@@ -33,7 +33,7 @@ import sys
 from osgeo import gdal
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -43,7 +43,7 @@ import gdaltest
 
 
 def rpftoc_1():
-    tst = gdaltest.GDALTest( 'RPFTOC', 'NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC', 1, 53599, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('RPFTOC', 'NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC', 1, 53599, filename_absolute = 1)
     gt = (1.9999416000000001, 0.0017833876302083334, 0.0, 36.000117500000002, 0.0, -0.0013461816406249993)
     return tst.testOpen(check_gt = gt)
 
@@ -52,10 +52,10 @@ def rpftoc_1():
 
 
 def rpftoc_2():
-    gdal.SetConfigOption( 'RPFTOC_FORCE_RGBA', 'YES' )
-    tst = gdaltest.GDALTest( 'RPFTOC', 'NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC', 1, 0, filename_absolute = 1 )
+    gdal.SetConfigOption('RPFTOC_FORCE_RGBA', 'YES')
+    tst = gdaltest.GDALTest('RPFTOC', 'NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC', 1, 0, filename_absolute = 1)
     res = tst.testOpen()
-    gdal.SetConfigOption( 'RPFTOC_FORCE_RGBA', 'NO' )
+    gdal.SetConfigOption('RPFTOC_FORCE_RGBA', 'NO')
     return res
 
 ###############################################################################
@@ -66,13 +66,13 @@ def rpftoc_3():
     ds = gdal.Open('data/A.TOC')
     md = ds.GetMetadata('SUBDATASETS')
     if 'SUBDATASET_1_NAME' not in md or md['SUBDATASET_1_NAME'] != 'NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC':
-        gdaltest.post_reason( 'missing SUBDATASET_1_NAME metadata' )
+        gdaltest.post_reason('missing SUBDATASET_1_NAME metadata')
         return 'fail'
 
     ds = gdal.Open('NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC')
     md = ds.GetMetadata()
     if 'FILENAME_0' not in md or (md['FILENAME_0'] != 'data/RPFTOC01.ON2' and md['FILENAME_0'] != 'data\\RPFTOC01.ON2'):
-        gdaltest.post_reason( 'missing SUBDATASET_1_NAME metadata' )
+        gdaltest.post_reason('missing SUBDATASET_1_NAME metadata')
         return 'fail'
 
     return 'success'
@@ -82,16 +82,16 @@ def rpftoc_3():
 
 
 def rpftoc_4():
-    gdal.SetConfigOption( 'RPFTOC_FORCE_RGBA', 'YES' )
+    gdal.SetConfigOption('RPFTOC_FORCE_RGBA', 'YES')
 
-    shutil.copyfile( 'data/A.TOC', 'tmp/A.TOC' )
-    shutil.copyfile( 'data/RPFTOC01.ON2', 'tmp/RPFTOC01.ON2' )
+    shutil.copyfile('data/A.TOC', 'tmp/A.TOC')
+    shutil.copyfile('data/RPFTOC01.ON2', 'tmp/RPFTOC01.ON2')
 
     ds = gdal.Open('NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:tmp/A.TOC')
-    err = ds.BuildOverviews( overviewlist = [2, 4] )
+    err = ds.BuildOverviews(overviewlist = [2, 4])
 
     if err != 0:
-        gdaltest.post_reason('BuildOverviews reports an error' )
+        gdaltest.post_reason('BuildOverviews reports an error')
         return 'fail'
 
     if ds.GetRasterBand(1).GetOverviewCount() != 2:
@@ -106,7 +106,7 @@ def rpftoc_4():
 
     ds = None
 
-    gdal.SetConfigOption( 'RPFTOC_FORCE_RGBA', 'NO' )
+    gdal.SetConfigOption('RPFTOC_FORCE_RGBA', 'NO')
 
     os.unlink('tmp/A.TOC')
     os.unlink('tmp/A.TOC.1.ovr')
@@ -119,12 +119,12 @@ gdaltest_list = [
     rpftoc_1,
     rpftoc_2,
     rpftoc_3,
-    rpftoc_4 ]
+    rpftoc_4]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'rpftoc' )
+    gdaltest.setup_run('rpftoc')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

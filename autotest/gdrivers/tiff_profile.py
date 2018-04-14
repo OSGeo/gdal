@@ -34,7 +34,7 @@ import os
 import sys
 import base64
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -56,7 +56,7 @@ def tiff_write_icc():
     f.close()
 
     # Create dummy file
-    options = [ 'SOURCE_ICC_PROFILE=' + icc ]
+    options = ['SOURCE_ICC_PROFILE=' + icc]
 
     driver = gdal.GetDriverByName('GTiff')
     ds = driver.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte, options)
@@ -124,7 +124,7 @@ def tiff_copy_icc():
     f.close()
 
     # Create dummy file
-    options = [ 'SOURCE_ICC_PROFILE=' + icc ]
+    options = ['SOURCE_ICC_PROFILE=' + icc]
 
     driver = gdal.GetDriverByName('GTiff')
     ds = driver.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte, options)
@@ -166,7 +166,7 @@ def tiff_copy_options_icc():
     f.close()
 
     # Create dummy file
-    options = [ 'SOURCE_ICC_PROFILE=' + icc ]
+    options = ['SOURCE_ICC_PROFILE=' + icc]
 
     driver = gdal.GetDriverByName('GTiff')
     ds = driver.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte)
@@ -216,7 +216,7 @@ def tiff_copy_options_colorimetric_data():
     source_whitepoint = (0.31271, 0.32902, 1.0)
     tifftag_transferfunction = (list(range(1, 256*4, 4)), list(range(2, 256*4+1, 4)), list(range(3, 256*4+2, 4)))
 
-    options = [ 'SOURCE_PRIMARIES_RED=' + cvtTuple2String(source_primaries[0]),
+    options = ['SOURCE_PRIMARIES_RED=' + cvtTuple2String(source_primaries[0]),
         'SOURCE_PRIMARIES_GREEN=' + cvtTuple2String(source_primaries[1]),
         'SOURCE_PRIMARIES_BLUE=' + cvtTuple2String(source_primaries[2]),
         'SOURCE_WHITEPOINT=' + cvtTuple2String(source_whitepoint),
@@ -243,7 +243,7 @@ def tiff_copy_options_colorimetric_data():
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
-        eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]
+        eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')')]
 
     for j in range(0, 3):
         for i in range(0, 3):
@@ -254,7 +254,7 @@ def tiff_copy_options_colorimetric_data():
     tifftag_transferfunction2 = (
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_RED'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_GREEN'] + ']'),
-        eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']') )
+        eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']'))
 
     if tifftag_transferfunction2 != tifftag_transferfunction:
         gdaltest.post_reason('fail')
@@ -276,7 +276,7 @@ def tiff_copy_options_colorimetric_data():
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
-        eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]
+        eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')')]
 
     for j in range(0, 3):
         for i in range(0, 3):
@@ -287,7 +287,7 @@ def tiff_copy_options_colorimetric_data():
     tifftag_transferfunction2 = (
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_RED'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_GREEN'] + ']'),
-        eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']') )
+        eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']'))
 
     if tifftag_transferfunction2 != tifftag_transferfunction:
         gdaltest.post_reason('fail')
@@ -308,7 +308,7 @@ def tiff_copy_colorimetric_data():
     source_whitepoint = (0.31271, 0.32902, 1.0)
     tifftag_transferfunction = (list(range(1, 256*4, 4)), list(range(2, 256*4+1, 4)), list(range(3, 256*4+2, 4)))
 
-    options = [ 'SOURCE_PRIMARIES_RED=' + cvtTuple2String(source_primaries[0]),
+    options = ['SOURCE_PRIMARIES_RED=' + cvtTuple2String(source_primaries[0]),
         'SOURCE_PRIMARIES_GREEN=' + cvtTuple2String(source_primaries[1]),
         'SOURCE_PRIMARIES_BLUE=' + cvtTuple2String(source_primaries[2]),
         'SOURCE_WHITEPOINT=' + cvtTuple2String(source_whitepoint),
@@ -338,7 +338,7 @@ def tiff_copy_colorimetric_data():
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
-        eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]
+        eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')')]
 
     for j in range(0, 3):
         for i in range(0, 3):
@@ -349,7 +349,7 @@ def tiff_copy_colorimetric_data():
     tifftag_transferfunction2 = (
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_RED'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_GREEN'] + ']'),
-        eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']') )
+        eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']'))
 
     if tifftag_transferfunction2 != tifftag_transferfunction:
         gdaltest.post_reason('fail')
@@ -371,7 +371,7 @@ def tiff_copy_colorimetric_data():
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
-        eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]
+        eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')')]
 
     for j in range(0, 3):
         for i in range(0, 3):
@@ -382,7 +382,7 @@ def tiff_copy_colorimetric_data():
     tifftag_transferfunction2 = (
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_RED'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_GREEN'] + ']'),
-        eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']') )
+        eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']'))
 
     if tifftag_transferfunction2 != tifftag_transferfunction:
         gdaltest.post_reason('fail')
@@ -470,7 +470,7 @@ def tiff_update_colorimetric():
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
-        eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]
+        eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')')]
 
     for j in range(0, 3):
         for i in range(0, 3):
@@ -481,7 +481,7 @@ def tiff_update_colorimetric():
     tifftag_transferfunction2 = (
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_RED'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_GREEN'] + ']'),
-        eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']') )
+        eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']'))
 
     if tifftag_transferfunction2 != tifftag_transferfunction:
         gdaltest.post_reason('fail')
@@ -502,7 +502,7 @@ def tiff_update_colorimetric():
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
         eval('(' + md['SOURCE_PRIMARIES_GREEN'] + ')'),
-        eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')') ]
+        eval('(' + md['SOURCE_PRIMARIES_BLUE'] + ')')]
 
     for j in range(0, 3):
         for i in range(0, 3):
@@ -513,7 +513,7 @@ def tiff_update_colorimetric():
     tifftag_transferfunction2 = (
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_RED'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_GREEN'] + ']'),
-        eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']') )
+        eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']'))
 
     if tifftag_transferfunction2 != tifftag_transferfunction:
         gdaltest.post_reason('fail')
@@ -526,18 +526,18 @@ def tiff_update_colorimetric():
 ############################################################################
 
 
-gdaltest_list.append( (tiff_write_icc) )
-gdaltest_list.append( (tiff_copy_icc) )
-gdaltest_list.append( (tiff_copy_options_icc) )
-gdaltest_list.append( (tiff_copy_options_colorimetric_data) )
-gdaltest_list.append( (tiff_copy_colorimetric_data) )
-gdaltest_list.append( (tiff_update_icc) )
-gdaltest_list.append( (tiff_update_colorimetric) )
+gdaltest_list.append((tiff_write_icc))
+gdaltest_list.append((tiff_copy_icc))
+gdaltest_list.append((tiff_copy_options_icc))
+gdaltest_list.append((tiff_copy_options_colorimetric_data))
+gdaltest_list.append((tiff_copy_colorimetric_data))
+gdaltest_list.append((tiff_update_icc))
+gdaltest_list.append((tiff_update_colorimetric))
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'tiff_profile' )
+    gdaltest.setup_run('tiff_profile')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

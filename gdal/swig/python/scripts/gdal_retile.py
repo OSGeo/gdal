@@ -46,7 +46,7 @@ except:
 class AffineTransformDecorator:
     """ A class providing some useful methods for affine Transformations """
 
-    def __init__(self, transform ):
+    def __init__(self, transform):
         self.geotransform=transform
         self.scaleX=self.geotransform[1]
         self.scaleY=self.geotransform[5]
@@ -69,18 +69,18 @@ class AffineTransformDecorator:
         ylist.append(self.uly+h)
         xlist.append(self.ulx)
         ylist.append(self.uly+h)
-        return [ xlist, ylist]
+        return [xlist, ylist]
 
 
 class DataSetCache:
     """ A class for caching source tiles """
 
-    def __init__(self ):
+    def __init__(self):
         self.cacheSize=8
         self.queue=[]
         self.dict={}
 
-    def get(self,name ):
+    def get(self,name):
 
         if name in self.dict:
             return self.dict[name]
@@ -118,7 +118,7 @@ class tile_info:
             self.countTilesY += int((ysize - tileHeight + (tileHeight - overlap) - 1) / (tileHeight - overlap))
         self.overlap = overlap
 
-    def report( self ):
+    def report(self):
         print('tileWidth:   %d' % self.tileWidth)
         print('tileHeight:  %d' % self.tileHeight)
         print('countTilesX: %d' % self.countTilesX)
@@ -129,7 +129,7 @@ class tile_info:
 class mosaic_info:
     """A class holding information about a GDAL file or a GDAL fileset"""
 
-    def __init__(self, filename,inputDS ):
+    def __init__(self, filename,inputDS):
         """
         Initialize mosaic_info from filename
 
@@ -191,25 +191,25 @@ class mosaic_info:
                 envelope=feature.GetGeometryRef().GetEnvelope()
             else:
                 featureEnv = feature.GetGeometryRef().GetEnvelope()
-                envelope= ( min(featureEnv[0],envelope[0]),max(featureEnv[1],envelope[1]),
+                envelope= (min(featureEnv[0],envelope[0]),max(featureEnv[1],envelope[1]),
                             min(featureEnv[2],envelope[2]),max(featureEnv[3],envelope[3]))
 
         if envelope is None:
             return None
 
         #enlarge to query rect if necessary
-        envelope= ( min(minx,envelope[0]),max(maxx,envelope[1]),
+        envelope= (min(minx,envelope[0]),max(maxx,envelope[1]),
                     min(miny,envelope[2]),max(maxy,envelope[3]))
 
         self.ogrTileIndexDS.GetLayer().SetSpatialFilter(None)
 
         # merge tiles
 
-        resultSizeX =int(math.ceil(((maxx-minx) / self.scaleX )))
-        resultSizeY =int(math.ceil(((miny-maxy) / self.scaleY )))
+        resultSizeX =int(math.ceil(((maxx-minx) / self.scaleX)))
+        resultSizeY =int(math.ceil(((miny-maxy) / self.scaleY)))
 
-        resultDS = self.TempDriver.Create( "TEMP", resultSizeX, resultSizeY, self.bands,self.band_type,[])
-        resultDS.SetGeoTransform( [minx,self.scaleX,0,maxy,0,self.scaleY] )
+        resultDS = self.TempDriver.Create("TEMP", resultSizeX, resultSizeY, self.bands,self.band_type,[])
+        resultDS.SetGeoTransform([minx,self.scaleX,0,maxy,0,self.scaleY])
 
         for feature in features:
             featureName =  feature.GetField(0)
@@ -251,17 +251,17 @@ class mosaic_info:
             assert sw_yoff >= 0
 
             for bandNr in range(1, self.bands + 1):
-                s_band = sourceDS.GetRasterBand( bandNr )
-                t_band = resultDS.GetRasterBand( bandNr )
+                s_band = sourceDS.GetRasterBand(bandNr)
+                t_band = resultDS.GetRasterBand(bandNr)
                 if self.ct is not None:
                     t_band.SetRasterColorTable(self.ct)
                 t_band.SetRasterColorInterpretation(self.ci[bandNr-1])
 
-                data = s_band.ReadRaster( sw_xoff, sw_yoff, sw_xsize, sw_ysize, tw_xsize, tw_ysize, self.band_type )
+                data = s_band.ReadRaster(sw_xoff, sw_yoff, sw_xsize, sw_ysize, tw_xsize, tw_ysize, self.band_type)
                 if data is None:
                     print(gdal.GetLastErrorMsg())
 
-                t_band.WriteRaster(tw_xoff, tw_yoff, tw_xsize, tw_ysize, data )
+                t_band.WriteRaster(tw_xoff, tw_yoff, tw_xsize, tw_ysize, data)
 
         return resultDS
 
@@ -269,7 +269,7 @@ class mosaic_info:
         del memDS
         #self.TempDriver.Delete("TEMP")
 
-    def report( self ):
+    def report(self):
         print('Filename: '+ self.filename)
         print('File Size: %dx%dx%d' \
               % (self.xsize, self.ysize, self.bands))
@@ -279,7 +279,7 @@ class mosaic_info:
               % (self.ulx,self.uly,self.lrx,self.lry))
 
 
-def getTileIndexFromFiles( inputTiles, driverTyp):
+def getTileIndexFromFiles(inputTiles, driverTyp):
 
     if Verbose:
         from sys import version_info
@@ -314,7 +314,7 @@ def getTargetDir(level = -1):
         return TargetDir+str(level)+os.sep
 
 
-def tileImage(minfo, ti ):
+def tileImage(minfo, ti):
     """
 
     Tile image in mosaicinfo minfo  based on tileinfo ti
@@ -441,18 +441,18 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height,tileName,
     bands = levelMosaicInfo.bands
 
     if MemDriver is None:
-        t_fh = Driver.Create( tileName, width, height, bands,bt,CreateOptions)
+        t_fh = Driver.Create(tileName, width, height, bands,bt,CreateOptions)
     else:
-        t_fh = MemDriver.Create( tileName, width, height, bands,bt)
+        t_fh = MemDriver.Create(tileName, width, height, bands,bt)
 
     if t_fh is None:
         print('Creation failed, terminating gdal_tile.')
-        sys.exit( 1 )
+        sys.exit(1)
 
-    t_fh.SetGeoTransform( geotransform )
-    t_fh.SetProjection( levelMosaicInfo.projection)
+    t_fh.SetGeoTransform(geotransform)
+    t_fh.SetProjection(levelMosaicInfo.projection)
     for band in range(1,bands+1):
-        t_band = t_fh.GetRasterBand( band )
+        t_band = t_fh.GetRasterBand(band)
         if levelMosaicInfo.ct is not None:
             t_band.SetRasterColorTable(levelMosaicInfo.ct)
         t_band.SetRasterColorInterpretation(levelMosaicInfo.ci[band-1])
@@ -460,19 +460,19 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height,tileName,
     res = gdal.ReprojectImage(s_fh,t_fh,None,None,ResamplingMethod)
     if res!=0:
         print("Reprojection failed for %s, error %d" % (tileName,res))
-        sys.exit( 1 )
+        sys.exit(1)
 
     levelMosaicInfo.closeDataSet(s_fh)
 
     if MemDriver is not None:
-        tt_fh = Driver.CreateCopy( tileName, t_fh, 0, CreateOptions )
+        tt_fh = Driver.CreateCopy(tileName, t_fh, 0, CreateOptions)
         tt_fh.FlushCache()
 
     if Verbose:
         print(tileName + " : " + str(offsetX)+"|"+str(offsetY)+"-->"+str(width)+"-"+str(height))
 
 
-def createTile( minfo, offsetX,offsetY,width,height, tilename,OGRDS):
+def createTile(minfo, offsetX,offsetY,width,height, tilename,OGRDS):
     """
 
     Create tile
@@ -504,34 +504,34 @@ def createTile( minfo, offsetX,offsetY,width,height, tilename,OGRDS):
     bands = minfo.bands
 
     if MemDriver is None:
-        t_fh = Driver.Create( tilename, width, height, bands,bt,CreateOptions)
+        t_fh = Driver.Create(tilename, width, height, bands,bt,CreateOptions)
     else:
-        t_fh = MemDriver.Create( tilename, width, height, bands,bt)
+        t_fh = MemDriver.Create(tilename, width, height, bands,bt)
 
     if t_fh is None:
         print('Creation failed, terminating gdal_tile.')
-        sys.exit( 1 )
+        sys.exit(1)
 
-    t_fh.SetGeoTransform( geotransform )
+    t_fh.SetGeoTransform(geotransform)
     if Source_SRS is not None:
-        t_fh.SetProjection( Source_SRS.ExportToWkt())
+        t_fh.SetProjection(Source_SRS.ExportToWkt())
 
     readX=min(s_fh.RasterXSize,width)
     readY=min(s_fh.RasterYSize,height)
     for band in range(1,bands+1):
-        s_band = s_fh.GetRasterBand( band )
-        t_band = t_fh.GetRasterBand( band )
+        s_band = s_fh.GetRasterBand(band)
+        t_band = t_fh.GetRasterBand(band)
         if minfo.ct is not None:
             t_band.SetRasterColorTable(minfo.ct)
 
 #        data = s_band.ReadRaster( offsetX,offsetY,width,height,width,height, t_band.DataType )
-        data = s_band.ReadRaster( 0,0,readX,readY,readX,readY,  t_band.DataType )
-        t_band.WriteRaster( 0,0,readX,readY, data,readX,readY, t_band.DataType )
+        data = s_band.ReadRaster(0,0,readX,readY,readX,readY,  t_band.DataType)
+        t_band.WriteRaster(0,0,readX,readY, data,readX,readY, t_band.DataType)
 
     minfo.closeDataSet(s_fh)
 
     if MemDriver is not None:
-        tt_fh = Driver.CreateCopy( tilename, t_fh, 0, CreateOptions )
+        tt_fh = Driver.CreateCopy(tilename, t_fh, 0, CreateOptions)
         tt_fh.FlushCache()
 
     if Verbose:
@@ -543,7 +543,7 @@ def createTileIndex(dsName,fieldName,srs,driverName):
     OGRDriver = ogr.GetDriverByName(driverName)
     if OGRDriver is None:
         print('ESRI Shapefile driver not found')
-        sys.exit( 1 )
+        sys.exit(1)
 
     OGRDataSource=OGRDriver.Open(dsName)
     if OGRDataSource is not None:
@@ -555,22 +555,22 @@ def createTileIndex(dsName,fieldName,srs,driverName):
     OGRDataSource=OGRDriver.CreateDataSource(dsName)
     if OGRDataSource is None:
         print('Could not open datasource '+dsName)
-        sys.exit( 1 )
+        sys.exit(1)
 
     OGRLayer = OGRDataSource.CreateLayer("index", srs, ogr.wkbPolygon)
     if OGRLayer is None:
         print('Could not create Layer')
-        sys.exit( 1 )
+        sys.exit(1)
 
     OGRFieldDefn = ogr.FieldDefn(fieldName,ogr.OFTString)
     if OGRFieldDefn is None:
         print('Could not create FieldDefn for '+fieldName)
-        sys.exit( 1 )
+        sys.exit(1)
 
     OGRFieldDefn.SetWidth(256)
     if OGRLayer.CreateField(OGRFieldDefn) != 0:
         print('Could not create Field for '+fieldName)
-        sys.exit( 1 )
+        sys.exit(1)
 
     return OGRDataSource
 
@@ -581,7 +581,7 @@ def addFeature(OGRDataSource,location,xlist,ylist):
     OGRFeature = ogr.Feature(OGRLayer.GetLayerDefn())
     if OGRFeature is None:
         print('Could not create Feature')
-        sys.exit( 1 )
+        sys.exit(1)
 
     OGRFeature.SetField(TileIndexFieldName,location)
     wkt = 'POLYGON ((%f %f,%f %f,%f %f,%f %f,%f %f ))' % (xlist[0],ylist[0],
@@ -589,7 +589,7 @@ def addFeature(OGRDataSource,location,xlist,ylist):
     OGRGeometry=ogr.CreateGeometryFromWkt(wkt,OGRLayer.GetSpatialRef())
     if (OGRGeometry is None):
         print('Could not create Geometry')
-        sys.exit( 1 )
+        sys.exit(1)
 
     OGRFeature.SetGeometryDirectly(OGRGeometry)
 
@@ -656,7 +656,7 @@ def getTileName(minfo,ti,xIndex,yIndex,level = -1):
     countDigits= len(str(max))
     parts=os.path.splitext(os.path.basename(minfo.filename))
     if parts[0][0]=="@" : #remove possible leading "@"
-       parts = ( parts[0][1:len(parts[0])], parts[1])
+       parts = (parts[0][1:len(parts[0])], parts[1])
 
     yIndex_str = ("%0"+str(countDigits)+"i") % (yIndex,)
     xIndex_str = ("%0"+str(countDigits)+"i") % (xIndex,)
@@ -741,7 +741,7 @@ def main(args = None):
 
     if args is None:
         args = sys.argv
-    argv = gdal.GeneralCmdLineProcessor( args )
+    argv = gdal.GeneralCmdLineProcessor(args)
     if argv is None:
         return 1
 
@@ -755,13 +755,13 @@ def main(args = None):
             Format = argv[i]
         elif arg == '-ot':
             i+=1
-            BandType = gdal.GetDataTypeByName( argv[i] )
+            BandType = gdal.GetDataTypeByName(argv[i])
             if BandType == gdal.GDT_Unknown:
                 print('Unknown GDAL data type: %s' % argv[i])
                 return 1
         elif arg == '-co':
             i+=1
-            CreateOptions.append( argv[i] )
+            CreateOptions.append(argv[i])
 
         elif arg == '-v':
             Verbose = True
@@ -813,7 +813,7 @@ def main(args = None):
         elif arg == '-s_srs':
             i+=1
             Source_SRS = osr.SpatialReference()
-            if Source_SRS.SetFromUserInput( argv[i] ) != 0:
+            if Source_SRS.SetFromUserInput(argv[i]) != 0:
                 print('invalid -s_srs: ' + argv[i])
                 return 1
 
@@ -846,7 +846,7 @@ def main(args = None):
             return 1
 
         else:
-            Names.append( arg )
+            Names.append(arg)
         i+=1
 
     if len(Names) == 0:
@@ -905,7 +905,7 @@ def main(args = None):
 
     if Source_SRS is None and len(minfo.projection) > 0 :
        Source_SRS = osr.SpatialReference()
-       if Source_SRS.SetFromUserInput( minfo.projection ) != 0:
+       if Source_SRS.SetFromUserInput(minfo.projection) != 0:
            print('invalid projection  ' + minfo.projection)
            return 1
 

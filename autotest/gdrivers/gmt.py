@@ -31,7 +31,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -41,17 +41,17 @@ import gdaltest
 
 def gmt_1():
 
-    gdaltest.gmt_drv = gdal.GetDriverByName( 'GMT' )
+    gdaltest.gmt_drv = gdal.GetDriverByName('GMT')
 
     if gdaltest.gmt_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'GMT', 'gmt_1.grd', 1, 34762 )
+    tst = gdaltest.GDALTest('GMT', 'gmt_1.grd', 1, 34762)
 
     gt = (59.958333333333336,0.083333333333333,0.0,
           25.041666666666668,0.0,-0.083333333333333)
 
-    return tst.testOpen( check_gt = gt )
+    return tst.testOpen(check_gt = gt)
 
 ###############################################################################
 # Verify a simple createcopy operation with 16bit data.
@@ -62,21 +62,21 @@ def gmt_2():
     if gdaltest.gmt_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'GMT', 'int16.tif', 1, 4672 )
-    return tst.testCreateCopy( check_gt = 1 )
+    tst = gdaltest.GDALTest('GMT', 'int16.tif', 1, 4672)
+    return tst.testCreateCopy(check_gt = 1)
 
 ###############################################################################
 
 
 gdaltest_list = [
     gmt_1,
-    gmt_2 ]
+    gmt_2]
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'gmt' )
+    gdaltest.setup_run('gmt')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

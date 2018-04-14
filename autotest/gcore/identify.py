@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -41,11 +41,11 @@ from osgeo import gdal
 
 def identify_1():
 
-    file_list = gdal.ReadDir( 'data' )
+    file_list = gdal.ReadDir('data')
 
-    dr = gdal.IdentifyDriver( 'data/byte.tif', file_list )
+    dr = gdal.IdentifyDriver('data/byte.tif', file_list)
     if dr is None or dr.GetDescription() != 'GTiff':
-        gdaltest.post_reason( 'Got wrong driver for byte.tif' )
+        gdaltest.post_reason('Got wrong driver for byte.tif')
         return 'fail'
 
     return 'success'
@@ -56,11 +56,11 @@ def identify_1():
 
 def identify_2():
 
-    file_list = gdal.ReadDir( 'data' )
+    file_list = gdal.ReadDir('data')
 
-    dr = gdal.IdentifyDriver( 'data/byte.pnm.aux.xml', file_list )
+    dr = gdal.IdentifyDriver('data/byte.pnm.aux.xml', file_list)
     if dr is not None:
-        gdaltest.post_reason( 'Got a driver for byte.pnm.aux.xml!' )
+        gdaltest.post_reason('Got a driver for byte.pnm.aux.xml!')
         return 'fail'
 
     return 'success'
@@ -71,9 +71,9 @@ def identify_2():
 
 def identify_3():
 
-    dr = gdal.IdentifyDriver( 'data' )
+    dr = gdal.IdentifyDriver('data')
     if dr is not None:
-        gdaltest.post_reason( 'Got a driver for data directory!' )
+        gdaltest.post_reason('Got a driver for data directory!')
         return 'fail'
 
     return 'success'
@@ -84,34 +84,34 @@ def identify_3():
 
 def identify_4():
 
-    dr = gdal.IdentifyDriverEx( 'data/byte.tif' )
+    dr = gdal.IdentifyDriverEx('data/byte.tif')
     if dr is None or dr.GetDescription() != 'GTiff':
-        gdaltest.post_reason( 'Got wrong driver for byte.tif' )
+        gdaltest.post_reason('Got wrong driver for byte.tif')
         return 'fail'
 
-    dr = gdal.IdentifyDriverEx( 'data/byte.tif', gdal.OF_RASTER )
+    dr = gdal.IdentifyDriverEx('data/byte.tif', gdal.OF_RASTER)
     if dr is None or dr.GetDescription() != 'GTiff':
-        gdaltest.post_reason( 'Got wrong driver for byte.tif' )
+        gdaltest.post_reason('Got wrong driver for byte.tif')
         return 'fail'
 
-    dr = gdal.IdentifyDriverEx( 'data/byte.tif', gdal.OF_VECTOR )
+    dr = gdal.IdentifyDriverEx('data/byte.tif', gdal.OF_VECTOR)
     if dr is not None:
-        gdaltest.post_reason( 'Got wrong driver for byte.tif' )
+        gdaltest.post_reason('Got wrong driver for byte.tif')
         return 'fail'
 
-    dr = gdal.IdentifyDriverEx( 'data/byte.tif', allowed_drivers = [ 'HFA' ] )
+    dr = gdal.IdentifyDriverEx('data/byte.tif', allowed_drivers = ['HFA'])
     if dr is not None:
-        gdaltest.post_reason( 'Got wrong driver for byte.tif' )
+        gdaltest.post_reason('Got wrong driver for byte.tif')
         return 'fail'
 
-    dr = gdal.IdentifyDriverEx( '../gdrivers/data/aea.dat', sibling_files = [ 'aea.dat'] )
+    dr = gdal.IdentifyDriverEx('../gdrivers/data/aea.dat', sibling_files = ['aea.dat'])
     if dr is not None:
-        gdaltest.post_reason( 'Got a driver, which was not expected!' )
+        gdaltest.post_reason('Got a driver, which was not expected!')
         return 'fail'
 
-    dr = gdal.IdentifyDriverEx( '../gdrivers/data/aea.dat', sibling_files = [ 'aea.dat', 'aea.hdr' ] )
+    dr = gdal.IdentifyDriverEx('../gdrivers/data/aea.dat', sibling_files = ['aea.dat', 'aea.hdr'])
     if dr is None:
-        gdaltest.post_reason( 'Did not get a driver!' )
+        gdaltest.post_reason('Did not get a driver!')
         return 'fail'
 
     return 'success'
@@ -121,12 +121,12 @@ gdaltest_list = [
     identify_1,
     identify_2,
     identify_3,
-    identify_4 ]
+    identify_4]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'identify' )
+    gdaltest.setup_run('identify')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

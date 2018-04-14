@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -39,7 +39,7 @@ from osgeo import osr
 from osgeo import gdal
 
 
-wkts = [ ('POINT (0 1 2)', 'points', 0),
+wkts = [('POINT (0 1 2)', 'points', 0),
          ('LINESTRING (0 1 2,3 4 5)', 'lines', 0),
          ('POINT (0 1 2)', 'points2', 4326),
          ('LINESTRING (0 1 2,3 4 5)', 'lines2', 32631),
@@ -288,13 +288,13 @@ def ogr_pcidsk_add_field_to_non_empty_layer():
     tmpfile = '/vsimem/tmp.pix'
     ds = ogr.GetDriverByName('PCIDSK').CreateDataSource(tmpfile)
     lyr = ds.CreateLayer('foo')
-    lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     f['foo'] = 'bar'
     lyr.CreateFeature(f)
     f = None
     with gdaltest.error_handler():
-        if lyr.CreateField( ogr.FieldDefn('bar', ogr.OFTString) ) == 0:
+        if lyr.CreateField(ogr.FieldDefn('bar', ogr.OFTString)) == 0:
             return 'fail'
     f = ogr.Feature(lyr.GetLayerDefn())
     f['foo'] = 'bar2'
@@ -407,12 +407,12 @@ gdaltest_list = [
     ogr_pcidsk_too_many_layers,
     ogr_pcidsk_online_1,
     ogr_pcidsk_online_2,
-    ogr_pcidsk_cleanup ]
+    ogr_pcidsk_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_pcidsk' )
+    gdaltest.setup_run('ogr_pcidsk')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -33,7 +33,7 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -178,7 +178,7 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gcps = [ gdal.GCP(0,1,2,3,4) ]
+    gcps = [gdal.GCP(0,1,2,3,4)]
     ds.SetGCPs(gcps, "foo")
 
     got_gcps = ds.GetGCPs()
@@ -357,7 +357,7 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds.GetRasterBand(1).SetColorInterpretation( gdal.GCI_Undefined )
+    ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_Undefined)
 
     ct = ds.GetRasterBand(1).GetColorTable()
     if ct is not None:
@@ -365,7 +365,7 @@ def gdal_api_proxy_sub():
         return 'fail'
 
     ct = gdal.ColorTable()
-    ct.SetColorEntry( 0, (1, 2, 3) )
+    ct.SetColorEntry(0, (1, 2, 3))
     if ds.GetRasterBand(1).SetColorTable(ct) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -616,10 +616,10 @@ def gdal_api_proxy_sub_clean():
     return 'success'
 
 
-gdaltest_list = [ gdal_api_proxy_1,
+gdaltest_list = [gdal_api_proxy_1,
                   gdal_api_proxy_2,
                   gdal_api_proxy_3,
-                  gdal_api_proxy_4 ]
+                  gdal_api_proxy_4]
 
 if __name__ == '__main__':
 
@@ -631,7 +631,7 @@ if __name__ == '__main__':
             gdal.SetConfigOption('GDAL_API_PROXY_SERVER', gdalserver_path)
 
         gdaltest.api_proxy_server_p = None
-        gdaltest_list = [ gdal_api_proxy_sub ]
+        gdaltest_list = [gdal_api_proxy_sub]
 
     elif len(sys.argv) >= 3 and sys.argv[2] == '-2':
 
@@ -658,7 +658,7 @@ if __name__ == '__main__':
             gdal.SetConfigOption('GDAL_API_PROXY_SERVER', 'localhost:%d' % port)
             print('port = %d' % port)
             gdaltest.api_proxy_server_p = p
-            gdaltest_list = [ gdal_api_proxy_sub, gdal_api_proxy_sub_clean ]
+            gdaltest_list = [gdal_api_proxy_sub, gdal_api_proxy_sub_clean]
         else:
             gdaltest_list = []
 
@@ -675,7 +675,7 @@ if __name__ == '__main__':
             gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
             gdal.SetConfigOption('GDAL_API_PROXY_SERVER', 'tmp/gdalapiproxysocket')
             gdaltest.api_proxy_server_p = p
-            gdaltest_list = [ gdal_api_proxy_sub, gdal_api_proxy_sub_clean ]
+            gdaltest_list = [gdal_api_proxy_sub, gdal_api_proxy_sub_clean]
         else:
             try:
                 p.terminate()
@@ -697,7 +697,7 @@ if __name__ == '__main__':
             gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
             gdal.SetConfigOption('GDAL_API_PROXY_SERVER', 'tmp/gdalapiproxysocket')
             gdaltest.api_proxy_server_p = p
-            gdaltest_list = [ gdal_api_proxy_sub, gdal_api_proxy_sub_clean ]
+            gdaltest_list = [gdal_api_proxy_sub, gdal_api_proxy_sub_clean]
         else:
             try:
                 p.terminate()
@@ -706,8 +706,8 @@ if __name__ == '__main__':
             p.wait()
             gdaltest_list = []
 
-    gdaltest.setup_run( 'gdal_api_proxy' )
+    gdaltest.setup_run('gdal_api_proxy')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

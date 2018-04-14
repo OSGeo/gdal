@@ -34,7 +34,7 @@ import sys
 import os
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -336,7 +336,7 @@ def test_gdal_calc_py_6():
 
 def test_gdal_calc_py_cleanup():
 
-    lst = [ 'tmp/test_gdal_calc_py.tif',
+    lst = ['tmp/test_gdal_calc_py.tif',
             'tmp/test_gdal_calc_py_1_1.tif',
             'tmp/test_gdal_calc_py_1_2.tif',
             'tmp/test_gdal_calc_py_1_3.tif',
@@ -374,8 +374,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdal_calc_py' )
+    gdaltest.setup_run('test_gdal_calc_py')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

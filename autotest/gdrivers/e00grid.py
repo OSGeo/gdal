@@ -31,7 +31,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -41,8 +41,8 @@ import gdaltest
 
 def e00grid_1():
 
-    tst = gdaltest.GDALTest( 'E00GRID', 'fake_e00grid.e00', 1, 65359 )
-    expected_gt = [ 500000.0, 1000.0, 0.0, 4000000.0, 0.0, -1000.0 ]
+    tst = gdaltest.GDALTest('E00GRID', 'fake_e00grid.e00', 1, 65359)
+    expected_gt = [500000.0, 1000.0, 0.0, 4000000.0, 0.0, -1000.0]
     expected_srs = """PROJCS["UTM Zone 15, Northern Hemisphere",
     GEOGCS["NAD83",
         DATUM["North_American_Datum_1983",
@@ -81,8 +81,8 @@ def e00grid_1():
 
 def e00grid_2():
 
-    tst = gdaltest.GDALTest( 'E00GRID', 'fake_e00grid_compressed.e00', 1, 65347 )
-    expected_gt = [ 500000.0, 1000.0, 0.0, 4000000.0, 0.0, -1000.0 ]
+    tst = gdaltest.GDALTest('E00GRID', 'fake_e00grid_compressed.e00', 1, 65347)
+    expected_gt = [500000.0, 1000.0, 0.0, 4000000.0, 0.0, -1000.0]
     expected_srs = """PROJCS["UTM Zone 15, Northern Hemisphere",
     GEOGCS["NAD83",
         DATUM["North_American_Datum_1983",
@@ -137,12 +137,12 @@ def e00grid_2():
 
 gdaltest_list = [
     e00grid_1,
-    e00grid_2 ]
+    e00grid_2]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'e00grid' )
+    gdaltest.setup_run('e00grid')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

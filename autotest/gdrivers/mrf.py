@@ -31,7 +31,7 @@
 import sys
 import glob
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 
@@ -118,9 +118,9 @@ def mrf_overview_near_fact_2():
     ref_ds = None
     gdal.Unlink('/vsimem/out.tif')
 
-    for dt in [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
+    for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                 gdal.GDT_Int32, gdal.GDT_UInt32,
-                gdal.GDT_Float32, gdal.GDT_Float64 ]:
+                gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format = 'MRF',
@@ -150,9 +150,9 @@ def mrf_overview_near_fact_2():
 
 def mrf_overview_near_with_nodata_fact_2():
 
-    for dt in [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
+    for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                 gdal.GDT_Int32, gdal.GDT_UInt32,
-                gdal.GDT_Float32, gdal.GDT_Float64 ]:
+                gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format = 'MRF',
@@ -184,9 +184,9 @@ def mrf_overview_near_with_nodata_fact_2():
 
 def mrf_overview_avg_fact_2():
 
-    for dt in [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
+    for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                 gdal.GDT_Int32, gdal.GDT_UInt32,
-                gdal.GDT_Float32, gdal.GDT_Float64 ]:
+                gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format = 'MRF',
@@ -218,9 +218,9 @@ def mrf_overview_avg_fact_2():
 
 def mrf_overview_avg_with_nodata_fact_2():
 
-    for dt in [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
+    for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                 gdal.GDT_Int32, gdal.GDT_UInt32,
-                gdal.GDT_Float32, gdal.GDT_Float64 ]:
+                gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format = 'MRF',
@@ -307,9 +307,9 @@ def mrf_overview_avg_fact_3():
 
 def mrf_overview_avg_with_nodata_fact_3():
 
-    for dt in [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
+    for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                 gdal.GDT_Int32, gdal.GDT_UInt32,
-                gdal.GDT_Float32, gdal.GDT_Float64 ]:
+                gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format = 'MRF',
@@ -343,7 +343,7 @@ def mrf_overview_avg_with_nodata_fact_3():
 def mrf_overview_partial_block():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF',
-                            creationOptions = [ 'COMPRESS=NONE', 'BLOCKSIZE=8' ] )
+                            creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=8'])
     out_ds.BuildOverviews('NEAR', [2])
     out_ds = None
 
@@ -369,7 +369,7 @@ def mrf_overview_near_implicit_level():
     # We ask only overview level 2, but MRF automatically creates 2 and 4
     # so check that 4 is properly initialized
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF',
-                            creationOptions = [ 'COMPRESS=NONE', 'BLOCKSIZE=5' ])
+                            creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=5'])
     out_ds.BuildOverviews('NEAR', [2])
     out_ds = None
 
@@ -634,7 +634,7 @@ def mrf_versioned():
     gdal.Unlink('/vsimem/out.til')
 
     # Caching MRF
-    gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF' )
+    gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF')
     gdal.FileFromMemBuffer('/vsimem/out.mrf',
 """<MRF_META>
   <Raster versioned="on">
@@ -713,7 +713,7 @@ def mrf_cleanup():
 'uint16.tif.*',
 'uint32.tif.*',
 'utmsmall.tif.*',
-'cloning.*' ]
+'cloning.*']
 
     for f in [fname for n in files for fname in glob.glob('tmp/' + n)]:
         gdal.Unlink(f)
@@ -770,33 +770,33 @@ for item in init_list:
 
     ut = gdaltest.GDALTest('MRF', src_filename, item[1], chksum, options = options, chksum_after_reopening = chksum_after_reopening)
     if ut is None:
-        print( 'MRF tests skipped' )
+        print('MRF tests skipped')
 
     ut = myTestCreateCopyWrapper(ut)
 
-    gdaltest_list.append( (ut.myTestCreateCopy, item[0] + ' ' + str(options)) )
+    gdaltest_list.append((ut.myTestCreateCopy, item[0] + ' ' + str(options)))
 
-gdaltest_list += [ mrf_overview_near_fact_2 ]
-gdaltest_list += [ mrf_overview_near_with_nodata_fact_2 ]
-gdaltest_list += [ mrf_overview_avg_fact_2 ]
-gdaltest_list += [ mrf_overview_avg_with_nodata_fact_2 ]
-gdaltest_list += [ mrf_overview_near_fact_3 ]
-gdaltest_list += [ mrf_overview_avg_fact_3 ]
-gdaltest_list += [ mrf_overview_avg_with_nodata_fact_3 ]
-gdaltest_list += [ mrf_overview_partial_block ]
-gdaltest_list += [ mrf_overview_near_implicit_level ]
-gdaltest_list += [ mrf_overview_external ]
-gdaltest_list += [ mrf_lerc_nodata ]
-gdaltest_list += [ mrf_lerc_with_huffman ]
-gdaltest_list += [ mrf_cached_source ]
-gdaltest_list += [ mrf_versioned ]
-gdaltest_list += [ mrf_zen_test ]
-gdaltest_list += [ mrf_cleanup ]
+gdaltest_list += [mrf_overview_near_fact_2]
+gdaltest_list += [mrf_overview_near_with_nodata_fact_2]
+gdaltest_list += [mrf_overview_avg_fact_2]
+gdaltest_list += [mrf_overview_avg_with_nodata_fact_2]
+gdaltest_list += [mrf_overview_near_fact_3]
+gdaltest_list += [mrf_overview_avg_fact_3]
+gdaltest_list += [mrf_overview_avg_with_nodata_fact_3]
+gdaltest_list += [mrf_overview_partial_block]
+gdaltest_list += [mrf_overview_near_implicit_level]
+gdaltest_list += [mrf_overview_external]
+gdaltest_list += [mrf_lerc_nodata]
+gdaltest_list += [mrf_lerc_with_huffman]
+gdaltest_list += [mrf_cached_source]
+gdaltest_list += [mrf_versioned]
+gdaltest_list += [mrf_zen_test]
+gdaltest_list += [mrf_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'mrf' )
+    gdaltest.setup_run('mrf')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

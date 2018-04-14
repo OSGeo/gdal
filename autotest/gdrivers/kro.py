@@ -32,7 +32,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,7 +42,7 @@ import gdaltest
 
 def kro_1():
 
-    tst = gdaltest.GDALTest( 'KRO', 'rgbsmall.tif', 2, 21053 )
+    tst = gdaltest.GDALTest('KRO', 'rgbsmall.tif', 2, 21053)
 
     return tst.testCreate()
 
@@ -52,7 +52,7 @@ def kro_1():
 
 def kro_2():
 
-    tst = gdaltest.GDALTest( 'KRO', '../../gcore/data/uint16.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('KRO', '../../gcore/data/uint16.tif', 1, 4672)
 
     return tst.testCreate()
 
@@ -62,7 +62,7 @@ def kro_2():
 
 def kro_3():
 
-    tst = gdaltest.GDALTest( 'KRO', '../../gcore/data/float32.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('KRO', '../../gcore/data/float32.tif', 1, 4672)
 
     return tst.testCreate()
 
@@ -72,7 +72,7 @@ def kro_3():
 
 def kro_4():
 
-    tst = gdaltest.GDALTest( 'KRO', 'rgba16.png', 1, 1886 )
+    tst = gdaltest.GDALTest('KRO', 'rgba16.png', 1, 1886)
 
     return tst.testCreate()
 
@@ -110,8 +110,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'KRO' )
+    gdaltest.setup_run('KRO')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

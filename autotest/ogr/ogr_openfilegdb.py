@@ -33,7 +33,7 @@ import os
 import sys
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -41,41 +41,41 @@ from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 
-ogrtest.openfilegdb_datalist = [ [ "none", ogr.wkbNone, None],
-                [ "point", ogr.wkbPoint, "POINT (1 2)" ],
-                [ "multipoint", ogr.wkbMultiPoint, "MULTIPOINT (1 2,3 4)" ],
-                [ "linestring", ogr.wkbLineString, "LINESTRING (1 2,3 4)", "MULTILINESTRING ((1 2,3 4))" ],
-                [ "multilinestring", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4))" ],
-                [ "multilinestring_multipart", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4),(5 6,7 8))" ],
-                [ "polygon", ogr.wkbPolygon, "POLYGON ((0 0,0 1,1 1,1 0,0 0))", "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))" ],
-                [ "multipolygon", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.75 0.25,0.75 0.75,0.25 0.75,0.25 0.25)),((2 0,2 1,3 1,3 0,2 0)))" ],
-                [ "point25D", ogr.wkbPoint25D, "POINT (1 2 3)" ],
-                [ "multipoint25D", ogr.wkbMultiPoint25D, "MULTIPOINT (1 2 -10,3 4 -20)" ],
-                [ "linestring25D", ogr.wkbLineString25D, "LINESTRING (1 2 -10,3 4 -20)", "MULTILINESTRING ((1 2 -10,3 4 -20))" ],
-                [ "multilinestring25D", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20))" ],
-                [ "multilinestring25D_multipart", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20),(5 6 -30,7 8 -40))" ],
-                [ "polygon25D", ogr.wkbPolygon25D, "POLYGON ((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10))", "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))" ],
-                [ "multipolygon25D", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))" ],
-                [ "multipatch", ogr.wkbGeometryCollection25D, "GEOMETRYCOLLECTION Z (TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0))),TIN Z (((10.0 0.0 0,10.0 1.0 0,11.0 0.0 0,10.0 0.0 0)),((10.0 0.0 0,11.0 0.0 0,10.0 -1.0 0,10.0 0.0 0))),TIN Z (((5.0 0.0 0,5.0 1.0 0,6.0 0.0 0,5.0 0.0 0))),MULTIPOLYGON Z (((100.0 0.0 0,100.0 1.0 0,101.0 1.0 0,101.0 0.0 0,100.0 0.0 0),(100.25 0.25 0,100.75 0.25 0,100.75 0.75 0,100.75 0.25 0,100.25 0.25 0))))" ],
-                [ "null_polygon", ogr.wkbPolygon, None],
-                [ "empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
-                [ "empty_multipoint", ogr.wkbMultiPoint, "MULTIPOINT EMPTY", None],
+ogrtest.openfilegdb_datalist = [["none", ogr.wkbNone, None],
+                ["point", ogr.wkbPoint, "POINT (1 2)"],
+                ["multipoint", ogr.wkbMultiPoint, "MULTIPOINT (1 2,3 4)"],
+                ["linestring", ogr.wkbLineString, "LINESTRING (1 2,3 4)", "MULTILINESTRING ((1 2,3 4))"],
+                ["multilinestring", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4))"],
+                ["multilinestring_multipart", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4),(5 6,7 8))"],
+                ["polygon", ogr.wkbPolygon, "POLYGON ((0 0,0 1,1 1,1 0,0 0))", "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))"],
+                ["multipolygon", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.75 0.25,0.75 0.75,0.25 0.75,0.25 0.25)),((2 0,2 1,3 1,3 0,2 0)))"],
+                ["point25D", ogr.wkbPoint25D, "POINT (1 2 3)"],
+                ["multipoint25D", ogr.wkbMultiPoint25D, "MULTIPOINT (1 2 -10,3 4 -20)"],
+                ["linestring25D", ogr.wkbLineString25D, "LINESTRING (1 2 -10,3 4 -20)", "MULTILINESTRING ((1 2 -10,3 4 -20))"],
+                ["multilinestring25D", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20))"],
+                ["multilinestring25D_multipart", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20),(5 6 -30,7 8 -40))"],
+                ["polygon25D", ogr.wkbPolygon25D, "POLYGON ((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10))", "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))"],
+                ["multipolygon25D", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))"],
+                ["multipatch", ogr.wkbGeometryCollection25D, "GEOMETRYCOLLECTION Z (TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0))),TIN Z (((10.0 0.0 0,10.0 1.0 0,11.0 0.0 0,10.0 0.0 0)),((10.0 0.0 0,11.0 0.0 0,10.0 -1.0 0,10.0 0.0 0))),TIN Z (((5.0 0.0 0,5.0 1.0 0,6.0 0.0 0,5.0 0.0 0))),MULTIPOLYGON Z (((100.0 0.0 0,100.0 1.0 0,101.0 1.0 0,101.0 0.0 0,100.0 0.0 0),(100.25 0.25 0,100.75 0.25 0,100.75 0.75 0,100.75 0.25 0,100.25 0.25 0))))"],
+                ["null_polygon", ogr.wkbPolygon, None],
+                ["empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
+                ["empty_multipoint", ogr.wkbMultiPoint, "MULTIPOINT EMPTY", None],
             ]
 
 
-ogrtest.openfilegdb_datalist_m = [ [ "pointm", ogr.wkbPointM, "POINT M (1 2 3)" ],
-                 [ "pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)" ],
-                 [ "multipointm", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3),(4 5 6))" ],
-                 [ "multipointzm", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4),(5 6 7 8))" ],
-                 [ "linestringm", ogr.wkbLineStringM, "LINESTRING M (1 2 3,4 5 6)", "MULTILINESTRING M ((1 2 3,4 5 6))" ],
-                 [ "linestringzm", ogr.wkbLineStringZM, "LINESTRING ZM (1 2 3 4,5 6 7 8)", "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))" ],
-                 [ "multilinestringm", ogr.wkbMultiLineStringM, "MULTILINESTRING M ((1 2 3,4 5 6))" ],
-                 [ "multilinestringzm", ogr.wkbMultiLineStringZM, "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))" ],
-                 [ "polygonm", ogr.wkbPolygonM, "POLYGON M ((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1))", "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))" ],
-                 [ "polygonzm", ogr.wkbPolygonZM, "POLYGON ZM ((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1))", "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))" ],
-                 [ "multipolygonm", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))" ],
-                 [ "multipolygonzm", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))" ],
-                 [ "empty_polygonm", ogr.wkbPolygonM, 'POLYGON M EMPTY', None],
+ogrtest.openfilegdb_datalist_m = [["pointm", ogr.wkbPointM, "POINT M (1 2 3)"],
+                 ["pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)"],
+                 ["multipointm", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3),(4 5 6))"],
+                 ["multipointzm", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4),(5 6 7 8))"],
+                 ["linestringm", ogr.wkbLineStringM, "LINESTRING M (1 2 3,4 5 6)", "MULTILINESTRING M ((1 2 3,4 5 6))"],
+                 ["linestringzm", ogr.wkbLineStringZM, "LINESTRING ZM (1 2 3 4,5 6 7 8)", "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))"],
+                 ["multilinestringm", ogr.wkbMultiLineStringM, "MULTILINESTRING M ((1 2 3,4 5 6))"],
+                 ["multilinestringzm", ogr.wkbMultiLineStringZM, "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))"],
+                 ["polygonm", ogr.wkbPolygonM, "POLYGON M ((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1))", "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))"],
+                 ["polygonzm", ogr.wkbPolygonZM, "POLYGON ZM ((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1))", "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))"],
+                 ["multipolygonm", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))"],
+                 ["multipolygonzm", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))"],
+                 ["empty_polygonm", ogr.wkbPolygonM, 'POLYGON M EMPTY', None],
                ]
 
 
@@ -109,11 +109,11 @@ def ogr_openfilegdb_make_test_data():
 
     for data in ogrtest.openfilegdb_datalist:
         if data[1] == ogr.wkbNone:
-            lyr = ds.CreateLayer(data[0], geom_type=data[1], options = options )
+            lyr = ds.CreateLayer(data[0], geom_type=data[1], options = options)
         elif data[0] == 'multipatch':
-            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = [ 'CREATE_MULTIPATCH=YES', options[0] ] )
+            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = ['CREATE_MULTIPATCH=YES', options[0]])
         else:
-            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = options )
+            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = options)
         lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
         lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
         lyr.CreateField(ogr.FieldDefn("smallint", ogr.OFTInteger))
@@ -151,7 +151,7 @@ def ogr_openfilegdb_make_test_data():
             lyr.CreateFeature(feat)
 
     if False:
-        lyr = ds.CreateLayer('sparse_layer', geom_type = ogr.wkbPoint )
+        lyr = ds.CreateLayer('sparse_layer', geom_type = ogr.wkbPoint)
         for i in range(4096):
             feat = ogr.Feature(lyr.GetLayerDefn())
             lyr.CreateFeature(feat)
@@ -160,7 +160,7 @@ def ogr_openfilegdb_make_test_data():
         lyr.CreateFeature(feat)
 
     if True:
-        lyr = ds.CreateLayer('big_layer', geom_type = ogr.wkbNone )
+        lyr = ds.CreateLayer('big_layer', geom_type = ogr.wkbNone)
         lyr.CreateField(ogr.FieldDefn("real", ogr.OFTReal))
         gdal.SetConfigOption('FGDB_BULK_LOAD', 'YES')
         #for i in range(340*341+1):
@@ -246,13 +246,13 @@ def ogr_openfilegdb_make_test_data():
         f = None
 
     for data in ogrtest.openfilegdb_datalist_m:
-        lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = [] )
+        lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = [])
 
         feat = ogr.Feature(lyr.GetLayerDefn())
         feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
         lyr.CreateFeature(feat)
 
-    for fld_name in [ 'id', 'str', 'smallint', 'int', 'float', 'real', 'adate', 'guid', 'nullint' ]:
+    for fld_name in ['id', 'str', 'smallint', 'int', 'float', 'real', 'adate', 'guid', 'nullint']:
         ds.ExecuteSQL('CREATE INDEX idx_%s ON point(%s)' % (fld_name, fld_name))
     ds.ExecuteSQL('CREATE INDEX idx_id ON none(id)')
     ds.ExecuteSQL('CREATE INDEX idx_real ON big_layer(real)')
@@ -500,7 +500,7 @@ def ogr_openfilegdb_4():
     ds = ogr.Open('/vsizip/data/testopenfilegdb.gdb.zip/testopenfilegdb.gdb')
 
     lyr = ds.GetLayerByName('point')
-    tests = [ ('id = 1', [1]),
+    tests = [('id = 1', [1]),
               ('1 = id', [1]),
               ('id = 5', [5]),
               ('id = 0', []),
@@ -638,7 +638,7 @@ def ogr_openfilegdb_4():
             return 'fail'
 
     lyr = ds.GetLayerByName('none')
-    tests = [ ('id = 1', [1]),
+    tests = [('id = 1', [1]),
               ('id IS NULL', [6]),
               ('id IS NOT NULL', [1,2,3,4,5]),
               ('id IS NULL OR id IS NOT NULL', [1,2,3,4,5,6]),
@@ -680,7 +680,7 @@ def ogr_openfilegdb_4():
             return 'fail'
 
     lyr = ds.GetLayerByName('big_layer')
-    tests = [ ('real = 0', 86, 1),
+    tests = [('real = 0', 86, 1),
               ('real = 1', 85, 2),
               ('real = 2', 85, 3),
               ('real = 3', 85, 4),
@@ -725,7 +725,7 @@ def ogr_openfilegdb_5():
     except:
         pass
     try:
-        gdaltest.unzip( 'tmp/', 'data/testopenfilegdb.gdb.zip')
+        gdaltest.unzip('tmp/', 'data/testopenfilegdb.gdb.zip')
     except:
         return 'skip'
     try:
@@ -797,26 +797,26 @@ def ogr_openfilegdb_7():
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
 
     tests = [ # Optimized:
-              ( "select * from point order by id", 5, 1, 1),
-              ( "select id, str from point order by id desc", 5, 5, 1),
-              ( "select * from point where id = 1 order by id", 1, 1, 1),
-              ( "select * from big_layer order by real", 86 + 3 * 85, 1, 1),
-              ( "select * from big_layer order by real desc", 86 + 3 * 85, 4 * 85, 1),
+              ("select * from point order by id", 5, 1, 1),
+              ("select id, str from point order by id desc", 5, 5, 1),
+              ("select * from point where id = 1 order by id", 1, 1, 1),
+              ("select * from big_layer order by real", 86 + 3 * 85, 1, 1),
+              ("select * from big_layer order by real desc", 86 + 3 * 85, 4 * 85, 1),
               # Invalid :
-              ( "select foo from", None, None, None),
-              ( "select foo from bar", None, None, None),
-              ( "select * from point order by foo", None, None, None),
+              ("select foo from", None, None, None),
+              ("select foo from bar", None, None, None),
+              ("select * from point order by foo", None, None, None),
               # Non-optimized :
-              ( "select * from point order by xml", None, None, 0),
-              ( "select fid from point order by id", None, None, 0),
-              ( "select cast(id as float) from point order by id", None, None, 0),
-              ( "select distinct id from point order by id", None, None, 0),
-              ( "select 1 from point order by id", None, None, 0),
-              ( "select count(*) from point order by id", None, None, 0),
-              ( "select * from point order by nullint", None, None, 0),
-              ( "select * from point where id = 1 or id = 2 order by id", None, None, 0),
-              ( "select * from point where id = 1 order by id, float", None, None, 0),
-              ( "select * from point where float > 0 order by id", None, None, 0),
+              ("select * from point order by xml", None, None, 0),
+              ("select fid from point order by id", None, None, 0),
+              ("select cast(id as float) from point order by id", None, None, 0),
+              ("select distinct id from point order by id", None, None, 0),
+              ("select 1 from point order by id", None, None, 0),
+              ("select count(*) from point order by id", None, None, 0),
+              ("select * from point order by nullint", None, None, 0),
+              ("select * from point where id = 1 or id = 2 order by id", None, None, 0),
+              ("select * from point where id = 1 order by id, float", None, None, 0),
+              ("select * from point where float > 0 order by id", None, None, 0),
             ]
 
     for (sql, feat_count, first_fid, expected_optimized) in tests:
@@ -900,7 +900,7 @@ def ogr_openfilegdb_8():
     lyr = ds.GetLayerByName('hole')
     # Not exactly in the order that one might expect, but logical when
     # looking at the structure of the .gdbtable
-    expected_str = [ 'fid13', 'fid2', 'fid3', 'fid4', 'fid5', 'fid6', 'fid7', 'fid8', 'fid9', 'fid10', 'fid11', None ]
+    expected_str = ['fid13', 'fid2', 'fid3', 'fid4', 'fid5', 'fid6', 'fid7', 'fid8', 'fid9', 'fid10', 'fid11', None]
     i = 0
     feat = lyr.GetNextFeature()
     while feat is not None:
@@ -1052,7 +1052,7 @@ def ogr_openfilegdb_10():
 
     else:
 
-        for (filename, offsets) in [ ('tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtable', [4, 5, 6, 7, 32, 33, 41, 42, 52, 59, 60, 63, 64, 72, 73, 77, 78, 79, 80, 81, 101, 102, 104, 105, 111, 180]),
+        for (filename, offsets) in [('tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtable', [4, 5, 6, 7, 32, 33, 41, 42, 52, 59, 60, 63, 64, 72, 73, 77, 78, 79, 80, 81, 101, 102, 104, 105, 111, 180]),
                           ('tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtablx', [4, 7, 11, 12, 16, 31, 5136, 5140, 5142, 5144])]:
             for offset in offsets:
                 backup = fuzz(filename, offset)
@@ -1077,8 +1077,8 @@ def ogr_openfilegdb_10():
                 gdal.PopErrorHandler()
                 unfuzz(backup)
 
-        for (filename, offsets) in [ ('tmp/testopenfilegdb_fuzzed.gdb/a00000004.gdbindexes', [0, 4, 5, 44, 45, 66, 67, 100, 101, 116, 117, 148, 149, 162, 163, 206, 207, 220, 221, 224, 280, 281]),
-                          ('tmp/testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx', [4, 12, 8196, 8300, 8460, 8620, 8780, 8940, 9100, 12290, 12294, 12298]) ]:
+        for (filename, offsets) in [('tmp/testopenfilegdb_fuzzed.gdb/a00000004.gdbindexes', [0, 4, 5, 44, 45, 66, 67, 100, 101, 116, 117, 148, 149, 162, 163, 206, 207, 220, 221, 224, 280, 281]),
+                          ('tmp/testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx', [4, 12, 8196, 8300, 8460, 8620, 8780, 8940, 9100, 12290, 12294, 12298])]:
             for offset in offsets:
                 #print(offset)
                 backup = fuzz(filename, offset)
@@ -1641,8 +1641,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_openfilegdb' )
+    gdaltest.setup_run('ogr_openfilegdb')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -599,10 +599,10 @@ class MajorObject(_object):
         """SetMetadataItem(MajorObject self, char const * pszName, char const * pszValue, char const * pszDomain) -> CPLErr"""
         return _ogr.MajorObject_SetMetadataItem(self, *args)
 
-    def GetMetadata( self, domain = '' ):
+    def GetMetadata(self, domain = ''):
       if domain[:4] == 'xml:':
-        return self.GetMetadata_List( domain )
-      return self.GetMetadata_Dict( domain )
+        return self.GetMetadata_List(domain)
+      return self.GetMetadata_Dict(domain)
 
 
 MajorObject_swigregister = _ogr.MajorObject_swigregister
@@ -1128,12 +1128,12 @@ class DataSource(MajorObject):
 
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_DataSource( self )
+      _ogr.delete_DataSource(self)
       self.thisown = 0
 
     def Release(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_DataSource( self )
+      _ogr.delete_DataSource(self)
       self.thisown = 0
 
     def Reference(self):
@@ -4512,7 +4512,7 @@ class Feature(_object):
 
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_Feature( self )
+      _ogr.delete_Feature(self)
       self.thisown = 0
 
     def __cmp__(self, other):
@@ -4582,9 +4582,9 @@ class Feature(_object):
             if fld_index < 0:
                 raise ValueError("Illegal field requested in SetField()")
             else:
-                return self.SetGeomField( fld_index, value )
+                return self.SetGeomField(fld_index, value)
         else:
-            return self.SetField2( fld_index, value )
+            return self.SetField2(fld_index, value)
 
     def GetField(self, fld_index):
         if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
@@ -4657,12 +4657,12 @@ class Feature(_object):
             raise ValueError("Illegal field requested in SetField2()")
 
         if value is None:
-            self.SetFieldNull( fld_index )
+            self.SetFieldNull(fld_index)
             return
 
         if isinstance(value,list):
             if len(value) == 0:
-                self.SetFieldNull( fld_index )
+                self.SetFieldNull(fld_index)
                 return
             if isinstance(value[0],type(1)) or isinstance(value[0],type(12345678901234)):
                 self.SetFieldInteger64List(fld_index,value)
@@ -4674,12 +4674,12 @@ class Feature(_object):
                 self.SetFieldStringList(fld_index,value)
                 return
             else:
-                raise TypeError( 'Unsupported type of list in SetField2(). Type of element is %s' % str(type(value[0])) )
+                raise TypeError('Unsupported type of list in SetField2(). Type of element is %s' % str(type(value[0])))
 
         try:
-            self.SetField( fld_index, value )
+            self.SetField(fld_index, value)
         except:
-            self.SetField( fld_index, str(value) )
+            self.SetField(fld_index, str(value))
         return
 
     def keys(self):
@@ -5235,7 +5235,7 @@ class FeatureDefn(_object):
 
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_FeatureDefn( self )
+      _ogr.delete_FeatureDefn(self)
       self.thisown = 0
 
 
@@ -5736,7 +5736,7 @@ class FieldDefn(_object):
 
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_FieldDefn( self )
+      _ogr.delete_FieldDefn(self)
       self.thisown = 0
 
 

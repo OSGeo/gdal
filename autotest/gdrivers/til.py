@@ -31,7 +31,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -42,7 +42,7 @@ from osgeo import gdal
 
 def til_1():
 
-    tst = gdaltest.GDALTest( 'TIL', 'testtil.til', 1, 4672 )
+    tst = gdaltest.GDALTest('TIL', 'testtil.til', 1, 4672)
     return tst.testOpen()
 
 ###############################################################################
@@ -56,11 +56,11 @@ def til_2():
     except:
         pass
 
-    ds = gdal.Open( 'data/testtil.til' )
+    ds = gdal.Open('data/testtil.til')
     filelist = ds.GetFileList()
 
     if len(filelist) != 3:
-        gdaltest.post_reason( 'did not get expected file list.' )
+        gdaltest.post_reason('did not get expected file list.')
         return 'fail'
 
     md = ds.GetMetadata('IMAGERY')
@@ -96,11 +96,11 @@ def til_3():
     except:
         pass
 
-    ds = gdal.Open( 'data/testtil2.til' )
+    ds = gdal.Open('data/testtil2.til')
     filelist = ds.GetFileList()
 
     if len(filelist) != 3:
-        gdaltest.post_reason( 'did not get expected file list.' )
+        gdaltest.post_reason('did not get expected file list.')
         return 'fail'
 
     md = ds.GetMetadata('IMAGERY')
@@ -129,12 +129,12 @@ def til_3():
 gdaltest_list = [
     til_1,
     til_2,
-    til_3 ]
+    til_3]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'til' )
+    gdaltest.setup_run('til')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

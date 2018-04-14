@@ -33,8 +33,8 @@
 import sys
 import os
 
-sys.path.append( '../pymod' )
-sys.path.append( '../gcore' )
+sys.path.append('../pymod')
+sys.path.append('../gcore')
 
 from osgeo import gdal
 import gdaltest
@@ -60,10 +60,10 @@ def test_gdal_rasterize_1():
 
     # Create a raster to rasterize into.
 
-    target_ds = gdal.GetDriverByName('GTiff').Create( 'tmp/rast1.tif', 100, 100, 3,
-                                                    gdal.GDT_Byte )
-    target_ds.SetGeoTransform( (1000,1,0,1100,0,-1) )
-    target_ds.SetProjection( sr_wkt )
+    target_ds = gdal.GetDriverByName('GTiff').Create('tmp/rast1.tif', 100, 100, 3,
+                                                    gdal.GDT_Byte)
+    target_ds.SetGeoTransform((1000,1,0,1100,0,-1))
+    target_ds.SetProjection(sr_wkt)
 
     # Close TIF file
     target_ds = None
@@ -71,8 +71,8 @@ def test_gdal_rasterize_1():
     # Create a layer to rasterize from.
 
     rast_ogr_ds = \
-              ogr.GetDriverByName('MapInfo File').CreateDataSource( 'tmp/rast1.tab' )
-    rast_lyr = rast_ogr_ds.CreateLayer( 'rast1', srs=sr )
+              ogr.GetDriverByName('MapInfo File').CreateDataSource('tmp/rast1.tab')
+    rast_lyr = rast_ogr_ds.CreateLayer('rast1', srs=sr)
 
     rast_lyr.GetLayerDefn()
     field_defn = ogr.FieldDefn('foo')
@@ -82,23 +82,23 @@ def test_gdal_rasterize_1():
 
     wkt_geom = 'POLYGON((1020 1030,1020 1045,1050 1045,1050 1030,1020 1030))'
 
-    feat = ogr.Feature( rast_lyr.GetLayerDefn() )
-    feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
+    feat = ogr.Feature(rast_lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
 
-    rast_lyr.CreateFeature( feat )
+    rast_lyr.CreateFeature(feat)
 
     # Add feature without geometry to test fix for #3310
-    feat = ogr.Feature( rast_lyr.GetLayerDefn() )
-    rast_lyr.CreateFeature( feat )
+    feat = ogr.Feature(rast_lyr.GetLayerDefn())
+    rast_lyr.CreateFeature(feat)
 
     # Add a linestring.
 
     wkt_geom = 'LINESTRING(1000 1000, 1100 1050)'
 
-    feat = ogr.Feature( rast_lyr.GetLayerDefn() )
-    feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
+    feat = ogr.Feature(rast_lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
 
-    rast_lyr.CreateFeature( feat )
+    rast_lyr.CreateFeature(feat)
 
     # Close file
     rast_ogr_ds.Destroy()
@@ -117,7 +117,7 @@ def test_gdal_rasterize_1():
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)
-        gdaltest.post_reason( 'Did not get expected image checksum' )
+        gdaltest.post_reason('Did not get expected image checksum')
 
         return 'fail'
 
@@ -136,9 +136,9 @@ def test_gdal_rasterize_2():
 
     # Create a raster to rasterize into.
 
-    target_ds = gdal.GetDriverByName('GTiff').Create( 'tmp/rast2.tif', 12, 12, 3,
-                                                    gdal.GDT_Byte )
-    target_ds.SetGeoTransform( (0,1,0,12,0,-1) )
+    target_ds = gdal.GetDriverByName('GTiff').Create('tmp/rast2.tif', 12, 12, 3,
+                                                    gdal.GDT_Byte)
+    target_ds.SetGeoTransform((0,1,0,12,0,-1))
 
     # Close TIF file
     target_ds = None
@@ -153,7 +153,7 @@ def test_gdal_rasterize_2():
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)
-        gdaltest.post_reason( 'Did not get expected image checksum' )
+        gdaltest.post_reason('Did not get expected image checksum')
 
         return 'fail'
 
@@ -217,7 +217,7 @@ def test_gdal_rasterize_4():
     if test_cli_utilities.get_gdal_rasterize_path() is None:
         return 'skip'
 
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/n43dt0.tif' )
+    gdal.GetDriverByName('GTiff').Delete('tmp/n43dt0.tif')
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_rasterize_path() + ' -3d tmp/n43dt0.shp tmp/n43dt0.tif -l n43dt0 -tr 0.008333333333333  0.008333333333333 -a_nodata 0 -a_srs EPSG:4326')
 
@@ -442,28 +442,28 @@ def test_gdal_rasterize_cleanup():
     if test_cli_utilities.get_gdal_rasterize_path() is None:
         return 'skip'
 
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/rast1.tif' )
-    ogr.GetDriverByName('MapInfo File').DeleteDataSource( 'tmp/rast1.tab' )
+    gdal.GetDriverByName('GTiff').Delete('tmp/rast1.tif')
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/rast1.tab')
 
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/rast2.tif' )
+    gdal.GetDriverByName('GTiff').Delete('tmp/rast2.tif')
 
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource( 'tmp/n43dt0.shp' )
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/n43dt0.tif' )
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/n43dt0.shp')
+    gdal.GetDriverByName('GTiff').Delete('tmp/n43dt0.tif')
 
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/test_gdal_rasterize_5.tif' )
+    gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_rasterize_5.tif')
     os.unlink('tmp/test_gdal_rasterize_5.csv')
     os.unlink('tmp/test_gdal_rasterize_5.vrt')
 
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/test_gdal_rasterize_6.tif' )
+    gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_rasterize_6.tif')
     os.unlink('tmp/test_gdal_rasterize_6.csv')
     os.unlink('tmp/test_gdal_rasterize_6.prj')
 
     if os.path.exists('tmp/test_gdal_rasterize_7.tif'):
-        gdal.GetDriverByName('GTiff').Delete( 'tmp/test_gdal_rasterize_7.tif' )
+        gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_rasterize_7.tif')
     if os.path.exists('tmp/test_gdal_rasterize_7.csv'):
         os.unlink('tmp/test_gdal_rasterize_7.csv')
 
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/test_gdal_rasterize_8.tif' )
+    gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_rasterize_8.tif')
     os.unlink('tmp/test_gdal_rasterize_8.csv')
 
     return 'success'
@@ -483,8 +483,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdal_rasterize' )
+    gdaltest.setup_run('test_gdal_rasterize')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -252,9 +252,9 @@ def Usage():
 if __name__ == '__main__':
 
   # Default GDAL argument parsing.
-  argv = gdal.GeneralCmdLineProcessor( sys.argv )
+  argv = gdal.GeneralCmdLineProcessor(sys.argv)
   if argv is None:
-    sys.exit( 0 )
+    sys.exit(0)
 
   if len(argv) == 1:
     Usage()

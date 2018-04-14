@@ -35,7 +35,7 @@ import sys
 import threading
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -87,12 +87,12 @@ def vrtderived_1():
     xmlstring = open(filename).read()
     gdal.Unlink(filename)
 
-    node = gdal.ParseXMLString( xmlstring )
+    node = gdal.ParseXMLString(xmlstring)
     node = _xmlsearch(node, gdal.CXT_Element, 'VRTRasterBand')
     node = _xmlsearch(node, gdal.CXT_Attribute, 'subClass')
     node = _xmlsearch(node, gdal.CXT_Text, 'VRTDerivedRasterBand')
     if node is None:
-        gdaltest.post_reason( 'invalid subclass' )
+        gdaltest.post_reason('invalid subclass')
         return 'fail'
 
     return 'success'
@@ -135,12 +135,12 @@ def vrtderived_2():
     xmlstring = open(filename).read()
     gdal.Unlink(filename)
 
-    node = gdal.ParseXMLString( xmlstring )
+    node = gdal.ParseXMLString(xmlstring)
     node = _xmlsearch(node, gdal.CXT_Element, 'VRTRasterBand')
     node = _xmlsearch(node, gdal.CXT_Element, 'PixelFunctionType')
     node = _xmlsearch(node, gdal.CXT_Text, 'dummy')
     if node is None:
-        gdaltest.post_reason( 'incorrect PixelFunctionType value' )
+        gdaltest.post_reason('incorrect PixelFunctionType value')
         return 'fail'
 
     return 'success'
@@ -174,12 +174,12 @@ def vrtderived_3():
     xmlstring = open(filename).read()
     gdal.Unlink(filename)
 
-    node = gdal.ParseXMLString( xmlstring )
+    node = gdal.ParseXMLString(xmlstring)
     node = _xmlsearch(node, gdal.CXT_Element, 'VRTRasterBand')
     node = _xmlsearch(node, gdal.CXT_Element, 'SourceTransferType')
     node = _xmlsearch(node, gdal.CXT_Text, 'Byte')
     if node is None:
-        gdaltest.post_reason( 'incorrect SourceTransferType value' )
+        gdaltest.post_reason('incorrect SourceTransferType value')
         return 'fail'
 
     return 'success'
@@ -201,7 +201,7 @@ def vrtderived_4():
     ret = vrt_ds.AddBand(gdal.GDT_Byte, options)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason( 'invalid SourceTransferType value not detected' )
+        gdaltest.post_reason('invalid SourceTransferType value not detected')
         return 'fail'
 
     return 'success'
@@ -223,7 +223,7 @@ def vrtderived_5():
     cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     if cs != 50577:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         return 'fail'
 
@@ -246,7 +246,7 @@ def vrtderived_6():
     cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     if cs != 10000:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         return 'fail'
 
@@ -269,7 +269,7 @@ def vrtderived_7():
     if ret.find('Checksum=0') >= 0:
         print('Did not manage to find a Python library')
     elif ret.find('Checksum=50577') < 0:
-        gdaltest.post_reason( 'fail' )
+        gdaltest.post_reason('fail')
         print(ret)
         print(err)
         return 'fail'
@@ -281,7 +281,7 @@ def vrtderived_7():
     if ret.find('Checksum=0') >= 0:
         print('Did not manage to find a Python library')
     elif ret.find('Checksum=50577') < 0:
-        gdaltest.post_reason( 'fail' )
+        gdaltest.post_reason('fail')
         print(ret)
         print(err)
         return 'fail'
@@ -293,7 +293,7 @@ def vrtderived_7():
     if ret.find('Checksum=0') >= 0:
         print('Did not manage to find a Python library')
     elif ret.find('Checksum=50577') < 0:
-        gdaltest.post_reason( 'fail' )
+        gdaltest.post_reason('fail')
         print(ret)
         print(err)
         return 'fail'
@@ -303,7 +303,7 @@ def vrtderived_7():
     if gdal.GetConfigOption('CPL_DEBUG') is not None:
         print(err)
     if ret.find('Checksum=0') < 0:
-        gdaltest.post_reason( 'fail' )
+        gdaltest.post_reason('fail')
         print(ret)
         print(err)
         return 'fail'
@@ -315,7 +315,7 @@ def vrtderived_7():
         if gdal.GetConfigOption('CPL_DEBUG') is not None:
             print(err)
         if ret.find('Checksum=0') < 0:
-            gdaltest.post_reason( 'fail' )
+            gdaltest.post_reason('fail')
             print(ret)
             print(err)
             return 'fail'
@@ -340,7 +340,7 @@ def vrtderived_8():
         cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     if cs != 0:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         return 'fail'
 
@@ -348,7 +348,7 @@ def vrtderived_8():
     with gdaltest.error_handler():
         cs = ds.GetRasterBand(1).Checksum()
     if cs != 0:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         return 'fail'
 
@@ -375,7 +375,7 @@ def vrtderived_9():
 </VRTDataset>
 """)
     if ds is not None:
-        gdaltest.post_reason( 'fail' )
+        gdaltest.post_reason('fail')
         return 'fail'
 
     # Unsupported PixelFunctionLanguage
@@ -388,7 +388,7 @@ def vrtderived_9():
 </VRTDataset>
 """)
     if ds is not None:
-        gdaltest.post_reason( 'fail' )
+        gdaltest.post_reason('fail')
         return 'fail'
 
     # PixelFunctionCode can only be used with Python
@@ -405,7 +405,7 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
 </VRTDataset>
 """)
     if ds is not None:
-        gdaltest.post_reason( 'fail' )
+        gdaltest.post_reason('fail')
         return 'fail'
 
     # PixelFunctionArguments can only be used with Python
@@ -418,7 +418,7 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
 </VRTDataset>
 """)
     if ds is not None:
-        gdaltest.post_reason( 'fail' )
+        gdaltest.post_reason('fail')
         return 'fail'
 
     # BufferRadius can only be used with Python
@@ -431,7 +431,7 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
 </VRTDataset>
 """)
     if ds is not None:
-        gdaltest.post_reason( 'fail' )
+        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid BufferRadius
@@ -445,7 +445,7 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
 </VRTDataset>
 """)
     if ds is not None:
-        gdaltest.post_reason( 'fail' )
+        gdaltest.post_reason('fail')
         return 'fail'
 
     # Error at Python code compilation (indentation error)
@@ -466,7 +466,7 @@ syntax_error
         cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     if cs != 0:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -490,7 +490,7 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
         cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     if cs != 0:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -513,7 +513,7 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
         cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     if cs != 0:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -536,7 +536,7 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
         cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     if cs != 0:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -559,7 +559,7 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
         cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     if cs != 0:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -581,7 +581,7 @@ uncallable_object = True
         cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     if cs != 0:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -599,7 +599,7 @@ uncallable_object = True
         cs = ds.GetRasterBand(1).Checksum()
         gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     if cs != 0:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -625,7 +625,7 @@ def my_func(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize,
     with gdaltest.error_handler():
         cs = ds.GetRasterBand(1).Checksum()
     if cs != 0:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -646,7 +646,7 @@ def my_func(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize,
     with gdaltest.error_handler():
         cs = ds.GetRasterBand(1).Checksum()
     if cs != 0:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -662,7 +662,7 @@ def my_func(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize,
     with gdaltest.error_handler():
         cs = ds.GetRasterBand(1).Checksum()
     if cs != 0:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -699,7 +699,7 @@ def vrtderived_10():
     cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     if cs != 100:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -709,40 +709,40 @@ def vrtderived_10():
     with gdaltest.error_handler():
         cs = ds.GetRasterBand(1).Checksum()
     if cs != 0:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
     # GDAL_VRT_PYTHON_TRUSTED_MODULES *NOT* matching our module
-    for val in [ 'vrtderive',
+    for val in ['vrtderive',
                  'vrtderivedX',
                  'vrtderivedX*',
                  'vrtderive.*'
-                 'vrtderivedX.*' ] :
+                 'vrtderivedX.*'] :
         ds = gdal.Open(content)
-        gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', val )
+        gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', val)
         with gdaltest.error_handler():
             cs = ds.GetRasterBand(1).Checksum()
         gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', None)
         if cs != 0:
-            gdaltest.post_reason( 'invalid checksum' )
+            gdaltest.post_reason('invalid checksum')
             print(cs)
             print(gdal.GetLastErrorMsg())
             return 'fail'
 
     # GDAL_VRT_PYTHON_TRUSTED_MODULES matching our module
-    for val in [ 'foo,vrtderived,bar',
+    for val in ['foo,vrtderived,bar',
                   '*',
                  'foo,vrtderived*,bar',
                  'foo,vrtderived.*,bar',
-                 'foo,vrtderi*,bar' ] :
+                 'foo,vrtderi*,bar'] :
         ds = gdal.Open(content)
-        gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', val )
+        gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', val)
         cs = ds.GetRasterBand(1).Checksum()
         gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', None)
         if cs != 100:
-            gdaltest.post_reason( 'invalid checksum' )
+            gdaltest.post_reason('invalid checksum')
             print(cs)
             print(gdal.GetLastErrorMsg())
             return 'fail'
@@ -776,7 +776,7 @@ def vrtderived_11():
     os.unlink('tmp/n43.dt0')
 
     if cs != 50577:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         return 'fail'
 
@@ -794,9 +794,9 @@ def vrtderived_12():
     except:
         return 'skip'
 
-    for dt in [ "Byte", "UInt16", "Int16", "UInt32", "Int32",
+    for dt in ["Byte", "UInt16", "Int16", "UInt32", "Int32",
                 "Float32", "Float64",
-                "CInt16", "CInt32", "CFloat32", "CFloat64" ]:
+                "CInt16", "CInt32", "CFloat32", "CFloat64"]:
         ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
 <VRTRasterBand dataType="%s" band="1" subClass="VRTDerivedRasterBand">
     <ColorInterp>Gray</ColorInterp>
@@ -815,14 +815,14 @@ def vrtderived_12():
         else:
             expected_cs = 100
         if cs != expected_cs:
-            gdaltest.post_reason( 'invalid checksum' )
+            gdaltest.post_reason('invalid checksum')
             print(dt)
             print(cs)
             print(gdal.GetLastErrorMsg())
             return 'fail'
 
     # Same for SourceTransferType
-    for dt in [ "CInt16", "CInt32" ]:
+    for dt in ["CInt16", "CInt32"]:
         ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
 <VRTRasterBand dataType="%s" band="1" subClass="VRTDerivedRasterBand">
     <SourceTransferType>Byte</SourceTransferType>
@@ -837,7 +837,7 @@ def vrtderived_12():
             cs = ds.GetRasterBand(1).Checksum()
         gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
         if cs != 0:
-            gdaltest.post_reason( 'invalid checksum' )
+            gdaltest.post_reason('invalid checksum')
             print(dt)
             print(cs)
             print(gdal.GetLastErrorMsg())
@@ -866,7 +866,7 @@ def vrtderived_13():
     gdal.Unlink('/vsimem/vrtderived_13.tif')
 
     if cs != 10000:
-        gdaltest.post_reason( 'invalid checksum' )
+        gdaltest.post_reason('invalid checksum')
         print(cs)
         return 'fail'
 
@@ -892,17 +892,17 @@ def vrtderived_14():
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
 
     if (my_min, my_max) != (1.0, 1.0):
-        gdaltest.post_reason( 'invalid ComputeRasterMinMax' )
+        gdaltest.post_reason('invalid ComputeRasterMinMax')
         print(my_min, my_max)
         return 'fail'
 
     if (my_min2, my_max2, mean, stddev) != (1.0, 1.0, 1.0, 0.0):
-        gdaltest.post_reason( 'invalid ComputeStatistics' )
+        gdaltest.post_reason('invalid ComputeStatistics')
         print(my_min2, my_max2, mean, stddev)
         return 'fail'
 
     if hist[1] != 10000:
-        gdaltest.post_reason( 'invalid GetHistogram' )
+        gdaltest.post_reason('invalid GetHistogram')
         print(hist)
         return 'fail'
 
@@ -947,7 +947,7 @@ def vrtderived_15():
     threads = []
     args_array = []
     for i in range(4):
-        args_dict = { 'ret': True }
+        args_dict = {'ret': True}
         t = threading.Thread(target=vrtderived_15_worker, args = (args_dict,))
         args_array.append(args_dict)
         threads.append(t)
@@ -969,7 +969,7 @@ def vrtderived_15():
 
 def vrtderived_cleanup():
     try:
-        os.remove( 'tmp/derived.vrt' )
+        os.remove('tmp/derived.vrt')
     except:
         pass
     return 'success'
@@ -996,8 +996,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vrtderived' )
+    gdaltest.setup_run('vrtderived')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

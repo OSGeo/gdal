@@ -32,7 +32,7 @@
 import sys
 import uuid
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -1227,11 +1227,11 @@ def ogr_carto_rw_1():
     fd.SetNullable(0)
     lyr.CreateField(fd)
 
-    field_defn = ogr.FieldDefn( 'field_string', ogr.OFTString )
+    field_defn = ogr.FieldDefn('field_string', ogr.OFTString)
     field_defn.SetDefault("'a''b'")
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_datetime_with_default', ogr.OFTDateTime )
+    field_defn = ogr.FieldDefn('field_datetime_with_default', ogr.OFTDateTime)
     field_defn.SetDefault("CURRENT_TIMESTAMP")
     lyr.CreateField(field_defn)
 
@@ -1286,11 +1286,11 @@ gdaltest_rw_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_carto' )
+    gdaltest.setup_run('ogr_carto')
 
     if gdal.GetConfigOption('CARTO_CONNECTION') is None:
-        gdaltest.run_tests( gdaltest_list )
+        gdaltest.run_tests(gdaltest_list)
     else:
-        gdaltest.run_tests( gdaltest_rw_list )
+        gdaltest.run_tests(gdaltest_rw_list)
 
     gdaltest.summarize()

@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,7 +40,7 @@ import gdaltest
 
 def grassasciigrid_1():
 
-    tst = gdaltest.GDALTest( 'GRASSASCIIGrid', 'grassascii.txt', 1, 212 )
+    tst = gdaltest.GDALTest('GRASSASCIIGrid', 'grassascii.txt', 1, 212)
     expected_gt = [-100.0, 62.5, 0.0, 250.0, 0.0, -41.666666666666664]
     return tst.testOpen(check_gt = expected_gt)
 
@@ -53,8 +53,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'grassasciigrid' )
+    gdaltest.setup_run('grassasciigrid')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

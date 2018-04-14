@@ -27,7 +27,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -39,37 +39,37 @@ init_list = [
     ('uint32.tif', 1, 4672, None),
     ('float32.tif', 1, 4672, None),
     ('float64.tif', 1, 4672, None),
-    ('utmsmall.tif', 1, 50054, None) ]
+    ('utmsmall.tif', 1, 50054, None)]
 
 gdaltest_list = []
 
 for item in init_list:
-    ut = gdaltest.GDALTest( 'HDF4Image', item[0], item[1], item[2],
-                            options = [ 'RANK=3' ] )
+    ut = gdaltest.GDALTest('HDF4Image', item[0], item[1], item[2],
+                            options = ['RANK=3'])
     if ut is None:
-        print( 'HDF4 tests skipped' )
-    gdaltest_list.append( (ut.testCreateCopy, item[0] + " rank=3") )
-    gdaltest_list.append( (ut.testCreate, item[0] + " rank=3") )
-    gdaltest_list.append( (ut.testSetGeoTransform, item[0] + " rank=3") )
-    gdaltest_list.append( (ut.testSetProjection, item[0] + " rank=3") )
-    gdaltest_list.append( (ut.testSetMetadata, item[0] + " rank=3") )
-    gdaltest_list.append( (ut.testSetNoDataValue, item[0] + " rank=3") )
-    gdaltest_list.append( (ut.testSetDescription, item[0] + " rank=3") )
-    ut = gdaltest.GDALTest( 'HDF4Image', item[0], item[1], item[2],
-                            options = [ 'RANK=2' ] )
+        print('HDF4 tests skipped')
+    gdaltest_list.append((ut.testCreateCopy, item[0] + " rank=3"))
+    gdaltest_list.append((ut.testCreate, item[0] + " rank=3"))
+    gdaltest_list.append((ut.testSetGeoTransform, item[0] + " rank=3"))
+    gdaltest_list.append((ut.testSetProjection, item[0] + " rank=3"))
+    gdaltest_list.append((ut.testSetMetadata, item[0] + " rank=3"))
+    gdaltest_list.append((ut.testSetNoDataValue, item[0] + " rank=3"))
+    gdaltest_list.append((ut.testSetDescription, item[0] + " rank=3"))
+    ut = gdaltest.GDALTest('HDF4Image', item[0], item[1], item[2],
+                            options = ['RANK=2'])
     if ut is None:
-        print( 'HDF4 tests skipped' )
-    gdaltest_list.append( (ut.testCreateCopy, item[0] + " rank=2") )
-    gdaltest_list.append( (ut.testSetGeoTransform, item[0] + " rank=2") )
-    gdaltest_list.append( (ut.testSetProjection, item[0] + " rank=2") )
-    gdaltest_list.append( (ut.testSetMetadata, item[0] + " rank=2") )
-    gdaltest_list.append( (ut.testSetNoDataValue, item[0] + " rank=2") )
-    gdaltest_list.append( (ut.testSetDescription, item[0] + " rank=2") )
+        print('HDF4 tests skipped')
+    gdaltest_list.append((ut.testCreateCopy, item[0] + " rank=2"))
+    gdaltest_list.append((ut.testSetGeoTransform, item[0] + " rank=2"))
+    gdaltest_list.append((ut.testSetProjection, item[0] + " rank=2"))
+    gdaltest_list.append((ut.testSetMetadata, item[0] + " rank=2"))
+    gdaltest_list.append((ut.testSetNoDataValue, item[0] + " rank=2"))
+    gdaltest_list.append((ut.testSetDescription, item[0] + " rank=2"))
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'hdf_write' )
+    gdaltest.setup_run('hdf_write')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

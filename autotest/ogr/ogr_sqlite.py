@@ -39,7 +39,7 @@ if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
     if os.path.dirname(sys.argv[0]) != '':
         os.chdir(os.path.dirname(sys.argv[0]))
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 from osgeo import ogr
@@ -59,14 +59,14 @@ def ogr_sqlite_1():
     gdaltest.has_spatialite = False
 
     try:
-        sqlite_dr = ogr.GetDriverByName( 'SQLite' )
+        sqlite_dr = ogr.GetDriverByName('SQLite')
         if sqlite_dr is None:
             return 'skip'
     except:
         return 'skip'
 
     try:
-        os.remove( 'tmp/sqlite_test.db' )
+        os.remove('tmp/sqlite_test.db')
     except:
         pass
 
@@ -75,7 +75,7 @@ def ogr_sqlite_1():
     # w.r.t system/OS crashes, unless you know what you are doing.
     gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
 
-    gdaltest.sl_ds = sqlite_dr.CreateDataSource( 'tmp/sqlite_test.db' )
+    gdaltest.sl_ds = sqlite_dr.CreateDataSource('tmp/sqlite_test.db')
 
     if gdaltest.sl_ds is not None:
         return 'success'
@@ -91,48 +91,48 @@ def ogr_sqlite_2():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:tpoly' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    gdaltest.sl_ds.ExecuteSQL('DELLAYER:tpoly')
     gdal.PopErrorHandler()
 
     # Test invalid FORMAT
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    lyr = gdaltest.sl_ds.CreateLayer( 'will_fail', options = ['FORMAT=FOO'] )
+    lyr = gdaltest.sl_ds.CreateLayer('will_fail', options = ['FORMAT=FOO'])
     gdal.PopErrorHandler()
     if lyr is not None:
         gdaltest.post_reason('layer creation should have failed')
         return 'fail'
 
     # Test creating a layer with an existing name
-    lyr = gdaltest.sl_ds.CreateLayer( 'a_layer')
+    lyr = gdaltest.sl_ds.CreateLayer('a_layer')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    lyr = gdaltest.sl_ds.CreateLayer( 'a_layer' )
+    lyr = gdaltest.sl_ds.CreateLayer('a_layer')
     gdal.PopErrorHandler()
     if lyr is not None:
         gdaltest.post_reason('layer creation should have failed')
         return 'fail'
 
     # Test OVERWRITE=YES
-    lyr = gdaltest.sl_ds.CreateLayer( 'a_layer', options = ['FID=my_fid','GEOMETRY_NAME=mygeom', 'OVERWRITE=YES'] )
+    lyr = gdaltest.sl_ds.CreateLayer('a_layer', options = ['FID=my_fid','GEOMETRY_NAME=mygeom', 'OVERWRITE=YES'])
     if lyr is None:
         gdaltest.post_reason('layer creation should have succeeded')
         return 'fail'
 
     ######################################################
     # Create Layer
-    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'tpoly' )
+    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer('tpoly')
 
     ######################################################
     # Setup Schema
 
-    fields = [ ('AREA', ogr.OFTReal),
+    fields = [('AREA', ogr.OFTReal),
                ('EAS_ID', ogr.OFTInteger),
                ('PRFEDEA', ogr.OFTString),
                ('BINCONTENT', ogr.OFTBinary),
-               ('INT64', ogr.OFTInteger64) ]
+               ('INT64', ogr.OFTInteger64)]
 
-    ogrtest.quick_create_layer_def( gdaltest.sl_lyr,
-                                    fields )
+    ogrtest.quick_create_layer_def(gdaltest.sl_lyr,
+                                    fields)
     fld_defn = ogr.FieldDefn('fld_boolean', ogr.OFTInteger)
     fld_defn.SetSubType(ogr.OFSTBoolean)
     gdaltest.sl_lyr.CreateField(fld_defn)
@@ -142,8 +142,8 @@ def ogr_sqlite_2():
     # even if no record are written
 
     gdaltest.sl_ds = None
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
-    gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName( 'tpoly')
+    gdaltest.sl_ds = ogr.Open('tmp/sqlite_test.db', update = 1)
+    gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('tpoly')
     if gdaltest.sl_lyr.GetGeometryColumn() != 'GEOMETRY':
         gdaltest.post_reason('failure')
         return 'fail'
@@ -174,9 +174,9 @@ def ogr_sqlite_2():
     ######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature( feature_def )
+    dst_feat = ogr.Feature(feature_def)
 
-    shp_ds = ogr.Open( 'data/poly.shp' )
+    shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
 
@@ -187,11 +187,11 @@ def ogr_sqlite_2():
 
     while feat is not None:
 
-        gdaltest.poly_feat.append( feat )
+        gdaltest.poly_feat.append(feat)
 
-        dst_feat.SetFrom( feat )
+        dst_feat.SetFrom(feat)
         dst_feat.SetField('int64', 1234567890123)
-        gdaltest.sl_lyr.CreateFeature( dst_feat )
+        gdaltest.sl_lyr.CreateFeature(dst_feat)
 
         feat = shp_lyr.GetNextFeature()
 
@@ -208,36 +208,36 @@ def ogr_sqlite_3():
         return 'skip'
 
     if gdaltest.sl_lyr.GetFeatureCount() != 10:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 10' % gdaltest.sl_lyr.GetFeatureCount() )
+        gdaltest.post_reason('GetFeatureCount() returned %d instead of 10' % gdaltest.sl_lyr.GetFeatureCount())
         return 'fail'
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.sl_lyr.SetAttributeFilter( 'eas_id < 170' )
-    tr = ogrtest.check_features_against_list( gdaltest.sl_lyr,
-                                              'eas_id', expect )
+    gdaltest.sl_lyr.SetAttributeFilter('eas_id < 170')
+    tr = ogrtest.check_features_against_list(gdaltest.sl_lyr,
+                                              'eas_id', expect)
 
     if gdaltest.sl_lyr.GetFeatureCount() != 5:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 5' % gdaltest.sl_lyr.GetFeatureCount() )
+        gdaltest.post_reason('GetFeatureCount() returned %d instead of 5' % gdaltest.sl_lyr.GetFeatureCount())
         return 'fail'
 
-    gdaltest.sl_lyr.SetAttributeFilter( None )
+    gdaltest.sl_lyr.SetAttributeFilter(None)
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.sl_lyr.GetNextFeature()
 
         if read_feat is None:
-            gdaltest.post_reason( 'Did not get as many features as expected.')
+            gdaltest.post_reason('Did not get as many features as expected.')
             return 'fail'
 
         if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
-                                          max_error = 0.001 ) != 0:
+                                          max_error = 0.001) != 0:
             return 'fail'
 
         for fld in range(3):
             if orig_feat.GetField(fld) != read_feat.GetField(fld):
-                gdaltest.post_reason( 'Attribute %d does not match' % fld )
+                gdaltest.post_reason('Attribute %d does not match' % fld)
                 return 'fail'
         if read_feat.GetField('int64') != 1234567890123:
             gdaltest.post_reason('failure')
@@ -262,33 +262,33 @@ def ogr_sqlite_4():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
-    wkt_list = [ '10', '2', '1', '3d_1', '4', '5', '6' ]
+    dst_feat = ogr.Feature(feature_def = gdaltest.sl_lyr.GetLayerDefn())
+    wkt_list = ['10', '2', '1', '3d_1', '4', '5', '6']
 
     for item in wkt_list:
 
-        wkt = open( 'data/wkb_wkt/'+item+'.wkt' ).read()
-        geom = ogr.CreateGeometryFromWkt( wkt )
+        wkt = open('data/wkb_wkt/'+item+'.wkt').read()
+        geom = ogr.CreateGeometryFromWkt(wkt)
 
         ######################################################################
         # Write geometry as a new feature.
 
-        dst_feat.SetGeometryDirectly( geom )
-        dst_feat.SetField( 'PRFEDEA', item )
-        dst_feat.SetFID( -1 )
-        gdaltest.sl_lyr.CreateFeature( dst_feat )
+        dst_feat.SetGeometryDirectly(geom)
+        dst_feat.SetField('PRFEDEA', item)
+        dst_feat.SetFID(-1)
+        gdaltest.sl_lyr.CreateFeature(dst_feat)
 
         ######################################################################
         # Read back the feature and get the geometry.
 
-        gdaltest.sl_lyr.SetAttributeFilter( "PRFEDEA = '%s'" % item )
+        gdaltest.sl_lyr.SetAttributeFilter("PRFEDEA = '%s'" % item)
         feat_read = gdaltest.sl_lyr.GetNextFeature()
 
         if feat_read is None:
-            gdaltest.post_reason( 'Did not get as many features as expected.')
+            gdaltest.post_reason('Did not get as many features as expected.')
             return 'fail'
 
-        if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
+        if ogrtest.check_feature_geometry(feat_read, geom) != 0:
             return 'fail'
 
     return 'success'
@@ -302,17 +302,17 @@ def ogr_sqlite_5():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    expect = [ 179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None ]
+    expect = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None]
 
-    sql_lyr = gdaltest.sl_ds.ExecuteSQL( 'select distinct eas_id from tpoly order by eas_id desc' )
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL('select distinct eas_id from tpoly order by eas_id desc')
 
     if sql_lyr.GetFeatureCount() != 11:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 11' % sql_lyr.GetFeatureCount() )
+        gdaltest.post_reason('GetFeatureCount() returned %d instead of 11' % sql_lyr.GetFeatureCount())
         return 'fail'
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'eas_id', expect)
 
-    gdaltest.sl_ds.ReleaseResultSet( sql_lyr )
+    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -328,16 +328,16 @@ def ogr_sqlite_6():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    sql_lyr = gdaltest.sl_ds.ExecuteSQL( "select * from tpoly where prfedea = '2'" )
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("select * from tpoly where prfedea = '2'")
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'prfedea', [ '2' ] )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'prfedea', ['2'])
     if tr:
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
-        if ogrtest.check_feature_geometry( feat_read, 'MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))' ) != 0:
+        if ogrtest.check_feature_geometry(feat_read, 'MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))') != 0:
             tr = 0
 
-    gdaltest.sl_ds.ReleaseResultSet( sql_lyr )
+    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -353,29 +353,29 @@ def ogr_sqlite_7():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    gdaltest.sl_lyr.SetAttributeFilter( None )
+    gdaltest.sl_lyr.SetAttributeFilter(None)
 
     geom = ogr.CreateGeometryFromWkt( \
-        'LINESTRING(479505 4763195,480526 4762819)' )
-    gdaltest.sl_lyr.SetSpatialFilter( geom )
+        'LINESTRING(479505 4763195,480526 4762819)')
+    gdaltest.sl_lyr.SetSpatialFilter(geom)
     geom.Destroy()
 
     if gdaltest.sl_lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 1' % gdaltest.sl_lyr.GetFeatureCount() )
+        gdaltest.post_reason('GetFeatureCount() returned %d instead of 1' % gdaltest.sl_lyr.GetFeatureCount())
         return 'fail'
 
-    tr = ogrtest.check_features_against_list( gdaltest.sl_lyr, 'eas_id',
-                                              [ 158 ] )
+    tr = ogrtest.check_features_against_list(gdaltest.sl_lyr, 'eas_id',
+                                              [158])
 
-    gdaltest.sl_lyr.SetAttributeFilter( 'eas_id = 158' )
+    gdaltest.sl_lyr.SetAttributeFilter('eas_id = 158')
 
     if gdaltest.sl_lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 1' % gdaltest.sl_lyr.GetFeatureCount() )
+        gdaltest.post_reason('GetFeatureCount() returned %d instead of 1' % gdaltest.sl_lyr.GetFeatureCount())
         return 'fail'
 
-    gdaltest.sl_lyr.SetAttributeFilter( None )
+    gdaltest.sl_lyr.SetAttributeFilter(None)
 
-    gdaltest.sl_lyr.SetSpatialFilter( None )
+    gdaltest.sl_lyr.SetSpatialFilter(None)
 
     if tr:
         return 'success'
@@ -394,45 +394,45 @@ def ogr_sqlite_8():
     ######################################################################
     # Prepare working feature.
 
-    dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
-    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'POINT(10 20)' ))
+    dst_feat = ogr.Feature(feature_def = gdaltest.sl_lyr.GetLayerDefn())
+    dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(10 20)'))
 
-    dst_feat.SetField( 'PRFEDEA', 'rollbacktest' )
+    dst_feat.SetField('PRFEDEA', 'rollbacktest')
 
     ######################################################################
     # Create it, but rollback the transaction.
 
     gdaltest.sl_lyr.StartTransaction()
-    gdaltest.sl_lyr.CreateFeature( dst_feat )
+    gdaltest.sl_lyr.CreateFeature(dst_feat)
     gdaltest.sl_lyr.RollbackTransaction()
 
     ######################################################################
     # Verify that it is not in the layer.
 
-    gdaltest.sl_lyr.SetAttributeFilter( "PRFEDEA = 'rollbacktest'" )
+    gdaltest.sl_lyr.SetAttributeFilter("PRFEDEA = 'rollbacktest'")
     feat_read = gdaltest.sl_lyr.GetNextFeature()
-    gdaltest.sl_lyr.SetAttributeFilter( None )
+    gdaltest.sl_lyr.SetAttributeFilter(None)
 
     if feat_read is not None:
-        gdaltest.post_reason( 'Unexpectedly got rollbacktest feature.' )
+        gdaltest.post_reason('Unexpectedly got rollbacktest feature.')
         return 'fail'
 
     ######################################################################
     # Create it, and commit the transaction.
 
     gdaltest.sl_lyr.StartTransaction()
-    gdaltest.sl_lyr.CreateFeature( dst_feat )
+    gdaltest.sl_lyr.CreateFeature(dst_feat)
     gdaltest.sl_lyr.CommitTransaction()
 
     ######################################################################
     # Verify that it is not in the layer.
 
-    gdaltest.sl_lyr.SetAttributeFilter( "PRFEDEA = 'rollbacktest'" )
+    gdaltest.sl_lyr.SetAttributeFilter("PRFEDEA = 'rollbacktest'")
     feat_read = gdaltest.sl_lyr.GetNextFeature()
-    gdaltest.sl_lyr.SetAttributeFilter( None )
+    gdaltest.sl_lyr.SetAttributeFilter(None)
 
     if feat_read is None:
-        gdaltest.post_reason( 'Failed to get committed feature.' )
+        gdaltest.post_reason('Failed to get committed feature.')
         return 'fail'
 
     feat_read.Destroy()
@@ -452,48 +452,48 @@ def ogr_sqlite_9():
     ######################################################################
     # Read feature with EAS_ID 158.
 
-    gdaltest.sl_lyr.SetAttributeFilter( "eas_id = 158" )
+    gdaltest.sl_lyr.SetAttributeFilter("eas_id = 158")
     feat_read = gdaltest.sl_lyr.GetNextFeature()
-    gdaltest.sl_lyr.SetAttributeFilter( None )
+    gdaltest.sl_lyr.SetAttributeFilter(None)
 
     if feat_read is None:
-        gdaltest.post_reason( 'did not find eas_id 158!' )
+        gdaltest.post_reason('did not find eas_id 158!')
         return 'fail'
 
     ######################################################################
     # Modify the PRFEDEA value, and reset it.
 
-    feat_read.SetField( 'PRFEDEA', 'SetWorked' )
-    err = gdaltest.sl_lyr.SetFeature( feat_read )
+    feat_read.SetField('PRFEDEA', 'SetWorked')
+    err = gdaltest.sl_lyr.SetFeature(feat_read)
     if err != 0:
-        gdaltest.post_reason( 'SetFeature() reported error %d' % err )
+        gdaltest.post_reason('SetFeature() reported error %d' % err)
         return 'fail'
 
     ######################################################################
     # Read feature with EAS_ID 158 and check that PRFEDEA was altered.
 
-    gdaltest.sl_lyr.SetAttributeFilter( "eas_id = 158" )
+    gdaltest.sl_lyr.SetAttributeFilter("eas_id = 158")
     feat_read_2 = gdaltest.sl_lyr.GetNextFeature()
-    gdaltest.sl_lyr.SetAttributeFilter( None )
+    gdaltest.sl_lyr.SetAttributeFilter(None)
 
     if feat_read_2 is None:
-        gdaltest.post_reason( 'did not find eas_id 158!' )
+        gdaltest.post_reason('did not find eas_id 158!')
         return 'fail'
 
     if feat_read_2.GetField('PRFEDEA') != 'SetWorked':
         feat_read_2.DumpReadable()
-        gdaltest.post_reason( 'PRFEDEA apparently not reset as expected.' )
+        gdaltest.post_reason('PRFEDEA apparently not reset as expected.')
         return 'fail'
 
     # Test updating non-existing feature
     feat_read.SetFID(-10)
-    if gdaltest.sl_lyr.SetFeature( feat_read ) != ogr.OGRERR_NON_EXISTING_FEATURE:
-        gdaltest.post_reason( 'Expected failure of SetFeature().' )
+    if gdaltest.sl_lyr.SetFeature(feat_read) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason('Expected failure of SetFeature().')
         return 'fail'
 
     # Test deleting non-existing feature
-    if gdaltest.sl_lyr.DeleteFeature( -10 ) != ogr.OGRERR_NON_EXISTING_FEATURE:
-        gdaltest.post_reason( 'Expected failure of DeleteFeature().' )
+    if gdaltest.sl_lyr.DeleteFeature(-10) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason('Expected failure of DeleteFeature().')
         return 'fail'
 
     feat_read.Destroy()
@@ -513,27 +513,27 @@ def ogr_sqlite_10():
     ######################################################################
     # Read feature with EAS_ID 158.
 
-    gdaltest.sl_lyr.SetAttributeFilter( "eas_id = 158" )
+    gdaltest.sl_lyr.SetAttributeFilter("eas_id = 158")
     feat_read = gdaltest.sl_lyr.GetNextFeature()
-    gdaltest.sl_lyr.SetAttributeFilter( None )
+    gdaltest.sl_lyr.SetAttributeFilter(None)
 
     if feat_read is None:
-        gdaltest.post_reason( 'did not find eas_id 158!' )
+        gdaltest.post_reason('did not find eas_id 158!')
         return 'fail'
 
     ######################################################################
     # Now read the feature by FID.
 
-    feat_read_2 = gdaltest.sl_lyr.GetFeature( feat_read.GetFID() )
+    feat_read_2 = gdaltest.sl_lyr.GetFeature(feat_read.GetFID())
 
     if feat_read_2 is None:
-        gdaltest.post_reason( 'did not find FID %d' % feat_read.GetFID() )
+        gdaltest.post_reason('did not find FID %d' % feat_read.GetFID())
         return 'fail'
 
     if feat_read_2.GetField('PRFEDEA') != feat_read.GetField('PRFEDEA'):
         feat_read.DumpReadable()
         feat_read_2.DumpReadable()
-        gdaltest.post_reason( 'GetFeature() result seems to not match expected.' )
+        gdaltest.post_reason('GetFeature() result seems to not match expected.')
         return 'fail'
 
     return 'success'
@@ -549,25 +549,25 @@ def ogr_sqlite_11():
 
     ######################################################
     # Create Layer with WKB geometry
-    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'geomwkb', options = [ 'FORMAT=WKB' ] )
+    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer('geomwkb', options = ['FORMAT=WKB'])
 
-    geom = ogr.CreateGeometryFromWkt( 'POINT(0 1)' )
-    dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
-    dst_feat.SetGeometry( geom )
-    gdaltest.sl_lyr.CreateFeature( dst_feat )
+    geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
+    dst_feat = ogr.Feature(feature_def = gdaltest.sl_lyr.GetLayerDefn())
+    dst_feat.SetGeometry(geom)
+    gdaltest.sl_lyr.CreateFeature(dst_feat)
     dst_feat = None
 
     # Test adding a column to see if geometry is preserved (#3471)
-    gdaltest.sl_lyr.CreateField( ogr.FieldDefn("foo", ogr.OFTString) )
+    gdaltest.sl_lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
 
     ######################################################
     # Reopen DB
     gdaltest.sl_ds = None
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
+    gdaltest.sl_ds = ogr.Open('tmp/sqlite_test.db', update = 1)
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('geomwkb')
 
     feat_read = gdaltest.sl_lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001) != 0:
         return 'fail'
 
     gdaltest.sl_lyr.ResetReading()
@@ -585,43 +585,43 @@ def ogr_sqlite_12():
 
     ######################################################
     # Create Layer with WKT geometry
-    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'geomwkt', options = [ 'FORMAT=WKT' ] )
+    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer('geomwkt', options = ['FORMAT=WKT'])
 
-    geom = ogr.CreateGeometryFromWkt( 'POINT(0 1)' )
-    dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
-    dst_feat.SetGeometry( geom )
-    gdaltest.sl_lyr.CreateFeature( dst_feat )
+    geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
+    dst_feat = ogr.Feature(feature_def = gdaltest.sl_lyr.GetLayerDefn())
+    dst_feat.SetGeometry(geom)
+    gdaltest.sl_lyr.CreateFeature(dst_feat)
     dst_feat = None
 
     # Test adding a column to see if geometry is preserved (#3471)
-    gdaltest.sl_lyr.CreateField( ogr.FieldDefn("foo", ogr.OFTString) )
+    gdaltest.sl_lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
 
     ######################################################
     # Reopen DB
     gdaltest.sl_ds = None
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
+    gdaltest.sl_ds = ogr.Open('tmp/sqlite_test.db', update = 1)
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('geomwkt')
 
     feat_read = gdaltest.sl_lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001) != 0:
         return 'fail'
     feat_read = None
 
     gdaltest.sl_lyr.ResetReading()
 
-    sql_lyr = gdaltest.sl_ds.ExecuteSQL( "select * from geomwkt" )
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("select * from geomwkt")
 
     feat_read = sql_lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001) != 0:
         return 'fail'
     feat_read = None
 
     feat_read = sql_lyr.GetFeature(0)
-    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001) != 0:
         return 'fail'
     feat_read = None
 
-    gdaltest.sl_ds.ReleaseResultSet( sql_lyr )
+    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
 
@@ -637,13 +637,13 @@ def ogr_sqlite_13():
     ######################################################
     # Create Layer with EPSG:4326
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG( 4326 )
-    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'wgs84layer', srs = srs )
+    srs.ImportFromEPSG(4326)
+    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer('wgs84layer', srs = srs)
 
     ######################################################
     # Reopen DB
     gdaltest.sl_ds = None
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
+    gdaltest.sl_ds = ogr.Open('tmp/sqlite_test.db', update = 1)
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('wgs84layer')
 
     if not gdaltest.sl_lyr.GetSpatialRef().IsSame(srs):
@@ -654,7 +654,7 @@ def ogr_sqlite_13():
     # Create second layer with very approximative EPSG:4326
     srs = osr.SpatialReference()
     srs.SetFromUserInput('GEOGCS["WGS 84",AUTHORITY["EPSG","4326"]]')
-    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'wgs84layer_approx', srs = srs )
+    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer('wgs84layer_approx', srs = srs)
 
     # Must still be 1
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT COUNT(*) AS count FROM spatial_ref_sys")
@@ -674,34 +674,34 @@ def ogr_sqlite_14():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'testtypes' )
-    ogrtest.quick_create_layer_def( gdaltest.sl_lyr,
-                                    [ ('INTEGER', ogr.OFTInteger),
+    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer('testtypes')
+    ogrtest.quick_create_layer_def(gdaltest.sl_lyr,
+                                    [('INTEGER', ogr.OFTInteger),
                                       ('FLOAT', ogr.OFTReal),
                                       ('STRING', ogr.OFTString),
                                       ('BLOB', ogr.OFTBinary),
-                                      ('BLOB2', ogr.OFTBinary) ] )
+                                      ('BLOB2', ogr.OFTBinary)])
 
-    dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
+    dst_feat = ogr.Feature(feature_def = gdaltest.sl_lyr.GetLayerDefn())
 
     dst_feat.SetField('INTEGER', 1)
     dst_feat.SetField('FLOAT', 1.2)
     dst_feat.SetField('STRING', 'myString\'a')
     dst_feat.SetFieldBinaryFromHexString('BLOB', '0001FF')
 
-    gdaltest.sl_lyr.CreateFeature( dst_feat )
+    gdaltest.sl_lyr.CreateFeature(dst_feat)
 
     ######################################################
     # Reopen DB
     gdaltest.sl_ds = None
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
+    gdaltest.sl_ds = ogr.Open('tmp/sqlite_test.db', update = 1)
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('testtypes')
 
     # Duplicate the first record
-    dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
+    dst_feat = ogr.Feature(feature_def = gdaltest.sl_lyr.GetLayerDefn())
     feat_read = gdaltest.sl_lyr.GetNextFeature()
     dst_feat.SetFrom(feat_read)
-    gdaltest.sl_lyr.CreateFeature( dst_feat )
+    gdaltest.sl_lyr.CreateFeature(dst_feat)
 
     # Check the 2 records
     gdaltest.sl_lyr.ResetReading()
@@ -729,41 +729,41 @@ def ogr_sqlite_15():
     ######################################################
     # Create Layer with SPATIALITE geometry
     with gdaltest.error_handler():
-        gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'geomspatialite', options = [ 'FORMAT=SPATIALITE' ] )
+        gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer('geomspatialite', options = ['FORMAT=SPATIALITE'])
 
-    geoms = [ ogr.CreateGeometryFromWkt( 'POINT(0 1)' ),
-              ogr.CreateGeometryFromWkt( 'MULTIPOINT EMPTY' ),
-              ogr.CreateGeometryFromWkt( 'MULTIPOINT (0 1,2 3)' ),
-              ogr.CreateGeometryFromWkt( 'LINESTRING EMPTY' ),
-              ogr.CreateGeometryFromWkt( 'LINESTRING (1 2,3 4)' ),
-              ogr.CreateGeometryFromWkt( 'MULTILINESTRING EMPTY' ),
-              ogr.CreateGeometryFromWkt( 'MULTILINESTRING ((1 2,3 4),(5 6,7 8))' ),
-              ogr.CreateGeometryFromWkt( 'POLYGON EMPTY' ),
-              ogr.CreateGeometryFromWkt( 'POLYGON ((1 2,3 4))' ),
-              ogr.CreateGeometryFromWkt( 'POLYGON ((1 2,3 4),(5 6,7 8))' ),
-              ogr.CreateGeometryFromWkt( 'MULTIPOLYGON EMPTY' ),
-              ogr.CreateGeometryFromWkt( 'MULTIPOLYGON (((1 2,3 4)),((5 6,7 8)))' ),
-              ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION EMPTY' ),
-              ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POLYGON ((5 6,7 8)))' ),
-              ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POINT(0 1))' ) ]
+    geoms = [ogr.CreateGeometryFromWkt('POINT(0 1)'),
+              ogr.CreateGeometryFromWkt('MULTIPOINT EMPTY'),
+              ogr.CreateGeometryFromWkt('MULTIPOINT (0 1,2 3)'),
+              ogr.CreateGeometryFromWkt('LINESTRING EMPTY'),
+              ogr.CreateGeometryFromWkt('LINESTRING (1 2,3 4)'),
+              ogr.CreateGeometryFromWkt('MULTILINESTRING EMPTY'),
+              ogr.CreateGeometryFromWkt('MULTILINESTRING ((1 2,3 4),(5 6,7 8))'),
+              ogr.CreateGeometryFromWkt('POLYGON EMPTY'),
+              ogr.CreateGeometryFromWkt('POLYGON ((1 2,3 4))'),
+              ogr.CreateGeometryFromWkt('POLYGON ((1 2,3 4),(5 6,7 8))'),
+              ogr.CreateGeometryFromWkt('MULTIPOLYGON EMPTY'),
+              ogr.CreateGeometryFromWkt('MULTIPOLYGON (((1 2,3 4)),((5 6,7 8)))'),
+              ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION EMPTY'),
+              ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POLYGON ((5 6,7 8)))'),
+              ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POINT(0 1))')]
 
     gdaltest.sl_lyr.StartTransaction()
 
     for geom in geoms:
-        dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
-        dst_feat.SetGeometry( geom )
-        gdaltest.sl_lyr.CreateFeature( dst_feat )
+        dst_feat = ogr.Feature(feature_def = gdaltest.sl_lyr.GetLayerDefn())
+        dst_feat.SetGeometry(geom)
+        gdaltest.sl_lyr.CreateFeature(dst_feat)
 
     gdaltest.sl_lyr.CommitTransaction()
 
     ######################################################
     # Reopen DB
     gdaltest.sl_ds = None
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+    gdaltest.sl_ds = ogr.Open('tmp/sqlite_test.db')
 
     # Test creating a layer on a read-only DB
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    lyr = gdaltest.sl_ds.CreateLayer( 'will_fail' )
+    lyr = gdaltest.sl_ds.CreateLayer('will_fail')
     gdal.PopErrorHandler()
     if lyr is not None:
         gdaltest.post_reason('layer creation should have failed')
@@ -773,22 +773,22 @@ def ogr_sqlite_15():
 
     for geom in geoms:
         feat_read = gdaltest.sl_lyr.GetNextFeature()
-        if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+        if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001) != 0:
             return 'fail'
 
     gdaltest.sl_lyr.ResetReading()
 
-    sql_lyr = gdaltest.sl_ds.ExecuteSQL( "select * from geomspatialite" )
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("select * from geomspatialite")
 
     feat_read = sql_lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat_read,geoms[0],max_error = 0.001 ) != 0:
+    if ogrtest.check_feature_geometry(feat_read,geoms[0],max_error = 0.001) != 0:
         return 'fail'
 
     feat_read = sql_lyr.GetFeature(0)
-    if ogrtest.check_feature_geometry(feat_read,geoms[0],max_error = 0.001 ) != 0:
+    if ogrtest.check_feature_geometry(feat_read,geoms[0],max_error = 0.001) != 0:
         return 'fail'
 
-    gdaltest.sl_ds.ReleaseResultSet( sql_lyr )
+    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
 
@@ -804,29 +804,29 @@ def ogr_sqlite_16():
     ######################################################
     # Reopen DB in update
     gdaltest.sl_ds = None
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
+    gdaltest.sl_ds = ogr.Open('tmp/sqlite_test.db', update = 1)
 
     # Hand create a table with FGF geometry
-    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO geometry_columns (f_table_name, f_geometry_column, geometry_type, coord_dimension, geometry_format) VALUES ('fgf_table', 'GEOMETRY', 0, 2, 'FGF')" )
-    gdaltest.sl_ds.ExecuteSQL( "CREATE TABLE fgf_table (OGC_FID INTEGER PRIMARY KEY, GEOMETRY BLOB)")
-    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (1, X'0100000000000000000000000000F03F0000000000000040')" )
-    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (2, X'020000000000000000000000')" )
-    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (3, X'020000000000000002000000000000000000F03F000000000000004000000000000008400000000000001040')" )
-    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (4, X'030000000000000000000000')" )
-    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (5, X'03000000000000000200000002000000000000000000F03F00000000000000400000000000000840000000000000104000000000')" )
-    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (6, X'0700000000000000')" )
-    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (7, X'070000000200000003000000000000000200000002000000000000000000F03F0000000000000040000000000000084000000000000010400000000003000000000000000200000002000000000000000000F03F00000000000000400000000000000840000000000000104000000000')" )
-    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (8, X'0100000001000000000000000000F03F00000000000000400000000000000840')" )
+    gdaltest.sl_ds.ExecuteSQL("INSERT INTO geometry_columns (f_table_name, f_geometry_column, geometry_type, coord_dimension, geometry_format) VALUES ('fgf_table', 'GEOMETRY', 0, 2, 'FGF')")
+    gdaltest.sl_ds.ExecuteSQL("CREATE TABLE fgf_table (OGC_FID INTEGER PRIMARY KEY, GEOMETRY BLOB)")
+    gdaltest.sl_ds.ExecuteSQL("INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (1, X'0100000000000000000000000000F03F0000000000000040')")
+    gdaltest.sl_ds.ExecuteSQL("INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (2, X'020000000000000000000000')")
+    gdaltest.sl_ds.ExecuteSQL("INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (3, X'020000000000000002000000000000000000F03F000000000000004000000000000008400000000000001040')")
+    gdaltest.sl_ds.ExecuteSQL("INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (4, X'030000000000000000000000')")
+    gdaltest.sl_ds.ExecuteSQL("INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (5, X'03000000000000000200000002000000000000000000F03F00000000000000400000000000000840000000000000104000000000')")
+    gdaltest.sl_ds.ExecuteSQL("INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (6, X'0700000000000000')")
+    gdaltest.sl_ds.ExecuteSQL("INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (7, X'070000000200000003000000000000000200000002000000000000000000F03F0000000000000040000000000000084000000000000010400000000003000000000000000200000002000000000000000000F03F00000000000000400000000000000840000000000000104000000000')")
+    gdaltest.sl_ds.ExecuteSQL("INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (8, X'0100000001000000000000000000F03F00000000000000400000000000000840')")
 
     # invalid geometries
-    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (9, X'0700000001000000')" )
-    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (10,X'060000000100000001')" )
-    gdaltest.sl_ds.ExecuteSQL( "INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (11,X'06000000010000000100000000000000000000000000F03F0000000000000040')" )
+    gdaltest.sl_ds.ExecuteSQL("INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (9, X'0700000001000000')")
+    gdaltest.sl_ds.ExecuteSQL("INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (10,X'060000000100000001')")
+    gdaltest.sl_ds.ExecuteSQL("INSERT INTO fgf_table (OGC_FID, GEOMETRY) VALUES (11,X'06000000010000000100000000000000000000000000F03F0000000000000040')")
 
     ######################################################
     # Reopen DB
     gdaltest.sl_ds = None
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1 )
+    gdaltest.sl_ds = ogr.Open('tmp/sqlite_test.db', update = 1)
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('fgf_table')
 
     feat = gdaltest.sl_lyr.GetNextFeature()
@@ -893,7 +893,7 @@ def ogr_sqlite_17():
     # Create dataset with SPATIALITE geometry
 
     with gdaltest.error_handler():
-        ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test.db', options = ['SPATIALITE=YES'] )
+        ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/spatialite_test.db', options = ['SPATIALITE=YES'])
 
     if not gdaltest.has_spatialite:
         if ds is not None:
@@ -901,7 +901,7 @@ def ogr_sqlite_17():
         return 'success'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    lyr = ds.CreateLayer( 'will_fail', options = ['FORMAT=WKB'] )
+    lyr = ds.CreateLayer('will_fail', options = ['FORMAT=WKB'])
     gdal.PopErrorHandler()
     if lyr is not None:
         gdaltest.post_reason('layer creation should have failed')
@@ -909,22 +909,22 @@ def ogr_sqlite_17():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("""GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]""")
-    lyr = ds.CreateLayer( 'geomspatialite', srs = srs )
+    lyr = ds.CreateLayer('geomspatialite', srs = srs)
 
-    geom = ogr.CreateGeometryFromWkt( 'POINT(0 1)' )
+    geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
 
-    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
-    dst_feat.SetGeometry( geom )
-    lyr.CreateFeature( dst_feat )
+    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat.SetGeometry(geom)
+    lyr.CreateFeature(dst_feat)
 
     ######################################################
     # Reopen DB
     ds = None
-    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    ds = ogr.Open('tmp/spatialite_test.db')
     lyr =ds.GetLayerByName('geomspatialite')
 
     feat_read = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001) != 0:
         return 'fail'
 
     srs = lyr.GetSpatialRef()
@@ -948,15 +948,15 @@ def ogr_sqlite_18():
     if not gdaltest.has_spatialite:
         return 'skip'
 
-    ds = ogr.Open( 'tmp/spatialite_test.db', update = 1  )
+    ds = ogr.Open('tmp/spatialite_test.db', update = 1)
     srs = osr.SpatialReference()
     srs.SetFromUserInput('+proj=vandg')
-    lyr = ds.CreateLayer( 'nonepsgsrs', srs = srs )
+    lyr = ds.CreateLayer('nonepsgsrs', srs = srs)
 
     ######################################################
     # Reopen DB
     ds = None
-    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    ds = ogr.Open('tmp/spatialite_test.db')
 
     lyr =ds.GetLayerByName('nonepsgsrs')
     srs = lyr.GetSpatialRef()
@@ -995,20 +995,20 @@ def ogr_sqlite_19():
     if gdaltest.spatialite_version != '2.3.1':
         return 'skip'
 
-    ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test_with_epsg.db', options = ['SPATIALITE=YES', 'INIT_WITH_EPSG=YES'] )
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/spatialite_test_with_epsg.db', options = ['SPATIALITE=YES', 'INIT_WITH_EPSG=YES'])
 
     # EPSG:26632 has a ' character in it's WKT representation
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:26632')
-    ds.CreateLayer( 'test', srs = srs )
+    ds.CreateLayer('test', srs = srs)
 
     ds = None
     ds = ogr.Open('tmp/spatialite_test_with_epsg.db')
 
-    sql_lyr = ds.ExecuteSQL( "select count(*) from spatial_ref_sys" )
+    sql_lyr = ds.ExecuteSQL("select count(*) from spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     nb_srs = feat.GetFieldAsInteger(0)
-    ds.ReleaseResultSet( sql_lyr )
+    ds.ReleaseResultSet(sql_lyr)
 
     # Currently the injection of the EPSG DB as proj.4 strings adds 3915 entries
     if nb_srs < 3915:
@@ -1033,20 +1033,20 @@ def ogr_sqlite_19_bis():
     if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) < 4:
         return 'skip'
 
-    ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( '/vsimem/spatialite_test_without_epsg.db', options = ['SPATIALITE=YES', 'INIT_WITH_EPSG=NO'] )
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/spatialite_test_without_epsg.db', options = ['SPATIALITE=YES', 'INIT_WITH_EPSG=NO'])
 
     # EPSG:26632 has a ' character in it's WKT representation
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:26632')
-    ds.CreateLayer( 'test', srs = srs )
+    ds.CreateLayer('test', srs = srs)
 
     ds = None
     ds = ogr.Open('/vsimem/spatialite_test_without_epsg.db')
 
-    sql_lyr = ds.ExecuteSQL( "select count(*) from spatial_ref_sys" )
+    sql_lyr = ds.ExecuteSQL("select count(*) from spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     nb_srs = feat.GetFieldAsInteger(0)
-    ds.ReleaseResultSet( sql_lyr )
+    ds.ReleaseResultSet(sql_lyr)
 
     if nb_srs != 1:
         gdaltest.post_reason('did not get expected SRS count')
@@ -1071,20 +1071,20 @@ def ogr_sqlite_20():
     except:
         pass
 
-    ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/non_spatialite_test_with_epsg.db', options = ['INIT_WITH_EPSG=YES'] )
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/non_spatialite_test_with_epsg.db', options = ['INIT_WITH_EPSG=YES'])
 
     # EPSG:26632 has a ' character in it's WKT representation
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:26632')
-    ds.CreateLayer( 'test', srs = srs )
+    ds.CreateLayer('test', srs = srs)
 
     ds = None
     ds = ogr.Open('tmp/non_spatialite_test_with_epsg.db')
 
-    sql_lyr = ds.ExecuteSQL( "select count(*) from spatial_ref_sys" )
+    sql_lyr = ds.ExecuteSQL("select count(*) from spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     nb_srs = feat.GetFieldAsInteger(0)
-    ds.ReleaseResultSet( sql_lyr )
+    ds.ReleaseResultSet(sql_lyr)
 
     # Currently the injection of the EPSG DB as proj.4 strings adds 3945 entries
     if nb_srs < 3945:
@@ -1150,60 +1150,60 @@ def ogr_sqlite_23():
         return 'skip'
 
     shp_layer = gdaltest.sl_ds.GetLayerByName('tpoly')
-    shp_layer.SetIgnoredFields( ['AREA'] )
+    shp_layer.SetIgnoredFields(['AREA'])
 
     feat = shp_layer.GetNextFeature()
 
-    if feat.IsFieldSet( 'AREA' ):
-        gdaltest.post_reason( 'got area despite request to ignore it.' )
+    if feat.IsFieldSet('AREA'):
+        gdaltest.post_reason('got area despite request to ignore it.')
         return 'fail'
 
     if feat.GetFieldAsInteger('EAS_ID') != 168:
-        gdaltest.post_reason( 'missing or wrong eas_id' )
+        gdaltest.post_reason('missing or wrong eas_id')
         return 'fail'
 
     wkt = 'POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,479647.0 4765369.5,479730.375 4765400.5,480039.03125 4765539.5,480035.34375 4765558.5,480159.78125 4765610.5,480202.28125 4765482.0,480365.0 4765015.5,480389.6875 4764950.0,480133.96875 4764856.5,480080.28125 4764979.5,480082.96875 4765049.5,480088.8125 4765139.5,480059.90625 4765239.5,480019.71875 4765319.5,479980.21875 4765409.5,479909.875 4765370.0,479859.875 4765270.0,479819.84375 4765180.5))'
     if ogrtest.check_feature_geometry(feat, wkt,
-                                      max_error = 0.00000001 ) != 0:
+                                      max_error = 0.00000001) != 0:
         return 'fail'
 
     fd = shp_layer.GetLayerDefn()
     fld = fd.GetFieldDefn(0) # area
     if not fld.IsIgnored():
-        gdaltest.post_reason( 'AREA unexpectedly not marked as ignored.' )
+        gdaltest.post_reason('AREA unexpectedly not marked as ignored.')
         return 'fail'
 
     fld = fd.GetFieldDefn(1) # eas_id
     if fld.IsIgnored():
-        gdaltest.post_reason( 'EASI unexpectedly marked as ignored.' )
+        gdaltest.post_reason('EASI unexpectedly marked as ignored.')
         return 'fail'
 
     if fd.IsGeometryIgnored():
-        gdaltest.post_reason( 'geometry unexpectedly ignored.' )
+        gdaltest.post_reason('geometry unexpectedly ignored.')
         return 'fail'
 
     if fd.IsStyleIgnored():
-        gdaltest.post_reason( 'style unexpectedly ignored.' )
+        gdaltest.post_reason('style unexpectedly ignored.')
         return 'fail'
 
-    fd.SetGeometryIgnored( 1 )
+    fd.SetGeometryIgnored(1)
 
     if not fd.IsGeometryIgnored():
-        gdaltest.post_reason( 'geometry unexpectedly not ignored.' )
+        gdaltest.post_reason('geometry unexpectedly not ignored.')
         return 'fail'
 
     feat = shp_layer.GetNextFeature()
 
     if feat.GetGeometryRef() is not None:
-        gdaltest.post_reason( 'Unexpectedly got a geometry on feature 2.' )
+        gdaltest.post_reason('Unexpectedly got a geometry on feature 2.')
         return 'fail'
 
-    if feat.IsFieldSet( 'AREA' ):
-        gdaltest.post_reason( 'got area despite request to ignore it.' )
+    if feat.IsFieldSet('AREA'):
+        gdaltest.post_reason('got area despite request to ignore it.')
         return 'fail'
 
     if feat.GetFieldAsInteger('EAS_ID') != 179:
-        gdaltest.post_reason( 'missing or wrong eas_id' )
+        gdaltest.post_reason('missing or wrong eas_id')
         return 'fail'
 
     return 'success'
@@ -1297,7 +1297,7 @@ def ogr_sqlite_25():
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
     try:
-        drv = gdal.GetDriverByName( 'HTTP' )
+        drv = gdal.GetDriverByName('HTTP')
     except:
         drv = None
 
@@ -1538,26 +1538,26 @@ def ogr_spatialite_2():
     if not gdaltest.has_spatialite:
         return 'skip'
 
-    ds = ogr.Open( 'tmp/spatialite_test.db', update = 1 )
+    ds = ogr.Open('tmp/spatialite_test.db', update = 1)
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:4326')
-    lyr = ds.CreateLayer( 'test_spatialfilter', srs = srs)
+    lyr = ds.CreateLayer('test_spatialfilter', srs = srs)
     lyr.CreateField(ogr.FieldDefn('intcol', ogr.OFTInteger))
 
     lyr.StartTransaction()
 
     for i in range(10):
         for j in range(10):
-            geom = ogr.CreateGeometryFromWkt( 'POINT(%d %d)' % (i, j))
-            dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
-            dst_feat.SetGeometry( geom )
-            lyr.CreateFeature( dst_feat )
+            geom = ogr.CreateGeometryFromWkt('POINT(%d %d)' % (i, j))
+            dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+            dst_feat.SetGeometry(geom)
+            lyr.CreateFeature(dst_feat)
             dst_feat.Destroy()
 
-    geom = ogr.CreateGeometryFromWkt( 'POLYGON((0 0,0 3,3 3,3 0,0 0))' )
-    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
-    dst_feat.SetGeometry( geom )
-    lyr.CreateFeature( dst_feat )
+    geom = ogr.CreateGeometryFromWkt('POLYGON((0 0,0 3,3 3,3 0,0 0))')
+    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat.SetGeometry(geom)
+    lyr.CreateFeature(dst_feat)
     dst_feat.Destroy()
 
     lyr.CommitTransaction()
@@ -1565,7 +1565,7 @@ def ogr_spatialite_2():
     ds = None
 
     # Test OLCFastFeatureCount with spatial index (created by default)
-    ds = ogr.Open( 'tmp/spatialite_test.db', update = 0 )
+    ds = ogr.Open('tmp/spatialite_test.db', update = 0)
     lyr = ds.GetLayerByName('test_spatialfilter')
 
     extent = lyr.GetExtent()
@@ -1582,8 +1582,8 @@ def ogr_spatialite_2():
         return 'fail'
 
     geom = ogr.CreateGeometryFromWkt( \
-        'POLYGON((2 2,2 8,8 8,8 2,2 2))' )
-    lyr.SetSpatialFilter( geom )
+        'POLYGON((2 2,2 8,8 8,8 2,2 2))')
+    lyr.SetSpatialFilter(geom)
 
     if lyr.TestCapability(ogr.OLCFastFeatureCount) is False:
         gdaltest.post_reason('OLCFastFeatureCount failed')
@@ -1616,7 +1616,7 @@ def ogr_spatialite_2():
     if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
-    sql_lyr.SetSpatialFilter( geom )
+    sql_lyr.SetSpatialFilter(geom)
     if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
@@ -1631,7 +1631,7 @@ def ogr_spatialite_2():
     if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
-    sql_lyr.SetSpatialFilter( geom )
+    sql_lyr.SetSpatialFilter(geom)
     if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
@@ -1660,7 +1660,7 @@ def ogr_spatialite_2():
     if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
-    sql_lyr.SetSpatialFilter( geom )
+    sql_lyr.SetSpatialFilter(geom)
     if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
@@ -1689,7 +1689,7 @@ def ogr_spatialite_2():
     if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
-    sql_lyr.SetSpatialFilter( geom )
+    sql_lyr.SetSpatialFilter(geom)
     if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
@@ -1701,7 +1701,7 @@ def ogr_spatialite_2():
 
     # Remove spatial index
     ds = None
-    ds = ogr.Open( 'tmp/spatialite_test.db', update = 1 )
+    ds = ogr.Open('tmp/spatialite_test.db', update = 1)
     sql_lyr = ds.ExecuteSQL("SELECT DisableSpatialIndex('test_spatialfilter', 'Geometry')")
     sql_lyr.GetFeatureCount()
     feat = sql_lyr.GetNextFeature()
@@ -1717,12 +1717,12 @@ def ogr_spatialite_2():
     ds.Destroy()
 
     # Test OLCFastFeatureCount without spatial index
-    ds = ogr.Open( 'tmp/spatialite_test.db' )
+    ds = ogr.Open('tmp/spatialite_test.db')
     lyr = ds.GetLayerByName('test_spatialfilter')
 
     geom = ogr.CreateGeometryFromWkt( \
-        'POLYGON((2 2,2 8,8 8,8 2,2 2))' )
-    lyr.SetSpatialFilter( geom )
+        'POLYGON((2 2,2 8,8 8,8 2,2 2))')
+    lyr.SetSpatialFilter(geom)
     geom.Destroy()
 
     if lyr.TestCapability(ogr.OLCFastFeatureCount) is True:
@@ -1747,19 +1747,19 @@ def ogr_spatialite_3():
     if not gdaltest.has_spatialite:
         return 'skip'
 
-    ds = ogr.Open( 'tmp/spatialite_test.db', update = 1 )
-    ds.ExecuteSQL( 'CREATE VIRTUAL TABLE testpoly USING VirtualShape(data/testpoly, CP1252, -1)')
+    ds = ogr.Open('tmp/spatialite_test.db', update = 1)
+    ds.ExecuteSQL('CREATE VIRTUAL TABLE testpoly USING VirtualShape(data/testpoly, CP1252, -1)')
     ds.Destroy()
 
-    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    ds = ogr.Open('tmp/spatialite_test.db')
     lyr = ds.GetLayerByName('testpoly')
     if lyr is None:
         return 'fail'
 
-    lyr.SetSpatialFilterRect( -400, 22, -120, 400 )
+    lyr.SetSpatialFilterRect(-400, 22, -120, 400)
 
-    tr = ogrtest.check_features_against_list( lyr, 'FID',
-                                              [ 0, 4, 8 ] )
+    tr = ogrtest.check_features_against_list(lyr, 'FID',
+                                              [0, 4, 8])
 
     ds.Destroy()
 
@@ -1777,7 +1777,7 @@ def ogr_spatialite_4():
     if not gdaltest.has_spatialite:
         return 'skip'
 
-    ds = ogr.Open( 'tmp/spatialite_test.db', update = 1  )
+    ds = ogr.Open('tmp/spatialite_test.db', update = 1)
 
     lyr = ds.ExecuteSQL('SELECT * FROM sqlite_master')
     nb_sqlite_master_objects_before = lyr.GetFeatureCount()
@@ -1788,7 +1788,7 @@ def ogr_spatialite_4():
     ds.ReleaseResultSet(lyr)
 
     lyr = ds.GetLayerByName('geomspatialite')
-    lyr.CreateField( ogr.FieldDefn("foo", ogr.OFTString) )
+    lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
 
     lyr = ds.ExecuteSQL('SELECT * FROM geomspatialite')
     feat = lyr.GetNextFeature()
@@ -1839,7 +1839,7 @@ def ogr_spatialite_5(bUseComprGeom = False):
         os.remove('tmp/ogr_spatialite_5.sqlite')
     except:
         pass
-    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_5.sqlite', options = ['SPATIALITE=YES'] )
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_5.sqlite', options = ['SPATIALITE=YES'])
 
     geometries = [
         #'POINT EMPTY',
@@ -1894,7 +1894,7 @@ def ogr_spatialite_5(bUseComprGeom = False):
     ]
 
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG( 4326 )
+    srs.ImportFromEPSG(4326)
 
     num_layer = 0
     for wkt in geometries:
@@ -2013,7 +2013,7 @@ def ogr_spatialite_6():
 
     # Create regular layer
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG( 4326 )
+    srs.ImportFromEPSG(4326)
     lyr = ds.CreateLayer(layername, geom_type = ogr.wkbPoint, srs = srs, options = ['LAUNDER=NO'])
 
     geometryname = lyr.GetGeometryColumn()
@@ -2585,7 +2585,7 @@ def ogr_sqlite_34():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT 'a' REGEXP 'a'")
     gdal.PopErrorHandler()
     if sql_lyr is None:
@@ -2616,7 +2616,7 @@ def ogr_sqlite_34():
         return 'fail'
 
     # NULL regexp
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT 'a' REGEXP NULL")
     gdal.PopErrorHandler()
     if sql_lyr is not None:
@@ -2624,7 +2624,7 @@ def ogr_sqlite_34():
         return 'fail'
 
     # Invalid regexp
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT 'a' REGEXP '['")
     gdal.PopErrorHandler()
     if sql_lyr is not None:
@@ -2683,14 +2683,14 @@ def ogr_sqlite_35():
     lyr.CreateFeature(feat)
     feat = None
 
-    for sql in [ "SELECT * FROM test",
+    for sql in ["SELECT * FROM test",
                     "SELECT * FROM test GROUP BY foo",
                     "SELECT * FROM test ORDER BY foo",
                     "SELECT * FROM test LIMIT 1",
                     "SELECT * FROM test WHERE 1=1",
                     "SELECT * FROM test WHERE 1=1 GROUP BY foo",
                     "SELECT * FROM test WHERE 1=1 ORDER BY foo",
-                    "SELECT * FROM test WHERE 1=1 LIMIT 1" ]:
+                    "SELECT * FROM test WHERE 1=1 LIMIT 1"]:
         sql_lyr = ds.ExecuteSQL(sql)
 
         sql_lyr.SetAttributeFilter("foo = 'bar'")
@@ -2917,42 +2917,42 @@ def ogr_sqlite_38():
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_38.sqlite')
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
 
-    field_defn = ogr.FieldDefn( 'field_string', ogr.OFTString )
+    field_defn = ogr.FieldDefn('field_string', ogr.OFTString)
     field_defn.SetDefault("'a''b'")
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_int', ogr.OFTInteger )
+    field_defn = ogr.FieldDefn('field_int', ogr.OFTInteger)
     field_defn.SetDefault('123')
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_real', ogr.OFTReal )
+    field_defn = ogr.FieldDefn('field_real', ogr.OFTReal)
     field_defn.SetDefault('1.23')
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_nodefault', ogr.OFTInteger )
+    field_defn = ogr.FieldDefn('field_nodefault', ogr.OFTInteger)
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_datetime', ogr.OFTDateTime )
+    field_defn = ogr.FieldDefn('field_datetime', ogr.OFTDateTime)
     field_defn.SetDefault("CURRENT_TIMESTAMP")
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_datetime2', ogr.OFTDateTime )
+    field_defn = ogr.FieldDefn('field_datetime2', ogr.OFTDateTime)
     field_defn.SetDefault("'2015/06/30 12:34:56'")
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_datetime3', ogr.OFTDateTime )
+    field_defn = ogr.FieldDefn('field_datetime3', ogr.OFTDateTime)
     field_defn.SetDefault("(strftime('%Y-%m-%dT%H:%M:%fZ','now'))")
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_datetime4', ogr.OFTDateTime )
+    field_defn = ogr.FieldDefn('field_datetime4', ogr.OFTDateTime)
     field_defn.SetDefault("'2015/06/30 12:34:56.123'")
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_date', ogr.OFTDate )
+    field_defn = ogr.FieldDefn('field_date', ogr.OFTDate)
     field_defn.SetDefault("CURRENT_DATE")
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_time', ogr.OFTTime )
+    field_defn = ogr.FieldDefn('field_time', ogr.OFTTime)
     field_defn.SetDefault("CURRENT_TIME")
     lyr.CreateField(field_defn)
 
@@ -3051,7 +3051,7 @@ def ogr_spatialite_9():
     if not gdaltest.has_spatialite:
         return 'skip'
 
-    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_spatialite_9.sqlite', options = [ 'SPATIALITE=YES'] )
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_spatialite_9.sqlite', options = ['SPATIALITE=YES'])
     lyr = ds.CreateLayer('point', geom_type = ogr.wkbPoint)
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(1 2)'))
@@ -3500,7 +3500,7 @@ def ogr_sqlite_44():
 "[""a"",null]","[1]","[1234567890123]","[0.125]",
 """)
 
-    gdal.VectorTranslate('/vsimem/ogr_sqlite_44.sqlite', '/vsimem/ogr_sqlite_44.csv', format = 'SQLite' )
+    gdal.VectorTranslate('/vsimem/ogr_sqlite_44.sqlite', '/vsimem/ogr_sqlite_44.csv', format = 'SQLite')
     gdal.VectorTranslate('/vsimem/ogr_sqlite_44_out.csv', '/vsimem/ogr_sqlite_44.sqlite', format = 'CSV', layerCreationOptions = ['CREATE_CSVT=YES', 'LINEFORMAT=LF'])
 
     f = gdal.VSIFOpenL('/vsimem/ogr_sqlite_44_out.csv', 'rb')
@@ -3595,7 +3595,7 @@ def ogr_spatialite_11():
 
     lyr = ds.CreateLayer('test2', geom_type = ogr.wkbNone)
     with gdaltest.error_handler():
-        res = lyr.CreateGeomField( ogr.GeomFieldDefn('foo', ogr.wkbCurvePolygon) )
+        res = lyr.CreateGeomField(ogr.GeomFieldDefn('foo', ogr.wkbCurvePolygon))
     if res == 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3636,106 +3636,106 @@ def ogr_sqlite_cleanup():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:tpoly' )
-    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:tpoly_2' )
-    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:tpoly_3' )
-    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:geomwkb' )
-    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:geomwkt' )
-    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:geomspatialite' )
-    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:wgs84layer' )
-    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:wgs84layer_approx' )
-    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:testtypes' )
-    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:fgf_table' )
+    gdaltest.sl_ds.ExecuteSQL('DELLAYER:tpoly')
+    gdaltest.sl_ds.ExecuteSQL('DELLAYER:tpoly_2')
+    gdaltest.sl_ds.ExecuteSQL('DELLAYER:tpoly_3')
+    gdaltest.sl_ds.ExecuteSQL('DELLAYER:geomwkb')
+    gdaltest.sl_ds.ExecuteSQL('DELLAYER:geomwkt')
+    gdaltest.sl_ds.ExecuteSQL('DELLAYER:geomspatialite')
+    gdaltest.sl_ds.ExecuteSQL('DELLAYER:wgs84layer')
+    gdaltest.sl_ds.ExecuteSQL('DELLAYER:wgs84layer_approx')
+    gdaltest.sl_ds.ExecuteSQL('DELLAYER:testtypes')
+    gdaltest.sl_ds.ExecuteSQL('DELLAYER:fgf_table')
 
     gdaltest.sl_ds = None
 
     gdaltest.shp_ds = None
 
     try:
-        os.remove( 'tmp/sqlite_test.db' )
+        os.remove('tmp/sqlite_test.db')
     except:
         pass
 
     try:
-        os.remove( 'tmp/spatialite_test.db' )
+        os.remove('tmp/spatialite_test.db')
     except:
         pass
 
     try:
-        os.remove( 'tmp/spatialite_test_with_epsg.db' )
+        os.remove('tmp/spatialite_test_with_epsg.db')
     except:
         pass
 
     try:
-        os.remove( 'tmp/non_spatialite_test_with_epsg.db' )
+        os.remove('tmp/non_spatialite_test_with_epsg.db')
     except:
         pass
     try:
-        os.remove( 'tmp/test24.sqlite' )
-    except:
-        pass
-
-    try:
-        os.remove( 'tmp/ogr_spatialite_5.sqlite' )
+        os.remove('tmp/test24.sqlite')
     except:
         pass
 
     try:
-        os.remove( 'tmp/ogr_spatialite_6.sqlite' )
+        os.remove('tmp/ogr_spatialite_5.sqlite')
     except:
         pass
 
     try:
-        os.remove( 'tmp/ogr_sqlite_27.sqlite' )
+        os.remove('tmp/ogr_spatialite_6.sqlite')
     except:
         pass
 
     try:
-        os.remove( 'tmp/ogr_sqlite_29.sqlite' )
+        os.remove('tmp/ogr_sqlite_27.sqlite')
     except:
         pass
 
     try:
-        os.remove( 'tmp/ogr_spatialite_8.sqlite' )
+        os.remove('tmp/ogr_sqlite_29.sqlite')
     except:
         pass
 
     try:
-        os.remove( 'tmp/ogr_sqlite_31.sqlite' )
+        os.remove('tmp/ogr_spatialite_8.sqlite')
     except:
         pass
 
     try:
-        os.remove( 'tmp/ogr_sqlite_32.sqlite' )
+        os.remove('tmp/ogr_sqlite_31.sqlite')
     except:
         pass
 
     try:
-        os.remove( 'tmp/ogr_sqlite_33.sqlite' )
+        os.remove('tmp/ogr_sqlite_32.sqlite')
     except:
         pass
 
     try:
-        os.remove( 'tmp/ogr_sqlite_35.sqlite' )
+        os.remove('tmp/ogr_sqlite_33.sqlite')
     except:
         pass
 
     try:
-        os.remove( 'tmp/ogr_sqlite_36.sqlite' )
+        os.remove('tmp/ogr_sqlite_35.sqlite')
     except:
         pass
 
     try:
-        os.remove( 'tmp/ogr_sqlite_37.sqlite' )
+        os.remove('tmp/ogr_sqlite_36.sqlite')
     except:
         pass
 
     try:
-        os.remove( 'tmp/ogr_sqlite_38.sqlite' )
+        os.remove('tmp/ogr_sqlite_37.sqlite')
+    except:
+        pass
+
+    try:
+        os.remove('tmp/ogr_sqlite_38.sqlite')
     except:
         pass
     try:
-        os.remove( 'tmp/ogr_spatialite_10.sqlite' )
+        os.remove('tmp/ogr_spatialite_10.sqlite')
     except:
         pass
     return 'success'
@@ -3834,8 +3834,8 @@ if __name__ == '__main__':
         run_without_spatialite = False
         gdal.SetConfigOption('SPATIALITE_LOAD', 'NO')
 
-    gdaltest.setup_run( 'ogr_sqlite' )
+    gdaltest.setup_run('ogr_sqlite')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

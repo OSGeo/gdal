@@ -32,7 +32,7 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -67,7 +67,7 @@ def rik_online_1():
         except:
             return 'skip'
 
-    tst = gdaltest.GDALTest('RIK', file_to_test, 1, 17162, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('RIK', file_to_test, 1, 17162, filename_absolute = 1)
     return tst.testOpen()
 
 ###############################################################################
@@ -85,7 +85,7 @@ def rik_online_2():
     if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/3674/ab-del.rik', 'ab-del.rik'):
         return 'skip'
 
-    tst = gdaltest.GDALTest('RIK', 'tmp/cache/ab-del.rik', 1, 44974, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('RIK', 'tmp/cache/ab-del.rik', 1, 44974, filename_absolute = 1)
     return tst.testOpen()
 
 
@@ -97,8 +97,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'RIK' )
+    gdaltest.setup_run('RIK')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

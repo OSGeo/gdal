@@ -47,7 +47,7 @@ except ImportError:
 # =============================================================================
 
 
-def read_lut( filename ):
+def read_lut(filename):
 
     lines = open(filename).readlines()
 
@@ -99,9 +99,9 @@ lut_filename = None
 create_options = []
 
 gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor( sys.argv )
+argv = gdal.GeneralCmdLineProcessor(sys.argv)
 if argv is None:
-    sys.exit( 0 )
+    sys.exit(0)
 
 # Parse command line arguments.
 i = 1
@@ -145,7 +145,7 @@ if src_filename is None or lut_filename is None:
 # ----------------------------------------------------------------------------
 # Load the LUT file.
 
-lut = read_lut( lut_filename )
+lut = read_lut(lut_filename)
 
 max_val = 0
 for entry in lut:
@@ -177,10 +177,10 @@ lookup = lookup.astype(tc)
 # Open source file
 
 if dst_filename is None:
-    src_ds = gdal.Open( src_filename, gdal.GA_Update )
+    src_ds = gdal.Open(src_filename, gdal.GA_Update)
     dst_ds = src_ds
 else:
-    src_ds = gdal.Open( src_filename )
+    src_ds = gdal.Open(src_filename)
     dst_ds = None
 
 if src_ds is None:
@@ -199,7 +199,7 @@ if dst_driver is None:
 
 if dst_ds is None:
     try:
-        dst_ds = gdal.Open( dst_filename, gdal.GA_Update )
+        dst_ds = gdal.Open(dst_filename, gdal.GA_Update)
     except:
         dst_ds = None
 
@@ -207,9 +207,9 @@ if dst_ds is None:
         dst_ds = dst_driver.Create(dst_filename,
                                    src_ds.RasterXSize,
                                    src_ds.RasterYSize,
-                                   1, gc, options = create_options )
-        dst_ds.SetProjection( src_ds.GetProjection() )
-        dst_ds.SetGeoTransform( src_ds.GetGeoTransform() )
+                                   1, gc, options = create_options)
+        dst_ds.SetProjection(src_ds.GetProjection())
+        dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
 
 
 dst_band = dst_ds.GetRasterBand(dst_band_n)
@@ -217,14 +217,14 @@ dst_band = dst_ds.GetRasterBand(dst_band_n)
 # ----------------------------------------------------------------------------
 # Do the processing one scanline at a time.
 
-gdal.TermProgress( 0.0 )
+gdal.TermProgress(0.0)
 for iY in range(src_ds.RasterYSize):
     src_data = src_band.ReadAsArray(0,iY,src_ds.RasterXSize,1)
 
     dst_data = numpy.take(lookup,src_data)
     dst_band.WriteArray(dst_data,0,iY)
 
-    gdal.TermProgress( (iY+1.0) / src_ds.RasterYSize )
+    gdal.TermProgress((iY+1.0) / src_ds.RasterYSize)
 
 src_ds = None
 dst_ds = None

@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal, osr
@@ -214,7 +214,7 @@ def applyverticalshiftgrid_3():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     grid_ds = gdal.Warp('', src_ds, format = 'MEM', dstSRS = 'EPSG:4326',
-                        width = 40, height = 40 )
+                        width = 40, height = 40)
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds,
                                          options = ['RESAMPLING=NEAREST'])
     if out_ds.RasterXSize != src_ds.RasterXSize:
@@ -438,8 +438,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'applyverticalshiftgrid' )
+    gdaltest.setup_run('applyverticalshiftgrid')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -80,7 +80,7 @@ import os
 import sys
 from osgeo import ogr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -108,11 +108,11 @@ def ogr_ntf_1():
     if ds.GetLayerCount() != 5:
         return 'fail'
 
-    layers = [ ('STRATEGI_POINT', ogr.wkbPoint, 9193),
+    layers = [('STRATEGI_POINT', ogr.wkbPoint, 9193),
                ('STRATEGI_LINE', ogr.wkbLineString, 8369),
                ('STRATEGI_TEXT', ogr.wkbPoint, 1335),
                ('STRATEGI_NODE', ogr.wkbNone, 10991),
-               ('FEATURE_CLASSES', ogr.wkbNone, 224) ]
+               ('FEATURE_CLASSES', ogr.wkbNone, 224)]
 
     for l in layers:
         lyr = ds.GetLayerByName(l[0])
@@ -158,11 +158,11 @@ def ogr_ntf_2():
     if ds.GetLayerCount() != 5:
         return 'fail'
 
-    layers = [ ('MERIDIAN2_POINT', ogr.wkbPoint, 408),
+    layers = [('MERIDIAN2_POINT', ogr.wkbPoint, 408),
                ('MERIDIAN2_LINE', ogr.wkbLineString, 513),
                ('MERIDIAN2_TEXT', ogr.wkbPoint, 7),
                ('MERIDIAN2_NODE', ogr.wkbNone, 397),
-               ('FEATURE_CLASSES', ogr.wkbNone, 50) ]
+               ('FEATURE_CLASSES', ogr.wkbNone, 50)]
 
     for l in layers:
         lyr = ds.GetLayerByName(l[0])
@@ -194,12 +194,12 @@ def ogr_ntf_2():
 
 gdaltest_list = [
     ogr_ntf_1,
-    ogr_ntf_2 ]
+    ogr_ntf_2]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_ntf' )
+    gdaltest.setup_run('ogr_ntf')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

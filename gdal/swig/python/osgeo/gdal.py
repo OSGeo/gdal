@@ -92,7 +92,7 @@ except AttributeError:
 have_warned = 0
 
 
-def deprecation_warn( module ):
+def deprecation_warn(module):
   global have_warned
 
   if have_warned == 1:
@@ -112,7 +112,7 @@ import gdalconst
 import sys
 byteorders = {"little": "<",
               "big": ">"}
-array_modes = { gdalconst.GDT_Int16:    ("%si2" % byteorders[sys.byteorder]),
+array_modes = {gdalconst.GDT_Int16:    ("%si2" % byteorders[sys.byteorder]),
                 gdalconst.GDT_UInt16:   ("%su2" % byteorders[sys.byteorder]),
                 gdalconst.GDT_Int32:    ("%si4" % byteorders[sys.byteorder]),
                 gdalconst.GDT_UInt32:   ("%su4" % byteorders[sys.byteorder]),
@@ -124,16 +124,16 @@ array_modes = { gdalconst.GDT_Int16:    ("%si2" % byteorders[sys.byteorder]),
 }
 
 
-def RGBFile2PCTFile( src_filename, dst_filename ):
+def RGBFile2PCTFile(src_filename, dst_filename):
   src_ds = Open(src_filename)
   if src_ds is None or src_ds == 'NULL':
       return 1
 
   ct = ColorTable()
-  err = ComputeMedianCutPCT( src_ds.GetRasterBand(1),
+  err = ComputeMedianCutPCT(src_ds.GetRasterBand(1),
                              src_ds.GetRasterBand(2),
                              src_ds.GetRasterBand(3),
-                             256, ct )
+                             256, ct)
   if err != 0:
       return err
 
@@ -141,15 +141,15 @@ def RGBFile2PCTFile( src_filename, dst_filename ):
   if gtiff_driver is None:
       return 1
 
-  dst_ds = gtiff_driver.Create( dst_filename,
-                                src_ds.RasterXSize, src_ds.RasterYSize )
-  dst_ds.GetRasterBand(1).SetRasterColorTable( ct )
+  dst_ds = gtiff_driver.Create(dst_filename,
+                                src_ds.RasterXSize, src_ds.RasterYSize)
+  dst_ds.GetRasterBand(1).SetRasterColorTable(ct)
 
-  err = DitherRGB2PCT( src_ds.GetRasterBand(1),
+  err = DitherRGB2PCT(src_ds.GetRasterBand(1),
                        src_ds.GetRasterBand(2),
                        src_ds.GetRasterBand(3),
                        dst_ds.GetRasterBand(1),
-                       ct )
+                       ct)
   dst_ds = None
   src_ds = None
 
@@ -310,19 +310,19 @@ def TranslateOptions(options = [], format = None,
         if format is not None:
             new_options += ['-of', format]
         if outputType != GDT_Unknown:
-            new_options += ['-ot', GetDataTypeName(outputType) ]
+            new_options += ['-ot', GetDataTypeName(outputType)]
         if maskBand != None:
-            new_options += ['-mask', str(maskBand) ]
+            new_options += ['-mask', str(maskBand)]
         if bandList != None:
             for b in bandList:
-                new_options += ['-b', str(b) ]
+                new_options += ['-b', str(b)]
         if width != 0 or height != 0:
             new_options += ['-outsize', str(width), str(height)]
         elif widthPct != 0 and heightPct != 0:
             new_options += ['-outsize', str(widthPct) + '%%', str(heightPct) + '%%']
         if creationOptions is not None:
             for opt in creationOptions:
-                new_options += ['-co', opt ]
+                new_options += ['-co', opt]
         if srcWin is not None:
             new_options += ['-srcwin', _strHighPrec(srcWin[0]), _strHighPrec(srcWin[1]), _strHighPrec(srcWin[2]), _strHighPrec(srcWin[3])]
         if strict:
@@ -333,7 +333,7 @@ def TranslateOptions(options = [], format = None,
             for scaleParam in scaleParams:
                 new_options += ['-scale']
                 for v in scaleParam:
-                    new_options += [ str(v) ]
+                    new_options += [str(v)]
         if exponents:
             for exponent in exponents:
                 new_options += ['-exponent', _strHighPrec(exponent)]
@@ -341,20 +341,20 @@ def TranslateOptions(options = [], format = None,
             new_options += ['-a_ullr', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
         if metadataOptions is not None:
             for opt in metadataOptions:
-                new_options += ['-mo', opt ]
+                new_options += ['-mo', opt]
         if outputSRS is not None:
-            new_options += ['-a_srs', str(outputSRS) ]
+            new_options += ['-a_srs', str(outputSRS)]
         if GCPs is not None:
             for gcp in GCPs:
-                new_options += ['-gcp', _strHighPrec(gcp.GCPPixel), _strHighPrec(gcp.GCPLine), _strHighPrec(gcp.GCPX), str(gcp.GCPY), _strHighPrec(gcp.GCPZ) ]
+                new_options += ['-gcp', _strHighPrec(gcp.GCPPixel), _strHighPrec(gcp.GCPLine), _strHighPrec(gcp.GCPX), str(gcp.GCPY), _strHighPrec(gcp.GCPZ)]
         if projWin is not None:
             new_options += ['-projwin', _strHighPrec(projWin[0]), _strHighPrec(projWin[1]), _strHighPrec(projWin[2]), _strHighPrec(projWin[3])]
         if projWinSRS is not None:
-            new_options += ['-projwin_srs', str(projWinSRS) ]
+            new_options += ['-projwin_srs', str(projWinSRS)]
         if noData is not None:
-            new_options += ['-a_nodata', _strHighPrec(noData) ]
+            new_options += ['-a_nodata', _strHighPrec(noData)]
         if rgbExpand is not None:
-            new_options += ['-expand', str(rgbExpand) ]
+            new_options += ['-expand', str(rgbExpand)]
         if stats:
             new_options += ['-stats']
         if not rat:
@@ -375,9 +375,9 @@ def TranslateOptions(options = [], format = None,
             elif resampleAlg == GRA_Mode:
                 new_options += ['-r', 'mode']
             else:
-                new_options += ['-r', str(resampleAlg) ]
+                new_options += ['-r', str(resampleAlg)]
         if xRes != 0 and yRes != 0:
-            new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes) ]
+            new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes)]
 
     return (GDALTranslateOptions(new_options), callback, callback_data)
 
@@ -469,21 +469,21 @@ def WarpOptions(options = [], format = None,
         if format is not None:
             new_options += ['-of', format]
         if outputType != GDT_Unknown:
-            new_options += ['-ot', GetDataTypeName(outputType) ]
+            new_options += ['-ot', GetDataTypeName(outputType)]
         if workingType != GDT_Unknown:
-            new_options += ['-wt', GetDataTypeName(workingType) ]
+            new_options += ['-wt', GetDataTypeName(workingType)]
         if outputBounds is not None:
-            new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3]) ]
+            new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
         if outputBoundsSRS is not None:
-            new_options += ['-te_srs', str(outputBoundsSRS) ]
+            new_options += ['-te_srs', str(outputBoundsSRS)]
         if xRes is not None and yRes is not None:
-            new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes) ]
+            new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes)]
         if width != 0 or height != 0:
             new_options += ['-ts', str(width), str(height)]
         if srcSRS is not None:
-            new_options += ['-s_srs', str(srcSRS) ]
+            new_options += ['-s_srs', str(srcSRS)]
         if dstSRS is not None:
-            new_options += ['-t_srs', str(dstSRS) ]
+            new_options += ['-t_srs', str(dstSRS)]
         if targetAlignedPixels:
             new_options += ['-tap']
         if srcAlpha:
@@ -513,16 +513,16 @@ def WarpOptions(options = [], format = None,
             elif resampleAlg == GRIORA_Gauss:
                 new_options += ['-r', 'gauss']
             else:
-                new_options += ['-r', str(resampleAlg) ]
+                new_options += ['-r', str(resampleAlg)]
         if warpMemoryLimit is not None:
-            new_options += ['-wm', str(warpMemoryLimit) ]
+            new_options += ['-wm', str(warpMemoryLimit)]
         if creationOptions is not None:
             for opt in creationOptions:
-                new_options += ['-co', opt ]
+                new_options += ['-co', opt]
         if srcNodata is not None:
-            new_options += ['-srcnodata', str(srcNodata) ]
+            new_options += ['-srcnodata', str(srcNodata)]
         if dstNodata is not None:
-            new_options += ['-dstnodata', str(dstNodata) ]
+            new_options += ['-dstnodata', str(dstNodata)]
         if multithread:
             new_options += ['-multi']
         if tps:
@@ -535,23 +535,23 @@ def WarpOptions(options = [], format = None,
             new_options += ['-order', str(polynomialOrder)]
         if transformerOptions is not None:
             for opt in transformerOptions:
-                new_options += ['-to', opt ]
+                new_options += ['-to', opt]
         if cutlineDSName is not None:
-            new_options += ['-cutline', str(cutlineDSName) ]
+            new_options += ['-cutline', str(cutlineDSName)]
         if cutlineLayer is not None:
-            new_options += ['-cl', str(cutlineLayer) ]
+            new_options += ['-cl', str(cutlineLayer)]
         if cutlineWhere is not None:
-            new_options += ['-cwhere', str(cutlineWhere) ]
+            new_options += ['-cwhere', str(cutlineWhere)]
         if cutlineSQL is not None:
-            new_options += ['-csql', str(cutlineSQL) ]
+            new_options += ['-csql', str(cutlineSQL)]
         if cutlineBlend is not None:
-            new_options += ['-cblend', str(cutlineBlend) ]
+            new_options += ['-cblend', str(cutlineBlend)]
         if cropToCutline:
             new_options += ['-crop_to_cutline']
         if not copyMetadata:
             new_options += ['-nomd']
         if metadataConflictValue:
-            new_options += ['-cvmd', str(metadataConflictValue) ]
+            new_options += ['-cvmd', str(metadataConflictValue)]
         if setColorInterpretation:
             new_options += ['-setci']
 
@@ -582,7 +582,7 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
             else:
                 srcDSTab.append(elt)
     else:
-        srcDSTab = [ srcDSOrSrcDSTab ]
+        srcDSTab = [srcDSOrSrcDSTab]
 
     if _is_str_or_unicode(destNameOrDestDS):
         return wrapper_GDALWarpDestName(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
@@ -646,18 +646,18 @@ def VectorTranslateOptions(options = [], format = None,
         if format is not None:
             new_options += ['-f', format]
         if srcSRS is not None:
-            new_options += ['-s_srs', str(srcSRS) ]
+            new_options += ['-s_srs', str(srcSRS)]
         if dstSRS is not None:
             if reproject:
-                new_options += ['-t_srs', str(dstSRS) ]
+                new_options += ['-t_srs', str(dstSRS)]
             else:
-                new_options += ['-a_srs', str(dstSRS) ]
+                new_options += ['-a_srs', str(dstSRS)]
         if SQLStatement is not None:
-            new_options += ['-sql', str(SQLStatement) ]
+            new_options += ['-sql', str(SQLStatement)]
         if SQLDialect is not None:
-            new_options += ['-dialect', str(SQLDialect) ]
+            new_options += ['-dialect', str(SQLDialect)]
         if where is not None:
-            new_options += ['-where', str(where) ]
+            new_options += ['-where', str(where)]
         if accessMode is not None:
             if accessMode == 'update':
                 new_options += ['-update']
@@ -680,22 +680,22 @@ def VectorTranslateOptions(options = [], format = None,
             new_options += ['-select', val]
         if datasetCreationOptions is not None:
             for opt in datasetCreationOptions:
-                new_options += ['-dsco', opt ]
+                new_options += ['-dsco', opt]
         if layerCreationOptions is not None:
             for opt in layerCreationOptions:
-                new_options += ['-lco', opt ]
+                new_options += ['-lco', opt]
         if layers is not None:
             if _is_str_or_unicode(layers):
-                new_options += [ layers ]
+                new_options += [layers]
             else:
                 for lyr in layers:
-                    new_options += [ lyr ]
+                    new_options += [lyr]
         if segmentizeMaxDist is not None:
-            new_options += ['-segmentize', str(segmentizeMaxDist) ]
+            new_options += ['-segmentize', str(segmentizeMaxDist)]
         if spatFilter is not None:
-            new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3]) ]
+            new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3])]
         if spatSRS is not None:
-            new_options += ['-spat_srs', str(spatSRS) ]
+            new_options += ['-spat_srs', str(spatSRS)]
         if layerName is not None:
             new_options += ['-nln', layerName]
         if geometryType is not None:
@@ -709,7 +709,7 @@ def VectorTranslateOptions(options = [], format = None,
         if limit is not None:
             new_options += ['-limit', str(limit)]
     if callback is not None:
-        new_options += [ '-progress' ]
+        new_options += ['-progress']
 
     return (GDALVectorTranslateOptions(new_options), callback, callback_data)
 
@@ -776,32 +776,32 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = None,
             new_options += ['-of', format]
         if creationOptions is not None:
             for opt in creationOptions:
-                new_options += ['-co', opt ]
+                new_options += ['-co', opt]
         if computeEdges:
-            new_options += ['-compute_edges' ]
+            new_options += ['-compute_edges']
         if alg ==  'ZevenbergenThorne':
             new_options += ['-alg', 'ZevenbergenThorne']
-        new_options += ['-b', str(band) ]
+        new_options += ['-b', str(band)]
         if zFactor is not None:
-            new_options += ['-z', str(zFactor) ]
+            new_options += ['-z', str(zFactor)]
         if scale is not None:
-            new_options += ['-s', str(scale) ]
+            new_options += ['-s', str(scale)]
         if azimuth is not None:
-            new_options += ['-az', str(azimuth) ]
+            new_options += ['-az', str(azimuth)]
         if altitude is not None:
-            new_options += ['-alt', str(altitude) ]
+            new_options += ['-alt', str(altitude)]
         if combined:
-            new_options += ['-combined' ]
+            new_options += ['-combined']
         if multiDirectional:
-            new_options += ['-multidirectional' ]
+            new_options += ['-multidirectional']
         if slopeFormat == 'percent':
-            new_options += ['-p' ]
+            new_options += ['-p']
         if trigonometric:
-            new_options += ['-trigonometric' ]
+            new_options += ['-trigonometric']
         if zeroForFlat:
-            new_options += ['-zero_for_flat' ]
+            new_options += ['-zero_for_flat']
         if addAlpha:
-            new_options += [ '-alpha' ]
+            new_options += ['-alpha']
 
     return (GDALDEMProcessingOptions(new_options), colorFilename, callback, callback_data)
 
@@ -855,7 +855,7 @@ def NearblackOptions(options = [], format = None,
             new_options += ['-of', format]
         if creationOptions is not None:
             for opt in creationOptions:
-                new_options += ['-co', opt ]
+                new_options += ['-co', opt]
         if white:
             new_options += ['-white']
         if colors is not None:
@@ -867,9 +867,9 @@ def NearblackOptions(options = [], format = None,
                     color_str += str(cpt)
                 new_options += ['-color',color_str]
         if maxNonBlack is not None:
-            new_options += ['-nb', str(maxNonBlack) ]
+            new_options += ['-nb', str(maxNonBlack)]
         if nearDist is not None:
-            new_options += ['-near', str(nearDist) ]
+            new_options += ['-near', str(nearDist)]
         if setAlpha:
             new_options += ['-setalpha']
         if setMask:
@@ -948,18 +948,18 @@ def GridOptions(options = [], format = None,
         if format is not None:
             new_options += ['-of', format]
         if outputType != GDT_Unknown:
-            new_options += ['-ot', GetDataTypeName(outputType) ]
+            new_options += ['-ot', GetDataTypeName(outputType)]
         if width != 0 or height != 0:
             new_options += ['-outsize', str(width), str(height)]
         if creationOptions is not None:
             for opt in creationOptions:
-                new_options += ['-co', opt ]
+                new_options += ['-co', opt]
         if outputBounds is not None:
             new_options += ['-txe', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[2]), '-tye', _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[3])]
         if outputSRS is not None:
-            new_options += ['-a_srs', str(outputSRS) ]
+            new_options += ['-a_srs', str(outputSRS)]
         if algorithm is not None:
-            new_options += ['-a', algorithm ]
+            new_options += ['-a', algorithm]
         if layers is not None:
             if type(layers) == type(()) or type(layers) == type([]):
                 for layer in layers:
@@ -967,17 +967,17 @@ def GridOptions(options = [], format = None,
             else:
                 new_options += ['-l', layers]
         if SQLStatement is not None:
-            new_options += ['-sql', str(SQLStatement) ]
+            new_options += ['-sql', str(SQLStatement)]
         if where is not None:
-            new_options += ['-where', str(where) ]
+            new_options += ['-where', str(where)]
         if zfield is not None:
-            new_options += ['-zfield', zfield ]
+            new_options += ['-zfield', zfield]
         if z_increase is not None:
-            new_options += ['-z_increase', str(z_increase) ]
+            new_options += ['-z_increase', str(z_increase)]
         if z_multiply is not None:
-            new_options += ['-z_multiply', str(z_multiply) ]
+            new_options += ['-z_multiply', str(z_multiply)]
         if spatFilter is not None:
-            new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3]) ]
+            new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3])]
 
     return (GDALGridOptions(new_options), callback, callback_data)
 
@@ -1050,28 +1050,28 @@ def RasterizeOptions(options = [], format = None,
         if format is not None:
             new_options += ['-of', format]
         if outputType != GDT_Unknown:
-            new_options += ['-ot', GetDataTypeName(outputType) ]
+            new_options += ['-ot', GetDataTypeName(outputType)]
         if creationOptions is not None:
             for opt in creationOptions:
-                new_options += ['-co', opt ]
+                new_options += ['-co', opt]
         if bands is not None:
             for b in bands:
-                new_options += ['-b', str(b) ]
+                new_options += ['-b', str(b)]
         if noData is not None:
-            new_options += ['-a_nodata', str(noData) ]
+            new_options += ['-a_nodata', str(noData)]
         if initValues is not None:
             if type(initValues) == type(()) or type(initValues) == type([]):
                 for val in initValues:
-                    new_options += ['-init', str(val) ]
+                    new_options += ['-init', str(val)]
             else:
-                new_options += ['-init', str(initValues) ]
+                new_options += ['-init', str(initValues)]
         if outputBounds is not None:
             new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
         if outputSRS is not None:
-            new_options += ['-a_srs', str(outputSRS) ]
+            new_options += ['-a_srs', str(outputSRS)]
         if transformerOptions is not None:
             for opt in transformerOptions:
-                new_options += ['-to', opt ]
+                new_options += ['-to', opt]
         if width is not None and height is not None:
             new_options += ['-ts', str(width), str(height)]
         if xRes is not None and yRes is not None:
@@ -1087,9 +1087,9 @@ def RasterizeOptions(options = [], format = None,
                 raise Exception('burnValues and attribute option are exclusive.')
             if type(burnValues) == type(()) or type(burnValues) == type([]):
                 for val in burnValues:
-                    new_options += ['-burn', str(val) ]
+                    new_options += ['-burn', str(val)]
             else:
-                new_options += ['-burn', str(burnValues) ]
+                new_options += ['-burn', str(burnValues)]
         if attribute is not None:
             new_options += ['-a', attribute]
         if useZ:
@@ -1101,13 +1101,13 @@ def RasterizeOptions(options = [], format = None,
             else:
                 new_options += ['-l', layers]
         if SQLStatement is not None:
-            new_options += ['-sql', str(SQLStatement) ]
+            new_options += ['-sql', str(SQLStatement)]
         if SQLDialect is not None:
-            new_options += ['-dialect', str(SQLDialect) ]
+            new_options += ['-dialect', str(SQLDialect)]
         if where is not None:
-            new_options += ['-where', str(where) ]
+            new_options += ['-where', str(where)]
         if optim is not None:
-            new_options += ['-optim', str(optim) ]
+            new_options += ['-optim', str(optim)]
 
     return (GDALRasterizeOptions(new_options), callback, callback_data)
 
@@ -1176,7 +1176,7 @@ def BuildVRTOptions(options = [],
     else:
         new_options = copy.copy(options)
         if resolution is not None:
-            new_options += ['-resolution', str(resolution) ]
+            new_options += ['-resolution', str(resolution)]
         if outputBounds is not None:
             new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
         if xRes is not None and yRes is not None:
@@ -1187,7 +1187,7 @@ def BuildVRTOptions(options = [],
             new_options += ['-separate']
         if bandList != None:
             for b in bandList:
-                new_options += ['-b', str(b) ]
+                new_options += ['-b', str(b)]
         if addAlpha:
             new_options += ['-addalpha']
         if resampleAlg is not None:
@@ -1208,15 +1208,15 @@ def BuildVRTOptions(options = [],
             elif resampleAlg == GRIORA_Gauss:
                 new_options += ['-r', 'gauss']
             else:
-                new_options += ['-r', str(resampleAlg) ]
+                new_options += ['-r', str(resampleAlg)]
         if outputSRS is not None:
-            new_options += ['-a_srs', str(outputSRS) ]
+            new_options += ['-a_srs', str(outputSRS)]
         if allowProjectionDifference:
             new_options += ['-allow_projection_difference']
         if srcNodata is not None:
-            new_options += ['-srcnodata', str(srcNodata) ]
+            new_options += ['-srcnodata', str(srcNodata)]
         if VRTNodata is not None:
-            new_options += ['-vrtnodata', str(VRTNodata) ]
+            new_options += ['-vrtnodata', str(VRTNodata)]
         if hideNodata:
             new_options += ['-hidenodata']
 
@@ -1241,7 +1241,7 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
     srcDSTab = []
     srcDSNamesTab = []
     if _is_str_or_unicode(srcDSOrSrcDSTab):
-        srcDSNamesTab = [ srcDSOrSrcDSTab ]
+        srcDSNamesTab = [srcDSOrSrcDSTab]
     elif type(srcDSOrSrcDSTab) == type([]):
         for elt in srcDSOrSrcDSTab:
             if _is_str_or_unicode(elt):
@@ -1251,7 +1251,7 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
         if len(srcDSTab) != 0 and len(srcDSNamesTab) != 0:
             raise Exception('Mix of names and dataset objects not supported')
     else:
-        srcDSTab = [ srcDSOrSrcDSTab ]
+        srcDSTab = [srcDSOrSrcDSTab]
 
     if len(srcDSTab) > 0:
         return BuildVRTInternalObjects(destName, srcDSTab, opts, callback, callback_data)
@@ -1618,10 +1618,10 @@ class MajorObject(_object):
         """SetMetadataItem(MajorObject self, char const * pszName, char const * pszValue, char const * pszDomain) -> CPLErr"""
         return _gdal.MajorObject_SetMetadataItem(self, *args)
 
-    def GetMetadata( self, domain = '' ):
+    def GetMetadata(self, domain = ''):
       if domain[:4] == 'xml:':
-        return self.GetMetadata_List( domain )
-      return self.GetMetadata_Dict( domain )
+        return self.GetMetadata_List(domain)
+      return self.GetMetadata_Dict(domain)
 
 
 MajorObject_swigregister = _gdal.MajorObject_swigregister
@@ -1772,7 +1772,7 @@ class GCP(_object):
     def __str__(self):
       str = '%s (%.2fP,%.2fL) -> (%.7fE,%.7fN,%.2f) %s '\
             % (self.Id, self.GCPPixel, self.GCPLine,
-               self.GCPX, self.GCPY, self.GCPZ, self.Info )
+               self.GCPX, self.GCPY, self.GCPZ, self.Info)
       return str
 
     def serialize(self,with_Z=0):
@@ -2125,17 +2125,17 @@ class Dataset(MajorObject):
         parameters should generally not be specified if buf_obj is specified. The array is returned"""
 
         import gdalnumeric
-        return gdalnumeric.DatasetReadAsArray( self, xoff, yoff, xsize, ysize, buf_obj,
+        return gdalnumeric.DatasetReadAsArray(self, xoff, yoff, xsize, ysize, buf_obj,
                                                buf_xsize, buf_ysize, buf_type,
                                                resample_alg = resample_alg,
                                                callback = callback,
-                                               callback_data = callback_data )
+                                               callback_data = callback_data)
 
     def WriteRaster(self, xoff, yoff, xsize, ysize,
                     buf_string,
                     buf_xsize = None, buf_ysize = None, buf_type = None,
                     band_list = None,
-                    buf_pixel_space = None, buf_line_space = None, buf_band_space = None ):
+                    buf_pixel_space = None, buf_line_space = None, buf_band_space = None):
 
         if buf_xsize is None:
             buf_xsize = xsize;
@@ -2149,7 +2149,7 @@ class Dataset(MajorObject):
         return _gdal.Dataset_WriteRaster(self,
                  xoff, yoff, xsize, ysize,
                 buf_string, buf_xsize, buf_ysize, buf_type, band_list,
-                buf_pixel_space, buf_line_space, buf_band_space )
+                buf_pixel_space, buf_line_space, buf_band_space)
 
     def ReadRaster(self, xoff = 0, yoff = 0, xsize = None, ysize = None,
                    buf_xsize = None, buf_ysize = None, buf_type = None,
@@ -2176,7 +2176,7 @@ class Dataset(MajorObject):
         return _gdal.Dataset_ReadRaster1(self, xoff, yoff, xsize, ysize,
                                             buf_xsize, buf_ysize, buf_type,
                                             band_list, buf_pixel_space, buf_line_space, buf_band_space,
-                                          resample_alg, callback, callback_data )
+                                          resample_alg, callback, callback_data)
 
     def GetVirtualMemArray(self, eAccess = gdalconst.GF_Read, xoff=0, yoff=0,
                            xsize=None, ysize=None, bufxsize=None, bufysize=None,
@@ -2209,7 +2209,7 @@ class Dataset(MajorObject):
             virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,band_list,band_sequential,cache_size,page_size_hint)
         else:
             virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,band_list,band_sequential,cache_size,page_size_hint, options)
-        return gdalnumeric.VirtualMemGetArray( virtualmem )
+        return gdalnumeric.VirtualMemGetArray(virtualmem)
 
     def GetTiledVirtualMemArray(self, eAccess = gdalconst.GF_Read, xoff=0, yoff=0,
                            xsize=None, ysize=None, tilexsize=256, tileysize=256,
@@ -2240,7 +2240,7 @@ class Dataset(MajorObject):
             virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,band_list,tile_organization,cache_size)
         else:
             virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,band_list,tile_organization,cache_size, options)
-        return gdalnumeric.VirtualMemGetArray( virtualmem )
+        return gdalnumeric.VirtualMemGetArray(virtualmem)
 
     def GetSubDatasets(self):
         sd_list = []
@@ -2251,8 +2251,8 @@ class Dataset(MajorObject):
 
         i = 1
         while 'SUBDATASET_'+str(i)+'_NAME' in sd:
-            sd_list.append( ( sd['SUBDATASET_'+str(i)+'_NAME'],
-                              sd['SUBDATASET_'+str(i)+'_DESC'] ) )
+            sd_list.append((sd['SUBDATASET_'+str(i)+'_NAME'],
+                              sd['SUBDATASET_'+str(i)+'_DESC']))
             i = i + 1
         return sd_list
 
@@ -2275,7 +2275,7 @@ class Dataset(MajorObject):
             from sys import version_info
             nRequiredSize = int(buf_xsize * buf_ysize * len(band_list) * (_gdal.GetDataTypeSize(buf_type) / 8))
             if version_info >= (3,0,0):
-                buf_obj_ar = [ None ]
+                buf_obj_ar = [None]
                 exec("buf_obj_ar[0] = b' ' * nRequiredSize")
                 buf_obj = buf_obj_ar[0]
             else:
@@ -2560,9 +2560,9 @@ class Band(MajorObject):
           approx_ok = False
       elif approx_ok == 1:
           approx_ok = True
-      new_args = [ approx_ok ]
+      new_args = [approx_ok]
       for arg in args[1:]:
-          new_args.append( arg )
+          new_args.append(arg)
 
       return _gdal.Band_ComputeStatistics(self, *new_args)
 
@@ -2593,7 +2593,7 @@ class Band(MajorObject):
 
         import gdalnumeric
 
-        return gdalnumeric.BandReadAsArray( self, xoff, yoff,
+        return gdalnumeric.BandReadAsArray(self, xoff, yoff,
                                             win_xsize, win_ysize,
                                             buf_xsize, buf_ysize, buf_type, buf_obj,
                                             resample_alg = resample_alg,
@@ -2606,10 +2606,10 @@ class Band(MajorObject):
                    callback_data = None):
         import gdalnumeric
 
-        return gdalnumeric.BandWriteArray( self, array, xoff, yoff,
+        return gdalnumeric.BandWriteArray(self, array, xoff, yoff,
                                            resample_alg = resample_alg,
                                            callback = callback,
-                                           callback_data = callback_data )
+                                           callback_data = callback_data)
 
     def GetVirtualMemArray(self, eAccess = gdalconst.GF_Read, xoff=0, yoff=0,
                            xsize=None, ysize=None, bufxsize=None, bufysize=None,
@@ -2636,7 +2636,7 @@ class Band(MajorObject):
               virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,cache_size,page_size_hint)
           else:
               virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,cache_size,page_size_hint,options)
-          return gdalnumeric.VirtualMemGetArray( virtualmem )
+          return gdalnumeric.VirtualMemGetArray(virtualmem)
 
     def GetVirtualMemAutoArray(self, eAccess = gdalconst.GF_Read, options = None):
           """Return a NumPy array for the band, seen as a virtual memory mapping.
@@ -2649,7 +2649,7 @@ class Band(MajorObject):
               virtualmem = self.GetVirtualMemAuto(eAccess)
           else:
               virtualmem = self.GetVirtualMemAuto(eAccess,options)
-          return gdalnumeric.VirtualMemGetArray( virtualmem )
+          return gdalnumeric.VirtualMemGetArray(virtualmem)
 
     def GetTiledVirtualMemArray(self, eAccess = gdalconst.GF_Read, xoff=0, yoff=0,
                              xsize=None, ysize=None, tilexsize=256, tileysize=256,
@@ -2672,7 +2672,7 @@ class Band(MajorObject):
               virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size)
           else:
               virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size,options)
-          return gdalnumeric.VirtualMemGetArray( virtualmem )
+          return gdalnumeric.VirtualMemGetArray(virtualmem)
 
     def __get_array_interface__(self):
         shape = [1, self.XSize, self.YSize]

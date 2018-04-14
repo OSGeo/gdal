@@ -33,7 +33,7 @@ from osgeo import gdal
 import sys
 from sys import version_info
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 try:
     import ctypes
@@ -90,7 +90,7 @@ def testnonboundtoswig_init():
         except:
             gdal_handle_stdcall = gdal_handle
 
-        gdal_handle_stdcall.GDALVersionInfo.argtypes = [ ctypes.c_char_p ]
+        gdal_handle_stdcall.GDALVersionInfo.argtypes = [ctypes.c_char_p]
         gdal_handle_stdcall.GDALVersionInfo.restype = ctypes.c_char_p
 
         dynamic_version = gdal_handle_stdcall.GDALVersionInfo(None)
@@ -120,7 +120,7 @@ def GDALDestroyDriverManager():
     if gdal_handle is None:
         return 'skip'
 
-    gdal_handle_stdcall.GDALDestroyDriverManager.argtypes = [ ]
+    gdal_handle_stdcall.GDALDestroyDriverManager.argtypes = []
     gdal_handle_stdcall.GDALDestroyDriverManager.restype = None
 
     gdal_handle_stdcall.GDALDestroyDriverManager()
@@ -139,7 +139,7 @@ def OGRCleanupAll():
     if gdal_handle is None:
         return 'skip'
 
-    gdal_handle_stdcall.OGRCleanupAll.argtypes = [ ]
+    gdal_handle_stdcall.OGRCleanupAll.argtypes = []
     gdal_handle_stdcall.OGRCleanupAll.restype = None
 
     gdal_handle_stdcall.OGRCleanupAll()
@@ -158,7 +158,7 @@ def OSRCleanup():
     if gdal_handle is None:
         return 'skip'
 
-    gdal_handle.OSRCleanup.argtypes = [ ]
+    gdal_handle.OSRCleanup.argtypes = []
     gdal_handle.OSRCleanup.restype = None
 
     gdal_handle.OSRCleanup()
@@ -179,19 +179,19 @@ def testnonboundtoswig_GDALSimpleImageWarp():
     wkt = src_ds.GetProjectionRef()
     src_ds = None
 
-    gdal_handle_stdcall.GDALOpen.argtypes = [ ctypes.c_char_p, ctypes.c_int]
+    gdal_handle_stdcall.GDALOpen.argtypes = [ctypes.c_char_p, ctypes.c_int]
     gdal_handle_stdcall.GDALOpen.restype = ctypes.c_void_p
 
-    gdal_handle_stdcall.GDALClose.argtypes = [ ctypes.c_void_p ]
+    gdal_handle_stdcall.GDALClose.argtypes = [ctypes.c_void_p]
     gdal_handle_stdcall.GDALClose.restype = None
 
     gdal_handle.GDALCreateGenImgProjTransformer2.restype = ctypes.c_void_p
-    gdal_handle.GDALCreateGenImgProjTransformer2.argtypes = [ ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+    gdal_handle.GDALCreateGenImgProjTransformer2.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
 
-    gdal_handle_stdcall.GDALSimpleImageWarp.argtypes = [ ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+    gdal_handle_stdcall.GDALSimpleImageWarp.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     gdal_handle_stdcall.GDALSimpleImageWarp.restype = ctypes.c_int
 
-    gdal_handle.GDALDestroyGenImgProjTransformer.argtypes = [ ctypes.c_void_p ]
+    gdal_handle.GDALDestroyGenImgProjTransformer.argtypes = [ctypes.c_void_p]
     gdal_handle.GDALDestroyGenImgProjTransformer.restype = None
 
     out_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/out.tif', 20, 20, 1)
@@ -217,7 +217,7 @@ def testnonboundtoswig_GDALSimpleImageWarp():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    pTransformerArg = gdal_handle.GDALCreateGenImgProjTransformer2( native_in_ds, native_out_ds, None )
+    pTransformerArg = gdal_handle.GDALCreateGenImgProjTransformer2(native_in_ds, native_out_ds, None)
     if pTransformerArg is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -323,14 +323,14 @@ def testnonboundtoswig_VRTDerivedBands():
                                             ctypes.c_int, # GDALDataType eSrcType
                                             ctypes.c_int, # GDALDataType eBufType
                                             ctypes.c_int,  # int nPixelSpace
-                                            ctypes.c_int )  # int nLineSpace
+                                            ctypes.c_int)  # int nLineSpace
 
     my_cDerivedPixelFunc = DerivedPixelFuncType(my_pyDerivedPixelFunc)
 
     #CPLErr CPL_DLL CPL_STDCALL GDALAddDerivedBandPixelFunc( const char *pszName,
     #                                GDALDerivedPixelFunc pfnPixelFunc );
 
-    gdal_handle_stdcall.GDALAddDerivedBandPixelFunc.argtypes = [ ctypes.c_char_p, DerivedPixelFuncType]
+    gdal_handle_stdcall.GDALAddDerivedBandPixelFunc.argtypes = [ctypes.c_char_p, DerivedPixelFuncType]
     gdal_handle_stdcall.GDALAddDerivedBandPixelFunc.restype = ctypes.c_int
 
     funcName = "pyDerivedPixelFunc"
@@ -378,14 +378,14 @@ def testnonboundtoswig_VRTDerivedBands():
     return 'success'
 
 
-gdaltest_list = [ testnonboundtoswig_init,
+gdaltest_list = [testnonboundtoswig_init,
                   testnonboundtoswig_GDALSimpleImageWarp,
-                  testnonboundtoswig_VRTDerivedBands ]
+                  testnonboundtoswig_VRTDerivedBands]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'testnonboundtoswig' )
+    gdaltest.setup_run('testnonboundtoswig')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,7 +40,7 @@ import gdaltest
 
 def sgi_1():
 
-    tst = gdaltest.GDALTest( 'SGI', 'byte.sgi', 1, 4672 )
+    tst = gdaltest.GDALTest('SGI', 'byte.sgi', 1, 4672)
 
     return tst.testOpen()
 
@@ -50,7 +50,7 @@ def sgi_1():
 
 def sgi_2():
 
-    tst = gdaltest.GDALTest( 'SGI', 'byte.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('SGI', 'byte.tif', 1, 4672)
 
     return tst.testCreate()
 
@@ -60,7 +60,7 @@ def sgi_2():
 
 def sgi_3():
 
-    tst = gdaltest.GDALTest( 'SGI', 'rgbsmall.tif', 2, 21053 )
+    tst = gdaltest.GDALTest('SGI', 'rgbsmall.tif', 2, 21053)
 
     return tst.testCreate()
 
@@ -74,8 +74,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'SGI' )
+    gdaltest.setup_run('SGI')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

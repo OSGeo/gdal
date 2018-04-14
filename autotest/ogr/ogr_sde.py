@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -50,7 +50,7 @@ sde_password = 'sde'
 
 gdaltest.sde_dr = None
 try:
-    gdaltest.sde_dr = ogr.GetDriverByName( 'SDE' )
+    gdaltest.sde_dr = ogr.GetDriverByName('SDE')
 except:
     pass
 
@@ -81,34 +81,34 @@ def ogr_sde_2():
         return 'skip'
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
 
-    shp_ds = ogr.Open( 'data/poly.shp' )
+    shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
 
     ds = ogr.Open(base, update=1)
-    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=shp_lyr.GetSpatialRef(),options = [ 'OVERWRITE=YES' ] )
+    lyr = ds.CreateLayer('SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=shp_lyr.GetSpatialRef(),options = ['OVERWRITE=YES'])
 #    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon)
 
-    ogrtest.quick_create_layer_def( lyr,
-                                    [ ('AREA', ogr.OFTReal),
+    ogrtest.quick_create_layer_def(lyr,
+                                    [('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString),
-                                      ('WHEN', ogr.OFTDateTime) ] )
+                                      ('WHEN', ogr.OFTDateTime)])
 
     #######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
 
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
 
     while feat is not None:
 
-        gdaltest.poly_feat.append( feat )
+        gdaltest.poly_feat.append(feat)
 
-        dst_feat.SetFrom( feat )
-        lyr.CreateFeature( dst_feat )
+        dst_feat.SetFrom(feat)
+        lyr.CreateFeature(dst_feat)
 
         feat = shp_lyr.GetNextFeature()
 
@@ -140,13 +140,13 @@ def ogr_sde_4():
     if gdaltest.sde_dr is None:
         return 'skip'
     version_name = 'TESTING'
-    gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'TRUE' )
+    gdal.SetConfigOption('SDE_VERSIONOVERWRITE', 'TRUE')
 
     base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, version_name)
     ds = ogr.Open(base, update=1)
     ds.Destroy()
 
-    gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'FALSE' )
+    gdal.SetConfigOption('SDE_VERSIONOVERWRITE', 'FALSE')
 
     base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, version_name)
     ds = ogr.Open(base, update=1)
@@ -161,7 +161,7 @@ def ogr_sde_5():
     if gdaltest.sde_dr is None:
         return 'skip'
     version_name = 'TESTING'
-    gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'TRUE' )
+    gdal.SetConfigOption('SDE_VERSIONOVERWRITE', 'TRUE')
 
     base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, version_name)
     ds = ogr.Open(base, update=1)
@@ -176,7 +176,7 @@ def ogr_sde_5():
     del ds
 
     default = 'DEFAULT'
-    gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'FALSE' )
+    gdal.SetConfigOption('SDE_VERSIONOVERWRITE', 'FALSE')
 
     default = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, default)
 #    print default
@@ -257,7 +257,7 @@ def ogr_sde_7():
     ds.Destroy()
 
     default = 'DEFAULT'
-    gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'FALSE' )
+    gdal.SetConfigOption('SDE_VERSIONOVERWRITE', 'FALSE')
 
     default = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (
         sde_server, sde_port, sde_db, sde_user, sde_password, default)
@@ -269,7 +269,7 @@ def ogr_sde_7():
     ds.Destroy()
 
     default = 'DEFAULT'
-    gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'FALSE' )
+    gdal.SetConfigOption('SDE_VERSIONOVERWRITE', 'FALSE')
 
     default = 'SDE:%s,%s,%s,%s,%s' % (
         sde_server, sde_port, sde_db, sde_user, sde_password)
@@ -289,7 +289,7 @@ def ogr_sde_8():
         return 'skip'
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
 
-    shp_ds = ogr.Open( 'data/poly.shp' )
+    shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
 
@@ -297,29 +297,29 @@ def ogr_sde_8():
     ref.ImportFromWkt('LOCAL_CS["IMAGE"]')
 
     ds = ogr.Open(base, update=1)
-    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options = [ 'OVERWRITE=YES' ] )
+    lyr = ds.CreateLayer('SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options = ['OVERWRITE=YES'])
     ref.ImportFromEPSG(4326)
-    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options = [ 'OVERWRITE=YES' ] )
-    ogrtest.quick_create_layer_def( lyr,
-                                    [ ('AREA', ogr.OFTReal),
+    lyr = ds.CreateLayer('SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options = ['OVERWRITE=YES'])
+    ogrtest.quick_create_layer_def(lyr,
+                                    [('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString),
-                                      ('WHEN', ogr.OFTDateTime) ] )
+                                      ('WHEN', ogr.OFTDateTime)])
 
     #######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
 
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
 
     while feat is not None:
 
-        gdaltest.poly_feat.append( feat )
+        gdaltest.poly_feat.append(feat)
 
-        dst_feat.SetFrom( feat )
-        lyr.CreateFeature( dst_feat )
+        dst_feat.SetFrom(feat)
+        lyr.CreateFeature(dst_feat)
 
         feat = shp_lyr.GetNextFeature()
 
@@ -353,8 +353,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_sde' )
+    gdaltest.setup_run('ogr_sde')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

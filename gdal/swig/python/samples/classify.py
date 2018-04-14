@@ -43,7 +43,7 @@ src_ds = gdal.Open('utm.tif')
 xsize = src_ds.RasterXSize
 ysize = src_ds.RasterYSize
 
-src_image = gdalnumeric.LoadFile( 'utm.tif' )
+src_image = gdalnumeric.LoadFile('utm.tif')
 
 dst_image = numpy.zeros((ysize,xsize))
 
@@ -58,6 +58,6 @@ for class_info in class_defs:
         numpy.greater_equal(src_image,class_start),
         numpy.less_equal(src_image,class_end))
 
-    dst_image = numpy.choose( mask, (dst_image,class_value) )
+    dst_image = numpy.choose(mask, (dst_image,class_value))
 
-gdalnumeric.SaveArray( dst_image, 'classes.tif' )
+gdalnumeric.SaveArray(dst_image, 'classes.tif')

@@ -32,7 +32,7 @@ import os
 import shutil
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -48,9 +48,9 @@ def test_gdalmove_1():
     if script_path is None:
         return 'skip'
 
-    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdalmove_1.tif' )
+    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdalmove_1.tif')
 
-    test_py_scripts.run_py_script(script_path, 'gdalmove', '-s_srs "+proj=utm +zone=11 +ellps=clrk66 +towgs84=0,0,0 +no_defs" -t_srs EPSG:32611 tmp/test_gdalmove_1.tif -et 1' )
+    test_py_scripts.run_py_script(script_path, 'gdalmove', '-s_srs "+proj=utm +zone=11 +ellps=clrk66 +towgs84=0,0,0 +no_defs" -t_srs EPSG:32611 tmp/test_gdalmove_1.tif -et 1')
 
     ds = gdal.Open('tmp/test_gdalmove_1.tif')
     got_gt = ds.GetGeoTransform()
@@ -76,7 +76,7 @@ def test_gdalmove_1():
 
 def test_gdalmove_cleanup():
 
-    lst = [ 'tmp/test_gdalmove_1.tif' ]
+    lst = ['tmp/test_gdalmove_1.tif']
     for filename in lst:
         try:
             os.remove(filename)
@@ -94,8 +94,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdalmove' )
+    gdaltest.setup_run('test_gdalmove')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

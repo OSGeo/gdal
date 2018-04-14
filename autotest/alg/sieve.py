@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -43,14 +43,14 @@ from osgeo import gdal
 
 def sieve_1():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
+    drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/sieve_src.grd')
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create('tmp/sieve_1.tif', 5, 7, 1, gdal.GDT_Byte )
+    dst_ds = drv.Create('tmp/sieve_1.tif', 5, 7, 1, gdal.GDT_Byte)
     dst_band = dst_ds.GetRasterBand(1)
 
-    gdal.SieveFilter( src_band, None, dst_band, 2, 4 )
+    gdal.SieveFilter(src_band, None, dst_band, 2, 4)
 
     cs_expected = 364
     cs = dst_band.Checksum()
@@ -59,12 +59,12 @@ def sieve_1():
     dst_ds = None
 
     if cs == cs_expected \
-       or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
-        drv.Delete( 'tmp/sieve_1.tif' )
+       or gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
+        drv.Delete('tmp/sieve_1.tif')
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason( 'got wrong checksum' )
+        gdaltest.post_reason('got wrong checksum')
         return 'fail'
     else:
         return 'success'
@@ -75,14 +75,14 @@ def sieve_1():
 
 def sieve_2():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
+    drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/sieve_src.grd')
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create('tmp/sieve_2.tif', 5, 7, 1, gdal.GDT_Byte )
+    dst_ds = drv.Create('tmp/sieve_2.tif', 5, 7, 1, gdal.GDT_Byte)
     dst_band = dst_ds.GetRasterBand(1)
 
-    gdal.SieveFilter( src_band, None, dst_band, 2, 8 )
+    gdal.SieveFilter(src_band, None, dst_band, 2, 8)
 
     cs_expected = 370
     cs = dst_band.Checksum()
@@ -91,12 +91,12 @@ def sieve_2():
     dst_ds = None
 
     if cs == cs_expected \
-       or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
-        drv.Delete( 'tmp/sieve_2.tif' )
+       or gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
+        drv.Delete('tmp/sieve_2.tif')
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason( 'got wrong checksum' )
+        gdaltest.post_reason('got wrong checksum')
         return 'fail'
     else:
         return 'success'
@@ -107,14 +107,14 @@ def sieve_2():
 
 def sieve_3():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
+    drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/unmergable.grd')
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create('tmp/sieve_3.tif', 5, 7, 1, gdal.GDT_Byte )
+    dst_ds = drv.Create('tmp/sieve_3.tif', 5, 7, 1, gdal.GDT_Byte)
     dst_band = dst_ds.GetRasterBand(1)
 
-    gdal.SieveFilter( src_band, None, dst_band, 2, 8 )
+    gdal.SieveFilter(src_band, None, dst_band, 2, 8)
 
     #cs_expected = 472
     cs_expected = 451
@@ -124,12 +124,12 @@ def sieve_3():
     dst_ds = None
 
     if cs == cs_expected \
-       or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
-        drv.Delete( 'tmp/sieve_3.tif' )
+       or gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
+        drv.Delete('tmp/sieve_3.tif')
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason( 'got wrong checksum' )
+        gdaltest.post_reason('got wrong checksum')
         return 'fail'
     else:
         return 'success'
@@ -140,14 +140,14 @@ def sieve_3():
 
 def sieve_4():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
+    drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/sieve_2634.grd')
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create('tmp/sieve_4.tif', 10, 8, 1, gdal.GDT_Byte )
+    dst_ds = drv.Create('tmp/sieve_4.tif', 10, 8, 1, gdal.GDT_Byte)
     dst_band = dst_ds.GetRasterBand(1)
 
-    gdal.SieveFilter( src_band, None, dst_band, 2, 4 )
+    gdal.SieveFilter(src_band, None, dst_band, 2, 4)
 
     cs_expected = 98
     cs = dst_band.Checksum()
@@ -156,12 +156,12 @@ def sieve_4():
     dst_ds = None
 
     if cs == cs_expected \
-       or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
-        drv.Delete( 'tmp/sieve_4.tif' )
+       or gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
+        drv.Delete('tmp/sieve_4.tif')
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason( 'got wrong checksum' )
+        gdaltest.post_reason('got wrong checksum')
         return 'fail'
     else:
         return 'success'
@@ -173,14 +173,14 @@ def sieve_4():
 
 def sieve_5():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
+    drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/sieve_src.grd')
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create('tmp/sieve_1.tif', 5, 7, 1, gdal.GDT_Byte )
+    dst_ds = drv.Create('tmp/sieve_1.tif', 5, 7, 1, gdal.GDT_Byte)
     dst_band = dst_ds.GetRasterBand(1)
 
-    gdal.SieveFilter( src_band, dst_band.GetMaskBand(), dst_band, 2, 4 )
+    gdal.SieveFilter(src_band, dst_band.GetMaskBand(), dst_band, 2, 4)
 
     cs_expected = 364
     cs = dst_band.Checksum()
@@ -189,12 +189,12 @@ def sieve_5():
     dst_ds = None
 
     if cs == cs_expected \
-       or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
-        drv.Delete( 'tmp/sieve_1.tif' )
+       or gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
+        drv.Delete('tmp/sieve_1.tif')
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason( 'got wrong checksum' )
+        gdaltest.post_reason('got wrong checksum')
         return 'fail'
     else:
         return 'success'
@@ -226,7 +226,7 @@ def sieve_6():
 
     band = ds.GetRasterBand(1)
 
-    gdal.SieveFilter( band, None, band, 2, 4 )
+    gdal.SieveFilter(band, None, band, 2, 4)
 
     #ar = band.ReadAsArray()
     #print(ar)
@@ -234,7 +234,7 @@ def sieve_6():
     cs = band.Checksum()
     if (size == 102 and cs != 60955) or (size == 3002 and cs != 63178):
         print('Got: ', cs)
-        gdaltest.post_reason( 'got wrong checksum' )
+        gdaltest.post_reason('got wrong checksum')
         return 'fail'
 
     return 'success'
@@ -260,14 +260,14 @@ NODATA_value 0
  0 1 1 1 1 1 1
  """)
 
-    drv = gdal.GetDriverByName( 'GTiff' )
+    drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('/vsimem/sieve_7.asc')
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create('/vsimem/sieve_7.tif', 7, 7, 1, gdal.GDT_Byte )
+    dst_ds = drv.Create('/vsimem/sieve_7.tif', 7, 7, 1, gdal.GDT_Byte)
     dst_band = dst_ds.GetRasterBand(1)
 
-    gdal.SieveFilter( src_band, src_band.GetMaskBand(), dst_band, 4, 4 )
+    gdal.SieveFilter(src_band, src_band.GetMaskBand(), dst_band, 4, 4)
 
     cs_expected = 42
     cs = dst_band.Checksum()
@@ -278,8 +278,8 @@ NODATA_value 0
     gdal.Unlink('/vsimem/sieve_7.asc')
 
     if cs == cs_expected \
-       or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
-        drv.Delete( '/vsimem/sieve_7.tif' )
+       or gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
+        drv.Delete('/vsimem/sieve_7.tif')
 
     # Expected:
     #[[0 0 0 0 0 0 0]
@@ -292,7 +292,7 @@ NODATA_value 0
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason( 'got wrong checksum' )
+        gdaltest.post_reason('got wrong checksum')
         return 'fail'
     else:
         return 'success'
@@ -318,14 +318,14 @@ cellsize     60.000000000000
  0 0 0 0 0 0 0
  """)
 
-    drv = gdal.GetDriverByName( 'GTiff' )
+    drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('/vsimem/sieve_8.asc')
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create('/vsimem/sieve_8.tif', 7, 7, 1, gdal.GDT_Byte )
+    dst_ds = drv.Create('/vsimem/sieve_8.tif', 7, 7, 1, gdal.GDT_Byte)
     dst_band = dst_ds.GetRasterBand(1)
 
-    gdal.SieveFilter( src_band, src_band.GetMaskBand(), dst_band, 4, 4 )
+    gdal.SieveFilter(src_band, src_band.GetMaskBand(), dst_band, 4, 4)
 
     # All non 0 should be mapped to 0
     cs_expected = 0
@@ -337,12 +337,12 @@ cellsize     60.000000000000
     gdal.Unlink('/vsimem/sieve_8.asc')
 
     if cs == cs_expected \
-       or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
-        drv.Delete( '/vsimem/sieve_8.tif' )
+       or gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
+        drv.Delete('/vsimem/sieve_8.tif')
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason( 'got wrong checksum' )
+        gdaltest.post_reason('got wrong checksum')
         return 'fail'
     else:
         return 'success'
@@ -361,8 +361,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'sieve' )
+    gdaltest.setup_run('sieve')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

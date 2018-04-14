@@ -69,7 +69,7 @@ def nwt_grd_2():
 
 
 gdaltest_list = [
-    nwt_grd_1, nwt_grd_2 ]
+    nwt_grd_1, nwt_grd_2]
 
 if __name__ == '__main__':
 

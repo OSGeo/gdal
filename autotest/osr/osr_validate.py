@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import osr
@@ -304,12 +304,12 @@ gdaltest_list = [
     osr_validate_3,
     osr_validate_4,
     osr_validate_5,
-    osr_validate_6 ]
+    osr_validate_6]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'osr_validate' )
+    gdaltest.setup_run('osr_validate')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -56,17 +56,17 @@ def GetOutputDriversFor(filename):
             drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
            drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
             if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
-                drv_list.append( drv.ShortName )
+                drv_list.append(drv.ShortName)
             else:
                 prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
                 if prefix is not None and filename.lower().startswith(prefix.lower()):
-                    drv_list.append( drv.ShortName )
+                    drv_list.append(drv.ShortName)
 
     # GMT is registered before netCDF for opening reasons, but we want
     # netCDF to be used by default for output.
     if ext.lower() == 'nc' and len(drv_list) == 0 and \
        drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
-           drv_list = [ 'NETCDF', 'GMT' ]
+           drv_list = ['NETCDF', 'GMT']
 
     return drv_list
 
@@ -98,7 +98,7 @@ def Usage():
 
 def gdal_pansharpen(argv):
 
-    argv = gdal.GeneralCmdLineProcessor( argv )
+    argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return -1
 
@@ -194,7 +194,7 @@ def gdal_pansharpen(argv):
         format = GetOutputDriverFor(out_name)
 
     if len(bands) == 0:
-        bands = [ j+1 for j in range(len(spectral_bands)) ]
+        bands = [j+1 for j in range(len(spectral_bands))]
     else:
         for i in range(len(bands)):
             if bands[i] < 0 or bands[i] > len(spectral_bands):
@@ -206,7 +206,7 @@ def gdal_pansharpen(argv):
         return 1
 
     vrt_xml = """<VRTDataset subClass="VRTPansharpenedDataset">\n"""
-    if bands != [ j+1 for j in range(len(spectral_bands)) ]:
+    if bands != [j+1 for j in range(len(spectral_bands))]:
         for i in range(len(bands)):
             band = spectral_bands[bands[i]-1]
             datatype = gdal.GetDataTypeName(band.DataType)

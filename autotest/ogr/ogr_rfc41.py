@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
@@ -165,7 +165,7 @@ def ogr_rfc41_2():
             return 'fail'
 
     # Recreate the field
-    for t in [ ogr.wkbPoint, ogr.wkbLineString ]:
+    for t in [ogr.wkbPoint, ogr.wkbLineString]:
         feature_defn.SetGeomType(t)
         if feature_defn.GetGeomFieldCount() != 1:
             gdaltest.post_reason('fail')
@@ -634,10 +634,10 @@ def ogr_rfc41_6():
 
     # Test implicit geometry column (since poly has one single geometry column)
     # then explicit geometry column
-    for sql in [ 'SELECT intfield FROM poly',
+    for sql in ['SELECT intfield FROM poly',
                  'SELECT * FROM poly',
                  'SELECT intfield, geomfield FROM poly',
-                 'SELECT geomfield, intfield FROM poly' ]:
+                 'SELECT geomfield, intfield FROM poly']:
         sql_lyr = ds.ExecuteSQL(sql)
         if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbPolygon:
             gdaltest.post_reason('fail')
@@ -795,14 +795,14 @@ def ogr_rfc41_6():
     ds.ReleaseResultSet(sql_lyr)
 
     wrong_sql_list = [
-        ( 'SELECT DISTINCT geomfield FROM poly', 'SELECT DISTINCT on a geometry not supported' ),
-        ( 'SELECT COUNT(DISTINCT geomfield) FROM poly', 'SELECT COUNT DISTINCT on a geometry not supported' ),
-        ( 'SELECT MAX(geomfield) FROM poly', 'Use of field function MAX() on geometry field' ),
-        ( 'SELECT CAST(5 AS GEOMETRY) FROM poly', 'Cannot cast integer to geometry'),
-        ( 'SELECT CAST(geomfield AS integer) FROM poly', 'Cannot cast geometry to integer' ),
-        ( 'SELECT CAST(geomfield AS GEOMETRY(2)) FROM poly', 'First argument of CAST operator should be a geometry type identifier'),
-        ( 'SELECT CAST(geomfield AS GEOMETRY(UNSUPPORTED_TYPE)) FROM poly', 'SQL Expression Parsing Error: syntax error' ),
-        ( 'SELECT CAST(geomfield AS GEOMETRY(UNSUPPORTED_TYPE,5)) FROM poly', 'SQL Expression Parsing Error: syntax error' ),
+        ('SELECT DISTINCT geomfield FROM poly', 'SELECT DISTINCT on a geometry not supported'),
+        ('SELECT COUNT(DISTINCT geomfield) FROM poly', 'SELECT COUNT DISTINCT on a geometry not supported'),
+        ('SELECT MAX(geomfield) FROM poly', 'Use of field function MAX() on geometry field'),
+        ('SELECT CAST(5 AS GEOMETRY) FROM poly', 'Cannot cast integer to geometry'),
+        ('SELECT CAST(geomfield AS integer) FROM poly', 'Cannot cast geometry to integer'),
+        ('SELECT CAST(geomfield AS GEOMETRY(2)) FROM poly', 'First argument of CAST operator should be a geometry type identifier'),
+        ('SELECT CAST(geomfield AS GEOMETRY(UNSUPPORTED_TYPE)) FROM poly', 'SQL Expression Parsing Error: syntax error'),
+        ('SELECT CAST(geomfield AS GEOMETRY(UNSUPPORTED_TYPE,5)) FROM poly', 'SQL Expression Parsing Error: syntax error'),
     ]
 
     for (sql, error_msg) in wrong_sql_list:
@@ -819,7 +819,7 @@ def ogr_rfc41_6():
             return 'fail'
 
     # Test invalid expressions with geometry
-    for sql in [ "SELECT geomfield + 'a' FROM poly",
+    for sql in ["SELECT geomfield + 'a' FROM poly",
                  "SELECT geomfield * 'a' FROM poly",
                  "SELECT geomfield + 'a' FROM poly",
                  "SELECT geomfield - 'a' FROM poly",
@@ -960,9 +960,9 @@ def ogr_rfc41_6():
     lyr.SetFeature(feat)
     feat = None
 
-    for sql in [ 'SELECT * FROM poly',
+    for sql in ['SELECT * FROM poly',
                  'SELECT geomfield, secondarygeom FROM poly',
-                 'SELECT secondarygeom, geomfield FROM poly' ]:
+                 'SELECT secondarygeom, geomfield FROM poly']:
         sql_lyr = ds.ExecuteSQL(sql)
         feat = sql_lyr.GetNextFeature()
         if feat.GetGeomFieldRef('geomfield').ExportToWkt() != 'POINT (1 2)':
@@ -1142,8 +1142,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_rfc41' )
+    gdaltest.setup_run('ogr_rfc41')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

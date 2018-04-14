@@ -41,7 +41,7 @@ def Usage():
 def gdal_rm(argv, progress = None):
     filename = None
 
-    argv = gdal.GeneralCmdLineProcessor( argv )
+    argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return -1
 

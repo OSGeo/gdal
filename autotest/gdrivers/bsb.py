@@ -31,7 +31,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -41,7 +41,7 @@ import gdaltest
 
 def bsb_0():
     try:
-        gdaltest.bsb_dr = gdal.GetDriverByName( 'BSB' )
+        gdaltest.bsb_dr = gdal.GetDriverByName('BSB')
     except:
         gdaltest.bsb_dr = None
 
@@ -58,7 +58,7 @@ def bsb_1():
     if gdaltest.bsb_dr is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'BSB', 'rgbsmall.kap', 1, 30321 )
+    tst = gdaltest.GDALTest('BSB', 'rgbsmall.kap', 1, 30321)
 
     return tst.testOpen()
 
@@ -74,7 +74,7 @@ def bsb_2():
     if 'DMD_CREATIONDATATYPES' not in md:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'BSB', 'rgbsmall.kap', 1, 30321 )
+    tst = gdaltest.GDALTest('BSB', 'rgbsmall.kap', 1, 30321)
 
     return tst.testCreateCopy()
 
@@ -89,7 +89,7 @@ def bsb_3():
     if gdaltest.bsb_dr is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'BSB', 'rgbsmall_index.kap', 1, 30321 )
+    tst = gdaltest.GDALTest('BSB', 'rgbsmall_index.kap', 1, 30321)
 
     return tst.testOpen()
 
@@ -103,7 +103,7 @@ def bsb_4():
     if gdaltest.bsb_dr is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'BSB', 'rgbsmall_with_line_break.kap', 1, 30321 )
+    tst = gdaltest.GDALTest('BSB', 'rgbsmall_with_line_break.kap', 1, 30321)
 
     return tst.testOpen()
 
@@ -115,7 +115,7 @@ def bsb_5():
     if gdaltest.bsb_dr is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'BSB', 'rgbsmall_truncated.kap', 1, 29696 )
+    tst = gdaltest.GDALTest('BSB', 'rgbsmall_truncated.kap', 1, 29696)
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = tst.testOpen()
@@ -131,7 +131,7 @@ def bsb_6():
     if gdaltest.bsb_dr is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'BSB', 'rgbsmall_truncated2.kap', 1, 29696 )
+    tst = gdaltest.GDALTest('BSB', 'rgbsmall_truncated2.kap', 1, 29696)
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = tst.testOpen()
@@ -153,8 +153,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'BSB' )
+    gdaltest.setup_run('BSB')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

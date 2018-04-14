@@ -32,7 +32,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import ogrtest
@@ -43,7 +43,7 @@ import gdaltest
 
 def cutline_1():
 
-    tst = gdaltest.GDALTest( 'VRT', 'cutline_noblend.vrt', 1, 11409 )
+    tst = gdaltest.GDALTest('VRT', 'cutline_noblend.vrt', 1, 11409)
     return tst.testOpen()
 
 ###############################################################################
@@ -54,7 +54,7 @@ def cutline_2():
     if not ogrtest.have_geos():
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'VRT', 'cutline_blend.vrt', 1, 21395 )
+    tst = gdaltest.GDALTest('VRT', 'cutline_blend.vrt', 1, 21395)
     return tst.testOpen()
 
 ###############################################################################
@@ -65,7 +65,7 @@ def cutline_3():
     if not ogrtest.have_geos():
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'VRT', 'cutline_multipolygon.vrt', 1, 20827 )
+    tst = gdaltest.GDALTest('VRT', 'cutline_multipolygon.vrt', 1, 20827)
     return tst.testOpen()
 
 ###############################################################################
@@ -133,8 +133,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'cutline' )
+    gdaltest.setup_run('cutline')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

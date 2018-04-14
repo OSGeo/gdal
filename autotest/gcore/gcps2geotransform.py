@@ -32,7 +32,7 @@
 from osgeo import gdal
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -58,7 +58,7 @@ def _list2gcps(src_list):
 def gcps2gt_1():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
-                (  0.0,   0.0, 400000, 370000),
+                (0.0,   0.0, 400000, 370000),
                 (100.0,   0.0, 410000, 370000),
                 (100.0, 200.0, 410000, 368000)
                 ]))
@@ -75,10 +75,10 @@ def gcps2gt_1():
 def gcps2gt_2():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
-                (  0.0,   0.0, 400000, 370000),
+                (0.0,   0.0, 400000, 370000),
                 (100.0,   0.0, 410000, 370000),
                 (100.0, 200.0, 410000, 368000),
-                (  0.0, 200.0, 400000, 368000.01)
+                (0.0, 200.0, 400000, 368000.01)
                 ]))
     if not gdaltest.geotransform_equals(
         gt, (400000.0, 100.0, 0.0, 370000.0025, -5e-05, -9.999975), 0.000001):
@@ -94,10 +94,10 @@ def gcps2gt_3():
 
     approx_ok = 0
     gt = gdal.GCPsToGeoTransform(_list2gcps([
-                (  0.0,   0.0, 400000, 370000),
+                (0.0,   0.0, 400000, 370000),
                 (100.0,   0.0, 410000, 370000),
                 (100.0, 200.0, 410000, 368000),
-                (  0.0, 200.0, 400000, 360000)
+                (0.0, 200.0, 400000, 360000)
                 ]), approx_ok)
     if gt is not None:
         gdaltest.post_reason('Expected failure when no good solution.')
@@ -112,7 +112,7 @@ def gcps2gt_3():
 def gcps2gt_4():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
-                (  0.0,   0.0, 400000, 370000),
+                (0.0,   0.0, 400000, 370000),
                 ]))
     if gt is not None:
         gdaltest.post_reason('Expected failure for single GCP.')
@@ -127,7 +127,7 @@ def gcps2gt_4():
 def gcps2gt_5():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
-                (  0.0,   0.0, 400000, 370000),
+                (0.0,   0.0, 400000, 370000),
                 (100.0, 200.0, 410000, 368000),
                 ]))
     if not gdaltest.geotransform_equals(
@@ -207,8 +207,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'gcps2geotransform' )
+    gdaltest.setup_run('gcps2geotransform')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

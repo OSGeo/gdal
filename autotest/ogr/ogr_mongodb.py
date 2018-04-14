@@ -33,7 +33,7 @@ import os
 import sys
 import uuid
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -146,7 +146,7 @@ def ogr_mongodb_1():
 
     # Connect to non existent host.
     gdal.PushErrorHandler()
-    ds = gdal.OpenEx('mongodb:', open_options = ['HOST=non_existing'] )
+    ds = gdal.OpenEx('mongodb:', open_options = ['HOST=non_existing'])
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('fail')
@@ -154,12 +154,12 @@ def ogr_mongodb_1():
 
     # All arguments split up
     open_options = []
-    open_options += ['HOST=' + ogrtest.mongodb_test_host ]
-    open_options += ['PORT=' + str(ogrtest.mongodb_test_port) ]
-    open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname ]
+    open_options += ['HOST=' + ogrtest.mongodb_test_host]
+    open_options += ['PORT=' + str(ogrtest.mongodb_test_port)]
+    open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname]
     if ogrtest.mongodb_test_user is not None:
-        open_options += ['USER=' + ogrtest.mongodb_test_user ]
-        open_options += ['PASSWORD=' + ogrtest.mongodb_test_password ]
+        open_options += ['USER=' + ogrtest.mongodb_test_user]
+        open_options += ['PASSWORD=' + ogrtest.mongodb_test_password]
     ds = gdal.OpenEx('mongodb:', open_options = open_options)
     if ds is None:
         gdaltest.post_reason('fail')
@@ -167,12 +167,12 @@ def ogr_mongodb_1():
 
     # Without DBNAME
     open_options = []
-    open_options += ['HOST=' + ogrtest.mongodb_test_host ]
-    open_options += ['PORT=' + str(ogrtest.mongodb_test_port) ]
+    open_options += ['HOST=' + ogrtest.mongodb_test_host]
+    open_options += ['PORT=' + str(ogrtest.mongodb_test_port)]
     if ogrtest.mongodb_test_user is not None:
-        open_options += ['AUTH_DBNAME=' + ogrtest.mongodb_test_dbname ]
-        open_options += ['USER=' + ogrtest.mongodb_test_user ]
-        open_options += ['PASSWORD=' + ogrtest.mongodb_test_password ]
+        open_options += ['AUTH_DBNAME=' + ogrtest.mongodb_test_dbname]
+        open_options += ['USER=' + ogrtest.mongodb_test_user]
+        open_options += ['PASSWORD=' + ogrtest.mongodb_test_password]
     gdal.PushErrorHandler()
     # Will succeed only against server in single mode
     ds = gdal.OpenEx('mongodb:', open_options = open_options)
@@ -181,9 +181,9 @@ def ogr_mongodb_1():
     # A few error cases with authentication
     if ogrtest.mongodb_test_user is not None:
         open_options = []
-        open_options += ['HOST=' + ogrtest.mongodb_test_host ]
-        open_options += ['PORT=' + str(ogrtest.mongodb_test_port) ]
-        open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname ]
+        open_options += ['HOST=' + ogrtest.mongodb_test_host]
+        open_options += ['PORT=' + str(ogrtest.mongodb_test_port)]
+        open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname]
         # Missing user and password
         gdal.PushErrorHandler()
         ds = gdal.OpenEx('mongodb:', open_options = open_options)
@@ -193,10 +193,10 @@ def ogr_mongodb_1():
             return 'fail'
 
         open_options = []
-        open_options += ['HOST=' + ogrtest.mongodb_test_host ]
-        open_options += ['PORT=' + str(ogrtest.mongodb_test_port) ]
-        open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname ]
-        open_options += ['USER=' + ogrtest.mongodb_test_user ]
+        open_options += ['HOST=' + ogrtest.mongodb_test_host]
+        open_options += ['PORT=' + str(ogrtest.mongodb_test_port)]
+        open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname]
+        open_options += ['USER=' + ogrtest.mongodb_test_user]
         # Missing password
         gdal.PushErrorHandler()
         ds = gdal.OpenEx('mongodb:', open_options = open_options)
@@ -206,10 +206,10 @@ def ogr_mongodb_1():
             return 'fail'
 
         open_options = []
-        open_options += ['HOST=' + ogrtest.mongodb_test_host ]
-        open_options += ['PORT=' + str(ogrtest.mongodb_test_port) ]
-        open_options += ['USER=' + ogrtest.mongodb_test_user ]
-        open_options += ['PASSWORD=' + ogrtest.mongodb_test_password ]
+        open_options += ['HOST=' + ogrtest.mongodb_test_host]
+        open_options += ['PORT=' + str(ogrtest.mongodb_test_port)]
+        open_options += ['USER=' + ogrtest.mongodb_test_user]
+        open_options += ['PASSWORD=' + ogrtest.mongodb_test_password]
         # Missing DBNAME
         gdal.PushErrorHandler()
         ds = gdal.OpenEx('mongodb:', open_options = open_options)
@@ -219,11 +219,11 @@ def ogr_mongodb_1():
             return 'fail'
 
         open_options = []
-        open_options += ['HOST=' + ogrtest.mongodb_test_host ]
-        open_options += ['PORT=' + str(ogrtest.mongodb_test_port) ]
-        open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname ]
-        open_options += ['USER=' + ogrtest.mongodb_test_user ]
-        open_options += ['PASSWORD=' + ogrtest.mongodb_test_password + '_wrong' ]
+        open_options += ['HOST=' + ogrtest.mongodb_test_host]
+        open_options += ['PORT=' + str(ogrtest.mongodb_test_port)]
+        open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname]
+        open_options += ['USER=' + ogrtest.mongodb_test_user]
+        open_options += ['PASSWORD=' + ogrtest.mongodb_test_password + '_wrong']
         # Wrong password
         gdal.PushErrorHandler()
         ds = gdal.OpenEx('mongodb:', open_options = open_options)
@@ -235,9 +235,9 @@ def ogr_mongodb_1():
     # Test AUTH_JSON: invalid JSon
     gdal.PushErrorHandler()
     open_options = []
-    open_options += ['HOST=' + ogrtest.mongodb_test_host ]
-    open_options += ['PORT=' + str(ogrtest.mongodb_test_port) ]
-    open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname ]
+    open_options += ['HOST=' + ogrtest.mongodb_test_host]
+    open_options += ['PORT=' + str(ogrtest.mongodb_test_port)]
+    open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname]
     open_options += ['AUTH_JSON={']
     ds = gdal.OpenEx('mongodb:', open_options = open_options)
     gdal.PopErrorHandler()
@@ -248,9 +248,9 @@ def ogr_mongodb_1():
     # Test AUTH_JSON: missing mechanism
     gdal.PushErrorHandler()
     open_options = []
-    open_options += ['HOST=' + ogrtest.mongodb_test_host ]
-    open_options += ['PORT=' + str(ogrtest.mongodb_test_port) ]
-    open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname ]
+    open_options += ['HOST=' + ogrtest.mongodb_test_host]
+    open_options += ['PORT=' + str(ogrtest.mongodb_test_port)]
+    open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname]
     open_options += ['AUTH_JSON={}']
     ds = gdal.OpenEx('mongodb:', open_options = open_options)
     gdal.PopErrorHandler()
@@ -261,9 +261,9 @@ def ogr_mongodb_1():
     # Successful AUTH_JSON use
     if ogrtest.mongodb_test_user is not None:
         open_options = []
-        open_options += ['HOST=' + ogrtest.mongodb_test_host ]
-        open_options += ['PORT=' + str(ogrtest.mongodb_test_port) ]
-        open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname ]
+        open_options += ['HOST=' + ogrtest.mongodb_test_host]
+        open_options += ['PORT=' + str(ogrtest.mongodb_test_port)]
+        open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname]
         open_options += ['AUTH_JSON={ "mechanism" : "SCRAM-SHA-1", "db": "%s", "user": "%s", "pwd": "%s" }' % \
             (ogrtest.mongodb_test_dbname, ogrtest.mongodb_test_user, ogrtest.mongodb_test_password)]
         ds = gdal.OpenEx('mongodb:', open_options = open_options)
@@ -801,7 +801,7 @@ def ogr_mongodb_2():
   ("intlist_boollist", ogr.OFTIntegerList),
   ("boollist_intlist", ogr.OFTIntegerList),
   ("mixedlist", ogr.OFTRealList),
-  ("mixedlist2", ogr.OFTStringList) ]
+  ("mixedlist2", ogr.OFTStringList)]
     for (fieldname, fieldtype) in expected_fields:
         fld_defn = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex(fieldname))
         if fld_defn.GetType() != fieldtype:
@@ -981,8 +981,8 @@ if __name__ == '__main__':
     import locale
     locale.setlocale(locale.LC_ALL, '')
 
-    gdaltest.setup_run( 'ogr_mongodb' )
+    gdaltest.setup_run('ogr_mongodb')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

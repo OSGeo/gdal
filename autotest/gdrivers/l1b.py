@@ -33,7 +33,7 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -41,14 +41,14 @@ import gdaltest
 ###############################################################################
 #
 class TestL1B:
-    def __init__( self, downloadURL, fileName, checksum, download_size, gcpNumber ):
+    def __init__(self, downloadURL, fileName, checksum, download_size, gcpNumber):
         self.downloadURL = downloadURL
         self.fileName = fileName
         self.checksum = checksum
         self.download_size = download_size
         self.gcpNumber = gcpNumber
 
-    def test( self ):
+    def test(self):
         if not gdaltest.download_file(self.downloadURL + '/' + self.fileName, self.fileName, self.download_size):
             return 'skip'
 
@@ -84,7 +84,7 @@ def l1b_geoloc():
       'X_BAND' : '1',
       'X_DATASET' : 'L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"',
       'Y_BAND' : '2',
-      'Y_DATASET' : 'L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"' }
+      'Y_DATASET' : 'L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"'}
     for key in expected_md:
         if md[key] != expected_md[key]:
             print(md)
@@ -298,7 +298,7 @@ def l1b_little_endian():
 
 gdaltest_list = []
 
-l1b_list = [ ('http://download.osgeo.org/gdal/data/l1b', 'n12gac8bit.l1b', 51754, -1, 1938),
+l1b_list = [('http://download.osgeo.org/gdal/data/l1b', 'n12gac8bit.l1b', 51754, -1, 1938),
              ('http://download.osgeo.org/gdal/data/l1b', 'n12gac10bit.l1b', 46039, -1, 1887),
              ('http://download.osgeo.org/gdal/data/l1b', 'n12gac10bit_ebcdic.l1b', 46039, -1, 1887), # 2848
              ('http://download.osgeo.org/gdal/data/l1b', 'n14gac16bit.l1b', 42286, -1, 2142),
@@ -314,8 +314,8 @@ l1b_list = [ ('http://download.osgeo.org/gdal/data/l1b', 'n12gac8bit.l1b', 51754
              ]
 
 for item in l1b_list:
-    ut = TestL1B( item[0], item[1], item[2], item[3], item[4] )
-    gdaltest_list.append( (ut.test, item[1]) )
+    ut = TestL1B(item[0], item[1], item[2], item[3], item[4])
+    gdaltest_list.append((ut.test, item[1]))
 
 gdaltest_list.append(l1b_geoloc)
 gdaltest_list.append(l1b_solar_zenith_angles_before_noaa_15)
@@ -327,8 +327,8 @@ gdaltest_list.append(l1b_little_endian)
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'l1b' )
+    gdaltest.setup_run('l1b')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

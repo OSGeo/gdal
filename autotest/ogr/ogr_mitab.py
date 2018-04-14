@@ -33,7 +33,7 @@ import sys
 import shutil
 import time
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -49,7 +49,7 @@ import test_cli_utilities
 def ogr_mitab_1():
 
     gdaltest.mapinfo_drv = ogr.GetDriverByName('MapInfo File')
-    gdaltest.mapinfo_ds = gdaltest.mapinfo_drv.CreateDataSource( 'tmp' )
+    gdaltest.mapinfo_ds = gdaltest.mapinfo_drv.CreateDataSource('tmp')
 
     if gdaltest.mapinfo_ds is not None:
         return 'success'
@@ -76,17 +76,17 @@ def ogr_mitab_2():
 
     #######################################################
     # Setup Schema
-    ogrtest.quick_create_layer_def( gdaltest.mapinfo_lyr,
-                                    [ ('AREA', ogr.OFTReal),
+    ogrtest.quick_create_layer_def(gdaltest.mapinfo_lyr,
+                                    [('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString) ] )
+                                      ('PRFEDEA', ogr.OFTString)])
 
     #######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature( feature_def = gdaltest.mapinfo_lyr.GetLayerDefn() )
+    dst_feat = ogr.Feature(feature_def = gdaltest.mapinfo_lyr.GetLayerDefn())
 
-    shp_ds = ogr.Open( 'data/poly.shp' )
+    shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
 
@@ -95,10 +95,10 @@ def ogr_mitab_2():
 
     while feat is not None:
 
-        gdaltest.poly_feat.append( feat )
+        gdaltest.poly_feat.append(feat)
 
-        dst_feat.SetFrom( feat )
-        gdaltest.mapinfo_lyr.CreateFeature( dst_feat )
+        dst_feat.SetFrom(feat)
+        gdaltest.mapinfo_lyr.CreateFeature(dst_feat)
 
         feat = shp_lyr.GetNextFeature()
 
@@ -120,29 +120,29 @@ def ogr_mitab_3():
     if gdaltest.mapinfo_drv is None:
         return 'skip'
 
-    gdaltest.mapinfo_ds = ogr.Open( 'tmp' )
+    gdaltest.mapinfo_ds = ogr.Open('tmp')
     gdaltest.mapinfo_lyr = gdaltest.mapinfo_ds.GetLayer(0)
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.mapinfo_lyr.SetAttributeFilter( 'EAS_ID < 170' )
-    tr = ogrtest.check_features_against_list( gdaltest.mapinfo_lyr,
-                                              'EAS_ID', expect )
-    gdaltest.mapinfo_lyr.SetAttributeFilter( None )
+    gdaltest.mapinfo_lyr.SetAttributeFilter('EAS_ID < 170')
+    tr = ogrtest.check_features_against_list(gdaltest.mapinfo_lyr,
+                                              'EAS_ID', expect)
+    gdaltest.mapinfo_lyr.SetAttributeFilter(None)
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.mapinfo_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry( read_feat,
+        if ogrtest.check_feature_geometry(read_feat,
                                            orig_feat.GetGeometryRef(),
-                                           max_error = 0.02 ) != 0:
-            gdaltest.post_reason( 'Geometry check fail.  i=%d' % i )
+                                           max_error = 0.02) != 0:
+            gdaltest.post_reason('Geometry check fail.  i=%d' % i)
             return 'fail'
 
         for fld in range(3):
             if orig_feat.GetField(fld) != read_feat.GetField(fld):
-                gdaltest.post_reason( 'Attribute %d does not match' % fld )
+                gdaltest.post_reason('Attribute %d does not match' % fld)
                 return 'fail'
 
     gdaltest.poly_feat = None
@@ -163,16 +163,16 @@ def ogr_mitab_4():
         return 'skip'
 
     sql_lyr = gdaltest.mapinfo_ds.ExecuteSQL( \
-        "select * from tpoly where prfedea = '35043413'" )
+        "select * from tpoly where prfedea = '35043413'")
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'prfedea', [ '35043413' ] )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'prfedea', ['35043413'])
     if tr:
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
-        if ogrtest.check_feature_geometry( feat_read, 'POLYGON ((479750.688 4764702.000,479658.594 4764670.000,479640.094 4764721.000,479735.906 4764752.000,479750.688 4764702.000))', max_error = 0.02 ) != 0:
+        if ogrtest.check_feature_geometry(feat_read, 'POLYGON ((479750.688 4764702.000,479658.594 4764670.000,479640.094 4764721.000,479735.906 4764752.000,479750.688 4764702.000))', max_error = 0.02) != 0:
             tr = 0
 
-    gdaltest.mapinfo_ds.ReleaseResultSet( sql_lyr )
+    gdaltest.mapinfo_ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -188,15 +188,15 @@ def ogr_mitab_5():
     if gdaltest.mapinfo_ds is None:
         return 'skip'
 
-    gdaltest.mapinfo_lyr.SetAttributeFilter( None )
+    gdaltest.mapinfo_lyr.SetAttributeFilter(None)
 
-    gdaltest.mapinfo_lyr.SetSpatialFilterRect( 479505, 4763195,
-                                               480526, 4762819 )
+    gdaltest.mapinfo_lyr.SetSpatialFilterRect(479505, 4763195,
+                                               480526, 4762819)
 
-    tr = ogrtest.check_features_against_list( gdaltest.mapinfo_lyr, 'eas_id',
-                                              [ 158 ] )
+    tr = ogrtest.check_features_against_list(gdaltest.mapinfo_lyr, 'eas_id',
+                                              [158])
 
-    gdaltest.mapinfo_lyr.SetSpatialFilter( None )
+    gdaltest.mapinfo_lyr.SetSpatialFilter(None)
 
     if tr:
         return 'success'
@@ -228,9 +228,9 @@ def ogr_mitab_6():
 def ogr_mitab_7():
 
     gdaltest.mapinfo_ds = None
-    gdaltest.mapinfo_drv.DeleteDataSource( 'tmp' )
+    gdaltest.mapinfo_drv.DeleteDataSource('tmp')
 
-    gdaltest.mapinfo_ds = gdaltest.mapinfo_drv.CreateDataSource( 'tmp/wrk.mif' )
+    gdaltest.mapinfo_ds = gdaltest.mapinfo_drv.CreateDataSource('tmp/wrk.mif')
 
     if gdaltest.mapinfo_ds is not None:
         return 'success'
@@ -248,21 +248,21 @@ def ogr_mitab_8():
 
     #######################################################
     # Create memory Layer
-    gdaltest.mapinfo_lyr = gdaltest.mapinfo_ds.CreateLayer( 'tpoly' )
+    gdaltest.mapinfo_lyr = gdaltest.mapinfo_ds.CreateLayer('tpoly')
 
     #######################################################
     # Setup Schema
-    ogrtest.quick_create_layer_def( gdaltest.mapinfo_lyr,
-                                    [ ('AREA', ogr.OFTReal),
+    ogrtest.quick_create_layer_def(gdaltest.mapinfo_lyr,
+                                    [('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString) ] )
+                                      ('PRFEDEA', ogr.OFTString)])
 
     #######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature( feature_def = gdaltest.mapinfo_lyr.GetLayerDefn() )
+    dst_feat = ogr.Feature(feature_def = gdaltest.mapinfo_lyr.GetLayerDefn())
 
-    shp_ds = ogr.Open( 'data/poly.shp' )
+    shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
 
@@ -271,10 +271,10 @@ def ogr_mitab_8():
 
     while feat is not None:
 
-        gdaltest.poly_feat.append( feat )
+        gdaltest.poly_feat.append(feat)
 
-        dst_feat.SetFrom( feat )
-        gdaltest.mapinfo_lyr.CreateFeature( dst_feat )
+        dst_feat.SetFrom(feat)
+        gdaltest.mapinfo_lyr.CreateFeature(dst_feat)
 
         feat = shp_lyr.GetNextFeature()
 
@@ -293,27 +293,27 @@ def ogr_mitab_9():
     if gdaltest.mapinfo_drv is None:
         return 'skip'
 
-    gdaltest.mapinfo_ds = ogr.Open( 'tmp' )
+    gdaltest.mapinfo_ds = ogr.Open('tmp')
     gdaltest.mapinfo_lyr = gdaltest.mapinfo_ds.GetLayer(0)
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.mapinfo_lyr.SetAttributeFilter( 'eas_id < 170' )
-    tr = ogrtest.check_features_against_list( gdaltest.mapinfo_lyr,
-                                              'eas_id', expect )
-    gdaltest.mapinfo_lyr.SetAttributeFilter( None )
+    gdaltest.mapinfo_lyr.SetAttributeFilter('eas_id < 170')
+    tr = ogrtest.check_features_against_list(gdaltest.mapinfo_lyr,
+                                              'eas_id', expect)
+    gdaltest.mapinfo_lyr.SetAttributeFilter(None)
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.mapinfo_lyr.GetNextFeature()
 
         if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
-                                          max_error = 0.000000001 ) != 0:
+                                          max_error = 0.000000001) != 0:
             return 'fail'
 
         for fld in range(3):
             if orig_feat.GetField(fld) != read_feat.GetField(fld):
-                gdaltest.post_reason( 'Attribute %d does not match' % fld )
+                gdaltest.post_reason('Attribute %d does not match' % fld)
                 return 'fail'
 
     gdaltest.poly_feat = None
@@ -332,28 +332,28 @@ def ogr_mitab_10():
     if gdaltest.mapinfo_drv is None:
         return 'skip'
 
-    ds = ogr.Open( 'data/small.mif' )
+    ds = ogr.Open('data/small.mif')
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
 
     if feat.NAME != " S. 11th St.":
-        gdaltest.post_reason( 'name attribute wrong.' )
+        gdaltest.post_reason('name attribute wrong.')
         return 'fail'
 
     if feat.FLOODZONE != 10:
-        gdaltest.post_reason( 'FLOODZONE attribute wrong.' )
+        gdaltest.post_reason('FLOODZONE attribute wrong.')
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat,
                                       'POLYGON ((407131.721 155322.441,407134.468 155329.616,407142.741 155327.242,407141.503 155322.467,407140.875 155320.049,407131.721 155322.441))',
-                                      max_error = 0.000000001 ) != 0:
+                                      max_error = 0.000000001) != 0:
         return 'fail'
 
     feat = lyr.GetNextFeature()
 
     if feat.OWNER != 'Guarino "Chucky" Sandra':
-        gdaltest.post_reason( 'owner attribute wrong.' )
+        gdaltest.post_reason('owner attribute wrong.')
         return 'fail'
 
     lyr = None
@@ -374,13 +374,13 @@ def ogr_mitab_11():
     if gdaltest.mapinfo_drv is None:
         return 'skip'
 
-    ds = ogr.Open( 'data/small_ntf.mif' )
+    ds = ogr.Open('data/small_ntf.mif')
     srs = ds.GetLayer(0).GetSpatialRef()
     ds = None
 
-    pm_value = srs.GetAttrValue( 'PROJCS|GEOGCS|PRIMEM',1)
+    pm_value = srs.GetAttrValue('PROJCS|GEOGCS|PRIMEM',1)
     if pm_value[:6] != '2.3372':
-        gdaltest.post_reason( 'got unexpected prime meridian, not paris: ' + pm_value )
+        gdaltest.post_reason('got unexpected prime meridian, not paris: ' + pm_value)
         return 'fail'
 
     return 'success'
@@ -394,14 +394,14 @@ def ogr_mitab_12():
     if gdaltest.mapinfo_drv is None:
         return 'skip'
 
-    ds = gdaltest.mapinfo_drv.CreateDataSource( 'tmp', options = ['FORMAT=MIF'] )
-    lyr = ds.CreateLayer( 'testlyrdef' )
+    ds = gdaltest.mapinfo_drv.CreateDataSource('tmp', options = ['FORMAT=MIF'])
+    lyr = ds.CreateLayer('testlyrdef')
     defn = lyr.GetLayerDefn()
 
     if defn is None:
         return 'fail'
 
-    ogrtest.quick_create_layer_def( lyr, [ ('AREA', ogr.OFTReal) ] )
+    ogrtest.quick_create_layer_def(lyr, [('AREA', ogr.OFTReal)])
 
     ds = None
     return 'success'
@@ -435,7 +435,7 @@ def ogr_mitab_13():
     #Check if the width and precision are as preserved.
     lyr = ds.GetLayer('testlyrdef')
     if lyr is None:
-        gdaltest.post_reason( 'Layer missing.' )
+        gdaltest.post_reason('Layer missing.')
         return 'fail'
 
     defn = lyr.GetLayerDefn()
@@ -448,7 +448,7 @@ def ogr_mitab_13():
     for field in data:
         fld = defn.GetFieldDefn(defn.GetFieldIndex(field[0]))
         if fld.GetType() != field[1] or fld.GetWidth() != field[2] or fld.GetPrecision() != field[3]:
-            gdaltest.post_reason( field[0] + ' field definition wrong.' )
+            gdaltest.post_reason(field[0] + ' field definition wrong.')
             return 'fail'
 
     ds = None
@@ -486,7 +486,7 @@ def ogr_mitab_14():
     #Check if the width and precision are as preserved.
     lyr = ds.GetLayer('testlyrdef')
     if lyr is None:
-        gdaltest.post_reason( 'Layer missing.' )
+        gdaltest.post_reason('Layer missing.')
         return 'fail'
 
     defn = lyr.GetLayerDefn()
@@ -502,7 +502,7 @@ def ogr_mitab_14():
         if fld.GetType() == ogr.OFTInteger:
             expected_with = 0
         if fld.GetType() != field[1] or fld.GetWidth() != expected_with or fld.GetPrecision() != field[3]:
-            gdaltest.post_reason( field[0] + ' field definition wrong.' )
+            gdaltest.post_reason(field[0] + ' field definition wrong.')
             return 'fail'
 
     ds = None
@@ -617,7 +617,7 @@ def ogr_mitab_18():
     ds = None
 
     # Test with our generated file, and with one generated by MapInfo
-    for filename in [ '/vsimem/ogr_mitab_18.tab', 'data/lambert93_francais.TAB' ]:
+    for filename in ['/vsimem/ogr_mitab_18.tab', 'data/lambert93_francais.TAB']:
         ds = ogr.Open(filename, update = 1)
         lyr = ds.GetLayer(0)
         sr_got = lyr.GetSpatialRef()
@@ -676,7 +676,7 @@ def ogr_mitab_20():
     # Pass i==4: use BOUNDS layer creation option
     # Pass i==5: with MITAB_BOUNDS_FILE and European bounds
     # Pass i==6: with MITAB_BOUNDS_FILE and generic EPSG:2154 (Europe bounds expected)
-    for fmt in [ 'tab', 'mif']:
+    for fmt in ['tab', 'mif']:
         for i in range(7):
             if i == 1 or i == 2 or i == 5 or i == 6:
                 gdal.SetConfigOption('MITAB_BOUNDS_FILE', 'data/mitab_bounds.txt')
@@ -1314,7 +1314,7 @@ def ogr_mitab_27():
 
 
 def generate_permutation(n):
-    tab = [ i for i in range(n) ]
+    tab = [i for i in range(n)]
     for i in range(10*n):
         ind = random.randint(0,n-1)
         tmp = tab[0]
@@ -1406,7 +1406,7 @@ def ogr_mitab_29():
         os.stat('tmp/cache/compr_symb_deleted_records.tab')
     except:
         try:
-            gdaltest.unzip( 'tmp/cache', 'data/compr_symb_deleted_records.zip')
+            gdaltest.unzip('tmp/cache', 'data/compr_symb_deleted_records.zip')
             try:
                 os.stat('tmp/cache/compr_symb_deleted_records.tab')
             except:
@@ -1810,9 +1810,9 @@ def ogr_mitab_35():
         return 'fail'
 
     # Test units
-    for mif_unit in [ 'mi', 'km', 'in', 'ft', 'yd', 'mm', 'cm', 'm', 'survey ft', 'nmi', 'li', 'ch', 'rd' ]:
+    for mif_unit in ['mi', 'km', 'in', 'ft', 'yd', 'mm', 'cm', 'm', 'survey ft', 'nmi', 'li', 'ch', 'rd']:
         coordsys = 'CoordSys NonEarth Units "%s"' % mif_unit
-        srs = get_srs_from_coordsys( coordsys )
+        srs = get_srs_from_coordsys(coordsys)
         #print(srs)
         got_coordsys = get_coordsys_from_srs(srs)
         if coordsys != got_coordsys:
@@ -1863,7 +1863,7 @@ def ogr_mitab_35():
         return 'fail'
 
     # Test round-tripping of projection methods
-    for coordsys in [ 'CoordSys Earth Projection 1, 104',
+    for coordsys in ['CoordSys Earth Projection 1, 104',
                       'CoordSys Earth Projection 2, 104, "m", 1, 2',
                       'CoordSys Earth Projection 3, 104, "m", 1, 2, 3, 4, 5, 6',
                       'CoordSys Earth Projection 4, 104, "m", 1, 90, 90',
@@ -1897,7 +1897,7 @@ def ogr_mitab_35():
                       'CoordSys Earth Projection 32, 104, "m", 1, 2, 3, 4, 5, 6',
                       'CoordSys Earth Projection 33, 104, "m", 1, 2, 3, 4',
                       ]:
-        srs = get_srs_from_coordsys( coordsys )
+        srs = get_srs_from_coordsys(coordsys)
         #print(srs)
         got_coordsys = get_coordsys_from_srs(srs)
         #if got_coordsys.find(' Bounds') >= 0:
@@ -2276,8 +2276,8 @@ def ogr_mitab_43():
             f_ref.DumpReadable()
             return 'fail'
 
-    gdaltest.mapinfo_drv.DeleteDataSource( '/vsimem/all_geoms_block_512.tab' )
-    gdaltest.mapinfo_drv.DeleteDataSource( '/vsimem/all_geoms_block_32256.tab' )
+    gdaltest.mapinfo_drv.DeleteDataSource('/vsimem/all_geoms_block_512.tab')
+    gdaltest.mapinfo_drv.DeleteDataSource('/vsimem/all_geoms_block_32256.tab')
     gdal.Unlink('/vsimem/all_geoms_block_32768.dat')
 
     return 'success'
@@ -2306,7 +2306,7 @@ def ogr_mitab_44():
         return 'fail'
     ds = None
 
-    gdaltest.mapinfo_drv.DeleteDataSource( '/vsimem/ogr_mitab_44.mif' )
+    gdaltest.mapinfo_drv.DeleteDataSource('/vsimem/ogr_mitab_44.mif')
 
     return 'success'
 
@@ -2316,14 +2316,14 @@ def ogr_mitab_44():
 
 def ogr_mitab_45():
 
-    lyrNames = [ 'lyr1', 'lyr2' ]
-    fldNames = [ 'field1', 'поле1' ]
-    featNames = [ 'аз',
+    lyrNames = ['lyr1', 'lyr2']
+    fldNames = ['field1', 'поле1']
+    featNames = ['аз',
                   'буки',
-                  'веди' ]
-    formats = [  'MIF',  'TAB', 'MIF', 'TAB' ]
-    lyrNums = [      1,      1,     2,     2 ]
-    dsExts = [ '.mif', '.tab',    '',    '' ]
+                  'веди']
+    formats = ['MIF',  'TAB', 'MIF', 'TAB']
+    lyrNums = [1,      1,     2,     2]
+    dsExts = ['.mif', '.tab',    '',    '']
 
     for formatN in range(len(formats)):
         format = formats[formatN]
@@ -2331,7 +2331,7 @@ def ogr_mitab_45():
         ext = dsExts[formatN]
         dsName='/vsimem/45/ogr_mitab_45_%s_%s%s' % (format, lyrCount, ext)
 
-        ds = gdaltest.mapinfo_drv.CreateDataSource(dsName, options = ['FORMAT='+format] )
+        ds = gdaltest.mapinfo_drv.CreateDataSource(dsName, options = ['FORMAT='+format])
 
         if ds is None:
             gdaltest.post_reason('Can\'t create dataset: ' + dsName)
@@ -2345,7 +2345,7 @@ def ogr_mitab_45():
                 return 'fail'
 
             if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
-                gdaltest.post_reason( 'skipping test: recode is not possible' )
+                gdaltest.post_reason('skipping test: recode is not possible')
                 return 'skip'
 
             for fldName in fldNames:
@@ -2419,12 +2419,12 @@ def ogr_mitab_45():
 
 def ogr_mitab_46():
 
-    dsNames = [ 'data/mitab/tab-win1251.TAB',
+    dsNames = ['data/mitab/tab-win1251.TAB',
                  'data/mitab/win1251.mif']
-    fldNames = [ 'Поле_А',     'Поле_Б',     'Поле_В',     'Поле_Г',     'Поле_Д' ]
-    fldVal = [ [ 'Значение А', 'Значение Б', 'Значение В', 'Значение Г', 'Значение Д' ],
-               [ 'Значение 1', 'Значение 2', 'Значение 3', 'Значение 4', 'Значение 5' ],
-               [ 'Полигон',    'Синий',      'Заливка',    'А а Б б',    'ЪЫЁЩ' ] ]
+    fldNames = ['Поле_А',     'Поле_Б',     'Поле_В',     'Поле_Г',     'Поле_Д']
+    fldVal = [['Значение А', 'Значение Б', 'Значение В', 'Значение Г', 'Значение Д'],
+               ['Значение 1', 'Значение 2', 'Значение 3', 'Значение 4', 'Значение 5'],
+               ['Полигон',    'Синий',      'Заливка',    'А а Б б',    'ЪЫЁЩ']]
 
     for dsName in dsNames:
 
@@ -2439,7 +2439,7 @@ def ogr_mitab_46():
             return 'fail'
 
         if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
-            gdaltest.post_reason( 'skipping test: recode is not possible' )
+            gdaltest.post_reason('skipping test: recode is not possible')
             return 'skip'
 
         for fldN in range(len(fldNames)):
@@ -2533,7 +2533,7 @@ def ogr_mitab_48():
     AXIS["Y",NORTH],
     AUTHORITY["EPSG","27584"]]""")
     lyr = ds.CreateLayer('foo', srs = sr)
-    lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     ds = None
 
     ds = ogr.Open('/vsimem/test.mif')
@@ -2597,8 +2597,8 @@ def ogr_mitab_tab_field_index_creation():
     filename = '/vsimem/' + layername + '.tab'
     ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
     lyr = ds.CreateLayer(layername)
-    lyr.CreateField( ogr.FieldDefn('id', ogr.OFTInteger) )
-    lyr.CreateField( ogr.FieldDefn('other_field', ogr.OFTInteger) )
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('other_field', ogr.OFTInteger))
     with gdaltest.error_handler():
         ds.ExecuteSQL('CREATE INDEX ON foo USING id')
         ds.ExecuteSQL('CREATE INDEX ON ' + layername + ' USING foo')
@@ -2676,7 +2676,7 @@ def ogr_mitab_cleanup():
         print(fl)
 
     gdaltest.mapinfo_ds = None
-    gdaltest.mapinfo_drv.DeleteDataSource( 'tmp' )
+    gdaltest.mapinfo_drv.DeleteDataSource('tmp')
 
     return 'success'
 
@@ -2738,8 +2738,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_mitab' )
+    gdaltest.setup_run('ogr_mitab')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import osr
@@ -50,12 +50,12 @@ def osr_getprojectionmethods_1():
 
 gdaltest_list = [
     osr_getprojectionmethods_1,
-    None ]
+    None]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'osr_getprojectionmethods' )
+    gdaltest.setup_run('osr_getprojectionmethods')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

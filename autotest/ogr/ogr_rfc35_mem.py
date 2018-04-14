@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
@@ -99,10 +99,10 @@ def Truncate(val, lyr_defn, fieldname):
 def CheckFeatures(lyr, foo = 'foo5', bar = 'bar10', baz = 'baz15', baw = 'baw20'):
 
     expected_values = [
-        [ 'foo0', None, None, None ],
-        [ 'foo1', 'bar1', None, None ],
-        [ 'foo2', 'bar2_01234', 'baz2_0123456789', None ],
-        [ 'foo3', 'bar3_01234', 'baz3_0123456789', 'baw3_012345678901234' ]
+        ['foo0', None, None, None],
+        ['foo1', 'bar1', None, None],
+        ['foo2', 'bar2_01234', 'baz2_0123456789', None],
+        ['foo3', 'bar3_01234', 'baz3_0123456789', 'baw3_012345678901234']
     ]
 
     lyr_defn = lyr.GetLayerDefn()
@@ -447,13 +447,13 @@ gdaltest_list = [
     ogr_rfc35_mem_3,
     ogr_rfc35_mem_4,
     ogr_rfc35_mem_5,
-    ogr_rfc35_mem_cleanup ]
+    ogr_rfc35_mem_cleanup]
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_rfc35_mem' )
+    gdaltest.setup_run('ogr_rfc35_mem')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

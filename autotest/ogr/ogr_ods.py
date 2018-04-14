@@ -32,7 +32,7 @@ import os
 import sys
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -84,7 +84,7 @@ def ogr_ods_check(ds):
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
 
-    type_array = [ ogr.OFTString,
+    type_array = [ogr.OFTString,
                    ogr.OFTInteger,
                    ogr.OFTReal,
                    ogr.OFTReal,
@@ -95,7 +95,7 @@ def ogr_ods_check(ds):
                    ogr.OFTReal,
                    ogr.OFTInteger,
                    ogr.OFTReal,
-                   ogr.OFTDateTime ]
+                   ogr.OFTDateTime]
 
     for i in range(len(type_array)):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
@@ -203,7 +203,7 @@ def ogr_ods_kspread_1():
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
 
-    type_array = [ ogr.OFTString,
+    type_array = [ogr.OFTString,
                    ogr.OFTInteger,
                    ogr.OFTReal,
                    ogr.OFTReal,
@@ -580,8 +580,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_ods' )
+    gdaltest.setup_run('ogr_ods')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
