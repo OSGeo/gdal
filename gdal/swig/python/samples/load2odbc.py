@@ -74,7 +74,7 @@ if layername is None:
 #############################################################################
 # Open the datasource to operate on.
 
-in_ds = ogr.Open(infile, update = 0)
+in_ds = ogr.Open(infile, update=0)
 
 in_layer = in_ds.GetLayerByName(layername)
 

@@ -38,7 +38,7 @@ def Usage():
     return -1
 
 
-def gdal_mkdir(argv, progress = None):
+def gdal_mkdir(argv, progress=None):
     filename = None
 
     argv = gdal.GeneralCmdLineProcessor(argv)

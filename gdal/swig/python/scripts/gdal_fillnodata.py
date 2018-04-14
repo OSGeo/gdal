@@ -38,7 +38,7 @@ def CopyBand(srcband, dstband):
     for line in range(srcband.YSize):
         line_data = srcband.ReadRaster(0, line, srcband.XSize, 1)
         dstband.WriteRaster(0, line, srcband.XSize, 1, line_data,
-                             buf_type = srcband.DataType)
+                             buf_type=srcband.DataType)
 
 
 def Usage():
@@ -197,7 +197,7 @@ else:
 
 result = gdal.FillNodata(dstband, maskband,
                           max_distance, smoothing_iterations, options,
-                          callback = prog_func)
+                          callback=prog_func)
 
 
 src_ds = None

@@ -64,7 +64,7 @@ def ogr_sql_sqlite_available():
     gdal.Unlink('/vsimem/ogr_sql_sqlite_available.db')
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM sqlite_master", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM sqlite_master", dialect='SQLite')
     ds.ReleaseResultSet(sql_lyr)
     if sql_lyr is None:
         return 'fail'
@@ -86,7 +86,7 @@ def ogr_sql_sqlite_1():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     for geom in [ogr.wkbNone, ogr.wkbUnknown]:
-        lyr = ds.CreateLayer("my_layer", geom_type = geom)
+        lyr = ds.CreateLayer("my_layer", geom_type=geom)
         field_defn = ogr.FieldDefn('intfield', ogr.OFTInteger)
         lyr.CreateField(field_defn)
         field_defn = ogr.FieldDefn('int64field', ogr.OFTInteger64)
@@ -126,7 +126,7 @@ def ogr_sql_sqlite_1():
         lyr.CreateField(field_defn)
 
         # Test INSERT
-        sql_lyr = ds.ExecuteSQL("INSERT INTO my_layer (intfield, int64field, nullablefield, doublefield, strfield, binaryfield, datetimefield, datefield, timefield, \"from\", boolfield, int16field, float32field, intlistfield, int64listfield, doublelistfield, strlistfield) VALUES (1,1234567890123456,NULL,2.34,'foo',x'0001FF', '2012-08-23 21:24', '2012-08-23', '21:24', 'from_val', 1, -32768, 1.23, '(2:2,3)', '(1:1234567890123456)', '(1:1.23)', '(1:a)')", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("INSERT INTO my_layer (intfield, int64field, nullablefield, doublefield, strfield, binaryfield, datetimefield, datefield, timefield, \"from\", boolfield, int16field, float32field, intlistfield, int64listfield, doublelistfield, strlistfield) VALUES (1,1234567890123456,NULL,2.34,'foo',x'0001FF', '2012-08-23 21:24', '2012-08-23', '21:24', 'from_val', 1, -32768, 1.23, '(2:2,3)', '(1:1234567890123456)', '(1:1.23)', '(1:a)')", dialect='SQLite')
         ds.ReleaseResultSet(sql_lyr)
 
         lyr.ResetReading()
@@ -147,7 +147,7 @@ def ogr_sql_sqlite_1():
         feat = None
 
         # Test UPDATE
-        sql_lyr = ds.ExecuteSQL("UPDATE my_layer SET intfield = 2, int64field = 234567890123, doublefield = 3.45, strfield = 'bar', timefield = '12:34' WHERE ROWID = 0", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("UPDATE my_layer SET intfield = 2, int64field = 234567890123, doublefield = 3.45, strfield = 'bar', timefield = '12:34' WHERE ROWID = 0", dialect='SQLite')
         ds.ReleaseResultSet(sql_lyr)
 
         lyr.ResetReading()
@@ -169,7 +169,7 @@ def ogr_sql_sqlite_1():
         feat = None
 
         # Test SELECT
-        sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer", dialect='SQLite')
         if sql_lyr.GetLayerDefn().GetFieldDefn(sql_lyr.GetLayerDefn().GetFieldIndex('boolfield')).GetSubType() != ogr.OFSTBoolean:
             gdaltest.post_reason('fail')
             return 'fail'
@@ -211,7 +211,7 @@ def ogr_sql_sqlite_1():
         ds.ReleaseResultSet(sql_lyr)
 
         # Test SELECT with OGR_STYLE
-        sql_lyr = ds.ExecuteSQL("SELECT *, OGR_STYLE FROM my_layer", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("SELECT *, OGR_STYLE FROM my_layer", dialect='SQLite')
         feat = sql_lyr.GetNextFeature()
         if feat.GetField('intfield') != 2 or \
            feat.GetField('nullablefield') is not None or \
@@ -237,7 +237,7 @@ def ogr_sql_sqlite_1():
                         'intfield = 2 AND doublefield = 3.45',
                         'ROWID = 0',
                         "\"from\" = 'from_val'"]:
-            sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer WHERE " + cond, dialect = 'SQLite')
+            sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer WHERE " + cond, dialect='SQLite')
             feat = sql_lyr.GetNextFeature()
             if feat is None:
                 gdaltest.post_reason('failure')
@@ -253,7 +253,7 @@ def ogr_sql_sqlite_1():
                         'intfield = 2 AND doublefield = 0',
                         'ROWID = 10000',
                         "\"from\" = 'other_val'"]:
-            sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer WHERE " + cond, dialect = 'SQLite')
+            sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer WHERE " + cond, dialect='SQLite')
             feat = sql_lyr.GetNextFeature()
             if feat is not None:
                 gdaltest.post_reason('failure')
@@ -263,11 +263,11 @@ def ogr_sql_sqlite_1():
 
         if geom != ogr.wkbNone:
             # Test a filter on geometry, to check that we won't try to optimize that
-            sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer WHERE GEOMETRY = x'00'", dialect = 'SQLite')
+            sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer WHERE GEOMETRY = x'00'", dialect='SQLite')
             ds.ReleaseResultSet(sql_lyr)
 
         # Test INSERT with specified ROWID/FID
-        sql_lyr = ds.ExecuteSQL("INSERT INTO my_layer (intfield, ROWID) VALUES (100, 1000)", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("INSERT INTO my_layer (intfield, ROWID) VALUES (100, 1000)", dialect='SQLite')
         ds.ReleaseResultSet(sql_lyr)
 
         feat = lyr.GetFeature(1000)
@@ -278,9 +278,9 @@ def ogr_sql_sqlite_1():
         feat = None
 
         # Test DELETE
-        sql_lyr = ds.ExecuteSQL("DELETE FROM my_layer WHERE intfield = 2", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("DELETE FROM my_layer WHERE intfield = 2", dialect='SQLite')
         ds.ReleaseResultSet(sql_lyr)
-        sql_lyr = ds.ExecuteSQL("DELETE FROM my_layer WHERE ROWID = 1000", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("DELETE FROM my_layer WHERE ROWID = 1000", dialect='SQLite')
         ds.ReleaseResultSet(sql_lyr)
 
         lyr.ResetReading()
@@ -311,7 +311,7 @@ def ogr_sql_sqlite_2():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
 
-    lyr = ds.CreateLayer("my_layer", srs = srs)
+    lyr = ds.CreateLayer("my_layer", srs=srs)
     field_defn = ogr.FieldDefn('intfield', ogr.OFTInteger)
     lyr.CreateField(field_defn)
     field_defn = ogr.FieldDefn('doublefield', ogr.OFTReal)
@@ -329,7 +329,7 @@ def ogr_sql_sqlite_2():
     feat = None
 
     # Test UPDATE
-    sql_lyr = ds.ExecuteSQL("UPDATE my_layer SET intfield = 2, doublefield = 3.45, strfield = 'bar' WHERE ROWID = 0", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("UPDATE my_layer SET intfield = 2, doublefield = 3.45, strfield = 'bar' WHERE ROWID = 0", dialect='SQLite')
     ds.ReleaseResultSet(sql_lyr)
 
     lyr.ResetReading()
@@ -344,7 +344,7 @@ def ogr_sql_sqlite_2():
     feat = None
 
     # Test SELECT
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     if feat.GetField('intfield') != 2 or \
        feat.GetField('doublefield') != 3.45 or \
@@ -363,7 +363,7 @@ def ogr_sql_sqlite_2():
     ds.ReleaseResultSet(sql_lyr)
 
     # Test SELECT with OGR_STYLE
-    sql_lyr = ds.ExecuteSQL("SELECT *, OGR_STYLE FROM my_layer", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT *, OGR_STYLE FROM my_layer", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     if feat.GetField('intfield') != 2 or \
        feat.GetField('doublefield') != 3.45 or \
@@ -385,7 +385,7 @@ def ogr_sql_sqlite_2():
     # Test with a custom SRS
     srs = osr.SpatialReference()
     srs.SetFromUserInput("""LOCAL_CS["foo"]""")
-    lyr = ds.CreateLayer("my_layer2", srs = srs)
+    lyr = ds.CreateLayer("my_layer2", srs=srs)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0 1)'))
@@ -398,7 +398,7 @@ def ogr_sql_sqlite_2():
     feat = None
 
     # Test SELECT
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer2", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer2", dialect='SQLite')
 
     layer_srs = sql_lyr.GetSpatialRef()
     if layer_srs is None or srs.IsSame(layer_srs) == 0:
@@ -436,7 +436,7 @@ def ogr_sql_sqlite_3():
 
     ds = ogr.Open('data')
 
-    sql_lyr = ds.ExecuteSQL("SELECT p.*, idlink.* FROM poly p LEFT JOIN idlink USING (EAS_ID) ORDER BY EAS_ID", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT p.*, idlink.* FROM poly p LEFT JOIN idlink USING (EAS_ID) ORDER BY EAS_ID", dialect='SQLite')
     count = sql_lyr.GetFeatureCount()
     sql_lyr.ResetReading()
     feat = sql_lyr.GetNextFeature()
@@ -469,7 +469,7 @@ def ogr_sql_sqlite_4():
 
     ds = ogr.Open('data')
 
-    sql_lyr = ds.ExecuteSQL("SELECT p.* FROM poly p JOIN poly USING (EAS_ID)", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT p.* FROM poly p JOIN poly USING (EAS_ID)", dialect='SQLite')
     count = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
 
@@ -491,7 +491,7 @@ def ogr_sql_sqlite_5():
         return 'skip'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/foo.db', options = ['SPATIALITE=YES'])
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/foo.db', options=['SPATIALITE=YES'])
     ogrtest.has_spatialite = ds is not None
     if ogrtest.has_spatialite:
         sql_lyr = ds.ExecuteSQL("SELECT spatialite_version()")
@@ -508,7 +508,7 @@ def ogr_sql_sqlite_5():
 
     ds = ogr.Open('data')
 
-    sql_lyr = ds.ExecuteSQL("SELECT MAX(ST_Length(GEOMETRY)) FROM POLY", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT MAX(ST_Length(GEOMETRY)) FROM POLY", dialect='SQLite')
     count = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
 
@@ -576,7 +576,7 @@ def ogr_sql_sqlite_7():
     feat = None
 
     # Test SELECT
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer", dialect='SQLite')
 
     if sql_lyr.GetGeometryColumn() != 'GEOMETRY2':
         gdaltest.post_reason('failure')
@@ -593,7 +593,7 @@ def ogr_sql_sqlite_7():
     ds.ReleaseResultSet(sql_lyr)
 
     # Test SELECT
-    sql_lyr = ds.ExecuteSQL("SELECT GEOMETRY2 FROM my_layer", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT GEOMETRY2 FROM my_layer", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
         gdaltest.post_reason('failure')
@@ -620,7 +620,7 @@ def ogr_sql_sqlite_8():
     sql_lyr = ds.ExecuteSQL(   \
         'SELECT p.*, il.name FROM poly p ' \
         + 'LEFT JOIN "data/idlink.dbf".idlink il USING (eas_id) ' \
-        + 'WHERE eas_id > 170 ORDER BY eas_id', dialect = 'SQLite')
+        + 'WHERE eas_id > 170 ORDER BY eas_id', dialect='SQLite')
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'eas_id', expect)
 
@@ -642,7 +642,7 @@ def ogr_sql_sqlite_9():
 
     ds = ogr.Open('data')
 
-    sql_lyr = ds.ExecuteSQL("SELECT count(*) as cnt FROM (SELECT * FROM (SELECT * FROM\n'data'.poly my_alias))p,(SELECT * FROM 'data'.idlink) il WHERE p.EAS_ID = il.EAS_id", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT count(*) as cnt FROM (SELECT * FROM (SELECT * FROM\n'data'.poly my_alias))p,(SELECT * FROM 'data'.idlink) il WHERE p.EAS_ID = il.EAS_id", dialect='SQLite')
 
     feat = sql_lyr.GetNextFeature()
     cnt = feat.GetField('cnt')
@@ -666,7 +666,7 @@ def ogr_sql_sqlite_10():
 
     ds = ogr.Open('data')
 
-    sql_lyr = ds.ExecuteSQL("SELECT count(*) as cnt FROM poly", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT count(*) as cnt FROM poly", dialect='SQLite')
 
     feat = sql_lyr.GetNextFeature()
     cnt = feat.GetField('cnt')
@@ -698,7 +698,7 @@ def ogr_sql_sqlite_11():
     lyr.CreateFeature(feat)
     feat = None
 
-    sql_lyr = ds.ExecuteSQL("SELECT 'a' FROM \"my_layer\"", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT 'a' FROM \"my_layer\"", dialect='SQLite')
     cnt = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
 
@@ -722,19 +722,19 @@ def ogr_sql_sqlite_12():
 
     # Invalid SQL
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr = ds.ExecuteSQL("qdfdfdf", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("qdfdfdf", dialect='SQLite')
     gdal.PopErrorHandler()
     ds.ReleaseResultSet(sql_lyr)
 
     # Non existing external datasource
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM 'foo'.'bar'", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM 'foo'.'bar'", dialect='SQLite')
     gdal.PopErrorHandler()
     ds.ReleaseResultSet(sql_lyr)
 
     # Non existing layer in existing external datasource
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM 'data'.'azertyuio'", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM 'data'.'azertyuio'", dialect='SQLite')
     gdal.PopErrorHandler()
     ds.ReleaseResultSet(sql_lyr)
 
@@ -756,9 +756,9 @@ def ogr_sql_sqlite_13():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
 
-    lyr = ds.CreateLayer("non_spatial", geom_type = ogr.wkbNone)
+    lyr = ds.CreateLayer("non_spatial", geom_type=ogr.wkbNone)
 
-    lyr = ds.CreateLayer("my_layer", geom_type = ogr.wkbLineString, srs = srs)
+    lyr = ds.CreateLayer("my_layer", geom_type=ogr.wkbLineString, srs=srs)
     field_defn = ogr.FieldDefn('intfield', ogr.OFTInteger)
     lyr.CreateField(field_defn)
 
@@ -769,7 +769,7 @@ def ogr_sql_sqlite_13():
 
     # Test with invalid parameter
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent(12)", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent(12)", dialect='SQLite')
     gdal.PopErrorHandler()
     feat = sql_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -781,7 +781,7 @@ def ogr_sql_sqlite_13():
 
     # Test on non existing layer
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent('foo')", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent('foo')", dialect='SQLite')
     gdal.PopErrorHandler()
     feat = sql_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -792,7 +792,7 @@ def ogr_sql_sqlite_13():
         return 'fail'
 
     # Test ogr_layer_Extent()
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent('my_layer')", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent('my_layer')", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     geom_wkt = feat.GetGeometryRef().ExportToWkt()
     feat = None
@@ -804,7 +804,7 @@ def ogr_sql_sqlite_13():
         return 'fail'
 
     # Test ogr_layer_FeatureCount()
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_FeatureCount('my_layer') AS the_count", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_FeatureCount('my_layer') AS the_count", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     count = feat.GetField('the_count')
     feat = None
@@ -816,7 +816,7 @@ def ogr_sql_sqlite_13():
         return 'fail'
 
     # Test ogr_layer_Extent() on a non spatial layer
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent('non_spatial')", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent('non_spatial')", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     ds.ReleaseResultSet(sql_lyr)
@@ -826,7 +826,7 @@ def ogr_sql_sqlite_13():
         return 'fail'
 
     # Test ogr_layer_SRID()
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_SRID('my_layer') AS the_srid", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_SRID('my_layer') AS the_srid", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     the_srid = feat.GetField('the_srid')
     feat = None
@@ -838,7 +838,7 @@ def ogr_sql_sqlite_13():
         return 'fail'
 
     # Test ogr_layer_SRID() on a non spatial layer
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_SRID('non_spatial') AS the_srid", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_SRID('non_spatial') AS the_srid", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     the_srid = feat.GetField('the_srid')
     feat = None
@@ -849,7 +849,7 @@ def ogr_sql_sqlite_13():
         return 'fail'
 
     # Test ogr_layer_GeometryType()
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_GeometryType('my_layer') AS the_geometrytype", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_GeometryType('my_layer') AS the_geometrytype", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     the_geometrytype = feat.GetField('the_geometrytype')
     feat = None
@@ -861,7 +861,7 @@ def ogr_sql_sqlite_13():
         return 'fail'
 
     # Test ogr_layer_GeometryType() on a non spatial layer
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_GeometryType('non_spatial') AS the_geometrytype", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_GeometryType('non_spatial') AS the_geometrytype", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     the_geometrytype = feat.GetField('the_geometrytype')
     feat = None
@@ -875,10 +875,10 @@ def ogr_sql_sqlite_13():
     ds_shape = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource('/vsimem/ogr_sql_sqlite_13.shp')
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
-    lyr = ds_shape.CreateLayer('ogr_sql_sqlite_13', srs = srs)
+    lyr = ds_shape.CreateLayer('ogr_sql_sqlite_13', srs=srs)
     ds_shape = None
 
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_SRID('/vsimem/ogr_sql_sqlite_13.shp'.ogr_sql_sqlite_13) AS the_srid_shp", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_SRID('/vsimem/ogr_sql_sqlite_13.shp'.ogr_sql_sqlite_13) AS the_srid_shp", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     the_srid_shp = feat.GetField('the_srid_shp')
     feat = None
@@ -906,7 +906,7 @@ def ogr_sql_sqlite_14_and_15(sql):
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
 
-    lyr = ds.CreateLayer("my_layer", geom_type = ogr.wkbLineString, srs = srs)
+    lyr = ds.CreateLayer("my_layer", geom_type=ogr.wkbLineString, srs=srs)
     field_defn = ogr.FieldDefn('intfield', ogr.OFTInteger)
     lyr.CreateField(field_defn)
 
@@ -922,7 +922,7 @@ def ogr_sql_sqlite_14_and_15(sql):
     lyr.CreateFeature(feat)
     feat = None
 
-    lyr2 = ds.CreateLayer("my_layer2", geom_type = ogr.wkbLineString, srs = srs)
+    lyr2 = ds.CreateLayer("my_layer2", geom_type=ogr.wkbLineString, srs=srs)
     field_defn = ogr.FieldDefn('intfield2', ogr.OFTInteger)
     lyr2.CreateField(field_defn)
 
@@ -941,7 +941,7 @@ def ogr_sql_sqlite_14_and_15(sql):
     got_one = False
     got_two = False
 
-    sql_lyr = ds.ExecuteSQL(sql, dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL(sql, dialect='SQLite')
     for i in range(2):
         feat = sql_lyr.GetNextFeature()
         i1 = feat.GetField('intfield')
@@ -1289,7 +1289,7 @@ def ogr_sql_sqlite_start_webserver():
     if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
 
-    (ogrtest.webserver_process, ogrtest.webserver_port) = webserver.launch(handler = GeocodingHTTPHandler)
+    (ogrtest.webserver_process, ogrtest.webserver_port) = webserver.launch(handler=GeocodingHTTPHandler)
     if ogrtest.webserver_port == 0:
         return 'skip'
 
@@ -1299,7 +1299,7 @@ def ogr_sql_sqlite_start_webserver():
 # Test ogr_geocode()
 
 
-def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?q=%%s'):
+def ogr_sql_sqlite_16(service=None, template='http://127.0.0.1:%d/geocoding?q=%%s'):
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -1340,7 +1340,7 @@ def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?
                     "SELECT ogr_geocode('Paris', '%s') AS %s" % (name_field, name_field),
                     "SELECT ogr_geocode('Paris', 'raw') AS raw"]:
 
-            sql_lyr = ds.ExecuteSQL(sql, dialect = 'SQLite')
+            sql_lyr = ds.ExecuteSQL(sql, dialect='SQLite')
             feat = sql_lyr.GetNextFeature()
             if feat is None:
                 gdaltest.post_reason('fail')
@@ -1364,7 +1364,7 @@ def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?
 
         if ret == 'success':
             for sql in ["SELECT ogr_geocode('NonExistingPlace')", "SELECT ogr_geocode('Error')"]:
-                sql_lyr = ds.ExecuteSQL(sql, dialect = 'SQLite')
+                sql_lyr = ds.ExecuteSQL(sql, dialect='SQLite')
                 feat = sql_lyr.GetNextFeature()
                 if feat is None:
                     gdaltest.post_reason('fail')
@@ -1382,16 +1382,16 @@ def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?
                 ds.ReleaseResultSet(sql_lyr)
 
         # Test various syntax errors
-        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode()", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode()", dialect='SQLite')
         ds.ReleaseResultSet(sql_lyr)
 
-        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode(5)", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode(5)", dialect='SQLite')
         ds.ReleaseResultSet(sql_lyr)
 
-        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode('Paris', 5)", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode('Paris', 5)", dialect='SQLite')
         ds.ReleaseResultSet(sql_lyr)
 
-        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode('Paris', 'geometry', 5)", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode('Paris', 'geometry', 5)", dialect='SQLite')
         ds.ReleaseResultSet(sql_lyr)
 
         ds = None
@@ -1433,7 +1433,7 @@ def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?
 # Test ogr_geocode_reverse()
 
 
-def ogr_sql_sqlite_17(service = None, template = 'http://127.0.0.1:%d/reversegeocoding?lon={lon}&lat={lat}'):
+def ogr_sql_sqlite_17(service=None, template='http://127.0.0.1:%d/reversegeocoding?lon={lon}&lat={lat}'):
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -1481,7 +1481,7 @@ def ogr_sql_sqlite_17(service = None, template = 'http://127.0.0.1:%d/reversegeo
 
         for sql in sql_list:
 
-            sql_lyr = ds.ExecuteSQL(sql, dialect = 'SQLite')
+            sql_lyr = ds.ExecuteSQL(sql, dialect='SQLite')
             feat = sql_lyr.GetNextFeature()
             if feat is None:
                 gdaltest.post_reason('fail')
@@ -1505,23 +1505,23 @@ def ogr_sql_sqlite_17(service = None, template = 'http://127.0.0.1:%d/reversegeo
             ds.ReleaseResultSet(sql_lyr)
 
         # Test various syntax errors
-        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse()", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse()", dialect='SQLite')
         ds.ReleaseResultSet(sql_lyr)
 
-        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(2)", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(2)", dialect='SQLite')
         ds.ReleaseResultSet(sql_lyr)
 
-        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(2, 'foo')", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(2, 'foo')", dialect='SQLite')
         ds.ReleaseResultSet(sql_lyr)
 
-        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(2, 49)", dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(2, 49)", dialect='SQLite')
         ds.ReleaseResultSet(sql_lyr)
 
         if ogrtest.has_spatialite:
-            sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(MakePoint(2,49))", dialect = 'SQLite')
+            sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(MakePoint(2,49))", dialect='SQLite')
             ds.ReleaseResultSet(sql_lyr)
 
-            sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(MakePoint(2,49), 5)", dialect = 'SQLite')
+            sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(MakePoint(2,49), 5)", dialect='SQLite')
             ds.ReleaseResultSet(sql_lyr)
 
         ds = None
@@ -1614,7 +1614,7 @@ def ogr_sql_sqlite_24():
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
 
     # Very short string
-    sql_lyr = ds.ExecuteSQL("SELECT CAST(ogr_inflate(ogr_deflate('ab')) AS VARCHAR)", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT CAST(ogr_inflate(ogr_deflate('ab')) AS VARCHAR)", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != 'ab':
         gdaltest.post_reason('fail')
@@ -1625,7 +1625,7 @@ def ogr_sql_sqlite_24():
 
     # Big very compressible string
     bigstr = ''.join(['a' for i in range(10000)])
-    sql_lyr = ds.ExecuteSQL("SELECT CAST(ogr_inflate(ogr_deflate('%s')) AS VARCHAR)" % bigstr, dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT CAST(ogr_inflate(ogr_deflate('%s')) AS VARCHAR)" % bigstr, dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != bigstr:
         gdaltest.post_reason('fail')
@@ -1635,7 +1635,7 @@ def ogr_sql_sqlite_24():
     ds.ReleaseResultSet(sql_lyr)
 
     # Blob
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate(ogr_deflate(x'0203', 5))", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate(ogr_deflate(x'0203', 5))", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != '0203':
         gdaltest.post_reason('fail')
@@ -1645,7 +1645,7 @@ def ogr_sql_sqlite_24():
     ds.ReleaseResultSet(sql_lyr)
 
     # Test inflating a random binary blob
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate(x'0203')", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate(x'0203')", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     if not feat.IsFieldNull(0):
         gdaltest.post_reason('fail')
@@ -1656,7 +1656,7 @@ def ogr_sql_sqlite_24():
 
     # Error case
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_deflate()", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_deflate()", dialect='SQLite')
     gdal.PopErrorHandler()
     if sql_lyr is not None:
         gdaltest.post_reason('fail')
@@ -1664,7 +1664,7 @@ def ogr_sql_sqlite_24():
         return 'fail'
 
     # Error case
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_deflate('a', 'b')", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_deflate('a', 'b')", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     if not feat.IsFieldNull(0):
         gdaltest.post_reason('fail')
@@ -1675,7 +1675,7 @@ def ogr_sql_sqlite_24():
 
     # Error case
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate()", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate()", dialect='SQLite')
     gdal.PopErrorHandler()
     if sql_lyr is not None:
         gdaltest.post_reason('fail')
@@ -1683,7 +1683,7 @@ def ogr_sql_sqlite_24():
         return 'fail'
 
     # Error case
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate('a')", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate('a')", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     if not feat.IsFieldNull(0):
         gdaltest.post_reason('fail')
@@ -1714,7 +1714,7 @@ def ogr_sql_sqlite_stop_webserver():
 
 def ogr_sql_sqlite_25_test_errors(ds, fct):
     for val in ['null', "'foo'", "x'00010203'"]:
-        sql_lyr = ds.ExecuteSQL("SELECT %s(%s)" % (fct, val), dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("SELECT %s(%s)" % (fct, val), dialect='SQLite')
         feat = sql_lyr.GetNextFeature()
         if not feat.IsFieldNull(0):
             feat.DumpReadable()
@@ -1736,7 +1736,7 @@ def ogr_sql_sqlite_25():
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
 
     # Test ST_AsText, ST_GeomFromText, ST_AsBinary, ST_GeomFromWKB
-    sql_lyr = ds.ExecuteSQL("SELECT ST_GeomFromWKB(ST_AsBinary(ST_GeomFromText(ST_AsText(ST_GeomFromText('POINT (0 1)')),4326)))", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ST_GeomFromWKB(ST_AsBinary(ST_GeomFromText(ST_AsText(ST_GeomFromText('POINT (0 1)')),4326)))", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
         gdaltest.post_reason('fail')
@@ -1751,7 +1751,7 @@ def ogr_sql_sqlite_25():
             return 'fail'
 
     # Test ST_SRID
-    sql_lyr = ds.ExecuteSQL("SELECT ST_SRID(ST_GeomFromText('POINT(0 0)',4326))", dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ST_SRID(ST_GeomFromText('POINT(0 0)',4326))", dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     val_sql = feat.GetField(0)
     ds.ReleaseResultSet(sql_lyr)
@@ -1762,7 +1762,7 @@ def ogr_sql_sqlite_25():
         return 'fail'
 
     # Test ST_Area
-    sql_lyr = ds.ExecuteSQL("SELECT ST_Area(ST_GeomFromText('%s')), ST_Area(null), ST_Area(x'00')" % 'POLYGON((0 0,0 1,1 1,1 0,0 0))', dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT ST_Area(ST_GeomFromText('%s')), ST_Area(null), ST_Area(x'00')" % 'POLYGON((0 0,0 1,1 1,1 0,0 0))', dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     val_sql = feat.GetField(0)
     val1_sql = feat.GetField(1)
@@ -1810,7 +1810,7 @@ def ogr_sql_sqlite_26():
 
     # Test ST_Buffer
     op_str = 'Buffer'
-    sql_lyr = ds.ExecuteSQL("SELECT %s(ST_GeomFromText('%s'),0.1)" % (op_str, geom1_wkt), dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL("SELECT %s(ST_GeomFromText('%s'),0.1)" % (op_str, geom1_wkt), dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     geom_sql = feat.GetGeometryRef()
     ds.ReleaseResultSet(sql_lyr)
@@ -1824,7 +1824,7 @@ def ogr_sql_sqlite_26():
 
     for op_str in ["IsEmpty", "IsSimple", "IsValid"]:
         for wkt in ['POLYGON EMPTY', 'POINT(0 1)', 'POLYGON((0 0,1 1,0 1,1 0,0 0))']:
-            sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'))" % (op_str, wkt), dialect = 'SQLite')
+            sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'))" % (op_str, wkt), dialect='SQLite')
             feat = sql_lyr.GetNextFeature()
             b_sql = feat.GetField(0)
             ds.ReleaseResultSet(sql_lyr)
@@ -1853,7 +1853,7 @@ def ogr_sql_sqlite_26():
                                 (geom1_wkt, geom2_wkt),
                                 (geom1_wkt, geom3_wkt),
                                 (geom1_wkt, geom4_wkt)]:
-            sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), ST_GeomFromText('%s'))" % (op_str, geomA_wkt, geomB_wkt), dialect = 'SQLite')
+            sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), ST_GeomFromText('%s'))" % (op_str, geomA_wkt, geomB_wkt), dialect='SQLite')
             feat = sql_lyr.GetNextFeature()
             b_sql = feat.GetField(0)
             ds.ReleaseResultSet(sql_lyr)
@@ -1875,7 +1875,7 @@ def ogr_sql_sqlite_26():
                                 (geom1_wkt, geom2_wkt),
                                 (geom1_wkt, geom3_wkt),
                                 (geom1_wkt, geom4_wkt)]:
-            sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), ST_GeomFromText('%s'))" % (op_str, geomA_wkt, geomB_wkt), dialect = 'SQLite')
+            sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), ST_GeomFromText('%s'))" % (op_str, geomA_wkt, geomB_wkt), dialect='SQLite')
             feat = sql_lyr.GetNextFeature()
             geom_sql = feat.GetGeometryRef()
             if geom_sql is not None:
@@ -1904,7 +1904,7 @@ def ogr_sql_sqlite_26():
     # Error cases
     op_str = 'Intersects'
     for val in ['null', "'foo'", "x'00010203'"]:
-        sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), %s), ST_%s(%s, ST_GeomFromText('%s'))" % (op_str, geom1_wkt, val, op_str, val, geom1_wkt), dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), %s), ST_%s(%s, ST_GeomFromText('%s'))" % (op_str, geom1_wkt, val, op_str, val, geom1_wkt), dialect='SQLite')
         feat = sql_lyr.GetNextFeature()
         b0_sql = feat.GetField(0)
         b1_sql = feat.GetField(1)
@@ -1915,7 +1915,7 @@ def ogr_sql_sqlite_26():
 
     op_str = 'Intersection'
     for val in ['null', "'foo'", "x'00010203'"]:
-        sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), %s)" % (op_str, geom1_wkt, val), dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), %s)" % (op_str, geom1_wkt, val), dialect='SQLite')
         feat = sql_lyr.GetNextFeature()
         geom_sql = feat.GetGeometryRef()
         ds.ReleaseResultSet(sql_lyr)
@@ -1923,7 +1923,7 @@ def ogr_sql_sqlite_26():
             gdaltest.post_reason('fail with %s' % op_str)
             return 'fail'
 
-        sql_lyr = ds.ExecuteSQL("SELECT ST_%s(%s, ST_GeomFromText('%s'))" % (op_str, val, geom1_wkt), dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL("SELECT ST_%s(%s, ST_GeomFromText('%s'))" % (op_str, val, geom1_wkt), dialect='SQLite')
         feat = sql_lyr.GetNextFeature()
         geom_sql = feat.GetGeometryRef()
         ds.ReleaseResultSet(sql_lyr)
@@ -1951,7 +1951,7 @@ def ogr_sql_sqlite_27():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, '2013/01/01 00:00:00')
     lyr.CreateFeature(feat)
-    lyr = ds.ExecuteSQL("SELECT MIN(DATE), MAX(DATE) from test", dialect = 'SQLite')
+    lyr = ds.ExecuteSQL("SELECT MIN(DATE), MAX(DATE) from test", dialect='SQLite')
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTDateTime:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1986,7 +1986,7 @@ def ogr_sql_sqlite_28():
     # Invalid parameters
     for sql in ["SELECT hstore_get_value('a')"]:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        sql_lyr = ds.ExecuteSQL(sql, dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL(sql, dialect='SQLite')
         gdal.PopErrorHandler()
         if sql_lyr is not None:
             gdaltest.post_reason('fail')
@@ -1999,7 +1999,7 @@ def ogr_sql_sqlite_28():
                  "SELECT hstore_get_value(1,'a')",
                  "SELECT hstore_get_value('a',1)",
                  "SELECT hstore_get_value('a=>b','c')"]:
-        sql_lyr = ds.ExecuteSQL(sql, dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL(sql, dialect='SQLite')
         f = sql_lyr.GetNextFeature()
         if not f.IsFieldNull(0):
             gdaltest.post_reason('fail')
@@ -2010,7 +2010,7 @@ def ogr_sql_sqlite_28():
 
     # Valid hstore syntax
     for (sql, expected) in [("SELECT hstore_get_value('a=>b', 'a')", 'b'), ]:
-        sql_lyr = ds.ExecuteSQL(sql, dialect = 'SQLite')
+        sql_lyr = ds.ExecuteSQL(sql, dialect='SQLite')
         f = sql_lyr.GetNextFeature()
         if f.GetField(0) != expected:
             gdaltest.post_reason('fail')
@@ -2031,12 +2031,12 @@ def ogr_sql_sqlite_29():
         return 'skip'
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
-    lyr = ds.CreateLayer('test', geom_type = ogr.wkbCircularString)
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbCircularString)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('CIRCULARSTRING(0 0,1 0,0 0)'))
     lyr.CreateFeature(f)
     f = None
-    sql_lyr = ds.ExecuteSQL('select * from test', dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL('select * from test', dialect='SQLite')
     geom_type = sql_lyr.GetGeomType()
     f = sql_lyr.GetNextFeature()
     got_wkt = f.GetGeometryRef().ExportToWkt()
@@ -2065,17 +2065,17 @@ def ogr_sql_sqlite_30():
         return 'skip'
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
-    lyr = ds.CreateLayer('testm', geom_type = ogr.wkbLineStringM)
+    lyr = ds.CreateLayer('testm', geom_type=ogr.wkbLineStringM)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING M (1 2 3)'))
     lyr.CreateFeature(f)
     f = None
-    lyr = ds.CreateLayer('testzm', geom_type = ogr.wkbLineStringZM)
+    lyr = ds.CreateLayer('testzm', geom_type=ogr.wkbLineStringZM)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING ZM (1 2 3 4)'))
     lyr.CreateFeature(f)
     f = None
-    sql_lyr = ds.ExecuteSQL('select * from testm', dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL('select * from testm', dialect='SQLite')
     geom_type = sql_lyr.GetGeomType()
     f = sql_lyr.GetNextFeature()
     got_wkt = f.GetGeometryRef().ExportToIsoWkt()
@@ -2091,7 +2091,7 @@ def ogr_sql_sqlite_30():
         print(got_wkt)
         return 'fail'
 
-    sql_lyr = ds.ExecuteSQL('select * from testzm', dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL('select * from testzm', dialect='SQLite')
     geom_type = sql_lyr.GetGeomType()
     f = sql_lyr.GetNextFeature()
     got_wkt = f.GetGeometryRef().ExportToIsoWkt()
@@ -2126,7 +2126,7 @@ def ogr_sql_sqlite_31():
     lyr.CreateFeature(f)
     f = None
 
-    sql_lyr = ds.ExecuteSQL('select * from test where "50M3 @w35Om3 N@M3" = 25', dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL('select * from test where "50M3 @w35Om3 N@M3" = 25', dialect='SQLite')
     f = sql_lyr.GetNextFeature()
     value = f.GetField(0)
     ds.ReleaseResultSet(sql_lyr)

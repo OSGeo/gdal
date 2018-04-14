@@ -75,7 +75,7 @@ def gif_2():
 def gif_3():
 
     tst = gdaltest.GDALTest('GIF', 'bug407.gif', 1, 57921,
-                             options = ['INTERLACING=NO'])
+                             options=['INTERLACING=NO'])
 
     return tst.testCreateCopy()
 
@@ -115,7 +115,7 @@ def gif_5():
 
     tst = gdaltest.GDALTest('GIF', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # Verify nodata support
@@ -235,9 +235,9 @@ def gif_9():
 def gif_10():
 
     tst = gdaltest.GDALTest('GIF', 'byte.tif', 1, 4672,
-                             options = ['INTERLACING=YES'])
+                             options=['INTERLACING=YES'])
 
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # Cleanup.

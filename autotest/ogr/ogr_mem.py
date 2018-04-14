@@ -80,7 +80,7 @@ def ogr_mem_2():
     #######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature(feature_def = gdaltest.mem_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gdaltest.mem_lyr.GetLayerDefn())
 
     shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
@@ -123,7 +123,7 @@ def ogr_mem_3():
         read_feat = gdaltest.mem_lyr.GetNextFeature()
 
         if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
-                                          max_error = 0.000000001) != 0:
+                                          max_error=0.000000001) != 0:
             return 'fail'
 
         for fld in range(3):
@@ -149,7 +149,7 @@ def ogr_mem_4():
     if gdaltest.mem_ds is None:
         return 'skip'
 
-    dst_feat = ogr.Feature(feature_def = gdaltest.mem_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gdaltest.mem_lyr.GetLayerDefn())
     wkt_list = ['10', '2', '1', '3d_1', '4', '5', '6']
 
     for item in wkt_list:
@@ -462,7 +462,7 @@ def ogr_mem_13():
     lyr.CreateField(field_defn)
     field_defn = ogr.FieldDefn('reallist', ogr.OFTRealList)
     lyr.CreateField(field_defn)
-    feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
     try:
         feat.SetFieldStringList
@@ -499,13 +499,13 @@ def ogr_mem_14():
     lyr = gdaltest.mem_ds.CreateLayer('SetNextByIndex')
     field_defn = ogr.FieldDefn('foo', ogr.OFTString)
     lyr.CreateField(field_defn)
-    feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     feat.SetField(0, 'first feature')
     lyr.CreateFeature(feat)
-    feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     feat.SetField(0, 'second feature')
     lyr.CreateFeature(feat)
-    feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     feat.SetField(0, 'third feature')
     lyr.CreateFeature(feat)
 
@@ -551,7 +551,7 @@ def ogr_mem_14():
 
 def ogr_mem_15():
 
-    lyr = gdaltest.mem_ds.CreateLayer('wkbCircularString', geom_type = ogr.wkbCircularString)
+    lyr = gdaltest.mem_ds.CreateLayer('wkbCircularString', geom_type=ogr.wkbCircularString)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('CIRCULARSTRING(0 0,1 0,0 0)'))
     lyr.CreateFeature(f)
@@ -803,7 +803,7 @@ def ogr_mem_17():
 
     ds.ResetReading()
 
-    f, lyr, pct = ds.GetNextFeature(include_pct = True)
+    f, lyr, pct = ds.GetNextFeature(include_pct=True)
     if f is None or l.GetName() != 'ogr_mem_1' or pct != 0.25:
         gdaltest.post_reason('fail')
         print(f)
@@ -811,35 +811,35 @@ def ogr_mem_17():
         print(pct)
         return 'fail'
 
-    f, pct = ds.GetNextFeature(include_layer = False, include_pct = True)
+    f, pct = ds.GetNextFeature(include_layer=False, include_pct=True)
     if f is None or pct != 0.50:
         gdaltest.post_reason('fail')
         print(f)
         print(pct)
         return 'fail'
 
-    f, pct = ds.GetNextFeature(include_layer = False, include_pct = True)
+    f, pct = ds.GetNextFeature(include_layer=False, include_pct=True)
     if f is None or pct != 0.75:
         gdaltest.post_reason('fail')
         print(f)
         print(pct)
         return 'fail'
 
-    f, pct = ds.GetNextFeature(include_layer = False, include_pct = True)
+    f, pct = ds.GetNextFeature(include_layer=False, include_pct=True)
     if f is None or pct != 1.0:
         gdaltest.post_reason('fail')
         print(f)
         print(pct)
         return 'fail'
 
-    f, pct = ds.GetNextFeature(include_layer = False, include_pct = True)
+    f, pct = ds.GetNextFeature(include_layer=False, include_pct=True)
     if f is not None or pct != 1.0:
         gdaltest.post_reason('fail')
         print(f)
         print(pct)
         return 'fail'
 
-    f, pct = ds.GetNextFeature(include_layer = False, include_pct = True)
+    f, pct = ds.GetNextFeature(include_layer=False, include_pct=True)
     if f is not None or pct != 1.0:
         gdaltest.post_reason('fail')
         print(f)
@@ -848,7 +848,7 @@ def ogr_mem_17():
 
     ds.ResetReading()
 
-    f = ds.GetNextFeature(include_layer = False)
+    f = ds.GetNextFeature(include_layer=False)
     if f is None:
         gdaltest.post_reason('fail')
         print(f)

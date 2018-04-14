@@ -256,7 +256,7 @@ class file_info:
         print('UL:(%f,%f)   LR:(%f,%f)'
               % (self.ulx,self.uly,self.lrx,self.lry))
 
-    def copy_into(self, t_fh, s_band = 1, t_band = 1, nodata_arg=None):
+    def copy_into(self, t_fh, s_band=1, t_band=1, nodata_arg=None):
         """
         Copy this files image into target file.
 

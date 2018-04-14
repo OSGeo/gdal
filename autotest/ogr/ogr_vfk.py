@@ -304,7 +304,7 @@ def ogr_vfk_9():
 
     # open with suppressing geometry
     gdaltest.vfk_ds = None
-    gdaltest.vfk_ds = gdal.OpenEx('data/bylany.vfk', open_options = ['SUPPRESS_GEOMETRY=YES'])
+    gdaltest.vfk_ds = gdal.OpenEx('data/bylany.vfk', open_options=['SUPPRESS_GEOMETRY=YES'])
 
     gdaltest.vfk_layer_par = gdaltest.vfk_ds.GetLayerByName('PAR')
 

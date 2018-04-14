@@ -48,7 +48,7 @@ def Usage():
 # =============================================================================
 
 
-def ProcessTarget(target, recursive, report_failure, filelist = None):
+def ProcessTarget(target, recursive, report_failure, filelist=None):
 
     if filelist is not None:
         driver = gdal.IdentifyDriver(target, filelist)

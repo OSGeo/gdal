@@ -157,7 +157,7 @@ def hdf5_6():
     shutil.copyfile('data/groups.h5', 'tmp/groups.h5')
 
     ds = gdal.Open('HDF5:"tmp/groups.h5"://MyGroup/dset1')
-    ds.BuildOverviews(overviewlist = [2])
+    ds.BuildOverviews(overviewlist=[2])
     ds = None
 
     if gdaltest.is_file_open('tmp/groups.h5'):

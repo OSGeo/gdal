@@ -149,7 +149,7 @@ def ogr_elasticsearch_1():
 
     # Failed index creation
     with gdaltest.error_handler():
-        lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84, options = ['FID='])
+        lyr = ds.CreateLayer('foo', srs=ogrtest.srs_wgs84, options=['FID='])
     if lyr is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -160,7 +160,7 @@ def ogr_elasticsearch_1():
 
     # Successful index creation
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo&CUSTOMREQUEST=PUT', '{}')
-    lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84, options = ['FID='])
+    lyr = ds.CreateLayer('foo', srs=ogrtest.srs_wgs84, options=['FID='])
     if lyr is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -174,8 +174,8 @@ def ogr_elasticsearch_1():
         '{ "type": "string" }, "properties": { } } } }', '{}')
 
     # OVERWRITE an nonexistent layer.
-    lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone,
-                         options = ['OVERWRITE=TRUE', 'FID='])
+    lyr = ds.CreateLayer('foo', geom_type=ogr.wkbNone,
+                         options=['OVERWRITE=TRUE', 'FID='])
     if gdal.GetLastErrorType() != gdal.CE_None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -184,7 +184,7 @@ def ogr_elasticsearch_1():
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo',
                            '{"foo":{"mappings":{"FeatureCollection":{}}}}')
     with gdaltest.error_handler():
-        lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE'])
+        lyr = ds.CreateLayer('foo', geom_type=ogr.wkbNone, options=['OVERWRITE=TRUE'])
     if gdal.GetLastErrorType() != gdal.CE_Failure:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -193,7 +193,7 @@ def ogr_elasticsearch_1():
     # Successful overwrite
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo&CUSTOMREQUEST=DELETE', '{}')
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/&POSTFIELDS={ }', '{}')
-    lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE', 'BULK_INSERT=NO', 'FID='])
+    lyr = ds.CreateLayer('foo', geom_type=ogr.wkbNone, options=['OVERWRITE=TRUE', 'BULK_INSERT=NO', 'FID='])
     if gdal.GetLastErrorType() != gdal.CE_None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -225,7 +225,7 @@ def ogr_elasticsearch_1():
 
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo&CUSTOMREQUEST=PUT', '{"error":"IndexAlreadyExistsException[[foo] already exists]","status":400}')
     with gdaltest.error_handler():
-        lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84)
+        lyr = ds.CreateLayer('foo', srs=ogrtest.srs_wgs84)
     if gdal.GetLastErrorType() != gdal.CE_Failure:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -244,8 +244,8 @@ def ogr_elasticsearch_1():
 
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2&CUSTOMREQUEST=PUT', '{}')
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { "str_field": { "type": "string", "index": "not_analyzed" }, "int_field": { "type": "integer", "store": "yes" }, "int64_field": { "type": "long", "index": "no" }, "real_field": { "type": "double" }, "real_field_unset": { "type": "double" }, "boolean_field": { "type": "boolean" }, "strlist_field": { "type": "string" }, "intlist_field": { "type": "integer" }, "int64list_field": { "type": "long" }, "reallist_field": { "type": "double" }, "date_field": { "type": "date", "format": "yyyy\/MM\/dd HH:mm:ss.SSSZZ||yyyy\/MM\/dd HH:mm:ss.SSS||yyyy\/MM\/dd" }, "datetime_field": { "type": "date", "format": "yyyy\/MM\/dd HH:mm:ss.SSSZZ||yyyy\/MM\/dd HH:mm:ss.SSS||yyyy\/MM\/dd" }, "time_field": { "type": "date", "format": "HH:mm:ss.SSS" }, "binary_field": { "type": "binary" } } }, "geometry": { "properties": { "type": { "type": "string" }, "coordinates": { "type": "geo_point" } } } }, "_meta": { "fields": { "strlist_field": "StringList", "intlist_field": "IntegerList", "int64list_field": "Integer64List", "reallist_field": "RealList" } } } }', '{}')
-    lyr = ds.CreateLayer('foo2', srs = ogrtest.srs_wgs84, geom_type = ogr.wkbPoint, \
-        options = ['BULK_INSERT=NO', 'FID=', 'STORED_FIELDS=int_field', 'NOT_ANALYZED_FIELDS=str_field', 'NOT_INDEXED_FIELDS=int64_field'])
+    lyr = ds.CreateLayer('foo2', srs=ogrtest.srs_wgs84, geom_type=ogr.wkbPoint, \
+        options=['BULK_INSERT=NO', 'FID=', 'STORED_FIELDS=int_field', 'NOT_ANALYZED_FIELDS=str_field', 'NOT_INDEXED_FIELDS=int64_field'])
     lyr.CreateField(ogr.FieldDefn('str_field', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('int_field', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('int64_field', ogr.OFTInteger64))
@@ -344,7 +344,7 @@ def ogr_elasticsearch_1():
     # With explicit GEOM_MAPPING_TYPE=GEO_POINT
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo3&CUSTOMREQUEST=PUT', '{}')
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo3/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { } }, "geometry": { "properties": { "type": { "type": "string" }, "coordinates": { "type": "geo_point", "fielddata": { "format": "compressed", "precision": "1m" } } } } }, "_meta": { "fid": "ogc_fid" } } }', '{}')
-    lyr = ds.CreateLayer('foo3', srs = ogrtest.srs_wgs84, options = ['GEOM_MAPPING_TYPE=GEO_POINT', 'GEOM_PRECISION=1m', 'BULK_INSERT=NO'])
+    lyr = ds.CreateLayer('foo3', srs=ogrtest.srs_wgs84, options=['GEOM_MAPPING_TYPE=GEO_POINT', 'GEOM_PRECISION=1m', 'BULK_INSERT=NO'])
 
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo3/FeatureCollection/&POSTFIELDS={ "ogc_fid": 1, "geometry": { "type": "POINT", "coordinates": [ 0.5, 0.5 ] }, "type": "Feature", "properties": { } }', '{}')
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -358,14 +358,14 @@ def ogr_elasticsearch_1():
     # Test explicit MAPPING first with error case
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo4&CUSTOMREQUEST=PUT', '{}')
     with gdaltest.error_handler():
-        lyr = ds.CreateLayer('foo4', srs = ogrtest.srs_wgs84, options = ['MAPPING={ "FeatureCollection": { "properties": {} }}'])
+        lyr = ds.CreateLayer('foo4', srs=ogrtest.srs_wgs84, options=['MAPPING={ "FeatureCollection": { "properties": {} }}'])
     if lyr is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Test successful explicit MAPPING with inline JSon mapping
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo4/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": {} }}', '{}')
-    lyr = ds.CreateLayer('foo4', srs = ogrtest.srs_wgs84, options = ['MAPPING={ "FeatureCollection": { "properties": {} }}'])
+    lyr = ds.CreateLayer('foo4', srs=ogrtest.srs_wgs84, options=['MAPPING={ "FeatureCollection": { "properties": {} }}'])
     if lyr is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -373,7 +373,7 @@ def ogr_elasticsearch_1():
     # Test successful explicit MAPPING with reference to file with mapping
     gdal.FileFromMemBuffer('/vsimem/map.txt', '{ "FeatureCollection": { "properties": { "foo": { "type": "string" } } }}')
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo4/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "foo": { "type": "string" } } }}', '{}')
-    lyr = ds.CreateLayer('foo4', srs = ogrtest.srs_wgs84, options = ['MAPPING=/vsimem/map.txt'])
+    lyr = ds.CreateLayer('foo4', srs=ogrtest.srs_wgs84, options=['MAPPING=/vsimem/map.txt'])
     gdal.Unlink('/vsimem/map.txt')
     if lyr is None:
         gdaltest.post_reason('fail')
@@ -398,7 +398,7 @@ def ogr_elasticsearch_2():
     gdal.Unlink('/vsimem/fakeelasticsearch/foo')
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { }, "geometry": { "type": "geo_shape" } } } }', '{}')
 
-    lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84, options = ['BULK_INSERT=NO', 'FID='])
+    lyr = ds.CreateLayer('foo', srs=ogrtest.srs_wgs84, options=['BULK_INSERT=NO', 'FID='])
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT(0 1),LINESTRING(0 1,2 3),POLYGON((0 0,0 10,10 10,0 0),(1 1,1 9,9 9,1 1)),MULTIPOINT(0 1, 2 3),MULTILINESTRING((0 1,2 3),(4 5,6 7)),MULTIPOLYGON(((0 0,0 10,10 10,0 0),(1 1,1 9,9 9,1 1)),((-1 -1,-1 -9,-9 -9,-1 -1))))'))
 
@@ -410,7 +410,7 @@ def ogr_elasticsearch_2():
     feat = None
 
     # Same but with explicit GEOM_MAPPING_TYPE=GEO_SHAPE
-    lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84, options = ['GEOM_MAPPING_TYPE=GEO_SHAPE', 'GEOM_PRECISION=1m', 'BULK_INSERT=NO', 'FID='])
+    lyr = ds.CreateLayer('foo', srs=ogrtest.srs_wgs84, options=['GEOM_MAPPING_TYPE=GEO_SHAPE', 'GEOM_PRECISION=1m', 'BULK_INSERT=NO', 'FID='])
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT(0 1),LINESTRING(0 1,2 3),POLYGON((0 0,0 10,10 10,0 0),(1 1,1 9,9 9,1 1)),MULTIPOINT(0 1, 2 3),MULTILINESTRING((0 1,2 3),(4 5,6 7)),MULTIPOLYGON(((0 0,0 10,10 10,0 0),(1 1,1 9,9 9,1 1)),((-1 -1,-1 -9,-9 -9,-1 -1))))'))
 
@@ -440,7 +440,7 @@ def ogr_elasticsearch_3():
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/name_laundering&CUSTOMREQUEST=PUT', '{}')
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/name_laundering/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } } } }', '{}')
 
-    lyr = ds.CreateLayer('NAME/laundering', srs = ogrtest.srs_wgs84, options = ['FID='])
+    lyr = ds.CreateLayer('NAME/laundering', srs=ogrtest.srs_wgs84, options=['FID='])
     feat = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(feat)
     if ret != 0:
@@ -925,7 +925,7 @@ def ogr_elasticsearch_4():
         return 'fail'
     lyr.SetAttributeFilter(None)
 
-    sql_lyr = ds.ExecuteSQL("{ 'FOO' : 'BAR' }", dialect = 'ES')
+    sql_lyr = ds.ExecuteSQL("{ 'FOO' : 'BAR' }", dialect='ES')
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search?scroll=1m&size=100&POSTFIELDS={ 'FOO' : 'BAR' }""", """{
     "hits":
     {
@@ -966,18 +966,18 @@ def ogr_elasticsearch_4():
 
     # Invalid index
     with gdaltest.error_handler():
-        bbox = lyr.GetExtent(geom_field = -1)
+        bbox = lyr.GetExtent(geom_field=-1)
 
     # geo_shape
-    bbox = lyr.GetExtent(geom_field = 0)
+    bbox = lyr.GetExtent(geom_field=0)
 
     # Invalid index
     with gdaltest.error_handler():
-        bbox = lyr.GetExtent(geom_field = 2)
+        bbox = lyr.GetExtent(geom_field=2)
 
     # No response
     with gdaltest.error_handler():
-        bbox = lyr.GetExtent(geom_field = 1)
+        bbox = lyr.GetExtent(geom_field=1)
 
     # Invalid response
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?search_type=count&pretty&POSTFIELDS={ "aggs" : { "bbox" : { "geo_bounds" : { "field" : "a_geopoint.coordinates" } } } }""",
@@ -997,7 +997,7 @@ def ogr_elasticsearch_4():
 }""")
 
     with gdaltest.error_handler():
-        bbox = lyr.GetExtent(geom_field = 1)
+        bbox = lyr.GetExtent(geom_field=1)
 
     # Valid response
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?pretty&POSTFIELDS={ "size": 0, "aggs" : { "bbox" : { "geo_bounds" : { "field" : "a_geopoint.coordinates" } } } }""",
@@ -1017,7 +1017,7 @@ def ogr_elasticsearch_4():
     }
   }
 }""")
-    bbox = lyr.GetExtent(geom_field = 1)
+    bbox = lyr.GetExtent(geom_field=1)
     if bbox != (1.0, 2.0, 9.0, 10.0):
         gdaltest.post_reason('fail')
         print(bbox)
@@ -1077,7 +1077,7 @@ def ogr_elasticsearch_5():
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/non_geojson&CUSTOMREQUEST=PUT', '')
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/non_geojson/my_mapping/_mapping&POSTFIELDS={ "my_mapping": { "properties": { "str": { "type": "string", "store": "yes" }, "geometry": { "type": "geo_shape" } }, "_meta": { "fid": "ogc_fid" } } }', '{}')
 
-    lyr = ds.CreateLayer('non_geojson', srs = ogrtest.srs_wgs84, options = ['MAPPING_NAME=my_mapping', 'BULK_INSERT=NO', 'STORE_FIELDS=YES'])
+    lyr = ds.CreateLayer('non_geojson', srs=ogrtest.srs_wgs84, options=['MAPPING_NAME=my_mapping', 'BULK_INSERT=NO', 'STORE_FIELDS=YES'])
     lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(5)
@@ -1137,7 +1137,7 @@ def ogr_elasticsearch_5():
     }
 }
 """)
-    ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch", gdal.OF_UPDATE, open_options = ['BULK_INSERT=NO'])
+    ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch", gdal.OF_UPDATE, open_options=['BULK_INSERT=NO'])
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/_search?scroll=1m&size=100""", """{
@@ -1249,7 +1249,7 @@ def ogr_elasticsearch_5():
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/_count?pretty""", "{}")
     lyr.CreateFeature(f)
 
-    ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch", open_options = ['FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN=0'])
+    ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch", open_options=['FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN=0'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['str_field'] != 'foo' or \
@@ -1261,7 +1261,7 @@ def ogr_elasticsearch_5():
         f.DumpReadable()
         return 'fail'
 
-    ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch", open_options = ['FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN=0', 'FLATTEN_NESTED_ATTRIBUTES=FALSE'])
+    ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch", open_options=['FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN=0', 'FLATTEN_NESTED_ATTRIBUTES=FALSE'])
     lyr = ds.GetLayer(0)
     index = lyr.GetLayerDefn().GetFieldIndex('another_field')
     if index >= 0:
@@ -1276,7 +1276,7 @@ def ogr_elasticsearch_5():
         f.DumpReadable()
         return 'fail'
 
-    ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch", gdal.OF_UPDATE, open_options = ['JSON_FIELD=YES'])
+    ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch", gdal.OF_UPDATE, open_options=['JSON_FIELD=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['str_field'] != 'foo' or \
@@ -1412,7 +1412,7 @@ def ogr_elasticsearch_7():
     ds = ogrtest.elasticsearch_drv.CreateDataSource("/vsimem/fakeelasticsearch")
 
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/test_write_mapping&CUSTOMREQUEST=PUT', '{}')
-    lyr = ds.CreateLayer('test_write_mapping', srs = ogrtest.srs_wgs84, options = ['WRITE_MAPPING=/vsimem/map.txt', 'FID='])
+    lyr = ds.CreateLayer('test_write_mapping', srs=ogrtest.srs_wgs84, options=['WRITE_MAPPING=/vsimem/map.txt', 'FID='])
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
     ds = None
@@ -1476,7 +1476,7 @@ def ogr_elasticsearch_8():
     other_srs = osr.SpatialReference()
     other_srs.ImportFromEPSG(32631)
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/other_srs&CUSTOMREQUEST=PUT', "{}")
-    lyr = ds.CreateLayer('other_srs', srs = other_srs)
+    lyr = ds.CreateLayer('other_srs', srs=other_srs)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (500000 0)'))
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/other_srs/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } }, "_meta": { "fid": "ogc_fid" } } }""", '{}')
@@ -2277,7 +2277,7 @@ def ogr_elasticsearch_11():
 
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/_search/scroll?scroll_id=my_scrollid&CUSTOMREQUEST=DELETE', '{}')
 
-    ds = ogr.Open('ES:/vsimem/fakeelasticsearch', update = 1)
+    ds = ogr.Open('ES:/vsimem/fakeelasticsearch', update=1)
     lyr = ds.GetLayer(0)
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""",
 """{

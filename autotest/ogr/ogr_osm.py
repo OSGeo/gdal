@@ -43,7 +43,7 @@ import ogrtest
 # Test .pbf
 
 
-def ogr_osm_1(filename = 'data/test.pbf'):
+def ogr_osm_1(filename='data/test.pbf'):
 
     try:
         ogrtest.osm_drv = ogr.GetDriverByName('OSM')
@@ -292,7 +292,7 @@ def ogr_osm_2():
 # Test ogr2ogr
 
 
-def ogr_osm_3(options = None, all_layers = False):
+def ogr_osm_3(options=None, all_layers=False):
 
     if ogrtest.osm_drv is None:
         return 'skip'
@@ -310,7 +310,7 @@ def ogr_osm_3(options = None, all_layers = False):
     else:
         layers = 'points lines multipolygons multilinestrings '
     with gdaltest.error_handler():
-        gdal.VectorTranslate('tmp/ogr_osm_3', 'data/test.pbf', options = layers + options)
+        gdal.VectorTranslate('tmp/ogr_osm_3', 'data/test.pbf', options=layers + options)
 
     ret = ogr_osm_1(filepath)
 
@@ -324,7 +324,7 @@ def ogr_osm_3(options = None, all_layers = False):
 
 def ogr_osm_3_sqlite_nodes():
     gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'NO')
-    ret = ogr_osm_3(options = '-skip')
+    ret = ogr_osm_3(options='-skip')
     gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', None)
     return ret
 
@@ -343,7 +343,7 @@ def ogr_osm_3_custom_compress_nodes():
 
 
 def ogr_osm_3_all_layers():
-    return ogr_osm_3(options = '-skip', all_layers = True)
+    return ogr_osm_3(options='-skip', all_layers=True)
 
 ###############################################################################
 # Test optimization when reading only the points layer through a SQL request
@@ -507,7 +507,7 @@ def ogr_osm_7():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    sql_lyr = ds.ExecuteSQL('SELECT * FROM points LIMIT 10', dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM points LIMIT 10', dialect='SQLite')
     if sql_lyr is None and gdal.GetLastErrorMsg().find('automatic extension loading failed') != 0:
         return 'skip'
     count = sql_lyr.GetFeatureCount()
@@ -833,7 +833,7 @@ def ogr_osm_15():
     count = 0
     last_pct = 0
     while True:
-        f, l, pct = ds.GetNextFeature(include_pct = True)
+        f, l, pct = ds.GetNextFeature(include_pct=True)
         if pct < last_pct:
             gdaltest.post_reason('fail')
             print(last_pct)
@@ -863,7 +863,7 @@ def ogr_osm_15():
         print(last_pct)
         return 'fail'
 
-    f, l, pct = ds.GetNextFeature(include_pct = True)
+    f, l, pct = ds.GetNextFeature(include_pct=True)
     if f is not None or l is not None or pct != 1.0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -878,14 +878,14 @@ def ogr_osm_15():
             return 'fail'
 
     ds.ResetReading()
-    f, l = ds.GetNextFeature(callback = ogr_osm_15_progresscbk_return_false)
+    f, l = ds.GetNextFeature(callback=ogr_osm_15_progresscbk_return_false)
     if f is not None or l is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     ds.ResetReading()
     pct_array = [0]
-    f, l = ds.GetNextFeature(callback = ogr_osm_15_progresscbk_return_true, callback_data = pct_array)
+    f, l = ds.GetNextFeature(callback=ogr_osm_15_progresscbk_return_true, callback_data=pct_array)
     if f is None or l is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -930,7 +930,7 @@ attribute_name_laundering=yes
 attributes=foo:baar,foo:bar
 """)
 
-    ds = gdal.OpenEx('/vsimem/ogr_osm_16.osm', open_options = ['CONFIG_FILE=/vsimem/ogr_osm_16_conf.ini'])
+    ds = gdal.OpenEx('/vsimem/ogr_osm_16.osm', open_options=['CONFIG_FILE=/vsimem/ogr_osm_16_conf.ini'])
     lyr = ds.GetLayerByName('points')
     f = lyr.GetNextFeature()
     if f['foo_baar'] != 'val' or f['foo_bar'] != 'val2':

@@ -48,7 +48,7 @@ def istgz(filename):
            filename.endswith('.tar.gz') or filename.endswith('.TAR.GZ')
 
 
-def display_file(fout, dirname, prefix, filename, longformat, check_open = False):
+def display_file(fout, dirname, prefix, filename, longformat, check_open=False):
 
     statBuf = None
     filename_displayed = prefix + filename
@@ -97,7 +97,7 @@ def display_file(fout, dirname, prefix, filename, longformat, check_open = False
         fout.write(line)
 
 
-def readDir(fout, dirname, prefix, longformat, recurse, depth, recurseInZip, recurseInTGZ, first = False):
+def readDir(fout, dirname, prefix, longformat, recurse, depth, recurseInZip, recurseInTGZ, first=False):
 
     if depth <= 0:
         return
@@ -157,7 +157,7 @@ def Usage():
     return -1
 
 
-def gdal_ls(argv, fout = sys.stdout):
+def gdal_ls(argv, fout=sys.stdout):
     longformat = False
     recurse = False
     recurseInZip = False

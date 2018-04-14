@@ -42,7 +42,7 @@ import gdaltest
 
 def vrtmisc_1():
 
-    ds = gdal.Translate('', 'data/byte.tif', options = '-of MEM -scale 74 255 0 255')
+    ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale 74 255 0 255')
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -59,7 +59,7 @@ def vrtmisc_1():
 
 def vrtmisc_2():
 
-    ds = gdal.Translate('', 'data/byte.tif', options = '-of MEM -scale 74 255 0 255 -exponent 2.2')
+    ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale 74 255 0 255 -exponent 2.2')
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -104,7 +104,7 @@ def vrtmisc_3():
 def vrtmisc_4():
 
     # -scale specified once applies to all bands
-    ds = gdal.Translate('', 'data/byte.tif', options = '-of MEM -scale 74 255 0 255 -b 1 -b 1')
+    ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale 74 255 0 255 -b 1 -b 1')
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     ds = None
@@ -127,7 +127,7 @@ def vrtmisc_4():
 def vrtmisc_5():
 
     # -scale_2 applies to band 2 only
-    ds = gdal.Translate('', 'data/byte.tif', options = '-of MEM -scale_2 74 255 0 255 -b 1 -b 1')
+    ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale_2 74 255 0 255 -b 1 -b 1')
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     ds = None
@@ -150,7 +150,7 @@ def vrtmisc_5():
 def vrtmisc_6():
 
     # -scale repeated as many times as output band number
-    ds = gdal.Translate('', 'data/byte.tif', options = '-of MEM -scale 0 255 0 255 -scale 74 255 0 255 -b 1 -b 1')
+    ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale 0 255 0 255 -scale 74 255 0 255 -b 1 -b 1')
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     ds = None
@@ -173,7 +173,7 @@ def vrtmisc_6():
 def vrtmisc_7():
 
     # -scale and -exponent, specified once, apply to all bands
-    ds = gdal.Translate('', 'data/byte.tif', options = '-of MEM -scale 74 255 0 255 -exponent 2.2 -b 1 -b 1')
+    ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale 74 255 0 255 -exponent 2.2 -b 1 -b 1')
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     ds = None
@@ -196,7 +196,7 @@ def vrtmisc_7():
 def vrtmisc_8():
 
     # -scale_2 and -exponent_2 apply to band 2 only
-    ds = gdal.Translate('', 'data/byte.tif', options = '-of MEM -scale_2 74 255 0 255 -exponent_2 2.2 -b 1 -b 1')
+    ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale_2 74 255 0 255 -exponent_2 2.2 -b 1 -b 1')
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     ds = None
@@ -219,7 +219,7 @@ def vrtmisc_8():
 def vrtmisc_9():
 
     # -scale and -exponent repeated as many times as output band number
-    ds = gdal.Translate('', 'data/byte.tif', options = '-of MEM -scale 0 255 0 255 -scale 74 255 0 255 -exponent 1 -exponent 2.2 -b 1 -b 1')
+    ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale 0 255 0 255 -scale 74 255 0 255 -exponent 1 -exponent 2.2 -b 1 -b 1')
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     ds = None
@@ -405,7 +405,7 @@ def vrtmisc_13():
 
 def vrtmisc_14():
 
-    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 123456789, 1, options = ['SPARSE_OK=YES', 'TILED=YES'])
+    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 123456789, 1, options=['SPARSE_OK=YES', 'TILED=YES'])
     gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_14.vrt', src_ds)
     src_ds = None
     fp = gdal.VSIFOpenL('/vsimem/vrtmisc_14.vrt', 'rb')
@@ -421,7 +421,7 @@ def vrtmisc_14():
         print(content)
         return 'fail'
 
-    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 1, 123456789, options = ['SPARSE_OK=YES', 'TILED=YES'])
+    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 1, 123456789, options=['SPARSE_OK=YES', 'TILED=YES'])
     gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_14.vrt', src_ds)
     src_ds = None
     fp = gdal.VSIFOpenL('/vsimem/vrtmisc_14.vrt', 'rb')
@@ -445,7 +445,7 @@ def vrtmisc_14():
 
 def vrtmisc_15():
 
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_15.tif', 1, 1, options = ['PIXELTYPE=SIGNEDBYTE'])
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_15.tif', 1, 1, options=['PIXELTYPE=SIGNEDBYTE'])
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
     if out_ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') != 'SIGNEDBYTE':
         gdaltest.post_reason('fail')
@@ -572,7 +572,7 @@ def vrtmisc_18():
 
 def vrtmisc_rat():
 
-    ds = gdal.Translate('/vsimem/vrtmisc_rat.tif', 'data/byte.tif', format = 'MEM')
+    ds = gdal.Translate('/vsimem/vrtmisc_rat.tif', 'data/byte.tif', format='MEM')
     rat = gdal.RasterAttributeTable()
     rat.CreateColumn("Ints", gdal.GFT_Integer, gdal.GFU_Generic)
     ds.GetRasterBand(1).SetDefaultRAT(rat)
@@ -590,7 +590,7 @@ def vrtmisc_rat():
         print(xml_vrt)
         return 'fail'
 
-    vrt_ds = gdal.Translate('/vsimem/vrtmisc_rat.vrt', ds, format = 'VRT', srcWin = [0,0,1,1])
+    vrt_ds = gdal.Translate('/vsimem/vrtmisc_rat.vrt', ds, format='VRT', srcWin=[0,0,1,1])
 
     xml_vrt = vrt_ds.GetMetadata('xml:VRT')[0]
     if gdal.GetLastErrorMsg() != '':
@@ -629,7 +629,7 @@ def vrtmisc_rat():
 
 def vrtmisc_colortable():
 
-    ds = gdal.Translate('', 'data/byte.tif', format = 'VRT')
+    ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ct = gdal.ColorTable()
     ct.SetColorEntry(0, (255,255,255,255))
     ds.GetRasterBand(1).SetColorTable(ct)
@@ -650,7 +650,7 @@ def vrtmisc_colortable():
 def vrtmisc_histogram():
 
     tmpfile = '/vsimem/vrtmisc_histogram.vrt'
-    ds = gdal.Translate(tmpfile, 'data/byte.tif', format = 'VRT')
+    ds = gdal.Translate(tmpfile, 'data/byte.tif', format='VRT')
     ds.GetRasterBand(1).SetDefaultHistogram(1,2,[3000000000,4])
     ds = None
 

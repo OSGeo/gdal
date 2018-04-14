@@ -207,7 +207,7 @@ if dst_ds is None:
         dst_ds = dst_driver.Create(dst_filename,
                                    src_ds.RasterXSize,
                                    src_ds.RasterYSize,
-                                   1, gc, options = create_options)
+                                   1, gc, options=create_options)
         dst_ds.SetProjection(src_ds.GetProjection())
         dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
 

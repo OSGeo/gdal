@@ -174,7 +174,7 @@ def vsigs_start_webserver():
     if not gdaltest.built_against_curl():
         return 'skip'
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
         return 'skip'
 
@@ -199,7 +199,7 @@ def vsigs_2():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/gs_fake_bucket_http_header_file/resource', 200,
                 {'Content-type': 'text/plain'}, 'Y',
-                expected_headers = {'foo': 'bar'})
+                expected_headers={'foo': 'bar'})
     with webserver.install_http_handler(handler):
         with gdaltest.config_option('GDAL_HTTP_HEADER_FILE', '/vsimem/my_headers.txt'):
             f = open_for_read('/vsigs/gs_fake_bucket_http_header_file/resource')
@@ -228,7 +228,7 @@ def vsigs_2():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/gs_fake_bucket/resource', 200,
                 {'Content-type': 'text/plain'}, 'foo',
-                expected_headers = {'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='})
+                expected_headers={'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='})
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsigs/gs_fake_bucket/resource')
         if f is None:
@@ -245,7 +245,7 @@ def vsigs_2():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/gs_fake_bucket/resource', 200,
                 {'Content-type': 'text/plain'}, 'foo',
-                expected_headers = {'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='})
+                expected_headers={'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='})
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsigs_streaming/gs_fake_bucket/resource')
         if f is None:
@@ -415,7 +415,7 @@ def vsigs_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/test_copy/file.bin', custom_method = method)
+    handler.add('PUT', '/test_copy/file.bin', custom_method=method)
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
         ret += gdal.VSIFWriteL('x' * 5000, 1, 5000, f)
@@ -440,7 +440,7 @@ def vsigs_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/test_copy/file.bin', custom_method = method)
+    handler.add('PUT', '/test_copy/file.bin', custom_method=method)
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
@@ -473,7 +473,7 @@ def vsigs_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/test_copy/file.bin', custom_method = method)
+    handler.add('PUT', '/test_copy/file.bin', custom_method=method)
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
         if ret != 35000:
@@ -533,7 +533,7 @@ def vsigs_read_credentials_refresh_token_default_gdal_app():
         request.end_headers()
         request.wfile.write(content.encode('ascii'))
 
-    handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method = method)
+    handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method=method)
 
     def method(request):
         if 'Authorization' not in request.headers:
@@ -552,7 +552,7 @@ def vsigs_read_credentials_refresh_token_default_gdal_app():
         request.end_headers()
         request.wfile.write("""foo""".encode('ascii'))
 
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsigs/gs_fake_bucket/resource')
         if f is None:
@@ -612,7 +612,7 @@ def vsigs_read_credentials_refresh_token_custom_app():
         request.end_headers()
         request.wfile.write(content.encode('ascii'))
 
-    handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method = method)
+    handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method=method)
 
     def method(request):
         if 'Authorization' not in request.headers:
@@ -631,7 +631,7 @@ def vsigs_read_credentials_refresh_token_custom_app():
         request.end_headers()
         request.wfile.write("""foo""".encode('ascii'))
 
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsigs/gs_fake_bucket/resource')
         if f is None:
@@ -723,7 +723,7 @@ gwE6fxOLyJDxuWRf
             request.end_headers()
             request.wfile.write(content.encode('ascii'))
 
-        handler.add('POST', '/oauth2/v4/token', custom_method = method)
+        handler.add('POST', '/oauth2/v4/token', custom_method=method)
 
         def method(request):
             if 'Authorization' not in request.headers:
@@ -742,7 +742,7 @@ gwE6fxOLyJDxuWRf
             request.end_headers()
             request.wfile.write("""foo""".encode('ascii'))
 
-        handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+        handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
         try:
             with webserver.install_http_handler(handler):
                 f = open_for_read('/vsigs/gs_fake_bucket/resource')
@@ -817,7 +817,7 @@ def vsigs_read_credentials_oauth2_service_account_json_file():
         request.end_headers()
         request.wfile.write(content.encode('ascii'))
 
-    handler.add('POST', '/oauth2/v4/token', custom_method = method)
+    handler.add('POST', '/oauth2/v4/token', custom_method=method)
 
     def method(request):
         if 'Authorization' not in request.headers:
@@ -836,7 +836,7 @@ def vsigs_read_credentials_oauth2_service_account_json_file():
         request.end_headers()
         request.wfile.write("""foo""".encode('ascii'))
 
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
     try:
         with webserver.install_http_handler(handler):
             f = open_for_read('/vsigs/gs_fake_bucket/resource')
@@ -919,7 +919,7 @@ gs_secret_access_key = bar
         request.wfile.write("""foo""".encode('ascii'))
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsigs/gs_fake_bucket/resource')
         if f is None:
@@ -984,7 +984,7 @@ client_secret = CLIENT_SECRET
         request.end_headers()
         request.wfile.write(content.encode('ascii'))
 
-    handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method = method)
+    handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method=method)
 
     def method(request):
         if 'Authorization' not in request.headers:
@@ -1003,7 +1003,7 @@ client_secret = CLIENT_SECRET
         request.end_headers()
         request.wfile.write("""foo""".encode('ascii'))
 
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsigs/gs_fake_bucket/resource')
         if f is None:
@@ -1070,7 +1070,7 @@ def vsigs_read_credentials_gce():
                 "token_type" : "Bearer",
                 "expires_in" : 3600,
                 }""")
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsigs/gs_fake_bucket/resource')
         if f is None:
@@ -1168,7 +1168,7 @@ def vsigs_read_credentials_gce_expiration():
                 "token_type" : "Bearer",
                 "expires_in" : 0,
                 }""")
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsigs/gs_fake_bucket/resource')
         if f is None:

@@ -56,8 +56,8 @@ def roipac_1():
         AUTHORITY["EPSG","9108"]],
     AUTHORITY["EPSG","4326"]]"""
 
-    return tst.testOpen(check_prj = prj,
-                         check_gt = (-180.0083333, 0.0083333333, 0.0,
+    return tst.testOpen(check_prj=prj,
+                         check_gt=(-180.0083333, 0.0083333333, 0.0,
                                      -59.9916667, 0.0, -0.0083333333))
 
 ###############################################################################
@@ -80,7 +80,7 @@ def roipac_2():
 def roipac_3():
 
     tst = gdaltest.GDALTest('roi_pac', 'srtm.dem', 1, 64074)
-    return tst.testCreateCopy(check_gt = 1, new_filename = 'strm.tst.dem')
+    return tst.testCreateCopy(check_gt=1, new_filename='strm.tst.dem')
 
 ###############################################################################
 # Verify VSIF*L capacity
@@ -89,7 +89,7 @@ def roipac_3():
 def roipac_4():
 
     tst = gdaltest.GDALTest('roi_pac', 'srtm.dem', 1, 64074)
-    return tst.testCreateCopy(check_gt = 1, new_filename = 'strm.tst.dem', vsimem = 1)
+    return tst.testCreateCopy(check_gt=1, new_filename='strm.tst.dem', vsimem=1)
 
 ###############################################################################
 # Verify offset/scale metadata reading
@@ -116,7 +116,7 @@ def roipac_6():
 
     tst = gdaltest.GDALTest('roi_pac', 'byte.tif', 1, 4672)
     with gdaltest.error_handler():
-        ret = tst.testCreateCopy(check_gt = 1, new_filename = 'byte.flg', vsimem = 1)
+        ret = tst.testCreateCopy(check_gt=1, new_filename='byte.flg', vsimem=1)
     return ret
 
 

@@ -37,7 +37,7 @@ from osgeo import gdal
 def prf_1():
 
     tst = gdaltest.GDALTest('prf', './PRF/ph.prf', 1, 43190)
-    return tst.testOpen(check_gt = (1, 2, 3, -7, 5, 6))
+    return tst.testOpen(check_gt=(1, 2, 3, -7, 5, 6))
 
 
 def prf_2():

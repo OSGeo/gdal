@@ -80,7 +80,7 @@ def ogr_wasp_elevation_from_linestring_z():
 
     for i in range(10):
         feat = ogr.Feature(dfn)
-        line = ogr.Geometry(type = ogr.wkbLineString25D)
+        line = ogr.Geometry(type=ogr.wkbLineString25D)
         line.AddPoint(i, 0, i)
         line.AddPoint(i, 0.5, i)
         line.AddPoint(i, 1, i)
@@ -133,7 +133,7 @@ def ogr_wasp_elevation_from_linestring_z_toler():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                           ref,
-                                          options = ['WASP_TOLERANCE=.1'],
+                                          options=['WASP_TOLERANCE=.1'],
                                           geom_type=ogr.wkbLineString25D)
     if not ogrtest.have_geos() :
         gdal.PopErrorHandler()
@@ -146,7 +146,7 @@ def ogr_wasp_elevation_from_linestring_z_toler():
 
     for i in range(10):
         feat = ogr.Feature(dfn)
-        line = ogr.Geometry(type = ogr.wkbLineString25D)
+        line = ogr.Geometry(type=ogr.wkbLineString25D)
         line.AddPoint(i, 0, i)
         line.AddPoint(i, 0.5, i)
         line.AddPoint(i, 1, i)
@@ -197,7 +197,7 @@ def ogr_wasp_elevation_from_linestring_field():
         return 'skip'
 
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
-                                          options = ['WASP_FIELDS=elevation'],
+                                          options=['WASP_FIELDS=elevation'],
                                           geom_type=ogr.wkbLineString)
 
     if layer is None:
@@ -209,7 +209,7 @@ def ogr_wasp_elevation_from_linestring_field():
     for i in range(10):
         feat = ogr.Feature(layer.GetLayerDefn())
         feat.SetField(0, float(i))
-        line = ogr.Geometry(type = ogr.wkbLineString)
+        line = ogr.Geometry(type=ogr.wkbLineString)
         line.AddPoint(i, 0)
         line.AddPoint(i, 0.5)
         line.AddPoint(i, 1)
@@ -252,7 +252,7 @@ def ogr_wasp_roughness_from_linestring_fields():
         return 'skip'
 
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
-                                          options = ['WASP_FIELDS=z_left,z_right'],
+                                          options=['WASP_FIELDS=z_left,z_right'],
                                           geom_type=ogr.wkbLineString)
 
     if layer is None:
@@ -268,7 +268,7 @@ def ogr_wasp_roughness_from_linestring_fields():
         feat.SetField(0, 'dummy_'+str(i))
         feat.SetField(1, float(i)-1)
         feat.SetField(2, float(i))
-        line = ogr.Geometry(type = ogr.wkbLineString)
+        line = ogr.Geometry(type=ogr.wkbLineString)
         line.AddPoint(i, 0)
         line.AddPoint(i, 0.5)
         line.AddPoint(i, 1)
@@ -332,12 +332,12 @@ def ogr_wasp_roughness_from_polygon_z():
 
     for i in range(6):
         feat = ogr.Feature(dfn)
-        ring = ogr.Geometry(type = ogr.wkbLinearRing)
+        ring = ogr.Geometry(type=ogr.wkbLinearRing)
         ring.AddPoint(0, 0, i)
         ring.AddPoint(round(math.cos(i*math.pi/3),6),  round(math.sin(i*math.pi/3),6), i)
         ring.AddPoint(round(math.cos((i+1)*math.pi/3),6),  round(math.sin((i+1)*math.pi/3),6), i)
         ring.AddPoint(0, 0, i)
-        poly = ogr.Geometry(type = ogr.wkbPolygon25D)
+        poly = ogr.Geometry(type=ogr.wkbPolygon25D)
         poly.AddGeometry(ring)
         feat.SetGeometry(poly)
         if layer.CreateFeature(feat) != 0:
@@ -388,7 +388,7 @@ def ogr_wasp_roughness_from_polygon_field():
     if not ogrtest.have_geos() :
         gdal.PushErrorHandler('CPLQuietErrorHandler')
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
-                                          options = ['WASP_FIELDS=roughness'],
+                                          options=['WASP_FIELDS=roughness'],
                                           geom_type=ogr.wkbPolygon)
     if not ogrtest.have_geos() :
         gdal.PopErrorHandler()
@@ -406,12 +406,12 @@ def ogr_wasp_roughness_from_polygon_field():
     for i in range(6):
         feat = ogr.Feature(layer.GetLayerDefn())
         feat.SetField(0, float(i))
-        ring = ogr.Geometry(type = ogr.wkbLinearRing)
+        ring = ogr.Geometry(type=ogr.wkbLinearRing)
         ring.AddPoint(0, 0)
         ring.AddPoint(round(math.cos(i*math.pi/3),6),  round(math.sin(i*math.pi/3),6))
         ring.AddPoint(round(math.cos((i+1)*math.pi/3),6),  round(math.sin((i+1)*math.pi/3),6))
         ring.AddPoint(0, 0)
-        poly = ogr.Geometry(type = ogr.wkbPolygon)
+        poly = ogr.Geometry(type=ogr.wkbPolygon)
         poly.AddGeometry(ring)
         feat.SetGeometry(poly)
         if layer.CreateFeature(feat) != 0:
@@ -479,13 +479,13 @@ def ogr_wasp_merge():
 
     for i in range(6):
         feat = ogr.Feature(dfn)
-        ring = ogr.Geometry(type = ogr.wkbLinearRing)
+        ring = ogr.Geometry(type=ogr.wkbLinearRing)
         h = i % 2
         ring.AddPoint(0, 0, h)
         ring.AddPoint(round(math.cos(i*math.pi/3),6),  round(math.sin(i*math.pi/3),6), h)
         ring.AddPoint(round(math.cos((i+1)*math.pi/3),6),  round(math.sin((i+1)*math.pi/3),6), h)
         ring.AddPoint(0, 0, h)
-        poly = ogr.Geometry(type = ogr.wkbPolygon25D)
+        poly = ogr.Geometry(type=ogr.wkbPolygon25D)
         poly.AddGeometry(ring)
         feat.SetGeometry(poly)
         if layer.CreateFeature(feat) != 0:

@@ -44,7 +44,7 @@ def gff_1():
     if not gdaltest.download_file('http://sandia.gov/RADAR/complex_data/MiniSAR20050519p0001image008.gff', 'MiniSAR20050519p0001image008.gff', 12088):
         return 'skip'
 
-    tst = gdaltest.GDALTest('GFF', 'tmp/cache/MiniSAR20050519p0001image008.gff', 1, 29757, filename_absolute = 1)
+    tst = gdaltest.GDALTest('GFF', 'tmp/cache/MiniSAR20050519p0001image008.gff', 1, 29757, filename_absolute=1)
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = tst.testOpen()
     gdal.PopErrorHandler()

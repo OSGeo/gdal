@@ -38,7 +38,7 @@ def Usage():
     return -1
 
 
-def gdal_rm_recurse(filename, simulate = False):
+def gdal_rm_recurse(filename, simulate=False):
 
     delete_self = True
     if filename.endswith('/*'):
@@ -49,7 +49,7 @@ def gdal_rm_recurse(filename, simulate = False):
     if dir_contents:
         for f in dir_contents:
             if f not in ('.', '..'):
-                ret = gdal_rm_recurse(filename + '/' + f, simulate = simulate)
+                ret = gdal_rm_recurse(filename + '/' + f, simulate=simulate)
                 if ret != 0:
                     return ret
         if not delete_self:
@@ -74,7 +74,7 @@ def gdal_rm_recurse(filename, simulate = False):
             return gdal.Unlink(filename)
 
 
-def gdal_rm(argv, progress = None):
+def gdal_rm(argv, progress=None):
     filename = None
     recurse = False
     simulate = False
@@ -115,7 +115,7 @@ def gdal_rm(argv, progress = None):
             return 1
 
     if recurse:
-        ret = gdal_rm_recurse(filename, simulate = simulate)
+        ret = gdal_rm_recurse(filename, simulate=simulate)
     else:
         if simulate:
             print('gdal.Unlink(%s)' % filename)

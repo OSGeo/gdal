@@ -69,7 +69,7 @@ gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
 
 gdaltest.setup_run('gdalautotest_all')
 
-gdaltest.run_all(test_list, run_as_external = run_as_external)
+gdaltest.run_all(test_list, run_as_external=run_as_external)
 
 errors = gdaltest.summarize()
 

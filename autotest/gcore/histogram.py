@@ -83,8 +83,8 @@ def histogram_3():
 
     ds = gdal.Open('data/int32_withneg.grd')
     hist = ds.GetRasterBand(1).GetHistogram(buckets=21, max=100, min=-100,
-                                             include_out_of_range = 1,
-                                             approx_ok = 0)
+                                             include_out_of_range=1,
+                                             approx_ok=0)
 
     exp_hist = [0, 0, 0, 0, 0, 1, 0, 1, 1, 3, 3, 2, 0, 5, 3, 4, 0, 1, 1, 2, 3]
 
@@ -103,8 +103,8 @@ def histogram_4():
 
     ds = gdal.Open('data/int32_withneg.grd')
     hist = ds.GetRasterBand(1).GetHistogram(buckets=21, max=100, min=-100,
-                                             include_out_of_range = 0,
-                                             approx_ok = 0)
+                                             include_out_of_range=0,
+                                             approx_ok=0)
 
     exp_hist = [0, 0, 0, 0, 0, 1, 0, 1, 1, 3, 3, 2, 0, 5, 3, 4, 0, 1, 1, 2, 0]
 
@@ -129,7 +129,7 @@ def histogram_4():
 def histogram_5():
 
     ds = gdal.Open('data/utmsmall.tif')
-    hist = ds.GetRasterBand(1).GetDefaultHistogram(force = 1)
+    hist = ds.GetRasterBand(1).GetDefaultHistogram(force=1)
 
     exp_hist = (-0.5, 255.5, 256, [2, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 0, 0, 0, 0, 0, 29, 0, 0, 0, 0, 0, 0, 0, 46, 0, 0, 0, 0, 0, 0, 0, 69, 0, 0, 0, 0, 0, 0, 0, 99, 0, 0, 0, 0, 0, 0, 0, 0, 120, 0, 0, 0, 0, 0, 0, 0, 178, 0, 0, 0, 0, 0, 0, 0, 193, 0, 0, 0, 0, 0, 0, 0, 212, 0, 0, 0, 0, 0, 0, 0, 281, 0, 0, 0, 0, 0, 0, 0, 0, 365, 0, 0, 0, 0, 0, 0, 0, 460, 0, 0, 0, 0, 0, 0, 0, 533, 0, 0, 0, 0, 0, 0, 0, 544, 0, 0, 0, 0, 0, 0, 0, 0, 626, 0, 0, 0, 0, 0, 0, 0, 653, 0, 0, 0, 0, 0, 0, 0, 673, 0, 0, 0, 0, 0, 0, 0, 629, 0, 0, 0, 0, 0, 0, 0, 0, 586, 0, 0, 0, 0, 0, 0, 0, 541, 0, 0, 0, 0, 0, 0, 0, 435, 0, 0, 0, 0, 0, 0, 0, 348, 0, 0, 0, 0, 0, 0, 0, 341, 0, 0, 0, 0, 0, 0, 0, 0, 284, 0, 0, 0, 0, 0, 0, 0, 225, 0, 0, 0, 0, 0, 0, 0, 237, 0, 0, 0, 0, 0, 0, 0, 172, 0, 0, 0, 0, 0, 0, 0, 0, 159, 0, 0, 0, 0, 0, 0, 0, 105, 0, 0, 0, 0, 0, 0, 0, 824])
 
@@ -155,7 +155,7 @@ def histogram_6():
 
     shutil.copy('../gdrivers/data/albania.jpg', 'tmp/albania.jpg')
     ds = gdal.Open('tmp/albania.jpg')
-    hist = ds.GetRasterBand(1).GetDefaultHistogram(force = 0)
+    hist = ds.GetRasterBand(1).GetDefaultHistogram(force=0)
     if hist is not None:
         gdaltest.post_reason('did not get expected histogram.')
         print(hist)

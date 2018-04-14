@@ -70,7 +70,7 @@ def ogr_geom_area():
 
 def ogr_geom_area_linearring():
 
-    geom = ogr.Geometry(type = ogr.wkbLinearRing)
+    geom = ogr.Geometry(type=ogr.wkbLinearRing)
     geom.AddPoint_2D(0, 0)
     geom.AddPoint_2D(10, 0)
     geom.AddPoint_2D(10, 10)
@@ -108,7 +108,7 @@ def ogr_geom_area_geometrycollection():
 
 def ogr_geom_area_linearring_big_offset():
 
-    geom = ogr.Geometry(type = ogr.wkbLinearRing)
+    geom = ogr.Geometry(type=ogr.wkbLinearRing)
     BIGOFFSET = 1.0e11
     geom.AddPoint_2D(BIGOFFSET + 0, BIGOFFSET + 0)
     geom.AddPoint_2D(BIGOFFSET + 10, BIGOFFSET + 0)
@@ -563,7 +563,7 @@ def ogr_geom_build_from_edges_1():
     if not ogrtest.have_geos():
         return 'skip'
 
-    link_coll = ogr.Geometry(type = ogr.wkbGeometryCollection)
+    link_coll = ogr.Geometry(type=ogr.wkbGeometryCollection)
 
     wkt_array = [
       'LINESTRING (-87.601595 30.999522,-87.599623 31.000059,-87.599219 31.00017)',
@@ -596,7 +596,7 @@ def ogr_geom_build_from_edges_2():
     if not ogrtest.have_geos():
         return 'skip'
 
-    link_coll = ogr.Geometry(type = ogr.wkbMultiLineString)
+    link_coll = ogr.Geometry(type=ogr.wkbMultiLineString)
 
     wkt_array = [
       'LINESTRING (-87.601595 30.999522,-87.599623 31.000059,-87.599219 31.00017)',
@@ -663,7 +663,7 @@ def ogr_geom_build_from_edges_4():
     if not ogrtest.have_geos():
         return 'skip'
 
-    link_coll = ogr.Geometry(type = ogr.wkbGeometryCollection)
+    link_coll = ogr.Geometry(type=ogr.wkbGeometryCollection)
 
     wkt_array = [
       'LINESTRING EMPTY',
@@ -702,7 +702,7 @@ def ogr_geom_build_from_edges_4():
 
 def ogr_geom_area_empty_linearring():
 
-    geom = ogr.Geometry(type = ogr.wkbLinearRing)
+    geom = ogr.Geometry(type=ogr.wkbLinearRing)
 
     area = geom.GetArea()
     if area != 0:
@@ -1124,7 +1124,7 @@ def ogr_geom_getpoints():
         gdaltest.post_reason('did not get expected points (1)')
         print(points)
         return 'fail'
-    points = geom.GetPoints(nCoordDimension = 3)
+    points = geom.GetPoints(nCoordDimension=3)
     if points != [(0.0, 1.0, 0.0), (2.0, 3.0, 0.0)]:
         gdaltest.post_reason('did not get expected points (2)')
         print(points)
@@ -1136,7 +1136,7 @@ def ogr_geom_getpoints():
         gdaltest.post_reason('did not get expected points (3)')
         print(points)
         return 'fail'
-    points = geom.GetPoints(nCoordDimension = 2)
+    points = geom.GetPoints(nCoordDimension=2)
     if points != [(0.0, 1.0), (3.0, 4.0)]:
         gdaltest.post_reason('did not get expected points (4)')
         print(points)
@@ -1148,7 +1148,7 @@ def ogr_geom_getpoints():
         gdaltest.post_reason('did not get expected points (5)')
         print(points)
         return 'fail'
-    points = geom.GetPoints(nCoordDimension = 3)
+    points = geom.GetPoints(nCoordDimension=3)
     if points != [(0.0, 1.0, 0.0)]:
         gdaltest.post_reason('did not get expected points (6)')
         print(points)
@@ -1160,7 +1160,7 @@ def ogr_geom_getpoints():
         gdaltest.post_reason('did not get expected points (7)')
         print(points)
         return 'fail'
-    points = geom.GetPoints(nCoordDimension = 2)
+    points = geom.GetPoints(nCoordDimension=2)
     if points != [(0.0, 1.0)]:
         gdaltest.post_reason('did not get expected points (8)')
         print(points)
@@ -3407,7 +3407,7 @@ def ogr_geom_getcurvegeometry():
 
     # Test option ADD_INTERMEDIATE_POINT=STEALTH
     g1 = ogr.CreateGeometryFromWkt('CIRCULARSTRING (0 0,1.2 1.0,2 0)')
-    g2 = g1.GetLinearGeometry(options = ['ADD_INTERMEDIATE_POINT=STEALTH'])
+    g2 = g1.GetLinearGeometry(options=['ADD_INTERMEDIATE_POINT=STEALTH'])
     g3 = g2.GetCurveGeometry()
     if not g3.Equals(g1):
         gdaltest.post_reason('fail')
@@ -3416,7 +3416,7 @@ def ogr_geom_getcurvegeometry():
 
     # Test option ADD_INTERMEDIATE_POINT=YES
     g1 = ogr.CreateGeometryFromWkt('CIRCULARSTRING (0 0,1.2 1.0,2 0)')
-    g2 = g1.GetLinearGeometry(options = ['ADD_INTERMEDIATE_POINT=YES'])
+    g2 = g1.GetLinearGeometry(options=['ADD_INTERMEDIATE_POINT=YES'])
     g3 = g2.GetCurveGeometry()
     if not g3.Equals(g1):
         gdaltest.post_reason('fail')
@@ -3443,7 +3443,7 @@ def ogr_geom_getcurvegeometry():
 
     # Test option ADD_INTERMEDIATE_POINT=FALSE
     g1 = ogr.CreateGeometryFromWkt('CIRCULARSTRING (0 0,1.2 1.0,2 0)')
-    g2 = g1.GetLinearGeometry(options = ['ADD_INTERMEDIATE_POINT=FALSE'])
+    g2 = g1.GetLinearGeometry(options=['ADD_INTERMEDIATE_POINT=FALSE'])
     g3 = g2.GetCurveGeometry()
     g1_expected = ogr.CreateGeometryFromWkt('CIRCULARSTRING (0 0,1.0 1.020199980003999,2 0)')
     if ogrtest.check_feature_geometry(g3, g1_expected) != 0:
@@ -3453,7 +3453,7 @@ def ogr_geom_getcurvegeometry():
 
     # Test with unrecognized options
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    g2_new = g1.GetLinearGeometry(options = ['bla', 'ADD_INTERMEDIATE_POINT=FALSE', 'foo=bar'])
+    g2_new = g1.GetLinearGeometry(options=['bla', 'ADD_INTERMEDIATE_POINT=FALSE', 'foo=bar'])
     gdal.PopErrorHandler()
     if not g2_new.Equals(g2):
         gdaltest.post_reason('fail')

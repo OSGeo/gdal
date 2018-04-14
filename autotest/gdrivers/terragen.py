@@ -49,7 +49,7 @@ def terragen_1():
 
 def terragen_2():
 
-    gdal.Translate('/vsimem/out.ter', 'data/float32.tif', options = '-of TERRAGEN -co MINUSERPIXELVALUE=74 -co MAXUSERPIXELVALUE=255')
+    gdal.Translate('/vsimem/out.ter', 'data/float32.tif', options='-of TERRAGEN -co MINUSERPIXELVALUE=74 -co MAXUSERPIXELVALUE=255')
     gdal.Translate('/vsimem/out.tif', '/vsimem/out.ter', options='-unscale')
     ds = gdal.Open('/vsimem/out.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:

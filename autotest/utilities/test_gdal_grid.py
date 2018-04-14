@@ -92,7 +92,7 @@ def test_gdal_grid_1():
             wkt = 'POINT(%f %f %s)' % (geotransform[0] + (i + .5) * geotransform[1],
                                         geotransform[3] + (j + .5) * geotransform[5],
                                         array_val[j * 121 + i])
-            dst_feat = ogr.Feature(feature_def = shape_lyr.GetLayerDefn())
+            dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
             dst_feat.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
             shape_lyr.CreateFeature(dst_feat)
 
@@ -285,9 +285,9 @@ def test_gdal_grid_3():
     # We should get the same values as in "ref_data/gdal_invdist.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_invdist.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 1:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds_ref = None
@@ -313,9 +313,9 @@ def test_gdal_grid_3():
     # We should get the same values as in "ref_data/gdal_invdist.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_invdist.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 1:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds_ref = None
@@ -341,9 +341,9 @@ def test_gdal_grid_3():
     # We should get the same values as in "ref_data/gdal_invdist.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_invdist.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 1:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds_ref = None
@@ -364,9 +364,9 @@ def test_gdal_grid_3():
     # We should get the same values as in "ref_data/gdal_invdist.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_invdist.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 1:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds_ref = None
@@ -387,9 +387,9 @@ def test_gdal_grid_3():
     # We should get the same values as in "ref_data/gdal_invdist.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_invdist.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 1:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds_ref = None
@@ -409,9 +409,9 @@ def test_gdal_grid_3():
     # We should get the same values as in "ref_data/grid_invdist_90_90_8p.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_invdist_90_90_8p.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 1:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds_ref = None
@@ -442,10 +442,10 @@ def test_gdal_grid_4():
     # We should get the same values as in "ref_data/grid_average.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_average.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     ds_ref = None
     if maxdiff > 1:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds = None
@@ -464,10 +464,10 @@ def test_gdal_grid_4():
     # We should get the same values as in "ref_data/grid_average_190_190.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_average_190_190.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     ds_ref = None
     if maxdiff > 1:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds = None
@@ -486,10 +486,10 @@ def test_gdal_grid_4():
     # We should get the same values as in "ref_data/grid_average_300_100_40.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_average_300_100_40.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     ds_ref = None
     if maxdiff > 1:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds = None
@@ -508,10 +508,10 @@ def test_gdal_grid_4():
     # We should get the same values as in "ref_data/grid_average_90_90_8p.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_average_90_90_8p.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     ds_ref = None
     if maxdiff > 1:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds = None
@@ -748,10 +748,10 @@ def test_gdal_grid_9():
     # We should get the same values as in "ref_data/grid_avdist.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_avdist.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     ds_ref = None
     if maxdiff > 1:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds = None
@@ -771,10 +771,10 @@ def test_gdal_grid_9():
     # We should get the same values as in "ref_data/grid_avdist_150_150.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_avdist_150_150.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     ds_ref = None
     if maxdiff > 1:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds = None
@@ -804,10 +804,10 @@ def test_gdal_grid_10():
     # We should get the same values as in "ref_data/grid_avdist_150_50_-15.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_avdist_150_50_-15.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     ds_ref = None
     if maxdiff > 1:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds = None
@@ -865,9 +865,9 @@ def test_gdal_grid_12():
     # We should get the same values as in "ref_data/gdal_invdistnn.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_invdistnn.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 0.00001:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds_ref = None
@@ -887,9 +887,9 @@ def test_gdal_grid_12():
     # We should get the same values as in "ref_data/grid_invdistnn_250_8minp.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_invdistnn_250_8minp.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 0.00001:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds_ref = None
@@ -909,9 +909,9 @@ def test_gdal_grid_12():
     # We should get the same values as in "ref_data/gdal_invdistnn_250_10maxp_3pow.tif"
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_invdistnn_250_10maxp_3pow.tif')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 0.00001:
-        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
     ds_ref = None

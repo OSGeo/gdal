@@ -76,7 +76,7 @@ def hfa_write_desc():
 def hfa_write_4bit():
     drv = gdal.GetDriverByName('HFA')
     src_ds = gdal.Open('data/byte.tif')
-    ds = drv.CreateCopy('tmp/4bit.img', src_ds, options = ['NBITS=1'])
+    ds = drv.CreateCopy('tmp/4bit.img', src_ds, options=['NBITS=1'])
     ds = None
     src_ds = None
 
@@ -102,7 +102,7 @@ def hfa_write_4bit_compressed():
     drv = gdal.GetDriverByName('HFA')
     src_ds = gdal.Open('data/byte.tif')
     ds = drv.CreateCopy('tmp/4bitc.img', src_ds,
-                        options = ['NBITS=1', 'COMPRESSED=YES'])
+                        options=['NBITS=1', 'COMPRESSED=YES'])
     ds = None
     src_ds = None
 
@@ -156,7 +156,7 @@ def hfa_update_overviews():
     shutil.copyfile('data/small_ov.rrd', 'tmp/small.rrd')
 
     ds = gdal.Open('tmp/small.img', gdal.GA_Update)
-    result = ds.BuildOverviews(overviewlist = [2])
+    result = ds.BuildOverviews(overviewlist=[2])
 
     if result != 0:
         print(result)
@@ -173,7 +173,7 @@ def hfa_update_overviews():
 def hfa_clean_external_overviews():
 
     ds = gdal.Open('tmp/small.img', gdal.GA_Update)
-    result = ds.BuildOverviews(overviewlist = [])
+    result = ds.BuildOverviews(overviewlist=[])
 
     if result != 0:
         gdaltest.post_reason('BuildOverviews() failed.')
@@ -211,7 +211,7 @@ def hfa_clean_external_overviews():
 
 def hfa_bug_2525():
     drv = gdal.GetDriverByName('HFA')
-    ds = drv.Create('tmp/test_hfa.img', 64, 64, 1, gdal.GDT_UInt16, options = ['COMPRESSED=YES'])
+    ds = drv.Create('tmp/test_hfa.img', 64, 64, 1, gdal.GDT_UInt16, options=['COMPRESSED=YES'])
     import struct
     data = struct.pack('H' * 64, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535)
     for i in range(64):
@@ -233,7 +233,7 @@ def hfa_use_rrd():
     old_value = gdal.GetConfigOption('HFA_USE_RRD', 'NO')
     gdal.SetConfigOption('HFA_USE_RRD', 'YES')
     ds = gdal.Open('tmp/small.img', gdal.GA_Update)
-    result = ds.BuildOverviews(overviewlist = [2])
+    result = ds.BuildOverviews(overviewlist=[2])
     gdal.SetConfigOption('HFA_USE_RRD', old_value)
 
     if result != 0:
@@ -278,7 +278,7 @@ def hfa_update_existing_aux_overviews():
 
     # Create overviews
     ds = gdal.Open('tmp/hfa_update_existing_aux_overviews.bmp')
-    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     ds = None
 
     # Save overviews checksum
@@ -287,7 +287,7 @@ def hfa_update_existing_aux_overviews():
     cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
 
     # and regenerate them
-    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     ds = None
 
     ds = gdal.Open('tmp/hfa_update_existing_aux_overviews.bmp')
@@ -304,8 +304,8 @@ def hfa_update_existing_aux_overviews():
         return 'fail'
 
     # and regenerate them twice in a row
-    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
-    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAR', overviewlist=[2, 4])
+    ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     ds = None
 
     ds = gdal.Open('tmp/hfa_update_existing_aux_overviews.bmp')
@@ -322,7 +322,7 @@ def hfa_update_existing_aux_overviews():
         return 'fail'
 
     # and regenerate them with an extra overview level
-    ds.BuildOverviews('NEAR', overviewlist = [8])
+    ds.BuildOverviews('NEAR', overviewlist=[8])
     ds = None
 
     ds = gdal.Open('tmp/hfa_update_existing_aux_overviews.bmp')
@@ -451,14 +451,14 @@ short_list = [ \
 
 for item in short_list:
     ut2 = gdaltest.GDALTest('HFA', item[0], item[1], item[2],
-                             options = ['USE_SPILL=YES'])
+                             options=['USE_SPILL=YES'])
     if ut2 is None:
         print('HFA tests skipped')
     gdaltest_list.append((ut2.testCreateCopy, item[0] + ' (spill)'))
     gdaltest_list.append((ut2.testCreate, item[0] + ' (spill)'))
 
     ut2 = gdaltest.GDALTest('HFA', item[0], item[1], item[2],
-                             options = ['COMPRESS=YES'])
+                             options=['COMPRESS=YES'])
     if ut2 is None:
         print('HFA tests skipped')
 #    gdaltest_list.append( (ut2.testCreateCopy, item[0] + ' (compressed)') )

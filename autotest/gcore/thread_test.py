@@ -68,7 +68,7 @@ def thread_test_1():
     args_array = []
     for i in range(4):
         args_dict = {'ret': True}
-        t = threading.Thread(target=thread_test_1_worker, args = (args_dict,))
+        t = threading.Thread(target=thread_test_1_worker, args=(args_dict,))
         args_array.append(args_dict)
         threads.append(t)
         t.start()

@@ -43,39 +43,39 @@ import gdal
 def rmf_1():
 
     tst = gdaltest.GDALTest('rmf', 'byte.rsw', 1, 4672)
-    return tst.testOpen(check_gt = (440720, 60, 0, 3751320, 0, -60))
+    return tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 
 def rmf_2():
 
     tst = gdaltest.GDALTest('rmf', 'byte-lzw.rsw', 1, 4672)
     with gdaltest.error_handler():
-        return tst.testOpen(check_gt = (440720, 60, 0, 3751320, 0, -60))
+        return tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 
 def rmf_3():
 
     tst = gdaltest.GDALTest('rmf', 'float64.mtw', 1, 4672)
     with gdaltest.error_handler():
-        return tst.testOpen(check_gt = (440720, 60, 0, 3751320, 0, -60))
+        return tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 
 def rmf_4():
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 1, 21212)
-    ret = tst.testOpen(check_gt = (-44.840320, 0.003432, 0,
+    ret = tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
                                      -22.932584, 0, -0.003432))
     if ret != 'success':
         return 'fail'
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 2, 21053)
-    ret = tst.testOpen(check_gt = (-44.840320, 0.003432, 0,
+    ret = tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
                                      -22.932584, 0, -0.003432))
     if ret != 'success':
         return 'fail'
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 3, 21349)
-    return tst.testOpen(check_gt = (-44.840320, 0.003432, 0,
+    return tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
                                      -22.932584, 0, -0.003432))
 
 
@@ -83,21 +83,21 @@ def rmf_5():
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 1, 21212)
     with gdaltest.error_handler():
-        ret = tst.testOpen(check_gt = (-44.840320, 0.003432, 0,
+        ret = tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
                                      -22.932584, 0, -0.003432))
     if ret != 'success':
         return 'fail'
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 2, 21053)
     with gdaltest.error_handler():
-        ret = tst.testOpen(check_gt = (-44.840320, 0.003432, 0,
+        ret = tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
                                      -22.932584, 0, -0.003432))
     if ret != 'success':
         return 'fail'
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 3, 21349)
     with gdaltest.error_handler():
-        return tst.testOpen(check_gt = (-44.840320, 0.003432, 0,
+        return tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
                                      -22.932584, 0, -0.003432))
 
 
@@ -127,14 +127,14 @@ def rmf_7():
 
     tst = gdaltest.GDALTest('rmf', 'byte.rsw', 1, 4672)
 
-    return tst.testCreateCopy(check_srs = 1, check_gt = 1, vsimem = 1)
+    return tst.testCreateCopy(check_srs=1, check_gt=1, vsimem=1)
 
 
 def rmf_8():
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 2, 21053)
 
-    return tst.testCreateCopy(check_srs = 1, check_gt = 1)
+    return tst.testCreateCopy(check_srs=1, check_gt=1)
 
 ###############################################################################
 # Create RMFHUGE=YES
@@ -142,9 +142,9 @@ def rmf_8():
 
 def rmf_9():
 
-    tst = gdaltest.GDALTest('rmf', 'byte.rsw', 1, 4672, options = ['RMFHUGE=YES'])
+    tst = gdaltest.GDALTest('rmf', 'byte.rsw', 1, 4672, options=['RMFHUGE=YES'])
 
-    return tst.testCreateCopy(check_srs = 1, check_gt = 1, vsimem = 1)
+    return tst.testCreateCopy(check_srs=1, check_gt=1, vsimem=1)
 
 ###############################################################################
 # Compressed DEM
@@ -204,7 +204,7 @@ def rmf_12a():
 
     tst = gdaltest.GDALTest('rmf', 'cucled-1.rsw', 1, 4672)
     with gdaltest.error_handler():
-        return tst.testOpen(check_gt = (440720, 60, 0, 3751320, 0, -60))
+        return tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 ###############################################################################
 # Check file open with cucled header offsets .
@@ -214,7 +214,7 @@ def rmf_12b():
 
     tst = gdaltest.GDALTest('rmf', 'cucled-2.rsw', 1, 4672)
     with gdaltest.error_handler():
-        return tst.testOpen(check_gt = (440720, 60, 0, 3751320, 0, -60))
+        return tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 ###############################################################################
 # Check file open with invalid subheader marker.
@@ -224,7 +224,7 @@ def rmf_12c():
 
     tst = gdaltest.GDALTest('rmf', 'invalid-subheader.rsw', 1, 4672)
     with gdaltest.error_handler():
-        return tst.testOpen(check_gt = (440720, 60, 0, 3751320, 0, -60))
+        return tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 ###############################################################################
 # Check file open with corrupted subheader.
@@ -233,7 +233,7 @@ def rmf_12c():
 def rmf_12d():
 
     tst = gdaltest.GDALTest('rmf', 'corrupted-subheader.rsw', 1, 4672)
-    return tst.testOpen(check_gt = (440720, 60, 0, 3751320, 0, -60))
+    return tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 ###############################################################################
 # Build overviews and check
@@ -268,7 +268,7 @@ def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_coun
                 return 'fail'
 
         reopen = True
-        err = src_ds.BuildOverviews(overviewlist = [2, 4])
+        err = src_ds.BuildOverviews(overviewlist=[2, 4])
         if err != 0:
             gdaltest.post_reason('BuildOverviews reports an error')
             return 'fail'

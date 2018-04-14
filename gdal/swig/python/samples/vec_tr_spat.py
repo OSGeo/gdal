@@ -79,7 +79,7 @@ if outfile is None:
 #############################################################################
 # Open the datasource to operate on.
 
-in_ds = ogr.Open(infile, update = 0)
+in_ds = ogr.Open(infile, update=0)
 
 if layer_name is not None:
     in_layer = in_ds.GetLayerByName(layer_name)
@@ -97,8 +97,8 @@ shp_driver.DeleteDataSource(outfile)
 shp_ds = shp_driver.CreateDataSource(outfile)
 
 shp_layer = shp_ds.CreateLayer(in_defn.GetName(),
-                                geom_type = in_defn.GetGeomType(),
-                                srs = in_layer.GetSpatialRef())
+                                geom_type=in_defn.GetGeomType(),
+                                srs=in_layer.GetSpatialRef())
 
 in_field_count = in_defn.GetFieldCount()
 
@@ -137,7 +137,7 @@ while in_feat is not None:
     geom = in_feat.GetGeometryRef()
 
     if geom.Intersect(filt_geom) != 0:
-        out_feat = ogr.Feature(feature_def = shp_layer.GetLayerDefn())
+        out_feat = ogr.Feature(feature_def=shp_layer.GetLayerDefn())
         out_feat.SetFrom(in_feat)
 
         shp_layer.CreateFeature(out_feat)

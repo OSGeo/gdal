@@ -179,7 +179,7 @@ def fast_5():
         PARAMETER["false_northing",10002288.3],
         UNIT["Meter",1]]"""
 
-    return tst.testOpen(check_gt = gt, check_prj = proj)
+    return tst.testOpen(check_gt=gt, check_prj=proj)
 
 
 ###############################################################################
@@ -200,7 +200,7 @@ def fast_6():
     proj = """LOCAL_CS["GCTP projection number 22",
     UNIT["Meter",1]]"""
 
-    return tst.testOpen(check_gt = gt, check_prj = proj)
+    return tst.testOpen(check_gt=gt, check_prj=proj)
 
 
 ###############################################################################
@@ -232,7 +232,7 @@ def fast_7():
     PARAMETER["false_northing",0],
     UNIT["Meter",1]]"""
 
-    return tst.testOpen(check_gt = gt, check_prj = proj)
+    return tst.testOpen(check_gt=gt, check_prj=proj)
 
 ###############################################################################
 # Test Euromap WIFS dataset
@@ -266,7 +266,7 @@ def fast_8():
     PARAMETER["false_northing",0],
     UNIT["Meter",1]]"""
 
-    return tst.testOpen(check_gt = gt, check_prj = proj)
+    return tst.testOpen(check_gt=gt, check_prj=proj)
 
 ###############################################################################
 # Check some metadata and opening for a RevB L7 file (#3306, #3307).

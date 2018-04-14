@@ -109,11 +109,11 @@ def ogr_openfilegdb_make_test_data():
 
     for data in ogrtest.openfilegdb_datalist:
         if data[1] == ogr.wkbNone:
-            lyr = ds.CreateLayer(data[0], geom_type=data[1], options = options)
+            lyr = ds.CreateLayer(data[0], geom_type=data[1], options=options)
         elif data[0] == 'multipatch':
-            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = ['CREATE_MULTIPATCH=YES', options[0]])
+            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options=['CREATE_MULTIPATCH=YES', options[0]])
         else:
-            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = options)
+            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options=options)
         lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
         lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
         lyr.CreateField(ogr.FieldDefn("smallint", ogr.OFTInteger))
@@ -151,7 +151,7 @@ def ogr_openfilegdb_make_test_data():
             lyr.CreateFeature(feat)
 
     if False:
-        lyr = ds.CreateLayer('sparse_layer', geom_type = ogr.wkbPoint)
+        lyr = ds.CreateLayer('sparse_layer', geom_type=ogr.wkbPoint)
         for i in range(4096):
             feat = ogr.Feature(lyr.GetLayerDefn())
             lyr.CreateFeature(feat)
@@ -160,7 +160,7 @@ def ogr_openfilegdb_make_test_data():
         lyr.CreateFeature(feat)
 
     if True:
-        lyr = ds.CreateLayer('big_layer', geom_type = ogr.wkbNone)
+        lyr = ds.CreateLayer('big_layer', geom_type=ogr.wkbNone)
         lyr.CreateField(ogr.FieldDefn("real", ogr.OFTReal))
         gdal.SetConfigOption('FGDB_BULK_LOAD', 'YES')
         #for i in range(340*341+1):
@@ -171,7 +171,7 @@ def ogr_openfilegdb_make_test_data():
         gdal.SetConfigOption('FGDB_BULK_LOAD', None)
 
     if True:
-        lyr = ds.CreateLayer('hole', geom_type = ogr.wkbPoint, srs = None)
+        lyr = ds.CreateLayer('hole', geom_type=ogr.wkbPoint, srs=None)
         lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
         feat = ogr.Feature(lyr.GetLayerDefn())
         feat.SetField('str', 'f1')
@@ -212,14 +212,14 @@ def ogr_openfilegdb_make_test_data():
         feat = None
 
     if True:
-        lyr = ds.CreateLayer('no_field', geom_type = ogr.wkbNone, srs = None)
+        lyr = ds.CreateLayer('no_field', geom_type=ogr.wkbNone, srs=None)
         for i in range(5):
             feat = ogr.Feature(lyr.GetLayerDefn())
             lyr.CreateFeature(feat)
             feat = None
 
     if True:
-        lyr = ds.CreateLayer('several_polygons', geom_type = ogr.wkbPolygon, srs = None)
+        lyr = ds.CreateLayer('several_polygons', geom_type=ogr.wkbPolygon, srs=None)
         for i in range(3):
             for j in range(3):
                 feat = ogr.Feature(lyr.GetLayerDefn())
@@ -233,7 +233,7 @@ def ogr_openfilegdb_make_test_data():
                 feat = None
 
     if True:
-        lyr = ds.CreateLayer('testnotnullable', geom_type = ogr.wkbPoint, srs = None, options = ['GEOMETRY_NULLABLE=NO'])
+        lyr = ds.CreateLayer('testnotnullable', geom_type=ogr.wkbPoint, srs=None, options=['GEOMETRY_NULLABLE=NO'])
         field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
         field_defn.SetNullable(0)
         lyr.CreateField(field_defn)
@@ -246,7 +246,7 @@ def ogr_openfilegdb_make_test_data():
         f = None
 
     for data in ogrtest.openfilegdb_datalist_m:
-        lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = [])
+        lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options=[])
 
         feat = ogr.Feature(lyr.GetLayerDefn())
         feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
@@ -273,7 +273,7 @@ def ogr_openfilegdb_make_test_data():
 # Basic tests
 
 
-def ogr_openfilegdb_1(filename = 'data/testopenfilegdb.gdb.zip', version10 = True):
+def ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=True):
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
@@ -426,17 +426,17 @@ def ogr_openfilegdb_1(filename = 'data/testopenfilegdb.gdb.zip', version10 = Tru
 
 
 def ogr_openfilegdb_1_92():
-    return ogr_openfilegdb_1(filename = 'data/testopenfilegdb92.gdb.zip', version10 = False)
+    return ogr_openfilegdb_1(filename='data/testopenfilegdb92.gdb.zip', version10=False)
 
 
 def ogr_openfilegdb_1_93():
-    return ogr_openfilegdb_1(filename = 'data/testopenfilegdb93.gdb.zip', version10 = False)
+    return ogr_openfilegdb_1(filename='data/testopenfilegdb93.gdb.zip', version10=False)
 
 ###############################################################################
 # Run test_ogrsf
 
 
-def ogr_openfilegdb_2(filename = 'data/testopenfilegdb.gdb.zip'):
+def ogr_openfilegdb_2(filename='data/testopenfilegdb.gdb.zip'):
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -452,11 +452,11 @@ def ogr_openfilegdb_2(filename = 'data/testopenfilegdb.gdb.zip'):
 
 
 def ogr_openfilegdb_2_92():
-    return ogr_openfilegdb_2(filename = 'data/testopenfilegdb92.gdb.zip')
+    return ogr_openfilegdb_2(filename='data/testopenfilegdb92.gdb.zip')
 
 
 def ogr_openfilegdb_2_93():
-    return ogr_openfilegdb_2(filename = 'data/testopenfilegdb93.gdb.zip')
+    return ogr_openfilegdb_2(filename='data/testopenfilegdb93.gdb.zip')
 
 ###############################################################################
 # Open a .gdbtable directly

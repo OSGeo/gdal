@@ -368,7 +368,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                                     print(fl)
 
                     if drv.ShortName not in ['ECW', 'JP2ECW', 'VRT', 'XPM', 'JPEG2000', 'FIT', 'RST', 'INGR', 'USGSDEM', 'KMLSUPEROVERLAY', 'GMT']:
-                        dst_ds = drv.CreateCopy(filename, ds, callback = misc_6_interrupt_callback_class().cbk)
+                        dst_ds = drv.CreateCopy(filename, ds, callback=misc_6_interrupt_callback_class().cbk)
                         if dst_ds is not None:
                             gdaltest.post_reason('interruption did not work with drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
                             dst_ds = None
@@ -618,7 +618,7 @@ def misc_12():
             if gdal_translate_path is not None:
                 # Test to detect memleaks
                 ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/misc_12.vrt', src_ds)
-                (out, err) = gdaltest.runexternal_out_and_err(gdal_translate_path + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/' + get_filename(drv, ''), check_memleak = False)
+                (out, err) = gdaltest.runexternal_out_and_err(gdal_translate_path + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/' + get_filename(drv, ''), check_memleak=False)
                 del ds
                 gdal.Unlink('tmp/misc_12.vrt')
 

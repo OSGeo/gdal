@@ -77,10 +77,10 @@ def substitute_inspire_schemas_location(location, inspire_schemas_location):
 # Validation function
 
 
-def validate(xml_filename_or_content, xsd_filename = None, \
-             application_schema_ns = None, \
-             ogc_schemas_location = None, \
-             inspire_schemas_location = None):
+def validate(xml_filename_or_content, xsd_filename=None, \
+             application_schema_ns=None, \
+             ogc_schemas_location=None, \
+             inspire_schemas_location=None):
 
     try:
         if xml_filename_or_content.find('<') == 0:
@@ -201,7 +201,7 @@ def validate(xml_filename_or_content, xsd_filename = None, \
 # Transform absolute schemaLocations into relative ones
 
 
-def transform_abs_links_to_ref_links(path, level = 0):
+def transform_abs_links_to_ref_links(path, level=0):
     for file in os.listdir(path):
         filename=path + '/' + file
         if os.path.isdir(filename) and filename.find('examples') < 0:
@@ -256,7 +256,7 @@ def transform_abs_links_to_ref_links(path, level = 0):
 # Transform absolute schemaLocations into relative ones
 
 
-def transform_inspire_abs_links_to_ref_links(path, level = 0):
+def transform_inspire_abs_links_to_ref_links(path, level=0):
     for file in os.listdir(path):
         filename=path + '/' + file
         if os.path.isdir(filename) and filename.find('examples') < 0:
@@ -312,13 +312,13 @@ def transform_inspire_abs_links_to_ref_links(path, level = 0):
 # Download OGC schemas
 
 
-def download_ogc_schemas(ogc_schemas_url = 'http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip', \
-                         xlink_xsd_url = 'http://www.w3.org/1999/xlink.xsd', \
-                         xml_xsd_url = 'http://www.w3.org/2001/xml.xsd', \
-                         target_dir = '.', \
-                         target_subdir = 'SCHEMAS_OPENGIS_NET',
-                         force_download = False,
-                         max_download_duration = None):
+def download_ogc_schemas(ogc_schemas_url='http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip', \
+                         xlink_xsd_url='http://www.w3.org/1999/xlink.xsd', \
+                         xml_xsd_url='http://www.w3.org/2001/xml.xsd', \
+                         target_dir='.', \
+                         target_subdir='SCHEMAS_OPENGIS_NET',
+                         force_download=False,
+                         max_download_duration=None):
     try:
         os.mkdir(target_dir)
     except:
@@ -327,7 +327,7 @@ def download_ogc_schemas(ogc_schemas_url = 'http://schemas.opengis.net/SCHEMAS_O
     try:
         os.stat(target_dir + '/' + 'SCHEMAS_OPENGIS_NET.zip')
     except:
-        if not gdaltest.download_file(ogc_schemas_url, target_dir + '/' + 'SCHEMAS_OPENGIS_NET.zip', base_dir = '.', force_download = force_download, max_download_duration = max_download_duration):
+        if not gdaltest.download_file(ogc_schemas_url, target_dir + '/' + 'SCHEMAS_OPENGIS_NET.zip', base_dir='.', force_download=force_download, max_download_duration=max_download_duration):
             return False
 
     try:
@@ -348,15 +348,15 @@ def download_ogc_schemas(ogc_schemas_url = 'http://schemas.opengis.net/SCHEMAS_O
     try:
         os.stat(target_dir + '/' + target_subdir + '/xlink.xsd')
     except:
-         if not gdaltest.download_file(xlink_xsd_url, target_dir + '/' + target_subdir + '/xlink.xsd', base_dir = '.', force_download = force_download, max_download_duration = max_download_duration):
-             if not gdaltest.download_file('http://even.rouault.free.fr/xlink.xsd', target_dir + '/' + target_subdir + '/xlink.xsd', base_dir = '.', force_download = force_download, max_download_duration = max_download_duration):
+         if not gdaltest.download_file(xlink_xsd_url, target_dir + '/' + target_subdir + '/xlink.xsd', base_dir='.', force_download=force_download, max_download_duration=max_download_duration):
+             if not gdaltest.download_file('http://even.rouault.free.fr/xlink.xsd', target_dir + '/' + target_subdir + '/xlink.xsd', base_dir='.', force_download=force_download, max_download_duration=max_download_duration):
                 return False
 
     try:
         os.stat(target_dir + '/' + target_subdir + '/xml.xsd')
     except:
-        if not gdaltest.download_file(xml_xsd_url, target_dir + '/' + target_subdir + '/xml.xsd', base_dir = '.', force_download = force_download, max_download_duration = max_download_duration):
-            if not gdaltest.download_file('http://even.rouault.free.fr/xml.xsd', target_dir + '/' + target_subdir + '/xml.xsd', base_dir = '.', force_download = force_download, max_download_duration = max_download_duration):
+        if not gdaltest.download_file(xml_xsd_url, target_dir + '/' + target_subdir + '/xml.xsd', base_dir='.', force_download=force_download, max_download_duration=max_download_duration):
+            if not gdaltest.download_file('http://even.rouault.free.fr/xml.xsd', target_dir + '/' + target_subdir + '/xml.xsd', base_dir='.', force_download=force_download, max_download_duration=max_download_duration):
                 return False
 
     transform_abs_links_to_ref_links(target_dir + '/' + target_subdir)
@@ -367,22 +367,22 @@ def download_ogc_schemas(ogc_schemas_url = 'http://schemas.opengis.net/SCHEMAS_O
 # Download INSPIRE schemas
 
 
-def download_inspire_schemas(target_dir = '.', \
-                             target_subdir = 'inspire_schemas',
-                             force_download = False):
+def download_inspire_schemas(target_dir='.', \
+                             target_subdir='inspire_schemas',
+                             force_download=False):
 
-    if not download_ogc_schemas(target_dir = target_dir, force_download = force_download):
+    if not download_ogc_schemas(target_dir=target_dir, force_download=force_download):
         return False
 
     try:
         os.stat(target_dir + '/' + 'inspire_common_1.0.1.zip')
     except:
-        gdaltest.download_file('http://inspire.ec.europa.eu/schemas/common/1.0.1.zip', target_dir + '/' + 'inspire_common_1.0.1.zip', base_dir = '.', force_download = force_download)
+        gdaltest.download_file('http://inspire.ec.europa.eu/schemas/common/1.0.1.zip', target_dir + '/' + 'inspire_common_1.0.1.zip', base_dir='.', force_download=force_download)
 
     try:
         os.stat(target_dir + '/' + 'inspire_vs_1.0.1.zip')
     except:
-        gdaltest.download_file('http://inspire.ec.europa.eu/schemas/inspire_vs/1.0.1.zip', target_dir + '/' + 'inspire_vs_1.0.1.zip', base_dir = '.', force_download = force_download)
+        gdaltest.download_file('http://inspire.ec.europa.eu/schemas/inspire_vs/1.0.1.zip', target_dir + '/' + 'inspire_vs_1.0.1.zip', base_dir='.', force_download=force_download)
 
     for subdir in ['', '/common', '/inspire_vs', '/inspire_dls', '/inspire_dls/1.0']:
         try:
@@ -413,7 +413,7 @@ def download_inspire_schemas(target_dir = '.', \
     try:
         os.stat(target_dir + '/' + target_subdir + '/inspire_dls/1.0/inspire_dls.xsd')
     except:
-        gdaltest.download_file('http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd', target_dir + '/' + target_subdir + '/inspire_dls/1.0/inspire_dls.xsd', base_dir = '.', force_download = force_download)
+        gdaltest.download_file('http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd', target_dir + '/' + target_subdir + '/inspire_dls/1.0/inspire_dls.xsd', base_dir='.', force_download=force_download)
 
     try:
         os.stat(target_dir + '/' + target_subdir + '/oi/3.0/Orthoimagery.xsd')
@@ -422,8 +422,8 @@ def download_inspire_schemas(target_dir = '.', \
             os.makedirs(target_dir + '/' + target_subdir + '/oi/3.0')
         except:
             pass
-        gdaltest.download_file('http://inspire.ec.europa.eu/schemas/oi/3.0/Orthoimagery.xsd', target_dir + '/' + target_subdir + '/oi/3.0/Orthoimagery.xsd', base_dir = '.', force_download = force_download)
-        gdaltest.download_file('http://portele.de/ShapeChangeAppinfo.xsd', target_dir + '/' + target_subdir + '/oi/3.0/ShapeChangeAppinfo.xsd', base_dir = '.', force_download = force_download)
+        gdaltest.download_file('http://inspire.ec.europa.eu/schemas/oi/3.0/Orthoimagery.xsd', target_dir + '/' + target_subdir + '/oi/3.0/Orthoimagery.xsd', base_dir='.', force_download=force_download)
+        gdaltest.download_file('http://portele.de/ShapeChangeAppinfo.xsd', target_dir + '/' + target_subdir + '/oi/3.0/ShapeChangeAppinfo.xsd', base_dir='.', force_download=force_download)
 
     try:
         os.stat(target_dir + '/' + target_subdir + '/base/3.3/BaseTypes.xsd')
@@ -432,7 +432,7 @@ def download_inspire_schemas(target_dir = '.', \
             os.makedirs(target_dir + '/' + target_subdir + '/base/3.3')
         except:
             pass
-        gdaltest.download_file('http://inspire.ec.europa.eu/schemas/base/3.3/BaseTypes.xsd', target_dir + '/' + target_subdir + '/base/3.3/BaseTypes.xsd', base_dir = '.', force_download = force_download)
+        gdaltest.download_file('http://inspire.ec.europa.eu/schemas/base/3.3/BaseTypes.xsd', target_dir + '/' + target_subdir + '/base/3.3/BaseTypes.xsd', base_dir='.', force_download=force_download)
 
     transform_inspire_abs_links_to_ref_links(target_dir + '/' + target_subdir)
 
@@ -528,14 +528,14 @@ if __name__ == '__main__':
             i = i + 1
             target_dir = argv[i]
         elif argv[i] == "-download_ogc_schemas":
-            ret = download_ogc_schemas(target_dir = target_dir, force_download = True)
+            ret = download_ogc_schemas(target_dir=target_dir, force_download=True)
             if i == len(argv)-1:
                 if ret:
                     sys.exit(0)
                 else:
                     sys.exit(1)
         elif argv[i] == "-download_inspire_schemas":
-            ret = download_inspire_schemas(target_dir = target_dir, force_download = True)
+            ret = download_inspire_schemas(target_dir=target_dir, force_download=True)
             if i == len(argv)-1:
                 if ret:
                     sys.exit(0)
@@ -565,10 +565,10 @@ if __name__ == '__main__':
     if filename is None:
         Usage()
 
-    if validate(filename, xsd_filename = xsd_filename, \
-                application_schema_ns = application_schema_ns, \
-                ogc_schemas_location = ogc_schemas_location,
-                inspire_schemas_location = inspire_schemas_location):
+    if validate(filename, xsd_filename=xsd_filename, \
+                application_schema_ns=application_schema_ns, \
+                ogc_schemas_location=ogc_schemas_location,
+                inspire_schemas_location=inspire_schemas_location):
         sys.exit(0)
     else:
         sys.exit(1)

@@ -641,7 +641,7 @@ Error""")
     gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=DROP FUNCTION IF EXISTS ogr_table_metadata(TEXT,TEXT); CREATE OR REPLACE FUNCTION ogr_table_metadata(schema_name TEXT, table_name TEXT) RETURNS TABLE (attname TEXT, typname TEXT, attlen INT, format_type TEXT, attnum INT, attnotnull BOOLEAN, indisprimary BOOLEAN, defaultexpr TEXT, dim INT, srid INT, geomtyp TEXT, srtext TEXT) AS $$ SELECT a.attname::text, t.typname::text, a.attlen::int, format_type(a.atttypid,a.atttypmod)::text, a.attnum::int, a.attnotnull::boolean, i.indisprimary::boolean, pg_get_expr(def.adbin, c.oid)::text AS defaultexpr, (CASE WHEN t.typname = 'geometry' THEN postgis_typmod_dims(a.atttypmod) ELSE NULL END)::int dim, (CASE WHEN t.typname = 'geometry' THEN postgis_typmod_srid(a.atttypmod) ELSE NULL END)::int srid, (CASE WHEN t.typname = 'geometry' THEN postgis_typmod_type(a.atttypmod) ELSE NULL END)::text geomtyp, srtext FROM pg_class c JOIN pg_attribute a ON a.attnum > 0 AND a.attrelid = c.oid AND c.relname = $2 AND c.relname IN (SELECT CDB_UserTables())JOIN pg_type t ON a.atttypid = t.oid JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname = $1 LEFT JOIN pg_index i ON c.oid = i.indrelid AND i.indisprimary = 't' AND a.attnum = ANY(i.indkey) LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND def.adnum = a.attnum LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) ORDER BY a.attnum $$ LANGUAGE SQL&api_key=foo""",
     """""""")
     gdal.SetConfigOption('CARTO_PAGE_SIZE', None)
-    ds = ogr.Open('CARTO:foo', update = 1)
+    ds = ogr.Open('CARTO:foo', update=1)
     lyr = ds.CreateLayer('MY_LAYER')
 
     gdal.ErrorReset()
@@ -658,11 +658,11 @@ Error""")
     ds = None
     gdal.Unlink("""/vsimem/carto&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo""")
 
-    ds = ogr.Open('CARTO:foo', update = 1)
+    ds = ogr.Open('CARTO:foo', update=1)
     gdal.SetConfigOption('CARTO_MAX_CHUNK_SIZE', '0')
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
-    lyr = ds.CreateLayer('MY_LAYER', srs = sr)
+    lyr = ds.CreateLayer('MY_LAYER', srs=sr)
     fld_defn = ogr.FieldDefn('STRFIELD', ogr.OFTString)
     fld_defn.SetNullable(0)
     fld_defn.SetDefault("'DEFAULT VAL'")
@@ -828,7 +828,7 @@ Error""")
     ds = None
 
     gdal.SetConfigOption('CARTO_MAX_CHUNK_SIZE', None)
-    ds = ogr.Open('CARTO:foo', update = 1)
+    ds = ogr.Open('CARTO:foo', update=1)
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT pg_catalog.pg_get_serial_sequence('table1', 'cartodb_id') AS seq_name&api_key=foo""",
@@ -856,7 +856,7 @@ Error""")
         f.DumpReadable()
         return 'fail'
 
-    ds = ogr.Open('CARTO:foo', update = 1)
+    ds = ogr.Open('CARTO:foo', update=1)
     lyr = ds.GetLayer(0)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFieldNull('strfield')
@@ -897,7 +897,7 @@ Error""")
                   "geomtyp":{"type":"string"},
                   "srtext":{"type":"string"}}}""")
 
-    ds = ogr.Open('CARTO:foo', update = 1)
+    ds = ogr.Open('CARTO:foo', update=1)
     lyr = ds.GetLayer(0)
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -931,7 +931,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = ogr.Open('CARTO:foo', update = 1)
+    ds = ogr.Open('CARTO:foo', update=1)
 
     gdal.PushErrorHandler()
     lyr = ds.CreateLayer('table1')
@@ -942,7 +942,7 @@ Error""")
 
     with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=DROP TABLE "table1"&api_key=foo""",
         """{"rows":[], "fields":{}}"""):
-        lyr = ds.CreateLayer('table1', geom_type = ogr.wkbPolygon, options = ['OVERWRITE=YES', 'CARTODBFY=NO'])
+        lyr = ds.CreateLayer('table1', geom_type=ogr.wkbPolygon, options=['OVERWRITE=YES', 'CARTODBFY=NO'])
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 0,0 0))'))
@@ -961,11 +961,11 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = ogr.Open('CARTO:foo', update = 1)
+    ds = ogr.Open('CARTO:foo', update=1)
 
     with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=DROP TABLE "table1"&api_key=foo""",
         """{"rows":[], "fields":{}}"""):
-        lyr = ds.CreateLayer('table1', geom_type = ogr.wkbPolygon, options = ['OVERWRITE=YES', 'CARTODBFY=NO'])
+        lyr = ds.CreateLayer('table1', geom_type=ogr.wkbPolygon, options=['OVERWRITE=YES', 'CARTODBFY=NO'])
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFID(100)
@@ -982,7 +982,7 @@ Error""")
                 return 'fail'
             ds = None
 
-    ds = ogr.Open('CARTO:foo', update = 1)
+    ds = ogr.Open('CARTO:foo', update=1)
 
     gdal.PushErrorHandler()
     ret = ds.DeleteLayer(0)
@@ -991,7 +991,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = ogr.Open('CARTO:foo', update = 1)
+    ds = ogr.Open('CARTO:foo', update=1)
 
     gdal.ErrorReset()
     with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=DROP TABLE "table1"&api_key=foo""",
@@ -1095,7 +1095,7 @@ def ogr_carto_rw_1():
     if ogrtest.carto_drv is None:
         return 'skip'
 
-    ds = ogr.Open(ogrtest.carto_connection, update = 1)
+    ds = ogr.Open(ogrtest.carto_connection, update=1)
     if ds is None:
         return 'fail'
 
@@ -1150,7 +1150,7 @@ def ogr_carto_rw_1():
 
     ds = None
 
-    ds = ogr.Open(ogrtest.carto_connection, update = 1)
+    ds = ogr.Open(ogrtest.carto_connection, update=1)
     lyr_name = "layer_" + a_uuid
     found = False
     for lyr in ds:
@@ -1194,19 +1194,19 @@ def ogr_carto_rw_1():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
-    lyr = ds.CreateLayer(lyr_name, geom_type = ogr.wkbMultiPolygon, srs = srs)
+    lyr = ds.CreateLayer(lyr_name, geom_type=ogr.wkbMultiPolygon, srs=srs)
     lyr.GetNextFeature()
     ds.ExecuteSQL("DELLAYER:" + lyr_name)
 
     # Test that the_geom_webmercator is properly created
-    lyr = ds.CreateLayer(lyr_name, geom_type = ogr.wkbPoint, srs = srs)
+    lyr = ds.CreateLayer(lyr_name, geom_type=ogr.wkbPoint, srs=srs)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (3 4)'))
     lyr.CreateFeature(f)
 
     ds = None
 
-    ds = ogr.Open(ogrtest.carto_connection, update = 1)
+    ds = ogr.Open(ogrtest.carto_connection, update=1)
 
     sql_lyr = ds.ExecuteSQL('SELECT ST_AsText(the_geom_webmercator) AS foo FROM ' + lyr_name)
     f = sql_lyr.GetNextFeature()
@@ -1220,7 +1220,7 @@ def ogr_carto_rw_1():
     ds.ExecuteSQL("DELLAYER:" + lyr_name)
 
     # Layer without geometry
-    lyr = ds.CreateLayer(lyr_name, geom_type = ogr.wkbNone)
+    lyr = ds.CreateLayer(lyr_name, geom_type=ogr.wkbNone)
     fd = ogr.FieldDefn("nullable", ogr.OFTString)
     lyr.CreateField(fd)
     fd = ogr.FieldDefn("not_nullable", ogr.OFTString)
@@ -1242,7 +1242,7 @@ def ogr_carto_rw_1():
 
     ds = None
 
-    ds = ogr.Open(ogrtest.carto_connection, update = 1)
+    ds = ogr.Open(ogrtest.carto_connection, update=1)
 
     lyr = ds.GetLayerByName(lyr_name)
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('nullable')).IsNullable() != 1:

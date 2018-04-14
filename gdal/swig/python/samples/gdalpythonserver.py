@@ -106,7 +106,7 @@ class GDALPythonServerRasterBand:
         return self.gdal_band.ReadBlock(nXBlockOff, nYBlockOff)
 
     def IRasterIO_Read(self, nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, nBufType):
-        return self.gdal_band.ReadRaster(nXOff, nYOff, nXSize, nYSize, buf_xsize = nBufXSize, buf_ysize = nBufYSize, buf_type = nBufType)
+        return self.gdal_band.ReadRaster(nXOff, nYOff, nXSize, nYSize, buf_xsize=nBufXSize, buf_ysize=nBufYSize, buf_type=nBufType)
 
     def GetUnitType(self):
         return self.gdal_band.GetUnitType()
@@ -121,18 +121,18 @@ class GDALPythonServerRasterBand:
         return self.gdal_band.GetColorTable()
 
     def GetHistogram(self, dfMin, dfMax, nBuckets, bIncludeOutOfRange, bApproxOK):
-        return self.gdal_band.GetHistogram(dfMin, dfMax, nBuckets, include_out_of_range = bIncludeOutOfRange, approx_ok = bApproxOK)
+        return self.gdal_band.GetHistogram(dfMin, dfMax, nBuckets, include_out_of_range=bIncludeOutOfRange, approx_ok=bApproxOK)
 
 
 class GDALPythonServerDataset:
 
-    def __init__(self, filename, access = gdal.GA_ReadOnly, open_options = None):
+    def __init__(self, filename, access=gdal.GA_ReadOnly, open_options=None):
         nFlags = 0
         if access == gdal.GA_Update:
             nFlags |= gdal.OF_UPDATE
         if open_options is None:
             open_options = []
-        self.gdal_ds = gdal.OpenEx(filename, nFlags, open_options = open_options)
+        self.gdal_ds = gdal.OpenEx(filename, nFlags, open_options=open_options)
         if self.gdal_ds is None:
             raise Exception(gdal.GetLastErrorMsg())
         self.RasterXSize = self.gdal_ds.RasterXSize
@@ -180,9 +180,9 @@ class GDALPythonServerDataset:
     def IRasterIO_Read(self, nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, \
                        nBufType, panBandMap, nPixelSpace, nLineSpace, nBandSpace):
         return self.gdal_ds.ReadRaster(nXOff, nYOff, nXSize, nYSize, \
-                                       buf_xsize = nBufXSize, buf_ysize = nBufYSize, \
-                                       buf_type = nBufType, band_list = panBandMap, \
-                                       buf_pixel_space = nPixelSpace, buf_line_space = nLineSpace, buf_band_space = nBandSpace)
+                                       buf_xsize=nBufXSize, buf_ysize=nBufYSize, \
+                                       buf_type=nBufType, band_list=panBandMap, \
+                                       buf_pixel_space=nPixelSpace, buf_line_space=nLineSpace, buf_band_space=nBandSpace)
 
 
 INSTR_GetGDALVersion = 1

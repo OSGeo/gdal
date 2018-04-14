@@ -65,7 +65,7 @@ def pcidsk_3():
 
     tst = gdaltest.GDALTest('PCIDSK', 'utm.pix', 1, 39576)
 
-    return tst.testCreateCopy(check_gt = 1, check_srs = 1)
+    return tst.testCreateCopy(check_gt=1, check_srs=1)
 
 ###############################################################################
 # Test overview reading.
@@ -241,7 +241,7 @@ def pcidsk_7():
 def pcidsk_8():
 
     tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
-                             options = ['INTERLEAVING=FILE'])
+                             options=['INTERLEAVING=FILE'])
 
     return tst.testCreate()
 
@@ -316,7 +316,7 @@ def pcidsk_11():
         return 'skip'
 
     tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
-                             options = ['INTERLEAVING=TILED', 'TILESIZE=32'])
+                             options=['INTERLEAVING=TILED', 'TILESIZE=32'])
 
     return tst.testCreate()
 
@@ -329,7 +329,7 @@ def pcidsk_12():
         return 'skip'
 
     tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
-                             options = ['INTERLEAVING=TILED', 'TILESIZE=32', 'COMPRESSION=RLE'])
+                             options=['INTERLEAVING=TILED', 'TILESIZE=32', 'COMPRESSION=RLE'])
 
     return tst.testCreate()
 
@@ -345,7 +345,7 @@ def pcidsk_13():
         return 'skip'
 
     src_ds = gdal.Open('data/byte.tif')
-    ds = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_13.pix', src_ds, options = ['INTERLEAVING=TILED', 'COMPRESSION=JPEG'])
+    ds = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_13.pix', src_ds, options=['INTERLEAVING=TILED', 'COMPRESSION=JPEG'])
     src_ds = None
 
     gdal.Unlink('/vsimem/pcidsk_13.pix.aux.xml')

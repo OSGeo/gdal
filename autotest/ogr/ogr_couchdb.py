@@ -78,10 +78,10 @@ def ogr_couchdb_1():
         return 'skip'
 
     gdal.VectorTranslate('CouchDB:' + ogrtest.couchdb_test_server, 'data/poly.shp',
-                         format = 'CouchDB',
-                         layerName = ogrtest.couchdb_temp_layer_name,
-                         layerCreationOptions = ['UPDATE_PERMISSIONS=ALL'])
-    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update = 1)
+                         format='CouchDB',
+                         layerName=ogrtest.couchdb_temp_layer_name,
+                         layerCreationOptions=['UPDATE_PERMISSIONS=ALL'])
+    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
     if ds is None:
         return 'fail'
     lyr = ds.GetLayerByName(ogrtest.couchdb_temp_layer_name)
@@ -102,10 +102,10 @@ def ogr_couchdb_2():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update = 1)
+    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
     if ds is None:
         return 'fail'
-    lyr = ds.CreateLayer(ogrtest.couchdb_temp_layer_name, geom_type = ogr.wkbNone, options = ['UPDATE_PERMISSIONS=ALL'])
+    lyr = ds.CreateLayer(ogrtest.couchdb_temp_layer_name, geom_type=ogr.wkbNone, options=['UPDATE_PERMISSIONS=ALL'])
     lyr.CreateField(ogr.FieldDefn('str_field', ogr.OFTString))
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -147,7 +147,7 @@ def ogr_couchdb_cleanup():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update = 1)
+    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
     if ds is None:
         return 'fail'
     ds.ExecuteSQL('DELLAYER:' + ogrtest.couchdb_temp_layer_name)

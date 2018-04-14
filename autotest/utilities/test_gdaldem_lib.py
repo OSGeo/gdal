@@ -45,7 +45,7 @@ import gdaltest
 def test_gdaldem_lib_hillshade():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', scale = 111120, zFactor = 30)
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', scale=111120, zFactor=30)
     if ds is None:
         return 'fail'
 
@@ -82,8 +82,8 @@ def test_gdaldem_lib_hillshade():
 
 def test_gdaldem_lib_hillshade_float():
 
-    src_ds = gdal.Translate('', gdal.Open('../gdrivers/data/n43.dt0'), format = 'MEM', outputType = gdal.GDT_Float32)
-    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', scale = 111120, zFactor = 30)
+    src_ds = gdal.Translate('', gdal.Open('../gdrivers/data/n43.dt0'), format='MEM', outputType=gdal.GDT_Float32)
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', scale=111120, zFactor=30)
     if ds is None:
         return 'fail'
 
@@ -120,8 +120,8 @@ def test_gdaldem_lib_hillshade_float():
 
 def test_gdaldem_lib_hillshade_float_png():
 
-    src_ds = gdal.Translate('', gdal.Open('../gdrivers/data/n43.dt0'), format = 'MEM', outputType = gdal.GDT_Float32)
-    ds = gdal.DEMProcessing('/vsimem/test_gdaldem_lib_hillshade_float_png.png', src_ds, 'hillshade', format = 'PNG', scale = 111120, zFactor = 30)
+    src_ds = gdal.Translate('', gdal.Open('../gdrivers/data/n43.dt0'), format='MEM', outputType=gdal.GDT_Float32)
+    ds = gdal.DEMProcessing('/vsimem/test_gdaldem_lib_hillshade_float_png.png', src_ds, 'hillshade', format='PNG', scale=111120, zFactor=30)
     if ds is None:
         return 'fail'
 
@@ -161,7 +161,7 @@ def test_gdaldem_lib_hillshade_float_png():
 def test_gdaldem_lib_hillshade_combined():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', combined = True, scale = 111120, zFactor = 30)
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', combined=True, scale=111120, zFactor=30)
     if ds is None:
         return 'fail'
 
@@ -199,7 +199,7 @@ def test_gdaldem_lib_hillshade_combined():
 def test_gdaldem_lib_hillshade_ZevenbergenThorne():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', alg = 'ZevenbergenThorne', scale = 111120, zFactor = 30)
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', alg='ZevenbergenThorne', scale=111120, zFactor=30)
     if ds is None:
         return 'fail'
 
@@ -237,7 +237,7 @@ def test_gdaldem_lib_hillshade_ZevenbergenThorne():
 def test_gdaldem_lib_hillshade_ZevenbergenThorne_combined():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', alg = 'ZevenbergenThorne', combined = True, scale = 111120, zFactor = 30)
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', alg='ZevenbergenThorne', combined=True, scale=111120, zFactor=30)
     if ds is None:
         return 'fail'
 
@@ -275,7 +275,7 @@ def test_gdaldem_lib_hillshade_ZevenbergenThorne_combined():
 def test_gdaldem_lib_hillshade_compute_edges():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', computeEdges = True, scale = 111120, zFactor = 30)
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', computeEdges=True, scale=111120, zFactor=30)
     if ds is None:
         return 'fail'
 
@@ -295,8 +295,8 @@ def test_gdaldem_lib_hillshade_compute_edges():
 
 def test_gdaldem_lib_hillshade_compute_edges_float():
 
-    src_ds = gdal.Translate('', gdal.Open('../gdrivers/data/n43.dt0'), format = 'MEM', outputType = gdal.GDT_Float32)
-    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', computeEdges = True, scale = 111120, zFactor = 30)
+    src_ds = gdal.Translate('', gdal.Open('../gdrivers/data/n43.dt0'), format='MEM', outputType=gdal.GDT_Float32)
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', computeEdges=True, scale=111120, zFactor=30)
     if ds is None:
         return 'fail'
 
@@ -332,11 +332,11 @@ def test_gdaldem_lib_hillshade_azimuth():
         src_ds.GetRasterBand(1).WriteRaster(0,j,100,1,data)
 
     # Light from the east
-    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', azimuth = 90, scale = 111120, zFactor = 100)
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', azimuth=90, scale=111120, zFactor=100)
     if ds is None:
         return 'fail'
     ds_ref = gdal.Open('data/pyramid_shaded_ref.tif')
-    if gdaltest.compare_ds(ds, ds_ref, verbose = 1) > 1:
+    if gdaltest.compare_ds(ds, ds_ref, verbose=1) > 1:
         gdaltest.post_reason('Bad checksum')
         return 'fail'
     ds = None
@@ -351,7 +351,7 @@ def test_gdaldem_lib_hillshade_azimuth():
 def test_gdaldem_lib_hillshade_multidirectional():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', multiDirectional = True, computeEdges = True, scale = 111120, zFactor = 30)
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', multiDirectional=True, computeEdges=True, scale=111120, zFactor=30)
     if ds is None:
         return 'fail'
 
@@ -372,7 +372,7 @@ def test_gdaldem_lib_hillshade_multidirectional():
 def test_gdaldem_lib_hillshade_multidirectional_ZevenbergenThorne():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', alg = 'ZevenbergenThorne', multiDirectional = True, computeEdges = True, scale = 111120, zFactor = 30)
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', alg='ZevenbergenThorne', multiDirectional=True, computeEdges=True, scale=111120, zFactor=30)
     if ds is None:
         return 'fail'
 
@@ -393,7 +393,7 @@ def test_gdaldem_lib_hillshade_multidirectional_ZevenbergenThorne():
 def test_gdaldem_lib_color_relief():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'color-relief', format = 'MEM', colorFilename = 'data/color_file.txt')
+    ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename='data/color_file.txt')
     if ds is None:
         return 'fail'
 
@@ -424,7 +424,7 @@ def test_gdaldem_lib_color_relief():
         gdaltest.post_reason('Bad projection')
         return 'fail'
 
-    ds = gdal.DEMProcessing('', src_ds, 'color-relief', format = 'MEM', colorFilename = 'data/color_file.txt', addAlpha = True)
+    ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename='data/color_file.txt', addAlpha=True)
     if ds.RasterCount != 4:
         gdaltest.post_reason('Bad RasterCount')
         return 'fail'
@@ -441,7 +441,7 @@ def test_gdaldem_lib_color_relief():
 def test_gdaldem_lib_tpi():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'tpi', format = 'MEM')
+    ds = gdal.DEMProcessing('', src_ds, 'tpi', format='MEM')
     if ds is None:
         return 'fail'
 
@@ -462,7 +462,7 @@ def test_gdaldem_lib_tpi():
 def test_gdaldem_lib_tri():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'tri', format = 'MEM')
+    ds = gdal.DEMProcessing('', src_ds, 'tri', format='MEM')
     if ds is None:
         return 'fail'
 
@@ -483,7 +483,7 @@ def test_gdaldem_lib_tri():
 def test_gdaldem_lib_roughness():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'roughness', format = 'MEM')
+    ds = gdal.DEMProcessing('', src_ds, 'roughness', format='MEM')
     if ds is None:
         return 'fail'
 
@@ -504,7 +504,7 @@ def test_gdaldem_lib_roughness():
 def test_gdaldem_lib_slope_ZevenbergenThorne():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'slope', format = 'MEM', alg = 'ZevenbergenThorne', scale = 111120, zFactor = 30)
+    ds = gdal.DEMProcessing('', src_ds, 'slope', format='MEM', alg='ZevenbergenThorne', scale=111120, zFactor=30)
     if ds is None:
         return 'fail'
 
@@ -523,7 +523,7 @@ def test_gdaldem_lib_slope_ZevenbergenThorne():
 def test_gdaldem_lib_aspect_ZevenbergenThorne():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'aspect', format = 'MEM', alg = 'ZevenbergenThorne', scale = 111120, zFactor = 30)
+    ds = gdal.DEMProcessing('', src_ds, 'aspect', format='MEM', alg='ZevenbergenThorne', scale=111120, zFactor=30)
     if ds is None:
         return 'fail'
 
@@ -554,7 +554,7 @@ def test_gdaldem_lib_nodata():
         src_ds.GetRasterBand(1).SetNoDataValue(value)
         src_ds.GetRasterBand(1).Fill(value)
 
-        ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM')
+        ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM')
         if ds is None:
             return 'fail'
 
@@ -571,7 +571,7 @@ def test_gdaldem_lib_nodata():
     src_ds.GetRasterBand(1).SetNoDataValue(0)
     src_ds.GetRasterBand(1).WriteRaster(1,1,1,1, struct.pack('B', 255))
 
-    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM')
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 0:
         gdaltest.post_reason('Bad checksum')
@@ -579,7 +579,7 @@ def test_gdaldem_lib_nodata():
         print(ds.ReadAsArray())
         return 'fail'
 
-    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', computeEdges = True)
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', computeEdges=True)
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 10:
         gdaltest.post_reason('Bad checksum')
@@ -592,7 +592,7 @@ def test_gdaldem_lib_nodata():
     src_ds.GetRasterBand(1).SetNoDataValue(0)
     src_ds.GetRasterBand(1).WriteRaster(1,1,1,1, struct.pack('f', 255))
 
-    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM')
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 0:
         gdaltest.post_reason('Bad checksum')
@@ -600,7 +600,7 @@ def test_gdaldem_lib_nodata():
         print(ds.ReadAsArray())
         return 'fail'
 
-    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', computeEdges = True)
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', computeEdges=True)
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 10:
         gdaltest.post_reason('Bad checksum')

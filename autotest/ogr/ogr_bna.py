@@ -57,12 +57,12 @@ def ogr_bna_1():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT (573.736 476.563)',
-                                       max_error = 0.0001) != 0:
+                                       max_error=0.0001) != 0:
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT (532.991 429.121)',
-                                       max_error = 0.0001) != 0:
+                                       max_error=0.0001) != 0:
         return 'fail'
 
     return 'success'
@@ -85,7 +85,7 @@ def ogr_bna_2():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (224.598 307.425,333.043 341.461,396.629 304.952)', max_error = 0.0001) != 0:
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (224.598 307.425,333.043 341.461,396.629 304.952)', max_error=0.0001) != 0:
         return 'fail'
 
     return 'success'
@@ -109,13 +109,13 @@ def ogr_bna_3():
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error = 0.0001) != 0:
+    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error=0.0001) != 0:
         return 'fail'
     feat = lyr.GetFeature(2)
-    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error = 0.0001) != 0:
+    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error=0.0001) != 0:
         return 'fail'
     feat = lyr.GetFeature(3)
-    if ogrtest.check_feature_geometry(feat, 'POLYGON ((0 0,0 10,10 10,10 0,0 0),(2 2,2 8,8 8,8 2,2 2))', max_error = 0.0001) != 0:
+    if ogrtest.check_feature_geometry(feat, 'POLYGON ((0 0,0 10,10 10,10 0,0 0),(2 2,2 8,8 8,8 2,2 2))', max_error=0.0001) != 0:
         return 'fail'
 
     return 'success'
@@ -158,7 +158,7 @@ def ogr_bna_check_content(lyr1, lyr2):
                 return 'fail'
 
         if ogrtest.check_feature_geometry(feat1,feat2.GetGeometryRef(),
-                                        max_error = 0.000000001) != 0:
+                                        max_error=0.000000001) != 0:
             return 'fail'
 
         feat1 = lyr1.GetNextFeature()
@@ -169,18 +169,18 @@ def ogr_bna_check_content(lyr1, lyr2):
 
 def ogr_bna_write(creation_options):
 
-    output_ds = ogr.GetDriverByName('BNA').CreateDataSource('tmp/out.bna', options = creation_options)
+    output_ds = ogr.GetDriverByName('BNA').CreateDataSource('tmp/out.bna', options=creation_options)
 
     # Duplicate data/test.bna into tmp/out.bna
     for layer_name in ['points', 'lines', 'polygons', 'ellipses'] :
         src_lyr = gdaltest.bna_ds.GetLayerByName('test_' + layer_name)
-        dst_lyr = output_ds.CreateLayer(layer_name, geom_type = src_lyr.GetLayerDefn().GetGeomType())
+        dst_lyr = output_ds.CreateLayer(layer_name, geom_type=src_lyr.GetLayerDefn().GetGeomType())
 
         for i in range(src_lyr.GetLayerDefn().GetFieldCount()):
             field_defn = src_lyr.GetLayerDefn().GetFieldDefn(i)
             dst_lyr.CreateField(field_defn)
 
-        dst_feat = ogr.Feature(feature_def = dst_lyr.GetLayerDefn())
+        dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
 
         src_lyr.ResetReading()
         feat = src_lyr.GetNextFeature()
