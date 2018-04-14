@@ -841,7 +841,7 @@ def warp_22():
             option = option1 + ' ' + option2
             try:
                 os.remove('tmp/warp_22_dst.tif')
-            except:
+            except OSError:
                 pass
             # -wm should not be greater than 2 * w * h. Let's put it at its minimum value
             gdal.Warp('tmp/warp_22_dst.tif', 'tmp/warp_22_src.tif', options = '-wm 100000 ' + option)

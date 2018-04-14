@@ -54,7 +54,7 @@ def have_proj480():
 
     try:
         import ctypes
-    except:
+    except ImportError:
         print('cannot find ctypes')
         have_proj480_flag = False
         return have_proj480_flag

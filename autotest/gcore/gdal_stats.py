@@ -107,7 +107,7 @@ def stats_dont_force():
 
     try:
         os.unlink('data/byte.tif.aux.xml')
-    except:
+    except OSError:
         pass
     ds = gdal.Open('data/byte.tif')
     stats = ds.GetRasterBand(1).GetStatistics(0, 0)
@@ -128,7 +128,7 @@ def stats_approx_nodata():
     shutil.copyfile('data/minfloat.tif', 'tmp/minfloat.tif')
     try:
         os.remove('tmp/minfloat.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/minfloat.tif')
@@ -180,7 +180,7 @@ def stats_nan_3():
 
     try:
         os.remove('tmp/nan32_nodata.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/nan32_nodata.tif')
@@ -440,7 +440,7 @@ def stats_flt_min():
     shutil.copyfile('data/flt_min.tif', 'tmp/flt_min.tif')
     try:
         os.remove('tmp/flt_min.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/flt_min.tif')
@@ -483,7 +483,7 @@ def stats_dbl_min():
     shutil.copyfile('data/dbl_min.tif', 'tmp/dbl_min.tif')
     try:
         os.remove('tmp/dbl_min.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/dbl_min.tif')

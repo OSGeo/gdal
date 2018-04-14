@@ -129,7 +129,7 @@ def tiff_write_4():
 
     try:
         from osgeo import gdalnumeric
-    except:
+    except ImportError:
         return 'skip'
 
     options = ['TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32']
@@ -569,10 +569,10 @@ def tiff_write_16():
 
     try:
         os.remove('tmp/tw_16.tif.aux.xml')
-    except:
+    except OSError:
         try:
             os.stat('tmp/tw_16.tif.aux.xml')
-        except:
+        except OSError:
             gdaltest.post_reason('No .aux.xml file.')
             return 'fail'
             pass
@@ -614,7 +614,7 @@ def tiff_write_17():
     # Ensure there is no .aux.xml file which might hold the RPC.
     try:
         os.remove('tmp/tm_17.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     # confirm there is no .rpb file created by default.
@@ -676,7 +676,7 @@ def tiff_write_18():
     # Ensure there is no .aux.xml file which might hold the RPC.
     try:
         os.remove('tmp/tm_18.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     # confirm there is an .rpb and .imd file.
@@ -780,7 +780,7 @@ def tiff_write_rpc_txt():
     # Ensure there is no .aux.xml file which might hold the RPC.
     try:
         os.remove('tmp/tiff_write_rpc_txt.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     # confirm there is no .RPB file created by default.
@@ -836,7 +836,7 @@ def tiff_write_rpc_in_pam():
     # Ensure there is a .aux.xml file which might hold the RPC.
     try:
         os.stat('tmp/tiff_write_rpc_in_pam.tif.aux.xml')
-    except:
+    except OSError:
         gdaltest.post_reason('missing .aux.xml file.')
         return 'fail'
 
@@ -1450,10 +1450,10 @@ def tiff_write_33():
 
     try:
         os.remove('tmp/tw_33.tif.aux.xml')
-    except:
+    except OSError:
         try:
             os.stat('tmp/tw_33.tif.aux.xml')
-        except:
+        except OSError:
             gdaltest.post_reason('No .aux.xml file.')
             return 'fail'
             pass
@@ -1506,10 +1506,10 @@ def tiff_write_34():
 
     try:
         os.remove('tmp/tw_34.tif.aux.xml')
-    except:
+    except OSError:
         try:
             os.stat('tmp/tw_34.tif.aux.xml')
-        except:
+        except OSError:
             gdaltest.post_reason('No .aux.xml file.')
             return 'fail'
             pass
@@ -1572,7 +1572,7 @@ def tiff_write_35():
 
     try:
         os.stat('tmp/tw_35.tif.aux.xml')
-    except:
+    except OSError:
         gdaltest.post_reason('No .aux.xml file.')
         return 'fail'
         pass
@@ -3219,7 +3219,7 @@ def tiff_write_80():
     try:
         # check that it *goes* to PAM
         os.stat('tmp/tiff_write_80_bis.tif.aux.xml')
-    except:
+    except OSError:
         gdaltest.post_reason('did not go to PAM as expected')
         return 'fail'
 
@@ -3384,7 +3384,7 @@ def tiff_write_84():
 
         try:
             os.remove('tmp/tiff_write_84.tif.ovr')
-        except:
+        except OSError:
             pass
 
         ds = gdal.Open('tmp/tiff_write_84.tif')
@@ -3475,7 +3475,7 @@ def tiff_write_85():
     try:
         # check that it *goes* to PAM
         os.stat('tmp/tiff_write_85_bis.tif.aux.xml')
-    except:
+    except OSError:
         gdaltest.post_reason('did not go to PAM as expected')
         return 'fail'
 
@@ -3772,7 +3772,7 @@ def tiff_write_89():
         # older versions of python don't have SEEK_END, add if missing.
         try:
             os.SEEK_END
-        except:
+        except NameError:
             os.SEEK_END = 2
 
         f = open('tmp/tiff_write_89.tif', 'rb')
@@ -3987,7 +3987,7 @@ def tiff_write_93():
 
         try:
             os.remove('tmp/tiff_write_93.tif.ovr')
-        except:
+        except OSError:
             pass
 
         ds = gdal.Open('tmp/tiff_write_93.tif')
