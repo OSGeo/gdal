@@ -1217,7 +1217,7 @@ class GPKGChecker:
                             'gpkg_metadata',
                             'gpkg_schema',
                             'gpkg_crs_wkt',
-                            'gpkg_elevation_tiles', #deprecated one
+                            'gpkg_elevation_tiles',  # deprecated one
                             'gpkg_2d_gridded_coverage'
                             ]
         for geom_name in GPKGChecker.EXT_GEOM_TYPES:

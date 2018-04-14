@@ -80,7 +80,7 @@ def validate(filename, inspire_tg = True, expected_gmljp2 = True, oidoc = None):
     if ogc_schemas_location != 'disabled':
         try:
             import xmlvalidate
-            xmlvalidate.validate # to make pyflakes happy
+            xmlvalidate.validate  # to make pyflakes happy
         except:
             ogc_schemas_location = 'disabled'
 

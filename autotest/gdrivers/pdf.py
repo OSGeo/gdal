@@ -651,7 +651,7 @@ def pdf_xmp():
         print(got_md[0])
         return 'fail'
 
-    if len(base_md) != 2: # NEATLINE and DPI
+    if len(base_md) != 2:  # NEATLINE and DPI
         gdaltest.post_reason('fail')
         print(base_md)
         return 'fail'

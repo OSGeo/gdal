@@ -985,7 +985,7 @@ def test_gdalwarp_lib_126():
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/cutline.shp')
     lyr = ds.CreateLayer('cutline')
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,1 1,0 1,1 0,0 0))')) # Self intersecting
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,1 1,0 1,1 0,0 0))'))  # Self intersecting
     lyr.CreateFeature(f)
     f = None
     ds = None
@@ -1445,7 +1445,7 @@ def test_gdalwarp_lib_135():
     ds = gdal.Warp('', src_ds, format = 'VRT',
                    srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
                    dstSRS = '+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid2.tif +vunits=m +no_defs')
-    src_ds = None # drop the ref to src_ds before for fun
+    src_ds = None  # drop the ref to src_ds before for fun
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
     if data != 115:
         gdaltest.post_reason('Bad value')

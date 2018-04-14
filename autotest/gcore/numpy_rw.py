@@ -653,14 +653,14 @@ def numpy_rw_14_progress_callback(pct, message, user_data):
         print('Expected %f, got %f' % (user_data[0], pct))
         user_data[1] = False
     user_data[0] = user_data[0] + 0.05
-    return 1 # 1 to continue, 0 to stop
+    return 1  # 1 to continue, 0 to stop
 
 
 def numpy_rw_14_progress_interrupt_callback(pct, message, user_data):
     user_data[0] = pct
     if pct >= 0.5:
         return 0
-    return 1 # 1 to continue, 0 to stop
+    return 1  # 1 to continue, 0 to stop
 
 
 def numpy_rw_14_progress_callback_2(pct, message, user_data):
@@ -668,7 +668,7 @@ def numpy_rw_14_progress_callback_2(pct, message, user_data):
         print('Got %f, last pct was %f' % (pct, user_data[0]))
         return 0
     user_data[0] = pct
-    return 1 # 1 to continue, 0 to stop
+    return 1  # 1 to continue, 0 to stop
 
 
 def numpy_rw_14():

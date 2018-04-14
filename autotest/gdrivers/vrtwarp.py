@@ -229,7 +229,7 @@ def vrtwarp_6():
     src_ds = gdal.Open('../gcore/data/byte.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vrtwarp_6.tif', src_ds)
     cs_main = tmp_ds.GetRasterBand(1).Checksum()
-    tmp_ds.SetGeoTransform([0,1,0,0,0,1]) # cancel geotransform
+    tmp_ds.SetGeoTransform([0,1,0,0,0,1])  # cancel geotransform
     gcp1 = gdal.GCP()
     gcp1.GCPPixel = 0
     gcp1.GCPLine = 0
@@ -285,7 +285,7 @@ def vrtwarp_7():
     src_ds = gdal.Open('../gcore/data/byte.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vrtwarp_7.tif', src_ds)
     cs_main = tmp_ds.GetRasterBand(1).Checksum()
-    tmp_ds.SetGeoTransform([0,1,0,0,0,1]) # cancel geotransform
+    tmp_ds.SetGeoTransform([0,1,0,0,0,1])  # cancel geotransform
     gcp1 = gdal.GCP()
     gcp1.GCPPixel = 0
     gcp1.GCPLine = 0

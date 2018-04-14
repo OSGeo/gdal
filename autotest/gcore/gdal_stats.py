@@ -462,7 +462,7 @@ def stats_flt_min():
         return 'fail'
 
     if stats != [0.0, 1.0, 0.33333333333333337, 0.47140452079103168] and \
-       stats != [0.0, 1.0, 0.33333333333333331, 0.47140452079103168]: # 32 bit
+       stats != [0.0, 1.0, 0.33333333333333331, 0.47140452079103168]:  # 32 bit
         gdaltest.post_reason('did not get expected stats')
         print(stats)
         return 'fail'
@@ -505,7 +505,7 @@ def stats_dbl_min():
         return 'fail'
 
     if stats != [0.0, 1.0, 0.33333333333333337, 0.47140452079103168] and \
-       stats != [0.0, 1.0, 0.33333333333333331, 0.47140452079103168]: # 32 bit
+       stats != [0.0, 1.0, 0.33333333333333331, 0.47140452079103168]:  # 32 bit
         gdaltest.post_reason('did not get expected stats')
         print(stats)
         return 'fail'

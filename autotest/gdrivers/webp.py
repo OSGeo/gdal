@@ -120,7 +120,7 @@ def webp_4():
         print(cs1)
         return 'fail'
 
-    if cs4 != 10807: # lossless alpha
+    if cs4 != 10807:  # lossless alpha
         gdaltest.post_reason('did not get expected checksum on band 4')
         print(cs4)
         return 'fail'

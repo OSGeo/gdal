@@ -564,11 +564,11 @@ def ogr_openfilegdb_4():
               ("id = 1 OR id = -1", [1]),
               ("id = -1 OR id = 1", [1]),
               ("id = 1 OR id = 1", [1]),
-              ("id = 1 OR id = 2", [1,2]), # exclusive branches
-              ("id < 3 OR id > 3", [1,2,4,5]), # exclusive branches
-              ("id > 3 OR id < 3", [1,2,4,5]), # exclusive branches
-              ("id <= 3 OR id >= 4", [1,2,3,4,5]), # exclusive branches
-              ("id >= 4 OR id <= 3", [1,2,3,4,5]), # exclusive branches
+              ("id = 1 OR id = 2", [1,2]),  # exclusive branches
+              ("id < 3 OR id > 3", [1,2,4,5]),  # exclusive branches
+              ("id > 3 OR id < 3", [1,2,4,5]),  # exclusive branches
+              ("id <= 3 OR id >= 4", [1,2,3,4,5]),  # exclusive branches
+              ("id >= 4 OR id <= 3", [1,2,3,4,5]),  # exclusive branches
               ("id < 3 OR id >= 3", [1,2,3,4,5]),
               ("id <= 3 OR id >= 3", [1,2,3,4,5]),
               ("id <= 5 OR id >= 1", [1,2,3,4,5]),
@@ -590,18 +590,18 @@ def ogr_openfilegdb_4():
               ("id BETWEEN 1 AND 5", [1,2,3,4,5]),
               ("id IN (1)", [1]),
               ("id IN (5,4,3,2,1)", [1,2,3,4,5]),
-              ('fid = 1', [1], 0), # no index used
-              ('fid BETWEEN 1 AND 1', [1], 0), # no index used
-              ('fid IN (1)', [1], 0), # no index used
-              ('fid IS NULL', [], 0), # no index used
-              ('fid IS NOT NULL', [1,2,3,4,5], 0), # no index used
-              ("xml <> ''", [1,2,3,4,5], 0), # no index used
-              ("id = 1 AND xml <> ''", [1], 1), # index partially used
-              ("xml <> '' AND id = 1", [1], 1), # index partially used
-              ("NOT(id = 1 AND xml <> '')", [2,3,4,5], 0), # no index used
-              ("id = 1 OR xml <> ''", [1,2,3,4,5], 0), # no index used
-              ('id = id', [1,2,3,4,5], 0), # no index used
-              ('id = 1 + 0', [1], 0), # no index used (currently...)
+              ('fid = 1', [1], 0),  # no index used
+              ('fid BETWEEN 1 AND 1', [1], 0),  # no index used
+              ('fid IN (1)', [1], 0),  # no index used
+              ('fid IS NULL', [], 0),  # no index used
+              ('fid IS NOT NULL', [1,2,3,4,5], 0),  # no index used
+              ("xml <> ''", [1,2,3,4,5], 0),  # no index used
+              ("id = 1 AND xml <> ''", [1], 1),  # index partially used
+              ("xml <> '' AND id = 1", [1], 1),  # index partially used
+              ("NOT(id = 1 AND xml <> '')", [2,3,4,5], 0),  # no index used
+              ("id = 1 OR xml <> ''", [1,2,3,4,5], 0),  # no index used
+              ('id = id', [1,2,3,4,5], 0),  # no index used
+              ('id = 1 + 0', [1], 0),  # no index used (currently...)
               ]
     for test in tests:
 
@@ -796,7 +796,7 @@ def ogr_openfilegdb_7():
 
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
 
-    tests = [ # Optimized:
+    tests = [  # Optimized:
               ("select * from point order by id", 5, 1, 1),
               ("select id, str from point order by id desc", 5, 5, 1),
               ("select * from point where id = 1 order by id", 1, 1, 1),

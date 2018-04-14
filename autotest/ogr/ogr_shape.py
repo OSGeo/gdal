@@ -1927,12 +1927,12 @@ def ogr_shape_45():
         return 'fail'
 
     fd = shp_layer.GetLayerDefn()
-    fld = fd.GetFieldDefn(0) # area
+    fld = fd.GetFieldDefn(0)  # area
     if not fld.IsIgnored():
         gdaltest.post_reason('AREA unexpectedly not marked as ignored.')
         return 'fail'
 
-    fld = fd.GetFieldDefn(1) # eas_id
+    fld = fd.GetFieldDefn(1)  # eas_id
     if fld.IsIgnored():
         gdaltest.post_reason('EASI unexpectedly marked as ignored.')
         return 'fail'
@@ -2720,7 +2720,7 @@ def ogr_shape_55():
     ds = shape_drv.CreateDataSource(ds_name)
     lyr = ds.CreateLayer('ogr_shape_55')
 
-    max_field_count = int((65535 - 33) / 32) # 2046
+    max_field_count = int((65535 - 33) / 32)  # 2046
 
     for i in range(max_field_count):
         if i == 255:
@@ -2768,7 +2768,7 @@ def ogr_shape_56():
     ds = shape_drv.CreateDataSource(ds_name)
     lyr = ds.CreateLayer('ogr_shape_56')
 
-    max_field_count = int(65535 / 80) # 819
+    max_field_count = int(65535 / 80)  # 819
 
     for i in range(max_field_count):
         if i == 255:
@@ -3367,7 +3367,7 @@ def ogr_shape_68():
         os.mkdir('tmp/mixedcase')
         shutil.copy('data/poly.shp', 'tmp/mixedcase/mixedcase.shp')
         shutil.copy('data/poly.shx', 'tmp/mixedcase/mixedcase.shx')
-        shutil.copy('data/poly.dbf', 'tmp/mixedcase/MIXEDCASE.DBF') # funny !
+        shutil.copy('data/poly.dbf', 'tmp/mixedcase/MIXEDCASE.DBF')  # funny !
 
         ds = ogr.Open('tmp/mixedcase', update = 1)
         if sys.platform == 'win32':
@@ -5139,9 +5139,9 @@ def ogr_shape_104():
 
     for (wkt, lyr_type, options, expected_wkt) in \
                 [['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [],  None],
-                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,1 1 3,2 2 4,0 0 0)))', ogr.wkbUnknown, [], None], # triangle fan
-                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 1 2,1 1 3,4 4 5,0 1 2)))', ogr.wkbUnknown, [], None], # triangle strip
-                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [], None], # no fan no strip
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,1 1 3,2 2 4,0 0 0)))', ogr.wkbUnknown, [], None],  # triangle fan
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 1 2,1 1 3,4 4 5,0 1 2)))', ogr.wkbUnknown, [], None],  # triangle strip
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [], None],  # no fan no strip
                   ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [],
                         'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))'],
                         # no fan no strip with duplicated triangle (as found in #5888)

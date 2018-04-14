@@ -366,7 +366,7 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode =
                         else:
                             dst_feat.SetField(fld_dst_idx, src_feat.GetFieldAsString(fld_src_idx))
                 else:
-                    dst_feat.SetFrom(src_feat) # resets the FID
+                    dst_feat.SetFrom(src_feat)  # resets the FID
                     dst_feat.SetFID(dst_fid)
                 if dry_run:
                     ret = 0

@@ -1485,13 +1485,13 @@ def ogr_csv_32():
             return 'fail'
 
     # Test warnings
-    for fid in [3, # string in real field
-                 4, # string in int field
-                 5, # real in int field
-                 6, # string in datetime field
-                 7, # Value with a width greater than field width found in record 7 for field int1
-                 8, # Value with a width greater than field width found in record 8 for field str1
-                 9, # Value with a precision greater than field precision found in record 9 for field real1
+    for fid in [3,  # string in real field
+                 4,  # string in int field
+                 5,  # real in int field
+                 6,  # string in datetime field
+                 7,  # Value with a width greater than field width found in record 7 for field int1
+                 8,  # Value with a width greater than field width found in record 8 for field str1
+                 9,  # Value with a precision greater than field precision found in record 9 for field real1
                  ]:
         ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
             open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'AUTODETECT_WIDTH=YES'])

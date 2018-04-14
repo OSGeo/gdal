@@ -421,7 +421,7 @@ def jpeg_9():
 
 def jpeg_10():
 
-    if gdaltest.jpeg_version == '9b': # Fails for some reason
+    if gdaltest.jpeg_version == '9b':  # Fails for some reason
         return 'skip'
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
@@ -458,7 +458,7 @@ def jpeg_10():
 
 def jpeg_11():
 
-    if gdaltest.jpeg_version == '9b': # Fails for some reason
+    if gdaltest.jpeg_version == '9b':  # Fails for some reason
         return 'skip'
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
@@ -538,7 +538,7 @@ def jpeg_13():
 
 def jpeg_14():
 
-    if gdaltest.jpeg_version == '9b': # Fails for some reason
+    if gdaltest.jpeg_version == '9b':  # Fails for some reason
         return 'skip'
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
@@ -1165,27 +1165,27 @@ def jpeg_28():
     # EXIF tags only
     src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
 
-    src_ds.SetMetadataItem('EXIF_DateTime', 'dt') # not enough values ASCII
-    src_ds.SetMetadataItem('EXIF_DateTimeOriginal', '01234567890123456789') # truncated ASCII
-    src_ds.SetMetadataItem('EXIF_DateTimeDigitized', '0123456789012345678') # right number of items ASCII
-    src_ds.SetMetadataItem('EXIF_Make', 'make') # variable ASCII
+    src_ds.SetMetadataItem('EXIF_DateTime', 'dt')  # not enough values ASCII
+    src_ds.SetMetadataItem('EXIF_DateTimeOriginal', '01234567890123456789')  # truncated ASCII
+    src_ds.SetMetadataItem('EXIF_DateTimeDigitized', '0123456789012345678')  # right number of items ASCII
+    src_ds.SetMetadataItem('EXIF_Make', 'make')  # variable ASCII
 
-    src_ds.SetMetadataItem('EXIF_ExifVersion', '01234') # truncated UNDEFINED
-    src_ds.SetMetadataItem('EXIF_ComponentsConfiguration', '0x1F') # not enough values UNDEFINED
-    src_ds.SetMetadataItem('EXIF_FlashpixVersion', 'ABCD') # right number of items UNDEFINED
-    src_ds.SetMetadataItem('EXIF_SpatialFrequencyResponse', '0xab 0xCD') # variable UNDEFINED
+    src_ds.SetMetadataItem('EXIF_ExifVersion', '01234')  # truncated UNDEFINED
+    src_ds.SetMetadataItem('EXIF_ComponentsConfiguration', '0x1F')  # not enough values UNDEFINED
+    src_ds.SetMetadataItem('EXIF_FlashpixVersion', 'ABCD')  # right number of items UNDEFINED
+    src_ds.SetMetadataItem('EXIF_SpatialFrequencyResponse', '0xab 0xCD')  # variable UNDEFINED
 
-    src_ds.SetMetadataItem('EXIF_Orientation', '10') # right number of items SHORT
-    src_ds.SetMetadataItem('EXIF_ResolutionUnit', '2 4') # truncated SHORT
-    src_ds.SetMetadataItem('EXIF_TransferFunction', '0 1') # not enough values SHORT
-    src_ds.SetMetadataItem('EXIF_ISOSpeedRatings', '1 2 3') # variable SHORT
+    src_ds.SetMetadataItem('EXIF_Orientation', '10')  # right number of items SHORT
+    src_ds.SetMetadataItem('EXIF_ResolutionUnit', '2 4')  # truncated SHORT
+    src_ds.SetMetadataItem('EXIF_TransferFunction', '0 1')  # not enough values SHORT
+    src_ds.SetMetadataItem('EXIF_ISOSpeedRatings', '1 2 3')  # variable SHORT
 
-    src_ds.SetMetadataItem('EXIF_StandardOutputSensitivity', '123456789') # right number of items LONG
+    src_ds.SetMetadataItem('EXIF_StandardOutputSensitivity', '123456789')  # right number of items LONG
 
-    src_ds.SetMetadataItem('EXIF_XResolution', '96') # right number of items RATIONAL
-    src_ds.SetMetadataItem('EXIF_YResolution', '96 0') # truncated RATIONAL
-    src_ds.SetMetadataItem('EXIF_CompressedBitsPerPixel', 'nan') # invalid RATIONAL
-    src_ds.SetMetadataItem('EXIF_ApertureValue', '-1') # invalid RATIONAL
+    src_ds.SetMetadataItem('EXIF_XResolution', '96')  # right number of items RATIONAL
+    src_ds.SetMetadataItem('EXIF_YResolution', '96 0')  # truncated RATIONAL
+    src_ds.SetMetadataItem('EXIF_CompressedBitsPerPixel', 'nan')  # invalid RATIONAL
+    src_ds.SetMetadataItem('EXIF_ApertureValue', '-1')  # invalid RATIONAL
 
     with gdaltest.error_handler():
         gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
