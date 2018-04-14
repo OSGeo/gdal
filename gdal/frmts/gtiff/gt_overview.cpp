@@ -272,7 +272,6 @@ static int GTIFFGetMaxColorChannels( int photometric )
         case PHOTOMETRIC_MASK:
             return 4;
         case PHOTOMETRIC_LOGL:
-        case PHOTOMETRIC_CFA:
         default:
             return 0;
     }
