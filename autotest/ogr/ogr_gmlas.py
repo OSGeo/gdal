@@ -1451,7 +1451,7 @@ def ogr_gmlas_dataset_getnextfeature():
                 return 'fail'
             break
         count += 1
-        last_l = l
+        last_l = lyr
 
     base_count = 59
     if count != base_count:

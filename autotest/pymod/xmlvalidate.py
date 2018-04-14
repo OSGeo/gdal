@@ -223,7 +223,7 @@ def transform_abs_links_to_ref_links(path, level = 0):
                     s = ln[0:pos]
                     for j in range(level):
                         s = s + "../"
-                    s = s + l[pos + len('http://schemas.opengis.net/'):]
+                    s = s + ln[pos + len('http://schemas.opengis.net/'):]
                     ln = s
                     lines[i] = ln
 
@@ -233,7 +233,7 @@ def transform_abs_links_to_ref_links(path, level = 0):
                     s = ln[0:pos]
                     for j in range(level):
                         s = s + "../"
-                    s = s + l[pos + len('http://www.w3.org/1999/'):]
+                    s = s + ln[pos + len('http://www.w3.org/1999/'):]
                     ln = s
                     lines[i] = ln
 
@@ -243,7 +243,7 @@ def transform_abs_links_to_ref_links(path, level = 0):
                     s = ln[0:pos]
                     for j in range(level):
                         s = s + "../"
-                    s = s + l[pos + len('http://www.w3.org/2001/'):]
+                    s = s + ln[pos + len('http://www.w3.org/2001/'):]
                     ln = s
                     lines[i] = ln
 
@@ -280,7 +280,7 @@ def transform_inspire_abs_links_to_ref_links(path, level = 0):
                     s = ln[0:pos]
                     for j in range(level):
                         s = s + "../"
-                    s = s + l[pos + len('http://inspire.ec.europa.eu/schemas/'):]
+                    s = s + ln[pos + len('http://inspire.ec.europa.eu/schemas/'):]
                     ln = s
                     lines[i] = ln
 
@@ -288,7 +288,7 @@ def transform_inspire_abs_links_to_ref_links(path, level = 0):
                 if pos >= 0:
                     rewrite = True
                     s = ln[0:pos]
-                    s = s + l[pos + len('http://portele.de/'):]
+                    s = s + ln[pos + len('http://portele.de/'):]
                     ln = s
                     lines[i] = ln
 
@@ -299,7 +299,7 @@ def transform_inspire_abs_links_to_ref_links(path, level = 0):
                     for j in range(level):
                         s = s + "../"
                     s = s + "../SCHEMAS_OPENGIS_NET/"
-                    s = s + l[pos + len('http://schemas.opengis.net/'):]
+                    s = s + ln[pos + len('http://schemas.opengis.net/'):]
                     ln = s
                     lines[i] = ln
 

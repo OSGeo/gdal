@@ -804,10 +804,10 @@ def ogr_mem_17():
     ds.ResetReading()
 
     f, lyr, pct = ds.GetNextFeature(include_pct = True)
-    if f is None or l.GetName() != 'ogr_mem_1' or pct != 0.25:
+    if f is None or lyr.GetName() != 'ogr_mem_1' or pct != 0.25:
         gdaltest.post_reason('fail')
         print(f)
-        print(l.GetName())
+        print(lyr.GetName())
         print(pct)
         return 'fail'
 
