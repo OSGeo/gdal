@@ -391,29 +391,29 @@ inline CPLSafeInt<unsigned> operator*( const CPLSafeInt<unsigned>& A,
 #endif
 }
 
+template<class T> inline CPLSafeInt<T> SafeDivSigned( const CPLSafeInt<T>& A,
+                                                      const CPLSafeInt<T>& B )
+{
+    const auto a = A.v();
+    const auto b = B.v();
+    if( b == 0 )
+        throw CPLSafeIntOverflowDivisionByZero();
+    if( a == std::numeric_limits<T>::min() && b == -1 )
+        throw CPLSafeIntOverflow();
+    return CPLSM(a/b);
+}
+
 inline CPLSafeInt<int> operator/( const CPLSafeInt<int>& A,
                                   const CPLSafeInt<int>& B )
 {
-    const int a = A.v();
-    const int b = B.v();
-    if( b == 0 )
-        throw CPLSafeIntOverflowDivisionByZero();
-    if( a == std::numeric_limits<int>::min() && b == -1 )
-        throw CPLSafeIntOverflow();
-    return CPLSM(a/b);
+    return SafeDivSigned(A, B);
 }
 
 #if defined(GDAL_COMPILATION)
 inline CPLSafeInt<GInt64> operator/( const CPLSafeInt<GInt64>& A,
                                      const CPLSafeInt<GInt64>& B )
 {
-    const GInt64 a = A.v();
-    const GInt64 b = B.v();
-    if( b == 0 )
-        throw CPLSafeIntOverflowDivisionByZero();
-    if( a == std::numeric_limits<GInt64>::min() && b == -1 )
-        throw CPLSafeIntOverflow();
-    return CPLSM(a/b);
+    return SafeDivSigned(A, B);
 }
 #endif //GDAL_COMPILATION
 
