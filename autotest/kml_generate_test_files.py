@@ -117,7 +117,7 @@ def generate_libkml(filename):
 
     try:
         os.unlink(filename)
-    except:
+    except OSError:
         pass
 
     content = """eiffel_tower_normal:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg/220px-Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg");LABEL(c:#FF0000FF)
@@ -332,7 +332,7 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
 def generate_libkml_update(filename):
     try:
         os.unlink(filename)
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename,

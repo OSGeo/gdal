@@ -318,7 +318,7 @@ def tiff_read_gzip():
 
     try:
         os.remove('data/byte.tif.gz.properties')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('/vsigzip/./data/byte.tif.gz')
@@ -770,7 +770,7 @@ def tiff_12bitjpeg():
 
     try:
         os.unlink('data/mandrilmini_12bitjpeg.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     try:
@@ -813,7 +813,7 @@ def tiff_read_stats_from_pam():
 
     try:
         os.remove('data/byte.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/byte.tif')
@@ -845,7 +845,7 @@ def tiff_read_stats_from_pam():
 
     try:
         os.remove('data/byte.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -1857,7 +1857,7 @@ def tiff_read_md1():
 
     try:
         os.remove('data/md_dg.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/md_dg.tif', gdal.GA_ReadOnly)
@@ -1907,7 +1907,7 @@ def tiff_read_md2():
 
     try:
         os.remove('data/md_dg_2.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/md_dg_2.tif', gdal.GA_ReadOnly)
@@ -1957,7 +1957,7 @@ def tiff_read_md3():
 
     try:
         os.remove('data/md_ge_rgb_0010000.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/md_ge_rgb_0010000.tif', gdal.GA_ReadOnly)
@@ -2007,7 +2007,7 @@ def tiff_read_md4():
 
     try:
         os.remove('data/md_ov.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/md_ov.tif', gdal.GA_ReadOnly)
@@ -2057,7 +2057,7 @@ def tiff_read_md5():
 
     try:
         os.remove('data/md_rdk1.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/md_rdk1.tif', gdal.GA_ReadOnly)
@@ -2107,7 +2107,7 @@ def tiff_read_md6():
 
     try:
         os.remove('data/md_ls_b1.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/md_ls_b1.tif', gdal.GA_ReadOnly)
@@ -2157,7 +2157,7 @@ def tiff_read_md7():
 
     try:
         os.remove('data/spot/md_spot.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/spot/md_spot.tif', gdal.GA_ReadOnly)
@@ -2207,7 +2207,7 @@ def tiff_read_md8():
 
     try:
         os.remove('data/md_re.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/md_re.tif', gdal.GA_ReadOnly)
@@ -2257,7 +2257,7 @@ def tiff_read_md9():
 
     try:
         os.remove('data/alos/IMG-md_alos.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/alos/IMG-md_alos.tif', gdal.GA_ReadOnly)
@@ -2304,7 +2304,7 @@ def tiff_read_md10():
 
     try:
         os.remove('data/md_eros.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/md_eros.tif', gdal.GA_ReadOnly)
@@ -2354,7 +2354,7 @@ def tiff_read_md11():
 
     try:
         os.remove('data/md_kompsat.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/md_kompsat.tif', gdal.GA_ReadOnly)

@@ -208,7 +208,7 @@ def sieve_6():
 
     try:
         import numpy
-    except:
+    except ImportError:
         return 'skip'
 
     # Try 3002. Should run in less than 10 seconds

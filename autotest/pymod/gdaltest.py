@@ -1385,7 +1385,7 @@ def download_file(url, filename=None, download_size=-1, force_download=False, ma
 
             try:
                 os.stat(base_dir)
-            except:
+            except OSError:
                 os.mkdir(base_dir)
 
             try:
@@ -1676,7 +1676,7 @@ def NaN():
     try:
         # Python >= 2.6
         return float('nan')
-    except:
+    except NameError:
         return 1e400 / 1e400
 
 ###############################################################################
@@ -1687,7 +1687,7 @@ def posinf():
     try:
         # Python >= 2.6
         return float('inf')
-    except:
+    except NameError:
         return 1e400
 
 ###############################################################################
@@ -1698,7 +1698,7 @@ def neginf():
     try:
         # Python >= 2.6
         return float('-inf')
-    except:
+    except NameError:
         return -1e400
 
 ###############################################################################
@@ -1838,7 +1838,7 @@ def find_lib_windows(libname):
 
     try:
         import ctypes
-    except:
+    except ImportError:
         return None
 
     kernel32 = ctypes.windll.kernel32

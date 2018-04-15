@@ -1106,9 +1106,9 @@ def CSLFindString(v, mystr):
 
 def IsNumber(pszStr):
     try:
-        (float)(pszStr)
+        float(pszStr)
         return True
-    except:
+    except ValueError:
         return False
 
 

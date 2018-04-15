@@ -1368,7 +1368,7 @@ def tiff_ovr_33():
 
     try:
         os.remove('tmp/ovr33.tif.ovr')
-    except:
+    except OSError:
         pass
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr33.tif', 1, 1, 1)
@@ -1534,7 +1534,7 @@ def tiff_ovr_39():
         gdal.Translate('tmp/ovr39.tif', 'data/byte.tif', options='-ot ' + gdal.GetDataTypeName(datatype))
         try:
             os.remove('tmp/ovr39.tif.ovr')
-        except:
+        except OSError:
             pass
 
         ds = gdal.Open('tmp/ovr39.tif')
@@ -1743,7 +1743,7 @@ def tiff_ovr_43():
 
     try:
         os.remove('tmp/ovr43.tif.ovr')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/ovr43.tif')

@@ -504,7 +504,7 @@ def hfa_clean_ige():
 
     try:
         open('tmp/igetest.ige')
-    except:
+    except IOError:
         gdaltest.post_reason('ige file not created with USE_SPILL=YES')
         return 'fail'
 
@@ -683,7 +683,7 @@ def hfa_rotated_write():
     # make sure we aren't preserving info in .aux.xml file
     try:
         os.remove('tmp/rot.img.aux.xml')
-    except:
+    except OSError:
         pass
 
     drv = gdal.GetDriverByName('HFA')
@@ -772,7 +772,7 @@ def hfa_proName():
     # Make sure we don't have interference from an .aux.xml
     try:
         os.remove('tmp/proname.img.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/proname.img')
@@ -1406,7 +1406,7 @@ def hfa_createcopy_statistics():
     tmpAuxXml = '../gcore/data/byte.tif.aux.xml'
     try:
         os.remove(tmpAuxXml)
-    except:
+    except OSError:
         pass
     ds_src = gdal.Open('../gcore/data/byte.tif')
     out_ds = gdal.GetDriverByName('HFA').CreateCopy('/vsimem/byte.img', ds_src, options=['STATISTICS=YES'])
