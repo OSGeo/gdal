@@ -4,9 +4,9 @@ set -e
 
 # build proj
 brew list --versions
-curl http://download.osgeo.org/proj/proj-4.9.3.tar.gz > proj-4.9.3.tar.gz
-tar xvzf proj-4.9.3.tar.gz
-cd proj-4.9.3/nad
+curl http://download.osgeo.org/proj/proj-5.0.1.tar.gz > proj-5.0.1.tar.gz
+tar xvzf proj-5.0.1.tar.gz
+cd proj-5.0.1/nad
 curl http://download.osgeo.org/proj/proj-datumgrid-1.5.tar.gz > proj-datumgrid-1.5.tar.gz
 tar xvzf proj-datumgrid-1.5.tar.gz
 cd ..
@@ -16,7 +16,7 @@ make install >/dev/null
 cd ..
 # build GDAL
 cd gdal
-CC="ccache gcc" CXX="ccache g++" ./configure --prefix=$HOME/install-gdal --enable-debug --with-jpeg12 --with-geotiff=internal --with-png=internal --with-static-proj4=$HOME/install-proj --with-sqlite3=/usr/local/opt/sqlite
+CC="ccache gcc" CXX="ccache g++" ./configure --prefix=$HOME/install-gdal --enable-debug --with-jpeg12 --with-geotiff=internal --with-png=internal --with-proj=$HOME/install-proj --with-sqlite3=/usr/local/opt/sqlite
 make USER_DEFS="-Wextra -Werror" -j3
 cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf
