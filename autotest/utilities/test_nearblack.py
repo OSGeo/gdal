@@ -121,7 +121,7 @@ def test_nearblack_3():
     if test_cli_utilities.get_nearblack_path() is None:
         return 'skip'
 
-    shutil.copy('tmp/nearblack2.tif','tmp/nearblack3.tif')
+    shutil.copy('tmp/nearblack2.tif', 'tmp/nearblack3.tif')
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' -setalpha -nb 0 -of GTiff tmp/nearblack3.tif')
 
     ds = gdal.Open('tmp/nearblack3.tif')
@@ -194,8 +194,8 @@ def test_nearblack_6():
     if test_cli_utilities.get_nearblack_path() is None:
         return 'skip'
 
-    shutil.copy('tmp/nearblack5.tif','tmp/nearblack6.tif')
-    shutil.copy('tmp/nearblack5.tif.msk','tmp/nearblack6.tif.msk')
+    shutil.copy('tmp/nearblack5.tif', 'tmp/nearblack6.tif')
+    shutil.copy('tmp/nearblack5.tif.msk', 'tmp/nearblack6.tif.msk')
 
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' -setmask -nb 0 -of GTiff tmp/nearblack6.tif')
 

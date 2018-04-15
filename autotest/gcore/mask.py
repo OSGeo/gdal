@@ -192,7 +192,7 @@ def mask_5():
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
-    ds = gdal.Open('tmp/mask_4.pnm',gdal.GA_Update)
+    ds = gdal.Open('tmp/mask_4.pnm', gdal.GA_Update)
 
     if ds is None:
         gdaltest.post_reason('Failed to open test dataset.')
@@ -201,7 +201,7 @@ def mask_5():
     # So that we instantiate the mask band before.
     ds.GetRasterBand(1).GetMaskFlags()
 
-    ds.BuildOverviews(overviewlist=[2,4])
+    ds.BuildOverviews(overviewlist=[2, 4])
 
     # confirm mask flags on overview.
     ovr = ds.GetRasterBand(1).GetOverview(1)
@@ -293,7 +293,7 @@ def mask_7():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    for i in (1,2,3):
+    for i in (1, 2, 3):
         band = ds.GetRasterBand(i)
 
         if band.GetMaskFlags() != gdal.GMF_PER_DATASET:
@@ -350,7 +350,7 @@ def mask_9():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    for i in (1,2,3):
+    for i in (1, 2, 3):
         band = ds.GetRasterBand(i)
 
         if band.GetMaskFlags() != 0:
@@ -378,7 +378,7 @@ def mask_10():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    for i in (1,2,3):
+    for i in (1, 2, 3):
         band = ds.GetRasterBand(i)
 
         if band.GetMaskFlags() != 0:
@@ -465,7 +465,7 @@ def mask_12():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    for i in (1,2,3):
+    for i in (1, 2, 3):
         band = ds.GetRasterBand(i)
 
         # Let's fetch the mask
@@ -516,7 +516,7 @@ def mask_12():
 
 def mask_13():
 
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK','NO')
+    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
 
     src_ds = gdal.Open('data/byte.tif')
 
@@ -923,7 +923,7 @@ def mask_21():
 def mask_22():
 
     drv = gdal.GetDriverByName('GTiff')
-    ds = drv.Create('tmp/mask_22.tif', 20 ,20)
+    ds = drv.Create('tmp/mask_22.tif', 20 , 20)
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
@@ -985,14 +985,14 @@ def mask_23():
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
 
-    src_ds = drv.Create('tmp/mask_23_src.tif', 3000, 2000, 3, options=['TILED=YES','SPARSE_OK=YES'])
+    src_ds = drv.Create('tmp/mask_23_src.tif', 3000, 2000, 3, options=['TILED=YES', 'SPARSE_OK=YES'])
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
     old_val = gdal.GetCacheMax()
     gdal.SetCacheMax(15000000)
     gdal.ErrorReset()
-    ds = drv.CreateCopy('tmp/mask_23_dst.tif', src_ds, options=['TILED=YES','COMPRESS=JPEG'])
+    ds = drv.CreateCopy('tmp/mask_23_dst.tif', src_ds, options=['TILED=YES', 'COMPRESS=JPEG'])
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
     gdal.SetCacheMax(old_val)
 
@@ -1029,24 +1029,24 @@ def mask_24():
 
     # IRasterIO() optimized case
     import struct
-    if struct.unpack('B', mask.ReadRaster(0,0,1,1))[0] != 255:
+    if struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0] != 255:
         gdaltest.post_reason('fail')
-        print(struct.unpack('B', mask.ReadRaster(0,0,1,1))[0])
+        print(struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0])
         return 'fail'
 
     # IReadBlock() code path
     (blockx, blocky) = mask.GetBlockSize()
-    if struct.unpack('B' * blockx * blocky, mask.ReadBlock(0,0))[0] != 255:
+    if struct.unpack('B' * blockx * blocky, mask.ReadBlock(0, 0))[0] != 255:
         gdaltest.post_reason('fail')
-        print(struct.unpack('B' * blockx * blocky, mask.ReadBlock(0,0))[0])
+        print(struct.unpack('B' * blockx * blocky, mask.ReadBlock(0, 0))[0])
         return 'fail'
     mask.FlushCache()
 
     # Test special case where dynamics is only 0-255
     ds.GetRasterBand(4).Fill(255)
-    if struct.unpack('B', mask.ReadRaster(0,0,1,1))[0] != 1:
+    if struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0] != 1:
         gdaltest.post_reason('fail')
-        print(struct.unpack('B', mask.ReadRaster(0,0,1,1))[0])
+        print(struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0])
         return 'fail'
 
     ds = None
@@ -1126,7 +1126,7 @@ def mask_25():
 
     # CreateMaskBand not supported by this dataset
     with gdaltest.error_handler():
-        ds = gdal.GetDriverByName('MEM').Create('',1,1)
+        ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
         ds.CreateMaskBand(0)
 
     return 'success'

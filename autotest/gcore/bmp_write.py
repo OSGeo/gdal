@@ -52,7 +52,7 @@ gdaltest_list = [bmp_vsimem]
 init_list = [ \
     ('byte.tif', 1, 4672, None),
     ('utmsmall.tif', 1, 50054, None),
-    ('8bit_pal.bmp', 1, 4672, None),]
+    ('8bit_pal.bmp', 1, 4672, None), ]
 
 for item in init_list:
     ut = gdaltest.GDALTest('BMP', item[0], item[1], item[2])

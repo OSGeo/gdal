@@ -915,7 +915,7 @@ def visoss_6():
     handler.add('PUT', '/oss_fake_bucket4/large_file.bin?partNumber=1&uploadId=my_id', custom_method=method)
 
     with webserver.install_http_handler(handler):
-        ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
+        ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
     if ret != size:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -985,7 +985,7 @@ def visoss_6():
             gdaltest.post_reason('fail')
             return 'fail'
         with gdaltest.error_handler():
-            ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
+            ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
         if ret != 0:
             gdaltest.post_reason('fail')
             print(ret)
@@ -1017,7 +1017,7 @@ def visoss_6():
             print(filename)
             return 'fail'
         with gdaltest.error_handler():
-            ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
+            ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
         if ret != 0:
             gdaltest.post_reason('fail')
             print(filename)
@@ -1046,7 +1046,7 @@ def visoss_6():
             print(filename)
             return 'fail'
         with gdaltest.error_handler():
-            ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
+            ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
         if ret != 0:
             gdaltest.post_reason('fail')
             print(filename)
@@ -1077,7 +1077,7 @@ def visoss_6():
                 gdaltest.post_reason('fail')
                 print(filename)
                 return 'fail'
-            ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
+            ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
             if ret != size:
                 gdaltest.post_reason('fail')
                 print(filename)
@@ -1103,7 +1103,7 @@ def visoss_7():
         return 'skip'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/oss_bucket_test_mkdir/dir/', 404, {'Connection':'close'})
+    handler.add('GET', '/oss_bucket_test_mkdir/dir/', 404, {'Connection': 'close'})
     handler.add('PUT', '/oss_bucket_test_mkdir/dir/', 200)
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsioss/oss_bucket_test_mkdir/dir', 0)
@@ -1122,7 +1122,7 @@ def visoss_7():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_bucket_test_mkdir/?delimiter=%2F&max-keys=1&prefix=dir%2F', 200,
-                 {'Content-type': 'application/xml', 'Connection':'close'},
+                 {'Content-type': 'application/xml', 'Connection': 'close'},
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
                         <Prefix>dir/</Prefix>

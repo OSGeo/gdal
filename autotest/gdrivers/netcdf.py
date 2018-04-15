@@ -232,7 +232,7 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
         mk = metadata[k].lstrip('{ ').rstrip('} ')
         if mk != v:
             gdaltest.post_reason("invalid value [%s] for metadata [%s]=[%s]" \
-                                     % (str(mk),str(k),str(v)))
+                                     % (str(mk), str(k), str(v)))
             return 'fail'
 
     metadata = metadata_band
@@ -247,7 +247,7 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
         mk = metadata[k].lstrip('{ ').rstrip('} ')
         if mk != v:
             gdaltest.post_reason("invalid value [%s] for metadata [%s]=[%s]" \
-                                     % (str(mk),str(k),str(v)))
+                                     % (str(mk), str(k), str(v)))
             return 'fail'
 
     return 'success'
@@ -530,17 +530,17 @@ def netcdf_10():
     gt = ds.GetGeoTransform()
 
     gt1 = (-1897186.0290038721, 5079.3608398440065,
-            0.0,2674684.0244560046,
-            0.0,-5079.4721679684635)
+            0.0, 2674684.0244560046,
+            0.0, -5079.4721679684635)
     gt2 = (-1897.186029003872, 5.079360839844003,
              0.0, 2674.6840244560044,
-             0.0,-5.079472167968456)
+             0.0, -5.079472167968456)
 
     if gt != gt1:
         sr = osr.SpatialReference()
         sr.ImportFromWkt(prj)
         #new driver uses UNIT vattribute instead of scaling values
-        if not (sr.GetAttrValue("PROJCS|UNIT",1) == "1000" and gt == gt2) :
+        if not (sr.GetAttrValue("PROJCS|UNIT", 1) == "1000" and gt == gt2) :
             gdaltest.post_reason('Incorrect geotransform, got ' + str(gt))
             return 'fail'
 
@@ -1361,7 +1361,7 @@ def netcdf_34():
         print('from multiprocessing import Process failed')
         return 'skip'
 
-    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/netcdf/' + filename,filename):
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/netcdf/' + filename, filename):
         return 'skip'
 
     sys.stdout.write('.')
@@ -1413,7 +1413,7 @@ def netcdf_35():
         return 'fail'
     bla = md['U#bla']
     if not len(bla) == 9591:
-        gdaltest.post_reason('U#bla metadata is of length %d, expecting %d' % (len(bla),9591))
+        gdaltest.post_reason('U#bla metadata is of length %d, expecting %d' % (len(bla), 9591))
         return 'fail'
     if not bla[-4:] == '_bla':
         gdaltest.post_reason('U#bla metadata ends with [%s], expecting [%s]' % (bla[-4:], '_bla'))
@@ -2031,7 +2031,7 @@ def netcdf_51():
     import netcdf_cf
     if netcdf_cf.netcdf_cf_setup() == 'success' and \
        gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_51.nc','auto',False)
+        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_51.nc', 'auto', False)
         if result_cf != 'success':
             gdaltest.post_reason('failure')
             return 'fail'
@@ -2166,7 +2166,7 @@ def netcdf_52():
     import netcdf_cf
     if netcdf_cf.netcdf_cf_setup() == 'success' and \
        gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_52.nc','auto',False)
+        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_52.nc', 'auto', False)
         if result_cf != 'success':
             gdaltest.post_reason('failure')
             return 'fail'
@@ -2623,7 +2623,7 @@ def netcdf_62_cf_check():
     import netcdf_cf
     if netcdf_cf.netcdf_cf_setup() == 'success' and \
        gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_62.nc','auto',False)
+        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_62.nc', 'auto', False)
         if result_cf != 'success':
             gdaltest.post_reason('failure')
             return 'fail'

@@ -928,7 +928,7 @@ def ogr_gpkg_14():
         return 'fail'
 
     # Test spatial filer right away
-    lyr.SetSpatialFilterRect(1000, 30000000,1000, 30000000)
+    lyr.SetSpatialFilterRect(1000, 30000000, 1000, 30000000)
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is None:
@@ -3365,7 +3365,7 @@ def ogr_gpkg_37():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if lyr.ReorderFields([1,0]) != 0:
+    if lyr.ReorderFields([1, 0]) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -3393,7 +3393,7 @@ def ogr_gpkg_37():
     ds = ogr.Open(dbname)
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
-        ret = lyr.ReorderFields([1,0])
+        ret = lyr.ReorderFields([1, 0])
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3434,7 +3434,7 @@ def ogr_gpkg_38():
         return 'fail'
     # Test that we can compute the extent of a layer that has none registered in gpkg_contents
     extent = lyr.GetExtent(force=1)
-    if extent != (1,3,2,4):
+    if extent != (1, 3, 2, 4):
         gdaltest.post_reason('fail')
         print(extent)
         return 'fail'
@@ -3446,7 +3446,7 @@ def ogr_gpkg_38():
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
     extent = lyr.GetExtent(force=0)
-    if extent != (1,3,2,4):
+    if extent != (1, 3, 2, 4):
         gdaltest.post_reason('fail')
         print(extent)
         return 'fail'
@@ -3860,12 +3860,12 @@ def ogr_gpkg_43():
     ds.StartTransaction()
     for i in range(1001):
         ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, data_type, identifier) " +
-                      "VALUES ('tiles%d', 'tiles', 'tiles%d')" % (i + 1,i + 1))
+                      "VALUES ('tiles%d', 'tiles', 'tiles%d')" % (i + 1, i + 1))
         ds.ExecuteSQL("INSERT INTO gpkg_tile_matrix_set VALUES " +
                       "('tiles%d', 0, 440720, 3750120, 441920, 3751320)" % (i + 1))
     for i in range(1001):
         ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, data_type, identifier) " +
-                      "VALUES ('attr%d', 'attributes', 'attr%d')" % (i + 1,i + 1))
+                      "VALUES ('attr%d', 'attributes', 'attr%d')" % (i + 1, i + 1))
         ds.ExecuteSQL("CREATE TABLE attr%d (id INTEGER PRIMARY KEY AUTOINCREMENT)" % (i + 1))
     ds.CommitTransaction()
     ds = None
@@ -4035,7 +4035,7 @@ def ogr_gpkg_46():
         return 'skip'
 
     # Effectively test spatial index
-    lyr.SetSpatialFilterRect(-0.5,-0.5,0.5,0.5)
+    lyr.SetSpatialFilterRect(-0.5, -0.5, 0.5, 0.5)
     if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -4105,7 +4105,7 @@ def ogr_gpkg_47():
     # Set wrong application_id
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 68, 0)
-    gdal.VSIFWriteL(struct.pack('B' * 4,0,0,0,0), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B' * 4, 0, 0, 0, 0), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
@@ -4128,7 +4128,7 @@ def ogr_gpkg_47():
     # Set wrong user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL(struct.pack('B' * 4,0,0,0,0), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B' * 4, 0, 0, 0, 0), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
@@ -4152,7 +4152,7 @@ def ogr_gpkg_47():
     # Set user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL(struct.pack('B' * 4,0,0,0x27,0xD9), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B' * 4, 0, 0, 0x27, 0xD9), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
@@ -4175,7 +4175,7 @@ def ogr_gpkg_47():
     # Set user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL(struct.pack('B' * 4,0,0,0x28,0x3C), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B' * 4, 0, 0, 0x28, 0x3C), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
@@ -4200,7 +4200,7 @@ def ogr_gpkg_47():
     # Set wrong application_id
     fp = gdal.VSIFOpenL('/vsimem/.cur_input', 'rb+')
     gdal.VSIFSeekL(fp, 68, 0)
-    gdal.VSIFWriteL(struct.pack('B' * 4,0,0,0,0), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B' * 4, 0, 0, 0, 0), 4, 1, fp)
     gdal.VSIFCloseL(fp)
     ogr.Open('/vsimem/.cur_input')
     gdal.Unlink('/vsimem/.cur_input')
@@ -4210,7 +4210,7 @@ def ogr_gpkg_47():
     # Set wrong user_version
     fp = gdal.VSIFOpenL('/vsimem/.cur_input', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL(struct.pack('B' * 4,0,0,0,0), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B' * 4, 0, 0, 0, 0), 4, 1, fp)
     gdal.VSIFCloseL(fp)
     ogr.Open('/vsimem/.cur_input')
     gdal.Unlink('/vsimem/.cur_input')

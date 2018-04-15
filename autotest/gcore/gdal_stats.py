@@ -316,7 +316,7 @@ def stats_nodata_inf_progress_cbk(value, string, extra):
 
 def stats_nodata_inf():
 
-    ds = gdal.GetDriverByName('HFA').Create('/vsimem/stats_nodata_inf.img', 3, 1,1, gdal.GDT_Float32)
+    ds = gdal.GetDriverByName('HFA').Create('/vsimem/stats_nodata_inf.img', 3, 1, 1, gdal.GDT_Float32)
     ds.GetRasterBand(1).SetNoDataValue(gdaltest.neginf())
     ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, struct.pack('f', gdaltest.neginf()), buf_type=gdal.GDT_Float32)
     ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, struct.pack('f', 1), buf_type=gdal.GDT_Float32)
@@ -586,7 +586,7 @@ def stats_byte_partial_tiles():
 
     # Non optimized code path
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
-    ds.GetRasterBand(1).WriteRaster(0,0,1,1,struct.pack('B' * 1, 1))
+    ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, struct.pack('B' * 1, 1))
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
@@ -598,11 +598,11 @@ def stats_byte_partial_tiles():
         return 'fail'
 
     ds = gdal.GetDriverByName('MEM').Create('', 3, 5)
-    ds.GetRasterBand(1).WriteRaster(0,0,3,1,struct.pack('B' * 3, 20, 30, 50))
-    ds.GetRasterBand(1).WriteRaster(0,1,3,1,struct.pack('B' * 3, 60, 10, 5))
-    ds.GetRasterBand(1).WriteRaster(0,2,3,1,struct.pack('B' * 3, 10, 20, 0))
-    ds.GetRasterBand(1).WriteRaster(0,3,3,1,struct.pack('B' * 3, 10, 20, 255))
-    ds.GetRasterBand(1).WriteRaster(0,4,3,1,struct.pack('B' * 3, 10, 20, 10))
+    ds.GetRasterBand(1).WriteRaster(0, 0, 3, 1, struct.pack('B' * 3, 20, 30, 50))
+    ds.GetRasterBand(1).WriteRaster(0, 1, 3, 1, struct.pack('B' * 3, 60, 10, 5))
+    ds.GetRasterBand(1).WriteRaster(0, 2, 3, 1, struct.pack('B' * 3, 10, 20, 0))
+    ds.GetRasterBand(1).WriteRaster(0, 3, 3, 1, struct.pack('B' * 3, 10, 20, 255))
+    ds.GetRasterBand(1).WriteRaster(0, 4, 3, 1, struct.pack('B' * 3, 10, 20, 10))
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
@@ -615,7 +615,7 @@ def stats_byte_partial_tiles():
 
     ds = gdal.GetDriverByName('MEM').Create('', 32 + 2, 2)
     ds.GetRasterBand(1).Fill(1)
-    ds.GetRasterBand(1).WriteRaster(32,1,2,1,struct.pack('B' * 2, 0, 255))
+    ds.GetRasterBand(1).WriteRaster(32, 1, 2, 1, struct.pack('B' * 2, 0, 255))
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
@@ -629,7 +629,7 @@ def stats_byte_partial_tiles():
     ds = gdal.GetDriverByName('MEM').Create('', 32 + 2, 2)
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).SetNoDataValue(2)
-    ds.GetRasterBand(1).WriteRaster(32,1,2,1,struct.pack('B' * 2, 0, 255))
+    ds.GetRasterBand(1).WriteRaster(32, 1, 2, 1, struct.pack('B' * 2, 0, 255))
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
@@ -713,7 +713,7 @@ def stats_uint16():
     # Test remaining pixels after multiple of 32
     ds = gdal.GetDriverByName('MEM').Create('', 32 + 2, 1, 1, gdal.GDT_UInt16)
     ds.GetRasterBand(1).Fill(1)
-    ds.GetRasterBand(1).WriteRaster(32,0,2,1,struct.pack('H' * 2, 0, 65535))
+    ds.GetRasterBand(1).WriteRaster(32, 0, 2, 1, struct.pack('H' * 2, 0, 65535))
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
@@ -727,7 +727,7 @@ def stats_uint16():
     # Non optimized code path
     for fill_val in [0, 1, 32767, 32768, 65535]:
         ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1, gdal.GDT_UInt16)
-        ds.GetRasterBand(1).WriteRaster(0,0,1,1,struct.pack('H' * 1, fill_val))
+        ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, struct.pack('H' * 1, fill_val))
         stats = ds.GetRasterBand(1).GetStatistics(0, 1)
         ds = None
 
@@ -740,11 +740,11 @@ def stats_uint16():
             return 'fail'
 
     ds = gdal.GetDriverByName('MEM').Create('', 3, 5, 1, gdal.GDT_UInt16)
-    ds.GetRasterBand(1).WriteRaster(0,0,3,1,struct.pack('H' * 3, 20, 30, 50))
-    ds.GetRasterBand(1).WriteRaster(0,1,3,1,struct.pack('H' * 3, 60, 10, 5))
-    ds.GetRasterBand(1).WriteRaster(0,2,3,1,struct.pack('H' * 3, 10, 20, 0))
-    ds.GetRasterBand(1).WriteRaster(0,3,3,1,struct.pack('H' * 3, 10, 20, 65535))
-    ds.GetRasterBand(1).WriteRaster(0,4,3,1,struct.pack('H' * 3, 10, 20, 10))
+    ds.GetRasterBand(1).WriteRaster(0, 0, 3, 1, struct.pack('H' * 3, 20, 30, 50))
+    ds.GetRasterBand(1).WriteRaster(0, 1, 3, 1, struct.pack('H' * 3, 60, 10, 5))
+    ds.GetRasterBand(1).WriteRaster(0, 2, 3, 1, struct.pack('H' * 3, 10, 20, 0))
+    ds.GetRasterBand(1).WriteRaster(0, 3, 3, 1, struct.pack('H' * 3, 10, 20, 65535))
+    ds.GetRasterBand(1).WriteRaster(0, 4, 3, 1, struct.pack('H' * 3, 10, 20, 10))
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
@@ -756,8 +756,8 @@ def stats_uint16():
         return 'fail'
 
     ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, gdal.GDT_UInt16)
-    ds.GetRasterBand(1).WriteRaster(0,0,2,1,struct.pack('H' * 2, 0, 65535))
-    ds.GetRasterBand(1).WriteRaster(0,1,2,1,struct.pack('H' * 2, 1, 65534))
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, struct.pack('H' * 2, 0, 65535))
+    ds.GetRasterBand(1).WriteRaster(0, 1, 2, 1, struct.pack('H' * 2, 1, 65534))
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
@@ -780,12 +780,12 @@ def stats_nodata_almost_max_float32():
 
     ds = gdal.Open('/vsimem/float32_almost_nodata_max_float32.tif')
     minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
-    if minmax != (0,0):
+    if minmax != (0, 0):
         gdaltest.post_reason('did not get expected minmax')
         print(minmax)
         return 'fail'
     stats = ds.GetRasterBand(1).ComputeStatistics(False)
-    if stats != [0,0,0,0]:
+    if stats != [0, 0, 0, 0]:
         gdaltest.post_reason('did not get expected stats')
         print(stats)
         return 'fail'

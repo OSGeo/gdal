@@ -238,7 +238,7 @@ def ogr_join_9():
 
 def ogr_join_10():
 
-    expect = [None,None,None,None,None,None,None,None,None,None]
+    expect = [None, None, None, None, None, None, None, None, None, None]
 
     sql_lyr = gdaltest.ds.ExecuteSQL( \
         'SELECT * FROM poly ' \
@@ -259,7 +259,7 @@ def ogr_join_10():
 
 def ogr_join_11():
 
-    expect = ['_168_','_179_','_171_','_170_','_165_','_158_','_166_']
+    expect = ['_168_', '_179_', '_171_', '_170_', '_165_', '_158_', '_166_']
 
     sql_lyr = gdaltest.ds.ExecuteSQL( \
         'SELECT il.*, il2.* FROM idlink il LEFT JOIN idlink2 il2 ON il.NAME = il2.NAME')
@@ -298,7 +298,7 @@ def ogr_join_12():
 
 def ogr_join_13():
 
-    expect = ['_168_','_179_','_171_',None, None,None,'_166_','_158_','_165_','_170_']
+    expect = ['_168_', '_179_', '_171_', None, None, None, '_166_', '_158_', '_165_', '_170_']
 
     sql_lyr = gdaltest.ds.ExecuteSQL( \
         'SELECT * FROM poly ' \
@@ -319,7 +319,7 @@ def ogr_join_13():
 
 def ogr_join_14():
 
-    expect = [168,179,171,170,165,158,166]
+    expect = [168, 179, 171, 170, 165, 158, 166]
 
     sql_lyr = gdaltest.ds.ExecuteSQL( \
         'SELECT * FROM idlink2 ' \
@@ -346,11 +346,11 @@ def ogr_join_15():
     ogrtest.quick_create_feature(lyr, ['key'], None)
 
     lyr = ds.CreateLayer('second')
-    ogrtest.quick_create_layer_def(lyr, [['col1_2'],['id'],['col3_2']])
+    ogrtest.quick_create_layer_def(lyr, [['col1_2'], ['id'], ['col3_2']])
     ogrtest.quick_create_feature(lyr, ['a2', 'key', 'c2'], None)
 
     lyr = ds.CreateLayer('third')
-    ogrtest.quick_create_layer_def(lyr, [['col1_3'],['id'],['col3_3']])
+    ogrtest.quick_create_layer_def(lyr, [['col1_3'], ['id'], ['col3_3']])
     ogrtest.quick_create_feature(lyr, ['a3', 'key', 'c3'], None)
 
     sql_lyr = ds.ExecuteSQL("SELECT concat(col3_2, ''), col3_2 FROM first JOIN second ON first.id = second.id JOIN third ON first.id = third.id")

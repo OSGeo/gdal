@@ -362,7 +362,7 @@ def pdf_ogcbp_lcc():
 
     src_ds = gdal.GetDriverByName('GTiff').Create('tmp/temp.tif', 1, 1)
     src_ds.SetProjection(wkt)
-    src_ds.SetGeoTransform([500000,1,0,1000000,0,-1])
+    src_ds.SetGeoTransform([500000, 1, 0, 1000000, 0, -1])
 
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'FALSE')
     out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_ogcbp_lcc.pdf', src_ds)
@@ -725,7 +725,7 @@ def pdf_update_gt():
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     ds.SetProjection(sr.ExportToWkt())
-    ds.SetGeoTransform([2,1,0,49,0,-1])
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     ds = None
 
     if os.path.exists('tmp/pdf_update_gt.pdf.aux.xml'):
@@ -737,7 +737,7 @@ def pdf_update_gt():
     gt = ds.GetGeoTransform()
     ds = None
 
-    expected_gt = [2,1,0,49,0,-1]
+    expected_gt = [2, 1, 0, 49, 0, -1]
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-8:
             gdaltest.post_reason('did not get expected gt')
@@ -764,7 +764,7 @@ def pdf_update_gt():
     # Set geotransform again
     ds = gdal.Open('tmp/pdf_update_gt.pdf', gdal.GA_Update)
     ds.SetProjection(sr.ExportToWkt())
-    ds.SetGeoTransform([3,1,0,50,0,-1])
+    ds.SetGeoTransform([3, 1, 0, 50, 0, -1])
     ds = None
 
     # Check geotransform
@@ -772,7 +772,7 @@ def pdf_update_gt():
     gt = ds.GetGeoTransform()
     ds = None
 
-    expected_gt = [3,1,0,50,0,-1]
+    expected_gt = [3, 1, 0, 50, 0, -1]
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-8:
             gdaltest.post_reason('did not get expected gt')
@@ -1832,7 +1832,7 @@ def pdf_write_huge():
     else:
         tmp_filename = 'tmp/pdf_write_huge.pdf'
 
-    for (xsize, ysize) in [(19200,1), (1,19200)]:
+    for (xsize, ysize) in [(19200, 1), (1, 19200)]:
         src_ds = gdal.GetDriverByName('MEM').Create('', xsize, ysize, 1)
         ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds)
         ds = None

@@ -359,8 +359,8 @@ def generate_libkml_update(filename):
 
 def generate_kmlsuperoverlay(filename):
 
-    src_ds = gdal.GetDriverByName('MEM').Create('',512,256,3)
-    src_ds.SetGeoTransform([-180,360. / 512,0,90,0,-180. / 256])
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 256, 3)
+    src_ds.SetGeoTransform([-180, 360. / 512, 0, 90, 0, -180. / 256])
     ds = gdal.GetDriverByName('KMLSuperOverlay').CreateCopy(filename, src_ds)
     del ds
     src_ds = None

@@ -373,7 +373,7 @@ def ogr_osm_4():
     # Test spatial filter
 
     lyr = ds.GetLayerByName('points')
-    lyr.SetSpatialFilterRect(0,0,0,0)
+    lyr.SetSpatialFilterRect(0, 0, 0, 0)
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is not None:

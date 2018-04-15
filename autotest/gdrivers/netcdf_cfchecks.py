@@ -73,7 +73,7 @@ def normalize_whitespace(text):
     return ' '.join(text.split())
 
 
-def my_cmp(a,b):
+def my_cmp(a, b):
     return (a > b) - (a < b)
 
 
@@ -261,34 +261,34 @@ def chkDerivedName(name):
        to the transformation rules. See CF standard names document
        for more information.
     """
-    if re.search("^(direction|magnitude|square|divergence)_of_[a-zA-Z][a-zA-Z0-9_]*$",name):
+    if re.search("^(direction|magnitude|square|divergence)_of_[a-zA-Z][a-zA-Z0-9_]*$", name):
         return 0
 
-    if re.search("^rate_of_change_of_[a-zA-Z][a-zA-Z0-9_]*$",name):
+    if re.search("^rate_of_change_of_[a-zA-Z][a-zA-Z0-9_]*$", name):
         return 0
 
-    if re.search("^(grid_)?(northward|southward|eastward|westward)_derivative_of_[a-zA-Z][a-zA-Z0-9_]*$",name):
+    if re.search("^(grid_)?(northward|southward|eastward|westward)_derivative_of_[a-zA-Z][a-zA-Z0-9_]*$", name):
         return 0
 
-    if re.search("^product_of_[a-zA-Z][a-zA-Z0-9_]*_and_[a-zA-Z][a-zA-Z0-9_]*$",name):
+    if re.search("^product_of_[a-zA-Z][a-zA-Z0-9_]*_and_[a-zA-Z][a-zA-Z0-9_]*$", name):
         return 0
 
-    if re.search("^ratio_of_[a-zA-Z][a-zA-Z0-9_]*_to_[a-zA-Z][a-zA-Z0-9_]*$",name):
+    if re.search("^ratio_of_[a-zA-Z][a-zA-Z0-9_]*_to_[a-zA-Z][a-zA-Z0-9_]*$", name):
         return 0
 
-    if re.search("^derivative_of_[a-zA-Z][a-zA-Z0-9_]*_wrt_[a-zA-Z][a-zA-Z0-9_]*$",name):
+    if re.search("^derivative_of_[a-zA-Z][a-zA-Z0-9_]*_wrt_[a-zA-Z][a-zA-Z0-9_]*$", name):
         return 0
 
-    if re.search("^(correlation|covariance)_over_[a-zA-Z][a-zA-Z0-9_]*_of_[a-zA-Z][a-zA-Z0-9_]*_and_[a-zA-Z][a-zA-Z0-9_]*$",name):
+    if re.search("^(correlation|covariance)_over_[a-zA-Z][a-zA-Z0-9_]*_of_[a-zA-Z][a-zA-Z0-9_]*_and_[a-zA-Z][a-zA-Z0-9_]*$", name):
         return 0
 
-    if re.search("^histogram_over_[a-zA-Z][a-zA-Z0-9_]*_of_[a-zA-Z][a-zA-Z0-9_]*$",name):
+    if re.search("^histogram_over_[a-zA-Z][a-zA-Z0-9_]*_of_[a-zA-Z][a-zA-Z0-9_]*$", name):
         return 0
 
-    if re.search("^probability_distribution_over_[a-zA-Z][a-zA-Z0-9_]*_of_[a-zA-Z][a-zA-Z0-9_]*$",name):
+    if re.search("^probability_distribution_over_[a-zA-Z][a-zA-Z0-9_]*_of_[a-zA-Z][a-zA-Z0-9_]*$", name):
         return 0
 
-    if re.search("^probability_density_function_over_[a-zA-Z][a-zA-Z0-9_]*_of_[a-zA-Z][a-zA-Z0-9_]*$",name):
+    if re.search("^probability_density_function_over_[a-zA-Z][a-zA-Z0-9_]*_of_[a-zA-Z][a-zA-Z0-9_]*$", name):
         return 0
 
     # Not a valid derived name
@@ -321,12 +321,12 @@ class CFChecker:
 
     print("")
     if self.uploader:
-        realfile = string.split(file,".nc")[0] + ".nc"
+        realfile = string.split(file, ".nc")[0] + ".nc"
         print("CHECKING NetCDF FILE:", realfile)
     elif self.useFileName == "no":
         print("CHECKING NetCDF FILE")
     else:
-        print("CHECKING NetCDF FILE:",file)
+        print("CHECKING NetCDF FILE:", file)
     print("=====================")
 
     # Check for valid filename
@@ -339,10 +339,10 @@ class CFChecker:
     # being displayed see Trac #50)
     # Use ctypes callback functions to declare ut_error_message_handler (uemh)
     # Don't fully understand why this works!  Solution supplied by ctypes-mailing-list. 19.01.10
-    uemh = ctypes.CFUNCTYPE(ctypes.c_int,ctypes.c_char_p)
-    ut_set_error_message_handler = ctypes.CFUNCTYPE(uemh,uemh)(("ut_set_error_message_handler",udunits))
-    ut_write_to_stderr = uemh(("ut_write_to_stderr",udunits))
-    ut_ignore = uemh(("ut_ignore",udunits))
+    uemh = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p)
+    ut_set_error_message_handler = ctypes.CFUNCTYPE(uemh, uemh)(("ut_set_error_message_handler", udunits))
+    ut_write_to_stderr = uemh(("ut_write_to_stderr", udunits))
+    ut_ignore = uemh(("ut_ignore", udunits))
 
     #old_handler =
     ut_set_error_message_handler(ut_ignore)
@@ -357,14 +357,14 @@ class CFChecker:
 
     # Read in netCDF file
     try:
-        self.f = cdms.open(file,"r")
+        self.f = cdms.open(file, "r")
 
     except AttributeError:
         print("NetCDF Attribute Error:")
         raise
     except:
         print("\nCould not open file, please check that NetCDF is formatted correctly.\n".upper())
-        print("ERRORS detected:",1)
+        print("ERRORS detected:", 1)
         raise
         exit(1)
 
@@ -373,7 +373,7 @@ class CFChecker:
     if not self.version:
         self.version = self.getFileCFVersion()
         if not self.version:
-            print("WARNING: Cannot determine CF version from the Conventions attribute; checking against latest CF version:",newest_version)
+            print("WARNING: Cannot determine CF version from the Conventions attribute; checking against latest CF version:", newest_version)
             self.warn = self.warn + 1
             self.version = newest_version
 
@@ -408,14 +408,14 @@ class CFChecker:
 
     # Read in netCDF file
     try:
-        self.f = cdms.open(file,"r")
+        self.f = cdms.open(file, "r")
 
     except AttributeError:
         print("NetCDF Attribute Error:")
         raise
     except:
         print("\nCould not open file, please check that NetCDF is formatted correctly.\n".upper())
-        print("ERRORS detected:",1)
+        print("ERRORS detected:", 1)
         raise
 
     try:
@@ -434,7 +434,7 @@ class CFChecker:
     if not self.chkGlobalAttributes():
         rc = 0
 
-    (coordVars,auxCoordVars,boundsVars,climatologyVars,gridMappingVars) = self.getCoordinateDataVars()
+    (coordVars, auxCoordVars, boundsVars, climatologyVars, gridMappingVars) = self.getCoordinateDataVars()
     self.coordVars = coordVars
     self.auxCoordVars = auxCoordVars
     self.boundsVars = boundsVars
@@ -455,35 +455,35 @@ class CFChecker:
     for var in self.f._file_.variables.keys():
         print("")
         print("------------------")
-        print("Checking variable:",var)
+        print("Checking variable:", var)
         print("------------------")
 
         if not self.validName(var):
-            print("ERROR (2.3): Invalid variable name -",var)
+            print("ERROR (2.3): Invalid variable name -", var)
             self.err = self.err + 1
             rc = 0
 
         # Check to see if a variable with this name already exists (case-insensitive)
         lowerVar = var.lower()
         if lowerVar in lowerVars:
-            print("WARNING (2.3): variable clash:-",var)
+            print("WARNING (2.3): variable clash:-", var)
             self.warn = self.warn + 1
         else:
             lowerVars.append(lowerVar)
 
         if var not in axes:
             # Non-coordinate variable
-            if not self.chkDimensions(var,allCoordVars):
+            if not self.chkDimensions(var, allCoordVars):
                 rc = 0
 
         if not self.chkDescription(var):
             rc = 0
 
         for attribute in self.f[var].attributes.keys():
-            if not self.chkAttribute(attribute,var,allCoordVars):
+            if not self.chkAttribute(attribute, var, allCoordVars):
                 rc = 0
 
-        if not self.chkUnits(var,allCoordVars):
+        if not self.chkUnits(var, allCoordVars):
             rc = 0
 
         if not self.chkValidMinMaxRange(var):
@@ -504,7 +504,7 @@ class CFChecker:
         if not self.chkCellMeasures(var):
             rc = 0
 
-        if not self.chkFormulaTerms(var,allCoordVars):
+        if not self.chkFormulaTerms(var, allCoordVars):
             rc = 0
 
         if not self.chkCompressAttr(var):
@@ -567,20 +567,20 @@ class CFChecker:
                 print("WARNING (9.5): A variable with the attribute cf_role should be included in a Discrete Geometry CF File")
                 self.warn = self.warn + 1
 
-            if re.match('^(timeSeries|trajectory|profile)$',featureType,re.I) and self.cf_roleCount != 1:
+            if re.match('^(timeSeries|trajectory|profile)$', featureType, re.I) and self.cf_roleCount != 1:
                 # Should only be a single occurrence of a cf_role attribute
-                print("WARNING (9.5): CF Files containing",featureType,"featureType should only include a single occurrence of a cf_role attribute")
+                print("WARNING (9.5): CF Files containing", featureType, "featureType should only include a single occurrence of a cf_role attribute")
                 self.warn = self.warn + 1
 
-            elif re.match('^(timeSeriesProfile|trajectoryProfile)$',featureType,re.I) and self.cf_roleCount > 2:
+            elif re.match('^(timeSeriesProfile|trajectoryProfile)$', featureType, re.I) and self.cf_roleCount > 2:
                 # May contain up to 2 occurrences of cf_roles attribute
-                print("ERROR (9.5): CF Files containing",featureType,"featureType may contain 2 occurrences of a cf_role attribute")
+                print("ERROR (9.5): CF Files containing", featureType, "featureType may contain 2 occurrences of a cf_role attribute")
                 self.err = self.err + 1
 
     print("")
-    print("ERRORS detected:",self.err)
-    print("WARNINGS given:",self.warn)
-    print("INFORMATION messages:",self.info)
+    print("ERRORS detected:", self.err)
+    print("WARNINGS given:", self.warn)
+    print("INFORMATION messages:", self.info)
 
     if self.err:
         # Return number of errors found
@@ -600,50 +600,50 @@ class CFChecker:
       D(ata non-coordinate) or G(lobal) variable."""
 
       self.AttrList = {}
-      self.AttrList['add_offset'] = ['N','D']
-      self.AttrList['ancillary_variables'] = ['S','D']
-      self.AttrList['axis'] = ['S','C']
-      self.AttrList['bounds'] = ['S','C']
-      self.AttrList['calendar'] = ['S','C']
-      self.AttrList['cell_measures'] = ['S','D']
-      self.AttrList['cell_methods'] = ['S','D']
-      self.AttrList['climatology'] = ['S','C']
-      self.AttrList['comment'] = ['S',('G','D')]
-      self.AttrList['compress'] = ['S','C']
-      self.AttrList['Conventions'] = ['S','G']
-      self.AttrList['coordinates'] = ['S','D']
-      self.AttrList['_FillValue'] = ['D','D']
-      self.AttrList['flag_meanings'] = ['S','D']
-      self.AttrList['flag_values'] = ['D','D']
-      self.AttrList['formula_terms'] = ['S','C']
-      self.AttrList['grid_mapping'] = ['S','D']
-      self.AttrList['history'] = ['S','G']
-      self.AttrList['institution'] = ['S',('G','D')]
-      self.AttrList['leap_month'] = ['N','C']
-      self.AttrList['leap_year'] = ['N','C']
-      self.AttrList['long_name'] = ['S',('C','D')]
-      self.AttrList['missing_value'] = ['D','D']
-      self.AttrList['month_lengths'] = ['N','C']
-      self.AttrList['positive'] = ['S','C']
-      self.AttrList['references'] = ['S',('G','D')]
-      self.AttrList['scale_factor'] = ['N','D']
-      self.AttrList['source'] = ['S',('G','D')]
-      self.AttrList['standard_error_multiplier'] = ['N','D']
-      self.AttrList['standard_name'] = ['S',('C','D')]
-      self.AttrList['title'] = ['S','G']
-      self.AttrList['units'] = ['S',('C','D')]
-      self.AttrList['valid_max'] = ['N',('C','D')]
-      self.AttrList['valid_min'] = ['N',('C','D')]
-      self.AttrList['valid_range'] = ['N',('C','D')]
+      self.AttrList['add_offset'] = ['N', 'D']
+      self.AttrList['ancillary_variables'] = ['S', 'D']
+      self.AttrList['axis'] = ['S', 'C']
+      self.AttrList['bounds'] = ['S', 'C']
+      self.AttrList['calendar'] = ['S', 'C']
+      self.AttrList['cell_measures'] = ['S', 'D']
+      self.AttrList['cell_methods'] = ['S', 'D']
+      self.AttrList['climatology'] = ['S', 'C']
+      self.AttrList['comment'] = ['S', ('G', 'D')]
+      self.AttrList['compress'] = ['S', 'C']
+      self.AttrList['Conventions'] = ['S', 'G']
+      self.AttrList['coordinates'] = ['S', 'D']
+      self.AttrList['_FillValue'] = ['D', 'D']
+      self.AttrList['flag_meanings'] = ['S', 'D']
+      self.AttrList['flag_values'] = ['D', 'D']
+      self.AttrList['formula_terms'] = ['S', 'C']
+      self.AttrList['grid_mapping'] = ['S', 'D']
+      self.AttrList['history'] = ['S', 'G']
+      self.AttrList['institution'] = ['S', ('G', 'D')]
+      self.AttrList['leap_month'] = ['N', 'C']
+      self.AttrList['leap_year'] = ['N', 'C']
+      self.AttrList['long_name'] = ['S', ('C', 'D')]
+      self.AttrList['missing_value'] = ['D', 'D']
+      self.AttrList['month_lengths'] = ['N', 'C']
+      self.AttrList['positive'] = ['S', 'C']
+      self.AttrList['references'] = ['S', ('G', 'D')]
+      self.AttrList['scale_factor'] = ['N', 'D']
+      self.AttrList['source'] = ['S', ('G', 'D')]
+      self.AttrList['standard_error_multiplier'] = ['N', 'D']
+      self.AttrList['standard_name'] = ['S', ('C', 'D')]
+      self.AttrList['title'] = ['S', 'G']
+      self.AttrList['units'] = ['S', ('C', 'D')]
+      self.AttrList['valid_max'] = ['N', ('C', 'D')]
+      self.AttrList['valid_min'] = ['N', ('C', 'D')]
+      self.AttrList['valid_range'] = ['N', ('C', 'D')]
 
       if self.version >= vn1_3:
-          self.AttrList['flag_masks'] = ['D','D']
+          self.AttrList['flag_masks'] = ['D', 'D']
 
       if self.version >= vn1_6:
-          self.AttrList['cf_role'] = ['S','C']
-          self.AttrList['featureType'] = ['S','G']
-          self.AttrList['instance_dimension'] = ['S','D']
-          self.AttrList['sample_dimension'] = ['S','D']
+          self.AttrList['cf_role'] = ['S', 'C']
+          self.AttrList['featureType'] = ['S', 'G']
+          self.AttrList['instance_dimension'] = ['S', 'D']
+          self.AttrList['sample_dimension'] = ['S', 'D']
 
       return
 
@@ -665,7 +665,7 @@ class CFChecker:
   def isNumeric(self, var):
   #-------------------------
       """Determine if variable is of Numeric data type."""
-      types = ['i','f','d']
+      types = ['i', 'f', 'd']
       rc = 1
       if self.getTypeCode(self.f[var]) not in types:
           rc = 0
@@ -699,14 +699,14 @@ class CFChecker:
 
       if len(bits) == 1:
           # Only standard_name part present
-          return (bits[0],"")
+          return (bits[0], "")
       elif len(bits) == 0:
           # Standard Name is blank
-          return ("","")
+          return ("", "")
       else:
           # At least 2 elements so return the first 2.
           # If there are more than 2, which is invalid syntax, this will have been picked up by chkDescription()
-          return (bits[0],bits[1])
+          return (bits[0], bits[1])
 
   #--------------------------------------------------
   def getInterpretation(self, units, positive=None):
@@ -714,7 +714,7 @@ class CFChecker:
     """Determine the interpretation (time - T, height or depth - Z,
     latitude - Y or longitude - X) of a dimension."""
 
-    if units in ['level','layer','sigma_level']:
+    if units in ['level', 'layer', 'sigma_level']:
         # Dimensionless vertical coordinate
         return "Z"
 
@@ -738,7 +738,7 @@ class CFChecker:
         return "T"
 
     # Vertical Coordinate
-    if positive and re.match('(up|down)',positive,re.I):
+    if positive and re.match('(up|down)', positive, re.I):
         return "Z"
 
     # Variable is a vertical coordinate if the units are dimensionally
@@ -747,11 +747,11 @@ class CFChecker:
         return "Z"
 
     # Latitude Coordinate
-    if re.match('(degrees_north|degree_north|degrees_N|degree_N|degreesN|degreeN)',units):
+    if re.match('(degrees_north|degree_north|degrees_N|degree_N|degreesN|degreeN)', units):
         return "Y"
 
     # Longitude Coordinate
-    if re.match('(degrees_east|degree_east|degrees_E|degree_E|degreesE|degreeE)',units):
+    if re.match('(degrees_east|degree_east|degrees_E|degree_E|degreesE|degreeE)', units):
         return "X"
 
     # Not possible to deduce interpretation
@@ -794,7 +794,7 @@ class CFChecker:
         if 'coordinates' in self.f[var].attributes:
             # Check syntax of 'coordinates' attribute
             if not self.parseBlankSeparatedList(self.f[var].attributes['coordinates']):
-                print("ERROR (5): Invalid syntax for 'coordinates' attribute in",var)
+                print("ERROR (5): Invalid syntax for 'coordinates' attribute in", var)
                 self.err = self.err + 1
             else:
                 coordinates = string.split(self.f[var].attributes['coordinates'])
@@ -811,22 +811,22 @@ class CFChecker:
                                 num_dimensions = len(self.f[dataVar].getAxisIds())
                                 if self.version < vn1_4:
                                     if not num_dimensions == 2:
-                                        print("ERROR (6.1): Label variable",dataVar,"must have 2 dimensions only")
+                                        print("ERROR (6.1): Label variable", dataVar, "must have 2 dimensions only")
                                         self.err = self.err + 1
 
                                 if self.version >= vn1_4:
                                     if num_dimensions != 1 and num_dimensions != 2:
-                                        print("ERROR (6.1): Label variable",dataVar,"must have 1 or 2 dimensions, but has",num_dimensions)
+                                        print("ERROR (6.1): Label variable", dataVar, "must have 1 or 2 dimensions, but has", num_dimensions)
                                         self.err = self.err + 1
 
                                 if num_dimensions == 2:
                                     if self.f[dataVar].getAxisIds()[0] not in self.f[var].getAxisIds():
                                         if self.version >= vn1_6 and 'featureType' in self.f.attributes:
                                             # This file contains Discrete Sampling Geometries
-                                            print("INFO (6.1): File contains a Discrete Sampling Geometry. Skipping check on dimensions of",dataVar)
+                                            print("INFO (6.1): File contains a Discrete Sampling Geometry. Skipping check on dimensions of", dataVar)
                                             self.info = self.info + 1
                                         else:
-                                            print("ERROR (6.1): Leading dimension of",dataVar,"must match one of those for",var)
+                                            print("ERROR (6.1): Leading dimension of", dataVar, "must match one of those for", var)
                                             self.err = self.err + 1
                             else:
                                 # Not a label variable
@@ -844,16 +844,16 @@ class CFChecker:
                                     if dim not in self.f[var].getAxisIds():
                                         if self.version >= vn1_6 and 'featureType' in self.f.attributes:
                                             # This file contains Discrete Sampling Geometries
-                                            print("INFO (5): File contains a Discrete Sampling Geometry. Skipping check on dimensions of",dataVar)
+                                            print("INFO (5): File contains a Discrete Sampling Geometry. Skipping check on dimensions of", dataVar)
                                             self.info = self.info + 1
                                         else:
-                                            print("ERROR (5): Dimensions of",dataVar,"must be a subset of dimensions of",var)
+                                            print("ERROR (5): Dimensions of", dataVar, "must be a subset of dimensions of", var)
                                             self.err = self.err + 1
 
                                         break
 
                     elif dataVar not in allVariables:
-                        print("ERROR (5): coordinates attribute referencing non-existent variable:",dataVar)
+                        print("ERROR (5): coordinates attribute referencing non-existent variable:", dataVar)
                         self.err = self.err + 1
 
         #-------------------------
@@ -862,7 +862,7 @@ class CFChecker:
         if 'bounds' in self.f[var].attributes:
             bounds = self.f[var].attributes['bounds']
             # Check syntax of 'bounds' attribute
-            if not re.search("^[a-zA-Z0-9_]*$",bounds):
+            if not re.search("^[a-zA-Z0-9_]*$", bounds):
                 print("ERROR (7.1): Invalid syntax for 'bounds' attribute")
                 self.err = self.err + 1
             else:
@@ -880,22 +880,22 @@ class CFChecker:
 
                         for dim in varDimensions:
                             if dim not in self.f[bounds].getAxisIds():
-                                print("ERROR (7.1): Incorrect dimensions for boundary variable:",bounds)
+                                print("ERROR (7.1): Incorrect dimensions for boundary variable:", bounds)
                                 self.err = self.err + 1
                     else:
-                        print("ERROR (7.1): Incorrect number of dimensions for boundary variable:",bounds)
+                        print("ERROR (7.1): Incorrect number of dimensions for boundary variable:", bounds)
                         self.err = self.err + 1
 
                     if 'units' in self.f[bounds].attributes:
                         if self.f[bounds].attributes['units'] != self.f[var].attributes['units']:
-                            print("ERROR (7.1): Boundary var",bounds,"has inconsistent units to",var)
+                            print("ERROR (7.1): Boundary var", bounds, "has inconsistent units to", var)
                             self.err = self.err + 1
                     if 'standard_name' in self.f[bounds].attributes and 'standard_name' in self.f[var].attributes:
                         if self.f[bounds].attributes['standard_name'] != self.f[var].attributes['standard_name']:
-                            print("ERROR (7.1): Boundary var",bounds,"has inconsistent std_name to",var)
+                            print("ERROR (7.1): Boundary var", bounds, "has inconsistent std_name to", var)
                             self.err = self.err + 1
                 else:
-                    print("ERROR (7.1): bounds attribute referencing non-existent variable:",bounds)
+                    print("ERROR (7.1): bounds attribute referencing non-existent variable:", bounds)
                     self.err = self.err + 1
 
             # Check that points specified by a coordinate or auxiliary coordinate
@@ -923,14 +923,14 @@ class CFChecker:
                         # Bounds array will be 1 dimensional
                         if not ((varData <= boundsData[0] and varData >= boundsData[1])
                                 or (varData >= boundsData[0] and varData <= boundsData[1])):
-                            print("WARNING (7.1): Data for variable",var,"lies outside cell boundaries")
+                            print("WARNING (7.1): Data for variable", var, "lies outside cell boundaries")
                             self.warn = self.warn + 1
                     else:
                         i = 0
                         for value in varData:
                             if not ((value <= boundsData[i][0] and value >= boundsData[i][1]) \
                                     or (value >= boundsData[i][0] and value <= boundsData[i][1])):
-                                print("WARNING (7.1): Data for variable",var,"lies outside cell boundaries")
+                                print("WARNING (7.1): Data for variable", var, "lies outside cell boundaries")
                                 self.warn = self.warn + 1
                                 break
                             i = i + 1
@@ -941,7 +941,7 @@ class CFChecker:
         if 'climatology' in self.f[var].attributes:
             climatology = self.f[var].attributes['climatology']
             # Check syntax of 'climatology' attribute
-            if not re.search("^[a-zA-Z0-9_]*$",climatology):
+            if not re.search("^[a-zA-Z0-9_]*$", climatology):
                 print("ERROR (7.4): Invalid syntax for 'climatology' attribute")
                 self.err = self.err + 1
             else:
@@ -952,15 +952,15 @@ class CFChecker:
                         self.err = self.err + 1
                     if 'units' in self.f[climatology].attributes:
                         if self.f[climatology].attributes['units'] != self.f[var].attributes['units']:
-                            print("ERROR (7.4): Climatology var",climatology,"has inconsistent units to",var)
+                            print("ERROR (7.4): Climatology var", climatology, "has inconsistent units to", var)
                             self.err = self.err + 1
                     if 'standard_name' in self.f[climatology].attributes:
                         if self.f[climatology].attributes['standard_name'] != self.f[var].attributes['standard_name']:
-                            print("ERROR (7.4): Climatology var",climatology,"has inconsistent std_name to",var)
+                            print("ERROR (7.4): Climatology var", climatology, "has inconsistent std_name to", var)
                             self.err = self.err + 1
                     if 'calendar' in self.f[climatology].attributes:
                         if self.f[climatology].attributes['calendar'] != self.f[var].attributes['calendar']:
-                            print("ERROR (7.4): Climatology var",climatology,"has inconsistent calendar to",var)
+                            print("ERROR (7.4): Climatology var", climatology, "has inconsistent calendar to", var)
                             self.err = self.err + 1
                 else:
                     print("ERROR (7.4): climatology attribute referencing non-existent variable")
@@ -972,14 +972,14 @@ class CFChecker:
         if 'grid_mapping' in self.f[var].attributes:
             grid_mapping = self.f[var].attributes['grid_mapping']
             # Check syntax of grid_mapping attribute: a string whose value is a single variable name.
-            if not re.search("^[a-zA-Z0-9_]*$",grid_mapping):
-                print("ERROR (5.6):",var,"- Invalid syntax for 'grid_mapping' attribute")
+            if not re.search("^[a-zA-Z0-9_]*$", grid_mapping):
+                print("ERROR (5.6):", var, "- Invalid syntax for 'grid_mapping' attribute")
                 self.err = self.err + 1
             else:
                 if grid_mapping in variables:
                     gridMappingVars.append(grid_mapping)
                 else:
-                    print("ERROR (5.6): grid_mapping attribute referencing non-existent variable",grid_mapping)
+                    print("ERROR (5.6): grid_mapping attribute referencing non-existent variable", grid_mapping)
                     self.err = self.err + 1
 
     return (coordVars, auxCoordVars, boundaryVars, climatologyVars, gridMappingVars)
@@ -993,21 +993,21 @@ class CFChecker:
 
       if 'grid_mapping_name' in var.attributes:
           # Check grid_mapping_name is valid
-          validNames = ['albers_conical_equal_area','azimuthal_equidistant','lambert_azimuthal_equal_area',
-                        'lambert_conformal_conic','polar_stereographic','rotated_latitude_longitude',
-                        'stereographic','transverse_mercator']
+          validNames = ['albers_conical_equal_area', 'azimuthal_equidistant', 'lambert_azimuthal_equal_area',
+                        'lambert_conformal_conic', 'polar_stereographic', 'rotated_latitude_longitude',
+                        'stereographic', 'transverse_mercator']
           validNames += ['geostationary'] # GDAL addition
 
           if self.version >= vn1_2:
               # Extra grid_mapping_names at vn1.2
-              validNames[len(validNames):] = ['latitude_longitude','vertical_perspective']
+              validNames[len(validNames):] = ['latitude_longitude', 'vertical_perspective']
 
           if self.version >= vn1_4:
               # Extra grid_mapping_names at vn1.4
-              validNames[len(validNames):] = ['lambert_cylindrical_equal_area','mercator','orthographic']
+              validNames[len(validNames):] = ['lambert_cylindrical_equal_area', 'mercator', 'orthographic']
 
           if var.grid_mapping_name not in validNames:
-              print("ERROR (5.6): Invalid grid_mapping_name:",var.grid_mapping_name)
+              print("ERROR (5.6): Invalid grid_mapping_name:", var.grid_mapping_name)
               self.err = self.err + 1
               rc = 0
       else:
@@ -1042,27 +1042,27 @@ class CFChecker:
       self.formulas['sigma'] = ['p(n,k,j,i)=ptop+sigma(k)*(ps(n,j,i)-ptop)']
 
       self.formulas['hybrid_sigma_pressure'] = ['p(n,k,j,i)=a(k)*p0+b(k)*ps(n,j,i)'
-                                              ,'p(n,k,j,i)=ap(k)+b(k)*ps(n,j,i)']
+                                              , 'p(n,k,j,i)=ap(k)+b(k)*ps(n,j,i)']
 
       self.formulas['atmosphere_hybrid_height_coordinate'] = ['z(n,k,j,i)=a(k)+b(k)*orog(n,j,i)']
 
       self.formulas['ocean_sigma_coordinate'] = ['z(n,k,j,i)=eta(n,j,i)+sigma(k)*(depth(j,i)+eta(n,j,i))']
 
       self.formulas['ocean_s_coordinate'] = ['z(n,k,j,i)=eta(n,j,i)*(1+s(k))+depth_c*s(k)+(depth(j,i)-depth_c)*C(k)'
-                                           ,'C(k)=(1-b)*sinh(a*s(k))/sinh(a)+b*[tanh(a*(s(k)+0.5))/(2*tanh(0.5*a))-0.5]']
+                                           , 'C(k)=(1-b)*sinh(a*s(k))/sinh(a)+b*[tanh(a*(s(k)+0.5))/(2*tanh(0.5*a))-0.5]']
 
       self.formulas['ocean_sigma_z_coordinate'] = ['z(n,k,j,i)=eta(n,j,i)+sigma(k)*(min(depth_c,depth(j,i))+eta(n,j,i))'
-                                                 ,'z(n,k,j,i)=zlev(k)']
+                                                 , 'z(n,k,j,i)=zlev(k)']
 
       self.formulas['ocean_double_sigma_coordinate'] = ['z(k,j,i)=sigma(k)*f(j,i)'
-                                                      ,'z(k,j,i)=f(j,i)+(sigma(k)-1)*(depth(j,i)-f(j,i))'
-                                                      ,'f(j,i)=0.5*(z1+z2)+0.5*(z1-z2)*tanh(2*a/(z1-z2)*(depth(j,i)-href))']
+                                                      , 'z(k,j,i)=f(j,i)+(sigma(k)-1)*(depth(j,i)-f(j,i))'
+                                                      , 'f(j,i)=0.5*(z1+z2)+0.5*(z1-z2)*tanh(2*a/(z1-z2)*(depth(j,i)-href))']
 
   #----------------------------------------
   def parseBlankSeparatedList(self, list):
   #----------------------------------------
       """Parse blank separated list"""
-      if re.match("^[a-zA-Z0-9_ ]*$",list):
+      if re.match("^[a-zA-Z0-9_ ]*$", list):
           return 1
       else:
           return 0
@@ -1072,7 +1072,7 @@ class CFChecker:
   #-------------------------------------------
       """Check list is a blank separated list of words containing alphanumeric characters
       plus underscore '_', period '.', plus '+', hyphen '-', or "at" sign '@'."""
-      if re.match("^[a-zA-Z0-9_ @\-\+\.]*$",list):
+      if re.match("^[a-zA-Z0-9_ @\-\+\.]*$", list):
           return 1
       else:
           return 0
@@ -1082,7 +1082,7 @@ class CFChecker:
   #-------------------------------------------
       """Check list is a blank or comma separated list of words containing alphanumeric
       characters plus underscore '_', period '.', plus '+', hyphen '-', or "at" sign '@'."""
-      if re.match("^[a-zA-Z0-9_ @\-\+\.,]*$",list):
+      if re.match("^[a-zA-Z0-9_ @\-\+\.,]*$", list):
           return 1
       else:
           return 0
@@ -1103,8 +1103,8 @@ class CFChecker:
         else:
             # Split string up into component parts
             # If a comma is present we assume a comma separated list as names cannot contain commas
-            if re.match("^.*,.*$",conventions):
-                conventionList = string.split(conventions,",")
+            if re.match("^.*,.*$", conventions):
+                conventionList = string.split(conventions, ",")
             else:
                 conventionList = string.split(conventions)
 
@@ -1132,15 +1132,15 @@ class CFChecker:
     if self.version >= vn1_6 and 'featureType' in self.f.attributes:
         featureType = self.f.attributes['featureType']
 
-        if not re.match('^(point|timeSeries|trajectory|profile|timeSeriesProfile|trajectoryProfile)$',featureType,re.I):
+        if not re.match('^(point|timeSeries|trajectory|profile|timeSeriesProfile|trajectoryProfile)$', featureType, re.I):
             print("ERROR (9.4): Global attribute 'featureType' contains invalid value")
 
         #self.chkFeatureType()
 
-    for attribute in ['title','history','institution','source','reference','comment']:
+    for attribute in ['title', 'history', 'institution', 'source', 'reference', 'comment']:
         if attribute in self.f.attributes:
             if not isinstance(self.f.attributes[attribute], str):
-                print("ERROR (2.6.2): Global attribute",attribute,"must be of type 'String'")
+                print("ERROR (2.6.2): Global attribute", attribute, "must be of type 'String'")
                 self.err = self.err + 1
     return rc
 
@@ -1155,8 +1155,8 @@ class CFChecker:
 
         # Split string up into component parts
         # If a comma is present we assume a comma separated list as names cannot contain commas
-        if re.match("^.*,.*$",conventions):
-            conventionList = string.split(conventions,",")
+        if re.match("^.*,.*$", conventions):
+            conventionList = string.split(conventions, ",")
         else:
             conventionList = string.split(conventions)
 
@@ -1189,7 +1189,7 @@ class CFChecker:
     return 1
 
   #---------------------------------------------
-  def chkDimensions(self,varName,allcoordVars):
+  def chkDimensions(self, varName, allcoordVars):
   #---------------------------------------------
     """Check variable has non-repeated dimensions, that
        space/time dimensions are listed in the order T,Z,Y,X
@@ -1203,8 +1203,8 @@ class CFChecker:
     trailingVars = []
 
     if len(dimensions) > 1:
-        order = ['T','Z','Y','X']
-        axesFound = [0,0,0,0] # Holding array to record whether a dimension with an axis value has been found.
+        order = ['T', 'Z', 'Y', 'X']
+        axesFound = [0, 0, 0, 0] # Holding array to record whether a dimension with an axis value has been found.
         i = -1
         lastPos = -1
         #trailing=0   # Flag to indicate trailing dimension
@@ -1218,7 +1218,7 @@ class CFChecker:
         for dim in dimensions:
             i = i + 1
             try:
-                if hasattr(self.f[dim],'axis'):
+                if hasattr(self.f[dim], 'axis'):
                     pos = order.index(self.f[dim].axis)
 
                     # Is there already a dimension with this axis attribute specified.
@@ -1227,10 +1227,10 @@ class CFChecker:
                         self.err = self.err + 1
                     else:
                         axesFound[pos] = 1
-                elif hasattr(self.f[dim],'units') and self.f[dim].units != "":
+                elif hasattr(self.f[dim], 'units') and self.f[dim].units != "":
                     # Determine interpretation of variable by units attribute
-                    if hasattr(self.f[dim],'positive'):
-                        interp = self.getInterpretation(self.f[dim].units,self.f[dim].positive)
+                    if hasattr(self.f[dim], 'positive'):
+                        interp = self.getInterpretation(self.f[dim].units, self.f[dim].positive)
                     else:
                         interp = self.getInterpretation(self.f[dim].units)
 
@@ -1244,7 +1244,7 @@ class CFChecker:
                 if firstST == -1:
                     firstST = pos
             except AttributeError:
-                print("ERROR: Problem accessing variable:",dim,"(May not exist in file).")
+                print("ERROR: Problem accessing variable:", dim, "(May not exist in file).")
                 self.err = self.err + 1
                 exit(self.err)
             except ValueError:
@@ -1269,10 +1269,10 @@ class CFChecker:
             if lastNonST > firstST and firstST != -1:
                 if len(trailingVars) == 1:
                     if var.id not in validTrailing:
-                        print("WARNING (2.4): dimensions",nonSpaceDimensions,"should appear to left of space/time dimensions")
+                        print("WARNING (2.4): dimensions", nonSpaceDimensions, "should appear to left of space/time dimensions")
                         self.warn = self.warn + 1
                 else:
-                    print("WARNING (2.4): dimensions",nonSpaceDimensions,"should appear to left of space/time dimensions")
+                    print("WARNING (2.4): dimensions", nonSpaceDimensions, "should appear to left of space/time dimensions")
                     self.warn = self.warn + 1
 
         dimensions.sort()
@@ -1313,7 +1313,7 @@ class CFChecker:
       return obj.typecode()
 
   #-------------------------------------------------------
-  def chkAttribute(self, attribute,varName,allCoordVars):
+  def chkAttribute(self, attribute, varName, allCoordVars):
   #-------------------------------------------------------
     """Check the syntax of the attribute name, that the attribute
     is of the correct type and that it is attached to the right
@@ -1322,7 +1322,7 @@ class CFChecker:
     var = self.f[varName]
 
     if not self.validName(attribute) and attribute != "_FillValue":
-        print("ERROR: Invalid attribute name -",attribute)
+        print("ERROR: Invalid attribute name -", attribute)
         self.err = self.err + 1
         return 0
 
@@ -1346,7 +1346,7 @@ class CFChecker:
             #attrType=self.AttrList[attribute][0]
             attrType = 'NoneType'
         else:
-            print("Unknown Type for attribute:",attribute,attrType)
+            print("Unknown Type for attribute:", attribute, attrType)
 
         # If attrType = 'NoneType' then it has been automatically created e.g. missing_value
         typeError = 0
@@ -1368,7 +1368,7 @@ class CFChecker:
                 typeError = 1
 
             if typeError:
-                print("ERROR: Attribute",attribute,"of incorrect type")
+                print("ERROR: Attribute", attribute, "of incorrect type")
                 self.err = self.err + 1
                 rc = 0
 
@@ -1389,7 +1389,7 @@ class CFChecker:
                     # variables whether set explicitly or not. Is this a cdms thing?
                     # Using var.missing_value is null then missing_value not set in the file
                     if var.missing_value:
-                        print("WARNING: attribute",attribute,"attached to wrong kind of variable")
+                        print("WARNING: attribute", attribute, "attached to wrong kind of variable")
                         self.warn = self.warn + 1
                 else:
                     print("INFO: attribute '" + attribute + "' is being used in a non-standard way")
@@ -1398,14 +1398,14 @@ class CFChecker:
                 i = i + 1
 
         # Check no time variable attributes. E.g. calendar, month_lengths etc.
-        TimeAttributes = ['calendar','month_lengths','leap_year','leap_month','climatology']
+        TimeAttributes = ['calendar', 'month_lengths', 'leap_year', 'leap_month', 'climatology']
         if attribute in TimeAttributes:
 
             if 'units' in var.attributes:
                 varUnits = udunits.ut_parse(self.unitSystem, var.attributes['units'], "UT_ASCII")
                 secsSinceEpoch = udunits.ut_parse(self.unitSystem, "seconds since 1970-01-01", "UT_ASCII")
                 if not udunits.ut_are_convertible(varUnits, secsSinceEpoch) :
-                    print("ERROR (4.4.1): Attribute",attribute,"may only be attached to time coordinate variable")
+                    print("ERROR (4.4.1): Attribute", attribute, "may only be attached to time coordinate variable")
                     self.err = self.err + 1
                     rc = 0
 
@@ -1414,7 +1414,7 @@ class CFChecker:
                 udunits.ut_free(secsSinceEpoch)
 
             else:
-                print("ERROR (4.4.1): Attribute",attribute,"may only be attached to time coordinate variable")
+                print("ERROR (4.4.1): Attribute", attribute, "may only be attached to time coordinate variable")
                 self.err = self.err + 1
                 rc = 0
 
@@ -1440,8 +1440,8 @@ class CFChecker:
         getComments = re.compile(r'\([^)]+\)')
 
         # Remove comments from the cell_methods string and split at these points
-        noComments = getComments.sub('%5A',cellMethods)
-        substrings = re.split('%5A',noComments)
+        noComments = getComments.sub('%5A', cellMethods)
+        substrings = re.split('%5A', noComments)
         pr = re.compile(r'^\s*(\S+\s*:\s*(\S+\s*:\s*)*(point|sum|maximum|median|mid_range|minimum|mean|mode|standard_deviation|variance)(\s+(over|within)\s+(days|years))?\s*)+$')
         # Validate each substring
         for s in substrings:
@@ -1452,17 +1452,17 @@ class CFChecker:
                     break
 
                 # Validate dim and check that it only appears once unless it is 'time'
-                allDims = re.findall(r'\S+\s*:',s)
+                allDims = re.findall(r'\S+\s*:', s)
                 for part in allDims:
-                    dims = re.split(':',part)
+                    dims = re.split(':', part)
                     for d in dims:
                         if d:
                             if var.getAxisIndex(d) == -1 and d not in self.std_name_dh.dict.keys():
-                                print("ERROR (7.3): Invalid 'name' in cell_methods attribute:",d)
+                                print("ERROR (7.3): Invalid 'name' in cell_methods attribute:", d)
                                 self.err = self.err + 1
                                 rc = 0
                             elif d in varDimensions and d != "time":
-                                print("ERROR (7.3): Multiple cell_methods entries for dimension:",d)
+                                print("ERROR (7.3): Multiple cell_methods entries for dimension:", d)
                                 self.err = self.err + 1
                             else:
                                 varDimensions[d] = 1
@@ -1473,7 +1473,7 @@ class CFChecker:
             comments = getComments.findall(cellMethods)
             cpr = re.compile(r'^\((interval:\s+\d+\s+(years|months|days|hours|minutes|seconds)\s*)*(comment: .+)?\)')
             for c in comments:
-                if re.search(r'^\(\s*interval',c):
+                if re.search(r'^\(\s*interval', c):
                     # Only need to check standardized comments i.e. those beginning (interval ...)
                     if not cpr.match(c):
                         strError = c
@@ -1488,7 +1488,7 @@ class CFChecker:
     return rc
 
   #----------------------------
-  def chkCFRole(self,varName):
+  def chkCFRole(self, varName):
   #----------------------------
       # Validate cf_role attribute
       rc = 1
@@ -1501,7 +1501,7 @@ class CFChecker:
           #print "ROS: Attribute cf_role found!!"
           self.cf_roleCount = self.cf_roleCount + 1
 
-          if cf_role not in ['timeseries_id','profile_id','trajectory_id']:
+          if cf_role not in ['timeseries_id', 'profile_id', 'trajectory_id']:
               print("ERROR (9.5): Invalid value for cf_role attribute")
               self.err = self.err + 1
 
@@ -1509,7 +1509,7 @@ class CFChecker:
       return rc
 
   #---------------------------------
-  def chkRaggedArray(self,varName):
+  def chkRaggedArray(self, varName):
   #---------------------------------
       # Validate count/index variable
       #rc=1
@@ -1534,7 +1534,7 @@ class CFChecker:
               self.err = self.err + 1
 
   #----------------------------------
-  def isValidUdunitsUnit(self,unit):
+  def isValidUdunitsUnit(self, unit):
   #----------------------------------
       # units must be recognizable by udunits package
       udunitsUnit = udunits.ut_parse(self.unitSystem, unit, "UT_ASCII")
@@ -1564,7 +1564,7 @@ class CFChecker:
               leadingDim = self.f[value].getAxisIds()[0]
               # Must not be a value of more than one
               if self.f.dimensions[leadingDim] > 1:
-                  print("ERROR (7.3):",value,"is not allowed a leading dimension of more than one.")
+                  print("ERROR (7.3):", value, "is not allowed a leading dimension of more than one.")
                   self.err = self.err + 1
 
           if 'standard_name' in self.f[value].attributes:
@@ -1578,7 +1578,7 @@ class CFChecker:
       return rc
 
   #----------------------------------
-  def chkCellMethods_redefined(self,varName):
+  def chkCellMethods_redefined(self, varName):
   #----------------------------------
     """Checks on cell_methods attribute
        dim1: [dim2: [dim3: ...]] method [where type1 [over type2]] [ (comment) ]
@@ -1621,8 +1621,8 @@ class CFChecker:
 
         # Validate each substring
         for s in substr_iter:
-            if not re.match(r'point|sum|maximum|median|mid_range|minimum|mean|mode|standard_deviation|variance',s.group('method')):
-                print("ERROR (7.3): Invalid cell_method:",s.group('method'))
+            if not re.match(r'point|sum|maximum|median|mid_range|minimum|mean|mode|standard_deviation|variance', s.group('method')):
+                print("ERROR (7.3): Invalid cell_method:", s.group('method'))
                 self.err = self.err + 1
                 rc = 0
 
@@ -1638,11 +1638,11 @@ class CFChecker:
                         self.err = self.err + 1
 
             # Validate dim and check that it only appears once unless it is 'time'
-            allDims = re.findall(r'\S+\s*:',s.group('dimensions'))
+            allDims = re.findall(r'\S+\s*:', s.group('dimensions'))
             dc = 0          # Number of dims
 
             for part in allDims:
-                dims = re.split(':',part)
+                dims = re.split(':', part)
 
                 for d in dims:
                     if d:
@@ -1651,18 +1651,18 @@ class CFChecker:
                             if self.version >= vn1_4:
                                 # Extra constraints at CF-1.4 and above
                                 if d != "area":
-                                    print("ERROR (7.3): Invalid 'name' in cell_methods attribute:",d)
+                                    print("ERROR (7.3): Invalid 'name' in cell_methods attribute:", d)
                                     self.err = self.err + 1
                                     rc = 0
                             else:
-                                print("ERROR (7.3): Invalid 'name' in cell_methods attribute:",d)
+                                print("ERROR (7.3): Invalid 'name' in cell_methods attribute:", d)
                                 self.err = self.err + 1
                                 rc = 0
 
                         else:
                             # dim is a variable dimension
                             if d in varDimensions and d != "time":
-                                print("ERROR (7.3): Multiple cell_methods entries for dimension:",d)
+                                print("ERROR (7.3): Multiple cell_methods entries for dimension:", d)
                                 self.err = self.err + 1
                                 rc = 0
                             else:
@@ -1673,7 +1673,7 @@ class CFChecker:
                                 # if the coordinate variable has either bounds or climatology attributes
                                 if d in self.coordVars and s.group('method') != 'point':
                                     if 'bounds' not in self.f[d].attributes and 'climatology' not in self.f[d].attributes:
-                                        print("WARNING (7.3): Coordinate variable",d,"should have bounds or climatology attribute")
+                                        print("WARNING (7.3): Coordinate variable", d, "should have bounds or climatology attribute")
                                         self.warn = self.warn + 1
 
             # Validate the comment associated with this method, if present
@@ -1688,7 +1688,7 @@ class CFChecker:
                     i = i + 1
                     unit = m.group('unit')
                     if not self.isValidUdunitsUnit(unit):
-                        print("ERROR (7.3): Invalid unit",unit,"in cell_methods comment")
+                        print("ERROR (7.3): Invalid unit", unit, "in cell_methods comment")
                         self.err = self.err + 1
                         rc = 0
 
@@ -1700,7 +1700,7 @@ class CFChecker:
     return rc
 
   #----------------------------------
-  def chkCellMeasures(self,varName):
+  def chkCellMeasures(self, varName):
   #----------------------------------
     """Checks on cell_measures attribute:
     1) Correct syntax
@@ -1711,7 +1711,7 @@ class CFChecker:
 
     if 'cell_measures' in var.attributes:
         cellMeasures = var.attributes['cell_measures']
-        if not re.search("^([a-zA-Z0-9]+: +([a-zA-Z0-9_ ]+:?)*( +[a-zA-Z0-9_]+)?)$",cellMeasures):
+        if not re.search("^([a-zA-Z0-9]+: +([a-zA-Z0-9_ ]+:?)*( +[a-zA-Z0-9_]+)?)$", cellMeasures):
             print("ERROR (7.2): Invalid cell_measures syntax")
             self.err = self.err + 1
             rc = 0
@@ -1733,7 +1733,7 @@ class CFChecker:
                     else:
                         # Valid variable name in cell_measures so carry on with tests.
                         if len(self.f[variable].getAxisIds()) > len(var.getAxisIds()):
-                            print("ERROR (7.2): Dimensions of",variable,"must be same or a subset of",var.getAxisIds())
+                            print("ERROR (7.2): Dimensions of", variable, "must be same or a subset of", var.getAxisIds())
                             self.err = self.err + 1
                             rc = 0
                         else:
@@ -1741,12 +1741,12 @@ class CFChecker:
                             # Put in else so as not to duplicate ERROR messages.
                             for dim in self.f[variable].getAxisIds():
                                 if dim not in var.getAxisIds():
-                                    print("ERROR (7.2): Dimensions of",variable,"must be same or a subset of",var.getAxisIds())
+                                    print("ERROR (7.2): Dimensions of", variable, "must be same or a subset of", var.getAxisIds())
                                     self.err = self.err + 1
                                     rc = 0
 
-                        measure = re.sub(':','',measure)
-                        if not re.match("^(area|volume)$",measure):
+                        measure = re.sub(':', '', measure)
+                        if not re.match("^(area|volume)$", measure):
                             print("ERROR (7.2): Invalid measure in attribute cell_measures")
                             self.err = self.err + 1
                             rc = 0
@@ -1767,7 +1767,7 @@ class CFChecker:
     return rc
 
   #----------------------------------
-  def chkFormulaTerms(self,varName,allCoordVars):
+  def chkFormulaTerms(self, varName, allCoordVars):
   #----------------------------------
     """Checks on formula_terms attribute (CF Section 4.3.2):
     formula_terms = var: term var: term ...
@@ -1791,10 +1791,10 @@ class CFChecker:
             # No sense in carrying on as can't validate formula_terms without valid standard name
             return 0
 
-        (stdName,modifier) = self.getStdName(var)
+        (stdName, modifier) = self.getStdName(var)
 
         if stdName not in self.alias:
-            print("ERROR (4.3.2): No formula defined for standard name:",stdName)
+            print("ERROR (4.3.2): No formula defined for standard name:", stdName)
             self.err = self.err + 1
             # No formula available so can't validate formula_terms
             return 0
@@ -1802,7 +1802,7 @@ class CFChecker:
         index = self.alias[stdName]
 
         formulaTerms = var.attributes['formula_terms']
-        if not re.search("^([a-zA-Z0-9_]+: +[a-zA-Z0-9_]+( +)?)*$",formulaTerms):
+        if not re.search("^([a-zA-Z0-9_]+: +[a-zA-Z0-9_]+( +)?)*$", formulaTerms):
             print("ERROR (4.3.2): Invalid formula_terms syntax")
             self.err = self.err + 1
             rc = 0
@@ -1813,27 +1813,27 @@ class CFChecker:
                 if not re.search("^[a-zA-Z0-9_]+:$", x):
                     # Variable - should be declared in netCDF file
                     if x not in self.f._file_.variables.keys():
-                        print("ERROR (4.3.2):",x,"is not declared as a variable")
+                        print("ERROR (4.3.2):", x, "is not declared as a variable")
                         self.err = self.err + 1
                         rc = 0
                 else:
                     # Term - Should be present in formula
-                    x = re.sub(':','',x)
+                    x = re.sub(':', '', x)
                     found = 'false'
                     for formula in self.formulas[index]:
-                        if re.search(x,formula):
+                        if re.search(x, formula):
                             found = 'true'
                             break
 
                     if found == 'false':
-                        print("ERROR (4.3.2): term",x,"not present in formula")
+                        print("ERROR (4.3.2): term", x, "not present in formula")
                         self.err = self.err + 1
                         rc = 0
 
     return rc
 
   #----------------------------------------
-  def chkUnits(self,varName,allCoordVars):
+  def chkUnits(self, varName, allCoordVars):
   #----------------------------------------
       """Check units attribute"""
       rc = 1
@@ -1856,8 +1856,8 @@ class CFChecker:
               return 0
 
           # units - level, layer and sigma_level are deprecated
-          if units in ['level','layer','sigma_level']:
-              print("WARNING (3.1): units",units,"is deprecated")
+          if units in ['level', 'layer', 'sigma_level']:
+              print("WARNING (3.1): units", units, "is deprecated")
               self.warn = self.warn + 1
           elif units == 'month':
               print("WARNING (4.4): The unit 'month', defined by udunits to be exactly year/12, should")
@@ -1871,7 +1871,7 @@ class CFChecker:
               # units must be recognizable by udunits package
               varUnit = udunits.ut_parse(self.unitSystem, units, "UT_ASCII")
               if not varUnit:
-                  print("ERROR (3.1): Invalid units: ",units)
+                  print("ERROR (3.1): Invalid units: ", units)
                   self.err = self.err + 1
                   # Invalid units so no point continuing with further unit checks
                   return 0
@@ -1879,7 +1879,7 @@ class CFChecker:
               # units of a variable that specifies a standard_name must
               # be consistent with units given in standard_name table
               if 'standard_name' in var.attributes:
-                  (stdName,modifier) = self.getStdName(var)
+                  (stdName, modifier) = self.getStdName(var)
 
                   # Is the Standard Name modifier number_of_observations being used.
                   if modifier == 'number_of_observations':
@@ -1898,7 +1898,7 @@ class CFChecker:
                       canonicalUnit = udunits.ut_parse(self.unitSystem, stdNameUnits, "UT_ASCII")
 
                       # To compare units we need to remove the reference time from the variable units
-                      if re.search("since",units):
+                      if re.search("since", units):
                           # unit attribute contains a reference time - remove it
                           udunits.ut_free(varUnit)
                           varUnit = udunits.ut_parse(self.unitSystem, units.split()[0], "UT_ASCII")
@@ -1907,12 +1907,12 @@ class CFChecker:
                       if 'cell_methods' in var.attributes:
                           # Remove comments from the cell_methods string - no need to search these
                           getComments = re.compile(r'\([^)]+\)')
-                          noComments = getComments.sub('%5A',var.attributes['cell_methods'])
+                          noComments = getComments.sub('%5A', var.attributes['cell_methods'])
 
-                          if re.search(r'(\s+|:)variance',noComments):
+                          if re.search(r'(\s+|:)variance', noComments):
                               # Variance method so standard_name units need to be squared.
                               unit1 = udunits.ut_parse(self.unitSystem, stdNameUnits, "UT_ASCII")
-                              canonicalUnit = udunits.ut_multiply(unit1,unit1)
+                              canonicalUnit = udunits.ut_multiply(unit1, unit1)
                               udunits.ut_free(unit1)
 
                       if not udunits.ut_are_convertible(varUnit, canonicalUnit):
@@ -1939,7 +1939,7 @@ class CFChecker:
                       if not var.axis == 'Z':
                           print("WARNING (3.1): units attribute should be present")
                           self.warn = self.warn + 1
-                  elif not hasattr(var,'positive') and not hasattr(var,'formula_terms') and not hasattr(var,'compress'):
+                  elif not hasattr(var, 'positive') and not hasattr(var, 'formula_terms') and not hasattr(var, 'compress'):
                       print("WARNING (3.1): units attribute should be present")
                       self.warn = self.warn + 1
 
@@ -1948,7 +1948,7 @@ class CFChecker:
 
               dimensions = self.f[var.id].getAxisIds()
 
-              if not hasattr(var,'flag_values') and len(dimensions) != 0 and self.f[var.id].typecode() != 'c':
+              if not hasattr(var, 'flag_values') and len(dimensions) != 0 and self.f[var.id].typecode() != 'c':
                   # Variable is not a flag variable or a scalar or a label
 
                   print("INFO (3.1): No units attribute set.  Please consider adding a units attribute for completeness.")
@@ -2027,10 +2027,10 @@ class CFChecker:
                 self.warn = self.warn + 1
 
         if var.id in self.boundsVars:
-            print("WARNING (7.1): Boundary Variable",var.id,"should not have _FillValue attribute")
+            print("WARNING (7.1): Boundary Variable", var.id, "should not have _FillValue attribute")
             self.warn = self.warn + 1
         elif var.id in self.climatologyVars:
-            print("ERROR (7.4): Climatology Variable",var.id,"must not have _FillValue attribute")
+            print("ERROR (7.4): Climatology Variable", var.id, "must not have _FillValue attribute")
             self.err = self.err + 1
             rc = 0
 
@@ -2071,10 +2071,10 @@ class CFChecker:
 ##                 rc=0
 
                 if var.id in self.boundsVars:
-                    print("WARNING (7.1): Boundary Variable",var.id,"should not have missing_value attribute")
+                    print("WARNING (7.1): Boundary Variable", var.id, "should not have missing_value attribute")
                     self.warn = self.warn + 1
                 elif var.id in self.climatologyVars:
-                    print("ERROR (7.4): Climatology Variable",var.id,"must not have missing_value attribute")
+                    print("ERROR (7.4): Climatology Variable", var.id, "must not have missing_value attribute")
                     self.err = self.err + 1
                     rc = 0
 
@@ -2098,7 +2098,7 @@ class CFChecker:
       var = self.f[varName]
 
       if 'axis' in var.attributes:
-          if not re.match('^(X|Y|Z|T)$',var.attributes['axis'],re.I):
+          if not re.match('^(X|Y|Z|T)$', var.attributes['axis'], re.I):
               print("ERROR (4): Invalid value for axis attribute")
               self.err = self.err + 1
               return 0
@@ -2111,9 +2111,9 @@ class CFChecker:
 
           # Check that axis attribute is consistent with the coordinate type
           # deduced from units and positive.
-          if hasattr(var,'units'):
-              if hasattr(var,'positive'):
-                  interp = self.getInterpretation(var.units,var.positive)
+          if hasattr(var, 'units'):
+              if hasattr(var, 'positive'):
+                  interp = self.getInterpretation(var.units, var.positive)
               else:
                   interp = self.getInterpretation(var.units)
           else:
@@ -2137,7 +2137,7 @@ class CFChecker:
   #----------------------------------------
       var = self.f[varName]
       if 'positive' in var.attributes:
-          if not re.match('^(down|up)$',var.attributes['positive'],re.I):
+          if not re.match('^(down|up)$', var.attributes['positive'], re.I):
               print("ERROR (4.3): Invalid value for positive attribute")
               self.err = self.err + 1
               return 0
@@ -2152,7 +2152,7 @@ class CFChecker:
 
     if 'calendar' in var.attributes:
         if not re.match('(gregorian|standard|proleptic_gregorian|noleap|365_day|all_leap|366_day|360_day|julian|none)',
-                        var.attributes['calendar'],re.I):
+                        var.attributes['calendar'], re.I):
             # Non-standardized calendar so month_lengths should be present
             if 'month_lengths' not in var.attributes:
                 print("ERROR (4.4.1): Non-standard calendar, so month_lengths attribute must be present")
@@ -2249,14 +2249,14 @@ class CFChecker:
               name = std_name_el[0]
               if name not in self.std_name_dh.dict.keys():
                   if chkDerivedName(name):
-                      print("ERROR (3.3): Invalid standard_name:",name)
+                      print("ERROR (3.3): Invalid standard_name:", name)
                       self.err = self.err + 1
                       rc = 0
 
               if len(std_name_el) == 2:
                   # Validate modifier
                   modifier = std_name_el[1]
-                  if modifier not in ['detection_minimum','number_of_observations','standard_error','status_flag']:
+                  if modifier not in ['detection_minimum', 'number_of_observations', 'standard_error', 'status_flag']:
                       print("ERROR (3.3): Invalid standard_name modifier: " + modifier)
                       rc = 0
 
@@ -2271,10 +2271,10 @@ class CFChecker:
         compress = var.attributes['compress']
 
         if var.typecode() != 'i':
-            print("ERROR (8.2):",var.id,"- compress attribute can only be attached to variable of type int.")
+            print("ERROR (8.2):", var.id, "- compress attribute can only be attached to variable of type int.")
             self.err = self.err + 1
             return 0
-        if not re.search("^[a-zA-Z0-9_ ]*$",compress):
+        if not re.search("^[a-zA-Z0-9_ ]*$", compress):
             print("ERROR (8.2): Invalid syntax for 'compress' attribute")
             self.err = self.err + 1
             rc = 0
@@ -2290,7 +2290,7 @@ class CFChecker:
                     found = 'true'
 
                 if found != 'true':
-                    print("ERROR (8.2): compress attribute naming non-existent dimension: ",x)
+                    print("ERROR (8.2): compress attribute naming non-existent dimension: ", x)
                     self.err = self.err + 1
                     rc = 0
 
@@ -2302,7 +2302,7 @@ class CFChecker:
                     break
 
             if outOfRange:
-                print("ERROR (8.2): values of",var.id,"must be in the range 0 to",dimProduct - 1)
+                print("ERROR (8.2): values of", var.id, "must be in the range 0 to", dimProduct - 1)
                 self.err = self.err + 1
     return rc
 
@@ -2336,12 +2336,12 @@ class CFChecker:
             rc = 0
 
         if varType != 'b' and varType != 'h' and varType != 'i':
-            print("ERROR (8.1):",var.id,"must be of type byte, short or int")
+            print("ERROR (8.1):", var.id, "must be of type byte, short or int")
             self.err = self.err + 1
             rc = 0
 
         if type == 'f' and varType == 'i':
-            print("WARNING (8.1): scale_factor/add_offset are type float, therefore",var.id,"should not be of type int")
+            print("WARNING (8.1): scale_factor/add_offset are type float, therefore", var.id, "should not be of type int")
             self.warn = self.warn + 1
 
     return rc
@@ -2378,7 +2378,7 @@ class CFChecker:
 #              print "Ros: after split:",values
 #              print "Ros: after split:",type(values)
 
-              retcode = self.equalNumOfValues(values,meanings)
+              retcode = self.equalNumOfValues(values, meanings)
               if retcode == -1:
                   print("ERROR (3.5): Problem in subroutine equalNumOfValues")
                   rc = 0
@@ -2400,7 +2400,7 @@ class CFChecker:
               values_or_masks = 1
               masks = var.attributes['flag_masks']
 
-              retcode = self.equalNumOfValues(masks,meanings)
+              retcode = self.equalNumOfValues(masks, meanings)
               if retcode == -1:
                   print("ERROR (3.5): Problem in subroutine equalNumOfValues")
                   rc = 0
@@ -2427,7 +2427,7 @@ class CFChecker:
                       bitwise_AND = v & masks[i]
 
                       if bitwise_AND != v:
-                          print("WARNING (3.5): Bitwise AND of flag_value",v,"and corresponding flag_mask",masks[i],"doesn't match flag_value.")
+                          print("WARNING (3.5): Bitwise AND of flag_value", v, "and corresponding flag_mask", masks[i], "doesn't match flag_value.")
                           self.warn = self.warn + 1
                       i = i + 1
 
@@ -2579,37 +2579,37 @@ def getargs(arglist):
         areatypes = environ[areatypeskey]
 
     try:
-        (opts,args) = getopt(arglist[1:],'a:bchlnu:s:v:',['area_types=','badc','coards','help','uploader','noname','udunits=','cf_standard_names=','version='])
+        (opts, args) = getopt(arglist[1:], 'a:bchlnu:s:v:', ['area_types=', 'badc', 'coards', 'help', 'uploader', 'noname', 'udunits=', 'cf_standard_names=', 'version='])
     except GetoptError:
         stderr.write('%s\n' % __doc__)
         exit(1)
 
     for a, v in opts:
-        if a in ('-a','--area_types'):
+        if a in ('-a', '--area_types'):
             areatypes = v.strip()
             continue
-        if a in ('-b','--badc'):
+        if a in ('-b', '--badc'):
             badc = "yes"
             continue
-        if a in ('-c','--coards'):
+        if a in ('-c', '--coards'):
             coards = "yes"
             continue
-        if a in ('-h','--help'):
+        if a in ('-h', '--help'):
             print(__doc__)
             exit(0)
-        if a in ('-l','--uploader'):
+        if a in ('-l', '--uploader'):
             uploader = "yes"
             continue
-        if a in ('-n','--noname'):
+        if a in ('-n', '--noname'):
             useFileName = "no"
             continue
-        if a in ('-u','--udunits'):
+        if a in ('-u', '--udunits'):
             udunits = v.strip()
             continue
-        if a in ('-s','--cf_standard_names'):
+        if a in ('-s', '--cf_standard_names'):
             standardname = v.strip()
             continue
-        if a in ('-v','--version'):
+        if a in ('-v', '--version'):
             if v == 'auto':
                 version = CFVersion()
             else:
@@ -2628,7 +2628,7 @@ def getargs(arglist):
         stderr.write('ERROR in command line\n\nusage:\n%s\n' % __doc__)
         exit(1)
 
-    return (badc,coards,uploader,useFileName,standardname,areatypes,udunits,version,args)
+    return (badc, coards, uploader, useFileName, standardname, areatypes, udunits, version, args)
 
 
 #--------------------------
@@ -2637,9 +2637,9 @@ def getargs(arglist):
 
 if __name__ == '__main__':
 
-    from sys import argv,exit
+    from sys import argv, exit
 
-    (badc,coards,uploader,useFileName,standardName,areaTypes,udunitsDat,version,files) = getargs(argv)
+    (badc, coards, uploader, useFileName, standardName, areaTypes, udunitsDat, version, files) = getargs(argv)
 
     inst = CFChecker(uploader=uploader, useFileName=useFileName, badc=badc, coards=coards, cfStandardNamesXML=standardName, cfAreaTypesXML=areaTypes, udunitsDat=udunitsDat, version=version)
     for file in files:

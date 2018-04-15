@@ -106,8 +106,8 @@ def test_gdal_grid_lib_2():
 
     for env_list in [[('GDAL_USE_AVX', 'NO'), ('GDAL_USE_SSE', 'NO')], [('GDAL_USE_AVX', 'NO')], []]:
 
-        for (key,value) in env_list:
-            gdal.SetConfigOption(key,value)
+        for (key, value) in env_list:
+            gdal.SetConfigOption(key, value)
 
         # Point strictly on grid
         ds1 = gdal.Grid('', '/vsimem/tmp/test_gdal_grid_lib_2.shp', format='MEM', \

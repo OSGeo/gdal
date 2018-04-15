@@ -42,18 +42,18 @@ from osgeo import gdal
 def asyncreader_1():
 
     ds = gdal.Open('data/rgbsmall.tif')
-    asyncreader = ds.BeginAsyncReader(0,0,ds.RasterXSize,ds.RasterYSize)
+    asyncreader = ds.BeginAsyncReader(0, 0, ds.RasterXSize, ds.RasterYSize)
     buf = asyncreader.GetBuffer()
     result = asyncreader.GetNextUpdatedRegion(0)
-    if result != [gdal.GARIO_COMPLETE, 0, 0, ds.RasterXSize,ds.RasterYSize]:
+    if result != [gdal.GARIO_COMPLETE, 0, 0, ds.RasterXSize, ds.RasterYSize]:
         gdaltest.post_reason('wrong return values for GetNextUpdatedRegion()')
         print(result)
         return 'fail'
     ds.EndAsyncReader(asyncreader)
     asyncreader = None
 
-    out_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/asyncresult.tif', ds.RasterXSize,ds.RasterYSize,ds.RasterCount)
-    out_ds.WriteRaster(0,0,ds.RasterXSize,ds.RasterYSize,buf)
+    out_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/asyncresult.tif', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
+    out_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buf)
 
     expected_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]

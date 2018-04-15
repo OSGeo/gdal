@@ -519,7 +519,7 @@ def ogr_csw_vsimem_csw_minimal_instance():
         return 'fail'
 
     lyr.SetAttributeFilter("identifier = 'an_identifier'")
-    lyr.SetSpatialFilterRect(-180,-90,180,90)
+    lyr.SetSpatialFilterRect(-180, -90, 180, 90)
     gdal.FileFromMemBuffer("""/vsimem/csw_endpoint&POSTFIELDS=<?xml version="1.0" encoding="UTF-8"?><csw:GetRecords resultType="results" service="CSW" version="2.0.2" startPosition="1" maxRecords="500" xmlns:csw="http://www.opengis.net/cat/csw/2.0.2" xmlns:gml="http://www.opengis.net/gml" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ogc="http://www.opengis.net/ogc" xmlns:ows="http://www.opengis.net/ows" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/CSW-discovery.xsd"><csw:Query typeNames="csw:Record"><csw:ElementSetName>full</csw:ElementSetName><csw:Constraint version="1.1.0"><ogc:Filter><ogc:And><ogc:BBOX><ogc:PropertyName>ows:BoundingBox</ogc:PropertyName><gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326"><gml:lowerCorner>-90 -180</gml:lowerCorner><gml:upperCorner>90 180</gml:upperCorner></gml:Envelope></ogc:BBOX><ogc:PropertyIsEqualTo><ogc:PropertyName>dc:identifier</ogc:PropertyName><ogc:Literal>an_identifier</ogc:Literal></ogc:PropertyIsEqualTo></ogc:And></ogc:Filter></csw:Constraint></csw:Query></csw:GetRecords>""",
 """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <csw:GetRecordsResponse

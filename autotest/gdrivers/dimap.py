@@ -55,7 +55,7 @@ def dimap_1():
         gdaltest.post_reason('wrong size or bands')
         return 'fail'
 
-    if ds.GetRasterBand(1).Checksum(0,0,100,100) != 21586:
+    if ds.GetRasterBand(1).Checksum(0, 0, 100, 100) != 21586:
         gdaltest.post_reason('wrong checksum')
         return 'fail'
 

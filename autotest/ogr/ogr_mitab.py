@@ -307,7 +307,7 @@ def ogr_mitab_9():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.mapinfo_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
+        if ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
                                           max_error=0.000000001) != 0:
             return 'fail'
 
@@ -378,7 +378,7 @@ def ogr_mitab_11():
     srs = ds.GetLayer(0).GetSpatialRef()
     ds = None
 
-    pm_value = srs.GetAttrValue('PROJCS|GEOGCS|PRIMEM',1)
+    pm_value = srs.GetAttrValue('PROJCS|GEOGCS|PRIMEM', 1)
     if pm_value[:6] != '2.3372':
         gdaltest.post_reason('got unexpected prime meridian, not paris: ' + pm_value)
         return 'fail'
@@ -440,10 +440,10 @@ def ogr_mitab_13():
 
     defn = lyr.GetLayerDefn()
 
-    data = [['AREA',  ogr.OFTReal,   7, 4],
-            ['VOLUME',ogr.OFTReal,   0, 0],
-            ['LENGTH',ogr.OFTInteger,10,0],
-            ['WIDTH', ogr.OFTInteger, 4,0]]
+    data = [['AREA', ogr.OFTReal, 7, 4],
+            ['VOLUME', ogr.OFTReal, 0, 0],
+            ['LENGTH', ogr.OFTInteger, 10, 0],
+            ['WIDTH', ogr.OFTInteger, 4, 0]]
 
     for field in data:
         fld = defn.GetFieldDefn(defn.GetFieldIndex(field[0]))
@@ -491,10 +491,10 @@ def ogr_mitab_14():
 
     defn = lyr.GetLayerDefn()
 
-    data = [['AREA',  ogr.OFTReal,   7, 4],
-            ['VOLUME',ogr.OFTReal,   0, 0],
-            ['LENGTH',ogr.OFTInteger,254,0],
-            ['WIDTH', ogr.OFTInteger,254,0]]
+    data = [['AREA', ogr.OFTReal, 7, 4],
+            ['VOLUME', ogr.OFTReal, 0, 0],
+            ['LENGTH', ogr.OFTInteger, 254, 0],
+            ['WIDTH', ogr.OFTInteger, 254, 0]]
 
     for field in data:
         fld = defn.GetFieldDefn(defn.GetFieldIndex(field[0]))
@@ -1316,7 +1316,7 @@ def ogr_mitab_27():
 def generate_permutation(n):
     tab = [i for i in range(n)]
     for i in range(10 * n):
-        ind = random.randint(0,n - 1)
+        ind = random.randint(0, n - 1)
         tmp = tab[0]
         tab[0] = tab[ind]
         tab[ind] = tmp
@@ -1345,7 +1345,7 @@ def ogr_mitab_28():
         y = n % N2
         f = ogr.Feature(lyr.GetLayerDefn())
         #f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%d %d)' % (x,y)))
-        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(%d %d,%f %f,%f %f)' % (x,y,x + 0.1,y,x + 0.2,y)))
+        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(%d %d,%f %f,%f %f)' % (x, y, x + 0.1, y, x + 0.2, y)))
         lyr.CreateFeature(f)
 
     # Delete all features
@@ -1360,7 +1360,7 @@ def ogr_mitab_28():
         y = n % N2
         f = ogr.Feature(lyr.GetLayerDefn())
         #f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%d %d)' % (x,y)))
-        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(%d %d,%f %f,%f %f)' % (x,y,x + 0.1,y,x + 0.2,y)))
+        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(%d %d,%f %f,%f %f)' % (x, y, x + 0.1, y, x + 0.2, y)))
         f.SetFID(i + 1)
         i = i + 1
         lyr.SetFeature(f)
@@ -1386,7 +1386,7 @@ def ogr_mitab_28():
     for n in range(N):
         x = int(n / N2)
         y = n % N2
-        lyr.SetSpatialFilterRect(x - 0.5,y - 0.5,x + 0.5,y + 0.5)
+        lyr.SetSpatialFilterRect(x - 0.5, y - 0.5, x + 0.5, y + 0.5)
         if lyr.GetFeatureCount() != 1:
             gdaltest.post_reason('fail')
             return 'fail'
@@ -1430,7 +1430,7 @@ def ogr_mitab_29():
         x = 1 + int(n / N2)
         y = 1 + n % N2
         f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%d %d)' % (x,y)))
+        f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%d %d)' % (x, y)))
         lyr.CreateFeature(f)
     ds = None
 
@@ -1442,11 +1442,11 @@ def ogr_mitab_29():
     for n in range(N):
         x = int(n / N2)
         y = n % N2
-        lyr.SetSpatialFilterRect(x - 0.01,y - 0.01,x + 0.01,y + 0.01)
+        lyr.SetSpatialFilterRect(x - 0.01, y - 0.01, x + 0.01, y + 0.01)
         if lyr.GetFeatureCount() != 1:
             print(n)
             print(lyr.GetFeatureCount())
-            print(x - 0.01,y - 0.01,x + 0.01,y + 0.01)
+            print(x - 0.01, y - 0.01, x + 0.01, y + 0.01)
             gdaltest.post_reason('fail')
             return 'fail'
     ds = None
@@ -1506,7 +1506,7 @@ def ogr_mitab_30(update=0):
     for j in range(100):
         feat = ogr.Feature(lyr.GetLayerDefn())
         feat.SetField('ID', j + 1)
-        feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (%d %d)' % (j,j)))
+        feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (%d %d)' % (j, j)))
         lyr.CreateFeature(feat)
         feat = None
 
@@ -1540,7 +1540,7 @@ def ogr_mitab_30(update=0):
                 gdaltest.post_reason('fail')
                 return 'fail'
             feat2 = lyr2.GetFeature(j + 1)
-            if feat2.GetField('ID') != j + 1 or feat2.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (j,j):
+            if feat2.GetField('ID') != j + 1 or feat2.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (j, j):
                 print(j)
                 print(i)
                 feat2.DumpReadable()
@@ -1549,7 +1549,7 @@ def ogr_mitab_30(update=0):
             lyr2.ResetReading()
             for k in range(j + 1):
                 feat2 = lyr2.GetNextFeature()
-            if feat2.GetField('ID') != j + 1 or feat2.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (j,j):
+            if feat2.GetField('ID') != j + 1 or feat2.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (j, j):
                 print(j)
                 print(i)
                 feat2.DumpReadable()
@@ -1576,7 +1576,7 @@ def ogr_mitab_31():
 
 def ogr_mitab_32():
 
-    for update in (0,1):
+    for update in (0, 1):
         ds = ogr.Open('data/aspatial-table.tab', update=update)
         lyr = ds.GetLayer(0)
         if lyr.GetFeatureCount() != 2:
@@ -1604,7 +1604,7 @@ def ogr_mitab_32():
 
 def ogr_mitab_33():
 
-    for update in (0,1):
+    for update in (0, 1):
         ds = ogr.Open('data/single_point_mapinfo.tab', update=update)
         lyr = ds.GetLayer(0)
         if lyr.GetFeatureCount() != 1:
@@ -1747,13 +1747,13 @@ Data
 NONE
 """ % coordsys
     content = content.encode('ascii')
-    gdal.VSIFWriteL(content, 1, len(content),f)
+    gdal.VSIFWriteL(content, 1, len(content), f)
     gdal.VSIFCloseL(f)
 
     f = gdal.VSIFOpenL(mif_filename[0:-3] + "mid", "wb")
     content = '""\n'
     content = content.encode('ascii')
-    gdal.VSIFWriteL(content, 1, len(content),f)
+    gdal.VSIFWriteL(content, 1, len(content), f)
     gdal.VSIFCloseL(f)
 
     ds = ogr.Open(mif_filename)
@@ -2321,9 +2321,9 @@ def ogr_mitab_45():
     featNames = ['аз',
                   'буки',
                   'веди']
-    formats = ['MIF',  'TAB', 'MIF', 'TAB']
-    lyrNums = [1,      1,     2,     2]
-    dsExts = ['.mif', '.tab',    '',    '']
+    formats = ['MIF', 'TAB', 'MIF', 'TAB']
+    lyrNums = [1, 1, 2, 2]
+    dsExts = ['.mif', '.tab', '', '']
 
     for formatN in range(len(formats)):
         format = formats[formatN]
@@ -2421,10 +2421,10 @@ def ogr_mitab_46():
 
     dsNames = ['data/mitab/tab-win1251.TAB',
                  'data/mitab/win1251.mif']
-    fldNames = ['Поле_А',     'Поле_Б',     'Поле_В',     'Поле_Г',     'Поле_Д']
+    fldNames = ['Поле_А', 'Поле_Б', 'Поле_В', 'Поле_Г', 'Поле_Д']
     fldVal = [['Значение А', 'Значение Б', 'Значение В', 'Значение Г', 'Значение Д'],
                ['Значение 1', 'Значение 2', 'Значение 3', 'Значение 4', 'Значение 5'],
-               ['Полигон',    'Синий',      'Заливка',    'А а Б б',    'ЪЫЁЩ']]
+               ['Полигон', 'Синий', 'Заливка', 'А а Б б', 'ЪЫЁЩ']]
 
     for dsName in dsNames:
 

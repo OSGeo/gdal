@@ -101,7 +101,7 @@ def deprecation_warn(module):
   have_warned = 1
 
   from warnings import warn
-  warn('%s.py was placed in a namespace, it is now available as osgeo.%s' % (module,module),
+  warn('%s.py was placed in a namespace, it is now available as osgeo.%s' % (module, module),
        DeprecationWarning)
 
 
@@ -112,15 +112,15 @@ import gdalconst
 import sys
 byteorders = {"little": "<",
               "big": ">"}
-array_modes = {gdalconst.GDT_Int16:    ("%si2" % byteorders[sys.byteorder]),
-                gdalconst.GDT_UInt16:   ("%su2" % byteorders[sys.byteorder]),
-                gdalconst.GDT_Int32:    ("%si4" % byteorders[sys.byteorder]),
-                gdalconst.GDT_UInt32:   ("%su4" % byteorders[sys.byteorder]),
-                gdalconst.GDT_Float32:  ("%sf4" % byteorders[sys.byteorder]),
-                gdalconst.GDT_Float64:  ("%sf8" % byteorders[sys.byteorder]),
+array_modes = {gdalconst.GDT_Int16: ("%si2" % byteorders[sys.byteorder]),
+                gdalconst.GDT_UInt16: ("%su2" % byteorders[sys.byteorder]),
+                gdalconst.GDT_Int32: ("%si4" % byteorders[sys.byteorder]),
+                gdalconst.GDT_UInt32: ("%su4" % byteorders[sys.byteorder]),
+                gdalconst.GDT_Float32: ("%sf4" % byteorders[sys.byteorder]),
+                gdalconst.GDT_Float64: ("%sf8" % byteorders[sys.byteorder]),
                 gdalconst.GDT_CFloat32: ("%sf4" % byteorders[sys.byteorder]),
                 gdalconst.GDT_CFloat64: ("%sf8" % byteorders[sys.byteorder]),
-                gdalconst.GDT_Byte:     ("%st8" % byteorders[sys.byteorder]),
+                gdalconst.GDT_Byte: ("%st8" % byteorders[sys.byteorder]),
 }
 
 
@@ -865,7 +865,7 @@ def NearblackOptions(options=[], format=None,
                     if color_str != '':
                         color_str += ','
                     color_str += str(cpt)
-                new_options += ['-color',color_str]
+                new_options += ['-color', color_str]
         if maxNonBlack is not None:
             new_options += ['-nb', str(maxNonBlack)]
         if nearDist is not None:
@@ -1775,20 +1775,20 @@ class GCP(_object):
                self.GCPX, self.GCPY, self.GCPZ, self.Info)
       return str
 
-    def serialize(self,with_Z=0):
-      base = [CXT_Element,'GCP']
-      base.append([CXT_Attribute,'Id',[CXT_Text,self.Id]])
+    def serialize(self, with_Z=0):
+      base = [CXT_Element, 'GCP']
+      base.append([CXT_Attribute, 'Id', [CXT_Text, self.Id]])
       pixval = '%0.15E' % self.GCPPixel
       lineval = '%0.15E' % self.GCPLine
       xval = '%0.15E' % self.GCPX
       yval = '%0.15E' % self.GCPY
       zval = '%0.15E' % self.GCPZ
-      base.append([CXT_Attribute,'Pixel',[CXT_Text,pixval]])
-      base.append([CXT_Attribute,'Line',[CXT_Text,lineval]])
-      base.append([CXT_Attribute,'X',[CXT_Text,xval]])
-      base.append([CXT_Attribute,'Y',[CXT_Text,yval]])
+      base.append([CXT_Attribute, 'Pixel', [CXT_Text, pixval]])
+      base.append([CXT_Attribute, 'Line', [CXT_Text, lineval]])
+      base.append([CXT_Attribute, 'X', [CXT_Text, xval]])
+      base.append([CXT_Attribute, 'Y', [CXT_Text, yval]])
       if with_Z:
-          base.append([CXT_Attribute,'Z',[CXT_Text,zval]])
+          base.append([CXT_Attribute, 'Z', [CXT_Text, zval]])
       return base
 
 
@@ -2142,7 +2142,7 @@ class Dataset(MajorObject):
         if buf_ysize is None:
             buf_ysize = ysize;
         if band_list is None:
-            band_list = range(1,self.RasterCount + 1)
+            band_list = range(1, self.RasterCount + 1)
         if buf_type is None:
             buf_type = self.GetRasterBand(1).DataType
 
@@ -2164,7 +2164,7 @@ class Dataset(MajorObject):
         if ysize is None:
             ysize = self.RasterYSize
         if band_list is None:
-            band_list = range(1,self.RasterCount + 1)
+            band_list = range(1, self.RasterCount + 1)
         if buf_xsize is None:
             buf_xsize = xsize;
         if buf_ysize is None:
@@ -2204,11 +2204,11 @@ class Dataset(MajorObject):
         if datatype is None:
             datatype = self.GetRasterBand(1).DataType
         if band_list is None:
-            band_list = range(1,self.RasterCount + 1)
+            band_list = range(1, self.RasterCount + 1)
         if options is None:
-            virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,band_list,band_sequential,cache_size,page_size_hint)
+            virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, band_list, band_sequential, cache_size, page_size_hint)
         else:
-            virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,band_list,band_sequential,cache_size,page_size_hint, options)
+            virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, band_list, band_sequential, cache_size, page_size_hint, options)
         return gdalnumeric.VirtualMemGetArray(virtualmem)
 
     def GetTiledVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
@@ -2235,11 +2235,11 @@ class Dataset(MajorObject):
         if datatype is None:
             datatype = self.GetRasterBand(1).DataType
         if band_list is None:
-            band_list = range(1,self.RasterCount + 1)
+            band_list = range(1, self.RasterCount + 1)
         if options is None:
-            virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,band_list,tile_organization,cache_size)
+            virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, band_list, tile_organization, cache_size)
         else:
-            virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,band_list,tile_organization,cache_size, options)
+            virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, band_list, tile_organization, cache_size, options)
         return gdalnumeric.VirtualMemGetArray(virtualmem)
 
     def GetSubDatasets(self):
@@ -2274,15 +2274,15 @@ class Dataset(MajorObject):
         if buf_obj is None:
             from sys import version_info
             nRequiredSize = int(buf_xsize * buf_ysize * len(band_list) * (_gdal.GetDataTypeSize(buf_type) / 8))
-            if version_info >= (3,0,0):
+            if version_info >= (3, 0, 0):
                 buf_obj_ar = [None]
                 exec("buf_obj_ar[0] = b' ' * nRequiredSize")
                 buf_obj = buf_obj_ar[0]
             else:
                 buf_obj = ' ' * nRequiredSize
-        return _gdal.Dataset_BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj, buf_xsize, buf_ysize, buf_type, band_list,  0, 0, 0, options)
+        return _gdal.Dataset_BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj, buf_xsize, buf_ysize, buf_type, band_list, 0, 0, 0, options)
 
-    def GetLayer(self,iLayer=0):
+    def GetLayer(self, iLayer=0):
         """Return the layer given an index or a name"""
         if isinstance(iLayer, str):
             return self.GetLayerByName(str(iLayer))
@@ -2633,9 +2633,9 @@ class Band(MajorObject):
           if datatype is None:
               datatype = self.DataType
           if options is None:
-              virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,cache_size,page_size_hint)
+              virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, cache_size, page_size_hint)
           else:
-              virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,cache_size,page_size_hint,options)
+              virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, cache_size, page_size_hint, options)
           return gdalnumeric.VirtualMemGetArray(virtualmem)
 
     def GetVirtualMemAutoArray(self, eAccess=gdalconst.GF_Read, options=None):
@@ -2648,7 +2648,7 @@ class Band(MajorObject):
           if options is None:
               virtualmem = self.GetVirtualMemAuto(eAccess)
           else:
-              virtualmem = self.GetVirtualMemAuto(eAccess,options)
+              virtualmem = self.GetVirtualMemAuto(eAccess, options)
           return gdalnumeric.VirtualMemGetArray(virtualmem)
 
     def GetTiledVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
@@ -2669,9 +2669,9 @@ class Band(MajorObject):
           if datatype is None:
               datatype = self.DataType
           if options is None:
-              virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size)
+              virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, cache_size)
           else:
-              virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size,options)
+              virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, cache_size, options)
           return gdalnumeric.VirtualMemGetArray(virtualmem)
 
     def __get_array_interface__(self):

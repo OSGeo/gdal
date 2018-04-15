@@ -128,7 +128,7 @@ def spawn_async26(cmd):
 
 
 def spawn_async(cmd):
-    if version_info >= (2,6,0):
+    if version_info >= (2, 6, 0):
         return spawn_async26(cmd)
 
     import popen2

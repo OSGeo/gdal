@@ -80,14 +80,14 @@ def arg_init():
     "cols": %(cols)d
 }"""
     gdaltest.argDefaults = {
-        'xmin':0.0,
-        'ymin':0.0,
-        'xmax':2.0,
-        'ymax':2.0,
-        'width':1.0,
-        'height':1.0,
-        'rows':2,
-        'cols':2
+        'xmin': 0.0,
+        'ymin': 0.0,
+        'xmax': 2.0,
+        'ymax': 2.0,
+        'width': 1.0,
+        'height': 1.0,
+        'rows': 2,
+        'cols': 2
     }
 
     # None means "no data"
@@ -115,7 +115,7 @@ def arg_init():
             arg.close()
 
             meta = copy(gdaltest.argDefaults)
-            meta.update(fmt='arg-' + name,dt=name)
+            meta.update(fmt='arg-' + name, dt=name)
             json = open('data/arg-' + name + '.json', 'w')
             json.write(gdaltest.argJsontpl % meta)
             json.close()

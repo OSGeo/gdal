@@ -100,13 +100,13 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
         ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
         ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
 
-    my_list = list(range(200)) + list(range(20,220)) + list(range(30,230))
-    raw_data = array.array('h',my_list).tostring()
+    my_list = list(range(200)) + list(range(20, 220)) + list(range(30, 230))
+    raw_data = array.array('h', my_list).tostring()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
                         buf_type=gdal.GDT_Int16,
-                        band_list=[1,2,3])
+                        band_list=[1, 2, 3])
 
     if createcopy:
         ds = drv.CreateCopy('tmp/test_create.ntf', ds,
@@ -355,7 +355,7 @@ def nitf_13():
     ds.SetProjection('PROJCS["UTM Zone 11, Southern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["Meter",1]]')
 
     my_list = list(range(200))
-    raw_data = array.array('f',my_list).tostring()
+    raw_data = array.array('f', my_list).tostring()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
@@ -590,13 +590,13 @@ def nitf_28_jp2ecw():
         ret = 'fail'
 
     tmpfilename = '/vsimem/nitf_28_jp2ecw.ntf'
-    src_ds = gdal.GetDriverByName('MEM').Create('',1025,1025)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1025, 1025)
     gdal.GetDriverByName('NITF').CreateCopy(tmpfilename, src_ds, options=['IC=C8'])
     ds = gdal.Open(tmpfilename)
     blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
     ds = None
     gdal.Unlink(tmpfilename)
-    if (blockxsize, blockysize) != (256,256): # 256 since this is hardcoded as such in the ECW driver
+    if (blockxsize, blockysize) != (256, 256): # 256 since this is hardcoded as such in the ECW driver
         gdaltest.post_reason('wrong block size')
         print(blockxsize, blockysize)
         ret = 'fail'
@@ -702,13 +702,13 @@ def nitf_28_jp2openjpeg_bis():
         ret = 'fail'
 
     tmpfilename = '/vsimem/nitf_28_jp2openjpeg_bis.ntf'
-    src_ds = gdal.GetDriverByName('MEM').Create('',1025,1025)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1025, 1025)
     gdal.GetDriverByName('NITF').CreateCopy(tmpfilename, src_ds, options=['IC=C8'])
     ds = gdal.Open(tmpfilename)
     blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
     ds = None
     gdal.Unlink(tmpfilename)
-    if (blockxsize, blockysize) != (1024,1024):
+    if (blockxsize, blockysize) != (1024, 1024):
         gdaltest.post_reason('wrong block size')
         print(blockxsize, blockysize)
         ret = 'fail'
@@ -729,10 +729,10 @@ def nitf_29():
                      ['IREP=RGB/LUT', 'LUT_SIZE=128'])
 
     ct = gdal.ColorTable()
-    ct.SetColorEntry(0, (255,255,255,255))
-    ct.SetColorEntry(1, (255,255,0,255))
-    ct.SetColorEntry(2, (255,0,255,255))
-    ct.SetColorEntry(3, (0,255,255,255))
+    ct.SetColorEntry(0, (255, 255, 255, 255))
+    ct.SetColorEntry(1, (255, 255, 0, 255))
+    ct.SetColorEntry(2, (255, 0, 255, 255))
+    ct.SetColorEntry(3, (0, 255, 255, 255))
 
     ds.GetRasterBand(1).SetRasterColorTable(ct)
 
@@ -742,10 +742,10 @@ def nitf_29():
 
     ct = ds.GetRasterBand(1).GetRasterColorTable()
     if ct.GetCount() != 129 or \
-       ct.GetColorEntry(0) != (255,255,255,255) or \
-       ct.GetColorEntry(1) != (255,255,0,255) or \
-       ct.GetColorEntry(2) != (255,0,255,255) or \
-       ct.GetColorEntry(3) != (0,255,255,255):
+       ct.GetColorEntry(0) != (255, 255, 255, 255) or \
+       ct.GetColorEntry(1) != (255, 255, 0, 255) or \
+       ct.GetColorEntry(2) != (255, 0, 255, 255) or \
+       ct.GetColorEntry(3) != (0, 255, 255, 255):
         gdaltest.post_reason('Wrong color table entry.')
         return 'fail'
 
@@ -757,10 +757,10 @@ def nitf_29():
 
     ct = ds.GetRasterBand(1).GetRasterColorTable()
     if ct.GetCount() != 130 or \
-       ct.GetColorEntry(0) != (255,255,255,255) or \
-       ct.GetColorEntry(1) != (255,255,0,255) or \
-       ct.GetColorEntry(2) != (255,0,255,255) or \
-       ct.GetColorEntry(3) != (0,255,255,255):
+       ct.GetColorEntry(0) != (255, 255, 255, 255) or \
+       ct.GetColorEntry(1) != (255, 255, 0, 255) or \
+       ct.GetColorEntry(2) != (255, 0, 255, 255) or \
+       ct.GetColorEntry(3) != (0, 255, 255, 255):
         gdaltest.post_reason('Wrong color table entry.')
         return 'fail'
 
@@ -862,7 +862,7 @@ def nitf_30():
         return 'fail'
 
     # Test that gdal_translate -ullr doesn't propagate BLOCKA
-    gdal.Translate('/vsimem/nitf30_no_src_md.ntf', src_ds, format='NITF', outputBounds=[2,49,3,50])
+    gdal.Translate('/vsimem/nitf30_no_src_md.ntf', src_ds, format='NITF', outputBounds=[2, 49, 3, 50])
     ds = gdal.Open('/vsimem/nitf30_no_src_md.ntf')
     md = ds.GetMetadata()
     ds = None
@@ -1638,7 +1638,7 @@ def nitf_50():
 
     ds.WriteRaster(0, 0, 100, 100, '   ', 1, 1,
                     buf_type=gdal.GDT_Byte,
-                    band_list=[1,2,3])
+                    band_list=[1, 2, 3])
 
     ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_BlueBand)
     ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
@@ -1675,8 +1675,8 @@ def nitf_50():
 def nitf_51():
     import struct
 
-    for xsize in range(1,9):
-        for nbpp in [1,2,3,4,5,6,7,12]:
+    for xsize in range(1, 9):
+        for nbpp in [1, 2, 3, 4, 5, 6, 7, 12]:
             ds = gdal.GetDriverByName('NITF').Create('tmp/nitf51.ntf', xsize, 1)
             ds = None
 
@@ -1754,7 +1754,7 @@ def nitf_53():
 
     # Patch ICORDS and IGEOLO
     f.seek(775)
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         exec("f.write(b'U')")
         exec("f.write(b'31UBQ1000040000')")
         exec("f.write(b'31UBQ2000040000')")
@@ -2255,8 +2255,8 @@ def nitf_68():
     ds = None
 
     ds = gdal.Open('data/rgb.ntf')
-    if len(ds.GetMetadataItem('NITFFileHeader','NITF_METADATA')) == 0:
-        print(ds.GetMetadataItem('NITFFileHeader','NITF_METADATA'))
+    if len(ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA')) == 0:
+        print(ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA'))
         return 'fail'
     ds = None
 
@@ -3345,12 +3345,12 @@ def nitf_online_13():
             return 'fail'
 
     tab = [
-        ('NITF_IDLVL','3'),
-        ('NITF_IALVL','1'),
-        ('NITF_ILOC_ROW','1100'),
-        ('NITF_ILOC_COLUMN','1100'),
-        ('NITF_CCS_ROW','1100'),
-        ('NITF_CCS_COLUMN','1100'),
+        ('NITF_IDLVL', '3'),
+        ('NITF_IALVL', '1'),
+        ('NITF_ILOC_ROW', '1100'),
+        ('NITF_ILOC_COLUMN', '1100'),
+        ('NITF_CCS_ROW', '1100'),
+        ('NITF_CCS_COLUMN', '1100'),
         ]
 
     for item in tab:
@@ -3599,7 +3599,7 @@ def nitf_online_18():
     # If we do not have a functioning coordinate transformer.
     else:
         if prj != '' \
-             or not gdaltest.geotransform_equals(gt,(0,1,0,0,0,1),0.00000001):
+             or not gdaltest.geotransform_equals(gt, (0, 1, 0, 0, 0, 1), 0.00000001):
             print(gt)
             print(prj)
             gdaltest.post_reason('did not get expected empty gt/projection')
@@ -3634,8 +3634,8 @@ def nitf_online_19():
     tst = gdaltest.GDALTest('NITF', 'tmp/cache/0000M033.GN3', 1, 38928,
                              filename_absolute=1)
 
-    return tst.testOpen(check_gt=(174.375000000000000,0.010986328125000,0,
-                                     51.923076923076927,0,-0.006760817307692))
+    return tst.testOpen(check_gt=(174.375000000000000, 0.010986328125000, 0,
+                                     51.923076923076927, 0, -0.006760817307692))
 
 ###############################################################################
 # Check that the RPF attribute metadata was carried through.
@@ -3698,12 +3698,12 @@ def nitf_online_22():
     ds = None
 
     tab = [
-        ('NITF_IDLVL','6'),
-        ('NITF_IALVL','1'),
-        ('NITF_ILOC_ROW','360'),
-        ('NITF_ILOC_COLUMN','380'),
-        ('NITF_CCS_ROW','425'),
-        ('NITF_CCS_COLUMN','410'),
+        ('NITF_IDLVL', '6'),
+        ('NITF_IALVL', '1'),
+        ('NITF_ILOC_ROW', '360'),
+        ('NITF_ILOC_COLUMN', '380'),
+        ('NITF_CCS_ROW', '425'),
+        ('NITF_CCS_COLUMN', '410'),
         ]
 
     for item in tab:
@@ -3717,12 +3717,12 @@ def nitf_online_22():
     ds = None
 
     tab = [
-        ('NITF_IDLVL','11'),
-        ('NITF_IALVL','2'),
-        ('NITF_ILOC_ROW','360'),
-        ('NITF_ILOC_COLUMN','40'),
-        ('NITF_CCS_ROW','422'),
-        ('NITF_CCS_COLUMN','210'),
+        ('NITF_IDLVL', '11'),
+        ('NITF_IALVL', '2'),
+        ('NITF_ILOC_ROW', '360'),
+        ('NITF_ILOC_COLUMN', '40'),
+        ('NITF_CCS_ROW', '422'),
+        ('NITF_CCS_COLUMN', '210'),
         ]
 
     for item in tab:
@@ -3736,12 +3736,12 @@ def nitf_online_22():
     ds = None
 
     tab = [
-        ('NITF_IDLVL','5'),
-        ('NITF_IALVL','3'),
-        ('NITF_ILOC_ROW','40'),
-        ('NITF_ILOC_COLUMN','240'),
-        ('NITF_CCS_ROW','-1'),
-        ('NITF_CCS_COLUMN','-1'),
+        ('NITF_IDLVL', '5'),
+        ('NITF_IALVL', '3'),
+        ('NITF_ILOC_ROW', '40'),
+        ('NITF_ILOC_COLUMN', '240'),
+        ('NITF_CCS_ROW', '-1'),
+        ('NITF_CCS_COLUMN', '-1'),
         ]
 
     for item in tab:
@@ -3755,12 +3755,12 @@ def nitf_online_22():
     ds = None
 
     tab = [
-        ('NITF_IDLVL','1'),
-        ('NITF_IALVL','0'),
-        ('NITF_ILOC_ROW','65'),
-        ('NITF_ILOC_COLUMN','30'),
-        ('NITF_CCS_ROW','65'),
-        ('NITF_CCS_COLUMN','30'),
+        ('NITF_IDLVL', '1'),
+        ('NITF_IALVL', '0'),
+        ('NITF_ILOC_ROW', '65'),
+        ('NITF_ILOC_COLUMN', '30'),
+        ('NITF_CCS_ROW', '65'),
+        ('NITF_CCS_COLUMN', '30'),
         ]
 
     for item in tab:

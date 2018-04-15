@@ -433,7 +433,7 @@ def process(argv, progress=None, progress_arg=None):
                                                 src_ds_idx)
                 layer_name = layer_name.replace('{LAYER_NAME}',
                                                 src_lyr.GetName())
-                layer_name = layer_name.replace('{LAYER_INDEX}',  '%d' %
+                layer_name = layer_name.replace('{LAYER_INDEX}', '%d' %
                                                 src_lyr_idx)
 
                 if t_srs is not None:
@@ -524,7 +524,7 @@ def process(argv, progress=None, progress_arg=None):
                                                 src_ds_idx)
                 layer_name = layer_name.replace('{LAYER_NAME}',
                                                 src_lyr.GetName())
-                layer_name = layer_name.replace('{LAYER_INDEX}',  '%d' %
+                layer_name = layer_name.replace('{LAYER_INDEX}', '%d' %
                                                 src_lyr_idx)
 
                 if t_srs is not None:

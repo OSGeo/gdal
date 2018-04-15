@@ -177,7 +177,7 @@ class SequentialHandler:
                 SequentialHandler._process_req_resp(req_resp, request)
                 return
 
-        request.send_error(500,'Unexpected %s request for %s, req_count = %d' % (method, request.path, self.req_count))
+        request.send_error(500, 'Unexpected %s request for %s, req_count = %d' % (method, request.path, self.req_count))
 
     def do_HEAD(self, request):
         self.process('HEAD', request)
@@ -259,7 +259,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
             f.write('HEAD %s\n' % self.path)
             f.close()
 
-        self.send_error(404,'File Not Found: %s' % self.path)
+        self.send_error(404, 'File Not Found: %s' % self.path)
 
     def do_DELETE(self):
         if do_log:
@@ -267,7 +267,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
             f.write('DELETE %s\n' % self.path)
             f.close()
 
-        self.send_error(404,'File Not Found: %s' % self.path)
+        self.send_error(404, 'File Not Found: %s' % self.path)
 
     def do_POST(self):
         if do_log:
@@ -275,7 +275,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
             f.write('POST %s\n' % self.path)
             f.close()
 
-        self.send_error(404,'File Not Found: %s' % self.path)
+        self.send_error(404, 'File Not Found: %s' % self.path)
 
     def do_PUT(self):
         if do_log:
@@ -283,7 +283,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
             f.write('PUT %s\n' % self.path)
             f.close()
 
-        self.send_error(404,'File Not Found: %s' % self.path)
+        self.send_error(404, 'File Not Found: %s' % self.path)
 
     def do_GET(self):
 
@@ -305,7 +305,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
         except IOError:
             pass
 
-        self.send_error(404,'File Not Found: %s' % self.path)
+        self.send_error(404, 'File Not Found: %s' % self.path)
 
 
 class GDAL_HttpServer(HTTPServer):
@@ -320,7 +320,7 @@ class GDAL_HttpServer(HTTPServer):
 
     def stop_server(self):
         if self.running:
-            if version_info >= (2,6,0):
+            if version_info >= (2, 6, 0):
                 self.shutdown()
             else:
                 gdaltest.gdalurlopen("http://127.0.0.1:%d/shutdown" % self.port)
@@ -328,7 +328,7 @@ class GDAL_HttpServer(HTTPServer):
 
     def serve_until_stop_server(self):
         self.running = True
-        if version_info >= (2,6,0):
+        if version_info >= (2, 6, 0):
             self.serve_forever(0.25)
         else:
             while self.running and not self.stop_requested:
@@ -345,7 +345,7 @@ class GDAL_ThreadedHttpServer(Thread):
         self.server = 0
         if handlerClass is None:
             handlerClass = GDAL_Handler
-        for port in range(8080,8100):
+        for port in range(8080, 8100):
             try:
                 self.server = GDAL_HttpServer(('', port), handlerClass)
                 self.server.port = port

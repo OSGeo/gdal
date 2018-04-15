@@ -487,7 +487,7 @@ def ogr_s57_online_4():
     lyr = ds.GetLayerByName('LNDMRK')
     for feat in lyr:
         mystr = feat.NOBJNM
-        if mystr and sys.version_info < (3,0,0):
+        if mystr and sys.version_info < (3, 0, 0):
             mystr.decode('UTF-8').encode('UTF-8')
 
     return 'success'

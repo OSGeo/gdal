@@ -44,7 +44,7 @@ class wkb_wkt_unit:
         self.unit = unit
 
     def wkbwkt_geom(self):
-        raw_wkb = open('data/wkb_wkt/' + self.unit + '.wkb','rb').read()
+        raw_wkb = open('data/wkb_wkt/' + self.unit + '.wkb', 'rb').read()
         raw_wkt = open('data/wkb_wkt/' + self.unit + '.wkt').read()
 
         ######################################################################

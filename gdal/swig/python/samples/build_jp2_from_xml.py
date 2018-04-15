@@ -100,7 +100,7 @@ def write_hexstring_as_binary(hex_binary_content, out_f):
     for i in range(int(len(hex_binary_content) / 2)):
         val = hex_letter_to_number(hex_binary_content[2 * i]) * 16 + \
               hex_letter_to_number(hex_binary_content[2 * i + 1])
-        if sys.version_info >= (3,0,0):
+        if sys.version_info >= (3, 0, 0):
             out_f.write(chr(val).encode('latin1'))
         else:
             out_f.write(chr(val))

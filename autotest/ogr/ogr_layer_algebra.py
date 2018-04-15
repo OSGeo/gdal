@@ -68,7 +68,7 @@ def print_layer(A):
         print(g.ExportToWkt())
 
 
-def is_same(A,B):
+def is_same(A, B):
 
     A.ResetReading()
     B.ResetReading()
@@ -114,17 +114,17 @@ def algebra_setup():
     pointInB1 = 'POINT(3 3)'
 
     feat = ogr.Feature(A.GetLayerDefn())
-    feat.SetField('A',1)
+    feat.SetField('A', 1)
     feat.SetGeometryDirectly(ogr.Geometry(wkt=a1))
     A.CreateFeature(feat)
 
     feat = ogr.Feature(A.GetLayerDefn())
-    feat.SetField('A',2)
+    feat.SetField('A', 2)
     feat.SetGeometryDirectly(ogr.Geometry(wkt=a2))
     A.CreateFeature(feat)
 
     feat = ogr.Feature(B.GetLayerDefn())
-    feat.SetField('B','first')
+    feat.SetField('B', 'first')
     feat.SetGeometryDirectly(ogr.Geometry(wkt=b1))
     B.CreateFeature(feat)
 
@@ -187,8 +187,8 @@ def algebra_intersection():
         gdaltest.post_reason('Layer.Intersection returned ' + str(C.GetFeatureCount()) + ' features')
         return 'fail'
 
-    f1 = (ogr.Geometry(wkt='POLYGON ((2 3,3 3,3 2,2 2,2 3))'),1,'first')
-    f2 = (ogr.Geometry(wkt='POLYGON ((5 2,5 3,6 3,6 2,5 2))'),2,'first')
+    f1 = (ogr.Geometry(wkt='POLYGON ((2 3,3 3,3 2,2 2,2 3))'), 1, 'first')
+    f2 = (ogr.Geometry(wkt='POLYGON ((5 2,5 3,6 3,6 2,5 2))'), 2, 'first')
 
     C.ResetReading()
     while 1:
@@ -224,8 +224,8 @@ def algebra_intersection():
         gdaltest.post_reason('Layer.Intersection returned ' + str(C.GetFeatureCount()) + ' features')
         return 'fail'
 
-    f1 = (ogr.Geometry(wkt='MULTIPOLYGON (((2 3,3 3,3 2,2 2,2 3)))'),1,'first')
-    f2 = (ogr.Geometry(wkt='MULTIPOLYGON (((5 2,5 3,6 3,6 2,5 2)))'),2,'first')
+    f1 = (ogr.Geometry(wkt='MULTIPOLYGON (((2 3,3 3,3 2,2 2,2 3)))'), 1, 'first')
+    f2 = (ogr.Geometry(wkt='MULTIPOLYGON (((5 2,5 3,6 3,6 2,5 2)))'), 2, 'first')
 
     C.ResetReading()
     while 1:

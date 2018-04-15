@@ -43,7 +43,7 @@ import gdaltest
 
 def rfc30_1():
 
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         filename = 'xx\u4E2D\u6587.\u4E2D\u6587'
         filename_escaped = gdaltest.urlescape(filename)
     else:
@@ -79,7 +79,7 @@ def rfc30_1():
 
 def rfc30_2():
 
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         filename = 'tmp/yy\u4E2D\u6587.\u4E2D\u6587'
     else:
         exec("filename =  u'tmp/yy\u4E2D\u6587.\u4E2D\u6587'")
@@ -96,7 +96,7 @@ def rfc30_2():
 
     # rename
 
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         new_filename = 'tmp/yy\u4E2D\u6587.\u4E2D\u6587'
         filename_for_rename = filename
     else:
@@ -116,7 +116,7 @@ def rfc30_2():
     data = gdal.VSIFReadL(3, 1, fd)
     gdal.VSIFCloseL(fd)
 
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         ok = eval("data == b'abc'")
     else:
         ok = data == 'abc'

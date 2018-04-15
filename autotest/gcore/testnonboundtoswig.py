@@ -94,7 +94,7 @@ def testnonboundtoswig_init():
         gdal_handle_stdcall.GDALVersionInfo.restype = ctypes.c_char_p
 
         dynamic_version = gdal_handle_stdcall.GDALVersionInfo(None)
-        if version_info >= (3,0,0):
+        if version_info >= (3, 0, 0):
             dynamic_version = str(dynamic_version, 'utf-8')
 
         if dynamic_version != static_version:
@@ -200,7 +200,7 @@ def testnonboundtoswig_GDALSimpleImageWarp():
     out_ds = None
 
     filename = 'data/byte.tif'
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         filename = bytes(filename, 'utf-8')
 
     native_in_ds = gdal_handle_stdcall.GDALOpen(filename, gdal.GA_ReadOnly)
@@ -209,7 +209,7 @@ def testnonboundtoswig_GDALSimpleImageWarp():
         return 'fail'
 
     filename = '/vsimem/out.tif'
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         filename = bytes(filename, 'utf-8')
 
     native_out_ds = gdal_handle_stdcall.GDALOpen(filename, gdal.GA_Update)
@@ -334,7 +334,7 @@ def testnonboundtoswig_VRTDerivedBands():
     gdal_handle_stdcall.GDALAddDerivedBandPixelFunc.restype = ctypes.c_int
 
     funcName = "pyDerivedPixelFunc"
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         funcName = bytes(funcName, 'utf-8')
     ret = gdal_handle_stdcall.GDALAddDerivedBandPixelFunc(funcName, my_cDerivedPixelFunc)
     if ret != 0:
@@ -356,12 +356,12 @@ def testnonboundtoswig_VRTDerivedBands():
 
     src_ds = gdal.Open('data/byte.tif')
     ref_cs = src_ds.GetRasterBand(1).Checksum()
-    ref_data = src_ds.GetRasterBand(1).ReadRaster(0,0,20,20)
+    ref_data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20)
     src_ds = None
 
     ds = gdal.Open(vrt_xml)
     got_cs = ds.GetRasterBand(1).Checksum()
-    got_data = ds.GetRasterBand(1).ReadRaster(0,0,20,20)
+    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20)
     ds = None
 
     if ref_cs != got_cs:

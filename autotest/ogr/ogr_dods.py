@@ -94,7 +94,7 @@ def ogr_dods_2():
         gdaltest.post_reason('time wrong')
         return 'fail'
 
-    if feat.GetField('profile.depth') != [0,10,20,30,39]:
+    if feat.GetField('profile.depth') != [0, 10, 20, 30, 39]:
         gdaltest.post_reason('depth wrong')
         return 'fail'
 
@@ -123,13 +123,13 @@ def ogr_dods_3():
         return 'skip'
 
     gdaltest.dods_normalized.ResetReading()
-    expect = [0,10,20,30,39]
+    expect = [0, 10, 20, 30, 39]
     tr = ogrtest.check_features_against_list(gdaltest.dods_normalized,
                                               'depth', expect)
     if tr == 0:
         return 'fail'
 
-    expected = [14.8100004196167,14.8100004196167,14.8100004196167,14.60999965667725,14.60999965667725]
+    expected = [14.8100004196167, 14.8100004196167, 14.8100004196167, 14.60999965667725, 14.60999965667725]
 
     gdaltest.dods_normalized.ResetReading()
     for i in range(5):
@@ -175,7 +175,7 @@ def ogr_dods_4():
         gdaltest.post_reason('time wrong')
         return 'fail'
 
-    if feat.GetField('profile.depth') != [0,10,20,30,39]:
+    if feat.GetField('profile.depth') != [0, 10, 20, 30, 39]:
         gdaltest.post_reason('depth wrong')
         return 'fail'
 

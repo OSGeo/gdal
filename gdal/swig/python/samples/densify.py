@@ -106,13 +106,13 @@ class Translator(object):
             name, ext = os.path.splitext(filename)
             if self.options.overwrite:
             # special case the Shapefile driver, which behaves specially.
-                if os.path.exists(os.path.join(path,name,) + '.shp'):
-                    os.remove(os.path.join(path,name,) + '.shp')
-                    os.remove(os.path.join(path,name,) + '.shx')
-                    os.remove(os.path.join(path,name,) + '.dbf')
+                if os.path.exists(os.path.join(path, name,) + '.shp'):
+                    os.remove(os.path.join(path, name,) + '.shp')
+                    os.remove(os.path.join(path, name,) + '.shx')
+                    os.remove(os.path.join(path, name,) + '.dbf')
             else:
-                if os.path.exists(os.path.join(path,name,) + ".shp"):
-                    raise Exception("The file '%s' already exists, but the overwrite option is not specified" % (os.path.join(path,name,) + ".shp"))
+                if os.path.exists(os.path.join(path, name,) + ".shp"):
+                    raise Exception("The file '%s' already exists, but the overwrite option is not specified" % (os.path.join(path, name,) + ".shp"))
 
         if self.options.overwrite:
             dsco = ('OVERWRITE=YES',)
@@ -172,7 +172,7 @@ class Translator(object):
 
 class Densify(Translator):
 
-    def calcpoint(self,x0, x1, y0, y1, d):
+    def calcpoint(self, x0, x1, y0, y1, d):
         a = x1 - x0
         b = y1 - y0
 
@@ -227,7 +227,7 @@ class Densify(Translator):
         y0 = geometry.GetY(0)
         g.AddPoint(x0, y0)
 
-        for i in range(1,geometry.GetPointCount()):
+        for i in range(1, geometry.GetPointCount()):
             threshold = self.options.distance
             x1 = geometry.GetX(i)
             y1 = geometry.GetY(i)
@@ -250,7 +250,7 @@ class Densify(Translator):
 
                     x = x0
                     y = y0
-                    for p in range(1,segcount):
+                    for p in range(1, segcount):
                         x = x + dx
                         y = y + dy
                         g.AddPoint(x, y)
@@ -259,18 +259,18 @@ class Densify(Translator):
                     segcount = int(math.floor(d / threshold))
                     xa = None
                     ya = None
-                    for p in range(1,segcount):
+                    for p in range(1, segcount):
                         if not xa:
-                            xn, yn = self.calcpoint(x0,x1,y0,y1,threshold)
+                            xn, yn = self.calcpoint(x0, x1, y0, y1, threshold)
                             d = self.distance(x0, xn, y0, yn)
                             xa = xn
                             ya = yn
-                            g.AddPoint(xa,ya)
+                            g.AddPoint(xa, ya)
                             continue
                         xn, yn = self.calcpoint(xa, x1, ya, y1, threshold)
                         xa = xn
                         ya = yn
-                        g.AddPoint(xa,ya)
+                        g.AddPoint(xa, ya)
 
                 elif self.options.remainder.upper() == "BEGIN":
 
@@ -284,19 +284,19 @@ class Densify(Translator):
                     remainder = d % threshold
                     for p in range(segcount):
                         if not xa:
-                            xn, yn = self.calcpoint(x0,x1,y0,y1,remainder)
+                            xn, yn = self.calcpoint(x0, x1, y0, y1, remainder)
 
                             d = self.distance(x0, xn, y0, yn)
                             xa = xn
                             ya = yn
-                            g.AddPoint(xa,ya)
+                            g.AddPoint(xa, ya)
                             continue
                         xn, yn = self.calcpoint(xa, x1, ya, y1, threshold)
                         xa = xn
                         ya = yn
-                        g.AddPoint(xa,ya)
+                        g.AddPoint(xa, ya)
 
-            g.AddPoint(x1,y1)
+            g.AddPoint(x1, y1)
             x0 = x1
             y0 = y1
 
@@ -324,7 +324,7 @@ def GetLength(geometry):
         g = single
         pt_count = g.GetPointCount()
         x1, y1 = g.GetX(0), g.GetY(0)
-        for pi in range(1,pt_count):
+        for pi in range(1, pt_count):
              x2, y2 = g.GetX(pi), g.GetY(pi)
              length = get_distance(x1, y1, x2, y2)
              cumulative = cumulative + length
@@ -349,10 +349,10 @@ def main():
 
     options = []
     o = optparse.make_option("-r", "--remainder", dest="remainder",
-                         type="choice",default='end',
+                         type="choice", default='end',
                           help="""what to do with the remainder -- place it at the beginning,
 place it at the end, or evenly distribute it across the segment""",
-                          choices=['end','begin','uniform'])
+                          choices=['end', 'begin', 'uniform'])
     options.append(o)
     o = optparse.make_option("-d", "--distance", dest='distance', type="float",
                           help="""Threshold distance for point placement.  If the

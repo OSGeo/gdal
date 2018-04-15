@@ -1155,7 +1155,7 @@ class DataSource(MajorObject):
         ds[0:4] would return a list of the first four layers."""
         if isinstance(value, slice):
             output = []
-            for i in xrange(value.start,value.stop,value.step):
+            for i in xrange(value.start, value.stop, value.step):
                 try:
                     output.append(self.GetLayer(i))
                 except OGRError: #we're done because we're off the end
@@ -1170,7 +1170,7 @@ class DataSource(MajorObject):
         else:
             raise TypeError('Input %s is not of String or Int type' % type(value))
 
-    def GetLayer(self,iLayer=0):
+    def GetLayer(self, iLayer=0):
         """Return the layer given an index or a name"""
         if isinstance(iLayer, str):
             return self.GetLayerByName(str(iLayer))
@@ -2966,7 +2966,7 @@ class Layer(MajorObject):
                 stop = len(self) - 1
             else:
                 stop = value.stop
-            for i in xrange(value.start,stop,value.step):
+            for i in xrange(value.start, stop, value.step):
                 feature = self.GetFeature(i)
                 if feature:
                     output.append(feature)
@@ -4548,7 +4548,7 @@ class Feature(_object):
         else:
             idx = self.GetFieldIndex(key)
             if idx != -1:
-                self.SetField2(idx,value)
+                self.SetField2(idx, value)
             else:
                 idx = self.GetGeomFieldIndex(key)
                 if idx != -1:
@@ -4660,18 +4660,18 @@ class Feature(_object):
             self.SetFieldNull(fld_index)
             return
 
-        if isinstance(value,list):
+        if isinstance(value, list):
             if len(value) == 0:
                 self.SetFieldNull(fld_index)
                 return
-            if isinstance(value[0],type(1)) or isinstance(value[0],type(12345678901234)):
-                self.SetFieldInteger64List(fld_index,value)
+            if isinstance(value[0], type(1)) or isinstance(value[0], type(12345678901234)):
+                self.SetFieldInteger64List(fld_index, value)
                 return
-            elif isinstance(value[0],float):
-                self.SetFieldDoubleList(fld_index,value)
+            elif isinstance(value[0], float):
+                self.SetFieldDoubleList(fld_index, value)
                 return
-            elif isinstance(value[0],str):
-                self.SetFieldStringList(fld_index,value)
+            elif isinstance(value[0], str):
+                self.SetFieldStringList(fld_index, value)
                 return
             else:
                 raise TypeError('Unsupported type of list in SetField2(). Type of element is %s' % str(type(value[0])))
@@ -4722,7 +4722,7 @@ class Feature(_object):
         else:
             geom_json_object = None
 
-        output = {'type':'Feature',
+        output = {'type': 'Feature',
                    'geometry': geom_json_object,
                    'properties': {}
                   }

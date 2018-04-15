@@ -1524,9 +1524,9 @@ def ogr_fgdb_19():
 
     lyr.GetSpatialFilter()
     lyr.SetSpatialFilter(None)
-    lyr.SetSpatialFilterRect(0,0,0,0)
-    lyr.SetSpatialFilter(0,None)
-    lyr.SetSpatialFilterRect(0,0,0,0,0)
+    lyr.SetSpatialFilterRect(0, 0, 0, 0)
+    lyr.SetSpatialFilter(0, None)
+    lyr.SetSpatialFilterRect(0, 0, 0, 0, 0)
     lyr.SetAttributeFilter(None)
     lyr.ResetReading()
     lyr.GetNextFeature()
@@ -1911,7 +1911,7 @@ def ogr_fgdb_20():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    for invalid_fid in [-2,0,9876543210]:
+    for invalid_fid in [-2, 0, 9876543210]:
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetFID(invalid_fid)
         gdal.PushErrorHandler()
@@ -2030,7 +2030,7 @@ def ogr_fgdb_20():
             f.DumpReadable()
             return 'fail'
 
-    for invalid_fid in [-2,0,9876543210]:
+    for invalid_fid in [-2, 0, 9876543210]:
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetFID(invalid_fid)
         ret = lyr.SetFeature(f)
@@ -2064,7 +2064,7 @@ def ogr_fgdb_20():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    for (fid, fgdb_fid) in [(3, 5), (2049,6), (10,7), (7,8), (9, None), (8, 10), (12, 11)]:
+    for (fid, fgdb_fid) in [(3, 5), (2049, 6), (10, 7), (7, 8), (9, None), (8, 10), (12, 11)]:
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetFID(fid)
         f.SetField('id', fid)
@@ -2087,7 +2087,7 @@ def ogr_fgdb_20():
     lyr.SetFeature(f)
 
     lyr.ResetReading()
-    expected = [(2, None), (4, 3), (3, 5), (2049,6), (10,7), (7,8), (9, None), (8, 10)]
+    expected = [(2, None), (4, 3), (3, 5), (2049, 6), (10, 7), (7, 8), (9, None), (8, 10)]
     for (fid, fgdb_fid) in expected:
         f = lyr.GetNextFeature()
         if f is None:
@@ -2178,7 +2178,7 @@ def ogr_fgdb_20():
 
     # Check consistency after re-opening
     gdal.ErrorReset()
-    for update in [0,1]:
+    for update in [0, 1]:
         ds = ogr.Open('tmp/test.gdb', update=update)
         lyr = ds.GetLayerByName('ogr_fgdb_20')
         if lyr.GetFeatureCount() != 10:
@@ -2252,7 +2252,7 @@ def ogr_fgdb_20():
     # Insert new features
     ds = ogr.Open('tmp/test.gdb', update=1)
     lyr = ds.GetLayerByName('ogr_fgdb_20')
-    for (fid, fgdb_fid) in [(10000000, 2050), (10000001,2051), (8191,2052), (16384,2053)]:
+    for (fid, fgdb_fid) in [(10000000, 2050), (10000001, 2051), (8191, 2052), (16384, 2053)]:
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetFID(fid)
         f.SetField('id', fid)
@@ -2266,7 +2266,7 @@ def ogr_fgdb_20():
     ds = None
 
     # Insert a new intermediate FIDs
-    for (fid, fgdb_fid) in [(1000000, 10000002), (1000001,10000002)]:
+    for (fid, fgdb_fid) in [(1000000, 10000002), (1000001, 10000002)]:
 
         ds = ogr.Open('tmp/test.gdb', update=1)
         lyr = ds.GetLayerByName('ogr_fgdb_20')
@@ -2283,7 +2283,7 @@ def ogr_fgdb_20():
 
     # Check consistency after re-opening
     gdal.ErrorReset()
-    for update in [0,1]:
+    for update in [0, 1]:
         ds = ogr.Open('tmp/test.gdb', update=update)
         lyr = ds.GetLayerByName('ogr_fgdb_20')
         if lyr.GetFeatureCount() != 16:

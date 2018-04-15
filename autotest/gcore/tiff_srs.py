@@ -58,7 +58,7 @@ class TestTiffSRS:
                 #print(proj4str)
                 sr.SetFromUserInput(proj4str)
 
-        ds = gdal.GetDriverByName('GTiff').Create('/vsimem/TestTiffSRS.tif',1,1)
+        ds = gdal.GetDriverByName('GTiff').Create('/vsimem/TestTiffSRS.tif', 1, 1)
         ds.SetProjection(sr.ExportToWkt())
         ds = None
 
@@ -96,7 +96,7 @@ def tiff_srs_without_linear_units():
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=vandg +datum=WGS84')
 
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_without_linear_units.tif',1,1)
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_without_linear_units.tif', 1, 1)
     ds.SetProjection(sr.ExportToWkt())
     ds = None
 
@@ -142,14 +142,14 @@ def tiff_srs_compd_cs():
             AUTHORITY["EPSG","9001"]],
         AXIS["Up",UP]]]""")
 
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_compd_cs.tif',1,1)
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_compd_cs.tif', 1, 1)
     ds.SetProjection(sr.ExportToWkt())
     ds = None
 
-    gdal.SetConfigOption('GTIFF_REPORT_COMPD_CS','YES')
+    gdal.SetConfigOption('GTIFF_REPORT_COMPD_CS', 'YES')
     ds = gdal.Open('/vsimem/tiff_srs_compd_cs.tif')
     wkt = ds.GetProjectionRef()
-    gdal.SetConfigOption('GTIFF_REPORT_COMPD_CS',None)
+    gdal.SetConfigOption('GTIFF_REPORT_COMPD_CS', None)
     sr2 = osr.SpatialReference()
     sr2.SetFromUserInput(wkt)
     ds = None
@@ -556,11 +556,11 @@ for item in tiff_srs_list:
     ut = TestTiffSRS(epsg_code, 0, epsg_proj4_broken)
     gdaltest_list.append((ut.test, "tiff_srs_proj4_of_epsg_%d" % epsg_code))
 
-tiff_srs_list_proj4 = [['eqdc', '+proj=eqdc +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g +lat_2=%.16g" +x_0=%.16g +y_0=%.16g' % (1,2,3,4,5,6)],
-                        ['mill', '+proj=mill +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A' % (1,2,3,4)],
-                        ['gnom', '+proj=gnom +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1,2,3,4)],
-                        ['robin', '+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1,2,3)],
-                        ['sinu', '+proj=sinu +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1,2,3)],
+tiff_srs_list_proj4 = [['eqdc', '+proj=eqdc +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g +lat_2=%.16g" +x_0=%.16g +y_0=%.16g' % (1, 2, 3, 4, 5, 6)],
+                        ['mill', '+proj=mill +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A' % (1, 2, 3, 4)],
+                        ['gnom', '+proj=gnom +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3, 4)],
+                        ['robin', '+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3)],
+                        ['sinu', '+proj=sinu +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3)],
                         ]
 for (title, proj4) in tiff_srs_list_proj4:
     ut = TestTiffSRS(proj4, 0, False)

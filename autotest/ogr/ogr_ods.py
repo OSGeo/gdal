@@ -356,7 +356,7 @@ def ogr_ods_6():
     src_ds = None
 
     fp = gdal.VSIFOpenL('/vsimem/content_formulas.csv', 'rb')
-    res = gdal.VSIFReadL(1,10000,fp)
+    res = gdal.VSIFReadL(1, 10000, fp)
     gdal.VSIFCloseL(fp)
 
     gdal.Unlink('/vsimem/content_formulas.csv')

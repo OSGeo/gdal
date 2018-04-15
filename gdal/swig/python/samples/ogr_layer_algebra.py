@@ -214,39 +214,39 @@ def main(argv=None):
             i = i + 1
             val = argv[i]
 
-            if EQUAL(val,"NONE"):
+            if EQUAL(val, "NONE"):
                 geom_type = ogr.wkbNone
-            elif EQUAL(val,"GEOMETRY"):
+            elif EQUAL(val, "GEOMETRY"):
                 geom_type = ogr.wkbUnknown
-            elif EQUAL(val,"POINT"):
+            elif EQUAL(val, "POINT"):
                 geom_type = ogr.wkbPoint
-            elif EQUAL(val,"LINESTRING"):
+            elif EQUAL(val, "LINESTRING"):
                 geom_type = ogr.wkbLineString
-            elif EQUAL(val,"POLYGON"):
+            elif EQUAL(val, "POLYGON"):
                 geom_type = ogr.wkbPolygon
-            elif EQUAL(val,"GEOMETRYCOLLECTION"):
+            elif EQUAL(val, "GEOMETRYCOLLECTION"):
                 geom_type = ogr.wkbGeometryCollection
-            elif EQUAL(val,"MULTIPOINT"):
+            elif EQUAL(val, "MULTIPOINT"):
                 geom_type = ogr.wkbMultiPoint
-            elif EQUAL(val,"MULTILINESTRING"):
+            elif EQUAL(val, "MULTILINESTRING"):
                 geom_type = ogr.wkbMultiLineString
-            elif EQUAL(val,"MULTIPOLYGON"):
+            elif EQUAL(val, "MULTIPOLYGON"):
                 geom_type = ogr.wkbMultiPolygon
-            elif EQUAL(val,"GEOMETRY25D"):
+            elif EQUAL(val, "GEOMETRY25D"):
                 geom_type = ogr.wkbUnknown | ogr.wkb25DBit
-            elif EQUAL(val,"POINT25D"):
+            elif EQUAL(val, "POINT25D"):
                 geom_type = ogr.wkbPoint25D
-            elif EQUAL(val,"LINESTRING25D"):
+            elif EQUAL(val, "LINESTRING25D"):
                 geom_type = ogr.wkbLineString25D
-            elif EQUAL(val,"POLYGON25D"):
+            elif EQUAL(val, "POLYGON25D"):
                 geom_type = ogr.wkbPolygon25D
-            elif EQUAL(val,"GEOMETRYCOLLECTION25D"):
+            elif EQUAL(val, "GEOMETRYCOLLECTION25D"):
                 geom_type = ogr.wkbGeometryCollection25D
-            elif EQUAL(val,"MULTIPOINT25D"):
+            elif EQUAL(val, "MULTIPOINT25D"):
                 geom_type = ogr.wkbMultiPoint25D
-            elif EQUAL(val,"MULTILINESTRING25D"):
+            elif EQUAL(val, "MULTILINESTRING25D"):
                 geom_type = ogr.wkbMultiLineString25D
-            elif EQUAL(val,"MULTIPOLYGON25D"):
+            elif EQUAL(val, "MULTIPOLYGON25D"):
                 geom_type = ogr.wkbMultiPolygon25D
             else:
                 print("-nlt %s: type not recognised." % val)

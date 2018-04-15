@@ -148,7 +148,7 @@ def vsiswift_fake_auth_v1_url():
     gdal.SetConfigOption('SWIFT_USER', 'my_user')
     gdal.SetConfigOption('SWIFT_KEY', 'my_key')
     gdal.SetConfigOption('SWIFT_STORAGE_URL', '')
-    gdal.SetConfigOption('SWIFT_AUTH_TOKEN',  '')
+    gdal.SetConfigOption('SWIFT_AUTH_TOKEN', '')
 
     handler = webserver.SequentialHandler()
 
@@ -553,7 +553,7 @@ def vsiswift_fake_unlink():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something/foo/bar', 206,
                 {'Content-Range': 'bytes 0-0/1'} , 'x')
-    handler.add('DELETE', '/v1/AUTH_something/foo/bar', 202, {'Connection':'close'})
+    handler.add('DELETE', '/v1/AUTH_something/foo/bar', 202, {'Connection': 'close'})
     with webserver.install_http_handler(handler):
         ret = gdal.Unlink('/vsiswift/foo/bar')
     if ret != 0:
@@ -564,7 +564,7 @@ def vsiswift_fake_unlink():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something/foo/bar', 206,
                 {'Content-Range': 'bytes 0-0/1'} , 'x')
-    handler.add('DELETE', '/v1/AUTH_something/foo/bar', 400, {'Connection':'close'})
+    handler.add('DELETE', '/v1/AUTH_something/foo/bar', 400, {'Connection': 'close'})
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ret = gdal.Unlink('/vsiswift/foo/bar')
@@ -592,8 +592,8 @@ def vsiswift_fake_mkdir_rmdir():
         return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/v1/AUTH_something/foo/dir/', 404, {'Connection':'close'})
-    handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=10000', 200, {'Connection':'close'}, "[]")
+    handler.add('GET', '/v1/AUTH_something/foo/dir/', 404, {'Connection': 'close'})
+    handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=10000', 200, {'Connection': 'close'}, "[]")
     handler.add('PUT', '/v1/AUTH_something/foo/dir/', 201)
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsiswift/foo/dir', 0)
@@ -603,10 +603,10 @@ def vsiswift_fake_mkdir_rmdir():
 
     # Try creating already existing directory
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/v1/AUTH_something/foo/dir/', 404, {'Connection':'close'})
+    handler.add('GET', '/v1/AUTH_something/foo/dir/', 404, {'Connection': 'close'})
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=10000',
                 200,
-                {'Connection':'close', 'Content-type': 'application/json'},
+                {'Connection': 'close', 'Content-type': 'application/json'},
                 """[ { "subdir": "dir/" } ]""")
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsiswift/foo/dir', 0)
@@ -627,7 +627,7 @@ def vsiswift_fake_mkdir_rmdir():
     handler.add('GET', '/v1/AUTH_something/foo/it_is_a_file/', 404)
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=10000',
                 200,
-                {'Connection':'close', 'Content-type': 'application/json'},
+                {'Connection': 'close', 'Content-type': 'application/json'},
                 """[ { "name": "it_is_a_file/", "bytes": 0, "last_modified": "1970-01-01T00:00:01" } ]""")
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiswift/foo/it_is_a_file')
@@ -640,7 +640,7 @@ def vsiswift_fake_mkdir_rmdir():
     handler.add('GET', '/v1/AUTH_something/foo/dir/', 200)
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=2&prefix=dir%2F',
                 200,
-                {'Connection':'close', 'Content-type': 'application/json'},
+                {'Connection': 'close', 'Content-type': 'application/json'},
                 """[]
                 """)
     handler.add('DELETE', '/v1/AUTH_something/foo/dir/', 204)
@@ -667,11 +667,11 @@ def vsiswift_fake_mkdir_rmdir():
     handler.add('GET', '/v1/AUTH_something/foo/dir_nonempty/', 404)
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=10000',
                 200,
-                {'Connection':'close', 'Content-type': 'application/json'},
+                {'Connection': 'close', 'Content-type': 'application/json'},
                 """[ { "subdir": "dir_nonempty/" } ]""")
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=2&prefix=dir_nonempty%2F',
                 200,
-                {'Connection':'close', 'Content-type': 'application/json'},
+                {'Connection': 'close', 'Content-type': 'application/json'},
                 """[ { "name": "dir_nonempty/some_file", "bytes": 0, "last_modified": "1970-01-01T00:00:01" } ]""")
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiswift/foo/dir_nonempty')

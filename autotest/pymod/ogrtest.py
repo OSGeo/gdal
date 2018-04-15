@@ -50,7 +50,7 @@ def check_features_against_list(layer, field_name, value_list):
             gdaltest.post_reason('Got only %d features, not the expected %d features.' % (i, len(value_list)))
             return 0
 
-        if isinstance(value_list[i],type('str')):
+        if isinstance(value_list[i], type('str')):
             isok = (feat.GetFieldAsString(field_index) != value_list[i])
         else:
             isok = (feat.GetField(field_index) != value_list[i])
@@ -75,7 +75,7 @@ def check_feature_geometry(feat, geom, max_error=0.0001):
     except:
         f_geom = feat
 
-    if geom is not None and isinstance(geom,type('a')):
+    if geom is not None and isinstance(geom, type('a')):
         geom = ogr.CreateGeometryFromWkt(geom)
 
     if (f_geom is not None and geom is None):
@@ -124,9 +124,9 @@ def check_feature_geometry(feat, geom, max_error=0.0001):
             if m_dist > max_error and f_geom.GetM(i) < -1.7e308 and geom.GetM(i) < -1.7e308:
                 m_dist = 0
 
-            if max(x_dist,y_dist,z_dist,m_dist) > max_error:
+            if max(x_dist, y_dist, z_dist, m_dist) > max_error:
                 gdaltest.post_reason('Error in vertex %d, off by %g.'
-                                      % (i, max(x_dist,y_dist,z_dist,m_dist)))
+                                      % (i, max(x_dist, y_dist, z_dist, m_dist)))
                 #print(f_geom.GetX(i))
                 #print(geom.GetX(i))
                 #print(f_geom.GetY(i))

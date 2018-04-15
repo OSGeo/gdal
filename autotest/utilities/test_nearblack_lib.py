@@ -166,7 +166,7 @@ def test_nearblack_lib_5():
 
 def test_nearblack_lib_7():
 
-    ds = gdal.Nearblack('', 'data/whiteblackred.tif', format='MEM', colors=((0,0,0),(255,255,255)))
+    ds = gdal.Nearblack('', 'data/whiteblackred.tif', format='MEM', colors=((0, 0, 0), (255, 255, 255)))
     if ds is None:
         return 'fail'
 

@@ -61,7 +61,7 @@ def lcp_1():
             gdaltest.post_reason('wrong metadataitem for dataset. md[\'%s\']=\'%s\', expected \'%s\'' % (item[0], md[item[0]], item[1]))
             return 'fail'
 
-    check_gt = (285807.932887174887583,30,0,5379230.386217921040952,0,-30)
+    check_gt = (285807.932887174887583, 30, 0, 5379230.386217921040952, 0, -30)
     new_gt = ds.GetGeoTransform()
     for i in range(6):
         if abs(new_gt[i] - check_gt[i]) > 1e-5:
@@ -157,7 +157,7 @@ def lcp_2():
             gdaltest.post_reason('wrong metadataitem for dataset. md[\'%s\']=\'%s\', expected \'%s\'' % (item[0], md[item[0]], item[1]))
             return 'fail'
 
-    check_gt = (-1328145,30,0,2961735,0,-30)
+    check_gt = (-1328145, 30, 0, 2961735, 0, -30)
     new_gt = ds.GetGeoTransform()
     for i in range(6):
         if abs(new_gt[i] - check_gt[i]) > 1e-5:
@@ -351,7 +351,7 @@ def lcp_8():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     retval = 'success'
     co = ['LATITUDE=0', 'LINEAR_UNIT=METER']
-    for i in [0,1,2,3,4,6,9,11]:
+    for i in [0, 1, 2, 3, 4, 6, 9, 11]:
         src_ds = mem_drv.Create('', 10, 10, i, gdal.GDT_Int16)
         if src_ds is None:
             retval = 'fail'
@@ -943,7 +943,7 @@ def lcp_23():
     for option in ['ELEVATION_UNIT', 'SLOPE_UNIT', 'ASPECT_UNIT',
                    'FUEL_MODEL_OPTION', 'CANOPY_COV_UNIT', 'CANOPY_HT_UNIT',
                    'CBH_UNIT', 'CBD_UNIT', 'DUFF_UNIT']:
-        co = ['%s=%s' % (option, bad),]
+        co = ['%s=%s' % (option, bad), ]
         lcp_ds = drv.CreateCopy('tmp/lcp_23.lcp', src_ds, False, co)
         if lcp_ds is not None:
             retval = 'fail'

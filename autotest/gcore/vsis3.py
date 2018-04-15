@@ -1378,7 +1378,7 @@ def vsis3_6():
     handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=1&uploadId=my_id', custom_method=method)
 
     with webserver.install_http_handler(handler):
-        ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
+        ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
     if ret != size:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1448,7 +1448,7 @@ def vsis3_6():
             gdaltest.post_reason('fail')
             return 'fail'
         with gdaltest.error_handler():
-            ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
+            ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
         if ret != 0:
             gdaltest.post_reason('fail')
             print(ret)
@@ -1480,7 +1480,7 @@ def vsis3_6():
             print(filename)
             return 'fail'
         with gdaltest.error_handler():
-            ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
+            ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
         if ret != 0:
             gdaltest.post_reason('fail')
             print(filename)
@@ -1509,7 +1509,7 @@ def vsis3_6():
             print(filename)
             return 'fail'
         with gdaltest.error_handler():
-            ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
+            ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
         if ret != 0:
             gdaltest.post_reason('fail')
             print(filename)
@@ -1540,7 +1540,7 @@ def vsis3_6():
                 gdaltest.post_reason('fail')
                 print(filename)
                 return 'fail'
-            ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
+            ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
             if ret != size:
                 gdaltest.post_reason('fail')
                 print(filename)
@@ -1566,7 +1566,7 @@ def vsis3_7():
         return 'skip'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_bucket_test_mkdir/dir/', 404, {'Connection':'close'})
+    handler.add('GET', '/s3_bucket_test_mkdir/dir/', 404, {'Connection': 'close'})
     handler.add('PUT', '/s3_bucket_test_mkdir/dir/', 200)
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsis3/s3_bucket_test_mkdir/dir', 0)
@@ -1585,7 +1585,7 @@ def vsis3_7():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=1&prefix=dir%2F', 200,
-                 {'Content-type': 'application/xml', 'Connection':'close'},
+                 {'Content-type': 'application/xml', 'Connection': 'close'},
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
                         <Prefix>dir/</Prefix>
@@ -2039,7 +2039,7 @@ def vsis3_read_credentials_ec2():
         print(data)
         return 'fail'
 
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL','')
+    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
     gdal.SetConfigOption('CPL_AWS_CHECK_HYPERVISOR_UUID', None)
 
     return 'success'
@@ -2100,7 +2100,7 @@ def vsis3_read_credentials_ec2_expiration():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL','')
+    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
     gdal.SetConfigOption('CPL_AWS_CHECK_HYPERVISOR_UUID', None)
 
     return 'success'

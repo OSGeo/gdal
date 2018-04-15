@@ -106,14 +106,14 @@ class file_info:
         t_lry = t_geotransform[3] + ysize * t_geotransform[5]
 
         # figure out intersection region
-        tgw_ulx = max(t_ulx,self.ulx)
-        tgw_lrx = min(t_lrx,self.lrx)
+        tgw_ulx = max(t_ulx, self.ulx)
+        tgw_lrx = min(t_lrx, self.lrx)
         if t_geotransform[5] < 0:
-            tgw_uly = min(t_uly,self.uly)
-            tgw_lry = max(t_lry,self.lry)
+            tgw_uly = min(t_uly, self.uly)
+            tgw_lry = max(t_lry, self.lry)
         else:
-            tgw_uly = max(t_uly,self.uly)
-            tgw_lry = min(t_lry,self.lry)
+            tgw_uly = max(t_uly, self.uly)
+            tgw_lry = min(t_lry, self.lry)
 
         # do they even intersect?
         if tgw_ulx >= tgw_lrx:

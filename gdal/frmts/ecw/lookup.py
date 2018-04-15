@@ -78,7 +78,7 @@ pfile.readline()
 
 for line in pfile.readlines():
     try:
-        tokens = string.split(string.strip(line),',')
+        tokens = string.split(string.strip(line), ',')
         if len(tokens) < 3:
             continue
 
@@ -155,10 +155,10 @@ for line in pfile.readlines():
         if len(wkt) > 0:
 	    print '%s,%s' % (id, srs.ExportToWkt())
         else:
-            print '%s,LOCAL_CS["%s - (unsupported)"]' % (id,id)
+            print '%s,LOCAL_CS["%s - (unsupported)"]' % (id, id)
 
     except KeyError:
-        print '%s,LOCAL_CS["%s - (unsupported)"]' % (id,id)
+        print '%s,LOCAL_CS["%s - (unsupported)"]' % (id, id)
 
     except:
         print 'cant translate: ', line
@@ -170,7 +170,7 @@ pfile = open(dir + 'datum.dat')
 pfile.readline()
 
 for line in pfile.readlines():
-    tokens = string.split(string.strip(line),',')
+    tokens = string.split(string.strip(line), ',')
     for i in range(len(tokens)):
         tokens[i] = string.strip(tokens[i])
 

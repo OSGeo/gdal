@@ -697,7 +697,7 @@ def vsiaz_fake_unlink():
     # Success
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 200, {'Content-Length': '1'})
-    handler.add('DELETE', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 202, {'Connection':'close'})
+    handler.add('DELETE', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 202, {'Connection': 'close'})
     with webserver.install_http_handler(handler):
         ret = gdal.Unlink('/vsiaz/az_bucket_test_unlink/myfile')
     if ret != 0:
@@ -707,7 +707,7 @@ def vsiaz_fake_unlink():
     # Failure
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 200, {'Content-Length': '1'})
-    handler.add('DELETE', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 400, {'Connection':'close'})
+    handler.add('DELETE', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 400, {'Connection': 'close'})
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ret = gdal.Unlink('/vsiaz/az_bucket_test_unlink/myfile')
@@ -733,8 +733,8 @@ def vsiaz_fake_mkdir_rmdir():
         return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/dir/', 404, {'Connection':'close'})
-    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir%2F&restype=container', 200, {'Connection':'close'})
+    handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/dir/', 404, {'Connection': 'close'})
+    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir%2F&restype=container', 200, {'Connection': 'close'})
     handler.add('PUT', '/azure/blob/myaccount/az_bucket_test_mkdir/dir/.gdal_marker_for_dir', 201)
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsiaz/az_bucket_test_mkdir/dir', 0)
@@ -747,7 +747,7 @@ def vsiaz_fake_mkdir_rmdir():
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/dir/', 404)
     handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir%2F&restype=container',
                 200,
-                {'Connection':'close', 'Content-type': 'application/xml'},
+                {'Connection': 'close', 'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
                         <Prefix>dir/</Prefix>
@@ -775,7 +775,7 @@ def vsiaz_fake_mkdir_rmdir():
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/it_is_a_file/', 404)
     handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=it_is_a_file%2F&restype=container',
                 200,
-                {'Connection':'close', 'Content-type': 'application/xml'},
+                {'Connection': 'close', 'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
                         <Prefix>it_is_a_file/</Prefix>
@@ -791,7 +791,7 @@ def vsiaz_fake_mkdir_rmdir():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir%2F&restype=container',
                 200,
-                {'Connection':'close', 'Content-type': 'application/xml'},
+                {'Connection': 'close', 'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
                         <Prefix>dir/</Prefix>
@@ -824,7 +824,7 @@ def vsiaz_fake_mkdir_rmdir():
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/dir_nonempty/', 404)
     handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir_nonempty%2F&restype=container',
                 200,
-                {'Connection':'close', 'Content-type': 'application/xml'},
+                {'Connection': 'close', 'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
                         <Prefix>dir_nonempty/</Prefix>
@@ -837,7 +837,7 @@ def vsiaz_fake_mkdir_rmdir():
                 """)
     handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir_nonempty%2F&restype=container',
                 200,
-                {'Connection':'close', 'Content-type': 'application/xml'},
+                {'Connection': 'close', 'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
                         <Prefix>dir_nonempty/</Prefix>

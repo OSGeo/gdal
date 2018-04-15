@@ -71,7 +71,7 @@ else:
 
 print('Importing to Tiled GeoTIFF file: %s' % newfile)
 new_dataset = geotiff.CreateCopy(newfile, dataset, 0,
-                                  ['TILED=YES',],
+                                  ['TILED=YES', ],
                                   callback=progress_cb,
                                   callback_data='Translate: ')
 dataset = None

@@ -306,8 +306,8 @@ def ogr_sql_12():
 
 def ogr_sql_13():
 
-    expect = ['POLYGON','POLYGON','POLYGON','POLYGON','POLYGON',
-              'POLYGON','POLYGON','POLYGON','POLYGON','POLYGON']
+    expect = ['POLYGON', 'POLYGON', 'POLYGON', 'POLYGON', 'POLYGON',
+              'POLYGON', 'POLYGON', 'POLYGON', 'POLYGON', 'POLYGON']
 
     sql_lyr = gdaltest.ds.ExecuteSQL("select ogr_geometry from poly where ogr_geometry = 'POLYGON'")
 
@@ -443,7 +443,7 @@ def ogr_sql_17():
 
 def ogr_sql_18():
 
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         return 'skip'
 
     name = 'data/departs.vrt'

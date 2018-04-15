@@ -75,19 +75,19 @@ def test_gdal_contour_1():
     ds.SetProjection(wkt)
     ds.SetGeoTransform([1, precision, 0, 50, 0, -precision])
 
-    raw_data = array.array('h',[10 for i in range(int(size / 2))]).tostring()
+    raw_data = array.array('h', [10 for i in range(int(size / 2))]).tostring()
     for i in range(int(size / 2)):
         ds.WriteRaster(int(size / 4), i + int(size / 4), int(size / 2), 1, raw_data,
                         buf_type=gdal.GDT_Int16,
                         band_list=[1])
 
-    raw_data = array.array('h',[20 for i in range(int(size / 2))]).tostring()
+    raw_data = array.array('h', [20 for i in range(int(size / 2))]).tostring()
     for i in range(int(size / 4)):
         ds.WriteRaster(int(size / 4) + int(size / 8), i + int(size / 4) + int(size / 8), int(size / 4), 1, raw_data,
                         buf_type=gdal.GDT_Int16,
                         band_list=[1])
 
-    raw_data = array.array('h',[25 for i in range(int(size / 4))]).tostring()
+    raw_data = array.array('h', [25 for i in range(int(size / 4))]).tostring()
     for i in range(int(size / 8)):
         ds.WriteRaster(int(size / 4) + int(size / 8) + int(size / 16), i + int(size / 4) + int(size / 8) + int(size / 16), int(size / 8), 1, raw_data,
                         buf_type=gdal.GDT_Int16,
@@ -284,21 +284,21 @@ def test_gdal_contour_4():
     ds.SetGeoTransform([1, precision, 0, 50, 0, -precision])
 
 # Make the elevation 15 for the whole image
-    raw_data = array.array('h',[15 for i in range(int(size))]).tostring()
+    raw_data = array.array('h', [15 for i in range(int(size))]).tostring()
     for i in range(int(size)):
         ds.WriteRaster(0, i, int(size), 1, raw_data,
                         buf_type=gdal.GDT_Int16,
                         band_list=[1])
 
 # Create a hill with elevation 25
-    raw_data = array.array('h',[25 for i in range(2)]).tostring()
+    raw_data = array.array('h', [25 for i in range(2)]).tostring()
     for i in range(2):
         ds.WriteRaster(int(size / 4) + int(size / 8) - 1, i + int(size / 2) - 1, 2, 1, raw_data,
                         buf_type=gdal.GDT_Int16,
                         band_list=[1])
 
 # Create a depression with elevation 5
-    raw_data = array.array('h',[5 for i in range(2)]).tostring()
+    raw_data = array.array('h', [5 for i in range(2)]).tostring()
     for i in range(2):
         ds.WriteRaster(int(size / 2) + int(size / 8) - 1, i + int(size / 2) - 1, 2, 1, raw_data,
                         buf_type=gdal.GDT_Int16,
@@ -345,7 +345,7 @@ def test_gdal_contour_4():
             print('Got %f. Expected %f' % (feat.GetField('elev'), expected_elev[i]))
             return 'fail'
         if ogrtest.check_feature_geometry(feat, expected_geom) != 0:
-            print('Got      %s.\nExpected %s' % (feat.GetGeometryRef().ExportToWkt(),expected_contours[i]))
+            print('Got      %s.\nExpected %s' % (feat.GetGeometryRef().ExportToWkt(), expected_contours[i]))
             test_failed = True
         i = i + 1
         feat = lyr.GetNextFeature()
@@ -397,7 +397,7 @@ def test_gdal_contour_5():
             print('Got %f. Expected %f' % (feat.GetField('elev'), expected_elev[i]))
             return 'fail'
         if ogrtest.check_feature_geometry(feat, expected_geom) != 0:
-            print('Got      %s.\nExpected %s' % (feat.GetGeometryRef().ExportToWkt(),expected_contours[i]))
+            print('Got      %s.\nExpected %s' % (feat.GetGeometryRef().ExportToWkt(), expected_contours[i]))
             test_failed = True
         i = i + 1
         feat = lyr.GetNextFeature()

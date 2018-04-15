@@ -211,13 +211,13 @@ if src_ds.GetGCPCount() > 0:
 
 progress(0.0)
 for iY in range(src_ds.RasterYSize):
-    src_data = src_band.ReadAsArray(0,iY,src_ds.RasterXSize,1)
+    src_data = src_band.ReadAsArray(0, iY, src_ds.RasterXSize, 1)
 
     for iBand in range(out_bands):
         band_lookup = lookup[iBand]
 
-        dst_data = Numeric.take(band_lookup,src_data)
-        tif_ds.GetRasterBand(iBand + 1).WriteArray(dst_data,0,iY)
+        dst_data = Numeric.take(band_lookup, src_data)
+        tif_ds.GetRasterBand(iBand + 1).WriteArray(dst_data, 0, iY)
 
     progress((iY + 1.0) / src_ds.RasterYSize)
 

@@ -79,11 +79,11 @@ def osr_epsg_2():
 
 def osr_epsg_3():
 
-    for epsg in [3120,2172,2173,2174,2175,3333,3334,3335,3329,3330,3331,3332,3328,4179]:
+    for epsg in [3120, 2172, 2173, 2174, 2175, 3333, 3334, 3335, 3329, 3330, 3331, 3332, 3328, 4179]:
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(epsg)
 
-        expected_towgs84 = [33.4,-146.6,-76.3,-0.359,-0.053,0.844,-0.84]
+        expected_towgs84 = [33.4, -146.6, -76.3, -0.359, -0.053, 0.844, -0.84]
 
         for i in range(6):
             if abs(float(srs.GetAttrValue('TOWGS84', i)) \

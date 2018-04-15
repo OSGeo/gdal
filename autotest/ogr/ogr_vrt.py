@@ -81,7 +81,7 @@ def ogr_vrt_2():
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat,'POINT(12.5 17 1.2)',
+    if ogrtest.check_feature_geometry(feat, 'POINT(12.5 17 1.2)',
                                       max_error=0.000000001) != 0:
         return 'fail'
 
@@ -90,7 +90,7 @@ def ogr_vrt_2():
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat,'POINT(100 200)',
+    if ogrtest.check_feature_geometry(feat, 'POINT(100 200)',
                                       max_error=0.000000001) != 0:
         return 'fail'
 
@@ -121,7 +121,7 @@ def ogr_vrt_3():
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat,'POINT(12.5 17 1.2)',
+    if ogrtest.check_feature_geometry(feat, 'POINT(12.5 17 1.2)',
                                       max_error=0.000000001) != 0:
         return 'fail'
 
@@ -130,7 +130,7 @@ def ogr_vrt_3():
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat,'POINT(100 200)',
+    if ogrtest.check_feature_geometry(feat, 'POINT(100 200)',
                                       max_error=0.000000001) != 0:
         return 'fail'
 
@@ -162,7 +162,7 @@ def ogr_vrt_4():
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat,'POINT(100 200)',
+    if ogrtest.check_feature_geometry(feat, 'POINT(100 200)',
                                       max_error=0.000000001) != 0:
         return 'fail'
 
@@ -190,7 +190,7 @@ def ogr_vrt_5():
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat,'POINT(12.5 17 1.2)',
+    if ogrtest.check_feature_geometry(feat, 'POINT(12.5 17 1.2)',
                                       max_error=0.000000001) != 0:
         return 'fail'
 
@@ -237,7 +237,7 @@ def ogr_vrt_7():
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat,'POINT(12.5 17 1.2)',
+    if ogrtest.check_feature_geometry(feat, 'POINT(12.5 17 1.2)',
                                       max_error=0.000000001) != 0:
         return 'fail'
 
@@ -246,7 +246,7 @@ def ogr_vrt_7():
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat,'POINT(100 200)',
+    if ogrtest.check_feature_geometry(feat, 'POINT(100 200)',
                                       max_error=0.000000001) != 0:
         return 'fail'
 
@@ -279,7 +279,7 @@ def ogr_vrt_8():
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat,'POINT(12.5 17 1.2)',
+    if ogrtest.check_feature_geometry(feat, 'POINT(12.5 17 1.2)',
                                       max_error=0.000000001) != 0:
         return 'fail'
 
@@ -288,7 +288,7 @@ def ogr_vrt_8():
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat,'POINT(100 200)',
+    if ogrtest.check_feature_geometry(feat, 'POINT(100 200)',
                                       max_error=0.000000001) != 0:
         return 'fail'
 
@@ -1812,7 +1812,7 @@ def ogr_vrt_29():
         return 'fail'
     feat = None
 
-    lyr.SetSpatialFilterRect(499999,-1,500001,1)
+    lyr.SetSpatialFilterRect(499999, -1, 500001, 1)
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
@@ -2650,7 +2650,7 @@ def ogr_vrt_33():
                     gdaltest.post_reason('fail')
                     return 'fail'
             elif j == 3:
-                if lyr.GetExtent(geom_field=1) != (0,1,0,1):
+                if lyr.GetExtent(geom_field=1) != (0, 1, 0, 1):
                     gdaltest.post_reason('fail')
                     return 'fail'
             elif j == 4:
@@ -2714,7 +2714,7 @@ def ogr_vrt_33():
                 if lyr.TestCapability(ogr.OLCFastGetExtent) != 1:
                     gdaltest.post_reason('fail')
                     return 'fail'
-                if lyr.GetExtent(geom_field=0) != (1,2,3,4):
+                if lyr.GetExtent(geom_field=0) != (1, 2, 3, 4):
                     gdaltest.post_reason('fail')
                     return 'fail'
             elif i == 4:

@@ -648,19 +648,19 @@ def plmosaic_17():
 
     for i in range(12):
         # Read at one nonexistent position.
-        ds.GetRasterBand(1).ReadRaster(4096 * i,0,1,1)
+        ds.GetRasterBand(1).ReadRaster(4096 * i, 0, 1, 1)
         if gdal.GetLastErrorMsg() != '':
             gdaltest.post_reason('fail')
             return 'fail'
-    for i in range(11,-1,-1):
+    for i in range(11, -1, -1):
         # Again in the same quad, but in different block, to test cache
-        ds.GetRasterBand(1).ReadRaster(4096 * i + 256,0,1,1)
+        ds.GetRasterBand(1).ReadRaster(4096 * i + 256, 0, 1, 1)
         if gdal.GetLastErrorMsg() != '':
             gdaltest.post_reason('fail')
             return 'fail'
     for i in range(12):
         # Again in the same quad, but in different block, to test cache
-        ds.GetRasterBand(1).ReadRaster(4096 * i + 512,256,1,1)
+        ds.GetRasterBand(1).ReadRaster(4096 * i + 512, 256, 1, 1)
         if gdal.GetLastErrorMsg() != '':
             gdaltest.post_reason('fail')
             return 'fail'
@@ -670,7 +670,7 @@ def plmosaic_17():
     # Invalid tile content
     gdal.FileFromMemBuffer('/vsimem/root/my_mosaic_id/quads/0-2047/full', 'garbage')
     gdal.PushErrorHandler()
-    ds.GetRasterBand(1).ReadRaster(0,0,1,1)
+    ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     gdal.PopErrorHandler()
 
     os.stat('tmp/plmosaic_cache/my_mosaic/my_mosaic_0-2047.tif')
@@ -681,7 +681,7 @@ def plmosaic_17():
     # GeoTIFF but with wrong dimensions
     gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/0-2047/full', 1, 1, 1)
     gdal.PushErrorHandler()
-    ds.GetRasterBand(1).ReadRaster(0,0,1,1)
+    ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     gdal.PopErrorHandler()
 
     os.stat('tmp/plmosaic_cache/my_mosaic/my_mosaic_0-2047.tif')
@@ -694,7 +694,7 @@ def plmosaic_17():
     tmp_ds.GetRasterBand(1).Fill(255)
     tmp_ds = None
 
-    val = ds.GetRasterBand(1).ReadRaster(0,0,1,1)
+    val = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     val = struct.unpack('B', val)[0]
     if val != 255:
         gdaltest.post_reason('fail')
@@ -711,7 +711,7 @@ def plmosaic_17():
     tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/0-2047/full', 4096, 4096, 4, options=['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
     tmp_ds.GetRasterBand(1).Fill(1)
     tmp_ds = None
-    val = ds.GetRasterBand(1).ReadRaster(0,0,1,1)
+    val = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     val = struct.unpack('B', val)[0]
     if val != 255:
         gdaltest.post_reason('fail')
@@ -727,7 +727,7 @@ def plmosaic_17():
     ds = gdal.OpenEx('PLMosaic:API_KEY=foo,MOSAIC=my_mosaic,CACHE_PATH=tmp,TRUST_CACHE=YES', gdal.OF_RASTER)
     gdal.SetConfigOption('PL_URL', None)
 
-    val = ds.GetRasterBand(1).ReadRaster(0,0,1,1)
+    val = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     val = struct.unpack('B', val)[0]
     if val != 255:
         gdaltest.post_reason('fail')
@@ -745,7 +745,7 @@ def plmosaic_17():
     tmp_ds.GetRasterBand(1).Fill(254)
     tmp_ds = None
 
-    val = ds.ReadRaster(0,0,1,1)
+    val = ds.ReadRaster(0, 0, 1, 1)
     val = struct.unpack('B' * 4, val)
     if val != (254, 0, 0, 0):
         gdaltest.post_reason('fail')
@@ -819,7 +819,7 @@ def plmosaic_19():
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=/does_not_exist'])
     gdal.SetConfigOption('PL_URL', None)
     gdal.PushErrorHandler()
-    val = ds.ReadRaster(0,0,1,1)
+    val = ds.ReadRaster(0, 0, 1, 1)
     gdal.PopErrorHandler()
     val = struct.unpack('B' * 4, val)
     if val != (254, 0, 0, 0):
@@ -827,7 +827,7 @@ def plmosaic_19():
         print(val)
         return 'fail'
 
-    val = ds.ReadRaster(256,0,1,1)
+    val = ds.ReadRaster(256, 0, 1, 1)
     val = struct.unpack('B' * 4, val)
     if val != (254, 0, 0, 0):
         gdaltest.post_reason('fail')
@@ -849,14 +849,14 @@ def plmosaic_20():
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH='])
     gdal.SetConfigOption('PL_URL', None)
-    val = ds.ReadRaster(0,0,1,1)
+    val = ds.ReadRaster(0, 0, 1, 1)
     val = struct.unpack('B' * 4, val)
     if val != (254, 0, 0, 0):
         gdaltest.post_reason('fail')
         print(val)
         return 'fail'
 
-    val = ds.ReadRaster(256,0,1,1)
+    val = ds.ReadRaster(256, 0, 1, 1)
     val = struct.unpack('B' * 4, val)
     if val != (254, 0, 0, 0):
         gdaltest.post_reason('fail')
@@ -881,7 +881,7 @@ def plmosaic_21():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    ds.ReadRaster(256,512,1,1)
+    ds.ReadRaster(256, 512, 1, 1)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
@@ -889,7 +889,7 @@ def plmosaic_21():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    ds.GetRasterBand(1).ReadRaster(256,512,1,1)
+    ds.GetRasterBand(1).ReadRaster(256, 512, 1, 1)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
@@ -897,7 +897,7 @@ def plmosaic_21():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    ds.GetRasterBand(1).ReadBlock(1,2)
+    ds.GetRasterBand(1).ReadBlock(1, 2)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
@@ -1042,7 +1042,7 @@ def plmosaic_with_bbox():
     tmp_ds.GetRasterBand(1).Fill(125)
     tmp_ds = None
 
-    val = ds.GetRasterBand(1).ReadRaster(0,0,1,1)
+    val = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     val = struct.unpack('B', val)[0]
     if val != 125:
         gdaltest.post_reason('fail')

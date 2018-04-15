@@ -55,7 +55,7 @@ class AffineTransformDecorator:
         self.ulx = self.geotransform[0]
         self.uly = self.geotransform[3]
 
-    def pointsFor(self,width,height):
+    def pointsFor(self, width, height):
         xlist = []
         ylist = []
         w = self.scaleX * width
@@ -80,7 +80,7 @@ class DataSetCache:
         self.queue = []
         self.dict = {}
 
-    def get(self,name):
+    def get(self, name):
 
         if name in self.dict:
             return self.dict[name]
@@ -105,7 +105,7 @@ class DataSetCache:
 class tile_info:
     """ A class holding info how to tile """
 
-    def __init__(self,xsize,ysize,tileWidth,tileHeight,overlap):
+    def __init__(self, xsize, ysize, tileWidth, tileHeight, overlap):
         self.width = xsize
         self.height = ysize
         self.tileWidth = tileWidth
@@ -129,7 +129,7 @@ class tile_info:
 class mosaic_info:
     """A class holding information about a GDAL file or a GDAL fileset"""
 
-    def __init__(self, filename,inputDS):
+    def __init__(self, filename, inputDS):
         """
         Initialize mosaic_info from filename
 
@@ -176,10 +176,10 @@ class mosaic_info:
         del self.cache
         del self.ogrTileIndexDS
 
-    def getDataSet(self,minx,miny,maxx,maxy):
+    def getDataSet(self, minx, miny, maxx, maxy):
 
         self.ogrTileIndexDS.GetLayer().ResetReading()
-        self.ogrTileIndexDS.GetLayer().SetSpatialFilterRect(minx,miny,maxx,maxy)
+        self.ogrTileIndexDS.GetLayer().SetSpatialFilterRect(minx, miny, maxx, maxy)
         features = []
         envelope = None
         while True:
@@ -191,15 +191,15 @@ class mosaic_info:
                 envelope = feature.GetGeometryRef().GetEnvelope()
             else:
                 featureEnv = feature.GetGeometryRef().GetEnvelope()
-                envelope = (min(featureEnv[0],envelope[0]),max(featureEnv[1],envelope[1]),
-                            min(featureEnv[2],envelope[2]),max(featureEnv[3],envelope[3]))
+                envelope = (min(featureEnv[0], envelope[0]), max(featureEnv[1], envelope[1]),
+                            min(featureEnv[2], envelope[2]), max(featureEnv[3], envelope[3]))
 
         if envelope is None:
             return None
 
         #enlarge to query rect if necessary
-        envelope = (min(minx,envelope[0]),max(maxx,envelope[1]),
-                    min(miny,envelope[2]),max(maxy,envelope[3]))
+        envelope = (min(minx, envelope[0]), max(maxx, envelope[1]),
+                    min(miny, envelope[2]), max(maxy, envelope[3]))
 
         self.ogrTileIndexDS.GetLayer().SetSpatialFilter(None)
 
@@ -208,8 +208,8 @@ class mosaic_info:
         resultSizeX = int(math.ceil(((maxx - minx) / self.scaleX)))
         resultSizeY = int(math.ceil(((miny - maxy) / self.scaleY)))
 
-        resultDS = self.TempDriver.Create("TEMP", resultSizeX, resultSizeY, self.bands,self.band_type,[])
-        resultDS.SetGeoTransform([minx,self.scaleX,0,maxy,0,self.scaleY])
+        resultDS = self.TempDriver.Create("TEMP", resultSizeX, resultSizeY, self.bands, self.band_type, [])
+        resultDS.SetGeoTransform([minx, self.scaleX, 0, maxy, 0, self.scaleY])
 
         for feature in features:
             featureName =  feature.GetField(0)
@@ -274,21 +274,21 @@ class mosaic_info:
         print('File Size: %dx%dx%d' \
               % (self.xsize, self.ysize, self.bands))
         print('Pixel Size: %f x %f' \
-              % (self.scaleX,self.scaleY))
+              % (self.scaleX, self.scaleY))
         print('UL:(%f,%f)   LR:(%f,%f)' \
-              % (self.ulx,self.uly,self.lrx,self.lry))
+              % (self.ulx, self.uly, self.lrx, self.lry))
 
 
 def getTileIndexFromFiles(inputTiles, driverTyp):
 
     if Verbose:
         from sys import version_info
-        if version_info >= (3,0,0):
+        if version_info >= (3, 0, 0):
             exec('print("Building internal Index for %d tile(s) ..." % len(inputTiles), end=" ")')
         else:
             exec('print "Building internal Index for %d tile(s) ..." % len(inputTiles), ')
 
-    ogrTileIndexDS = createTileIndex("TileIndex",TileIndexFieldName,None,driverTyp)
+    ogrTileIndexDS = createTileIndex("TileIndex", TileIndexFieldName, None, driverTyp)
     for inputTile in inputTiles:
 
         fhInputTile = gdal.Open(inputTile)
@@ -298,7 +298,7 @@ def getTileIndexFromFiles(inputTiles, driverTyp):
         dec = AffineTransformDecorator(fhInputTile.GetGeoTransform())
         points = dec.pointsFor(fhInputTile.RasterXSize, fhInputTile.RasterYSize)
 
-        addFeature(ogrTileIndexDS,inputTile,points[0],points[1])
+        addFeature(ogrTileIndexDS, inputTile, points[0], points[1])
         del fhInputTile
 
     if Verbose:
@@ -325,10 +325,10 @@ def tileImage(minfo, ti):
 
     global LastRowIndx
     LastRowIndx = -1
-    OGRDS = createTileIndex("TileResult_0", TileIndexFieldName, Source_SRS,TileIndexDriverTyp)
+    OGRDS = createTileIndex("TileResult_0", TileIndexFieldName, Source_SRS, TileIndexDriverTyp)
 
-    yRange = list(range(1,ti.countTilesY + 1))
-    xRange = list(range(1,ti.countTilesX + 1))
+    yRange = list(range(1, ti.countTilesY + 1))
+    xRange = list(range(1, ti.countTilesX + 1))
 
     if not Quiet and not Verbose:
         progress(0.0)
@@ -342,16 +342,16 @@ def tileImage(minfo, ti):
             height = ti.tileHeight
             width = ti.tileWidth
             if UseDirForEachRow :
-                tilename = getTileName(minfo,ti, xIndex, yIndex,0)
+                tilename = getTileName(minfo, ti, xIndex, yIndex, 0)
             else:
-                tilename = getTileName(minfo,ti, xIndex, yIndex)
+                tilename = getTileName(minfo, ti, xIndex, yIndex)
 
             if offsetX + width > ti.width:
                 width = ti.width - offsetX
             if offsetY + height > ti.height:
                 height = ti.height - offsetY
 
-            createTile(minfo, offsetX, offsetY, width, height,tilename,OGRDS)
+            createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS)
 
             if not Quiet and not Verbose:
                 processed += 1
@@ -362,14 +362,14 @@ def tileImage(minfo, ti):
             shapeName = getTargetDir(0) + TileIndexName
         else:
             shapeName = getTargetDir() + TileIndexName
-        copyTileIndexToDisk(OGRDS,shapeName)
+        copyTileIndexToDisk(OGRDS, shapeName)
 
     if CsvFileName is not None:
         if UseDirForEachRow and PyramidOnly == False:
             csvName = getTargetDir(0) + CsvFileName
         else:
             csvName = getTargetDir() + CsvFileName
-        copyTileIndexToCSV(OGRDS,csvName)
+        copyTileIndexToCSV(OGRDS, csvName)
 
     return OGRDS
 
@@ -386,7 +386,7 @@ def copyTileIndexToDisk(OGRDS, fileName):
       if UseDirForEachRow :
           t = os.path.split(os.path.dirname(feature.GetField(0)))
           basename = t[1] + "/" + basename
-      newFeature.SetField(0,basename)
+      newFeature.SetField(0, basename)
       SHAPEDS.GetLayer().CreateFeature(newFeature)
     closeTileIndex(SHAPEDS)
 
@@ -414,16 +414,16 @@ def copyTileIndexToCSV(OGRDS, fileName):
     csvfile.close()
 
 
-def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height,tileName,OGRDS):
+def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height, tileName, OGRDS):
 
     sx = levelMosaicInfo.scaleX * 2
     sy = levelMosaicInfo.scaleY * 2
 
-    dec = AffineTransformDecorator([levelMosaicInfo.ulx + offsetX * sx,sx,0,
-                                    levelMosaicInfo.uly + offsetY * sy,0,sy])
+    dec = AffineTransformDecorator([levelMosaicInfo.ulx + offsetX * sx, sx, 0,
+                                    levelMosaicInfo.uly + offsetY * sy, 0, sy])
 
-    s_fh = levelMosaicInfo.getDataSet(dec.ulx,dec.uly + height * dec.scaleY,
-                         dec.ulx + width * dec.scaleX,dec.uly)
+    s_fh = levelMosaicInfo.getDataSet(dec.ulx, dec.uly + height * dec.scaleY,
+                         dec.ulx + width * dec.scaleX, dec.uly)
     if s_fh is None:
         return
 
@@ -436,14 +436,14 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height,tileName,
     else:
         bt = BandType
 
-    geotransform = [dec.ulx, dec.scaleX, 0,dec.uly,0,dec.scaleY]
+    geotransform = [dec.ulx, dec.scaleX, 0, dec.uly, 0, dec.scaleY]
 
     bands = levelMosaicInfo.bands
 
     if MemDriver is None:
-        t_fh = Driver.Create(tileName, width, height, bands,bt,CreateOptions)
+        t_fh = Driver.Create(tileName, width, height, bands, bt, CreateOptions)
     else:
-        t_fh = MemDriver.Create(tileName, width, height, bands,bt)
+        t_fh = MemDriver.Create(tileName, width, height, bands, bt)
 
     if t_fh is None:
         print('Creation failed, terminating gdal_tile.')
@@ -451,15 +451,15 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height,tileName,
 
     t_fh.SetGeoTransform(geotransform)
     t_fh.SetProjection(levelMosaicInfo.projection)
-    for band in range(1,bands + 1):
+    for band in range(1, bands + 1):
         t_band = t_fh.GetRasterBand(band)
         if levelMosaicInfo.ct is not None:
             t_band.SetRasterColorTable(levelMosaicInfo.ct)
         t_band.SetRasterColorInterpretation(levelMosaicInfo.ci[band - 1])
 
-    res = gdal.ReprojectImage(s_fh,t_fh,None,None,ResamplingMethod)
+    res = gdal.ReprojectImage(s_fh, t_fh, None, None, ResamplingMethod)
     if res != 0:
-        print("Reprojection failed for %s, error %d" % (tileName,res))
+        print("Reprojection failed for %s, error %d" % (tileName, res))
         sys.exit(1)
 
     levelMosaicInfo.closeDataSet(s_fh)
@@ -472,7 +472,7 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height,tileName,
         print(tileName + " : " + str(offsetX) + "|" + str(offsetY) + "-->" + str(width) + "-" + str(height))
 
 
-def createTile(minfo, offsetX,offsetY,width,height, tilename,OGRDS):
+def createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS):
     """
 
     Create tile
@@ -485,16 +485,16 @@ def createTile(minfo, offsetX,offsetY,width,height, tilename,OGRDS):
     else:
         bt = BandType
 
-    dec = AffineTransformDecorator([minfo.ulx,minfo.scaleX,0,minfo.uly,0,minfo.scaleY])
+    dec = AffineTransformDecorator([minfo.ulx, minfo.scaleX, 0, minfo.uly, 0, minfo.scaleY])
 
-    s_fh = minfo.getDataSet(dec.ulx + offsetX * dec.scaleX,dec.uly + offsetY * dec.scaleY + height * dec.scaleY,
+    s_fh = minfo.getDataSet(dec.ulx + offsetX * dec.scaleX, dec.uly + offsetY * dec.scaleY + height * dec.scaleY,
                          dec.ulx + offsetX * dec.scaleX + width * dec.scaleX,
                          dec.uly + offsetY * dec.scaleY)
     if s_fh is None:
         return
 
     geotransform = [dec.ulx + offsetX * dec.scaleX, dec.scaleX, 0,
-                    dec.uly + offsetY * dec.scaleY,  0,dec.scaleY]
+                    dec.uly + offsetY * dec.scaleY, 0, dec.scaleY]
 
     if OGRDS is not None:
         dec2 = AffineTransformDecorator(geotransform)
@@ -504,9 +504,9 @@ def createTile(minfo, offsetX,offsetY,width,height, tilename,OGRDS):
     bands = minfo.bands
 
     if MemDriver is None:
-        t_fh = Driver.Create(tilename, width, height, bands,bt,CreateOptions)
+        t_fh = Driver.Create(tilename, width, height, bands, bt, CreateOptions)
     else:
-        t_fh = MemDriver.Create(tilename, width, height, bands,bt)
+        t_fh = MemDriver.Create(tilename, width, height, bands, bt)
 
     if t_fh is None:
         print('Creation failed, terminating gdal_tile.')
@@ -516,17 +516,17 @@ def createTile(minfo, offsetX,offsetY,width,height, tilename,OGRDS):
     if Source_SRS is not None:
         t_fh.SetProjection(Source_SRS.ExportToWkt())
 
-    readX = min(s_fh.RasterXSize,width)
-    readY = min(s_fh.RasterYSize,height)
-    for band in range(1,bands + 1):
+    readX = min(s_fh.RasterXSize, width)
+    readY = min(s_fh.RasterYSize, height)
+    for band in range(1, bands + 1):
         s_band = s_fh.GetRasterBand(band)
         t_band = t_fh.GetRasterBand(band)
         if minfo.ct is not None:
             t_band.SetRasterColorTable(minfo.ct)
 
 #        data = s_band.ReadRaster( offsetX,offsetY,width,height,width,height, t_band.DataType )
-        data = s_band.ReadRaster(0,0,readX,readY,readX,readY,  t_band.DataType)
-        t_band.WriteRaster(0,0,readX,readY, data,readX,readY, t_band.DataType)
+        data = s_band.ReadRaster(0, 0, readX, readY, readX, readY, t_band.DataType)
+        t_band.WriteRaster(0, 0, readX, readY, data, readX, readY, t_band.DataType)
 
     minfo.closeDataSet(s_fh)
 
@@ -538,7 +538,7 @@ def createTile(minfo, offsetX,offsetY,width,height, tilename,OGRDS):
         print(tilename + " : " + str(offsetX) + "|" + str(offsetY) + "-->" + str(width) + "-" + str(height))
 
 
-def createTileIndex(dsName,fieldName,srs,driverName):
+def createTileIndex(dsName, fieldName, srs, driverName):
 
     OGRDriver = ogr.GetDriverByName(driverName)
     if OGRDriver is None:
@@ -562,7 +562,7 @@ def createTileIndex(dsName,fieldName,srs,driverName):
         print('Could not create Layer')
         sys.exit(1)
 
-    OGRFieldDefn = ogr.FieldDefn(fieldName,ogr.OFTString)
+    OGRFieldDefn = ogr.FieldDefn(fieldName, ogr.OFTString)
     if OGRFieldDefn is None:
         print('Could not create FieldDefn for ' + fieldName)
         sys.exit(1)
@@ -575,7 +575,7 @@ def createTileIndex(dsName,fieldName,srs,driverName):
     return OGRDataSource
 
 
-def addFeature(OGRDataSource,location,xlist,ylist):
+def addFeature(OGRDataSource, location, xlist, ylist):
 
     OGRLayer = OGRDataSource.GetLayer()
     OGRFeature = ogr.Feature(OGRLayer.GetLayerDefn())
@@ -583,10 +583,10 @@ def addFeature(OGRDataSource,location,xlist,ylist):
         print('Could not create Feature')
         sys.exit(1)
 
-    OGRFeature.SetField(TileIndexFieldName,location)
-    wkt = 'POLYGON ((%f %f,%f %f,%f %f,%f %f,%f %f ))' % (xlist[0],ylist[0],
-            xlist[1],ylist[1],xlist[2],ylist[2],xlist[3],ylist[3],xlist[0],ylist[0])
-    OGRGeometry = ogr.CreateGeometryFromWkt(wkt,OGRLayer.GetSpatialRef())
+    OGRFeature.SetField(TileIndexFieldName, location)
+    wkt = 'POLYGON ((%f %f,%f %f,%f %f,%f %f,%f %f ))' % (xlist[0], ylist[0],
+            xlist[1], ylist[1], xlist[2], ylist[2], xlist[3], ylist[3], xlist[0], ylist[0])
+    OGRGeometry = ogr.CreateGeometryFromWkt(wkt, OGRLayer.GetSpatialRef())
     if (OGRGeometry is None):
         print('Could not create Geometry')
         sys.exit(1)
@@ -601,22 +601,22 @@ def closeTileIndex(OGRDataSource):
     OGRDataSource.Destroy()
 
 
-def buildPyramid(minfo,createdTileIndexDS,tileWidth, tileHeight, overlap):
+def buildPyramid(minfo, createdTileIndexDS, tileWidth, tileHeight, overlap):
 
     global LastRowIndx
     inputDS = createdTileIndexDS
-    for level in range(1,Levels + 1):
+    for level in range(1, Levels + 1):
         LastRowIndx = -1
-        levelMosaicInfo = mosaic_info(minfo.filename,inputDS)
-        levelOutputTileInfo = tile_info(int(levelMosaicInfo.xsize / 2),int(levelMosaicInfo.ysize / 2),tileWidth,tileHeight,overlap)
-        inputDS = buildPyramidLevel(levelMosaicInfo,levelOutputTileInfo,level)
+        levelMosaicInfo = mosaic_info(minfo.filename, inputDS)
+        levelOutputTileInfo = tile_info(int(levelMosaicInfo.xsize / 2), int(levelMosaicInfo.ysize / 2), tileWidth, tileHeight, overlap)
+        inputDS = buildPyramidLevel(levelMosaicInfo, levelOutputTileInfo, level)
 
 
-def buildPyramidLevel(levelMosaicInfo,levelOutputTileInfo, level):
-    yRange = list(range(1,levelOutputTileInfo.countTilesY + 1))
-    xRange = list(range(1,levelOutputTileInfo.countTilesX + 1))
+def buildPyramidLevel(levelMosaicInfo, levelOutputTileInfo, level):
+    yRange = list(range(1, levelOutputTileInfo.countTilesY + 1))
+    xRange = list(range(1, levelOutputTileInfo.countTilesX + 1))
 
-    OGRDS = createTileIndex("TileResult_" + str(level), TileIndexFieldName, Source_SRS,TileIndexDriverTyp)
+    OGRDS = createTileIndex("TileResult_" + str(level), TileIndexFieldName, Source_SRS, TileIndexDriverTyp)
 
     for yIndex in yRange:
         for xIndex in xRange:
@@ -630,21 +630,21 @@ def buildPyramidLevel(levelMosaicInfo,levelOutputTileInfo, level):
             if offsetY + height > levelOutputTileInfo.height:
                 height = levelOutputTileInfo.height - offsetY
 
-            tilename = getTileName(levelMosaicInfo,levelOutputTileInfo, xIndex, yIndex,level)
-            createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height,tilename,OGRDS)
+            tilename = getTileName(levelMosaicInfo, levelOutputTileInfo, xIndex, yIndex, level)
+            createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height, tilename, OGRDS)
 
     if TileIndexName is not None:
         shapeName = getTargetDir(level) + TileIndexName
-        copyTileIndexToDisk(OGRDS,shapeName)
+        copyTileIndexToDisk(OGRDS, shapeName)
 
     if CsvFileName is not None:
         csvName = getTargetDir(level) + CsvFileName
-        copyTileIndexToCSV(OGRDS,csvName)
+        copyTileIndexToCSV(OGRDS, csvName)
 
     return OGRDS
 
 
-def getTileName(minfo,ti,xIndex,yIndex,level=-1):
+def getTileName(minfo, ti, xIndex, yIndex, level=-1):
     """
     creates the tile file name
     """
@@ -855,7 +855,7 @@ def main(args=None):
         return 1
 
     if (TileWidth == 0 or TileHeight == 0):
-        print("Invalid tile dimension %d,%d" % (TileWidth,TileHeight))
+        print("Invalid tile dimension %d,%d" % (TileWidth, TileHeight))
         return 1
     if (TileWidth - Overlap <= 0 or TileHeight - Overlap <= 0):
         print("Overlap too big w.r.t tile height/width")
@@ -874,7 +874,7 @@ def main(args=None):
 
     if Levels > 0:    #prepare Dirs for pyramid
         startIndx = 1
-        for levelIndx in range(startIndx,Levels + 1):
+        for levelIndx in range(startIndx, Levels + 1):
             leveldir = TargetDir + str(levelIndx) + os.sep
             if (os.path.exists(leveldir)):
                 continue
@@ -896,12 +896,12 @@ def main(args=None):
     if 'DCAP_CREATE' not in DriverMD:
         MemDriver = gdal.GetDriverByName("MEM")
 
-    tileIndexDS = getTileIndexFromFiles(Names,TileIndexDriverTyp)
+    tileIndexDS = getTileIndexFromFiles(Names, TileIndexDriverTyp)
     if tileIndexDS is None:
         print("Error building tile index")
         return 1
-    minfo = mosaic_info(Names[0],tileIndexDS)
-    ti = tile_info(minfo.xsize,minfo.ysize, TileWidth, TileHeight, Overlap)
+    minfo = mosaic_info(Names[0], tileIndexDS)
+    ti = tile_info(minfo.xsize, minfo.ysize, TileWidth, TileHeight, Overlap)
 
     if Source_SRS is None and len(minfo.projection) > 0 :
        Source_SRS = osr.SpatialReference()
@@ -914,13 +914,13 @@ def main(args=None):
         ti.report()
 
     if PyramidOnly == False:
-       dsCreatedTileIndex = tileImage(minfo,ti)
+       dsCreatedTileIndex = tileImage(minfo, ti)
        tileIndexDS.Destroy()
     else:
        dsCreatedTileIndex = tileIndexDS
 
     if Levels > 0:
-       buildPyramid(minfo,dsCreatedTileIndex,TileWidth, TileHeight, Overlap)
+       buildPyramid(minfo, dsCreatedTileIndex, TileWidth, TileHeight, Overlap)
 
     if Verbose:
         print("FINISHED")

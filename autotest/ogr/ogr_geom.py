@@ -979,14 +979,14 @@ def ogr_geom_linestring_limits():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    geom.SetPoint(-1, 5,6,7)
+    geom.SetPoint(-1, 5, 6, 7)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorType() == 0:
         return 'fail'
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    geom.SetPoint_2D(-1, 5,6)
+    geom.SetPoint_2D(-1, 5, 6)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorType() == 0:
         return 'fail'
@@ -994,14 +994,14 @@ def ogr_geom_linestring_limits():
     if False:
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        geom.SetPoint(2147000000, 5,6,7)
+        geom.SetPoint(2147000000, 5, 6, 7)
         gdal.PopErrorHandler()
         if gdal.GetLastErrorType() == 0:
             return 'fail'
 
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        geom.SetPoint_2D(2147000000, 5,6)
+        geom.SetPoint_2D(2147000000, 5, 6)
         gdal.PopErrorHandler()
         if gdal.GetLastErrorType() == 0:
             return 'fail'
@@ -2742,7 +2742,7 @@ def ogr_geom_curvepolygon():
     # Intersects optimizations on a circle
     g1 = ogr.CreateGeometryFromWkt('CURVEPOLYGON (CIRCULARSTRING (0 0,2 0,0 0))')
     # Point slightly within circle
-    p1 = ogr.CreateGeometryFromWkt('POINT (%.16g %.16g)' % (1 + math.cos(math.pi / 6) - 1e-4,math.sin(math.pi / 6)))
+    p1 = ogr.CreateGeometryFromWkt('POINT (%.16g %.16g)' % (1 + math.cos(math.pi / 6) - 1e-4, math.sin(math.pi / 6)))
     # To prove that we don't use discretization
     gdal.SetConfigOption('OGR_ARC_STEPSIZE', '45')
     res = g1.Intersects(p1)
@@ -2755,7 +2755,7 @@ def ogr_geom_curvepolygon():
         return 'fail'
 
     # Test point slightly outside circle
-    p2 = ogr.CreateGeometryFromWkt('POINT (%.16g %.16g)' % (1 + math.cos(math.pi / 6) + 1e-4,math.sin(math.pi / 6)))
+    p2 = ogr.CreateGeometryFromWkt('POINT (%.16g %.16g)' % (1 + math.cos(math.pi / 6) + 1e-4, math.sin(math.pi / 6)))
     if p2.Within(g1):
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2773,7 +2773,7 @@ def ogr_geom_curvepolygon():
         return 'fail'
 
     # This is not a circle
-    p2 = ogr.CreateGeometryFromWkt('POINT (%.16g %.16g)' % (1 + math.cos(math.pi / 6) - 1e-2,math.sin(math.pi / 6)))
+    p2 = ogr.CreateGeometryFromWkt('POINT (%.16g %.16g)' % (1 + math.cos(math.pi / 6) - 1e-2, math.sin(math.pi / 6)))
     g1 = ogr.CreateGeometryFromWkt('CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,2 0,1 1,0 0))')
     if p2.Within(g1):
         gdaltest.post_reason('fail')
@@ -3222,9 +3222,9 @@ def ogr_geom_getcurvegeometry():
 
     # Really random arcs with coordinates in the [-1000,1000] range
     for i in range(1000):
-        v = [random.randint(-1000,1000) for i in range(6)]
+        v = [random.randint(-1000, 1000) for i in range(6)]
         if v[0] != v[4] or v[1] != v[5]:
-            wkt = 'CIRCULARSTRING (%d %d,%d %d,%d %d)' % (v[0],v[1],v[2],v[3],v[4],v[5])
+            wkt = 'CIRCULARSTRING (%d %d,%d %d,%d %d)' % (v[0], v[1], v[2], v[3], v[4], v[5])
             g1 = ogr.CreateGeometryFromWkt(wkt)
             g2 = g1.GetLinearGeometry()
             if g2.GetPointCount() != 3:
@@ -3240,11 +3240,11 @@ def ogr_geom_getcurvegeometry():
 
     # Really random arcs in random displacements, but with small radius
     for i in range(1000):
-        x = random.randint(-1000000,1000000)
-        y = random.randint(-1000000,1000000)
-        v = [random.randint(-10,10) for i in range(6)]
+        x = random.randint(-1000000, 1000000)
+        y = random.randint(-1000000, 1000000)
+        v = [random.randint(-10, 10) for i in range(6)]
         if v[0] != v[4] or v[1] != v[5]:
-            wkt = 'CIRCULARSTRING (%d %d,%d %d,%d %d)' % (x + v[0],y + v[1],x + v[2],y + v[3],x + v[4],y + v[5])
+            wkt = 'CIRCULARSTRING (%d %d,%d %d,%d %d)' % (x + v[0], y + v[1], x + v[2], y + v[3], x + v[4], y + v[5])
             g1 = ogr.CreateGeometryFromWkt(wkt)
             g2 = g1.GetLinearGeometry()
             if g2.GetPointCount() != 3:
@@ -3260,9 +3260,9 @@ def ogr_geom_getcurvegeometry():
 
     # Really random arcs with coordinates in the [-1000000,1000000] range
     for i in range(1000):
-        v = [random.randint(-1000000,1000000) for i in range(6)]
+        v = [random.randint(-1000000, 1000000) for i in range(6)]
         if v[0] != v[4] or v[1] != v[5]:
-            wkt = 'CIRCULARSTRING (%d %d,%d %d,%d %d)' % (v[0],v[1],v[2],v[3],v[4],v[5])
+            wkt = 'CIRCULARSTRING (%d %d,%d %d,%d %d)' % (v[0], v[1], v[2], v[3], v[4], v[5])
             g1 = ogr.CreateGeometryFromWkt(wkt)
             g2 = g1.GetLinearGeometry()
             if g2.GetPointCount() != 3:
@@ -3462,7 +3462,7 @@ def ogr_geom_getcurvegeometry():
 
     # Add repeated point at end of line
     g2 = g1.GetLinearGeometry()
-    g2.AddPoint_2D(2 - 1e-9,0)
+    g2.AddPoint_2D(2 - 1e-9, 0)
     g3 = g2.GetCurveGeometry()
     if not g3.Equals(g1):
         gdaltest.post_reason('fail')
@@ -3472,7 +3472,7 @@ def ogr_geom_getcurvegeometry():
     # Add repeated point at end of line
     g2 = g1.GetLinearGeometry()
     g2_new = ogr.Geometry(ogr.wkbLineString)
-    g2_new.AddPoint_2D(0,1e-9)
+    g2_new.AddPoint_2D(0, 1e-9)
     for i in range(g2.GetPointCount()):
         g2_new.AddPoint_2D(g2.GetX(i), g2.GetY(i))
     g3 = g2_new.GetCurveGeometry()
@@ -3482,7 +3482,7 @@ def ogr_geom_getcurvegeometry():
         return 'fail'
 
     # Test various configurations
-    for (wkt,eps) in [('CIRCULARSTRING (0 0,0.5 0.5,0 1,-0.5 0.5,0 0)', 0),
+    for (wkt, eps) in [('CIRCULARSTRING (0 0,0.5 0.5,0 1,-0.5 0.5,0 0)', 0),
                         ('CIRCULARSTRING (0 0,-0.5 0.5,0 1,0.5 0.5,0 0)', 0),
                         ('CIRCULARSTRING (0 0,0.5 -0.5,0 -1,-0.5 -0.5,0 0)', 0),
                         ('CIRCULARSTRING (0 0,-0.5 -0.5,0 -1,0.5 -0.5,0 0)', 0),
@@ -3501,7 +3501,7 @@ def ogr_geom_getcurvegeometry():
                         ('CIRCULARSTRING (100000000 1,100000001 0,100000000 -1,99999999 0,100000000 1)', 0),
                         ('CIRCULARSTRING (-100000000 1,-100000001 0,-100000000 -1,-99999999 0,-100000000 1)', 0),
                         ('CIRCULARSTRING (100000000 100000001,100000001 100000000,100000000 99999999,99999999 100000000,100000000 100000001)', 0),
-                        ('CIRCULARSTRING (760112.098000001162291 207740.096999999135733,760116.642489952617325 207741.101843414857285,760120.967999998480082 207742.820000000298023,760123.571822694852017 207744.275888498465065,760126.011999998241663 207745.991999998688698,760127.330062366439961 207747.037052432337077,760128.585999999195337 207748.155999999493361)',1e-5)]:
+                        ('CIRCULARSTRING (760112.098000001162291 207740.096999999135733,760116.642489952617325 207741.101843414857285,760120.967999998480082 207742.820000000298023,760123.571822694852017 207744.275888498465065,760126.011999998241663 207745.991999998688698,760127.330062366439961 207747.037052432337077,760128.585999999195337 207748.155999999493361)', 1e-5)]:
         g1 = ogr.CreateGeometryFromWkt(wkt)
         g2 = g1.GetLinearGeometry()
         g3 = g2.GetCurveGeometry()
@@ -3703,8 +3703,8 @@ def ogr_geom_gt_functions():
                (ogr.wkbMultiLineString, ogr.wkbMultiCurve, 1),
                (ogr.wkbUnknown, ogr.wkbUnknown, 1),
                (ogr.wkbUnknown, ogr.wkbPoint, 0),
-               (ogr.wkbTIN, ogr.wkbPolyhedralSurface,1),
-               (ogr.wkbPolyhedralSurface, ogr.wkbTIN,0),
+               (ogr.wkbTIN, ogr.wkbPolyhedralSurface, 1),
+               (ogr.wkbPolyhedralSurface, ogr.wkbTIN, 0),
                ]
     for (gt, gt2, res) in tuples:
         if ogr.GT_IsSubClassOf(gt, gt2) != res:
@@ -4152,7 +4152,7 @@ def ogr_geom_import_corrupted_wkb():
                 else:
                     wkb[i] = 255 - wkb[i]
                 with gdaltest.error_handler():
-                    if sys.version_info >= (3,0,0):
+                    if sys.version_info >= (3, 0, 0):
                         g = ogr.CreateGeometryFromWkb(bytes(wkb))
                     else:
                         g = ogr.CreateGeometryFromWkb(str(wkb))
@@ -4167,7 +4167,7 @@ def ogr_geom_import_corrupted_wkb():
         # Test truncation of the WKB
         for i in range(len(wkb)):
             with gdaltest.error_handler():
-                if sys.version_info >= (3,0,0):
+                if sys.version_info >= (3, 0, 0):
                     g = ogr.CreateGeometryFromWkb(bytes(wkb[0:i]))
                 else:
                     g = ogr.CreateGeometryFromWkb(str(wkb[0:i]))

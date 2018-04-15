@@ -501,7 +501,7 @@ def ogr_rfc41_4():
     # Test invalid spatial filter index
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    lyr.SetSpatialFilterRect(2, 0,0,0,0)
+    lyr.SetSpatialFilterRect(2, 0, 0, 0, 0)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
@@ -910,7 +910,7 @@ def ogr_rfc41_6():
         return 'fail'
     feat = None
 
-    sql_lyr.SetSpatialFilterRect(0, 1,2,1,2)
+    sql_lyr.SetSpatialFilterRect(0, 1, 2, 1, 2)
     feat = sql_lyr.GetNextFeature()
     if feat is None:
         gdaltest.post_reason('fail')
@@ -920,7 +920,7 @@ def ogr_rfc41_6():
     # Test invalid spatial filter index
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr.SetSpatialFilterRect(2, 0,0,0,0)
+    sql_lyr.SetSpatialFilterRect(2, 0, 0, 0, 0)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
@@ -989,19 +989,19 @@ def ogr_rfc41_6():
     if sql_lyr.GetExtent(geom_field=1) != (10.0, 10.0, 100.0, 100.0):
         gdaltest.post_reason('fail')
         return 'fail'
-    sql_lyr.SetSpatialFilterRect(0,0.5,1.5,1.5,2.5)
+    sql_lyr.SetSpatialFilterRect(0, 0.5, 1.5, 1.5, 2.5)
     if sql_lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
-    sql_lyr.SetSpatialFilterRect(0,0,0,0.5,0.5)
+    sql_lyr.SetSpatialFilterRect(0, 0, 0, 0.5, 0.5)
     if sql_lyr.GetFeatureCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    sql_lyr.SetSpatialFilterRect(1,9,99,11,101)
+    sql_lyr.SetSpatialFilterRect(1, 9, 99, 11, 101)
     if sql_lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
-    sql_lyr.SetSpatialFilterRect(1,0,0,0.5,0.5)
+    sql_lyr.SetSpatialFilterRect(1, 0, 0, 0.5, 0.5)
     if sql_lyr.GetFeatureCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'

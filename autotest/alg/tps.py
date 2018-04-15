@@ -43,11 +43,11 @@ from osgeo import gdal, osr
 def tps_1():
 
     drv = gdal.GetDriverByName('MEM')
-    ds = drv.Create('foo',2,2)
+    ds = drv.Create('foo', 2, 2)
     gcp_list = [
-        gdal.GCP(0, 0, 0,  0,  0),
-        gdal.GCP(0, 50, 0,  0, 50),
-        gdal.GCP(50, 0, 0, 50,  0),
+        gdal.GCP(0, 0, 0, 0, 0),
+        gdal.GCP(0, 50, 0, 0, 50),
+        gdal.GCP(50, 0, 0, 50, 0),
         gdal.GCP(50, 50, 0, 50, 50),
         gdal.GCP(0 * 25, 0 * 25, 0, 25, 25),
         ]
