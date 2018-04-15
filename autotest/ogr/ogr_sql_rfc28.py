@@ -637,18 +637,13 @@ def ogr_rfc28_27():
 # Extensive test of the evaluation of arithmetic and logical operators
 
 
-def ogr_rfc28_28_test_boolean(formula, expected_bool):
-    lyr = gdaltest.ds.ExecuteSQL("SELECT * from poly where fid = 0 and " + formula)
-    count = lyr.GetFeatureCount()
-    gdaltest.ds.ReleaseResultSet(lyr)
+def ogr_rfc28_28_test(formula, expected_val):
+    lyr = gdaltest.ds.ExecuteSQL("SELECT " + formula + " from poly where fid = 0")
+    f = lyr.GetNextFeature()
+    got = f.GetField(0)
 
-    if expected_bool:
-        expected_count = 1
-    else:
-        expected_count = 0
-
-    if count != expected_count:
-        gdaltest.post_reason('bad result for %s : %d' % (formula, count))
+    if got != expected_val:
+        gdaltest.post_reason('bad result for %s : %s' % (formula, str(expected_val)))
         return 'fail'
 
     return 'success'
@@ -671,19 +666,10 @@ def ogr_rfc28_28():
             formulas.append('3.' + operator + '3000000000000')
 
     for formula in formulas:
-        lyr = gdaltest.ds.ExecuteSQL("SELECT " + formula + " from poly where fid = 0")
-        expect = [eval(formula)]
-        f = lyr.GetNextFeature()
-        got = f.GetField(0)
-        lyr.ResetReading()
-        tr = ogrtest.check_features_against_list(lyr, 'field_1', expect)
-        gdaltest.ds.ReleaseResultSet(lyr)
-
-        if tr == 0:
-            gdaltest.post_reason('bad result for %s' % formula)
-            print(expect)
-            print(got)
-            return 'fail'
+        expected_val = eval(formula)
+        ret = ogr_rfc28_28_test(formula, expected_val)
+        if ret == 'fail':
+            return ret
 
     operators = ['<', '<=', '>', '>=', ' = ', '<>']
     formulas = []
@@ -707,11 +693,11 @@ def ogr_rfc28_28():
 
     for formula in formulas:
         expected_bool = eval(formula.replace(' = ','==').replace('<>','!='))
-        ret = ogr_rfc28_28_test_boolean(formula, expected_bool)
+        ret = ogr_rfc28_28_test(formula, expected_bool)
         if ret == 'fail':
             return ret
 
-    formulas_and_expected_bool = [['3 in (3,5)', True],
+    formulas_and_expected_val = [['3 in (3,5)', True],
                                    ['1000000000000 in (1000000000000, 1000000000001)', True],
                                    ['4 in (3,5)', False],
                                    ['3. in (3.,4.)', True],
@@ -732,10 +718,13 @@ def ogr_rfc28_28():
                                    ["'c' between 'b' and 'd'", True],
                                    ["'d' between 'b' and 'd'", True],
                                    ["'a' between 'b' and 'd'", False],
-                                   ["'e' between 'b' and 'd'", False]]
+                                   ["'e' between 'b' and 'd'", False],
+                                   ["null is null", True],
+                                   ["1 is null", False],
+                                   ["1.0 is null", False]]
 
-    for [formula, expected_bool] in formulas_and_expected_bool:
-        ret = ogr_rfc28_28_test_boolean(formula, expected_bool)
+    for [formula, expected_val] in formulas_and_expected_val:
+        ret = ogr_rfc28_28_test(formula, expected_val)
         if ret == 'fail':
             return ret
 
@@ -1614,6 +1603,58 @@ def ogr_rfc28_48():
 
     return 'success'
 
+
+###############################################################################
+def ogr_rfc28_int_overflows():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('lyr')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    tests = [('SELECT -9223372036854775808 FROM lyr', -9223372036854775808),
+             ('SELECT -9223372036854775808/1 FROM lyr', -9223372036854775808),
+             ('SELECT 9223372036854775807 FROM lyr', 9223372036854775807),
+             ('SELECT 9223372036854775807*1 FROM lyr', 9223372036854775807),
+             ('SELECT 9223372036854775807/1 FROM lyr', 9223372036854775807),
+             ('SELECT 9223372036854775807/-1 FROM lyr', -9223372036854775807),
+             ('SELECT 9223372036854775807*-1 FROM lyr', -9223372036854775807),
+             ('SELECT -1*9223372036854775807 FROM lyr', -9223372036854775807),
+             ('SELECT 1*(-9223372036854775808) FROM lyr', -9223372036854775808),
+             ('SELECT 0*(-9223372036854775808) FROM lyr', 0),
+             ('SELECT 9223372036854775806+1 FROM lyr', 9223372036854775807),
+             ('SELECT -9223372036854775807-1 FROM lyr', -9223372036854775808),
+             ('SELECT 9223372036854775808 FROM lyr', 9223372036854775808.0),
+             ('SELECT -9223372036854775809 FROM lyr', -9223372036854775809.0),
+             ('SELECT 9223372036854775807+1 FROM lyr', None),
+             ('SELECT 9223372036854775807 - (-1) FROM lyr', None),
+             ('SELECT -9223372036854775808-1 FROM lyr', None),
+             ('SELECT -9223372036854775808 + (-1) FROM lyr', None),
+             ('SELECT 9223372036854775807*2 FROM lyr', None),
+             ('SELECT -9223372036854775807*2 FROM lyr', None),
+             ('SELECT -1*(-9223372036854775808) FROM lyr', None),
+             ('SELECT 2 * (-9223372036854775807) FROM lyr', None),
+             ('SELECT 9223372036854775807*-2 FROM lyr', None),
+             ('SELECT -9223372036854775807*-2 FROM lyr', None),
+             ('SELECT -9223372036854775808*-1 FROM lyr', None),
+             ('SELECT -9223372036854775808/-1 FROM lyr', None),
+             ('SELECT 1/0 FROM lyr', 2147483647),
+             ]
+    for sql, res in tests:
+        sql_lyr = ds.ExecuteSQL(sql)
+        if res is None:
+            with gdaltest.error_handler():
+                f = sql_lyr.GetNextFeature()
+        else:
+            f = sql_lyr.GetNextFeature()
+        if f.GetField(0) != res:
+            gdaltest.post_reason('fail')
+            print(sql, res, f.GetField(0))
+            return 'fail'
+        ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
+
+
 ###############################################################################
 
 
@@ -1677,6 +1718,7 @@ gdaltest_list = [
     ogr_rfc28_46,
     ogr_rfc28_47,
     ogr_rfc28_48,
+    ogr_rfc28_int_overflows,
     ogr_rfc28_cleanup]
 
 if __name__ == '__main__':

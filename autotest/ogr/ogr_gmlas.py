@@ -1444,14 +1444,14 @@ def ogr_gmlas_dataset_getnextfeature():
     count = 0
     last_l = None
     while True:
-        f, l = ds.GetNextFeature()
+        f, lyr = ds.GetNextFeature()
         if f is None:
-            if l is not None:
+            if lyr is not None:
                 gdaltest.post_reason('fail')
                 return 'fail'
             break
         count += 1
-        last_l = l
+        last_l = lyr
 
     base_count = 59
     if count != base_count:
@@ -1464,8 +1464,8 @@ def ogr_gmlas_dataset_getnextfeature():
         print(last_l.GetName())
         return 'fail'
 
-    f, l = ds.GetNextFeature()
-    if f is not None or l is not None:
+    f, lyr = ds.GetNextFeature()
+    if f is not None or lyr is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -1496,9 +1496,9 @@ def ogr_gmlas_dataset_getnextfeature():
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options = ['EXPOSE_METADATA_LAYERS=YES'])
     count = 0
     while True:
-        f, l = ds.GetNextFeature()
+        f, lyr = ds.GetNextFeature()
         if f is None:
-            if l is not None:
+            if lyr is not None:
                 gdaltest.post_reason('fail')
                 return 'fail'
             break
@@ -1514,8 +1514,8 @@ def ogr_gmlas_dataset_getnextfeature():
         print(count)
         return 'fail'
 
-    f, l = ds.GetNextFeature()
-    if f is not None or l is not None:
+    f, lyr = ds.GetNextFeature()
+    if f is not None or lyr is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -1523,9 +1523,9 @@ def ogr_gmlas_dataset_getnextfeature():
 
     count = 0
     while True:
-        f, l = ds.GetNextFeature()
+        f, lyr = ds.GetNextFeature()
         if f is None:
-            if l is not None:
+            if lyr is not None:
                 gdaltest.post_reason('fail')
                 return 'fail'
             break
@@ -1553,9 +1553,9 @@ def ogr_gmlas_dataset_getnextfeature():
 
         count = 0
         while True:
-            f, l = ds.GetNextFeature()
+            f, lyr = ds.GetNextFeature()
             if f is None:
-                if l is not None:
+                if lyr is not None:
                     gdaltest.post_reason('fail')
                     return 'fail'
                 break
@@ -1567,8 +1567,8 @@ def ogr_gmlas_dataset_getnextfeature():
             print(expected_count)
             return 'fail'
 
-        f, l = ds.GetNextFeature()
-        if f is not None or l is not None:
+        f, lyr = ds.GetNextFeature()
+        if f is not None or lyr is not None:
             gdaltest.post_reason('fail')
             return 'fail'
 
@@ -1577,14 +1577,14 @@ def ogr_gmlas_dataset_getnextfeature():
     count = 0
     last_l = None
     while True:
-        f, l = ds.GetNextFeature()
+        f, lyr = ds.GetNextFeature()
         if f is None:
-            if l is not None:
+            if lyr is not None:
                 gdaltest.post_reason('fail')
                 return 'fail'
             break
         count += 1
-        last_l = l
+        last_l = lyr
 
     if count == 0:
         gdaltest.post_reason('fail')
@@ -3051,9 +3051,9 @@ def ogr_gmlas_read_fake_gmljp2():
 
     count = 0
     while True:
-        f, l = ds.GetNextFeature()
+        f, lyr = ds.GetNextFeature()
         if f is None:
-            if l is not None:
+            if lyr is not None:
                 gdaltest.post_reason('fail')
                 return 'fail'
             break

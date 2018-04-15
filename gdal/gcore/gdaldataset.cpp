@@ -6977,8 +6977,24 @@ struct GDALDataset::Layers::Iterator::Private
     GDALDataset* m_poDS = nullptr;
 };
 
+GDALDataset::Layers::Iterator::Iterator():
+    m_poPrivate(new Private())
+{}
+
+// False positive of cppcheck 1.72
+// cppcheck-suppress uninitMemberVar
+GDALDataset::Layers::Iterator::Iterator(const Iterator& oOther):
+    m_poPrivate(new Private(*(oOther.m_poPrivate)))
+{
+}
+
+GDALDataset::Layers::Iterator::Iterator(Iterator&& oOther):
+    m_poPrivate(std::move(oOther.m_poPrivate))
+{
+}
+
 GDALDataset::Layers::Iterator::Iterator(GDALDataset* poDS, bool bStart):
-    m_poPrivate(new GDALDataset::Layers::Iterator::Private())
+    m_poPrivate(new Private())
 {
     m_poPrivate->m_poDS = poDS;
     m_poPrivate->m_nLayerCount = poDS->GetLayerCount();
@@ -6997,7 +7013,23 @@ GDALDataset::Layers::Iterator::~Iterator()
 {
 }
 
-OGRLayer* GDALDataset::Layers::Iterator::operator*()
+// False positive of cppcheck 1.72
+// cppcheck-suppress operatorEqVarError
+GDALDataset::Layers::Iterator& GDALDataset::Layers::Iterator::operator=(
+                                const Iterator& oOther)
+{
+    *m_poPrivate = *oOther.m_poPrivate;
+    return *this;
+}
+
+GDALDataset::Layers::Iterator& GDALDataset::Layers::Iterator::operator=(
+                                GDALDataset::Layers::Iterator&& oOther)
+{
+    m_poPrivate = std::move(oOther.m_poPrivate);
+    return *this;
+}
+
+OGRLayer* GDALDataset::Layers::Iterator::operator*() const
 {
     return m_poPrivate->m_poLayer;
 }
@@ -7015,6 +7047,13 @@ GDALDataset::Layers::Iterator& GDALDataset::Layers::Iterator::operator++()
         m_poPrivate->m_poLayer = nullptr;
     }
     return *this;
+}
+
+GDALDataset::Layers::Iterator GDALDataset::Layers::Iterator::operator++(int)
+{
+    GDALDataset::Layers::Iterator temp = *this;
+    ++(*this);
+    return temp;
 }
 
 bool GDALDataset::Layers::Iterator::operator!= (const Iterator& it) const
@@ -7057,7 +7096,7 @@ GDALDataset::Layers GDALDataset::GetLayers()
  @since GDAL 2.3
 */
 
-const GDALDataset::Layers::Iterator GDALDataset::Layers::begin() const
+GDALDataset::Layers::Iterator GDALDataset::Layers::begin() const
 {
     return {m_poSelf, true};
 }
@@ -7072,7 +7111,7 @@ const GDALDataset::Layers::Iterator GDALDataset::Layers::begin() const
  @since GDAL 2.3
 */
 
-const GDALDataset::Layers::Iterator GDALDataset::Layers::end() const
+GDALDataset::Layers::Iterator GDALDataset::Layers::end() const
 {
     return {m_poSelf, false};
 }

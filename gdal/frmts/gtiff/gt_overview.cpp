@@ -246,6 +246,38 @@ void GTIFFBuildOverviewMetadata( const char *pszResampling,
 }
 
 /************************************************************************/
+/*                      GTIFFGetMaxColorChannels()                      */
+/************************************************************************/
+
+/*
+* Return the maximum number of color channels specified for a given photometric
+* type. 0 is returned if photometric type isn't supported or no default value
+* is defined by the specification.
+*/
+static int GTIFFGetMaxColorChannels( int photometric )
+{
+    switch (photometric) {
+        case PHOTOMETRIC_PALETTE:
+        case PHOTOMETRIC_MINISWHITE:
+        case PHOTOMETRIC_MINISBLACK:
+            return 1;
+        case PHOTOMETRIC_YCBCR:
+        case PHOTOMETRIC_RGB:
+        case PHOTOMETRIC_CIELAB:
+        case PHOTOMETRIC_LOGLUV:
+        case PHOTOMETRIC_ITULAB:
+        case PHOTOMETRIC_ICCLAB:
+            return 3;
+        case PHOTOMETRIC_SEPARATED:
+        case PHOTOMETRIC_MASK:
+            return 4;
+        case PHOTOMETRIC_LOGL:
+        default:
+            return 0;
+    }
+}
+
+/************************************************************************/
 /*                        GTIFFBuildOverviews()                         */
 /************************************************************************/
 
@@ -448,6 +480,13 @@ GTIFFBuildOverviews( const char * pszFilename,
     {
         nPhotometric = PHOTOMETRIC_PALETTE;
         // Should set the colormap up at this point too!
+    }
+    else if( nBands >= 3 &&
+             papoBandList[0]->GetColorInterpretation() == GCI_RedBand &&
+             papoBandList[1]->GetColorInterpretation() == GCI_GreenBand &&
+             papoBandList[2]->GetColorInterpretation() == GCI_BlueBand )
+    {
+        nPhotometric = PHOTOMETRIC_RGB;
     }
     else
         nPhotometric = PHOTOMETRIC_MINISBLACK;
@@ -746,6 +785,21 @@ GTIFFBuildOverviews( const char * pszFilename,
         pszNoData = osNoData.c_str();
     }
 
+    std::vector<uint16> anExtraSamples;
+    for( int i = GTIFFGetMaxColorChannels(nPhotometric)+1; i <= nBands; i++ )
+    {
+        if( papoBandList[i-1]->GetColorInterpretation() == GCI_AlphaBand )
+        {
+            anExtraSamples.push_back(
+                GTiffGetAlphaValue(CPLGetConfigOption("GTIFF_ALPHA", nullptr),
+                                   DEFAULT_ALPHA_TYPE));
+        }
+        else
+        {
+            anExtraSamples.push_back(EXTRASAMPLE_UNSPECIFIED);
+        }
+    }
+
     for( iOverview = 0; iOverview < nOverviews; iOverview++ )
     {
         const int nOXSize = (nXSize + panOverviewList[iOverview] - 1)
@@ -759,8 +813,8 @@ GTIFFBuildOverviews( const char * pszFilename,
                              nOvrBlockXSize, nOvrBlockYSize, TRUE, nCompression,
                              nPhotometric, nSampleFormat, nPredictor,
                              panRed, panGreen, panBlue,
-                             0,
-                             nullptr, // TODO: How can we fetch extrasamples?
+                             static_cast<int>(anExtraSamples.size()),
+                             anExtraSamples.empty() ? nullptr : anExtraSamples.data(),
                              osMetadata,
                              CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", nullptr ),
                              CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", nullptr ),

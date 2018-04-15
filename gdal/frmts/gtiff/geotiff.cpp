@@ -5018,10 +5018,7 @@ GDALColorInterp GTiffRasterBand::GetColorInterpretation()
 /*                         GTiffGetAlphaValue()                         */
 /************************************************************************/
 
-// Note: Was EXTRASAMPLE_ASSOCALPHA in GDAL < 1.10.
-constexpr uint16 DEFAULT_ALPHA_TYPE = EXTRASAMPLE_UNASSALPHA;
-
-static uint16 GTiffGetAlphaValue(const char* pszValue, uint16 nDefault)
+uint16 GTiffGetAlphaValue(const char* pszValue, uint16 nDefault)
 {
     if( pszValue == nullptr )
         return nDefault;

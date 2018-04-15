@@ -86,6 +86,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     bool bXDimPct = false;
     bool bYDimPct = false;
     bool bNonNearestResampling = false;
+    int nBlockXSize = 0;
+    int nBlockYSize = 0;
     if( papszArgv != nullptr )
     {
         int nCount = CSLCount(papszArgv);
@@ -104,6 +106,26 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             {
                 bNonNearestResampling = !STARTS_WITH_CI(papszArgv[i+1], "NEAR");
             }
+            else if( EQUAL(papszArgv[i], "-co") && i + 1 < nCount )
+            {
+                if( STARTS_WITH_CI(papszArgv[i+1], "BLOCKSIZE=") )
+                {
+                    nBlockXSize = std::max(nBlockXSize,
+                                atoi(papszArgv[i+1]+strlen("BLOCKSIZE=")));
+                    nBlockYSize = std::max(nBlockYSize,
+                                atoi(papszArgv[i+1]+strlen("BLOCKSIZE=")));
+                }
+                else if( STARTS_WITH_CI(papszArgv[i+1], "BLOCKXSIZE=") )
+                {
+                    nBlockXSize = std::max(nBlockXSize,
+                                atoi(papszArgv[i+1]+strlen("BLOCKXSIZE=")));
+                }
+                else if( STARTS_WITH_CI(papszArgv[i+1], "BLOCKYSIZE=") )
+                {
+                    nBlockYSize = std::max(nBlockYSize,
+                                atoi(papszArgv[i+1]+strlen("BLOCKYSIZE=")));
+                }
+            }
         }
     }
 
@@ -121,14 +143,6 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 int nBands = poSrcDS->GetRasterCount();
                 if( nBands < 10 )
                 {
-                    vsi_l_offset nSize =
-                        static_cast<vsi_l_offset>(nBands) *
-                        poSrcDS->GetRasterXSize() *
-                        poSrcDS->GetRasterYSize();
-                    if( nBands )
-                        nSize *= GDALGetDataTypeSizeBytes(
-                                poSrcDS->GetRasterBand(1)->GetRasterDataType() );
-
                     // Prevent excessive downsampling which might require huge
                     // memory allocation
                     bool bOKForResampling = true;
@@ -153,6 +167,17 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     bool bOKForSrc = true;
                     if( nBands )
                     {
+                        const int nDTSize = GDALGetDataTypeSizeBytes(
+                            poSrcDS->GetRasterBand(1)->GetRasterDataType() );
+                        vsi_l_offset nSize =
+                            static_cast<vsi_l_offset>(nBands) *
+                                poSrcDS->GetRasterXSize() *
+                                poSrcDS->GetRasterYSize() * nDTSize;
+                        if( nSize > 10 * 1024 * 1024 )
+                        {
+                            bOKForSrc = false;
+                        }
+
                         int nBXSize = 0, nBYSize = 0;
                         GDALGetBlockSize( GDALGetRasterBand(hSrcDS, 1), &nBXSize,
                                           &nBYSize );
@@ -163,13 +188,19 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                             (pszInterleave && EQUAL(pszInterleave, "PIXEL")) ?
                                         nBands : 1;
                         if( static_cast<GIntBig>(nSimultaneousBands)*
-                                        nBXSize * nBYSize > 10 * 1024 * 1024 )
+                                nBXSize * nBYSize * nDTSize > 10 * 1024 * 1024 )
+                        {
+                            bOKForSrc = false;
+                        }
+
+                        if( static_cast<GIntBig>(nBlockXSize) * nBlockYSize *
+                                        nBands * nDTSize  > 10 * 1024 * 1024 )
                         {
                             bOKForSrc = false;
                         }
                     }
 
-                    if( bOKForSrc && nSize < 10 * 1024 * 1024 && bOKForResampling )
+                    if( bOKForSrc && bOKForResampling )
                     {
                         GDALDatasetH hOutDS = GDALTranslate("/vsimem/out", hSrcDS,
                                                             psOptions, nullptr);
