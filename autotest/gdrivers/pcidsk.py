@@ -111,8 +111,8 @@ def pcidsk_5():
     # using the set and single methods.
 
     gdaltest.pcidsk_ds.SetMetadata(['ABC=DEF', 'GHI=JKL'])
-    gdaltest.pcidsk_ds.SetMetadataItem('XXX',  'YYY')
-    gdaltest.pcidsk_ds.SetMetadataItem('XYZ',  '123', 'AltDomain')
+    gdaltest.pcidsk_ds.SetMetadataItem('XXX', 'YYY')
+    gdaltest.pcidsk_ds.SetMetadataItem('XYZ', '123', 'AltDomain')
 
     # Close and reopen.
     gdaltest.pcidsk_ds = None
@@ -148,8 +148,8 @@ def pcidsk_6():
     band = gdaltest.pcidsk_ds.GetRasterBand(1)
 
     band.SetMetadata(['ABC=DEF', 'GHI=JKL'])
-    band.SetMetadataItem('XXX',  'YYY')
-    band.SetMetadataItem('XYZ',  '123', 'AltDomain')
+    band.SetMetadataItem('XXX', 'YYY')
+    band.SetMetadataItem('XYZ', '123', 'AltDomain')
     band = None
 
     # Close and reopen.
@@ -190,14 +190,14 @@ def pcidsk_7():
         return 'fail'
 
     ct = gdal.ColorTable()
-    ct.SetColorEntry(0, (0,255,0,255))
-    ct.SetColorEntry(1, (255,0,255,255))
-    ct.SetColorEntry(2, (0,0,255,255))
+    ct.SetColorEntry(0, (0, 255, 0, 255))
+    ct.SetColorEntry(1, (255, 0, 255, 255))
+    ct.SetColorEntry(2, (0, 0, 255, 255))
     band.SetColorTable(ct)
 
     ct = band.GetColorTable()
 
-    if ct.GetColorEntry(1) != (255,0,255,255):
+    if ct.GetColorEntry(1) != (255, 0, 255, 255):
         gdaltest.post_reason('Got wrong color table entry immediately.')
         return 'fail'
 
@@ -212,7 +212,7 @@ def pcidsk_7():
 
     ct = band.GetColorTable()
 
-    if ct.GetColorEntry(1) != (255,0,255,255):
+    if ct.GetColorEntry(1) != (255, 0, 255, 255):
         gdaltest.post_reason('Got wrong color table entry after reopen.')
         return 'fail'
 

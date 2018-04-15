@@ -206,7 +206,7 @@ def mbtiles_http_jpeg_three_bands():
         return 'skip'
 
     handler = webserver.FileHandler(
-        {'/world_l1.mbtiles' : open('data/world_l1.mbtiles','rb').read()})
+        {'/world_l1.mbtiles' : open('data/world_l1.mbtiles', 'rb').read()})
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/world_l1.mbtiles' % gdaltest.webserver_port)
     if ds is None:
@@ -233,7 +233,7 @@ def mbtiles_http_jpeg_single_band():
         return 'skip'
 
     handler = webserver.FileHandler(
-        {'/byte_jpeg.mbtiles' : open('data/byte_jpeg.mbtiles','rb').read()})
+        {'/byte_jpeg.mbtiles' : open('data/byte_jpeg.mbtiles', 'rb').read()})
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/byte_jpeg.mbtiles' % gdaltest.webserver_port)
     if ds is None:
@@ -260,7 +260,7 @@ def mbtiles_http_png():
         return 'skip'
 
     handler = webserver.FileHandler(
-        {'/byte.mbtiles' : open('data/byte.mbtiles','rb').read()})
+        {'/byte.mbtiles' : open('data/byte.mbtiles', 'rb').read()})
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/byte.mbtiles' % gdaltest.webserver_port)
     if ds is None:
@@ -456,15 +456,15 @@ def mbtiles_7():
     gt[1] /= 2
     gt[5] /= 2
     mem_ds.SetGeoTransform(gt)
-    mem_ds.WriteRaster(0,0,mem_ds.RasterXSize,mem_ds.RasterYSize,
-                       data,src_ds.RasterXSize,src_ds.RasterYSize)
+    mem_ds.WriteRaster(0, 0, mem_ds.RasterXSize, mem_ds.RasterYSize,
+                       data, src_ds.RasterXSize, src_ds.RasterYSize)
     src_ds = None
 
     gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_7.mbtiles', mem_ds, options=['TILE_FORMAT=PNG8', 'DITHER=YES', 'RESAMPLING=NEAREST'])
     mem_ds = None
 
     ds = gdal.Open('/vsimem/mbtiles_7.mbtiles', gdal.GA_Update)
-    ds.BuildOverviews('NEAR', [2,4])
+    ds.BuildOverviews('NEAR', [2, 4])
     ds = None
 
     ds = gdal.Open('/vsimem/mbtiles_7.mbtiles')
@@ -531,7 +531,7 @@ def mbtiles_8():
     if got_ct is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    if out_ds.GetRasterBand(1).GetBlockSize() != [256,256]:
+    if out_ds.GetRasterBand(1).GetBlockSize() != [256, 256]:
         gdaltest.post_reason('fail')
         print(out_ds.GetRasterBand(1).GetBlockSize())
         return 'fail'
@@ -554,7 +554,7 @@ def mbtiles_8():
     if got_ct is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    if out_ds.GetRasterBand(1).GetBlockSize() != [512,512]:
+    if out_ds.GetRasterBand(1).GetBlockSize() != [512, 512]:
         gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
@@ -718,7 +718,7 @@ def mbtiles_create():
     ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
     # Only north-up non rotated geotransform supported
     with gdaltest.error_handler():
-        ret = ds.SetGeoTransform([0,1,0,0,0,1])
+        ret = ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -728,7 +728,7 @@ def mbtiles_create():
     ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
     # Could not find an appropriate zoom level that matches raster pixel size
     with gdaltest.error_handler():
-        ret = ds.SetGeoTransform([0,1,0,0,0,-1])
+        ret = ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'

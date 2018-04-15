@@ -92,7 +92,7 @@ def gta_2():
     out_ds = None
 
     out_ds = gdal.Open('/vsimem/byte.gta', gdal.GA_Update)
-    out_ds.WriteRaster(0,0,20,20,src_ds.ReadRaster(0,0,20,20))
+    out_ds.WriteRaster(0, 0, 20, 20, src_ds.ReadRaster(0, 0, 20, 20))
     out_ds = None
 
     out_ds = gdal.Open('/vsimem/byte.gta')
@@ -168,7 +168,7 @@ def gta_4():
     if gdaltest.gta_drv is None:
         return 'skip'
 
-    src_ds = gdal.GetDriverByName('MEM').Create('',1,1,17)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 17)
     src_ds.GetRasterBand(1).Fill(255)
     src_ds.GetRasterBand(1).ComputeStatistics(False)
     src_ds.GetRasterBand(1).SetNoDataValue(123)

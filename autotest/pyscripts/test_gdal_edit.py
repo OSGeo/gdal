@@ -61,7 +61,7 @@ def test_gdal_edit_py_1():
         # Passing utf-8 characters doesn't at least please Wine...
         val = 'fake-utf8'
         val_encoded = val
-    elif sys.version_info >= (3,0,0):
+    elif sys.version_info >= (3, 0, 0):
         val = '\u00e9ven'
         val_encoded = val
     else:

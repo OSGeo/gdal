@@ -65,7 +65,7 @@ def move(filename, t_srs, s_srs=None, pixel_threshold=None):
 
     corners_pixel_line = [
         (0, 0, 0),
-        (0, ds.RasterYSize,0),
+        (0, ds.RasterYSize, 0),
         (ds.RasterXSize, 0, 0),
         (ds.RasterXSize, ds.RasterYSize, 0),
         (ds.RasterXSize / 2.0, ds.RasterYSize / 2.0, 0.0)]

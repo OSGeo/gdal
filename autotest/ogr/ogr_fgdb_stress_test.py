@@ -113,7 +113,7 @@ def ogr_fgdb_stress_test_1():
     nfeatures_created = 0
     for i in range(100000):
         #print(i)
-        function = random.randrange(0,500)
+        function = random.randrange(0, 500)
         if function == 0:
             if not in_transaction:
                 if verbose:
@@ -127,10 +127,10 @@ def ogr_fgdb_stress_test_1():
         elif function < 500 / 3:
             ret = []
             fid = -1
-            if random.randrange(0,2) == 0:
-                fid = 1 + random.randrange(0,1000)
-            str = '%d' % random.randrange(0,1000)
-            wkt = 'POINT (%d %d)' % (random.randrange(0,100),random.randrange(0,100))
+            if random.randrange(0, 2) == 0:
+                fid = 1 + random.randrange(0, 1000)
+            str = '%d' % random.randrange(0, 1000)
+            wkt = 'POINT (%d %d)' % (random.randrange(0, 100), random.randrange(0, 100))
             if verbose:
                 print('Create(%d)' % fid)
             for lyr in [lyr_test, lyr_ref]:
@@ -154,11 +154,11 @@ def ogr_fgdb_stress_test_1():
         # a SetFeature() before having creating at least 2 features !
         elif function < 500 * 2 / 3 and nfeatures_created >= 2:
             ret = []
-            fid = 1 + random.randrange(0,1000)
+            fid = 1 + random.randrange(0, 1000)
             if verbose:
                 print('Update(%d)' % fid)
-            str = '%d' % random.randrange(0,1000)
-            wkt = 'POINT (%d %d)' % (random.randrange(0,100),random.randrange(0,100))
+            str = '%d' % random.randrange(0, 1000)
+            wkt = 'POINT (%d %d)' % (random.randrange(0, 100), random.randrange(0, 100))
             for lyr in [lyr_test, lyr_ref]:
                 f = ogr.Feature(lyr.GetLayerDefn())
                 f.SetFID(fid)
@@ -174,7 +174,7 @@ def ogr_fgdb_stress_test_1():
         # Same for DeleteFeature()
         elif nfeatures_created >= 2:
             ret = []
-            fid = 1 + random.randrange(0,1000)
+            fid = 1 + random.randrange(0, 1000)
             if verbose:
                 print('Delete(%d)' % fid)
             for lyr in [lyr_test, lyr_ref]:

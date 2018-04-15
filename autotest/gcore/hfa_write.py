@@ -213,7 +213,7 @@ def hfa_bug_2525():
     drv = gdal.GetDriverByName('HFA')
     ds = drv.Create('tmp/test_hfa.img', 64, 64, 1, gdal.GDT_UInt16, options=['COMPRESSED=YES'])
     import struct
-    data = struct.pack('H' * 64, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535)
+    data = struct.pack('H' * 64, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535)
     for i in range(64):
         ds.GetRasterBand(1).WriteRaster(0, i, 64, 1, data)
     ds = None
@@ -352,7 +352,7 @@ def hfa_update_existing_aux_overviews():
 def hfa_write_invalid_wkt():
 
     # No GEOGCS
-    ds = gdal.GetDriverByName('HFA').Create('/vsimem/hfa_write_invalid_wkt.img', 1,1)
+    ds = gdal.GetDriverByName('HFA').Create('/vsimem/hfa_write_invalid_wkt.img', 1, 1)
     ds.SetProjection("""PROJCS["NAD27 / UTM zone 11N",
     PROJECTION["Transverse_Mercator"],
     PARAMETER["latitude_of_origin",0],
@@ -366,7 +366,7 @@ def hfa_write_invalid_wkt():
     ds = None
 
     # No DATUM in GEOGCS
-    ds = gdal.GetDriverByName('HFA').Create('/vsimem/hfa_write_invalid_wkt.img', 1,1)
+    ds = gdal.GetDriverByName('HFA').Create('/vsimem/hfa_write_invalid_wkt.img', 1, 1)
     ds.SetProjection("""PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
         AUTHORITY["EPSG","4267"]],
@@ -382,7 +382,7 @@ def hfa_write_invalid_wkt():
     ds = None
 
     # No SPHEROID in DATUM
-    ds = gdal.GetDriverByName('HFA').Create('/vsimem/hfa_write_invalid_wkt.img', 1,1)
+    ds = gdal.GetDriverByName('HFA').Create('/vsimem/hfa_write_invalid_wkt.img', 1, 1)
     ds.SetProjection("""PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
         DATUM["North_American_Datum_1927",

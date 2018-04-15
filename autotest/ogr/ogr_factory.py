@@ -42,7 +42,7 @@ from osgeo import ogr
 
 def save_as_csv(geom, filename):
     csv = 'ID,WKT\n0,"%s"\n' % geom.ExportToWkt()
-    open('/home/warmerda/' + filename,'w').write(csv)
+    open('/home/warmerda/' + filename, 'w').write(csv)
 
 ###############################################################################
 # 30 degree rotated ellipse, just one quarter.

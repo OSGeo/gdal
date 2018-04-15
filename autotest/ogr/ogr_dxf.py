@@ -73,7 +73,7 @@ def ogr_dxf_1():
         return 'fail'
 
     # Setup the utf-8 string.
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         gdaltest.sample_text = 'Text Sample1\u00BF\u03BB\n"abc"'
         gdaltest.sample_style = 'Text Sample1\u00BF\u03BB\n\\"abc\\"'
     else:
@@ -138,7 +138,7 @@ def ogr_dxf_2():
 
     if abs(geom.GetX(0) - 73.25) > 0.001 or abs(geom.GetY(0) - 139.75) > 0.001:
         gdaltest.post_reason('first point (%g,%g) not expected location.' \
-                              % (geom.GetX(0),geom.GetY(0)))
+                              % (geom.GetX(0), geom.GetY(0)))
         return 'fail'
 
     return 'success'
@@ -163,7 +163,7 @@ def ogr_dxf_3():
 
     if abs(geom.GetX(0) - 61.133) > 0.01 or abs(geom.GetY(0) - 103.592) > 0.01:
         gdaltest.post_reason('first point (%g,%g) not expected location.' \
-                              % (geom.GetX(0),geom.GetY(0)))
+                              % (geom.GetX(0), geom.GetY(0)))
         return 'fail'
 
     return 'success'
@@ -241,7 +241,7 @@ def ogr_dxf_7():
 
     if abs(geom.GetX(0) - 115.258) > 0.01 or abs(geom.GetY(0) - 107.791) > 0.01:
         gdaltest.post_reason('first point (%g,%g) not expected location.' \
-                              % (geom.GetX(0),geom.GetY(0)))
+                              % (geom.GetX(0), geom.GetY(0)))
         return 'fail'
 
     return 'success'
@@ -296,7 +296,7 @@ def ogr_dxf_8():
 
     expected_style = 'LABEL(f:"Arial",t:"54.33",p:5,a:43.3,s:2.5g,c:#000000)'
     if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s' % (feat.GetStyleString(),expected_style))
+        gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s' % (feat.GetStyleString(), expected_style))
         return 'fail'
 
     return 'success'
@@ -330,7 +330,7 @@ def ogr_dxf_9():
 
     expected_style = 'LABEL(f:"Arial",t:"' + gdaltest.sample_style + '",a:45,s:0.5g,p:5,c:#000000)'
     if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style))
+        gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(), expected_style))
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, 'POINT (77.602201427662891 120.775897075866169 0)'):
@@ -551,7 +551,7 @@ def ogr_dxf_13():
     if abs(geom.GetX(0) - 251297.8179) > 0.001 \
        or abs(geom.GetY(0) - 412226.8286) > 0.001:
         gdaltest.post_reason('first point (%g,%g) not expected location.' \
-                              % (geom.GetX(0),geom.GetY(0)))
+                              % (geom.GetX(0), geom.GetY(0)))
         return 'fail'
 
     # Other possible tests:
@@ -606,7 +606,7 @@ def ogr_dxf_14():
     if abs(geom.GetX(0) - 251297.8179) > 0.001 \
        or abs(geom.GetY(0) - 412226.8286) > 0.001:
         gdaltest.post_reason('first point (%g,%g) not expected location.' \
-                              % (geom.GetX(0),geom.GetY(0)))
+                              % (geom.GetX(0), geom.GetY(0)))
         return 'fail'
 
     ds = None
@@ -685,7 +685,7 @@ def ogr_dxf_15():
 
     outdxf = open('tmp/dxf_14.dxf').read()
     start_1 = outdxf.find('  0\nLAYER')
-    start_2 = outdxf.find('  0\nLAYER',start_1 + 10)
+    start_2 = outdxf.find('  0\nLAYER', start_1 + 10)
 
     txt_1 = outdxf[start_1:start_2]
     txt_2 = outdxf[start_2:start_2 + len(txt_1) + 2]
@@ -746,7 +746,7 @@ def ogr_dxf_16():
         gdaltest.post_reason('Did not get expected angle.')
         return 'fail'
 
-    if feat.GetField('BlockScale') != [1.0,1.0,1.0]:
+    if feat.GetField('BlockScale') != [1.0, 1.0, 1.0]:
         print(feat.GetField('BlockScale'))
         gdaltest.post_reason('Did not get expected BlockScale')
         return 'fail'
@@ -782,7 +782,7 @@ def ogr_dxf_16():
 
     expected_style = 'LABEL(f:"Arial",t:"' + gdaltest.sample_style + '",a:45,s:0.5g,p:5,c:#000000)'
     if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style))
+        gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(), expected_style))
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, 'POINT (-1.495452348993292 0.813702013422821 0)'):
@@ -868,7 +868,7 @@ def ogr_dxf_17():
     dst_feat.SetField('BlockName', 'XMark')
     dst_feat.SetField('BlockAngle', '30')
     dst_feat.SetFieldDoubleList(lyr.GetLayerDefn().GetFieldIndex('BlockScale'),
-                                [4.0,5.0,6.0])
+                                [4.0, 5.0, 6.0])
     lyr.CreateFeature(dst_feat)
 
     # Write a Block2 reference feature.
@@ -1169,7 +1169,7 @@ def ogr_dxf_22():
     ds = ogr.Open('data/text.dxf')
     lyr = ds.GetLayer(0)
 
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         test_text = 'test\ttext ab/c~d\u00B1ef^g.h#i jklm'
     else:
         exec("test_text = u'test\ttext ab/c~d\u00B1ef^g.h#i jklm'")
@@ -1931,7 +1931,7 @@ def ogr_dxf_32():
 #   LINESTRING Z (1 1 0,1 2 0,2 2 0,1 1 0)
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'LINESTRING Z (1 1 0,1 2 0,2 2 0,1 1 0)') \
-    or feat.GetField('RawCodeValues') != ['66      1','10 0.0','20 0.0','30 0.0']:
+    or feat.GetField('RawCodeValues') != ['66      1', '10 0.0', '20 0.0', '30 0.0']:
         feat.DumpReadable()
         return 'fail'
 
@@ -2521,7 +2521,7 @@ def ogr_dxf_33():
         gdaltest.post_reason('wrong ASMData on first 3DSOLID')
         return 'fail'
 
-    if feat.GetField('ASMTransform') != [1,0,0,0,1,0,0,0,1,0,0,0]:
+    if feat.GetField('ASMTransform') != [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]:
         feat.DumpReadable()
         gdaltest.post_reason('wrong ASMTransform on first 3DSOLID')
         return 'fail'
@@ -2967,16 +2967,16 @@ def ogr_dxf_42():
     if f.GetField('BlockName') != 'BLOCK4':
         gdaltest.post_reason('Wrong BlockName')
         return 'fail'
-    if f.GetField('BlockScale') != [0.4,1.0,1.5]:
+    if f.GetField('BlockScale') != [0.4, 1.0, 1.5]:
         gdaltest.post_reason('Wrong BlockScale')
         return 'fail'
     if f.GetField('BlockAngle') != 40:
         gdaltest.post_reason('Wrong BlockAngle')
         return 'fail'
-    if f.GetField('BlockOCSNormal') != [0.6,0.565685424949238,0.565685424949238]:
+    if f.GetField('BlockOCSNormal') != [0.6, 0.565685424949238, 0.565685424949238]:
         gdaltest.post_reason('Wrong BlockOCSNormal')
         return 'fail'
-    if f.GetField('BlockOCSCoords') != [5,5,0]:
+    if f.GetField('BlockOCSCoords') != [5, 5, 0]:
         gdaltest.post_reason('Wrong BlockOCSCoords')
         return 'fail'
     if f.GetField('Block') != 'BLOCK3':
@@ -3178,7 +3178,7 @@ def ogr_dxf_44():
         f.DumpReadable()
         return 'fail'
 
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         test_text = 'Apples\u00B1'
     else:
         exec("test_text = u'Apples\u00B1'")
@@ -3616,7 +3616,7 @@ def ogr_dxf_49():
     lyr = ds.GetLayerByName('entities')
 
     f = lyr.GetFeature(0)
-    if f.GetField('BlockAttributes') != ['MYATT1 super test','MYATTMULTI_001 Corps','MYATTMULTI_002 plpl']:
+    if f.GetField('BlockAttributes') != ['MYATT1 super test', 'MYATTMULTI_001 Corps', 'MYATTMULTI_002 plpl']:
         gdaltest.post_reason('Wrong BlockAttributes value on first INSERT')
         f.DumpReadable()
         return 'fail'
@@ -3712,7 +3712,7 @@ def ogr_dxf_51():
 
     lyr = ds.GetLayer(0)
 
-    wanted_style = ['a:330','c:#000000','dx:1.96672g','dy:-1.13549g','f:"Arial"','p:2','s:3g','t:"some text"','w:25']
+    wanted_style = ['a:330', 'c:#000000', 'dx:1.96672g', 'dy:-1.13549g', 'f:"Arial"', 'p:2', 's:3g', 't:"some text"', 'w:25']
 
     # Three text features, all with the same effective geometry and style
     for x in range(3):

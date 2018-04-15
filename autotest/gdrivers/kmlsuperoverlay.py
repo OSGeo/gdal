@@ -176,8 +176,8 @@ def kmlsuperoverlay_4():
 
     # Test fix for #6311
     vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
-    got_data = vrt_ds.ReadRaster(0,0,800,400,200,100)
-    ref_data = ds.ReadRaster(0,0,800,400,200,100)
+    got_data = vrt_ds.ReadRaster(0, 0, 800, 400, 200, 100)
+    ref_data = ds.ReadRaster(0, 0, 800, 400, 200, 100)
     vrt_ds = None
     if got_data != ref_data:
         gdaltest.post_reason('fail')

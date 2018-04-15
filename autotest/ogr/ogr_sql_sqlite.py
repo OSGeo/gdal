@@ -1042,7 +1042,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
                     self.wfile.write("""<?xml version="1.0" encoding="UTF-8"?><searchresults></searchresults>""".encode('ascii'))
                     return
                 else:
-                    self.send_error(404,'File Not Found: %s' % self.path)
+                    self.send_error(404, 'File Not Found: %s' % self.path)
                     return
 
             elif self.path.find('/yahoogeocoding') != -1:
@@ -1064,7 +1064,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
                     return
 
                 else:
-                    self.send_error(404,'File Not Found: %s' % self.path)
+                    self.send_error(404, 'File Not Found: %s' % self.path)
                     return
 
             elif self.path.find('/geonamesgeocoding') != -1:
@@ -1099,7 +1099,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
                     return
 
                 else:
-                    self.send_error(404,'File Not Found: %s' % self.path)
+                    self.send_error(404, 'File Not Found: %s' % self.path)
                     return
 
             elif self.path.find('/binggeocoding') != -1:
@@ -1158,7 +1158,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
                     return
 
                 else:
-                    self.send_error(404,'File Not Found: %s' % self.path)
+                    self.send_error(404, 'File Not Found: %s' % self.path)
                     return
 
             # Below is for reverse geocoding
@@ -1184,7 +1184,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 </reversegeocode>""".encode('ascii'))
                     return
                 else:
-                    self.send_error(404,'File Not Found: %s' % self.path)
+                    self.send_error(404, 'File Not Found: %s' % self.path)
                     return
 
             elif self.path.find('/yahooreversegeocoding') != -1:
@@ -1197,7 +1197,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 <!-- wws05.geotech.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:03:31 PST 2012 -->""".encode('ascii'))
                     return
                 else:
-                    self.send_error(404,'File Not Found: %s' % self.path)
+                    self.send_error(404, 'File Not Found: %s' % self.path)
                     return
 
             elif self.path.find('/geonamesreversegeocoding') != -1:
@@ -1222,7 +1222,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 </geonames>""".encode('ascii'))
                     return
                 else:
-                    self.send_error(404,'File Not Found: %s' % self.path)
+                    self.send_error(404, 'File Not Found: %s' % self.path)
                     return
 
             elif self.path.find('/bingreversegeocoding') != -1:
@@ -1267,14 +1267,14 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 </Response>""".encode('ascii'))
                     return
                 else:
-                    self.send_error(404,'File Not Found: %s' % self.path)
+                    self.send_error(404, 'File Not Found: %s' % self.path)
                     return
 
             return
         except IOError:
             pass
 
-        self.send_error(404,'File Not Found: %s' % self.path)
+        self.send_error(404, 'File Not Found: %s' % self.path)
 
 
 ###############################################################################

@@ -1302,24 +1302,24 @@ def gml_invalid_geoms():
         ('<gml:OrientableSurface><foo/></gml:OrientableSurface>', None),
         ('<gml:OrientableSurface><gml:baseSurface/></gml:OrientableSurface>', None),
         ('<gml:OrientableSurface><gml:baseSurface><foo/></gml:baseSurface></gml:OrientableSurface>', None),
-        ('<gmlce:SimplePolygon/>',None),  # invalid
-        ('<gmlce:SimplePolygon><foo/></gmlce:SimplePolygon>',None),  # invalid GML3, but we are tolerant
-        ('<gmlce:SimplePolygon><gml:posList/></gmlce:SimplePolygon>','POLYGON EMPTY'),  # validates the schema
-        ('<gmlce:SimpleMultiPoint/>',None),  # invalid
-        ('<gmlce:SimpleMultiPoint><foo/></gmlce:SimpleMultiPoint>',None),  # invalid GML3, but we are tolerant
-        ('<gmlce:SimpleMultiPoint><gml:posList/></gmlce:SimpleMultiPoint>','MULTIPOINT EMPTY'),  # validates the schema
-        ('<gml:Envelope/>',None),
-        ('<gml:Envelope><gml:lowerCorner/><gml:upperCorner/></gml:Envelope>',None),
-        ('<gml:Envelope><gml:lowerCorner>1</gml:lowerCorner><gml:upperCorner>3 4</gml:upperCorner/></gml:Envelope>',None),
-        ('<gml:Point><gml:coordinates cs="bla">1bla2</gml:coordinates></gml:Point>',None),
-        ('<gml:Point><gml:coordinates cs="">1bla2</gml:coordinates></gml:Point>',None),
-        ('<gml:Point><gml:coordinates cs="0">1bla2</gml:coordinates></gml:Point>',None),
-        ('<gml:Point><gml:coordinates ts="bla">1,2</gml:coordinates></gml:Point>',None),
-        ('<gml:Point><gml:coordinates ts="">1,2</gml:coordinates></gml:Point>',None),
-        ('<gml:Point><gml:coordinates ts="0">1,2</gml:coordinates></gml:Point>',None),
-        ('<gml:Point><gml:coordinates decimal="bla">1,2</gml:coordinates></gml:Point>',None),
-        ('<gml:Point><gml:coordinates decimal="">1,2</gml:coordinates></gml:Point>',None),
-        ('<gml:Point><gml:coordinates decimal="0">1,2</gml:coordinates></gml:Point>',None),
+        ('<gmlce:SimplePolygon/>', None),  # invalid
+        ('<gmlce:SimplePolygon><foo/></gmlce:SimplePolygon>', None),  # invalid GML3, but we are tolerant
+        ('<gmlce:SimplePolygon><gml:posList/></gmlce:SimplePolygon>', 'POLYGON EMPTY'),  # validates the schema
+        ('<gmlce:SimpleMultiPoint/>', None),  # invalid
+        ('<gmlce:SimpleMultiPoint><foo/></gmlce:SimpleMultiPoint>', None),  # invalid GML3, but we are tolerant
+        ('<gmlce:SimpleMultiPoint><gml:posList/></gmlce:SimpleMultiPoint>', 'MULTIPOINT EMPTY'),  # validates the schema
+        ('<gml:Envelope/>', None),
+        ('<gml:Envelope><gml:lowerCorner/><gml:upperCorner/></gml:Envelope>', None),
+        ('<gml:Envelope><gml:lowerCorner>1</gml:lowerCorner><gml:upperCorner>3 4</gml:upperCorner/></gml:Envelope>', None),
+        ('<gml:Point><gml:coordinates cs="bla">1bla2</gml:coordinates></gml:Point>', None),
+        ('<gml:Point><gml:coordinates cs="">1bla2</gml:coordinates></gml:Point>', None),
+        ('<gml:Point><gml:coordinates cs="0">1bla2</gml:coordinates></gml:Point>', None),
+        ('<gml:Point><gml:coordinates ts="bla">1,2</gml:coordinates></gml:Point>', None),
+        ('<gml:Point><gml:coordinates ts="">1,2</gml:coordinates></gml:Point>', None),
+        ('<gml:Point><gml:coordinates ts="0">1,2</gml:coordinates></gml:Point>', None),
+        ('<gml:Point><gml:coordinates decimal="bla">1,2</gml:coordinates></gml:Point>', None),
+        ('<gml:Point><gml:coordinates decimal="">1,2</gml:coordinates></gml:Point>', None),
+        ('<gml:Point><gml:coordinates decimal="0">1,2</gml:coordinates></gml:Point>', None),
         ("""<gml:Curve><gml:segments>
             <gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc>
             <gml:LineStringSegment><gml:posList>-10 0 -1 0 0 0</gml:posList></gml:LineStringSegment>

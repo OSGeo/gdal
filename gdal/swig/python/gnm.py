@@ -6,7 +6,7 @@
 
 
 from sys import version_info
-if version_info >= (2,6,0):
+if version_info >= (2, 6, 0):
     def swig_import_helper():
         from os.path import dirname
         import imp
@@ -33,27 +33,27 @@ except NameError:
     pass  # Python < 2.2 doesn't have 'property'.
 
 
-def _swig_setattr_nondynamic(self,class_type,name,value,static=1):
+def _swig_setattr_nondynamic(self, class_type, name, value, static=1):
     if (name == "thisown"): return self.this.own(value)
     if (name == "this"):
         if type(value).__name__ == 'SwigPyObject':
             self.__dict__[name] = value
             return
-    method = class_type.__swig_setmethods__.get(name,None)
-    if method: return method(self,value)
+    method = class_type.__swig_setmethods__.get(name, None)
+    if method: return method(self, value)
     if (not static):
         self.__dict__[name] = value
     else:
         raise AttributeError("You cannot add attributes to %s" % self)
 
 
-def _swig_setattr(self,class_type,name,value):
-    return _swig_setattr_nondynamic(self,class_type,name,value,0)
+def _swig_setattr(self, class_type, name, value):
+    return _swig_setattr_nondynamic(self, class_type, name, value, 0)
 
 
-def _swig_getattr(self,class_type,name):
+def _swig_getattr(self, class_type, name):
     if (name == "thisown"): return self.this.own()
-    method = class_type.__swig_getmethods__.get(name,None)
+    method = class_type.__swig_getmethods__.get(name, None)
     if method: return method(self)
     raise AttributeError(name)
 
@@ -143,10 +143,10 @@ def CastToGenericNetwork(*args):
 class Network(MajorObject):
     """Proxy of C++ GNMNetworkShadow class"""
     __swig_setmethods__ = {}
-    for _s in [MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
+    for _s in [MajorObject]: __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, Network, name, value)
     __swig_getmethods__ = {}
-    for _s in [MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [MajorObject]: __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, Network, name)
 
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
@@ -241,10 +241,10 @@ Network_swigregister(Network)
 class GenericNetwork(Network):
     """Proxy of C++ GNMGenericNetworkShadow class"""
     __swig_setmethods__ = {}
-    for _s in [Network]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
+    for _s in [Network]: __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, GenericNetwork, name, value)
     __swig_getmethods__ = {}
-    for _s in [Network]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [Network]: __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, GenericNetwork, name)
 
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")

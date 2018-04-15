@@ -64,7 +64,7 @@ def test_gdalwarp_lib_1():
 def test_gdalwarp_lib_2():
 
     ds1 = gdal.Open('../gcore/data/byte.tif')
-    dstDS = gdal.Warp('tmp/testgdalwarp2.tif'.encode('ascii').decode('ascii'),[ds1], format='GTiff')
+    dstDS = gdal.Warp('tmp/testgdalwarp2.tif'.encode('ascii').decode('ascii'), [ds1], format='GTiff')
 
     if dstDS.GetRasterBand(1).Checksum() != 4672:
         gdaltest.post_reason('Bad checksum')
@@ -119,8 +119,8 @@ def test_gdalwarp_lib_4():
 def test_gdalwarp_lib_5():
 
     ds = gdal.Open('../gcore/data/byte.tif')
-    gcpList = [gdal.GCP(440720.000,3751320.000,0,0,0), gdal.GCP(441920.000,3751320.000,0,20,0), gdal.GCP(441920.000,3750120.000,0,20,20), gdal.GCP(440720.000,3750120.000,0,0,20)]
-    ds1 = gdal.Translate('tmp/testgdalwarp_gcp.tif',ds,outputSRS='EPSG:26711',GCPs=gcpList)
+    gcpList = [gdal.GCP(440720.000, 3751320.000, 0, 0, 0), gdal.GCP(441920.000, 3751320.000, 0, 20, 0), gdal.GCP(441920.000, 3750120.000, 0, 20, 20), gdal.GCP(440720.000, 3750120.000, 0, 0, 20)]
+    ds1 = gdal.Translate('tmp/testgdalwarp_gcp.tif', ds, outputSRS='EPSG:26711', GCPs=gcpList)
     dstDS = gdal.Warp('', ds1, format='MEM', tps=True)
 
     if dstDS.GetRasterBand(1).Checksum() != 4672:
@@ -142,7 +142,7 @@ def test_gdalwarp_lib_5():
 def test_gdalwarp_lib_6():
 
     ds1 = gdal.Open('tmp/testgdalwarp_gcp.tif')
-    dstDS = gdal.Warp('',ds1, format='MEM', tps=True)
+    dstDS = gdal.Warp('', ds1, format='MEM', tps=True)
 
     if dstDS.GetRasterBand(1).Checksum() != 4672:
         gdaltest.post_reason('Bad checksum')
@@ -163,7 +163,7 @@ def test_gdalwarp_lib_6():
 def test_gdalwarp_lib_7():
 
     ds1 = gdal.Open('tmp/testgdalwarp_gcp.tif')
-    dstDS = gdal.Warp('',[ds1], format='MEM',xRes=120,yRes=120)
+    dstDS = gdal.Warp('', [ds1], format='MEM', xRes=120, yRes=120)
     if dstDS is None:
         return 'fail'
 
@@ -183,7 +183,7 @@ def test_gdalwarp_lib_7():
 def test_gdalwarp_lib_8():
 
     ds1 = gdal.Open('tmp/testgdalwarp_gcp.tif')
-    dstDS = gdal.Warp('',[ds1], format='MEM',width=10,height=10)
+    dstDS = gdal.Warp('', [ds1], format='MEM', width=10, height=10)
     if dstDS is None:
         return 'fail'
 
@@ -470,8 +470,8 @@ def test_gdalwarp_lib_32():
 
 def test_gdalwarp_lib_34():
 
-    srcds1 = gdal.Translate('', '../gcore/data/byte.tif', format='MEM', srcWin=[0,0,10,20])
-    srcds2 = gdal.Translate('', '../gcore/data/byte.tif', format='MEM', srcWin=[10,0,10,20])
+    srcds1 = gdal.Translate('', '../gcore/data/byte.tif', format='MEM', srcWin=[0, 0, 10, 20])
+    srcds2 = gdal.Translate('', '../gcore/data/byte.tif', format='MEM', srcWin=[10, 0, 10, 20])
     ds = gdal.Warp('', [srcds1, srcds2], format='MEM')
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -926,12 +926,12 @@ def test_gdalwarp_lib_123():
 def test_gdalwarp_lib_124():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
-    src_ds.SetGeoTransform([10,1,0,10,0,-1])
+    src_ds.SetGeoTransform([10, 1, 0, 10, 0, -1])
     src_ds.GetRasterBand(1).SetNoDataValue(12)
     src_ds.GetRasterBand(1).Fill(12)
 
     out_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
-    out_ds.SetGeoTransform([10,1,0,10,0,-1])
+    out_ds.SetGeoTransform([10, 1, 0, 10, 0, -1])
     out_ds.GetRasterBand(1).SetNoDataValue(21)
     out_ds.GetRasterBand(1).Fill(21)
     expected_cs = out_ds.GetRasterBand(1).Checksum()
@@ -956,12 +956,12 @@ def test_gdalwarp_lib_125():
     for i in range(3):
 
         src_ds_1 = gdal.GetDriverByName('MEM').Create('', 2, 2)
-        src_ds_1.SetGeoTransform([10,1,0,10,0,-1])
+        src_ds_1.SetGeoTransform([10, 1, 0, 10, 0, -1])
         if i == 1 or i == 3:
             src_ds_1.GetRasterBand(1).SetMetadataItem('STATISTICS_MINIUM', '5')
 
         src_ds_2 = gdal.GetDriverByName('MEM').Create('', 2, 2)
-        src_ds_2.SetGeoTransform([10,1,0,10,0,-1])
+        src_ds_2.SetGeoTransform([10, 1, 0, 10, 0, -1])
         if i == 2 or i == 3:
             src_ds_2.GetRasterBand(1).SetMetadataItem('STATISTICS_MINIUM', '5')
 
@@ -1138,7 +1138,7 @@ def test_gdalwarp_lib_129():
 
     ds = gdal.Warp('', mem_ds, format='MEM', cutlineDSName=cutlineDSName,
                    dstSRS='EPSG:4326',
-                   outputBounds=[-1,0,0,1],
+                   outputBounds=[-1, 0, 0, 1],
                    xRes=0.01, yRes=0.01,
                    transformerOptions=['RPC_DEM=data/test_gdalwarp_lib_129_dem.vrt'])
     cs = ds.GetRasterBand(1).Checksum()
@@ -1161,7 +1161,7 @@ def test_gdalwarp_lib_130():
 
     src_ds = gdal.GetDriverByName('GTiff').Create(
         '/vsimem/test_gdalwarp_lib_130.tif', 1, 1, 5, options=['PHOTOMETRIC=RGB'])
-    src_ds.SetGeoTransform([100,1,0,200,0,-1])
+    src_ds.SetGeoTransform([100, 1, 0, 200, 0, -1])
     src_ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)
     src_ds.GetRasterBand(1).Fill(1)
     src_ds.GetRasterBand(2).Fill(2)
@@ -1176,7 +1176,7 @@ def test_gdalwarp_lib_130():
     if ds.GetRasterBand(5).GetColorInterpretation() != gdal.GCI_AlphaBand:
         gdaltest.post_reason('bad color interpretation')
         return 'fail'
-    expected_val = [1,2,3,4,255]
+    expected_val = [1, 2, 3, 4, 255]
     for i in range(5):
         data = struct.unpack('B' * 1, ds.GetRasterBand(i + 1).ReadRaster())[0]
         if data != expected_val[i]:
@@ -1217,13 +1217,13 @@ def test_gdalwarp_lib_131():
 
     src_ds = gdal.GetDriverByName('GTiff').Create(
         '/vsimem/test_gdalwarp_lib_131.tif', 1, 1, 2)
-    src_ds.SetGeoTransform([100,1,0,200,0,-1])
+    src_ds.SetGeoTransform([100, 1, 0, 200, 0, -1])
     src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
     src_ds.GetRasterBand(1).Fill(1)
     src_ds.GetRasterBand(2).Fill(0)
 
     ds = gdal.Warp('/vsimem/test_gdalwarp_lib_131_dst.tif', src_ds, options='-nosrcalpha')
-    expected_val = [1,0]
+    expected_val = [1, 0]
     for i in range(2):
         data = struct.unpack('B' * 1, ds.GetRasterBand(i + 1).ReadRaster())[0]
         if data != expected_val[i]:
@@ -1249,7 +1249,7 @@ def test_gdalwarp_lib_132():
     for dt in [gdal.GDT_Byte, gdal.GDT_Float32]:
         src_ds = gdal.GetDriverByName('GTiff').Create(
             '/vsimem/test_gdalwarp_lib_132.tif', 33, 1, 2, dt)
-        src_ds.SetGeoTransform([100,1,0,200,0,-1])
+        src_ds.SetGeoTransform([100, 1, 0, 200, 0, -1])
         src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
 
         ds = gdal.Translate('/vsimem/test_gdalwarp_lib_132_dst.tif', src_ds)
@@ -1265,7 +1265,7 @@ def test_gdalwarp_lib_132():
         gdal.Warp(ds, src_ds)
         expected_alpha = int(src_alpha + dst_alpha * (255 - src_alpha) / 255. + 0.5)
         expected_grey = int((src_grey * src_alpha + dst_grey * dst_alpha * (255 - src_alpha) / 255.) / expected_alpha + 0.5)
-        expected_val = [expected_grey,expected_alpha]
+        expected_val = [expected_grey, expected_alpha]
         for i in range(2):
             for x in range(33):
                 data = struct.unpack('B' * 1, ds.GetRasterBand(i + 1).ReadRaster(i, 0, 1, 1, buf_type=gdal.GDT_Byte))[0]
@@ -1305,7 +1305,7 @@ def test_gdalwarp_lib_133():
     ds = None
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 4, 1)
-    src_ds.SetGeoTransform([0,1,0,1,0,-1])
+    src_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
     src_ds.GetRasterBand(1).Fill(255)
     ds = gdal.Warp('', src_ds, format='MEM', cutlineDSName='/vsimem/test_gdalwarp_lib_133.shp')
     if ds is None:
@@ -1339,11 +1339,11 @@ def test_gdalwarp_lib_134():
     src_src_ds = gdal.Open('../gcore/data/byte.tif')
     src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
     src_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, src_src_ds.GetRasterBand(1).ReadRaster())
-    ds = gdal.Warp('', src_ds, format='MEM', transformerOptions=['SRC_METHOD=NO_GEOTRANSFORM', 'DST_METHOD=NO_GEOTRANSFORM'], outputBounds=[1,2,4,6])
+    ds = gdal.Warp('', src_ds, format='MEM', transformerOptions=['SRC_METHOD=NO_GEOTRANSFORM', 'DST_METHOD=NO_GEOTRANSFORM'], outputBounds=[1, 2, 4, 6])
     if ds is None:
         return 'fail'
 
-    if ds.GetRasterBand(1).ReadRaster() != src_src_ds.GetRasterBand(1).ReadRaster(1,2,4 - 1,6 - 2):
+    if ds.GetRasterBand(1).ReadRaster() != src_src_ds.GetRasterBand(1).ReadRaster(1, 2, 4 - 1, 6 - 2):
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -1353,7 +1353,7 @@ def test_gdalwarp_lib_134():
     if ds is None:
         return 'fail'
 
-    if ds.GetRasterBand(1).ReadRaster() != src_src_ds.GetRasterBand(1).ReadRaster(2,2,16,16):
+    if ds.GetRasterBand(1).ReadRaster() != src_src_ds.GetRasterBand(1).ReadRaster(2, 2, 16, 16):
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -1370,14 +1370,14 @@ def test_gdalwarp_lib_134():
 def test_gdalwarp_lib_135():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
-    src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
+    src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
     src_ds.GetRasterBand(1).Fill(100)
 
     grid_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/grid.tif', 1, 1)
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
     grid_ds.SetProjection(sr.ExportToWkt())
-    grid_ds.SetGeoTransform([-180,360,0,90,0,-180])
+    grid_ds.SetGeoTransform([-180, 360, 0, 90, 0, -180])
     grid_ds.GetRasterBand(1).Fill(20)
     grid_ds = None
 
@@ -1385,7 +1385,7 @@ def test_gdalwarp_lib_135():
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
     grid_ds.SetProjection(sr.ExportToWkt())
-    grid_ds.SetGeoTransform([-180,360,0,90,0,-180])
+    grid_ds.SetGeoTransform([-180, 360, 0, 90, 0, -180])
     grid_ds.GetRasterBand(1).Fill(5)
     grid_ds = None
 
@@ -1453,7 +1453,7 @@ def test_gdalwarp_lib_135():
         return 'fail'
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
-    src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
+    src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
     src_ds.GetRasterBand(1).Fill(100)
 
     # Both transforms to regular VRT
@@ -1562,7 +1562,7 @@ def test_gdalwarp_lib_135():
 
     # Forward transform with explicit m unit
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
-    src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
+    src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs')
     src_ds.SetProjection(sr.ExportToWkt())
@@ -1579,7 +1579,7 @@ def test_gdalwarp_lib_135():
 
     # Forward transform with explicit ft unit
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1, gdal.GDT_Float32)
-    src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
+    src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs')
     src_ds.SetProjection(sr.ExportToWkt())
@@ -1596,7 +1596,7 @@ def test_gdalwarp_lib_135():
 
     # Forward transform with explicit unhandled unit
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
-    src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
+    src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs')
     src_ds.SetProjection(sr.ExportToWkt())
@@ -1616,13 +1616,13 @@ def test_gdalwarp_lib_135():
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
     grid_ds.SetProjection(sr.ExportToWkt())
-    grid_ds.SetGeoTransform([-180,360,0,90,0,-180])
+    grid_ds.SetGeoTransform([-180, 360, 0, 90, 0, -180])
     grid_ds.GetRasterBand(1).Fill(255)
     grid_ds.GetRasterBand(1).SetNoDataValue(255)
     grid_ds = None
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
-    src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
+    src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
     src_ds.GetRasterBand(1).Fill(100)
 
     # Test missing shift values in area of interest
@@ -1730,10 +1730,10 @@ def test_gdalwarp_lib_136():
 def test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs():
     src_ds = gdal.Open('../gcore/data/byte.tif')
     src_ds_32611_left = gdal.Translate('', src_ds, format='MEM',
-                                       srcWin=[0,0,10,20],
+                                       srcWin=[0, 0, 10, 20],
                                        outputSRS='EPSG:32611')
     src_ds_32611_right = gdal.Translate('', src_ds, format='MEM',
-                                       srcWin=[10,0,10,20],
+                                       srcWin=[10, 0, 10, 20],
                                        outputSRS='EPSG:32611')
     src_ds_4326_right = gdal.Warp('', src_ds_32611_right, format='MEM',
                                   dstSRS='EPSG:4326')
@@ -1759,8 +1759,8 @@ def test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs(
 
 def test_gdalwarp_lib_touching_dateline():
 
-    src_ds = gdal.GetDriverByName('MEM').Create('', 100,100)
-    src_ds.SetGeoTransform([-2050000,500,0,2100000,0,-500])
+    src_ds = gdal.GetDriverByName('MEM').Create('', 100, 100)
+    src_ds.SetGeoTransform([-2050000, 500, 0, 2100000, 0, -500])
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(3411)
     src_ds.SetProjection(sr.ExportToWkt())

@@ -91,7 +91,7 @@ def ogr_gft_read():
     if lyr is None:
         return 'fail'
 
-    lyr.SetSpatialFilterRect(67,31.5,67.5,32)
+    lyr.SetSpatialFilterRect(67, 31.5, 67.5, 32)
     lyr.SetAttributeFilter("'Attack on' = 'ENEMY'")
 
     count = lyr.GetFeatureCount()
@@ -135,7 +135,7 @@ def ogr_gft_write():
     ogrtest.gft_can_write = True
 
     import random
-    ogrtest.gft_rand_val = random.randint(0,2147000000)
+    ogrtest.gft_rand_val = random.randint(0, 2147000000)
     table_name = "test_%d" % ogrtest.gft_rand_val
 
     lyr = ds.CreateLayer(table_name)

@@ -122,7 +122,7 @@ if x < 0 or x >= ds.RasterXSize or y < 0 or y >= ds.RasterYSize:
     print('Passed coordinates are not in dataset extent')
     sys.exit(1)
 
-res = ds.ReadAsArray(x,y,1,1)
+res = ds.ReadAsArray(x, y, 1, 1)
 if len(res.shape) == 2:
     print(res[0][0])
 else:

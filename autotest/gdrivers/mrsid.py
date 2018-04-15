@@ -195,7 +195,7 @@ def mrsid_3():
         gdaltest.post_reason('did not get expected overview count')
         return 'fail'
 
-    new_stat = band.GetOverview(3).GetStatistics(0,1)
+    new_stat = band.GetOverview(3).GetStatistics(0, 1)
 
     check_stat = (11.0, 230.0, 103.42607897153351, 39.952592422557757)
 
@@ -339,7 +339,7 @@ def mrsid_8():
     if gdaltest.mrsid_drv is None:
         return 'skip'
 
-    new_gt = (10000,50,0,20000,0,-50)
+    new_gt = (10000, 50, 0, 20000, 0, -50)
     new_srs = """PROJCS["OSGB 1936 / British National Grid",GEOGCS["OSGB 1936",DATUM["OSGB_1936",SPHEROID["Airy 1830",6377563.396,299.3249646,AUTHORITY["EPSG","7001"]],AUTHORITY["EPSG","6277"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4277"]],UNIT["metre",1,AUTHORITY["EPSG","9001"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",49],PARAMETER["central_meridian",-2],PARAMETER["scale_factor",0.9996012717],PARAMETER["false_easting",400000],PARAMETER["false_northing",-100000],AUTHORITY["EPSG","27700"],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -529,7 +529,7 @@ def mrsid_online_3():
 
     ds = gdal.Open('tmp/cache/Bretagne1.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne1.bmp')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref,verbose=0)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
 
     ds = None
     ds_ref = None
@@ -539,7 +539,7 @@ def mrsid_online_3():
         print(ds.GetRasterBand(1).Checksum())
         print(ds_ref.GetRasterBand(1).Checksum())
 
-        gdaltest.compare_ds(ds, ds_ref,verbose=1)
+        gdaltest.compare_ds(ds, ds_ref, verbose=1)
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
 

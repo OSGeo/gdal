@@ -782,7 +782,7 @@ def vsigs_read_credentials_oauth2_service_account_json_file():
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
 
-    gdal.FileFromMemBuffer('/vsimem/service_account.json',"""{
+    gdal.FileFromMemBuffer('/vsimem/service_account.json', """{
   "private_key": "-----BEGIN PRIVATE KEY-----\nMIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAOlwJQLLDG1HeLrk\nVNcFR5Qptto/rJE5emRuy0YmkVINT4uHb1be7OOo44C2Ev8QPVtNHHS2XwCY5gTm\ni2RfIBLv+VDMoVQPqqE0LHb0WeqGmM5V1tHbmVnIkCcKMn3HpK30grccuBc472LQ\nDVkkGqIiGu0qLAQ89JP/r0LWWySRAgMBAAECgYAWjsS00WRBByAOh1P/dz4kfidy\nTabiXbiLDf3MqJtwX2Lpa8wBjAc+NKrPXEjXpv0W3ou6Z4kkqKHJpXGg4GRb4N5I\n2FA+7T1lA0FCXa7dT2jvgJLgpBepJu5b//tqFqORb4A4gMZw0CiPN3sUsWsSw5Hd\nDrRXwp6sarzG77kvZQJBAPgysAmmXIIp9j1hrFSkctk4GPkOzZ3bxKt2Nl4GFrb+\nbpKSon6OIhP1edrxTz1SMD1k5FiAAVUrMDKSarbh5osCQQDwxq4Tvf/HiYz79JBg\nWz5D51ySkbg01dOVgFW3eaYAdB6ta/o4vpHhnbrfl6VO9oUb3QR4hcrruwnDHsw3\n4mDTAkEA9FPZjbZSTOSH/cbgAXbdhE4/7zWOXj7Q7UVyob52r+/p46osAk9i5qj5\nKvnv2lrFGDrwutpP9YqNaMtP9/aLnwJBALLWf9n+GAv3qRZD0zEe1KLPKD1dqvrj\nj+LNjd1Xp+tSVK7vMs4PDoAMDg+hrZF3HetSQM3cYpqxNFEPgRRJOy0CQQDQlZHI\nyzpSgEiyx8O3EK1iTidvnLXbtWabvjZFfIE/0OhfBmN225MtKG3YLV2HoUvpajLq\ngwE6fxOLyJDxuWRf\n-----END PRIVATE KEY-----\n",
   "client_email": "CLIENT_EMAIL"
                            }""")
@@ -1107,7 +1107,7 @@ def vsigs_read_credentials_gce():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL','')
+    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL', '')
     gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', None)
 
     return 'success'
@@ -1182,7 +1182,7 @@ def vsigs_read_credentials_gce_expiration():
         print(data)
         return 'fail'
 
-    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL','')
+    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL', '')
     gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', None)
 
     return 'success'

@@ -69,7 +69,7 @@ def ProcessTarget(target, recursive, report_failure, filelist=None):
         if stat.S_ISDIR(mode):
             subfilelist = os.listdir(target)
             for item in subfilelist:
-                subtarget = os.path.join(target,item)
+                subtarget = os.path.join(target, item)
                 ProcessTarget(subtarget, 1, report_failure, subfilelist)
 
 # =============================================================================

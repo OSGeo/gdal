@@ -68,7 +68,7 @@ jp2openjpeg_drv_unregistered = False
 jp2lura_drv_unregistered = False
 
 from sys import version_info
-if version_info >= (3,0,0):
+if version_info >= (3, 0, 0):
     import gdaltest_python3 as gdaltestaux
 else:
     import gdaltest_python2 as gdaltestaux
@@ -302,7 +302,7 @@ def run_all(dirlist, run_as_external=False):
                     if sys.platform == 'win32':
                         python_exe = python_exe.replace('\\', '/')
 
-                    print('Running %s/%s...' % (dir_name,file))
+                    print('Running %s/%s...' % (dir_name, file))
                     #ret = runexternal(python_exe + ' ' + file, display_live_on_parent_stdout = True)
                     if 'GDALTEST_ASAN_OPTIONS' in os.environ:
                         if 'ASAN_OPTIONS' in os.environ:
@@ -325,8 +325,8 @@ def run_all(dirlist, run_as_external=False):
                         success_counter += 1
                 else:
                     try:
-                        print('Running tests from %s/%s' % (dir_name,file))
-                        setup_run('%s/%s' % (dir_name,file))
+                        print('Running tests from %s/%s' % (dir_name, file))
+                        setup_run('%s/%s' % (dir_name, file))
                         exec("run_tests( " + module + ".gdaltest_list)")
                     except:
                         #import traceback
@@ -691,7 +691,7 @@ class GDALTest:
             elif self.chksum is not None and bnd.Checksum() != self.chksum:
                 post_reason(
                     'Did not get expected checksum on still-open file.\n' \
-                    '    Got %d instead of %d.' % (bnd.Checksum(),self.chksum))
+                    '    Got %d instead of %d.' % (bnd.Checksum(), self.chksum))
                 return 'fail'
             if check_minmax:
                 got_minmax = bnd.ComputeRasterMinMax()
@@ -795,7 +795,7 @@ class GDALTest:
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
-        src_img = src_ds.GetRasterBand(self.band).ReadRaster(0,0,xsize,ysize)
+        src_img = src_ds.GetRasterBand(self.band).ReadRaster(0, 0, xsize, ysize)
         minmax = src_ds.GetRasterBand(self.band).ComputeRasterMinMax()
 
         if new_filename is None:
@@ -814,19 +814,19 @@ class GDALTest:
         src_ds = None
 
         try:
-            for band in range(1,out_bands + 1):
+            for band in range(1, out_bands + 1):
                 new_ds.GetRasterBand(band).WriteRaster(0, 0, xsize, ysize, src_img)
         except:
             post_reason('Failed to write raster bands to test file.')
             return 'fail'
 
-        for band in range(1,out_bands + 1):
+        for band in range(1, out_bands + 1):
             if self.chksum is not None \
                and new_ds.GetRasterBand(band).Checksum() != self.chksum:
                 post_reason(
                     'Did not get expected checksum on still-open file.\n' \
                     '    Got %d instead of %d.' \
-                    % (new_ds.GetRasterBand(band).Checksum(),self.chksum))
+                    % (new_ds.GetRasterBand(band).Checksum(), self.chksum))
 
                 return 'fail'
 
@@ -847,12 +847,12 @@ class GDALTest:
             post_reason('Failed to open dataset: ' + new_filename)
             return 'fail'
 
-        for band in range(1,out_bands + 1):
+        for band in range(1, out_bands + 1):
             if self.chksum is not None \
                and new_ds.GetRasterBand(band).Checksum() != self.chksum:
                 post_reason('Did not get expected checksum on reopened file.' \
                     '    Got %d instead of %d.' \
-                    % (new_ds.GetRasterBand(band).Checksum(),self.chksum))
+                    % (new_ds.GetRasterBand(band).Checksum(), self.chksum))
                 return 'fail'
 
             if new_ds.GetRasterBand(band).ComputeRasterMinMax() != minmax and check_minmax:
@@ -1251,7 +1251,7 @@ def rpcs_equal(md1, md2):
     for sf in simple_fields:
 
         try:
-            if not approx_equal(float(md1[sf]),float(md2[sf])):
+            if not approx_equal(float(md1[sf]), float(md2[sf])):
                 post_reason('%s values differ.' % sf)
                 print(md1[sf])
                 print(md2[sf])
@@ -1285,8 +1285,8 @@ def rpcs_equal(md1, md2):
             return 0
 
         for i in range(20):
-            if not approx_equal(float(list1[i]),float(list2[i])):
-                post_reason('%s[%d] values differ.' % (cf,i))
+            if not approx_equal(float(list1[i]), float(list2[i])):
+                post_reason('%s[%d] values differ.' % (cf, i))
                 print(list1[i], list2[i])
                 return 0
 
@@ -1464,15 +1464,15 @@ def compare_ds(ds1, ds2, xoff=0, yoff=0, width=0, height=0, verbose=1):
 # Deregister all JPEG2000 drivers, except the one passed as an argument
 
 def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
-    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv,jp2lura_drv
-    global jp2kak_drv_unregistered,jpeg2000_drv_unregistered,jp2ecw_drv_unregistered,jp2mrsid_drv_unregistered,jp2openjpeg_drv_unregistered,jp2lura_drv_unregistered
+    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv, jp2lura_drv
+    global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered, jp2lura_drv_unregistered
 
     # Deregister other potential conflicting JPEG2000 drivers that will
     # be re-registered in the cleanup
     try:
         jp2kak_drv = gdal.GetDriverByName('JP2KAK')
         if name_of_driver_to_keep != 'JP2KAK' and jp2kak_drv:
-            gdal.Debug('gdaltest','Deregistering JP2KAK')
+            gdal.Debug('gdaltest', 'Deregistering JP2KAK')
             jp2kak_drv.Deregister()
             jp2kak_drv_unregistered = True
     except:
@@ -1481,7 +1481,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     try:
         jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
         if name_of_driver_to_keep != 'JPEG2000' and jpeg2000_drv:
-            gdal.Debug('gdaltest','Deregistering JPEG2000')
+            gdal.Debug('gdaltest', 'Deregistering JPEG2000')
             jpeg2000_drv.Deregister()
             jpeg2000_drv_unregistered = True
     except:
@@ -1490,7 +1490,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     try:
         jp2ecw_drv = gdal.GetDriverByName('JP2ECW')
         if name_of_driver_to_keep != 'JP2ECW' and jp2ecw_drv:
-            gdal.Debug('gdaltest.','Deregistering JP2ECW')
+            gdal.Debug('gdaltest.', 'Deregistering JP2ECW')
             jp2ecw_drv.Deregister()
             jp2ecw_drv_unregistered = True
     except:
@@ -1499,7 +1499,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     try:
         jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
         if name_of_driver_to_keep != 'JP2MrSID' and jp2mrsid_drv:
-            gdal.Debug('gdaltest.','Deregistering JP2MrSID')
+            gdal.Debug('gdaltest.', 'Deregistering JP2MrSID')
             jp2mrsid_drv.Deregister()
             jp2mrsid_drv_unregistered = True
     except:
@@ -1508,7 +1508,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     try:
         jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
         if name_of_driver_to_keep != 'JP2OpenJPEG' and jp2openjpeg_drv:
-            gdal.Debug('gdaltest.','Deregistering JP2OpenJPEG')
+            gdal.Debug('gdaltest.', 'Deregistering JP2OpenJPEG')
             jp2openjpeg_drv.Deregister()
             jp2openjpeg_drv_unregistered = True
     except:
@@ -1517,7 +1517,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     try:
         jp2lura_drv = gdal.GetDriverByName('JP2Lura')
         if name_of_driver_to_keep != 'JP2Lura' and jp2lura_drv:
-            gdal.Debug('gdaltest.','Deregistering JP2Lura')
+            gdal.Debug('gdaltest.', 'Deregistering JP2Lura')
             jp2lura_drv.Deregister()
             jp2lura_drv_unregistered = True
     except:
@@ -1531,14 +1531,14 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
 
 
 def reregister_all_jpeg2000_drivers():
-    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv,jp2lura_drv
-    global jp2kak_drv_unregistered,jpeg2000_drv_unregistered,jp2ecw_drv_unregistered,jp2mrsid_drv_unregistered,jp2openjpeg_drv_unregistered,jp2lura_drv_unregistered
+    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv, jp2lura_drv
+    global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered, jp2lura_drv_unregistered
 
     try:
         if jp2kak_drv_unregistered:
             jp2kak_drv.Register()
             jp2kak_drv_unregistered = False
-            gdal.Debug('gdaltest','Registering JP2KAK')
+            gdal.Debug('gdaltest', 'Registering JP2KAK')
     except:
         pass
 
@@ -1546,7 +1546,7 @@ def reregister_all_jpeg2000_drivers():
         if jpeg2000_drv_unregistered:
             jpeg2000_drv.Register()
             jpeg2000_drv_unregistered = False
-            gdal.Debug('gdaltest','Registering JPEG2000')
+            gdal.Debug('gdaltest', 'Registering JPEG2000')
     except:
         pass
 
@@ -1554,7 +1554,7 @@ def reregister_all_jpeg2000_drivers():
         if jp2ecw_drv_unregistered:
             jp2ecw_drv.Register()
             jp2ecw_drv_unregistered = False
-            gdal.Debug('gdaltest','Registering JP2ECW')
+            gdal.Debug('gdaltest', 'Registering JP2ECW')
     except:
         pass
 
@@ -1562,7 +1562,7 @@ def reregister_all_jpeg2000_drivers():
         if jp2mrsid_drv_unregistered:
             jp2mrsid_drv.Register()
             jp2mrsid_drv_unregistered = False
-            gdal.Debug('gdaltest','Registering JP2MrSID')
+            gdal.Debug('gdaltest', 'Registering JP2MrSID')
     except:
         pass
 
@@ -1570,7 +1570,7 @@ def reregister_all_jpeg2000_drivers():
         if jp2openjpeg_drv_unregistered:
             jp2openjpeg_drv.Register()
             jp2openjpeg_drv = False
-            gdal.Debug('gdaltest','Registering JP2OpenJPEG')
+            gdal.Debug('gdaltest', 'Registering JP2OpenJPEG')
     except:
         pass
 
@@ -1578,7 +1578,7 @@ def reregister_all_jpeg2000_drivers():
         if jp2lura_drv_unregistered:
             jp2lura_drv.Register()
             jp2lura_drv = False
-            gdal.Debug('gdaltest','Registering JP2Lura')
+            gdal.Debug('gdaltest', 'Registering JP2Lura')
     except:
         pass
 
@@ -1647,7 +1647,7 @@ def unzip(target_dir, zipfilename, verbose=False):
             if not os.path.exists(outdirname):
                os.makedirs(outdirname)
 
-            outfile = open(outfilename,'wb')
+            outfile = open(outfilename, 'wb')
             outfile.write(zf.read(filename))
             outfile.close()
 
@@ -1882,7 +1882,7 @@ def find_lib_windows(libname):
     GetLastError.argtypes = []
     GetLastError.rettypes = ctypes.c_int
 
-    snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE,0)
+    snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0)
     if snapshot is None:
         return None
 

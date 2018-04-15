@@ -58,7 +58,7 @@ def test_gdal_pansharpen_1():
     gt[5] *= 0.5
     pan_ds.SetGeoTransform(gt)
     pan_ds.SetProjection(wkt)
-    pan_ds.GetRasterBand(1).WriteRaster(0,0,800,400,src_data,400,200)
+    pan_ds.GetRasterBand(1).WriteRaster(0, 0, 800, 400, src_data, 400, 200)
     pan_ds = None
 
     test_py_scripts.run_py_script(script_path, 'gdal_pansharpen', ' tmp/small_world_pan.tif ../gdrivers/data/small_world.tif tmp/out.tif')

@@ -43,7 +43,7 @@ from osgeo import gdal
 
 def colortable_1():
 
-    gdaltest.test_ct_data = [(255,0,0), (0,255,0), (0,0,255), (255,255,255,0)]
+    gdaltest.test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
 
     gdaltest.test_ct = gdal.ColorTable()
     for i in range(len(gdaltest.test_ct_data)):
@@ -85,12 +85,12 @@ def colortable_3():
     except:
         return 'skip'
 
-    ct.CreateColorRamp(0,(255,0,0),255,(0,0,255))
+    ct.CreateColorRamp(0, (255, 0, 0), 255, (0, 0, 255))
 
-    if ct.GetColorEntry(0) != (255,0,0,255):
+    if ct.GetColorEntry(0) != (255, 0, 0, 255):
         return 'fail'
 
-    if ct.GetColorEntry(255) != (0,0,255,255):
+    if ct.GetColorEntry(255) != (0, 0, 255, 255):
         return 'fail'
 
     return 'success'

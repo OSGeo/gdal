@@ -899,7 +899,7 @@ def test_gdalwarp_31():
     ds = None
 
     if cs1 != 4672 or cs2 != 4672 or cs3 != 4727 or err == '' or err2 != '':
-        print(cs1,cs2,cs3)
+        print(cs1, cs2, cs3)
         print(err)
         print(err2)
         return 'fail'
@@ -1309,8 +1309,8 @@ def test_gdalwarp_41():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    src_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalwarp_41_src.tif',666,666)
-    src_ds.SetGeoTransform([-3333500,10010.510510510510358,0,3333500.000000000000000,0,-10010.510510510510358])
+    src_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalwarp_41_src.tif', 666, 666)
+    src_ds.SetGeoTransform([-3333500, 10010.510510510510358, 0, 3333500.000000000000000, 0, -10010.510510510510358])
     src_ds.SetProjection("""PROJCS["WGS_1984_Stereographic_South_Pole",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",

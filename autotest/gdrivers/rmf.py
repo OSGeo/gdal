@@ -311,8 +311,8 @@ def rmf_13():
     return rmf_build_ov(source='byte.rsw',
                         testid='13',
                         options=['RMFHUGE=NO'],
-                        ov_sizes=[[10,10], [5,5]],
-                        crs=[[1087,1087,1087], [328,328,328]],
+                        ov_sizes=[[10, 10], [5, 5]],
+                        crs=[[1087, 1087, 1087], [328, 328, 328]],
                         reopen=False)
 
 ###############################################################################
@@ -323,8 +323,8 @@ def rmf_14():
     return rmf_build_ov(source='byte.rsw',
                         testid='14',
                         options=['RMFHUGE=YES'],
-                        ov_sizes=[[10,10], [5,5]],
-                        crs=[[1087,1087,1087], [328,328,328]],
+                        ov_sizes=[[10, 10], [5, 5]],
+                        crs=[[1087, 1087, 1087], [328, 328, 328]],
                         reopen=False)
 
 ###############################################################################
@@ -335,8 +335,8 @@ def rmf_15():
     return rmf_build_ov(source='byte.rsw',
                         testid='15',
                         options=['RMFHUGE=NO'],
-                        ov_sizes=[[10,10], [5,5]],
-                        crs=[[1087,1087,1087], [328,328,328]],
+                        ov_sizes=[[10, 10], [5, 5]],
+                        crs=[[1087, 1087, 1087], [328, 328, 328]],
                         reopen=True)
 
 ###############################################################################
@@ -347,8 +347,8 @@ def rmf_16():
     return rmf_build_ov(source='byte.rsw',
                         testid='16',
                         options=['RMFHUGE=YES'],
-                        ov_sizes=[[10,10], [5,5]],
-                        crs=[[1087,1087,1087], [328,328,328]],
+                        ov_sizes=[[10, 10], [5, 5]],
+                        crs=[[1087, 1087, 1087], [328, 328, 328]],
                         reopen=True)
 
 ###############################################################################
@@ -359,8 +359,8 @@ def rmf_17():
     return rmf_build_ov(source='float64.mtw',
                         testid='17',
                         options=['RMFHUGE=NO', 'MTW=YES'],
-                        ov_sizes=[[10,10], [5,5]],
-                        crs=[[1087,1087,1087], [328,328,328]],
+                        ov_sizes=[[10, 10], [5, 5]],
+                        crs=[[1087, 1087, 1087], [328, 328, 328]],
                         reopen=False)
 
 ###############################################################################
@@ -371,7 +371,7 @@ def rmf_18():
     return rmf_build_ov(source='float64.mtw',
                         testid='18',
                         options=['RMFHUGE=YES', 'MTW=YES'],
-                        ov_sizes=[[10,10], [5,5]],
+                        ov_sizes=[[10, 10], [5, 5]],
                         crs=[[1087], [328]],
                         reopen=False)
 
@@ -383,7 +383,7 @@ def rmf_19():
     return rmf_build_ov(source='float64.mtw',
                         testid='19',
                         options=['RMFHUGE=NO', 'MTW=YES'],
-                        ov_sizes=[[10,10], [5,5]],
+                        ov_sizes=[[10, 10], [5, 5]],
                         crs=[[1087], [328]],
                         reopen=True)
 
@@ -395,7 +395,7 @@ def rmf_20():
     return rmf_build_ov(source='float64.mtw',
                         testid='20',
                         options=['RMFHUGE=YES', 'MTW=YES'],
-                        ov_sizes=[[10,10], [5,5]],
+                        ov_sizes=[[10, 10], [5, 5]],
                         crs=[[1087], [328]],
                         reopen=True)
 
@@ -407,7 +407,7 @@ def rmf_21():
     return rmf_build_ov(source='float64.mtw',
                         testid='21',
                         options=['RMFHUGE=NO', 'MTW=YES'],
-                        ov_sizes=[[10,10], [5,5]],
+                        ov_sizes=[[10, 10], [5, 5]],
                         crs=[[1087], [328]],
                         reopen=False,
                         pass_count=2)
@@ -420,7 +420,7 @@ def rmf_22():
     return rmf_build_ov(source='float64.mtw',
                         testid='22',
                         options=['RMFHUGE=YES', 'MTW=YES'],
-                        ov_sizes=[[10,10], [5,5]],
+                        ov_sizes=[[10, 10], [5, 5]],
                         crs=[[1087], [328]],
                         reopen=False,
                         pass_count=2)
@@ -433,7 +433,7 @@ def rmf_23():
     return rmf_build_ov(source='float64.mtw',
                         testid='23',
                         options=['RMFHUGE=NO', 'MTW=YES'],
-                        ov_sizes=[[10,10], [5,5]],
+                        ov_sizes=[[10, 10], [5, 5]],
                         crs=[[1087], [328]],
                         reopen=True,
                         pass_count=2)
@@ -446,7 +446,7 @@ def rmf_24():
     return rmf_build_ov(source='float64.mtw',
                         testid='24',
                         options=['RMFHUGE=YES', 'MTW=YES'],
-                        ov_sizes=[[10,10], [5,5]],
+                        ov_sizes=[[10, 10], [5, 5]],
                         crs=[[1087], [328]],
                         reopen=True,
                         pass_count=2)

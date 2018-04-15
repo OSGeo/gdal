@@ -270,7 +270,7 @@ def vsifile_5():
         gdal.VSIFReadL(1, 1, fp)
 
         gdal.VSIFSeekL(fp, 0, 0)
-        data = gdal.VSIFReadL(1,3 * 32768,fp)
+        data = gdal.VSIFReadL(1, 3 * 32768, fp)
         if data.decode('ascii') != ref_data[0:3 * 32768]:
             gdaltest.post_reason('fail')
             gdal.SetConfigOption('VSI_CACHE_SIZE', None)
@@ -278,14 +278,14 @@ def vsifile_5():
             return 'fail'
 
         gdal.VSIFSeekL(fp, 16384, 0)
-        data = gdal.VSIFReadL(1,5 * 32768,fp)
+        data = gdal.VSIFReadL(1, 5 * 32768, fp)
         if data.decode('ascii') != ref_data[16384:16384 + 5 * 32768]:
             gdaltest.post_reason('fail')
             gdal.SetConfigOption('VSI_CACHE_SIZE', None)
             gdal.SetConfigOption('VSI_CACHE', None)
             return 'fail'
 
-        data = gdal.VSIFReadL(1,50 * 32768,fp)
+        data = gdal.VSIFReadL(1, 50 * 32768, fp)
         if data[0:1130496].decode('ascii') != ref_data[16384 + 5 * 32768:]:
             gdaltest.post_reason('fail')
             gdal.SetConfigOption('VSI_CACHE_SIZE', None)
@@ -620,7 +620,7 @@ def vsifile_12():
             gdaltest.post_reason('fail')
             print(ret)
             return 'fail'
-        ret = gdal.VSIFGetRangeStatusL(f, block_size * 2 - 1,1)
+        ret = gdal.VSIFGetRangeStatusL(f, block_size * 2 - 1, 1)
         if ret != gdal.VSI_RANGE_STATUS_HOLE:
             gdaltest.post_reason('fail')
             print(ret)
@@ -689,7 +689,7 @@ def vsifile_15():
         return 'fail'
     while not gdal.VSIFEofL(fp):
         with gdaltest.error_handler():
-            gdal.VSIFReadL(1,4,fp)
+            gdal.VSIFReadL(1, 4, fp)
     gdal.VSIFCloseL(fp)
 
     return 'success'

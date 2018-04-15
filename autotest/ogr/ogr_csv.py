@@ -63,7 +63,7 @@ def ogr_csv_check_layer(lyr, expect_code_as_numeric):
     else:
         expect = ['8901', '8902', '8903', '8904']
 
-    tr = ogrtest.check_features_against_list(lyr,'PRIME_MERIDIAN_CODE',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'PRIME_MERIDIAN_CODE', expect)
     if not tr:
         return 'fail'
 
@@ -73,7 +73,7 @@ def ogr_csv_check_layer(lyr, expect_code_as_numeric):
                'Institut Geographique National (IGN), Paris',
                'Instituto Geografico "Augustin Cadazzi" (IGAC); Bogota']
 
-    tr = ogrtest.check_features_against_list(lyr,'INFORMATION_SOURCE',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'INFORMATION_SOURCE', expect)
     if not tr:
         return 'fail'
 
@@ -214,7 +214,7 @@ def ogr_csv_5():
 
     #######################################################
     # Create layer (.csv file)
-    gdaltest.csv_lyr2 = ogr_csv_copy_layer('pm2', ['LINEFORMAT=CRLF',])
+    gdaltest.csv_lyr2 = ogr_csv_copy_layer('pm2', ['LINEFORMAT=CRLF', ])
 
     return 'success'
 
@@ -306,7 +306,7 @@ def ogr_csv_9():
 
     expect = ['8901', '8902', '8903', '8904', '7000']
 
-    tr = ogrtest.check_features_against_list(lyr,'PRIME_MERIDIAN_CODE',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'PRIME_MERIDIAN_CODE', expect)
     if not tr:
         return 'fail'
 
@@ -317,7 +317,7 @@ def ogr_csv_9():
                'Instituto Geografico "Augustin Cadazzi" (IGAC); Bogota',
                'This is a newline test\n']
 
-    tr = ogrtest.check_features_against_list(lyr,'INFORMATION_SOURCE',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'INFORMATION_SOURCE', expect)
     if not tr:
         return 'fail'
 
@@ -393,21 +393,21 @@ def ogr_csv_check_testcsvt(lyr):
     lyr.ResetReading()
 
     expect = [12, None]
-    tr = ogrtest.check_features_against_list(lyr,'INTCOL',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'INTCOL', expect)
     if not tr:
         return 'fail'
 
     lyr.ResetReading()
 
     expect = [5.7, None]
-    tr = ogrtest.check_features_against_list(lyr,'REALCOL',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'REALCOL', expect)
     if not tr:
         return 'fail'
 
     lyr.ResetReading()
 
     expect = ['foo', '']
-    tr = ogrtest.check_features_against_list(lyr,'STRINGCOL',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'STRINGCOL', expect)
     if not tr:
         return 'fail'
 
@@ -509,7 +509,7 @@ def ogr_csv_12():
 
     #######################################################
     # Create layer (.csv file)
-    options = ['CREATE_CSVT=YES',]
+    options = ['CREATE_CSVT=YES', ]
     gdaltest.csv_lyr2 = gdaltest.csv_tmpds.CreateLayer('testcsvt_copy',
                                                         options=options)
 
@@ -569,7 +569,7 @@ def ogr_csv_13():
     gdaltest.csv_tmpds = ogr.Open('tmp/csvwrk', update=1)
 
     # AS_WKT
-    options = ['GEOMETRY=AS_WKT','CREATE_CSVT=YES']
+    options = ['GEOMETRY=AS_WKT', 'CREATE_CSVT=YES']
     lyr = gdaltest.csv_tmpds.CreateLayer('as_wkt', options=options)
 
     field_defn = ogr.FieldDefn('ADATA', ogr.OFTString)
@@ -585,7 +585,7 @@ def ogr_csv_13():
     lyr.CreateFeature(dst_feat)
 
     # AS_WKT but no field
-    options = ['GEOMETRY=AS_WKT','CREATE_CSVT=YES']
+    options = ['GEOMETRY=AS_WKT', 'CREATE_CSVT=YES']
     lyr = gdaltest.csv_tmpds.CreateLayer('as_wkt_no_field', options=options)
 
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
@@ -593,7 +593,7 @@ def ogr_csv_13():
     lyr.CreateFeature(dst_feat)
 
     # AS_XY
-    options = ['GEOMETRY=AS_XY','CREATE_CSVT=YES']
+    options = ['GEOMETRY=AS_XY', 'CREATE_CSVT=YES']
     lyr = gdaltest.csv_tmpds.CreateLayer('as_xy', options=options)
 
     field_defn = ogr.FieldDefn('ADATA', ogr.OFTString)
@@ -611,7 +611,7 @@ def ogr_csv_13():
     lyr.CreateFeature(dst_feat)
 
     # AS_YX
-    options = ['GEOMETRY=AS_YX','CREATE_CSVT=YES']
+    options = ['GEOMETRY=AS_YX', 'CREATE_CSVT=YES']
     lyr = gdaltest.csv_tmpds.CreateLayer('as_yx', options=options)
 
     field_defn = ogr.FieldDefn('ADATA', ogr.OFTString)
@@ -623,7 +623,7 @@ def ogr_csv_13():
     lyr.CreateFeature(dst_feat)
 
     # AS_XYZ
-    options = ['GEOMETRY=AS_XYZ','CREATE_CSVT=YES']
+    options = ['GEOMETRY=AS_XYZ', 'CREATE_CSVT=YES']
     lyr = gdaltest.csv_tmpds.CreateLayer('as_xyz', options=options)
 
     field_defn = ogr.FieldDefn('ADATA', ogr.OFTString)
@@ -644,13 +644,13 @@ def ogr_csv_13():
     lyr = gdaltest.csv_tmpds.GetLayerByName('as_wkt')
 
     expect = ['POINT (1 2)']
-    tr = ogrtest.check_features_against_list(lyr,'WKT',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'WKT', expect)
     if not tr:
         return 'fail'
 
     lyr.ResetReading()
     expect = ['avalue']
-    tr = ogrtest.check_features_against_list(lyr,'ADATA',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'ADATA', expect)
     if not tr:
         return 'fail'
 
@@ -658,7 +658,7 @@ def ogr_csv_13():
     lyr = gdaltest.csv_tmpds.GetLayerByName('as_wkt_no_field')
 
     expect = ['POINT (1 2)']
-    tr = ogrtest.check_features_against_list(lyr,'WKT',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'WKT', expect)
     if not tr:
         return 'fail'
 
@@ -669,19 +669,19 @@ def ogr_csv_13():
         return 'fail'
 
     expect = [1, None]
-    tr = ogrtest.check_features_against_list(lyr,'X',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'X', expect)
     if not tr:
         return 'fail'
 
     lyr.ResetReading()
     expect = [2, None]
-    tr = ogrtest.check_features_against_list(lyr,'Y',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'Y', expect)
     if not tr:
         return 'fail'
 
     lyr.ResetReading()
-    expect = ['avalue','avalue']
-    tr = ogrtest.check_features_against_list(lyr,'ADATA',expect)
+    expect = ['avalue', 'avalue']
+    tr = ogrtest.check_features_against_list(lyr, 'ADATA', expect)
     if not tr:
         return 'fail'
 
@@ -692,13 +692,13 @@ def ogr_csv_13():
         return 'fail'
 
     expect = [1]
-    tr = ogrtest.check_features_against_list(lyr,'X',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'X', expect)
     if not tr:
         return 'fail'
 
     lyr.ResetReading()
     expect = [2]
-    tr = ogrtest.check_features_against_list(lyr,'Y',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'Y', expect)
     if not tr:
         return 'fail'
 
@@ -709,19 +709,19 @@ def ogr_csv_13():
         return 'fail'
 
     expect = [1]
-    tr = ogrtest.check_features_against_list(lyr,'X',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'X', expect)
     if not tr:
         return 'fail'
 
     lyr.ResetReading()
     expect = [2]
-    tr = ogrtest.check_features_against_list(lyr,'Y',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'Y', expect)
     if not tr:
         return 'fail'
 
     lyr.ResetReading()
     expect = [3]
-    tr = ogrtest.check_features_against_list(lyr,'Z',expect)
+    tr = ogrtest.check_features_against_list(lyr, 'Z', expect)
     if not tr:
         return 'fail'
 
@@ -741,7 +741,7 @@ def ogr_csv_14():
 
     #######################################################
     # Create layer (.csv file)
-    gdaltest.csv_lyr1 = ogr_csv_copy_layer('pm3', ['SEPARATOR=SEMICOLON',])
+    gdaltest.csv_lyr1 = ogr_csv_copy_layer('pm3', ['SEPARATOR=SEMICOLON', ])
 
     return 'success'
 
@@ -841,19 +841,19 @@ def ogr_csv_19():
 
     lyr.ResetReading()
     with gdaltest.error_handler():
-        if not ogrtest.check_features_against_list(lyr,'INTCOL',[12]):
+        if not ogrtest.check_features_against_list(lyr, 'INTCOL', [12]):
             return 'fail'
     lyr.ResetReading()
-    if not ogrtest.check_features_against_list(lyr,'REALCOL',[5.7]):
+    if not ogrtest.check_features_against_list(lyr, 'REALCOL', [5.7]):
         return 'fail'
     lyr.ResetReading()
-    if not ogrtest.check_features_against_list(lyr,'INTCOL2',[None]):
+    if not ogrtest.check_features_against_list(lyr, 'INTCOL2', [None]):
         return 'fail'
     lyr.ResetReading()
-    if not ogrtest.check_features_against_list(lyr,'REALCOL2',[None]):
+    if not ogrtest.check_features_against_list(lyr, 'REALCOL2', [None]):
         return 'fail'
     lyr.ResetReading()
-    if not ogrtest.check_features_against_list(lyr,'STRINGCOL',['foo']):
+    if not ogrtest.check_features_against_list(lyr, 'STRINGCOL', ['foo']):
         return 'fail'
 
     return 'success'
@@ -932,10 +932,10 @@ def ogr_csv_21():
     lyr.ResetReading()
 
     expect = ['test', '2000', '2000.12']
-    for i in range(0,3):
+    for i in range(0, 3):
         got = lyr.GetLayerDefn().GetFieldDefn(i).GetNameRef()
         if got != expect[i]:
-            print('column %d got name %s expected %s' % (i,str(got), str(expect[i])))
+            print('column %d got name %s expected %s' % (i, str(got), str(expect[i])))
             return 'fail'
 
     gdaltest.csv_ds = None
@@ -950,10 +950,10 @@ def ogr_csv_21():
     lyr.ResetReading()
 
     expect = ['field_1', 'field_2', 'field_3']
-    for i in range(0,3):
+    for i in range(0, 3):
         got = lyr.GetLayerDefn().GetFieldDefn(i).GetNameRef()
         if got != expect[i]:
-            print('column %d got name %s expected %s' % (i,str(got), str(expect[i])))
+            print('column %d got name %s expected %s' % (i, str(got), str(expect[i])))
             return 'fail'
 
     return 'success'
@@ -994,7 +994,7 @@ def ogr_csv_23():
     ds = None
 
     data = open('tmp/csvwrk/utf8.csv', 'rb').read()
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         ogrtest.ret = False
         exec("ogrtest.ret = (data[:6] == b'\\xef\\xbb\\xbfWKT')")
     else:
@@ -1533,7 +1533,7 @@ def ogr_csv_33():
         open_options=['AUTODETECT_TYPE=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    col_values = [1,1,1,1,1,0,0,0,0,0,0,1,'y']
+    col_values = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 'y']
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         if (i < 10 and lyr.GetLayerDefn().GetFieldDefn(i).GetSubType() != ogr.OFSTBoolean) or \
            (i >= 10 and lyr.GetLayerDefn().GetFieldDefn(i).GetSubType() == ogr.OFSTBoolean):
@@ -1603,7 +1603,7 @@ def ogr_csv_34():
         open_options=['AUTODETECT_TYPE=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    col_values = [1,10000000000,10000000000,10000000000.0]
+    col_values = [1, 10000000000, 10000000000, 10000000000.0]
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         if f.GetField(i) != col_values[i]:
             gdaltest.post_reason('fail')
@@ -1611,7 +1611,7 @@ def ogr_csv_34():
             f.DumpReadable()
             return 'fail'
     f = lyr.GetNextFeature()
-    col_values = [10000000000,1,10000000000,1.0]
+    col_values = [10000000000, 1, 10000000000, 1.0]
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         if f.GetField(i) != col_values[i]:
             gdaltest.post_reason('fail')

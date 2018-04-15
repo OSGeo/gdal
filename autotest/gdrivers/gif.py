@@ -88,8 +88,8 @@ def gif_4():
     ds = gdal.Open('data/bug407.gif')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
     if cm.GetCount() != 16 \
-       or cm.GetColorEntry(0) != (255,255,255,255) \
-       or cm.GetColorEntry(1) != (255,255,208,255):
+       or cm.GetColorEntry(0) != (255, 255, 255, 255) \
+       or cm.GetColorEntry(1) != (255, 255, 208, 255):
         gdaltest.post_reason('Wrong colormap entries')
         return 'fail'
 

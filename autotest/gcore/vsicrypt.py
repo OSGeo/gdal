@@ -435,21 +435,21 @@ def vsicrypt_4():
         random.seed(seed)
 
         for i in range(20):
-            random_offset = random.randint(0,1000)
+            random_offset = random.randint(0, 1000)
             gdal.VSIFSeekL(test_f, random_offset, 0)
             gdal.VSIFSeekL(ref_f, random_offset, 0)
 
-            random_size = random.randint(1,80)
+            random_size = random.randint(1, 80)
             random_content = ''.join([chr(40 + int(10 * random.random())) for i in range(random_size)])
             gdal.VSIFWriteL(random_content, 1, random_size, test_f)
             gdal.VSIFWriteL(random_content, 1, random_size, ref_f)
 
-            if random.randint(0,1) == 0:
-                random_offset = random.randint(0,1500)
+            if random.randint(0, 1) == 0:
+                random_offset = random.randint(0, 1500)
                 gdal.VSIFSeekL(test_f, random_offset, 0)
                 gdal.VSIFSeekL(ref_f, random_offset, 0)
 
-                random_size = random.randint(1,80)
+                random_size = random.randint(1, 80)
                 test_content = gdal.VSIFReadL(1, random_size, test_f)
                 ref_content = gdal.VSIFReadL(1, random_size, ref_f)
                 if test_content != ref_content:
@@ -496,7 +496,7 @@ def vsicrypt_5():
     gdal.VSIFCloseL(f)
 
     f = gdal.VSIFOpenL(test_file, 'rb+')
-    gdal.VSIFSeekL(f, 3,0)
+    gdal.VSIFSeekL(f, 3, 0)
     gdal.VSIFWriteL('d', 1, 1, f)
     gdal.VSIFCloseL(f)
 
@@ -510,8 +510,8 @@ def vsicrypt_5():
         return 'fail'
 
     f = gdal.VSIFOpenL(test_file, 'rb+')
-    gdal.VSIFReadL(1,1,f)
-    gdal.VSIFSeekL(f, 5,0)
+    gdal.VSIFReadL(1, 1, f)
+    gdal.VSIFSeekL(f, 5, 0)
     gdal.VSIFWriteL('f', 1, 1, f)
     gdal.VSIFCloseL(f)
 
@@ -525,10 +525,10 @@ def vsicrypt_5():
         return 'fail'
 
     f = gdal.VSIFOpenL(test_file, 'rb+')
-    gdal.VSIFReadL(1,1,f)
-    gdal.VSIFSeekL(f, 512,0)
+    gdal.VSIFReadL(1, 1, f)
+    gdal.VSIFSeekL(f, 512, 0)
     gdal.VSIFWriteL('Z', 1, 1, f)
-    gdal.VSIFSeekL(f, 7,0)
+    gdal.VSIFSeekL(f, 7, 0)
     gdal.VSIFWriteL('h', 1, 1, f)
     gdal.VSIFCloseL(f)
 

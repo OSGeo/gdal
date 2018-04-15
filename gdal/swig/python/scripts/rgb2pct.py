@@ -178,7 +178,7 @@ if format == 'GTiff':
     tif_filename = dst_filename
 else:
     import tempfile
-    tif_filedesc,tif_filename = tempfile.mkstemp(suffix='.tif')
+    tif_filedesc, tif_filename = tempfile.mkstemp(suffix='.tif')
 
 gtiff_driver = gdal.GetDriverByName('GTiff')
 

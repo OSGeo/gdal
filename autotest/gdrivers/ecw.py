@@ -124,14 +124,14 @@ def ecw_2():
         (exp_mean, exp_stddev) = (141.172, 67.3636)
     else:
         if gdaltest.ecw_drv.major_version == 5:
-            (exp_mean, exp_stddev) = (141.606,67.2919)
+            (exp_mean, exp_stddev) = (141.606, 67.2919)
         else:
             (exp_mean, exp_stddev) = (140.332, 67.611)
 
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
     if abs(mean - exp_mean) > 0.5 or abs(stddev - exp_stddev) > 0.5:
-        gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev))
+        gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
@@ -198,14 +198,14 @@ def ecw_4():
         (exp_mean, exp_stddev) = (140.290, 66.6303)
     else:
         if gdaltest.ecw_drv.major_version == 5:
-            (exp_mean, exp_stddev) = (141.517,67.1285)
+            (exp_mean, exp_stddev) = (141.517, 67.1285)
         else:
             (exp_mean, exp_stddev) = (138.971, 67.716)
 
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
     if abs(mean - exp_mean) > 1.5 or abs(stddev - exp_stddev) > 0.5:
-        gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev))
+        gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
@@ -330,7 +330,7 @@ def ecw_8():
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
     if abs(mean - exp_mean) > 1.0 or abs(stddev - exp_stddev) > 1.0:
-        gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev))
+        gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
@@ -375,7 +375,7 @@ def ecw_9():
 
     ds.SetProjection('GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]')
 
-    raw_data = array.array('h',list(range(200))).tostring()
+    raw_data = array.array('h', list(range(200))).tostring()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
@@ -405,7 +405,7 @@ def ecw_10():
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
     if abs(mean - exp_mean) > 1.1 or abs(stddev - exp_stddev) > 0.1:
-        gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev))
+        gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
@@ -436,13 +436,13 @@ def ecw_11():
                      ['ICORDS=G'])
     ds.SetGeoTransform((100, 0.1, 0.0, 30.0, 0.0, -0.1))
 
-    my_list = list(range(200)) + list(range(20,220)) + list(range(30,230))
-    raw_data = array.array('h',my_list).tostring()
+    my_list = list(range(200)) + list(range(20, 220)) + list(range(30, 230))
+    raw_data = array.array('h', my_list).tostring()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
                         buf_type=gdal.GDT_Int16,
-                        band_list=[1,2,3])
+                        band_list=[1, 2, 3])
 
     ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_BlueBand)
     ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
@@ -504,7 +504,7 @@ def ecw_13():
 
     wrktype = gdal.GDT_Float32
     raw_data = ds.ReadRaster(10, 10, 40, 40, buf_type=wrktype,
-                              band_list=[3,2,1])
+                              band_list=[3, 2, 1])
     ds = None
 
     drv = gdal.GetDriverByName('MEM')
@@ -723,7 +723,7 @@ def ecw_20():
 
     if abs(mean - exp_mean) > 0.5 or abs(stddev - exp_stddev) > 0.5:
         gdaltest.post_reason('mean/stddev of (%g,%g) diffs from '
-                              'expected(%g,%g)' % (mean, stddev,exp_mean,
+                              'expected(%g,%g)' % (mean, stddev, exp_mean,
                                                    exp_stddev))
         return 'fail'
 
@@ -742,7 +742,7 @@ def ecw_21():
         return 'skip'
 
     ds = gdal.Open('data/jrc.ecw')
-    mem_ds = gdal.GetDriverByName('MEM').CreateCopy('xxxyyy',ds,options=['INTERLEAVE=PIXEL'])
+    mem_ds = gdal.GetDriverByName('MEM').CreateCopy('xxxyyy', ds, options=['INTERLEAVE=PIXEL'])
     ds = None
 
     if gdaltest.ecw_drv.major_version == 3:
@@ -756,7 +756,7 @@ def ecw_21():
     (mean, stddev) = mem_ds.GetRasterBand(1).ComputeBandStats()
 
     if abs(mean - exp_mean) > 0.5 or abs(stddev - exp_stddev) > 0.5:
-        gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev))
+        gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
         return 'fail'
 
     return 'success'
@@ -843,7 +843,7 @@ def ecw_24():
         except:
             pass
         return 'skip'
-    gt = [1,2,0,3,0,-4]
+    gt = [1, 2, 0, 3, 0, -4]
     ds.SetGeoTransform(gt)
     ds = None
 
@@ -1054,13 +1054,13 @@ def ecw_28():
     x = y = 50
 
     ds = gdal.Open('data/jrc.ecw')
-    multiband_data = ds.ReadRaster(x,y,1,1)
+    multiband_data = ds.ReadRaster(x, y, 1, 1)
     ds = None
 
     ds = gdal.Open('data/jrc.ecw')
-    data1 = ds.GetRasterBand(1).ReadRaster(x,y,1,1)
-    data2 = ds.GetRasterBand(2).ReadRaster(x,y,1,1)
-    data3 = ds.GetRasterBand(3).ReadRaster(x,y,1,1)
+    data1 = ds.GetRasterBand(1).ReadRaster(x, y, 1, 1)
+    data2 = ds.GetRasterBand(2).ReadRaster(x, y, 1, 1)
+    data3 = ds.GetRasterBand(3).ReadRaster(x, y, 1, 1)
     ds = None
 
     import struct
@@ -1082,22 +1082,22 @@ def ecw_29():
         return 'skip'
 
     ds = gdal.Open('data/jrc.ecw')
-    data_b1 = ds.GetRasterBand(1).ReadRaster(0,0,400,400)
+    data_b1 = ds.GetRasterBand(1).ReadRaster(0, 0, 400, 400)
     ds = None
 
     ds = gdal.Open('data/jrc.ecw')
-    data_ecw_supersampled_b1 = ds.GetRasterBand(1).ReadRaster(0,0,400,400,800,800)
+    data_ecw_supersampled_b1 = ds.GetRasterBand(1).ReadRaster(0, 0, 400, 400, 800, 800)
     ds = None
 
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_0.tif', 400 ,400, 1)
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_0.tif', 400 , 400, 1)
     ds.WriteRaster(0, 0, 400, 400, data_b1)
-    data_tiff_supersampled_b1 = ds.GetRasterBand(1).ReadRaster(0,0,400,400,800,800)
+    data_tiff_supersampled_b1 = ds.GetRasterBand(1).ReadRaster(0, 0, 400, 400, 800, 800)
     ds = None
 
-    ds1 = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_1.tif', 800 ,800, 1)
+    ds1 = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_1.tif', 800 , 800, 1)
     ds1.WriteRaster(0, 0, 800, 800, data_ecw_supersampled_b1)
 
-    ds2 = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_2.tif', 800 ,800, 1)
+    ds2 = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_2.tif', 800 , 800, 1)
     ds2.WriteRaster(0, 0, 800, 800, data_tiff_supersampled_b1)
 
     ret = 'success'
@@ -1114,19 +1114,19 @@ def ecw_29():
         tile = 32
         for j in range(2 * int((ds1.RasterYSize - tile / 2) / tile)):
             for i in range(2 * int((ds1.RasterXSize - tile / 2) / tile)):
-                tmp_ds1 = gdal.GetDriverByName('MEM').Create('', tile ,tile, 1)
-                tmp_ds2 = gdal.GetDriverByName('MEM').Create('', tile ,tile, 1)
+                tmp_ds1 = gdal.GetDriverByName('MEM').Create('', tile , tile, 1)
+                tmp_ds2 = gdal.GetDriverByName('MEM').Create('', tile , tile, 1)
                 data1 = ds1.ReadRaster(i * int(tile / 2), j * int(tile / 2), tile, tile)
                 data2 = ds2.ReadRaster(i * int(tile / 2), j * int(tile / 2), tile, tile)
-                tmp_ds1.WriteRaster(0,0,tile,tile,data1)
-                tmp_ds2.WriteRaster(0,0,tile,tile,data2)
-                (ignored, ignored, mean1, stddev1) = tmp_ds1.GetRasterBand(1).GetStatistics(1,1)
-                (ignored, ignored, mean2, stddev2) = tmp_ds2.GetRasterBand(1).GetStatistics(1,1)
+                tmp_ds1.WriteRaster(0, 0, tile, tile, data1)
+                tmp_ds2.WriteRaster(0, 0, tile, tile, data2)
+                (ignored, ignored, mean1, stddev1) = tmp_ds1.GetRasterBand(1).GetStatistics(1, 1)
+                (ignored, ignored, mean2, stddev2) = tmp_ds2.GetRasterBand(1).GetStatistics(1, 1)
                 nvals = nvals + 1
                 sum_abs_diff_mean = sum_abs_diff_mean + abs(mean1 - mean2)
                 sum_abs_diff_stddev = sum_abs_diff_stddev + abs(stddev1 - stddev2)
                 if abs(mean1 - mean2) > (stddev1 + stddev2) / 2 or abs(stddev1 - stddev2) > 30:
-                    print("%d, %d, %f, %f" % (j, i ,abs(mean1 - mean2), abs(stddev1 - stddev2)))
+                    print("%d, %d, %f, %f" % (j, i , abs(mean1 - mean2), abs(stddev1 - stddev2)))
                     ret = 'fail'
 
         if sum_abs_diff_mean / nvals > 4 or sum_abs_diff_stddev / nvals > 3:
@@ -1154,8 +1154,8 @@ def ecw_30():
 
     ds = gdal.Open('data/jrc.ecw')
     (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
-    data_readraster = ds.GetRasterBand(1).ReadRaster(0,0,blockxsize,blockysize)
-    data_readblock = ds.GetRasterBand(1).ReadBlock(0,0)
+    data_readraster = ds.GetRasterBand(1).ReadRaster(0, 0, blockxsize, blockysize)
+    data_readblock = ds.GetRasterBand(1).ReadBlock(0, 0)
     ds = None
 
     if data_readraster != data_readblock:
@@ -1176,12 +1176,12 @@ def ecw_31():
         return 'skip'
 
     ds = gdal.Open('data/jrc.ecw')
-    ref_buf = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
+    ref_buf = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     ds = None
 
     ds = gdal.Open('data/jrc.ecw')
 
-    asyncreader = ds.BeginAsyncReader(0,0,ds.RasterXSize,ds.RasterYSize)
+    asyncreader = ds.BeginAsyncReader(0, 0, ds.RasterXSize, ds.RasterYSize)
     while True:
         result = asyncreader.GetNextUpdatedRegion(0.05)
         if result[0] == gdal.GARIO_COMPLETE:
@@ -1193,7 +1193,7 @@ def ecw_31():
             ds.EndAsyncReader(asyncreader)
             return 'fail'
 
-    if result != [gdal.GARIO_COMPLETE, 0, 0, ds.RasterXSize,ds.RasterYSize]:
+    if result != [gdal.GARIO_COMPLETE, 0, 0, ds.RasterXSize, ds.RasterYSize]:
         gdaltest.post_reason('wrong return values for GetNextUpdatedRegion()')
         print(result)
         ds.EndAsyncReader(asyncreader)
@@ -1223,8 +1223,8 @@ def ecw_32():
         return 'skip'
 
     ds = gdal.Open('data/jrc.ecw')
-    data_123 = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize, band_list=[1,2,3])
-    data_321 = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize, band_list=[3,2,1])
+    data_123 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[1, 2, 3])
+    data_321 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[3, 2, 1])
     if data_123 == data_321:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1249,7 +1249,7 @@ def ecw_32():
         </SimpleSource>
     </VRTRasterBand>
     </VRTDataset>""")
-    data_vrt = vrt_ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize, band_list=[1,2,3])
+    data_vrt = vrt_ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[1, 2, 3])
 
     if data_321 != data_vrt:
         gdaltest.post_reason('failure')
@@ -1267,34 +1267,34 @@ def ecw_33():
         return 'skip'
 
     ds = gdal.Open('data/jrc.ecw')
-    multiband_data = ds.ReadRaster(100,100,50,50)
+    multiband_data = ds.ReadRaster(100, 100, 50, 50)
     ds = None
 
     ds = gdal.Open('data/jrc.ecw')
 
     # To feed the heuristics
-    ds.GetRasterBand(1).ReadRaster(10,10,50,50)
-    ds.GetRasterBand(2).ReadRaster(10,10,50,50)
-    ds.GetRasterBand(3).ReadRaster(10,10,50,50)
+    ds.GetRasterBand(1).ReadRaster(10, 10, 50, 50)
+    ds.GetRasterBand(2).ReadRaster(10, 10, 50, 50)
+    ds.GetRasterBand(3).ReadRaster(10, 10, 50, 50)
 
     # Now the heuristics should be set to ON
-    data1_1 = ds.GetRasterBand(1).ReadRaster(100,100,50,50)
-    data2_1 = ds.GetRasterBand(2).ReadRaster(100,100,50,50)
-    data3_1 = ds.GetRasterBand(3).ReadRaster(100,100,50,50)
+    data1_1 = ds.GetRasterBand(1).ReadRaster(100, 100, 50, 50)
+    data2_1 = ds.GetRasterBand(2).ReadRaster(100, 100, 50, 50)
+    data3_1 = ds.GetRasterBand(3).ReadRaster(100, 100, 50, 50)
 
     # Break heuristics
-    ds.GetRasterBand(2).ReadRaster(100,100,50,50)
-    ds.GetRasterBand(1).ReadRaster(100,100,50,50)
+    ds.GetRasterBand(2).ReadRaster(100, 100, 50, 50)
+    ds.GetRasterBand(1).ReadRaster(100, 100, 50, 50)
 
     # To feed the heuristics again
-    ds.GetRasterBand(1).ReadRaster(10,10,50,50)
-    ds.GetRasterBand(2).ReadRaster(10,10,50,50)
-    ds.GetRasterBand(3).ReadRaster(10,10,50,50)
+    ds.GetRasterBand(1).ReadRaster(10, 10, 50, 50)
+    ds.GetRasterBand(2).ReadRaster(10, 10, 50, 50)
+    ds.GetRasterBand(3).ReadRaster(10, 10, 50, 50)
 
     # Now the heuristics should be set to ON
-    data1_2 = ds.GetRasterBand(1).ReadRaster(100,100,50,50)
-    data2_2 = ds.GetRasterBand(2).ReadRaster(100,100,50,50)
-    data3_2 = ds.GetRasterBand(3).ReadRaster(100,100,50,50)
+    data1_2 = ds.GetRasterBand(1).ReadRaster(100, 100, 50, 50)
+    data2_2 = ds.GetRasterBand(2).ReadRaster(100, 100, 50, 50)
+    data3_2 = ds.GetRasterBand(3).ReadRaster(100, 100, 50, 50)
 
     ds = None
 
@@ -1325,19 +1325,19 @@ def ecw_33_bis():
         return 'skip'
 
     ds = gdal.Open('data/jrc.ecw')
-    data_ref = ds.ReadRaster(0,0,50,50)
+    data_ref = ds.ReadRaster(0, 0, 50, 50)
 
     ds = gdal.Open('data/jrc.ecw')
 
     # To feed the heuristics
-    ds.GetRasterBand(1).ReadRaster(0,0,50,50,buf_pixel_space=4)
-    ds.GetRasterBand(2).ReadRaster(0,0,50,50,buf_pixel_space=4)
-    ds.GetRasterBand(3).ReadRaster(0,0,50,50,buf_pixel_space=4)
+    ds.GetRasterBand(1).ReadRaster(0, 0, 50, 50, buf_pixel_space=4)
+    ds.GetRasterBand(2).ReadRaster(0, 0, 50, 50, buf_pixel_space=4)
+    ds.GetRasterBand(3).ReadRaster(0, 0, 50, 50, buf_pixel_space=4)
 
     # Now the heuristics should be set to ON
-    data1 = ds.GetRasterBand(1).ReadRaster(0,0,50,50,buf_pixel_space=4)
-    data2 = ds.GetRasterBand(2).ReadRaster(0,0,50,50,buf_pixel_space=4)
-    data3 = ds.GetRasterBand(3).ReadRaster(0,0,50,50,buf_pixel_space=4)
+    data1 = ds.GetRasterBand(1).ReadRaster(0, 0, 50, 50, buf_pixel_space=4)
+    data2 = ds.GetRasterBand(2).ReadRaster(0, 0, 50, 50, buf_pixel_space=4)
+    data3 = ds.GetRasterBand(3).ReadRaster(0, 0, 50, 50, buf_pixel_space=4)
 
     # Note: we must compare with the dataset RasterIO() buffer since
     # with SDK 3.3, the results of band RasterIO() and dataset RasterIO() are
@@ -1372,7 +1372,7 @@ def ecw_34():
     ds = gdal.GetDriverByName('MEM').Create('MEM:::', 128, 128, 1, gdal.GDT_UInt16)
     ds.GetRasterBand(1).Fill(65535)
     ref_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type=gdal.GDT_UInt16)
-    out_ds = gdaltest.ecw_drv.CreateCopy('tmp/UInt16_big_out.ecw', ds, options=['ECW_FORMAT_VERSION=3','TARGET=1'])
+    out_ds = gdaltest.ecw_drv.CreateCopy('tmp/UInt16_big_out.ecw', ds, options=['ECW_FORMAT_VERSION=3', 'TARGET=1'])
     del out_ds
     ds = None
 
@@ -1448,7 +1448,7 @@ def ecw_36():
     </VRTRasterBand>
     </VRTDataset>""")
 
-    dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrc312.ecw', vrt_ds, options=['ECW_FORMAT_VERSION=3','TARGET=75'])
+    dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrc312.ecw', vrt_ds, options=['ECW_FORMAT_VERSION=3', 'TARGET=75'])
 
     if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand :
         print('Band 1 color interpretation should be Blue  but is : ' + gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
@@ -1491,7 +1491,7 @@ def ecw_37():
 
     ds = gdal.Open("data/jrc.ecw")
 
-    dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrc123.ecw', ds, options=['ECW_FORMAT_VERSION=3','TARGET=75'])
+    dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrc123.ecw', ds, options=['ECW_FORMAT_VERSION=3', 'TARGET=75'])
 
     if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand :
         print('Band 1 color interpretation should be Red but is : ' + gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
@@ -1531,7 +1531,7 @@ def ecw_38():
         return 'skip'
 
     gdaltest.ecw_38_fname = ''
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         exec("""gdaltest.ecw_38_fname = 'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'""")
     else:
         exec("""gdaltest.ecw_38_fname = u'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'""")
@@ -1571,7 +1571,7 @@ def ecw_39():
 
     ds = gdal.Open('data/jrc.ecw')
 
-    dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrcstats.ecw', ds, options=['ECW_FORMAT_VERSION=3','TARGET=75'])
+    dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrcstats.ecw', ds, options=['ECW_FORMAT_VERSION=3', 'TARGET=75'])
     ds = None
     hist = (0, 255, 2, [3, 4])
 
@@ -1611,26 +1611,26 @@ def ecw_40():
             return 'fail'
 
     expected_md = [
-  ('CLOCKWISE_ROTATION_DEG','0.000000'),
-  ('COLORSPACE','RGB'),
-  ('COMPRESSION_DATE','2013-04-04T09:20:03Z'),
-  ('COMPRESSION_RATE_ACTUAL','3.165093'),
-  ('COMPRESSION_RATE_TARGET','20'),
-  ('FILE_METADATA_COMPRESSION_SOFTWARE','python2.7/GDAL v1.10.0.0/ECWJP2 SDK v5.0.0.0'),
-  ('FILE_METADATA_ACQUISITION_DATE','2012-09-12'),
-  ('FILE_METADATA_ACQUISITION_SENSOR_NAME','Leica ADS-80'),
-  ('FILE_METADATA_ADDRESS','2 Abbotsford Street, West Leederville WA 6007 Australia'),
-  ('FILE_METADATA_AUTHOR','Unknown'),
-  ('FILE_METADATA_CLASSIFICATION','test gdal image'),
-  ('FILE_METADATA_COMPANY','ERDAS-QA'),
-  ('FILE_METADATA_COMPRESSION_SOFTWARE','python2.7/GDAL v1.10.0.0/ECWJP2 SDK v5.0.0.0'),
-  ('FILE_METADATA_COPYRIGHT','Intergraph 2013'),
-  ('FILE_METADATA_EMAIL','support@intergraph.com'),
-  ('FILE_METADATA_TELEPHONE','+61 8 9388 2900'),
-  ('VERSION','3')]
+  ('CLOCKWISE_ROTATION_DEG', '0.000000'),
+  ('COLORSPACE', 'RGB'),
+  ('COMPRESSION_DATE', '2013-04-04T09:20:03Z'),
+  ('COMPRESSION_RATE_ACTUAL', '3.165093'),
+  ('COMPRESSION_RATE_TARGET', '20'),
+  ('FILE_METADATA_COMPRESSION_SOFTWARE', 'python2.7/GDAL v1.10.0.0/ECWJP2 SDK v5.0.0.0'),
+  ('FILE_METADATA_ACQUISITION_DATE', '2012-09-12'),
+  ('FILE_METADATA_ACQUISITION_SENSOR_NAME', 'Leica ADS-80'),
+  ('FILE_METADATA_ADDRESS', '2 Abbotsford Street, West Leederville WA 6007 Australia'),
+  ('FILE_METADATA_AUTHOR', 'Unknown'),
+  ('FILE_METADATA_CLASSIFICATION', 'test gdal image'),
+  ('FILE_METADATA_COMPANY', 'ERDAS-QA'),
+  ('FILE_METADATA_COMPRESSION_SOFTWARE', 'python2.7/GDAL v1.10.0.0/ECWJP2 SDK v5.0.0.0'),
+  ('FILE_METADATA_COPYRIGHT', 'Intergraph 2013'),
+  ('FILE_METADATA_EMAIL', 'support@intergraph.com'),
+  ('FILE_METADATA_TELEPHONE', '+61 8 9388 2900'),
+  ('VERSION', '3')]
 
     got_md = ds.GetMetadata()
-    for (key,value) in expected_md:
+    for (key, value) in expected_md:
         if key not in got_md or got_md[key] != value:
             gdaltest.post_reason('fail')
             print(key)
@@ -1672,7 +1672,7 @@ def ecw_41():
     if ds.GetRasterBand(1).GetMaximum() is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetRasterBand(1).GetStatistics(1,0) != [0.0, 0.0, 0.0, -1.0]:
+    if ds.GetRasterBand(1).GetStatistics(1, 0) != [0.0, 0.0, 0.0, -1.0]:
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetDefaultHistogram(force=0) is not None:
@@ -1680,7 +1680,7 @@ def ecw_41():
         return 'fail'
 
     # Now compute the stats
-    stats = ds.GetRasterBand(1).GetStatistics(0,1)
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     expected_stats = [0.0, 255.0, 21.662427983539093, 51.789457392268119]
     for i in range(4):
         if abs(stats[i] - expected_stats[i]) > 1:
@@ -1708,7 +1708,7 @@ def ecw_41():
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetMaximum())
         return 'fail'
-    stats = ds.GetRasterBand(1).GetStatistics(0,0)
+    stats = ds.GetRasterBand(1).GetStatistics(0, 0)
     expected_stats = [0.0, 255.0, 21.662427983539093, 51.789457392268119]
     for i in range(4):
         if abs(stats[i] - expected_stats[i]) > 1:
@@ -1868,15 +1868,15 @@ def ecw_43():
         gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
-    jp2_bands_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    jp2_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize / 16),int(ds.RasterYSize / 16))
+    jp2_bands_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
+    jp2_fourth_band_data = fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
+    fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, int(ds.RasterXSize / 16), int(ds.RasterYSize / 16))
 
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/ecw_43.tif', ds)
     fourth_band = tmp_ds.GetRasterBand(4)
     got_cs = fourth_band.Checksum()
-    gtiff_bands_data = tmp_ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    gtiff_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
+    gtiff_bands_data = tmp_ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
+    gtiff_fourth_band_data = fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     #gtiff_fourth_band_subsampled_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,ds.RasterXSize/16,ds.RasterYSize/16)
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/ecw_43.tif')
@@ -1915,27 +1915,27 @@ def ecw_44():
     ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
 
     expected_md = [
-  ('CODE_BLOCK_SIZE_X','64'),
-  ('CODE_BLOCK_SIZE_Y','64'),
-  ('GML_JP2_DATA','FALSE'),
-  ('PRECINCT_SIZE_X','128,128'),
-  ('PRECINCT_SIZE_Y','128,128'),
-  ('PRECISION','8,8,8,1'),
-  ('PROFILE','0'),
-  ('PROGRESSION_ORDER','RPCL'),
-  ('QUALITY_LAYERS','1'),
-  ('RESOLUTION_LEVELS','2'),
-  ('PROGRESSION_ORDER','RPCL'),
-  ('TILE_HEIGHT','150'),
-  ('TILE_WIDTH','162'),
-  ('TILES_X','1'),
-  ('TILES_Y','1'),
-  ('TRANSFORMATION_TYPE','5x3'),
-  ('USE_EPH','TRUE'),
-  ('USE_SOP','FALSE')]
+  ('CODE_BLOCK_SIZE_X', '64'),
+  ('CODE_BLOCK_SIZE_Y', '64'),
+  ('GML_JP2_DATA', 'FALSE'),
+  ('PRECINCT_SIZE_X', '128,128'),
+  ('PRECINCT_SIZE_Y', '128,128'),
+  ('PRECISION', '8,8,8,1'),
+  ('PROFILE', '0'),
+  ('PROGRESSION_ORDER', 'RPCL'),
+  ('QUALITY_LAYERS', '1'),
+  ('RESOLUTION_LEVELS', '2'),
+  ('PROGRESSION_ORDER', 'RPCL'),
+  ('TILE_HEIGHT', '150'),
+  ('TILE_WIDTH', '162'),
+  ('TILES_X', '1'),
+  ('TILES_Y', '1'),
+  ('TRANSFORMATION_TYPE', '5x3'),
+  ('USE_EPH', 'TRUE'),
+  ('USE_SOP', 'FALSE')]
 
     got_md = ds.GetMetadata('JPEG2000')
-    for (key,value) in expected_md:
+    for (key, value) in expected_md:
         if key not in got_md or got_md[key] != value:
             gdaltest.post_reason('fail')
             print(key)
@@ -2113,14 +2113,14 @@ def ecw_47():
     mean_tolerance = 0.5
 
     if gdaltest.ecw_drv.major_version == 5:
-        (exp_mean, exp_stddev) = (141.606,67.2919)
+        (exp_mean, exp_stddev) = (141.606, 67.2919)
     else:
         (exp_mean, exp_stddev) = (140.332, 67.611)
 
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
     if abs(mean - exp_mean) > mean_tolerance or abs(stddev - exp_stddev) > 0.5:
-        gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev))
+        gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
         return 'fail'
 
     gdal.Unlink('/vsimem/ecw_47.ecw')
@@ -2320,20 +2320,20 @@ def ecw_online_5():
     ds = gdal.Open('tmp/cache/red_flower.ecw')
 
     if gdaltest.ecw_drv.major_version == 3:
-        (exp_mean, exp_stddev) = (112.801,52.0431)
+        (exp_mean, exp_stddev) = (112.801, 52.0431)
         # on Tamas slavebots, (mean,stddev)  = (113.301,52.0434)
         mean_tolerance = 1
     else:
         mean_tolerance = 0.5
         if gdaltest.ecw_drv.major_version == 5:
-            (exp_mean, exp_stddev) = (113.345,52.1259)
+            (exp_mean, exp_stddev) = (113.345, 52.1259)
         else:
-            (exp_mean, exp_stddev) = (114.337,52.1751)
+            (exp_mean, exp_stddev) = (114.337, 52.1751)
 
     (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
 
     if abs(mean - exp_mean) > mean_tolerance or abs(stddev - exp_stddev) > 0.5:
-        gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev))
+        gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
         return 'fail'
 
     return 'success'

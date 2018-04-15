@@ -452,7 +452,7 @@ def ogr_xlsx_11():
     ds = ogr.Open('data/not_all_columns_present.xlsx')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    for i in (0,27,28,29):
+    for i in (0, 27, 28, 29):
         if f['Field%d' % (i + 1)] != 'val%d' % (i + 1):
             f.DumpReadable()
             return 'fail'

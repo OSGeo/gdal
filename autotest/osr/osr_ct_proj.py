@@ -177,7 +177,7 @@ transform_list = [ \
 
     # Verify that 26592 "pcs.override" is working well.
     ('EPSG:26591', (1550000, 10000, 0.0), 0.02,
-     'EPSG:4265', (9.449316,0.090469,0.00), 0.00001,
+     'EPSG:4265', (9.449316, 0.090469, 0.00), 0.00001,
      'MMRome1_MMGreenwich', None, None),
 
     # Test Bonne projection.
@@ -191,42 +191,42 @@ transform_list = [ \
      'TPED_Mars', None, None),
 
     # test scale factor precision (per #1970)
-    ('data/wkt_rt90.def', (1572570.342,6728429.67,0.0), 0.001,
-     ' +proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs',(616531.1155,6727527.5682,0.0), 0.001,
+    ('data/wkt_rt90.def', (1572570.342, 6728429.67, 0.0), 0.001,
+     ' +proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs', (616531.1155, 6727527.5682, 0.0), 0.001,
      'ScalePrecision(#1970)', None, None),
 
     # Test Google Mercator (EPSG:3785)
-    ('EPSG:3785', (1572570.342,6728429.67,0.0), 0.001,
-     'WGS84',(14.126639735716626, 51.601722482149995, 0.0), 0.0000001,
+    ('EPSG:3785', (1572570.342, 6728429.67, 0.0), 0.001,
+     'WGS84', (14.126639735716626, 51.601722482149995, 0.0), 0.0000001,
      'GoogleMercator(#3136)', None, None),
 
     # Test Equirectangular with all parameters
-    ('+proj=eqc +ellps=sphere  +lat_0=-2 +lat_ts=1 +lon_0=-10', (-14453132.04, 4670184.72,0.0), 0.1,
+    ('+proj=eqc +ellps=sphere  +lat_0=-2 +lat_ts=1 +lon_0=-10', (-14453132.04, 4670184.72, 0.0), 0.1,
      '+proj=latlong +ellps=sphere', (-140.0, 40.0, 0.0), 0.000001,
      'Equirectangular(#2706)', None, "4.6.1"),
 
     # Test Geocentric
     ('+proj=latlong +datum=WGS84', (-140.0, 40.0, 0.0), 0.000001,
-     'EPSG:4328', (-3748031.46884168,-3144971.82314589,4077985.57220038), 0.1,
+     'EPSG:4328', (-3748031.46884168, -3144971.82314589, 4077985.57220038), 0.1,
      'Geocentric', None, None),
 
     # Test Vertical Datum Shift with a change of horizontal and vert units.
-    ('+proj=utm +zone=11 +datum=WGS84', (100000.0,3500000.0,0.0), 0.1,
-     '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft', (328083.333225467,11482916.6665952,136.055454832886), 0.01,
+    ('+proj=utm +zone=11 +datum=WGS84', (100000.0, 3500000.0, 0.0), 0.1,
+     '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft', (328083.333225467, 11482916.6665952, 136.055454832886), 0.01,
      'EGM 96 Conversion', None, "GRID:egm96_15.gtx"),
 
     # Test optimization in case of identical projections (projected)
-    ('+proj=utm +zone=11 +datum=NAD27 +units=m', (440720.0,3751260.0,0.0), 0,
-     '+proj=utm +zone=11 +datum=NAD27 +units=m', (440720.0,3751260.0,0.0), 0,
+    ('+proj=utm +zone=11 +datum=NAD27 +units=m', (440720.0, 3751260.0, 0.0), 0,
+     '+proj=utm +zone=11 +datum=NAD27 +units=m', (440720.0, 3751260.0, 0.0), 0,
      'No-op Optimization (projected)', None, None),
 
     # Test optimization in case of identical projections (geodetic)
-    ('+proj=longlat +datum=WGS84', (2,49,0.0), 0,
-     '+proj=longlat +datum=WGS84', (2,49,0.0), 0,
+    ('+proj=longlat +datum=WGS84', (2, 49, 0.0), 0,
+     '+proj=longlat +datum=WGS84', (2, 49, 0.0), 0,
      'No-op Optimization (geodetic)', None, None),
 
     # Test GRS80 -> EPSG:3857
-    ('+proj=longlat +ellps=GRS80 +towgs84=0,0,0 +no_defs', (2,49,0.0), 1e-8,
+    ('+proj=longlat +ellps=GRS80 +towgs84=0,0,0 +no_defs', (2, 49, 0.0), 1e-8,
      '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs', (222638.981586547, 6274861.39384813, 0), 1e-3,
      'GRS80 -> EPSG:3857', None, None),
 

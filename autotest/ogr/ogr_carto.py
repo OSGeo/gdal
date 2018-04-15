@@ -417,7 +417,7 @@ Error""")
     gdal.PushErrorHandler()
     extent = lyr.GetExtent()
     gdal.PopErrorHandler()
-    if extent != (0,0,0,0):
+    if extent != (0, 0, 0, 0):
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -428,7 +428,7 @@ Error""")
     gdal.PushErrorHandler()
     extent = lyr.GetExtent()
     gdal.PopErrorHandler()
-    if extent != (0,0,0,0):
+    if extent != (0, 0, 0, 0):
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -591,7 +591,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    lyr.SetSpatialFilterRect(-180,-90,180,90)
+    lyr.SetSpatialFilterRect(-180, -90, 180, 90)
 
     gdal.PushErrorHandler()
     fc = lyr.GetFeatureCount()

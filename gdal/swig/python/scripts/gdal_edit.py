@@ -136,7 +136,7 @@ def gdal_edit(argv):
                 i = i + 1
             else:
                 z = 0
-            gcp = gdal.GCP(x,y,z,pixel,line)
+            gcp = gdal.GCP(x, y, z, pixel, line)
             gcp_list.append(gcp)
         elif argv[i] == '-unsetgt' :
             unsetgt = True
@@ -262,9 +262,9 @@ def gdal_edit(argv):
         # For now only the GTiff drivers understands full-zero as a hint
         # to unset the geotransform
         if ds.GetDriver().ShortName == 'GTiff':
-            ds.SetGeoTransform([0,0,0,0,0,0])
+            ds.SetGeoTransform([0, 0, 0, 0, 0, 0])
         else:
-            ds.SetGeoTransform([0,1,0,0,0,1])
+            ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
 
     if len(gcp_list) > 0:
         if wkt is None:

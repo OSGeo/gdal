@@ -570,8 +570,8 @@ def rl2_22():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    left_ds = gdal.Translate('left', src_ds, srcWin=[0,0,10,20], format='MEM')
-    right_ds = gdal.Translate('', src_ds, srcWin=[10,0,10,20], format='MEM')
+    left_ds = gdal.Translate('left', src_ds, srcWin=[0, 0, 10, 20], format='MEM')
+    right_ds = gdal.Translate('', src_ds, srcWin=[10, 0, 10, 20], format='MEM')
 
     gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', left_ds, options=['COVERAGE=left_right'])
     ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', right_ds, options=['APPEND_SUBDATASET=YES', 'COVERAGE=left_right', 'SECTION=right'])
