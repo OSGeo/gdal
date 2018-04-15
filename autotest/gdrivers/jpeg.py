@@ -133,7 +133,7 @@ def jpeg_3():
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
-    if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_GrayIndex:
+    if ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_GrayIndex:
         gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
@@ -318,7 +318,7 @@ def jpeg_8():
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
-    if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_RedBand:
+    if ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_RedBand:
         gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
@@ -330,7 +330,7 @@ def jpeg_8():
         print(ds.GetRasterBand(2).Checksum())
         return 'fail'
 
-    if ds.GetRasterBand(2).GetRasterColorInterpretation()!= gdal.GCI_GreenBand:
+    if ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_GreenBand:
         gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(2).GetRasterColorInterpretation())
         return 'fail'
@@ -342,7 +342,7 @@ def jpeg_8():
         print(ds.GetRasterBand(3).Checksum())
         return 'fail'
 
-    if ds.GetRasterBand(3).GetRasterColorInterpretation()!= gdal.GCI_BlueBand:
+    if ds.GetRasterBand(3).GetRasterColorInterpretation() != gdal.GCI_BlueBand:
         gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(3).GetRasterColorInterpretation())
         return 'fail'
@@ -372,7 +372,7 @@ def jpeg_9():
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
-    if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_CyanBand:
+    if ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_CyanBand:
         gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
@@ -384,7 +384,7 @@ def jpeg_9():
         print(ds.GetRasterBand(2).Checksum())
         return 'fail'
 
-    if ds.GetRasterBand(2).GetRasterColorInterpretation()!= gdal.GCI_MagentaBand:
+    if ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_MagentaBand:
         gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(2).GetRasterColorInterpretation())
         return 'fail'
@@ -396,7 +396,7 @@ def jpeg_9():
         print(ds.GetRasterBand(3).Checksum())
         return 'fail'
 
-    if ds.GetRasterBand(3).GetRasterColorInterpretation()!= gdal.GCI_YellowBand:
+    if ds.GetRasterBand(3).GetRasterColorInterpretation() != gdal.GCI_YellowBand:
         gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(3).GetRasterColorInterpretation())
         return 'fail'
@@ -408,7 +408,7 @@ def jpeg_9():
         print(ds.GetRasterBand(4).Checksum())
         return 'fail'
 
-    if ds.GetRasterBand(4).GetRasterColorInterpretation()!= gdal.GCI_BlackBand:
+    if ds.GetRasterBand(4).GetRasterColorInterpretation() != gdal.GCI_BlackBand:
         gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(4).GetRasterColorInterpretation())
         return 'fail'
@@ -421,7 +421,7 @@ def jpeg_9():
 
 def jpeg_10():
 
-    if gdaltest.jpeg_version == '9b': # Fails for some reason
+    if gdaltest.jpeg_version == '9b':  # Fails for some reason
         return 'skip'
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
@@ -458,7 +458,7 @@ def jpeg_10():
 
 def jpeg_11():
 
-    if gdaltest.jpeg_version == '9b': # Fails for some reason
+    if gdaltest.jpeg_version == '9b':  # Fails for some reason
         return 'skip'
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
@@ -538,7 +538,7 @@ def jpeg_13():
 
 def jpeg_14():
 
-    if gdaltest.jpeg_version == '9b': # Fails for some reason
+    if gdaltest.jpeg_version == '9b':  # Fails for some reason
         return 'skip'
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
@@ -726,7 +726,7 @@ def jpeg_18():
     data = struct.unpack('B' * width, line0)
     if abs(data[0] - 0) > 10:
         return 'fail'
-    line1023 = ds.GetRasterBand(1).ReadRaster(0,height-1,width,1)
+    line1023 = ds.GetRasterBand(1).ReadRaster(0,height - 1,width,1)
     data = struct.unpack('B' * width, line1023)
     if abs(data[0] - 255) > 10:
         return 'fail'
@@ -736,7 +736,7 @@ def jpeg_18():
     data = struct.unpack('B' * (int(width / 4)), line0_ovr1)
     if abs(data[0] - 0) > 10:
         return 'fail'
-    line1023_bis = ds.GetRasterBand(1).ReadRaster(0,height-1,width,1)
+    line1023_bis = ds.GetRasterBand(1).ReadRaster(0,height - 1,width,1)
     if line1023_bis == line0 or line1023 != line1023_bis:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -784,7 +784,7 @@ def jpeg_19():
         src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(
             0, 0, iX,height, struct.pack('B' * 1, 255), 1, 1)
         src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(
-            iX, 0, width-iX, height, struct.pack('B' * 1, 0), 1, 1)
+            iX, 0, width - iX, height, struct.pack('B' * 1, 0), 1, 1)
         tiff_mask_data = src_ds.GetRasterBand(1).GetMaskBand().ReadRaster(
             0, 0, width, height)
 
@@ -999,14 +999,14 @@ def jpeg_22():
 
 def jpeg_23():
     ds = gdal.Open('data/albania.jpg')
-    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
 
     # Band interleaved
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize)
     tmp_ds = gdal.GetDriverByName('Mem').Create(
         '', ds.RasterXSize, ds.RasterYSize, 3)
     tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data)
-    got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1018,7 +1018,7 @@ def jpeg_23():
         '', ds.RasterXSize, ds.RasterYSize, 3)
     tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize,data,
                        buf_pixel_space=3, buf_band_space=1)
-    got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1030,7 +1030,7 @@ def jpeg_23():
         '', ds.RasterXSize, ds.RasterYSize, 3)
     tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize,data,
                        buf_pixel_space=4, buf_band_space=1)
-    got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1165,27 +1165,27 @@ def jpeg_28():
     # EXIF tags only
     src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
 
-    src_ds.SetMetadataItem('EXIF_DateTime', 'dt') # not enough values ASCII
-    src_ds.SetMetadataItem('EXIF_DateTimeOriginal', '01234567890123456789') # truncated ASCII
-    src_ds.SetMetadataItem('EXIF_DateTimeDigitized', '0123456789012345678') # right number of items ASCII
-    src_ds.SetMetadataItem('EXIF_Make', 'make') # variable ASCII
+    src_ds.SetMetadataItem('EXIF_DateTime', 'dt')  # not enough values ASCII
+    src_ds.SetMetadataItem('EXIF_DateTimeOriginal', '01234567890123456789')  # truncated ASCII
+    src_ds.SetMetadataItem('EXIF_DateTimeDigitized', '0123456789012345678')  # right number of items ASCII
+    src_ds.SetMetadataItem('EXIF_Make', 'make')  # variable ASCII
 
-    src_ds.SetMetadataItem('EXIF_ExifVersion', '01234') # truncated UNDEFINED
-    src_ds.SetMetadataItem('EXIF_ComponentsConfiguration', '0x1F') # not enough values UNDEFINED
-    src_ds.SetMetadataItem('EXIF_FlashpixVersion', 'ABCD') # right number of items UNDEFINED
-    src_ds.SetMetadataItem('EXIF_SpatialFrequencyResponse', '0xab 0xCD') # variable UNDEFINED
+    src_ds.SetMetadataItem('EXIF_ExifVersion', '01234')  # truncated UNDEFINED
+    src_ds.SetMetadataItem('EXIF_ComponentsConfiguration', '0x1F')  # not enough values UNDEFINED
+    src_ds.SetMetadataItem('EXIF_FlashpixVersion', 'ABCD')  # right number of items UNDEFINED
+    src_ds.SetMetadataItem('EXIF_SpatialFrequencyResponse', '0xab 0xCD')  # variable UNDEFINED
 
-    src_ds.SetMetadataItem('EXIF_Orientation', '10') # right number of items SHORT
-    src_ds.SetMetadataItem('EXIF_ResolutionUnit', '2 4') # truncated SHORT
-    src_ds.SetMetadataItem('EXIF_TransferFunction', '0 1') # not enough values SHORT
-    src_ds.SetMetadataItem('EXIF_ISOSpeedRatings', '1 2 3') # variable SHORT
+    src_ds.SetMetadataItem('EXIF_Orientation', '10')  # right number of items SHORT
+    src_ds.SetMetadataItem('EXIF_ResolutionUnit', '2 4')  # truncated SHORT
+    src_ds.SetMetadataItem('EXIF_TransferFunction', '0 1')  # not enough values SHORT
+    src_ds.SetMetadataItem('EXIF_ISOSpeedRatings', '1 2 3')  # variable SHORT
 
-    src_ds.SetMetadataItem('EXIF_StandardOutputSensitivity', '123456789') # right number of items LONG
+    src_ds.SetMetadataItem('EXIF_StandardOutputSensitivity', '123456789')  # right number of items LONG
 
-    src_ds.SetMetadataItem('EXIF_XResolution', '96') # right number of items RATIONAL
-    src_ds.SetMetadataItem('EXIF_YResolution', '96 0') # truncated RATIONAL
-    src_ds.SetMetadataItem('EXIF_CompressedBitsPerPixel', 'nan') # invalid RATIONAL
-    src_ds.SetMetadataItem('EXIF_ApertureValue', '-1') # invalid RATIONAL
+    src_ds.SetMetadataItem('EXIF_XResolution', '96')  # right number of items RATIONAL
+    src_ds.SetMetadataItem('EXIF_YResolution', '96 0')  # truncated RATIONAL
+    src_ds.SetMetadataItem('EXIF_CompressedBitsPerPixel', 'nan')  # invalid RATIONAL
+    src_ds.SetMetadataItem('EXIF_ApertureValue', '-1')  # invalid RATIONAL
 
     with gdaltest.error_handler():
         gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
@@ -1314,7 +1314,7 @@ def jpeg_28():
         gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
-    if ds.GetRasterBand(1).GetOverview(ds.GetRasterBand(1).GetOverviewCount()-1).XSize != 32:
+    if ds.GetRasterBand(1).GetOverview(ds.GetRasterBand(1).GetOverviewCount() - 1).XSize != 32:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None

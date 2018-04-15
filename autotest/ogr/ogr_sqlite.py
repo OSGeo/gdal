@@ -267,7 +267,7 @@ def ogr_sqlite_4():
 
     for item in wkt_list:
 
-        wkt = open('data/wkb_wkt/'+item+'.wkt').read()
+        wkt = open('data/wkb_wkt/' + item + '.wkt').read()
         geom = ogr.CreateGeometryFromWkt(wkt)
 
         ######################################################################
@@ -921,7 +921,7 @@ def ogr_sqlite_17():
     # Reopen DB
     ds = None
     ds = ogr.Open('tmp/spatialite_test.db')
-    lyr =ds.GetLayerByName('geomspatialite')
+    lyr = ds.GetLayerByName('geomspatialite')
 
     feat_read = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat_read,geom,max_error=0.001) != 0:
@@ -958,7 +958,7 @@ def ogr_sqlite_18():
     ds = None
     ds = ogr.Open('tmp/spatialite_test.db')
 
-    lyr =ds.GetLayerByName('nonepsgsrs')
+    lyr = ds.GetLayerByName('nonepsgsrs')
     srs = lyr.GetSpatialRef()
     wkt = srs.ExportToWkt()
     if wkt.find('VanDerGrinten') == -1:
@@ -1168,12 +1168,12 @@ def ogr_sqlite_23():
         return 'fail'
 
     fd = shp_layer.GetLayerDefn()
-    fld = fd.GetFieldDefn(0) # area
+    fld = fd.GetFieldDefn(0)  # area
     if not fld.IsIgnored():
         gdaltest.post_reason('AREA unexpectedly not marked as ignored.')
         return 'fail'
 
-    fld = fd.GetFieldDefn(1) # eas_id
+    fld = fd.GetFieldDefn(1)  # eas_id
     if fld.IsIgnored():
         gdaltest.post_reason('EASI unexpectedly marked as ignored.')
         return 'fail'
@@ -3476,7 +3476,7 @@ def ogr_sqlite_43():
 
     # Only available since sqlite 3.8.0
     version = ogrtest.sqlite_version.split('.')
-    if not (len(version) >= 3 and int(version[0])*10000 + int(version[1])*100 + int(version[2]) >= 30800):
+    if not (len(version) >= 3 and int(version[0]) * 10000 + int(version[1]) * 100 + int(version[2]) >= 30800):
         return 'skip'
 
     ds = ogr.Open('file:foo?mode=memory&cache=shared')
@@ -3546,7 +3546,7 @@ def ogr_sqlite_45():
 
     # Only available since sqlite 3.7.0
     version = ogrtest.sqlite_version.split('.')
-    if not (len(version) >= 3 and int(version[0])*10000 + int(version[1])*100 + int(version[2]) >= 30700):
+    if not (len(version) >= 3 and int(version[0]) * 10000 + int(version[1]) * 100 + int(version[2]) >= 30700):
         return 'skip'
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_45.db')

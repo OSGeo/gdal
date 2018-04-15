@@ -99,7 +99,7 @@ def numpy_rw_3():
     ds = gdal.Open('data/cint_sar.tif')
     array = ds.ReadAsArray()
 
-    if array[2][3] != 116-16j:
+    if array[2][3] != 116 - 16j:
         print(array[0][2][3])
         gdaltest.post_reason('complex value read improperly.')
         return 'fail'
@@ -558,7 +558,7 @@ def numpy_rw_13():
     ar[2][0][0] = 102
     ar[2][0][1] = 202
     for i in range(3):
-        ds.GetRasterBand(i+1).WriteArray(ar[i])
+        ds.GetRasterBand(i + 1).WriteArray(ar[i])
 
     ar = numpy.empty([3, 1, 2], dtype=numpy.int64)
     try:
@@ -653,14 +653,14 @@ def numpy_rw_14_progress_callback(pct, message, user_data):
         print('Expected %f, got %f' % (user_data[0], pct))
         user_data[1] = False
     user_data[0] = user_data[0] + 0.05
-    return 1 # 1 to continue, 0 to stop
+    return 1  # 1 to continue, 0 to stop
 
 
 def numpy_rw_14_progress_interrupt_callback(pct, message, user_data):
     user_data[0] = pct
     if pct >= 0.5:
         return 0
-    return 1 # 1 to continue, 0 to stop
+    return 1  # 1 to continue, 0 to stop
 
 
 def numpy_rw_14_progress_callback_2(pct, message, user_data):
@@ -668,7 +668,7 @@ def numpy_rw_14_progress_callback_2(pct, message, user_data):
         print('Got %f, last pct was %f' % (pct, user_data[0]))
         return 0
     user_data[0] = pct
-    return 1 # 1 to continue, 0 to stop
+    return 1  # 1 to continue, 0 to stop
 
 
 def numpy_rw_14():

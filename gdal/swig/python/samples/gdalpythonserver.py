@@ -140,7 +140,7 @@ class GDALPythonServerDataset:
         self.RasterCount = self.gdal_ds.RasterCount
         self.bands = []
         for i in range(self.RasterCount):
-            gdal_band = self.gdal_ds.GetRasterBand(i+1)
+            gdal_band = self.gdal_ds.GetRasterBand(i + 1)
             self.bands.append(GDALPythonServerRasterBand(gdal_band))
 
     def __del__(self):
@@ -150,7 +150,7 @@ class GDALPythonServerDataset:
         return self.gdal_ds.GetDriver()
 
     def GetRasterBand(self, i):
-        return self.bands[i-1]
+        return self.bands[i - 1]
 
     def GetDescription(self):
         return self.gdal_ds.GetDescription()
@@ -380,8 +380,8 @@ def read_str():
     if length <= 0:
         return None
     str = sys.stdin.read(length)
-    if len(str) > 0 and str[len(str)-1] == '\0':
-        str =  str[0:len(str)-1]
+    if len(str) > 0 and str[len(str) - 1] == '\0':
+        str =  str[0:len(str) - 1]
     return str
 
 
@@ -432,15 +432,15 @@ def write_str(s):
 
 def write_band(band, isrv_num):
     if band is not None:
-        write_int(isrv_num) # srv band count
-        write_int(band.Band) # band number
-        write_int(0) # access
-        write_int(band.XSize) # X
-        write_int(band.YSize) # Y
-        write_int(band.DataType) # data type
-        write_int(band.BlockXSize) # block x size
-        write_int(band.BlockYSize) # block y size
-        write_str('') # band description
+        write_int(isrv_num)  # srv band count
+        write_int(band.Band)  # band number
+        write_int(0)  # access
+        write_int(band.XSize)  # X
+        write_int(band.YSize)  # Y
+        write_int(band.DataType)  # data type
+        write_int(band.BlockXSize)  # block x size
+        write_int(band.BlockYSize)  # block y size
+        write_str('')  # band description
     else:
         write_int(-1)
 
@@ -507,11 +507,11 @@ def main_loop():
                 sys.stderr.write('extra_bytes=%d\n' % extra_bytes)
 
             write_str('2.1dev')
-            write_int(2) # vmajor
-            write_int(1) # vminor
-            write_int(3) # protovmajor
-            write_int(0) # protovminor
-            write_int(0) # extra bytes
+            write_int(2)  # vmajor
+            write_int(1)  # vminor
+            write_int(3)  # protovmajor
+            write_int(0)  # protovminor
+            write_int(0)  # extra bytes
             continue
         elif instr == INSTR_EXIT:
             server_ds = None
@@ -560,26 +560,26 @@ def main_loop():
 
             write_marker()
             if server_ds is None:
-                write_int(0) # Failure
+                write_int(0)  # Failure
             else:
-                write_int(1) # Success
-                write_int(16) # caps length
+                write_int(1)  # Success
+                write_int(16)  # caps length
                 caps = [0 for i in range(16)]
                 for cap in caps_list:
                     caps[int(cap / 8)] = caps[int(cap / 8)] | (1 << (cap % 8))
                 for i in range(16):
-                    sys.stdout.write(struct.pack('B', caps[i])) # caps
+                    sys.stdout.write(struct.pack('B', caps[i]))  # caps
                 write_str(server_ds.GetDescription())
                 drv = server_ds.GetDriver()
                 if drv is not None:
                     write_str(drv.GetDescription())
-                    write_int(0) # End of driver metadata
+                    write_int(0)  # End of driver metadata
                 else:
                     write_str(None)
-                write_int(server_ds.RasterXSize) # X
-                write_int(server_ds.RasterYSize) # Y
-                write_int(server_ds.RasterCount) # Band count
-                write_int(1) # All bands are identical
+                write_int(server_ds.RasterXSize)  # X
+                write_int(server_ds.RasterYSize)  # Y
+                write_int(server_ds.RasterCount)  # Band count
+                write_int(1)  # All bands are identical
 
                 if server_ds.RasterCount > 0:
                     write_band(server_ds.GetRasterBand(1), len(server_bands))
@@ -597,20 +597,20 @@ def main_loop():
         elif instr == INSTR_Create:
             filename = read_str()
             cwd = read_str()
-            read_int() # xsize =
-            read_int() # ysize =
-            read_int() # bands =
-            read_int() # datatype =
-            read_strlist() #options =
+            read_int()  # xsize =
+            read_int()  # ysize =
+            read_int()  # bands =
+            read_int()  # datatype =
+            read_strlist()  # options =
             write_marker()
             # FIXME
             write_int(0)
         elif instr == INSTR_CreateCopy:
             filename = read_str()
-            read_str() # src_description =
+            read_str()  # src_description =
             cwd = read_str()
-            read_int() # strict =
-            read_strlist() # options =
+            read_int()  # strict =
+            read_strlist()  # options =
             # FIXME
             write_int(0)
         elif instr == INSTR_QuietDelete:
@@ -663,7 +663,7 @@ def main_loop():
             nBufType = read_int()
             nBandCount = read_int()
             panBandMap = []
-            read_int() # size =
+            read_int()  # size =
             for i in range(nBandCount):
                 panBandMap.append(read_int())
             nPixelSpace = read_bigint()
@@ -748,7 +748,7 @@ def main_loop():
             write_marker()
             if val is None:
                 write_int(0)
-                write_double(1) #default value is 1
+                write_double(1)  # default value is 1
             else:
                 write_int(1)
                 write_double(val)

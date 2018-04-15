@@ -136,7 +136,7 @@ def ogr_dxf_2():
         gdaltest.post_reason('envelope area not as expected, got %g.' % area)
         return 'fail'
 
-    if abs(geom.GetX(0)-73.25) > 0.001 or abs(geom.GetY(0)-139.75) > 0.001:
+    if abs(geom.GetX(0) - 73.25) > 0.001 or abs(geom.GetY(0) - 139.75) > 0.001:
         gdaltest.post_reason('first point (%g,%g) not expected location.' \
                               % (geom.GetX(0),geom.GetY(0)))
         return 'fail'
@@ -161,7 +161,7 @@ def ogr_dxf_3():
         gdaltest.post_reason('envelope area not as expected, got %g.' % area)
         return 'fail'
 
-    if abs(geom.GetX(0)-61.133) > 0.01 or abs(geom.GetY(0)-103.592) > 0.01:
+    if abs(geom.GetX(0) - 61.133) > 0.01 or abs(geom.GetY(0) - 103.592) > 0.01:
         gdaltest.post_reason('first point (%g,%g) not expected location.' \
                               % (geom.GetX(0),geom.GetY(0)))
         return 'fail'
@@ -239,7 +239,7 @@ def ogr_dxf_7():
         gdaltest.post_reason('envelope area not as expected, got %g.' % area)
         return 'fail'
 
-    if abs(geom.GetX(0)-115.258) > 0.01 or abs(geom.GetY(0)-107.791) > 0.01:
+    if abs(geom.GetX(0) - 115.258) > 0.01 or abs(geom.GetY(0) - 107.791) > 0.01:
         gdaltest.post_reason('first point (%g,%g) not expected location.' \
                               % (geom.GetX(0),geom.GetY(0)))
         return 'fail'
@@ -328,7 +328,7 @@ def ogr_dxf_9():
         gdaltest.post_reason('Did not get expected first mtext.')
         return 'fail'
 
-    expected_style = 'LABEL(f:"Arial",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
+    expected_style = 'LABEL(f:"Arial",t:"' + gdaltest.sample_style + '",a:45,s:0.5g,p:5,c:#000000)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style))
         return 'fail'
@@ -548,8 +548,8 @@ def ogr_dxf_13():
         gdaltest.post_reason('did not get expected number of points, got %d' % geom.GetPointCount())
         return 'fail'
 
-    if abs(geom.GetX(0)-251297.8179) > 0.001 \
-       or abs(geom.GetY(0)-412226.8286) > 0.001:
+    if abs(geom.GetX(0) - 251297.8179) > 0.001 \
+       or abs(geom.GetY(0) - 412226.8286) > 0.001:
         gdaltest.post_reason('first point (%g,%g) not expected location.' \
                               % (geom.GetX(0),geom.GetY(0)))
         return 'fail'
@@ -603,8 +603,8 @@ def ogr_dxf_14():
         gdaltest.post_reason('did not get expected number of points, got %d' % geom.GetPointCount())
         return 'fail'
 
-    if abs(geom.GetX(0)-251297.8179) > 0.001 \
-       or abs(geom.GetY(0)-412226.8286) > 0.001:
+    if abs(geom.GetX(0) - 251297.8179) > 0.001 \
+       or abs(geom.GetY(0) - 412226.8286) > 0.001:
         gdaltest.post_reason('first point (%g,%g) not expected location.' \
                               % (geom.GetX(0),geom.GetY(0)))
         return 'fail'
@@ -685,22 +685,22 @@ def ogr_dxf_15():
 
     outdxf = open('tmp/dxf_14.dxf').read()
     start_1 = outdxf.find('  0\nLAYER')
-    start_2 = outdxf.find('  0\nLAYER',start_1+10)
+    start_2 = outdxf.find('  0\nLAYER',start_1 + 10)
 
     txt_1 = outdxf[start_1:start_2]
-    txt_2 = outdxf[start_2:start_2+len(txt_1)+2]
+    txt_2 = outdxf[start_2:start_2 + len(txt_1) + 2]
 
     abc_off = txt_2.find('abc\n')
 
-    if txt_2[16:abc_off] + '0' + txt_2[abc_off+3:] != txt_1[16:]:
-        print(txt_2[abc_off] + '0' + txt_2[abc_off+3:])
+    if txt_2[16:abc_off] + '0' + txt_2[abc_off + 3:] != txt_1[16:]:
+        print(txt_2[abc_off] + '0' + txt_2[abc_off + 3:])
         print(txt_1)
         gdaltest.post_reason('Layer abc does not seem to match layer 0.')
         return 'fail'
 
     # Check that $HANDSEED was set as expected.
     start_seed = outdxf.find('$HANDSEED')
-    handseed = outdxf[start_seed+10+4:start_seed+10+4+8]
+    handseed = outdxf[start_seed + 10 + 4:start_seed + 10 + 4 + 8]
     if handseed != '00000053':
         gdaltest.post_reason('Did not get expected HANDSEED, got %s.' % handseed)
         return 'fail'
@@ -780,7 +780,7 @@ def ogr_dxf_16():
         gdaltest.post_reason('Did not get expected first mtext.')
         return 'fail'
 
-    expected_style = 'LABEL(f:"Arial",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
+    expected_style = 'LABEL(f:"Arial",t:"' + gdaltest.sample_style + '",a:45,s:0.5g,p:5,c:#000000)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style))
         return 'fail'

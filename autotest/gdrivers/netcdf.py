@@ -93,7 +93,7 @@ def netcdf_setup():
         gdaltest.netcdf_drv_has_hdf4 = True
 
     print('NOTICE: using netcdf version ' + gdaltest.netcdf_drv_version + \
-               '  has_nc2: '+str(gdaltest.netcdf_drv_has_nc2)+'  has_nc4: ' + \
+               '  has_nc2: ' + str(gdaltest.netcdf_drv_has_nc2) + '  has_nc4: ' + \
                str(gdaltest.netcdf_drv_has_nc4))
 
     return 'success'
@@ -104,7 +104,7 @@ def netcdf_setup():
 
 
 def netcdf_test_copy(ifile, band, checksum, ofile, opts=[], driver='NETCDF'):
-    test = gdaltest.GDALTest('NETCDF', '../'+ifile, band, checksum, options=opts)
+    test = gdaltest.GDALTest('NETCDF', '../' + ifile, band, checksum, options=opts)
     return test.testCreateCopy(check_gt=0, check_srs=0, new_filename=ofile, delete_copy=0, check_minmax=0)
 
 ###############################################################################
@@ -166,7 +166,7 @@ def netcdf_test_deflate(ifile, checksum, zlevel=1, timeout=None):
     ofile1 = 'tmp/' + os.path.basename(ifile) + '-1.nc'
     ofile1_opts = ['FORMAT=NC4C', 'COMPRESS=NONE']
     ofile2 = 'tmp/' + os.path.basename(ifile) + '-2.nc'
-    ofile2_opts = ['FORMAT=NC4C', 'COMPRESS=DEFLATE', 'ZLEVEL='+str(zlevel)]
+    ofile2_opts = ['FORMAT=NC4C', 'COMPRESS=DEFLATE', 'ZLEVEL=' + str(zlevel)]
 
     if not os.path.exists(ifile):
         gdaltest.post_reason('ifile %s does not exist' % ifile)
@@ -540,8 +540,8 @@ def netcdf_10():
         sr = osr.SpatialReference()
         sr.ImportFromWkt(prj)
         #new driver uses UNIT vattribute instead of scaling values
-        if not (sr.GetAttrValue("PROJCS|UNIT",1)=="1000" and gt == gt2) :
-            gdaltest.post_reason('Incorrect geotransform, got '+str(gt))
+        if not (sr.GetAttrValue("PROJCS|UNIT",1) == "1000" and gt == gt2) :
+            gdaltest.post_reason('Incorrect geotransform, got ' + str(gt))
             return 'fail'
 
     ds = None
@@ -860,7 +860,7 @@ def netcdf_21():
             return 'fail'
 
         if (err != '' or ret != ''):
-            gdaltest.post_reason('gdalwarp returned error\n'+str(ret)+' '+str(err))
+            gdaltest.post_reason('gdalwarp returned error\n' + str(ret) + ' ' + str(err))
             return 'fail'
 
     # test compression of the file, with a conservative timeout of 60 seconds
@@ -1151,7 +1151,7 @@ def netcdf_test_4dfile(ofile):
     if err is None or 'netcdf library version' not in err:
         print('NOTICE: ncdump not found')
         return 'success'
-    (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h '+ ofile)
+    (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h ' + ofile)
     if ret == '' or err != '':
         gdaltest.post_reason('ncdump failed')
         return 'fail'
@@ -1230,7 +1230,7 @@ def netcdf_29():
         return 'fail'
 
     if (err != '' or ret != ''):
-        gdaltest.post_reason('gdalwarp returned error\n'+str(ret)+' '+str(err))
+        gdaltest.post_reason('gdalwarp returned error\n' + str(ret) + ' ' + str(err))
         return 'fail'
 
     # copy vrt to netcdf, with proper dimension rolling
@@ -1283,7 +1283,7 @@ def netcdf_31():
     gt1 = (-80.0, 0.25, 0.0, -19.5, 0.0, -0.25)
 
     if gt != gt1:
-        gdaltest.post_reason('Incorrect geotransform, got '+str(gt))
+        gdaltest.post_reason('Incorrect geotransform, got ' + str(gt))
         return 'fail'
 
     ds = None
@@ -1361,13 +1361,13 @@ def netcdf_34():
         print('from multiprocessing import Process failed')
         return 'skip'
 
-    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/netcdf/'+filename,filename):
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/netcdf/' + filename,filename):
         return 'skip'
 
     sys.stdout.write('.')
     sys.stdout.flush()
 
-    tst = gdaltest.GDALTest('NetCDF', '../tmp/cache/'+filename, 1, 31621)
+    tst = gdaltest.GDALTest('NetCDF', '../tmp/cache/' + filename, 1, 31621)
     #tst.testOpen()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -3045,7 +3045,7 @@ def netcdf_73():
     ds = gdal.Open('data/geos_rad.nc')
     gt = ds.GetGeoTransform()
     expected_gt = (-5979486.362104082, 1087179.4077774752, 0.0, -5979487.123448145, 0.0, 1087179.4077774752)
-    if max([abs(gt[i]-expected_gt[i]) for i in range(6)]) > 1:
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1:
         print(gt)
         return 'fail'
 
@@ -3063,7 +3063,7 @@ def netcdf_74():
     ds = gdal.Open('data/geos_microradian.nc')
     gt = ds.GetGeoTransform()
     expected_gt = (-5739675.119757546, 615630.8078590936, 0.0, -1032263.7666924844, 0.0, 615630.8078590936)
-    if max([abs(gt[i]-expected_gt[i]) for i in range(6)]) > 1:
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1:
         print(gt)
         return 'fail'
 

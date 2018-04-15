@@ -302,7 +302,7 @@ def ogr_mongodb_2():
     a_uuid = str(uuid.uuid1()).replace('-', '_')
     ogrtest.mongodb_layer_name = 'test_' + a_uuid
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4258) # ETRS 89 will reproject identically to EPSG:4326
+    srs.ImportFromEPSG(4258)  # ETRS 89 will reproject identically to EPSG:4326
     lyr = ogrtest.mongodb_ds.CreateLayer(ogrtest.mongodb_layer_name, geom_type=ogr.wkbPolygon, srs=srs, options=['GEOMETRY_NAME=location.mygeom', 'FID='])
 
     gdal.PushErrorHandler()
@@ -349,7 +349,7 @@ def ogr_mongodb_2():
     f['location.name'] = 'Paris'
     f['bool'] = 1
     f['int'] = 1
-    f['int64'] = 1234567890123456 # put a number larger than 1 << 40 so that fromjson() doesn't pick double
+    f['int64'] = 1234567890123456  # put a number larger than 1 << 40 so that fromjson() doesn't pick double
     f['real'] = 1.23
     f['dt'] = '1234/12/31 23:59:59.123+00'
     f.SetFieldBinaryFromHexString('binary', '00FF')
@@ -823,7 +823,7 @@ def ogr_mongodb_2():
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
-    if f['int'] != 2147483647 or f['int64'] != 9223372036854775807 or f['real'] +1 != f['real']:
+    if f['int'] != 2147483647 or f['int64'] != 9223372036854775807 or f['real'] + 1 != f['real']:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'

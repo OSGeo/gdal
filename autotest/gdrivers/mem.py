@@ -163,7 +163,7 @@ def mem_2():
     # allocate band data array.
     width = 50
     height = 3
-    p = malloc(width*height*4)
+    p = malloc(width * height * 4)
     if p is None:
         return 'skip'
     float_p = ctypes.cast(p,ctypes.POINTER(ctypes.c_float))
@@ -174,7 +174,7 @@ def mem_2():
 
     for dsname in dsnames:
 
-        for i in range(width*height):
+        for i in range(width * height):
             float_p[i] = 5.0
 
         ds = gdal.Open(dsname)
@@ -230,18 +230,18 @@ def mem_4():
     ds = drv.Create('', 100, 100, 3)
     expected_cs = [0, 0, 0]
     for i in range(3):
-        cs = ds.GetRasterBand(i+1).Checksum()
+        cs = ds.GetRasterBand(i + 1).Checksum()
         if cs != expected_cs[i]:
-            gdaltest.post_reason('did not get expected checksum for band %d' % (i+1))
+            gdaltest.post_reason('did not get expected checksum for band %d' % (i + 1))
             print(cs)
             return 'fail'
 
     ds.GetRasterBand(1).Fill(255)
     expected_cs = [57182, 0, 0]
     for i in range(3):
-        cs = ds.GetRasterBand(i+1).Checksum()
+        cs = ds.GetRasterBand(i + 1).Checksum()
         if cs != expected_cs[i]:
-            gdaltest.post_reason('did not get expected checksum for band %d after fill' % (i+1))
+            gdaltest.post_reason('did not get expected checksum for band %d after fill' % (i + 1))
             print(cs)
             return 'fail'
 
@@ -260,18 +260,18 @@ def mem_5():
     ds = drv.Create('', 100, 100, 3, options=['INTERLEAVE=PIXEL'])
     expected_cs = [0, 0, 0]
     for i in range(3):
-        cs = ds.GetRasterBand(i+1).Checksum()
+        cs = ds.GetRasterBand(i + 1).Checksum()
         if cs != expected_cs[i]:
-            gdaltest.post_reason('did not get expected checksum for band %d' % (i+1))
+            gdaltest.post_reason('did not get expected checksum for band %d' % (i + 1))
             print(cs)
             return 'fail'
 
     ds.GetRasterBand(1).Fill(255)
     expected_cs = [57182, 0, 0]
     for i in range(3):
-        cs = ds.GetRasterBand(i+1).Checksum()
+        cs = ds.GetRasterBand(i + 1).Checksum()
         if cs != expected_cs[i]:
-            gdaltest.post_reason('did not get expected checksum for band %d after fill' % (i+1))
+            gdaltest.post_reason('did not get expected checksum for band %d after fill' % (i + 1))
             print(cs)
             return 'fail'
 

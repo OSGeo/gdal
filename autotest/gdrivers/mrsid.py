@@ -201,7 +201,7 @@ def mrsid_3():
 
     stat_epsilon = 0.0001
     for i in range(4):
-        if abs(new_stat[i]-check_stat[i]) > stat_epsilon:
+        if abs(new_stat[i] - check_stat[i]) > stat_epsilon:
             print('')
             print('old = ', check_stat)
             print('new = ', new_stat)
@@ -438,12 +438,12 @@ def mrsid_11():
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-440720) > 0.1 \
-        or abs(geotransform[1]-60) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-3751320) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -60) > 0.001:
+    if abs(geotransform[0] - 440720) > 0.1 \
+        or abs(geotransform[1] - 60) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 3751320) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'

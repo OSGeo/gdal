@@ -105,7 +105,7 @@ def test_ogrtindex_1(srs=None):
             gdaltest.post_reason('did not get expected spatial ref')
             return 'fail'
 
-    expected_wkts =['POLYGON ((49 2,49 2,49 2,49 2,49 2))',
+    expected_wkts = ['POLYGON ((49 2,49 2,49 2,49 2,49 2))',
                     'POLYGON ((49 3,49 3,49 3,49 3,49 3))',
                     'POLYGON ((48 2,48 2,48 2,48 2,48 2))',
                     'POLYGON ((48 3,48 3,48 3,48 3,48 3))']
@@ -210,7 +210,7 @@ def test_ogrtindex_3():
             gdaltest.post_reason('did not get expected spatial ref')
             return 'fail'
 
-        expected_wkts =['POLYGON ((2 49,2 49,2 49,2 49,2 49))',
+        expected_wkts = ['POLYGON ((2 49,2 49,2 49,2 49,2 49))',
                         'POLYGON ((3 50,3 50,3 50,3 50,3 50))']
         i = 0
         feat = ds.GetLayer(0).GetNextFeature()

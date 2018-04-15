@@ -191,11 +191,11 @@ def pds4_8():
 
     filename = '/vsimem/out.xml'
     for proj4 in ['+proj=eqc +lat_ts=43.75 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
-                   '+proj=lcc +lat_1=10 +lat_0=10 +lon_0=-112.5 +k_0=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs', # LCC_1SP
-                   '+proj=lcc +lat_1=9 +lat_2=11 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs', # LCC_2SP
-                   '+proj=omerc +lat_0=10 +lonc=11 +alpha=12 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs', # Oblique Mercator Azimuth Center
-                   '+proj=omerc +lat_0=10 +lon_1=11 +lat_1=12 +lon_2=13 +lat_2=14 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs', # Oblique Mercator 2 points
-                   '+proj=stere +lat_0=90 +lat_ts=90 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs', # Polar Stereographic
+                   '+proj=lcc +lat_1=10 +lat_0=10 +lon_0=-112.5 +k_0=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # LCC_1SP
+                   '+proj=lcc +lat_1=9 +lat_2=11 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # LCC_2SP
+                   '+proj=omerc +lat_0=10 +lonc=11 +alpha=12 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Oblique Mercator Azimuth Center
+                   '+proj=omerc +lat_0=10 +lon_1=11 +lat_1=12 +lon_2=13 +lat_2=14 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Oblique Mercator 2 points
+                   '+proj=stere +lat_0=90 +lat_ts=90 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Polar Stereographic
                    '+proj=poly +lat_0=9 +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
                    '+proj=sinu +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
                    '+proj=tmerc +lat_0=11 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
@@ -309,7 +309,7 @@ def pds4_9():
         with hide_substitution_warnings_error_handler():
             gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4',
                            noData=75,
-                           creationOptions=['IMAGE_FORMAT='+format])
+                           creationOptions=['IMAGE_FORMAT=' + format])
 
         ret = validate_xml(filename)
         if ret == 'fail':
@@ -342,7 +342,7 @@ def pds4_9():
         with hide_substitution_warnings_error_handler():
             gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4',
                         creationOptions=['USE_SRC_LABEL=NO',
-                                            'IMAGE_FORMAT='+format])
+                                            'IMAGE_FORMAT=' + format])
 
         ret = validate_xml(filename)
         if ret == 'fail':
@@ -541,7 +541,7 @@ def pds4_10():
     filename2 = '/vsimem/out2.xml'
     for format in ['RAW', 'GEOTIFF']:
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                                 options=['IMAGE_FORMAT='+format])
+                                                 options=['IMAGE_FORMAT=' + format])
         ds.GetRasterBand(1).SetScale(2)
         ds.GetRasterBand(1).SetOffset(3)
         with hide_substitution_warnings_error_handler():

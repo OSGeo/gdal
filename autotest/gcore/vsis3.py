@@ -1326,13 +1326,13 @@ def vsis3_6():
     if gdaltest.webserver_port == 0:
         return 'skip'
 
-    with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'): # 1 MB
+    with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'):  # 1 MB
         with webserver.install_http_handler(webserver.SequentialHandler()):
             f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket4/large_file.bin', 'wb')
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    size = 1024*1024+1
+    size = 1024 * 1024 + 1
     big_buffer = ''.join('a' for i in range(size))
 
     handler = webserver.SequentialHandler()
@@ -1442,7 +1442,7 @@ def vsis3_6():
                         '/vsis3/s3_fake_bucket4/large_file_initiate_empty_result.bin',
                         '/vsis3/s3_fake_bucket4/large_file_initiate_invalid_xml_result.bin',
                         '/vsis3/s3_fake_bucket4/large_file_initiate_no_uploadId.bin']:
-        with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'): # 1 MB
+        with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'):  # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
         if f is None:
             gdaltest.post_reason('fail')
@@ -1473,7 +1473,7 @@ def vsis3_6():
     with webserver.install_http_handler(handler):
       for filename in ['/vsis3/s3_fake_bucket4/large_file_upload_part_403_error.bin',
                         '/vsis3/s3_fake_bucket4/large_file_upload_part_no_etag.bin']:
-        with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'): # 1 MB
+        with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'):  # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
         if f is None:
             gdaltest.post_reason('fail')
@@ -1502,7 +1502,7 @@ def vsis3_6():
 
     filename = '/vsis3/s3_fake_bucket4/large_file_abortmultipart_403_error.bin'
     with webserver.install_http_handler(handler):
-        with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'): # 1 MB
+        with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'):  # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
         if f is None:
             gdaltest.post_reason('fail')
@@ -1534,7 +1534,7 @@ def vsis3_6():
 
     filename = '/vsis3/s3_fake_bucket4/large_file_completemultipart_403_error.bin'
     with webserver.install_http_handler(handler):
-        with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'): # 1 MB
+        with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'):  # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
             if f is None:
                 gdaltest.post_reason('fail')

@@ -450,7 +450,7 @@ def kea_8():
         if ds.GetRasterBand(1).GetColorTable() is not None:
             gdaltest.post_reason('fail')
             return 'fail'
-        if ds.GetRasterBand(1).SetColorTable(None) == 0: # not allowed by the driver
+        if ds.GetRasterBand(1).SetColorTable(None) == 0:  # not allowed by the driver
             gdaltest.post_reason('fail')
             return 'fail'
         ct = gdal.ColorTable()
@@ -542,7 +542,7 @@ def kea_10():
                                  (gdal.GDT_UInt32,0,0),
                                  (gdal.GDT_UInt32,0xFFFFFFFF,0xFFFFFFFF),
                                  (gdal.GDT_UInt32,-1,None),
-                                 (gdal.GDT_UInt32,0xFFFFFFFF+1,None),
+                                 (gdal.GDT_UInt32,0xFFFFFFFF + 1,None),
                                  (gdal.GDT_Int32,-2147483648,-2147483648),
                                  (gdal.GDT_Int32,2147483647,2147483647),
                                  (gdal.GDT_Int32,-2147483649,None),
@@ -631,7 +631,7 @@ def kea_12():
     if ds.GetRasterBand(1).GetDefaultRAT().GetColumnCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetRasterBand(1).SetDefaultRAT(None) == 0: # not allowed by the driver
+    if ds.GetRasterBand(1).SetDefaultRAT(None) == 0:  # not allowed by the driver
         gdaltest.post_reason('fail')
         return 'fail'
     rat = ds.GetRasterBand(1).GetDefaultRAT()
@@ -797,7 +797,7 @@ def kea_13():
     ds.BuildOverviews('NEAR', [2])
     ds = None
     ds = gdal.Open('tmp/out.kea')
-    out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds) # yes CreateCopy() of KEA copies overviews
+    out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)  # yes CreateCopy() of KEA copies overviews
     if out2_ds.GetRasterBand(1).GetOverviewCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -856,7 +856,7 @@ def kea_14():
     ds = None
 
     ds = gdal.Open('tmp/out.kea')
-    out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds) # yes CreateCopy() of KEA copies overviews
+    out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)  # yes CreateCopy() of KEA copies overviews
     if out2_ds.GetRasterBand(1).GetMaskFlags() != 0:
         gdaltest.post_reason('fail')
         return 'fail'

@@ -141,7 +141,7 @@ def xyz_4():
     got_gt = ds.GetGeoTransform()
     expected_gt = (440660.0, 60.0, 0.0, 3751350.0, 0.0, -120.0)
     for i in range(6):
-        if abs(got_gt[i]-expected_gt[i]) > 1e-5:
+        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
             gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)
@@ -189,7 +189,7 @@ def xyz_5():
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        if abs(got_gt[i]-expected_gt[i]) > 1e-5:
+        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
             gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)
@@ -222,7 +222,7 @@ def xyz_6():
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        if abs(got_gt[i]-expected_gt[i]) > 1e-5:
+        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
             gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)
@@ -266,7 +266,7 @@ def xyz_7():
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        if abs(got_gt[i]-expected_gt[i]) > 1e-8:
+        if abs(got_gt[i] - expected_gt[i]) > 1e-8:
             gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)

@@ -214,14 +214,14 @@ def sieve_6():
     # Try 3002. Should run in less than 10 seconds
     #size = 3002
     size = 102
-    ds = gdal.GetDriverByName('MEM').Create('', size+1, size)
-    ar = numpy.zeros((size,size+1), dtype=numpy.uint8)
+    ds = gdal.GetDriverByName('MEM').Create('', size + 1, size)
+    ar = numpy.zeros((size,size + 1), dtype=numpy.uint8)
     for i in range(size):
-        for j in range(int(size/3)):
-            ar[i][size+1-1-i-1-3*j] = 255
-            ar[i][size+1-1-i-3*j] = 255
+        for j in range(int(size / 3)):
+            ar[i][size + 1 - 1 - i - 1 - 3 * j] = 255
+            ar[i][size + 1 - 1 - i - 3 * j] = 255
         ar[i][0] = 255
-    ar[size-1] = 255
+    ar[size - 1] = 255
     ds.GetRasterBand(1).WriteArray(ar)
 
     band = ds.GetRasterBand(1)

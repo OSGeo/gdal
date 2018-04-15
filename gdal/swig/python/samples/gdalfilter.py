@@ -63,30 +63,30 @@ while i < len(sys.argv):
     arg = sys.argv[i]
 
     if arg == '-size':
-        size = int(sys.argv[i+1])
+        size = int(sys.argv[i + 1])
         i = i + 1
 
     elif arg == '-n':
         normalized = 1
 
     elif arg == '-f':
-        out_format = int(sys.argv[i+1])
+        out_format = int(sys.argv[i + 1])
         i = i + 1
 
     elif arg == '-co':
-        create_options.append(sys.argv[i+1])
+        create_options.append(sys.argv[i + 1])
         i = i + 1
 
     elif arg == '-coefs':
         coefs = []
-        for iCoef in range(size*size):
+        for iCoef in range(size * size):
             try:
-                coefs.append(float(sys.argv[iCoef+i+1]))
+                coefs.append(float(sys.argv[iCoef + i + 1]))
             except:
                 print("Didn't find enough valid kernel coefficients, need ", \
-                      size*size)
+                      size * size)
                 sys.exit(1)
-        i = i + size*size
+        i = i + size * size
 
     elif srcfile is None:
         srcfile = sys.argv[i]
@@ -155,9 +155,9 @@ filt_template = \
 # =============================================================================
 
 for iBand in range(vrt_ds.RasterCount):
-    band = vrt_ds.GetRasterBand(iBand+1)
+    band = vrt_ds.GetRasterBand(iBand + 1)
 
-    src_xml = filt_template % (iBand+1)
+    src_xml = filt_template % (iBand + 1)
 
     band.SetMetadata({'source_0' : src_xml}, 'vrt_sources')
 

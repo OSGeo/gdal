@@ -204,7 +204,7 @@ def ogr_mysql_4():
     for item in wkt_list:
         dst_feat = ogr.Feature(feature_def)
 
-        wkt = open('data/wkb_wkt/'+item+'.wkt').read()
+        wkt = open('data/wkb_wkt/' + item + '.wkt').read()
         geom = ogr.CreateGeometryFromWkt(wkt)
 
         ######################################################################
@@ -223,7 +223,7 @@ def ogr_mysql_4():
     wkt_list = ['10', '2', '1', '5', '4', '6']
 
     for item in wkt_list:
-        wkt = open('data/wkb_wkt/'+item+'.wkt').read()
+        wkt = open('data/wkb_wkt/' + item + '.wkt').read()
         geom = ogr.CreateGeometryFromWkt(wkt)
 
         ######################################################################
@@ -493,7 +493,7 @@ def ogr_mysql_15():
     query = 'eas_id = 169'
 
     for id in range(1000):
-        query = query + (' or eas_id = %d' % (id+1000))
+        query = query + (' or eas_id = %d' % (id + 1000))
 
     gdaltest.mysql_lyr.SetAttributeFilter(query)
     tr = ogrtest.check_features_against_list(gdaltest.mysql_lyr,
@@ -519,7 +519,7 @@ def ogr_mysql_16():
     query = 'eas_id = 169'
 
     for id in range(1000):
-        query = query + (' or eas_id = %d' % (id+1000))
+        query = query + (' or eas_id = %d' % (id + 1000))
 
     statement = 'select eas_id from tpoly where ' + query
 
@@ -574,7 +574,7 @@ def ogr_mysql_18():
         gdaltest.post_reason('did not get geometry_columns layer')
         return 'fail'
 
-    if count+1 != gdaltest.mysql_ds.GetLayerCount():
+    if count + 1 != gdaltest.mysql_ds.GetLayerCount():
         gdaltest.post_reason('layer count unexpectedly unchanged.')
         return 'fail'
 

@@ -102,7 +102,7 @@ class FileHandler:
                         end = len(filedata)
             request.send_response(200)
             if 'Range' in request.headers:
-                request.send_header('Content-Range', '%d-%d' % (start, end-1))
+                request.send_header('Content-Range', '%d-%d' % (start, end - 1))
             request.send_header('Content-Length', len(filedata))
             request.end_headers()
             request.wfile.write(filedata[start:end])

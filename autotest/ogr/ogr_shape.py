@@ -513,7 +513,7 @@ def ogr_shape_15():
             gdaltest.post_reason('Still an FID 9 in dataset.')
             return 'fail'
 
-        count = count+1
+        count = count + 1
         feat = gdaltest.shape_lyr.GetNextFeature()
 
     if count is not 10:
@@ -544,7 +544,7 @@ def ogr_shape_16():
         if feat.GetFID() == 9:
             got_9 = 1
 
-        count = count+1
+        count = count + 1
         feat = gdaltest.shape_lyr.GetNextFeature()
 
     if count is not 10:
@@ -764,7 +764,7 @@ def ogr_shape_21():
         # Test fix for #3665
         lyr.ResetReading()
         (minx, maxx, miny, maxy) = lyr.GetExtent()
-        lyr.SetSpatialFilterRect(minx+1e-9,miny+1e-9,maxx-1e-9,maxy-1e-9)
+        lyr.SetSpatialFilterRect(minx + 1e-9,miny + 1e-9,maxx - 1e-9,maxy - 1e-9)
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         feat = lyr.GetNextFeature()
         gdal.PopErrorHandler()
@@ -1453,7 +1453,7 @@ def ogr_shape_32():
             return 'fail'
 
         if (n % 22846) == 0:
-            sys.stdout.write('\r%.1f%%   ' % (n/Decimal('228460.0')))
+            sys.stdout.write('\r%.1f%%   ' % (n / Decimal('228460.0')))
             sys.stdout.flush()
 
     #######################################################
@@ -1464,7 +1464,7 @@ def ogr_shape_32():
 
     read_lyr = gdaltest.shape_ds_big.GetLayerByName('bigLayer')
 
-    for i in [0, 1, read_lyr.GetFeatureCount()-1]:
+    for i in [0, 1, read_lyr.GetFeatureCount() - 1]:
       feat_read = read_lyr.GetFeature(i)
       if feat_read is None:
         print('Could not retrieve geometry at FID', i)
@@ -1927,12 +1927,12 @@ def ogr_shape_45():
         return 'fail'
 
     fd = shp_layer.GetLayerDefn()
-    fld = fd.GetFieldDefn(0) # area
+    fld = fd.GetFieldDefn(0)  # area
     if not fld.IsIgnored():
         gdaltest.post_reason('AREA unexpectedly not marked as ignored.')
         return 'fail'
 
-    fld = fd.GetFieldDefn(1) # eas_id
+    fld = fd.GetFieldDefn(1)  # eas_id
     if fld.IsIgnored():
         gdaltest.post_reason('EASI unexpectedly marked as ignored.')
         return 'fail'
@@ -2557,7 +2557,7 @@ def ogr_shape_54_create_layer(ds, layer_index):
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, 'val%d' % layer_index)
     if (layer_index % 2) == 0:
-        feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (%d %d)' % (layer_index, layer_index+1)))
+        feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (%d %d)' % (layer_index, layer_index + 1)))
     lyr.CreateFeature(feat)
     feat = None
     return
@@ -2578,7 +2578,7 @@ def ogr_shape_54_test_layer(ds, layer_index):
         return 'fail'
     if (layer_index % 2) == 0:
         if feat.GetGeometryRef() is None or \
-           feat.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (layer_index, layer_index+1):
+           feat.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (layer_index, layer_index + 1):
             gdaltest.post_reason('failed for layer %d' % layer_index)
             return 'fail'
 
@@ -2720,7 +2720,7 @@ def ogr_shape_55():
     ds = shape_drv.CreateDataSource(ds_name)
     lyr = ds.CreateLayer('ogr_shape_55')
 
-    max_field_count = int((65535 - 33) / 32) # 2046
+    max_field_count = int((65535 - 33) / 32)  # 2046
 
     for i in range(max_field_count):
         if i == 255:
@@ -2768,7 +2768,7 @@ def ogr_shape_56():
     ds = shape_drv.CreateDataSource(ds_name)
     lyr = ds.CreateLayer('ogr_shape_56')
 
-    max_field_count = int(65535 / 80) # 819
+    max_field_count = int(65535 / 80)  # 819
 
     for i in range(max_field_count):
         if i == 255:
@@ -3367,7 +3367,7 @@ def ogr_shape_68():
         os.mkdir('tmp/mixedcase')
         shutil.copy('data/poly.shp', 'tmp/mixedcase/mixedcase.shp')
         shutil.copy('data/poly.shx', 'tmp/mixedcase/mixedcase.shx')
-        shutil.copy('data/poly.dbf', 'tmp/mixedcase/MIXEDCASE.DBF') # funny !
+        shutil.copy('data/poly.dbf', 'tmp/mixedcase/MIXEDCASE.DBF')  # funny !
 
         ds = ogr.Open('tmp/mixedcase', update=1)
         if sys.platform == 'win32':
@@ -4310,7 +4310,7 @@ def ogr_shape_90():
 
     # The declare file size doesn't match the real one
     f = gdal.VSIFOpenL('/vsimem/ogr_shape_90.shx', 'rb+')
-    filesize = int((100 + 8 * 1024 * 1024)/2)
+    filesize = int((100 + 8 * 1024 * 1024) / 2)
     gdal.VSIFSeekL(f, 24, 0)
     gdal.VSIFWriteL(struct.pack('>i', filesize), 1, 4, f)
     gdal.VSIFCloseL(f)
@@ -4328,7 +4328,7 @@ def ogr_shape_90():
 
     ds = ogr.Open('/vsimem/ogr_shape_90.shp')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 1024*1024:
+    if lyr.GetFeatureCount() != 1024 * 1024:
         return 'fail'
 
     ds = None
@@ -5139,9 +5139,9 @@ def ogr_shape_104():
 
     for (wkt, lyr_type, options, expected_wkt) in \
                 [['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [],  None],
-                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,1 1 3,2 2 4,0 0 0)))', ogr.wkbUnknown, [], None], # triangle fan
-                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 1 2,1 1 3,4 4 5,0 1 2)))', ogr.wkbUnknown, [], None], # triangle strip
-                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [], None], # no fan no strip
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,1 1 3,2 2 4,0 0 0)))', ogr.wkbUnknown, [], None],  # triangle fan
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 1 2,1 1 3,4 4 5,0 1 2)))', ogr.wkbUnknown, [], None],  # triangle strip
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [], None],  # no fan no strip
                   ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [],
                         'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))'],
                         # no fan no strip with duplicated triangle (as found in #5888)

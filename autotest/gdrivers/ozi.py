@@ -83,8 +83,8 @@ def ozi_online_1():
 
         gcp0 = gcps[0]
         if gcp0.GCPPixel != 61 or gcp0.GCPLine != 436 \
-                or abs(gcp0.GCPX- (-1653990.4525324)) > 0.001 \
-                or abs(gcp0.GCPY- 6950885.0402214) > 0.001:
+                or abs(gcp0.GCPX - (-1653990.4525324)) > 0.001 \
+                or abs(gcp0.GCPY - 6950885.0402214) > 0.001:
             gdaltest.post_reason('did not get expected gcp.')
             print(gcp0)
             return 'fail'

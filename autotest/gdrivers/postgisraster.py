@@ -55,7 +55,7 @@ def postgisraster_init():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
-    gdaltest.postgisraster_connection_string="PG:host='localhost' dbname='gisdb' user='gis' password='gis' schema='gis_schema' "
+    gdaltest.postgisraster_connection_string = "PG:host='localhost' dbname='gisdb' user='gis' password='gis' schema='gis_schema' "
 
     try:
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")

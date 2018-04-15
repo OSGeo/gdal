@@ -110,7 +110,7 @@ def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src=True, cla
         else:
             src_band = i + 1
         data = src_ds.GetRasterBand(src_band).ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize)
-        mem_ds.GetRasterBand(i+1).WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data)
+        mem_ds.GetRasterBand(i + 1).WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data)
     if tile_drv.ShortName == 'PNG':
         options = []
     else:
@@ -120,10 +120,10 @@ def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src=True, cla
         mem_ds = gdal.GetDriverByName('MEM').Create('', src_ds.RasterXSize, src_ds.RasterYSize, working_bands)
         mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
                         tmp_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize))
-        expected_cs = [mem_ds.GetRasterBand(i+1).Checksum() for i in range(working_bands)]
+        expected_cs = [mem_ds.GetRasterBand(i + 1).Checksum() for i in range(working_bands)]
     else:
         tmp_ds.FlushCache()
-        expected_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(working_bands)]
+        expected_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(working_bands)]
     mem_ds = None
     tmp_ds = None
     gdal.Unlink('/vsimem/tmp.' + tile_drv.ShortName)
@@ -215,7 +215,7 @@ def gpkg_1():
 
     got_gt = out_ds.GetGeoTransform()
     for i in range(6):
-        if abs(expected_gt[i]-got_gt[i])>1e-8:
+        if abs(expected_gt[i] - got_gt[i]) > 1e-8:
             gdaltest.post_reason('fail')
             return 'fail'
     got_wkt = out_ds.GetProjectionRef()
@@ -228,7 +228,7 @@ def gpkg_1():
         gdaltest.post_reason('fail')
         return 'fail'
     expected_cs = [expected_cs, expected_cs, expected_cs, 4873]
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))

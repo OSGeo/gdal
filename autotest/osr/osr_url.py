@@ -52,7 +52,7 @@ def osr_url_test(url, expected_wkt):
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     try:
         srs.ImportFromUrl(url)
-    except AttributeError: # old-gen bindings don't have this method yet
+    except AttributeError:  # old-gen bindings don't have this method yet
         return 'skip'
     except Exception:
         gdal.PopErrorHandler()

@@ -132,7 +132,7 @@ def reverse_rings(poly):
     for i_ring in range(poly.GetGeometryCount()):
         ring = poly.GetGeometryRef(i_ring)
         v_count = ring.GetPointCount()
-        for i_vert in range(v_count/2):
+        for i_vert in range(v_count / 2):
             i_other = v_count - i_vert - 1
             p1 = (ring.GetX(i_vert),ring.GetY(i_vert),ring.GetZ(i_vert))
             ring.SetPoint(i_vert,ring.GetX(i_other),ring.GetY(i_other),ring.GetZ(i_other))
@@ -199,7 +199,7 @@ def ogr_oci_4():
 
     for item in wkt_list:
 
-        wkt = open('data/wkb_wkt/'+item+'.wkt').read()
+        wkt = open('data/wkb_wkt/' + item + '.wkt').read()
         geom = ogr.CreateGeometryFromWkt(wkt)
 
         ######################################################################

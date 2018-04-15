@@ -97,7 +97,7 @@ def ogr_index_2():
                                      ('VALUE', ogr.OFTString, 16)])
 
     for i in range(20):
-        ogrtest.quick_create_feature(gdaltest.s_lyr, [i,'Value '+str(i)],None)
+        ogrtest.quick_create_feature(gdaltest.s_lyr, [i,'Value ' + str(i)],None)
 
     if gdaltest.s_lyr.GetFeatureCount() != 20:
         gdaltest.post_reason('FeatureCount wrong')

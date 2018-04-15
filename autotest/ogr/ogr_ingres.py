@@ -306,7 +306,7 @@ def ogr_ingres_8():
     new_count = gdaltest.ingres_lyr.GetFeatureCount()
     if new_count != old_count - 1:
         gdaltest.post_reason('got feature count of %d, not expected %d.' \
-                              % (new_count, old_count -1))
+                              % (new_count, old_count - 1))
 
     if gdaltest.ingres_lyr.GetFeature(target_fid) is not None:
         gdaltest.post_reason('Got deleted feature!')

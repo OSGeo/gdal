@@ -826,7 +826,7 @@ def warp_22():
     for j in range(h):
         line = ''
         for i in range(w):
-            line = line + '%c' % int((i*i+h*j/(i+1)) % 256)
+            line = line + '%c' % int((i * i + h * j / (i + 1)) % 256)
         ds.GetRasterBand(1).WriteRaster(0,j,w,1,line)
 
     expected_cs = ds.GetRasterBand(1).Checksum()
@@ -1004,7 +1004,7 @@ def warp_26():
 
 def warp_27_progress_callback(pct, message, user_data):
     #print(pct)
-    return 1 # 1 to continue, 0 to stop
+    return 1  # 1 to continue, 0 to stop
 
 
 def warp_27():
@@ -1022,7 +1022,7 @@ def warp_27():
 
     # Call AutoCreateWarpedVRT() to fetch default values for target raster dimensions and geotransform
     tmp_ds = gdal.AutoCreateWarpedVRT(src_ds, \
-                                       None, # src_wkt : left to default value --> will use the one from source \
+                                       None,  # src_wkt : left to default value --> will use the one from source \
                                        dst_wkt, \
                                        resampling, \
                                        error_threshold)
@@ -1040,16 +1040,16 @@ def warp_27():
     # And run the reprojection
 
     cbk = warp_27_progress_callback
-    cbk_user_data = None # value for last parameter of above warp_27_progress_callback
+    cbk_user_data = None  # value for last parameter of above warp_27_progress_callback
 
     gdal.ReprojectImage(src_ds, \
                          dst_ds, \
-                         None, # src_wkt : left to default value --> will use the one from source \
-                         None, # dst_wkt : left to default value --> will use the one from destination \
+                         None,  # src_wkt : left to default value --> will use the one from source \
+                         None,  # dst_wkt : left to default value --> will use the one from destination \
                          resampling, \
-                         0, # WarpMemoryLimit : left to default value \
+                         0,  # WarpMemoryLimit : left to default value \
                          error_threshold,
-                         cbk, # Progress callback : could be left to None or unspecified for silent progress
+                         cbk,  # Progress callback : could be left to None or unspecified for silent progress
                          cbk_user_data)  # Progress callback user data
 
     # Done !
@@ -1165,9 +1165,9 @@ def warp_29():
 
 def warp_30_progress_callback(pct, message, user_data):
     if pct > 0.2:
-        return 0 # stop
+        return 0  # stop
     else:
-        return 1 # continue
+        return 1  # continue
 
 
 def warp_30():
@@ -1185,7 +1185,7 @@ def warp_30():
 
     # Call AutoCreateWarpedVRT() to fetch default values for target raster dimensions and geotransform
     tmp_ds = gdal.AutoCreateWarpedVRT(src_ds, \
-                                       None, # src_wkt : left to default value --> will use the one from source \
+                                       None,  # src_wkt : left to default value --> will use the one from source \
                                        dst_wkt, \
                                        resampling, \
                                        error_threshold)
@@ -1203,17 +1203,17 @@ def warp_30():
     # And run the reprojection
 
     cbk = warp_30_progress_callback
-    cbk_user_data = None # value for last parameter of above warp_27_progress_callback
+    cbk_user_data = None  # value for last parameter of above warp_27_progress_callback
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = gdal.ReprojectImage(src_ds, \
                          dst_ds, \
-                         None, # src_wkt : left to default value --> will use the one from source \
-                         None, # dst_wkt : left to default value --> will use the one from destination \
+                         None,  # src_wkt : left to default value --> will use the one from source \
+                         None,  # dst_wkt : left to default value --> will use the one from destination \
                          resampling, \
-                         0, # WarpMemoryLimit : left to default value \
+                         0,  # WarpMemoryLimit : left to default value \
                          error_threshold,
-                         cbk, # Progress callback : could be left to None or unspecified for silent progress
+                         cbk,  # Progress callback : could be left to None or unspecified for silent progress
                          cbk_user_data)  # Progress callback user data
     gdal.PopErrorHandler()
 
@@ -1226,12 +1226,12 @@ def warp_30():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = gdal.ReprojectImage(src_ds, \
                          dst_ds, \
-                         None, # src_wkt : left to default value --> will use the one from source \
-                         None, # dst_wkt : left to default value --> will use the one from destination \
+                         None,  # src_wkt : left to default value --> will use the one from source \
+                         None,  # dst_wkt : left to default value --> will use the one from destination \
                          resampling, \
-                         0, # WarpMemoryLimit : left to default value \
+                         0,  # WarpMemoryLimit : left to default value \
                          error_threshold,
-                         cbk, # Progress callback : could be left to None or unspecified for silent progress
+                         cbk,  # Progress callback : could be left to None or unspecified for silent progress
                          cbk_user_data)  # Progress callback user data
     gdal.PopErrorHandler()
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
@@ -1853,8 +1853,8 @@ def warp_54():
                                 options='-of MEM -scale 0 255 0 65535 -ot UInt16 -a_ullr -162 150 0 0')
     dst_ds = gdal.Warp('', src_ds, format='MEM')
     for i in range(4):
-        expected_cs = src_ds.GetRasterBand(i+1).Checksum()
-        got_cs = dst_ds.GetRasterBand(i+1).Checksum()
+        expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
+        got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
         if expected_cs != got_cs:
             gdaltest.post_reason('fail')
             print(i)
@@ -1867,8 +1867,8 @@ def warp_54():
                                 options='-of MEM -scale 0 255 0 32767 -ot Int16 -a_ullr -162 150 0 0')
     dst_ds = gdal.Warp('', src_ds, format='MEM')
     for i in range(4):
-        expected_cs = src_ds.GetRasterBand(i+1).Checksum()
-        got_cs = dst_ds.GetRasterBand(i+1).Checksum()
+        expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
+        got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
         if expected_cs != got_cs:
             gdaltest.post_reason('fail')
             print(i)
@@ -1880,11 +1880,11 @@ def warp_54():
     src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
                                 options='-of MEM -scale 0 255 0 32767 -ot UInt16 -a_ullr -162 150 0 0')
     for i in range(4):
-        src_ds.GetRasterBand(i+1).SetMetadataItem('NBITS', '15', 'IMAGE_STRUCTURE')
+        src_ds.GetRasterBand(i + 1).SetMetadataItem('NBITS', '15', 'IMAGE_STRUCTURE')
     dst_ds = gdal.Warp('/vsimem/warp_54.tif', src_ds, options='-co NBITS=15')
     for i in range(4):
-        expected_cs = src_ds.GetRasterBand(i+1).Checksum()
-        got_cs = dst_ds.GetRasterBand(i+1).Checksum()
+        expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
+        got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
         if expected_cs != got_cs:
             gdaltest.post_reason('fail')
             print(i)

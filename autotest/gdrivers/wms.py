@@ -109,8 +109,8 @@ def wms_3():
         return 'fail'
 
     gt = gdaltest.wms_ds.GetGeoTransform()
-    if abs(gt[0]- -180) > 0.00001 \
-       or abs(gt[3]- 85) > 0.00001 \
+    if abs(gt[0] - -180) > 0.00001 \
+       or abs(gt[3] - 85) > 0.00001 \
        or abs(gt[1] - 0.01) > 0.00001 \
        or abs(gt[2] - 0) > 0.00001 \
        or abs(gt[5] - -0.01) > 0.00001 \
@@ -654,9 +654,9 @@ def wms_12():
     ds = None
 
     for i in range(len(subdatasets) // 2):
-        desc = subdatasets['SUBDATASET_%d_DESC' % (i+1)]
+        desc = subdatasets['SUBDATASET_%d_DESC' % (i + 1)]
         if desc == 'basic':
-            name = subdatasets['SUBDATASET_%d_NAME' % (i+1)]
+            name = subdatasets['SUBDATASET_%d_NAME' % (i + 1)]
             ds = gdal.Open(name)
             if ds is None:
                 if gdaltest.gdalurlopen('http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/basic/0/0/0.png') is None:
@@ -714,8 +714,8 @@ def wms_14():
         return 'fail'
 
     gt = ds.GetGeoTransform()
-    if abs(gt[0]- -20037508.34278924,) > 0.00001 \
-       or abs(gt[3]- 20037508.34278924,) > 0.00001 \
+    if abs(gt[0] - -20037508.34278924,) > 0.00001 \
+       or abs(gt[3] - 20037508.34278924,) > 0.00001 \
        or abs(gt[1] - 0.2985821417389697) > 0.00001 \
        or abs(gt[2] - 0) > 0.00001 \
        or abs(gt[5] - -0.2985821417389697,) > 0.00001 \
@@ -769,8 +769,8 @@ def wms_15():
         return 'fail'
 
     gt = ds.GetGeoTransform()
-    if abs(gt[0]- -20037508.342787001) > 0.00001 \
-       or abs(gt[3]- 20037508.342787001) > 0.00001 \
+    if abs(gt[0] - -20037508.342787001) > 0.00001 \
+       or abs(gt[3] - 20037508.342787001) > 0.00001 \
        or abs(gt[1] - 0.037322767717361482) > 0.00001 \
        or abs(gt[2] - 0) > 0.00001 \
        or abs(gt[5] - -0.037322767717361482) > 0.00001 \
@@ -986,7 +986,7 @@ def wms_19():
         return 'fail'
 
     # Expected checksum seems to change over time. Hum...
-    cs = ds.GetRasterBand(1).GetOverview(ds.GetRasterBand(1).GetOverviewCount()-1).Checksum()
+    cs = ds.GetRasterBand(1).GetOverview(ds.GetRasterBand(1).GetOverviewCount() - 1).Checksum()
     if cs == 0:
         gdaltest.post_reason('Did not get expected checksum.')
         print(cs)

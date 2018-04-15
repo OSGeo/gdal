@@ -94,9 +94,9 @@ infile = None
 outfile = None
 layer_list = []
 relative = "0"
-schema=0
-feature_count=0
-extent=0
+schema = 0
+feature_count = 0
+extent = 0
 openoptions = []
 
 argv = gdal.GeneralCmdLineProcessor(sys.argv)

@@ -229,7 +229,7 @@ class TestEnvisatASAR(TestEnvisat):
             gdaltest.post_reason('Unable to read ADS metadata from ASAR.')
             return 'fail'
 
-        record = 'SQ_ADS' # it is present in all ASAR poducts
+        record = 'SQ_ADS'  # it is present in all ASAR poducts
         if product.startswith('ASA_WV'):
             for field in ('ZERO_DOPPLER_TIME',
                           'INPUT_MEAN',
@@ -296,7 +296,7 @@ class TestEnvisatMERIS(TestEnvisat):
             gdaltest.post_reason('Unable to read ADS metadata from ASAR.')
             return 'fail'
 
-        record = 'Quality_ADS' # it is present in all MER poducts
+        record = 'Quality_ADS'  # it is present in all MER poducts
 
         for field in ('DSR_TIME', 'ATTACH_FLAG'):
             key0 = '%s_%s' % (record, field)

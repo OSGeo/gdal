@@ -298,7 +298,7 @@ def my_pyDerivedPixelFunc(papoSources, nSources, pData, nBufXSize, nBufYSize, eS
         gdaltest.post_reason('did not get expected nLineSpace')
         return 1
 
-    nLineStride = (int)(nLineSpace/nPixelSpace)
+    nLineStride = (int)(nLineSpace / nPixelSpace)
 
     srcValues = ctypes.cast(papoSources[0], ctypes.POINTER(srcctype))
     dstValues = ctypes.cast(pData, ctypes.POINTER(dstctype))
@@ -314,14 +314,14 @@ def testnonboundtoswig_VRTDerivedBands():
     if gdal_handle is None:
         return 'skip'
 
-    DerivedPixelFuncType = ctypes.CFUNCTYPE(ctypes.c_int, # ret CPLErr
-                                            ctypes.POINTER(ctypes.c_void_p), # void **papoSources
-                                            ctypes.c_int, # int nSources
+    DerivedPixelFuncType = ctypes.CFUNCTYPE(ctypes.c_int,  # ret CPLErr
+                                            ctypes.POINTER(ctypes.c_void_p),  # void **papoSources
+                                            ctypes.c_int,  # int nSources
                                             ctypes.c_void_p,  # void *pData
                                             ctypes.c_int,  # int nBufXSize
                                             ctypes.c_int,  # int nBufYSize
-                                            ctypes.c_int, # GDALDataType eSrcType
-                                            ctypes.c_int, # GDALDataType eBufType
+                                            ctypes.c_int,  # GDALDataType eSrcType
+                                            ctypes.c_int,  # GDALDataType eBufType
                                             ctypes.c_int,  # int nPixelSpace
                                             ctypes.c_int)  # int nLineSpace
 

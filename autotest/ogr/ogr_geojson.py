@@ -466,7 +466,7 @@ def ogr_geojson_9():
 
         rc = copy_shape_to_geojson(test[0])
         if not rc:
-            gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
+            gdaltest.post_reason('Failed making copy of ' + test[0] + '.shp')
             return 'fail'
 
         rc = verify_geojson_copy(test[0], test[1], test[2])
@@ -499,7 +499,7 @@ def ogr_geojson_10():
 
         rc = copy_shape_to_geojson(test[0], '/vsigzip/')
         if not rc:
-            gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
+            gdaltest.post_reason('Failed making copy of ' + test[0] + '.shp')
             return 'fail'
 
         rc = verify_geojson_copy(test[0], test[1], test[2])
@@ -594,7 +594,7 @@ def ogr_geojson_13():
 
     rc = copy_shape_to_geojson(test[0], '/vsistdout/')
     if not rc:
-        gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
+        gdaltest.post_reason('Failed making copy of ' + test[0] + '.shp')
         return 'fail'
 
     return 'success'
@@ -1664,7 +1664,7 @@ def ogr_geojson_35():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(2)
     geom = ogr.Geometry(ogr.wkbPoint)
-    geom.AddPoint(-1.7e308 * 2, 1.7e308 * 2, 1.7e308 * 2) # evaluates to -inf, inf
+    geom.AddPoint(-1.7e308 * 2, 1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
 
@@ -1672,7 +1672,7 @@ def ogr_geojson_35():
     feat.SetFID(3)
     geom = ogr.Geometry(ogr.wkbLineString)
     geom.AddPoint_2D(0,0)
-    geom.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2) # evaluates to -inf, inf
+    geom.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
 
@@ -1681,7 +1681,7 @@ def ogr_geojson_35():
     geom = ogr.Geometry(ogr.wkbPolygon)
     geom2 = ogr.Geometry(ogr.wkbLinearRing)
     geom2.AddPoint_2D(0,0)
-    geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2) # evaluates to -inf, inf
+    geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
     geom.AddGeometry(geom2)
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
@@ -1692,7 +1692,7 @@ def ogr_geojson_35():
     geom2 = ogr.Geometry(ogr.wkbPoint)
     geom2.AddPoint_2D(0,0)
     geom2 = ogr.Geometry(ogr.wkbPoint)
-    geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2) # evaluates to -inf, inf
+    geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
     geom.AddGeometry(geom2)
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
@@ -1703,7 +1703,7 @@ def ogr_geojson_35():
     geom2 = ogr.Geometry(ogr.wkbLineString)
     geom2.AddPoint_2D(0,0)
     geom2 = ogr.Geometry(ogr.wkbLineString)
-    geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2) # evaluates to -inf, inf
+    geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
     geom.AddGeometry(geom2)
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
@@ -1717,7 +1717,7 @@ def ogr_geojson_35():
     geom2.AddGeometry(geom3)
     geom2 = ogr.Geometry(ogr.wkbPolygon)
     geom3 = ogr.Geometry(ogr.wkbLinearRing)
-    geom3.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2) # evaluates to -inf, inf
+    geom3.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
     geom2.AddGeometry(geom3)
     geom.AddGeometry(geom2)
     feat.SetGeometry(geom)

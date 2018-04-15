@@ -462,7 +462,7 @@ def stats_flt_min():
         return 'fail'
 
     if stats != [0.0, 1.0, 0.33333333333333337, 0.47140452079103168] and \
-       stats != [0.0, 1.0, 0.33333333333333331, 0.47140452079103168]: # 32 bit
+       stats != [0.0, 1.0, 0.33333333333333331, 0.47140452079103168]:  # 32 bit
         gdaltest.post_reason('did not get expected stats')
         print(stats)
         return 'fail'
@@ -505,7 +505,7 @@ def stats_dbl_min():
         return 'fail'
 
     if stats != [0.0, 1.0, 0.33333333333333337, 0.47140452079103168] and \
-       stats != [0.0, 1.0, 0.33333333333333331, 0.47140452079103168]: # 32 bit
+       stats != [0.0, 1.0, 0.33333333333333331, 0.47140452079103168]:  # 32 bit
         gdaltest.post_reason('did not get expected stats')
         print(stats)
         return 'fail'
@@ -613,7 +613,7 @@ def stats_byte_partial_tiles():
         print(expected_stats)
         return 'fail'
 
-    ds = gdal.GetDriverByName('MEM').Create('', 32+2, 2)
+    ds = gdal.GetDriverByName('MEM').Create('', 32 + 2, 2)
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).WriteRaster(32,1,2,1,struct.pack('B' * 2, 0, 255))
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
@@ -626,7 +626,7 @@ def stats_byte_partial_tiles():
         print(expected_stats)
         return 'fail'
 
-    ds = gdal.GetDriverByName('MEM').Create('', 32+2, 2)
+    ds = gdal.GetDriverByName('MEM').Create('', 32 + 2, 2)
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).SetNoDataValue(2)
     ds.GetRasterBand(1).WriteRaster(32,1,2,1,struct.pack('B' * 2, 0, 255))
@@ -711,7 +711,7 @@ def stats_uint16():
             return 'fail'
 
     # Test remaining pixels after multiple of 32
-    ds = gdal.GetDriverByName('MEM').Create('', 32+2, 1, 1, gdal.GDT_UInt16)
+    ds = gdal.GetDriverByName('MEM').Create('', 32 + 2, 1, 1, gdal.GDT_UInt16)
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).WriteRaster(32,0,2,1,struct.pack('H' * 2, 0, 65535))
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)

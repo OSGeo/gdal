@@ -115,12 +115,12 @@ def validate(ds, check_tiled=True):
                     errors += [
                         'First overview has larger dimension than main band']
         else:
-            prev_ovr_band = ds.GetRasterBand(1).GetOverview(i-1)
+            prev_ovr_band = ds.GetRasterBand(1).GetOverview(i - 1)
             if (ovr_band.XSize > prev_ovr_band.XSize or
                 ovr_band.YSize > prev_ovr_band.YSize):
                     errors += [
                         'Overview of index %d has larger dimension than '
-                        'overview of index %d' % (i, i-1)]
+                        'overview of index %d' % (i, i - 1)]
 
         if check_tiled:
             block_size = ovr_band.GetBlockSize()
@@ -145,7 +145,7 @@ def validate(ds, check_tiled=True):
                     'The offset of the IFD for overview of index %d is %d, '
                     'whereas it should be greater than the one of index %d, '
                     'which is at byte %d' %
-                    (i, ifd_offsets[-1], i-1, ifd_offsets[-2])]
+                    (i, ifd_offsets[-1], i - 1, ifd_offsets[-2])]
 
     # Check that the imagery starts by the smallest overview and ends with
     # the main resolution dataset
@@ -171,7 +171,7 @@ def validate(ds, check_tiled=True):
             errors += [
                 'The offset of the first block of the image should '
                 'be after its IFD']
-    for i in range(len(data_offsets)-2, 0, -1):
+    for i in range(len(data_offsets) - 2, 0, -1):
         if data_offsets[i] < data_offsets[i + 1]:
             errors += [
                 'The offset of the first block of overview of index %d should '

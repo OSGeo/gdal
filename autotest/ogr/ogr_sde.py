@@ -213,7 +213,7 @@ def ogr_sde_5():
     idx = f4.GetFieldIndex('WHEN')
     df = f4.GetField(idx)
     if df != '2008/03/19 16:15:00':
-        gdaltest.post_reason("datetime handling did not work -- expected '2008/03/19 16:15:00' got '%s' "% df)
+        gdaltest.post_reason("datetime handling did not work -- expected '2008/03/19 16:15:00' got '%s' " % df)
     ds4.Destroy()
     del ds4
     return 'success'

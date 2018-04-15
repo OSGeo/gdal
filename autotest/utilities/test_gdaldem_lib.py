@@ -325,7 +325,7 @@ def test_gdaldem_lib_hillshade_azimuth():
     for j in range(100):
         data = ''
         for i in range(100):
-            val = 255 - 5 * max(abs(50-i),abs(50-j))
+            val = 255 - 5 * max(abs(50 - i),abs(50 - j))
             data = data + ('%c' % (val))
         if version_info >= (3,0,0):
             data = bytes(data, 'ISO-8859-1')
@@ -584,7 +584,7 @@ def test_gdaldem_lib_nodata():
     if cs != 10:
         gdaltest.post_reason('Bad checksum')
         print(cs)
-        print(ds.ReadAsArray()) # Should be 0 0 0 0 181 0 0 0 0
+        print(ds.ReadAsArray())  # Should be 0 0 0 0 181 0 0 0 0
         return 'fail'
 
     # Same with floating point
@@ -605,7 +605,7 @@ def test_gdaldem_lib_nodata():
     if cs != 10:
         gdaltest.post_reason('Bad checksum')
         print(cs)
-        print(ds.ReadAsArray()) # Should be 0 0 0 0 181 0 0 0 0
+        print(ds.ReadAsArray())  # Should be 0 0 0 0 181 0 0 0 0
         return 'fail'
 
     return 'success'

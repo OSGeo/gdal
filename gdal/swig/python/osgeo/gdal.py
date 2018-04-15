@@ -674,7 +674,7 @@ def VectorTranslateOptions(options=[], format=None,
         if selectFields is not None:
             val = ''
             for item in selectFields:
-                if len(val)>0:
+                if len(val) > 0:
                     val += ','
                 val += item
             new_options += ['-select', val]
@@ -2142,7 +2142,7 @@ class Dataset(MajorObject):
         if buf_ysize is None:
             buf_ysize = ysize;
         if band_list is None:
-            band_list = range(1,self.RasterCount+1)
+            band_list = range(1,self.RasterCount + 1)
         if buf_type is None:
             buf_type = self.GetRasterBand(1).DataType
 
@@ -2164,7 +2164,7 @@ class Dataset(MajorObject):
         if ysize is None:
             ysize = self.RasterYSize
         if band_list is None:
-            band_list = range(1,self.RasterCount+1)
+            band_list = range(1,self.RasterCount + 1)
         if buf_xsize is None:
             buf_xsize = xsize;
         if buf_ysize is None:
@@ -2204,7 +2204,7 @@ class Dataset(MajorObject):
         if datatype is None:
             datatype = self.GetRasterBand(1).DataType
         if band_list is None:
-            band_list = range(1,self.RasterCount+1)
+            band_list = range(1,self.RasterCount + 1)
         if options is None:
             virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,band_list,band_sequential,cache_size,page_size_hint)
         else:
@@ -2235,7 +2235,7 @@ class Dataset(MajorObject):
         if datatype is None:
             datatype = self.GetRasterBand(1).DataType
         if band_list is None:
-            band_list = range(1,self.RasterCount+1)
+            band_list = range(1,self.RasterCount + 1)
         if options is None:
             virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,band_list,tile_organization,cache_size)
         else:
@@ -2250,9 +2250,9 @@ class Dataset(MajorObject):
             return sd_list
 
         i = 1
-        while 'SUBDATASET_'+str(i)+'_NAME' in sd:
-            sd_list.append((sd['SUBDATASET_'+str(i)+'_NAME'],
-                              sd['SUBDATASET_'+str(i)+'_DESC']))
+        while 'SUBDATASET_' + str(i) + '_NAME' in sd:
+            sd_list.append((sd['SUBDATASET_' + str(i) + '_NAME'],
+                              sd['SUBDATASET_' + str(i) + '_DESC']))
             i = i + 1
         return sd_list
 

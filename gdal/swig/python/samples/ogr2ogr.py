@@ -212,15 +212,15 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 
     iArg = 1
     while iArg < nArgc:
-        if EQUAL(args[iArg],"-f") and iArg < nArgc-1:
+        if EQUAL(args[iArg],"-f") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszFormat = args[iArg]
 
-        elif EQUAL(args[iArg],"-dsco") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-dsco") and iArg < nArgc - 1:
             iArg = iArg + 1
             papszDSCO.append(args[iArg])
 
-        elif EQUAL(args[iArg],"-lco") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-lco") and iArg < nArgc - 1:
             iArg = iArg + 1
             papszLCO.append(args[iArg])
 
@@ -229,7 +229,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 
         elif len(args[iArg]) >= 5 and EQUAL(args[iArg][0:5], "-skip"):
             bSkipFailures = True
-            nGroupTransactions = 1 # #2409
+            nGroupTransactions = 1  # 2409
 
         elif EQUAL(args[iArg],"-append"):
             bAppend = True
@@ -242,80 +242,80 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
         elif EQUAL(args[iArg],"-update"):
             bUpdate = True
 
-        elif EQUAL(args[iArg],"-fid") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-fid") and iArg < nArgc - 1:
             iArg = iArg + 1
             nFIDToFetch = int(args[iArg])
 
-        elif EQUAL(args[iArg],"-sql") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-sql") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszSQLStatement = args[iArg]
 
-        elif EQUAL(args[iArg],"-nln") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-nln") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszNewLayerName = args[iArg]
 
-        elif EQUAL(args[iArg],"-nlt") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-nlt") and iArg < nArgc - 1:
 
-            if EQUAL(args[iArg+1],"NONE"):
+            if EQUAL(args[iArg + 1],"NONE"):
                 eGType = ogr.wkbNone
-            elif EQUAL(args[iArg+1],"GEOMETRY"):
+            elif EQUAL(args[iArg + 1],"GEOMETRY"):
                 eGType = ogr.wkbUnknown
-            elif EQUAL(args[iArg+1],"PROMOTE_TO_MULTI"):
+            elif EQUAL(args[iArg + 1],"PROMOTE_TO_MULTI"):
                 bPromoteToMulti = True
-            elif EQUAL(args[iArg+1],"POINT"):
+            elif EQUAL(args[iArg + 1],"POINT"):
                 eGType = ogr.wkbPoint
-            elif EQUAL(args[iArg+1],"LINESTRING"):
+            elif EQUAL(args[iArg + 1],"LINESTRING"):
                 eGType = ogr.wkbLineString
-            elif EQUAL(args[iArg+1],"POLYGON"):
+            elif EQUAL(args[iArg + 1],"POLYGON"):
                 eGType = ogr.wkbPolygon
-            elif EQUAL(args[iArg+1],"GEOMETRYCOLLECTION"):
+            elif EQUAL(args[iArg + 1],"GEOMETRYCOLLECTION"):
                 eGType = ogr.wkbGeometryCollection
-            elif EQUAL(args[iArg+1],"MULTIPOINT"):
+            elif EQUAL(args[iArg + 1],"MULTIPOINT"):
                 eGType = ogr.wkbMultiPoint
-            elif EQUAL(args[iArg+1],"MULTILINESTRING"):
+            elif EQUAL(args[iArg + 1],"MULTILINESTRING"):
                 eGType = ogr.wkbMultiLineString
-            elif EQUAL(args[iArg+1],"MULTIPOLYGON"):
+            elif EQUAL(args[iArg + 1],"MULTIPOLYGON"):
                 eGType = ogr.wkbMultiPolygon
-            elif EQUAL(args[iArg+1],"GEOMETRY25D"):
+            elif EQUAL(args[iArg + 1],"GEOMETRY25D"):
                 eGType = ogr.wkbUnknown | ogr.wkb25DBit
-            elif EQUAL(args[iArg+1],"POINT25D"):
+            elif EQUAL(args[iArg + 1],"POINT25D"):
                 eGType = ogr.wkbPoint25D
-            elif EQUAL(args[iArg+1],"LINESTRING25D"):
+            elif EQUAL(args[iArg + 1],"LINESTRING25D"):
                 eGType = ogr.wkbLineString25D
-            elif EQUAL(args[iArg+1],"POLYGON25D"):
+            elif EQUAL(args[iArg + 1],"POLYGON25D"):
                 eGType = ogr.wkbPolygon25D
-            elif EQUAL(args[iArg+1],"GEOMETRYCOLLECTION25D"):
+            elif EQUAL(args[iArg + 1],"GEOMETRYCOLLECTION25D"):
                 eGType = ogr.wkbGeometryCollection25D
-            elif EQUAL(args[iArg+1],"MULTIPOINT25D"):
+            elif EQUAL(args[iArg + 1],"MULTIPOINT25D"):
                 eGType = ogr.wkbMultiPoint25D
-            elif EQUAL(args[iArg+1],"MULTILINESTRING25D"):
+            elif EQUAL(args[iArg + 1],"MULTILINESTRING25D"):
                 eGType = ogr.wkbMultiLineString25D
-            elif EQUAL(args[iArg+1],"MULTIPOLYGON25D"):
+            elif EQUAL(args[iArg + 1],"MULTIPOLYGON25D"):
                 eGType = ogr.wkbMultiPolygon25D
             else:
-                print("-nlt %s: type not recognised." % args[iArg+1])
+                print("-nlt %s: type not recognised." % args[iArg + 1])
                 return False
 
             iArg = iArg + 1
 
-        elif EQUAL(args[iArg],"-dim") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-dim") and iArg < nArgc - 1:
 
-            nCoordDim = int(args[iArg+1])
+            nCoordDim = int(args[iArg + 1])
             if nCoordDim != 2 and nCoordDim != 3:
-                print("-dim %s: value not handled." % args[iArg+1])
+                print("-dim %s: value not handled." % args[iArg + 1])
                 return False
             iArg = iArg + 1
 
         elif (EQUAL(args[iArg],"-tg") or \
-                EQUAL(args[iArg],"-gt")) and iArg < nArgc-1:
+                EQUAL(args[iArg],"-gt")) and iArg < nArgc - 1:
             iArg = iArg + 1
             nGroupTransactions = int(args[iArg])
 
-        elif EQUAL(args[iArg],"-s_srs") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-s_srs") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszSourceSRSDef = args[iArg]
 
-        elif EQUAL(args[iArg],"-a_srs") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-a_srs") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszOutputSRSDef = args[iArg]
             if EQUAL(pszOutputSRSDef, "NULL") or \
@@ -323,7 +323,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                 pszOutputSRSDef = None
                 bNullifyOutputSRS = True
 
-        elif EQUAL(args[iArg],"-t_srs") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-t_srs") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszOutputSRSDef = args[iArg]
             bTransform = True
@@ -331,21 +331,21 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
         elif EQUAL(args[iArg],"-spat") and iArg + 4 < nArgc:
             oRing = ogr.Geometry(ogr.wkbLinearRing)
 
-            oRing.AddPoint_2D(float(args[iArg+1]), float(args[iArg+2]))
-            oRing.AddPoint_2D(float(args[iArg+1]), float(args[iArg+4]))
-            oRing.AddPoint_2D(float(args[iArg+3]), float(args[iArg+4]))
-            oRing.AddPoint_2D(float(args[iArg+3]), float(args[iArg+2]))
-            oRing.AddPoint_2D(float(args[iArg+1]), float(args[iArg+2]))
+            oRing.AddPoint_2D(float(args[iArg + 1]), float(args[iArg + 2]))
+            oRing.AddPoint_2D(float(args[iArg + 1]), float(args[iArg + 4]))
+            oRing.AddPoint_2D(float(args[iArg + 3]), float(args[iArg + 4]))
+            oRing.AddPoint_2D(float(args[iArg + 3]), float(args[iArg + 2]))
+            oRing.AddPoint_2D(float(args[iArg + 1]), float(args[iArg + 2]))
 
             poSpatialFilter = ogr.Geometry(ogr.wkbPolygon)
             poSpatialFilter.AddGeometry(oRing)
             iArg = iArg + 4
 
-        elif EQUAL(args[iArg],"-where") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-where") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszWHERE = args[iArg]
 
-        elif EQUAL(args[iArg],"-select") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-select") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszSelect = args[iArg]
             if pszSelect.find(',') != -1:
@@ -355,17 +355,17 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
             if papszSelFields[0] == '':
                 papszSelFields = []
 
-        elif EQUAL(args[iArg],"-simplify") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-simplify") and iArg < nArgc - 1:
             iArg = iArg + 1
             eGeomOp = GeomOperation.SIMPLIFY_PRESERVE_TOPOLOGY
             dfGeomOpParam = float(args[iArg])
 
-        elif EQUAL(args[iArg],"-segmentize") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-segmentize") and iArg < nArgc - 1:
             iArg = iArg + 1
             eGeomOp = GeomOperation.SEGMENTIZE
             dfGeomOpParam = float(args[iArg])
 
-        elif EQUAL(args[iArg],"-fieldTypeToString") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-fieldTypeToString") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszFieldTypeToString = args[iArg]
             if pszFieldTypeToString.find(',') != -1:
@@ -403,98 +403,98 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
         #    bWrapDateline = True;
         #}
         #
-        elif EQUAL(args[iArg],"-clipsrc") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-clipsrc") and iArg < nArgc - 1:
 
             bClipSrc = True
-            if IsNumber(args[iArg+1]) and iArg < nArgc - 4:
+            if IsNumber(args[iArg + 1]) and iArg < nArgc - 4:
                 oRing = ogr.Geometry(ogr.wkbLinearRing)
 
-                oRing.AddPoint_2D(float(args[iArg+1]), float(args[iArg+2]))
-                oRing.AddPoint_2D(float(args[iArg+1]), float(args[iArg+4]))
-                oRing.AddPoint_2D(float(args[iArg+3]), float(args[iArg+4]))
-                oRing.AddPoint_2D(float(args[iArg+3]), float(args[iArg+2]))
-                oRing.AddPoint_2D(float(args[iArg+1]), float(args[iArg+2]))
+                oRing.AddPoint_2D(float(args[iArg + 1]), float(args[iArg + 2]))
+                oRing.AddPoint_2D(float(args[iArg + 1]), float(args[iArg + 4]))
+                oRing.AddPoint_2D(float(args[iArg + 3]), float(args[iArg + 4]))
+                oRing.AddPoint_2D(float(args[iArg + 3]), float(args[iArg + 2]))
+                oRing.AddPoint_2D(float(args[iArg + 1]), float(args[iArg + 2]))
 
                 poClipSrc = ogr.Geometry(ogr.wkbPolygon)
                 poClipSrc.AddGeometry(oRing)
                 iArg = iArg + 4
 
-            elif (len(args[iArg+1]) >= 7 and EQUAL(args[iArg+1][0:7],"POLYGON")) or \
-                  (len(args[iArg+1]) >= 12 and EQUAL(args[iArg+1][0:12],"MULTIPOLYGON")) :
-                poClipSrc = ogr.CreateGeometryFromWkt(args[iArg+1])
+            elif (len(args[iArg + 1]) >= 7 and EQUAL(args[iArg + 1][0:7],"POLYGON")) or \
+                  (len(args[iArg + 1]) >= 12 and EQUAL(args[iArg + 1][0:12],"MULTIPOLYGON")) :
+                poClipSrc = ogr.CreateGeometryFromWkt(args[iArg + 1])
                 if poClipSrc is None:
                     print("FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n")
                     return Usage()
 
                 iArg = iArg + 1
 
-            elif EQUAL(args[iArg+1],"spat_extent"):
+            elif EQUAL(args[iArg + 1],"spat_extent"):
                 iArg = iArg + 1
 
             else:
-                pszClipSrcDS = args[iArg+1]
+                pszClipSrcDS = args[iArg + 1]
                 iArg = iArg + 1
 
-        elif EQUAL(args[iArg],"-clipsrcsql") and iArg < nArgc-1:
-            pszClipSrcSQL = args[iArg+1]
+        elif EQUAL(args[iArg],"-clipsrcsql") and iArg < nArgc - 1:
+            pszClipSrcSQL = args[iArg + 1]
             iArg = iArg + 1
 
-        elif EQUAL(args[iArg],"-clipsrclayer") and iArg < nArgc-1:
-            pszClipSrcLayer = args[iArg+1]
+        elif EQUAL(args[iArg],"-clipsrclayer") and iArg < nArgc - 1:
+            pszClipSrcLayer = args[iArg + 1]
             iArg = iArg + 1
 
-        elif EQUAL(args[iArg],"-clipsrcwhere") and iArg < nArgc-1:
-            pszClipSrcWhere = args[iArg+1]
+        elif EQUAL(args[iArg],"-clipsrcwhere") and iArg < nArgc - 1:
+            pszClipSrcWhere = args[iArg + 1]
             iArg = iArg + 1
 
-        elif EQUAL(args[iArg],"-clipdst") and iArg < nArgc-1:
+        elif EQUAL(args[iArg],"-clipdst") and iArg < nArgc - 1:
 
-            if IsNumber(args[iArg+1]) and iArg < nArgc - 4:
+            if IsNumber(args[iArg + 1]) and iArg < nArgc - 4:
                 oRing = ogr.Geometry(ogr.wkbLinearRing)
 
-                oRing.AddPoint_2D(float(args[iArg+1]), float(args[iArg+2]))
-                oRing.AddPoint_2D(float(args[iArg+1]), float(args[iArg+4]))
-                oRing.AddPoint_2D(float(args[iArg+3]), float(args[iArg+4]))
-                oRing.AddPoint_2D(float(args[iArg+3]), float(args[iArg+2]))
-                oRing.AddPoint_2D(float(args[iArg+1]), float(args[iArg+2]))
+                oRing.AddPoint_2D(float(args[iArg + 1]), float(args[iArg + 2]))
+                oRing.AddPoint_2D(float(args[iArg + 1]), float(args[iArg + 4]))
+                oRing.AddPoint_2D(float(args[iArg + 3]), float(args[iArg + 4]))
+                oRing.AddPoint_2D(float(args[iArg + 3]), float(args[iArg + 2]))
+                oRing.AddPoint_2D(float(args[iArg + 1]), float(args[iArg + 2]))
 
                 poClipDst = ogr.Geometry(ogr.wkbPolygon)
                 poClipDst.AddGeometry(oRing)
                 iArg = iArg + 4
 
-            elif (len(args[iArg+1]) >= 7 and EQUAL(args[iArg+1][0:7],"POLYGON")) or \
-                  (len(args[iArg+1]) >= 12 and EQUAL(args[iArg+1][0:12],"MULTIPOLYGON")) :
-                poClipDst = ogr.CreateGeometryFromWkt(args[iArg+1])
+            elif (len(args[iArg + 1]) >= 7 and EQUAL(args[iArg + 1][0:7],"POLYGON")) or \
+                  (len(args[iArg + 1]) >= 12 and EQUAL(args[iArg + 1][0:12],"MULTIPOLYGON")) :
+                poClipDst = ogr.CreateGeometryFromWkt(args[iArg + 1])
                 if poClipDst is None:
                     print("FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n")
                     return Usage()
 
                 iArg = iArg + 1
 
-            elif EQUAL(args[iArg+1],"spat_extent"):
+            elif EQUAL(args[iArg + 1],"spat_extent"):
                 iArg = iArg + 1
 
             else:
-                pszClipDstDS = args[iArg+1]
+                pszClipDstDS = args[iArg + 1]
                 iArg = iArg + 1
 
-        elif EQUAL(args[iArg],"-clipdstsql") and iArg < nArgc-1:
-            pszClipDstSQL = args[iArg+1]
+        elif EQUAL(args[iArg],"-clipdstsql") and iArg < nArgc - 1:
+            pszClipDstSQL = args[iArg + 1]
             iArg = iArg + 1
 
-        elif EQUAL(args[iArg],"-clipdstlayer") and iArg < nArgc-1:
-            pszClipDstLayer = args[iArg+1]
+        elif EQUAL(args[iArg],"-clipdstlayer") and iArg < nArgc - 1:
+            pszClipDstLayer = args[iArg + 1]
             iArg = iArg + 1
 
-        elif EQUAL(args[iArg],"-clipdstwhere") and iArg < nArgc-1:
-            pszClipDstWhere = args[iArg+1]
+        elif EQUAL(args[iArg],"-clipdstwhere") and iArg < nArgc - 1:
+            pszClipDstWhere = args[iArg + 1]
             iArg = iArg + 1
 
         elif EQUAL(args[iArg],"-explodecollections"):
             bExplodeCollections = True
 
-        elif EQUAL(args[iArg],"-zfield") and iArg < nArgc-1:
-            pszZField = args[iArg+1]
+        elif EQUAL(args[iArg],"-zfield") and iArg < nArgc - 1:
+            pszZField = args[iArg + 1]
             iArg = iArg + 1
 
         elif args[iArg][0] == '-':
@@ -1628,7 +1628,7 @@ def TranslateLayer(psInfo, poSrcDS, poSrcLayer, poDstDS,  \
                     poClipped = poDstGeometry.Intersection(poClipSrc)
                     if poClipped is None or poClipped.IsEmpty():
                         # Report progress
-                        nCount = nCount +1
+                        nCount = nCount + 1
                         if pfnProgress is not None:
                             pfnProgress(nCount * 1.0 / nCountLayerFeatures, "", pProgressArg)
                         continue
@@ -1702,7 +1702,7 @@ def TranslateLayer(psInfo, poSrcDS, poSrcLayer, poDstDS,  \
 
 if __name__ == '__main__':
     version_num = int(gdal.VersionInfo('VERSION_NUM'))
-    if version_num < 1800: # because of ogr.GetFieldTypeName
+    if version_num < 1800:  # because of ogr.GetFieldTypeName
         print('ERROR: Python bindings of GDAL 1.8.0 or later required')
         sys.exit(1)
 

@@ -261,7 +261,7 @@ def gdal_api_proxy_sub():
         print(len(got_data_weird_spacing))
         return 'fail'
 
-    if got_data[20:20+20] != got_data_weird_spacing[32:32+20]:
+    if got_data[20:20 + 20] != got_data_weird_spacing[32:32 + 20]:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -271,7 +271,7 @@ def gdal_api_proxy_sub():
         print(len(got_data_weird_spacing))
         return 'fail'
 
-    if got_data[20:20+20] != got_data_weird_spacing[32:32+20]:
+    if got_data[20:20 + 20] != got_data_weird_spacing[32:32 + 20]:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -280,7 +280,7 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if got_data[20:20+20] != got_block[256:256+20]:
+    if got_data[20:20 + 20] != got_block[256:256 + 20]:
         gdaltest.post_reason('fail')
         return 'fail'
 

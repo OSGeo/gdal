@@ -93,7 +93,7 @@ def ogr_s57_2():
 
         if lyr.GetName() != lyr_info[0]:
             gdaltest.post_reason('Expected layer %d to be %s but it was %s.'\
-                                  % (i+1, lyr_info[0], lyr.GetName()))
+                                  % (i + 1, lyr_info[0], lyr.GetName()))
             return 'fail'
 
         count = lyr.GetFeatureCount(force=1)

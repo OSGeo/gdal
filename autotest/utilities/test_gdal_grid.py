@@ -86,7 +86,7 @@ def test_gdal_grid_1():
     shape_lyr = shape_ds.CreateLayer('n43')
 
     data = ds.ReadRaster(0, 0, 121, 121)
-    array_val = struct.unpack('h' * 121*121, data)
+    array_val = struct.unpack('h' * 121 * 121, data)
     for j in range(121):
         for i in range(121):
             wkt = 'POINT(%f %f %s)' % (geotransform[0] + (i + .5) * geotransform[1],
@@ -278,9 +278,9 @@ def test_gdal_grid_3():
     (out, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' --debug on --config GDAL_USE_AVX NO --config GDAL_USE_SSE NO -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
     pos = err.find(' threads')
     if pos >= 0:
-        pos_blank = err[0:pos-1].rfind(' ')
+        pos_blank = err[0:pos - 1].rfind(' ')
         if pos_blank >= 0:
-            print('Step 1: %s threads used' % err[pos_blank+1:pos])
+            print('Step 1: %s threads used' % err[pos_blank + 1:pos])
 
     # We should get the same values as in "ref_data/gdal_invdist.tif"
     ds = gdal.Open(outfiles[-1])

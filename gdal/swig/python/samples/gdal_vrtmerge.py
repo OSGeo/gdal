@@ -84,7 +84,7 @@ class file_info:
         self.nodata = [None]
         self.cts = [None]
         self.color_interps = [None]
-        for i in range(1, fh.RasterCount+1):
+        for i in range(1, fh.RasterCount + 1):
             band = fh.GetRasterBand(i)
             self.band_types.append(band.DataType)
             self.block_sizes.append(band.GetBlockSize())
@@ -126,9 +126,9 @@ class file_info:
         # compute target window in pixel coordinates.
         tw_xoff = int((tgw_ulx - t_geotransform[0]) / t_geotransform[1] + 0.1)
         tw_yoff = int((tgw_uly - t_geotransform[3]) / t_geotransform[5] + 0.1)
-        tw_xsize = int((tgw_lrx - t_geotransform[0])/t_geotransform[1] + 0.5) \
+        tw_xsize = int((tgw_lrx - t_geotransform[0]) / t_geotransform[1] + 0.5) \
                    - tw_xoff
-        tw_ysize = int((tgw_lry - t_geotransform[3])/t_geotransform[5] + 0.5) \
+        tw_ysize = int((tgw_lry - t_geotransform[3]) / t_geotransform[5] + 0.5) \
                    - tw_yoff
 
         if tw_xsize < 1 or tw_ysize < 1:
@@ -206,10 +206,10 @@ if __name__ == '__main__':
             separate = True
 
         elif arg == '-ul_lr':
-            ulx = float(argv[i+1])
-            uly = float(argv[i+2])
-            lrx = float(argv[i+3])
-            lry = float(argv[i+4])
+            ulx = float(argv[i + 1])
+            uly = float(argv[i + 2])
+            lrx = float(argv[i + 3])
+            lry = float(argv[i + 4])
             i = i + 4
 
         elif arg[:1] == '-':
@@ -291,7 +291,7 @@ if __name__ == '__main__':
             band_n = band_n + 1
             if len(fi.band_types) != 2:
                 print('File %s has %d bands. Only first band will be taken '
-                        'into account' % (fi.filename, len(fi.band_types)-1))
+                        'into account' % (fi.filename, len(fi.band_types) - 1))
             dataType = gdal.GetDataTypeName(fi.band_types[1])
 
             t_fh.write('\t<VRTRasterBand dataType="%s" band="%i">\n'
@@ -301,7 +301,7 @@ if __name__ == '__main__':
             fi.write_source(t_fh, geotransform, xsize, ysize, 1)
             t_fh.write('\t</VRTRasterBand>\n')
     else:
-        for band in range(1, bands+1):
+        for band in range(1, bands + 1):
             dataType = gdal.GetDataTypeName(file_infos[0].band_types[band])
 
             t_fh.write('\t<VRTRasterBand dataType="%s" band="%i">\n'

@@ -660,11 +660,11 @@ def hfa_rotated_read():
     check_gt = (11856857.07898215, 0.895867662235625, 0.02684252936279331,
                  7041861.472946444, 0.01962103617166367, -0.9007880319529181)
 
-    gt_epsilon = (abs(check_gt[1])+abs(check_gt[2])) / 100.0
+    gt_epsilon = (abs(check_gt[1]) + abs(check_gt[2])) / 100.0
 
     new_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(new_gt[i]-check_gt[i]) > gt_epsilon:
+        if abs(new_gt[i] - check_gt[i]) > gt_epsilon:
             print('')
             print('old = ', check_gt)
             print('new = ', new_gt)
@@ -724,11 +724,11 @@ def hfa_rotated_write():
     ds = None
 
     ds = gdal.Open('tmp/rot.img')
-    gt_epsilon = (abs(check_gt[1])+abs(check_gt[2])) / 100.0
+    gt_epsilon = (abs(check_gt[1]) + abs(check_gt[2])) / 100.0
 
     new_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(new_gt[i]-check_gt[i]) > gt_epsilon:
+        if abs(new_gt[i] - check_gt[i]) > gt_epsilon:
             print('')
             print('old = ', check_gt)
             print('new = ', new_gt)
@@ -922,7 +922,7 @@ def hfa_xforms_3rd():
             gdaltest.post_reason('metadata item %d missing' % check_item[0])
             return 'fail'
 
-        if abs(value - check_item[1]) > abs(value/100000.0):
+        if abs(value - check_item[1]) > abs(value / 100000.0):
             gdaltest.post_reason('metadata item %s has wrong value: %.15g' % \
                                   (check_item[0], value))
             return 'fail'
@@ -1373,7 +1373,7 @@ def hfa_write_rat():
 
     if rat.GetColumnCount() != 6 \
        or rat.GetTypeOfCol(0) != gdal.GFT_Real \
-       or rat.GetUsageOfCol(0) != gdal.GFU_Generic: # should be GFU_MinMax
+       or rat.GetUsageOfCol(0) != gdal.GFU_Generic:  # should be GFU_MinMax
         print(rat.GetColumnCount())
         print(rat.GetTypeOfCol(0))
         print(rat.GetUsageOfCol(0))

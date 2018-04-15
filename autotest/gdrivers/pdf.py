@@ -651,7 +651,7 @@ def pdf_xmp():
         print(got_md[0])
         return 'fail'
 
-    if len(base_md) != 2: # NEATLINE and DPI
+    if len(base_md) != 2:  # NEATLINE and DPI
         gdaltest.post_reason('fail')
         print(base_md)
         return 'fail'
@@ -1231,7 +1231,7 @@ def pdf_set_neatline(geo_encoding, dpi=300):
 
     for i in range(6):
         if (expected_gt[i] == 0 and abs(got_gt[i] - expected_gt[i]) > 1e-7) or \
-           (expected_gt[i] != 0 and abs((got_gt[i] - expected_gt[i])/expected_gt[i]) > 1e-7):
+           (expected_gt[i] != 0 and abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) > 1e-7):
             gdaltest.post_reason('did not get expected gt')
             print(got_gt)
             return 'fail'
@@ -1569,7 +1569,7 @@ def pdf_write_ogr():
         # Test that all combinations give a different result
         for i in range(len(rendering_options)):
             #print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
-            for j in range(i+1, len(rendering_options)):
+            for j in range(i + 1, len(rendering_options)):
                 if cs_tab[i] == cs_tab[j] and cs_tab[i] >= 0 and cs_tab[j] >= 0:
                     gdaltest.post_reason('fail')
                     print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]))
@@ -1577,10 +1577,10 @@ def pdf_write_ogr():
                     return 'fail'
 
         # And test that RASTER,VECTOR,TEXT is the default rendering
-        if abs(cs_tab[len(rendering_options)-1]) != cs_ref:
+        if abs(cs_tab[len(rendering_options) - 1]) != cs_ref:
             gdaltest.post_reason('fail')
             print(cs_ref)
-            print(cs_tab[len(rendering_options)-1])
+            print(cs_tab[len(rendering_options) - 1])
             return 'fail'
 
     gdal.GetDriverByName('PDF').Delete('tmp/pdf_write_ogr.pdf')
@@ -1906,7 +1906,7 @@ def pdf_overviews():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 1024, 1024, 3)
     for i in range(3):
-        src_ds.GetRasterBand(i+1).Fill(255)
+        src_ds.GetRasterBand(i + 1).Fill(255)
     ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds)
     src_ds = None
     ds = None

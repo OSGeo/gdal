@@ -46,11 +46,11 @@ def osr_pm_1():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(27572)
 
-    if abs(float(srs.GetAttrValue('PRIMEM', 1))-2.33722917) > 0.0000005:
+    if abs(float(srs.GetAttrValue('PRIMEM', 1)) - 2.33722917) > 0.0000005:
         gdaltest.post_reason('Wrong prime meridian.')
         return 'fail'
 
-    if abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN)-0.0) > 0.0000005:
+    if abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) - 0.0) > 0.0000005:
         gdaltest.post_reason('Wrong central meridian.')
         return 'fail'
 
@@ -89,11 +89,11 @@ def osr_pm_3():
     srs = osr.SpatialReference()
     srs.ImportFromProj4('+proj=utm +zone=30 +datum=WGS84 +pm=bogota')
 
-    if abs(float(srs.GetAttrValue('PRIMEM', 1))+74.08091666678081) > 0.0000005:
+    if abs(float(srs.GetAttrValue('PRIMEM', 1)) + 74.08091666678081) > 0.0000005:
         gdaltest.post_reason('Wrong prime meridian.')
         return 'fail'
 
-    if abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN)+3.0) > 0.0000005:
+    if abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) + 3.0) > 0.0000005:
         gdaltest.post_reason('Wrong central meridian.')
         return 'fail'
 

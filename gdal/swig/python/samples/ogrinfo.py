@@ -98,39 +98,39 @@ def main(argv=None):
             bReadOnly = True
         elif EQUAL(argv[iArg],"-q") or EQUAL(argv[iArg],"-quiet"):
             bVerbose = False
-        elif EQUAL(argv[iArg],"-fid") and iArg < nArgc-1:
+        elif EQUAL(argv[iArg],"-fid") and iArg < nArgc - 1:
             iArg = iArg + 1
             nFetchFID = int(argv[iArg])
         elif EQUAL(argv[iArg],"-spat") and iArg + 4 < nArgc:
             oRing = ogr.Geometry(ogr.wkbLinearRing)
 
-            oRing.AddPoint(float(argv[iArg+1]), float(argv[iArg+2]))
-            oRing.AddPoint(float(argv[iArg+1]), float(argv[iArg+4]))
-            oRing.AddPoint(float(argv[iArg+3]), float(argv[iArg+4]))
-            oRing.AddPoint(float(argv[iArg+3]), float(argv[iArg+2]))
-            oRing.AddPoint(float(argv[iArg+1]), float(argv[iArg+2]))
+            oRing.AddPoint(float(argv[iArg + 1]), float(argv[iArg + 2]))
+            oRing.AddPoint(float(argv[iArg + 1]), float(argv[iArg + 4]))
+            oRing.AddPoint(float(argv[iArg + 3]), float(argv[iArg + 4]))
+            oRing.AddPoint(float(argv[iArg + 3]), float(argv[iArg + 2]))
+            oRing.AddPoint(float(argv[iArg + 1]), float(argv[iArg + 2]))
 
             poSpatialFilter = ogr.Geometry(ogr.wkbPolygon)
             poSpatialFilter.AddGeometry(oRing)
             iArg = iArg + 4
 
-        elif EQUAL(argv[iArg],"-geomfield") and iArg < nArgc-1:
+        elif EQUAL(argv[iArg],"-geomfield") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszGeomField = argv[iArg]
 
-        elif EQUAL(argv[iArg],"-where") and iArg < nArgc-1:
+        elif EQUAL(argv[iArg],"-where") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszWHERE = argv[iArg]
 
-        elif EQUAL(argv[iArg],"-sql") and iArg < nArgc-1:
+        elif EQUAL(argv[iArg],"-sql") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszSQLStatement = argv[iArg]
 
-        elif EQUAL(argv[iArg],"-dialect") and iArg < nArgc-1:
+        elif EQUAL(argv[iArg],"-dialect") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszDialect = argv[iArg]
 
-        elif EQUAL(argv[iArg],"-rc") and iArg < nArgc-1:
+        elif EQUAL(argv[iArg],"-rc") and iArg < nArgc - 1:
             iArg = iArg + 1
             nRepeatCount = int(argv[iArg])
 
@@ -247,7 +247,7 @@ def main(argv=None):
                     return 1
 
                 if not bAllLayers:
-                    line = "%d: %s" % (iLayer+1, poLayer.GetLayerDefn().GetName())
+                    line = "%d: %s" % (iLayer + 1, poLayer.GetLayerDefn().GetName())
 
                     nGeomFieldCount = poLayer.GetLayerDefn().GetGeomFieldCount()
                     if nGeomFieldCount > 1:
@@ -489,10 +489,10 @@ def DumpReadableGeometry(poGeometry, pszPrefix, options):
                 line = line + ("%d points" % poRing.GetPointCount())
                 if nRings > 1:
                     line = line + (", %d inner rings (" % (nRings - 1))
-                    for ir in range(0,nRings-1):
+                    for ir in range(0,nRings - 1):
                         if ir > 0:
                             line = line + ", "
-                        poRing = poGeometry.GetGeometryRef(ir+1)
+                        poRing = poGeometry.GetGeometryRef(ir + 1)
                         line = line + ("%d points" % poRing.GetPointCount())
                     line = line + ")"
             print(line)
@@ -529,7 +529,7 @@ def DumpReadableGeometry(poGeometry, pszPrefix, options):
 
 if __name__ == '__main__':
     version_num = int(gdal.VersionInfo('VERSION_NUM'))
-    if version_num < 1800: # because of ogr.GetFieldTypeName
+    if version_num < 1800:  # because of ogr.GetFieldTypeName
         print('ERROR: Python bindings of GDAL 1.8.0 or later required')
         sys.exit(1)
 

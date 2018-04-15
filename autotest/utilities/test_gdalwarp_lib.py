@@ -985,7 +985,7 @@ def test_gdalwarp_lib_126():
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/cutline.shp')
     lyr = ds.CreateLayer('cutline')
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,1 1,0 1,1 0,0 0))')) # Self intersecting
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,1 1,0 1,1 0,0 0))'))  # Self intersecting
     lyr.CreateFeature(f)
     f = None
     ds = None
@@ -1178,7 +1178,7 @@ def test_gdalwarp_lib_130():
         return 'fail'
     expected_val = [1,2,3,4,255]
     for i in range(5):
-        data = struct.unpack('B' * 1, ds.GetRasterBand(i+1).ReadRaster())[0]
+        data = struct.unpack('B' * 1, ds.GetRasterBand(i + 1).ReadRaster())[0]
         if data != expected_val[i]:
             gdaltest.post_reason('bad checksum')
             print(i)
@@ -1187,10 +1187,10 @@ def test_gdalwarp_lib_130():
 
     # Wrap onto existing file
     for i in range(5):
-        ds.GetRasterBand(i+1).Fill(0)
+        ds.GetRasterBand(i + 1).Fill(0)
     gdal.Warp(ds, src_ds)
     for i in range(5):
-        data = struct.unpack('B' * 1, ds.GetRasterBand(i+1).ReadRaster())[0]
+        data = struct.unpack('B' * 1, ds.GetRasterBand(i + 1).ReadRaster())[0]
         if data != expected_val[i]:
             gdaltest.post_reason('bad checksum')
             print(i)
@@ -1225,7 +1225,7 @@ def test_gdalwarp_lib_131():
     ds = gdal.Warp('/vsimem/test_gdalwarp_lib_131_dst.tif', src_ds, options='-nosrcalpha')
     expected_val = [1,0]
     for i in range(2):
-        data = struct.unpack('B' * 1, ds.GetRasterBand(i+1).ReadRaster())[0]
+        data = struct.unpack('B' * 1, ds.GetRasterBand(i + 1).ReadRaster())[0]
         if data != expected_val[i]:
             gdaltest.post_reason('bad checksum')
             print(i)
@@ -1268,7 +1268,7 @@ def test_gdalwarp_lib_132():
         expected_val = [expected_grey,expected_alpha]
         for i in range(2):
             for x in range(33):
-                data = struct.unpack('B' * 1, ds.GetRasterBand(i+1).ReadRaster(i, 0, 1, 1, buf_type=gdal.GDT_Byte))[0]
+                data = struct.unpack('B' * 1, ds.GetRasterBand(i + 1).ReadRaster(i, 0, 1, 1, buf_type=gdal.GDT_Byte))[0]
                 if abs(data - expected_val[i]) > 1:
                     gdaltest.post_reason('bad checksum')
                     print(dt)
@@ -1343,7 +1343,7 @@ def test_gdalwarp_lib_134():
     if ds is None:
         return 'fail'
 
-    if ds.GetRasterBand(1).ReadRaster() != src_src_ds.GetRasterBand(1).ReadRaster(1,2,4-1,6-2):
+    if ds.GetRasterBand(1).ReadRaster() != src_src_ds.GetRasterBand(1).ReadRaster(1,2,4 - 1,6 - 2):
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
@@ -1445,7 +1445,7 @@ def test_gdalwarp_lib_135():
     ds = gdal.Warp('', src_ds, format='VRT',
                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
                    dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid2.tif +vunits=m +no_defs')
-    src_ds = None # drop the ref to src_ds before for fun
+    src_ds = None  # drop the ref to src_ds before for fun
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
     if data != 115:
         gdaltest.post_reason('Bad value')
@@ -1819,7 +1819,7 @@ def test_gdalwarp_lib_cleanup():
 
     for i in range(2):
         try:
-            os.remove('tmp/testgdalwarp' + str(i+1) + '.tif')
+            os.remove('tmp/testgdalwarp' + str(i + 1) + '.tif')
         except:
             pass
     try:

@@ -314,7 +314,7 @@ def WriteLongStrings(fname):
     band = ds.GetRasterBand(1)
     rat = band.GetDefaultRAT()
 
-    if rat.WriteArray(LONG_STRING_DATA, 2, 10)!= gdal.CE_None:
+    if rat.WriteArray(LONG_STRING_DATA, 2, 10) != gdal.CE_None:
         raise HFATestError("Failed to write string column")
 
     #print("wrote long strings ok")

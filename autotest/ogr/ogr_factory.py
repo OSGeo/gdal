@@ -42,7 +42,7 @@ from osgeo import ogr
 
 def save_as_csv(geom, filename):
     csv = 'ID,WKT\n0,"%s"\n' % geom.ExportToWkt()
-    open('/home/warmerda/'+filename,'w').write(csv)
+    open('/home/warmerda/' + filename,'w').write(csv)
 
 ###############################################################################
 # 30 degree rotated ellipse, just one quarter.
@@ -291,7 +291,7 @@ def ogr_factory_6():
         ogr.ForceToLineString(src_geom)
         for target_type in range(ogr.wkbMultiSurface):
             gdal.PushErrorHandler('CPLQuietErrorHandler')
-            ogr.ForceTo(src_geom, 1 +target_type)
+            ogr.ForceTo(src_geom, 1 + target_type)
             gdal.PopErrorHandler()
         #print(src_geom.ExportToWkt(), dst_geom1.ExportToWkt(), dst_geom2.ExportToWkt(), dst_geom3.ExportToWkt(), dst_geom4.ExportToWkt())
 

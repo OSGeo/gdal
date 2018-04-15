@@ -153,12 +153,12 @@ def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-100) > 0.1 \
-        or abs(geotransform[1]-0.1) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-30.0) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -0.1) > 0.001:
+    if abs(geotransform[0] - 100) > 0.1 \
+        or abs(geotransform[1] - 0.1) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 30.0) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -0.1) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -168,7 +168,7 @@ def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_
             gdaltest.post_reason('Got wrong color interpretation.')
             return 'fail'
 
-        if ds.GetRasterBand(2).GetRasterColorInterpretation() !=gdal.GCI_GreenBand:
+        if ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_GreenBand:
             gdaltest.post_reason('Got wrong color interpretation.')
             return 'fail'
 
@@ -260,7 +260,7 @@ def nitf_9():
     (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
+    if abs(exp_mean - mean) > 0.1 or abs(exp_stddev - stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason('did not get expected mean or standard dev.')
         return 'fail'
@@ -309,14 +309,14 @@ def nitf_12():
 
     mdTRE = ds.GetMetadata('TRE')
 
-    try: # NG bindings
+    try:  # NG bindings
         blockA = ds.GetMetadataItem('BLOCKA', 'TRE')
     except:
         blockA = mdTRE['BLOCKA']
 
     mdCGM = ds.GetMetadata('CGM')
 
-    try: # NG bindings
+    try:  # NG bindings
         segmentCount = ds.GetMetadataItem('SEGMENT_COUNT', 'CGM')
     except:
         segmentCount = mdCGM['SEGMENT_COUNT']
@@ -381,12 +381,12 @@ def nitf_14():
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-400000) > .1 \
-    or abs(geotransform[1]-10) > 0.001 \
-    or abs(geotransform[2]-0) > 0.001 \
-    or abs(geotransform[3]-6000000) > .1 \
-    or abs(geotransform[4]-0) > 0.001 \
-    or abs(geotransform[5]- -10) > 0.001:
+    if abs(geotransform[0] - 400000) > .1 \
+    or abs(geotransform[1] - 10) > 0.001 \
+    or abs(geotransform[2] - 0) > 0.001 \
+    or abs(geotransform[3] - 6000000) > .1 \
+    or abs(geotransform[4] - 0) > 0.001 \
+    or abs(geotransform[5] - -10) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -492,7 +492,7 @@ def nitf_21():
 
     mdTEXT = ds.GetMetadata('TEXT')
 
-    try: # NG bindings
+    try:  # NG bindings
         data0 = ds.GetMetadataItem('DATA_0', 'TEXT')
     except:
         data0 = mdTEXT['DATA_0']
@@ -596,7 +596,7 @@ def nitf_28_jp2ecw():
     blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
     ds = None
     gdal.Unlink(tmpfilename)
-    if (blockxsize, blockysize) != (256,256): # 256 since this is hardcoded as such in the ECW driver
+    if (blockxsize, blockysize) != (256,256):  # 256 since this is hardcoded as such in the ECW driver
         gdaltest.post_reason('wrong block size')
         print(blockxsize, blockysize)
         ret = 'fail'
@@ -1021,7 +1021,7 @@ def nitf_36():
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
     (minval, maxval, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, True)
 
-    if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
+    if abs(exp_mean - mean) > 0.1 or abs(exp_stddev - stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason('did not get expected mean or standard dev.')
         return 'fail'
@@ -1041,7 +1041,7 @@ def nitf_36():
         return 'fail'
 
     (minval, maxval, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
-    if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
+    if abs(exp_mean - mean) > 0.1 or abs(exp_stddev - stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason('Should have statistics at that point.')
         return 'fail'
@@ -1177,7 +1177,7 @@ def nitf_39():
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
+    if abs(exp_mean - mean) > 0.1 or abs(exp_stddev - stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason('did not get expected mean or standard dev.')
         return 'fail'
@@ -1224,7 +1224,7 @@ def nitf_40():
     # has not put it somewhere else due to involuntary cast to 32bit integer.
     blockWidth = 256
     blockHeight = 256
-    nBlockx = int((width+blockWidth-1)/blockWidth)
+    nBlockx = int((width + blockWidth - 1) / blockWidth)
     iBlockx = int(x / blockWidth)
     iBlocky = int(y / blockHeight)
     ix = x % blockWidth
@@ -1575,7 +1575,7 @@ def nitf_48():
 def nitf_49():
 
     options = ["TEXT=DATA_0=COUCOU",
-                "TEXT=HEADER_0=ABC", # This content is invalid but who cares here
+                "TEXT=HEADER_0=ABC",  # This content is invalid but who cares here
                 "CGM=SEGMENT_COUNT=1",
                 "CGM=SEGMENT_0_SLOC_ROW=25",
                 "CGM=SEGMENT_0_SLOC_COL=25",
@@ -1620,7 +1620,7 @@ def nitf_50():
 
     options = [  # "IC=C8",
                 "TEXT=DATA_0=COUCOU",
-                "TEXT=HEADER_0=ABC", # This content is invalid but who cares here
+                "TEXT=HEADER_0=ABC",  # This content is invalid but who cares here
                 "CGM=SEGMENT_COUNT=1",
                 "CGM=SEGMENT_0_SLOC_ROW=25",
                 "CGM=SEGMENT_0_SLOC_COL=25",
@@ -1683,11 +1683,11 @@ def nitf_51():
             f = open('tmp/nitf51.ntf', 'rb+')
             # Patch NBPP value at offset 811
             f.seek(811)
-            f.write(struct.pack('B' * 2, 48 + int(nbpp/10), 48 + nbpp % 10))
+            f.write(struct.pack('B' * 2, 48 + int(nbpp / 10), 48 + nbpp % 10))
 
             # Write image data
             f.seek(843)
-            n = int((xsize * nbpp+7) / 8)
+            n = int((xsize * nbpp + 7) / 8)
             for i in range(n):
                 f.write(struct.pack('B' * 1, 255))
 
@@ -1793,7 +1793,7 @@ def nitf_53():
 def nitf_54():
 
     # Create a fake NITF file with RPC00B TRE (probably not conformant, but enough to test GDAL code)
-    RPC00B='100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+    RPC00B = '100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
 
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf54.ntf', 1, 1, options=['TRE=RPC00B=' + RPC00B])
     ds = None
@@ -1815,7 +1815,7 @@ def nitf_54():
 def nitf_55():
 
     # Create a fake NITF file with ICHIPB TRE (probably not conformant, but enough to test GDAL code)
-    ICHIPB='00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+    ICHIPB = '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
 
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf55.ntf', 1, 1, options=['TRE=ICHIPB=' + ICHIPB])
     ds = None
@@ -1837,7 +1837,7 @@ def nitf_55():
 def nitf_56():
 
     # Create a fake NITF file with USE00A TRE (probably not conformant, but enough to test GDAL code)
-    USE00A='00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+    USE00A = '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
 
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf56.ntf', 1, 1, options=['TRE=USE00A=' + USE00A])
     ds = None
@@ -1859,7 +1859,7 @@ def nitf_56():
 def nitf_57():
 
     # Create a fake NITF file with GEOLOB TRE
-    GEOLOB='000000360000000360-180.000000000090.000000000000'
+    GEOLOB = '000000360000000360-180.000000000090.000000000000'
 
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf57.ntf', 1, 1, options=['TRE=GEOLOB=' + GEOLOB])
     ds = None
@@ -1882,7 +1882,7 @@ def nitf_57():
 def nitf_58():
 
     # Create a fake NITF file with STDIDC TRE (probably not conformant, but enough to test GDAL code)
-    STDIDC='00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+    STDIDC = '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
 
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf58.ntf', 1, 1, options=['TRE=STDIDC=' + STDIDC])
     ds = None
@@ -1904,8 +1904,8 @@ def nitf_58():
 def nitf_read_IMRFCA_IMASDA():
 
     # Create a fake NITF file with fake IMRFCA and IMASDA TRE
-    IMRFCA='0' * 1760
-    IMASDA='0' * 242
+    IMRFCA = '0' * 1760
+    IMASDA = '0' * 242
 
     tmpfile = '/vsimem/nitf_read_IMRFCA_IMASDA.ntf'
     gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options=['TRE=IMRFCA=' + IMRFCA, 'TRE=IMASDA=' + IMASDA])
@@ -2015,7 +2015,7 @@ def nitf_60():
 
     ref_gt = [1036422.8453166834, 149.94543479697344, 0.0, 345474.28177222813, 0.0, -149.94543479697404]
     for i in range(6):
-        if abs(gt[i]-ref_gt[i]) > 1e-6:
+        if abs(gt[i] - ref_gt[i]) > 1e-6:
             gdaltest.post_reason('did not get expected geotransform')
             print(gt)
             return 'fail'
@@ -2297,7 +2297,7 @@ def nitf_69():
     src_ds = gdal.Open('/vsimem/nitf_69_src.ntf')
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_69_dest.ntf', 20, 20, 1, options=['ICORDS=G'])
     ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection())
-    ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection()) # To check we can call it several times without error
+    ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection())  # To check we can call it several times without error
     ds = None
     src_ds = None
 
@@ -3150,13 +3150,13 @@ def nitf_online_7():
         colorInterpretations = [gdal.GCI_Undefined, gdal.GCI_Undefined, gdal.GCI_RedBand, gdal.GCI_BlueBand, gdal.GCI_Undefined, gdal.GCI_GreenBand]
 
         for i in range(6):
-            cs = ds.GetRasterBand(i+1).Checksum()
+            cs = ds.GetRasterBand(i + 1).Checksum()
             if cs != checksums[i]:
                 gdaltest.post_reason('got checksum %d for image %s' \
                                       % (cs, file))
                 return 'fail'
 
-            if ds.GetRasterBand(i+1).GetRasterColorInterpretation() != colorInterpretations[i]:
+            if ds.GetRasterBand(i + 1).GetRasterColorInterpretation() != colorInterpretations[i]:
                 gdaltest.post_reason('got wrong color interp for image %s' \
                                       % file)
                 return 'fail'
@@ -3487,7 +3487,7 @@ def nitf_online_16(driver_to_test):
     else:
         print(ds.RasterCount)
         for i in range(ds.RasterCount):
-            print(ds.GetRasterBand(i+1).Checksum())
+            print(ds.GetRasterBand(i + 1).Checksum())
         print(ds.GetRasterBand(1).GetRasterColorTable())
         gdaltest.post_reason('Did not get expected checksums')
         ret = 'fail'
@@ -3544,7 +3544,7 @@ def nitf_online_17(driver_to_test):
     else:
         print(ds.RasterCount)
         for i in range(ds.RasterCount):
-            print(ds.GetRasterBand(i+1).Checksum())
+            print(ds.GetRasterBand(i + 1).Checksum())
         print(ds.GetRasterBand(1).GetRasterColorTable())
         gdaltest.post_reason('Did not get expected checksums')
         ret = 'fail'
@@ -3591,7 +3591,7 @@ def nitf_online_18():
         if prj.find('Azimuthal_Equidistant') == -1:
             gdaltest.post_reason('wrong projection?')
             return 'fail'
-        expected_gt=(-1669792.3618991028, 724.73626818537502, 0.0, -556597.45396636717, 0.0, -724.73626818537434)
+        expected_gt = (-1669792.3618991028, 724.73626818537502, 0.0, -556597.45396636717, 0.0, -724.73626818537434)
         if not gdaltest.geotransform_equals(gt, expected_gt, 1.0):
             gdaltest.post_reason('did not get expected geotransform.')
             return 'fail'
@@ -3613,8 +3613,8 @@ def nitf_online_18():
         gcps = ds.GetGCPs()
         gcp3 = gcps[3]
         if gcp3.GCPPixel != 0 or gcp3.GCPLine != 1536 \
-                or abs(gcp3.GCPX+45) > 0.0000000001 \
-                or abs(gcp3.GCPY-68.78679656) > 0.00000001:
+                or abs(gcp3.GCPX + 45) > 0.0000000001 \
+                or abs(gcp3.GCPY - 68.78679656) > 0.00000001:
             gdaltest.post_reason('did not get expected gcp.')
             return 'fail'
 

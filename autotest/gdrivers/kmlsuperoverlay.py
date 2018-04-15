@@ -282,12 +282,12 @@ def kmlsuperoverlay_6():
             print(got_gt)
             return 'fail'
     for i in range(4):
-        cs = ds.GetRasterBand(i+1).Checksum()
+        cs = ds.GetRasterBand(i + 1).Checksum()
         if cs != 47673:
             print(cs)
             gdaltest.post_reason('failure')
             return 'fail'
-        if ds.GetRasterBand(i+1).GetRasterColorInterpretation() != gdal.GCI_RedBand + i:
+        if ds.GetRasterBand(i + 1).GetRasterColorInterpretation() != gdal.GCI_RedBand + i:
             gdaltest.post_reason('failure')
             return 'fail'
     if ds.GetRasterBand(1).GetOverviewCount() != 1:

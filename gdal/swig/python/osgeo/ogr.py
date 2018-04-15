@@ -1158,11 +1158,11 @@ class DataSource(MajorObject):
             for i in xrange(value.start,value.stop,value.step):
                 try:
                     output.append(self.GetLayer(i))
-                except OGRError: #we're done because we're off the end
+                except OGRError:  # we're done because we're off the end
                     return output
             return output
         if isinstance(value, int):
-            if value > len(self)-1:
+            if value > len(self) - 1:
                 raise IndexError
             return self.GetLayer(value)
         elif isinstance(value, str):
@@ -2974,7 +2974,7 @@ class Layer(MajorObject):
                     return output
             return output
         if isinstance(value, int):
-            if value > len(self)-1:
+            if value > len(self) - 1:
                 raise IndexError
             return self.GetFeature(value)
         else:

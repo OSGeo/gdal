@@ -312,7 +312,7 @@ def osr_ct_8():
                 print('Expected: %s' % str(expected_result))
                 return 'fail'
 
-    pnts = [(0, 6274861.39400658), (1+0, 1+6274861.39400658)]
+    pnts = [(0, 6274861.39400658), (1 + 0, 1 + 6274861.39400658)]
     result = ct.TransformPoints(pnts)
     expected_result = [(0.0, 49.000000000000007, 0.0), (8.9831528411952125e-06, 49.000005893478189, 0.0)]
 

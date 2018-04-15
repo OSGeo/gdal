@@ -97,7 +97,7 @@ def vsicurl_streaming_1():
         gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
         return 'fail'
-    if gdal.VSIFTellL(fp) != 2001+20:
+    if gdal.VSIFTellL(fp) != 2001 + 20:
         gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
         return 'fail'
@@ -116,7 +116,7 @@ def vsicurl_streaming_1():
 
     gdal.VSIFSeekL(fp, 2001, 0)
     data_2001_2 = gdal.VSIFReadL(1, 20, fp)
-    if gdal.VSIFTellL(fp) != 2001+20:
+    if gdal.VSIFTellL(fp) != 2001 + 20:
         gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
         return 'fail'
@@ -133,7 +133,7 @@ def vsicurl_streaming_1():
         gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
         return 'fail'
-    if gdal.VSIFTellL(fp) != 1024 * 1024 + 100+ 20:
+    if gdal.VSIFTellL(fp) != 1024 * 1024 + 100 + 20:
         gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
         return 'fail'

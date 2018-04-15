@@ -155,7 +155,7 @@ def jp2kak_10():
     got = []
 
     for x in range(8):
-        got.append((ord(data[x*100]), ord(data[80000 + x*100])))
+        got.append((ord(data[x * 100]), ord(data[80000 + x * 100])))
 
     if got != expected:
         print(got)

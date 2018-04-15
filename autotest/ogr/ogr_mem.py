@@ -154,7 +154,7 @@ def ogr_mem_4():
 
     for item in wkt_list:
 
-        wkt = open('data/wkb_wkt/'+item+'.wkt').read()
+        wkt = open('data/wkb_wkt/' + item + '.wkt').read()
         geom = ogr.CreateGeometryFromWkt(wkt)
 
         ######################################################################
@@ -331,7 +331,7 @@ def ogr_mem_9():
     new_count = gdaltest.mem_lyr.GetFeatureCount()
     if new_count != old_count - 1:
         gdaltest.post_reason('got feature count of %d, not expected %d.' \
-                              % (new_count, old_count -1))
+                              % (new_count, old_count - 1))
 
     if not gdaltest.mem_lyr.TestCapability(ogr.OLCRandomRead):
         gdaltest.post_reason('OLCRandomRead capability test failed.')
@@ -723,7 +723,7 @@ def ogr_mem_16():
     if f.GetFID() != 1234567890123:
         gdaltest.post_reason('fail')
         return 'fail'
-    f = None # Important we must not have dangling references before modifying the schema !
+    f = None  # Important we must not have dangling references before modifying the schema !
 
     # Create a field so as to test OGRMemLayerIteratorMap
     lyr.CreateField(ogr.FieldDefn('foo'))

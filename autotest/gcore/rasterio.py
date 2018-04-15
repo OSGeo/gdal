@@ -149,7 +149,7 @@ def rasterio_4():
 
     data = ['' for i in range(5 * 4)]
     for size in range(5 * 4):
-        for k in range(size+1):
+        for k in range(size + 1):
             data[size] = data[size] + 'A'
         data[size] = data[size].encode('ascii')
 
@@ -358,14 +358,14 @@ def rasterio_8_progress_callback(pct, message, user_data):
         print('Expected %f, got %f' % (user_data[0] + 0.05, pct))
         user_data[1] = False
     user_data[0] = pct
-    return 1 # 1 to continue, 0 to stop
+    return 1  # 1 to continue, 0 to stop
 
 
 def rasterio_8_progress_interrupt_callback(pct, message, user_data):
     user_data[0] = pct
     if pct >= 0.5:
         return 0
-    return 1 # 1 to continue, 0 to stop
+    return 1  # 1 to continue, 0 to stop
 
 
 def rasterio_8_progress_callback_2(pct, message, user_data):
@@ -373,7 +373,7 @@ def rasterio_8_progress_callback_2(pct, message, user_data):
         print('Got %f, last pct was %f' % (pct, user_data[0]))
         return 0
     user_data[0] = pct
-    return 1 # 1 to continue, 0 to stop
+    return 1  # 1 to continue, 0 to stop
 
 
 def rasterio_8():
@@ -516,7 +516,7 @@ def rasterio_9_progress_callback(pct, message, user_data):
     user_data[0] = pct
     if user_data[1] is not None and pct >= user_data[1]:
         return 0
-    return 1 # 1 to continue, 0 to stop
+    return 1  # 1 to continue, 0 to stop
 
 
 def rasterio_9_checksum(data, buf_xsize, buf_ysize, data_type=gdal.GDT_Byte):
@@ -542,7 +542,7 @@ def rasterio_9():
         return 'fail'
     data_ar = struct.unpack('h' * 10 * 10, data)
     cs = rasterio_9_checksum(data, 10, 10, data_type=gdal.GDT_Int16)
-    if cs != 1211: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
+    if cs != 1211:  # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -575,7 +575,7 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
     cs = rasterio_9_checksum(data, 10, 10)
-    if cs != 1154: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r LANCZOS
+    if cs != 1154:  # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r LANCZOS
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -597,7 +597,7 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
     cs = rasterio_9_checksum(data, 10, 10, data_type=gdal.GDT_UInt16)
-    if cs != 1211: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
+    if cs != 1211:  # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -619,7 +619,7 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
     cs = rasterio_9_checksum(data, 10, 10, data_type=gdal.GDT_CInt16)
-    if cs != 1211: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
+    if cs != 1211:  # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -655,7 +655,7 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
     cs = rasterio_9_checksum(data, 10, 10)
-    if cs != 1089: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r GAUSS
+    if cs != 1089:  # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r GAUSS
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -675,7 +675,7 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
     cs = rasterio_9_checksum(data, 10, 10)
-    if cs != 1059: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r CUBIC
+    if cs != 1059:  # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r CUBIC
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -692,7 +692,7 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
     cs = rasterio_9_checksum(data, 5, 5)
-    if cs != 214: # checksum of gdal_translate data/byte.tif out.tif -outsize 5 5 -r CUBIC
+    if cs != 214:  # checksum of gdal_translate data/byte.tif out.tif -outsize 5 5 -r CUBIC
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -705,7 +705,7 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
     cs = rasterio_9_checksum(data, 5, 5, data_type=gdal.GDT_UInt16)
-    if cs != 214: # checksum of gdal_translate data/byte.tif out.tif -outsize 5 5 -r CUBIC
+    if cs != 214:  # checksum of gdal_translate data/byte.tif out.tif -outsize 5 5 -r CUBIC
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -721,7 +721,7 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
     cs = rasterio_9_checksum(data, 40, 40)
-    if cs != 19556: # checksum of gdal_translate data/byte.tif out.tif -outsize 40 40 -r CUBIC
+    if cs != 19556:  # checksum of gdal_translate data/byte.tif out.tif -outsize 40 40 -r CUBIC
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -741,7 +741,7 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
     cs = rasterio_9_checksum(data, 40, 40)
-    if cs != 19041: # checksum of gdal_translate data/byte.tif out.tif -outsize 40 40 -r CUBICSPLINE
+    if cs != 19041:  # checksum of gdal_translate data/byte.tif out.tif -outsize 40 40 -r CUBICSPLINE
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -761,13 +761,13 @@ def rasterio_9():
     if data is None:
         gdaltest.post_reason('failure')
         return 'fail'
-    cs = rasterio_9_checksum(data[0:25*25], 25, 25)
-    if cs != 5975: # checksum of gdal_translate data/rgbsmall_cmyk.tif out.tif -outsize 25 25 -r CUBIC
+    cs = rasterio_9_checksum(data[0:25 * 25], 25, 25)
+    if cs != 5975:  # checksum of gdal_translate data/rgbsmall_cmyk.tif out.tif -outsize 25 25 -r CUBIC
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
-    cs = rasterio_9_checksum(data[25*25:2*25*25], 25, 25)
-    if cs != 6248: # checksum of gdal_translate data/rgbsmall_cmyk.tif out.tif -outsize 25 25 -r CUBIC
+    cs = rasterio_9_checksum(data[25 * 25:2 * 25 * 25], 25, 25)
+    if cs != 6248:  # checksum of gdal_translate data/rgbsmall_cmyk.tif out.tif -outsize 25 25 -r CUBIC
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -789,7 +789,7 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
     cs = rasterio_9_checksum(data, 162 * 16, 150 * 16)
-    if cs != 30836: # checksum of gdal_translate data/stefan_full_rgba.png out.tif -outsize 1600% 1600% -r CUBIC
+    if cs != 30836:  # checksum of gdal_translate data/stefan_full_rgba.png out.tif -outsize 1600% 1600% -r CUBIC
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -876,7 +876,7 @@ def rasterio_12_progress_callback(pct, message, user_data):
         print('Got %f, last pct was %f' % (pct, user_data[0]))
         return 0
     user_data[0] = pct
-    return 1 # 1 to continue, 0 to stop
+    return 1  # 1 to continue, 0 to stop
 
 
 def rasterio_12():
@@ -890,10 +890,10 @@ def rasterio_12():
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, 4)
     for i in range(3):
-        mem_ds.GetRasterBand(i+1).SetColorInterpretation(gdal.GCI_GrayIndex)
+        mem_ds.GetRasterBand(i + 1).SetColorInterpretation(gdal.GCI_GrayIndex)
     mem_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_AlphaBand)
     for i in range(4):
-        mem_ds.GetRasterBand(i+1).WriteArray(numpy.array([[0,0,0,0],[0,255,0,0],[0,0,0,0]]))
+        mem_ds.GetRasterBand(i + 1).WriteArray(numpy.array([[0,0,0,0],[0,255,0,0],[0,0,0,0]]))
 
     tab = [0]
     ar_ds = mem_ds.ReadAsArray(0,0,4,3,buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic, \
@@ -911,7 +911,7 @@ def rasterio_12():
         print(ar_ds2)
         return 'fail'
 
-    ar_bands = [mem_ds.GetRasterBand(i+1).ReadAsArray(0,0,4,3,buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic) for i in range(4)]
+    ar_bands = [mem_ds.GetRasterBand(i + 1).ReadAsArray(0,0,4,3,buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic) for i in range(4)]
 
     # Results of band or dataset RasterIO should be the same
     for i in range(4):
@@ -999,9 +999,9 @@ cellsize     0
     gdal.Unlink('/vsimem/rasterio_14_out.asc')
 
     ds = gdal.GetDriverByName('MEM').Create('', 1000000, 1)
-    ds.GetRasterBand(1).WriteRaster(ds.RasterXSize-1,0,1,1,struct.pack('B' * 1, 100))
-    data = ds.ReadRaster(buf_xsize=int(ds.RasterXSize/2), buf_ysize=1, resample_alg=gdal.GRIORA_Average)
-    data = struct.unpack('B' * int(ds.RasterXSize/2), data)
+    ds.GetRasterBand(1).WriteRaster(ds.RasterXSize - 1,0,1,1,struct.pack('B' * 1, 100))
+    data = ds.ReadRaster(buf_xsize=int(ds.RasterXSize / 2), buf_ysize=1, resample_alg=gdal.GRIORA_Average)
+    data = struct.unpack('B' * int(ds.RasterXSize / 2), data)
     if data[-1:][0] != 50:
         gdaltest.post_reason('fail')
         print(data[-1:][0])
@@ -1015,9 +1015,9 @@ cellsize     0
         return 'fail'
 
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1000000)
-    ds.GetRasterBand(1).WriteRaster(0,ds.RasterYSize-1,1,1,struct.pack('B' * 1, 100))
-    data = ds.ReadRaster(buf_xsize=1, buf_ysize=int(ds.RasterYSize/2), resample_alg=gdal.GRIORA_Average)
-    data = struct.unpack('B' * int(ds.RasterYSize/2), data)
+    ds.GetRasterBand(1).WriteRaster(0,ds.RasterYSize - 1,1,1,struct.pack('B' * 1, 100))
+    data = ds.ReadRaster(buf_xsize=1, buf_ysize=int(ds.RasterYSize / 2), resample_alg=gdal.GRIORA_Average)
+    data = struct.unpack('B' * int(ds.RasterYSize / 2), data)
     if data[-1:][0] != 50:
         gdaltest.post_reason('fail')
         print(data[-1:][0])

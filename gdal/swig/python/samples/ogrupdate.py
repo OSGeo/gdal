@@ -106,19 +106,19 @@ def ogrupdate_analyse_args(argv, progress=None, progress_arg=None):
     i = 0
     while i < len(argv):
         arg = argv[i]
-        if arg == '-src' and i+1 < len(argv):
+        if arg == '-src' and i + 1 < len(argv):
             i = i + 1
             src_filename = argv[i]
-        elif arg == '-dst' and i+1 < len(argv):
+        elif arg == '-dst' and i + 1 < len(argv):
             i = i + 1
             dst_filename = argv[i]
-        elif arg == '-srclayer' and i+1 < len(argv):
+        elif arg == '-srclayer' and i + 1 < len(argv):
             i = i + 1
             src_layername = argv[i]
-        elif arg == '-dstlayer' and i+1 < len(argv):
+        elif arg == '-dstlayer' and i + 1 < len(argv):
             i = i + 1
             dst_layername = argv[i]
-        elif arg == '-matchfield' and i+1 < len(argv):
+        elif arg == '-matchfield' and i + 1 < len(argv):
             i = i + 1
             matchfieldname = argv[i]
         elif arg == '-update_only':
@@ -129,7 +129,7 @@ def ogrupdate_analyse_args(argv, progress=None, progress_arg=None):
             preserve_fid = True
         elif arg == '-compare_before_update':
             compare_before_update = True
-        elif arg == "-select" and i+1 < len(argv):
+        elif arg == "-select" and i + 1 < len(argv):
             i = i + 1
             pszSelect = argv[i]
             if pszSelect.find(',') != -1:
@@ -366,7 +366,7 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname=None, update_mode=DEF
                         else:
                             dst_feat.SetField(fld_dst_idx, src_feat.GetFieldAsString(fld_src_idx))
                 else:
-                    dst_feat.SetFrom(src_feat) # resets the FID
+                    dst_feat.SetFrom(src_feat)  # resets the FID
                     dst_feat.SetFID(dst_fid)
                 if dry_run:
                     ret = 0

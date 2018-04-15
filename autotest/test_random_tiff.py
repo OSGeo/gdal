@@ -111,7 +111,7 @@ def generate_tif(comb_val):
         if val is not None:
             content = content + ('%c' % (tag & 255)) + ('%c' % (tag >> 8))
             content = content + '\x04\x00\x01\x00\x00\x00'
-            content = content + ('%c' % (val & 255)) + ('%c' % ((val >> 8)& 255)) + ('%c' % ((val >> 16)& 255)) + ('%c' % ((val >> 24) & 255))
+            content = content + ('%c' % (val & 255)) + ('%c' % ((val >> 8) & 255)) + ('%c' % ((val >> 16) & 255)) + ('%c' % ((val >> 24) & 255))
 
     return content
 
