@@ -3772,7 +3772,7 @@ def tiff_write_89():
         # older versions of python don't have SEEK_END, add if missing.
         try:
             os.SEEK_END
-        except NameError:
+        except AttributeError:
             os.SEEK_END = 2
 
         f = open('tmp/tiff_write_89.tif', 'rb')
