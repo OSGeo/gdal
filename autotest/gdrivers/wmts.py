@@ -1784,7 +1784,7 @@ def wmts_cleanup():
 
     try:
         shutil.rmtree('tmp/wmts_cache')
-    except:
+    except OSError:
         pass
 
     return 'success'

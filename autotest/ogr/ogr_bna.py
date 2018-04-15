@@ -215,7 +215,7 @@ def ogr_bna_6():
 
     try:
         os.remove('tmp/out.bna')
-    except:
+    except OSError:
         pass
 
     ret = ogr_bna_write(['LINEFORMAT=LF', 'MULTILINE=NO', 'COORDINATE_PRECISION=3'])
@@ -250,7 +250,7 @@ def ogr_bna_cleanup():
 
     try:
         os.remove('tmp/out.bna')
-    except:
+    except OSError:
         pass
 
     return 'success'

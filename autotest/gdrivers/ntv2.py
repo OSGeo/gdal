@@ -150,7 +150,7 @@ def ntv2_online_1():
 
     try:
         os.stat('tmp/cache/nzgd2kgrid0005.gsb')
-    except:
+    except OSError:
         return 'skip'
 
     tst = gdaltest.GDALTest('NTV2', 'tmp/cache/nzgd2kgrid0005.gsb', 1, 54971, filename_absolute=1)
@@ -164,7 +164,7 @@ def ntv2_online_2():
 
     try:
         os.stat('tmp/cache/nzgd2kgrid0005.gsb')
-    except:
+    except OSError:
         return 'skip'
 
     tst = gdaltest.GDALTest('NTV2', 'tmp/cache/nzgd2kgrid0005.gsb', 1, 54971, filename_absolute=1)
@@ -177,7 +177,7 @@ def ntv2_online_3():
 
     try:
         os.stat('tmp/cache/nzgd2kgrid0005.gsb')
-    except:
+    except OSError:
         return 'skip'
 
     tst = gdaltest.GDALTest('NTV2', 'tmp/cache/nzgd2kgrid0005.gsb', 1, 54971, filename_absolute=1)

@@ -54,7 +54,7 @@ def vrtwarp_2():
 
     try:
         os.remove('tmp/warp.vrt')
-    except:
+    except OSError:
         pass
 
     gcp_ds = gdal.OpenShared('data/rgb_gcp.vrt', gdal.GA_ReadOnly)

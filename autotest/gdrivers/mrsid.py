@@ -221,7 +221,7 @@ def mrsid_4():
 
     try:
         os.remove('data/mercator_new.sid.aux.xml')
-    except:
+    except OSError:
         pass
 
     tst = gdaltest.GDALTest('MrSID', 'mercator_new.sid', 1, None)
@@ -251,7 +251,7 @@ def mrsid_4():
 
     try:
         os.remove('data/mercator_new.sid.aux.xml')
-    except:
+    except OSError:
         pass
 
     return ret
@@ -589,7 +589,7 @@ def mrsid_cleanup():
     try:
         os.remove('data/mercator.sid.aux.xml')
         os.remove('data/mercator_new.sid.aux.xml')
-    except:
+    except OSError:
         pass
 
     gdaltest.reregister_all_jpeg2000_drivers()

@@ -259,7 +259,7 @@ def aaigrid_10():
 
         try:
             os.remove('data/float64.asc.aux.xml')
-        except:
+        except OSError:
             pass
 
         if i == 0:
@@ -288,7 +288,7 @@ def aaigrid_10():
 
         try:
             os.remove('data/float64.asc.aux.xml')
-        except:
+        except OSError:
             pass
 
     return 'success'

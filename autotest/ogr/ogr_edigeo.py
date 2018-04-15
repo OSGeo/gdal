@@ -63,7 +63,7 @@ def ogr_edigeo_1():
     try:
         for filename in filelist:
             os.stat('tmp/cache/' + filename)
-    except:
+    except OSError:
         return 'skip'
 
     ds = ogr.Open('tmp/cache/E000AB01.THF')

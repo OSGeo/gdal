@@ -117,7 +117,7 @@ def test_gdalinfo_5():
 
     try:
         os.remove('../gcore/data/byte.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif')
@@ -190,7 +190,7 @@ def test_gdalinfo_8():
 
     try:
         os.remove('../gcore/data/byte.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif')
@@ -631,7 +631,7 @@ def test_gdalinfo_32():
 
     try:
         os.remove('../gcore/data/byte.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gcore/data/byte.tif')
@@ -704,7 +704,7 @@ def test_gdalinfo_35():
 
     try:
         os.remove('../gcore/data/byte.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gcore/data/byte.tif')

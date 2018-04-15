@@ -261,7 +261,7 @@ def ogr_index_9():
     for filename in ['join_t.idm', 'join_t.ind']:
         try:
             os.stat(filename)
-        except:
+        except OSError:
             gdaltest.post_reason("%s should exist" % filename)
             return 'fail'
             pass

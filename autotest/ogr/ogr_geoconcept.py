@@ -153,7 +153,7 @@ def ogr_gxt_3():
 
     try:
         os.remove('tmp/tmp.gxt')
-    except:
+    except OSError:
         pass
 
     # Duplicate all the points from the source GXT
@@ -317,7 +317,7 @@ def ogr_gxt_cleanup():
     gdaltest.gxt_ds = None
     try:
         os.remove('tmp/tmp.gxt')
-    except:
+    except OSError:
         pass
     return 'success'
 

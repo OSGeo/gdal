@@ -66,7 +66,7 @@ def ogr_fgdb_init():
 
     try:
         shutil.rmtree("tmp/test.gdb")
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -86,7 +86,7 @@ def ogr_fgdb_is_sdk_1_4_or_later():
 
     try:
         shutil.rmtree("tmp/ogr_fgdb_is_sdk_1_4_or_later.gdb")
-    except:
+    except OSError:
         pass
 
     ds = ogrtest.fgdb_drv.CreateDataSource("tmp/ogr_fgdb_is_sdk_1_4_or_later.gdb")
@@ -369,7 +369,7 @@ def ogr_fgdb_3():
 
     try:
         shutil.rmtree("tmp/poly.gdb")
-    except:
+    except OSError:
         pass
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f filegdb tmp/poly.gdb data/poly.shp -nlt MULTIPOLYGON -a_srs None')
@@ -517,7 +517,7 @@ def ogr_fgdb_7():
 
     try:
         shutil.rmtree("tmp/test.gdb")
-    except:
+    except OSError:
         pass
 
     srs = osr.SpatialReference()
@@ -555,7 +555,7 @@ def ogr_fgdb_8():
 
     try:
         shutil.rmtree("tmp/test.gdb")
-    except:
+    except OSError:
         pass
 
     srs = osr.SpatialReference()
@@ -594,7 +594,7 @@ def ogr_fgdb_9():
 
     try:
         shutil.rmtree("tmp/test.gdb")
-    except:
+    except OSError:
         pass
 
     srs = osr.SpatialReference()
@@ -642,7 +642,7 @@ def ogr_fgdb_10():
 
     try:
         shutil.rmtree("tmp/test.gdb")
-    except:
+    except OSError:
         pass
 
     srs_exact_4326 = osr.SpatialReference()
@@ -745,7 +745,7 @@ def ogr_fgdb_11():
 
     try:
         shutil.rmtree("tmp/test.gdb")
-    except:
+    except OSError:
         pass
 
     f = open('data/test_filegdb_field_types.xml', 'rt')
@@ -823,11 +823,11 @@ def ogr_fgdb_12():
 
     try:
         os.unlink('tmp/dummy.gdb')
-    except:
+    except OSError:
         pass
     try:
         shutil.rmtree('tmp/dummy.gdb')
-    except:
+    except OSError:
         pass
 
     f = open('tmp/dummy.gdb', 'wb')
@@ -882,7 +882,7 @@ def ogr_fgdb_13():
 
     try:
         shutil.rmtree("/nonexistingdir")
-    except:
+    except OSError:
         pass
 
     name = '/nonexistingdrive:/nonexistingdir/dummy.gdb'
@@ -935,7 +935,7 @@ def ogr_fgdb_15():
 
     try:
         shutil.rmtree('tmp/test3005.gdb')
-    except:
+    except OSError:
         pass
     gdaltest.unzip('tmp', 'data/test3005.gdb.zip')
     ds = ogr.Open('tmp/test3005.gdb')
@@ -967,7 +967,7 @@ def ogr_fgdb_16():
         pass
     try:
         os.stat('tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb')
-    except:
+    except OSError:
         return 'skip'
 
     ogrtest.fgdb_drv.Deregister()
@@ -1000,7 +1000,7 @@ def ogr_fgdb_17():
 
     try:
         shutil.rmtree("tmp/test.gdb")
-    except:
+    except OSError:
         pass
 
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
@@ -1076,7 +1076,7 @@ def ogr_fgdb_18():
 
     try:
         shutil.rmtree("tmp/test.gdb")
-    except:
+    except OSError:
         pass
 
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
@@ -1191,11 +1191,11 @@ def ogr_fgdb_19():
 
     try:
         shutil.rmtree("tmp/test.gdb.ogrtmp")
-    except:
+    except OSError:
         pass
     try:
         shutil.rmtree("tmp/test.gdb.ogredited")
-    except:
+    except OSError:
         pass
 
     # Error case: try in read-only
@@ -1272,7 +1272,7 @@ def ogr_fgdb_19():
 
     try:
         os.stat('tmp/test.gdb.ogredited')
-    except:
+    except OSError:
         gdaltest.post_reason('fail')
         return 'fail'
     try:
@@ -2312,7 +2312,7 @@ def ogr_fgdb_20():
     for case in ('CASE1', 'CASE2', 'CASE3'):
         try:
             shutil.rmtree("tmp/test2.gdb")
-        except:
+        except OSError:
             pass
 
         ds = ogrtest.fgdb_drv.CreateDataSource("tmp/test2.gdb")
@@ -2393,7 +2393,7 @@ def ogr_fgdb_21():
 
     try:
         shutil.rmtree("tmp/test.gdb")
-    except:
+    except OSError:
         pass
 
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
@@ -2601,20 +2601,20 @@ def ogr_fgdb_cleanup():
 
     try:
         shutil.rmtree("tmp/test.gdb")
-    except:
+    except OSError:
         pass
 
     try:
         shutil.rmtree("tmp/test2.gdb")
-    except:
+    except OSError:
         pass
     try:
         shutil.rmtree("tmp/poly.gdb")
-    except:
+    except OSError:
         pass
     try:
         shutil.rmtree('tmp/test3005.gdb')
-    except:
+    except OSError:
         pass
 
     if ogrtest.openfilegdb_drv is not None:

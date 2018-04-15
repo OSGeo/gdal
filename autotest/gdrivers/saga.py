@@ -172,7 +172,7 @@ def saga_6():
     try:
         os.remove('tmp/test6.sgrd')
         os.remove('tmp/test6.sdat')
-    except:
+    except OSError:
         pass
 
     return 'success'

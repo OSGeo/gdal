@@ -45,7 +45,7 @@ def loslas_online_1():
 
     try:
         os.stat('tmp/cache/NADCON.zip')
-    except:
+    except OSError:
         return 'skip'
 
     tst = gdaltest.GDALTest('LOSLAS', '/vsizip/tmp/cache/NADCON.zip/wyhpgn.los', 1, 0, filename_absolute=1)

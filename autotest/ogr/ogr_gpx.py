@@ -364,7 +364,7 @@ def ogr_gpx_7():
 
     try:
         os.remove('tmp/gpx.gpx')
-    except:
+    except OSError:
         pass
 
     co_opts = ['GPX_USE_EXTENSIONS=yes']
@@ -436,7 +436,7 @@ def ogr_gpx_8():
 
     try:
         os.remove('tmp/gpx.gpx')
-    except:
+    except OSError:
         pass
 
     gdaltest.gpx_ds = ogr.GetDriverByName('GPX').CreateDataSource('tmp/gpx.gpx', options=['LINEFORMAT=LF'])
@@ -546,7 +546,7 @@ def ogr_gpx_cleanup():
     gdaltest.gpx_ds = None
     try:
         os.remove('tmp/gpx.gpx')
-    except:
+    except OSError:
         pass
     return 'success'
 

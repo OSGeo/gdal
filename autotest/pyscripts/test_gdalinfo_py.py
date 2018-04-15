@@ -116,7 +116,7 @@ def test_gdalinfo_py_5():
 
     try:
         os.remove('../gcore/data/byte.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/byte.tif')

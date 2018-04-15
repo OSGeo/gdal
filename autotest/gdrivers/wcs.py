@@ -38,7 +38,7 @@ import shutil
 import urlparse
 try:
     from BaseHTTPServer import BaseHTTPRequestHandler
-except:
+except ImportError:
     from http.server import BaseHTTPRequestHandler
 
 from osgeo import gdal
@@ -590,12 +590,12 @@ def wcs_cleanup():
 
     try:
         os.remove('tmp/geoserver.wcs')
-    except:
+    except OSError:
         pass
 
     try:
         shutil.rmtree('wcs_cache')
-    except:
+    except OSError:
         pass
 
     return 'success'

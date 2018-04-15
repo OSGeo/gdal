@@ -372,7 +372,7 @@ def ogr_vrt_11():
 
     try:
         os.remove('tmp/test.csvt')
-    except:
+    except OSError:
         pass
 
     vrt_xml = """
@@ -1636,7 +1636,7 @@ def ogr_vrt_29():
         os.unlink('tmp/ogr_vrt_29.shx')
         os.unlink('tmp/ogr_vrt_29.dbf')
         os.unlink('tmp/ogr_vrt_29.prj')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_vrt_29.shp')
@@ -1992,7 +1992,7 @@ def ogr_vrt_29():
         os.unlink('tmp/ogr_vrt_29.shx')
         os.unlink('tmp/ogr_vrt_29.dbf')
         os.unlink('tmp/ogr_vrt_29.prj')
-    except:
+    except OSError:
         pass
     os.unlink('tmp/ogr_vrt_29.vrt')
     os.unlink('tmp/ogr_vrt_29_2.vrt')
@@ -2017,7 +2017,7 @@ def ogr_vrt_30():
                       'tmp/ogr_vrt_30_2.qix']:
         try:
             os.unlink(filename)
-        except:
+        except OSError:
             pass
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_vrt_30_1.shp')
@@ -2506,7 +2506,7 @@ def ogr_vrt_30():
                       'tmp/ogr_vrt_30_2.qix']:
         try:
             os.unlink(filename)
-        except:
+        except OSError:
             pass
     os.unlink('tmp/ogr_vrt_30.vrt')
 
@@ -2578,7 +2578,7 @@ def ogr_vrt_33():
     try:
         import shutil
         shutil.rmtree('tmp/ogr_vrt_33')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('tmp/ogr_vrt_33', options=['GEOMETRY=AS_WKT'])
@@ -3341,7 +3341,7 @@ def ogr_vrt_34():
 
     try:
         os.remove('tmp/test.csvt')
-    except:
+    except OSError:
         pass
 
     vrt_xml = """
@@ -3383,7 +3383,7 @@ def ogr_vrt_35():
 
     try:
         os.remove('tmp/test.csvt')
-    except:
+    except OSError:
         pass
 
     # Explicit nullable
@@ -3690,13 +3690,13 @@ def ogr_vrt_cleanup():
 
     try:
         os.unlink('tmp/ogr_vrt_33.vrt')
-    except:
+    except OSError:
         pass
 
     try:
         import shutil
         shutil.rmtree('tmp/ogr_vrt_33')
-    except:
+    except OSError:
         pass
 
     gdaltest.vrt_ds = None

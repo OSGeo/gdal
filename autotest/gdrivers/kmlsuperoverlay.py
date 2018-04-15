@@ -83,7 +83,7 @@ def kmlsuperoverlay_3():
     for filename in filelist:
         try:
             os.remove(filename)
-        except:
+        except OSError:
             gdaltest.post_reason("Missing file: %s" % filename)
             return 'fail'
 
@@ -203,7 +203,7 @@ def kmlsuperoverlay_5():
 
     try:
         from xml.etree import ElementTree
-    except:
+    except ImportError:
         return 'skip'
 
     src_ds = gdal.Open("""<VRTDataset rasterXSize="512" rasterYSize="512">

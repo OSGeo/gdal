@@ -173,7 +173,7 @@ def aigrid_online_1():
         os.mkdir('tmp/cache/nzdem')
         os.mkdir('tmp/cache/nzdem/info')
         os.mkdir('tmp/cache/nzdem/nzdem500')
-    except:
+    except OSError:
         pass
 
     for filename in list_files:
@@ -254,12 +254,12 @@ def aigrid_online_2():
 
     try:
         os.stat('tmp/cache/ai_bug')
-    except:
+    except OSError:
         try:
             gdaltest.unzip('tmp/cache', 'tmp/cache/ai_bug_6886')
             try:
                 os.stat('tmp/cache/ai_bug')
-            except:
+            except OSError:
                 return 'skip'
         except:
             return 'skip'

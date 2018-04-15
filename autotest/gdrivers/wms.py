@@ -393,7 +393,7 @@ def wms_8():
 
     try:
         shutil.rmtree('tmp/gdalwmscache')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open(tms)
@@ -430,7 +430,7 @@ def wms_8():
     for expected_file in expected_files:
         try:
             os.stat(expected_file)
-        except:
+        except OSError:
             gdaltest.post_reason('%s should exist' % expected_file)
             return 'fail'
 
@@ -1005,7 +1005,7 @@ def wms_cleanup():
 
     try:
         shutil.rmtree('gdalwmscache')
-    except:
+    except OSError:
         pass
 
     return 'success'

@@ -84,7 +84,7 @@ def ograpispy_2():
 
     try:
         shutil.rmtree('tmp/snapshot_1')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ograpispy_2.shp')
@@ -140,19 +140,19 @@ def ograpispy_2():
 def ograpispy_cleanup():
     try:
         os.unlink('tmp/ograpispy_1.py')
-    except:
+    except OSError:
         pass
     try:
         os.unlink('tmp/ograpispy_2.py')
-    except:
+    except OSError:
         pass
     try:
         os.unlink('tmp/ograpispy_2.pyc')
-    except:
+    except OSError:
         pass
     try:
         shutil.rmtree('tmp/snapshot_1')
-    except:
+    except OSError:
         pass
     try:
         os.stat('tmp/ograpispy_2.shp')

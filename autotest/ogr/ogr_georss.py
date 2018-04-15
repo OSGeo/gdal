@@ -137,7 +137,7 @@ def ogr_georss_1bis():
 
     try:
         os.remove('tmp/test_atom.xml')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('GeoRSS').CreateDataSource('tmp/test_atom.xml', options=['FORMAT=ATOM'])
@@ -270,7 +270,7 @@ def ogr_georss_create(filename, options):
 
     try:
         os.remove(filename)
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('GeoRSS').CreateDataSource(filename, options=options)
     lyr = ds.CreateLayer('georss')
@@ -418,7 +418,7 @@ def ogr_georss_9():
 def ogr_georss_10():
     try:
         os.remove('tmp/test32631.rss')
-    except:
+    except OSError:
         pass
 
     srs = osr.SpatialReference()
@@ -439,7 +439,7 @@ def ogr_georss_10():
 
     try:
         os.remove('tmp/test32631.rss')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('GeoRSS').CreateDataSource('tmp/test32631.rss', options=['GEOM_DIALECT=GML'])
@@ -539,7 +539,7 @@ def ogr_georss_12():
 def ogr_georss_13():
     try:
         os.remove('tmp/nonstandard.rss')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('GeoRSS').CreateDataSource('tmp/nonstandard.rss', options=['USE_EXTENSIONS=YES'])
     lyr = ds.CreateLayer('georss')
@@ -653,7 +653,7 @@ def ogr_georss_cleanup():
     for filename in list_files:
         try:
             os.remove(filename)
-        except:
+        except OSError:
             pass
 
     files = os.listdir('data')

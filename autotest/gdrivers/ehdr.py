@@ -259,7 +259,7 @@ def ehdr_13():
 
     try:
         os.unlink('data/byte.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     src_ds = gdal.Open('data/byte.tif')

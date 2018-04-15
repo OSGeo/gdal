@@ -80,7 +80,7 @@ def test_gdalmove_cleanup():
     for filename in lst:
         try:
             os.remove(filename)
-        except:
+        except OSError:
             pass
 
     return 'success'

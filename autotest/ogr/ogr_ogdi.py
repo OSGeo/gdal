@@ -63,12 +63,12 @@ def ogr_ogdi_1():
 
     try:
         os.stat('tmp/cache/ogdits-3.1')
-    except:
+    except OSError:
         try:
             gdaltest.unzip('tmp/cache', 'tmp/cache/ogdits-3.1.0.zip')
             try:
                 os.stat('tmp/cache/ogdits-3.1')
-            except:
+            except OSError:
                 return 'skip'
         except:
             return 'skip'

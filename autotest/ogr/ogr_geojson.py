@@ -4104,7 +4104,7 @@ def ogr_geojson_cleanup():
 
     try:
         os.remove('tmp/out_ogr_geojson_14.geojson')
-    except:
+    except OSError:
         pass
 
     for f in gdal.ReadDir('/vsimem/geojson'):

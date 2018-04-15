@@ -1820,11 +1820,11 @@ def test_gdalwarp_lib_cleanup():
     for i in range(2):
         try:
             os.remove('tmp/testgdalwarp' + str(i + 1) + '.tif')
-        except:
+        except OSError:
             pass
     try:
         os.remove('tmp/testgdalwarp_gcp.tif')
-    except:
+    except OSError:
         pass
 
     return 'success'

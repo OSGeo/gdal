@@ -56,7 +56,7 @@ def ogr_vfk_1():
 
     try:
         os.remove('data/bylany.vfk.db')
-    except:
+    except OSError:
         pass
 
     gdaltest.vfk_ds = ogr.Open('data/bylany.vfk')
@@ -336,7 +336,7 @@ def ogr_vfk_cleanup():
 
     try:
         os.remove('data/bylany.db')
-    except:
+    except OSError:
         pass
 
     return 'success'
