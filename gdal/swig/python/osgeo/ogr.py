@@ -1158,7 +1158,7 @@ class DataSource(MajorObject):
             for i in xrange(value.start, value.stop, value.step):
                 try:
                     output.append(self.GetLayer(i))
-                except OGRError: #we're done because we're off the end
+                except OGRError:  # we're done because we're off the end
                     return output
             return output
         if isinstance(value, int):

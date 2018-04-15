@@ -1373,7 +1373,7 @@ def hfa_write_rat():
 
     if rat.GetColumnCount() != 6 \
        or rat.GetTypeOfCol(0) != gdal.GFT_Real \
-       or rat.GetUsageOfCol(0) != gdal.GFU_Generic: # should be GFU_MinMax
+       or rat.GetUsageOfCol(0) != gdal.GFU_Generic:  # should be GFU_MinMax
         print(rat.GetColumnCount())
         print(rat.GetTypeOfCol(0))
         print(rat.GetUsageOfCol(0))

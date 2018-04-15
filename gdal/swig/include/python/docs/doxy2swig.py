@@ -241,7 +241,7 @@ class Doxy2SWIG:
             first = self.get_specific_nodes(node, ('definition', 'name'))
             name = first['name'].firstChild.data
             name = name.replace(sys.argv[4], '')
-            if name[:8] == 'operator': # Don't handle operators yet.
+            if name[:8] == 'operator':  # Don't handle operators yet.
                 return
 
             defn = first['definition'].firstChild.data
@@ -351,7 +351,7 @@ class Doxy2SWIG:
         for i in _data.split('\n\n'):
             if i == 'Parameters:':
                 ret.extend(['Parameters:\n-----------', '\n\n'])
-            elif i.find('// File:') > -1: # leave comments alone.
+            elif i.find('// File:') > -1:  # leave comments alone.
                 ret.extend([i, '\n'])
             else:
                 _tmp = textwrap.fill(i.strip())

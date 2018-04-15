@@ -996,7 +996,7 @@ class CFChecker:
           validNames = ['albers_conical_equal_area', 'azimuthal_equidistant', 'lambert_azimuthal_equal_area',
                         'lambert_conformal_conic', 'polar_stereographic', 'rotated_latitude_longitude',
                         'stereographic', 'transverse_mercator']
-          validNames += ['geostationary'] # GDAL addition
+          validNames += ['geostationary']  # GDAL addition
 
           if self.version >= vn1_2:
               # Extra grid_mapping_names at vn1.2
@@ -1203,10 +1203,10 @@ class CFChecker:
     trailingVars = []
 
     if len(dimensions) > 1:
-        order = ['T', 'Z', 'Y', 'X']
-        axesFound = [0, 0, 0, 0] # Holding array to record whether a dimension with an axis value has been found.
-        i = -1
-        lastPos = -1
+        order=['T', 'Z', 'Y', 'X']
+        axesFound=[0, 0, 0, 0]  # Holding array to record whether a dimension with an axis value has been found.
+        i=-1
+        lastPos=-1
         #trailing=0   # Flag to indicate trailing dimension
 
         # Flags to hold positions of first space/time dimension and

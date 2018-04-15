@@ -139,7 +139,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
     if ogc_schemas_location != 'disabled':
         try:
             import xmlvalidate
-            xmlvalidate.validate # to make pyflakes happy
+            xmlvalidate.validate  # to make pyflakes happy
         except:
             ogc_schemas_location = 'disabled'
 
@@ -351,7 +351,7 @@ def jp2lura_8():
 
     ds = gdal.Open('data/3_13bit_and_1bit.jp2')
 
-    expected_checksums = [64570, 57277, 56048] # 61292]
+    expected_checksums = [64570, 57277, 56048]  # 61292]
 
     for i in range(len(expected_checksums)):
         if ds.GetRasterBand(i + 1).Checksum() != expected_checksums[i]:

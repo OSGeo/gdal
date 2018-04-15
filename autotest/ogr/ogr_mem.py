@@ -723,7 +723,7 @@ def ogr_mem_16():
     if f.GetFID() != 1234567890123:
         gdaltest.post_reason('fail')
         return 'fail'
-    f = None # Important we must not have dangling references before modifying the schema !
+    f = None  # Important we must not have dangling references before modifying the schema !
 
     # Create a field so as to test OGRMemLayerIteratorMap
     lyr.CreateField(ogr.FieldDefn('foo'))

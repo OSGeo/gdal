@@ -101,8 +101,8 @@ def rfc30_2():
         filename_for_rename = filename
     else:
         exec("new_filename = u'tmp/yy\u4E2D\u6587.\u4E2D\u6587'")
-        filename_for_rename = filename.encode('utf-8') # FIXME ? rename should perhaps accept unicode strings
-        new_filename = new_filename.encode('utf-8') # FIXME ? rename should perhaps accept unicode strings
+        filename_for_rename = filename.encode('utf-8')  # FIXME ? rename should perhaps accept unicode strings
+        new_filename = new_filename.encode('utf-8')  # FIXME ? rename should perhaps accept unicode strings
 
     if gdal.Rename(filename_for_rename, new_filename) != 0:
         gdaltest.post_reason('utf-8 rename failed.')

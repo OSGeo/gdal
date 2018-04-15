@@ -1068,7 +1068,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
     if ogc_schemas_location != 'disabled':
         try:
             import xmlvalidate
-            xmlvalidate.validate # to make pyflakes happy
+            xmlvalidate.validate  # to make pyflakes happy
         except:
             ogc_schemas_location = 'disabled'
 
@@ -1428,7 +1428,7 @@ def jp2openjpeg_29():
 
     tests = [(['TILEPARTS=DISABLED'], False),
               (['TILEPARTS=RESOLUTIONS'], False),
-              (['TILEPARTS=LAYERS'], True), # warning since there's only one quality layer
+              (['TILEPARTS=LAYERS'], True),  # warning since there's only one quality layer
               (['TILEPARTS=LAYERS', 'QUALITY=1,2'], False),
               (['TILEPARTS=COMPONENTS'], False),
               (['TILEPARTS=ILLEGAL'], True),

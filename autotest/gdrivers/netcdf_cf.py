@@ -38,7 +38,7 @@ sys.path.append('../pymod')
 
 import gdaltest
 
-import imp # for netcdf_cf_setup()
+import imp  # for netcdf_cf_setup()
 from netcdf import netcdf_setup, netcdf_test_copy
 
 ###############################################################################
@@ -266,7 +266,7 @@ netcdf_cfproj_tuples = [
         "+proj=cea +lat_ts=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
         "lambert_cylindrical_equal_area",
         ['longitude_of_central_meridian',
-         'standard_parallel', # TODO: OR 'scale_factor_at_projection_origin'
+         'standard_parallel',  # TODO: OR 'scale_factor_at_projection_origin'
          'false_easting', 'false_northing'],
          ['projection_x_coordinate', 'projection_y_coordinate']),
     # 2 entries for Mercator, since attribs different for 1SP or 2SP

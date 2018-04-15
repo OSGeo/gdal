@@ -3707,7 +3707,7 @@ def tiff_write_88():
     src_ds = gdal.Open('tmp/tiff_write_88_src.tif')
     # for testing only. We need to keep the file to check it was a bigtiff
     gdal.SetConfigOption('GTIFF_DELETE_ON_ERROR', 'NO')
-    gdal.SetConfigOption('CHECK_DISK_FREE_SPACE', 'NO') # we don't want free space to be an issue here
+    gdal.SetConfigOption('CHECK_DISK_FREE_SPACE', 'NO')  # we don't want free space to be an issue here
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_88_dst.tif', src_ds,
             options=['TILED=YES', 'COPY_SRC_OVERVIEWS=YES', 'ENDIANNESS=LITTLE'])
@@ -7308,20 +7308,20 @@ def tiff_write_157():
 
     # Write controlled values of Float16
     vals = struct.pack('H' * 14,
-                            0x0000, # Positive zero
-                            0x8000, # Negative zero
-                            0x7C00, # Positive infinity
-                            0xFC00, # Negative infinity
-                            0x7E00, # Some positive quiet NaN
-                            0xFE00, # Some negative quiet NaN
-                            0x3D00, # 1.25
-                            0xBD00, # -1.25
-                            0x0001, # Smallest positive denormalized value
-                            0x8001, # Smallest negative denormalized value
-                            0x03FF, # Largest positive denormalized value
-                            0x83FF, # Largest negative denormalized value
-                            0x0400, # Smallest positive normalized value
-                            0x8400, # Smallest negative normalized value
+                            0x0000,  # Positive zero
+                            0x8000,  # Negative zero
+                            0x7C00,  # Positive infinity
+                            0xFC00,  # Negative infinity
+                            0x7E00,  # Some positive quiet NaN
+                            0xFE00,  # Some negative quiet NaN
+                            0x3D00,  # 1.25
+                            0xBD00,  # -1.25
+                            0x0001,  # Smallest positive denormalized value
+                            0x8001,  # Smallest negative denormalized value
+                            0x03FF,  # Largest positive denormalized value
+                            0x83FF,  # Largest negative denormalized value
+                            0x0400,  # Smallest positive normalized value
+                            0x8400,  # Smallest negative normalized value
                        )
 
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_157.tif', 14, 1, 1, gdal.GDT_Float32, options=['NBITS=16'])
@@ -7381,24 +7381,24 @@ def tiff_write_157():
     # Now try Float32 -> Float16 conversion
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_157.tif', 18, 1, 1, gdal.GDT_Float32, options=['NBITS=16'])
     vals = struct.pack('I' * 18,
-                            0x00000000, # Positive zero
-                            0x80000000, # Negative zero
-                            0x7f800000, # Positive infinity
-                            0xff800000, # Negative infinity
-                            0x7fc00000, # Some positive quiet NaN
-                            0xffc00000, # Some negative quiet NaN
-                            0x7f800001, # Some positive signaling NaN with significant that will get lost
-                            0xff800001, # Some negative signaling NaN with significant that will get lost
-                            0x3fa00000, # 1.25
-                            0xbfa00000, # -1.25
-                            0x00000001, # Smallest positive denormalized value
-                            0x80000001, # Smallest negative denormalized value
-                            0x007fffff, # Largest positive denormalized value
-                            0x807fffff, # Largest negative denormalized value
-                            0x00800000, # Smallest positive normalized value
-                            0x80800000, # Smallest negative normalized value
-                            0x33800000, # 5.9604644775390625e-08 = Smallest number that can be converted as a float16 denormalized value
-                            0x47800000, # 65536 --> converted to infinity
+                            0x00000000,  # Positive zero
+                            0x80000000,  # Negative zero
+                            0x7f800000,  # Positive infinity
+                            0xff800000,  # Negative infinity
+                            0x7fc00000,  # Some positive quiet NaN
+                            0xffc00000,  # Some negative quiet NaN
+                            0x7f800001,  # Some positive signaling NaN with significant that will get lost
+                            0xff800001,  # Some negative signaling NaN with significant that will get lost
+                            0x3fa00000,  # 1.25
+                            0xbfa00000,  # -1.25
+                            0x00000001,  # Smallest positive denormalized value
+                            0x80000001,  # Smallest negative denormalized value
+                            0x007fffff,  # Largest positive denormalized value
+                            0x807fffff,  # Largest negative denormalized value
+                            0x00800000,  # Smallest positive normalized value
+                            0x80800000,  # Smallest negative normalized value
+                            0x33800000,  # 5.9604644775390625e-08 = Smallest number that can be converted as a float16 denormalized value
+                            0x47800000,  # 65536 --> converted to infinity
                        )
     ds.GetRasterBand(1).WriteRaster(0, 0, 18, 1, vals, buf_type=gdal.GDT_Float32)
     with gdaltest.error_handler():
@@ -8162,11 +8162,11 @@ gdaltest_list = [
     tiff_write_86,
     tiff_write_87,
     tiff_write_88,
-    tiff_write_89, # leaks mem
-    tiff_write_90, # leaks mem
-    tiff_write_91, # leaks mem
-    tiff_write_92, # leaks mem
-    tiff_write_93, # leaks mem
+    tiff_write_89,  # leaks mem
+    tiff_write_90,  # leaks mem
+    tiff_write_91,  # leaks mem
+    tiff_write_92,  # leaks mem
+    tiff_write_93,  # leaks mem
     tiff_write_94,  # leaks mem
     tiff_write_95,
     tiff_write_96,  # leaks mem

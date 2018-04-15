@@ -309,14 +309,14 @@ def nitf_12():
 
     mdTRE = ds.GetMetadata('TRE')
 
-    try: # NG bindings
+    try:  # NG bindings
         blockA = ds.GetMetadataItem('BLOCKA', 'TRE')
     except:
         blockA = mdTRE['BLOCKA']
 
     mdCGM = ds.GetMetadata('CGM')
 
-    try: # NG bindings
+    try:  # NG bindings
         segmentCount = ds.GetMetadataItem('SEGMENT_COUNT', 'CGM')
     except:
         segmentCount = mdCGM['SEGMENT_COUNT']
@@ -492,7 +492,7 @@ def nitf_21():
 
     mdTEXT = ds.GetMetadata('TEXT')
 
-    try: # NG bindings
+    try:  # NG bindings
         data0 = ds.GetMetadataItem('DATA_0', 'TEXT')
     except:
         data0 = mdTEXT['DATA_0']
@@ -596,7 +596,7 @@ def nitf_28_jp2ecw():
     blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
     ds = None
     gdal.Unlink(tmpfilename)
-    if (blockxsize, blockysize) != (256, 256): # 256 since this is hardcoded as such in the ECW driver
+    if (blockxsize, blockysize) != (256, 256):  # 256 since this is hardcoded as such in the ECW driver
         gdaltest.post_reason('wrong block size')
         print(blockxsize, blockysize)
         ret = 'fail'
@@ -1575,7 +1575,7 @@ def nitf_48():
 def nitf_49():
 
     options = ["TEXT=DATA_0=COUCOU",
-                "TEXT=HEADER_0=ABC", # This content is invalid but who cares here
+                "TEXT=HEADER_0=ABC",  # This content is invalid but who cares here
                 "CGM=SEGMENT_COUNT=1",
                 "CGM=SEGMENT_0_SLOC_ROW=25",
                 "CGM=SEGMENT_0_SLOC_COL=25",
@@ -1620,7 +1620,7 @@ def nitf_50():
 
     options = [  # "IC=C8",
                 "TEXT=DATA_0=COUCOU",
-                "TEXT=HEADER_0=ABC", # This content is invalid but who cares here
+                "TEXT=HEADER_0=ABC",  # This content is invalid but who cares here
                 "CGM=SEGMENT_COUNT=1",
                 "CGM=SEGMENT_0_SLOC_ROW=25",
                 "CGM=SEGMENT_0_SLOC_COL=25",
@@ -2297,7 +2297,7 @@ def nitf_69():
     src_ds = gdal.Open('/vsimem/nitf_69_src.ntf')
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_69_dest.ntf', 20, 20, 1, options=['ICORDS=G'])
     ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection())
-    ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection()) # To check we can call it several times without error
+    ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection())  # To check we can call it several times without error
     ds = None
     src_ds = None
 

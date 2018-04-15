@@ -424,11 +424,11 @@ def ogr_wkbwkt_test_import_wkt_sf12():
                         ('MULTIPOINT Z (EMPTY)', 'MULTIPOINT EMPTY'),
                         ('MULTIPOINT M EMPTY', 'MULTIPOINT EMPTY'),
                         ('MULTIPOINT ZM EMPTY', 'MULTIPOINT EMPTY'),
-                        ('MULTIPOINT (0 1,2 3)', 'MULTIPOINT (0 1,2 3)'), # Not SF1.2 compliant but recognized
+                        ('MULTIPOINT (0 1,2 3)', 'MULTIPOINT (0 1,2 3)'),  # Not SF1.2 compliant but recognized
                         ('MULTIPOINT ((0 1),(2 3))', 'MULTIPOINT (0 1,2 3)'),
-                        ('MULTIPOINT ((0 1),EMPTY)', 'MULTIPOINT (0 1)'), # We don't output empty points in multipoint
-                        ('MULTIPOINT (EMPTY,(0 1))', 'MULTIPOINT (0 1)'), # We don't output empty points in multipoint
-                        ('MULTIPOINT (EMPTY,(0 1),EMPTY)', 'MULTIPOINT (0 1)'), # We don't output empty points in multipoint
+                        ('MULTIPOINT ((0 1),EMPTY)', 'MULTIPOINT (0 1)'),  # We don't output empty points in multipoint
+                        ('MULTIPOINT (EMPTY,(0 1))', 'MULTIPOINT (0 1)'),  # We don't output empty points in multipoint
+                        ('MULTIPOINT (EMPTY,(0 1),EMPTY)', 'MULTIPOINT (0 1)'),  # We don't output empty points in multipoint
                         ('MULTIPOINT Z ((0 1 2),(3 4 5))', 'MULTIPOINT (0 1 2,3 4 5)'),
                         ('MULTIPOINT M ((0 1 2),(3 4 5))', 'MULTIPOINT (0 1,3 4)'),
                         ('MULTIPOINT ZM ((0 1 2 3),(4 5 6 7))', 'MULTIPOINT (0 1 2,4 5 6)'),

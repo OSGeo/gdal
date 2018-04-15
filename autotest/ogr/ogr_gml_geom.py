@@ -1205,26 +1205,26 @@ def gml_invalid_geoms():
         ('<!-- bla -->', None),
         ('<foo/>', None),
         ('<gml:Point><gml:pos>31 29 16</gml:pos><gml:pos>31 29 16</gml:pos></gml:Point>', None),
-        ('<gml:Point><gml:coordinates/></gml:Point>', 'POINT EMPTY'), # This is valid GML actually
+        ('<gml:Point><gml:coordinates/></gml:Point>', 'POINT EMPTY'),  # This is valid GML actually
         ('<gml:Point><gml:coordinates>0</gml:coordinates></gml:Point>', None),
-        ('<gml:Point><gml:coordinates>0 1</gml:coordinates></gml:Point>', 'POINT (0 1)'), # Support for uncommon formatting of coordinates
-        ('<gml:Point><gml:coordinates>0 1 2</gml:coordinates></gml:Point>', 'POINT (0 1 2)'), # Support for uncommon formatting of coordinates
+        ('<gml:Point><gml:coordinates>0 1</gml:coordinates></gml:Point>', 'POINT (0 1)'),  # Support for uncommon formatting of coordinates
+        ('<gml:Point><gml:coordinates>0 1 2</gml:coordinates></gml:Point>', 'POINT (0 1 2)'),  # Support for uncommon formatting of coordinates
         ('<gml:Point><gml:coordinates>0,1 2,3</gml:coordinates></gml:Point>', None),
         ('<gml:Point><gml:pos>0</gml:pos></gml:Point>', None),
-        ('<gml:Point><gml:pos/></gml:Point>', 'POINT EMPTY'), # This is valid GML actually
+        ('<gml:Point><gml:pos/></gml:Point>', 'POINT EMPTY'),  # This is valid GML actually
         ('<gml:Point/>', None),
         ('<gml:Point><foo/></gml:Point>', None),
         ('<gml:LineString/>', None),
         ('<gml:LineString><foo/></gml:LineString>', None),
-        ('<gml:LineString><gml:posList></gml:posList></gml:LineString>', 'LINESTRING EMPTY'), # This is valid GML actually
+        ('<gml:LineString><gml:posList></gml:posList></gml:LineString>', 'LINESTRING EMPTY'),  # This is valid GML actually
         ('<gml:LineString><gml:posList>0</gml:posList></gml:LineString>', None),
         ('<gml:LineString><gml:posList srsDimension="4">0 1 2 3</gml:posList></gml:LineString>', None),
         ('<gml:LineString><gml:posList srsDimension="3">0 1 2 3</gml:posList></gml:LineString>', None),
         ('<gml:Point><gml:coord></gml:coord></gml:Point>', None),
         ('<gml:Point><gml:coord><gml:X/><gml:Y/></gml:coord></gml:Point>', None),
         ('<gml:Point><gml:coord><gml:X>0</gml:X></gml:coord></gml:Point>', None),
-        ('<gml:Polygon/>', 'POLYGON EMPTY'), # valid GML3, but invalid GML2. Be tolerant
-        ('<gml:Polygon><gml:outerBoundaryIs/></gml:Polygon>', 'POLYGON EMPTY'), # valid GML2
+        ('<gml:Polygon/>', 'POLYGON EMPTY'),  # valid GML3, but invalid GML2. Be tolerant
+        ('<gml:Polygon><gml:outerBoundaryIs/></gml:Polygon>', 'POLYGON EMPTY'),  # valid GML2
         ('<gml:Polygon><gml:outerBoundaryIs><foo/></gml:outerBoundaryIs></gml:Polygon>', None),
         ('<gml:Polygon><gml:outerBoundaryIs><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:outerBoundaryIs></gml:Polygon>', None),
         ('<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:posList>0 1 2 3 4 5 0 1</gml:posList></gml:LinearRing></gml:outerBoundaryIs><gml:innerBoundaryIs/></gml:Polygon>', None),
@@ -1237,17 +1237,17 @@ def gml_invalid_geoms():
         ('<gml:Ring><gml:curveMember><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:curveMember></gml:Ring>', None),
         ('<gml:Box/>', None),
         ('<gml:Box><gml:pos>31 29 16</gml:pos></gml:Box>', None),
-        ('<gml:MultiPolygon/>', 'MULTIPOLYGON EMPTY'), # valid GML3, but invalid GML2. Be tolerant
-        ('<gml:MultiPolygon><foo/></gml:MultiPolygon>', 'MULTIPOLYGON EMPTY'), # illegal GML, but we are tolerant
-        ('<gml:MultiPolygon><gml:polygonMember/></gml:MultiPolygon>', 'MULTIPOLYGON EMPTY'), # valid in GML3 (accepted by PostGIS too)
+        ('<gml:MultiPolygon/>', 'MULTIPOLYGON EMPTY'),  # valid GML3, but invalid GML2. Be tolerant
+        ('<gml:MultiPolygon><foo/></gml:MultiPolygon>', 'MULTIPOLYGON EMPTY'),  # illegal GML, but we are tolerant
+        ('<gml:MultiPolygon><gml:polygonMember/></gml:MultiPolygon>', 'MULTIPOLYGON EMPTY'),  # valid in GML3 (accepted by PostGIS too)
         ('<gml:MultiPolygon><gml:polygonMember><foo/></gml:polygonMember></gml:MultiPolygon>', None),
         ('<gml:MultiPolygon><gml:polygonMember><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:polygonMember></gml:MultiPolygon>', None),
-        ('<gml:MultiSurface><gml:surfaceMembers/></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'), # valid GML
-        ('<gml:MultiSurface><gml:surfaceMembers><foo/></gml:surfaceMembers></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'), # illegal GML, but we are tolerant
-        ('<gml:MultiSurface><gml:surfaceMembers><gml:Polygon/></gml:surfaceMembers></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'), # valid GML3
+        ('<gml:MultiSurface><gml:surfaceMembers/></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'),  # valid GML
+        ('<gml:MultiSurface><gml:surfaceMembers><foo/></gml:surfaceMembers></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'),  # illegal GML, but we are tolerant
+        ('<gml:MultiSurface><gml:surfaceMembers><gml:Polygon/></gml:surfaceMembers></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'),  # valid GML3
         ('<gml:MultiPoint/>', 'MULTIPOINT EMPTY'),
         ('<gml:MultiPoint><foo/></gml:MultiPoint>', 'MULTIPOINT EMPTY'),
-        ('<gml:MultiPoint><gml:pointMember/></gml:MultiPoint>', 'MULTIPOINT EMPTY'), # valid in GML3 (accepted by PostGIS too)
+        ('<gml:MultiPoint><gml:pointMember/></gml:MultiPoint>', 'MULTIPOINT EMPTY'),  # valid in GML3 (accepted by PostGIS too)
         ('<gml:MultiPoint><gml:pointMember><gml:LineString><gml:posList>0 1 2 3</gml:posList></gml:LineString></gml:pointMember></gml:MultiPoint>', None),
         ('<gml:MultiPoint><gml:pointMembers></gml:pointMembers></gml:MultiPoint>', 'MULTIPOINT EMPTY'),
         ('<gml:MultiPoint><gml:pointMembers><foo/></gml:pointMembers></gml:MultiPoint>', 'MULTIPOINT EMPTY'),
@@ -1258,7 +1258,7 @@ def gml_invalid_geoms():
         ('<gml:MultiLineString><gml:lineStringMember><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:lineStringMember></gml:MultiLineString>', None),
         ('<gml:MultiCurve/>', 'MULTILINESTRING EMPTY'),
         ('<gml:MultiCurve><foo/></gml:MultiCurve>', 'MULTILINESTRING EMPTY'),
-        ('<gml:MultiCurve><gml:curveMember/></gml:MultiCurve>', 'MULTILINESTRING EMPTY'), # valid in GML3 (accepted by PostGIS too)
+        ('<gml:MultiCurve><gml:curveMember/></gml:MultiCurve>', 'MULTILINESTRING EMPTY'),  # valid in GML3 (accepted by PostGIS too)
         ('<gml:MultiCurve><gml:curveMember><foo/></gml:curveMember></gml:MultiCurve>', None),
         ('<gml:MultiCurve><gml:curveMember><gml:Curve/></gml:curveMember></gml:MultiCurve>', None),
         ('<gml:MultiCurve><gml:curveMember><gml:Curve><foo/></gml:Curve></gml:curveMember></gml:MultiCurve>', None),
@@ -1286,16 +1286,16 @@ def gml_invalid_geoms():
         ('<gml:segments><gml:LineStringSegment><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:LineStringSegment></gml:segments>', None),
         ('<gml:MultiGeometry/>', 'GEOMETRYCOLLECTION EMPTY'),
         ('<gml:MultiGeometry><foo/></gml:MultiGeometry>', 'GEOMETRYCOLLECTION EMPTY'),
-        ('<gml:MultiGeometry><gml:geometryMember/></gml:MultiGeometry>', 'GEOMETRYCOLLECTION EMPTY'), # valid in GML3 (accepted by PostGIS too)
+        ('<gml:MultiGeometry><gml:geometryMember/></gml:MultiGeometry>', 'GEOMETRYCOLLECTION EMPTY'),  # valid in GML3 (accepted by PostGIS too)
         ('<gml:MultiGeometry><gml:geometryMember><foo/></gml:geometryMember></gml:MultiGeometry>', None),
-        ('<gml:Surface/>', 'POLYGON EMPTY'), # valid GML3
-        ('<gml:Surface><foo/></gml:Surface>', 'POLYGON EMPTY'), # invalid GML3, but we are tolerant
-        ('<gml:Surface><gml:patches/></gml:Surface>', 'POLYGON EMPTY'), # valid GML3
+        ('<gml:Surface/>', 'POLYGON EMPTY'),  # valid GML3
+        ('<gml:Surface><foo/></gml:Surface>', 'POLYGON EMPTY'),  # invalid GML3, but we are tolerant
+        ('<gml:Surface><gml:patches/></gml:Surface>', 'POLYGON EMPTY'),  # valid GML3
         ('<gml:Surface><gml:patches><foo/></gml:patches></gml:Surface>', None),
-        ('<gml:Surface><gml:patches><gml:PolygonPatch/></gml:patches></gml:Surface>', 'POLYGON EMPTY'), # valid GML3
-        ('<gml:Solid/>', 'POLYHEDRALSURFACE EMPTY'), # valid GML3
-        ('<gml:Solid><foo/></gml:Solid>', 'POLYHEDRALSURFACE EMPTY'), # invalid GML3, but we are tolerant
-        ('<gml:Solid><gml:exterior/></gml:Solid>', 'POLYHEDRALSURFACE EMPTY'), # valid GML3
+        ('<gml:Surface><gml:patches><gml:PolygonPatch/></gml:patches></gml:Surface>', 'POLYGON EMPTY'),  # valid GML3
+        ('<gml:Solid/>', 'POLYHEDRALSURFACE EMPTY'),  # valid GML3
+        ('<gml:Solid><foo/></gml:Solid>', 'POLYHEDRALSURFACE EMPTY'),  # invalid GML3, but we are tolerant
+        ('<gml:Solid><gml:exterior/></gml:Solid>', 'POLYHEDRALSURFACE EMPTY'),  # valid GML3
         ('<gml:Solid><gml:exterior><foo/></gml:exterior></gml:Solid>', None),
         ('<gml:Solid><gml:exterior><Polygon><exterior><LinearRing><posList srsDimension="2">0 0 4 0 4 4 0 4 0 0</posList></LinearRing></exterior></Polygon></gml:exterior><gml:interior/></gml:Solid>', 'POLYGON ((0 0,4 0,4 4,0 4,0 0))'),
         ('<gml:OrientableSurface/>', None),
@@ -1303,11 +1303,11 @@ def gml_invalid_geoms():
         ('<gml:OrientableSurface><gml:baseSurface/></gml:OrientableSurface>', None),
         ('<gml:OrientableSurface><gml:baseSurface><foo/></gml:baseSurface></gml:OrientableSurface>', None),
         ('<gmlce:SimplePolygon/>', None),  # invalid
-        ('<gmlce:SimplePolygon><foo/></gmlce:SimplePolygon>', None), # invalid GML3, but we are tolerant
-        ('<gmlce:SimplePolygon><gml:posList/></gmlce:SimplePolygon>', 'POLYGON EMPTY'), # validates the schema
+        ('<gmlce:SimplePolygon><foo/></gmlce:SimplePolygon>', None),  # invalid GML3, but we are tolerant
+        ('<gmlce:SimplePolygon><gml:posList/></gmlce:SimplePolygon>', 'POLYGON EMPTY'),  # validates the schema
         ('<gmlce:SimpleMultiPoint/>', None),  # invalid
-        ('<gmlce:SimpleMultiPoint><foo/></gmlce:SimpleMultiPoint>', None), # invalid GML3, but we are tolerant
-        ('<gmlce:SimpleMultiPoint><gml:posList/></gmlce:SimpleMultiPoint>', 'MULTIPOINT EMPTY'), # validates the schema
+        ('<gmlce:SimpleMultiPoint><foo/></gmlce:SimpleMultiPoint>', None),  # invalid GML3, but we are tolerant
+        ('<gmlce:SimpleMultiPoint><gml:posList/></gmlce:SimpleMultiPoint>', 'MULTIPOINT EMPTY'),  # validates the schema
         ('<gml:Envelope/>', None),
         ('<gml:Envelope><gml:lowerCorner/><gml:upperCorner/></gml:Envelope>', None),
         ('<gml:Envelope><gml:lowerCorner>1</gml:lowerCorner><gml:upperCorner>3 4</gml:upperCorner/></gml:Envelope>', None),
@@ -1323,7 +1323,7 @@ def gml_invalid_geoms():
         ("""<gml:Curve><gml:segments>
             <gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc>
             <gml:LineStringSegment><gml:posList>-10 0 -1 0 0 0</gml:posList></gml:LineStringSegment>
-            </gml:segments></gml:Curve>""", "COMPOUNDCURVE (CIRCULARSTRING (0 0,1 0,0 0),(0 0,-1 0,-10 0))"), # non contiguous segments
+            </gml:segments></gml:Curve>""", "COMPOUNDCURVE (CIRCULARSTRING (0 0,1 0,0 0),(0 0,-1 0,-10 0))"),  # non contiguous segments
         ("""<gml:CompositeCurve>
             <gml:curveMember><gml:Curve><gml:segments><gml:LineString><gml:posList>0 0 1 0 0 0</gml:posList></gml:LineString></gml:segments></gml:Curve></gml:curveMember>
             <gml:curveMember>
@@ -1332,7 +1332,7 @@ def gml_invalid_geoms():
                         <gml:LineStringSegment><gml:posList>0 0 -1 0 0 0</gml:posList></gml:LineStringSegment>
                     </gml:segments></gml:Curve>
             </gml:curveMember>
-            </gml:CompositeCurve>""", None), # non contiguous segments
+            </gml:CompositeCurve>""", None),  # non contiguous segments
         ("<gml:ArcByBulge><gml:bulge>2</gml:bulge><gml:normal>-1</gml:normal></gml:ArcByBulge>", None),
         ("<gml:ArcByBulge><gml:posList>2 0</gml:posList><gml:bulge>2</gml:bulge><gml:normal>-1</gml:normal></gml:ArcByBulge>", None),
         ("<gml:ArcByBulge><gml:posList>2 0 -2 0</gml:posList><gml:normal>-1</gml:normal></gml:ArcByBulge>", None),
@@ -1744,17 +1744,17 @@ def gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing():
 def gml_Coordinates_ts_cs_decimal():
 
     gml_expected_wkt_list = [
-        ('<gml:Point><gml:coordinates>1,2</gml:coordinates></gml:Point>', 'POINT (1 2)'), # default values
-        ('<gml:Point><gml:coordinates cs="," ts=" " decimal=".">1,2</gml:coordinates></gml:Point>', 'POINT (1 2)'), # default values
-        ('<gml:Point><gml:coordinates cs="," ts=" " decimal=".">1,2,3</gml:coordinates></gml:Point>', 'POINT (1 2 3)'), # default values
-        ('<gml:Point><gml:coordinates cs="," ts=" " decimal=".">  1,2  </gml:coordinates></gml:Point>', 'POINT (1 2)'), # we accept that...
-        ('<gml:Point><gml:coordinates>1 2</gml:coordinates></gml:Point>', 'POINT (1 2)'), # this is completely out of specification ! but we accept that too !
+        ('<gml:Point><gml:coordinates>1,2</gml:coordinates></gml:Point>', 'POINT (1 2)'),  # default values
+        ('<gml:Point><gml:coordinates cs="," ts=" " decimal=".">1,2</gml:coordinates></gml:Point>', 'POINT (1 2)'),  # default values
+        ('<gml:Point><gml:coordinates cs="," ts=" " decimal=".">1,2,3</gml:coordinates></gml:Point>', 'POINT (1 2 3)'),  # default values
+        ('<gml:Point><gml:coordinates cs="," ts=" " decimal=".">  1,2  </gml:coordinates></gml:Point>', 'POINT (1 2)'),  # we accept that...
+        ('<gml:Point><gml:coordinates>1 2</gml:coordinates></gml:Point>', 'POINT (1 2)'),  # this is completely out of specification ! but we accept that too !
         ('<gml:Point><gml:coordinates cs=";">1;2</gml:coordinates></gml:Point>', 'POINT (1 2)'),
         ('<gml:Point><gml:coordinates decimal="," cs=";">1,2;3,4</gml:coordinates></gml:Point>', 'POINT (1.2 3.4)'),
         ('<gml:Point><gml:coordinates decimal="," cs=";">1,2;3,4;5,6</gml:coordinates></gml:Point>', 'POINT (1.2 3.4 5.6)'),
-        ('<gml:LineString><gml:coordinates>1,2 3,4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2,3 4)'), # default values
-        ('<gml:LineString><gml:coordinates cs="," ts=" " decimal=".">1,2 3,4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2,3 4)'), # default values
-        ('<gml:LineString><gml:coordinates cs="," ts=" " decimal=".">1,2,2.5 3,4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2 2.5,3 4 0)'), # default values
+        ('<gml:LineString><gml:coordinates>1,2 3,4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2,3 4)'),  # default values
+        ('<gml:LineString><gml:coordinates cs="," ts=" " decimal=".">1,2 3,4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2,3 4)'),  # default values
+        ('<gml:LineString><gml:coordinates cs="," ts=" " decimal=".">1,2,2.5 3,4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2 2.5,3 4 0)'),  # default values
         ('<gml:LineString><gml:coordinates ts="-">1,2-3,4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2,3 4)'),
         ('<gml:LineString><gml:coordinates cs=" " ts=",">1 2,3 4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2,3 4)'),
         ('<gml:LineString><gml:coordinates cs=" " ts=",">1 2 2.5,3 4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2 2.5,3 4 0)'),

@@ -229,7 +229,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 
         elif len(args[iArg]) >= 5 and EQUAL(args[iArg][0:5], "-skip"):
             bSkipFailures = True
-            nGroupTransactions = 1 # #2409
+            nGroupTransactions = 1  # 2409
 
         elif EQUAL(args[iArg], "-append"):
             bAppend = True
@@ -1702,7 +1702,7 @@ def TranslateLayer(psInfo, poSrcDS, poSrcLayer, poDstDS,  \
 
 if __name__ == '__main__':
     version_num = int(gdal.VersionInfo('VERSION_NUM'))
-    if version_num < 1800: # because of ogr.GetFieldTypeName
+    if version_num < 1800:  # because of ogr.GetFieldTypeName
         print('ERROR: Python bindings of GDAL 1.8.0 or later required')
         sys.exit(1)
 
