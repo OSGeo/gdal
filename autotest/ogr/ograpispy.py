@@ -68,7 +68,7 @@ def ograpispy_1():
         for line in unified_diff(ref_data.splitlines(), got_data.splitlines(),
                                      fromfile='expected', tofile='got',
                                      linterm=""):
-            print line
+            print(line)
         return 'fail'
 
     return 'success'
