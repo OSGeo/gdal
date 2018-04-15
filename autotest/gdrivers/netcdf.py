@@ -1723,8 +1723,8 @@ def netcdf_44():
         return 'skip'
 
     for f, md5 in ('data/ushort.nc', 18), ('data/uint.nc', 10):
-        if (netcdf_test_copy(f, 1, md5, 'tmp/netcdf_44.nc', ['FORMAT=NC4'])
-            != 'success'):
+        if netcdf_test_copy(f, 1, md5, 'tmp/netcdf_44.nc', ['FORMAT=NC4']) !=
+                'success':
             return 'fail'
 
     return 'success'
