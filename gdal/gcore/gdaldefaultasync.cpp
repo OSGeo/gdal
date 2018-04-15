@@ -353,7 +353,7 @@ GDALDefaultAsyncReader( GDALDataset* poDSIn,
     nBufYSize = nBufYSizeIn;
     eBufType = eBufTypeIn;
     nBandCount = nBandCountIn;
-    panBandMap = (int *) CPLMalloc(sizeof(int)*nBandCountIn);
+    panBandMap = static_cast<int*>(CPLMalloc(sizeof(int)*nBandCountIn));
 
     if( panBandMapIn != nullptr )
         memcpy( panBandMap, panBandMapIn, sizeof(int)*nBandCount );

@@ -532,7 +532,7 @@ int GDALRasterAttributeTable::GetLinearBinning(
     CPL_UNUSED double * pdfRow0Min ,
     CPL_UNUSED double * pdfBinSize ) const
 {
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -1088,10 +1088,10 @@ GDALRATDumpReadable( GDALRasterAttributeTableH hRAT, FILE *fp )
 //! Construct empty table.
 
 GDALDefaultRasterAttributeTable::GDALDefaultRasterAttributeTable() :
-    bLinearBinning(FALSE),
+    bLinearBinning(false),
     dfRow0Min(-0.5),
     dfBinSize(1.0),
-    bColumnsAnalysed(FALSE),
+    bColumnsAnalysed(false),
     nMinCol(-1),
     nMaxCol(-1),
     nRowCount(0)
@@ -1163,7 +1163,7 @@ GDALDestroyRasterAttributeTable( GDALRasterAttributeTableH hRAT )
 void GDALDefaultRasterAttributeTable::AnalyseColumns()
 
 {
-    bColumnsAnalysed = TRUE;
+    bColumnsAnalysed = true;
 
     nMinCol = GetColOfUsage( GFU_Min );
     if( nMinCol == -1 )
@@ -1213,7 +1213,7 @@ int CPL_STDCALL GDALRATGetColumnCount( GDALRasterAttributeTableH hRAT )
 const char *GDALDefaultRasterAttributeTable::GetNameOfCol( int iCol ) const
 
 {
-    if( iCol < 0 || iCol >= (int) aoFields.size() )
+    if( iCol < 0 || iCol >= static_cast<int>(aoFields.size()) )
         return "";
 
     return aoFields[iCol].sName;
@@ -1255,7 +1255,7 @@ GDALRATFieldUsage GDALDefaultRasterAttributeTable::GetUsageOfCol(
     int iCol ) const
 
 {
-    if( iCol < 0 || iCol >= (int) aoFields.size() )
+    if( iCol < 0 || iCol >= static_cast<int>(aoFields.size()) )
         return GFU_Generic;
 
     return aoFields[iCol].eUsage;
@@ -1296,7 +1296,7 @@ GDALRATGetUsageOfCol( GDALRasterAttributeTableH hRAT, int iCol )
 GDALRATFieldType GDALDefaultRasterAttributeTable::GetTypeOfCol( int iCol ) const
 
 {
-    if( iCol < 0 || iCol >= (int) aoFields.size() )
+    if( iCol < 0 || iCol >= static_cast<int>(aoFields.size()) )
         return GFT_Integer;
 
     return aoFields[iCol].eType;
@@ -1401,7 +1401,7 @@ const char *
 GDALDefaultRasterAttributeTable::GetValueAsString( int iRow, int iField ) const
 
 {
-    if( iField < 0 || iField >= (int) aoFields.size() )
+    if( iField < 0 || iField >= static_cast<int>(aoFields.size()) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iField (%d) out of range.", iField );
@@ -1469,7 +1469,7 @@ int
 GDALDefaultRasterAttributeTable::GetValueAsInt( int iRow, int iField ) const
 
 {
-    if( iField < 0 || iField >= (int) aoFields.size() )
+    if( iField < 0 || iField >= static_cast<int>(aoFields.size()) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iField (%d) out of range.", iField );
@@ -1528,7 +1528,7 @@ double
 GDALDefaultRasterAttributeTable::GetValueAsDouble( int iRow, int iField ) const
 
 {
-    if( iField < 0 || iField >= (int) aoFields.size() )
+    if( iField < 0 || iField >= static_cast<int>(aoFields.size()) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iField (%d) out of range.", iField );
@@ -1626,7 +1626,7 @@ void GDALDefaultRasterAttributeTable::SetValue( int iRow, int iField,
                                                 const char *pszValue )
 
 {
-    if( iField < 0 || iField >= (int) aoFields.size() )
+    if( iField < 0 || iField >= static_cast<int>(aoFields.size()) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iField (%d) out of range.", iField );
@@ -1763,7 +1763,7 @@ void GDALDefaultRasterAttributeTable::SetValue( int iRow, int iField,
                                                 double dfValue )
 
 {
-    if( iField < 0 || iField >= (int) aoFields.size() )
+    if( iField < 0 || iField >= static_cast<int>(aoFields.size()) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iField (%d) out of range.", iField );
@@ -1785,7 +1785,7 @@ void GDALDefaultRasterAttributeTable::SetValue( int iRow, int iField,
     switch( aoFields[iField].eType )
     {
       case GFT_Integer:
-        aoFields[iField].anValues[iRow] = (int) dfValue;
+        aoFields[iField].anValues[iRow] = static_cast<int>(dfValue);
         break;
 
       case GFT_Real:
@@ -1832,7 +1832,7 @@ int GDALDefaultRasterAttributeTable::ChangesAreWrittenToFile()
 {
     // GDALRasterBand.SetDefaultRAT needs to be called on instances of
     // GDALDefaultRasterAttributeTable since changes are just in-memory
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -1849,7 +1849,7 @@ int GDALDefaultRasterAttributeTable::ChangesAreWrittenToFile()
 int CPL_STDCALL
 GDALRATChangesAreWrittenToFile( GDALRasterAttributeTableH hRAT )
 {
-    VALIDATE_POINTER1( hRAT, "GDALRATChangesAreWrittenToFile", FALSE );
+    VALIDATE_POINTER1( hRAT, "GDALRATChangesAreWrittenToFile", false );
 
     return GDALRasterAttributeTable::FromHandle(hRAT)->
         ChangesAreWrittenToFile();
@@ -1954,7 +1954,7 @@ CPLErr GDALDefaultRasterAttributeTable::SetLinearBinning( double dfRow0MinIn,
                                                           double dfBinSizeIn )
 
 {
-    bLinearBinning = TRUE;
+    bLinearBinning = true;
     dfRow0Min = dfRow0MinIn;
     dfBinSize = dfBinSizeIn;
 
@@ -1970,12 +1970,12 @@ int GDALDefaultRasterAttributeTable::GetLinearBinning(
 
 {
     if( !bLinearBinning )
-        return FALSE;
+        return false;
 
     *pdfRow0Min = dfRow0Min;
     *pdfBinSize = dfBinSize;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/

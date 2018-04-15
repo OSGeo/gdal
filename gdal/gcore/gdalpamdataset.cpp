@@ -607,7 +607,7 @@ const char *GDALPamDataset::BuildPamFilename()
     {
         if( !GDALCanFileAcceptSidecarFile(pszPhysicalFile) )
             return nullptr;
-        psPam->pszPamFilename = (char*) CPLMalloc(strlen(pszPhysicalFile)+10);
+        psPam->pszPamFilename = static_cast<char*>(CPLMalloc(strlen(pszPhysicalFile)+10));
         strcpy( psPam->pszPamFilename, pszPhysicalFile );
         strcat( psPam->pszPamFilename, ".aux.xml" );
     }

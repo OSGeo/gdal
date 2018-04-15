@@ -368,7 +368,7 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree,
             {
                 CPL_LSBPTR64( pabyBin );
 
-                GDALPamRasterBand::SetNoDataValue( *((double *) pabyBin) );
+                GDALPamRasterBand::SetNoDataValue( *reinterpret_cast<const double*>(pabyBin) );
             }
             else
             {

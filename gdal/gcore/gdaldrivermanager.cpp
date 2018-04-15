@@ -812,20 +812,15 @@ void GDALDriverManager::AutoLoadDrivers()
                 && !EQUAL(pszExtension,"dylib") )
                 continue;
 
-            char *pszFuncName;
+            CPLString osFuncName;
             if( STARTS_WITH_CI(papszFiles[iFile], "gdal_") )
             {
-                pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
-                snprintf( pszFuncName,
-                          strlen(papszFiles[iFile])+20,
-                          "GDALRegister_%s",
+                osFuncName.Printf("GDALRegister_%s",
                         CPLGetBasename(papszFiles[iFile]) + strlen("gdal_") );
             }
             else if( STARTS_WITH_CI(papszFiles[iFile], "ogr_") )
             {
-                pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
-                snprintf( pszFuncName,
-                         strlen(papszFiles[iFile])+20,
+                osFuncName.Printf(
                          "RegisterOGR%s",
                          CPLGetBasename(papszFiles[iFile]) + strlen("ogr_") );
             }
@@ -838,13 +833,13 @@ void GDALDriverManager::AutoLoadDrivers()
 
             CPLErrorReset();
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            void *pRegister = CPLGetSymbol( pszFilename, pszFuncName );
+            void *pRegister = CPLGetSymbol( pszFilename, osFuncName );
             CPLPopErrorHandler();
             if( pRegister == nullptr )
             {
                 CPLString osLastErrorMsg(CPLGetLastErrorMsg());
-                strcpy( pszFuncName, "GDALRegisterMe" );
-                pRegister = CPLGetSymbol( pszFilename, pszFuncName );
+                osFuncName = "GDALRegisterMe";
+                pRegister = CPLGetSymbol( pszFilename, osFuncName );
                 if( pRegister == nullptr )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
@@ -855,12 +850,10 @@ void GDALDriverManager::AutoLoadDrivers()
             if( pRegister != nullptr )
             {
                 CPLDebug( "GDAL", "Auto register %s using %s.",
-                          pszFilename, pszFuncName );
+                          pszFilename, osFuncName.c_str() );
 
-                ((void (*)()) pRegister)();
+                reinterpret_cast<void (*)()>(pRegister)();
             }
-
-            CPLFree( pszFuncName );
         }
 
         CSLDestroy( papszFiles );

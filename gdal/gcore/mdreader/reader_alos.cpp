@@ -50,38 +50,37 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
     CPLString osDirName = CPLGetDirname(pszPath);
     CPLString osBaseName = CPLGetBasename(pszPath);
 
-    const char* pszIMDSourceFilename = CPLFormFilename(osDirName, "summary", ".txt");
-    if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+    CPLString osIMDSourceFilename = CPLFormFilename(osDirName, "summary", ".txt");
+    if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
-        m_osIMDSourceFilename = pszIMDSourceFilename;
+        m_osIMDSourceFilename = osIMDSourceFilename;
     }
     else
     {
-        pszIMDSourceFilename = CPLFormFilename( osDirName, "SUMMARY", ".TXT");
-        if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+        osIMDSourceFilename = CPLFormFilename( osDirName, "SUMMARY", ".TXT");
+        if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osIMDSourceFilename = pszIMDSourceFilename;
+            m_osIMDSourceFilename = osIMDSourceFilename;
         }
     }
 
-    const char *pszHDRFileName;
     if( osBaseName.size() >= 6 )
     {
         // check if this is separate band or whole image
         // test without 6 symbols
-        pszHDRFileName = CPLFormFilename(osDirName, CPLSPrintf("HDR%s",
+        CPLString osHDRFileName = CPLFormFilename(osDirName, CPLSPrintf("HDR%s",
                                                     osBaseName + 6), "txt");
-        if (CPLCheckForFile((char*)pszHDRFileName, papszSiblingFiles))
+        if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
         {
-            m_osHDRSourceFilename = pszHDRFileName;
+            m_osHDRSourceFilename = osHDRFileName;
         }
         else
         {
-            pszHDRFileName = CPLFormFilename(osDirName, CPLSPrintf("HDR%s",
+            osHDRFileName = CPLFormFilename(osDirName, CPLSPrintf("HDR%s",
                                             osBaseName + 6), "TXT");
-            if (CPLCheckForFile((char*)pszHDRFileName, papszSiblingFiles))
+            if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
             {
-                m_osHDRSourceFilename = pszHDRFileName;
+                m_osHDRSourceFilename = osHDRFileName;
             }
         }
     }
@@ -89,40 +88,39 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
     // test without 3 symbols
     if( osBaseName.size() >= 3 && m_osHDRSourceFilename.empty())
     {
-        pszHDRFileName = CPLFormFilename(osDirName, CPLSPrintf("HDR%s",
+        CPLString osHDRFileName = CPLFormFilename(osDirName, CPLSPrintf("HDR%s",
                                          osBaseName + 3), "txt");
-        if (CPLCheckForFile((char*)pszHDRFileName, papszSiblingFiles))
+        if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
         {
-            m_osHDRSourceFilename = pszHDRFileName;
+            m_osHDRSourceFilename = osHDRFileName;
         }
         else
         {
-            pszHDRFileName = CPLFormFilename(osDirName, CPLSPrintf("HDR%s",
+            osHDRFileName = CPLFormFilename(osDirName, CPLSPrintf("HDR%s",
                                              osBaseName + 3), "TXT");
-            if (CPLCheckForFile((char*)pszHDRFileName, papszSiblingFiles))
+            if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
             {
-                m_osHDRSourceFilename = pszHDRFileName;
+                m_osHDRSourceFilename = osHDRFileName;
             }
         }
     }
 
     // test without 6 symbols
-    const char *pszRPCFileName;
     if( osBaseName.size() >= 6 )
     {
-        pszRPCFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
+        CPLString osRPCFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
                                                     osBaseName + 6), "txt");
-        if (CPLCheckForFile((char*)pszRPCFileName, papszSiblingFiles))
+        if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = pszRPCFileName;
+            m_osRPBSourceFilename = osRPCFileName;
         }
         else
         {
-            pszRPCFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
+            osRPCFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
                                             osBaseName + 6), "TXT");
-            if (CPLCheckForFile((char*)pszRPCFileName, papszSiblingFiles))
+            if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
             {
-                m_osRPBSourceFilename = pszRPCFileName;
+                m_osRPBSourceFilename = osRPCFileName;
             }
         }
     }
@@ -130,19 +128,19 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
     // test without 3 symbols
     if( osBaseName.size() >= 3 && m_osRPBSourceFilename.empty())
     {
-        pszRPCFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
+        CPLString osRPCFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
                                          osBaseName + 3), "txt");
-        if (CPLCheckForFile((char*)pszRPCFileName, papszSiblingFiles))
+        if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = pszRPCFileName;
+            m_osRPBSourceFilename = osRPCFileName;
         }
         else
         {
-            pszRPCFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
+            osRPCFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
                                              osBaseName + 3), "TXT");
-            if (CPLCheckForFile((char*)pszRPCFileName, papszSiblingFiles))
+            if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
             {
-                m_osRPBSourceFilename = pszRPCFileName;
+                m_osRPBSourceFilename = osRPCFileName;
             }
         }
     }

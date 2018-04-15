@@ -60,9 +60,9 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
 
     const char* pszDirName = CPLGetDirname(pszPath);
 
-    const char* pszIMDSourceFilename = CPLFormFilename( pszDirName,
+    CPLString osIMDSourceFilename = CPLFormFilename( pszDirName,
                                 CPLSPrintf("DIM_%s", pszBaseName + 4), "XML" );
-    const char* pszRPBSourceFilename = CPLFormFilename( pszDirName,
+    CPLString osRPBSourceFilename = CPLFormFilename( pszDirName,
                                 CPLSPrintf("RPC_%s", pszBaseName + 4), "XML" );
 
     // find last underline
@@ -77,31 +77,31 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
 
     sBaseName[nLastUnderline] = 0;
 
-    if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+    if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
-        m_osIMDSourceFilename = pszIMDSourceFilename;
+        m_osIMDSourceFilename = osIMDSourceFilename;
     }
     else
     {
-        pszIMDSourceFilename = CPLFormFilename( pszDirName, CPLSPrintf("DIM_%s",
+        osIMDSourceFilename = CPLFormFilename( pszDirName, CPLSPrintf("DIM_%s",
                                                             sBaseName), "XML" );
-        if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+        if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osIMDSourceFilename = pszIMDSourceFilename;
+            m_osIMDSourceFilename = osIMDSourceFilename;
         }
     }
 
-    if (CPLCheckForFile((char*)pszRPBSourceFilename, papszSiblingFiles))
+    if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
     {
-        m_osRPBSourceFilename = pszRPBSourceFilename;
+        m_osRPBSourceFilename = osRPBSourceFilename;
     }
     else
     {
-        pszRPBSourceFilename = CPLFormFilename( pszDirName, CPLSPrintf("RPC_%s",
+        osRPBSourceFilename = CPLFormFilename( pszDirName, CPLSPrintf("RPC_%s",
                                                             sBaseName), "XML" );
-        if (CPLCheckForFile((char*)pszRPBSourceFilename, papszSiblingFiles))
+        if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = pszRPBSourceFilename;
+            m_osRPBSourceFilename = osRPBSourceFilename;
         }
     }
 

@@ -259,14 +259,14 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
         case GDALGMLJP2Expr_XPATH:
         {
             xmlXPathObjectPtr pXPathObj = xmlXPathEvalExpression(
-                    (const xmlChar*)osValue.c_str(), pXPathCtx);
+                    reinterpret_cast<const xmlChar*>(osValue.c_str()), pXPathCtx);
             if( pXPathObj == nullptr )
                 return GDALGMLJP2Expr("");
 
             // Add result of the evaluation.
             CPLString osXMLRes;
             if( pXPathObj->type == XPATH_STRING )
-                osXMLRes = (const char*)pXPathObj->stringval;
+                osXMLRes = reinterpret_cast<const char*>(pXPathObj->stringval);
             else if( pXPathObj->type == XPATH_BOOLEAN )
                 osXMLRes = pXPathObj->boolval ? "true" : "false";
             else if( pXPathObj->type == XPATH_NUMBER )
@@ -281,7 +281,7 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
 
                     xmlBufferPtr pBuf = xmlBufferCreate();
                     xmlNodeDump(pBuf, pDoc, pCur, 2, 1);
-                    osXMLRes += (const char*)xmlBufferContent(pBuf);
+                    osXMLRes += reinterpret_cast<const char*>(xmlBufferContent(pBuf));
                     xmlBufferFree(pBuf);
                 }
             }
@@ -323,7 +323,7 @@ static CPLString GDALGMLJP2EvalExpr(const CPLString& osTemplate,
         GDALGMLJP2Expr* poExpr = GDALGMLJP2Expr::Build(pszExpr, pszExpr);
         if( poExpr == nullptr )
             break;
-        nPos = (size_t)(pszExpr - osTemplate.c_str());
+        nPos = static_cast<size_t>(pszExpr - osTemplate.c_str());
         osXMLRes += poExpr->Evaluate(pXPathCtx,pDoc).osValue;
         delete poExpr;
     }
@@ -339,7 +339,7 @@ static void GDALGMLJP2XPathErrorHandler( void * /* userData */,
 {
     if( error->domain == XML_FROM_XPATH &&
         error->str1 != nullptr &&
-        error->int1 < (int)strlen(error->str1) )
+        error->int1 < static_cast<int>(strlen(error->str1)) )
     {
         GDALGMLJP2Expr::ReportError(error->str1,
                                     error->str1 + error->int1,
@@ -369,7 +369,7 @@ static void GDALGMLJP2RegisterNamespaces(xmlXPathContextPtr pXPathCtx,
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Registration of namespace %s failed",
-                             (const char*)pNode->ns->prefix);
+                             reinterpret_cast<const char*>(pNode->ns->prefix));
                 }
             }
         }

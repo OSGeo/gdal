@@ -250,7 +250,7 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
             while( strlen(oSubChildBox.GetType()) > 0 )
             {
                 if( EQUAL(oSubChildBox.GetType(),"lbl ") )
-                    pszLabel = (char *)oSubChildBox.ReadBoxData();
+                    pszLabel = reinterpret_cast<char *>(oSubChildBox.ReadBoxData());
                 else if( EQUAL(oSubChildBox.GetType(),"xml ") )
                 {
                     pszXML =
@@ -427,7 +427,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
         {
             if( pszXMPMetadata == nullptr )
             {
-                pszXMPMetadata = (char*) oBox.ReadBoxData();
+                pszXMPMetadata = reinterpret_cast<char *>(oBox.ReadBoxData());
             }
             else
             {
@@ -445,7 +445,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
             if( oSubBox.ReadFirstChild( &oBox ) &&
                 EQUAL(oSubBox.GetType(),"lbl ") )
             {
-                char *pszLabel = (char *) oSubBox.ReadBoxData();
+                char *pszLabel = reinterpret_cast<char *>(oSubBox.ReadBoxData());
                 if( pszLabel != nullptr && EQUAL(pszLabel,"gml.data") )
                 {
                     CollectGMLData( &oBox );
@@ -461,7 +461,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
         {
             CPLString osBoxName;
 
-            char *pszXML = (char *) oBox.ReadBoxData();
+            char *pszXML = reinterpret_cast<char *>(oBox.ReadBoxData());
             if( pszXML != nullptr &&
                 STARTS_WITH(pszXML, "<GDALMultiDomainMetadata>") )
             {
@@ -556,7 +556,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
         {
             if( pszXMLIPR == nullptr )
             {
-                pszXMLIPR = (char*) oBox.ReadBoxData();
+                pszXMLIPR = reinterpret_cast<char*>(oBox.ReadBoxData());
                 CPLXMLTreeCloser psNode(CPLParseXMLString(pszXMLIPR));
                 if( psNode == nullptr )
                 {
@@ -1461,7 +1461,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 
         CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_END ));
         const int nLength = static_cast<int>( VSIFTellL( fp ) );
-        pszGML = (char *) CPLCalloc(1,nLength+1);
+        pszGML = static_cast<char *>(CPLCalloc(1,nLength+1));
         CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_SET ));
         CPL_IGNORE_RET_VAL(VSIFReadL( pszGML, 1, nLength, fp ));
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
@@ -1908,7 +1908,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 */
 
         json_tokener* jstok = json_tokener_new();
-        json_object* poObj = json_tokener_parse_ex(jstok, pabyContent ? (const char*) pabyContent : pszDefFilename, -1);
+        json_object* poObj = json_tokener_parse_ex(jstok, pabyContent ?
+            reinterpret_cast<const char*>(pabyContent) : pszDefFilename, -1);
         CPLFree(pabyContent);
         if( jstok->err != json_tokener_success)
         {
@@ -3078,7 +3079,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         GByte* pabyContent = nullptr;
         if( VSIIngestFile( nullptr, aoBoxes[i].osFile, &pabyContent, nullptr, -1 ) )
         {
-            CPLXMLTreeCloser psNode(CPLParseXMLString((const char*)pabyContent));
+            CPLXMLTreeCloser psNode(CPLParseXMLString(
+                                reinterpret_cast<const char*>(pabyContent)));
             CPLFree(pabyContent);
             pabyContent = nullptr;
             if( psNode.get() )
@@ -3087,10 +3089,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 if( psRoot )
                 {
                     GDALGMLJP2PatchFeatureCollectionSubstitutionGroup(psRoot);
-                    pabyContent = (GByte*) CPLSerializeXMLTree(psRoot);
+                    pabyContent = reinterpret_cast<GByte*>(CPLSerializeXMLTree(psRoot));
                     apoGMLBoxes.push_back(
                         GDALJP2Box::CreateLabelledXMLAssoc( aoBoxes[i].osLabel,
-                                                            (const char*)pabyContent ) );
+                                reinterpret_cast<const char*>(pabyContent)) );
                 }
             }
         }
@@ -3204,7 +3206,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
 
     GDALJP2Box* poBox = new GDALJP2Box();
     poBox->SetType("xml ");
-    poBox->SetWritableData(static_cast<int>(strlen(pszXML) + 1), (const GByte*)pszXML);
+    poBox->SetWritableData(static_cast<int>(strlen(pszXML) + 1),
+                           reinterpret_cast<const GByte*>(pszXML));
     CPLFree(pszXML);
 
     return poBox;
@@ -3234,9 +3237,9 @@ GDALJP2Box** GDALJP2Metadata::CreateXMLBoxes( GDALDataset* poSrcDS,
                 GDALJP2Box* poBox = new GDALJP2Box();
                 poBox->SetType("xml ");
                 poBox->SetWritableData(static_cast<int>(strlen(*papszSrcMD) + 1),
-                                       (const GByte*)*papszSrcMD);
-                papoBoxes = (GDALJP2Box**)CPLRealloc(papoBoxes,
-                                        sizeof(GDALJP2Box*) * (*pnBoxes + 1));
+                                       reinterpret_cast<const GByte*>(*papszSrcMD));
+                papoBoxes = static_cast<GDALJP2Box**>(CPLRealloc(papoBoxes,
+                                        sizeof(GDALJP2Box*) * (*pnBoxes + 1)));
                 papoBoxes[(*pnBoxes)++] = poBox;
             }
         }
@@ -3257,7 +3260,7 @@ GDALJP2Box *GDALJP2Metadata::CreateXMPBox ( GDALDataset* poSrcDS )
     {
         poBox = GDALJP2Box::CreateUUIDBox(xmp_uuid,
                                           static_cast<int>(strlen(*papszSrcMD) + 1),
-                                          (const GByte*)*papszSrcMD);
+                                          reinterpret_cast<const GByte*>(*papszSrcMD));
     }
     return poBox;
 }
@@ -3275,7 +3278,7 @@ GDALJP2Box *GDALJP2Metadata::CreateIPRBox ( GDALDataset* poSrcDS )
         poBox = new GDALJP2Box();
         poBox->SetType("jp2i");
         poBox->SetWritableData(static_cast<int>(strlen(*papszSrcMD) + 1),
-                                        (const GByte*)*papszSrcMD);
+                               reinterpret_cast<const GByte*>(*papszSrcMD));
     }
     return poBox;
 }
