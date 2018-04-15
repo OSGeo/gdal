@@ -87,7 +87,7 @@ while feat is not None:
     # If the list is in string form we need to convert it.
     if type(link_list).__name__ == 'str':
         colon = link_list.find(':')
-        items = link_list[colon+1:-1].split(',')
+        items = link_list[colon + 1:-1].split(',')
         link_list = []
         for item in items:
             try:

@@ -119,7 +119,7 @@ def auto_noaa(options, loslas_list):
         options.create_options = []
         options.metadata = original_metadata
         if los.find('hpgn') != -1:
-            ntv2_filename = los[:-4]+'.gsb'
+            ntv2_filename = los[:-4] + '.gsb'
             options.append = 0
             options.negate = 1
             options.metadata.append('SUB_NAME=' + los[:2])
@@ -180,53 +180,53 @@ if __name__ == '__main__':
         if arg == '-v':
             options.verbose_flag = 1
 
-        elif arg == '-version' and i < len(argv)-1:
-            options.metadata.append('VERSION='+argv[i+1])
-            i = i+1
+        elif arg == '-version' and i < len(argv) - 1:
+            options.metadata.append('VERSION=' + argv[i + 1])
+            i = i + 1
 
-        elif arg == '-created' and i < len(argv)-1:
-            options.metadata.append('CREATED='+argv[i+1])
-            i = i+1
+        elif arg == '-created' and i < len(argv) - 1:
+            options.metadata.append('CREATED=' + argv[i + 1])
+            i = i + 1
 
-        elif arg == '-updated' and i < len(argv)-1:
-            options.metadata.append('UPDATED='+argv[i+1])
-            i = i+1
+        elif arg == '-updated' and i < len(argv) - 1:
+            options.metadata.append('UPDATED=' + argv[i + 1])
+            i = i + 1
 
-        elif arg == '-system_f' and i < len(argv)-1:
-            options.metadata.append('SYSTEM_F='+argv[i+1])
-            i = i+1
+        elif arg == '-system_f' and i < len(argv) - 1:
+            options.metadata.append('SYSTEM_F=' + argv[i + 1])
+            i = i + 1
 
-        elif arg == '-system_t' and i < len(argv)-1:
-            options.metadata.append('SYSTEM_T='+argv[i+1])
-            i = i+1
+        elif arg == '-system_t' and i < len(argv) - 1:
+            options.metadata.append('SYSTEM_T=' + argv[i + 1])
+            i = i + 1
 
-        elif arg == '-parent' and i < len(argv)-1:
-            options.metadata.append('PARENT='+argv[i+1])
-            i = i+1
+        elif arg == '-parent' and i < len(argv) - 1:
+            options.metadata.append('PARENT=' + argv[i + 1])
+            i = i + 1
 
-        elif arg == '-sub_name' and i < len(argv)-1:
-            options.metadata.append('SUB_NAME='+argv[i+1])
-            i = i+1
+        elif arg == '-sub_name' and i < len(argv) - 1:
+            options.metadata.append('SUB_NAME=' + argv[i + 1])
+            i = i + 1
 
-        elif arg == '-gs_type' and i < len(argv)-1:
-            options.metadata.append('GS_TYPE='+argv[i+1])
-            i = i+1
+        elif arg == '-gs_type' and i < len(argv) - 1:
+            options.metadata.append('GS_TYPE=' + argv[i + 1])
+            i = i + 1
 
-        elif arg == '-major_f' and i < len(argv)-1:
-            options.metadata.append('MAJOR_F='+argv[i+1])
-            i = i+1
+        elif arg == '-major_f' and i < len(argv) - 1:
+            options.metadata.append('MAJOR_F=' + argv[i + 1])
+            i = i + 1
 
-        elif arg == '-minor_f' and i < len(argv)-1:
-            options.metadata.append('MINOR_F='+argv[i+1])
-            i = i+1
+        elif arg == '-minor_f' and i < len(argv) - 1:
+            options.metadata.append('MINOR_F=' + argv[i + 1])
+            i = i + 1
 
-        elif arg == '-major_t' and i < len(argv)-1:
-            options.metadata.append('MAJOR_T='+argv[i+1])
-            i = i+1
+        elif arg == '-major_t' and i < len(argv) - 1:
+            options.metadata.append('MAJOR_T=' + argv[i + 1])
+            i = i + 1
 
-        elif arg == '-minor_t' and i < len(argv)-1:
-            options.metadata.append('MINOR_T='+argv[i+1])
-            i = i+1
+        elif arg == '-minor_t' and i < len(argv) - 1:
+            options.metadata.append('MINOR_T=' + argv[i + 1])
+            i = i + 1
 
         elif arg == '-negate':
             options.negate = 1

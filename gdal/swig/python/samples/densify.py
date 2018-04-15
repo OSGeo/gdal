@@ -106,13 +106,13 @@ class Translator(object):
             name, ext = os.path.splitext(filename)
             if self.options.overwrite:
             # special case the Shapefile driver, which behaves specially.
-                if os.path.exists(os.path.join(path,name,) +'.shp'):
-                    os.remove(os.path.join(path,name,) +'.shp')
-                    os.remove(os.path.join(path,name,) +'.shx')
-                    os.remove(os.path.join(path,name,) +'.dbf')
+                if os.path.exists(os.path.join(path,name,) + '.shp'):
+                    os.remove(os.path.join(path,name,) + '.shp')
+                    os.remove(os.path.join(path,name,) + '.shx')
+                    os.remove(os.path.join(path,name,) + '.dbf')
             else:
-                if os.path.exists(os.path.join(path,name,)+".shp"):
-                    raise Exception("The file '%s' already exists, but the overwrite option is not specified" % (os.path.join(path,name,)+".shp"))
+                if os.path.exists(os.path.join(path,name,) + ".shp"):
+                    raise Exception("The file '%s' already exists, but the overwrite option is not specified" % (os.path.join(path,name,) + ".shp"))
 
         if self.options.overwrite:
             dsco = ('OVERWRITE=YES',)
@@ -185,7 +185,7 @@ class Densify(Translator):
                 yn = y0 - d
             return (xn, yn)
 
-        theta = math.degrees(math.atan(abs(b)/abs(a)))
+        theta = math.degrees(math.atan(abs(b) / abs(a)))
 
         if a > 0 and b > 0:
             omega = theta
@@ -203,8 +203,8 @@ class Densify(Translator):
             else:
                 xn = x0 - d
         else:
-            xn = x0 + d*math.cos(math.radians(omega))
-            yn = y0 + d*math.sin(math.radians(omega))
+            xn = x0 + d * math.cos(math.radians(omega))
+            yn = y0 + d * math.sin(math.radians(omega))
 
         return (xn, yn)
 
@@ -237,16 +237,16 @@ class Densify(Translator):
 
             if self.options.remainder.upper() == "UNIFORM":
                 if d != 0.0:
-                    threshold = float(d)/math.ceil(d/threshold)
+                    threshold = float(d) / math.ceil(d / threshold)
                 else:
                     # duplicate point... throw it out
                     continue
             if (d > threshold):
                 if self.options.remainder.upper() == "UNIFORM":
-                    segcount = int(math.ceil(d/threshold))
+                    segcount = int(math.ceil(d / threshold))
 
-                    dx = (x1 - x0)/segcount
-                    dy = (y1 - y0)/segcount
+                    dx = (x1 - x0) / segcount
+                    dy = (y1 - y0) / segcount
 
                     x = x0
                     y = y0
@@ -256,7 +256,7 @@ class Densify(Translator):
                         g.AddPoint(x, y)
 
                 elif self.options.remainder.upper() == "END":
-                    segcount = int(math.floor(d/threshold))
+                    segcount = int(math.floor(d / threshold))
                     xa = None
                     ya = None
                     for p in range(1,segcount):
@@ -276,7 +276,7 @@ class Densify(Translator):
 
                     # I think this might put an extra point in at the end of the
                     # first segment
-                    segcount = int(math.floor(d/threshold))
+                    segcount = int(math.floor(d / threshold))
                     xa = None
                     ya = None
                     #xb = x0
@@ -366,5 +366,5 @@ is chosen, the threshold distance will be used as an absolute value.""",
     d.process()
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

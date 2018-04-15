@@ -122,32 +122,32 @@ def gdal_pansharpen(argv):
     i = 1
     argc = len(argv)
     while i < argc:
-        if (argv[i] == '-of' or argv[i] == '-f') and i < len(argv)-1:
-            format = argv[i+1]
+        if (argv[i] == '-of' or argv[i] == '-f') and i < len(argv) - 1:
+            format = argv[i + 1]
             i = i + 1
-        elif argv[i] == '-r' and i < len(argv)-1:
-            resampling = argv[i+1]
+        elif argv[i] == '-r' and i < len(argv) - 1:
+            resampling = argv[i + 1]
             i = i + 1
-        elif argv[i] == '-spat_adjust' and i < len(argv)-1:
-            spat_adjust = argv[i+1]
+        elif argv[i] == '-spat_adjust' and i < len(argv) - 1:
+            spat_adjust = argv[i + 1]
             i = i + 1
-        elif argv[i] == '-b' and i < len(argv)-1:
-            bands.append(int(argv[i+1]))
+        elif argv[i] == '-b' and i < len(argv) - 1:
+            bands.append(int(argv[i + 1]))
             i = i + 1
-        elif argv[i] == '-w' and i < len(argv)-1:
-            weights.append(float(argv[i+1]))
+        elif argv[i] == '-w' and i < len(argv) - 1:
+            weights.append(float(argv[i + 1]))
             i = i + 1
-        elif argv[i] == '-co' and i < len(argv)-1:
-            creation_options.append(argv[i+1])
+        elif argv[i] == '-co' and i < len(argv) - 1:
+            creation_options.append(argv[i + 1])
             i = i + 1
-        elif argv[i] == '-threads' and i < len(argv)-1:
-            num_threads = argv[i+1]
+        elif argv[i] == '-threads' and i < len(argv) - 1:
+            num_threads = argv[i + 1]
             i = i + 1
-        elif argv[i] == '-bitdepth' and i < len(argv)-1:
-            bitdepth = argv[i+1]
+        elif argv[i] == '-bitdepth' and i < len(argv) - 1:
+            bitdepth = argv[i + 1]
             i = i + 1
-        elif argv[i] == '-nodata' and i < len(argv)-1:
-            nodata = argv[i+1]
+        elif argv[i] == '-nodata' and i < len(argv) - 1:
+            nodata = argv[i + 1]
             i = i + 1
         elif argv[i] == '-q':
             callback = None
@@ -169,7 +169,7 @@ def gdal_pansharpen(argv):
                     ds = gdal.Open(spectral_name)
                     if ds is None:
                         return 1
-                    band_num = int(last_name[pos+len(',band='):])
+                    band_num = int(last_name[pos + len(',band='):])
                     band = ds.GetRasterBand(band_num)
                     spectral_ds.append(ds)
                     spectral_bands.append(band)
@@ -180,7 +180,7 @@ def gdal_pansharpen(argv):
                         return 1
                     for j in range(ds.RasterCount):
                         spectral_ds.append(ds)
-                        spectral_bands.append(ds.GetRasterBand(j+1))
+                        spectral_bands.append(ds.GetRasterBand(j + 1))
 
             last_name = argv[i]
 
@@ -194,7 +194,7 @@ def gdal_pansharpen(argv):
         format = GetOutputDriverFor(out_name)
 
     if len(bands) == 0:
-        bands = [j+1 for j in range(len(spectral_bands))]
+        bands = [j + 1 for j in range(len(spectral_bands))]
     else:
         for i in range(len(bands)):
             if bands[i] < 0 or bands[i] > len(spectral_bands):
@@ -206,14 +206,14 @@ def gdal_pansharpen(argv):
         return 1
 
     vrt_xml = """<VRTDataset subClass="VRTPansharpenedDataset">\n"""
-    if bands != [j+1 for j in range(len(spectral_bands))]:
+    if bands != [j + 1 for j in range(len(spectral_bands))]:
         for i in range(len(bands)):
-            band = spectral_bands[bands[i]-1]
+            band = spectral_bands[bands[i] - 1]
             datatype = gdal.GetDataTypeName(band.DataType)
             colorname = gdal.GetColorInterpretationName(band.GetColorInterpretation())
             vrt_xml += """  <VRTRasterBand dataType="%s" band="%d" subClass="VRTPansharpenedRasterBand">
       <ColorInterp>%s</ColorInterp>
-  </VRTRasterBand>\n""" % (datatype, i+1, colorname)
+  </VRTRasterBand>\n""" % (datatype, i + 1, colorname)
 
     vrt_xml += """  <PansharpeningOptions>\n"""
 
@@ -242,10 +242,10 @@ def gdal_pansharpen(argv):
     if spat_adjust is not None:
         vrt_xml += '      <SpatialExtentAdjustment>%s</SpatialExtentAdjustment>\n' % spat_adjust
 
-    pan_relative='0'
+    pan_relative = '0'
     if format.upper() == 'VRT':
         if not os.path.isabs(pan_name):
-            pan_relative='1'
+            pan_relative = '1'
             pan_name = os.path.relpath(pan_name, os.path.dirname(out_name))
 
     vrt_xml += """    <PanchroBand>
@@ -257,14 +257,14 @@ def gdal_pansharpen(argv):
         dstband = ''
         for j in range(len(bands)):
             if i + 1 == bands[j]:
-                dstband = ' dstBand="%d"' % (j+1)
+                dstband = ' dstBand="%d"' % (j + 1)
                 break
 
-        ms_relative='0'
+        ms_relative = '0'
         ms_name = spectral_ds[i].GetDescription()
         if format.upper() == 'VRT':
             if not os.path.isabs(ms_name):
-                ms_relative='1'
+                ms_relative = '1'
                 ms_name = os.path.relpath(ms_name, os.path.dirname(out_name))
 
         vrt_xml += """    <SpectralBand%s>

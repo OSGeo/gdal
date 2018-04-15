@@ -49,7 +49,7 @@ def CheckFileSize(src_filename):
         return 'skip'
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-f "MapInfo File" /vsimem/CheckFileSize.tab ' + src_filename)
-    statBufSrc = gdal.VSIStatL(src_filename[0:-3]+"dat", gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    statBufSrc = gdal.VSIStatL(src_filename[0:-3] + "dat", gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
     statBufDst = gdal.VSIStatL('/vsimem/CheckFileSize.dat', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/CheckFileSize.tab')
 

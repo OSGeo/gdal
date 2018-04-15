@@ -56,7 +56,7 @@ def jpipkak_1():
 
     stats = target.GetStatistics(0,1)
 
-    if abs(stats[2] - 6791.121) > 1.0 or abs(stats[3]-3046.536) > 1.0:
+    if abs(stats[2] - 6791.121) > 1.0 or abs(stats[3] - 3046.536) > 1.0:
         print(stats)
         gdaltest.post_reason('did not get expected mean/stddev')
         return 'fail'
@@ -89,7 +89,7 @@ def jpipkak_2():
 
     stats = target.GetStatistics(0,1)
 
-    if abs(stats[2] - 43.429) > 1.0 or abs(stats[3]-18.526) > 1.0:
+    if abs(stats[2] - 43.429) > 1.0 or abs(stats[3] - 18.526) > 1.0:
         print(stats)
         gdaltest.post_reason('did not get expected mean/stddev')
         return 'fail'
@@ -116,7 +116,7 @@ def jpipkak_3():
 
     stats = target.GetStatistics(0,1)
 
-    if abs(stats[2] - 483.501) > 1.0 or abs(stats[3]-117.972) > 1.0:
+    if abs(stats[2] - 483.501) > 1.0 or abs(stats[3] - 117.972) > 1.0:
         print(stats)
         gdaltest.post_reason('did not get expected mean/stddev')
         return 'fail'
@@ -143,7 +143,7 @@ def jpipkak_4():
 
     stats = target.GetStatistics(0,1)
 
-    if abs(stats[2] - 5333.148) > 1.0 or abs(stats[3]-2522.023) > 1.0:
+    if abs(stats[2] - 5333.148) > 1.0 or abs(stats[3] - 2522.023) > 1.0:
         print(stats)
         gdaltest.post_reason('did not get expected mean/stddev')
         return 'fail'
@@ -170,7 +170,7 @@ def jpipkak_5():
 
     stats = target.GetStatistics(0,1)
 
-    if abs(stats[2] - 42.462) > 1.0 or abs(stats[3]-20.611) > 1.0:
+    if abs(stats[2] - 42.462) > 1.0 or abs(stats[3] - 20.611) > 1.0:
         print(stats)
         gdaltest.post_reason('did not get expected mean/stddev')
         return 'fail'

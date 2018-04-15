@@ -1588,7 +1588,7 @@ def ogr_libkml_read_write_style():
         </Style>"""
     lines = [l.strip() for l in data.split('\n')]
 
-    lines_got = lines[lines.index('<Style>'):lines.index('</Style>')+1]
+    lines_got = lines[lines.index('<Style>'):lines.index('</Style>') + 1]
     lines_ref = [l.strip() for l in expected_style.split('\n')]
     if lines_got != lines_ref:
         print(data)

@@ -2330,7 +2330,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized():
         expected_extent = (-20037508.342789248, 20037508.342789248, -20037508.342789154, 20037508.342789147)
         got_extent = lyr.GetExtent()
         for i in range(4):
-            if abs(expected_extent[i]-got_extent[i]) > 1e-5:
+            if abs(expected_extent[i] - got_extent[i]) > 1e-5:
                 gdaltest.post_reason('fail')
                 print(got_extent)
                 return 'fail'
@@ -4388,7 +4388,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         f.DumpReadable()
         return 'fail'
 
-    f= lyr.GetNextFeature()
+    f = lyr.GetNextFeature()
     if f is not None:
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -4534,7 +4534,7 @@ def ogr_wfs_vsimem_wfs200_json():
         f.DumpReadable()
         return 'fail'
 
-    f= lyr.GetNextFeature()
+    f = lyr.GetNextFeature()
     if f is not None:
         gdaltest.post_reason('fail')
         f.DumpReadable()

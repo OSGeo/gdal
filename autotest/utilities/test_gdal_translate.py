@@ -1025,11 +1025,11 @@ def test_gdal_translate_35():
 def test_gdal_translate_cleanup():
     for i in range(14):
         try:
-            os.remove('tmp/test' + str(i+1) + '.tif')
+            os.remove('tmp/test' + str(i + 1) + '.tif')
         except:
             pass
         try:
-            os.remove('tmp/test' + str(i+1) + '.tif.aux.xml')
+            os.remove('tmp/test' + str(i + 1) + '.tif.aux.xml')
         except:
             pass
     try:

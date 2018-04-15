@@ -110,7 +110,7 @@ def mk_src_feature():
     got_vals = src_feature.GetFieldAsDateTime(feat_def.GetFieldIndex('field_datetime'))
     expected_vals = [2011, 11, 11, 14, 10, 35.123, 0]
     for i in range(len(expected_vals)):
-        if abs(got_vals[i]-expected_vals[i]) > 1e-4:
+        if abs(got_vals[i] - expected_vals[i]) > 1e-4:
             gdaltest.post_reason('fail')
             print(got_vals)
             print(expected_vals)

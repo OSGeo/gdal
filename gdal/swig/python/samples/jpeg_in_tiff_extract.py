@@ -81,9 +81,9 @@ def extract_tile(ds, src_band_nbr, tile_x, tile_y, jpg_filename):
 
     # Write JPEG tables
     if jpegtables is not None:
-        for i in range(int(len(jpegtables)/2)):
-            c1 = ord(jpegtables[2*i])
-            c2 = ord(jpegtables[2*i+1])
+        for i in range(int(len(jpegtables) / 2)):
+            c1 = ord(jpegtables[2 * i])
+            c2 = ord(jpegtables[2 * i + 1])
             if c1 >= ord('0') and c1 <= ord('9'):
                 val = c1 - ord('0')
             else:
@@ -243,8 +243,8 @@ def jpeg_in_tiff_extract(argv):
             for src_band_nbr in range(ds.RasterCount):
                 for tile_y in range(block_in_col):
                     for tile_x in range(block_in_row):
-                        filename = '%s_%d_%d_%d%s' % (radix_jpg_filename, src_band_nbr+1, tile_x, tile_y, extension)
-                        ret = extract_tile(ds, src_band_nbr+1, tile_x, tile_y, filename)
+                        filename = '%s_%d_%d_%d%s' % (radix_jpg_filename, src_band_nbr + 1, tile_x, tile_y, extension)
+                        ret = extract_tile(ds, src_band_nbr + 1, tile_x, tile_y, filename)
                         if ret != 0:
                             return ret
         return 0

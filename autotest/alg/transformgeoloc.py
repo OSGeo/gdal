@@ -69,8 +69,8 @@ def transformgeoloc_1():
     utm_wkt = osr.GetUserInputAsWKT('+proj=utm +zone=11 +datum=WGS84')
 
     ll_utm_transformer = gdal.Transformer(None, None,
-                                          ['SRC_SRS='+wgs84_wkt,
-                                           'DST_SRS='+utm_wkt])
+                                          ['SRC_SRS=' + wgs84_wkt,
+                                           'DST_SRS=' + utm_wkt])
 
     # transform the geoloc dataset in place.
     status = ll_utm_transformer.TransformGeolocations(

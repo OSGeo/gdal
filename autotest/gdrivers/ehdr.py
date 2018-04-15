@@ -277,7 +277,7 @@ def ehdr_13():
     stats = ds.GetRasterBand(1).GetStatistics(False, True)
     expected_stats = [74.0, 255.0, 126.765, 22.928470838675704]
     for i in range(4):
-        if abs(stats[i]-expected_stats[i]) > 0.0001:
+        if abs(stats[i] - expected_stats[i]) > 0.0001:
             gdaltest.post_reason('did not get expected statistics')
             return 'fail'
     ds = None
@@ -298,7 +298,7 @@ def ehdr_13():
     stats = ds.GetRasterBand(1).GetStatistics(False, True)
     expected_stats = [74.0, 255.0, 126.765, 22.928470838675704]
     for i in range(4):
-        if abs(stats[i]-expected_stats[i]) > 0.0001:
+        if abs(stats[i] - expected_stats[i]) > 0.0001:
             gdaltest.post_reason('did not get expected statistics')
             return 'fail'
     ds = None

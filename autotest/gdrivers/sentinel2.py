@@ -113,10 +113,10 @@ def sentinel2_l1c_1():
     # Try opening the 4 subdatasets
     for i in range(4):
         gdal.ErrorReset()
-        ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i+1)])
+        ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
         if ds is None or gdal.GetLastErrorMsg() != '':
             gdaltest.post_reason('fail')
-            print(got_md['SUBDATASET_%d_NAME' % (i+1)])
+            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
             return 'fail'
 
     # Try various invalid subdataset names
@@ -709,10 +709,10 @@ def sentinel2_l1c_tile_1():
     # Try opening the 4 subdatasets
     for i in range(4):
         gdal.ErrorReset()
-        ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i+1)])
+        ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
         if ds is None or gdal.GetLastErrorMsg() != '':
             gdaltest.post_reason('fail')
-            print(got_md['SUBDATASET_%d_NAME' % (i+1)])
+            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
             return 'fail'
 
     # Try various invalid subdataset names
@@ -1180,10 +1180,10 @@ def sentinel2_l1b_1():
     # Try opening the 3 subdatasets
     for i in range(3):
         gdal.ErrorReset()
-        ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i+1)])
+        ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
         if ds is None or gdal.GetLastErrorMsg() != '':
             gdaltest.post_reason('fail')
-            print(got_md['SUBDATASET_%d_NAME' % (i+1)])
+            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
             return 'fail'
 
     # Try various invalid subdataset names
@@ -1392,8 +1392,8 @@ def sentinel2_l1b_3():
         print(gcps[3])
         return 'fail'
 
-    if gcps[4].GCPPixel != 1276./2 or \
-       gcps[4].GCPLine != 384./2 or \
+    if gcps[4].GCPPixel != 1276. / 2 or \
+       gcps[4].GCPLine != 384. / 2 or \
        gcps[4].GCPX != 12 or \
        gcps[4].GCPY != 45.5 or \
        gcps[4].GCPZ != 2.5:
@@ -1836,10 +1836,10 @@ def sentinel2_l2a_1():
     # Try opening the 4 subdatasets
     for i in range(2):
         gdal.ErrorReset()
-        ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i+1)])
+        ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
         if ds is None or gdal.GetLastErrorMsg() != '':
             gdaltest.post_reason('fail')
-            print(got_md['SUBDATASET_%d_NAME' % (i+1)])
+            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
             return 'fail'
 
     # Try various invalid subdataset names
@@ -2003,8 +2003,8 @@ def sentinel2_l2a_2():
 
     scl_band = 0
     for i in range(ds.RasterCount):
-        if ds.GetRasterBand(i+1).GetMetadataItem('BANDNAME') == 'SCL':
-            scl_band = i +1
+        if ds.GetRasterBand(i + 1).GetMetadataItem('BANDNAME') == 'SCL':
+            scl_band = i + 1
     if scl_band == 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2176,10 +2176,10 @@ def sentinel2_l1c_safe_compact_1():
     # Try opening the 4 subdatasets
     for i in range(4):
         gdal.ErrorReset()
-        ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i+1)])
+        ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
         if ds is None or gdal.GetLastErrorMsg() != '':
             gdaltest.post_reason('fail')
-            print(got_md['SUBDATASET_%d_NAME' % (i+1)])
+            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
             return 'fail'
 
     # Try various invalid subdataset names

@@ -86,7 +86,7 @@ for dirname, dirnames, filenames in os.walk('.'):
                 #year = int(line.split(' ')[7])
                 i = i + 1
                 i = i + 1
-                commit_number = lines[i-4][7:15]
+                commit_number = lines[i - 4][7:15]
                 ignore_commit = False
                 while i < nlines:
                     line = lines[i][0:-1]
@@ -124,9 +124,9 @@ for dirname, dirnames, filenames in os.walk('.'):
                 idx = line.find("(" + git_author)
                 if idx > 0:
                     count_matching_lines = count_matching_lines + 1
-                    line = line[idx+len(git_author)+1:]
+                    line = line[idx + len(git_author) + 1:]
                     idx = line.find(' 20')
-                    year = int(line[idx+1:idx+5])
+                    year = int(line[idx + 1:idx + 5])
                     if minyear < 0 or year < minyear:
                         minyear = year
                     if maxyear < 0 or year > maxyear:

@@ -205,7 +205,7 @@ def get_lineno_2framesback(frames):
         frame = inspect.currentframe()
         while frames > 0:
             frame = frame.f_back
-            frames = frames-1
+            frames = frames - 1
 
         return frame.f_lineno
     except:
@@ -237,7 +237,7 @@ def summarize():
         print('Test Script: %s' % cur_name)
     print('Succeeded: %d' % success_counter)
     print('Failed:    %d (%d blew exceptions)' \
-          % (failure_counter+blow_counter, blow_counter))
+          % (failure_counter + blow_counter, blow_counter))
     print('Skipped:   %d' % skip_counter)
     print('Expected fail:%d' % expected_failure_counter)
     if start_time is not None:
@@ -458,7 +458,7 @@ class GDALTest:
                 # Copy all files in /vsimem/
                 mainfile_dirname = os.path.dirname(fl[0])
                 for filename in fl:
-                    target_filename = '/vsimem/tmp_testOpen/' + filename[len(mainfile_dirname)+1:]
+                    target_filename = '/vsimem/tmp_testOpen/' + filename[len(mainfile_dirname) + 1:]
                     if stat.S_ISDIR(gdal.VSIStatL(filename).mode):
                         gdal.Mkdir(target_filename, 0)
                     else:
@@ -498,7 +498,7 @@ class GDALTest:
                 other_ds = None
 
                 for filename in gdal.ReadDirRecursive('/vsimem/tmp_testOpen'):
-                    gdal.Unlink('/vsimem/tmp_testOpen/'+ filename)
+                    gdal.Unlink('/vsimem/tmp_testOpen/' + filename)
 
                 if virtual_ds_is_None:
                     post_reason('File list is not complete or driver does not support /vsimem/')
@@ -527,11 +527,11 @@ class GDALTest:
         if check_gt:
             # Default to 100th of pixel as our test value.
             if gt_epsilon is None:
-                gt_epsilon = (abs(check_gt[1])+abs(check_gt[2])) / 100.0
+                gt_epsilon = (abs(check_gt[1]) + abs(check_gt[2])) / 100.0
 
             new_gt = ds.GetGeoTransform()
             for i in range(6):
-                if abs(new_gt[i]-check_gt[i]) > gt_epsilon:
+                if abs(new_gt[i] - check_gt[i]) > gt_epsilon:
                     print('')
                     print('old = ', check_gt)
                     print('new = ', new_gt)
@@ -560,7 +560,7 @@ class GDALTest:
                     post_reason('NaN or infinity value encountered \'%s\'.' % sv)
                     return 'fail'
 
-                if abs(new_stat[i]-check_approx_stat[i]) > stat_epsilon:
+                if abs(new_stat[i] - check_approx_stat[i]) > stat_epsilon:
                     print('')
                     print('old = ', check_approx_stat)
                     print('new = ', new_stat)
@@ -584,7 +584,7 @@ class GDALTest:
                     post_reason('NaN or infinity value encountered \'%s\'.' % sv)
                     return 'fail'
 
-                if abs(new_stat[i]-check_stat[i]) > stat_epsilon:
+                if abs(new_stat[i] - check_stat[i]) > stat_epsilon:
                     print('')
                     print('old = ', check_stat)
                     print('new = ', new_stat)
@@ -814,13 +814,13 @@ class GDALTest:
         src_ds = None
 
         try:
-            for band in range(1,out_bands+1):
+            for band in range(1,out_bands + 1):
                 new_ds.GetRasterBand(band).WriteRaster(0, 0, xsize, ysize, src_img)
         except:
             post_reason('Failed to write raster bands to test file.')
             return 'fail'
 
-        for band in range(1,out_bands+1):
+        for band in range(1,out_bands + 1):
             if self.chksum is not None \
                and new_ds.GetRasterBand(band).Checksum() != self.chksum:
                 post_reason(
@@ -847,7 +847,7 @@ class GDALTest:
             post_reason('Failed to open dataset: ' + new_filename)
             return 'fail'
 
-        for band in range(1,out_bands+1):
+        for band in range(1,out_bands + 1):
             if self.chksum is not None \
                and new_ds.GetRasterBand(band).Checksum() != self.chksum:
                 post_reason('Did not get expected checksum on reopened file.' \
@@ -945,7 +945,7 @@ class GDALTest:
         gt = (123.0, 1.18, 0.0, 456.0, 0.0, -1.18)
         if prj is None:
             # This is a challenging SRS since it has non-meter linear units.
-            prj='PROJCS["NAD83 / Ohio South",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",40.03333333333333],PARAMETER["standard_parallel_2",38.73333333333333],PARAMETER["latitude_of_origin",38],PARAMETER["central_meridian",-82.5],PARAMETER["false_easting",1968500],PARAMETER["false_northing",0],UNIT["US survey foot",0.3048006096012192]]'
+            prj = 'PROJCS["NAD83 / Ohio South",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",40.03333333333333],PARAMETER["standard_parallel_2",38.73333333333333],PARAMETER["latitude_of_origin",38],PARAMETER["central_meridian",-82.5],PARAMETER["false_easting",1968500],PARAMETER["false_northing",0],UNIT["US survey foot",0.3048006096012192]]'
 
         src_osr = osr.SpatialReference()
         src_osr.ImportFromWkt(prj)
@@ -1207,7 +1207,7 @@ def approx_equal(a, b):
     if a == 0 and b != 0:
         return 0
 
-    if abs(b/a - 1.0) > .00000000001:
+    if abs(b / a - 1.0) > .00000000001:
         return 0
     else:
         return 1
@@ -1299,7 +1299,7 @@ def rpcs_equal(md1, md2):
 
 def geotransform_equals(gt1, gt2, gt_epsilon):
     for i in range(6):
-        if abs(gt1[i]-gt2[i]) > gt_epsilon:
+        if abs(gt1[i] - gt2[i]) > gt_epsilon:
             print('')
             print('gt1 = ', gt1)
             print('gt2 = ', gt2)
@@ -1440,7 +1440,7 @@ def compare_ds(ds1, ds2, xoff=0, yoff=0, width=0, height=0, verbose=1):
 
     maxdiff = 0.0
     ndiffs = 0
-    for i in range(width*height):
+    for i in range(width * height):
         diff = val_array1[i] - val_array2[i]
         if diff != 0:
             #print(val_array1[i])
@@ -1776,23 +1776,23 @@ def find_lib_linux(libname):
         i = line.find(' ')
         if i < 0:
             continue
-        line = line[i+1:]
+        line = line[i + 1:]
         i = line.find(' ')
         if i < 0:
             continue
-        line = line[i+1:]
+        line = line[i + 1:]
         i = line.find(' ')
         if i < 0:
             continue
-        line = line[i+1:]
+        line = line[i + 1:]
         i = line.find(' ')
         if i < 0:
             continue
-        line = line[i+1:]
+        line = line[i + 1:]
         i = line.find(' ')
         if i < 0:
             continue
-        line = line[i+1:]
+        line = line[i + 1:]
 
         soname = line.lstrip().rstrip('\n')
         if soname.rfind('/lib' + libname) == -1:
@@ -1909,10 +1909,10 @@ def find_lib_windows(libname):
         i = path.rfind('\\' + libname)
         if i < 0:
             continue
-        if path[i+1:].find('\\') >= 0:
+        if path[i + 1:].find('\\') >= 0:
             continue
         # Avoid matching gdal_PLUGIN.dll
-        if path[i+1:].find('_') >= 0:
+        if path[i + 1:].find('_') >= 0:
             continue
         soname = path
         break

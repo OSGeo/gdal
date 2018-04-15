@@ -542,7 +542,7 @@ def kea_10():
                                  (gdal.GDT_UInt32,0,0),
                                  (gdal.GDT_UInt32,0xFFFFFFFF,0xFFFFFFFF),
                                  (gdal.GDT_UInt32,-1,None),
-                                 (gdal.GDT_UInt32,0xFFFFFFFF+1,None),
+                                 (gdal.GDT_UInt32,0xFFFFFFFF + 1,None),
                                  (gdal.GDT_Int32,-2147483648,-2147483648),
                                  (gdal.GDT_Int32,2147483647,2147483647),
                                  (gdal.GDT_Int32,-2147483649,None),

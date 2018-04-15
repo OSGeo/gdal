@@ -152,7 +152,7 @@ def vsicrypt_2():
                 new_byte = chr(val).encode('latin1')
             except:
                 new_byte = chr(val)
-            header_new = header[0:i] + new_byte + header[i+1:]
+            header_new = header[0:i] + new_byte + header[i + 1:]
             gdal.VSIFWriteL(header_new, 1, 46, fp)
             gdal.VSIFCloseL(fp)
 

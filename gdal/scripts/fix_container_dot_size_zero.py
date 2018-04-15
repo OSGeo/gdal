@@ -59,7 +59,7 @@ def find_start_identifier_pos(content, pos_start_identifier):
             pos_start_identifier -= 1
         elif c.isalnum() or c == '_' or c == '.':
             pos_start_identifier -= 1
-        elif c == '>' and content[pos_start_identifier-1] == '-':
+        elif c == '>' and content[pos_start_identifier - 1] == '-':
             pos_start_identifier -= 2
         else:
             break
@@ -128,15 +128,15 @@ while True:
         pos_cur += 1
         if (content[pos_after:].startswith(' ?') or \
             content[pos_after:].startswith('?')) and \
-           (content[pos_cur-1] == '(' or content[pos_cur-1] == ',') :
+           (content[pos_cur - 1] == '(' or content[pos_cur - 1] == ',') :
             non_empty = True
-        elif content[pos_cur-3:pos_cur] == 'if(':
+        elif content[pos_cur - 3:pos_cur] == 'if(':
             non_empty = True
-        elif content[pos_cur-4:pos_cur] == 'if (':
+        elif content[pos_cur - 4:pos_cur] == 'if (':
             non_empty = True
-        elif content[pos_cur-2:pos_cur] == '&&':
+        elif content[pos_cur - 2:pos_cur] == '&&':
             non_empty = True
-        elif content[pos_cur-2:pos_cur] == '||':
+        elif content[pos_cur - 2:pos_cur] == '||':
             non_empty = True
 
     if empty:

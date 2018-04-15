@@ -327,7 +327,7 @@ def hdf5_9():
 
         if metadata[key] != ref_metadata[key]:
             gdaltest.post_reason('incorrect metadata value for key "%s": '
-                                  'expected "%s", got "%s" '%
+                                  'expected "%s", got "%s" ' %
                                     (key, ref_metadata[key], metadata[key]))
             return 'fail'
 
@@ -613,7 +613,7 @@ hdf5_list = [('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/c
 
 for item in hdf5_list:
     ut = TestHDF5(item[0], item[1], item[2], item[3], item[4])
-    gdaltest_list.append((ut.test, 'HDF5:"' + item[1]+ '"://' + item[2]))
+    gdaltest_list.append((ut.test, 'HDF5:"' + item[1] + '"://' + item[2]))
 
 
 if __name__ == '__main__':

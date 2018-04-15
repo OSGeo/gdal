@@ -1013,7 +1013,7 @@ def grib_grib2_write_projections():
 
         expected_gt = src_ds.GetGeoTransform()
         got_gt = out_ds.GetGeoTransform()
-        if max([abs(expected_gt[i]-got_gt[i]) for i in range(6)]) > 1e-5:
+        if max([abs(expected_gt[i] - got_gt[i]) for i in range(6)]) > 1e-5:
             gdaltest.post_reason('did not get expected geotransform for %s' % filename)
             print(got_gt)
             print(expected_gt)
@@ -1071,9 +1071,9 @@ def grib_grib2_write_projections():
         gdaltest.post_reason('did not get expected projection for Mercator_1SP')
         print(out_ds.GetProjectionRef())
         return 'fail'
-    expected_gt=(-10931635.565066436, 60.297, 0.0, 3331982.221608528, 0.0, -60.297)
+    expected_gt = (-10931635.565066436, 60.297, 0.0, 3331982.221608528, 0.0, -60.297)
     got_gt = out_ds.GetGeoTransform()
-    if max([abs(expected_gt[i]-got_gt[i]) for i in range(6)]) > 1e-5:
+    if max([abs(expected_gt[i] - got_gt[i]) for i in range(6)]) > 1e-5:
         gdaltest.post_reason('did not get expected geotransform for Mercator_1SP')
         print(got_gt)
         return 'fail'
@@ -1110,9 +1110,9 @@ def grib_grib2_write_projections():
         gdaltest.post_reason('did not get expected projection for LCC_1SP')
         print(out_ds.GetProjectionRef())
         return 'fail'
-    expected_gt=(8974472.884926716, 60.017, 0.0, 6235685.688523474, 0.0, -60.017)
+    expected_gt = (8974472.884926716, 60.017, 0.0, 6235685.688523474, 0.0, -60.017)
     got_gt = out_ds.GetGeoTransform()
-    if max([abs(expected_gt[i]-got_gt[i]) for i in range(6)]) > 1e-5:
+    if max([abs(expected_gt[i] - got_gt[i]) for i in range(6)]) > 1e-5:
         gdaltest.post_reason('did not get expected geotransform for LCC_1SP')
         print(got_gt)
         return 'fail'
@@ -1372,10 +1372,10 @@ def grib_grib2_write_data_encodings():
         out_ds = None
         gdal.Unlink(tmpfilename)
         expected_vals = (1.23e10, -2.45e10,1.23e10, -2.45e10)
-        if max([abs((got_vals[i] - expected_vals[i])/expected_vals[i]) for i in range(4)]) > 1e-4:
+        if max([abs((got_vals[i] - expected_vals[i]) / expected_vals[i]) for i in range(4)]) > 1e-4:
             gdaltest.post_reason('did not get expected values for ' + encoding)
             print(got_vals)
-            print(max([abs((got_vals[i] - expected_vals[i])/expected_vals[i]) for i in range(2)]))
+            print(max([abs((got_vals[i] - expected_vals[i]) / expected_vals[i]) for i in range(2)]))
             return 'fail'
     test_ds = None
 
@@ -1384,7 +1384,7 @@ def grib_grib2_write_data_encodings():
         tmpfilename = '/vsimem/out.grb2'
         gdal.ErrorReset()
         gdal.Translate(tmpfilename, 'data/utm.tif', format='GRIB',
-                        creationOptions=['JPEG2000_DRIVER='+drvname,
+                        creationOptions=['JPEG2000_DRIVER=' + drvname,
                                            'COMPRESSION_RATIO=20'])
         error_msg = gdal.GetLastErrorMsg()
         if error_msg != '':
@@ -1526,10 +1526,10 @@ def grib_grib2_write_temperatures():
             expected_vals = (25.0, 25.1, 25.1, 25.2)
         else:
             expected_vals = (25.0 - 273.15, 25.1 - 273.15, 25.1 - 273.15, 25.2 - 273.15)
-        if max([abs((got_vals[i] - expected_vals[i])/expected_vals[i]) for i in range(4)]) > 1e-4:
+        if max([abs((got_vals[i] - expected_vals[i]) / expected_vals[i]) for i in range(4)]) > 1e-4:
             gdaltest.post_reason('fail with data_encoding = %s and type = %s' % (data_encoding, str(src_type)))
             print(got_vals)
-            print(max([abs((got_vals[i] - expected_vals[i])/expected_vals[i]) for i in range(2)]))
+            print(max([abs((got_vals[i] - expected_vals[i]) / expected_vals[i]) for i in range(2)]))
             return 'fail'
 
     return 'success'

@@ -660,7 +660,7 @@ def ogr_mvt_mbtiles_open_vector_in_raster_mode():
 
 def ogr_mvt_x_y_z_filename_scheme():
 
-    tmpfilename ='/vsimem/0-0-0.pbf'
+    tmpfilename = '/vsimem/0-0-0.pbf'
     gdal.FileFromMemBuffer(tmpfilename,
         open('data/mvt/linestring/0/0/0.pbf', 'rb').read())
     ds = ogr.Open(tmpfilename)

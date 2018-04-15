@@ -191,7 +191,7 @@ def test_gdal_rasterize_3():
     gt_ref = ds_ref.GetGeoTransform()
     gt = ds.GetGeoTransform()
     for i in range(6):
-        if (abs(gt[i]-gt_ref[i])>1e-6):
+        if (abs(gt[i] - gt_ref[i]) > 1e-6):
             gdaltest.post_reason('did not get expected geotransform')
             print(gt)
             print(gt_ref)
@@ -298,7 +298,7 @@ def test_gdal_rasterize_5():
     gt_ref = [0,1,0,3,0,-1]
     gt = ds.GetGeoTransform()
     for i in range(6):
-        if (abs(gt[i]-gt_ref[i])>1e-6):
+        if (abs(gt[i] - gt_ref[i]) > 1e-6):
             gdaltest.post_reason('did not get expected geotransform')
             print(gt)
             print(gt_ref)
@@ -333,7 +333,7 @@ def test_gdal_rasterize_6():
     f.close()
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdal_rasterize_6.tif', 100, 100)
-    ds.SetGeoTransform([200000,(400000-200000)/100,0,6500000,0,-(6500000-6200000)/100])
+    ds.SetGeoTransform([200000,(400000 - 200000) / 100,0,6500000,0,-(6500000 - 6200000) / 100])
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(3857)
     ds.SetProjection(sr.ExportToWkt())

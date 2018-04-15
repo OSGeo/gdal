@@ -127,7 +127,7 @@ def test_ogr2ogr_lib_4():
         gdaltest.post_reason('wrong feature count')
         print(ds.GetLayer(0).GetFeatureCount())
         return 'fail'
-    ds= None
+    ds = None
 
     ds = gdal.VectorTranslate('/vsimem/poly.shp', srcDS, accessMode='append')
     if ds is None:
@@ -260,13 +260,13 @@ def test_ogr2ogr_lib_10():
     ds = gdal.VectorTranslate('/vsimem/tmp/poly.shp',srcDS)
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
-    ds= None
+    ds = None
 
     # Overwrite
     ds = gdal.VectorTranslate('/vsimem/tmp',srcDS,accessMode='overwrite')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
-    ds= None
+    ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/tmp')
     return 'success'

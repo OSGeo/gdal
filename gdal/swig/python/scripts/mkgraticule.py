@@ -48,11 +48,11 @@ def float_range(*args):
         raise TypeError("float_range needs 1-3 float arguments")
 
     the_range = []
-    steps = (stop-start)/step
+    steps = (stop - start) / step
     if steps != int(steps):
         steps = steps + 1.0
     for i in range(int(steps)):
-        the_range.append(i*step+start)
+        the_range.append(i * step + start)
 
     return the_range
 
@@ -93,10 +93,10 @@ while i < len(sys.argv):
         i = i + 1
         substepsize = float(sys.argv[i])
     elif sys.argv[i] == '-range':
-        xmin = float(sys.argv[i+1])
-        ymin = float(sys.argv[i+2])
-        xmax = float(sys.argv[i+3])
-        ymax = float(sys.argv[i+4])
+        xmin = float(sys.argv[i + 1])
+        ymin = float(sys.argv[i + 2])
+        xmax = float(sys.argv[i + 3])
+        ymax = float(sys.argv[i + 4])
         i = i + 4
     elif sys.argv[i][0] == '-':
         Usage()
@@ -156,11 +156,11 @@ if not connected:
     feat = ogr.Feature(feature_def=layer.GetLayerDefn())
     geom = ogr.Geometry(type=ogr.wkbLineString)
 
-    for lat in float_range(ymin,ymax+stepsize/2,stepsize):
-        for long_ in float_range(xmin,xmax-substepsize/2,substepsize):
+    for lat in float_range(ymin,ymax + stepsize / 2,stepsize):
+        for long_ in float_range(xmin,xmax - substepsize / 2,substepsize):
 
             geom.SetPoint(0, long_, lat)
-            geom.SetPoint(1, long_+substepsize, lat)
+            geom.SetPoint(1, long_ + substepsize, lat)
 
             err = 0
             if ct is not None:
@@ -173,10 +173,10 @@ if not connected:
     #########################################################################
     # Generate lines of longitude
 
-    for long_ in float_range(xmin,xmax+stepsize/2,stepsize):
-        for lat in float_range(ymin,ymax-substepsize/2,substepsize):
+    for long_ in float_range(xmin,xmax + stepsize / 2,stepsize):
+        for lat in float_range(ymin,ymax - substepsize / 2,substepsize):
             geom.SetPoint(0, long_, lat)
-            geom.SetPoint(1, long_, lat+substepsize)
+            geom.SetPoint(1, long_, lat + substepsize)
 
             err = 0
             if ct is not None:
@@ -197,11 +197,11 @@ if connected:
 
     feat = ogr.Feature(feature_def=layer.GetLayerDefn())
 
-    for lat in float_range(ymin,ymax+stepsize/2,stepsize):
+    for lat in float_range(ymin,ymax + stepsize / 2,stepsize):
 
         geom = ogr.Geometry(type=ogr.wkbLineString)
 
-        for long_ in float_range(xmin,xmax+substepsize/2,substepsize):
+        for long_ in float_range(xmin,xmax + substepsize / 2,substepsize):
             geom.AddPoint(long_, lat)
 
         err = 0
@@ -215,11 +215,11 @@ if connected:
     #########################################################################
     # Generate lines of longitude
 
-    for long_ in float_range(xmin,xmax+stepsize/2,stepsize):
+    for long_ in float_range(xmin,xmax + stepsize / 2,stepsize):
 
         geom = ogr.Geometry(type=ogr.wkbLineString)
 
-        for lat in float_range(ymin,ymax+substepsize/2,substepsize):
+        for lat in float_range(ymin,ymax + substepsize / 2,substepsize):
             geom.AddPoint(long_, lat)
 
         err = 0

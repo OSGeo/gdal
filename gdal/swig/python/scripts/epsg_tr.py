@@ -167,7 +167,7 @@ if __name__ == '__main__':
         elif arg[:5] == '-skip':
             report_error = 0
 
-        elif arg == '-list' and i < len(argv)-1:
+        elif arg == '-list' and i < len(argv) - 1:
             i = i + 1
             list_file = argv[i]
 
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     prj_srs = osr.SpatialReference()
 
     if start_code != -1:
-        for code in range(start_code,end_code+1):
+        for code in range(start_code,end_code + 1):
             trHandleCode(code, gen_dict_line, report_error, output_format)
 
     # loop over codes read from list file.

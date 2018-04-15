@@ -73,7 +73,7 @@ def ogr_ogdi_1():
         except:
             return 'skip'
 
-    url_name ='gltp:/vrf/' + os.getcwd()+ '/tmp/cache/ogdits-3.1/data/vpf/vm2alv2/texash'
+    url_name = 'gltp:/vrf/' + os.getcwd() + '/tmp/cache/ogdits-3.1/data/vpf/vm2alv2/texash'
 
     ds = ogr.Open(url_name)
     ogrtest.ogdi_ds = ds
@@ -126,7 +126,7 @@ def ogr_ogdi_2():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
 
-    url_name ='gltp:/vrf/' + os.getcwd()+ '/tmp/cache/ogdits-3.1/data/vpf/vm2alv2/texash'
+    url_name = 'gltp:/vrf/' + os.getcwd() + '/tmp/cache/ogdits-3.1/data/vpf/vm2alv2/texash'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config OGR_OGDI_LAUNDER_LAYER_NAMES YES -ro "' + url_name + '" markersp_bnd contourl_elev polbnda_bnd extractp_ind')
 
@@ -193,7 +193,7 @@ def ogr_ogdi_4():
     if ogrtest.ogdi_drv is None:
         return 'skip'
 
-    url_name ='gltp:/vrf/' + os.getcwd()+ '/data/vm2alv2_texash/texash'
+    url_name = 'gltp:/vrf/' + os.getcwd() + '/data/vm2alv2_texash/texash'
     ds = ogr.Open(url_name)
     if ds is None:
         gdaltest.post_reason('cannot open dataset')
@@ -232,7 +232,7 @@ def ogr_ogdi_4():
     ds = None
 
     # Test opening one single layer
-    ds = ogr.Open(url_name +':polbnda@bnd(*):area')
+    ds = ogr.Open(url_name + ':polbnda@bnd(*):area')
     if ds is None:
         gdaltest.post_reason('cannot open dataset')
         return 'fail'
@@ -256,7 +256,7 @@ def ogr_ogdi_5():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
 
-    url_name ='gltp:/vrf/' + os.getcwd()+ '/data/vm2alv2_texash/texash'
+    url_name = 'gltp:/vrf/' + os.getcwd() + '/data/vm2alv2_texash/texash'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config OGR_OGDI_LAUNDER_LAYER_NAMES YES -ro "' + url_name + '"')
 

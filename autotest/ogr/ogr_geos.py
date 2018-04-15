@@ -505,7 +505,7 @@ def ogr_geos_distance():
 
     distance = g1.Distance(g2)
 
-    if abs(distance-1) > 0.00000000001:
+    if abs(distance - 1) > 0.00000000001:
         gdaltest.post_reason('Distance() result wrong, got %g.' % distance)
         return 'fail'
 

@@ -466,7 +466,7 @@ def ogr_geojson_9():
 
         rc = copy_shape_to_geojson(test[0])
         if not rc:
-            gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
+            gdaltest.post_reason('Failed making copy of ' + test[0] + '.shp')
             return 'fail'
 
         rc = verify_geojson_copy(test[0], test[1], test[2])
@@ -499,7 +499,7 @@ def ogr_geojson_10():
 
         rc = copy_shape_to_geojson(test[0], '/vsigzip/')
         if not rc:
-            gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
+            gdaltest.post_reason('Failed making copy of ' + test[0] + '.shp')
             return 'fail'
 
         rc = verify_geojson_copy(test[0], test[1], test[2])
@@ -594,7 +594,7 @@ def ogr_geojson_13():
 
     rc = copy_shape_to_geojson(test[0], '/vsistdout/')
     if not rc:
-        gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
+        gdaltest.post_reason('Failed making copy of ' + test[0] + '.shp')
         return 'fail'
 
     return 'success'

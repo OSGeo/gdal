@@ -53,10 +53,10 @@ while i < len(sys.argv):
     arg = sys.argv[i]
 
     if arg == '-spat':
-        s_minx = int(sys.argv[i+1])
-        s_miny = int(sys.argv[i+2])
-        s_maxx = int(sys.argv[i+3])
-        s_maxy = int(sys.argv[i+4])
+        s_minx = int(sys.argv[i + 1])
+        s_miny = int(sys.argv[i + 2])
+        s_maxx = int(sys.argv[i + 3])
+        s_maxy = int(sys.argv[i + 4])
         i = i + 4
 
     elif infile is None:

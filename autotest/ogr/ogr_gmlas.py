@@ -63,8 +63,8 @@ def compare_ogrinfo_output(gmlfile, reffile, options=''):
     tmpfilename = 'tmp/' + os.path.basename(gmlfile) + '.txt'
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() +
         ' -ro -al GMLAS:' + gmlfile +
-        ' -oo EXPOSE_METADATA_LAYERS=YES '+
-        '-oo @KEEP_RELATIVE_PATHS_FOR_METADATA=YES '+
+        ' -oo EXPOSE_METADATA_LAYERS=YES ' +
+        '-oo @KEEP_RELATIVE_PATHS_FOR_METADATA=YES ' +
         '-oo @EXPOSE_SCHEMAS_NAME_IN_METADATA=NO ' +
         '-oo @EXPOSE_CONFIGURATION_IN_METADATA=NO' + ' ' + options,
         encoding='utf-8')

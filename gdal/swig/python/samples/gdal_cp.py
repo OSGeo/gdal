@@ -164,7 +164,7 @@ def gdal_cp_single(srcfile, targetfile, progress):
 def gdal_cp_recurse(srcdir, targetdir, progress, skip_failure):
 
     if srcdir[-1] == '/':
-        srcdir = srcdir[0:len(srcdir)-1]
+        srcdir = srcdir[0:len(srcdir) - 1]
     lst = gdal.ReadDir(srcdir)
     if lst is None:
         print('%s is not a directory' % srcdir)
@@ -291,7 +291,7 @@ def gdal_cp(argv, progress=None):
         # Make sure that 'gdal_cp.py -r [srcdir/]lastsubdir targetdir' creates
         # targetdir/lastsubdir if targetdir already exists (like cp -r does).
         if srcfile[-1] == '/':
-            srcfile = srcfile[0:len(srcfile)-1]
+            srcfile = srcfile[0:len(srcfile) - 1]
         statBufSrc = gdal.VSIStatL(srcfile, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG)
         if statBufSrc is None:
             statBufSrc = gdal.VSIStatL(srcfile + '/', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG)

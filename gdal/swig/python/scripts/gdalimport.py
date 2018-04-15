@@ -64,8 +64,8 @@ if len(argv) < 3:
     newfile = newbase + ".tif"
     i = 0
     while os.path.isfile(newfile):
-        i = i+1
-        newfile = newbase+"_"+str(i)+".tif"
+        i = i + 1
+        newfile = newbase + "_" + str(i) + ".tif"
 else:
     newfile = argv[2]
 

@@ -140,7 +140,7 @@ class GDALPythonServerDataset:
         self.RasterCount = self.gdal_ds.RasterCount
         self.bands = []
         for i in range(self.RasterCount):
-            gdal_band = self.gdal_ds.GetRasterBand(i+1)
+            gdal_band = self.gdal_ds.GetRasterBand(i + 1)
             self.bands.append(GDALPythonServerRasterBand(gdal_band))
 
     def __del__(self):
@@ -150,7 +150,7 @@ class GDALPythonServerDataset:
         return self.gdal_ds.GetDriver()
 
     def GetRasterBand(self, i):
-        return self.bands[i-1]
+        return self.bands[i - 1]
 
     def GetDescription(self):
         return self.gdal_ds.GetDescription()
@@ -380,8 +380,8 @@ def read_str():
     if length <= 0:
         return None
     str = sys.stdin.read(length)
-    if len(str) > 0 and str[len(str)-1] == '\0':
-        str =  str[0:len(str)-1]
+    if len(str) > 0 and str[len(str) - 1] == '\0':
+        str =  str[0:len(str) - 1]
     return str
 
 

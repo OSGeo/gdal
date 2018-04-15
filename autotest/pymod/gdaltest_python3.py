@@ -101,7 +101,7 @@ def gdalurlopen(url, timeout=10):
         socket.setdefaulttimeout(old_timeout)
         return None
     except:
-        print('HTTP service for %s is down.' %(url))
+        print('HTTP service for %s is down.' % (url))
         socket.setdefaulttimeout(old_timeout)
         return None
 

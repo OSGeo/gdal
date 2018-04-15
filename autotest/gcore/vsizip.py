@@ -129,7 +129,7 @@ def vsizip_1():
 
     # Test alternate uri syntax
     gdal.Rename("/vsimem/test.zip", "/vsimem/test.xxx")
-    f= gdal.VSIFOpenL("/vsizip/{/vsimem/test.xxx}/subdir3/abcd", "rb")
+    f = gdal.VSIFOpenL("/vsizip/{/vsimem/test.xxx}/subdir3/abcd", "rb")
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -142,7 +142,7 @@ def vsizip_1():
         return 'fail'
 
     # With a trailing slash
-    f= gdal.VSIFOpenL("/vsizip/{/vsimem/test.xxx}/subdir3/abcd/", "rb")
+    f = gdal.VSIFOpenL("/vsizip/{/vsimem/test.xxx}/subdir3/abcd/", "rb")
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -167,13 +167,13 @@ def vsizip_1():
         return 'fail'
 
     # Non existing subfile
-    f= gdal.VSIFOpenL("/vsizip/{/vsimem/test.zzz}/bla", "rb")
+    f = gdal.VSIFOpenL("/vsizip/{/vsimem/test.zzz}/bla", "rb")
     if f is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Wrong syntax
-    f= gdal.VSIFOpenL("/vsizip/{/vsimem/test.xxx}.aux.xml", "rb")
+    f = gdal.VSIFOpenL("/vsizip/{/vsimem/test.xxx}.aux.xml", "rb")
     if f is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -191,7 +191,7 @@ def vsizip_1():
     gdal.VSIFCloseL(f)
     gdal.VSIFCloseL(hZIP)
 
-    f= gdal.VSIFOpenL("/vsizip/{/vsizip/{/vsimem/zipinzip.yyy}/test.xxx}/subdir3/abcd/", "rb")
+    f = gdal.VSIFOpenL("/vsizip/{/vsizip/{/vsimem/zipinzip.yyy}/test.xxx}/subdir3/abcd/", "rb")
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -372,10 +372,10 @@ def vsizip_5():
         gdaltest.post_reason('fail read')
         return 'fail'
     if len(res) != 1001:
-        gdaltest.post_reason('wrong size: '+str(len(res)))
+        gdaltest.post_reason('wrong size: ' + str(len(res)))
         return 'fail'
     if res[10] != 'a/a/a/a/a/a/a/a/a/a/a/':
-        gdaltest.post_reason('bad content: '+res[10])
+        gdaltest.post_reason('bad content: ' + res[10])
         return 'fail'
 
     gdal.Unlink("/vsimem/bigdepthzip.zip")
@@ -618,8 +618,8 @@ def vsizip_13():
         gdaltest.post_reason('fail')
         return 'fail'
     # Test truncation
-    lst_truncated = gdal.ReadDir('/vsizip/vsimem/vsizip_13.zip', int(len(lst)/2))
-    if len(lst_truncated) <= int(len(lst)/2):
+    lst_truncated = gdal.ReadDir('/vsizip/vsimem/vsizip_13.zip', int(len(lst) / 2))
+    if len(lst_truncated) <= int(len(lst) / 2):
         gdaltest.post_reason('fail')
         return 'fail'
 

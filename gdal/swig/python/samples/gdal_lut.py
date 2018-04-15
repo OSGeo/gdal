@@ -224,7 +224,7 @@ for iY in range(src_ds.RasterYSize):
     dst_data = numpy.take(lookup,src_data)
     dst_band.WriteArray(dst_data,0,iY)
 
-    gdal.TermProgress((iY+1.0) / src_ds.RasterYSize)
+    gdal.TermProgress((iY + 1.0) / src_ds.RasterYSize)
 
 src_ds = None
 dst_ds = None

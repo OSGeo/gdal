@@ -203,9 +203,9 @@ def validate(xml_filename_or_content, xsd_filename=None, \
 
 def transform_abs_links_to_ref_links(path, level=0):
     for file in os.listdir(path):
-        filename=path + '/' + file
+        filename = path + '/' + file
         if os.path.isdir(filename) and filename.find('examples') < 0:
-            transform_abs_links_to_ref_links(filename, level+1)
+            transform_abs_links_to_ref_links(filename, level + 1)
         elif filename.endswith('.xsd'):
             #print(level)
             #print(filename)
@@ -258,9 +258,9 @@ def transform_abs_links_to_ref_links(path, level=0):
 
 def transform_inspire_abs_links_to_ref_links(path, level=0):
     for file in os.listdir(path):
-        filename=path + '/' + file
+        filename = path + '/' + file
         if os.path.isdir(filename) and filename.find('examples') < 0:
-            transform_inspire_abs_links_to_ref_links(filename, level+1)
+            transform_inspire_abs_links_to_ref_links(filename, level + 1)
         elif filename.endswith('.xsd'):
             #print(level)
             #print(filename)
@@ -529,14 +529,14 @@ if __name__ == '__main__':
             target_dir = argv[i]
         elif argv[i] == "-download_ogc_schemas":
             ret = download_ogc_schemas(target_dir=target_dir, force_download=True)
-            if i == len(argv)-1:
+            if i == len(argv) - 1:
                 if ret:
                     sys.exit(0)
                 else:
                     sys.exit(1)
         elif argv[i] == "-download_inspire_schemas":
             ret = download_inspire_schemas(target_dir=target_dir, force_download=True)
-            if i == len(argv)-1:
+            if i == len(argv) - 1:
                 if ret:
                     sys.exit(0)
                 else:

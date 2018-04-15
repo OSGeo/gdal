@@ -285,7 +285,7 @@ def ogr_dgn_8():
 
     # should be: 'BRUSH(fc:#b40000,id:"ogr-brush-0")'
     if feat.GetStyleString() != 'PEN(id:"ogr-pen-0",c:#b40000)':
-        gdaltest.post_reason('feature 3: Style string different than expected: '+ feat.GetStyleString())
+        gdaltest.post_reason('feature 3: Style string different than expected: ' + feat.GetStyleString())
         return 'fail'
 
     dgn2_ds = None

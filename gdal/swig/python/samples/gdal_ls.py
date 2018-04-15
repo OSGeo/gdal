@@ -186,8 +186,8 @@ def gdal_ls(argv, fout=sys.stdout):
             recurseInTGZ = True
         elif argv[i] == '-noprefix':
             display_prefix = False
-        elif argv[i] == '-depth' and i < len(argv)-1:
-            depth = int(argv[i+1])
+        elif argv[i] == '-depth' and i < len(argv) - 1:
+            depth = int(argv[i + 1])
             i = i + 1
         elif argv[i][0] == '-':
             sys.stderr.write('Unrecognized option : %s\n' % argv[i])
@@ -205,7 +205,7 @@ def gdal_ls(argv, fout=sys.stdout):
 
     # Remove trailing
     if dirname[-1] == '/':
-        dirname = dirname[0:len(dirname)-1]
+        dirname = dirname[0:len(dirname) - 1]
 
     if needsVSICurl(dirname):
         dirname = '/vsicurl/' + dirname

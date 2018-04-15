@@ -124,9 +124,9 @@ def vrt_read_3():
     # A simple Checksum() cannot detect if the fix works or not as
     # Checksum() reads line per line, and we must use IRasterIO() on multi-line request
     data = ds.GetRasterBand(1).ReadRaster(90,0,20,100)
-    got = struct.unpack('B' * 20*100, data)
+    got = struct.unpack('B' * 20 * 100, data)
     for i in range(100):
-        if got[i*20 + 9] != 255:
+        if got[i * 20 + 9] != 255:
             gdaltest.post_reason('at line %d, did not find 255' % i)
             return 'fail'
     ds = None
@@ -760,7 +760,7 @@ def vrt_read_20():
 
     shutil.copy('data/byte.tif', 'tmp')
     for i in range(3):
-        open('tmp/byte1_%d.vrt' % (i+1), 'wt').write("""<VRTDataset rasterXSize="20" rasterYSize="20">
+        open('tmp/byte1_%d.vrt' % (i + 1), 'wt').write("""<VRTDataset rasterXSize="20" rasterYSize="20">
     <VRTRasterBand dataType="Byte" band="1">
         <SimpleSource>
         <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
@@ -973,7 +973,7 @@ def vrt_read_22():
         return 'fail'
 
     data = ds.ReadRaster()
-    got = struct.unpack('B' * 20*20, data)
+    got = struct.unpack('B' * 20 * 20, data)
     if got[0] != 63:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1298,14 +1298,14 @@ def vrt_read_29():
     # Check that the 2 bands share the same source handle
     ds.GetRasterBand(1).Checksum()
     lst = gdaltest.get_opened_files()
-    if len(lst) != len(lst_before)+1:
+    if len(lst) != len(lst_before) + 1:
         gdaltest.post_reason('fail')
         print(lst)
         print(lst_before)
         return 'fail'
     ds.GetRasterBand(2).Checksum()
     lst = gdaltest.get_opened_files()
-    if len(lst) != len(lst_before)+1:
+    if len(lst) != len(lst_before) + 1:
         gdaltest.post_reason('fail')
         print(lst)
         print(lst_before)
@@ -1317,7 +1317,7 @@ def vrt_read_29():
     # Check that it consumes an extra handle
     ds2.GetRasterBand(1).Checksum()
     lst = gdaltest.get_opened_files()
-    if len(lst) != len(lst_before)+2:
+    if len(lst) != len(lst_before) + 2:
         gdaltest.post_reason('fail')
         print(lst)
         print(lst_before)
@@ -1343,8 +1343,8 @@ def vrt_read_30():
 </VRTDataset>""")
 
     data = ds.ReadRaster(0,0,2,2,2,2, buf_pixel_space=3, buf_line_space=2 * 3, buf_band_space=1)
-    got = struct.unpack('B' * 2*2*3, data)
-    for i in range(2*2*3):
+    got = struct.unpack('B' * 2 * 2 * 3, data)
+    for i in range(2 * 2 * 3):
         if got[i] != 0:
             print(got)
             return 'fail'
@@ -1371,14 +1371,14 @@ dy           1
     ds = gdal.Translate('', '/vsimem/in.asc', outputType=gdal.GDT_Byte, format='VRT')
 
     data = ds.GetRasterBand(1).ReadRaster(0,0,2,2, buf_type=gdal.GDT_Float32)
-    got = struct.unpack('f' * 2*2, data)
+    got = struct.unpack('f' * 2 * 2, data)
     if got != (0, 1, 254, 255):
         gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
     data = ds.ReadRaster(0,0,2,2, buf_type=gdal.GDT_Float32)
-    got = struct.unpack('f' * 2*2, data)
+    got = struct.unpack('f' * 2 * 2, data)
     if got != (0, 1, 254, 255):
         gdaltest.post_reason('fail')
         print(got)

@@ -587,7 +587,7 @@ def rda_graph_nominal():
     handler.add('GET', '/rda_api/tile/foo/bar/0/1.tif', 200, {}, tile10_data)
     handler.add('GET', '/rda_api/tile/foo/bar/1/1.tif', 200, {}, tile11_data)
     with webserver.install_http_handler(handler):
-        cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+        cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [54287, 50451, 21110]:
         gdaltest.post_reason('fail')
         print(cs)
@@ -596,7 +596,7 @@ def rda_graph_nominal():
     # Retry without any network setup to test caching
     with gdaltest.config_options(config_options):
         ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [54287, 50451, 21110]:
         gdaltest.post_reason('fail')
         print(cs)
@@ -607,11 +607,11 @@ def rda_graph_nominal():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if data[0+320*300] != 250:
+    if data[0 + 320 * 300] != 250:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if data[0+320*300*2] != 245:
+    if data[0 + 320 * 300 * 2] != 245:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -619,11 +619,11 @@ def rda_graph_nominal():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if data[320*299] != 225:
+    if data[320 * 299] != 225:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if data[320*299+319] != 210:
+    if data[320 * 299 + 319] != 210:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -682,7 +682,7 @@ def rda_graph_nominal():
     if data[0] != 255:
         gdaltest.post_reason('fail')
         return 'fail'
-    if data[256*(256-2)] != 225:
+    if data[256 * (256 - 2)] != 225:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -880,7 +880,7 @@ def rda_template_nominal():
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"template-id": "foo","params": [{"nodeId": "bar"}],"options":{"delete-on-close":false}}')
 
-        cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+        cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
         if cs != [54287, 50451, 21110]:
             gdaltest.post_reason('fail')
             print(cs)
@@ -889,7 +889,7 @@ def rda_template_nominal():
     # Retry without any network setup to test caching
     with gdaltest.config_options(config_options):
         ds = gdal.Open('{"template-id": "foo","params": [{"nodeId": "bar"}],"options":{"delete-on-close":false}}')
-    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [54287, 50451, 21110]:
         gdaltest.post_reason('fail')
         print(cs)
@@ -900,11 +900,11 @@ def rda_template_nominal():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if data[0+320*300] != 250:
+    if data[0 + 320 * 300] != 250:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if data[0+320*300*2] != 245:
+    if data[0 + 320 * 300 * 2] != 245:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -912,11 +912,11 @@ def rda_template_nominal():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if data[320*299] != 225:
+    if data[320 * 299] != 225:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if data[320*299+319] != 210:
+    if data[320 * 299 + 319] != 210:
         gdaltest.post_reason('fail')
         return 'fail'
 

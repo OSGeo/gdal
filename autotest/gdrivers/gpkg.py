@@ -142,7 +142,7 @@ def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src=True, cla
         else:
             src_band = i + 1
         data = src_ds.GetRasterBand(src_band).ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize)
-        mem_ds.GetRasterBand(i+1).WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data)
+        mem_ds.GetRasterBand(i + 1).WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data)
     if tile_drv.ShortName == 'PNG':
         options = []
     else:
@@ -152,10 +152,10 @@ def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src=True, cla
         mem_ds = gdal.GetDriverByName('MEM').Create('', src_ds.RasterXSize, src_ds.RasterYSize, working_bands)
         mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
                         tmp_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize))
-        expected_cs = [mem_ds.GetRasterBand(i+1).Checksum() for i in range(working_bands)]
+        expected_cs = [mem_ds.GetRasterBand(i + 1).Checksum() for i in range(working_bands)]
     else:
         tmp_ds.FlushCache()
-        expected_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(working_bands)]
+        expected_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(working_bands)]
     mem_ds = None
     tmp_ds = None
     gdal.Unlink('/vsimem/tmp.' + tile_drv.ShortName)
@@ -252,7 +252,7 @@ def gpkg_1():
 
     got_gt = out_ds.GetGeoTransform()
     for i in range(6):
-        if abs(expected_gt[i]-got_gt[i])>1e-8:
+        if abs(expected_gt[i] - got_gt[i]) > 1e-8:
             gdaltest.post_reason('fail')
             return 'fail'
     got_wkt = out_ds.GetProjectionRef()
@@ -260,7 +260,7 @@ def gpkg_1():
         gdaltest.post_reason('fail')
         return 'fail'
     expected_cs = [expected_cs, expected_cs, expected_cs, 4873]
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -280,7 +280,7 @@ def gpkg_1():
 
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['BAND_COUNT=3'])
     expected_cs = expected_cs[0:3]
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(out_ds.RasterCount)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(out_ds.RasterCount)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -292,7 +292,7 @@ def gpkg_1():
         gdaltest.post_reason('fail')
         return 'fail'
     expected_cs = [clamped_expected_cs,clamped_expected_cs,clamped_expected_cs,4898]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -318,7 +318,7 @@ def gpkg_1():
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
     expected_cs = [expected_cs, expected_cs, expected_cs, 4873]
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -355,7 +355,7 @@ def gpkg_2():
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
     expected_cs = [expected_cs, expected_cs, expected_cs, 4873]
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -374,7 +374,7 @@ def gpkg_2():
     out_ds = None
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['USE_TILE_EXTENT=YES'])
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != clamped_expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(clamped_expected_cs)))
@@ -391,7 +391,7 @@ def gpkg_2():
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
     expected_cs = [expected_cs, expected_cs, expected_cs, 4873]
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -462,7 +462,7 @@ def gpkg_3():
         return 'fail'
 
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg')
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -485,7 +485,7 @@ def gpkg_3():
     out_ds = None
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['USE_TILE_EXTENT=YES'])
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != clamped_expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(clamped_expected_cs)))
@@ -502,7 +502,7 @@ def gpkg_3():
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
     expected_cs.append(4873)
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -595,7 +595,7 @@ def gpkg_4(tile_drv_name='PNG'):
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
     expected_cs.append(30658)
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -605,7 +605,7 @@ def gpkg_4(tile_drv_name='PNG'):
     out_ds = None
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['USE_TILE_EXTENT=YES'])
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != clamped_expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(clamped_expected_cs)))
@@ -622,7 +622,7 @@ def gpkg_4(tile_drv_name='PNG'):
     out_ds = None
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -700,7 +700,7 @@ def gpkg_7(tile_drv_name='PNG'):
     gdal.Unlink(src_filename)
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(working_bands)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(working_bands)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -721,7 +721,7 @@ def gpkg_7(tile_drv_name='PNG'):
     gdal.Unlink(tmp_filename)
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -742,7 +742,7 @@ def gpkg_7(tile_drv_name='PNG'):
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
     expected_cs = [0, 0, 0, 0]
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -812,7 +812,7 @@ def gpkg_10():
         gdaltest.post_reason('fail')
         print(block_size)
         return 'fail'
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -837,7 +837,7 @@ def gpkg_10():
 
     expected_cs = [expected_cs_single_band]
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['BAND_COUNT=1'])
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(out_ds.RasterCount)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(out_ds.RasterCount)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -890,7 +890,7 @@ def gpkg_10():
 
     expected_cs = [10991, 57677, 34965, 10638]
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -934,7 +934,7 @@ def gpkg_11(tile_drv_name='JPEG'):
       <SourceBand>1</SourceBand>
       <ColorTableComponent>%d</ColorTableComponent>
     </ComplexSource>
-  </VRTRasterBand>""" % (i+1, i+1)
+  </VRTRasterBand>""" % (i + 1, i + 1)
     rgba_xml += '</VRTDataset>'
     rgba_ds = gdal.Open(rgba_xml)
 
@@ -949,7 +949,7 @@ def gpkg_11(tile_drv_name='JPEG'):
     rgba_ds = None
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(working_bands)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(working_bands)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -989,7 +989,7 @@ def gpkg_13():
 
     expected_cs = [63025, 48175, 12204]
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -1002,7 +1002,7 @@ def gpkg_13():
 
     expected_cs = [expected_cs_single_band]
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['BAND_COUNT=1'])
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(out_ds.RasterCount)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(out_ds.RasterCount)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -1028,7 +1028,7 @@ def gpkg_13():
         gdaltest.post_reason('fail')
         return 'fail'
     expected_cs = [62358, 45823, 12238, 64301]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -1156,7 +1156,7 @@ def gpkg_14():
         gdaltest.post_reason('fail')
         return 'fail'
     expected_cs = [27644,31968,38564,64301]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -1165,18 +1165,18 @@ def gpkg_14():
 
     # Open with exactly one tile shift
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_UPDATE, open_options=['TILE_FORMAT=PNG', 'MINX=-410.4','MAXY=320.4'])
-    if ds.RasterXSize != 400+256 or ds.RasterYSize != 200+256:
+    if ds.RasterXSize != 400 + 256 or ds.RasterYSize != 200 + 256:
         gdaltest.post_reason('fail')
         return 'fail'
     expected_cs = [29070,32796,41086,64288]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
     data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
     for i in range(ds.RasterCount):
-        ds.GetRasterBand(i+1).Fill(0)
+        ds.GetRasterBand(i + 1).Fill(0)
     ds.FlushCache()
     sql_lyr = ds.ExecuteSQL('SELECT * FROM foo')
     fc = sql_lyr.GetFeatureCount()
@@ -1195,7 +1195,7 @@ def gpkg_14():
         gdaltest.post_reason('fail')
         return 'fail'
     expected_cs = [28940, 32454, 40526, 64323]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -1205,7 +1205,7 @@ def gpkg_14():
     data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
     # Do a clean just to be sure
     for i in range(ds.RasterCount):
-        ds.GetRasterBand(i+1).Fill(0)
+        ds.GetRasterBand(i + 1).Fill(0)
     ds.FlushCache()
     sql_lyr = ds.ExecuteSQL('SELECT * FROM foo')
     fc = sql_lyr.GetFeatureCount()
@@ -1218,7 +1218,7 @@ def gpkg_14():
 
     ds = gdal.OpenEx('GPKG:/vsimem/tmp.gpkg:foo', gdal.OF_UPDATE, open_options=['MINX=-270','MAXY=180','MINY=-180','MAXX=270'])
     expected_cs = [28940, 32454, 40526, 64323]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -1230,7 +1230,7 @@ def gpkg_14():
 
     ds = gdal.OpenEx('GPKG:/vsimem/tmp.gpkg:foo', open_options=['MINX=-270','MAXY=180','MINY=-180','MAXX=270'])
     expected_cs = [28940, 32454, 40526, 64323]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -1243,7 +1243,7 @@ def gpkg_14():
         gdaltest.post_reason('fail')
         return 'fail'
     expected_cs = [9586,9360,26758,48827]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -1259,7 +1259,7 @@ def gpkg_14():
         gdaltest.post_reason('fail')
         return 'fail'
     expected_cs = [9586,9360,26758,48827]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -1317,7 +1317,7 @@ def gpkg_14():
         gdaltest.post_reason('fail')
         return 'fail'
     expected_cs = [9586,9360,26758,48827]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -1337,7 +1337,7 @@ def gpkg_14():
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['MINX=-10','MAXY=10','MINY=-30','MAXX=30'])
     expected_cs = [4934,4934,4934,4934]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -1358,7 +1358,7 @@ def gpkg_14():
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['MINX=-10','MAXY=10','MINY=-30','MAXX=30'])
     expected_cs = [1223,1223,1223,1223]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -1379,7 +1379,7 @@ def gpkg_14():
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg')
     expected_cs = [13365, 13365, 13365, 13365]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -1415,7 +1415,7 @@ def gpkg_14():
         return 'fail'
 
     expected_cs = [0,56451,0,0]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -1647,15 +1647,15 @@ def gpkg_16():
     val3 = ord(out_ds.GetRasterBand(3).ReadRaster(0,0,1,1))
     out_ds = None
 
-    if abs(val1-255)>1:
+    if abs(val1 - 255) > 1:
         gdaltest.post_reason('fail')
         print(val1)
         return 'fail'
-    if abs(val2-127)>1:
+    if abs(val2 - 127) > 1:
         gdaltest.post_reason('fail')
         print(val2)
         return 'fail'
-    if abs(val3-0)>1:
+    if abs(val3 - 0) > 1:
         gdaltest.post_reason('fail')
         print(val3)
         return 'fail'
@@ -1853,8 +1853,8 @@ def gpkg_18():
 
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tmp.tif', ds)
     tmp_ds.BuildOverviews('CUBIC', [2, 4])
-    expected_cs_ov0 = [tmp_ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(3)]
-    expected_cs_ov1 = [tmp_ds.GetRasterBand(i+1).GetOverview(1).Checksum() for i in range(3)]
+    expected_cs_ov0 = [tmp_ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(3)]
+    expected_cs_ov1 = [tmp_ds.GetRasterBand(i + 1).GetOverview(1).Checksum() for i in range(3)]
     #tmp_ds.BuildOverviews('NEAR', [3])
     #expected_cs_ov_factor3 = [tmp_ds.GetRasterBand(i+1).GetOverview(2).Checksum() for i in range(3)]
     tmp_ds = None
@@ -1863,13 +1863,13 @@ def gpkg_18():
     ds = None
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
-    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(3)]
     if got_cs != expected_cs_ov0:
         gdaltest.post_reason('fail')
         print(got_cs)
         print(expected_cs_ov0)
         return 'fail'
-    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(1).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).GetOverview(1).Checksum() for i in range(3)]
     if got_cs != expected_cs_ov1:
         gdaltest.post_reason('fail')
         print(got_cs)
@@ -1893,20 +1893,20 @@ def gpkg_18():
     if out_ds.GetRasterBand(1).GetOverviewCount() != 3:
         gdaltest.post_reason('fail')
         return 'fail'
-    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(3)]
     if got_cs != expected_cs_ov0:
         gdaltest.post_reason('fail')
         print(got_cs)
         print(expected_cs_ov0)
         return 'fail'
     expected_cs = [24807, 25544, 34002]
-    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(1).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).GetOverview(1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print(got_cs)
         print(expected_cs)
         return 'fail'
-    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(2).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).GetOverview(2).Checksum() for i in range(3)]
     if got_cs != expected_cs_ov1:
         gdaltest.post_reason('fail')
         print(got_cs)
@@ -1926,20 +1926,20 @@ def gpkg_18():
     if out_ds.GetRasterBand(1).GetOverviewCount() != 3:
         gdaltest.post_reason('fail')
         return 'fail'
-    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(3)]
     if got_cs != expected_cs_ov0:
         gdaltest.post_reason('fail')
         print(got_cs)
         print(expected_cs_ov0)
         return 'fail'
     expected_cs = [24807, 25544, 34002]
-    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(1).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).GetOverview(1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print(got_cs)
         print(expected_cs)
         return 'fail'
-    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(2).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).GetOverview(2).Checksum() for i in range(3)]
     if got_cs != expected_cs_ov1:
         gdaltest.post_reason('fail')
         print(got_cs)
@@ -1954,7 +1954,7 @@ def gpkg_18():
         gdaltest.post_reason('fail')
         return 'fail'
     expected_cs = [12725, 12539, 13553]
-    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(3).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).GetOverview(3).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print(got_cs)
@@ -2006,8 +2006,8 @@ def gpkg_19():
 
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tmp.tif', ds)
     tmp_ds.BuildOverviews('NEAR', [2, 4])
-    expected_cs_ov0 = [tmp_ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(1)]
-    expected_cs_ov1 = [tmp_ds.GetRasterBand(i+1).GetOverview(1).Checksum() for i in range(1)]
+    expected_cs_ov0 = [tmp_ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(1)]
+    expected_cs_ov1 = [tmp_ds.GetRasterBand(i + 1).GetOverview(1).Checksum() for i in range(1)]
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tmp.tif')
 
@@ -2017,13 +2017,13 @@ def gpkg_19():
     if out_ds.GetRasterBand(1).GetOverview(0).GetColorTable() is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(1)]
+    got_cs = [out_ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(1)]
     if got_cs != expected_cs_ov0:
         gdaltest.post_reason('fail')
         print(got_cs)
         print(expected_cs_ov0)
         return 'fail'
-    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(1).Checksum() for i in range(1)]
+    got_cs = [out_ds.GetRasterBand(i + 1).GetOverview(1).Checksum() for i in range(1)]
     if got_cs != expected_cs_ov1:
         gdaltest.post_reason('fail')
         print(got_cs)
@@ -2058,7 +2058,7 @@ def gpkg_20():
     ds = None
 
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER)
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [30875,31451,38110,64269]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -2077,7 +2077,7 @@ def gpkg_20():
     ds = None
 
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER)
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [27001,30168,34800,64269]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -2096,7 +2096,7 @@ def gpkg_20():
     ds = None
 
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER)
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [27718,31528,42062,64269]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -2123,7 +2123,7 @@ def gpkg_20():
     ds = None
 
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER)
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [2500, 5000, 7500, 30658]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -2495,7 +2495,7 @@ def gpkg_22(tile_drv_name='PNG'):
     out_ds = None
 
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['BAND_COUNT=2'])
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(2)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(2)]
     if got_cs != expected_cs:
         if tile_drv_name != 'WEBP' or got_cs not in ([4899, 10807], [6274, 10807]):
             gdaltest.post_reason('fail')
@@ -2504,7 +2504,7 @@ def gpkg_22(tile_drv_name='PNG'):
     out_ds = None
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [expected_cs[0], expected_cs[0], expected_cs[0], expected_cs[1]]
     if got_cs != expected_cs:
         if tile_drv_name != 'WEBP' or got_cs not in ([4899, 4899, 4899, 10807], [4899, 4984, 4899, 10807], [6274, 6274, 6274, 10807]):
@@ -2514,7 +2514,7 @@ def gpkg_22(tile_drv_name='PNG'):
     out_ds = None
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['USE_TILE_EXTENT=YES'])
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != clamped_expected_cs:
         if tile_drv_name != 'WEBP' or got_cs not in ([5266, 5266, 5266, 11580], [5266, 5310, 5266, 11580], [6436, 6436, 6436, 11580]):
             gdaltest.post_reason('fail')
@@ -2574,14 +2574,14 @@ def gpkg_26():
     for (scheme, expected_cs, other_options) in tests:
 
         src_ds = gdal.Open('data/byte.tif')
-        options = ['TILE_FORMAT=PNG', 'TILING_SCHEME='+scheme]
+        options = ['TILE_FORMAT=PNG', 'TILING_SCHEME=' + scheme]
         if other_options:
             options = options + other_options
         ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options=options)
         ds = None
 
         ds = gdal.Open('/vsimem/tmp.gpkg')
-        got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+        got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
         # VC12 returns [3561, 3561, 3561, 3691] for GoogleCRS84Quad
         # and For GoogleCRS84Quad RESAMPLING=CUBIC, got [3415, 3415, 3415, 3691]
         if max([abs(got_cs[i] - expected_cs[i]) for i in range(4)]) > 2:
@@ -2599,14 +2599,14 @@ def gpkg_26():
     for (scheme, expected_cs, other_options) in tests:
 
         src_ds = gdal.Open('data/small_world.tif')
-        options = ['TILE_FORMAT=PNG', 'TILING_SCHEME='+scheme]
+        options = ['TILE_FORMAT=PNG', 'TILING_SCHEME=' + scheme]
         if other_options:
             options = options + other_options
         ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options=options)
         ds = None
 
         ds = gdal.Open('/vsimem/tmp.gpkg')
-        got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+        got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
         if got_cs not in expected_cs:
             gdaltest.post_reason('fail')
             print('For %s, got %s, expected %s' % (scheme, str(got_cs), str(expected_cs)))
@@ -2698,8 +2698,8 @@ def gpkg_27():
     out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options=['TILE_FORMAT=PNG', 'BLOCKXSIZE=200', 'BLOCKYSIZE=200'])
     gdal.SetCacheMax(oldSize)
 
-    expected_cs = [src_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    expected_cs = [src_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -2724,8 +2724,8 @@ def gpkg_28():
     src_ds = gdal.Open('data/small_world.tif')
     data = []
     for b in range(3):
-        data.append(src_ds.GetRasterBand(b+1).ReadRaster())
-    expected_cs = [src_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+        data.append(src_ds.GetRasterBand(b + 1).ReadRaster())
+    expected_cs = [src_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     src_ds = None
 
     out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 400 ,200, 3, options=['TILE_FORMAT=PNG', 'BLOCKXSIZE=400', 'BLOCKYSIZE=200'])
@@ -2740,10 +2740,10 @@ def gpkg_28():
     out_ds.GetRasterBand(2).ReadRaster(0,0,400,200)
     # Write remaining bands 2 and 3
     for b in range(2):
-        out_ds.GetRasterBand(b+2).WriteRaster(0,0,400,200, data[b+1])
+        out_ds.GetRasterBand(b + 2).WriteRaster(0,0,400,200, data[b + 1])
     out_ds = None
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['BAND_COUNT=3'])
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -2768,9 +2768,9 @@ def gpkg_29(x=0):
     left = []
     right = []
     for b in range(3):
-        left.append(src_ds.GetRasterBand(b+1).ReadRaster(0,0,200,200))
-        right.append(src_ds.GetRasterBand(b+1).ReadRaster(200,0,200,200))
-    expected_cs = [src_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+        left.append(src_ds.GetRasterBand(b + 1).ReadRaster(0,0,200,200))
+        right.append(src_ds.GetRasterBand(b + 1).ReadRaster(200,0,200,200))
+    expected_cs = [src_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     src_ds = None
 
     out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 400 ,200, 3, options=['TILE_FORMAT=PNG', 'BLOCKXSIZE=200', 'BLOCKYSIZE=200'])
@@ -2783,12 +2783,12 @@ def gpkg_29(x=0):
     gdal.SetCacheMax(oldSize)
     out_ds.GetRasterBand(2).ReadRaster(x,0,200,200)
     for b in range(2):
-        out_ds.GetRasterBand(b+2).WriteRaster(0,0,200,200, left[b+1])
+        out_ds.GetRasterBand(b + 2).WriteRaster(0,0,200,200, left[b + 1])
     for b in range(3):
-        out_ds.GetRasterBand(b+1).WriteRaster(200,0,200,200, right[b])
+        out_ds.GetRasterBand(b + 1).WriteRaster(200,0,200,200, right[b])
     out_ds = None
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['BAND_COUNT=3'])
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -2827,7 +2827,7 @@ def gpkg_31():
     if check_tile_format(ds, 'PNG', 4, False) != 'success':
         return 'fail'
     expected_cs = [4672, 4672, 4672, 4873]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -2858,7 +2858,7 @@ def gpkg_32():
     if check_tile_format(ds, 'PNG', 4, False) != 'success':
         return 'fail'
     expected_cs = [1970, 1970, 1970, 10807]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -2866,7 +2866,7 @@ def gpkg_32():
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['BAND_COUNT=2'])
     expected_cs = [1970, 10807]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -2899,7 +2899,7 @@ def gpkg_33():
     if check_tile_format(ds, 'PNG', 4, False) != 'success':
         return 'fail'
     expected_cs = [10991, 57677, 34965, 10638]
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -3005,7 +3005,7 @@ def gpkg_36():
 
     expected_cs = [993, 50461, 64354, 17849]
     out_ds = gdal.Open('/vsimem/gpkg_36.gpkg')
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -3065,7 +3065,7 @@ def gpkg_38():
     filesize = gdal.VSIStatL('/vsimem/gpkg_38.gpkg').size
     gdal.Unlink('/vsimem/gpkg_38.gpkg')
 
-    filename = '/vsimem/||maxlength=%d||gpkg_38.gpkg' % (filesize-100000)
+    filename = '/vsimem/||maxlength=%d||gpkg_38.gpkg' % (filesize - 100000)
     with gdaltest.error_handler():
         ds = gdaltest.gpkg_dr.CreateCopy(filename, src_ds, options=['TILE_FORMAT=PNG', 'BLOCKSIZE=8'])
         ds_is_none = ds is None
@@ -3075,7 +3075,7 @@ def gpkg_38():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    filename = '/vsimem/||maxlength=%d||gpkg_38.gpkg' % (filesize-1)
+    filename = '/vsimem/||maxlength=%d||gpkg_38.gpkg' % (filesize - 1)
     with gdaltest.error_handler():
         ds = gdaltest.gpkg_dr.CreateCopy(filename, src_ds, options=['TILE_FORMAT=PNG', 'BLOCKSIZE=8'])
         ds_is_none = ds is None

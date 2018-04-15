@@ -62,7 +62,7 @@ class Doxy2SWIG:
         f.close()
 
         self.pieces = []
-        self.pieces.append('\n// File: %s\n'%\
+        self.pieces.append('\n// File: %s\n' %\
                            os.path.basename(f.name))
 
         self.space_re = re.compile(r'\s+')
@@ -342,7 +342,7 @@ class Doxy2SWIG:
                 elif count > 2:
                     ret.append('\n\n')
                 elif count:
-                    ret.append('\n'*count)
+                    ret.append('\n' * count)
                 count = 0
                 ret.append(i)
 

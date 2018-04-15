@@ -823,7 +823,7 @@ def ogr_mongodb_2():
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
-    if f['int'] != 2147483647 or f['int64'] != 9223372036854775807 or f['real'] +1 != f['real']:
+    if f['int'] != 2147483647 or f['int64'] != 9223372036854775807 or f['real'] + 1 != f['real']:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'

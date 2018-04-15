@@ -447,7 +447,7 @@ def pixfun_diff_r():
         return 'fail'
     refdata2 = refds.GetRasterBand(1).ReadAsArray(10, 10, 5, 6)
 
-    if not numpy.alltrue(data == refdata1-refdata2):
+    if not numpy.alltrue(data == refdata1 - refdata2):
         return 'fail'
 
     return 'success'
@@ -482,7 +482,7 @@ def pixfun_diff_c():
         return 'fail'
     refdata2 = refds.GetRasterBand(1).ReadAsArray(0, 0, 5, 6)
 
-    if not numpy.alltrue(data == refdata1-refdata2):
+    if not numpy.alltrue(data == refdata1 - refdata2):
         return 'fail'
 
     return 'success'
@@ -541,7 +541,7 @@ def pixfun_mul_c():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if not numpy.alltrue(data == refdata*refdata):
+    if not numpy.alltrue(data == refdata * refdata):
         return 'fail'
 
     return 'success'
@@ -569,7 +569,7 @@ def pixfun_cmul_c():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if not numpy.alltrue(data == refdata*refdata.conj()):
+    if not numpy.alltrue(data == refdata * refdata.conj()):
         return 'fail'
 
     return 'success'
@@ -635,7 +635,7 @@ def pixfun_inv_r():
     refdata = refds.GetRasterBand(1).ReadAsArray()
     refdata = refdata.astype('float64')
 
-    if not numpy.alltrue(data == 1./refdata):
+    if not numpy.alltrue(data == 1. / refdata):
         return 'fail'
 
     return 'success'
@@ -663,7 +663,7 @@ def pixfun_inv_c():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
     refdata = refdata.astype('complex')
-    delta = data - 1./refdata
+    delta = data - 1. / refdata
 
     if not numpy.alltrue(abs(delta.real) < 1e-13):
         return 'fail'
@@ -695,7 +695,7 @@ def pixfun_intensity_c():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if not numpy.alltrue(data == (refdata*refdata.conj()).real):
+    if not numpy.alltrue(data == (refdata * refdata.conj()).real):
         return 'fail'
 
     return 'success'
@@ -723,7 +723,7 @@ def pixfun_intensity_r():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    if not numpy.alltrue(data == (refdata*refdata.conj()).real):
+    if not numpy.alltrue(data == (refdata * refdata.conj()).real):
         return 'fail'
 
     return 'success'
@@ -890,7 +890,7 @@ def pixfun_dB2amp():
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
     #if not numpy.alltrue(data == 10.**(refdata/20.)):
-    if not numpy.allclose(data, 10.**(refdata/20.)):
+    if not numpy.allclose(data, 10.**(refdata / 20.)):
         return 'fail'
 
     return 'success'
@@ -919,7 +919,7 @@ def pixfun_dB2pow():
     refdata = refds.GetRasterBand(1).ReadAsArray()
     refdata = refdata.astype('float64')
 
-    if not numpy.allclose(data, 10.**(refdata/10.)):
+    if not numpy.allclose(data, 10.**(refdata / 10.)):
         return 'fail'
 
     return 'success'

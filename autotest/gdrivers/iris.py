@@ -75,7 +75,7 @@ def iris_2():
     expected_gt = [16435.721785269096, 1370.4263720754534, 0.0, 5289830.4584420761, 0.0, -1357.6498705837876]
     for i in range(6):
         if (expected_gt[i] == 0.0 and got_gt[i] != 0.0) or \
-           (expected_gt[i] != 0.0 and abs(got_gt[i] - expected_gt[i])/abs(expected_gt[i]) > 1e-5) :
+           (expected_gt[i] != 0.0 and abs(got_gt[i] - expected_gt[i]) / abs(expected_gt[i]) > 1e-5) :
             gdaltest.post_reason('fail')
             print(got_gt)
             print(i)
@@ -112,7 +112,7 @@ def iris_2():
 
     for md in expected_metadata:
         key = md[0:md.find('=')]
-        value = md[md.find('=')+1:]
+        value = md[md.find('=') + 1:]
         if got_metadata[key] != value:
             gdaltest.post_reason('did not find %s' % key)
             print(got_metadata)

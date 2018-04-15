@@ -42,7 +42,7 @@ import gdaltest
 def ace2_1():
 
     f = gdal.VSIFOpenL('/vsimem/45N015E_5M.ACE2', 'wb')
-    gdal.VSIFSeekL(f, 180*180*4-1, 0)
+    gdal.VSIFSeekL(f, 180 * 180 * 4 - 1, 0)
     gdal.VSIFWriteL('\0', 1, 1, f)
     gdal.VSIFCloseL(f)
 

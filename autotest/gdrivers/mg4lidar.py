@@ -80,7 +80,7 @@ def mg4lidar_1():
     gt = ds.GetGeoTransform()
     ref_gt = (504489.919999999983702,3.078227571115974,0,4795848.389999999664724,0,-3.078259860787739)
     for i in range(6):
-        if abs(gt[i]-ref_gt[i]) > 1e-6:
+        if abs(gt[i] - ref_gt[i]) > 1e-6:
             gdaltest.post_reason('did not get expected geotransform')
             print(gt)
             return 'fail'
