@@ -553,7 +553,7 @@ def vsicrypt_6():
 
     try:
         import ctypes
-    except:
+    except ImportError:
         return 'skip'
     import testnonboundtoswig
 

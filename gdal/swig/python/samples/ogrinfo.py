@@ -54,7 +54,7 @@ def EQUAL(a, b):
 #**********************************************************************
 
 
-def main(argv = None):
+def main(argv=None):
 
     global bReadOnly
     global bVerbose
@@ -354,11 +354,11 @@ def ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter, options):
         if nGeomFieldCount > 1:
             for iGeom in range(nGeomFieldCount):
                 poGFldDefn = poLayer.GetLayerDefn().GetGeomFieldDefn(iGeom)
-                oExt = poLayer.GetExtent(True, geom_field = iGeom, can_return_null = True)
+                oExt = poLayer.GetExtent(True, geom_field=iGeom, can_return_null=True)
                 if oExt is not None:
                     print("Extent (%s): (%f, %f) - (%f, %f)" % (poGFldDefn.GetNameRef(), oExt[0], oExt[2], oExt[1], oExt[3]))
         else:
-            oExt = poLayer.GetExtent(True, can_return_null = True)
+            oExt = poLayer.GetExtent(True, can_return_null=True)
             if oExt is not None:
                 print("Extent: (%f, %f) - (%f, %f)" % (oExt[0], oExt[2], oExt[1], oExt[3]))
 
@@ -421,7 +421,7 @@ def ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter, options):
     return
 
 
-def DumpReadableFeature(poFeature, options = None):
+def DumpReadableFeature(poFeature, options=None):
 
     poDefn = poFeature.GetDefnRef()
     print("OGRFeature(%s):%ld" % (poDefn.GetName(), poFeature.GetFID()))

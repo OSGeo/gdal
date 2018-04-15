@@ -106,7 +106,7 @@ def jpeg_copy_options_icc():
     ds = driver_tiff.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte)
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy('tmp/icc_test.jpg', ds, options = options)
+    ds2 = driver.CreateCopy('tmp/icc_test.jpg', ds, options=options)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
@@ -155,7 +155,7 @@ def jpeg_copy_icc_64K():
     ds = driver_tiff.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte, options)
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy('tmp/icc_test.jpg', ds, options = ['COMMENT=foo'])
+    ds2 = driver.CreateCopy('tmp/icc_test.jpg', ds, options=['COMMENT=foo'])
     ds = None
     md = ds2.GetMetadata("COLOR_PROFILE")
     comment = ds2.GetMetadataItem('COMMENT')

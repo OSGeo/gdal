@@ -180,7 +180,7 @@ def aigrid_online_1():
         if not gdaltest.download_file('http://download.osgeo.org/gdal/data/aig/nzdem/' + filename , 'nzdem/' + filename):
             return 'skip'
 
-    tst = gdaltest.GDALTest('AIG', 'tmp/cache/nzdem/nzdem500/hdr.adf', 1, 45334, filename_absolute = 1)
+    tst = gdaltest.GDALTest('AIG', 'tmp/cache/nzdem/nzdem500/hdr.adf', 1, 45334, filename_absolute=1)
     ret = tst.testOpen()
     if ret != 'success':
         return ret
@@ -264,7 +264,7 @@ def aigrid_online_2():
         except:
             return 'skip'
 
-    tst = gdaltest.GDALTest('AIG', 'tmp/cache/ai_bug/ai_bug/hdr.adf', 1, 16018, filename_absolute = 1)
+    tst = gdaltest.GDALTest('AIG', 'tmp/cache/ai_bug/ai_bug/hdr.adf', 1, 16018, filename_absolute=1)
     return tst.testOpen()
 
 ###############################################################################

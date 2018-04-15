@@ -103,7 +103,7 @@ def test_gdaladdo_3():
     if test_cli_utilities.get_gdaladdo_path() is None:
         return 'skip'
 
-    gdal.Translate('tmp/test_gdaladdo_3.tif', '../gcore/data/nodata_byte.tif', options = '-outsize 1024 1024')
+    gdal.Translate('tmp/test_gdaladdo_3.tif', '../gcore/data/nodata_byte.tif', options='-outsize 1024 1024')
 
     gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' -ro tmp/test_gdaladdo_3.tif 2')
 
@@ -189,7 +189,7 @@ def test_gdaladdo_5():
         print(cnt)
         return 'fail'
 
-    gdal.Translate('tmp/test_gdaladdo_5.tif', '../gcore/data/nodata_byte.tif', options = '-outsize 257 257')
+    gdal.Translate('tmp/test_gdaladdo_5.tif', '../gcore/data/nodata_byte.tif', options='-outsize 257 257')
 
     # Will generate overviews of size 129x129
     gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' tmp/test_gdaladdo_5.tif')

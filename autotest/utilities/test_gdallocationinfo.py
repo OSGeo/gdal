@@ -147,7 +147,7 @@ def test_gdallocationinfo_6():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/test_gdallocationinfo_6.tif', src_ds)
-    ds.BuildOverviews('AVERAGE', overviewlist = [2])
+    ds.BuildOverviews('AVERAGE', overviewlist=[2])
     ds = None
     src_ds = None
 

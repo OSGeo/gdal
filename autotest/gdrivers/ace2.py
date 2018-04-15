@@ -46,7 +46,7 @@ def ace2_1():
     gdal.VSIFWriteL('\0', 1, 1, f)
     gdal.VSIFCloseL(f)
 
-    tst = gdaltest.GDALTest('ACE2', '/vsimem/45N015E_5M.ACE2', 1, 0, filename_absolute = 1)
+    tst = gdaltest.GDALTest('ACE2', '/vsimem/45N015E_5M.ACE2', 1, 0, filename_absolute=1)
     expected_gt = [15.0, 0.08333333333333333, 0.0, 60.0, 0.0, -0.08333333333333333]
     expected_srs = """GEOGCS["WGS 84",
     DATUM["WGS_1984",
@@ -59,7 +59,7 @@ def ace2_1():
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9108"]],
     AUTHORITY["EPSG","4326"]]"""
-    ret = tst.testOpen(check_gt = expected_gt, check_prj = expected_srs)
+    ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs)
 
     gdal.Unlink('/vsimem/45N015E_5M.ACE2')
 

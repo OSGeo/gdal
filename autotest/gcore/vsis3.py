@@ -173,7 +173,7 @@ def vsis3_start_webserver():
     if not gdaltest.built_against_curl():
         return 'skip'
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
         return 'skip'
 
@@ -226,7 +226,7 @@ def vsis3_2():
         return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_fake_bucket/resource', custom_method = get_s3_fake_bucket_resource_method)
+    handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
 
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_fake_bucket/resource')
@@ -242,7 +242,7 @@ def vsis3_2():
             return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_fake_bucket/resource', custom_method = get_s3_fake_bucket_resource_method)
+    handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3_streaming/s3_fake_bucket/resource')
         if f is None:
@@ -278,7 +278,7 @@ def vsis3_2():
         request.end_headers()
         request.wfile.write("""foo""".encode('ascii'))
 
-    handler.add('GET', '/s3_fake_bucket_with_session_token/resource', custom_method = method)
+    handler.add('GET', '/s3_fake_bucket_with_session_token/resource', custom_method=method)
 
     # Test with temporary credentials
     with gdaltest.config_option('AWS_SESSION_TOKEN', 'AWS_SESSION_TOKEN'):
@@ -314,7 +314,7 @@ def vsis3_2():
             request.end_headers()
             request.wfile.write(''.join('a' for i in range(1000000)).encode('ascii'))
 
-    handler.add('GET', '/s3_fake_bucket/resource2.bin', custom_method = method)
+    handler.add('GET', '/s3_fake_bucket/resource2.bin', custom_method=method)
 
     with webserver.install_http_handler(handler):
         #old_val = gdal.GetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN')
@@ -361,7 +361,7 @@ def vsis3_2():
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
 
-    handler.add('GET', '/s3_fake_bucket/redirect', custom_method = method)
+    handler.add('GET', '/s3_fake_bucket/redirect', custom_method=method)
 
     def method(request):
         request.protocol_version = 'HTTP/1.1'
@@ -378,7 +378,7 @@ def vsis3_2():
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
 
-    handler.add('GET', '/s3_fake_bucket/redirect', custom_method = method)
+    handler.add('GET', '/s3_fake_bucket/redirect', custom_method=method)
 
     def method(request):
         request.protocol_version = 'HTTP/1.1'
@@ -393,7 +393,7 @@ def vsis3_2():
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
 
-    handler.add('GET', '/s3_fake_bucket/redirect', custom_method = method)
+    handler.add('GET', '/s3_fake_bucket/redirect', custom_method=method)
 
     # Test region and endpoint 'redirects'
     with webserver.install_http_handler(handler):
@@ -448,7 +448,7 @@ def vsis3_2():
         request.end_headers()
         request.wfile.write(response.encode('ascii'))
 
-    handler.add('GET', '/s3_fake_bucket/non_xml_error', custom_method = method)
+    handler.add('GET', '/s3_fake_bucket/non_xml_error', custom_method=method)
 
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
@@ -565,7 +565,7 @@ def vsis3_2():
         request.end_headers()
         request.wfile.write("""foo""".encode('ascii'))
 
-    handler.add('GET', '/s3_fake_bucket_with_requester_pays/resource', custom_method = method)
+    handler.add('GET', '/s3_fake_bucket_with_requester_pays/resource', custom_method=method)
 
     with gdaltest.config_option('AWS_REQUEST_PAYER', 'requester'):
         with webserver.install_http_handler(handler):
@@ -621,8 +621,8 @@ def vsis3_2():
             request.wfile.write(response.encode('ascii'))
 
     h = HandlerClass('foo')
-    handler.add('GET', '/s3_test_temporary_redirect_read/resource', custom_method = h.method_req_1)
-    handler.add('GET', '/s3_test_temporary_redirect_read/resource', custom_method = h.method_req_2)
+    handler.add('GET', '/s3_test_temporary_redirect_read/resource', custom_method=h.method_req_1)
+    handler.add('GET', '/s3_test_temporary_redirect_read/resource', custom_method=h.method_req_2)
 
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_test_temporary_redirect_read/resource')
@@ -641,8 +641,8 @@ def vsis3_2():
     handler = webserver.SequentialHandler()
 
     h = HandlerClass('bar')
-    handler.add('GET', '/s3_test_temporary_redirect_read/resource2', custom_method = h.method_req_1)
-    handler.add('GET', '/s3_test_temporary_redirect_read/resource2', custom_method = h.method_req_2)
+    handler.add('GET', '/s3_test_temporary_redirect_read/resource2', custom_method=h.method_req_1)
+    handler.add('GET', '/s3_test_temporary_redirect_read/resource2', custom_method=h.method_req_2)
 
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_test_temporary_redirect_read/resource2')
@@ -713,9 +713,9 @@ def vsis3_3():
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
 
-    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method = method)
-    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method = method)
-    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method = method)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method=method)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method=method)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method=method)
 
     def method(request):
         # /vsis3/ should have remembered the change of region and endpoint
@@ -744,7 +744,7 @@ def vsis3_3():
         request.end_headers()
         request.wfile.write(response.encode('ascii'))
 
-    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F', custom_method = method)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F', custom_method=method)
 
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_fake_bucket2/a_dir/resource3.bin')
@@ -981,8 +981,8 @@ def vsis3_3():
                     </CommonPrefixes>
                 </ListBucketResult>
             """)
-    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=%2F', custom_method = h.method_req_1)
-    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=%2F', custom_method = h.method_req_2)
+    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=%2F', custom_method=h.method_req_1)
+    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=%2F', custom_method=h.method_req_2)
 
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsis3/s3_test_temporary_redirect_read_dir')
@@ -1002,8 +1002,8 @@ def vsis3_3():
                 </CommonPrefixes>
             </ListBucketResult>
         """)
-    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=%2F&prefix=test%2F', custom_method = h.method_req_1)
-    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=%2F&prefix=test%2F', custom_method = h.method_req_2)
+    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=%2F&prefix=test%2F', custom_method=h.method_req_1)
+    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=%2F&prefix=test%2F', custom_method=h.method_req_2)
 
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsis3/s3_test_temporary_redirect_read_dir/test')
@@ -1050,7 +1050,7 @@ def vsis3_4():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/s3_fake_bucket3/empty_file.bin', custom_method = method)
+    handler.add('PUT', '/s3_fake_bucket3/empty_file.bin', custom_method=method)
 
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/empty_file.bin', 'wb')
@@ -1162,7 +1162,7 @@ def vsis3_4():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/s3_fake_bucket3/another_file.bin', custom_method = method)
+    handler.add('PUT', '/s3_fake_bucket3/another_file.bin', custom_method=method)
 
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
@@ -1217,8 +1217,8 @@ def vsis3_4():
             request.send_header('Content-Length', 0)
             request.end_headers()
 
-    handler.add('PUT', '/s3_fake_bucket3/redirect', custom_method = method)
-    handler.add('PUT', '/s3_fake_bucket3/redirect', custom_method = method)
+    handler.add('PUT', '/s3_fake_bucket3/redirect', custom_method=method)
+    handler.add('PUT', '/s3_fake_bucket3/redirect', custom_method=method)
 
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
@@ -1306,8 +1306,8 @@ def vsis3_5():
             request.send_header('Content-Length', 0)
             request.end_headers()
 
-    handler.add('DELETE', '/s3_delete_bucket/redirect', custom_method = method)
-    handler.add('DELETE', '/s3_delete_bucket/redirect', custom_method = method)
+    handler.add('DELETE', '/s3_delete_bucket/redirect', custom_method=method)
+    handler.add('DELETE', '/s3_delete_bucket/redirect', custom_method=method)
 
     with webserver.install_http_handler(handler):
         ret = gdal.Unlink('/vsis3/s3_delete_bucket/redirect')
@@ -1360,8 +1360,8 @@ def vsis3_6():
             request.send_header('Content-Length', 0)
             request.end_headers()
 
-    handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads', custom_method = method)
-    handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads', custom_method = method)
+    handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads', custom_method=method)
+    handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads', custom_method=method)
 
     def method(request):
         if request.headers['Content-Length'] != '1048576':
@@ -1375,7 +1375,7 @@ def vsis3_6():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=1&uploadId=my_id', custom_method = method)
+    handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=1&uploadId=my_id', custom_method=method)
 
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
@@ -1394,7 +1394,7 @@ def vsis3_6():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=2&uploadId=my_id', custom_method = method)
+    handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=2&uploadId=my_id', custom_method=method)
 
     def method(request):
 
@@ -1423,7 +1423,7 @@ def vsis3_6():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploadId=my_id', custom_method = method)
+    handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploadId=my_id', custom_method=method)
 
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
@@ -1708,7 +1708,7 @@ aws_secret_access_key = bar
 """)
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_fake_bucket/resource', custom_method = get_s3_fake_bucket_resource_method)
+    handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_fake_bucket/resource')
         if f is None:
@@ -1757,7 +1757,7 @@ aws_secret_access_key = bar
 """)
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_fake_bucket/resource', custom_method = get_s3_fake_bucket_resource_method)
+    handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_fake_bucket/resource')
         if f is None:
@@ -1819,7 +1819,7 @@ aws_secret_access_key = bar
 """)
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_fake_bucket/resource', custom_method = get_s3_fake_bucket_resource_method)
+    handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_fake_bucket/resource')
         if f is None:
@@ -1883,7 +1883,7 @@ aws_secret_access_key = bar
 """)
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_fake_bucket/resource', custom_method = get_s3_fake_bucket_resource_method)
+    handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_fake_bucket/resource')
         if f is None:
@@ -1949,7 +1949,7 @@ aws_secret_access_key = bar
 
     gdal.ErrorReset()
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_fake_bucket/resource', custom_method = get_s3_fake_bucket_resource_method)
+    handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             f = open_for_read('/vsis3/s3_fake_bucket/resource')
@@ -2007,7 +2007,7 @@ def vsis3_read_credentials_ec2():
                 "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
                 "Expiration": "3000-01-01T00:00:00Z"
                 }""")
-    handler.add('GET', '/s3_fake_bucket/resource', custom_method = get_s3_fake_bucket_resource_method)
+    handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_fake_bucket/resource')
         if f is None:
@@ -2077,7 +2077,7 @@ def vsis3_read_credentials_ec2_expiration():
                 "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
                 "Expiration": "1970-01-01T00:00:00Z"
                 }""")
-    handler.add('GET', '/s3_fake_bucket/resource', custom_method = get_s3_fake_bucket_resource_method)
+    handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_fake_bucket/resource')
         if f is None:

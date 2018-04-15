@@ -127,7 +127,7 @@ def test_gdal_edit_py_2():
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     wkt = ds.GetProjectionRef()
-    gt = ds.GetGeoTransform(can_return_null = True)
+    gt = ds.GetGeoTransform(can_return_null=True)
     ds = None
 
     if gt is not None:
@@ -317,7 +317,7 @@ def test_gdal_edit_py_7():
 
     gdal.Translate('tmp/test_gdal_edit_py.tif',
                    '../gcore/data/byte.tif',
-                   options = '-b 1 -b 1 -b 1 -b 1 -co PHOTOMETRIC=RGB -co ALPHA=NO')
+                   options='-b 1 -b 1 -b 1 -b 1 -co PHOTOMETRIC=RGB -co ALPHA=NO')
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -colorinterp_4 alpha")
 

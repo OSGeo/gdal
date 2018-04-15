@@ -54,7 +54,7 @@ def have_proj480():
 
     try:
         import ctypes
-    except:
+    except ImportError:
         print('cannot find ctypes')
         have_proj480_flag = False
         return have_proj480_flag
@@ -310,7 +310,7 @@ def osr_proj4_7():
     PARAMETER["false_northing",200000],
     UNIT["Meter",1]]"""
 
-    srs_expected = osr.SpatialReference(wkt = expected)
+    srs_expected = osr.SpatialReference(wkt=expected)
     if not srs.IsSame(srs_expected):
         gdaltest.post_reason('did not get expected wkt.')
         print('Got: %s' % srs.ExportToPrettyWkt())

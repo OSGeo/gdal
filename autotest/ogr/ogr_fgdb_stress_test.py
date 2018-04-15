@@ -102,8 +102,8 @@ def ogr_fgdb_stress_test_1():
     ds_ref = ogrtest.reference_drv.CreateDataSource('tmp/test.' + ogrtest.reference_ext)
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
-    lyr_test = ds_test.CreateLayer("test", geom_type = ogr.wkbPoint, srs = sr)
-    lyr_ref = ds_ref.CreateLayer("test", geom_type = ogr.wkbPoint, srs = sr)
+    lyr_test = ds_test.CreateLayer("test", geom_type=ogr.wkbPoint, srs=sr)
+    lyr_ref = ds_ref.CreateLayer("test", geom_type=ogr.wkbPoint, srs=sr)
     for lyr in [lyr_test, lyr_ref]:
         lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
     ds_test.ExecuteSQL("CREATE INDEX idx_test_str ON test(str)")
@@ -118,7 +118,7 @@ def ogr_fgdb_stress_test_1():
             if not in_transaction:
                 if verbose:
                     print('StartTransaction')
-                ds_test.StartTransaction(force = 1)
+                ds_test.StartTransaction(force=1)
             else:
                 if verbose:
                     print('CommitTransaction')

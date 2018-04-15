@@ -66,7 +66,7 @@ shp_driver.DeleteDataSource(shpfilename)
 
 shp_ds = shp_driver.CreateDataSource(shpfilename)
 
-shp_layer = shp_ds.CreateLayer('out', geom_type = ogr.wkbPoint25D)
+shp_layer = shp_ds.CreateLayer('out', geom_type=ogr.wkbPoint25D)
 
 src_defn = src_soundg.GetLayerDefn()
 field_count = src_defn.GetFieldCount()

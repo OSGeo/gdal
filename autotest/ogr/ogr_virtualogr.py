@@ -58,7 +58,7 @@ def ogr_virtualogr_run_sql(sql_statement):
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr = ds.ExecuteSQL(sql_statement, dialect = 'SQLITE')
+    sql_lyr = ds.ExecuteSQL(sql_statement, dialect='SQLITE')
     gdal.PopErrorHandler()
     success = gdal.GetLastErrorMsg() == ''
     ds.ReleaseResultSet(sql_lyr)
@@ -178,7 +178,7 @@ def ogr_virtualogr_2():
     ds = None
 
     # Add suspicious trigger
-    ds = ogr.Open('/vsimem/ogr_virtualogr_2.db', update = 1)
+    ds = ogr.Open('/vsimem/ogr_virtualogr_2.db', update=1)
     ds.ExecuteSQL("CREATE TRIGGER spy_trigger INSERT ON regular_table BEGIN " + \
                   "INSERT OR REPLACE INTO spy_table (spy_content) " + \
                   "SELECT OGR_STYLE FROM foo; END;")
@@ -253,7 +253,7 @@ def ogr_virtualogr_3():
         libgdal_name = libgdal_name.replace('\\', '/')
         libsqlite_name = libsqlite_name.replace('\\', '/')
 
-    ret = gdaltest.runexternal(python_exe + ' ogr_as_sqlite_extension.py "%s" "%s"' % (libsqlite_name, libgdal_name), check_memleak = False)
+    ret = gdaltest.runexternal(python_exe + ' ogr_as_sqlite_extension.py "%s" "%s"' % (libsqlite_name, libgdal_name), check_memleak=False)
 
     if ret.find('skip') == 0:
         return 'skip'
@@ -351,7 +351,7 @@ def ogr_virtualogr_5():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr = ds.ExecuteSQL("CREATE VIRTUAL TABLE lyr2 USING VirtualOGR('/vsimem/ogr_virtualogr_5.csv')", dialect = 'SQLITE')
+    sql_lyr = ds.ExecuteSQL("CREATE VIRTUAL TABLE lyr2 USING VirtualOGR('/vsimem/ogr_virtualogr_5.csv')", dialect='SQLITE')
     gdal.PopErrorHandler()
     if sql_lyr is not None:
         return 'fail'

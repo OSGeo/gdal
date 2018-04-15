@@ -583,7 +583,7 @@ def ogr_csw_vsimem_csw_output_schema_csw():
     if gdaltest.csw_drv is None:
         return 'skip'
 
-    ds = gdal.OpenEx('CSW:/vsimem/csw_endpoint', open_options = ['OUTPUT_SCHEMA=CSW'])
+    ds = gdal.OpenEx('CSW:/vsimem/csw_endpoint', open_options=['OUTPUT_SCHEMA=CSW'])
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer("""/vsimem/csw_endpoint&POSTFIELDS=<?xml version="1.0" encoding="UTF-8"?><csw:GetRecords resultType="results" service="CSW" version="2.0.2" outputSchema="http://www.opengis.net/cat/csw/2.0.2" startPosition="1" maxRecords="500" xmlns:csw="http://www.opengis.net/cat/csw/2.0.2" xmlns:gml="http://www.opengis.net/gml" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ogc="http://www.opengis.net/ogc" xmlns:ows="http://www.opengis.net/ows" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/CSW-discovery.xsd"><csw:Query typeNames="csw:Record"><csw:ElementSetName>full</csw:ElementSetName></csw:Query></csw:GetRecords>""",
@@ -648,7 +648,7 @@ def ogr_csw_vsimem_csw_output_schema_gmd():
     if gdaltest.csw_drv is None:
         return 'skip'
 
-    ds = gdal.OpenEx('CSW:/vsimem/csw_endpoint', open_options = ['OUTPUT_SCHEMA=GMD'])
+    ds = gdal.OpenEx('CSW:/vsimem/csw_endpoint', open_options=['OUTPUT_SCHEMA=GMD'])
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer("""/vsimem/csw_endpoint&POSTFIELDS=<?xml version="1.0" encoding="UTF-8"?><csw:GetRecords resultType="results" service="CSW" version="2.0.2" outputSchema="http://www.isotc211.org/2005/gmd" startPosition="1" maxRecords="500" xmlns:csw="http://www.opengis.net/cat/csw/2.0.2" xmlns:gml="http://www.opengis.net/gml" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ogc="http://www.opengis.net/ogc" xmlns:ows="http://www.opengis.net/ows" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/CSW-discovery.xsd"><csw:Query typeNames="csw:Record"><csw:ElementSetName>full</csw:ElementSetName></csw:Query></csw:GetRecords>""",
@@ -694,7 +694,7 @@ def ogr_csw_vsimem_csw_output_schema_fgdc():
     if gdaltest.csw_drv is None:
         return 'skip'
 
-    ds = gdal.OpenEx('CSW:/vsimem/csw_endpoint', open_options = ['OUTPUT_SCHEMA=http://www.opengis.net/cat/csw/csdgm'])
+    ds = gdal.OpenEx('CSW:/vsimem/csw_endpoint', open_options=['OUTPUT_SCHEMA=http://www.opengis.net/cat/csw/csdgm'])
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer("""/vsimem/csw_endpoint&POSTFIELDS=<?xml version="1.0" encoding="UTF-8"?><csw:GetRecords resultType="results" service="CSW" version="2.0.2" outputSchema="http://www.opengis.net/cat/csw/csdgm" startPosition="1" maxRecords="500" xmlns:csw="http://www.opengis.net/cat/csw/2.0.2" xmlns:gml="http://www.opengis.net/gml" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ogc="http://www.opengis.net/ogc" xmlns:ows="http://www.opengis.net/ows" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/CSW-discovery.xsd"><csw:Query typeNames="csw:Record"><csw:ElementSetName>full</csw:ElementSetName></csw:Query></csw:GetRecords>""",

@@ -45,7 +45,7 @@ gdaltest_list = []
 
 for item in init_list:
     ut = gdaltest.GDALTest('HDF4Image', item[0], item[1], item[2],
-                            options = ['RANK=3'])
+                            options=['RANK=3'])
     if ut is None:
         print('HDF4 tests skipped')
     gdaltest_list.append((ut.testCreateCopy, item[0] + " rank=3"))
@@ -56,7 +56,7 @@ for item in init_list:
     gdaltest_list.append((ut.testSetNoDataValue, item[0] + " rank=3"))
     gdaltest_list.append((ut.testSetDescription, item[0] + " rank=3"))
     ut = gdaltest.GDALTest('HDF4Image', item[0], item[1], item[2],
-                            options = ['RANK=2'])
+                            options=['RANK=2'])
     if ut is None:
         print('HDF4 tests skipped')
     gdaltest_list.append((ut.testCreateCopy, item[0] + " rank=2"))

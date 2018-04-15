@@ -110,7 +110,7 @@ def ida_4():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
 
-    return gdaltest.ida_tst.testSetProjection(prj = prj)
+    return gdaltest.ida_tst.testSetProjection(prj=prj)
 
 ###############################################################################
 # Test Goodes Projection.
@@ -131,7 +131,7 @@ def ida_5():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
 
-    return gdaltest.ida_tst.testSetProjection(prj = prj)
+    return gdaltest.ida_tst.testSetProjection(prj=prj)
 
 ###############################################################################
 # Test LCC Projection.
@@ -155,7 +155,7 @@ def ida_6():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
 
-    return gdaltest.ida_tst.testSetProjection(prj = prj)
+    return gdaltest.ida_tst.testSetProjection(prj=prj)
 
 ###############################################################################
 # Test LAEA Projection.
@@ -177,7 +177,7 @@ def ida_7():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
 
-    return gdaltest.ida_tst.testSetProjection(prj = prj)
+    return gdaltest.ida_tst.testSetProjection(prj=prj)
 
 
 gdaltest_list = [

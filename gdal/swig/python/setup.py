@@ -177,7 +177,7 @@ except OSError, e:
     return r
 
 
-def supports_cxx11(compiler, compiler_flag = None):
+def supports_cxx11(compiler, compiler_flag=None):
     ret = False
     with open('gdal_python_cxx11_test.cpp', 'wt') as f:
         f.write("""
@@ -237,7 +237,7 @@ class gdal_ext(build_ext):
 
     def get_gdal_config(self, option):
         try:
-            return fetch_config(option, gdal_config = self.gdal_config)
+            return fetch_config(option, gdal_config=self.gdal_config)
         except gdal_config_error:
             # If an error is thrown, it is possibly because
             # the gdal-config location given in setup.cfg is
@@ -313,34 +313,34 @@ if sys.platform == 'darwin' and [int(x) for x in os.uname()[2].split('.')] >= [1
 
 gdal_module = Extension('osgeo._gdal',
                         sources=['extensions/gdal_wrap.cpp'],
-                        extra_compile_args = extra_compile_args,
-                        extra_link_args = extra_link_args)
+                        extra_compile_args=extra_compile_args,
+                        extra_link_args=extra_link_args)
 
 gdalconst_module = Extension('osgeo._gdalconst',
                     sources=['extensions/gdalconst_wrap.c'],
-                    extra_compile_args = extra_compile_args,
-                    extra_link_args = extra_link_args)
+                    extra_compile_args=extra_compile_args,
+                    extra_link_args=extra_link_args)
 
 osr_module = Extension('osgeo._osr',
                     sources=['extensions/osr_wrap.cpp'],
-                    extra_compile_args = extra_compile_args,
-                    extra_link_args = extra_link_args)
+                    extra_compile_args=extra_compile_args,
+                    extra_link_args=extra_link_args)
 
 ogr_module = Extension('osgeo._ogr',
                     sources=['extensions/ogr_wrap.cpp'],
-                    extra_compile_args = extra_compile_args,
-                    extra_link_args = extra_link_args)
+                    extra_compile_args=extra_compile_args,
+                    extra_link_args=extra_link_args)
 
 
 array_module = Extension('osgeo._gdal_array',
                     sources=['extensions/gdal_array_wrap.cpp'],
-                    extra_compile_args = extra_compile_args,
-                    extra_link_args = extra_link_args)
+                    extra_compile_args=extra_compile_args,
+                    extra_link_args=extra_link_args)
 
 gnm_module = Extension('osgeo._gnm',
                     sources=['extensions/gnm_wrap.cpp'],
-                    extra_compile_args = extra_compile_args,
-                    extra_link_args = extra_link_args)
+                    extra_compile_args=extra_compile_args,
+                    extra_link_args=extra_link_args)
 
 ext_modules = [gdal_module,
               gdalconst_module,

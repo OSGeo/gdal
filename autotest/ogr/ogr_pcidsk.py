@@ -57,7 +57,7 @@ def ogr_pcidsk_1():
 
     ds = ogr_drv.CreateDataSource('tmp/ogr_pcidsk_1.pix')
 
-    lyr = ds.CreateLayer('nothing', geom_type = ogr.wkbNone)
+    lyr = ds.CreateLayer('nothing', geom_type=ogr.wkbNone)
     feat = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(feat)
 
@@ -67,7 +67,7 @@ def ogr_pcidsk_1():
         gdaltest.post_reason('failure')
         return 'fail'
 
-    lyr = ds.CreateLayer('fields', geom_type = ogr.wkbNone)
+    lyr = ds.CreateLayer('fields', geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('realfield', ogr.OFTReal))
@@ -116,7 +116,7 @@ def ogr_pcidsk_1():
             srs.ImportFromEPSG(epsgcode)
         else:
             srs = None
-        lyr = ds.CreateLayer(layername, geom_type = geom.GetGeometryType(), srs = srs)
+        lyr = ds.CreateLayer(layername, geom_type=geom.GetGeometryType(), srs=srs)
         feat = ogr.Feature(lyr.GetLayerDefn())
         feat.SetGeometry(geom)
         lyr.CreateFeature(feat)
@@ -270,7 +270,7 @@ def ogr_pcidsk_5():
     if gdal.GetDriverByName('PCIDSK') is None:
         return 'skip'
 
-    ds = ogr.Open('../gdrivers/data/utm.pix', update = 1)
+    ds = ogr.Open('../gdrivers/data/utm.pix', update=1)
     if ds is None:
         return 'fail'
     ds = None

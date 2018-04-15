@@ -285,7 +285,7 @@ def sentinel2_l1c_2():
 def sentinel2_l1c_3():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
-    ds = gdal.OpenEx('SENTINEL2_L1C:%s:60m:EPSG_32632' % filename_xml, open_options = ['ALPHA=YES'])
+    ds = gdal.OpenEx('SENTINEL2_L1C:%s:60m:EPSG_32632' % filename_xml, open_options=['ALPHA=YES'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -919,8 +919,8 @@ def sentinel2_l1c_tile_4():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
-    gdal.SetConfigOption('SENTINEL2_USE_MAIN_MTD', 'NO')  # Simulate absence of main MTD file
-    ds = gdal.OpenEx('SENTINEL2_L1C_TILE:%s:10m' % filename_xml, open_options = ['ALPHA=YES'])
+    gdal.SetConfigOption('SENTINEL2_USE_MAIN_MTD', 'NO') # Simulate absence of main MTD file
+    ds = gdal.OpenEx('SENTINEL2_L1C_TILE:%s:10m' % filename_xml, open_options=['ALPHA=YES'])
     gdal.SetConfigOption('SENTINEL2_USE_MAIN_MTD', None)
     if ds is None or gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail')
@@ -1543,7 +1543,7 @@ def sentinel2_l1b_4():
         return 'fail'
     ds = None
 
-    ds = gdal.OpenEx('SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m', open_options = ['ALPHA=YES'])
+    ds = gdal.OpenEx('SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m', open_options=['ALPHA=YES'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'

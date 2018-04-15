@@ -331,7 +331,7 @@ def vrtderived_8():
     try:
         import numpy
         numpy.ones
-    except:
+    except (ImportError, NameError):
         return 'skip'
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', 'NO')
@@ -363,7 +363,7 @@ def vrtderived_9():
     try:
         import numpy
         numpy.ones
-    except:
+    except (ImportError, NameError):
         return 'skip'
 
     # Missing PixelFunctionType
@@ -682,7 +682,7 @@ def vrtderived_10():
     try:
         import numpy
         numpy.ones
-    except:
+    except (ImportError, NameError):
         return 'skip'
 
     content = """<VRTDataset rasterXSize="10" rasterYSize="10">
@@ -758,7 +758,7 @@ def vrtderived_11():
     try:
         import numpy
         numpy.ones
-    except:
+    except (ImportError, NameError):
         return 'skip'
 
     shutil.copy('data/n43_hillshade.vrt', 'tmp/n43_hillshade.vrt')
@@ -791,7 +791,7 @@ def vrtderived_12():
     try:
         import numpy
         numpy.ones
-    except:
+    except (ImportError, NameError):
         return 'skip'
 
     for dt in ["Byte", "UInt16", "Int16", "UInt32", "Int32",
@@ -854,7 +854,7 @@ def vrtderived_13():
     try:
         import numpy
         numpy.ones
-    except:
+    except (ImportError, NameError):
         return 'skip'
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', "YES")
@@ -881,7 +881,7 @@ def vrtderived_14():
     try:
         import numpy
         numpy.ones
-    except:
+    except (ImportError, NameError):
         return 'skip'
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', "YES")
@@ -939,7 +939,7 @@ def vrtderived_15():
     try:
         import numpy
         numpy.ones
-    except:
+    except (ImportError, NameError):
         return 'skip'
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', "YES")
@@ -948,7 +948,7 @@ def vrtderived_15():
     args_array = []
     for i in range(4):
         args_dict = {'ret': True}
-        t = threading.Thread(target=vrtderived_15_worker, args = (args_dict,))
+        t = threading.Thread(target=vrtderived_15_worker, args=(args_dict,))
         args_array.append(args_dict)
         threads.append(t)
         t.start()

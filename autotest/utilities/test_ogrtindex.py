@@ -44,7 +44,7 @@ import test_cli_utilities
 # Simple test
 
 
-def test_ogrtindex_1(srs = None):
+def test_ogrtindex_1(srs=None):
     if test_cli_utilities.get_ogrtindex_path() is None:
         return 'skip'
 
@@ -59,26 +59,26 @@ def test_ogrtindex_1(srs = None):
 
     shape_ds = shape_drv.CreateDataSource('tmp')
 
-    shape_lyr = shape_ds.CreateLayer('point1', srs = srs)
-    dst_feat = ogr.Feature(feature_def = shape_lyr.GetLayerDefn())
+    shape_lyr = shape_ds.CreateLayer('point1', srs=srs)
+    dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(49 2)'))
     shape_lyr.CreateFeature(dst_feat)
     dst_feat.Destroy()
 
-    shape_lyr = shape_ds.CreateLayer('point2', srs = srs)
-    dst_feat = ogr.Feature(feature_def = shape_lyr.GetLayerDefn())
+    shape_lyr = shape_ds.CreateLayer('point2', srs=srs)
+    dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(49 3)'))
     shape_lyr.CreateFeature(dst_feat)
     dst_feat.Destroy()
 
-    shape_lyr = shape_ds.CreateLayer('point3', srs = srs)
-    dst_feat = ogr.Feature(feature_def = shape_lyr.GetLayerDefn())
+    shape_lyr = shape_ds.CreateLayer('point3', srs=srs)
+    dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(48 2)'))
     shape_lyr.CreateFeature(dst_feat)
     dst_feat.Destroy()
 
-    shape_lyr = shape_ds.CreateLayer('point4', srs = srs)
-    dst_feat = ogr.Feature(feature_def = shape_lyr.GetLayerDefn())
+    shape_lyr = shape_ds.CreateLayer('point4', srs=srs)
+    dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(48 3)'))
     shape_lyr.CreateFeature(dst_feat)
     dst_feat.Destroy()
@@ -160,13 +160,13 @@ def test_ogrtindex_3():
     srs_32631.ImportFromEPSG(32631)
     wkt_epsg_32631 = srs_32631.ExportToWkt()
 
-    shape_lyr = shape_ds.CreateLayer('point1', srs = srs_4326)
-    dst_feat = ogr.Feature(feature_def = shape_lyr.GetLayerDefn())
+    shape_lyr = shape_ds.CreateLayer('point1', srs=srs_4326)
+    dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 49)'))
     shape_lyr.CreateFeature(dst_feat)
 
-    shape_lyr = shape_ds.CreateLayer('point2', srs = srs_32631)
-    dst_feat = ogr.Feature(feature_def = shape_lyr.GetLayerDefn())
+    shape_lyr = shape_ds.CreateLayer('point2', srs=srs_32631)
+    dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(500000 5538630.70286887)'))
     shape_lyr.CreateFeature(dst_feat)
     shape_ds = None

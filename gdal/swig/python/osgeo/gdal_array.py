@@ -188,7 +188,7 @@ codes = {gdalconst.GDT_Byte      :   numpy.uint8,
         }
 
 
-def OpenArray(array, prototype_ds = None):
+def OpenArray(array, prototype_ds=None):
 
     ds = OpenNumPyArray(array)
 
@@ -233,7 +233,7 @@ def GDALTypeCodeToNumericTypeCode(gdal_code):
 
 def LoadFile(filename, xoff=0, yoff=0, xsize=None, ysize=None,
               buf_xsize=None, buf_ysize=None, buf_type=None,
-              resample_alg = gdal.GRIORA_NearestNeighbour,
+              resample_alg=gdal.GRIORA_NearestNeighbour,
               callback=None, callback_data=None):
     ds = gdal.Open(filename)
     if ds is None:
@@ -242,10 +242,10 @@ def LoadFile(filename, xoff=0, yoff=0, xsize=None, ysize=None,
     return DatasetReadAsArray(ds, xoff, yoff, xsize, ysize,
                                buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
                                resample_alg=resample_alg,
-                               callback = callback, callback_data = callback_data)
+                               callback=callback, callback_data=callback_data)
 
 
-def SaveArray(src_array, filename, format = "GTiff", prototype = None):
+def SaveArray(src_array, filename, format="GTiff", prototype=None):
     driver = gdal.GetDriverByName(format)
     if driver is None:
         raise ValueError("Can't find driver "+format)
@@ -254,8 +254,8 @@ def SaveArray(src_array, filename, format = "GTiff", prototype = None):
 
 
 def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_obj=None,
-                        buf_xsize = None, buf_ysize = None, buf_type = None,
-                        resample_alg = gdal.GRIORA_NearestNeighbour,
+                        buf_xsize=None, buf_ysize=None, buf_type=None,
+                        resample_alg=gdal.GRIORA_NearestNeighbour,
                         callback=None, callback_data=None):
     """Pure python implementation of reading a chunk of a GDAL file
     into a numpy array.  Used by the gdal.Dataset.ReadAsArray method."""
@@ -270,11 +270,11 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
 
     if ds.RasterCount == 1:
         return BandReadAsArray(ds.GetRasterBand(1), xoff, yoff, win_xsize, win_ysize,
-                                buf_xsize = buf_xsize, buf_ysize = buf_ysize, buf_type = buf_type,
-                                buf_obj = buf_obj,
-                                resample_alg = resample_alg,
-                                callback = callback,
-                                callback_data = callback_data)
+                                buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
+                                buf_obj=buf_obj,
+                                resample_alg=resample_alg,
+                                callback=callback,
+                                callback_data=callback_data)
 
     if buf_obj is None:
         if buf_xsize is None:
@@ -293,7 +293,7 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
             typecode = numpy.float32
         if buf_type == gdalconst.GDT_Byte and ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE':
             typecode = numpy.int8
-        buf_obj = numpy.empty([ds.RasterCount, buf_ysize,buf_xsize], dtype = typecode)
+        buf_obj = numpy.empty([ds.RasterCount, buf_ysize,buf_xsize], dtype=typecode)
 
     else:
         if len(buf_obj.shape) != 3:
@@ -322,9 +322,9 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
     return buf_obj
 
 
-def BandReadAsArray(band, xoff = 0, yoff = 0, win_xsize = None, win_ysize = None,
+def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                      buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
-                     resample_alg = gdal.GRIORA_NearestNeighbour,
+                     resample_alg=gdal.GRIORA_NearestNeighbour,
                      callback=None, callback_data=None):
     """Pure python implementation of reading a chunk of a GDAL file
     into a numpy array.  Used by the gdal.Band.ReadAsArray method."""
@@ -351,7 +351,7 @@ def BandReadAsArray(band, xoff = 0, yoff = 0, win_xsize = None, win_ysize = None
 
         if buf_type == gdalconst.GDT_Byte and band.GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE':
             typecode = numpy.int8
-        buf_obj = numpy.empty([buf_ysize,buf_xsize], dtype = typecode)
+        buf_obj = numpy.empty([buf_ysize,buf_xsize], dtype=typecode)
 
     else:
         if len(buf_obj.shape) == 2:
@@ -380,7 +380,7 @@ def BandReadAsArray(band, xoff = 0, yoff = 0, win_xsize = None, win_ysize = None
 
 
 def BandWriteArray(band, array, xoff=0, yoff=0,
-                    resample_alg = gdal.GRIORA_NearestNeighbour,
+                    resample_alg=gdal.GRIORA_NearestNeighbour,
                     callback=None, callback_data=None):
     """Pure python implementation of writing a chunk of a GDAL file
     from a numpy array.  Used by the gdal.Band.WriteArray method."""

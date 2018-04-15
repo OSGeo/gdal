@@ -56,8 +56,8 @@ def isce_1():
         AUTHORITY["EPSG","9108"]],
     AUTHORITY["EPSG","4326"]]"""
 
-    return tst.testOpen(check_prj = prj,
-                         check_gt = (14.259166666666667,
+    return tst.testOpen(check_prj=prj,
+                         check_gt=(14.259166666666667,
                                      0.0008333333333333334,
                                      0.0,
                                      38.22083333333333,
@@ -84,7 +84,7 @@ def isce_2():
 def isce_3():
 
     tst = gdaltest.GDALTest('isce', 'isce.slc', 1, 350)
-    return tst.testCreateCopy(check_gt = 0, new_filename = 'isce.tst.slc')
+    return tst.testCreateCopy(check_gt=0, new_filename='isce.tst.slc')
 
 ###############################################################################
 # Verify VSIF*L capacity
@@ -93,7 +93,7 @@ def isce_3():
 def isce_4():
 
     tst = gdaltest.GDALTest('isce', 'isce.slc', 1, 350)
-    return tst.testCreateCopy(check_gt = 0, new_filename = 'isce.tst.slc', vsimem = 1)
+    return tst.testCreateCopy(check_gt=0, new_filename='isce.tst.slc', vsimem=1)
 
 
 gdaltest_list = [

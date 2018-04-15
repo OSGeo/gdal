@@ -60,7 +60,7 @@ def ogr_mysql_1():
         return 'skip'
 
     try:
-        gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update = 1)
+        gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update=1)
     except:
         gdaltest.mysql_ds = None
 
@@ -84,8 +84,8 @@ def ogr_mysql_2():
 
     ######################################################
     # Create Layer
-    gdaltest.mysql_lyr = gdaltest.mysql_ds.CreateLayer('tpoly', srs = shp_lyr.GetSpatialRef(),
-                                                  options = ['ENGINE=MyISAM'])
+    gdaltest.mysql_lyr = gdaltest.mysql_ds.CreateLayer('tpoly', srs=shp_lyr.GetSpatialRef(),
+                                                  options=['ENGINE=MyISAM'])
 
     ######################################################
     # Setup Schema
@@ -99,7 +99,7 @@ def ogr_mysql_2():
     ######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature(feature_def = gdaltest.mysql_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gdaltest.mysql_lyr.GetLayerDefn())
 
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
@@ -159,7 +159,7 @@ def ogr_mysql_3():
         read_feat = gdaltest.mysql_lyr.GetNextFeature()
 
         if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
-                                          max_error = 0.001) != 0:
+                                          max_error=0.001) != 0:
             return 'fail'
 
         for fld in range(3):
@@ -363,7 +363,7 @@ def ogr_mysql_8():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    dst_feat = ogr.Feature(feature_def = gdaltest.mysql_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gdaltest.mysql_lyr.GetLayerDefn())
 
     dst_feat.SetField('PRFEDEA', 'CrazyKey')
     dst_feat.SetField('SHORTNAME', 'Crazy"\'Long')
@@ -617,11 +617,11 @@ def ogr_mysql_20():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    layer = gdaltest.mysql_ds.CreateLayer('select', options = ['ENGINE=MyISAM'])
+    layer = gdaltest.mysql_ds.CreateLayer('select', options=['ENGINE=MyISAM'])
     ogrtest.quick_create_layer_def(layer,
                                     [('desc', ogr.OFTString) ,
                                       ('select', ogr.OFTString)])
-    dst_feat = ogr.Feature(feature_def = layer.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=layer.GetLayerDefn())
 
     dst_feat.SetField('desc', 'desc')
     dst_feat.SetField('select', 'select')
@@ -647,9 +647,9 @@ def ogr_mysql_21():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    layer = gdaltest.mysql_ds.CreateLayer('tablewithspatialindex', geom_type = ogr.wkbPoint, options = ['ENGINE=MyISAM'])
+    layer = gdaltest.mysql_ds.CreateLayer('tablewithspatialindex', geom_type=ogr.wkbPoint, options=['ENGINE=MyISAM'])
     ogrtest.quick_create_layer_def(layer, [('name', ogr.OFTString)])
-    dst_feat = ogr.Feature(feature_def = layer.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=layer.GetLayerDefn())
     dst_feat.SetField('name', 'name')
 
     # The insertion MUST fail
@@ -675,10 +675,10 @@ def ogr_mysql_22():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    layer = gdaltest.mysql_ds.CreateLayer('tablewithoutspatialindex', geom_type = ogr.wkbPoint,
-                                          options = ['SPATIAL_INDEX=NO', 'ENGINE=MyISAM'])
+    layer = gdaltest.mysql_ds.CreateLayer('tablewithoutspatialindex', geom_type=ogr.wkbPoint,
+                                          options=['SPATIAL_INDEX=NO', 'ENGINE=MyISAM'])
     ogrtest.quick_create_layer_def(layer, [('name', ogr.OFTString)])
-    dst_feat = ogr.Feature(feature_def = layer.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=layer.GetLayerDefn())
     dst_feat.SetField('name', 'name')
 
     layer.CreateFeature(dst_feat)
@@ -764,7 +764,7 @@ def ogr_mysql_72():
         return 'skip'
 
     # Regular layer with 32 bit IDs
-    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_72', geom_type = ogr.wkbNone)
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_72', geom_type=ogr.wkbNone)
     if lyr.GetMetadataItem(ogr.OLMD_FID64) is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -780,7 +780,7 @@ def ogr_mysql_72():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_72', geom_type = ogr.wkbNone, options = ['FID64=YES', 'OVERWRITE=YES'])
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_72', geom_type=ogr.wkbNone, options=['FID64=YES', 'OVERWRITE=YES'])
     if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -797,7 +797,7 @@ def ogr_mysql_72():
 
     gdaltest.mysql_ds = None
     # Test with normal protocol
-    gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update = 1)
+    gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update=1)
     lyr = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_72')
     if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
         gdaltest.post_reason('fail')
@@ -819,7 +819,7 @@ def ogr_mysql_25():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_25', geom_type = ogr.wkbPoint, options = ['ENGINE=MyISAM'])
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_25', geom_type=ogr.wkbPoint, options=['ENGINE=MyISAM'])
     field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
     field_defn.SetNullable(0)
     lyr.CreateField(field_defn)
@@ -857,7 +857,7 @@ def ogr_mysql_25():
         f = None
 
     gdaltest.mysql_ds = None
-    gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update = 1)
+    gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update=1)
     lyr = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_25')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
         gdaltest.post_reason('fail')
@@ -880,7 +880,7 @@ def ogr_mysql_26():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_26', geom_type = ogr.wkbPoint, options = ['ENGINE=MyISAM'])
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_26', geom_type=ogr.wkbPoint, options=['ENGINE=MyISAM'])
 
     field_defn = ogr.FieldDefn('field_string', ogr.OFTString)
     field_defn.SetDefault("'a''b'")
@@ -924,7 +924,7 @@ def ogr_mysql_26():
     f = None
 
     gdaltest.mysql_ds = None
-    gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update = 1)
+    gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update=1)
     lyr = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_26')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() != "'a''b'":
         gdaltest.post_reason('fail')

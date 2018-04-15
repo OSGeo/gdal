@@ -60,7 +60,7 @@ def test_gdal_grid_lib_1():
             wkt = 'POINT(%f %f %s)' % (geotransform[0] + (i + .5) * geotransform[1],
                                         geotransform[3] + (j + .5) * geotransform[5],
                                         array_val[j * 121 + i])
-            dst_feat = ogr.Feature(feature_def = shape_lyr.GetLayerDefn())
+            dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
             dst_feat.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
             shape_lyr.CreateFeature(dst_feat)
 
@@ -73,11 +73,11 @@ def test_gdal_grid_lib_1():
         spatFilter = [-180, -90, 180, 90]
 
     # Create a GDAL dataset from the previous generated OGR grid
-    ds2 = gdal.Grid('', '/vsimem/tmp/n43.shp', format = 'MEM', \
-                    outputBounds = [-80.0041667, 42.9958333, -78.9958333 , 44.0041667], \
-                    width = 121, height = 121, outputType = gdal.GDT_Int16, \
-                    algorithm = 'nearest:radius1=0.0:radius2=0.0:angle=0.0',
-                    spatFilter = spatFilter)
+    ds2 = gdal.Grid('', '/vsimem/tmp/n43.shp', format='MEM', \
+                    outputBounds=[-80.0041667, 42.9958333, -78.9958333 , 44.0041667], \
+                    width=121, height=121, outputType=gdal.GDT_Int16, \
+                    algorithm='nearest:radius1=0.0:radius2=0.0:angle=0.0',
+                    spatFilter=spatFilter)
     # We should get the same values as in n43.td0
     if ds.GetRasterBand(1).Checksum() != ds2.GetRasterBand(1).Checksum():
         print('bad checksum : got %d, expected %d' % (ds.GetRasterBand(1).Checksum() , ds2.GetRasterBand(1).Checksum()))
@@ -97,9 +97,9 @@ def test_gdal_grid_lib_1():
 
 def test_gdal_grid_lib_2():
 
-    shape_ds = ogr.Open('/vsimem/tmp', update = 1)
+    shape_ds = ogr.Open('/vsimem/tmp', update=1)
     shape_lyr = shape_ds.CreateLayer('test_gdal_grid_lib_2')
-    dst_feat = ogr.Feature(feature_def = shape_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0 100)'))
     shape_lyr.CreateFeature(dst_feat)
     shape_ds = None
@@ -110,13 +110,13 @@ def test_gdal_grid_lib_2():
             gdal.SetConfigOption(key,value)
 
         # Point strictly on grid
-        ds1 = gdal.Grid('', '/vsimem/tmp/test_gdal_grid_lib_2.shp', format = 'MEM', \
-                        outputBounds = [-0.5, -0.5, 0.5, 0.5], \
-                        width = 1, height = 1, outputType = gdal.GDT_Byte)
+        ds1 = gdal.Grid('', '/vsimem/tmp/test_gdal_grid_lib_2.shp', format='MEM', \
+                        outputBounds=[-0.5, -0.5, 0.5, 0.5], \
+                        width=1, height=1, outputType=gdal.GDT_Byte)
 
-        ds2 = gdal.Grid('', '/vsimem/tmp/test_gdal_grid_lib_2.shp', format = 'MEM', \
-                        outputBounds = [-0.4, -0.4, 0.6, 0.6], \
-                        width = 10, height = 10, outputType = gdal.GDT_Byte)
+        ds2 = gdal.Grid('', '/vsimem/tmp/test_gdal_grid_lib_2.shp', format='MEM', \
+                        outputBounds=[-0.4, -0.4, 0.6, 0.6], \
+                        width=10, height=10, outputType=gdal.GDT_Byte)
 
         gdal.SetConfigOption('GDAL_USE_AVX', None)
         gdal.SetConfigOption('GDAL_USE_SSE', None)

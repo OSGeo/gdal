@@ -984,7 +984,7 @@ def ogr_sql_32():
     gdal.ErrorReset()
 
     sql_lyr = gdaltest.ds.ExecuteSQL('select min(eas_id) from poly where area = 0',
-                                      dialect = 'OGRSQL')
+                                      dialect='OGRSQL')
 
     feat = sql_lyr.GetNextFeature()
     val = feat.GetField(0)
@@ -1566,7 +1566,7 @@ def ogr_sql_47():
 def ogr_sql_48():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
-    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn('int_field', ogr.OFTInteger))
     for i in range(1000):
         f = ogr.Feature(lyr.GetLayerDefn())

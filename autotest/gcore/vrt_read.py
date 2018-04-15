@@ -144,7 +144,7 @@ def vrt_read_4():
 
     try:
         import numpy as np
-    except:
+    except ImportError:
         return 'skip'
 
     data = np.zeros((1, 1), np.complex64)
@@ -1066,12 +1066,12 @@ def vrt_read_23():
     </SimpleSource>
   </VRTRasterBand>
 </VRTDataset>""")
-    got_ar = ds.GetRasterBand(1).ReadAsArray(0,0,2,1,4,1, resample_alg = gdal.GRIORA_Bilinear)
+    got_ar = ds.GetRasterBand(1).ReadAsArray(0,0,2,1,4,1, resample_alg=gdal.GRIORA_Bilinear)
     if list(got_ar[0]) != [0,10,10,10]:
         gdaltest.post_reason('failure')
         print(list(got_ar[0]))
         return 'fail'
-    if ds.ReadRaster(0,0,2,1,4,1, resample_alg = gdal.GRIORA_Bilinear) != ds.GetRasterBand(1).ReadRaster(0,0,2,1,4,1, resample_alg = gdal.GRIORA_Bilinear):
+    if ds.ReadRaster(0,0,2,1,4,1, resample_alg=gdal.GRIORA_Bilinear) != ds.GetRasterBand(1).ReadRaster(0,0,2,1,4,1, resample_alg=gdal.GRIORA_Bilinear):
         gdaltest.post_reason('failure')
         return 'fail'
     ds = None
@@ -1091,12 +1091,12 @@ def vrt_read_23():
     </SimpleSource>
   </VRTRasterBand>
 </VRTDataset>""")
-    got_ar = ds.GetRasterBand(1).ReadAsArray(0,0,2,1,4,1, resample_alg = gdal.GRIORA_Bilinear)
+    got_ar = ds.GetRasterBand(1).ReadAsArray(0,0,2,1,4,1, resample_alg=gdal.GRIORA_Bilinear)
     if list(got_ar[0]) != [0,10,10,10]:
         gdaltest.post_reason('failure')
         print(list(got_ar[0]))
         return 'fail'
-    if ds.ReadRaster(0,0,2,1,4,1, resample_alg = gdal.GRIORA_Bilinear) != ds.GetRasterBand(1).ReadRaster(0,0,2,1,4,1, resample_alg = gdal.GRIORA_Bilinear):
+    if ds.ReadRaster(0,0,2,1,4,1, resample_alg=gdal.GRIORA_Bilinear) != ds.GetRasterBand(1).ReadRaster(0,0,2,1,4,1, resample_alg=gdal.GRIORA_Bilinear):
         gdaltest.post_reason('failure')
         return 'fail'
     ds = None
@@ -1342,7 +1342,7 @@ def vrt_read_30():
   </VRTRasterBand>
 </VRTDataset>""")
 
-    data = ds.ReadRaster(0,0,2,2,2,2, buf_pixel_space = 3, buf_line_space = 2 * 3, buf_band_space = 1)
+    data = ds.ReadRaster(0,0,2,2,2,2, buf_pixel_space=3, buf_line_space=2 * 3, buf_band_space=1)
     got = struct.unpack('B' * 2*2*3, data)
     for i in range(2*2*3):
         if got[i] != 0:
@@ -1368,16 +1368,16 @@ dy           1
 -255         1
 254          256""")
 
-    ds = gdal.Translate('', '/vsimem/in.asc', outputType = gdal.GDT_Byte, format = 'VRT')
+    ds = gdal.Translate('', '/vsimem/in.asc', outputType=gdal.GDT_Byte, format='VRT')
 
-    data = ds.GetRasterBand(1).ReadRaster(0,0,2,2, buf_type = gdal.GDT_Float32)
+    data = ds.GetRasterBand(1).ReadRaster(0,0,2,2, buf_type=gdal.GDT_Float32)
     got = struct.unpack('f' * 2*2, data)
     if got != (0, 1, 254, 255):
         gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
-    data = ds.ReadRaster(0,0,2,2, buf_type = gdal.GDT_Float32)
+    data = ds.ReadRaster(0,0,2,2, buf_type=gdal.GDT_Float32)
     got = struct.unpack('f' * 2*2, data)
     if got != (0, 1, 254, 255):
         gdaltest.post_reason('fail')

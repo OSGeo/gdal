@@ -62,7 +62,7 @@ def e00grid_1():
     PARAMETER["false_easting",500000],
     PARAMETER["false_northing",0],
     UNIT["METERS",1]]"""
-    ret = tst.testOpen(check_gt = expected_gt, check_prj = expected_srs)
+    ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs)
 
     if ret == 'success':
         ds = gdal.Open('data/fake_e00grid.e00')
@@ -102,7 +102,7 @@ def e00grid_2():
     PARAMETER["false_easting",500000],
     PARAMETER["false_northing",0],
     UNIT["METERS",1]]"""
-    ret = tst.testOpen(check_gt = expected_gt, check_prj = expected_srs)
+    ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs)
 
     if ret == 'success':
         ds = gdal.Open('data/fake_e00grid_compressed.e00')

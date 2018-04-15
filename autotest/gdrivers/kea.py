@@ -55,8 +55,8 @@ def kea_1():
     if gdaltest.kea_driver is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('KEA', 'byte.tif', 1, 4672, options = ['IMAGEBLOCKSIZE=15', 'THEMATIC=YES'])
-    return tst.testCreateCopy(check_srs = True, check_gt = 1)
+    tst = gdaltest.GDALTest('KEA', 'byte.tif', 1, 4672, options=['IMAGEBLOCKSIZE=15', 'THEMATIC=YES'])
+    return tst.testCreateCopy(check_srs=True, check_gt=1)
 
 ###############################################################################
 # Test CreateCopy() for various data types
@@ -76,7 +76,7 @@ def kea_2():
 
     for src_file in src_files:
         tst = gdaltest.GDALTest('KEA', src_file, 1, 4672)
-        ret = tst.testCreateCopy(check_minmax = 1)
+        ret = tst.testCreateCopy(check_minmax=1)
         if ret != 'success':
             return ret
 
@@ -100,7 +100,7 @@ def kea_3():
 
     for src_file in src_files:
         tst = gdaltest.GDALTest('KEA', src_file, 1, 4672)
-        ret = tst.testCreate(out_bands = 1, check_minmax = 1)
+        ret = tst.testCreate(out_bands=1, check_minmax=1)
         if ret != 'success':
             return ret
 
@@ -227,7 +227,7 @@ def kea_5():
     options = ['IMAGEBLOCKSIZE=15', 'ATTBLOCKSIZE=100', 'MDC_NELMTS=10',
                 'RDCC_NELMTS=256', 'RDCC_NBYTES=500000', 'RDCC_W0=0.5',
                 'SIEVE_BUF=32768', 'META_BLOCKSIZE=1024', 'DEFLATE=9', 'THEMATIC=YES']
-    ds = gdaltest.kea_driver.Create("tmp/out.kea", 100, 100, 3, options = options)
+    ds = gdaltest.kea_driver.Create("tmp/out.kea", 100, 100, 3, options=options)
     ds = None
     ds = gdal.Open('tmp/out.kea')
     if ds.GetRasterBand(1).GetBlockSize() != [15,15]:
@@ -598,7 +598,7 @@ def kea_11():
     if ds.AddBand(gdal.GDT_Byte) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.AddBand(gdal.GDT_Int16, options = ['DEFLATE=9']) != 0:
+    if ds.AddBand(gdal.GDT_Int16, options=['DEFLATE=9']) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None

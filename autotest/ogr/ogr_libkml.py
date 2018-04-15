@@ -408,7 +408,7 @@ def ogr_libkml_write(filename):
     if filename != '/vsimem/libkml_use_doc_off.kmz':
         srs = osr.SpatialReference()
         srs.SetWellKnownGeogCS('WGS72')
-        lyr = ds.CreateLayer('test_wgs72', srs = srs)
+        lyr = ds.CreateLayer('test_wgs72', srs=srs)
 
         dst_feat = ogr.Feature(lyr.GetLayerDefn())
         dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
@@ -981,10 +981,10 @@ def ogr_libkml_write_layer_lookat():
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_layer_lookat.kml")
     options = ['LOOKAT_LONGITUDE=2', 'LOOKAT_LATITUDE=49', 'LOOKAT_RANGE=150']
-    ds.CreateLayer('test', options = options)
+    ds.CreateLayer('test', options=options)
     options = ['LOOKAT_LONGITUDE=3', 'LOOKAT_LATITUDE=50', 'LOOKAT_RANGE=250',
                 'LOOKAT_ALTITUDE=100', 'LOOKAT_HEADING=70', 'LOOKAT_TILT=50', 'LOOKAT_ALTITUDEMODE=relativeToGround']
-    ds.CreateLayer('test2', options = options)
+    ds.CreateLayer('test2', options=options)
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_layer_lookat.kml', 'rb')
@@ -1026,7 +1026,7 @@ def ogr_libkml_write_layer_camera():
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_layer_camera.kml")
     options = ['CAMERA_LONGITUDE=3', 'CAMERA_LATITUDE=50', 'CAMERA_ALTITUDE=100',
                 'CAMERA_HEADING=70', 'CAMERA_TILT=50', 'CAMERA_ROLL=10', 'CAMERA_ALTITUDEMODE=relativeToGround']
-    ds.CreateLayer('test', options = options)
+    ds.CreateLayer('test', options=options)
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_layer_camera.kml', 'rb')
@@ -1139,7 +1139,7 @@ def ogr_libkml_write_atom_author():
 
     filepath = '/vsimem/ogr_libkml_write_atom_author.kml'
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filepath,
-                                                        options = ['author_name=name', 'author_uri=http://foo', 'author_email=foo@bar.com'])
+                                                        options=['author_name=name', 'author_uri=http://foo', 'author_email=foo@bar.com'])
     if ds is None:
         gdaltest.post_reason('Unable to create %s.' % filepath)
         return 'fail'
@@ -1171,7 +1171,7 @@ def ogr_libkml_write_atom_link():
 
     filepath = '/vsimem/ogr_libkml_write_atom_link.kml'
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filepath,
-                                                        options = ['link=http://foo'])
+                                                        options=['link=http://foo'])
     if ds is None:
         gdaltest.post_reason('Unable to create %s.' % filepath)
         return 'fail'
@@ -1201,7 +1201,7 @@ def ogr_libkml_write_phonenumber():
 
     filepath = '/vsimem/ogr_libkml_write_phonenumber.kml'
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filepath,
-                                                        options = ['phonenumber=tel:911'])
+                                                        options=['phonenumber=tel:911'])
     if ds is None:
         gdaltest.post_reason('Unable to create %s.' % filepath)
         return 'fail'
@@ -1229,11 +1229,11 @@ def ogr_libkml_write_region():
         return 'skip'
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_region.kml")
-    lyr = ds.CreateLayer('auto', options = ['ADD_REGION=YES'])
+    lyr = ds.CreateLayer('auto', options=['ADD_REGION=YES'])
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48))'))
     lyr.CreateFeature(feat)
-    lyr = ds.CreateLayer('manual', options = ['ADD_REGION=YES', 'REGION_XMIN=-180', \
+    lyr = ds.CreateLayer('manual', options=['ADD_REGION=YES', 'REGION_XMIN=-180', \
         'REGION_XMAX=180', 'REGION_YMIN=-90', 'REGION_YMAX=90', \
         'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000', \
         'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2'])
@@ -1278,8 +1278,8 @@ def ogr_libkml_write_screenoverlay():
         return 'skip'
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_screenoverlay.kml")
-    ds.CreateLayer('auto', options = ['SO_HREF=http://foo'])
-    ds.CreateLayer('manual', options = ['SO_HREF=http://bar',
+    ds.CreateLayer('auto', options=['SO_HREF=http://foo'])
+    ds.CreateLayer('manual', options=['SO_HREF=http://bar',
                                               'SO_NAME=name',
                                               'SO_DESCRIPTION=description',
                                               'SO_OVERLAY_X=10',
@@ -1480,7 +1480,7 @@ def ogr_libkml_read_write_style():
 
     options = ['style1_balloonstyle_bgcolor=#FFFF00',
                 'style1_balloonstyle_text=This is $[name], whose description is:<br/>$[description]']
-    ds = ogr.GetDriverByName('LIBKML').CreateDataSource('/vsimem/ogr_libkml_read_write_style_write.kml', options = options)
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource('/vsimem/ogr_libkml_read_write_style_write.kml', options=options)
     ds.SetStyleTable(style_table)
     ds = None
     src_ds = None
@@ -1666,7 +1666,7 @@ def ogr_libkml_write_update():
             name = "/vsimem/ogr_libkml_write_update_dir"
 
         ds = ogr.GetDriverByName('LIBKML').CreateDataSource(name,
-                                                            options = ['UPDATE_TARGETHREF=http://foo'])
+                                                            options=['UPDATE_TARGETHREF=http://foo'])
         lyr = ds.CreateLayer('layer_to_edit')
         feat = ogr.Feature(lyr.GetLayerDefn())
         with gdaltest.error_handler():
@@ -1735,7 +1735,7 @@ def ogr_libkml_write_networklinkcontrol():
         else:
             name = "/vsimem/ogr_libkml_write_networklinkcontrol_dir"
 
-        ds = ogr.GetDriverByName('LIBKML').CreateDataSource(name, options = options)
+        ds = ogr.GetDriverByName('LIBKML').CreateDataSource(name, options=options)
         if ds is None:
             gdaltest.post_reason('Unable to create %s.' % name)
             return 'fail'
@@ -1778,14 +1778,14 @@ def ogr_libkml_write_liststyle():
         return 'skip'
 
     options = ['LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png']
-    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_liststyle.kml", options = options)
-    ds.CreateLayer('test', options = ['LISTSTYLE_ICON_HREF=http://foo'])
-    ds.CreateLayer('test_check', options = ['LISTSTYLE_TYPE=check'])
-    ds.CreateLayer('test_radioFolder', options = ['LISTSTYLE_TYPE=radioFolder'])
-    ds.CreateLayer('test_checkOffOnly', options = ['LISTSTYLE_TYPE=checkOffOnly'])
-    ds.CreateLayer('test_checkHideChildren', options = ['LISTSTYLE_TYPE=checkHideChildren'])
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_liststyle.kml", options=options)
+    ds.CreateLayer('test', options=['LISTSTYLE_ICON_HREF=http://foo'])
+    ds.CreateLayer('test_check', options=['LISTSTYLE_TYPE=check'])
+    ds.CreateLayer('test_radioFolder', options=['LISTSTYLE_TYPE=radioFolder'])
+    ds.CreateLayer('test_checkOffOnly', options=['LISTSTYLE_TYPE=checkOffOnly'])
+    ds.CreateLayer('test_checkHideChildren', options=['LISTSTYLE_TYPE=checkHideChildren'])
     with gdaltest.error_handler():
-        ds.CreateLayer('test_error', options = ['LISTSTYLE_TYPE=error'])
+        ds.CreateLayer('test_error', options=['LISTSTYLE_TYPE=error'])
         ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_liststyle.kml', 'rb')
@@ -2019,8 +2019,8 @@ def ogr_libkml_write_folder():
         return 'skip'
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_folder.kml")
-    ds.CreateLayer('test', options = ['LISTSTYLE_ICON_HREF=http://foo', 'FOLDER=YES'])
-    ds.CreateLayer('test2', options = ['FOLDER=YES'])
+    ds.CreateLayer('test', options=['LISTSTYLE_ICON_HREF=http://foo', 'FOLDER=YES'])
+    ds.CreateLayer('test2', options=['FOLDER=YES'])
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_folder.kml', 'rb')
@@ -2049,8 +2049,8 @@ def ogr_libkml_write_container_properties():
         return 'skip'
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_container_properties.kml",
-                                 options = ['NAME=ds_name', 'DESCRIPTION=ds_description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=ds_snippet'])
-    ds.CreateLayer('test', options = ['NAME=lyr_name', 'DESCRIPTION=lyr_description', 'OPEN=0', 'VISIBILITY=0', 'SNIPPET=lyr_snippet'])
+                                 options=['NAME=ds_name', 'DESCRIPTION=ds_description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=ds_snippet'])
+    ds.CreateLayer('test', options=['NAME=lyr_name', 'DESCRIPTION=lyr_description', 'OPEN=0', 'VISIBILITY=0', 'SNIPPET=lyr_snippet'])
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_container_properties.kml', 'rb')

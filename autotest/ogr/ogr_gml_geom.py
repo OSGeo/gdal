@@ -1419,7 +1419,7 @@ def gml_write_gml3_srs():
 
     geom = ogr.CreateGeometryFromWkt('POINT(500000 4500000)')
     geom.AssignSpatialReference(sr32631)
-    gml3 = geom.ExportToGML(options = ['FORMAT=GML3'])
+    gml3 = geom.ExportToGML(options=['FORMAT=GML3'])
     expected_gml = '<gml:Point srsName="urn:ogc:def:crs:EPSG::32631"><gml:pos>500000 4500000</gml:pos></gml:Point>'
     if gml3 != expected_gml:
         gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
@@ -1428,7 +1428,7 @@ def gml_write_gml3_srs():
     # Should perform the needed coordinate order swapping
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
     geom.AssignSpatialReference(srlonglat)
-    gml3 = geom.ExportToGML(options = ['FORMAT=GML3'])
+    gml3 = geom.ExportToGML(options=['FORMAT=GML3'])
     expected_gml = '<gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos></gml:Point>'
     if gml3 != expected_gml:
         gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
@@ -1437,7 +1437,7 @@ def gml_write_gml3_srs():
     # Should not change the coordinate order.
     geom = ogr.CreateGeometryFromWkt('POINT(49 2)')
     geom.AssignSpatialReference(srlatlong)
-    gml3 = geom.ExportToGML(options = ['FORMAT=GML3'])
+    gml3 = geom.ExportToGML(options=['FORMAT=GML3'])
     expected_gml = '<gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos></gml:Point>'
     if gml3 != expected_gml:
         gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
@@ -1446,7 +1446,7 @@ def gml_write_gml3_srs():
     # Legacy SRS format
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
     geom.AssignSpatialReference(srlonglat)
-    gml3 = geom.ExportToGML(options = ['FORMAT=GML3', 'GML3_LONGSRS=NO'])
+    gml3 = geom.ExportToGML(options=['FORMAT=GML3', 'GML3_LONGSRS=NO'])
     expected_gml = '<gml:Point srsName="EPSG:4326"><gml:pos>2 49</gml:pos></gml:Point>'
     if gml3 != expected_gml:
         gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
@@ -1455,7 +1455,7 @@ def gml_write_gml3_srs():
     # Test SRSNAME_FORMAT=SHORT
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
     geom.AssignSpatialReference(srlonglat)
-    gml3 = geom.ExportToGML(options = ['FORMAT=GML3', 'SRSNAME_FORMAT=SHORT'])
+    gml3 = geom.ExportToGML(options=['FORMAT=GML3', 'SRSNAME_FORMAT=SHORT'])
     expected_gml = '<gml:Point srsName="EPSG:4326"><gml:pos>2 49</gml:pos></gml:Point>'
     if gml3 != expected_gml:
         gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
@@ -1464,7 +1464,7 @@ def gml_write_gml3_srs():
     # Test SRSNAME_FORMAT=SRSNAME_FORMAT
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
     geom.AssignSpatialReference(srlonglat)
-    gml3 = geom.ExportToGML(options = ['FORMAT=GML3', 'SRSNAME_FORMAT=OGC_URN'])
+    gml3 = geom.ExportToGML(options=['FORMAT=GML3', 'SRSNAME_FORMAT=OGC_URN'])
     expected_gml = '<gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos></gml:Point>'
     if gml3 != expected_gml:
         gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
@@ -1473,7 +1473,7 @@ def gml_write_gml3_srs():
     # Test SRSNAME_FORMAT=OGC_URL
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
     geom.AssignSpatialReference(srlonglat)
-    gml3 = geom.ExportToGML(options = ['FORMAT=GML3', 'SRSNAME_FORMAT=OGC_URL'])
+    gml3 = geom.ExportToGML(options=['FORMAT=GML3', 'SRSNAME_FORMAT=OGC_URL'])
     expected_gml = '<gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/4326"><gml:pos>49 2</gml:pos></gml:Point>'
     if gml3 != expected_gml:
         gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
@@ -2393,21 +2393,21 @@ def gml_OGRMultiCurve():
 def gml_write_gml_ns():
 
     geom = ogr.CreateGeometryFromWkt('POINT(500000 4500000)')
-    gml = geom.ExportToGML(options = ['NAMESPACE_DECL=YES'])
+    gml = geom.ExportToGML(options=['NAMESPACE_DECL=YES'])
     expected_gml = '<gml:Point xmlns:gml="http://www.opengis.net/gml"><gml:coordinates>500000,4500000</gml:coordinates></gml:Point>'
     if gml != expected_gml:
         gdaltest.post_reason('got %s, instead of %s' % (gml, expected_gml))
         return 'fail'
 
     geom = ogr.CreateGeometryFromWkt('POINT(500000 4500000)')
-    gml = geom.ExportToGML(options = ['FORMAT=GML3', 'NAMESPACE_DECL=YES'])
+    gml = geom.ExportToGML(options=['FORMAT=GML3', 'NAMESPACE_DECL=YES'])
     expected_gml = '<gml:Point xmlns:gml="http://www.opengis.net/gml"><gml:pos>500000 4500000</gml:pos></gml:Point>'
     if gml != expected_gml:
         gdaltest.post_reason('got %s, instead of %s' % (gml, expected_gml))
         return 'fail'
 
     geom = ogr.CreateGeometryFromWkt('POINT(500000 4500000)')
-    gml = geom.ExportToGML(options = ['FORMAT=GML32', 'GMLID=foo', 'NAMESPACE_DECL=YES'])
+    gml = geom.ExportToGML(options=['FORMAT=GML32', 'GMLID=foo', 'NAMESPACE_DECL=YES'])
     expected_gml = '<gml:Point xmlns:gml="http://www.opengis.net/gml/3.2" gml:id="foo"><gml:pos>500000 4500000</gml:pos></gml:Point>'
     if gml != expected_gml:
         gdaltest.post_reason('got %s, instead of %s' % (gml, expected_gml))

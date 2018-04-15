@@ -123,7 +123,7 @@ def jpeg_3():
                'QUALITY=50',
                'WORLDFILE=YES']
     ds = gdal.GetDriverByName('JPEG').CreateCopy('tmp/byte.jpg', ds,
-                                                  options = options)
+                                                  options=options)
 
     # IJG, MozJPEG
     expected_cs = [4794, 4787]
@@ -152,7 +152,7 @@ def jpeg_3():
 
     try:
         os.stat('tmp/byte.wld')
-    except:
+    except OSError:
         gdaltest.post_reason('should have .wld file at that point')
         return 'fail'
 
@@ -288,7 +288,7 @@ def jpeg_7():
     options = ['PROGRESSIVE=YES',
                'QUALITY=50']
     ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/byte.jpg', ds,
-                                                  options = options)
+                                                  options=options)
 
     # IJG, MozJPEG
     expected_cs = [4794, 4787]
@@ -433,7 +433,7 @@ def jpeg_10():
 
     try:
         os.remove('data/12bit_rose_extract.jpg.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/12bit_rose_extract.jpg')
@@ -447,7 +447,7 @@ def jpeg_10():
 
     try:
         os.remove('data/12bit_rose_extract.jpg.aux.xml')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -571,7 +571,7 @@ def jpeg_15():
 
     tst = gdaltest.GDALTest('JPEG', 'albania.jpg', 2, 17016)
 
-    return tst.testCreateCopy(vsimem = 1, interrupt_during_copy = True)
+    return tst.testCreateCopy(vsimem=1, interrupt_during_copy=True)
 
 ###############################################################################
 # Test overview support
@@ -582,7 +582,7 @@ def jpeg_16():
     shutil.copy('data/albania.jpg', 'tmp/albania.jpg')
     try:
         os.unlink('tmp/albania.jpg.ovr')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/albania.jpg')
@@ -715,7 +715,7 @@ def jpeg_18():
         src_ds.WriteRaster(0,i,width,1,data,1,1)
 
     ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_18.jpg', src_ds,
-                                                 options = ['QUALITY=99'])
+                                                 options=['QUALITY=99'])
     src_ds = None
     gdal.Unlink('/vsimem/jpeg_18.tif')
 
@@ -911,7 +911,7 @@ def jpeg_22():
     src_ds = gdal.GetDriverByName('Mem').Create('', 4096, 2048)
     src_ds.GetRasterBand(1).Fill(255)
     ds = gdal.GetDriverByName('JPEG').CreateCopy(
-        '/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES'])
+        '/vsimem/jpeg_22.jpg', src_ds, options=['EXIF_THUMBNAIL=YES'])
     src_ds = None
     if ds.GetRasterBand(1).GetOverviewCount() != 4:
         gdaltest.post_reason('failure')
@@ -931,7 +931,7 @@ def jpeg_22():
     src_ds = gdal.GetDriverByName('Mem').Create('', 2048, 4096, 3)
     src_ds.GetRasterBand(1).Fill(255)
     ds = gdal.GetDriverByName('JPEG').CreateCopy(
-        '/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES'])
+        '/vsimem/jpeg_22.jpg', src_ds, options=['EXIF_THUMBNAIL=YES'])
     src_ds = None
     ovr = ds.GetRasterBand(1).GetOverview(3)
     if ovr.XSize != 64 or ovr.YSize != 128:
@@ -946,7 +946,7 @@ def jpeg_22():
     src_ds.GetRasterBand(1).Fill(255)
     ds = gdal.GetDriverByName('JPEG').CreateCopy(
         '/vsimem/jpeg_22.jpg', src_ds,
-        options = ['COMMENT=foo','EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=40'])
+        options=['COMMENT=foo','EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=40'])
     src_ds = None
     ovr = ds.GetRasterBand(1).GetOverview(3)
     if ds.GetMetadataItem('COMMENT') != 'foo':
@@ -963,7 +963,7 @@ def jpeg_22():
     src_ds.GetRasterBand(1).Fill(255)
     ds = gdal.GetDriverByName('JPEG').CreateCopy(
         '/vsimem/jpeg_22.jpg', src_ds,
-        options = ['EXIF_THUMBNAIL=YES', 'THUMBNAIL_HEIGHT=60'])
+        options=['EXIF_THUMBNAIL=YES', 'THUMBNAIL_HEIGHT=60'])
     src_ds = None
     ovr = ds.GetRasterBand(1).GetOverview(3)
     if ovr.XSize != 30 or ovr.YSize != 60:
@@ -977,7 +977,7 @@ def jpeg_22():
     src_ds.GetRasterBand(1).Fill(255)
     ds = gdal.GetDriverByName('JPEG').CreateCopy(
         '/vsimem/jpeg_22.jpg', src_ds,
-        options = ['EXIF_THUMBNAIL=YES',
+        options=['EXIF_THUMBNAIL=YES',
                    'THUMBNAIL_WIDTH=50',
                    'THUMBNAIL_HEIGHT=40'])
     src_ds = None
@@ -1013,11 +1013,11 @@ def jpeg_23():
 
     # Pixel interleaved
     data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize,
-                         buf_pixel_space = 3, buf_band_space = 1)
+                         buf_pixel_space=3, buf_band_space=1)
     tmp_ds = gdal.GetDriverByName('Mem').Create(
         '', ds.RasterXSize, ds.RasterYSize, 3)
     tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize,data,
-                       buf_pixel_space = 3, buf_band_space = 1)
+                       buf_pixel_space=3, buf_band_space=1)
     got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
@@ -1025,11 +1025,11 @@ def jpeg_23():
 
     # Pixel interleaved with padding
     data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize,
-                         buf_pixel_space = 4, buf_band_space = 1)
+                         buf_pixel_space=4, buf_band_space=1)
     tmp_ds = gdal.GetDriverByName('Mem').Create(
         '', ds.RasterXSize, ds.RasterYSize, 3)
     tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize,data,
-                       buf_pixel_space = 4, buf_band_space = 1)
+                       buf_pixel_space=4, buf_band_space=1)
     got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
@@ -1054,7 +1054,7 @@ def jpeg_24():
     if not has_arithmetic:
         gdal.PushErrorHandler()
     ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/byte.jpg', src_ds,
-                                                  options = ['ARITHMETIC=YES'])
+                                                  options=['ARITHMETIC=YES'])
     if not has_arithmetic:
         gdal.PopErrorHandler()
     else:
@@ -1083,7 +1083,7 @@ def jpeg_25():
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('JPEG').CreateCopy(
-        '/vsimem/byte.jpg', src_ds, options = ['COMMENT=my comment'])
+        '/vsimem/byte.jpg', src_ds, options=['COMMENT=my comment'])
     ds = None
     ds = gdal.Open('/vsimem/byte.jpg')
     if ds.GetMetadataItem('COMMENT') != 'my comment':
@@ -1303,7 +1303,7 @@ def jpeg_28():
     src_ds.SetMetadataItem('EXIF_ExifVersion', '0231')
     src_ds.SetMetadataItem('EXIF_GPSLatitudeRef', 'N')
     gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds,
-            options = ['EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=32', 'THUMBNAIL_HEIGHT=32'])
+            options=['EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=32', 'THUMBNAIL_HEIGHT=32'])
     src_ds = None
     if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
         gdaltest.post_reason('fail')

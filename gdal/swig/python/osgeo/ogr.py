@@ -599,7 +599,7 @@ class MajorObject(_object):
         """SetMetadataItem(MajorObject self, char const * pszName, char const * pszValue, char const * pszDomain) -> CPLErr"""
         return _ogr.MajorObject_SetMetadataItem(self, *args)
 
-    def GetMetadata(self, domain = ''):
+    def GetMetadata(self, domain=''):
       if domain[:4] == 'xml:':
         return self.GetMetadata_List(domain)
       return self.GetMetadata_Dict(domain)
@@ -4699,7 +4699,7 @@ class Feature(_object):
     def geometry(self):
         return self.GetGeometryRef()
 
-    def ExportToJson(self, as_object = False, options = None):
+    def ExportToJson(self, as_object=False, options=None):
         """Exports a GeoJSON object which represents the Feature. The
            as_object parameter determines whether the returned value
            should be a Python object instead of a string. Defaults to False.
@@ -4717,7 +4717,7 @@ class Feature(_object):
         if geom is not None:
             if options is None:
                 options = []
-            geom_json_string = geom.ExportToJson(options = options)
+            geom_json_string = geom.ExportToJson(options=options)
             geom_json_object = simplejson.loads(geom_json_string)
         else:
             geom_json_object = None

@@ -288,7 +288,7 @@ def rl2_6():
         return 'skip'
 
     tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 4672)
-    return tst.testCreateCopy(vsimem = 1, check_minmax = False)
+    return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 ###############################################################################
 # Test CreateCopy() on a RGB
@@ -299,8 +299,8 @@ def rl2_7():
     if gdaltest.rl2_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('SQLite', 'small_world.tif', 1, 30111, options = ['COMPRESS=PNG'])
-    return tst.testCreateCopy(vsimem = 1)
+    tst = gdaltest.GDALTest('SQLite', 'small_world.tif', 1, 30111, options=['COMPRESS=PNG'])
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # Test CreateCopy() on a paletted dataset
@@ -311,8 +311,8 @@ def rl2_8():
     if gdaltest.rl2_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('SQLite', 'small_world_pct.tif', 1, 14890, options = ['COMPRESS=PNG'])
-    return tst.testCreateCopy(vsimem = 1, check_minmax = False)
+    tst = gdaltest.GDALTest('SQLite', 'small_world_pct.tif', 1, 14890, options=['COMPRESS=PNG'])
+    return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 ###############################################################################
 # Test CreateCopy() on a DATAGRID uint16
@@ -324,7 +324,7 @@ def rl2_9():
         return 'skip'
 
     tst = gdaltest.GDALTest('SQLite', '../../gcore/data/uint16.tif', 1, 4672)
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # Test CreateCopy() on a DATAGRID int16
@@ -336,7 +336,7 @@ def rl2_10():
         return 'skip'
 
     tst = gdaltest.GDALTest('SQLite', '../../gcore/data/int16.tif', 1, 4672)
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # Test CreateCopy() on a DATAGRID uint32
@@ -348,7 +348,7 @@ def rl2_11():
         return 'skip'
 
     tst = gdaltest.GDALTest('SQLite', '../../gcore/data/uint32.tif', 1, 4672)
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # Test CreateCopy() on a DATAGRID int32
@@ -360,7 +360,7 @@ def rl2_12():
         return 'skip'
 
     tst = gdaltest.GDALTest('SQLite', '../../gcore/data/int32.tif', 1, 4672)
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # Test CreateCopy() on a DATAGRID float
@@ -372,7 +372,7 @@ def rl2_13():
         return 'skip'
 
     tst = gdaltest.GDALTest('SQLite', '../../gcore/data/float32.tif', 1, 4672)
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # Test CreateCopy() on a DATAGRID double
@@ -384,7 +384,7 @@ def rl2_14():
         return 'skip'
 
     tst = gdaltest.GDALTest('SQLite', '../../gcore/data/float64.tif', 1, 4672)
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # Test CreateCopy() on a 1 bit paletted
@@ -396,7 +396,7 @@ def rl2_15():
         return 'skip'
 
     tst = gdaltest.GDALTest('SQLite', '../../gcore/data/1bit.bmp', 1, 200)
-    return tst.testCreateCopy(vsimem = 1, check_minmax = False)
+    return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 ###############################################################################
 # Test CreateCopy() on a forced 1 bit
@@ -407,8 +407,8 @@ def rl2_16():
     if gdaltest.rl2_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 400, options = ['NBITS=1', 'COMPRESS=CCITTFAX4'])
-    return tst.testCreateCopy(vsimem = 1, check_minmax = False)
+    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 400, options=['NBITS=1', 'COMPRESS=CCITTFAX4'])
+    return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 ###############################################################################
 # Test CreateCopy() on a forced 2 bit
@@ -419,8 +419,8 @@ def rl2_17():
     if gdaltest.rl2_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 4873, options = ['NBITS=2', 'COMPRESS=DEFLATE'])
-    return tst.testCreateCopy(vsimem = 1, check_minmax = False)
+    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 4873, options=['NBITS=2', 'COMPRESS=DEFLATE'])
+    return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 ###############################################################################
 # Test CreateCopy() on a forced 4 bit
@@ -431,8 +431,8 @@ def rl2_18():
     if gdaltest.rl2_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 2541, options = ['NBITS=4'])
-    return tst.testCreateCopy(vsimem = 1, check_minmax = False)
+    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 2541, options=['NBITS=4'])
+    return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 ###############################################################################
 # Test CreateCopy() with forced monochrome
@@ -443,8 +443,8 @@ def rl2_19():
     if gdaltest.rl2_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 400, options = ['PIXEL_TYPE=MONOCHROME'])
-    return tst.testCreateCopy(vsimem = 1, check_minmax = False)
+    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 400, options=['PIXEL_TYPE=MONOCHROME'])
+    return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 ###############################################################################
 # Test incompatibilities on CreateCopy()
@@ -488,7 +488,7 @@ def rl2_20():
             src_ds.GetRasterBand(1).SetMetadataItem('NBITS', nbits, 'IMAGE_STRUCTURE')
         options = ['PIXEL_TYPE=' + pixel_type, 'COMPRESS=' + compress]
         with gdaltest.error_handler():
-            out_ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_20.rl2', src_ds, options = options)
+            out_ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_20.rl2', src_ds, options=options)
         if out_ds is not None:
             gdaltest.post_reason('Expected error for %s, band=%d, dt=%d, %s, nbits=%s' % (pixel_type, band_count, dt, compress, nbits))
             return 'fail'
@@ -530,7 +530,7 @@ def rl2_21():
         options = ['COMPRESS=' + compress]
         if quality is not None:
             options += ['QUALITY=' + str(quality)]
-        out_ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_21.rl2', src_ds, options = options)
+        out_ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_21.rl2', src_ds, options=options)
         if out_ds is None:
             gdaltest.post_reason('Got error with %s, quality=%d' % (compress, quality))
             return 'fail'
@@ -553,10 +553,10 @@ def rl2_22():
 
     src_ds = gdal.Open('data/byte.tif')
 
-    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/rl2_22.rl2', options = ['SPATIALITE=YES'])
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/rl2_22.rl2', options=['SPATIALITE=YES'])
     ds.CreateLayer('foo', None, ogr.wkbPoint)
     ds = None
-    ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', src_ds, options = ['APPEND_SUBDATASET=YES', 'COVERAGE=byte'])
+    ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', src_ds, options=['APPEND_SUBDATASET=YES', 'COVERAGE=byte'])
     if ds.GetRasterBand(1).Checksum() != 4672:
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
@@ -570,18 +570,18 @@ def rl2_22():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    left_ds = gdal.Translate('left', src_ds, srcWin = [0,0,10,20], format = 'MEM')
-    right_ds = gdal.Translate('', src_ds, srcWin = [10,0,10,20], format = 'MEM')
+    left_ds = gdal.Translate('left', src_ds, srcWin=[0,0,10,20], format='MEM')
+    right_ds = gdal.Translate('', src_ds, srcWin=[10,0,10,20], format='MEM')
 
-    gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', left_ds, options = ['COVERAGE=left_right'])
-    ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', right_ds, options = ['APPEND_SUBDATASET=YES', 'COVERAGE=left_right', 'SECTION=right'])
+    gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', left_ds, options=['COVERAGE=left_right'])
+    ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', right_ds, options=['APPEND_SUBDATASET=YES', 'COVERAGE=left_right', 'SECTION=right'])
     if ds.GetRasterBand(1).Checksum() != 4672:
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
     src_ds = gdal.Open('data/rgbsmall.tif')
-    ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', src_ds, options = ['APPEND_SUBDATASET=YES', 'COVERAGE=rgbsmall'])
+    ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', src_ds, options=['APPEND_SUBDATASET=YES', 'COVERAGE=rgbsmall'])
     if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
@@ -602,7 +602,7 @@ def rl2_23():
         return 'skip'
 
     src_ds = gdal.Open('data/byte.tif')
-    src_ds = gdal.Translate('', src_ds, format = 'MEM', width = 2048, height = 2048)
+    src_ds = gdal.Translate('', src_ds, format='MEM', width=2048, height=2048)
     ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_23.rl2', src_ds)
     ret = ds.BuildOverviews('NEAR', [2])
     if ret != 0:

@@ -201,8 +201,8 @@ def get_layer_and_map(out_lyr_name, src_lyr, dst_ds, layerMap, geom_type, option
         if out_lyr is None:
             if not options.bQuiet:
                 print('Creating layer %s' % out_lyr_name)
-            out_lyr = dst_ds.CreateLayer(out_lyr_name, srs = srs, \
-                                geom_type = geom_type, options = options.lco)
+            out_lyr = dst_ds.CreateLayer(out_lyr_name, srs=srs, \
+                                geom_type=geom_type, options=options.lco)
             if out_lyr is None:
                 return 1
             src_field_count = src_lyr.GetLayerDefn().GetFieldCount()
@@ -291,7 +291,7 @@ def convert_layer(src_lyr, dst_ds, layerMap, options):
 # ogr_dispatch()
 
 
-def ogr_dispatch(argv, progress = None, progress_arg = None):
+def ogr_dispatch(argv, progress=None, progress_arg=None):
 
     src_filename = None
     dst_filename = None
@@ -378,13 +378,13 @@ def ogr_dispatch(argv, progress = None, progress_arg = None):
         print('Cannot open source datasource %s' % src_filename)
         return 1
 
-    dst_ds = ogr.Open(dst_filename, update = 1)
+    dst_ds = ogr.Open(dst_filename, update=1)
     if dst_ds is not None:
         if len(dsco) != 0:
             print('-dsco should not be specified for an existing datasource')
             return 1
     else:
-        dst_ds = ogr.GetDriverByName(format).CreateDataSource(dst_filename, options = dsco)
+        dst_ds = ogr.GetDriverByName(format).CreateDataSource(dst_filename, options=dsco)
     if dst_ds is None:
         print('Cannot open or create target datasource %s' % dst_filename)
         return 1

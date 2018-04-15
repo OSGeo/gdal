@@ -107,7 +107,7 @@ def jpeg2000_2():
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
     tst = gdaltest.GDALTest('JPEG2000', 'byte.jp2', 1, 50054)
-    return tst.testOpen(check_prj = srs, check_gt = gt)
+    return tst.testOpen(check_prj=srs, check_gt=gt)
 
 ###############################################################################
 # Open int16.jp2
@@ -149,7 +149,7 @@ def jpeg2000_4():
         return 'fail'
 
     # This may fail for a good reason
-    if tst.testCreateCopy(check_gt = 1, check_srs = 1) != 'success':
+    if tst.testCreateCopy(check_gt=1, check_srs=1) != 'success':
         gdaltest.post_reason('This is an expected failure if Jasper has not the jp2_encode_uuid function')
         return 'expected_fail'
 
@@ -196,7 +196,7 @@ def jpeg2000_7():
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('JPEG2000', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute = 1)
+    tst = gdaltest.GDALTest('JPEG2000', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute=1)
     return tst.testOpen()
 
 ###############################################################################
@@ -325,7 +325,7 @@ def jpeg2000_11():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options = ['1BIT_ALPHA_PROMOTION=NO'])
+    ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
         gdaltest.post_reason('fail')
@@ -345,7 +345,7 @@ def jpeg2000_online_1():
         return 'skip'
 
     # Checksum = 32669 on my PC
-    tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute = 1)
+    tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute=1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -368,7 +368,7 @@ def jpeg2000_online_2():
         return 'skip'
 
     # Checksum = 15621 on my PC
-    tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/gcp.jp2', 1, None, filename_absolute = 1)
+    tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/gcp.jp2', 1, None, filename_absolute=1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -402,7 +402,7 @@ def jpeg2000_online_3():
         return 'skip'
 
     # Checksum = 14443 on my PC
-    tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute = 1)
+    tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute=1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -436,7 +436,7 @@ def jpeg2000_online_4():
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.bmp', 'Bretagne2.bmp'):
         return 'skip'
 
-    tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute = 1)
+    tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute=1)
 
     # Jasper cannot handle this image
     # Actually, a patched Jasper can ;-)

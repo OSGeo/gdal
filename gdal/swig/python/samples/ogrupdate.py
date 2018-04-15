@@ -74,7 +74,7 @@ def Usage():
 # ogrupdate_analyse_args()
 
 
-def ogrupdate_analyse_args(argv, progress = None, progress_arg = None):
+def ogrupdate_analyse_args(argv, progress=None, progress_arg=None):
 
     src_filename = None
     dst_filename = None
@@ -165,7 +165,7 @@ def ogrupdate_analyse_args(argv, progress = None, progress_arg = None):
         print('Cannot open source datasource %s' % src_filename)
         return 1
 
-    dst_ds = ogr.Open(dst_filename, update = 1)
+    dst_ds = ogr.Open(dst_filename, update=1)
     if dst_ds is None:
         print('Cannot open destination datasource %s' % dst_filename)
         return 1
@@ -273,11 +273,11 @@ def AreFeaturesEqual(src_feat, dst_feat):
 # ogrupdate_process()
 
 
-def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode = DEFAULT, \
-                      preserve_fid = False, compare_before_update = False, \
-                      papszSelFields = None, dry_run = False, skip_failures = False, \
-                      updated_count_out = None, updated_failed_out = None, inserted_count_out = None, inserted_failed_out = None, \
-                      progress = None, progress_arg = None):
+def ogrupdate_process(src_layer, dst_layer, matchfieldname=None, update_mode=DEFAULT, \
+                      preserve_fid=False, compare_before_update=False, \
+                      papszSelFields=None, dry_run=False, skip_failures=False, \
+                      updated_count_out=None, updated_failed_out=None, inserted_count_out=None, inserted_failed_out=None, \
+                      progress=None, progress_arg=None):
 
     src_layer_defn = src_layer.GetLayerDefn()
     dst_layer_defn = dst_layer.GetLayerDefn()

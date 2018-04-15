@@ -266,7 +266,7 @@ def summarize():
 ###############################################################################
 
 
-def run_all(dirlist, run_as_external = False):
+def run_all(dirlist, run_as_external=False):
 
     global start_time, end_time
     global cur_name
@@ -310,7 +310,7 @@ def run_all(dirlist, run_as_external = False):
                         else:
                             backup_asan_options = None
                         os.environ['ASAN_OPTIONS'] = os.environ['GDALTEST_ASAN_OPTIONS']
-                    ret = runexternal(python_exe + """ -c "import %s; import sys; sys.path.append('../pymod'); import gdaltest; gdaltest.run_tests( %s.gdaltest_list ); gdaltest.summarize()" """ % (module, module) , display_live_on_parent_stdout = True)
+                    ret = runexternal(python_exe + """ -c "import %s; import sys; sys.path.append('../pymod'); import gdaltest; gdaltest.run_tests( %s.gdaltest_list ); gdaltest.summarize()" """ % (module, module) , display_live_on_parent_stdout=True)
                     if 'GDALTEST_ASAN_OPTIONS' in os.environ:
                         if backup_asan_options is None:
                             del os.environ['ASAN_OPTIONS']
@@ -385,8 +385,8 @@ def testCreateCopyInterruptCallback(pct, message, user_data):
 
 class GDALTest:
     def __init__(self, drivername, filename, band, chksum,
-                 xoff = 0, yoff = 0, xsize = 0, ysize = 0, options = [],
-                 filename_absolute = 0, chksum_after_reopening = None, open_options = None):
+                 xoff=0, yoff=0, xsize=0, ysize=0, options=[],
+                 filename_absolute=0, chksum_after_reopening=None, open_options=None):
         self.driver = None
         self.drivername = drivername
         self.filename = filename
@@ -418,10 +418,10 @@ class GDALTest:
 
         return 'success'
 
-    def testOpen(self, check_prj = None, check_gt = None, gt_epsilon = None, \
-                 check_stat = None, check_approx_stat = None, \
-                 stat_epsilon = None, skip_checksum = None, check_min = None, \
-                 check_max = None, check_filelist = True):
+    def testOpen(self, check_prj=None, check_gt=None, gt_epsilon=None, \
+                 check_stat=None, check_approx_stat=None, \
+                 stat_epsilon=None, skip_checksum=None, check_min=None, \
+                 check_max=None, check_filelist=True):
         """check_prj - projection reference, check_gt - geotransformation
         matrix (tuple), gt_epsilon - geotransformation tolerance,
         check_stat - band statistics (tuple), stat_epsilon - statistics
@@ -435,7 +435,7 @@ class GDALTest:
             wrk_filename = 'data/' + self.filename
 
         if self.open_options:
-            ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options = self.open_options)
+            ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
         else:
             ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
@@ -490,7 +490,7 @@ class GDALTest:
                         ((drv_name.lower() == 'gif' and self.drivername.lower() == 'biggif') or \
                          (drv_name.lower() == 'biggif' and self.drivername.lower() == 'gif')):
                         drivers += [drv_name]
-                other_ds = gdal.OpenEx(main_virtual_filename, gdal.OF_RASTER, allowed_drivers = drivers)
+                other_ds = gdal.OpenEx(main_virtual_filename, gdal.OF_RASTER, allowed_drivers=drivers)
                 other_ds_is_None = other_ds is None
                 other_ds_driver_name = None
                 if not other_ds_is_None:
@@ -616,11 +616,11 @@ class GDALTest:
                         % (self.band, self.filename, chksum, self.chksum))
             return 'fail'
 
-    def testCreateCopy(self, check_minmax = 1, check_gt = 0, check_srs = None,
-                       vsimem = 0, new_filename = None, strict_in = 0,
-                       skip_preclose_test = 0, delete_copy = 1, gt_epsilon = None,
-                       check_checksum_not_null = None, interrupt_during_copy = False,
-                       dest_open_options = None, quiet_error_handler = True):
+    def testCreateCopy(self, check_minmax=1, check_gt=0, check_srs=None,
+                       vsimem=0, new_filename=None, strict_in=0,
+                       skip_preclose_test=0, delete_copy=1, gt_epsilon=None,
+                       check_checksum_not_null=None, interrupt_during_copy=False,
+                       dest_open_options=None, quiet_error_handler=True):
 
         if self.testDriver() == 'fail':
             return 'skip'
@@ -631,7 +631,7 @@ class GDALTest:
             wrk_filename = 'data/' + self.filename
 
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options = self.open_options)
+            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
@@ -651,13 +651,13 @@ class GDALTest:
             gdal.PushErrorHandler('CPLQuietErrorHandler')
         if interrupt_during_copy:
             new_ds = self.driver.CreateCopy(new_filename, src_ds,
-                                         strict = strict_in,
-                                         options = self.options,
-                                         callback = testCreateCopyInterruptCallback)
+                                         strict=strict_in,
+                                         options=self.options,
+                                         callback=testCreateCopyInterruptCallback)
         else:
             new_ds = self.driver.CreateCopy(new_filename, src_ds,
-                                            strict = strict_in,
-                                            options = self.options)
+                                            strict=strict_in,
+                                            options=self.options)
         if quiet_error_handler:
             gdal.PopErrorHandler()
 
@@ -708,7 +708,7 @@ class GDALTest:
         # hopefully it's closed now!
 
         if dest_open_options is not None:
-            new_ds = gdal.OpenEx(new_filename, gdal.OF_RASTER, open_options = dest_open_options)
+            new_ds = gdal.OpenEx(new_filename, gdal.OF_RASTER, open_options=dest_open_options)
         else:
             new_ds = gdal.Open(new_filename)
         if new_ds is None:
@@ -778,8 +778,8 @@ class GDALTest:
 
         return 'success'
 
-    def testCreate(self, vsimem = 0, new_filename = None, out_bands = 1,
-                   check_minmax = 1, dest_open_options = None):
+    def testCreate(self, vsimem=0, new_filename=None, out_bands=1,
+                   check_minmax=1, dest_open_options=None):
         if self.testDriver() == 'fail':
             return 'skip'
 
@@ -789,7 +789,7 @@ class GDALTest:
             wrk_filename = 'data/' + self.filename
 
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options = self.open_options)
+            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
@@ -806,7 +806,7 @@ class GDALTest:
 
         new_ds = self.driver.Create(new_filename, xsize, ysize, out_bands,
                                      src_ds.GetRasterBand(self.band).DataType,
-                                     options = self.options)
+                                     options=self.options)
         if new_ds is None:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
@@ -840,7 +840,7 @@ class GDALTest:
         new_ds = None
 
         if dest_open_options is not None:
-            new_ds = gdal.OpenEx(new_filename, gdal.OF_RASTER, open_options = dest_open_options)
+            new_ds = gdal.OpenEx(new_filename, gdal.OF_RASTER, open_options=dest_open_options)
         else:
             new_ds = gdal.Open(new_filename)
         if new_ds is None:
@@ -872,7 +872,7 @@ class GDALTest:
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options = self.open_options)
+            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
@@ -882,7 +882,7 @@ class GDALTest:
         new_filename = 'tmp/' + self.filename + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
                                      src_ds.GetRasterBand(self.band).DataType,
-                                     options = self.options)
+                                     options=self.options)
         if new_ds is None:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
@@ -921,13 +921,13 @@ class GDALTest:
 
         return 'success'
 
-    def testSetProjection(self, prj = None, expected_prj = None):
+    def testSetProjection(self, prj=None, expected_prj=None):
         if self.testDriver() == 'fail':
             return 'skip'
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options = self.open_options)
+            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
@@ -937,7 +937,7 @@ class GDALTest:
         new_filename = 'tmp/' + self.filename + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
                                      src_ds.GetRasterBand(self.band).DataType,
-                                     options = self.options)
+                                     options=self.options)
         if new_ds is None:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
@@ -992,7 +992,7 @@ class GDALTest:
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options = self.open_options)
+            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
@@ -1002,7 +1002,7 @@ class GDALTest:
         new_filename = 'tmp/' + self.filename + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
                                      src_ds.GetRasterBand(self.band).DataType,
-                                     options = self.options)
+                                     options=self.options)
         if new_ds is None:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
@@ -1041,13 +1041,13 @@ class GDALTest:
 
         return 'success'
 
-    def testSetNoDataValue(self, delete = False):
+    def testSetNoDataValue(self, delete=False):
         if self.testDriver() == 'fail':
             return 'skip'
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options = self.open_options)
+            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
@@ -1057,7 +1057,7 @@ class GDALTest:
         new_filename = 'tmp/' + self.filename + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
                                      src_ds.GetRasterBand(self.band).DataType,
-                                     options = self.options)
+                                     options=self.options)
         if new_ds is None:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
@@ -1106,7 +1106,7 @@ class GDALTest:
         return 'success'
 
     def testSetNoDataValueAndDelete(self):
-        return self.testSetNoDataValue(delete = True)
+        return self.testSetNoDataValue(delete=True)
 
     def testSetDescription(self):
         if self.testDriver() == 'fail':
@@ -1114,7 +1114,7 @@ class GDALTest:
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options = self.open_options)
+            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
@@ -1124,7 +1124,7 @@ class GDALTest:
         new_filename = 'tmp/' + self.filename + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
                                      src_ds.GetRasterBand(self.band).DataType,
-                                     options = self.options)
+                                     options=self.options)
         if new_ds is None:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
@@ -1157,7 +1157,7 @@ class GDALTest:
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options = self.open_options)
+            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
@@ -1167,7 +1167,7 @@ class GDALTest:
         new_filename = 'tmp/' + self.filename + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
                                      src_ds.GetRasterBand(self.band).DataType,
-                                     options = self.options)
+                                     options=self.options)
         if new_ds is None:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
@@ -1315,7 +1315,7 @@ def geotransform_equals(gt1, gt2, gt_epsilon):
 # If GDAL_DOWNLOAD_TEST_DATA is not defined, the function fails
 # If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
 
-def download_file(url, filename = None, download_size = -1, force_download = False, max_download_duration = None, base_dir = 'tmp/cache'):
+def download_file(url, filename=None, download_size=-1, force_download=False, max_download_duration=None, base_dir='tmp/cache'):
 
     if filename is None:
         filename = os.path.basename(url)
@@ -1385,7 +1385,7 @@ def download_file(url, filename = None, download_size = -1, force_download = Fal
 
             try:
                 os.stat(base_dir)
-            except:
+            except OSError:
                 os.mkdir(base_dir)
 
             try:
@@ -1423,7 +1423,7 @@ def gdal_data_type_to_python_struct_format(datatype):
 # Compare the values of the pixels
 
 
-def compare_ds(ds1, ds2, xoff = 0, yoff = 0, width = 0, height = 0, verbose=1):
+def compare_ds(ds1, ds2, xoff=0, yoff=0, width=0, height=0, verbose=1):
     import struct
 
     if width == 0:
@@ -1626,7 +1626,7 @@ def filesystem_supports_sparse_files(path):
 # Unzip a file
 
 
-def unzip(target_dir, zipfilename, verbose = False):
+def unzip(target_dir, zipfilename, verbose=False):
 
     try:
         import zipfile
@@ -1676,7 +1676,7 @@ def NaN():
     try:
         # Python >= 2.6
         return float('nan')
-    except:
+    except NameError:
         return 1e400 / 1e400
 
 ###############################################################################
@@ -1687,7 +1687,7 @@ def posinf():
     try:
         # Python >= 2.6
         return float('inf')
-    except:
+    except NameError:
         return 1e400
 
 ###############################################################################
@@ -1698,7 +1698,7 @@ def neginf():
     try:
         # Python >= 2.6
         return float('-inf')
-    except:
+    except NameError:
         return -1e400
 
 ###############################################################################
@@ -1838,7 +1838,7 @@ def find_lib_windows(libname):
 
     try:
         import ctypes
-    except:
+    except ImportError:
         return None
 
     kernel32 = ctypes.windll.kernel32
@@ -1989,7 +1989,7 @@ def built_against_curl():
 
 
 @contextlib.contextmanager
-def error_handler(error_name = 'CPLQuietErrorHandler'):
+def error_handler(error_name='CPLQuietErrorHandler'):
   handler = gdal.PushErrorHandler(error_name)
   try:
     yield handler

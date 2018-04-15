@@ -117,7 +117,7 @@ def generate_libkml(filename):
 
     try:
         os.unlink(filename)
-    except:
+    except OSError:
         pass
 
     content = """eiffel_tower_normal:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg/220px-Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg");LABEL(c:#FF0000FF)
@@ -142,7 +142,7 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
                 'NLC_EXPIRES=2014-12-31T23:59:59Z',
                 'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png',
                 'eiffel_tower_normal_balloonstyle_bgcolor=#FFFF00']
-    ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename, options = ds_options)
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename, options=ds_options)
 
     ds.SetStyleTable(style_table)
 
@@ -151,7 +151,7 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
                     'ADD_REGION=YES', 'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000', \
                     'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2', 'SO_HREF=http://www.gdal.org/gdalicon.png',
                     'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png']
-    lyr = ds.CreateLayer('test', options = lyr_options)
+    lyr = ds.CreateLayer('test', options=lyr_options)
     lyr.CreateField(ogr.FieldDefn('name', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('description', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('nom_francais', ogr.OFTString))
@@ -306,7 +306,7 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     lyr_options = ['CAMERA_LONGITUDE=2.2945', 'CAMERA_LATITUDE=48.85825', 'CAMERA_ALTITUDE=30',
                     'CAMERA_HEADING=120', 'CAMERA_TILT=70', 'CAMERA_ROLL=10', 'CAMERA_ALTITUDEMODE=relativeToGround',
                     'FOLDER=YES', 'NAME=layer_name', 'DESCRIPTION=description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=snippet']
-    ds.CreateLayer('test2', options = lyr_options)
+    ds.CreateLayer('test2', options=lyr_options)
 
     gdal.SetConfigOption('LIBKML_USE_SIMPLEFIELD', 'NO')
     lyr = ds.CreateLayer('test_data')
@@ -332,11 +332,11 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
 def generate_libkml_update(filename):
     try:
         os.unlink(filename)
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename,
-        options = ['UPDATE_TARGETHREF=http://even.rouault.free.fr/kml/gdal_2.1/test_ogrlibkml.kml'])
+        options=['UPDATE_TARGETHREF=http://even.rouault.free.fr/kml/gdal_2.1/test_ogrlibkml.kml'])
     lyr = ds.CreateLayer('test')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(100)

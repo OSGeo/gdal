@@ -119,7 +119,7 @@ if pixel_out == 0:
 else:
     geom_type = ogr.wkbPoint
 
-layer = ds.CreateLayer('gcps', srs, geom_type = geom_type)
+layer = ds.CreateLayer('gcps', srs, geom_type=geom_type)
 
 if pixel_out == 0:
     fd = ogr.FieldDefn('Pixel', ogr.OFTReal)

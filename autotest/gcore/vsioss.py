@@ -145,7 +145,7 @@ def visoss_start_webserver():
     if not gdaltest.built_against_curl():
         return 'skip'
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
         return 'skip'
 
@@ -199,7 +199,7 @@ def visoss_2():
         return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/oss_fake_bucket/resource', custom_method = get_oss_fake_bucket_resource_method)
+    handler.add('GET', '/oss_fake_bucket/resource', custom_method=get_oss_fake_bucket_resource_method)
 
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsioss/oss_fake_bucket/resource')
@@ -215,7 +215,7 @@ def visoss_2():
             return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/oss_fake_bucket/resource', custom_method = get_oss_fake_bucket_resource_method)
+    handler.add('GET', '/oss_fake_bucket/resource', custom_method=get_oss_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsioss_streaming/oss_fake_bucket/resource')
         if f is None:
@@ -249,7 +249,7 @@ def visoss_2():
         request.end_headers()
         request.wfile.write(response.encode('ascii'))
 
-    handler.add('GET', '/oss_fake_bucket/redirect', custom_method = method)
+    handler.add('GET', '/oss_fake_bucket/redirect', custom_method=method)
 
     def method(request):
         request.protocol_version = 'HTTP/1.1'
@@ -264,7 +264,7 @@ def visoss_2():
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
 
-    handler.add('GET', '/oss_fake_bucket/redirect', custom_method = method)
+    handler.add('GET', '/oss_fake_bucket/redirect', custom_method=method)
 
     # Test region and endpoint 'redirects'
     with webserver.install_http_handler(handler):
@@ -318,7 +318,7 @@ def visoss_2():
         request.end_headers()
         request.wfile.write(response.encode('ascii'))
 
-    handler.add('GET', '/oss_fake_bucket/non_xml_error', custom_method = method)
+    handler.add('GET', '/oss_fake_bucket/non_xml_error', custom_method=method)
 
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
@@ -441,7 +441,7 @@ def visoss_3():
         request.end_headers()
         request.wfile.write(response.encode('ascii'))
 
-    handler.add('GET', '/oss_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method = method)
+    handler.add('GET', '/oss_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method=method)
 
     def method(request):
         request.protocol_version = 'HTTP/1.1'
@@ -464,7 +464,7 @@ def visoss_3():
         request.end_headers()
         request.wfile.write(response.encode('ascii'))
 
-    handler.add('GET', '/oss_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F', custom_method = method)
+    handler.add('GET', '/oss_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F', custom_method=method)
 
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsioss/oss_fake_bucket2/a_dir/resource3.bin')
@@ -691,7 +691,7 @@ def visoss_4():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/oss_fake_bucket3/empty_file.bin', custom_method = method)
+    handler.add('PUT', '/oss_fake_bucket3/empty_file.bin', custom_method=method)
 
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsioss/oss_fake_bucket3/empty_file.bin', 'wb')
@@ -803,7 +803,7 @@ def visoss_4():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/oss_fake_bucket3/another_file.bin', custom_method = method)
+    handler.add('PUT', '/oss_fake_bucket3/another_file.bin', custom_method=method)
 
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
@@ -898,7 +898,7 @@ def visoss_6():
         request.end_headers()
         request.wfile.write(response.encode('ascii'))
 
-    handler.add('POST', '/oss_fake_bucket4/large_file.bin?uploads', custom_method = method)
+    handler.add('POST', '/oss_fake_bucket4/large_file.bin?uploads', custom_method=method)
 
     def method(request):
         if request.headers['Content-Length'] != '1048576':
@@ -912,7 +912,7 @@ def visoss_6():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/oss_fake_bucket4/large_file.bin?partNumber=1&uploadId=my_id', custom_method = method)
+    handler.add('PUT', '/oss_fake_bucket4/large_file.bin?partNumber=1&uploadId=my_id', custom_method=method)
 
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
@@ -931,7 +931,7 @@ def visoss_6():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/oss_fake_bucket4/large_file.bin?partNumber=2&uploadId=my_id', custom_method = method)
+    handler.add('PUT', '/oss_fake_bucket4/large_file.bin?partNumber=2&uploadId=my_id', custom_method=method)
 
     def method(request):
 
@@ -960,7 +960,7 @@ def visoss_6():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('POST', '/oss_fake_bucket4/large_file.bin?uploadId=my_id', custom_method = method)
+    handler.add('POST', '/oss_fake_bucket4/large_file.bin?uploadId=my_id', custom_method=method)
 
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):

@@ -117,7 +117,7 @@ def Truncate(val, lyr_defn, fieldname):
     return val[0:lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex(fieldname)).GetWidth()]
 
 
-def CheckFeatures(lyr, foo = 'foo5', bar = 'bar10', baz = 'baz15', baw = 'baw20'):
+def CheckFeatures(lyr, foo='foo5', bar='bar10', baz='baz15', baw='baw20'):
 
     expected_values = [
         ['foo0', None, None, None],
@@ -164,7 +164,7 @@ def Check(lyr, expected_order):
     if ret != 'success':
         return ret
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr_reopen = ds.GetLayer(0)
 
     ret = CheckColumnOrder(lyr_reopen, expected_order)
@@ -180,7 +180,7 @@ def Check(lyr, expected_order):
 
 def ogr_rfc35_shape_2():
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
 
     if lyr.TestCapability(ogr.OLCReorderFields) != 1:
@@ -243,7 +243,7 @@ def ogr_rfc35_shape_2():
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
 
     ret = CheckColumnOrder(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
@@ -262,7 +262,7 @@ def ogr_rfc35_shape_2():
 
 def ogr_rfc35_shape_3():
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
 
     fd = ogr.FieldDefn("baz25", ogr.OFTString)
@@ -284,7 +284,7 @@ def ogr_rfc35_shape_3():
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, baz = 'baz25')
+    ret = CheckFeatures(lyr, baz='baz25')
     if ret != 'success':
         return ret
 
@@ -294,20 +294,20 @@ def ogr_rfc35_shape_3():
     lyr_defn = lyr.GetLayerDefn()
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz25"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, baz = 'baz5')
+    ret = CheckFeatures(lyr, baz='baz5')
     if ret != 'success':
         return ret
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('baz5'))
     if fld_defn.GetWidth() != 5:
         return 'fail'
 
-    ret = CheckFeatures(lyr, baz = 'baz5')
+    ret = CheckFeatures(lyr, baz='baz5')
     if ret != 'success':
         return ret
 
@@ -319,7 +319,7 @@ def ogr_rfc35_shape_3():
 
 def ogr_rfc35_shape_4():
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -346,7 +346,7 @@ def ogr_rfc35_shape_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz = 'baz5')
+    ret = CheckFeatures(lyr, baz='baz5')
     if ret != 'success':
         return ret
 
@@ -359,13 +359,13 @@ def ogr_rfc35_shape_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz = 'baz5')
+    ret = CheckFeatures(lyr, baz='baz5')
     if ret != 'success':
         return ret
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -378,7 +378,7 @@ def ogr_rfc35_shape_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz = 'baz5')
+    ret = CheckFeatures(lyr, baz='baz5')
     if ret != 'success':
         return ret
 
@@ -389,7 +389,7 @@ def ogr_rfc35_shape_4():
     if ret == 'fail':
         return ret
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -403,13 +403,13 @@ def ogr_rfc35_shape_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz = 'baz5')
+    ret = CheckFeatures(lyr, baz='baz5')
     if ret != 'success':
         return ret
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -419,7 +419,7 @@ def ogr_rfc35_shape_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz = 'baz5')
+    ret = CheckFeatures(lyr, baz='baz5')
     if ret != 'success':
         return ret
 
@@ -450,13 +450,13 @@ def ogr_rfc35_shape_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz = 'baz5')
+    ret = CheckFeatures(lyr, baz='baz5')
     if ret != 'success':
         return ret
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -466,7 +466,7 @@ def ogr_rfc35_shape_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz = 'baz5')
+    ret = CheckFeatures(lyr, baz='baz5')
     if ret != 'success':
         return ret
 
@@ -478,7 +478,7 @@ def ogr_rfc35_shape_4():
 
 def ogr_rfc35_shape_5():
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -500,7 +500,7 @@ def ogr_rfc35_shape_5():
     if ret == 0:
         return 'fail'
 
-    ret = CheckFeatures(lyr, baz = 'baz5')
+    ret = CheckFeatures(lyr, baz='baz5')
     if ret != 'success':
         return ret
 
@@ -514,18 +514,18 @@ def ogr_rfc35_shape_5():
     if ret == 'fail':
         return ret
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    ret = CheckFeatures(lyr, baz = 'baz5', baw = None)
+    ret = CheckFeatures(lyr, baz='baz5', baw=None)
     if ret != 'success':
         return ret
 
     if lyr.DeleteField(lyr_defn.GetFieldIndex('baz5')) != 0:
         return 'fail'
 
-    ret = CheckFeatures(lyr, baz = None, baw = None)
+    ret = CheckFeatures(lyr, baz=None, baw=None)
     if ret != 'success':
         return ret
 
@@ -535,17 +535,17 @@ def ogr_rfc35_shape_5():
     if lyr.DeleteField(lyr_defn.GetFieldIndex('bar10')) != 0:
         return 'fail'
 
-    ret = CheckFeatures(lyr, foo = None, bar = None, baz = None, baw = None)
+    ret = CheckFeatures(lyr, foo=None, bar=None, baz=None, baw=None)
     if ret != 'success':
         return ret
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    ret = CheckFeatures(lyr, foo = None, bar = None, baz = None, baw = None)
+    ret = CheckFeatures(lyr, foo=None, bar=None, baz=None, baw=None)
     if ret != 'success':
         return ret
 

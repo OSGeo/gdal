@@ -64,7 +64,7 @@ def gnm_filenetwork_create():
     if ogrtest.drv is None:
         return 'skip'
 
-    ds = ogrtest.drv.Create('tmp/', 0, 0, 0, gdal.GDT_Unknown, options = ['net_name=test_gnm', 'net_description=Test file based GNM', 'net_srs=EPSG:4326'])
+    ds = ogrtest.drv.Create('tmp/', 0, 0, 0, gdal.GDT_Unknown, options=['net_name=test_gnm', 'net_description=Test file based GNM', 'net_srs=EPSG:4326'])
     # cast to GNM
     dn = gnm.CastToNetwork(ds)
     if dn is None:
@@ -219,7 +219,7 @@ def gnm_graph_kshortest():
         gdaltest.post_reason('cast to GNMNetwork failed')
         return 'fail'
 
-    lyr = dn.GetPath(61, 50, gnm.GATKShortestPath, options = ['num_paths=3'])
+    lyr = dn.GetPath(61, 50, gnm.GATKShortestPath, options=['num_paths=3'])
     if lyr is None:
         gdaltest.post_reason('failed to get path')
         return 'fail'

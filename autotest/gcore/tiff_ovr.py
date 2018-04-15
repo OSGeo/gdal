@@ -91,7 +91,7 @@ def tiff_ovr_1():
         return 'fail'
 
     gdaltest.tiff_drv.CreateCopy('tmp/mfloat32.tif', src_ds,
-                                  options = ['INTERLEAVE=PIXEL'])
+                                  options=['INTERLEAVE=PIXEL'])
     src_ds = None
 
     ds = gdal.Open('tmp/mfloat32.tif')
@@ -100,7 +100,7 @@ def tiff_ovr_1():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    err = ds.BuildOverviews(overviewlist = [2, 4])
+    err = ds.BuildOverviews(overviewlist=[2, 4])
 
     if err != 0:
         gdaltest.post_reason('BuildOverviews reports an error')
@@ -144,7 +144,7 @@ def tiff_ovr_3():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    err = src_ds.BuildOverviews(overviewlist = [2, 4])
+    err = src_ds.BuildOverviews(overviewlist=[2, 4])
     if err != 0:
         gdaltest.post_reason('BuildOverviews reports an error')
         return 'fail'
@@ -176,7 +176,7 @@ def tiff_ovr_4():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    wrk_ds.BuildOverviews('AVERAGE_BIT2GRAYSCALE', overviewlist = [2,4])
+    wrk_ds.BuildOverviews('AVERAGE_BIT2GRAYSCALE', overviewlist=[2,4])
     wrk_ds = None
 
     wrk_ds = gdal.Open('tmp/ovr4.tif')
@@ -255,7 +255,7 @@ def tiff_ovr_5():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    wrk_ds.BuildOverviews('AVERAGE', overviewlist = [2])
+    wrk_ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     cs = wrk_ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 1130
@@ -284,7 +284,7 @@ def tiff_ovr_6():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    wrk_ds.BuildOverviews('AVERAGE', overviewlist = [2])
+    wrk_ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     gdal.SetConfigOption('USE_RRD', oldOption)
 
@@ -320,7 +320,7 @@ def tiff_ovr_7():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    ds.BuildOverviews('NEAREST', overviewlist = [2])
+    ds.BuildOverviews('NEAREST', overviewlist=[2])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 0
@@ -351,7 +351,7 @@ def tiff_ovr_8():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    ds.BuildOverviews('AVERAGE', overviewlist = [2])
+    ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 200
@@ -388,7 +388,7 @@ def tiff_ovr_9():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    ds.BuildOverviews('AVERAGE', overviewlist = [2])
+    ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     gdal.SetConfigOption('COMPRESS_OVERVIEW', '')
     gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', '')
@@ -430,14 +430,14 @@ def tiff_ovr_10():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr10.tif', src_ds, options = ['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'])
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr10.tif', src_ds, options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'])
     src_ds = None
 
     if ds is None:
         gdaltest.post_reason('Failed to apply JPEG compression.')
         return 'fail'
 
-    ds.BuildOverviews('AVERAGE', overviewlist = [2])
+    ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     ds = None
     ds = gdal.Open('tmp/ovr10.tif', gdal.GA_ReadOnly)
@@ -482,7 +482,7 @@ def tiff_ovr_11():
         ds = None
         ds = gdal.Open('tmp/ovr11.tif', gdal.GA_Update)
 
-    ds.BuildOverviews('AVERAGE', overviewlist = [2])
+    ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     ds = None
     ds = gdal.Open('tmp/ovr11.tif', gdal.GA_ReadOnly)
@@ -517,7 +517,7 @@ def tiff_ovr_12():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr12.tif', src_ds, options = ['COMPRESS=DEFLATE'])
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr12.tif', src_ds, options=['COMPRESS=DEFLATE'])
     src_ds = None
 
     md = gdaltest.tiff_drv.GetMetadata()
@@ -529,7 +529,7 @@ def tiff_ovr_12():
         ds = None
         ds = gdal.Open('tmp/ovr12.tif', gdal.GA_Update)
 
-    ds.BuildOverviews('AVERAGE', overviewlist = [2])
+    ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     ds = None
     ds = gdal.Open('tmp/ovr12.tif', gdal.GA_ReadOnly)
@@ -566,7 +566,7 @@ def tiff_ovr_13():
         return 'fail'
 
     gdaltest.tiff_drv.CreateCopy('tmp/mfloat32.tif', src_ds,
-                                  options = ['INTERLEAVE=PIXEL'])
+                                  options=['INTERLEAVE=PIXEL'])
     src_ds = None
 
     ds = gdal.Open('tmp/mfloat32.tif')
@@ -575,7 +575,7 @@ def tiff_ovr_13():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    err = ds.BuildOverviews('GAUSS', overviewlist = [2, 4])
+    err = ds.BuildOverviews('GAUSS', overviewlist=[2, 4])
 
     if err != 0:
         gdaltest.post_reason('BuildOverviews reports an error')
@@ -603,7 +603,7 @@ def tiff_ovr_14():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    ds.BuildOverviews('GAUSS', overviewlist = [2])
+    ds.BuildOverviews('GAUSS', overviewlist=[2])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 200
@@ -630,7 +630,7 @@ def tiff_ovr_15():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr15.tif', src_ds, options = ['COMPRESS=DEFLATE'])
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr15.tif', src_ds, options=['COMPRESS=DEFLATE'])
     src_ds = None
 
     md = gdaltest.tiff_drv.GetMetadata()
@@ -642,7 +642,7 @@ def tiff_ovr_15():
         ds = None
         ds = gdal.Open('tmp/ovr15.tif', gdal.GA_Update)
 
-    ds.BuildOverviews('GAUSS', overviewlist = [2])
+    ds.BuildOverviews('GAUSS', overviewlist=[2])
 
     ds = None
     ds = gdal.Open('tmp/ovr15.tif', gdal.GA_ReadOnly)
@@ -679,7 +679,7 @@ def tiff_ovr_16():
         return 'fail'
 
     gdaltest.tiff_drv.CreateCopy('tmp/ovr16.tif', src_ds,
-                                  options = ['INTERLEAVE=PIXEL'])
+                                  options=['INTERLEAVE=PIXEL'])
     src_ds = None
 
     ds = gdal.Open('tmp/ovr16.tif')
@@ -688,7 +688,7 @@ def tiff_ovr_16():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    err = ds.BuildOverviews('MODE', overviewlist = [2, 4])
+    err = ds.BuildOverviews('MODE', overviewlist=[2, 4])
 
     if err != 0:
         gdaltest.post_reason('BuildOverviews reports an error')
@@ -719,7 +719,7 @@ def tiff_ovr_17():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    err = ds.BuildOverviews('MODE', overviewlist = [2, 4])
+    err = ds.BuildOverviews('MODE', overviewlist=[2, 4])
 
     if err != 0:
         gdaltest.post_reason('BuildOverviews reports an error')
@@ -750,7 +750,7 @@ def tiff_ovr_18():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    ds.BuildOverviews('MODE', overviewlist = [2])
+    ds.BuildOverviews('MODE', overviewlist=[2])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 100
@@ -782,9 +782,9 @@ def tiff_ovr_19():
 
     # The flush is important to simulate the behaviour that wash it by #2621
     ds.FlushCache()
-    ds.BuildOverviews('NEAR', overviewlist = [2])
+    ds.BuildOverviews('NEAR', overviewlist=[2])
     ds.FlushCache()
-    ds.BuildOverviews('NEAR', overviewlist = [2,4])
+    ds.BuildOverviews('NEAR', overviewlist=[2,4])
 
     if ds.GetRasterBand(1).GetOverviewCount() != 2 is None:
         print('Overview could not be generated')
@@ -825,7 +825,7 @@ def tiff_ovr_20():
         return 'fail'
 
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'YES')
-    ds.BuildOverviews('NEAREST', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAREST', overviewlist=[2, 4])
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
 
     ds = None
@@ -853,7 +853,7 @@ def tiff_ovr_21():
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
-    ds = gdaltest.tiff_drv.Create('tmp/ovr21.tif', 170000, 100000, 1, options = ['SPARSE_OK=YES'])
+    ds = gdaltest.tiff_drv.Create('tmp/ovr21.tif', 170000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
 
     ds = gdal.Open('tmp/ovr21.tif')
@@ -864,7 +864,7 @@ def tiff_ovr_21():
 
     # 170 k * 100 k = 17 GB. 17 GB / (2^2) = 4.25 GB > 4.2 GB
     # so BigTIFF is needed
-    ds.BuildOverviews('NONE', overviewlist = [2])
+    ds.BuildOverviews('NONE', overviewlist=[2])
 
     ds = None
 
@@ -891,7 +891,7 @@ def tiff_ovr_22():
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
-    ds = gdaltest.tiff_drv.Create('tmp/ovr22.tif', 170000, 100000, 1, options = ['SPARSE_OK=YES'])
+    ds = gdaltest.tiff_drv.Create('tmp/ovr22.tif', 170000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
 
     ds = gdal.Open('tmp/ovr22.tif')
@@ -904,7 +904,7 @@ def tiff_ovr_22():
     # so BigTIFF is needed
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'NO')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    err = ds.BuildOverviews('NONE', overviewlist = [2])
+    err = ds.BuildOverviews('NONE', overviewlist=[2])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
 
@@ -927,7 +927,7 @@ def tiff_ovr_23():
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
-    ds = gdaltest.tiff_drv.Create('tmp/ovr23.tif', 170000, 100000, 1, options = ['SPARSE_OK=YES'])
+    ds = gdaltest.tiff_drv.Create('tmp/ovr23.tif', 170000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
 
     ds = gdal.Open('tmp/ovr23.tif')
@@ -938,7 +938,7 @@ def tiff_ovr_23():
 
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'NO')
     gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
-    ds.BuildOverviews('NONE', overviewlist = [2])
+    ds.BuildOverviews('NONE', overviewlist=[2])
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
     gdal.SetConfigOption('COMPRESS_OVERVIEW', '')
 
@@ -967,7 +967,7 @@ def tiff_ovr_24():
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
-    ds = gdaltest.tiff_drv.Create('tmp/ovr24.tif', 85000, 100000, 1, options = ['SPARSE_OK=YES'])
+    ds = gdaltest.tiff_drv.Create('tmp/ovr24.tif', 85000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
 
     ds = gdal.Open('tmp/ovr24.tif')
@@ -979,7 +979,7 @@ def tiff_ovr_24():
     # 85 k * 100 k = 8.5 GB, so BigTIFF might be needed as
     # 8.5 GB / 2 > 4.2 GB
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_SAFER')
-    ds.BuildOverviews('NONE', overviewlist = [16])
+    ds.BuildOverviews('NONE', overviewlist=[16])
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
 
     ds = None
@@ -1006,7 +1006,7 @@ def tiff_ovr_25():
     ds = gdaltest.tiff_drv.Create('tmp/ovr25.tif',100,100,1)
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).FlushCache()
-    ds.BuildOverviews('NEAR', overviewlist = [2])
+    ds.BuildOverviews('NEAR', overviewlist=[2])
     ds = None
 
     ds = gdal.Open('tmp/ovr25.tif')
@@ -1033,7 +1033,7 @@ def tiff_ovr_26():
     ds = gdaltest.tiff_drv.Create('tmp/ovr26.tif',100,100,1)
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).FlushCache()
-    ds.BuildOverviews('NEAR', overviewlist = [2])
+    ds.BuildOverviews('NEAR', overviewlist=[2])
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     ds.GetRasterBand(1).GetOverview(0).Fill(0)
     cs_new = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -1056,7 +1056,7 @@ def tiff_ovr_27():
     ds = gdaltest.tiff_drv.Create('tmp/ovr27.tif',100,100,1)
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).FlushCache()
-    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     cs2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
     ds.GetRasterBand(1).GetOverview(0).Fill(0)
@@ -1083,7 +1083,7 @@ def tiff_ovr_27():
 def tiff_ovr_28():
 
     ds = gdal.Open('tmp/ovr25.tif', gdal.GA_Update)
-    if ds.BuildOverviews(overviewlist = []) != 0:
+    if ds.BuildOverviews(overviewlist=[]) != 0:
         gdaltest.post_reason('BuildOverviews() returned error code.')
         return 'fail'
 
@@ -1110,7 +1110,7 @@ def tiff_ovr_29():
     png_ds = gdal.GetDriverByName('PNG').CreateCopy('tmp/ovr29.png', src_ds)
     src_ds = None
 
-    png_ds.BuildOverviews(overviewlist = [2])
+    png_ds.BuildOverviews(overviewlist=[2])
     png_ds = None
 
     if open('tmp/ovr29.png.ovr') is None:
@@ -1123,7 +1123,7 @@ def tiff_ovr_29():
         gdaltest.post_reason('did not find overview')
         return 'fail'
 
-    png_ds.BuildOverviews(overviewlist = [])
+    png_ds.BuildOverviews(overviewlist=[])
     if png_ds.GetRasterBand(1).GetOverviewCount() != 0:
         gdaltest.post_reason('delete overview failed.')
         return 'fail'
@@ -1155,7 +1155,7 @@ def tiff_ovr_29():
 def tiff_ovr_30():
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr30.tif', 20, 20, 1)
-    ds.BuildOverviews(overviewlist = [2])
+    ds.BuildOverviews(overviewlist=[2])
     ds = None
 
     ds = gdal.Open('tmp/ovr30.tif', gdal.GA_Update)
@@ -1165,7 +1165,7 @@ def tiff_ovr_30():
     ds = None
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr30.tif', 20, 20, 1)
-    ds.BuildOverviews(overviewlist = [2])
+    ds.BuildOverviews(overviewlist=[2])
     ds = None
 
     ds = gdal.Open('tmp/ovr30.tif', gdal.GA_Update)
@@ -1191,7 +1191,7 @@ def tiff_ovr_31():
     ds.GetRasterBand(2).Fill(255)
     ds.GetRasterBand(3).Fill(255)
     ds.GetRasterBand(4).Fill(255)
-    ds.BuildOverviews('average', overviewlist = [2, 4])
+    ds.BuildOverviews('average', overviewlist=[2, 4])
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
     expected_cs = 7646
     if cs != expected_cs:
@@ -1216,7 +1216,7 @@ def tiff_ovr_32():
     shutil.copyfile('data/stefan_full_rgba_photometric_rgb.tif', 'tmp/ovr32.tif')
 
     ds = gdal.Open('tmp/ovr32.tif', gdal.GA_Update)
-    ds.BuildOverviews('cubic', overviewlist = [2,5])
+    ds.BuildOverviews('cubic', overviewlist=[2,5])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 21168
@@ -1239,14 +1239,14 @@ def tiff_ovr_32():
 
     tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ovr32_float.tif', src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount, gdal.GDT_Float32)
     src_data = src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize)
-    tmp_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, src_data, buf_type = gdal.GDT_Byte)
-    tmp_ds.BuildOverviews('cubic', overviewlist = [2])
+    tmp_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, src_data, buf_type=gdal.GDT_Byte)
+    tmp_ds.BuildOverviews('cubic', overviewlist=[2])
 
     tmp2_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ovr32_byte.tif', tmp_ds.RasterXSize, tmp_ds.RasterYSize, tmp_ds.RasterCount)
-    tmp2_ds.BuildOverviews('NONE', overviewlist = [2])
+    tmp2_ds.BuildOverviews('NONE', overviewlist=[2])
     tmp2_ovr_ds = tmp2_ds.GetRasterBand(1).GetOverview(0).GetDataset()
     tmp_ovr_ds = tmp_ds.GetRasterBand(1).GetOverview(0).GetDataset()
-    src_data = tmp_ovr_ds.ReadRaster(0, 0, tmp_ovr_ds.RasterXSize, tmp_ovr_ds.RasterYSize, buf_type = gdal.GDT_Byte)
+    src_data = tmp_ovr_ds.ReadRaster(0, 0, tmp_ovr_ds.RasterXSize, tmp_ovr_ds.RasterYSize, buf_type=gdal.GDT_Byte)
     tmp2_ovr_ds.WriteRaster(0, 0, tmp_ovr_ds.RasterXSize, tmp_ovr_ds.RasterYSize, src_data)
 
     cs = tmp2_ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -1267,7 +1267,7 @@ def tiff_ovr_32():
     ds = gdal.Open('tmp/ovr32.tif')
     gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
     gdal.SetConfigOption('INTERLEAVE_OVERVIEW', 'PIXEL')
-    ds.BuildOverviews('cubic', overviewlist = [2,5])
+    ds.BuildOverviews('cubic', overviewlist=[2,5])
     gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
     gdal.SetConfigOption('INTERLEAVE_OVERVIEW', None)
 
@@ -1291,7 +1291,7 @@ def tiff_ovr_32():
     shutil.copyfile('data/stefan_full_rgba.tif', 'tmp/ovr32.tif')
 
     ds = gdal.Open('tmp/ovr32.tif', gdal.GA_Update)
-    ds.BuildOverviews('cubic', overviewlist = [2,5])
+    ds.BuildOverviews('cubic', overviewlist=[2,5])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 21656
@@ -1314,14 +1314,14 @@ def tiff_ovr_32():
 
     tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ovr32_float.tif', src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount, gdal.GDT_Float32)
     src_data = src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize)
-    tmp_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, src_data, buf_type = gdal.GDT_Byte)
-    tmp_ds.BuildOverviews('cubic', overviewlist = [2])
+    tmp_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, src_data, buf_type=gdal.GDT_Byte)
+    tmp_ds.BuildOverviews('cubic', overviewlist=[2])
 
     tmp2_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ovr32_byte.tif', tmp_ds.RasterXSize, tmp_ds.RasterYSize, tmp_ds.RasterCount)
-    tmp2_ds.BuildOverviews('NONE', overviewlist = [2])
+    tmp2_ds.BuildOverviews('NONE', overviewlist=[2])
     tmp2_ovr_ds = tmp2_ds.GetRasterBand(1).GetOverview(0).GetDataset()
     tmp_ovr_ds = tmp_ds.GetRasterBand(1).GetOverview(0).GetDataset()
-    src_data = tmp_ovr_ds.ReadRaster(0, 0, tmp_ovr_ds.RasterXSize, tmp_ovr_ds.RasterYSize, buf_type = gdal.GDT_Byte)
+    src_data = tmp_ovr_ds.ReadRaster(0, 0, tmp_ovr_ds.RasterXSize, tmp_ovr_ds.RasterYSize, buf_type=gdal.GDT_Byte)
     tmp2_ovr_ds.WriteRaster(0, 0, tmp_ovr_ds.RasterXSize, tmp_ovr_ds.RasterYSize, src_data)
 
     cs = tmp2_ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -1339,8 +1339,8 @@ def tiff_ovr_32():
 
     # Same test with a compressed dataset
     src_ds = gdal.Open('data/stefan_full_rgba.tif')
-    ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/ovr32.tif', src_ds, options = ['COMPRESS=DEFLATE'])
-    ds.BuildOverviews('cubic', overviewlist = [2,5])
+    ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/ovr32.tif', src_ds, options=['COMPRESS=DEFLATE'])
+    ds.BuildOverviews('cubic', overviewlist=[2,5])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 21656
@@ -1368,13 +1368,13 @@ def tiff_ovr_33():
 
     try:
         os.remove('tmp/ovr33.tif.ovr')
-    except:
+    except OSError:
         pass
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr33.tif', 1, 1, 1)
     ds = None
     ds = gdal.Open('tmp/ovr33.tif')
-    ds.BuildOverviews('NEAREST', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAREST', overviewlist=[2, 4])
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/ovr33.tif')
@@ -1389,7 +1389,7 @@ def tiff_ovr_34():
 
     ds_in = gdal.Open('data/byte.tif')
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr34.tif', ds_in)
-    ds.BuildOverviews('NEAREST', overviewlist = [2])
+    ds.BuildOverviews('NEAREST', overviewlist=[2])
     ds.GetRasterBand(1).GetOverview(0).Fill(32.0)
     ds = None
     ds_in = None
@@ -1415,7 +1415,7 @@ def tiff_ovr_35():
 
     ds_in = gdal.Open('data/byte.tif')
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr35.tif', ds_in)
-    ds.BuildOverviews('NEAREST', overviewlist = [2])
+    ds.BuildOverviews('NEAREST', overviewlist=[2])
     ds.GetRasterBand(1).GetOverview(0).Fill(32.0)
     ds = None
     ds_in = None
@@ -1464,7 +1464,7 @@ def tiff_ovr_37():
 
     gdal.SetConfigOption('PREDICTOR_OVERVIEW', '2')
     gdal.SetConfigOption('COMPRESS_OVERVIEW', 'LZW')
-    ds.BuildOverviews('NEAR', overviewlist = [2])
+    ds.BuildOverviews('NEAR', overviewlist=[2])
     gdal.SetConfigOption('PREDICTOR_OVERVIEW', None)
     gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
 
@@ -1500,8 +1500,8 @@ def tiff_ovr_38():
         return 'skip'
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr38.tif', src_ds, options = ['COMPRESS=LZW', 'PREDICTOR=2'])
-    ds.BuildOverviews(overviewlist = [2, 4])
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr38.tif', src_ds, options=['COMPRESS=LZW', 'PREDICTOR=2'])
+    ds.BuildOverviews(overviewlist=[2, 4])
     ds = None
 
     file_size = os.stat('tmp/ovr38.tif')[stat.ST_SIZE]
@@ -1531,14 +1531,14 @@ def tiff_ovr_39():
                      gdal.GDT_CFloat32,
                      gdal.GDT_CFloat64]:
 
-        gdal.Translate('tmp/ovr39.tif', 'data/byte.tif', options = '-ot ' + gdal.GetDataTypeName(datatype))
+        gdal.Translate('tmp/ovr39.tif', 'data/byte.tif', options='-ot ' + gdal.GetDataTypeName(datatype))
         try:
             os.remove('tmp/ovr39.tif.ovr')
-        except:
+        except OSError:
             pass
 
         ds = gdal.Open('tmp/ovr39.tif')
-        ds.BuildOverviews('NEAREST', overviewlist = [2])
+        ds.BuildOverviews('NEAREST', overviewlist=[2])
         ds = None
 
         ds = gdal.Open('tmp/ovr39.tif.ovr')
@@ -1579,7 +1579,7 @@ def tiff_ovr_40():
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    wrk_ds.BuildOverviews('AVERAGE_BIT2GRAYSCALE', overviewlist = [2,4])
+    wrk_ds.BuildOverviews('AVERAGE_BIT2GRAYSCALE', overviewlist=[2,4])
     wrk_ds = None
 
     wrk_ds = gdal.Open('tmp/ovr40.tif')
@@ -1654,7 +1654,7 @@ def tiff_ovr_41():
 
     ds = gdal.Open('tmp/ovr41.tif')
     #data = wrk_ds.GetRasterBand(1).ReadRaster(0,0,99,99,50,50)
-    ds.BuildOverviews('NEAREST', overviewlist = [2])
+    ds.BuildOverviews('NEAREST', overviewlist=[2])
     ds = None
 
     #ds = gdaltest.tiff_drv.Create('tmp/ovr41.tif.handmade.ovr',50,50,1,options=['NBITS=1'])
@@ -1689,7 +1689,7 @@ def tiff_ovr_42():
     ds = None
 
     ds = gdal.Open('tmp/ovr42.tif')
-    ds.BuildOverviews('NEAREST', overviewlist = [2])
+    ds.BuildOverviews('NEAREST', overviewlist=[2])
     ds = None
 
     ds = gdal.Open('tmp/ovr42.tif.ovr')
@@ -1743,12 +1743,12 @@ def tiff_ovr_43():
 
     try:
         os.remove('tmp/ovr43.tif.ovr')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/ovr43.tif')
     gdal.SetConfigOption('COMPRESS_OVERVIEW','JPEG')
-    ds.BuildOverviews('NEAREST', overviewlist = [2])
+    ds.BuildOverviews('NEAREST', overviewlist=[2])
     ds = None
     gdal.SetConfigOption('COMPRESS_OVERVIEW',None)
 
@@ -1781,7 +1781,7 @@ def tiff_ovr_44():
     shutil.copyfile('data/byte.tif', 'tmp/ovr44.tif')
     gdal.SetConfigOption('GDAL_TIFF_OVR_BLOCKSIZE', '256')
     ds = gdal.Open('tmp/ovr44.tif', gdal.GA_Update)
-    ds.BuildOverviews(overviewlist = [2])
+    ds.BuildOverviews(overviewlist=[2])
     ds = None
     gdal.SetConfigOption('GDAL_TIFF_OVR_BLOCKSIZE', None)
 
@@ -1813,7 +1813,7 @@ def tiff_ovr_45():
     shutil.copyfile('data/byte.tif', 'tmp/ovr45.tif')
     gdal.SetConfigOption('GDAL_TIFF_OVR_BLOCKSIZE', '256')
     ds = gdal.Open('tmp/ovr45.tif', gdal.GA_ReadOnly)
-    ds.BuildOverviews(overviewlist = [2])
+    ds.BuildOverviews(overviewlist=[2])
     ds = None
     gdal.SetConfigOption('GDAL_TIFF_OVR_BLOCKSIZE', None)
 
@@ -1851,8 +1851,8 @@ def tiff_ovr_46():
 
     # Test NEAREST
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
-    ds.BuildOverviews('NEAREST', overviewlist = [2])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
+    ds.BuildOverviews('NEAREST', overviewlist=[2])
     ds = None
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
 
@@ -1860,8 +1860,8 @@ def tiff_ovr_46():
 
     # Test AVERAGE in optimized case (x2 reduction)
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
-    ds.BuildOverviews('AVERAGE', overviewlist = [2])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
+    ds.BuildOverviews('AVERAGE', overviewlist=[2])
     ds = None
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
 
@@ -1869,8 +1869,8 @@ def tiff_ovr_46():
 
     # Test AVERAGE in un-optimized case (x3 reduction)
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
-    ds.BuildOverviews('AVERAGE', overviewlist = [3])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
+    ds.BuildOverviews('AVERAGE', overviewlist=[3])
     ds = None
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
 
@@ -1878,13 +1878,13 @@ def tiff_ovr_46():
 
     # Test AVERAGE in un-optimized case (color table)
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
 
     ct = gdal.ColorTable()
     ct.SetColorEntry(0, (255,0,0))
     ds.GetRasterBand(1).SetRasterColorTable(ct)
 
-    ds.BuildOverviews('AVERAGE', overviewlist = [2])
+    ds.BuildOverviews('AVERAGE', overviewlist=[2])
     ds = None
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
 
@@ -1892,8 +1892,8 @@ def tiff_ovr_46():
 
     # Test GAUSS
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
-    ds.BuildOverviews('GAUSS', overviewlist = [2])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
+    ds.BuildOverviews('GAUSS', overviewlist=[2])
     ds = None
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
 
@@ -1901,13 +1901,13 @@ def tiff_ovr_46():
 
     # Test GAUSS with color table
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
 
     ct = gdal.ColorTable()
     ct.SetColorEntry(0, (255,0,0))
     ds.GetRasterBand(1).SetRasterColorTable(ct)
 
-    ds.BuildOverviews('GAUSS', overviewlist = [2])
+    ds.BuildOverviews('GAUSS', overviewlist=[2])
     ds = None
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
 
@@ -1915,8 +1915,8 @@ def tiff_ovr_46():
 
     # Test MODE
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
-    ds.BuildOverviews('MODE', overviewlist = [2])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
+    ds.BuildOverviews('MODE', overviewlist=[2])
     ds = None
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
 
@@ -1924,8 +1924,8 @@ def tiff_ovr_46():
 
     # Test CUBIC
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options = ['SPARSE_OK=YES'])
-    ds.BuildOverviews('CUBIC', overviewlist = [2])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
+    ds.BuildOverviews('CUBIC', overviewlist=[2])
     ds = None
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
 
@@ -2015,7 +2015,7 @@ def tiff_ovr_49():
     ds = None
     ds = gdal.Open('/vsimem/tiff_ovr_49.tif')
     gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
-    ds.BuildOverviews('AVERAGE', overviewlist = [2])
+    ds.BuildOverviews('AVERAGE', overviewlist=[2])
     gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
     ds = None
     ds = gdal.Open('/vsimem/tiff_ovr_49.tif.ovr')
@@ -2037,8 +2037,8 @@ def tiff_ovr_50():
                                               options=['COMPRESS=DEFLATE'])
     ds.GetRasterBand(1).Fill(255)
     # We just check that it doesn't crash
-    ds.BuildOverviews('AVERAGE', overviewlist = [2,4,8,16,32])
-    ds.BuildOverviews('AVERAGE', overviewlist = [2,4,8,16,32])
+    ds.BuildOverviews('AVERAGE', overviewlist=[2,4,8,16,32])
+    ds.BuildOverviews('AVERAGE', overviewlist=[2,4,8,16,32])
     ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_50.tif')
 

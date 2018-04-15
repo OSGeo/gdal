@@ -240,7 +240,7 @@ def ogr_interlis1_5():
     layer_defn = lyr.GetLayerDefn()
     for i in range(layer_defn.GetFieldCount()):
         dst_lyr.CreateField(layer_defn.GetFieldDefn(i))
-    dst_feat = ogr.Feature(feature_def = dst_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
     dst_feat.SetFrom(feat)
     dst_lyr.CreateFeature(dst_feat)
 
@@ -286,7 +286,7 @@ def ogr_interlis1_6():
     layer_defn = lyr.GetLayerDefn()
     for i in range(layer_defn.GetFieldCount()):
         dst_lyr.CreateField(layer_defn.GetFieldDefn(i))
-    dst_feat = ogr.Feature(feature_def = dst_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
     dst_feat.SetFrom(feat)
     dst_lyr.CreateFeature(dst_feat)
 
@@ -364,7 +364,7 @@ def ogr_interlis1_7():
     layer_defn = lyr.GetLayerDefn()
     for i in range(layer_defn.GetFieldCount()):
         dst_lyr.CreateField(layer_defn.GetFieldDefn(i))
-    dst_feat = ogr.Feature(feature_def = dst_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
     dst_feat.SetFrom(feat)
     dst_lyr.CreateFeature(dst_feat)
 
@@ -1034,7 +1034,7 @@ def ogr_interlis1_14():
     layer_defn = lyr.GetLayerDefn()
     for i in range(layer_defn.GetFieldCount()):
         dst_lyr.CreateField(layer_defn.GetFieldDefn(i))
-    dst_feat = ogr.Feature(feature_def = dst_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
     dst_feat.SetFrom(feat)
     dst_lyr.CreateFeature(dst_feat)
 
@@ -1224,7 +1224,7 @@ def ogr_interlis2_3():
 
     dst_lyr = dst_ds.CreateLayer('RoadsExdm2ien.RoadsExtended.RoadSign')
 
-    dst_feat = ogr.Feature(feature_def = dst_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
     dst_feat.SetFrom(feat)
     dst_lyr.CreateFeature(dst_feat)
 
@@ -1233,7 +1233,7 @@ def ogr_interlis2_3():
 
     dst_lyr = dst_ds.CreateLayer('RoadsExdm2ben.Roads.LandCover')
 
-    dst_feat = ogr.Feature(feature_def = dst_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
     dst_feat.SetFrom(feat)
     dst_lyr.CreateFeature(dst_feat)
 

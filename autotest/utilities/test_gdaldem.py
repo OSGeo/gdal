@@ -215,7 +215,7 @@ def test_gdaldem_hillshade_azimuth():
 
     ds_ref = gdal.Open('data/pyramid_shaded_ref.tif')
     ds = gdal.Open('tmp/pyramid_shaded.tif')
-    if gdaltest.compare_ds(ds, ds_ref, verbose = 1) > 1:
+    if gdaltest.compare_ds(ds, ds_ref, verbose=1) > 1:
         gdaltest.post_reason('Bad checksum')
         return 'fail'
     ds = None
@@ -458,7 +458,7 @@ def test_gdaldem_color_relief_vrt():
         return 'fail'
 
     ds_ref = gdal.Open('tmp/n43_colorrelief.tif')
-    if gdaltest.compare_ds(ds, ds_ref, verbose = 0) > 1:
+    if gdaltest.compare_ds(ds, ds_ref, verbose=0) > 1:
         gdaltest.post_reason('Bad checksum')
         return 'fail'
     ds_ref = None
