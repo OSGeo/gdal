@@ -97,7 +97,7 @@ def ogr_gml_2():
         return 'skip'
 
     # copy gml file (but not .gfs file)
-    open('tmp/ionic_wfs.gml','w').write(open('data/ionic_wfs.gml').read())
+    open('tmp/ionic_wfs.gml', 'w').write(open('data/ionic_wfs.gml').read())
 
     gml_ds = ogr.Open('tmp/ionic_wfs.gml')
 
@@ -310,7 +310,7 @@ def ogr_gml_8():
     gml_ds = ogr.Open('data/utf8.gml')
     lyr = gml_ds.GetLayer()
     feat = lyr.GetNextFeature()
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         if feat.GetFieldAsString('name') != '\xc4\x80liamanu'.encode('latin1').decode('utf-8'):
             print(feat.GetFieldAsString('name'))
             return 'fail'
@@ -545,16 +545,16 @@ def ogr_gml_13():
         ds = ogr.Open('data/testlistfields.gml')
         lyr = ds.GetLayer(0)
         feat = lyr.GetNextFeature()
-        if feat.GetFieldAsStringList(feat.GetFieldIndex('attrib1')) != ['value1','value2']:
+        if feat.GetFieldAsStringList(feat.GetFieldIndex('attrib1')) != ['value1', 'value2']:
             gdaltest.post_reason('did not get expected value for attrib1')
             return 'fail'
         if feat.GetField(feat.GetFieldIndex('attrib2')) != 'value3':
             gdaltest.post_reason('did not get expected value for attrib2')
             return 'fail'
-        if feat.GetFieldAsIntegerList(feat.GetFieldIndex('attrib3')) != [4,5]:
+        if feat.GetFieldAsIntegerList(feat.GetFieldIndex('attrib3')) != [4, 5]:
             gdaltest.post_reason('did not get expected value for attrib3')
             return 'fail'
-        if feat.GetFieldAsDoubleList(feat.GetFieldIndex('attrib4')) != [6.1,7.1]:
+        if feat.GetFieldAsDoubleList(feat.GetFieldIndex('attrib4')) != [6.1, 7.1]:
             gdaltest.post_reason('did not get expected value for attrib4')
             return 'fail'
         ds = None
@@ -1365,19 +1365,19 @@ def ogr_gml_33():
     ds = ogr.Open('data/testfmegml_interleaved.gml')
     gdal.SetConfigOption('GML_READ_MODE', None)
 
-    read_sequence = [[0,1],
-                      [0,None],
-                      [1,3],
-                      [2,5],
-                      [2,None],
-                      [0,2],
-                      [1,4],
-                      [1,None],
-                      [2,6],
-                      [2,None],
-                      [0,None],
-                      [1,None],
-                      [2,None]]
+    read_sequence = [[0, 1],
+                      [0, None],
+                      [1, 3],
+                      [2, 5],
+                      [2, None],
+                      [0, 2],
+                      [1, 4],
+                      [1, None],
+                      [2, 6],
+                      [2, None],
+                      [0, None],
+                      [1, None],
+                      [2, None]]
 
     for i in range(len(read_sequence)):
         lyr = ds.GetLayer(read_sequence[i][0])
@@ -1407,7 +1407,7 @@ def ogr_gml_34():
     lyr = ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn("name", ogr.OFTString))
     feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField(0,  '\xc4\x80liamanu<&')
+    feat.SetField(0, '\xc4\x80liamanu<&')
     lyr.CreateFeature(feat)
     feat = None
     ds = None
@@ -2358,7 +2358,7 @@ def ogr_gml_56():
     if feat.GetFieldAsString(feat.GetFieldIndex('subFeatureProperty_href')) != '#subFeature.0':
         gdaltest.post_reason('fail')
         return 'fail'
-    if feat.GetFieldAsStringList(feat.GetFieldIndex('subFeatureRepeatedProperty_href')) != ['#subFeatureRepeated.0','#subFeatureRepeated.1']:
+    if feat.GetFieldAsStringList(feat.GetFieldIndex('subFeatureRepeatedProperty_href')) != ['#subFeatureRepeated.0', '#subFeatureRepeated.1']:
         gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
@@ -2525,10 +2525,10 @@ def ogr_gml_58():
                  ('nationalCadastralReference', 'nationalCadastralReference'),
                  ('validFrom', '2002-01-01T00:00:00.0Z'),
                  ('validTo', '2003-01-01T00:00:00.0Z'),
-                 ('basicPropertyUnit_href', ['#BPU.1','#BPU.2']),
+                 ('basicPropertyUnit_href', ['#BPU.1', '#BPU.2']),
                  ('administrativeUnit_href', '#AU.1'),
                  ('zoning_href', '#CZ.1')]
-    for (key,val) in expected:
+    for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
             print(val)
@@ -2557,7 +2557,7 @@ def ogr_gml_58():
                  ('basicPropertyUnit_href', None),
                  ('administrativeUnit_href', None),
                  ('zoning_href', None)]
-    for (key,val) in expected:
+    for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
             print(val)
@@ -2593,7 +2593,7 @@ def ogr_gml_58():
                  ('beginLifespanVersion', '2002-01-01T00:00:00.0Z'),
                  ('endLifespanVersion', '2003-01-01T00:00:00.0Z'),
                  ('administrativeUnit_href', '#AU.1')]
-    for (key,val) in expected:
+    for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
             print(val)
@@ -2613,7 +2613,7 @@ def ogr_gml_58():
                  ('beginLifespanVersion', '2002-01-01T00:00:00.0Z'),
                  ('endLifespanVersion', None),
                  ('administrativeUnit_href', None)]
-    for (key,val) in expected:
+    for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
             print(val)
@@ -2647,8 +2647,8 @@ def ogr_gml_58():
                  ('inspireId_namespace', 'namespace'),
                  ('validFrom', '2002-01-01T00:00:00.0Z'),
                  ('validTo', '2003-01-01T00:00:00.0Z'),
-                 ('parcel_href', ['#Parcel.1','#Parcel.2'])]
-    for (key,val) in expected:
+                 ('parcel_href', ['#Parcel.1', '#Parcel.2'])]
+    for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
             print(val)
@@ -2670,7 +2670,7 @@ def ogr_gml_58():
                  ('validFrom', None),
                  ('validTo', None),
                  ('parcel_href', None)]
-    for (key,val) in expected:
+    for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
             print(val)
@@ -2725,7 +2725,7 @@ def ogr_gml_58():
                  ('validFrom', '2002-01-01T00:00:00.0Z'),
                  ('validTo', '2003-01-01T00:00:00.0Z'),
                  ('upperLevelUnit_href', '#ulu.1')]
-    for (key,val) in expected:
+    for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
             print(val)
@@ -2761,7 +2761,7 @@ def ogr_gml_58():
                  ('validFrom', None),
                  ('validTo', None),
                  ('upperLevelUnit_href', None)]
-    for (key,val) in expected:
+    for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
             print(val)
@@ -2811,7 +2811,7 @@ def ogr_gml_59():
                  ('name_fr', 'Nom francais'),
                  ('name_others_lang', ['de']),
                  ('name_others', ['Deutsche name'])]
-    for (key,val) in expected:
+    for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
             print(val)
@@ -3080,7 +3080,7 @@ def ogr_gml_65():
     for (option, expected) in option_expected_list:
         filename = '/vsimem/ogr_gml_65.gml'
         #filename = 'ogr_gml_65.gml'
-        ds = ogr.GetDriverByName('GML').CreateDataSource(filename, options=['FORMAT=GML3',option])
+        ds = ogr.GetDriverByName('GML').CreateDataSource(filename, options=['FORMAT=GML3', option])
         lyr = ds.CreateLayer('lyr')
         feat = ogr.Feature(lyr.GetLayerDefn())
         feat.SetGeometry(ogr.CreateGeometryFromWkt("MULTIPOLYGON (((0 1 2,3 4 5,6 7 8,0 1 2)))"))
@@ -3490,7 +3490,7 @@ def ogr_gml_67():
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField(0, 1)
     f.SetField(1, 0)
-    f.SetFieldIntegerList(2, [1,0])
+    f.SetFieldIntegerList(2, [1, 0])
     f.SetField(3, -32768)
     f.SetField(4, 1.23)
     f.SetField(5, 1)

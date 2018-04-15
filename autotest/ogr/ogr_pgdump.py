@@ -731,7 +731,7 @@ def ogr_pgdump_9(pg_use_copy='YES'):
     feat.SetField('str', 'ABCDEF')
     lyr.CreateFeature(feat)
 
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         val4 = '\u00e9\u00e9\u00e9\u00e9'
         val5 = val4 + '\u00e9'
         val6 = val5 + '\u00e9'

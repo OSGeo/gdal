@@ -206,7 +206,7 @@ if dst_filename is not None:
         format = GetOutputDriverFor(dst_filename)
 
     drv = gdal.GetDriverByName(format)
-    dst_ds = drv.Create(dst_filename,src_ds.RasterXSize, src_ds.RasterYSize,1,
+    dst_ds = drv.Create(dst_filename, src_ds.RasterXSize, src_ds.RasterYSize, 1,
                          srcband.DataType)
     wkt = src_ds.GetProjection()
     if wkt != '':

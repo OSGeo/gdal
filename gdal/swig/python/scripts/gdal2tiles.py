@@ -61,7 +61,7 @@ except Exception:
 
 __version__ = "$Id$"
 
-resampling_list = ('average', 'near', 'bilinear', 'cubic', 'cubicspline', 'lanczos',  'antialias')
+resampling_list = ('average', 'near', 'bilinear', 'cubic', 'cubicspline', 'lanczos', 'antialias')
 profile_list = ('mercator', 'geodetic', 'raster')
 webviewer_list = ('all', 'google', 'openlayers', 'leaflet', 'none')
 

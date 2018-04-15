@@ -51,7 +51,7 @@ def ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
 
-    ds = ogr.GetDriverByName('PDF').CreateDataSource(name, options=['STREAM_COMPRESS=NONE','MARGIN=10', 'OGR_WRITE_ATTRIBUTES=%s' % write_attributes, 'OGR_LINK_FIELD=linkfield'])
+    ds = ogr.GetDriverByName('PDF').CreateDataSource(name, options=['STREAM_COMPRESS=NONE', 'MARGIN=10', 'OGR_WRITE_ATTRIBUTES=%s' % write_attributes, 'OGR_LINK_FIELD=linkfield'])
 
     lyr = ds.CreateLayer('first_layer', srs=sr)
 

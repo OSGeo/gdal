@@ -163,7 +163,7 @@ def netcdf_cf_get_command(ifile, version='auto'):
 
 ###############################################################################
 # Check a file for CF compliance
-def netcdf_cf_check_file(ifile,version='auto', silent=True):
+def netcdf_cf_check_file(ifile, version='auto', silent=True):
 
     #if not silent:
     #    print 'checking file ' + ifile
@@ -240,14 +240,14 @@ netcdf_cfproj_tuples = [
     ("AEA", "Albers Equal Area", "EPSG:3577", "albers_conical_equal_area",
         ['standard_parallel', 'longitude_of_central_meridian',
          'latitude_of_projection_origin', 'false_easting', 'false_northing'],
-         ['projection_x_coordinate','projection_y_coordinate']),
+         ['projection_x_coordinate', 'projection_y_coordinate']),
     ("AZE", "Azimuthal Equidistant",
         #Didn't have EPSG suitable for AU
         "+proj=aeqd +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
         "azimuthal_equidistant",
         ['longitude_of_projection_origin',
          'latitude_of_projection_origin', 'false_easting', 'false_northing'],
-         ['projection_x_coordinate','projection_y_coordinate']),
+         ['projection_x_coordinate', 'projection_y_coordinate']),
     ("LAZEA", "Lambert azimuthal equal area",
         # Specify proj4 since no appropriate LAZEA for AU.
         #"+proj=laea +lat_0=0 +lon_0=134 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
@@ -255,12 +255,12 @@ netcdf_cfproj_tuples = [
         "lambert_azimuthal_equal_area",
         ['longitude_of_projection_origin',
          'latitude_of_projection_origin', 'false_easting', 'false_northing'],
-         ['projection_x_coordinate','projection_y_coordinate']),
+         ['projection_x_coordinate', 'projection_y_coordinate']),
     ("LC_2SP", "Lambert conformal", "EPSG:3112", "lambert_conformal_conic",
         ['standard_parallel',
          'longitude_of_central_meridian',
          'latitude_of_projection_origin', 'false_easting', 'false_northing'],
-         ['projection_x_coordinate','projection_y_coordinate']),
+         ['projection_x_coordinate', 'projection_y_coordinate']),
     # TODO: Test LCC with 1SP
     ("LCEA", "Lambert Cylindrical Equal Area",
         "+proj=cea +lat_ts=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
@@ -268,7 +268,7 @@ netcdf_cfproj_tuples = [
         ['longitude_of_central_meridian',
          'standard_parallel',  # TODO: OR 'scale_factor_at_projection_origin'
          'false_easting', 'false_northing'],
-         ['projection_x_coordinate','projection_y_coordinate']),
+         ['projection_x_coordinate', 'projection_y_coordinate']),
     # 2 entries for Mercator, since attribs different for 1SP or 2SP
     ("M-1SP", "Mercator",
         "+proj=merc +lon_0=145 +k_0=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
@@ -276,7 +276,7 @@ netcdf_cfproj_tuples = [
         ['longitude_of_projection_origin',
          'scale_factor_at_projection_origin',
          'false_easting', 'false_northing'],
-         ['projection_x_coordinate','projection_y_coordinate']),
+         ['projection_x_coordinate', 'projection_y_coordinate']),
     # Commented out as it seems GDAL itself's support of Mercator with 2SP
     #  is a bit dodgy
     ("M-2SP", "Mercator",
@@ -287,7 +287,7 @@ netcdf_cfproj_tuples = [
         ['longitude_of_projection_origin',
          'standard_parallel',
          'false_easting', 'false_northing'],
-         ['projection_x_coordinate','projection_y_coordinate']),
+         ['projection_x_coordinate', 'projection_y_coordinate']),
     ("Ortho", "Orthographic",
         "+proj=ortho +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
         "orthographic",
@@ -322,7 +322,7 @@ netcdf_cfproj_tuples = [
         'longitude_of_central_meridian',
         'latitude_of_projection_origin',
          'false_easting', 'false_northing'],
-         ['projection_x_coordinate','projection_y_coordinate']),
+         ['projection_x_coordinate', 'projection_y_coordinate']),
     ("GEOS", "Geostationary_satellite",
         "+proj=geos +h=35785831 +lon_0=145 +datum=WGS84 +sweep=y +units=m",
         "geostationary",
@@ -330,7 +330,7 @@ netcdf_cfproj_tuples = [
           'perspective_point_height',
           'sweep_angle_axis',
          'false_easting', 'false_northing'],
-        ['projection_x_coordinate','projection_y_coordinate'])
+        ['projection_x_coordinate', 'projection_y_coordinate'])
     ]
 
 # By default, we will use GeoTIFF as the 'intermediate' raster format
@@ -343,11 +343,11 @@ netcdf_cfproj_tuples = [
 netcdf_cfproj_def_int_format = "GTiff"
 
 netcdf_cfproj_int_fmt_maps = {
-    "M-2SP":'HFA'
+    "M-2SP": 'HFA'
     }
 
-netcdf_cfproj_format_fnames = {"HFA":"img", "GTiff":"tif", "NITF":"nitf",
-    "ERS":"ers"}
+netcdf_cfproj_format_fnames = {"HFA": "img", "GTiff": "tif", "NITF": "nitf",
+    "ERS": "ers"}
 
 ###############################################################################
 # Check support for given projection tuple definitions
@@ -548,7 +548,7 @@ def netcdf_cfproj_test_cf(proj, projNc):
             resDetails['missingCoordVarStdNames'].append(coordVarStdName)
 
     # Final check use the cf-checker.
-    result_cf = netcdf_cf_check_file(projNc,'auto',True)
+    result_cf = netcdf_cf_check_file(projNc, 'auto', True)
     if result_cf == 'fail':
         resDetails['cfcheck_error'] = gdaltest.netcdf_cf_check_error
         transWorked = False
@@ -581,7 +581,7 @@ def netcdf_cf_1():
 
     result_cf = 'success'
     if gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf_check_file('tmp/netcdf_18.nc','auto',False)
+        result_cf = netcdf_cf_check_file('tmp/netcdf_18.nc', 'auto', False)
 
     if result != 'fail' and result_cf != 'fail':
         return 'success'
@@ -600,7 +600,7 @@ def netcdf_cf_2():
 
     result_cf = 'success'
     if gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf_check_file('tmp/netcdf_cf_2.nc','auto',False)
+        result_cf = netcdf_cf_check_file('tmp/netcdf_cf_2.nc', 'auto', False)
 
     if result != 'fail' and result_cf != 'fail':
         return 'success'
@@ -628,7 +628,7 @@ def netcdf_cf_3():
 
     result_cf = 'success'
     if gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf_check_file('tmp/netcdf_cf_3.nc','auto',False)
+        result_cf = netcdf_cf_check_file('tmp/netcdf_cf_3.nc', 'auto', False)
 
     if result != 'fail' and result_cf != 'fail':
         return 'success'

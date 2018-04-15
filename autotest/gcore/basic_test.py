@@ -202,7 +202,7 @@ def basic_test_9():
     gdaltest.err_no = 0
     gdaltest.msg = ''
     gdal.PushErrorHandler(my_python_error_handler)
-    gdal.Error(1,2,'test')
+    gdal.Error(1, 2, 'test')
     gdal.PopErrorHandler()
 
     if gdaltest.eErrClass != 1:
@@ -239,12 +239,12 @@ def basic_test_10():
 
     # Check that reference counting works OK
     gdal.PushErrorHandler(my_python_error_handler_class().handler)
-    gdal.Error(1,2,'test')
+    gdal.Error(1, 2, 'test')
     gdal.PopErrorHandler()
 
     error_handler = my_python_error_handler_class()
     gdal.PushErrorHandler(error_handler.handler)
-    gdal.Error(1,2,'test')
+    gdal.Error(1, 2, 'test')
     gdal.PopErrorHandler()
 
     if error_handler.eErrClass != 1:
@@ -447,20 +447,20 @@ def basic_test_12():
 
 def basic_test_13():
 
-    ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     for i in range(3):
         if i == 0:
-            ds.SetMetadataItem("ScaleBounds","True")
-            ds.SetMetadataItem("ScaleBounds.MinScale","0")
-            ds.SetMetadataItem("ScaleBounds.MaxScale","2000000")
+            ds.SetMetadataItem("ScaleBounds", "True")
+            ds.SetMetadataItem("ScaleBounds.MinScale", "0")
+            ds.SetMetadataItem("ScaleBounds.MaxScale", "2000000")
         elif i == 1:
-            ds.SetMetadataItem("ScaleBounds.MaxScale","2000000")
-            ds.SetMetadataItem("ScaleBounds.MinScale","0")
-            ds.SetMetadataItem("ScaleBounds","True")
+            ds.SetMetadataItem("ScaleBounds.MaxScale", "2000000")
+            ds.SetMetadataItem("ScaleBounds.MinScale", "0")
+            ds.SetMetadataItem("ScaleBounds", "True")
         else:
-            ds.SetMetadataItem("ScaleBounds.MinScale","0")
-            ds.SetMetadataItem("ScaleBounds","True")
-            ds.SetMetadataItem("ScaleBounds.MaxScale","2000000")
+            ds.SetMetadataItem("ScaleBounds.MinScale", "0")
+            ds.SetMetadataItem("ScaleBounds", "True")
+            ds.SetMetadataItem("ScaleBounds.MaxScale", "2000000")
 
         if ds.GetMetadataItem('scalebounds') != 'True':
             gdaltest.post_reason('failure')
@@ -479,7 +479,7 @@ def basic_test_13():
             return 'fail'
     ds = None
 
-    ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     for i in range(200):
         ds.SetMetadataItem("FILENAME_%d" % i, "%d" % i)
     for i in range(200):
@@ -495,7 +495,7 @@ def basic_test_13():
 
 def basic_test_14():
 
-    ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
 
     ds.SetMetadata('foo')
     if ds.GetMetadata_List() != ['foo']:
@@ -547,7 +547,7 @@ def basic_test_14():
     except:
         pass
 
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         val = '\u00e9ven'
     else:
         exec("val = u'\\u00e9ven'")
@@ -598,26 +598,26 @@ def basic_test_15():
 
     try:
         with gdaltest.error_handler():
-            gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback='foo')
+            gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback='foo')
         gdaltest.post_reason('fail')
         return 'fail'
     except:
         pass
 
     with gdaltest.error_handler():
-        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback=basic_test_15_cbk_no_argument)
+        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback=basic_test_15_cbk_no_argument)
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
-        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback=basic_test_15_cbk_no_ret)
+        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback=basic_test_15_cbk_no_ret)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
-        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback=basic_test_15_cbk_bad_ret)
+        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback=basic_test_15_cbk_bad_ret)
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'

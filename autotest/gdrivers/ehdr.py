@@ -79,17 +79,17 @@ def ehdr_4():
     drv = gdal.GetDriverByName('EHdr')
     ds = drv.Create('tmp/test_4.bil', 200, 100, 1, gdal.GDT_Byte)
 
-    raw_data = array.array('h',list(range(200))).tostring()
+    raw_data = array.array('h', list(range(200))).tostring()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
                         buf_type=gdal.GDT_Int16)
 
     ct = gdal.ColorTable()
-    ct.SetColorEntry(0, (255,255,255,255))
-    ct.SetColorEntry(1, (255,255,0,255))
-    ct.SetColorEntry(2, (255,0,255,255))
-    ct.SetColorEntry(3, (0,255,255,255))
+    ct.SetColorEntry(0, (255, 255, 255, 255))
+    ct.SetColorEntry(1, (255, 255, 0, 255))
+    ct.SetColorEntry(2, (255, 0, 255, 255))
+    ct.SetColorEntry(3, (0, 255, 255, 255))
 
     ds.GetRasterBand(1).SetRasterColorTable(ct)
 
@@ -117,7 +117,7 @@ def ehdr_5():
 
     ct = band.GetRasterColorTable()
     if ct is None or ct.GetCount() != 4 \
-       or ct.GetColorEntry(2) != (255,0,255,255):
+       or ct.GetColorEntry(2) != (255, 0, 255, 255):
         gdaltest.post_reason('color table not persisted properly.')
         return 'fail'
 
@@ -387,12 +387,12 @@ def ehdr_rat():
         gdaltest.post_reason('fail')
         print(rat.GetRowCount())
         return 'fail'
-    for (idx, val) in [(0,-500), (1,127), (2,40), (3,65)]:
+    for (idx, val) in [(0, -500), (1, 127), (2, 40), (3, 65)]:
         if rat.GetValueAsInt(0, idx) != val:
             gdaltest.post_reason('fail')
             print(idx, rat.GetValueAsInt(0, idx))
             return 'fail'
-    for (idx, val) in [(0,2000), (1,145), (2,97), (3,47)]:
+    for (idx, val) in [(0, 2000), (1, 145), (2, 97), (3, 47)]:
         if rat.GetValueAsInt(24, idx) != val:
             gdaltest.post_reason('fail')
             print(idx, rat.GetValueAsInt(24, idx))

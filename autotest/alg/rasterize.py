@@ -52,7 +52,7 @@ def rasterize_1():
 
     target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 3,
                                                     gdal.GDT_Byte)
-    target_ds.SetGeoTransform((1000,1,0,1100,0,-1))
+    target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
@@ -81,8 +81,8 @@ def rasterize_1():
 
     # Run the algorithm.
 
-    err = gdal.RasterizeLayer(target_ds, [3,2,1], rast_mem_lyr,
-                               burn_values=[200,220,240])
+    err = gdal.RasterizeLayer(target_ds, [3, 2, 1], rast_mem_lyr,
+                               burn_values=[200, 220, 240])
 
     if err != 0:
         print(err)
@@ -97,7 +97,7 @@ def rasterize_1():
         print(checksum)
         gdaltest.post_reason('Did not get expected image checksum')
 
-        gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_1.tif',target_ds)
+        gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_1.tif', target_ds)
         return 'fail'
 
     return 'success'
@@ -115,7 +115,7 @@ def rasterize_2():
 
     target_ds = gdal.GetDriverByName('MEM').Create('', 12, 12, 3,
                                                     gdal.GDT_Byte)
-    target_ds.SetGeoTransform((0,1,0,12,0,-1))
+    target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
@@ -125,8 +125,8 @@ def rasterize_2():
     # Run the algorithm.
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    err = gdal.RasterizeLayer(target_ds, [3,2,1], cutline_ds.GetLayer(0),
-                               burn_values=[200,220,240],
+    err = gdal.RasterizeLayer(target_ds, [3, 2, 1], cutline_ds.GetLayer(0),
+                               burn_values=[200, 220, 240],
                                options=["ALL_TOUCHED=TRUE"])
     gdal.PopErrorHandler()
 
@@ -143,7 +143,7 @@ def rasterize_2():
         print(checksum)
         gdaltest.post_reason('Did not get expected image checksum')
 
-        gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_2.tif',target_ds)
+        gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_2.tif', target_ds)
         return 'fail'
 
     return 'success'
@@ -162,7 +162,7 @@ def rasterize_3():
 
     target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 3,
                                                     gdal.GDT_Byte)
-    target_ds.SetGeoTransform((1000,1,0,1100,0,-1))
+    target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
@@ -184,8 +184,8 @@ def rasterize_3():
 
     # Run the algorithm.
 
-    err = gdal.RasterizeLayer(target_ds, [3,2,1], rast_mem_lyr,
-                               burn_values=[10,10,55], options=["BURN_VALUE_FROM=Z"])
+    err = gdal.RasterizeLayer(target_ds, [3, 2, 1], rast_mem_lyr,
+                               burn_values=[10, 10, 55], options=["BURN_VALUE_FROM=Z"])
 
     if err != 0:
         print(err)
@@ -199,7 +199,7 @@ def rasterize_3():
     if checksum != expected:
         print(checksum)
         gdaltest.post_reason('Did not get expected image checksum')
-        gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_3.tif',target_ds)
+        gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_3.tif', target_ds)
         return 'fail'
 
     return 'success'
@@ -217,7 +217,7 @@ def rasterize_4():
     # Create a memory raster to rasterize into.
     target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 3,
                                                     gdal.GDT_Byte)
-    target_ds.SetGeoTransform((1000,1,0,1100,0,-1))
+    target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
@@ -233,7 +233,7 @@ def rasterize_4():
                 'POLYGON((1020 1076 190,1025 1085 35,1065 1090 26,1064 1078 35,1020 1076 190),(1023 1079 5,1061 1081 35,1062 1087 26,1028 1082 35,1023 1079 85))',
                 'LINESTRING(1005 1000 10, 1100 1050 120)',
                 'LINESTRING(1000 1000 150, 1095 1050 -5, 1080 1080 200)']
-    celsius_field_values = [50,255,60,100,180]
+    celsius_field_values = [50, 255, 60, 100, 180]
 
     i = 0
     for g in wkt_geom:
@@ -244,7 +244,7 @@ def rasterize_4():
         i = i + 1
 
     # Run the algorithm.
-    err = gdal.RasterizeLayer(target_ds, [1,2,3], rast_mem_lyr,
+    err = gdal.RasterizeLayer(target_ds, [1, 2, 3], rast_mem_lyr,
                                options=["ATTRIBUTE=CELSIUS"])
 
     if err != 0:
@@ -258,7 +258,7 @@ def rasterize_4():
     if checksum != expected:
         print(checksum)
         gdaltest.post_reason('Did not get expected image checksum')
-        gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_4.tif',target_ds)
+        gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_4.tif', target_ds)
         return 'fail'
 
     return 'success'
@@ -277,7 +277,7 @@ def rasterize_5():
 
     target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 3,
                                                     gdal.GDT_Byte)
-    target_ds.SetGeoTransform((1000,1,0,1100,0,-1))
+    target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
@@ -313,7 +313,7 @@ def rasterize_5():
     # Run the algorithm.
 
     err = gdal.RasterizeLayer(target_ds, [1, 2, 3], rast_mem_lyr,
-                               burn_values=[100,110,120],
+                               burn_values=[100, 110, 120],
                                options=["MERGE_ALG=ADD"])
 
     if err != 0:
@@ -329,7 +329,7 @@ def rasterize_5():
         print(checksum)
         gdaltest.post_reason('Did not get expected image checksum')
 
-        gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_5.tif',target_ds)
+        gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_5.tif', target_ds)
         return 'fail'
 
     return 'success'

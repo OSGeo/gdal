@@ -154,17 +154,17 @@ for gcp in gcps:
     if pixel_out == 0:
         geom = ogr.Geometry(geom_type)
         feat.SetField('Pixel', gcp.GCPPixel)
-        feat.SetField('Line',  gcp.GCPLine)
+        feat.SetField('Line', gcp.GCPLine)
         geom.SetPoint(0, gcp.GCPX, gcp.GCPY, gcp.GCPZ)
     else:
         geom = ogr.Geometry(geom_type)
         feat.SetField('X', gcp.GCPX)
-        feat.SetField('Y',  gcp.GCPY)
-        feat.SetField('Z',  gcp.GCPZ)
+        feat.SetField('Y', gcp.GCPY)
+        feat.SetField('Z', gcp.GCPZ)
         geom.SetPoint(0, gcp.GCPPixel, gcp.GCPLine)
 
-    feat.SetField('Id',    gcp.Id)
-    feat.SetField('Info',  gcp.Info)
+    feat.SetField('Id', gcp.Id)
+    feat.SetField('Info', gcp.Info)
 
     feat.SetGeometryDirectly(geom)
     layer.CreateFeature(feat)

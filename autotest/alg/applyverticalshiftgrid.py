@@ -354,7 +354,7 @@ def applyverticalshiftgrid_5():
     grid_ds.GetRasterBand(1).Fill(0)
     src_ds = gdal.Translate('', src_ds, format='MEM',
                             outputType=gdal.GDT_Float32,
-                            scaleParams=[[0,1,0,0.5]])
+                            scaleParams=[[0, 1, 0, 0.5]])
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds, srcUnitToMeter=2)
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 4672:
@@ -367,7 +367,7 @@ def applyverticalshiftgrid_5():
     grid_ds.GetRasterBand(1).Fill(0)
     src_ds = gdal.Translate('', src_ds, format='MEM',
                             outputType=gdal.GDT_Float32,
-                            scaleParams=[[0,1,0,0.5]])
+                            scaleParams=[[0, 1, 0, 0.5]])
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds, dstUnitToMeter=0.5)
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 4672:
@@ -385,7 +385,7 @@ def applyverticalshiftgrid_6():
 
     grid_ds = gdal.GetDriverByName('GTX').Create(
         '/vsimem/applyverticalshiftgrid_6.gtx', 1440, 721, 1, gdal.GDT_Float32)
-    grid_ds.SetGeoTransform([-180.125,0.25,0,90.125,0,-0.25])
+    grid_ds.SetGeoTransform([-180.125, 0.25, 0, 90.125, 0, -0.25])
     grid_ds.GetRasterBand(1).Fill(10)
     grid_ds = None
 
@@ -409,7 +409,7 @@ def applyverticalshiftgrid_7():
 
     grid_ds = gdal.GetDriverByName('GTX').Create(
         '/vsimem/applyverticalshiftgrid_7.gtx', 700, 721, 1, gdal.GDT_Float32)
-    grid_ds.SetGeoTransform([-150 + 360,0.25,0,90.125,0,-0.25])
+    grid_ds.SetGeoTransform([-150 + 360, 0.25, 0, 90.125, 0, -0.25])
     grid_ds.GetRasterBand(1).Fill(10)
     grid_ds = None
 

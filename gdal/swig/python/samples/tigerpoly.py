@@ -139,7 +139,7 @@ while feat is not None:
 
     feat = line_layer.GetNextFeature()
 
-print('Got %d lines in %d modules.' % (line_count,len(modules_hash)))
+print('Got %d lines in %d modules.' % (line_count, len(modules_hash)))
 
 #############################################################################
 # Read all polygon/chain links and build a hash keyed by POLY_ID listing

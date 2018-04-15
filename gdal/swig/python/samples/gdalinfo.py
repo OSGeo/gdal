@@ -434,7 +434,7 @@ def main(argv=None):
 
                     if pszResampling is not None \
                        and len(pszResampling) >= 12 \
-                       and EQUAL(pszResampling[0:12],"AVERAGE_BIT2"):
+                       and EQUAL(pszResampling[0:12], "AVERAGE_BIT2"):
                         line = line + "*"
 
                 else:

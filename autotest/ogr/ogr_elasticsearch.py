@@ -275,9 +275,9 @@ def ogr_elasticsearch_1():
     feat.SetField('real_field', 2.34)
     feat.SetField('boolean_field', 1)
     feat['strlist_field'] = ['a', 'b']
-    feat['intlist_field'] = [1,2]
-    feat['int64list_field'] = [123456789012,2]
-    feat['reallist_field'] = [1.23,4.56]
+    feat['intlist_field'] = [1, 2]
+    feat['int64list_field'] = [123456789012, 2]
+    feat['reallist_field'] = [1.23, 4.56]
     feat['date_field'] = '2015/08/12'
     feat['datetime_field'] = '2015/08/12 12:34:56.789'
     feat['time_field'] = '12:34:56.789'
@@ -829,7 +829,7 @@ def ogr_elasticsearch_4():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    lyr.SetSpatialFilterRect(1,48,3,50)
+    lyr.SetSpatialFilterRect(1, 48, 3, 50)
     lyr.ResetReading()
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "geo_shape": { "a_geoshape": { "shape": { "type": "envelope", "coordinates": [ [ 1.0, 50.0 ], [ 3.0, 48.0 ] ] } } } } } } }""", """{
     "hits":
@@ -855,7 +855,7 @@ def ogr_elasticsearch_4():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    lyr.SetSpatialFilterRect(1,1,48,3,50)
+    lyr.SetSpatialFilterRect(1, 1, 48, 3, 50)
     lyr.ResetReading()
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "geo_bounding_box": { "a_geopoint.coordinates": { "top_left": { "lat": 50.0, "lon": 1.0 }, "bottom_right": { "lat": 48.0, "lon": 3.0 } } } } } } }""", """{
     "hits":
@@ -881,7 +881,7 @@ def ogr_elasticsearch_4():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?pretty&POSTFIELDS={ "size": 0, "query": { "constant_score" : { "filter": { "geo_bounding_box": { "a_geopoint.coordinates": { "top_left": { "lat": 50.0, "lon": 1.0 }, "bottom_right": { "lat": 48.0, "lon": 3.0 } } } } } } }""","""{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?pretty&POSTFIELDS={ "size": 0, "query": { "constant_score" : { "filter": { "geo_bounding_box": { "a_geopoint.coordinates": { "top_left": { "lat": 50.0, "lon": 1.0 }, "bottom_right": { "lat": 48.0, "lon": 3.0 } } } } } } }""", """{
     "hits":
     {
         "total": 10
@@ -893,7 +893,7 @@ def ogr_elasticsearch_4():
         return 'fail'
 
     lyr.SetSpatialFilter(None)
-    lyr.SetSpatialFilterRect(-180,-90,180,90)
+    lyr.SetSpatialFilterRect(-180, -90, 180, 90)
     with gdaltest.error_handler():
         lyr.SetSpatialFilter(-1, None)
         lyr.SetSpatialFilter(2, None)
@@ -2124,7 +2124,7 @@ def ogr_elasticsearch_10():
         return 'fail'
 
     lyr.SetAttributeFilter("keyword_field = 'foo2'")
-    lyr.SetSpatialFilterRect(2,49,2,49)
+    lyr.SetSpatialFilterRect(2, 49, 2, 49)
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "bool" : { "must" : [{ "geo_shape": { "a_geoshape": { "shape": { "type": "envelope", "coordinates": [ [ 2.0, 49.0 ], [ 2.0, 49.0 ] ] } } } }, { "term": { "properties.keyword_field": "foo2" } }] } } } } }""",
 """{
 "_scroll_id": "my_scrollid",

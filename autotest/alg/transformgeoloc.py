@@ -52,9 +52,9 @@ def transformgeoloc_1():
     # Setup 2x2 geolocation arrays in a memory dataset with lat/long values.
 
     drv = gdal.GetDriverByName('MEM')
-    geoloc_ds = drv.Create('geoloc_1',2,2,3,gdal.GDT_Float64)
+    geoloc_ds = drv.Create('geoloc_1', 2, 2, 3, gdal.GDT_Float64)
 
-    lon_array = numpy.asarray([[-117.0,-116.0],
+    lon_array = numpy.asarray([[-117.0, -116.0],
                                [-116.5, -115.5]])
     lat_array = numpy.asarray([[45.0, 45.5],
                                [44.0, 44.5]])

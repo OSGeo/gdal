@@ -215,7 +215,7 @@ def sieve_6():
     #size = 3002
     size = 102
     ds = gdal.GetDriverByName('MEM').Create('', size + 1, size)
-    ar = numpy.zeros((size,size + 1), dtype=numpy.uint8)
+    ar = numpy.zeros((size, size + 1), dtype=numpy.uint8)
     for i in range(size):
         for j in range(int(size / 3)):
             ar[i][size + 1 - 1 - i - 1 - 3 * j] = 255

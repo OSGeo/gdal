@@ -128,7 +128,7 @@ def test_gdal_translate_lib_4():
 
     ds = gdal.Open('../gcore/data/rgbsmall.tif')
 
-    ds = gdal.Translate('tmp/test4.tif', ds, bandList=[3,2,1])
+    ds = gdal.Translate('tmp/test4.tif', ds, bandList=[3, 2, 1])
     if ds is None:
         gdaltest.post_reason('got error/warning')
         return 'fail'
@@ -232,7 +232,7 @@ def test_gdal_translate_lib_7():
 
 def test_gdal_translate_lib_8():
 
-    gcpList = [gdal.GCP(440720.000,3751320.000,0,0,0), gdal.GCP(441920.000,3751320.000,0,20,0), gdal.GCP(441920.000,3750120.000,0,20,20), gdal.GCP(440720.000,3750120.000,0,0,20)]
+    gcpList = [gdal.GCP(440720.000, 3751320.000, 0, 0, 0), gdal.GCP(441920.000, 3751320.000, 0, 20, 0), gdal.GCP(441920.000, 3750120.000, 0, 20, 20), gdal.GCP(440720.000, 3750120.000, 0, 0, 20)]
     ds = gdal.Open('../gcore/data/byte.tif')
     ds = gdal.Translate('tmp/test8.tif', ds, outputSRS='EPSG:26711', GCPs=gcpList)
     if ds is None:
@@ -281,7 +281,7 @@ def test_gdal_translate_lib_9():
 def test_gdal_translate_lib_10():
 
     ds = gdal.Open('../gcore/data/byte.tif')
-    ds = gdal.Translate('tmp/test10.tif', ds, srcWin=[0,0,1,1])
+    ds = gdal.Translate('tmp/test10.tif', ds, srcWin=[0, 0, 1, 1])
     if ds is None:
         return 'fail'
 
@@ -323,7 +323,7 @@ def test_gdal_translate_lib_11():
 def test_gdal_translate_lib_12():
 
     ds = gdal.Open('../gcore/data/byte.tif')
-    ds = gdal.Translate('tmp/test12.tif', ds, outputBounds=[440720.000,3751320.000,441920.000,3750120.000])
+    ds = gdal.Translate('tmp/test12.tif', ds, outputBounds=[440720.000, 3751320.000, 441920.000, 3750120.000])
     if ds is None:
         return 'fail'
 

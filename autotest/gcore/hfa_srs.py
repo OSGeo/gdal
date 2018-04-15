@@ -55,7 +55,7 @@ class TestHFASRS:
             #print(proj4str)
             sr.SetFromUserInput(proj4str)
 
-        ds = gdal.GetDriverByName('HFA').Create('/vsimem/TestHFASRS.img',1,1)
+        ds = gdal.GetDriverByName('HFA').Create('/vsimem/TestHFASRS.img', 1, 1)
         ds.SetProjection(sr.ExportToWkt())
         ds = None
 

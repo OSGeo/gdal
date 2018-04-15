@@ -62,7 +62,7 @@ def gdal_api_proxy_1():
 
 def gdal_api_proxy_2():
 
-    if sys.version_info < (2,6,0):
+    if sys.version_info < (2, 6, 0):
         return 'skip'
 
     import test_py_scripts
@@ -79,7 +79,7 @@ def gdal_api_proxy_2():
 
 def gdal_api_proxy_3():
 
-    if sys.version_info < (2,6,0):
+    if sys.version_info < (2, 6, 0):
         return 'skip'
 
     if sys.platform == 'win32':
@@ -103,7 +103,7 @@ def gdal_api_proxy_3():
 
 def gdal_api_proxy_4():
 
-    if sys.version_info < (2,6,0):
+    if sys.version_info < (2, 6, 0):
         return 'skip'
 
     if sys.platform == 'win32':
@@ -153,7 +153,7 @@ def gdal_api_proxy_sub():
 
     ds = gdal.Open('tmp/byte.tif', gdal.GA_Update)
 
-    ds.SetGeoTransform([1,2,3,4,5,6])
+    ds.SetGeoTransform([1, 2, 3, 4, 5, 6])
     got_gt = ds.GetGeoTransform()
     if src_gt == got_gt:
         gdaltest.post_reason('fail')
@@ -178,7 +178,7 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gcps = [gdal.GCP(0,1,2,3,4)]
+    gcps = [gdal.GCP(0, 1, 2, 3, 4)]
     ds.SetGCPs(gcps, "foo")
 
     got_gcps = ds.GetGCPs()
@@ -424,12 +424,12 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    got_stats = ds.GetRasterBand(1).GetStatistics(0,0)
+    got_stats = ds.GetRasterBand(1).GetStatistics(0, 0)
     if got_stats[3] >= 0.0:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    got_stats = ds.GetRasterBand(1).GetStatistics(1,1)
+    got_stats = ds.GetRasterBand(1).GetStatistics(1, 1)
     if got_stats[0] != 74.0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -442,15 +442,15 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds.GetRasterBand(1).SetStatistics(1,2,3,4)
-    got_stats = ds.GetRasterBand(1).GetStatistics(1,1)
-    if got_stats != [1,2,3,4]:
+    ds.GetRasterBand(1).SetStatistics(1, 2, 3, 4)
+    got_stats = ds.GetRasterBand(1).GetStatistics(1, 1)
+    if got_stats != [1, 2, 3, 4]:
         print(got_stats)
         gdaltest.post_reason('fail')
         return 'fail'
 
     ds.GetRasterBand(1).ComputeStatistics(0)
-    got_stats = ds.GetRasterBand(1).GetStatistics(1,1)
+    got_stats = ds.GetRasterBand(1).GetStatistics(1, 1)
     if got_stats[0] != 74.0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -515,7 +515,7 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds.GetRasterBand(1).SetDefaultHistogram(1,2,[3])
+    ds.GetRasterBand(1).SetDefaultHistogram(1, 2, [3])
     (minval, maxval, nitems, got_hist3) = ds.GetRasterBand(1).GetDefaultHistogram()
     if minval != 1:
         gdaltest.post_reason('fail')
@@ -641,7 +641,7 @@ if __name__ == '__main__':
         import time
 
         p = None
-        for port in [8080,8081,8082]:
+        for port in [8080, 8081, 8082]:
             p = subprocess.Popen([gdalserver_path, '-tcpserver', '%d' % port])
             time.sleep(1)
             if p.poll() is None:

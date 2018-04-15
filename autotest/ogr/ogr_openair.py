@@ -56,7 +56,7 @@ def ogr_openair_1():
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
-    if ogrtest.check_feature_geometry(feat,'POLYGON ((49.75 2.75,49.75 3.0,49.5 3.0,49.5 2.75,49.75 2.75))',
+    if ogrtest.check_feature_geometry(feat, 'POLYGON ((49.75 2.75,49.75 3.0,49.5 3.0,49.5 2.75,49.75 2.75))',
                                       max_error=0.0000001) != 0:
         print('did not get expected first geom')
         print(geom.ExportToWkt())
@@ -73,7 +73,7 @@ def ogr_openair_1():
         return 'fail'
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
-    if ogrtest.check_feature_geometry(feat,'POINT (49.2625 2.504166666666667)',
+    if ogrtest.check_feature_geometry(feat, 'POINT (49.2625 2.504166666666667)',
                                       max_error=0.0000001) != 0:
         print('did not get expected geom on labels layer')
         print(geom.ExportToWkt())

@@ -65,7 +65,7 @@ def ogr_arcgen_points():
         gdaltest.post_reason('did not get expected ID')
         feat.DumpReadable()
         return 'fail'
-    if ogrtest.check_feature_geometry(feat,'POINT (2 49)',
+    if ogrtest.check_feature_geometry(feat, 'POINT (2 49)',
                                       max_error=0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
@@ -102,7 +102,7 @@ def ogr_arcgen_points25d():
         gdaltest.post_reason('did not get expected ID')
         feat.DumpReadable()
         return 'fail'
-    if ogrtest.check_feature_geometry(feat,'POINT (2 49 10)',
+    if ogrtest.check_feature_geometry(feat, 'POINT (2 49 10)',
                                       max_error=0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
@@ -135,7 +135,7 @@ def ogr_arcgen_lines():
         gdaltest.post_reason('did not get expected ID')
         feat.DumpReadable()
         return 'fail'
-    if ogrtest.check_feature_geometry(feat,'LINESTRING (2 49,3 50)',
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (2 49,3 50)',
                                       max_error=0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
@@ -168,7 +168,7 @@ def ogr_arcgen_lines25d():
         gdaltest.post_reason('did not get expected ID')
         feat.DumpReadable()
         return 'fail'
-    if ogrtest.check_feature_geometry(feat,'LINESTRING (2 49 10,3 50 10)',
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (2 49 10,3 50 10)',
                                       max_error=0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
@@ -201,7 +201,7 @@ def ogr_arcgen_polygons():
         print('did not get expected ID')
         feat.DumpReadable()
         return 'fail'
-    if ogrtest.check_feature_geometry(feat,'POLYGON ((2 49,2 50,3 50,3 49,2 49))',
+    if ogrtest.check_feature_geometry(feat, 'POLYGON ((2 49,2 50,3 50,3 49,2 49))',
                                       max_error=0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
@@ -234,7 +234,7 @@ def ogr_arcgen_polygons25d():
         gdaltest.post_reason('did not get expected ID')
         feat.DumpReadable()
         return 'fail'
-    if ogrtest.check_feature_geometry(feat,'POLYGON ((2 49 10,2 50 10,3 50 10,3 49 10,2 49 10))',
+    if ogrtest.check_feature_geometry(feat, 'POLYGON ((2 49 10,2 50 10,3 50 10,3 49 10,2 49 10))',
                                       max_error=0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()

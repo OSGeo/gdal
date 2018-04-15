@@ -158,7 +158,7 @@ def ogr_mysql_3():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.mysql_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
+        if ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
                                           max_error=0.001) != 0:
             return 'fail'
 
@@ -233,10 +233,10 @@ def ogr_mysql_4():
         feat_read = gdaltest.mysql_lyr.GetNextFeature()
 
         if ogrtest.check_feature_geometry(feat_read, geom) != 0:
-            print('Geometry changed. Closing rings before trying again for wkt #',item)
-            print('(before):',geom.ExportToWkt())
+            print('Geometry changed. Closing rings before trying again for wkt #', item)
+            print('(before):', geom.ExportToWkt())
             geom.CloseRings()
-            print('(after) :',geom.ExportToWkt())
+            print('(after) :', geom.ExportToWkt())
             if ogrtest.check_feature_geometry(feat_read, geom) != 0:
                 return 'fail'
 

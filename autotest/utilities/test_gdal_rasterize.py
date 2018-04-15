@@ -62,7 +62,7 @@ def test_gdal_rasterize_1():
 
     target_ds = gdal.GetDriverByName('GTiff').Create('tmp/rast1.tif', 100, 100, 3,
                                                     gdal.GDT_Byte)
-    target_ds.SetGeoTransform((1000,1,0,1100,0,-1))
+    target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
     # Close TIF file
@@ -138,7 +138,7 @@ def test_gdal_rasterize_2():
 
     target_ds = gdal.GetDriverByName('GTiff').Create('tmp/rast2.tif', 12, 12, 3,
                                                     gdal.GDT_Byte)
-    target_ds.SetGeoTransform((0,1,0,12,0,-1))
+    target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
 
     # Close TIF file
     target_ds = None
@@ -295,7 +295,7 @@ def test_gdal_rasterize_5():
         print(ds.RasterYSize)
         return 'fail'
 
-    gt_ref = [0,1,0,3,0,-1]
+    gt_ref = [0, 1, 0, 3, 0, -1]
     gt = ds.GetGeoTransform()
     for i in range(6):
         if (abs(gt[i] - gt_ref[i]) > 1e-6):
@@ -333,7 +333,7 @@ def test_gdal_rasterize_6():
     f.close()
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdal_rasterize_6.tif', 100, 100)
-    ds.SetGeoTransform([200000,(400000 - 200000) / 100,0,6500000,0,-(6500000 - 6200000) / 100])
+    ds.SetGeoTransform([200000, (400000 - 200000) / 100, 0, 6500000, 0, -(6500000 - 6200000) / 100])
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(3857)
     ds.SetProjection(sr.ExportToWkt())

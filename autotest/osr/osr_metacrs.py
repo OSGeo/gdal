@@ -89,7 +89,7 @@ class MetaCRSTest:
 
         return 'success'
 
-    def build_srs(self,type,crstext):
+    def build_srs(self, type, crstext):
         if type == 'EPSG':
             srs = osr.SpatialReference()
             if srs.ImportFromEPSGA(int(crstext)) == 0:
@@ -131,12 +131,12 @@ class MetaCRSTest:
         # axes if needed.
 
         if self.src_srs.EPSGTreatsAsLatLong():
-            self.src_xyz = (self.src_xyz[1],self.src_xyz[0],self.src_xyz[2])
+            self.src_xyz = (self.src_xyz[1], self.src_xyz[0], self.src_xyz[2])
 
         result = ct.TransformPoint(self.src_xyz[0], self.src_xyz[1], self.src_xyz[2])
 
         if self.src_srs.EPSGTreatsAsLatLong():
-            result = (result[1],result[0],result[2])
+            result = (result[1], result[0], result[2])
 
         ######################################################################
         # Check results.
@@ -147,9 +147,9 @@ class MetaCRSTest:
         if error > self.dst_error:
             err_msg = 'Dest error is %g, src=%g,%g,%g, dst=%g,%g,%g, exp=%g,%g,%g' \
                       % (error,
-                         self.src_xyz[0],self.src_xyz[1],self.src_xyz[2],
+                         self.src_xyz[0], self.src_xyz[1], self.src_xyz[2],
                          result[0], result[1], result[2],
-                         self.dst_xyz[0],self.dst_xyz[1],self.dst_xyz[2])
+                         self.dst_xyz[0], self.dst_xyz[1], self.dst_xyz[2])
 
             gdaltest.post_reason(err_msg)
 
@@ -167,7 +167,7 @@ class MetaCRSTest:
 
 gdaltest_list = []
 
-csv_reader = csv.DictReader(open('data/Test_Data_File.csv','rt'))
+csv_reader = csv.DictReader(open('data/Test_Data_File.csv', 'rt'))
 
 for test in csv_reader:
     ut = MetaCRSTest(test)

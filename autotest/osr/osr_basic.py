@@ -221,7 +221,7 @@ def osr_basic_4():
 
     srs.SetTOWGS84(1, 2, 3)
 
-    if srs.GetTOWGS84() != (1,2,3,0,0,0,0):
+    if srs.GetTOWGS84() != (1, 2, 3, 0, 0, 0, 0):
         gdaltest.post_reason('GetTOWGS84() result is wrong.')
         return 'fail'
 
@@ -230,7 +230,7 @@ def osr_basic_4():
     srs2 = osr.SpatialReference()
     srs2.ImportFromProj4(proj4)
 
-    if srs2.GetTOWGS84() != (1,2,3,0,0,0,0):
+    if srs2.GetTOWGS84() != (1, 2, 3, 0, 0, 0, 0):
         gdaltest.post_reason('GetTOWGS84() result is wrong after PROJ.4 conversion.')
         return 'fail'
 

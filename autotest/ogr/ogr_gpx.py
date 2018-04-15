@@ -505,8 +505,8 @@ def ogr_gpx_8():
 
     gdaltest.gpx_ds = None
 
-    f = open('tmp/gpx.gpx','rb')
-    f_ref = open('data/ogr_gpx_8_ref.txt','rb')
+    f = open('tmp/gpx.gpx', 'rb')
+    f_ref = open('data/ogr_gpx_8_ref.txt', 'rb')
     f_content = f.read()
     f_ref_content = f_ref.read()
     f.close()

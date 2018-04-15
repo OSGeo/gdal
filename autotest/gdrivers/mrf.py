@@ -68,9 +68,9 @@ init_list = [
     ('byte.tif', 1, [4672, [4603, 4652]], ['COMPRESS=JPEG', 'QUALITY=99']),
     # following expected checksums are for: gcc 4.4 debug, mingw/vc9 32-bit, mingw-w64/vc12 64bit, MacOSX
     ('rgbsmall.tif', 1, [21212, [21162, 21110, 21155, 21116]], ['COMPRESS=JPEG', 'QUALITY=99']),
-    ('rgbsmall.tif', 1, [21212, [21266, 21369, 21256, 21495]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99']),
-    ('rgbsmall.tif', 1, [21212, [21261, 21209, 21254, 21215]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99','PHOTOMETRIC=RGB']),
-    ('rgbsmall.tif', 1, [21212, [21283, 21127, 21278, 21124]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99','PHOTOMETRIC=YCC']),
+    ('rgbsmall.tif', 1, [21212, [21266, 21369, 21256, 21495]], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99']),
+    ('rgbsmall.tif', 1, [21212, [21261, 21209, 21254, 21215]], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=RGB']),
+    ('rgbsmall.tif', 1, [21212, [21283, 21127, 21278, 21124]], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=YCC']),
     ('12bit_rose_extract.jpg', 1, [30075, [29650, 29680, 29680, 29650]], ['COMPRESS=JPEG']),
 ]
 

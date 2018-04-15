@@ -318,18 +318,18 @@ def test_gdaldem_lib_hillshade_azimuth():
 
     from sys import version_info
     src_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 1)
-    src_ds.SetGeoTransform([2,0.01,0,49,0,-0.01])
+    src_ds.SetGeoTransform([2, 0.01, 0, 49, 0, -0.01])
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     src_ds.SetProjection(sr.ExportToWkt())
     for j in range(100):
         data = ''
         for i in range(100):
-            val = 255 - 5 * max(abs(50 - i),abs(50 - j))
+            val = 255 - 5 * max(abs(50 - i), abs(50 - j))
             data = data + ('%c' % (val))
-        if version_info >= (3,0,0):
+        if version_info >= (3, 0, 0):
             data = bytes(data, 'ISO-8859-1')
-        src_ds.GetRasterBand(1).WriteRaster(0,j,100,1,data)
+        src_ds.GetRasterBand(1).WriteRaster(0, j, 100, 1, data)
 
     # Light from the east
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', azimuth=90, scale=111120, zFactor=100)
@@ -569,7 +569,7 @@ def test_gdaldem_lib_nodata():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 3, 3, 1)
     src_ds.GetRasterBand(1).SetNoDataValue(0)
-    src_ds.GetRasterBand(1).WriteRaster(1,1,1,1, struct.pack('B', 255))
+    src_ds.GetRasterBand(1).WriteRaster(1, 1, 1, 1, struct.pack('B', 255))
 
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM')
     cs = ds.GetRasterBand(1).Checksum()
@@ -590,7 +590,7 @@ def test_gdaldem_lib_nodata():
     # Same with floating point
     src_ds = gdal.GetDriverByName('MEM').Create('', 3, 3, 1, gdal.GDT_Float32)
     src_ds.GetRasterBand(1).SetNoDataValue(0)
-    src_ds.GetRasterBand(1).WriteRaster(1,1,1,1, struct.pack('f', 255))
+    src_ds.GetRasterBand(1).WriteRaster(1, 1, 1, 1, struct.pack('f', 255))
 
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM')
     cs = ds.GetRasterBand(1).Checksum()
