@@ -91,20 +91,20 @@ def overviewds_2():
     if ds.GetGCPCount() != 0 or ds.GetGCPProjection() != src_ds.GetGCPProjection() or len(ds.GetGCPs()) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    expected_data = src_ds.ReadRaster(0,0,20,20,10,10)
-    got_data = ds.ReadRaster(0,0,10,10)
+    expected_data = src_ds.ReadRaster(0, 0, 20, 20, 10, 10)
+    got_data = ds.ReadRaster(0, 0, 10, 10)
     if expected_data != got_data:
         gdaltest.post_reason('fail')
         return 'fail'
-    got_data = ds.GetRasterBand(1).ReadRaster(0,0,10,10)
+    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 10, 10)
     if expected_data != got_data:
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
-    expected_data = src_ds.ReadRaster(0,0,20,20,5,5)
-    got_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster(0,0,5,5)
+    expected_data = src_ds.ReadRaster(0, 0, 20, 20, 5, 5)
+    got_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 5, 5)
     if expected_data != got_data:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -135,7 +135,7 @@ def overviewds_3():
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/byte.tif', src_ds)
-    ds.SetGeoTransform([0,1,0,0,0,1])  # cancel geotransform
+    ds.SetGeoTransform([0, 1, 0, 0, 0, 1])  # cancel geotransform
     gcp1 = gdal.GCP()
     gcp1.GCPPixel = 0
     gcp1.GCPLine = 0
@@ -155,7 +155,7 @@ def overviewds_3():
     ds.SetGCPs(src_gcps, src_ds.GetProjectionRef())
 
     tr = gdal.Transformer(ds, None, ['METHOD=GCP_POLYNOMIAL'])
-    (ref_success,ref_pnt) = tr.TransformPoint(0, 20, 10)
+    (ref_success, ref_pnt) = tr.TransformPoint(0, 20, 10)
 
     ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     ds = None
@@ -170,7 +170,7 @@ def overviewds_3():
 
     # Really check that the transformer works
     tr = gdal.Transformer(ds, None, ['METHOD=GCP_POLYNOMIAL'])
-    (success,pnt) = tr.TransformPoint(0, 20 / 2.0, 10 / 2.0)
+    (success, pnt) = tr.TransformPoint(0, 20 / 2.0, 10 / 2.0)
 
     for i in range(3):
         if abs(ref_pnt[i] - pnt[i]) > 1e-5:
@@ -201,7 +201,7 @@ def overviewds_4():
     rpc_md = ds.GetMetadata('RPC')
 
     tr = gdal.Transformer(ds, None, ['METHOD=RPC'])
-    (ref_success,ref_pnt) = tr.TransformPoint(0, 20, 10)
+    (ref_success, ref_pnt) = tr.TransformPoint(0, 20, 10)
 
     ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     ds = None
@@ -229,7 +229,7 @@ def overviewds_4():
 
     # Really check that the transformer works
     tr = gdal.Transformer(ds, None, ['METHOD=RPC'])
-    (success,pnt) = tr.TransformPoint(0, 20 / 2.0, 10 / 2.0)
+    (success, pnt) = tr.TransformPoint(0, 20 / 2.0, 10 / 2.0)
 
     for i in range(3):
         if abs(ref_pnt[i] - pnt[i]) > 1e-5:
@@ -260,7 +260,7 @@ def overviewds_5():
     geoloc_md = ds.GetMetadata('GEOLOCATION')
 
     tr = gdal.Transformer(ds, None, ['METHOD=GEOLOC_ARRAY'])
-    (ref_success,ref_pnt) = tr.TransformPoint(0, 20, 10)
+    (ref_success, ref_pnt) = tr.TransformPoint(0, 20, 10)
 
     ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     ds = None
@@ -296,7 +296,7 @@ def overviewds_5():
     # Really check that the transformer works
     tr = gdal.Transformer(ds, None, ['METHOD=GEOLOC_ARRAY'])
     expected_xyz = (20.0 / 2, 10.0 / 2, 0)
-    (success,pnt) = tr.TransformPoint(1, ref_pnt[0], ref_pnt[1])
+    (success, pnt) = tr.TransformPoint(1, ref_pnt[0], ref_pnt[1])
 
     for i in range(3):
         if abs(pnt[i] - expected_xyz[i]) > 0.5:

@@ -317,7 +317,7 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
             i = i + 1
             format = argv[i]
 
-        elif EQUAL(arg,'-a_srs') and i + 1 < len(argv):
+        elif EQUAL(arg, '-a_srs') and i + 1 < len(argv):
             i = i + 1
             pszOutputSRSDef = argv[i]
             if EQUAL(pszOutputSRSDef, "NULL") or \
@@ -347,11 +347,11 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
             options.bPrefixWithLayerName = True
         elif EQUAL(arg, '-style_as_field'):
             options.bStyleAsField = True
-        elif (EQUAL(arg,"-tg") or \
-                EQUAL(arg,"-gt")) and i + 1 < len(argv):
+        elif (EQUAL(arg, "-tg") or \
+                EQUAL(arg, "-gt")) and i + 1 < len(argv):
             i = i + 1
             options.nGroupTransactions = int(argv[i])
-        elif EQUAL(arg,"-where") and i + 1 < len(argv):
+        elif EQUAL(arg, "-where") and i + 1 < len(argv):
             i = i + 1
             pszWHERE = argv[i]
         elif EQUAL(arg, '-quiet'):

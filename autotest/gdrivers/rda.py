@@ -143,7 +143,7 @@ def rda_failed_authentication():
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 404)
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options({'GBDX_AUTH_URL':  '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
+        with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -156,7 +156,7 @@ def rda_failed_authentication():
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, 'invalid_json')
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options({'GBDX_AUTH_URL':  '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
+        with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -169,7 +169,7 @@ def rda_failed_authentication():
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{}')
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options({'GBDX_AUTH_URL':  '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
+        with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -197,7 +197,7 @@ def rda_error_metadata():
     handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 404)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+                                    'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -213,7 +213,7 @@ def rda_error_metadata():
     handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 404, {}, '{"error": "some error"}')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+                                    'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -229,7 +229,7 @@ def rda_error_metadata():
     handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, 'invalid json')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+                                    'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -243,7 +243,7 @@ def rda_error_metadata():
     handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, '{}')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+                                    'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -280,7 +280,7 @@ def rda_error_metadata():
     }}""")
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+                                    'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -317,7 +317,7 @@ def rda_error_metadata():
     }}""")
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+                                    'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -354,7 +354,7 @@ def rda_error_metadata():
     }}""")
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+                                    'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -376,7 +376,7 @@ def rda_graph_nominal():
         return 'skip'
 
     handler = webserver.SequentialHandler()
-    metadata_json = {"imageMetadata":{
+    metadata_json = {"imageMetadata": {
         "imageId": "imageId",
         "profileName": "profileName",
         "nativeTileFileFormat": "TIF",
@@ -413,7 +413,7 @@ def rda_graph_nominal():
 
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-        'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+        'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
         'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
@@ -506,7 +506,7 @@ def rda_graph_nominal():
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
     # RPC should be ignored since there is a valid geotransform
-    metadata_json["rpcSensorModel"] = {"spatialReferenceSystem":"EPSG:4326","upperLeftCorner":{"x":2.07724378,"y":48.84065078},"upperRightCorner":{"x":2.31489579,"y":48.84057427},"lowerRightCorner":{"x":2.31360304,"y":48.69084146},"lowerLeftCorner":{"x":2.07783336,"y":48.69170554},"gsd":5.641394178943586E-6,"postScaleFactorX":1.0,"postScaleFactorY":1.0,"lineOffset":13313.0,"sampleOffset":13775.0,"latOffset":48.7657,"lonOffset":2.1959,"heightOffset":151.0,"lineScale":13314.0,"sampleScale":13776.0,"latScale":0.075,"lonScale":0.1203,"heightScale":500.0,"lineNumCoefs":[0.003462388,-0.003319885,-1.004173,-5.694582E-4,0.00138283,1.973615E-6,3.606842E-4,-8.287262E-4,-0.001348337,3.399036E-7,-1.431479E-6,1.058794E-6,2.705906E-5,-9.732266E-8,-2.988015E-5,-1.20553E-4,-2.956054E-5,2.817489E-7,0.0,-1.663039E-8],"lineDenCoefs":[1.0,0.001393466,0.002175939,3.615903E-4,1.188453E-5,-5.55041E-7,-2.20758E-6,1.688344E-5,-6.33621E-5,2.911688E-5,-2.333141E-8,1.367653E-7,1.006995E-6,8.290656E-8,-7.302754E-7,-1.959288E-4,2.555922E-8,2.074273E-8,6.766787E-7,2.106776E-8],"sampleNumCoefs":[-0.003627584,1.015469,-0.001694738,-0.0107359,-0.001958667,5.325142E-4,-4.003552E-4,0.003666871,2.035126E-4,-5.427884E-6,-1.176796E-6,-1.536131E-5,-6.907792E-5,-1.670626E-5,7.908289E-5,-4.442762E-6,1.143467E-7,3.322555E-6,8.624531E-7,1.741671E-7],"sampleDenCoefs":[1.0,-3.707032E-5,0.001978281,-5.804113E-4,-4.497994E-5,-2.659572E-6,9.73096E-7,-1.250655E-5,4.714011E-5,-1.697617E-5,-6.041848E-8,0.0,2.173017E-7,5.608078E-8,-2.660194E-7,-2.020556E-7,-6.347383E-8,1.321956E-8,-8.626535E-8,1.908747E-8]}
+    metadata_json["rpcSensorModel"] = {"spatialReferenceSystem": "EPSG:4326", "upperLeftCorner": {"x": 2.07724378, "y": 48.84065078}, "upperRightCorner": {"x": 2.31489579, "y": 48.84057427}, "lowerRightCorner": {"x": 2.31360304, "y": 48.69084146}, "lowerLeftCorner": {"x": 2.07783336, "y": 48.69170554}, "gsd": 5.641394178943586E-6, "postScaleFactorX": 1.0, "postScaleFactorY": 1.0, "lineOffset": 13313.0, "sampleOffset": 13775.0, "latOffset": 48.7657, "lonOffset": 2.1959, "heightOffset": 151.0, "lineScale": 13314.0, "sampleScale": 13776.0, "latScale": 0.075, "lonScale": 0.1203, "heightScale": 500.0, "lineNumCoefs": [0.003462388, -0.003319885, -1.004173, -5.694582E-4, 0.00138283, 1.973615E-6, 3.606842E-4, -8.287262E-4, -0.001348337, 3.399036E-7, -1.431479E-6, 1.058794E-6, 2.705906E-5, -9.732266E-8, -2.988015E-5, -1.20553E-4, -2.956054E-5, 2.817489E-7, 0.0, -1.663039E-8], "lineDenCoefs": [1.0, 0.001393466, 0.002175939, 3.615903E-4, 1.188453E-5, -5.55041E-7, -2.20758E-6, 1.688344E-5, -6.33621E-5, 2.911688E-5, -2.333141E-8, 1.367653E-7, 1.006995E-6, 8.290656E-8, -7.302754E-7, -1.959288E-4, 2.555922E-8, 2.074273E-8, 6.766787E-7, 2.106776E-8], "sampleNumCoefs": [-0.003627584, 1.015469, -0.001694738, -0.0107359, -0.001958667, 5.325142E-4, -4.003552E-4, 0.003666871, 2.035126E-4, -5.427884E-6, -1.176796E-6, -1.536131E-5, -6.907792E-5, -1.670626E-5, 7.908289E-5, -4.442762E-6, 1.143467E-7, 3.322555E-6, 8.624531E-7, 1.741671E-7], "sampleDenCoefs": [1.0, -3.707032E-5, 0.001978281, -5.804113E-4, -4.497994E-5, -2.659572E-6, 9.73096E-7, -1.250655E-5, 4.714011E-5, -1.697617E-5, -6.041848E-8, 0.0, 2.173017E-7, 5.608078E-8, -2.660194E-7, -2.020556E-7, -6.347383E-8, 1.321956E-8, -8.626535E-8, 1.908747E-8]}
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
     handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
@@ -642,8 +642,8 @@ def rda_graph_nominal():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-        ds.AdviseRead(0,0,320,300)
-        ds.ReadRaster(0,0,1,1)
+        ds.AdviseRead(0, 0, 320, 300)
+        ds.ReadRaster(0, 0, 1, 1)
     ds = None
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
@@ -659,8 +659,8 @@ def rda_graph_nominal():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-        ds.GetRasterBand(1).AdviseRead(0,0,320,300)
-        ds.GetRasterBand(1).ReadRaster(0,0,1,1)
+        ds.GetRasterBand(1).AdviseRead(0, 0, 320, 300)
+        ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     ds = None
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
@@ -676,7 +676,7 @@ def rda_graph_nominal():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-        data = ds.GetRasterBand(1).ReadBlock(0,0)
+        data = ds.GetRasterBand(1).ReadBlock(0, 0)
 
     data = struct.unpack('B' * (256 * 256), data)
     if data[0] != 255:
@@ -688,7 +688,7 @@ def rda_graph_nominal():
 
     # Try IReadBlock() when data for other bands is already cached
     ds.GetRasterBand(1).FlushCache()
-    data = ds.GetRasterBand(1).ReadBlock(0,0)
+    data = ds.GetRasterBand(1).ReadBlock(0, 0)
     data = struct.unpack('B' * (256 * 256), data)
     if data[0] != 255:
         gdaltest.post_reason('fail')
@@ -727,7 +727,7 @@ def rda_template_nominal():
         return 'skip'
 
     handler = webserver.SequentialHandler()
-    metadata_json = {"imageMetadata":{
+    metadata_json = {"imageMetadata": {
         "imageId": "imageId",
         "profileName": "profileName",
         "version": "1.1",
@@ -756,7 +756,7 @@ def rda_template_nominal():
 
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-        'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+        'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
         'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
@@ -1056,7 +1056,7 @@ def rda_download_queue():
 
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-        'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+        'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
         'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
@@ -1074,14 +1074,14 @@ def rda_download_queue():
     handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, metadata_json)
     for y in range(5):
         for x in range(4):
-            handler.add_unordered('GET', '/rda_api/tile/foo/bar/%d/%d.tif' % (x,y), 200, {}, tile_data)
+            handler.add_unordered('GET', '/rda_api/tile/foo/bar/%d/%d.tif' % (x, y), 200, {}, tile_data)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             # We need at least (width=5) <= MAXCONNECT so that AdviseRead(all_raster) is honoured
             ds = gdal.OpenEx('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}', open_options=['MAXCONNECT=8'])
-        ds.AdviseRead(0,0,4,5)
-        ds.ReadRaster(0,0,4,3)
-        ref_data = ds.ReadRaster(0,1,4,2)
+        ds.AdviseRead(0, 0, 4, 5)
+        ds.ReadRaster(0, 0, 4, 3)
+        ref_data = ds.ReadRaster(0, 1, 4, 2)
 
     # Test that we have the last 8 tiles cached
     ds.FlushCache()
@@ -1089,7 +1089,7 @@ def rda_download_queue():
 
     handler = webserver.SequentialHandler()
     with webserver.install_http_handler(handler):
-        data = ds.ReadRaster(0,1,4,2)
+        data = ds.ReadRaster(0, 1, 4, 2)
     if data != ref_data:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1138,7 +1138,7 @@ def rda_rpc():
 
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-        'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+        'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
         'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
@@ -1157,7 +1157,7 @@ def rda_rpc():
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
     # Invalid RPC
-    metadata_json["rpcSensorModel"] = {"spatialReferenceSystem":"EPSG:4326","upperLeftCorner":{"x":2.07724378,"y":48.84065078},"upperRightCorner":{"x":2.31489579,"y":48.84057427},"lowerRightCorner":{"x":2.31360304,"y":48.69084146},"lowerLeftCorner":{"x":2.07783336,"y":48.69170554},"gsd":5.641394178943586E-6,"postScaleFactorX":2.0,"postScaleFactorY":2.0,"lineOffset":13313.0,"sampleOffset":13775.0,"latOffset":48.7657,"lonOffset":2.1959,"heightOffset":151.0,"lineScale":13314.0,"sampleScale":13776.0,"latScale":0.075,"lonScale":0.1203,"heightScale":500.0,"lineNumCoefs":[],"lineDenCoefs":[],"sampleNumCoefs":[],"sampleDenCoefs":[]}
+    metadata_json["rpcSensorModel"] = {"spatialReferenceSystem": "EPSG:4326", "upperLeftCorner": {"x": 2.07724378, "y": 48.84065078}, "upperRightCorner": {"x": 2.31489579, "y": 48.84057427}, "lowerRightCorner": {"x": 2.31360304, "y": 48.69084146}, "lowerLeftCorner": {"x": 2.07783336, "y": 48.69170554}, "gsd": 5.641394178943586E-6, "postScaleFactorX": 2.0, "postScaleFactorY": 2.0, "lineOffset": 13313.0, "sampleOffset": 13775.0, "latOffset": 48.7657, "lonOffset": 2.1959, "heightOffset": 151.0, "lineScale": 13314.0, "sampleScale": 13776.0, "latScale": 0.075, "lonScale": 0.1203, "heightScale": 500.0, "lineNumCoefs": [], "lineDenCoefs": [], "sampleNumCoefs": [], "sampleDenCoefs": []}
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
     handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
@@ -1174,7 +1174,7 @@ def rda_rpc():
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
     # Good RPC
-    metadata_json["rpcSensorModel"] = {"spatialReferenceSystem":"EPSG:4326","upperLeftCorner":{"x":2.07724378,"y":48.84065078},"upperRightCorner":{"x":2.31489579,"y":48.84057427},"lowerRightCorner":{"x":2.31360304,"y":48.69084146},"lowerLeftCorner":{"x":2.07783336,"y":48.69170554},"gsd":5.641394178943586E-6,"postScaleFactorX":1.0,"postScaleFactorY":1.0,"lineOffset":13313.0,"sampleOffset":13775.0,"latOffset":48.7657,"lonOffset":2.1959,"heightOffset":151.0,"lineScale":13314.0,"sampleScale":13776.0,"latScale":0.075,"lonScale":0.1203,"heightScale":500.0,"lineNumCoefs":[0.003462388,-0.003319885,-1.004173,-5.694582E-4,0.00138283,1.973615E-6,3.606842E-4,-8.287262E-4,-0.001348337,3.399036E-7,-1.431479E-6,1.058794E-6,2.705906E-5,-9.732266E-8,-2.988015E-5,-1.20553E-4,-2.956054E-5,2.817489E-7,0.0,-1.663039E-8],"lineDenCoefs":[1.0,0.001393466,0.002175939,3.615903E-4,1.188453E-5,-5.55041E-7,-2.20758E-6,1.688344E-5,-6.33621E-5,2.911688E-5,-2.333141E-8,1.367653E-7,1.006995E-6,8.290656E-8,-7.302754E-7,-1.959288E-4,2.555922E-8,2.074273E-8,6.766787E-7,2.106776E-8],"sampleNumCoefs":[-0.003627584,1.015469,-0.001694738,-0.0107359,-0.001958667,5.325142E-4,-4.003552E-4,0.003666871,2.035126E-4,-5.427884E-6,-1.176796E-6,-1.536131E-5,-6.907792E-5,-1.670626E-5,7.908289E-5,-4.442762E-6,1.143467E-7,3.322555E-6,8.624531E-7,1.741671E-7],"sampleDenCoefs":[1.0,-3.707032E-5,0.001978281,-5.804113E-4,-4.497994E-5,-2.659572E-6,9.73096E-7,-1.250655E-5,4.714011E-5,-1.697617E-5,-6.041848E-8,0.0,2.173017E-7,5.608078E-8,-2.660194E-7,-2.020556E-7,-6.347383E-8,1.321956E-8,-8.626535E-8,1.908747E-8]}
+    metadata_json["rpcSensorModel"] = {"spatialReferenceSystem": "EPSG:4326", "upperLeftCorner": {"x": 2.07724378, "y": 48.84065078}, "upperRightCorner": {"x": 2.31489579, "y": 48.84057427}, "lowerRightCorner": {"x": 2.31360304, "y": 48.69084146}, "lowerLeftCorner": {"x": 2.07783336, "y": 48.69170554}, "gsd": 5.641394178943586E-6, "postScaleFactorX": 1.0, "postScaleFactorY": 1.0, "lineOffset": 13313.0, "sampleOffset": 13775.0, "latOffset": 48.7657, "lonOffset": 2.1959, "heightOffset": 151.0, "lineScale": 13314.0, "sampleScale": 13776.0, "latScale": 0.075, "lonScale": 0.1203, "heightScale": 500.0, "lineNumCoefs": [0.003462388, -0.003319885, -1.004173, -5.694582E-4, 0.00138283, 1.973615E-6, 3.606842E-4, -8.287262E-4, -0.001348337, 3.399036E-7, -1.431479E-6, 1.058794E-6, 2.705906E-5, -9.732266E-8, -2.988015E-5, -1.20553E-4, -2.956054E-5, 2.817489E-7, 0.0, -1.663039E-8], "lineDenCoefs": [1.0, 0.001393466, 0.002175939, 3.615903E-4, 1.188453E-5, -5.55041E-7, -2.20758E-6, 1.688344E-5, -6.33621E-5, 2.911688E-5, -2.333141E-8, 1.367653E-7, 1.006995E-6, 8.290656E-8, -7.302754E-7, -1.959288E-4, 2.555922E-8, 2.074273E-8, 6.766787E-7, 2.106776E-8], "sampleNumCoefs": [-0.003627584, 1.015469, -0.001694738, -0.0107359, -0.001958667, 5.325142E-4, -4.003552E-4, 0.003666871, 2.035126E-4, -5.427884E-6, -1.176796E-6, -1.536131E-5, -6.907792E-5, -1.670626E-5, 7.908289E-5, -4.442762E-6, 1.143467E-7, 3.322555E-6, 8.624531E-7, 1.741671E-7], "sampleDenCoefs": [1.0, -3.707032E-5, 0.001978281, -5.804113E-4, -4.497994E-5, -2.659572E-6, 9.73096E-7, -1.250655E-5, 4.714011E-5, -1.697617E-5, -6.041848E-8, 0.0, 2.173017E-7, 5.608078E-8, -2.660194E-7, -2.020556E-7, -6.347383E-8, 1.321956E-8, -8.626535E-8, 1.908747E-8]}
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
     handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
@@ -1246,7 +1246,7 @@ def rda_real_cache_dir():
     config_options = {
         'RDA_CACHE_DIR': '',
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-        'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+        'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
         'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
@@ -1335,7 +1335,7 @@ def rda_real_expired_authentication():
 
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-        'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+        'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
         'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
@@ -1396,7 +1396,7 @@ def rda_bad_tile():
 
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-        'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+        'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
         'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
@@ -1434,7 +1434,7 @@ def rda_bad_tile():
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
         with gdaltest.error_handler():
-            data = ds.GetRasterBand(1).ReadBlock(0,0)
+            data = ds.GetRasterBand(1).ReadBlock(0, 0)
         if data is not None:
             gdaltest.post_reason('fail')
             return 'fail'
@@ -1466,7 +1466,7 @@ def rda_bad_tile():
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
         with gdaltest.error_handler():
-            data = ds.GetRasterBand(1).ReadBlock(0,0)
+            data = ds.GetRasterBand(1).ReadBlock(0, 0)
         if data is not None:
             gdaltest.post_reason('fail')
             return 'fail'

@@ -367,7 +367,7 @@ def check_oi_rg_consistency(filename, serialized_oi_rg, error_report):
     gdal.SetConfigOption('GMLJP2OVERRIDE', '/vsimem/override.gml')
     gdal.FileFromMemBuffer('/vsimem/override.gml', gmljp2_from_oi)
     fake_in_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
-    fake_in_ds.SetGeoTransform([0,60,0,0,0,-60])
+    fake_in_ds.SetGeoTransform([0, 60, 0, 0, 0, -60])
     gdal.GetDriverByName('JP2OpenJPEG').CreateCopy('/vsimem/temp.jp2', fake_in_ds, options=['GeoJP2=NO'])
     gdal.SetConfigOption('GMLJP2OVERRIDE', None)
     gdal.Unlink('/vsimem/override.gml')

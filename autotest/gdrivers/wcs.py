@@ -85,7 +85,7 @@ def wcs_2():
         return 'skip'
 
     # first, copy to tmp directory.
-    open('tmp/geoserver.wcs','w').write(open('data/geoserver.wcs').read())
+    open('tmp/geoserver.wcs', 'w').write(open('data/geoserver.wcs').read())
 
     gdaltest.wcs_ds = None
     gdaltest.wcs_ds = gdal.Open('tmp/geoserver.wcs')
@@ -196,7 +196,7 @@ def old_wcs_2():
         return 'skip'
 
     # first, copy to tmp directory.
-    open('tmp/srtmplus.wcs','w').write(open('data/srtmplus.wcs').read())
+    open('tmp/srtmplus.wcs', 'w').write(open('data/srtmplus.wcs').read())
 
     gdaltest.wcs_ds = None
     gdaltest.wcs_ds = gdal.Open('tmp/srtmplus.wcs')
@@ -570,7 +570,7 @@ def wcs_6():
                     wcs_6_ok = False
                     break
                 options = [cache]
-                gdal.Translate(tmpfile, ds, srcWin=[0,0,2,2], options=options)
+                gdal.Translate(tmpfile, ds, srcWin=[0, 0, 2, 2], options=options)
                 os.remove(tmpfile)
             else:
                 print(server + ' ' + version + ' non_scaled skipped (no response file)')

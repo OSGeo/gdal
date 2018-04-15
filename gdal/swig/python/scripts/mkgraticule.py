@@ -156,8 +156,8 @@ if not connected:
     feat = ogr.Feature(feature_def=layer.GetLayerDefn())
     geom = ogr.Geometry(type=ogr.wkbLineString)
 
-    for lat in float_range(ymin,ymax + stepsize / 2,stepsize):
-        for long_ in float_range(xmin,xmax - substepsize / 2,substepsize):
+    for lat in float_range(ymin, ymax + stepsize / 2, stepsize):
+        for long_ in float_range(xmin, xmax - substepsize / 2, substepsize):
 
             geom.SetPoint(0, long_, lat)
             geom.SetPoint(1, long_ + substepsize, lat)
@@ -173,8 +173,8 @@ if not connected:
     #########################################################################
     # Generate lines of longitude
 
-    for long_ in float_range(xmin,xmax + stepsize / 2,stepsize):
-        for lat in float_range(ymin,ymax - substepsize / 2,substepsize):
+    for long_ in float_range(xmin, xmax + stepsize / 2, stepsize):
+        for lat in float_range(ymin, ymax - substepsize / 2, substepsize):
             geom.SetPoint(0, long_, lat)
             geom.SetPoint(1, long_, lat + substepsize)
 
@@ -197,11 +197,11 @@ if connected:
 
     feat = ogr.Feature(feature_def=layer.GetLayerDefn())
 
-    for lat in float_range(ymin,ymax + stepsize / 2,stepsize):
+    for lat in float_range(ymin, ymax + stepsize / 2, stepsize):
 
         geom = ogr.Geometry(type=ogr.wkbLineString)
 
-        for long_ in float_range(xmin,xmax + substepsize / 2,substepsize):
+        for long_ in float_range(xmin, xmax + substepsize / 2, substepsize):
             geom.AddPoint(long_, lat)
 
         err = 0
@@ -215,11 +215,11 @@ if connected:
     #########################################################################
     # Generate lines of longitude
 
-    for long_ in float_range(xmin,xmax + stepsize / 2,stepsize):
+    for long_ in float_range(xmin, xmax + stepsize / 2, stepsize):
 
         geom = ogr.Geometry(type=ogr.wkbLineString)
 
-        for lat in float_range(ymin,ymax + substepsize / 2,substepsize):
+        for lat in float_range(ymin, ymax + substepsize / 2, substepsize):
             geom.AddPoint(long_, lat)
 
         err = 0

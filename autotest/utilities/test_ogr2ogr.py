@@ -695,10 +695,10 @@ def test_ogr2ogr_20():
     feat = ds.GetLayer(0).GetNextFeature()
     for i in range(layer_defn.GetFieldCount()):
         if layer_defn.GetFieldDefn(i).GetNameRef() != expected_fields[i]:
-            print('Expected ', expected_fields[i],',but got',layer_defn.GetFieldDefn(i).GetNameRef())
+            print('Expected ', expected_fields[i], ',but got', layer_defn.GetFieldDefn(i).GetNameRef())
             error_occurred = True
         if feat.GetFieldAsString(i) != expected_data[i]:
-            print('Expected the value ', expected_data[i],',but got',feat.GetFieldAsString(i))
+            print('Expected the value ', expected_data[i], ',but got', feat.GetFieldAsString(i))
             error_occurred = True
 
     ds.Destroy()
@@ -1869,12 +1869,12 @@ def test_ogr2ogr_48():
     feat = lyr.GetNextFeature()
     for i in range(layer_defn.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(i + 1):
-            print('Expected the value ', str(i + 1),',but got',feat.GetFieldAsString(i))
+            print('Expected the value ', str(i + 1), ',but got', feat.GetFieldAsString(i))
             error_occurred = True
     feat = lyr.GetNextFeature()
     for i in range(layer_defn.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(layer_defn.GetFieldCount() - i):
-            print('Expected the value ', str(layer_defn.GetFieldCount() - i),',but got',feat.GetFieldAsString(i))
+            print('Expected the value ', str(layer_defn.GetFieldCount() - i), ',but got', feat.GetFieldAsString(i))
             error_occurred = True
 
     ds.Destroy()
@@ -2747,7 +2747,7 @@ def check_identity_transformation(x, y, srid):
             pass
 
     # Generate CSV file with test point
-    xy_wkb = '0101000000' + ''.join(hexify_double(q) for q in struct.unpack('>QQ', struct.pack("<dd",x,y)))
+    xy_wkb = '0101000000' + ''.join(hexify_double(q) for q in struct.unpack('>QQ', struct.pack("<dd", x, y)))
     f = open('tmp/input_point.csv', 'wt')
     f.write('id,wkb_geom\n')
     f.write('1,' + xy_wkb + '\n')

@@ -44,7 +44,7 @@ import ogrtest
 def test_ogr2ogr_lib_1():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
-    ds = gdal.VectorTranslate('',srcDS, format='Memory')
+    ds = gdal.VectorTranslate('', srcDS, format='Memory')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
 
@@ -81,7 +81,7 @@ def test_ogr2ogr_lib_2():
     gdal.Unlink('/vsimem/sql.txt')
 
     # Test @filename syntax with a UTF-8 BOM
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         gdal.FileFromMemBuffer('/vsimem/sql.txt', '\xEF\xBB\xBFselect * from poly'.encode('LATIN1'))
     else:
         gdal.FileFromMemBuffer('/vsimem/sql.txt', '\xEF\xBB\xBFselect * from poly')
@@ -183,7 +183,7 @@ def test_ogr2ogr_lib_6():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     # Voluntary don't use the exact case of the source field names (#4502)
-    ds = gdal.VectorTranslate('', srcDS, format='Memory', selectFields=['eas_id','prfedea'])
+    ds = gdal.VectorTranslate('', srcDS, format='Memory', selectFields=['eas_id', 'prfedea'])
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldCount() != 2:
         return 'fail'
@@ -257,13 +257,13 @@ def test_ogr2ogr_lib_9():
 def test_ogr2ogr_lib_10():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
-    ds = gdal.VectorTranslate('/vsimem/tmp/poly.shp',srcDS)
+    ds = gdal.VectorTranslate('/vsimem/tmp/poly.shp', srcDS)
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
     ds = None
 
     # Overwrite
-    ds = gdal.VectorTranslate('/vsimem/tmp',srcDS,accessMode='overwrite')
+    ds = gdal.VectorTranslate('/vsimem/tmp', srcDS, accessMode='overwrite')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
     ds = None
@@ -278,7 +278,7 @@ def test_ogr2ogr_lib_10():
 def test_ogr2ogr_lib_11():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
-    ds = gdal.VectorTranslate('',srcDS, format='Memory',spatFilter=[479609,4764629,479764,4764817])
+    ds = gdal.VectorTranslate('', srcDS, format='Memory', spatFilter=[479609, 4764629, 479764, 4764817])
     if ogrtest.have_geos():
         if ds is None or ds.GetLayer(0).GetFeatureCount() != 4:
             return 'fail'
@@ -351,7 +351,7 @@ def test_ogr2ogr_lib_15():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     with gdaltest.error_handler():
-        ds = gdal.VectorTranslate('',srcDS, format='Memory', zField='foo')
+        ds = gdal.VectorTranslate('', srcDS, format='Memory', zField='foo')
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbPolygon:
         return 'fail'
@@ -378,14 +378,14 @@ def test_ogr2ogr_lib_16():
               ['POINT ZM (1 2 3 4)', 'layer_dim', 'POINT ZM (1 2 3 4)'],
               ]
     for (wkt_before, dim, wkt_after) in tests:
-        srcDS = gdal.GetDriverByName('Memory').Create('',0,0,0)
+        srcDS = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
         geom = ogr.CreateGeometryFromWkt(wkt_before)
         lyr = srcDS.CreateLayer('test', geom_type=geom.GetGeometryType())
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometry(geom)
         lyr.CreateFeature(f)
 
-        ds = gdal.VectorTranslate('',srcDS, format='Memory', dim=dim)
+        ds = gdal.VectorTranslate('', srcDS, format='Memory', dim=dim)
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         if f.GetGeometryRef().ExportToIsoWkt() != wkt_after:

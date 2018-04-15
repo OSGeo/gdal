@@ -670,9 +670,9 @@ def osr_esri_test(wkt_esri, wkt_ogc, proj4):
         print('\nesri->ogc, esri->proj\n')
     srs_esri.SetFromUserInput(wkt_esri)
     srs_esri.MorphFromESRI()
-    srs_esri.SetAttrValue('PROJCS|GEOGCS|DATUM','unknown')
+    srs_esri.SetAttrValue('PROJCS|GEOGCS|DATUM', 'unknown')
     srs_ogc.SetFromUserInput(wkt_ogc)
-    srs_ogc.SetAttrValue('PROJCS|GEOGCS|DATUM','unknown')
+    srs_ogc.SetAttrValue('PROJCS|GEOGCS|DATUM', 'unknown')
     wkt_esri_to_ogc = srs_esri.ExportToWkt()
     wkt_esri_to_proj4 = srs_esri.ExportToProj4()
     if not silent:
@@ -691,12 +691,12 @@ def osr_esri_test(wkt_esri, wkt_ogc, proj4):
     if not silent:
         print('\nogc->esri, ogc->proj\n')
     srs_esri.SetFromUserInput(wkt_esri)
-    srs_esri.SetAttrValue('PROJCS|GEOGCS|DATUM','unknown')
+    srs_esri.SetAttrValue('PROJCS|GEOGCS|DATUM', 'unknown')
     srs_ogc.SetFromUserInput(wkt_ogc)
-    srs_ogc.SetAttrValue('PROJCS|GEOGCS|DATUM','unknown')
+    srs_ogc.SetAttrValue('PROJCS|GEOGCS|DATUM', 'unknown')
     wkt_ogc_to_proj4 = srs_ogc.ExportToProj4()
     srs_ogc.MorphToESRI()
-    srs_ogc.SetAttrValue('PROJCS|GEOGCS|DATUM','unknown')
+    srs_ogc.SetAttrValue('PROJCS|GEOGCS|DATUM', 'unknown')
     wkt_ogc_to_esri = srs_ogc.ExportToWkt()
     if not silent:
         print('wkt_ogc_to_esri: ' + wkt_ogc_to_esri)
@@ -714,10 +714,10 @@ def osr_esri_test(wkt_esri, wkt_ogc, proj4):
         print('\nproj->esri, proj->ogc\n')
     srs_esri.SetFromUserInput(proj4)
     srs_esri.MorphFromESRI()
-    srs_esri.SetAttrValue('PROJCS|GEOGCS|DATUM','unknown')
+    srs_esri.SetAttrValue('PROJCS|GEOGCS|DATUM', 'unknown')
     proj4_to_esri = srs_esri.ExportToProj4()
     srs_ogc.SetFromUserInput(proj4)
-    srs_ogc.SetAttrValue('PROJCS|GEOGCS|DATUM','unknown')
+    srs_ogc.SetAttrValue('PROJCS|GEOGCS|DATUM', 'unknown')
     proj4_to_ogc = srs_ogc.ExportToProj4()
 
     if proj4_to_ogc != proj4:
@@ -811,24 +811,24 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
         epsg_ne = ''
         epsg_none = ''
         epsg_other = ''
-        of_epsg = open(ofile_epsg,'w')
+        of_epsg = open(ofile_epsg, 'w')
     if os.path.exists(ofile_srs):
         os.unlink(ofile_srs)
     if check_srs:
-        of_srs = open(ofile_srs,'w')
+        of_srs = open(ofile_srs, 'w')
     if os.path.exists(ofile_wkt):
         os.unlink(ofile_wkt)
     if check_wkt:
-        of_wkt = open(ofile_wkt,'w')
+        of_wkt = open(ofile_wkt, 'w')
 
     #open input file
     if os.path.splitext(ifile)[1] == '.gz':
         f = gzip.open(ifile, 'rb')
     else:
-        f = open(ifile,'rt')
-    csv_reader = csv.DictReader(f,delimiter=';')
+        f = open(ifile, 'rt')
+    csv_reader = csv.DictReader(f, delimiter=';')
 
-    csv.DictReader(gdal.FindFile('gdal','gcs.csv'), 'epsg_gcs2', 'GEOGCS', True)
+    csv.DictReader(gdal.FindFile('gdal', 'gcs.csv'), 'epsg_gcs2', 'GEOGCS', True)
 
     #set GDAL_FIX_ESRI_WKT option
     fix_config_bak = gdal.GetConfigOption('GDAL_FIX_ESRI_WKT')
@@ -858,8 +858,8 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
         wkt3 = srs3.ExportToWkt()
 
         #manage special cases of PROJECTION parameters that have multiple mappings
-        remap_proj = dict([['Transverse_Mercator','Gauss_Kruger'], ['Equidistant_Cylindrical', 'Plate_Carree'], \
-                              ['Hotine_Oblique_Mercator_Azimuth_Natural_Origin','Hotine_Oblique_Mercator_Azimuth_Center']])
+        remap_proj = dict([['Transverse_Mercator', 'Gauss_Kruger'], ['Equidistant_Cylindrical', 'Plate_Carree'], \
+                              ['Hotine_Oblique_Mercator_Azimuth_Natural_Origin', 'Hotine_Oblique_Mercator_Azimuth_Center']])
         proj1 = srs1.GetAttrValue('PROJCS|PROJECTION')
         proj3 = srs3.GetAttrValue('PROJCS|PROJECTION')
         if proj3 in remap_proj and proj1 == remap_proj[proj3]:
@@ -906,7 +906,7 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
     if check_epsg:
         of_epsg.close()
         if failed_epsg_count > 0:
-            print('ERROR: Failed %d EPSG tests, see file %s' % (failed_epsg_count,ofile_epsg))
+            print('ERROR: Failed %d EPSG tests, see file %s' % (failed_epsg_count, ofile_epsg))
             #print('epsg_ne: '+epsg_ne)
             #print('epsg_none: '+epsg_none)
             #print('epsg_other: '+epsg_other)
@@ -917,7 +917,7 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
     if check_srs:
         of_srs.close()
         if failed_srs_count > 0:
-            print('ERROR: Failed %d SRS tests, see file %s' % (failed_srs_count,ofile_srs))
+            print('ERROR: Failed %d SRS tests, see file %s' % (failed_srs_count, ofile_srs))
             result = 'fail'
         else:
             os.unlink(ofile_srs)
@@ -925,7 +925,7 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
     if check_wkt:
         of_wkt.close()
         if failed_wkt_count > 0 :
-            print('WARNING: Failed %d WKT tests, see file %s' % (failed_wkt_count,ofile_wkt))
+            print('WARNING: Failed %d WKT tests, see file %s' % (failed_wkt_count, ofile_wkt))
         else:
             os.unlink(ofile_wkt)
 
@@ -935,7 +935,7 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
 def osr_esri_21():
 
     # FIXME ?
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         return 'skip'
 
     result = 'success'
@@ -992,22 +992,22 @@ def osr_esri_test_ogc_esri_ogc(ifile, ofile_base, fix_config='NO', check_epsg=Fa
         os.unlink(ofile_epsg)
     if check_epsg:
         epsg_error = ''
-        of_epsg = open(ofile_epsg,'w')
+        of_epsg = open(ofile_epsg, 'w')
     if os.path.exists(ofile_srs):
         os.unlink(ofile_srs)
     if check_srs:
-        of_srs = open(ofile_srs,'w')
+        of_srs = open(ofile_srs, 'w')
     if os.path.exists(ofile_wkt):
         os.unlink(ofile_wkt)
     if check_wkt:
-        of_wkt = open(ofile_wkt,'w')
+        of_wkt = open(ofile_wkt, 'w')
 
     #open input file
     if os.path.splitext(ifile)[1] == '.gz':
         f = gzip.open(ifile, 'rb')
     else:
-        f = open(ifile,'rt')
-    csv_reader = csv.DictReader(f,delimiter=',')
+        f = open(ifile, 'rt')
+    csv_reader = csv.DictReader(f, delimiter=',')
 
     #set GDAL_FIX_ESRI_WKT option
     fix_config_bak = gdal.GetConfigOption('GDAL_FIX_ESRI_WKT')
@@ -1092,7 +1092,7 @@ def osr_esri_test_ogc_esri_ogc(ifile, ofile_base, fix_config='NO', check_epsg=Fa
     if check_epsg:
         of_epsg.close()
         if failed_epsg_count > 0 :
-            print('ERROR: Failed %d EPSG tests, see file %s' % (failed_epsg_count,ofile_epsg))
+            print('ERROR: Failed %d EPSG tests, see file %s' % (failed_epsg_count, ofile_epsg))
             #print(epsg_error)
             result = 'fail'
         else:
@@ -1100,14 +1100,14 @@ def osr_esri_test_ogc_esri_ogc(ifile, ofile_base, fix_config='NO', check_epsg=Fa
     if check_srs:
         of_srs.close()
         if failed_srs_count > 0 :
-            print('ERROR: Failed %d SRS tests, see file %s' % (failed_srs_count,ofile_srs))
+            print('ERROR: Failed %d SRS tests, see file %s' % (failed_srs_count, ofile_srs))
             result = 'fail'
         else:
             os.unlink(ofile_srs)
     if check_wkt:
         of_wkt.close()
         if failed_wkt_count > 0 :
-            print('WARNING: Failed %d WKT tests, see file %s' % (failed_wkt_count,ofile_wkt))
+            print('WARNING: Failed %d WKT tests, see file %s' % (failed_wkt_count, ofile_wkt))
         else:
             os.unlink(ofile_wkt)
 
@@ -1122,12 +1122,12 @@ def osr_esri_22():
     result = 'success'
 
     # Test GEOGCSCS defs
-    result1 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal','gcs.csv'), 'epsg_gcs')
+    result1 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal', 'gcs.csv'), 'epsg_gcs')
     if result1 == 'fail':
         result = 'expected_fail'
 
     # Test PROJCS defs
-    result2 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal','pcs.csv'), 'epsg_pcs')
+    result2 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal', 'pcs.csv'), 'epsg_pcs')
     if result2 == 'fail':
         result = 'expected_fail'
 
@@ -1143,13 +1143,13 @@ def osr_esri_23():
     result = 'success'
 
     # Test GEOGCSCS defs
-    result1 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal','gcs.csv'),
+    result1 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal', 'gcs.csv'),
                                          'epsg_gcs2', 'GEOGCS', True)
     if result1 == 'fail':
         result = 'expected_fail'
 
     # Test PROJCS defs
-    result2 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal','pcs.csv'),
+    result2 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal', 'pcs.csv'),
                                          'epsg_pcs2', 'DATUM', False)
     if result2 == 'fail':
         result = 'fail'

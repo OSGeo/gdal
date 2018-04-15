@@ -191,7 +191,7 @@ def ogr_rfc35_sqlite_2():
     lyr.CreateFeature(feat)
     feat = None
 
-    if lyr.ReorderField(1,3) != 0:
+    if lyr.ReorderField(1, 3) != 0:
         gdaltest.post_reason('failed')
         return 'fail'
 
@@ -200,50 +200,50 @@ def ogr_rfc35_sqlite_2():
         gdaltest.post_reason('failed')
         return ret
 
-    lyr.ReorderField(3,1)
+    lyr.ReorderField(3, 1)
     ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
 
-    lyr.ReorderField(0,2)
+    lyr.ReorderField(0, 2)
     ret = Check(lyr, ['bar10', 'baz15', 'foo5', 'baw20'])
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
 
-    lyr.ReorderField(2,0)
+    lyr.ReorderField(2, 0)
     ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
 
-    lyr.ReorderField(0,1)
+    lyr.ReorderField(0, 1)
     ret = Check(lyr, ['bar10', 'foo5', 'baz15', 'baw20'])
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
 
-    lyr.ReorderField(1,0)
+    lyr.ReorderField(1, 0)
     ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
 
-    lyr.ReorderFields([3,2,1,0])
+    lyr.ReorderFields([3, 2, 1, 0])
     ret = Check(lyr, ['baw20', 'baz15', 'bar10', 'foo5'])
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
 
-    lyr.ReorderFields([3,2,1,0])
+    lyr.ReorderFields([3, 2, 1, 0])
     ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ret = lyr.ReorderFields([0,0,0,0])
+    ret = lyr.ReorderFields([0, 0, 0, 0])
     gdal.PopErrorHandler()
     if ret == 0:
         gdaltest.post_reason('failed')

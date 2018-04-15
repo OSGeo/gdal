@@ -227,7 +227,7 @@ def ogr_openfilegdb_make_test_data():
                 x2 = 2 * i + 1
                 y1 = 2 * j
                 y2 = 2 * j + 1
-                geom = ogr.CreateGeometryFromWkt('POLYGON((%d %d,%d %d,%d %d,%d %d,%d %d))' % (x1,y1,x1,y2,x2,y2,x2,y1,x1,y1))
+                geom = ogr.CreateGeometryFromWkt('POLYGON((%d %d,%d %d,%d %d,%d %d,%d %d))' % (x1, y1, x1, y2, x2, y2, x2, y1, x1, y1))
                 feat.SetGeometry(geom)
                 lyr.CreateFeature(feat)
                 feat = None
@@ -511,71 +511,71 @@ def ogr_openfilegdb_4():
               ('5 <= id', [5]),
               ('id < 1', []),
               ('1 > id', []),
-              ('id >= 1', [1,2,3,4,5]),
-              ('id > 0', [1,2,3,4,5]),
-              ('0 < id', [1,2,3,4,5]),
-              ('id <= 5', [1,2,3,4,5]),
-              ('id < 6', [1,2,3,4,5]),
-              ('id <> 0', [1,2,3,4,5]),
-              ('id IS NOT NULL', [1,2,3,4,5]),
+              ('id >= 1', [1, 2, 3, 4, 5]),
+              ('id > 0', [1, 2, 3, 4, 5]),
+              ('0 < id', [1, 2, 3, 4, 5]),
+              ('id <= 5', [1, 2, 3, 4, 5]),
+              ('id < 6', [1, 2, 3, 4, 5]),
+              ('id <> 0', [1, 2, 3, 4, 5]),
+              ('id IS NOT NULL', [1, 2, 3, 4, 5]),
               ('id IS NULL', []),
               ('nullint IS NOT NULL', []),
-              ('nullint IS NULL', [1,2,3,4,5]),
+              ('nullint IS NULL', [1, 2, 3, 4, 5]),
               ("str = 'foo_e'", []),
-              ("str = 'foo_é'", [1,2,3,4,5]),
-              ("str <= 'foo_é'", [1,2,3,4,5]),
-              ("str >= 'foo_é'", [1,2,3,4,5]),
+              ("str = 'foo_é'", [1, 2, 3, 4, 5]),
+              ("str <= 'foo_é'", [1, 2, 3, 4, 5]),
+              ("str >= 'foo_é'", [1, 2, 3, 4, 5]),
               ("str <> 'foo_é'", []),
               ("str < 'foo_é'", []),
               ("str > 'foo_é'", []),
-              ('smallint = -13', [1,2,3,4,5]),
-              ('smallint <= -13', [1,2,3,4,5]),
-              ('smallint >= -13', [1,2,3,4,5]),
+              ('smallint = -13', [1, 2, 3, 4, 5]),
+              ('smallint <= -13', [1, 2, 3, 4, 5]),
+              ('smallint >= -13', [1, 2, 3, 4, 5]),
               ('smallint < -13', []),
               ('smallint > -13', []),
-              ('int = 123', [1,2,3,4,5]),
-              ('int <= 123', [1,2,3,4,5]),
-              ('int >= 123', [1,2,3,4,5]),
+              ('int = 123', [1, 2, 3, 4, 5]),
+              ('int <= 123', [1, 2, 3, 4, 5]),
+              ('int >= 123', [1, 2, 3, 4, 5]),
               ('int < 123', []),
               ('int > 123', []),
-              ('float = 1.5', [1,2,3,4,5]),
-              ('float <= 1.5', [1,2,3,4,5]),
-              ('float >= 1.5', [1,2,3,4,5]),
+              ('float = 1.5', [1, 2, 3, 4, 5]),
+              ('float <= 1.5', [1, 2, 3, 4, 5]),
+              ('float >= 1.5', [1, 2, 3, 4, 5]),
               ('float < 1.5', []),
               ('float > 1.5', []),
-              ('real = 4.56', [1,2,3,4,5]),
-              ('real <= 4.56', [1,2,3,4,5]),
-              ('real >= 4.56', [1,2,3,4,5]),
+              ('real = 4.56', [1, 2, 3, 4, 5]),
+              ('real <= 4.56', [1, 2, 3, 4, 5]),
+              ('real >= 4.56', [1, 2, 3, 4, 5]),
               ('real < 4.56', []),
               ('real > 4.56', []),
-              ("adate = '2013/12/26 12:34:56'", [1,2,3,4,5]),
-              ("adate <= '2013/12/26 12:34:56'", [1,2,3,4,5]),
-              ("adate >= '2013/12/26 12:34:56'", [1,2,3,4,5]),
+              ("adate = '2013/12/26 12:34:56'", [1, 2, 3, 4, 5]),
+              ("adate <= '2013/12/26 12:34:56'", [1, 2, 3, 4, 5]),
+              ("adate >= '2013/12/26 12:34:56'", [1, 2, 3, 4, 5]),
               ("adate < '2013/12/26 12:34:56'", []),
               ("adate > '2013/12/26 12:34:56'", []),
-              ("guid = '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", [1,2,3,4,5]),
-              ("guid <= '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", [1,2,3,4,5]),
-              ("guid >= '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", [1,2,3,4,5]),
+              ("guid = '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", [1, 2, 3, 4, 5]),
+              ("guid <= '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", [1, 2, 3, 4, 5]),
+              ("guid >= '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", [1, 2, 3, 4, 5]),
               ("guid < '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", []),
               ("guid > '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", []),
               ("guid = '{'", []),
-              ("guid > '{'", [1,2,3,4,5]),
-              ("NOT(id = 1)", [2,3,4,5]),
+              ("guid > '{'", [1, 2, 3, 4, 5]),
+              ("NOT(id = 1)", [2, 3, 4, 5]),
               ("id = 1 OR id = -1", [1]),
               ("id = -1 OR id = 1", [1]),
               ("id = 1 OR id = 1", [1]),
-              ("id = 1 OR id = 2", [1,2]),  # exclusive branches
-              ("id < 3 OR id > 3", [1,2,4,5]),  # exclusive branches
-              ("id > 3 OR id < 3", [1,2,4,5]),  # exclusive branches
-              ("id <= 3 OR id >= 4", [1,2,3,4,5]),  # exclusive branches
-              ("id >= 4 OR id <= 3", [1,2,3,4,5]),  # exclusive branches
-              ("id < 3 OR id >= 3", [1,2,3,4,5]),
-              ("id <= 3 OR id >= 3", [1,2,3,4,5]),
-              ("id <= 5 OR id >= 1", [1,2,3,4,5]),
-              ("id <= 1.5 OR id >= 2", [1,2,3,4,5]),
-              ('id IS NULL OR id IS NOT NULL', [1,2,3,4,5]),
+              ("id = 1 OR id = 2", [1, 2]),  # exclusive branches
+              ("id < 3 OR id > 3", [1, 2, 4, 5]),  # exclusive branches
+              ("id > 3 OR id < 3", [1, 2, 4, 5]),  # exclusive branches
+              ("id <= 3 OR id >= 4", [1, 2, 3, 4, 5]),  # exclusive branches
+              ("id >= 4 OR id <= 3", [1, 2, 3, 4, 5]),  # exclusive branches
+              ("id < 3 OR id >= 3", [1, 2, 3, 4, 5]),
+              ("id <= 3 OR id >= 3", [1, 2, 3, 4, 5]),
+              ("id <= 5 OR id >= 1", [1, 2, 3, 4, 5]),
+              ("id <= 1.5 OR id >= 2", [1, 2, 3, 4, 5]),
+              ('id IS NULL OR id IS NOT NULL', [1, 2, 3, 4, 5]),
               ('float < 1.5 OR float > 1.5', []),
-              ('float <= 1.5 OR float >= 1.5', [1,2,3,4,5]),
+              ('float <= 1.5 OR float >= 1.5', [1, 2, 3, 4, 5]),
               ('float < 1.5 OR float > 2', []),
               ('float < 1 OR float > 2.5', []),
               ("str < 'foo_é' OR str > 'z'", []),
@@ -584,23 +584,23 @@ def ogr_openfilegdb_4():
               ("id = -1 AND id = 1", []),
               ("id = 1 AND id = 1", [1]),
               ("id = 1 AND id = 2", []),
-              ("id <= 5 AND id >= 1", [1,2,3,4,5]),
+              ("id <= 5 AND id >= 1", [1, 2, 3, 4, 5]),
               ("id <= 3 AND id >= 3", [3]),
               ("id = 1 AND float = 1.5", [1]),
-              ("id BETWEEN 1 AND 5", [1,2,3,4,5]),
+              ("id BETWEEN 1 AND 5", [1, 2, 3, 4, 5]),
               ("id IN (1)", [1]),
-              ("id IN (5,4,3,2,1)", [1,2,3,4,5]),
+              ("id IN (5,4,3,2,1)", [1, 2, 3, 4, 5]),
               ('fid = 1', [1], 0),  # no index used
               ('fid BETWEEN 1 AND 1', [1], 0),  # no index used
               ('fid IN (1)', [1], 0),  # no index used
               ('fid IS NULL', [], 0),  # no index used
-              ('fid IS NOT NULL', [1,2,3,4,5], 0),  # no index used
-              ("xml <> ''", [1,2,3,4,5], 0),  # no index used
+              ('fid IS NOT NULL', [1, 2, 3, 4, 5], 0),  # no index used
+              ("xml <> ''", [1, 2, 3, 4, 5], 0),  # no index used
               ("id = 1 AND xml <> ''", [1], 1),  # index partially used
               ("xml <> '' AND id = 1", [1], 1),  # index partially used
-              ("NOT(id = 1 AND xml <> '')", [2,3,4,5], 0),  # no index used
-              ("id = 1 OR xml <> ''", [1,2,3,4,5], 0),  # no index used
-              ('id = id', [1,2,3,4,5], 0),  # no index used
+              ("NOT(id = 1 AND xml <> '')", [2, 3, 4, 5], 0),  # no index used
+              ("id = 1 OR xml <> ''", [1, 2, 3, 4, 5], 0),  # no index used
+              ('id = id', [1, 2, 3, 4, 5], 0),  # no index used
               ('id = 1 + 0', [1], 0),  # no index used (currently...)
               ]
     for test in tests:
@@ -640,8 +640,8 @@ def ogr_openfilegdb_4():
     lyr = ds.GetLayerByName('none')
     tests = [('id = 1', [1]),
               ('id IS NULL', [6]),
-              ('id IS NOT NULL', [1,2,3,4,5]),
-              ('id IS NULL OR id IS NOT NULL', [1,2,3,4,5,6]),
+              ('id IS NOT NULL', [1, 2, 3, 4, 5]),
+              ('id IS NULL OR id IS NOT NULL', [1, 2, 3, 4, 5, 6]),
               ('id = 1 OR id IS NULL', [1, 6]),
               ('id IS NULL OR id = 1', [1, 6]),
               ]
@@ -945,7 +945,7 @@ def fuzz(filename, offset):
     v = ord(f.read(1))
     f.seek(offset, 0)
     import sys
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         f.write(('%c' % (255 - v)).encode('ISO-8859-1'))
     else:
         f.write('%c' % (255 - v))
@@ -958,7 +958,7 @@ def unfuzz(backup):
     f = open(filename, "rb+")
     f.seek(offset, 0)
     import sys
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         f.write(('%c' % (v)).encode('ISO-8859-1'))
     else:
         f.write('%c' % (v))
@@ -1137,7 +1137,7 @@ def ogr_openfilegdb_11():
     if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
         gdaltest.post_reason('failure')
         return 'fail'
-    lyr.SetSpatialFilterRect(0.25,0.25,0.5,0.5)
+    lyr.SetSpatialFilterRect(0.25, 0.25, 0.5, 0.5)
     if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1164,7 +1164,7 @@ def ogr_openfilegdb_11():
     # Test iterating without spatial index already built
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('several_polygons')
-    lyr.SetSpatialFilterRect(0.25,0.25,0.5,0.5)
+    lyr.SetSpatialFilterRect(0.25, 0.25, 0.5, 0.5)
     c = 0
     feat = lyr.GetNextFeature()
     if get_spi_state(ds, lyr) != SPI_IN_BUILDING:
@@ -1192,7 +1192,7 @@ def ogr_openfilegdb_11():
 
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('multipolygon')
-    lyr.SetSpatialFilterRect(1.4,0.4,1.6,0.6)
+    lyr.SetSpatialFilterRect(1.4, 0.4, 1.6, 0.6)
     if lyr.GetFeatureCount() != expected_count:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1203,7 +1203,7 @@ def ogr_openfilegdb_11():
     # when GEOS is available
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('multipolygon')
-    lyr.SetSpatialFilterRect(1.4,0.4,1.6,0.6)
+    lyr.SetSpatialFilterRect(1.4, 0.4, 1.6, 0.6)
     c = 0
     feat = lyr.GetNextFeature()
     while feat is not None:
@@ -1222,7 +1222,7 @@ def ogr_openfilegdb_11():
     # GetFeature() should not impact spatial index building
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('several_polygons')
-    lyr.SetSpatialFilterRect(0.25,0.25,0.5,0.5)
+    lyr.SetSpatialFilterRect(0.25, 0.25, 0.5, 0.5)
     feat = lyr.GetFeature(1)
     feat = lyr.GetFeature(1)
     if get_spi_state(ds, lyr) != SPI_IN_BUILDING:
@@ -1248,7 +1248,7 @@ def ogr_openfilegdb_11():
         return 'fail'
 
     # This will create an array of filtered features
-    lyr.SetSpatialFilterRect(0.25,0.25,0.5,0.5)
+    lyr.SetSpatialFilterRect(0.25, 0.25, 0.5, 0.5)
     if lyr.TestCapability(ogr.OLCFastSetNextByIndex) != 1:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1416,7 +1416,7 @@ def ogr_openfilegdb_16():
 
     ds = ogr.Open('data/sparse.gdb.zip')
     lyr = ds.GetLayer(0)
-    for fid in [2,3,4,7,8,9,10,2049,8191,16384,10000000,10000001]:
+    for fid in [2, 3, 4, 7, 8, 9, 10, 2049, 8191, 16384, 10000000, 10000001]:
         f = lyr.GetNextFeature()
         if f.GetFID() != fid:
             gdaltest.post_reason('fail')

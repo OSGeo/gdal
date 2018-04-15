@@ -328,7 +328,7 @@ CPLSpawnedProcess* CPLSpawnAsync(
     }
 
     if( !CreateProcess(nullptr,
-                       (CHAR*)osCommandLine.c_str(),
+                       const_cast<CHAR*>(osCommandLine.c_str()),
                        nullptr,          // Process security attributes
                        nullptr,          // Primary thread security attributes
                        TRUE,          // Handles are inherited

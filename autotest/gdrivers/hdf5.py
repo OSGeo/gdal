@@ -176,7 +176,7 @@ def hdf5_6():
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
         gdaltest.post_reason('failed to find overview with alternate path')
         return 'fail'
-    ovfile = ds.GetMetadataItem('OVERVIEW_FILE','OVERVIEWS')
+    ovfile = ds.GetMetadataItem('OVERVIEW_FILE', 'OVERVIEWS')
     if ovfile[:11] != 'data/../tmp':
         print(ovfile)
         gdaltest.post_reason('did not get expected OVERVIEW_FILE.')

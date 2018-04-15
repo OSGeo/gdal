@@ -1368,7 +1368,7 @@ retry:
         }
         else if( sWriteFuncData.pBuffer != nullptr )
         {
-            ProcessGetFileSizeResult( (const char*)sWriteFuncData.pBuffer );
+            ProcessGetFileSizeResult( reinterpret_cast<const char*>(sWriteFuncData.pBuffer) );
         }
 
         // Try to guess if this is a directory. Generally if this is a
@@ -1643,8 +1643,8 @@ retry:
         sWriteFuncHeaderData.bError )
     {
         if( sWriteFuncData.pBuffer != nullptr &&
-            CanRestartOnError((const char*)sWriteFuncData.pBuffer,
-                              (const char*)sWriteFuncHeaderData.pBuffer, false) )
+            CanRestartOnError(reinterpret_cast<const char*>(sWriteFuncData.pBuffer),
+                              reinterpret_cast<const char*>(sWriteFuncHeaderData.pBuffer), false) )
         {
             CPLFree(sWriteFuncData.pBuffer);
             CPLFree(sWriteFuncHeaderData.pBuffer);
@@ -5475,7 +5475,7 @@ VSIS3WriteHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
         nBytesToWrite -= nToWriteInBuffer;
         if( m_nBufferOff == m_nBufferSize )
         {
-            if( m_nCurOffset == (vsi_l_offset)m_nBufferSize )
+            if( m_nCurOffset == static_cast<vsi_l_offset>(m_nBufferSize) )
             {
                 if( !InitiateMultipartUpload() )
                 {
@@ -6967,7 +6967,7 @@ VSIAzureWriteHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
         nBytesToWrite -= nToWriteInBuffer;
         if( m_nBufferOff == m_nBufferSize )
         {
-            if( m_nCurOffset == (vsi_l_offset)m_nBufferSize )
+            if( m_nCurOffset == static_cast<vsi_l_offset>(m_nBufferSize) )
             {
                 if( !DoPUT(false, true) )
                 {

@@ -61,7 +61,7 @@ def test_gdal_edit_py_1():
         # Passing utf-8 characters doesn't at least please Wine...
         val = 'fake-utf8'
         val_encoded = val
-    elif sys.version_info >= (3,0,0):
+    elif sys.version_info >= (3, 0, 0):
         val = '\u00e9ven'
         val_encoded = val
     else:
@@ -192,8 +192,8 @@ def test_gdal_edit_py_4():
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     band = ds.GetRasterBand(1)
-    if (band.GetMetadataItem('STATISTICS_MINIMUM') is None
-            or band.GetMetadataItem('FOO') is None):
+    if (band.GetMetadataItem('STATISTICS_MINIMUM') is None or
+            band.GetMetadataItem('FOO') is None):
         gdaltest.post_reason('fail')
         return 'fail'
     ds = band = None
@@ -202,8 +202,8 @@ def test_gdal_edit_py_4():
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     band = ds.GetRasterBand(1)
-    if (band.GetMetadataItem('STATISTICS_MINIMUM') is not None
-            or band.GetMetadataItem('FOO') is None):
+    if (band.GetMetadataItem('STATISTICS_MINIMUM') is not None or
+            band.GetMetadataItem('FOO') is None):
         gdaltest.post_reason('fail')
         return 'fail'
     ds = band = None

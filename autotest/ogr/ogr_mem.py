@@ -122,7 +122,7 @@ def ogr_mem_3():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.mem_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
+        if ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
                                           max_error=0.000000001) != 0:
             return 'fail'
 

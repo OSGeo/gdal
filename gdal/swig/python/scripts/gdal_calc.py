@@ -55,11 +55,11 @@ from osgeo import gdalnumeric
 
 
 # create alphabetic list for storing input layers
-AlphaList = ["A","B","C","D","E","F","G","H","I","J","K","L","M",
-           "N","O","P","Q","R","S","T","U","V","W","X","Y","Z"]
+AlphaList = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+           "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 
 # set up some default nodatavalues for each datatype
-DefaultNDVLookup = {'Byte':255, 'UInt16':65535, 'Int16':-32767, 'UInt32':4294967293, 'Int32':-2147483647, 'Float32':3.402823466E+38, 'Float64':1.7976931348623158E+308}
+DefaultNDVLookup = {'Byte': 255, 'UInt16': 65535, 'Int16': -32767, 'UInt32': 4294967293, 'Int32': -2147483647, 'Float32': 3.402823466E+38, 'Float64': 1.7976931348623158E+308}
 
 
 def DoesDriverHandleExtension(drv, ext):
@@ -171,7 +171,7 @@ def doit(opts, args):
                 DimensionsCheck = [myFile.RasterXSize, myFile.RasterYSize]
 
             if opts.debug:
-                print("file %s: %s, dimensions: %s, %s, type: %s" % (myI,myF,DimensionsCheck[0],DimensionsCheck[1],myDataType[-1]))
+                print("file %s: %s, dimensions: %s, %s, type: %s" % (myI, myF, DimensionsCheck[0], DimensionsCheck[1], myDataType[-1]))
 
     # process allBands option
     allBandsIndex = None
@@ -196,7 +196,7 @@ def doit(opts, args):
         if opts.debug:
             print("Output file %s exists - filling in results into file" % (opts.outF))
         myOut = gdal.Open(opts.outF, gdal.GA_Update)
-        if [myOut.RasterXSize,myOut.RasterYSize] != DimensionsCheck:
+        if [myOut.RasterXSize, myOut.RasterYSize] != DimensionsCheck:
             raise Exception("Error! Output exists, but is the wrong size.  Use the --overwrite option to automatically overwrite the existing file")
         myOutB = myOut.GetRasterBand(1)
         myOutNDV = myOutB.GetNoDataValue()
@@ -232,14 +232,14 @@ def doit(opts, args):
         else:
             myOutNDV = DefaultNDVLookup[myOutType]
 
-        for i in range(1,allBandsCount + 1):
+        for i in range(1, allBandsCount + 1):
             myOutB = myOut.GetRasterBand(i)
             myOutB.SetNoDataValue(myOutNDV)
             # write to band
             myOutB = None
 
     if opts.debug:
-        print("output file: %s, dimensions: %s, %s, type: %s" % (opts.outF,myOut.RasterXSize,myOut.RasterYSize,myOutType))
+        print("output file: %s, dimensions: %s, %s, type: %s" % (opts.outF, myOut.RasterXSize, myOut.RasterYSize, myOutType))
 
     ################################################################
     # find block size to chop grids into bite-sized chunks
@@ -267,14 +267,14 @@ def doit(opts, args):
     # start looping through each band in allBandsCount
     ################################################################
 
-    for bandNo in range(1,allBandsCount + 1):
+    for bandNo in range(1, allBandsCount + 1):
 
         ################################################################
         # start looping through blocks of data
         ################################################################
 
         # loop through X-lines
-        for X in range(0,nXBlocks):
+        for X in range(0, nXBlocks):
 
             # in the rare (impossible?) case that the blocks don't fit perfectly
             # change the block size of the final piece
@@ -290,12 +290,12 @@ def doit(opts, args):
             myBufSize = nXValid * nYValid
 
             # loop through Y lines
-            for Y in range(0,nYBlocks):
+            for Y in range(0, nYBlocks):
                 ProgressCt += 1
                 if 10 * ProgressCt / ProgressEnd%10 != ProgressMk and not opts.quiet:
                     ProgressMk = 10 * ProgressCt / ProgressEnd%10
                     from sys import version_info
-                    if version_info >= (3,0,0):
+                    if version_info >= (3, 0, 0):
                         exec('print("%d.." % (10*ProgressMk), end=" ")')
                     else:
                         exec('print 10*ProgressMk, "..",')
@@ -315,7 +315,7 @@ def doit(opts, args):
                 local_namespace = {}
 
                 # fetch data for each input layer
-                for i,Alpha in enumerate(myAlphaList):
+                for i, Alpha in enumerate(myAlphaList):
 
                     # populate lettered arrays with values
                     if allBandsIndex is not None and allBandsIndex == i:
@@ -330,7 +330,7 @@ def doit(opts, args):
                     if myNDV[i] is not None:
                         if myNDVs is None:
                             myNDVs = numpy.zeros(myBufSize)
-                            myNDVs.shape = (nYValid,nXValid)
+                            myNDVs.shape = (nYValid, nXValid)
                         myNDVs = 1 * numpy.logical_or(myNDVs == 1, myval == myNDV[i])
 
                     # add an array of values for this block to the eval namespace
@@ -349,7 +349,7 @@ def doit(opts, args):
                 if myNDVs is not None:
                     myResult = ((1 * (myNDVs == 0)) * myResult) + (myOutNDV * myNDVs)
                 elif not isinstance(myResult, numpy.ndarray):
-                    myResult = numpy.ones((nYValid,nXValid)) * myResult
+                    myResult = numpy.ones((nYValid, nXValid)) * myResult
 
                 # write data block to the output file
                 myOutB = myOut.GetRasterBand(bandNo)

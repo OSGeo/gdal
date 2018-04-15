@@ -118,7 +118,7 @@ CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat),
     szModestBuffer[0] = '\0';
     int nPR = CPLvsnprintf( szModestBuffer, sizeof(szModestBuffer), pszFormat,
                              wrk_args );
-    if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
+    if( nPR == -1 || nPR >= static_cast<int>(sizeof(szModestBuffer))-1 )
     {
         int nWorkBufferSize = 2000;
         char *pszWorkBuffer = static_cast<char *>(

@@ -261,7 +261,7 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
         bool bEOFSave = bEOF;
         bEOF = false;
         const size_t nBytesRead =
-            this->Read( ((char *) pBuffer) + nBytesRequested - nExtraBytes,
+            this->Read( static_cast<char *>(pBuffer) + nBytesRequested - nExtraBytes,
                         1, nExtraBytes );
         nCurOffset = nCurOffsetSave;
         bEOF = bEOFSave;

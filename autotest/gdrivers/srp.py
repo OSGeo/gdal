@@ -62,12 +62,12 @@ def srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if ct.GetColorEntry(0) != (0,0,0,255):
+    if ct.GetColorEntry(0) != (0, 0, 0, 255):
         gdaltest.post_reason('fail')
         print(ct.GetColorEntry(0))
         return 'fail'
 
-    if ct.GetColorEntry(1) != (255,0,0,255):
+    if ct.GetColorEntry(1) != (255, 0, 0, 255):
         gdaltest.post_reason('fail')
         print(ct.GetColorEntry(1))
         return 'fail'
@@ -83,7 +83,7 @@ def srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
 
     got_md = ds.GetMetadata()
     for md in expected_md:
-        (key,value) = md.split('=')
+        (key, value) = md.split('=')
         if key not in got_md or got_md[key] != value:
             gdaltest.post_reason('did not find %s' % md)
             print(got_md)
@@ -143,7 +143,7 @@ def srp_5():
 
     got_md = ds.GetMetadata()
     for md in expected_md:
-        (key,value) = md.split('=')
+        (key, value) = md.split('=')
         if key not in got_md or got_md[key] != value:
             gdaltest.post_reason('did not find %s' % md)
             print(got_md)

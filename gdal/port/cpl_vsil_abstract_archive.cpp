@@ -162,8 +162,8 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive(
     if( oFileList.find(archiveFilename) != oFileList.end() )
     {
         VSIArchiveContent* content = oFileList[archiveFilename];
-        if( (time_t)sStat.st_mtime > content->mTime ||
-            (vsi_l_offset)sStat.st_size != content->nFileSize)
+        if( static_cast<time_t>(sStat.st_mtime) > content->mTime ||
+            static_cast<vsi_l_offset>(sStat.st_size) != content->nFileSize)
         {
             CPLDebug("VSIArchive",
                      "The content of %s has changed since it was cached",
@@ -194,7 +194,7 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive(
 
     VSIArchiveContent* content = new VSIArchiveContent;
     content->mTime = sStat.st_mtime;
-    content->nFileSize = (vsi_l_offset)sStat.st_size;
+    content->nFileSize = static_cast<vsi_l_offset>(sStat.st_size);
     content->nEntries = 0;
     content->entries = nullptr;
     oFileList[archiveFilename] = content;
@@ -719,7 +719,7 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename,
         {
             // Patching st_size with uncompressed file size.
             pStatBuf->st_size = archiveEntry->uncompressed_size;
-            pStatBuf->st_mtime = (time_t)archiveEntry->nModifiedTime;
+            pStatBuf->st_mtime = static_cast<time_t>(archiveEntry->nModifiedTime);
             if( archiveEntry->bIsDir )
                 pStatBuf->st_mode = S_IFDIR;
             else
@@ -756,7 +756,7 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename,
             {
                 // Patching st_size with uncompressed file size.
                 pStatBuf->st_size = poReader->GetFileSize();
-                pStatBuf->st_mtime = (time_t)poReader->GetModifiedTime();
+                pStatBuf->st_mtime = static_cast<time_t>(poReader->GetModifiedTime());
                 pStatBuf->st_mode = S_IFREG;
             }
 

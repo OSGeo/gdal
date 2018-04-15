@@ -263,7 +263,7 @@ def ogr_pg_3():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.pg_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
+        if ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
                                           max_error=0.001) != 0:
             return 'fail'
 
@@ -651,7 +651,7 @@ def ogr_pg_12():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.pgc_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
+        if ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
                                           max_error=0.001) != 0:
             return 'fail'
 
@@ -1086,7 +1086,7 @@ def ogr_pg_21_subgeoms():
                     'TRIANGLE ZM ((0 0 0 0,0 1 0 0,1 1 0 0,0 0 0 0))']
 
     layer = gdaltest.pg_ds.GetLayerByName('testgeom')
-    for i in range(8,10):
+    for i in range(8, 10):
         feat = layer.GetFeature(i)
         geom = feat.GetGeometryRef()
         if geom is None:
@@ -1135,7 +1135,7 @@ def ogr_pg_21_3d_geometries():
                     'TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))',
                     'TRIANGLE Z ((48 36 84,32 54 64,86 11 54,48 36 84))']
 
-    for i in range(0,3):
+    for i in range(0, 3):
         gdaltest.pg_ds.ExecuteSQL("INSERT INTO zgeoms (field_no, wkb_geometry) VALUES (%d,GeomFromEWKT('%s'))" % (i, wkt_list[i]))
 
     gdaltest.pg_ds.Destroy()
@@ -3246,9 +3246,9 @@ def ogr_pg_59():
         return 'skip'
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + ' -append -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string
-        + '" data/poly.shp -nln public.tpoly')
+        test_cli_utilities.get_ogr2ogr_path() +
+        ' -append -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string +
+        '" data/poly.shp -nln public.tpoly')
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     lyr = ds.GetLayerByName('tpoly')
@@ -3954,7 +3954,7 @@ def ogr_pg_71():
         else:
             fct = 'AsEWKT'
 
-        lyr = gdaltest.pg_ds.ExecuteSQL("SELECT %s(ST_GeomFromText('%s'))" % (fct,postgis_in_wkt))
+        lyr = gdaltest.pg_ds.ExecuteSQL("SELECT %s(ST_GeomFromText('%s'))" % (fct, postgis_in_wkt))
         f = lyr.GetNextFeature()
         g = f.GetGeometryRef()
         out_wkt = g.ExportToWkt()
@@ -5483,7 +5483,7 @@ def ogr_pg_85():
     gdal.Unlink('/vsimem/ogr_pg_85/ogr_pg_85_2.csv')
     gdal.Unlink('/vsimem/ogr_pg_85')
 
-    gdal.SetConfigOption('PG_USE_COPY',old_val)
+    gdal.SetConfigOption('PG_USE_COPY', old_val)
 
     lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_85_2')
     if lyr.GetFeatureCount() != 2:

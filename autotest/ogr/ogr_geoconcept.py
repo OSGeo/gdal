@@ -219,13 +219,13 @@ def ogr_gxt_3():
 
     feat = gxt_lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,'POINT(0 1)',
+    if ogrtest.check_feature_geometry(feat, 'POINT(0 1)',
                                       max_error=0.000000001) != 0:
         return 'fail'
 
     feat = gxt_lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,'POINT(2 3)',
+    if ogrtest.check_feature_geometry(feat, 'POINT(2 3)',
                                       max_error=0.000000001) != 0:
         return 'fail'
 
@@ -241,7 +241,7 @@ def ogr_gxt_multipolygon_singlepart_nohole():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))',
+    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))',
                                       max_error=0.000000001) != 0:
         feat.DumpReadable()
         return 'fail'
@@ -261,7 +261,7 @@ def ogr_gxt_multipolygon_singlepart_hole():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.1 0.1,0.1 0.9,0.9 0.9,0.1 0.1)))',
+    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.1 0.1,0.1 0.9,0.9 0.9,0.1 0.1)))',
                                       max_error=0.000000001) != 0:
         feat.DumpReadable()
         return 'fail'
@@ -281,7 +281,7 @@ def ogr_gxt_multipolygon_twoparts_second_with_hole():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,'MULTIPOLYGON (((-10 -10,-10 -9,-9 -9,-10 -10)),((0 0,0 1,1 1,1 0,0 0),(0.1 0.1,0.1 0.9,0.9 0.9,0.1 0.1)))',
+    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((-10 -10,-10 -9,-9 -9,-10 -10)),((0 0,0 1,1 1,1 0,0 0),(0.1 0.1,0.1 0.9,0.9 0.9,0.1 0.1)))',
                                       max_error=0.000000001) != 0:
         feat.DumpReadable()
         return 'fail'
@@ -301,7 +301,7 @@ def ogr_gxt_line():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,'LINESTRING (440720 3751320,441920 3750120)',
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (440720 3751320,441920 3750120)',
                                       max_error=0.000000001) != 0:
         feat.DumpReadable()
         return 'fail'

@@ -304,7 +304,7 @@ bool VSIGZipHandle::CloseBaseHandle()
 {
     bool bRet = true;
     if( m_poBaseHandle )
-        bRet = VSIFCloseL((VSILFILE*)m_poBaseHandle) == 0;
+        bRet = VSIFCloseL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) == 0;
     m_poBaseHandle = nullptr;
     return bRet;
 }
@@ -348,20 +348,20 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
     }
     else
     {
-        if( VSIFSeekL((VSILFILE*)poBaseHandle, 0, SEEK_END) != 0 )
+        if( VSIFSeekL(reinterpret_cast<VSILFILE*>(poBaseHandle), 0, SEEK_END) != 0 )
             CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
-        m_compressed_size = VSIFTellL((VSILFILE*)poBaseHandle) - offset;
+        m_compressed_size = VSIFTellL(reinterpret_cast<VSILFILE*>(poBaseHandle)) - offset;
         compressed_size = m_compressed_size;
     }
     m_uncompressed_size = uncompressed_size;
     offsetEndCompressedData = offset + compressed_size;
 
-    if( VSIFSeekL((VSILFILE*)poBaseHandle, offset, SEEK_SET) != 0 )
+    if( VSIFSeekL(reinterpret_cast<VSILFILE*>(poBaseHandle), offset, SEEK_SET) != 0 )
         CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
 
-    stream.zalloc = (alloc_func)nullptr;
-    stream.zfree = (free_func)nullptr;
-    stream.opaque = (voidpf)nullptr;
+    stream.zalloc = nullptr;
+    stream.zfree = nullptr;
+    stream.opaque = nullptr;
     stream.next_in = inbuf = nullptr;
     stream.next_out = outbuf = nullptr;
     stream.avail_in = stream.avail_out = 0;
@@ -385,7 +385,7 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
     stream.avail_out = static_cast<uInt>(Z_BUFSIZE);
 
     if( offset == 0 ) check_header();  // Skip the .gz header.
-    startOff = VSIFTellL((VSILFILE*)poBaseHandle) - stream.avail_in;
+    startOff = VSIFTellL(reinterpret_cast<VSILFILE*>(poBaseHandle)) - stream.avail_in;
 
     if( transparent == 0 )
     {
@@ -452,7 +452,7 @@ VSIGZipHandle::~VSIGZipHandle()
     CPLFree(m_pszBaseFileName);
 
     if( m_poBaseHandle )
-        CPL_IGNORE_RET_VAL(VSIFCloseL((VSILFILE*)m_poBaseHandle));
+        CPL_IGNORE_RET_VAL(VSIFCloseL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)));
 }
 
 /************************************************************************/
@@ -471,23 +471,23 @@ void VSIGZipHandle::check_header()
         errno = 0;
         len = static_cast<uInt>(
             VSIFReadL(inbuf + len, 1, static_cast<size_t>(Z_BUFSIZE) >> len,
-                      (VSILFILE*)m_poBaseHandle));
+                      reinterpret_cast<VSILFILE*>(m_poBaseHandle)));
 #ifdef ENABLE_DEBUG
         CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
-                 VSIFTellL((VSILFILE*)m_poBaseHandle),
+                 VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)),
                  offsetEndCompressedData);
 #endif
-        if( VSIFTellL((VSILFILE*)m_poBaseHandle) > offsetEndCompressedData )
+        if( VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) > offsetEndCompressedData )
         {
             len = len + static_cast<uInt>(
-                offsetEndCompressedData - VSIFTellL((VSILFILE*)m_poBaseHandle));
-            if( VSIFSeekL((VSILFILE*)m_poBaseHandle,
+                offsetEndCompressedData - VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)));
+            if( VSIFSeekL(reinterpret_cast<VSILFILE*>(m_poBaseHandle),
                           offsetEndCompressedData, SEEK_SET) != 0 )
                 z_err = Z_DATA_ERROR;
         }
         if( len == 0 )  // && ferror(file)
         {
-            if( VSIFTellL((VSILFILE*)m_poBaseHandle) !=
+            if( VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) !=
                 offsetEndCompressedData )
                 z_err = Z_ERRNO;
         }
@@ -563,26 +563,26 @@ int VSIGZipHandle::get_byte()
         errno = 0;
         stream.avail_in = static_cast<uInt>(
             VSIFReadL(inbuf, 1, static_cast<size_t>(Z_BUFSIZE),
-                      (VSILFILE*)m_poBaseHandle));
+                      reinterpret_cast<VSILFILE*>(m_poBaseHandle)));
 #ifdef ENABLE_DEBUG
         CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
-                 VSIFTellL((VSILFILE*)m_poBaseHandle),
+                 VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)),
                  offsetEndCompressedData);
 #endif
-        if( VSIFTellL((VSILFILE*)m_poBaseHandle) > offsetEndCompressedData )
+        if( VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) > offsetEndCompressedData )
         {
             stream.avail_in =
                 stream.avail_in +
                 static_cast<uInt>(
                     offsetEndCompressedData -
-                    VSIFTellL((VSILFILE*)m_poBaseHandle));
-            if( VSIFSeekL((VSILFILE*)m_poBaseHandle,
+                    VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)));
+            if( VSIFSeekL(reinterpret_cast<VSILFILE*>(m_poBaseHandle),
                           offsetEndCompressedData, SEEK_SET) != 0 )
                 return EOF;
         }
         if( stream.avail_in == 0 ) {
             z_eof = 1;
-            if( VSIFTellL((VSILFILE*)m_poBaseHandle) !=
+            if( VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) !=
                 offsetEndCompressedData )
                 z_err = Z_ERRNO;
             // if( ferror(file) ) z_err = Z_ERRNO;
@@ -609,7 +609,7 @@ int VSIGZipHandle::gzrewind ()
         CPL_IGNORE_RET_VAL(inflateReset(&stream));
     in = 0;
     out = 0;
-    return VSIFSeekL((VSILFILE*)m_poBaseHandle, startOff, SEEK_SET);
+    return VSIFSeekL(reinterpret_cast<VSILFILE*>(m_poBaseHandle), startOff, SEEK_SET);
 }
 
 /************************************************************************/
@@ -681,7 +681,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
             return -1L;
         }
 
-        if( VSIFSeekL((VSILFILE*)m_poBaseHandle, offset, SEEK_SET) < 0 )
+        if( VSIFSeekL(reinterpret_cast<VSILFILE*>(m_poBaseHandle), offset, SEEK_SET) < 0 )
         {
             CPL_VSIL_GZ_RETURN(-1);
             return -1L;
@@ -773,7 +773,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
                 snapshots[i].out, out, offset);
 #endif
             offset = out + offset - snapshots[i].out;
-            if( VSIFSeekL((VSILFILE*)m_poBaseHandle,
+            if( VSIFSeekL(reinterpret_cast<VSILFILE*>(m_poBaseHandle),
                           snapshots[i].posInBaseHandle, SEEK_SET) != 0 )
                 CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
 
@@ -917,7 +917,7 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
 
     const unsigned len =
         static_cast<unsigned int>(nSize) * static_cast<unsigned int>(nMemb);
-    Bytef *pStart = (Bytef*)buf;  // Start off point for crc computation.
+    Bytef *pStart = static_cast<Bytef*>(buf);  // Start off point for crc computation.
     // == stream.next_out but not forced far (for MSDOS).
     Byte *next_out = static_cast<Byte *>(buf);
     stream.next_out = static_cast<Bytef *>(buf);
@@ -948,7 +948,7 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
                     std::min(m_compressed_size - (in + nRead),
                              static_cast<vsi_l_offset>(stream.avail_out)));
                 uInt nReadFromFile = static_cast<uInt>(
-                    VSIFReadL(next_out, 1, nToRead, (VSILFILE*)m_poBaseHandle));
+                    VSIFReadL(next_out, 1, nToRead, reinterpret_cast<VSILFILE*>(m_poBaseHandle)));
                 stream.avail_out -= nReadFromFile;
                 nRead += nReadFromFile;
             }
@@ -964,7 +964,7 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
         if( stream.avail_in == 0 && !z_eof )
         {
             vsi_l_offset posInBaseHandle =
-                VSIFTellL((VSILFILE*)m_poBaseHandle);
+                VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle));
             if( posInBaseHandle - startOff > m_compressed_size )
             {
                 // If we reach here, file size has changed (because at
@@ -1012,22 +1012,22 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
 
             errno = 0;
             stream.avail_in = static_cast<uInt>(
-                VSIFReadL(inbuf, 1, Z_BUFSIZE, (VSILFILE*)m_poBaseHandle));
+                VSIFReadL(inbuf, 1, Z_BUFSIZE, reinterpret_cast<VSILFILE*>(m_poBaseHandle)));
 #ifdef ENABLE_DEBUG
             CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
-                     VSIFTellL((VSILFILE*)m_poBaseHandle),
+                     VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)),
                      offsetEndCompressedData);
 #endif
-            if( VSIFTellL((VSILFILE*)m_poBaseHandle) > offsetEndCompressedData )
+            if( VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) > offsetEndCompressedData )
             {
 #ifdef ENABLE_DEBUG
                 CPLDebug("GZIP", "avail_in before = %d", stream.avail_in);
 #endif
                 stream.avail_in =
                     stream.avail_in -
-                    static_cast<uInt>(VSIFTellL((VSILFILE*)m_poBaseHandle) -
+                    static_cast<uInt>(VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) -
                                       offsetEndCompressedData);
-                if( VSIFSeekL((VSILFILE*)m_poBaseHandle,
+                if( VSIFSeekL(reinterpret_cast<VSILFILE*>(m_poBaseHandle),
                               offsetEndCompressedData, SEEK_SET) != 0 )
                     CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
 #ifdef ENABLE_DEBUG
@@ -1037,7 +1037,7 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
             if( stream.avail_in == 0 )
             {
                 z_eof = 1;
-                if( VSIFTellL((VSILFILE*)m_poBaseHandle) !=
+                if( VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) !=
                     offsetEndCompressedData )
                 {
                     z_err = Z_ERRNO;
@@ -1237,9 +1237,9 @@ VSIGZipWriteHandle::VSIGZipWriteHandle( VSIVirtualHandle *poBaseHandle,
     bRegularZLib(bRegularZLibIn),
     bAutoCloseBaseHandle(bAutoCloseBaseHandleIn)
 {
-    sStream.zalloc = (alloc_func)nullptr;
-    sStream.zfree = (free_func)nullptr;
-    sStream.opaque = (voidpf)nullptr;
+    sStream.zalloc = nullptr;
+    sStream.zfree = nullptr;
+    sStream.opaque = nullptr;
     sStream.next_in = nullptr;
     sStream.next_out = nullptr;
     sStream.avail_in = sStream.avail_out = 0;
@@ -1367,7 +1367,7 @@ size_t VSIGZipWriteHandle::Write( const void * const pBuffer,
     int nBytesToWrite = static_cast<int>(nSize * nMemb);
     int nNextByte = 0;
 
-    nCRC = crc32(nCRC, (const Bytef *)pBuffer, nBytesToWrite);
+    nCRC = crc32(nCRC, reinterpret_cast<const Bytef *>(pBuffer), nBytesToWrite);
 
     if( !bCompressActive )
         return 0;
@@ -1384,7 +1384,7 @@ size_t VSIGZipWriteHandle::Write( const void * const pBuffer,
             static_cast<int>(Z_BUFSIZE-sStream.avail_in),
             nBytesToWrite - nNextByte);
         memcpy( pabyInBuf + sStream.avail_in,
-                ((Byte *) pBuffer) + nNextByte,
+                reinterpret_cast<const Byte *>(pBuffer) + nNextByte,
                 nNewBytesToWrite );
 
         sStream.next_in = pabyInBuf;
@@ -1626,7 +1626,7 @@ VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly(
         return nullptr;
 
     unsigned char signature[2] = { '\0', '\0' };
-    if( VSIFReadL(signature, 1, 2, (VSILFILE*)poVirtualHandle) != 2 ||
+    if( VSIFReadL(signature, 1, 2, reinterpret_cast<VSILFILE*>(poVirtualHandle)) != 2 ||
         signature[0] != gz_magic[0] || signature[1] != gz_magic[1] )
     {
         poVirtualHandle->Close();
@@ -2726,9 +2726,9 @@ void* CPLZLibDeflate( const void* ptr,
     }
 
     strm.avail_in = static_cast<uInt>(nBytes);
-    strm.next_in = (Bytef*) ptr;
+    strm.next_in = reinterpret_cast<Bytef*>(const_cast<void*>(ptr));
     strm.avail_out = static_cast<uInt>(nTmpSize);
-    strm.next_out = (Bytef*) pTmp;
+    strm.next_out = reinterpret_cast<Bytef*>(pTmp);
     ret = deflate(&strm, Z_FINISH);
     if( ret != Z_STREAM_END )
     {
@@ -2773,7 +2773,7 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
     strm.zfree = nullptr;
     strm.opaque = nullptr;
     strm.avail_in = static_cast<uInt>(nBytes);
-    strm.next_in = (Bytef*) ptr;
+    strm.next_in = static_cast<Bytef*>(const_cast<void*>(ptr));
     int ret = inflateInit2(&strm, MAX_WBITS + 32);
     if( ret != Z_OK )
     {
@@ -2832,7 +2832,7 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
             }
             pszTmp = pszTmpNew;
             strm.avail_out = static_cast<uInt>(nTmpSize - nAlreadyWritten);
-            strm.next_out = (Bytef*) (pszTmp + nAlreadyWritten);
+            strm.next_out = reinterpret_cast<Bytef*>(pszTmp + nAlreadyWritten);
         }
         else
             break;

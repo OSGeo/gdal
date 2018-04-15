@@ -45,7 +45,7 @@ def pds_1():
 
     tst = gdaltest.GDALTest('PDS', 'mc02_truncated.img', 1, 47151)
     expected_prj = """PROJCS["SIMPLE_CYLINDRICAL "MARS"",GEOGCS["GCS_"MARS"",DATUM["D_"MARS"",SPHEROID[""MARS"",3396000,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],PARAMETER["pseudo_standard_parallel_1",0]]"""
-    expected_gt = (-10668384.903788566589355,926.115274429321289,0,3852176.483988761901855,0,-926.115274429321289)
+    expected_gt = (-10668384.903788566589355, 926.115274429321289, 0, 3852176.483988761901855, 0, -926.115274429321289)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
     ret = tst.testOpen(check_prj=expected_prj,
@@ -108,7 +108,7 @@ def pds_3():
 
     tst = gdaltest.GDALTest('PDS', 'EN0001426030M_truncated.IMG', 1, 1367)
 
-    gt_expected = (0,1,0,0,0,1)
+    gt_expected = (0, 1, 0, 0, 0, 1)
     if tst.testOpen(check_gt=gt_expected) != 'success':
         return 'fail'
 

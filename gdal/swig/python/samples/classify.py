@@ -45,19 +45,19 @@ ysize = src_ds.RasterYSize
 
 src_image = gdalnumeric.LoadFile('utm.tif')
 
-dst_image = numpy.zeros((ysize,xsize))
+dst_image = numpy.zeros((ysize, xsize))
 
 for class_info in class_defs:
     class_id = class_info[0]
     class_start = class_info[1]
     class_end = class_info[2]
 
-    class_value = numpy.ones((ysize,xsize)) * class_id
+    class_value = numpy.ones((ysize, xsize)) * class_id
 
     mask = numpy.bitwise_and(
-        numpy.greater_equal(src_image,class_start),
-        numpy.less_equal(src_image,class_end))
+        numpy.greater_equal(src_image, class_start),
+        numpy.less_equal(src_image, class_end))
 
-    dst_image = numpy.choose(mask, (dst_image,class_value))
+    dst_image = numpy.choose(mask, (dst_image, class_value))
 
 gdalnumeric.SaveArray(dst_image, 'classes.tif')

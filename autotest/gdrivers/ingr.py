@@ -69,7 +69,7 @@ def ingr_3():
 
     ds = gdal.Open('data/8bit_pal.cot')
     ct = ds.GetRasterBand(1).GetRasterColorTable()
-    if ct.GetCount() != 256 or ct.GetColorEntry(8) != (8,8,8,255):
+    if ct.GetCount() != 256 or ct.GetColorEntry(8) != (8, 8, 8, 255):
         gdaltest.post_reason('Wrong color table entry.')
         return 'fail'
 

@@ -99,13 +99,13 @@ def ogr_wasp_elevation_from_linestring_z():
     j = 0
     for line in f:
         if not i % 2:
-            [h,n] = line.split()
+            [h, n] = line.split()
             if int(n) != 3:
                 gdaltest.post_reason('number of points should be 3 and is %s' % n)
                 return 'fail'
 
             if float(h) != j:
-                gdaltest.post_reason('altitude should be %d and is %s' % (j,h))
+                gdaltest.post_reason('altitude should be %d and is %s' % (j, h))
                 return 'fail'
 
             j += 1
@@ -165,7 +165,7 @@ def ogr_wasp_elevation_from_linestring_z_toler():
     j = 0
     for line in f:
         if not i % 2:
-            [h,n] = line.split()
+            [h, n] = line.split()
             if int(n) != 2:
                 if ogrtest.have_geos():
                     gdaltest.post_reason('number of points should be 2 and is %s' % n)
@@ -175,7 +175,7 @@ def ogr_wasp_elevation_from_linestring_z_toler():
                     return 'fail'
 
             if float(h) != j:
-                gdaltest.post_reason('altitude should be %d and is %s' % (j,h))
+                gdaltest.post_reason('altitude should be %d and is %s' % (j, h))
                 return 'fail'
 
             j += 1
@@ -228,13 +228,13 @@ def ogr_wasp_elevation_from_linestring_field():
     j = 0
     for line in f:
         if not i % 2:
-            [h,n] = line.split()
+            [h, n] = line.split()
             if int(n) != 3:
                 gdaltest.post_reason('number of points should be 3 and is %s' % n)
                 return 'fail'
 
             if float(h) != j:
-                gdaltest.post_reason('altitude should be %d and is %s' % (j,h))
+                gdaltest.post_reason('altitude should be %d and is %s' % (j, h))
                 return 'fail'
 
             j += 1
@@ -287,13 +287,13 @@ def ogr_wasp_roughness_from_linestring_fields():
     j = 0
     for line in f:
         if not i % 2:
-            [l,r,n] = line.split()
+            [l, r, n] = line.split()
             if int(n) != 3:
                 gdaltest.post_reason('number of points should be 3 and is %s' % n)
                 return 'fail'
 
             if float(r) != j or float(l) != j - 1:
-                gdaltest.post_reason('roughness should be %d and %d and is %s and %s' % (j - 1,j,l,r))
+                gdaltest.post_reason('roughness should be %d and %d and is %s and %s' % (j - 1, j, l, r))
                 return 'fail'
 
             j += 1
@@ -334,8 +334,8 @@ def ogr_wasp_roughness_from_polygon_z():
         feat = ogr.Feature(dfn)
         ring = ogr.Geometry(type=ogr.wkbLinearRing)
         ring.AddPoint(0, 0, i)
-        ring.AddPoint(round(math.cos(i * math.pi / 3),6),  round(math.sin(i * math.pi / 3),6), i)
-        ring.AddPoint(round(math.cos((i + 1) * math.pi / 3),6),  round(math.sin((i + 1) * math.pi / 3),6), i)
+        ring.AddPoint(round(math.cos(i * math.pi / 3), 6), round(math.sin(i * math.pi / 3), 6), i)
+        ring.AddPoint(round(math.cos((i + 1) * math.pi / 3), 6), round(math.sin((i + 1) * math.pi / 3), 6), i)
         ring.AddPoint(0, 0, i)
         poly = ogr.Geometry(type=ogr.wkbPolygon25D)
         poly.AddGeometry(ring)
@@ -355,7 +355,7 @@ def ogr_wasp_roughness_from_polygon_z():
     res = set()
     for line in f:
         if not i % 2:
-            [l,r,n] = [v for v in line.split()]
+            [l, r, n] = [v for v in line.split()]
             if int(n) != 2:
                 gdaltest.post_reason('number of points should be 2 and is %d' % int(n))
                 return 'fail'
@@ -370,7 +370,7 @@ def ogr_wasp_roughness_from_polygon_z():
         gdaltest.post_reason('there should be 6 boundaries and there are %d' % j)
         return 'fail'
 
-    if res != set([(0,1),(0,5),(1,2),(2,3),(3,4),(4,5)]):
+    if res != set([(0, 1), (0, 5), (1, 2), (2, 3), (3, 4), (4, 5)]):
         print(res)
         gdaltest.post_reason('wrong values f=in boundaries')
         return 'fail'
@@ -408,8 +408,8 @@ def ogr_wasp_roughness_from_polygon_field():
         feat.SetField(0, float(i))
         ring = ogr.Geometry(type=ogr.wkbLinearRing)
         ring.AddPoint(0, 0)
-        ring.AddPoint(round(math.cos(i * math.pi / 3),6),  round(math.sin(i * math.pi / 3),6))
-        ring.AddPoint(round(math.cos((i + 1) * math.pi / 3),6),  round(math.sin((i + 1) * math.pi / 3),6))
+        ring.AddPoint(round(math.cos(i * math.pi / 3), 6), round(math.sin(i * math.pi / 3), 6))
+        ring.AddPoint(round(math.cos((i + 1) * math.pi / 3), 6), round(math.sin((i + 1) * math.pi / 3), 6))
         ring.AddPoint(0, 0)
         poly = ogr.Geometry(type=ogr.wkbPolygon)
         poly.AddGeometry(ring)
@@ -429,7 +429,7 @@ def ogr_wasp_roughness_from_polygon_field():
     res = set()
     for line in f:
         if not i % 2:
-            [l,r,n] = [v for v in line.split()]
+            [l, r, n] = [v for v in line.split()]
             if int(n) != 2:
                 gdaltest.post_reason('number of points should be 2 and is %d' % int(n))
                 return 'fail'
@@ -444,7 +444,7 @@ def ogr_wasp_roughness_from_polygon_field():
         gdaltest.post_reason('there should be 6 boundaries and there are %d' % j)
         return 'fail'
 
-    if res != set([(0,1),(0,5),(1,2),(2,3),(3,4),(4,5)]):
+    if res != set([(0, 1), (0, 5), (1, 2), (2, 3), (3, 4), (4, 5)]):
         print(res)
         gdaltest.post_reason('wrong values f=in boundaries')
         return 'fail'
@@ -482,8 +482,8 @@ def ogr_wasp_merge():
         ring = ogr.Geometry(type=ogr.wkbLinearRing)
         h = i % 2
         ring.AddPoint(0, 0, h)
-        ring.AddPoint(round(math.cos(i * math.pi / 3),6),  round(math.sin(i * math.pi / 3),6), h)
-        ring.AddPoint(round(math.cos((i + 1) * math.pi / 3),6),  round(math.sin((i + 1) * math.pi / 3),6), h)
+        ring.AddPoint(round(math.cos(i * math.pi / 3), 6), round(math.sin(i * math.pi / 3), 6), h)
+        ring.AddPoint(round(math.cos((i + 1) * math.pi / 3), 6), round(math.sin((i + 1) * math.pi / 3), 6), h)
         ring.AddPoint(0, 0, h)
         poly = ogr.Geometry(type=ogr.wkbPolygon25D)
         poly.AddGeometry(ring)
@@ -503,7 +503,7 @@ def ogr_wasp_merge():
     res = []
     for line in f:
         if not i % 2:
-            [l,r,n] = [v for v in line.split()]
+            [l, r, n] = [v for v in line.split()]
             if int(n) != 2:
                 gdaltest.post_reason('number of points should be 2 and is %d (unwanted merge ?)' % int(n))
                 return 'fail'
@@ -518,7 +518,7 @@ def ogr_wasp_merge():
         gdaltest.post_reason('there should be 6 boundaries and there are %d' % j)
         return 'fail'
 
-    if res != [(0,1) for k in range(6)]:
+    if res != [(0, 1) for k in range(6)]:
         print(res)
         gdaltest.post_reason('wrong values f=in boundaries')
         return 'fail'

@@ -73,7 +73,7 @@ def compare_image_pixels(golden_band, new_band, id, options=[]):
     golden_line = golden_band.ReadAsArray(0, line, golden_band.XSize, 1)[0]
     new_line = new_band.ReadAsArray(0, line, golden_band.XSize, 1)[0]
     diff_line = golden_line.astype(float) - new_line.astype(float)
-    max_diff = max(max_diff,abs(diff_line).max())
+    max_diff = max(max_diff, abs(diff_line).max())
     diff_count += len(diff_line.nonzero()[0])
 
   print('  Pixels Differing: ' + str(diff_count))
@@ -108,7 +108,7 @@ def compare_band(golden_band, new_band, id, options=[]):
     print('  Golden: ' + str(golden_band.Checksum()))
     print('  New:    ' + str(new_band.Checksum()))
     found_diff += 1
-    compare_image_pixels(golden_band,new_band, id, options)
+    compare_image_pixels(golden_band, new_band, id, options)
 
   # Check overviews
   if golden_band.GetOverviewCount() != new_band.GetOverviewCount():
@@ -232,7 +232,7 @@ def compare_sds(golden_db, new_db, options=[]):
     found_diff += sds_diff
     if sds_diff > 0:
       print('%d differences found between:\n  %s\n  %s' \
-            % (sds_diff, golden_sds[key],new_sds[key]))
+            % (sds_diff, golden_sds[key], new_sds[key]))
 
   return found_diff
 
@@ -291,7 +291,7 @@ if __name__ == '__main__':
   try:
     os.stat(golden_file)
 
-    if not filecmp.cmp(golden_file,new_file):
+    if not filecmp.cmp(golden_file, new_file):
       print('Files differ at the binary level.')
       found_diff += 1
   except OSError:

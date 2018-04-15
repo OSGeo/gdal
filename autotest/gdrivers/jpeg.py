@@ -78,12 +78,12 @@ def jpeg_2():
     ds.GetFileList()
 
     try:
-        if (md['EXIF_GPSLatitudeRef'] != 'N'
-            or md['EXIF_GPSLatitude'] != '(41) (1) (22.91)'
-            or md['EXIF_PixelXDimension'] != '361'
-            or md['EXIF_GPSVersionID'] != '0x02 0x00 0x00 0x00'
-            or md['EXIF_ExifVersion'] != '0210'
-            or md['EXIF_XResolution'] != '(96)'):
+        if (md['EXIF_GPSLatitudeRef'] != 'N' or
+                md['EXIF_GPSLatitude'] != '(41) (1) (22.91)' or
+                md['EXIF_PixelXDimension'] != '361' or
+                md['EXIF_GPSVersionID'] != '0x02 0x00 0x00 0x00' or
+                md['EXIF_ExifVersion'] != '0210' or
+                md['EXIF_XResolution'] != '(96)'):
             print(md)
             gdaltest.post_reason('Exif metadata wrong.')
             return 'fail'
@@ -252,8 +252,8 @@ def jpeg_6():
     ds = gdal.Open('data/vophead.jpg')
 
     # Because of the optimization in r17446, we shouldn't yet get this error.
-    if (gdal.GetLastErrorType() == 2
-        and gdal.GetLastErrorMsg().find('Ignoring EXIF') != -1):
+    if (gdal.GetLastErrorType() == 2 and
+            gdal.GetLastErrorMsg().find('Ignoring EXIF') != -1):
         gdaltest.post_reason('got error too soon.')
         return 'fail'
 
@@ -263,8 +263,8 @@ def jpeg_6():
         md = ds.GetMetadata()
 
     # Did we get an exif related warning?
-    if (gdal.GetLastErrorType() != 2
-        or gdal.GetLastErrorMsg().find('Ignoring EXIF') == -1):
+    if (gdal.GetLastErrorType() != 2 or
+            gdal.GetLastErrorMsg().find('Ignoring EXIF') == -1):
         gdaltest.post_reason('did not get expected error.')
         return 'fail'
 
@@ -520,7 +520,7 @@ def jpeg_13():
         '/vsistdout_redirect//vsimem/tmp.jpg', src_ds)
     if ds.GetRasterBand(1).Checksum() != 0:
         return 'fail'
-    ds.ReadRaster(0,0,1,1)
+    ds.ReadRaster(0, 0, 1, 1)
     src_ds = None
     ds = None
 
@@ -655,9 +655,9 @@ def jpeg_17():
     gdal.ErrorReset()
     with gdaltest.error_handler('CPLQuietErrorHandler'):
       ds = gdal.Open('data/bogus.jpg')
-    if (ds is not None
-        or gdal.GetLastErrorType() != gdal.CE_Failure
-        or gdal.GetLastErrorMsg() == ''):
+      if (ds is not None or
+            gdal.GetLastErrorType() != gdal.CE_Failure or
+            gdal.GetLastErrorMsg() == ''):
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -666,8 +666,8 @@ def jpeg_17():
     with gdaltest.error_handler('CPLQuietErrorHandler'):
         # ERROR 1: libjpeg: Huffman table 0x00 was not defined
         cs = ds.GetRasterBand(1).Checksum()
-    if (gdal.GetLastErrorType() != gdal.CE_Failure
-        or gdal.GetLastErrorMsg() == ''):
+    if (gdal.GetLastErrorType() != gdal.CE_Failure or
+            gdal.GetLastErrorMsg() == ''):
         # libjpeg-turbo 1.4.0 doesn't emit errors...
         if cs != 4925:
             gdaltest.post_reason('fail')
@@ -680,8 +680,8 @@ def jpeg_17():
         #   libjpeg: Corrupt JPEG data: found marker 0x00 instead of RST63
         ds.GetRasterBand(1).Checksum()
 
-    if (gdal.GetLastErrorType() != gdal.CE_Warning
-        or gdal.GetLastErrorMsg() == ''):
+    if (gdal.GetLastErrorType() != gdal.CE_Warning or
+            gdal.GetLastErrorMsg() == ''):
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -694,8 +694,8 @@ def jpeg_17():
         ds.GetRasterBand(1).Checksum()
         gdal.SetConfigOption('GDAL_ERROR_ON_LIBJPEG_WARNING', None)
 
-    if (gdal.GetLastErrorType() != gdal.CE_Failure
-        or gdal.GetLastErrorMsg() == ''):
+    if (gdal.GetLastErrorType() != gdal.CE_Failure or
+            gdal.GetLastErrorMsg() == ''):
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -712,7 +712,7 @@ def jpeg_18():
                                                   width, height, 1)
     for i in range(height):
         data = struct.pack('B' * 1, int(i / (height / 256)))
-        src_ds.WriteRaster(0,i,width,1,data,1,1)
+        src_ds.WriteRaster(0, i, width, 1, data, 1, 1)
 
     ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_18.jpg', src_ds,
                                                  options=['QUALITY=99'])
@@ -722,11 +722,11 @@ def jpeg_18():
     oldSize = gdal.GetCacheMax()
     gdal.SetCacheMax(0)
 
-    line0 = ds.GetRasterBand(1).ReadRaster(0,0,width,1)
+    line0 = ds.GetRasterBand(1).ReadRaster(0, 0, width, 1)
     data = struct.unpack('B' * width, line0)
     if abs(data[0] - 0) > 10:
         return 'fail'
-    line1023 = ds.GetRasterBand(1).ReadRaster(0,height - 1,width,1)
+    line1023 = ds.GetRasterBand(1).ReadRaster(0, height - 1, width, 1)
     data = struct.unpack('B' * width, line1023)
     if abs(data[0] - 255) > 10:
         return 'fail'
@@ -736,11 +736,11 @@ def jpeg_18():
     data = struct.unpack('B' * (int(width / 4)), line0_ovr1)
     if abs(data[0] - 0) > 10:
         return 'fail'
-    line1023_bis = ds.GetRasterBand(1).ReadRaster(0,height - 1,width,1)
+    line1023_bis = ds.GetRasterBand(1).ReadRaster(0, height - 1, width, 1)
     if line1023_bis == line0 or line1023 != line1023_bis:
         gdaltest.post_reason('fail')
         return 'fail'
-    line0_bis = ds.GetRasterBand(1).ReadRaster(0,0,width,1)
+    line0_bis = ds.GetRasterBand(1).ReadRaster(0, 0, width, 1)
     if line0 != line0_bis:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -749,7 +749,7 @@ def jpeg_18():
     data = struct.unpack('B' * int(width / 4), line255_ovr1)
     if abs(data[0] - 255) > 10:
         return 'fail'
-    line0_bis = ds.GetRasterBand(1).ReadRaster(0,0,width,1)
+    line0_bis = ds.GetRasterBand(1).ReadRaster(0, 0, width, 1)
     if line0 != line0_bis:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -782,7 +782,7 @@ def jpeg_19():
                                                       width, height, 1)
         src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
         src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(
-            0, 0, iX,height, struct.pack('B' * 1, 255), 1, 1)
+            0, 0, iX, height, struct.pack('B' * 1, 255), 1, 1)
         src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(
             iX, 0, width - iX, height, struct.pack('B' * 1, 0), 1, 1)
         tiff_mask_data = src_ds.GetRasterBand(1).GetMaskBand().ReadRaster(
@@ -884,7 +884,7 @@ def jpeg_21():
         gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
-    expected_dim_cs = [[512,512,0], [256,256,0], [196,196,12681]]
+    expected_dim_cs = [[512, 512, 0], [256, 256, 0], [196, 196, 12681]]
     i = 0
     for expected_w, expected_h, expected_cs in expected_dim_cs:
         ovr = ds.GetRasterBand(1).GetOverview(i)
@@ -946,7 +946,7 @@ def jpeg_22():
     src_ds.GetRasterBand(1).Fill(255)
     ds = gdal.GetDriverByName('JPEG').CreateCopy(
         '/vsimem/jpeg_22.jpg', src_ds,
-        options=['COMMENT=foo','EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=40'])
+        options=['COMMENT=foo', 'EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=40'])
     src_ds = None
     ovr = ds.GetRasterBand(1).GetOverview(3)
     if ds.GetMetadataItem('COMMENT') != 'foo':
@@ -1002,10 +1002,10 @@ def jpeg_23():
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
 
     # Band interleaved
-    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize)
+    data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     tmp_ds = gdal.GetDriverByName('Mem').Create(
         '', ds.RasterXSize, ds.RasterYSize, 3)
-    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data)
+    tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data)
     got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
@@ -1016,7 +1016,7 @@ def jpeg_23():
                          buf_pixel_space=3, buf_band_space=1)
     tmp_ds = gdal.GetDriverByName('Mem').Create(
         '', ds.RasterXSize, ds.RasterYSize, 3)
-    tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize,data,
+    tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data,
                        buf_pixel_space=3, buf_band_space=1)
     got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != got_cs:
@@ -1028,7 +1028,7 @@ def jpeg_23():
                          buf_pixel_space=4, buf_band_space=1)
     tmp_ds = gdal.GetDriverByName('Mem').Create(
         '', ds.RasterXSize, ds.RasterYSize, 3)
-    tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize,data,
+    tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data,
                        buf_pixel_space=4, buf_band_space=1)
     got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != got_cs:
@@ -1154,7 +1154,7 @@ def jpeg_28():
     tmpfilename = '/vsimem/jpeg_28.jpg'
 
     # Nothing
-    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     ds = gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
     src_ds = None
     ds = gdal.Open(tmpfilename)
@@ -1163,7 +1163,7 @@ def jpeg_28():
         return 'fail'
 
     # EXIF tags only
-    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
 
     src_ds.SetMetadataItem('EXIF_DateTime', 'dt')  # not enough values ASCII
     src_ds.SetMetadataItem('EXIF_DateTimeOriginal', '01234567890123456789')  # truncated ASCII
@@ -1203,7 +1203,7 @@ def jpeg_28():
 
     # Test SRATIONAL
     for val in (-1.5, -1, -0.5, 0, 0.5, 1, 1.5):
-        src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+        src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
         src_ds.SetMetadataItem('EXIF_ShutterSpeedValue', str(val))
         gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
         src_ds = None
@@ -1221,7 +1221,7 @@ def jpeg_28():
 
     # Test RATIONAL
     for val in (0, 0.5, 1, 1.5):
-        src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+        src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
         src_ds.SetMetadataItem('EXIF_ApertureValue', str(val))
         gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
         src_ds = None
@@ -1238,7 +1238,7 @@ def jpeg_28():
             return 'fail'
 
     # GPS tags only
-    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     src_ds.SetMetadataItem('EXIF_GPSLatitudeRef', 'N')
     src_ds.SetMetadataItem('EXIF_GPSLatitude', '49 34 56.5')
     gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
@@ -1255,7 +1255,7 @@ def jpeg_28():
     ds = None
 
     # EXIF and GPS tags
-    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     src_ds.SetMetadataItem('EXIF_ExifVersion', '0231')
     src_ds.SetMetadataItem('EXIF_GPSLatitudeRef', 'N')
     gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
@@ -1272,7 +1272,7 @@ def jpeg_28():
     ds = None
 
     # EXIF and other metadata
-    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     src_ds.SetMetadataItem('EXIF_ExifVersion', '0231')
     src_ds.SetMetadataItem('EXIF_invalid', 'foo')
     src_ds.SetMetadataItem('FOO', 'BAR')
@@ -1291,7 +1291,7 @@ def jpeg_28():
     ds = None
 
     # Too much content for EXIF
-    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     src_ds.SetMetadataItem('EXIF_UserComment', ''.join(['x' for i in range(65535)]))
     with gdaltest.error_handler():
         gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
@@ -1299,7 +1299,7 @@ def jpeg_28():
     ds = None
 
     # EXIF and GPS tags and EXIF overview
-    src_ds = gdal.GetDriverByName('MEM').Create('',1024,1024)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1024, 1024)
     src_ds.SetMetadataItem('EXIF_ExifVersion', '0231')
     src_ds.SetMetadataItem('EXIF_GPSLatitudeRef', 'N')
     gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds,

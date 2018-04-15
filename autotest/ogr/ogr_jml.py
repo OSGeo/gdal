@@ -476,7 +476,7 @@ def ogr_jml_4():
         return 'skip'
 
     # Missing CollectionElement, FeatureElement or GeometryElement
-    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml',"""<?xml version='1.0' encoding='UTF-8'?>
+    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml', """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <MISSING_CollectionElement>featureCollection</MISSING_CollectionElement>
@@ -500,7 +500,7 @@ def ogr_jml_4():
     ds = None
 
     # XML malformed in JCSGMLInputTemplate
-    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml',"""<?xml version='1.0' encoding='UTF-8'?>
+    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml', """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <CollectionElement>featureCollection</CollectionElement>
@@ -524,7 +524,7 @@ def ogr_jml_4():
     ds = None
 
     # XML malformed in featureCollection
-    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml',"""<?xml version='1.0' encoding='UTF-8'?>
+    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml', """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <CollectionElement>featureCollection</CollectionElement>
@@ -554,7 +554,7 @@ def ogr_jml_4():
     ds = None
 
     # XML malformed in featureCollection
-    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml',"""<?xml version='1.0' encoding='UTF-8'?>
+    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml', """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <CollectionElement>featureCollection</CollectionElement>
@@ -585,7 +585,7 @@ def ogr_jml_4():
     del ds
 
     # Invalid column definitions
-    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml',"""<?xml version='1.0' encoding='UTF-8'?>
+    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml', """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <CollectionElement>featureCollection</CollectionElement>

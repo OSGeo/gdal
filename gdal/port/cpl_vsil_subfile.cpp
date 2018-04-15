@@ -386,7 +386,7 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
         }
         vsi_l_offset nFpSize = VSIFTellL(fp);
         // For a directory, the size will be max(vsi_l_offset) / 2
-        if( nFpSize == ~((vsi_l_offset)(0)) / 2 || nOff > nFpSize )
+        if( nFpSize == ~(static_cast<vsi_l_offset>(0)) / 2 || nOff > nFpSize )
         {
             poHandle->Close();
             delete poHandle;

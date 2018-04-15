@@ -157,7 +157,7 @@ def ogr_bna_check_content(lyr1, lyr2):
             if feat1.GetField(i) != feat2.GetField(i):
                 return 'fail'
 
-        if ogrtest.check_feature_geometry(feat1,feat2.GetGeometryRef(),
+        if ogrtest.check_feature_geometry(feat1, feat2.GetGeometryRef(),
                                         max_error=0.000000001) != 0:
             return 'fail'
 
@@ -218,7 +218,7 @@ def ogr_bna_6():
     except:
         pass
 
-    ret = ogr_bna_write(['LINEFORMAT=LF','MULTILINE=NO', 'COORDINATE_PRECISION=3'])
+    ret = ogr_bna_write(['LINEFORMAT=LF', 'MULTILINE=NO', 'COORDINATE_PRECISION=3'])
     if ret != 'success':
         return ret
 
@@ -229,7 +229,7 @@ def ogr_bna_6():
 
     os.remove('tmp/out.bna')
 
-    ret = ogr_bna_write(['LINEFORMAT=CRLF','MULTILINE=NO', 'COORDINATE_PRECISION=3'])
+    ret = ogr_bna_write(['LINEFORMAT=CRLF', 'MULTILINE=NO', 'COORDINATE_PRECISION=3'])
     if ret != 'success':
         return ret
 
