@@ -142,8 +142,8 @@ except:
     pass
 
 ds = drv.CreateDataSource(outfile)
-layer = ds.CreateLayer('out', geom_type = ogr.wkbLineString,
-                        srs = t_srs_o)
+layer = ds.CreateLayer('out', geom_type=ogr.wkbLineString,
+                        srs=t_srs_o)
 
 #########################################################################
 # Not connected case.  Produce individual segments are these are going to
@@ -153,8 +153,8 @@ if not connected:
     #########################################################################
     # Generate lines of latitude.
 
-    feat = ogr.Feature(feature_def = layer.GetLayerDefn())
-    geom = ogr.Geometry(type = ogr.wkbLineString)
+    feat = ogr.Feature(feature_def=layer.GetLayerDefn())
+    geom = ogr.Geometry(type=ogr.wkbLineString)
 
     for lat in float_range(ymin,ymax+stepsize/2,stepsize):
         for long_ in float_range(xmin,xmax-substepsize/2,substepsize):
@@ -195,11 +195,11 @@ if connected:
     #########################################################################
     # Generate lines of latitude.
 
-    feat = ogr.Feature(feature_def = layer.GetLayerDefn())
+    feat = ogr.Feature(feature_def=layer.GetLayerDefn())
 
     for lat in float_range(ymin,ymax+stepsize/2,stepsize):
 
-        geom = ogr.Geometry(type = ogr.wkbLineString)
+        geom = ogr.Geometry(type=ogr.wkbLineString)
 
         for long_ in float_range(xmin,xmax+substepsize/2,substepsize):
             geom.AddPoint(long_, lat)
@@ -217,7 +217,7 @@ if connected:
 
     for long_ in float_range(xmin,xmax+stepsize/2,stepsize):
 
-        geom = ogr.Geometry(type = ogr.wkbLineString)
+        geom = ogr.Geometry(type=ogr.wkbLineString)
 
         for lat in float_range(ymin,ymax+substepsize/2,substepsize):
             geom.AddPoint(long_, lat)

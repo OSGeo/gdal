@@ -67,7 +67,7 @@ def urlescape(url):
     return url
 
 
-def gdalurlopen(url, timeout = 10):
+def gdalurlopen(url, timeout=10):
     old_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(timeout)
 
@@ -148,7 +148,7 @@ def wait_process(process):
 # Compatible with Python 2.6 or above
 
 
-def _runexternal_subprocess(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False, encoding = None):
+def _runexternal_subprocess(cmd, strin=None, check_memleak=True, display_live_on_parent_stdout=False, encoding=None):
     import subprocess
     import shlex
     command = shlex.split(cmd)
@@ -185,7 +185,7 @@ def _runexternal_subprocess(cmd, strin = None, check_memleak = True, display_liv
     return ret
 
 
-def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False, encoding = None):
+def runexternal(cmd, strin=None, check_memleak=True, display_live_on_parent_stdout=False, encoding=None):
     from gdaltest import is_travis_branch
     if not is_travis_branch('mingw'):
         has_subprocess = False
@@ -239,7 +239,7 @@ def read_in_thread(f, q):
 # Compatible with Python 2.6 or above
 
 
-def _runexternal_out_and_err_subprocess(cmd, check_memleak = True):
+def _runexternal_out_and_err_subprocess(cmd, check_memleak=True):
     import subprocess
     import shlex
     command = shlex.split(cmd)
@@ -274,7 +274,7 @@ def _runexternal_out_and_err_subprocess(cmd, check_memleak = True):
     return (ret_stdout, ret_stderr)
 
 
-def runexternal_out_and_err(cmd, check_memleak = True):
+def runexternal_out_and_err(cmd, check_memleak=True):
     from gdaltest import is_travis_branch
     if not is_travis_branch('mingw'):
         has_subprocess = False

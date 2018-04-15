@@ -302,23 +302,23 @@ def basic_test_11():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = gdal.OpenEx('data/byte.tif', allowed_drivers = [])
+    ds = gdal.OpenEx('data/byte.tif', allowed_drivers=[])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = gdal.OpenEx('data/byte.tif', allowed_drivers = ['GTiff'])
+    ds = gdal.OpenEx('data/byte.tif', allowed_drivers=['GTiff'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = gdal.OpenEx('data/byte.tif', allowed_drivers = ['PNG'])
+    ds = gdal.OpenEx('data/byte.tif', allowed_drivers=['PNG'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
-        ds = gdal.OpenEx('data/byte.tif', open_options = ['FOO'])
+        ds = gdal.OpenEx('data/byte.tif', open_options=['FOO'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -346,7 +346,7 @@ def basic_test_11():
         return 'fail'
     ds.GetLayer(0).GetMetadata()
 
-    ds = gdal.OpenEx('../ogr/data/poly.shp', allowed_drivers = ['ESRI Shapefile'])
+    ds = gdal.OpenEx('../ogr/data/poly.shp', allowed_drivers=['ESRI Shapefile'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -598,26 +598,26 @@ def basic_test_15():
 
     try:
         with gdaltest.error_handler():
-            gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback = 'foo')
+            gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback='foo')
         gdaltest.post_reason('fail')
         return 'fail'
     except:
         pass
 
     with gdaltest.error_handler():
-        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback = basic_test_15_cbk_no_argument)
+        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback=basic_test_15_cbk_no_argument)
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
-        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback = basic_test_15_cbk_no_ret)
+        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback=basic_test_15_cbk_no_ret)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
-        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback = basic_test_15_cbk_bad_ret)
+        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback=basic_test_15_cbk_bad_ret)
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -637,7 +637,7 @@ def basic_test_16():
         return 'fail'
 
     gdal.ErrorReset()
-    gdal.Translate('/vsimem/temp.tif', 'data/byte.tif', options = '-co BLOCKYSIZE=10')
+    gdal.Translate('/vsimem/temp.tif', 'data/byte.tif', options='-co BLOCKYSIZE=10')
     with gdaltest.error_handler():
         gdal.OpenEx('/vsimem/temp.tif', gdal.OF_UPDATE, open_options=['@NUM_THREADS=INVALID'])
     gdal.Unlink('/vsimem/temp.tif')

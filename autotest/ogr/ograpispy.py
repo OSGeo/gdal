@@ -94,7 +94,7 @@ def ograpispy_2():
 
     gdal.SetConfigOption('OGR_API_SPY_FILE', 'tmp/ograpispy_2.py')
     gdal.SetConfigOption('OGR_API_SPY_SNAPSHOT_PATH', 'tmp')
-    ds = ogr.Open('tmp/ograpispy_2.shp', update = 1)
+    ds = ogr.Open('tmp/ograpispy_2.shp', update=1)
     lyr = ds.GetLayer(0)
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     ds = None
@@ -108,7 +108,7 @@ def ograpispy_2():
         return 'fail'
     ds = None
 
-    ds = ogr.Open('tmp/snapshot_1/working/ograpispy_2.shp', update = 1)
+    ds = ogr.Open('tmp/snapshot_1/working/ograpispy_2.shp', update=1)
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')

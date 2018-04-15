@@ -88,7 +88,7 @@ def run_py_script(script_path, script_name, concatenated_argv):
 ###############################################################################
 # Runs a Python script in a new process
 #
-def run_py_script_as_external_script(script_path, script_name, concatenated_argv, display_live_on_parent_stdout = False):
+def run_py_script_as_external_script(script_path, script_name, concatenated_argv, display_live_on_parent_stdout=False):
 
     script_file_path = os.path.join(script_path, script_name + '.py')
 
@@ -99,7 +99,7 @@ def run_py_script_as_external_script(script_path, script_name, concatenated_argv
         python_exe = python_exe.replace('\\', '/')
         script_file_path = script_file_path.replace('\\', '/')
 
-    return gdaltest.runexternal(python_exe + ' ' + script_file_path + ' ' + concatenated_argv, display_live_on_parent_stdout = display_live_on_parent_stdout)
+    return gdaltest.runexternal(python_exe + ' ' + script_file_path + ' ' + concatenated_argv, display_live_on_parent_stdout=display_live_on_parent_stdout)
 
 ###############################################################################
 # Runs a Python script as a py module

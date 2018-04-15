@@ -269,7 +269,7 @@ def rasterlite_6():
 
     # Test first if spatialite is available
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ogr_ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/spatialite_test.db', options = ['SPATIALITE=YES'])
+    ogr_ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/spatialite_test.db', options=['SPATIALITE=YES'])
     if ogr_ds is not None:
         sql_lyr = ogr_ds.ExecuteSQL("SELECT AsText(GeomFromText('POINT(0 1)'))")
     else:
@@ -326,7 +326,7 @@ def rasterlite_7():
     ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
     # Resampling method is not taken into account
-    ds.BuildOverviews('NEAREST', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAREST', overviewlist=[2, 4])
 
     if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1192:
         gdaltest.post_reason('Wrong checksum for overview 0')
@@ -368,7 +368,7 @@ def rasterlite_8():
 
     ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
-    ds.BuildOverviews(overviewlist = [])
+    ds.BuildOverviews(overviewlist=[])
 
     if ds.GetRasterBand(1).GetOverviewCount() != 0:
         return 'fail'
@@ -390,9 +390,9 @@ def rasterlite_9():
     if gdaltest.epsilon_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('RASTERLITE', 'byte.tif', 1, 4866, options = ['DRIVER=EPSILON'])
+    tst = gdaltest.GDALTest('RASTERLITE', 'byte.tif', 1, 4866, options=['DRIVER=EPSILON'])
 
-    return tst.testCreateCopy(check_gt = 1, check_srs = 1, check_minmax = 0)
+    return tst.testCreateCopy(check_gt=1, check_srs=1, check_minmax=0)
 
 ###############################################################################
 # Create a rasterlite dataset with EPSILON tiles
@@ -409,9 +409,9 @@ def rasterlite_10():
     if gdaltest.epsilon_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('RASTERLITE', 'rgbsmall.tif', 1, 23189, options = ['DRIVER=EPSILON'])
+    tst = gdaltest.GDALTest('RASTERLITE', 'rgbsmall.tif', 1, 23189, options=['DRIVER=EPSILON'])
 
-    return tst.testCreateCopy(check_gt = 1, check_srs = 1, check_minmax = 0)
+    return tst.testCreateCopy(check_gt=1, check_srs=1, check_minmax=0)
 
 ###############################################################################
 # Test BuildOverviews() with AVERAGE resampling
@@ -427,10 +427,10 @@ def rasterlite_11():
 
     ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
-    ds.BuildOverviews(overviewlist = [])
+    ds.BuildOverviews(overviewlist=[])
 
     # Resampling method is not taken into account
-    ds.BuildOverviews('AVERAGE', overviewlist = [2, 4])
+    ds.BuildOverviews('AVERAGE', overviewlist=[2, 4])
 
     # Reopen and test
     ds = None

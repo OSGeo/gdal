@@ -112,9 +112,9 @@ def mrsid_1():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
 
-    ret = tst.testOpen(check_gt = gt, \
-        check_stat = (0.0, 255.0, 103.319, 55.153), \
-        check_approx_stat = (2.0, 243.0, 103.131, 43.978))
+    ret = tst.testOpen(check_gt=gt, \
+        check_stat=(0.0, 255.0, 103.319, 55.153), \
+        check_approx_stat=(2.0, 243.0, 103.131, 43.978))
 
     if ret != 'success':
         return ret
@@ -148,7 +148,7 @@ def mrsid_2():
     ds = gdal.Open('data/mercator.sid')
 
     try:
-        data = ds.ReadRaster(0, 0, 515, 515, buf_xsize = 10, buf_ysize = 10)
+        data = ds.ReadRaster(0, 0, 515, 515, buf_xsize=10, buf_ysize=10)
     except:
         gdaltest.post_reason('Small overview read failed: ' + gdal.GetLastErrorMsg())
         return 'fail'
@@ -245,9 +245,9 @@ def mrsid_4():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
 
-    ret = tst.testOpen(check_gt = gt, check_prj = prj, \
-        check_stat = (0.0, 255.0, 103.112, 52.477), \
-        check_approx_stat = (0.0, 255.0, 102.684, 51.614))
+    ret = tst.testOpen(check_gt=gt, check_prj=prj, \
+        check_stat=(0.0, 255.0, 103.112, 52.477), \
+        check_approx_stat=(0.0, 255.0, 102.684, 51.614))
 
     try:
         os.remove('data/mercator_new.sid.aux.xml')
@@ -300,7 +300,7 @@ def mrsid_6():
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
     tst = gdaltest.GDALTest('JP2MrSID', 'byte.jp2', 1, 50054)
-    return tst.testOpen(check_prj = srs, check_gt = gt)
+    return tst.testOpen(check_prj=srs, check_gt=gt)
 
 
 ###############################################################################
@@ -464,7 +464,7 @@ def mrsid_online_1():
         return 'skip'
 
     # Checksum = 29473 on my PC
-    tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute = 1)
+    tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute=1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -487,7 +487,7 @@ def mrsid_online_2():
         return 'skip'
 
     # Checksum = 209 on my PC
-    tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/gcp.jp2', 1, None, filename_absolute = 1)
+    tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/gcp.jp2', 1, None, filename_absolute=1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -522,7 +522,7 @@ def mrsid_online_3():
         return 'skip'
 
     # checksum = 14443 on my PC
-    tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute = 1)
+    tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute=1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -559,14 +559,14 @@ def mrsid_online_4():
         return 'skip'
 
     # Checksum = 53186 on my PC
-    tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute = 1)
+    tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute=1)
 
     if tst.testOpen() != 'success':
         return 'fail'
 
     ds = gdal.Open('tmp/cache/Bretagne2.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne2.bmp')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, width = 256, height = 256)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, width=256, height=256)
 
     ds = None
     ds_ref = None

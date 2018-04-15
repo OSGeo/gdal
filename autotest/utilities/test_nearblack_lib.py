@@ -43,7 +43,7 @@ import gdaltest
 def test_nearblack_lib_1():
 
     src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
-    ds = gdal.Nearblack('', src_ds, format = 'MEM', maxNonBlack = 0, nearDist = 15)
+    ds = gdal.Nearblack('', src_ds, format='MEM', maxNonBlack=0, nearDist=15)
     if ds is None:
         return 'fail'
 
@@ -85,7 +85,7 @@ def test_nearblack_lib_1():
 
 def test_nearblack_lib_2():
 
-    ds = gdal.Nearblack('', '../gdrivers/data/rgbsmall.tif', format = 'MEM', maxNonBlack = 0, setAlpha = True)
+    ds = gdal.Nearblack('', '../gdrivers/data/rgbsmall.tif', format='MEM', maxNonBlack=0, setAlpha=True)
     if ds is None:
         return 'fail'
 
@@ -104,8 +104,8 @@ def test_nearblack_lib_2():
 
 def test_nearblack_lib_3():
 
-    src_ds = gdal.Nearblack('', '../gdrivers/data/rgbsmall.tif', format = 'MEM', maxNonBlack = 0, setAlpha = True)
-    ds = gdal.Nearblack('', src_ds, format = 'MEM', maxNonBlack = 0, setAlpha = True)
+    src_ds = gdal.Nearblack('', '../gdrivers/data/rgbsmall.tif', format='MEM', maxNonBlack=0, setAlpha=True)
+    ds = gdal.Nearblack('', src_ds, format='MEM', maxNonBlack=0, setAlpha=True)
     if ds is None:
         return 'fail'
 
@@ -124,8 +124,8 @@ def test_nearblack_lib_3():
 
 def test_nearblack_lib_4():
 
-    src_ds = gdal.Warp('', '../gdrivers/data/rgbsmall.tif', format = 'MEM', warpOptions = ["INIT_DEST=255"], srcNodata = 0)
-    ds = gdal.Nearblack('', src_ds, format = 'MEM', white = True, maxNonBlack = 0, setAlpha = True)
+    src_ds = gdal.Warp('', '../gdrivers/data/rgbsmall.tif', format='MEM', warpOptions=["INIT_DEST=255"], srcNodata=0)
+    ds = gdal.Nearblack('', src_ds, format='MEM', white=True, maxNonBlack=0, setAlpha=True)
     if ds is None:
         return 'fail'
 
@@ -144,7 +144,7 @@ def test_nearblack_lib_4():
 
 def test_nearblack_lib_5():
 
-    ds = gdal.Nearblack('/vsimem/test_nearblack_lib_5.tif', '../gdrivers/data/rgbsmall.tif', format = 'GTiff', maxNonBlack = 0, setMask = True)
+    ds = gdal.Nearblack('/vsimem/test_nearblack_lib_5.tif', '../gdrivers/data/rgbsmall.tif', format='GTiff', maxNonBlack=0, setMask=True)
     if ds is None:
         return 'fail'
 
@@ -166,7 +166,7 @@ def test_nearblack_lib_5():
 
 def test_nearblack_lib_7():
 
-    ds = gdal.Nearblack('', 'data/whiteblackred.tif', format = 'MEM', colors = ((0,0,0),(255,255,255)))
+    ds = gdal.Nearblack('', 'data/whiteblackred.tif', format='MEM', colors=((0,0,0),(255,255,255)))
     if ds is None:
         return 'fail'
 
@@ -191,7 +191,7 @@ def test_nearblack_lib_8():
 
     src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
     ds = gdal.GetDriverByName('MEM').CreateCopy('', src_ds)
-    ret = gdal.Nearblack(ds, ds, maxNonBlack = 0)
+    ret = gdal.Nearblack(ds, ds, maxNonBlack=0)
     if ret != 1:
         gdaltest.post_reason('failure')
         return 'fail'

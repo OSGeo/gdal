@@ -128,7 +128,7 @@ def vsiswift_start_webserver():
     if not gdaltest.built_against_curl():
         return 'skip'
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
         return 'skip'
 
@@ -169,7 +169,7 @@ def vsiswift_fake_auth_v1_url():
         request.end_headers()
         request.wfile.write("""foo""".encode('ascii'))
 
-    handler.add('GET', '/auth/1.0', custom_method = method)
+    handler.add('GET', '/auth/1.0', custom_method=method)
 
     def method(request):
 
@@ -187,7 +187,7 @@ def vsiswift_fake_auth_v1_url():
         request.end_headers()
         request.wfile.write("""foo""".encode('ascii'))
 
-    handler.add('GET', '/v1/AUTH_something/foo/bar', custom_method = method)
+    handler.add('GET', '/v1/AUTH_something/foo/bar', custom_method=method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiswift/foo/bar')
         if f is None:
@@ -219,7 +219,7 @@ def vsiswift_fake_auth_v1_url():
         request.end_headers()
         request.wfile.write("""bar""".encode('ascii'))
 
-    handler.add('GET', '/v1/AUTH_something/foo/baz', custom_method = method)
+    handler.add('GET', '/v1/AUTH_something/foo/baz', custom_method=method)
 
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiswift/foo/baz')
@@ -283,7 +283,7 @@ def vsiswift_fake_auth_storage_url_and_auth_token():
         request.wfile.write("""foo""".encode('ascii'))
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/v1/AUTH_something/foo/bar', custom_method = method)
+    handler.add('GET', '/v1/AUTH_something/foo/bar', custom_method=method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiswift/foo/bar')
         if f is None:
@@ -525,7 +525,7 @@ def vsiswift_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/v1/AUTH_something/test_copy/file.bin', custom_method = method)
+    handler.add('PUT', '/v1/AUTH_something/test_copy/file.bin', custom_method=method)
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
         ret += gdal.VSIFWriteL('x' * 5000, 1, 5000, f)

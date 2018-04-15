@@ -74,7 +74,7 @@ def jp2kak_3():
         return 'skip'
 
     tst = gdaltest.GDALTest('JP2KAK', 'byte.jp2', 1, 50054,
-                            options = ['QUALITY=100'])
+                            options=['QUALITY=100'])
 
     return tst.testCreateCopy()
 
@@ -88,9 +88,9 @@ def jp2kak_4():
         return 'skip'
 
     tst = gdaltest.GDALTest('JP2KAK', 'rgbsmall.tif', 0, 0,
-                            options = ['GMLJP2=OFF'])
+                            options=['GMLJP2=OFF'])
 
-    return tst.testCreateCopy(check_srs = 1, check_gt = 1)
+    return tst.testCreateCopy(check_srs=1, check_gt=1)
 
 ###############################################################################
 # Test GeoJP2 production with gcps.
@@ -102,9 +102,9 @@ def jp2kak_5():
         return 'skip'
 
     tst = gdaltest.GDALTest('JP2KAK', 'rgbsmall.tif', 0, 0,
-                            options = ['GEOJP2=OFF'])
+                            options=['GEOJP2=OFF'])
 
-    return tst.testCreateCopy(check_srs = 1, check_gt = 1)
+    return tst.testCreateCopy(check_srs=1, check_gt=1)
 
 ###############################################################################
 # Test VSI*L support with a JPC rather than jp2 datastream.
@@ -117,10 +117,10 @@ def jp2kak_8():
         return 'skip'
 
     tst = gdaltest.GDALTest('JP2KAK', 'byte.jp2', 1, 50054,
-                            options = ['QUALITY=100'])
+                            options=['QUALITY=100'])
 
-    return tst.testCreateCopy(vsimem = 1,
-                              new_filename = '/vsimem/jp2kak_8.jpc')
+    return tst.testCreateCopy(vsimem=1,
+                              new_filename='/vsimem/jp2kak_8.jpc')
 
 ###############################################################################
 # Test checksum values for a YCbCr color model file.
@@ -147,7 +147,7 @@ def jp2kak_10():
         return 'skip'
 
     ds = gdal.Open('data/rgbwcmyk01_YeGeo_kakadu.jp2')
-    data = ds.ReadRaster(0, 0, 800, 100, band_list = [2, 3]).decode('latin1')
+    data = ds.ReadRaster(0, 0, 800, 100, band_list=[2, 3]).decode('latin1')
     ds = None
 
     expected = [(0,0), (255,0), (0, 255), (255,255),
@@ -387,7 +387,7 @@ def jp2kak_18():
         return 'skip'
 
     tst = gdaltest.GDALTest('JP2KAK', 'int16.tif', 1, 4672,
-                            options = ['QUALITY=100'])
+                            options=['QUALITY=100'])
 
     return tst.testCreateCopy()
 
@@ -401,7 +401,7 @@ def jp2kak_19():
         return 'skip'
 
     tst = gdaltest.GDALTest('JP2KAK', '../gcore/data/uint16.tif', 1, 4672,
-                            options = ['QUALITY=100'], filename_absolute = 1)
+                            options=['QUALITY=100'], filename_absolute=1)
 
     return tst.testCreateCopy(vsimem=1)
 
@@ -455,7 +455,7 @@ def jp2kak_20():
     #    return 'fail'
 
     ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2',
-                     open_options = ['1BIT_ALPHA_PROMOTION=NO'])
+                     open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
         gdaltest.post_reason('fail')
@@ -474,19 +474,19 @@ def jp2kak_21():
 
     tmp_ds = gdaltest.jp2kak_drv.CreateCopy(
         '/vsimem/jp2kak_21.jp2',
-        gdal.Open('data/int16.tif'), options = ['QUALITY=100'])
+        gdal.Open('data/int16.tif'), options=['QUALITY=100'])
     tmp_ds = None
     tmp_ds = gdal.Open('/vsimem/jp2kak_21.jp2')
     full_res_data = tmp_ds.ReadRaster(0, 0, 20, 20)
     upsampled_data = tmp_ds.ReadRaster(0, 0, 20, 20, 40, 40,
-                                       resample_alg = gdal.GRIORA_Cubic)
+                                       resample_alg=gdal.GRIORA_Cubic)
     tmp_ds = None
     gdal.Unlink('/vsimem/jp2kak_21.jp2')
 
     tmp_ds = gdal.GetDriverByName('MEM').Create('', 20, 20, 1, gdal.GDT_Int16)
     tmp_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, full_res_data)
     ref_upsampled_data = tmp_ds.ReadRaster(0, 0, 20, 20, 40, 40,
-                                           resample_alg = gdal.GRIORA_Cubic)
+                                           resample_alg=gdal.GRIORA_Cubic)
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 40, 40, 1, gdal.GDT_Int16)
     mem_ds.GetRasterBand(1).WriteRaster(0, 0, 40, 40, ref_upsampled_data)
@@ -511,7 +511,7 @@ def jp2kak_22():
         return 'skip'
 
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
-    gdaltest.jp2kak_drv.CreateCopy('/vsimem/jp2kak_22.jp2', src_ds, options = ['QUALITY=100'])
+    gdaltest.jp2kak_drv.CreateCopy('/vsimem/jp2kak_22.jp2', src_ds, options=['QUALITY=100'])
     ds = gdal.Open('/vsimem/jp2kak_22.jp2')
     for i in range(4):
         ref_cs = src_ds.GetRasterBand(1).Checksum()

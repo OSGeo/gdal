@@ -48,10 +48,10 @@ def loslas_online_1():
     except:
         return 'skip'
 
-    tst = gdaltest.GDALTest('LOSLAS', '/vsizip/tmp/cache/NADCON.zip/wyhpgn.los', 1, 0, filename_absolute = 1)
+    tst = gdaltest.GDALTest('LOSLAS', '/vsizip/tmp/cache/NADCON.zip/wyhpgn.los', 1, 0, filename_absolute=1)
     gt = (-111.625, 0.25, 0.0, 45.625, 0.0, -0.25)
     stats = (-0.0080000003799796, 0.031125999987125001, 0.0093017323318172005, 0.0075646520354096004)
-    return tst.testOpen(check_gt = gt, check_stat = stats, check_prj = 'WGS84')
+    return tst.testOpen(check_gt=gt, check_stat=stats, check_prj='WGS84')
 
 
 gdaltest_list = [

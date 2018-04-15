@@ -130,7 +130,7 @@ def check(feat, fieldname, value):
         gdaltest.post_reason('did not get value %s for field %s, got %s.' \
                               % (str(value), fieldname,
                                  str(feat.GetField(fieldname))),
-                              frames = 3)
+                              frames=3)
         feat.DumpReadable()
         return 0
     else:
@@ -1088,7 +1088,7 @@ def ogr_feature_native_data():
     if gdal.GetDriverByName('SQLITE') is not None:
         dialects += ['OGR_SQLITE']
     for dialect in dialects:
-        sql_lyr = ds.ExecuteSQL('SELECT * FROM %s' % lyr.GetName(), dialect = dialect)
+        sql_lyr = ds.ExecuteSQL('SELECT * FROM %s' % lyr.GetName(), dialect=dialect)
         native_data = sql_lyr.GetMetadataItem('NATIVE_DATA', 'NATIVE_DATA')
         if native_data != 'native_data':
             gdaltest.post_reason('fail')

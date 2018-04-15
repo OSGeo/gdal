@@ -58,7 +58,7 @@ def ehdr_2():
 
     tst = gdaltest.GDALTest('EHDR', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy(check_gt = 1, check_srs = 1)
+    return tst.testCreateCopy(check_gt=1, check_srs=1)
 
 ###############################################################################
 # 32bit floating point (read, and createcopy).
@@ -83,7 +83,7 @@ def ehdr_4():
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
-                        buf_type = gdal.GDT_Int16)
+                        buf_type=gdal.GDT_Int16)
 
     ct = gdal.ColorTable()
     ct.SetColorEntry(0, (255,255,255,255))
@@ -141,7 +141,7 @@ def ehdr_6():
 
     tst = gdaltest.GDALTest('EHDR', 'float32.bil', 1, 27)
 
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # 32bit integer (read, and createcopy).
@@ -237,7 +237,7 @@ def ehdr_12():
 
     src_ds = gdal.Open('../gcore/data/1bit.bmp')
     ds = gdal.GetDriverByName('EHDR').CreateCopy('/vsimem/1bit.bil', src_ds,
-                                                  options = ['NBITS=1'])
+                                                  options=['NBITS=1'])
     ds = None
 
     ds = gdal.Open('/vsimem/1bit.bil')
@@ -373,7 +373,7 @@ def ehdr_14():
 def ehdr_rat():
 
     tmpfile = '/vsimem/rat.bil'
-    gdal.Translate(tmpfile, 'data/int16_rat.bil', format = 'EHdr')
+    gdal.Translate(tmpfile, 'data/int16_rat.bil', format='EHdr')
     ds = gdal.Open(tmpfile)
     rat = ds.GetRasterBand(1).GetDefaultRAT()
     if rat is None:

@@ -82,7 +82,7 @@ def ogr_vrt_2():
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,'POINT(12.5 17 1.2)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         return 'fail'
 
     if feat.GetFID() != 0:
@@ -91,7 +91,7 @@ def ogr_vrt_2():
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,'POINT(100 200)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         return 'fail'
 
     if feat.GetFID() != 1:
@@ -122,7 +122,7 @@ def ogr_vrt_3():
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,'POINT(12.5 17 1.2)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         return 'fail'
 
     if feat.GetFID() != 1:
@@ -131,7 +131,7 @@ def ogr_vrt_3():
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,'POINT(100 200)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         return 'fail'
 
     if feat.GetFID() != 2:
@@ -163,7 +163,7 @@ def ogr_vrt_4():
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,'POINT(100 200)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         return 'fail'
 
     lyr.SetSpatialFilter(None)
@@ -191,7 +191,7 @@ def ogr_vrt_5():
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,'POINT(12.5 17 1.2)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         return 'fail'
 
     lyr.SetAttributeFilter(None)
@@ -238,7 +238,7 @@ def ogr_vrt_7():
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,'POINT(12.5 17 1.2)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         return 'fail'
 
     if feat.GetFID() != 1:
@@ -247,7 +247,7 @@ def ogr_vrt_7():
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,'POINT(100 200)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         return 'fail'
 
     if feat.GetFID() != 2:
@@ -280,7 +280,7 @@ def ogr_vrt_8():
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,'POINT(12.5 17 1.2)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         return 'fail'
 
     if feat.GetFID() != 1:
@@ -289,7 +289,7 @@ def ogr_vrt_8():
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,'POINT(100 200)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         return 'fail'
 
     if feat.GetFID() != 2:
@@ -384,7 +384,7 @@ def ogr_vrt_11():
         <Style>style</Style>
     </OGRVRTLayer>
 </OGRVRTDataSource>"""
-    vrt_ds = ogr.Open(vrt_xml, update = 1)
+    vrt_ds = ogr.Open(vrt_xml, update=1)
     vrt_lyr = vrt_ds.GetLayerByName('test')
 
     # Only val1, val2, style attributes should be reported
@@ -442,7 +442,7 @@ def ogr_vrt_11():
     f.write('Real,String,Real,String\n'.encode('ascii'))
     f.close()
 
-    vrt_ds = ogr.Open(vrt_xml, update = 1)
+    vrt_ds = ogr.Open(vrt_xml, update=1)
     vrt_lyr = vrt_ds.GetLayerByName('test')
     vrt_lyr.SetSpatialFilterRect(0, 40, 10, 49.5)
     if vrt_lyr.GetFeatureCount() != 1:
@@ -490,7 +490,7 @@ def ogr_vrt_12():
         <GeometryField encoding="WKT" field="wkt_geom"/>
     </OGRVRTLayer>
 </OGRVRTDataSource>"""
-    vrt_ds = ogr.Open(vrt_xml, update = 1)
+    vrt_ds = ogr.Open(vrt_xml, update=1)
     vrt_lyr = vrt_ds.GetLayerByName('test')
 
     feat = ogr.Feature(vrt_lyr.GetLayerDefn())
@@ -533,7 +533,7 @@ def ogr_vrt_13():
         <GeometryField encoding="WKB" field="wkb_geom"/>
     </OGRVRTLayer>
 </OGRVRTDataSource>"""
-    vrt_ds = ogr.Open(vrt_xml, update = 1)
+    vrt_ds = ogr.Open(vrt_xml, update=1)
     vrt_lyr = vrt_ds.GetLayerByName('test')
 
     feat = ogr.Feature(vrt_lyr.GetLayerDefn())
@@ -979,7 +979,7 @@ def ogr_vrt_20():
         <SrcLayer>test</SrcLayer>
     </OGRVRTLayer>
 </OGRVRTDataSource>"""
-    vrt_ds = ogr.Open(vrt_xml, update = 1)
+    vrt_ds = ogr.Open(vrt_xml, update=1)
     vrt_lyr = vrt_ds.GetLayerByName('mytest')
 
     if vrt_lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
@@ -1340,7 +1340,7 @@ def ogr_vrt_22():
 # Test anti-recursion mechanism
 
 
-def ogr_vrt_23(shared_ds_flag = ''):
+def ogr_vrt_23(shared_ds_flag=''):
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
         gdaltest.post_reason('would crash')
@@ -1482,7 +1482,7 @@ def ogr_vrt_26():
     <OGRVRTLayer name="test">
         <SrcDataSource>/vsimem/ogr_vrt_26.db</SrcDataSource>
     </OGRVRTLayer>
-</OGRVRTDataSource>""", update = 1)
+</OGRVRTDataSource>""", update=1)
 
     lyr = vrt_ds.GetLayer(0)
     if lyr.TestCapability(ogr.OLCTransactions) == 0:
@@ -1642,7 +1642,7 @@ def ogr_vrt_29():
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_vrt_29.shp')
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
-    lyr = ds.CreateLayer('ogr_vrt_29', srs = sr)
+    lyr = ds.CreateLayer('ogr_vrt_29', srs=sr)
     lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
 
     for i in range(5):
@@ -1774,7 +1774,7 @@ def ogr_vrt_29():
     f.close()
 
     # Check reprojection in both directions
-    ds = ogr.Open('tmp/ogr_vrt_29.vrt', update = 1)
+    ds = ogr.Open('tmp/ogr_vrt_29.vrt', update=1)
     lyr = ds.GetLayer(0)
 
     sr = lyr.GetSpatialRef()
@@ -1873,7 +1873,7 @@ def ogr_vrt_29():
     ds = None
 
     # Check in .shp file
-    ds = ogr.Open('tmp/ogr_vrt_29.shp', update = 1)
+    ds = ogr.Open('tmp/ogr_vrt_29.shp', update=1)
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -1908,7 +1908,7 @@ def ogr_vrt_29():
     ds = None
 
     # Check failed reprojection when reading through VRT
-    ds = ogr.Open('tmp/ogr_vrt_29.vrt', update = 1)
+    ds = ogr.Open('tmp/ogr_vrt_29.vrt', update=1)
     lyr = ds.GetLayer(0)
     lyr.SetAttributeFilter('id = 1000')
 
@@ -1946,7 +1946,7 @@ def ogr_vrt_29():
     f.close()
 
     # Check failed reprojection when writing through VRT
-    ds = ogr.Open('tmp/ogr_vrt_29_2.vrt', update = 1)
+    ds = ogr.Open('tmp/ogr_vrt_29_2.vrt', update=1)
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -1972,7 +1972,7 @@ def ogr_vrt_29():
     ds = None
 
     # Some sanity operations before running test_ogrsf
-    ds = ogr.Open('tmp/ogr_vrt_29.shp', update = 1)
+    ds = ogr.Open('tmp/ogr_vrt_29.shp', update=1)
     ds.ExecuteSQL('REPACK ogr_vrt_29')
     ds.ExecuteSQL('RECOMPUTE EXTENT ON ogr_vrt_29')
     ds = None
@@ -2023,7 +2023,7 @@ def ogr_vrt_30():
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_vrt_30_1.shp')
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
-    lyr = ds.CreateLayer('ogr_vrt_30_1', srs = sr)
+    lyr = ds.CreateLayer('ogr_vrt_30_1', srs=sr)
     lyr.CreateField(ogr.FieldDefn('id1', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('id2', ogr.OFTInteger))
 
@@ -2043,7 +2043,7 @@ def ogr_vrt_30():
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_vrt_30_2.shp')
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
-    lyr = ds.CreateLayer('ogr_vrt_30_2', srs = sr)
+    lyr = ds.CreateLayer('ogr_vrt_30_2', srs=sr)
     lyr.CreateField(ogr.FieldDefn('id2', ogr.OFTInteger64))
     lyr.CreateField(ogr.FieldDefn('id3', ogr.OFTInteger))
 
@@ -2076,7 +2076,7 @@ def ogr_vrt_30():
     # Check
 
     for check in range(10):
-        ds = ogr.Open('tmp/ogr_vrt_30.vrt', update = 1)
+        ds = ogr.Open('tmp/ogr_vrt_30.vrt', update=1)
         lyr = ds.GetLayer(0)
 
         if check == 0:
@@ -2276,7 +2276,7 @@ def ogr_vrt_30():
     f.close()
 
     for check in range(9):
-        ds = ogr.Open('tmp/ogr_vrt_30.vrt', update = 1)
+        ds = ogr.Open('tmp/ogr_vrt_30.vrt', update=1)
         lyr = ds.GetLayer(0)
 
         if check == 0:
@@ -2516,7 +2516,7 @@ def ogr_vrt_30():
 # Test anti-recursion mechanism with union layer
 
 
-def ogr_vrt_31(shared_ds_flag = ''):
+def ogr_vrt_31(shared_ds_flag=''):
 
     rec1 = """<OGRVRTDataSource>
     <OGRVRTUnionLayer name="rec1">
@@ -2581,15 +2581,15 @@ def ogr_vrt_33():
     except:
         pass
 
-    ds = ogr.GetDriverByName('CSV').CreateDataSource('tmp/ogr_vrt_33', options = ['GEOMETRY=AS_WKT'])
-    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone, options = ['CREATE_CSVT=YES'])
+    ds = ogr.GetDriverByName('CSV').CreateDataSource('tmp/ogr_vrt_33', options=['GEOMETRY=AS_WKT'])
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone, options=['CREATE_CSVT=YES'])
     lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_4326_POINT", ogr.wkbPoint))
     lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_32632_POLYGON", ogr.wkbPolygon))
     lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_4326_LINESTRING", ogr.wkbLineString))
     lyr.CreateField(ogr.FieldDefn("X", ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn("Y", ogr.OFTReal))
 
-    lyr = ds.CreateLayer('test2', geom_type = ogr.wkbNone, options = ['CREATE_CSVT=YES'])
+    lyr = ds.CreateLayer('test2', geom_type=ogr.wkbNone, options=['CREATE_CSVT=YES'])
     lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_32632_POLYGON", ogr.wkbPolygon))
     lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_4326_POINT", ogr.wkbPoint))
     lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_32631_POINT", ogr.wkbPoint))
@@ -2597,7 +2597,7 @@ def ogr_vrt_33():
     lyr.CreateField(ogr.FieldDefn("X", ogr.OFTReal))
     ds = None
 
-    ds = ogr.Open('tmp/ogr_vrt_33', update = 1)
+    ds = ogr.Open('tmp/ogr_vrt_33', update=1)
     lyr = ds.GetLayerByName('test')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeomField(0, ogr.CreateGeometryFromWkt('POINT (1 2)'))
@@ -2650,7 +2650,7 @@ def ogr_vrt_33():
                     gdaltest.post_reason('fail')
                     return 'fail'
             elif j == 3:
-                if lyr.GetExtent(geom_field = 1) != (0,1,0,1):
+                if lyr.GetExtent(geom_field=1) != (0,1,0,1):
                     gdaltest.post_reason('fail')
                     return 'fail'
             elif j == 4:
@@ -2714,7 +2714,7 @@ def ogr_vrt_33():
                 if lyr.TestCapability(ogr.OLCFastGetExtent) != 1:
                     gdaltest.post_reason('fail')
                     return 'fail'
-                if lyr.GetExtent(geom_field = 0) != (1,2,3,4):
+                if lyr.GetExtent(geom_field=0) != (1,2,3,4):
                     gdaltest.post_reason('fail')
                     return 'fail'
             elif i == 4:
@@ -3204,7 +3204,7 @@ def ogr_vrt_33():
     if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
         gdaltest.post_reason('fail')
         return 'fail'
-    bb = lyr.GetExtent(geom_field = 1)
+    bb = lyr.GetExtent(geom_field=1)
     if bb != (1, 3, 2, 4):
         gdaltest.post_reason('fail')
         print(bb)
@@ -3457,7 +3457,7 @@ def ogr_vrt_36():
         return 'skip'
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_vrt_36.shp')
-    lyr = ds.CreateLayer('ogr_vrt_36', geom_type = ogr.wkbPoint)
+    lyr = ds.CreateLayer('ogr_vrt_36', geom_type=ogr.wkbPoint)
     lyr.CreateField(ogr.FieldDefn('id'))
     f = ogr.Feature(lyr.GetLayerDefn())
     f['id'] = '1'
@@ -3475,7 +3475,7 @@ def ogr_vrt_36():
     </OGRVRTLayer>
 </OGRVRTDataSource>""")
 
-    ds = ogr.Open('/vsimem/ogr_vrt_36.vrt', update = 1)
+    ds = ogr.Open('/vsimem/ogr_vrt_36.vrt', update=1)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     lyr.SetFeature(f)
@@ -3563,7 +3563,7 @@ def ogr_vrt_38():
         if qualifier == 'M' or qualifier == 'ZM':
           expected_geom_type = ogr.GT_SetM(expected_geom_type)
 
-        ds = ogr.Open('/vsimem/ogr_vrt_38.vrt', update = 1)
+        ds = ogr.Open('/vsimem/ogr_vrt_38.vrt', update=1)
         lyr = ds.GetLayer(0)
         if lyr.GetGeomType() != expected_geom_type:
             gdaltest.post_reason('failure')

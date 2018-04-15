@@ -63,7 +63,7 @@ def http_1():
         gdaltest.dods_drv = None
 
     tst = gdaltest.GDALTest('PNG','http://gdal.org/gdalicon.png',
-                             1, 7617, filename_absolute = 1)
+                             1, 7617, filename_absolute=1)
     ret = tst.testOpen()
     if ret == 'fail':
         conn = gdaltest.gdalurlopen('http://gdal.org/gdalicon.png')
@@ -89,7 +89,7 @@ def http_2():
         return 'skip'
 
     tst = gdaltest.GDALTest('GTiff','/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gcore/data/byte.tif',
-                             1, 4672, filename_absolute = 1)
+                             1, 4672, filename_absolute=1)
     ret = tst.testOpen()
     if ret == 'fail':
         conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gcore/data/byte.tif')
@@ -184,7 +184,7 @@ def http_4():
 
     ds = gdal.Open('/vsicurl/ftp://download.osgeo.org/gdal/data/gtiff/utm.tif')
     if ds is None:
-        conn = gdaltest.gdalurlopen('ftp://download.osgeo.org/gdal/data/gtiff/utm.tif', timeout = 4)
+        conn = gdaltest.gdalurlopen('ftp://download.osgeo.org/gdal/data/gtiff/utm.tif', timeout=4)
         if conn is None:
             print('cannot open URL')
             return 'skip'
@@ -291,7 +291,7 @@ def http_test_ssl_verifystatus():
     with gdaltest.config_option('GDAL_HTTP_SSL_VERIFYSTATUS', 'YES'):
         with gdaltest.error_handler():
             # For now this URL doesn't support OCSP stapling...
-            gdal.OpenEx('https://google.com', allowed_drivers = ['HTTP'])
+            gdal.OpenEx('https://google.com', allowed_drivers=['HTTP'])
     last_err = gdal.GetLastErrorMsg()
     if last_err.find('No OCSP response received') < 0 and last_err.find('libcurl too old') < 0:
 
@@ -317,7 +317,7 @@ def http_test_use_capi_store():
             return http_test_use_capi_store_sub()
 
     import test_py_scripts
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdalhttp', ' -use_capi_store', display_live_on_parent_stdout = True)
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdalhttp', ' -use_capi_store', display_live_on_parent_stdout=True)
 
     if ret.find('Failed:    0') == -1:
         return 'fail'
@@ -328,7 +328,7 @@ def http_test_use_capi_store():
 def http_test_use_capi_store_sub():
 
     with gdaltest.config_option('GDAL_HTTP_USE_CAPI_STORE', 'YES'):
-        gdal.OpenEx('https://google.com', allowed_drivers = ['HTTP'])
+        gdal.OpenEx('https://google.com', allowed_drivers=['HTTP'])
 
     return 'success'
 

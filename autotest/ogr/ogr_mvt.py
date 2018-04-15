@@ -70,7 +70,7 @@ def ogr_mvt_datatypes():
 
     # Without metadata.json
     ds = gdal.OpenEx('data/mvt/datatypes/0/0/0.pbf',
-                     open_options = ['METADATA_FILE='])
+                     open_options=['METADATA_FILE='])
     lyr = ds.GetLayer(0)
 
     count = lyr.GetLayerDefn().GetFieldCount()
@@ -259,7 +259,7 @@ def ogr_mvt_linestring():
         f.DumpReadable()
         return 'fail'
 
-    ds = gdal.OpenEx('data/mvt/linestring/0/0/0.pbf', open_options = ['METADATA_FILE='])
+    ds = gdal.OpenEx('data/mvt/linestring/0/0/0.pbf', open_options=['METADATA_FILE='])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'LINESTRING (215246.671651058 6281289.23636264,332653.947097085 6447616.20991119)') != 0:
@@ -280,7 +280,7 @@ def ogr_mvt_multilinestring():
         f.DumpReadable()
         return 'fail'
 
-    ds = gdal.OpenEx('data/mvt/multilinestring/0/0/0.pbf', open_options = ['METADATA_FILE='])
+    ds = gdal.OpenEx('data/mvt/multilinestring/0/0/0.pbf', open_options=['METADATA_FILE='])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119),(440277.282922614 6623727.12308023,547900.618748143 6809621.97586978),(665307.894194175 6985732.88903883,772931.230019704 7171627.74182838))') != 0:
@@ -301,7 +301,7 @@ def ogr_mvt_polygon():
         f.DumpReadable()
         return 'fail'
 
-    ds = gdal.OpenEx('data/mvt/polygon/0/0/0.pbf', open_options = ['METADATA_FILE='])
+    ds = gdal.OpenEx('data/mvt/polygon/0/0/0.pbf', open_options=['METADATA_FILE='])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'POLYGON ((332653.947097085 6447616.20991119,332653.947097085 6281289.23636264,215246.671651058 6281289.23636264,215246.671651058 6447616.20991119,332653.947097085 6447616.20991119))') != 0:
@@ -389,7 +389,7 @@ def ogr_mvt_tileset_tilegl():
 def ogr_mvt_tileset_without_metadata_file():
 
     ds = gdal.OpenEx('data/mvt/point_polygon/1',
-                     open_options = ['METADATA_FILE=', 'CLIP=NO'])
+                     open_options=['METADATA_FILE=', 'CLIP=NO'])
     lyr = ds.GetLayerByName('point')
     if lyr.GetGeomType() != ogr.wkbMultiPoint:
         gdaltest.post_reason('fail')
@@ -411,7 +411,7 @@ def ogr_mvt_tileset_without_metadata_file():
 def ogr_mvt_tileset_json_field():
 
     ds = gdal.OpenEx('data/mvt/datatypes/0',
-                     open_options = ['METADATA_FILE=', 'JSON_FIELD=YES', 'CLIP=NO'])
+                     open_options=['METADATA_FILE=', 'JSON_FIELD=YES', 'CLIP=NO'])
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldCount() != 2:
         gdaltest.post_reason('fail')
@@ -488,7 +488,7 @@ def ogr_mvt_open_variants():
 def ogr_mvt_xyz_options():
 
     ds = gdal.OpenEx('data/mvt/datatypes/0/0/0.pbf',
-                     open_options = ['X=1', 'Y=2', 'Z=3'])
+                     open_options=['X=1', 'Y=2', 'Z=3'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'POINT (-12496536.8802869 8299226.7830913)') != 0:
@@ -567,7 +567,7 @@ def ogr_mvt_mbtiles_json_field():
         return 'skip'
 
     ds = gdal.OpenEx('data/mvt/datatypes.mbtiles',
-                     open_options = ['JSON_FIELD=YES', 'CLIP=NO'])
+                     open_options=['JSON_FIELD=YES', 'CLIP=NO'])
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldCount() != 2:
         gdaltest.post_reason('fail')
@@ -598,7 +598,7 @@ def ogr_mvt_mbtiles_json_field_auto():
         return 'skip'
 
     ds = gdal.OpenEx('data/mvt/datatypes_json_field_auto.mbtiles',
-                     open_options = ['CLIP=NO'])
+                     open_options=['CLIP=NO'])
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldCount() != 2:
         gdaltest.post_reason('fail')
@@ -680,7 +680,7 @@ def ogr_mvt_x_y_z_filename_scheme():
 def ogr_mvt_polygon_larger_than_header():
 
     ds = gdal.OpenEx('data/mvt/polygon_larger_than_header.pbf',
-                     open_options = ['CLIP=NO'])
+                     open_options=['CLIP=NO'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f is None:
@@ -714,14 +714,14 @@ def ogr_mvt_errors():
     # Inexisting metadata
     with gdaltest.error_handler():
         if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf',
-                        open_options = ['METADATA_FILE=/i_do_not/exist']) is None:
+                        open_options=['METADATA_FILE=/i_do_not/exist']) is None:
             gdaltest.post_reason('fail')
             return 'fail'
 
     # Invalid metadata
     with gdaltest.error_handler():
         if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf',
-                        open_options = ['METADATA_FILE=ogr_mvt.py']) is None:
+                        open_options=['METADATA_FILE=ogr_mvt.py']) is None:
             gdaltest.post_reason('fail')
             return 'fail'
 
@@ -729,7 +729,7 @@ def ogr_mvt_errors():
     gdal.FileFromMemBuffer('/vsimem/my.json', '{}')
     with gdaltest.error_handler():
         if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf',
-                        open_options = ['METADATA_FILE=/vsimem/my.json']) is None:
+                        open_options=['METADATA_FILE=/vsimem/my.json']) is None:
             gdaltest.post_reason('fail')
             return 'fail'
     gdal.Unlink('/vsimem/my.json')
@@ -738,7 +738,7 @@ def ogr_mvt_errors():
     gdal.FileFromMemBuffer('/vsimem/my.json', '{ "json": "x y" }')
     with gdaltest.error_handler():
         if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf',
-                        open_options = ['METADATA_FILE=/vsimem/my.json']) is None:
+                        open_options=['METADATA_FILE=/vsimem/my.json']) is None:
             gdaltest.post_reason('fail')
             return 'fail'
     gdal.Unlink('/vsimem/my.json')
@@ -770,7 +770,7 @@ def ogr_mvt_http_start():
     if not gdaltest.built_against_curl():
         return 'skip'
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
         return 'skip'
 
@@ -904,21 +904,21 @@ def ogr_mvt_write_one_layer():
 
     # Test empty layer: OK
     with gdaltest.error_handler():
-        out_ds = gdal.VectorTranslate('/vsimem/outmvt', src_ds, format = 'MVT')
+        out_ds = gdal.VectorTranslate('/vsimem/outmvt', src_ds, format='MVT')
     if out_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Cannot create directory
     with gdaltest.error_handler():
-        out_ds = gdal.VectorTranslate('/i_dont/exist/outmvt', src_ds, format = 'MVT')
+        out_ds = gdal.VectorTranslate('/i_dont/exist/outmvt', src_ds, format='MVT')
     if out_ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Directory already exists
     with gdaltest.error_handler():
-        out_ds = gdal.VectorTranslate('/vsimem/outmvt', src_ds, format = 'MVT')
+        out_ds = gdal.VectorTranslate('/vsimem/outmvt', src_ds, format='MVT')
     if out_ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -980,7 +980,7 @@ def ogr_mvt_write_one_layer():
 
     with gdaltest.error_handler():
         out_ds = gdal.VectorTranslate('/vsimem/outmvt', src_ds,
-                                      options = '-f MVT -preserve_fid')
+                                      options='-f MVT -preserve_fid')
     if out_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1227,7 +1227,7 @@ def ogr_mvt_write_conf():
                            'minzoom': 1,
                            'maxzoom': 2}}
     out_ds = gdal.VectorTranslate('/vsimem/outmvt', src_ds,
-        format = 'MVT', datasetCreationOptions = ["CONF=%s" % json.dumps(conf)])
+        format='MVT', datasetCreationOptions=["CONF=%s" % json.dumps(conf)])
     if out_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1348,7 +1348,7 @@ def ogr_mvt_write_limitations_max_size():
     # Also test single threaded execution
     with gdaltest.config_option('GDAL_NUM_THREADS', '1'):
         out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds,
-                                  datasetCreationOptions = ['MAX_SIZE=100', 'SIMPLIFICATION=1'])
+                                  datasetCreationOptions=['MAX_SIZE=100', 'SIMPLIFICATION=1'])
     if out_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1400,7 +1400,7 @@ def ogr_mvt_write_polygon_repaired():
     f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,0 0))'))
     lyr.CreateFeature(f)
 
-    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds, datasetCreationOptions = ['MAXZOOM=0'])
+    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds, datasetCreationOptions=['MAXZOOM=0'])
     if out_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1489,7 +1489,7 @@ def ogr_mvt_write_limitations_max_size_polygon():
     lyr.CreateFeature(f)
 
     out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds,
-                                  datasetCreationOptions = ['MAX_SIZE=100'])
+                                  datasetCreationOptions=['MAX_SIZE=100'])
     if out_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1530,8 +1530,8 @@ def ogr_mvt_write_limitations_max_features():
     f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((500000 1000000,510000 1000000,510000 1100000,500000 1000000))'))
     lyr.CreateFeature(f)
 
-    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds, format = 'MVT',
-                                  datasetCreationOptions = ['MAX_FEATURES=1'])
+    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds, format='MVT',
+                                  datasetCreationOptions=['MAX_FEATURES=1'])
     if out_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1569,14 +1569,14 @@ def ogr_mvt_write_custom_tiling_scheme():
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
-    lyr = src_ds.CreateLayer('mylayer', srs = srs)
+    lyr = src_ds.CreateLayer('mylayer', srs=srs)
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(12 71,13 72)'))
     lyr.CreateFeature(f)
 
-    out_ds = gdal.VectorTranslate('/vsimem/out', src_ds, format = 'MVT',
-                                  datasetCreationOptions = ['TILING_SCHEME=EPSG:3067,-548576,8388608,2097152'])
+    out_ds = gdal.VectorTranslate('/vsimem/out', src_ds, format='MVT',
+                                  datasetCreationOptions=['TILING_SCHEME=EPSG:3067,-548576,8388608,2097152'])
     if out_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1621,7 +1621,7 @@ def ogr_mvt_write_errors():
     gdal.RmdirRecursive('/vsimem/foo.bar')
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
-                                                options = ['FORMAT=MBTILES'])
+                                                options=['FORMAT=MBTILES'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1630,7 +1630,7 @@ def ogr_mvt_write_errors():
     gdal.RmdirRecursive('/vsimem/foo')
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
-                                options = ['TEMPORARY_DB=/i/do_not/exist.db'])
+                                options=['TEMPORARY_DB=/i/do_not/exist.db'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1638,7 +1638,7 @@ def ogr_mvt_write_errors():
     # cannot create mbtiles file
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/i/do_not/exist.mbtiles',
-                                options = ['TEMPORARY_DB=/vsimem/temp.db'])
+                                options=['TEMPORARY_DB=/vsimem/temp.db'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1648,13 +1648,13 @@ def ogr_mvt_write_errors():
     gdal.RmdirRecursive('/vsimem/foo')
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
-                                                options = ['MINZOOM=-1'])
+                                                options=['MINZOOM=-1'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
-                                                options = ['MINZOOM=30'])
+                                                options=['MINZOOM=30'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1663,13 +1663,13 @@ def ogr_mvt_write_errors():
     gdal.RmdirRecursive('/vsimem/foo')
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
-                                                options = ['MAXZOOM=-1'])
+                                                options=['MAXZOOM=-1'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
-                                                options = ['MAXZOOM=30'])
+                                                options=['MAXZOOM=30'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1678,7 +1678,7 @@ def ogr_mvt_write_errors():
     gdal.RmdirRecursive('/vsimem/foo')
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
-                                        options = ['MINZOOM=1', 'MAXZOOM=0'])
+                                        options=['MINZOOM=1', 'MAXZOOM=0'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1687,7 +1687,7 @@ def ogr_mvt_write_errors():
     gdal.RmdirRecursive('/vsimem/foo')
     ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo')
     with gdaltest.error_handler():
-        lyr = ds.CreateLayer('foo', options = ['MINZOOM=-1'])
+        lyr = ds.CreateLayer('foo', options=['MINZOOM=-1'])
     if lyr is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1697,7 +1697,7 @@ def ogr_mvt_write_errors():
     gdal.FileFromMemBuffer('/vsimem/invalid.json', 'foo bar')
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
-                                        options = ['CONF=/vsimem/invalid.json'])
+                                        options=['CONF=/vsimem/invalid.json'])
     gdal.Unlink('/vsimem/invalid.json')
     if ds is not None:
         gdaltest.post_reason('fail')
@@ -1706,7 +1706,7 @@ def ogr_mvt_write_errors():
     # TILING_SCHEME not allowed with MBTILES
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.mbtiles',
-                            options = ['TILING_SCHEME=EPSG:4326,-180,180,360'])
+                            options=['TILING_SCHEME=EPSG:4326,-180,180,360'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1715,7 +1715,7 @@ def ogr_mvt_write_errors():
     gdal.RmdirRecursive('/vsimem/foo')
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
-                            options = ['TILING_SCHEME=EPSG:4326'])
+                            options=['TILING_SCHEME=EPSG:4326'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1739,7 +1739,7 @@ def ogr_mvt_write_errors():
     gdal.RmdirRecursive('/vsimem/foo')
     with gdaltest.config_option('OGR_MVT_REMOVE_TEMP_FILE', 'NO'):
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo')
-    temp_ds = ogr.Open('/vsimem/foo.temp.db', update = 1)
+    temp_ds = ogr.Open('/vsimem/foo.temp.db', update=1)
     temp_ds.ExecuteSQL('DROP TABLE temp')
     temp_ds = None
     gdal.Unlink('/vsimem/foo.temp.db')
@@ -1759,7 +1759,7 @@ def ogr_mvt_write_errors():
     with gdaltest.config_option('OGR_MVT_REMOVE_TEMP_FILE', 'NO'):
         with gdaltest.config_option('GDAL_NUM_THREADS', '1'):
             ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo')
-    temp_ds = ogr.Open('/vsimem/foo.temp.db', update = 1)
+    temp_ds = ogr.Open('/vsimem/foo.temp.db', update=1)
     temp_ds.ExecuteSQL('DROP TABLE temp')
     temp_ds = None
     gdal.Unlink('/vsimem/foo.temp.db')
@@ -1778,7 +1778,7 @@ def ogr_mvt_write_errors():
     gdal.RmdirRecursive('/vsimem/foo')
     ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo')
     with gdaltest.error_handler():
-        lyr = ds.CreateLayer('test', srs = osr.SpatialReference())
+        lyr = ds.CreateLayer('test', srs=osr.SpatialReference())
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
     lyr.CreateFeature(f)
@@ -1805,7 +1805,7 @@ def ogr_mvt_write_reuse_temp_db():
     lyr.CreateFeature(f)
 
     with gdaltest.config_option('OGR_MVT_REMOVE_TEMP_FILE', 'NO'):
-        gdal.VectorTranslate('/vsimem/out', src_ds, format = 'MVT')
+        gdal.VectorTranslate('/vsimem/out', src_ds, format='MVT')
 
     if gdal.VSIStatL('/vsimem/out.temp.db') is None:
         gdaltest.post_reason('fail')
@@ -1814,7 +1814,7 @@ def ogr_mvt_write_reuse_temp_db():
     gdal.RmdirRecursive('/vsimem/out')
 
     with gdaltest.config_option('OGR_MVT_REUSE_TEMP_FILE', 'YES'):
-        gdal.VectorTranslate('/vsimem/out', src_ds, format = 'MVT')
+        gdal.VectorTranslate('/vsimem/out', src_ds, format='MVT')
 
     out_ds = ogr.Open('/vsimem/out/5')
     if out_ds is None:

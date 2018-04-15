@@ -86,7 +86,7 @@ def ogr_sde_2():
     shp_lyr = shp_ds.GetLayer(0)
 
     ds = ogr.Open(base, update=1)
-    lyr = ds.CreateLayer('SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=shp_lyr.GetSpatialRef(),options = ['OVERWRITE=YES'])
+    lyr = ds.CreateLayer('SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=shp_lyr.GetSpatialRef(),options=['OVERWRITE=YES'])
 #    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon)
 
     ogrtest.quick_create_layer_def(lyr,
@@ -98,7 +98,7 @@ def ogr_sde_2():
     #######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
@@ -297,9 +297,9 @@ def ogr_sde_8():
     ref.ImportFromWkt('LOCAL_CS["IMAGE"]')
 
     ds = ogr.Open(base, update=1)
-    lyr = ds.CreateLayer('SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options = ['OVERWRITE=YES'])
+    lyr = ds.CreateLayer('SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options=['OVERWRITE=YES'])
     ref.ImportFromEPSG(4326)
-    lyr = ds.CreateLayer('SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options = ['OVERWRITE=YES'])
+    lyr = ds.CreateLayer('SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options=['OVERWRITE=YES'])
     ogrtest.quick_create_layer_def(lyr,
                                     [('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
@@ -309,7 +309,7 @@ def ogr_sde_8():
     #######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []

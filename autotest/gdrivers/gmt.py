@@ -51,7 +51,7 @@ def gmt_1():
     gt = (59.958333333333336,0.083333333333333,0.0,
           25.041666666666668,0.0,-0.083333333333333)
 
-    return tst.testOpen(check_gt = gt)
+    return tst.testOpen(check_gt=gt)
 
 ###############################################################################
 # Verify a simple createcopy operation with 16bit data.
@@ -63,7 +63,7 @@ def gmt_2():
         return 'skip'
 
     tst = gdaltest.GDALTest('GMT', 'int16.tif', 1, 4672)
-    return tst.testCreateCopy(check_gt = 1)
+    return tst.testCreateCopy(check_gt=1)
 
 ###############################################################################
 

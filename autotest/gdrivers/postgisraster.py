@@ -114,7 +114,7 @@ def postgisraster_compare_utm():
     # dataset actually contains many sub-datasets. test the first one
     dst_ds = gdal.Open(dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'])
 
-    diff = gdaltest.compare_ds(src_ds, dst_ds, width=100, height=100, verbose = 1)
+    diff = gdaltest.compare_ds(src_ds, dst_ds, width=100, height=100, verbose=1)
     if diff == 0:
         return 'success'
     else:
@@ -134,7 +134,7 @@ def postgisraster_compare_small_world():
     # dataset actually contains many sub-datasets. test the first one
     dst_ds = gdal.Open(dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'])
 
-    diff = gdaltest.compare_ds(src_ds, dst_ds, width=40, height=20, verbose = 1)
+    diff = gdaltest.compare_ds(src_ds, dst_ds, width=40, height=20, verbose=1)
     if diff == 0:
         return 'success'
     else:
@@ -161,8 +161,8 @@ def postgisraster_test_utm_open():
     main_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
 
     # Try to open PostGISRaster with the same data than original tif file
-    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 1, cs, filename_absolute = 1)
-    return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)
+    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 1, cs, filename_absolute=1)
+    return tst.testOpen(check_prj=prj, check_gt=gt, skip_checksum=True)
 
 ###############################################################################
 #
@@ -185,8 +185,8 @@ def postgisraster_test_small_world_open_b1():
     main_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
     # Try to open PostGISRaster with the same data than original tif file
-    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 1, cs, filename_absolute = 1)
-    return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)
+    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 1, cs, filename_absolute=1)
+    return tst.testOpen(check_prj=prj, check_gt=gt, skip_checksum=True)
 
 ###############################################################################
 #
@@ -209,8 +209,8 @@ def postgisraster_test_small_world_open_b2():
     main_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
     # Try to open PostGISRaster with the same data than original tif file
-    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 2, cs, filename_absolute = 1)
-    return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)
+    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 2, cs, filename_absolute=1)
+    return tst.testOpen(check_prj=prj, check_gt=gt, skip_checksum=True)
 
 ###############################################################################
 #
@@ -235,9 +235,9 @@ def postgisraster_test_small_world_open_b3():
     main_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
     # Checksum for each band can be obtained by gdalinfo -checksum <file>
-    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 3, cs, filename_absolute = 1)
+    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 3, cs, filename_absolute=1)
 
-    return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)
+    return tst.testOpen(check_prj=prj, check_gt=gt, skip_checksum=True)
 
 
 def postgisraster_test_create_copy_bad_conn_string():
@@ -246,7 +246,7 @@ def postgisraster_test_create_copy_bad_conn_string():
 
     src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
-    new_ds = gdaltest.postgisrasterDriver.CreateCopy("bogus connection string", src_ds, strict = True)
+    new_ds = gdaltest.postgisrasterDriver.CreateCopy("bogus connection string", src_ds, strict=True)
 
     if new_ds is None:
         return 'success'
@@ -264,7 +264,7 @@ def postgisraster_test_create_copy_no_dbname():
     # a bogus PG: filename to the postgis raster driver
     options = ['APPEND_SUBDATASET=YES']
 
-    new_ds = gdaltest.postgisrasterDriver.CreateCopy("PG: no database name", src_ds, strict = True, options = options)
+    new_ds = gdaltest.postgisrasterDriver.CreateCopy("PG: no database name", src_ds, strict=True, options=options)
 
     if new_ds is None:
         return 'success'
@@ -282,7 +282,7 @@ def postgisraster_test_create_copy_no_tablename():
     # a bogus PG: filename to the postgis raster driver
     options = ['APPEND_SUBDATASET=YES']
 
-    new_ds = gdaltest.postgisrasterDriver.CreateCopy(gdaltest.postgisraster_connection_string, src_ds, strict = True, options = options)
+    new_ds = gdaltest.postgisrasterDriver.CreateCopy(gdaltest.postgisraster_connection_string, src_ds, strict=True, options=options)
 
     if new_ds is None:
         return 'success'
@@ -300,7 +300,7 @@ def postgisraster_test_create_copy_and_delete():
 
     src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
-    new_ds = gdaltest.postgisrasterDriver.CreateCopy(gdaltest.postgisraster_connection_string + "table='small_world_copy'", src_ds, strict = True)
+    new_ds = gdaltest.postgisrasterDriver.CreateCopy(gdaltest.postgisraster_connection_string + "table='small_world_copy'", src_ds, strict=True)
 
     if new_ds is None:
         return 'fail'
@@ -324,7 +324,7 @@ def postgisraster_test_create_copy_and_delete_phases():
 
     src_md = src_ds.GetMetadata('SUBDATASETS').keys()
 
-    new_ds = gdaltest.postgisrasterDriver.CreateCopy(gdaltest.postgisraster_connection_string + "table='small_world_copy'", src_ds, strict = True)
+    new_ds = gdaltest.postgisrasterDriver.CreateCopy(gdaltest.postgisraster_connection_string + "table='small_world_copy'", src_ds, strict=True)
 
     new_md = new_ds.GetMetadata('SUBDATASETS').keys()
 

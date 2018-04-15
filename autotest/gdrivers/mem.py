@@ -53,14 +53,14 @@ def mem_1():
         gdaltest.post_reason('projection wrong')
         return 'fail'
 
-    if ds.GetGeoTransform(can_return_null = True) is not None:
+    if ds.GetGeoTransform(can_return_null=True) is not None:
         gdaltest.post_reason('geotransform wrong')
         return 'fail'
 
     raw_data = array.array('f',list(range(150))).tostring()
     ds.WriteRaster(0, 0, 50, 3, raw_data,
-                    buf_type = gdal.GDT_Float32,
-                    band_list = [1])
+                    buf_type=gdal.GDT_Float32,
+                    band_list=[1])
 
     wkt = gdaltest.user_srs_to_wkt('EPSG:26711')
     ds.SetProjection(wkt)
@@ -257,7 +257,7 @@ def mem_5():
 
     drv = gdal.GetDriverByName('MEM')
 
-    ds = drv.Create('', 100, 100, 3, options = ['INTERLEAVE=PIXEL'])
+    ds = drv.Create('', 100, 100, 3, options=['INTERLEAVE=PIXEL'])
     expected_cs = [0, 0, 0]
     for i in range(3):
         cs = ds.GetRasterBand(i+1).Checksum()
@@ -320,7 +320,7 @@ def mem_6():
 
     # Out of memory error
     with gdaltest.error_handler():
-        ds = drv.Create('', 0x7FFFFFFF, 0x7FFFFFFF, 1, options = ['INTERLEAVE=PIXEL'])
+        ds = drv.Create('', 0x7FFFFFFF, 0x7FFFFFFF, 1, options=['INTERLEAVE=PIXEL'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -395,7 +395,7 @@ def mem_9():
     drv = gdal.GetDriverByName('MEM')
 
     for interleave in ['BAND', 'PIXEL'] :
-        out_ds = drv.CreateCopy('', src_ds, options = ['INTERLEAVE=%s' % interleave])
+        out_ds = drv.CreateCopy('', src_ds, options=['INTERLEAVE=%s' % interleave])
         ref_data = src_ds.GetRasterBand(2).ReadRaster(20,8,4,5)
         got_data = out_ds.GetRasterBand(2).ReadRaster(20,8,4,5)
         if ref_data != got_data:
@@ -441,14 +441,14 @@ def mem_9():
             gdaltest.post_reason('fail')
             return 'fail'
 
-        ref_data = src_ds.ReadRaster(20,20,4,5, buf_type = gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
-        got_data = out_ds.ReadRaster(20,20,4,5, buf_type = gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
+        ref_data = src_ds.ReadRaster(20,20,4,5, buf_type=gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
+        got_data = out_ds.ReadRaster(20,20,4,5, buf_type=gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
         if ref_data != got_data:
             print(interleave)
             gdaltest.post_reason('fail')
             return 'fail'
-        out_ds.WriteRaster(20,20,4,5, got_data, buf_type = gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
-        got_data = out_ds.ReadRaster(20,20,4,5, buf_type = gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
+        out_ds.WriteRaster(20,20,4,5, got_data, buf_type=gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
+        got_data = out_ds.ReadRaster(20,20,4,5, buf_type=gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
         if ref_data != got_data:
             print(interleave)
             gdaltest.post_reason('fail')
@@ -474,9 +474,9 @@ def mem_9():
             return 'fail'
 
         # Test IRasterIO(GF_Write, change data type) + IWriteBlock() + IRasterIO(GF_Read, change data type)
-        ref_data = src_ds.GetRasterBand(1).ReadRaster(10,11,4,5, buf_type = gdal.GDT_Int32)
-        out_ds.GetRasterBand(1).WriteRaster(10,11,4,5,ref_data, buf_type = gdal.GDT_Int32)
-        got_data = out_ds.GetRasterBand(1).ReadRaster(10,11,4,5, buf_type = gdal.GDT_Int32)
+        ref_data = src_ds.GetRasterBand(1).ReadRaster(10,11,4,5, buf_type=gdal.GDT_Int32)
+        out_ds.GetRasterBand(1).WriteRaster(10,11,4,5,ref_data, buf_type=gdal.GDT_Int32)
+        got_data = out_ds.GetRasterBand(1).ReadRaster(10,11,4,5, buf_type=gdal.GDT_Int32)
         if ref_data != got_data:
             print(interleave)
             gdaltest.post_reason('fail')

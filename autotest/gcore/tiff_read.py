@@ -1429,7 +1429,7 @@ def tiff_direct_and_virtual_mem_io():
     if dt == gdal.GDT_Int16:
         dt_size = 2
         mem_ds = gdal.GetDriverByName('MEM').Create('', src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount, dt)
-        data = src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, buf_type = dt)
+        data = src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, buf_type=dt)
         new_vals = []
         for i in range(4*src_ds.RasterXSize*src_ds.RasterYSize):
             if sys.version_info >= (3,0,0):
@@ -1442,12 +1442,12 @@ def tiff_direct_and_virtual_mem_io():
             data = ''.encode('latin1').join(new_vals)
         else:
             data = ''.join(new_vals)
-        mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data, buf_type = dt)
+        mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data, buf_type=dt)
         src_ds = mem_ds
     elif dt == gdal.GDT_CInt16:
         dt_size = 4
         mem_ds = gdal.GetDriverByName('MEM').Create('', src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount, dt)
-        data = src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, buf_type = dt)
+        data = src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, buf_type=dt)
         new_vals = []
         for i in range(4*src_ds.RasterXSize*src_ds.RasterYSize):
             if sys.version_info >= (3,0,0):
@@ -1464,7 +1464,7 @@ def tiff_direct_and_virtual_mem_io():
             data = ''.encode('latin1').join(new_vals)
         else:
             data = ''.join(new_vals)
-        mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data, buf_type = dt)
+        mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data, buf_type=dt)
         src_ds = mem_ds
 
     for truncated in [False, True]:
@@ -1488,12 +1488,12 @@ def tiff_direct_and_virtual_mem_io():
             creation_options = []
             if (dt == gdal.GDT_CInt16 or dt == gdal.GDT_Int16):
                 creation_options += ['ENDIANNESS=INVERTED']
-            out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options = creation_options)
+            out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options=creation_options)
             out_ds.FlushCache()
             out_ds = None
         elif i == 1:
             filename = '%s/tiff_direct_io_separate.tif' % prefix
-            out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options = ['INTERLEAVE=BAND'])
+            out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options=['INTERLEAVE=BAND'])
             out_ds.FlushCache()
             out_ds = None
         elif i == 2:
@@ -1502,34 +1502,34 @@ def tiff_direct_and_virtual_mem_io():
             if (dt == gdal.GDT_CInt16 or dt == gdal.GDT_Int16):
                 creation_options += ['ENDIANNESS=INVERTED']
             if option == 'GTIFF_VIRTUAL_MEM_IO' and prefix == '/vsimem':
-                gdal.Translate(filename, src_ds, bandList = [1, 2, 3], creationOptions= creation_options)
+                gdal.Translate(filename, src_ds, bandList=[1, 2, 3], creationOptions=creation_options)
             else:
-                out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options = creation_options)
+                out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options=creation_options)
                 out_ds.FlushCache()
                 out_ds = None
         elif i == 3:
             filename = '%s/tiff_direct_io_tiled_separate.tif' % prefix
-            out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options = ['TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=16', 'INTERLEAVE=BAND'])
+            out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options=['TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=16', 'INTERLEAVE=BAND'])
             out_ds.FlushCache()
             out_ds = None
         elif i == 4:
             filename = '%s/tiff_direct_io_sparse.tif' % prefix
-            out_ds = gdal.GetDriverByName('GTiff').Create(filename, 165, 150, 4, dt, options = ['SPARSE_OK=YES'])
+            out_ds = gdal.GetDriverByName('GTiff').Create(filename, 165, 150, 4, dt, options=['SPARSE_OK=YES'])
             out_ds.FlushCache()
             out_ds = None
         elif i == 5:
             filename = '%s/tiff_direct_io_sparse_separate.tif' % prefix
-            out_ds = gdal.GetDriverByName('GTiff').Create(filename, 165, 150, 4, dt, options = ['SPARSE_OK=YES', 'INTERLEAVE=BAND'])
+            out_ds = gdal.GetDriverByName('GTiff').Create(filename, 165, 150, 4, dt, options=['SPARSE_OK=YES', 'INTERLEAVE=BAND'])
             out_ds.FlushCache()
             out_ds = None
         elif i == 6:
             filename = '%s/tiff_direct_io_sparse_tiled.tif' % prefix
-            out_ds = gdal.GetDriverByName('GTiff').Create(filename, 165, 150, 4, dt, options = ['SPARSE_OK=YES', 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=16'])
+            out_ds = gdal.GetDriverByName('GTiff').Create(filename, 165, 150, 4, dt, options=['SPARSE_OK=YES', 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=16'])
             out_ds.FlushCache()
             out_ds = None
         else:
             filename = '%s/tiff_direct_io_sparse_tiled_separate.tif' % prefix
-            out_ds = gdal.GetDriverByName('GTiff').Create(filename, 165, 150, 4, dt, options = ['SPARSE_OK=YES', 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=16', 'INTERLEAVE=BAND'])
+            out_ds = gdal.GetDriverByName('GTiff').Create(filename, 165, 150, 4, dt, options=['SPARSE_OK=YES', 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=16', 'INTERLEAVE=BAND'])
             out_ds.FlushCache()
             out_ds = None
 
@@ -1576,27 +1576,27 @@ def tiff_direct_and_virtual_mem_io():
             gdal.PushErrorHandler()
         ref_data_native_type = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize)
         ref_data_native_type_whole = ds.GetRasterBand(1).ReadRaster()
-        ref_data_native_type_downsampled = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2))
-        ref_data_native_type_downsampled_not_nearest = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), resample_alg = gdal.GRIORA_Bilinear)
-        ref_data_native_type_upsampled = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = nbands * xsize, buf_ysize = nbands * ysize)
-        ref_data_native_type_custom_spacings = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = nbands * dt_size)
-        ref_data_float32 = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
+        ref_data_native_type_downsampled = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=int(xsize/2), buf_ysize=int(ysize/2))
+        ref_data_native_type_downsampled_not_nearest = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=int(xsize/2), buf_ysize=int(ysize/2), resample_alg=gdal.GRIORA_Bilinear)
+        ref_data_native_type_upsampled = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=nbands * xsize, buf_ysize=nbands * ysize)
+        ref_data_native_type_custom_spacings = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space=nbands * dt_size)
+        ref_data_float32 = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_type=gdal.GDT_Float32)
         ref_nbands_data_native_type = ds.ReadRaster(xoff, yoff, xsize, ysize)
         ref_nbands_data_native_type_whole = ds.ReadRaster()
-        ref_nbands_data_native_type_downsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2))
-        ref_nbands_data_native_type_downsampled_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
-        ref_nbands_data_native_type_downsampled_not_nearest = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), resample_alg = gdal.GRIORA_Bilinear)
-        ref_nbands_data_native_type_upsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = 4 * xsize, buf_ysize = 4 * ysize)
-        ref_nbands_data_native_type_downsampled_x_upsampled_y = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = 32 * ysize)
-        ref_nbands_data_native_type_unordered_list = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list = [nbands-i for i in range(nbands)])
-        ref_nbands_data_native_type_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
-        ref_nbands_data_native_type_pixel_interleaved_whole = ds.ReadRaster(buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
-        ref_nbands_m_1_data_native_type_pixel_interleaved_with_extra_space = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list = [i+1 for i in range(nbands-1)], buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
-        ref_nbands_data_float32 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
-        ref_nbands_data_float32_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32, buf_pixel_space = nbands*sizeof_float, buf_band_space = 1*sizeof_float)
-        ref_nbands_data_native_type_custom_spacings = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = 2 * nbands * dt_size, buf_band_space = dt_size)
+        ref_nbands_data_native_type_downsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=int(xsize/2), buf_ysize=int(ysize/2))
+        ref_nbands_data_native_type_downsampled_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=int(xsize/2), buf_ysize=int(ysize/2), buf_pixel_space=nbands * dt_size, buf_band_space=dt_size)
+        ref_nbands_data_native_type_downsampled_not_nearest = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=int(xsize/2), buf_ysize=int(ysize/2), resample_alg=gdal.GRIORA_Bilinear)
+        ref_nbands_data_native_type_upsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=4 * xsize, buf_ysize=4 * ysize)
+        ref_nbands_data_native_type_downsampled_x_upsampled_y = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=int(xsize/2), buf_ysize=32 * ysize)
+        ref_nbands_data_native_type_unordered_list = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list=[nbands-i for i in range(nbands)])
+        ref_nbands_data_native_type_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space=nbands * dt_size, buf_band_space=dt_size)
+        ref_nbands_data_native_type_pixel_interleaved_whole = ds.ReadRaster(buf_pixel_space=nbands * dt_size, buf_band_space=dt_size)
+        ref_nbands_m_1_data_native_type_pixel_interleaved_with_extra_space = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list=[i+1 for i in range(nbands-1)], buf_pixel_space=nbands * dt_size, buf_band_space=dt_size)
+        ref_nbands_data_float32 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type=gdal.GDT_Float32)
+        ref_nbands_data_float32_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type=gdal.GDT_Float32, buf_pixel_space=nbands*sizeof_float, buf_band_space=1*sizeof_float)
+        ref_nbands_data_native_type_custom_spacings = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space=2 * nbands * dt_size, buf_band_space=dt_size)
         if nbands == 3:
-            ref_nbands_data_native_type_custom_spacings_2 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = 4 * dt_size, buf_band_space = dt_size)
+            ref_nbands_data_native_type_custom_spacings_2 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space=4 * dt_size, buf_band_space=dt_size)
         if truncated:
             gdal.PopErrorHandler()
         ds = None
@@ -1609,28 +1609,28 @@ def tiff_direct_and_virtual_mem_io():
         band_interleaved = ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE') == 'BAND'
         got_data_native_type = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize)
         got_data_native_type_whole = ds.GetRasterBand(1).ReadRaster()
-        got_data_native_type_downsampled = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2))
-        got_data_native_type_downsampled_not_nearest = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), resample_alg = gdal.GRIORA_Bilinear)
-        got_data_native_type_upsampled = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = nbands * xsize, buf_ysize = nbands * ysize)
-        got_data_native_type_custom_spacings = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = nbands * dt_size)
-        got_data_float32 = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
+        got_data_native_type_downsampled = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=int(xsize/2), buf_ysize=int(ysize/2))
+        got_data_native_type_downsampled_not_nearest = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=int(xsize/2), buf_ysize=int(ysize/2), resample_alg=gdal.GRIORA_Bilinear)
+        got_data_native_type_upsampled = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=nbands * xsize, buf_ysize=nbands * ysize)
+        got_data_native_type_custom_spacings = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space=nbands * dt_size)
+        got_data_float32 = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_type=gdal.GDT_Float32)
         got_nbands_data_native_type = ds.ReadRaster(xoff, yoff, xsize, ysize)
         got_nbands_data_native_type_whole = ds.ReadRaster()
-        got_nbands_data_native_type_bottom_right_downsampled = ds.ReadRaster(ds.RasterXSize-2, ds.RasterYSize - 1, 2, 1, buf_xsize = 1, buf_ysize = 1, buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
-        got_nbands_data_native_type_downsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2))
-        got_nbands_data_native_type_downsampled_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
-        got_nbands_data_native_type_downsampled_not_nearest = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), resample_alg = gdal.GRIORA_Bilinear)
-        got_nbands_data_native_type_upsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = 4 * xsize, buf_ysize = 4 * ysize)
-        got_nbands_data_native_type_downsampled_x_upsampled_y = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = 32 * ysize)
-        got_nbands_data_native_type_unordered_list = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list = [nbands-i for i in range(nbands)])
-        got_nbands_data_native_type_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
-        got_nbands_data_native_type_pixel_interleaved_whole = ds.ReadRaster(buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
-        got_nbands_m_1_data_native_type_pixel_interleaved_with_extra_space = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list = [i+1 for i in range(nbands-1)], buf_pixel_space = nbands * dt_size, buf_band_space = dt_size)
-        got_nbands_data_float32 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
-        got_nbands_data_float32_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32, buf_pixel_space = nbands*sizeof_float, buf_band_space = 1*sizeof_float)
-        got_nbands_data_native_type_custom_spacings = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = 2 * nbands * dt_size, buf_band_space = dt_size)
+        got_nbands_data_native_type_bottom_right_downsampled = ds.ReadRaster(ds.RasterXSize-2, ds.RasterYSize - 1, 2, 1, buf_xsize=1, buf_ysize=1, buf_pixel_space=nbands * dt_size, buf_band_space=dt_size)
+        got_nbands_data_native_type_downsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=int(xsize/2), buf_ysize=int(ysize/2))
+        got_nbands_data_native_type_downsampled_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=int(xsize/2), buf_ysize=int(ysize/2), buf_pixel_space=nbands * dt_size, buf_band_space=dt_size)
+        got_nbands_data_native_type_downsampled_not_nearest = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=int(xsize/2), buf_ysize=int(ysize/2), resample_alg=gdal.GRIORA_Bilinear)
+        got_nbands_data_native_type_upsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=4 * xsize, buf_ysize=4 * ysize)
+        got_nbands_data_native_type_downsampled_x_upsampled_y = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize=int(xsize/2), buf_ysize=32 * ysize)
+        got_nbands_data_native_type_unordered_list = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list=[nbands-i for i in range(nbands)])
+        got_nbands_data_native_type_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space=nbands * dt_size, buf_band_space=dt_size)
+        got_nbands_data_native_type_pixel_interleaved_whole = ds.ReadRaster(buf_pixel_space=nbands * dt_size, buf_band_space=dt_size)
+        got_nbands_m_1_data_native_type_pixel_interleaved_with_extra_space = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list=[i+1 for i in range(nbands-1)], buf_pixel_space=nbands * dt_size, buf_band_space=dt_size)
+        got_nbands_data_float32 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type=gdal.GDT_Float32)
+        got_nbands_data_float32_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type=gdal.GDT_Float32, buf_pixel_space=nbands*sizeof_float, buf_band_space=1*sizeof_float)
+        got_nbands_data_native_type_custom_spacings = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space=2 * nbands * dt_size, buf_band_space=dt_size)
         if nbands == 3:
-            got_nbands_data_native_type_custom_spacings_2 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = 4 * dt_size, buf_band_space = dt_size)
+            got_nbands_data_native_type_custom_spacings_2 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space=4 * dt_size, buf_band_space=dt_size)
         ds = None
         gdal.SetConfigOption(option, old_val)
         if truncated:
@@ -2592,7 +2592,7 @@ def tiff_read_strip_separate_as_rgba():
 
     # 3 band
     gdal.Translate('/vsimem/tiff_read_strip_separate_as_rgba.tif',
-                   'data/rgbsmall.tif', options = '-co INTERLEAVE=BAND')
+                   'data/rgbsmall.tif', options='-co INTERLEAVE=BAND')
 
     gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
     ds = gdal.Open('/vsimem/tiff_read_strip_separate_as_rgba.tif')
@@ -2609,7 +2609,7 @@ def tiff_read_strip_separate_as_rgba():
     # 3 band with PHOTOMETRIC_MINISBLACK to trigger gtStripSeparate() to
     # use the single band code path
     gdal.Translate('/vsimem/tiff_read_strip_separate_as_rgba.tif',
-                   'data/rgbsmall.tif', options = '-co INTERLEAVE=BAND -co PHOTOMETRIC=MINISBLACK')
+                   'data/rgbsmall.tif', options='-co INTERLEAVE=BAND -co PHOTOMETRIC=MINISBLACK')
 
     gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
     ds = gdal.Open('/vsimem/tiff_read_strip_separate_as_rgba.tif')
@@ -2636,7 +2636,7 @@ def tiff_read_tiled_separate_as_rgba():
 
     # 3 band
     gdal.Translate('/vsimem/tiff_read_tiled_separate_as_rgba.tif',
-                   'data/rgbsmall.tif', options = '-co TILED=YES -co INTERLEAVE=BAND')
+                   'data/rgbsmall.tif', options='-co TILED=YES -co INTERLEAVE=BAND')
 
     gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
     ds = gdal.Open('/vsimem/tiff_read_tiled_separate_as_rgba.tif')
@@ -2652,7 +2652,7 @@ def tiff_read_tiled_separate_as_rgba():
 
     # Single band
     gdal.Translate('/vsimem/tiff_read_tiled_separate_as_rgba.tif',
-                   'data/byte.tif', options = '-co TILED=YES -co INTERLEAVE=BAND')
+                   'data/byte.tif', options='-co TILED=YES -co INTERLEAVE=BAND')
 
     gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
     ds = gdal.Open('/vsimem/tiff_read_tiled_separate_as_rgba.tif')
@@ -2873,7 +2873,7 @@ def tiff_read_gcp_internal_and_auxxml():
             open_options = []
             if config_option_value is not None:
                 open_options += ['GEOREF_SOURCES=' + config_option_value]
-            ds = gdal.OpenEx('/vsimem/byte_gcp.tif', open_options = open_options)
+            ds = gdal.OpenEx('/vsimem/byte_gcp.tif', open_options=open_options)
             if iteration == 0:
                 gcp_count = ds.GetGCPCount()
                 srs_wkt = ds.GetGCPProjection()
@@ -2928,8 +2928,8 @@ def tiff_read_aux():
 
 def tiff_read_one_band_from_two_bands():
 
-    gdal.Translate('/vsimem/tiff_read_one_band_from_two_bands.tif', 'data/byte.tif', options = '-b 1 -b 1')
-    gdal.Translate('/vsimem/tiff_read_one_band_from_two_bands_dst.tif', '/vsimem/tiff_read_one_band_from_two_bands.tif', options = '-b 1')
+    gdal.Translate('/vsimem/tiff_read_one_band_from_two_bands.tif', 'data/byte.tif', options='-b 1 -b 1')
+    gdal.Translate('/vsimem/tiff_read_one_band_from_two_bands_dst.tif', '/vsimem/tiff_read_one_band_from_two_bands.tif', options='-b 1')
 
     ds = gdal.Open('/vsimem/tiff_read_one_band_from_two_bands_dst.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
@@ -3272,7 +3272,7 @@ def tiff_read_big_strip():
     if not check_libtiff_internal_or_at_least(4,0,8):
         return 'skip'
 
-    gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options = '-co compress=lzw -outsize 10000 2000  -co blockysize=2000 -r bilinear -ot float32')
+    gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options='-co compress=lzw -outsize 10000 2000  -co blockysize=2000 -r bilinear -ot float32')
     ds = gdal.Open('/vsimem/test.tif')
     if ds.GetRasterBand(1).Checksum() != 2676:
         return 'fail'
@@ -3287,7 +3287,7 @@ def tiff_read_big_strip():
 
 def tiff_read_big_strip_chunky_way():
 
-    gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options = '-co compress=lzw -outsize 1000 2001  -co blockysize=2001 -r bilinear')
+    gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options='-co compress=lzw -outsize 1000 2001  -co blockysize=2001 -r bilinear')
     ds = gdal.Open('/vsimem/test.tif')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 38337:
@@ -3306,7 +3306,7 @@ def tiff_read_big_tile():
     if not check_libtiff_internal_or_at_least(4,0,8):
         return 'skip'
 
-    gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options = '-co compress=lzw -outsize 10000 2000 -co tiled=yes -co blockxsize=10000 -co blockysize=2000 -r bilinear -ot float32')
+    gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options='-co compress=lzw -outsize 10000 2000 -co tiled=yes -co blockxsize=10000 -co blockysize=2000 -r bilinear -ot float32')
     ds = gdal.Open('/vsimem/test.tif')
     if ds.GetRasterBand(1).Checksum() != 2676:
         return 'fail'
@@ -3368,7 +3368,7 @@ def tiff_read_many_blocks():
     if md['LIBTIFF'] != 'INTERNAL':
         return 'skip'
 
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test.tif', 1, 2000000, options = ['BLOCKYSIZE=1'])
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test.tif', 1, 2000000, options=['BLOCKYSIZE=1'])
     ds = None
     ds = gdal.Open('/vsimem/test.tif')
     if ds.GetRasterBand(1).Checksum() != 0:
@@ -3621,7 +3621,7 @@ def tiff_read_mmap_interface():
                      ['COMPRESS=LZW'], ['COMPRESS=LZW', 'TILED=YES']]:
         gdal.GetDriverByName('GTiff').CreateCopy(tmpfile,
                                                  src_ds,
-                                                 options = options)
+                                                 options=options)
         gdal.SetConfigOption('GTIFF_USE_MMAP', 'YES')
         ds = gdal.Open(tmpfile)
         cs = ds.GetRasterBand(1).Checksum()

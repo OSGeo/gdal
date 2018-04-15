@@ -55,7 +55,7 @@ def EQUAL(a, b):
 #**********************************************************************
 
 
-def main(argv = None):
+def main(argv=None):
 
     bComputeMinMax = False
     bShowGCPs = True
@@ -190,7 +190,7 @@ def main(argv = None):
 # --------------------------------------------------------------------
 #      Report Geotransform.
 # --------------------------------------------------------------------
-    adfGeoTransform = hDataset.GetGeoTransform(can_return_null = True)
+    adfGeoTransform = hDataset.GetGeoTransform(can_return_null=True)
     if adfGeoTransform is not None:
 
         if adfGeoTransform[2] == 0.0 and adfGeoTransform[4] == 0.0:
@@ -391,7 +391,7 @@ def main(argv = None):
 
         if bReportHistograms:
 
-            hist = hBand.GetDefaultHistogram(force = True, callback = gdal.TermProgress)
+            hist = hBand.GetDefaultHistogram(force=True, callback=gdal.TermProgress)
             if hist is not None:
                 dfMin = hist[0]
                 dfMax = hist[1]
@@ -565,7 +565,7 @@ def GDALInfoReportCorner(hDataset, hTransform, corner_name, x, y):
 # --------------------------------------------------------------------
 #      Transform the point into georeferenced coordinates.
 # --------------------------------------------------------------------
-    adfGeoTransform = hDataset.GetGeoTransform(can_return_null = True)
+    adfGeoTransform = hDataset.GetGeoTransform(can_return_null=True)
     if adfGeoTransform is not None:
         dfGeoX = adfGeoTransform[0] + adfGeoTransform[1] * x \
             + adfGeoTransform[2] * y

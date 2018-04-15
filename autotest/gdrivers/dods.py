@@ -66,7 +66,7 @@ def dods_1():
 def dods_2():
     if gdaltest.dods_dr is None:
         return 'skip'
-    tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11', 1, 3391, filename_absolute = 1)
+    tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11', 1, 3391, filename_absolute=1)
     return tst.testOpen()
 
 ###############################################################################
@@ -76,7 +76,7 @@ def dods_2():
 def dods_3():
     if gdaltest.dods_dr is None:
         return 'skip'
-    tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z', 12, 43208, filename_absolute = 1)
+    tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z', 12, 43208, filename_absolute=1)
     return tst.testOpen()
 
 ###############################################################################
@@ -86,7 +86,7 @@ def dods_3():
 def dods_4():
     if gdaltest.dods_dr is None:
         return 'skip'
-    tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][x]', 1, 3391, filename_absolute = 1)
+    tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][x]', 1, 3391, filename_absolute=1)
     return tst.testOpen()
 
 ###############################################################################
@@ -97,7 +97,7 @@ def dods_5():
     if gdaltest.dods_dr is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][-x]', 1, 2436, filename_absolute = 1)
+    tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][-x]', 1, 2436, filename_absolute=1)
     return tst.testOpen()
 
 ###############################################################################

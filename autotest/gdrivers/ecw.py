@@ -156,7 +156,7 @@ def ecw_3():
         return 'skip'
 
     ds = gdal.Open('data/jrc.ecw')
-    out_ds = gdaltest.ecw_drv.CreateCopy('tmp/jrc_out.ecw', ds, options = ['TARGET=75'])
+    out_ds = gdaltest.ecw_drv.CreateCopy('tmp/jrc_out.ecw', ds, options=['TARGET=75'])
     if out_ds is not None:
         version = out_ds.GetMetadataItem('VERSION')
         if version != '2':
@@ -232,7 +232,7 @@ def ecw_5():
         return 'skip'
 
     ds = gdal.Open('data/small.vrt')
-    ds_out = gdaltest.jp2ecw_drv.CreateCopy('tmp/ecw_5.jp2', ds, options = ['TARGET=75'])
+    ds_out = gdaltest.jp2ecw_drv.CreateCopy('tmp/ecw_5.jp2', ds, options=['TARGET=75'])
     if ds_out.GetDriver().ShortName != "JP2ECW":
         return 'fail'
     version = ds_out.GetMetadataItem('VERSION')
@@ -310,7 +310,7 @@ def ecw_7():
 
     ds = gdal.Open('data/small.vrt')
     drv = gdal.GetDriverByName('NITF')
-    drv.CreateCopy('tmp/ecw_7.ntf', ds, options = ['IC=C8', 'TARGET=75'], strict = 0)
+    drv.CreateCopy('tmp/ecw_7.ntf', ds, options=['IC=C8', 'TARGET=75'], strict=0)
     ds = None
 
     return 'success'
@@ -370,7 +370,7 @@ def ecw_9():
         pass
 
     ds = gdaltest.jp2ecw_drv.Create('tmp/ecw9.jp2', 200, 100, 1,
-                                     gdal.GDT_Int16, options = ['TARGET=75'])
+                                     gdal.GDT_Int16, options=['TARGET=75'])
     ds.SetGeoTransform((100, 0.1, 0.0, 30.0, 0.0, -0.1))
 
     ds.SetProjection('GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]')
@@ -379,7 +379,7 @@ def ecw_9():
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
-                        buf_type = gdal.GDT_Int16)
+                        buf_type=gdal.GDT_Int16)
     ds = None
 
     return 'success'
@@ -441,8 +441,8 @@ def ecw_11():
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
-                        buf_type = gdal.GDT_Int16,
-                        band_list = [1,2,3])
+                        buf_type=gdal.GDT_Int16,
+                        band_list=[1,2,3])
 
     ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_BlueBand)
     ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
@@ -503,13 +503,13 @@ def ecw_13():
     ds = gdal.Open('data/rgb16_ecwsdk.jp2')
 
     wrktype = gdal.GDT_Float32
-    raw_data = ds.ReadRaster(10, 10, 40, 40, buf_type = wrktype,
-                              band_list = [3,2,1])
+    raw_data = ds.ReadRaster(10, 10, 40, 40, buf_type=wrktype,
+                              band_list=[3,2,1])
     ds = None
 
     drv = gdal.GetDriverByName('MEM')
     ds = drv.Create('workdata', 40, 40, 3, wrktype)
-    ds.WriteRaster(0, 0, 40, 40, raw_data, buf_type = wrktype)
+    ds.WriteRaster(0, 0, 40, 40, raw_data, buf_type=wrktype)
 
     checksums = (ds.GetRasterBand(1).Checksum(),
                   ds.GetRasterBand(2).Checksum(),
@@ -601,7 +601,7 @@ def ecw_16():
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
     tst = gdaltest.GDALTest('JP2ECW', 'byte.jp2', 1, 50054)
-    return tst.testOpen(check_prj = srs, check_gt = gt)
+    return tst.testOpen(check_prj=srs, check_gt=gt)
 
 ###############################################################################
 # Open int16.jp2
@@ -661,8 +661,8 @@ def ecw_18():
 """
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    tst = gdaltest.GDALTest('JP2ECW', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute = 1)
-    return tst.testOpen(check_prj = srs, check_gt = gt)
+    tst = gdaltest.GDALTest('JP2ECW', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute=1)
+    return tst.testOpen(check_prj=srs, check_gt=gt)
 
 ###############################################################################
 # Test a JPEG2000 with the 3 bands having 13bit depth and the 4th one 1 bit
@@ -1223,8 +1223,8 @@ def ecw_32():
         return 'skip'
 
     ds = gdal.Open('data/jrc.ecw')
-    data_123 = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize, band_list = [1,2,3])
-    data_321 = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize, band_list = [3,2,1])
+    data_123 = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize, band_list=[1,2,3])
+    data_321 = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize, band_list=[3,2,1])
     if data_123 == data_321:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1249,7 +1249,7 @@ def ecw_32():
         </SimpleSource>
     </VRTRasterBand>
     </VRTDataset>""")
-    data_vrt = vrt_ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize, band_list = [1,2,3])
+    data_vrt = vrt_ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize, band_list=[1,2,3])
 
     if data_321 != data_vrt:
         gdaltest.post_reason('failure')
@@ -1371,13 +1371,13 @@ def ecw_34():
 
     ds = gdal.GetDriverByName('MEM').Create('MEM:::', 128, 128, 1, gdal.GDT_UInt16)
     ds.GetRasterBand(1).Fill(65535)
-    ref_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type = gdal.GDT_UInt16)
-    out_ds = gdaltest.ecw_drv.CreateCopy('tmp/UInt16_big_out.ecw', ds, options = ['ECW_FORMAT_VERSION=3','TARGET=1'])
+    ref_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type=gdal.GDT_UInt16)
+    out_ds = gdaltest.ecw_drv.CreateCopy('tmp/UInt16_big_out.ecw', ds, options=['ECW_FORMAT_VERSION=3','TARGET=1'])
     del out_ds
     ds = None
 
     ds = gdal.Open('tmp/UInt16_big_out.ecw')
-    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type = gdal.GDT_UInt16)
+    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type=gdal.GDT_UInt16)
     version = ds.GetMetadataItem('VERSION')
     ds = None
 
@@ -1400,13 +1400,13 @@ def ecw_35():
 
     ds = gdal.GetDriverByName('MEM').Create('MEM:::', 128, 128, 1, gdal.GDT_UInt16)
     ds.GetRasterBand(1).Fill(65535)
-    ref_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type = gdal.GDT_UInt16)
-    out_ds = gdaltest.jp2ecw_drv.CreateCopy('tmp/UInt16_big_out.jp2', ds, options = ['TARGET=1'])
+    ref_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type=gdal.GDT_UInt16)
+    out_ds = gdaltest.jp2ecw_drv.CreateCopy('tmp/UInt16_big_out.jp2', ds, options=['TARGET=1'])
     del out_ds
     ds = None
 
     ds = gdal.Open('tmp/UInt16_big_out.jp2')
-    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type = gdal.GDT_UInt16)
+    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type=gdal.GDT_UInt16)
     ds = None
 
     if got_data != ref_data:
@@ -1448,7 +1448,7 @@ def ecw_36():
     </VRTRasterBand>
     </VRTDataset>""")
 
-    dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrc312.ecw', vrt_ds, options = ['ECW_FORMAT_VERSION=3','TARGET=75'])
+    dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrc312.ecw', vrt_ds, options=['ECW_FORMAT_VERSION=3','TARGET=75'])
 
     if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand :
         print('Band 1 color interpretation should be Blue  but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
@@ -1491,7 +1491,7 @@ def ecw_37():
 
     ds = gdal.Open("data/jrc.ecw")
 
-    dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrc123.ecw', ds, options = ['ECW_FORMAT_VERSION=3','TARGET=75'])
+    dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrc123.ecw', ds, options=['ECW_FORMAT_VERSION=3','TARGET=75'])
 
     if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand :
         print('Band 1 color interpretation should be Red but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
@@ -1571,7 +1571,7 @@ def ecw_39():
 
     ds = gdal.Open('data/jrc.ecw')
 
-    dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrcstats.ecw', ds, options = ['ECW_FORMAT_VERSION=3','TARGET=75'])
+    dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrcstats.ecw', ds, options=['ECW_FORMAT_VERSION=3','TARGET=75'])
     ds = None
     hist = (0, 255, 2, [3, 4])
 
@@ -1675,7 +1675,7 @@ def ecw_41():
     if ds.GetRasterBand(1).GetStatistics(1,0) != [0.0, 0.0, 0.0, -1.0]:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetRasterBand(1).GetDefaultHistogram(force = 0) is not None:
+    if ds.GetRasterBand(1).GetDefaultHistogram(force=0) is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -1745,7 +1745,7 @@ def ecw_41():
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetMaximum())
         return 'fail'
-    got_hist = ds.GetRasterBand(1).GetDefaultHistogram(force = 0)
+    got_hist = ds.GetRasterBand(1).GetDefaultHistogram(force=0)
     if got_hist != expected_hist:
         gdaltest.post_reason('fail')
         print(got_hist)
@@ -1893,7 +1893,7 @@ def ecw_43():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options = ['1BIT_ALPHA_PROMOTION=NO'])
+    ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
         gdaltest.post_reason('fail')
@@ -1964,7 +1964,7 @@ def ecw_45():
 
     # No metadata
     src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
-    out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options = ['WRITE_METADATA=YES'])
+    out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
     if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
@@ -1981,7 +1981,7 @@ def ecw_45():
     for options in [['WRITE_METADATA=YES']]:
         src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
         src_ds.SetMetadataItem('FOO', 'BAR')
-        out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options = options)
+        out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options=options)
         del out_ds
         if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
             gdaltest.post_reason('fail')
@@ -1997,7 +1997,7 @@ def ecw_45():
     # Simple metadata in auxiliary domain
     src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
     src_ds.SetMetadataItem('FOO', 'BAR', 'SOME_DOMAIN')
-    out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options = ['WRITE_METADATA=YES'])
+    out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
     if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
@@ -2013,7 +2013,7 @@ def ecw_45():
     # Simple metadata in auxiliary XML domain
     src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
     src_ds.SetMetadata(['<some_arbitrary_xml_box/>'], 'xml:SOME_DOMAIN')
-    out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options = ['WRITE_METADATA=YES'])
+    out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
     if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
@@ -2028,7 +2028,7 @@ def ecw_45():
     for options in [['WRITE_METADATA=YES']]:
         src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
         src_ds.SetMetadata(['<some_arbitrary_xml_box/>'], 'xml:BOX_1')
-        out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options = options)
+        out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options=options)
         del out_ds
         if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
             gdaltest.post_reason('fail')
@@ -2043,7 +2043,7 @@ def ecw_45():
     for options in [['WRITE_METADATA=YES']]:
         src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
         src_ds.SetMetadata(['<fake_xmp_box/>'], 'xml:XMP')
-        out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options = options)
+        out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options=options)
         del out_ds
         if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
             gdaltest.post_reason('fail')
@@ -2069,13 +2069,13 @@ def ecw_46():
     tmp_ds = None
     tmp_ds = gdal.Open('/vsimem/ecw_46.jp2')
     full_res_data = tmp_ds.ReadRaster(0, 0, 20, 20)
-    upsampled_data = tmp_ds.ReadRaster(0, 0, 20, 20, 40, 40, resample_alg = gdal.GRIORA_Cubic)
+    upsampled_data = tmp_ds.ReadRaster(0, 0, 20, 20, 40, 40, resample_alg=gdal.GRIORA_Cubic)
     tmp_ds = None
     gdal.Unlink('/vsimem/ecw_46.jp2')
 
     tmp_ds = gdal.GetDriverByName('MEM').Create('', 20, 20, 1, gdal.GDT_Int16)
     tmp_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, full_res_data)
-    ref_upsampled_data = tmp_ds.ReadRaster(0, 0, 20, 20, 40, 40, resample_alg = gdal.GRIORA_Cubic)
+    ref_upsampled_data = tmp_ds.ReadRaster(0, 0, 20, 20, 40, 40, resample_alg=gdal.GRIORA_Cubic)
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 40, 40, 1, gdal.GDT_Int16)
     mem_ds.GetRasterBand(1).WriteRaster(0, 0, 40, 40, ref_upsampled_data)
@@ -2188,7 +2188,7 @@ def ecw_online_1():
         return 'skip'
 
     # checksum = 32316 on my PC
-    tst = gdaltest.GDALTest('JP2ECW', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute = 1)
+    tst = gdaltest.GDALTest('JP2ECW', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute=1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -2210,7 +2210,7 @@ def ecw_online_2():
         return 'skip'
 
     # checksum = 1292 on my PC
-    tst = gdaltest.GDALTest('JP2ECW', 'tmp/cache/gcp.jp2', 1, None, filename_absolute = 1)
+    tst = gdaltest.GDALTest('JP2ECW', 'tmp/cache/gcp.jp2', 1, None, filename_absolute=1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -2246,7 +2246,7 @@ def ecw_online_3():
         return 'skip'
 
     # checksum = 16481 on my PC
-    tst = gdaltest.GDALTest('JP2ECW', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute = 1)
+    tst = gdaltest.GDALTest('JP2ECW', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute=1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -2285,14 +2285,14 @@ def ecw_online_4():
         return 'skip'
 
     # Checksum = 53054 on my PC
-    tst = gdaltest.GDALTest('JP2ECW', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute = 1)
+    tst = gdaltest.GDALTest('JP2ECW', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute=1)
 
     if tst.testOpen() != 'success':
         return 'fail'
 
     ds = gdal.Open('tmp/cache/Bretagne2.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne2.bmp')
-    maxdiff = gdaltest.compare_ds(ds, ds_ref, width = 256, height = 256)
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, width=256, height=256)
 #    print(ds.GetRasterBand(1).Checksum())
 #    print(ds_ref.GetRasterBand(1).Checksum())
 

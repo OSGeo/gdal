@@ -64,7 +64,7 @@ def ilwis_1():
 
     gt = (795480, 20, 0, 8090520, 0, -20)
 
-    return tst.testOpen(check_gt = gt, check_prj = srs)
+    return tst.testOpen(check_gt=gt, check_prj=srs)
 
 ###############################################################################
 # copy byte data and verify.
@@ -75,7 +75,7 @@ def ilwis_2():
     tst = gdaltest.GDALTest('ilwis', 'byte.tif', 1, 4672)
 
     return tst.testCreateCopy(check_srs=1, check_gt=1,
-                               new_filename = 'tmp/byte.mpr')
+                               new_filename='tmp/byte.mpr')
 
 ###############################################################################
 # copy floating point data and use Create interface.
@@ -85,7 +85,7 @@ def ilwis_3():
 
     tst = gdaltest.GDALTest('ilwis', 'float.img', 1, 23529)
 
-    return tst.testCreate(new_filename = 'tmp/float.mpr', out_bands = 1)
+    return tst.testCreate(new_filename='tmp/float.mpr', out_bands=1)
 
 ###############################################################################
 # Try multi band dataset.
@@ -95,8 +95,8 @@ def ilwis_4():
 
     tst = gdaltest.GDALTest('ilwis', 'rgbsmall.tif', 2, 21053)
 
-    return tst.testCreate(new_filename = 'tmp/rgb.mpl', check_minmax = 0,
-                           out_bands = 3)
+    return tst.testCreate(new_filename='tmp/rgb.mpl', check_minmax=0,
+                           out_bands=3)
 
 ###############################################################################
 # Test vsi in-memory support.
@@ -107,8 +107,8 @@ def ilwis_5():
     tst = gdaltest.GDALTest('ilwis', 'byte.tif', 1, 4672)
 
     return tst.testCreateCopy(check_srs=1, check_gt=1,
-                               vsimem = 1,
-                               new_filename = '/vsimem/ilwis/byte.mpr')
+                               vsimem=1,
+                               new_filename='/vsimem/ilwis/byte.mpr')
 
 ###############################################################################
 # Cleanup.

@@ -99,17 +99,17 @@ def identify_4():
         gdaltest.post_reason('Got wrong driver for byte.tif')
         return 'fail'
 
-    dr = gdal.IdentifyDriverEx('data/byte.tif', allowed_drivers = ['HFA'])
+    dr = gdal.IdentifyDriverEx('data/byte.tif', allowed_drivers=['HFA'])
     if dr is not None:
         gdaltest.post_reason('Got wrong driver for byte.tif')
         return 'fail'
 
-    dr = gdal.IdentifyDriverEx('../gdrivers/data/aea.dat', sibling_files = ['aea.dat'])
+    dr = gdal.IdentifyDriverEx('../gdrivers/data/aea.dat', sibling_files=['aea.dat'])
     if dr is not None:
         gdaltest.post_reason('Got a driver, which was not expected!')
         return 'fail'
 
-    dr = gdal.IdentifyDriverEx('../gdrivers/data/aea.dat', sibling_files = ['aea.dat', 'aea.hdr'])
+    dr = gdal.IdentifyDriverEx('../gdrivers/data/aea.dat', sibling_files=['aea.dat', 'aea.hdr'])
     if dr is None:
         gdaltest.post_reason('Did not get a driver!')
         return 'fail'

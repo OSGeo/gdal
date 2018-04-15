@@ -114,7 +114,7 @@ def ogr_gpsbabel_3():
         return 'skip'
 
     ds = ogr.GetDriverByName('GPSBabel').CreateDataSource('GPSBabel:nmea:tmp/nmea.txt')
-    lyr = ds.CreateLayer('track_points', geom_type = ogr.wkbPoint)
+    lyr = ds.CreateLayer('track_points', geom_type=ogr.wkbPoint)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('track_fid', 0)

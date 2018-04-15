@@ -101,14 +101,14 @@ def ogr_basic_3():
     ###########################################################################
     # Create query geometry.
 
-    ring = ogr.Geometry(type = ogr.wkbLinearRing)
+    ring = ogr.Geometry(type=ogr.wkbLinearRing)
     ring.AddPoint(minx, miny)
     ring.AddPoint(maxx, miny)
     ring.AddPoint(maxx, maxy)
     ring.AddPoint(minx, maxy)
     ring.AddPoint(minx, miny)
 
-    poly = ogr.Geometry(type = ogr.wkbPolygon)
+    poly = ogr.Geometry(type=ogr.wkbPolygon)
     poly.AddGeometryDirectly(ring)
 
     gdaltest.lyr.SetSpatialFilter(poly)

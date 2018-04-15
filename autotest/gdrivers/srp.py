@@ -42,13 +42,13 @@ import gdaltest
 # Read USRP dataset with PCB=0
 
 
-def srp_1(filename = 'USRP_PCB0/FKUSRP01.IMG'):
+def srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32600 + 17)
 
     tst = gdaltest.GDALTest('SRP', filename, 1, 24576)
-    ret = tst.testOpen(check_prj = srs.ExportToWkt(), check_gt = (500000.0, 5.0, 0.0, 5000000.0, 0.0, -5.0))
+    ret = tst.testOpen(check_prj=srs.ExportToWkt(), check_gt=(500000.0, 5.0, 0.0, 5000000.0, 0.0, -5.0))
     if ret != 'success':
         return ret
 
@@ -157,7 +157,7 @@ def srp_5():
 
 def srp_6():
 
-    tst = gdaltest.GDALTest('SRP', 'SRP:data/USRP_PCB4/FKUSRP01.GEN,data/USRP_PCB4/FKUSRP01.IMG', 1, 24576, filename_absolute = 1)
+    tst = gdaltest.GDALTest('SRP', 'SRP:data/USRP_PCB4/FKUSRP01.GEN,data/USRP_PCB4/FKUSRP01.IMG', 1, 24576, filename_absolute=1)
     return tst.testOpen()
 
 

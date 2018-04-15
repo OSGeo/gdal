@@ -67,7 +67,7 @@ def gxf_2():
     PARAMETER["false_easting",609601.22],
     UNIT["ftUS",0.3048006096012]]"""
 
-    return tst.testOpen(check_prj = wkt)
+    return tst.testOpen(check_prj=wkt)
 
 ###############################################################################
 #

@@ -42,7 +42,7 @@ from osgeo import gdal, ogr
 # Test a fairly simple case, with nodata masking.
 
 
-def polygonize_1(is_int_polygonize = True):
+def polygonize_1(is_int_polygonize=True):
 
     src_ds = gdal.Open('data/polygonize_in.grd')
     src_band = src_ds.GetRasterBand(1)
@@ -92,7 +92,7 @@ def polygonize_1(is_int_polygonize = True):
 
 
 def polygonize_1_float():
-    return polygonize_1(is_int_polygonize = False)
+    return polygonize_1(is_int_polygonize=False)
 
 ###############################################################################
 # Test a simple case without masking.

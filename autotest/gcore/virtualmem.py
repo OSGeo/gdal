@@ -230,7 +230,7 @@ def virtualmem_4():
             os.unlink(tmpfile)
         except:
             pass
-        ds = gdal.GetDriverByName('GTiff').Create(tmpfile, 400, 301, 2, options = [option])
+        ds = gdal.GetDriverByName('GTiff').Create(tmpfile, 400, 301, 2, options=[option])
         ar1 = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Write)
         if gdal.GetLastErrorMsg().find('mmap() failed') >= 0:
             ar1 = None

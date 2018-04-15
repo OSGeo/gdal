@@ -197,7 +197,7 @@ def write_control(control_fn, out_grid_fn, in_grid_fn,
 #############################################################################
 
 
-def Usage(brief = 1):
+def Usage(brief=1):
     print("""
 crs2crs2grid.py
         <src_crs_id> <src_crs_date> <dst_crs_id> <dst_crs_year>

@@ -96,7 +96,7 @@ if len(sys.argv) == 2 and sys.argv[1] == '-test1':
 
     # Check that proxy overviews work
     ds = gdal.Open('tmpdirreadonly/byte.tif')
-    ds.BuildOverviews('NEAR', overviewlist = [2])
+    ds.BuildOverviews('NEAR', overviewlist=[2])
     ds = None
 
     filelist = gdal.ReadDir('tmppamproxydir')

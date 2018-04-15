@@ -397,7 +397,7 @@ def ogr_ods_7():
         os.unlink(filepath)
     shutil.copy('data/test.ods', filepath)
 
-    ds = ogr.Open(filepath, update = 1)
+    ds = ogr.Open(filepath, update=1)
     lyr = ds.GetLayerByName('Feuille7')
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:

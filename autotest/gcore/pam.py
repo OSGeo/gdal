@@ -477,7 +477,7 @@ def pam_12():
 
     ds = gdal.Open('tmp/byte.tif')
     (min, max, _, hist1) = ds.GetRasterBand(1).GetDefaultHistogram()
-    hist2 = ds.GetRasterBand(1).GetHistogram(include_out_of_range = 1, approx_ok = 0)
+    hist2 = ds.GetRasterBand(1).GetHistogram(include_out_of_range=1, approx_ok=0)
     ds.SetMetadataItem('FOO', 'BAR')
     ds.GetRasterBand(1).SetDefaultHistogram(min, max, hist1)
     ds = None

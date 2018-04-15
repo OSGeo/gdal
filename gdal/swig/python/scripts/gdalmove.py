@@ -45,7 +45,7 @@ def fmt_loc(srs_obj, loc):
 ###############################################################################
 
 
-def move(filename, t_srs, s_srs=None, pixel_threshold = None):
+def move(filename, t_srs, s_srs=None, pixel_threshold=None):
 
     # -------------------------------------------------------------------------
     # Open the file.

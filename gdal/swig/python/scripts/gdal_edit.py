@@ -222,9 +222,9 @@ def gdal_edit(argv):
 
     if open_options is not None:
         if ro:
-            ds = gdal.OpenEx(datasetname, gdal.OF_RASTER, open_options = open_options)
+            ds = gdal.OpenEx(datasetname, gdal.OF_RASTER, open_options=open_options)
         else:
-            ds = gdal.OpenEx(datasetname, gdal.OF_RASTER | gdal.OF_UPDATE, open_options = open_options)
+            ds = gdal.OpenEx(datasetname, gdal.OF_RASTER | gdal.OF_UPDATE, open_options=open_options)
     # GDAL 1.X compat
     elif ro:
         ds = gdal.Open(datasetname)

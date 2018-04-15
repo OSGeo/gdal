@@ -78,7 +78,7 @@ def webp_3():
         return 'skip'
 
     src_ds = gdal.Open('data/rgbsmall.tif')
-    out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_3.webp', src_ds, options = ['QUALITY=80'])
+    out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_3.webp', src_ds, options=['QUALITY=80'])
     src_ds = None
     cs1 = out_ds.GetRasterBand(1).Checksum()
     out_ds = None
@@ -141,7 +141,7 @@ def webp_5():
         return 'skip'
 
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
-    out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_5.webp', src_ds, options = ['LOSSLESS=YES'])
+    out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_5.webp', src_ds, options=['LOSSLESS=YES'])
     src_ds = None
     cs1 = out_ds.GetRasterBand(1).Checksum()
     cs4 = out_ds.GetRasterBand(4).Checksum()

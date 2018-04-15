@@ -66,7 +66,7 @@ def rasterize_1():
     wkt_geom = 'POLYGON((1020 1030,1020 1045,1050 1045,1050 1030,1020 1030))'
 
     feat = ogr.Feature(rast_mem_lyr.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=wkt_geom))
 
     rast_mem_lyr.CreateFeature(feat)
 
@@ -75,14 +75,14 @@ def rasterize_1():
     wkt_geom = 'LINESTRING(1000 1000, 1100 1050)'
 
     feat = ogr.Feature(rast_mem_lyr.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=wkt_geom))
 
     rast_mem_lyr.CreateFeature(feat)
 
     # Run the algorithm.
 
     err = gdal.RasterizeLayer(target_ds, [3,2,1], rast_mem_lyr,
-                               burn_values = [200,220,240])
+                               burn_values=[200,220,240])
 
     if err != 0:
         print(err)
@@ -126,8 +126,8 @@ def rasterize_2():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     err = gdal.RasterizeLayer(target_ds, [3,2,1], cutline_ds.GetLayer(0),
-                               burn_values = [200,220,240],
-                               options = ["ALL_TOUCHED=TRUE"])
+                               burn_values=[200,220,240],
+                               options=["ALL_TOUCHED=TRUE"])
     gdal.PopErrorHandler()
 
     if err != 0:
@@ -179,13 +179,13 @@ def rasterize_3():
                 'LINESTRING(1000 1000 150, 1095 1050 -5, 1080 1080 200)']
     for g in wkt_geom:
         feat = ogr.Feature(rast_mem_lyr.GetLayerDefn())
-        feat.SetGeometryDirectly(ogr.Geometry(wkt = g))
+        feat.SetGeometryDirectly(ogr.Geometry(wkt=g))
         rast_mem_lyr.CreateFeature(feat)
 
     # Run the algorithm.
 
     err = gdal.RasterizeLayer(target_ds, [3,2,1], rast_mem_lyr,
-                               burn_values = [10,10,55], options = ["BURN_VALUE_FROM=Z"])
+                               burn_values=[10,10,55], options=["BURN_VALUE_FROM=Z"])
 
     if err != 0:
         print(err)
@@ -238,14 +238,14 @@ def rasterize_4():
     i = 0
     for g in wkt_geom:
         feat = ogr.Feature(rast_mem_lyr.GetLayerDefn())
-        feat.SetGeometryDirectly(ogr.Geometry(wkt = g))
+        feat.SetGeometryDirectly(ogr.Geometry(wkt=g))
         feat.SetField('CELSIUS', celsius_field_values[i])
         rast_mem_lyr.CreateFeature(feat)
         i = i + 1
 
     # Run the algorithm.
     err = gdal.RasterizeLayer(target_ds, [1,2,3], rast_mem_lyr,
-                               options = ["ATTRIBUTE=CELSIUS"])
+                               options=["ATTRIBUTE=CELSIUS"])
 
     if err != 0:
         print(err)
@@ -290,31 +290,31 @@ def rasterize_5():
 
     wkt_geom = 'POLYGON((1020 1030,1020 1045,1050 1045,1050 1030,1020 1030))'
     feat = ogr.Feature(rast_mem_lyr.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=wkt_geom))
     rast_mem_lyr.CreateFeature(feat)
 
     wkt_geom = 'POLYGON((1045 1050,1055 1050,1055 1020,1045 1020,1045 1050))'
     feat = ogr.Feature(rast_mem_lyr.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=wkt_geom))
     rast_mem_lyr.CreateFeature(feat)
 
     # Add linestrings.
 
     wkt_geom = 'LINESTRING(1000 1000, 1100 1050)'
     feat = ogr.Feature(rast_mem_lyr.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=wkt_geom))
     rast_mem_lyr.CreateFeature(feat)
 
     wkt_geom = 'LINESTRING(1005 1000, 1000 1050)'
     feat = ogr.Feature(rast_mem_lyr.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=wkt_geom))
     rast_mem_lyr.CreateFeature(feat)
 
     # Run the algorithm.
 
     err = gdal.RasterizeLayer(target_ds, [1, 2, 3], rast_mem_lyr,
-                               burn_values = [100,110,120],
-                               options = ["MERGE_ALG=ADD"])
+                               burn_values=[100,110,120],
+                               options=["MERGE_ALG=ADD"])
 
     if err != 0:
         print(err)

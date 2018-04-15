@@ -62,8 +62,8 @@ def envi_1():
     PARAMETER["false_northing",0],
     UNIT["Meter",1]]"""
 
-    return tst.testOpen(check_prj = prj,
-                         check_gt = (-936408.178, 28.5, 0.0,
+    return tst.testOpen(check_prj=prj,
+                         check_gt=(-936408.178, 28.5, 0.0,
                                      2423902.344, 0.0, -28.5))
 
 ###############################################################################
@@ -73,7 +73,7 @@ def envi_1():
 def envi_2():
 
     tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 14823)
-    return tst.testCreateCopy(check_gt = 1)
+    return tst.testCreateCopy(check_gt=1)
 
 ###############################################################################
 # Try the Create interface with an RGB image.
@@ -107,7 +107,7 @@ def envi_4():
     PARAMETER["false_easting",20000],
     PARAMETER["false_northing",30000]]"""
 
-    return tst.testSetProjection(prj = prj)
+    return tst.testSetProjection(prj=prj)
 
 ###############################################################################
 # Test TM Projection.
@@ -153,7 +153,7 @@ def envi_5():
     PARAMETER["false_northing",-100000],
     UNIT["Meter",1]]"""
 
-    return tst.testSetProjection(prj = prj, expected_prj = expected_prj)
+    return tst.testSetProjection(prj=prj, expected_prj=expected_prj)
 
 ###############################################################################
 # Test LAEA Projection.
@@ -175,7 +175,7 @@ def envi_6():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
 
-    return gdaltest.envi_tst.testSetProjection(prj = prj)
+    return gdaltest.envi_tst.testSetProjection(prj=prj)
 
 ###############################################################################
 # Verify VSIF*L capacity
@@ -184,7 +184,7 @@ def envi_6():
 def envi_7():
 
     tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 14823)
-    return tst.testCreateCopy(check_gt = 1, vsimem = 1)
+    return tst.testCreateCopy(check_gt=1, vsimem=1)
 
 ###############################################################################
 # Test fix for #3751
@@ -213,7 +213,7 @@ def envi_8():
 def envi_9():
 
     tst = gdaltest.GDALTest('envi', 'aea_compressed.dat', 1, 14823)
-    return tst.testCreateCopy(check_gt = 1)
+    return tst.testCreateCopy(check_gt=1)
 
 ###############################################################################
 # Test RPC reading and writing

@@ -126,7 +126,7 @@ def pixfun_imag_c():
         return 'fail'
 
     # Test bugfix of #6599
-    copied_ds = gdal.Translate('', filename, format = 'MEM')
+    copied_ds = gdal.Translate('', filename, format='MEM')
     data_ds = copied_ds.GetRasterBand(1).ReadAsArray()
     copied_ds = None
 

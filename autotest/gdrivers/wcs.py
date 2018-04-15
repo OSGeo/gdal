@@ -498,7 +498,7 @@ def wcs_6():
     cache = 'CACHE=wcs_cache'
     global urls
     urls = read_urls()
-    (process, port) = webserver.launch(handler = WCSHTTPHandler)
+    (process, port) = webserver.launch(handler=WCSHTTPHandler)
     url = "http://127.0.0.1:" + str(port)
     setup = setupFct()
     servers = []
@@ -517,8 +517,8 @@ def wcs_6():
                 options.append('CLEAR_CACHE')
                 first_call = False
             query = 'server=' + server + '&version=' + version
-            ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
-                             open_options = options)
+            ds = gdal.OpenEx(utf8_path="WCS:" + url + "/?" + query,
+                             open_options=options)
 
             coverage = setup[server]['Coverage']
             if isinstance(coverage, list):
@@ -537,14 +537,14 @@ def wcs_6():
                 if o != '-oo':
                     options.append(o)
             options.append('GetCoverageExtra=test=none')
-            ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
-                             open_options = options)
+            ds = gdal.OpenEx(utf8_path="WCS:" + url + "/?" + query,
+                             open_options=options)
             ds = 0
             options = [cache]
             options.append('GetCoverageExtra=test=scaled')
             options.append('INTERLEAVE=PIXEL')
-            ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
-                             open_options = options)
+            ds = gdal.OpenEx(utf8_path="WCS:" + url + "/?" + query,
+                             open_options=options)
             if not ds:
                 print("OpenEx failed: WCS:" + url + "/?" + query)
                 global wcs_6_ok
@@ -555,22 +555,22 @@ def wcs_6():
                 projwin[i] = int(c)
             options = [cache]
             tmpfile = "tmp/"+server+version+".tiff"
-            gdal.Translate(tmpfile, ds, projWin = projwin, width = size, options = options)
+            gdal.Translate(tmpfile, ds, projWin=projwin, width=size, options=options)
             os.remove(tmpfile)
 
             if os.path.isfile('data/wcs/' + server + '-' + version + '-non_scaled.tiff'):
                 options = [cache]
                 options.append('GetCoverageExtra=test=non_scaled')
                 options.append('INTERLEAVE=PIXEL')
-                ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
-                                 open_options = options)
+                ds = gdal.OpenEx(utf8_path="WCS:" + url + "/?" + query,
+                                 open_options=options)
                 if not ds:
                     print("OpenEx failed: WCS:" + url + "/?" + query)
                     global wcs_6_ok
                     wcs_6_ok = False
                     break
                 options = [cache]
-                gdal.Translate(tmpfile, ds, srcWin = [0,0,2,2], options = options)
+                gdal.Translate(tmpfile, ds, srcWin=[0,0,2,2], options=options)
                 os.remove(tmpfile)
             else:
                 print(server + ' ' + version + ' non_scaled skipped (no response file)')

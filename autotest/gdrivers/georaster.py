@@ -118,7 +118,7 @@ def georaster_byte():
 
     ds = None
 
-    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 4672, filename_absolute = 1)
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 4672, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -147,7 +147,7 @@ def georaster_int16():
 
     ds = None
 
-    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 4672, filename_absolute = 1)
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 4672, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -176,7 +176,7 @@ def georaster_int32():
 
     ds = None
 
-    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 4672, filename_absolute = 1)
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 4672, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -204,7 +204,7 @@ def georaster_rgb_b1():
 
     ds = None
 
-    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute = 1)
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -232,7 +232,7 @@ def georaster_rgb_b2():
 
     ds = None
 
-    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute = 1)
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -260,7 +260,7 @@ def georaster_rgb_b3_bsq():
 
     ds = None
 
-    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute = 1)
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -288,7 +288,7 @@ def georaster_rgb_b3_bip():
 
     ds = None
 
-    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute = 1)
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -316,7 +316,7 @@ def georaster_rgb_b3_bil():
 
     ds = None
 
-    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute = 1)
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -344,7 +344,7 @@ def georaster_byte_deflate():
 
     ds = None
 
-    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 4672, filename_absolute = 1)
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 4672, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -372,7 +372,7 @@ def georaster_rgb_deflate_b3():
 
     ds = None
 
-    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute = 1)
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -400,7 +400,7 @@ def georaster_1bit():
 
     ds = None
 
-    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 252, filename_absolute = 1)
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 252, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -428,7 +428,7 @@ def georaster_2bit():
 
     ds = None
 
-    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 718, filename_absolute = 1)
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 718, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -456,7 +456,7 @@ def georaster_4bit():
 
     ds = None
 
-    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 2578, filename_absolute = 1)
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 2578, filename_absolute=1)
 
     return tst.testOpen()
 

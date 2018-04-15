@@ -148,12 +148,12 @@ def ogr_gpx_1():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT (1 0)',
-                                       max_error = 0.0001) != 0:
+                                       max_error=0.0001) != 0:
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT (4 3)',
-                                       max_error = 0.0001) != 0:
+                                       max_error=0.0001) != 0:
         return 'fail'
 
     return 'success'
@@ -173,11 +173,11 @@ def ogr_gpx_2():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (6 5,9 8,12 11)', max_error = 0.0001) != 0:
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (6 5,9 8,12 11)', max_error=0.0001) != 0:
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING EMPTY', max_error = 0.0001) != 0:
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING EMPTY', max_error=0.0001) != 0:
         return 'fail'
 
     return 'success'
@@ -203,7 +203,7 @@ def ogr_gpx_3():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POINT (6 5)', max_error = 0.0001) != 0:
+    if ogrtest.check_feature_geometry(feat, 'POINT (6 5)', max_error=0.0001) != 0:
         return 'fail'
 
     return 'success'
@@ -223,11 +223,11 @@ def ogr_gpx_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((15 14,18 17),(21 20,24 23))', max_error = 0.0001) != 0:
+    if ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((15 14,18 17),(21 20,24 23))', max_error=0.0001) != 0:
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'MULTILINESTRING EMPTY', max_error = 0.0001) != 0:
+    if ogrtest.check_feature_geometry(feat, 'MULTILINESTRING EMPTY', max_error=0.0001) != 0:
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -258,7 +258,7 @@ def ogr_gpx_5():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POINT (15 14)', max_error = 0.0001) != 0:
+    if ogrtest.check_feature_geometry(feat, 'POINT (15 14)', max_error=0.0001) != 0:
         return 'fail'
 
     return 'success'
@@ -287,13 +287,13 @@ def ogr_gpx_6():
     gpx_lyr = gdaltest.gpx_ds.GetLayerByName('waypoints')
 
     gpx2_ds = ogr.GetDriverByName('GPX').CreateDataSource('tmp/gpx.gpx',
-                                                          options = co_opts)
+                                                          options=co_opts)
 
-    gpx2_lyr = gpx2_ds.CreateLayer('waypoints', geom_type = ogr.wkbPoint)
+    gpx2_lyr = gpx2_ds.CreateLayer('waypoints', geom_type=ogr.wkbPoint)
 
     gpx_lyr.ResetReading()
 
-    dst_feat = ogr.Feature(feature_def = gpx2_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gpx2_lyr.GetLayerDefn())
 
     feat = gpx_lyr.GetNextFeature()
     while feat is not None:
@@ -307,11 +307,11 @@ def ogr_gpx_6():
     # Duplicate routes
     gpx_lyr = gdaltest.gpx_ds.GetLayerByName('routes')
 
-    gpx2_lyr = gpx2_ds.CreateLayer('routes', geom_type = ogr.wkbLineString)
+    gpx2_lyr = gpx2_ds.CreateLayer('routes', geom_type=ogr.wkbLineString)
 
     gpx_lyr.ResetReading()
 
-    dst_feat = ogr.Feature(feature_def = gpx2_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gpx2_lyr.GetLayerDefn())
 
     feat = gpx_lyr.GetNextFeature()
     while feat is not None:
@@ -325,11 +325,11 @@ def ogr_gpx_6():
     # Duplicate tracks
     gpx_lyr = gdaltest.gpx_ds.GetLayerByName('tracks')
 
-    gpx2_lyr = gpx2_ds.CreateLayer('tracks', geom_type = ogr.wkbMultiLineString)
+    gpx2_lyr = gpx2_ds.CreateLayer('tracks', geom_type=ogr.wkbMultiLineString)
 
     gpx_lyr.ResetReading()
 
-    dst_feat = ogr.Feature(feature_def = gpx2_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gpx2_lyr.GetLayerDefn())
 
     feat = gpx_lyr.GetNextFeature()
     while feat is not None:
@@ -373,9 +373,9 @@ def ogr_gpx_7():
     bna_lyr = bna_ds.GetLayerByName('bna_for_gpx_points')
 
     gdaltest.gpx_ds = ogr.GetDriverByName('GPX').CreateDataSource('tmp/gpx.gpx',
-                                                          options = co_opts)
+                                                          options=co_opts)
 
-    gpx_lyr = gdaltest.gpx_ds.CreateLayer('waypoints', geom_type = ogr.wkbPoint)
+    gpx_lyr = gdaltest.gpx_ds.CreateLayer('waypoints', geom_type=ogr.wkbPoint)
 
     bna_lyr.ResetReading()
 
@@ -383,7 +383,7 @@ def ogr_gpx_7():
         field_defn = bna_lyr.GetLayerDefn().GetFieldDefn(i)
         gpx_lyr.CreateField(field_defn)
 
-    dst_feat = ogr.Feature(feature_def = gpx_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gpx_lyr.GetLayerDefn())
 
     feat = bna_lyr.GetNextFeature()
     while feat is not None:
@@ -439,9 +439,9 @@ def ogr_gpx_8():
     except:
         pass
 
-    gdaltest.gpx_ds = ogr.GetDriverByName('GPX').CreateDataSource('tmp/gpx.gpx', options = ['LINEFORMAT=LF'])
+    gdaltest.gpx_ds = ogr.GetDriverByName('GPX').CreateDataSource('tmp/gpx.gpx', options=['LINEFORMAT=LF'])
 
-    lyr = gdaltest.gpx_ds.CreateLayer('route_points', geom_type = ogr.wkbPoint)
+    lyr = gdaltest.gpx_ds.CreateLayer('route_points', geom_type=ogr.wkbPoint)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
@@ -470,7 +470,7 @@ def ogr_gpx_8():
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
 
-    lyr = gdaltest.gpx_ds.CreateLayer('track_points', geom_type = ogr.wkbPoint)
+    lyr = gdaltest.gpx_ds.CreateLayer('track_points', geom_type=ogr.wkbPoint)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
