@@ -690,7 +690,7 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 
 #ifdef DEBUG_OUT_OF_BOUND_ACCESS
     int* panGaussMatrixDup = static_cast<int*>(
-        CPLMalloc(sizeof(int) * nGaussMatrixDim * nGaussMatrixDim)=;
+        CPLMalloc(sizeof(int) * nGaussMatrixDim * nGaussMatrixDim));
     memcpy(panGaussMatrixDup, panGaussMatrix,
            sizeof(int) * nGaussMatrixDim * nGaussMatrixDim);
     panGaussMatrix = panGaussMatrixDup;
@@ -760,20 +760,19 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         const int iSizeY = nSrcYOff2 - nSrcYOff;
         nSrcYOff = nSrcYOff + iSizeY/2 - nGaussMatrixDim/2;
         nSrcYOff2 = nSrcYOff + nGaussMatrixDim;
+
+        if( nSrcYOff2 > nChunkBottomYOff ||
+            (dfYRatioDstToSrc > 1 && iDstLine == nOYSize-1) )
+        {
+            nSrcYOff2 = std::min(nChunkBottomYOff,
+                                 nSrcYOff + nGaussMatrixDim);
+        }
+
         int nYShiftGaussMatrix = 0;
         if(nSrcYOff < 0)
         {
             nYShiftGaussMatrix = -nSrcYOff;
             nSrcYOff = 0;
-        }
-
-        if( nSrcYOff2 > nChunkBottomYOff ||
-            (dfYRatioDstToSrc > 1 && iDstLine == nOYSize-1) )
-        {
-            if( nChunkBottomYOff - nSrcYOff <= nGaussMatrixDim )
-            {
-                nSrcYOff2 = nChunkBottomYOff;
-            }
         }
 
         const float * const pafSrcScanline =
@@ -795,20 +794,19 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             const int iSizeX = nSrcXOff2 - nSrcXOff;
             nSrcXOff = nSrcXOff + iSizeX/2 - nGaussMatrixDim/2;
             nSrcXOff2 = nSrcXOff + nGaussMatrixDim;
+
+            if( nSrcXOff2 > nChunkRightXOff ||
+                (dfXRatioDstToSrc > 1 && iDstPixel == nOXSize-1) )
+            {
+                nSrcXOff2 = std::min(nChunkRightXOff,
+                                     nSrcXOff + nGaussMatrixDim);
+            }
+
             int nXShiftGaussMatrix = 0;
             if(nSrcXOff < 0)
             {
                 nXShiftGaussMatrix = -nSrcXOff;
                 nSrcXOff = 0;
-            }
-
-            if( nSrcXOff2 > nChunkRightXOff ||
-                (dfXRatioDstToSrc > 1 && iDstPixel == nOXSize-1) )
-            {
-                if( nChunkRightXOff - nSrcXOff <= nGaussMatrixDim )
-                {
-                    nSrcXOff2 = nChunkRightXOff;
-                }
             }
 
             if( poColorTable == nullptr )
@@ -908,7 +906,7 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     CPLFree( pafDstScanline );
     CPLFree( aEntries );
 #ifdef DEBUG_OUT_OF_BOUND_ACCESS
-    CPLFree( panGaussMatrixNew );
+    CPLFree( panGaussMatrixDup );
 #endif
 
     return eErr;

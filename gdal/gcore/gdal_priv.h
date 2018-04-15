@@ -65,11 +65,14 @@ class GDALAsyncReader;
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
 #include "cpl_atomic_ops.h"
-#include <vector>
-#include <map>
-#include <limits>
+
 #include <cmath>
+#include <iterator>
+#include <limits>
+#include <map>
 #include <memory>
+#include <vector>
+
 #include "ogr_core.h"
 #include "ogr_feature.h"
 
@@ -645,7 +648,9 @@ private:
     virtual int         GetLayerCount();
     virtual OGRLayer    *GetLayer(int iLayer);
 
-    /** Class returned by GetLayers() that act as a container for vector layers. */
+    /** Class returned by GetLayers() that acts as a range of layers.
+     * @since GDAL 2.3
+     */
     class CPL_DLL Layers
     {
       private:
@@ -654,25 +659,40 @@ private:
         GDALDataset* m_poSelf;
         explicit Layers(GDALDataset* poSelf): m_poSelf(poSelf) {}
 
+      public:
+
+        /** Layer iterator.
+         * @since GDAL 2.3
+         */
         class CPL_DLL Iterator
         {
                 struct Private;
                 std::unique_ptr<Private> m_poPrivate;
             public:
-                Iterator(GDALDataset* poDS, bool bStart);
-                Iterator(const Iterator& oOther); // declared but not defined. Needed for gcc 5.4 at least
-                Iterator(Iterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
-                ~Iterator();
-                OGRLayer* operator*();
-                Iterator& operator++();
-                bool operator!=(const Iterator& it) const;
+
+                using value_type = OGRLayer*; /**< value_type */
+                using reference = OGRLayer*; /**< reference */
+                using difference_type = void; /**< difference_type */
+                using pointer = void; /**< pointer */
+                using iterator_category = std::input_iterator_tag; /**< iterator_category */
+
+                Iterator(); /**< Default constructor */
+                Iterator(GDALDataset* poDS, bool bStart);  /**< Constructor */
+                Iterator(const Iterator& oOther);  /**< Copy constructor */
+                Iterator(Iterator&& oOther);  /**< Move constructor */
+                ~Iterator(); /**< Destructor */
+
+                Iterator& operator=(const Iterator& oOther);  /**< Assignment operator */
+                Iterator& operator=(Iterator&& oOther); /**< Move assignment operator */
+
+                OGRLayer* operator*() const; /**< Dereference operator */
+                Iterator& operator++(); /**< Pre-increment operator */
+                Iterator operator++(int); /**< Post-increment operator */
+                bool operator!=(const Iterator& it) const; /**< Difference comparison operator */
         };
 
-      public:
-
-        const Iterator begin() const;
-
-        const Iterator end() const;
+        Iterator begin() const;
+        Iterator end() const;
 
         size_t size() const;
 

@@ -1387,7 +1387,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         if( i - 1 < static_cast<int>(aosLayerNames.size()) )
         {
-            const CPLString& osName(aosLayerNames[i-1]);
+            const CPLString osName(aosLayerNames[i-1]);
             poBand->GDALRasterBand::SetDescription(osName);
             if( EQUAL(osName, "red") )
                 poBand->SetColorInterpretation( GCI_RedBand );

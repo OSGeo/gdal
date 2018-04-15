@@ -3520,15 +3520,15 @@ static int _TIFFGetMaxColorChannels( uint16 photometric )
 	case PHOTOMETRIC_YCBCR:
 	case PHOTOMETRIC_RGB:
 	case PHOTOMETRIC_CIELAB:
+	case PHOTOMETRIC_LOGLUV:
+	case PHOTOMETRIC_ITULAB:
+	case PHOTOMETRIC_ICCLAB:
             return 3;
 	case PHOTOMETRIC_SEPARATED:
 	case PHOTOMETRIC_MASK:
             return 4;
 	case PHOTOMETRIC_LOGL:
-	case PHOTOMETRIC_LOGLUV:
 	case PHOTOMETRIC_CFA:
-	case PHOTOMETRIC_ITULAB:
-	case PHOTOMETRIC_ICCLAB:
 	default:
             return 0;
     }

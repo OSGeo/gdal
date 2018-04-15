@@ -198,6 +198,15 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
         }
         else
         {
+            if( osToken.size() > 19 ||
+                (osToken.size() >= 19 && osToken > "9223372036854775807") )
+            {
+                *ppNode = new swq_expr_node( CPLAtof(osToken) );
+                if( osToken == "9223372036854775808" )
+                    (*ppNode)->string_value = CPLStrdup(osToken);
+                return SWQT_FLOAT_NUMBER;
+            }
+
             GIntBig nVal = CPLAtoGIntBig(osToken);
             if( CPL_INT64_FITS_ON_INT32(nVal) )
                 *ppNode = new swq_expr_node( static_cast<int>(nVal) );

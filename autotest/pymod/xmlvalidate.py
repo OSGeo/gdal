@@ -214,38 +214,38 @@ def transform_abs_links_to_ref_links(path, level = 0):
             f.close()
             rewrite = False
             for i in range(len(lines)):
-                l = lines[i]
-                if l[-1] == '\n':
-                    l = l[0:-1]
-                pos = l.find('http://schemas.opengis.net/')
+                ln = lines[i]
+                if ln[-1] == '\n':
+                    ln = ln[0:-1]
+                pos = ln.find('http://schemas.opengis.net/')
                 if pos >= 0:
                     rewrite = True
-                    s = l[0:pos]
+                    s = ln[0:pos]
                     for j in range(level):
                         s = s + "../"
-                    s = s + l[pos + len('http://schemas.opengis.net/'):]
-                    l = s
-                    lines[i] = l
+                    s = s + ln[pos + len('http://schemas.opengis.net/'):]
+                    ln = s
+                    lines[i] = ln
 
-                pos = l.find('http://www.w3.org/1999/xlink.xsd')
+                pos = ln.find('http://www.w3.org/1999/xlink.xsd')
                 if pos >= 0:
                     rewrite = True
-                    s = l[0:pos]
+                    s = ln[0:pos]
                     for j in range(level):
                         s = s + "../"
-                    s = s + l[pos + len('http://www.w3.org/1999/'):]
-                    l = s
-                    lines[i] = l
+                    s = s + ln[pos + len('http://www.w3.org/1999/'):]
+                    ln = s
+                    lines[i] = ln
 
-                pos = l.find('http://www.w3.org/2001/xml.xsd')
+                pos = ln.find('http://www.w3.org/2001/xml.xsd')
                 if pos >= 0:
                     rewrite = True
-                    s = l[0:pos]
+                    s = ln[0:pos]
                     for j in range(level):
                         s = s + "../"
-                    s = s + l[pos + len('http://www.w3.org/2001/'):]
-                    l = s
-                    lines[i] = l
+                    s = s + ln[pos + len('http://www.w3.org/2001/'):]
+                    ln = s
+                    lines[i] = ln
 
             if rewrite:
                 f = open(filename, 'wt')
@@ -269,39 +269,39 @@ def transform_inspire_abs_links_to_ref_links(path, level = 0):
             f.close()
             rewrite = False
             for i in range(len(lines)):
-                l = lines[i]
-                if l[-1] == '\n':
-                    l = l[0:-1]
+                ln = lines[i]
+                if ln[-1] == '\n':
+                    ln = ln[0:-1]
 
-                pos = l.find('schemaLocation="http://inspire.ec.europa.eu/schemas/')
+                pos = ln.find('schemaLocation="http://inspire.ec.europa.eu/schemas/')
                 if pos >= 0:
                     pos += len('schemaLocation="')
                     rewrite = True
-                    s = l[0:pos]
+                    s = ln[0:pos]
                     for j in range(level):
                         s = s + "../"
-                    s = s + l[pos + len('http://inspire.ec.europa.eu/schemas/'):]
-                    l = s
-                    lines[i] = l
+                    s = s + ln[pos + len('http://inspire.ec.europa.eu/schemas/'):]
+                    ln = s
+                    lines[i] = ln
 
-                pos = l.find('http://portele.de/')
+                pos = ln.find('http://portele.de/')
                 if pos >= 0:
                     rewrite = True
-                    s = l[0:pos]
-                    s = s + l[pos + len('http://portele.de/'):]
-                    l = s
-                    lines[i] = l
+                    s = ln[0:pos]
+                    s = s + ln[pos + len('http://portele.de/'):]
+                    ln = s
+                    lines[i] = ln
 
-                pos = l.find('http://schemas.opengis.net/')
+                pos = ln.find('http://schemas.opengis.net/')
                 if pos >= 0:
                     rewrite = True
-                    s = l[0:pos]
+                    s = ln[0:pos]
                     for j in range(level):
                         s = s + "../"
                     s = s + "../SCHEMAS_OPENGIS_NET/"
-                    s = s + l[pos + len('http://schemas.opengis.net/'):]
-                    l = s
-                    lines[i] = l
+                    s = s + ln[pos + len('http://schemas.opengis.net/'):]
+                    ln = s
+                    lines[i] = ln
 
             if rewrite:
                 f = open(filename, 'wb')
