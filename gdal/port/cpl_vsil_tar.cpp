@@ -318,7 +318,7 @@ int VSITarReader::GotoNextFile()
                     if( m_abyBufferIdx < m_abyBufferSize )
                     {
                         osNextFileName.assign(
-                            (const char*)(m_abyBuffer + nFilenameStartIdx),
+                            reinterpret_cast<const char*>(m_abyBuffer + nFilenameStartIdx),
                             m_abyBufferIdx - nFilenameStartIdx);
                         nCurOffset = VSIFTellL(fp);
                         nCurOffset -= m_abyBufferSize;

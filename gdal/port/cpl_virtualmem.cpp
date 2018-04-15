@@ -135,8 +135,8 @@ struct CPLVirtualMem
    - other things I've not identified
 */
 
-#define ALIGN_DOWN(p,pagesize) (void*)(((GUIntptr_t)(p)) / (pagesize) * (pagesize))
-#define ALIGN_UP(p,pagesize) (void*)(((GUIntptr_t)(p) + (pagesize) - 1) / (pagesize) * (pagesize))
+#define ALIGN_DOWN(p,pagesize) reinterpret_cast<void*>((reinterpret_cast<GUIntptr_t>(p)) / (pagesize) * (pagesize))
+#define ALIGN_UP(p,pagesize) reinterpret_cast<void*>((reinterpret_cast<GUIntptr_t>(p) + (pagesize) - 1) / (pagesize) * (pagesize))
 
 #define DEFAULT_PAGE_SIZE       (256*256)
 #define MAXIMUM_PAGE_SIZE       (32*1024*1024)
@@ -144,7 +144,7 @@ struct CPLVirtualMem
 // Linux Kernel limit.
 #define MAXIMUM_COUNT_OF_MAPPINGS   65536
 
-#define BYEBYE_ADDR             ((void*)(~static_cast<size_t>(0)))
+#define BYEBYE_ADDR             (reinterpret_cast<void*>(~static_cast<size_t>(0)))
 
 #define MAPPING_FOUND           "yeah"
 #define MAPPING_NOT_FOUND       "doh!"
@@ -464,7 +464,7 @@ CPLVirtualMem* CPLVirtualMemNew( size_t nSize,
         return nullptr;
     }
 
-    return (CPLVirtualMem*) ctxt;
+    return reinterpret_cast<CPLVirtualMem*>(ctxt);
 }
 
 /************************************************************************/
@@ -488,8 +488,8 @@ static void CPLVirtualMemFreeFileMemoryMapped(CPLVirtualMemVMA* ctxt)
         {
             if( TEST_BIT(ctxt->pabitRWMappedPages, i) )
             {
-                void* addr = (char*)ctxt->sBase.pData + i * ctxt->sBase.nPageSize;
-                ctxt->pfnUnCachePage((CPLVirtualMem*)ctxt,
+                void* addr = static_cast<char*>(ctxt->sBase.pData) + i * ctxt->sBase.nPageSize;
+                ctxt->pfnUnCachePage(reinterpret_cast<CPLVirtualMem*>(ctxt),
                                  i * ctxt->sBase.nPageSize,
                                  addr,
                                  ctxt->sBase.nPageSize,
@@ -647,25 +647,25 @@ void CPLVirtualMemAddPage( CPLVirtualMemVMA* ctxt, void* target_addr,
                            OpType opType, pthread_t hRequesterThread )
 {
     const int iPage = static_cast<int>(
-       ((char*)target_addr - (char*)ctxt->sBase.pData) / ctxt->sBase.nPageSize);
+       (static_cast<char*>(target_addr) - static_cast<char*>(ctxt->sBase.pData)) / ctxt->sBase.nPageSize);
     if( ctxt->nLRUSize == ctxt->nCacheMaxSizeInPages )
     {
 #if defined DEBUG_VIRTUALMEM && defined DEBUG_VERBOSE
         fprintfstderr("uncaching page %d\n", iPage);
 #endif
         int nOldPage = ctxt->panLRUPageIndices[ctxt->iLRUStart];
-        void* addr = (char*)ctxt->sBase.pData + nOldPage * ctxt->sBase.nPageSize;
+        void* addr = static_cast<char*>(ctxt->sBase.pData) + nOldPage * ctxt->sBase.nPageSize;
         if( ctxt->sBase.eAccessMode == VIRTUALMEM_READWRITE &&
             ctxt->pfnUnCachePage != nullptr &&
             TEST_BIT(ctxt->pabitRWMappedPages, nOldPage) )
         {
             size_t nToBeEvicted = ctxt->sBase.nPageSize;
-            if( (char*)addr + nToBeEvicted >=
-                (char*)ctxt->sBase.pData + ctxt->sBase.nSize )
+            if( static_cast<char*>(addr) + nToBeEvicted >=
+                static_cast<char*>(ctxt->sBase.pData) + ctxt->sBase.nSize )
                 nToBeEvicted =
-                    (char*)ctxt->sBase.pData + ctxt->sBase.nSize - (char*)addr;
+                    static_cast<char*>(ctxt->sBase.pData) + ctxt->sBase.nSize - static_cast<char*>(addr);
 
-            ctxt->pfnUnCachePage((CPLVirtualMem*)ctxt,
+            ctxt->pfnUnCachePage(reinterpret_cast<CPLVirtualMem*>(ctxt),
                                  nOldPage * ctxt->sBase.nPageSize,
                                  addr,
                                  nToBeEvicted,
@@ -1583,12 +1583,12 @@ void CPLVirtualMemPin( CPLVirtualMem* ctxt,
     msg.hRequesterThread = pthread_self();
     msg.opType = (bWriteOp) ? OP_STORE : OP_LOAD;
 
-    char* pBase = (char*)ALIGN_DOWN(pAddr, ctxt->nPageSize);
+    char* pBase = reinterpret_cast<char*>(ALIGN_DOWN(pAddr, ctxt->nPageSize));
     const size_t n =
-        ((char*)pAddr - pBase + nSize + ctxt->nPageSize - 1) / ctxt->nPageSize;
+        (reinterpret_cast<char*>(pAddr) - pBase + nSize + ctxt->nPageSize - 1) / ctxt->nPageSize;
     for( size_t i = 0; i < n; i++ )
     {
-        msg.pFaultAddr = (char*) pBase + i * ctxt->nPageSize;
+        msg.pFaultAddr = reinterpret_cast<char*>(pBase) + i * ctxt->nPageSize;
         CPLVirtualMemManagerPinAddrInternal(&msg);
     }
 }
@@ -1623,7 +1623,7 @@ static void CPLVirtualMemManagerSIGSEGVHandler( int the_signal,
 
 #if defined(__x86_64__) || defined(__i386__)
     ucontext_t* the_ucontext = static_cast<ucontext_t *>(the_ctxt);
-    const GByte* rip = (const GByte*)the_ucontext->uc_mcontext.gregs[REG_IP];
+    const GByte* rip = reinterpret_cast<const GByte*>(the_ucontext->uc_mcontext.gregs[REG_IP]);
     msg.opType = CPLVirtualMemGetOpType(rip);
 #if defined DEBUG_VIRTUALMEM && defined DEBUG_VERBOSE
     fprintfstderr("at rip %p, bytes: %02x %02x %02x %02x\n",
@@ -1631,8 +1631,8 @@ static void CPLVirtualMemManagerSIGSEGVHandler( int the_signal,
 #endif
     if( msg.opType == OP_MOVS_RSI_RDI )
     {
-        void* rsi = (void*)the_ucontext->uc_mcontext.gregs[REG_SI];
-        void* rdi = (void*)the_ucontext->uc_mcontext.gregs[REG_DI];
+        void* rsi = reinterpret_cast<void*>(the_ucontext->uc_mcontext.gregs[REG_SI]);
+        void* rdi = reinterpret_cast<void*>(the_ucontext->uc_mcontext.gregs[REG_DI]);
 
 #if defined DEBUG_VIRTUALMEM && defined DEBUG_VERBOSE
         fprintfstderr("fault=%p rsi=%p rsi=%p\n", msg.pFaultAddr, rsi, rdi);
@@ -1725,9 +1725,9 @@ static void CPLVirtualMemManagerThread( void* /* unused_param */ )
         for( int i=0; i < pVirtualMemManager->nVirtualMemCount; i++ )
         {
             ctxt = pVirtualMemManager->pasVirtualMem[i];
-            if( (char*)msg.pFaultAddr >= (char*) ctxt->sBase.pData &&
-                (char*)msg.pFaultAddr <
-                (char*)ctxt->sBase.pData + ctxt->sBase.nSize )
+            if( static_cast<char*>(msg.pFaultAddr) >= static_cast<char*>(ctxt->sBase.pData) &&
+                static_cast<char*>(msg.pFaultAddr) <
+                static_cast<char*>(ctxt->sBase.pData) + ctxt->sBase.nSize )
             {
                 bMappingFound = true;
                 break;
@@ -1738,11 +1738,11 @@ static void CPLVirtualMemManagerThread( void* /* unused_param */ )
         if( bMappingFound )
         {
             char * const start_page_addr =
-                reinterpret_cast<char*>(
+                static_cast<char*>(
                     ALIGN_DOWN(msg.pFaultAddr, ctxt->sBase.nPageSize));
             const int iPage = static_cast<int>(
-                ((char*)start_page_addr -
-                 (char*)ctxt->sBase.pData) / ctxt->sBase.nPageSize);
+                (static_cast<char*>(start_page_addr) -
+                 static_cast<char*>(ctxt->sBase.pData)) / ctxt->sBase.nPageSize);
 
             if( iPage == ctxt->iLastPage )
             {
@@ -1820,16 +1820,16 @@ static void CPLVirtualMemManagerThread( void* /* unused_param */ )
 
                     size_t nToFill = ctxt->sBase.nPageSize;
                     if( start_page_addr + nToFill >=
-                        (char*) ctxt->sBase.pData + ctxt->sBase.nSize )
+                        static_cast<char*>(ctxt->sBase.pData) + ctxt->sBase.nSize )
                     {
                         nToFill =
-                            (char*) ctxt->sBase.pData +
+                            static_cast<char*>(ctxt->sBase.pData) +
                             ctxt->sBase.nSize - start_page_addr;
                     }
 
                     ctxt->pfnCachePage(
-                            (CPLVirtualMem*)ctxt,
-                            start_page_addr - (char*) ctxt->sBase.pData,
+                            reinterpret_cast<CPLVirtualMem*>(ctxt),
+                            start_page_addr - static_cast<char*>(ctxt->sBase.pData),
                             pPageToFill,
                             nToFill,
                             ctxt->sBase.pCbkUserData);
@@ -1934,8 +1934,8 @@ void CPLVirtualMemManagerTerminate(void)
     // Cleanup everything.
     while( pVirtualMemManager->nVirtualMemCount > 0 )
         CPLVirtualMemFree(
-            (CPLVirtualMem*)pVirtualMemManager->
-                pasVirtualMem[pVirtualMemManager->nVirtualMemCount - 1]);
+            reinterpret_cast<CPLVirtualMem*>(pVirtualMemManager->
+                pasVirtualMem[pVirtualMemManager->nVirtualMemCount - 1]));
     CPLFree(pVirtualMemManager->pasVirtualMem);
 
     close(pVirtualMemManager->pipefd_to_thread[0]);
@@ -1997,7 +1997,7 @@ void CPLVirtualMemManagerTerminate( void ) {}
 static void CPLVirtualMemFreeFileMemoryMapped( CPLVirtualMem* ctxt )
 {
     const size_t nMappingSize =
-        ctxt->nSize + (GByte*)ctxt->pData - (GByte*)ctxt->pDataToFree;
+        ctxt->nSize + static_cast<GByte*>(ctxt->pData) - static_cast<GByte*>(ctxt->pDataToFree);
     const int nRet = munmap(ctxt->pDataToFree, nMappingSize);
     IGNORE_OR_ASSERT_IN_DEBUG(nRet == 0);
 }
@@ -2035,7 +2035,7 @@ CPLVirtualMemFileMapNew( VSILFILE* fp,
     }
 #endif
 
-    int fd = static_cast<int>((GUIntptr_t) VSIFGetNativeFileDescriptorL(fp));
+    int fd = static_cast<int>(reinterpret_cast<GUIntptr_t>(VSIFGetNativeFileDescriptorL(fp)));
     if( fd == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,

@@ -43,7 +43,7 @@ CPL_CVSID("$Id$")
 static GUInt32 getu32( const unsigned char *addr )
 {
     return
-        (((((GUInt32)addr[3] << 8) | addr[2]) << 8) | addr[1]) << 8 | addr[0];
+        ((((static_cast<GUInt32>(addr[3]) << 8) | addr[2]) << 8) | addr[1]) << 8 | addr[0];
 }
 
 static void putu32( GUInt32 data, unsigned char *addr )
@@ -78,7 +78,7 @@ void CPLMD5Update( struct CPLMD5Context *context, unsigned char const *buf,
 {
     // Update bitcount
     GUInt32 t = context->bits[0];
-    if ((context->bits[0] = (t + ((GUInt32)len << 3)) & 0xffffffff) < t)
+    if ((context->bits[0] = (t + (static_cast<GUInt32>(len) << 3)) & 0xffffffff) < t)
         context->bits[1]++;  /* Carry from low to high */
     context->bits[1] += len >> 29;
 
@@ -124,7 +124,7 @@ void CPLMD5Update( struct CPLMD5Context *context, unsigned char const *buf,
 void CPLMD5Final( unsigned char digest[16], struct CPLMD5Context *context )
 {
     /* Compute number of bytes mod 64 */
-    unsigned count = (unsigned)((context->bits[0] >> 3) & 0x3F);
+    unsigned count = static_cast<unsigned>((context->bits[0] >> 3) & 0x3F);
 
     /* Set the first char of padding to 0x80.  This is safe since there is
     always at least one byte free */

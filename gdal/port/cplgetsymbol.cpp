@@ -177,18 +177,18 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
                        | FORMAT_MESSAGE_IGNORE_INSERTS,
                        nullptr, nLastError,
                        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                       (LPTSTR) &lpMsgBuf, 0, nullptr );
+                       reinterpret_cast<LPTSTR>(&lpMsgBuf), 0, nullptr );
 
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Can't load requested DLL: %s\n%d: %s",
-                  pszLibrary, nLastError, (const char *) lpMsgBuf );
+                  pszLibrary, nLastError, static_cast<const char *>(lpMsgBuf) );
         return nullptr;
     }
 
     // Restore old error mode.
     SetErrorMode(uOldErrorMode);
 
-    pSymbol = (void *) GetProcAddress( (HINSTANCE) pLibrary, pszSymbolName );
+    pSymbol = reinterpret_cast<void *>(GetProcAddress( static_cast<HINSTANCE>(pLibrary), pszSymbolName ));
 
     if( pSymbol == nullptr )
     {

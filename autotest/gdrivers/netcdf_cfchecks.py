@@ -921,8 +921,8 @@ class CFChecker:
                         # Gone for belts and braces approach here!!
                         # Variable contains only one value
                         # Bounds array will be 1 dimensional
-                        if not ((varData <= boundsData[0] and varData >= boundsData[1])
-                                or (varData >= boundsData[0] and varData <= boundsData[1])):
+                        if not ((varData <= boundsData[0] and varData >= boundsData[1]) or \
+                                    (varData >= boundsData[0] and varData <= boundsData[1])):
                             print("WARNING (7.1): Data for variable", var, "lies outside cell boundaries")
                             self.warn = self.warn + 1
                     else:

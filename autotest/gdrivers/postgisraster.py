@@ -78,8 +78,8 @@ def postgisraster_test_open_error1():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
-    ds = gdal.Open(gdaltest.postgisraster_connection_string
-                   + "table='nonexistent'")
+    ds = gdal.Open(gdaltest.postgisraster_connection_string +
+                       "table='nonexistent'")
     if ds is None:
         return 'success'
     else:

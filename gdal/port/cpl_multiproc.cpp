@@ -424,7 +424,7 @@ static void CPLCleanupTLSList( void **papTLSList )
     {
         if( papTLSList[i] != nullptr && papTLSList[i+CTLS_MAX] != nullptr )
         {
-            CPLTLSFreeFunc pfnFree = (CPLTLSFreeFunc) papTLSList[i + CTLS_MAX];
+            CPLTLSFreeFunc pfnFree = reinterpret_cast<CPLTLSFreeFunc>(papTLSList[i + CTLS_MAX]);
             pfnFree( papTLSList[i] );
             papTLSList[i] = nullptr;
         }
@@ -838,7 +838,7 @@ CPLMutex *CPLCreateMutex()
       EnterCriticalSection(pcs);
     }
 
-    return (CPLMutex *) pcs;
+    return reinterpret_cast<CPLMutex *>(pcs);
 #endif
 }
 
@@ -862,7 +862,7 @@ int CPLAcquireMutex( CPLMutex *hMutexIn, double dfWaitInSeconds )
 
     return hr != WAIT_TIMEOUT;
 #else
-    CRITICAL_SECTION *pcs = (CRITICAL_SECTION *)hMutexIn;
+    CRITICAL_SECTION *pcs = reinterpret_cast<CRITICAL_SECTION*>(hMutexIn);
     BOOL ret;
 
     if( dfWaitInSeconds >= 1000.0 )
@@ -898,7 +898,7 @@ void CPLReleaseMutex( CPLMutex *hMutexIn )
 
     ReleaseMutex( hMutex );
 #else
-    CRITICAL_SECTION *pcs = (CRITICAL_SECTION *)hMutexIn;
+    CRITICAL_SECTION *pcs = reinterpret_cast<CRITICAL_SECTION*>(hMutexIn);
 
     LeaveCriticalSection(pcs);
 #endif
@@ -916,7 +916,7 @@ void CPLDestroyMutex( CPLMutex *hMutexIn )
 
     CloseHandle( hMutex );
 #else
-    CRITICAL_SECTION *pcs = (CRITICAL_SECTION *)hMutexIn;
+    CRITICAL_SECTION *pcs = reinterpret_cast<CRITICAL_SECTION*>(hMutexIn);
 
     DeleteCriticalSection( pcs );
     free( pcs );
@@ -953,7 +953,7 @@ CPLCond *CPLCreateCond()
     }
     CPLReleaseMutex(psCond->hInternalMutex);
     psCond->psWaiterList = nullptr;
-    return (CPLCond*) psCond;
+    return reinterpret_cast<CPLCond*>(psCond);
 }
 
 /************************************************************************/
@@ -962,14 +962,14 @@ CPLCond *CPLCreateCond()
 
 static void CPLTLSFreeEvent( void* pData )
 {
-    CloseHandle((HANDLE)pData);
+    CloseHandle(static_cast<HANDLE>(pData));
 }
 
 void CPLCondWait( CPLCond *hCond, CPLMutex* hClientMutex )
 {
-    Win32Cond* psCond = (Win32Cond*) hCond;
+    Win32Cond* psCond = reinterpret_cast<Win32Cond*>(hCond);
 
-    HANDLE hEvent = (HANDLE) CPLGetTLS(CTLS_WIN32_COND);
+    HANDLE hEvent = static_cast<HANDLE>(CPLGetTLS(CTLS_WIN32_COND));
     if( hEvent == nullptr )
     {
         hEvent = CreateEvent(nullptr, /* security attributes */
@@ -1011,7 +1011,7 @@ void CPLCondWait( CPLCond *hCond, CPLMutex* hClientMutex )
 
 void CPLCondSignal( CPLCond *hCond )
 {
-    Win32Cond* psCond = (Win32Cond*) hCond;
+    Win32Cond* psCond = reinterpret_cast<Win32Cond*>(hCond);
 
     // Signal the first registered event, and remove it from the list.
     CPLAcquireMutex(psCond->hInternalMutex, 1000.0);
@@ -1033,7 +1033,7 @@ void CPLCondSignal( CPLCond *hCond )
 
 void CPLCondBroadcast( CPLCond *hCond )
 {
-    Win32Cond* psCond = (Win32Cond*) hCond;
+    Win32Cond* psCond = reinterpret_cast<Win32Cond*>(hCond);
 
     // Signal all the registered events, and remove them from the list.
     CPLAcquireMutex(psCond->hInternalMutex, 1000.0);
@@ -1057,7 +1057,7 @@ void CPLCondBroadcast( CPLCond *hCond )
 
 void CPLDestroyCond( CPLCond *hCond )
 {
-    Win32Cond* psCond = (Win32Cond*) hCond;
+    Win32Cond* psCond = reinterpret_cast<Win32Cond*>(hCond);
     CPLDestroyMutex(psCond->hInternalMutex);
     psCond->hInternalMutex = nullptr;
     CPLAssert(psCond->psWaiterList == nullptr);
@@ -1104,7 +1104,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
         return nullptr;
     }
 
-    return (void *) hLockFile;
+    return static_cast<void *>(hLockFile);
 }
 
 /************************************************************************/
@@ -1114,7 +1114,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 void CPLUnlockFile( void *hLock )
 
 {
-    HANDLE    hLockFile = (HANDLE) hLock;
+    HANDLE    hLockFile = static_cast<HANDLE>(hLock);
 
     CloseHandle( hLockFile );
 }
@@ -1204,7 +1204,7 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
         return nullptr;
 
     psInfo->hThread = hThread;
-    return (CPLJoinableThread*) psInfo;
+    return reinterpret_cast<CPLJoinableThread*>(psInfo);
 }
 
 /************************************************************************/
@@ -1213,7 +1213,8 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
 
 void CPLJoinThread( CPLJoinableThread* hJoinableThread )
 {
-    CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo *) hJoinableThread;
+    CPLStdCallThreadInfo *psInfo =
+        reinterpret_cast<CPLStdCallThreadInfo *>(hJoinableThread);
 
     WaitForSingleObject(psInfo->hThread, INFINITE);
     CloseHandle( psInfo->hThread );
@@ -1227,7 +1228,7 @@ void CPLJoinThread( CPLJoinableThread* hJoinableThread )
 void CPLSleep( double dfWaitInSeconds )
 
 {
-    Sleep( (DWORD) (dfWaitInSeconds * 1000.0) );
+    Sleep( static_cast<DWORD>(dfWaitInSeconds * 1000.0) );
 }
 
 static bool bTLSKeySetup = false;
@@ -1260,7 +1261,7 @@ static void **CPLGetTLSList( int *pbMemoryErrorOccurred )
         bTLSKeySetup = true;
     }
 
-    papTLSList = (void **) TlsGetValue( nTLSKey );
+    papTLSList = static_cast<void**>(TlsGetValue( nTLSKey ));
     if( papTLSList == nullptr )
     {
         papTLSList =
@@ -1310,7 +1311,7 @@ void CPLCleanupTLS()
     if( !bTLSKeySetup )
         return;
 
-    void **papTLSList = (void **) TlsGetValue( nTLSKey );
+    void **papTLSList = static_cast<void **>(TlsGetValue( nTLSKey ));
     if( papTLSList == nullptr )
         return;
 
@@ -1532,9 +1533,9 @@ static CPLMutex *CPLCreateMutexInternal( bool bAlreadyInGlobalLock,
     CPLInitMutex(psItem);
 
     // Mutexes are implicitly acquired when created.
-    CPLAcquireMutex( (CPLMutex*)psItem, 0.0 );
+    CPLAcquireMutex( reinterpret_cast<CPLMutex*>(psItem), 0.0 );
 
-    return (CPLMutex*)psItem;
+    return reinterpret_cast<CPLMutex*>(psItem);
 }
 
 CPLMutex *CPLCreateMutex()
@@ -1554,7 +1555,7 @@ CPLMutex *CPLCreateMutexEx( int nOptions )
 int CPLAcquireMutex( CPLMutex *hMutexIn, double /* dfWaitInSeconds */ )
 {
     // TODO: Need to add timeout support.
-    MutexLinkedElt* psItem = (MutexLinkedElt *) hMutexIn;
+    MutexLinkedElt* psItem = reinterpret_cast<MutexLinkedElt *>(hMutexIn);
     const int err = pthread_mutex_lock( &(psItem->sMutex) );
 
     if( err != 0 )
@@ -1578,7 +1579,7 @@ int CPLAcquireMutex( CPLMutex *hMutexIn, double /* dfWaitInSeconds */ )
 void CPLReleaseMutex( CPLMutex *hMutexIn )
 
 {
-    MutexLinkedElt* psItem = (MutexLinkedElt *) hMutexIn;
+    MutexLinkedElt* psItem = reinterpret_cast<MutexLinkedElt *>(hMutexIn);
     const int err = pthread_mutex_unlock( &(psItem->sMutex) );
     if( err != 0 )
     {
@@ -1594,7 +1595,7 @@ void CPLReleaseMutex( CPLMutex *hMutexIn )
 void CPLDestroyMutex( CPLMutex *hMutexIn )
 
 {
-    MutexLinkedElt* psItem = (MutexLinkedElt *) hMutexIn;
+    MutexLinkedElt* psItem = reinterpret_cast<MutexLinkedElt *>(hMutexIn);
     const int err = pthread_mutex_destroy( &(psItem->sMutex) );
         if( err != 0 )
     {
@@ -1647,7 +1648,7 @@ CPLCond *CPLCreateCond()
     pthread_cond_t* pCond =
       static_cast<pthread_cond_t *>(malloc(sizeof(pthread_cond_t)));
     if( pCond && pthread_cond_init(pCond, nullptr) == 0 )
-        return (CPLCond*) pCond;
+        return reinterpret_cast<CPLCond*>(pCond);
     fprintf(stderr, "CPLCreateCond() failed.\n");
     free(pCond);
     return nullptr;
@@ -1659,8 +1660,8 @@ CPLCond *CPLCreateCond()
 
 void CPLCondWait( CPLCond *hCond, CPLMutex* hMutex )
 {
-    pthread_cond_t* pCond = (pthread_cond_t* )hCond;
-    MutexLinkedElt* psItem = (MutexLinkedElt *) hMutex;
+    pthread_cond_t* pCond = reinterpret_cast<pthread_cond_t*>(hCond);
+    MutexLinkedElt* psItem = reinterpret_cast<MutexLinkedElt *>(hMutex);
     pthread_mutex_t * pMutex = &(psItem->sMutex);
     pthread_cond_wait(pCond, pMutex);
 }
@@ -1671,7 +1672,7 @@ void CPLCondWait( CPLCond *hCond, CPLMutex* hMutex )
 
 void CPLCondSignal( CPLCond *hCond )
 {
-    pthread_cond_t* pCond = (pthread_cond_t* )hCond;
+    pthread_cond_t* pCond = reinterpret_cast<pthread_cond_t*>(hCond);
     pthread_cond_signal(pCond);
 }
 
@@ -1681,7 +1682,7 @@ void CPLCondSignal( CPLCond *hCond )
 
 void CPLCondBroadcast( CPLCond *hCond )
 {
-    pthread_cond_t* pCond = (pthread_cond_t* )hCond;
+    pthread_cond_t* pCond = reinterpret_cast<pthread_cond_t*>(hCond);
     pthread_cond_broadcast(pCond);
 }
 
@@ -1691,7 +1692,7 @@ void CPLCondBroadcast( CPLCond *hCond )
 
 void CPLDestroyCond( CPLCond *hCond )
 {
-    pthread_cond_t* pCond = (pthread_cond_t* )hCond;
+    pthread_cond_t* pCond = reinterpret_cast<pthread_cond_t*>(hCond);
     pthread_cond_destroy(pCond);
     free(hCond);
 }
@@ -1771,8 +1772,7 @@ void CPLUnlockFile( void *hLock )
 GIntBig CPLGetPID()
 
 {
-    // TODO(schwehr): What is the correct C++ way to do this cast?
-    return (GIntBig)pthread_self();
+    return reinterpret_cast<GIntBig>(reinterpret_cast<void*>(pthread_self()));
 }
 
 static pthread_key_t oTLSKey;
@@ -1786,7 +1786,7 @@ static void CPLMake_key()
 
 {
     if( pthread_key_create( &oTLSKey,
-                            (void (*)(void*)) CPLCleanupTLSList ) != 0 )
+                reinterpret_cast<void (*)(void*)>(CPLCleanupTLSList) ) != 0 )
     {
         CPLError( CE_Fatal, CPLE_AppDefined, "pthread_key_create() failed!" );
     }
@@ -1813,7 +1813,7 @@ static void **CPLGetTLSList( int* pbMemoryErrorOccurred )
         CPLEmergencyError( "CPLGetTLSList(): pthread_once() failed!" );
     }
 
-    void **papTLSList = (void **) pthread_getspecific( oTLSKey );
+    void **papTLSList = static_cast<void **>(pthread_getspecific( oTLSKey ));
     if( papTLSList == nullptr )
     {
         papTLSList =
@@ -1933,7 +1933,7 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
     pthread_attr_init( &hThreadAttr );
     pthread_attr_setdetachstate( &hThreadAttr, PTHREAD_CREATE_DETACHED );
     if( pthread_create( &(psInfo->hThread), &hThreadAttr,
-                        CPLStdCallThreadJacket, (void *) psInfo ) != 0 )
+                        CPLStdCallThreadJacket, static_cast<void *>(psInfo) ) != 0 )
     {
 #ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
         pthread_cond_destroy(&(psInfo->sCond));
@@ -2007,7 +2007,7 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
     pthread_attr_init( &hThreadAttr );
     pthread_attr_setdetachstate( &hThreadAttr, PTHREAD_CREATE_JOINABLE );
     int err = pthread_create( &(psInfo->hThread), &hThreadAttr,
-                        CPLStdCallThreadJacket, (void *) psInfo );
+                        CPLStdCallThreadJacket, static_cast<void *>(psInfo) );
     if( err != 0 )
     {
 #ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
@@ -2046,7 +2046,7 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
     }
 #endif
 
-    return (CPLJoinableThread*) psInfo;
+    return reinterpret_cast<CPLJoinableThread*>(psInfo);
 }
 
 /************************************************************************/
@@ -2055,7 +2055,8 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
 
 void CPLJoinThread(CPLJoinableThread* hJoinableThread)
 {
-    CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo*) hJoinableThread;
+    CPLStdCallThreadInfo *psInfo =
+        reinterpret_cast<CPLStdCallThreadInfo*>(hJoinableThread);
     if( psInfo == nullptr )
         return;
 
@@ -2099,7 +2100,7 @@ void CPLFinalizeTLS()
 void CPLCleanupTLS()
 
 {
-    void **papTLSList = (void **) pthread_getspecific( oTLSKey );
+    void **papTLSList = static_cast<void **>(pthread_getspecific( oTLSKey ));
     if( papTLSList == nullptr )
         return;
 
@@ -2248,7 +2249,7 @@ void CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree )
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
     l_papTLSList[nIndex] = pData;
-    l_papTLSList[CTLS_MAX + nIndex] = (void*) pfnFree;
+    l_papTLSList[CTLS_MAX + nIndex] = reinterpret_cast<void*>(pfnFree);
 }
 
 /************************************************************************/
@@ -2267,7 +2268,7 @@ void CPLSetTLSWithFreeFuncEx( int nIndex, void *pData,
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
     l_papTLSList[nIndex] = pData;
-    l_papTLSList[CTLS_MAX + nIndex] = (void*) pfnFree;
+    l_papTLSList[CTLS_MAX + nIndex] = reinterpret_cast<void*>(pfnFree);
 }
 #ifndef HAVE_SPINLOCK_IMPL
 
@@ -2279,7 +2280,7 @@ void CPLSetTLSWithFreeFuncEx( int nIndex, void *pData,
 
 CPLSpinLock *CPLCreateSpinLock( void )
 {
-    CPLSpinLock* psSpin = (CPLSpinLock *)CPLCreateMutex();
+    CPLSpinLock* psSpin = reinterpret_cast<CPLSpinLock *>(CPLCreateMutex());
     if( psSpin )
         CPLReleaseSpinLock(psSpin);
     return psSpin;
@@ -2300,7 +2301,7 @@ int   CPLCreateOrAcquireSpinLockInternal( CPLLock** ppsLock )
 
 int CPLAcquireSpinLock( CPLSpinLock* psSpin )
 {
-    return CPLAcquireMutex( (CPLMutex*)psSpin, 1000 );
+    return CPLAcquireMutex( reinterpret_cast<CPLMutex*>(psSpin), 1000 );
 }
 
 /************************************************************************/
@@ -2309,7 +2310,7 @@ int CPLAcquireSpinLock( CPLSpinLock* psSpin )
 
 void CPLReleaseSpinLock( CPLSpinLock* psSpin )
 {
-    CPLReleaseMutex( (CPLMutex*)psSpin );
+    CPLReleaseMutex( reinterpret_cast<CPLMutex*>(psSpin) );
 }
 
 /************************************************************************/
@@ -2318,7 +2319,7 @@ void CPLReleaseSpinLock( CPLSpinLock* psSpin )
 
 void CPLDestroySpinLock( CPLSpinLock* psSpin )
 {
-    CPLDestroyMutex( (CPLMutex*)psSpin );
+    CPLDestroyMutex( reinterpret_cast<CPLMutex*>(psSpin) );
 }
 
 #endif  // HAVE_SPINLOCK_IMPL

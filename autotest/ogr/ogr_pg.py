@@ -3246,9 +3246,9 @@ def ogr_pg_59():
         return 'skip'
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + ' -append -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string
-        + '" data/poly.shp -nln public.tpoly')
+        test_cli_utilities.get_ogr2ogr_path() +
+        ' -append -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string +
+        '" data/poly.shp -nln public.tpoly')
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     lyr = ds.GetLayerByName('tpoly')
