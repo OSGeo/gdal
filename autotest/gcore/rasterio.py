@@ -542,7 +542,7 @@ def rasterio_9():
         return 'fail'
     data_ar = struct.unpack('h' * 10 * 10, data)
     cs = rasterio_9_checksum(data, 10, 10, data_type=gdal.GDT_Int16)
-    if cs != 1211: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
+    if cs != 1211:  # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -597,7 +597,7 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
     cs = rasterio_9_checksum(data, 10, 10, data_type=gdal.GDT_UInt16)
-    if cs != 1211: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
+    if cs != 1211:  # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -619,7 +619,7 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
     cs = rasterio_9_checksum(data, 10, 10, data_type=gdal.GDT_CInt16)
-    if cs != 1211: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
+    if cs != 1211:  # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -705,7 +705,7 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
     cs = rasterio_9_checksum(data, 5, 5, data_type=gdal.GDT_UInt16)
-    if cs != 214: # checksum of gdal_translate data/byte.tif out.tif -outsize 5 5 -r CUBIC
+    if cs != 214:  # checksum of gdal_translate data/byte.tif out.tif -outsize 5 5 -r CUBIC
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'

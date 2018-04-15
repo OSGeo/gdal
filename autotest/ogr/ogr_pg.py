@@ -5035,7 +5035,7 @@ def ogr_pg_78():
 
     gdaltest.pg_ds = None
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
-    lc = gdaltest.pg_ds.GetLayerCount() # force discovery of all tables
+    lc = gdaltest.pg_ds.GetLayerCount()  # force discovery of all tables
     ogr_pg_78_found = False
     ogr_pg_78_2_found = False
     for i in range(lc):
@@ -5067,7 +5067,7 @@ def ogr_pg_78():
     # Test with slow method
     gdal.SetConfigOption('PG_USE_POSTGIS2_OPTIM', 'NO')
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
-    lc = gdaltest.pg_ds.GetLayerCount() # force discovery of all tables
+    lc = gdaltest.pg_ds.GetLayerCount()  # force discovery of all tables
     ogr_pg_78_found = False
     ogr_pg_78_2_found = False
     for i in range(lc):
@@ -5375,7 +5375,7 @@ def ogr_pg_84():
     ds = None
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
-    ds.GetLayerCount() # load all layers
+    ds.GetLayerCount()  # load all layers
     lyr = ds.GetLayerByName('ogr_pg_84')
     if lyr.GetMetadataItem('DESCRIPTION') != 'foo':
         gdaltest.post_reason('fail')
@@ -5389,7 +5389,7 @@ def ogr_pg_84():
     ds = None
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
-    lyr = ds.GetLayerByName('ogr_pg_84') # load just this layer
+    lyr = ds.GetLayerByName('ogr_pg_84')  # load just this layer
     if lyr.GetMetadataItem('DESCRIPTION') != 'bar':
         gdaltest.post_reason('fail')
         return 'fail'

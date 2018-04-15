@@ -302,7 +302,7 @@ def ogr_mongodb_2():
     a_uuid = str(uuid.uuid1()).replace('-', '_')
     ogrtest.mongodb_layer_name = 'test_' + a_uuid
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4258) # ETRS 89 will reproject identically to EPSG:4326
+    srs.ImportFromEPSG(4258)  # ETRS 89 will reproject identically to EPSG:4326
     lyr = ogrtest.mongodb_ds.CreateLayer(ogrtest.mongodb_layer_name, geom_type=ogr.wkbPolygon, srs=srs, options=['GEOMETRY_NAME=location.mygeom', 'FID='])
 
     gdal.PushErrorHandler()

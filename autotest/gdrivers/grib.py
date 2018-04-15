@@ -1450,25 +1450,14 @@ def grib_grib2_write_data_encodings_warnings_and_errors():
     tests += [['data/byte.tif', ['DATA_ENCODING=FOO']]]  # invalid DATA_ENCODING
     tests += [['data/byte.tif', ['JPEG2000_DRIVER=FOO', 'SPATIAL_DIFFERENCING_ORDER=BAR']]]  # both cannot be used together
     tests += [['data/byte.tif', ['SPATIAL_DIFFERENCING_ORDER=3']]]
-<<<<<<< HEAD
     tests += [['data/byte.tif', ['JPEG2000_DRIVER=THIS_IS_NOT_A_J2K_DRIVER']]]  # non-existing driver
     tests += [['data/byte.tif', ['JPEG2000_DRIVER=DERIVED']]]  # Read-only driver
     tests += [['../gcore/data/cfloat32.tif', []]]  # complex data type
     tests += [['data/float64.asc', []]]  # no projection
     tests += [['data/byte.sgi', []]]  # no geotransform
     tests += [['data/rotation.img', []]]  # geotransform with rotation terms
-    gdal.GetDriverByName('GTiff').Create('/vsimem/huge.tif', 65535, 65535, 1, options = ['SPARSE_OK=YES'])
-    tests += [['/vsimem/huge.tif', []]]  # too many pixels
-=======
-    tests += [['data/byte.tif', ['JPEG2000_DRIVER=THIS_IS_NOT_A_J2K_DRIVER']]] # non-existing driver
-    tests += [['data/byte.tif', ['JPEG2000_DRIVER=DERIVED']]] # Read-only driver
-    tests += [['../gcore/data/cfloat32.tif', []]] # complex data type
-    tests += [['data/float64.asc', []]] # no projection
-    tests += [['data/byte.sgi', []]] # no geotransform
-    tests += [['data/rotation.img', []]] # geotransform with rotation terms
     gdal.GetDriverByName('GTiff').Create('/vsimem/huge.tif', 65535, 65535, 1, options=['SPARSE_OK=YES'])
-    tests += [['/vsimem/huge.tif', []]] # too many pixels
->>>>>>> upstream/master
+    tests += [['/vsimem/huge.tif', []]]  # too many pixels
 
     for (filename, options,) in tests:
         tmpfilename = '/vsimem/out.grb2'

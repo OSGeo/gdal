@@ -919,7 +919,7 @@ def sentinel2_l1c_tile_4():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
-    gdal.SetConfigOption('SENTINEL2_USE_MAIN_MTD', 'NO') # Simulate absence of main MTD file
+    gdal.SetConfigOption('SENTINEL2_USE_MAIN_MTD', 'NO')  # Simulate absence of main MTD file
     ds = gdal.OpenEx('SENTINEL2_L1C_TILE:%s:10m' % filename_xml, open_options=['ALPHA=YES'])
     gdal.SetConfigOption('SENTINEL2_USE_MAIN_MTD', None)
     if ds is None or gdal.GetLastErrorMsg() != '':
