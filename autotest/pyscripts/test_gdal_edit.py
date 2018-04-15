@@ -192,8 +192,8 @@ def test_gdal_edit_py_4():
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     band = ds.GetRasterBand(1)
-    if band.GetMetadataItem('STATISTICS_MINIMUM') is None or
-            band.GetMetadataItem('FOO') is None:
+    if (band.GetMetadataItem('STATISTICS_MINIMUM') is None or
+            band.GetMetadataItem('FOO') is None):
         gdaltest.post_reason('fail')
         return 'fail'
     ds = band = None
@@ -202,8 +202,8 @@ def test_gdal_edit_py_4():
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     band = ds.GetRasterBand(1)
-    if band.GetMetadataItem('STATISTICS_MINIMUM') is not None or
-            band.GetMetadataItem('FOO') is None:
+    if (band.GetMetadataItem('STATISTICS_MINIMUM') is not None or
+            band.GetMetadataItem('FOO') is None):
         gdaltest.post_reason('fail')
         return 'fail'
     ds = band = None

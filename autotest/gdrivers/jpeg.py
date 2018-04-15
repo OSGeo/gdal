@@ -78,12 +78,12 @@ def jpeg_2():
     ds.GetFileList()
 
     try:
-        if md['EXIF_GPSLatitudeRef'] != 'N' or
+        if (md['EXIF_GPSLatitudeRef'] != 'N' or
                 md['EXIF_GPSLatitude'] != '(41) (1) (22.91)' or
                 md['EXIF_PixelXDimension'] != '361' or
                 md['EXIF_GPSVersionID'] != '0x02 0x00 0x00 0x00' or
                 md['EXIF_ExifVersion'] != '0210' or
-                md['EXIF_XResolution'] != '(96)':
+                md['EXIF_XResolution'] != '(96)'):
             print(md)
             gdaltest.post_reason('Exif metadata wrong.')
             return 'fail'
@@ -263,7 +263,7 @@ def jpeg_6():
         md = ds.GetMetadata()
 
     # Did we get an exif related warning?
-    if gdal.GetLastErrorType() != 2 or
+    if gdal.GetLastErrorType() != 2 or \
             gdal.GetLastErrorMsg().find('Ignoring EXIF') == -1:
         gdaltest.post_reason('did not get expected error.')
         return 'fail'
@@ -655,8 +655,8 @@ def jpeg_17():
     gdal.ErrorReset()
     with gdaltest.error_handler('CPLQuietErrorHandler'):
       ds = gdal.Open('data/bogus.jpg')
-      if ds is not None or
-            gdal.GetLastErrorType() != gdal.CE_Failure or
+      if ds is not None or \
+            gdal.GetLastErrorType() != gdal.CE_Failure or \
             gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
@@ -666,7 +666,7 @@ def jpeg_17():
     with gdaltest.error_handler('CPLQuietErrorHandler'):
         # ERROR 1: libjpeg: Huffman table 0x00 was not defined
         cs = ds.GetRasterBand(1).Checksum()
-    if gdal.GetLastErrorType() != gdal.CE_Failure or
+    if gdal.GetLastErrorType() != gdal.CE_Failure or \
             gdal.GetLastErrorMsg() == '':
         # libjpeg-turbo 1.4.0 doesn't emit errors...
         if cs != 4925:
@@ -680,7 +680,7 @@ def jpeg_17():
         #   libjpeg: Corrupt JPEG data: found marker 0x00 instead of RST63
         ds.GetRasterBand(1).Checksum()
 
-    if gdal.GetLastErrorType() != gdal.CE_Warning or
+    if gdal.GetLastErrorType() != gdal.CE_Warning or \
             gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
@@ -694,7 +694,7 @@ def jpeg_17():
         ds.GetRasterBand(1).Checksum()
         gdal.SetConfigOption('GDAL_ERROR_ON_LIBJPEG_WARNING', None)
 
-    if gdal.GetLastErrorType() != gdal.CE_Failure or
+    if gdal.GetLastErrorType() != gdal.CE_Failure or \
             gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'

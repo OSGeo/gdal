@@ -189,11 +189,11 @@ def gdal_edit(argv):
     if datasetname is None:
         return Usage()
 
-    if srs is None and lry is None and yres is None and not unsetgt and
+    if (srs is None and lry is None and yres is None and not unsetgt and
             not unsetstats and not stats and nodata is None and
             len(molist) == 0 and not unsetmd and len(gcp_list) == 0 and
             not unsetnodata and len(colorinterp) == 0 and
-            scale is None and offset is None:
+            scale is None and offset is None):
         print('No option specified')
         print('')
         return Usage()
