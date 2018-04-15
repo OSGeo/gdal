@@ -43,20 +43,20 @@ from osgeo import gdal, osr
 def tps_1():
 
     drv = gdal.GetDriverByName('MEM')
-    ds = drv.Create('foo',2,2)
+    ds = drv.Create('foo', 2, 2)
     gcp_list = [
-        gdal.GCP(0, 0, 0,  0,  0),
-        gdal.GCP(0, 50, 0,  0, 50),
-        gdal.GCP(50, 0, 0, 50,  0),
+        gdal.GCP(0, 0, 0, 0, 0),
+        gdal.GCP(0, 50, 0, 0, 50),
+        gdal.GCP(50, 0, 0, 50, 0),
         gdal.GCP(50, 50, 0, 50, 50),
-        gdal.GCP(0*25, 0*25, 0, 25, 25),
+        gdal.GCP(0 * 25, 0 * 25, 0, 25, 25),
         ]
     ds.SetGCPs(gcp_list, osr.GetUserInputAsWKT('WGS84'))
     utm_wkt = osr.GetUserInputAsWKT('+proj=utm +zone=11 +datum=WGS84')
 
     with gdaltest.error_handler():
         transformer = gdal.Transformer(ds, None,
-                                       ['DST_SRS='+utm_wkt,
+                                       ['DST_SRS=' + utm_wkt,
                                         'METHOD=GCP_TPS'])
     if transformer is not None:
         return 'fail'

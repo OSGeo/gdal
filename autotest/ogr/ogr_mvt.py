@@ -419,21 +419,21 @@ def ogr_mvt_tileset_json_field():
     f = lyr.GetNextFeature()
     d = json.loads(f.GetFieldAsString("json"))
     if d != {
-        "bool_true":True,
-        "bool_false":False,
-        "pos_int_value":1,
-        "pos_int64_value":123456789012345,
-        "neg_int_value":-1,
-        "neg_int64_value":-123456789012345,
-        "pos_sint_value":1,
-        "pos_sint64_value":123456789012345,
-        "neg_sint_value":-1,
-        "neg_sint64_value":-123456789012345,
-        "uint_value":2000000000,
-        "uint64_value":4000000000,
-        "float_value":1.25,
-        "real_value":1.23456789,
-        "string_value":"str"
+        "bool_true": True,
+        "bool_false": False,
+        "pos_int_value": 1,
+        "pos_int64_value": 123456789012345,
+        "neg_int_value": -1,
+        "neg_int64_value": -123456789012345,
+        "pos_sint_value": 1,
+        "pos_sint64_value": 123456789012345,
+        "neg_sint_value": -1,
+        "neg_sint64_value": -123456789012345,
+        "uint_value": 2000000000,
+        "uint64_value": 4000000000,
+        "float_value": 1.25,
+        "real_value": 1.23456789,
+        "string_value": "str"
         }:
         gdaltest.post_reason('fail')
         print(f.GetFieldAsString("json"))
@@ -549,7 +549,7 @@ def ogr_mvt_mbtiles():
         f.DumpReadable()
         return 'fail'
 
-    lyr.SetSpatialFilterRect(0,0,10000000,10000000)
+    lyr.SetSpatialFilterRect(0, 0, 10000000, 10000000)
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'MULTIPOINT ((220138.641461308 6276397.26655239))') != 0:
@@ -660,7 +660,7 @@ def ogr_mvt_mbtiles_open_vector_in_raster_mode():
 
 def ogr_mvt_x_y_z_filename_scheme():
 
-    tmpfilename ='/vsimem/0-0-0.pbf'
+    tmpfilename = '/vsimem/0-0-0.pbf'
     gdal.FileFromMemBuffer(tmpfilename,
         open('data/mvt/linestring/0/0/0.pbf', 'rb').read())
     ds = ogr.Open(tmpfilename)
@@ -1083,15 +1083,15 @@ def ogr_mvt_write_one_layer():
     gdal.VSIFCloseL(f)
     data_json = json.loads(data)
     expected_json = {
-        "name":"outmvt",
-        "description":"",
-        "version":2,
-        "minzoom":0,
-        "maxzoom":5,
-        "center":"0.0449158,9.0352907,0",
-        "bounds":"-4.5814079,8.9465739,4.6712395,9.1240075",
-        "type":"overlay",
-        "format":"pbf",
+        "name": "outmvt",
+        "description": "",
+        "version": 2,
+        "minzoom": 0,
+        "maxzoom": 5,
+        "center": "0.0449158,9.0352907,0",
+        "bounds": "-4.5814079,8.9465739,4.6712395,9.1240075",
+        "type": "overlay",
+        "format": "pbf",
     }
     for k in expected_json:
         if k not in data_json or data_json[k] != expected_json[k]:
@@ -1100,46 +1100,46 @@ def ogr_mvt_write_one_layer():
             return 'fail'
     json_json = json.loads(data_json['json'])
     expected_json_json = {
-        "vector_layers":[
+        "vector_layers": [
             {
-            "id":"mylayer",
-            "description":"",
-            "minzoom":0,
-            "maxzoom":5,
-            "fields":{
-                "strfield":"String",
-                "intfield":"Number",
-                "int64field":"Number",
-                "realfield":"Number",
-                "datefield":"String",
-                "datetimefield":"String",
-                "boolfield":"Boolean"
+            "id": "mylayer",
+            "description": "",
+            "minzoom": 0,
+            "maxzoom": 5,
+            "fields": {
+                "strfield": "String",
+                "intfield": "Number",
+                "int64field": "Number",
+                "realfield": "Number",
+                "datefield": "String",
+                "datetimefield": "String",
+                "boolfield": "Boolean"
             }
             }
         ],
-        "tilestats":{
-            "layerCount":1,
-            "layers":[
+        "tilestats": {
+            "layerCount": 1,
+            "layers": [
             {
-                "layer":"mylayer",
-                "count":7,
-                "geometry":"LineString",
-                "attributeCount":7,
-                "attributes":[
+                "layer": "mylayer",
+                "count": 7,
+                "geometry": "LineString",
+                "attributeCount": 7,
+                "attributes": [
                 {
-                    "attribute":"strfield",
-                    "count":2,
-                    "type":"string",
-                    "values":[
+                    "attribute": "strfield",
+                    "count": 2,
+                    "type": "string",
+                    "values": [
                         "foo",
                         "foobarbazbaw"
                     ]
                 },
                 {
-                    "attribute":"intfield",
-                    "count":2,
-                    "type":"numeric",
-                    "values":[
+                    "attribute": "intfield",
+                    "count": 2,
+                    "type": "numeric",
+                    "values": [
                         -1,
                         1
                     ],
@@ -1147,10 +1147,10 @@ def ogr_mvt_write_one_layer():
                     "max":1
                 },
                 {
-                    "attribute":"int64field",
-                    "count":2,
-                    "type":"numeric",
-                    "values":[
+                    "attribute": "int64field",
+                    "count": 2,
+                    "type": "numeric",
+                    "values": [
                         -123456789012345,
                         123456789012345
                     ],
@@ -1158,10 +1158,10 @@ def ogr_mvt_write_one_layer():
                     "max":123456789012345
                 },
                 {
-                    "attribute":"realfield",
-                    "count":2,
-                    "type":"numeric",
-                    "values":[
+                    "attribute": "realfield",
+                    "count": 2,
+                    "type": "numeric",
+                    "values": [
                         -1.256780,
                         1.250000
                     ],
@@ -1169,26 +1169,26 @@ def ogr_mvt_write_one_layer():
                     "max":1.25
                 },
                 {
-                    "attribute":"datefield",
-                    "count":1,
-                    "type":"string",
-                    "values":[
+                    "attribute": "datefield",
+                    "count": 1,
+                    "type": "string",
+                    "values": [
                     "2018-02-01"
                     ]
                 },
                 {
-                    "attribute":"datetimefield",
-                    "count":1,
-                    "type":"string",
-                    "values":[
+                    "attribute": "datetimefield",
+                    "count": 1,
+                    "type": "string",
+                    "values": [
                         "2018-02-01T12:34:56Z"
                     ]
                 },
                 {
-                    "attribute":"boolfield",
-                    "count":1,
-                    "type":"boolean",
-                    "values":[
+                    "attribute": "boolfield",
+                    "count": 1,
+                    "type": "boolean",
+                    "values": [
                         True
                     ]
                 }
@@ -1253,25 +1253,25 @@ def ogr_mvt_write_conf():
     data_json = json.loads(data)
     json_json = json.loads(data_json['json'])
     expected_json_json = {
-        "vector_layers":[
+        "vector_layers": [
         {
-            "id":"TheLayer",
-            "description":"the layer",
-            "minzoom":1,
-            "maxzoom":2,
-            "fields":{
+            "id": "TheLayer",
+            "description": "the layer",
+            "minzoom": 1,
+            "maxzoom": 2,
+            "fields": {
             }
         }
         ],
-        "tilestats":{
-            "layerCount":1,
-            "layers":[
+        "tilestats": {
+            "layerCount": 1,
+            "layers": [
                 {
-                    "layer":"TheLayer",
-                    "count":1,
-                    "geometry":"Point",
-                    "attributeCount":0,
-                    "attributes":[
+                    "layer": "TheLayer",
+                    "count": 1,
+                    "geometry": "Point",
+                    "attributeCount": 0,
+                    "attributes": [
                     ]
                 }
             ]

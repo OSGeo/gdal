@@ -357,9 +357,9 @@ def ogr_basic_7():
     for num_field in [6, 7, 8]:
         for i in range(7):
             feat_almost_clone = feat.Clone()
-            feat_almost_clone.SetField(num_field, 2010+(i==0), 1+(i==1),
-                                       8+(i==2), 22+(i==3), 48+(i==4),
-                                       15+(i==5), 4+(i==6))
+            feat_almost_clone.SetField(num_field, 2010 + (i == 0), 1 + (i == 1),
+                                       8 + (i == 2), 22 + (i == 3), 48 + (i == 4),
+                                       15 + (i == 5), 4 + (i == 6))
             if feat.Equal(feat_almost_clone):
                 feat.DumpReadable()
                 feat_almost_clone.DumpReadable()
@@ -539,15 +539,15 @@ def ogr_basic_12():
     feat_def.AddFieldDefn(field_def)
 
     f = ogr.Feature(feat_def)
-    f.SetFieldIntegerList(0, [0,1])
+    f.SetFieldIntegerList(0, [0, 1])
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    f.SetFieldIntegerList(0, [0,1,2,1])
+    f.SetFieldIntegerList(0, [0, 1, 2, 1])
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
-    if f.GetField('fld') != [0,1,1,1]:
+    if f.GetField('fld') != [0, 1, 1, 1]:
         print(f.GetField('fld'))
         gdaltest.post_reason('fail')
         return 'fail'
@@ -670,7 +670,7 @@ def ogr_basic_13():
               ('2016-0-31', None),
               ('2016-1-32', None),
               ('2016-1-0', None),
-              ('0/1/1','2000/01/01 00:00:00'),
+              ('0/1/1', '2000/01/01 00:00:00'),
               ('00/1/1', '2000/01/01 00:00:00'),
               ('00/00/00', None),
               ('000/00/00', None),
@@ -758,7 +758,7 @@ def ogr_basic_16():
 
 def ogr_basic_invalid_unicode():
 
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         val = '\udcfc'
     else:
         exec("val = u'\\udcfc'")

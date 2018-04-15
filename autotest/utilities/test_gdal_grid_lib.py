@@ -54,7 +54,7 @@ def test_gdal_grid_lib_1():
     shape_lyr = shape_ds.CreateLayer('n43')
 
     data = ds.ReadRaster(0, 0, 121, 121)
-    array_val = struct.unpack('h' * 121*121, data)
+    array_val = struct.unpack('h' * 121 * 121, data)
     for j in range(121):
         for i in range(121):
             wkt = 'POINT(%f %f %s)' % (geotransform[0] + (i + .5) * geotransform[1],
@@ -106,8 +106,8 @@ def test_gdal_grid_lib_2():
 
     for env_list in [[('GDAL_USE_AVX', 'NO'), ('GDAL_USE_SSE', 'NO')], [('GDAL_USE_AVX', 'NO')], []]:
 
-        for (key,value) in env_list:
-            gdal.SetConfigOption(key,value)
+        for (key, value) in env_list:
+            gdal.SetConfigOption(key, value)
 
         # Point strictly on grid
         ds1 = gdal.Grid('', '/vsimem/tmp/test_gdal_grid_lib_2.shp', format='MEM', \

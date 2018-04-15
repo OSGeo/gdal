@@ -62,7 +62,7 @@ def http_1():
     except:
         gdaltest.dods_drv = None
 
-    tst = gdaltest.GDALTest('PNG','http://gdal.org/gdalicon.png',
+    tst = gdaltest.GDALTest('PNG', 'http://gdal.org/gdalicon.png',
                              1, 7617, filename_absolute=1)
     ret = tst.testOpen()
     if ret == 'fail':
@@ -88,7 +88,7 @@ def http_2():
     if drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('GTiff','/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gcore/data/byte.tif',
+    tst = gdaltest.GDALTest('GTiff', '/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gcore/data/byte.tif',
                              1, 4672, filename_absolute=1)
     ret = tst.testOpen()
     if ret == 'fail':

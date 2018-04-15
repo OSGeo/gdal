@@ -189,7 +189,7 @@ def vsicurl_9():
     if not gdaltest.built_against_curl():
         return 'skip'
 
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         filename = 'xx\u4E2D\u6587.\u4E2D\u6587'
     else:
         exec("filename =  u'xx\u4E2D\u6587.\u4E2D\u6587'")
@@ -330,13 +330,13 @@ def vsicurl_test_redirect():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.VSIFSeekL(f,0,2)
+    gdal.VSIFSeekL(f, 0, 2)
     if gdal.VSIFTellL(f) != 1000000:
         gdaltest.post_reason('fail')
         print(gdal.VSIFTellL(f))
         gdal.VSIFCloseL(f)
         return 'fail'
-    gdal.VSIFSeekL(f,0,0)
+    gdal.VSIFSeekL(f, 0, 0)
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (current_time + 30), custom_method=method)
@@ -417,7 +417,7 @@ def vsicurl_test_retry():
         f = gdal.VSIFOpenL('/vsicurl/http://localhost:%d/test_retry/test.txt' % gdaltest.webserver_port, 'rb')
         data_len = 0
         if f:
-            data_len = len(gdal.VSIFReadL(1,1,f))
+            data_len = len(gdal.VSIFReadL(1, 1, f))
             gdal.VSIFCloseL(f)
         if data_len != 0:
             gdaltest.post_reason('fail')
@@ -439,7 +439,7 @@ def vsicurl_test_retry():
             return 'fail'
         gdal.ErrorReset()
         with gdaltest.error_handler():
-            data = gdal.VSIFReadL(1,3,f).decode('ascii')
+            data = gdal.VSIFReadL(1, 3, f).decode('ascii')
         error_msg = gdal.GetLastErrorMsg()
         gdal.VSIFCloseL(f)
         if data != 'foo':

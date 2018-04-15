@@ -93,50 +93,50 @@ def gdal_edit(argv):
     while i < argc:
         if argv[i] == '-ro':
             ro = True
-        elif argv[i] == '-a_srs' and i < len(argv)-1:
-            srs = argv[i+1]
+        elif argv[i] == '-a_srs' and i < len(argv) - 1:
+            srs = argv[i + 1]
             i = i + 1
-        elif argv[i] == '-a_ullr' and i < len(argv)-4:
-            ulx = float(argv[i+1])
+        elif argv[i] == '-a_ullr' and i < len(argv) - 4:
+            ulx = float(argv[i + 1])
             i = i + 1
-            uly = float(argv[i+1])
+            uly = float(argv[i + 1])
             i = i + 1
-            lrx = float(argv[i+1])
+            lrx = float(argv[i + 1])
             i = i + 1
-            lry = float(argv[i+1])
+            lry = float(argv[i + 1])
             i = i + 1
-        elif argv[i] == '-tr' and i < len(argv)-2:
-            xres = float(argv[i+1])
+        elif argv[i] == '-tr' and i < len(argv) - 2:
+            xres = float(argv[i + 1])
             i = i + 1
-            yres = float(argv[i+1])
+            yres = float(argv[i + 1])
             i = i + 1
-        elif argv[i] == '-a_nodata' and i < len(argv)-1:
-            nodata = float(argv[i+1])
+        elif argv[i] == '-a_nodata' and i < len(argv) - 1:
+            nodata = float(argv[i + 1])
             i = i + 1
-        elif argv[i] == '-scale' and i < len(argv)-1:
-            scale = float(argv[i+1])
+        elif argv[i] == '-scale' and i < len(argv) - 1:
+            scale = float(argv[i + 1])
             i = i + 1
-        elif argv[i] == '-offset' and i < len(argv)-1:
-            offset = float(argv[i+1])
+        elif argv[i] == '-offset' and i < len(argv) - 1:
+            offset = float(argv[i + 1])
             i = i + 1
-        elif argv[i] == '-mo' and i < len(argv)-1:
-            molist.append(argv[i+1])
+        elif argv[i] == '-mo' and i < len(argv) - 1:
+            molist.append(argv[i + 1])
             i = i + 1
         elif argv[i] == '-gcp' and i + 4 < len(argv):
-            pixel = float(argv[i+1])
+            pixel = float(argv[i + 1])
             i = i + 1
-            line = float(argv[i+1])
+            line = float(argv[i + 1])
             i = i + 1
-            x = float(argv[i+1])
+            x = float(argv[i + 1])
             i = i + 1
-            y = float(argv[i+1])
+            y = float(argv[i + 1])
             i = i + 1
-            if i + 1 < len(argv) and ArgIsNumeric(argv[i+1]):
-                z = float(argv[i+1])
+            if i + 1 < len(argv) and ArgIsNumeric(argv[i + 1]):
+                z = float(argv[i + 1])
                 i = i + 1
             else:
                 z = 0
-            gcp = gdal.GCP(x,y,z,pixel,line)
+            gcp = gdal.GCP(x, y, z, pixel, line)
             gcp_list.append(gcp)
         elif argv[i] == '-unsetgt' :
             unsetgt = True
@@ -151,12 +151,12 @@ def gdal_edit(argv):
             unsetmd = True
         elif argv[i] == '-unsetnodata':
             unsetnodata = True
-        elif argv[i] == '-oo' and i < len(argv)-1:
-            open_options.append(argv[i+1])
+        elif argv[i] == '-oo' and i < len(argv) - 1:
+            open_options.append(argv[i + 1])
             i = i + 1
-        elif argv[i].startswith('-colorinterp_')and i < len(argv)-1:
+        elif argv[i].startswith('-colorinterp_')and i < len(argv) - 1:
             band = int(argv[i][len('-colorinterp_'):])
-            val = argv[i+1]
+            val = argv[i + 1]
             if val.lower() == 'red':
                 val = gdal.GCI_RedBand
             elif val.lower() == 'green':
@@ -262,9 +262,9 @@ def gdal_edit(argv):
         # For now only the GTiff drivers understands full-zero as a hint
         # to unset the geotransform
         if ds.GetDriver().ShortName == 'GTiff':
-            ds.SetGeoTransform([0,0,0,0,0,0])
+            ds.SetGeoTransform([0, 0, 0, 0, 0, 0])
         else:
-            ds.SetGeoTransform([0,1,0,0,0,1])
+            ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
 
     if len(gcp_list) > 0:
         if wkt is None:
@@ -275,29 +275,29 @@ def gdal_edit(argv):
 
     if nodata is not None:
         for i in range(ds.RasterCount):
-            ds.GetRasterBand(i+1).SetNoDataValue(nodata)
+            ds.GetRasterBand(i + 1).SetNoDataValue(nodata)
     elif unsetnodata:
         for i in range(ds.RasterCount):
-            ds.GetRasterBand(i+1).DeleteNoDataValue()
+            ds.GetRasterBand(i + 1).DeleteNoDataValue()
 
     if scale is not None:
         for i in range(ds.RasterCount):
-            ds.GetRasterBand(i+1).SetScale(scale)
+            ds.GetRasterBand(i + 1).SetScale(scale)
 
     if offset is not None:
        for i in range(ds.RasterCount):
-           ds.GetRasterBand(i+1).SetOffset(offset)
+           ds.GetRasterBand(i + 1).SetOffset(offset)
 
     if unsetstats:
         for i in range(ds.RasterCount):
-            band = ds.GetRasterBand(i+1)
+            band = ds.GetRasterBand(i + 1)
             for key in band.GetMetadata().keys():
                 if key.startswith('STATISTICS_'):
                     band.SetMetadataItem(key, None)
 
     if stats:
         for i in range(ds.RasterCount):
-            ds.GetRasterBand(i+1).ComputeStatistics(approx_stats)
+            ds.GetRasterBand(i + 1).ComputeStatistics(approx_stats)
 
     if len(molist) != 0:
         if unsetmd:
@@ -307,7 +307,7 @@ def gdal_edit(argv):
         for moitem in molist:
             equal_pos = moitem.find('=')
             if equal_pos > 0:
-                md[moitem[0:equal_pos]] = moitem[equal_pos+1:]
+                md[moitem[0:equal_pos]] = moitem[equal_pos + 1:]
         ds.SetMetadata(md)
     elif unsetmd:
         ds.SetMetadata({})

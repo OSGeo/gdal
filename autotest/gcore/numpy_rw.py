@@ -99,7 +99,7 @@ def numpy_rw_3():
     ds = gdal.Open('data/cint_sar.tif')
     array = ds.ReadAsArray()
 
-    if array[2][3] != 116-16j:
+    if array[2][3] != 116 - 16j:
         print(array[0][2][3])
         gdaltest.post_reason('complex value read improperly.')
         return 'fail'
@@ -116,7 +116,7 @@ def numpy_rw_4():
         return 'skip'
 
     ds = gdal.Open('data/byte.tif')
-    array = ds.GetRasterBand(1).ReadAsArray(0,0,20,20,5,5)
+    array = ds.GetRasterBand(1).ReadAsArray(0, 0, 20, 20, 5, 5)
 
     if array[2][3] != 123:
         print(array[2][3])
@@ -136,7 +136,7 @@ def numpy_rw_5():
 
     from osgeo import gdalnumeric
 
-    array = gdalnumeric.LoadFile('data/rgbsmall.tif',35,21,1,1)
+    array = gdalnumeric.LoadFile('data/rgbsmall.tif', 35, 21, 1, 1)
 
     if array[0][0][0] != 78:
         print(array)
@@ -260,7 +260,7 @@ def numpy_rw_8():
     from osgeo import gdalnumeric
 
     ds = gdal.Open('data/rgbsmall.tif')
-    array = numpy.zeros([ds.RasterCount,ds.RasterYSize, ds.RasterXSize], numpy.uint8)
+    array = numpy.zeros([ds.RasterCount, ds.RasterYSize, ds.RasterXSize], numpy.uint8)
     ds.ReadAsArray(buf_obj=array)
 
     ds2 = gdalnumeric.OpenArray(array)
@@ -427,12 +427,12 @@ def numpy_rw_12():
 
     drv = gdal.GetDriverByName('MEM')
     ds = drv.Create('', 1, 2, 1, gdal.GDT_Byte)
-    slice = ar[:,1:]
+    slice = ar[:, 1:]
 
     ds.GetRasterBand(1).WriteArray(slice)
 
     ar_read = numpy.zeros_like(ar)
-    slice_read = ar_read[:,1:]
+    slice_read = ar_read[:, 1:]
     ds.GetRasterBand(1).ReadAsArray(buf_obj=slice_read)
     ds = None
 
@@ -558,7 +558,7 @@ def numpy_rw_13():
     ar[2][0][0] = 102
     ar[2][0][1] = 202
     for i in range(3):
-        ds.GetRasterBand(i+1).WriteArray(ar[i])
+        ds.GetRasterBand(i + 1).WriteArray(ar[i])
 
     ar = numpy.empty([3, 1, 2], dtype=numpy.int64)
     try:
@@ -763,15 +763,15 @@ def numpy_rw_15():
     import numpy
     from osgeo import gdal_array
 
-    array = numpy.empty([1,1,1], numpy.uint8)
+    array = numpy.empty([1, 1, 1], numpy.uint8)
     ds = gdal_array.OpenArray(array)
     gt = ds.GetGeoTransform(can_return_null=True)
     if gt is not None:
         gdaltest.post_reason('failure')
         return 'fail'
-    ds.SetGeoTransform([1,2,3,4,5,-6])
+    ds.SetGeoTransform([1, 2, 3, 4, 5, -6])
     gt = ds.GetGeoTransform()
-    if gt != (1,2,3,4,5,-6):
+    if gt != (1, 2, 3, 4, 5, -6):
         gdaltest.post_reason('failure')
         return 'fail'
 
@@ -798,7 +798,7 @@ def numpy_rw_16():
         return 'fail'
 
     # 4D
-    array = numpy.empty([1,1,1,1], numpy.uint8)
+    array = numpy.empty([1, 1, 1, 1], numpy.uint8)
     with gdaltest.error_handler():
         ds = gdal_array.OpenArray(array)
     if ds is not None:
@@ -806,7 +806,7 @@ def numpy_rw_16():
         return 'fail'
 
     # Unsupported data type
-    array = numpy.empty([1,1], numpy.float16)
+    array = numpy.empty([1, 1], numpy.float16)
     with gdaltest.error_handler():
         ds = gdal_array.OpenArray(array)
     if ds is not None:
@@ -828,7 +828,7 @@ def numpy_rw_17():
     from osgeo import gdal_array
 
     # Disabled by default
-    array = numpy.empty([1,1], numpy.uint8)
+    array = numpy.empty([1, 1], numpy.uint8)
     with gdaltest.error_handler():
         ds = gdal.Open(gdal_array.GetArrayFilename(array))
     if ds is not None:

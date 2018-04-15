@@ -308,7 +308,7 @@ def grib_grib2_read_template_4_32():
         print(cs)
         return 'fail'
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_REF_TIME': '  1508479200 sec UTC', 'GRIB_VALID_TIME': '  1508479200 sec UTC', 'GRIB_FORECAST_SECONDS': '0 sec', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '5 7 2 0 0 0 0 0 1 0 0 0 0 1 0 31 1 29 67 140 2 0 0 238 217', 'GRIB_PDS_PDTN': '32', 'GRIB_COMMENT': 'Brightness Temperature [C]', 'GRIB_SHORT_NAME': '0 undefined', 'GRIB_ELEMENT': 'BRTEMP', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES' :'5 7 2 0 0 0 0 1 0 1 31 285 17292 2 61145'}
+    expected_md = {'GRIB_REF_TIME': '  1508479200 sec UTC', 'GRIB_VALID_TIME': '  1508479200 sec UTC', 'GRIB_FORECAST_SECONDS': '0 sec', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '5 7 2 0 0 0 0 0 1 0 0 0 0 1 0 31 1 29 67 140 2 0 0 238 217', 'GRIB_PDS_PDTN': '32', 'GRIB_COMMENT': 'Brightness Temperature [C]', 'GRIB_SHORT_NAME': '0 undefined', 'GRIB_ELEMENT': 'BRTEMP', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES' : '5 7 2 0 0 0 0 1 0 1 31 285 17292 2 61145'}
     for k in expected_md:
         if k not in md or md[k] != expected_md[k]:
             gdaltest.post_reason('Did not get expected metadata')
@@ -1013,7 +1013,7 @@ def grib_grib2_write_projections():
 
         expected_gt = src_ds.GetGeoTransform()
         got_gt = out_ds.GetGeoTransform()
-        if max([abs(expected_gt[i]-got_gt[i]) for i in range(6)]) > 1e-5:
+        if max([abs(expected_gt[i] - got_gt[i]) for i in range(6)]) > 1e-5:
             gdaltest.post_reason('did not get expected geotransform for %s' % filename)
             print(got_gt)
             print(expected_gt)
@@ -1024,7 +1024,7 @@ def grib_grib2_write_projections():
 
     # Test writing GRS80
     src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, gdal.GDT_Float32)
-    src_ds.SetGeoTransform([2,1,0,49,0,-1])
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     src_ds.SetProjection("""GEOGCS["GRS 1980(IUGG, 1980)",
     DATUM["unknown",
         SPHEROID["GRS80",6378137,298.257222101]],
@@ -1071,9 +1071,9 @@ def grib_grib2_write_projections():
         gdaltest.post_reason('did not get expected projection for Mercator_1SP')
         print(out_ds.GetProjectionRef())
         return 'fail'
-    expected_gt=(-10931635.565066436, 60.297, 0.0, 3331982.221608528, 0.0, -60.297)
+    expected_gt = (-10931635.565066436, 60.297, 0.0, 3331982.221608528, 0.0, -60.297)
     got_gt = out_ds.GetGeoTransform()
-    if max([abs(expected_gt[i]-got_gt[i]) for i in range(6)]) > 1e-5:
+    if max([abs(expected_gt[i] - got_gt[i]) for i in range(6)]) > 1e-5:
         gdaltest.post_reason('did not get expected geotransform for Mercator_1SP')
         print(got_gt)
         return 'fail'
@@ -1110,9 +1110,9 @@ def grib_grib2_write_projections():
         gdaltest.post_reason('did not get expected projection for LCC_1SP')
         print(out_ds.GetProjectionRef())
         return 'fail'
-    expected_gt=(8974472.884926716, 60.017, 0.0, 6235685.688523474, 0.0, -60.017)
+    expected_gt = (8974472.884926716, 60.017, 0.0, 6235685.688523474, 0.0, -60.017)
     got_gt = out_ds.GetGeoTransform()
-    if max([abs(expected_gt[i]-got_gt[i]) for i in range(6)]) > 1e-5:
+    if max([abs(expected_gt[i] - got_gt[i]) for i in range(6)]) > 1e-5:
         gdaltest.post_reason('did not get expected geotransform for LCC_1SP')
         print(got_gt)
         return 'fail'
@@ -1233,7 +1233,7 @@ def grib_grib2_write_data_encodings():
     tests += [['../gcore/data/float32.tif', ['DATA_ENCODING=COMPLEX_PACKING'], 4672, GS5_CMPLX]]
 
     one_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
-    one_ds.SetGeoTransform([2,1,0,49,0,-1])
+    one_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     sr = osr.SpatialReference()
     sr.SetFromUserInput('WGS84')
     one_ds.SetProjection(sr.ExportToWkt())
@@ -1247,14 +1247,14 @@ def grib_grib2_write_data_encodings():
         tests += [[one_ds, ['DATA_ENCODING=JPEG2000'], 1, GS5_JPEG2000]]
 
     nodata_never_hit_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
-    nodata_never_hit_ds.SetGeoTransform([2,1,0,49,0,-1])
+    nodata_never_hit_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     nodata_never_hit_ds.SetProjection(sr.ExportToWkt())
     nodata_never_hit_ds.GetRasterBand(1).SetNoDataValue(1)
 
     tests += [[nodata_never_hit_ds, [], 0, GS5_SIMPLE]]
 
     all_nodata_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
-    all_nodata_ds.SetGeoTransform([2,1,0,49,0,-1])
+    all_nodata_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     all_nodata_ds.SetProjection(sr.ExportToWkt())
     all_nodata_ds.GetRasterBand(1).SetNoDataValue(0)
 
@@ -1302,7 +1302,7 @@ def grib_grib2_write_data_encodings():
 
     # Test floating point data with dynamic < 1
     test_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, gdal.GDT_Float32)
-    test_ds.SetGeoTransform([2,1,0,49,0,-1])
+    test_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     test_ds.SetProjection(sr.ExportToWkt())
     test_ds.WriteRaster(0, 0, 2, 2, struct.pack(4 * 'f', 1.23, 1.45, 1.56, 1.78))
 
@@ -1346,7 +1346,7 @@ def grib_grib2_write_data_encodings():
 
     # Test floating point data with very large dynamic
     test_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, gdal.GDT_Float32)
-    test_ds.SetGeoTransform([2,1,0,49,0,-1])
+    test_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     test_ds.SetProjection(sr.ExportToWkt())
     test_ds.WriteRaster(0, 0, 2, 2, struct.pack(4 * 'f', 1.23e10, -2.45e10, 1.23e10, -2.45e10))
 
@@ -1371,11 +1371,11 @@ def grib_grib2_write_data_encodings():
         got_vals = struct.unpack(4 * 'd', out_ds.ReadRaster())
         out_ds = None
         gdal.Unlink(tmpfilename)
-        expected_vals = (1.23e10, -2.45e10,1.23e10, -2.45e10)
-        if max([abs((got_vals[i] - expected_vals[i])/expected_vals[i]) for i in range(4)]) > 1e-4:
+        expected_vals = (1.23e10, -2.45e10, 1.23e10, -2.45e10)
+        if max([abs((got_vals[i] - expected_vals[i]) / expected_vals[i]) for i in range(4)]) > 1e-4:
             gdaltest.post_reason('did not get expected values for ' + encoding)
             print(got_vals)
-            print(max([abs((got_vals[i] - expected_vals[i])/expected_vals[i]) for i in range(2)]))
+            print(max([abs((got_vals[i] - expected_vals[i]) / expected_vals[i]) for i in range(2)]))
             return 'fail'
     test_ds = None
 
@@ -1384,7 +1384,7 @@ def grib_grib2_write_data_encodings():
         tmpfilename = '/vsimem/out.grb2'
         gdal.ErrorReset()
         gdal.Translate(tmpfilename, 'data/utm.tif', format='GRIB',
-                        creationOptions=['JPEG2000_DRIVER='+drvname,
+                        creationOptions=['JPEG2000_DRIVER=' + drvname,
                                            'COMPRESSION_RATIO=20'])
         error_msg = gdal.GetLastErrorMsg()
         if error_msg != '':
@@ -1500,7 +1500,7 @@ def grib_grib2_write_temperatures():
             (gdal.GDT_Float32, 'SIMPLE_PACKING', None)]:
 
         src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, src_type)
-        src_ds.SetGeoTransform([2,1,0,49,0,-1])
+        src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
         sr = osr.SpatialReference()
         sr.SetFromUserInput('WGS84')
         src_ds.SetProjection(sr.ExportToWkt())
@@ -1526,10 +1526,10 @@ def grib_grib2_write_temperatures():
             expected_vals = (25.0, 25.1, 25.1, 25.2)
         else:
             expected_vals = (25.0 - 273.15, 25.1 - 273.15, 25.1 - 273.15, 25.2 - 273.15)
-        if max([abs((got_vals[i] - expected_vals[i])/expected_vals[i]) for i in range(4)]) > 1e-4:
+        if max([abs((got_vals[i] - expected_vals[i]) / expected_vals[i]) for i in range(4)]) > 1e-4:
             gdaltest.post_reason('fail with data_encoding = %s and type = %s' % (data_encoding, str(src_type)))
             print(got_vals)
-            print(max([abs((got_vals[i] - expected_vals[i])/expected_vals[i]) for i in range(2)]))
+            print(max([abs((got_vals[i] - expected_vals[i]) / expected_vals[i]) for i in range(2)]))
             return 'fail'
 
     return 'success'

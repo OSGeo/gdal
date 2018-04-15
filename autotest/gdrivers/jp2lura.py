@@ -354,8 +354,8 @@ def jp2lura_8():
     expected_checksums = [64570, 57277, 56048]  # 61292]
 
     for i in range(len(expected_checksums)):
-        if ds.GetRasterBand(i+1).Checksum() != expected_checksums[i]:
-            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i+1))
+        if ds.GetRasterBand(i + 1).Checksum() != expected_checksums[i]:
+            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i + 1))
             return 'fail'
 
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
@@ -376,12 +376,12 @@ def jp2lura_9():
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-440720) > 0.1 \
-        or abs(geotransform[1]-60) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-3751320) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -60) > 0.001:
+    if abs(geotransform[0] - 440720) > 0.1 \
+        or abs(geotransform[1] - 60) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 3751320) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -441,15 +441,15 @@ def DISABLED_jp2lura_11():
         gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
-    jp2_bands_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    jp2_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize/16),int(ds.RasterYSize/16))
+    jp2_bands_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
+    jp2_fourth_band_data = fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
+    fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, int(ds.RasterXSize / 16), int(ds.RasterYSize / 16))
 
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/jp2lura_11.tif', ds)
     fourth_band = tmp_ds.GetRasterBand(4)
     got_cs = fourth_band.Checksum()
-    gtiff_bands_data = tmp_ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    gtiff_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
+    gtiff_bands_data = tmp_ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
+    gtiff_fourth_band_data = fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     #gtiff_fourth_band_subsampled_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,ds.RasterXSize/16,ds.RasterYSize/16)
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/jp2lura_11.tif')
@@ -507,7 +507,7 @@ def jp2lura_12():
     shutil.copy('data/byte.jp2', 'tmp/jp2lura_12.jp2')
 
     ds = gdal.Open('tmp/jp2lura_12.jp2')
-    ds.SetGeoTransform([1000,1,0,2000,0,-1])
+    ds.SetGeoTransform([1000, 1, 0, 2000, 0, -1])
     ds = None
 
     ds = gdal.Open('tmp/jp2lura_12.jp2')
@@ -516,7 +516,7 @@ def jp2lura_12():
 
     gdaltest.jp2lura_drv.Delete('tmp/jp2lura_12.jp2')
 
-    if gt != (1000,1,0,2000,0,-1):
+    if gt != (1000, 1, 0, 2000, 0, -1):
         gdaltest.post_reason('fail')
         print(gt)
         return 'fail'
@@ -562,7 +562,7 @@ def jp2lura_13():
     ds = gdal.Open('tmp/jp2lura_13.jp2')
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
-    gcps = [gdal.GCP(0,1,2,3,4)]
+    gcps = [gdal.GCP(0, 1, 2, 3, 4)]
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
 
@@ -689,7 +689,7 @@ def jp2lura_18():
     if gdaltest.jp2lura_drv is None:
         return 'skip'
 
-    src_ds = gdal.GetDriverByName('Mem').Create('',2000,2000)
+    src_ds = gdal.GetDriverByName('Mem').Create('', 2000, 2000)
     ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_18.jp2', src_ds, options=['TILEXSIZE=2000', 'TILEYSIZE=2000'])
     ds = None
     src_ds = None
@@ -1123,7 +1123,7 @@ def jp2lura_27():
     # Not sure how we can check that except looking at logs with CPL_DEBUG=GDAL
     # for "GDAL: GDALDatasetCopyWholeRaster(): 2048*2048 swaths, bInterleave=1"
     src_ds = gdal.GetDriverByName('MEM').Create('', 2049, 2049, 4)
-    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_27.jp2', src_ds, options=['LEVELS=1','TILEXSIZE=2048', 'TILEYSIZE=2048'])
+    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_27.jp2', src_ds, options=['LEVELS=1', 'TILEXSIZE=2048', 'TILEYSIZE=2048'])
     src_ds = None
     #print('End of JP2 decoding')
     out2_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/jp2lura_27.tif', out_ds, options=['TILED=YES'])
@@ -1193,8 +1193,8 @@ def get_element_val(node):
 
 def jp2lura_test_codeblock(filename, codeblock_width, codeblock_height):
     node = gdal.GetJPEG2000Structure(filename, ['ALL=YES'])
-    xcb = 2**(2+int(get_element_val(find_element_with_name(node, "Field", "SPcod_xcb_minus_2"))))
-    ycb = 2**(2+int(get_element_val(find_element_with_name(node, "Field", "SPcod_ycb_minus_2"))))
+    xcb = 2**(2 + int(get_element_val(find_element_with_name(node, "Field", "SPcod_xcb_minus_2"))))
+    ycb = 2**(2 + int(get_element_val(find_element_with_name(node, "Field", "SPcod_ycb_minus_2"))))
     if xcb != codeblock_width or ycb != codeblock_height:
         return False
     return True
@@ -1246,10 +1246,10 @@ def jp2lura_30():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
     ct = gdal.ColorTable()
-    ct.SetColorEntry(0, (255,255,255,255))
-    ct.SetColorEntry(1, (255,255,0,255))
-    ct.SetColorEntry(2, (255,0,255,255))
-    ct.SetColorEntry(3, (0,255,255,255))
+    ct.SetColorEntry(0, (255, 255, 255, 255))
+    ct.SetColorEntry(1, (255, 255, 0, 255))
+    ct.SetColorEntry(2, (255, 0, 255, 255))
+    ct.SetColorEntry(3, (0, 255, 255, 255))
     src_ds.GetRasterBand(1).SetRasterColorTable(ct)
 
     gdal.ErrorReset()
@@ -1535,7 +1535,7 @@ def jp2lura_38():
     src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
     wkt = """PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",100,1]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]"""
     src_ds.SetProjection(wkt)
-    src_ds.SetGeoTransform([0,60,0,0,0,-60])
+    src_ds.SetGeoTransform([0, 60, 0, 0, 0, -60])
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_38.jp2', src_ds, options=['GeoJP2=NO'])
     if out_ds.GetProjectionRef() != wkt:
         gdaltest.post_reason('fail')
@@ -1576,7 +1576,7 @@ def jp2lura_39():
 
     # No metadata
     src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
-    src_ds.SetGeoTransform([0,60,0,0,0,-60])
+    src_ds.SetGeoTransform([0, 60, 0, 0, 0, -60])
     gdal.SetConfigOption('GMLJP2OVERRIDE', '/vsimem/override.gml')
     # This GML has srsName only on RectifiedGrid (taken from D.2.2.2 from DGIWG_Profile_of_JPEG2000_for_Georeferenced_Imagery.pdf)
     gdal.FileFromMemBuffer('/vsimem/override.gml', """<?xml version="1.0" encoding="UTF-8"?>
@@ -1650,7 +1650,7 @@ def jp2lura_40():
 
     # No metadata
     src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
-    src_ds.SetGeoTransform([0,60,0,0,0,-60])
+    src_ds.SetGeoTransform([0, 60, 0, 0, 0, -60])
     gdal.SetConfigOption('GMLJP2OVERRIDE', '/vsimem/override.gml')
 
     gdal.FileFromMemBuffer('/vsimem/override.gml', """<?xml version="1.0" encoding="UTF-8"?>
@@ -1915,7 +1915,7 @@ def jp2lura_48():
 
     ds = gdal.Open('data/byte_tile_2048.jp2')
     (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
-    if (blockxsize, blockysize) != (20,20):
+    if (blockxsize, blockysize) != (20, 20):
         gdaltest.post_reason('fail')
         print(blockxsize, blockysize)
         return 'fail'
@@ -2147,13 +2147,13 @@ def jp2lura_49():
         gdal.Unlink('/vsimem/byte_nogeoref.j2w')
 
         if gt != expected_gt:
-            gdaltest.post_reason('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            gdaltest.post_reason('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
             print('Got ' + str(gt))
             print('Expected ' + str(expected_gt))
             return 'fail'
 
         if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
-            gdaltest.post_reason('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            gdaltest.post_reason('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
             print('Got ' + srs_wkt)
             print('Expected ' + expected_srs)
             return 'fail'
@@ -2204,13 +2204,13 @@ def jp2lura_49():
         gdal.Unlink('/vsimem/inconsitant_geojp2_gmljp2.j2w')
 
         if gt != expected_gt:
-            gdaltest.post_reason('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            gdaltest.post_reason('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
             print('Got ' + str(gt))
             print('Expected ' + str(expected_gt))
             return 'fail'
 
         if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
-            gdaltest.post_reason('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            gdaltest.post_reason('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
             print('Got ' + srs_wkt)
             print('Expected ' + expected_srs)
             return 'fail'
@@ -2444,7 +2444,7 @@ def jp2lura_54():
     # Request with a type that is not the natural type
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 100, 100,
                                           buf_type=gdal.GDT_Int16)
-    data = struct.unpack('h'* 100 * 100, data)
+    data = struct.unpack('h' * 100 * 100, data)
     if min(data) != 100 or max(data) != 100:
         gdaltest.post_reason('fail')
         print(min(data))
@@ -2453,7 +2453,7 @@ def jp2lura_54():
 
     # Request at a resolution that is not a power of two
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 30, 30)
-    data = struct.unpack('B'* 30 * 30, data)
+    data = struct.unpack('B' * 30 * 30, data)
     if min(data) != 100 or max(data) != 100:
         gdaltest.post_reason('fail')
         print(min(data))

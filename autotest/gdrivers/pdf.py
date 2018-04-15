@@ -362,7 +362,7 @@ def pdf_ogcbp_lcc():
 
     src_ds = gdal.GetDriverByName('GTiff').Create('tmp/temp.tif', 1, 1)
     src_ds.SetProjection(wkt)
-    src_ds.SetGeoTransform([500000,1,0,1000000,0,-1])
+    src_ds.SetGeoTransform([500000, 1, 0, 1000000, 0, -1])
 
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'FALSE')
     out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_ogcbp_lcc.pdf', src_ds)
@@ -725,7 +725,7 @@ def pdf_update_gt():
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     ds.SetProjection(sr.ExportToWkt())
-    ds.SetGeoTransform([2,1,0,49,0,-1])
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     ds = None
 
     if os.path.exists('tmp/pdf_update_gt.pdf.aux.xml'):
@@ -737,7 +737,7 @@ def pdf_update_gt():
     gt = ds.GetGeoTransform()
     ds = None
 
-    expected_gt = [2,1,0,49,0,-1]
+    expected_gt = [2, 1, 0, 49, 0, -1]
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-8:
             gdaltest.post_reason('did not get expected gt')
@@ -764,7 +764,7 @@ def pdf_update_gt():
     # Set geotransform again
     ds = gdal.Open('tmp/pdf_update_gt.pdf', gdal.GA_Update)
     ds.SetProjection(sr.ExportToWkt())
-    ds.SetGeoTransform([3,1,0,50,0,-1])
+    ds.SetGeoTransform([3, 1, 0, 50, 0, -1])
     ds = None
 
     # Check geotransform
@@ -772,7 +772,7 @@ def pdf_update_gt():
     gt = ds.GetGeoTransform()
     ds = None
 
-    expected_gt = [3,1,0,50,0,-1]
+    expected_gt = [3, 1, 0, 50, 0, -1]
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-8:
             gdaltest.post_reason('did not get expected gt')
@@ -1231,7 +1231,7 @@ def pdf_set_neatline(geo_encoding, dpi=300):
 
     for i in range(6):
         if (expected_gt[i] == 0 and abs(got_gt[i] - expected_gt[i]) > 1e-7) or \
-           (expected_gt[i] != 0 and abs((got_gt[i] - expected_gt[i])/expected_gt[i]) > 1e-7):
+           (expected_gt[i] != 0 and abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) > 1e-7):
             gdaltest.post_reason('did not get expected gt')
             print(got_gt)
             return 'fail'
@@ -1569,7 +1569,7 @@ def pdf_write_ogr():
         # Test that all combinations give a different result
         for i in range(len(rendering_options)):
             #print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
-            for j in range(i+1, len(rendering_options)):
+            for j in range(i + 1, len(rendering_options)):
                 if cs_tab[i] == cs_tab[j] and cs_tab[i] >= 0 and cs_tab[j] >= 0:
                     gdaltest.post_reason('fail')
                     print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]))
@@ -1577,10 +1577,10 @@ def pdf_write_ogr():
                     return 'fail'
 
         # And test that RASTER,VECTOR,TEXT is the default rendering
-        if abs(cs_tab[len(rendering_options)-1]) != cs_ref:
+        if abs(cs_tab[len(rendering_options) - 1]) != cs_ref:
             gdaltest.post_reason('fail')
             print(cs_ref)
-            print(cs_tab[len(rendering_options)-1])
+            print(cs_tab[len(rendering_options) - 1])
             return 'fail'
 
     gdal.GetDriverByName('PDF').Delete('tmp/pdf_write_ogr.pdf')
@@ -1832,7 +1832,7 @@ def pdf_write_huge():
     else:
         tmp_filename = 'tmp/pdf_write_huge.pdf'
 
-    for (xsize, ysize) in [(19200,1), (1,19200)]:
+    for (xsize, ysize) in [(19200, 1), (1, 19200)]:
         src_ds = gdal.GetDriverByName('MEM').Create('', xsize, ysize, 1)
         ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds)
         ds = None
@@ -1906,7 +1906,7 @@ def pdf_overviews():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 1024, 1024, 3)
     for i in range(3):
-        src_ds.GetRasterBand(i+1).Fill(255)
+        src_ds.GetRasterBand(i + 1).Fill(255)
     ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds)
     src_ds = None
     ds = None

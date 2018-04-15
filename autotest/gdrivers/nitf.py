@@ -100,13 +100,13 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
         ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
         ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
 
-    my_list = list(range(200)) + list(range(20,220)) + list(range(30,230))
-    raw_data = array.array('h',my_list).tostring()
+    my_list = list(range(200)) + list(range(20, 220)) + list(range(30, 230))
+    raw_data = array.array('h', my_list).tostring()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
                         buf_type=gdal.GDT_Int16,
-                        band_list=[1,2,3])
+                        band_list=[1, 2, 3])
 
     if createcopy:
         ds = drv.CreateCopy('tmp/test_create.ntf', ds,
@@ -153,12 +153,12 @@ def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-100) > 0.1 \
-        or abs(geotransform[1]-0.1) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-30.0) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -0.1) > 0.001:
+    if abs(geotransform[0] - 100) > 0.1 \
+        or abs(geotransform[1] - 0.1) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 30.0) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -0.1) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -168,7 +168,7 @@ def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_
             gdaltest.post_reason('Got wrong color interpretation.')
             return 'fail'
 
-        if ds.GetRasterBand(2).GetRasterColorInterpretation() !=gdal.GCI_GreenBand:
+        if ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_GreenBand:
             gdaltest.post_reason('Got wrong color interpretation.')
             return 'fail'
 
@@ -260,7 +260,7 @@ def nitf_9():
     (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
+    if abs(exp_mean - mean) > 0.1 or abs(exp_stddev - stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason('did not get expected mean or standard dev.')
         return 'fail'
@@ -355,7 +355,7 @@ def nitf_13():
     ds.SetProjection('PROJCS["UTM Zone 11, Southern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["Meter",1]]')
 
     my_list = list(range(200))
-    raw_data = array.array('f',my_list).tostring()
+    raw_data = array.array('f', my_list).tostring()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
@@ -381,12 +381,12 @@ def nitf_14():
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-400000) > .1 \
-    or abs(geotransform[1]-10) > 0.001 \
-    or abs(geotransform[2]-0) > 0.001 \
-    or abs(geotransform[3]-6000000) > .1 \
-    or abs(geotransform[4]-0) > 0.001 \
-    or abs(geotransform[5]- -10) > 0.001:
+    if abs(geotransform[0] - 400000) > .1 \
+    or abs(geotransform[1] - 10) > 0.001 \
+    or abs(geotransform[2] - 0) > 0.001 \
+    or abs(geotransform[3] - 6000000) > .1 \
+    or abs(geotransform[4] - 0) > 0.001 \
+    or abs(geotransform[5] - -10) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -590,13 +590,13 @@ def nitf_28_jp2ecw():
         ret = 'fail'
 
     tmpfilename = '/vsimem/nitf_28_jp2ecw.ntf'
-    src_ds = gdal.GetDriverByName('MEM').Create('',1025,1025)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1025, 1025)
     gdal.GetDriverByName('NITF').CreateCopy(tmpfilename, src_ds, options=['IC=C8'])
     ds = gdal.Open(tmpfilename)
     blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
     ds = None
     gdal.Unlink(tmpfilename)
-    if (blockxsize, blockysize) != (256,256):  # 256 since this is hardcoded as such in the ECW driver
+    if (blockxsize, blockysize) != (256, 256):  # 256 since this is hardcoded as such in the ECW driver
         gdaltest.post_reason('wrong block size')
         print(blockxsize, blockysize)
         ret = 'fail'
@@ -702,13 +702,13 @@ def nitf_28_jp2openjpeg_bis():
         ret = 'fail'
 
     tmpfilename = '/vsimem/nitf_28_jp2openjpeg_bis.ntf'
-    src_ds = gdal.GetDriverByName('MEM').Create('',1025,1025)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1025, 1025)
     gdal.GetDriverByName('NITF').CreateCopy(tmpfilename, src_ds, options=['IC=C8'])
     ds = gdal.Open(tmpfilename)
     blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
     ds = None
     gdal.Unlink(tmpfilename)
-    if (blockxsize, blockysize) != (1024,1024):
+    if (blockxsize, blockysize) != (1024, 1024):
         gdaltest.post_reason('wrong block size')
         print(blockxsize, blockysize)
         ret = 'fail'
@@ -729,10 +729,10 @@ def nitf_29():
                      ['IREP=RGB/LUT', 'LUT_SIZE=128'])
 
     ct = gdal.ColorTable()
-    ct.SetColorEntry(0, (255,255,255,255))
-    ct.SetColorEntry(1, (255,255,0,255))
-    ct.SetColorEntry(2, (255,0,255,255))
-    ct.SetColorEntry(3, (0,255,255,255))
+    ct.SetColorEntry(0, (255, 255, 255, 255))
+    ct.SetColorEntry(1, (255, 255, 0, 255))
+    ct.SetColorEntry(2, (255, 0, 255, 255))
+    ct.SetColorEntry(3, (0, 255, 255, 255))
 
     ds.GetRasterBand(1).SetRasterColorTable(ct)
 
@@ -742,10 +742,10 @@ def nitf_29():
 
     ct = ds.GetRasterBand(1).GetRasterColorTable()
     if ct.GetCount() != 129 or \
-       ct.GetColorEntry(0) != (255,255,255,255) or \
-       ct.GetColorEntry(1) != (255,255,0,255) or \
-       ct.GetColorEntry(2) != (255,0,255,255) or \
-       ct.GetColorEntry(3) != (0,255,255,255):
+       ct.GetColorEntry(0) != (255, 255, 255, 255) or \
+       ct.GetColorEntry(1) != (255, 255, 0, 255) or \
+       ct.GetColorEntry(2) != (255, 0, 255, 255) or \
+       ct.GetColorEntry(3) != (0, 255, 255, 255):
         gdaltest.post_reason('Wrong color table entry.')
         return 'fail'
 
@@ -757,10 +757,10 @@ def nitf_29():
 
     ct = ds.GetRasterBand(1).GetRasterColorTable()
     if ct.GetCount() != 130 or \
-       ct.GetColorEntry(0) != (255,255,255,255) or \
-       ct.GetColorEntry(1) != (255,255,0,255) or \
-       ct.GetColorEntry(2) != (255,0,255,255) or \
-       ct.GetColorEntry(3) != (0,255,255,255):
+       ct.GetColorEntry(0) != (255, 255, 255, 255) or \
+       ct.GetColorEntry(1) != (255, 255, 0, 255) or \
+       ct.GetColorEntry(2) != (255, 0, 255, 255) or \
+       ct.GetColorEntry(3) != (0, 255, 255, 255):
         gdaltest.post_reason('Wrong color table entry.')
         return 'fail'
 
@@ -862,7 +862,7 @@ def nitf_30():
         return 'fail'
 
     # Test that gdal_translate -ullr doesn't propagate BLOCKA
-    gdal.Translate('/vsimem/nitf30_no_src_md.ntf', src_ds, format='NITF', outputBounds=[2,49,3,50])
+    gdal.Translate('/vsimem/nitf30_no_src_md.ntf', src_ds, format='NITF', outputBounds=[2, 49, 3, 50])
     ds = gdal.Open('/vsimem/nitf30_no_src_md.ntf')
     md = ds.GetMetadata()
     ds = None
@@ -1021,7 +1021,7 @@ def nitf_36():
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
     (minval, maxval, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, True)
 
-    if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
+    if abs(exp_mean - mean) > 0.1 or abs(exp_stddev - stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason('did not get expected mean or standard dev.')
         return 'fail'
@@ -1041,7 +1041,7 @@ def nitf_36():
         return 'fail'
 
     (minval, maxval, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
-    if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
+    if abs(exp_mean - mean) > 0.1 or abs(exp_stddev - stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason('Should have statistics at that point.')
         return 'fail'
@@ -1177,7 +1177,7 @@ def nitf_39():
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
+    if abs(exp_mean - mean) > 0.1 or abs(exp_stddev - stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason('did not get expected mean or standard dev.')
         return 'fail'
@@ -1224,7 +1224,7 @@ def nitf_40():
     # has not put it somewhere else due to involuntary cast to 32bit integer.
     blockWidth = 256
     blockHeight = 256
-    nBlockx = int((width+blockWidth-1)/blockWidth)
+    nBlockx = int((width + blockWidth - 1) / blockWidth)
     iBlockx = int(x / blockWidth)
     iBlocky = int(y / blockHeight)
     ix = x % blockWidth
@@ -1638,7 +1638,7 @@ def nitf_50():
 
     ds.WriteRaster(0, 0, 100, 100, '   ', 1, 1,
                     buf_type=gdal.GDT_Byte,
-                    band_list=[1,2,3])
+                    band_list=[1, 2, 3])
 
     ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_BlueBand)
     ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
@@ -1675,19 +1675,19 @@ def nitf_50():
 def nitf_51():
     import struct
 
-    for xsize in range(1,9):
-        for nbpp in [1,2,3,4,5,6,7,12]:
+    for xsize in range(1, 9):
+        for nbpp in [1, 2, 3, 4, 5, 6, 7, 12]:
             ds = gdal.GetDriverByName('NITF').Create('tmp/nitf51.ntf', xsize, 1)
             ds = None
 
             f = open('tmp/nitf51.ntf', 'rb+')
             # Patch NBPP value at offset 811
             f.seek(811)
-            f.write(struct.pack('B' * 2, 48 + int(nbpp/10), 48 + nbpp % 10))
+            f.write(struct.pack('B' * 2, 48 + int(nbpp / 10), 48 + nbpp % 10))
 
             # Write image data
             f.seek(843)
-            n = int((xsize * nbpp+7) / 8)
+            n = int((xsize * nbpp + 7) / 8)
             for i in range(n):
                 f.write(struct.pack('B' * 1, 255))
 
@@ -1754,7 +1754,7 @@ def nitf_53():
 
     # Patch ICORDS and IGEOLO
     f.seek(775)
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         exec("f.write(b'U')")
         exec("f.write(b'31UBQ1000040000')")
         exec("f.write(b'31UBQ2000040000')")
@@ -1793,7 +1793,7 @@ def nitf_53():
 def nitf_54():
 
     # Create a fake NITF file with RPC00B TRE (probably not conformant, but enough to test GDAL code)
-    RPC00B='100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+    RPC00B = '100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
 
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf54.ntf', 1, 1, options=['TRE=RPC00B=' + RPC00B])
     ds = None
@@ -1815,7 +1815,7 @@ def nitf_54():
 def nitf_55():
 
     # Create a fake NITF file with ICHIPB TRE (probably not conformant, but enough to test GDAL code)
-    ICHIPB='00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+    ICHIPB = '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
 
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf55.ntf', 1, 1, options=['TRE=ICHIPB=' + ICHIPB])
     ds = None
@@ -1837,7 +1837,7 @@ def nitf_55():
 def nitf_56():
 
     # Create a fake NITF file with USE00A TRE (probably not conformant, but enough to test GDAL code)
-    USE00A='00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+    USE00A = '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
 
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf56.ntf', 1, 1, options=['TRE=USE00A=' + USE00A])
     ds = None
@@ -1859,7 +1859,7 @@ def nitf_56():
 def nitf_57():
 
     # Create a fake NITF file with GEOLOB TRE
-    GEOLOB='000000360000000360-180.000000000090.000000000000'
+    GEOLOB = '000000360000000360-180.000000000090.000000000000'
 
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf57.ntf', 1, 1, options=['TRE=GEOLOB=' + GEOLOB])
     ds = None
@@ -1882,7 +1882,7 @@ def nitf_57():
 def nitf_58():
 
     # Create a fake NITF file with STDIDC TRE (probably not conformant, but enough to test GDAL code)
-    STDIDC='00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+    STDIDC = '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
 
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf58.ntf', 1, 1, options=['TRE=STDIDC=' + STDIDC])
     ds = None
@@ -1904,8 +1904,8 @@ def nitf_58():
 def nitf_read_IMRFCA_IMASDA():
 
     # Create a fake NITF file with fake IMRFCA and IMASDA TRE
-    IMRFCA='0' * 1760
-    IMASDA='0' * 242
+    IMRFCA = '0' * 1760
+    IMASDA = '0' * 242
 
     tmpfile = '/vsimem/nitf_read_IMRFCA_IMASDA.ntf'
     gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options=['TRE=IMRFCA=' + IMRFCA, 'TRE=IMASDA=' + IMASDA])
@@ -2015,7 +2015,7 @@ def nitf_60():
 
     ref_gt = [1036422.8453166834, 149.94543479697344, 0.0, 345474.28177222813, 0.0, -149.94543479697404]
     for i in range(6):
-        if abs(gt[i]-ref_gt[i]) > 1e-6:
+        if abs(gt[i] - ref_gt[i]) > 1e-6:
             gdaltest.post_reason('did not get expected geotransform')
             print(gt)
             return 'fail'
@@ -2255,8 +2255,8 @@ def nitf_68():
     ds = None
 
     ds = gdal.Open('data/rgb.ntf')
-    if len(ds.GetMetadataItem('NITFFileHeader','NITF_METADATA')) == 0:
-        print(ds.GetMetadataItem('NITFFileHeader','NITF_METADATA'))
+    if len(ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA')) == 0:
+        print(ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA'))
         return 'fail'
     ds = None
 
@@ -3150,13 +3150,13 @@ def nitf_online_7():
         colorInterpretations = [gdal.GCI_Undefined, gdal.GCI_Undefined, gdal.GCI_RedBand, gdal.GCI_BlueBand, gdal.GCI_Undefined, gdal.GCI_GreenBand]
 
         for i in range(6):
-            cs = ds.GetRasterBand(i+1).Checksum()
+            cs = ds.GetRasterBand(i + 1).Checksum()
             if cs != checksums[i]:
                 gdaltest.post_reason('got checksum %d for image %s' \
                                       % (cs, file))
                 return 'fail'
 
-            if ds.GetRasterBand(i+1).GetRasterColorInterpretation() != colorInterpretations[i]:
+            if ds.GetRasterBand(i + 1).GetRasterColorInterpretation() != colorInterpretations[i]:
                 gdaltest.post_reason('got wrong color interp for image %s' \
                                       % file)
                 return 'fail'
@@ -3345,12 +3345,12 @@ def nitf_online_13():
             return 'fail'
 
     tab = [
-        ('NITF_IDLVL','3'),
-        ('NITF_IALVL','1'),
-        ('NITF_ILOC_ROW','1100'),
-        ('NITF_ILOC_COLUMN','1100'),
-        ('NITF_CCS_ROW','1100'),
-        ('NITF_CCS_COLUMN','1100'),
+        ('NITF_IDLVL', '3'),
+        ('NITF_IALVL', '1'),
+        ('NITF_ILOC_ROW', '1100'),
+        ('NITF_ILOC_COLUMN', '1100'),
+        ('NITF_CCS_ROW', '1100'),
+        ('NITF_CCS_COLUMN', '1100'),
         ]
 
     for item in tab:
@@ -3487,7 +3487,7 @@ def nitf_online_16(driver_to_test):
     else:
         print(ds.RasterCount)
         for i in range(ds.RasterCount):
-            print(ds.GetRasterBand(i+1).Checksum())
+            print(ds.GetRasterBand(i + 1).Checksum())
         print(ds.GetRasterBand(1).GetRasterColorTable())
         gdaltest.post_reason('Did not get expected checksums')
         ret = 'fail'
@@ -3544,7 +3544,7 @@ def nitf_online_17(driver_to_test):
     else:
         print(ds.RasterCount)
         for i in range(ds.RasterCount):
-            print(ds.GetRasterBand(i+1).Checksum())
+            print(ds.GetRasterBand(i + 1).Checksum())
         print(ds.GetRasterBand(1).GetRasterColorTable())
         gdaltest.post_reason('Did not get expected checksums')
         ret = 'fail'
@@ -3591,7 +3591,7 @@ def nitf_online_18():
         if prj.find('Azimuthal_Equidistant') == -1:
             gdaltest.post_reason('wrong projection?')
             return 'fail'
-        expected_gt=(-1669792.3618991028, 724.73626818537502, 0.0, -556597.45396636717, 0.0, -724.73626818537434)
+        expected_gt = (-1669792.3618991028, 724.73626818537502, 0.0, -556597.45396636717, 0.0, -724.73626818537434)
         if not gdaltest.geotransform_equals(gt, expected_gt, 1.0):
             gdaltest.post_reason('did not get expected geotransform.')
             return 'fail'
@@ -3599,7 +3599,7 @@ def nitf_online_18():
     # If we do not have a functioning coordinate transformer.
     else:
         if prj != '' \
-             or not gdaltest.geotransform_equals(gt,(0,1,0,0,0,1),0.00000001):
+             or not gdaltest.geotransform_equals(gt, (0, 1, 0, 0, 0, 1), 0.00000001):
             print(gt)
             print(prj)
             gdaltest.post_reason('did not get expected empty gt/projection')
@@ -3613,8 +3613,8 @@ def nitf_online_18():
         gcps = ds.GetGCPs()
         gcp3 = gcps[3]
         if gcp3.GCPPixel != 0 or gcp3.GCPLine != 1536 \
-                or abs(gcp3.GCPX+45) > 0.0000000001 \
-                or abs(gcp3.GCPY-68.78679656) > 0.00000001:
+                or abs(gcp3.GCPX + 45) > 0.0000000001 \
+                or abs(gcp3.GCPY - 68.78679656) > 0.00000001:
             gdaltest.post_reason('did not get expected gcp.')
             return 'fail'
 
@@ -3634,8 +3634,8 @@ def nitf_online_19():
     tst = gdaltest.GDALTest('NITF', 'tmp/cache/0000M033.GN3', 1, 38928,
                              filename_absolute=1)
 
-    return tst.testOpen(check_gt=(174.375000000000000,0.010986328125000,0,
-                                     51.923076923076927,0,-0.006760817307692))
+    return tst.testOpen(check_gt=(174.375000000000000, 0.010986328125000, 0,
+                                     51.923076923076927, 0, -0.006760817307692))
 
 ###############################################################################
 # Check that the RPF attribute metadata was carried through.
@@ -3698,12 +3698,12 @@ def nitf_online_22():
     ds = None
 
     tab = [
-        ('NITF_IDLVL','6'),
-        ('NITF_IALVL','1'),
-        ('NITF_ILOC_ROW','360'),
-        ('NITF_ILOC_COLUMN','380'),
-        ('NITF_CCS_ROW','425'),
-        ('NITF_CCS_COLUMN','410'),
+        ('NITF_IDLVL', '6'),
+        ('NITF_IALVL', '1'),
+        ('NITF_ILOC_ROW', '360'),
+        ('NITF_ILOC_COLUMN', '380'),
+        ('NITF_CCS_ROW', '425'),
+        ('NITF_CCS_COLUMN', '410'),
         ]
 
     for item in tab:
@@ -3717,12 +3717,12 @@ def nitf_online_22():
     ds = None
 
     tab = [
-        ('NITF_IDLVL','11'),
-        ('NITF_IALVL','2'),
-        ('NITF_ILOC_ROW','360'),
-        ('NITF_ILOC_COLUMN','40'),
-        ('NITF_CCS_ROW','422'),
-        ('NITF_CCS_COLUMN','210'),
+        ('NITF_IDLVL', '11'),
+        ('NITF_IALVL', '2'),
+        ('NITF_ILOC_ROW', '360'),
+        ('NITF_ILOC_COLUMN', '40'),
+        ('NITF_CCS_ROW', '422'),
+        ('NITF_CCS_COLUMN', '210'),
         ]
 
     for item in tab:
@@ -3736,12 +3736,12 @@ def nitf_online_22():
     ds = None
 
     tab = [
-        ('NITF_IDLVL','5'),
-        ('NITF_IALVL','3'),
-        ('NITF_ILOC_ROW','40'),
-        ('NITF_ILOC_COLUMN','240'),
-        ('NITF_CCS_ROW','-1'),
-        ('NITF_CCS_COLUMN','-1'),
+        ('NITF_IDLVL', '5'),
+        ('NITF_IALVL', '3'),
+        ('NITF_ILOC_ROW', '40'),
+        ('NITF_ILOC_COLUMN', '240'),
+        ('NITF_CCS_ROW', '-1'),
+        ('NITF_CCS_COLUMN', '-1'),
         ]
 
     for item in tab:
@@ -3755,12 +3755,12 @@ def nitf_online_22():
     ds = None
 
     tab = [
-        ('NITF_IDLVL','1'),
-        ('NITF_IALVL','0'),
-        ('NITF_ILOC_ROW','65'),
-        ('NITF_ILOC_COLUMN','30'),
-        ('NITF_CCS_ROW','65'),
-        ('NITF_CCS_COLUMN','30'),
+        ('NITF_IDLVL', '1'),
+        ('NITF_IALVL', '0'),
+        ('NITF_ILOC_ROW', '65'),
+        ('NITF_ILOC_COLUMN', '30'),
+        ('NITF_CCS_ROW', '65'),
+        ('NITF_CCS_COLUMN', '30'),
         ]
 
     for item in tab:

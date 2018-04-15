@@ -43,12 +43,12 @@ def osr_pci_1():
     srs = osr.SpatialReference()
     srs.ImportFromPCI('EC          E015', 'METRE', prj_parms)
 
-    if abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1)-47.0)>0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2)-62.0)>0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_CENTER)-54.5)>0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_LONGITUDE_OF_CENTER)-45.0)>0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)-0.0)>0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING)-0.0)>0.0000005:
+    if abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1) - 47.0) > 0.0000005 \
+       or abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2) - 62.0) > 0.0000005 \
+       or abs(srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_CENTER) - 54.5) > 0.0000005 \
+       or abs(srs.GetProjParm(osr.SRS_PP_LONGITUDE_OF_CENTER) - 45.0) > 0.0000005 \
+       or abs(srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) - 0.0) > 0.0000005 \
+       or abs(srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING) - 0.0) > 0.0000005:
         gdaltest.post_reason('Can not import Equidistant Conic projection.')
         return 'fail'
 

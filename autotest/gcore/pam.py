@@ -168,7 +168,7 @@ def pam_4():
     shutil.copyfile('data/mfftest.r00', 'tmp/mfftest.r00')
 
     ds = gdal.Open('tmp/mfftest.hdr')
-    stats = ds.GetRasterBand(1).GetStatistics(0,1)
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
 
     if stats[0] != 0 or stats[1] != 4:
         gdaltest.post_reason('Got wrong min/max, likely nodata not working?')
@@ -362,10 +362,10 @@ def pam_10():
         return 'fail'
 
     ct = band.GetColorTable()
-    if ct.GetColorEntry(0) != (0,0,0,255):
+    if ct.GetColorEntry(0) != (0, 0, 0, 255):
         print(ct.GetColorEntry(0))
         return 'fail'
-    if ct.GetColorEntry(1) != (1,1,1,255):
+    if ct.GetColorEntry(1) != (1, 1, 1, 255):
         print(ct.GetColorEntry(1))
         return 'fail'
 

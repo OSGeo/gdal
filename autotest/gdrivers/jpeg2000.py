@@ -213,8 +213,8 @@ def jpeg2000_8():
     expected_checksums = [64570, 57277, 56048, 61292]
 
     for i in range(4):
-        if ds.GetRasterBand(i+1).Checksum() != expected_checksums[i]:
-            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i+1))
+        if ds.GetRasterBand(i + 1).Checksum() != expected_checksums[i]:
+            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i + 1))
             return 'fail'
 
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
@@ -235,12 +235,12 @@ def jpeg2000_9():
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-440720) > 0.1 \
-        or abs(geotransform[1]-60) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-3751320) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -60) > 0.001:
+    if abs(geotransform[0] - 440720) > 0.1 \
+        or abs(geotransform[1] - 60) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 3751320) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -260,7 +260,7 @@ def jpeg2000_10():
 
     src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/jpeg2000_10_src.tif', 128, 128, 5)
     for i in range(src_ds.RasterCount):
-        src_ds.GetRasterBand(i+1).Fill(10*i+1)
+        src_ds.GetRasterBand(i + 1).Fill(10 * i + 1)
 
     ds = gdaltest.jpeg2000_drv.CreateCopy('/vsimem/jpeg2000_10_dst.tif', src_ds)
     ds = None
@@ -269,10 +269,10 @@ def jpeg2000_10():
     if ds is None:
         return 'fail'
     for i in range(src_ds.RasterCount):
-        if ds.GetRasterBand(i+1).Checksum() != src_ds.GetRasterBand(i+1).Checksum():
-            gdaltest.post_reason('bad checksum for band %d' % (i+1))
-            print(ds.GetRasterBand(i+1).Checksum())
-            print(src_ds.GetRasterBand(i+1).Checksum())
+        if ds.GetRasterBand(i + 1).Checksum() != src_ds.GetRasterBand(i + 1).Checksum():
+            gdaltest.post_reason('bad checksum for band %d' % (i + 1))
+            print(ds.GetRasterBand(i + 1).Checksum())
+            print(src_ds.GetRasterBand(i + 1).Checksum())
             return 'fail'
     ds = None
     src_ds = None
@@ -300,15 +300,15 @@ def jpeg2000_11():
         gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
-    jp2_bands_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    jp2_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize/16),int(ds.RasterYSize/16))
+    jp2_bands_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
+    jp2_fourth_band_data = fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
+    fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, int(ds.RasterXSize / 16), int(ds.RasterYSize / 16))
 
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/jpeg2000_11.tif', ds)
     fourth_band = tmp_ds.GetRasterBand(4)
     got_cs = fourth_band.Checksum()
-    gtiff_bands_data = tmp_ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    gtiff_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
+    gtiff_bands_data = tmp_ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
+    gtiff_fourth_band_data = fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     #gtiff_fourth_band_subsampled_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,ds.RasterXSize/16,ds.RasterYSize/16)
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/jpeg2000_11.tif')

@@ -636,7 +636,7 @@ def ogr_wfs3_spatial_filter():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    lyr.SetSpatialFilterRect(2,49,3,50)
+    lyr.SetSpatialFilterRect(2, 49, 3, 50)
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/foo?count=10&bbox=2,49,3,50', 200,
                 {'Content-Type': 'application/geo+json'},

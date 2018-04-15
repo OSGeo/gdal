@@ -114,7 +114,7 @@ def get_count_and_indices_of_jp2boxes(ar):
         if child[XML_TYPE_IDX] == gdal.CXT_Element and child[XML_VALUE_IDX] == 'JP2Box':
             jp2box_name = get_attribute_val(child, 'name')
             if jp2box_name in the_dic:
-                the_dic[jp2box_name] = (the_dic[jp2box_name][0]+1, the_dic[jp2box_name][1])
+                the_dic[jp2box_name] = (the_dic[jp2box_name][0] + 1, the_dic[jp2box_name][1])
             else:
                 the_dic[jp2box_name] = (1, child_idx)
 
@@ -367,7 +367,7 @@ def check_oi_rg_consistency(filename, serialized_oi_rg, error_report):
     gdal.SetConfigOption('GMLJP2OVERRIDE', '/vsimem/override.gml')
     gdal.FileFromMemBuffer('/vsimem/override.gml', gmljp2_from_oi)
     fake_in_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
-    fake_in_ds.SetGeoTransform([0,60,0,0,0,-60])
+    fake_in_ds.SetGeoTransform([0, 60, 0, 0, 0, -60])
     gdal.GetDriverByName('JP2OpenJPEG').CreateCopy('/vsimem/temp.jp2', fake_in_ds, options=['GeoJP2=NO'])
     gdal.SetConfigOption('GMLJP2OVERRIDE', None)
     gdal.Unlink('/vsimem/override.gml')
@@ -437,7 +437,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
         if gmljp2_found and ogc_schemas_location != 'disabled':
             if ogc_schemas_location is not None:
                 import os
-                sys.path.append(os.path.dirname(os.path.realpath(__file__))+'/../../../../autotest/pymod')
+                sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/../../../../autotest/pymod')
                 try:
                     import xmlvalidate
                     xml_validate_found = True
@@ -680,9 +680,9 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
                     val = int(val)
                     validate_bitsize(error_report, inspire_tg, val, 'pclr.B[%d]' % i, datatype)
                 if pclr_NE > 0 and pclr_NPC > 0:
-                    val = get_field_val(pclr, 'C_%d_%d' % (pclr_NE-1, pclr_NPC-1))
+                    val = get_field_val(pclr, 'C_%d_%d' % (pclr_NE - 1, pclr_NPC - 1))
                     if val is None:
-                        error_report.EmitError('GENERAL', 'pclr.C_%d_%d not found' % (pclr_NE-1, pclr_NPC-1))
+                        error_report.EmitError('GENERAL', 'pclr.C_%d_%d not found' % (pclr_NE - 1, pclr_NPC - 1))
 
             # Check optional "cmap" subbox
             cmap = find_jp2box(jp2h, 'cmap')
@@ -924,7 +924,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
             if ihdr and ihdr_width != Xsiz - XOsiz:
                 error_report.EmitError('GENERAL', 'ihdr_width(=%d) != Xsiz (=%d)- XOsiz(=%d)' % (ihdr_width, Xsiz, XOsiz))
             if ihdr and ihdr_height != Ysiz - YOsiz:
-                error_report.EmitError('GENERAL', 'ihdr_height(=%d) != Ysiz(=%d) - YOsiz(=%d)'% (ihdr_height, Ysiz, YOsiz))
+                error_report.EmitError('GENERAL', 'ihdr_height(=%d) != Ysiz(=%d) - YOsiz(=%d)' % (ihdr_height, Ysiz, YOsiz))
             if ihdr and ihdr_nc != Csiz:
                 error_report.EmitError('GENERAL', 'ihdr_nc(=%d) != Csiz (=%d)' % (ihdr_nc, Csiz))
 
@@ -1114,11 +1114,11 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
                                 for i in range(Csiz):
                                     if tab_Ssiz[i] >= 128:
                                         tab_Ssiz[i] -= 128
-                                        minSsiz = - 2** tab_Ssiz[i]
-                                        maxSsiz = 2** tab_Ssiz[i] - 1
+                                        minSsiz = - 2 ** tab_Ssiz[i]
+                                        maxSsiz = 2 ** tab_Ssiz[i] - 1
                                     else:
                                         minSsiz = 0
-                                        maxSsiz = 2** (tab_Ssiz[i]+1) - 1
+                                        maxSsiz = 2 ** (tab_Ssiz[i] + 1) - 1
                                     if min_vals[i] is not None and max_vals[i] is not None:
                                         if min_vals[i] != minSsiz:
                                             error_report.EmitError('INSPIRE_TG', 'rangeType.field[%d].min(=%d) != min(Ssiz[%d])(=%d)' % (i, min_vals[i], i, minSsiz), conformance_class='A.8.6')
@@ -1159,7 +1159,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
             if SPcod_xcb_minus_2 + SPcod_ycb_minus_2 > 8:
                 error_report.EmitError('GENERAL', 'SPcod_xcb_minus_2 + SPcod_ycb_minus_2 = %d, whereas max allowed is 8' % (SPcod_xcb_minus_2 + SPcod_ycb_minus_2))
 
-            for i in range(SPcod_NumDecompositions+1):
+            for i in range(SPcod_NumDecompositions + 1):
                 SPcod_Precincts = get_field_val(cod, 'SPcod_Precincts%d' % i)
                 if SPcod_Precincts is not None and (Scod & 1) == 0:
                     error_report.EmitWarning(
@@ -1208,17 +1208,17 @@ def main():
         if sys.argv[i] == "-oidoc":
             if i >= len(sys.argv) - 1:
                 return Usage()
-            oidoc = sys.argv[i+1]
+            oidoc = sys.argv[i + 1]
             i = i + 1
         elif sys.argv[i] == "-ogc_schemas_location":
             if i >= len(sys.argv) - 1:
                 return Usage()
-            ogc_schemas_location = sys.argv[i+1]
+            ogc_schemas_location = sys.argv[i + 1]
             i = i + 1
         elif sys.argv[i] == "-datatype":
             if i >= len(sys.argv) - 1:
                 return Usage()
-            datatype = sys.argv[i+1]
+            datatype = sys.argv[i + 1]
             i = i + 1
         elif sys.argv[i] == "-inspire_tg":
             inspire_tg = True

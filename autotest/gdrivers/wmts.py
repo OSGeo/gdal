@@ -470,7 +470,7 @@ def wmts_13():
         gdaltest.post_reason('fail')
         return 'fail'
     for i in range(4):
-        if ds.GetRasterBand(i+1).GetColorInterpretation() != gdal.GCI_RedBand + i:
+        if ds.GetRasterBand(i + 1).GetColorInterpretation() != gdal.GCI_RedBand + i:
             gdaltest.post_reason('fail')
             return 'fail'
     if ds.GetRasterBand(1).GetOverviewCount() != 0:
@@ -524,24 +524,24 @@ def wmts_13():
         ds = None
 
     ds = gdal.Open('WMTS:/vsimem/minimal.xml')
-    tmp_ds = gdal.GetDriverByName('MEM').Create('',256,256,4)
+    tmp_ds = gdal.GetDriverByName('MEM').Create('', 256, 256, 4)
     for i in range(4):
-        tmp_ds.GetRasterBand(i+1).Fill((i+1)*255/4)
+        tmp_ds.GetRasterBand(i + 1).Fill((i + 1) * 255 / 4)
     tmp_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/0/0/0.png', tmp_ds)
     for i in range(4):
-        cs = ds.GetRasterBand(i+1).Checksum()
-        if cs != tmp_ds.GetRasterBand(i+1).Checksum():
+        cs = ds.GetRasterBand(i + 1).Checksum()
+        if cs != tmp_ds.GetRasterBand(i + 1).Checksum():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    ref_data = tmp_ds.ReadRaster(0,0,256,256)
-    got_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,256,256)
+    ref_data = tmp_ds.ReadRaster(0, 0, 256, 256)
+    got_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, 256, 256)
     if ref_data != got_data:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ref_data = tmp_ds.GetRasterBand(1).ReadRaster(0,0,256,256)
-    got_data = ds.GetRasterBand(1).ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,256,256)
+    ref_data = tmp_ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256)
+    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, 256, 256)
     if ref_data != got_data:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -676,7 +676,7 @@ def wmts_14():
         return 'fail'
 
     gdal.PushErrorHandler()
-    gdaltest.wmts_drv.CreateCopy('/vsimem/gdal_nominal.xml', gdal.GetDriverByName('MEM').Create('',1,1))
+    gdaltest.wmts_drv.CreateCopy('/vsimem/gdal_nominal.xml', gdal.GetDriverByName('MEM').Create('', 1, 1))
     gdal.PopErrorHandler()
 
     gdaltest.wmts_drv.CreateCopy('/vsimem/gdal_nominal.xml', ds)
@@ -983,24 +983,24 @@ def wmts_15():
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    tmp_ds = gdal.GetDriverByName('MEM').Create('',256,256,4)
+    tmp_ds = gdal.GetDriverByName('MEM').Create('', 256, 256, 4)
     for i in range(4):
-        tmp_ds.GetRasterBand(i+1).Fill((i+1)*255/4)
+        tmp_ds.GetRasterBand(i + 1).Fill((i + 1) * 255 / 4)
     tmp_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/nominal_kvp.xml?service=WMTS&request=GetTile&version=1.0.0&layer=lyr1&style=default_style&format=image/png&TileMatrixSet=tms&TileMatrix=0&TileRow=0&TileCol=0&time=2011-10-04', tmp_ds)
     for i in range(4):
-        cs = ds.GetRasterBand(i+1).GetOverview(0).Checksum()
-        if cs != tmp_ds.GetRasterBand(i+1).Checksum():
+        cs = ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
+        if cs != tmp_ds.GetRasterBand(i + 1).Checksum():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    ref_data = tmp_ds.ReadRaster(0,0,256,256)
-    got_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,256,256)
+    ref_data = tmp_ds.ReadRaster(0, 0, 256, 256)
+    got_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, 256, 256)
     if ref_data != got_data:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ref_data = tmp_ds.GetRasterBand(1).ReadRaster(0,0,256,256)
-    got_data = ds.GetRasterBand(1).ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,256,256)
+    ref_data = tmp_ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256)
+    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, 256, 256)
     if ref_data != got_data:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1567,21 +1567,21 @@ def wmts_21():
         print(ds.GetProjectionRef())
         return 'fail'
 
-    tmp_ds = gdal.GetDriverByName('MEM').Create('',256,256,4)
+    tmp_ds = gdal.GetDriverByName('MEM').Create('', 256, 256, 4)
     for i in range(4):
-        tmp_ds.GetRasterBand(i+1).Fill(64)
+        tmp_ds.GetRasterBand(i + 1).Fill(64)
     tmp3_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/wmts_21/default_style/tms/GoogleCRS84Quad:2/1/3.png', tmp_ds)
 
-    tmp_ds = gdal.GetDriverByName('MEM').Create('',256,256,4)
+    tmp_ds = gdal.GetDriverByName('MEM').Create('', 256, 256, 4)
     for i in range(4):
-        tmp_ds.GetRasterBand(i+1).Fill(128)
+        tmp_ds.GetRasterBand(i + 1).Fill(128)
     tmp0_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/wmts_21/default_style/tms/GoogleCRS84Quad:2/1/0.png', tmp_ds)
 
-    if ds.GetRasterBand(1).ReadRaster(0,0,256,256) != tmp3_ds.GetRasterBand(1).ReadRaster(0,0,256,256):
+    if ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256) != tmp3_ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256):
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if ds.GetRasterBand(1).ReadRaster(256,0,256,256) != tmp0_ds.GetRasterBand(1).ReadRaster(0,0,256,256):
+    if ds.GetRasterBand(1).ReadRaster(256, 0, 256, 256) != tmp0_ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256):
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -1667,7 +1667,7 @@ def wmts_23(imagetype, expected_cs):
     if gdaltest.wmts_drv is None:
         return 'skip'
 
-    inputXml = '/vsimem/' + imagetype +'.xml'
+    inputXml = '/vsimem/' + imagetype + '.xml'
     serviceUrl = '/vsimem/wmts_23/' + imagetype
     gdal.FileFromMemBuffer(inputXml, """<Capabilities>
     <Contents>

@@ -451,7 +451,7 @@ def ogr_mongodb_2():
 
     # Test geometry filter
     lyr.SetAttributeFilter(None)
-    lyr.SetSpatialFilterRect(2.1,49.1,2.9,49.9)
+    lyr.SetSpatialFilterRect(2.1, 49.1, 2.9, 49.9)
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if not f.Equal(f_ref):
@@ -459,7 +459,7 @@ def ogr_mongodb_2():
         f.DumpReadable()
         return 'fail'
 
-    lyr.SetSpatialFilterRect(1.1,49.1,1.9,49.9)
+    lyr.SetSpatialFilterRect(1.1, 49.1, 1.9, 49.9)
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is not None:
@@ -571,7 +571,7 @@ def ogr_mongodb_2():
             f_ref.DumpReadable()
             return 'fail'
 
-    lyr.SetSpatialFilterRect(2.1,49.1,2.9,49.9)
+    lyr.SetSpatialFilterRect(2.1, 49.1, 2.9, 49.9)
     lyr.ResetReading()
     if f is None:
         gdaltest.post_reason('fail')
@@ -760,7 +760,7 @@ def ogr_mongodb_2():
             print(f_ref.GetGeomFieldDefnRef(i).GetType())
             return 'fail'
 
-    lyr.SetSpatialFilterRect(2.1,49.1,2.9,49.9)
+    lyr.SetSpatialFilterRect(2.1, 49.1, 2.9, 49.9)
     lyr.ResetReading()
     if f is None:
         gdaltest.post_reason('fail')
@@ -816,14 +816,14 @@ def ogr_mongodb_2():
     f = lyr.GetNextFeature()
     f = lyr.GetNextFeature()
     f = lyr.GetNextFeature()
-    if f['intlist'] != [1,1,-2147483648,2147483647,-2147483648,2147483647,-2147483648,2147483647,1,1] or \
-       f['int64list'] != [1,1234567890123456,1,-9223372036854775808,9223372036854775807,-9223372036854775808,9223372036854775807,1] or \
+    if f['intlist'] != [1, 1, -2147483648, 2147483647, -2147483648, 2147483647, -2147483648, 2147483647, 1, 1] or \
+       f['int64list'] != [1, 1234567890123456, 1, -9223372036854775808, 9223372036854775807, -9223372036854775808, 9223372036854775807, 1] or \
        f['int'] != -2147483648 or f['int64'] != -9223372036854775808 or f['real'] - 1 != f['real']:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
-    if f['int'] != 2147483647 or f['int64'] != 9223372036854775807 or f['real'] +1 != f['real']:
+    if f['int'] != 2147483647 or f['int64'] != 9223372036854775807 or f['real'] + 1 != f['real']:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -832,13 +832,13 @@ def ogr_mongodb_2():
     if lyr.TestCapability(ogr.OLCFastSpatialFilter) == 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    lyr.SetSpatialFilterRect(1.9,48.9,2.1,49.1)
+    lyr.SetSpatialFilterRect(1.9, 48.9, 2.1, 49.1)
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    lyr.SetSpatialFilterRect(1.9,48.9,1.95,48.95)
+    lyr.SetSpatialFilterRect(1.9, 48.9, 1.95, 48.95)
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is not None:
@@ -850,7 +850,7 @@ def ogr_mongodb_2():
         gdaltest.post_reason('fail')
         print(lyr.TestCapability(ogr.OLCFastSpatialFilter))
         return 'fail'
-    lyr.SetSpatialFilterRect(1.9,48.9,2.1,49.1)
+    lyr.SetSpatialFilterRect(1.9, 48.9, 2.1, 49.1)
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is None:

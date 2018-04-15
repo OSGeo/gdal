@@ -284,7 +284,7 @@ def envi_12():
         print(ct.GetCount())
         return 'fail'
 
-    if ct.GetColorEntry(0) != (0,0,0,255):
+    if ct.GetColorEntry(0) != (0, 0, 0, 255):
         gdaltest.post_reason('bad color entry')
         print(ct.GetColorEntry(0))
         return 'fail'

@@ -154,7 +154,7 @@ def raster_copy_with_nodata(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                                    t_xsize, t_ysize)
     data_dst = t_band.ReadAsArray(t_xoff, t_yoff, t_xsize, t_ysize)
 
-    nodata_test = Numeric.equal(data_src,nodata)
+    nodata_test = Numeric.equal(data_src, nodata)
     to_write = Numeric.choose(nodata_test, (data_src, data_dst))
 
     t_band.WriteArray(to_write, t_xoff, t_yoff)
@@ -248,13 +248,13 @@ class file_info:
         return 1
 
     def report(self):
-        print('Filename: '+ self.filename)
+        print('Filename: ' + self.filename)
         print('File Size: %dx%dx%d'
               % (self.xsize, self.ysize, self.bands))
         print('Pixel Size: %f x %f'
-              % (self.geotransform[1],self.geotransform[5]))
+              % (self.geotransform[1], self.geotransform[5]))
         print('UL:(%f,%f)   LR:(%f,%f)'
-              % (self.ulx,self.uly,self.lrx,self.lry))
+              % (self.ulx, self.uly, self.lrx, self.lry))
 
     def copy_into(self, t_fh, s_band=1, t_band=1, nodata_arg=None):
         """
@@ -281,14 +281,14 @@ class file_info:
         t_lry = t_geotransform[3] + t_fh.RasterYSize * t_geotransform[5]
 
         # figure out intersection region
-        tgw_ulx = max(t_ulx,self.ulx)
-        tgw_lrx = min(t_lrx,self.lrx)
+        tgw_ulx = max(t_ulx, self.ulx)
+        tgw_lrx = min(t_lrx, self.lrx)
         if t_geotransform[5] < 0:
-            tgw_uly = min(t_uly,self.uly)
-            tgw_lry = max(t_lry,self.lry)
+            tgw_uly = min(t_uly, self.uly)
+            tgw_lry = max(t_lry, self.lry)
         else:
-            tgw_uly = max(t_uly,self.uly)
-            tgw_lry = min(t_lry,self.lry)
+            tgw_uly = max(t_uly, self.uly)
+            tgw_lry = min(t_lry, self.lry)
 
         # do they even intersect?
         if tgw_ulx >= tgw_lrx:
@@ -301,9 +301,9 @@ class file_info:
         # compute target window in pixel coordinates.
         tw_xoff = int((tgw_ulx - t_geotransform[0]) / t_geotransform[1] + 0.1)
         tw_yoff = int((tgw_uly - t_geotransform[3]) / t_geotransform[5] + 0.1)
-        tw_xsize = int((tgw_lrx - t_geotransform[0])/t_geotransform[1] + 0.5) \
+        tw_xsize = int((tgw_lrx - t_geotransform[0]) / t_geotransform[1] + 0.5) \
                    - tw_xoff
-        tw_ysize = int((tgw_lry - t_geotransform[3])/t_geotransform[5] + 0.5) \
+        tw_ysize = int((tgw_lry - t_geotransform[3]) / t_geotransform[5] + 0.5) \
                    - tw_yoff
 
         if tw_xsize < 1 or tw_ysize < 1:
@@ -430,18 +430,18 @@ def main(argv=None):
             create_options.append(argv[i])
 
         elif arg == '-ps':
-            psize_x = float(argv[i+1])
-            psize_y = -1 * abs(float(argv[i+2]))
+            psize_x = float(argv[i + 1])
+            psize_y = -1 * abs(float(argv[i + 2]))
             i = i + 2
 
         elif arg == '-tap':
             bTargetAlignedPixels = True
 
         elif arg == '-ul_lr':
-            ulx = float(argv[i+1])
-            uly = float(argv[i+2])
-            lrx = float(argv[i+3])
-            lry = float(argv[i+4])
+            ulx = float(argv[i + 1])
+            uly = float(argv[i + 2])
+            lrx = float(argv[i + 3])
+            lry = float(argv[i + 4])
             i = i + 4
 
         elif arg[:1] == '-':
@@ -514,10 +514,10 @@ def main(argv=None):
         ysize = int((lry - uly) / geotransform[5] + 0.5)
 
         if separate != 0:
-            bands=0
+            bands = 0
 
             for fi in file_infos:
-                bands=bands + fi.bands
+                bands = bands + fi.bands
         else:
             bands = file_infos[0].bands
 
@@ -534,28 +534,28 @@ def main(argv=None):
             t_fh.GetRasterBand(1).SetRasterColorTable(file_infos[0].ct)
     else:
         if separate != 0:
-            bands=0
+            bands = 0
             for fi in file_infos:
-                bands=bands + fi.bands
+                bands = bands + fi.bands
             if t_fh.RasterCount < bands :
                 print('Existing output file has less bands than the input files. You should delete it before. Terminating gdal_merge.')
                 sys.exit(1)
         else:
-            bands = min(file_infos[0].bands,t_fh.RasterCount)
+            bands = min(file_infos[0].bands, t_fh.RasterCount)
 
     # Do we need to set nodata value ?
     if a_nodata is not None:
         for i in range(t_fh.RasterCount):
-            t_fh.GetRasterBand(i+1).SetNoDataValue(a_nodata)
+            t_fh.GetRasterBand(i + 1).SetNoDataValue(a_nodata)
 
     # Do we need to pre-initialize the whole mosaic file to some value?
     if pre_init is not None:
         if t_fh.RasterCount <= len(pre_init):
             for i in range(t_fh.RasterCount):
-                t_fh.GetRasterBand(i+1).Fill(pre_init[i])
+                t_fh.GetRasterBand(i + 1).Fill(pre_init[i])
         elif len(pre_init) == 1:
             for i in range(t_fh.RasterCount):
-                t_fh.GetRasterBand(i+1).Fill(pre_init[0])
+                t_fh.GetRasterBand(i + 1).Fill(pre_init[0])
 
     # Copy data from source files into output file.
     t_band = 1
@@ -571,20 +571,20 @@ def main(argv=None):
         if verbose != 0:
             print("")
             print("Processing file %5d of %5d, %6.3f%% completed in %d minutes."
-                  % (fi_processed+1,len(file_infos),
+                  % (fi_processed + 1, len(file_infos),
                      fi_processed * 100.0 / len(file_infos),
-                     int(round((time.time() - start_time)/60.0))))
+                     int(round((time.time() - start_time) / 60.0))))
             fi.report()
 
         if separate == 0 :
-            for band in range(1, bands+1):
+            for band in range(1, bands + 1):
                 fi.copy_into(t_fh, band, band, nodata)
         else:
-            for band in range(1, fi.bands+1):
+            for band in range(1, fi.bands + 1):
                 fi.copy_into(t_fh, band, t_band, nodata)
-                t_band = t_band+1
+                t_band = t_band + 1
 
-        fi_processed = fi_processed+1
+        fi_processed = fi_processed + 1
         if quiet == 0 and verbose == 0:
             progress(fi_processed / float(len(file_infos)))
 

@@ -64,19 +64,19 @@ def next_point(fd):
     line = fd.readline().strip()
     tokens = line.split()
 
-    lat_src = float(tokens[1]) + float(tokens[2])/60.0 + float(tokens[3])/3600.0
-    lat_dst = float(tokens[5]) + float(tokens[6])/60.0 + float(tokens[7])/3600.0
+    lat_src = float(tokens[1]) + float(tokens[2]) / 60.0 + float(tokens[3]) / 3600.0
+    lat_dst = float(tokens[5]) + float(tokens[6]) / 60.0 + float(tokens[7]) / 3600.0
 
     line = fd.readline().strip()
     tokens = line.split()
 
-    lon_src = float(tokens[1]) + float(tokens[2])/60.0 + float(tokens[3])/3600.0
-    lon_dst = float(tokens[5]) + float(tokens[6])/60.0 + float(tokens[7])/3600.0
+    lon_src = float(tokens[1]) + float(tokens[2]) / 60.0 + float(tokens[3]) / 3600.0
+    lon_dst = float(tokens[5]) + float(tokens[6]) / 60.0 + float(tokens[7]) / 3600.0
 
-    return (int(name_tokens[1]),int(name_tokens[2]),lat_src,lon_src,lat_dst,lon_dst)
+    return (int(name_tokens[1]), int(name_tokens[2]), lat_src, lon_src, lat_dst, lon_dst)
 
 
-def read_grid_crs_to_crs(filename,shape):
+def read_grid_crs_to_crs(filename, shape):
     fd = open(filename)
     grid = numpy.zeros(shape)
 
@@ -88,8 +88,8 @@ def read_grid_crs_to_crs(filename,shape):
 
     ptuple = next_point(fd)
     while ptuple is not None:
-        grid[0,ptuple[1],ptuple[0]] = ptuple[4] - ptuple[2]
-        grid[1,ptuple[1],ptuple[0]] = ptuple[5] - ptuple[3]
+        grid[0, ptuple[1], ptuple[0]] = ptuple[4] - ptuple[2]
+        grid[1, ptuple[1], ptuple[0]] = ptuple[5] - ptuple[3]
         points_found = points_found + 1
         ptuple = next_point(fd)
 
@@ -117,8 +117,8 @@ def new_create_grid(griddef):
     lon_steps = griddef[4]
     lat_steps = griddef[5]
 
-    lat_axis = numpy.linspace(lat_start,lat_end,lat_steps)
-    lon_axis = numpy.linspace(lon_start,lon_end,lon_steps)
+    lat_axis = numpy.linspace(lat_start, lat_end, lat_steps)
+    lon_axis = numpy.linspace(lon_start, lon_end, lon_steps)
 
     lon_list = []
     for i in range(lat_steps):
@@ -132,18 +132,18 @@ def new_create_grid(griddef):
 
     lat_band = numpy.column_stack(lat_list)
 
-    return numpy.array([lon_band,lat_band])
+    return numpy.array([lon_band, lat_band])
 
 ##############################################################################
 # This function writes a grid out in form suitable to use as input to the
 # htdp program.
 
 
-def write_grid(grid,out_filename):
-    fd_out = open(out_filename,'w')
+def write_grid(grid, out_filename):
+    fd_out = open(out_filename, 'w')
     for i in range(grid.shape[2]):
         for j in range(grid.shape[1]):
-            fd_out.write('%f %f 0 "PNT_%d_%d"\n' % (grid[1,j,i],grid[0,j,i],i,j))
+            fd_out.write('%f %f 0 "PNT_%d_%d"\n' % (grid[1, j, i], grid[0, j, i], i, j))
     fd_out.close()
 
 ##############################################################################
@@ -152,10 +152,10 @@ def write_grid(grid,out_filename):
 
 def write_gdal_grid(filename, grid, griddef):
 
-    ps_x = (griddef[2] - griddef[0]) / (griddef[4]-1)
-    ps_y = (griddef[3] - griddef[1]) / (griddef[5]-1)
-    geotransform = (griddef[0] - ps_x*0.5, ps_x, 0.0,
-                    griddef[1] - ps_y*0.5, 0.0, ps_y)
+    ps_x = (griddef[2] - griddef[0]) / (griddef[4] - 1)
+    ps_y = (griddef[3] - griddef[1]) / (griddef[5] - 1)
+    geotransform = (griddef[0] - ps_x * 0.5, ps_x, 0.0,
+                    griddef[1] - ps_y * 0.5, 0.0, ps_y)
 
     grid = grid.astype(numpy.float32)
     ds = gdal_array.SaveArray(grid, filename, format='CTable2')
@@ -192,7 +192,7 @@ def write_control(control_fn, out_grid_fn, in_grid_fn,
                                           dst_crs_date,
                                           in_grid_fn)
 
-    open(control_fn,'w').write(control_filled)
+    open(control_fn, 'w').write(control_filled)
 
 #############################################################################
 
@@ -282,28 +282,28 @@ if __name__ == '__main__':
     i = 1
     while i < len(argv):
 
-        if argv[i] == '-griddef' and i < len(argv)-6:
-            griddef = (float(argv[i+1]),
-                       float(argv[i+2]),
-                       float(argv[i+3]),
-                       float(argv[i+4]),
-                       float(argv[i+5]),
-                       float(argv[i+6]))
+        if argv[i] == '-griddef' and i < len(argv) - 6:
+            griddef = (float(argv[i + 1]),
+                       float(argv[i + 2]),
+                       float(argv[i + 3]),
+                       float(argv[i + 4]),
+                       float(argv[i + 5]),
+                       float(argv[i + 6]))
             i = i + 6
 
-        elif argv[i] == '-htdp' and i < len(argv)-1:
-            htdp_path = argv[i+1]
+        elif argv[i] == '-htdp' and i < len(argv) - 1:
+            htdp_path = argv[i + 1]
             i = i + 1
 
         elif argv[i] == '-kwf':
             kwf = 1
 
-        elif argv[i] == '-wrkdir' and i < len(argv)-1:
-            wrkdir = argv[i+1]
+        elif argv[i] == '-wrkdir' and i < len(argv) - 1:
+            wrkdir = argv[i + 1]
             i = i + 1
 
-        elif argv[i] == '-o' and i < len(argv)-1:
-            output_grid_name = argv[i+1]
+        elif argv[i] == '-o' and i < len(argv) - 1:
+            output_grid_name = argv[i + 1]
             i = i + 1
 
         elif argv[i] == '-h' or argv[i] == '--help':
@@ -381,7 +381,7 @@ if __name__ == '__main__':
 
     print('htdp run complete.')
 
-    adjustment = read_grid_crs_to_crs(out_grid_fn,grid.shape)
+    adjustment = read_grid_crs_to_crs(out_grid_fn, grid.shape)
 
     # Convert shifts to radians
     adjustment = adjustment * (3.14159265358979323846 / 180.0)

@@ -1588,7 +1588,7 @@ def ogr_libkml_read_write_style():
         </Style>"""
     lines = [l.strip() for l in data.split('\n')]
 
-    lines_got = lines[lines.index('<Style>'):lines.index('</Style>')+1]
+    lines_got = lines[lines.index('<Style>'):lines.index('</Style>') + 1]
     lines_ref = [l.strip() for l in expected_style.split('\n')]
     if lines_got != lines_ref:
         print(data)
@@ -1599,8 +1599,8 @@ def ogr_libkml_read_write_style():
     # Automatic StyleMap creation testing
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource('/vsimem/ogr_libkml_read_write_style_write.kml')
     style_table = ogr.StyleTable()
-    style_table.AddStyle('style1_normal','SYMBOL(id:"http://style1_normal",c:#67452301)')
-    style_table.AddStyle('style1_highlight','SYMBOL(id:"http://style1_highlight",c:#10325476)')
+    style_table.AddStyle('style1_normal', 'SYMBOL(id:"http://style1_normal",c:#67452301)')
+    style_table.AddStyle('style1_highlight', 'SYMBOL(id:"http://style1_highlight",c:#10325476)')
     ds.SetStyleTable(style_table)
     ds = None
 

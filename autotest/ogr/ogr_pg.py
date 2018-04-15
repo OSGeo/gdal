@@ -69,9 +69,9 @@ def ogr_pg_1():
     gdaltest.pg_use_copy = gdal.GetConfigOption('PG_USE_COPY', None)
     val = gdal.GetConfigOption('OGR_PG_CONNECTION_STRING', None)
     if val is not None:
-        gdaltest.pg_connection_string=val
+        gdaltest.pg_connection_string = val
     else:
-        gdaltest.pg_connection_string='dbname=autotest'
+        gdaltest.pg_connection_string = 'dbname=autotest'
     #gdaltest.pg_connection_string='dbname=autotest-postgis1.4'
     #gdaltest.pg_connection_string='dbname=autotest port=5432'
     #gdaltest.pg_connection_string='dbname=autotest-postgis2.0'
@@ -263,7 +263,7 @@ def ogr_pg_3():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.pg_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
+        if ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
                                           max_error=0.001) != 0:
             return 'fail'
 
@@ -297,7 +297,7 @@ def ogr_pg_4():
 
     for item in wkt_list:
 
-        wkt = open('data/wkb_wkt/'+item+'.wkt').read()
+        wkt = open('data/wkb_wkt/' + item + '.wkt').read()
         geom = ogr.CreateGeometryFromWkt(wkt)
 
         ######################################################################
@@ -651,7 +651,7 @@ def ogr_pg_12():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.pgc_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
+        if ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
                                           max_error=0.001) != 0:
             return 'fail'
 
@@ -784,7 +784,7 @@ def ogr_pg_15():
     query = 'eas_id = 169'
 
     for id in range(1000):
-        query = query + (' or eas_id = %d' % (id+1000))
+        query = query + (' or eas_id = %d' % (id + 1000))
 
     gdaltest.pg_lyr.SetAttributeFilter(query)
     tr = ogrtest.check_features_against_list(gdaltest.pg_lyr,
@@ -810,7 +810,7 @@ def ogr_pg_16():
     query = 'eas_id = 169'
 
     for id in range(1000):
-        query = query + (' or eas_id = %d' % (id+1000))
+        query = query + (' or eas_id = %d' % (id + 1000))
 
     statement = 'select eas_id from tpoly where ' + query
 
@@ -865,7 +865,7 @@ def ogr_pg_18():
         gdaltest.post_reason('did not get geometry_columns layer')
         return 'fail'
 
-    if count+1 != gdaltest.pg_ds.GetLayerCount():
+    if count + 1 != gdaltest.pg_ds.GetLayerCount():
         gdaltest.post_reason('layer count unexpectedly unchanged.')
         return 'fail'
 
@@ -1086,7 +1086,7 @@ def ogr_pg_21_subgeoms():
                     'TRIANGLE ZM ((0 0 0 0,0 1 0 0,1 1 0 0,0 0 0 0))']
 
     layer = gdaltest.pg_ds.GetLayerByName('testgeom')
-    for i in range(8,10):
+    for i in range(8, 10):
         feat = layer.GetFeature(i)
         geom = feat.GetGeometryRef()
         if geom is None:
@@ -1135,7 +1135,7 @@ def ogr_pg_21_3d_geometries():
                     'TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))',
                     'TRIANGLE Z ((48 36 84,32 54 64,86 11 54,48 36 84))']
 
-    for i in range(0,3):
+    for i in range(0, 3):
         gdaltest.pg_ds.ExecuteSQL("INSERT INTO zgeoms (field_no, wkb_geometry) VALUES (%d,GeomFromEWKT('%s'))" % (i, wkt_list[i]))
 
     gdaltest.pg_ds.Destroy()
@@ -1221,7 +1221,7 @@ def ogr_pg_22():
     found = ogr_pg_check_layer_in_list(gdaltest.pg_ds, layer_name)
 
     if found is False:
-        gdaltest.post_reason('layer from schema \''+schema_name+'\' not listed')
+        gdaltest.post_reason('layer from schema \'' + schema_name + '\' not listed')
         return 'fail'
 
     return 'success'
@@ -2847,7 +2847,7 @@ def ogr_pg_50():
 
     for option in ['NO', 'YES']:
         for value in ['NaN', 'Inf', '-Inf']:
-            gdaltest.pg_lyr.SetAttributeFilter('PRFEDEA = \''+value+'\' AND SHORTNAME = \''+option+'\'')
+            gdaltest.pg_lyr.SetAttributeFilter('PRFEDEA = \'' + value + '\' AND SHORTNAME = \'' + option + '\'')
             feat = gdaltest.pg_lyr.GetNextFeature()
             got_val = feat.GetField('AREA')
             if value == 'NaN':
@@ -3926,7 +3926,7 @@ def ogr_pg_71():
             z_pos = postgis_in_wkt.find('Z ')
             # PostGIS 1.X doesn't like Z in WKT
             if not gdaltest.pg_has_postgis_2 and z_pos >= 0:
-                postgis_in_wkt = postgis_in_wkt[0:z_pos] + postgis_in_wkt[z_pos+2:]
+                postgis_in_wkt = postgis_in_wkt[0:z_pos] + postgis_in_wkt[z_pos + 2:]
             else:
                 break
 
@@ -3954,7 +3954,7 @@ def ogr_pg_71():
         else:
             fct = 'AsEWKT'
 
-        lyr = gdaltest.pg_ds.ExecuteSQL("SELECT %s(ST_GeomFromText('%s'))" % (fct,postgis_in_wkt))
+        lyr = gdaltest.pg_ds.ExecuteSQL("SELECT %s(ST_GeomFromText('%s'))" % (fct, postgis_in_wkt))
         f = lyr.GetNextFeature()
         g = f.GetGeometryRef()
         out_wkt = g.ExportToWkt()
@@ -5483,7 +5483,7 @@ def ogr_pg_85():
     gdal.Unlink('/vsimem/ogr_pg_85/ogr_pg_85_2.csv')
     gdal.Unlink('/vsimem/ogr_pg_85')
 
-    gdal.SetConfigOption('PG_USE_COPY',old_val)
+    gdal.SetConfigOption('PG_USE_COPY', old_val)
 
     lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_85_2')
     if lyr.GetFeatureCount() != 2:

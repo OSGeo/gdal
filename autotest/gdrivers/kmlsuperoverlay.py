@@ -176,8 +176,8 @@ def kmlsuperoverlay_4():
 
     # Test fix for #6311
     vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
-    got_data = vrt_ds.ReadRaster(0,0,800,400,200,100)
-    ref_data = ds.ReadRaster(0,0,800,400,200,100)
+    got_data = vrt_ds.ReadRaster(0, 0, 800, 400, 200, 100)
+    ref_data = ds.ReadRaster(0, 0, 800, 400, 200, 100)
     vrt_ds = None
     if got_data != ref_data:
         gdaltest.post_reason('fail')
@@ -282,12 +282,12 @@ def kmlsuperoverlay_6():
             print(got_gt)
             return 'fail'
     for i in range(4):
-        cs = ds.GetRasterBand(i+1).Checksum()
+        cs = ds.GetRasterBand(i + 1).Checksum()
         if cs != 47673:
             print(cs)
             gdaltest.post_reason('failure')
             return 'fail'
-        if ds.GetRasterBand(i+1).GetRasterColorInterpretation() != gdal.GCI_RedBand + i:
+        if ds.GetRasterBand(i + 1).GetRasterColorInterpretation() != gdal.GCI_RedBand + i:
             gdaltest.post_reason('failure')
             return 'fail'
     if ds.GetRasterBand(1).GetOverviewCount() != 1:

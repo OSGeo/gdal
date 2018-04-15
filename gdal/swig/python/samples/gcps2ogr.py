@@ -47,7 +47,7 @@ out_dataset = None
 i = 1
 while i < len(sys.argv):
     if sys.argv[i] == '-f':
-        i+=1
+        i += 1
         out_format = sys.argv[i]
     elif sys.argv[i][0] == '-':
         Usage()
@@ -57,7 +57,7 @@ while i < len(sys.argv):
         out_dataset = sys.argv[i]
     else:
         Usage()
-    i+= 1
+    i += 1
 
 if out_dataset is None:
     Usage()

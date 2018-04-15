@@ -203,7 +203,7 @@ def ogr_wfs_geoserver():
         return 'skip'
 
     if feat.GetField('NAME') != 'museam' or \
-       ogrtest.check_feature_geometry(feat,'POINT (-74.0104611 40.70758763)',
+       ogrtest.check_feature_geometry(feat, 'POINT (-74.0104611 40.70758763)',
                                       max_error=0.000001) != 0:
         gdaltest.post_reason('did not get expected feature (1)')
         feat.DumpReadable()
@@ -217,7 +217,7 @@ def ogr_wfs_geoserver():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetField('NAME') != 'museam' or \
-       ogrtest.check_feature_geometry(feat,'POINT (-74.0104611 40.70758763)',
+       ogrtest.check_feature_geometry(feat, 'POINT (-74.0104611 40.70758763)',
                                       max_error=0.000001) != 0:
         gdaltest.post_reason('did not get expected feature (2)')
         feat.DumpReadable()
@@ -296,7 +296,7 @@ def ogr_wfs_geoserver_json():
 
     feat = lyr.GetNextFeature()
     #if feat.GetField('name') != 'Alexander Bay' or \
-    if ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
+    if ogrtest.check_feature_geometry(feat, 'POINT (16.4827778 -28.5947222)',
                                       max_error=0.000000001) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
@@ -343,7 +343,7 @@ def ogr_wfs_geoserver_shapezip():
 
     feat = lyr.GetNextFeature()
     #if feat.GetField('name') != 'Alexander Bay' or \
-    if ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
+    if ogrtest.check_feature_geometry(feat, 'POINT (16.4827778 -28.5947222)',
                                       max_error=0.000000001) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
@@ -460,7 +460,7 @@ def ogr_wfs_deegree():
 
     feat = lyr.GetNextFeature()
     if feat.GetField('OBJECTID') != 1 or \
-       ogrtest.check_feature_geometry(feat,'POINT (558750.703 4402882.05)',
+       ogrtest.check_feature_geometry(feat, 'POINT (558750.703 4402882.05)',
                                       max_error=0.000000001) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
@@ -565,7 +565,7 @@ class WFSHTTPHandler(BaseHTTPRequestHandler):
         except IOError:
             pass
 
-        self.send_error(404,'File Not Found: %s' % self.path)
+        self.send_error(404, 'File Not Found: %s' % self.path)
 
 ###############################################################################
 # Test reading a local fake WFS server
@@ -605,7 +605,7 @@ def ogr_wfs_fake_wfs_server():
 
     feat = lyr.GetNextFeature()
     if feat.GetField('MPLength') != '33513.' or \
-       ogrtest.check_feature_geometry(feat,'MULTICURVE ((154898.65286 568054.62753,160108.36082 566076.78094,164239.254332 563024.70188,170523.31535 561231.219583,172676.42256 559253.37299,175912.80562 557459.89069,180043.699132 553508.779495,183294.491306 552250.182732))',
+       ogrtest.check_feature_geometry(feat, 'MULTICURVE ((154898.65286 568054.62753,160108.36082 566076.78094,164239.254332 563024.70188,170523.31535 561231.219583,172676.42256 559253.37299,175912.80562 557459.89069,180043.699132 553508.779495,183294.491306 552250.182732))',
                                       max_error=0.00001) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
@@ -1018,7 +1018,7 @@ def ogr_wfs_deegree_wfs200():
             return 'fail'
 
     lyr.SetAttributeFilter(None)
-    lyr.SetSpatialFilterRect(-1e8,-1e8,1e8,1e8)
+    lyr.SetSpatialFilterRect(-1e8, -1e8, 1e8, 1e8)
     spatialfiltercount = lyr.GetFeatureCount()
     lyr.SetSpatialFilter(None)
     allcount = lyr.GetFeatureCount()
@@ -2196,7 +2196,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getextent():
 
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
     lyr = ds.GetLayer(0)
-    if lyr.GetExtent() != (2,2,49,49):
+    if lyr.GetExtent() != (2, 2, 49, 49):
         gdaltest.post_reason('fail')
         print(lyr.GetExtent())
         return 'fail'
@@ -2226,7 +2226,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature():
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
-    if extent != (0,0,0,0):
+    if extent != (0, 0, 0, 0):
         gdaltest.post_reason('fail')
         print(extent)
         return 'fail'
@@ -2330,7 +2330,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized():
         expected_extent = (-20037508.342789248, 20037508.342789248, -20037508.342789154, 20037508.342789147)
         got_extent = lyr.GetExtent()
         for i in range(4):
-            if abs(expected_extent[i]-got_extent[i]) > 1e-5:
+            if abs(expected_extent[i] - got_extent[i]) > 1e-5:
                 gdaltest.post_reason('fail')
                 print(got_extent)
                 return 'fail'
@@ -2849,7 +2849,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 </wfs:FeatureCollection>
 """)
 
-    lyr.SetSpatialFilterRect(1,48,3,50)
+    lyr.SetSpatialFilterRect(1, 48, 3, 50)
 
     f = lyr.GetNextFeature()
     if f is None:
@@ -2857,7 +2857,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         return 'fail'
 
     if gdal.GetConfigOption('OGR_WFS_USE_STREAMING') == 'NO':
-        lyr.SetSpatialFilterRect(1.5,48.5,2.5,49.5)
+        lyr.SetSpatialFilterRect(1.5, 48.5, 2.5, 49.5)
         f = lyr.GetNextFeature()
         if f is None:
             gdaltest.post_reason('fail')
@@ -2867,7 +2867,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         lyr.ResetReading()
 
         lyr.ResetReading()
-        lyr.SetSpatialFilterRect(1,48,3,50)
+        lyr.SetSpatialFilterRect(1, 48, 3, 50)
         f = lyr.GetNextFeature()
         if f is None:
             gdaltest.post_reason('fail')
@@ -2920,7 +2920,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 </wfs:FeatureCollection>
 """)
 
-    lyr.SetSpatialFilterRect(1,48,3,50)
+    lyr.SetSpatialFilterRect(1, 48, 3, 50)
     lyr.SetAttributeFilter("str = 'str'")
 
     f = lyr.GetNextFeature()
@@ -4388,7 +4388,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         f.DumpReadable()
         return 'fail'
 
-    f= lyr.GetNextFeature()
+    f = lyr.GetNextFeature()
     if f is not None:
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -4534,7 +4534,7 @@ def ogr_wfs_vsimem_wfs200_json():
         f.DumpReadable()
         return 'fail'
 
-    f= lyr.GetNextFeature()
+    f = lyr.GetNextFeature()
     if f is not None:
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -5033,7 +5033,7 @@ xsi:schemaLocation="http://foo blabla
 
     sql_lyr.SetSpatialFilter(None)
     gdal.PushErrorHandler()
-    sql_lyr.SetSpatialFilterRect(0,0,0,0)
+    sql_lyr.SetSpatialFilterRect(0, 0, 0, 0)
     gdal.PopErrorHandler()
 
     ds.ReleaseResultSet(sql_lyr)

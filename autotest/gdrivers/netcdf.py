@@ -93,7 +93,7 @@ def netcdf_setup():
         gdaltest.netcdf_drv_has_hdf4 = True
 
     print('NOTICE: using netcdf version ' + gdaltest.netcdf_drv_version + \
-               '  has_nc2: '+str(gdaltest.netcdf_drv_has_nc2)+'  has_nc4: ' + \
+               '  has_nc2: ' + str(gdaltest.netcdf_drv_has_nc2) + '  has_nc4: ' + \
                str(gdaltest.netcdf_drv_has_nc4))
 
     return 'success'
@@ -104,7 +104,7 @@ def netcdf_setup():
 
 
 def netcdf_test_copy(ifile, band, checksum, ofile, opts=[], driver='NETCDF'):
-    test = gdaltest.GDALTest('NETCDF', '../'+ifile, band, checksum, options=opts)
+    test = gdaltest.GDALTest('NETCDF', '../' + ifile, band, checksum, options=opts)
     return test.testCreateCopy(check_gt=0, check_srs=0, new_filename=ofile, delete_copy=0, check_minmax=0)
 
 ###############################################################################
@@ -166,7 +166,7 @@ def netcdf_test_deflate(ifile, checksum, zlevel=1, timeout=None):
     ofile1 = 'tmp/' + os.path.basename(ifile) + '-1.nc'
     ofile1_opts = ['FORMAT=NC4C', 'COMPRESS=NONE']
     ofile2 = 'tmp/' + os.path.basename(ifile) + '-2.nc'
-    ofile2_opts = ['FORMAT=NC4C', 'COMPRESS=DEFLATE', 'ZLEVEL='+str(zlevel)]
+    ofile2_opts = ['FORMAT=NC4C', 'COMPRESS=DEFLATE', 'ZLEVEL=' + str(zlevel)]
 
     if not os.path.exists(ifile):
         gdaltest.post_reason('ifile %s does not exist' % ifile)
@@ -232,7 +232,7 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
         mk = metadata[k].lstrip('{ ').rstrip('} ')
         if mk != v:
             gdaltest.post_reason("invalid value [%s] for metadata [%s]=[%s]" \
-                                     % (str(mk),str(k),str(v)))
+                                     % (str(mk), str(k), str(v)))
             return 'fail'
 
     metadata = metadata_band
@@ -247,7 +247,7 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
         mk = metadata[k].lstrip('{ ').rstrip('} ')
         if mk != v:
             gdaltest.post_reason("invalid value [%s] for metadata [%s]=[%s]" \
-                                     % (str(mk),str(k),str(v)))
+                                     % (str(mk), str(k), str(v)))
             return 'fail'
 
     return 'success'
@@ -530,18 +530,18 @@ def netcdf_10():
     gt = ds.GetGeoTransform()
 
     gt1 = (-1897186.0290038721, 5079.3608398440065,
-            0.0,2674684.0244560046,
-            0.0,-5079.4721679684635)
+            0.0, 2674684.0244560046,
+            0.0, -5079.4721679684635)
     gt2 = (-1897.186029003872, 5.079360839844003,
              0.0, 2674.6840244560044,
-             0.0,-5.079472167968456)
+             0.0, -5.079472167968456)
 
     if gt != gt1:
         sr = osr.SpatialReference()
         sr.ImportFromWkt(prj)
         #new driver uses UNIT vattribute instead of scaling values
-        if not (sr.GetAttrValue("PROJCS|UNIT",1)=="1000" and gt == gt2) :
-            gdaltest.post_reason('Incorrect geotransform, got '+str(gt))
+        if not (sr.GetAttrValue("PROJCS|UNIT", 1) == "1000" and gt == gt2) :
+            gdaltest.post_reason('Incorrect geotransform, got ' + str(gt))
             return 'fail'
 
     ds = None
@@ -860,7 +860,7 @@ def netcdf_21():
             return 'fail'
 
         if (err != '' or ret != ''):
-            gdaltest.post_reason('gdalwarp returned error\n'+str(ret)+' '+str(err))
+            gdaltest.post_reason('gdalwarp returned error\n' + str(ret) + ' ' + str(err))
             return 'fail'
 
     # test compression of the file, with a conservative timeout of 60 seconds
@@ -1151,7 +1151,7 @@ def netcdf_test_4dfile(ofile):
     if err is None or 'netcdf library version' not in err:
         print('NOTICE: ncdump not found')
         return 'success'
-    (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h '+ ofile)
+    (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h ' + ofile)
     if ret == '' or err != '':
         gdaltest.post_reason('ncdump failed')
         return 'fail'
@@ -1230,7 +1230,7 @@ def netcdf_29():
         return 'fail'
 
     if (err != '' or ret != ''):
-        gdaltest.post_reason('gdalwarp returned error\n'+str(ret)+' '+str(err))
+        gdaltest.post_reason('gdalwarp returned error\n' + str(ret) + ' ' + str(err))
         return 'fail'
 
     # copy vrt to netcdf, with proper dimension rolling
@@ -1283,7 +1283,7 @@ def netcdf_31():
     gt1 = (-80.0, 0.25, 0.0, -19.5, 0.0, -0.25)
 
     if gt != gt1:
-        gdaltest.post_reason('Incorrect geotransform, got '+str(gt))
+        gdaltest.post_reason('Incorrect geotransform, got ' + str(gt))
         return 'fail'
 
     ds = None
@@ -1361,13 +1361,13 @@ def netcdf_34():
         print('from multiprocessing import Process failed')
         return 'skip'
 
-    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/netcdf/'+filename,filename):
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/netcdf/' + filename, filename):
         return 'skip'
 
     sys.stdout.write('.')
     sys.stdout.flush()
 
-    tst = gdaltest.GDALTest('NetCDF', '../tmp/cache/'+filename, 1, 31621)
+    tst = gdaltest.GDALTest('NetCDF', '../tmp/cache/' + filename, 1, 31621)
     #tst.testOpen()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -1413,7 +1413,7 @@ def netcdf_35():
         return 'fail'
     bla = md['U#bla']
     if not len(bla) == 9591:
-        gdaltest.post_reason('U#bla metadata is of length %d, expecting %d' % (len(bla),9591))
+        gdaltest.post_reason('U#bla metadata is of length %d, expecting %d' % (len(bla), 9591))
         return 'fail'
     if not bla[-4:] == '_bla':
         gdaltest.post_reason('U#bla metadata ends with [%s], expecting [%s]' % (bla[-4:], '_bla'))
@@ -2031,7 +2031,7 @@ def netcdf_51():
     import netcdf_cf
     if netcdf_cf.netcdf_cf_setup() == 'success' and \
        gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_51.nc','auto',False)
+        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_51.nc', 'auto', False)
         if result_cf != 'success':
             gdaltest.post_reason('failure')
             return 'fail'
@@ -2166,7 +2166,7 @@ def netcdf_52():
     import netcdf_cf
     if netcdf_cf.netcdf_cf_setup() == 'success' and \
        gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_52.nc','auto',False)
+        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_52.nc', 'auto', False)
         if result_cf != 'success':
             gdaltest.post_reason('failure')
             return 'fail'
@@ -2623,7 +2623,7 @@ def netcdf_62_cf_check():
     import netcdf_cf
     if netcdf_cf.netcdf_cf_setup() == 'success' and \
        gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_62.nc','auto',False)
+        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_62.nc', 'auto', False)
         if result_cf != 'success':
             gdaltest.post_reason('failure')
             return 'fail'
@@ -3045,7 +3045,7 @@ def netcdf_73():
     ds = gdal.Open('data/geos_rad.nc')
     gt = ds.GetGeoTransform()
     expected_gt = (-5979486.362104082, 1087179.4077774752, 0.0, -5979487.123448145, 0.0, 1087179.4077774752)
-    if max([abs(gt[i]-expected_gt[i]) for i in range(6)]) > 1:
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1:
         print(gt)
         return 'fail'
 
@@ -3063,7 +3063,7 @@ def netcdf_74():
     ds = gdal.Open('data/geos_microradian.nc')
     gt = ds.GetGeoTransform()
     expected_gt = (-5739675.119757546, 615630.8078590936, 0.0, -1032263.7666924844, 0.0, 615630.8078590936)
-    if max([abs(gt[i]-expected_gt[i]) for i in range(6)]) > 1:
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1:
         print(gt)
         return 'fail'
 

@@ -711,7 +711,7 @@ def warp_18():
 def warp_19_internal(size, datatype, resampling_string):
 
     ds = gdaltest.tiff_drv.Create('tmp/test.tif', size, size, 1, datatype)
-    ds.SetGeoTransform((10,5,0,30,0,-5))
+    ds.SetGeoTransform((10, 5, 0, 30, 0, -5))
     ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
     ds.GetRasterBand(1).Fill(10.1, 20.1)
     ds = None
@@ -817,8 +817,8 @@ def warp_22():
     # Generate source image with non uniform data
     w = 1001
     h = 1001
-    ds = gdal.GetDriverByName('GTiff').Create("tmp/warp_22_src.tif", w,h, 1)
-    ds.SetGeoTransform([2,0.01,0,49,0,-0.01])
+    ds = gdal.GetDriverByName('GTiff').Create("tmp/warp_22_src.tif", w, h, 1)
+    ds.SetGeoTransform([2, 0.01, 0, 49, 0, -0.01])
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     ds.SetProjection(sr.ExportToWkt())
@@ -826,8 +826,8 @@ def warp_22():
     for j in range(h):
         line = ''
         for i in range(w):
-            line = line + '%c' % int((i*i+h*j/(i+1)) % 256)
-        ds.GetRasterBand(1).WriteRaster(0,j,w,1,line)
+            line = line + '%c' % int((i * i + h * j / (i + 1)) % 256)
+        ds.GetRasterBand(1).WriteRaster(0, j, w, 1, line)
 
     expected_cs = ds.GetRasterBand(1).Checksum()
     ds = None
@@ -916,7 +916,7 @@ def warp_23():
     gcp8.GCPX = -88.826733
     gcp8.GCPY = 29.95304
 
-    gcps = [gcp1,gcp2,gcp3,gcp4,gcp5,gcp6,gcp7,gcp8]
+    gcps = [gcp1, gcp2, gcp3, gcp4, gcp5, gcp6, gcp7, gcp8]
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
 
@@ -1419,9 +1419,9 @@ def warp_38():
     ds = gdal.GetDriverByName('GTiff').Create(out_file, 50, 50, 3)
 
     gcp_list = [
-        gdal.GCP(397000, 5642000, 0,  0,  0),
-        gdal.GCP(397000, 5641990, 0,  0, 50),
-        gdal.GCP(397010, 5642000, 0, 50,  0),
+        gdal.GCP(397000, 5642000, 0, 0, 0),
+        gdal.GCP(397000, 5641990, 0, 0, 50),
+        gdal.GCP(397010, 5642000, 0, 50, 0),
         gdal.GCP(397010, 5641990, 0, 50, 50),
         gdal.GCP(397005, 5641995, 0, 25, 25),
         ]
@@ -1455,9 +1455,9 @@ def warp_39():
     ds = gdal.GetDriverByName('GTiff').Create(out_file, 50, 50, 3)
 
     gcp_list = [
-        gdal.GCP(397000, 5642000, 0,  0,  0),
-        gdal.GCP(397000, 5641990, 0,  0, 50),
-        gdal.GCP(397010, 5642000, 0, 50,  0),
+        gdal.GCP(397000, 5642000, 0, 0, 0),
+        gdal.GCP(397000, 5641990, 0, 0, 50),
+        gdal.GCP(397010, 5642000, 0, 50, 0),
         gdal.GCP(397010, 5641990, 0, 50, 50),
         gdal.GCP(397005, 5641995, 0, 25, 25),
         ]
@@ -1814,17 +1814,17 @@ def warp_53():
         src_ds.GetRasterBand(2).Fill(255)
         import struct
         zero = struct.pack('B' * 1, 0)
-        src_ds.GetRasterBand(2).WriteRaster(10,10,1,1,zero,
+        src_ds.GetRasterBand(2).WriteRaster(10, 10, 1, 1, zero,
                                             buf_type=gdal.GDT_Byte)
         dst_ds = gdal.Translate('', src_ds,
                                 options='-of MEM -a_srs EPSG:32611')
 
         for option in ('-wo USE_GENERAL_CASE=TRUE', ''):
             # First checksum is proj 4.8, second proj 4.9.2
-            for alg_name, expected_cs in (('near', [3781,3843]),
-                                           ('cubic',[3942,4133]),
-                                           ('cubicspline',[3874,4076]),
-                                           ('bilinear',[4019,3991])):
+            for alg_name, expected_cs in (('near', [3781, 3843]),
+                                           ('cubic', [3942, 4133]),
+                                           ('cubicspline', [3874, 4076]),
+                                           ('bilinear', [4019, 3991])):
                 dst_ds.GetRasterBand(1).Fill(0)
                 dst_ds.GetRasterBand(2).Fill(0)
                 gdal.Warp(dst_ds, src_ds,
@@ -1853,8 +1853,8 @@ def warp_54():
                                 options='-of MEM -scale 0 255 0 65535 -ot UInt16 -a_ullr -162 150 0 0')
     dst_ds = gdal.Warp('', src_ds, format='MEM')
     for i in range(4):
-        expected_cs = src_ds.GetRasterBand(i+1).Checksum()
-        got_cs = dst_ds.GetRasterBand(i+1).Checksum()
+        expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
+        got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
         if expected_cs != got_cs:
             gdaltest.post_reason('fail')
             print(i)
@@ -1867,8 +1867,8 @@ def warp_54():
                                 options='-of MEM -scale 0 255 0 32767 -ot Int16 -a_ullr -162 150 0 0')
     dst_ds = gdal.Warp('', src_ds, format='MEM')
     for i in range(4):
-        expected_cs = src_ds.GetRasterBand(i+1).Checksum()
-        got_cs = dst_ds.GetRasterBand(i+1).Checksum()
+        expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
+        got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
         if expected_cs != got_cs:
             gdaltest.post_reason('fail')
             print(i)
@@ -1880,11 +1880,11 @@ def warp_54():
     src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
                                 options='-of MEM -scale 0 255 0 32767 -ot UInt16 -a_ullr -162 150 0 0')
     for i in range(4):
-        src_ds.GetRasterBand(i+1).SetMetadataItem('NBITS', '15', 'IMAGE_STRUCTURE')
+        src_ds.GetRasterBand(i + 1).SetMetadataItem('NBITS', '15', 'IMAGE_STRUCTURE')
     dst_ds = gdal.Warp('/vsimem/warp_54.tif', src_ds, options='-co NBITS=15')
     for i in range(4):
-        expected_cs = src_ds.GetRasterBand(i+1).Checksum()
-        got_cs = dst_ds.GetRasterBand(i+1).Checksum()
+        expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
+        got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
         if expected_cs != got_cs:
             gdaltest.post_reason('fail')
             print(i)
@@ -1930,19 +1930,19 @@ def warp_56():
 
     pix_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     src_ds = gdal.GetDriverByName('MEM').Create('', 3, 3)
-    src_ds.GetRasterBand(1).WriteArray(numpy.array([[0,0,0],
-                                                    [0,0,0],
-                                                    [0,0,100]]))
-    src_ds.SetGeoTransform([1, 1,  0,
-                            1, 0,  1])
+    src_ds.GetRasterBand(1).WriteArray(numpy.array([[0, 0, 0],
+                                                    [0, 0, 0],
+                                                    [0, 0, 100]]))
+    src_ds.SetGeoTransform([1, 1, 0,
+                            1, 0, 1])
 
     for off in numpy.linspace(0, 2, 21):
-        pix_ds.SetGeoTransform([off + 1, 1,  0,
-                                off + 1, 0,  1])
+        pix_ds.SetGeoTransform([off + 1, 1, 0,
+                                off + 1, 0, 1])
         gdal.Warp(pix_ds, src_ds, resampleAlg='bilinear')
 
         exp = 0 if off < 1 else 100 * (off - 1)**2
-        warped = pix_ds.GetRasterBand(1).ReadAsArray()[0,0]
+        warped = pix_ds.GetRasterBand(1).ReadAsArray()[0, 0]
         if abs(warped - exp) > 0.6:
             gdaltest.post_reason('offset: {}, expected: {:.0f}, got: {}'.format(off, exp, warped))
             return 'fail'

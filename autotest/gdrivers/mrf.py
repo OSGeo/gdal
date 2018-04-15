@@ -68,9 +68,9 @@ init_list = [
     ('byte.tif', 1, [4672, [4603, 4652]], ['COMPRESS=JPEG', 'QUALITY=99']),
     # following expected checksums are for: gcc 4.4 debug, mingw/vc9 32-bit, mingw-w64/vc12 64bit, MacOSX
     ('rgbsmall.tif', 1, [21212, [21162, 21110, 21155, 21116]], ['COMPRESS=JPEG', 'QUALITY=99']),
-    ('rgbsmall.tif', 1, [21212, [21266, 21369, 21256, 21495]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99']),
-    ('rgbsmall.tif', 1, [21212, [21261, 21209, 21254, 21215]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99','PHOTOMETRIC=RGB']),
-    ('rgbsmall.tif', 1, [21212, [21283, 21127, 21278, 21124]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99','PHOTOMETRIC=YCC']),
+    ('rgbsmall.tif', 1, [21212, [21266, 21369, 21256, 21495]], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99']),
+    ('rgbsmall.tif', 1, [21212, [21261, 21209, 21254, 21215]], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=RGB']),
+    ('rgbsmall.tif', 1, [21212, [21283, 21127, 21278, 21124]], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=YCC']),
     ('12bit_rose_extract.jpg', 1, [30075, [29650, 29680, 29680, 29650]], ['COMPRESS=JPEG']),
 ]
 
@@ -130,7 +130,7 @@ def mrf_overview_near_fact_2():
         out_ds = None
 
         ds = gdal.Open('/vsimem/out.mrf')
-        cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
         if cs != expected_cs:
             gdaltest.post_reason('fail')
             print(dt)
@@ -163,7 +163,7 @@ def mrf_overview_near_with_nodata_fact_2():
         out_ds = None
 
         ds = gdal.Open('/vsimem/out.mrf')
-        cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
         expected_cs = 1117
         if cs != expected_cs:
             gdaltest.post_reason('fail')
@@ -198,7 +198,7 @@ def mrf_overview_avg_fact_2():
         expected_cs = 1152
 
         ds = gdal.Open('/vsimem/out.mrf')
-        cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
         if cs != expected_cs:
             gdaltest.post_reason('fail')
             print(dt)
@@ -233,7 +233,7 @@ def mrf_overview_avg_with_nodata_fact_2():
         expected_cs = 1164
 
         ds = gdal.Open('/vsimem/out.mrf')
-        cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
         if cs != expected_cs:
             gdaltest.post_reason('fail')
             print(dt)
@@ -260,7 +260,7 @@ def mrf_overview_near_fact_3():
     out_ds = None
 
     ds = gdal.Open('/vsimem/out.mrf')
-    cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 478
     if cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -287,7 +287,7 @@ def mrf_overview_avg_fact_3():
     out_ds = None
 
     ds = gdal.Open('/vsimem/out.mrf')
-    cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 658
     if cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -322,7 +322,7 @@ def mrf_overview_avg_with_nodata_fact_3():
         expected_cs = 531
 
         ds = gdal.Open('/vsimem/out.mrf')
-        cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
         if cs != expected_cs:
             gdaltest.post_reason('fail')
             print(dt)
@@ -348,7 +348,7 @@ def mrf_overview_partial_block():
     out_ds = None
 
     ds = gdal.Open('/vsimem/out.mrf')
-    cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 1087:
         gdaltest.post_reason('fail')
         print(cs)
@@ -374,7 +374,7 @@ def mrf_overview_near_implicit_level():
     out_ds = None
 
     ds = gdal.Open('/vsimem/out.mrf')
-    cs= ds.GetRasterBand(1).GetOverview(1).Checksum()
+    cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
     if cs != 328:
         gdaltest.post_reason('fail')
         print(cs)
@@ -388,7 +388,7 @@ def mrf_overview_near_implicit_level():
         return 'fail'
 
     ds = gdal.Open('/vsimem/out.mrf:MRF:L1')
-    cs= ds.GetRasterBand(1).Checksum()
+    cs = ds.GetRasterBand(1).Checksum()
     if cs != 328:
         gdaltest.post_reason('fail')
         print(cs)
@@ -412,7 +412,7 @@ def mrf_overview_external():
     ds = None
 
     ds = gdal.Open('/vsimem/out.mrf')
-    cs= ds.GetRasterBand(1).GetOverview(0).Checksum()
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 1087
     if cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -441,7 +441,7 @@ def mrf_lerc_nodata():
         gdaltest.post_reason('fail')
         print(nodata)
         return 'fail'
-    cs= ds.GetRasterBand(1).Checksum()
+    cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
     if cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -464,7 +464,7 @@ def mrf_lerc_with_huffman():
     gdal.Translate('/vsimem/out.mrf', 'data/small_world.tif', format='MRF',
                    width=5000, height=5000, creationOptions=['COMPRESS=LERC'])
     ds = gdal.Open('/vsimem/out.mrf')
-    cs= ds.GetRasterBand(1).Checksum()
+    cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 31204
     if cs != expected_cs:
         gdaltest.post_reason('fail')

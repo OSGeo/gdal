@@ -192,7 +192,7 @@ def ogr_cloudant_SetSpatialFilter():
     if lyr is None:
         return 'fail'
 
-    lyr.SetSpatialFilterRect(-104.9847,39.7392,-104.9847,39.7392)
+    lyr.SetSpatialFilterRect(-104.9847, 39.7392, -104.9847, 39.7392)
 
     feat = lyr.GetNextFeature()
     if feat is None:

@@ -105,7 +105,7 @@ def usgsdem_5():
     gt1 = ds.GetGeoTransform()
     gt2 = ds2.GetGeoTransform()
     for i in range(6):
-        if abs(gt1[i]-gt2[i]) > 1e-5:
+        if abs(gt1[i] - gt2[i]) > 1e-5:
             print('')
             print('old = ', gt1)
             print('new = ', gt2)
@@ -178,10 +178,10 @@ def usgsdem_7():
         print(ds2.RasterYSize)
         return 'fail'
 
-    expected_gt = (-80.000104166666674,0.000208333333333,0,44.000104166666667,0,-0.000208333333333)
+    expected_gt = (-80.000104166666674, 0.000208333333333, 0, 44.000104166666667, 0, -0.000208333333333)
     got_gt = ds2.GetGeoTransform()
     for i in range(6):
-        if abs(expected_gt[i]-got_gt[i]) > 1e-5:
+        if abs(expected_gt[i] - got_gt[i]) > 1e-5:
             print('')
             print('expected = ', expected_gt)
             print('got = ', got_gt)

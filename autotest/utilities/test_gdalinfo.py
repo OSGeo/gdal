@@ -611,7 +611,7 @@ def test_gdalinfo_31():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/bug407.gif')
     ret = json.loads(ret)
-    if ret['bands'][0]['colorTable']['entries'][0] != [255,255,255,255]:
+    if ret['bands'][0]['colorTable']['entries'][0] != [255, 255, 255, 255]:
         return 'fail'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json -noct ../gdrivers/data/bug407.gif')

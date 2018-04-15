@@ -49,7 +49,7 @@ def CheckFileSize(src_filename):
         return 'skip'
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-f "MapInfo File" /vsimem/CheckFileSize.tab ' + src_filename)
-    statBufSrc = gdal.VSIStatL(src_filename[0:-3]+"dat", gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    statBufSrc = gdal.VSIStatL(src_filename[0:-3] + "dat", gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
     statBufDst = gdal.VSIStatL('/vsimem/CheckFileSize.dat', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/CheckFileSize.tab')
 
@@ -195,7 +195,7 @@ def ogr_rfc35_mitab_2():
     lyr.CreateFeature(feat)
     feat = None
 
-    if lyr.ReorderField(1,3) != 0:
+    if lyr.ReorderField(1, 3) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
     #ds = None
@@ -206,7 +206,7 @@ def ogr_rfc35_mitab_2():
         gdaltest.post_reason(ret)
         return ret
 
-    lyr.ReorderField(3,1)
+    lyr.ReorderField(3, 1)
     #ds = None
     #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
     #lyr = ds.GetLayer(0)
@@ -215,7 +215,7 @@ def ogr_rfc35_mitab_2():
         gdaltest.post_reason(ret)
         return ret
 
-    lyr.ReorderField(0,2)
+    lyr.ReorderField(0, 2)
     #ds = None
     #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
     #lyr = ds.GetLayer(0)
@@ -224,7 +224,7 @@ def ogr_rfc35_mitab_2():
         gdaltest.post_reason(ret)
         return ret
 
-    lyr.ReorderField(2,0)
+    lyr.ReorderField(2, 0)
     #ds = None
     #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
     #lyr = ds.GetLayer(0)
@@ -233,7 +233,7 @@ def ogr_rfc35_mitab_2():
         gdaltest.post_reason(ret)
         return ret
 
-    lyr.ReorderField(0,1)
+    lyr.ReorderField(0, 1)
     #ds = None
     #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
     #lyr = ds.GetLayer(0)
@@ -242,7 +242,7 @@ def ogr_rfc35_mitab_2():
         gdaltest.post_reason(ret)
         return ret
 
-    lyr.ReorderField(1,0)
+    lyr.ReorderField(1, 0)
     #ds = None
     #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
     #lyr = ds.GetLayer(0)
@@ -251,7 +251,7 @@ def ogr_rfc35_mitab_2():
         gdaltest.post_reason(ret)
         return ret
 
-    lyr.ReorderFields([3,2,1,0])
+    lyr.ReorderFields([3, 2, 1, 0])
     #ds = None
     #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
     #lyr = ds.GetLayer(0)
@@ -260,7 +260,7 @@ def ogr_rfc35_mitab_2():
         gdaltest.post_reason(ret)
         return ret
 
-    lyr.ReorderFields([3,2,1,0])
+    lyr.ReorderFields([3, 2, 1, 0])
     #ds = None
     #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
     #lyr = ds.GetLayer(0)
@@ -270,7 +270,7 @@ def ogr_rfc35_mitab_2():
         return ret
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ret = lyr.ReorderFields([0,0,0,0])
+    ret = lyr.ReorderFields([0, 0, 0, 0])
     gdal.PopErrorHandler()
     if ret == 0:
         gdaltest.post_reason('fail')

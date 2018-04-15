@@ -899,7 +899,7 @@ def test_gdalwarp_31():
     ds = None
 
     if cs1 != 4672 or cs2 != 4672 or cs3 != 4727 or err == '' or err2 != '':
-        print(cs1,cs2,cs3)
+        print(cs1, cs2, cs3)
         print(err)
         print(err2)
         return 'fail'
@@ -1309,8 +1309,8 @@ def test_gdalwarp_41():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    src_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalwarp_41_src.tif',666,666)
-    src_ds.SetGeoTransform([-3333500,10010.510510510510358,0,3333500.000000000000000,0,-10010.510510510510358])
+    src_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalwarp_41_src.tif', 666, 666)
+    src_ds.SetGeoTransform([-3333500, 10010.510510510510358, 0, 3333500.000000000000000, 0, -10010.510510510510358])
     src_ds.SetProjection("""PROJCS["WGS_1984_Stereographic_South_Pole",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
@@ -1370,7 +1370,7 @@ def test_gdalwarp_42():
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -wo UNIFIED_SRC_NODATA=YES')
 
     ds = gdal.Open('tmp/test_gdalwarp_42.tif')
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [25382, 27573, 35297, 59540]
     if got_cs != expected_cs:
         gdaltest.post_reason('failure')
@@ -1382,7 +1382,7 @@ def test_gdalwarp_42():
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -overwrite -te -180 -90 180 90 -dstalpha -wo UNIFIED_SRC_NODATA=YES')
 
     ds = gdal.Open('tmp/test_gdalwarp_42.tif')
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [25382, 27573, 35297, 59540]
     if got_cs != expected_cs:
         gdaltest.post_reason('failure')
@@ -1394,7 +1394,7 @@ def test_gdalwarp_42():
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -wo INIT_DEST=255,255,255,0 -overwrite -te -180 -90 180 90 -dstalpha -wo UNIFIED_SRC_NODATA=YES')
 
     ds = gdal.Open('tmp/test_gdalwarp_42.tif')
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [30111, 32302, 40026, 59540]
     if got_cs != expected_cs:
         gdaltest.post_reason('failure')
@@ -1407,7 +1407,7 @@ def test_gdalwarp_42():
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -wo INIT_DEST=0,0,0,0 -overwrite -te -180 -90 180 90 -dstalpha -wo UNIFIED_SRC_NODATA=YES')
 
     ds = gdal.Open('tmp/test_gdalwarp_42.tif')
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [25382, 27573, 35297, 59540]
     if got_cs != expected_cs:
         gdaltest.post_reason('failure')
@@ -1438,7 +1438,7 @@ def test_gdalwarp_43():
     if ds.GetMetadataItem('FOO') != 'BAR':
         gdaltest.post_reason('failure')
         return 'fail'
-    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [30106, 32285, 40022, 64261]
     if got_cs != expected_cs:
         gdaltest.post_reason('failure')
@@ -1582,15 +1582,15 @@ def test_gdalwarp_cleanup():
 
     for i in range(37):
         try:
-            os.remove('tmp/testgdalwarp' + str(i+1) + '.tif')
+            os.remove('tmp/testgdalwarp' + str(i + 1) + '.tif')
         except:
             pass
         try:
-            os.remove('tmp/testgdalwarp' + str(i+1) + '.vrt')
+            os.remove('tmp/testgdalwarp' + str(i + 1) + '.vrt')
         except:
             pass
         try:
-            os.remove('tmp/testgdalwarp' + str(i+1) + '.tif.aux.xml')
+            os.remove('tmp/testgdalwarp' + str(i + 1) + '.tif.aux.xml')
         except:
             pass
     try:

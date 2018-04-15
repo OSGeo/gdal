@@ -166,7 +166,7 @@ def misc_5_internal(drv, datatype, nBands):
     filename = get_filename(drv, dirname)
     ds = drv.Create(filename, 100, 100, nBands, datatype)
     if ds is not None and not (drv.ShortName == 'GPKG' and nBands == 0):
-        set_gt = (2,1.0/10,0,49,0,-1.0/10)
+        set_gt = (2, 1.0 / 10, 0, 49, 0, -1.0 / 10)
         ds.SetGeoTransform(set_gt)
         ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.01745329251994328]]')
 
@@ -245,7 +245,7 @@ def misc_5():
                 if misc_5_internal(drv, datatype, nBands) < 0:
                     ret = 'fail'
 
-            for nBands in [1,3]:
+            for nBands in [1, 3]:
                 for datatype in (gdal.GDT_UInt16,
                                 gdal.GDT_Int16,
                                 gdal.GDT_UInt32,
@@ -284,7 +284,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
     ds = gdal.GetDriverByName('MEM').Create('', 10, 10, nBands, datatype)
     if nBands > 0:
         ds.GetRasterBand(1).Fill(255)
-    ds.SetGeoTransform([2,1.0/10,0,49,0,-1.0/10])
+    ds.SetGeoTransform([2, 1.0 / 10, 0, 49, 0, -1.0 / 10])
     ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.01745329251994328]]')
     ds.SetMetadata(['a'])
 
@@ -601,7 +601,7 @@ def misc_12():
                 size = 128
 
             src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/misc_12_src.tif', size, size, nbands, datatype)
-            set_gt = (2,1.0/size,0,49,0,-1.0/size)
+            set_gt = (2, 1.0 / size, 0, 49, 0, -1.0 / size)
             src_ds.SetGeoTransform(set_gt)
             src_ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.01745329251994328]]')
 

@@ -58,13 +58,13 @@ def test_gdal_pansharpen_1():
     gt[5] *= 0.5
     pan_ds.SetGeoTransform(gt)
     pan_ds.SetProjection(wkt)
-    pan_ds.GetRasterBand(1).WriteRaster(0,0,800,400,src_data,400,200)
+    pan_ds.GetRasterBand(1).WriteRaster(0, 0, 800, 400, src_data, 400, 200)
     pan_ds = None
 
     test_py_scripts.run_py_script(script_path, 'gdal_pansharpen', ' tmp/small_world_pan.tif ../gdrivers/data/small_world.tif tmp/out.tif')
 
     ds = gdal.Open('tmp/out.tif')
-    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     ds = None
     gdal.GetDriverByName('GTiff').Delete('tmp/out.tif')
 
@@ -88,7 +88,7 @@ def test_gdal_pansharpen_2():
     test_py_scripts.run_py_script(script_path, 'gdal_pansharpen', ' -q -b 3 -b 1 -bitdepth 8 -threads ALL_CPUS -spat_adjust union -w 0.33333333333333333 -w 0.33333333333333333 -w 0.33333333333333333 -of VRT -r cubic tmp/small_world_pan.tif ../gdrivers/data/small_world.tif,band=1 ../gdrivers/data/small_world.tif,band=2 ../gdrivers/data/small_world.tif,band=3 tmp/out.vrt')
 
     ds = gdal.Open('tmp/out.vrt')
-    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     ds = None
     gdal.GetDriverByName('VRT').Delete('tmp/out.vrt')
 

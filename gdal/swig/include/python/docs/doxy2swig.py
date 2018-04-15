@@ -62,7 +62,7 @@ class Doxy2SWIG:
         f.close()
 
         self.pieces = []
-        self.pieces.append('\n// File: %s\n'%\
+        self.pieces.append('\n// File: %s\n' %\
                            os.path.basename(f.name))
 
         self.space_re = re.compile(r'\s+')
@@ -195,7 +195,7 @@ class Doxy2SWIG:
             for n in names:
                 if n in first:
                     self.parse(first[n])
-            self.add_text(['";','\n'])
+            self.add_text(['";', '\n'])
             for n in node.childNodes:
                 if n not in first.values():
                     self.parse(n)
@@ -240,7 +240,7 @@ class Doxy2SWIG:
         if prot == 'public':
             first = self.get_specific_nodes(node, ('definition', 'name'))
             name = first['name'].firstChild.data
-            name = name.replace(sys.argv[4],'')
+            name = name.replace(sys.argv[4], '')
             if name[:8] == 'operator':  # Don't handle operators yet.
                 return
 
@@ -308,7 +308,7 @@ class Doxy2SWIG:
             refid = c.attributes['refid'].value
             fname = refid + '.xml'
             if not os.path.exists(fname):
-                fname = os.path.join(self.my_dir,  fname)
+                fname = os.path.join(self.my_dir, fname)
             print "parsing file: %s"%fname
             p = Doxy2SWIG(fname)
             p.generate()
@@ -342,7 +342,7 @@ class Doxy2SWIG:
                 elif count > 2:
                     ret.append('\n\n')
                 elif count:
-                    ret.append('\n'*count)
+                    ret.append('\n' * count)
                 count = 0
                 ret.append(i)
 

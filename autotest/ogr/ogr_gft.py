@@ -80,7 +80,7 @@ def ogr_gft_read():
     gdal.SetConfigOption('GFT_AUTH', None)
     gdal.SetConfigOption('GFT_ACCESS_TOKEN', None)
     gdal.SetConfigOption('GFT_REFRESH_TOKEN', None)
-    ds = ogr.Open('GFT:tables='+table_id)
+    ds = ogr.Open('GFT:tables=' + table_id)
     gdal.SetConfigOption('GFT_AUTH', old_auth)
     gdal.SetConfigOption('GFT_ACCESS_TOKEN', old_access)
     gdal.SetConfigOption('GFT_REFRESH_TOKEN', old_refresh)
@@ -91,7 +91,7 @@ def ogr_gft_read():
     if lyr is None:
         return 'fail'
 
-    lyr.SetSpatialFilterRect(67,31.5,67.5,32)
+    lyr.SetSpatialFilterRect(67, 31.5, 67.5, 32)
     lyr.SetAttributeFilter("'Attack on' = 'ENEMY'")
 
     count = lyr.GetFeatureCount()
@@ -103,7 +103,7 @@ def ogr_gft_read():
             return 'skip'
         return 'fail'
 
-    sql_lyr = ds.ExecuteSQL("SELECT Latitude, Longitude FROM "+table_id+" WHERE ST_INTERSECTS('Latitude', RECTANGLE(LATLNG(31.5,67.0), LATLNG(32.0,67.5))) AND 'Attack on' = 'ENEMY'")
+    sql_lyr = ds.ExecuteSQL("SELECT Latitude, Longitude FROM " + table_id + " WHERE ST_INTERSECTS('Latitude', RECTANGLE(LATLNG(31.5,67.0), LATLNG(32.0,67.5))) AND 'Attack on' = 'ENEMY'")
     if sql_lyr is None:
         gdaltest.post_reason('SQL request failed')
         return 'fail'
@@ -135,7 +135,7 @@ def ogr_gft_write():
     ogrtest.gft_can_write = True
 
     import random
-    ogrtest.gft_rand_val = random.randint(0,2147000000)
+    ogrtest.gft_rand_val = random.randint(0, 2147000000)
     table_name = "test_%d" % ogrtest.gft_rand_val
 
     lyr = ds.CreateLayer(table_name)

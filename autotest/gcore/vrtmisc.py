@@ -590,7 +590,7 @@ def vrtmisc_rat():
         print(xml_vrt)
         return 'fail'
 
-    vrt_ds = gdal.Translate('/vsimem/vrtmisc_rat.vrt', ds, format='VRT', srcWin=[0,0,1,1])
+    vrt_ds = gdal.Translate('/vsimem/vrtmisc_rat.vrt', ds, format='VRT', srcWin=[0, 0, 1, 1])
 
     xml_vrt = vrt_ds.GetMetadata('xml:VRT')[0]
     if gdal.GetLastErrorMsg() != '':
@@ -631,7 +631,7 @@ def vrtmisc_colortable():
 
     ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ct = gdal.ColorTable()
-    ct.SetColorEntry(0, (255,255,255,255))
+    ct.SetColorEntry(0, (255, 255, 255, 255))
     ds.GetRasterBand(1).SetColorTable(ct)
     if ds.GetRasterBand(1).GetColorTable().GetCount() != 1:
         gdaltest.post_reason('fail')
@@ -651,7 +651,7 @@ def vrtmisc_histogram():
 
     tmpfile = '/vsimem/vrtmisc_histogram.vrt'
     ds = gdal.Translate(tmpfile, 'data/byte.tif', format='VRT')
-    ds.GetRasterBand(1).SetDefaultHistogram(1,2,[3000000000,4])
+    ds.GetRasterBand(1).SetDefaultHistogram(1, 2, [3000000000, 4])
     ds = None
 
     ds = gdal.Open(tmpfile)

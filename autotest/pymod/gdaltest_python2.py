@@ -100,7 +100,7 @@ def gdalurlopen(url, timeout=10):
         socket.setdefaulttimeout(old_timeout)
         return None
     except:
-        print('HTTP service for %s is down.' %(url))
+        print('HTTP service for %s is down.' % (url))
         socket.setdefaulttimeout(old_timeout)
         return None
 
@@ -128,7 +128,7 @@ def spawn_async26(cmd):
 
 
 def spawn_async(cmd):
-    if version_info >= (2,6,0):
+    if version_info >= (2, 6, 0):
         return spawn_async26(cmd)
 
     import popen2

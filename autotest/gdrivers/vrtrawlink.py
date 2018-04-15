@@ -135,10 +135,10 @@ def vrtrawlink_4():
 
     # write out some simple data.
     band_1 = gdaltest.rawlink_ds.GetRasterBand(1)
-    byte_data = band_1.ReadRaster(0,0,31,35)
+    byte_data = band_1.ReadRaster(0, 0, 31, 35)
 
     band = gdaltest.rawlink_ds.GetRasterBand(2)
-    band.WriteRaster(0,0,31,35,byte_data,31,35,gdal.GDT_Byte)
+    band.WriteRaster(0, 0, 31, 35, byte_data, 31, 35, gdal.GDT_Byte)
 
     gdaltest.rawlink_ds.FlushCache()
 

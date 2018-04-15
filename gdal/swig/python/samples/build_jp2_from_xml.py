@@ -97,10 +97,10 @@ def hex_letter_to_number(ch):
 
 
 def write_hexstring_as_binary(hex_binary_content, out_f):
-    for i in range(int(len(hex_binary_content)/2)):
-        val = hex_letter_to_number(hex_binary_content[2*i]) * 16 + \
-              hex_letter_to_number(hex_binary_content[2*i+1])
-        if sys.version_info >= (3,0,0):
+    for i in range(int(len(hex_binary_content) / 2)):
+        val = hex_letter_to_number(hex_binary_content[2 * i]) * 16 + \
+              hex_letter_to_number(hex_binary_content[2 * i + 1])
+        if sys.version_info >= (3, 0, 0):
             out_f.write(chr(val).encode('latin1'))
         else:
             out_f.write(chr(val))
@@ -269,7 +269,7 @@ def parse_jp2_box(xml_tree, out_f, src_jp2file):
                 return False
         else:
             uuid = ''
-        out_f.write(struct.pack('>I' * 1, 8 + int(len(hex_binary_content)/2) + int(len(uuid)/2)))
+        out_f.write(struct.pack('>I' * 1, 8 + int(len(hex_binary_content) / 2) + int(len(uuid) / 2)))
         out_f.write(jp2box_name.encode('ascii'))
         write_hexstring_as_binary(uuid, out_f)
         write_hexstring_as_binary(hex_binary_content, out_f)
@@ -340,7 +340,7 @@ def parse_jp2_box(xml_tree, out_f, src_jp2file):
         if uuid is None:
             uuid = 'B14BF8BD083D4B43A5AE8CD7D5A6CE03'
 
-        out_f.write(struct.pack('>I' * 1, 8 + len(binary_content) + int(len(uuid)/2)))
+        out_f.write(struct.pack('>I' * 1, 8 + len(binary_content) + int(len(uuid) / 2)))
         out_f.write(jp2box_name.encode('ascii'))
         write_hexstring_as_binary(uuid, out_f)
         out_f.write(binary_content)

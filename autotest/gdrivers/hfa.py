@@ -467,8 +467,8 @@ def hfa_grow_rrdlist():
     #os.system("copy data\\bug_1109.img tmp")
 
     # Add two overview levels.
-    ds = gdal.Open('tmp/bug_1109.img',gdal.GA_Update)
-    result = ds.BuildOverviews(overviewlist=[4,8])
+    ds = gdal.Open('tmp/bug_1109.img', gdal.GA_Update)
+    result = ds.BuildOverviews(overviewlist=[4, 8])
     ds = None
 
     if result != 0:
@@ -660,11 +660,11 @@ def hfa_rotated_read():
     check_gt = (11856857.07898215, 0.895867662235625, 0.02684252936279331,
                  7041861.472946444, 0.01962103617166367, -0.9007880319529181)
 
-    gt_epsilon = (abs(check_gt[1])+abs(check_gt[2])) / 100.0
+    gt_epsilon = (abs(check_gt[1]) + abs(check_gt[2])) / 100.0
 
     new_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(new_gt[i]-check_gt[i]) > gt_epsilon:
+        if abs(new_gt[i] - check_gt[i]) > gt_epsilon:
             print('')
             print('old = ', check_gt)
             print('new = ', new_gt)
@@ -724,11 +724,11 @@ def hfa_rotated_write():
     ds = None
 
     ds = gdal.Open('tmp/rot.img')
-    gt_epsilon = (abs(check_gt[1])+abs(check_gt[2])) / 100.0
+    gt_epsilon = (abs(check_gt[1]) + abs(check_gt[2])) / 100.0
 
     new_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(new_gt[i]-check_gt[i]) > gt_epsilon:
+        if abs(new_gt[i] - check_gt[i]) > gt_epsilon:
             print('')
             print('old = ', check_gt)
             print('new = ', new_gt)
@@ -828,9 +828,9 @@ def hfa_unique_values_color_table():
         gdaltest.post_reason('got wrong color count')
         return 'fail'
 
-    if ct.GetColorEntry(253) != (0,0,0,0) \
-       or ct.GetColorEntry(254) != (255,255,170,255) \
-       or ct.GetColorEntry(255) != (255,255,255,255):
+    if ct.GetColorEntry(253) != (0, 0, 0, 0) \
+       or ct.GetColorEntry(254) != (255, 255, 170, 255) \
+       or ct.GetColorEntry(255) != (255, 255, 255, 255):
 
         print(ct.GetColorEntry(253))
         print(ct.GetColorEntry(254))
@@ -922,7 +922,7 @@ def hfa_xforms_3rd():
             gdaltest.post_reason('metadata item %d missing' % check_item[0])
             return 'fail'
 
-        if abs(value - check_item[1]) > abs(value/100000.0):
+        if abs(value - check_item[1]) > abs(value / 100000.0):
             gdaltest.post_reason('metadata item %s has wrong value: %.15g' % \
                                   (check_item[0], value))
             return 'fail'
@@ -958,7 +958,7 @@ def hfa_xforms_3rd():
 
 def hfa_delete_colortable():
     # copy a file to tmp dir to modify.
-    open('tmp/i8u.img','wb').write(open('data/i8u_c_i.img', 'rb').read())
+    open('tmp/i8u.img', 'wb').write(open('data/i8u_c_i.img', 'rb').read())
 
     # clear color table.
     ds = gdal.Open('tmp/i8u.img', gdal.GA_Update)
@@ -1159,11 +1159,11 @@ def hfa_camera_md():
 
     md = ds.GetMetadata('CAMERA_MODEL')
 
-    check_list = [('direction','EMOD_FORWARD'),
-                   ('forSrcAffine[0]','0.025004093931786'),
-                   ('invDstAffine[0]','1'),
-                   ('coeffs[1]','-0.008'),
-                   ('elevationType','EPRJ_ELEVATION_TYPE_HEIGHT')]
+    check_list = [('direction', 'EMOD_FORWARD'),
+                   ('forSrcAffine[0]', '0.025004093931786'),
+                   ('invDstAffine[0]', '1'),
+                   ('coeffs[1]', '-0.008'),
+                   ('elevationType', 'EPRJ_ELEVATION_TYPE_HEIGHT')]
     for check_item in check_list:
         try:
             value = md[check_item[0]]
@@ -1181,7 +1181,7 @@ def hfa_camera_md():
     srs_wkt = md['outputProjection']
     exp_wkt = 'PROJCS["UTM Zone 17, Northern Hemisphere",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.978698213898,AUTHORITY["EPSG","7008"]],TOWGS84[-10,158,187,0,0,0,0],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-81],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1],AUTHORITY["EPSG","26717"]]'
 
-    if not gdaltest.equal_srs_from_wkt(srs_wkt,exp_wkt):
+    if not gdaltest.equal_srs_from_wkt(srs_wkt, exp_wkt):
         gdaltest.post_reason('wrong outputProjection')
         return 'fail'
 

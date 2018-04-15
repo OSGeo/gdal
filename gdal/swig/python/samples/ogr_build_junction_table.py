@@ -88,8 +88,8 @@ def build_junction_table(ds, lyr, ifield, bAppend, bOverwrite):
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ds.ExecuteSQL('CREATE INDEX idx_%s_gml_id ON %s(gml_id)' % (first_table, first_table))
         ds.ExecuteSQL('CREATE INDEX idx_%s_gml_id ON %s(gml_id)' % (second_table, second_table))
-        ds.ExecuteSQL('CREATE INDEX idx_%s_gml_id ON %s(%s)' % (junction_table_name+'_'+first_table, junction_table_name,first_table + '_gml_id'))
-        ds.ExecuteSQL('CREATE INDEX idx_%s_gml_id ON %s(%s)' % (junction_table_name+'_'+second_table, junction_table_name,second_table + '_gml_id'))
+        ds.ExecuteSQL('CREATE INDEX idx_%s_gml_id ON %s(%s)' % (junction_table_name + '_' + first_table, junction_table_name, first_table + '_gml_id'))
+        ds.ExecuteSQL('CREATE INDEX idx_%s_gml_id ON %s(%s)' % (junction_table_name + '_' + second_table, junction_table_name, second_table + '_gml_id'))
         gdal.PopErrorHandler()
 
     lyr.ResetReading()
@@ -105,7 +105,7 @@ def build_junction_table(ds, lyr, ifield, bAppend, bOverwrite):
         else:
             href = feat.GetFieldAsString(ifield)
             if href[0] == '(' and href.find(':') > 0 and href[-1] == ')':
-                href_list = href[href.find(':')+1:-1].split(',')
+                href_list = href[href.find(':') + 1:-1].split(',')
             else:
                 href_list = [href]
 

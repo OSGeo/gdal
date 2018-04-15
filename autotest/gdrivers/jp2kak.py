@@ -150,12 +150,12 @@ def jp2kak_10():
     data = ds.ReadRaster(0, 0, 800, 100, band_list=[2, 3]).decode('latin1')
     ds = None
 
-    expected = [(0,0), (255,0), (0, 255), (255,255),
-                 (255,255), (0,255), (255,0), (0,0)]
+    expected = [(0, 0), (255, 0), (0, 255), (255, 255),
+                 (255, 255), (0, 255), (255, 0), (0, 0)]
     got = []
 
     for x in range(8):
-        got.append((ord(data[x*100]), ord(data[80000 + x*100])))
+        got.append((ord(data[x * 100]), ord(data[80000 + x * 100])))
 
     if got != expected:
         print(got)
@@ -423,7 +423,7 @@ def jp2kak_20():
         gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
-    jp2_bands_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
+    jp2_bands_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     # jp2_fourth_band_data = fourth_band.ReadRaster(
     #     0, 0, ds.RasterXSize, ds.RasterYSize)
     fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize,
@@ -433,7 +433,7 @@ def jp2kak_20():
     tmp_ds = tiff_drv.CreateCopy('/vsimem/jp2kak_20.tif', ds)
     fourth_band = tmp_ds.GetRasterBand(4)
     got_cs = fourth_band.Checksum()
-    gtiff_bands_data = tmp_ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
+    gtiff_bands_data = tmp_ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     # gtiff_fourth_band_data = fourth_band.ReadRaster(0, 0, ds.RasterXSize,
     #                                                 ds.RasterYSize)
     # gtiff_fourth_band_subsampled_data = fourth_band.ReadRaster(

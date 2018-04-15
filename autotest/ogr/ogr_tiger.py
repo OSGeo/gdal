@@ -187,9 +187,9 @@ def ogr_tiger_4():
         if file[0] == '.':
             continue
 
-        data = open('tmp/cache/TGR01001/'+file,'r').read()
+        data = open('tmp/cache/TGR01001/' + file, 'r').read()
 
-        f = gdal.VSIFOpenL('/vsimem/tigertest/'+file, 'wb')
+        f = gdal.VSIFOpenL('/vsimem/tigertest/' + file, 'wb')
         gdal.VSIFWriteL(data, 1, len(data), f)
         gdal.VSIFCloseL(f)
 
@@ -234,7 +234,7 @@ def ogr_tiger_4():
         if file[0] == '.':
             continue
 
-        gdal.Unlink('/vsimem/tigertest/'+file)
+        gdal.Unlink('/vsimem/tigertest/' + file)
 
     return 'success'
 

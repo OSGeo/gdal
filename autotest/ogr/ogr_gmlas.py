@@ -63,8 +63,8 @@ def compare_ogrinfo_output(gmlfile, reffile, options=''):
     tmpfilename = 'tmp/' + os.path.basename(gmlfile) + '.txt'
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() +
         ' -ro -al GMLAS:' + gmlfile +
-        ' -oo EXPOSE_METADATA_LAYERS=YES '+
-        '-oo @KEEP_RELATIVE_PATHS_FOR_METADATA=YES '+
+        ' -oo EXPOSE_METADATA_LAYERS=YES ' +
+        '-oo @KEEP_RELATIVE_PATHS_FOR_METADATA=YES ' +
         '-oo @EXPOSE_SCHEMAS_NAME_IN_METADATA=NO ' +
         '-oo @EXPOSE_CONFIGURATION_IN_METADATA=NO' + ' ' + options,
         encoding='utf-8')
@@ -1168,7 +1168,7 @@ class GMLASHTTPHandler(BaseHTTPRequestHandler):
         except IOError:
             pass
 
-        self.send_error(404,'File Not Found: %s' % self.path)
+        self.send_error(404, 'File Not Found: %s' % self.path)
 
 ###############################################################################
 # Test schema caching
@@ -1776,7 +1776,7 @@ def ogr_gmlas_xlink_resolver():
 </xs:schema>""")
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_xlink_resolver_fake_xlink.xsd',
-                           open('data/gmlas/gmlas_fake_xlink.xsd','rb').read())
+                           open('data/gmlas/gmlas_fake_xlink.xsd', 'rb').read())
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_xlink_resolver.xml',
 """
@@ -2053,7 +2053,7 @@ def ogr_gmlas_xlink_resolver():
     <my_link attr_before="a" xlink:href="http://localhost:%d/vsimem/non_matching_resource.xml" attr_after="b"/>
     <my_link2 attr_before="a2" xlink:href="http://localhost:%d/vsimem/subdir1/resource.xml" attr_after="b2"/>
   </main_elt>
-</FeatureCollection>""" % (webserver_port, webserver_port,webserver_port, webserver_port))
+</FeatureCollection>""" % (webserver_port, webserver_port, webserver_port, webserver_port))
 
     config_file = """<Configuration>
         <XLinkResolution>
@@ -2118,7 +2118,7 @@ def ogr_gmlas_xlink_resolver():
                     <XPath>//datetime</XPath>
                 </Field>
             </URLSpecificResolution>
-        </XLinkResolution></Configuration>""" % (webserver_port,webserver_port)
+        </XLinkResolution></Configuration>""" % (webserver_port, webserver_port)
 
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml',
         open_options=['CONFIG_FILE=' + config_file])
@@ -2206,7 +2206,7 @@ def ogr_gmlas_recoding():
     if ogr.GetDriverByName('GMLAS') is None:
         return 'skip'
 
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         accent = '\u00e9'
     else:
         exec("accent = u'\\u00e9'")
@@ -2909,7 +2909,7 @@ def ogr_gmlas_writer_errors():
 
     # Source dataset is empty
     with gdaltest.error_handler():
-        ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', gdal.GetDriverByName('Memory').Create('',0,0,0,0), format='GMLAS')
+        ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', gdal.GetDriverByName('Memory').Create('', 0, 0, 0, 0), format='GMLAS')
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Source dataset has no layers') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
@@ -2988,7 +2988,7 @@ def ogr_gmlas_writer_errors():
     gdal.Unlink('/vsimem/valid.xml')
 
     # _ogr_layers_metadata not found
-    src_ds = gdal.GetDriverByName('Memory').Create('',0,0,0,0)
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, 0)
     src_ds.CreateLayer('_ogr_other_metadata')
     with gdaltest.error_handler():
         ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', src_ds, format='GMLAS')
@@ -2998,7 +2998,7 @@ def ogr_gmlas_writer_errors():
         return 'fail'
 
     # _ogr_fields_metadata not found
-    src_ds = gdal.GetDriverByName('Memory').Create('',0,0,0,0)
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, 0)
     src_ds.CreateLayer('_ogr_other_metadata')
     src_ds.CreateLayer('_ogr_layers_metadata')
     with gdaltest.error_handler():
@@ -3009,7 +3009,7 @@ def ogr_gmlas_writer_errors():
         return 'fail'
 
     # _ogr_layer_relationships not found
-    src_ds = gdal.GetDriverByName('Memory').Create('',0,0,0,0)
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, 0)
     src_ds.CreateLayer('_ogr_other_metadata')
     src_ds.CreateLayer('_ogr_layers_metadata')
     src_ds.CreateLayer('_ogr_fields_metadata')
@@ -3021,7 +3021,7 @@ def ogr_gmlas_writer_errors():
         return 'fail'
 
     # Cannot find field layer_name in _ogr_layers_metadata layer
-    src_ds = gdal.GetDriverByName('Memory').Create('',0,0,0,0)
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, 0)
     src_ds.CreateLayer('_ogr_other_metadata')
     src_ds.CreateLayer('_ogr_layers_metadata')
     src_ds.CreateLayer('_ogr_fields_metadata')

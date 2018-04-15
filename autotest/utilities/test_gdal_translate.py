@@ -528,9 +528,9 @@ def test_gdal_translate_19():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdal_translate_19_src.tif',1,1,2)
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdal_translate_19_src.tif', 1, 1, 2)
     ct = gdal.ColorTable()
-    ct.SetColorEntry(127, (1,2,3,255))
+    ct.SetColorEntry(127, (1, 2, 3, 255))
     ds.GetRasterBand(1).SetRasterColorTable(ct)
     ds.GetRasterBand(1).Fill(127)
     ds.GetRasterBand(2).Fill(250)
@@ -1025,11 +1025,11 @@ def test_gdal_translate_35():
 def test_gdal_translate_cleanup():
     for i in range(14):
         try:
-            os.remove('tmp/test' + str(i+1) + '.tif')
+            os.remove('tmp/test' + str(i + 1) + '.tif')
         except:
             pass
         try:
-            os.remove('tmp/test' + str(i+1) + '.tif.aux.xml')
+            os.remove('tmp/test' + str(i + 1) + '.tif.aux.xml')
         except:
             pass
     try:

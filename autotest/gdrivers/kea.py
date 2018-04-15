@@ -149,7 +149,7 @@ def kea_4():
         return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ret = ds.SetGeoTransform([1,2,3,4,5,6])
+    ret = ds.SetGeoTransform([1, 2, 3, 4, 5, 6])
     gdal.PopErrorHandler()
     if ret == 0:
         gdaltest.post_reason('fail')
@@ -200,7 +200,7 @@ def kea_4():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds.GetRasterBand(1).WriteRaster(0,0,1,1,'\0')
+    ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, '\0')
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds.FlushCache()
@@ -230,7 +230,7 @@ def kea_5():
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 100, 100, 3, options=options)
     ds = None
     ds = gdal.Open('tmp/out.kea')
-    if ds.GetRasterBand(1).GetBlockSize() != [15,15]:
+    if ds.GetRasterBand(1).GetBlockSize() != [15, 15]:
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetBlockSize())
         return 'fail'
@@ -242,7 +242,7 @@ def kea_5():
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
-    if ds.GetGeoTransform() != (0,1,0,0,0,-1):
+    if ds.GetGeoTransform() != (0, 1, 0, 0, 0, -1):
         gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
@@ -264,21 +264,21 @@ def kea_6():
         return 'skip'
 
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 5)
-    ds.SetMetadata({'foo':'bar'})
+    ds.SetMetadata({'foo': 'bar'})
     ds.SetMetadataItem('bar', 'baw')
-    ds.GetRasterBand(1).SetMetadata({'bar':'baz'})
+    ds.GetRasterBand(1).SetMetadata({'bar': 'baz'})
     ds.GetRasterBand(1).SetDescription('desc')
     ds.GetRasterBand(2).SetMetadata({'LAYER_TYPE' : 'any_string_that_is_not_athematic_is_thematic'})
     ds.GetRasterBand(3).SetMetadata({'LAYER_TYPE' : 'athematic'})
     ds.GetRasterBand(4).SetMetadataItem('LAYER_TYPE', 'thematic')
     ds.GetRasterBand(5).SetMetadataItem('LAYER_TYPE', 'athematic')
-    if ds.SetMetadata({'foo':'bar'}, 'other_domain') == 0:
+    if ds.SetMetadata({'foo': 'bar'}, 'other_domain') == 0:
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.SetMetadataItem('foo', 'bar', 'other_domain') == 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetRasterBand(1).SetMetadata({'foo':'bar'}, 'other_domain') == 0:
+    if ds.GetRasterBand(1).SetMetadata({'foo': 'bar'}, 'other_domain') == 0:
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).SetMetadataItem('foo', 'bar', 'other_domain') == 0:
@@ -373,7 +373,7 @@ def kea_7():
     if ds.GetGCPCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.SetGeoTransform([1,2,3,4,5,6]) != 0:
+    if ds.SetGeoTransform([1, 2, 3, 4, 5, 6]) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.SetProjection('foo') != 0:
@@ -387,7 +387,7 @@ def kea_7():
     if out2_ds.GetGCPCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if out2_ds.GetGeoTransform() != (1,2,3,4,5,6):
+    if out2_ds.GetGeoTransform() != (1, 2, 3, 4, 5, 6):
         gdaltest.post_reason('fail')
         print(out2_ds.GetGeoTransform())
         return 'fail'
@@ -402,10 +402,10 @@ def kea_7():
 
     # GCP
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1)
-    gcp1 = gdal.GCP(0,1,2,3,4)
+    gcp1 = gdal.GCP(0, 1, 2, 3, 4)
     gcp1.Id = "id"
     gcp1.Info = "info"
-    gcp2 = gdal.GCP(0,1,2,3,4)
+    gcp2 = gdal.GCP(0, 1, 2, 3, 4)
     gcps = [gcp1, gcp2]
     ds.SetGCPs(gcps, "foo")
     ds = None
@@ -454,9 +454,9 @@ def kea_8():
             gdaltest.post_reason('fail')
             return 'fail'
         ct = gdal.ColorTable()
-        ct.SetColorEntry(0, (0,255,0,255))
-        ct.SetColorEntry(1, (255,0,255,255))
-        ct.SetColorEntry(2, (0,0,255,255))
+        ct.SetColorEntry(0, (0, 255, 0, 255))
+        ct.SetColorEntry(1, (255, 0, 255, 255))
+        ct.SetColorEntry(2, (0, 0, 255, 255))
         if ds.GetRasterBand(1).SetColorTable(ct) != 0:
             gdaltest.post_reason('fail')
             return 'fail'
@@ -474,7 +474,7 @@ def kea_8():
         if got_ct.GetCount() != 3:
             gdaltest.post_reason('Got wrong color table entry count.')
             return 'fail'
-        if got_ct.GetColorEntry(1) != (255,0,255,255):
+        if got_ct.GetColorEntry(1) != (255, 0, 255, 255):
             gdaltest.post_reason('Got wrong color table entry.')
             return 'fail'
 
@@ -526,28 +526,28 @@ def kea_10():
     if gdaltest.kea_driver is None:
         return 'skip'
 
-    for (dt,nd,expected_nd) in [(gdal.GDT_Byte,0,0),
-                                 (gdal.GDT_Byte,1.1,1.0),
-                                 (gdal.GDT_Byte,255,255),
-                                 (gdal.GDT_Byte,-1,None),
-                                 (gdal.GDT_Byte,256,None),
-                                 (gdal.GDT_UInt16,0,0),
-                                 (gdal.GDT_UInt16,65535,65535),
-                                 (gdal.GDT_UInt16,-1,None),
-                                 (gdal.GDT_UInt16,65536,None),
-                                 (gdal.GDT_Int16,-32768,-32768),
-                                 (gdal.GDT_Int16,32767,32767),
-                                 (gdal.GDT_Int16,-32769,None),
-                                 (gdal.GDT_Int16,32768,None),
-                                 (gdal.GDT_UInt32,0,0),
-                                 (gdal.GDT_UInt32,0xFFFFFFFF,0xFFFFFFFF),
-                                 (gdal.GDT_UInt32,-1,None),
-                                 (gdal.GDT_UInt32,0xFFFFFFFF+1,None),
-                                 (gdal.GDT_Int32,-2147483648,-2147483648),
-                                 (gdal.GDT_Int32,2147483647,2147483647),
-                                 (gdal.GDT_Int32,-2147483649,None),
-                                 (gdal.GDT_Int32,2147483648,None),
-                                 (gdal.GDT_Float32,0.5,0.5),
+    for (dt, nd, expected_nd) in [(gdal.GDT_Byte, 0, 0),
+                                 (gdal.GDT_Byte, 1.1, 1.0),
+                                 (gdal.GDT_Byte, 255, 255),
+                                 (gdal.GDT_Byte, -1, None),
+                                 (gdal.GDT_Byte, 256, None),
+                                 (gdal.GDT_UInt16, 0, 0),
+                                 (gdal.GDT_UInt16, 65535, 65535),
+                                 (gdal.GDT_UInt16, -1, None),
+                                 (gdal.GDT_UInt16, 65536, None),
+                                 (gdal.GDT_Int16, -32768, -32768),
+                                 (gdal.GDT_Int16, 32767, 32767),
+                                 (gdal.GDT_Int16, -32769, None),
+                                 (gdal.GDT_Int16, 32768, None),
+                                 (gdal.GDT_UInt32, 0, 0),
+                                 (gdal.GDT_UInt32, 0xFFFFFFFF, 0xFFFFFFFF),
+                                 (gdal.GDT_UInt32, -1, None),
+                                 (gdal.GDT_UInt32, 0xFFFFFFFF + 1, None),
+                                 (gdal.GDT_Int32, -2147483648, -2147483648),
+                                 (gdal.GDT_Int32, 2147483647, 2147483647),
+                                 (gdal.GDT_Int32, -2147483649, None),
+                                 (gdal.GDT_Int32, 2147483648, None),
+                                 (gdal.GDT_Float32, 0.5, 0.5),
                                  ]:
         ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, dt)
         if ds.GetRasterBand(1).GetNoDataValue() is not None:
@@ -648,17 +648,17 @@ def kea_12():
     rat.CreateColumn('col_integer_alpha', gdal.GFT_Integer, gdal.GFU_Alpha)
     rat.SetRowCount(1)
 
-    rat.SetValueAsString(0,0,"1.23")
-    rat.SetValueAsInt(0,0,1)
-    rat.SetValueAsDouble(0,0,1.23)
+    rat.SetValueAsString(0, 0, "1.23")
+    rat.SetValueAsInt(0, 0, 1)
+    rat.SetValueAsDouble(0, 0, 1.23)
 
-    rat.SetValueAsInt(0,2,0)
-    rat.SetValueAsDouble(0,2,0)
-    rat.SetValueAsString(0,2,'foo')
+    rat.SetValueAsInt(0, 2, 0)
+    rat.SetValueAsDouble(0, 2, 0)
+    rat.SetValueAsString(0, 2, 'foo')
 
-    rat.SetValueAsString(0,3,"123")
-    rat.SetValueAsDouble(0,3,123)
-    rat.SetValueAsInt(0,3,123)
+    rat.SetValueAsString(0, 3, "123")
+    rat.SetValueAsDouble(0, 3, 123)
+    rat.SetValueAsInt(0, 3, 123)
 
     cloned_rat = rat.Clone()
     if ds.GetRasterBand(1).SetDefaultRAT(rat) != 0:

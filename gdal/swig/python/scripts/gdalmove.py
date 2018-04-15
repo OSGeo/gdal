@@ -65,10 +65,10 @@ def move(filename, t_srs, s_srs=None, pixel_threshold=None):
 
     corners_pixel_line = [
         (0, 0, 0),
-        (0, ds.RasterYSize,0),
+        (0, ds.RasterYSize, 0),
         (ds.RasterXSize, 0, 0),
         (ds.RasterXSize, ds.RasterYSize, 0),
-        (ds.RasterXSize/2.0, ds.RasterYSize/2.0, 0.0)]
+        (ds.RasterXSize / 2.0, ds.RasterYSize / 2.0, 0.0)]
 
     orig_gt = ds.GetGeoTransform()
 
@@ -235,16 +235,16 @@ def main():
     i = 1
     while i < len(argv):
 
-        if argv[i] == '-s_srs' and i < len(argv)-1:
-            s_srs = argv[i+1]
+        if argv[i] == '-s_srs' and i < len(argv) - 1:
+            s_srs = argv[i + 1]
             i += 1
 
-        elif argv[i] == '-t_srs' and i < len(argv)-1:
-            t_srs = argv[i+1]
+        elif argv[i] == '-t_srs' and i < len(argv) - 1:
+            t_srs = argv[i + 1]
             i += 1
 
-        elif argv[i] == '-et' and i < len(argv)-1:
-            pixel_threshold = float(argv[i+1])
+        elif argv[i] == '-et' and i < len(argv) - 1:
+            pixel_threshold = float(argv[i + 1])
             i += 1
 
         elif filename is None:

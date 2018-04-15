@@ -421,10 +421,10 @@ class GPKGChecker:
             wkb_big_endian = (wkb_endianness == 0)
             if wkb_big_endian:
                 wkb_geom_type = struct.unpack(
-                    '>I' * 1, blob[header_len+1:header_len+5])[0]
+                    '>I' * 1, blob[header_len + 1:header_len + 5])[0]
             else:
                 wkb_geom_type = struct.unpack(
-                    '<I' * 1, blob[header_len+1:header_len+5])[0]
+                    '<I' * 1, blob[header_len + 1:header_len + 5])[0]
             self._assert(wkb_geom_type >= 0 and
                          (wkb_geom_type % 1000) < len(wkb_geometries),
                          19, 'Invalid WKB geometry type')
@@ -532,9 +532,9 @@ class GPKGChecker:
                 c.execute("SELECT 1 FROM sqlite_master WHERE " +
                           "type = 'trigger' " +
                           "AND name = '%s_update%d'" %
-                          (_esc_literal(rtree_name), i+1))
+                          (_esc_literal(rtree_name), i + 1))
                 self._assert(c.fetchone() is not None, 75,
-                             "%s_update%d trigger missing" % (rtree_name, i+1))
+                             "%s_update%d trigger missing" % (rtree_name, i + 1))
 
             c.execute("SELECT 1 FROM sqlite_master WHERE type = 'trigger' " +
                       "AND name = '%s_delete'" % _esc_literal(rtree_name))
@@ -681,15 +681,15 @@ class GPKGChecker:
             if prev_zoom_level is not None and \
                zoom_level == prev_zoom_level + 1 and not zoom_other_levels:
                     self._assert(
-                        abs((pixel_x_size-prev_pixel_x_size/2) /
+                        abs((pixel_x_size - prev_pixel_x_size / 2) /
                             prev_pixel_x_size) < 1e-5, 35,
                         "Expected pixel_x_size=%f for zoom_level=%d. Got %f" %
-                        (prev_pixel_x_size/2, zoom_level, pixel_x_size))
+                        (prev_pixel_x_size / 2, zoom_level, pixel_x_size))
                     self._assert(
-                        abs((pixel_y_size-prev_pixel_y_size/2) /
+                        abs((pixel_y_size - prev_pixel_y_size / 2) /
                             prev_pixel_y_size) < 1e-5, 35,
                         "Expected pixel_y_size=%f for zoom_level=%d. Got %f" %
-                        (prev_pixel_y_size/2, zoom_level, pixel_y_size))
+                        (prev_pixel_y_size / 2, zoom_level, pixel_y_size))
 
             prev_pixel_x_size = pixel_x_size
             prev_pixel_y_size = pixel_y_size
@@ -1234,7 +1234,7 @@ class GPKGChecker:
                              62,
                              "extension_name %s not valid" % extension_name)
                 author = extension_name[0:extension_name.find('_')]
-                ext_name = extension_name[extension_name.find('_')+1:]
+                ext_name = extension_name[extension_name.find('_') + 1:]
                 for x in author:
                     self._assert((x >= 'a' and x <= 'z') or
                                  (x >= 'A' and x <= 'Z') or

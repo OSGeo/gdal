@@ -454,8 +454,8 @@ def ogr_geojson_9():
 
     gdaltest.tests = [
         ['gjpoint', [1], ['Point 1']],
-        ['gjline',  [1], ['Line 1']],
-        ['gjpoly',  [1], ['Polygon 1']],
+        ['gjline', [1], ['Line 1']],
+        ['gjpoly', [1], ['Polygon 1']],
         ['gjmultipoint', [1], ['MultiPoint 1']],
         ['gjmultiline', [2], ['MultiLine 1']],
         ['gjmultipoly', [2], ['MultiPoly 1']]
@@ -466,7 +466,7 @@ def ogr_geojson_9():
 
         rc = copy_shape_to_geojson(test[0])
         if not rc:
-            gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
+            gdaltest.post_reason('Failed making copy of ' + test[0] + '.shp')
             return 'fail'
 
         rc = verify_geojson_copy(test[0], test[1], test[2])
@@ -487,8 +487,8 @@ def ogr_geojson_10():
 
     gdaltest.tests = [
         ['gjpoint', [1], ['Point 1']],
-        ['gjline',  [1], ['Line 1']],
-        ['gjpoly',  [1], ['Polygon 1']],
+        ['gjline', [1], ['Line 1']],
+        ['gjpoly', [1], ['Polygon 1']],
         ['gjmultipoint', [1], ['MultiPoint 1']],
         ['gjmultiline', [2], ['MultiLine 1']],
         ['gjmultipoly', [2], ['MultiPoly 1']]
@@ -499,7 +499,7 @@ def ogr_geojson_10():
 
         rc = copy_shape_to_geojson(test[0], '/vsigzip/')
         if not rc:
-            gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
+            gdaltest.post_reason('Failed making copy of ' + test[0] + '.shp')
             return 'fail'
 
         rc = verify_geojson_copy(test[0], test[1], test[2])
@@ -594,7 +594,7 @@ def ogr_geojson_13():
 
     rc = copy_shape_to_geojson(test[0], '/vsistdout/')
     if not rc:
-        gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
+        gdaltest.post_reason('Failed making copy of ' + test[0] + '.shp')
         return 'fail'
 
     return 'success'
@@ -699,7 +699,7 @@ def ogr_geojson_16():
         gdaltest.post_reason('Missing layer called esripoint')
         return 'fail'
 
-    extent = (2,2,49,49)
+    extent = (2, 2, 49, 49)
 
     rc = validate_layer(lyr, 'esripoint', 1, ogr.wkbPoint, 4, extent)
     if not rc:
@@ -759,7 +759,7 @@ def ogr_geojson_17():
 
     lyr = ds.GetLayer(0)
 
-    extent = (2,3,49,50)
+    extent = (2, 3, 49, 50)
 
     rc = validate_layer(lyr, None, 1, ogr.wkbLineString, 0, extent)
     if not rc:
@@ -818,7 +818,7 @@ def ogr_geojson_18():
 
     lyr = ds.GetLayer(0)
 
-    extent = (-3,3,49,50)
+    extent = (-3, 3, 49, 50)
 
     rc = validate_layer(lyr, None, 1, ogr.wkbPolygon, 0, extent)
     if not rc:
@@ -868,7 +868,7 @@ def ogr_geojson_19():
 
     lyr = ds.GetLayer(0)
 
-    extent = (2,3,49,50)
+    extent = (2, 3, 49, 50)
 
     rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
     if not rc:
@@ -1376,7 +1376,7 @@ def ogr_geojson_28():
     lyr = ds.GetLayer(0)
 
     # validate layer doesn't check z, but put it in
-    extent = (2,2,49,49,1,1)
+    extent = (2, 2, 49, 49, 1, 1)
 
     rc = validate_layer(lyr, None, 1, ogr.wkbPoint, 4, extent)
     if not rc:
@@ -1437,7 +1437,7 @@ def ogr_geojson_29():
     lyr = ds.GetLayer(0)
 
     # validate layer doesn't check z, but put it in
-    extent = (2,3,49,50,1,2)
+    extent = (2, 3, 49, 50, 1, 2)
 
     rc = validate_layer(lyr, None, 1, ogr.wkbLineString, 0, extent)
     if not rc:
@@ -1475,7 +1475,7 @@ def ogr_geojson_30():
     lyr = ds.GetLayer(0)
 
     # validate layer doesn't check z, but put it in
-    extent = (2,3,49,50,1,2)
+    extent = (2, 3, 49, 50, 1, 2)
 
     rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
     if not rc:
@@ -1513,7 +1513,7 @@ def ogr_geojson_31():
     lyr = ds.GetLayer(0)
 
     # validate layer doesn't check z, but put it in
-    extent = (2,3,49,50,1,4)
+    extent = (2, 3, 49, 50, 1, 4)
 
     rc = validate_layer(lyr, None, 1, ogr.wkbPolygon, 0, extent)
     if not rc:
@@ -1550,7 +1550,7 @@ def ogr_geojson_32():
 
     lyr = ds.GetLayer(0)
 
-    extent = (2,3,49,50)
+    extent = (2, 3, 49, 50)
 
     rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
     if not rc:
@@ -1587,7 +1587,7 @@ def ogr_geojson_33():
 
     lyr = ds.GetLayer(0)
 
-    extent = (2,3,49,50)
+    extent = (2, 3, 49, 50)
 
     rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
     if not rc:
@@ -1624,7 +1624,7 @@ def ogr_geojson_34():
 
     lyr = ds.GetLayer(0)
 
-    extent = (2,3,49,50)
+    extent = (2, 3, 49, 50)
 
     rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
     if not rc:
@@ -1671,7 +1671,7 @@ def ogr_geojson_35():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(3)
     geom = ogr.Geometry(ogr.wkbLineString)
-    geom.AddPoint_2D(0,0)
+    geom.AddPoint_2D(0, 0)
     geom.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
@@ -1680,7 +1680,7 @@ def ogr_geojson_35():
     feat.SetFID(4)
     geom = ogr.Geometry(ogr.wkbPolygon)
     geom2 = ogr.Geometry(ogr.wkbLinearRing)
-    geom2.AddPoint_2D(0,0)
+    geom2.AddPoint_2D(0, 0)
     geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
     geom.AddGeometry(geom2)
     feat.SetGeometry(geom)
@@ -1690,7 +1690,7 @@ def ogr_geojson_35():
     feat.SetFID(5)
     geom = ogr.Geometry(ogr.wkbMultiPoint)
     geom2 = ogr.Geometry(ogr.wkbPoint)
-    geom2.AddPoint_2D(0,0)
+    geom2.AddPoint_2D(0, 0)
     geom2 = ogr.Geometry(ogr.wkbPoint)
     geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
     geom.AddGeometry(geom2)
@@ -1701,7 +1701,7 @@ def ogr_geojson_35():
     feat.SetFID(6)
     geom = ogr.Geometry(ogr.wkbMultiLineString)
     geom2 = ogr.Geometry(ogr.wkbLineString)
-    geom2.AddPoint_2D(0,0)
+    geom2.AddPoint_2D(0, 0)
     geom2 = ogr.Geometry(ogr.wkbLineString)
     geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
     geom.AddGeometry(geom2)
@@ -1713,7 +1713,7 @@ def ogr_geojson_35():
     geom = ogr.Geometry(ogr.wkbMultiPolygon)
     geom2 = ogr.Geometry(ogr.wkbPolygon)
     geom3 = ogr.Geometry(ogr.wkbLinearRing)
-    geom3.AddPoint_2D(0,0)
+    geom3.AddPoint_2D(0, 0)
     geom2.AddGeometry(geom3)
     geom2 = ogr.Geometry(ogr.wkbPolygon)
     geom3 = ogr.Geometry(ogr.wkbLinearRing)
@@ -1737,7 +1737,7 @@ def ogr_geojson_35():
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
-    for id in range(2,8):
+    for id in range(2, 8):
         if data.find('{ "type": "Feature", "id": %d, "properties": { }, "geometry": null }' % id) == -1:
             gdaltest.post_reason('fail')
             print(data)
@@ -2260,7 +2260,7 @@ def ogr_geojson_42():
     gdal.PushErrorHandler()
     extent = lyr.GetExtent()
     gdal.PopErrorHandler()
-    if extent != (2,2,49,49):
+    if extent != (2, 2, 49, 49):
         gdaltest.post_reason('fail')
         print(extent)
         return 'fail'
@@ -3312,7 +3312,7 @@ def ogr_geojson_57():
         return 'skip'
 
     # Standard case: EPSG:32662: WGS 84 / Plate Carre
-    src_ds = gdal.GetDriverByName('Memory').Create('',0,0,0)
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput('+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs')
     lyr = src_ds.CreateLayer('test', srs=sr)
@@ -3338,7 +3338,7 @@ def ogr_geojson_57():
         return 'fail'
 
     # Polar case: EPSG:3995: WGS 84 / Arctic Polar Stereographic
-    src_ds = gdal.GetDriverByName('Memory').Create('',0,0,0)
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput('+proj=stere +lat_0=90 +lat_ts=71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs')
     lyr = src_ds.CreateLayer('test', srs=sr)
@@ -3368,7 +3368,7 @@ def ogr_geojson_57():
         return 'fail'
 
     # Polar case: slice of spherical cap (not intersecting antimeridian, west hemisphere)
-    src_ds = gdal.GetDriverByName('Memory').Create('',0,0,0)
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput('+proj=stere +lat_0=90 +lat_ts=71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs')
     lyr = src_ds.CreateLayer('test', srs=sr)
@@ -3394,7 +3394,7 @@ def ogr_geojson_57():
         return 'fail'
 
     # Polar case: slice of spherical cap (not intersecting antimeridian, east hemisphere)
-    src_ds = gdal.GetDriverByName('Memory').Create('',0,0,0)
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput('+proj=stere +lat_0=90 +lat_ts=71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs')
     lyr = src_ds.CreateLayer('test', srs=sr)
@@ -3420,7 +3420,7 @@ def ogr_geojson_57():
         return 'fail'
 
     # Polar case: slice of spherical cap crossing the antimeridian
-    src_ds = gdal.GetDriverByName('Memory').Create('',0,0,0)
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput('+proj=stere +lat_0=90 +lat_ts=71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs')
     lyr = src_ds.CreateLayer('test', srs=sr)
@@ -3446,7 +3446,7 @@ def ogr_geojson_57():
         return 'fail'
 
     # Polar case: EPSG:3031: WGS 84 / Antarctic Polar Stereographic
-    src_ds = gdal.GetDriverByName('Memory').Create('',0,0,0)
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput('+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs')
     lyr = src_ds.CreateLayer('test', srs=sr)
@@ -3472,7 +3472,7 @@ def ogr_geojson_57():
         return 'fail'
 
     # Antimeridian case: EPSG:32660: WGS 84 / UTM zone 60N with polygon and line crossing
-    src_ds = gdal.GetDriverByName('Memory').Create('',0,0,0)
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput('+proj=utm +zone=60 +datum=WGS84 +units=m +no_defs')
     lyr = src_ds.CreateLayer('test', srs=sr)
@@ -3519,7 +3519,7 @@ def ogr_geojson_57():
         return 'fail'
 
     # Antimeridian case: EPSG:32660: WGS 84 / UTM zone 60N wit polygon on west of antimeridian
-    src_ds = gdal.GetDriverByName('Memory').Create('',0,0,0)
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput('+proj=utm +zone=60 +datum=WGS84 +units=m +no_defs')
     lyr = src_ds.CreateLayer('test', srs=sr)
@@ -4055,16 +4055,16 @@ def ogr_geojson_geom_export_failure():
 
     g = ogr.Geometry(ogr.wkbPolygon)
     lr = ogr.Geometry(ogr.wkbLinearRing)
-    lr.AddPoint_2D(0,0)
-    lr.AddPoint_2D(0,1)
-    lr.AddPoint_2D(1,1)
-    lr.AddPoint_2D(0,0)
+    lr.AddPoint_2D(0, 0)
+    lr.AddPoint_2D(0, 1)
+    lr.AddPoint_2D(1, 1)
+    lr.AddPoint_2D(0, 0)
     g.AddGeometry(lr)
     lr = ogr.Geometry(ogr.wkbLinearRing)
-    lr.AddPoint_2D(0,0)
-    lr.AddPoint_2D(float('nan'),1)
-    lr.AddPoint_2D(1,1)
-    lr.AddPoint_2D(0,0)
+    lr.AddPoint_2D(0, 0)
+    lr.AddPoint_2D(float('nan'), 1)
+    lr.AddPoint_2D(1, 1)
+    lr.AddPoint_2D(0, 0)
     g.AddGeometry(lr)
     with gdaltest.error_handler():
         geojson = g.ExportToJson()

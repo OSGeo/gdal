@@ -126,7 +126,7 @@ def vrtderived_2():
         gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
-        ret = vrt_ds.GetRasterBand(1).WriteRaster(0,0,1,1,' ')
+        ret = vrt_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, ' ')
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'

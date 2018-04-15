@@ -89,61 +89,61 @@ def main(argv=None):
     iArg = 1
     while iArg < nArgc:
 
-        if EQUAL(argv[iArg],"--utility_version"):
+        if EQUAL(argv[iArg], "--utility_version"):
             print("%s is running against GDAL %s" %
                    (argv[0], gdal.VersionInfo("RELEASE_NAME")))
             return 0
 
-        elif EQUAL(argv[iArg],"-ro"):
+        elif EQUAL(argv[iArg], "-ro"):
             bReadOnly = True
-        elif EQUAL(argv[iArg],"-q") or EQUAL(argv[iArg],"-quiet"):
+        elif EQUAL(argv[iArg], "-q") or EQUAL(argv[iArg], "-quiet"):
             bVerbose = False
-        elif EQUAL(argv[iArg],"-fid") and iArg < nArgc-1:
+        elif EQUAL(argv[iArg], "-fid") and iArg < nArgc - 1:
             iArg = iArg + 1
             nFetchFID = int(argv[iArg])
-        elif EQUAL(argv[iArg],"-spat") and iArg + 4 < nArgc:
+        elif EQUAL(argv[iArg], "-spat") and iArg + 4 < nArgc:
             oRing = ogr.Geometry(ogr.wkbLinearRing)
 
-            oRing.AddPoint(float(argv[iArg+1]), float(argv[iArg+2]))
-            oRing.AddPoint(float(argv[iArg+1]), float(argv[iArg+4]))
-            oRing.AddPoint(float(argv[iArg+3]), float(argv[iArg+4]))
-            oRing.AddPoint(float(argv[iArg+3]), float(argv[iArg+2]))
-            oRing.AddPoint(float(argv[iArg+1]), float(argv[iArg+2]))
+            oRing.AddPoint(float(argv[iArg + 1]), float(argv[iArg + 2]))
+            oRing.AddPoint(float(argv[iArg + 1]), float(argv[iArg + 4]))
+            oRing.AddPoint(float(argv[iArg + 3]), float(argv[iArg + 4]))
+            oRing.AddPoint(float(argv[iArg + 3]), float(argv[iArg + 2]))
+            oRing.AddPoint(float(argv[iArg + 1]), float(argv[iArg + 2]))
 
             poSpatialFilter = ogr.Geometry(ogr.wkbPolygon)
             poSpatialFilter.AddGeometry(oRing)
             iArg = iArg + 4
 
-        elif EQUAL(argv[iArg],"-geomfield") and iArg < nArgc-1:
+        elif EQUAL(argv[iArg], "-geomfield") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszGeomField = argv[iArg]
 
-        elif EQUAL(argv[iArg],"-where") and iArg < nArgc-1:
+        elif EQUAL(argv[iArg], "-where") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszWHERE = argv[iArg]
 
-        elif EQUAL(argv[iArg],"-sql") and iArg < nArgc-1:
+        elif EQUAL(argv[iArg], "-sql") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszSQLStatement = argv[iArg]
 
-        elif EQUAL(argv[iArg],"-dialect") and iArg < nArgc-1:
+        elif EQUAL(argv[iArg], "-dialect") and iArg < nArgc - 1:
             iArg = iArg + 1
             pszDialect = argv[iArg]
 
-        elif EQUAL(argv[iArg],"-rc") and iArg < nArgc-1:
+        elif EQUAL(argv[iArg], "-rc") and iArg < nArgc - 1:
             iArg = iArg + 1
             nRepeatCount = int(argv[iArg])
 
-        elif EQUAL(argv[iArg],"-al"):
+        elif EQUAL(argv[iArg], "-al"):
             bAllLayers = True
 
-        elif EQUAL(argv[iArg],"-so") or EQUAL(argv[iArg],"-summary"):
+        elif EQUAL(argv[iArg], "-so") or EQUAL(argv[iArg], "-summary"):
             bSummaryOnly = True
 
-        elif len(argv[iArg]) > 8 and EQUAL(argv[iArg][0:8],"-fields="):
+        elif len(argv[iArg]) > 8 and EQUAL(argv[iArg][0:8], "-fields="):
             options['DISPLAY_FIELDS'] = argv[iArg][7:len(argv[iArg])]
 
-        elif len(argv[iArg]) > 6 and EQUAL(argv[iArg][0:6],"-geom="):
+        elif len(argv[iArg]) > 6 and EQUAL(argv[iArg][0:6], "-geom="):
             options['DISPLAY_GEOMETRY'] = argv[iArg][6:len(argv[iArg])]
 
         elif argv[iArg][0] == '-':
@@ -247,7 +247,7 @@ def main(argv=None):
                     return 1
 
                 if not bAllLayers:
-                    line = "%d: %s" % (iLayer+1, poLayer.GetLayerDefn().GetName())
+                    line = "%d: %s" % (iLayer + 1, poLayer.GetLayerDefn().GetName())
 
                     nGeomFieldCount = poLayer.GetLayerDefn().GetGeomFieldCount()
                     if nGeomFieldCount > 1:
@@ -489,10 +489,10 @@ def DumpReadableGeometry(poGeometry, pszPrefix, options):
                 line = line + ("%d points" % poRing.GetPointCount())
                 if nRings > 1:
                     line = line + (", %d inner rings (" % (nRings - 1))
-                    for ir in range(0,nRings-1):
+                    for ir in range(0, nRings - 1):
                         if ir > 0:
                             line = line + ", "
-                        poRing = poGeometry.GetGeometryRef(ir+1)
+                        poRing = poGeometry.GetGeometryRef(ir + 1)
                         line = line + ("%d points" % poRing.GetPointCount())
                     line = line + ")"
             print(line)
@@ -511,7 +511,7 @@ def DumpReadableGeometry(poGeometry, pszPrefix, options):
                 for ig in range(poGeometry.GetGeometryCount()):
                     subgeom = poGeometry.GetGeometryRef(ig)
                     from sys import version_info
-                    if version_info >= (3,0,0):
+                    if version_info >= (3, 0, 0):
                         exec('print("", end=" ")')
                     else:
                         exec('print "", ')

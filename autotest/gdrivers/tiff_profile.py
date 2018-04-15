@@ -214,7 +214,7 @@ def tiff_copy_options_colorimetric_data():
     # sRGB values
     source_primaries = [(0.64, 0.33, 1.0), (0.3, 0.6, 1.0), (0.15, 0.06, 1.0)]
     source_whitepoint = (0.31271, 0.32902, 1.0)
-    tifftag_transferfunction = (list(range(1, 256*4, 4)), list(range(2, 256*4+1, 4)), list(range(3, 256*4+2, 4)))
+    tifftag_transferfunction = (list(range(1, 256 * 4, 4)), list(range(2, 256 * 4 + 1, 4)), list(range(3, 256 * 4 + 2, 4)))
 
     options = ['SOURCE_PRIMARIES_RED=' + cvtTuple2String(source_primaries[0]),
         'SOURCE_PRIMARIES_GREEN=' + cvtTuple2String(source_primaries[1]),
@@ -306,7 +306,7 @@ def tiff_copy_colorimetric_data():
     # sRGB values
     source_primaries = [(0.64, 0.33, 1.0), (0.3, 0.6, 1.0), (0.15, 0.06, 1.0)]
     source_whitepoint = (0.31271, 0.32902, 1.0)
-    tifftag_transferfunction = (list(range(1, 256*4, 4)), list(range(2, 256*4+1, 4)), list(range(3, 256*4+2, 4)))
+    tifftag_transferfunction = (list(range(1, 256 * 4, 4)), list(range(2, 256 * 4 + 1, 4)), list(range(3, 256 * 4 + 2, 4)))
 
     options = ['SOURCE_PRIMARIES_RED=' + cvtTuple2String(source_primaries[0]),
         'SOURCE_PRIMARIES_GREEN=' + cvtTuple2String(source_primaries[1]),
@@ -411,7 +411,7 @@ def tiff_update_icc():
 
     ds = gdal.Open('tmp/icc_test.tiff', gdal.GA_Update)
 
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         icc = icc.decode('ascii')
     ds.SetMetadataItem('SOURCE_ICC_PROFILE', icc, 'COLOR_PROFILE')
     md = ds.GetMetadata("COLOR_PROFILE")
@@ -439,9 +439,9 @@ def tiff_update_icc():
 
 
 def tiff_update_colorimetric():
-    source_primaries = [(0.234, 0.555, 1.0), (0.2,0,1), (2,3.5,1)]
+    source_primaries = [(0.234, 0.555, 1.0), (0.2, 0, 1), (2, 3.5, 1)]
     source_whitepoint = (0.31271, 0.32902, 1.0)
-    tifftag_transferfunction = (list(range(1, 256*4, 4)), list(range(2, 256*4+1, 4)), list(range(3, 256*4+2, 4)))
+    tifftag_transferfunction = (list(range(1, 256 * 4, 4)), list(range(2, 256 * 4 + 1, 4)), list(range(3, 256 * 4 + 2, 4)))
 
     # Create dummy file
     driver = gdal.GetDriverByName('GTiff')

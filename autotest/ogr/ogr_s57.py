@@ -93,7 +93,7 @@ def ogr_s57_2():
 
         if lyr.GetName() != lyr_info[0]:
             gdaltest.post_reason('Expected layer %d to be %s but it was %s.'\
-                                  % (i+1, lyr_info[0], lyr.GetName()))
+                                  % (i + 1, lyr_info[0], lyr.GetName()))
             return 'fail'
 
         count = lyr.GetFeatureCount(force=1)
@@ -487,7 +487,7 @@ def ogr_s57_online_4():
     lyr = ds.GetLayerByName('LNDMRK')
     for feat in lyr:
         mystr = feat.NOBJNM
-        if mystr and sys.version_info < (3,0,0):
+        if mystr and sys.version_info < (3, 0, 0):
             mystr.decode('UTF-8').encode('UTF-8')
 
     return 'success'

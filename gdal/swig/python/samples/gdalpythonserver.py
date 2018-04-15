@@ -140,7 +140,7 @@ class GDALPythonServerDataset:
         self.RasterCount = self.gdal_ds.RasterCount
         self.bands = []
         for i in range(self.RasterCount):
-            gdal_band = self.gdal_ds.GetRasterBand(i+1)
+            gdal_band = self.gdal_ds.GetRasterBand(i + 1)
             self.bands.append(GDALPythonServerRasterBand(gdal_band))
 
     def __del__(self):
@@ -150,7 +150,7 @@ class GDALPythonServerDataset:
         return self.gdal_ds.GetDriver()
 
     def GetRasterBand(self, i):
-        return self.bands[i-1]
+        return self.bands[i - 1]
 
     def GetDescription(self):
         return self.gdal_ds.GetDescription()
@@ -355,21 +355,21 @@ VERBOSE = 0
 
 
 def read_int():
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         return struct.unpack('i', sys.stdin.read(4).encode('latin1'))[0]
     else:
         return struct.unpack('i', sys.stdin.read(4))[0]
 
 
 def read_bigint():
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         return struct.unpack('q', sys.stdin.read(8).encode('latin1'))[0]
     else:
         return struct.unpack('q', sys.stdin.read(8))[0]
 
 
 def read_double():
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         return struct.unpack('d', sys.stdin.read(8).encode('latin1'))[0]
     else:
         return struct.unpack('d', sys.stdin.read(8))[0]
@@ -380,8 +380,8 @@ def read_str():
     if length <= 0:
         return None
     str = sys.stdin.read(length)
-    if len(str) > 0 and str[len(str)-1] == '\0':
-        str =  str[0:len(str)-1]
+    if len(str) > 0 and str[len(str) - 1] == '\0':
+        str =  str[0:len(str) - 1]
     return str
 
 
@@ -400,7 +400,7 @@ def write_int(i):
         v = struct.pack('i', 0)
     else:
         v = struct.pack('i', i)
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         sys.stdout.write(v.decode('latin1'))
     else:
         sys.stdout.write(v)
@@ -408,14 +408,14 @@ def write_int(i):
 
 def write_uint64(i):
     v = struct.pack('Q', i)
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         sys.stdout.write(v.decode('latin1'))
     else:
         sys.stdout.write(v)
 
 
 def write_double(d):
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         sys.stdout.write(struct.pack('d', d).decode('latin1'))
     else:
         sys.stdout.write(struct.pack('d', d))
@@ -487,7 +487,7 @@ def main_loop():
             band = server_bands[srv_band]
 
         if instr == INSTR_GetGDALVersion:
-            if sys.version_info >= (3,0,0):
+            if sys.version_info >= (3, 0, 0):
                 lsb = struct.unpack('B', sys.stdin.read(1).encode('latin1'))[0]
             else:
                 lsb = struct.unpack('B', sys.stdin.read(1))[0]

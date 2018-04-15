@@ -58,7 +58,7 @@ def ogr_index_1():
     gdaltest.p_ds = drv.CreateDataSource('index_p.mif')
     gdaltest.p_lyr = gdaltest.p_ds.CreateLayer('index_p')
 
-    ogrtest.quick_create_layer_def(gdaltest.p_lyr,[('PKEY', ogr.OFTInteger)])
+    ogrtest.quick_create_layer_def(gdaltest.p_lyr, [('PKEY', ogr.OFTInteger)])
     ogrtest.quick_create_feature(gdaltest.p_lyr, [5], None)
     ogrtest.quick_create_feature(gdaltest.p_lyr, [10], None)
     ogrtest.quick_create_feature(gdaltest.p_lyr, [9], None)
@@ -97,7 +97,7 @@ def ogr_index_2():
                                      ('VALUE', ogr.OFTString, 16)])
 
     for i in range(20):
-        ogrtest.quick_create_feature(gdaltest.s_lyr, [i,'Value '+str(i)],None)
+        ogrtest.quick_create_feature(gdaltest.s_lyr, [i, 'Value ' + str(i)], None)
 
     if gdaltest.s_lyr.GetFeatureCount() != 20:
         gdaltest.post_reason('FeatureCount wrong')
@@ -245,7 +245,7 @@ def ogr_index_9():
 
     # After dataset closing, check that the index files do not exist after
     # dropping the index
-    for filename in ['join_t.idm','join_t.ind']:
+    for filename in ['join_t.idm', 'join_t.ind']:
         try:
             os.stat(filename)
             gdaltest.post_reason("%s should not exist" % filename)
@@ -258,7 +258,7 @@ def ogr_index_9():
     gdaltest.s_ds.ExecuteSQL('CREATE INDEX ON join_t USING value')
     gdaltest.s_ds.Release()
 
-    for filename in ['join_t.idm','join_t.ind']:
+    for filename in ['join_t.idm', 'join_t.ind']:
         try:
             os.stat(filename)
         except:
@@ -521,7 +521,7 @@ def ogr_index_cleanup():
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('index_p.mif')
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('join_t.dbf')
 
-    for filename in ['join_t.idm','join_t.ind']:
+    for filename in ['join_t.idm', 'join_t.ind']:
         try:
             os.stat(filename)
             gdaltest.post_reason("%s should not exist" % filename)

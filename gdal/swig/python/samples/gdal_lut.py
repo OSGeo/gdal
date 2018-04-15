@@ -164,11 +164,11 @@ else:
 
 if len(lut) <= 256:
     lookup = numpy.arange(256)
-    for i in range(min(256,len(lut))):
+    for i in range(min(256, len(lut))):
         lookup[i] = lut[i]
 else:
     lookup = numpy.arange(65536)
-    for i in range(min(65536,len(lut))):
+    for i in range(min(65536, len(lut))):
         lookup[i] = lut[i]
 
 lookup = lookup.astype(tc)
@@ -219,12 +219,12 @@ dst_band = dst_ds.GetRasterBand(dst_band_n)
 
 gdal.TermProgress(0.0)
 for iY in range(src_ds.RasterYSize):
-    src_data = src_band.ReadAsArray(0,iY,src_ds.RasterXSize,1)
+    src_data = src_band.ReadAsArray(0, iY, src_ds.RasterXSize, 1)
 
-    dst_data = numpy.take(lookup,src_data)
-    dst_band.WriteArray(dst_data,0,iY)
+    dst_data = numpy.take(lookup, src_data)
+    dst_band.WriteArray(dst_data, 0, iY)
 
-    gdal.TermProgress((iY+1.0) / src_ds.RasterYSize)
+    gdal.TermProgress((iY + 1.0) / src_ds.RasterYSize)
 
 src_ds = None
 dst_ds = None

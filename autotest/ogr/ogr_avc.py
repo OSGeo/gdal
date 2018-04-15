@@ -53,7 +53,7 @@ def check_content(ds):
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat,'LINESTRING (340099.875 4100200.0,340400.0625 4100399.5,340900.125 4100200.0,340700.03125 4100199.5)',
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (340099.875 4100200.0,340400.0625 4100399.5,340900.125 4100200.0,340700.03125 4100199.5)',
                                       max_error=0.01) != 0:
         return 'fail'
 
@@ -185,7 +185,7 @@ def ogr_avc_5():
             print(filename)
             f.DumpReadable()
             return 'fail'
-        if last_feature.GetField('ArcIds') != [-4,-5] or abs(last_feature.GetField('AREA') - 9939.059) > 1e-3:
+        if last_feature.GetField('ArcIds') != [-4, -5] or abs(last_feature.GetField('AREA') - 9939.059) > 1e-3:
             gdaltest.post_reason('fail')
             print(filename)
             f.DumpReadable()

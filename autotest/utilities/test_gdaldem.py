@@ -195,18 +195,18 @@ def test_gdaldem_hillshade_azimuth():
 
     from sys import version_info
     ds = gdal.GetDriverByName('GTiff').Create('tmp/pyramid.tif', 100, 100, 1)
-    ds.SetGeoTransform([2,0.01,0,49,0,-0.01])
+    ds.SetGeoTransform([2, 0.01, 0, 49, 0, -0.01])
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     ds.SetProjection(sr.ExportToWkt())
     for j in range(100):
         data = ''
         for i in range(100):
-            val = 255 - 5 * max(abs(50-i),abs(50-j))
+            val = 255 - 5 * max(abs(50 - i), abs(50 - j))
             data = data + ('%c' % (val))
-        if version_info >= (3,0,0):
+        if version_info >= (3, 0, 0):
             data = bytes(data, 'ISO-8859-1')
-        ds.GetRasterBand(1).WriteRaster(0,j,100,1,data)
+        ds.GetRasterBand(1).WriteRaster(0, j, 100, 1, data)
 
     ds = None
 
@@ -677,7 +677,7 @@ NODATA_value nan
 
     import struct
     val = struct.unpack('B' * 4, val)
-    if val != (0,0,0,1):
+    if val != (0, 0, 0, 1):
         gdaltest.post_reason('fail')
         print(val)
         return 'fail'
@@ -724,7 +724,7 @@ NODATA_value 5
 
     import struct
     val = struct.unpack('B' * 6, val)
-    if val != (1,1,5,10,10,25):
+    if val != (1, 1, 5, 10, 10, 25):
         gdaltest.post_reason('fail')
         print(val)
         return 'fail'
@@ -737,7 +737,7 @@ NODATA_value 5
 
     import struct
     val = struct.unpack('B' * 6, val)
-    if val != (1,1,5,10,10,25):
+    if val != (1, 1, 5, 10, 10, 25):
         gdaltest.post_reason('fail')
         print(val)
         return 'fail'

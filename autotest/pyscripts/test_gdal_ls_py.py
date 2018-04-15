@@ -56,7 +56,7 @@ def run_gdal_ls(argv):
     sys.path = saved_syspath
 
     from sys import version_info
-    if version_info >= (3,0,0):
+    if version_info >= (3, 0, 0):
         import io
         outstr = io.StringIO()
     else:
@@ -163,7 +163,7 @@ def test_gdal_ls_py_5():
     f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         return 'skip'
-    d = gdal.VSIFReadL(1,1,f)
+    d = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
     if len(d) == 0:
         return 'skip'
@@ -196,7 +196,7 @@ def test_gdal_ls_py_6():
     f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         return 'skip'
-    d = gdal.VSIFReadL(1,1,f)
+    d = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
     if len(d) == 0:
         return 'skip'
@@ -243,7 +243,7 @@ def test_gdal_ls_py_7():
     f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         return 'skip'
-    d = gdal.VSIFReadL(1,1,f)
+    d = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
     if len(d) == 0:
         return 'skip'
@@ -282,7 +282,7 @@ def test_gdal_ls_py_8():
     f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         return 'skip'
-    d = gdal.VSIFReadL(1,1,f)
+    d = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
     if len(d) == 0:
         return 'skip'

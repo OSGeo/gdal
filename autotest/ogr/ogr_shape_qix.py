@@ -68,7 +68,7 @@ def check_qix_non_overlapping_geoms(lyr):
     # Get all geoms in a single gulp. We do not use exactly the extent bounds, because
     # there is an optimization in the shapefile driver to skip the spatial index in that
     # case. That trick can only work with non point geometries of course
-    lyr.SetSpatialFilterRect(extents[0]+0.001, extents[2]+0.001, extents[1]-0.001, extents[3]-0.001)
+    lyr.SetSpatialFilterRect(extents[0] + 0.001, extents[2] + 0.001, extents[1] - 0.001, extents[3] - 0.001)
     lyr.ResetReading()
     fc = lyr.GetFeatureCount()
     if fc != fc_ref:
@@ -82,7 +82,7 @@ def check_qix_non_overlapping_geoms(lyr):
 
 def build_rectangle_from_point(x, y, radius=0.1):
     return ogr.CreateGeometryFromWkt('POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))' % \
-        (x-radius,y-radius,x-radius,y+radius,x+radius,y+radius,x+radius,y-radius,x-radius,y-radius))
+        (x - radius, y - radius, x - radius, y + radius, x + radius, y + radius, x + radius, y - radius, x - radius, y - radius))
 
 ###############################################################################
 # Test geoms on a 10x10 grid
@@ -97,7 +97,7 @@ def ogr_shape_qix_1():
     for x in range(10):
         for y in range(10):
             feat = ogr.Feature(lyr.GetLayerDefn())
-            feat.SetGeometry(build_rectangle_from_point(x,y))
+            feat.SetGeometry(build_rectangle_from_point(x, y))
             lyr.CreateFeature(feat)
             feat = None
 
@@ -126,7 +126,7 @@ def ogr_shape_qix_2():
     for x in range(100):
         for y in range(100):
             feat = ogr.Feature(lyr.GetLayerDefn())
-            feat.SetGeometry(build_rectangle_from_point(x,y))
+            feat.SetGeometry(build_rectangle_from_point(x, y))
             lyr.CreateFeature(feat)
             feat = None
 
@@ -155,14 +155,14 @@ def ogr_shape_qix_3():
     for x in range(10):
         for y in range(10):
             feat = ogr.Feature(lyr.GetLayerDefn())
-            feat.SetGeometry(build_rectangle_from_point(x,y))
+            feat.SetGeometry(build_rectangle_from_point(x, y))
             lyr.CreateFeature(feat)
             feat = None
 
     for x in range(10):
         for y in range(10):
             feat = ogr.Feature(lyr.GetLayerDefn())
-            feat.SetGeometry(build_rectangle_from_point(x+1000,y))
+            feat.SetGeometry(build_rectangle_from_point(x + 1000, y))
             lyr.CreateFeature(feat)
             feat = None
 
@@ -215,7 +215,7 @@ def check_qix_random_geoms(lyr):
     # Get all geoms in a single gulp. We do not use exactly the extent bounds, because
     # there is an optimization in the shapefile driver to skip the spatial index in that
     # case. That trick can only work with non point geometries of course
-    lyr.SetSpatialFilterRect(extents[0]+0.001, extents[2]+0.001, extents[1]-0.001, extents[3]-0.001)
+    lyr.SetSpatialFilterRect(extents[0] + 0.001, extents[2] + 0.001, extents[1] - 0.001, extents[3] - 0.001)
     lyr.ResetReading()
     fc = lyr.GetFeatureCount()
     if fc != fc_ref:
@@ -227,9 +227,9 @@ def check_qix_random_geoms(lyr):
 ###############################################################################
 
 
-def build_rectangle(x1,y1,x2,y2):
+def build_rectangle(x1, y1, x2, y2):
     return ogr.CreateGeometryFromWkt('POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))' % \
-        (x1,y1,x1,y2,x2,y2,x2,y1,x1,y1))
+        (x1, y1, x1, y2, x2, y2, x2, y1, x1, y1))
 
 ###############################################################################
 # Test random geometries
@@ -245,22 +245,22 @@ def ogr_shape_qix_4():
     # a bit of overlapping between the geometries
     for x in range(1000):
         feat = ogr.Feature(lyr.GetLayerDefn())
-        x1 = random.randint(0,200)
-        y1 = random.randint(0,200)
-        x2 = x1 + random.randint(1,10)
-        y2 = y1 + random.randint(1,10)
-        feat.SetGeometry(build_rectangle(x1,y1,x2,y2))
+        x1 = random.randint(0, 200)
+        y1 = random.randint(0, 200)
+        x2 = x1 + random.randint(1, 10)
+        y2 = y1 + random.randint(1, 10)
+        feat.SetGeometry(build_rectangle(x1, y1, x2, y2))
         lyr.CreateFeature(feat)
         feat = None
 
     # And add statistically non overlapping features
     for x in range(1000):
         feat = ogr.Feature(lyr.GetLayerDefn())
-        x1 = random.randint(0,10000)
-        y1 = random.randint(0,10000)
-        x2 = x1 + random.randint(1,10)
-        y2 = y1 + random.randint(1,10)
-        feat.SetGeometry(build_rectangle(x1,y1,x2,y2))
+        x1 = random.randint(0, 10000)
+        y1 = random.randint(0, 10000)
+        x2 = x1 + random.randint(1, 10)
+        y2 = y1 + random.randint(1, 10)
+        feat.SetGeometry(build_rectangle(x1, y1, x2, y2))
         lyr.CreateFeature(feat)
         feat = None
 

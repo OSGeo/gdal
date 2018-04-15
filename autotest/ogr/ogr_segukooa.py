@@ -75,7 +75,7 @@ def ogr_segp1_points():
             feat.DumpReadable()
             return 'fail'
 
-    if ogrtest.check_feature_geometry(feat,'POINT (2 49)',
+    if ogrtest.check_feature_geometry(feat, 'POINT (2 49)',
                                       max_error=0.0000001) != 0:
         print('did not get expected first geom')
         feat.DumpReadable()
@@ -110,7 +110,7 @@ def ogr_segp1_lines():
         feat.DumpReadable()
         return 'fail'
 
-    if ogrtest.check_feature_geometry(feat,'LINESTRING (2 49,2.0 49.5)',
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (2 49,2.0 49.5)',
                                       max_error=0.0000001) != 0:
         print('did not get expected first geom')
         feat.DumpReadable()
@@ -123,7 +123,7 @@ def ogr_segp1_lines():
         feat.DumpReadable()
         return 'fail'
 
-    if ogrtest.check_feature_geometry(feat,'LINESTRING (-2 -49,-2.5 -49.0)',
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (-2 -49,-2.5 -49.0)',
                                       max_error=0.0000001) != 0:
         print('did not get expected first geom')
         feat.DumpReadable()
@@ -169,7 +169,7 @@ def ogr_ukooa_points():
             feat.DumpReadable()
             return 'fail'
 
-    if ogrtest.check_feature_geometry(feat,'POINT (2 49)',
+    if ogrtest.check_feature_geometry(feat, 'POINT (2 49)',
                                       max_error=0.0000001) != 0:
         print('did not get expected first geom')
         feat.DumpReadable()
@@ -204,7 +204,7 @@ def ogr_ukooa_lines():
         feat.DumpReadable()
         return 'fail'
 
-    if ogrtest.check_feature_geometry(feat,'LINESTRING (2 49,2.0 49.5)',
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (2 49,2.0 49.5)',
                                       max_error=0.0000001) != 0:
         print('did not get expected first geom')
         feat.DumpReadable()
@@ -217,7 +217,7 @@ def ogr_ukooa_lines():
         feat.DumpReadable()
         return 'fail'
 
-    if ogrtest.check_feature_geometry(feat,'LINESTRING (-2 -49,-2.5 -49.0)',
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (-2 -49,-2.5 -49.0)',
                                       max_error=0.0000001) != 0:
         print('did not get expected first geom')
         feat.DumpReadable()

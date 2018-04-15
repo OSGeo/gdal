@@ -61,7 +61,7 @@ tags = [['TIFFTAG_IMAGEWIDTH', TIFFTAG_IMAGEWIDTH, [0, 1, 0x7FFFFFFF, 0xFFFFFFFF
          ['TIFFTAG_STRIPOFFSETS', TIFFTAG_STRIPOFFSETS, [None, 0, 8]],
          ['TIFFTAG_SAMPLESPERPIXEL', TIFFTAG_SAMPLESPERPIXEL, [None, 1, 255, 65535]],
          ['TIFFTAG_ROWSPERSTRIP', TIFFTAG_ROWSPERSTRIP, [None, 0, 1, 0x7FFFFFFF, 0xFFFFFFFF]],
-         ['TIFFTAG_STRIPBYTECOUNTS', TIFFTAG_STRIPBYTECOUNTS, [None, 0,1,0x7FFFFFFF,0xFFFFFFFF]],
+         ['TIFFTAG_STRIPBYTECOUNTS', TIFFTAG_STRIPBYTECOUNTS, [None, 0, 1, 0x7FFFFFFF, 0xFFFFFFFF]],
          ['TIFFTAG_PLANARCONFIG', TIFFTAG_PLANARCONFIG, [None, PLANARCONFIG_CONTIG, PLANARCONFIG_SEPARATE]],
          ['TIFFTAG_TILEWIDTH', TIFFTAG_TILEWIDTH, [None, 0, 8, 256, 65536, 0x7FFFFFFF]],
          ['TIFFTAG_TILELENGTH', TIFFTAG_TILELENGTH, [None, 0, 8, 256, 65536, 0x7FFFFFFF]],
@@ -111,7 +111,7 @@ def generate_tif(comb_val):
         if val is not None:
             content = content + ('%c' % (tag & 255)) + ('%c' % (tag >> 8))
             content = content + '\x04\x00\x01\x00\x00\x00'
-            content = content + ('%c' % (val & 255)) + ('%c' % ((val >> 8)& 255)) + ('%c' % ((val >> 16)& 255)) + ('%c' % ((val >> 24) & 255))
+            content = content + ('%c' % (val & 255)) + ('%c' % ((val >> 8) & 255)) + ('%c' % ((val >> 16) & 255)) + ('%c' % ((val >> 24) & 255))
 
     return content
 

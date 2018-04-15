@@ -86,7 +86,7 @@ def ogr_sde_2():
     shp_lyr = shp_ds.GetLayer(0)
 
     ds = ogr.Open(base, update=1)
-    lyr = ds.CreateLayer('SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=shp_lyr.GetSpatialRef(),options=['OVERWRITE=YES'])
+    lyr = ds.CreateLayer('SDE.TPOLY' , geom_type=ogr.wkbPolygon, srs=shp_lyr.GetSpatialRef(), options=['OVERWRITE=YES'])
 #    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon)
 
     ogrtest.quick_create_layer_def(lyr,
@@ -169,7 +169,7 @@ def ogr_sde_5():
     l1 = ds.GetLayerByName('SDE.TPOLY')
 
     f1 = l1.GetFeature(1)
-    f1.SetField("PRFEDEA",'SDE.TESTING')
+    f1.SetField("PRFEDEA", 'SDE.TESTING')
     l1.SetFeature(f1)
 
     ds.Destroy()
@@ -186,7 +186,7 @@ def ogr_sde_5():
 
     f2 = l2.GetFeature(1)
 
-    f2.SetField("PRFEDEA",'SDE.DEFAULT')
+    f2.SetField("PRFEDEA", 'SDE.DEFAULT')
     f2.SetField("WHEN", 2008, 3, 19, 16, 15, 00, 0)
 
     l2.SetFeature(f2)
@@ -213,7 +213,7 @@ def ogr_sde_5():
     idx = f4.GetFieldIndex('WHEN')
     df = f4.GetField(idx)
     if df != '2008/03/19 16:15:00':
-        gdaltest.post_reason("datetime handling did not work -- expected '2008/03/19 16:15:00' got '%s' "% df)
+        gdaltest.post_reason("datetime handling did not work -- expected '2008/03/19 16:15:00' got '%s' " % df)
     ds4.Destroy()
     del ds4
     return 'success'
@@ -297,9 +297,9 @@ def ogr_sde_8():
     ref.ImportFromWkt('LOCAL_CS["IMAGE"]')
 
     ds = ogr.Open(base, update=1)
-    lyr = ds.CreateLayer('SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options=['OVERWRITE=YES'])
+    lyr = ds.CreateLayer('SDE.TPOLY' , geom_type=ogr.wkbPolygon, srs=ref, options=['OVERWRITE=YES'])
     ref.ImportFromEPSG(4326)
-    lyr = ds.CreateLayer('SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options=['OVERWRITE=YES'])
+    lyr = ds.CreateLayer('SDE.TPOLY' , geom_type=ogr.wkbPolygon, srs=ref, options=['OVERWRITE=YES'])
     ogrtest.quick_create_layer_def(lyr,
                                     [('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
@@ -332,7 +332,7 @@ def ogr_sde_cleanup():
         return 'skip'
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base, update=1)
-    ds.DeleteLayer('%s.%s' % (sde_user.upper(),'TPOLY'))
+    ds.DeleteLayer('%s.%s' % (sde_user.upper(), 'TPOLY'))
     ds.Destroy()
 
     return 'success'

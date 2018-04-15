@@ -97,11 +97,11 @@ if band is None:
     sys.exit(2)
 
 if not quiet:
-    print('Size is ',indataset.RasterXSize,'x',indataset.RasterYSize,'x',indataset.RasterCount)
-    print('Projection is ',indataset.GetProjection())
-    print('Origin = (',geotransform[0], ',',geotransform[3],')')
-    print('Pixel Size = (',geotransform[1], ',',geotransform[5],')')
-    print('Converting band number',iBand,'with type',gdal.GetDataTypeName(band.DataType))
+    print('Size is ', indataset.RasterXSize, 'x', indataset.RasterYSize, 'x', indataset.RasterCount)
+    print('Projection is ', indataset.GetProjection())
+    print('Origin = (', geotransform[0], ',', geotransform[3], ')')
+    print('Pixel Size = (', geotransform[1], ',', geotransform[5], ')')
+    print('Converting band number', iBand, 'with type', gdal.GetDataTypeName(band.DataType))
 
 # Header printing
 fpout = open(outfile, "wt")

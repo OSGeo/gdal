@@ -139,7 +139,7 @@ def vsistdin_4():
       <SourceBand>1</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>""" % (' '.join([' ' for i in range(1024*1024)])))
+</VRTDataset>""" % (' '.join([' ' for i in range(1024 * 1024)])))
     f.close()
 
     # Should work on both Unix and Windows

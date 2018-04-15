@@ -121,10 +121,10 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
             if err:
                 print('-- (unable to translate)')
             else:
-                wkt = gdal.EscapeString(wkt,scheme=gdal.CPLES_SQL)
-                proj4text = gdal.EscapeString(proj4text,scheme=gdal.CPLES_SQL)
+                wkt = gdal.EscapeString(wkt, scheme=gdal.CPLES_SQL)
+                proj4text = gdal.EscapeString(proj4text, scheme=gdal.CPLES_SQL)
                 print('INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (%s,\'EPSG\',%s,\'%s\',\'%s\');' % \
-                      (str(code),str(code),wkt,proj4text))
+                      (str(code), str(code), wkt, proj4text))
 
         # INGRES COPY command input.
         if output_format == '-copy':
@@ -134,8 +134,8 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
                 proj4text = prj_srs.ExportToProj4()
 
                 print('%d\t%d%s\t%d\t%d%s\t%d%s\n' \
-                       % (code,4,'EPSG',code,len(wkt),wkt,
-                          len(proj4text),proj4text))
+                       % (code, 4, 'EPSG', code, len(wkt), wkt,
+                          len(proj4text), proj4text))
             except:
                 pass
 
@@ -167,7 +167,7 @@ if __name__ == '__main__':
         elif arg[:5] == '-skip':
             report_error = 0
 
-        elif arg == '-list' and i < len(argv)-1:
+        elif arg == '-list' and i < len(argv) - 1:
             i = i + 1
             list_file = argv[i]
 
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     prj_srs = osr.SpatialReference()
 
     if start_code != -1:
-        for code in range(start_code,end_code+1):
+        for code in range(start_code, end_code + 1):
             trHandleCode(code, gen_dict_line, report_error, output_format)
 
     # loop over codes read from list file.

@@ -229,8 +229,8 @@ for i in range(1, inband.YSize - 1):
     nx = -dy * dzx
     ny = dx * dzy
     nz = dx * dy
-    nxyz = nx*nx + ny*ny + nz*nz
-    nlxyz = nx*lx + ny*ly + nz*lz
+    nxyz = nx * nx + ny * ny + nz * nz
+    nlxyz = nx * lx + ny * ly + nz * lz
     cosine = dyn_range * (nlxyz / (lxyz * Numeric.sqrt(nxyz)))
     cosine = Numeric.clip(cosine, 0.0, dyn_range)
     outline[0, 1:-1] = cosine.astype(numtype)

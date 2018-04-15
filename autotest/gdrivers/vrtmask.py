@@ -310,7 +310,7 @@ def vrtmask_7():
         print(expected_msk_cs)
         return 'fail'
 
-    if msk_cs!= expected_msk_cs:
+    if msk_cs != expected_msk_cs:
         gdaltest.post_reason('did not get expected mask band checksum')
         print(msk_cs)
         print(expected_msk_cs)

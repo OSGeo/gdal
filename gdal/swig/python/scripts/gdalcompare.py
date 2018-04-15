@@ -73,7 +73,7 @@ def compare_image_pixels(golden_band, new_band, id, options=[]):
     golden_line = golden_band.ReadAsArray(0, line, golden_band.XSize, 1)[0]
     new_line = new_band.ReadAsArray(0, line, golden_band.XSize, 1)[0]
     diff_line = golden_line.astype(float) - new_line.astype(float)
-    max_diff = max(max_diff,abs(diff_line).max())
+    max_diff = max(max_diff, abs(diff_line).max())
     diff_count += len(diff_line.nonzero()[0])
 
   print('  Pixels Differing: ' + str(diff_count))
@@ -108,7 +108,7 @@ def compare_band(golden_band, new_band, id, options=[]):
     print('  Golden: ' + str(golden_band.Checksum()))
     print('  New:    ' + str(new_band.Checksum()))
     found_diff += 1
-    compare_image_pixels(golden_band,new_band, id, options)
+    compare_image_pixels(golden_band, new_band, id, options)
 
   # Check overviews
   if golden_band.GetOverviewCount() != new_band.GetOverviewCount():
@@ -192,10 +192,10 @@ def compare_db(golden_db, new_db, options=[]):
 
   # Dimensions
   for i in range(golden_db.RasterCount):
-      gSzX = golden_db.GetRasterBand(i+1).XSize
-      nSzX = new_db.GetRasterBand(i+1).XSize
-      gSzY = golden_db.GetRasterBand(i+1).YSize
-      nSzY = new_db.GetRasterBand(i+1).YSize
+      gSzX = golden_db.GetRasterBand(i + 1).XSize
+      nSzX = new_db.GetRasterBand(i + 1).XSize
+      gSzY = golden_db.GetRasterBand(i + 1).YSize
+      nSzY = new_db.GetRasterBand(i + 1).YSize
 
       if gSzX != nSzX or gSzY != nSzY:
           print('Band size mismatch (band=%d golden=[%d,%d], new=[%d,%d])' %
@@ -205,9 +205,9 @@ def compare_db(golden_db, new_db, options=[]):
   # If so-far-so-good, then compare pixels
   if found_diff == 0:
     for i in range(golden_db.RasterCount):
-      found_diff += compare_band(golden_db.GetRasterBand(i+1),
-                                 new_db.GetRasterBand(i+1),
-                                 str(i+1),
+      found_diff += compare_band(golden_db.GetRasterBand(i + 1),
+                                 new_db.GetRasterBand(i + 1),
+                                 str(i + 1),
                                  options)
 
   return found_diff
@@ -223,7 +223,7 @@ def compare_sds(golden_db, new_db, options=[]):
 
   count = len(list(golden_sds.keys())) / 2
   for i in range(count):
-    key = 'SUBDATASET_%d_NAME' % (i+1)
+    key = 'SUBDATASET_%d_NAME' % (i + 1)
 
     sub_golden_db = gdal.Open(golden_sds[key])
     sub_new_db = gdal.Open(new_sds[key])
@@ -232,7 +232,7 @@ def compare_sds(golden_db, new_db, options=[]):
     found_diff += sds_diff
     if sds_diff > 0:
       print('%d differences found between:\n  %s\n  %s' \
-            % (sds_diff, golden_sds[key],new_sds[key]))
+            % (sds_diff, golden_sds[key], new_sds[key]))
 
   return found_diff
 
@@ -291,7 +291,7 @@ if __name__ == '__main__':
   try:
     os.stat(golden_file)
 
-    if not filecmp.cmp(golden_file,new_file):
+    if not filecmp.cmp(golden_file, new_file):
       print('Files differ at the binary level.')
       found_diff += 1
   except OSError:

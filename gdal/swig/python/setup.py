@@ -88,9 +88,9 @@ try:
         HAVE_NUMPY = False
     else:
 #        print ('numpy include', get_numpy_include())
-        if get_numpy_include() =='.':
+        if get_numpy_include() == '.':
             print("numpy headers were not found!  Array support will not be enabled")
-            HAVE_NUMPY=False
+            HAVE_NUMPY = False
 except ImportError:
     pass
 
@@ -148,7 +148,7 @@ def fetch_config(option, gdal_config='gdal-config'):
         import subprocess
         command, args = command.split()[0], command.split()[1]
         from sys import version_info
-        if version_info >= (3,0,0):
+        if version_info >= (3, 0, 0):
             try:
                 p = subprocess.Popen([command, args], stdout=subprocess.PIPE)
             except OSError:
@@ -188,7 +188,7 @@ int main () { return 0; }""")
         f.close()
         extra_postargs = None
         if compiler_flag:
-            extra_postargs=[compiler_flag]
+            extra_postargs = [compiler_flag]
 
         if os.name == 'posix':
             # Redirect stderr to /dev/null to hide any error messages
@@ -288,8 +288,8 @@ class gdal_ext(build_ext):
             return True
 
         self.gdaldir = self.get_gdal_config('prefix')
-        self.library_dirs.append(os.path.join(self.gdaldir,'lib'))
-        self.include_dirs.append(os.path.join(self.gdaldir,'include'))
+        self.library_dirs.append(os.path.join(self.gdaldir, 'lib'))
+        self.include_dirs.append(os.path.join(self.gdaldir, 'include'))
 
         cflags = self.get_gdal_config('cflags')
         if cflags:
@@ -367,7 +367,7 @@ if HAVE_NUMPY:
     ext_modules.append(array_module)
     py_modules.append('gdalnumeric')
 
-packages = ["osgeo",]
+packages = ["osgeo", ]
 
 readme = str(open('README.txt', 'rb').read())
 

@@ -62,8 +62,8 @@ while i < len(argv):
         bands.append(int(argv[i]))
 
     elif arg == '-srcwin':
-        srcwin = [int(argv[i+1]),int(argv[i+2]),
-                  int(argv[i+3]),int(argv[i+3])]
+        srcwin = [int(argv[i + 1]), int(argv[i + 2]),
+                  int(argv[i + 3]), int(argv[i + 3])]
         i = i + 4
 
     elif filename is None:
@@ -90,7 +90,7 @@ if srcwin is None:
     srcwin = [0, 0, ds.RasterXSize, ds.RasterYSize]
 
 if len(bands) == 0:
-    bands = list(range(1,(ds.RasterCount+1)))
+    bands = list(range(1, (ds.RasterCount + 1)))
 
 
 # Generate checksums

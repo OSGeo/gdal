@@ -692,7 +692,7 @@ def ogr_rfc28_28():
         formulas.append('1000000000000' + operator + '1000000000000')
 
     for formula in formulas:
-        expected_bool = eval(formula.replace(' = ','==').replace('<>','!='))
+        expected_bool = eval(formula.replace(' = ', '==').replace('<>', '!='))
         ret = ogr_rfc28_28_test(formula, expected_bool)
         if ret == 'fail':
             return ret
@@ -1438,7 +1438,7 @@ def ogr_rfc28_47():
     if lyr.GetFeatureCount() != 2:
         gdaltest.post_reason('fail')
         return 'fail'
-    tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [165,170])
+    tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [165, 170])
     gdaltest.ds.ReleaseResultSet(lyr)
     if not tr:
         gdaltest.post_reason('fail')
@@ -1467,7 +1467,7 @@ def ogr_rfc28_47():
     gdaltest.ds.ReleaseResultSet(lyr)
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY ORDER BY EAS_ID DESC LIMIT 2")
-    tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [179,173])
+    tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [179, 173])
     gdaltest.ds.ReleaseResultSet(lyr)
     if not tr:
         gdaltest.post_reason('fail')
@@ -1481,7 +1481,7 @@ def ogr_rfc28_47():
         return 'fail'
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT DISTINCT EAS_ID FROM POLY ORDER BY EAS_ID DESC LIMIT 2 OFFSET 3")
-    tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [171,170])
+    tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [171, 170])
     gdaltest.ds.ReleaseResultSet(lyr)
     if not tr:
         gdaltest.post_reason('fail')

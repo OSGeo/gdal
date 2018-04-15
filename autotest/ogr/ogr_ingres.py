@@ -124,7 +124,7 @@ def ogr_ingres_3():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.ingres_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
+        if ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
                                           max_error=0.000000001) != 0:
             return 'fail'
 
@@ -306,7 +306,7 @@ def ogr_ingres_8():
     new_count = gdaltest.ingres_lyr.GetFeatureCount()
     if new_count != old_count - 1:
         gdaltest.post_reason('got feature count of %d, not expected %d.' \
-                              % (new_count, old_count -1))
+                              % (new_count, old_count - 1))
 
     if gdaltest.ingres_lyr.GetFeature(target_fid) is not None:
         gdaltest.post_reason('Got deleted feature!')

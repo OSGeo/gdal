@@ -61,10 +61,10 @@ def lcp_1():
             gdaltest.post_reason('wrong metadataitem for dataset. md[\'%s\']=\'%s\', expected \'%s\'' % (item[0], md[item[0]], item[1]))
             return 'fail'
 
-    check_gt = (285807.932887174887583,30,0,5379230.386217921040952,0,-30)
+    check_gt = (285807.932887174887583, 30, 0, 5379230.386217921040952, 0, -30)
     new_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(new_gt[i]-check_gt[i]) > 1e-5:
+        if abs(new_gt[i] - check_gt[i]) > 1e-5:
             print('')
             print('old = ', check_gt)
             print('new = ', new_gt)
@@ -123,14 +123,14 @@ def lcp_1():
                     ]
 
     for i in range(8):
-        band = ds.GetRasterBand(i+1)
+        band = ds.GetRasterBand(i + 1)
         if band.Checksum() != dataPerBand[i][0]:
-            gdaltest.post_reason('wrong checksum for band %d. Got %d, expected %d' % (i+1, band.Checksum(), dataPerBand[i][0]))
+            gdaltest.post_reason('wrong checksum for band %d. Got %d, expected %d' % (i + 1, band.Checksum(), dataPerBand[i][0]))
             return 'fail'
         md = band.GetMetadata()
         for item in dataPerBand[i][1]:
             if md[item[0]] != item[1]:
-                gdaltest.post_reason('wrong metadataitem for band %d. md[\'%s\']=\'%s\', expected \'%s\'' % (i+1, item[0], md[item[0]], item[1]))
+                gdaltest.post_reason('wrong metadataitem for band %d. md[\'%s\']=\'%s\', expected \'%s\'' % (i + 1, item[0], md[item[0]], item[1]))
                 return 'fail'
 
     ds = None
@@ -157,10 +157,10 @@ def lcp_2():
             gdaltest.post_reason('wrong metadataitem for dataset. md[\'%s\']=\'%s\', expected \'%s\'' % (item[0], md[item[0]], item[1]))
             return 'fail'
 
-    check_gt = (-1328145,30,0,2961735,0,-30)
+    check_gt = (-1328145, 30, 0, 2961735, 0, -30)
     new_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(new_gt[i]-check_gt[i]) > 1e-5:
+        if abs(new_gt[i] - check_gt[i]) > 1e-5:
             print('')
             print('old = ', check_gt)
             print('new = ', new_gt)
@@ -219,14 +219,14 @@ def lcp_2():
                     ]
 
     for i in range(8):
-        band = ds.GetRasterBand(i+1)
+        band = ds.GetRasterBand(i + 1)
         if band.Checksum() != dataPerBand[i][0]:
-            gdaltest.post_reason('wrong checksum for band %d. Got %d, expected %d' % (i+1, band.Checksum(), dataPerBand[i][0]))
+            gdaltest.post_reason('wrong checksum for band %d. Got %d, expected %d' % (i + 1, band.Checksum(), dataPerBand[i][0]))
             return 'fail'
         md = band.GetMetadata()
         for item in dataPerBand[i][1]:
             if md[item[0]] != item[1]:
-                gdaltest.post_reason('wrong metadataitem for band %d. md[\'%s\']=\'%s\', expected \'%s\'' % (i+1, item[0], md[item[0]], item[1]))
+                gdaltest.post_reason('wrong metadataitem for band %d. md[\'%s\']=\'%s\', expected \'%s\'' % (i + 1, item[0], md[item[0]], item[1]))
                 return 'fail'
 
     ds = None
@@ -351,7 +351,7 @@ def lcp_8():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     retval = 'success'
     co = ['LATITUDE=0', 'LINEAR_UNIT=METER']
-    for i in [0,1,2,3,4,6,9,11]:
+    for i in [0, 1, 2, 3, 4, 6, 9, 11]:
         src_ds = mem_drv.Create('', 10, 10, i, gdal.GDT_Int16)
         if src_ds is None:
             retval = 'fail'
@@ -852,7 +852,7 @@ def lcp_21():
 
     for i in range(10):
         data = [random.randint(0, 100) for i in range(9)]
-        src_ds.GetRasterBand(i+1).WriteRaster(0, 0, 3, 3, struct.pack('h'*9, *data))
+        src_ds.GetRasterBand(i + 1).WriteRaster(0, 0, 3, 3, struct.pack('h' * 9, *data))
 
     co = ['LATITUDE=0', 'LINEAR_UNIT=METER']
     lcp_ds = drv.CreateCopy('tmp/lcp_21.lcp', src_ds, False, co)
@@ -860,7 +860,7 @@ def lcp_21():
         retval = 'fail'
     retval = 'success'
     for i in range(10):
-        if src_ds.GetRasterBand(i+1).Checksum() != lcp_ds.GetRasterBand(i+1).Checksum():
+        if src_ds.GetRasterBand(i + 1).Checksum() != lcp_ds.GetRasterBand(i + 1).Checksum():
             gdaltest.post_reason('Did not get expected checksum')
             retval = 'fail'
 
@@ -897,7 +897,7 @@ def lcp_22():
 
     for i in range(10):
         data = [random.randint(0, 100) for i in range(9)]
-        src_ds.GetRasterBand(i+1).WriteRaster(0, 0, 3, 3, struct.pack('h'*9, *data))
+        src_ds.GetRasterBand(i + 1).WriteRaster(0, 0, 3, 3, struct.pack('h' * 9, *data))
 
     retval = 'success'
     co = ['LATITUDE=0', 'LINEAR_UNIT=METER']
@@ -906,8 +906,8 @@ def lcp_22():
         return 'fail'
     retval = 'success'
     for i in range(10):
-        src_data = src_ds.GetRasterBand(i+1).ReadAsArray()
-        dst_data = lcp_ds.GetRasterBand(i+1).ReadAsArray()
+        src_data = src_ds.GetRasterBand(i + 1).ReadAsArray()
+        dst_data = lcp_ds.GetRasterBand(i + 1).ReadAsArray()
         if not numpy.array_equal(src_data, dst_data):
             gdaltest.post_reason('Did not copy data correctly')
             retval = 'fail'
@@ -943,7 +943,7 @@ def lcp_23():
     for option in ['ELEVATION_UNIT', 'SLOPE_UNIT', 'ASPECT_UNIT',
                    'FUEL_MODEL_OPTION', 'CANOPY_COV_UNIT', 'CANOPY_HT_UNIT',
                    'CBH_UNIT', 'CBD_UNIT', 'DUFF_UNIT']:
-        co = ['%s=%s' % (option, bad),]
+        co = ['%s=%s' % (option, bad), ]
         lcp_ds = drv.CreateCopy('tmp/lcp_23.lcp', src_ds, False, co)
         if lcp_ds is not None:
             retval = 'fail'

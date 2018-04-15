@@ -80,14 +80,14 @@ def arg_init():
     "cols": %(cols)d
 }"""
     gdaltest.argDefaults = {
-        'xmin':0.0,
-        'ymin':0.0,
-        'xmax':2.0,
-        'ymax':2.0,
-        'width':1.0,
-        'height':1.0,
-        'rows':2,
-        'cols':2
+        'xmin': 0.0,
+        'ymin': 0.0,
+        'xmax': 2.0,
+        'ymax': 2.0,
+        'width': 1.0,
+        'height': 1.0,
+        'rows': 2,
+        'cols': 2
     }
 
     # None means "no data"
@@ -97,10 +97,10 @@ def arg_init():
                      ('int32', '>i', -(1 << 31)),
                      ('int64', '>q', -(1 << 63))],
          'data': [None, 2, -3, -4]},
-        {'formats': [('uint8', '>B', (1 << 8)-1),
-                     ('uint16', '>H', (1 << 16)-1),
-                     ('uint32', '>I', (1 << 32)-1),
-                     ('uint64', '>Q', (1 << 64)-1)],
+        {'formats': [('uint8', '>B', (1 << 8) - 1),
+                     ('uint16', '>H', (1 << 16) - 1),
+                     ('uint32', '>I', (1 << 32) - 1),
+                     ('uint64', '>Q', (1 << 64) - 1)],
          'data': [None, 2, 3, 4]},
         {'formats': [('float32', '>f', gdaltest.NaN()),
                      ('float64', '>d', gdaltest.NaN())],
@@ -110,17 +110,17 @@ def arg_init():
     for d in gdaltest.argTests:
         for (name, fmt, nodata) in d['formats']:
             bytes = encode(fmt, nodata, d['data'])
-            arg = open('data/arg-'+name+'.arg', 'wb')
+            arg = open('data/arg-' + name + '.arg', 'wb')
             arg.write(bytes)
             arg.close()
 
             meta = copy(gdaltest.argDefaults)
-            meta.update(fmt='arg-'+name,dt=name)
-            json = open('data/arg-'+name+'.json', 'w')
+            meta.update(fmt='arg-' + name, dt=name)
+            json = open('data/arg-' + name + '.json', 'w')
             json.write(gdaltest.argJsontpl % meta)
             json.close()
 
-    ds = gdal.Open('data/arg-'+gdaltest.argTests[0]['formats'][1][0]+'.arg')
+    ds = gdal.Open('data/arg-' + gdaltest.argTests[0]['formats'][1][0] + '.arg')
     if ds is None:
         gdaltest.argDriver = None
 
@@ -139,11 +139,11 @@ def arg_unsupported():
         for (name, fmt, nodata) in d['formats']:
             if name == 'int64' or name == 'uint64':
                 with gdaltest.error_handler('CPLQuietErrorHandler'):
-                    ds = gdal.Open('data/arg-'+name+'.arg')
+                    ds = gdal.Open('data/arg-' + name + '.arg')
                 if ds is not None:
                     return 'fail'
             else:
-                ds = gdal.Open('data/arg-'+name+'.arg')
+                ds = gdal.Open('data/arg-' + name + '.arg')
                 if ds is None:
                     return 'fail'
 
@@ -157,7 +157,7 @@ def arg_getrastercount():
     for d in gdaltest.argTests:
         for (name, fmt, nodata) in d['formats']:
             with gdaltest.error_handler('CPLQuietErrorHandler'):
-              ds = gdal.Open('data/arg-'+name+'.arg')
+              ds = gdal.Open('data/arg-' + name + '.arg')
             if ds is None:
                 continue
 
@@ -174,7 +174,7 @@ def arg_getgeotransform():
     for d in gdaltest.argTests:
         for (name, fmt, nodata) in d['formats']:
             with gdaltest.error_handler('CPLQuietErrorHandler'):
-                ds = gdal.Open('data/arg-'+name+'.arg')
+                ds = gdal.Open('data/arg-' + name + '.arg')
             if ds is None:
                 continue
 
@@ -218,7 +218,7 @@ def arg_blocksize():
     os.remove('data/utm-uneven-blocks.tif')
     gdal.GetDriverByName('ARG').Delete('data/utm.arg')
 
-    if stat.st_size != (xsize*ysize):
+    if stat.st_size != (xsize * ysize):
         return 'fail'
 
     return 'success'
@@ -301,17 +301,17 @@ def arg_byteorder():
     for d in gdaltest.argTests:
         for (name, fmt, nodata) in d['formats']:
 
-            basename = 'data/arg-'+name
+            basename = 'data/arg-' + name
             with gdaltest.error_handler('CPLQuietErrorHandler'):
-                orig = gdal.Open(basename+'.arg')
+                orig = gdal.Open(basename + '.arg')
             if orig is None:
                 continue
 
-            dest = tifDriver.CreateCopy(basename+'.tif', orig, False)
+            dest = tifDriver.CreateCopy(basename + '.tif', orig, False)
             if dest is None:
                 return 'fail'
 
-            mirror = gdaltest.argDriver.CreateCopy(basename+'2.arg', dest, False)
+            mirror = gdaltest.argDriver.CreateCopy(basename + '2.arg', dest, False)
             if mirror is None:
                 return 'fail'
 
@@ -319,8 +319,8 @@ def arg_byteorder():
             dest = None
             mirror = None
 
-            tmp1 = open(basename+'.arg', 'rb')
-            tmp2 = open(basename+'2.arg', 'rb')
+            tmp1 = open(basename + '.arg', 'rb')
+            tmp2 = open(basename + '2.arg', 'rb')
 
             data1 = tmp1.read()
             data2 = tmp2.read()
@@ -328,8 +328,8 @@ def arg_byteorder():
             tmp1.close()
             tmp2.close()
 
-            gdal.GetDriverByName('GTiff').Delete(basename+'.tif')
-            gdal.GetDriverByName('ARG').Delete(basename+'2.arg')
+            gdal.GetDriverByName('GTiff').Delete(basename + '.tif')
+            gdal.GetDriverByName('ARG').Delete(basename + '2.arg')
 
             if data1 != data2:
                 return 'fail'
@@ -343,8 +343,8 @@ def arg_destroy():
 
     for d in gdaltest.argTests:
         for (name, fmt, nodata) in d['formats']:
-            os.remove('data/arg-'+name+'.arg')
-            os.remove('data/arg-'+name+'.json')
+            os.remove('data/arg-' + name + '.arg')
+            os.remove('data/arg-' + name + '.json')
 
     return 'success'
 

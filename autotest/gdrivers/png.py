@@ -65,8 +65,8 @@ def png_3():
     ds = gdal.Open('data/test.png')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
     if cm.GetCount() != 16 \
-       or cm.GetColorEntry(0) != (255,255,255,0) \
-       or cm.GetColorEntry(1) != (255,255,208,255):
+       or cm.GetColorEntry(0) != (255, 255, 255, 0) \
+       or cm.GetColorEntry(1) != (255, 255, 208, 255):
         gdaltest.post_reason('Wrong colormap entries')
         return 'fail'
 
@@ -254,31 +254,31 @@ def png_11():
 
 def png_12():
     ds = gdal.Open('../gcore/data/stefan_full_rgba.png')
-    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
 
     # Band interleaved
-    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize)
+    data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
-    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data)
-    got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data)
+    got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'
 
     # Pixel interleaved
-    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space=ds.RasterCount, buf_band_space=1)
+    data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buf_pixel_space=ds.RasterCount, buf_band_space=1)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
-    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data, buf_pixel_space=ds.RasterCount, buf_band_space=1)
-    got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data, buf_pixel_space=ds.RasterCount, buf_band_space=1)
+    got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'
 
     # Pixel interleaved with padding
-    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space=5, buf_band_space=1)
+    data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buf_pixel_space=5, buf_band_space=1)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
-    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data, buf_pixel_space=5, buf_band_space=1)
-    got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data, buf_pixel_space=5, buf_band_space=1)
+    got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -291,7 +291,7 @@ def png_12():
 
 def png_13():
 
-    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     src_ds.SetMetadataItem('foo', 'bar')
     src_ds.SetMetadataItem('COPYRIGHT', 'copyright value')
     src_ds.SetMetadataItem('DESCRIPTION', 'will be overridden by creation option')

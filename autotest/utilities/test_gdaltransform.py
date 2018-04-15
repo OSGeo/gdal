@@ -148,7 +148,7 @@ def test_gdaltransform_5():
     x = float(text_split[0])
     y = float(text_split[1])
 
-    if abs(x-440720) > 1e-4 or abs(y-3751320) > 1e-4:
+    if abs(x - 440720) > 1e-4 or abs(y - 3751320) > 1e-4:
         print(ret)
         return 'fail'
 
@@ -169,7 +169,7 @@ def test_gdaltransform_6():
     x = float(text_split[0])
     y = float(text_split[1])
 
-    if abs(x-440720) > 1e-4 or abs(y-3751320) > 1e-4:
+    if abs(x - 440720) > 1e-4 or abs(y - 3751320) > 1e-4:
         print(ret)
         return 'fail'
 
@@ -190,7 +190,7 @@ def test_gdaltransform_7():
     x = float(text_split[0])
     y = float(text_split[1])
 
-    if abs(x-0) > 1e-4 or abs(y-0) > 1e-4:
+    if abs(x - 0) > 1e-4 or abs(y - 0) > 1e-4:
         print(ret)
         return 'fail'
 

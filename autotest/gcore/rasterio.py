@@ -149,7 +149,7 @@ def rasterio_4():
 
     data = ['' for i in range(5 * 4)]
     for size in range(5 * 4):
-        for k in range(size+1):
+        for k in range(size + 1):
             data[size] = data[size] + 'A'
         data[size] = data[size].encode('ascii')
 
@@ -173,7 +173,7 @@ def rasterio_4():
                             data2 = ds.ReadRaster(i, j, k + 1, m + 1, xsize + 1, ysize + 1, gdal.GDT_Byte)
                             if data2 != data[(xsize + 1) * (ysize + 1) - 1]:
                                 gdaltest.post_reason('Didnt get expected buffer ')
-                                print(i,j,k,m,xsize,ysize)
+                                print(i, j, k, m, xsize, ysize)
                                 print(data2)
                                 print(data[(xsize + 1) * (ysize + 1) - 1])
                                 return 'fail'
@@ -202,13 +202,13 @@ def rasterio_5():
     ds = gdal.Open('data/byte.tif')
 
     for obj in [ds, ds.GetRasterBand(1)]:
-        obj.ReadRaster(0,0,-2000000000,1,1,1)
-        obj.ReadRaster(0,0,1,-2000000000,1,1)
+        obj.ReadRaster(0, 0, -2000000000, 1, 1, 1)
+        obj.ReadRaster(0, 0, 1, -2000000000, 1, 1)
 
-    for band_number in [-1,0,2]:
+    for band_number in [-1, 0, 2]:
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        res = ds.ReadRaster(0,0,1,1,band_list=[band_number])
+        res = ds.ReadRaster(0, 0, 1, 1, band_list=[band_number])
         gdal.PopErrorHandler()
         error_msg = gdal.GetLastErrorMsg()
         if res is not None:
@@ -219,7 +219,7 @@ def rasterio_5():
             print(error_msg)
             return 'fail'
 
-    res = ds.ReadRaster(0,0,1,1,band_list=[1,1])
+    res = ds.ReadRaster(0, 0, 1, 1, band_list=[1, 1])
     if res is None:
         gdaltest.post_reason('expected non None')
         return 'fail'
@@ -227,7 +227,7 @@ def rasterio_5():
     for obj in [ds, ds.GetRasterBand(1)]:
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        res = obj.ReadRaster(0,0,21,21)
+        res = obj.ReadRaster(0, 0, 21, 21)
         gdal.PopErrorHandler()
         error_msg = gdal.GetLastErrorMsg()
         if res is not None:
@@ -251,7 +251,7 @@ def rasterio_5():
         if maxsize == 2147483647 and sys.platform != 'win32':
             gdal.ErrorReset()
             gdal.PushErrorHandler('CPLQuietErrorHandler')
-            res = obj.ReadRaster(0,0,1,1,1000000,1000000)
+            res = obj.ReadRaster(0, 0, 1, 1, 1000000, 1000000)
             gdal.PopErrorHandler()
             error_msg = gdal.GetLastErrorMsg()
             if res is not None:
@@ -264,7 +264,7 @@ def rasterio_5():
 
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        res = obj.ReadRaster(0,0,0,1)
+        res = obj.ReadRaster(0, 0, 0, 1)
         gdal.PopErrorHandler()
         error_msg = gdal.GetLastErrorMsg()
         if res is not None:
@@ -289,7 +289,7 @@ def rasterio_6():
 
     for obj in [ds, ds.GetRasterBand(1)]:
         try:
-            obj.WriteRaster(0,0,2,2,None)
+            obj.WriteRaster(0, 0, 2, 2, None)
             gdaltest.post_reason('expected exception')
             return 'fail'
         except:
@@ -297,7 +297,7 @@ def rasterio_6():
 
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        obj.WriteRaster(0,0,2,2,' ')
+        obj.WriteRaster(0, 0, 2, 2, ' ')
         gdal.PopErrorHandler()
         error_msg = gdal.GetLastErrorMsg()
         if error_msg.find('Buffer too small') == -1:
@@ -307,7 +307,7 @@ def rasterio_6():
 
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        obj.WriteRaster(-1,0,1,1,' ')
+        obj.WriteRaster(-1, 0, 1, 1, ' ')
         gdal.PopErrorHandler()
         error_msg = gdal.GetLastErrorMsg()
         if error_msg.find('Access window out of range in RasterIO()') == -1:
@@ -317,7 +317,7 @@ def rasterio_6():
 
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        obj.WriteRaster(0,0,0,1,' ')
+        obj.WriteRaster(0, 0, 0, 1, ' ')
         gdal.PopErrorHandler()
         error_msg = gdal.GetLastErrorMsg()
         if error_msg.find('Illegal values for buffer size') == -1:
@@ -521,7 +521,7 @@ def rasterio_9_progress_callback(pct, message, user_data):
 
 def rasterio_9_checksum(data, buf_xsize, buf_ysize, data_type=gdal.GDT_Byte):
     ds = gdal.GetDriverByName('MEM').Create('', buf_xsize, buf_ysize, 1)
-    ds.GetRasterBand(1).WriteRaster(0,0,buf_xsize,buf_ysize,data, buf_type=data_type)
+    ds.GetRasterBand(1).WriteRaster(0, 0, buf_xsize, buf_ysize, data, buf_type=data_type)
     cs = ds.GetRasterBand(1).Checksum()
     return cs
 
@@ -609,7 +609,7 @@ def rasterio_9():
     # Test RasterBand.ReadRaster, with Bilinear on Complex, thus using warp API
     tab = [0, None]
     complex_ds = gdal.GetDriverByName('MEM').Create('', 20, 20, 1, gdal.GDT_CInt16)
-    complex_ds.GetRasterBand(1).WriteRaster(0,0,20,20, ds.GetRasterBand(1).ReadRaster(), buf_type=gdal.GDT_Byte)
+    complex_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, ds.GetRasterBand(1).ReadRaster(), buf_type=gdal.GDT_Byte)
     data = complex_ds.GetRasterBand(1).ReadRaster(buf_xsize=10,
                                                   buf_ysize=10,
                                                   resample_alg=gdal.GRIORA_Bilinear,
@@ -846,11 +846,11 @@ def rasterio_11():
         return 'skip'
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3)
-    mem_ds.GetRasterBand(1).WriteArray(numpy.array([[80,125,125,80],[80,125,125,80],[80,125,125,80]]))
+    mem_ds.GetRasterBand(1).WriteArray(numpy.array([[80, 125, 125, 80], [80, 125, 125, 80], [80, 125, 125, 80]]))
 
     # A bit dummy
     mem_ds.GetRasterBand(1).SetMetadataItem('NBITS', '8', 'IMAGE_STRUCTURE')
-    ar = mem_ds.GetRasterBand(1).ReadAsArray(0,0,4,3,8,3, resample_alg=gdal.GRIORA_Cubic)
+    ar = mem_ds.GetRasterBand(1).ReadAsArray(0, 0, 4, 3, 8, 3, resample_alg=gdal.GRIORA_Cubic)
     if ar.max() != 129:
         gdaltest.post_reason('failure')
         print(ar.max())
@@ -858,7 +858,7 @@ def rasterio_11():
 
     # NBITS=7
     mem_ds.GetRasterBand(1).SetMetadataItem('NBITS', '7', 'IMAGE_STRUCTURE')
-    ar = mem_ds.GetRasterBand(1).ReadAsArray(0,0,4,3,8,3, resample_alg=gdal.GRIORA_Cubic)
+    ar = mem_ds.GetRasterBand(1).ReadAsArray(0, 0, 4, 3, 8, 3, resample_alg=gdal.GRIORA_Cubic)
     # Would overshoot to 129 if NBITS was ignored
     if ar.max() != 127:
         gdaltest.post_reason('failure')
@@ -890,13 +890,13 @@ def rasterio_12():
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, 4)
     for i in range(3):
-        mem_ds.GetRasterBand(i+1).SetColorInterpretation(gdal.GCI_GrayIndex)
+        mem_ds.GetRasterBand(i + 1).SetColorInterpretation(gdal.GCI_GrayIndex)
     mem_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_AlphaBand)
     for i in range(4):
-        mem_ds.GetRasterBand(i+1).WriteArray(numpy.array([[0,0,0,0],[0,255,0,0],[0,0,0,0]]))
+        mem_ds.GetRasterBand(i + 1).WriteArray(numpy.array([[0, 0, 0, 0], [0, 255, 0, 0], [0, 0, 0, 0]]))
 
     tab = [0]
-    ar_ds = mem_ds.ReadAsArray(0,0,4,3,buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic, \
+    ar_ds = mem_ds.ReadAsArray(0, 0, 4, 3, buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic, \
                                callback=rasterio_12_progress_callback, \
                                callback_data=tab)
     if tab[0] != 1.0:
@@ -904,32 +904,32 @@ def rasterio_12():
         print(tab)
         return 'fail'
 
-    ar_ds2 = mem_ds.ReadAsArray(0,0,4,3,buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic)
+    ar_ds2 = mem_ds.ReadAsArray(0, 0, 4, 3, buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic)
     if not numpy.array_equal(ar_ds, ar_ds2):
         gdaltest.post_reason('failure')
         print(ar_ds)
         print(ar_ds2)
         return 'fail'
 
-    ar_bands = [mem_ds.GetRasterBand(i+1).ReadAsArray(0,0,4,3,buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic) for i in range(4)]
+    ar_bands = [mem_ds.GetRasterBand(i + 1).ReadAsArray(0, 0, 4, 3, buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic) for i in range(4)]
 
     # Results of band or dataset RasterIO should be the same
     for i in range(4):
-        if not numpy.array_equal(ar_ds[i],ar_bands[i]):
+        if not numpy.array_equal(ar_ds[i], ar_bands[i]):
             gdaltest.post_reason('failure')
             print(ar_ds)
             print(ar_bands[i])
             return 'fail'
 
     # First, second and third band should have identical content
-    if not numpy.array_equal(ar_ds[0],ar_ds[1]):
+    if not numpy.array_equal(ar_ds[0], ar_ds[1]):
         gdaltest.post_reason('failure')
         print(ar_ds[0])
         print(ar_ds[1])
         return 'fail'
 
     # Alpha band should be different
-    if numpy.array_equal(ar_ds[0],ar_ds[3]):
+    if numpy.array_equal(ar_ds[0], ar_ds[3]):
         gdaltest.post_reason('failure')
         print(ar_ds[0])
         print(ar_ds[3])
@@ -954,11 +954,11 @@ def rasterio_13():
 
         mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, 1, dt)
         mem_ds.GetRasterBand(1).SetNoDataValue(0)
-        mem_ds.GetRasterBand(1).WriteArray(numpy.array([[0,0,0,0],[0,255,0,0],[0,0,0,0]]))
+        mem_ds.GetRasterBand(1).WriteArray(numpy.array([[0, 0, 0, 0], [0, 255, 0, 0], [0, 0, 0, 0]]))
 
-        ar_ds = mem_ds.ReadAsArray(0,0,4,3,buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic)
+        ar_ds = mem_ds.ReadAsArray(0, 0, 4, 3, buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic)
 
-        expected_ar = numpy.array([[0,0,0,0,0,0,0,0],[0,255,255,255,255,0,0,0],[0,0,0,0,0,0,0,0]])
+        expected_ar = numpy.array([[0, 0, 0, 0, 0, 0, 0, 0], [0, 255, 255, 255, 255, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]])
         if not numpy.array_equal(ar_ds, expected_ar):
             gdaltest.post_reason('failure')
             print(dt)
@@ -999,9 +999,9 @@ cellsize     0
     gdal.Unlink('/vsimem/rasterio_14_out.asc')
 
     ds = gdal.GetDriverByName('MEM').Create('', 1000000, 1)
-    ds.GetRasterBand(1).WriteRaster(ds.RasterXSize-1,0,1,1,struct.pack('B' * 1, 100))
-    data = ds.ReadRaster(buf_xsize=int(ds.RasterXSize/2), buf_ysize=1, resample_alg=gdal.GRIORA_Average)
-    data = struct.unpack('B' * int(ds.RasterXSize/2), data)
+    ds.GetRasterBand(1).WriteRaster(ds.RasterXSize - 1, 0, 1, 1, struct.pack('B' * 1, 100))
+    data = ds.ReadRaster(buf_xsize=int(ds.RasterXSize / 2), buf_ysize=1, resample_alg=gdal.GRIORA_Average)
+    data = struct.unpack('B' * int(ds.RasterXSize / 2), data)
     if data[-1:][0] != 50:
         gdaltest.post_reason('fail')
         print(data[-1:][0])
@@ -1015,9 +1015,9 @@ cellsize     0
         return 'fail'
 
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1000000)
-    ds.GetRasterBand(1).WriteRaster(0,ds.RasterYSize-1,1,1,struct.pack('B' * 1, 100))
-    data = ds.ReadRaster(buf_xsize=1, buf_ysize=int(ds.RasterYSize/2), resample_alg=gdal.GRIORA_Average)
-    data = struct.unpack('B' * int(ds.RasterYSize/2), data)
+    ds.GetRasterBand(1).WriteRaster(0, ds.RasterYSize - 1, 1, 1, struct.pack('B' * 1, 100))
+    data = ds.ReadRaster(buf_xsize=1, buf_ysize=int(ds.RasterYSize / 2), resample_alg=gdal.GRIORA_Average)
+    data = struct.unpack('B' * int(ds.RasterYSize / 2), data)
     if data[-1:][0] != 50:
         gdaltest.post_reason('fail')
         print(data[-1:][0])

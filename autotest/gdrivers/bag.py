@@ -78,25 +78,25 @@ def bag_2():
         return 'fail'
 
     b1 = ds.GetRasterBand(1)
-    if abs(b1.GetMinimum()-10) > 0.01:
+    if abs(b1.GetMinimum() - 10) > 0.01:
         gdaltest.post_reason('band 1 minimum wrong.')
         return 'fail'
 
-    if abs(b1.GetMaximum()-19.8) > 0.01:
+    if abs(b1.GetMaximum() - 19.8) > 0.01:
         gdaltest.post_reason('band 1 maximum wrong.')
         return 'fail'
 
-    if abs(b1.GetNoDataValue()-1000000.0) > 0.1:
+    if abs(b1.GetNoDataValue() - 1000000.0) > 0.1:
         gdaltest.post_reason('band 1 nodata wrong.')
         return 'fail'
 
     b2 = ds.GetRasterBand(2)
-    if abs(b2.GetNoDataValue()-1000000.0) > 0.1:
+    if abs(b2.GetNoDataValue() - 1000000.0) > 0.1:
         gdaltest.post_reason('band 2 nodata wrong.')
         return 'fail'
 
     b3 = ds.GetRasterBand(3)
-    if abs(b3.GetNoDataValue()-1000000.0) > 0.1:
+    if abs(b3.GetNoDataValue() - 1000000.0) > 0.1:
         gdaltest.post_reason('band 3 nodata wrong.')
         return 'fail'
 

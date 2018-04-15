@@ -204,7 +204,7 @@ def pds4_8():
         sr = osr.SpatialReference()
         sr.ImportFromProj4(proj4)
         ds.SetProjection(sr.ExportToWkt())
-        ds.SetGeoTransform([0,1,0,0,0,-1])
+        ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
         with gdaltest.error_handler():
             ds = None
 
@@ -230,7 +230,7 @@ def pds4_8():
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
-    ds.SetGeoTransform([2,1,0,49,0,-2])
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     with gdaltest.error_handler():
         ds = None
     ds = gdal.Open(filename)
@@ -309,7 +309,7 @@ def pds4_9():
         with hide_substitution_warnings_error_handler():
             gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4',
                            noData=75,
-                           creationOptions=['IMAGE_FORMAT='+format])
+                           creationOptions=['IMAGE_FORMAT=' + format])
 
         ret = validate_xml(filename)
         if ret == 'fail':
@@ -342,7 +342,7 @@ def pds4_9():
         with hide_substitution_warnings_error_handler():
             gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4',
                         creationOptions=['USE_SRC_LABEL=NO',
-                                            'IMAGE_FORMAT='+format])
+                                            'IMAGE_FORMAT=' + format])
 
         ret = validate_xml(filename)
         if ret == 'fail':
@@ -541,7 +541,7 @@ def pds4_10():
     filename2 = '/vsimem/out2.xml'
     for format in ['RAW', 'GEOTIFF']:
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                                 options=['IMAGE_FORMAT='+format])
+                                                 options=['IMAGE_FORMAT=' + format])
         ds.GetRasterBand(1).SetScale(2)
         ds.GetRasterBand(1).SetOffset(3)
         with hide_substitution_warnings_error_handler():
@@ -633,7 +633,7 @@ def pds4_12():
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
-    ds.SetGeoTransform([2,1,0,49,0,-2])
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     ds = None
 
     f = gdal.VSIFOpenL(filename, 'rb')
@@ -1036,7 +1036,7 @@ def pds4_14():
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
-    ds.SetGeoTransform([2,1,0,49,0,-2])
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = None
@@ -1172,7 +1172,7 @@ def pds4_16():
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
-    ds.SetGeoTransform([2,1,0,49,0,-2])
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     with hide_substitution_warnings_error_handler():
         ds = None
 
@@ -1273,7 +1273,7 @@ def pds4_18():
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
-    ds.SetGeoTransform([2,1,0,49,0,-2])
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     with gdaltest.error_handler():
         ds = None
 

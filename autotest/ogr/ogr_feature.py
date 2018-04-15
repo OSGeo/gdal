@@ -106,18 +106,18 @@ def mk_src_feature():
     src_feature.SetFieldBinaryFromHexString('field_binary', '0123465789ABCDEF')
     src_feature.SetField('field_date', '2011/11/11')
     src_feature.SetField('field_time', '14:10:35')
-    src_feature.SetField('field_datetime', 2011,11,11,14,10,35.123,0)
+    src_feature.SetField('field_datetime', 2011, 11, 11, 14, 10, 35.123, 0)
     got_vals = src_feature.GetFieldAsDateTime(feat_def.GetFieldIndex('field_datetime'))
     expected_vals = [2011, 11, 11, 14, 10, 35.123, 0]
     for i in range(len(expected_vals)):
-        if abs(got_vals[i]-expected_vals[i]) > 1e-4:
+        if abs(got_vals[i] - expected_vals[i]) > 1e-4:
             gdaltest.post_reason('fail')
             print(got_vals)
             print(expected_vals)
     src_feature.field_integerlist = '(3:10,20,30)'
     src_feature.field_integer64list = [9876543210]
-    src_feature.field_reallist = [123.5,567.0]
-    src_feature.field_stringlist = ['abc','def']
+    src_feature.field_reallist = [123.5, 567.0]
+    src_feature.field_stringlist = ['abc', 'def']
 
     return src_feature
 
@@ -364,7 +364,7 @@ def ogr_feature_cp_binary():
         return 'fail'
 
     expected = '\x01\x23\x46\x57\x89\xAB\xCD\xEF'
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         expected = expected.encode('LATIN1')
     if dst_feature.GetFieldAsBinary('field_binary') != expected:
         return 'fail'
@@ -580,7 +580,7 @@ def ogr_feature_cp_integerlist():
     if not check(dst_feature, 'field_integer64list', [2147483647]):
         return 'fail'
 
-    if not check(dst_feature, 'field_reallist', [123,567]):
+    if not check(dst_feature, 'field_reallist', [123, 567]):
         return 'fail'
 
     if not check(dst_feature, 'field_stringlist', None):
@@ -628,7 +628,7 @@ def ogr_feature_cp_integer64list():
     if not check(dst_feature, 'field_integer64list', [9876543210]):
         return 'fail'
 
-    if not check(dst_feature, 'field_reallist', [123,567]):
+    if not check(dst_feature, 'field_reallist', [123, 567]):
         return 'fail'
 
     if not check(dst_feature, 'field_stringlist', None):
@@ -670,7 +670,7 @@ def ogr_feature_cp_reallist():
     if not check(dst_feature, 'field_datetime', None):
         return 'fail'
 
-    if not check(dst_feature, 'field_integerlist', [10.0,20.0,30.0]):
+    if not check(dst_feature, 'field_integerlist', [10.0, 20.0, 30.0]):
         return 'fail'
 
     if not check(dst_feature, 'field_integer64list', [9876543210.0]):
@@ -737,7 +737,7 @@ def ogr_feature_cp_stringlist():
 # Test SetField() / GetField() with unicode string
 
 def ogr_feature_unicode():
-    if sys.version_info >= (3,0,0):
+    if sys.version_info >= (3, 0, 0):
         return 'skip'
 
     feat_def = ogr.FeatureDefn('test')
@@ -1184,8 +1184,8 @@ def ogr_feature_null_field():
     f.SetFieldBinaryFromHexString('field_binary', '0123465789ABCDEF')
     f.field_integerlist = '(3:10,20,30)'
     f.field_integer64list = [9876543210]
-    f.field_reallist = [123.5,567.0]
-    f.field_stringlist = ['abc','def']
+    f.field_reallist = [123.5, 567.0]
+    f.field_stringlist = ['abc', 'def']
     if f.IsFieldNull('field_binary') != 0:
         gdaltest.post_reason('fail')
         return 'fail'

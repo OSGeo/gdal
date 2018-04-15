@@ -52,9 +52,9 @@ def transformgeoloc_1():
     # Setup 2x2 geolocation arrays in a memory dataset with lat/long values.
 
     drv = gdal.GetDriverByName('MEM')
-    geoloc_ds = drv.Create('geoloc_1',2,2,3,gdal.GDT_Float64)
+    geoloc_ds = drv.Create('geoloc_1', 2, 2, 3, gdal.GDT_Float64)
 
-    lon_array = numpy.asarray([[-117.0,-116.0],
+    lon_array = numpy.asarray([[-117.0, -116.0],
                                [-116.5, -115.5]])
     lat_array = numpy.asarray([[45.0, 45.5],
                                [44.0, 44.5]])
@@ -69,8 +69,8 @@ def transformgeoloc_1():
     utm_wkt = osr.GetUserInputAsWKT('+proj=utm +zone=11 +datum=WGS84')
 
     ll_utm_transformer = gdal.Transformer(None, None,
-                                          ['SRC_SRS='+wgs84_wkt,
-                                           'DST_SRS='+utm_wkt])
+                                          ['SRC_SRS=' + wgs84_wkt,
+                                           'DST_SRS=' + utm_wkt])
 
     # transform the geoloc dataset in place.
     status = ll_utm_transformer.TransformGeolocations(

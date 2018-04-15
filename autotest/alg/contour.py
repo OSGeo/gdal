@@ -67,21 +67,21 @@ def contour_1():
     ds.SetProjection(wkt)
     ds.SetGeoTransform([1, precision, 0, 50, 0, -precision])
 
-    raw_data = array.array('h',[10 for i in range(int(size/2))]).tostring()
-    for i in range(int(size/2)):
-        ds.WriteRaster(int(size/4), i+int(size/4), int(size/2), 1, raw_data,
+    raw_data = array.array('h', [10 for i in range(int(size / 2))]).tostring()
+    for i in range(int(size / 2)):
+        ds.WriteRaster(int(size / 4), i + int(size / 4), int(size / 2), 1, raw_data,
                         buf_type=gdal.GDT_Int16,
                         band_list=[1])
 
-    raw_data = array.array('h',[20 for i in range(int(size/2))]).tostring()
-    for i in range(int(size/4)):
-        ds.WriteRaster(int(size/4)+int(size/8), i+int(size/4)+int(size/8), int(size/4), 1, raw_data,
+    raw_data = array.array('h', [20 for i in range(int(size / 2))]).tostring()
+    for i in range(int(size / 4)):
+        ds.WriteRaster(int(size / 4) + int(size / 8), i + int(size / 4) + int(size / 8), int(size / 4), 1, raw_data,
                         buf_type=gdal.GDT_Int16,
                         band_list=[1])
 
-    raw_data = array.array('h',[25 for i in range(int(size/4))]).tostring()
-    for i in range(int(size/8)):
-        ds.WriteRaster(int(size/4)+int(size/8)+int(size/16), i+int(size/4)+int(size/8)+int(size/16), int(size/8), 1, raw_data,
+    raw_data = array.array('h', [25 for i in range(int(size / 4))]).tostring()
+    for i in range(int(size / 8)):
+        ds.WriteRaster(int(size / 4) + int(size / 8) + int(size / 16), i + int(size / 4) + int(size / 8) + int(size / 16), int(size / 8), 1, raw_data,
                         buf_type=gdal.GDT_Int16,
                         band_list=[1])
 
@@ -97,7 +97,7 @@ def contour_1():
     ds = None
 
     expected_envelopes = [[1.25, 1.75, 49.25, 49.75],
-                           [1.25+0.125, 1.75-0.125, 49.25+0.125, 49.75-0.125]]
+                           [1.25 + 0.125, 1.75 - 0.125, 49.25 + 0.125, 49.75 - 0.125]]
     expected_height = [10, 20]
 
     lyr = ogr_ds.ExecuteSQL("select * from contour order by elev asc")
@@ -114,7 +114,7 @@ def contour_1():
             print('Got %f. Expected %f' % (feat.GetField('elev'), expected_height[i]))
             return 'fail'
         for j in range(4):
-            if abs(expected_envelopes[i][j] - envelope[j]) > precision/2*1.001:
+            if abs(expected_envelopes[i][j] - envelope[j]) > precision / 2 * 1.001:
                 print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
                 print(feat.GetGeometryRef().GetEnvelope())
                 print(expected_envelopes[i])
@@ -155,15 +155,15 @@ def contour_2():
     ogr_lyr.CreateField(field_defn)
 
     ds = gdal.Open('tmp/gdal_contour.tif')
-    gdal.ContourGenerate(ds.GetRasterBand(1), 0, 0, [10,20,25], 0, 0, ogr_lyr, 0, 1)
+    gdal.ContourGenerate(ds.GetRasterBand(1), 0, 0, [10, 20, 25], 0, 0, ogr_lyr, 0, 1)
     ds = None
 
     size = 160
     precision = 1. / size
 
     expected_envelopes = [[1.25, 1.75, 49.25, 49.75],
-                           [1.25+0.125, 1.75-0.125, 49.25+0.125, 49.75-0.125],
-                           [1.25+0.125+0.0625, 1.75-0.125-0.0625, 49.25+0.125+0.0625, 49.75-0.125-0.0625]]
+                           [1.25 + 0.125, 1.75 - 0.125, 49.25 + 0.125, 49.75 - 0.125],
+                           [1.25 + 0.125 + 0.0625, 1.75 - 0.125 - 0.0625, 49.25 + 0.125 + 0.0625, 49.75 - 0.125 - 0.0625]]
     expected_height = [10, 20, 25]
 
     lyr = ogr_ds.ExecuteSQL("select * from contour order by elev asc")
@@ -183,7 +183,7 @@ def contour_2():
             print('Got %f. Expected %f' % (feat.GetField('elev'), expected_height[i]))
             return 'fail'
         for j in range(4):
-            if abs(expected_envelopes[i][j] - envelope[j]) > precision/2*1.001:
+            if abs(expected_envelopes[i][j] - envelope[j]) > precision / 2 * 1.001:
                 print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
                 print(feat.GetGeometryRef().GetEnvelope())
                 print(expected_envelopes[i])

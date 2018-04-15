@@ -257,8 +257,8 @@ def jp2openjpeg_8():
     expected_checksums = [64570, 57277, 56048, 61292]
 
     for i in range(4):
-        if ds.GetRasterBand(i+1).Checksum() != expected_checksums[i]:
-            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i+1))
+        if ds.GetRasterBand(i + 1).Checksum() != expected_checksums[i]:
+            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i + 1))
             return 'fail'
 
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
@@ -279,12 +279,12 @@ def jp2openjpeg_9():
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-440720) > 0.1 \
-        or abs(geotransform[1]-60) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-3751320) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -60) > 0.001:
+    if abs(geotransform[0] - 440720) > 0.1 \
+        or abs(geotransform[1] - 60) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 3751320) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -344,15 +344,15 @@ def jp2openjpeg_11():
         gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
-    jp2_bands_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    jp2_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize/16),int(ds.RasterYSize/16))
+    jp2_bands_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
+    jp2_fourth_band_data = fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
+    fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, int(ds.RasterXSize / 16), int(ds.RasterYSize / 16))
 
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/jp2openjpeg_11.tif', ds)
     fourth_band = tmp_ds.GetRasterBand(4)
     got_cs = fourth_band.Checksum()
-    gtiff_bands_data = tmp_ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    gtiff_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
+    gtiff_bands_data = tmp_ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
+    gtiff_fourth_band_data = fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     #gtiff_fourth_band_subsampled_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,ds.RasterXSize/16,ds.RasterYSize/16)
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/jp2openjpeg_11.tif')
@@ -410,7 +410,7 @@ def jp2openjpeg_12():
     shutil.copy('data/byte.jp2', 'tmp/jp2openjpeg_12.jp2')
 
     ds = gdal.Open('tmp/jp2openjpeg_12.jp2')
-    ds.SetGeoTransform([1000,1,0,2000,0,-1])
+    ds.SetGeoTransform([1000, 1, 0, 2000, 0, -1])
     ds = None
 
     ds = gdal.Open('tmp/jp2openjpeg_12.jp2')
@@ -419,7 +419,7 @@ def jp2openjpeg_12():
 
     gdaltest.jp2openjpeg_drv.Delete('tmp/jp2openjpeg_12.jp2')
 
-    if gt != (1000,1,0,2000,0,-1):
+    if gt != (1000, 1, 0, 2000, 0, -1):
         gdaltest.post_reason('fail')
         print(gt)
         return 'fail'
@@ -465,7 +465,7 @@ def jp2openjpeg_13():
     ds = gdal.Open('tmp/jp2openjpeg_13.jp2')
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
-    gcps = [gdal.GCP(0,1,2,3,4)]
+    gcps = [gdal.GCP(0, 1, 2, 3, 4)]
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
 
@@ -515,7 +515,7 @@ def jp2openjpeg_15():
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
 
-    src_ds = gdal.GetDriverByName('MEM').Create('', 256,256)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 256, 256)
     src_ds.GetRasterBand(1).Fill(255)
     data = src_ds.ReadRaster()
     ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_15.jp2', src_ds, options=['BLOCKXSIZE=32', 'BLOCKYSIZE=32'])
@@ -614,7 +614,7 @@ def jp2openjpeg_18():
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
 
-    src_ds = gdal.GetDriverByName('Mem').Create('',2000,2000)
+    src_ds = gdal.GetDriverByName('Mem').Create('', 2000, 2000)
     ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_18.jp2', src_ds, options=['BLOCKXSIZE=2000', 'BLOCKYSIZE=2000'])
     ds = None
     src_ds = None
@@ -1093,17 +1093,17 @@ def jp2openjpeg_26():
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
     src_ds.SetProjection(sr.ExportToWkt())
-    src_ds.SetGeoTransform([450000,1,0,5000000,0,-1])
+    src_ds.SetGeoTransform([450000, 1, 0, 5000000, 0, -1])
 
     # Nominal case: tiled
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES'])
     overview_count = out_ds.GetRasterBand(1).GetOverviewCount()
     # We have 2x2 1024x1024 tiles. Each of them can be reconstructed down to 128x128.
     # So for full raster the smallest overview is 2*128
-    if out_ds.GetRasterBand(1).GetOverview(overview_count-1).XSize != 2*128 or \
-       out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize != 2*128:
-        print(out_ds.GetRasterBand(1).GetOverview(overview_count-1).XSize)
-        print(out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize)
+    if out_ds.GetRasterBand(1).GetOverview(overview_count - 1).XSize != 2 * 128 or \
+       out_ds.GetRasterBand(1).GetOverview(overview_count - 1).YSize != 2 * 128:
+        print(out_ds.GetRasterBand(1).GetOverview(overview_count - 1).XSize)
+        print(out_ds.GetRasterBand(1).GetOverview(overview_count - 1).YSize)
         gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
@@ -1118,10 +1118,10 @@ def jp2openjpeg_26():
     # Nominal case: untiled
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES', 'BLOCKXSIZE=2048', 'BLOCKYSIZE=2048'])
     overview_count = out_ds.GetRasterBand(1).GetOverviewCount()
-    if out_ds.GetRasterBand(1).GetOverview(overview_count-1).XSize != 128 or \
-       out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize != 128:
-        print(out_ds.GetRasterBand(1).GetOverview(overview_count-1).XSize)
-        print(out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize)
+    if out_ds.GetRasterBand(1).GetOverview(overview_count - 1).XSize != 128 or \
+       out_ds.GetRasterBand(1).GetOverview(overview_count - 1).YSize != 128:
+        print(out_ds.GetRasterBand(1).GetOverview(overview_count - 1).XSize)
+        print(out_ds.GetRasterBand(1).GetOverview(overview_count - 1).YSize)
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.ErrorReset()
@@ -1145,7 +1145,7 @@ def jp2openjpeg_26():
     # Nominal case: RGBA
     src_ds = gdal.GetDriverByName('MEM').Create('', 128, 128, 4)
     src_ds.SetProjection(sr.ExportToWkt())
-    src_ds.SetGeoTransform([450000,1,0,5000000,0,-1])
+    src_ds.SetGeoTransform([450000, 1, 0, 5000000, 0, -1])
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES', 'ALPHA=YES'])
     out_ds = None
     ds = gdal.OpenEx('/vsimem/jp2openjpeg_26.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
@@ -1303,7 +1303,7 @@ def jp2openjpeg_27():
     # Not sure how we can check that except looking at logs with CPL_DEBUG=GDAL
     # for "GDAL: GDALDatasetCopyWholeRaster(): 2048*2048 swaths, bInterleave=1"
     src_ds = gdal.GetDriverByName('MEM').Create('', 2049, 2049, 4)
-    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_27.jp2', src_ds, options=['RESOLUTIONS=1','BLOCKXSIZE=2048', 'BLOCKYSIZE=2048'])
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_27.jp2', src_ds, options=['RESOLUTIONS=1', 'BLOCKXSIZE=2048', 'BLOCKYSIZE=2048'])
     src_ds = None
     #print('End of JP2 decoding')
     out2_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/jp2openjpeg_27.tif', out_ds, options=['TILED=YES'])
@@ -1373,8 +1373,8 @@ def get_element_val(node):
 
 def jp2openjpeg_test_codeblock(filename, codeblock_width, codeblock_height):
     node = gdal.GetJPEG2000Structure(filename, ['ALL=YES'])
-    xcb = 2**(2+int(get_element_val(find_element_with_name(node, "Field", "SPcod_xcb_minus_2"))))
-    ycb = 2**(2+int(get_element_val(find_element_with_name(node, "Field", "SPcod_ycb_minus_2"))))
+    xcb = 2**(2 + int(get_element_val(find_element_with_name(node, "Field", "SPcod_xcb_minus_2"))))
+    ycb = 2**(2 + int(get_element_val(find_element_with_name(node, "Field", "SPcod_ycb_minus_2"))))
     if xcb != codeblock_width or ycb != codeblock_height:
         return False
     return True
@@ -1464,10 +1464,10 @@ def jp2openjpeg_30():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
     ct = gdal.ColorTable()
-    ct.SetColorEntry(0, (255,255,255,255))
-    ct.SetColorEntry(1, (255,255,0,255))
-    ct.SetColorEntry(2, (255,0,255,255))
-    ct.SetColorEntry(3, (0,255,255,255))
+    ct.SetColorEntry(0, (255, 255, 255, 255))
+    ct.SetColorEntry(1, (255, 255, 0, 255))
+    ct.SetColorEntry(2, (255, 0, 255, 255))
+    ct.SetColorEntry(3, (0, 255, 255, 255))
     src_ds.GetRasterBand(1).SetRasterColorTable(ct)
 
     tests = [([], False),
@@ -1487,10 +1487,10 @@ def jp2openjpeg_30():
             return 'fail'
         ct = out_ds.GetRasterBand(1).GetRasterColorTable()
         if ct.GetCount() != 4 or \
-           ct.GetColorEntry(0) != (255,255,255,255) or \
-           ct.GetColorEntry(1) != (255,255,0,255) or \
-           ct.GetColorEntry(2) != (255,0,255,255) or \
-           ct.GetColorEntry(3) != (0,255,255,255):
+           ct.GetColorEntry(0) != (255, 255, 255, 255) or \
+           ct.GetColorEntry(1) != (255, 255, 0, 255) or \
+           ct.GetColorEntry(2) != (255, 0, 255, 255) or \
+           ct.GetColorEntry(3) != (0, 255, 255, 255):
             gdaltest.post_reason('Wrong color table entry.')
             return 'fail'
         del out_ds
@@ -1504,18 +1504,18 @@ def jp2openjpeg_30():
     # Test with c4 != 255
     src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
     ct = gdal.ColorTable()
-    ct.SetColorEntry(0, (0,0,0,0))
-    ct.SetColorEntry(1, (255,255,0,255))
-    ct.SetColorEntry(2, (255,0,255,255))
-    ct.SetColorEntry(3, (0,255,255,255))
+    ct.SetColorEntry(0, (0, 0, 0, 0))
+    ct.SetColorEntry(1, (255, 255, 0, 255))
+    ct.SetColorEntry(2, (255, 0, 255, 255))
+    ct.SetColorEntry(3, (0, 255, 255, 255))
     src_ds.GetRasterBand(1).SetRasterColorTable(ct)
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_30.jp2', src_ds)
     ct = out_ds.GetRasterBand(1).GetRasterColorTable()
     if ct.GetCount() != 4 or \
-        ct.GetColorEntry(0) != (0,0,0,0) or \
-        ct.GetColorEntry(1) != (255,255,0,255) or \
-        ct.GetColorEntry(2) != (255,0,255,255) or \
-        ct.GetColorEntry(3) != (0,255,255,255):
+        ct.GetColorEntry(0) != (0, 0, 0, 0) or \
+        ct.GetColorEntry(1) != (255, 255, 0, 255) or \
+        ct.GetColorEntry(2) != (255, 0, 255, 255) or \
+        ct.GetColorEntry(3) != (0, 255, 255, 255):
         gdaltest.post_reason('Wrong color table entry.')
         return 'fail'
     del out_ds
@@ -1524,18 +1524,18 @@ def jp2openjpeg_30():
     # Same but with CT_COMPONENTS=3
     src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
     ct = gdal.ColorTable()
-    ct.SetColorEntry(0, (0,0,0,0))
-    ct.SetColorEntry(1, (255,255,0,255))
-    ct.SetColorEntry(2, (255,0,255,255))
-    ct.SetColorEntry(3, (0,255,255,255))
+    ct.SetColorEntry(0, (0, 0, 0, 0))
+    ct.SetColorEntry(1, (255, 255, 0, 255))
+    ct.SetColorEntry(2, (255, 0, 255, 255))
+    ct.SetColorEntry(3, (0, 255, 255, 255))
     src_ds.GetRasterBand(1).SetRasterColorTable(ct)
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_30.jp2', src_ds, options=['CT_COMPONENTS=3'])
     ct = out_ds.GetRasterBand(1).GetRasterColorTable()
     if ct.GetCount() != 4 or \
-        ct.GetColorEntry(0) != (0,0,0,255) or \
-        ct.GetColorEntry(1) != (255,255,0,255) or \
-        ct.GetColorEntry(2) != (255,0,255,255) or \
-        ct.GetColorEntry(3) != (0,255,255,255):
+        ct.GetColorEntry(0) != (0, 0, 0, 255) or \
+        ct.GetColorEntry(1) != (255, 255, 0, 255) or \
+        ct.GetColorEntry(2) != (255, 0, 255, 255) or \
+        ct.GetColorEntry(3) != (0, 255, 255, 255):
         gdaltest.post_reason('Wrong color table entry.')
         return 'fail'
     del out_ds
@@ -1863,7 +1863,7 @@ def jp2openjpeg_38():
     src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
     wkt = """PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",100,1]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]"""
     src_ds.SetProjection(wkt)
-    src_ds.SetGeoTransform([0,60,0,0,0,-60])
+    src_ds.SetGeoTransform([0, 60, 0, 0, 0, -60])
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_38.jp2', src_ds, options=['GeoJP2=NO'])
     if out_ds.GetProjectionRef() != wkt:
         gdaltest.post_reason('fail')
@@ -1905,7 +1905,7 @@ def jp2openjpeg_39():
 
     # No metadata
     src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
-    src_ds.SetGeoTransform([0,60,0,0,0,-60])
+    src_ds.SetGeoTransform([0, 60, 0, 0, 0, -60])
     gdal.SetConfigOption('GMLJP2OVERRIDE', '/vsimem/override.gml')
     # This GML has srsName only on RectifiedGrid (taken from D.2.2.2 from DGIWG_Profile_of_JPEG2000_for_Georeferenced_Imagery.pdf)
     gdal.FileFromMemBuffer('/vsimem/override.gml', """<?xml version="1.0" encoding="UTF-8"?>
@@ -1979,7 +1979,7 @@ def jp2openjpeg_40():
 
     # No metadata
     src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
-    src_ds.SetGeoTransform([0,60,0,0,0,-60])
+    src_ds.SetGeoTransform([0, 60, 0, 0, 0, -60])
     gdal.SetConfigOption('GMLJP2OVERRIDE', '/vsimem/override.gml')
 
     gdal.FileFromMemBuffer('/vsimem/override.gml', """<?xml version="1.0" encoding="UTF-8"?>
@@ -2136,7 +2136,7 @@ def jp2openjpeg_42():
         return 'fail'
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
-    gcps = [gdal.GCP(0,1,2,3,4)]
+    gcps = [gdal.GCP(0, 1, 2, 3, 4)]
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
@@ -2178,7 +2178,7 @@ def jp2openjpeg_42():
         return 'fail'
     # Add projection and geotransform
     ds.SetProjection(sr.ExportToWkt())
-    ds.SetGeoTransform([0,1,2,3,4,5])
+    ds.SetGeoTransform([0, 1, 2, 3, 4, 5])
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
@@ -2190,7 +2190,7 @@ def jp2openjpeg_42():
         gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
-    if ds.GetGeoTransform() != (0,1,2,3,4,5):
+    if ds.GetGeoTransform() != (0, 1, 2, 3, 4, 5):
         gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
@@ -2201,7 +2201,7 @@ def jp2openjpeg_42():
         return 'fail'
     # Remove projection and geotransform
     ds.SetProjection('')
-    ds.SetGeoTransform([0,1,0,0,0,1])
+    ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
@@ -2213,7 +2213,7 @@ def jp2openjpeg_42():
         gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
-    if ds.GetGeoTransform() != (0,1,0,0,0,1):
+    if ds.GetGeoTransform() != (0, 1, 0, 0, 0, 1):
         gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
@@ -2226,13 +2226,13 @@ def jp2openjpeg_42():
     # Create file with georef boxes before codestream, and disable GMLJP2
     src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
     src_ds.SetProjection(sr.ExportToWkt())
-    src_ds.SetGeoTransform([0,1,2,3,4,5])
+    src_ds.SetGeoTransform([0, 1, 2, 3, 4, 5])
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_42.jp2', src_ds, options=['GMLJP2=NO'])
     del out_ds
 
     # Modify geotransform
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
-    ds.SetGeoTransform([1,2,3,4,5,6])
+    ds.SetGeoTransform([1, 2, 3, 4, 5, 6])
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
@@ -2240,7 +2240,7 @@ def jp2openjpeg_42():
 
     # Check it and that we don't have GMLJP2
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
-    if ds.GetGeoTransform() != (1,2,3,4,5,6):
+    if ds.GetGeoTransform() != (1, 2, 3, 4, 5, 6):
         gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
@@ -2253,17 +2253,17 @@ def jp2openjpeg_42():
     # Create file with georef boxes before codestream, and disable GeoJP2
     src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
     src_ds.SetProjection(sr.ExportToWkt())
-    src_ds.SetGeoTransform([2,3,0,4,0,-5])
+    src_ds.SetGeoTransform([2, 3, 0, 4, 0, -5])
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_42.jp2', src_ds, options=['GeoJP2=NO'])
     del out_ds
 
     # Modify geotransform
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
-    if ds.GetGeoTransform() != (2,3,0,4,0,-5):
+    if ds.GetGeoTransform() != (2, 3, 0, 4, 0, -5):
         gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
-    ds.SetGeoTransform([1,2,0,3,0,-4])
+    ds.SetGeoTransform([1, 2, 0, 3, 0, -4])
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
@@ -2271,7 +2271,7 @@ def jp2openjpeg_42():
 
     # Check it
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
-    if ds.GetGeoTransform() != (1,2,0,3,0,-4):
+    if ds.GetGeoTransform() != (1, 2, 0, 3, 0, -4):
         gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
@@ -2280,7 +2280,7 @@ def jp2openjpeg_42():
         print(ds.GetMetadataDomainList())
         return 'fail'
     # Add GCPs
-    gcps = [gdal.GCP(0,1,2,3,4)]
+    gcps = [gdal.GCP(0, 1, 2, 3, 4)]
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
@@ -3080,11 +3080,11 @@ def jp2openjpeg_45():
     # Test serializing GDAL metadata
     true = True
     conf = {"root_instance": {"metadata": [{"gdal_metadata": true}]}}
-    src_ds = gdal.GetDriverByName('MEM').Create('',10,10)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10)
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
     src_ds.SetProjection(sr.ExportToWkt())
-    src_ds.SetGeoTransform([450000,1,0,5000000,0,-1])
+    src_ds.SetGeoTransform([450000, 1, 0, 5000000, 0, -1])
     src_ds.SetMetadataItem('FOO', 'BAR')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
     del out_ds
@@ -3107,7 +3107,7 @@ def jp2openjpeg_45():
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 
     # Test writing&reading a gmljp2:featureMember pointing to a remote resource
-    conf = {"root_instance":{"gml_filelist": [{"remote_resource":"https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/expected_gml_gml32.gml"}]}}
+    conf = {"root_instance": {"gml_filelist": [{"remote_resource": "https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/expected_gml_gml32.gml"}]}}
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
     del out_ds
 
@@ -3203,7 +3203,7 @@ yeah: """) < 0:
     ]:
 
         gdal.FileFromMemBuffer("/vsimem/template.xml", invalid_template)
-        gdal.FileFromMemBuffer("/vsimem/source.xml","""<A/>""")
+        gdal.FileFromMemBuffer("/vsimem/source.xml", """<A/>""")
 
         gdal.ErrorReset()
         gdal.PushErrorHandler()
@@ -3227,7 +3227,7 @@ yeah: """) < 0:
             return 'fail'
 
     # Nonexistent template.
-    gdal.FileFromMemBuffer("/vsimem/source.xml","""<A/>""")
+    gdal.FileFromMemBuffer("/vsimem/source.xml", """<A/>""")
     conf = {
     "root_instance": {
         "metadata": [
@@ -3251,7 +3251,7 @@ yeah: """) < 0:
 
     # Nonexistent source
     gdal.FileFromMemBuffer(
-        "/vsimem/template.xml","""<gmljp2:metadata></gmljp2:metadata>""")
+        "/vsimem/template.xml", """<gmljp2:metadata></gmljp2:metadata>""")
     conf = {
     "root_instance": {
         "metadata": [
@@ -3274,8 +3274,8 @@ yeah: """) < 0:
     gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
 
     # Invalid source
-    gdal.FileFromMemBuffer("/vsimem/template.xml","""<gmljp2:metadata></gmljp2:metadata>""")
-    gdal.FileFromMemBuffer("/vsimem/source.xml","""<A""")
+    gdal.FileFromMemBuffer("/vsimem/template.xml", """<gmljp2:metadata></gmljp2:metadata>""")
+    gdal.FileFromMemBuffer("/vsimem/source.xml", """<A""")
     conf = {
     "root_instance": {
         "metadata": [
@@ -3341,7 +3341,7 @@ def jp2openjpeg_48():
 
     ds = gdal.Open('data/byte_tile_2048.jp2')
     (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
-    if (blockxsize, blockysize) != (20,20):
+    if (blockxsize, blockysize) != (20, 20):
         gdaltest.post_reason('fail')
         print(blockxsize, blockysize)
         return 'fail'
@@ -3572,13 +3572,13 @@ def jp2openjpeg_49():
         gdal.Unlink('/vsimem/byte_nogeoref.j2w')
 
         if gt != expected_gt:
-            gdaltest.post_reason('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            gdaltest.post_reason('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
             print('Got ' + str(gt))
             print('Expected ' + str(expected_gt))
             return 'fail'
 
         if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
-            gdaltest.post_reason('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            gdaltest.post_reason('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
             print('Got ' + srs_wkt)
             print('Expected ' + expected_srs)
             return 'fail'
@@ -3629,13 +3629,13 @@ def jp2openjpeg_49():
         gdal.Unlink('/vsimem/inconsitant_geojp2_gmljp2.j2w')
 
         if gt != expected_gt:
-            gdaltest.post_reason('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            gdaltest.post_reason('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
             print('Got ' + str(gt))
             print('Expected ' + str(expected_gt))
             return 'fail'
 
         if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
-            gdaltest.post_reason('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            gdaltest.post_reason('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
             print('Got ' + srs_wkt)
             print('Expected ' + expected_srs)
             return 'fail'

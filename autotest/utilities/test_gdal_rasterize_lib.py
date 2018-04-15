@@ -54,7 +54,7 @@ def test_gdal_rasterize_lib_1():
 
     target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 3,
                                                     gdal.GDT_Byte)
-    target_ds.SetGeoTransform((1000,1,0,1100,0,-1))
+    target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
     # Create a layer to rasterize from.
@@ -89,7 +89,7 @@ def test_gdal_rasterize_lib_1():
 
     rast_lyr.CreateFeature(feat)
 
-    ret = gdal.Rasterize(target_ds, vector_ds, bands=[3,2,1], burnValues=[200,220,240], layers='rast1')
+    ret = gdal.Rasterize(target_ds, vector_ds, bands=[3, 2, 1], burnValues=[200, 220, 240], layers='rast1')
     if ret != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -142,7 +142,7 @@ def test_gdal_rasterize_lib_3():
     gt_ref = ds_ref.GetGeoTransform()
     gt = ds.GetGeoTransform()
     for i in range(6):
-        if (abs(gt[i]-gt_ref[i])>1e-6):
+        if (abs(gt[i] - gt_ref[i]) > 1e-6):
             gdaltest.post_reason('did not get expected geotransform')
             print(gt)
             print(gt_ref)
@@ -323,7 +323,7 @@ def test_gdal_rasterize_lib_4():
     for optim in ['RASTER', 'VECTOR', 'AUTO']:
         target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 3,
                                                         gdal.GDT_Byte)
-        target_ds.SetGeoTransform((1000,1,0,1100,0,-1))
+        target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
         target_ds.SetProjection(sr_wkt)
 
         # Create a layer to rasterize from.
@@ -358,7 +358,7 @@ def test_gdal_rasterize_lib_4():
 
         rast_lyr.CreateFeature(feat)
 
-        ret = gdal.Rasterize(target_ds, vector_ds, bands=[3,2,1], burnValues=[200,220,240], layers='rast1', optim=optim)
+        ret = gdal.Rasterize(target_ds, vector_ds, bands=[3, 2, 1], burnValues=[200, 220, 240], layers='rast1', optim=optim)
         if ret != 1:
             gdaltest.post_reason('fail')
             return 'fail'

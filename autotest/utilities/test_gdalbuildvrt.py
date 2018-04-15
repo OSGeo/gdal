@@ -249,7 +249,7 @@ def test_gdalbuildvrt_7():
         return 'skip'
 
     out_ds = gdal.GetDriverByName('GTiff').Create('tmp/vrtnull1.tif', 20, 10, 3, gdal.GDT_UInt16)
-    out_ds.SetGeoTransform([2,0.1,0,49,0,-0.1])
+    out_ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:4326')
     out_ds.SetProjection(srs.ExportToWkt())
@@ -269,7 +269,7 @@ def test_gdalbuildvrt_7():
     out_ds = None
 
     out_ds = gdal.GetDriverByName('GTiff').Create('tmp/vrtnull2.tif', 20, 10, 3, gdal.GDT_UInt16)
-    out_ds.SetGeoTransform([2,0.1,0,49,0,-0.1])
+    out_ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:4326')
     out_ds.SetProjection(srs.ExportToWkt())
@@ -366,7 +366,7 @@ def test_gdalbuildvrt_10():
         return 'skip'
 
     out_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalbuildvrt_10_1.tif', 10, 10, 1, gdal.GDT_Byte, options=['NBITS=1', 'PHOTOMETRIC=MINISWHITE'])
-    out_ds.SetGeoTransform([2,0.1,0,49,0,-0.1])
+    out_ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:4326')
     out_ds.SetProjection(srs.ExportToWkt())
@@ -375,7 +375,7 @@ def test_gdalbuildvrt_10():
     out_ds = None
 
     out_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalbuildvrt_10_2.tif', 10, 10, 1, gdal.GDT_Byte, options=['NBITS=1', 'PHOTOMETRIC=MINISWHITE'])
-    out_ds.SetGeoTransform([2,0.1,0,49,0,-0.1])
+    out_ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:4326')
     out_ds.SetProjection(srs.ExportToWkt())

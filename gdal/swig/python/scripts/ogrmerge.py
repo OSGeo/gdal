@@ -218,10 +218,10 @@ def process(argv, progress=None, progress_arg=None):
     i = 0
     while i < len(argv):
         arg = argv[i]
-        if (arg == '-f' or arg == '-of') and i+1 < len(argv):
+        if (arg == '-f' or arg == '-of') and i + 1 < len(argv):
             i = i + 1
             output_format = argv[i]
-        elif arg == '-o' and i+1 < len(argv):
+        elif arg == '-o' and i + 1 < len(argv):
             i = i + 1
             dst_filename = argv[i]
         elif arg == '-progress':
@@ -243,34 +243,34 @@ def process(argv, progress=None, progress_arg=None):
             update = True
         elif arg == '-single':
             single_layer = True
-        elif arg == '-a_srs' and i+1 < len(argv):
+        elif arg == '-a_srs' and i + 1 < len(argv):
             i = i + 1
             a_srs = argv[i]
-        elif arg == '-s_srs' and i+1 < len(argv):
+        elif arg == '-s_srs' and i + 1 < len(argv):
             i = i + 1
             s_srs = argv[i]
-        elif arg == '-t_srs' and i+1 < len(argv):
+        elif arg == '-t_srs' and i + 1 < len(argv):
             i = i + 1
             t_srs = argv[i]
-        elif arg == '-nln' and i+1 < len(argv):
+        elif arg == '-nln' and i + 1 < len(argv):
             i = i + 1
             layer_name_template = argv[i]
-        elif arg == '-field_strategy' and i+1 < len(argv):
+        elif arg == '-field_strategy' and i + 1 < len(argv):
             i = i + 1
             field_strategy = argv[i]
-        elif arg == '-src_layer_field_name' and i+1 < len(argv):
+        elif arg == '-src_layer_field_name' and i + 1 < len(argv):
             i = i + 1
             src_layer_field_name = argv[i]
-        elif arg == '-src_layer_field_content' and i+1 < len(argv):
+        elif arg == '-src_layer_field_content' and i + 1 < len(argv):
             i = i + 1
             src_layer_field_content = argv[i]
-        elif arg == '-dsco' and i+1 < len(argv):
+        elif arg == '-dsco' and i + 1 < len(argv):
             i = i + 1
             dsco.append(argv[i])
-        elif arg == '-lco' and i+1 < len(argv):
+        elif arg == '-lco' and i + 1 < len(argv):
             i = i + 1
             lco.append(argv[i])
-        elif arg == '-src_geom_type' and i+1 < len(argv):
+        elif arg == '-src_geom_type' and i + 1 < len(argv):
             i = i + 1
             src_geom_type_names = argv[i].split(',')
             for src_geom_type_name in src_geom_type_names:
@@ -433,7 +433,7 @@ def process(argv, progress=None, progress_arg=None):
                                                 src_ds_idx)
                 layer_name = layer_name.replace('{LAYER_NAME}',
                                                 src_lyr.GetName())
-                layer_name = layer_name.replace('{LAYER_INDEX}',  '%d' %
+                layer_name = layer_name.replace('{LAYER_INDEX}', '%d' %
                                                 src_lyr_idx)
 
                 if t_srs is not None:
@@ -524,7 +524,7 @@ def process(argv, progress=None, progress_arg=None):
                                                 src_ds_idx)
                 layer_name = layer_name.replace('{LAYER_NAME}',
                                                 src_lyr.GetName())
-                layer_name = layer_name.replace('{LAYER_INDEX}',  '%d' %
+                layer_name = layer_name.replace('{LAYER_INDEX}', '%d' %
                                                 src_lyr_idx)
 
                 if t_srs is not None:

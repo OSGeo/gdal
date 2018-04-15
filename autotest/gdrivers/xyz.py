@@ -85,22 +85,22 @@ def xyz_3():
 """
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
     ds = gdal.Open('/vsimem/grid.xyz')
-    buf = ds.ReadRaster(0,2,2,1)
+    buf = ds.ReadRaster(0, 2, 2, 1)
     bytes = struct.unpack('B' * 2, buf)
     if bytes != (69, 70):
         print(buf)
         return 'fail'
-    buf = ds.ReadRaster(0,1,2,1)
+    buf = ds.ReadRaster(0, 1, 2, 1)
     bytes = struct.unpack('B' * 2, buf)
     if bytes != (67, 68):
         print(buf)
         return 'fail'
-    buf = ds.ReadRaster(0,0,2,1)
+    buf = ds.ReadRaster(0, 0, 2, 1)
     bytes = struct.unpack('B' * 2, buf)
     if bytes != (65, 66):
         print(buf)
         return 'fail'
-    buf = ds.ReadRaster(0,2,2,1)
+    buf = ds.ReadRaster(0, 2, 2, 1)
     bytes = struct.unpack('B' * 2, buf)
     if bytes != (69, 70):
         print(buf)
@@ -115,7 +115,7 @@ def xyz_3():
 # and missing value in the middle. And a not so exact spacing
 
 def xyz_4_checkline(ds, i, expected_bytes):
-    buf = ds.ReadRaster(0,i,ds.RasterXSize,1)
+    buf = ds.ReadRaster(0, i, ds.RasterXSize, 1)
     bytes = struct.unpack('B' * ds.RasterXSize, buf)
     if bytes != expected_bytes:
         return False
@@ -141,7 +141,7 @@ def xyz_4():
     got_gt = ds.GetGeoTransform()
     expected_gt = (440660.0, 60.0, 0.0, 3751350.0, 0.0, -120.0)
     for i in range(6):
-        if abs(got_gt[i]-expected_gt[i]) > 1e-5:
+        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
             gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)
@@ -156,7 +156,7 @@ def xyz_4():
     if ds.GetRasterBand(1).GetNoDataValue() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    for i in [0,1,2,1,0,2,0,2,0,1,2]:
+    for i in [0, 1, 2, 1, 0, 2, 0, 2, 0, 1, 2]:
         if not xyz_4_checkline(ds, i, expected[i]):
             gdaltest.post_reason('fail')
             return 'fail'
@@ -189,7 +189,7 @@ def xyz_5():
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        if abs(got_gt[i]-expected_gt[i]) > 1e-5:
+        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
             gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)
@@ -222,7 +222,7 @@ def xyz_6():
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        if abs(got_gt[i]-expected_gt[i]) > 1e-5:
+        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
             gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)
@@ -266,7 +266,7 @@ def xyz_7():
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        if abs(got_gt[i]-expected_gt[i]) > 1e-8:
+        if abs(got_gt[i] - expected_gt[i]) > 1e-8:
             gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)

@@ -60,7 +60,7 @@ def main(argv=None):
     bComputeMinMax = False
     bShowGCPs = True
     bShowMetadata = True
-    bShowRAT=True
+    bShowRAT = True
     bStats = False
     bApproxStats = True
     bShowColorTable = True
@@ -126,7 +126,7 @@ def main(argv=None):
             bShowRAT = False
         elif EQUAL(argv[i], "-noct"):
             bShowColorTable = False
-        elif EQUAL(argv[i], "-mdd") and i < nArgc-1:
+        elif EQUAL(argv[i], "-mdd") and i < nArgc - 1:
             i = i + 1
             papszExtraMDDomains.append(argv[i])
         elif EQUAL(argv[i], "-nofl"):
@@ -333,15 +333,15 @@ def main(argv=None):
                           hDataset.RasterXSize, \
                           hDataset.RasterYSize)
     GDALInfoReportCorner(hDataset, hTransform, "Center", \
-                          hDataset.RasterXSize/2.0, \
-                          hDataset.RasterYSize/2.0)
+                          hDataset.RasterXSize / 2.0, \
+                          hDataset.RasterYSize / 2.0)
 
 # ====================================================================
 #      Loop over bands.
 # ====================================================================
     for iBand in range(hDataset.RasterCount):
 
-        hBand = hDataset.GetRasterBand(iBand+1)
+        hBand = hDataset.GetRasterBand(iBand + 1)
 
         #if( bSample )
         #{
@@ -353,7 +353,7 @@ def main(argv=None):
         #}
 
         (nBlockXSize, nBlockYSize) = hBand.GetBlockSize()
-        print("Band %d Block=%dx%d Type=%s, ColorInterp=%s" % (iBand+1, \
+        print("Band %d Block=%dx%d Type=%s, ColorInterp=%s" % (iBand + 1, \
                 nBlockXSize, nBlockYSize, \
                 gdal.GetDataTypeName(hBand.DataType), \
                 gdal.GetColorInterpretationName( \
@@ -434,7 +434,7 @@ def main(argv=None):
 
                     if pszResampling is not None \
                        and len(pszResampling) >= 12 \
-                       and EQUAL(pszResampling[0:12],"AVERAGE_BIT2"):
+                       and EQUAL(pszResampling[0:12], "AVERAGE_BIT2"):
                         line = line + "*"
 
                 else:

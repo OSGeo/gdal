@@ -85,7 +85,7 @@ def wcs_2():
         return 'skip'
 
     # first, copy to tmp directory.
-    open('tmp/geoserver.wcs','w').write(open('data/geoserver.wcs').read())
+    open('tmp/geoserver.wcs', 'w').write(open('data/geoserver.wcs').read())
 
     gdaltest.wcs_ds = None
     gdaltest.wcs_ds = gdal.Open('tmp/geoserver.wcs')
@@ -122,7 +122,7 @@ def wcs_3():
     gt = gdaltest.wcs_ds.GetGeoTransform()
     expected_gt = (-130.85167999999999, 0.070036907426246159, 0.0, 54.114100000000001, 0.0, -0.055867725752508368)
     for i in range(6):
-        if abs(gt[i]- expected_gt[i]) > 0.00001:
+        if abs(gt[i] - expected_gt[i]) > 0.00001:
             gdaltest.post_reason('wrong geotransform')
             print(gt)
             return 'fail'
@@ -196,7 +196,7 @@ def old_wcs_2():
         return 'skip'
 
     # first, copy to tmp directory.
-    open('tmp/srtmplus.wcs','w').write(open('data/srtmplus.wcs').read())
+    open('tmp/srtmplus.wcs', 'w').write(open('data/srtmplus.wcs').read())
 
     gdaltest.wcs_ds = None
     gdaltest.wcs_ds = gdal.Open('tmp/srtmplus.wcs')
@@ -228,8 +228,8 @@ def old_wcs_3():
         return 'fail'
 
     gt = gdaltest.wcs_ds.GetGeoTransform()
-    if abs(gt[0]- -180.0041667) > 0.00001 \
-       or abs(gt[3]- 90.004167) > 0.00001 \
+    if abs(gt[0] - -180.0041667) > 0.00001 \
+       or abs(gt[3] - 90.004167) > 0.00001 \
        or abs(gt[1] - 0.00833333) > 0.00001 \
        or abs(gt[2] - 0) > 0.00001 \
        or abs(gt[5] - -0.00833333) > 0.00001 \
@@ -386,7 +386,7 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
                 ok = "not ok\ngot:  " + got + "\nhave: " + have
                 global wcs_6_ok
                 wcs_6_ok = False
-            print('test ' + server + ' ' + test + ' WCS ' + version + ' '+ok)
+            print('test ' + server + ' ' + test + ' WCS ' + version + ' ' + ok)
         self.Respond(request, server, version, test)
         return
 
@@ -554,7 +554,7 @@ def wcs_6():
             for i, c in enumerate(projwin):
                 projwin[i] = int(c)
             options = [cache]
-            tmpfile = "tmp/"+server+version+".tiff"
+            tmpfile = "tmp/" + server + version + ".tiff"
             gdal.Translate(tmpfile, ds, projWin=projwin, width=size, options=options)
             os.remove(tmpfile)
 
@@ -570,7 +570,7 @@ def wcs_6():
                     wcs_6_ok = False
                     break
                 options = [cache]
-                gdal.Translate(tmpfile, ds, srcWin=[0,0,2,2], options=options)
+                gdal.Translate(tmpfile, ds, srcWin=[0, 0, 2, 2], options=options)
                 os.remove(tmpfile)
             else:
                 print(server + ' ' + version + ' non_scaled skipped (no response file)')

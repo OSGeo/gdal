@@ -62,7 +62,7 @@ if __name__ == '__main__':
         arg = argv[i]
 
         if arg == '-req':
-            req = (float(argv[i+1]), float(argv[i+2]), int(argv[i+3]))
+            req = (float(argv[i + 1]), float(argv[i + 2]), int(argv[i + 3]))
             i = i + 3
 
         elif arg == '-ioor':
