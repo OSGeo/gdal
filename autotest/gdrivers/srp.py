@@ -181,7 +181,7 @@ gdaltest_list = [
     srp_5,
     srp_6,
     srp_cleanup
- ]
+    ]
 
 if __name__ == '__main__':
 

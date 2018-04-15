@@ -318,10 +318,10 @@ netcdf_cfproj_tuples = [
     ("TM", "Transverse Mercator", "EPSG:32655",  # UTM Zone 55N
         "transverse_mercator",
         [
-         'scale_factor_at_central_meridian',
+            'scale_factor_at_central_meridian',
         'longitude_of_central_meridian',
         'latitude_of_projection_origin',
-         'false_easting', 'false_northing'],
+            'false_easting', 'false_northing'],
          ['projection_x_coordinate','projection_y_coordinate']),
     ("GEOS", "Geostationary_satellite",
         "+proj=geos +h=35785831 +lon_0=145 +datum=WGS84 +sweep=y +units=m",

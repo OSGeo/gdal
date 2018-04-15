@@ -1397,7 +1397,7 @@ def rda_bad_tile():
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
         'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-         'GBDX_USERNAME': 'user_name',
+        'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
 
