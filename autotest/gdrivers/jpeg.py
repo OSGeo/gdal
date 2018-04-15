@@ -152,7 +152,7 @@ def jpeg_3():
 
     try:
         os.stat('tmp/byte.wld')
-    except:
+    except OSError:
         gdaltest.post_reason('should have .wld file at that point')
         return 'fail'
 
@@ -433,7 +433,7 @@ def jpeg_10():
 
     try:
         os.remove('data/12bit_rose_extract.jpg.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/12bit_rose_extract.jpg')
@@ -447,7 +447,7 @@ def jpeg_10():
 
     try:
         os.remove('data/12bit_rose_extract.jpg.aux.xml')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -582,7 +582,7 @@ def jpeg_16():
     shutil.copy('data/albania.jpg', 'tmp/albania.jpg')
     try:
         os.unlink('tmp/albania.jpg.ovr')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/albania.jpg')

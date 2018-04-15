@@ -46,15 +46,15 @@ def contour_1():
 
     try:
         os.remove('tmp/contour.shp')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/contour.dbf')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/contour.shx')
-    except:
+    except OSError:
         pass
 
     drv = gdal.GetDriverByName('GTiff')
@@ -136,15 +136,15 @@ def contour_2():
 
     try:
         os.remove('tmp/contour.shp')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/contour.dbf')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/contour.shx')
-    except:
+    except OSError:
         pass
 
     ogr_ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/contour.shp')
@@ -206,7 +206,7 @@ def contour_cleanup():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/contour.shp')
     try:
         os.remove('tmp/gdal_contour.tif')
-    except:
+    except OSError:
         pass
 
     return 'success'

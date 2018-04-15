@@ -610,7 +610,7 @@ def gdal_api_proxy_sub_clean():
         gdaltest.api_proxy_server_p.wait()
     try:
         os.unlink('tmp/gdalapiproxysocket')
-    except:
+    except OSError:
         pass
 
     return 'success'

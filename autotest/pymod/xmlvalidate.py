@@ -321,7 +321,7 @@ def download_ogc_schemas(ogc_schemas_url='http://schemas.opengis.net/SCHEMAS_OPE
                          max_download_duration=None):
     try:
         os.mkdir(target_dir)
-    except:
+    except OSError:
         pass
 
     try:
@@ -341,20 +341,20 @@ def download_ogc_schemas(ogc_schemas_url='http://schemas.opengis.net/SCHEMAS_OPE
         gdaltest.unzip(target_dir + '/' + target_subdir, target_dir + '/' + 'SCHEMAS_OPENGIS_NET.zip')
         try:
             os.stat(target_dir + '/' + target_subdir + '/wfs')
-        except:
+        except OSError:
             print('Cannot unzip SCHEMAS_OPENGIS_NET.zip')
             return False
 
     try:
         os.stat(target_dir + '/' + target_subdir + '/xlink.xsd')
-    except:
+    except OSError:
          if not gdaltest.download_file(xlink_xsd_url, target_dir + '/' + target_subdir + '/xlink.xsd', base_dir='.', force_download=force_download, max_download_duration=max_download_duration):
              if not gdaltest.download_file('http://even.rouault.free.fr/xlink.xsd', target_dir + '/' + target_subdir + '/xlink.xsd', base_dir='.', force_download=force_download, max_download_duration=max_download_duration):
                 return False
 
     try:
         os.stat(target_dir + '/' + target_subdir + '/xml.xsd')
-    except:
+    except OSError:
         if not gdaltest.download_file(xml_xsd_url, target_dir + '/' + target_subdir + '/xml.xsd', base_dir='.', force_download=force_download, max_download_duration=max_download_duration):
             if not gdaltest.download_file('http://even.rouault.free.fr/xml.xsd', target_dir + '/' + target_subdir + '/xml.xsd', base_dir='.', force_download=force_download, max_download_duration=max_download_duration):
                 return False
@@ -376,61 +376,61 @@ def download_inspire_schemas(target_dir='.', \
 
     try:
         os.stat(target_dir + '/' + 'inspire_common_1.0.1.zip')
-    except:
+    except OSError:
         gdaltest.download_file('http://inspire.ec.europa.eu/schemas/common/1.0.1.zip', target_dir + '/' + 'inspire_common_1.0.1.zip', base_dir='.', force_download=force_download)
 
     try:
         os.stat(target_dir + '/' + 'inspire_vs_1.0.1.zip')
-    except:
+    except OSError:
         gdaltest.download_file('http://inspire.ec.europa.eu/schemas/inspire_vs/1.0.1.zip', target_dir + '/' + 'inspire_vs_1.0.1.zip', base_dir='.', force_download=force_download)
 
     for subdir in ['', '/common', '/inspire_vs', '/inspire_dls', '/inspire_dls/1.0']:
         try:
             os.mkdir(target_dir + '/' + target_subdir + subdir)
-        except:
+        except OSError:
             pass
 
     try:
         os.stat(target_dir + '/' + target_subdir + '/common/1.0')
-    except:
+    except OSError:
         gdaltest.unzip(target_dir + '/' + target_subdir + '/common', target_dir + '/' + 'inspire_common_1.0.1.zip')
         try:
             os.stat(target_dir + '/' + target_subdir + '/common/1.0')
-        except:
+        except OSError:
             print('Cannot unzip inspire_common_1.0.1.zip')
             return False
 
     try:
         os.stat(target_dir + '/' + target_subdir + '/inspire_vs/1.0')
-    except:
+    except OSError:
         gdaltest.unzip(target_dir + '/' + target_subdir + '/inspire_vs', target_dir + '/' + 'inspire_vs_1.0.1.zip')
         try:
             os.stat(target_dir + '/' + target_subdir + '/inspire_vs/1.0')
-        except:
+        except OSError:
             print('Cannot unzip inspire_vs_1.0.1.zip')
             return False
 
     try:
         os.stat(target_dir + '/' + target_subdir + '/inspire_dls/1.0/inspire_dls.xsd')
-    except:
+    except OSError:
         gdaltest.download_file('http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd', target_dir + '/' + target_subdir + '/inspire_dls/1.0/inspire_dls.xsd', base_dir='.', force_download=force_download)
 
     try:
         os.stat(target_dir + '/' + target_subdir + '/oi/3.0/Orthoimagery.xsd')
-    except:
+    except OSError:
         try:
             os.makedirs(target_dir + '/' + target_subdir + '/oi/3.0')
-        except:
+        except OSError:
             pass
         gdaltest.download_file('http://inspire.ec.europa.eu/schemas/oi/3.0/Orthoimagery.xsd', target_dir + '/' + target_subdir + '/oi/3.0/Orthoimagery.xsd', base_dir='.', force_download=force_download)
         gdaltest.download_file('http://portele.de/ShapeChangeAppinfo.xsd', target_dir + '/' + target_subdir + '/oi/3.0/ShapeChangeAppinfo.xsd', base_dir='.', force_download=force_download)
 
     try:
         os.stat(target_dir + '/' + target_subdir + '/base/3.3/BaseTypes.xsd')
-    except:
+    except OSError:
         try:
             os.makedirs(target_dir + '/' + target_subdir + '/base/3.3')
-        except:
+        except OSError:
             pass
         gdaltest.download_file('http://inspire.ec.europa.eu/schemas/base/3.3/BaseTypes.xsd', target_dir + '/' + target_subdir + '/base/3.3/BaseTypes.xsd', base_dir='.', force_download=force_download)
 
@@ -453,7 +453,7 @@ def has_local_ogc_schemas(path):
         if False:
             try:
                 os.stat(path + '/ogc_catalog.xml')
-            except:
+            except OSError:
                 f = open(path + '/ogc_catalog.xml', 'wb')
                 f.write("""<?xml version="1.0"?>
     <!DOCTYPE catalog PUBLIC "-//OASIS//DTD Entity Resolution XML Catalog V1.0//EN" "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd">

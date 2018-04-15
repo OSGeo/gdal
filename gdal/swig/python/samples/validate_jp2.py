@@ -1240,7 +1240,7 @@ def main():
         try:
             os.stat('SCHEMAS_OPENGIS_NET')
             ogc_schemas_location = 'SCHEMAS_OPENGIS_NET'
-        except:
+        except OSError:
             pass
 
     if ogc_schemas_location is not None:

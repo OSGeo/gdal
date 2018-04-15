@@ -144,7 +144,7 @@ def vrt_read_4():
 
     try:
         import numpy as np
-    except:
+    except ImportError:
         return 'skip'
 
     data = np.zeros((1, 1), np.complex64)
