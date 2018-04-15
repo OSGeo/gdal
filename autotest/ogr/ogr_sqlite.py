@@ -1168,12 +1168,12 @@ def ogr_sqlite_23():
         return 'fail'
 
     fd = shp_layer.GetLayerDefn()
-    fld = fd.GetFieldDefn(0) # area
+    fld = fd.GetFieldDefn(0)  # area
     if not fld.IsIgnored():
         gdaltest.post_reason('AREA unexpectedly not marked as ignored.')
         return 'fail'
 
-    fld = fd.GetFieldDefn(1) # eas_id
+    fld = fd.GetFieldDefn(1)  # eas_id
     if fld.IsIgnored():
         gdaltest.post_reason('EASI unexpectedly marked as ignored.')
         return 'fail'

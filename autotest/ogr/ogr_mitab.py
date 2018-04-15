@@ -682,7 +682,7 @@ def ogr_mitab_20():
                 gdal.SetConfigOption('MITAB_BOUNDS_FILE', 'data/mitab_bounds.txt')
             ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('/vsimem/ogr_mitab_20.' + fmt)
             sr = osr.SpatialReference()
-            if i == 1 or i == 2: # French bounds
+            if i == 1 or i == 2:  # French bounds
                 sr.SetFromUserInput("""PROJCS["RGF93 / Lambert-93",
         GEOGCS["RGF93",
             DATUM["Reseau_Geodesique_Francais_1993",
@@ -699,7 +699,7 @@ def ogr_mitab_20():
         PARAMETER["false_northing",6600000],
         UNIT["Meter",1.0],
         AUTHORITY["EPSG","2154"]]""")
-            elif i == 5: # European bounds
+            elif i == 5:  # European bounds
                 sr.SetFromUserInput("""PROJCS["RGF93 / Lambert-93",
         GEOGCS["RGF93",
             DATUM["Reseau_Geodesique_Francais_1993",
@@ -1700,7 +1700,7 @@ def ogr_mitab_34():
     ds = ogr.Open(filename, update=1)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    lyr.GetNextFeature() # seek to another object
+    lyr.GetNextFeature()  # seek to another object
     geom = f.GetGeometryRef()
     geom.SetPoint_2D(0, -1000, 3000)
     lyr.SetFeature(f)

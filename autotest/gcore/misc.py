@@ -271,9 +271,9 @@ class misc_6_interrupt_callback_class:
 
     def cbk(self, pct, message, user_data):
         if pct > 0.5:
-            return 0 # to stop
+            return 0  # to stop
         else:
-            return 1 # to continue
+            return 1  # to continue
 
 ###############################################################################
 # Test CreateCopy() with a source dataset with various band numbers (including 0) and datatype

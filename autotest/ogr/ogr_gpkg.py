@@ -2076,7 +2076,7 @@ def ogr_gpkg_23():
     fc = sql_lyr.GetFeatureCount()
     f = sql_lyr.GetNextFeature()
     ds.ReleaseResultSet(sql_lyr)
-    if fc != 2: # r-tree and aspatial
+    if fc != 2:  # r-tree and aspatial
         print(fc)
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2103,7 +2103,7 @@ def ogr_gpkg_23():
     fc = sql_lyr.GetFeatureCount()
     f = sql_lyr.GetNextFeature()
     ds.ReleaseResultSet(sql_lyr)
-    if fc != 1: # r-tree
+    if fc != 1:  # r-tree
         print(fc)
         gdaltest.post_reason('fail')
         return 'fail'

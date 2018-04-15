@@ -878,7 +878,7 @@ def visoss_6():
     if gdaltest.webserver_port == 0:
         return 'skip'
 
-    with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'): # 1 MB
+    with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'):  # 1 MB
         with webserver.install_http_handler(webserver.SequentialHandler()):
             f = gdal.VSIFOpenL('/vsioss/oss_fake_bucket4/large_file.bin', 'wb')
     if f is None:
@@ -979,7 +979,7 @@ def visoss_6():
                         '/vsioss/oss_fake_bucket4/large_file_initiate_empty_result.bin',
                         '/vsioss/oss_fake_bucket4/large_file_initiate_invalid_xml_result.bin',
                         '/vsioss/oss_fake_bucket4/large_file_initiate_no_uploadId.bin']:
-        with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'): # 1 MB
+        with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'):  # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
         if f is None:
             gdaltest.post_reason('fail')
@@ -1010,7 +1010,7 @@ def visoss_6():
     with webserver.install_http_handler(handler):
       for filename in ['/vsioss/oss_fake_bucket4/large_file_upload_part_403_error.bin',
                         '/vsioss/oss_fake_bucket4/large_file_upload_part_no_etag.bin']:
-        with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'): # 1 MB
+        with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'):  # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
         if f is None:
             gdaltest.post_reason('fail')
@@ -1039,7 +1039,7 @@ def visoss_6():
 
     filename = '/vsioss/oss_fake_bucket4/large_file_abortmultipart_403_error.bin'
     with webserver.install_http_handler(handler):
-        with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'): # 1 MB
+        with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'):  # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
         if f is None:
             gdaltest.post_reason('fail')
@@ -1071,7 +1071,7 @@ def visoss_6():
 
     filename = '/vsioss/oss_fake_bucket4/large_file_completemultipart_403_error.bin'
     with webserver.install_http_handler(handler):
-        with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'): # 1 MB
+        with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'):  # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
             if f is None:
                 gdaltest.post_reason('fail')

@@ -229,7 +229,7 @@ def ogr_ods_kspread_1():
        feat.GetFieldAsDouble(2) != 3.45 or \
        feat.GetFieldAsDouble(3) != 0.52 or \
        feat.GetFieldAsString(4) != '2012/01/22' or \
-       feat.GetFieldAsString(5) != '22/01/2012 18:49:00': # 2012/01/22 18:49:00
+       feat.GetFieldAsString(5) != '22/01/2012 18:49:00':  # 2012/01/22 18:49:00
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'

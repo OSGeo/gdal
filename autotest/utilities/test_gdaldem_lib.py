@@ -584,7 +584,7 @@ def test_gdaldem_lib_nodata():
     if cs != 10:
         gdaltest.post_reason('Bad checksum')
         print(cs)
-        print(ds.ReadAsArray()) # Should be 0 0 0 0 181 0 0 0 0
+        print(ds.ReadAsArray())  # Should be 0 0 0 0 181 0 0 0 0
         return 'fail'
 
     # Same with floating point
@@ -605,7 +605,7 @@ def test_gdaldem_lib_nodata():
     if cs != 10:
         gdaltest.post_reason('Bad checksum')
         print(cs)
-        print(ds.ReadAsArray()) # Should be 0 0 0 0 181 0 0 0 0
+        print(ds.ReadAsArray())  # Should be 0 0 0 0 181 0 0 0 0
         return 'fail'
 
     return 'success'

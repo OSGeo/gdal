@@ -580,7 +580,7 @@ def vrt_read_14():
 
     src_ds = gdal.Open('data/byte.tif')
     mem_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrt_read_14.tif', src_ds)
-    mem_ds.FlushCache() # hum this should not be necessary ideally
+    mem_ds.FlushCache()  # hum this should not be necessary ideally
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="4" rasterYSize="4">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>

@@ -376,9 +376,9 @@ def clean_tmp():
 
 def testCreateCopyInterruptCallback(pct, message, user_data):
     if pct > 0.5:
-        return 0 # to stop
+        return 0  # to stop
     else:
-        return 1 # to continue
+        return 1  # to continue
 
 ###############################################################################
 
