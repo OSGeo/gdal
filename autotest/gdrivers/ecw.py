@@ -92,13 +92,13 @@ def ecw_1():
 
         sdk_off = longname.find('SDK ')
         if sdk_off != -1:
-            gdaltest.ecw_drv.major_version = int(float(longname[sdk_off+4]))
+            gdaltest.ecw_drv.major_version = int(float(longname[sdk_off + 4]))
             sdk_minor_off = longname.find('.', sdk_off)
             if sdk_minor_off >= 0:
-                if longname[sdk_minor_off+1] == 'x':
+                if longname[sdk_minor_off + 1] == 'x':
                     gdaltest.ecw_drv.minor_version = 3
                 else:
-                    gdaltest.ecw_drv.minor_version = int(longname[sdk_minor_off+1])
+                    gdaltest.ecw_drv.minor_version = int(longname[sdk_minor_off + 1])
             else:
                 gdaltest.ecw_drv.minor_version = 0
         else:
@@ -130,17 +130,17 @@ def ecw_2():
 
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    if abs(mean-exp_mean) > 0.5 or abs(stddev-exp_stddev) > 0.5:
+    if abs(mean - exp_mean) > 0.5 or abs(stddev - exp_stddev) > 0.5:
         gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev))
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-467498.5) > 0.1 \
-        or abs(geotransform[1]-16.5475) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-5077883.2825) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -16.5475) > 0.001:
+    if abs(geotransform[0] - 467498.5) > 0.1 \
+        or abs(geotransform[1] - 16.5475) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 5077883.2825) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -16.5475) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -204,17 +204,17 @@ def ecw_4():
 
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    if abs(mean-exp_mean) > 1.5 or abs(stddev-exp_stddev) > 0.5:
+    if abs(mean - exp_mean) > 1.5 or abs(stddev - exp_stddev) > 0.5:
         gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev))
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-467498.5) > 0.1 \
-        or abs(geotransform[1]-16.5475) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-5077883.2825) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -16.5475) > 0.001:
+    if abs(geotransform[0] - 467498.5) > 0.1 \
+        or abs(geotransform[1] - 16.5475) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 5077883.2825) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -16.5475) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -262,7 +262,7 @@ def ecw_6():
 
     # The difference in the stddev is outrageously large between win32 and
     # Linux, but I don't know why.
-    if abs(mean-exp_mean) > 1.5 or abs(stddev-exp_stddev) > 6:
+    if abs(mean - exp_mean) > 1.5 or abs(stddev - exp_stddev) > 6:
         gdaltest.post_reason('mean/stddev of (%g,%g) diffs from '
                               'expected(%g,%g)' % (mean, stddev, exp_mean,
                                                     exp_stddev))
@@ -272,19 +272,19 @@ def ecw_6():
 
     # The difference in the stddev is outrageously large between win32 and
     # Linux, but I don't know why.
-    if abs(mean-exp_mean) > 1.0 or abs(stddev-exp_stddev) > 6:
+    if abs(mean - exp_mean) > 1.0 or abs(stddev - exp_stddev) > 6:
         gdaltest.post_reason('mean/stddev of (%g,%g) diffs from '
                               'expected(%g,%g)' % (mean, stddev, exp_mean,
                                                     exp_stddev))
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-440720) > 0.1 \
-        or abs(geotransform[1]-60) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-3751320) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -60) > 0.001:
+    if abs(geotransform[0] - 440720) > 0.1 \
+        or abs(geotransform[1] - 60) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 3751320) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -329,17 +329,17 @@ def ecw_8():
     (exp_mean, exp_stddev) = (145.57, 43.1712)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    if abs(mean-exp_mean) > 1.0 or abs(stddev-exp_stddev) > 1.0:
+    if abs(mean - exp_mean) > 1.0 or abs(stddev - exp_stddev) > 1.0:
         gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev))
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-440720) > 0.1 \
-        or abs(geotransform[1]-60) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-3751320) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -60) > 0.001:
+    if abs(geotransform[0] - 440720) > 0.1 \
+        or abs(geotransform[1] - 60) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 3751320) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -404,17 +404,17 @@ def ecw_10():
     (exp_mean, exp_stddev) = (98.49, 57.7129)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    if abs(mean-exp_mean) > 1.1 or abs(stddev-exp_stddev) > 0.1:
+    if abs(mean - exp_mean) > 1.1 or abs(stddev - exp_stddev) > 0.1:
         gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev))
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-100) > 0.1 \
-        or abs(geotransform[1]-0.1) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-30) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -0.1) > 0.001:
+    if abs(geotransform[0] - 100) > 0.1 \
+        or abs(geotransform[1] - 0.1) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 30) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -0.1) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -463,12 +463,12 @@ def ecw_12():
     ds = gdal.Open('tmp/test_11.ntf')
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-100) > 0.1 \
-        or abs(geotransform[1]-0.1) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-30.0) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -0.1) > 0.001:
+    if abs(geotransform[0] - 100) > 0.1 \
+        or abs(geotransform[1] - 0.1) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 30.0) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -0.1) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -477,7 +477,7 @@ def ecw_12():
         gdaltest.post_reason('Got wrong color interpretation.')
         return 'fail'
 
-    if ds.GetRasterBand(2).GetRasterColorInterpretation() !=gdal.GCI_GreenBand:
+    if ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_GreenBand:
         gdaltest.post_reason('Got wrong color interpretation.')
         return 'fail'
 
@@ -678,8 +678,8 @@ def ecw_19():
     expected_checksums = [64570, 57277, 56048, 61292]
 
     for i in range(4):
-        if ds.GetRasterBand(i+1).Checksum() != expected_checksums[i]:
-            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i+1))
+        if ds.GetRasterBand(i + 1).Checksum() != expected_checksums[i]:
+            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i + 1))
             return 'fail'
 
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
@@ -721,7 +721,7 @@ def ecw_20():
             (exp_mean, exp_stddev) = (140.889, 62.742)
     (mean, stddev) = band.GetOverview(0).ComputeBandStats()
 
-    if abs(mean-exp_mean) > 0.5 or abs(stddev-exp_stddev) > 0.5:
+    if abs(mean - exp_mean) > 0.5 or abs(stddev - exp_stddev) > 0.5:
         gdaltest.post_reason('mean/stddev of (%g,%g) diffs from '
                               'expected(%g,%g)' % (mean, stddev,exp_mean,
                                                    exp_stddev))
@@ -755,7 +755,7 @@ def ecw_21():
 
     (mean, stddev) = mem_ds.GetRasterBand(1).ComputeBandStats()
 
-    if abs(mean-exp_mean) > 0.5 or abs(stddev-exp_stddev) > 0.5:
+    if abs(mean - exp_mean) > 0.5 or abs(stddev - exp_stddev) > 0.5:
         gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev))
         return 'fail'
 
@@ -1028,12 +1028,12 @@ def ecw_27():
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-440720) > 0.1 \
-        or abs(geotransform[1]-60) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-3751320) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -60) > 0.001:
+    if abs(geotransform[0] - 440720) > 0.1 \
+        or abs(geotransform[1] - 60) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 3751320) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -1112,21 +1112,21 @@ def ecw_29():
         sum_abs_diff_mean = 0
         sum_abs_diff_stddev = 0
         tile = 32
-        for j in range(2 * int((ds1.RasterYSize - tile/2) / tile)):
-            for i in range(2 * int((ds1.RasterXSize - tile/2) / tile)):
+        for j in range(2 * int((ds1.RasterYSize - tile / 2) / tile)):
+            for i in range(2 * int((ds1.RasterXSize - tile / 2) / tile)):
                 tmp_ds1 = gdal.GetDriverByName('MEM').Create('', tile ,tile, 1)
                 tmp_ds2 = gdal.GetDriverByName('MEM').Create('', tile ,tile, 1)
-                data1 = ds1.ReadRaster(i * int(tile/2), j * int(tile/2), tile, tile)
-                data2 = ds2.ReadRaster(i * int(tile/2), j * int(tile/2), tile, tile)
+                data1 = ds1.ReadRaster(i * int(tile / 2), j * int(tile / 2), tile, tile)
+                data2 = ds2.ReadRaster(i * int(tile / 2), j * int(tile / 2), tile, tile)
                 tmp_ds1.WriteRaster(0,0,tile,tile,data1)
                 tmp_ds2.WriteRaster(0,0,tile,tile,data2)
                 (ignored, ignored, mean1, stddev1) = tmp_ds1.GetRasterBand(1).GetStatistics(1,1)
                 (ignored, ignored, mean2, stddev2) = tmp_ds2.GetRasterBand(1).GetStatistics(1,1)
                 nvals = nvals + 1
-                sum_abs_diff_mean = sum_abs_diff_mean + abs(mean1-mean2)
+                sum_abs_diff_mean = sum_abs_diff_mean + abs(mean1 - mean2)
                 sum_abs_diff_stddev = sum_abs_diff_stddev + abs(stddev1 - stddev2)
-                if abs(mean1-mean2) > (stddev1 + stddev2) / 2 or abs(stddev1 - stddev2) > 30:
-                    print("%d, %d, %f, %f" % (j, i ,abs(mean1-mean2), abs(stddev1 - stddev2)))
+                if abs(mean1 - mean2) > (stddev1 + stddev2) / 2 or abs(stddev1 - stddev2) > 30:
+                    print("%d, %d, %f, %f" % (j, i ,abs(mean1 - mean2), abs(stddev1 - stddev2)))
                     ret = 'fail'
 
         if sum_abs_diff_mean / nvals > 4 or sum_abs_diff_stddev / nvals > 3:
@@ -1343,14 +1343,14 @@ def ecw_33_bis():
     # with SDK 3.3, the results of band RasterIO() and dataset RasterIO() are
     # not consistent. (which seems to be no longer the case with more recent
     # SDK such as 5.0)
-    for i in range(50*50):
-        if data1[i*4] != data_ref[i]:
+    for i in range(50 * 50):
+        if data1[i * 4] != data_ref[i]:
             gdaltest.post_reason('fail')
             return 'fail'
-        if data2[i*4] != data_ref[50*50+i]:
+        if data2[i * 4] != data_ref[50 * 50 + i]:
             gdaltest.post_reason('fail')
             return 'fail'
-        if data3[i*4] != data_ref[2*50*50+i]:
+        if data3[i * 4] != data_ref[2 * 50 * 50 + i]:
             gdaltest.post_reason('fail')
             return 'fail'
 
@@ -1366,7 +1366,7 @@ def ecw_34():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0 :
         return 'skip'
-    if gdaltest.ecw_drv.major_version <5:
+    if gdaltest.ecw_drv.major_version < 5:
         return 'skip'
 
     ds = gdal.GetDriverByName('MEM').Create('MEM:::', 128, 128, 1, gdal.GDT_UInt16)
@@ -1421,7 +1421,7 @@ def ecw_36():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
-    if gdaltest.ecw_drv.major_version <5:
+    if gdaltest.ecw_drv.major_version < 5:
         return 'skip'
 
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="400" rasterYSize="400">
@@ -1451,13 +1451,13 @@ def ecw_36():
     dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrc312.ecw', vrt_ds, options=['ECW_FORMAT_VERSION=3','TARGET=75'])
 
     if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand :
-        print('Band 1 color interpretation should be Blue  but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
+        print('Band 1 color interpretation should be Blue  but is : ' + gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
     if dswr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_RedBand:
-        print('Band 2 color interpretation should be Red but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(2).GetColorInterpretation()))
+        print('Band 2 color interpretation should be Red but is : ' + gdal.GetColorInterpretationName(dswr.GetRasterBand(2).GetColorInterpretation()))
         return 'fail'
     if dswr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_GreenBand:
-        print('Band 3 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(3).GetColorInterpretation()))
+        print('Band 3 color interpretation should be Green but is : ' + gdal.GetColorInterpretationName(dswr.GetRasterBand(3).GetColorInterpretation()))
         return 'fail'
 
     dswr = None
@@ -1465,13 +1465,13 @@ def ecw_36():
     dsr = gdal.Open('tmp/jrc312.ecw')
 
     if dsr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand :
-        print('Band 1 color interpretation should be Blue  but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(1).GetColorInterpretation()))
+        print('Band 1 color interpretation should be Blue  but is : ' + gdal.GetColorInterpretationName(dsr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
     if dsr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_RedBand:
-        print('Band 2 color interpretation should be Red but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(2).GetColorInterpretation()))
+        print('Band 2 color interpretation should be Red but is : ' + gdal.GetColorInterpretationName(dsr.GetRasterBand(2).GetColorInterpretation()))
         return 'fail'
     if dsr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_GreenBand:
-        print('Band 3 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(3).GetColorInterpretation()))
+        print('Band 3 color interpretation should be Green but is : ' + gdal.GetColorInterpretationName(dsr.GetRasterBand(3).GetColorInterpretation()))
         return 'fail'
 
     dsr = None
@@ -1486,7 +1486,7 @@ def ecw_37():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
-    if gdaltest.ecw_drv.major_version <5:
+    if gdaltest.ecw_drv.major_version < 5:
         return 'skip'
 
     ds = gdal.Open("data/jrc.ecw")
@@ -1494,13 +1494,13 @@ def ecw_37():
     dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrc123.ecw', ds, options=['ECW_FORMAT_VERSION=3','TARGET=75'])
 
     if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand :
-        print('Band 1 color interpretation should be Red but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
+        print('Band 1 color interpretation should be Red but is : ' + gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
     if dswr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        print('Band 2 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(2).GetColorInterpretation()))
+        print('Band 2 color interpretation should be Green but is : ' + gdal.GetColorInterpretationName(dswr.GetRasterBand(2).GetColorInterpretation()))
         return 'fail'
     if dswr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        print('Band 3 color interpretation should be Blue but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(3).GetColorInterpretation()))
+        print('Band 3 color interpretation should be Blue but is : ' + gdal.GetColorInterpretationName(dswr.GetRasterBand(3).GetColorInterpretation()))
         return 'fail'
 
     dswr = None
@@ -1508,13 +1508,13 @@ def ecw_37():
     dsr = gdal.Open('tmp/jrc123.ecw')
 
     if dsr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand :
-        print('Band 1 color interpretation should be Red  but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(1).GetColorInterpretation()))
+        print('Band 1 color interpretation should be Red  but is : ' + gdal.GetColorInterpretationName(dsr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
     if dsr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        print('Band 2 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(2).GetColorInterpretation()))
+        print('Band 2 color interpretation should be Green but is : ' + gdal.GetColorInterpretationName(dsr.GetRasterBand(2).GetColorInterpretation()))
         return 'fail'
     if dsr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        print('Band 3 color interpretation should be Blue but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(3).GetColorInterpretation()))
+        print('Band 3 color interpretation should be Blue but is : ' + gdal.GetColorInterpretationName(dsr.GetRasterBand(3).GetColorInterpretation()))
         return 'fail'
 
     dsr = None
@@ -1537,7 +1537,7 @@ def ecw_38():
         exec("""gdaltest.ecw_38_fname = u'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'""")
     fname = gdaltest.ecw_38_fname
 
-    if gdaltest.ecw_drv.major_version <4:
+    if gdaltest.ecw_drv.major_version < 4:
         return 'skip'
 
     shutil.copyfile('data/jrc.ecw', fname)
@@ -1566,7 +1566,7 @@ def ecw_39():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
-    if gdaltest.ecw_drv.major_version <5:
+    if gdaltest.ecw_drv.major_version < 5:
         return 'skip'
 
     ds = gdal.Open('data/jrc.ecw')
@@ -1683,7 +1683,7 @@ def ecw_41():
     stats = ds.GetRasterBand(1).GetStatistics(0,1)
     expected_stats = [0.0, 255.0, 21.662427983539093, 51.789457392268119]
     for i in range(4):
-        if abs(stats[i]-expected_stats[i]) > 1:
+        if abs(stats[i] - expected_stats[i]) > 1:
             gdaltest.post_reason('fail')
             print(stats)
             print(expected_stats)
@@ -1711,7 +1711,7 @@ def ecw_41():
     stats = ds.GetRasterBand(1).GetStatistics(0,0)
     expected_stats = [0.0, 255.0, 21.662427983539093, 51.789457392268119]
     for i in range(4):
-        if abs(stats[i]-expected_stats[i]) > 1:
+        if abs(stats[i] - expected_stats[i]) > 1:
             gdaltest.post_reason('fail')
             print(stats[i])
             print(expected_stats[i])
@@ -1870,7 +1870,7 @@ def ecw_43():
         return 'fail'
     jp2_bands_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
     jp2_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize/16),int(ds.RasterYSize/16))
+    fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize / 16),int(ds.RasterYSize / 16))
 
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/ecw_43.tif', ds)
     fourth_band = tmp_ds.GetRasterBand(4)
@@ -1909,7 +1909,7 @@ def ecw_44():
 
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
-    if gdaltest.ecw_drv.major_version < 5 or (gdaltest.ecw_drv.major_version ==5 and gdaltest.ecw_drv.minor_version <1) :
+    if gdaltest.ecw_drv.major_version < 5 or (gdaltest.ecw_drv.major_version == 5 and gdaltest.ecw_drv.minor_version < 1) :
         return 'skip'
 
     ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
@@ -2119,7 +2119,7 @@ def ecw_47():
 
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    if abs(mean-exp_mean) > mean_tolerance or abs(stddev-exp_stddev) > 0.5:
+    if abs(mean - exp_mean) > mean_tolerance or abs(stddev - exp_stddev) > 0.5:
         gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev))
         return 'fail'
 
@@ -2236,7 +2236,7 @@ def ecw_online_2():
 def ecw_online_3():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
-    if gdaltest.ecw_drv.major_version ==4:
+    if gdaltest.ecw_drv.major_version == 4:
         gdaltest.post_reason('4.x SDK gets unreliable results for jp2')
         return 'skip'
 
@@ -2332,7 +2332,7 @@ def ecw_online_5():
 
     (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
 
-    if abs(mean-exp_mean) > mean_tolerance or abs(stddev-exp_stddev) > 0.5:
+    if abs(mean - exp_mean) > mean_tolerance or abs(stddev - exp_stddev) > 0.5:
         gdaltest.post_reason('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev,exp_mean, exp_stddev))
         return 'fail'
 

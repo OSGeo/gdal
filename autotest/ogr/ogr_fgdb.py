@@ -1415,7 +1415,7 @@ def ogr_fgdb_19():
     if ret != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    ds.DeleteLayer(ds.GetLayerCount()-1)
+    ds.DeleteLayer(ds.GetLayerCount() - 1)
     if ds.CommitTransaction() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1575,7 +1575,7 @@ def ogr_fgdb_19():
             gdaltest.post_reason('fail')
             return 'fail'
 
-        ds.DeleteLayer(ds.GetLayerCount()-1)
+        ds.DeleteLayer(ds.GetLayerCount() - 1)
 
         gdal.SetConfigOption('FGDB_SIMUL_FAIL', 'CASE1')
         gdal.PushErrorHandler()
@@ -2169,8 +2169,8 @@ def ogr_fgdb_20():
     gdal.SetConfigOption('FGDB_BULK_LOAD', 'YES')
     for i in range(1000):
         f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(i+2)
-        f.SetField('id', i+2)
+        f.SetFID(i + 2)
+        f.SetField('id', i + 2)
         f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (%d 0)' % i))
         lyr.CreateFeature(f)
     gdal.SetConfigOption('FGDB_BULK_LOAD', None)

@@ -55,11 +55,11 @@ from osgeo import gdalnumeric
 
 
 # create alphabetic list for storing input layers
-AlphaList=["A","B","C","D","E","F","G","H","I","J","K","L","M",
+AlphaList = ["A","B","C","D","E","F","G","H","I","J","K","L","M",
            "N","O","P","Q","R","S","T","U","V","W","X","Y","Z"]
 
 # set up some default nodatavalues for each datatype
-DefaultNDVLookup={'Byte':255, 'UInt16':65535, 'Int16':-32767, 'UInt32':4294967293, 'Int32':-2147483647, 'Float32':3.402823466E+38, 'Float64':1.7976931348623158E+308}
+DefaultNDVLookup = {'Byte':255, 'UInt16':65535, 'Int16':-32767, 'UInt32':4294967293, 'Int32':-2147483647, 'Float32':3.402823466E+38, 'Float64':1.7976931348623158E+308}
 
 
 def DoesDriverHandleExtension(drv, ext):
@@ -116,7 +116,7 @@ def GetOutputDriverFor(filename):
 def doit(opts, args):
 
     if opts.debug:
-        print("gdal_calc.py starting calculation %s" %(opts.calc))
+        print("gdal_calc.py starting calculation %s" % (opts.calc))
 
     # set up global namespace for eval with all functions of gdalnumeric
     global_namespace = dict([(key, getattr(gdalnumeric, key))
@@ -135,13 +135,13 @@ def doit(opts, args):
     ################################################################
 
     # set up some lists to store data for each band
-    myFiles=[]
-    myBands=[]
-    myAlphaList=[]
-    myDataType=[]
-    myDataTypeNum=[]
-    myNDV=[]
-    DimensionsCheck=None
+    myFiles = []
+    myBands = []
+    myAlphaList = []
+    myDataType = []
+    myDataTypeNum = []
+    myNDV = []
+    DimensionsCheck = None
 
     # loop through input files - checking dimensions
     for myI, myF in opts.input_files.items():
@@ -171,19 +171,19 @@ def doit(opts, args):
                 DimensionsCheck = [myFile.RasterXSize, myFile.RasterYSize]
 
             if opts.debug:
-                print("file %s: %s, dimensions: %s, %s, type: %s" %(myI,myF,DimensionsCheck[0],DimensionsCheck[1],myDataType[-1]))
+                print("file %s: %s, dimensions: %s, %s, type: %s" % (myI,myF,DimensionsCheck[0],DimensionsCheck[1],myDataType[-1]))
 
     # process allBands option
-    allBandsIndex=None
-    allBandsCount=1
+    allBandsIndex = None
+    allBandsCount = 1
     if opts.allBands:
         try:
-            allBandsIndex=myAlphaList.index(opts.allBands)
+            allBandsIndex = myAlphaList.index(opts.allBands)
         except ValueError:
             raise Exception("Error! allBands option was given but Band %s not found.  Cannot proceed" % (opts.allBands))
-        allBandsCount=myFiles[allBandsIndex].RasterCount
+        allBandsCount = myFiles[allBandsIndex].RasterCount
         if allBandsCount <= 1:
-            allBandsIndex=None
+            allBandsIndex = None
 
     ################################################################
     # set up output file
@@ -194,13 +194,13 @@ def doit(opts, args):
         if allBandsIndex is not None:
             raise Exception("Error! allBands option was given but Output file exists, must use --overwrite option!")
         if opts.debug:
-            print("Output file %s exists - filling in results into file" %(opts.outF))
-        myOut=gdal.Open(opts.outF, gdal.GA_Update)
+            print("Output file %s exists - filling in results into file" % (opts.outF))
+        myOut = gdal.Open(opts.outF, gdal.GA_Update)
         if [myOut.RasterXSize,myOut.RasterYSize] != DimensionsCheck:
             raise Exception("Error! Output exists, but is the wrong size.  Use the --overwrite option to automatically overwrite the existing file")
-        myOutB=myOut.GetRasterBand(1)
-        myOutNDV=myOutB.GetNoDataValue()
-        myOutType=gdal.GetDataTypeName(myOutB.DataType)
+        myOutB = myOut.GetRasterBand(1)
+        myOutNDV = myOutB.GetNoDataValue()
+        myOutType = gdal.GetDataTypeName(myOutB.DataType)
 
     else:
         # remove existing file and regenerate
@@ -208,14 +208,14 @@ def doit(opts, args):
             os.remove(opts.outF)
         # create a new file
         if opts.debug:
-            print("Generating output file %s" %(opts.outF))
+            print("Generating output file %s" % (opts.outF))
 
         # find data type to use
         if not opts.type:
             # use the largest type of the input files
-            myOutType=gdal.GetDataTypeName(max(myDataTypeNum))
+            myOutType = gdal.GetDataTypeName(max(myDataTypeNum))
         else:
-            myOutType=opts.type
+            myOutType = opts.type
 
         # create file
         myOutDrv = gdal.GetDriverByName(opts.format)
@@ -228,46 +228,46 @@ def doit(opts, args):
         myOut.SetProjection(myFiles[0].GetProjection())
 
         if opts.NoDataValue is not None:
-            myOutNDV=opts.NoDataValue
+            myOutNDV = opts.NoDataValue
         else:
-            myOutNDV=DefaultNDVLookup[myOutType]
+            myOutNDV = DefaultNDVLookup[myOutType]
 
-        for i in range(1,allBandsCount+1):
-            myOutB=myOut.GetRasterBand(i)
+        for i in range(1,allBandsCount + 1):
+            myOutB = myOut.GetRasterBand(i)
             myOutB.SetNoDataValue(myOutNDV)
             # write to band
-            myOutB=None
+            myOutB = None
 
     if opts.debug:
-        print("output file: %s, dimensions: %s, %s, type: %s" %(opts.outF,myOut.RasterXSize,myOut.RasterYSize,myOutType))
+        print("output file: %s, dimensions: %s, %s, type: %s" % (opts.outF,myOut.RasterXSize,myOut.RasterYSize,myOutType))
 
     ################################################################
     # find block size to chop grids into bite-sized chunks
     ################################################################
 
     # use the block size of the first layer to read efficiently
-    myBlockSize=myFiles[0].GetRasterBand(myBands[0]).GetBlockSize()
+    myBlockSize = myFiles[0].GetRasterBand(myBands[0]).GetBlockSize()
     # store these numbers in variables that may change later
     nXValid = myBlockSize[0]
     nYValid = myBlockSize[1]
     # find total x and y blocks to be read
     nXBlocks = (int)((DimensionsCheck[0] + myBlockSize[0] - 1) / myBlockSize[0])
     nYBlocks = (int)((DimensionsCheck[1] + myBlockSize[1] - 1) / myBlockSize[1])
-    myBufSize = myBlockSize[0]*myBlockSize[1]
+    myBufSize = myBlockSize[0] * myBlockSize[1]
 
     if opts.debug:
-        print("using blocksize %s x %s" %(myBlockSize[0], myBlockSize[1]))
+        print("using blocksize %s x %s" % (myBlockSize[0], myBlockSize[1]))
 
     # variables for displaying progress
-    ProgressCt=-1
-    ProgressMk=-1
-    ProgressEnd=nXBlocks*nYBlocks*allBandsCount
+    ProgressCt = -1
+    ProgressMk = -1
+    ProgressEnd = nXBlocks * nYBlocks * allBandsCount
 
     ################################################################
     # start looping through each band in allBandsCount
     ################################################################
 
-    for bandNo in range(1,allBandsCount+1):
+    for bandNo in range(1,allBandsCount + 1):
 
         ################################################################
         # start looping through blocks of data
@@ -278,22 +278,22 @@ def doit(opts, args):
 
             # in the rare (impossible?) case that the blocks don't fit perfectly
             # change the block size of the final piece
-            if X==nXBlocks-1:
+            if X == nXBlocks - 1:
                 nXValid = DimensionsCheck[0] - X * myBlockSize[0]
-                myBufSize = nXValid*nYValid
+                myBufSize = nXValid * nYValid
 
             # find X offset
-            myX=X*myBlockSize[0]
+            myX = X * myBlockSize[0]
 
             # reset buffer size for start of Y loop
             nYValid = myBlockSize[1]
-            myBufSize = nXValid*nYValid
+            myBufSize = nXValid * nYValid
 
             # loop through Y lines
             for Y in range(0,nYBlocks):
-                ProgressCt+=1
-                if 10*ProgressCt/ProgressEnd%10!=ProgressMk and not opts.quiet:
-                    ProgressMk=10*ProgressCt/ProgressEnd%10
+                ProgressCt += 1
+                if 10 * ProgressCt / ProgressEnd%10 != ProgressMk and not opts.quiet:
+                    ProgressMk = 10 * ProgressCt / ProgressEnd%10
                     from sys import version_info
                     if version_info >= (3,0,0):
                         exec('print("%d.." % (10*ProgressMk), end=" ")')
@@ -301,12 +301,12 @@ def doit(opts, args):
                         exec('print 10*ProgressMk, "..",')
 
                 # change the block size of the final piece
-                if Y==nYBlocks-1:
+                if Y == nYBlocks - 1:
                     nYValid = DimensionsCheck[1] - Y * myBlockSize[1]
-                    myBufSize = nXValid*nYValid
+                    myBufSize = nXValid * nYValid
 
                 # find Y offset
-                myY=Y*myBlockSize[1]
+                myY = Y * myBlockSize[1]
 
                 # create empty buffer to mark where nodata occurs
                 myNDVs = None
@@ -318,11 +318,11 @@ def doit(opts, args):
                 for i,Alpha in enumerate(myAlphaList):
 
                     # populate lettered arrays with values
-                    if allBandsIndex is not None and allBandsIndex==i:
-                        myBandNo=bandNo
+                    if allBandsIndex is not None and allBandsIndex == i:
+                        myBandNo = bandNo
                     else:
-                        myBandNo=myBands[i]
-                    myval=gdalnumeric.BandReadAsArray(myFiles[i].GetRasterBand(myBandNo),
+                        myBandNo = myBands[i]
+                    myval = gdalnumeric.BandReadAsArray(myFiles[i].GetRasterBand(myBandNo),
                                           xoff=myX, yoff=myY,
                                           win_xsize=nXValid, win_ysize=nYValid)
 
@@ -330,29 +330,29 @@ def doit(opts, args):
                     if myNDV[i] is not None:
                         if myNDVs is None:
                             myNDVs = numpy.zeros(myBufSize)
-                            myNDVs.shape=(nYValid,nXValid)
-                        myNDVs=1*numpy.logical_or(myNDVs==1, myval==myNDV[i])
+                            myNDVs.shape = (nYValid,nXValid)
+                        myNDVs = 1 * numpy.logical_or(myNDVs == 1, myval == myNDV[i])
 
                     # add an array of values for this block to the eval namespace
                     local_namespace[Alpha] = myval
-                    myval=None
+                    myval = None
 
                 # try the calculation on the array blocks
                 try:
                     myResult = eval(opts.calc, global_namespace, local_namespace)
                 except:
-                    print("evaluation of calculation %s failed" %(opts.calc))
+                    print("evaluation of calculation %s failed" % (opts.calc))
                     raise
 
                 # Propagate nodata values (set nodata cells to zero
                 # then add nodata value to these cells).
                 if myNDVs is not None:
-                    myResult = ((1*(myNDVs==0))*myResult) + (myOutNDV*myNDVs)
+                    myResult = ((1 * (myNDVs == 0)) * myResult) + (myOutNDV * myNDVs)
                 elif not isinstance(myResult, numpy.ndarray):
                     myResult = numpy.ones((nYValid,nXValid)) * myResult
 
                 # write data block to the output file
-                myOutB=myOut.GetRasterBand(bandNo)
+                myOutB = myOut.GetRasterBand(bandNo)
                 gdalnumeric.BandWriteArray(myOutB, myResult, xoff=myX, yoff=myY)
 
     if not opts.quiet:

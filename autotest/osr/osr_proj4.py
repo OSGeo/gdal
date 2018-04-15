@@ -98,7 +98,7 @@ def osr_proj4_1():
     srs = osr.SpatialReference()
     srs.ImportFromProj4('+proj=tmerc +lat_0=53.5000000000 +lon_0=-8.0000000000 +k_0=1.0000350000 +x_0=200000.0000000000 +y_0=250000.0000000000 +a=6377340.189000 +rf=299.324965 +towgs84=482.530,-130.596,564.557,-1.042,-0.214,-0.631,8.15')
 
-    if abs(srs.GetProjParm(osr.SRS_PP_SCALE_FACTOR)-1.000035) > 0.0000005:
+    if abs(srs.GetProjParm(osr.SRS_PP_SCALE_FACTOR) - 1.000035) > 0.0000005:
         gdaltest.post_reason('+k_0 not supported on import from PROJ.4?')
         return 'fail'
 
@@ -115,7 +115,7 @@ def osr_proj4_2():
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=lcc +x_0=0.6096012192024384e+06 +y_0=0 +lon_0=90dw +lat_0=42dn +lat_1=44d4'n +lat_2=42d44'n +a=6378206.400000 +rf=294.978698 +nadgrids=conus,ntv1_can.dat +units=m")
 
-    if abs(srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)-609601.219) > 0.0005:
+    if abs(srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) - 609601.219) > 0.0005:
         gdaltest.post_reason('Parsing exponents not supported?')
         return 'fail'
 
@@ -663,14 +663,14 @@ def osr_proj4_15():
 def osr_proj4_16():
 
     def almost(a,b):
-        if abs(a-b) > 0.000000000001:
+        if abs(a - b) > 0.000000000001:
             return False
         return True
     units = (('km', 1000.),
              ('m', 1.),
-             ('dm', 1./10.),
-             ('cm', 1./100.),
-             ('mm', 1./1000.),
+             ('dm', 1. / 10.),
+             ('cm', 1. / 100.),
+             ('mm', 1. / 1000.),
              ('kmi', 1852.0),
              ('in', 0.0254),
              ('ft', 0.3048),
@@ -679,7 +679,7 @@ def osr_proj4_16():
              ('fath', 1.8288),
              ('ch', 20.1168),
              ('link', 0.201168),
-             ('us-in', 1./39.37),
+             ('us-in', 1. / 39.37),
              ('us-ft', 0.304800609601219),
              ('us-yd', 0.914401828803658),
              ('us-ch', 20.11684023368047),

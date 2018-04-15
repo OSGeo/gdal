@@ -220,11 +220,11 @@ def gta_4():
         return 'fail'
     for i in range(17):
         if i != gdal.GCI_PaletteIndex:
-            if new_ds.GetRasterBand(i+1).GetColorInterpretation() != i:
+            if new_ds.GetRasterBand(i + 1).GetColorInterpretation() != i:
                 gdaltest.post_reason(
                     'did not get expected color interpretation '
-                    'for band %d' % (i+1))
-                print(new_ds.GetRasterBand(i+1).GetColorInterpretation())
+                    'for band %d' % (i + 1))
+                print(new_ds.GetRasterBand(i + 1).GetColorInterpretation())
                 return 'fail'
 
     new_ds = None
@@ -244,7 +244,7 @@ def gta_5():
 
     src_ds = gdal.Open('data/byte.tif')
 
-    compress_list =['NONE',
+    compress_list = ['NONE',
                     'BZIP2',
                     "XZ",
                     "ZLIB",

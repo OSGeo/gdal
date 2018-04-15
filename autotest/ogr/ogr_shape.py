@@ -513,7 +513,7 @@ def ogr_shape_15():
             gdaltest.post_reason('Still an FID 9 in dataset.')
             return 'fail'
 
-        count = count+1
+        count = count + 1
         feat = gdaltest.shape_lyr.GetNextFeature()
 
     if count is not 10:
@@ -544,7 +544,7 @@ def ogr_shape_16():
         if feat.GetFID() == 9:
             got_9 = 1
 
-        count = count+1
+        count = count + 1
         feat = gdaltest.shape_lyr.GetNextFeature()
 
     if count is not 10:
@@ -764,7 +764,7 @@ def ogr_shape_21():
         # Test fix for #3665
         lyr.ResetReading()
         (minx, maxx, miny, maxy) = lyr.GetExtent()
-        lyr.SetSpatialFilterRect(minx+1e-9,miny+1e-9,maxx-1e-9,maxy-1e-9)
+        lyr.SetSpatialFilterRect(minx + 1e-9,miny + 1e-9,maxx - 1e-9,maxy - 1e-9)
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         feat = lyr.GetNextFeature()
         gdal.PopErrorHandler()
@@ -1453,7 +1453,7 @@ def ogr_shape_32():
             return 'fail'
 
         if (n % 22846) == 0:
-            sys.stdout.write('\r%.1f%%   ' % (n/Decimal('228460.0')))
+            sys.stdout.write('\r%.1f%%   ' % (n / Decimal('228460.0')))
             sys.stdout.flush()
 
     #######################################################
@@ -1464,7 +1464,7 @@ def ogr_shape_32():
 
     read_lyr = gdaltest.shape_ds_big.GetLayerByName('bigLayer')
 
-    for i in [0, 1, read_lyr.GetFeatureCount()-1]:
+    for i in [0, 1, read_lyr.GetFeatureCount() - 1]:
       feat_read = read_lyr.GetFeature(i)
       if feat_read is None:
         print('Could not retrieve geometry at FID', i)
@@ -2557,7 +2557,7 @@ def ogr_shape_54_create_layer(ds, layer_index):
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, 'val%d' % layer_index)
     if (layer_index % 2) == 0:
-        feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (%d %d)' % (layer_index, layer_index+1)))
+        feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (%d %d)' % (layer_index, layer_index + 1)))
     lyr.CreateFeature(feat)
     feat = None
     return
@@ -2578,7 +2578,7 @@ def ogr_shape_54_test_layer(ds, layer_index):
         return 'fail'
     if (layer_index % 2) == 0:
         if feat.GetGeometryRef() is None or \
-           feat.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (layer_index, layer_index+1):
+           feat.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (layer_index, layer_index + 1):
             gdaltest.post_reason('failed for layer %d' % layer_index)
             return 'fail'
 
@@ -4310,7 +4310,7 @@ def ogr_shape_90():
 
     # The declare file size doesn't match the real one
     f = gdal.VSIFOpenL('/vsimem/ogr_shape_90.shx', 'rb+')
-    filesize = int((100 + 8 * 1024 * 1024)/2)
+    filesize = int((100 + 8 * 1024 * 1024) / 2)
     gdal.VSIFSeekL(f, 24, 0)
     gdal.VSIFWriteL(struct.pack('>i', filesize), 1, 4, f)
     gdal.VSIFCloseL(f)
@@ -4328,7 +4328,7 @@ def ogr_shape_90():
 
     ds = ogr.Open('/vsimem/ogr_shape_90.shp')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 1024*1024:
+    if lyr.GetFeatureCount() != 1024 * 1024:
         return 'fail'
 
     ds = None

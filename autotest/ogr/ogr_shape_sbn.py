@@ -75,26 +75,26 @@ def search_all_features(lyr):
     # there is an optimization in the shapefile driver to skip the spatial index in that
     # case.
     eps = 0.0001
-    lyr.SetSpatialFilterRect(extents[0]+eps, extents[2]+eps, extents[1]-eps, extents[3]-eps)
+    lyr.SetSpatialFilterRect(extents[0] + eps, extents[2] + eps, extents[1] - eps, extents[3] - eps)
     lyr.ResetReading()
     fc = lyr.GetFeatureCount()
 
     # For point layers, we need a special case since there may be points on the border
     # of the extent
     if lyr.GetGeomType() == ogr.wkbPoint:
-        lyr.SetSpatialFilterRect(extents[0], extents[2]+eps, extents[0]+eps, extents[3]-eps)
+        lyr.SetSpatialFilterRect(extents[0], extents[2] + eps, extents[0] + eps, extents[3] - eps)
         lyr.ResetReading()
         fc = fc + lyr.GetFeatureCount()
 
-        lyr.SetSpatialFilterRect(extents[1]-eps, extents[2]+eps, extents[1], extents[3]-eps)
+        lyr.SetSpatialFilterRect(extents[1] - eps, extents[2] + eps, extents[1], extents[3] - eps)
         lyr.ResetReading()
         fc = fc + lyr.GetFeatureCount()
 
-        lyr.SetSpatialFilterRect(extents[0], extents[2], extents[1], extents[2]+eps)
+        lyr.SetSpatialFilterRect(extents[0], extents[2], extents[1], extents[2] + eps)
         lyr.ResetReading()
         fc = fc + lyr.GetFeatureCount()
 
-        lyr.SetSpatialFilterRect(extents[0], extents[3]-eps, extents[1], extents[3])
+        lyr.SetSpatialFilterRect(extents[0], extents[3] - eps, extents[1], extents[3])
         lyr.ResetReading()
         fc = fc + lyr.GetFeatureCount()
 

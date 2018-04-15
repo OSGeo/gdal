@@ -73,16 +73,16 @@ if __name__ == '__main__':
         arg = argv[i]
 
         if arg == '-srcwin':
-            srcwin = (int(argv[i+1]),int(argv[i+2]),
-                      int(argv[i+3]),int(argv[i+4]))
+            srcwin = (int(argv[i + 1]),int(argv[i + 2]),
+                      int(argv[i + 3]),int(argv[i + 4]))
             i = i + 4
 
         elif arg == '-skip':
-            skip = int(argv[i+1])
+            skip = int(argv[i + 1])
             i = i + 1
 
         elif arg == '-band':
-            band_nums.append(int(argv[i+1]))
+            band_nums.append(int(argv[i + 1]))
             i = i + 1
 
         elif arg == '-csv':
@@ -149,7 +149,7 @@ if __name__ == '__main__':
 
     # Loop emitting data.
 
-    for y in range(srcwin[1],srcwin[1]+srcwin[3],skip):
+    for y in range(srcwin[1],srcwin[1] + srcwin[3],skip):
 
         data = []
         for band in bands:
@@ -162,8 +162,8 @@ if __name__ == '__main__':
 
             x = x_i + srcwin[0]
 
-            geo_x = gt[0] + (x+0.5) * gt[1] + (y+0.5) * gt[2]
-            geo_y = gt[3] + (x+0.5) * gt[4] + (y+0.5) * gt[5]
+            geo_x = gt[0] + (x + 0.5) * gt[1] + (y + 0.5) * gt[2]
+            geo_y = gt[3] + (x + 0.5) * gt[4] + (y + 0.5) * gt[5]
 
             x_i_data = []
             for i in range(len(bands)):

@@ -64,7 +64,7 @@ def ogr_dods_1():
 
     try:
         gdaltest.dods_profiles = gdaltest.dods_ds.GetLayerByName('profiles')
-        gdaltest.dods_normalized =gdaltest.dods_ds.GetLayerByName('normalized')
+        gdaltest.dods_normalized = gdaltest.dods_ds.GetLayerByName('normalized')
         gdaltest.dods_lines = gdaltest.dods_ds.GetLayerByName('lines')
     except:
         gdaltest.dods_profiles = None
@@ -139,7 +139,7 @@ def ogr_dods_3():
             gdaltest.post_reason('time wrong')
             return 'fail'
 
-        if abs(feat.GetField('T_20')-expected[i]) > 0.001:
+        if abs(feat.GetField('T_20') - expected[i]) > 0.001:
             gdaltest.post_reason('T_20 wrong')
             return 'fail'
 

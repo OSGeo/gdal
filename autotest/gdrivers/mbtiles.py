@@ -357,7 +357,7 @@ def mbtiles_5():
     got_gt = ds.GetGeoTransform()
     expected_gt = (-13095853.550435878, 76.437028285176254, 0.0, 4015708.8887064462, 0.0, -76.437028285176254)
     for i in range(6):
-        if abs(expected_gt[i]-got_gt[i])>1e-6:
+        if abs(expected_gt[i] - got_gt[i]) > 1e-6:
             gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)
@@ -473,7 +473,7 @@ def mbtiles_7():
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
     expected_ovr_cs = [21179, 22577, 11996, 17849]
-    got_ovr_cs = [ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(ds.RasterCount)]
+    got_ovr_cs = [ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(ds.RasterCount)]
     if expected_ovr_cs != got_ovr_cs:
         gdaltest.post_reason('fail')
         print(got_ovr_cs)
@@ -522,7 +522,7 @@ def mbtiles_8():
 
     expected_cs = [993, 50461, 64354]
     out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
@@ -545,7 +545,7 @@ def mbtiles_8():
 
     expected_cs = [60844, 7388, 53813]
     out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
-    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))

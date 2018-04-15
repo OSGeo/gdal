@@ -3105,7 +3105,7 @@ def ogr_gml_65():
         ds = None
 
         gdal.Unlink(filename)
-        gdal.Unlink(filename[0:-3]+"xsd")
+        gdal.Unlink(filename[0:-3] + "xsd")
 
     return 'success'
 
@@ -3449,10 +3449,10 @@ def ogr_gml_66():
 
         ds = None
 
-        gdal.Unlink(filename[0:-3]+"xsd")
+        gdal.Unlink(filename[0:-3] + "xsd")
 
     gdal.Unlink(filename)
-    gdal.Unlink(filename[0:-3]+"gfs")
+    gdal.Unlink(filename[0:-3] + "gfs")
 
     return 'success'
 
@@ -3555,10 +3555,10 @@ def ogr_gml_67():
             return 'fail'
         ds = None
 
-        gdal.Unlink(filename[0:-3]+"xsd")
+        gdal.Unlink(filename[0:-3] + "xsd")
 
     gdal.Unlink(filename)
-    gdal.Unlink(filename[0:-3]+"gfs")
+    gdal.Unlink(filename[0:-3] + "gfs")
 
     return 'success'
 
@@ -4175,7 +4175,7 @@ def ogr_gml_79():
     for (srsname_format, expected_srsname, expected_coords) in tests:
 
         ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_79.xml', \
-                options=['FORMAT=GML3', 'SRSNAME_FORMAT='+srsname_format])
+                options=['FORMAT=GML3', 'SRSNAME_FORMAT=' + srsname_format])
         lyr = ds.CreateLayer('firstlayer', srs=sr)
         feat = ogr.Feature(lyr.GetLayerDefn())
         geom = ogr.CreateGeometryFromWkt('POINT (2 49)')

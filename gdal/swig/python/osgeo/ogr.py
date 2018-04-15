@@ -1162,7 +1162,7 @@ class DataSource(MajorObject):
                     return output
             return output
         if isinstance(value, int):
-            if value > len(self)-1:
+            if value > len(self) - 1:
                 raise IndexError
             return self.GetLayer(value)
         elif isinstance(value, str):
@@ -2974,7 +2974,7 @@ class Layer(MajorObject):
                     return output
             return output
         if isinstance(value, int):
-            if value > len(self)-1:
+            if value > len(self) - 1:
                 raise IndexError
             return self.GetFeature(value)
         else:

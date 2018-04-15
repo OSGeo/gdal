@@ -164,7 +164,7 @@ def ogr_openfilegdb_make_test_data():
         lyr.CreateField(ogr.FieldDefn("real", ogr.OFTReal))
         gdal.SetConfigOption('FGDB_BULK_LOAD', 'YES')
         #for i in range(340*341+1):
-        for i in range(340+1):
+        for i in range(340 + 1):
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetField(0, i % 4)
             lyr.CreateFeature(feat)
@@ -191,14 +191,14 @@ def ogr_openfilegdb_make_test_data():
 
         for i in range(8):
             feat = ogr.Feature(lyr.GetLayerDefn())
-            feat.SetField('str', 'fid%d' % (4+i))
-            feat.SetField('int0', 4+i)
+            feat.SetField('str', 'fid%d' % (4 + i))
+            feat.SetField('int0', 4 + i)
             feat.SetField('str2', '                                            ')
             lyr.CreateFeature(feat)
         feat = None
 
         for i in range(8):
-            lyr.CreateField(ogr.FieldDefn('int%d' % (i+1), ogr.OFTInteger))
+            lyr.CreateField(ogr.FieldDefn('int%d' % (i + 1), ogr.OFTInteger))
 
         lyr.DeleteFeature(1)
 
@@ -1429,7 +1429,7 @@ def ogr_openfilegdb_16():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    f = lyr.GetFeature(10000000-1)
+    f = lyr.GetFeature(10000000 - 1)
     if f is not None:
         gdaltest.post_reason('fail')
         return 'fail'

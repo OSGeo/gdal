@@ -88,9 +88,9 @@ try:
         HAVE_NUMPY = False
     else:
 #        print ('numpy include', get_numpy_include())
-        if get_numpy_include() =='.':
+        if get_numpy_include() == '.':
             print("numpy headers were not found!  Array support will not be enabled")
-            HAVE_NUMPY=False
+            HAVE_NUMPY = False
 except ImportError:
     pass
 
@@ -188,7 +188,7 @@ int main () { return 0; }""")
         f.close()
         extra_postargs = None
         if compiler_flag:
-            extra_postargs=[compiler_flag]
+            extra_postargs = [compiler_flag]
 
         if os.name == 'posix':
             # Redirect stderr to /dev/null to hide any error messages

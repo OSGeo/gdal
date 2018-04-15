@@ -309,7 +309,7 @@ def pds4_9():
         with hide_substitution_warnings_error_handler():
             gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4',
                            noData=75,
-                           creationOptions=['IMAGE_FORMAT='+format])
+                           creationOptions=['IMAGE_FORMAT=' + format])
 
         ret = validate_xml(filename)
         if ret == 'fail':
@@ -342,7 +342,7 @@ def pds4_9():
         with hide_substitution_warnings_error_handler():
             gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4',
                         creationOptions=['USE_SRC_LABEL=NO',
-                                            'IMAGE_FORMAT='+format])
+                                            'IMAGE_FORMAT=' + format])
 
         ret = validate_xml(filename)
         if ret == 'fail':
@@ -541,7 +541,7 @@ def pds4_10():
     filename2 = '/vsimem/out2.xml'
     for format in ['RAW', 'GEOTIFF']:
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                                 options=['IMAGE_FORMAT='+format])
+                                                 options=['IMAGE_FORMAT=' + format])
         ds.GetRasterBand(1).SetScale(2)
         ds.GetRasterBand(1).SetOffset(3)
         with hide_substitution_warnings_error_handler():

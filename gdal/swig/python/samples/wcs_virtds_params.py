@@ -57,19 +57,19 @@ nArgc = len(argv)
 iArg = 1
 while iArg < nArgc:
 
-    if argv[iArg] == "-lyr_name" and iArg < nArgc-1:
+    if argv[iArg] == "-lyr_name" and iArg < nArgc - 1:
         iArg = iArg + 1
         lyr_name = argv[iArg]
 
-    elif argv[iArg] == "-tileindex" and iArg < nArgc-1:
+    elif argv[iArg] == "-tileindex" and iArg < nArgc - 1:
         iArg = iArg + 1
         tileitem = argv[iArg]
 
-    elif argv[iArg] == "-src_srs_name" and iArg < nArgc-1:
+    elif argv[iArg] == "-src_srs_name" and iArg < nArgc - 1:
         iArg = iArg + 1
         tilesrs = argv[iArg]
 
-    elif argv[iArg] == "-t_srs" and iArg < nArgc-1:
+    elif argv[iArg] == "-t_srs" and iArg < nArgc - 1:
         iArg = iArg + 1
         srsname = argv[iArg]
 

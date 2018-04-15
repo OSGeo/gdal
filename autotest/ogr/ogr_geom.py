@@ -51,13 +51,13 @@ def ogr_geom_area():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     area = geom.GetArea()
-    if abs(area-99.5) > 0.00000000001:
+    if abs(area - 99.5) > 0.00000000001:
         gdaltest.post_reason('GetArea() result wrong, got %g.' % area)
         return 'fail'
 
     # OGR >= 1.8.0
     area = geom.Area()
-    if abs(area-99.5) > 0.00000000001:
+    if abs(area - 99.5) > 0.00000000001:
         gdaltest.post_reason('Area() result wrong, got %g.' % area)
         return 'fail'
 
@@ -95,7 +95,7 @@ def ogr_geom_area_geometrycollection():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     area = geom.Area()
-    if abs(area-1) > 0.00000000001:
+    if abs(area - 1) > 0.00000000001:
         gdaltest.post_reason('Area() result wrong, got %g.' % area)
         return 'fail'
 
@@ -133,13 +133,13 @@ def ogr_geom_area_triangle():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     area = geom.GetArea()
-    if abs(area-4999.5) < 0.00000000001:
+    if abs(area - 4999.5) < 0.00000000001:
         gdaltest.post_reason('GetArea() result wrong, got %g.' % area)
         return 'fail'
 
     # OGR >= 1.8.0
     area = geom.Area()
-    if abs(area-4999.5) < 0.00000000001:
+    if abs(area - 4999.5) < 0.00000000001:
         gdaltest.post_reason('Area() result wrong, got %g.' % area)
         return 'fail'
 
@@ -356,7 +356,7 @@ def ogr_geom_tin():
         return 'fail'
 
     if ogrtest.have_sfcgal():
-        area = 12.3*tin.Area()
+        area = 12.3 * tin.Area()
         if area != 12.3:
             gdaltest.post_reason("Wrong area of TIN")
             return 'fail'
@@ -820,11 +820,11 @@ def ogr_geom_segmentize():
     g2 = ogr.CreateGeometryFromWkt(in_wkt)
     g2.Segmentize(0.25)
     for i in range(g1.GetPointCount()):
-        if g1.GetPoint(i) != g2.GetPoint(g1.GetPointCount()-1-i):
+        if g1.GetPoint(i) != g2.GetPoint(g1.GetPointCount() - 1 - i):
             gdaltest.post_reason('fail')
             print(i)
-            print('%.18g' % (g1.GetPoint(i)[0] - g2.GetPoint(g1.GetPointCount()-1-i)[0]))
-            print('%.18g' % (g1.GetPoint(i)[1] - g2.GetPoint(g1.GetPointCount()-1-i)[1]))
+            print('%.18g' % (g1.GetPoint(i)[0] - g2.GetPoint(g1.GetPointCount() - 1 - i)[0]))
+            print('%.18g' % (g1.GetPoint(i)[1] - g2.GetPoint(g1.GetPointCount() - 1 - i)[1]))
             print(g1)
             print(g2)
             return 'fail'
@@ -1089,7 +1089,7 @@ def ogr_geom_length_multilinestring():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     length = geom.Length()
-    if abs(length-2) > 0.00000000001:
+    if abs(length - 2) > 0.00000000001:
         gdaltest.post_reason('Length() result wrong, got %g.' % length)
         return 'fail'
 
@@ -1106,7 +1106,7 @@ def ogr_geom_length_geometrycollection():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     length = geom.Length()
-    if abs(length-4) > 0.00000000001:
+    if abs(length - 4) > 0.00000000001:
         gdaltest.post_reason('Length() result wrong, got %g.' % length)
         return 'fail'
 
@@ -1814,11 +1814,11 @@ def ogr_geom_circularstring():
     g2 = ogr.CreateGeometryFromWkt(in_wkt)
     g2.Segmentize(0.25)
     for i in range(g1.GetPointCount()):
-        if g1.GetPoint(i) != g2.GetPoint(g1.GetPointCount()-1-i):
+        if g1.GetPoint(i) != g2.GetPoint(g1.GetPointCount() - 1 - i):
             gdaltest.post_reason('fail')
             print(i)
-            print('%.18g' % (g1.GetPoint(i)[0] - g2.GetPoint(g1.GetPointCount()-1-i)[0]))
-            print('%.18g' % (g1.GetPoint(i)[1] - g2.GetPoint(g1.GetPointCount()-1-i)[1]))
+            print('%.18g' % (g1.GetPoint(i)[0] - g2.GetPoint(g1.GetPointCount() - 1 - i)[0]))
+            print('%.18g' % (g1.GetPoint(i)[1] - g2.GetPoint(g1.GetPointCount() - 1 - i)[1]))
             print(g1)
             print(g2)
             return 'fail'
@@ -2175,14 +2175,14 @@ def ogr_geom_compoundcurve():
         print(p)
         return 'fail'
 
-    p = g1.Value(math.pi+1)
+    p = g1.Value(math.pi + 1)
     expected_p = ogr.CreateGeometryFromWkt('POINT (1 0 20)')
     if ogrtest.check_feature_geometry(p, expected_p) != 0:
         gdaltest.post_reason('fail')
         print(p)
         return 'fail'
 
-    p = g1.Value(math.pi+2+1e-3)
+    p = g1.Value(math.pi + 2 + 1e-3)
     expected_p = ogr.CreateGeometryFromWkt('POINT (0 0 10)')
     if ogrtest.check_feature_geometry(p, expected_p) != 0:
         gdaltest.post_reason('fail')
@@ -2488,7 +2488,7 @@ def ogr_geom_curvepolygon():
 
     if ogrtest.have_geos():
         p1 = g1.PointOnSurface()
-        if (p1.GetX()-0.5)*(p1.GetX()-0.5)+p1.GetY()*p1.GetY() > 0.5 * 0.5:
+        if (p1.GetX() - 0.5) * (p1.GetX() - 0.5) + p1.GetY() * p1.GetY() > 0.5 * 0.5:
             gdaltest.post_reason('fail')
             print(p1)
             return 'fail'
@@ -2742,7 +2742,7 @@ def ogr_geom_curvepolygon():
     # Intersects optimizations on a circle
     g1 = ogr.CreateGeometryFromWkt('CURVEPOLYGON (CIRCULARSTRING (0 0,2 0,0 0))')
     # Point slightly within circle
-    p1 = ogr.CreateGeometryFromWkt('POINT (%.16g %.16g)' % (1 + math.cos(math.pi/6)-1e-4,math.sin(math.pi/6)))
+    p1 = ogr.CreateGeometryFromWkt('POINT (%.16g %.16g)' % (1 + math.cos(math.pi / 6) - 1e-4,math.sin(math.pi / 6)))
     # To prove that we don't use discretization
     gdal.SetConfigOption('OGR_ARC_STEPSIZE', '45')
     res = g1.Intersects(p1)
@@ -2755,7 +2755,7 @@ def ogr_geom_curvepolygon():
         return 'fail'
 
     # Test point slightly outside circle
-    p2 = ogr.CreateGeometryFromWkt('POINT (%.16g %.16g)' % (1 + math.cos(math.pi/6)+1e-4,math.sin(math.pi/6)))
+    p2 = ogr.CreateGeometryFromWkt('POINT (%.16g %.16g)' % (1 + math.cos(math.pi / 6) + 1e-4,math.sin(math.pi / 6)))
     if p2.Within(g1):
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2773,7 +2773,7 @@ def ogr_geom_curvepolygon():
         return 'fail'
 
     # This is not a circle
-    p2 = ogr.CreateGeometryFromWkt('POINT (%.16g %.16g)' % (1 + math.cos(math.pi/6)-1e-2,math.sin(math.pi/6)))
+    p2 = ogr.CreateGeometryFromWkt('POINT (%.16g %.16g)' % (1 + math.cos(math.pi / 6) - 1e-2,math.sin(math.pi / 6)))
     g1 = ogr.CreateGeometryFromWkt('CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,2 0,1 1,0 0))')
     if p2.Within(g1):
         gdaltest.post_reason('fail')
@@ -3174,7 +3174,7 @@ def ogr_geom_getcurvegeometry():
     g3 = g2.GetCurveGeometry()
     if g3.GetGeometryType() != ogr.wkbCircularString or \
        g1.GetPoint(0) != g3.GetPoint(0) or g1.GetPoint(2) != g3.GetPoint(2) or \
-       abs((g3.GetX(1) - 1)*(g3.GetX(1) - 1)+g3.GetY(1)*g3.GetY(1) - 1) > 1e-8:
+       abs((g3.GetX(1) - 1) * (g3.GetX(1) - 1) + g3.GetY(1) * g3.GetY(1) - 1) > 1e-8:
         gdaltest.post_reason('fail')
         print(g3)
         return 'fail'
@@ -3244,7 +3244,7 @@ def ogr_geom_getcurvegeometry():
         y = random.randint(-1000000,1000000)
         v = [random.randint(-10,10) for i in range(6)]
         if v[0] != v[4] or v[1] != v[5]:
-            wkt = 'CIRCULARSTRING (%d %d,%d %d,%d %d)' % (x+v[0],y+v[1],x+v[2],y+v[3],x+v[4],y+v[5])
+            wkt = 'CIRCULARSTRING (%d %d,%d %d,%d %d)' % (x + v[0],y + v[1],x + v[2],y + v[3],x + v[4],y + v[5])
             g1 = ogr.CreateGeometryFromWkt(wkt)
             g2 = g1.GetLinearGeometry()
             if g2.GetPointCount() != 3:
@@ -3293,8 +3293,8 @@ def ogr_geom_getcurvegeometry():
        g1.GetPoint(0) != g3.GetPoint(0) or \
        g1.GetPoint(1) != g3.GetPoint(2) or \
        g1.GetPoint(2) != g3.GetPoint(4) or \
-       abs((g3.GetX(1) - 0.5)*(g3.GetX(1) - 0.5)+g3.GetY(1)*g3.GetY(1) - 0.5*0.5) > 1e-12 or \
-       abs((g3.GetX(3) - 0.5)*(g3.GetX(3) - 0.5)+g3.GetY(3)*g3.GetY(3) - 0.5*0.5) > 1e-12 :
+       abs((g3.GetX(1) - 0.5) * (g3.GetX(1) - 0.5) + g3.GetY(1) * g3.GetY(1) - 0.5 * 0.5) > 1e-12 or \
+       abs((g3.GetX(3) - 0.5) * (g3.GetX(3) - 0.5) + g3.GetY(3) * g3.GetY(3) - 0.5 * 0.5) > 1e-12 :
         gdaltest.post_reason('fail')
         print(g3)
         #print(abs((g3.GetX(1) - 0.5)*(g3.GetX(1) - 0.5)+g3.GetY(1)*g3.GetY(1) - 0.5*0.5))
@@ -3462,7 +3462,7 @@ def ogr_geom_getcurvegeometry():
 
     # Add repeated point at end of line
     g2 = g1.GetLinearGeometry()
-    g2.AddPoint_2D(2-1e-9,0)
+    g2.AddPoint_2D(2 - 1e-9,0)
     g3 = g2.GetCurveGeometry()
     if not g3.Equals(g1):
         gdaltest.post_reason('fail')

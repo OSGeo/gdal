@@ -69,9 +69,9 @@ def ogr_pg_1():
     gdaltest.pg_use_copy = gdal.GetConfigOption('PG_USE_COPY', None)
     val = gdal.GetConfigOption('OGR_PG_CONNECTION_STRING', None)
     if val is not None:
-        gdaltest.pg_connection_string=val
+        gdaltest.pg_connection_string = val
     else:
-        gdaltest.pg_connection_string='dbname=autotest'
+        gdaltest.pg_connection_string = 'dbname=autotest'
     #gdaltest.pg_connection_string='dbname=autotest-postgis1.4'
     #gdaltest.pg_connection_string='dbname=autotest port=5432'
     #gdaltest.pg_connection_string='dbname=autotest-postgis2.0'
@@ -297,7 +297,7 @@ def ogr_pg_4():
 
     for item in wkt_list:
 
-        wkt = open('data/wkb_wkt/'+item+'.wkt').read()
+        wkt = open('data/wkb_wkt/' + item + '.wkt').read()
         geom = ogr.CreateGeometryFromWkt(wkt)
 
         ######################################################################
@@ -784,7 +784,7 @@ def ogr_pg_15():
     query = 'eas_id = 169'
 
     for id in range(1000):
-        query = query + (' or eas_id = %d' % (id+1000))
+        query = query + (' or eas_id = %d' % (id + 1000))
 
     gdaltest.pg_lyr.SetAttributeFilter(query)
     tr = ogrtest.check_features_against_list(gdaltest.pg_lyr,
@@ -810,7 +810,7 @@ def ogr_pg_16():
     query = 'eas_id = 169'
 
     for id in range(1000):
-        query = query + (' or eas_id = %d' % (id+1000))
+        query = query + (' or eas_id = %d' % (id + 1000))
 
     statement = 'select eas_id from tpoly where ' + query
 
@@ -865,7 +865,7 @@ def ogr_pg_18():
         gdaltest.post_reason('did not get geometry_columns layer')
         return 'fail'
 
-    if count+1 != gdaltest.pg_ds.GetLayerCount():
+    if count + 1 != gdaltest.pg_ds.GetLayerCount():
         gdaltest.post_reason('layer count unexpectedly unchanged.')
         return 'fail'
 
@@ -1221,7 +1221,7 @@ def ogr_pg_22():
     found = ogr_pg_check_layer_in_list(gdaltest.pg_ds, layer_name)
 
     if found is False:
-        gdaltest.post_reason('layer from schema \''+schema_name+'\' not listed')
+        gdaltest.post_reason('layer from schema \'' + schema_name + '\' not listed')
         return 'fail'
 
     return 'success'
@@ -2847,16 +2847,16 @@ def ogr_pg_50():
 
     for option in ['NO', 'YES']:
         for value in ['NaN', 'Inf', '-Inf']:
-            gdaltest.pg_lyr.SetAttributeFilter('PRFEDEA = \''+value+'\' AND SHORTNAME = \''+option+'\'')
+            gdaltest.pg_lyr.SetAttributeFilter('PRFEDEA = \'' + value + '\' AND SHORTNAME = \'' + option + '\'')
             feat = gdaltest.pg_lyr.GetNextFeature()
             got_val = feat.GetField('AREA')
             if value == 'NaN':
                 if not gdaltest.isnan(got_val):
-                    print(feat.GetFieldAsString('AREA')+' returned for AREA instead of '+value)
+                    print(feat.GetFieldAsString('AREA') + ' returned for AREA instead of ' + value)
                     gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
                     return 'fail'
             elif got_val != float(value):
-                print(feat.GetFieldAsString('AREA')+' returned for AREA instead of '+value)
+                print(feat.GetFieldAsString('AREA') + ' returned for AREA instead of ' + value)
                 gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
                 return 'fail'
 
@@ -2864,11 +2864,11 @@ def ogr_pg_50():
                 got_val = feat.GetFieldAsDoubleList(feature_def.GetFieldIndex('REALLIST'))
                 if value == 'NaN':
                     if not gdaltest.isnan(got_val[0]) or not gdaltest.isnan(got_val[1]):
-                        print(feat.GetFieldAsString('REALLIST')+' returned for REALLIST instead of '+value)
+                        print(feat.GetFieldAsString('REALLIST') + ' returned for REALLIST instead of ' + value)
                         gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
                         return 'fail'
                 elif got_val[0] != float(value) or got_val[1] != float(value):
-                    print(feat.GetFieldAsString('REALLIST')+' returned for REALLIST instead of '+value)
+                    print(feat.GetFieldAsString('REALLIST') + ' returned for REALLIST instead of ' + value)
                     gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
                     return 'fail'
 
@@ -3926,7 +3926,7 @@ def ogr_pg_71():
             z_pos = postgis_in_wkt.find('Z ')
             # PostGIS 1.X doesn't like Z in WKT
             if not gdaltest.pg_has_postgis_2 and z_pos >= 0:
-                postgis_in_wkt = postgis_in_wkt[0:z_pos] + postgis_in_wkt[z_pos+2:]
+                postgis_in_wkt = postgis_in_wkt[0:z_pos] + postgis_in_wkt[z_pos + 2:]
             else:
                 break
 

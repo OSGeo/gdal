@@ -1105,7 +1105,7 @@ def ogr_carto_rw_1():
     # No-op
     with gdaltest.error_handler():
         lyr = ds.CreateLayer(lyr_name)
-    ds.DeleteLayer(ds.GetLayerCount()-1)
+    ds.DeleteLayer(ds.GetLayerCount() - 1)
 
     # Deferred table creation
     with gdaltest.error_handler():

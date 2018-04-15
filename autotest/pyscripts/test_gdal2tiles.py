@@ -54,10 +54,10 @@ def test_gdal2tiles_py_simple():
 
     expected_cs = [25314, 28114, 6148, 59026]
     for i in range(4):
-        if ds.GetRasterBand(i+1).Checksum() != expected_cs[i]:
-            gdaltest.post_reason('wrong checksum for band %d' % (i+1))
+        if ds.GetRasterBand(i + 1).Checksum() != expected_cs[i]:
+            gdaltest.post_reason('wrong checksum for band %d' % (i + 1))
             for j in range(4):
-                print(ds.GetRasterBand(j+1).Checksum())
+                print(ds.GetRasterBand(j + 1).Checksum())
             return 'fail'
 
     ds = None
@@ -94,10 +94,10 @@ def test_gdal2tiles_py_zoom_option():
 
     expected_cs = [8130, 10496, 65274, 63715]
     for i in range(4):
-        if ds.GetRasterBand(i+1).Checksum() != expected_cs[i]:
-            gdaltest.post_reason('wrong checksum for band %d' % (i+1))
+        if ds.GetRasterBand(i + 1).Checksum() != expected_cs[i]:
+            gdaltest.post_reason('wrong checksum for band %d' % (i + 1))
             for j in range(4):
-                print(ds.GetRasterBand(j+1).Checksum())
+                print(ds.GetRasterBand(j + 1).Checksum())
             return 'fail'
 
     ds = None

@@ -111,7 +111,7 @@ def test_gdaltindex_1():
         print(tileindex_wkt)
         return 'fail'
 
-    expected_wkts =['POLYGON ((49 2,50 2,50 1,49 1,49 2))',
+    expected_wkts = ['POLYGON ((49 2,50 2,50 1,49 1,49 2))',
                     'POLYGON ((49 3,50 3,50 2,49 2,49 3))',
                     'POLYGON ((48 2,49 2,49 1,48 1,48 2))',
                     'POLYGON ((48 3,49 3,49 2,48 2,48 3))']

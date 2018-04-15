@@ -738,7 +738,7 @@ def ogr_kml_write_schema():
 
     gdal.Unlink('/vsimem/ogr_kml_write_schema.kml')
 
-    expected_content="""<?xml version="1.0" encoding="utf-8" ?>
+    expected_content = """<?xml version="1.0" encoding="utf-8" ?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
 <Document id="root_doc">
 <Schema name="lyr" id="lyr">
@@ -775,7 +775,7 @@ def ogr_kml_empty_layer():
 
     gdal.Unlink('/vsimem/ogr_kml_empty_layer.kml')
 
-    expected_content="""<?xml version="1.0" encoding="utf-8" ?>
+    expected_content = """<?xml version="1.0" encoding="utf-8" ?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
 <Document id="root_doc">
 <Folder><name>empty</name>
@@ -806,7 +806,7 @@ def ogr_kml_two_layers():
     gdal.Unlink('/vsimem/ogr_kml_two_layers.kml')
 
     # FIXME: the schema for lyr should be written before the first Folter for XML compliance
-    expected_content="""<?xml version="1.0" encoding="utf-8" ?>
+    expected_content = """<?xml version="1.0" encoding="utf-8" ?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
 <Document id="root_doc">
 <Folder><name>empty</name>

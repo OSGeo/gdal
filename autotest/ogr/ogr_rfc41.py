@@ -1019,7 +1019,7 @@ def ogr_rfc41_7():
 
     ds = ogr.Open('data')
     sql = "select eas_id, \"_ogr_geometry_\" as geom1, cast(null as geometry) as geom2, " + \
-          "'a', cast('POINT(3 4)' as geometry) as geom3, fid, \"_ogr_geometry_\" as geom4, "+\
+          "'a', cast('POINT(3 4)' as geometry) as geom3, fid, \"_ogr_geometry_\" as geom4, " +\
           "'c', p.eas_id, cast(area as integer) as area_int, \"_ogr_geometry_\", area from " +\
           "poly join \"data\".poly p on poly.eas_id = p.eas_id"
     sql_lyr = ds.ExecuteSQL(sql)

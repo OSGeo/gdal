@@ -307,17 +307,17 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
     i = 0
     while i < len(argv):
         arg = argv[i]
-        if EQUAL(arg, '-src') and i+1 < len(argv):
+        if EQUAL(arg, '-src') and i + 1 < len(argv):
             i = i + 1
             src_filename = argv[i]
-        elif EQUAL(arg, '-dst') and i+1 < len(argv):
+        elif EQUAL(arg, '-dst') and i + 1 < len(argv):
             i = i + 1
             dst_filename = argv[i]
-        elif EQUAL(arg, '-f') and i+1 < len(argv):
+        elif EQUAL(arg, '-f') and i + 1 < len(argv):
             i = i + 1
             format = argv[i]
 
-        elif EQUAL(arg,'-a_srs') and i+1 < len(argv):
+        elif EQUAL(arg,'-a_srs') and i + 1 < len(argv):
             i = i + 1
             pszOutputSRSDef = argv[i]
             if EQUAL(pszOutputSRSDef, "NULL") or \
@@ -328,13 +328,13 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
                 if options.poOutputSRS.SetFromUserInput(pszOutputSRSDef) != 0:
                     print("Failed to process SRS definition: %s" % pszOutputSRSDef)
                     return 1
-        elif EQUAL(arg, '-dsco') and i+1 < len(argv):
+        elif EQUAL(arg, '-dsco') and i + 1 < len(argv):
             i = i + 1
             dsco.append(argv[i])
-        elif EQUAL(arg, '-lco') and i+1 < len(argv):
+        elif EQUAL(arg, '-lco') and i + 1 < len(argv):
             i = i + 1
             lco.append(argv[i])
-        elif EQUAL(arg, '-field') and i+1 < len(argv):
+        elif EQUAL(arg, '-field') and i + 1 < len(argv):
             i = i + 1
             options.dispatch_fields.append(argv[i])
         elif EQUAL(arg, '-25D_as_2D'):
@@ -348,10 +348,10 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
         elif EQUAL(arg, '-style_as_field'):
             options.bStyleAsField = True
         elif (EQUAL(arg,"-tg") or \
-                EQUAL(arg,"-gt")) and i+1 < len(argv):
+                EQUAL(arg,"-gt")) and i + 1 < len(argv):
             i = i + 1
             options.nGroupTransactions = int(argv[i])
-        elif EQUAL(arg,"-where") and i+1 < len(argv):
+        elif EQUAL(arg,"-where") and i + 1 < len(argv):
             i = i + 1
             pszWHERE = argv[i]
         elif EQUAL(arg, '-quiet'):

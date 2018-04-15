@@ -237,7 +237,7 @@ def LoadFile(filename, xoff=0, yoff=0, xsize=None, ysize=None,
               callback=None, callback_data=None):
     ds = gdal.Open(filename)
     if ds is None:
-        raise ValueError("Can't open "+filename+"\n\n"+gdal.GetLastErrorMsg())
+        raise ValueError("Can't open " + filename + "\n\n" + gdal.GetLastErrorMsg())
 
     return DatasetReadAsArray(ds, xoff, yoff, xsize, ysize,
                                buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
@@ -248,7 +248,7 @@ def LoadFile(filename, xoff=0, yoff=0, xsize=None, ysize=None,
 def SaveArray(src_array, filename, format="GTiff", prototype=None):
     driver = gdal.GetDriverByName(format)
     if driver is None:
-        raise ValueError("Can't find driver "+format)
+        raise ValueError("Can't find driver " + format)
 
     return driver.CreateCopy(filename, OpenArray(src_array,prototype))
 
@@ -283,7 +283,7 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
             buf_ysize = win_ysize
         if buf_type is None:
             buf_type = ds.GetRasterBand(1).DataType
-            for band_index in range(2,ds.RasterCount+1):
+            for band_index in range(2,ds.RasterCount + 1):
                 if buf_type != ds.GetRasterBand(band_index).DataType:
                     buf_type = gdalconst.GDT_Float32
 
@@ -481,8 +481,8 @@ def CopyDatasetInfo(src, dst, xoff=0, yoff=0):
             dst.SetGeoTransform(gt)
         else:
             ngt = [gt[0],gt[1],gt[2],gt[3],gt[4],gt[5]]
-            ngt[0] = gt[0] + xoff*gt[1] + yoff*gt[2];
-            ngt[3] = gt[3] + xoff*gt[4] + yoff*gt[5];
+            ngt[0] = gt[0] + xoff * gt[1] + yoff * gt[2];
+            ngt[3] = gt[3] + xoff * gt[4] + yoff * gt[5];
             dst.SetGeoTransform((ngt[0], ngt[1], ngt[2], ngt[3], ngt[4], ngt[5]))
 
 #Check for GCPs

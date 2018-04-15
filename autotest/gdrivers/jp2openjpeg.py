@@ -257,8 +257,8 @@ def jp2openjpeg_8():
     expected_checksums = [64570, 57277, 56048, 61292]
 
     for i in range(4):
-        if ds.GetRasterBand(i+1).Checksum() != expected_checksums[i]:
-            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i+1))
+        if ds.GetRasterBand(i + 1).Checksum() != expected_checksums[i]:
+            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i + 1))
             return 'fail'
 
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
@@ -279,12 +279,12 @@ def jp2openjpeg_9():
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-440720) > 0.1 \
-        or abs(geotransform[1]-60) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-3751320) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -60) > 0.001:
+    if abs(geotransform[0] - 440720) > 0.1 \
+        or abs(geotransform[1] - 60) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 3751320) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -346,7 +346,7 @@ def jp2openjpeg_11():
         return 'fail'
     jp2_bands_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
     jp2_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize/16),int(ds.RasterYSize/16))
+    fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize / 16),int(ds.RasterYSize / 16))
 
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/jp2openjpeg_11.tif', ds)
     fourth_band = tmp_ds.GetRasterBand(4)
@@ -1100,10 +1100,10 @@ def jp2openjpeg_26():
     overview_count = out_ds.GetRasterBand(1).GetOverviewCount()
     # We have 2x2 1024x1024 tiles. Each of them can be reconstructed down to 128x128.
     # So for full raster the smallest overview is 2*128
-    if out_ds.GetRasterBand(1).GetOverview(overview_count-1).XSize != 2*128 or \
-       out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize != 2*128:
-        print(out_ds.GetRasterBand(1).GetOverview(overview_count-1).XSize)
-        print(out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize)
+    if out_ds.GetRasterBand(1).GetOverview(overview_count - 1).XSize != 2 * 128 or \
+       out_ds.GetRasterBand(1).GetOverview(overview_count - 1).YSize != 2 * 128:
+        print(out_ds.GetRasterBand(1).GetOverview(overview_count - 1).XSize)
+        print(out_ds.GetRasterBand(1).GetOverview(overview_count - 1).YSize)
         gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
@@ -1118,10 +1118,10 @@ def jp2openjpeg_26():
     # Nominal case: untiled
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES', 'BLOCKXSIZE=2048', 'BLOCKYSIZE=2048'])
     overview_count = out_ds.GetRasterBand(1).GetOverviewCount()
-    if out_ds.GetRasterBand(1).GetOverview(overview_count-1).XSize != 128 or \
-       out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize != 128:
-        print(out_ds.GetRasterBand(1).GetOverview(overview_count-1).XSize)
-        print(out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize)
+    if out_ds.GetRasterBand(1).GetOverview(overview_count - 1).XSize != 128 or \
+       out_ds.GetRasterBand(1).GetOverview(overview_count - 1).YSize != 128:
+        print(out_ds.GetRasterBand(1).GetOverview(overview_count - 1).XSize)
+        print(out_ds.GetRasterBand(1).GetOverview(overview_count - 1).YSize)
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.ErrorReset()
@@ -1373,8 +1373,8 @@ def get_element_val(node):
 
 def jp2openjpeg_test_codeblock(filename, codeblock_width, codeblock_height):
     node = gdal.GetJPEG2000Structure(filename, ['ALL=YES'])
-    xcb = 2**(2+int(get_element_val(find_element_with_name(node, "Field", "SPcod_xcb_minus_2"))))
-    ycb = 2**(2+int(get_element_val(find_element_with_name(node, "Field", "SPcod_ycb_minus_2"))))
+    xcb = 2**(2 + int(get_element_val(find_element_with_name(node, "Field", "SPcod_xcb_minus_2"))))
+    ycb = 2**(2 + int(get_element_val(find_element_with_name(node, "Field", "SPcod_ycb_minus_2"))))
     if xcb != codeblock_width or ycb != codeblock_height:
         return False
     return True

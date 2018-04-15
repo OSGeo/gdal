@@ -67,7 +67,7 @@ def osr_basic_1():
 
     for parm in parm_list:
         value = utm_srs.GetProjParm(parm[0], -1111)
-        if abs(value-parm[1]) > .00000000000010:
+        if abs(value - parm[1]) > .00000000000010:
             gdaltest.post_reason('got %g for %s instead of %g.' \
                                   % (value, parm[0], parm[1]))
             return 'fail'
@@ -326,7 +326,7 @@ def osr_basic_8():
         gdaltest.post_reason('false easting was unexpectedly not updated.')
         return 'fail'
 
-    if abs(fe-3280.840) > 0.01:
+    if abs(fe - 3280.840) > 0.01:
         print(fe)
         gdaltest.post_reason('wrong updated false easting value.')
         return 'fail'

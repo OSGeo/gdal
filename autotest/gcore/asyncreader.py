@@ -55,8 +55,8 @@ def asyncreader_1():
     out_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/asyncresult.tif', ds.RasterXSize,ds.RasterYSize,ds.RasterCount)
     out_ds.WriteRaster(0,0,ds.RasterXSize,ds.RasterYSize,buf)
 
-    expected_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
-    cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    expected_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
+    cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
 
     ds = None
     out_ds = None
@@ -64,7 +64,7 @@ def asyncreader_1():
 
     for i in range(len(cs)):
         if cs[i] != expected_cs[i]:
-            gdaltest.post_reason('did not get expected checksum for band %d' % (i+1))
+            gdaltest.post_reason('did not get expected checksum for band %d' % (i + 1))
             print(cs[i])
             print(expected_cs[i])
             return 'fail'

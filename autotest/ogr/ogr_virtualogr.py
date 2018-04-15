@@ -237,7 +237,7 @@ def ogr_virtualogr_3():
     libgdal_name = gdaltest.find_lib('gdal')
     if libgdal_name is None:
         return 'skip'
-    print('Found '+ libgdal_name)
+    print('Found ' + libgdal_name)
 
     # Find path of libsqlite3 or libspatialite
     libsqlite_name = gdaltest.find_lib('sqlite3')

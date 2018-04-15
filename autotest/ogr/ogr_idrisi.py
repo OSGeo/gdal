@@ -120,7 +120,7 @@ def ogr_idrisi_1():
         feat.DumpReadable()
         return 'fail'
 
-    lyr.SetSpatialFilterRect(600000-1,4000000-1,600000+1,4000000+1)
+    lyr.SetSpatialFilterRect(600000 - 1,4000000 - 1,600000 + 1,4000000 + 1)
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 2.0:

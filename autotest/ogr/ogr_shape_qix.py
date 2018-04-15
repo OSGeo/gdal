@@ -68,7 +68,7 @@ def check_qix_non_overlapping_geoms(lyr):
     # Get all geoms in a single gulp. We do not use exactly the extent bounds, because
     # there is an optimization in the shapefile driver to skip the spatial index in that
     # case. That trick can only work with non point geometries of course
-    lyr.SetSpatialFilterRect(extents[0]+0.001, extents[2]+0.001, extents[1]-0.001, extents[3]-0.001)
+    lyr.SetSpatialFilterRect(extents[0] + 0.001, extents[2] + 0.001, extents[1] - 0.001, extents[3] - 0.001)
     lyr.ResetReading()
     fc = lyr.GetFeatureCount()
     if fc != fc_ref:
@@ -82,7 +82,7 @@ def check_qix_non_overlapping_geoms(lyr):
 
 def build_rectangle_from_point(x, y, radius=0.1):
     return ogr.CreateGeometryFromWkt('POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))' % \
-        (x-radius,y-radius,x-radius,y+radius,x+radius,y+radius,x+radius,y-radius,x-radius,y-radius))
+        (x - radius,y - radius,x - radius,y + radius,x + radius,y + radius,x + radius,y - radius,x - radius,y - radius))
 
 ###############################################################################
 # Test geoms on a 10x10 grid
@@ -162,7 +162,7 @@ def ogr_shape_qix_3():
     for x in range(10):
         for y in range(10):
             feat = ogr.Feature(lyr.GetLayerDefn())
-            feat.SetGeometry(build_rectangle_from_point(x+1000,y))
+            feat.SetGeometry(build_rectangle_from_point(x + 1000,y))
             lyr.CreateFeature(feat)
             feat = None
 
@@ -215,7 +215,7 @@ def check_qix_random_geoms(lyr):
     # Get all geoms in a single gulp. We do not use exactly the extent bounds, because
     # there is an optimization in the shapefile driver to skip the spatial index in that
     # case. That trick can only work with non point geometries of course
-    lyr.SetSpatialFilterRect(extents[0]+0.001, extents[2]+0.001, extents[1]-0.001, extents[3]-0.001)
+    lyr.SetSpatialFilterRect(extents[0] + 0.001, extents[2] + 0.001, extents[1] - 0.001, extents[3] - 0.001)
     lyr.ResetReading()
     fc = lyr.GetFeatureCount()
     if fc != fc_ref:

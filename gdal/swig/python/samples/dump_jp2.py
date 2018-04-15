@@ -164,17 +164,17 @@ def main():
         if sys.argv[i] == "-dump_gmljp2":
             if i >= len(sys.argv) - 1:
                 return Usage()
-            out_gmljp2 = sys.argv[i+1]
+            out_gmljp2 = sys.argv[i + 1]
             i = i + 1
         elif sys.argv[i] == "-dump_crsdictionary":
             if i >= len(sys.argv) - 1:
                 return Usage()
-            out_crsdictionary = sys.argv[i+1]
+            out_crsdictionary = sys.argv[i + 1]
             i = i + 1
         elif sys.argv[i] == "-extract_all_xml_boxes":
             if i >= len(sys.argv) - 1:
                 return Usage()
-            extract_all_xml_boxes_prefix = sys.argv[i+1]
+            extract_all_xml_boxes_prefix = sys.argv[i + 1]
             i = i + 1
         elif sys.argv[i][0] == '-':
             return Usage()

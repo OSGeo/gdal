@@ -493,7 +493,7 @@ def ogr_gpkg_8():
     for i in range(10):
         feat.SetFID(-1)
         feat.SetField('fld_integer', 10 + i)
-        feat.SetField('fld_real', 3.14159/(i+1))
+        feat.SetField('fld_real', 3.14159 / (i + 1))
         feat.SetField('fld_string', 'test string %d test' % i)
         feat.SetField('fld_date', '2014/05/17 ')
         feat.SetField('fld_datetime', '2014/05/17  12:34:56')
@@ -1429,7 +1429,7 @@ def ogr_gpkg_16():
     # Test with database wide unknown extension
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpk_16.gpkg')
     ds.CreateLayer('foo')
-    ds.ExecuteSQL("INSERT INTO gpkg_extensions ( "+ \
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions ( " + \
         "extension_name, definition, scope ) VALUES ( 'myext', 'some ext', 'write-only' ) ")
     ds = None
 
@@ -3860,13 +3860,13 @@ def ogr_gpkg_43():
     ds.StartTransaction()
     for i in range(1001):
         ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, data_type, identifier) " +
-                      "VALUES ('tiles%d', 'tiles', 'tiles%d')" % (i+1,i+1))
+                      "VALUES ('tiles%d', 'tiles', 'tiles%d')" % (i + 1,i + 1))
         ds.ExecuteSQL("INSERT INTO gpkg_tile_matrix_set VALUES " +
-                      "('tiles%d', 0, 440720, 3750120, 441920, 3751320)" % (i+1))
+                      "('tiles%d', 0, 440720, 3750120, 441920, 3751320)" % (i + 1))
     for i in range(1001):
         ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, data_type, identifier) " +
-                      "VALUES ('attr%d', 'attributes', 'attr%d')" % (i+1,i+1))
-        ds.ExecuteSQL("CREATE TABLE attr%d (id INTEGER PRIMARY KEY AUTOINCREMENT)" % (i+1))
+                      "VALUES ('attr%d', 'attributes', 'attr%d')" % (i + 1,i + 1))
+        ds.ExecuteSQL("CREATE TABLE attr%d (id INTEGER PRIMARY KEY AUTOINCREMENT)" % (i + 1))
     ds.CommitTransaction()
     ds = None
 
@@ -4105,7 +4105,7 @@ def ogr_gpkg_47():
     # Set wrong application_id
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 68, 0)
-    gdal.VSIFWriteL(struct.pack('B'*4,0,0,0,0), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B' * 4,0,0,0,0), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
@@ -4128,7 +4128,7 @@ def ogr_gpkg_47():
     # Set wrong user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL(struct.pack('B'*4,0,0,0,0), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B' * 4,0,0,0,0), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
@@ -4152,7 +4152,7 @@ def ogr_gpkg_47():
     # Set user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL(struct.pack('B'*4,0,0,0x27,0xD9), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B' * 4,0,0,0x27,0xD9), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
@@ -4175,7 +4175,7 @@ def ogr_gpkg_47():
     # Set user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL(struct.pack('B'*4,0,0,0x28,0x3C), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B' * 4,0,0,0x28,0x3C), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
@@ -4200,7 +4200,7 @@ def ogr_gpkg_47():
     # Set wrong application_id
     fp = gdal.VSIFOpenL('/vsimem/.cur_input', 'rb+')
     gdal.VSIFSeekL(fp, 68, 0)
-    gdal.VSIFWriteL(struct.pack('B'*4,0,0,0,0), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B' * 4,0,0,0,0), 4, 1, fp)
     gdal.VSIFCloseL(fp)
     ogr.Open('/vsimem/.cur_input')
     gdal.Unlink('/vsimem/.cur_input')
@@ -4210,7 +4210,7 @@ def ogr_gpkg_47():
     # Set wrong user_version
     fp = gdal.VSIFOpenL('/vsimem/.cur_input', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL(struct.pack('B'*4,0,0,0,0), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B' * 4,0,0,0,0), 4, 1, fp)
     gdal.VSIFCloseL(fp)
     ogr.Open('/vsimem/.cur_input')
     gdal.Unlink('/vsimem/.cur_input')

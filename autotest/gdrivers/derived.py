@@ -78,13 +78,13 @@ def derived_test1():
             if gt != expected_gt:
                 gdaltest.post_reason('fail')
                 import pprint
-                pprint.pprint("Expected geotransform: "+str(expected_gt)+", got "+str(gt))
+                pprint.pprint("Expected geotransform: " + str(expected_gt) + ", got " + str(gt))
                 return 'fail'
             prj = ds.GetProjection()
             if prj != expected_prj:
                 gdaltest.post_reason('fail')
                 import pprint
-                pprint.pprint("Expected projection: "+str(expected_prj)+", got: "+str(gt))
+                pprint.pprint("Expected projection: " + str(expected_prj) + ", got: " + str(gt))
                 return 'fail'
     return 'success'
 
@@ -137,7 +137,7 @@ def derived_test2():
             if expected_cs[key] != cs:
                  gdaltest.post_reason('fail')
                  import pprint
-                 pprint.pprint("Expected checksum "+str(expected_cs[key])+", got "+str(cs))
+                 pprint.pprint("Expected checksum " + str(expected_cs[key]) + ", got " + str(cs))
                  return 'fail'
 
     return 'success'

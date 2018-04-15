@@ -79,13 +79,13 @@ i = 1
 while i < len(argv):
     arg = argv[i]
 
-    if arg == '-s' and i < len(argv)-1:
-        if argv[i+1] in SCOPES:
-            scope = SCOPES[argv[i+1]]
-        elif argv[i+1].startswith('http'):
-            scope = argv[i+1]
+    if arg == '-s' and i < len(argv) - 1:
+        if argv[i + 1] in SCOPES:
+            scope = SCOPES[argv[i + 1]]
+        elif argv[i + 1].startswith('http'):
+            scope = argv[i + 1]
         else:
-            print('Scope %s not recognised.' % argv[i+1])
+            print('Scope %s not recognised.' % argv[i + 1])
             Usage()
             sys.exit(1)
         i = i + 1
@@ -132,11 +132,11 @@ else:
 
     refresh_token = gdal.GOA2GetRefreshToken(auth_token, scope)
 
-    print('Refresh Token:'+refresh_token)
+    print('Refresh Token:' + refresh_token)
     print('')
     if scope == SCOPES['ft']:
         print('Consider setting a configuration option like:')
-        print('GFT_REFRESH_TOKEN='+refresh_token)
+        print('GFT_REFRESH_TOKEN=' + refresh_token)
     elif scope in (SCOPES['storage'], SCOPES['storage-rw']):
         print('Consider setting a configuration option like:')
-        print('GS_OAUTH2_REFRESH_TOKEN='+refresh_token)
+        print('GS_OAUTH2_REFRESH_TOKEN=' + refresh_token)

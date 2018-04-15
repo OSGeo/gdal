@@ -330,10 +330,10 @@ def ogr_xlsx_8():
     ds = drv.CreateDataSource('/vsimem/ogr_xlsx_8.xlsx')
     lyr = ds.CreateLayer('foo')
     for i in range(30):
-        lyr.CreateField(ogr.FieldDefn('Field%d' % (i+1)))
+        lyr.CreateField(ogr.FieldDefn('Field%d' % (i + 1)))
     f = ogr.Feature(lyr.GetLayerDefn())
     for i in range(30):
-        f.SetField(i, 'val%d' % (i+1))
+        f.SetField(i, 'val%d' % (i + 1))
     lyr.CreateFeature(f)
     f = None
     ds = None
@@ -453,7 +453,7 @@ def ogr_xlsx_11():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     for i in (0,27,28,29):
-        if f['Field%d' % (i+1)] != 'val%d' % (i+1):
+        if f['Field%d' % (i + 1)] != 'val%d' % (i + 1):
             f.DumpReadable()
             return 'fail'
     ds = None
@@ -527,7 +527,7 @@ def ogr_xlsx_13():
 
     for i in range(len(type_array)):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
-            gdaltest.post_reason('invalid type for field {}'.format(i+1))
+            gdaltest.post_reason('invalid type for field {}'.format(i + 1))
             return 'fail'
 
     return 'success'
@@ -579,7 +579,7 @@ def ogr_xlsx_14():
 
     for i in range(len(type_array)):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
-            gdaltest.post_reason('invalid type for field {}'.format(i+1))
+            gdaltest.post_reason('invalid type for field {}'.format(i + 1))
             return 'fail'
 
     return 'success'

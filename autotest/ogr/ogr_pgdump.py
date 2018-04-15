@@ -765,7 +765,7 @@ def ogr_pgdump_9(pg_use_copy='YES'):
     if sql.find("""01234%s""" % eofield) < 0 or \
        sql.find("""ABCDE%s""" % eofield) < 0 or \
        sql.find("""%s%s""" % (val5, eofield)) < 0 or \
-       sql.find("""%s%s""" % ('a'+val4, eofield)) < 0:
+       sql.find("""%s%s""" % ('a' + val4, eofield)) < 0:
         print(sql)
         return 'fail'
 

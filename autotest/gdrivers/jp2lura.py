@@ -354,8 +354,8 @@ def jp2lura_8():
     expected_checksums = [64570, 57277, 56048]  # 61292]
 
     for i in range(len(expected_checksums)):
-        if ds.GetRasterBand(i+1).Checksum() != expected_checksums[i]:
-            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i+1))
+        if ds.GetRasterBand(i + 1).Checksum() != expected_checksums[i]:
+            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i + 1))
             return 'fail'
 
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
@@ -376,12 +376,12 @@ def jp2lura_9():
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0]-440720) > 0.1 \
-        or abs(geotransform[1]-60) > 0.001 \
-        or abs(geotransform[2]-0) > 0.001 \
-        or abs(geotransform[3]-3751320) > 0.1 \
-        or abs(geotransform[4]-0) > 0.001 \
-        or abs(geotransform[5]- -60) > 0.001:
+    if abs(geotransform[0] - 440720) > 0.1 \
+        or abs(geotransform[1] - 60) > 0.001 \
+        or abs(geotransform[2] - 0) > 0.001 \
+        or abs(geotransform[3] - 3751320) > 0.1 \
+        or abs(geotransform[4] - 0) > 0.001 \
+        or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -443,7 +443,7 @@ def DISABLED_jp2lura_11():
         return 'fail'
     jp2_bands_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
     jp2_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize/16),int(ds.RasterYSize/16))
+    fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize / 16),int(ds.RasterYSize / 16))
 
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/jp2lura_11.tif', ds)
     fourth_band = tmp_ds.GetRasterBand(4)
@@ -1193,8 +1193,8 @@ def get_element_val(node):
 
 def jp2lura_test_codeblock(filename, codeblock_width, codeblock_height):
     node = gdal.GetJPEG2000Structure(filename, ['ALL=YES'])
-    xcb = 2**(2+int(get_element_val(find_element_with_name(node, "Field", "SPcod_xcb_minus_2"))))
-    ycb = 2**(2+int(get_element_val(find_element_with_name(node, "Field", "SPcod_ycb_minus_2"))))
+    xcb = 2**(2 + int(get_element_val(find_element_with_name(node, "Field", "SPcod_xcb_minus_2"))))
+    ycb = 2**(2 + int(get_element_val(find_element_with_name(node, "Field", "SPcod_ycb_minus_2"))))
     if xcb != codeblock_width or ycb != codeblock_height:
         return False
     return True
@@ -2444,7 +2444,7 @@ def jp2lura_54():
     # Request with a type that is not the natural type
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 100, 100,
                                           buf_type=gdal.GDT_Int16)
-    data = struct.unpack('h'* 100 * 100, data)
+    data = struct.unpack('h' * 100 * 100, data)
     if min(data) != 100 or max(data) != 100:
         gdaltest.post_reason('fail')
         print(min(data))
@@ -2453,7 +2453,7 @@ def jp2lura_54():
 
     # Request at a resolution that is not a power of two
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 30, 30)
-    data = struct.unpack('B'* 30 * 30, data)
+    data = struct.unpack('B' * 30 * 30, data)
     if min(data) != 100 or max(data) != 100:
         gdaltest.post_reason('fail')
         print(min(data))

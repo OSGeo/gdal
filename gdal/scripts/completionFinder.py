@@ -61,7 +61,7 @@ def processLine(line):
           pair = key.split("=")
           choices = ((pair[1])[1:-1]).split('/')
           for c in choices:
-            outList.append(pair[0]+"="+c)
+            outList.append(pair[0] + "=" + c)
         else:
           outList.append(key)
 
@@ -133,7 +133,7 @@ def parseOGRGeneralOptions():
 
 def getCompletionScript(name,optList):
   output = []
-  output.append("_"+name+"()\n")
+  output.append("_" + name + "()\n")
   output.append("{\n")
   output.append("  local cur prev\n")
   output.append("  COMPREPLY=()\n")
@@ -170,12 +170,12 @@ def getCompletionScript(name,optList):
       for arg in ("-f", "-of"):
         if (arg in optList) and isGdal:
             output.append("    %s)\n" % arg)
-            output.append("      key_list=\"$( "+formatParsingCmd+")\"\n")
+            output.append("      key_list=\"$( " + formatParsingCmd + ")\"\n")
             output.append("      COMPREPLY=( $( compgen -W '$key_list' -- $cur) )\n")
             output.append("      ;;\n")
       if ("--format" in optList) and isGdal:
         output.append("    --format)\n")
-        output.append("      key_list=\"$( "+formatParsingCmd+")\"\n")
+        output.append("      key_list=\"$( " + formatParsingCmd + ")\"\n")
         output.append("      COMPREPLY=( $( compgen -W '$key_list' -- $cur) )\n")
         output.append("      ;;\n")
       output.append("  esac\n")
@@ -190,7 +190,7 @@ def getCompletionScript(name,optList):
         if (arg in optList) and not isGdal:
             # completion is more tricky here because of spaces
             output.append("    %s)\n" % arg)
-            output.append("      key_list=\"$( "+formatParsingCmd+")\"\n")
+            output.append("      key_list=\"$( " + formatParsingCmd + ")\"\n")
             output.append("      for iter in $key_list; do\n")
             output.append("        if [[ $iter =~ ^$cur ]]; then\n")
             output.append("          COMPREPLY+=( \"${iter//__/ }\" )\n")
@@ -201,7 +201,7 @@ def getCompletionScript(name,optList):
 
   output.append("  return 0\n")
   output.append("}\n")
-  output.append("complete -o default -F _"+name+" "+name+"\n")
+  output.append("complete -o default -F _" + name + " " + name + "\n")
 
   return output
 

@@ -78,18 +78,18 @@ def netcdf_cf_setup():
         xml_dir = './data/netcdf_cf_xml'
         tmp_dir = './tmp/cache'
         files = dict()
-        files['a'] = xml_dir+'/area-type-table.xml'
-        files['s'] = tmp_dir+'/cf-standard-name-table-v18.xml'
+        files['a'] = xml_dir + '/area-type-table.xml'
+        files['s'] = tmp_dir + '/cf-standard-name-table-v18.xml'
         #either find udunits path in UDUNITS_PATH, or based on location of udunits app, or copy all .xml files to data
         #opt_u = '/home/soft/share/udunits/udunits2.xml'
-        files['u'] = xml_dir+'/udunits2.xml'
+        files['u'] = xml_dir + '/udunits2.xml'
         #look for xml files
         if not (os.path.exists(files['a']) and os.path.exists(files['s']) and os.path.exists(files['u'])):
             print('NOTICE: cdms2 installed, but necessary xml files are not found!')
             print('        the following files must exist:')
-            print('        '+xml_dir+'/area-type-table.xml from http://cf-pcmdi.llnl.gov/documents/cf-standard-names/area-type-table/1/area-type-table.xml')
-            print('        '+tmp_dir+'/cf-standard-name-table-v18.xml - http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/18/cf-standard-name-table.xml')
-            print('        '+xml_dir+'/udunits2*.xml from a UDUNITS2 install')
+            print('        ' + xml_dir + '/area-type-table.xml from http://cf-pcmdi.llnl.gov/documents/cf-standard-names/area-type-table/1/area-type-table.xml')
+            print('        ' + tmp_dir + '/cf-standard-name-table-v18.xml - http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/18/cf-standard-name-table.xml')
+            print('        ' + xml_dir + '/udunits2*.xml from a UDUNITS2 install')
             #try to get cf-standard-name-table
             if not os.path.exists(files['s']):
                 #print '        downloading cf-standard-name-table.xml (v18) from http://cf-pcmdi.llnl.gov ...'
@@ -151,7 +151,7 @@ def netcdf_cf_get_command(ifile, version='auto'):
             command = './netcdf_cfchecks.py -a ' + gdaltest.netcdf_cf_files['a'] \
                 + ' -s ' + gdaltest.netcdf_cf_files['s'] \
                 + ' -u ' + gdaltest.netcdf_cf_files['u'] \
-                + ' -v ' + version +' ' + ifile
+                + ' -v ' + version + ' ' + ifile
         elif method is 'http':
             #command = shlex.split( 'curl --form cfversion="1.5" --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"' )
             #switch to 1.5 as driver now supports, and auto when it becomes available
@@ -175,7 +175,7 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
     output_all = ''
 
     command = netcdf_cf_get_command(ifile, version='auto')
-    if command is None or command=='':
+    if command is None or command == '':
         gdaltest.post_reason('no suitable method found, skipping')
         return 'skip'
 
@@ -367,7 +367,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
 
     silent = True
     gdaltest.netcdf_drv_silent = True
-    bWriteGdalTags="YES"
+    bWriteGdalTags = "YES"
     #silent = False
     gdaltest.netcdf_drv_silent = False
 #    bWriteGdalTags="NO"
@@ -397,7 +397,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
 
     heading = "Testing GDAL translation results to NetCDF\n"
     resFile.write(heading)
-    resFile.write(len(heading)*"="+"\n")
+    resFile.write(len(heading) * "=" + "\n")
 
 #    now = datetime.datetime.now()
 #    resFile.write("*Date/time:* %s\n" % (now.strftime("%Y-%m-%d %H:%M")))
@@ -435,7 +435,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         srs.SetFromUserInput(proj[2])
         t_srs_wkt = srs.ExportToWkt()
         if not silent:
-            print("going to warp file "+origTiff+"\n" + s_srs_wkt + "\ninto file "+projRaster + "\n" + t_srs_wkt)
+            print("going to warp file " + origTiff + "\n" + s_srs_wkt + "\ninto file " + projRaster + "\n" + t_srs_wkt)
         dswarp = gdal.AutoCreateWarpedVRT(dsTiff, s_srs_wkt, t_srs_wkt, gdal.GRA_NearestNeighbour, 0)
         drv_inter = gdal.GetDriverByName(intFmt)
         drv_netcdf = gdal.GetDriverByName("netcdf")
@@ -449,7 +449,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         #ncCoOpts = "-co WRITE_GDAL_TAGS=yes"
         if not silent:
             print("About to translate to NetCDF")
-        dst = drv_netcdf.CreateCopy(projNc, dsw, 0, ['WRITE_GDAL_TAGS='+bWriteGdalTags])
+        dst = drv_netcdf.CreateCopy(projNc, dsw, 0, ['WRITE_GDAL_TAGS=' + bWriteGdalTags])
         #For drivers like HFA, line below ESSENTIAL so that all info is
         # saved to new raster file - which we'll reopen later and want
         # to be fully updated.
@@ -484,10 +484,10 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         projRaster2 = os.path.join(outPath, "%s_%s2.%s" % \
             (origTiff.rstrip('.tif'), proj[0], intExt))
 
-        tst_res[i_t+1] = netcdf_test_copy(projRaster, 1, None, projNc2, [], 'NETCDF')
-        tst_res[i_t+2] = netcdf_test_copy(projNc2, 1, None, projRaster2, [], intFmt)
+        tst_res[i_t + 1] = netcdf_test_copy(projRaster, 1, None, projNc2, [], 'NETCDF')
+        tst_res[i_t + 2] = netcdf_test_copy(projNc2, 1, None, projRaster2, [], intFmt)
 
-        if tst_res[i_t+1] == 'fail' or tst_res[i_t+2] == 'fail':
+        if tst_res[i_t + 1] == 'fail' or tst_res[i_t + 2] == 'fail':
             result = 'fail'
 
         i_t = i_t + 2
@@ -535,7 +535,7 @@ def netcdf_cfproj_test_cf(proj, projNc):
     for attrib in proj[4]:
         # The ':' prefix and ' ' suffix is to help check for exact name,
         # e.g. to catch the standard_parallel_1 and 2 issue.
-        if (":"+attrib+" ") not in dumpStr:
+        if (":" + attrib + " ") not in dumpStr:
             transWorked = False
             resDetails['missingAttrs'].append(attrib)
     #        print "**Error for proj '%s': CF-1 attrib '%s' not found.**" % \

@@ -54,7 +54,7 @@ def test_gdal_grid_lib_1():
     shape_lyr = shape_ds.CreateLayer('n43')
 
     data = ds.ReadRaster(0, 0, 121, 121)
-    array_val = struct.unpack('h' * 121*121, data)
+    array_val = struct.unpack('h' * 121 * 121, data)
     for j in range(121):
         for i in range(121):
             wkt = 'POINT(%f %f %s)' % (geotransform[0] + (i + .5) * geotransform[1],

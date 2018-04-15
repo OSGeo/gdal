@@ -56,23 +56,23 @@ def rgb_to_hsv(r,g,b):
 
     # compute the difference, but reset zeros to ones to avoid divide by zeros later.
     ones = numpy.ones((r.shape[0],r.shape[1]))
-    maxc_minus_minc = numpy.choose(minc_eq_maxc, (maxc-minc,ones))
+    maxc_minus_minc = numpy.choose(minc_eq_maxc, (maxc - minc,ones))
 
-    s = (maxc-minc) / numpy.maximum(ones,maxc)
-    rc = (maxc-r) / maxc_minus_minc
-    gc = (maxc-g) / maxc_minus_minc
-    bc = (maxc-b) / maxc_minus_minc
+    s = (maxc - minc) / numpy.maximum(ones,maxc)
+    rc = (maxc - r) / maxc_minus_minc
+    gc = (maxc - g) / maxc_minus_minc
+    bc = (maxc - b) / maxc_minus_minc
 
     maxc_is_r = numpy.equal(maxc,r)
     maxc_is_g = numpy.equal(maxc,g)
     maxc_is_b = numpy.equal(maxc,b)
 
     h = numpy.zeros((r.shape[0],r.shape[1]))
-    h = numpy.choose(maxc_is_b, (h,4.0+gc-rc))
-    h = numpy.choose(maxc_is_g, (h,2.0+rc-bc))
-    h = numpy.choose(maxc_is_r, (h,bc-gc))
+    h = numpy.choose(maxc_is_b, (h,4.0 + gc - rc))
+    h = numpy.choose(maxc_is_g, (h,2.0 + rc - bc))
+    h = numpy.choose(maxc_is_r, (h,bc - gc))
 
-    h = numpy.mod(h/6.0,1.0)
+    h = numpy.mod(h / 6.0,1.0)
 
     hsv = numpy.asarray([h,s,v])
 
@@ -92,11 +92,11 @@ def hsv_to_rgb(hsv):
     v = hsv[2]
 
     #if s == 0.0: return v, v, v
-    i = (h*6.0).astype(int)
-    f = (h*6.0) - i
-    p = v*(1.0 - s)
-    q = v*(1.0 - s*f)
-    t = v*(1.0 - s*(1.0-f))
+    i = (h * 6.0).astype(int)
+    f = (h * 6.0) - i
+    p = v * (1.0 - s)
+    q = v * (1.0 - s * f)
+    t = v * (1.0 - s * (1.0 - f))
 
     r = i.choose(v, q, p, p, t, v)
     g = i.choose(t, v, v, q, p, p)
@@ -236,4 +236,4 @@ for i in range(hillband.YSize):
 
     #update progress line
     if not quiet:
-        gdal.TermProgress_nocb((float(i+1) / hillband.YSize))
+        gdal.TermProgress_nocb((float(i + 1) / hillband.YSize))

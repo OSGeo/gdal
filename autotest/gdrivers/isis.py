@@ -429,11 +429,11 @@ def isis_12():
     gdal.Translate('/vsimem/isis_tmp.lbl', src_ds, format='ISIS3')
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     for i in range(4):
-        cs = ds.GetRasterBand(i+1).Checksum()
-        expected_cs = src_ds.GetRasterBand(i+1).Checksum()
+        cs = ds.GetRasterBand(i + 1).Checksum()
+        expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         if cs != expected_cs:
             gdaltest.post_reason('fail')
-            print(i+1, cs, expected_cs)
+            print(i + 1, cs, expected_cs)
             return 'fail'
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
@@ -450,11 +450,11 @@ def isis_13():
                                       'BLOCKYSIZE=32'])
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     for i in range(4):
-        cs = ds.GetRasterBand(i+1).Checksum()
-        expected_cs = src_ds.GetRasterBand(i+1).Checksum()
+        cs = ds.GetRasterBand(i + 1).Checksum()
+        expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         if cs != expected_cs:
             gdaltest.post_reason('fail')
-            print(i+1, cs, expected_cs)
+            print(i + 1, cs, expected_cs)
             return 'fail'
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
@@ -470,11 +470,11 @@ def isis_14():
                    creationOptions=['DATA_LOCATION=GEOTIFF'])
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     for i in range(4):
-        cs = ds.GetRasterBand(i+1).Checksum()
-        expected_cs = src_ds.GetRasterBand(i+1).Checksum()
+        cs = ds.GetRasterBand(i + 1).Checksum()
+        expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         if cs != expected_cs:
             gdaltest.post_reason('fail')
-            print(i+1, cs, expected_cs)
+            print(i + 1, cs, expected_cs)
             return 'fail'
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
@@ -491,11 +491,11 @@ def isis_15():
                                       'BLOCKXSIZE=16', 'BLOCKYSIZE=32'])
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     for i in range(4):
-        cs = ds.GetRasterBand(i+1).Checksum()
-        expected_cs = src_ds.GetRasterBand(i+1).Checksum()
+        cs = ds.GetRasterBand(i + 1).Checksum()
+        expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         if cs != expected_cs:
             gdaltest.post_reason('fail')
-            print(i+1, cs, expected_cs)
+            print(i + 1, cs, expected_cs)
             return 'fail'
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')

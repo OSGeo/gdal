@@ -777,7 +777,7 @@ def tiff_ovr_19():
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
-    ds=gdal.GetDriverByName('GTiff').Create('tmp/ovr19.tif',100,100,1)
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/ovr19.tif',100,100,1)
     ds.GetRasterBand(1).Fill(1)
 
     # The flush is important to simulate the behaviour that wash it by #2621
@@ -1977,7 +1977,7 @@ def tiff_ovr_48():
 
     ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif.ovr')
     for i in range(4):
-        cs = ds.GetRasterBand(i+1).Checksum()
+        cs = ds.GetRasterBand(i + 1).Checksum()
         if cs != 3:
             print(i)
             return 'fail'
@@ -1993,7 +1993,7 @@ def tiff_ovr_48():
 
     ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif.ovr')
     for i in range(4):
-        cs = ds.GetRasterBand(i+1).Checksum()
+        cs = ds.GetRasterBand(i + 1).Checksum()
         if cs != 0:
             print(i)
             return 'fail'

@@ -192,10 +192,10 @@ def compare_db(golden_db, new_db, options=[]):
 
   # Dimensions
   for i in range(golden_db.RasterCount):
-      gSzX = golden_db.GetRasterBand(i+1).XSize
-      nSzX = new_db.GetRasterBand(i+1).XSize
-      gSzY = golden_db.GetRasterBand(i+1).YSize
-      nSzY = new_db.GetRasterBand(i+1).YSize
+      gSzX = golden_db.GetRasterBand(i + 1).XSize
+      nSzX = new_db.GetRasterBand(i + 1).XSize
+      gSzY = golden_db.GetRasterBand(i + 1).YSize
+      nSzY = new_db.GetRasterBand(i + 1).YSize
 
       if gSzX != nSzX or gSzY != nSzY:
           print('Band size mismatch (band=%d golden=[%d,%d], new=[%d,%d])' %
@@ -205,9 +205,9 @@ def compare_db(golden_db, new_db, options=[]):
   # If so-far-so-good, then compare pixels
   if found_diff == 0:
     for i in range(golden_db.RasterCount):
-      found_diff += compare_band(golden_db.GetRasterBand(i+1),
-                                 new_db.GetRasterBand(i+1),
-                                 str(i+1),
+      found_diff += compare_band(golden_db.GetRasterBand(i + 1),
+                                 new_db.GetRasterBand(i + 1),
+                                 str(i + 1),
                                  options)
 
   return found_diff
@@ -223,7 +223,7 @@ def compare_sds(golden_db, new_db, options=[]):
 
   count = len(list(golden_sds.keys())) / 2
   for i in range(count):
-    key = 'SUBDATASET_%d_NAME' % (i+1)
+    key = 'SUBDATASET_%d_NAME' % (i + 1)
 
     sub_golden_db = gdal.Open(golden_sds[key])
     sub_new_db = gdal.Open(new_sds[key])
