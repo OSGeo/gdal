@@ -69,7 +69,7 @@ def build_junction_table(ds, lyr, ifield, bAppend, bOverwrite):
             return False
 
     if junction_lyr is None:
-        junction_lyr = ds.CreateLayer(junction_table_name, geom_type = ogr.wkbNone)
+        junction_lyr = ds.CreateLayer(junction_table_name, geom_type=ogr.wkbNone)
         if junction_lyr is None:
             print('Cannot create layer %s' % junction_table_name)
             return False
@@ -183,7 +183,7 @@ if bAppend and bOverwrite:
     print('Only one of -append or -overwrite can be used')
     sys.exit(1)
 
-ds = ogr.Open(ds_name, update = 1)
+ds = ogr.Open(ds_name, update=1)
 if ds is None:
     print('Cannot open %s in update mode' % ds_name)
     sys.exit(1)

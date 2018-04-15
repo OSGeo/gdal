@@ -122,7 +122,7 @@ def CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, \
 ###############################################################################
 
 
-def main(argv = None):
+def main(argv=None):
 
     format = 'ESRI Shapefile'
     quiet_flag = 0
@@ -357,7 +357,7 @@ def main(argv = None):
             print('Warning: input and method layers have SRS defined, but they are not identical. No on-the-fly reprojection will be done.')
 
     # Result layer
-    output_ds = ogr.Open(output_ds_name, update = 1)
+    output_ds = ogr.Open(output_ds_name, update=1)
     if output_ds is None:
         output_ds = ogr.Open(output_ds_name)
         if output_ds is not None:
@@ -369,7 +369,7 @@ def main(argv = None):
             print('Cannot find driver %s' % format)
             return 1
 
-        output_ds = drv.CreateDataSource(output_ds_name, options = dsco)
+        output_ds = drv.CreateDataSource(output_ds_name, options=dsco)
         if output_ds is None:
             print('Cannot create datasource "%s"' % output_ds_name)
             return 1
@@ -428,9 +428,9 @@ def main(argv = None):
 
     op = getattr(input_lyr, op_str)
     if quiet_flag == 0:
-        ret = op(method_lyr, output_lyr, options = opt, callback = gdal.TermProgress_nocb)
+        ret = op(method_lyr, output_lyr, options=opt, callback=gdal.TermProgress_nocb)
     else:
-        ret = op(method_lyr, output_lyr, options = opt)
+        ret = op(method_lyr, output_lyr, options=opt)
 
     input_ds = None
     method_ds = None

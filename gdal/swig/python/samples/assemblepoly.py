@@ -36,7 +36,7 @@ from osgeo import ogr
 # Open the datasource to operate on.
 
 #ds = ogr.Open( '/u/data/ntf/bl2000/HALTON.NTF' )
-ds = ogr.Open('PG:dbname=test', update = 1)
+ds = ogr.Open('PG:dbname=test', update=1)
 
 layer_count = ds.GetLayerCount()
 
@@ -95,7 +95,7 @@ while feat is not None:
             except:
                 print('item failed to translate: ', item)
 
-    link_coll = ogr.Geometry(type = ogr.wkbGeometryCollection)
+    link_coll = ogr.Geometry(type=ogr.wkbGeometryCollection)
     for geom_id in link_list:
         geom = lines_hash[tile_ref][geom_id]
         link_coll.AddGeometry(geom)

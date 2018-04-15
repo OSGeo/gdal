@@ -151,7 +151,7 @@ if schema and extent:
 #############################################################################
 # Open the datasource to read.
 
-src_ds = gdal.OpenEx(infile, gdal.OF_VECTOR, open_options = openoptions)
+src_ds = gdal.OpenEx(infile, gdal.OF_VECTOR, open_options=openoptions)
 
 if schema:
     infile = '@dummy@'
@@ -265,7 +265,7 @@ for name in layer_list:
                 vrt += '      <SRS>%s</SRS>\n' \
                         % (Esc(srs.ExportToWkt()))
             if extent:
-                (xmin, xmax, ymin, ymax) = layer.GetExtent(geom_field = fld_index)
+                (xmin, xmax, ymin, ymax) = layer.GetExtent(geom_field=fld_index)
                 vrt += '      <ExtentXMin>%.15g</ExtentXMin>\n' % xmin
                 vrt += '      <ExtentYMin>%.15g</ExtentYMin>\n' % ymin
                 vrt += '      <ExtentXMax>%.15g</ExtentXMax>\n' % xmax

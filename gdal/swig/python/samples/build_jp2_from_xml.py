@@ -46,7 +46,7 @@ def Usage():
     return 1
 
 
-def find_xml_node(ar, element_name, immediate_child = False, only_attributes = False):
+def find_xml_node(ar, element_name, immediate_child=False, only_attributes=False):
     #type = ar[XML_TYPE_IDX]
     value = ar[XML_VALUE_IDX]
     if not immediate_child and value == element_name:
@@ -173,7 +173,7 @@ def parse_jpc_marker(xml_tree, out_f, src_jp2file):
     if marker_name is None:
         print('Cannot find Marker.name attribute')
         return False
-    if find_xml_node(xml_tree, 'Field', immediate_child = True):
+    if find_xml_node(xml_tree, 'Field', immediate_child=True):
         if marker_name not in marker_map:
             print('Cannot find marker signature for %s' % marker_name)
             return False
@@ -219,7 +219,7 @@ def parse_jpc_marker(xml_tree, out_f, src_jp2file):
     return True
 
 
-def parse_jp2codestream(inpath, xml_tree, out_f, src_jp2file = None):
+def parse_jp2codestream(inpath, xml_tree, out_f, src_jp2file=None):
 
     if src_jp2file is None:
         src_jp2filename = get_attribute_val(xml_tree, 'filename')
@@ -251,19 +251,19 @@ def parse_jp2_box(xml_tree, out_f, src_jp2file):
     if len(jp2box_name) != 4:
         print('Invalid JP2Box.name : %s' % jp2box_name)
         return False
-    hex_binary_content = get_node_content(find_xml_node(xml_tree, 'BinaryContent', immediate_child = True))
-    decoded_content = find_xml_node(xml_tree, 'DecodedContent', immediate_child = True)
-    decoded_geotiff = find_xml_node(xml_tree, 'DecodedGeoTIFF', immediate_child = True)
-    text_content = get_node_content(find_xml_node(xml_tree, 'TextContent', immediate_child = True))
-    xml_content = find_xml_node(xml_tree, 'XMLContent', immediate_child = True)
-    jp2box = find_xml_node(xml_tree, 'JP2Box', immediate_child = True)
-    jp2codestream = find_xml_node(xml_tree, 'JP2KCodeStream', immediate_child = True)
+    hex_binary_content = get_node_content(find_xml_node(xml_tree, 'BinaryContent', immediate_child=True))
+    decoded_content = find_xml_node(xml_tree, 'DecodedContent', immediate_child=True)
+    decoded_geotiff = find_xml_node(xml_tree, 'DecodedGeoTIFF', immediate_child=True)
+    text_content = get_node_content(find_xml_node(xml_tree, 'TextContent', immediate_child=True))
+    xml_content = find_xml_node(xml_tree, 'XMLContent', immediate_child=True)
+    jp2box = find_xml_node(xml_tree, 'JP2Box', immediate_child=True)
+    jp2codestream = find_xml_node(xml_tree, 'JP2KCodeStream', immediate_child=True)
 
     if hex_binary_content:
         if decoded_content or decoded_geotiff or text_content or xml_content or jp2box:
             print('BinaryContent found, and one of DecodedContent/DecodedGeoTIFF/TextContent/XMLContent/JP2Box. The latter will be ignored')
         if jp2box_name == 'uuid':
-            uuid = get_node_content(find_xml_node(xml_tree, 'UUID', immediate_child = True))
+            uuid = get_node_content(find_xml_node(xml_tree, 'UUID', immediate_child=True))
             if uuid is None:
                 print('Cannot find JP2Box.UUID element')
                 return False
@@ -336,7 +336,7 @@ def parse_jp2_box(xml_tree, out_f, src_jp2file):
             gdal.VSIFCloseL(tif_f)
             gdal.Unlink(tmpfilename)
 
-        uuid = get_node_content(find_xml_node(xml_tree, 'UUID', immediate_child = True))
+        uuid = get_node_content(find_xml_node(xml_tree, 'UUID', immediate_child=True))
         if uuid is None:
             uuid = 'B14BF8BD083D4B43A5AE8CD7D5A6CE03'
 

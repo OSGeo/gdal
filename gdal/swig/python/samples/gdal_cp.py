@@ -249,7 +249,7 @@ def gdal_cp_pattern_match(srcdir, pattern, targetfile, progress, skip_failure):
     return 0
 
 
-def gdal_cp(argv, progress = None):
+def gdal_cp(argv, progress=None):
     srcfile = None
     targetfile = None
     recurse = False

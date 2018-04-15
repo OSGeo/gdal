@@ -127,8 +127,8 @@ class Translator(object):
         else:
             self.out_srs = None
         self.output = self.out_ds.CreateLayer(self.options.output,
-                                                geom_type = self.input.GetLayerDefn().GetGeomType(),
-                                                srs= self.out_srs)
+                                                geom_type=self.input.GetLayerDefn().GetGeomType(),
+                                                srs=self.out_srs)
 
     def make_fields(self):
         defn = self.input.GetLayerDefn()
@@ -305,7 +305,7 @@ class Densify(Translator):
     def process(self):
         self.open()
         self.make_fields()
-        self.translate(geometry_callback = self.densify)
+        self.translate(geometry_callback=self.densify)
 
 
 def GetLength(geometry):

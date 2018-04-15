@@ -180,12 +180,12 @@ def _is_str_or_unicode(o):
     return isinstance(o, str) or str(type(o)) == "<type 'unicode'>"
 
 
-def InfoOptions(options = [], format = 'text', deserialize = True,
-         computeMinMax = False, reportHistograms = False, reportProj4 = False,
-         stats = False, approxStats = False, computeChecksum = False,
-         showGCPs = True, showMetadata = True, showRAT = True, showColorTable = True,
-         listMDD = False, showFileList = True, allMetadata = False,
-         extraMDDomains = None):
+def InfoOptions(options=[], format='text', deserialize=True,
+         computeMinMax=False, reportHistograms=False, reportProj4=False,
+         stats=False, approxStats=False, computeChecksum=False,
+         showGCPs=True, showMetadata=True, showRAT=True, showColorTable=True,
+         listMDD=False, showFileList=True, allMetadata=False,
+         extraMDDomains=None):
     """ Create a InfoOptions() object that can be passed to gdal.Info()
         options can be be an array of strings, a string or let empty and filled from other keywords."""
     import copy
@@ -257,17 +257,17 @@ def _strHighPrec(x):
     return x if _is_str_or_unicode(x) else '%.18g' % x
 
 
-def TranslateOptions(options = [], format = None,
-              outputType = GDT_Unknown, bandList = None, maskBand = None,
-              width = 0, height = 0, widthPct = 0.0, heightPct = 0.0,
-              xRes = 0.0, yRes = 0.0,
-              creationOptions = None, srcWin = None, projWin = None, projWinSRS = None, strict = False,
-              unscale = False, scaleParams = None, exponents = None,
-              outputBounds = None, metadataOptions = None,
-              outputSRS = None, GCPs = None,
-              noData = None, rgbExpand = None,
-              stats = False, rat = True, resampleAlg = None,
-              callback = None, callback_data = None):
+def TranslateOptions(options=[], format=None,
+              outputType=GDT_Unknown, bandList=None, maskBand=None,
+              width=0, height=0, widthPct=0.0, heightPct=0.0,
+              xRes=0.0, yRes=0.0,
+              creationOptions=None, srcWin=None, projWin=None, projWinSRS=None, strict=False,
+              unscale=False, scaleParams=None, exponents=None,
+              outputBounds=None, metadataOptions=None,
+              outputSRS=None, GCPs=None,
+              noData=None, rgbExpand=None,
+              stats=False, rat=True, resampleAlg=None,
+              callback=None, callback_data=None):
     """ Create a TranslateOptions() object that can be passed to gdal.Translate()
         Keyword arguments are :
           options --- can be be an array of strings, a string or let empty and filled from other keywords.
@@ -402,23 +402,23 @@ def Translate(destName, srcDS, **kwargs):
     return TranslateInternal(destName, srcDS, opts, callback, callback_data)
 
 
-def WarpOptions(options = [], format = None,
-         outputBounds = None,
-         outputBoundsSRS = None,
-         xRes = None, yRes = None, targetAlignedPixels = False,
-         width = 0, height = 0,
-         srcSRS = None, dstSRS = None,
-         srcAlpha = False, dstAlpha = False,
-         warpOptions = None, errorThreshold = None,
-         warpMemoryLimit = None, creationOptions = None, outputType = GDT_Unknown,
-         workingType = GDT_Unknown, resampleAlg = None,
-         srcNodata = None, dstNodata = None, multithread = False,
-         tps = False, rpc = False, geoloc = False, polynomialOrder = None,
-         transformerOptions = None, cutlineDSName = None,
-         cutlineLayer = None, cutlineWhere = None, cutlineSQL = None, cutlineBlend = None, cropToCutline = False,
-         copyMetadata = True, metadataConflictValue = None,
-         setColorInterpretation = False,
-         callback = None, callback_data = None):
+def WarpOptions(options=[], format=None,
+         outputBounds=None,
+         outputBoundsSRS=None,
+         xRes=None, yRes=None, targetAlignedPixels=False,
+         width=0, height=0,
+         srcSRS=None, dstSRS=None,
+         srcAlpha=False, dstAlpha=False,
+         warpOptions=None, errorThreshold=None,
+         warpMemoryLimit=None, creationOptions=None, outputType=GDT_Unknown,
+         workingType=GDT_Unknown, resampleAlg=None,
+         srcNodata=None, dstNodata=None, multithread=False,
+         tps=False, rpc=False, geoloc=False, polynomialOrder=None,
+         transformerOptions=None, cutlineDSName=None,
+         cutlineLayer=None, cutlineWhere=None, cutlineSQL=None, cutlineBlend=None, cropToCutline=False,
+         copyMetadata=True, metadataConflictValue=None,
+         setColorInterpretation=False,
+         callback=None, callback_data=None):
     """ Create a WarpOptions() object that can be passed to gdal.Warp()
         Keyword arguments are :
           options --- can be be an array of strings, a string or let empty and filled from other keywords.
@@ -590,24 +590,24 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
         return wrapper_GDALWarpDestDS(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
 
 
-def VectorTranslateOptions(options = [], format = None,
-         accessMode = None,
-         srcSRS = None, dstSRS = None, reproject = True,
-         SQLStatement = None, SQLDialect = None, where = None, selectFields = None,
-         addFields = False,
-         forceNullable = False,
-         spatFilter = None, spatSRS = None,
-         datasetCreationOptions = None,
-         layerCreationOptions = None,
-         layers = None,
-         layerName = None,
-         geometryType = None,
-         dim = None,
-         segmentizeMaxDist= None,
-         zField = None,
-         skipFailures = False,
-         limit = None,
-         callback = None, callback_data = None):
+def VectorTranslateOptions(options=[], format=None,
+         accessMode=None,
+         srcSRS=None, dstSRS=None, reproject=True,
+         SQLStatement=None, SQLDialect=None, where=None, selectFields=None,
+         addFields=False,
+         forceNullable=False,
+         spatFilter=None, spatSRS=None,
+         datasetCreationOptions=None,
+         layerCreationOptions=None,
+         layers=None,
+         layerName=None,
+         geometryType=None,
+         dim=None,
+         segmentizeMaxDist=None,
+         zField=None,
+         skipFailures=False,
+         limit=None,
+         callback=None, callback_data=None):
     """ Create a VectorTranslateOptions() object that can be passed to gdal.VectorTranslate()
         Keyword arguments are :
           options --- can be be an array of strings, a string or let empty and filled from other keywords.
@@ -737,13 +737,13 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
         return wrapper_GDALVectorTranslateDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 
-def DEMProcessingOptions(options = [], colorFilename = None, format = None,
-              creationOptions = None, computeEdges = False, alg = 'Horn', band = 1,
-              zFactor = None, scale = None, azimuth = None, altitude = None,
-              combined = False, multiDirectional = False,
-              slopeFormat = None, trigonometric = False, zeroForFlat = False,
-              addAlpha = None,
-              callback = None, callback_data = None):
+def DEMProcessingOptions(options=[], colorFilename=None, format=None,
+              creationOptions=None, computeEdges=False, alg='Horn', band=1,
+              zFactor=None, scale=None, azimuth=None, altitude=None,
+              combined=False, multiDirectional=False,
+              slopeFormat=None, trigonometric=False, zeroForFlat=False,
+              addAlpha=None,
+              callback=None, callback_data=None):
     """ Create a DEMProcessingOptions() object that can be passed to gdal.DEMProcessing()
         Keyword arguments are :
           options --- can be be an array of strings, a string or let empty and filled from other keywords.
@@ -827,10 +827,10 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
     return DEMProcessingInternal(destName, srcDS, processing, colorFilename, opts, callback, callback_data)
 
 
-def NearblackOptions(options = [], format = None,
-         creationOptions = None, white = False, colors = None,
-         maxNonBlack = None, nearDist = None, setAlpha = False, setMask = False,
-         callback = None, callback_data = None):
+def NearblackOptions(options=[], format=None,
+         creationOptions=None, white=False, colors=None,
+         maxNonBlack=None, nearDist=None, setAlpha=False, setMask=False,
+         callback=None, callback_data=None):
     """ Create a NearblackOptions() object that can be passed to gdal.Nearblack()
         Keyword arguments are :
           options --- can be be an array of strings, a string or let empty and filled from other keywords.
@@ -901,22 +901,22 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
         return wrapper_GDALNearblackDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 
-def GridOptions(options = [], format = None,
-              outputType = GDT_Unknown,
-              width = 0, height = 0,
-              creationOptions = None,
-              outputBounds = None,
-              outputSRS = None,
-              noData = None,
-              algorithm = None,
-              layers = None,
-              SQLStatement = None,
-              where = None,
-              spatFilter = None,
-              zfield = None,
-              z_increase = None,
-              z_multiply = None,
-              callback = None, callback_data = None):
+def GridOptions(options=[], format=None,
+              outputType=GDT_Unknown,
+              width=0, height=0,
+              creationOptions=None,
+              outputBounds=None,
+              outputSRS=None,
+              noData=None,
+              algorithm=None,
+              layers=None,
+              SQLStatement=None,
+              where=None,
+              spatFilter=None,
+              zfield=None,
+              z_increase=None,
+              z_multiply=None,
+              callback=None, callback_data=None):
     """ Create a GridOptions() object that can be passed to gdal.Grid()
         Keyword arguments are :
           options --- can be be an array of strings, a string or let empty and filled from other keywords.
@@ -1002,17 +1002,17 @@ def Grid(destName, srcDS, **kwargs):
     return GridInternal(destName, srcDS, opts, callback, callback_data)
 
 
-def RasterizeOptions(options = [], format = None,
-         outputType = GDT_Unknown,
-         creationOptions = None, noData = None, initValues = None,
-         outputBounds = None, outputSRS = None,
-         transformerOptions = None,
-         width = None, height = None,
-         xRes = None, yRes = None, targetAlignedPixels = False,
-         bands = None, inverse = False, allTouched = False,
-         burnValues = None, attribute = None, useZ = False, layers = None,
-         SQLStatement = None, SQLDialect = None, where = None, optim = None,
-         callback = None, callback_data = None):
+def RasterizeOptions(options=[], format=None,
+         outputType=GDT_Unknown,
+         creationOptions=None, noData=None, initValues=None,
+         outputBounds=None, outputSRS=None,
+         transformerOptions=None,
+         width=None, height=None,
+         xRes=None, yRes=None, targetAlignedPixels=False,
+         bands=None, inverse=False, allTouched=False,
+         burnValues=None, attribute=None, useZ=False, layers=None,
+         SQLStatement=None, SQLDialect=None, where=None, optim=None,
+         callback=None, callback_data=None):
     """ Create a RasterizeOptions() object that can be passed to gdal.Rasterize()
         Keyword arguments are :
           options --- can be be an array of strings, a string or let empty and filled from other keywords.
@@ -1135,21 +1135,21 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
         return wrapper_GDALRasterizeDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 
-def BuildVRTOptions(options = [],
-                    resolution = None,
-                    outputBounds = None,
-                    xRes = None, yRes = None,
-                    targetAlignedPixels = None,
-                    separate = None,
-                    bandList = None,
-                    addAlpha = None,
-                    resampleAlg = None,
-                    outputSRS = None,
-                    allowProjectionDifference = None,
-                    srcNodata = None,
-                    VRTNodata = None,
-                    hideNodata = None,
-                    callback = None, callback_data = None):
+def BuildVRTOptions(options=[],
+                    resolution=None,
+                    outputBounds=None,
+                    xRes=None, yRes=None,
+                    targetAlignedPixels=None,
+                    separate=None,
+                    bandList=None,
+                    addAlpha=None,
+                    resampleAlg=None,
+                    outputSRS=None,
+                    allowProjectionDifference=None,
+                    srcNodata=None,
+                    VRTNodata=None,
+                    hideNodata=None,
+                    callback=None, callback_data=None):
     """ Create a BuildVRTOptions() object that can be passed to gdal.BuildVRT()
         Keyword arguments are :
           options --- can be be an array of strings, a string or let empty and filled from other keywords..
@@ -1618,7 +1618,7 @@ class MajorObject(_object):
         """SetMetadataItem(MajorObject self, char const * pszName, char const * pszValue, char const * pszDomain) -> CPLErr"""
         return _gdal.MajorObject_SetMetadataItem(self, *args)
 
-    def GetMetadata(self, domain = ''):
+    def GetMetadata(self, domain=''):
       if domain[:4] == 'xml:':
         return self.GetMetadata_List(domain)
       return self.GetMetadata_Dict(domain)
@@ -2117,25 +2117,25 @@ class Dataset(MajorObject):
         return _gdal.Dataset_ReadRaster1(self, *args, **kwargs)
 
     def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None,
-                    buf_xsize = None, buf_ysize = None, buf_type = None,
-                    resample_alg = GRIORA_NearestNeighbour,
-                    callback = None,
-                    callback_data = None):
+                    buf_xsize=None, buf_ysize=None, buf_type=None,
+                    resample_alg=GRIORA_NearestNeighbour,
+                    callback=None,
+                    callback_data=None):
         """ Reading a chunk of a GDAL band into a numpy array. The optional (buf_xsize,buf_ysize,buf_type)
         parameters should generally not be specified if buf_obj is specified. The array is returned"""
 
         import gdalnumeric
         return gdalnumeric.DatasetReadAsArray(self, xoff, yoff, xsize, ysize, buf_obj,
                                                buf_xsize, buf_ysize, buf_type,
-                                               resample_alg = resample_alg,
-                                               callback = callback,
-                                               callback_data = callback_data)
+                                               resample_alg=resample_alg,
+                                               callback=callback,
+                                               callback_data=callback_data)
 
     def WriteRaster(self, xoff, yoff, xsize, ysize,
                     buf_string,
-                    buf_xsize = None, buf_ysize = None, buf_type = None,
-                    band_list = None,
-                    buf_pixel_space = None, buf_line_space = None, buf_band_space = None):
+                    buf_xsize=None, buf_ysize=None, buf_type=None,
+                    band_list=None,
+                    buf_pixel_space=None, buf_line_space=None, buf_band_space=None):
 
         if buf_xsize is None:
             buf_xsize = xsize;
@@ -2151,13 +2151,13 @@ class Dataset(MajorObject):
                 buf_string, buf_xsize, buf_ysize, buf_type, band_list,
                 buf_pixel_space, buf_line_space, buf_band_space)
 
-    def ReadRaster(self, xoff = 0, yoff = 0, xsize = None, ysize = None,
-                   buf_xsize = None, buf_ysize = None, buf_type = None,
-                   band_list = None,
-                   buf_pixel_space = None, buf_line_space = None, buf_band_space = None,
-                   resample_alg = GRIORA_NearestNeighbour,
-                   callback = None,
-                   callback_data = None):
+    def ReadRaster(self, xoff=0, yoff=0, xsize=None, ysize=None,
+                   buf_xsize=None, buf_ysize=None, buf_type=None,
+                   band_list=None,
+                   buf_pixel_space=None, buf_line_space=None, buf_band_space=None,
+                   resample_alg=GRIORA_NearestNeighbour,
+                   callback=None,
+                   callback_data=None):
 
         if xsize is None:
             xsize = self.RasterXSize
@@ -2178,11 +2178,11 @@ class Dataset(MajorObject):
                                             band_list, buf_pixel_space, buf_line_space, buf_band_space,
                                           resample_alg, callback, callback_data)
 
-    def GetVirtualMemArray(self, eAccess = gdalconst.GF_Read, xoff=0, yoff=0,
+    def GetVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
                            xsize=None, ysize=None, bufxsize=None, bufysize=None,
-                           datatype = None, band_list = None, band_sequential = True,
-                           cache_size = 10 * 1024 * 1024, page_size_hint = 0,
-                           options = None):
+                           datatype=None, band_list=None, band_sequential=True,
+                           cache_size=10 * 1024 * 1024, page_size_hint=0,
+                           options=None):
         """Return a NumPy array for the dataset, seen as a virtual memory mapping.
            If there are several bands and band_sequential = True, an element is
            accessed with array[band][y][x].
@@ -2211,10 +2211,10 @@ class Dataset(MajorObject):
             virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,band_list,band_sequential,cache_size,page_size_hint, options)
         return gdalnumeric.VirtualMemGetArray(virtualmem)
 
-    def GetTiledVirtualMemArray(self, eAccess = gdalconst.GF_Read, xoff=0, yoff=0,
+    def GetTiledVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
                            xsize=None, ysize=None, tilexsize=256, tileysize=256,
-                           datatype = None, band_list = None, tile_organization = gdalconst.GTO_BSQ,
-                           cache_size = 10 * 1024 * 1024, options = None):
+                           datatype=None, band_list=None, tile_organization=gdalconst.GTO_BSQ,
+                           cache_size=10 * 1024 * 1024, options=None):
         """Return a NumPy array for the dataset, seen as a virtual memory mapping with
            a tile organization.
            If there are several bands and tile_organization = gdal.GTO_TIP, an element is
@@ -2256,7 +2256,7 @@ class Dataset(MajorObject):
             i = i + 1
         return sd_list
 
-    def BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj = None, buf_xsize = None, buf_ysize = None, buf_type = None, band_list = None, options=[]):
+    def BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj=None, buf_xsize=None, buf_ysize=None, buf_type=None, band_list=None, options=[]):
         if band_list is None:
             band_list = range(1, self.RasterCount + 1)
         if buf_xsize is None:
@@ -2566,12 +2566,12 @@ class Band(MajorObject):
 
       return _gdal.Band_ComputeStatistics(self, *new_args)
 
-    def ReadRaster(self, xoff = 0, yoff = 0, xsize = None, ysize = None,
-                     buf_xsize = None, buf_ysize = None, buf_type = None,
-                     buf_pixel_space = None, buf_line_space = None,
-                     resample_alg = GRIORA_NearestNeighbour,
-                     callback = None,
-                     callback_data = None):
+    def ReadRaster(self, xoff=0, yoff=0, xsize=None, ysize=None,
+                     buf_xsize=None, buf_ysize=None, buf_type=None,
+                     buf_pixel_space=None, buf_line_space=None,
+                     resample_alg=GRIORA_NearestNeighbour,
+                     callback=None,
+                     callback_data=None):
 
         if xsize is None:
             xsize = self.XSize
@@ -2585,9 +2585,9 @@ class Band(MajorObject):
 
     def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                     buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
-                    resample_alg = GRIORA_NearestNeighbour,
-                    callback = None,
-                    callback_data = None):
+                    resample_alg=GRIORA_NearestNeighbour,
+                    callback=None,
+                    callback_data=None):
         """ Reading a chunk of a GDAL band into a numpy array. The optional (buf_xsize,buf_ysize,buf_type)
         parameters should generally not be specified if buf_obj is specified. The array is returned"""
 
@@ -2596,26 +2596,26 @@ class Band(MajorObject):
         return gdalnumeric.BandReadAsArray(self, xoff, yoff,
                                             win_xsize, win_ysize,
                                             buf_xsize, buf_ysize, buf_type, buf_obj,
-                                            resample_alg = resample_alg,
-                                            callback = callback,
-                                            callback_data = callback_data)
+                                            resample_alg=resample_alg,
+                                            callback=callback,
+                                            callback_data=callback_data)
 
     def WriteArray(self, array, xoff=0, yoff=0,
-                   resample_alg = GRIORA_NearestNeighbour,
-                   callback = None,
-                   callback_data = None):
+                   resample_alg=GRIORA_NearestNeighbour,
+                   callback=None,
+                   callback_data=None):
         import gdalnumeric
 
         return gdalnumeric.BandWriteArray(self, array, xoff, yoff,
-                                           resample_alg = resample_alg,
-                                           callback = callback,
-                                           callback_data = callback_data)
+                                           resample_alg=resample_alg,
+                                           callback=callback,
+                                           callback_data=callback_data)
 
-    def GetVirtualMemArray(self, eAccess = gdalconst.GF_Read, xoff=0, yoff=0,
+    def GetVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
                            xsize=None, ysize=None, bufxsize=None, bufysize=None,
-                           datatype = None,
-                           cache_size = 10 * 1024 * 1024, page_size_hint = 0,
-                           options = None):
+                           datatype=None,
+                           cache_size=10 * 1024 * 1024, page_size_hint=0,
+                           options=None):
           """Return a NumPy array for the band, seen as a virtual memory mapping.
              An element is accessed with array[y][x].
              Any reference to the array must be dropped before the last reference to the
@@ -2638,7 +2638,7 @@ class Band(MajorObject):
               virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,cache_size,page_size_hint,options)
           return gdalnumeric.VirtualMemGetArray(virtualmem)
 
-    def GetVirtualMemAutoArray(self, eAccess = gdalconst.GF_Read, options = None):
+    def GetVirtualMemAutoArray(self, eAccess=gdalconst.GF_Read, options=None):
           """Return a NumPy array for the band, seen as a virtual memory mapping.
              An element is accessed with array[y][x].
              Any reference to the array must be dropped before the last reference to the
@@ -2651,10 +2651,10 @@ class Band(MajorObject):
               virtualmem = self.GetVirtualMemAuto(eAccess,options)
           return gdalnumeric.VirtualMemGetArray(virtualmem)
 
-    def GetTiledVirtualMemArray(self, eAccess = gdalconst.GF_Read, xoff=0, yoff=0,
+    def GetTiledVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
                              xsize=None, ysize=None, tilexsize=256, tileysize=256,
-                             datatype = None,
-                             cache_size = 10 * 1024 * 1024, options = None):
+                             datatype=None,
+                             cache_size=10 * 1024 * 1024, options=None):
           """Return a NumPy array for the band, seen as a virtual memory mapping with
              a tile organization.
              An element is accessed with array[tiley][tilex][y][x].
