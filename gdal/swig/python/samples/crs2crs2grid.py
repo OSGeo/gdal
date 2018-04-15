@@ -165,8 +165,8 @@ def write_gdal_grid(filename, grid, griddef):
 
 
 def write_control(control_fn, out_grid_fn, in_grid_fn,
-                   src_crs_id, src_crs_date,
-                   dst_crs_id, dst_crs_date):
+                  src_crs_id, src_crs_date,
+                  dst_crs_id, dst_crs_date):
 
     # start_date, end_date should be something like "2011.0"
 
@@ -186,11 +186,11 @@ def write_control(control_fn, out_grid_fn, in_grid_fn,
 """
 
     control_filled = control_template % (out_grid_fn,
-                                          src_crs_id,
-                                          dst_crs_id,
-                                          src_crs_date,
-                                          dst_crs_date,
-                                          in_grid_fn)
+                                         src_crs_id,
+                                         dst_crs_id,
+                                         src_crs_date,
+                                         dst_crs_date,
+                                         in_grid_fn)
 
     open(control_fn, 'w').write(control_filled)
 
@@ -365,8 +365,8 @@ if __name__ == '__main__':
 
     write_grid(grid, in_grid_fn)
     write_control(control_fn, out_grid_fn, in_grid_fn,
-                   src_crs_id, src_crs_date,
-                   dst_crs_id, dst_crs_date)
+                  src_crs_id, src_crs_date,
+                  dst_crs_id, dst_crs_date)
 
     # Run htdp to transform the data.
     try:

@@ -427,7 +427,7 @@ def vrt_read_10():
     # Single source optimization
     for i in range(2):
         gdal.FileFromMemBuffer('/vsimem/vrt_read_10.vrt',
-    """<VRTDataset rasterXSize="20" rasterYSize="20">
+                               """<VRTDataset rasterXSize="20" rasterYSize="20">
     <VRTRasterBand dataType="Byte" band="1">
         <SimpleSource>
         <SourceFilename relativeToVRT="1">vrt_read_10.tif</SourceFilename>
@@ -454,7 +454,7 @@ def vrt_read_10():
     # Two sources general case
     for i in range(2):
         gdal.FileFromMemBuffer('/vsimem/vrt_read_10.vrt',
-    """<VRTDataset rasterXSize="20" rasterYSize="20">
+                               """<VRTDataset rasterXSize="20" rasterYSize="20">
     <VRTRasterBand dataType="Byte" band="1">
         <SimpleSource>
         <SourceFilename relativeToVRT="1">vrt_read_10.tif</SourceFilename>
@@ -1359,7 +1359,7 @@ def vrt_read_30():
 def vrt_read_31():
 
     gdal.FileFromMemBuffer('/vsimem/in.asc',
-"""ncols        2
+                           """ncols        2
 nrows        2
 xllcorner    0
 yllcorner    0

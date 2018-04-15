@@ -57,21 +57,21 @@ def osr_esri_1():
 
     if srs.GetAttrValue('DATUM') != 'Australian_Geodetic_Datum_1966':
         gdaltest.post_reason('Got wrong DATUM name (%s) after EPSG import.' %\
-                              srs.GetAttrValue('DATUM'))
+                             srs.GetAttrValue('DATUM'))
         return 'fail'
 
     srs.MorphToESRI()
 
     if srs.GetAttrValue('DATUM') != 'D_Australian_1966':
         gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI morph.' %\
-                              srs.GetAttrValue('DATUM'))
+                             srs.GetAttrValue('DATUM'))
         return 'fail'
 
     srs.MorphFromESRI()
 
     if srs.GetAttrValue('DATUM') != 'Australian_Geodetic_Datum_1966':
         gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI unmorph.' %\
-                              srs.GetAttrValue('DATUM'))
+                             srs.GetAttrValue('DATUM'))
         return 'fail'
 
     return 'success'
@@ -90,12 +90,12 @@ def osr_esri_2():
 
     if srs.GetAttrValue('GEOGCS') != 'GCS_WGS_1984':
         gdaltest.post_reason('Got wrong GEOGCS name (%s) after ESRI morph.' %\
-                              srs.GetAttrValue('GEOGCS'))
+                             srs.GetAttrValue('GEOGCS'))
         return 'fail'
 
     if srs.GetAttrValue('PROJCS') != 'WGS_1984_UTM_Zone_11S':
         gdaltest.post_reason('Got wrong PROJCS name (%s) after ESRI morph.' %\
-                              srs.GetAttrValue('PROJCS'))
+                             srs.GetAttrValue('PROJCS'))
         return 'fail'
 
     return 'success'
@@ -113,7 +113,7 @@ def osr_esri_3():
 
     if srs.GetAttrValue('PROJCS') != 'Miller_Cylindrical':
         gdaltest.post_reason('Got wrong PROJCS name (%s) after ESRI morph.' %\
-                              srs.GetAttrValue('PROJCS'))
+                             srs.GetAttrValue('PROJCS'))
         return 'fail'
 
     return 'success'
@@ -131,12 +131,12 @@ def osr_esri_4():
 
     if srs.GetAttrValue('PROJECTION') != 'Stereographic_South_Pole':
         gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' %\
-                              srs.GetAttrValue('PROJECTION'))
+                             srs.GetAttrValue('PROJECTION'))
         return 'fail'
 
     if srs.GetProjParm('standard_parallel_1') != -80.2333:
         gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' %\
-                              srs.GetProjParm('standard_parallel_1'))
+                             srs.GetProjParm('standard_parallel_1'))
         return 'fail'
 
     return 'success'
@@ -154,12 +154,12 @@ def osr_esri_5():
 
     if srs.GetAttrValue('PROJECTION') != 'Polar_Stereographic':
         gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' %\
-                              srs.GetAttrValue('PROJECTION'))
+                             srs.GetAttrValue('PROJECTION'))
         return 'fail'
 
     if srs.GetProjParm('latitude_of_origin') != -80.2333:
         gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' %\
-                              srs.GetProjParm('latitude_of_origin'))
+                             srs.GetProjParm('latitude_of_origin'))
         return 'fail'
 
     return 'success'
@@ -191,15 +191,15 @@ def osr_esri_6():
 def osr_esri_7():
 
     prj = ['Projection    STATEPLANE',
-            'Fipszone      903',
-            'Datum         NAD83',
-            'Spheroid      GRS80',
-            'Units         FEET',
-            'Zunits        NO',
-            'Xshift        0.0',
-            'Yshift        0.0',
-            'Parameters    ',
-            '']
+           'Fipszone      903',
+           'Datum         NAD83',
+           'Spheroid      GRS80',
+           'Units         FEET',
+           'Zunits        NO',
+           'Xshift        0.0',
+           'Yshift        0.0',
+           'Parameters    ',
+           '']
 
     srs_prj = osr.SpatialReference()
     srs_prj.ImportFromESRI(prj)
@@ -242,15 +242,15 @@ def osr_esri_7():
 def osr_esri_8():
 
     prj = ['Projection    STATEPLANE',
-            'Fipszone      903',
-            'Datum         NAD83',
-            'Spheroid      GRS80',
-            'Units         3.280839895013123',
-            'Zunits        NO',
-            'Xshift        0.0',
-            'Yshift        0.0',
-            'Parameters    ',
-            '']
+           'Fipszone      903',
+           'Datum         NAD83',
+           'Spheroid      GRS80',
+           'Units         3.280839895013123',
+           'Zunits        NO',
+           'Xshift        0.0',
+           'Yshift        0.0',
+           'Parameters    ',
+           '']
 
     srs_prj = osr.SpatialReference()
     srs_prj.ImportFromESRI(prj)
@@ -358,18 +358,18 @@ def osr_esri_11():
 
     srs = osr.SpatialReference()
     srs.ImportFromESRI(['Projection    TRANSVERSE',
-                          'Datum         NAD27',
-                          'Spheroid      CLARKE1866',
-                          'Units         METERS',
-                          'Zunits        NO',
-                          'Xshift        0.0',
-                          'Yshift        0.0',
-                          'Parameters   ',
-                          '1.0 /* scale factor at central meridian',
-                          '-106 56  0.5 /* longitude of central meridian',
-                          '  39 33 30 /* latitude of origin',
-                          '0.0 /* false easting (meters)',
-                          '0.0 /* false northing (meters)'])
+                        'Datum         NAD27',
+                        'Spheroid      CLARKE1866',
+                        'Units         METERS',
+                        'Zunits        NO',
+                        'Xshift        0.0',
+                        'Yshift        0.0',
+                        'Parameters   ',
+                        '1.0 /* scale factor at central meridian',
+                        '-106 56  0.5 /* longitude of central meridian',
+                        '  39 33 30 /* latitude of origin',
+                        '0.0 /* false easting (meters)',
+                        '0.0 /* false northing (meters)'])
 
     expected = 'PROJCS["unnamed",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",39.55833333333333],PARAMETER["central_meridian",-106.9334722222222],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["METERS",1]]'
 
@@ -397,21 +397,21 @@ def osr_esri_12():
 
     if srs.GetAttrValue('PROJECTION') != 'Lambert_Conformal_Conic_2SP':
         gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' % \
-                              srs.GetAttrValue('PROJECTION'))
+                             srs.GetAttrValue('PROJECTION'))
         return 'fail'
 
     if abs(srs.GetProjParm('standard_parallel_1') - 34.333333333) > 0.00001:
         gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' % \
-                              srs.GetProjParm('standard_parallel_1'))
+                             srs.GetProjParm('standard_parallel_1'))
         return 'fail'
 
     if srs.GetAttrValue('DATUM') != 'North_American_Datum_1983':
         gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI morph.' % \
-                              srs.GetAttrValue('DATUM'))
+                             srs.GetAttrValue('DATUM'))
 
     if srs.GetAttrValue('UNIT') != 'Meter':
         gdaltest.post_reason('Got wrong UNIT name (%s) after ESRI morph.' % \
-                              srs.GetAttrValue('UNIT'))
+                             srs.GetAttrValue('UNIT'))
         return 'fail'
 
     return 'success'
@@ -430,21 +430,21 @@ def osr_esri_13():
 
     if srs.GetAttrValue('PROJECTION') != 'Lambert_Conformal_Conic_2SP':
         gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' % \
-                              srs.GetAttrValue('PROJECTION'))
+                             srs.GetAttrValue('PROJECTION'))
         return 'fail'
 
     if abs(srs.GetProjParm('standard_parallel_1') - 34.333333333) > 0.00001:
         gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' % \
-                              srs.GetProjParm('standard_parallel_1'))
+                             srs.GetProjParm('standard_parallel_1'))
         return 'fail'
 
     if srs.GetAttrValue('DATUM') != 'North_American_Datum_1983':
         gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI morph.' % \
-                              srs.GetAttrValue('DATUM'))
+                             srs.GetAttrValue('DATUM'))
 
     if srs.GetAttrValue('UNIT') != 'Meter':
         gdaltest.post_reason('Got wrong UNIT name (%s) after ESRI morph.' % \
-                              srs.GetAttrValue('UNIT'))
+                             srs.GetAttrValue('UNIT'))
         return 'fail'
 
     return 'success'
@@ -458,10 +458,10 @@ def osr_esri_14():
 
     srs = osr.SpatialReference()
     srs.ImportFromESRI(['PROJECTION STATEPLANE',
-                          'UNITS feet',
-                          'FIPSZONE 2600',
-                          'DATUM NAD83',
-                          'PARAMETERS'])
+                        'UNITS feet',
+                        'FIPSZONE 2600',
+                        'DATUM NAD83',
+                        'PARAMETERS'])
     if srs.GetAuthorityCode('PROJCS') is not None:
         print(srs.GetAuthorityCode('PROJCS'))
         gdaltest.post_reason('Get epsg authority code inappropriately.')
@@ -469,10 +469,10 @@ def osr_esri_14():
 
     srs = osr.SpatialReference()
     srs.ImportFromESRI(['PROJECTION STATEPLANE',
-                          'UNITS meter',
-                          'FIPSZONE 2600',
-                          'DATUM NAD83',
-                          'PARAMETERS'])
+                        'UNITS meter',
+                        'FIPSZONE 2600',
+                        'DATUM NAD83',
+                        'PARAMETERS'])
     if srs.GetAuthorityCode('PROJCS') != '32104':
         print(srs.GetAuthorityCode('PROJCS'))
         gdaltest.post_reason('Did not get epsg authority code when expected.')
@@ -859,7 +859,7 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
 
         #manage special cases of PROJECTION parameters that have multiple mappings
         remap_proj = dict([['Transverse_Mercator', 'Gauss_Kruger'], ['Equidistant_Cylindrical', 'Plate_Carree'], \
-                              ['Hotine_Oblique_Mercator_Azimuth_Natural_Origin', 'Hotine_Oblique_Mercator_Azimuth_Center']])
+                           ['Hotine_Oblique_Mercator_Azimuth_Natural_Origin', 'Hotine_Oblique_Mercator_Azimuth_Center']])
         proj1 = srs1.GetAttrValue('PROJCS|PROJECTION')
         proj3 = srs3.GetAttrValue('PROJCS|PROJECTION')
         if proj3 in remap_proj and proj1 == remap_proj[proj3]:
@@ -1212,7 +1212,7 @@ def osr_esri_25():
     target_srs.ImportFromEPSG(4326)
     transformer = osr.CoordinateTransformation(srs, target_srs)
     expected_proj4_string = ('+a=6378137 +b=6378137 +proj=merc +lat_ts=0'
-                              ' +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +no_defs')
+                             ' +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +no_defs')
     proj4_string = srs.ExportToProj4()
     if not (expected_proj4_string.split(' ').sort() == proj4_string.split(' ').sort()):
       print('Got: %s' % expected_proj4_string)
@@ -1473,8 +1473,8 @@ def osr_esri_29():
 def osr_esri_30():
 
     prj = ['Projection    GEOGRAPHIC',
-            'Parameters    6370000.0  6370000.0',
-            '']
+           'Parameters    6370000.0  6370000.0',
+           '']
 
     srs_prj = osr.SpatialReference()
     srs_prj.ImportFromESRI(prj)
@@ -1501,18 +1501,18 @@ def osr_esri_30():
 def osr_esri_31():
 
     prj = ['Projection    MERCATOR',
-            'Datum         WGS84',
-            'Spheroid      WGS84',
-            'Units         METERS',
-            'Zunits        NO',
-            'Xshift        0.0',
-            'Yshift        0.0',
-            'Parameters    ',
-             '100  0  0.0 /* longitude of central meridian',
-             '-41  0  0.0 /* latitude of true scale',
-            '100.0 /* false easting (meters)',
-            '200.0 /* false northing (meters)'
-            '']
+           'Datum         WGS84',
+           'Spheroid      WGS84',
+           'Units         METERS',
+           'Zunits        NO',
+           'Xshift        0.0',
+           'Yshift        0.0',
+           'Parameters    ',
+           '100  0  0.0 /* longitude of central meridian',
+           '-41  0  0.0 /* latitude of true scale',
+           '100.0 /* false easting (meters)',
+           '200.0 /* false northing (meters)'
+           '']
 
     srs_prj = osr.SpatialReference()
     srs_prj.ImportFromESRI(prj)

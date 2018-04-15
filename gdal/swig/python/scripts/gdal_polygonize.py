@@ -266,7 +266,7 @@ else:
     prog_func = gdal.TermProgress
 
 result = gdal.Polygonize(srcband, maskband, dst_layer, dst_field, options,
-                          callback=prog_func)
+                         callback=prog_func)
 
 srcband = None
 src_ds = None

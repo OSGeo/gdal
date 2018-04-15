@@ -51,33 +51,33 @@ def sentinel2_l1c_1():
         return 'fail'
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
- 'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
- 'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
- 'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
- 'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
- 'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
- 'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
- 'DEGRADED_ANC_DATA_PERCENTAGE': '0',
- 'DEGRADED_MSI_DATA_PERCENTAGE': '0',
- 'FOOTPRINT': 'POLYGON((11 46, 11 45, 13 45, 13 46, 11 46))',
- 'FORMAT_CORRECTNESS_FLAG': 'PASSED',
- 'GENERAL_QUALITY_FLAG': 'PASSED',
- 'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
- 'GEOMETRIC_QUALITY_FLAG': 'PASSED',
- 'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
- 'PREVIEW_IMAGE_URL': 'http://example.com',
- 'PROCESSING_BASELINE': '01.03',
- 'PROCESSING_LEVEL': 'Level-1C',
- 'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_TYPE': 'S2MSI1C',
- 'QUANTIFICATION_VALUE': '1000',
- 'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
- 'REFERENCE_BAND': 'B1',
- 'REFLECTANCE_CONVERSION_U': '0.97',
- 'SENSOR_QUALITY_FLAG': 'PASSED',
- 'SPECIAL_VALUE_NODATA': '1',
- 'SPECIAL_VALUE_SATURATED': '0'}
+                   'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
+                   'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                   'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
+                   'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                   'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
+                   'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                   'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                   'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                   'FOOTPRINT': 'POLYGON((11 46, 11 45, 13 45, 13 46, 11 46))',
+                   'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                   'GENERAL_QUALITY_FLAG': 'PASSED',
+                   'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
+                   'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
+                   'PREVIEW_IMAGE_URL': 'http://example.com',
+                   'PROCESSING_BASELINE': '01.03',
+                   'PROCESSING_LEVEL': 'Level-1C',
+                   'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_TYPE': 'S2MSI1C',
+                   'QUANTIFICATION_VALUE': '1000',
+                   'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'REFERENCE_BAND': 'B1',
+                   'REFLECTANCE_CONVERSION_U': '0.97',
+                   'SENSOR_QUALITY_FLAG': 'PASSED',
+                   'SPECIAL_VALUE_NODATA': '1',
+                   'SPECIAL_VALUE_SATURATED': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -86,13 +86,13 @@ def sentinel2_l1c_1():
         return 'fail'
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution, UTM 32N',
- 'SUBDATASET_1_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml:10m:EPSG_32632',
- 'SUBDATASET_2_DESC': 'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution, UTM 32N',
- 'SUBDATASET_2_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml:20m:EPSG_32632',
- 'SUBDATASET_3_DESC': 'Bands B1, B9, B10 with 60m resolution, UTM 32N',
- 'SUBDATASET_3_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml:60m:EPSG_32632',
- 'SUBDATASET_4_DESC': 'RGB preview, UTM 32N',
- 'SUBDATASET_4_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml:PREVIEW:EPSG_32632'}
+                   'SUBDATASET_1_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml:10m:EPSG_32632',
+                   'SUBDATASET_2_DESC': 'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution, UTM 32N',
+                   'SUBDATASET_2_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml:20m:EPSG_32632',
+                   'SUBDATASET_3_DESC': 'Bands B1, B9, B10 with 60m resolution, UTM 32N',
+                   'SUBDATASET_3_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml:60m:EPSG_32632',
+                   'SUBDATASET_4_DESC': 'RGB preview, UTM 32N',
+                   'SUBDATASET_4_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml:PREVIEW:EPSG_32632'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -152,32 +152,32 @@ def sentinel2_l1c_2():
         return 'fail'
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
- 'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
- 'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
- 'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
- 'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
- 'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
- 'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
- 'DEGRADED_ANC_DATA_PERCENTAGE': '0',
- 'DEGRADED_MSI_DATA_PERCENTAGE': '0',
- 'FORMAT_CORRECTNESS_FLAG': 'PASSED',
- 'GENERAL_QUALITY_FLAG': 'PASSED',
- 'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
- 'GEOMETRIC_QUALITY_FLAG': 'PASSED',
- 'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
- 'PREVIEW_IMAGE_URL': 'http://example.com',
- 'PROCESSING_BASELINE': '01.03',
- 'PROCESSING_LEVEL': 'Level-1C',
- 'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_TYPE': 'S2MSI1C',
- 'QUANTIFICATION_VALUE': '1000',
- 'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
- 'REFERENCE_BAND': 'B1',
- 'REFLECTANCE_CONVERSION_U': '0.97',
- 'SENSOR_QUALITY_FLAG': 'PASSED',
- 'SPECIAL_VALUE_NODATA': '1',
- 'SPECIAL_VALUE_SATURATED': '0'}
+                   'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
+                   'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                   'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
+                   'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                   'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
+                   'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                   'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                   'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                   'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                   'GENERAL_QUALITY_FLAG': 'PASSED',
+                   'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
+                   'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
+                   'PREVIEW_IMAGE_URL': 'http://example.com',
+                   'PROCESSING_BASELINE': '01.03',
+                   'PROCESSING_LEVEL': 'Level-1C',
+                   'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_TYPE': 'S2MSI1C',
+                   'QUANTIFICATION_VALUE': '1000',
+                   'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'REFERENCE_BAND': 'B1',
+                   'REFLECTANCE_CONVERSION_U': '0.97',
+                   'SENSOR_QUALITY_FLAG': 'PASSED',
+                   'SPECIAL_VALUE_NODATA': '1',
+                   'SPECIAL_VALUE_SATURATED': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -232,12 +232,12 @@ def sentinel2_l1c_2():
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B4',
- 'BANDWIDTH': '30',
- 'BANDWIDTH_UNIT': 'nm',
- 'SOLAR_IRRADIANCE': '1500',
- 'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
- 'WAVELENGTH': '665',
- 'WAVELENGTH_UNIT': 'nm'}
+                   'BANDWIDTH': '30',
+                   'BANDWIDTH_UNIT': 'nm',
+                   'SOLAR_IRRADIANCE': '1500',
+                   'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
+                   'WAVELENGTH': '665',
+                   'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
         gdaltest.post_reason('fail')
         import pprint
@@ -264,12 +264,12 @@ def sentinel2_l1c_2():
 
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B8',
- 'BANDWIDTH': '115',
- 'BANDWIDTH_UNIT': 'nm',
- 'SOLAR_IRRADIANCE': '1000',
- 'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
- 'WAVELENGTH': '842',
- 'WAVELENGTH_UNIT': 'nm'}
+                   'BANDWIDTH': '115',
+                   'BANDWIDTH_UNIT': 'nm',
+                   'SOLAR_IRRADIANCE': '1000',
+                   'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
+                   'WAVELENGTH': '842',
+                   'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
         gdaltest.post_reason('fail')
         import pprint
@@ -353,7 +353,7 @@ def sentinel2_l1c_5():
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
+                           """<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
 """)
 
     with gdaltest.error_handler():
@@ -370,7 +370,7 @@ def sentinel2_l1c_5():
 
     # File is OK, but granule MTD are missing
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
+                           """<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
     <n1:General_Info>
         <Product_Info>
 <Query_Options>
@@ -452,7 +452,7 @@ def sentinel2_l1c_5():
 
     # No Product_Info
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
+                           """<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
     <n1:General_Info>
     </n1:General_Info>
 </n1:Level-1C_User_Product>""")
@@ -473,7 +473,7 @@ def sentinel2_l1c_5():
 
     # No Product_Organisation
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
+                           """<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
     <n1:General_Info>
         <Product_Info/>
     </n1:General_Info>
@@ -495,7 +495,7 @@ def sentinel2_l1c_5():
 
     # No Band_List
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
+                           """<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
     <n1:General_Info>
         <Product_Info>
 <Product_Organisation>
@@ -513,7 +513,7 @@ def sentinel2_l1c_5():
 
     # No valid bands
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
+                           """<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
     <n1:General_Info>
         <Product_Info>
 <Query_Options>
@@ -572,7 +572,7 @@ def sentinel2_l1c_6():
 def sentinel2_l1c_7():
 
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
+                           """<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
     <n1:General_Info>
         <Product_Info>
             <Query_Options>
@@ -592,7 +592,7 @@ def sentinel2_l1c_7():
 </n1:Level-1C_User_Product>""")
 
     gdal.FileFromMemBuffer('/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/S2A_OPER_MTD_L1C_bla.xml',
-"""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+                           """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <n1:Level-1C_Tile_ID xmlns:n1="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_TILE_L1C/02.09.07/scripts/../../../schemas/02.11.06/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd">
 <n1:General_Info>
 <TILE_ID metadataLevel="Brief">S2A_OPER_MSI_L1C_bla_N01.03</TILE_ID>
@@ -654,36 +654,36 @@ def sentinel2_l1c_tile_1():
         return 'fail'
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
- 'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
- 'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
- 'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
- 'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
- 'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
- 'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
- 'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
- 'DEGRADED_ANC_DATA_PERCENTAGE': '0',
- 'DEGRADED_MSI_DATA_PERCENTAGE': '0',
- 'DOWNLINK_PRIORITY': 'NOMINAL',
- 'FORMAT_CORRECTNESS_FLAG': 'PASSED',
- 'GENERAL_QUALITY_FLAG': 'PASSED',
- 'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
- 'GEOMETRIC_QUALITY_FLAG': 'PASSED',
- 'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
- 'PREVIEW_IMAGE_URL': 'http://example.com',
- 'PROCESSING_BASELINE': '01.03',
- 'PROCESSING_LEVEL': 'Level-1C',
- 'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_TYPE': 'S2MSI1C',
- 'QUANTIFICATION_VALUE': '1000',
- 'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
- 'REFERENCE_BAND': 'B1',
- 'REFLECTANCE_CONVERSION_U': '0.97',
- 'SENSING_TIME': '2015-12-31T23:59:59.999Z',
- 'SENSOR_QUALITY_FLAG': 'PASSED',
- 'SPECIAL_VALUE_NODATA': '1',
- 'SPECIAL_VALUE_SATURATED': '0',
- 'TILE_ID': 'S2A_OPER_MSI_L1C_TL_MTI__20151231T235959_A000123_T32TQR_N01.03'}
+                   'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
+                   'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
+                   'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                   'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
+                   'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                   'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
+                   'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                   'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                   'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                   'DOWNLINK_PRIORITY': 'NOMINAL',
+                   'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                   'GENERAL_QUALITY_FLAG': 'PASSED',
+                   'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
+                   'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
+                   'PREVIEW_IMAGE_URL': 'http://example.com',
+                   'PROCESSING_BASELINE': '01.03',
+                   'PROCESSING_LEVEL': 'Level-1C',
+                   'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_TYPE': 'S2MSI1C',
+                   'QUANTIFICATION_VALUE': '1000',
+                   'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'REFERENCE_BAND': 'B1',
+                   'REFLECTANCE_CONVERSION_U': '0.97',
+                   'SENSING_TIME': '2015-12-31T23:59:59.999Z',
+                   'SENSOR_QUALITY_FLAG': 'PASSED',
+                   'SPECIAL_VALUE_NODATA': '1',
+                   'SPECIAL_VALUE_SATURATED': '0',
+                   'TILE_ID': 'S2A_OPER_MSI_L1C_TL_MTI__20151231T235959_A000123_T32TQR_N01.03'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -692,13 +692,13 @@ def sentinel2_l1c_tile_1():
         return 'fail'
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution',
- 'SUBDATASET_1_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:10m',
- 'SUBDATASET_2_DESC': 'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution',
- 'SUBDATASET_2_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:20m',
- 'SUBDATASET_3_DESC': 'Bands B1, B9, B10 with 60m resolution',
- 'SUBDATASET_3_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:60m',
- 'SUBDATASET_4_DESC': 'RGB preview',
- 'SUBDATASET_4_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:PREVIEW'}
+                   'SUBDATASET_1_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:10m',
+                   'SUBDATASET_2_DESC': 'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution',
+                   'SUBDATASET_2_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:20m',
+                   'SUBDATASET_3_DESC': 'Bands B1, B9, B10 with 60m resolution',
+                   'SUBDATASET_3_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:60m',
+                   'SUBDATASET_4_DESC': 'RGB preview',
+                   'SUBDATASET_4_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:PREVIEW'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -745,11 +745,11 @@ def sentinel2_l1c_tile_2():
         return 'fail'
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
- 'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
- 'DEGRADED_MSI_DATA_PERCENTAGE': '0',
- 'DOWNLINK_PRIORITY': 'NOMINAL',
- 'SENSING_TIME': '2015-12-31T23:59:59.999Z',
- 'TILE_ID': 'S2A_OPER_MSI_L1C_TL_MTI__20151231T235959_A000123_T32TQR_N01.03'}
+                   'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
+                   'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                   'DOWNLINK_PRIORITY': 'NOMINAL',
+                   'SENSING_TIME': '2015-12-31T23:59:59.999Z',
+                   'TILE_ID': 'S2A_OPER_MSI_L1C_TL_MTI__20151231T235959_A000123_T32TQR_N01.03'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -758,13 +758,13 @@ def sentinel2_l1c_tile_2():
         return 'fail'
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution',
- 'SUBDATASET_1_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:10m',
- 'SUBDATASET_2_DESC': 'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution',
- 'SUBDATASET_2_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:20m',
- 'SUBDATASET_3_DESC': 'Bands B1, B9, B10 with 60m resolution',
- 'SUBDATASET_3_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:60m',
- 'SUBDATASET_4_DESC': 'RGB preview',
- 'SUBDATASET_4_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:PREVIEW'}
+                   'SUBDATASET_1_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:10m',
+                   'SUBDATASET_2_DESC': 'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution',
+                   'SUBDATASET_2_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:20m',
+                   'SUBDATASET_3_DESC': 'Bands B1, B9, B10 with 60m resolution',
+                   'SUBDATASET_3_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:60m',
+                   'SUBDATASET_4_DESC': 'RGB preview',
+                   'SUBDATASET_4_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:PREVIEW'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -788,36 +788,36 @@ def sentinel2_l1c_tile_3():
         return 'fail'
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
- 'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
- 'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
- 'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
- 'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
- 'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
- 'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
- 'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
- 'DEGRADED_ANC_DATA_PERCENTAGE': '0',
- 'DEGRADED_MSI_DATA_PERCENTAGE': '0',
- 'DOWNLINK_PRIORITY': 'NOMINAL',
- 'FORMAT_CORRECTNESS_FLAG': 'PASSED',
- 'GENERAL_QUALITY_FLAG': 'PASSED',
- 'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
- 'GEOMETRIC_QUALITY_FLAG': 'PASSED',
- 'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
- 'PREVIEW_IMAGE_URL': 'http://example.com',
- 'PROCESSING_BASELINE': '01.03',
- 'PROCESSING_LEVEL': 'Level-1C',
- 'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_TYPE': 'S2MSI1C',
- 'QUANTIFICATION_VALUE': '1000',
- 'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
- 'REFERENCE_BAND': 'B1',
- 'REFLECTANCE_CONVERSION_U': '0.97',
- 'SENSING_TIME': '2015-12-31T23:59:59.999Z',
- 'SENSOR_QUALITY_FLAG': 'PASSED',
- 'SPECIAL_VALUE_NODATA': '1',
- 'SPECIAL_VALUE_SATURATED': '0',
- 'TILE_ID': 'S2A_OPER_MSI_L1C_TL_MTI__20151231T235959_A000123_T32TQR_N01.03'}
+                   'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
+                   'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
+                   'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                   'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
+                   'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                   'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
+                   'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                   'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                   'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                   'DOWNLINK_PRIORITY': 'NOMINAL',
+                   'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                   'GENERAL_QUALITY_FLAG': 'PASSED',
+                   'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
+                   'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
+                   'PREVIEW_IMAGE_URL': 'http://example.com',
+                   'PROCESSING_BASELINE': '01.03',
+                   'PROCESSING_LEVEL': 'Level-1C',
+                   'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_TYPE': 'S2MSI1C',
+                   'QUANTIFICATION_VALUE': '1000',
+                   'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'REFERENCE_BAND': 'B1',
+                   'REFLECTANCE_CONVERSION_U': '0.97',
+                   'SENSING_TIME': '2015-12-31T23:59:59.999Z',
+                   'SENSOR_QUALITY_FLAG': 'PASSED',
+                   'SPECIAL_VALUE_NODATA': '1',
+                   'SPECIAL_VALUE_SATURATED': '0',
+                   'TILE_ID': 'S2A_OPER_MSI_L1C_TL_MTI__20151231T235959_A000123_T32TQR_N01.03'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -865,12 +865,12 @@ def sentinel2_l1c_tile_3():
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B4',
- 'BANDWIDTH': '30',
- 'BANDWIDTH_UNIT': 'nm',
- 'SOLAR_IRRADIANCE': '1500',
- 'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
- 'WAVELENGTH': '665',
- 'WAVELENGTH_UNIT': 'nm'}
+                   'BANDWIDTH': '30',
+                   'BANDWIDTH_UNIT': 'nm',
+                   'SOLAR_IRRADIANCE': '1500',
+                   'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
+                   'WAVELENGTH': '665',
+                   'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
         gdaltest.post_reason('fail')
         import pprint
@@ -897,12 +897,12 @@ def sentinel2_l1c_tile_3():
 
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B8',
- 'BANDWIDTH': '115',
- 'BANDWIDTH_UNIT': 'nm',
- 'SOLAR_IRRADIANCE': '1000',
- 'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
- 'WAVELENGTH': '842',
- 'WAVELENGTH_UNIT': 'nm'}
+                   'BANDWIDTH': '115',
+                   'BANDWIDTH_UNIT': 'nm',
+                   'SOLAR_IRRADIANCE': '1000',
+                   'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
+                   'WAVELENGTH': '842',
+                   'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
         gdaltest.post_reason('fail')
         import pprint
@@ -927,11 +927,11 @@ def sentinel2_l1c_tile_4():
         return 'fail'
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
- 'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
- 'DEGRADED_MSI_DATA_PERCENTAGE': '0',
- 'DOWNLINK_PRIORITY': 'NOMINAL',
- 'SENSING_TIME': '2015-12-31T23:59:59.999Z',
- 'TILE_ID': 'S2A_OPER_MSI_L1C_TL_MTI__20151231T235959_A000123_T32TQR_N01.03'}
+                   'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
+                   'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                   'DOWNLINK_PRIORITY': 'NOMINAL',
+                   'SENSING_TIME': '2015-12-31T23:59:59.999Z',
+                   'TILE_ID': 'S2A_OPER_MSI_L1C_TL_MTI__20151231T235959_A000123_T32TQR_N01.03'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -979,10 +979,10 @@ def sentinel2_l1c_tile_4():
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B4',
- 'BANDWIDTH': '30',
- 'BANDWIDTH_UNIT': 'nm',
- 'WAVELENGTH': '665',
- 'WAVELENGTH_UNIT': 'nm'}
+                   'BANDWIDTH': '30',
+                   'BANDWIDTH_UNIT': 'nm',
+                   'WAVELENGTH': '665',
+                   'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
         gdaltest.post_reason('fail')
         import pprint
@@ -1065,7 +1065,7 @@ def sentinel2_l1c_tile_6():
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1C_Tile_ID xmlns:n1="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_TILE_L1C/02.09.07/scripts/../../../schemas/02.11.06/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd">
+                           """<n1:Level-1C_Tile_ID xmlns:n1="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_TILE_L1C/02.09.07/scripts/../../../schemas/02.11.06/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd">
 """)
 
     with gdaltest.error_handler():
@@ -1081,7 +1081,7 @@ def sentinel2_l1c_tile_6():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/S2A_OPER_MTD_L1C_bla.xml',
-"""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+                           """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <n1:Level-1C_Tile_ID xmlns:n1="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_TILE_L1C/02.09.07/scripts/../../../schemas/02.11.06/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd">
 <n1:General_Info>
 <TILE_ID metadataLevel="Brief">S2A_OPER_MSI_L1C_bla_N01.03</TILE_ID>
@@ -1133,30 +1133,30 @@ def sentinel2_l1b_1():
         return 'fail'
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
- 'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
- 'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
- 'DATATAKE_1_ID': 'GS2B_20151231T235959_000123_N01.03',
- 'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
- 'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
- 'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2B',
- 'DEGRADED_ANC_DATA_PERCENTAGE': '0',
- 'DEGRADED_MSI_DATA_PERCENTAGE': '0',
- 'FOOTPRINT': 'POLYGON((11 46, 11 45, 13 45, 13 46, 11 46))',
- 'FORMAT_CORRECTNESS_FLAG': 'PASSED',
- 'GENERAL_QUALITY_FLAG': 'PASSED',
- 'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
- 'GEOMETRIC_QUALITY_FLAG': 'PASSED',
- 'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
- 'PREVIEW_IMAGE_URL': 'http://example.com',
- 'PROCESSING_BASELINE': '01.03',
- 'PROCESSING_LEVEL': 'Level-1B',
- 'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_TYPE': 'S2MSI1B',
- 'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
- 'SENSOR_QUALITY_FLAG': 'PASSED',
- 'SPECIAL_VALUE_NODATA': '1',
- 'SPECIAL_VALUE_SATURATED': '0'}
+                   'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
+                   'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                   'DATATAKE_1_ID': 'GS2B_20151231T235959_000123_N01.03',
+                   'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                   'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
+                   'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2B',
+                   'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                   'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                   'FOOTPRINT': 'POLYGON((11 46, 11 45, 13 45, 13 46, 11 46))',
+                   'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                   'GENERAL_QUALITY_FLAG': 'PASSED',
+                   'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
+                   'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
+                   'PREVIEW_IMAGE_URL': 'http://example.com',
+                   'PROCESSING_BASELINE': '01.03',
+                   'PROCESSING_LEVEL': 'Level-1B',
+                   'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_TYPE': 'S2MSI1B',
+                   'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'SENSOR_QUALITY_FLAG': 'PASSED',
+                   'SPECIAL_VALUE_NODATA': '1',
+                   'SPECIAL_VALUE_SATURATED': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -1165,11 +1165,11 @@ def sentinel2_l1b_1():
         return 'fail'
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 of granule S2B_OPER_MTD_L1B.xml with 10m resolution',
- 'SUBDATASET_1_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:10m',
- 'SUBDATASET_2_DESC': 'Bands B5, B6, B7, B8A, B11, B12 of granule S2B_OPER_MTD_L1B.xml with 20m resolution',
- 'SUBDATASET_2_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:20m',
- 'SUBDATASET_3_DESC': 'Bands B1, B9, B10 of granule S2B_OPER_MTD_L1B.xml with 60m resolution',
- 'SUBDATASET_3_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m'}
+                   'SUBDATASET_1_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:10m',
+                   'SUBDATASET_2_DESC': 'Bands B5, B6, B7, B8A, B11, B12 of granule S2B_OPER_MTD_L1B.xml with 20m resolution',
+                   'SUBDATASET_2_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:20m',
+                   'SUBDATASET_3_DESC': 'Bands B1, B9, B10 of granule S2B_OPER_MTD_L1B.xml with 60m resolution',
+                   'SUBDATASET_3_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -1215,39 +1215,39 @@ def sentinel2_l1b_2():
         return 'fail'
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
- 'DATASTRIP_ID': 'S2B_OPER_MSI_L1B_DS_MTI__20151231T235959_S20151231T235959_N01.03',
- 'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
- 'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
- 'DATATAKE_1_ID': 'GS2B_20151231T235959_000123_N01.03',
- 'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
- 'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
- 'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2B',
- 'DEGRADED_ANC_DATA_PERCENTAGE': '0',
- 'DEGRADED_MSI_DATA_PERCENTAGE': '0',
- 'DETECTOR_ID': '02',
- 'DOWNLINK_PRIORITY': 'NOMINAL',
- 'FOOTPRINT': 'POLYGON((11 46 1, 11 45 2, 13 45 3, 13 46 4, 11 46 1))',
- 'FORMAT_CORRECTNESS_FLAG': 'PASSED',
- 'GENERAL_QUALITY_FLAG': 'PASSED',
- 'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
- 'GEOMETRIC_QUALITY_FLAG': 'PASSED',
- 'GRANULE_ID': 'S2B_OPER_MSI_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03',
- 'INCIDENCE_AZIMUTH_ANGLE': '96',
- 'INCIDENCE_ZENITH_ANGLE': '8',
- 'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
- 'PREVIEW_IMAGE_URL': 'http://example.com',
- 'PROCESSING_BASELINE': '01.03',
- 'PROCESSING_LEVEL': 'Level-1B',
- 'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_TYPE': 'S2MSI1B',
- 'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
- 'SENSING_TIME': '2015-12-31T23:59:59.999Z',
- 'SENSOR_QUALITY_FLAG': 'PASSED',
- 'SOLAR_AZIMUTH_ANGLE': '158',
- 'SOLAR_ZENITH_ANGLE': '43',
- 'SPECIAL_VALUE_NODATA': '1',
- 'SPECIAL_VALUE_SATURATED': '0'}
+                   'DATASTRIP_ID': 'S2B_OPER_MSI_L1B_DS_MTI__20151231T235959_S20151231T235959_N01.03',
+                   'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
+                   'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                   'DATATAKE_1_ID': 'GS2B_20151231T235959_000123_N01.03',
+                   'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                   'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
+                   'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2B',
+                   'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                   'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                   'DETECTOR_ID': '02',
+                   'DOWNLINK_PRIORITY': 'NOMINAL',
+                   'FOOTPRINT': 'POLYGON((11 46 1, 11 45 2, 13 45 3, 13 46 4, 11 46 1))',
+                   'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                   'GENERAL_QUALITY_FLAG': 'PASSED',
+                   'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
+                   'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'GRANULE_ID': 'S2B_OPER_MSI_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03',
+                   'INCIDENCE_AZIMUTH_ANGLE': '96',
+                   'INCIDENCE_ZENITH_ANGLE': '8',
+                   'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
+                   'PREVIEW_IMAGE_URL': 'http://example.com',
+                   'PROCESSING_BASELINE': '01.03',
+                   'PROCESSING_LEVEL': 'Level-1B',
+                   'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_TYPE': 'S2MSI1B',
+                   'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'SENSING_TIME': '2015-12-31T23:59:59.999Z',
+                   'SENSOR_QUALITY_FLAG': 'PASSED',
+                   'SOLAR_AZIMUTH_ANGLE': '158',
+                   'SOLAR_ZENITH_ANGLE': '43',
+                   'SPECIAL_VALUE_NODATA': '1',
+                   'SPECIAL_VALUE_SATURATED': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -1256,11 +1256,11 @@ def sentinel2_l1b_2():
         return 'fail'
 
     subdatasets_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution',
- 'SUBDATASET_1_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:10m',
- 'SUBDATASET_2_DESC': 'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution',
- 'SUBDATASET_2_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:20m',
- 'SUBDATASET_3_DESC': 'Bands B1, B9, B10 with 60m resolution',
- 'SUBDATASET_3_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m'}
+                      'SUBDATASET_1_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:10m',
+                      'SUBDATASET_2_DESC': 'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution',
+                      'SUBDATASET_2_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:20m',
+                      'SUBDATASET_3_DESC': 'Bands B1, B9, B10 with 60m resolution',
+                      'SUBDATASET_3_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != subdatasets_md:
         gdaltest.post_reason('fail')
@@ -1300,39 +1300,39 @@ def sentinel2_l1b_3():
         return 'fail'
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
- 'DATASTRIP_ID': 'S2B_OPER_MSI_L1B_DS_MTI__20151231T235959_S20151231T235959_N01.03',
- 'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
- 'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
- 'DATATAKE_1_ID': 'GS2B_20151231T235959_000123_N01.03',
- 'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
- 'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
- 'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2B',
- 'DEGRADED_ANC_DATA_PERCENTAGE': '0',
- 'DEGRADED_MSI_DATA_PERCENTAGE': '0',
- 'DETECTOR_ID': '02',
- 'DOWNLINK_PRIORITY': 'NOMINAL',
- 'FOOTPRINT': 'POLYGON((11 46 1, 11 45 2, 13 45 3, 13 46 4, 11 46 1))',
- 'FORMAT_CORRECTNESS_FLAG': 'PASSED',
- 'GENERAL_QUALITY_FLAG': 'PASSED',
- 'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
- 'GEOMETRIC_QUALITY_FLAG': 'PASSED',
- 'GRANULE_ID': 'S2B_OPER_MSI_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03',
- 'INCIDENCE_AZIMUTH_ANGLE': '96',
- 'INCIDENCE_ZENITH_ANGLE': '8',
- 'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
- 'PREVIEW_IMAGE_URL': 'http://example.com',
- 'PROCESSING_BASELINE': '01.03',
- 'PROCESSING_LEVEL': 'Level-1B',
- 'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_TYPE': 'S2MSI1B',
- 'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
- 'SENSING_TIME': '2015-12-31T23:59:59.999Z',
- 'SENSOR_QUALITY_FLAG': 'PASSED',
- 'SOLAR_AZIMUTH_ANGLE': '158',
- 'SOLAR_ZENITH_ANGLE': '43',
- 'SPECIAL_VALUE_NODATA': '1',
- 'SPECIAL_VALUE_SATURATED': '0'}
+                   'DATASTRIP_ID': 'S2B_OPER_MSI_L1B_DS_MTI__20151231T235959_S20151231T235959_N01.03',
+                   'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
+                   'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                   'DATATAKE_1_ID': 'GS2B_20151231T235959_000123_N01.03',
+                   'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                   'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
+                   'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2B',
+                   'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                   'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                   'DETECTOR_ID': '02',
+                   'DOWNLINK_PRIORITY': 'NOMINAL',
+                   'FOOTPRINT': 'POLYGON((11 46 1, 11 45 2, 13 45 3, 13 46 4, 11 46 1))',
+                   'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                   'GENERAL_QUALITY_FLAG': 'PASSED',
+                   'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
+                   'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'GRANULE_ID': 'S2B_OPER_MSI_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03',
+                   'INCIDENCE_AZIMUTH_ANGLE': '96',
+                   'INCIDENCE_ZENITH_ANGLE': '8',
+                   'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
+                   'PREVIEW_IMAGE_URL': 'http://example.com',
+                   'PROCESSING_BASELINE': '01.03',
+                   'PROCESSING_LEVEL': 'Level-1B',
+                   'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_TYPE': 'S2MSI1B',
+                   'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'SENSING_TIME': '2015-12-31T23:59:59.999Z',
+                   'SENSOR_QUALITY_FLAG': 'PASSED',
+                   'SOLAR_AZIMUTH_ANGLE': '158',
+                   'SOLAR_ZENITH_ANGLE': '43',
+                   'SPECIAL_VALUE_NODATA': '1',
+                   'SPECIAL_VALUE_SATURATED': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -1425,10 +1425,10 @@ def sentinel2_l1b_3():
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B1',
- 'BANDWIDTH': '20',
- 'BANDWIDTH_UNIT': 'nm',
- 'WAVELENGTH': '443',
- 'WAVELENGTH_UNIT': 'nm'}
+                   'BANDWIDTH': '20',
+                   'BANDWIDTH_UNIT': 'nm',
+                   'WAVELENGTH': '443',
+                   'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
         gdaltest.post_reason('fail')
         import pprint
@@ -1452,7 +1452,7 @@ def sentinel2_l1b_3():
 def sentinel2_l1b_4():
 
     gdal.FileFromMemBuffer('/vsimem/foo/S2B_PROD_MTD_foo.xml',
-"""<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
+                           """<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
     <n1:General_Info>
         <Product_Info>
 <Query_Options>
@@ -1467,7 +1467,7 @@ def sentinel2_l1b_4():
 </n1:Level-1B_User_Product>""")
 
     gdal.FileFromMemBuffer('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml',
-"""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+                           """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
 <n1:General_Info>
 <TILE_ID metadataLevel="Brief">S2A_OPER_MSI_L1C_bla_N01.03</TILE_ID>
@@ -1500,7 +1500,7 @@ def sentinel2_l1b_4():
 
     # With brief granule metadata (no Granule_Dimensions)
     gdal.FileFromMemBuffer('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml',
-"""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+                           """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
 <n1:General_Info>
 <TILE_ID metadataLevel="Brief">S2A_OPER_MSI_L1C_bla_N01.03</TILE_ID>
@@ -1516,7 +1516,7 @@ def sentinel2_l1b_4():
 
     # With standard granule metadata (with Granule_Dimensions)
     gdal.FileFromMemBuffer('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml',
-"""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+                           """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
 <n1:General_Info>
 <TILE_ID metadataLevel="Brief">S2A_OPER_MSI_L1C_bla_N01.03</TILE_ID>
@@ -1534,7 +1534,7 @@ def sentinel2_l1b_4():
 
     ds = gdal.Open('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml')
     expected_md = {'SUBDATASET_1_DESC': 'Bands B1 with 60m resolution',
- 'SUBDATASET_1_NAME': 'SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m'}
+                   'SUBDATASET_1_NAME': 'SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -1565,7 +1565,7 @@ def sentinel2_l1b_5():
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
+                           """<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
 """)
 
     with gdaltest.error_handler():
@@ -1576,7 +1576,7 @@ def sentinel2_l1b_5():
 
     # No Product_Info
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
+                           """<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
     <n1:General_Info>
     </n1:General_Info>
 </n1:Level-1B_User_Product>""")
@@ -1590,7 +1590,7 @@ def sentinel2_l1b_5():
 
     # No Product_Organisation
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
+                           """<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
     <n1:General_Info>
         <Product_Info/>
     </n1:General_Info>
@@ -1612,7 +1612,7 @@ def sentinel2_l1b_5():
 
     # No Band_List
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
+                           """<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
     <n1:General_Info>
         <Product_Info>
 <Product_Organisation>
@@ -1630,7 +1630,7 @@ def sentinel2_l1b_5():
 
     # No valid bands
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
+                           """<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
     <n1:General_Info>
         <Product_Info>
 <Query_Options>
@@ -1653,7 +1653,7 @@ def sentinel2_l1b_5():
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
+                           """<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
 """)
 
     with gdaltest.error_handler():
@@ -1671,7 +1671,7 @@ def sentinel2_l1b_5():
 
     # No Granule_Dimensions
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
+                           """<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
   <n1:General_Info>
   </n1:General_Info>
   <n1:Geometric_Info>
@@ -1687,7 +1687,7 @@ def sentinel2_l1b_5():
 
     # No ROWS
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
+                           """<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
   <n1:General_Info>
   </n1:General_Info>
   <n1:Geometric_Info>
@@ -1709,7 +1709,7 @@ def sentinel2_l1b_5():
 
     # No NCOLS
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
+                           """<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
   <n1:General_Info>
   </n1:General_Info>
   <n1:Geometric_Info>
@@ -1731,7 +1731,7 @@ def sentinel2_l1b_5():
 
     # Not the desired resolution
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
+                           """<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
   <n1:General_Info>
   </n1:General_Info>
   <n1:Geometric_Info>
@@ -1766,55 +1766,55 @@ def sentinel2_l2a_1():
         return 'fail'
 
     expected_md = {'AOT_RETRIEVAL_ACCURACY': '0',
- 'BARE_SOILS_PERCENTAGE': '0',
- 'CLOUD_COVERAGE_ASSESSMENT': '0.0',
- 'CLOUD_SHADOW_PERCENTAGE': '0',
- 'DARK_FEATURES_PERCENTAGE': '0',
- 'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
- 'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
- 'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
- 'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
- 'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
- 'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
- 'DEGRADED_ANC_DATA_PERCENTAGE': '0',
- 'DEGRADED_MSI_DATA_PERCENTAGE': '0',
- 'FOOTPRINT': 'POLYGON((11 46, 11 45, 13 45, 13 46, 11 46))',
- 'FORMAT_CORRECTNESS_FLAG': 'PASSED',
- 'GENERAL_QUALITY_FLAG': 'PASSED',
- 'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
- 'GEOMETRIC_QUALITY_FLAG': 'PASSED',
- 'HIGH_PROBA_CLOUDS_PERCENTAGE': '0',
- 'L1C_TOA_QUANTIFICATION_VALUE': '1000',
- 'L1C_TOA_QUANTIFICATION_VALUE_UNIT': 'none',
- 'L2A_AOT_QUANTIFICATION_VALUE': '1000.0',
- 'L2A_AOT_QUANTIFICATION_VALUE_UNIT': 'none',
- 'L2A_BOA_QUANTIFICATION_VALUE': '1000',
- 'L2A_BOA_QUANTIFICATION_VALUE_UNIT': 'none',
- 'L2A_WVP_QUANTIFICATION_VALUE': '1000.0',
- 'L2A_WVP_QUANTIFICATION_VALUE_UNIT': 'cm',
- 'LOW_PROBA_CLOUDS_PERCENTAGE': '0',
- 'MEDIUM_PROBA_CLOUDS_PERCENTAGE': '0',
- 'NODATA_PIXEL_PERCENTAGE': '0',
- 'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
- 'PREVIEW_IMAGE_URL': 'http://example.com',
- 'PROCESSING_BASELINE': '01.03',
- 'PROCESSING_LEVEL': 'Level-2Ap',
- 'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_TYPE': 'S2MSI2Ap',
- 'RADIATIVE_TRANSFER_ACCURAY': '0',
- 'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
- 'REFERENCE_BAND': 'B1',
- 'REFLECTANCE_CONVERSION_U': '0.97',
- 'SATURATED_DEFECTIVE_PIXEL_PERCENTAGE': '0',
- 'SENSOR_QUALITY_FLAG': 'PASSED',
- 'SNOW_ICE_PERCENTAGE': '0',
- 'SPECIAL_VALUE_NODATA': '1',
- 'SPECIAL_VALUE_SATURATED': '0',
- 'THIN_CIRRUS_PERCENTAGE': '0',
- 'VEGETATION_PERCENTAGE': '0',
- 'WATER_PERCENTAGE': '0',
- 'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0'}
+                   'BARE_SOILS_PERCENTAGE': '0',
+                   'CLOUD_COVERAGE_ASSESSMENT': '0.0',
+                   'CLOUD_SHADOW_PERCENTAGE': '0',
+                   'DARK_FEATURES_PERCENTAGE': '0',
+                   'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
+                   'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                   'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
+                   'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                   'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
+                   'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                   'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                   'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                   'FOOTPRINT': 'POLYGON((11 46, 11 45, 13 45, 13 46, 11 46))',
+                   'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                   'GENERAL_QUALITY_FLAG': 'PASSED',
+                   'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
+                   'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'HIGH_PROBA_CLOUDS_PERCENTAGE': '0',
+                   'L1C_TOA_QUANTIFICATION_VALUE': '1000',
+                   'L1C_TOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                   'L2A_AOT_QUANTIFICATION_VALUE': '1000.0',
+                   'L2A_AOT_QUANTIFICATION_VALUE_UNIT': 'none',
+                   'L2A_BOA_QUANTIFICATION_VALUE': '1000',
+                   'L2A_BOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                   'L2A_WVP_QUANTIFICATION_VALUE': '1000.0',
+                   'L2A_WVP_QUANTIFICATION_VALUE_UNIT': 'cm',
+                   'LOW_PROBA_CLOUDS_PERCENTAGE': '0',
+                   'MEDIUM_PROBA_CLOUDS_PERCENTAGE': '0',
+                   'NODATA_PIXEL_PERCENTAGE': '0',
+                   'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
+                   'PREVIEW_IMAGE_URL': 'http://example.com',
+                   'PROCESSING_BASELINE': '01.03',
+                   'PROCESSING_LEVEL': 'Level-2Ap',
+                   'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_TYPE': 'S2MSI2Ap',
+                   'RADIATIVE_TRANSFER_ACCURAY': '0',
+                   'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'REFERENCE_BAND': 'B1',
+                   'REFLECTANCE_CONVERSION_U': '0.97',
+                   'SATURATED_DEFECTIVE_PIXEL_PERCENTAGE': '0',
+                   'SENSOR_QUALITY_FLAG': 'PASSED',
+                   'SNOW_ICE_PERCENTAGE': '0',
+                   'SPECIAL_VALUE_NODATA': '1',
+                   'SPECIAL_VALUE_SATURATED': '0',
+                   'THIN_CIRRUS_PERCENTAGE': '0',
+                   'VEGETATION_PERCENTAGE': '0',
+                   'WATER_PERCENTAGE': '0',
+                   'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -1823,9 +1823,9 @@ def sentinel2_l2a_1():
         return 'fail'
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B1, B2, B3, B4, B5, B6, B7, B9, B10, B11, B12, B8A, AOT, CLD, SCL, SNW, WVP with 60m resolution, UTM 32N',
- 'SUBDATASET_1_NAME': 'SENTINEL2_L2A:data/fake_sentinel2_l2a/S2A_USER_PRD_MSIL2A.SAFE/S2A_USER_MTD_SAFL2A.xml:60m:EPSG_32632',
- 'SUBDATASET_2_DESC': 'RGB preview, UTM 32N',
- 'SUBDATASET_2_NAME': 'SENTINEL2_L2A:data/fake_sentinel2_l2a/S2A_USER_PRD_MSIL2A.SAFE/S2A_USER_MTD_SAFL2A.xml:PREVIEW:EPSG_32632'}
+                   'SUBDATASET_1_NAME': 'SENTINEL2_L2A:data/fake_sentinel2_l2a/S2A_USER_PRD_MSIL2A.SAFE/S2A_USER_MTD_SAFL2A.xml:60m:EPSG_32632',
+                   'SUBDATASET_2_DESC': 'RGB preview, UTM 32N',
+                   'SUBDATASET_2_NAME': 'SENTINEL2_L2A:data/fake_sentinel2_l2a/S2A_USER_PRD_MSIL2A.SAFE/S2A_USER_MTD_SAFL2A.xml:PREVIEW:EPSG_32632'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -1875,54 +1875,54 @@ def sentinel2_l2a_2():
         return 'fail'
 
     expected_md = {'AOT_RETRIEVAL_ACCURACY': '0',
- 'BARE_SOILS_PERCENTAGE': '0',
- 'CLOUD_COVERAGE_ASSESSMENT': '0.0',
- 'CLOUD_SHADOW_PERCENTAGE': '0',
- 'DARK_FEATURES_PERCENTAGE': '0',
- 'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
- 'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
- 'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
- 'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
- 'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
- 'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
- 'DEGRADED_ANC_DATA_PERCENTAGE': '0',
- 'DEGRADED_MSI_DATA_PERCENTAGE': '0',
- 'FORMAT_CORRECTNESS_FLAG': 'PASSED',
- 'GENERAL_QUALITY_FLAG': 'PASSED',
- 'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
- 'GEOMETRIC_QUALITY_FLAG': 'PASSED',
- 'HIGH_PROBA_CLOUDS_PERCENTAGE': '0',
- 'L1C_TOA_QUANTIFICATION_VALUE': '1000',
- 'L1C_TOA_QUANTIFICATION_VALUE_UNIT': 'none',
- 'L2A_AOT_QUANTIFICATION_VALUE': '1000.0',
- 'L2A_AOT_QUANTIFICATION_VALUE_UNIT': 'none',
- 'L2A_BOA_QUANTIFICATION_VALUE': '1000',
- 'L2A_BOA_QUANTIFICATION_VALUE_UNIT': 'none',
- 'L2A_WVP_QUANTIFICATION_VALUE': '1000.0',
- 'L2A_WVP_QUANTIFICATION_VALUE_UNIT': 'cm',
- 'LOW_PROBA_CLOUDS_PERCENTAGE': '0',
- 'MEDIUM_PROBA_CLOUDS_PERCENTAGE': '0',
- 'NODATA_PIXEL_PERCENTAGE': '0',
- 'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
- 'PREVIEW_IMAGE_URL': 'http://example.com',
- 'PROCESSING_BASELINE': '01.03',
- 'PROCESSING_LEVEL': 'Level-2Ap',
- 'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_TYPE': 'S2MSI2Ap',
- 'RADIATIVE_TRANSFER_ACCURAY': '0',
- 'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
- 'REFERENCE_BAND': 'B1',
- 'REFLECTANCE_CONVERSION_U': '0.97',
- 'SATURATED_DEFECTIVE_PIXEL_PERCENTAGE': '0',
- 'SENSOR_QUALITY_FLAG': 'PASSED',
- 'SNOW_ICE_PERCENTAGE': '0',
- 'SPECIAL_VALUE_NODATA': '1',
- 'SPECIAL_VALUE_SATURATED': '0',
- 'THIN_CIRRUS_PERCENTAGE': '0',
- 'VEGETATION_PERCENTAGE': '0',
- 'WATER_PERCENTAGE': '0',
- 'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0'}
+                   'BARE_SOILS_PERCENTAGE': '0',
+                   'CLOUD_COVERAGE_ASSESSMENT': '0.0',
+                   'CLOUD_SHADOW_PERCENTAGE': '0',
+                   'DARK_FEATURES_PERCENTAGE': '0',
+                   'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
+                   'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                   'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
+                   'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                   'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
+                   'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                   'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                   'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                   'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                   'GENERAL_QUALITY_FLAG': 'PASSED',
+                   'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
+                   'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'HIGH_PROBA_CLOUDS_PERCENTAGE': '0',
+                   'L1C_TOA_QUANTIFICATION_VALUE': '1000',
+                   'L1C_TOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                   'L2A_AOT_QUANTIFICATION_VALUE': '1000.0',
+                   'L2A_AOT_QUANTIFICATION_VALUE_UNIT': 'none',
+                   'L2A_BOA_QUANTIFICATION_VALUE': '1000',
+                   'L2A_BOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                   'L2A_WVP_QUANTIFICATION_VALUE': '1000.0',
+                   'L2A_WVP_QUANTIFICATION_VALUE_UNIT': 'cm',
+                   'LOW_PROBA_CLOUDS_PERCENTAGE': '0',
+                   'MEDIUM_PROBA_CLOUDS_PERCENTAGE': '0',
+                   'NODATA_PIXEL_PERCENTAGE': '0',
+                   'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
+                   'PREVIEW_IMAGE_URL': 'http://example.com',
+                   'PROCESSING_BASELINE': '01.03',
+                   'PROCESSING_LEVEL': 'Level-2Ap',
+                   'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_TYPE': 'S2MSI2Ap',
+                   'RADIATIVE_TRANSFER_ACCURAY': '0',
+                   'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'REFERENCE_BAND': 'B1',
+                   'REFLECTANCE_CONVERSION_U': '0.97',
+                   'SATURATED_DEFECTIVE_PIXEL_PERCENTAGE': '0',
+                   'SENSOR_QUALITY_FLAG': 'PASSED',
+                   'SNOW_ICE_PERCENTAGE': '0',
+                   'SPECIAL_VALUE_NODATA': '1',
+                   'SPECIAL_VALUE_SATURATED': '0',
+                   'THIN_CIRRUS_PERCENTAGE': '0',
+                   'VEGETATION_PERCENTAGE': '0',
+                   'WATER_PERCENTAGE': '0',
+                   'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -1971,12 +1971,12 @@ def sentinel2_l2a_2():
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B1',
- 'BANDWIDTH': '20',
- 'BANDWIDTH_UNIT': 'nm',
- 'SOLAR_IRRADIANCE': '1900',
- 'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
- 'WAVELENGTH': '443',
- 'WAVELENGTH_UNIT': 'nm'}
+                   'BANDWIDTH': '20',
+                   'BANDWIDTH_UNIT': 'nm',
+                   'SOLAR_IRRADIANCE': '1900',
+                   'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
+                   'WAVELENGTH': '443',
+                   'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
         gdaltest.post_reason('fail')
         import pprint
@@ -2010,17 +2010,17 @@ def sentinel2_l2a_2():
         return 'fail'
     band = ds.GetRasterBand(scl_band)
     expected_categories = ['NODATA',
-                            'SATURATED_DEFECTIVE',
-                            'DARK_FEATURE_SHADOW',
-                            'CLOUD_SHADOW',
-                            'VEGETATION',
-                            'BARE_SOIL_DESERT',
-                            'WATER',
-                            'CLOUD_LOW_PROBA',
-                            'CLOUD_MEDIUM_PROBA',
-                            'CLOUD_HIGH_PROBA',
-                            'THIN_CIRRUS',
-                            'SNOW_ICE']
+                           'SATURATED_DEFECTIVE',
+                           'DARK_FEATURE_SHADOW',
+                           'CLOUD_SHADOW',
+                           'VEGETATION',
+                           'BARE_SOIL_DESERT',
+                           'WATER',
+                           'CLOUD_LOW_PROBA',
+                           'CLOUD_MEDIUM_PROBA',
+                           'CLOUD_HIGH_PROBA',
+                           'THIN_CIRRUS',
+                           'SNOW_ICE']
     got_categories = band.GetCategoryNames()
     if got_categories != expected_categories:
         gdaltest.post_reason('fail')
@@ -2038,7 +2038,7 @@ def sentinel2_l2a_3():
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-2A_User_Product xmlns:n1="https://psd-12.sentinel2.eo.esa.int/PSD/User_Product_Level-2A.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-2A.xsd S2_User_Product_Level-2A_Metadata.xsd">
+                           """<n1:Level-2A_User_Product xmlns:n1="https://psd-12.sentinel2.eo.esa.int/PSD/User_Product_Level-2A.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-2A.xsd S2_User_Product_Level-2A_Metadata.xsd">
 """)
 
     with gdaltest.error_handler():
@@ -2055,7 +2055,7 @@ def sentinel2_l2a_3():
 
     # File is OK, but granule MTD are missing
     gdal.FileFromMemBuffer('/vsimem/test.xml',
-"""<n1:Level-2A_User_Product xmlns:n1="https://psd-12.sentinel2.eo.esa.int/PSD/User_Product_Level-2A.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-2A.xsd S2_User_Product_Level-2A_Metadata.xsd">
+                           """<n1:Level-2A_User_Product xmlns:n1="https://psd-12.sentinel2.eo.esa.int/PSD/User_Product_Level-2A.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-2A.xsd S2_User_Product_Level-2A_Metadata.xsd">
     <n1:General_Info>
         <L2A_Product_Info>
 <Query_Options>
@@ -2124,33 +2124,33 @@ def sentinel2_l1c_safe_compact_1():
         return 'fail'
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
- 'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
- 'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
- 'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
- 'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
- 'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
- 'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
- 'DEGRADED_ANC_DATA_PERCENTAGE': '0',
- 'DEGRADED_MSI_DATA_PERCENTAGE': '0',
- 'FOOTPRINT': 'POLYGON((11 46, 11 45, 13 45, 13 46, 11 46))',
- 'FORMAT_CORRECTNESS_FLAG': 'PASSED',
- 'GENERAL_QUALITY_FLAG': 'PASSED',
- 'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
- 'GEOMETRIC_QUALITY_FLAG': 'PASSED',
- 'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
- 'PREVIEW_IMAGE_URL': 'http://example.com',
- 'PROCESSING_BASELINE': '01.03',
- 'PROCESSING_LEVEL': 'Level-1C',
- 'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_TYPE': 'S2MSI1C',
- 'QUANTIFICATION_VALUE': '1000',
- 'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
- 'REFERENCE_BAND': 'B1',
- 'REFLECTANCE_CONVERSION_U': '0.97',
- 'SENSOR_QUALITY_FLAG': 'PASSED',
- 'SPECIAL_VALUE_NODATA': '1',
- 'SPECIAL_VALUE_SATURATED': '0'}
+                   'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
+                   'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                   'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
+                   'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                   'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
+                   'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                   'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                   'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                   'FOOTPRINT': 'POLYGON((11 46, 11 45, 13 45, 13 46, 11 46))',
+                   'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                   'GENERAL_QUALITY_FLAG': 'PASSED',
+                   'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
+                   'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
+                   'PREVIEW_IMAGE_URL': 'http://example.com',
+                   'PROCESSING_BASELINE': '01.03',
+                   'PROCESSING_LEVEL': 'Level-1C',
+                   'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_TYPE': 'S2MSI1C',
+                   'QUANTIFICATION_VALUE': '1000',
+                   'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'REFERENCE_BAND': 'B1',
+                   'REFLECTANCE_CONVERSION_U': '0.97',
+                   'SENSOR_QUALITY_FLAG': 'PASSED',
+                   'SPECIAL_VALUE_NODATA': '1',
+                   'SPECIAL_VALUE_SATURATED': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -2159,13 +2159,13 @@ def sentinel2_l1c_safe_compact_1():
         return 'fail'
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution, UTM 32N',
- 'SUBDATASET_1_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml:10m:EPSG_32632',
- 'SUBDATASET_2_DESC': 'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution, UTM 32N',
- 'SUBDATASET_2_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml:20m:EPSG_32632',
- 'SUBDATASET_3_DESC': 'Bands B1, B9, B10 with 60m resolution, UTM 32N',
- 'SUBDATASET_3_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml:60m:EPSG_32632',
- 'SUBDATASET_4_DESC': 'True color image, UTM 32N',
- 'SUBDATASET_4_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml:TCI:EPSG_32632'}
+                   'SUBDATASET_1_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml:10m:EPSG_32632',
+                   'SUBDATASET_2_DESC': 'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution, UTM 32N',
+                   'SUBDATASET_2_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml:20m:EPSG_32632',
+                   'SUBDATASET_3_DESC': 'Bands B1, B9, B10 with 60m resolution, UTM 32N',
+                   'SUBDATASET_3_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml:60m:EPSG_32632',
+                   'SUBDATASET_4_DESC': 'True color image, UTM 32N',
+                   'SUBDATASET_4_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml:TCI:EPSG_32632'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -2225,32 +2225,32 @@ def sentinel2_l1c_safe_compact_2():
         return 'fail'
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
- 'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
- 'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
- 'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
- 'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
- 'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
- 'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
- 'DEGRADED_ANC_DATA_PERCENTAGE': '0',
- 'DEGRADED_MSI_DATA_PERCENTAGE': '0',
- 'FORMAT_CORRECTNESS_FLAG': 'PASSED',
- 'GENERAL_QUALITY_FLAG': 'PASSED',
- 'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
- 'GEOMETRIC_QUALITY_FLAG': 'PASSED',
- 'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
- 'PREVIEW_IMAGE_URL': 'http://example.com',
- 'PROCESSING_BASELINE': '01.03',
- 'PROCESSING_LEVEL': 'Level-1C',
- 'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
- 'PRODUCT_TYPE': 'S2MSI1C',
- 'QUANTIFICATION_VALUE': '1000',
- 'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
- 'REFERENCE_BAND': 'B1',
- 'REFLECTANCE_CONVERSION_U': '0.97',
- 'SENSOR_QUALITY_FLAG': 'PASSED',
- 'SPECIAL_VALUE_NODATA': '1',
- 'SPECIAL_VALUE_SATURATED': '0'}
+                   'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
+                   'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                   'DATATAKE_1_ID': 'GS2A_20151231T235959_000123_N01.03',
+                   'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                   'DATATAKE_1_SENSING_ORBIT_NUMBER': '22',
+                   'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                   'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                   'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                   'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                   'GENERAL_QUALITY_FLAG': 'PASSED',
+                   'GENERATION_TIME': '2015-12-31T23:59:59.999Z',
+                   'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'PREVIEW_GEO_INFO': 'BrowseImageFootprint',
+                   'PREVIEW_IMAGE_URL': 'http://example.com',
+                   'PROCESSING_BASELINE': '01.03',
+                   'PROCESSING_LEVEL': 'Level-1C',
+                   'PRODUCT_START_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_STOP_TIME': '2015-12-31T23:59:59.999Z',
+                   'PRODUCT_TYPE': 'S2MSI1C',
+                   'QUANTIFICATION_VALUE': '1000',
+                   'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                   'REFERENCE_BAND': 'B1',
+                   'REFLECTANCE_CONVERSION_U': '0.97',
+                   'SENSOR_QUALITY_FLAG': 'PASSED',
+                   'SPECIAL_VALUE_NODATA': '1',
+                   'SPECIAL_VALUE_SATURATED': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
         gdaltest.post_reason('fail')
@@ -2299,12 +2299,12 @@ def sentinel2_l1c_safe_compact_2():
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B4',
- 'BANDWIDTH': '30',
- 'BANDWIDTH_UNIT': 'nm',
- 'SOLAR_IRRADIANCE': '1500',
- 'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
- 'WAVELENGTH': '665',
- 'WAVELENGTH_UNIT': 'nm'}
+                   'BANDWIDTH': '30',
+                   'BANDWIDTH_UNIT': 'nm',
+                   'SOLAR_IRRADIANCE': '1500',
+                   'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
+                   'WAVELENGTH': '665',
+                   'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
         gdaltest.post_reason('fail')
         import pprint
@@ -2331,12 +2331,12 @@ def sentinel2_l1c_safe_compact_2():
 
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B8',
- 'BANDWIDTH': '115',
- 'BANDWIDTH_UNIT': 'nm',
- 'SOLAR_IRRADIANCE': '1000',
- 'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
- 'WAVELENGTH': '842',
- 'WAVELENGTH_UNIT': 'nm'}
+                   'BANDWIDTH': '115',
+                   'BANDWIDTH_UNIT': 'nm',
+                   'SOLAR_IRRADIANCE': '1000',
+                   'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
+                   'WAVELENGTH': '842',
+                   'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
         gdaltest.post_reason('fail')
         import pprint

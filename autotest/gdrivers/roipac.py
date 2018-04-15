@@ -57,8 +57,8 @@ def roipac_1():
     AUTHORITY["EPSG","4326"]]"""
 
     return tst.testOpen(check_prj=prj,
-                         check_gt=(-180.0083333, 0.0083333333, 0.0,
-                                     -59.9916667, 0.0, -0.0083333333))
+                        check_gt=(-180.0083333, 0.0083333333, 0.0,
+                                  -59.9916667, 0.0, -0.0083333333))
 
 ###############################################################################
 # Test reading of metadata from the ROI_PAC metadata domain

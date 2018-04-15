@@ -47,7 +47,7 @@ def hfa_write_desc():
     src_ds = gdal.Open('data/byte.tif')
 
     new_ds = gdal.GetDriverByName('HFA').CreateCopy('tmp/test_desc.img',
-                                                     src_ds)
+                                                    src_ds)
 
     bnd = new_ds.GetRasterBand(1)
     bnd.SetDescription('CustomBandName')
@@ -422,15 +422,15 @@ init_list = [ \
     ('utmsmall.tif', 1, 50054, None)]
 
 gdaltest_list = [hfa_write_desc,
-                  hfa_write_4bit,
-                  hfa_write_4bit_compressed,
-                  hfa_write_nd_invalid,
-                  hfa_update_overviews,
-                  hfa_clean_external_overviews,
-                  hfa_bug_2525,
-                  hfa_use_rrd,
-                  hfa_update_existing_aux_overviews,
-                  hfa_write_invalid_wkt]
+                 hfa_write_4bit,
+                 hfa_write_4bit_compressed,
+                 hfa_write_nd_invalid,
+                 hfa_update_overviews,
+                 hfa_clean_external_overviews,
+                 hfa_bug_2525,
+                 hfa_use_rrd,
+                 hfa_update_existing_aux_overviews,
+                 hfa_write_invalid_wkt]
 
 # full set of tests for normal mode.
 
@@ -451,14 +451,14 @@ short_list = [ \
 
 for item in short_list:
     ut2 = gdaltest.GDALTest('HFA', item[0], item[1], item[2],
-                             options=['USE_SPILL=YES'])
+                            options=['USE_SPILL=YES'])
     if ut2 is None:
         print('HFA tests skipped')
     gdaltest_list.append((ut2.testCreateCopy, item[0] + ' (spill)'))
     gdaltest_list.append((ut2.testCreate, item[0] + ' (spill)'))
 
     ut2 = gdaltest.GDALTest('HFA', item[0], item[1], item[2],
-                             options=['COMPRESS=YES'])
+                            options=['COMPRESS=YES'])
     if ut2 is None:
         print('HFA tests skipped')
 #    gdaltest_list.append( (ut2.testCreateCopy, item[0] + ' (compressed)') )

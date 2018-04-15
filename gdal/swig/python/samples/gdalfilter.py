@@ -176,5 +176,5 @@ if out_driver is None:
     sys.exit(1)
 
 out_ds = out_driver.CreateCopy(dstfile, vrt_ds, options=create_options,
-                                callback=gdal.TermProgress)
+                               callback=gdal.TermProgress)
 out_ds = None

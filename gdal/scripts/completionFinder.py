@@ -212,44 +212,44 @@ def main(argv):
     return 1
 
   gdaltools = ["gdal2tiles.py",\
-                "gdal2xyz.py",\
-                "gdaladdo",\
-#                "gdal_auth.py",\
-                "gdalbuildvrt",\
-                "gdal_calc.py",\
-                "gdalchksum.py",\
-                "gdalcompare.py",\
-                "gdal-config",\
-                "gdal_contour",\
-                "gdaldem",\
-                "gdal_edit.py",\
-                "gdalenhance",\
-                "gdal_fillnodata.py",\
-                "gdal_grid",\
-                "gdalident.py",\
-                "gdalimport.py",\
-                "gdalinfo",\
-                "gdallocationinfo",\
-                "gdalmanage",\
-                "gdal_merge.py",\
-                "gdalmove.py",\
-                "gdal_polygonize.py",\
-                "gdal_proximity.py",\
-                "gdal_rasterize",\
-                "gdal_retile.py",\
-                "gdalserver",\
-                "gdal_sieve.py",\
-                "gdalsrsinfo",\
-                "gdaltindex",\
-                "gdaltransform",\
-                "gdal_translate",\
-                "gdalwarp"]
+               "gdal2xyz.py",\
+               "gdaladdo",\
+               #                "gdal_auth.py",\
+               "gdalbuildvrt",\
+               "gdal_calc.py",\
+               "gdalchksum.py",\
+               "gdalcompare.py",\
+               "gdal-config",\
+               "gdal_contour",\
+               "gdaldem",\
+               "gdal_edit.py",\
+               "gdalenhance",\
+               "gdal_fillnodata.py",\
+               "gdal_grid",\
+               "gdalident.py",\
+               "gdalimport.py",\
+               "gdalinfo",\
+               "gdallocationinfo",\
+               "gdalmanage",\
+               "gdal_merge.py",\
+               "gdalmove.py",\
+               "gdal_polygonize.py",\
+               "gdal_proximity.py",\
+               "gdal_rasterize",\
+               "gdal_retile.py",\
+               "gdalserver",\
+               "gdal_sieve.py",\
+               "gdalsrsinfo",\
+               "gdaltindex",\
+               "gdaltransform",\
+               "gdal_translate",\
+               "gdalwarp"]
 
   ogrtools = ["ogr2ogr",\
-               "ogrinfo",\
-               "ogrlineref",\
-               "ogrtindex",
-               "ogrmerge.py"]
+              "ogrinfo",\
+              "ogrlineref",\
+              "ogrtindex",
+              "ogrmerge.py"]
 
   # parse general options
   generalOptions = parseGDALGeneralOptions()

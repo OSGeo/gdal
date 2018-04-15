@@ -86,7 +86,7 @@ class ScaledProgress:
 
     def Progress(self, dfComplete, message):
         return self.UnderlyingProgress.Progress(dfComplete * (self.dfMax - self.dfMin) + self.dfMin,
-                                                 message)
+                                                message)
 
 
 def gdal_cp_single(srcfile, targetfile, progress):

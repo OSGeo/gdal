@@ -65,7 +65,7 @@ def ogr_dgnv8_2():
         return 'skip'
 
     gdal.VectorTranslate('/vsimem/ogr_dgnv8_2.csv', 'data/test_dgnv8.dgn',
-        options='-f CSV  -dsco geometry=as_wkt -sql "select *, ogr_style from my_model"')
+                         options='-f CSV  -dsco geometry=as_wkt -sql "select *, ogr_style from my_model"')
 
     ds_ref = ogr.Open('/vsimem/ogr_dgnv8_2.csv')
     lyr_ref = ds_ref.GetLayer(0)
@@ -122,7 +122,7 @@ def ogr_dgnv8_4():
 
     tmp_csv = '/vsimem/ogr_dgnv8_4.csv'
     gdal.VectorTranslate(tmp_csv, tmp_dgn,
-        options='-f CSV  -dsco geometry=as_wkt -sql "select *, ogr_style from my_model"')
+                         options='-f CSV  -dsco geometry=as_wkt -sql "select *, ogr_style from my_model"')
     gdal.Unlink(tmp_dgn)
 
     ds_ref = ogr.Open(tmp_csv)
@@ -146,17 +146,17 @@ def ogr_dgnv8_5():
 
     tmp_dgn = 'tmp/ogr_dgnv8_5.dgn'
     options = ['APPLICATION=application',
-                'TITLE=title',
-                'SUBJECT=subject',
-                'AUTHOR=author',
-                'KEYWORDS=keywords',
-                'TEMPLATE=template',
-                'COMMENTS=comments',
-                'LAST_SAVED_BY=last_saved_by',
-                'REVISION_NUMBER=revision_number',
-                'CATEGORY=category',
-                'MANAGER=manager',
-                'COMPANY=company']
+               'TITLE=title',
+               'SUBJECT=subject',
+               'AUTHOR=author',
+               'KEYWORDS=keywords',
+               'TEMPLATE=template',
+               'COMMENTS=comments',
+               'LAST_SAVED_BY=last_saved_by',
+               'REVISION_NUMBER=revision_number',
+               'CATEGORY=category',
+               'MANAGER=manager',
+               'COMPANY=company']
     ds = gdaltest.dgnv8_drv.CreateDataSource(tmp_dgn, options=options)
     lyr = ds.CreateLayer('my_layer')
     f = ogr.Feature(lyr.GetLayerDefn())

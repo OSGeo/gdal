@@ -53,14 +53,14 @@ def test_gdal_rasterize_lib_1():
     # Create a raster to rasterize into.
 
     target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 3,
-                                                    gdal.GDT_Byte)
+                                                   gdal.GDT_Byte)
     target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
     # Create a layer to rasterize from.
 
     vector_ds = \
-              gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     rast_lyr = vector_ds.CreateLayer('rast1', srs=sr)
 
     rast_lyr.GetLayerDefn()
@@ -167,7 +167,7 @@ def test_gdal_rasterize_lib_100():
     # Create a layer to rasterize from.
 
     vector_ds = \
-              gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     rast_lyr = vector_ds.CreateLayer('rast1')
 
     wkt_geom = 'POLYGON((20 20,20 80,80 80,80 20,20 20))'
@@ -206,7 +206,7 @@ def test_gdal_rasterize_lib_101():
     # Create a layer to rasterize from.
 
     vector_ds = \
-              gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     rast_lyr = vector_ds.CreateLayer('rast1')
 
     # polygon with empty exterior ring
@@ -261,7 +261,7 @@ def test_gdal_rasterize_lib_102():
     target_ds.SetMetadata(md, "RPC")
 
     vector_ds = \
-              gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     rast_lyr = vector_ds.CreateLayer('', srs=sr)
@@ -322,14 +322,14 @@ def test_gdal_rasterize_lib_4():
     # Create a raster to rasterize into.
     for optim in ['RASTER', 'VECTOR', 'AUTO']:
         target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 3,
-                                                        gdal.GDT_Byte)
+                                                       gdal.GDT_Byte)
         target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
         target_ds.SetProjection(sr_wkt)
 
         # Create a layer to rasterize from.
 
         vector_ds = \
-                gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+        gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
         rast_lyr = vector_ds.CreateLayer('rast1', srs=sr)
 
         rast_lyr.GetLayerDefn()

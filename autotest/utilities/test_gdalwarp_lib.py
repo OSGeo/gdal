@@ -1024,19 +1024,19 @@ def test_gdalwarp_lib_128():
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 1177, 4719)
     rpc = ["HEIGHT_OFF=109",
-             "LINE_NUM_COEFF=-0.001245683 -0.09427649 -1.006342 -1.954469e-05 0.001033926 2.020534e-08 -3.845472e-07 -0.002075817 0.0005520694 0 -4.642442e-06 -3.271793e-06 2.705977e-05 -7.634384e-07 -2.132832e-05 -3.248862e-05 -8.17894e-06 -3.678094e-07 2.002032e-06 3.693162e-08",
-             "LONG_OFF=7.1477",
-             "SAMP_DEN_COEFF=1 0.01415176 -0.003715018 -0.001205632 -0.0007738299 4.057763e-05 -1.649126e-05 0.0001453584 0.0001628194 -7.354731e-05 4.821444e-07 -4.927701e-06 -1.942371e-05 -2.817499e-06 1.946396e-06 3.04243e-06 2.362282e-07 -2.5371e-07 -1.36993e-07 1.132432e-07",
-             "LINE_SCALE=2360",
-             "SAMP_NUM_COEFF=0.04337163 1.775948 -0.87108 0.007425391 0.01783631 0.0004057179 -0.000184695 -0.04257537 -0.01127869 -1.531228e-06 1.017961e-05 0.000572344 -0.0002941 -0.0001301705 -0.0003289546 5.394918e-05 6.388447e-05 -4.038289e-06 -7.525785e-06 -5.431241e-07",
-             "LONG_SCALE=0.8383",
-             "SAMP_SCALE=593",
-             "SAMP_OFF=589",
-             "LAT_SCALE=1.4127",
-             "LAT_OFF=33.8992",
-             "LINE_OFF=2359",
-             "LINE_DEN_COEFF=1 0.0007273139 -0.0006006867 -4.272095e-07 2.578717e-05 4.718479e-06 -2.116976e-06 -1.347805e-05 -2.209958e-05 8.131258e-06 -7.290143e-08 5.105109e-08 -7.353388e-07 0 2.131142e-06 9.697701e-08 1.237039e-08 7.153246e-08 6.758015e-08 5.811124e-08",
-             "HEIGHT_SCALE=96.3"]
+           "LINE_NUM_COEFF=-0.001245683 -0.09427649 -1.006342 -1.954469e-05 0.001033926 2.020534e-08 -3.845472e-07 -0.002075817 0.0005520694 0 -4.642442e-06 -3.271793e-06 2.705977e-05 -7.634384e-07 -2.132832e-05 -3.248862e-05 -8.17894e-06 -3.678094e-07 2.002032e-06 3.693162e-08",
+           "LONG_OFF=7.1477",
+           "SAMP_DEN_COEFF=1 0.01415176 -0.003715018 -0.001205632 -0.0007738299 4.057763e-05 -1.649126e-05 0.0001453584 0.0001628194 -7.354731e-05 4.821444e-07 -4.927701e-06 -1.942371e-05 -2.817499e-06 1.946396e-06 3.04243e-06 2.362282e-07 -2.5371e-07 -1.36993e-07 1.132432e-07",
+           "LINE_SCALE=2360",
+           "SAMP_NUM_COEFF=0.04337163 1.775948 -0.87108 0.007425391 0.01783631 0.0004057179 -0.000184695 -0.04257537 -0.01127869 -1.531228e-06 1.017961e-05 0.000572344 -0.0002941 -0.0001301705 -0.0003289546 5.394918e-05 6.388447e-05 -4.038289e-06 -7.525785e-06 -5.431241e-07",
+           "LONG_SCALE=0.8383",
+           "SAMP_SCALE=593",
+           "SAMP_OFF=589",
+           "LAT_SCALE=1.4127",
+           "LAT_OFF=33.8992",
+           "LINE_OFF=2359",
+           "LINE_DEN_COEFF=1 0.0007273139 -0.0006006867 -4.272095e-07 2.578717e-05 4.718479e-06 -2.116976e-06 -1.347805e-05 -2.209958e-05 8.131258e-06 -7.290143e-08 5.105109e-08 -7.353388e-07 0 2.131142e-06 9.697701e-08 1.237039e-08 7.153246e-08 6.758015e-08 5.811124e-08",
+           "HEIGHT_SCALE=96.3"]
     mem_ds.SetMetadata(rpc, "RPC")
     mem_ds.GetRasterBand(1).Fill(255)
 
@@ -1085,10 +1085,10 @@ def test_gdalwarp_lib_128():
     gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', 'NO')
     with gdaltest.error_handler():
         ds = gdal.Warp('', mem_ds, format='MEM', cutlineDSName=cutlineDSName,
-                    dstSRS='EPSG:4326',
-                    outputBounds=[7.2, 32.52, 7.217, 32.59],
-                    xRes=0.000226555, yRes=0.000226555,
-                    transformerOptions=['RPC_DEM=data/test_gdalwarp_lib_128_dem.tif'])
+                       dstSRS='EPSG:4326',
+                       outputBounds=[7.2, 32.52, 7.217, 32.59],
+                       xRes=0.000226555, yRes=0.000226555,
+                       transformerOptions=['RPC_DEM=data/test_gdalwarp_lib_128_dem.tif'])
     gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', None)
     if ds is not None:
         gdaltest.post_reason('expected none return')
@@ -1109,19 +1109,19 @@ def test_gdalwarp_lib_129():
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 1000, 2000)
     rpc = ["HEIGHT_OFF=1767",
-              "LINE_NUM_COEFF=0.0004430579 -0.06200816 -1.007087 1.614683e-05 0.0009263463 -1.003745e-07 -2.346893e-06 -0.001179024 -0.0007413534 0 9.41488e-08 -4.566652e-07 2.895947e-05 -2.925327e-07 -2.308839e-05 -1.502702e-05 -4.775127e-06 0 4.290483e-07 2.850458e-08",
-              "LONG_OFF=-.2282",
-              "SAMP_DEN_COEFF=1 -0.01907542 0.01651069 -0.001340671 -0.0005495095 -1.072863e-05 -1.157626e-05 0.0003737224 0.0002712591 -0.0001363199 3.614417e-08 3.584749e-06 9.175671e-06 2.661593e-06 -1.045511e-05 -1.293648e-06 -2.769964e-06 5.931109e-07 -1.018687e-07 2.366109e-07",
-              "LINE_SCALE=11886",
-              "SAMP_NUM_COEFF=0.007334337 1.737166 -0.7954719 -0.004635387 -0.007478255 0.0006381186 -0.0003313475 0.0002313095 -0.002883101 -1.625925e-06 -6.409095e-06 -0.000403506 -0.0004441055 -0.0002360882 8.940442e-06 -0.0001780485 0.0001081517 -6.592931e-06 2.642496e-06 6.316508e-07",
-              "LONG_SCALE=0.6996",
-              "SAMP_SCALE=2945",
-              "SAMP_OFF=2926",
-              "LAT_SCALE=1.4116",
-              "LAT_OFF=.4344",
-              "LINE_OFF=-115",
-              "LINE_DEN_COEFF=1 0.0008882352 -0.0002437686 -2.380782e-06 2.69128e-05 0 2.144654e-07 -2.093549e-05 -7.055149e-06 4.740057e-06 0 -1.588607e-08 -1.397592e-05 0 -7.717698e-07 6.505002e-06 0 -1.225041e-08 3.608499e-08 -4.463376e-08",
-              "HEIGHT_SCALE=1024"]
+           "LINE_NUM_COEFF=0.0004430579 -0.06200816 -1.007087 1.614683e-05 0.0009263463 -1.003745e-07 -2.346893e-06 -0.001179024 -0.0007413534 0 9.41488e-08 -4.566652e-07 2.895947e-05 -2.925327e-07 -2.308839e-05 -1.502702e-05 -4.775127e-06 0 4.290483e-07 2.850458e-08",
+           "LONG_OFF=-.2282",
+           "SAMP_DEN_COEFF=1 -0.01907542 0.01651069 -0.001340671 -0.0005495095 -1.072863e-05 -1.157626e-05 0.0003737224 0.0002712591 -0.0001363199 3.614417e-08 3.584749e-06 9.175671e-06 2.661593e-06 -1.045511e-05 -1.293648e-06 -2.769964e-06 5.931109e-07 -1.018687e-07 2.366109e-07",
+           "LINE_SCALE=11886",
+           "SAMP_NUM_COEFF=0.007334337 1.737166 -0.7954719 -0.004635387 -0.007478255 0.0006381186 -0.0003313475 0.0002313095 -0.002883101 -1.625925e-06 -6.409095e-06 -0.000403506 -0.0004441055 -0.0002360882 8.940442e-06 -0.0001780485 0.0001081517 -6.592931e-06 2.642496e-06 6.316508e-07",
+           "LONG_SCALE=0.6996",
+           "SAMP_SCALE=2945",
+           "SAMP_OFF=2926",
+           "LAT_SCALE=1.4116",
+           "LAT_OFF=.4344",
+           "LINE_OFF=-115",
+           "LINE_DEN_COEFF=1 0.0008882352 -0.0002437686 -2.380782e-06 2.69128e-05 0 2.144654e-07 -2.093549e-05 -7.055149e-06 4.740057e-06 0 -1.588607e-08 -1.397592e-05 0 -7.717698e-07 6.505002e-06 0 -1.225041e-08 3.608499e-08 -4.463376e-08",
+           "HEIGHT_SCALE=1024"]
 
     mem_ds.SetMetadata(rpc, "RPC")
     mem_ds.GetRasterBand(1).Fill(255)
@@ -1459,8 +1459,8 @@ def test_gdalwarp_lib_135():
     # Both transforms to regular VRT
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/dem.tif', src_ds)
     gdal.Warp('/vsimem/tmp.vrt', '/vsimem/dem.tif', format='VRT',
-                   srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
-                   dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid2.tif +vunits=m +no_defs')
+              srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
+              dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid2.tif +vunits=m +no_defs')
     ds = gdal.Open('/vsimem/tmp.vrt')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
     ds = None
@@ -1474,8 +1474,8 @@ def test_gdalwarp_lib_135():
     # Missing grid in forward path
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
-                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=i_dont_exist.tif +vunits=m +no_defs',
-                    dstSRS='EPSG:4979')
+                       srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=i_dont_exist.tif +vunits=m +no_defs',
+                       dstSRS='EPSG:4979')
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1485,8 +1485,8 @@ def test_gdalwarp_lib_135():
     os.environ['PROJ_LIB'] = '/i_dont/exist'
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
-                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=i_dont_exist.tif +vunits=m +no_defs',
-                    dstSRS='EPSG:4979')
+                       srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=i_dont_exist.tif +vunits=m +no_defs',
+                       dstSRS='EPSG:4979')
     if old_proj_lib:
         os.environ['PROJ_LIB'] = old_proj_lib
     else:
@@ -1498,8 +1498,8 @@ def test_gdalwarp_lib_135():
     # Missing grid in forward path
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
-                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=~/i_dont_exist.tif +vunits=m +no_defs',
-                    dstSRS='EPSG:4979')
+                       srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=~/i_dont_exist.tif +vunits=m +no_defs',
+                       dstSRS='EPSG:4979')
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1507,8 +1507,8 @@ def test_gdalwarp_lib_135():
     # Missing grid in forward path
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
-                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/i_dont/exist.tif +vunits=m +no_defs',
-                    dstSRS='EPSG:4979')
+                       srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/i_dont/exist.tif +vunits=m +no_defs',
+                       dstSRS='EPSG:4979')
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1516,8 +1516,8 @@ def test_gdalwarp_lib_135():
     # Ungeoref grid in forward path
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
-                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/ungeoref_grid.tif +vunits=m +no_defs',
-                    dstSRS='EPSG:4979')
+                       srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/ungeoref_grid.tif +vunits=m +no_defs',
+                       dstSRS='EPSG:4979')
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1525,8 +1525,8 @@ def test_gdalwarp_lib_135():
     # Missing grid in inverse path
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
-                   srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
-                   dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=i_dont_exist.tif +vunits=m +no_defs')
+                       srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
+                       dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=i_dont_exist.tif +vunits=m +no_defs')
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1534,16 +1534,16 @@ def test_gdalwarp_lib_135():
     # Ungeoref grid in inverse path
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
-                   srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
-                   dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/ungeoref_grid.tif +vunits=m +no_defs')
+                       srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
+                       dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/ungeoref_grid.tif +vunits=m +no_defs')
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Missing grid in forward path, but this is OK
     ds = gdal.Warp('', src_ds, format='MEM',
-                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=@i_dont_exist.tif +vunits=m +no_defs',
-                    dstSRS='EPSG:4979')
+                   srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=@i_dont_exist.tif +vunits=m +no_defs',
+                   dstSRS='EPSG:4979')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
     if data != 100:
         gdaltest.post_reason('Bad value')
@@ -1638,9 +1638,9 @@ def test_gdalwarp_lib_135():
     # Same, but make it an error
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
-                   srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/empty_grid.tif +vunits=m +no_defs',
-                   dstSRS='EPSG:4979',
-                   transformerOptions=['ERROR_ON_MISSING_VERT_SHIFT=YES'])
+                       srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/empty_grid.tif +vunits=m +no_defs',
+                       dstSRS='EPSG:4979',
+                       transformerOptions=['ERROR_ON_MISSING_VERT_SHIFT=YES'])
     if ds is not None:
         gdaltest.post_reason('Bad value')
         print(data)
@@ -1669,8 +1669,8 @@ def test_gdalwarp_lib_135():
     # Test several grids, with some missing
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
-                   srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif,i_dont_exist.tif +vunits=m +no_defs',
-                   dstSRS='EPSG:4979')
+                       srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif,i_dont_exist.tif +vunits=m +no_defs',
+                       dstSRS='EPSG:4979')
     if ds is not None:
         gdaltest.post_reason('Bad value')
         print(data)
@@ -1733,8 +1733,8 @@ def test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs(
                                        srcWin=[0, 0, 10, 20],
                                        outputSRS='EPSG:32611')
     src_ds_32611_right = gdal.Translate('', src_ds, format='MEM',
-                                       srcWin=[10, 0, 10, 20],
-                                       outputSRS='EPSG:32611')
+                                        srcWin=[10, 0, 10, 20],
+                                        outputSRS='EPSG:32611')
     src_ds_4326_right = gdal.Warp('', src_ds_32611_right, format='MEM',
                                   dstSRS='EPSG:4326')
     out_ds = gdal.Warp('', [src_ds_4326_right, src_ds_32611_left], format='MEM')
@@ -1791,7 +1791,7 @@ def test_gdalwarp_lib_override_default_output_nodata():
 
     for format in formats:
         gdal.Warp('tmp/out.nc', '../gcore/data/byte.tif', srcNodata=255,
-                format='netCDF', creationOptions=['FORMAT=' + format])
+                  format='netCDF', creationOptions=['FORMAT=' + format])
         ds = gdal.Open('tmp/out.nc')
         if ds.GetRasterBand(1).GetNoDataValue() != 255:
             gdaltest.post_reason('fail')

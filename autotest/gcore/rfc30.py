@@ -135,7 +135,7 @@ def rfc30_2():
 
 
 gdaltest_list = [rfc30_1,
-                  rfc30_2
+                 rfc30_2
                   ]
 
 if __name__ == '__main__':

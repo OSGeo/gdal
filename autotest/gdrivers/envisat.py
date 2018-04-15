@@ -55,7 +55,7 @@ def _get_mds_num(filename):
 
     sph = fd.read(sph_size)
     sph = '\n'.join(line.decode('iso8859-1').rstrip()
-                                                for line in sph.splitlines())
+                    for line in sph.splitlines())
     count = 0
     for block in sph.split('\n\n'):
         if block.startswith('DS_NAME'):

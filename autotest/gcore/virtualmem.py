@@ -286,9 +286,9 @@ def virtualmem_4():
 
 
 gdaltest_list = [virtualmem_1,
-                  virtualmem_2,
-                  virtualmem_3,
-                  virtualmem_4]
+                 virtualmem_2,
+                 virtualmem_3,
+                 virtualmem_4]
 
 
 if __name__ == '__main__':

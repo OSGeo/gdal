@@ -1293,7 +1293,7 @@ def ogr_wfs_vsimem_fail_because_missing_featuretypelist():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities>
+                           """<WFS_Capabilities>
 </WFS_Capabilities>
 """)
     gdal.PushErrorHandler()
@@ -1318,7 +1318,7 @@ def ogr_wfs_vsimem_wfs110_open_getcapabilities_file():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/caps.xml',
-"""<WFS_Capabilities
+                           """<WFS_Capabilities
 """)
 
     gdal.PushErrorHandler()
@@ -1333,7 +1333,7 @@ def ogr_wfs_vsimem_wfs110_open_getcapabilities_file():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/caps.xml',
-"""<foo><WFS_Capabilities/></foo>
+                           """<foo><WFS_Capabilities/></foo>
 """)
 
     gdal.PushErrorHandler()
@@ -1348,7 +1348,7 @@ def ogr_wfs_vsimem_wfs110_open_getcapabilities_file():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/caps.xml',
-"""<WFS_Capabilities version="1.1.0">
+                           """<WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
         <FeatureType/>
         <FeatureType>
@@ -1370,7 +1370,7 @@ def ogr_wfs_vsimem_wfs110_open_getcapabilities_file():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/caps.xml',
-"""<WFS_Capabilities version="1.1.0">
+                           """<WFS_Capabilities version="1.1.0">
     <ows:OperationsMetadata>
         <ows:Operation name="GetCapabilities">
             <ows:DCP><ows:HTTP>
@@ -1458,7 +1458,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_missing_describefeaturetype():
 
     # Invalid response, but enough for use
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="1.1.0">
+                           """<WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
         <FeatureType/>
         <FeatureType>
@@ -1509,7 +1509,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_invalid_describefeaturetype():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
-"""<invalid_xml
+                           """<invalid_xml
 """)
 
     gdal.ErrorReset()
@@ -1539,7 +1539,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype_missing_schema():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
-"""<missing_schema/>
+                           """<missing_schema/>
 """)
 
     gdal.ErrorReset()
@@ -1569,7 +1569,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
-"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+                           """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.1.1/base/gml.xsd"/>
   <xsd:complexType name="my_layerType">
     <xsd:complexContent>
@@ -1645,7 +1645,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdal.FileFromMemBuffer('/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml',
-"""<OGRWFSDataSource>
+                           """<OGRWFSDataSource>
     <URL>/vsimem/wfs_endpoint</URL>
 </OGRWFSDataSource>""")
 
@@ -1722,7 +1722,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml',
-"""<OGRWFSDataSource>
+                           """<OGRWFSDataSource>
   <URL>/vsimem/wfs_endpoint</URL>
   <WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
@@ -1796,7 +1796,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_with_hits():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="1.1.0">
+                           """<WFS_Capabilities version="1.1.0">
     <OperationsMetadata>
         <ows:Operation name="GetFeature">
             <ows:Parameter name="resultType">
@@ -1849,7 +1849,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeaturecount_with_hits():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&RESULTTYPE=hits',
-"""<invalid_xml""")
+                           """<invalid_xml""")
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
@@ -1879,7 +1879,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_FeatureCol
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&RESULTTYPE=hits',
-"""<dummy_xml/>""")
+                           """<dummy_xml/>""")
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
@@ -1909,7 +1909,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_invalid_xml():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&RESULTTYPE=hits',
-"""<invalid_xml""")
+                           """<invalid_xml""")
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
@@ -1939,7 +1939,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_ServiceExceptionRe
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&RESULTTYPE=hits',
-"""<ServiceExceptionReport/>""")
+                           """<ServiceExceptionReport/>""")
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
@@ -1968,7 +1968,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_numberOfFe
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&RESULTTYPE=hits',
-"""<FeatureCollection/>""")
+                           """<FeatureCollection/>""")
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
@@ -1998,7 +1998,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&RESULTTYPE=hits',
-"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -2060,7 +2060,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeature():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer',
-"""<invalid_xml
+                           """<invalid_xml
 """)
 
     gdal.ErrorReset()
@@ -2090,7 +2090,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_exception_getfeature():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer',
-"""<ServiceExceptionReport/>
+                           """<ServiceExceptionReport/>
 """)
 
     gdal.ErrorReset()
@@ -2118,7 +2118,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeature():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="1.1.0">
+                           """<WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
         <FeatureType>
             <Name>my_layer</Name>
@@ -2135,7 +2135,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeature():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer',
-"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -2244,7 +2244,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="1.1.0">
+                           """<WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
         <FeatureType>
             <Name>my_layer</Name>
@@ -2348,7 +2348,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeature_ogr_getfeature():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="1.1.0">
+                           """<WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
         <FeatureType>
             <Name>my_layer</Name>
@@ -2411,7 +2411,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeature_ogr_getfeature():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CGmlObjectId%20id%3D%22my_layer.100%22%2F%3E%3C%2FFilter%3E',
-"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -2452,7 +2452,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_failed():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer',
-"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -2496,7 +2496,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_success():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CGmlObjectId%20id%3D%22my_layer.1%22%2F%3E%3CGmlObjectId%20id%3D%22my_layer.1%22%2F%3E%3C%2FFilter%3E',
-"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -2550,7 +2550,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_filter():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3CAnd%3E%3CAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Estr%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Eshort%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Efloat%3C%2FPropertyName%3E%3CLiteral%3E1.2%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsLike%20wildCard%3D%27%2A%27%20singleChar%3D%27_%27%20escapeChar%3D%27%21%27%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Est%2A%3C%2FLiteral%3E%3C%2FPropertyIsLike%3E%3C%2FOr%3E%3CNot%3E%3CPropertyIsNull%3E%3CPropertyName%3Eboolean%3C%2FPropertyName%3E%3C%2FPropertyIsNull%3E%3C%2FNot%3E%3C%2FOr%3E%3CPropertyIsGreaterThan%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThan%3E%3C%2FOr%3E%3CPropertyIsGreaterThanOrEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThanOrEqualTo%3E%3C%2FOr%3E%3CPropertyIsNotEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2%3C%2FLiteral%3E%3C%2FPropertyIsNotEqualTo%3E%3C%2FOr%3E%3CPropertyIsLessThan%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThan%3E%3C%2FOr%3E%3CPropertyIsLessThanOrEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThanOrEqualTo%3E%3C%2FOr%3E%3C%2FFilter%3E',
-"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -2818,7 +2818,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_spatial_filter():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CBBOX%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Box%3E%3Cgml:coordinates%3E48.0000000000000000,1.0000000000000000%2050.0000000000000000,3.0000000000000000%3C%2Fgml:coordinates%3E%3C%2Fgml:Box%3E%3C%2FBBOX%3E%3C%2FFilter%3E',
-"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -2889,7 +2889,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_spatial_filter_and_attribute_filter():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Estr%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3CBBOX%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Box%3E%3Cgml:coordinates%3E48.0000000000000000,1.0000000000000000%2050.0000000000000000,3.0000000000000000%3C%2Fgml:coordinates%3E%3C%2Fgml:Box%3E%3C%2FBBOX%3E%3C%2FAnd%3E%3C%2FFilter%3E',
-"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -2943,7 +2943,7 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="1.1.0">
+                           """<WFS_Capabilities version="1.1.0">
     <OperationsMetadata>
         <ows:Operation name="Transaction">
             <ows:DCP>
@@ -3079,7 +3079,7 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
         return 'fail'
 
     gdal.FileFromMemBuffer(wfs_insert_url,
-"""<TransactionResponse>
+                           """<TransactionResponse>
 </TransactionResponse>
 """)
 
@@ -3092,7 +3092,7 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
         return 'fail'
 
     gdal.FileFromMemBuffer(wfs_insert_url,
-"""<TransactionResponse>
+                           """<TransactionResponse>
     <InsertResults>
         <Feature>
             <FeatureId/>
@@ -3110,7 +3110,7 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
         return 'fail'
 
     gdal.FileFromMemBuffer(wfs_insert_url,
-"""<TransactionResponse>
+                           """<TransactionResponse>
     <InsertResults>
         <Feature>
             <FeatureId fid="my_layer.100"/>
@@ -3288,7 +3288,7 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
         return 'fail'
 
     gdal.FileFromMemBuffer(wfs_insert_url,
-"""<TransactionResponse>
+                           """<TransactionResponse>
     <TransactionSummary totalInserted="1"/>
 </TransactionResponse>
 """)
@@ -3311,7 +3311,7 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
         return 'fail'
 
     gdal.FileFromMemBuffer(wfs_insert_url,
-"""<TransactionResponse>
+                           """<TransactionResponse>
     <TransactionSummary totalInserted="1"/>
     <InsertResults/>
 </TransactionResponse>
@@ -3335,7 +3335,7 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
         return 'fail'
 
     gdal.FileFromMemBuffer(wfs_insert_url,
-"""<TransactionResponse>
+                           """<TransactionResponse>
     <TransactionSummary totalInserted="1"/>
     <InsertResults>
         <Feature>
@@ -3362,7 +3362,7 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
         return 'fail'
 
     gdal.FileFromMemBuffer(wfs_insert_url,
-"""<TransactionResponse>
+                           """<TransactionResponse>
     <TransactionSummary totalInserted="1"/>
     <InsertResults>
         <Feature>
@@ -3410,7 +3410,7 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
 </wfs:Transaction>
 """
     gdal.FileFromMemBuffer(wfs_insert_url,
-"""<TransactionResponse>
+                           """<TransactionResponse>
     <TransactionSummary totalInserted="1"/>
     <InsertResults>
         <Feature>
@@ -3651,7 +3651,7 @@ def ogr_wfs_vsimem_wfs110_deletefeature():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CGmlObjectId%20id%3D%22my_layer.200%22%2F%3E%3C%2FFilter%3E',
-"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -3822,7 +3822,7 @@ def ogr_wfs_vsimem_wfs110_schema_not_understood():
 
     # Invalid response, but enough for use
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint_schema_not_understood?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="1.1.0">
+                           """<WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
         <FeatureType/>
         <FeatureType>
@@ -3835,7 +3835,7 @@ def ogr_wfs_vsimem_wfs110_schema_not_understood():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint_schema_not_understood?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
-"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+                           """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.1.1/base/gml.xsd"/>
   <xsd:complexType name="my_layerType">
     <xsd:complexContent>
@@ -3868,7 +3868,7 @@ def ogr_wfs_vsimem_wfs110_schema_not_understood():
     lyr = ds.GetLayer(0)
 
     content = \
-"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -3927,7 +3927,7 @@ def ogr_wfs_vsimem_wfs110_multiple_layers():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="1.1.0">
+                           """<WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
         <FeatureType>
             <Name>my_layer</Name>
@@ -3963,7 +3963,7 @@ def ogr_wfs_vsimem_wfs110_multiple_layers():
     ds = ogr.Open('WFS:/vsimem/wfs110_multiple_layers')
     lyr = ds.GetLayer(0)
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer,my_layer2',
-    "<ServiceExceptionReport/>")
+                           "<ServiceExceptionReport/>")
     lyr = ds.GetLayer(0)
     gdal.PushErrorHandler()
     lyr_defn = lyr.GetLayerDefn()
@@ -3975,7 +3975,7 @@ def ogr_wfs_vsimem_wfs110_multiple_layers():
     ds = ogr.Open('WFS:/vsimem/wfs110_multiple_layers')
     lyr = ds.GetLayer(0)
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer,my_layer2',
-    "<invalid_xml")
+                           "<invalid_xml")
     lyr = ds.GetLayer(0)
     gdal.PushErrorHandler()
     lyr_defn = lyr.GetLayerDefn()
@@ -3987,7 +3987,7 @@ def ogr_wfs_vsimem_wfs110_multiple_layers():
     ds = ogr.Open('WFS:/vsimem/wfs110_multiple_layers')
     lyr = ds.GetLayer(0)
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer,my_layer2',
-    "<no_schema/>")
+                           "<no_schema/>")
     lyr = ds.GetLayer(0)
     gdal.PushErrorHandler()
     lyr_defn = lyr.GetLayerDefn()
@@ -3999,7 +3999,7 @@ def ogr_wfs_vsimem_wfs110_multiple_layers():
     ds = ogr.Open('WFS:/vsimem/wfs110_multiple_layers')
     lyr = ds.GetLayer(0)
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer,my_layer2',
-"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+                           """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
   <xsd:complexType name="my_layerType">
     <xsd:complexContent>
@@ -4039,7 +4039,7 @@ def ogr_wfs_vsimem_wfs110_multiple_layers():
     ds = ogr.Open('WFS:/vsimem/wfs110_multiple_layers')
     lyr = ds.GetLayer(0)
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer,my_layer2',
-"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+                           """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
   <xsd:complexType name="my_layerType">
     <xsd:complexContent>
@@ -4061,7 +4061,7 @@ def ogr_wfs_vsimem_wfs110_multiple_layers():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer2',
-"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+                           """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
  <xsd:complexType name="my_layer2Type">
     <xsd:complexContent>
@@ -4092,7 +4092,7 @@ def ogr_wfs_vsimem_wfs110_multiple_layers_same_name_different_ns():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers_different_ns?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="1.1.0">
+                           """<WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
         <FeatureType>
             <Name>ns1:my_layer</Name>
@@ -4119,7 +4119,7 @@ def ogr_wfs_vsimem_wfs110_multiple_layers_same_name_different_ns():
     ds = ogr.Open('WFS:/vsimem/wfs110_multiple_layers_different_ns')
     lyr = ds.GetLayer(0)
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers_different_ns?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=ns1:my_layer',
-"""<xsd:schema xmlns:ns1="http://ns1" xmlns:ns2="http://ns2" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+                           """<xsd:schema xmlns:ns1="http://ns1" xmlns:ns2="http://ns2" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
   <xsd:complexType name="my_layerType">
     <xsd:complexContent>
@@ -4141,7 +4141,7 @@ def ogr_wfs_vsimem_wfs110_multiple_layers_same_name_different_ns():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers_different_ns?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=ns1:my_layer',
-"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:ns1="http://ns1"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -4166,7 +4166,7 @@ xsi:schemaLocation="http://ns1 /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=2.0.
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers_different_ns?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=ns2:my_layer',
-"""<xsd:schema xmlns:ns2="http://ns2" xmlns:ns2="http://ns2" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+                           """<xsd:schema xmlns:ns2="http://ns2" xmlns:ns2="http://ns2" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
   <xsd:complexType name="my_layerType">
     <xsd:complexContent>
@@ -4198,7 +4198,7 @@ def ogr_wfs_vsimem_wfs200_paging():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="2.0.0">
+                           """<WFS_Capabilities version="2.0.0">
     <OperationsMetadata>
         <ows:Operation name="GetFeature">
             <ows:Constraint name="CountDefault">
@@ -4283,7 +4283,7 @@ def ogr_wfs_vsimem_wfs200_paging():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
-"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+                           """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
   <xsd:complexType name="my_layerType">
     <xsd:complexContent>
@@ -4306,7 +4306,7 @@ def ogr_wfs_vsimem_wfs200_paging():
 """)
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=0&COUNT=2',
-"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -4342,7 +4342,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=2.0.
 """)
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=2&COUNT=2',
-"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -4409,7 +4409,7 @@ def ogr_wfs_vsimem_wfs200_json():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_json?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="2.0.0">
+                           """<WFS_Capabilities version="2.0.0">
     <OperationsMetadata>
         <ows:Operation name="GetFeature">
             <ows:Parameter name="resultType">
@@ -4494,7 +4494,7 @@ def ogr_wfs_vsimem_wfs200_json():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_json?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
-"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+                           """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
   <xsd:complexType name="my_layerType">
     <xsd:complexContent>
@@ -4517,7 +4517,7 @@ def ogr_wfs_vsimem_wfs200_json():
 """)
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_json?OUTPUTFORMAT=application/json&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=0&COUNT=2',
-"""{"type":"FeatureCollection",
+                           """{"type":"FeatureCollection",
 "totalFeatures":"unknown",
 "features":[{"type":"Feature","id":"my_layer.1",
 "geometry":{"type":"Point","coordinates":[2, 49]},
@@ -4550,7 +4550,7 @@ def ogr_wfs_vsimem_wfs200_multipart():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="2.0.0">
+                           """<WFS_Capabilities version="2.0.0">
     <FeatureTypeList>
         <FeatureType>
             <Name>my_layer</Name>
@@ -4570,7 +4570,7 @@ def ogr_wfs_vsimem_wfs200_multipart():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
-"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+                           """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
   <xsd:complexType name="my_layerType">
     <xsd:complexContent>
@@ -4587,7 +4587,7 @@ def ogr_wfs_vsimem_wfs200_multipart():
 """)
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer',
-"""Content-Type: multipart/mixed; boundary="my_boundary"
+                           """Content-Type: multipart/mixed; boundary="my_boundary"
 \r
 \r
 --my_boundary
@@ -4623,7 +4623,7 @@ Content-Disposition: attachment; filename=my.json
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer',
-"""Content-Type: multipart/mixed; boundary="my_boundary"
+                           """Content-Type: multipart/mixed; boundary="my_boundary"
 \r
 \r
 --my_boundary
@@ -4652,7 +4652,7 @@ Content-Disposition: attachment; filename=my.json
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer',
-"""Content-Type: multipart/mixed; boundary="my_boundary"
+                           """Content-Type: multipart/mixed; boundary="my_boundary"
 \r
 \r
 --my_boundary
@@ -4687,7 +4687,7 @@ def ogr_wfs_vsimem_wfs200_join():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="2.0.0">
+                           """<WFS_Capabilities version="2.0.0">
     <OperationsMetadata>
         <ows:Operation name="GetFeature">
             <ows:Constraint name="CountDefault">
@@ -4724,7 +4724,7 @@ def ogr_wfs_vsimem_wfs200_join():
 """)
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=lyr1,lyr2',
-"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+                           """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
   <xsd:complexType name="lyr1Type">
     <xsd:complexContent>
@@ -4769,7 +4769,7 @@ def ogr_wfs_vsimem_wfs200_join():
     sql_lyr = ds.ExecuteSQL('SELECT * FROM lyr1 JOIN lyr2 ON lyr1.str = lyr2.str2')
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&STARTINDEX=0&COUNT=1&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E',
-    """""")
+                           """""")
 
     gdal.PushErrorHandler()
     f = sql_lyr.GetNextFeature()
@@ -4785,7 +4785,7 @@ def ogr_wfs_vsimem_wfs200_join():
     sql_lyr = ds.ExecuteSQL('SELECT * FROM lyr1 JOIN lyr2 ON lyr1.str = lyr2.str2')
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&STARTINDEX=0&COUNT=1&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E',
-    """<ServiceExceptionReport/>""")
+                           """<ServiceExceptionReport/>""")
 
     gdal.PushErrorHandler()
     f = sql_lyr.GetNextFeature()
@@ -4801,7 +4801,7 @@ def ogr_wfs_vsimem_wfs200_join():
     sql_lyr = ds.ExecuteSQL('SELECT * FROM lyr1 JOIN lyr2 ON lyr1.str = lyr2.str2')
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&STARTINDEX=0&COUNT=1&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E',
-    """<invalid_xml""")
+                           """<invalid_xml""")
 
     gdal.PushErrorHandler()
     f = sql_lyr.GetNextFeature()
@@ -4817,7 +4817,7 @@ def ogr_wfs_vsimem_wfs200_join():
     sql_lyr = ds.ExecuteSQL('SELECT * FROM lyr1 JOIN lyr2 ON lyr1.str = lyr2.str2')
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&STARTINDEX=0&COUNT=1&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E',
-    """<dummy_xml/>""")
+                           """<dummy_xml/>""")
 
     gdal.PushErrorHandler()
     f = sql_lyr.GetNextFeature()
@@ -4833,7 +4833,7 @@ def ogr_wfs_vsimem_wfs200_join():
     sql_lyr = ds.ExecuteSQL('SELECT * FROM lyr1 JOIN lyr2 ON lyr1.str = lyr2.str2')
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&STARTINDEX=0&COUNT=1&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E',
-"""<?xml version="1.0" encoding="UTF-8"?>
+                           """<?xml version="1.0" encoding="UTF-8"?>
 <wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
     xmlns:foo="http://foo"
     xmlns:wfs="http://www.opengis.net/wfs/2.0"
@@ -4863,7 +4863,7 @@ def ogr_wfs_vsimem_wfs200_join():
 """)
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&STARTINDEX=1&COUNT=1&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E',
-"""<?xml version="1.0" encoding="UTF-8"?>
+                           """<?xml version="1.0" encoding="UTF-8"?>
 <wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
     xmlns:foo="http://foo"
     xmlns:wfs="http://www.opengis.net/wfs/2.0"
@@ -4892,7 +4892,7 @@ def ogr_wfs_vsimem_wfs200_join():
 </wfs:FeatureCollection>
 """)
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&STARTINDEX=2&COUNT=1&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E',
-"""<?xml version="1.0" encoding="UTF-8"?>
+                           """<?xml version="1.0" encoding="UTF-8"?>
 <wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
     xmlns:foo="http://foo"
     xmlns:wfs="http://www.opengis.net/wfs/2.0"
@@ -4946,7 +4946,7 @@ def ogr_wfs_vsimem_wfs200_join():
 
     # Empty content returned by server
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits',
-"""""")
+                           """""")
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     fc = sql_lyr.GetFeatureCount()
     gdal.PopErrorHandler()
@@ -4957,7 +4957,7 @@ def ogr_wfs_vsimem_wfs200_join():
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits',
-"""<invalid_xml""")
+                           """<invalid_xml""")
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     fc = sql_lyr.GetFeatureCount()
     gdal.PopErrorHandler()
@@ -4968,7 +4968,7 @@ def ogr_wfs_vsimem_wfs200_join():
 
     # Server exception
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits',
-"""<ServiceExceptionReport/>""")
+                           """<ServiceExceptionReport/>""")
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     fc = sql_lyr.GetFeatureCount()
     gdal.PopErrorHandler()
@@ -4979,7 +4979,7 @@ def ogr_wfs_vsimem_wfs200_join():
 
     # Missing FeatureCollection
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits',
-"""<dummy_xml/>""")
+                           """<dummy_xml/>""")
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     fc = sql_lyr.GetFeatureCount()
     gdal.PopErrorHandler()
@@ -4990,7 +4990,7 @@ def ogr_wfs_vsimem_wfs200_join():
 
     # Missing FeatureCollection.numberMatched
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits',
-"""<FeatureCollection/>""")
+                           """<FeatureCollection/>""")
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     fc = sql_lyr.GetFeatureCount()
     gdal.PopErrorHandler()
@@ -5001,7 +5001,7 @@ def ogr_wfs_vsimem_wfs200_join():
 
     # Valid
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits',
-    """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs/2.0"
@@ -5183,7 +5183,7 @@ def ogr_wfs_vsimem_wfs200_join_layer_with_namespace_prefix():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="2.0.0">
+                           """<WFS_Capabilities version="2.0.0">
     <OperationsMetadata>
         <ows:Operation name="GetFeature">
             <ows:Constraint name="CountDefault">
@@ -5220,7 +5220,7 @@ def ogr_wfs_vsimem_wfs200_join_layer_with_namespace_prefix():
 """)
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=foo:lyr1,foo:lyr2',
-"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+                           """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
   <xsd:complexType name="lyr1Type">
     <xsd:complexContent>
@@ -5253,7 +5253,7 @@ def ogr_wfs_vsimem_wfs200_join_layer_with_namespace_prefix():
     sql_lyr = ds.ExecuteSQL('SELECT * FROM lyr1 JOIN lyr2 ON lyr1.str = lyr2.str2')
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28foo:lyr1,foo:lyr2%29&STARTINDEX=0&COUNT=1&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:foo%3D%22http:%2F%2Ffoo%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Efoo:lyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Efoo:lyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E',
-"""<?xml version="1.0" encoding="UTF-8"?>
+                           """<?xml version="1.0" encoding="UTF-8"?>
 <wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
     xmlns:foo="http://foo"
     xmlns:wfs="http://www.opengis.net/wfs/2.0"
@@ -5303,7 +5303,7 @@ def ogr_wfs_vsimem_wfs200_join_distinct():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&REQUEST=GetCapabilities',
-"""<WFS_Capabilities version="2.0.0">
+                           """<WFS_Capabilities version="2.0.0">
     <OperationsMetadata>
         <ows:Operation name="GetFeature">
             <ows:Constraint name="CountDefault">
@@ -5340,7 +5340,7 @@ def ogr_wfs_vsimem_wfs200_join_distinct():
 """)
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=foo:lyr1,foo:lyr2',
-"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+                           """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
   <xsd:complexType name="lyr1Type">
     <xsd:complexContent>
@@ -5378,7 +5378,7 @@ def ogr_wfs_vsimem_wfs200_join_distinct():
     sql_lyr = ds.ExecuteSQL('SELECT DISTINCT lyr1.str, lyr1.int, lyr1.int64, lyr1.double, lyr1.dt, lyr2.another_shape FROM lyr1 JOIN lyr2 ON lyr1.str = lyr2.str2')
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28foo:lyr1,foo:lyr2%29&STARTINDEX=0&COUNT=4&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:foo%3D%22http:%2F%2Ffoo%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Efoo:lyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Efoo:lyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E',
-"""<?xml version="1.0" encoding="UTF-8"?>
+                           """<?xml version="1.0" encoding="UTF-8"?>
 <wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
     xmlns:foo="http://foo"
     xmlns:wfs="http://www.opengis.net/wfs/2.0"

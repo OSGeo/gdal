@@ -701,22 +701,22 @@ def basic_test_17():
 
 
 gdaltest_list = [basic_test_1,
-                  basic_test_2,
-                  basic_test_3,
-                  basic_test_4,
-                  basic_test_5,
-                  basic_test_6,
-                  basic_test_7,
-                  basic_test_8,
-                  basic_test_9,
-                  basic_test_10,
-                  basic_test_11,
-                  basic_test_12,
-                  basic_test_13,
-                  basic_test_14,
-                  basic_test_15,
-                  basic_test_16,
-                  basic_test_17]
+                 basic_test_2,
+                 basic_test_3,
+                 basic_test_4,
+                 basic_test_5,
+                 basic_test_6,
+                 basic_test_7,
+                 basic_test_8,
+                 basic_test_9,
+                 basic_test_10,
+                 basic_test_11,
+                 basic_test_12,
+                 basic_test_13,
+                 basic_test_14,
+                 basic_test_15,
+                 basic_test_16,
+                 basic_test_17]
 
 
 if __name__ == '__main__':

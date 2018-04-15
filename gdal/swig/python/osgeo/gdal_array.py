@@ -175,16 +175,16 @@ import gdal
 gdal.AllRegister()
 
 codes = {gdalconst.GDT_Byte      : numpy.uint8,
-            gdalconst.GDT_UInt16    : numpy.uint16,
-            gdalconst.GDT_Int16     : numpy.int16,
-            gdalconst.GDT_UInt32    : numpy.uint32,
-            gdalconst.GDT_Int32     : numpy.int32,
-            gdalconst.GDT_Float32   : numpy.float32,
-            gdalconst.GDT_Float64   : numpy.float64,
-            gdalconst.GDT_CInt16    : numpy.complex64,
-            gdalconst.GDT_CInt32    : numpy.complex64,
-            gdalconst.GDT_CFloat32  : numpy.complex64,
-            gdalconst.GDT_CFloat64  : numpy.complex128
+         gdalconst.GDT_UInt16    : numpy.uint16,
+         gdalconst.GDT_Int16     : numpy.int16,
+         gdalconst.GDT_UInt32    : numpy.uint32,
+         gdalconst.GDT_Int32     : numpy.int32,
+         gdalconst.GDT_Float32   : numpy.float32,
+         gdalconst.GDT_Float64   : numpy.float64,
+         gdalconst.GDT_CInt16    : numpy.complex64,
+         gdalconst.GDT_CInt32    : numpy.complex64,
+         gdalconst.GDT_CFloat32  : numpy.complex64,
+         gdalconst.GDT_CFloat64  : numpy.complex128
         }
 
 
@@ -232,17 +232,17 @@ def GDALTypeCodeToNumericTypeCode(gdal_code):
 
 
 def LoadFile(filename, xoff=0, yoff=0, xsize=None, ysize=None,
-              buf_xsize=None, buf_ysize=None, buf_type=None,
-              resample_alg=gdal.GRIORA_NearestNeighbour,
-              callback=None, callback_data=None):
+             buf_xsize=None, buf_ysize=None, buf_type=None,
+             resample_alg=gdal.GRIORA_NearestNeighbour,
+             callback=None, callback_data=None):
     ds = gdal.Open(filename)
     if ds is None:
         raise ValueError("Can't open " + filename + "\n\n" + gdal.GetLastErrorMsg())
 
     return DatasetReadAsArray(ds, xoff, yoff, xsize, ysize,
-                               buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
-                               resample_alg=resample_alg,
-                               callback=callback, callback_data=callback_data)
+                              buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
+                              resample_alg=resample_alg,
+                              callback=callback, callback_data=callback_data)
 
 
 def SaveArray(src_array, filename, format="GTiff", prototype=None):
@@ -254,9 +254,9 @@ def SaveArray(src_array, filename, format="GTiff", prototype=None):
 
 
 def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_obj=None,
-                        buf_xsize=None, buf_ysize=None, buf_type=None,
-                        resample_alg=gdal.GRIORA_NearestNeighbour,
-                        callback=None, callback_data=None):
+                       buf_xsize=None, buf_ysize=None, buf_type=None,
+                       resample_alg=gdal.GRIORA_NearestNeighbour,
+                       callback=None, callback_data=None):
     """Pure python implementation of reading a chunk of a GDAL file
     into a numpy array.  Used by the gdal.Dataset.ReadAsArray method."""
 
@@ -270,11 +270,11 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
 
     if ds.RasterCount == 1:
         return BandReadAsArray(ds.GetRasterBand(1), xoff, yoff, win_xsize, win_ysize,
-                                buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
-                                buf_obj=buf_obj,
-                                resample_alg=resample_alg,
-                                callback=callback,
-                                callback_data=callback_data)
+                               buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
+                               buf_obj=buf_obj,
+                               resample_alg=resample_alg,
+                               callback=callback,
+                               callback_data=callback_data)
 
     if buf_obj is None:
         if buf_xsize is None:
@@ -316,16 +316,16 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
         buf_type = datatype
 
     if DatasetIONumPy(ds, 0, xoff, yoff, win_xsize, win_ysize,
-                       buf_obj, buf_type, resample_alg, callback, callback_data) != 0:
+                      buf_obj, buf_type, resample_alg, callback, callback_data) != 0:
         return None
 
     return buf_obj
 
 
 def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
-                     buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
-                     resample_alg=gdal.GRIORA_NearestNeighbour,
-                     callback=None, callback_data=None):
+                    buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
+                    resample_alg=gdal.GRIORA_NearestNeighbour,
+                    callback=None, callback_data=None):
     """Pure python implementation of reading a chunk of a GDAL file
     into a numpy array.  Used by the gdal.Band.ReadAsArray method."""
 
@@ -373,15 +373,15 @@ def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
         buf_type = datatype
 
     if BandRasterIONumPy(band, 0, xoff, yoff, win_xsize, win_ysize,
-                          buf_obj, buf_type, resample_alg, callback, callback_data) != 0:
+                         buf_obj, buf_type, resample_alg, callback, callback_data) != 0:
         return None
 
     return buf_obj
 
 
 def BandWriteArray(band, array, xoff=0, yoff=0,
-                    resample_alg=gdal.GRIORA_NearestNeighbour,
-                    callback=None, callback_data=None):
+                   resample_alg=gdal.GRIORA_NearestNeighbour,
+                   callback=None, callback_data=None):
     """Pure python implementation of writing a chunk of a GDAL file
     from a numpy array.  Used by the gdal.Band.WriteArray method."""
 
@@ -407,7 +407,7 @@ def BandWriteArray(band, array, xoff=0, yoff=0,
         raise ValueError("array does not have corresponding GDAL data type")
 
     return BandRasterIONumPy(band, 1, xoff, yoff, xsize, ysize,
-                                array, datatype, resample_alg, callback, callback_data)
+                             array, datatype, resample_alg, callback, callback_data)
 
 
 def RATWriteArray(rat, array, field, start=0):

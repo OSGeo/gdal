@@ -191,11 +191,11 @@ def test_pct2rgb_4():
 def test_rgb2pct_cleanup():
 
     lst = ['tmp/test_rgb2pct_1.tif',
-            'tmp/test_pct2rgb_1.tif',
-            'tmp/test_rgb2pct_2.tif',
-            'tmp/test_rgb2pct_3.tif',
-            'tmp/test_pct2rgb_1.tif',
-            'tmp/test_pct2rgb_4.tif']
+           'tmp/test_pct2rgb_1.tif',
+           'tmp/test_rgb2pct_2.tif',
+           'tmp/test_rgb2pct_3.tif',
+           'tmp/test_pct2rgb_1.tif',
+           'tmp/test_pct2rgb_4.tif']
     for filename in lst:
         try:
             os.remove(filename)

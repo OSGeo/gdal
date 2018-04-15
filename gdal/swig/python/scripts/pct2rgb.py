@@ -195,7 +195,7 @@ else:
 gtiff_driver = gdal.GetDriverByName('GTiff')
 
 tif_ds = gtiff_driver.Create(tif_filename,
-                              src_ds.RasterXSize, src_ds.RasterYSize, out_bands)
+                             src_ds.RasterXSize, src_ds.RasterYSize, out_bands)
 
 
 # ----------------------------------------------------------------------------

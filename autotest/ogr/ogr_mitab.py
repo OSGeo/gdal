@@ -77,9 +77,9 @@ def ogr_mitab_2():
     #######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(gdaltest.mapinfo_lyr,
-                                    [('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString)])
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger),
+                                    ('PRFEDEA', ogr.OFTString)])
 
     #######################################################
     # Copy in poly.shp
@@ -127,7 +127,7 @@ def ogr_mitab_3():
 
     gdaltest.mapinfo_lyr.SetAttributeFilter('EAS_ID < 170')
     tr = ogrtest.check_features_against_list(gdaltest.mapinfo_lyr,
-                                              'EAS_ID', expect)
+                                             'EAS_ID', expect)
     gdaltest.mapinfo_lyr.SetAttributeFilter(None)
 
     for i in range(len(gdaltest.poly_feat)):
@@ -135,8 +135,8 @@ def ogr_mitab_3():
         read_feat = gdaltest.mapinfo_lyr.GetNextFeature()
 
         if ogrtest.check_feature_geometry(read_feat,
-                                           orig_feat.GetGeometryRef(),
-                                           max_error=0.02) != 0:
+                                          orig_feat.GetGeometryRef(),
+                                          max_error=0.02) != 0:
             gdaltest.post_reason('Geometry check fail.  i=%d' % i)
             return 'fail'
 
@@ -191,10 +191,10 @@ def ogr_mitab_5():
     gdaltest.mapinfo_lyr.SetAttributeFilter(None)
 
     gdaltest.mapinfo_lyr.SetSpatialFilterRect(479505, 4763195,
-                                               480526, 4762819)
+                                              480526, 4762819)
 
     tr = ogrtest.check_features_against_list(gdaltest.mapinfo_lyr, 'eas_id',
-                                              [158])
+                                             [158])
 
     gdaltest.mapinfo_lyr.SetSpatialFilter(None)
 
@@ -253,9 +253,9 @@ def ogr_mitab_8():
     #######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(gdaltest.mapinfo_lyr,
-                                    [('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString)])
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger),
+                                    ('PRFEDEA', ogr.OFTString)])
 
     #######################################################
     # Copy in poly.shp
@@ -300,7 +300,7 @@ def ogr_mitab_9():
 
     gdaltest.mapinfo_lyr.SetAttributeFilter('eas_id < 170')
     tr = ogrtest.check_features_against_list(gdaltest.mapinfo_lyr,
-                                              'eas_id', expect)
+                                             'eas_id', expect)
     gdaltest.mapinfo_lyr.SetAttributeFilter(None)
 
     for i in range(len(gdaltest.poly_feat)):
@@ -1864,38 +1864,38 @@ def ogr_mitab_35():
 
     # Test round-tripping of projection methods
     for coordsys in ['CoordSys Earth Projection 1, 104',
-                      'CoordSys Earth Projection 2, 104, "m", 1, 2',
-                      'CoordSys Earth Projection 3, 104, "m", 1, 2, 3, 4, 5, 6',
-                      'CoordSys Earth Projection 4, 104, "m", 1, 90, 90',
-                      'CoordSys Earth Projection 5, 104, "m", 1, 90, 90',
-                      'CoordSys Earth Projection 6, 104, "m", 1, 2, 3, 4, 5, 6',
-                      'CoordSys Earth Projection 7, 104, "m", 1, 2, 3, 4, 5, 6',
-                      'CoordSys Earth Projection 8, 104, "m", 1, 2, 3, 4, 5',
-                      'CoordSys Earth Projection 9, 104, "m", 1, 2, 3, 4, 5, 6',
-                      'CoordSys Earth Projection 10, 104, "m", 1',
-                      'CoordSys Earth Projection 11, 104, "m", 1',
-                      'CoordSys Earth Projection 12, 104, "m", 1',
-                      'CoordSys Earth Projection 13, 104, "m", 1',
-                      'CoordSys Earth Projection 14, 104, "m", 1',
-                      'CoordSys Earth Projection 15, 104, "m", 1',
-                      'CoordSys Earth Projection 16, 104, "m", 1',
-                      'CoordSys Earth Projection 17, 104, "m", 1',
-                      'CoordSys Earth Projection 18, 104, "m", 1, 2, 3, 4',
-                      'CoordSys Earth Projection 19, 104, "m", 1, 2, 3, 4, 5, 6',
-                      'CoordSys Earth Projection 20, 104, "m", 1, 2, 3, 4, 5',
-                      'CoordSys Earth Projection 21, 104, "m", 1, 2, 3, 4, 5',
-                      'CoordSys Earth Projection 22, 104, "m", 1, 2, 3, 4, 5',
-                      'CoordSys Earth Projection 23, 104, "m", 1, 2, 3, 4, 5',
-                      'CoordSys Earth Projection 24, 104, "m", 1, 2, 3, 4, 5',
-                      'CoordSys Earth Projection 25, 104, "m", 1, 2, 3, 4',
-                      'CoordSys Earth Projection 26, 104, "m", 1, 2',
-                      'CoordSys Earth Projection 27, 104, "m", 1, 2, 3, 4',
-                      'CoordSys Earth Projection 28, 104, "m", 1, 2, 90',
-                      #'CoordSys Earth Projection 29, 104, "m", 1, 90, 90', # alias of 4
-                      'CoordSys Earth Projection 30, 104, "m", 1, 2, 3, 4',
-                      'CoordSys Earth Projection 31, 104, "m", 1, 2, 3, 4, 5',
-                      'CoordSys Earth Projection 32, 104, "m", 1, 2, 3, 4, 5, 6',
-                      'CoordSys Earth Projection 33, 104, "m", 1, 2, 3, 4',
+                     'CoordSys Earth Projection 2, 104, "m", 1, 2',
+                     'CoordSys Earth Projection 3, 104, "m", 1, 2, 3, 4, 5, 6',
+                     'CoordSys Earth Projection 4, 104, "m", 1, 90, 90',
+                     'CoordSys Earth Projection 5, 104, "m", 1, 90, 90',
+                     'CoordSys Earth Projection 6, 104, "m", 1, 2, 3, 4, 5, 6',
+                     'CoordSys Earth Projection 7, 104, "m", 1, 2, 3, 4, 5, 6',
+                     'CoordSys Earth Projection 8, 104, "m", 1, 2, 3, 4, 5',
+                     'CoordSys Earth Projection 9, 104, "m", 1, 2, 3, 4, 5, 6',
+                     'CoordSys Earth Projection 10, 104, "m", 1',
+                     'CoordSys Earth Projection 11, 104, "m", 1',
+                     'CoordSys Earth Projection 12, 104, "m", 1',
+                     'CoordSys Earth Projection 13, 104, "m", 1',
+                     'CoordSys Earth Projection 14, 104, "m", 1',
+                     'CoordSys Earth Projection 15, 104, "m", 1',
+                     'CoordSys Earth Projection 16, 104, "m", 1',
+                     'CoordSys Earth Projection 17, 104, "m", 1',
+                     'CoordSys Earth Projection 18, 104, "m", 1, 2, 3, 4',
+                     'CoordSys Earth Projection 19, 104, "m", 1, 2, 3, 4, 5, 6',
+                     'CoordSys Earth Projection 20, 104, "m", 1, 2, 3, 4, 5',
+                     'CoordSys Earth Projection 21, 104, "m", 1, 2, 3, 4, 5',
+                     'CoordSys Earth Projection 22, 104, "m", 1, 2, 3, 4, 5',
+                     'CoordSys Earth Projection 23, 104, "m", 1, 2, 3, 4, 5',
+                     'CoordSys Earth Projection 24, 104, "m", 1, 2, 3, 4, 5',
+                     'CoordSys Earth Projection 25, 104, "m", 1, 2, 3, 4',
+                     'CoordSys Earth Projection 26, 104, "m", 1, 2',
+                     'CoordSys Earth Projection 27, 104, "m", 1, 2, 3, 4',
+                     'CoordSys Earth Projection 28, 104, "m", 1, 2, 90',
+                     #'CoordSys Earth Projection 29, 104, "m", 1, 90, 90', # alias of 4
+                     'CoordSys Earth Projection 30, 104, "m", 1, 2, 3, 4',
+                     'CoordSys Earth Projection 31, 104, "m", 1, 2, 3, 4, 5',
+                     'CoordSys Earth Projection 32, 104, "m", 1, 2, 3, 4, 5, 6',
+                     'CoordSys Earth Projection 33, 104, "m", 1, 2, 3, 4',
                       ]:
         srs = get_srs_from_coordsys(coordsys)
         #print(srs)
@@ -2319,8 +2319,8 @@ def ogr_mitab_45():
     lyrNames = ['lyr1', 'lyr2']
     fldNames = ['field1', 'поле1']
     featNames = ['аз',
-                  'буки',
-                  'веди']
+                 'буки',
+                 'веди']
     formats = ['MIF', 'TAB', 'MIF', 'TAB']
     lyrNums = [1, 1, 2, 2]
     dsExts = ['.mif', '.tab', '', '']
@@ -2420,11 +2420,11 @@ def ogr_mitab_45():
 def ogr_mitab_46():
 
     dsNames = ['data/mitab/tab-win1251.TAB',
-                 'data/mitab/win1251.mif']
+               'data/mitab/win1251.mif']
     fldNames = ['Поле_А', 'Поле_Б', 'Поле_В', 'Поле_Г', 'Поле_Д']
     fldVal = [['Значение А', 'Значение Б', 'Значение В', 'Значение Г', 'Значение Д'],
-               ['Значение 1', 'Значение 2', 'Значение 3', 'Значение 4', 'Значение 5'],
-               ['Полигон', 'Синий', 'Заливка', 'А а Б б', 'ЪЫЁЩ']]
+              ['Значение 1', 'Значение 2', 'Значение 3', 'Значение 4', 'Значение 5'],
+              ['Полигон', 'Синий', 'Заливка', 'А а Б б', 'ЪЫЁЩ']]
 
     for dsName in dsNames:
 

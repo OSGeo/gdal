@@ -60,7 +60,7 @@ def r_2():
 def r_3():
 
     tst = gdaltest.GDALTest('R', 'byte.tif', 1, 4672,
-                             options=['ASCII=YES'])
+                            options=['ASCII=YES'])
     return tst.testCreateCopy()
 
 ###############################################################################

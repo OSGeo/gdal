@@ -91,7 +91,7 @@ def tiff_ovr_1():
         return 'fail'
 
     gdaltest.tiff_drv.CreateCopy('tmp/mfloat32.tif', src_ds,
-                                  options=['INTERLEAVE=PIXEL'])
+                                 options=['INTERLEAVE=PIXEL'])
     src_ds = None
 
     ds = gdal.Open('tmp/mfloat32.tif')
@@ -566,7 +566,7 @@ def tiff_ovr_13():
         return 'fail'
 
     gdaltest.tiff_drv.CreateCopy('tmp/mfloat32.tif', src_ds,
-                                  options=['INTERLEAVE=PIXEL'])
+                                 options=['INTERLEAVE=PIXEL'])
     src_ds = None
 
     ds = gdal.Open('tmp/mfloat32.tif')
@@ -679,7 +679,7 @@ def tiff_ovr_16():
         return 'fail'
 
     gdaltest.tiff_drv.CreateCopy('tmp/ovr16.tif', src_ds,
-                                  options=['INTERLEAVE=PIXEL'])
+                                 options=['INTERLEAVE=PIXEL'])
     src_ds = None
 
     ds = gdal.Open('tmp/ovr16.tif')
@@ -2361,9 +2361,9 @@ for item in gdaltest_list_internal:
 gdaltest_list.append(tiff_ovr_restore_endianness)
 
 gdaltest_list += [tiff_ovr_51,
-                   tiff_ovr_52,
-                   tiff_ovr_53,
-                   tiff_ovr_54]
+                  tiff_ovr_52,
+                  tiff_ovr_53,
+                  tiff_ovr_54]
 
 if __name__ == '__main__':
 

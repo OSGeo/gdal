@@ -164,9 +164,9 @@ def vsistdin_4():
 
 
 gdaltest_list = [vsistdin_1,
-                  vsistdin_2,
-                  vsistdin_3,
-                  vsistdin_4
+                 vsistdin_2,
+                 vsistdin_3,
+                 vsistdin_4
                   ]
 
 

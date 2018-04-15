@@ -99,7 +99,7 @@ def ogr_dods_2():
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, 'POINT (4.30000019 5.36999989)')\
-           != 0:
+    != 0:
         return 'fail'
 
     feat.Destroy()
@@ -125,7 +125,7 @@ def ogr_dods_3():
     gdaltest.dods_normalized.ResetReading()
     expect = [0, 10, 20, 30, 39]
     tr = ogrtest.check_features_against_list(gdaltest.dods_normalized,
-                                              'depth', expect)
+                                             'depth', expect)
     if tr == 0:
         return 'fail'
 
@@ -144,7 +144,7 @@ def ogr_dods_3():
             return 'fail'
 
         if ogrtest.check_feature_geometry(feat, 'POINT (4.30000019 5.36999989)')\
-               != 0:
+        != 0:
             return 'fail'
 
         feat.Destroy()

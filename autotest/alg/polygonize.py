@@ -73,7 +73,7 @@ def polygonize_1(is_int_polygonize=True):
         return 'fail'
 
     expect = [107, 123, 115, 115, 140, 148, 123, 140, 156,
-               100, 101, 102, 103]
+              100, 101, 102, 103]
 
     tr = ogrtest.check_features_against_list(mem_layer, 'DN', expect)
 
@@ -126,7 +126,7 @@ def polygonize_2():
         return 'fail'
 
     expect = [107, 123, 115, 132, 115, 132, 140, 132, 148, 123, 140,
-               132, 156, 100, 101, 102, 103]
+              132, 156, 100, 101, 102, 103]
 
     tr = ogrtest.check_features_against_list(mem_layer, 'DN', expect)
 
@@ -213,7 +213,7 @@ def polygonize_4():
         return 'fail'
 
     expect = [107, 123, 132, 115, 132, 115, 140, 148,
-               123, 140, 132, 156, 100, 101, 102, 103]
+              123, 140, 132, 156, 100, 101, 102, 103]
 
     tr = ogrtest.check_features_against_list(mem_layer, 'DN', expect)
 

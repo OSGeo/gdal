@@ -143,7 +143,7 @@ except:
 
 ds = drv.CreateDataSource(outfile)
 layer = ds.CreateLayer('out', geom_type=ogr.wkbLineString,
-                        srs=t_srs_o)
+                       srs=t_srs_o)
 
 #########################################################################
 # Not connected case.  Produce individual segments are these are going to

@@ -493,22 +493,22 @@ def vsicurl_stop_webserver():
 
 
 gdaltest_list = [vsicurl_1,
-                  #vsicurl_2,
-                  #vsicurl_3,
-                  vsicurl_4,
-                  vsicurl_5,
-                  vsicurl_6,
-                  vsicurl_7,
-                  #vsicurl_8,
-                  vsicurl_9,
-                  vsicurl_10,
-                  vsicurl_11,
-                  vsicurl_start_webserver,
-                  vsicurl_test_redirect,
-                  vsicurl_test_clear_cache,
-                  vsicurl_test_retry,
-                  vsicurl_test_fallback_from_head_to_get,
-                  vsicurl_stop_webserver]
+                 #vsicurl_2,
+                 #vsicurl_3,
+                 vsicurl_4,
+                 vsicurl_5,
+                 vsicurl_6,
+                 vsicurl_7,
+                 #vsicurl_8,
+                 vsicurl_9,
+                 vsicurl_10,
+                 vsicurl_11,
+                 vsicurl_start_webserver,
+                 vsicurl_test_redirect,
+                 vsicurl_test_clear_cache,
+                 vsicurl_test_retry,
+                 vsicurl_test_fallback_from_head_to_get,
+                 vsicurl_stop_webserver]
 
 if __name__ == '__main__':
 

@@ -260,8 +260,8 @@ def hdf5_8():
             value = type(attributes[attr])(value)
             if value != attributes[attr]:
                 gdaltest.post_reason('incorrect metadata value for "%s": '
-                                       '"%s" != "%s"' % (name, value,
-                                                         attributes[attr]))
+                                     '"%s" != "%s"' % (name, value,
+                                                       attributes[attr]))
                 return 'fail'
 
     # level0
@@ -316,8 +316,8 @@ def hdf5_9():
 
     if len(metadata) != len(ref_metadata):
         gdaltest.post_reason('incorrect number of metadata: '
-                              'expected %d, got %d' % (len(ref_metadata),
-                                                       len(metadata)))
+                             'expected %d, got %d' % (len(ref_metadata),
+                                                      len(metadata)))
         return 'fail'
 
     for key in metadata:
@@ -327,8 +327,8 @@ def hdf5_9():
 
         if metadata[key] != ref_metadata[key]:
             gdaltest.post_reason('incorrect metadata value for key "%s": '
-                                  'expected "%s", got "%s" ' %
-                                    (key, ref_metadata[key], metadata[key]))
+                                 'expected "%s", got "%s" ' %
+                                 (key, ref_metadata[key], metadata[key]))
             return 'fail'
 
     return 'success'
@@ -604,11 +604,11 @@ gdaltest_list = [
 ]
 
 hdf5_list = [('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
-                                     'HDF4_PALGROUP/HDF4_PALETTE_2', 7488, -1),
-              ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
-                                     'Raster_Image_#0', 3661, -1),
-              ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/geospatial/DEM', 'half_moon_bay.grid',
-                                     'HDFEOS/GRIDS/DEMGRID/Data_Fields/Elevation', 30863, -1),
+              'HDF4_PALGROUP/HDF4_PALETTE_2', 7488, -1),
+             ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
+              'Raster_Image_#0', 3661, -1),
+             ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/geospatial/DEM', 'half_moon_bay.grid',
+              'HDFEOS/GRIDS/DEMGRID/Data_Fields/Elevation', 30863, -1),
               ]
 
 for item in hdf5_list:

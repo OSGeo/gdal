@@ -162,11 +162,11 @@ if dst_driver is None:
 ct = gdal.ColorTable()
 if pct_filename is None:
     err = gdal.ComputeMedianCutPCT(src_ds.GetRasterBand(1),
-                                    src_ds.GetRasterBand(2),
-                                    src_ds.GetRasterBand(3),
-                                    color_count, ct,
-                                    callback=gdal.TermProgress,
-                                    callback_data='Generate PCT')
+                                   src_ds.GetRasterBand(2),
+                                   src_ds.GetRasterBand(3),
+                                   color_count, ct,
+                                   callback=gdal.TermProgress,
+                                   callback_data='Generate PCT')
 else:
     pct_ds = gdal.Open(pct_filename)
     ct = pct_ds.GetRasterBand(1).GetRasterColorTable().Clone()
@@ -183,7 +183,7 @@ else:
 gtiff_driver = gdal.GetDriverByName('GTiff')
 
 tif_ds = gtiff_driver.Create(tif_filename,
-                              src_ds.RasterXSize, src_ds.RasterYSize, 1)
+                             src_ds.RasterXSize, src_ds.RasterYSize, 1)
 
 tif_ds.GetRasterBand(1).SetRasterColorTable(ct)
 
@@ -199,12 +199,12 @@ if src_ds.GetGCPCount() > 0:
 # Actually transfer and dither the data.
 
 err = gdal.DitherRGB2PCT(src_ds.GetRasterBand(1),
-                          src_ds.GetRasterBand(2),
-                          src_ds.GetRasterBand(3),
-                          tif_ds.GetRasterBand(1),
-                          ct,
-                          callback=gdal.TermProgress,
-                          callback_data='Generate PCT')
+                         src_ds.GetRasterBand(2),
+                         src_ds.GetRasterBand(3),
+                         tif_ds.GetRasterBand(1),
+                         ct,
+                         callback=gdal.TermProgress,
+                         callback_data='Generate PCT')
 
 tif_ds = None
 

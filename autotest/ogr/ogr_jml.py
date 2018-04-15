@@ -78,16 +78,16 @@ def ogr_jml_1():
         return 'fail'
     lyr = ds.GetLayer(0)
     fields = [('first_property', ogr.OFTString),
-               ('another_property', ogr.OFTString),
-               ('objectAttr', ogr.OFTString),
-               ('attr2', ogr.OFTString),
-               ('attr3', ogr.OFTString),
-               ('int', ogr.OFTInteger),
-               ('double', ogr.OFTReal),
-               ('date', ogr.OFTDateTime),
-               ('datetime', ogr.OFTDateTime),
-               ('R_G_B', ogr.OFTString),
-               ('not_ignored', ogr.OFTString)]
+              ('another_property', ogr.OFTString),
+              ('objectAttr', ogr.OFTString),
+              ('attr2', ogr.OFTString),
+              ('attr3', ogr.OFTString),
+              ('int', ogr.OFTInteger),
+              ('double', ogr.OFTReal),
+              ('date', ogr.OFTDateTime),
+              ('datetime', ogr.OFTDateTime),
+              ('R_G_B', ogr.OFTString),
+              ('not_ignored', ogr.OFTString)]
     if lyr.GetLayerDefn().GetFieldCount() != len(fields):
         gdaltest.post_reason('fail')
         return 'fail'

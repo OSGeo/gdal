@@ -85,17 +85,17 @@ def ogr_ods_check(ds):
         return 'fail'
 
     type_array = [ogr.OFTString,
-                   ogr.OFTInteger,
-                   ogr.OFTReal,
-                   ogr.OFTReal,
-                   ogr.OFTDate,
-                   ogr.OFTDateTime,
-                   ogr.OFTReal,
-                   ogr.OFTTime,
-                   ogr.OFTReal,
-                   ogr.OFTInteger,
-                   ogr.OFTReal,
-                   ogr.OFTDateTime]
+                  ogr.OFTInteger,
+                  ogr.OFTReal,
+                  ogr.OFTReal,
+                  ogr.OFTDate,
+                  ogr.OFTDateTime,
+                  ogr.OFTReal,
+                  ogr.OFTTime,
+                  ogr.OFTReal,
+                  ogr.OFTInteger,
+                  ogr.OFTReal,
+                  ogr.OFTDateTime]
 
     for i in range(len(type_array)):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
@@ -204,17 +204,17 @@ def ogr_ods_kspread_1():
         return 'fail'
 
     type_array = [ogr.OFTString,
-                   ogr.OFTInteger,
-                   ogr.OFTReal,
-                   ogr.OFTReal,
-                   ogr.OFTDate,
-                   ogr.OFTString,  # ogr.OFTDateTime,
-                   ogr.OFTReal,
-                   ogr.OFTTime,
-                   ogr.OFTReal,
-                   ogr.OFTInteger,
-                   ogr.OFTReal,
-                   ogr.OFTString,  # ogr.OFTDateTime
+                  ogr.OFTInteger,
+                  ogr.OFTReal,
+                  ogr.OFTReal,
+                  ogr.OFTDate,
+                  ogr.OFTString,  # ogr.OFTDateTime,
+                  ogr.OFTReal,
+                  ogr.OFTTime,
+                  ogr.OFTReal,
+                  ogr.OFTInteger,
+                  ogr.OFTReal,
+                  ogr.OFTString,  # ogr.OFTDateTime
                    ]
 
     for i in range(len(type_array)):

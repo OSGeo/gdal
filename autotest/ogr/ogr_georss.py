@@ -63,24 +63,24 @@ def ogr_georss_init():
         pass
 
     gdaltest.atom_field_values = [('title', 'Atom draft-07 snapshot', ogr.OFTString),
-                                    ('link_rel', 'alternate', ogr.OFTString),
-                                    ('link_type', 'text/html', ogr.OFTString),
-                                    ('link_href', 'http://example.org/2005/04/02/atom', ogr.OFTString),
-                                    ('link2_rel', 'enclosure', ogr.OFTString),
-                                    ('link2_type', 'audio/mpeg', ogr.OFTString),
-                                    ('link2_length', '1337', ogr.OFTInteger),
-                                    ('link2_href', 'http://example.org/audio/ph34r_my_podcast.mp3', ogr.OFTString),
-                                    ('id', 'tag:example.org,2003:3.2397', ogr.OFTString),
-                                    ('updated', '2005/07/31 12:29:29+00', ogr.OFTDateTime),
-                                    ('published', '2003/12/13 08:29:29-04', ogr.OFTDateTime),
-                                    ('author_name', 'Mark Pilgrim', ogr.OFTString),
-                                    ('author_uri', 'http://example.org/', ogr.OFTString),
-                                    ('author_email', 'f8dy@example.com', ogr.OFTString),
-                                    ('contributor_name', 'Sam Ruby', ogr.OFTString),
-                                    ('contributor2_name', 'Joe Gregorio', ogr.OFTString),
-                                    ('content_type', 'xhtml', ogr.OFTString),
-                                    ('content_xml_lang', 'en', ogr.OFTString),
-                                    ('content_xml_base', 'http://diveintomark.org/', ogr.OFTString)]
+                                  ('link_rel', 'alternate', ogr.OFTString),
+                                  ('link_type', 'text/html', ogr.OFTString),
+                                  ('link_href', 'http://example.org/2005/04/02/atom', ogr.OFTString),
+                                  ('link2_rel', 'enclosure', ogr.OFTString),
+                                  ('link2_type', 'audio/mpeg', ogr.OFTString),
+                                  ('link2_length', '1337', ogr.OFTInteger),
+                                  ('link2_href', 'http://example.org/audio/ph34r_my_podcast.mp3', ogr.OFTString),
+                                  ('id', 'tag:example.org,2003:3.2397', ogr.OFTString),
+                                  ('updated', '2005/07/31 12:29:29+00', ogr.OFTDateTime),
+                                  ('published', '2003/12/13 08:29:29-04', ogr.OFTDateTime),
+                                  ('author_name', 'Mark Pilgrim', ogr.OFTString),
+                                  ('author_uri', 'http://example.org/', ogr.OFTString),
+                                  ('author_email', 'f8dy@example.com', ogr.OFTString),
+                                  ('contributor_name', 'Sam Ruby', ogr.OFTString),
+                                  ('contributor2_name', 'Joe Gregorio', ogr.OFTString),
+                                  ('content_type', 'xhtml', ogr.OFTString),
+                                  ('content_xml_lang', 'en', ogr.OFTString),
+                                  ('content_xml_base', 'http://diveintomark.org/', ogr.OFTString)]
 
     return 'success'
 
