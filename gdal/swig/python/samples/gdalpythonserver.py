@@ -425,8 +425,7 @@ def write_str(s):
     if s is None:
         write_int(0)
     else:
-        l = len(s)
-        write_int(l+1)
+        write_int(len(s) + 1)
         sys.stdout.write(s)
         sys.stdout.write('\x00')
 
@@ -760,9 +759,9 @@ def main_loop():
             write_marker()
             if val is None:
                 write_int(CE_Failure)
-                l = band.BlockXSize * band.BlockYSize * (gdal.GetDataTypeSize(band.DataType) / 8)
-                write_int(l)
-                sys.stdout.write(''.join('\0' for i in range(l)))
+                length = band.BlockXSize * band.BlockYSize * (gdal.GetDataTypeSize(band.DataType) / 8)
+                write_int(length)
+                sys.stdout.write(''.join('\0' for i in range(length)))
             else:
                 write_int(CE_None)
                 write_int(len(val))

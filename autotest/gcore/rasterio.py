@@ -119,19 +119,19 @@ def rasterio_3():
         while j < ds.RasterYSize:
             k = 0
             while k < ds.RasterXSize - i:
-                l = 0
-                while l < ds.RasterYSize - j:
+                m = 0
+                while m < ds.RasterYSize - j:
                     for xsize in range(5):
                         for ysize in range(4):
                             ds.GetRasterBand(1).Fill(0)
-                            ds.WriteRaster(i, j, k + 1, l + 1, data[xsize][ysize],
+                            ds.WriteRaster(i, j, k + 1, m + 1, data[xsize][ysize],
                                            buf_type = gdal.GDT_Byte,
                                            buf_xsize=xsize + 1, buf_ysize=ysize + 1)
-                            data2 = ds.ReadRaster(i, j, k + 1, l + 1, xsize + 1, ysize + 1, gdal.GDT_Byte)
+                            data2 = ds.ReadRaster(i, j, k + 1, m + 1, xsize + 1, ysize + 1, gdal.GDT_Byte)
                             if data2 != data[xsize][ysize]:
                                 gdaltest.post_reason('Didnt get expected buffer ')
                                 return 'fail'
-                    l = l + 1
+                    m = m + 1
                 k = k + 1
             j = j + 1
         i = i + 1
@@ -162,22 +162,22 @@ def rasterio_4():
         while j < ds.RasterYSize:
             k = 0
             while k < ds.RasterXSize - i:
-                l = 0
-                while l < ds.RasterYSize - j:
+                m = 0
+                while m < ds.RasterYSize - j:
                     for xsize in range(5):
                         for ysize in range(4):
                             ds.GetRasterBand(1).Fill(0)
-                            ds.WriteRaster(i, j, k + 1, l + 1, data[(xsize + 1) * (ysize + 1) - 1],
+                            ds.WriteRaster(i, j, k + 1, m + 1, data[(xsize + 1) * (ysize + 1) - 1],
                                            buf_type = gdal.GDT_Byte,
                                            buf_xsize=xsize + 1, buf_ysize=ysize + 1)
-                            data2 = ds.ReadRaster(i, j, k + 1, l + 1, xsize + 1, ysize + 1, gdal.GDT_Byte)
+                            data2 = ds.ReadRaster(i, j, k + 1, m + 1, xsize + 1, ysize + 1, gdal.GDT_Byte)
                             if data2 != data[(xsize + 1) * (ysize + 1) - 1]:
                                 gdaltest.post_reason('Didnt get expected buffer ')
-                                print(i,j,k,l,xsize,ysize)
+                                print(i,j,k,m,xsize,ysize)
                                 print(data2)
                                 print(data[(xsize + 1) * (ysize + 1) - 1])
                                 return 'fail'
-                    l = l + 1
+                    m = m + 1
                 k = k + 1
             if j >= 15:
                 j = j + 1
@@ -338,14 +338,12 @@ def rasterio_7():
     ds = gdal.Open('data/byte.tif')
 
     data = ds.GetRasterBand(1).ReadRaster()
-    l = len(data)
-    if l != 400:
+    if len(data) != 400:
         gdaltest.post_reason('did not read expected band data via ReadRaster()')
         return 'fail'
 
     data = ds.ReadRaster()
-    l = len(data)
-    if l != 400:
+    if len(data) != 400:
         gdaltest.post_reason('did not read expected dataset data via ReadRaster()')
         return 'fail'
 
@@ -392,8 +390,7 @@ def rasterio_8():
     data = ds.GetRasterBand(1).ReadRaster(resample_alg = gdal.GRIORA_NearestNeighbour,
                                           callback = rasterio_8_progress_callback,
                                           callback_data = tab)
-    l = len(data)
-    if l != 400:
+    if len(data) != 400:
         gdaltest.post_reason('did not read expected band data via ReadRaster()')
         return 'fail'
     if abs(tab[0] - 1) > 1e-5 or not tab[1]:
@@ -459,8 +456,7 @@ def rasterio_8():
     data = ds.ReadRaster(resample_alg = gdal.GRIORA_NearestNeighbour,
                          callback = rasterio_8_progress_callback,
                          callback_data = tab)
-    l = len(data)
-    if l != 400:
+    if len(data) != 400:
         gdaltest.post_reason('did not read expected dataset data via ReadRaster()')
         return 'fail'
     if abs(tab[0] - 1) > 1e-5 or not tab[1]:

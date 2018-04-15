@@ -3848,7 +3848,7 @@ def ogr_geom_gt_functions():
 def ogr_geom_api_limit_tests():
 
     p = ogr.Geometry(ogr.wkbPoint)
-    l = ogr.Geometry(ogr.wkbLineString)
+    lyr = ogr.Geometry(ogr.wkbLineString)
     poly = ogr.Geometry(ogr.wkbPolygon)
 
     with gdaltest.error_handler():
@@ -3856,9 +3856,9 @@ def ogr_geom_api_limit_tests():
         p.GetY(1)
         p.GetZ(1)
 
-        l.GetX(1)
-        l.GetY(1)
-        l.GetZ(1)
+        lyr.GetX(1)
+        lyr.GetY(1)
+        lyr.GetZ(1)
 
         poly.GetX()
         poly.GetY()
@@ -3867,15 +3867,15 @@ def ogr_geom_api_limit_tests():
         poly.GetPoints()
 
         p.GetPoint(1)
-        l.GetPoint(1)
+        lyr.GetPoint(1)
         poly.GetPoint(1)
 
         p.SetPoint(1, 0, 0)
-        l.SetPoint(-1, 0, 0)
+        lyr.SetPoint(-1, 0, 0)
         poly.SetPoint(0, 0, 0)
 
         p.SetPoint_2D(1, 0, 0)
-        l.SetPoint_2D(-1, 0, 0)
+        lyr.SetPoint_2D(-1, 0, 0)
         poly.SetPoint_2D(0, 0, 0)
 
         poly.AddPoint(0, 0)
