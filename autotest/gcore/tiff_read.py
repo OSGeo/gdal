@@ -813,7 +813,7 @@ def tiff_read_stats_from_pam():
 
     try:
         os.remove('data/byte.tif.aux.xml')
-    except OSErro:
+    except OSError:
         pass
 
     ds = gdal.Open('data/byte.tif')
