@@ -1023,17 +1023,17 @@ int TABMAPIndexBlock::PickSeedsForSplit( TABMAPIndexEntry *pasEntries,
         }
     }
 
-    const int nSrcWidth = std::abs(nSrcMaxX - nSrcMinX);
-    const int nSrcHeight = std::abs(nSrcMaxY - nSrcMinY);
+    const double dfSrcWidth = std::abs(static_cast<double>(nSrcMaxX) - nSrcMinX);
+    const double dfSrcHeight = std::abs(static_cast<double>(nSrcMaxY) - nSrcMinY);
 
     // Calculate the separation for each pair (note that it may be negative
     // in case of overlap)
     // Normalize the separation by dividing by the extents of the
     // corresponding dimension
     const double dX =
-        nSrcWidth == 0 ? 0 : (double)(nHighestMinX - nLowestMaxX) / nSrcWidth;
+        dfSrcWidth == 0.0 ? 0.0 : (static_cast<double>(nHighestMinX) - nLowestMaxX) / dfSrcWidth;
     const double dY =
-        nSrcHeight == 0 ? 0 : (double)(nHighestMinY - nLowestMaxY) / nSrcHeight;
+        dfSrcHeight == 0.0 ? 0.0 : (static_cast<double>(nHighestMinY) - nLowestMaxY) / dfSrcHeight;
 
     // Choose the pair with the greatest normalized separation along
     // any dimension
