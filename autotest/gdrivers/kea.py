@@ -67,12 +67,12 @@ def kea_2():
         return 'skip'
 
     src_files = ['byte.tif',
-                  'int16.tif',
-                  '../../gcore/data/uint16.tif',
-                  '../../gcore/data/int32.tif',
-                  '../../gcore/data/uint32.tif',
-                  '../../gcore/data/float32.tif',
-                  '../../gcore/data/float64.tif']
+                 'int16.tif',
+                 '../../gcore/data/uint16.tif',
+                 '../../gcore/data/int32.tif',
+                 '../../gcore/data/uint32.tif',
+                 '../../gcore/data/float32.tif',
+                 '../../gcore/data/float64.tif']
 
     for src_file in src_files:
         tst = gdaltest.GDALTest('KEA', src_file, 1, 4672)
@@ -91,12 +91,12 @@ def kea_3():
         return 'skip'
 
     src_files = ['byte.tif',
-                  'int16.tif',
-                  '../../gcore/data/uint16.tif',
-                  '../../gcore/data/int32.tif',
-                  '../../gcore/data/uint32.tif',
-                  '../../gcore/data/float32.tif',
-                  '../../gcore/data/float64.tif']
+                 'int16.tif',
+                 '../../gcore/data/uint16.tif',
+                 '../../gcore/data/int32.tif',
+                 '../../gcore/data/uint32.tif',
+                 '../../gcore/data/float32.tif',
+                 '../../gcore/data/float64.tif']
 
     for src_file in src_files:
         tst = gdaltest.GDALTest('KEA', src_file, 1, 4672)
@@ -225,8 +225,8 @@ def kea_5():
         return 'skip'
 
     options = ['IMAGEBLOCKSIZE=15', 'ATTBLOCKSIZE=100', 'MDC_NELMTS=10',
-                'RDCC_NELMTS=256', 'RDCC_NBYTES=500000', 'RDCC_W0=0.5',
-                'SIEVE_BUF=32768', 'META_BLOCKSIZE=1024', 'DEFLATE=9', 'THEMATIC=YES']
+               'RDCC_NELMTS=256', 'RDCC_NBYTES=500000', 'RDCC_W0=0.5',
+               'SIEVE_BUF=32768', 'META_BLOCKSIZE=1024', 'DEFLATE=9', 'THEMATIC=YES']
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 100, 100, 3, options=options)
     ds = None
     ds = gdal.Open('tmp/out.kea')
@@ -527,27 +527,27 @@ def kea_10():
         return 'skip'
 
     for (dt, nd, expected_nd) in [(gdal.GDT_Byte, 0, 0),
-                                 (gdal.GDT_Byte, 1.1, 1.0),
-                                 (gdal.GDT_Byte, 255, 255),
-                                 (gdal.GDT_Byte, -1, None),
-                                 (gdal.GDT_Byte, 256, None),
-                                 (gdal.GDT_UInt16, 0, 0),
-                                 (gdal.GDT_UInt16, 65535, 65535),
-                                 (gdal.GDT_UInt16, -1, None),
-                                 (gdal.GDT_UInt16, 65536, None),
-                                 (gdal.GDT_Int16, -32768, -32768),
-                                 (gdal.GDT_Int16, 32767, 32767),
-                                 (gdal.GDT_Int16, -32769, None),
-                                 (gdal.GDT_Int16, 32768, None),
-                                 (gdal.GDT_UInt32, 0, 0),
-                                 (gdal.GDT_UInt32, 0xFFFFFFFF, 0xFFFFFFFF),
-                                 (gdal.GDT_UInt32, -1, None),
-                                 (gdal.GDT_UInt32, 0xFFFFFFFF + 1, None),
-                                 (gdal.GDT_Int32, -2147483648, -2147483648),
-                                 (gdal.GDT_Int32, 2147483647, 2147483647),
-                                 (gdal.GDT_Int32, -2147483649, None),
-                                 (gdal.GDT_Int32, 2147483648, None),
-                                 (gdal.GDT_Float32, 0.5, 0.5),
+                                  (gdal.GDT_Byte, 1.1, 1.0),
+                                  (gdal.GDT_Byte, 255, 255),
+                                  (gdal.GDT_Byte, -1, None),
+                                  (gdal.GDT_Byte, 256, None),
+                                  (gdal.GDT_UInt16, 0, 0),
+                                  (gdal.GDT_UInt16, 65535, 65535),
+                                  (gdal.GDT_UInt16, -1, None),
+                                  (gdal.GDT_UInt16, 65536, None),
+                                  (gdal.GDT_Int16, -32768, -32768),
+                                  (gdal.GDT_Int16, 32767, 32767),
+                                  (gdal.GDT_Int16, -32769, None),
+                                  (gdal.GDT_Int16, 32768, None),
+                                  (gdal.GDT_UInt32, 0, 0),
+                                  (gdal.GDT_UInt32, 0xFFFFFFFF, 0xFFFFFFFF),
+                                  (gdal.GDT_UInt32, -1, None),
+                                  (gdal.GDT_UInt32, 0xFFFFFFFF + 1, None),
+                                  (gdal.GDT_Int32, -2147483648, -2147483648),
+                                  (gdal.GDT_Int32, 2147483647, 2147483647),
+                                  (gdal.GDT_Int32, -2147483649, None),
+                                  (gdal.GDT_Int32, 2147483648, None),
+                                  (gdal.GDT_Float32, 0.5, 0.5),
                                  ]:
         ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, dt)
         if ds.GetRasterBand(1).GetNoDataValue() is not None:

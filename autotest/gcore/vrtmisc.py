@@ -242,7 +242,7 @@ def vrtmisc_9():
 def vrtmisc_10():
 
     gdal.FileFromMemBuffer("/vsimem/vrtmisc_10.vrt",
-"""<VRTDataset rasterXSize="1" rasterYSize="1">
+                           """<VRTDataset rasterXSize="1" rasterYSize="1">
   <Metadata>
       <MDI key="foo">bar</MDI>
   </Metadata>
@@ -349,7 +349,7 @@ def vrtmisc_11():
 def vrtmisc_12():
 
     gdal.FileFromMemBuffer("/vsimem/vrtmisc_12.vrt",
-"""<VRTDataset rasterXSize="1" rasterYSize="1">
+                           """<VRTDataset rasterXSize="1" rasterYSize="1">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
       <SourceFilename relativeToVRT="0">foo.tif</SourceFilename>

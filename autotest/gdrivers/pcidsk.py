@@ -105,7 +105,7 @@ def pcidsk_5():
     # Create testing file.
 
     gdaltest.pcidsk_ds = driver.Create('tmp/pcidsk_5.pix', 400, 600, 1,
-                                        gdal.GDT_Byte)
+                                       gdal.GDT_Byte)
 
     # Write out some metadata to the default and non-default domain and
     # using the set and single methods.
@@ -241,7 +241,7 @@ def pcidsk_7():
 def pcidsk_8():
 
     tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
-                             options=['INTERLEAVING=FILE'])
+                            options=['INTERLEAVING=FILE'])
 
     return tst.testCreate()
 
@@ -316,7 +316,7 @@ def pcidsk_11():
         return 'skip'
 
     tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
-                             options=['INTERLEAVING=TILED', 'TILESIZE=32'])
+                            options=['INTERLEAVING=TILED', 'TILESIZE=32'])
 
     return tst.testCreate()
 
@@ -329,7 +329,7 @@ def pcidsk_12():
         return 'skip'
 
     tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
-                             options=['INTERLEAVING=TILED', 'TILESIZE=32', 'COMPRESSION=RLE'])
+                            options=['INTERLEAVING=TILED', 'TILESIZE=32', 'COMPRESSION=RLE'])
 
     return tst.testCreate()
 

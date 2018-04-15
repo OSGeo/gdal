@@ -245,18 +245,18 @@ def gta_5():
     src_ds = gdal.Open('data/byte.tif')
 
     compress_list = ['NONE',
-                    'BZIP2',
-                    "XZ",
-                    "ZLIB",
-                    "ZLIB1",
-                    "ZLIB2",
-                    "ZLIB3",
-                    "ZLIB4",
-                    "ZLIB5",
-                    "ZLIB6",
-                    "ZLIB7",
-                    "ZLIB8",
-                    "ZLIB9"]
+                     'BZIP2',
+                     "XZ",
+                     "ZLIB",
+                     "ZLIB1",
+                     "ZLIB2",
+                     "ZLIB3",
+                     "ZLIB4",
+                     "ZLIB5",
+                     "ZLIB6",
+                     "ZLIB7",
+                     "ZLIB8",
+                     "ZLIB9"]
 
     for compress in compress_list:
         out_ds = gdaltest.gta_drv.CreateCopy('/vsimem/gta_5.gta', src_ds, options=['COMPRESS=' + compress])

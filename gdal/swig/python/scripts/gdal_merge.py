@@ -98,13 +98,13 @@ def GetOutputDriverFor(filename):
 
 # =============================================================================
 def raster_copy(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
-                 t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
-                 nodata=None):
+                t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
+                nodata=None):
 
     if verbose != 0:
         print('Copy %d,%d,%d,%d to %d,%d,%d,%d.'
               % (s_xoff, s_yoff, s_xsize, s_ysize,
-             t_xoff, t_yoff, t_xsize, t_ysize))
+                 t_xoff, t_yoff, t_xsize, t_ysize))
 
     if nodata is not None:
         return raster_copy_with_nodata(
@@ -132,7 +132,7 @@ def raster_copy(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
     data = s_band.ReadRaster(s_xoff, s_yoff, s_xsize, s_ysize,
                              t_xsize, t_ysize, t_band.DataType)
     t_band.WriteRaster(t_xoff, t_yoff, t_xsize, t_ysize,
-                        data, t_xsize, t_ysize, t_band.DataType)
+                       data, t_xsize, t_ysize, t_band.DataType)
 
     return 0
 
@@ -140,8 +140,8 @@ def raster_copy(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
 
 
 def raster_copy_with_nodata(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
-                             t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
-                             nodata):
+                            t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
+                            nodata):
     try:
         import numpy as Numeric
     except ImportError:
@@ -151,7 +151,7 @@ def raster_copy_with_nodata(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
     t_band = t_fh.GetRasterBand(t_band_n)
 
     data_src = s_band.ReadAsArray(s_xoff, s_yoff, s_xsize, s_ysize,
-                                   t_xsize, t_ysize)
+                                  t_xsize, t_ysize)
     data_dst = t_band.ReadAsArray(t_xoff, t_yoff, t_xsize, t_ysize)
 
     nodata_test = Numeric.equal(data_src, nodata)
@@ -165,8 +165,8 @@ def raster_copy_with_nodata(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
 
 
 def raster_copy_with_mask(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
-                           t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
-                           m_band):
+                          t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
+                          m_band):
     try:
         import numpy as Numeric
     except ImportError:
@@ -176,9 +176,9 @@ def raster_copy_with_mask(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
     t_band = t_fh.GetRasterBand(t_band_n)
 
     data_src = s_band.ReadAsArray(s_xoff, s_yoff, s_xsize, s_ysize,
-                                   t_xsize, t_ysize)
+                                  t_xsize, t_ysize)
     data_mask = m_band.ReadAsArray(s_xoff, s_yoff, s_xsize, s_ysize,
-                                    t_xsize, t_ysize)
+                                   t_xsize, t_ysize)
     data_dst = t_band.ReadAsArray(t_xoff, t_yoff, t_xsize, t_ysize)
 
     mask_test = Numeric.equal(data_mask, 0)
@@ -302,9 +302,9 @@ class file_info:
         tw_xoff = int((tgw_ulx - t_geotransform[0]) / t_geotransform[1] + 0.1)
         tw_yoff = int((tgw_uly - t_geotransform[3]) / t_geotransform[5] + 0.1)
         tw_xsize = int((tgw_lrx - t_geotransform[0]) / t_geotransform[1] + 0.5) \
-                   - tw_xoff
+        - tw_xoff
         tw_ysize = int((tgw_lry - t_geotransform[3]) / t_geotransform[5] + 0.5) \
-                   - tw_yoff
+        - tw_yoff
 
         if tw_xsize < 1 or tw_ysize < 1:
             return 1
@@ -324,8 +324,8 @@ class file_info:
         s_fh = gdal.Open(self.filename)
 
         return raster_copy(s_fh, sw_xoff, sw_yoff, sw_xsize, sw_ysize, s_band,
-                            t_fh, tw_xoff, tw_yoff, tw_xsize, tw_ysize, t_band,
-                            nodata_arg)
+                           t_fh, tw_xoff, tw_yoff, tw_xsize, tw_ysize, t_band,
+                           nodata_arg)
 
 
 # =============================================================================
@@ -522,7 +522,7 @@ def main(argv=None):
             bands = file_infos[0].bands
 
         t_fh = Driver.Create(out_file, xsize, ysize, bands,
-                              band_type, create_options)
+                             band_type, create_options)
         if t_fh is None:
             print('Creation failed, terminating gdal_merge.')
             sys.exit(1)

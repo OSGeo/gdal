@@ -17,33 +17,33 @@ class Translator(object):
         parser = OptionParser(usage)
         g = OptionGroup(parser, "Base options", "Basic Translation Options")
         g.add_option("-i", "--input", dest="input",
-                          help="OGR input data source", metavar="INPUT")
+                     help="OGR input data source", metavar="INPUT")
         g.add_option("-o", "--output", dest='output',
-                          help="OGR output data source", metavar="OUTPUT")
+                     help="OGR output data source", metavar="OUTPUT")
         g.add_option("-n", "--nooverwrite",
-                          action="store_false", dest="overwrite",
-                          help="Do not overwrite the existing output file")
+                     action="store_false", dest="overwrite",
+                     help="Do not overwrite the existing output file")
 
         g.add_option("-f", "--driver", dest='driver',
-                          help="OGR output driver.  Defaults to \"ESRI Shapefile\"", metavar="DRIVER")
+                     help="OGR output driver.  Defaults to \"ESRI Shapefile\"", metavar="DRIVER")
 
         g.add_option('-w', "--where", dest="where",
-                          help="""SQL attribute filter -- enclose in quotes "PNAME='Cedar River'" """,)
+                     help="""SQL attribute filter -- enclose in quotes "PNAME='Cedar River'" """,)
         g.add_option('-s', "--spat", dest="spat",
-                          help="""Spatial query extents -- minx miny maxx maxy""",
-                          type=float, nargs=4)
+                     help="""Spatial query extents -- minx miny maxx maxy""",
+                     type=float, nargs=4)
         g.add_option('-l', "--layer", dest="layer",
-                          help="""The name of the input layer to translate, if not given, the first layer on the data source is used""",)
+                     help="""The name of the input layer to translate, if not given, the first layer on the data source is used""",)
 
         g.add_option('-k', "--select", dest="fields",
-                          help="""Comma separated list of fields to include -- field1,field2,field3,...,fieldn""",)
+                     help="""Comma separated list of fields to include -- field1,field2,field3,...,fieldn""",)
         g.add_option('-t', '--target-srs', dest="t_srs",
-                          help="""Target SRS -- the spatial reference system to project the data to""")
+                     help="""Target SRS -- the spatial reference system to project the data to""")
         g.add_option('-a', '--assign-srs', dest="a_srs",
-                          help="""Assign SRS -- the spatial reference to assign to the input data""")
+                     help="""Assign SRS -- the spatial reference to assign to the input data""")
         g.add_option("-q", "--quiet",
-                          action="store_false", dest="verbose", default=False,
-                          help="don't print status messages to stdout")
+                     action="store_false", dest="verbose", default=False,
+                     help="don't print status messages to stdout")
         parser.add_option_group(g)
 
         if self.opts:
@@ -127,8 +127,8 @@ class Translator(object):
         else:
             self.out_srs = None
         self.output = self.out_ds.CreateLayer(self.options.output,
-                                                geom_type=self.input.GetLayerDefn().GetGeomType(),
-                                                srs=self.out_srs)
+                                              geom_type=self.input.GetLayerDefn().GetGeomType(),
+                                              srs=self.out_srs)
 
     def make_fields(self):
         defn = self.input.GetLayerDefn()
@@ -349,18 +349,18 @@ def main():
 
     options = []
     o = optparse.make_option("-r", "--remainder", dest="remainder",
-                         type="choice", default='end',
-                          help="""what to do with the remainder -- place it at the beginning,
+                             type="choice", default='end',
+                             help="""what to do with the remainder -- place it at the beginning,
 place it at the end, or evenly distribute it across the segment""",
-                          choices=['end', 'begin', 'uniform'])
+                             choices=['end', 'begin', 'uniform'])
     options.append(o)
     o = optparse.make_option("-d", "--distance", dest='distance', type="float",
-                          help="""Threshold distance for point placement.  If the
+                             help="""Threshold distance for point placement.  If the
 'uniform' remainder is used, points will be evenly placed
 along the segment in a fashion that makes sure they are
 no further apart than the threshold.  If 'beg' or 'end'
 is chosen, the threshold distance will be used as an absolute value.""",
-                          metavar="DISTANCE")
+                             metavar="DISTANCE")
     options.append(o)
     d = Densify(sys.argv[1:], options=options)
     d.process()

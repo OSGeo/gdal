@@ -119,7 +119,7 @@ def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src=True, cla
     if clamp_output:
         mem_ds = gdal.GetDriverByName('MEM').Create('', src_ds.RasterXSize, src_ds.RasterYSize, working_bands)
         mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
-                        tmp_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize))
+                           tmp_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize))
         expected_cs = [mem_ds.GetRasterBand(i + 1).Checksum() for i in range(working_bands)]
     else:
         tmp_ds.FlushCache()

@@ -346,7 +346,7 @@ class GPKGChecker:
             else:
                 self._assert(_is_valid_data_type(type), 5,
                              ('table %s has column %s of unexpected type %s'
-                             % (table_name, name, type)))
+                              % (table_name, name, type)))
         self._assert(found_geom, 24,
                      'table %s has no %s column' %
                      (table_name, geom_column_name))
@@ -354,10 +354,10 @@ class GPKGChecker:
                      'table %s has no INTEGER PRIMARY KEY' % table_name)
 
         self._assert(z in (0, 1, 2), 27, ("z value of %s is %d. " +
-                     "Expected 0, 1 or 2") % (table_name, z))
+                                          "Expected 0, 1 or 2") % (table_name, z))
 
         self._assert(m in (0, 1, 2), 27, ("m value of %s is %d. " +
-                     "Expected 0, 1 or 2") % (table_name, m))
+                                          "Expected 0, 1 or 2") % (table_name, m))
 
         if geometry_type_name in GPKGChecker.EXT_GEOM_TYPES:
             c.execute("SELECT 1 FROM gpkg_extensions WHERE "
@@ -457,34 +457,34 @@ class GPKGChecker:
         elif geometry_type_name == 'GEOMETRYCOLLECTION':
             self._assert(len(found_geom_types) == 0 or
                          len(found_geom_types.difference(
-                            set(['GEOMETRYCOLLECTION', 'MULTIPOINT',
-                                 'MULTILINESTRING', 'MULTIPOLYGON',
-                                 'MULTICURVE', 'MULTISURFACE']))) == 0, 32,
+                             set(['GEOMETRYCOLLECTION', 'MULTIPOINT',
+                                  'MULTILINESTRING', 'MULTIPOLYGON',
+                                  'MULTICURVE', 'MULTISURFACE']))) == 0, 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
         elif geometry_type_name in ('CURVEPOLYGON', 'SURFACE'):
             self._assert(len(found_geom_types) == 0 or
                          len(found_geom_types.difference(
-                            set(['POLYGON', 'CURVEPOLYGON']))) == 0, 32,
+                             set(['POLYGON', 'CURVEPOLYGON']))) == 0, 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
         elif geometry_type_name == 'MULTICURVE':
             self._assert(len(found_geom_types) == 0 or
                          len(found_geom_types.difference(
-                            set(['MULTILINESTRING', 'MULTICURVE']))) == 0, 32,
+                             set(['MULTILINESTRING', 'MULTICURVE']))) == 0, 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
         elif geometry_type_name == 'MULTISURFACE':
             self._assert(len(found_geom_types) == 0 or
                          len(found_geom_types.difference(
-                            set(['MULTIPOLYGON', 'MULTISURFACE']))) == 0, 32,
+                             set(['MULTIPOLYGON', 'MULTISURFACE']))) == 0, 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
         elif geometry_type_name == 'CURVE':
             self._assert(len(found_geom_types) == 0 or
                          len(found_geom_types.difference(
-                            set(['LINESTRING', 'CIRCULARSTRING',
-                                 'COMPOUNDCURVE']))) == 0, 32,
+                             set(['LINESTRING', 'CIRCULARSTRING',
+                                  'COMPOUNDCURVE']))) == 0, 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
 

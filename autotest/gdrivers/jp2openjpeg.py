@@ -1388,12 +1388,12 @@ def jp2openjpeg_28():
     src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
 
     tests = [(['CODEBLOCK_WIDTH=2'], 64, 64, True),
-              (['CODEBLOCK_WIDTH=2048'], 64, 64, True),
-              (['CODEBLOCK_HEIGHT=2'], 64, 64, True),
-              (['CODEBLOCK_HEIGHT=2048'], 64, 64, True),
-              (['CODEBLOCK_WIDTH=128', 'CODEBLOCK_HEIGHT=128'], 64, 64, True),
-              (['CODEBLOCK_WIDTH=63'], 32, 64, True),
-              (['CODEBLOCK_WIDTH=32', 'CODEBLOCK_HEIGHT=32'], 32, 32, False),
+             (['CODEBLOCK_WIDTH=2048'], 64, 64, True),
+             (['CODEBLOCK_HEIGHT=2'], 64, 64, True),
+             (['CODEBLOCK_HEIGHT=2048'], 64, 64, True),
+             (['CODEBLOCK_WIDTH=128', 'CODEBLOCK_HEIGHT=128'], 64, 64, True),
+             (['CODEBLOCK_WIDTH=63'], 32, 64, True),
+             (['CODEBLOCK_WIDTH=32', 'CODEBLOCK_HEIGHT=32'], 32, 32, False),
               ]
 
     for (options, expected_cbkw, expected_cbkh, warning_expected) in tests:
@@ -1427,11 +1427,11 @@ def jp2openjpeg_29():
     src_ds = gdal.GetDriverByName('MEM').Create('', 128, 128, 1)
 
     tests = [(['TILEPARTS=DISABLED'], False),
-              (['TILEPARTS=RESOLUTIONS'], False),
-              (['TILEPARTS=LAYERS'], True),  # warning since there's only one quality layer
-              (['TILEPARTS=LAYERS', 'QUALITY=1,2'], False),
-              (['TILEPARTS=COMPONENTS'], False),
-              (['TILEPARTS=ILLEGAL'], True),
+             (['TILEPARTS=RESOLUTIONS'], False),
+             (['TILEPARTS=LAYERS'], True),  # warning since there's only one quality layer
+             (['TILEPARTS=LAYERS', 'QUALITY=1,2'], False),
+             (['TILEPARTS=COMPONENTS'], False),
+             (['TILEPARTS=ILLEGAL'], True),
               ]
 
     for (options, warning_expected) in tests:
@@ -1471,9 +1471,9 @@ def jp2openjpeg_30():
     src_ds.GetRasterBand(1).SetRasterColorTable(ct)
 
     tests = [([], False),
-              (['QUALITY=100', 'REVERSIBLE=YES'], False),
-              (['QUALITY=50'], True),
-              (['REVERSIBLE=NO'], True),
+             (['QUALITY=100', 'REVERSIBLE=YES'], False),
+             (['QUALITY=50'], True),
+             (['REVERSIBLE=NO'], True),
               ]
 
     for (options, warning_expected) in tests:
@@ -2063,7 +2063,7 @@ def jp2openjpeg_41():
 
     src_ds = gdal.Open('data/byte.jp2')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds, \
-        options=['USE_SRC_CODESTREAM=YES', 'PROFILE=PROFILE_1', 'GEOJP2=NO', 'GMLJP2=NO'])
+                                                 options=['USE_SRC_CODESTREAM=YES', 'PROFILE=PROFILE_1', 'GEOJP2=NO', 'GMLJP2=NO'])
     if src_ds.GetRasterBand(1).Checksum() != out_ds.GetRasterBand(1).Checksum():
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2078,7 +2078,7 @@ def jp2openjpeg_41():
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds, \
-        options=['USE_SRC_CODESTREAM=YES', 'QUALITY=1'])
+                                                 options=['USE_SRC_CODESTREAM=YES', 'QUALITY=1'])
     gdal.PopErrorHandler()
     del out_ds
     if gdal.GetLastErrorMsg() == '':
@@ -2092,7 +2092,7 @@ def jp2openjpeg_41():
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds, \
-        options=['USE_SRC_CODESTREAM=YES'])
+                                                 options=['USE_SRC_CODESTREAM=YES'])
     gdal.PopErrorHandler()
     del out_ds
     if gdal.GetLastErrorMsg() == '':
@@ -2525,7 +2525,7 @@ def jp2openjpeg_45():
 
     # Test valid values for grid_coverage_range_type_file
     gdal.FileFromMemBuffer("/vsimem/grid_coverage_range_type_file.xml",
-"""
+                           """
 <swe:DataRecord><swe:field name="custom_datarecord">
     <swe:Quantity definition="http://custom">
         <swe:description>custom</swe:description>
@@ -2581,13 +2581,13 @@ def jp2openjpeg_45():
                 }
             ],
 
-            "annotations": [
+        "annotations": [
                 "/vsimem/i_dont_exist.shp",
                 "/vsimem/i_dont_exist.kml",
                 "../gcore/data/byte.tif"
             ],
 
-            "gml_filelist": [
+        "gml_filelist": [
                 "/vsimem/i_dont_exist.xml",
                 "../gcore/data/byte.tif",
                 {
@@ -2597,7 +2597,7 @@ def jp2openjpeg_45():
                 },
             ],
 
-            "styles": [
+        "styles": [
                 "/vsimem/i_dont_exist.xml",
                 "../gcore/data/byte.tif",
                 {
@@ -2606,7 +2606,7 @@ def jp2openjpeg_45():
                 }
             ],
 
-            "extensions": [
+        "extensions": [
                 "/vsimem/i_dont_exist.xml",
                 "../gcore/data/byte.tif",
                 {
@@ -2632,17 +2632,17 @@ def jp2openjpeg_45():
 
     # Test most options: valid case
     gdal.FileFromMemBuffer("/vsimem/second_metadata.xml",
-"""<gmljp2:dcMetadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+                           """<gmljp2:dcMetadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title>Second metadata</dc:title>
 </gmljp2:dcMetadata>""")
 
     gdal.FileFromMemBuffer("/vsimem/third_metadata.xml",
-"""<gmljp2:dcMetadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+                           """<gmljp2:dcMetadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title>Third metadata</dc:title>
 </gmljp2:dcMetadata>""")
 
     gdal.FileFromMemBuffer("/vsimem/feature.xml",
-"""<FeatureCollection gml:id="myFC1">
+                           """<FeatureCollection gml:id="myFC1">
     <featureMember>
         <Observation gml:id="myFC1_Observation">
             <validTime/>
@@ -2652,7 +2652,7 @@ def jp2openjpeg_45():
 </FeatureCollection>""")
 
     gdal.FileFromMemBuffer("/vsimem/a_schema.xsd",
-"""<?xml version="1.0" encoding="UTF-8"?>
+                           """<?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:ogr="http://ogr.maptools.org/" targetNamespace="http://ogr.maptools.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlsf="http://www.opengis.net/gmlsf/2.0" elementFormDefault="qualified" version="1.0">
   <xs:annotation>
     <xs:appinfo source="http://schemas.opengis.net/gmlsfProfile/2.0/gmlsfLevels.xsd">
@@ -2713,7 +2713,7 @@ def jp2openjpeg_45():
         ds = None
 
     gdal.FileFromMemBuffer("/vsimem/feature2.gml",
-"""<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://ogr.maptools.org/ http://dummy" gml:id="myFC3">
+                           """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://ogr.maptools.org/ http://dummy" gml:id="myFC3">
     <featureMember>
         <Observation gml:id="myFC3_Observation">
             <validTime/>
@@ -2723,7 +2723,7 @@ def jp2openjpeg_45():
 </FeatureCollection>""")
 
     gdal.FileFromMemBuffer("/vsimem/feature3.gml",
-"""<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ http://dummy" gml:id="myFC4">
+                           """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ http://dummy" gml:id="myFC4">
     <featureMember>
         <Observation gml:id="myFC4_Observation">
             <validTime/>
@@ -2733,7 +2733,7 @@ def jp2openjpeg_45():
 </FeatureCollection>""")
 
     gdal.FileFromMemBuffer("/vsimem/empty.kml",
-"""<?xml version="1.0" encoding="UTF-8"?>
+                           """<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xsi:schemaLocation="http://www.opengis.net/kml/2.2 http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd">
     <Document id="empty_doc"/>
 </kml>
@@ -2787,12 +2787,12 @@ def jp2openjpeg_45():
                 }
             ],
 
-            "annotations": [
+        "annotations": [
                 "/vsimem/myshape.shp",
                 "/vsimem/empty.kml"
             ],
 
-            "gml_filelist": [
+        "gml_filelist": [
                 "/vsimem/feature.xml",
                 {
                     "file": "/vsimem/myshape.shp",
@@ -2819,7 +2819,7 @@ def jp2openjpeg_45():
                 }
             ],
 
-            "styles" : [
+        "styles" : [
                 "/vsimem/style1.xml",
                 {
                     "file": "/vsimem/style2.xml",
@@ -2834,7 +2834,7 @@ def jp2openjpeg_45():
                 }
             ],
 
-            "extensions" : [
+        "extensions" : [
                 "/vsimem/extension1.xml",
                 {
                     "file": "/vsimem/extension2.xml",
@@ -2859,7 +2859,7 @@ def jp2openjpeg_45():
     ]
 }
     gdal.FileFromMemBuffer("/vsimem/grid_coverage_file.xml",
-"""
+                           """
     <gmljp2:GMLJP2RectifiedGridCoverage gml:id="my_GMLJP2RectifiedGridCoverage">
      <gml:domainSet>
       <gml:RectifiedGrid gml:id="RGC_1_GRID_ID_GMLJP2_0" dimension="2" srsName="http://www.opengis.net/def/crs/EPSG/0/26711">
@@ -3033,11 +3033,11 @@ def jp2openjpeg_45():
         print(ds.GetLayerCount())
         return 'fail'
     expected_layers = ['FC_GridCoverage_1_myshape',
-                        'FC_CoverageCollection_1_Observation',
-                        'FC_CoverageCollection_2_myshape',
-                        'FC_CoverageCollection_3_myshape',
-                        'FC_CoverageCollection_4_myshape',
-                        'Annotation_1_myshape']
+                       'FC_CoverageCollection_1_Observation',
+                       'FC_CoverageCollection_2_myshape',
+                       'FC_CoverageCollection_3_myshape',
+                       'FC_CoverageCollection_4_myshape',
+                       'Annotation_1_myshape']
     for j in range(6):
         if ds.GetLayer(j).GetName() != expected_layers[j]:
             gdaltest.post_reason('fail')
@@ -3160,10 +3160,10 @@ def jp2openjpeg_46():
 }
 
     gdal.FileFromMemBuffer("/vsimem/template.xml",
-"""<gmljp2:metadata>{{{ XPATH(1) }}} {{{ XPATH('str') }}} {{{ XPATH(true()) }}}X{{{ XPATH(//B) }}} {{{XPATH(if(//B/text() = 'my_value',if(false(),'not_expected',concat('yeah: ',uuid())),'doh!'))}}}</gmljp2:metadata>""")
+                           """<gmljp2:metadata>{{{ XPATH(1) }}} {{{ XPATH('str') }}} {{{ XPATH(true()) }}}X{{{ XPATH(//B) }}} {{{XPATH(if(//B/text() = 'my_value',if(false(),'not_expected',concat('yeah: ',uuid())),'doh!'))}}}</gmljp2:metadata>""")
 
     gdal.FileFromMemBuffer("/vsimem/source.xml",
-"""<A><B>my_value</B></A>""")
+                           """<A><B>my_value</B></A>""")
 
     src_ds = gdal.Open('data/byte.tif')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_46.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
@@ -3535,24 +3535,24 @@ def jp2openjpeg_49():
         return 'skip'
 
     tests = [(None, True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
-              (None, True, False, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
-              (None, False, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              (None, False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ('INTERNAL', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ('INTERNAL,PAM', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
-              ('INTERNAL,WORLDFILE', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('INTERNAL,PAM,WORLDFILE', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
-              ('INTERNAL,WORLDFILE,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('WORLDFILE,PAM,INTERNAL', False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ('PAM,WORLDFILE,INTERNAL', False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ('PAM', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
-              ('PAM,WORLDFILE', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
-              ('WORLDFILE', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('WORLDFILE,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('WORLDFILE,INTERNAL', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('WORLDFILE,PAM,INTERNAL', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('WORLDFILE,INTERNAL,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('NONE', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+             (None, True, False, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+             (None, False, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             (None, False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+             ('INTERNAL', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+             ('INTERNAL,PAM', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+             ('INTERNAL,WORLDFILE', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('INTERNAL,PAM,WORLDFILE', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+             ('INTERNAL,WORLDFILE,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('WORLDFILE,PAM,INTERNAL', False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+             ('PAM,WORLDFILE,INTERNAL', False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+             ('PAM', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+             ('PAM,WORLDFILE', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+             ('WORLDFILE', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('WORLDFILE,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('WORLDFILE,INTERNAL', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('WORLDFILE,PAM,INTERNAL', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('WORLDFILE,INTERNAL,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('NONE', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
               ]
 
     for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
@@ -3584,31 +3584,31 @@ def jp2openjpeg_49():
             return 'fail'
 
     tests = [(None, True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
-              (None, True, False, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
-              (None, False, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              (None, False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              ('INTERNAL', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              ('INTERNAL,PAM', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              ('INTERNAL,WORLDFILE', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              ('INTERNAL,PAM,WORLDFILE', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              ('INTERNAL,WORLDFILE,PAM', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              ('WORLDFILE,PAM,INTERNAL', False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              ('PAM,WORLDFILE,INTERNAL', False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              ('GEOJP2', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              ('GEOJP2,GMLJP2', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              ('GMLJP2', True, True, '26712', (439970.0, 60.0, 0.0, 3751030.0, 0.0, -60.0)),
-              ('GMLJP2,GEOJP2', True, True, '26712', (439970.0, 60.0, 0.0, 3751030.0, 0.0, -60.0)),
-              ('MSIG', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ('MSIG,GMLJP2,GEOJP2', True, True, '26712', (439970.0, 60.0, 0.0, 3751030.0, 0.0, -60.0)),
-              ('MSIG,GEOJP2,GMLJP2', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              ('PAM', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
-              ('PAM,WORLDFILE', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
-              ('WORLDFILE', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('WORLDFILE,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('WORLDFILE,INTERNAL', True, True, '26711', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('WORLDFILE,PAM,INTERNAL', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('WORLDFILE,INTERNAL,PAM', True, True, '26711', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('NONE', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+             (None, True, False, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+             (None, False, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             (None, False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             ('INTERNAL', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             ('INTERNAL,PAM', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             ('INTERNAL,WORLDFILE', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             ('INTERNAL,PAM,WORLDFILE', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             ('INTERNAL,WORLDFILE,PAM', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             ('WORLDFILE,PAM,INTERNAL', False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             ('PAM,WORLDFILE,INTERNAL', False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             ('GEOJP2', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             ('GEOJP2,GMLJP2', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             ('GMLJP2', True, True, '26712', (439970.0, 60.0, 0.0, 3751030.0, 0.0, -60.0)),
+             ('GMLJP2,GEOJP2', True, True, '26712', (439970.0, 60.0, 0.0, 3751030.0, 0.0, -60.0)),
+             ('MSIG', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+             ('MSIG,GMLJP2,GEOJP2', True, True, '26712', (439970.0, 60.0, 0.0, 3751030.0, 0.0, -60.0)),
+             ('MSIG,GEOJP2,GMLJP2', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             ('PAM', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+             ('PAM,WORLDFILE', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+             ('WORLDFILE', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('WORLDFILE,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('WORLDFILE,INTERNAL', True, True, '26711', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('WORLDFILE,PAM,INTERNAL', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('WORLDFILE,INTERNAL,PAM', True, True, '26711', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('NONE', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
               ]
 
     for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:

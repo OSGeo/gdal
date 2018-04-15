@@ -88,7 +88,7 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
         ds = gdal.GetDriverByName('MEM').Create('', 200, 100, 3, gdal.GDT_Byte)
     else:
         ds = drv.Create('tmp/test_create.ntf', 200, 100, 3, gdal.GDT_Byte,
-                     creation_options)
+                        creation_options)
     ds.SetGeoTransform((100, 0.1, 0.0, 30.0, 0.0, -0.1))
 
     if set_inverted_color_interp:
@@ -105,8 +105,8 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
-                        buf_type=gdal.GDT_Int16,
-                        band_list=[1, 2, 3])
+                       buf_type=gdal.GDT_Int16,
+                       band_list=[1, 2, 3])
 
     if createcopy:
         ds = drv.CreateCopy('tmp/test_create.ntf', ds,
@@ -196,8 +196,8 @@ def nitf_6():
 
     tst = gdaltest.GDALTest('NITF', 'rgb.ntf', 3, 21349)
     return tst.testOpen(check_prj='WGS84',
-                         check_gt=(-44.842029478458, 0.003503401360, 0,
-                                     -22.930748299319, 0, -0.003503401360))
+                        check_gt=(-44.842029478458, 0.003503401360, 0,
+                                  -22.930748299319, 0, -0.003503401360))
 
 ###############################################################################
 # NITF in-memory.
@@ -251,7 +251,7 @@ def nitf_9():
 
     src_ds = gdal.Open('data/rgbsmall.tif')
     ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf9.ntf', src_ds,
-                                                  options=['IC=C3'])
+                                                 options=['IC=C3'])
     src_ds = None
     ds = None
 
@@ -350,7 +350,7 @@ def nitf_12():
 def nitf_13():
     drv = gdal.GetDriverByName('NITF')
     ds = drv.Create('tmp/test_13.ntf', 200, 100, 1, gdal.GDT_Byte,
-                     ['ICORDS=S'])
+                    ['ICORDS=S'])
     ds.SetGeoTransform((400000, 10, 0.0, 6000000, 0.0, -10))
     ds.SetProjection('PROJCS["UTM Zone 11, Southern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["Meter",1]]')
 
@@ -359,8 +359,8 @@ def nitf_13():
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
-                        buf_type=gdal.GDT_Int16,
-                        band_list=[1])
+                       buf_type=gdal.GDT_Int16,
+                       band_list=[1])
 
     ds = None
 
@@ -726,7 +726,7 @@ def nitf_29():
     drv = gdal.GetDriverByName('NITF')
 
     ds = drv.Create('tmp/test_29.ntf', 1, 1, 1, gdal.GDT_Byte,
-                     ['IREP=RGB/LUT', 'LUT_SIZE=128'])
+                    ['IREP=RGB/LUT', 'LUT_SIZE=128'])
 
     ct = gdal.ColorTable()
     ct.SetColorEntry(0, (255, 255, 255, 255))
@@ -808,16 +808,16 @@ def nitf_30():
 
     # Test overriding src BLOCKA metadata with NITF_BLOCKA creation options
     gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf30_override.ntf', src_ds,
-        options=['BLOCKA_BLOCK_INSTANCE_01=01',
-                   'BLOCKA_BLOCK_COUNT=01',
-                   'BLOCKA_N_GRAY_01=00000',
-                   'BLOCKA_L_LINES_01=01000',
-                   'BLOCKA_LAYOVER_ANGLE_01=000',
-                   'BLOCKA_SHADOW_ANGLE_01=000',
-                   'BLOCKA_FRLC_LOC_01=+42.319331+020.078400',
-                   'BLOCKA_LRLC_LOC_01=+42.317083+020.126072',
-                   'BLOCKA_LRFC_LOC_01=+42.281634+020.122570',
-                   'BLOCKA_FRFC_LOC_01=+42.283881+020.074924'
+                                            options=['BLOCKA_BLOCK_INSTANCE_01=01',
+                                                     'BLOCKA_BLOCK_COUNT=01',
+                                                     'BLOCKA_N_GRAY_01=00000',
+                                                     'BLOCKA_L_LINES_01=01000',
+                                                     'BLOCKA_LAYOVER_ANGLE_01=000',
+                                                     'BLOCKA_SHADOW_ANGLE_01=000',
+                                                     'BLOCKA_FRLC_LOC_01=+42.319331+020.078400',
+                                                     'BLOCKA_LRLC_LOC_01=+42.317083+020.126072',
+                                                     'BLOCKA_LRFC_LOC_01=+42.281634+020.122570',
+                                                     'BLOCKA_FRFC_LOC_01=+42.283881+020.074924'
                    ])
     ds = gdal.Open('/vsimem/nitf30_override.ntf')
     md = ds.GetMetadata()
@@ -840,7 +840,7 @@ def nitf_30():
 
     # Test overriding src BLOCKA metadata with TRE=BLOCKA= creation option
     gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf30_override.ntf', src_ds,
-        options=['TRE=BLOCKA=010000001000000000                +42.319331+020.078400+42.317083+020.126072+42.281634+020.122570+42.283881+020.074924xxxxx'
+                                            options=['TRE=BLOCKA=010000001000000000                +42.319331+020.078400+42.317083+020.126072+42.281634+020.122570+42.283881+020.074924xxxxx'
                    ])
     ds = gdal.Open('/vsimem/nitf30_override.ntf')
     md = ds.GetMetadata()
@@ -891,8 +891,8 @@ def nitf_30():
 def nitf_31():
 
     if nitf_create(['TRE=CUSTOM= Test TRE1\\0MORE',
-                      'TRE=TOTEST=SecondTRE',
-                      'ICORDS=G']) != 'success':
+                    'TRE=TOTEST=SecondTRE',
+                    'ICORDS=G']) != 'success':
         return 'fail'
 
     ds = gdal.Open('tmp/test_create.ntf')
@@ -939,13 +939,13 @@ def nitf_32():
 def nitf_33():
 
     if nitf_create(['ICORDS=D',
-        'BLOCKA_BLOCK_COUNT=01',
-        'BLOCKA_BLOCK_INSTANCE_01=01',
-        'BLOCKA_L_LINES_01=100',
-        'BLOCKA_FRLC_LOC_01=+29.950000+119.950000',
-        'BLOCKA_LRLC_LOC_01=+20.050000+119.950000',
-        'BLOCKA_LRFC_LOC_01=+20.050000+100.050000',
-        'BLOCKA_FRFC_LOC_01=+29.950000+100.050000']) != 'success':
+                    'BLOCKA_BLOCK_COUNT=01',
+                    'BLOCKA_BLOCK_INSTANCE_01=01',
+                    'BLOCKA_L_LINES_01=100',
+                    'BLOCKA_FRLC_LOC_01=+29.950000+119.950000',
+                    'BLOCKA_LRLC_LOC_01=+20.050000+119.950000',
+                    'BLOCKA_LRFC_LOC_01=+20.050000+100.050000',
+                    'BLOCKA_FRFC_LOC_01=+29.950000+100.050000']) != 'success':
         return 'fail'
 
     return nitf_check_created_file(32498, 42602, 38982)
@@ -1003,7 +1003,7 @@ def nitf_36():
 
     src_ds = gdal.Open('data/rgbsmall.tif')
     ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf36.ntf', src_ds,
-                                                  options=['IC=C3', 'BLOCKSIZE=32', 'QUALITY=100'])
+                                                 options=['IC=C3', 'BLOCKSIZE=32', 'QUALITY=100'])
     src_ds = None
     ds = None
 
@@ -1168,7 +1168,7 @@ def nitf_39():
 
     src_ds = gdal.Open('data/rgbsmall.tif')
     ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf39.ntf', src_ds,
-                                                  options=['IC=M3', 'BLOCKSIZE=32', 'QUALITY=100'])
+                                                 options=['IC=M3', 'BLOCKSIZE=32', 'QUALITY=100'])
     src_ds = None
     ds = None
 
@@ -1575,19 +1575,19 @@ def nitf_48():
 def nitf_49():
 
     options = ["TEXT=DATA_0=COUCOU",
-                "TEXT=HEADER_0=ABC",  # This content is invalid but who cares here
-                "CGM=SEGMENT_COUNT=1",
-                "CGM=SEGMENT_0_SLOC_ROW=25",
-                "CGM=SEGMENT_0_SLOC_COL=25",
-                "CGM=SEGMENT_0_SDLVL=2",
-                "CGM=SEGMENT_0_SALVL=1",
-                "CGM=SEGMENT_0_DATA=XYZ"]
+               "TEXT=HEADER_0=ABC",  # This content is invalid but who cares here
+               "CGM=SEGMENT_COUNT=1",
+               "CGM=SEGMENT_0_SLOC_ROW=25",
+               "CGM=SEGMENT_0_SLOC_COL=25",
+               "CGM=SEGMENT_0_SDLVL=2",
+               "CGM=SEGMENT_0_SALVL=1",
+               "CGM=SEGMENT_0_DATA=XYZ"]
 
     src_ds = gdal.Open('data/text_md.vrt')
 
     # This will check that the creation option overrides the TEXT metadata domain from the source
     ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf49.ntf', src_ds,
-                                                  options=options)
+                                                 options=options)
 
     # Test copy from source TEXT and CGM metadata domains
     ds2 = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf49_2.ntf', ds)
@@ -1637,8 +1637,8 @@ def nitf_50():
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf50.ntf', 100, 100, 3, options=options)
 
     ds.WriteRaster(0, 0, 100, 100, '   ', 1, 1,
-                    buf_type=gdal.GDT_Byte,
-                    band_list=[1, 2, 3])
+                   buf_type=gdal.GDT_Byte,
+                   band_list=[1, 2, 3])
 
     ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_BlueBand)
     ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
@@ -1720,8 +1720,8 @@ def nitf_52():
 
     # Create a fake NITF file with GeoSDE TREs (probably not conformant, but enough to test GDAL code)
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf52.ntf', 1, 1, options=['FILE_TRE=GEOPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789012345EURM                                                                                                                                                                                                                                                                                                                                                                 ', \
-          'FILE_TRE=PRJPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789AC0000000000000000000000000000000', \
-          'TRE=MAPLOB=M  0001000010000000000100000000000005000000'])
+                                                                              'FILE_TRE=PRJPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789AC0000000000000000000000000000000', \
+                                                                              'TRE=MAPLOB=M  0001000010000000000100000000000005000000'])
     ds = None
 
     ds = gdal.Open('tmp/nitf52.ntf')
@@ -2350,7 +2350,7 @@ def nitf_70():
     src_ds = gdal.Open('data/rgbsmall.tif')
 
     ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf_70.ntf', src_ds,
-                                                  options=['IC=C3', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'])
+                                                 options=['IC=C3', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'])
     ds = None
 
     # For comparison
@@ -2885,7 +2885,7 @@ def nitf_75():
 </genc:GeopoliticalEntityEntry>"""
 
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_75.ntf', 1, 1, options=['TRE=CCINFA=0062RQ 17ge:GENC:3:3-5:PRI000002RQ 20as:ISO2:6:II-3:US-PR000002BM 17ge:GENC:3:3-5:MMR04108 ' + \
-                 listing_AG1 + '3MMR 19ge:ISO1:3:VII-7:MMR00000' + '2S1 19ge:GENC:3:3-alt:SCT000002YYC16gg:1059:2:ed9:3E00000'])
+                                                                                   listing_AG1 + '3MMR 19ge:ISO1:3:VII-7:MMR00000' + '2S1 19ge:GENC:3:3-alt:SCT000002YYC16gg:1059:2:ed9:3E00000'])
     ds = None
 
     ds = gdal.Open('/vsimem/nitf_75.ntf')
@@ -3153,12 +3153,12 @@ def nitf_online_7():
             cs = ds.GetRasterBand(i + 1).Checksum()
             if cs != checksums[i]:
                 gdaltest.post_reason('got checksum %d for image %s' \
-                                      % (cs, file))
+                                     % (cs, file))
                 return 'fail'
 
             if ds.GetRasterBand(i + 1).GetRasterColorInterpretation() != colorInterpretations[i]:
                 gdaltest.post_reason('got wrong color interp for image %s' \
-                                      % file)
+                                     % file)
                 return 'fail'
         ds = None
 
@@ -3305,7 +3305,7 @@ def nitf_online_12():
         return 'skip'
 
     tst = gdaltest.GDALTest('NITF', 'tmp/cache/i_3430a.ntf', 1, 38647,
-                             filename_absolute=1)
+                            filename_absolute=1)
 
     return tst.testOpen()
 
@@ -3356,7 +3356,7 @@ def nitf_online_13():
     for item in tab:
         if md[item[0]] != item[1]:
             gdaltest.post_reason('wrong value for %s, got %s instead of %s.'
-                                  % (item[0], md[item[0]], item[1]))
+                                 % (item[0], md[item[0]], item[1]))
             return 'fail'
 
     return 'success'
@@ -3481,8 +3481,8 @@ def nitf_online_16(driver_to_test):
         ret = 'success'
 
     elif ds.RasterCount == 1 and \
-       ds.GetRasterBand(1).Checksum() == 47664 and \
-       ds.GetRasterBand(1).GetRasterColorTable() is not None:
+    ds.GetRasterBand(1).Checksum() == 47664 and \
+    ds.GetRasterBand(1).GetRasterColorTable() is not None:
         ret = 'success'
     else:
         print(ds.RasterCount)
@@ -3632,10 +3632,10 @@ def nitf_online_19():
         return 'skip'
 
     tst = gdaltest.GDALTest('NITF', 'tmp/cache/0000M033.GN3', 1, 38928,
-                             filename_absolute=1)
+                            filename_absolute=1)
 
     return tst.testOpen(check_gt=(174.375000000000000, 0.010986328125000, 0,
-                                     51.923076923076927, 0, -0.006760817307692))
+                                  51.923076923076927, 0, -0.006760817307692))
 
 ###############################################################################
 # Check that the RPF attribute metadata was carried through.
@@ -3709,7 +3709,7 @@ def nitf_online_22():
     for item in tab:
         if md[item[0]] != item[1]:
             gdaltest.post_reason('(1) wrong value for %s, got %s instead of %s.'
-                                  % (item[0], md[item[0]], item[1]))
+                                 % (item[0], md[item[0]], item[1]))
             return 'fail'
 
     ds = gdal.Open('NITF_IM:2:tmp/cache/U_0001C.NTF')
@@ -3728,7 +3728,7 @@ def nitf_online_22():
     for item in tab:
         if md[item[0]] != item[1]:
             gdaltest.post_reason('(2) wrong value for %s, got %s instead of %s.'
-                                  % (item[0], md[item[0]], item[1]))
+                                 % (item[0], md[item[0]], item[1]))
             return 'fail'
 
     ds = gdal.Open('NITF_IM:3:tmp/cache/U_0001C.NTF')
@@ -3747,7 +3747,7 @@ def nitf_online_22():
     for item in tab:
         if md[item[0]] != item[1]:
             gdaltest.post_reason('(3) wrong value for %s, got %s instead of %s.'
-                                  % (item[0], md[item[0]], item[1]))
+                                 % (item[0], md[item[0]], item[1]))
             return 'fail'
 
     ds = gdal.Open('NITF_IM:4:tmp/cache/U_0001C.NTF')
@@ -3766,7 +3766,7 @@ def nitf_online_22():
     for item in tab:
         if md[item[0]] != item[1]:
             gdaltest.post_reason('(4) wrong value for %s, got %s instead of %s.'
-                                  % (item[0], md[item[0]], item[1]))
+                                 % (item[0], md[item[0]], item[1]))
             return 'fail'
 
     return 'success'

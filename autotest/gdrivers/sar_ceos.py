@@ -39,10 +39,10 @@ import gdaltest
 
 def sar_ceos_online_1():
     list_files = ['ottawa_patch.img',
-                   'ottawa_patch.led',
-                   'ottawa_patch.nul',
-                   'ottawa_patch.trl',
-                   'ottawa_patch.vol']
+                  'ottawa_patch.led',
+                  'ottawa_patch.nul',
+                  'ottawa_patch.trl',
+                  'ottawa_patch.vol']
 
     for filename in list_files:
         if not gdaltest.download_file('http://download.osgeo.org/gdal/data/ceos/' + filename , filename):

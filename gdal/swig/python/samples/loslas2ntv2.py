@@ -79,8 +79,8 @@ def TranslateLOSLAS(los, ntv2_filename, options):
 
     ntv2_driver = gdal.GetDriverByName('NTv2')
     ntv2_db = ntv2_driver.Create(ntv2_filename,
-                                  los_db.RasterXSize, los_db.RasterYSize,
-                                  4, gdal.GDT_Float32, create_options)
+                                 los_db.RasterXSize, los_db.RasterYSize,
+                                 4, gdal.GDT_Float32, create_options)
 
     # Copy georeferencing
     ntv2_db.SetGeoTransform(los_db.GetGeoTransform())

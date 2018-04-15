@@ -154,20 +154,20 @@ def aigrid_6():
 def aigrid_online_1():
 
     list_files = ['info/arc.dir',
-                   'info/arc0000.dat',
-                   'info/arc0000.nit',
-                   'info/arc0001.dat',
-                   'info/arc0001.nit',
-                   'info/arc0002.dat',
-                   'info/arc0002.nit',
-                   'info/arc0002r.001',
-                   'nzdem500/dblbnd.adf',
-                   'nzdem500/hdr.adf',
-                   'nzdem500/log',
-                   'nzdem500/sta.adf',
-                   'nzdem500/vat.adf',
-                   'nzdem500/w001001.adf',
-                   'nzdem500/w001001x.adf']
+                  'info/arc0000.dat',
+                  'info/arc0000.nit',
+                  'info/arc0001.dat',
+                  'info/arc0001.nit',
+                  'info/arc0002.dat',
+                  'info/arc0002.nit',
+                  'info/arc0002r.001',
+                  'nzdem500/dblbnd.adf',
+                  'nzdem500/hdr.adf',
+                  'nzdem500/log',
+                  'nzdem500/sta.adf',
+                  'nzdem500/vat.adf',
+                  'nzdem500/w001001.adf',
+                  'nzdem500/w001001x.adf']
 
     try:
         os.mkdir('tmp/cache/nzdem')

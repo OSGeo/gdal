@@ -984,7 +984,7 @@ def ogr_sql_32():
     gdal.ErrorReset()
 
     sql_lyr = gdaltest.ds.ExecuteSQL('select min(eas_id) from poly where area = 0',
-                                      dialect='OGRSQL')
+                                     dialect='OGRSQL')
 
     feat = sql_lyr.GetNextFeature()
     val = feat.GetField(0)
@@ -1375,19 +1375,19 @@ def ogr_sql_44():
 
     # Invalid hstore syntax or empty result
     for sql in ["SELECT hstore_get_value('a', null) FROM poly",
-                 "SELECT hstore_get_value(null, 'a') FROM poly",
-                 "SELECT hstore_get_value('a', 'a') FROM poly",
-                 "SELECT hstore_get_value('a=>b', 'c') FROM poly",
-                 "SELECT hstore_get_value('a=>', 'a') FROM poly",
-                 "SELECT hstore_get_value(' a => ', 'a') FROM poly",
-                 "SELECT hstore_get_value('a=>b,z,c=>d', 'c') FROM poly",
-                 "SELECT hstore_get_value('\"a', 'a') FROM poly",
-                 "SELECT hstore_get_value('\"a\"', 'a') FROM poly",
-                 "SELECT hstore_get_value('\"a\"=', 'a') FROM poly",
-                 "SELECT hstore_get_value('\"a\" =>', 'a') FROM poly",
-                 "SELECT hstore_get_value('\"a\" => ', 'a') FROM poly",
-                 "SELECT hstore_get_value('\"a\" => \"', 'a') FROM poly",
-                 "SELECT hstore_get_value('\"a\" => \"\" z', 'a') FROM poly"]:
+                "SELECT hstore_get_value(null, 'a') FROM poly",
+                "SELECT hstore_get_value('a', 'a') FROM poly",
+                "SELECT hstore_get_value('a=>b', 'c') FROM poly",
+                "SELECT hstore_get_value('a=>', 'a') FROM poly",
+                "SELECT hstore_get_value(' a => ', 'a') FROM poly",
+                "SELECT hstore_get_value('a=>b,z,c=>d', 'c') FROM poly",
+                "SELECT hstore_get_value('\"a', 'a') FROM poly",
+                "SELECT hstore_get_value('\"a\"', 'a') FROM poly",
+                "SELECT hstore_get_value('\"a\"=', 'a') FROM poly",
+                "SELECT hstore_get_value('\"a\" =>', 'a') FROM poly",
+                "SELECT hstore_get_value('\"a\" => ', 'a') FROM poly",
+                "SELECT hstore_get_value('\"a\" => \"', 'a') FROM poly",
+                "SELECT hstore_get_value('\"a\" => \"\" z', 'a') FROM poly"]:
         sql_lyr = gdaltest.ds.ExecuteSQL(sql)
         f = sql_lyr.GetNextFeature()
         if f.IsFieldSetAndNotNull(0):
@@ -1399,14 +1399,14 @@ def ogr_sql_44():
 
     # Valid hstore syntax
     for (sql, expected) in [("SELECT hstore_get_value('a=>b', 'a') FROM poly", 'b'),
-                             ("SELECT hstore_get_value(' a => b ', 'a') FROM poly", 'b'),
-                             ("SELECT hstore_get_value('\"a\"=>b', 'a') FROM poly", 'b'),
-                             ("SELECT hstore_get_value(' \"a\" =>b', 'a') FROM poly", 'b'),
-                             ("SELECT hstore_get_value('a=>\"b\"', 'a') FROM poly", 'b'),
-                             ("SELECT hstore_get_value('a=> \"b\" ', 'a') FROM poly", 'b'),
-                             ("SELECT hstore_get_value('\"a\"=>\"b\"', 'a') FROM poly", 'b'),
-                             ("SELECT hstore_get_value(' \"a\" => \"b\" ', 'a') FROM poly", 'b'),
-                             ("SELECT hstore_get_value(' \"a\\\"b\" => \"b\" ', 'a\"b') FROM poly", 'b')]:
+                            ("SELECT hstore_get_value(' a => b ', 'a') FROM poly", 'b'),
+                            ("SELECT hstore_get_value('\"a\"=>b', 'a') FROM poly", 'b'),
+                            ("SELECT hstore_get_value(' \"a\" =>b', 'a') FROM poly", 'b'),
+                            ("SELECT hstore_get_value('a=>\"b\"', 'a') FROM poly", 'b'),
+                            ("SELECT hstore_get_value('a=> \"b\" ', 'a') FROM poly", 'b'),
+                            ("SELECT hstore_get_value('\"a\"=>\"b\"', 'a') FROM poly", 'b'),
+                            ("SELECT hstore_get_value(' \"a\" => \"b\" ', 'a') FROM poly", 'b'),
+                            ("SELECT hstore_get_value(' \"a\\\"b\" => \"b\" ', 'a\"b') FROM poly", 'b')]:
         sql_lyr = gdaltest.ds.ExecuteSQL(sql)
         f = sql_lyr.GetNextFeature()
         if f.GetField(0) != expected:

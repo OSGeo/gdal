@@ -304,7 +304,7 @@ NODATA_value 0
 def sieve_8():
 
     gdal.FileFromMemBuffer('/vsimem/sieve_8.asc',
-"""ncols        7
+                           """ncols        7
 nrows        7
 xllcorner    440720.000000000000
 yllcorner    3750120.000000000000

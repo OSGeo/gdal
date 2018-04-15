@@ -40,9 +40,9 @@ from osgeo import gdal
 
 
 wkts = [('POINT (0 1 2)', 'points', 0),
-         ('LINESTRING (0 1 2,3 4 5)', 'lines', 0),
-         ('POINT (0 1 2)', 'points2', 4326),
-         ('LINESTRING (0 1 2,3 4 5)', 'lines2', 32631),
+        ('LINESTRING (0 1 2,3 4 5)', 'lines', 0),
+        ('POINT (0 1 2)', 'points2', 4326),
+        ('LINESTRING (0 1 2,3 4 5)', 'lines2', 32631),
          ]
 
 ###############################################################################

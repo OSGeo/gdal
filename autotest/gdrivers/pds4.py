@@ -191,14 +191,14 @@ def pds4_8():
 
     filename = '/vsimem/out.xml'
     for proj4 in ['+proj=eqc +lat_ts=43.75 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
-                   '+proj=lcc +lat_1=10 +lat_0=10 +lon_0=-112.5 +k_0=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # LCC_1SP
-                   '+proj=lcc +lat_1=9 +lat_2=11 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # LCC_2SP
-                   '+proj=omerc +lat_0=10 +lonc=11 +alpha=12 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Oblique Mercator Azimuth Center
-                   '+proj=omerc +lat_0=10 +lon_1=11 +lat_1=12 +lon_2=13 +lat_2=14 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Oblique Mercator 2 points
-                   '+proj=stere +lat_0=90 +lat_ts=90 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Polar Stereographic
-                   '+proj=poly +lat_0=9 +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
-                   '+proj=sinu +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
-                   '+proj=tmerc +lat_0=11 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
+                  '+proj=lcc +lat_1=10 +lat_0=10 +lon_0=-112.5 +k_0=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # LCC_1SP
+                  '+proj=lcc +lat_1=9 +lat_2=11 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # LCC_2SP
+                  '+proj=omerc +lat_0=10 +lonc=11 +alpha=12 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Oblique Mercator Azimuth Center
+                  '+proj=omerc +lat_0=10 +lon_1=11 +lat_1=12 +lon_2=13 +lat_2=14 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Oblique Mercator 2 points
+                  '+proj=stere +lat_0=90 +lat_ts=90 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Polar Stereographic
+                  '+proj=poly +lat_0=9 +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
+                  '+proj=sinu +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
+                  '+proj=tmerc +lat_0=11 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
                    ]:
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1)
         sr = osr.SpatialReference()
@@ -341,7 +341,7 @@ def pds4_9():
     for format in ['RAW', 'GEOTIFF']:
         with hide_substitution_warnings_error_handler():
             gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4',
-                        creationOptions=['USE_SRC_LABEL=NO',
+                           creationOptions=['USE_SRC_LABEL=NO',
                                             'IMAGE_FORMAT=' + format])
 
         ret = validate_xml(filename)
@@ -361,7 +361,7 @@ def pds4_9():
 
         # Test filling with nodata
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options=['IMAGE_FORMAT=' + format])
+                                                 options=['IMAGE_FORMAT=' + format])
         ds.GetRasterBand(1).SetNoDataValue(1)
         with hide_substitution_warnings_error_handler():
             ds = None
@@ -377,7 +377,7 @@ def pds4_9():
 
         # Test setting nodata and then explicit Fill()
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options=['IMAGE_FORMAT=' + format])
+                                                 options=['IMAGE_FORMAT=' + format])
         ds.GetRasterBand(1).SetNoDataValue(10)
         ds.GetRasterBand(1).Fill(1)
         with hide_substitution_warnings_error_handler():
@@ -441,7 +441,7 @@ def pds4_9():
     </File_Area_Observational>
 </Product_Observational>""")
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options=['TEMPLATE=' + template])
+                                             options=['TEMPLATE=' + template])
     ds.GetRasterBand(1).SetNoDataValue(10)
     with hide_substitution_warnings_error_handler():
         ds = None
@@ -508,7 +508,7 @@ def pds4_9():
     </File_Area_Observational>
 </Product_Observational>""")
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options=['TEMPLATE=' + template])
+                                             options=['TEMPLATE=' + template])
     ds.GetRasterBand(1).SetNoDataValue(10)
     with hide_substitution_warnings_error_handler():
         ds = None
@@ -574,14 +574,14 @@ def pds4_11():
 
     filename = '/vsimem/out.xml'
     for (dt, data) in [(gdal.GDT_Byte, struct.pack('B', 255)),
-                        (gdal.GDT_UInt16, struct.pack('H', 65535)),
-                        (gdal.GDT_Int16, struct.pack('h', -32768)),
-                        (gdal.GDT_UInt32, struct.pack('I', 4000000000)),
-                        (gdal.GDT_Int32, struct.pack('i', -2000000000)),
-                        (gdal.GDT_Float32, struct.pack('f', 1.25)),
-                        (gdal.GDT_Float64, struct.pack('d', 1.25)),
-                        (gdal.GDT_CFloat32, struct.pack('ff', 1.25, 2.5)),
-                        (gdal.GDT_CFloat64, struct.pack('dd', 1.25, 2.5))]:
+                       (gdal.GDT_UInt16, struct.pack('H', 65535)),
+                       (gdal.GDT_Int16, struct.pack('h', -32768)),
+                       (gdal.GDT_UInt32, struct.pack('I', 4000000000)),
+                       (gdal.GDT_Int32, struct.pack('i', -2000000000)),
+                       (gdal.GDT_Float32, struct.pack('f', 1.25)),
+                       (gdal.GDT_Float64, struct.pack('d', 1.25)),
+                       (gdal.GDT_CFloat32, struct.pack('ff', 1.25, 2.5)),
+                       (gdal.GDT_CFloat64, struct.pack('dd', 1.25, 2.5))]:
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1, dt)
         ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, data)
         with hide_substitution_warnings_error_handler():
@@ -619,17 +619,17 @@ def pds4_12():
 
     filename = '/vsimem/out.xml'
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-        options=['VAR_LOGICAL_IDENTIFIER=logical_identifier',
-                   'VAR_TITLE=title',
-                   'VAR_INVESTIGATION_AREA_NAME=ian',
-                   'VAR_INVESTIGATION_AREA_LID_REFERENCE=ialr',
-                   'VAR_OBSERVING_SYSTEM_NAME=osn',
-                   'VAR_UNUSED=foo',
-                   'TEMPLATE=data/byte_pds4.xml',
-                   'BOUNDING_DEGREES=1,2,3,4',
-                   'LATITUDE_TYPE=planetographic',
-                   'LONGITUDE_DIRECTION=Positive West',
-                   'IMAGE_FILENAME=/vsimem/myimage.raw'])
+                                             options=['VAR_LOGICAL_IDENTIFIER=logical_identifier',
+                                                      'VAR_TITLE=title',
+                                                      'VAR_INVESTIGATION_AREA_NAME=ian',
+                                                      'VAR_INVESTIGATION_AREA_LID_REFERENCE=ialr',
+                                                      'VAR_OBSERVING_SYSTEM_NAME=osn',
+                                                      'VAR_UNUSED=foo',
+                                                      'TEMPLATE=data/byte_pds4.xml',
+                                                      'BOUNDING_DEGREES=1,2,3,4',
+                                                      'LATITUDE_TYPE=planetographic',
+                                                      'LONGITUDE_DIRECTION=Positive West',
+                                                      'IMAGE_FILENAME=/vsimem/myimage.raw'])
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
@@ -979,7 +979,7 @@ def pds4_14():
     # Invalid value for INTERLEAVE
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('PDS4').Create('/vsimem/out.xml', 1, 1,
-                                        options=['INTERLEAVE=INVALID'])
+                                                 options=['INTERLEAVE=INVALID'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -987,8 +987,8 @@ def pds4_14():
     # INTERLEAVE=BIL not supported for GeoTIFF in PDS4
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('PDS4').Create('/vsimem/out.xml', 1, 1,
-                                        options=['INTERLEAVE=BIL',
-                                                   'IMAGE_FORMAT=GEOTIFF'])
+                                                 options=['INTERLEAVE=BIL',
+                                                          'IMAGE_FORMAT=GEOTIFF'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -996,7 +996,7 @@ def pds4_14():
     # Cannot create GeoTIFF file
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('PDS4').Create('/i/do_not/exist.xml', 1, 1,
-                                        options=['IMAGE_FORMAT=GEOTIFF'])
+                                                 options=['IMAGE_FORMAT=GEOTIFF'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1005,7 +1005,7 @@ def pds4_14():
     # Output file has same name as input file
     with gdaltest.error_handler():
         ds = gdal.Translate('/vsimem/test.xml', '/vsimem/test.tif',
-                   format='PDS4', creationOptions=['IMAGE_FORMAT=GEOTIFF'])
+                            format='PDS4', creationOptions=['IMAGE_FORMAT=GEOTIFF'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1016,7 +1016,7 @@ def pds4_14():
     # Missing Product_Observational root
     gdal.FileFromMemBuffer(template, """<foo/>""")
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options=['TEMPLATE=' + template])
+                                             options=['TEMPLATE=' + template])
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = None
@@ -1032,7 +1032,7 @@ def pds4_14():
                        xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd">
 </Product_Observational>""")
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options=['TEMPLATE=' + template])
+                                             options=['TEMPLATE=' + template])
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
@@ -1052,7 +1052,7 @@ def pds4_14():
                        xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd">
 </Product_Observational>""")
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options=['TEMPLATE=' + template])
+                                             options=['TEMPLATE=' + template])
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = None
@@ -1071,7 +1071,7 @@ def pds4_14():
     <foo/>
 </Product_Observational>""")
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options=['TEMPLATE=' + template])
+                                             options=['TEMPLATE=' + template])
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = None
@@ -1095,7 +1095,7 @@ def pds4_15():
     filename = '/vsimem/out.xml'
     with hide_substitution_warnings_error_handler():
         gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options=['TEMPLATE=data/byte_pds4.xml'])
+                                            options=['TEMPLATE=data/byte_pds4.xml'])
 
     ret = validate_xml(filename)
     if ret == 'fail':
@@ -1125,7 +1125,7 @@ def pds4_16():
     filename = '/vsimem/out.xml'
 
     gdal.FileFromMemBuffer(template,
-"""<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1"
+                           """<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1"
                           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
     http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd">
   <Identification_Area>
@@ -1168,7 +1168,7 @@ def pds4_16():
 </Product_Observational>""")
 
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-        options=['TEMPLATE=' + template])
+                                             options=['TEMPLATE=' + template])
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())

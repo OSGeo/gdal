@@ -184,7 +184,7 @@ gdaltest_list = [
     jpipkak_3,
     jpipkak_4,
     jpipkak_5
- ]
+    ]
 
 if __name__ == '__main__':
 

@@ -424,7 +424,7 @@ def vsiswift_fake_readdir():
     # List containers (empty result)
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something', 200, {'Content-type': 'application/json'},
-        """[]
+                """[]
         """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/')
@@ -438,7 +438,7 @@ def vsiswift_fake_readdir():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something', 200, {'Content-type': 'application/json'},
-        """[ { "name": "mycontainer1", "count": 0, "bytes": 0 },
+                """[ { "name": "mycontainer1", "count": 0, "bytes": 0 },
              { "name": "mycontainer2", "count": 0, "bytes": 0}
            ] """)
     with webserver.install_http_handler(handler):
@@ -453,7 +453,7 @@ def vsiswift_fake_readdir():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something', 200, {'Content-type': 'application/json'},
-        """[ {
+                """[ {
                 "last_modified": "1970-01-01T00:00:01",
                 "bytes": 123456,
                 "name": "foo"
@@ -863,17 +863,17 @@ def vsiswift_cleanup():
 
 
 gdaltest_list = [vsiswift_init,
-                  vsiswift_real_server_errors,
-                  vsiswift_start_webserver,
-                  vsiswift_fake_auth_v1_url,
-                  vsiswift_fake_auth_storage_url_and_auth_token,
-                  vsiswift_stat,
-                  vsiswift_fake_readdir,
-                  vsiswift_fake_write,
-                  vsiswift_fake_unlink,
-                  vsiswift_fake_mkdir_rmdir,
-                  vsiswift_stop_webserver,
-                  vsiswift_cleanup]
+                 vsiswift_real_server_errors,
+                 vsiswift_start_webserver,
+                 vsiswift_fake_auth_v1_url,
+                 vsiswift_fake_auth_storage_url_and_auth_token,
+                 vsiswift_stat,
+                 vsiswift_fake_readdir,
+                 vsiswift_fake_write,
+                 vsiswift_fake_unlink,
+                 vsiswift_fake_mkdir_rmdir,
+                 vsiswift_stop_webserver,
+                 vsiswift_cleanup]
 
 # gdaltest_list = [ vsiswift_init, vsiswift_start_webserver, vsiswift_fake_mkdir_rmdir, vsiswift_stop_webserver, vsiswift_cleanup ]
 

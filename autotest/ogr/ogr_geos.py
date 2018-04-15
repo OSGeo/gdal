@@ -90,7 +90,7 @@ def ogr_geos_difference():
     result = g1.Difference(g2)
 
     if ogrtest.check_feature_geometry(result,
-                                       'POLYGON ((5 5,10 10,10 0,5 5))'):
+                                      'POLYGON ((5 5,10 10,10 0,5 5))'):
         gdaltest.post_reason('Got: %s' % result.ExportToWkt())
         return 'fail'
 
@@ -111,7 +111,7 @@ def ogr_geos_symmetric_difference():
     result = g1.SymmetricDifference(g2)
 
     if ogrtest.check_feature_geometry(result,
-           'MULTIPOLYGON (((5 5,0 0,0 10,5 5)),((5 5,10 10,10 0,5 5)))'):
+                                      'MULTIPOLYGON (((5 5,0 0,0 10,5 5)),((5 5,10 10,10 0,5 5)))'):
         gdaltest.post_reason('Got: %s' % result.ExportToWkt())
         return 'fail'
 
@@ -132,7 +132,7 @@ def ogr_geos_sym_difference():
     result = g1.SymDifference(g2)
 
     if ogrtest.check_feature_geometry(result,
-           'MULTIPOLYGON (((5 5,0 0,0 10,5 5)),((5 5,10 10,10 0,5 5)))'):
+                                      'MULTIPOLYGON (((5 5,0 0,0 10,5 5)),((5 5,10 10,10 0,5 5)))'):
         gdaltest.post_reason('Got: %s' % result.ExportToWkt())
         return 'fail'
 
@@ -346,7 +346,7 @@ def ogr_geos_buffer():
     result = g1.Buffer(1.0, 3)
 
     if ogrtest.check_feature_geometry(result,
-                                       'POLYGON ((0 -1,-0.555570233019607 -0.831469612302542,-0.923879532511288 -0.382683432365087,-0.98078528040323 0.19509032201613,-0.707106781186547 0.707106781186547,9.292893218813452 10.707106781186548,9.690983005625053 10.951056516295154,10.156434465040231 10.987688340595138,10.587785252292473 10.809016994374947,10.891006524188368 10.453990499739547,11 10,11 0,10.866025403784439 -0.5,10.5 -0.866025403784439,10 -1,0 -1))') != 0:
+                                      'POLYGON ((0 -1,-0.555570233019607 -0.831469612302542,-0.923879532511288 -0.382683432365087,-0.98078528040323 0.19509032201613,-0.707106781186547 0.707106781186547,9.292893218813452 10.707106781186548,9.690983005625053 10.951056516295154,10.156434465040231 10.987688340595138,10.587785252292473 10.809016994374947,10.891006524188368 10.453990499739547,11 10,11 0,10.866025403784439 -0.5,10.5 -0.866025403784439,10 -1,0 -1))') != 0:
         gdaltest.post_reason('Got: %s' % result.ExportToWkt())
         return 'fail'
 
@@ -365,7 +365,7 @@ def ogr_geos_centroid():
     centroid = g1.Centroid()
 
     if ogrtest.check_feature_geometry(centroid,
-                                       'POINT(6.666666667 3.333333333)') != 0:
+                                      'POINT(6.666666667 3.333333333)') != 0:
         gdaltest.post_reason('Got: %s' % centroid.ExportToWkt())
         return 'fail'
 
@@ -393,7 +393,7 @@ def ogr_geos_centroid_multipolygon():
     centroid = g1.Centroid()
 
     if ogrtest.check_feature_geometry(centroid,
-                                       'POINT (1.5 0.5)') != 0:
+                                      'POINT (1.5 0.5)') != 0:
         gdaltest.post_reason('Got: %s' % centroid.ExportToWkt())
         return 'fail'
 

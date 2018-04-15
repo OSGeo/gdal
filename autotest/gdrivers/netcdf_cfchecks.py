@@ -922,7 +922,7 @@ class CFChecker:
                         # Variable contains only one value
                         # Bounds array will be 1 dimensional
                         if not ((varData <= boundsData[0] and varData >= boundsData[1]) or \
-                                    (varData >= boundsData[0] and varData <= boundsData[1])):
+                                (varData >= boundsData[0] and varData <= boundsData[1])):
                             print("WARNING (7.1): Data for variable", var, "lies outside cell boundaries")
                             self.warn = self.warn + 1
                     else:
@@ -1042,21 +1042,21 @@ class CFChecker:
       self.formulas['sigma'] = ['p(n,k,j,i)=ptop+sigma(k)*(ps(n,j,i)-ptop)']
 
       self.formulas['hybrid_sigma_pressure'] = ['p(n,k,j,i)=a(k)*p0+b(k)*ps(n,j,i)'
-                                              , 'p(n,k,j,i)=ap(k)+b(k)*ps(n,j,i)']
+                                                , 'p(n,k,j,i)=ap(k)+b(k)*ps(n,j,i)']
 
       self.formulas['atmosphere_hybrid_height_coordinate'] = ['z(n,k,j,i)=a(k)+b(k)*orog(n,j,i)']
 
       self.formulas['ocean_sigma_coordinate'] = ['z(n,k,j,i)=eta(n,j,i)+sigma(k)*(depth(j,i)+eta(n,j,i))']
 
       self.formulas['ocean_s_coordinate'] = ['z(n,k,j,i)=eta(n,j,i)*(1+s(k))+depth_c*s(k)+(depth(j,i)-depth_c)*C(k)'
-                                           , 'C(k)=(1-b)*sinh(a*s(k))/sinh(a)+b*[tanh(a*(s(k)+0.5))/(2*tanh(0.5*a))-0.5]']
+                                             , 'C(k)=(1-b)*sinh(a*s(k))/sinh(a)+b*[tanh(a*(s(k)+0.5))/(2*tanh(0.5*a))-0.5]']
 
       self.formulas['ocean_sigma_z_coordinate'] = ['z(n,k,j,i)=eta(n,j,i)+sigma(k)*(min(depth_c,depth(j,i))+eta(n,j,i))'
-                                                 , 'z(n,k,j,i)=zlev(k)']
+                                                   , 'z(n,k,j,i)=zlev(k)']
 
       self.formulas['ocean_double_sigma_coordinate'] = ['z(k,j,i)=sigma(k)*f(j,i)'
-                                                      , 'z(k,j,i)=f(j,i)+(sigma(k)-1)*(depth(j,i)-f(j,i))'
-                                                      , 'f(j,i)=0.5*(z1+z2)+0.5*(z1-z2)*tanh(2*a/(z1-z2)*(depth(j,i)-href))']
+                                                        , 'z(k,j,i)=f(j,i)+(sigma(k)-1)*(depth(j,i)-f(j,i))'
+                                                        , 'f(j,i)=0.5*(z1+z2)+0.5*(z1-z2)*tanh(2*a/(z1-z2)*(depth(j,i)-href))']
 
   #----------------------------------------
   def parseBlankSeparatedList(self, list):
@@ -1596,12 +1596,12 @@ class CFChecker:
 #        cellMethods="lat: area: maximum (interval: 1 hours interval: 3 hours comment: fred)"
 
         pr1 = re.compile(r'^'
-                      r'(\s*\S+\s*:\s*(\S+\s*:\s*)*'
-                      r'([a-z_]+)'
-                      r'(\s+where\s+\S+(\s+over\s+\S+)?)?'
-                      r'(\s+(over|within)\s+(days|years))?\s*'
-                      r'(\((interval:\s+\d+\s+\S+\s*)*(comment: .+)?.*\))?)'
-                      r'+$')
+                         r'(\s*\S+\s*:\s*(\S+\s*:\s*)*'
+                         r'([a-z_]+)'
+                         r'(\s+where\s+\S+(\s+over\s+\S+)?)?'
+                         r'(\s+(over|within)\s+(days|years))?\s*'
+                         r'(\((interval:\s+\d+\s+\S+\s*)*(comment: .+)?.*\))?)'
+                         r'+$')
 
         # Validate the entire string
         m = pr1.match(cellMethods)
@@ -1612,10 +1612,10 @@ class CFChecker:
 
         # Grab each word-list - dim1: [dim2: [dim3: ...]] method [where type1 [over type2]] [within|over days|years] [(comment)]
         pr2 = re.compile(r'(?P<dimensions>\s*\S+\s*:\s*(\S+\s*:\s*)*'
-                      r'(?P<method>[a-z_]+)'
-                      r'(?:\s+where\s+(?P<type1>\S+)(?:\s+over\s+(?P<type2>\S+))?)?'
-                      r'(?:\s+(?:over|within)\s+(?:days|years))?\s*)'
-                      r'(?P<comment>\([^)]+\))?')
+                         r'(?P<method>[a-z_]+)'
+                         r'(?:\s+where\s+(?P<type1>\S+)(?:\s+over\s+(?P<type2>\S+))?)?'
+                         r'(?:\s+(?:over|within)\s+(?:days|years))?\s*)'
+                         r'(?P<comment>\([^)]+\))?')
 
         substr_iter = pr2.finditer(cellMethods)
 

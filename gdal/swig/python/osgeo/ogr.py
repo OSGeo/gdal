@@ -4723,8 +4723,8 @@ class Feature(_object):
             geom_json_object = None
 
         output = {'type': 'Feature',
-                   'geometry': geom_json_object,
-                   'properties': {}
+                  'geometry': geom_json_object,
+                  'properties': {}
                   }
 
         fid = self.GetFID()

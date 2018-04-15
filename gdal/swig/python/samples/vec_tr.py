@@ -125,8 +125,8 @@ shp_driver.DeleteDataSource(outfile)
 shp_ds = shp_driver.CreateDataSource(outfile)
 
 shp_layer = shp_ds.CreateLayer(in_defn.GetName(),
-                                geom_type=in_defn.GetGeomType(),
-                                srs=in_layer.GetSpatialRef())
+                               geom_type=in_defn.GetGeomType(),
+                               srs=in_layer.GetSpatialRef())
 
 in_field_count = in_defn.GetFieldCount()
 

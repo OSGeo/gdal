@@ -365,17 +365,17 @@ def test_ogr2ogr_lib_15():
 def test_ogr2ogr_lib_16():
 
     tests = [['POINT M (1 2 3)', None, 'POINT M (1 2 3)'],
-              ['POINT M (1 2 3)', 'XY', 'POINT (1 2)'],
-              ['POINT M (1 2 3)', 'XYZ', 'POINT Z (1 2 0)'],
-              ['POINT M (1 2 3)', 'XYM', 'POINT M (1 2 3)'],
-              ['POINT M (1 2 3)', 'XYZM', 'POINT ZM (1 2 0 3)'],
-              ['POINT M (1 2 3)', 'layer_dim', 'POINT M (1 2 3)'],
-              ['POINT ZM (1 2 3 4)', None, 'POINT ZM (1 2 3 4)'],
-              ['POINT ZM (1 2 3 4)', 'XY', 'POINT (1 2)'],
-              ['POINT ZM (1 2 3 4)', 'XYZ', 'POINT Z (1 2 3)'],
-              ['POINT ZM (1 2 3 4)', 'XYM', 'POINT M (1 2 4)'],
-              ['POINT ZM (1 2 3 4)', 'XYZM', 'POINT ZM (1 2 3 4)'],
-              ['POINT ZM (1 2 3 4)', 'layer_dim', 'POINT ZM (1 2 3 4)'],
+             ['POINT M (1 2 3)', 'XY', 'POINT (1 2)'],
+             ['POINT M (1 2 3)', 'XYZ', 'POINT Z (1 2 0)'],
+             ['POINT M (1 2 3)', 'XYM', 'POINT M (1 2 3)'],
+             ['POINT M (1 2 3)', 'XYZM', 'POINT ZM (1 2 0 3)'],
+             ['POINT M (1 2 3)', 'layer_dim', 'POINT M (1 2 3)'],
+             ['POINT ZM (1 2 3 4)', None, 'POINT ZM (1 2 3 4)'],
+             ['POINT ZM (1 2 3 4)', 'XY', 'POINT (1 2)'],
+             ['POINT ZM (1 2 3 4)', 'XYZ', 'POINT Z (1 2 3)'],
+             ['POINT ZM (1 2 3 4)', 'XYM', 'POINT M (1 2 4)'],
+             ['POINT ZM (1 2 3 4)', 'XYZM', 'POINT ZM (1 2 3 4)'],
+             ['POINT ZM (1 2 3 4)', 'layer_dim', 'POINT ZM (1 2 3 4)'],
               ]
     for (wkt_before, dim, wkt_after) in tests:
         srcDS = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)

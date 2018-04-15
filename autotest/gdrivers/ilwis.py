@@ -75,7 +75,7 @@ def ilwis_2():
     tst = gdaltest.GDALTest('ilwis', 'byte.tif', 1, 4672)
 
     return tst.testCreateCopy(check_srs=1, check_gt=1,
-                               new_filename='tmp/byte.mpr')
+                              new_filename='tmp/byte.mpr')
 
 ###############################################################################
 # copy floating point data and use Create interface.
@@ -96,7 +96,7 @@ def ilwis_4():
     tst = gdaltest.GDALTest('ilwis', 'rgbsmall.tif', 2, 21053)
 
     return tst.testCreate(new_filename='tmp/rgb.mpl', check_minmax=0,
-                           out_bands=3)
+                          out_bands=3)
 
 ###############################################################################
 # Test vsi in-memory support.
@@ -107,8 +107,8 @@ def ilwis_5():
     tst = gdaltest.GDALTest('ilwis', 'byte.tif', 1, 4672)
 
     return tst.testCreateCopy(check_srs=1, check_gt=1,
-                               vsimem=1,
-                               new_filename='/vsimem/ilwis/byte.mpr')
+                              vsimem=1,
+                              new_filename='/vsimem/ilwis/byte.mpr')
 
 ###############################################################################
 # Cleanup.

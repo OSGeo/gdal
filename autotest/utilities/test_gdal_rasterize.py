@@ -61,7 +61,7 @@ def test_gdal_rasterize_1():
     # Create a raster to rasterize into.
 
     target_ds = gdal.GetDriverByName('GTiff').Create('tmp/rast1.tif', 100, 100, 3,
-                                                    gdal.GDT_Byte)
+                                                     gdal.GDT_Byte)
     target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
@@ -71,7 +71,7 @@ def test_gdal_rasterize_1():
     # Create a layer to rasterize from.
 
     rast_ogr_ds = \
-              ogr.GetDriverByName('MapInfo File').CreateDataSource('tmp/rast1.tab')
+    ogr.GetDriverByName('MapInfo File').CreateDataSource('tmp/rast1.tab')
     rast_lyr = rast_ogr_ds.CreateLayer('rast1', srs=sr)
 
     rast_lyr.GetLayerDefn()
@@ -137,7 +137,7 @@ def test_gdal_rasterize_2():
     # Create a raster to rasterize into.
 
     target_ds = gdal.GetDriverByName('GTiff').Create('tmp/rast2.tif', 12, 12, 3,
-                                                    gdal.GDT_Byte)
+                                                     gdal.GDT_Byte)
     target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
 
     # Close TIF file

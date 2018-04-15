@@ -423,7 +423,7 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height, tileName
                                     levelMosaicInfo.uly + offsetY * sy, 0, sy])
 
     s_fh = levelMosaicInfo.getDataSet(dec.ulx, dec.uly + height * dec.scaleY,
-                         dec.ulx + width * dec.scaleX, dec.uly)
+                                      dec.ulx + width * dec.scaleX, dec.uly)
     if s_fh is None:
         return
 
@@ -488,8 +488,8 @@ def createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS):
     dec = AffineTransformDecorator([minfo.ulx, minfo.scaleX, 0, minfo.uly, 0, minfo.scaleY])
 
     s_fh = minfo.getDataSet(dec.ulx + offsetX * dec.scaleX, dec.uly + offsetY * dec.scaleY + height * dec.scaleY,
-                         dec.ulx + offsetX * dec.scaleX + width * dec.scaleX,
-                         dec.uly + offsetY * dec.scaleY)
+                            dec.ulx + offsetX * dec.scaleX + width * dec.scaleX,
+                            dec.uly + offsetY * dec.scaleY)
     if s_fh is None:
         return
 
@@ -585,7 +585,7 @@ def addFeature(OGRDataSource, location, xlist, ylist):
 
     OGRFeature.SetField(TileIndexFieldName, location)
     wkt = 'POLYGON ((%f %f,%f %f,%f %f,%f %f,%f %f ))' % (xlist[0], ylist[0],
-            xlist[1], ylist[1], xlist[2], ylist[2], xlist[3], ylist[3], xlist[0], ylist[0])
+                                                          xlist[1], ylist[1], xlist[2], ylist[2], xlist[3], ylist[3], xlist[0], ylist[0])
     OGRGeometry = ogr.CreateGeometryFromWkt(wkt, OGRLayer.GetSpatialRef())
     if (OGRGeometry is None):
         print('Could not create Geometry')

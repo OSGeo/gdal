@@ -648,35 +648,35 @@ def test_ogr2ogr_20():
         return 'skip'
 
     expected_fields = ['a',
-                        'A_1',
-                        'a_1_2',
-                        'aaaaaAAAAA',
-                        'aAaaaAAA_1',
-                        'aaaaaAAAAB',
-                        'aaaaaAAA_2',
-                        'aaaaaAAA_3',
-                        'aaaaaAAA_4',
-                        'aaaaaAAA_5',
-                        'aaaaaAAA_6',
-                        'aaaaaAAA_7',
-                        'aaaaaAAA_8',
-                        'aaaaaAAA_9',
-                        'aaaaaAAA10']
+                       'A_1',
+                       'a_1_2',
+                       'aaaaaAAAAA',
+                       'aAaaaAAA_1',
+                       'aaaaaAAAAB',
+                       'aaaaaAAA_2',
+                       'aaaaaAAA_3',
+                       'aaaaaAAA_4',
+                       'aaaaaAAA_5',
+                       'aaaaaAAA_6',
+                       'aaaaaAAA_7',
+                       'aaaaaAAA_8',
+                       'aaaaaAAA_9',
+                       'aaaaaAAA10']
     expected_data = ['1',
-                      '2',
-                      '3',
-                      '4',
-                      '5',
-                      '6',
-                      '7',
-                      '8',
-                      '9',
-                      '10',
-                      '11',
-                      '12',
-                      '13',
-                      '14',
-                      '15']
+                     '2',
+                     '3',
+                     '4',
+                     '5',
+                     '6',
+                     '7',
+                     '8',
+                     '9',
+                     '10',
+                     '11',
+                     '12',
+                     '13',
+                     '14',
+                     '15']
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp data/Fields.csv')
 
@@ -724,8 +724,8 @@ def test_ogr2ogr_21():
         pass
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() +
-        ' -f GPSTrackMaker tmp/testogr2ogr21.gtm data/dataforogr2ogr21.csv ' +
-        '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')
+                         ' -f GPSTrackMaker tmp/testogr2ogr21.gtm data/dataforogr2ogr21.csv ' +
+                         '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')
     ds = ogr.Open('tmp/testogr2ogr21.gtm')
 
     if ds is None:
@@ -755,8 +755,8 @@ def test_ogr2ogr_22():
         return 'skip'
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() +
-        ' -f "MapInfo File" tmp/testogr2ogr22.mif data/dataforogr2ogr21.csv ' +
-        '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')
+                         ' -f "MapInfo File" tmp/testogr2ogr22.mif data/dataforogr2ogr21.csv ' +
+                         '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')
     ds = ogr.Open('tmp/testogr2ogr22.mif')
 
     if ds is None:
@@ -786,8 +786,8 @@ def test_ogr2ogr_23():
         return 'skip'
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() +
-        ' -f "MapInfo File" tmp/testogr2ogr23.mif data/dataforogr2ogr21.csv ' +
-        '-sql "SELECT comment, name FROM dataforogr2ogr21" -select comment,name -nlt POINT')
+                         ' -f "MapInfo File" tmp/testogr2ogr23.mif data/dataforogr2ogr21.csv ' +
+                         '-sql "SELECT comment, name FROM dataforogr2ogr21" -select comment,name -nlt POINT')
     ds = ogr.Open('tmp/testogr2ogr23.mif')
 
     if ds is None:

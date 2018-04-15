@@ -747,8 +747,8 @@ def ogr_gpkg_12():
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
     for sql in ['SELECT * FROM tbl_linestring_renamed LIMIT 1',
-                 'SELECT * FROM tbl_linestring_renamed ORDER BY fld_integer LIMIT 1',
-                 'SELECT * FROM tbl_linestring_renamed UNION ALL SELECT * FROM tbl_linestring_renamed ORDER BY fld_integer LIMIT 1']:
+                'SELECT * FROM tbl_linestring_renamed ORDER BY fld_integer LIMIT 1',
+                'SELECT * FROM tbl_linestring_renamed UNION ALL SELECT * FROM tbl_linestring_renamed ORDER BY fld_integer LIMIT 1']:
         sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(sql)
         feat = sql_lyr.GetNextFeature()
         if feat is None:
@@ -1360,7 +1360,7 @@ def ogr_gpkg_16():
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpk_16.gpkg')
     ds.CreateLayer('foo')
     ds.ExecuteSQL("INSERT INTO gpkg_extensions ( table_name, column_name, " + \
-        "extension_name, definition, scope ) VALUES ( 'foo', 'geom', 'myext', 'some ext', 'write-only' ) ")
+                  "extension_name, definition, scope ) VALUES ( 'foo', 'geom', 'myext', 'some ext', 'write-only' ) ")
     ds = None
 
     # No warning since we open as read-only
@@ -1412,7 +1412,7 @@ def ogr_gpkg_16():
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpk_16.gpkg')
     ds.CreateLayer('foo')
     ds.ExecuteSQL("INSERT INTO gpkg_extensions ( table_name, column_name, " + \
-        "extension_name, definition, scope ) VALUES ( 'foo', 'geom', 'gpkg_geom_XXXX', 'some ext', 'read-write' ) ")
+                  "extension_name, definition, scope ) VALUES ( 'foo', 'geom', 'gpkg_geom_XXXX', 'some ext', 'read-write' ) ")
     ds = None
 
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg')
@@ -1430,7 +1430,7 @@ def ogr_gpkg_16():
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpk_16.gpkg')
     ds.CreateLayer('foo')
     ds.ExecuteSQL("INSERT INTO gpkg_extensions ( " + \
-        "extension_name, definition, scope ) VALUES ( 'myext', 'some ext', 'write-only' ) ")
+                  "extension_name, definition, scope ) VALUES ( 'myext', 'some ext', 'write-only' ) ")
     ds = None
 
     # No warning since we open as read-only
@@ -3794,7 +3794,7 @@ def ogr_gpkg_42():
 
     # Test without feature_count column
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_42.gpkg',
-                            options=['ADD_GPKG_OGR_CONTENTS=FALSE'])
+                                           options=['ADD_GPKG_OGR_CONTENTS=FALSE'])
     lyr = ds.CreateLayer('foo', geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn('i', ogr.OFTInteger))
     for i in range(5):
@@ -4593,7 +4593,7 @@ def ogr_gpkg_57():
 
     tmpfile = '/vsimem/tmp.gpkg.txt'
     gdal.FileFromMemBuffer(tmpfile,
-"""-- SQL GPKG
+                           """-- SQL GPKG
 CREATE TABLE gpkg_spatial_ref_sys (srs_name,srs_id,organization,organization_coordsys_id,definition,description);
 INSERT INTO "gpkg_spatial_ref_sys" VALUES('',0,'NONE',0,'undefined','');
 CREATE TABLE gpkg_contents (table_name,data_type,identifier,description,last_change,min_x, min_y,max_x, max_y,srs_id);

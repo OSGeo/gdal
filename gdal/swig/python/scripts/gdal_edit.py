@@ -171,7 +171,7 @@ def gdal_edit(argv):
                 val = gdal.GCI_Undefined
             else:
                 sys.stderr.write('Unsupported color interpretation %s.\n' % val + \
-                    'Only red, green, blue, alpha, gray, undefined are supported.\n')
+                                 'Only red, green, blue, alpha, gray, undefined are supported.\n')
                 return Usage()
             colorinterp[band] = val
             i = i + 1
@@ -247,7 +247,7 @@ def gdal_edit(argv):
 
     if lry is not None:
         gt = [ulx, (lrx - ulx) / ds.RasterXSize, 0,
-               uly, 0, (lry - uly) / ds.RasterYSize]
+              uly, 0, (lry - uly) / ds.RasterYSize]
         ds.SetGeoTransform(gt)
 
     if yres is not None:

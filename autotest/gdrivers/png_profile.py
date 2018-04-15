@@ -179,10 +179,10 @@ def png_copy_options_colorimetric_data():
     source_whitepoint = (0.31271, 0.32902, 1.0)
 
     options = ['SOURCE_PRIMARIES_RED=' + cvtTuple2String(source_primaries[0]),
-        'SOURCE_PRIMARIES_GREEN=' + cvtTuple2String(source_primaries[1]),
-        'SOURCE_PRIMARIES_BLUE=' + cvtTuple2String(source_primaries[2]),
-        'SOURCE_WHITEPOINT=' + cvtTuple2String(source_whitepoint),
-        'PNG_GAMMA=1.5']
+               'SOURCE_PRIMARIES_GREEN=' + cvtTuple2String(source_primaries[1]),
+               'SOURCE_PRIMARIES_BLUE=' + cvtTuple2String(source_primaries[2]),
+               'SOURCE_WHITEPOINT=' + cvtTuple2String(source_whitepoint),
+               'PNG_GAMMA=1.5']
 
     driver = gdal.GetDriverByName('PNG')
     driver_tiff = gdal.GetDriverByName('GTiff')
@@ -259,9 +259,9 @@ def png_copy_colorimetric_data():
     source_whitepoint = (0.31271, 0.32902, 1.0)
 
     options = ['SOURCE_PRIMARIES_RED=' + cvtTuple2String(source_primaries[0]),
-        'SOURCE_PRIMARIES_GREEN=' + cvtTuple2String(source_primaries[1]),
-        'SOURCE_PRIMARIES_BLUE=' + cvtTuple2String(source_primaries[2]),
-        'SOURCE_WHITEPOINT=' + cvtTuple2String(source_whitepoint)]
+               'SOURCE_PRIMARIES_GREEN=' + cvtTuple2String(source_primaries[1]),
+               'SOURCE_PRIMARIES_BLUE=' + cvtTuple2String(source_primaries[2]),
+               'SOURCE_WHITEPOINT=' + cvtTuple2String(source_whitepoint)]
 
     options2 = ['PNG_GAMMA=1.5']
 
