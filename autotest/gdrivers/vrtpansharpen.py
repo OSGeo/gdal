@@ -1225,7 +1225,7 @@ def vrtpansharpen_4():
 
     vrt_ds = gdal.Open(xml)
     for dt in [gdal.GDT_Int16, gdal.GDT_UInt16, gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64, gdal.GDT_CFloat64]:
-        data = vrt_ds.GetRasterBand(1).ReadRaster(buf_type = dt)
+        data = vrt_ds.GetRasterBand(1).ReadRaster(buf_type=dt)
         tmp_ds = gdal.GetDriverByName('MEM').Create('',800,400,1,dt)
         tmp_ds.WriteRaster(0,0,800,400,data)
         cs = tmp_ds.GetRasterBand(1).Checksum()
@@ -1306,7 +1306,7 @@ def vrtpansharpen_5():
 </VRTDataset>""" % (gdal.GetDataTypeName(dt), spectral_xml, spectral_xml, spectral_xml)
 
         vrt_ds = gdal.Open(xml)
-        data = vrt_ds.GetRasterBand(1).ReadRaster(buf_type = gdal.GDT_Byte)
+        data = vrt_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Byte)
         tmp_ds = gdal.GetDriverByName('MEM').Create('',800,400,1)
         tmp_ds.WriteRaster(0,0,800,400,data)
         cs = tmp_ds.GetRasterBand(1).Checksum()
@@ -1353,7 +1353,7 @@ def vrtpansharpen_6():
                 options = ['NBITS=%d' % nbits]
             else:
                 options = []
-            mem_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ms.tif', 4, 1, 1, dt, options = options)
+            mem_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ms.tif', 4, 1, 1, dt, options=options)
             ar = numpy.array([[80,125,125,80]])
             if dt == gdal.GDT_UInt16:
                 ar = ar << (12-7)
@@ -1362,7 +1362,7 @@ def vrtpansharpen_6():
             mem_ds.GetRasterBand(1).WriteArray(ar)
             mem_ds = None
 
-            mem_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/pan.tif', 8, 2, 1, dt, options = options)
+            mem_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/pan.tif', 8, 2, 1, dt, options=options)
             ar = numpy.array([[76, 89, 115, 127, 127, 115, 89, 76],
                               [76, 89, 115, 127, 127, 115, 89, 76]])
             if dt == gdal.GDT_UInt16:
@@ -1782,10 +1782,10 @@ def vrtpansharpen_10():
     # Actually go through the optimized impl
     data = vrt_ds.ReadRaster()
     # And check
-    data_int32 = vrt_ds.ReadRaster(buf_type = gdal.GDT_Int32)
+    data_int32 = vrt_ds.ReadRaster(buf_type=gdal.GDT_Int32)
     tmp_ds = gdal.GetDriverByName('MEM').Create('', vrt_ds.RasterXSize, vrt_ds.RasterYSize, vrt_ds.RasterCount, gdal.GDT_Int32)
     tmp_ds.WriteRaster(0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize, data_int32)
-    ref_data = tmp_ds.ReadRaster(buf_type = gdal.GDT_UInt16)
+    ref_data = tmp_ds.ReadRaster(buf_type=gdal.GDT_UInt16)
     if data != ref_data:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1825,10 +1825,10 @@ def vrtpansharpen_10():
     # Actually go through the optimized impl
     data = vrt_ds.ReadRaster()
     # And check
-    data_int32 = vrt_ds.ReadRaster(buf_type = gdal.GDT_Int32)
+    data_int32 = vrt_ds.ReadRaster(buf_type=gdal.GDT_Int32)
     tmp_ds = gdal.GetDriverByName('MEM').Create('', vrt_ds.RasterXSize, vrt_ds.RasterYSize, vrt_ds.RasterCount, gdal.GDT_Int32)
     tmp_ds.WriteRaster(0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize, data_int32)
-    ref_data = tmp_ds.ReadRaster(buf_type = gdal.GDT_UInt16)
+    ref_data = tmp_ds.ReadRaster(buf_type=gdal.GDT_UInt16)
     if data != ref_data:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1864,10 +1864,10 @@ def vrtpansharpen_10():
     # Actually go through the optimized impl
     data = vrt_ds.ReadRaster()
     # And check
-    data_int32 = vrt_ds.ReadRaster(buf_type = gdal.GDT_Int32)
+    data_int32 = vrt_ds.ReadRaster(buf_type=gdal.GDT_Int32)
     tmp_ds = gdal.GetDriverByName('MEM').Create('', vrt_ds.RasterXSize, vrt_ds.RasterYSize, vrt_ds.RasterCount, gdal.GDT_Int32)
     tmp_ds.WriteRaster(0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize, data_int32)
-    ref_data = tmp_ds.ReadRaster(buf_type = gdal.GDT_UInt16)
+    ref_data = tmp_ds.ReadRaster(buf_type=gdal.GDT_UInt16)
     if data != ref_data:
         gdaltest.post_reason('fail')
         return 'fail'

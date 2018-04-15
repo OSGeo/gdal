@@ -287,7 +287,7 @@ def pdf_iso32000():
         return 'skip'
 
     tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None)
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = pdf_checksum_available())
+    ret = tst.testCreateCopy(check_minmax=0, check_gt=1, check_srs=True, check_checksum_not_null=pdf_checksum_available())
 
     return ret
 
@@ -300,8 +300,8 @@ def pdf_iso32000_dpi_300():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options = ['DPI=300'])
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = pdf_checksum_available())
+    tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options=['DPI=300'])
+    ret = tst.testCreateCopy(check_minmax=0, check_gt=1, check_srs=True, check_checksum_not_null=pdf_checksum_available())
 
     return ret
 
@@ -315,8 +315,8 @@ def pdf_ogcbp():
         return 'skip'
 
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'FALSE')
-    tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options = ['GEO_ENCODING=OGC_BP'])
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = pdf_checksum_available())
+    tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options=['GEO_ENCODING=OGC_BP'])
+    ret = tst.testCreateCopy(check_minmax=0, check_gt=1, check_srs=True, check_checksum_not_null=pdf_checksum_available())
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
 
     return ret
@@ -331,8 +331,8 @@ def pdf_ogcbp_dpi_300():
         return 'skip'
 
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'FALSE')
-    tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options = ['GEO_ENCODING=OGC_BP', 'DPI=300'])
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = pdf_checksum_available())
+    tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options=['GEO_ENCODING=OGC_BP', 'DPI=300'])
+    ret = tst.testCreateCopy(check_minmax=0, check_gt=1, check_srs=True, check_checksum_not_null=pdf_checksum_available())
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
 
     return ret
@@ -393,8 +393,8 @@ def pdf_no_compression():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options = ['COMPRESS=NONE'])
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
+    tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options=['COMPRESS=NONE'])
+    ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
 
     return ret
 
@@ -402,7 +402,7 @@ def pdf_no_compression():
 # Test compression methods
 
 
-def pdf_jpeg_compression(filename = 'byte.tif'):
+def pdf_jpeg_compression(filename='byte.tif'):
 
     if gdaltest.pdf_drv is None:
         return 'skip'
@@ -410,8 +410,8 @@ def pdf_jpeg_compression(filename = 'byte.tif'):
     if gdal.GetDriverByName('JPEG') is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('PDF', filename, 1, None, options = ['COMPRESS=JPEG'])
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
+    tst = gdaltest.GDALTest('PDF', filename, 1, None, options=['COMPRESS=JPEG'])
+    ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
 
     return ret
 
@@ -427,7 +427,7 @@ def pdf_get_J2KDriver(drv_name):
     return drv
 
 
-def pdf_jpx_compression(filename, drv_name = None):
+def pdf_jpx_compression(filename, drv_name=None):
 
     if gdaltest.pdf_drv is None:
         return 'skip'
@@ -446,8 +446,8 @@ def pdf_jpx_compression(filename, drv_name = None):
     else:
         options = ['COMPRESS=JPEG2000', 'JPEG2000_DRIVER=%s' % drv_name]
 
-    tst = gdaltest.GDALTest('PDF', filename, 1, None, options = options)
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
+    tst = gdaltest.GDALTest('PDF', filename, 1, None, options=options)
+    ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
 
     return ret
 
@@ -483,7 +483,7 @@ def pdf_jpeg_compression_rgb():
 # Test RGBA
 
 
-def pdf_rgba_default_compression(options_param = []):
+def pdf_rgba_default_compression(options_param=[]):
 
     if gdaltest.pdf_drv is None:
         return 'skip'
@@ -492,7 +492,7 @@ def pdf_rgba_default_compression(options_param = []):
         return 'skip'
 
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
-    out_ds = gdaltest.pdf_drv.CreateCopy('tmp/rgba.pdf', src_ds, options = options_param)
+    out_ds = gdaltest.pdf_drv.CreateCopy('tmp/rgba.pdf', src_ds, options=options_param)
     out_ds = None
 
     #gdal.SetConfigOption('GDAL_PDF_BANDS', '4')
@@ -563,8 +563,8 @@ def pdf_predictor_2():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('PDF', 'utm.tif', 1, None, options = ['PREDICTOR=2'])
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
+    tst = gdaltest.GDALTest('PDF', 'utm.tif', 1, None, options=['PREDICTOR=2'])
+    ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
 
     return ret
 
@@ -574,8 +574,8 @@ def pdf_predictor_2_rgb():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('PDF', 'rgbsmall.tif', 1, None, options = ['PREDICTOR=2'])
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
+    tst = gdaltest.GDALTest('PDF', 'rgbsmall.tif', 1, None, options=['PREDICTOR=2'])
+    ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
 
     return ret
 
@@ -588,8 +588,8 @@ def pdf_tiled():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('PDF', 'utm.tif', 1, None, options = ['COMPRESS=DEFLATE', 'TILED=YES'])
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
+    tst = gdaltest.GDALTest('PDF', 'utm.tif', 1, None, options=['COMPRESS=DEFLATE', 'TILED=YES'])
+    ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
 
     return ret
 
@@ -599,8 +599,8 @@ def pdf_tiled_128():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('PDF', 'utm.tif', 1, None, options = ['BLOCKXSIZE=128', 'BLOCKYSIZE=128'])
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
+    tst = gdaltest.GDALTest('PDF', 'utm.tif', 1, None, options=['BLOCKXSIZE=128', 'BLOCKYSIZE=128'])
+    ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
 
     return ret
 
@@ -617,7 +617,7 @@ def pdf_color_table():
         return 'skip'
 
     tst = gdaltest.GDALTest('PDF', 'bug407.gif', 1, None)
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
+    ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
 
     return ret
 
@@ -631,7 +631,7 @@ def pdf_xmp():
         return 'skip'
 
     src_ds = gdal.Open('data/adobe_style_geospatial_with_xmp.pdf')
-    gdaltest.pdf_drv.CreateCopy('tmp/pdf_xmp.pdf', src_ds, options = ['WRITE_INFO=NO'])
+    gdaltest.pdf_drv.CreateCopy('tmp/pdf_xmp.pdf', src_ds, options=['WRITE_INFO=NO'])
     out_ds = gdal.Open('tmp/pdf_xmp.pdf')
     if out_ds is None:
         # Some Poppler versions cannot re-open the file
@@ -682,7 +682,7 @@ def pdf_info():
     ]
 
     src_ds = gdal.Open('data/byte.tif')
-    out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_info.pdf', src_ds, options = options)
+    out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_info.pdf', src_ds, options=options)
     #print(out_ds.GetMetadata())
     out_ds2 = gdaltest.pdf_drv.CreateCopy('tmp/pdf_info_2.pdf', out_ds)
     md = out_ds2.GetMetadata()
@@ -924,7 +924,7 @@ def pdf_update_xmp():
 # Check SetGCPs() but with GCPs that resolve to a geotransform
 
 
-def pdf_update_gcps(dpi = 300):
+def pdf_update_gcps(dpi=300):
 
     if gdaltest.pdf_drv is None:
         return 'skip'
@@ -934,7 +934,7 @@ def pdf_update_gcps(dpi = 300):
     src_ds = gdal.Open('data/byte.tif')
     src_wkt = src_ds.GetProjectionRef()
     src_gt = src_ds.GetGeoTransform()
-    ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds, options = ['GEO_ENCODING=NONE', 'DPI=%d' % dpi])
+    ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds, options=['GEO_ENCODING=NONE', 'DPI=%d' % dpi])
     ds = None
     src_ds = None
 
@@ -1019,7 +1019,7 @@ def pdf_update_gcps(dpi = 300):
     expected_geom = ogr.Geometry(ogr.wkbPolygon)
     expected_geom.AddGeometry(expected_lr)
 
-    if ogrtest.check_feature_geometry(got_geom, expected_geom, max_error = max_error) != 0:
+    if ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error) != 0:
         gdaltest.post_reason('bad neatline')
         print('got : %s' % got_neatline)
         print('expected : %s' % expected_geom.ExportToWkt())
@@ -1046,7 +1046,7 @@ def pdf_update_gcps_ogc_bp():
 # Check SetGCPs() but with GCPs that do *not* resolve to a geotransform
 
 
-def pdf_set_5_gcps_ogc_bp(dpi = 300):
+def pdf_set_5_gcps_ogc_bp(dpi=300):
 
     if gdaltest.pdf_drv is None:
         return 'skip'
@@ -1096,7 +1096,7 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
     vrt_gcps = vrt_ds.GetGCPs()
 
     # Create PDF
-    ds = gdaltest.pdf_drv.CreateCopy(out_filename, vrt_ds, options = ['GEO_ENCODING=OGC_BP', 'DPI=%d' % dpi])
+    ds = gdaltest.pdf_drv.CreateCopy(out_filename, vrt_ds, options=['GEO_ENCODING=OGC_BP', 'DPI=%d' % dpi])
     ds = None
 
     vrt_ds = None
@@ -1162,7 +1162,7 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
 ###############################################################################
 # Check NEATLINE support
 
-def pdf_set_neatline(geo_encoding, dpi = 300):
+def pdf_set_neatline(geo_encoding, dpi=300):
 
     if gdaltest.pdf_drv is None:
         return 'skip'
@@ -1177,7 +1177,7 @@ def pdf_set_neatline(geo_encoding, dpi = 300):
     # Test CreateCopy() with NEATLINE
     src_ds = gdal.Open('data/byte.tif')
     expected_gt = src_ds.GetGeoTransform()
-    ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds, options = ['NEATLINE=%s' % neatline, 'GEO_ENCODING=%s' % geo_encoding, 'DPI=%d' % dpi])
+    ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds, options=['NEATLINE=%s' % neatline, 'GEO_ENCODING=%s' % geo_encoding, 'DPI=%d' % dpi])
     ds = None
     src_ds = None
 
@@ -1204,7 +1204,7 @@ def pdf_set_neatline(geo_encoding, dpi = 300):
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     expected_geom = ogr.CreateGeometryFromWkt(neatline)
 
-    if ogrtest.check_feature_geometry(got_geom, expected_geom, max_error = max_error) != 0:
+    if ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error) != 0:
         gdaltest.post_reason('bad neatline')
         print('got : %s' % got_neatline)
         print('expected : %s' % expected_geom.ExportToWkt())
@@ -1239,7 +1239,7 @@ def pdf_set_neatline(geo_encoding, dpi = 300):
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     expected_geom = ogr.CreateGeometryFromWkt(neatline)
 
-    if ogrtest.check_feature_geometry(got_geom, expected_geom, max_error = max_error) != 0:
+    if ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error) != 0:
         gdaltest.post_reason('bad neatline')
         print('got : %s' % got_neatline)
         print('expected : %s' % expected_geom.ExportToWkt())
@@ -1269,7 +1269,7 @@ def pdf_check_identity_iso32000():
     out_filename = 'tmp/pdf_check_identity_iso32000.pdf'
 
     src_ds = gdal.Open('data/test_pdf.vrt')
-    out_ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds, options = ['STREAM_COMPRESS=NONE'])
+    out_ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds, options=['STREAM_COMPRESS=NONE'])
     del out_ds
     src_ds = None
 
@@ -1302,7 +1302,7 @@ def pdf_check_identity_ogc_bp():
 
     src_ds = gdal.Open('data/test_pdf.vrt')
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'NO')
-    out_ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds, options = ['GEO_ENCODING=OGC_BP', 'STREAM_COMPRESS=NONE'])
+    out_ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds, options=['GEO_ENCODING=OGC_BP', 'STREAM_COMPRESS=NONE'])
     del out_ds
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
     src_ds = None
@@ -1407,7 +1407,7 @@ if (button == 4) app.launchURL('http://gdal.org/');"""
                 'JAVASCRIPT=%s' % js]
 
     src_ds = gdal.Open('data/byte.tif')
-    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_custom_layout.pdf', src_ds, options = options)
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_custom_layout.pdf', src_ds, options=options)
     ds = None
     src_ds = None
 
@@ -1473,7 +1473,7 @@ def pdf_extra_rasters():
                 'EXCLUSIVE_LAYERS=byte_tif,subbyte']
 
     src_ds = gdal.Open('data/byte.tif')
-    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_extra_rasters.pdf', src_ds, options = options)
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_extra_rasters.pdf', src_ds, options=options)
     ds = None
     src_ds = None
 
@@ -1537,7 +1537,7 @@ def pdf_write_ogr():
     options = ['OGR_DATASOURCE=tmp/test.vrt', 'OGR_DISPLAY_LAYER_NAMES=A_Layer', 'OGR_DISPLAY_FIELD=foo']
 
     src_ds = gdal.Open('data/byte.tif')
-    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr.pdf', src_ds, options = options)
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr.pdf', src_ds, options=options)
     ds = None
     src_ds = None
 
@@ -1558,7 +1558,7 @@ def pdf_write_ogr():
         rendering_options = ['RASTER', 'VECTOR', 'TEXT', 'RASTER,VECTOR', 'RASTER,TEXT', 'VECTOR,TEXT', 'RASTER,VECTOR,TEXT']
         for opt in rendering_options:
             gdal.ErrorReset()
-            ds = gdal.OpenEx('tmp/pdf_write_ogr.pdf', open_options = ['RENDERING_OPTIONS=%s' % opt])
+            ds = gdal.OpenEx('tmp/pdf_write_ogr.pdf', open_options=['RENDERING_OPTIONS=%s' % opt])
             cs = ds.GetRasterBand(1).Checksum()
             # When misconfigured Poppler with fonts, use this to avoid error
             if opt.find('TEXT') >= 0 and gdal.GetLastErrorMsg().find('font') >= 0:
@@ -1646,7 +1646,7 @@ def pdf_write_ogr_with_reprojection():
     options = ['OGR_DATASOURCE=tmp/test.vrt', 'OGR_DISPLAY_LAYER_NAMES=A_Layer', 'OGR_DISPLAY_FIELD=foo']
 
     src_ds = gdal.Open('data/byte.tif')
-    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr_with_reprojection.pdf', src_ds, options = options)
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr_with_reprojection.pdf', src_ds, options=options)
     del ds
     src_ds = None
 
@@ -1681,7 +1681,7 @@ def pdf_jpeg_direct_copy():
         return 'skip'
 
     src_ds = gdal.Open('data/byte_with_xmp.jpg')
-    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_jpeg_direct_copy.pdf', src_ds, options = ['XMP=NO'])
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_jpeg_direct_copy.pdf', src_ds, options=['XMP=NO'])
     ds = None
     src_ds = None
 
@@ -1772,14 +1772,14 @@ def pdf_jpeg_in_vrt_direct_copy():
 # Test reading georeferencing attached to an image, and not to the page (#4695)
 
 
-def pdf_georef_on_image(src_filename = 'data/byte.tif'):
+def pdf_georef_on_image(src_filename='data/byte.tif'):
 
     if gdaltest.pdf_drv is None:
         return 'skip'
 
     src_ds = gdal.Open(src_filename)
     gdal.SetConfigOption('GDAL_PDF_WRITE_GEOREF_ON_IMAGE', 'YES')
-    out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_georef_on_image.pdf', src_ds, options = ['MARGIN=10', 'GEO_ENCODING=NONE'])
+    out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_georef_on_image.pdf', src_ds, options=['MARGIN=10', 'GEO_ENCODING=NONE'])
     del out_ds
     gdal.SetConfigOption('GDAL_PDF_WRITE_GEOREF_ON_IMAGE', None)
     if pdf_checksum_available():
@@ -1851,7 +1851,7 @@ def pdf_write_huge():
 
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options = ['DPI=72'])
+        ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options=['DPI=72'])
         gdal.PopErrorHandler()
         msg = gdal.GetLastErrorMsg()
         if msg == '':
@@ -1871,7 +1871,7 @@ def pdf_write_huge():
         src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options = [option])
+        ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options=[option])
         gdal.PopErrorHandler()
         msg = gdal.GetLastErrorMsg()
         if msg == '':
@@ -1964,13 +1964,13 @@ def pdf_password():
 
     # Wrong password
     with gdaltest.error_handler():
-        ds = gdal.OpenEx('data/byte_enc.pdf', open_options = ['USER_PWD=wrong_password'])
+        ds = gdal.OpenEx('data/byte_enc.pdf', open_options=['USER_PWD=wrong_password'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Correct password
-    ds = gdal.OpenEx('data/byte_enc.pdf', open_options = ['USER_PWD=user_password'])
+    ds = gdal.OpenEx('data/byte_enc.pdf', open_options=['USER_PWD=user_password'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2066,7 +2066,7 @@ def pdf_metadata():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    gdal.Translate('tmp/pdf_metadata.pdf', 'data/byte.tif', format = 'PDF', metadataOptions = ['FOO=BAR'])
+    gdal.Translate('tmp/pdf_metadata.pdf', 'data/byte.tif', format='PDF', metadataOptions=['FOO=BAR'])
     ds = gdal.Open('tmp/pdf_metadata.pdf')
     md = ds.GetMetadata()
     if 'FOO' not in md:
@@ -2102,7 +2102,7 @@ def pdf_pam_georef():
         return 'fail'
 
     # Now disable internal georeferencing, so georef should go to PAM
-    gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds, options = ['GEO_ENCODING=NONE'])
+    gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds, options=['GEO_ENCODING=NONE'])
     if not os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml'):
         gdaltest.post_reason('fail')
         return 'fail'

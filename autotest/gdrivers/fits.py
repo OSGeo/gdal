@@ -64,7 +64,7 @@ class TestFITS:
             return 'skip'
 
         ds = gdal.Open('../gcore/data/' + self.fileName + '.tif')
-        gdaltest.fitsDriver.CreateCopy('tmp/' + self.fileName + '.fits', ds, options = ['PAGESIZE=2,2'])
+        gdaltest.fitsDriver.CreateCopy('tmp/' + self.fileName + '.fits', ds, options=['PAGESIZE=2,2'])
 
         ds2 = gdal.Open('tmp/' + self.fileName + '.fits')
         if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():

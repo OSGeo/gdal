@@ -75,7 +75,7 @@ def nitf_3():
 ###############################################################################
 # Test direction creation of an NITF file.
 
-def nitf_create(creation_options, set_inverted_color_interp = True, createcopy = False):
+def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=False):
 
     drv = gdal.GetDriverByName('NITF')
 
@@ -105,12 +105,12 @@ def nitf_create(creation_options, set_inverted_color_interp = True, createcopy =
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
-                        buf_type = gdal.GDT_Int16,
-                        band_list = [1,2,3])
+                        buf_type=gdal.GDT_Int16,
+                        band_list=[1,2,3])
 
     if createcopy:
         ds = drv.CreateCopy('tmp/test_create.ntf', ds,
-                            options = creation_options)
+                            options=creation_options)
 
     ds = None
 
@@ -128,7 +128,7 @@ def nitf_4():
 ###############################################################################
 # Verify created file
 
-def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_interp = True):
+def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_interp=True):
     ds = gdal.Open('tmp/test_create.ntf')
 
     chksum = ds.GetRasterBand(1).Checksum()
@@ -195,8 +195,8 @@ def nitf_5():
 def nitf_6():
 
     tst = gdaltest.GDALTest('NITF', 'rgb.ntf', 3, 21349)
-    return tst.testOpen(check_prj = 'WGS84',
-                         check_gt = (-44.842029478458, 0.003503401360, 0,
+    return tst.testOpen(check_prj='WGS84',
+                         check_gt=(-44.842029478458, 0.003503401360, 0,
                                      -22.930748299319, 0, -0.003503401360))
 
 ###############################################################################
@@ -206,7 +206,7 @@ def nitf_6():
 def nitf_7():
 
     tst = gdaltest.GDALTest('NITF', 'rgbsmall.tif', 3, 21349)
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # Verify we can open an NSIF file, and get metadata including BLOCKA.
@@ -251,7 +251,7 @@ def nitf_9():
 
     src_ds = gdal.Open('data/rgbsmall.tif')
     ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf9.ntf', src_ds,
-                                                  options = ['IC=C3'])
+                                                  options=['IC=C3'])
     src_ds = None
     ds = None
 
@@ -359,8 +359,8 @@ def nitf_13():
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
-                        buf_type = gdal.GDT_Int16,
-                        band_list = [1])
+                        buf_type=gdal.GDT_Int16,
+                        band_list=[1])
 
     ds = None
 
@@ -409,7 +409,7 @@ def nitf_15():
 
     tst = gdaltest.GDALTest('NITF', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # Checks a 1-bit mono with mask table having (0x00) black as transparent with white arrow.
@@ -582,8 +582,8 @@ def nitf_28_jp2ecw():
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
 
-    if nitf_create(['ICORDS=G', 'IC=C8', 'TARGET=75'], set_inverted_color_interp = False) == 'success':
-        ret = nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp = False)
+    if nitf_create(['ICORDS=G', 'IC=C8', 'TARGET=75'], set_inverted_color_interp=False) == 'success':
+        ret = nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp=False)
         if ret == 'success':
             gdaltest.nitf_28_jp2ecw_is_ok = True
     else:
@@ -591,7 +591,7 @@ def nitf_28_jp2ecw():
 
     tmpfilename = '/vsimem/nitf_28_jp2ecw.ntf'
     src_ds = gdal.GetDriverByName('MEM').Create('',1025,1025)
-    gdal.GetDriverByName('NITF').CreateCopy(tmpfilename, src_ds, options = ['IC=C8'])
+    gdal.GetDriverByName('NITF').CreateCopy(tmpfilename, src_ds, options=['IC=C8'])
     ds = gdal.Open(tmpfilename)
     blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
     ds = None
@@ -624,7 +624,7 @@ def nitf_28_jp2mrsid():
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2MrSID')
 
-    ret = nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp = False)
+    ret = nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp=False)
 
     gdaltest.reregister_all_jpeg2000_drivers()
 
@@ -649,7 +649,7 @@ def nitf_28_jp2kak():
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2KAK')
 
-    ret = nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp = False)
+    ret = nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp=False)
 
     gdaltest.reregister_all_jpeg2000_drivers()
 
@@ -674,7 +674,7 @@ def nitf_28_jp2openjpeg():
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
 
-    ret = nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp = False)
+    ret = nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp=False)
 
     gdaltest.reregister_all_jpeg2000_drivers()
 
@@ -696,14 +696,14 @@ def nitf_28_jp2openjpeg_bis():
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
 
-    if nitf_create(['ICORDS=G', 'IC=C8', 'QUALITY=25'], set_inverted_color_interp = False, createcopy = True) == 'success':
-        ret = nitf_check_created_file(31604, 42782, 38791, set_inverted_color_interp = False)
+    if nitf_create(['ICORDS=G', 'IC=C8', 'QUALITY=25'], set_inverted_color_interp=False, createcopy=True) == 'success':
+        ret = nitf_check_created_file(31604, 42782, 38791, set_inverted_color_interp=False)
     else:
         ret = 'fail'
 
     tmpfilename = '/vsimem/nitf_28_jp2openjpeg_bis.ntf'
     src_ds = gdal.GetDriverByName('MEM').Create('',1025,1025)
-    gdal.GetDriverByName('NITF').CreateCopy(tmpfilename, src_ds, options = ['IC=C8'])
+    gdal.GetDriverByName('NITF').CreateCopy(tmpfilename, src_ds, options=['IC=C8'])
     ds = gdal.Open(tmpfilename)
     blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
     ds = None
@@ -808,7 +808,7 @@ def nitf_30():
 
     # Test overriding src BLOCKA metadata with NITF_BLOCKA creation options
     gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf30_override.ntf', src_ds,
-        options = ['BLOCKA_BLOCK_INSTANCE_01=01',
+        options=['BLOCKA_BLOCK_INSTANCE_01=01',
                    'BLOCKA_BLOCK_COUNT=01',
                    'BLOCKA_N_GRAY_01=00000',
                    'BLOCKA_L_LINES_01=01000',
@@ -840,7 +840,7 @@ def nitf_30():
 
     # Test overriding src BLOCKA metadata with TRE=BLOCKA= creation option
     gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf30_override.ntf', src_ds,
-        options = ['TRE=BLOCKA=010000001000000000                +42.319331+020.078400+42.317083+020.126072+42.281634+020.122570+42.283881+020.074924xxxxx'
+        options=['TRE=BLOCKA=010000001000000000                +42.319331+020.078400+42.317083+020.126072+42.281634+020.122570+42.283881+020.074924xxxxx'
                    ])
     ds = gdal.Open('/vsimem/nitf30_override.ntf')
     md = ds.GetMetadata()
@@ -862,7 +862,7 @@ def nitf_30():
         return 'fail'
 
     # Test that gdal_translate -ullr doesn't propagate BLOCKA
-    gdal.Translate('/vsimem/nitf30_no_src_md.ntf', src_ds, format = 'NITF', outputBounds = [2,49,3,50])
+    gdal.Translate('/vsimem/nitf30_no_src_md.ntf', src_ds, format='NITF', outputBounds=[2,49,3,50])
     ds = gdal.Open('/vsimem/nitf30_no_src_md.ntf')
     md = ds.GetMetadata()
     ds = None
@@ -873,7 +873,7 @@ def nitf_30():
 
     # Test USE_SRC_NITF_METADATA=NO
     gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf30_no_src_md.ntf', src_ds,
-                                            options = ['USE_SRC_NITF_METADATA=NO'])
+                                            options=['USE_SRC_NITF_METADATA=NO'])
     ds = gdal.Open('/vsimem/nitf30_no_src_md.ntf')
     md = ds.GetMetadata()
     ds = None
@@ -956,7 +956,7 @@ def nitf_33():
 
 def nitf_34():
 
-    tst = gdaltest.GDALTest('NITF', 'n43.dt0', 1, 49187, options = ['BLOCKSIZE=64'])
+    tst = gdaltest.GDALTest('NITF', 'n43.dt0', 1, 49187, options=['BLOCKSIZE=64'])
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -1003,7 +1003,7 @@ def nitf_36():
 
     src_ds = gdal.Open('data/rgbsmall.tif')
     ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf36.ntf', src_ds,
-                                                  options = ['IC=C3', 'BLOCKSIZE=32', 'QUALITY=100'])
+                                                  options=['IC=C3', 'BLOCKSIZE=32', 'QUALITY=100'])
     src_ds = None
     ds = None
 
@@ -1084,14 +1084,14 @@ def nitf_38():
     data = ds.GetRasterBand(1).ReadRaster(0, 0, nXSize, nYSize)
     expected_cs = ds.GetRasterBand(1).Checksum()
 
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf38.ntf', nXSize, nYSize, 1, options = ['NUMI=999'])
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf38.ntf', nXSize, nYSize, 1, options=['NUMI=999'])
     ds = None
 
     ds = gdal.Open('NITF_IM:998:tmp/nitf38.ntf', gdal.GA_Update)
     ds.GetRasterBand(1).WriteRaster(0, 0, nXSize, nYSize, data)
 
     # Create overviews
-    ds.BuildOverviews(overviewlist = [2])
+    ds.BuildOverviews(overviewlist=[2])
 
     ds = None
 
@@ -1168,7 +1168,7 @@ def nitf_39():
 
     src_ds = gdal.Open('data/rgbsmall.tif')
     ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf39.ntf', src_ds,
-                                                  options = ['IC=M3', 'BLOCKSIZE=32', 'QUALITY=100'])
+                                                  options=['IC=M3', 'BLOCKSIZE=32', 'QUALITY=100'])
     src_ds = None
     ds = None
 
@@ -1207,7 +1207,7 @@ def nitf_40():
     x = width - 1
     y = height - 1
 
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf40.ntf', width, height, options = ['BLOCKSIZE=256'])
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf40.ntf', width, height, options=['BLOCKSIZE=256'])
     data = struct.pack('B' * 1, 123)
 
     # Write a non NULL byte at the bottom right corner of the image (around 10 GB offset)
@@ -1304,7 +1304,7 @@ def nitf_42():
         return 'skip'
 
     ds = gdal.Open('data/U_4017A.NTF')
-    out_ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf42.ntf', ds, options = ['IC=C3', 'FHDR=NITF02.10'])
+    out_ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf42.ntf', ds, options=['IC=C3', 'FHDR=NITF02.10'])
     del out_ds
 
     ds = gdal.Open('tmp/nitf42.ntf')
@@ -1340,7 +1340,7 @@ def nitf_43(driver_to_test, options):
 
     ds = gdal.Open('data/byte.tif')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    out_ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf_43.ntf', ds, options = options, strict=0)
+    out_ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf_43.ntf', ds, options=options, strict=0)
     gdal.PopErrorHandler()
     out_ds = None
     out_ds = gdal.Open('tmp/nitf_43.ntf')
@@ -1412,7 +1412,7 @@ def nitf_45():
     shutil.copyfile('data/two_images_jpeg.ntf', 'tmp/nitf45.ntf')
 
     ds = gdal.Open('NITF_IM:1:tmp/nitf45.ntf', gdal.GA_Update)
-    ds.BuildOverviews(overviewlist = [2])
+    ds.BuildOverviews(overviewlist=[2])
     # FIXME ? ds.GetRasterBand(1).GetOverview(0) is None until we reopen
     ds = None
 
@@ -1457,7 +1457,7 @@ def nitf_46(driver_to_test):
     shutil.copyfile('data/two_images_jp2.ntf', 'tmp/nitf46.ntf')
 
     ds = gdal.Open('NITF_IM:1:tmp/nitf46.ntf', gdal.GA_Update)
-    ds.BuildOverviews(overviewlist = [2])
+    ds.BuildOverviews(overviewlist=[2])
     # FIXME ? ds.GetRasterBand(1).GetOverview(0) is None until we reopen
     ds = None
 
@@ -1542,7 +1542,7 @@ def nitf_48():
     shutil.copyfile('data/rset.ntf.r2', 'tmp/rset.ntf.r2')
 
     ds = gdal.Open('tmp/rset.ntf.r0', gdal.GA_Update)
-    ds.BuildOverviews(overviewlist = [3])
+    ds.BuildOverviews(overviewlist=[3])
     ds = None
 
     ds = gdal.Open('tmp/rset.ntf.r0')
@@ -1587,7 +1587,7 @@ def nitf_49():
 
     # This will check that the creation option overrides the TEXT metadata domain from the source
     ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf49.ntf', src_ds,
-                                                  options = options)
+                                                  options=options)
 
     # Test copy from source TEXT and CGM metadata domains
     ds2 = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf49_2.ntf', ds)
@@ -1634,11 +1634,11 @@ def nitf_50():
         pass
 
     # This will check that the creation option overrides the TEXT metadata domain from the source
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf50.ntf', 100, 100, 3, options = options)
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf50.ntf', 100, 100, 3, options=options)
 
     ds.WriteRaster(0, 0, 100, 100, '   ', 1, 1,
-                    buf_type = gdal.GDT_Byte,
-                    band_list = [1,2,3])
+                    buf_type=gdal.GDT_Byte,
+                    band_list=[1,2,3])
 
     ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_BlueBand)
     ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
@@ -1695,7 +1695,7 @@ def nitf_51():
 
             ds = gdal.Open('tmp/nitf51.ntf')
             if nbpp == 12:
-                data = ds.GetRasterBand(1).ReadRaster(0, 0, xsize, 1, buf_type = gdal.GDT_UInt16)
+                data = ds.GetRasterBand(1).ReadRaster(0, 0, xsize, 1, buf_type=gdal.GDT_UInt16)
                 arr = struct.unpack('H' * xsize, data)
             else:
                 data = ds.GetRasterBand(1).ReadRaster(0, 0, xsize, 1)
@@ -1719,8 +1719,7 @@ def nitf_51():
 def nitf_52():
 
     # Create a fake NITF file with GeoSDE TREs (probably not conformant, but enough to test GDAL code)
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf52.ntf', 1, 1, options = \
-         ['FILE_TRE=GEOPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789012345EURM                                                                                                                                                                                                                                                                                                                                                                 ', \
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf52.ntf', 1, 1, options=['FILE_TRE=GEOPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789012345EURM                                                                                                                                                                                                                                                                                                                                                                 ', \
           'FILE_TRE=PRJPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789AC0000000000000000000000000000000', \
           'TRE=MAPLOB=M  0001000010000000000100000000000005000000'])
     ds = None
@@ -1748,7 +1747,7 @@ def nitf_52():
 
 def nitf_53():
 
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf53.ntf', 2, 2, options = ['ICORDS=N'])
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf53.ntf', 2, 2, options=['ICORDS=N'])
     ds = None
 
     f = open('tmp/nitf53.ntf', 'rb+')
@@ -1796,7 +1795,7 @@ def nitf_54():
     # Create a fake NITF file with RPC00B TRE (probably not conformant, but enough to test GDAL code)
     RPC00B='100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
 
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf54.ntf', 1, 1, options = ['TRE=RPC00B=' + RPC00B])
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf54.ntf', 1, 1, options=['TRE=RPC00B=' + RPC00B])
     ds = None
 
     ds = gdal.Open('tmp/nitf54.ntf')
@@ -1818,7 +1817,7 @@ def nitf_55():
     # Create a fake NITF file with ICHIPB TRE (probably not conformant, but enough to test GDAL code)
     ICHIPB='00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
 
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf55.ntf', 1, 1, options = ['TRE=ICHIPB=' + ICHIPB])
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf55.ntf', 1, 1, options=['TRE=ICHIPB=' + ICHIPB])
     ds = None
 
     ds = gdal.Open('tmp/nitf55.ntf')
@@ -1840,7 +1839,7 @@ def nitf_56():
     # Create a fake NITF file with USE00A TRE (probably not conformant, but enough to test GDAL code)
     USE00A='00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
 
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf56.ntf', 1, 1, options = ['TRE=USE00A=' + USE00A])
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf56.ntf', 1, 1, options=['TRE=USE00A=' + USE00A])
     ds = None
 
     ds = gdal.Open('tmp/nitf56.ntf')
@@ -1862,7 +1861,7 @@ def nitf_57():
     # Create a fake NITF file with GEOLOB TRE
     GEOLOB='000000360000000360-180.000000000090.000000000000'
 
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf57.ntf', 1, 1, options = ['TRE=GEOLOB=' + GEOLOB])
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf57.ntf', 1, 1, options=['TRE=GEOLOB=' + GEOLOB])
     ds = None
 
     ds = gdal.Open('tmp/nitf57.ntf')
@@ -1885,7 +1884,7 @@ def nitf_58():
     # Create a fake NITF file with STDIDC TRE (probably not conformant, but enough to test GDAL code)
     STDIDC='00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
 
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf58.ntf', 1, 1, options = ['TRE=STDIDC=' + STDIDC])
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf58.ntf', 1, 1, options=['TRE=STDIDC=' + STDIDC])
     ds = None
 
     ds = gdal.Open('tmp/nitf58.ntf')
@@ -1909,7 +1908,7 @@ def nitf_read_IMRFCA_IMASDA():
     IMASDA='0' * 242
 
     tmpfile = '/vsimem/nitf_read_IMRFCA_IMASDA.ntf'
-    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA, 'TRE=IMASDA=' + IMASDA])
+    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options=['TRE=IMRFCA=' + IMRFCA, 'TRE=IMASDA=' + IMASDA])
     ds = gdal.Open(tmpfile)
     md = ds.GetMetadata('RPC')
     ds = None
@@ -1920,7 +1919,7 @@ def nitf_read_IMRFCA_IMASDA():
         return 'fail'
 
     # Only IMRFCA
-    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA])
+    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options=['TRE=IMRFCA=' + IMRFCA])
     ds = gdal.Open(tmpfile)
     md = ds.GetMetadata('RPC')
     ds = None
@@ -1931,7 +1930,7 @@ def nitf_read_IMRFCA_IMASDA():
         return 'fail'
 
     # Only IMASDA
-    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMASDA=' + IMASDA])
+    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options=['TRE=IMASDA=' + IMASDA])
     ds = gdal.Open(tmpfile)
     md = ds.GetMetadata('RPC')
     ds = None
@@ -1943,7 +1942,7 @@ def nitf_read_IMRFCA_IMASDA():
 
     # Too short IMRFCA
     with gdaltest.error_handler():
-        gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA[0:-1], 'TRE=IMASDA=' + IMASDA])
+        gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options=['TRE=IMRFCA=' + IMRFCA[0:-1], 'TRE=IMASDA=' + IMASDA])
         ds = gdal.Open(tmpfile)
     md = ds.GetMetadata('RPC')
     ds = None
@@ -1955,7 +1954,7 @@ def nitf_read_IMRFCA_IMASDA():
 
     # Too short IMASDA
     with gdaltest.error_handler():
-        gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA, 'TRE=IMASDA=' + IMASDA[0:-1]])
+        gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options=['TRE=IMRFCA=' + IMRFCA, 'TRE=IMASDA=' + IMASDA[0:-1]])
         ds = gdal.Open(tmpfile)
     md = ds.GetMetadata('RPC')
     ds = None
@@ -1975,7 +1974,7 @@ def nitf_59():
 
     shutil.copyfile('data/nitf59.nfw', 'tmp/nitf59.nfw')
     shutil.copyfile('data/nitf59.hdr', 'tmp/nitf59.hdr')
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf59.ntf', 1, 1, options = ['ICORDS=N'])
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf59.ntf', 1, 1, options=['ICORDS=N'])
     ds = None
 
     ds = gdal.Open('tmp/nitf59.ntf')
@@ -2056,7 +2055,7 @@ def nitf_62():
     # 80+1 characters
     comments = '012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678ZA'
 
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf62.ntf', 1, 1, options = ['ICOM=' + comments])
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf62.ntf', 1, 1, options=['ICOM=' + comments])
     ds = None
 
     ds = gdal.Open('tmp/nitf62.ntf')
@@ -2077,7 +2076,7 @@ def nitf_62():
 
 def nitf_63():
 
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf63.ntf', 50, 25, 3, gdal.GDT_Int16, options = ['BLOCKXSIZE=256'])
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf63.ntf', 50, 25, 3, gdal.GDT_Int16, options=['BLOCKXSIZE=256'])
     ds = None
 
     try:
@@ -2125,7 +2124,7 @@ def nitf_64():
     sr.SetWellKnownGeogCS('WGS84')
     src_ds.SetProjection(sr.ExportToWkt())
 
-    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_64.ntf', src_ds, options = ['ICORDS=D'])
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_64.ntf', src_ds, options=['ICORDS=D'])
     ds = None
 
     ds = gdal.Open('/vsimem/nitf_64.ntf')
@@ -2139,7 +2138,7 @@ def nitf_64():
             return 'fail'
     ds = None
 
-    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_64.ntf', src_ds, options = ['ICORDS=G'])
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_64.ntf', src_ds, options=['ICORDS=G'])
     ds = None
 
     ds = gdal.Open('/vsimem/nitf_64.ntf')
@@ -2153,7 +2152,7 @@ def nitf_64():
             return 'fail'
     ds = None
 
-    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_64.ntf', src_ds, options = ['SDE_TRE=YES'])
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_64.ntf', src_ds, options=['SDE_TRE=YES'])
     ds = None
 
     ds = gdal.Open('/vsimem/nitf_64.ntf')
@@ -2179,7 +2178,7 @@ def nitf_64():
 
 def nitf_65():
 
-    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_65.ntf', 10000, 100, options = ['BLOCKXSIZE=10000'])
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_65.ntf', 10000, 100, options=['BLOCKXSIZE=10000'])
     ds = None
 
     ds = gdal.Open('/vsimem/nitf_65.ntf')
@@ -2201,7 +2200,7 @@ def nitf_65():
 
 def nitf_66():
 
-    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_66.ntf', 100, 10000, options = ['BLOCKYSIZE=10000', 'BLOCKXSIZE=50'])
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_66.ntf', 100, 10000, options=['BLOCKYSIZE=10000', 'BLOCKXSIZE=50'])
     ds = None
 
     ds = gdal.Open('/vsimem/nitf_66.ntf')
@@ -2225,7 +2224,7 @@ def nitf_67():
 
     src_ds = gdal.Open('data/byte.tif')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_67.ntf', src_ds, options = ['BLOCKYSIZE=1', 'BLOCKXSIZE=10'], strict=0)
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_67.ntf', src_ds, options=['BLOCKYSIZE=1', 'BLOCKXSIZE=10'], strict=0)
     gdal.PopErrorHandler()
     ds = None
     src_ds = None
@@ -2296,7 +2295,7 @@ def nitf_69():
 
     # Test Create() and SetGCPs()
     src_ds = gdal.Open('/vsimem/nitf_69_src.ntf')
-    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_69_dest.ntf', 20, 20, 1, options = ['ICORDS=G'])
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_69_dest.ntf', 20, 20, 1, options=['ICORDS=G'])
     ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection())
     ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection()) # To check we can call it several times without error
     ds = None
@@ -2351,12 +2350,12 @@ def nitf_70():
     src_ds = gdal.Open('data/rgbsmall.tif')
 
     ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf_70.ntf', src_ds,
-                                                  options = ['IC=C3', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'])
+                                                  options=['IC=C3', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'])
     ds = None
 
     # For comparison
     ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/nitf_70.tif', src_ds,
-                                                  options = ['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'TILED=YES', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'])
+                                                  options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'TILED=YES', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'])
     ds = None
     src_ds = None
 
@@ -2384,8 +2383,7 @@ def nitf_70():
 
 def nitf_71():
 
-    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_71.ntf', 1, 1, options = \
-             ['TRE=ENGRDA=0123456789012345678900210012345678901230123X01200000002XY01X01230123X01200000001X'])
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_71.ntf', 1, 1, options=['TRE=ENGRDA=0123456789012345678900210012345678901230123X01200000002XY01X01230123X01200000001X'])
     ds = None
 
     ds = gdal.Open('/vsimem/nitf_71.ntf')
@@ -2565,7 +2563,7 @@ def nitf_72():
     gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_72_copy.ntf')
 
     # Test that RPC00B = NO works
-    gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds, options = ['RPC00B=NO'])
+    gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds, options=['RPC00B=NO'])
 
     if gdal.VSIStatL('/vsimem/nitf_72.ntf.aux.xml') is None:
         gdaltest.post_reason('fail: PAM file was expected')
@@ -2710,7 +2708,7 @@ def nitf_72():
 
     # Test RPCTXT creation option
     with gdaltest.error_handler():
-        gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds, options = ['RPCTXT=YES'])
+        gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds, options=['RPCTXT=YES'])
 
     if gdal.VSIStatL('/vsimem/nitf_72.ntf.aux.xml') is None:
         gdaltest.post_reason('fail: PAM file was expected')
@@ -2790,8 +2788,7 @@ def nitf_73():
 
 def nitf_74():
 
-    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_74.ntf', 1, 1, options = \
-             ['FILE_TRE=CCINFA=0012AS 17ge:GENC:3:3-5:AUS00000'])
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_74.ntf', 1, 1, options=['FILE_TRE=CCINFA=0012AS 17ge:GENC:3:3-5:AUS00000'])
     ds = None
 
     ds = gdal.Open('/vsimem/nitf_74.ntf')
@@ -2887,8 +2884,7 @@ def nitf_75():
     </genc:localShortName>
 </genc:GeopoliticalEntityEntry>"""
 
-    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_75.ntf', 1, 1, options = \
-             ['TRE=CCINFA=0062RQ 17ge:GENC:3:3-5:PRI000002RQ 20as:ISO2:6:II-3:US-PR000002BM 17ge:GENC:3:3-5:MMR04108 ' + \
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_75.ntf', 1, 1, options=['TRE=CCINFA=0062RQ 17ge:GENC:3:3-5:PRI000002RQ 20as:ISO2:6:II-3:US-PR000002BM 17ge:GENC:3:3-5:MMR04108 ' + \
                  listing_AG1 + '3MMR 19ge:ISO1:3:VII-7:MMR00000' + '2S1 19ge:GENC:3:3-alt:SCT000002YYC16gg:1059:2:ed9:3E00000'])
     ds = None
 
@@ -3044,7 +3040,7 @@ def nitf_online_1():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/bugs/NITF21_CGM_ANNO_Uncompressed_unmasked.ntf', 'NITF21_CGM_ANNO_Uncompressed_unmasked.ntf'):
         return 'skip'
 
-    tst = gdaltest.GDALTest('NITF', 'tmp/cache/NITF21_CGM_ANNO_Uncompressed_unmasked.ntf', 1, 13123, filename_absolute = 1)
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/NITF21_CGM_ANNO_Uncompressed_unmasked.ntf', 1, 13123, filename_absolute=1)
 
     # Shut up the warning about missing image segment
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -3081,7 +3077,7 @@ def nitf_online_3():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf1.1/U_0001a.ntf', 'U_0001a.ntf'):
         return 'skip'
 
-    tst = gdaltest.GDALTest('NITF', 'NITF_IM:3:tmp/cache/U_0001a.ntf', 1, 23463, filename_absolute = 1)
+    tst = gdaltest.GDALTest('NITF', 'NITF_IM:3:tmp/cache/U_0001a.ntf', 1, 23463, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -3105,7 +3101,7 @@ def nitf_online_4():
 
     ds = None
 
-    tst = gdaltest.GDALTest('NITF', 'tmp/cache/001zc013.on1', 1, 53960, filename_absolute = 1)
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/001zc013.on1', 1, 53960, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -3118,7 +3114,7 @@ def nitf_online_5():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/cadrg/overview.ovr', 'overview.ovr'):
         return 'skip'
 
-    tst = gdaltest.GDALTest('NITF', 'tmp/cache/overview.ovr', 1, 60699, filename_absolute = 1)
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/overview.ovr', 1, 60699, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -3131,7 +3127,7 @@ def nitf_online_6():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_4001b.ntf', 'U_4001b.ntf'):
         return 'skip'
 
-    tst = gdaltest.GDALTest('NITF', 'tmp/cache/U_4001b.ntf', 1, 60030, filename_absolute = 1)
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/U_4001b.ntf', 1, 60030, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -3193,7 +3189,7 @@ def nitf_online_8():
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3301j.nsf', 'ns3301j.nsf'):
         return 'skip'
 
-    tst = gdaltest.GDALTest('NITF', 'tmp/cache/ns3301j.nsf', 1, 56861, filename_absolute = 1)
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/ns3301j.nsf', 1, 56861, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -3206,7 +3202,7 @@ def nitf_online_9():
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3304a.nsf', 'ns3304a.nsf'):
         return 'skip'
 
-    tst = gdaltest.GDALTest('NITF', 'tmp/cache/ns3304a.nsf', 1, 32419, filename_absolute = 1)
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/ns3304a.nsf', 1, 32419, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -3309,7 +3305,7 @@ def nitf_online_12():
         return 'skip'
 
     tst = gdaltest.GDALTest('NITF', 'tmp/cache/i_3430a.ntf', 1, 38647,
-                             filename_absolute = 1)
+                             filename_absolute=1)
 
     return tst.testOpen()
 
@@ -3409,7 +3405,7 @@ def nitf_online_14():
 # Test opening a IC=C8 NITF file with the various JPEG2000 drivers
 
 
-def nitf_online_15(driver_to_test, expected_cs = 1054):
+def nitf_online_15(driver_to_test, expected_cs=1054):
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/p0_01/p0_01a.ntf', 'p0_01a.ntf'):
         return 'skip'
 
@@ -3636,9 +3632,9 @@ def nitf_online_19():
         return 'skip'
 
     tst = gdaltest.GDALTest('NITF', 'tmp/cache/0000M033.GN3', 1, 38928,
-                             filename_absolute = 1)
+                             filename_absolute=1)
 
-    return tst.testOpen(check_gt = (174.375000000000000,0.010986328125000,0,
+    return tst.testOpen(check_gt=(174.375000000000000,0.010986328125000,0,
                                      51.923076923076927,0,-0.006760817307692))
 
 ###############################################################################
@@ -3784,7 +3780,7 @@ def nitf_online_23():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_3058b.ntf', 'U_3058b.ntf'):
         return 'skip'
 
-    tst = gdaltest.GDALTest('NITF', 'tmp/cache/U_3058b.ntf', 1, 44748, filename_absolute = 1)
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/U_3058b.ntf', 1, 44748, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -3832,7 +3828,7 @@ def nitf_online_25():
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/docs/HRE_spec/Case1_HRE10G324642N1170747W_Uxx.hr5', 'Case1_HRE10G324642N1170747W_Uxx.hr5'):
         return 'skip'
 
-    tst = gdaltest.GDALTest('NITF', 'tmp/cache/Case1_HRE10G324642N1170747W_Uxx.hr5', 1, 7099, filename_absolute = 1)
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/Case1_HRE10G324642N1170747W_Uxx.hr5', 1, 7099, filename_absolute=1)
 
     ret = tst.testOpen()
     if ret != 'success':

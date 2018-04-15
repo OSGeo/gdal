@@ -84,7 +84,7 @@ def plmosaic_3():
 
     gdal.PushErrorHandler()
     gdal.SetConfigOption('PL_URL', '/vsimem/does_not_exist/')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if ds is not None:
@@ -106,7 +106,7 @@ def plmosaic_4():
 
     gdal.PushErrorHandler()
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if ds is not None:
@@ -128,7 +128,7 @@ def plmosaic_5():
 
     gdal.PushErrorHandler()
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if ds is not None:
@@ -150,7 +150,7 @@ def plmosaic_6():
 
     gdal.PushErrorHandler()
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if ds is not None:
@@ -173,7 +173,7 @@ def plmosaic_7():
 }""")
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None:
         gdaltest.post_reason('fail')
@@ -230,7 +230,7 @@ def plmosaic_8():
 }""")
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     if ds.GetMetadata("SUBDATASETS") != {'SUBDATASET_2_NAME': 'PLMOSAIC:mosaic=another_mosaic_name', 'SUBDATASET_2_DESC': 'Mosaic another_mosaic_name', 'SUBDATASET_1_NAME': 'PLMOSAIC:mosaic=my_mosaic_name', 'SUBDATASET_1_DESC': 'Mosaic my_mosaic_name'}:
         gdaltest.post_reason('fail')
@@ -251,7 +251,7 @@ def plmosaic_9():
 
     gdal.PushErrorHandler()
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=does_not_exist'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=does_not_exist'])
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if ds is not None or gdal.GetLastErrorMsg().find('/vsimem/root/?name__is=does_not_exist') < 0:
@@ -273,7 +273,7 @@ def plmosaic_9bis():
     gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('JSON parsing error') < 0:
@@ -295,7 +295,7 @@ def plmosaic_9ter():
     gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{}""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('No mosaic my_mosaic') < 0:
@@ -322,7 +322,7 @@ def plmosaic_10():
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('Missing required parameter') < 0:
@@ -355,7 +355,7 @@ def plmosaic_11():
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('Unsupported coordinate_system') < 0:
@@ -388,7 +388,7 @@ def plmosaic_12():
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('Unsupported data_type') < 0:
@@ -421,7 +421,7 @@ def plmosaic_13():
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('Unsupported resolution') < 0:
@@ -454,7 +454,7 @@ def plmosaic_14():
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('Unsupported quad_size') < 0:
@@ -493,7 +493,7 @@ def plmosaic_15():
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if gdal.GetLastErrorMsg().find('Invalid _links.tiles') < 0:
@@ -570,7 +570,7 @@ def plmosaic_16():
         return 'fail'
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     if ds.GetMetadata("SUBDATASETS") != {}:
         gdaltest.post_reason('fail')
@@ -594,7 +594,7 @@ def plmosaic_17():
         return 'skip'
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
     gdal.SetConfigOption('PL_URL', None)
     if ds is None:
         gdaltest.post_reason('fail')
@@ -690,7 +690,7 @@ def plmosaic_17():
     shutil.rmtree('tmp/plmosaic_cache')
 
     # Good GeoTIFF
-    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/0-2047/full', 4096, 4096, 4, options = ['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
+    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/0-2047/full', 4096, 4096, 4, options=['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
     tmp_ds.GetRasterBand(1).Fill(255)
     tmp_ds = None
 
@@ -708,7 +708,7 @@ def plmosaic_17():
     # Read again from file cache.
     # We change the file behind the scene (but not changing its size)
     # to demonstrate that the cached tile is still use
-    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/0-2047/full', 4096, 4096, 4, options = ['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
+    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/0-2047/full', 4096, 4096, 4, options=['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
     tmp_ds.GetRasterBand(1).Fill(1)
     tmp_ds = None
     val = ds.GetRasterBand(1).ReadRaster(0,0,1,1)
@@ -737,10 +737,10 @@ def plmosaic_17():
 
     # Read again from file cache but the metatile has changed in between
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
     gdal.SetConfigOption('PL_URL', None)
 
-    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/0-2047/full', 4096, 4096, 4, options = ['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
+    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/0-2047/full', 4096, 4096, 4, options=['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
     tmp_ds.SetMetadataItem('foo', 'bar')
     tmp_ds.GetRasterBand(1).Fill(254)
     tmp_ds = None
@@ -766,7 +766,7 @@ def plmosaic_18():
     shutil.rmtree('tmp/plmosaic_cache')
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
     gdal.SetConfigOption('PL_URL', None)
 
     ret = ds.GetRasterBand(1).GetMetadataItem('Pixel_0_0', 'LocationInfo')
@@ -816,7 +816,7 @@ def plmosaic_19():
         return 'skip'
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=/does_not_exist'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=/does_not_exist'])
     gdal.SetConfigOption('PL_URL', None)
     gdal.PushErrorHandler()
     val = ds.ReadRaster(0,0,1,1)
@@ -847,7 +847,7 @@ def plmosaic_20():
         return 'skip'
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH='])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH='])
     gdal.SetConfigOption('PL_URL', None)
     val = ds.ReadRaster(0,0,1,1)
     val = struct.unpack('B' * 4, val)
@@ -876,7 +876,7 @@ def plmosaic_21():
         return 'skip'
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=', 'USE_TILES=YES'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=', 'USE_TILES=YES'])
     gdal.SetConfigOption('PL_URL', None)
 
     gdal.ErrorReset()
@@ -926,7 +926,7 @@ def plmosaic_21():
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=mosaic_uint16', 'CACHE_PATH=', 'USE_TILES=YES'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=mosaic_uint16', 'CACHE_PATH=', 'USE_TILES=YES'])
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg().find('Cannot use tile API for full resolution data on non Byte mosaic') < 0:
@@ -954,7 +954,7 @@ def plmosaic_21():
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=mosaic_without_tiles', 'CACHE_PATH=', 'USE_TILES=YES'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=mosaic_without_tiles', 'CACHE_PATH=', 'USE_TILES=YES'])
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg().find('Cannot find tile definition, so use_tiles will be ignored') < 0:
@@ -1019,7 +1019,7 @@ def plmosaic_with_bbox():
 }""")
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo'])
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     if ds.RasterXSize != 233472:
         gdaltest.post_reason('fail')
@@ -1038,7 +1038,7 @@ def plmosaic_with_bbox():
             return 'fail'
 
     # Good GeoTIFF
-    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/455-1272/full', 4096, 4096, 4, options = ['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
+    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/455-1272/full', 4096, 4096, 4, options=['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
     tmp_ds.GetRasterBand(1).Fill(125)
     tmp_ds = None
 

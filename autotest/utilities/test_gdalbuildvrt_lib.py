@@ -96,7 +96,7 @@ def mycallback(pct, msg, user_data):
 def test_gdalbuildvrt_lib_2():
 
     tab = [0]
-    ds = gdal.BuildVRT('', '../gcore/data/byte.tif', callback = mycallback, callback_data = tab)
+    ds = gdal.BuildVRT('', '../gcore/data/byte.tif', callback=mycallback, callback_data=tab)
     if ds is None:
         return 'fail'
 

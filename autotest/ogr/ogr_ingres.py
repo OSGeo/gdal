@@ -73,7 +73,7 @@ def ogr_ingres_2():
     # Create Layer
     gdaltest.ingres_lyr = gdaltest.ingres_ds.CreateLayer( \
         'tpoly', geom_type=ogr.wkbPolygon,
-        options = ['OVERWRITE=YES'])
+        options=['OVERWRITE=YES'])
 
     #######################################################
     # Setup Schema
@@ -85,7 +85,7 @@ def ogr_ingres_2():
     #######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature(feature_def = gdaltest.ingres_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gdaltest.ingres_lyr.GetLayerDefn())
 
     shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
@@ -125,7 +125,7 @@ def ogr_ingres_3():
         read_feat = gdaltest.ingres_lyr.GetNextFeature()
 
         if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
-                                          max_error = 0.000000001) != 0:
+                                          max_error=0.000000001) != 0:
             return 'fail'
 
         for fld in range(3):

@@ -59,7 +59,7 @@ except:
     has_validate = False
 
 
-def validate(filename, quiet = False):
+def validate(filename, quiet=False):
     if has_validate:
         my_filename = filename
         if my_filename.startswith('/vsimem/'):
@@ -130,7 +130,7 @@ def ogr_gpkg_2():
     if gdaltest.gpkg_dr is None:
         return 'skip'
 
-    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update = 1)
+    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update=1)
 
     # Check there a ogr_empty_table
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT COUNT(*) FROM sqlite_master WHERE name = 'ogr_empty_table'")
@@ -171,15 +171,15 @@ def ogr_gpkg_3():
     #gdal.PushErrorHandler('CPLQuietErrorHandler')
     srs4326 = osr.SpatialReference()
     srs4326.ImportFromEPSG(4326)
-    lyr = gdaltest.gpkg_ds.CreateLayer('first_layer', geom_type = ogr.wkbPoint, srs = srs4326, options = ['GEOMETRY_NAME=gpkg_geometry', 'SPATIAL_INDEX=NO'])
+    lyr = gdaltest.gpkg_ds.CreateLayer('first_layer', geom_type=ogr.wkbPoint, srs=srs4326, options=['GEOMETRY_NAME=gpkg_geometry', 'SPATIAL_INDEX=NO'])
     #gdal.PopErrorHandler()
     if lyr is None:
         return 'fail'
 
     # Test creating a layer with an existing name
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    lyr = gdaltest.gpkg_ds.CreateLayer('a_layer', options = ['SPATIAL_INDEX=NO'])
-    lyr = gdaltest.gpkg_ds.CreateLayer('a_layer', options = ['SPATIAL_INDEX=NO'])
+    lyr = gdaltest.gpkg_ds.CreateLayer('a_layer', options=['SPATIAL_INDEX=NO'])
+    lyr = gdaltest.gpkg_ds.CreateLayer('a_layer', options=['SPATIAL_INDEX=NO'])
     gdal.PopErrorHandler()
     if lyr is not None:
         gdaltest.post_reason('layer creation should have failed')
@@ -203,7 +203,7 @@ def ogr_gpkg_4():
         return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update = 1)
+    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update=1)
     gdal.PopErrorHandler()
 
     if gdaltest.gpkg_ds is None:
@@ -228,7 +228,7 @@ def ogr_gpkg_4():
         return 'fail'
 
     gdaltest.gpkg_ds = None
-    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update = 1)
+    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update=1)
 
     lyr0 = gdaltest.gpkg_ds.GetLayer(0)
 
@@ -237,7 +237,7 @@ def ogr_gpkg_4():
         return 'fail'
 
     gdaltest.gpkg_ds = None
-    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update = 1)
+    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update=1)
 
     lyr0 = gdaltest.gpkg_ds.GetLayer(0)
     lyr1 = gdaltest.gpkg_ds.GetLayer(1)
@@ -308,7 +308,7 @@ def ogr_gpkg_6():
 
     srs4326 = osr.SpatialReference()
     srs4326.ImportFromEPSG(4326)
-    lyr = gdaltest.gpkg_ds.CreateLayer('field_test_layer', geom_type = ogr.wkbPoint, srs = srs4326)
+    lyr = gdaltest.gpkg_ds.CreateLayer('field_test_layer', geom_type=ogr.wkbPoint, srs=srs4326)
     if lyr is None:
         return 'fail'
 
@@ -326,7 +326,7 @@ def ogr_gpkg_6():
         return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update = 1)
+    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update=1)
     gdal.PopErrorHandler()
 
     if gdaltest.gpkg_ds is None:
@@ -464,7 +464,7 @@ def ogr_gpkg_8():
     # Test a non-default SRS
     srs.ImportFromEPSG(32631)
 
-    lyr = gdaltest.gpkg_ds.CreateLayer('tbl_linestring', geom_type = ogr.wkbLineString, srs = srs)
+    lyr = gdaltest.gpkg_ds.CreateLayer('tbl_linestring', geom_type=ogr.wkbLineString, srs=srs)
     if lyr is None:
         return 'fail'
 
@@ -519,7 +519,7 @@ def ogr_gpkg_8():
         return 'fail'
 
     gdaltest.gpkg_ds = None
-    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update = 1)
+    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update=1)
     lyr = gdaltest.gpkg_ds.GetLayerByName('tbl_linestring')
     if lyr.GetLayerDefn().GetFieldDefn(6).GetSubType() != ogr.OFSTBoolean:
         gdaltest.post_reason('fail')
@@ -540,7 +540,7 @@ def ogr_gpkg_8():
         feat.DumpReadable()
         return 'fail'
 
-    lyr = gdaltest.gpkg_ds.CreateLayer('tbl_polygon', geom_type = ogr.wkbPolygon, srs = srs)
+    lyr = gdaltest.gpkg_ds.CreateLayer('tbl_polygon', geom_type=ogr.wkbPolygon, srs=srs)
     if lyr is None:
         return 'fail'
 
@@ -569,7 +569,7 @@ def ogr_gpkg_8():
         return 'fail'
 
     # Test out the 3D support...
-    lyr = gdaltest.gpkg_ds.CreateLayer('tbl_polygon25d', geom_type = ogr.wkbPolygon25D, srs = srs)
+    lyr = gdaltest.gpkg_ds.CreateLayer('tbl_polygon25d', geom_type=ogr.wkbPolygon25D, srs=srs)
     if lyr is None:
         return 'fail'
 
@@ -622,13 +622,13 @@ def ogr_gpkg_11():
         return 'skip'
 
     gdaltest.gpkg_ds = None
-    gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update = 1)
+    gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update=1)
     gdaltest.gpkg_ds.ExecuteSQL('CREATE INDEX tbl_linestring_fld_integer_idx ON tbl_linestring(fld_integer)')
     gdaltest.gpkg_ds.ExecuteSQL('ALTER TABLE tbl_linestring RENAME TO tbl_linestring_renamed;')
     gdaltest.gpkg_ds.ExecuteSQL('VACUUM')
     gdaltest.gpkg_ds = None
 
-    gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update = 1)
+    gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update=1)
     lyr = gdaltest.gpkg_ds.GetLayerByName('tbl_linestring_renamed')
     if lyr is None:
         return 'fail'
@@ -787,7 +787,7 @@ def ogr_gpkg_13():
     if gdaltest.gpkg_dr is None:
         return 'skip'
 
-    lyr = gdaltest.gpkg_ds.CreateLayer('non_spatial', geom_type = ogr.wkbNone, options = ['ASPATIAL_VARIANT=OGR_ASPATIAL'])
+    lyr = gdaltest.gpkg_ds.CreateLayer('non_spatial', geom_type=ogr.wkbNone, options=['ASPATIAL_VARIANT=OGR_ASPATIAL'])
     feat = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(feat)
     feat = None
@@ -809,10 +809,10 @@ def ogr_gpkg_13():
         return 'fail'
 
     # Test second aspatial layer
-    lyr = gdaltest.gpkg_ds.CreateLayer('non_spatial2', geom_type = ogr.wkbNone, options = ['ASPATIAL_VARIANT=OGR_ASPATIAL'])
+    lyr = gdaltest.gpkg_ds.CreateLayer('non_spatial2', geom_type=ogr.wkbNone, options=['ASPATIAL_VARIANT=OGR_ASPATIAL'])
 
     gdaltest.gpkg_ds = None
-    gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update = 1)
+    gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update=1)
     if gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail : warning NOT expected')
         return 'fail'
@@ -853,7 +853,7 @@ def ogr_gpkg_14():
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
 
-    lyr = gdaltest.gpkg_ds.CreateLayer('point_no_spi-but-with-dashes', geom_type = ogr.wkbPoint, options = ['SPATIAL_INDEX=NO'], srs = sr)
+    lyr = gdaltest.gpkg_ds.CreateLayer('point_no_spi-but-with-dashes', geom_type=ogr.wkbPoint, options=['SPATIAL_INDEX=NO'], srs=sr)
     if lyr.TestCapability(ogr.OLCFastSpatialFilter) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -896,7 +896,7 @@ def ogr_gpkg_14():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    lyr = gdaltest.gpkg_ds.CreateLayer('point-with-spi-and-dashes', geom_type = ogr.wkbPoint)
+    lyr = gdaltest.gpkg_ds.CreateLayer('point-with-spi-and-dashes', geom_type=ogr.wkbPoint)
     if lyr.TestCapability(ogr.OLCFastSpatialFilter) != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1344,7 +1344,7 @@ def ogr_gpkg_15():
         gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
     gdaltest.gpkg_ds = None
-    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update = 1)
+    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update=1)
 
     return 'success'
 
@@ -1373,7 +1373,7 @@ def ogr_gpkg_16():
         return 'fail'
 
     # Warning since we open as read-write
-    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update=1)
     lyr = ds.GetLayer(0)
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr.GetLayerDefn()
@@ -1396,7 +1396,7 @@ def ogr_gpkg_16():
         return 'fail'
 
     # and also as read-write
-    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update=1)
     lyr = ds.GetLayer(0)
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr.GetLayerDefn()
@@ -1443,7 +1443,7 @@ def ogr_gpkg_16():
 
     # Warning since we open as read-write
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update=1)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail : warning expected')
@@ -1462,7 +1462,7 @@ def ogr_gpkg_16():
 
     # and also as read-write
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update=1)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail : warning expected')
@@ -1483,7 +1483,7 @@ def ogr_gpkg_17():
         return 'skip'
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_17.gpkg')
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_version()", dialect = 'INDIRECT_SQLITE')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_version()", dialect='INDIRECT_SQLITE')
     f = sql_lyr.GetNextFeature()
     if f is None:
         return 'fail'
@@ -1503,7 +1503,7 @@ def ogr_gpkg_18():
         return 'skip'
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_18.gpkg')
-    lyr = ds.CreateLayer('wkbCircularString', geom_type = ogr.wkbCircularString)
+    lyr = ds.CreateLayer('wkbCircularString', geom_type=ogr.wkbCircularString)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('CIRCULARSTRING(0 0,1 0,0 0)'))
     lyr.CreateFeature(f)
@@ -1568,7 +1568,7 @@ def ogr_gpkg_18():
 
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_18.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_18.gpkg', update=1)
     lyr = ds.GetLayer(0)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('CIRCULARSTRING(0 0,1 0,0 0)'))
@@ -1580,7 +1580,7 @@ def ogr_gpkg_18():
     ds = None
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_18.gpkg')
-    lyr = ds.CreateLayer('test', geom_type = ogr.wkbTriangle)
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbTriangle)
     with gdaltest.error_handler():
         # Warning 1: Registering non-standard gpkg_geom_TRIANGLE extension
         ds.FlushCache()
@@ -1591,7 +1591,7 @@ def ogr_gpkg_18():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
-    ret = validate('/vsimem/ogr_gpkg_18.gpkg', quiet = True)
+    ret = validate('/vsimem/ogr_gpkg_18.gpkg', quiet=True)
     if ret:
         gdaltest.post_reason('validation unexpectedly succeeded')
         return 'fail'
@@ -1661,8 +1661,8 @@ def ogr_gpkg_19():
         return 'fail'
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
-    lyr = ds.CreateLayer('test_with_md', options = ['IDENTIFIER=ident', 'DESCRIPTION=desc'])
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update=1)
+    lyr = ds.CreateLayer('test_with_md', options=['IDENTIFIER=ident', 'DESCRIPTION=desc'])
     lyr.SetMetadataItem('IDENTIFIER', 'ignored_because_of_lco')
     lyr.SetMetadataItem('DESCRIPTION', 'ignored_because_of_lco')
     lyr.SetMetadata({'IDENTIFIER': 'ignored_because_of_lco', 'DESCRIPTION': 'ignored_because_of_lco'})
@@ -1679,7 +1679,7 @@ def ogr_gpkg_19():
         print(lyr.GetMetadataItem('DESCRIPTION'))
         return 'fail'
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update=1)
     lyr = ds.GetLayer('test_with_md')
     if lyr.GetMetadata() != {'IDENTIFIER': 'ident', 'DESCRIPTION': 'desc'}:
         gdaltest.post_reason('fail')
@@ -1692,7 +1692,7 @@ def ogr_gpkg_19():
     # FIXME? Is it expected to have a .aux.xml here ?
     gdal.Unlink('/vsimem/ogr_gpkg_19.gpkg.aux.xml')
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update=1)
     lyr = ds.GetLayer('test_with_md')
     if lyr.GetMetadata() != {'IDENTIFIER': 'another_ident', 'DESCRIPTION': 'another_desc'}:
         gdaltest.post_reason('fail')
@@ -1702,7 +1702,7 @@ def ogr_gpkg_19():
     lyr.SetMetadataItem('bar', 'baz', 'another_domain')
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update=1)
     lyr = ds.GetLayer('test_with_md')
     if lyr.GetMetadataDomainList() != ['', 'another_domain']:
         gdaltest.post_reason('fail')
@@ -1710,7 +1710,7 @@ def ogr_gpkg_19():
         return 'fail'
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update=1)
     lyr = ds.GetLayer('test_with_md')
     if lyr.GetMetadata() != {'IDENTIFIER': 'another_ident', 'foo': 'bar', 'DESCRIPTION': 'another_desc'}:
         gdaltest.post_reason('fail')
@@ -1724,7 +1724,7 @@ def ogr_gpkg_19():
     lyr.SetMetadata(None, 'another_domain')
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update=1)
     lyr = ds.GetLayer('test_with_md')
     if lyr.GetMetadata() != {'IDENTIFIER': 'another_ident', 'DESCRIPTION': 'another_desc'}:
         gdaltest.post_reason('fail')
@@ -1762,14 +1762,14 @@ def ogr_gpkg_20():
     DATUM["my datum",
         SPHEROID["my spheroid",1000,0]],
     AUTHORITY["my_org","4326"]]""")
-    lyr = ds.CreateLayer('my_org_4326', srs = srs)
+    lyr = ds.CreateLayer('my_org_4326', srs=srs)
 
     # No authority node
     srs = osr.SpatialReference()
     srs.SetFromUserInput("""GEOGCS["another geogcs",
     DATUM["another datum",
         SPHEROID["another spheroid",1000,0]]]""")
-    lyr = ds.CreateLayer('without_org', srs = srs)
+    lyr = ds.CreateLayer('without_org', srs=srs)
 
     ds = None
 
@@ -1812,7 +1812,7 @@ def ogr_gpkg_20():
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_20.gpkg')
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
-    lyr = ds.CreateLayer('foo4326', srs = srs)
+    lyr = ds.CreateLayer('foo4326', srs=srs)
     ds.ExecuteSQL("UPDATE gpkg_spatial_ref_sys SET definition='invalid', "
                   "organization='', organization_coordsys_id = 0 "
                   "WHERE srs_id = 4326")
@@ -1820,14 +1820,14 @@ def ogr_gpkg_20():
 
     # Unable to parse srs_id '4326' well-known text 'invalid'
     with gdaltest.error_handler():
-        ds = ogr.Open('/vsimem/ogr_gpkg_20.gpkg', update = 1)
+        ds = ogr.Open('/vsimem/ogr_gpkg_20.gpkg', update=1)
 
     ds.ExecuteSQL('DELETE FROM gpkg_spatial_ref_sys WHERE srs_id = 4326')
     ds = None
     gdal.SetConfigOption('OGR_GPKG_FOREIGN_KEY_CHECK', 'NO')
     # Warning 1: unable to read srs_id '4326' from gpkg_spatial_ref_sys
     with gdaltest.error_handler():
-        ds = ogr.Open('/vsimem/ogr_gpkg_20.gpkg', update = 1)
+        ds = ogr.Open('/vsimem/ogr_gpkg_20.gpkg', update=1)
     gdal.SetConfigOption('OGR_GPKG_FOREIGN_KEY_CHECK', None)
     ds = None
 
@@ -1836,7 +1836,7 @@ def ogr_gpkg_20():
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_20.gpkg')
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
-    lyr = ds.CreateLayer('foo4326', srs = srs)
+    lyr = ds.CreateLayer('foo4326', srs=srs)
 
     ds.ExecuteSQL('DROP TABLE gpkg_spatial_ref_sys')
     ds.ExecuteSQL('CREATE TABLE gpkg_spatial_ref_sys (srs_name TEXT, '
@@ -1850,7 +1850,7 @@ def ogr_gpkg_20():
     gdal.SetConfigOption('OGR_GPKG_FOREIGN_KEY_CHECK', 'NO')
     # Warning 1: null definition for srs_id '4326' in gpkg_spatial_ref_sys
     with gdaltest.error_handler():
-        ds = ogr.Open('/vsimem/ogr_gpkg_20.gpkg', update = 1)
+        ds = ogr.Open('/vsimem/ogr_gpkg_20.gpkg', update=1)
     ds = None
 
     gdal.Unlink('/vsimem/ogr_gpkg_20.gpkg')
@@ -1873,7 +1873,7 @@ def ogr_gpkg_21():
     lyr.CreateField(field_defn)
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_21.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_21.gpkg', update=1)
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldDefn(0).GetWidth() != 2:
         gdaltest.post_reason('fail')
@@ -1914,7 +1914,7 @@ def ogr_gpkg_21():
     gdal.Unlink('/vsimem/ogr_gpkg_21.gpkg')
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_21.gpkg')
-    lyr = ds.CreateLayer('test', options = ['TRUNCATE_FIELDS=YES'])
+    lyr = ds.CreateLayer('test', options=['TRUNCATE_FIELDS=YES'])
     field_defn = ogr.FieldDefn('str', ogr.OFTString)
     field_defn.SetWidth(2)
     lyr.CreateField(field_defn)
@@ -1998,7 +1998,7 @@ def ogr_gpkg_23():
         return 'skip'
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_23.gpkg')
-    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
     field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
     field_defn.SetNullable(0)
     lyr.CreateField(field_defn)
@@ -2037,7 +2037,7 @@ def ogr_gpkg_23():
     f = None
 
     # Nullable geometry field
-    lyr = ds.CreateLayer('test2', geom_type = ogr.wkbPoint)
+    lyr = ds.CreateLayer('test2', geom_type=ogr.wkbPoint)
 
     # Cannot add more than one geometry field
     gdal.PushErrorHandler()
@@ -2052,7 +2052,7 @@ def ogr_gpkg_23():
     f = None
 
     # Not-nullable fields and geometry fields created after table creation
-    lyr = ds.CreateLayer('test3', geom_type = ogr.wkbNone, options = ['ASPATIAL_VARIANT=OGR_ASPATIAL'])
+    lyr = ds.CreateLayer('test3', geom_type=ogr.wkbNone, options=['ASPATIAL_VARIANT=OGR_ASPATIAL'])
 
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
@@ -2122,7 +2122,7 @@ def ogr_gpkg_23():
     f = None
 
     # Not Nullable geometry field
-    lyr = ds.CreateLayer('test4', geom_type = ogr.wkbPoint, options = ['GEOMETRY_NULLABLE=NO'])
+    lyr = ds.CreateLayer('test4', geom_type=ogr.wkbPoint, options=['GEOMETRY_NULLABLE=NO'])
     if lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2131,7 +2131,7 @@ def ogr_gpkg_23():
     lyr.CreateFeature(f)
     f = None
 
-    ds.CreateLayer('test5', geom_type = ogr.wkbNone)
+    ds.CreateLayer('test5', geom_type=ogr.wkbNone)
 
     ds = None
 
@@ -2192,7 +2192,7 @@ def ogr_gpkg_24():
         return 'skip'
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_24.gpkg')
-    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
 
     field_defn = ogr.FieldDefn('field_string', ogr.OFTString)
     field_defn.SetDefault("'a''b'")
@@ -2258,7 +2258,7 @@ def ogr_gpkg_24():
 
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_24.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_24.gpkg', update=1)
     lyr = ds.GetLayerByName('test')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() != "'a''b'":
         gdaltest.post_reason('fail')
@@ -2325,7 +2325,7 @@ def ogr_gpkg_25():
         return 'skip'
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_25.gpkg')
-    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone, options = ['FID=myfid'])
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone, options=['FID=myfid'])
 
     lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
     gdal.PushErrorHandler()
@@ -2458,7 +2458,7 @@ def ogr_gpkg_26():
         return 'fail'
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update=1)
     if ds.GetLayerCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2487,7 +2487,7 @@ def ogr_gpkg_26():
         return 'fail'
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update=1)
     if ds.GetLayerCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2527,7 +2527,7 @@ def ogr_gpkg_26():
         return 'fail'
 
     ds.StartTransaction()
-    lyr = ds.CreateLayer('test2', geom_type = ogr.wkbPoint)
+    lyr = ds.CreateLayer('test2', geom_type=ogr.wkbPoint)
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -2549,7 +2549,7 @@ def ogr_gpkg_26():
 
     if False:
         ds.StartTransaction()
-        lyr = ds.CreateLayer('test3', geom_type = ogr.wkbPoint)
+        lyr = ds.CreateLayer('test3', geom_type=ogr.wkbPoint)
         lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
 
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -2626,7 +2626,7 @@ def ogr_gpkg_28():
         return 'skip'
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
-    ds = gdal.VectorTranslate('/vsimem/ogr_gpkg_28.gpkg', srcDS, format = 'GPKG', dstSRS='EPSG:4326')
+    ds = gdal.VectorTranslate('/vsimem/ogr_gpkg_28.gpkg', srcDS, format='GPKG', dstSRS='EPSG:4326')
     if str(ds.GetLayer(0).GetSpatialRef()).find('1984') == -1:
         return 'fail'
 
@@ -2648,14 +2648,14 @@ def ogr_gpkg_29():
     if ds.TestCapability(ogr.ODsCMeasuredGeometries) != 1:
         gdaltest.post_reason('fail')
         return 'fail'
-    lyr = ds.CreateLayer('pointm', geom_type = ogr.wkbPointM)
+    lyr = ds.CreateLayer('pointm', geom_type=ogr.wkbPointM)
     if lyr.TestCapability(ogr.OLCMeasuredGeometries) != 1:
         gdaltest.post_reason('fail')
         return 'fail'
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT M (1 2 3)'))
     lyr.CreateFeature(f)
-    lyr = ds.CreateLayer('pointzm', geom_type = ogr.wkbPointZM)
+    lyr = ds.CreateLayer('pointzm', geom_type=ogr.wkbPointZM)
     if lyr.TestCapability(ogr.OLCMeasuredGeometries) != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2668,7 +2668,7 @@ def ogr_gpkg_29():
         gdaltest.post_reason('validation failed')
         return 'fail'
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_29.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_29.gpkg', update=1)
     lyr = ds.GetLayerByName('pointm')
     if lyr.GetGeomType() != ogr.wkbPointM:
         gdaltest.post_reason('fail')
@@ -2743,7 +2743,7 @@ def ogr_gpkg_30():
     ds = None
 
     with gdaltest.error_handler():
-        ds = ogr.Open('/vsimem/ogr_gpkg_30.geopkg', update = 1)
+        ds = ogr.Open('/vsimem/ogr_gpkg_30.geopkg', update=1)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2767,14 +2767,14 @@ def ogr_gpkg_31():
         return 'skip'
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_31.gpkg')
-    lyr = ds.CreateLayer('curve', geom_type = ogr.wkbCurve)
+    lyr = ds.CreateLayer('curve', geom_type=ogr.wkbCurve)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING (1 2,3 4)'))
     lyr.CreateFeature(f)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('COMPOUNDCURVE ((1 2,3 4))'))
     lyr.CreateFeature(f)
-    lyr = ds.CreateLayer('surface', geom_type = ogr.wkbSurface)
+    lyr = ds.CreateLayer('surface', geom_type=ogr.wkbSurface)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 1,1 1,0 0))'))
     lyr.CreateFeature(f)
@@ -2813,7 +2813,7 @@ def ogr_gpkg_32():
         return 'skip'
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_32.gpkg')
-    ds.CreateLayer('aspatial', geom_type = ogr.wkbNone, options = ['ASPATIAL_VARIANT=NOT_REGISTERED'])
+    ds.CreateLayer('aspatial', geom_type=ogr.wkbNone, options=['ASPATIAL_VARIANT=NOT_REGISTERED'])
     ds = None
 
     ds = ogr.Open('/vsimem/ogr_gpkg_32.gpkg')
@@ -2856,7 +2856,7 @@ def ogr_gpkg_33():
 
     gdal.SetConfigOption('OGR_CURRENT_DATE', '2000-01-01T:00:00:00.000Z')
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_33.gpkg')
-    ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    ds.CreateLayer('test', geom_type=ogr.wkbNone)
     ds = None
     gdal.SetConfigOption('OGR_CURRENT_DATE', None)
 
@@ -2924,7 +2924,7 @@ def ogr_gpkg_34():
 
     dbname = '/vsimem/ogr_gpkg_34.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
-    lyr = ds.CreateLayer(layer_name, geom_type = ogr.wkbCurvePolygon)
+    lyr = ds.CreateLayer(layer_name, geom_type=ogr.wkbCurvePolygon)
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('CURVEPOLYGON ((0 0,0 1,1 1,0 0))'))
@@ -2953,7 +2953,7 @@ def ogr_gpkg_34():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = ogr.Open(dbname, update = 1)
+    ds = ogr.Open(dbname, update=1)
     new_layer_name = """weird2'layer"name"""
     with gdaltest.error_handler():
         ds.ExecuteSQL('ALTER TABLE "weird\'layer""name" RENAME TO gpkg_contents')
@@ -2975,7 +2975,7 @@ def ogr_gpkg_34():
         return 'fail'
     layer_name = new_layer_name
 
-    ds = ogr.Open(dbname, update = 1)
+    ds = ogr.Open(dbname, update=1)
     with gdaltest.error_handler():
         ds.ExecuteSQL('DELLAYER:does_not_exist')
     if gdal.GetLastErrorMsg() == '':
@@ -3002,7 +3002,7 @@ def ogr_gpkg_34():
 
     # Try again with DROP TABLE syntax
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
-    lyr = ds.CreateLayer(layer_name, geom_type = ogr.wkbCurvePolygon)
+    lyr = ds.CreateLayer(layer_name, geom_type=ogr.wkbCurvePolygon)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('CURVEPOLYGON ((0 0,0 1,1 1,0 0))'))
     lyr.CreateFeature(f)
@@ -3010,7 +3010,7 @@ def ogr_gpkg_34():
     lyr = ds.CreateLayer('another_layer_name')
     ds = None
 
-    ds = ogr.Open(dbname, update = 1)
+    ds = ogr.Open(dbname, update=1)
     ds.ExecuteSQL('DROP TABLE "weird2\'layer""name"')
     if gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail')
@@ -3056,7 +3056,7 @@ def ogr_gpkg_35():
 
     dbname = '/vsimem/ogr_gpkg_35.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
-    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPolygon)
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbPolygon)
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('bar_i_will_disappear', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('baz', ogr.OFTString))
@@ -3068,7 +3068,7 @@ def ogr_gpkg_35():
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 1,1 1,0 0))'))
     lyr.CreateFeature(f)
 
-    lyr_nonspatial = ds.CreateLayer('test_nonspatial', geom_type = ogr.wkbNone)
+    lyr_nonspatial = ds.CreateLayer('test_nonspatial', geom_type=ogr.wkbNone)
     lyr_nonspatial.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     lyr_nonspatial.CreateField(ogr.FieldDefn('bar_i_will_disappear', ogr.OFTString))
     lyr_nonspatial.CreateField(ogr.FieldDefn('baz', ogr.OFTString))
@@ -3175,7 +3175,7 @@ def ogr_gpkg_36():
 
     dbname = '/vsimem/ogr_gpkg_36.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
-    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPolygon)
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbPolygon)
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('baz', ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -3301,7 +3301,7 @@ def ogr_gpkg_36():
 
     # Test failed DB re-opening
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
-    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPolygon)
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbPolygon)
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     # Unlink before AlterFieldDefn
@@ -3329,7 +3329,7 @@ def ogr_gpkg_37():
 
     dbname = '/vsimem/ogr_gpkg_37.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
-    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPolygon)
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbPolygon)
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('bar', ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -3414,26 +3414,26 @@ def ogr_gpkg_38():
 
     dbname = '/vsimem/ogr_gpkg_38.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
-    lyr = ds.CreateLayer('test', geom_type = ogr.wkbLineString)
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbLineString)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING (1 2,3 4)'))
     lyr.CreateFeature(f)
     ds = None
 
     # Simulate that extent is not recorded
-    ds = ogr.Open(dbname, update = 1)
+    ds = ogr.Open(dbname, update=1)
     ds.ExecuteSQL('UPDATE gpkg_contents SET min_x = NULL, min_y = NULL, max_x = NULL, max_y = NULL')
     ds = None
 
-    ds = ogr.Open(dbname, update = 1)
+    ds = ogr.Open(dbname, update=1)
     lyr = ds.GetLayer(0)
-    extent = lyr.GetExtent(force = 0, can_return_null = True)
+    extent = lyr.GetExtent(force=0, can_return_null=True)
     if extent is not None:
         gdaltest.post_reason('fail')
         print(extent)
         return 'fail'
     # Test that we can compute the extent of a layer that has none registered in gpkg_contents
-    extent = lyr.GetExtent(force = 1)
+    extent = lyr.GetExtent(force=1)
     if extent != (1,3,2,4):
         gdaltest.post_reason('fail')
         print(extent)
@@ -3445,7 +3445,7 @@ def ogr_gpkg_38():
         f.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
-    extent = lyr.GetExtent(force = 0)
+    extent = lyr.GetExtent(force=0)
     if extent != (1,3,2,4):
         gdaltest.post_reason('fail')
         print(extent)
@@ -3457,14 +3457,14 @@ def ogr_gpkg_38():
     lyr.SetFeature(f)
 
     # The extent has grown
-    extent = lyr.GetExtent(force = 0)
+    extent = lyr.GetExtent(force=0)
     if extent != (-3.0, 3.0, -4.0, 4.0):
         gdaltest.post_reason('fail')
         print(extent)
         return 'fail'
 
     ds.ExecuteSQL('RECOMPUTE EXTENT ON test')
-    extent = lyr.GetExtent(force = 0)
+    extent = lyr.GetExtent(force=0)
     if extent != (-3.0, -1.0, -4.0, -2.0):
         gdaltest.post_reason('fail')
         print(extent)
@@ -3473,21 +3473,21 @@ def ogr_gpkg_38():
 
     ds = ogr.Open(dbname)
     lyr = ds.GetLayer(0)
-    extent = lyr.GetExtent(force = 0)
+    extent = lyr.GetExtent(force=0)
     if extent != (-3.0, -1.0, -4.0, -2.0):
         gdaltest.post_reason('fail')
         print(extent)
         return 'fail'
     ds = None
 
-    ds = ogr.Open(dbname, update = 1)
+    ds = ogr.Open(dbname, update=1)
     lyr = ds.GetLayer(0)
     # Delete last feature
     lyr.DeleteFeature(1)
 
     # This should cancel NULLify the extent in gpkg_contents
     ds.ExecuteSQL('RECOMPUTE EXTENT ON test')
-    extent = lyr.GetExtent(force = 0, can_return_null = True)
+    extent = lyr.GetExtent(force=0, can_return_null=True)
     if extent is not None:
         gdaltest.post_reason('fail')
         print(extent)
@@ -3496,7 +3496,7 @@ def ogr_gpkg_38():
 
     ds = ogr.Open(dbname)
     lyr = ds.GetLayer(0)
-    extent = lyr.GetExtent(force = 0, can_return_null = True)
+    extent = lyr.GetExtent(force=0, can_return_null=True)
     if extent is not None:
         gdaltest.post_reason('fail')
         print(extent)
@@ -3521,32 +3521,32 @@ def ogr_gpkg_39():
 
     ds.CreateLayer('test')
 
-    lyr = ds.CreateLayer('test_with_explicit_identifier', options = ['IDENTIFIER=explicit_identifier'])
+    lyr = ds.CreateLayer('test_with_explicit_identifier', options=['IDENTIFIER=explicit_identifier'])
     if lyr is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Allow overwriting
-    lyr = ds.CreateLayer('test_with_explicit_identifier', options = ['IDENTIFIER=explicit_identifier', 'OVERWRITE=YES'])
+    lyr = ds.CreateLayer('test_with_explicit_identifier', options=['IDENTIFIER=explicit_identifier', 'OVERWRITE=YES'])
     if lyr is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
-        lyr = ds.CreateLayer('test2', options = ['IDENTIFIER=test'])
+        lyr = ds.CreateLayer('test2', options=['IDENTIFIER=test'])
     if lyr is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
-        lyr = ds.CreateLayer('test2', options = ['IDENTIFIER=explicit_identifier'])
+        lyr = ds.CreateLayer('test2', options=['IDENTIFIER=explicit_identifier'])
     if lyr is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     ds.ExecuteSQL("INSERT INTO gpkg_contents ( table_name, identifier, data_type ) VALUES ( 'some_table', 'another_identifier', 'some_data_type' )")
     with gdaltest.error_handler():
-        lyr = ds.CreateLayer('test2', options = ['IDENTIFIER=another_identifier'])
+        lyr = ds.CreateLayer('test2', options=['IDENTIFIER=another_identifier'])
     if lyr is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3567,7 +3567,7 @@ def ogr_gpkg_40():
         return 'skip'
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_40.gpkg')
-    ds.CreateLayer('aspatial', geom_type = ogr.wkbNone, options = ['ASPATIAL_VARIANT=GPKG_ATTRIBUTES'])
+    ds.CreateLayer('aspatial', geom_type=ogr.wkbNone, options=['ASPATIAL_VARIANT=GPKG_ATTRIBUTES'])
     ds = None
 
     ds = ogr.Open('/vsimem/ogr_gpkg_40.gpkg')
@@ -3644,7 +3644,7 @@ def ogr_gpkg_41():
 
 def foo_has_trigger(ds):
     sql_lyr = ds.ExecuteSQL(
-        "SELECT COUNT(*) FROM sqlite_master WHERE name = 'trigger_insert_feature_count_foo'", dialect = 'DEBUG')
+        "SELECT COUNT(*) FROM sqlite_master WHERE name = 'trigger_insert_feature_count_foo'", dialect='DEBUG')
     f = sql_lyr.GetNextFeature()
     has_trigger = f.GetField(0) == 1
     f = None
@@ -3653,7 +3653,7 @@ def foo_has_trigger(ds):
 
 
 def get_feature_count_from_gpkg_contents(ds):
-    sql_lyr = ds.ExecuteSQL('SELECT feature_count FROM gpkg_ogr_contents', dialect = 'DEBUG')
+    sql_lyr = ds.ExecuteSQL('SELECT feature_count FROM gpkg_ogr_contents', dialect='DEBUG')
     f = sql_lyr.GetNextFeature()
     val = f.GetField(0)
     f = None
@@ -3667,7 +3667,7 @@ def ogr_gpkg_42():
         return 'skip'
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_42.gpkg')
-    lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone)
+    lyr = ds.CreateLayer('foo', geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn('i', ogr.OFTInteger))
     for i in range(5):
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -3688,7 +3688,7 @@ def ogr_gpkg_42():
         return 'fail'
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update=1)
     lyr = ds.GetLayer(0)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField(0, 10)
@@ -3731,7 +3731,7 @@ def ogr_gpkg_42():
 
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update=1)
     lyr = ds.GetLayer(0)
     fc = lyr.GetFeatureCount()
     if fc != 5:
@@ -3741,7 +3741,7 @@ def ogr_gpkg_42():
     ds.ExecuteSQL('UPDATE gpkg_ogr_contents SET feature_count = NULL')
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update=1)
     lyr = ds.GetLayer(0)
     if get_feature_count_from_gpkg_contents(ds) is not None:
         gdaltest.post_reason('fail')
@@ -3753,7 +3753,7 @@ def ogr_gpkg_42():
         return 'fail'
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update=1)
     if get_feature_count_from_gpkg_contents(ds) != 5:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3761,7 +3761,7 @@ def ogr_gpkg_42():
     # So as to test that we really read from gpkg_ogr_contents
     ds.ExecuteSQL('UPDATE gpkg_ogr_contents SET feature_count = 5000')
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update=1)
     lyr = ds.GetLayer(0)
     fc = lyr.GetFeatureCount()
     if fc != 5000:
@@ -3772,8 +3772,8 @@ def ogr_gpkg_42():
     # Test renaming
     ds.ExecuteSQL('ALTER TABLE foo RENAME TO bar')
     ds = None
-    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update = 1)
-    sql_lyr = ds.ExecuteSQL("SELECT feature_count FROM gpkg_ogr_contents WHERE table_name = 'bar'", dialect = 'DEBUG')
+    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update=1)
+    sql_lyr = ds.ExecuteSQL("SELECT feature_count FROM gpkg_ogr_contents WHERE table_name = 'bar'", dialect='DEBUG')
     f = sql_lyr.GetNextFeature()
     val = f.GetField(0)
     f = None
@@ -3784,7 +3784,7 @@ def ogr_gpkg_42():
 
     # Test layer deletion
     ds.DeleteLayer(0)
-    sql_lyr = ds.ExecuteSQL("SELECT feature_count FROM gpkg_ogr_contents WHERE table_name != 'ogr_empty_table'", dialect = 'DEBUG')
+    sql_lyr = ds.ExecuteSQL("SELECT feature_count FROM gpkg_ogr_contents WHERE table_name != 'ogr_empty_table'", dialect='DEBUG')
     f = sql_lyr.GetNextFeature()
     if f is not None:
         gdaltest.post_reason('fail')
@@ -3794,8 +3794,8 @@ def ogr_gpkg_42():
 
     # Test without feature_count column
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_42.gpkg',
-                            options = ['ADD_GPKG_OGR_CONTENTS=FALSE'])
-    lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone)
+                            options=['ADD_GPKG_OGR_CONTENTS=FALSE'])
+    lyr = ds.CreateLayer('foo', geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn('i', ogr.OFTInteger))
     for i in range(5):
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -3803,7 +3803,7 @@ def ogr_gpkg_42():
         lyr.CreateFeature(f)
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update=1)
 
     # Check that feature_count column is missing
     sql_lyr = ds.ExecuteSQL('PRAGMA table_info(gpkg_contents)')
@@ -3929,7 +3929,7 @@ def ogr_gpkg_44():
         return 'fail'
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_44.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_44.gpkg', update=1)
     ds.SetMetadataItem('FOO', 'BAR')
     ds = None
 
@@ -4003,7 +4003,7 @@ def ogr_gpkg_46():
 
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_46.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_46.gpkg', update=1)
     lyr = ds.GetLayerByName('my_view')
     if lyr.GetLayerDefn().GetFieldCount() != 1:
         gdaltest.post_reason('fail')
@@ -4109,7 +4109,7 @@ def ogr_gpkg_47():
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
-        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update = 1)
+        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -4124,7 +4124,7 @@ def ogr_gpkg_47():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options = ['VERSION=1.2'])
+    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options=['VERSION=1.2'])
     # Set wrong user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
@@ -4132,7 +4132,7 @@ def ogr_gpkg_47():
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
-        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update = 1)
+        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -4148,14 +4148,14 @@ def ogr_gpkg_47():
         return 'fail'
 
     # Set GPKG 1.2.1
-    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options = ['VERSION=1.2'])
+    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options=['VERSION=1.2'])
     # Set user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
     gdal.VSIFWriteL(struct.pack('B'*4,0,0,0x27,0xD9), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -4171,7 +4171,7 @@ def ogr_gpkg_47():
         return 'fail'
 
     # Set GPKG 1.3.0
-    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options = ['VERSION=1.2'])
+    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options=['VERSION=1.2'])
     # Set user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
@@ -4179,7 +4179,7 @@ def ogr_gpkg_47():
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
-        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update = 1)
+        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -4206,7 +4206,7 @@ def ogr_gpkg_47():
     gdal.Unlink('/vsimem/.cur_input')
 
     with gdaltest.error_handler():
-        gdaltest.gpkg_dr.CreateDataSource('/vsimem/.cur_input', options = ['VERSION=1.2'])
+        gdaltest.gpkg_dr.CreateDataSource('/vsimem/.cur_input', options=['VERSION=1.2'])
     # Set wrong user_version
     fp = gdal.VSIFOpenL('/vsimem/.cur_input', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
@@ -4272,7 +4272,7 @@ def ogr_gpkg_48():
         return 'fail'
 
     # No geom field, one single field with default value
-    lyr = ds.CreateLayer('default_field_no_geom', geom_type = ogr.wkbNone)
+    lyr = ds.CreateLayer('default_field_no_geom', geom_type=ogr.wkbNone)
     fld_defn = ogr.FieldDefn('foo')
     fld_defn.SetDefault('x')
     lyr.CreateField(fld_defn)
@@ -4314,8 +4314,8 @@ def ogr_gpkg_49():
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_49.gpkg')
 
-    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone,
-                         options = ['ASPATIAL_VARIANT=GPKG_ATTRIBUTES'])
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone,
+                         options=['ASPATIAL_VARIANT=GPKG_ATTRIBUTES'])
 
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
@@ -4344,17 +4344,17 @@ def ogr_gpkg_50():
     gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_50.gpkg')
     gdal.SetConfigOption('GPKG_ADD_DEFINITION_12_063', None)
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_50.gpkg', update = 1)
+    ds = ogr.Open('/vsimem/ogr_gpkg_50.gpkg', update=1)
     srs32631 = osr.SpatialReference()
     srs32631.ImportFromEPSG(32631)
-    ds.CreateLayer('test', srs = srs32631)
+    ds.CreateLayer('test', srs=srs32631)
 
     # No authority node
     srs_without_org = osr.SpatialReference()
     srs_without_org.SetFromUserInput("""GEOGCS["another geogcs",
     DATUM["another datum",
         SPHEROID["another spheroid",1000,0]]]""")
-    lyr = ds.CreateLayer('without_org', srs = srs_without_org)
+    lyr = ds.CreateLayer('without_org', srs=srs_without_org)
 
     ds = None
 
@@ -4478,8 +4478,8 @@ def ogr_gpkg_54():
     f = None
     ds = None
 
-    ds1 = ogr.Open(tmpfile, update = 1)
-    ds2 = ogr.Open(tmpfile, update = 1)
+    ds1 = ogr.Open(tmpfile, update=1)
+    ds2 = ogr.Open(tmpfile, update=1)
 
     lyr1 = ds1.GetLayer(0)
     lyr2 = ds2.GetLayer(1)
@@ -4566,7 +4566,7 @@ def ogr_gpkg_56():
     if gdaltest.gpkg_dr is None:
         return 'skip'
 
-    ds = gdal.VectorTranslate('/vsimem/ogr_gpkg_56.gpkg', 'data/poly.shp', format = 'GPKG')
+    ds = gdal.VectorTranslate('/vsimem/ogr_gpkg_56.gpkg', 'data/poly.shp', format='GPKG')
     lyr = ds.ExecuteSQL('select a.fid as fid1, b.fid as fid2 from poly a, poly b order by fid1, fid2')
     lyr.GetNextFeature()
     f = lyr.GetNextFeature()
@@ -4628,9 +4628,9 @@ def ogr_gpkg_58():
         return 'skip'
 
     out_filename = '/vsimem/ogr_gpkg_58.gpkg'
-    gdal.VectorTranslate(out_filename, 'data/poly.shp', format = 'GPKG')
-    gdal.VectorTranslate(out_filename, 'data/poly.shp', format = 'GPKG',
-                         accessMode = 'overwrite')
+    gdal.VectorTranslate(out_filename, 'data/poly.shp', format='GPKG')
+    gdal.VectorTranslate(out_filename, 'data/poly.shp', format='GPKG',
+                         accessMode='overwrite')
 
     ds = ogr.Open(out_filename)
     sql_lyr = ds.ExecuteSQL("SELECT HasSpatialIndex('poly', 'geom')")
@@ -4654,10 +4654,10 @@ def ogr_gpkg_59():
         return 'skip'
 
     out_filename = '/vsimem/ogr_gpkg_59.gpkg'
-    gdal.VectorTranslate(out_filename, 'data/poly.shp', format = 'GPKG',
-                         layerCreationOptions = ['SPATIAL_INDEX=NO'])
+    gdal.VectorTranslate(out_filename, 'data/poly.shp', format='GPKG',
+                         layerCreationOptions=['SPATIAL_INDEX=NO'])
 
-    ds = ogr.Open(out_filename, update = 1)
+    ds = ogr.Open(out_filename, update=1)
     sql_lyr = ds.ExecuteSQL("SELECT CreateSpatialIndex('poly', 'geom')")
     f = sql_lyr.GetNextFeature()
     if f.GetField(0) != 1:

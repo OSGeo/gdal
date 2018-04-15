@@ -52,7 +52,7 @@ def paux_2():
 
     tst = gdaltest.GDALTest('PAux', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy(check_gt = 1)
+    return tst.testCreateCopy(check_gt=1)
 
 ###############################################################################
 # Test /vsimem based.
@@ -62,7 +62,7 @@ def paux_3():
 
     tst = gdaltest.GDALTest('PAux', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # Cleanup.

@@ -915,7 +915,7 @@ def test_gdalwarp_32():
         return 'skip'
 
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -tap ../gcore/data/byte.tif tmp/testgdalwarp32.tif',
-                                                  check_memleak = False)
+                                                  check_memleak=False)
     if err.find('-tap option cannot be used without using -tr') == -1:
         gdaltest.post_reason('expected error')
         return 'fail'
@@ -1163,7 +1163,7 @@ def test_gdalwarp_40():
     src_ds = gdal.Open('../gcore/data/byte.tif')
     out_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/test_gdalwarp_40_src.tif', src_ds)
     cs_main = out_ds.GetRasterBand(1).Checksum()
-    out_ds.BuildOverviews('NONE', overviewlist = [2, 4])
+    out_ds.BuildOverviews('NONE', overviewlist=[2, 4])
     out_ds.GetRasterBand(1).GetOverview(0).Fill(127)
     cs_ov0 = out_ds.GetRasterBand(1).GetOverview(0).Checksum()
     out_ds.GetRasterBand(1).GetOverview(1).Fill(255)

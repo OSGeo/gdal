@@ -189,13 +189,13 @@ def ogr_dgn_7():
                 'ORIGIN=-50,-50,0']
 
     dgn2_ds = ogr.GetDriverByName('DGN').CreateDataSource('tmp/dgn7.dgn',
-                                                          options = co_opts)
+                                                          options=co_opts)
 
     dgn2_lyr = dgn2_ds.CreateLayer('elements')
 
     gdaltest.dgn_lyr.ResetReading()
 
-    dst_feat = ogr.Feature(feature_def = dgn2_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=dgn2_lyr.GetLayerDefn())
 
     feat = gdaltest.dgn_lyr.GetNextFeature()
     while feat is not None:

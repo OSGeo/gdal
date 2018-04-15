@@ -211,7 +211,7 @@ def png_9():
 
     tst = gdaltest.GDALTest('PNG', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # Test writing to /vsistdout/
@@ -244,7 +244,7 @@ def png_11():
 
     tst = gdaltest.GDALTest('PNG', 'byte.tif', 1, 4672)
 
-    ret = tst.testCreateCopy(vsimem = 1, interrupt_during_copy = True)
+    ret = tst.testCreateCopy(vsimem=1, interrupt_during_copy=True)
     gdal.Unlink('/vsimem/byte.tif.tst')
     return ret
 
@@ -266,18 +266,18 @@ def png_12():
         return 'fail'
 
     # Pixel interleaved
-    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = ds.RasterCount, buf_band_space = 1)
+    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space=ds.RasterCount, buf_band_space=1)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
-    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data, buf_pixel_space = ds.RasterCount, buf_band_space = 1)
+    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data, buf_pixel_space=ds.RasterCount, buf_band_space=1)
     got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'
 
     # Pixel interleaved with padding
-    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = 5, buf_band_space = 1)
+    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space=5, buf_band_space=1)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
-    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data, buf_pixel_space = 5, buf_band_space = 1)
+    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data, buf_pixel_space=5, buf_band_space=1)
     got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
@@ -295,7 +295,7 @@ def png_13():
     src_ds.SetMetadataItem('foo', 'bar')
     src_ds.SetMetadataItem('COPYRIGHT', 'copyright value')
     src_ds.SetMetadataItem('DESCRIPTION', 'will be overridden by creation option')
-    out_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options = ['WRITE_METADATA_AS_TEXT=YES', 'DESCRIPTION=my desc'])
+    out_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options=['WRITE_METADATA_AS_TEXT=YES', 'DESCRIPTION=my desc'])
     md = out_ds.GetMetadata()
     if len(md) != 3 or md['foo'] != 'bar' or md['Copyright'] != 'copyright value' or md['Description'] != 'my desc':
         gdaltest.post_reason('failure')
@@ -339,7 +339,7 @@ def png_14():
         return 'fail'
 
     # Test explicit NBITS
-    gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options = ['NBITS=2'])
+    gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options=['NBITS=2'])
     out_ds = gdal.Open('/vsimem/tmp.png')
     nbits = out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
     gdal.Unlink('/vsimem/tmp.png')
@@ -350,7 +350,7 @@ def png_14():
 
     # Test (wrong) explicit NBITS
     with gdaltest.error_handler():
-        gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options = ['NBITS=7'])
+        gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options=['NBITS=7'])
     out_ds = gdal.Open('/vsimem/tmp.png')
     nbits = out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
     gdal.Unlink('/vsimem/tmp.png')

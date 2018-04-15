@@ -70,20 +70,20 @@ def contour_1():
     raw_data = array.array('h',[10 for i in range(int(size/2))]).tostring()
     for i in range(int(size/2)):
         ds.WriteRaster(int(size/4), i+int(size/4), int(size/2), 1, raw_data,
-                        buf_type = gdal.GDT_Int16,
-                        band_list = [1])
+                        buf_type=gdal.GDT_Int16,
+                        band_list=[1])
 
     raw_data = array.array('h',[20 for i in range(int(size/2))]).tostring()
     for i in range(int(size/4)):
         ds.WriteRaster(int(size/4)+int(size/8), i+int(size/4)+int(size/8), int(size/4), 1, raw_data,
-                        buf_type = gdal.GDT_Int16,
-                        band_list = [1])
+                        buf_type=gdal.GDT_Int16,
+                        band_list=[1])
 
     raw_data = array.array('h',[25 for i in range(int(size/4))]).tostring()
     for i in range(int(size/8)):
         ds.WriteRaster(int(size/4)+int(size/8)+int(size/16), i+int(size/4)+int(size/8)+int(size/16), int(size/8), 1, raw_data,
-                        buf_type = gdal.GDT_Int16,
-                        band_list = [1])
+                        buf_type=gdal.GDT_Int16,
+                        band_list=[1])
 
     ogr_ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/contour.shp')
     ogr_lyr = ogr_ds.CreateLayer('contour')
@@ -148,7 +148,7 @@ def contour_2():
         pass
 
     ogr_ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/contour.shp')
-    ogr_lyr = ogr_ds.CreateLayer('contour', geom_type = ogr.wkbLineString25D)
+    ogr_lyr = ogr_ds.CreateLayer('contour', geom_type=ogr.wkbLineString25D)
     field_defn = ogr.FieldDefn('ID', ogr.OFTInteger)
     ogr_lyr.CreateField(field_defn)
     field_defn = ogr.FieldDefn('elev', ogr.OFTReal)

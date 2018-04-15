@@ -45,7 +45,7 @@ def ogr_db2_hack_1():
 
     # XDR Case.
     geom = ogr.CreateGeometryFromWkt('POINT(10 20)')
-    wkb = geom.ExportToWkb(byte_order = ogr.wkbXDR).decode('latin1')
+    wkb = geom.ExportToWkb(byte_order=ogr.wkbXDR).decode('latin1')
     geom.Destroy()
 
     if wkb[0] != '0':
@@ -54,7 +54,7 @@ def ogr_db2_hack_1():
 
     # NDR Case.
     geom = ogr.CreateGeometryFromWkt('POINT(10 20)')
-    wkb = geom.ExportToWkb(byte_order = ogr.wkbNDR).decode('latin1')
+    wkb = geom.ExportToWkb(byte_order=ogr.wkbNDR).decode('latin1')
     geom.Destroy()
 
     if wkb[0] != '1':
@@ -75,7 +75,7 @@ def ogr_db2_hack_2():
 
     # XDR Case.
     geom = ogr.CreateGeometryFromWkt('POINT(10 20)')
-    wkb = geom.ExportToWkb(byte_order = ogr.wkbXDR).decode('latin1')
+    wkb = geom.ExportToWkb(byte_order=ogr.wkbXDR).decode('latin1')
     geom.Destroy()
 
     if wkb[0] != chr(0):
@@ -84,7 +84,7 @@ def ogr_db2_hack_2():
 
     # NDR Case.
     geom = ogr.CreateGeometryFromWkt('POINT(10 20)')
-    wkb = geom.ExportToWkb(byte_order = ogr.wkbNDR).decode('latin1')
+    wkb = geom.ExportToWkb(byte_order=ogr.wkbNDR).decode('latin1')
     geom.Destroy()
 
     if wkb[0] != chr(1):

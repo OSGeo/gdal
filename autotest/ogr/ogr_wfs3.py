@@ -49,7 +49,7 @@ def ogr_wfs3_init():
         return 'skip'
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = \
-        webserver.launch(handler = webserver.DispatcherHttpHandler)
+        webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
         return 'skip'
 

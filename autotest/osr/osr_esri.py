@@ -226,7 +226,7 @@ def osr_esri_7():
     AXIS["X",EAST],
     AXIS["Y",NORTH]]"""
 
-    srs_wkt = osr.SpatialReference(wkt = wkt)
+    srs_wkt = osr.SpatialReference(wkt=wkt)
 
     if not srs_prj.IsSame(srs_wkt):
         print('got: ', srs_prj.ExportToPrettyWkt())
@@ -276,7 +276,7 @@ def osr_esri_8():
     UNIT["user-defined",0.3048],
     AUTHORITY["EPSG","26960"]]"""
 
-    srs_wkt = osr.SpatialReference(wkt = wkt)
+    srs_wkt = osr.SpatialReference(wkt=wkt)
 
     if not srs_prj.IsSame(srs_wkt):
         gdaltest.post_reason('old style ESRI projection imported wrong, perhaps linear units?')
@@ -597,7 +597,7 @@ def osr_esri_18():
 
     srs.MorphFromESRI()
 
-    srs_expected = osr.SpatialReference(wkt = expected)
+    srs_expected = osr.SpatialReference(wkt=expected)
 
     if not srs.IsSame(srs_expected):
         print('')
@@ -607,7 +607,7 @@ def osr_esri_18():
         return 'fail'
 
     srs.MorphToESRI()
-    srs_expected = osr.SpatialReference(wkt = original)
+    srs_expected = osr.SpatialReference(wkt=original)
 
     if not srs.IsSame(srs_expected):
         print('')
@@ -1485,7 +1485,7 @@ def osr_esri_30():
     PRIMEM["Greenwich",0],
     UNIT["degree",0.0174532925199433]]"""
 
-    srs_wkt = osr.SpatialReference(wkt = wkt)
+    srs_wkt = osr.SpatialReference(wkt=wkt)
 
     if not srs_prj.IsSame(srs_wkt):
         gdaltest.post_reason('fail')
@@ -1536,7 +1536,7 @@ def osr_esri_31():
     PARAMETER["false_northing",200],
     UNIT["METERS",1]]"""
 
-    srs_wkt = osr.SpatialReference(wkt = wkt)
+    srs_wkt = osr.SpatialReference(wkt=wkt)
 
     if not srs_prj.IsSame(srs_wkt):
         gdaltest.post_reason('fail')

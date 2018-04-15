@@ -584,7 +584,7 @@ def test_ogr2ogr_py_18():
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/wrapdateline_src.shp')
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32660)
-    lyr = ds.CreateLayer('wrapdateline_src', srs = srs)
+    lyr = ds.CreateLayer('wrapdateline_src', srs=srs)
     feat = ogr.Feature(lyr.GetLayerDefn())
     geom = ogr.CreateGeometryFromWkt('POLYGON((700000 4000000,800000 4000000,800000 3000000,700000 3000000,700000 4000000))')
     feat.SetGeometryDirectly(geom)
@@ -1402,7 +1402,7 @@ def test_ogr2ogr_py_44():
         pass
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_44_src.shp')
-    lyr = ds.CreateLayer('test_ogr2ogr_44_src', geom_type = ogr.wkbPolygon)
+    lyr = ds.CreateLayer('test_ogr2ogr_44_src', geom_type=ogr.wkbPolygon)
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,0 0))'))
     lyr.CreateFeature(feat)
@@ -1460,7 +1460,7 @@ def test_ogr2ogr_py_45():
         pass
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_44_src.shp')
-    lyr = ds.CreateLayer('test_ogr2ogr_44_src', geom_type = ogr.wkbPolygon)
+    lyr = ds.CreateLayer('test_ogr2ogr_44_src', geom_type=ogr.wkbPolygon)
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,0 0))'))
     lyr.CreateFeature(feat)
@@ -1518,7 +1518,7 @@ def test_ogr2ogr_py_46():
         pass
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_45_src.shp')
-    lyr = ds.CreateLayer('test_ogr2ogr_45_src', geom_type = ogr.wkbLineString)
+    lyr = ds.CreateLayer('test_ogr2ogr_45_src', geom_type=ogr.wkbLineString)
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,0 1,1 1,0 0)'))
     lyr.CreateFeature(feat)

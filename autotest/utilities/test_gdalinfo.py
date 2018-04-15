@@ -259,7 +259,7 @@ def test_gdalinfo_11():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --version', check_memleak = False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --version', check_memleak=False)
     if ret.find(gdal.VersionInfo('--version')) != 0:
         print(ret)
         return 'fail'
@@ -274,7 +274,7 @@ def test_gdalinfo_12():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --build', check_memleak = False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --build', check_memleak=False)
     ret = ret.replace('\r\n', '\n')
     if ret.find(gdal.VersionInfo('BUILD_INFO')) != 0:
         print(ret)
@@ -290,7 +290,7 @@ def test_gdalinfo_13():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --license', check_memleak = False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --license', check_memleak=False)
     ret = ret.replace('\r\n', '\n')
     if ret.find(gdal.VersionInfo('LICENSE')) != 0:
         print(ret)
@@ -309,7 +309,7 @@ def test_gdalinfo_14():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --config', check_memleak = False)
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --config', check_memleak=False)
     if err.find('--config option given without a key and value argument') < 0:
         print(err)
         return 'fail'
@@ -324,7 +324,7 @@ def test_gdalinfo_15():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --mempreload', check_memleak = False)
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --mempreload', check_memleak=False)
     if err.find('--mempreload option given without directory path') < 0:
         print(err)
         return 'fail'
@@ -339,7 +339,7 @@ def test_gdalinfo_16():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug on --mempreload ../gcore/data /vsimem/byte.tif', check_memleak = False)
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug on --mempreload ../gcore/data /vsimem/byte.tif', check_memleak=False)
     if ret.find('Driver: GTiff/GeoTIFF') != 0:
         print(ret)
         return 'fail'
@@ -354,7 +354,7 @@ def test_gdalinfo_17():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug', check_memleak = False)
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug', check_memleak=False)
     if err.find('--debug option given without debug level') < 0:
         print(err)
         return 'fail'
@@ -369,13 +369,13 @@ def test_gdalinfo_18():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile', check_memleak = False)
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile', check_memleak=False)
     if err.find('--optfile option given without filename') < 0:
         gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile /foo/bar', check_memleak = False)
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile /foo/bar', check_memleak=False)
     if err.find('Unable to open optfile') < 0:
         gdaltest.post_reason('fail')
         print(err)
@@ -395,7 +395,7 @@ def test_gdalinfo_19():
     f.write('# comment\n')
     f.write('../gcore/data/byte.tif\n')
     f.close()
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --optfile tmp/optfile.txt', check_memleak = False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --optfile tmp/optfile.txt', check_memleak=False)
     os.unlink('tmp/optfile.txt')
     if ret.find('Driver: GTiff/GeoTIFF') != 0:
         print(ret)
@@ -411,7 +411,7 @@ def test_gdalinfo_20():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --formats', check_memleak = False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --formats', check_memleak=False)
     if ret.find('GTiff -raster- (rw+vs): GeoTIFF') < 0:
         print(ret)
         return 'fail'
@@ -426,13 +426,13 @@ def test_gdalinfo_21():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format', check_memleak = False)
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format', check_memleak=False)
     if err.find('--format option given without a format code') < 0:
         gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format foo_bar', check_memleak = False)
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format foo_bar', check_memleak=False)
     if err.find('--format option given with format') < 0:
         gdaltest.post_reason('fail')
         print(err)
@@ -448,7 +448,7 @@ def test_gdalinfo_22():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --format GTiff', check_memleak = False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --format GTiff', check_memleak=False)
 
     expected_strings = [
         'Short Name:',
@@ -477,7 +477,7 @@ def test_gdalinfo_23():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --help-general', check_memleak = False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --help-general', check_memleak=False)
     if ret.find('Generic GDAL utility command options') < 0:
         print(ret)
         return 'fail'
@@ -492,7 +492,7 @@ def test_gdalinfo_24():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --locale C ../gcore/data/byte.tif', check_memleak = False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --locale C ../gcore/data/byte.tif', check_memleak=False)
     if ret.find('Driver: GTiff/GeoTIFF') != 0:
         print(ret)
         return 'fail'
@@ -507,7 +507,7 @@ def test_gdalinfo_25():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -listmdd', check_memleak = False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -listmdd', check_memleak=False)
     if ret.find('Metadata domains:') < 0:
         print(ret)
         return 'fail'
@@ -525,7 +525,7 @@ def test_gdalinfo_26():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -mdd all', check_memleak = False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -mdd all', check_memleak=False)
     if ret.find('Metadata (xml:XMP)') < 0:
         print(ret)
         return 'fail'
@@ -540,7 +540,7 @@ def test_gdalinfo_27():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/float64.asc -oo datatype=float64', check_memleak = False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/float64.asc -oo datatype=float64', check_memleak=False)
     if ret.find('Type=Float64') < 0:
         print(ret)
         return 'fail'
@@ -778,7 +778,7 @@ def test_gdalinfo_38():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/byte_with_xmp.tif -listmdd', check_memleak = False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/byte_with_xmp.tif -listmdd', check_memleak=False)
     ret = json.loads(ret)
     if 'metadataDomains' not in ret['metadata']:
         print(ret)
@@ -797,7 +797,7 @@ def test_gdalinfo_39():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/byte_with_xmp.tif -mdd all', check_memleak = False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/byte_with_xmp.tif -mdd all', check_memleak=False)
     ret = json.loads(ret)
     if 'xml:XMP' not in ret['metadata']:
         print(ret)

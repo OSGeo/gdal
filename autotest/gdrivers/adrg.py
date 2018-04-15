@@ -62,7 +62,7 @@ def adrg_read_transh():
 
 def adrg_read_subdataset_img():
 
-    tst = gdaltest.GDALTest('ADRG', 'ADRG:data/SMALL_ADRG/ABCDEF01.GEN,data/SMALL_ADRG/ABCDEF01.IMG', 1, 62833, filename_absolute = 1)
+    tst = gdaltest.GDALTest('ADRG', 'ADRG:data/SMALL_ADRG/ABCDEF01.GEN,data/SMALL_ADRG/ABCDEF01.IMG', 1, 62833, filename_absolute=1)
     return tst.testOpen()
 
 ###############################################################################

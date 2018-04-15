@@ -43,7 +43,7 @@ from osgeo import osr
 # Test write support
 
 
-def ogr_pdf_1(name = 'tmp/ogr_pdf_1.pdf', write_attributes = 'YES'):
+def ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
 
     if ogr.GetDriverByName('PDF') is None:
         return 'skip'
@@ -51,9 +51,9 @@ def ogr_pdf_1(name = 'tmp/ogr_pdf_1.pdf', write_attributes = 'YES'):
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
 
-    ds = ogr.GetDriverByName('PDF').CreateDataSource(name, options = ['STREAM_COMPRESS=NONE','MARGIN=10', 'OGR_WRITE_ATTRIBUTES=%s' % write_attributes, 'OGR_LINK_FIELD=linkfield'])
+    ds = ogr.GetDriverByName('PDF').CreateDataSource(name, options=['STREAM_COMPRESS=NONE','MARGIN=10', 'OGR_WRITE_ATTRIBUTES=%s' % write_attributes, 'OGR_LINK_FIELD=linkfield'])
 
-    lyr = ds.CreateLayer('first_layer', srs = sr)
+    lyr = ds.CreateLayer('first_layer', srs=sr)
 
     lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
@@ -116,7 +116,7 @@ def ogr_pdf_1(name = 'tmp/ogr_pdf_1.pdf', write_attributes = 'YES'):
 # Test read support
 
 
-def ogr_pdf_2(name = 'tmp/ogr_pdf_1.pdf', has_attributes = True):
+def ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
 
     if ogr.GetDriverByName('PDF') is None:
         return 'skip'

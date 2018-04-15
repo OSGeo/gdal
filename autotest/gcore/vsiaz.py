@@ -144,7 +144,7 @@ def vsiaz_start_webserver():
     if not gdaltest.built_against_curl():
         return 'skip'
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
         return 'skip'
 
@@ -190,7 +190,7 @@ def vsiaz_fake_basic():
         request.wfile.write("""foo""".encode('ascii'))
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket/resource', custom_method = method)
+    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket/resource', custom_method=method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiaz/az_fake_bucket/resource')
         if f is None:
@@ -223,7 +223,7 @@ def vsiaz_fake_basic():
         request.wfile.write("""foo""".encode('ascii'))
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket/resource', custom_method = method)
+    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket/resource', custom_method=method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiaz_streaming/az_fake_bucket/resource')
         if f is None:
@@ -446,7 +446,7 @@ def vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method = method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
         ret += gdal.VSIFWriteL('x' * 5000, 1, 5000, f)
@@ -496,7 +496,7 @@ def vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method = method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
 
     if gdal.VSIFSeekL(f, 0, 0) != 0:
         gdaltest.post_reason('fail')
@@ -577,7 +577,7 @@ def vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method = method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
 
     def method(request):
         h = request.headers
@@ -600,7 +600,7 @@ def vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', custom_method = method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', custom_method=method)
 
     def method(request):
         h = request.headers
@@ -623,7 +623,7 @@ def vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', custom_method = method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', custom_method=method)
 
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('0123456789abcdef', 1, 16, f)
@@ -650,7 +650,7 @@ def vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method = method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
 
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():

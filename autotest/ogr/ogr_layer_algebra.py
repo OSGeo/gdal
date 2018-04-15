@@ -115,21 +115,21 @@ def algebra_setup():
 
     feat = ogr.Feature(A.GetLayerDefn())
     feat.SetField('A',1)
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = a1))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=a1))
     A.CreateFeature(feat)
 
     feat = ogr.Feature(A.GetLayerDefn())
     feat.SetField('A',2)
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = a2))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=a2))
     A.CreateFeature(feat)
 
     feat = ogr.Feature(B.GetLayerDefn())
     feat.SetField('B','first')
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = b1))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=b1))
     B.CreateFeature(feat)
 
     feat = ogr.Feature(pointInB.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = pointInB1))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=pointInB1))
     pointInB.CreateFeature(feat)
 
     d1 = 'POLYGON((1 2, 1 3, 3 3, 3 2, 1 2))'
@@ -138,21 +138,21 @@ def algebra_setup():
     D1 = ds.CreateLayer('D1')
 
     feat = ogr.Feature(D1.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = d1))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=d1))
     D1.CreateFeature(feat)
 
     feat = ogr.Feature(D1.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = d2))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=d2))
     D1.CreateFeature(feat)
 
     D2 = ds.CreateLayer('D2')
 
     feat = ogr.Feature(D2.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = d1))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=d1))
     D2.CreateFeature(feat)
 
     feat = ogr.Feature(D2.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = d2))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=d2))
     D2.CreateFeature(feat)
 
     empty = ds.CreateLayer('empty')
@@ -187,8 +187,8 @@ def algebra_intersection():
         gdaltest.post_reason('Layer.Intersection returned '+str(C.GetFeatureCount())+' features')
         return 'fail'
 
-    f1 = (ogr.Geometry(wkt = 'POLYGON ((2 3,3 3,3 2,2 2,2 3))'),1,'first')
-    f2 = (ogr.Geometry(wkt = 'POLYGON ((5 2,5 3,6 3,6 2,5 2))'),2,'first')
+    f1 = (ogr.Geometry(wkt='POLYGON ((2 3,3 3,3 2,2 2,2 3))'),1,'first')
+    f2 = (ogr.Geometry(wkt='POLYGON ((5 2,5 3,6 3,6 2,5 2))'),2,'first')
 
     C.ResetReading()
     while 1:
@@ -214,7 +214,7 @@ def algebra_intersection():
     C.CreateField(ogr.FieldDefn("A", ogr.OFTInteger))
     C.CreateField(ogr.FieldDefn("B", ogr.OFTString))
 
-    err = A.Intersection(B, C, options = ['PROMOTE_TO_MULTI=YES'])
+    err = A.Intersection(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
     if err != 0:
         gdaltest.post_reason('got non-zero result code '+str(err)+' from Layer.Intersection')
@@ -361,7 +361,7 @@ def algebra_union():
 
     recreate_layer_C()
 
-    err = A.Union(B, C, options = ['PROMOTE_TO_MULTI=YES'])
+    err = A.Union(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
     if ogrtest.have_geos():
         if err != 0:
@@ -426,7 +426,7 @@ def algebra_symdifference():
 
     recreate_layer_C()
 
-    err = A.SymDifference(B, C, options = ['PROMOTE_TO_MULTI=YES'])
+    err = A.SymDifference(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
     if ogrtest.have_geos():
         if err != 0:
@@ -476,7 +476,7 @@ def algebra_identify():
 
     recreate_layer_C()
 
-    err = A.Identity(B, C, options = ['PROMOTE_TO_MULTI=YES'])
+    err = A.Identity(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
     if ogrtest.have_geos():
         if err != 0:
@@ -526,7 +526,7 @@ def algebra_update():
 
     recreate_layer_C()
 
-    err = A.Update(B, C, options = ['PROMOTE_TO_MULTI=YES'])
+    err = A.Update(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
     if ogrtest.have_geos():
         if err != 0:
@@ -576,7 +576,7 @@ def algebra_clip():
 
     recreate_layer_C()
 
-    err = A.Clip(B, C, options = ['PROMOTE_TO_MULTI=YES'])
+    err = A.Clip(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
     if ogrtest.have_geos():
         if err != 0:
@@ -626,7 +626,7 @@ def algebra_erase():
 
     recreate_layer_C()
 
-    err = A.Erase(B, C, options = ['PROMOTE_TO_MULTI=YES'])
+    err = A.Erase(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
     if ogrtest.have_geos():
         if err != 0:
@@ -673,7 +673,7 @@ def algebra_erase():
 
     recreate_layer_C()
 
-    A.Erase(empty, C, options = ['PROMOTE_TO_MULTI=YES'])
+    A.Erase(empty, C, options=['PROMOTE_TO_MULTI=YES'])
 
     if C.GetFeatureCount() != A.GetFeatureCount():
         gdaltest.post_reason('Layer.Erase returned '+str(C.GetFeatureCount())+' features')

@@ -65,7 +65,7 @@ def ogr_cad_2():
     if gdaltest.cad_dr is None:
         return 'skip'
 
-    gdaltest.cad_ds = gdal.OpenEx('data/cad/ellipse_r2000.dwg', allowed_drivers = ['CAD'])
+    gdaltest.cad_ds = gdal.OpenEx('data/cad/ellipse_r2000.dwg', allowed_drivers=['CAD'])
 
     if gdaltest.cad_ds is None:
         return 'fail'
@@ -143,7 +143,7 @@ def ogr_cad_3():
     if gdaltest.cad_dr is None:
         return 'skip'
 
-    gdaltest.cad_ds = gdal.OpenEx('data/cad/triple_circles_r2000.dwg', allowed_drivers = ['CAD'])
+    gdaltest.cad_ds = gdal.OpenEx('data/cad/triple_circles_r2000.dwg', allowed_drivers=['CAD'])
 
     if gdaltest.cad_ds is None:
         return 'fail'
@@ -304,7 +304,7 @@ def ogr_cad_4():
     if gdaltest.cad_dr is None:
         return 'skip'
 
-    gdaltest.cad_ds = gdal.OpenEx('data/cad/point2d_r2000.dwg', allowed_drivers = ['CAD'])
+    gdaltest.cad_ds = gdal.OpenEx('data/cad/point2d_r2000.dwg', allowed_drivers=['CAD'])
 
     if gdaltest.cad_ds.GetLayerCount() != 1:
         gdaltest.post_reason('expected exactly one layer.')
@@ -333,7 +333,7 @@ def ogr_cad_5():
     if gdaltest.cad_dr is None:
         return 'skip'
 
-    gdaltest.cad_ds = gdal.OpenEx('data/cad/line_r2000.dwg', allowed_drivers = ['CAD'])
+    gdaltest.cad_ds = gdal.OpenEx('data/cad/line_r2000.dwg', allowed_drivers=['CAD'])
 
     if gdaltest.cad_ds.GetLayerCount() != 1:
         gdaltest.post_reason('expected exactly one layer.')
@@ -363,7 +363,7 @@ def ogr_cad_6():
     if gdaltest.cad_dr is None:
         return 'skip'
 
-    gdaltest.cad_ds = gdal.OpenEx('data/cad/text_mtext_attdef_r2000.dwg', allowed_drivers = ['CAD'])
+    gdaltest.cad_ds = gdal.OpenEx('data/cad/text_mtext_attdef_r2000.dwg', allowed_drivers=['CAD'])
 
     if gdaltest.cad_ds.GetLayerCount() != 1:
         gdaltest.post_reason('expected exactly one layer.')
@@ -440,7 +440,7 @@ def ogr_cad_9():
         return 'skip'
 
     with gdaltest.error_handler():
-        ds = gdal.OpenEx('data/AC1018_signature.dwg', allowed_drivers = ['CAD'])
+        ds = gdal.OpenEx('data/AC1018_signature.dwg', allowed_drivers=['CAD'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'

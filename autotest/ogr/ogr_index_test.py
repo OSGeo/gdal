@@ -76,7 +76,7 @@ def ogr_index_1():
     # from a newly created (updatable) file.
 
     gdaltest.p_ds = None
-    gdaltest.p_ds = ogr.OpenShared('index_p.mif', update = 0)
+    gdaltest.p_ds = ogr.OpenShared('index_p.mif', update=0)
     gdaltest.p_lyr = gdaltest.p_ds.GetLayerByName('index_p')
 
     return 'success'
@@ -90,7 +90,7 @@ def ogr_index_2():
     drv = ogr.GetDriverByName('ESRI Shapefile')
     gdaltest.s_ds = drv.CreateDataSource('join_t.dbf')
     gdaltest.s_lyr = gdaltest.s_ds.CreateLayer('join_t',
-                                                geom_type = ogr.wkbNone)
+                                                geom_type=ogr.wkbNone)
 
     ogrtest.quick_create_layer_def(gdaltest.s_lyr,
                                     [('SKEY', ogr.OFTInteger),
@@ -107,7 +107,7 @@ def ogr_index_2():
     gdaltest.s_lyr = None
     gdaltest.s_ds = None
 
-    gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update = 1)
+    gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update=1)
     gdaltest.s_lyr = gdaltest.s_ds.GetLayerByName('join_t')
 
     return 'success'
@@ -171,7 +171,7 @@ def ogr_index_5():
 def ogr_index_6():
 
     gdaltest.s_ds.Release()
-    gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update = 1)
+    gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update=1)
     gdaltest.s_lyr = gdaltest.s_ds.GetLayerByName('join_t')
 
     gdaltest.s_lyr.SetAttributeFilter("VALUE='Value 5'")
@@ -254,7 +254,7 @@ def ogr_index_9():
             pass
 
     # Re-create an index
-    gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update = 1)
+    gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update=1)
     gdaltest.s_ds.ExecuteSQL('CREATE INDEX ON join_t USING value')
     gdaltest.s_ds.Release()
 
@@ -275,7 +275,7 @@ def ogr_index_9():
         return 'fail'
 
     # Close the dataset and re-open
-    gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update = 1)
+    gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update=1)
     # At this point the .ind was opened in read-only. Now it
     # will be re-opened in read-write mode
     gdaltest.s_ds.ExecuteSQL('CREATE INDEX ON join_t USING skey')
@@ -461,7 +461,7 @@ def ogr_index_11_check(lyr, expected_fids):
 def ogr_index_11():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_index_11.dbf')
-    lyr = ds.CreateLayer('ogr_index_11', geom_type = ogr.wkbNone)
+    lyr = ds.CreateLayer('ogr_index_11', geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
 

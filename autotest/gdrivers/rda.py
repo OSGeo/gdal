@@ -55,7 +55,7 @@ def rda_test_presence():
     if gdaltest.rda_drv is None:
         return 'skip'
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
         return 'skip'
 
@@ -1078,7 +1078,7 @@ def rda_download_queue():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             # We need at least (width=5) <= MAXCONNECT so that AdviseRead(all_raster) is honoured
-            ds = gdal.OpenEx('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}', open_options = ['MAXCONNECT=8'])
+            ds = gdal.OpenEx('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}', open_options=['MAXCONNECT=8'])
         ds.AdviseRead(0,0,4,5)
         ds.ReadRaster(0,0,4,3)
         ref_data = ds.ReadRaster(0,1,4,2)

@@ -65,7 +65,7 @@ def ctg_1():
     AUTHORITY["EPSG","32614"],
     AXIS["Easting",EAST],
     AXIS["Northing",NORTH]]"""
-    ret = tst.testOpen(check_gt = expected_gt, check_prj = expected_srs)
+    ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs)
 
     if ret == 'success':
         ds = gdal.Open('data/fake_grid_cell')

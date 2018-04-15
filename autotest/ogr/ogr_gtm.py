@@ -264,7 +264,7 @@ def ogr_gtm_read_2():
 def ogr_gtm_write_1():
 
     ds = ogr.GetDriverByName('GPSTrackMaker').CreateDataSource('tmp/gtm.gtm')
-    lyr = ds.CreateLayer('gtm_waypoints', geom_type = ogr.wkbPoint)
+    lyr = ds.CreateLayer('gtm_waypoints', geom_type=ogr.wkbPoint)
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
     dst_feat.SetField('name', 'WAY0000000')
@@ -285,7 +285,7 @@ def ogr_gtm_write_1():
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
 
-    lyr = ds.CreateLayer('gtm_tracks', geom_type = ogr.wkbLineString)
+    lyr = ds.CreateLayer('gtm_tracks', geom_type=ogr.wkbLineString)
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
     dst_feat.SetField('name', '1st Street')

@@ -119,7 +119,7 @@ def aaigrid_3():
 
     prj = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke_1866",6378206.4,294.9786982138982]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]'
 
-    return tst.testCreateCopy(check_gt = 1, check_srs = prj)
+    return tst.testCreateCopy(check_gt=1, check_srs=prj)
 
 ###############################################################################
 # Read subwindow.  Tests the tail recursion problem.
@@ -165,7 +165,7 @@ def aaigrid_5():
     UNIT["METERS",1]]
     """
 
-    return tst.testOpen(check_prj = prj)
+    return tst.testOpen(check_prj=prj)
 
 ###############################################################################
 # Verify data type determination from type of nodata
@@ -213,7 +213,7 @@ def aaigrid_7():
 
     tst = gdaltest.GDALTest('AAIGRID', 'nonsquare.vrt', 1, 12481)
 
-    return tst.testCreateCopy(check_gt = 1)
+    return tst.testCreateCopy(check_gt=1)
 
 
 ###############################################################################
@@ -223,7 +223,7 @@ def aaigrid_8():
 
     tst = gdaltest.GDALTest('AAIGRID', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -232,7 +232,7 @@ def aaigrid_8():
 def aaigrid_9():
 
     ds = gdal.Open('data/float32.bil')
-    ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds, options = ['DECIMAL_PRECISION=2'])
+    ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds, options=['DECIMAL_PRECISION=2'])
     got_minmax = ds2.GetRasterBand(1).ComputeRasterMinMax()
     ds2 = None
 
@@ -267,7 +267,7 @@ def aaigrid_10():
             ds = gdal.Open('data/float64.asc')
             gdal.SetConfigOption('AAIGRID_DATATYPE', None)
         else:
-            ds = gdal.OpenEx('data/float64.asc', open_options = ['DATATYPE=Float64'])
+            ds = gdal.OpenEx('data/float64.asc', open_options=['DATATYPE=Float64'])
 
         if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
             gdaltest.post_reason('Data type is not Float64!')
@@ -300,7 +300,7 @@ def aaigrid_10():
 def aaigrid_11():
 
     ds = gdal.Open('data/float32.bil')
-    ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds, options = ['SIGNIFICANT_DIGITS=2'])
+    ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds, options=['SIGNIFICANT_DIGITS=2'])
     got_minmax = ds2.GetRasterBand(1).ComputeRasterMinMax()
     ds2 = None
 
@@ -319,7 +319,7 @@ def aaigrid_12():
 
     ds = gdal.Open('data/nodata_float.asc')
     ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds,
-                               options = ['DECIMAL_PRECISION=3'])
+                               options=['DECIMAL_PRECISION=3'])
     del ds2
 
     aai = open('tmp/aaigrid.tmp')
@@ -348,7 +348,7 @@ def aaigrid_13():
 
     ds = gdal.Open('data/nodata_float.asc')
     ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds,
-                               options = ['SIGNIFICANT_DIGITS=3'])
+                               options=['SIGNIFICANT_DIGITS=3'])
     del ds2
 
     aai = open('tmp/aaigrid.tmp')
@@ -377,7 +377,7 @@ def aaigrid_14():
 
     ds = gdal.Open('data/byte.tif')
     mem_ds = gdal.GetDriverByName('MEM').Create('', 20, 20, 1, gdal.GDT_Float32)
-    mem_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, ds.ReadRaster(0, 0, 20, 20, buf_type = gdal.GDT_Float32))
+    mem_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, ds.ReadRaster(0, 0, 20, 20, buf_type=gdal.GDT_Float32))
     ds = None
     gdal.GetDriverByName('AAIGRID').CreateCopy('/vsimem/aaigrid_14.asc', mem_ds)
 

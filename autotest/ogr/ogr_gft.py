@@ -128,7 +128,7 @@ def ogr_gft_write():
         ogrtest.gft_can_write = False
         return 'skip'
 
-    ds = ogr.Open('GFT:refresh=%s' % ogrtest.gft_refresh, update = 1)
+    ds = ogr.Open('GFT:refresh=%s' % ogrtest.gft_refresh, update=1)
     if ds is None:
         ogrtest.gft_can_write = False
         return 'skip'
@@ -218,7 +218,7 @@ def ogr_gft_ogr2ogr_non_spatial():
 
     os.unlink('tmp/no_geometry_table.csv')
 
-    ds = ogr.Open('GFT:refresh=%s' % ogrtest.gft_refresh, update = 1)
+    ds = ogr.Open('GFT:refresh=%s' % ogrtest.gft_refresh, update=1)
     lyr = ds.GetLayerByName(layer_name)
     if lyr.GetLayerDefn().GetFieldCount() != 2:
         gdaltest.post_reason('did not get expected field count')
@@ -278,7 +278,7 @@ def ogr_gft_ogr2ogr_spatial():
     os.unlink('tmp/geometry_table.csv')
     os.unlink('tmp/geometry_table.csvt')
 
-    ds = ogr.Open('GFT:refresh=%s' % ogrtest.gft_refresh, update = 1)
+    ds = ogr.Open('GFT:refresh=%s' % ogrtest.gft_refresh, update=1)
 
     for name in [layer_name, copied_layer_name]:
         lyr = ds.GetLayerByName(name)

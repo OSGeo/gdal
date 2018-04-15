@@ -66,7 +66,7 @@ def ogr_arcgen_points():
         feat.DumpReadable()
         return 'fail'
     if ogrtest.check_feature_geometry(feat,'POINT (2 49)',
-                                      max_error = 0.0000001) != 0:
+                                      max_error=0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
         return 'fail'
@@ -103,7 +103,7 @@ def ogr_arcgen_points25d():
         feat.DumpReadable()
         return 'fail'
     if ogrtest.check_feature_geometry(feat,'POINT (2 49 10)',
-                                      max_error = 0.0000001) != 0:
+                                      max_error=0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
         return 'fail'
@@ -136,7 +136,7 @@ def ogr_arcgen_lines():
         feat.DumpReadable()
         return 'fail'
     if ogrtest.check_feature_geometry(feat,'LINESTRING (2 49,3 50)',
-                                      max_error = 0.0000001) != 0:
+                                      max_error=0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
         return 'fail'
@@ -169,7 +169,7 @@ def ogr_arcgen_lines25d():
         feat.DumpReadable()
         return 'fail'
     if ogrtest.check_feature_geometry(feat,'LINESTRING (2 49 10,3 50 10)',
-                                      max_error = 0.0000001) != 0:
+                                      max_error=0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
         return 'fail'
@@ -202,7 +202,7 @@ def ogr_arcgen_polygons():
         feat.DumpReadable()
         return 'fail'
     if ogrtest.check_feature_geometry(feat,'POLYGON ((2 49,2 50,3 50,3 49,2 49))',
-                                      max_error = 0.0000001) != 0:
+                                      max_error=0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
         return 'fail'
@@ -235,7 +235,7 @@ def ogr_arcgen_polygons25d():
         feat.DumpReadable()
         return 'fail'
     if ogrtest.check_feature_geometry(feat,'POLYGON ((2 49 10,2 50 10,3 50 10,3 49 10,2 49 10))',
-                                      max_error = 0.0000001) != 0:
+                                      max_error=0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
         return 'fail'

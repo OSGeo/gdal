@@ -48,8 +48,8 @@ def pds_1():
     expected_gt = (-10668384.903788566589355,926.115274429321289,0,3852176.483988761901855,0,-926.115274429321289)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen(check_prj = expected_prj,
-                         check_gt = expected_gt)
+    ret = tst.testOpen(check_prj=expected_prj,
+                         check_gt=expected_gt)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
     return ret
@@ -74,8 +74,8 @@ def pds_2():
     expected_gt = (587861.55900404998, 75.000002980232239, 0.0, -7815243.4746123618, 0.0, -75.000002980232239)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen(check_prj = expected_prj,
-                     check_gt = expected_gt)
+    ret = tst.testOpen(check_prj=expected_prj,
+                     check_gt=expected_gt)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
     if ret != 'success':
@@ -130,7 +130,7 @@ def pds_4():
     gt_expected = (6119184.3590369327, 1.0113804322107001, 0.0, -549696.39009125973, 0.0, -1.0113804322107001)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen(check_gt = gt_expected)
+    ret = tst.testOpen(check_gt=gt_expected)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
     return ret
@@ -233,7 +233,7 @@ def pds_8():
 
     expected_gt = (10670237.134337425, 926.11527442932129, 0.0, -3854028.7145376205, 0.0, -926.11527442932129)
 
-    result = tst.testOpen(check_gt = expected_gt)
+    result = tst.testOpen(check_gt=expected_gt)
 
     # clear config settings
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)

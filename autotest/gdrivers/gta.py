@@ -259,7 +259,7 @@ def gta_5():
                     "ZLIB9"]
 
     for compress in compress_list:
-        out_ds = gdaltest.gta_drv.CreateCopy('/vsimem/gta_5.gta', src_ds, options = ['COMPRESS=' + compress])
+        out_ds = gdaltest.gta_drv.CreateCopy('/vsimem/gta_5.gta', src_ds, options=['COMPRESS=' + compress])
         del out_ds
 
     gdaltest.gta_drv.Delete('/vsimem/gta_5.gta')
@@ -272,7 +272,7 @@ for item in init_list:
         filename = item[0]
     else:
         filename = '../../gcore/data/' + item[0]
-    ut = gdaltest.GDALTest('GTA', filename, item[1], item[2], options = item[3])
+    ut = gdaltest.GDALTest('GTA', filename, item[1], item[2], options=item[3])
     if ut is None:
         print('GTA tests skipped')
         sys.exit()

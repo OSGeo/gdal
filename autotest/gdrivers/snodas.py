@@ -54,7 +54,7 @@ def snodas_1():
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9108"]],
     AUTHORITY["EPSG","4326"]]"""
-    ret = tst.testOpen(check_gt = expected_gt, check_prj = expected_srs, skip_checksum = True)
+    ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs, skip_checksum=True)
 
     if ret is 'success':
         ds = gdal.Open('data/fake_snodas.hdr')

@@ -54,8 +54,8 @@ def ers_1():
 def ers_2():
 
     tst = gdaltest.GDALTest('ERS', 'float32.bil', 1, 27)
-    return tst.testCreateCopy(new_filename = 'tmp/float32.ers',
-                               check_gt = 1, vsimem = 1)
+    return tst.testCreateCopy(new_filename='tmp/float32.ers',
+                               check_gt=1, vsimem=1)
 
 ###############################################################################
 # Test multi-band file.
@@ -64,7 +64,7 @@ def ers_2():
 def ers_3():
 
     tst = gdaltest.GDALTest('ERS', 'rgbsmall.tif', 2, 21053)
-    return tst.testCreate(new_filename = 'tmp/rgbsmall.ers')
+    return tst.testCreate(new_filename='tmp/rgbsmall.ers')
 
 ###############################################################################
 # Test HeaderOffset case.
@@ -80,7 +80,7 @@ def ers_4():
     UNIT["degree",0.0174532925199433]]"""
 
     tst = gdaltest.GDALTest('ERS', 'ers_dem.ers', 1, 56588)
-    return tst.testOpen(check_prj = srs, check_gt = gt)
+    return tst.testOpen(check_prj=srs, check_gt=gt)
 
 ###############################################################################
 # Confirm we can recognised signed 8bit data.
@@ -220,7 +220,7 @@ def ers_9():
 def ers_10():
 
     drv = gdal.GetDriverByName('ERS')
-    ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options = ['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=METERS'])
+    ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options=['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=METERS'])
 
     proj = ds.GetMetadataItem("PROJ", "ERS")
     datum = ds.GetMetadataItem("DATUM", "ERS")
@@ -308,7 +308,7 @@ def ers_10():
         print(wkt)
         return 'fail'
 
-    ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options = ['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=FEET'])
+    ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options=['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=FEET'])
     ds = None
 
     # Check that we can update those values with SetProjection()

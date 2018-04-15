@@ -204,7 +204,7 @@ def ogr_wfs_geoserver():
 
     if feat.GetField('NAME') != 'museam' or \
        ogrtest.check_feature_geometry(feat,'POINT (-74.0104611 40.70758763)',
-                                      max_error = 0.000001) != 0:
+                                      max_error=0.000001) != 0:
         gdaltest.post_reason('did not get expected feature (1)')
         feat.DumpReadable()
         return 'fail'
@@ -218,7 +218,7 @@ def ogr_wfs_geoserver():
     feat = lyr.GetNextFeature()
     if feat.GetField('NAME') != 'museam' or \
        ogrtest.check_feature_geometry(feat,'POINT (-74.0104611 40.70758763)',
-                                      max_error = 0.000001) != 0:
+                                      max_error=0.000001) != 0:
         gdaltest.post_reason('did not get expected feature (2)')
         feat.DumpReadable()
         return 'fail'
@@ -297,7 +297,7 @@ def ogr_wfs_geoserver_json():
     feat = lyr.GetNextFeature()
     #if feat.GetField('name') != 'Alexander Bay' or \
     if ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
         return 'fail'
@@ -344,7 +344,7 @@ def ogr_wfs_geoserver_shapezip():
     feat = lyr.GetNextFeature()
     #if feat.GetField('name') != 'Alexander Bay' or \
     if ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
         return 'fail'
@@ -461,7 +461,7 @@ def ogr_wfs_deegree():
     feat = lyr.GetNextFeature()
     if feat.GetField('OBJECTID') != 1 or \
        ogrtest.check_feature_geometry(feat,'POINT (558750.703 4402882.05)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
         return 'fail'
@@ -575,7 +575,7 @@ def ogr_wfs_fake_wfs_server():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
-    (process, port) = webserver.launch(handler = WFSHTTPHandler)
+    (process, port) = webserver.launch(handler=WFSHTTPHandler)
     if port == 0:
         return 'skip'
 
@@ -606,7 +606,7 @@ def ogr_wfs_fake_wfs_server():
     feat = lyr.GetNextFeature()
     if feat.GetField('MPLength') != '33513.' or \
        ogrtest.check_feature_geometry(feat,'MULTICURVE ((154898.65286 568054.62753,160108.36082 566076.78094,164239.254332 563024.70188,170523.31535 561231.219583,172676.42256 559253.37299,175912.80562 557459.89069,180043.699132 553508.779495,183294.491306 552250.182732))',
-                                      max_error = 0.00001) != 0:
+                                      max_error=0.00001) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
         webserver.server_stop(process, port)
@@ -627,7 +627,7 @@ def ogr_wfs_geoserver_wfst():
     if not gdaltest.geoserver_wfs:
         return 'skip'
 
-    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?VERSION=1.1.0', update = 1)
+    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?VERSION=1.1.0', update=1)
     if ds is None:
         return 'fail'
 
@@ -722,7 +722,7 @@ def ogr_wfs_deegree_wfst():
         print('cannot open URL')
         return 'skip'
 
-    ds = ogr.Open('WFS:http://testing.deegree.org/deegree-wfs/services', update = 1)
+    ds = ogr.Open('WFS:http://testing.deegree.org/deegree-wfs/services', update=1)
     if ds is None:
         return 'fail'
 
@@ -767,7 +767,7 @@ def ogr_wfs_ionic_wfst():
         return 'skip'
     gdaltest.ionic_wfs = True
 
-    ds = ogr.Open('WFS:http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA', update = 1)
+    ds = ogr.Open('WFS:http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA', update=1)
     if ds is None:
         if gdal.GetLastErrorMsg().find('HTTP error code : 403') != -1:
             gdaltest.ionic_wfs = False
@@ -1438,7 +1438,7 @@ def ogr_wfs_vsimem_wfs110_minimal_instance():
         return 'fail'
 
     gdal.PushErrorHandler()
-    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('fail')
@@ -1599,7 +1599,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options = ['EXPOSE_GML_ID=NO'])
+    ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options=['EXPOSE_GML_ID=NO'])
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     if lyr_defn.GetFieldCount() != 7:
@@ -1607,7 +1607,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype():
         return 'fail'
 
     gdal.SetConfigOption('GML_EXPOSE_GML_ID', 'YES')
-    ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options = ['EXPOSE_GML_ID=NO'])
+    ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options=['EXPOSE_GML_ID=NO'])
     gdal.SetConfigOption('GML_EXPOSE_GML_ID', None)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
@@ -1616,7 +1616,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype():
         return 'fail'
 
     gdal.SetConfigOption('GML_EXPOSE_GML_ID', 'NO')
-    ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options = ['EXPOSE_GML_ID=YES'])
+    ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options=['EXPOSE_GML_ID=YES'])
     gdal.SetConfigOption('GML_EXPOSE_GML_ID', None)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
@@ -2310,7 +2310,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized():
         print(got_extent)
         return 'fail'
 
-    ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options = ['TRUST_CAPABILITIES_BOUNDS=YES'])
+    ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options=['TRUST_CAPABILITIES_BOUNDS=YES'])
     lyr = ds.GetLayer(1)
     if lyr.GetExtent() != (-170.0, 170.0, -80.0, 80.0):
         gdaltest.post_reason('fail')
@@ -3012,7 +3012,7 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
 </WFS_Capabilities>
 """)
 
-    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     lyr = ds.GetLayer(0)
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -3447,7 +3447,7 @@ def ogr_wfs_vsimem_wfs110_updatefeature():
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
-    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     lyr = ds.GetLayer(0)
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -3639,7 +3639,7 @@ def ogr_wfs_vsimem_wfs110_deletefeature():
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
-    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     lyr = ds.GetLayer(0)
 
     gdal.PushErrorHandler()
@@ -3670,7 +3670,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 </wfs:FeatureCollection>
 """)
 
-    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     lyr = ds.GetLayer(0)
 
     gdal.PushErrorHandler()
@@ -3681,7 +3681,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     lyr = ds.GetLayer(0)
 
     wfs_delete_url = """/vsimem/wfs_endpoint&POSTFIELDS=<?xml version="1.0"?>
@@ -3708,7 +3708,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     lyr = ds.GetLayer(0)
     gdal.FileFromMemBuffer(wfs_delete_url, "<invalid_xml>")
     gdal.PushErrorHandler()
@@ -3719,7 +3719,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     lyr = ds.GetLayer(0)
     gdal.FileFromMemBuffer(wfs_delete_url, "<foo/>")
     gdal.PushErrorHandler()
@@ -3730,7 +3730,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     lyr = ds.GetLayer(0)
     gdal.FileFromMemBuffer(wfs_delete_url, "<TransactionResponse/>")
     ret = lyr.DeleteFeature(200)

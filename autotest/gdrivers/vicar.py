@@ -53,7 +53,7 @@ def vicar_1():
     PARAMETER["longitude_of_center",137],
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
-    if tst.testOpen(check_prj = expected_prj, skip_checksum = True) != 'success':
+    if tst.testOpen(check_prj=expected_prj, skip_checksum=True) != 'success':
         gdaltest.post_reason('fail')
         return 'fail'
 

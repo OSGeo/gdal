@@ -287,7 +287,7 @@ def ogr_xlsx_7():
         pass
     shutil.copy('data/test.xlsx', 'tmp/ogr_xlsx_7.xlsx')
 
-    ds = ogr.Open('tmp/ogr_xlsx_7.xlsx', update = 1)
+    ds = ogr.Open('tmp/ogr_xlsx_7.xlsx', update=1)
     lyr = ds.GetLayerByName('Feuille7')
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:
@@ -595,8 +595,8 @@ def ogr_xlsx_15():
         return 'skip'
 
     out_filename = '/vsimem/ogr_xlsx_15.xlsx'
-    gdal.VectorTranslate(out_filename, 'data/poly.shp', options = '-f XLSX -nln first')
-    gdal.VectorTranslate(out_filename, 'data/poly.shp', options = '-update -nln second')
+    gdal.VectorTranslate(out_filename, 'data/poly.shp', options='-f XLSX -nln first')
+    gdal.VectorTranslate(out_filename, 'data/poly.shp', options='-update -nln second')
 
     ds = ogr.Open(out_filename)
     if ds.GetLayerByName('first').GetFeatureCount() == 0:

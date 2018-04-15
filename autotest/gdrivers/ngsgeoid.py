@@ -41,7 +41,7 @@ import gdaltest
 def ngsgeoid_1():
 
     tst = gdaltest.GDALTest('NGSGEOID', 'g2009u01_le_truncated.bin', 1, 65534)
-    return tst.testOpen(check_gt = (229.99166666666667, 0.016666666666670001, 0.0, 40.00833333333334, 0.0, -0.016666666666670001), check_prj = 'WGS84')
+    return tst.testOpen(check_gt=(229.99166666666667, 0.016666666666670001, 0.0, 40.00833333333334, 0.0, -0.016666666666670001), check_prj='WGS84')
 
 ###############################################################################
 # Test opening a big endian file
@@ -50,7 +50,7 @@ def ngsgeoid_1():
 def ngsgeoid_2():
 
     tst = gdaltest.GDALTest('NGSGEOID', 'g2009u01_be_truncated.bin', 1, 65534)
-    return tst.testOpen(check_gt = (229.99166666666667, 0.016666666666670001, 0.0, 40.00833333333334, 0.0, -0.016666666666670001), check_prj = 'WGS84')
+    return tst.testOpen(check_gt=(229.99166666666667, 0.016666666666670001, 0.0, 40.00833333333334, 0.0, -0.016666666666670001), check_prj='WGS84')
 
 
 gdaltest_list = [

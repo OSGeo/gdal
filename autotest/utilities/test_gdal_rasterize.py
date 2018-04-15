@@ -83,7 +83,7 @@ def test_gdal_rasterize_1():
     wkt_geom = 'POLYGON((1020 1030,1020 1045,1050 1045,1050 1030,1020 1030))'
 
     feat = ogr.Feature(rast_lyr.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=wkt_geom))
 
     rast_lyr.CreateFeature(feat)
 
@@ -96,7 +96,7 @@ def test_gdal_rasterize_1():
     wkt_geom = 'LINESTRING(1000 1000, 1100 1050)'
 
     feat = ogr.Feature(rast_lyr.GetLayerDefn())
-    feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=wkt_geom))
 
     rast_lyr.CreateFeature(feat)
 
@@ -370,7 +370,7 @@ def test_gdal_rasterize_7():
     if drv is None:
         return 'skip'
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = drv.CreateDataSource('/vsimem/foo.db', options = ['SPATIALITE=YES'])
+    ds = drv.CreateDataSource('/vsimem/foo.db', options=['SPATIALITE=YES'])
     if ds is None:
         return 'skip'
     ds = None

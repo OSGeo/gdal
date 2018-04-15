@@ -49,7 +49,7 @@ def bmp_online_1():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/bmp/8bit_pal_rle.bmp', '8bit_pal_rle.bmp'):
         return 'skip'
 
-    tst = gdaltest.GDALTest('BMP', 'tmp/cache/8bit_pal_rle.bmp', 1, 17270, filename_absolute = 1)
+    tst = gdaltest.GDALTest('BMP', 'tmp/cache/8bit_pal_rle.bmp', 1, 17270, filename_absolute=1)
 
     return tst.testOpen()
 
@@ -59,9 +59,9 @@ def bmp_online_2():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/bmp/24bit.bmp', '24bit.bmp'):
         return 'skip'
 
-    tst = gdaltest.GDALTest('BMP', 'tmp/cache/24bit.bmp', 1, 7158, filename_absolute = 1)
+    tst = gdaltest.GDALTest('BMP', 'tmp/cache/24bit.bmp', 1, 7158, filename_absolute=1)
     if tst == 'success':
-        tst = gdaltest.GDALTest('BMP', 'tmp/cache/24bit.bmp', 3, 27670, filename_absolute = 1)
+        tst = gdaltest.GDALTest('BMP', 'tmp/cache/24bit.bmp', 3, 27670, filename_absolute=1)
 
     return tst.testOpen()
 
