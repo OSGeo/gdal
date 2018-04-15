@@ -73,7 +73,7 @@ def rasterlite_2():
     # Test if SQLite3 supports rtrees
     try:
         os.remove('tmp/testrtree.sqlite')
-    except:
+    except OSError:
         pass
     ds2 = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/testrtree.sqlite')
     gdal.ErrorReset()
@@ -81,7 +81,7 @@ def rasterlite_2():
     ds2.Destroy()
     try:
         os.remove('tmp/testrtree.sqlite')
-    except:
+    except OSError:
         pass
     if gdal.GetLastErrorMsg().find('rtree') != -1:
         gdaltest.rasterlite_drv = None
@@ -498,22 +498,22 @@ def rasterlite_cleanup():
 
     try:
         os.remove('tmp/spatialite_test.db')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/byte.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/byte.tif.tst')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/rgbsmall.tif.tst')
-    except:
+    except OSError:
         pass
 
     return 'success'

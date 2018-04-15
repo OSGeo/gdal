@@ -67,7 +67,7 @@ def ogr_sqlite_1():
 
     try:
         os.remove('tmp/sqlite_test.db')
-    except:
+    except OSError:
         pass
 
     # This is to speed-up the runtime of tests on EXT4 filesystems
@@ -1068,7 +1068,7 @@ def ogr_sqlite_20():
 
     try:
         os.unlink('tmp/non_spatialite_test_with_epsg.db')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/non_spatialite_test_with_epsg.db', options=['INIT_WITH_EPSG=YES'])
@@ -1219,7 +1219,7 @@ def ogr_sqlite_24():
 
     try:
         os.remove('tmp/test24.sqlite')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/test24.sqlite')
     lyr = ds.CreateLayer('test')
@@ -1470,7 +1470,7 @@ def ogr_sqlite_29():
 
     try:
         os.remove('tmp/ogr_sqlite_29.sqlite')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_29.sqlite')
 
@@ -1837,7 +1837,7 @@ def ogr_spatialite_5(bUseComprGeom=False):
 
     try:
         os.remove('tmp/ogr_spatialite_5.sqlite')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_5.sqlite', options=['SPATIALITE=YES'])
 
@@ -1992,7 +1992,7 @@ def ogr_spatialite_6():
 
     try:
         os.remove('tmp/ogr_spatialite_6.sqlite')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_6.sqlite', options=['SPATIALITE=YES'])
 
@@ -2169,7 +2169,7 @@ def ogr_spatialite_8():
 
     try:
         os.remove('tmp/ogr_spatialite_8.sqlite')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_8.sqlite', options=['SPATIALITE=YES'])
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
@@ -2372,7 +2372,7 @@ def ogr_sqlite_31():
 
     try:
         os.remove('tmp/ogr_sqlite_31.sqlite')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_31.sqlite')
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
@@ -2454,7 +2454,7 @@ def ogr_sqlite_32():
 
     try:
         os.remove('tmp/ogr_sqlite_32.sqlite')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_32.sqlite')
     lyr = ds.CreateLayer('test')
@@ -2512,7 +2512,7 @@ def ogr_sqlite_33():
     for i in range(2):
         try:
             os.remove('tmp/ogr_sqlite_33.sqlite')
-        except:
+        except OSError:
             pass
         if i == 0:
             options = []
@@ -2669,7 +2669,7 @@ def ogr_sqlite_35():
 
     try:
         os.remove('tmp/ogr_sqlite_35.sqlite')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_35.sqlite', options=options)
@@ -2761,7 +2761,7 @@ def ogr_sqlite_36():
 
     try:
         os.remove('tmp/ogr_sqlite_36.sqlite')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_36.sqlite')
@@ -2800,7 +2800,7 @@ def ogr_sqlite_37():
 
     try:
         os.remove('tmp/ogr_sqlite_37.sqlite')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_37.sqlite')
@@ -2911,7 +2911,7 @@ def ogr_sqlite_38():
 
     try:
         os.remove('tmp/ogr_sqlite_38.sqlite')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_38.sqlite')
@@ -3076,7 +3076,7 @@ def ogr_spatialite_10():
         return 'skip'
     try:
         os.remove('tmp/ogr_spatialite_10.sqlite')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_10.sqlite', options=['SPATIALITE=YES'])
@@ -3653,90 +3653,90 @@ def ogr_sqlite_cleanup():
 
     try:
         os.remove('tmp/sqlite_test.db')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/spatialite_test.db')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/spatialite_test_with_epsg.db')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/non_spatialite_test_with_epsg.db')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test24.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_spatialite_5.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_spatialite_6.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_27.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_29.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_spatialite_8.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_31.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_32.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_33.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_35.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_36.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_37.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_38.sqlite')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/ogr_spatialite_10.sqlite')
-    except:
+    except OSError:
         pass
     return 'success'
 

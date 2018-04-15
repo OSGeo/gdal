@@ -398,7 +398,7 @@ def pam_11():
     try:
         os.chmod('tmpdirreadonly', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         shutil.rmtree('tmpdirreadonly')
-    except:
+    except OSError:
         pass
     os.mkdir('tmpdirreadonly')
     shutil.copy('data/byte.tif', 'tmpdirreadonly/byte.tif')
@@ -554,11 +554,11 @@ def pam_cleanup():
     try:
         os.chmod('tmpdirreadonly', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         shutil.rmtree('tmpdirreadonly')
-    except:
+    except OSError:
         pass
     try:
         shutil.rmtree('tmppamproxydir')
-    except:
+    except OSError:
         pass
 
     return 'success'

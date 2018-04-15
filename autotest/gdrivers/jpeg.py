@@ -1331,11 +1331,11 @@ def jpeg_cleanup():
 
     try:
         os.unlink('tmp/albania.jpg')
-    except:
+    except OSError:
         pass
     try:
         os.unlink('tmp/albania.jpg.ovr')
-    except:
+    except OSError:
         pass
 
     return 'success'

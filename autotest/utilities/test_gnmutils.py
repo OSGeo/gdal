@@ -57,7 +57,7 @@ def test_gnmmanage_1():
     try:
         os.stat('tmp/test_gnm')
         pass
-    except:
+    except OSError:
         gdaltest.post_reason('Expected create tmp/test_gnm')
         return 'fail'
 
@@ -177,7 +177,7 @@ def test_gnm_cleanup():
         os.stat('tmp/test_gnm')
         gdaltest.post_reason('Expected delete tmp/test_gnm')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'

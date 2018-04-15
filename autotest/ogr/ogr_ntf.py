@@ -94,12 +94,12 @@ def ogr_ntf_1():
 
     try:
         os.stat('tmp/cache/SS.ntf')
-    except:
+    except OSError:
         try:
             gdaltest.unzip('tmp/cache', 'tmp/cache/stratntf.exe')
             try:
                 os.stat('tmp/cache/SS.ntf')
-            except:
+            except OSError:
                 return 'skip'
         except:
             return 'skip'
@@ -144,12 +144,12 @@ def ogr_ntf_2():
 
     try:
         os.stat('tmp/cache/Port_Talbot_NTF/SS78.ntf')
-    except:
+    except OSError:
         try:
             gdaltest.unzip('tmp/cache', 'tmp/cache/meridian2ntf.exe')
             try:
                 os.stat('tmp/cache/Port_Talbot_NTF/SS78.ntf')
-            except:
+            except OSError:
                 return 'skip'
         except:
             return 'skip'

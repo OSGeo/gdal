@@ -720,7 +720,7 @@ def test_ogr2ogr_21():
 
     try:
         os.remove('tmp/testogr2ogr21.gtm')
-    except:
+    except OSError:
         pass
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() +
@@ -1373,7 +1373,7 @@ def test_ogr2ogr_37():
 
     try:
         os.mkdir('tmp/test_ogr2ogr_37_src')
-    except:
+    except OSError:
         pass
     shutil.copy('../ogr/data/poly.shp', 'tmp/test_ogr2ogr_37_src')
     shutil.copy('../ogr/data/poly.shx', 'tmp/test_ogr2ogr_37_src')
@@ -1440,7 +1440,7 @@ def test_ogr2ogr_39():
 
     try:
         os.mkdir('tmp/test_ogr2ogr_39_src')
-    except:
+    except OSError:
         pass
     shutil.copy('../ogr/data/poly.shp', 'tmp/test_ogr2ogr_39_src')
     shutil.copy('../ogr/data/poly.shx', 'tmp/test_ogr2ogr_39_src')
@@ -1678,7 +1678,7 @@ def test_ogr2ogr_45():
     try:
         os.unlink('tmp/test_ogr2ogr_45.gml')
         os.unlink('tmp/test_ogr2ogr_45.xsd')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_45_src.shp')
@@ -1735,7 +1735,7 @@ def test_ogr2ogr_46():
     try:
         os.unlink('tmp/test_ogr2ogr_46.gml')
         os.unlink('tmp/test_ogr2ogr_46.xsd')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_46_src.shp')
@@ -1808,7 +1808,7 @@ def test_ogr2ogr_47():
 
     try:
         os.unlink('tmp/test_ogr2ogr_47_src.gfs')
-    except:
+    except OSError:
         pass
 
     try:
@@ -2650,11 +2650,11 @@ def test_ogr2ogr_64():
 
     try:
         shutil.rmtree('tmp/in_csv')
-    except:
+    except OSError:
         pass
     try:
         shutil.rmtree('tmp/out_csv')
-    except:
+    except OSError:
         pass
 
     os.mkdir('tmp/in_csv')

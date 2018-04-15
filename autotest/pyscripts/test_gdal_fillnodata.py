@@ -88,7 +88,7 @@ def test_gdal_fillnodata_cleanup():
     for filename in lst:
         try:
             os.remove(filename)
-        except:
+        except OSError:
             pass
 
     return 'success'

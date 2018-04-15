@@ -1326,7 +1326,7 @@ def download_file(url, filename=None, download_size=-1, force_download=False, ma
     try:
         os.stat(base_dir + '/' + filename)
         return True
-    except:
+    except OSError:
         if 'GDAL_DOWNLOAD_TEST_DATA' in os.environ or force_download:
             val = None
             import time
@@ -1631,7 +1631,7 @@ def unzip(target_dir, zipfilename, verbose=False):
     try:
         import zipfile
         zf = zipfile.ZipFile(zipfilename)
-    except:
+    except ImportError:
         os.system('unzip -d ' + target_dir + ' ' + zipfilename)
         return
 
@@ -1961,7 +1961,7 @@ def get_opened_files():
             filename = os.readlink('%s/%s' % (fdpath, fd))
             if not filename.startswith('/dev/') and not filename.startswith('pipe:'):
                 filenames.append(filename)
-        except:
+        except OSError:
             pass
     return filenames
 

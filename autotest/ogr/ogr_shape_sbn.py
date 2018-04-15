@@ -115,12 +115,12 @@ def ogr_shape_sbn_1():
 
     try:
         os.stat('tmp/cache/CochitiDamShapeFiles/CochitiBoundary.shp')
-    except:
+    except OSError:
         try:
             gdaltest.unzip('tmp/cache', 'tmp/cache/Cochiti_shapefiles.zip')
             try:
                 os.stat('tmp/cache/CochitiDamShapeFiles/CochitiBoundary.shp')
-            except:
+            except OSError:
                 return 'skip'
         except:
             return 'skip'

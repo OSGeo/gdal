@@ -62,19 +62,19 @@ def ogr_nas_1():
 
     try:
         os.stat('tmp/cache/BKG_NAS_Peine.xml')
-    except:
+    except OSError:
         try:
             gdaltest.unzip('tmp/cache', 'tmp/cache/nas_testdaten_peine.zip')
             try:
                 os.stat('tmp/cache/BKG_NAS_Peine.xml')
-            except:
+            except OSError:
                 return 'skip'
         except:
             return 'skip'
 
     try:
         os.remove('tmp/cache/BKG_NAS_Peine.gfs')
-    except:
+    except OSError:
         pass
 
     ds = ogr.Open('tmp/cache/BKG_NAS_Peine.xml')
@@ -126,19 +126,19 @@ def ogr_nas_2():
 
     try:
         os.stat('tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml')
-    except:
+    except OSError:
         try:
             gdaltest.unzip('tmp/cache', 'tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml.zip')
             try:
                 os.stat('tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml')
-            except:
+            except OSError:
                 return 'skip'
         except:
             return 'skip'
 
     try:
         os.remove('tmp/cache/gm2566-testdaten-gid60-2008-11-11.gfs')
-    except:
+    except OSError:
         pass
 
     ds = ogr.Open('tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml')
@@ -217,7 +217,7 @@ def ogr_nas_4():
 
     try:
         os.remove('data/delete_nas.gfs')
-    except:
+    except OSError:
         pass
 
     ds = ogr.Open('data/delete_nas.xml')
@@ -256,7 +256,7 @@ def ogr_nas_4():
 
     try:
         os.remove('data/delete_nas.gfs')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -278,7 +278,7 @@ def ogr_nas_5():
 
     try:
         os.remove('data/replace_nas.gfs')
-    except:
+    except OSError:
         pass
 
     ds = ogr.Open('data/replace_nas.xml')
@@ -349,7 +349,7 @@ def ogr_nas_5():
 
     try:
         os.remove('data/replace_nas.gfs')
-    except:
+    except OSError:
         pass
 
     return 'success'
