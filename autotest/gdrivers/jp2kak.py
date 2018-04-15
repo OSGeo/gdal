@@ -301,8 +301,8 @@ def jp2kak_15():
 
     md = jp2_ds.GetMetadata()
 
-    if (md['TIFFTAG_RESOLUTIONUNIT'] != '3 (pixels/cm)'
-        or md['TIFFTAG_XRESOLUTION'] != '200.012'):
+    if (md['TIFFTAG_RESOLUTIONUNIT'] != '3 (pixels/cm)' or
+            md['TIFFTAG_XRESOLUTION'] != '200.012'):
         gdaltest.post_reason('did not get expected resolution metadata')
         return 'fail'
 
@@ -328,8 +328,8 @@ def jp2kak_16():
     jp2_ds = gdal.Open('tmp/jp2kak_16.jp2')
     md = jp2_ds.GetMetadata()
 
-    if (md['TIFFTAG_RESOLUTIONUNIT'] != '3 (pixels/cm)'
-        or md['TIFFTAG_XRESOLUTION'] != '200.012'):
+    if (md['TIFFTAG_RESOLUTIONUNIT'] != '3 (pixels/cm)' or
+            md['TIFFTAG_XRESOLUTION'] != '200.012'):
         gdaltest.post_reason('did not get expected resolution metadata')
         return 'fail'
 
@@ -361,11 +361,12 @@ def jp2kak_17():
     gte = (42.999583333333369, 0.008271349862259, 0,
            34.000416666666631, 0, -0.008271349862259)
 
-    if (abs(gt[0] - gte[0]) > 0.0000001 or abs(gt[3] - gte[3]) > 0.000001
-        or abs(gt[1] - gte[1]) > 0.000000000005
-        or abs(gt[2] - gte[2]) > 0.000000000005
-        or abs(gt[4] - gte[4]) > 0.000000000005
-        or abs(gt[5] - gte[5]) > 0.000000000005):
+    if (abs(gt[0] - gte[0]) > 0.0000001 or
+        abs(gt[3] - gte[3]) > 0.000001 or
+        abs(gt[1] - gte[1]) > 0.000000000005 or
+        abs(gt[2] - gte[2]) > 0.000000000005 or
+        abs(gt[4] - gte[4]) > 0.000000000005 or
+        abs(gt[5] - gte[5]) > 0.000000000005):
         gdaltest.post_reason('did not get expected geotransform')
         print('got: ', gt)
         gdal.SetConfigOption('GDAL_JP2K_ALT_OFFSETVECTOR_ORDER', 'NO')
