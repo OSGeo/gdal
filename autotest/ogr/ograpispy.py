@@ -32,6 +32,7 @@
 import os
 import sys
 import shutil
+from difflib import unified_diff
 
 sys.path.append('../pymod')
 
@@ -63,7 +64,11 @@ def ograpispy_1():
 
     if ref_data != got_data:
         gdaltest.post_reason('did not get expected script')
-        print(got_data)
+        print
+        for line in unified_diff(ref_data.splitlines(), got_data.splitlines(),
+                                     fromfile='expected', tofile='got',
+                                     linterm=""):
+            print(line)
         return 'fail'
 
     return 'success'
