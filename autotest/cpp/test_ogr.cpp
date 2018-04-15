@@ -1071,26 +1071,38 @@ namespace tut
         ensure_equals(oTarget[0], layers[0]);
         ensure_equals(oTarget[1], layers[1]);
 
+        // Test copy constructor
         {
-            GDALDataset::Layers::Iterator newIter(poDS->GetLayers().begin());
-            ensure_equals(*newIter, layers[0]);
+            GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
+            ++srcIter;
+            GDALDataset::Layers::Iterator newIter(srcIter);
+            ensure_equals(*newIter, layers[1]);
         }
 
+        // Test assignment operator
         {
+            GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
+            ++srcIter;
             GDALDataset::Layers::Iterator newIter;
-            newIter = poDS->GetLayers().begin();
-            ensure_equals(*newIter, layers[0]);
+            newIter = srcIter;
+            ensure_equals(*newIter, layers[1]);
         }
 
+        // Test move constructor
         {
-            GDALDataset::Layers::Iterator newIter(std::move(poDS->GetLayers().begin()));
-            ensure_equals(*newIter, layers[0]);
+            GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
+            ++srcIter;
+            GDALDataset::Layers::Iterator newIter(std::move(srcIter));
+            ensure_equals(*newIter, layers[1]);
         }
 
+        // Test move assignment operator
         {
+            GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
+            ++srcIter;
             GDALDataset::Layers::Iterator newIter;
-            newIter = std::move(poDS->GetLayers().begin());
-            ensure_equals(*newIter, layers[0]);
+            newIter = std::move(srcIter);
+            ensure_equals(*newIter, layers[1]);
         }
 
     }
