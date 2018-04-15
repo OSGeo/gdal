@@ -242,7 +242,7 @@ if dst_layer is None:
         srs = osr.SpatialReference()
         srs.ImportFromWkt(src_ds.GetProjectionRef())
 
-    dst_layer = dst_ds.CreateLayer(dst_layername, geom_type=ogr.wkbPolygon, srs = srs)
+    dst_layer = dst_ds.CreateLayer(dst_layername, geom_type=ogr.wkbPolygon, srs=srs)
 
     if dst_fieldname is None:
         dst_fieldname = 'DN'
@@ -266,7 +266,7 @@ else:
     prog_func = gdal.TermProgress
 
 result = gdal.Polygonize(srcband, maskband, dst_layer, dst_field, options,
-                          callback = prog_func)
+                          callback=prog_func)
 
 srcband = None
 src_ds = None

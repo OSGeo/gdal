@@ -68,7 +68,7 @@ sr = None
 wkt = ds.GetGCPProjection()
 if wkt != '':
     sr = osr.SpatialReference(wkt)
-out_lyr = out_ds.CreateLayer('gcps', geom_type = ogr.wkbPoint, srs = sr)
+out_lyr = out_ds.CreateLayer('gcps', geom_type=ogr.wkbPoint, srs=sr)
 out_lyr.CreateField(ogr.FieldDefn('Id', ogr.OFTString))
 out_lyr.CreateField(ogr.FieldDefn('Info', ogr.OFTString))
 out_lyr.CreateField(ogr.FieldDefn('X', ogr.OFTReal))

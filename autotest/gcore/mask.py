@@ -201,7 +201,7 @@ def mask_5():
     # So that we instantiate the mask band before.
     ds.GetRasterBand(1).GetMaskFlags()
 
-    ds.BuildOverviews(overviewlist = [2,4])
+    ds.BuildOverviews(overviewlist=[2,4])
 
     # confirm mask flags on overview.
     ovr = ds.GetRasterBand(1).GetOverview(1)
@@ -667,7 +667,7 @@ def mask_14():
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
     old_val = gdal.GetCacheMax()
     gdal.SetCacheMax(0)
-    out_ds = drv.CreateCopy('/vsimem/byte_with_mask.tif', ds, options = ['COMPRESS=JPEG'])
+    out_ds = drv.CreateCopy('/vsimem/byte_with_mask.tif', ds, options=['COMPRESS=JPEG'])
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', None)
     gdal.SetCacheMax(old_val)
     if out_ds.GetRasterBand(1).Checksum() == 0:
@@ -707,21 +707,21 @@ def mask_and_ovr(order, method):
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
-        ds.BuildOverviews(method, overviewlist = [2, 4])
+        ds.BuildOverviews(method, overviewlist=[2, 4])
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
         ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
     elif order == 2:
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
-        ds.BuildOverviews(method, overviewlist = [2, 4])
+        ds.BuildOverviews(method, overviewlist=[2, 4])
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
     elif order == 3:
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
-        ds.BuildOverviews(method, overviewlist = [2, 4])
+        ds.BuildOverviews(method, overviewlist=[2, 4])
         ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
@@ -731,7 +731,7 @@ def mask_and_ovr(order, method):
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetMaskBand().Fill(1)
         # The overview for the mask will be implicitly created and computed.
-        ds.BuildOverviews(method, overviewlist = [2, 4])
+        ds.BuildOverviews(method, overviewlist=[2, 4])
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
 
     if order < 4:
@@ -739,7 +739,7 @@ def mask_and_ovr(order, method):
         ds = gdal.Open('tmp/byte_with_ovr_and_mask.tif', gdal.GA_Update)
         ds.GetRasterBand(1).GetMaskBand().Fill(1)
         # The overview of the mask will be implicitly recomputed.
-        ds.BuildOverviews(method, overviewlist = [2, 4])
+        ds.BuildOverviews(method, overviewlist=[2, 4])
 
     ds = None
 
@@ -985,14 +985,14 @@ def mask_23():
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
 
-    src_ds = drv.Create('tmp/mask_23_src.tif', 3000, 2000, 3, options = ['TILED=YES','SPARSE_OK=YES'])
+    src_ds = drv.Create('tmp/mask_23_src.tif', 3000, 2000, 3, options=['TILED=YES','SPARSE_OK=YES'])
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
     old_val = gdal.GetCacheMax()
     gdal.SetCacheMax(15000000)
     gdal.ErrorReset()
-    ds = drv.CreateCopy('tmp/mask_23_dst.tif', src_ds, options = ['TILED=YES','COMPRESS=JPEG'])
+    ds = drv.CreateCopy('tmp/mask_23_dst.tif', src_ds, options=['TILED=YES','COMPRESS=JPEG'])
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
     gdal.SetCacheMax(old_val)
 
@@ -1016,7 +1016,7 @@ def mask_23():
 def mask_24():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_24.tif', 100, 100, 4, \
-                gdal.GDT_UInt16, options = ['PHOTOMETRIC=RGB', 'ALPHA=YES'])
+                gdal.GDT_UInt16, options=['PHOTOMETRIC=RGB', 'ALPHA=YES'])
     ds.GetRasterBand(1).Fill(65565)
     ds.GetRasterBand(2).Fill(65565)
     ds.GetRasterBand(3).Fill(65565)

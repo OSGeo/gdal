@@ -188,7 +188,7 @@ def ingr_14():
 def ingr_15():
 
     tst = gdaltest.GDALTest('INGR', 'frmt02.cot', 1, 26968)
-    result = tst.testCreateCopy(vsimem = 1)
+    result = tst.testCreateCopy(vsimem=1)
 
     try:
         os.remove('data/frmt02.cot.aux.xml')

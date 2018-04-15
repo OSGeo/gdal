@@ -65,13 +65,13 @@ def ogr_dgnv8_2():
         return 'skip'
 
     gdal.VectorTranslate('/vsimem/ogr_dgnv8_2.csv', 'data/test_dgnv8.dgn',
-        options = '-f CSV  -dsco geometry=as_wkt -sql "select *, ogr_style from my_model"')
+        options='-f CSV  -dsco geometry=as_wkt -sql "select *, ogr_style from my_model"')
 
     ds_ref = ogr.Open('/vsimem/ogr_dgnv8_2.csv')
     lyr_ref = ds_ref.GetLayer(0)
     ds = ogr.Open('data/test_dgnv8_ref.csv')
     lyr = ds.GetLayer(0)
-    ret = ogrtest.compare_layers(lyr, lyr_ref, excluded_fields = ['WKT'])
+    ret = ogrtest.compare_layers(lyr, lyr_ref, excluded_fields=['WKT'])
 
     gdal.Unlink('/vsimem/ogr_dgnv8_2.csv')
 
@@ -118,18 +118,18 @@ def ogr_dgnv8_4():
         return 'skip'
 
     tmp_dgn = 'tmp/ogr_dgnv8_4.dgn'
-    gdal.VectorTranslate(tmp_dgn, 'data/test_dgnv8.dgn', format = 'DGNv8')
+    gdal.VectorTranslate(tmp_dgn, 'data/test_dgnv8.dgn', format='DGNv8')
 
     tmp_csv = '/vsimem/ogr_dgnv8_4.csv'
     gdal.VectorTranslate(tmp_csv, tmp_dgn,
-        options = '-f CSV  -dsco geometry=as_wkt -sql "select *, ogr_style from my_model"')
+        options='-f CSV  -dsco geometry=as_wkt -sql "select *, ogr_style from my_model"')
     gdal.Unlink(tmp_dgn)
 
     ds_ref = ogr.Open(tmp_csv)
     lyr_ref = ds_ref.GetLayer(0)
     ds = ogr.Open('data/test_dgnv8_write_ref.csv')
     lyr = ds.GetLayer(0)
-    ret = ogrtest.compare_layers(lyr, lyr_ref, excluded_fields = ['WKT'])
+    ret = ogrtest.compare_layers(lyr, lyr_ref, excluded_fields=['WKT'])
 
     gdal.Unlink(tmp_csv)
 
@@ -157,7 +157,7 @@ def ogr_dgnv8_5():
                 'CATEGORY=category',
                 'MANAGER=manager',
                 'COMPANY=company']
-    ds = gdaltest.dgnv8_drv.CreateDataSource(tmp_dgn, options = options)
+    ds = gdaltest.dgnv8_drv.CreateDataSource(tmp_dgn, options=options)
     lyr = ds.CreateLayer('my_layer')
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 1)'))
@@ -172,7 +172,7 @@ def ogr_dgnv8_5():
     ds = None
 
     tmp2_dgn = 'tmp/ogr_dgnv8_5_2.dgn'
-    gdaltest.dgnv8_drv.CreateDataSource(tmp2_dgn, options = ['SEED=' + tmp_dgn, 'TITLE=another_title'])
+    gdaltest.dgnv8_drv.CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn, 'TITLE=another_title'])
     ds = ogr.Open(tmp2_dgn)
     if ds.GetMetadataItem('TITLE', 'DGN') != 'another_title' or ds.GetMetadataItem('APPLICATION', 'DGN') != 'application':
         gdaltest.post_reason('fail')
@@ -189,13 +189,13 @@ def ogr_dgnv8_5():
         return 'fail'
     ds = None
 
-    ds = gdaltest.dgnv8_drv.CreateDataSource(tmp2_dgn, options = ['SEED=' + tmp_dgn])
-    lyr = ds.CreateLayer('a_layer', options = ['DESCRIPTION=my_layer', 'DIM=2'])
+    ds = gdaltest.dgnv8_drv.CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn])
+    lyr = ds.CreateLayer('a_layer', options=['DESCRIPTION=my_layer', 'DIM=2'])
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 3)'))
     lyr.CreateFeature(f)
     ds = None
-    ds = ogr.Open(tmp2_dgn, update = 1)
+    ds = ogr.Open(tmp2_dgn, update=1)
     lyr = ds.GetLayer(0)
     if lyr.GetName() != 'a_layer':
         gdaltest.post_reason('fail')

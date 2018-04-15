@@ -140,14 +140,14 @@ def ogr_georss_1bis():
     except:
         pass
 
-    ds = ogr.GetDriverByName('GeoRSS').CreateDataSource('tmp/test_atom.xml', options = ['FORMAT=ATOM'])
+    ds = ogr.GetDriverByName('GeoRSS').CreateDataSource('tmp/test_atom.xml', options=['FORMAT=ATOM'])
     lyr = ds.CreateLayer('georss')
 
     for field_value in gdaltest.atom_field_values:
         lyr.CreateField(ogr.FieldDefn(field_value[0], field_value[2]))
     lyr.CreateField(ogr.FieldDefn('content', ogr.OFTString))
 
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     for field_value in gdaltest.atom_field_values:
         dst_feat.SetField(field_value[0], field_value[1])
     dst_feat.SetField('content', '<div xmlns="http://www.w3.org/1999/xhtml"><p><i>[Update: The Atom draft is finished.]</i></p></div>')
@@ -272,7 +272,7 @@ def ogr_georss_create(filename, options):
         os.remove(filename)
     except:
         pass
-    ds = ogr.GetDriverByName('GeoRSS').CreateDataSource(filename, options = options)
+    ds = ogr.GetDriverByName('GeoRSS').CreateDataSource(filename, options=options)
     lyr = ds.CreateLayer('georss')
 
     lyr.CreateField(ogr.FieldDefn('title', ogr.OFTString))
@@ -285,7 +285,7 @@ def ogr_georss_create(filename, options):
     lyr.CreateField(ogr.FieldDefn('category2', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('category2_domain', ogr.OFTString))
 
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetField('title', 'A point')
     dst_feat.SetField('author', 'Author')
     dst_feat.SetField('link', 'http://gdal.org')
@@ -300,7 +300,7 @@ def ogr_georss_create(filename, options):
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
 
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetField('title', 'A line')
     dst_feat.SetField('author', 'Author')
     dst_feat.SetField('link', 'http://gdal.org')
@@ -311,7 +311,7 @@ def ogr_georss_create(filename, options):
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
 
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetField('title', 'A polygon')
     dst_feat.SetField('author', 'Author')
     dst_feat.SetField('link', 'http://gdal.org')
@@ -322,7 +322,7 @@ def ogr_georss_create(filename, options):
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
 
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetField('title', 'A box')
     dst_feat.SetField('author', 'Author')
     dst_feat.SetField('link', 'http://gdal.org')
@@ -427,7 +427,7 @@ def ogr_georss_10():
     ds = ogr.GetDriverByName('GeoRSS').CreateDataSource('tmp/test32631.rss')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     try:
-        lyr = ds.CreateLayer('georss', srs = srs)
+        lyr = ds.CreateLayer('georss', srs=srs)
     except:
         lyr = None
     gdal.PopErrorHandler()
@@ -442,10 +442,10 @@ def ogr_georss_10():
     except:
         pass
 
-    ds = ogr.GetDriverByName('GeoRSS').CreateDataSource('tmp/test32631.rss', options = ['GEOM_DIALECT=GML'])
-    lyr = ds.CreateLayer('georss', srs = srs)
+    ds = ogr.GetDriverByName('GeoRSS').CreateDataSource('tmp/test32631.rss', options=['GEOM_DIALECT=GML'])
+    lyr = ds.CreateLayer('georss', srs=srs)
 
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (500000 4000000)'))
 
     if lyr.CreateFeature(dst_feat) != 0:
@@ -541,14 +541,14 @@ def ogr_georss_13():
         os.remove('tmp/nonstandard.rss')
     except:
         pass
-    ds = ogr.GetDriverByName('GeoRSS').CreateDataSource('tmp/nonstandard.rss', options = ['USE_EXTENSIONS=YES'])
+    ds = ogr.GetDriverByName('GeoRSS').CreateDataSource('tmp/nonstandard.rss', options=['USE_EXTENSIONS=YES'])
     lyr = ds.CreateLayer('georss')
 
     lyr.CreateField(ogr.FieldDefn('myns_field', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('field2', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('ogr_field3', ogr.OFTString))
 
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetField('myns_field', 'val')
     dst_feat.SetField('field2', 'val2')
     dst_feat.SetField('ogr_field3', 'val3')

@@ -44,9 +44,9 @@ import gdaltest
 
 def kmlsuperoverlay_1():
 
-    tst = gdaltest.GDALTest('KMLSUPEROVERLAY', 'small_world.tif', 1, 30111, options = ['FORMAT=PNG'])
+    tst = gdaltest.GDALTest('KMLSUPEROVERLAY', 'small_world.tif', 1, 30111, options=['FORMAT=PNG'])
 
-    return tst.testCreateCopy(new_filename = '/vsimem/kmlout.kmz')
+    return tst.testCreateCopy(new_filename='/vsimem/kmlout.kmz')
 
 ###############################################################################
 # Test CreateCopy() to a KML file
@@ -54,9 +54,9 @@ def kmlsuperoverlay_1():
 
 def kmlsuperoverlay_2():
 
-    tst = gdaltest.GDALTest('KMLSUPEROVERLAY', 'small_world.tif', 1, 30111, options = ['FORMAT=PNG'])
+    tst = gdaltest.GDALTest('KMLSUPEROVERLAY', 'small_world.tif', 1, 30111, options=['FORMAT=PNG'])
 
-    return tst.testCreateCopy(new_filename = '/vsimem/kmlout.kml')
+    return tst.testCreateCopy(new_filename='/vsimem/kmlout.kml')
 
 ###############################################################################
 # Test CreateCopy() to a KML file
@@ -145,7 +145,7 @@ def kmlsuperoverlay_4():
     gdal.FileFromMemBuffer("/vsimem/src.vrt", vrt_xml)
 
     src_ds = gdal.Open("/vsimem/src.vrt")
-    ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('/vsimem/kmlsuperoverlay_4.kmz', src_ds, options = ['FORMAT=PNG', 'NAME=myname', 'DESCRIPTION=mydescription', 'ALTITUDE=10', 'ALTITUDEMODE=absolute'])
+    ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('/vsimem/kmlsuperoverlay_4.kmz', src_ds, options=['FORMAT=PNG', 'NAME=myname', 'DESCRIPTION=mydescription', 'ALTITUDE=10', 'ALTITUDEMODE=absolute'])
     if ds.GetMetadataItem('NAME') != 'myname':
         gdaltest.post_reason('fail')
         return 'fail'

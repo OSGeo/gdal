@@ -44,7 +44,7 @@ def blx_1():
     prj = 'WGS84'
     gt = [20.0004166, 0.0008333, 0.0, 50.0004166, 0.0, -0.0008333]
     tst = gdaltest.GDALTest('BLX', 's4103.blx', 1, 47024)
-    return tst.testOpen(check_prj = prj, check_gt = gt)
+    return tst.testOpen(check_prj=prj, check_gt=gt)
 
 
 ###############################################################################
@@ -55,7 +55,7 @@ def blx_2():
     prj = 'WGS84'
     gt = [20.0004166, 0.0008333, 0.0, 50.0004166, 0.0, -0.0008333]
     tst = gdaltest.GDALTest('BLX', 's4103.xlb', 1, 47024)
-    return tst.testOpen(check_prj = prj, check_gt = gt)
+    return tst.testOpen(check_prj=prj, check_gt=gt)
 
 
 ###############################################################################
@@ -64,7 +64,7 @@ def blx_2():
 def blx_3():
 
     tst = gdaltest.GDALTest('BLX', 's4103.xlb', 1, 47024)
-    return tst.testCreateCopy(check_gt = 1, check_srs = 1)
+    return tst.testCreateCopy(check_gt=1, check_srs=1)
 
 
 ###############################################################################
@@ -72,8 +72,8 @@ def blx_3():
 
 def blx_4():
 
-    tst = gdaltest.GDALTest('BLX', 's4103.blx', 1, 47024, options = ['BIGENDIAN=YES'])
-    return tst.testCreateCopy(check_gt = 1, check_srs = 1)
+    tst = gdaltest.GDALTest('BLX', 's4103.blx', 1, 47024, options=['BIGENDIAN=YES'])
+    return tst.testCreateCopy(check_gt=1, check_srs=1)
 
 
 ###############################################################################

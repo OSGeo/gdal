@@ -75,7 +75,7 @@ def ogr_oci_2():
 
     ######################################################
     # Create Oracle Layer
-    gdaltest.oci_lyr = gdaltest.oci_ds.CreateLayer('tpoly', options = ['DIM=3'])
+    gdaltest.oci_lyr = gdaltest.oci_ds.CreateLayer('tpoly', options=['DIM=3'])
 
     ######################################################
     # Setup Schema
@@ -87,7 +87,7 @@ def ogr_oci_2():
     ######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature(feature_def = gdaltest.oci_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gdaltest.oci_lyr.GetLayerDefn())
 
     shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
@@ -160,7 +160,7 @@ def ogr_oci_3():
         reverse_rings(orig_feat.GetGeometryRef())
 
         if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
-                                          max_error = 0.000000001) != 0:
+                                          max_error=0.000000001) != 0:
             print('expected:', orig_feat.GetGeometryRef().ExportToWkt())
             print('got:', read_feat.GetGeometryRef().ExportToWkt())
             return 'fail'
@@ -205,7 +205,7 @@ def ogr_oci_4():
         ######################################################################
         # Write geometry as a new Oracle feature.
 
-        dst_feat = ogr.Feature(feature_def = gdaltest.oci_lyr.GetLayerDefn())
+        dst_feat = ogr.Feature(feature_def=gdaltest.oci_lyr.GetLayerDefn())
         dst_feat.SetGeometryDirectly(geom)
         dst_feat.SetField('PRFEDEA', item)
         gdaltest.oci_lyr.CreateFeature(dst_feat)
@@ -330,8 +330,8 @@ def ogr_oci_8():
 
     #######################################################
     # Create Oracle Layer
-    oci_lyr2 = gdaltest.oci_ds.CreateLayer('testsrs', srs = srs,
-                                        options = ['INDEX=FALSE'])
+    oci_lyr2 = gdaltest.oci_ds.CreateLayer('testsrs', srs=srs,
+                                        options=['INDEX=FALSE'])
 
     #######################################################
     # Now check that the srs for the layer is really the built-in
@@ -376,8 +376,8 @@ def ogr_oci_9():
 
     #######################################################
     # Create Oracle Layer
-    oci_lyr2 = gdaltest.oci_ds.CreateLayer('testsrs2', srs = srs,
-                                            options = ['INDEX=FALSE'])
+    oci_lyr2 = gdaltest.oci_ds.CreateLayer('testsrs2', srs=srs,
+                                            options=['INDEX=FALSE'])
 
     #######################################################
     # Now check that the srs for the layer is really the built-in
@@ -718,7 +718,7 @@ def ogr_oci_17():
     ######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature(feature_def = gdaltest.oci_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gdaltest.oci_lyr.GetLayerDefn())
 
     shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
@@ -789,12 +789,12 @@ def ogr_oci_18():
             strgeomtype = strgeomtype + '3'
         else:
             dim = 2
-        lyr = gdaltest.oci_ds.CreateLayer('test_%s' % strgeomtype, geom_type = geomtype, options = ['DIM=%d' % dim])
+        lyr = gdaltest.oci_ds.CreateLayer('test_%s' % strgeomtype, geom_type=geomtype, options=['DIM=%d' % dim])
         feat = ogr.Feature(lyr.GetLayerDefn())
         feat.SetGeometry(g)
         lyr.CreateFeature(feat)
         lyr.SyncToDisk()
-    lyr = gdaltest.oci_ds.CreateLayer('test_NONE', geom_type = ogr.wkbNone)
+    lyr = gdaltest.oci_ds.CreateLayer('test_NONE', geom_type=ogr.wkbNone)
     feat = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(feat)
     lyr.SyncToDisk()
@@ -846,7 +846,7 @@ def ogr_oci_19():
     if gdaltest.oci_ds is None:
         return 'skip'
 
-    lyr = gdaltest.oci_ds.CreateLayer('testdate', geom_type = ogr.wkbNone)
+    lyr = gdaltest.oci_ds.CreateLayer('testdate', geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn('MYDATE', ogr.OFTDate))
     lyr.CreateField(ogr.FieldDefn('MYDATETIME', ogr.OFTDateTime))
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -879,7 +879,7 @@ def ogr_oci_20():
 
     if gdaltest.oci_ds is None:
         return 'skip'
-    lyr = gdaltest.oci_ds.CreateLayer('ogr_oci_20', geom_type = ogr.wkbPoint, options = ['GEOMETRY_NULLABLE=NO', 'DIM=2'])
+    lyr = gdaltest.oci_ds.CreateLayer('ogr_oci_20', geom_type=ogr.wkbPoint, options=['GEOMETRY_NULLABLE=NO', 'DIM=2'])
     if lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -922,7 +922,7 @@ def ogr_oci_20():
     lyr.SyncToDisk()
 
     # Test with nullable geometry
-    lyr = gdaltest.oci_ds.CreateLayer('ogr_oci_20bis', geom_type = ogr.wkbPoint, options = ['DIM=2'])
+    lyr = gdaltest.oci_ds.CreateLayer('ogr_oci_20bis', geom_type=ogr.wkbPoint, options=['DIM=2'])
     if lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -979,7 +979,7 @@ def ogr_oci_21():
     if gdaltest.oci_ds is None:
         return 'skip'
 
-    lyr = gdaltest.oci_ds.CreateLayer('ogr_oci_21', geom_type = ogr.wkbPoint, options = ['DIM=2'])
+    lyr = gdaltest.oci_ds.CreateLayer('ogr_oci_21', geom_type=ogr.wkbPoint, options=['DIM=2'])
 
     field_defn = ogr.FieldDefn('field_string', ogr.OFTString)
     field_defn.SetDefault("'a''b'")

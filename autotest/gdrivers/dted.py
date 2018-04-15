@@ -91,7 +91,7 @@ def dted_3():
 
     prj = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
 
-    return tst.testCreateCopy(check_gt = 1, check_srs = prj)
+    return tst.testCreateCopy(check_gt=1, check_srs=prj)
 
 ###############################################################################
 # Read subwindow.  Tests the tail recursion problem.
@@ -249,7 +249,7 @@ def dted_9():
 def dted_10():
 
     tst = gdaltest.GDALTest('dted', 'n43.dt0', 1, 49187)
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################

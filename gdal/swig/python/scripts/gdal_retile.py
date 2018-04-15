@@ -307,7 +307,7 @@ def getTileIndexFromFiles(inputTiles, driverTyp):
     return ogrTileIndexDS
 
 
-def getTargetDir(level = -1):
+def getTargetDir(level=-1):
     if level==-1:
         return TargetDir
     else:
@@ -644,7 +644,7 @@ def buildPyramidLevel(levelMosaicInfo,levelOutputTileInfo, level):
     return OGRDS
 
 
-def getTileName(minfo,ti,xIndex,yIndex,level = -1):
+def getTileName(minfo,ti,xIndex,yIndex,level=-1):
     """
     creates the tile file name
     """
@@ -710,7 +710,7 @@ def Usage():
 # Program mainline.
 #
 
-def main(args = None):
+def main(args=None):
 
     global Verbose
     global Quiet

@@ -312,9 +312,9 @@ def test_gdal_calc_py_6():
     sys.path.insert(0, script_path)
     import gdal_calc
 
-    gdal.Translate('tmp/test_gdal_calc_py.tif', '../gcore/data/byte.tif', options = '-a_nodata 74')
+    gdal.Translate('tmp/test_gdal_calc_py.tif', '../gcore/data/byte.tif', options='-a_nodata 74')
 
-    gdal_calc.Calc('A', A='tmp/test_gdal_calc_py.tif', overwrite=True, quiet=True, outfile='tmp/test_gdal_calc_py_6.tif', NoDataValue = 1)
+    gdal_calc.Calc('A', A='tmp/test_gdal_calc_py.tif', overwrite=True, quiet=True, outfile='tmp/test_gdal_calc_py_6.tif', NoDataValue=1)
 
     sys.path = backup_sys_path
 

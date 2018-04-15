@@ -84,7 +84,7 @@ def ogr_gxt_1():
 
     if ogrtest.check_feature_geometry(feat,
           'MULTIPOLYGON (((50000 7130000,600000 7130000,600000 6580000,50000 6580000,50000 7130000)))',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         return 'fail'
 
     srs = osr.SpatialReference()
@@ -136,7 +136,7 @@ def ogr_gxt_2():
 
     if ogrtest.check_feature_geometry(feat,
           'MULTIPOLYGON (((50000 7130000,600000 7130000,600000 6580000,50000 6580000,50000 7130000)))',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         return 'fail'
 
     return 'success'
@@ -164,7 +164,7 @@ def ogr_gxt_3():
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('WGS84')
 
-    gxt_lyr = gdaltest.gxt_ds.CreateLayer('points', srs, geom_type = ogr.wkbPoint)
+    gxt_lyr = gdaltest.gxt_ds.CreateLayer('points', srs, geom_type=ogr.wkbPoint)
 
     src_lyr.ResetReading()
 
@@ -172,7 +172,7 @@ def ogr_gxt_3():
         field_defn = src_lyr.GetLayerDefn().GetFieldDefn(i)
         gxt_lyr.CreateField(field_defn)
 
-    dst_feat = ogr.Feature(feature_def = gxt_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gxt_lyr.GetLayerDefn())
 
     feat = src_lyr.GetNextFeature()
     while feat is not None:
@@ -220,13 +220,13 @@ def ogr_gxt_3():
     feat = gxt_lyr.GetNextFeature()
 
     if ogrtest.check_feature_geometry(feat,'POINT(0 1)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         return 'fail'
 
     feat = gxt_lyr.GetNextFeature()
 
     if ogrtest.check_feature_geometry(feat,'POINT(2 3)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         return 'fail'
 
     return 'success'
@@ -242,7 +242,7 @@ def ogr_gxt_multipolygon_singlepart_nohole():
     feat = lyr.GetNextFeature()
 
     if ogrtest.check_feature_geometry(feat,'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         feat.DumpReadable()
         return 'fail'
 
@@ -262,7 +262,7 @@ def ogr_gxt_multipolygon_singlepart_hole():
     feat = lyr.GetNextFeature()
 
     if ogrtest.check_feature_geometry(feat,'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.1 0.1,0.1 0.9,0.9 0.9,0.1 0.1)))',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         feat.DumpReadable()
         return 'fail'
 
@@ -282,7 +282,7 @@ def ogr_gxt_multipolygon_twoparts_second_with_hole():
     feat = lyr.GetNextFeature()
 
     if ogrtest.check_feature_geometry(feat,'MULTIPOLYGON (((-10 -10,-10 -9,-9 -9,-10 -10)),((0 0,0 1,1 1,1 0,0 0),(0.1 0.1,0.1 0.9,0.9 0.9,0.1 0.1)))',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         feat.DumpReadable()
         return 'fail'
 
@@ -302,7 +302,7 @@ def ogr_gxt_line():
     feat = lyr.GetNextFeature()
 
     if ogrtest.check_feature_geometry(feat,'LINESTRING (440720 3751320,441920 3750120)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         feat.DumpReadable()
         return 'fail'
 

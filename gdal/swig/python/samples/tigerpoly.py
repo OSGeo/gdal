@@ -81,7 +81,7 @@ if infile is None:
 #############################################################################
 # Open the datasource to operate on.
 
-ds = ogr.Open(infile, update = 0)
+ds = ogr.Open(infile, update=0)
 
 poly_layer = ds.GetLayerByName('Polygon')
 
@@ -96,8 +96,8 @@ shp_driver.DeleteDataSource(outfile)
 
 shp_ds = shp_driver.CreateDataSource(outfile)
 
-shp_layer = shp_ds.CreateLayer('out', geom_type = ogr.wkbPolygon,
-                                srs = nad83)
+shp_layer = shp_ds.CreateLayer('out', geom_type=ogr.wkbPolygon,
+                                srs=nad83)
 
 src_defn = poly_layer.GetLayerDefn()
 poly_field_count = src_defn.GetFieldCount()
@@ -202,7 +202,7 @@ while feat is not None:
 
     tlid_list = module.poly_line_links[polyid]
 
-    link_coll = ogr.Geometry(type = ogr.wkbGeometryCollection)
+    link_coll = ogr.Geometry(type=ogr.wkbGeometryCollection)
     for tlid in tlid_list:
         geom = module.lines[tlid]
         link_coll.AddGeometry(geom)

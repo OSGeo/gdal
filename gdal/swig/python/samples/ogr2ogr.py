@@ -47,7 +47,7 @@ from osgeo import osr
 
 
 class ScaledProgressObject:
-    def __init__(self, min, max, cbk, cbk_data = None):
+    def __init__(self, min, max, cbk, cbk_data=None):
         self.min = min
         self.max = max
         self.cbk = cbk
@@ -142,7 +142,7 @@ class Enum(set):
 GeomOperation = Enum(["NONE", "SEGMENTIZE", "SIMPLIFY_PRESERVE_TOPOLOGY"])
 
 
-def main(args = None, progress_func = TermProgress, progress_data = None):
+def main(args=None, progress_func=TermProgress, progress_data=None):
 
     global bSkipFailures
     global nGroupTransactions
@@ -632,7 +632,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 # --------------------------------------------------------------------
 #      Create the output data source.
 # --------------------------------------------------------------------
-        poODS = poDriver.CreateDataSource(pszDestDataSource, options = papszDSCO)
+        poODS = poDriver.CreateDataSource(pszDestDataSource, options=papszDSCO)
         if poODS is None:
             print("%s driver failed to create %s" % (pszFormat, pszDestDataSource))
             return False

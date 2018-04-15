@@ -44,7 +44,7 @@ import gdaltest
 def saga_1():
 
     tst = gdaltest.GDALTest('SAGA', '4byteFloat.sdat', 1, 108)
-    return tst.testOpen(check_prj = """PROJCS["NAD_1927_UTM_Zone_11N",
+    return tst.testOpen(check_prj="""PROJCS["NAD_1927_UTM_Zone_11N",
     GEOGCS["GCS_North_American_1927",
         DATUM["North_American_Datum_1927",
             SPHEROID["Clarke_1866",6378206.4,294.9786982]],
@@ -65,7 +65,7 @@ def saga_1():
 def saga_2():
 
     tst = gdaltest.GDALTest('SAGA', '4byteFloat.sdat', 1, 108)
-    return tst.testCreateCopy(new_filename = 'tmp/createcopy.sdat', check_srs = True)
+    return tst.testCreateCopy(new_filename='tmp/createcopy.sdat', check_srs=True)
 
 ###############################################################################
 # Test copying a reference sample with Create()
@@ -74,7 +74,7 @@ def saga_2():
 def saga_3():
 
     tst = gdaltest.GDALTest('SAGA', '4byteFloat.sdat', 1, 108)
-    return tst.testCreate(new_filename = 'tmp/copy.sdat', out_bands = 1)
+    return tst.testCreate(new_filename='tmp/copy.sdat', out_bands=1)
 
 ###############################################################################
 # Test CreateCopy() for various data types
@@ -96,7 +96,7 @@ def saga_4():
             check_minmax = 0
         else:
             check_minmax = 1
-        ret = tst.testCreateCopy(new_filename = 'tmp/test4.sdat', check_minmax = check_minmax)
+        ret = tst.testCreateCopy(new_filename='tmp/test4.sdat', check_minmax=check_minmax)
         if ret != 'success':
             return ret
 
@@ -122,7 +122,7 @@ def saga_5():
             check_minmax = 0
         else:
             check_minmax = 1
-        ret = tst.testCreate(new_filename = 'tmp/test5.sdat', out_bands = 1, check_minmax = check_minmax)
+        ret = tst.testCreate(new_filename='tmp/test5.sdat', out_bands=1, check_minmax=check_minmax)
         if ret != 'success':
             return ret
 
@@ -151,7 +151,7 @@ def saga_6():
 
         ds = gdal.Open('tmp/test6.sdat')
 
-        data = ds.GetRasterBand(1).ReadRaster(1, 1, 1, 1, buf_type = gdal.GDT_Float64)
+        data = ds.GetRasterBand(1).ReadRaster(1, 1, 1, 1, buf_type=gdal.GDT_Float64)
 
         # Read raw data into tuple of float numbers
         import struct
@@ -184,7 +184,7 @@ def saga_6():
 def saga_7():
 
     tst = gdaltest.GDALTest('SAGA', '4byteFloat.sdat', 1, 108)
-    return tst.testCreateCopy(new_filename = '/vsimem/createcopy.sdat')
+    return tst.testCreateCopy(new_filename='/vsimem/createcopy.sdat')
 
 
 ###############################################################################
@@ -192,7 +192,7 @@ def saga_7():
 
 def saga_8():
     tst = gdaltest.GDALTest('SAGA', '4byteFloat.sg-grd-z', 1, 108)
-    return tst.testOpen(check_prj = """PROJCS["NAD_1927_UTM_Zone_11N",
+    return tst.testOpen(check_prj="""PROJCS["NAD_1927_UTM_Zone_11N",
     GEOGCS["GCS_North_American_1927",
         DATUM["North_American_Datum_1927",
             SPHEROID["Clarke_1866",6378206.4,294.9786982]],

@@ -425,24 +425,24 @@ def ogr_dxf_12():
 
     lyr = ds.CreateLayer('entities')
 
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(10 12, 60 65)'))
     lyr.CreateFeature(dst_feat)
     dst_feat = None
 
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,100 0,100 100,0 0))'))
     lyr.CreateFeature(dst_feat)
     dst_feat = None
 
     # Test 25D linestring with constant Z (#5210)
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(1 2 10,3 4 10)'))
     lyr.CreateFeature(dst_feat)
     dst_feat = None
 
     # Test 25D linestring with different Z (#5210)
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(1 2 -10,3 4 10)'))
     lyr.CreateFeature(dst_feat)
     dst_feat = None
@@ -626,12 +626,12 @@ def ogr_dxf_15():
 
     lyr = ds.CreateLayer('entities')
 
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(10 12, 60 65)'))
     dst_feat.SetField('Layer', 'abc')
     lyr.CreateFeature(dst_feat)
 
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,100 0,100 100,0 0))'))
     lyr.CreateFeature(dst_feat)
 
@@ -821,49 +821,49 @@ def ogr_dxf_17():
     blyr = ds.CreateLayer('blocks')
     lyr = ds.CreateLayer('entities')
 
-    dst_feat = ogr.Feature(feature_def = blyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=blyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt(
         'GEOMETRYCOLLECTION( LINESTRING(0 0,1 1),LINESTRING(1 0,0 1))'))
     dst_feat.SetField('Block', 'XMark')
     blyr.CreateFeature(dst_feat)
 
     # Block with 2 polygons
-    dst_feat = ogr.Feature(feature_def = blyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=blyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt(
         'GEOMETRYCOLLECTION( POLYGON((10 10,10 20,20 20,20 10,10 10)),POLYGON((10 -10,10 -20,20 -20,20 -10,10 -10)))'))
     dst_feat.SetField('Block', 'Block2')
     blyr.CreateFeature(dst_feat)
 
     # Block with point and line
-    dst_feat = ogr.Feature(feature_def = blyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=blyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt(
         'GEOMETRYCOLLECTION( POINT(1 2),LINESTRING(0 0,1 1))'))
     dst_feat.SetField('Block', 'Block3')
     blyr.CreateFeature(dst_feat)
 
     # Write a block reference feature.
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(200 100)'))
     dst_feat.SetField('Layer', 'abc')
     dst_feat.SetField('BlockName', 'XMark')
     lyr.CreateFeature(dst_feat)
 
     # Write a block reference feature for a non-existent block.
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(300 50)'))
     dst_feat.SetField('Layer', 'abc')
     dst_feat.SetField('BlockName', 'DoesNotExist')
     lyr.CreateFeature(dst_feat)
 
     # Write a block reference feature for a template defined block
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(250 200)'))
     dst_feat.SetField('Layer', 'abc')
     dst_feat.SetField('BlockName', 'STAR')
     lyr.CreateFeature(dst_feat)
 
     # Write a block reference feature with scaling and rotation
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(300 100)'))
     dst_feat.SetField('BlockName', 'XMark')
     dst_feat.SetField('BlockAngle', '30')
@@ -872,14 +872,14 @@ def ogr_dxf_17():
     lyr.CreateFeature(dst_feat)
 
     # Write a Block2 reference feature.
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(350 100)'))
     dst_feat.SetField('Layer', 'abc')
     dst_feat.SetField('BlockName', 'Block2')
     lyr.CreateFeature(dst_feat)
 
     # Write a Block3 reference feature.
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(400 100)'))
     dst_feat.SetField('Layer', 'abc')
     dst_feat.SetField('BlockName', 'Block3')
@@ -967,33 +967,33 @@ def ogr_dxf_18():
     lyr = ds.CreateLayer('entities')
 
     # Write a feature with a predefined LTYPE in the header.
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(0 0,25 25)'))
     dst_feat.SetField('Linetype', 'DASHED')
     dst_feat.SetStyleString('PEN(c:#ffff00,w:2g,p:"12.0g 6.0g")')
     lyr.CreateFeature(dst_feat)
 
     # Write a feature with a named linetype but that isn't predefined in the header.
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(5 5,30 30)'))
     dst_feat.SetField('Linetype', 'DOTTED')
     dst_feat.SetStyleString('PEN(c:#ffff00,w:2g,p:"0.0g 4.0g")')
     lyr.CreateFeature(dst_feat)
 
     # Write a feature without a linetype name - it will be created.
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(5 5,40 30)'))
     dst_feat.SetStyleString('PEN(c:#ffff00,w:2g,p:"3.0g 4.0g")')
     lyr.CreateFeature(dst_feat)
 
     # Write a feature with a linetype proportional to a predefined one.
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(5 5,40 20)'))
     dst_feat.SetStyleString('PEN(c:#ffff00,w:0.3mm,p:"6.35g 3.0617284g")')
     lyr.CreateFeature(dst_feat)
 
     # Write a feature with a linetype proportional to an auto-created one.
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(5 5,40 10)'))
     dst_feat.SetStyleString('PEN(c:#ffff00,w:20px,p:"6.0g 8.0g")')
     lyr.CreateFeature(dst_feat)
@@ -1093,7 +1093,7 @@ def ogr_dxf_19():
     lyr = ds.CreateLayer('entities')
 
     # Write a block reference feature for a template defined block
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(250 200)'))
     dst_feat.SetField('Layer', 'abc')
     dst_feat.SetField('BlockName', 'STAR')
@@ -2563,7 +2563,7 @@ def ogr_dxf_33():
 def ogr_dxf_34():
     ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/triangle_test.dxf')
     lyr = ds.CreateLayer('entities')
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('TRIANGLE ((0 0,0 1,1 0,0 0))'))
 
     lyr.CreateFeature(dst_feat)
@@ -2724,7 +2724,7 @@ def ogr_dxf_37():
 
     lyr = ds.CreateLayer('blocks')
 
-    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
     lyr.CreateFeature(dst_feat)
     dst_feat = None

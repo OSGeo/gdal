@@ -68,7 +68,7 @@ def urlescape(url):
     return url
 
 
-def gdalurlopen(url, timeout = 10):
+def gdalurlopen(url, timeout=10):
     old_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(timeout)
 
@@ -119,7 +119,7 @@ def wait_process(process):
     process.wait()
 
 
-def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False, encoding='latin1'):
+def runexternal(cmd, strin=None, check_memleak=True, display_live_on_parent_stdout=False, encoding='latin1'):
     command = shlex.split(cmd)
     if strin is None:
         p = subprocess.Popen(command, stdout=subprocess.PIPE)
@@ -156,7 +156,7 @@ def read_in_thread(f, q):
     f.close()
 
 
-def runexternal_out_and_err(cmd, check_memleak = True):
+def runexternal_out_and_err(cmd, check_memleak=True):
     command = shlex.split(cmd)
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 

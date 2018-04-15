@@ -406,7 +406,7 @@ def ogr_kml_write_1():
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('WGS72')
     ds = ogr.GetDriverByName('KML').CreateDataSource('tmp/kml.kml')
-    lyr = ds.CreateLayer('test_wgs72', srs = srs)
+    lyr = ds.CreateLayer('test_wgs72', srs=srs)
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))

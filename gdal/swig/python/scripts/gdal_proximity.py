@@ -234,7 +234,7 @@ else:
     prog_func = gdal.TermProgress
 
 gdal.ComputeProximity(srcband, dstband, options,
-                       callback = prog_func)
+                       callback=prog_func)
 
 srcband = None
 dstband = None

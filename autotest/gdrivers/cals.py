@@ -108,7 +108,7 @@ def cals_4():
     # 2 bands
     src_ds = gdal.GetDriverByName('MEM').Create('',1,1,2)
     gdal.PushErrorHandler()
-    out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_4.cal', src_ds, strict = True)
+    out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_4.cal', src_ds, strict=True)
     gdal.PopErrorHandler()
     if out_ds is not None:
         gdaltest.post_reason('fail')
@@ -117,7 +117,7 @@ def cals_4():
     # 1 band but not 1-bit
     src_ds = gdal.GetDriverByName('MEM').Create('',1,1,1)
     gdal.PushErrorHandler()
-    out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_4.cal', src_ds, strict = True)
+    out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_4.cal', src_ds, strict=True)
     gdal.PopErrorHandler()
     if out_ds is not None:
         gdaltest.post_reason('fail')
@@ -127,7 +127,7 @@ def cals_4():
     src_ds = gdal.GetDriverByName('MEM').Create('',1000000,1,1)
     src_ds.GetRasterBand(1).SetMetadataItem('NBITS', '1', 'IMAGE_STRUCTURE')
     gdal.PushErrorHandler()
-    out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_4.cal', src_ds, strict = True)
+    out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_4.cal', src_ds, strict=True)
     gdal.PopErrorHandler()
     if out_ds is not None:
         gdaltest.post_reason('fail')

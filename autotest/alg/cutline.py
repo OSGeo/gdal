@@ -111,7 +111,7 @@ def cutline_4():
     <Cutline>MULTIPOLYGON(((10 10,10 50,60 50, 10 10)),((70 70,70 100,100 100,100 70,70 70),(80 80,80 90,90 90,90 80,80 80)))</Cutline>
   </GDALWarpOptions>
 </VRTDataset>""")
-    out_ds = gdal.Translate('', ds, options = '-of MEM -outsize 50%% 50%%')
+    out_ds = gdal.Translate('', ds, options='-of MEM -outsize 50%% 50%%')
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 5170:
         print(cs)

@@ -43,10 +43,10 @@ from osgeo import gdal
 
 
 def overviewds_1():
-    ds = gdal.OpenEx('data/byte.tif', open_options = ['OVERVIEW_LEVEL=-1'])
+    ds = gdal.OpenEx('data/byte.tif', open_options=['OVERVIEW_LEVEL=-1'])
     if ds is not None:
         return 'fail'
-    ds = gdal.OpenEx('data/byte.tif', open_options = ['OVERVIEW_LEVEL=0'])
+    ds = gdal.OpenEx('data/byte.tif', open_options=['OVERVIEW_LEVEL=0'])
     if ds is not None:
         return 'fail'
 
@@ -60,17 +60,17 @@ def overviewds_2():
 
     shutil.copy('data/byte.tif', 'tmp')
     ds = gdal.Open('tmp/byte.tif')
-    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     ds = None
 
-    ds = gdal.OpenEx('tmp/byte.tif', open_options = ['OVERVIEW_LEVEL=0only'])
+    ds = gdal.OpenEx('tmp/byte.tif', open_options=['OVERVIEW_LEVEL=0only'])
     if ds.GetRasterBand(1).GetOverviewCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     src_ds = gdal.Open('tmp/byte.tif')
-    ds = gdal.OpenEx('tmp/byte.tif', open_options = ['OVERVIEW_LEVEL=0'])
+    ds = gdal.OpenEx('tmp/byte.tif', open_options=['OVERVIEW_LEVEL=0'])
     if ds is None:
         return 'fail'
     if ds.RasterXSize != 10 or ds.RasterYSize != 10 or ds.RasterCount != 1:
@@ -157,10 +157,10 @@ def overviewds_3():
     tr = gdal.Transformer(ds, None, ['METHOD=GCP_POLYNOMIAL'])
     (ref_success,ref_pnt) = tr.TransformPoint(0, 20, 10)
 
-    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     ds = None
 
-    ds = gdal.OpenEx('tmp/byte.tif', open_options = ['OVERVIEW_LEVEL=0'])
+    ds = gdal.OpenEx('tmp/byte.tif', open_options=['OVERVIEW_LEVEL=0'])
     gcps = ds.GetGCPs()
     for i in range(3):
         if gcps[i].GCPPixel != src_gcps[i].GCPPixel / 2 or gcps[i].GCPLine != src_gcps[i].GCPLine / 2 or \
@@ -203,10 +203,10 @@ def overviewds_4():
     tr = gdal.Transformer(ds, None, ['METHOD=RPC'])
     (ref_success,ref_pnt) = tr.TransformPoint(0, 20, 10)
 
-    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     ds = None
 
-    ds = gdal.OpenEx('tmp/byte.tif', open_options = ['OVERVIEW_LEVEL=0'])
+    ds = gdal.OpenEx('tmp/byte.tif', open_options=['OVERVIEW_LEVEL=0'])
     got_md = ds.GetMetadata('RPC')
 
     for key in rpc_md:
@@ -262,10 +262,10 @@ def overviewds_5():
     tr = gdal.Transformer(ds, None, ['METHOD=GEOLOC_ARRAY'])
     (ref_success,ref_pnt) = tr.TransformPoint(0, 20, 10)
 
-    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     ds = None
 
-    ds = gdal.OpenEx('tmp/sstgeo.vrt', open_options = ['OVERVIEW_LEVEL=0'])
+    ds = gdal.OpenEx('tmp/sstgeo.vrt', open_options=['OVERVIEW_LEVEL=0'])
     got_md = ds.GetMetadata('GEOLOCATION')
 
     for key in geoloc_md:
@@ -316,10 +316,10 @@ def overviewds_6():
 
     shutil.copy('data/byte.tif', 'tmp')
     ds = gdal.Open('tmp/byte.tif')
-    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     ds = None
 
-    src_ds = gdal.OpenEx('tmp/byte.tif', open_options = ['OVERVIEW_LEVEL=0'])
+    src_ds = gdal.OpenEx('tmp/byte.tif', open_options=['OVERVIEW_LEVEL=0'])
     expected_cs = src_ds.GetRasterBand(1).Checksum()
     ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/byte.vrt', src_ds)
     ds = None

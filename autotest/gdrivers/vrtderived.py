@@ -948,7 +948,7 @@ def vrtderived_15():
     args_array = []
     for i in range(4):
         args_dict = {'ret': True}
-        t = threading.Thread(target=vrtderived_15_worker, args = (args_dict,))
+        t = threading.Thread(target=vrtderived_15_worker, args=(args_dict,))
         args_array.append(args_dict)
         threads.append(t)
         t.start()

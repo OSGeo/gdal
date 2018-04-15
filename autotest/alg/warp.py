@@ -716,7 +716,7 @@ def warp_19_internal(size, datatype, resampling_string):
     ds.GetRasterBand(1).Fill(10.1, 20.1)
     ds = None
 
-    gdal.Warp('tmp/testwarp.tif', 'tmp/test.tif', options = '-r ' + resampling_string)
+    gdal.Warp('tmp/testwarp.tif', 'tmp/test.tif', options='-r ' + resampling_string)
 
     ref_ds = gdal.Open('tmp/test.tif')
     ds = gdal.Open('tmp/testwarp.tif')
@@ -792,7 +792,7 @@ def warp_21():
     shutil.copy('data/utmsmall_near.vrt', 'tmp/warp_21.vrt')
 
     ds = gdal.Open('tmp/warp_21.vrt', gdal.GA_Update)
-    ds.BuildOverviews('NEAR', overviewlist = [2])
+    ds.BuildOverviews('NEAR', overviewlist=[2])
     ds = None
 
     ds = gdal.Open('tmp/warp_21.vrt')
@@ -844,7 +844,7 @@ def warp_22():
             except OSError:
                 pass
             # -wm should not be greater than 2 * w * h. Let's put it at its minimum value
-            gdal.Warp('tmp/warp_22_dst.tif', 'tmp/warp_22_src.tif', options = '-wm 100000 ' + option)
+            gdal.Warp('tmp/warp_22_dst.tif', 'tmp/warp_22_src.tif', options='-wm 100000 ' + option)
             ds = gdal.Open('tmp/warp_22_dst.tif')
             cs = ds.GetRasterBand(1).Checksum()
             if cs != expected_cs:
@@ -920,14 +920,14 @@ def warp_23():
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
 
-    ds = gdal.GetDriverByName('GTiff').Create('tmp/test3582.tif', 70, 170, 4, options = ['SPARSE_OK=YES'])
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/test3582.tif', 70, 170, 4, options=['SPARSE_OK=YES'])
     for i in range(len(gcps)):
         gcps[i].GCPPixel = gcps[i].GCPPixel / 10
         gcps[i].GCPLine = gcps[i].GCPLine / 10
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
 
-    ds = gdal.Warp('', 'tmp/test3582.tif', format = 'MEM')
+    ds = gdal.Warp('', 'tmp/test3582.tif', format='MEM')
     ret = 'success'
     if ds is None:
         gdaltest.post_reason('could not open output dataset')
@@ -947,7 +947,7 @@ def warp_24():
 
     ds_ref = gdal.Open('data/test3658.tif')
     cs_ref = ds_ref.GetRasterBand(1).Checksum()
-    ds = gdal.Warp('', ds_ref, options = '-of MEM -r bilinear')
+    ds = gdal.Warp('', ds_ref, options='-of MEM -r bilinear')
     cs = ds.GetRasterBand(1).Checksum()
 
     if cs != cs_ref:
@@ -979,10 +979,10 @@ def warp_25():
 def warp_26():
 
     gdal.Translate('tmp/warp_25_gcp.vrt', '../gcore/data/byte.tif',
-                    options = '-of VRT -gcp 0 0 0 20 -gcp 0 20 0  0 '
+                    options='-of VRT -gcp 0 0 0 20 -gcp 0 20 0  0 '
                               '-gcp 20 0 20 20 -gcp 20 20 20 0')
     gdal.Warp('tmp/warp_25_warp.vrt', 'tmp/warp_25_gcp.vrt',
-               options = '-of VRT -tps')
+               options='-of VRT -tps')
 
     ds = gdal.Open('tmp/warp_25_warp.vrt')
     cs = ds.GetRasterBand(1).Checksum()
@@ -1060,7 +1060,7 @@ def warp_27():
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    ds = gdal.Warp('tmp/warp_27_ref.tif', '../gcore/data/byte.tif', options = '-rb -t_srs EPSG:4326')
+    ds = gdal.Warp('tmp/warp_27_ref.tif', '../gcore/data/byte.tif', options='-rb -t_srs EPSG:4326')
     ref_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -1428,7 +1428,7 @@ def warp_38():
     ds.SetGCPs(gcp_list, gdaltest.user_srs_to_wkt('EPSG:32632'))
     ds = None
 
-    gdal.Warp(out_file, 'data/test3658.tif', options = '-to DST_METHOD=GCP_POLYNOMIAL')
+    gdal.Warp(out_file, 'data/test3658.tif', options='-to DST_METHOD=GCP_POLYNOMIAL')
 
     ds = gdal.Open(out_file)
     cs = ds.GetRasterBand(1).Checksum()
@@ -1464,7 +1464,7 @@ def warp_39():
     ds.SetGCPs(gcp_list, gdaltest.user_srs_to_wkt('EPSG:32632'))
     ds = None
 
-    gdal.Warp(out_file, 'data/test3658.tif', options = '-to DST_METHOD=GCP_TPS')
+    gdal.Warp(out_file, 'data/test3658.tif', options='-to DST_METHOD=GCP_TPS')
 
     ds = gdal.Open(out_file)
     cs = ds.GetRasterBand(1).Checksum()
@@ -1777,16 +1777,16 @@ def warp_52():
     import time
     start = time.time()
 
-    out_ds = gdal.Warp('', src_ds, format = 'MEM',
-              outputBounds = [8453323.83095, 4676723.13796, 8472891.71018, 4696291.0172],
-              xRes = 4.77731426716,
-              yRes = 4.77731426716,
-              dstSRS = 'EPSG:3857',
-              warpOptions = ['SKIP_NOSOURCE=YES', 'DST_ALPHA_MAX=255'],
-              transformerOptions = ['RPC_DEM=data/warp_52_dem.tif'],
-              dstAlpha = True,
-              errorThreshold = 0,
-              resampleAlg = gdal.GRA_Cubic)
+    out_ds = gdal.Warp('', src_ds, format='MEM',
+              outputBounds=[8453323.83095, 4676723.13796, 8472891.71018, 4696291.0172],
+              xRes=4.77731426716,
+              yRes=4.77731426716,
+              dstSRS='EPSG:3857',
+              warpOptions=['SKIP_NOSOURCE=YES', 'DST_ALPHA_MAX=255'],
+              transformerOptions=['RPC_DEM=data/warp_52_dem.tif'],
+              dstAlpha=True,
+              errorThreshold=0,
+              resampleAlg=gdal.GRA_Cubic)
 
     end = time.time()
     if end - start > 5:
@@ -1809,15 +1809,15 @@ def warp_53():
 
     for typestr in ('Byte', 'UInt16', 'Int16'):
         src_ds = gdal.Translate('', '../gcore/data/byte.tif',
-                                options = '-of MEM -b 1 -b 1 -ot ' + typestr)
+                                options='-of MEM -b 1 -b 1 -ot ' + typestr)
         src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
         src_ds.GetRasterBand(2).Fill(255)
         import struct
         zero = struct.pack('B' * 1, 0)
         src_ds.GetRasterBand(2).WriteRaster(10,10,1,1,zero,
-                                            buf_type = gdal.GDT_Byte)
+                                            buf_type=gdal.GDT_Byte)
         dst_ds = gdal.Translate('', src_ds,
-                                options = '-of MEM -a_srs EPSG:32611')
+                                options='-of MEM -a_srs EPSG:32611')
 
         for option in ('-wo USE_GENERAL_CASE=TRUE', ''):
             # First checksum is proj 4.8, second proj 4.9.2
@@ -1828,7 +1828,7 @@ def warp_53():
                 dst_ds.GetRasterBand(1).Fill(0)
                 dst_ds.GetRasterBand(2).Fill(0)
                 gdal.Warp(dst_ds, src_ds,
-                          options = '-r ' + alg_name + ' ' + option)
+                          options='-r ' + alg_name + ' ' + option)
                 cs1 = dst_ds.GetRasterBand(1).Checksum()
                 cs2 = dst_ds.GetRasterBand(2).Checksum()
                 if cs1 not in expected_cs or cs2 not in [3903, 4138]:
@@ -1850,8 +1850,8 @@ def warp_54():
 
     # UInt16
     src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
-                                options = '-of MEM -scale 0 255 0 65535 -ot UInt16 -a_ullr -162 150 0 0')
-    dst_ds = gdal.Warp('', src_ds, format = 'MEM')
+                                options='-of MEM -scale 0 255 0 65535 -ot UInt16 -a_ullr -162 150 0 0')
+    dst_ds = gdal.Warp('', src_ds, format='MEM')
     for i in range(4):
         expected_cs = src_ds.GetRasterBand(i+1).Checksum()
         got_cs = dst_ds.GetRasterBand(i+1).Checksum()
@@ -1864,8 +1864,8 @@ def warp_54():
 
     # Int16
     src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
-                                options = '-of MEM -scale 0 255 0 32767 -ot Int16 -a_ullr -162 150 0 0')
-    dst_ds = gdal.Warp('', src_ds, format = 'MEM')
+                                options='-of MEM -scale 0 255 0 32767 -ot Int16 -a_ullr -162 150 0 0')
+    dst_ds = gdal.Warp('', src_ds, format='MEM')
     for i in range(4):
         expected_cs = src_ds.GetRasterBand(i+1).Checksum()
         got_cs = dst_ds.GetRasterBand(i+1).Checksum()
@@ -1878,10 +1878,10 @@ def warp_54():
 
     # Test NBITS
     src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
-                                options = '-of MEM -scale 0 255 0 32767 -ot UInt16 -a_ullr -162 150 0 0')
+                                options='-of MEM -scale 0 255 0 32767 -ot UInt16 -a_ullr -162 150 0 0')
     for i in range(4):
         src_ds.GetRasterBand(i+1).SetMetadataItem('NBITS', '15', 'IMAGE_STRUCTURE')
-    dst_ds = gdal.Warp('/vsimem/warp_54.tif', src_ds, options = '-co NBITS=15')
+    dst_ds = gdal.Warp('/vsimem/warp_54.tif', src_ds, options='-co NBITS=15')
     for i in range(4):
         expected_cs = src_ds.GetRasterBand(i+1).Checksum()
         got_cs = dst_ds.GetRasterBand(i+1).Checksum()

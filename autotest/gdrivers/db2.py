@@ -92,7 +92,7 @@ def gpkg_init():
 #
 
 
-def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src = True, clamp_output = True):
+def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src=True, clamp_output=True):
     if extend_src:
         mem_ds = gdal.GetDriverByName('MEM').Create('', 256, 256, working_bands)
     else:
@@ -115,7 +115,7 @@ def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src = True, c
         options = []
     else:
         options = ['QUALITY=75']
-    tmp_ds = tile_drv.CreateCopy('/vsimem/tmp.' + tile_drv.ShortName, mem_ds, options = options)
+    tmp_ds = tile_drv.CreateCopy('/vsimem/tmp.' + tile_drv.ShortName, mem_ds, options=options)
     if clamp_output:
         mem_ds = gdal.GetDriverByName('MEM').Create('', src_ds.RasterXSize, src_ds.RasterYSize, working_bands)
         mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
@@ -133,7 +133,7 @@ def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src = True, c
 #
 
 
-def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct, row = 0, col = 0, zoom_level = None):
+def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct, row=0, col=0, zoom_level=None):
     if zoom_level is None:
         zoom_level_str = "(SELECT MAX(zoom_level) FROM tmp)"
     else:
@@ -198,11 +198,11 @@ def gpkg_1():
 #   clamped_expected_cs = get_expected_checksums(ds, gdaltest.png_dr, 1, clamp_output = False)[0]
     expected_gt = ds.GetGeoTransform()
     expected_wkt = ds.GetProjectionRef()
-    out_ds = gdaltest.db2_dr.CreateCopy('DB2ODBC:database=samp105;DSN=SAMP105A', ds, options = ['TILE_FORMAT=PNG'])
+    out_ds = gdaltest.db2_dr.CreateCopy('DB2ODBC:database=samp105;DSN=SAMP105A', ds, options=['TILE_FORMAT=PNG'])
     out_ds = None
     ds = None
 
-    out_ds = gdal.OpenEx(gdaltest.db2_test_server, gdal.OF_RASTER | gdal.OF_UPDATE, open_options= ['TABLE=byte'])
+    out_ds = gdal.OpenEx(gdaltest.db2_test_server, gdal.OF_RASTER | gdal.OF_UPDATE, open_options=['TABLE=byte'])
 
     bnd = out_ds.GetRasterBand(1)
     if bnd.Checksum() != 4672:

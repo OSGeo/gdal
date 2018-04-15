@@ -49,7 +49,7 @@ def gdal_api_proxy_1():
     if gdaltest.gdalserver_path is None:
         gdaltest.gdalserver_path = 'gdalserver'
 
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -1' % gdaltest.gdalserver_path, display_live_on_parent_stdout = True)
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -1' % gdaltest.gdalserver_path, display_live_on_parent_stdout=True)
 
     if ret.find('Failed:    0') == -1:
         return 'fail'
@@ -66,7 +66,7 @@ def gdal_api_proxy_2():
         return 'skip'
 
     import test_py_scripts
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -2' % gdaltest.gdalserver_path, display_live_on_parent_stdout = True)
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -2' % gdaltest.gdalserver_path, display_live_on_parent_stdout=True)
 
     if ret.find('Failed:    0') == -1:
         return 'fail'
@@ -90,7 +90,7 @@ def gdal_api_proxy_3():
         return 'skip'
 
     import test_py_scripts
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -3' % gdaltest.gdalserver_path, display_live_on_parent_stdout = True)
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -3' % gdaltest.gdalserver_path, display_live_on_parent_stdout=True)
 
     if ret.find('Failed:    0') == -1:
         return 'fail'
@@ -114,7 +114,7 @@ def gdal_api_proxy_4():
         return 'skip'
 
     import test_py_scripts
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -4' % gdaltest.gdalserver_path, display_live_on_parent_stdout = True)
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -4' % gdaltest.gdalserver_path, display_live_on_parent_stdout=True)
 
     if ret.find('Failed:    0') == -1:
         return 'fail'
@@ -144,7 +144,7 @@ def gdal_api_proxy_sub():
     ds = None
 
     src_ds = gdal.Open('data/byte.tif')
-    ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/byte.tif', src_ds, options = ['TILED=YES'])
+    ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/byte.tif', src_ds, options=['TILED=YES'])
     got_cs = ds.GetRasterBand(1).Checksum()
     if src_cs != got_cs:
         gdaltest.post_reason('fail')
@@ -255,7 +255,7 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    got_data_weird_spacing = ds.ReadRaster(0, 0, 20, 20, buf_pixel_space = 1, buf_line_space = 32)
+    got_data_weird_spacing = ds.ReadRaster(0, 0, 20, 20, buf_pixel_space=1, buf_line_space=32)
     if len(got_data_weird_spacing) != 32 * (20 - 1) + 20:
         gdaltest.post_reason('fail')
         print(len(got_data_weird_spacing))
@@ -265,7 +265,7 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    got_data_weird_spacing = ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20, buf_pixel_space = 1, buf_line_space = 32)
+    got_data_weird_spacing = ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20, buf_pixel_space=1, buf_line_space=32)
     if len(got_data_weird_spacing) != 32 * (20 - 1) + 20:
         gdaltest.post_reason('fail')
         print(len(got_data_weird_spacing))

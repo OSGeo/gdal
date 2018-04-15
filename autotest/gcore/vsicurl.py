@@ -253,7 +253,7 @@ def vsicurl_start_webserver():
     if not gdaltest.built_against_curl():
         return 'skip'
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
         return 'skip'
 
@@ -286,7 +286,7 @@ def vsicurl_test_redirect():
             response += '\r\n'
             request.wfile.write(response.encode('ascii'))
 
-    handler.add('HEAD', '/test_redirect/test.bin', custom_method = method)
+    handler.add('HEAD', '/test_redirect/test.bin', custom_method=method)
     handler.add('HEAD', '/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (current_time + 30), 403,
                 {'Server' : 'foo'}, '')
 
@@ -322,7 +322,7 @@ def vsicurl_test_redirect():
             response += '\r\n'
             request.wfile.write(response.encode('ascii'))
 
-    handler.add('GET', '/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (current_time + 30), custom_method = method)
+    handler.add('GET', '/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (current_time + 30), custom_method=method)
 
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsicurl/http://localhost:%d/test_redirect/test.bin' % gdaltest.webserver_port, 'rb')
@@ -339,8 +339,8 @@ def vsicurl_test_redirect():
     gdal.VSIFSeekL(f,0,0)
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (current_time + 30), custom_method = method)
-    handler.add('GET', '/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (current_time + 30), custom_method = method)
+    handler.add('GET', '/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (current_time + 30), custom_method=method)
+    handler.add('GET', '/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (current_time + 30), custom_method=method)
 
     current_time = int(time.time())
 
@@ -356,7 +356,7 @@ def vsicurl_test_redirect():
             request.end_headers()
             request.wfile.write(('x' * 16384).encode('ascii'))
 
-    handler.add('GET', '/test_redirect/test.bin', custom_method = method)
+    handler.add('GET', '/test_redirect/test.bin', custom_method=method)
 
     def method(request):
         # Second signed URL
@@ -370,7 +370,7 @@ def vsicurl_test_redirect():
             request.end_headers()
             request.wfile.write('y'.encode('ascii'))
 
-    handler.add('GET', '/foo.s3.amazonaws.com/test_redirected2/test.bin?Signature=foo&Expires=%d' % (current_time + 30), custom_method = method)
+    handler.add('GET', '/foo.s3.amazonaws.com/test_redirected2/test.bin?Signature=foo&Expires=%d' % (current_time + 30), custom_method=method)
 
     with webserver.install_http_handler(handler):
         content = gdal.VSIFReadL(1, 16383, f).decode('ascii')

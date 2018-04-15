@@ -61,7 +61,7 @@ class TestXPM:
 def xpm_1():
 
     tst = gdaltest.GDALTest('XPM', 'byte.tif', 1, 4583)
-    return tst.testCreateCopy(vsimem = 1, check_minmax = False)
+    return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 
 gdaltest_list = []

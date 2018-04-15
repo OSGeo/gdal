@@ -63,7 +63,7 @@ def ogr_pds_1():
         return 'fail'
     geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'POINT (146.1325 -55.648)',
-                                      max_error = 0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         print('did not get expected geom')
         print(geom.ExportToWkt())
         return 'fail'

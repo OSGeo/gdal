@@ -293,7 +293,7 @@ def gdal_pansharpen(argv):
         return 0
 
     vrt_ds = gdal.Open(vrt_xml)
-    out_ds = gdal.GetDriverByName(format).CreateCopy(out_name, vrt_ds, 0, creation_options, callback = callback)
+    out_ds = gdal.GetDriverByName(format).CreateCopy(out_name, vrt_ds, 0, creation_options, callback=callback)
     if out_ds is None:
         return 1
     return 0

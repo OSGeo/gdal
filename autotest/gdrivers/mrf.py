@@ -95,7 +95,7 @@ def mrf_zen_test():
 '''
     for interleave in 'PIXEL', 'BAND':
         co = ['COMPRESS=JPEG', 'INTERLEAVE=' + interleave]
-        gdal.Translate('tmp/masked.mrf', 'data/masked.jpg', format = 'MRF', creationOptions = co)
+        gdal.Translate('tmp/masked.mrf', 'data/masked.jpg', format='MRF', creationOptions=co)
         ds = gdal.Open(testvrt)
         cs = ds.GetRasterBand(1).Checksum()
         if cs != expectedCS:
@@ -123,9 +123,9 @@ def mrf_overview_near_fact_2():
                 gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
-                                format = 'MRF',
-                                creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=10'],
-                                outputType = dt)
+                                format='MRF',
+                                creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=10'],
+                                outputType=dt)
         out_ds.BuildOverviews('NEAR', [2])
         out_ds = None
 
@@ -155,10 +155,10 @@ def mrf_overview_near_with_nodata_fact_2():
                 gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
-                                format = 'MRF',
-                                creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=10'],
-                                outputType = dt,
-                                noData = 107)
+                                format='MRF',
+                                creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=10'],
+                                outputType=dt,
+                                noData=107)
         out_ds.BuildOverviews('NEAR', [2])
         out_ds = None
 
@@ -189,9 +189,9 @@ def mrf_overview_avg_fact_2():
                 gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
-                                format = 'MRF',
-                                creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=10'],
-                                outputType = dt)
+                                format='MRF',
+                                creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=10'],
+                                outputType=dt)
         out_ds.BuildOverviews('AVG', [2])
         out_ds = None
 
@@ -223,10 +223,10 @@ def mrf_overview_avg_with_nodata_fact_2():
                 gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
-                                format = 'MRF',
-                                creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=10'],
-                                outputType = dt,
-                                noData = 107)
+                                format='MRF',
+                                creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=10'],
+                                outputType=dt,
+                                noData=107)
         out_ds.BuildOverviews('AVG', [2])
         out_ds = None
 
@@ -254,8 +254,8 @@ def mrf_overview_avg_with_nodata_fact_2():
 def mrf_overview_near_fact_3():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
-                            format = 'MRF',
-                            creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=10'])
+                            format='MRF',
+                            creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=10'])
     out_ds.BuildOverviews('NEAR', [3])
     out_ds = None
 
@@ -281,8 +281,8 @@ def mrf_overview_near_fact_3():
 def mrf_overview_avg_fact_3():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
-                            format = 'MRF',
-                            creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=10'])
+                            format='MRF',
+                            creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=10'])
     out_ds.BuildOverviews('AVG', [3])
     out_ds = None
 
@@ -312,10 +312,10 @@ def mrf_overview_avg_with_nodata_fact_3():
                 gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
-                                format = 'MRF',
-                                creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=10'],
-                                outputType = dt,
-                                noData = 107)
+                                format='MRF',
+                                creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=10'],
+                                outputType=dt,
+                                noData=107)
         out_ds.BuildOverviews('AVG', [3])
         out_ds = None
 
@@ -342,8 +342,8 @@ def mrf_overview_avg_with_nodata_fact_3():
 
 def mrf_overview_partial_block():
 
-    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF',
-                            creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=8'])
+    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
+                            creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=8'])
     out_ds.BuildOverviews('NEAR', [2])
     out_ds = None
 
@@ -368,8 +368,8 @@ def mrf_overview_near_implicit_level():
 
     # We ask only overview level 2, but MRF automatically creates 2 and 4
     # so check that 4 is properly initialized
-    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF',
-                            creationOptions = ['COMPRESS=NONE', 'BLOCKSIZE=5'])
+    out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
+                            creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=5'])
     out_ds.BuildOverviews('NEAR', [2])
     out_ds = None
 
@@ -406,7 +406,7 @@ def mrf_overview_near_implicit_level():
 
 def mrf_overview_external():
 
-    gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF')
+    gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF')
     ds = gdal.Open('/vsimem/out.mrf')
     ds.BuildOverviews('NEAR', [2])
     ds = None
@@ -433,8 +433,8 @@ def mrf_overview_external():
 
 def mrf_lerc_nodata():
 
-    gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF',
-                   noData = 107, creationOptions = ['COMPRESS=LERC'])
+    gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
+                   noData=107, creationOptions=['COMPRESS=LERC'])
     ds = gdal.Open('/vsimem/out.mrf')
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     if nodata != 107:
@@ -461,8 +461,8 @@ def mrf_lerc_nodata():
 
 def mrf_lerc_with_huffman():
 
-    gdal.Translate('/vsimem/out.mrf', 'data/small_world.tif', format = 'MRF',
-                   width = 5000, height = 5000, creationOptions = ['COMPRESS=LERC'])
+    gdal.Translate('/vsimem/out.mrf', 'data/small_world.tif', format='MRF',
+                   width=5000, height=5000, creationOptions=['COMPRESS=LERC'])
     ds = gdal.Open('/vsimem/out.mrf')
     cs= ds.GetRasterBand(1).Checksum()
     expected_cs = 31204
@@ -485,8 +485,8 @@ def mrf_lerc_with_huffman():
 def mrf_cached_source():
 
     # Caching MRF
-    gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF',
-                   creationOptions = ['CACHEDSOURCE=invalid_source', 'NOCOPY=TRUE'])
+    gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
+                   creationOptions=['CACHEDSOURCE=invalid_source', 'NOCOPY=TRUE'])
     ds = gdal.Open('/vsimem/out.mrf')
     with gdaltest.error_handler():
         cs = ds.GetRasterBand(1).Checksum()
@@ -508,8 +508,8 @@ def mrf_cached_source():
     gdal.Unlink('tmp/byte.ppg')
 
     open('tmp/byte.tif', 'wb').write(open('data/byte.tif', 'rb').read())
-    gdal.Translate('tmp/out.mrf', 'tmp/byte.tif', format = 'MRF',
-                   creationOptions = ['CACHEDSOURCE=byte.tif', 'NOCOPY=TRUE'])
+    gdal.Translate('tmp/out.mrf', 'tmp/byte.tif', format='MRF',
+                   creationOptions=['CACHEDSOURCE=byte.tif', 'NOCOPY=TRUE'])
     ds = gdal.Open('tmp/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
@@ -634,7 +634,7 @@ def mrf_versioned():
     gdal.Unlink('/vsimem/out.til')
 
     # Caching MRF
-    gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF')
+    gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF')
     gdal.FileFromMemBuffer('/vsimem/out.mrf',
 """<MRF_META>
   <Raster versioned="on">
@@ -740,7 +740,7 @@ class myTestCreateCopyWrapper:
         for x in self.ut.options:
             if x.find('OPTIONS:LERC_PREC=') >= 0:
                 check_minmax = False
-        return self.ut.testCreateCopy(check_minmax = check_minmax)
+        return self.ut.testCreateCopy(check_minmax=check_minmax)
 
 
 for item in init_list:
@@ -768,7 +768,7 @@ for item in init_list:
         chksum = chksum_param
         chksum_after_reopening = chksum_param
 
-    ut = gdaltest.GDALTest('MRF', src_filename, item[1], chksum, options = options, chksum_after_reopening = chksum_after_reopening)
+    ut = gdaltest.GDALTest('MRF', src_filename, item[1], chksum, options=options, chksum_after_reopening=chksum_after_reopening)
     if ut is None:
         print('MRF tests skipped')
 

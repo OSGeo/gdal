@@ -63,7 +63,7 @@ def mbtiles_2():
     if gdal.GetDriverByName('JPEG') is None:
         return 'skip'
 
-    ds = gdal.OpenEx('data/world_l1.mbtiles', open_options = ['USE_BOUNDS=NO'])
+    ds = gdal.OpenEx('data/world_l1.mbtiles', open_options=['USE_BOUNDS=NO'])
     if ds is None:
         return 'fail'
 
@@ -181,7 +181,7 @@ def mbtiles_start_webserver():
     if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
         return 'skip'
 
@@ -344,7 +344,7 @@ def mbtiles_5():
     gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_5.mbtiles', src_ds)
     src_ds = None
 
-    ds = gdal.OpenEx('/vsimem/mbtiles_5.mbtiles', open_options = ['BAND_COUNT=2'])
+    ds = gdal.OpenEx('/vsimem/mbtiles_5.mbtiles', open_options=['BAND_COUNT=2'])
     if ds.RasterXSize != 19 or ds.RasterYSize != 19:
         gdaltest.post_reason('fail')
         print(ds.RasterXSize)
@@ -411,7 +411,7 @@ def mbtiles_6():
     options += ['TYPE=baselayer']
     options += ['VERSION=version']
     options += ['WRITE_BOUNDS=no']
-    gdaltest.mbtiles_drv.CreateCopy('tmp/mbtiles_6.mbtiles', src_ds, options = options)
+    gdaltest.mbtiles_drv.CreateCopy('tmp/mbtiles_6.mbtiles', src_ds, options=options)
     src_ds = None
 
     ds = gdal.Open('tmp/mbtiles_6.mbtiles')
@@ -460,7 +460,7 @@ def mbtiles_7():
                        data,src_ds.RasterXSize,src_ds.RasterYSize)
     src_ds = None
 
-    gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_7.mbtiles', mem_ds, options = ['TILE_FORMAT=PNG8', 'DITHER=YES', 'RESAMPLING=NEAREST'])
+    gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_7.mbtiles', mem_ds, options=['TILE_FORMAT=PNG8', 'DITHER=YES', 'RESAMPLING=NEAREST'])
     mem_ds = None
 
     ds = gdal.Open('/vsimem/mbtiles_7.mbtiles', gdal.GA_Update)
@@ -516,7 +516,7 @@ def mbtiles_8():
         return 'skip'
 
     src_ds = gdal.Open('data/small_world_pct.tif')
-    out_ds = gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_8.mbtiles', src_ds, options = ['RESAMPLING=NEAREST'])
+    out_ds = gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_8.mbtiles', src_ds, options=['RESAMPLING=NEAREST'])
     out_ds = None
     src_ds = None
 
@@ -539,7 +539,7 @@ def mbtiles_8():
 
     # 512 pixel tiles
     src_ds = gdal.Open('data/small_world_pct.tif')
-    out_ds = gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_8.mbtiles', src_ds, options = ['RESAMPLING=NEAREST', 'BLOCKSIZE=512'])
+    out_ds = gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_8.mbtiles', src_ds, options=['RESAMPLING=NEAREST', 'BLOCKSIZE=512'])
     out_ds = None
     src_ds = None
 
@@ -575,9 +575,9 @@ def mbtiles_9():
         return 'skip'
 
     src_ds = gdal.Open('data/byte.tif')
-    gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_9.mbtiles', src_ds, options = ['RESAMPLING=NEAREST'])
+    gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_9.mbtiles', src_ds, options=['RESAMPLING=NEAREST'])
     src_ds = None
-    ds = ogr.Open('SQLITE:/vsimem/mbtiles_9.mbtiles', update = 1)
+    ds = ogr.Open('SQLITE:/vsimem/mbtiles_9.mbtiles', update=1)
     ds.ExecuteSQL("UPDATE metadata SET value='invalid' WHERE name='bounds'")
     ds = None
 
@@ -610,7 +610,7 @@ def mbtiles_10():
     old_val_GPKG_FORCE_TEMPDB_COMPACTION = gdal.GetConfigOption('GPKG_FORCE_TEMPDB_COMPACTION')
     gdal.SetConfigOption('GPKG_FORCE_TEMPDB_COMPACTION', 'YES')
     with gdaltest.SetCacheMax(0):
-        gdal.Translate('/vsimem/mbtiles_10.mbtiles', '../gcore/data/byte.tif', options = '-of MBTILES -outsize 512 512')
+        gdal.Translate('/vsimem/mbtiles_10.mbtiles', '../gcore/data/byte.tif', options='-of MBTILES -outsize 512 512')
     gdal.SetConfigOption('GPKG_FORCE_TEMPDB_COMPACTION', old_val_GPKG_FORCE_TEMPDB_COMPACTION)
 
     ds = gdal.Open('/vsimem/mbtiles_10.mbtiles')

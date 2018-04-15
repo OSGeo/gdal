@@ -184,7 +184,7 @@ def ogr_jml_2():
     ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32632)
-    lyr = ds.CreateLayer('foo', srs = srs)
+    lyr = ds.CreateLayer('foo', srs=srs)
     lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('int', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('double', ogr.OFTReal))
@@ -384,7 +384,7 @@ def ogr_jml_2():
 
     # Test CREATE_R_G_B_FIELD=NO
     ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
-    lyr = ds.CreateLayer('foo', options = ['CREATE_R_G_B_FIELD=NO'])
+    lyr = ds.CreateLayer('foo', options=['CREATE_R_G_B_FIELD=NO'])
     lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
@@ -403,7 +403,7 @@ def ogr_jml_2():
 
     # Test CREATE_OGR_STYLE_FIELD=YES
     ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
-    lyr = ds.CreateLayer('foo', options = ['CREATE_OGR_STYLE_FIELD=YES'])
+    lyr = ds.CreateLayer('foo', options=['CREATE_OGR_STYLE_FIELD=YES'])
     lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetStyleString('PEN(c:#445566)')
@@ -423,7 +423,7 @@ def ogr_jml_2():
 
     # Test CREATE_OGR_STYLE_FIELD=YES with a R_G_B field
     ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
-    lyr = ds.CreateLayer('foo', options = ['CREATE_OGR_STYLE_FIELD=YES'])
+    lyr = ds.CreateLayer('foo', options=['CREATE_OGR_STYLE_FIELD=YES'])
     lyr.CreateField(ogr.FieldDefn('R_G_B', ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField('R_G_B', '112233')

@@ -732,7 +732,7 @@ def wmts_14():
 
     for open_options in [['URL=/vsimem/nominal.xml'],
                           ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'TILEMATRIXSET=tms']]:
-        ds = gdal.OpenEx('WMTS:', open_options = open_options)
+        ds = gdal.OpenEx('WMTS:', open_options=open_options)
         if ds is None:
             gdaltest.post_reason('fail')
             return 'fail'
@@ -741,7 +741,7 @@ def wmts_14():
                           ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'TILEMATRIX=30'],
                           ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'ZOOM_LEVEL=30']]:
         gdal.PushErrorHandler()
-        ds = gdal.OpenEx('WMTS:', open_options = open_options)
+        ds = gdal.OpenEx('WMTS:', open_options=open_options)
         gdal.PopErrorHandler()
         if ds is not None:
             gdaltest.post_reason('fail')
@@ -765,7 +765,7 @@ def wmts_14():
         print(ds.RasterXSize)
         return 'fail'
 
-    ds = gdal.OpenEx('WMTS:/vsimem/gdal_nominal.xml', open_options = ['tilematrix=tm_0'])
+    ds = gdal.OpenEx('WMTS:/vsimem/gdal_nominal.xml', open_options=['tilematrix=tm_0'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -783,7 +783,7 @@ def wmts_14():
         print(ds.RasterXSize)
         return 'fail'
 
-    ds = gdal.OpenEx('WMTS:/vsimem/gdal_nominal.xml', open_options = ['zoom_level=0'])
+    ds = gdal.OpenEx('WMTS:/vsimem/gdal_nominal.xml', open_options=['zoom_level=0'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'

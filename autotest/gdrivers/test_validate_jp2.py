@@ -69,7 +69,7 @@ def test_validate_jp2_1():
 ###############################################################################
 
 
-def validate(filename, inspire_tg = True, expected_gmljp2 = True, oidoc = None):
+def validate(filename, inspire_tg=True, expected_gmljp2=True, oidoc=None):
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET')
@@ -85,8 +85,8 @@ def validate(filename, inspire_tg = True, expected_gmljp2 = True, oidoc = None):
             ogc_schemas_location = 'disabled'
 
     import validate_jp2
-    error_report = validate_jp2.ErrorReport(collect_internally = True)
-    return validate_jp2.validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location, error_report = error_report)
+    error_report = validate_jp2.ErrorReport(collect_internally=True)
+    return validate_jp2.validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location, error_report=error_report)
 
 ###############################################################################
 # Highly corrupted file
@@ -100,7 +100,7 @@ def test_validate_jp2_2():
     import build_jp2_from_xml
 
     build_jp2_from_xml.build_file('data/test_validate_jp2/byte_corrupted.xml', '/vsimem/out.jp2')
-    error_report = validate('/vsimem/out.jp2', oidoc = 'data/test_validate_jp2/byte_oi.xml')
+    error_report = validate('/vsimem/out.jp2', oidoc='data/test_validate_jp2/byte_oi.xml')
     gdal.Unlink('/vsimem/out.jp2')
 
     expected_errors = ['ERROR[GeoJP2]: 2 GeoTIFF UUID box found',
@@ -169,7 +169,7 @@ def test_validate_jp2_3():
 
     build_jp2_from_xml.build_file('data/test_validate_jp2/stefan_full_rgba_corrupted.xml', '/vsimem/out.jp2')
     gdal.PushErrorHandler()
-    error_report = validate('/vsimem/out.jp2', oidoc = 'data/test_validate_jp2/stefan_full_rgba_oi.xml')
+    error_report = validate('/vsimem/out.jp2', oidoc='data/test_validate_jp2/stefan_full_rgba_oi.xml')
     gdal.PopErrorHandler()
     gdal.Unlink('/vsimem/out.jp2')
 
@@ -226,7 +226,7 @@ def test_validate_jp2_4():
 
     build_jp2_from_xml.build_file('data/test_validate_jp2/almost_nojp2box.xml', '/vsimem/out.jp2')
     gdal.PushErrorHandler()
-    error_report = validate('/vsimem/out.jp2', expected_gmljp2 = False)
+    error_report = validate('/vsimem/out.jp2', expected_gmljp2=False)
     gdal.PopErrorHandler()
     gdal.Unlink('/vsimem/out.jp2')
 
@@ -271,7 +271,7 @@ def test_validate_jp2_5():
 
     build_jp2_from_xml.build_file('data/test_validate_jp2/utmsmall_pct_corrupted.xml', '/vsimem/out.jp2')
     gdal.PushErrorHandler()
-    error_report = validate('/vsimem/out.jp2', oidoc = 'data/test_validate_jp2/utmsmall_pct_oi.xml')
+    error_report = validate('/vsimem/out.jp2', oidoc='data/test_validate_jp2/utmsmall_pct_oi.xml')
     gdal.PopErrorHandler()
     gdal.Unlink('/vsimem/out.jp2')
 
@@ -314,7 +314,7 @@ def test_validate_jp2_6():
     if not gdaltest.has_validate_jp2_and_build_jp2:
         return 'skip'
 
-    error_report = validate('data/test_validate_jp2/byte.jp2', oidoc = 'data/test_validate_jp2/byte_oi.xml')
+    error_report = validate('data/test_validate_jp2/byte.jp2', oidoc='data/test_validate_jp2/byte_oi.xml')
     gdal.Unlink('/vsimem/out.jp2')
 
     expected_errors = []
@@ -344,7 +344,7 @@ def test_validate_jp2_7():
     if not gdaltest.has_validate_jp2_and_build_jp2:
         return 'skip'
 
-    error_report = validate('data/test_validate_jp2/stefan_full_rgba.jp2', oidoc = 'data/test_validate_jp2/stefan_full_rgba_oi.xml', expected_gmljp2 = False)
+    error_report = validate('data/test_validate_jp2/stefan_full_rgba.jp2', oidoc='data/test_validate_jp2/stefan_full_rgba_oi.xml', expected_gmljp2=False)
     gdal.Unlink('/vsimem/out.jp2')
 
     expected_errors = []
@@ -374,7 +374,7 @@ def test_validate_jp2_8():
     if not gdaltest.has_validate_jp2_and_build_jp2:
         return 'skip'
 
-    error_report = validate('data/test_validate_jp2/utmsmall_pct.jp2', oidoc = 'data/test_validate_jp2/utmsmall_pct_oi.xml')
+    error_report = validate('data/test_validate_jp2/utmsmall_pct.jp2', oidoc='data/test_validate_jp2/utmsmall_pct_oi.xml')
     gdal.Unlink('/vsimem/out.jp2')
 
     expected_errors = []

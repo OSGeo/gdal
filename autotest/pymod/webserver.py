@@ -56,7 +56,7 @@ def install_http_handler(handler_instance):
 
 
 class RequestResponse:
-    def __init__(self, method, path, code, headers = {}, body = None, custom_method = None, expected_headers = {}, expected_body = None):
+    def __init__(self, method, path, code, headers={}, body=None, custom_method=None, expected_headers={}, expected_body=None):
         self.method = method
         self.path = path
         self.code = code
@@ -118,11 +118,11 @@ class SequentialHandler:
         assert self.req_count == len(self.req_resp), (self.req_count, len(self.req_resp))
         assert len(self.req_resp_map) == 0
 
-    def add(self, method, path, code = None, headers = {}, body = None, custom_method = None, expected_headers = {}, expected_body = None):
+    def add(self, method, path, code=None, headers={}, body=None, custom_method=None, expected_headers={}, expected_body=None):
         assert len(self.req_resp_map) == 0
         self.req_resp.append(RequestResponse(method, path, code, headers, body, custom_method, expected_headers, expected_body))
 
-    def add_unordered(self, method, path, code = None, headers = {}, body = None, custom_method = None, expected_headers = {}, expected_body = None):
+    def add_unordered(self, method, path, code=None, headers={}, body=None, custom_method=None, expected_headers={}, expected_body=None):
         self.req_resp_map[(method, path)] = RequestResponse(method, path, code, headers, body, custom_method, expected_headers, expected_body)
 
     @staticmethod
@@ -339,7 +339,7 @@ class GDAL_HttpServer(HTTPServer):
 
 class GDAL_ThreadedHttpServer(Thread):
 
-    def __init__(self, handlerClass = None):
+    def __init__(self, handlerClass=None):
         Thread.__init__(self)
         ok = False
         self.server = 0
@@ -390,7 +390,7 @@ class GDAL_ThreadedHttpServer(Thread):
         self.stop()
 
 
-def launch(fork_process = None, handler = None):
+def launch(fork_process=None, handler=None):
     if handler is not None:
         if fork_process:
             raise Exception('fork_process = True incompatible with custom handler')

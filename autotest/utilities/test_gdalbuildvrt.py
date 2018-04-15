@@ -263,9 +263,9 @@ def test_gdalbuildvrt_7():
     except:
         ff = '\xff'
 
-    out_ds.GetRasterBand(1).WriteRaster(0, 0, 10, 10, ff, buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1)
-    out_ds.GetRasterBand(2).WriteRaster(0, 0, 10, 10, '\x00', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1)
-    out_ds.GetRasterBand(3).WriteRaster(0, 0, 10, 10, '\x00', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1)
+    out_ds.GetRasterBand(1).WriteRaster(0, 0, 10, 10, ff, buf_type=gdal.GDT_Byte, buf_xsize=1, buf_ysize=1)
+    out_ds.GetRasterBand(2).WriteRaster(0, 0, 10, 10, '\x00', buf_type=gdal.GDT_Byte, buf_xsize=1, buf_ysize=1)
+    out_ds.GetRasterBand(3).WriteRaster(0, 0, 10, 10, '\x00', buf_type=gdal.GDT_Byte, buf_xsize=1, buf_ysize=1)
     out_ds = None
 
     out_ds = gdal.GetDriverByName('GTiff').Create('tmp/vrtnull2.tif', 20, 10, 3, gdal.GDT_UInt16)
@@ -278,9 +278,9 @@ def test_gdalbuildvrt_7():
     out_ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
     out_ds.GetRasterBand(1).SetNoDataValue(256)
 
-    out_ds.GetRasterBand(1).WriteRaster(10, 0, 10, 10, '\x00', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1)
-    out_ds.GetRasterBand(2).WriteRaster(10, 0, 10, 10, ff, buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1)
-    out_ds.GetRasterBand(3).WriteRaster(10, 0, 10, 10, '\x00', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1)
+    out_ds.GetRasterBand(1).WriteRaster(10, 0, 10, 10, '\x00', buf_type=gdal.GDT_Byte, buf_xsize=1, buf_ysize=1)
+    out_ds.GetRasterBand(2).WriteRaster(10, 0, 10, 10, ff, buf_type=gdal.GDT_Byte, buf_xsize=1, buf_ysize=1)
+    out_ds.GetRasterBand(3).WriteRaster(10, 0, 10, 10, '\x00', buf_type=gdal.GDT_Byte, buf_xsize=1, buf_ysize=1)
     out_ds = None
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/gdalbuildvrt7.vrt tmp/vrtnull1.tif tmp/vrtnull2.tif')
@@ -365,22 +365,22 @@ def test_gdalbuildvrt_10():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         return 'skip'
 
-    out_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalbuildvrt_10_1.tif', 10, 10, 1, gdal.GDT_Byte, options = ['NBITS=1', 'PHOTOMETRIC=MINISWHITE'])
+    out_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalbuildvrt_10_1.tif', 10, 10, 1, gdal.GDT_Byte, options=['NBITS=1', 'PHOTOMETRIC=MINISWHITE'])
     out_ds.SetGeoTransform([2,0.1,0,49,0,-0.1])
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:4326')
     out_ds.SetProjection(srs.ExportToWkt())
 
-    out_ds.GetRasterBand(1).WriteRaster(1, 1, 3, 3, '\x01', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1)
+    out_ds.GetRasterBand(1).WriteRaster(1, 1, 3, 3, '\x01', buf_type=gdal.GDT_Byte, buf_xsize=1, buf_ysize=1)
     out_ds = None
 
-    out_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalbuildvrt_10_2.tif', 10, 10, 1, gdal.GDT_Byte, options = ['NBITS=1', 'PHOTOMETRIC=MINISWHITE'])
+    out_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalbuildvrt_10_2.tif', 10, 10, 1, gdal.GDT_Byte, options=['NBITS=1', 'PHOTOMETRIC=MINISWHITE'])
     out_ds.SetGeoTransform([2,0.1,0,49,0,-0.1])
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:4326')
     out_ds.SetProjection(srs.ExportToWkt())
 
-    out_ds.GetRasterBand(1).WriteRaster(6, 6, 3, 3, '\x01', buf_type = gdal.GDT_Byte, buf_xsize = 1, buf_ysize = 1)
+    out_ds.GetRasterBand(1).WriteRaster(6, 6, 3, 3, '\x01', buf_type=gdal.GDT_Byte, buf_xsize=1, buf_ysize=1)
     out_ds = None
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -srcnodata 0 tmp/gdalbuildvrt10.vrt tmp/test_gdalbuildvrt_10_1.tif tmp/test_gdalbuildvrt_10_2.tif')
@@ -443,7 +443,7 @@ def test_gdalbuildvrt_12():
         return 'skip'
 
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalbuildvrt_path() + ' -tap tmp/gdalbuildvrt12.vrt ../gcore/data/byte.tif',
-                                                  check_memleak = False)
+                                                  check_memleak=False)
     if err.find('-tap option cannot be used without using -tr') == -1:
         gdaltest.post_reason('expected error')
         return 'fail'

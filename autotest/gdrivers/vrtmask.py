@@ -209,7 +209,7 @@ def vrtmask_5():
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
 
-    gdal.Translate('tmp/vrtmask_5.vrt', '../gcore/data/ycbcr_with_mask.tif', options = '-of VRT -outsize 100% 100%')
+    gdal.Translate('tmp/vrtmask_5.vrt', '../gcore/data/ycbcr_with_mask.tif', options='-of VRT -outsize 100% 100%')
 
     src_ds = gdal.Open('../gcore/data/ycbcr_with_mask.tif')
     expected_msk_cs = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
@@ -241,7 +241,7 @@ def vrtmask_6():
         return 'skip'
 
     gdal.Translate('tmp/vrtmask_6.vrt', '../gcore/data/ycbcr_with_mask.tif',
-                   options = '-of VRT -b 1 -b 2 -b 3 -mask mask,1')
+                   options='-of VRT -b 1 -b 2 -b 3 -mask mask,1')
 
     src_ds = gdal.Open('../gcore/data/ycbcr_with_mask.tif')
     expected_msk_cs = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
@@ -278,7 +278,7 @@ def vrtmask_7():
 
     gdal.Translate('tmp/vrtmask_7_rgba.tif',
                    '../gcore/data/ycbcr_with_mask.tif',
-                   options = '-b 1 -b 2 -b 3 -b mask')
+                   options='-b 1 -b 2 -b 3 -b mask')
 
     src_ds = gdal.Open('../gcore/data/ycbcr_with_mask.tif')
     expected_msk_cs = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
@@ -289,7 +289,7 @@ def vrtmask_7():
     ds = None
 
     gdal.Translate('tmp/vrtmask_7_rgbmask.vrt', 'tmp/vrtmask_7_rgba.tif',
-                   options = '-of VRT -b 1 -b 2 -b 3 -mask 4')
+                   options='-of VRT -b 1 -b 2 -b 3 -mask 4')
 
     ds = gdal.Open('tmp/vrtmask_7_rgbmask.vrt')
     msk_cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
@@ -330,7 +330,7 @@ def vrtmask_8():
         return 'skip'
 
     gdal.Translate('tmp/vrtmask_8.vrt', '../gcore/data/ycbcr_with_mask.tif',
-                   options = '-of VRT -mask none')
+                   options='-of VRT -mask none')
 
     ds = gdal.Open('tmp/vrtmask_8.vrt')
     flags = ds.GetRasterBand(1).GetMaskFlags()
@@ -381,10 +381,10 @@ def vrtmask_9():
 
 def vrtmask_10():
 
-    gdal.Translate('tmp/vrtmask_10_ref.tif', '../gcore/data/stefan_full_rgba.tif', options = '-srcwin 40 40 100 100')
-    gdal.Translate('tmp/vrtmask_10.vrt', '../gcore/data/stefan_full_rgba.tif', options = '-of VRT -b 1 -b 2 -b 3 -mask 4 -srcwin 30 30 120 120')
-    gdal.Translate('tmp/vrtmask_10_2.vrt', 'tmp/vrtmask_10.vrt', options = '-of VRT -srcwin 5 5 110 110')
-    gdal.Translate('tmp/vrtmask_10_3.tif', 'tmp/vrtmask_10_2.vrt', options = '-b 1 -b 2 -b 3 -b mask -srcwin 5 5 100 100')
+    gdal.Translate('tmp/vrtmask_10_ref.tif', '../gcore/data/stefan_full_rgba.tif', options='-srcwin 40 40 100 100')
+    gdal.Translate('tmp/vrtmask_10.vrt', '../gcore/data/stefan_full_rgba.tif', options='-of VRT -b 1 -b 2 -b 3 -mask 4 -srcwin 30 30 120 120')
+    gdal.Translate('tmp/vrtmask_10_2.vrt', 'tmp/vrtmask_10.vrt', options='-of VRT -srcwin 5 5 110 110')
+    gdal.Translate('tmp/vrtmask_10_3.tif', 'tmp/vrtmask_10_2.vrt', options='-b 1 -b 2 -b 3 -b mask -srcwin 5 5 100 100')
 
     ds = gdal.Open('tmp/vrtmask_10_ref.tif')
     cs_ref = ds.GetRasterBand(4).Checksum()
@@ -409,7 +409,7 @@ def vrtmask_10():
 def vrtmask_11():
 
     # Cannot create mask band at raster band level when a dataset mask band already exists
-    ds = gdal.Translate('', 'data/byte.tif', format = 'VRT')
+    ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     with gdaltest.error_handler():
         ret = ds.GetRasterBand(1).CreateMaskBand(0)
@@ -418,7 +418,7 @@ def vrtmask_11():
         return 'fail'
 
     # This VRT dataset has already a mask band
-    ds = gdal.Translate('', 'data/byte.tif', format = 'VRT')
+    ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     with gdaltest.error_handler():
         ret = ds.CreateMaskBand(gdal.GMF_PER_DATASET)
@@ -427,7 +427,7 @@ def vrtmask_11():
         return 'fail'
 
     # This VRT band has already a mask band
-    ds = gdal.Translate('', 'data/byte.tif', format = 'VRT')
+    ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ds.GetRasterBand(1).CreateMaskBand(0)
     with gdaltest.error_handler():
         ret = ds.GetRasterBand(1).CreateMaskBand(0)
@@ -435,7 +435,7 @@ def vrtmask_11():
         gdaltest.post_reason('expected an error, but got success')
         return 'fail'
 
-    ds = gdal.Translate('', 'data/byte.tif', format = 'VRT')
+    ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ret = ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
     if ret != 0:
         gdaltest.post_reason('fail')

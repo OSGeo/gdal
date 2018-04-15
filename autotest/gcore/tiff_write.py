@@ -107,7 +107,7 @@ def tiff_write_3():
     options = ['TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32']
 
     new_ds = gdaltest.tiff_drv.CreateCopy('tmp/test_3.tif', src_ds,
-                                           options = options)
+                                           options=options)
 
     bnd = new_ds.GetRasterBand(1)
     if bnd.Checksum() != 50054:
@@ -278,11 +278,11 @@ def tiff_write_6():
     for i in range(5):
         buf = buf + buf
 
-    ds.WriteRaster(0, 0, 32, 32, buf, buf_type = gdal.GDT_Byte)
+    ds.WriteRaster(0, 0, 32, 32, buf, buf_type=gdal.GDT_Byte)
     ds.FlushCache()
-    ds.WriteRaster(32, 0, 32, 32, buf, buf_type = gdal.GDT_Byte)
+    ds.WriteRaster(32, 0, 32, 32, buf, buf_type=gdal.GDT_Byte)
     ds.FlushCache()
-    buf_read = ds.ReadRaster(0, 0, 32, 32, buf_type = gdal.GDT_Byte)
+    buf_read = ds.ReadRaster(0, 0, 32, 32, buf_type=gdal.GDT_Byte)
 
     if buf_read != buf:
         gdaltest.tiff_write_6_failed = True
@@ -317,11 +317,11 @@ def tiff_write_7():
     for i in range(5):
         buf = buf + buf
 
-    ds.WriteRaster(0, 0, 32, 32, buf, buf_type = gdal.GDT_Byte)
+    ds.WriteRaster(0, 0, 32, 32, buf, buf_type=gdal.GDT_Byte)
     ds.FlushCache()
-    ds.WriteRaster(32, 0, 32, 32, buf, buf_type = gdal.GDT_Byte)
+    ds.WriteRaster(32, 0, 32, 32, buf, buf_type=gdal.GDT_Byte)
     ds.FlushCache()
-    buf_read = ds.ReadRaster(0, 0, 32, 32, buf_type = gdal.GDT_Byte)
+    buf_read = ds.ReadRaster(0, 0, 32, 32, buf_type=gdal.GDT_Byte)
 
     if buf_read != buf:
         gdaltest.post_reason('did not get back expected data.')
@@ -348,12 +348,12 @@ def tiff_write_8():
     for i in range(5):
         buf = buf + buf
 
-    ds.WriteRaster(0, 0, 32, 32, buf, buf_type = gdal.GDT_Byte)
+    ds.WriteRaster(0, 0, 32, 32, buf, buf_type=gdal.GDT_Byte)
     ds.FlushCache()
-    ds.WriteRaster(32, 0, 32, 32, buf, buf_type = gdal.GDT_Byte)
+    ds.WriteRaster(32, 0, 32, 32, buf, buf_type=gdal.GDT_Byte)
     ds.FlushCache()
 
-    buf_read = ds.ReadRaster(0, 0, 32, 32, buf_type = gdal.GDT_Byte)
+    buf_read = ds.ReadRaster(0, 0, 32, 32, buf_type=gdal.GDT_Byte)
 
     if buf_read != buf:
         gdaltest.post_reason('did not get back expected data.')
@@ -373,7 +373,7 @@ def tiff_write_9():
 
     src_ds = gdal.Open('data/byte.tif')
     new_ds = gdaltest.tiff_drv.CreateCopy('tmp/test_9.tif', src_ds,
-                                            options = ['NBITS=5'])
+                                            options=['NBITS=5'])
     with gdaltest.error_handler():
       new_ds = None
 
@@ -397,8 +397,8 @@ def tiff_write_9():
 def tiff_write_10():
 
     ut = gdaltest.GDALTest('GTiff', 'oddsize_1bit2b.tif', 2, 5918,
-                            options = ['NBITS=1', 'INTERLEAVE=BAND'])
-    return ut.testCreate(out_bands = 2)
+                            options=['NBITS=1', 'INTERLEAVE=BAND'])
+    return ut.testCreate(out_bands=2)
 
 ###############################################################################
 # Simple 1 bit file, treated through the GTiffBitmapBand class.
@@ -407,7 +407,7 @@ def tiff_write_10():
 def tiff_write_11():
 
     ut = gdaltest.GDALTest('GTiff', 'oddsize1bit.tif', 1, 5918,
-                            options = ['NBITS=1', 'COMPRESS=CCITTFAX4'])
+                            options=['NBITS=1', 'COMPRESS=CCITTFAX4'])
     return ut.testCreateCopy()
 
 ###############################################################################
@@ -438,7 +438,7 @@ def tiff_write_13():
         return 'skip'
 
     src_ds = gdal.Open('data/sasha.tif')
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/sasha.tif', src_ds, options = ['PROFILE=BASELINE',
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/sasha.tif', src_ds, options=['PROFILE=BASELINE',
                                                                            'TILED=YES',
                                                                            'COMPRESS=JPEG',
                                                                            'PHOTOMETRIC=YCBCR',
@@ -473,7 +473,7 @@ def tiff_write_14():
 
     tst = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -668,7 +668,7 @@ def tiff_write_18():
     rpc_md = ds_in.GetMetadata('RPC')
 
     ds = gdaltest.tiff_drv.CreateCopy('tmp/tw_18.tif', ds_in,
-                         options = ['PROFILE=BASELINE'])
+                         options=['PROFILE=BASELINE'])
 
     ds_in = None
     ds = None
@@ -772,7 +772,7 @@ def tiff_write_rpc_txt():
     rpc_md = ds_in.GetMetadata('RPC')
 
     ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_rpc_txt.tif', ds_in_without_imd,
-                         options = ['PROFILE=BASELINE', 'RPCTXT=YES'])
+                         options=['PROFILE=BASELINE', 'RPCTXT=YES'])
 
     ds_in = None
     ds = None
@@ -828,7 +828,7 @@ def tiff_write_rpc_in_pam():
     rpc_md = ds_in.GetMetadata('RPC')
 
     ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_rpc_in_pam.tif', ds_in,
-                         options = ['PROFILE=BASELINE', 'RPB=NO'])
+                         options=['PROFILE=BASELINE', 'RPB=NO'])
 
     ds_in = None
     ds = None
@@ -868,7 +868,7 @@ def tiff_write_19():
     src_ds = gdal.Open('data/contig_strip.tif')
 
     new_ds = gdaltest.tiff_drv.CreateCopy('tmp/contig_strip_7.tif', src_ds,
-                                           options = ['NBITS=7', 'INTERLEAVE=PIXEL'])
+                                           options=['NBITS=7', 'INTERLEAVE=PIXEL'])
 
     new_ds = None
 
@@ -1017,7 +1017,7 @@ def tiff_write_22():
 
     src_ds = gdal.Open('data/stefan_full_rgba_photometric_rgb.tif')
 
-    new_ds = gdaltest.tiff_drv.CreateCopy('tmp/stefan_full_rgba_photometric_rgb.tif', src_ds, options = ['PHOTOMETRIC=RGB'])
+    new_ds = gdaltest.tiff_drv.CreateCopy('tmp/stefan_full_rgba_photometric_rgb.tif', src_ds, options=['PHOTOMETRIC=RGB'])
 
     new_ds = None
 
@@ -1045,7 +1045,7 @@ def tiff_write_23():
 
     src_ds = gdal.Open('data/stefan_full_greyalpha.tif')
 
-    new_ds = gdaltest.tiff_drv.CreateCopy('tmp/stefan_full_greyalpha.tif', src_ds, options = ['ALPHA=YES'])
+    new_ds = gdaltest.tiff_drv.CreateCopy('tmp/stefan_full_greyalpha.tif', src_ds, options=['ALPHA=YES'])
 
     new_ds = None
 
@@ -1238,7 +1238,7 @@ def tiff_write_29():
 
     # When creating a 4 channel image with PHOTOMETRIC=RGB,
     # TIFFTAG_EXTRASAMPLES=EXTRASAMPLE_UNSPECIFIED
-    ds = gdaltest.tiff_drv.Create('/vsimem/rgba.tif', 1, 1, 4, options = ['PHOTOMETRIC=RGB'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/rgba.tif', 1, 1, 4, options=['PHOTOMETRIC=RGB'])
     if ds.GetMetadataItem('TIFFTAG_EXTRASAMPLES', '_DEBUG_') != '0':
         gdaltest.post_reason('fail')
         print(ds.GetMetadataItem('TIFFTAG_EXTRASAMPLES', '_DEBUG_'))
@@ -1273,7 +1273,7 @@ def tiff_write_29():
         return 'fail'
 
     # Test cancelling alpha
-    gdaltest.tiff_drv.CreateCopy('/vsimem/rgb_no_alpha.tif', ds, options = ['ALPHA=NO'])
+    gdaltest.tiff_drv.CreateCopy('/vsimem/rgb_no_alpha.tif', ds, options=['ALPHA=NO'])
     ds = None
 
     if gdal.VSIStatL('/vsimem/rgb_no_alpha.tif.aux.xml') is not None:
@@ -1290,7 +1290,7 @@ def tiff_write_29():
         return 'fail'
 
     # Test re-adding alpha
-    gdaltest.tiff_drv.CreateCopy('/vsimem/rgb_added_alpha.tif', ds, options = ['ALPHA=YES'])
+    gdaltest.tiff_drv.CreateCopy('/vsimem/rgb_added_alpha.tif', ds, options=['ALPHA=YES'])
     ds = None
 
     if gdal.VSIStatL('/vsimem/rgb_added_alpha.tif.aux.xml') is not None:
@@ -1323,7 +1323,7 @@ def tiff_write_30():
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
 
-    ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 1, 1, 1, options = ['BigTIFF=YES'])
+    ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 1, 1, 1, options=['BigTIFF=YES'])
     ds = None
 
     ds = gdal.Open('tmp/bigtiff.tif')
@@ -1356,7 +1356,7 @@ def tiff_write_31():
         return 'skip'
 
     ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 100000, 100000, 1,
-                                   options = ['SPARSE_OK=TRUE'])
+                                   options=['SPARSE_OK=TRUE'])
     ds = None
 
     ds = gdal.Open('tmp/bigtiff.tif')
@@ -1599,7 +1599,7 @@ def tiff_write_35():
 def tiff_write_big_odd_bits(vrtfilename, tmpfilename, nbits, interleaving):
     ds_in = gdal.Open(vrtfilename)
 
-    ds = gdaltest.tiff_drv.CreateCopy(tmpfilename, ds_in, options = ['NBITS=' + str(nbits), 'INTERLEAVE='+ interleaving])
+    ds = gdaltest.tiff_drv.CreateCopy(tmpfilename, ds_in, options=['NBITS=' + str(nbits), 'INTERLEAVE='+ interleaving])
 
     ds_in = None
 
@@ -1700,7 +1700,7 @@ def tiff_write_43():
 
 def tiff_write_44():
 
-    ds = gdaltest.tiff_drv.Create('tmp/tw_44.tif', 1, 1, 1, gdal.GDT_UInt16, options = ['NBITS=9'])
+    ds = gdaltest.tiff_drv.Create('tmp/tw_44.tif', 1, 1, 1, gdal.GDT_UInt16, options=['NBITS=9'])
     ds = None
     ds = gdal.Open('tmp/tw_44.tif')
     bnd = ds.GetRasterBand(1)
@@ -1735,7 +1735,7 @@ def tiff_write_44():
 
 def tiff_write_45():
 
-    ds = gdaltest.tiff_drv.Create('tmp/tw_45.tif', 1, 1, 1, gdal.GDT_UInt32, options = ['NBITS=17'])
+    ds = gdaltest.tiff_drv.Create('tmp/tw_45.tif', 1, 1, 1, gdal.GDT_UInt32, options=['NBITS=17'])
     ds = None
     ds = gdal.Open('tmp/tw_45.tif')
     bnd = ds.GetRasterBand(1)
@@ -1773,10 +1773,10 @@ def tiff_write_46():
 
     with gdaltest.SetCacheMax(0):
 
-        ds = gdaltest.tiff_drv.Create("tmp/tiff_write_46_1.tif", 10, 10, 1, options = ['NBITS=1'])
+        ds = gdaltest.tiff_drv.Create("tmp/tiff_write_46_1.tif", 10, 10, 1, options=['NBITS=1'])
         ds.GetRasterBand(1).Fill(0)
 
-        ds2 = gdaltest.tiff_drv.Create("tmp/tiff_write_46_2.tif", 10, 10, 1, options = ['NBITS=1'])
+        ds2 = gdaltest.tiff_drv.Create("tmp/tiff_write_46_2.tif", 10, 10, 1, options=['NBITS=1'])
         ds2.GetRasterBand(1).Fill(1)
         ones = ds2.ReadRaster(0, 0, 10, 1)
 
@@ -1828,7 +1828,7 @@ def tiff_write_48():
     with gdaltest.SetCacheMax(0):
 
         src_ds = gdal.Open('data/utmsmall.tif')
-        new_ds = gdal.GetDriverByName("GTiff").Create('tmp/tiff_write_48.tif', 100, 100, 1, options = ['TILED=YES', 'BLOCKXSIZE=96', 'BLOCKYSIZE=96'])
+        new_ds = gdal.GetDriverByName("GTiff").Create('tmp/tiff_write_48.tif', 100, 100, 1, options=['TILED=YES', 'BLOCKXSIZE=96', 'BLOCKYSIZE=96'])
         data = src_ds.ReadRaster(0, 0, 100, 1)
         data2 = src_ds.ReadRaster(0, 1, 100, 99)
         new_ds.WriteRaster(0, 1, 100, 99, data2)
@@ -1856,7 +1856,7 @@ def tiff_write_49():
     # We open the source as RAW to get the CMYK bands
     src_ds = gdal.Open('GTIFF_RAW:data/rgbsmall_cmyk.tif')
 
-    new_ds = gdal.GetDriverByName("GTiff").CreateCopy('tmp/tiff_write_49.tif', src_ds, options = ['PHOTOMETRIC=CMYK'])
+    new_ds = gdal.GetDriverByName("GTiff").CreateCopy('tmp/tiff_write_49.tif', src_ds, options=['PHOTOMETRIC=CMYK'])
 
     # At this point, for the purpose of the copy, the dataset will have been opened as RAW
     if new_ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_CyanBand:
@@ -1889,7 +1889,7 @@ def tiff_write_50():
     # We open the source as RAW to get the CMYK bands
     src_ds = gdal.Open('GTIFF_RAW:data/rgbsmall_cmyk.tif')
 
-    new_ds = gdal.GetDriverByName("GTiff").Create('tmp/tiff_write_50.tif', src_ds.RasterXSize, src_ds.RasterYSize, 4, options = ['PHOTOMETRIC=CMYK'])
+    new_ds = gdal.GetDriverByName("GTiff").Create('tmp/tiff_write_50.tif', src_ds.RasterXSize, src_ds.RasterYSize, 4, options=['PHOTOMETRIC=CMYK'])
     for i in range(4):
         data = src_ds.GetRasterBand(i+1).ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize)
         new_ds.GetRasterBand(i+1).WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data)
@@ -2045,7 +2045,7 @@ def tiff_write_53_bis():
                                               30, 50, 1,
                                               options=['PHOTOMETRIC=PALETTE'])
     ds.GetRasterBand(1).Fill(10)
-    ds.BuildOverviews('NONE', overviewlist = [2])
+    ds.BuildOverviews('NONE', overviewlist=[2])
     ds = None
 
     ds = gdal.Open('tmp/tiff_write_53_bis.tif', gdal.GA_Update)
@@ -2213,7 +2213,7 @@ def tiff_write_58():
     for compression in ('NONE', 'JPEG', 'LZW', 'DEFLATE', 'PACKBITS'):
 
         if md['DMD_CREATIONOPTIONLIST'].find(compression) != -1:
-            ds = gdaltest.tiff_drv.Create('tmp/tiff_write_58.tif', 4, 4000, 1, options = ['COMPRESS=' + compression])
+            ds = gdaltest.tiff_drv.Create('tmp/tiff_write_58.tif', 4, 4000, 1, options=['COMPRESS=' + compression])
             ds.GetRasterBand(1).Fill(255)
             ds = None
 
@@ -2251,7 +2251,7 @@ def tiff_write_59():
                 gdal_type = gdal.GDT_UInt32
                 ctype = 'i'
 
-            ds = gdaltest.tiff_drv.Create("tmp/tiff_write_59.tif", 10, 10, nbands, gdal_type, options = ['NBITS=%d' % nbits])
+            ds = gdaltest.tiff_drv.Create("tmp/tiff_write_59.tif", 10, 10, nbands, gdal_type, options=['NBITS=%d' % nbits])
             ds.GetRasterBand(1).Fill(1)
 
             ds = None
@@ -2291,7 +2291,7 @@ def tiff_write_60():
     for options_tuple in tuples:
         # Create case
         with gdaltest.error_handler():
-          ds = gdaltest.tiff_drv.Create('tmp/tiff_write_60.tif', 10, 10, options = [options_tuple[0], 'PROFILE=BASELINE'])
+          ds = gdaltest.tiff_drv.Create('tmp/tiff_write_60.tif', 10, 10, options=[options_tuple[0], 'PROFILE=BASELINE'])
         gt = (0.0, 1.0, 0.0, 50.0, 0.0, -1.0)
         ds.SetGeoTransform(gt)
         ds = None
@@ -2315,7 +2315,7 @@ def tiff_write_60():
         # CreateCopy case
         src_ds = gdal.Open('data/byte.tif')
         with gdaltest.error_handler():
-          ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_60.tif', src_ds, options = [options_tuple[0], 'PROFILE=BASELINE'])
+          ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_60.tif', src_ds, options=[options_tuple[0], 'PROFILE=BASELINE'])
         gt = (0.0, 1.0, 0.0, 50.0, 0.0, -1.0)
         ds.SetGeoTransform(gt)
         ds = None
@@ -2349,7 +2349,7 @@ def tiff_write_61():
         return 'skip'
 
     ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 50000, 50000, 1,
-                                   options = ['BIGTIFF=IF_NEEDED', 'SPARSE_OK=TRUE'])
+                                   options=['BIGTIFF=IF_NEEDED', 'SPARSE_OK=TRUE'])
     ds = None
 
     ds = gdal.Open('tmp/bigtiff.tif')
@@ -2382,7 +2382,7 @@ def tiff_write_62():
         return 'skip'
 
     ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 50000, 50000, 1,
-                                   options = ['BIGTIFF=IF_SAFER', 'SPARSE_OK=TRUE'])
+                                   options=['BIGTIFF=IF_SAFER', 'SPARSE_OK=TRUE'])
     ds = None
 
     ds = gdal.Open('tmp/bigtiff.tif')
@@ -2418,7 +2418,7 @@ def tiff_write_63():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 150000, 150000, 1,
-                                   options = ['BIGTIFF=NO'])
+                                   options=['BIGTIFF=NO'])
     gdal.PopErrorHandler()
 
     if ds is None:
@@ -2488,7 +2488,7 @@ def tiff_write_66():
     if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
         return 'skip'
 
-    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_66.tif',1,1,65535, options = ['INTERLEAVE=BAND'])
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_66.tif',1,1,65535, options=['INTERLEAVE=BAND'])
     ds = None
 
     ds = gdal.Open('tmp/tiff_write_66.tif')
@@ -2516,7 +2516,7 @@ def tiff_write_67():
     if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
         return 'skip'
 
-    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_67.tif',1,1,65535, options = ['INTERLEAVE=PIXEL'])
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_67.tif',1,1,65535, options=['INTERLEAVE=PIXEL'])
     ds = None
 
     ds = gdal.Open('tmp/tiff_write_67.tif')
@@ -2566,7 +2566,7 @@ def tiff_write_68():
 
 def tiff_write_69():
 
-    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_69.tif', 32, 32, 1, gdal.GDT_Int16, options = ['SPARSE_OK=YES'])
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_69.tif', 32, 32, 1, gdal.GDT_Int16, options=['SPARSE_OK=YES'])
     ds = None
 
     ds = gdal.Open('tmp/tiff_write_69.tif')
@@ -2593,7 +2593,7 @@ def tiff_write_70():
     expected_cs = ref_ds.GetRasterBand(1).Checksum()
     ref_ds = None
 
-    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_70.tif', 32, 32, 1, gdal.GDT_Int16, options = ['SPARSE_OK=YES'])
+    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_70.tif', 32, 32, 1, gdal.GDT_Int16, options=['SPARSE_OK=YES'])
     ds.GetRasterBand(1).SetNoDataValue(0)
     if os.stat('tmp/tiff_write_70.tif').st_size > 8:
         gdaltest.post_reason('directory should not be crystallized')
@@ -2713,7 +2713,7 @@ def tiff_write_72():
 
     for profile in ('GDALGeotiff', 'GEOTIFF', 'BASELINE'):
         src_ds = gdal.Open('tmp/byte.tif')
-        out_ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_72.tif', src_ds, options = ['ENDIANNESS=LITTLE', 'PROFILE=' + profile])
+        out_ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_72.tif', src_ds, options=['ENDIANNESS=LITTLE', 'PROFILE=' + profile])
         del out_ds
         src_ds = None
 
@@ -2743,7 +2743,7 @@ def tiff_write_72():
 
 def tiff_write_73():
 
-    out_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_73.tif', 10, 10, options = ['ENDIANNESS=LITTLE'])
+    out_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_73.tif', 10, 10, options=['ENDIANNESS=LITTLE'])
     out_ds.SetGeoTransform([1,0.01,0,1,0,-0.01])
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:32601')
@@ -2823,7 +2823,7 @@ def tiff_write_74():
 
         drv = gdal.GetDriverByName('GTiff')
         dst_ds = drv.CreateCopy('tmp/test_74.tif', ds,
-                                options = ['COMPRESS=JPEG', 'NBITS=12',
+                                options=['COMPRESS=JPEG', 'NBITS=12',
                                             'JPEG_QUALITY=95',
                                             'PHOTOMETRIC=' + photometric])
         dst_ds = None
@@ -2889,7 +2889,7 @@ def tiff_write_76():
 
     src_ds = gdal.Open('data/slim_g4.tif')
     compression = src_ds.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION']
-    new_ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_76.tif', src_ds, options = ['BLOCKYSIZE=%d' % src_ds.RasterYSize, 'COMPRESS=' + compression])
+    new_ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_76.tif', src_ds, options=['BLOCKYSIZE=%d' % src_ds.RasterYSize, 'COMPRESS=' + compression])
     new_ds = None
     new_ds = gdal.Open('tmp/tiff_write_76.tif')
 
@@ -2917,7 +2917,7 @@ def tiff_write_77():
 
     for interleaving in ('PIXEL', 'BAND'):
         new_ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_77.tif', src_ds,
-                                                options = ['BLOCKYSIZE=%d' % src_ds.RasterYSize,
+                                                options=['BLOCKYSIZE=%d' % src_ds.RasterYSize,
                                                            'COMPRESS=LZW',
                                                            'INTERLEAVE=' + interleaving])
 
@@ -2973,7 +2973,7 @@ def tiff_write_78():
     src_ds.GetRasterBand(2).Fill(255)
 
     new_ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_78.tif', src_ds,
-                                            options = ['BLOCKYSIZE=%d' % src_ds.RasterYSize,
+                                            options=['BLOCKYSIZE=%d' % src_ds.RasterYSize,
                                                        'COMPRESS=JPEG',
                                                        'PHOTOMETRIC=YCBCR'])
 
@@ -3305,7 +3305,7 @@ def tiff_write_81():
 def tiff_write_82():
 
     src_ds = gdal.Open('data/byte.tif')
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_82.tif', src_ds, options = ['PIXELTYPE=SIGNEDBYTE'])
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_82.tif', src_ds, options=['PIXELTYPE=SIGNEDBYTE'])
     src_ds = None
     ds = None
 
@@ -3390,7 +3390,7 @@ def tiff_write_84():
         ds = gdal.Open('tmp/tiff_write_84.tif')
         gdal.SetConfigOption('COMPRESS_OVERVIEW','JPEG')
         gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW','90')
-        ds.BuildOverviews('NEAREST', overviewlist = [2])
+        ds.BuildOverviews('NEAREST', overviewlist=[2])
         cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
         ds = None
         gdal.SetConfigOption('COMPRESS_OVERVIEW',None)
@@ -3613,13 +3613,13 @@ def tiff_write_86():
 
 def tiff_write_87():
 
-    gdal.Translate('tmp/tiff_write_87_src.tif', 'data/utmsmall.tif', options = '-a_nodata 0')
+    gdal.Translate('tmp/tiff_write_87_src.tif', 'data/utmsmall.tif', options='-a_nodata 0')
 
     src_ds = gdal.Open('tmp/tiff_write_87_src.tif', gdal.GA_Update)
-    src_ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+    src_ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     expected_cs1 = src_ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs2 = src_ds.GetRasterBand(1).GetOverview(1).Checksum()
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_87_dst.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES', 'ENDIANNESS=LITTLE'])
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_87_dst.tif', src_ds, options=['COPY_SRC_OVERVIEWS=YES', 'ENDIANNESS=LITTLE'])
     ds = None
     src_ds = None
 
@@ -3639,7 +3639,7 @@ def tiff_write_87():
 
     import validate_cloud_optimized_geotiff
     try:
-        errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled = False)
+        errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled=False)
         if len(errors) != 0:
             gdaltest.post_reason('validate_cloud_optimized_geotiff failed')
             print(errors)
@@ -3685,8 +3685,8 @@ def tiff_write_88():
 
     # The file would be > 4.2 GB without SPARSE_OK
     src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_88_src.tif', 60000, 60000, 1,
-            options = ['TILED=YES', 'SPARSE_OK=YES'])
-    src_ds.BuildOverviews('NONE', overviewlist = [2, 4])
+            options=['TILED=YES', 'SPARSE_OK=YES'])
+    src_ds.BuildOverviews('NONE', overviewlist=[2, 4])
     # Just write one data block so that we can truncate it
     data = src_ds.GetRasterBand(1).GetOverview(1).ReadRaster(0, 0, 128, 128)
     src_ds.GetRasterBand(1).GetOverview(1).WriteRaster(0, 0, 128, 128, data)
@@ -3710,7 +3710,7 @@ def tiff_write_88():
     gdal.SetConfigOption('CHECK_DISK_FREE_SPACE', 'NO') # we don't want free space to be an issue here
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_88_dst.tif', src_ds,
-            options = ['TILED=YES', 'COPY_SRC_OVERVIEWS=YES', 'ENDIANNESS=LITTLE'])
+            options=['TILED=YES', 'COPY_SRC_OVERVIEWS=YES', 'ENDIANNESS=LITTLE'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('GTIFF_DELETE_ON_ERROR', None)
     gdal.SetConfigOption('CHECK_DISK_FREE_SPACE', None)
@@ -3754,7 +3754,7 @@ def tiff_write_89():
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
 
         ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_89.tif', 1024, 1024, 3, \
-            options = ['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality])
+            options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality])
 
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
@@ -3812,13 +3812,13 @@ def tiff_write_90():
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
 
         ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_90.tif', 1024, 1024, 3, \
-            options = ['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality])
+            options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality])
 
         data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
         ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
         ds.GetRasterBand(2).WriteRaster(0, 0, 1024, 1024, data)
         ds.GetRasterBand(3).WriteRaster(0, 0, 1024, 1024, data)
-        ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+        ds.BuildOverviews('NEAR', overviewlist=[2, 4])
 
         src_ds = None
         ds = None
@@ -3860,7 +3860,7 @@ def tiff_write_91():
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
 
         ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_91.tif', 1024, 1024, 3, \
-            options = ['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality])
+            options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality])
 
         data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
         ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
@@ -3870,7 +3870,7 @@ def tiff_write_91():
 
         ds = gdal.Open('tmp/tiff_write_91.tif', gdal.GA_Update)
         gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', '%d' % quality)
-        ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+        ds.BuildOverviews('NEAR', overviewlist=[2, 4])
         gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', None)
 
         src_ds = None
@@ -3915,7 +3915,7 @@ def tiff_write_92():
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
 
         ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_92.tif', 1024, 1024, 3, \
-            options = ['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality])
+            options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality])
 
         data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
         ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
@@ -3926,7 +3926,7 @@ def tiff_write_92():
         ds = gdal.Open('tmp/tiff_write_92.tif', gdal.GA_Update)
         if jpeg_quality_overview is not False:
             gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', '%d' % jpeg_quality_overview)
-        ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+        ds.BuildOverviews('NEAR', overviewlist=[2, 4])
         gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', None)
 
         src_ds = None
@@ -3972,7 +3972,7 @@ def tiff_write_93():
 
     src_ds = gdal.Open('../gdrivers/data/utm.tif')
     ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_93.tif', 1024, 1024, 3, \
-        options = ['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'])
+        options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'])
 
     data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
     ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
@@ -3994,7 +3994,7 @@ def tiff_write_93():
         gdal.SetConfigOption('COMPRESS_OVERVIEW', 'JPEG')
         gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', '%d' % quality)
         gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', 'YCBCR')
-        ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+        ds.BuildOverviews('NEAR', overviewlist=[2, 4])
         gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
         gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', None)
         gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', None)
@@ -4046,7 +4046,7 @@ def tiff_write_94():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
     ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/tiff_write_94_dst.tif', src_ds,
-        options = ['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=30'])
+        options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=30'])
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', None)
 
     src_ds = None
@@ -4073,10 +4073,10 @@ def tiff_write_94():
 
 def tiff_write_95():
 
-    src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_95_src.tif', 7171, 6083, options = ['SPARSE_OK=YES'])
-    src_ds.BuildOverviews('NONE', overviewlist = [2, 4, 8, 16, 32, 64])
+    src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_95_src.tif', 7171, 6083, options=['SPARSE_OK=YES'])
+    src_ds.BuildOverviews('NONE', overviewlist=[2, 4, 8, 16, 32, 64])
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_95_dst.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES'])
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_95_dst.tif', src_ds, options=['COPY_SRC_OVERVIEWS=YES'])
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
     ok = ds is not None
     ds = None
@@ -4105,7 +4105,7 @@ def tiff_write_96():
         exec("src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(25,25,50,50,b'\\xff',1,1)")
     else:
         src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(25,25,50,50,'\xff',1,1)
-    src_ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+    src_ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     expected_cs = src_ds.GetRasterBand(1).Checksum()
     expected_cs_mask = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
     expected_cs_ovr_1 = src_ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -4113,7 +4113,7 @@ def tiff_write_96():
     expected_cs_ovr_2 = src_ds.GetRasterBand(1).GetOverview(1).Checksum()
     expected_cs_ovr_mask_2 = src_ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
 
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_96_dst.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES'])
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_96_dst.tif', src_ds, options=['COPY_SRC_OVERVIEWS=YES'])
     ds = None
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', None)
 
@@ -4277,7 +4277,7 @@ def tiff_write_98():
 def tiff_write_99():
 
     src_ds = gdal.Open('data/rgbsmall.tif')
-    new_ds = gdaltest.tiff_drv.CreateCopy('tmp/test_99.tif', src_ds, options = ['COMPRESS=JPEG'])
+    new_ds = gdaltest.tiff_drv.CreateCopy('tmp/test_99.tif', src_ds, options=['COMPRESS=JPEG'])
     del new_ds
     src_ds = None
 
@@ -4303,7 +4303,7 @@ def tiff_write_100():
 
     src_ds = gdaltest.tiff_drv.Create('/vsimem/test_100_src.tif', 16, 16, 2)
     src_ds.GetRasterBand(1).Fill(255)
-    new_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/test_100_dst.tif', src_ds, options = ['COMPRESS=JPEG'])
+    new_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/test_100_dst.tif', src_ds, options=['COMPRESS=JPEG'])
     del new_ds
     src_ds = None
 
@@ -4375,7 +4375,7 @@ Band 1}""".encode('ascii'))
             continue
 
         ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_101.tif', src_ds, \
-            options = ['COMPRESS=' + compression_method, 'BLOCKXSIZE=2500', 'BLOCKYSIZE=4000'])
+            options=['COMPRESS=' + compression_method, 'BLOCKXSIZE=2500', 'BLOCKYSIZE=4000'])
         ds = None
 
         ds = gdal.Open('tmp/tiff_write_101.tif')
@@ -4457,9 +4457,9 @@ def tiff_write_103():
     if test_cli_utilities.get_gdaladdo_path() is None:
         return 'skip'
 
-    gdal.Translate('tmp/tiff_write_103_src.tif', 'data/rgbsmall.tif', options = '-outsize 260 260')
+    gdal.Translate('tmp/tiff_write_103_src.tif', 'data/rgbsmall.tif', options='-outsize 260 260')
     gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' -ro tmp/tiff_write_103_src.tif 2')
-    gdal.Translate('tmp/tiff_write_103_dst.tif', 'tmp/tiff_write_103_src.tif', options = '-co COPY_SRC_OVERVIEWS=YES')
+    gdal.Translate('tmp/tiff_write_103_dst.tif', 'tmp/tiff_write_103_src.tif', options='-co COPY_SRC_OVERVIEWS=YES')
 
     src_ds = gdal.Open('tmp/tiff_write_103_src.tif')
     dst_ds = gdal.Open('tmp/tiff_write_103_dst.tif')
@@ -4544,7 +4544,7 @@ def tiff_write_105():
 # Test the direct copy mechanism of JPEG source
 
 
-def tiff_write_106(filename = '../gdrivers/data/byte_with_xmp.jpg', options = ['COMPRESS=JPEG'], check_cs = True):
+def tiff_write_106(filename='../gdrivers/data/byte_with_xmp.jpg', options=['COMPRESS=JPEG'], check_cs=True):
 
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
@@ -4556,7 +4556,7 @@ def tiff_write_106(filename = '../gdrivers/data/byte_with_xmp.jpg', options = ['
     for i in range(nbands):
         src_cs.append(src_ds.GetRasterBand(i+1).Checksum())
 
-    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_106.tif', src_ds, options = options)
+    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_106.tif', src_ds, options=options)
     out_ds = None
 
     out_ds = gdal.Open('/vsimem/tiff_write_106.tif')
@@ -4584,47 +4584,47 @@ def tiff_write_106(filename = '../gdrivers/data/byte_with_xmp.jpg', options = ['
 
 
 def tiff_write_107():
-    return tiff_write_106(options = ['COMPRESS=JPEG','BLOCKYSIZE=8'])
+    return tiff_write_106(options=['COMPRESS=JPEG','BLOCKYSIZE=8'])
 
 
 def tiff_write_108():
-    return tiff_write_106(options = ['COMPRESS=JPEG','BLOCKYSIZE=20'])
+    return tiff_write_106(options=['COMPRESS=JPEG','BLOCKYSIZE=20'])
 
 
 def tiff_write_109():
-    return tiff_write_106(options = ['COMPRESS=JPEG','TILED=YES','BLOCKYSIZE=16','BLOCKXSIZE=16'])
+    return tiff_write_106(options=['COMPRESS=JPEG','TILED=YES','BLOCKYSIZE=16','BLOCKXSIZE=16'])
 
 # Strip organization of YCbCr does *NOT* give exact pixels w.r.t. original image
 
 
 def tiff_write_110():
-    return tiff_write_106(filename = '../gdrivers/data/albania.jpg' , check_cs = False)
+    return tiff_write_106(filename='../gdrivers/data/albania.jpg' , check_cs=False)
 
 # Whole copy of YCbCr *DOES* give exact pixels w.r.t. original image
 
 
 def tiff_write_111():
-    return tiff_write_106(filename = '../gdrivers/data/albania.jpg' , options = ['COMPRESS=JPEG', 'BLOCKYSIZE=260'])
+    return tiff_write_106(filename='../gdrivers/data/albania.jpg' , options=['COMPRESS=JPEG', 'BLOCKYSIZE=260'])
 
 
 def tiff_write_111_bis():
-    return tiff_write_106(filename = '../gdrivers/data/albania.jpg' , options = ['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=PIXEL'])
+    return tiff_write_106(filename='../gdrivers/data/albania.jpg' , options=['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=PIXEL'])
 
 
 def tiff_write_111_ter():
-    return tiff_write_106(filename = '../gdrivers/data/albania.jpg' , options = ['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=BAND'], check_cs = False)
+    return tiff_write_106(filename='../gdrivers/data/albania.jpg' , options=['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=BAND'], check_cs=False)
 
 # Tiled organization of YCbCr does *NOT* give exact pixels w.r.t. original image
 
 
 def tiff_write_112():
-    return tiff_write_106(filename = '../gdrivers/data/albania.jpg' , options = ['COMPRESS=JPEG', 'TILED=YES'], check_cs = False)
+    return tiff_write_106(filename='../gdrivers/data/albania.jpg' , options=['COMPRESS=JPEG', 'TILED=YES'], check_cs=False)
 
 # The source is a JPEG in RGB colorspace (usually it is YCbCr).
 
 
 def tiff_write_113():
-    return tiff_write_106(filename = '../gdrivers/data/rgbsmall_rgb.jpg' , options = ['COMPRESS=JPEG', 'BLOCKYSIZE=8'])
+    return tiff_write_106(filename='../gdrivers/data/rgbsmall_rgb.jpg' , options=['COMPRESS=JPEG', 'BLOCKYSIZE=8'])
 
 ###############################################################################
 # Test CreateCopy() interruption
@@ -4634,7 +4634,7 @@ def tiff_write_114():
 
     tst = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy(vsimem = 1, interrupt_during_copy = True)
+    return tst.testCreateCopy(vsimem=1, interrupt_during_copy=True)
 
 ###############################################################################
 # Test writing a pixel interleaved RGBA JPEG-compressed TIFF
@@ -4648,7 +4648,7 @@ def tiff_write_115():
     tmpfilename = '/vsimem/tiff_write_115.tif'
 
     src_ds = gdal.Open('data/stefan_full_rgba.tif')
-    ds = gdaltest.tiff_drv.CreateCopy(tmpfilename, src_ds, options = ['COMPRESS=JPEG'])
+    ds = gdaltest.tiff_drv.CreateCopy(tmpfilename, src_ds, options=['COMPRESS=JPEG'])
     if ds is None:
         return 'fail'
     ds = None
@@ -4700,7 +4700,7 @@ def tiff_write_116():
     tmpfilename = '/vsimem/tiff_write_116.tif'
 
     src_ds = gdal.Open('data/stefan_full_rgba.tif')
-    ds = gdaltest.tiff_drv.CreateCopy(tmpfilename, src_ds, options = ['COMPRESS=JPEG', 'INTERLEAVE=BAND'])
+    ds = gdaltest.tiff_drv.CreateCopy(tmpfilename, src_ds, options=['COMPRESS=JPEG', 'INTERLEAVE=BAND'])
     if ds is None:
         return 'fail'
     ds = None
@@ -4757,7 +4757,7 @@ def tiff_write_117():
     # so that we have always the same random :-)
     random.seed(0)
 
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_117.tif', 512, 256, 2, options = ['COMPRESS=DEFLATE', 'TILED=YES'])
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_117.tif', 512, 256, 2, options=['COMPRESS=DEFLATE', 'TILED=YES'])
 
     # Write first tile so that its byte count of that tile is 2048 (a multiple of 1024)
     adjust = 1254
@@ -4884,7 +4884,7 @@ def tiff_write_121():
   </VRTRasterBand>
 </VRTDataset>""")
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_121.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_121.tif', src_ds, options=['COPY_SRC_OVERVIEWS=YES'])
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('fail')
@@ -4911,7 +4911,7 @@ def tiff_write_121():
   </VRTRasterBand>
 </VRTDataset>""")
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_121.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_121.tif', src_ds, options=['COPY_SRC_OVERVIEWS=YES'])
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('fail')
@@ -4942,7 +4942,7 @@ def tiff_write_121():
   </VRTRasterBand>
 </VRTDataset>""")
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_121.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_121.tif', src_ds, options=['COPY_SRC_OVERVIEWS=YES'])
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('fail')
@@ -5119,7 +5119,7 @@ def tiff_write_123():
 
     # Create a BGR with PROFILE=BASELINE --> no TIFFTAG_GDAL_METADATA tag, but .aux.xml instead
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_123_bgr.tif', 1,1,3,
-                                            options = ['PROFILE=BASELINE'])
+                                            options=['PROFILE=BASELINE'])
     ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_BlueBand)
     ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
     ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_RedBand)
@@ -5224,7 +5224,7 @@ def tiff_write_123():
     # first 3 bands
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 3)
     gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_123_rgb.tif', src_ds,
-                                      options = ['PHOTOMETRIC=RGB'])
+                                      options=['PHOTOMETRIC=RGB'])
     ds = gdal.Open('/vsimem/tiff_write_123_rgb.tif')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
         gdaltest.post_reason('fail')
@@ -5235,7 +5235,7 @@ def tiff_write_123():
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 5)
     src_ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)
     gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_123_rgbua.tif', src_ds,
-                                      options = ['PHOTOMETRIC=RGB'])
+                                      options=['PHOTOMETRIC=RGB'])
     ds = gdal.Open('/vsimem/tiff_write_123_rgbua.tif')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
         gdaltest.post_reason('fail')
@@ -5303,7 +5303,7 @@ def tiff_write_124():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     # Test "SetColorTable() only supported for Byte or UInt16 bands in TIFF format."
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_124.tif', 1,1,1, gdal.GDT_UInt32, options = ['PHOTOMETRIC=PALETTE'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_124.tif', 1,1,1, gdal.GDT_UInt32, options=['PHOTOMETRIC=PALETTE'])
     gdal.PopErrorHandler()
     ds = None
 
@@ -5320,7 +5320,7 @@ def tiff_write_125():
     if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
         return 'skip'
 
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_125.tif', 2147000000, 5000, 65535, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=5000', 'COMPRESS=LZW', 'BIGTIFF=NO'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_125.tif', 2147000000, 5000, 65535, options=['SPARSE_OK=YES', 'BLOCKYSIZE=5000', 'COMPRESS=LZW', 'BIGTIFF=NO'])
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_125.tif')
@@ -5330,7 +5330,7 @@ def tiff_write_125():
         ds.GetRasterBand(1).ReadBlock(0,0)
         gdal.PopErrorHandler()
 
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_125.tif', 2147000000, 5000, 1, options = ['NBITS=1', 'SPARSE_OK=YES', 'BLOCKYSIZE=5000', 'COMPRESS=LZW', 'BIGTIFF=NO'])
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_125.tif', 2147000000, 5000, 1, options=['NBITS=1', 'SPARSE_OK=YES', 'BLOCKYSIZE=5000', 'COMPRESS=LZW', 'BIGTIFF=NO'])
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_125.tif')
@@ -5371,7 +5371,7 @@ def tiff_write_126():
 
     for (options, cs1, cs2, cs3, cs4) in options_list:
         os.environ['JPEGMEM'] = '500M'
-        ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_126.tif', src_ds, options = options)
+        ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_126.tif', src_ds, options=options)
         ds = None
         del os.environ['JPEGMEM']
 
@@ -5435,7 +5435,7 @@ def tiff_write_126():
 
     for (options, cs1, cs3, cs4) in options_list:
         os.environ['JPEGMEM'] = '500M'
-        ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_126.tif', src_ds, options = options)
+        ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_126.tif', src_ds, options=options)
         ds = None
         del os.environ['JPEGMEM']
 
@@ -5478,7 +5478,7 @@ def tiff_write_126():
     # Test single-strip, opened as split band
     src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_126_src.tif', 8, 2001)
     src_ds.GetRasterBand(1).Fill(255)
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_126.tif', src_ds, options = ['COMPRESS=JPEG', 'BLOCKYSIZE=2001'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_126.tif', src_ds, options=['COMPRESS=JPEG', 'BLOCKYSIZE=2001'])
     src_ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_126_src.tif')
     ds = None
@@ -5504,7 +5504,7 @@ def tiff_write_126():
         return 'success'
 
     # Test with completely sparse file
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_126.tif', 1024, 1024, options = ['COMPRESS=JPEG', 'SPARSE_OK=YES'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_126.tif', 1024, 1024, options=['COMPRESS=JPEG', 'SPARSE_OK=YES'])
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_126.tif')
@@ -5524,7 +5524,7 @@ def tiff_write_126():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_126.tif')
 
     # Test with partially sparse file
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_126.tif', 1024, 1024, 3, options = ['COMPRESS=JPEG', 'SPARSE_OK=YES', 'INTERLEAVE=BAND'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_126.tif', 1024, 1024, 3, options=['COMPRESS=JPEG', 'SPARSE_OK=YES', 'INTERLEAVE=BAND'])
     # Fill band 3, but let blocks of band 1 unwritten.
     ds.GetRasterBand(3).Fill(0)
     ds = None
@@ -5624,7 +5624,7 @@ def tiff_write_128():
     # Will received implicitly CMYK photometric interpretation.
     old_val = gdal.GetConfigOption('GDAL_PAM_ENABLED')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_128.tif', src_ds, options = ['COMPRESS=JPEG'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_128.tif', src_ds, options=['COMPRESS=JPEG'])
     ds = None
     gdal.SetConfigOption('GDAL_PAM_ENABLED', old_val)
 
@@ -5644,7 +5644,7 @@ def tiff_write_128():
     # Try with explicit CMYK photometric interpreation
     old_val = gdal.GetConfigOption('GDAL_PAM_ENABLED')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_128.tif', src_ds, options = ['COMPRESS=JPEG', 'PHOTOMETRIC=CMYK'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_128.tif', src_ds, options=['COMPRESS=JPEG', 'PHOTOMETRIC=CMYK'])
     ds = None
     gdal.SetConfigOption('GDAL_PAM_ENABLED', old_val)
 
@@ -5664,7 +5664,7 @@ def tiff_write_128():
     # Try with more neutral colorspace in the case the source JPEG is not really CMYK (yes that happens !)
     old_val = gdal.GetConfigOption('GDAL_PAM_ENABLED')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_128.tif', src_ds, options = ['COMPRESS=JPEG', 'PHOTOMETRIC=MINISBLACK', 'PROFILE=BASELINE'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_128.tif', src_ds, options=['COMPRESS=JPEG', 'PHOTOMETRIC=MINISBLACK', 'PROFILE=BASELINE'])
     ds = None
     gdal.SetConfigOption('GDAL_PAM_ENABLED', old_val)
 
@@ -5701,7 +5701,7 @@ def tiff_write_129():
             cs_ref = 0
             for i in range(2):
                 ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_129.tif', 64, 32, 3,
-                    options = ['COMPRESS=JPEG', 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32', 'JPEG_QUALITY=50', 'PHOTOMETRIC=' + photometric, 'JPEGTABLESMODE=' + jpegtablesmode])
+                    options=['COMPRESS=JPEG', 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32', 'JPEG_QUALITY=50', 'PHOTOMETRIC=' + photometric, 'JPEGTABLESMODE=' + jpegtablesmode])
                 src_ds = gdal.Open('data/rgbsmall.tif')
                 data = src_ds.ReadRaster(0,0,32,32)
                 ds.WriteRaster(0,0,32,32,data)
@@ -5791,7 +5791,7 @@ def tiff_write_131():
         return 'skip'
 
     ut = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4672,
-                            options = ['COMPRESS=LZMA', 'LZMA_PRESET=9'])
+                            options=['COMPRESS=LZMA', 'LZMA_PRESET=9'])
     return ut.testCreateCopy()
 
 ###############################################################################
@@ -5848,7 +5848,7 @@ def tiff_write_132():
 
 def tiff_write_133():
 
-    src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options = ['STREAMABLE_OUTPUT=YES'])
+    src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options=['STREAMABLE_OUTPUT=YES'])
     src_ds.SetGeoTransform([1,2,0,3,0,-2])
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:32601')
@@ -5904,7 +5904,7 @@ def tiff_write_133():
         return 'fail'
 
     # Pixel interleaved
-    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = ['STREAMABLE_OUTPUT=YES', 'BLOCKYSIZE=32'])
+    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options=['STREAMABLE_OUTPUT=YES', 'BLOCKYSIZE=32'])
     out_ds = None
 
     gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
@@ -5942,7 +5942,7 @@ def tiff_write_133():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_133_dst.tif')
 
     # Tiled
-    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = ['STREAMABLE_OUTPUT=YES', 'TILED=YES'])
+    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options=['STREAMABLE_OUTPUT=YES', 'TILED=YES'])
     out_ds = None
 
     gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
@@ -5981,7 +5981,7 @@ def tiff_write_133():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_133_dst.tif')
 
     # Band interleaved
-    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = ['STREAMABLE_OUTPUT=YES', 'INTERLEAVE=BAND'])
+    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options=['STREAMABLE_OUTPUT=YES', 'INTERLEAVE=BAND'])
     out_ds = None
 
     gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
@@ -6004,7 +6004,7 @@ def tiff_write_133():
     # BIGTIFF
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') >= 0:
-        out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = ['STREAMABLE_OUTPUT=YES', 'BIGTIFF=YES'])
+        out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options=['STREAMABLE_OUTPUT=YES', 'BIGTIFF=YES'])
         out_ds = None
 
         gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
@@ -6026,20 +6026,20 @@ def tiff_write_133():
 
     # Compression not supported
     gdal.PushErrorHandler()
-    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = ['STREAMABLE_OUTPUT=YES', 'COMPRESS=DEFLATE'])
+    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options=['STREAMABLE_OUTPUT=YES', 'COMPRESS=DEFLATE'])
     gdal.PopErrorHandler()
     if out_ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Test writing into a non authorized file
-    ds = gdaltest.tiff_drv.Create('/foo/bar', 1024, 1000, 3, options = ['STREAMABLE_OUTPUT=YES', 'BLOCKYSIZE=1'])
+    ds = gdaltest.tiff_drv.Create('/foo/bar', 1024, 1000, 3, options=['STREAMABLE_OUTPUT=YES', 'BLOCKYSIZE=1'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler()
-    out_ds = gdaltest.tiff_drv.CreateCopy('/foo/bar', src_ds, options = ['STREAMABLE_OUTPUT=YES'])
+    out_ds = gdaltest.tiff_drv.CreateCopy('/foo/bar', src_ds, options=['STREAMABLE_OUTPUT=YES'])
     gdal.PopErrorHandler()
     if out_ds is not None:
         gdaltest.post_reason('fail')
@@ -6059,7 +6059,7 @@ def tiff_write_133():
 
     # BigTIFF with IFD not at offset 16
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') >= 0:
-        ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options = ['BIGTIFF=YES'])
+        ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options=['BIGTIFF=YES'])
         ds.GetRasterBand(1).Fill(0)
         ds.FlushCache()
         ds.SetGeoTransform([1,2,0,3,0,-2])
@@ -6075,7 +6075,7 @@ def tiff_write_133():
             return 'fail'
 
     # Test reading strips in not increasing order
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options = ['BLOCKYSIZE=1'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options=['BLOCKYSIZE=1'])
     for y in range(1000):
         ds.WriteRaster(0, 1000-y-1, 1024, 1, ''.join('a' for i in range(3*1024)))
         ds.FlushCache()
@@ -6098,7 +6098,7 @@ def tiff_write_133():
                 return 'fail'
 
     # Test writing strips in not increasing order in a streamable output
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options = ['STREAMABLE_OUTPUT=YES', 'BLOCKYSIZE=1'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options=['STREAMABLE_OUTPUT=YES', 'BLOCKYSIZE=1'])
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     ret = ds.WriteRaster(0, 999, 1024, 1, ''.join('a' for i in range(3*1024)))
@@ -6110,7 +6110,7 @@ def tiff_write_133():
     ds = None
 
     # Test writing tiles in not increasing order in a streamable output
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options = ['STREAMABLE_OUTPUT=YES', 'TILED=YES'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options=['STREAMABLE_OUTPUT=YES', 'TILED=YES'])
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     ret = ds.WriteRaster(256, 256, 256, 256, ''.join('a' for i in range(3*256*256)))
@@ -6131,7 +6131,7 @@ def tiff_write_133():
 
 def tiff_write_134():
 
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, options = ['DISCARD_LSB=0,1,3'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, options=['DISCARD_LSB=0,1,3'])
     ds.GetRasterBand(1).Fill(127)
     ds.GetRasterBand(2).Fill(127)
     ds.GetRasterBand(3).Fill(127)
@@ -6153,7 +6153,7 @@ def tiff_write_134():
     src_ds.GetRasterBand(1).Fill(127)
     src_ds.GetRasterBand(2).Fill(127)
     src_ds.GetRasterBand(3).Fill(127)
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_134.tif', src_ds, options = ['DISCARD_LSB=0,1,3'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_134.tif', src_ds, options=['DISCARD_LSB=0,1,3'])
     ds = None
     ds = gdal.Open('/vsimem/tiff_write_134.tif')
     cs1 = ds.GetRasterBand(1).Checksum()
@@ -6169,7 +6169,7 @@ def tiff_write_134():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134_src.tif')
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
 
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, options = ['DISCARD_LSB=3'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, options=['DISCARD_LSB=3'])
     ds.GetRasterBand(1).Fill(127)
     ds.GetRasterBand(2).Fill(127)
     ds.GetRasterBand(3).Fill(127)
@@ -6270,7 +6270,7 @@ def tiff_write_136():
     src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_136_src.tif', 8, 2001)
     src_ds.GetRasterBand(1).Fill(1)
     expected_cs = src_ds.GetRasterBand(1).Checksum()
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_136.tif', src_ds, options = ['NBITS=1', 'COMPRESS=DEFLATE', 'BLOCKYSIZE=2001'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_136.tif', src_ds, options=['NBITS=1', 'COMPRESS=DEFLATE', 'BLOCKYSIZE=2001'])
     src_ds = None
     ds = None
     ds = gdal.Open('/vsimem/tiff_write_136.tif')
@@ -6300,7 +6300,7 @@ def tiff_write_137():
 
     # Test NUM_THREADS as creation option
     ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_137.tif', src_ds, \
-        options = ['BLOCKYSIZE=16', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
+        options=['BLOCKYSIZE=16', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
     src_ds = None
     ds = None
     ds = gdal.Open('/vsimem/tiff_write_137.tif')
@@ -6314,7 +6314,7 @@ def tiff_write_137():
 
     # Test NUM_THREADS as creation option with Create()
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, 1, \
-        options = ['BLOCKYSIZE=16', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
+        options=['BLOCKYSIZE=16', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
     ds.GetRasterBand(1).WriteRaster(0,0,4000,4000,data)
     ds = None
     ds = gdal.Open('/vsimem/tiff_write_137.tif')
@@ -6328,9 +6328,9 @@ def tiff_write_137():
 
     # Test NUM_THREADS as open option
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, \
-        options = ['TILED=YES', 'COMPRESS=DEFLATE', 'PREDICTOR=2', 'SPARSE_OK=YES'])
+        options=['TILED=YES', 'COMPRESS=DEFLATE', 'PREDICTOR=2', 'SPARSE_OK=YES'])
     ds = None
-    ds = gdal.OpenEx('/vsimem/tiff_write_137.tif', gdal.OF_UPDATE, open_options = ['NUM_THREADS=4'])
+    ds = gdal.OpenEx('/vsimem/tiff_write_137.tif', gdal.OF_UPDATE, open_options=['NUM_THREADS=4'])
     ds.GetRasterBand(1).Fill(1)
     ds = None
     ds = gdal.Open('/vsimem/tiff_write_137.tif')
@@ -6344,7 +6344,7 @@ def tiff_write_137():
 
     # Ask data immediately while the block is compressed
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, \
-                            options = ['BLOCKYSIZE=3999', 'COMPRESS=DEFLATE', 'NUM_THREADS=4'])
+                            options=['BLOCKYSIZE=3999', 'COMPRESS=DEFLATE', 'NUM_THREADS=4'])
     ds.WriteRaster(0,0,1,1,'A')
     ds.FlushCache()
     val = ds.ReadRaster(0,0,1,1).decode('ascii')
@@ -6360,7 +6360,7 @@ def tiff_write_137():
     # Test NUM_THREADS with raster == tile
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_137.tif', src_ds, \
-        options = ['BLOCKYSIZE=20', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
+        options=['BLOCKYSIZE=20', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
     src_ds = None
     ds = None
     ds = gdal.Open('/vsimem/tiff_write_137.tif')
@@ -6384,7 +6384,7 @@ def tiff_write_138():
     # Test that consecutive IWriteBlock() calls for the same block but in
     # different bands only generate a single tile write, and not 3 rewrites
     ds = gdal.GetDriverByName('GTiff').Create(
-        '/vsimem/tiff_write_138.tif', 10, 1, 3, options = ['COMPRESS=DEFLATE'])
+        '/vsimem/tiff_write_138.tif', 10, 1, 3, options=['COMPRESS=DEFLATE'])
     ds.GetRasterBand(1).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
     ds.GetRasterBand(1).FlushCache()
     ds.GetRasterBand(2).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
@@ -6407,7 +6407,7 @@ def tiff_write_138():
         tmp_ds = None
 
         ds = gdal.GetDriverByName('GTiff').Create(
-            '/vsimem/tiff_write_138.tif', 10, 1, 3, options = ['COMPRESS=DEFLATE'])
+            '/vsimem/tiff_write_138.tif', 10, 1, 3, options=['COMPRESS=DEFLATE'])
         ds.GetRasterBand(1).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
         ds.GetRasterBand(2).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
         ds.GetRasterBand(3).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
@@ -6443,7 +6443,7 @@ def tiff_write_139():
     for nbands in (1,3,4):
 
         ds = drv.Create('/vsimem/tiff_write_139.tif', 4, 1, nbands,
-                                        options = ['PREDICTOR=2', 'COMPRESS=DEFLATE'])
+                                        options=['PREDICTOR=2', 'COMPRESS=DEFLATE'])
         ref_content = struct.pack('B' * 4, 255, 0, 255, 0)
         for i in range(nbands):
             ds.GetRasterBand(i+1).WriteRaster(0,0,4,1,ref_content)
@@ -6465,7 +6465,7 @@ def tiff_write_139():
             continue
 
         ds = drv.Create('/vsimem/tiff_write_139.tif', 6, 1, 1, gdal.GDT_Int16,
-                                        options = ['PREDICTOR=2', 'COMPRESS=DEFLATE', 'ENDIANNESS=%s' % endianness])
+                                        options=['PREDICTOR=2', 'COMPRESS=DEFLATE', 'ENDIANNESS=%s' % endianness])
         ref_content = struct.pack('h' * 6, -32768,32767, -32768,32767, -32768,32767)
         ds.GetRasterBand(1).WriteRaster(0,0,6,1,ref_content)
         ds = None
@@ -6487,7 +6487,7 @@ def tiff_write_139():
             continue
 
         ds = drv.Create('/vsimem/tiff_write_139.tif', 6, 1, 1, gdal.GDT_UInt16,
-                                        options = ['PREDICTOR=2', 'COMPRESS=DEFLATE', 'ENDIANNESS=%s' % endianness])
+                                        options=['PREDICTOR=2', 'COMPRESS=DEFLATE', 'ENDIANNESS=%s' % endianness])
         ref_content = struct.pack('H' * 6, 0, 65535, 0, 65535, 0, 65535)
         ds.GetRasterBand(1).WriteRaster(0,0,6,1,ref_content)
         ds = None
@@ -6509,7 +6509,7 @@ def tiff_write_139():
             continue
 
         ds = drv.Create('/vsimem/tiff_write_139.tif', 6, 1, 1, gdal.GDT_UInt32,
-                                        options = ['PREDICTOR=2', 'COMPRESS=DEFLATE', 'ENDIANNESS=%s' % endianness])
+                                        options=['PREDICTOR=2', 'COMPRESS=DEFLATE', 'ENDIANNESS=%s' % endianness])
         ref_content = struct.pack('I' * 6, 0, 2000000000, 0, 2000000000, 0, 2000000000)
         ds.GetRasterBand(1).WriteRaster(0,0,6,1,ref_content)
         ds = None
@@ -6527,7 +6527,7 @@ def tiff_write_139():
     # Test floating-point predictor
     # Seems to be broken with ENDIANNESS=INVERTED
     ds = drv.Create('/vsimem/tiff_write_139.tif', 4, 1, 1, gdal.GDT_Float64,
-                                    options = ['PREDICTOR=3', 'COMPRESS=DEFLATE'])
+                                    options=['PREDICTOR=3', 'COMPRESS=DEFLATE'])
     ref_content = struct.pack('d' * 4, 1, -1e100, 1e10, -1e5)
     ds.GetRasterBand(1).WriteRaster(0,0,4,1,ref_content)
     ds = None
@@ -6594,7 +6594,7 @@ def tiff_write_140():
     ds = None
 
     # Strange case: set alpha to a band, but it is already set on another one (because of ALPHA=YES)
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_140.tif',1,1,5, options = ['ALPHA=YES'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_140.tif',1,1,5, options=['ALPHA=YES'])
     # Should emit a warning mentioning ALPHA creation option.
     gdal.ErrorReset()
     with gdaltest.error_handler():
@@ -6631,7 +6631,7 @@ def tiff_write_140():
 
 def tiff_write_141():
 
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_141.tif',1,1,options = ['GEOTIFF_KEYS_FLAVOR=ESRI_PE'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_141.tif',1,1,options=['GEOTIFF_KEYS_FLAVOR=ESRI_PE'])
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(3857)
     ds.SetProjection(srs.ExportToWkt())
@@ -6719,7 +6719,7 @@ def tiff_write_144():
     if not gdaltest.filesystem_supports_sparse_files('tmp'):
         return 'skip'
 
-    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_144.tif', 20, 20, 1, options = ['BIGTIFF=YES'])
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_144.tif', 20, 20, 1, options=['BIGTIFF=YES'])
     ds.GetRasterBand(1).Fill(255)
     ds = None
 
@@ -6789,7 +6789,7 @@ def tiff_write_145():
         gdal.Unlink(filename)
         gdal.ErrorReset()
         with gdaltest.error_handler():
-            ds = gdaltest.tiff_drv.Create(filename, xsize, ysize, bands, datatype, options = creation_options)
+            ds = gdaltest.tiff_drv.Create(filename, xsize, ysize, bands, datatype, options=creation_options)
         if ds is not None and options.get('expected_failure', False):
             gdaltest.post_reason('expected failure, but did not get it')
             print(options)
@@ -6819,9 +6819,9 @@ def tiff_write_146():
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
 
-    tmp_ds = gdal.Translate('', 'data/stefan_full_rgba.tif', format = 'MEM')
+    tmp_ds = gdal.Translate('', 'data/stefan_full_rgba.tif', format='MEM')
     original_stats = [tmp_ds.GetRasterBand(i+1).ComputeStatistics(True) for i in range(4)]
-    gdal.Translate('/vsimem/tiff_write_146.tif', 'data/stefan_full_rgba.tif', options = '-outsize 1000% 1000% -co COMPRESS=JPEG')
+    gdal.Translate('/vsimem/tiff_write_146.tif', 'data/stefan_full_rgba.tif', options='-outsize 1000% 1000% -co COMPRESS=JPEG')
     out_ds = gdal.Open('/vsimem/tiff_write_146.tif')
     got_stats = [out_ds.GetRasterBand(i+1).GetOverview(2).ComputeStatistics(True) for i in range(4)]
     out_ds = None
@@ -6851,7 +6851,7 @@ def tiff_write_147():
 
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
-    gdal.Translate('/vsimem/tiff_write_147.tif', '../gdrivers/data/rgb_ntf_cmyk.jpg', options = '-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK')
+    gdal.Translate('/vsimem/tiff_write_147.tif', '../gdrivers/data/rgb_ntf_cmyk.jpg', options='-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK')
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
     gdal.SetConfigOption('GDAL_PAM_ENABLED', None)
     out_ds = gdal.Open('/vsimem/tiff_write_147.tif')
@@ -6874,12 +6874,12 @@ def tiff_write_148():
         return 'skip'
 
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
-    tmp_ds = gdal.Translate('', '../gdrivers/data/rgb_ntf_cmyk.jpg', format = 'MEM')
+    tmp_ds = gdal.Translate('', '../gdrivers/data/rgb_ntf_cmyk.jpg', format='MEM')
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
     original_stats = [tmp_ds.GetRasterBand(i+1).ComputeStatistics(True) for i in range(4)]
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
-    gdal.Translate('/vsimem/tiff_write_148.tif', '../gdrivers/data/rgb_ntf_cmyk.jpg', options = '-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK')
+    gdal.Translate('/vsimem/tiff_write_148.tif', '../gdrivers/data/rgb_ntf_cmyk.jpg', options='-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK')
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
     gdal.SetConfigOption('GDAL_PAM_ENABLED', None)
     out_ds = gdal.Open('GTIFF_RAW:/vsimem/tiff_write_148.tif')
@@ -6919,7 +6919,7 @@ def tiff_write_149():
 
     # Test implicit blocks
     expected_cs = 13626
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_149.tif', 40, 30, 2, gdal.GDT_UInt16, options = ['NBITS=12', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'INTERLEAVE=BAND', 'SPARSE_OK=YES'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_149.tif', 40, 30, 2, gdal.GDT_UInt16, options=['NBITS=12', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'INTERLEAVE=BAND', 'SPARSE_OK=YES'])
     ds.GetRasterBand(1).SetNoDataValue(127)
     ds.GetRasterBand(2).SetNoDataValue(127)
     ds = None
@@ -6933,7 +6933,7 @@ def tiff_write_149():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_149.tif')
 
     # NBITS=12, SEPARATE. Checksum must be the same as in the implicit blocks case
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_149.tif', 40, 30, 2, gdal.GDT_UInt16, options = ['NBITS=12', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'INTERLEAVE=BAND'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_149.tif', 40, 30, 2, gdal.GDT_UInt16, options=['NBITS=12', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'INTERLEAVE=BAND'])
     ds.GetRasterBand(1).SetNoDataValue(127)
     ds.GetRasterBand(2).SetNoDataValue(127)
     ds = None
@@ -6947,7 +6947,7 @@ def tiff_write_149():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_149.tif')
 
     # NBITS=12, CONTIG. Checksum must be the same as in the implicit blocks case
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_149.tif', 40, 30, 2, gdal.GDT_UInt16, options = ['NBITS=12', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'INTERLEAVE=PIXEL'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_149.tif', 40, 30, 2, gdal.GDT_UInt16, options=['NBITS=12', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'INTERLEAVE=PIXEL'])
     ds.GetRasterBand(1).SetNoDataValue(127)
     ds.GetRasterBand(2).SetNoDataValue(127)
     ds = None
@@ -7019,7 +7019,7 @@ def tiff_write_151():
 
 def tiff_write_152():
 
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_152.tif', 1, 1, 2, options = ['NBITS=2'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_152.tif', 1, 1, 2, options=['NBITS=2'])
     ds.GetRasterBand(2).SetNoDataValue(3)
     ds.GetRasterBand(2).Fill(1)
     ds = None
@@ -7073,7 +7073,7 @@ def tiff_write_154():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 500, 500)
 
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['BLOCKYSIZE=256'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options=['BLOCKYSIZE=256'])
     ds.FlushCache()
     # At that point empty blocks have not yet been flushed
     if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 162:
@@ -7088,7 +7088,7 @@ def tiff_write_154():
         return 'fail'
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
 
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['BLOCKYSIZE=256', 'COMPRESS=DEFLATE'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options=['BLOCKYSIZE=256', 'COMPRESS=DEFLATE'])
     ds.FlushCache()
     # With compression, empty blocks are written right away
     if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 462:
@@ -7103,14 +7103,14 @@ def tiff_write_154():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
 
     # SPARSE_OK in CreateCopy(): blocks are not written
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=256'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options=['SPARSE_OK=YES', 'BLOCKYSIZE=256'])
     ds = None
     if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 162:
         gdaltest.post_reason('fail')
         print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
         return 'fail'
     # SPARSE_OK in Open()/update: blocks are not written
-    ds = gdal.OpenEx('/vsimem/tiff_write_154.tif', gdal.OF_UPDATE, open_options = ['SPARSE_OK=YES'])
+    ds = gdal.OpenEx('/vsimem/tiff_write_154.tif', gdal.OF_UPDATE, open_options=['SPARSE_OK=YES'])
     ds.GetRasterBand(1).Fill(0)
     ds = None
     if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 162:
@@ -7130,7 +7130,7 @@ def tiff_write_154():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
 
     # SPARSE_OK in CreateCopy() in compressed case (strips): blocks are not written
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=256', 'COMPRESS=DEFLATE'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options=['SPARSE_OK=YES', 'BLOCKYSIZE=256', 'COMPRESS=DEFLATE'])
     ds = None
     if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 174:
         gdaltest.post_reason('fail')
@@ -7139,7 +7139,7 @@ def tiff_write_154():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
 
     # SPARSE_OK in CreateCopy() in compressed case (tiling): blocks are not written
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['SPARSE_OK=YES', 'TILED=YES'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options=['SPARSE_OK=YES', 'TILED=YES'])
     ds = None
     if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 190:
         gdaltest.post_reason('fail')
@@ -7158,7 +7158,7 @@ def tiff_write_154():
         else:
             src_ds = gdal.GetDriverByName('MEM').Create('', 500, 500, 1, dt)
             options = ['SPARSE_OK=YES', 'BLOCKYSIZE=256']
-        gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = options)
+        gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options=options)
         if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 162:
             gdaltest.post_reason('fail')
             print(dt)
@@ -7178,7 +7178,7 @@ def tiff_write_154():
             options = ['SPARSE_OK=YES', 'BLOCKYSIZE=256']
         src_ds.GetRasterBand(1).Fill(1)
         src_ds.GetRasterBand(1).SetNoDataValue(1)
-        ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = options)
+        ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options=options)
         ds = None
         if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 174:
             gdaltest.post_reason('fail')
@@ -7190,7 +7190,7 @@ def tiff_write_154():
     src_ds = gdal.GetDriverByName('MEM').Create('', 100, 1, 1)
     src_ds.GetRasterBand(1).Fill(0)
     src_ds.GetRasterBand(1).WriteRaster(99,0,1,1,struct.pack('B' * 1, 1))
-    gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['SPARSE_OK=YES'])
+    gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options=['SPARSE_OK=YES'])
     if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 246:
         gdaltest.post_reason('fail')
         print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
@@ -7233,7 +7233,7 @@ def tiff_write_155():
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_155.tif')
 
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_155.tif', 1, 1, options = ['PROFILE=GeoTIFF'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_155.tif', 1, 1, options=['PROFILE=GeoTIFF'])
     ds.GetRasterBand(1).SetDescription('foo')
     ds = None
 
@@ -7256,7 +7256,7 @@ def tiff_write_155():
 
 def tiff_write_156():
 
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_156.tif', 64, 64, options = ['SPARSE_OK=YES', 'TILED=YES','BLOCKXSIZE=32', 'BLOCKYSIZE=32'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_156.tif', 64, 64, options=['SPARSE_OK=YES', 'TILED=YES','BLOCKXSIZE=32', 'BLOCKYSIZE=32'])
     ds.GetRasterBand(1).WriteRaster(0,0,1,1,'X')
 
     (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0,0,32,32)
@@ -7284,7 +7284,7 @@ def tiff_write_156():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_156.tif')
 
     # Test fix for #6703
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_156.tif', 1, 512, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=1'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_156.tif', 1, 512, options=['SPARSE_OK=YES', 'BLOCKYSIZE=1'])
     ds.GetRasterBand(1).WriteRaster(0,100,1,1,'X')
     ds = None
     ds = gdal.Open('/vsimem/tiff_write_156.tif')
@@ -7324,7 +7324,7 @@ def tiff_write_157():
                             0x8400, # Smallest negative normalized value
                        )
 
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_157.tif', 14, 1, 1, gdal.GDT_Float32, options = ['NBITS=16'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_157.tif', 14, 1, 1, gdal.GDT_Float32, options=['NBITS=16'])
     ds = None
     ds = gdal.Open('/vsimem/tiff_write_157.tif')
     offset = int(ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
@@ -7379,7 +7379,7 @@ def tiff_write_157():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_157_dst.tif')
 
     # Now try Float32 -> Float16 conversion
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_157.tif', 18, 1, 1, gdal.GDT_Float32, options = ['NBITS=16'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_157.tif', 18, 1, 1, gdal.GDT_Float32, options=['NBITS=16'])
     vals = struct.pack('I' * 18,
                             0x00000000, # Positive zero
                             0x80000000, # Negative zero
@@ -7400,7 +7400,7 @@ def tiff_write_157():
                             0x33800000, # 5.9604644775390625e-08 = Smallest number that can be converted as a float16 denormalized value
                             0x47800000, # 65536 --> converted to infinity
                        )
-    ds.GetRasterBand(1).WriteRaster(0,0,18,1,vals, buf_type = gdal.GDT_Float32)
+    ds.GetRasterBand(1).WriteRaster(0,0,18,1,vals, buf_type=gdal.GDT_Float32)
     with gdaltest.error_handler():
         ds.FlushCache()
     ds = None
@@ -7428,7 +7428,7 @@ def tiff_write_157():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_157.tif')
 
     # Test pixel interleaved
-    gdal.Translate('/vsimem/tiff_write_157.tif', '../gdrivers/data/small_world.tif', options = '-co NBITS=16 -ot Float32')
+    gdal.Translate('/vsimem/tiff_write_157.tif', '../gdrivers/data/small_world.tif', options='-co NBITS=16 -ot Float32')
     ds = gdal.Open('/vsimem/tiff_write_157.tif')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 30111:
@@ -7452,7 +7452,7 @@ def tiff_write_157():
 
 def tiff_write_158():
 
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_158.tif', 20, 40, 1, options = ['TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=32'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_158.tif', 20, 40, 1, options=['TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=32'])
     (w, h) = ds.GetRasterBand(1).GetActualBlockSize(0,0)
     if (w, h) != (16,32):
         gdaltest.post_reason('failure')
@@ -7501,10 +7501,10 @@ def tiff_write_159():
     prev_table = ''
     for options in [[], ['JPEG_QUALITY=50'], ['PHOTOMETRIC=YCBCR']]:
 
-        src_ds = gdal.Translate('',  '../gdrivers/data/small_world.tif', format = 'MEM')
-        src_ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+        src_ds = gdal.Translate('',  '../gdrivers/data/small_world.tif', format='MEM')
+        src_ds.BuildOverviews('NEAR', overviewlist=[2, 4])
         ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_159.tif', src_ds,
-                                        options = ['COPY_SRC_OVERVIEWS=YES', 'COMPRESS=JPEG'] + options)
+                                        options=['COPY_SRC_OVERVIEWS=YES', 'COMPRESS=JPEG'] + options)
         ds = None
         src_ds = None
 
@@ -7549,10 +7549,10 @@ def tiff_write_159():
 
     for value in range(4):
 
-        src_ds = gdal.Translate('',  'data/byte.tif', format = 'MEM')
-        src_ds.BuildOverviews('NEAR', overviewlist = [2])
+        src_ds = gdal.Translate('',  'data/byte.tif', format='MEM')
+        src_ds.BuildOverviews('NEAR', overviewlist=[2])
         ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_159.tif', src_ds,
-                                        options = ['COPY_SRC_OVERVIEWS=YES', 'COMPRESS=JPEG', 'JPEGTABLESMODE=%d' % value])
+                                        options=['COPY_SRC_OVERVIEWS=YES', 'COMPRESS=JPEG', 'JPEGTABLESMODE=%d' % value])
         ds = None
         src_ds = None
 
@@ -7577,7 +7577,7 @@ def tiff_write_159():
 
 def tiff_write_160():
 
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_160.tif', 10, 10, options = ['BLOCKYSIZE=11'])
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_160.tif', 10, 10, options=['BLOCKYSIZE=11'])
     ds.GetRasterBand(1).Fill(255)
     ds = None
 
@@ -7609,7 +7609,7 @@ def tiff_write_161():
         if ds.SetGCPs(src_ds.GetGCPs(), '') != 0:
             gdaltest.post_reason('fail')
             return 'fail'
-    if ds.GetGeoTransform(can_return_null = True) is not None:
+    if ds.GetGeoTransform(can_return_null=True) is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
@@ -7618,7 +7618,7 @@ def tiff_write_161():
     if len(ds.GetGCPs()) == 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetGeoTransform(can_return_null = True) is not None:
+    if ds.GetGeoTransform(can_return_null=True) is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
@@ -7657,7 +7657,7 @@ def tiff_write_162():
     options = ['TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512', 'COMPRESS=JPEG']
 
     gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_162.tif', src_ds,
-                                  options = options)
+                                  options=options)
 
     if gdal.GetLastErrorMsg() != '':
         return 'fail'
@@ -7678,7 +7678,7 @@ def tiff_write_163():
         return 'skip'
 
     gdal.Translate('/vsimem/tiff_write_163.tif', 'data/byte.tif',
-                   options = '-outsize 1 20000 -co BLOCKYSIZE=20000 -co PROFILE=BASELINE')
+                   options='-outsize 1 20000 -co BLOCKYSIZE=20000 -co PROFILE=BASELINE')
     ds = gdal.Open('/vsimem/tiff_write_163.tif')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 47567:
@@ -7708,7 +7708,7 @@ def tiff_write_164():
     ds = None
 
     ds = gdal.Open('/vsimem/test.tif')
-    gt = ds.GetGeoTransform(can_return_null = True)
+    gt = ds.GetGeoTransform(can_return_null=True)
     ds = None
 
     if gt != (0,1,0,0,0,1):
@@ -7722,7 +7722,7 @@ def tiff_write_164():
     ds = None
 
     ds = gdal.Open('/vsimem/test.tif')
-    gt = ds.GetGeoTransform(can_return_null = True)
+    gt = ds.GetGeoTransform(can_return_null=True)
     ds = None
 
     if gt != (0,1,0,0,0,-1):
@@ -7801,7 +7801,7 @@ def tiff_write_166():
 
     # Scale + offset through CreateCopy()
     gdal.Translate('/vsimem/tiff_write_166.tif', 'data/byte.tif',
-                   options = '-a_srs EPSG:26711+5773 -a_scale 2.0 -a_offset 10 -co PROFILE=GEOTIFF')
+                   options='-a_srs EPSG:26711+5773 -a_scale 2.0 -a_offset 10 -co PROFILE=GEOTIFF')
     if gdal.VSIStatL('/vsimem/tiff_write_166.tif.aux.xml') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -7821,7 +7821,7 @@ def tiff_write_166():
 
     # Offset only through CreateCopy()
     gdal.Translate('/vsimem/tiff_write_166.tif', 'data/byte.tif',
-                   options = '-a_srs EPSG:26711+5773 -a_offset 10 -co PROFILE=GEOTIFF')
+                   options='-a_srs EPSG:26711+5773 -a_offset 10 -co PROFILE=GEOTIFF')
     if gdal.VSIStatL('/vsimem/tiff_write_166.tif.aux.xml') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -7840,7 +7840,7 @@ def tiff_write_166():
     gdal.Unlink('/vsimem/tiff_write_166.tif')
 
     # Scale + offset through Create()
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_166.tif', 1, 1, options = ['PROFILE=GEOTIFF'])
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_166.tif', 1, 1, options=['PROFILE=GEOTIFF'])
     sr = osr.SpatialReference()
     sr.SetFromUserInput('EPSG:26711+5773')
     ds.SetProjection(sr.ExportToWkt())
@@ -7865,7 +7865,7 @@ def tiff_write_166():
     gdal.Unlink('/vsimem/tiff_write_166.tif')
 
     # Scale only through Create()
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_166.tif', 1, 1, options = ['PROFILE=GEOTIFF'])
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_166.tif', 1, 1, options=['PROFILE=GEOTIFF'])
     sr = osr.SpatialReference()
     sr.SetFromUserInput('EPSG:26711+5773')
     ds.SetProjection(sr.ExportToWkt())
@@ -7889,7 +7889,7 @@ def tiff_write_166():
     gdal.Unlink('/vsimem/tiff_write_166.tif')
 
     # Offset only through through Create()
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_166.tif', 1, 1, options = ['PROFILE=GEOTIFF'])
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_166.tif', 1, 1, options=['PROFILE=GEOTIFF'])
     sr = osr.SpatialReference()
     sr.SetFromUserInput('EPSG:26711+5773')
     ds.SetProjection(sr.ExportToWkt())
@@ -7921,12 +7921,12 @@ def tiff_write_167_deflate_zlevel():
 
     src_ds = gdal.Open('data/byte.tif')
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', src_ds,
-                                             options = ['COMPRESS=DEFLATE',
+                                             options=['COMPRESS=DEFLATE',
                                                         'ZLEVEL=1'])
     size1 = gdal.VSIStatL('/vsimem/out.tif').size
 
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', src_ds,
-                                             options = ['COMPRESS=DEFLATE',
+                                             options=['COMPRESS=DEFLATE',
                                                         'NUM_THREADS=2',
                                                         'ZLEVEL=9'])
     size2 = gdal.VSIStatL('/vsimem/out.tif').size
@@ -7938,7 +7938,7 @@ def tiff_write_167_deflate_zlevel():
         return 'fail'
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/out.tif', 20, 20, 1,
-                                             options = ['COMPRESS=DEFLATE',
+                                             options=['COMPRESS=DEFLATE',
                                                         'ZLEVEL=9'])
     ds.SetProjection(src_ds.GetProjectionRef())
     ds.SetGeoTransform(src_ds.GetGeoTransform())
@@ -7962,7 +7962,7 @@ def tiff_write_167_deflate_zlevel():
 def tiff_write_168_ccitfax3():
 
     ut = gdaltest.GDALTest('GTiff', 'oddsize1bit.tif', 1, 5918,
-                            options = ['NBITS=1', 'COMPRESS=CCITTFAX3'])
+                            options=['NBITS=1', 'COMPRESS=CCITTFAX3'])
     return ut.testCreateCopy()
 
 ###############################################################################
@@ -7972,7 +7972,7 @@ def tiff_write_168_ccitfax3():
 def tiff_write_169_ccitrle():
 
     ut = gdaltest.GDALTest('GTiff', 'oddsize1bit.tif', 1, 5918,
-                            options = ['NBITS=1', 'COMPRESS=CCITTRLE'])
+                            options=['NBITS=1', 'COMPRESS=CCITTRLE'])
     return ut.testCreateCopy()
 
 ###############################################################################
@@ -7984,7 +7984,7 @@ def tiff_write_170_invalid_compresion():
     src_ds = gdal.Open('data/byte.tif')
     with gdaltest.error_handler():
         gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', src_ds,
-                                        options = ['COMPRESS=INVALID'])
+                                        options=['COMPRESS=INVALID'])
     if gdal.GetLastErrorMsg() == '':
         return 'fail'
     gdal.Unlink('/vsimem/out.tif')
@@ -8001,7 +8001,7 @@ def tiff_write_171_zstd():
         return 'skip'
 
     ut = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4672,
-                            options = ['COMPRESS=ZSTD', 'ZSTD_LEVEL=1'])
+                            options=['COMPRESS=ZSTD', 'ZSTD_LEVEL=1'])
     return ut.testCreateCopy()
 
 ###############################################################################
@@ -8052,7 +8052,7 @@ def tiff_write_api_proxy():
         return 'skip'
 
     import test_py_scripts
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'tiff_write', ' -api_proxy', display_live_on_parent_stdout = True)
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'tiff_write', ' -api_proxy', display_live_on_parent_stdout=True)
 
     if ret.find('Failed:    0') == -1:
         return 'fail'

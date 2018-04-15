@@ -32,6 +32,7 @@
 import os
 import sys
 import shutil
+from difflib import unified_diff
 
 sys.path.append('../pymod')
 
@@ -63,7 +64,11 @@ def ograpispy_1():
 
     if ref_data != got_data:
         gdaltest.post_reason('did not get expected script')
-        print(got_data)
+        print
+        for line in unified_diff(ref_data.splitlines(), got_data.splitlines(),
+                                     fromfile='expected', tofile='got',
+                                     linterm=""):
+            print(line)
         return 'fail'
 
     return 'success'
@@ -89,7 +94,7 @@ def ograpispy_2():
 
     gdal.SetConfigOption('OGR_API_SPY_FILE', 'tmp/ograpispy_2.py')
     gdal.SetConfigOption('OGR_API_SPY_SNAPSHOT_PATH', 'tmp')
-    ds = ogr.Open('tmp/ograpispy_2.shp', update = 1)
+    ds = ogr.Open('tmp/ograpispy_2.shp', update=1)
     lyr = ds.GetLayer(0)
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     ds = None
@@ -103,7 +108,7 @@ def ograpispy_2():
         return 'fail'
     ds = None
 
-    ds = ogr.Open('tmp/snapshot_1/working/ograpispy_2.shp', update = 1)
+    ds = ogr.Open('tmp/snapshot_1/working/ograpispy_2.shp', update=1)
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')

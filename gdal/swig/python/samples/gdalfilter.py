@@ -175,6 +175,6 @@ if out_driver is None:
     print('Output driver %s does not appear to exist.' % out_format)
     sys.exit(1)
 
-out_ds = out_driver.CreateCopy(dstfile, vrt_ds, options = create_options,
-                                callback = gdal.TermProgress)
+out_ds = out_driver.CreateCopy(dstfile, vrt_ds, options=create_options,
+                                callback=gdal.TermProgress)
 out_ds = None

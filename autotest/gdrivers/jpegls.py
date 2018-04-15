@@ -47,7 +47,7 @@ def jpegls_1():
         return 'skip'
 
     tst = gdaltest.GDALTest('JPEGLS', 'byte.tif', 1, 4672)
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 
@@ -61,7 +61,7 @@ def jpegls_2():
         return 'skip'
 
     tst = gdaltest.GDALTest('JPEGLS', 'int16.tif', 1, 4672)
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 
 gdaltest_list = [

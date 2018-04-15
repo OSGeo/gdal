@@ -70,7 +70,7 @@ def genbin_1():
     gt = (1181700.9894981384, 82.021003723042099, 0.0,
           596254.01050186157, 0.0, -82.021003723045894)
 
-    return tst.testOpen(check_prj = prj, check_gt = gt)
+    return tst.testOpen(check_prj=prj, check_gt=gt)
 
 
 gdaltest_list = [

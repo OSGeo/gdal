@@ -71,7 +71,7 @@ def ogr_gmt_2():
     #######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature(feature_def = gdaltest.gmt_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gdaltest.gmt_lyr.GetLayerDefn())
 
     shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
@@ -115,7 +115,7 @@ def ogr_gmt_3():
         read_feat = gdaltest.gmt_lyr.GetNextFeature()
 
         if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
-                                          max_error = 0.000000001) != 0:
+                                          max_error=0.000000001) != 0:
             return 'fail'
 
         for fld in range(3):
@@ -192,7 +192,7 @@ def ogr_gmt_5():
     #######################################################
     # Write a first multipolygon
 
-    dst_feat = ogr.Feature(feature_def = gdaltest.gmt_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gdaltest.gmt_lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(
         ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0,0 10,10 10,0 10,0 0),(3 3,4 4, 3 4,3 3)),((12 0,14 0,12 3,12 0)))'))
     dst_feat.SetField('ID', 15)
@@ -200,7 +200,7 @@ def ogr_gmt_5():
     gdaltest.gmt_lyr.CreateFeature(dst_feat)
     gdal.SetConfigOption('GMT_USE_TAB', None)
 
-    dst_feat = ogr.Feature(feature_def = gdaltest.gmt_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gdaltest.gmt_lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(
         ogr.CreateGeometryFromWkt('MULTIPOLYGON(((30 20,40 20,30 30,30 20)))'))
     dst_feat.SetField('ID', 16)

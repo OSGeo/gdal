@@ -468,7 +468,7 @@ def hfa_grow_rrdlist():
 
     # Add two overview levels.
     ds = gdal.Open('tmp/bug_1109.img',gdal.GA_Update)
-    result = ds.BuildOverviews(overviewlist = [4,8])
+    result = ds.BuildOverviews(overviewlist=[4,8])
     ds = None
 
     if result != 0:
@@ -499,7 +499,7 @@ def hfa_clean_ige():
     src_ds = gdal.Open('data/byte.tif')
 
     out_ds = drv.CreateCopy('tmp/igetest.img', src_ds,
-                    options = ['USE_SPILL=YES'])
+                    options=['USE_SPILL=YES'])
     out_ds = None
 
     try:
@@ -600,7 +600,7 @@ def hfa_nodata_write():
 
     for line in range(7):
         ds.WriteRaster(0, line, 7, 1, raw_data,
-                        buf_type = gdal.GDT_Int16)
+                        buf_type=gdal.GDT_Int16)
 
     b = ds.GetRasterBand(1)
     b.SetNoDataValue(1)
@@ -753,7 +753,7 @@ def hfa_vsimem():
 
     tst = gdaltest.GDALTest('HFA', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy(vsimem = 1)
+    return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
 # Test that PROJCS[] names are preserved as the mapinfo.proName in
@@ -798,7 +798,7 @@ def hfa_proName():
 def hfa_read_empty_compressed():
 
     drv = gdal.GetDriverByName('HFA')
-    ds = drv.Create('tmp/emptycompressed.img', 64, 64, 1, options = ['COMPRESSED=YES'])
+    ds = drv.Create('tmp/emptycompressed.img', 64, 64, 1, options=['COMPRESSED=YES'])
     ds = None
 
     ds = gdal.Open('tmp/emptycompressed.img')
@@ -1055,7 +1055,7 @@ def hfa_ov_nodata():
     wrk_ds = drv.CreateCopy('/vsimem/ov_nodata.img', src_ds)
     src_ds = None
 
-    wrk_ds.BuildOverviews(overviewlist = [2])
+    wrk_ds.BuildOverviews(overviewlist=[2])
     wrk_ds = None
 
     wrk2_ds = gdal.Open('/vsimem/ov_nodata.img')
@@ -1123,8 +1123,8 @@ def hfa_write_bit2grayscale():
     gdal.SetConfigOption('HFA_USE_RRD', 'YES')
 
     ds = gdal.Open('tmp/small1bit.img', gdal.GA_Update)
-    ds.BuildOverviews(resampling = 'average_bit2grayscale',
-                       overviewlist = [2])
+    ds.BuildOverviews(resampling='average_bit2grayscale',
+                       overviewlist=[2])
 
     ov = ds.GetRasterBand(1).GetOverview(1)
 
@@ -1409,7 +1409,7 @@ def hfa_createcopy_statistics():
     except OSError:
         pass
     ds_src = gdal.Open('../gcore/data/byte.tif')
-    out_ds = gdal.GetDriverByName('HFA').CreateCopy('/vsimem/byte.img', ds_src, options = ['STATISTICS=YES'])
+    out_ds = gdal.GetDriverByName('HFA').CreateCopy('/vsimem/byte.img', ds_src, options=['STATISTICS=YES'])
     del out_ds
     ds_src = None
     if os.path.exists(tmpAuxXml):

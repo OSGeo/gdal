@@ -428,7 +428,7 @@ def ogr_rfc41_4():
         gdaltest.post_reason('fail')
         return 'fail'
     sr = osr.SpatialReference()
-    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint, srs = sr)
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbPoint, srs=sr)
     if lyr.TestCapability(ogr.OLCCreateGeomField) == 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -466,14 +466,14 @@ def ogr_rfc41_4():
         return 'fail'
 
     # Test GetExtent()
-    got_extent = lyr.GetExtent(geom_field = 1)
+    got_extent = lyr.GetExtent(geom_field=1)
     if got_extent != (10.0, 11.0, 10.0, 11.0):
         gdaltest.post_reason('fail')
         return 'fail'
     # Test invalid geometry field index
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    got_extent = lyr.GetExtent(geom_field = 2)
+    got_extent = lyr.GetExtent(geom_field=2)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
@@ -619,7 +619,7 @@ def ogr_rfc41_6():
 
     ds = ogr.GetDriverByName('memory').CreateDataSource('')
     sr = osr.SpatialReference()
-    lyr = ds.CreateLayer('poly', geom_type = ogr.wkbPolygon, srs = sr)
+    lyr = ds.CreateLayer('poly', geom_type=ogr.wkbPolygon, srs=sr)
     lyr.GetLayerDefn().GetGeomFieldDefn(0).SetName('geomfield')
     lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('wkt', ogr.OFTString))
@@ -929,7 +929,7 @@ def ogr_rfc41_6():
     # Test invalid geometry field index
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr.GetExtent(geom_field = 2)
+    sql_lyr.GetExtent(geom_field=2)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
@@ -983,10 +983,10 @@ def ogr_rfc41_6():
 
     # Check GetExtent() and SetSpatialFilter()
     sql_lyr = ds.ExecuteSQL('SELECT * FROM poly')
-    if sql_lyr.GetExtent(geom_field = 0) != (1.0, 1.0, 2.0, 2.0):
+    if sql_lyr.GetExtent(geom_field=0) != (1.0, 1.0, 2.0, 2.0):
         gdaltest.post_reason('fail')
         return 'fail'
-    if sql_lyr.GetExtent(geom_field = 1) != (10.0, 10.0, 100.0, 100.0):
+    if sql_lyr.GetExtent(geom_field=1) != (10.0, 10.0, 100.0, 100.0):
         gdaltest.post_reason('fail')
         return 'fail'
     sql_lyr.SetSpatialFilterRect(0,0.5,1.5,1.5,2.5)
@@ -1056,7 +1056,7 @@ def ogr_rfc41_8():
         return 'skip'
 
     ds = ogr.GetDriverByName('memory').CreateDataSource('')
-    lyr = ds.CreateLayer('mytable', geom_type = ogr.wkbPolygon)
+    lyr = ds.CreateLayer('mytable', geom_type=ogr.wkbPolygon)
     lyr.GetLayerDefn().GetGeomFieldDefn(0).SetName('geomfield')
     gfld_defn = ogr.GeomFieldDefn('geomfield2', ogr.wkbPoint25D)
     sr = osr.SpatialReference()
@@ -1065,7 +1065,7 @@ def ogr_rfc41_8():
     lyr.CreateGeomField(gfld_defn)
 
     # Check that we get the geometry columns, even with no features
-    sql_lyr = ds.ExecuteSQL('SELECT * FROM mytable', dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM mytable', dialect='SQLite')
     if sql_lyr.GetLayerDefn().GetGeomFieldCount() != 2:
         print(sql_lyr.GetLayerDefn().GetGeomFieldCount())
         gdaltest.post_reason('fail')
@@ -1088,10 +1088,10 @@ def ogr_rfc41_8():
     # Test INSERT INTO request
     ds.ExecuteSQL("INSERT INTO mytable (geomfield, geomfield2) VALUES (" +
                   "GeomFromText('POLYGON ((0 0,0 1,1 1,1 0,0 0))'), " +
-                  "GeomFromText('POINT Z(0 1 2)') )", dialect = 'SQLite')
+                  "GeomFromText('POINT Z(0 1 2)') )", dialect='SQLite')
 
     # Check output
-    sql_lyr = ds.ExecuteSQL('SELECT geomfield2, geomfield FROM mytable', dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL('SELECT geomfield2, geomfield FROM mytable', dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     geom = feat.GetGeomFieldRef('geomfield')
     if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
@@ -1108,10 +1108,10 @@ def ogr_rfc41_8():
 
     # Test UPDATE
     ds.ExecuteSQL("UPDATE mytable SET geomfield2 = " +
-                  "GeomFromText('POINT Z(3 4 5)')", dialect = 'SQLite')
+                  "GeomFromText('POINT Z(3 4 5)')", dialect='SQLite')
 
     # Check output
-    sql_lyr = ds.ExecuteSQL('SELECT geomfield2, geomfield FROM mytable', dialect = 'SQLite')
+    sql_lyr = ds.ExecuteSQL('SELECT geomfield2, geomfield FROM mytable', dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     geom = feat.GetGeomFieldRef('geomfield')
     if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':

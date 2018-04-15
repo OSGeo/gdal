@@ -68,7 +68,7 @@ def check_features_against_list(layer, field_name, value_list):
 ###############################################################################
 
 
-def check_feature_geometry(feat, geom, max_error = 0.0001):
+def check_feature_geometry(feat, geom, max_error=0.0001):
     """ Returns 0 in case of success """
     try:
         f_geom = feat.GetGeometryRef()
@@ -140,13 +140,13 @@ def check_feature_geometry(feat, geom, max_error = 0.0001):
 ###############################################################################
 
 
-def check_feature(feat, feat_ref, max_error = 0.0001, excluded_fields = None):
+def check_feature(feat, feat_ref, max_error=0.0001, excluded_fields=None):
     """ Returns 0 in case of success """
 
     for i in range(feat.GetGeomFieldCount()):
         ret = check_feature_geometry(feat.GetGeomFieldRef(i),
                                      feat_ref.GetGeomFieldRef(i),
-                                     max_error = max_error)
+                                     max_error=max_error)
         if ret != 0:
             return ret
 
@@ -165,7 +165,7 @@ def check_feature(feat, feat_ref, max_error = 0.0001, excluded_fields = None):
 ###############################################################################
 
 
-def compare_layers(lyr, lyr_ref, excluded_fields = None):
+def compare_layers(lyr, lyr_ref, excluded_fields=None):
 
     for f_ref in lyr_ref:
         f = lyr.GetNextFeature()
@@ -212,7 +212,7 @@ def quick_create_layer_def(lyr, field_list):
 
 
 def quick_create_feature(layer, field_values, wkt_geometry):
-    feature = ogr.Feature(feature_def = layer.GetLayerDefn())
+    feature = ogr.Feature(feature_def=layer.GetLayerDefn())
 
     for i in range(len(field_values)):
         feature.SetField(i, field_values[i])

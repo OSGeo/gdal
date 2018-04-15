@@ -724,8 +724,8 @@ def grib_grib2_write_creation_options():
         return 'skip'
 
     tmpfilename = '/vsimem/out.grb2'
-    gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                   creationOptions = [
+    gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                   creationOptions=[
         "DISCIPLINE=1",
         "IDS=CENTER=85(Toulouse) SUBCENTER=2 MASTER_TABLE=5 LOCAL_TABLE=0 SIGNF_REF_TIME=0(Analysis) REF_TIME=2017-09-11T12:34:56Z PROD_STATUS=2(Research) TYPE=0(Analysis)",
         "IDS_SUBCENTER=3", # Test that it overrides IDS
@@ -746,8 +746,8 @@ def grib_grib2_write_creation_options():
 
     # Test with PDS_TEMPLATE_NUMBERS and more elements than needed (warning)
     with gdaltest.error_handler():
-        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                    creationOptions = [
+        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                    creationOptions=[
             "PDS_PDTN=40",
             "PDS_TEMPLATE_NUMBERS=20 0 156 72 0 255 99 0 0 0 1 0 0 0 0 1 255 255 255 255 255 255 255 255 255 255 255 0extra"
                     ])
@@ -768,8 +768,8 @@ def grib_grib2_write_creation_options():
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES and insufficient number of elements
     with gdaltest.error_handler():
-        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                    creationOptions = [
+        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                    creationOptions=[
             "PDS_PDTN=40",
             "PDS_TEMPLATE_NUMBERS=20 0 156 72 0 255 99 0 0 0 1 0 0 0 0 1 255 255 255 255 255 255 255 255 255 255"
                     ])
@@ -779,8 +779,8 @@ def grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES
-    gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                   creationOptions = [
+    gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                   creationOptions=[
         "PDS_PDTN=40",
         "PDS_TEMPLATE_ASSEMBLED_VALUES=20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647"
                    ])
@@ -797,8 +797,8 @@ def grib_grib2_write_creation_options():
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES and more elements than needed (warning)
     with gdaltest.error_handler():
-        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                    creationOptions = [
+        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                    creationOptions=[
             "PDS_PDTN=40",
             "PDS_TEMPLATE_ASSEMBLED_VALUES=20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647 0extra"
                     ])
@@ -819,8 +819,8 @@ def grib_grib2_write_creation_options():
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES and insufficient number of elements
     with gdaltest.error_handler():
-        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                    creationOptions = [
+        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                    creationOptions=[
             "PDS_PDTN=40",
             "PDS_TEMPLATE_ASSEMBLED_VALUES=20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127"
                     ])
@@ -830,8 +830,8 @@ def grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES with variable number of elements
-    gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                   creationOptions = [
+    gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                   creationOptions=[
         "PDS_PDTN=32",
         "PDS_TEMPLATE_ASSEMBLED_VALUES=5 7 2 0 0 0 0 1 0 2 31 285 17292 2 61145 31 285 17292 2 61145"
                    ])
@@ -848,8 +848,8 @@ def grib_grib2_write_creation_options():
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES with variable number of elements, and insufficient number of elements in the variable section
     with gdaltest.error_handler():
-        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                   creationOptions = [
+        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                   creationOptions=[
         "PDS_PDTN=32",
         "PDS_TEMPLATE_ASSEMBLED_VALUES=5 7 2 0 0 0 0 1 0 2 31 285 17292 2 61145 31 285 17292 2"
                    ])
@@ -860,8 +860,8 @@ def grib_grib2_write_creation_options():
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES with variable number of elements, and extra elements
     with gdaltest.error_handler():
-        gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                   creationOptions = [
+        gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                   creationOptions=[
         "PDS_PDTN=32",
         "PDS_TEMPLATE_ASSEMBLED_VALUES=5 7 2 0 0 0 0 1 0 2 31 285 17292 2 61145 31 285 17292 2 61145 0extra"
                    ])
@@ -877,8 +877,8 @@ def grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with PDS_TEMPLATE_NUMBERS with variable number of elements
-    gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                   creationOptions = [
+    gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                   creationOptions=[
         "PDS_PDTN=32",
         "PDS_TEMPLATE_NUMBERS=5 7 2 0 0 0 0 0 1 0 0 0 0 2 0 31 1 29 67 140 2 0 0 238 217 0 31 1 29 67 140 2 0 0 238 217"
                    ])
@@ -895,8 +895,8 @@ def grib_grib2_write_creation_options():
 
     # Test with unknown PDS_PDTN with PDS_TEMPLATE_NUMBERS
     with gdaltest.error_handler():
-        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                   creationOptions = [
+        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                   creationOptions=[
         "PDS_PDTN=65535",
         "PDS_TEMPLATE_NUMBERS=1 2 3 4 5"
                    ])
@@ -918,8 +918,8 @@ def grib_grib2_write_creation_options():
 
     # Test with unknown PDS_PDTN with PDS_TEMPLATE_ASSEMBLED_VALUES
     with gdaltest.error_handler():
-        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                   creationOptions = [
+        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                   creationOptions=[
         "PDS_PDTN=65535",
         "PDS_TEMPLATE_ASSEMBLED_VALUES=1 2 3 4 5"
                    ])
@@ -930,8 +930,8 @@ def grib_grib2_write_creation_options():
 
     # Test with PDS_PDTN != 0 without template numbers
     with gdaltest.error_handler():
-        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                   creationOptions = [
+        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                   creationOptions=[
         "PDS_PDTN=32"
                    ])
     if out_ds is not None:
@@ -941,8 +941,8 @@ def grib_grib2_write_creation_options():
 
     # Test with invalid values in PDS_TEMPLATE_NUMBERS
     with gdaltest.error_handler():
-        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                   creationOptions = [
+        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                   creationOptions=[
         "PDS_PDTN=254",
         "PDS_TEMPLATE_NUMBERS=-1 256 0 0 0 0"
                    ])
@@ -954,8 +954,8 @@ def grib_grib2_write_creation_options():
 
     # Test with invalid values in PDS_TEMPLATE_ASSEMBLED_VALUES
     with gdaltest.error_handler():
-        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                   creationOptions = [
+        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                   creationOptions=[
         "PDS_PDTN=44",
         # {44,21,0,                    {1,  1, 2,1,-1,      -4,   -1,-4,1,1,1,  2,  1,1,-2   ,1,-1,  -4,1,-1,-4} },
         "PDS_TEMPLATE_ASSEMBLED_VALUES=-1 256 -1 1 128 4000000000 -1 -4 1 1 1 65536 1 1 32768 1 -129 -4 1 -1 -4"
@@ -968,8 +968,8 @@ def grib_grib2_write_creation_options():
 
     # Test with both PDS_TEMPLATE_NUMBERS and PDS_TEMPLATE_ASSEMBLED_VALUES
     with gdaltest.error_handler():
-        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
-                   creationOptions = [
+        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
+                   creationOptions=[
         "PDS_PDTN=40",
         "PDS_TEMPLATE_NUMBERS=20 0 156 72 0 255 99 0 0 0 1 0 0 0 0 1 255 255 255 255 255 255 255 255 255 255 255",
         "PDS_TEMPLATE_ASSEMBLED_VALUES=20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647"
@@ -1002,7 +1002,7 @@ def grib_grib2_write_projections():
         filename = 'data/grib/' + filename
         src_ds = gdal.Open(filename)
         tmpfilename = '/vsimem/out.grb2'
-        gdal.Translate(tmpfilename, filename, format = 'GRIB')
+        gdal.Translate(tmpfilename, filename, format='GRIB')
         out_ds = gdal.Open(tmpfilename)
 
         if src_ds.GetProjectionRef() != out_ds.GetProjectionRef():
@@ -1041,7 +1041,7 @@ def grib_grib2_write_projections():
         return 'fail'
 
     # Test writing Mercator_1SP with scale != 1 (will be read as Mercator_2SP)
-    src_ds = gdal.Warp('', 'data/byte.tif', format = 'MEM', dstSRS = """PROJCS["unnamed",
+    src_ds = gdal.Warp('', 'data/byte.tif', format='MEM', dstSRS="""PROJCS["unnamed",
     GEOGCS["NAD27",
         DATUM["North_American_Datum_1927",
             SPHEROID["Clarke 1866",6378206.4,294.9786982138982,
@@ -1060,7 +1060,7 @@ def grib_grib2_write_projections():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]""")
     tmpfilename = '/vsimem/out.grb2'
-    gdal.Translate(tmpfilename, src_ds, format = 'GRIB')
+    gdal.Translate(tmpfilename, src_ds, format='GRIB')
     out_ds = gdal.Open(tmpfilename)
     expected_wkt = 'PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unknown",SPHEROID["Spheroid imported from GRIB file",6378206.4,294.9786982139109]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_2SP"],PARAMETER["standard_parallel_1",33.500986],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'
     got_sr = osr.SpatialReference()
@@ -1081,7 +1081,7 @@ def grib_grib2_write_projections():
     gdal.Unlink(tmpfilename)
 
     # Test writing LCC_1SP (will be read as LCC_2SP)
-    src_ds = gdal.Warp('', 'data/byte.tif', format = 'MEM', dstSRS = """PROJCS["unnamed",
+    src_ds = gdal.Warp('', 'data/byte.tif', format='MEM', dstSRS="""PROJCS["unnamed",
     GEOGCS["NAD27",
         DATUM["North_American_Datum_1927",
             SPHEROID["Clarke 1866",6378206.4,294.9786982138982,
@@ -1099,7 +1099,7 @@ def grib_grib2_write_projections():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]""")
     tmpfilename = '/vsimem/out.grb2'
-    gdal.Translate(tmpfilename, src_ds, format = 'GRIB')
+    gdal.Translate(tmpfilename, src_ds, format='GRIB')
     out_ds = gdal.Open(tmpfilename)
     expected_wkt = 'PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unknown",SPHEROID["Spheroid imported from GRIB file",6378206.4,294.9786982139109]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",34.310911],PARAMETER["standard_parallel_2",32.686501],PARAMETER["latitude_of_origin",33.5],PARAMETER["central_meridian",117],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'
     got_sr = osr.SpatialReference()
@@ -1263,8 +1263,8 @@ def grib_grib2_write_data_encodings():
     for (filename, options, expected_cs, expected_section5_template_number) in tests:
         tmpfilename = '/vsimem/out.grb2'
         gdal.ErrorReset()
-        gdal.Translate(tmpfilename, filename, format = 'GRIB',
-                       creationOptions = options)
+        gdal.Translate(tmpfilename, filename, format='GRIB',
+                       creationOptions=options)
         error_msg = gdal.GetLastErrorMsg()
         if error_msg != '':
             gdaltest.post_reason('did not expect error for %s, %s' % (str(filename), str(options)))
@@ -1319,12 +1319,12 @@ def grib_grib2_write_data_encodings():
         options = ['DATA_ENCODING=' + encoding]
         if encoding == 'COMPLEX_PACKING':
             with gdaltest.error_handler():
-                success = gdal.Translate(tmpfilename, test_ds, format = 'GRIB', creationOptions = options)
+                success = gdal.Translate(tmpfilename, test_ds, format='GRIB', creationOptions=options)
             if success:
                 gdaltest.post_reason('expected error for %s, %s' % ('floating point data with dynamic < 1', str(options)))
                 return 'fail'
         else:
-            gdal.Translate(tmpfilename, test_ds, format = 'GRIB', creationOptions = options)
+            gdal.Translate(tmpfilename, test_ds, format='GRIB', creationOptions=options)
             error_msg = gdal.GetLastErrorMsg()
             if error_msg != '':
                 gdaltest.post_reason('did not expect error for %s, %s' % ('floating point data with dynamic < 1', str(options)))
@@ -1361,7 +1361,7 @@ def grib_grib2_write_data_encodings():
         tmpfilename = '/vsimem/out.grb2'
         if encoding != 'SIMPLE_PACKING':
             gdal.PushErrorHandler()
-        gdal.Translate(tmpfilename, test_ds, format = 'GRIB', creationOptions = ['DATA_ENCODING=' + encoding])
+        gdal.Translate(tmpfilename, test_ds, format='GRIB', creationOptions=['DATA_ENCODING=' + encoding])
         if encoding != 'SIMPLE_PACKING':
             gdal.PopErrorHandler()
         out_ds = gdal.Open(tmpfilename)
@@ -1383,8 +1383,8 @@ def grib_grib2_write_data_encodings():
     for drvname in found_j2k_drivers:
         tmpfilename = '/vsimem/out.grb2'
         gdal.ErrorReset()
-        gdal.Translate(tmpfilename, 'data/utm.tif', format = 'GRIB',
-                        creationOptions = ['JPEG2000_DRIVER='+drvname,
+        gdal.Translate(tmpfilename, 'data/utm.tif', format='GRIB',
+                        creationOptions=['JPEG2000_DRIVER='+drvname,
                                            'COMPRESSION_RATIO=20'])
         error_msg = gdal.GetLastErrorMsg()
         if error_msg != '':
@@ -1424,7 +1424,7 @@ def grib_grib2_write_data_encodings_warnings_and_errors():
         src_ds = gdal.Open(filename)
         gdal.ErrorReset()
         with gdaltest.error_handler():
-            out_ds = gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options = options)
+            out_ds = gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
 
         error_msg = gdal.GetLastErrorMsg()
         if error_msg == '':
@@ -1456,7 +1456,7 @@ def grib_grib2_write_data_encodings_warnings_and_errors():
     tests += [['data/float64.asc', []]] # no projection
     tests += [['data/byte.sgi', []]] # no geotransform
     tests += [['data/rotation.img', []]] # geotransform with rotation terms
-    gdal.GetDriverByName('GTiff').Create('/vsimem/huge.tif', 65535, 65535, 1, options = ['SPARSE_OK=YES'])
+    gdal.GetDriverByName('GTiff').Create('/vsimem/huge.tif', 65535, 65535, 1, options=['SPARSE_OK=YES'])
     tests += [['/vsimem/huge.tif', []]] # too many pixels
 
     for (filename, options,) in tests:
@@ -1464,7 +1464,7 @@ def grib_grib2_write_data_encodings_warnings_and_errors():
         src_ds = gdal.Open(filename)
         gdal.ErrorReset()
         with gdaltest.error_handler():
-            out_ds = gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options = options)
+            out_ds = gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
 
         error_msg = gdal.GetLastErrorMsg()
         if error_msg == '':
@@ -1479,7 +1479,7 @@ def grib_grib2_write_data_encodings_warnings_and_errors():
     gdal.Unlink('/vsimem/huge.tif')
 
     with gdaltest.error_handler():
-        out_ds = gdal.Translate('/i/do_not/exist.grb2', 'data/byte.tif', format = 'GRIB')
+        out_ds = gdal.Translate('/i/do_not/exist.grb2', 'data/byte.tif', format='GRIB')
     if out_ds is not None:
         gdaltest.post_reason('expected null return')
         return 'fail'
@@ -1506,7 +1506,7 @@ def grib_grib2_write_temperatures():
         src_ds.SetProjection(sr.ExportToWkt())
         src_ds.WriteRaster(0, 0, 2, 2,
                            struct.pack(4 * 'f', 25.0, 25.1, 25.1, 25.2),
-                           buf_type = gdal.GDT_Float32)
+                           buf_type=gdal.GDT_Float32)
 
         tmpfilename = '/vsimem/out.grb2'
         options = [
@@ -1516,7 +1516,7 @@ def grib_grib2_write_temperatures():
         ]
         if input_unit is not None:
             options += ['INPUT_UNIT=' + input_unit]
-        gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options = options)
+        gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
 
         out_ds = gdal.Open(tmpfilename)
         got_vals = struct.unpack(4 * 'd', out_ds.ReadRaster())
