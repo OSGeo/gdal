@@ -69,7 +69,7 @@ def ogr_rfc30_1():
     else:
         # First try with Unicode string
         exec("filename =  u'/vsimem/\u00e9.shp'")
-        exec("layer_name = u'\u00e9'.encode( 'utf-8' )") # FIXME? we should perhaps accept Unicode strings for layernames as well
+        exec("layer_name = u'\u00e9'.encode( 'utf-8' )")  # FIXME? we should perhaps accept Unicode strings for layernames as well
 
     return ogr_rfc30_1_internal(filename, layer_name)
 
@@ -83,7 +83,7 @@ def ogr_rfc30_1_bis():
     layer_name = None
     # Test that it also works with a regular string (non Unicode) with utf8 content on python 2.X
     exec("filename =  u'/vsimem/\u00e9.shp'.encode( 'utf-8' )")
-    exec("layer_name = u'\u00e9'.encode( 'utf-8' )") # FIXME? we should perhaps accept Unicode strings for layernames as well
+    exec("layer_name = u'\u00e9'.encode( 'utf-8' )")  # FIXME? we should perhaps accept Unicode strings for layernames as well
 
     return ogr_rfc30_1_internal(filename, layer_name)
 

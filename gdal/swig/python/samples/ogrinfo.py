@@ -529,7 +529,7 @@ def DumpReadableGeometry(poGeometry, pszPrefix, options):
 
 if __name__ == '__main__':
     version_num = int(gdal.VersionInfo('VERSION_NUM'))
-    if version_num < 1800: # because of ogr.GetFieldTypeName
+    if version_num < 1800:  # because of ogr.GetFieldTypeName
         print('ERROR: Python bindings of GDAL 1.8.0 or later required')
         sys.exit(1)
 

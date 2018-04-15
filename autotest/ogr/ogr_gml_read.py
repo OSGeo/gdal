@@ -336,7 +336,7 @@ def ogr_gml_9():
     lyr.CreateField(ogr.FieldDefn('test', ogr.OFTString))
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
-    dst_feat.SetFieldBinaryFromHexString('test', '80626164') # \x80bad'
+    dst_feat.SetFieldBinaryFromHexString('test', '80626164')  # \x80bad'
 
     # Avoid the warning
     gdal.PushErrorHandler('CPLQuietErrorHandler')

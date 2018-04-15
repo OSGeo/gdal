@@ -728,9 +728,9 @@ def grib_grib2_write_creation_options():
                    creationOptions=[
         "DISCIPLINE=1",
         "IDS=CENTER=85(Toulouse) SUBCENTER=2 MASTER_TABLE=5 LOCAL_TABLE=0 SIGNF_REF_TIME=0(Analysis) REF_TIME=2017-09-11T12:34:56Z PROD_STATUS=2(Research) TYPE=0(Analysis)",
-        "IDS_SUBCENTER=3", # Test that it overrides IDS
+        "IDS_SUBCENTER=3",  # Test that it overrides IDS
         "PDS_PDTN=30",
-        "BAND_1_PDS_PDTN=40", # Test that it overrides PDS_PDTN
+        "BAND_1_PDS_PDTN=40",  # Test that it overrides PDS_PDTN
         "PDS_TEMPLATE_NUMBERS=20 0 156 72 0 255 99 0 0 0 1 0 0 0 0 1 255 255 255 255 255 255 255 255 255 255 255"
                    ])
     ds = gdal.Open(tmpfilename)
@@ -996,7 +996,7 @@ def grib_grib2_write_projections():
                   'mercator.grb2',
                   'mercator_2sp.grb2',
                   'polar_stereographic.grb2',
-                  'ieee754_single.grb2' # Longitude latitude
+                  'ieee754_single.grb2'  # Longitude latitude
                   ]
     for filename in filenames:
         filename = 'data/grib/' + filename
@@ -1177,7 +1177,7 @@ def grib_grib2_write_data_encodings():
     tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'NBITS=5', 'DECIMAL_SCALE_FACTOR=-1'], 4820, GS5_SIMPLE]]
     tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'NBITS=8', 'DECIMAL_SCALE_FACTOR=-1'], 4855, GS5_SIMPLE]]
 
-    tests += [['data/grib/ds.mint.bin', ['PDS_PDTN=8', 'PDS_TEMPLATE_ASSEMBLED_VALUES=0 5 2 0 0 255 255 1 19 1 0 0 255 -1 -2147483647 2008 2 22 12 0 0 1 0 3 255 1 12 1 0'], 46650, GS5_CMPLX]] # has nodata, hence complex packing
+    tests += [['data/grib/ds.mint.bin', ['PDS_PDTN=8', 'PDS_TEMPLATE_ASSEMBLED_VALUES=0 5 2 0 0 255 255 1 19 1 0 0 255 -1 -2147483647 2008 2 22 12 0 0 1 0 3 255 1 12 1 0'], 46650, GS5_CMPLX]]  # has nodata, hence complex packing
     tests += [['data/byte.tif', ['DATA_ENCODING=COMPLEX_PACKING'], 4672, GS5_CMPLX]]
     tests += [['data/byte.tif', ['DATA_ENCODING=COMPLEX_PACKING', 'SPATIAL_DIFFERENCING_ORDER=0'], 4672, GS5_CMPLX]]
     tests += [['data/byte.tif', ['SPATIAL_DIFFERENCING_ORDER=1'], 4672, GS5_CMPLXSEC]]
@@ -1191,10 +1191,10 @@ def grib_grib2_write_data_encodings():
         tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=8'], 4672, GS5_PNG]]
         tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'DECIMAL_SCALE_FACTOR=-1'], 4820, GS5_PNG]]
         tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=8', 'DECIMAL_SCALE_FACTOR=-1'], 4855, GS5_PNG]]
-        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=9'], 4672, GS5_PNG]] # rounded to 16 bit
-        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=7'], 4672, GS5_PNG]] # rounded to 8 bit
+        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=9'], 4672, GS5_PNG]]  # rounded to 16 bit
+        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=7'], 4672, GS5_PNG]]  # rounded to 8 bit
         tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=4'], 5103, GS5_PNG]]
-        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=3'], 5103, GS5_PNG]] # rounded to 4 bit
+        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=3'], 5103, GS5_PNG]]  # rounded to 4 bit
         tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=2'], 5103, GS5_PNG]]
         tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=1'], 5103, GS5_PNG]]
         tests += [['../gcore/data/float32.tif', ['DATA_ENCODING=PNG'], 4672, GS5_PNG]]
@@ -1211,7 +1211,7 @@ def grib_grib2_write_data_encodings():
 
     if len(found_j2k_drivers) > 0:
         tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000'], 4672, GS5_JPEG2000]]
-        tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'COMPRESSION_RATIO=2'], 4672, GS5_JPEG2000]] # COMPRESSION_RATIO ignored in that case
+        tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'COMPRESSION_RATIO=2'], 4672, GS5_JPEG2000]]  # COMPRESSION_RATIO ignored in that case
         tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'NBITS=8'], 4672, GS5_JPEG2000]]
         tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'DECIMAL_SCALE_FACTOR=-1'], 4820, GS5_JPEG2000]]
         tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'NBITS=8', 'DECIMAL_SCALE_FACTOR=-1'], 4855, GS5_JPEG2000]]
@@ -1394,7 +1394,7 @@ def grib_grib2_write_data_encodings():
         cs = out_ds.GetRasterBand(1).Checksum()
         out_ds = None
         gdal.Unlink(tmpfilename)
-        if cs == 0 or cs == 50235: # 50235: lossless checksum
+        if cs == 0 or cs == 50235:  # 50235: lossless checksum
             gdaltest.post_reason('did not get expected checksum for lossy JPEG2000 with ' + drvname)
             print(cs)
 
@@ -1415,7 +1415,7 @@ def grib_grib2_write_data_encodings_warnings_and_errors():
     tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'JPEG2000_DRIVER=FOO'], 4672]]
     tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'JPEG2000_DRIVER=FOO'], 4672]]
     tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'SPATIAL_DIFFERENCING_ORDER=1'], 4672]]
-    tests += [['data/grib/ds.mint.bin', ['DATA_ENCODING=SIMPLE_PACKING'], 41640]] # should warn since simple packing doesn't support nodata
+    tests += [['data/grib/ds.mint.bin', ['DATA_ENCODING=SIMPLE_PACKING'], 41640]]  # should warn since simple packing doesn't support nodata
     tests += [['data/byte.tif', ['NBITS=32'], 4672]]
     tests += [['data/byte.tif', ['DATA_ENCODING=IEEE_FLOATING_POINT', 'NBITS=8'], 4672]]
     tests += [['data/byte.tif', ['DATA_ENCODING=IEEE_FLOATING_POINT', 'DECIMAL_SCALE_FACTOR=-1'], 4672]]
@@ -1447,17 +1447,17 @@ def grib_grib2_write_data_encodings_warnings_and_errors():
 
     # Cases where errors are expected
     tests = []
-    tests += [['data/byte.tif', ['DATA_ENCODING=FOO']]] # invalid DATA_ENCODING
-    tests += [['data/byte.tif', ['JPEG2000_DRIVER=FOO', 'SPATIAL_DIFFERENCING_ORDER=BAR']]] # both cannot be used together
+    tests += [['data/byte.tif', ['DATA_ENCODING=FOO']]]  # invalid DATA_ENCODING
+    tests += [['data/byte.tif', ['JPEG2000_DRIVER=FOO', 'SPATIAL_DIFFERENCING_ORDER=BAR']]]  # both cannot be used together
     tests += [['data/byte.tif', ['SPATIAL_DIFFERENCING_ORDER=3']]]
-    tests += [['data/byte.tif', ['JPEG2000_DRIVER=THIS_IS_NOT_A_J2K_DRIVER']]] # non-existing driver
-    tests += [['data/byte.tif', ['JPEG2000_DRIVER=DERIVED']]] # Read-only driver
-    tests += [['../gcore/data/cfloat32.tif', []]] # complex data type
-    tests += [['data/float64.asc', []]] # no projection
-    tests += [['data/byte.sgi', []]] # no geotransform
-    tests += [['data/rotation.img', []]] # geotransform with rotation terms
+    tests += [['data/byte.tif', ['JPEG2000_DRIVER=THIS_IS_NOT_A_J2K_DRIVER']]]  # non-existing driver
+    tests += [['data/byte.tif', ['JPEG2000_DRIVER=DERIVED']]]  # Read-only driver
+    tests += [['../gcore/data/cfloat32.tif', []]]  # complex data type
+    tests += [['data/float64.asc', []]]  # no projection
+    tests += [['data/byte.sgi', []]]  # no geotransform
+    tests += [['data/rotation.img', []]]  # geotransform with rotation terms
     gdal.GetDriverByName('GTiff').Create('/vsimem/huge.tif', 65535, 65535, 1, options=['SPARSE_OK=YES'])
-    tests += [['/vsimem/huge.tif', []]] # too many pixels
+    tests += [['/vsimem/huge.tif', []]]  # too many pixels
 
     for (filename, options,) in tests:
         tmpfilename = '/vsimem/out.grb2'

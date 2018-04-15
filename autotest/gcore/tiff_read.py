@@ -1839,7 +1839,7 @@ def tiff_direct_and_virtual_mem_io():
             print(i)
             return 'fail'
 
-  ds = gdal.Open('data/byte.tif') # any GTiff file will do
+  ds = gdal.Open('data/byte.tif')  # any GTiff file will do
   unreached = ds.GetMetadataItem('UNREACHED_VIRTUALMEMIO_CODE_PATH', '_DEBUG_')
   ds = None
   if unreached:
@@ -2993,10 +2993,10 @@ def tiff_read_ycbcr_lzw():
 
     tests = [('ycbcr_11_lzw.tif', 13459, 12939, 12414),
               ('ycbcr_12_lzw.tif', 13565, 13105, 12660),
-              ('ycbcr_14_lzw.tif', 0, 0, 0), # not supported
+              ('ycbcr_14_lzw.tif', 0, 0, 0),  # not supported
               ('ycbcr_21_lzw.tif', 13587, 13297, 12760),
               ('ycbcr_22_lzw.tif', 13393, 13137, 12656),
-              ('ycbcr_24_lzw.tif', 0, 0, 0), # not supported
+              ('ycbcr_24_lzw.tif', 0, 0, 0),  # not supported
               ('ycbcr_41_lzw.tif', 13218, 12758, 12592),
               ('ycbcr_42_lzw.tif', 13277, 12779, 12614),
               ('ycbcr_42_lzw_optimized.tif', 19918, 20120, 19087),
@@ -3509,7 +3509,7 @@ def tiff_read_size_of_stripbytecount_lower_than_stripcount():
 def tiff_read_stripoffset_types():
 
     tests = [
-        ('data/classictiff_one_block_byte.tif', []), # unsupported
+        ('data/classictiff_one_block_byte.tif', []),  # unsupported
         ('data/classictiff_one_block_long.tif', [158]),
         ('data/classictiff_one_block_be_long.tif', [158]),
         ('data/classictiff_one_strip_long.tif', [146]),

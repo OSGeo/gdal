@@ -324,7 +324,7 @@ def ogr_pg_4():
         feat_read.Destroy()
 
     dst_feat.Destroy()
-    gdaltest.pg_lyr.ResetReading() # to close implicit transaction
+    gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
 
     return 'success'
 
@@ -664,7 +664,7 @@ def ogr_pg_12():
         orig_feat.Destroy()
 
     gdaltest.poly_feat = None
-    gdaltest.pgc_lyr.ResetReading() # to close implicit transaction
+    gdaltest.pgc_lyr.ResetReading()  # to close implicit transaction
 
     return 'success'
 
@@ -2792,7 +2792,7 @@ def ogr_pg_49():
     gdal.SetConfigOption('PGSQL_OGR_FID', None)
 
     feat = lyr.GetNextFeature()
-    lyr.ResetReading() # to close implicit transaction
+    lyr.ResetReading()  # to close implicit transaction
 
     if lyr.GetFIDColumn() != 'other_id':
         print(lyr.GetFIDColumn())
@@ -2853,11 +2853,11 @@ def ogr_pg_50():
             if value == 'NaN':
                 if not gdaltest.isnan(got_val):
                     print(feat.GetFieldAsString('AREA')+' returned for AREA instead of '+value)
-                    gdaltest.pg_lyr.ResetReading() # to close implicit transaction
+                    gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
                     return 'fail'
             elif got_val != float(value):
                 print(feat.GetFieldAsString('AREA')+' returned for AREA instead of '+value)
-                gdaltest.pg_lyr.ResetReading() # to close implicit transaction
+                gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
                 return 'fail'
 
             if bHasSetFieldDoubleList:
@@ -2865,14 +2865,14 @@ def ogr_pg_50():
                 if value == 'NaN':
                     if not gdaltest.isnan(got_val[0]) or not gdaltest.isnan(got_val[1]):
                         print(feat.GetFieldAsString('REALLIST')+' returned for REALLIST instead of '+value)
-                        gdaltest.pg_lyr.ResetReading() # to close implicit transaction
+                        gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
                         return 'fail'
                 elif got_val[0] != float(value) or got_val[1] != float(value):
                     print(feat.GetFieldAsString('REALLIST')+' returned for REALLIST instead of '+value)
-                    gdaltest.pg_lyr.ResetReading() # to close implicit transaction
+                    gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
                     return 'fail'
 
-    gdaltest.pg_lyr.ResetReading() # to close implicit transaction
+    gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
 
     return 'success'
 
@@ -2935,7 +2935,7 @@ def ogr_pg_53():
     feat.SetField(0, 'bar')
     lyr.CreateFeature(feat)
 
-    lyr.ResetReading() # force above feature to be committed
+    lyr.ResetReading()  # force above feature to be committed
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
 
@@ -3047,7 +3047,7 @@ def ogr_pg_55():
     layer.CreateFeature(feat)
     feat = None
 
-    layer.ResetReading() # force above feature to be committed
+    layer.ResetReading()  # force above feature to be committed
 
     old_val = gdal.GetConfigOption('PG_USE_BASE64')
     gdal.SetConfigOption('PG_USE_BASE64', 'YES')
@@ -3215,7 +3215,7 @@ def ogr_pg_58():
         gdaltest.post_reason('failed (2)')
         return 'fail'
     feat = None
-    lyr.ResetReading() # to close implicit transaction
+    lyr.ResetReading()  # to close implicit transaction
 
     if lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex('anotherstrcolumn')) != 0:
         gdaltest.post_reason('failed (3)')
@@ -3670,7 +3670,7 @@ def ogr_pg_67():
         return 'skip'
 
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_67')
-    lyr.ResetReading() # to trigger layer creation
+    lyr.ResetReading()  # to trigger layer creation
     lyr = None
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
@@ -4073,7 +4073,7 @@ def ogr_pg_72():
         f.DumpReadable()
         return 'fail'
 
-    lyr.ResetReading() # to close implicit transaction
+    lyr.ResetReading()  # to close implicit transaction
 
     return 'success'
 
@@ -4132,7 +4132,7 @@ def ogr_pg_73():
 
     gdal.SetConfigOption('PG_USE_COPY', gdaltest.pg_use_copy)
 
-    lyr.ResetReading() # force above feature to be committed
+    lyr.ResetReading()  # force above feature to be committed
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
     lyr = ds.GetLayerByName('ogr_pg_73')
@@ -4265,7 +4265,7 @@ def ogr_pg_74():
     lyr.CreateFeature(f)
     f = None
 
-    lyr.ResetReading() # force above feature to be committed
+    lyr.ResetReading()  # force above feature to be committed
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
     ds.ExecuteSQL('set timezone to "UTC"')
@@ -4323,7 +4323,7 @@ def ogr_pg_74():
         f.DumpReadable()
         return 'fail'
 
-    lyr.ResetReading() # to close implicit transaction
+    lyr.ResetReading()  # to close implicit transaction
 
     # Change DEFAULT value
     src_fd = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string'))
@@ -4468,7 +4468,7 @@ def ogr_pg_75():
         f.DumpReadable()
         return 'fail'
     f = None
-    lyr.ResetReading() # to close implicit transaction
+    lyr.ResetReading()  # to close implicit transaction
 
     return 'success'
 
@@ -5035,7 +5035,7 @@ def ogr_pg_78():
 
     gdaltest.pg_ds = None
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
-    lc = gdaltest.pg_ds.GetLayerCount() # force discovery of all tables
+    lc = gdaltest.pg_ds.GetLayerCount()  # force discovery of all tables
     ogr_pg_78_found = False
     ogr_pg_78_2_found = False
     for i in range(lc):
@@ -5067,7 +5067,7 @@ def ogr_pg_78():
     # Test with slow method
     gdal.SetConfigOption('PG_USE_POSTGIS2_OPTIM', 'NO')
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
-    lc = gdaltest.pg_ds.GetLayerCount() # force discovery of all tables
+    lc = gdaltest.pg_ds.GetLayerCount()  # force discovery of all tables
     ogr_pg_78_found = False
     ogr_pg_78_2_found = False
     for i in range(lc):
@@ -5257,7 +5257,7 @@ def ogr_pg_81():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    lyr.ResetReading() # flushes implicit transaction
+    lyr.ResetReading()  # flushes implicit transaction
 
     return 'success'
 
@@ -5318,7 +5318,7 @@ def ogr_pg_83():
             gdaltest.post_reason('fail')
             print(geom_type, options, wkt, expected_wkt, got_wkt)
             return 'fail'
-        lyr.ResetReading() # flushes implicit transaction
+        lyr.ResetReading()  # flushes implicit transaction
 
         if 'GEOM_TYPE=geography' in options:
             continue
@@ -5347,7 +5347,7 @@ def ogr_pg_83():
             gdaltest.post_reason('fail')
             print(geom_type, options, wkt, expected_wkt, got_wkt)
             return 'fail'
-        lyr.ResetReading() # flushes implicit transaction
+        lyr.ResetReading()  # flushes implicit transaction
 
     return 'success'
 
@@ -5375,7 +5375,7 @@ def ogr_pg_84():
     ds = None
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
-    ds.GetLayerCount() # load all layers
+    ds.GetLayerCount()  # load all layers
     lyr = ds.GetLayerByName('ogr_pg_84')
     if lyr.GetMetadataItem('DESCRIPTION') != 'foo':
         gdaltest.post_reason('fail')
@@ -5389,7 +5389,7 @@ def ogr_pg_84():
     ds = None
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
-    lyr = ds.GetLayerByName('ogr_pg_84') # load just this layer
+    lyr = ds.GetLayerByName('ogr_pg_84')  # load just this layer
     if lyr.GetMetadataItem('DESCRIPTION') != 'bar':
         gdaltest.post_reason('fail')
         return 'fail'
@@ -5413,7 +5413,7 @@ def ogr_pg_84():
     ds = None
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
-    lyr = ds.GetLayerByName('ogr_pg_84') # load just this layer
+    lyr = ds.GetLayerByName('ogr_pg_84')  # load just this layer
     if lyr.GetMetadataDomainList() is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -5423,8 +5423,8 @@ def ogr_pg_84():
     ds = None
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
-    ds.GetLayerCount() # load all layers
-    lyr = ds.GetLayerByName('ogr_pg_84') # load just this layer
+    ds.GetLayerCount()  # load all layers
+    lyr = ds.GetLayerByName('ogr_pg_84')  # load just this layer
     if lyr.GetMetadataItem('DESCRIPTION') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -5444,7 +5444,7 @@ def ogr_pg_85():
     gdaltest.pg_ds.CreateLayer('ogr_pg_85_1')
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_85_2')
     lyr.CreateField(ogr.FieldDefn('foo'))
-    gdaltest.pg_ds.ReleaseResultSet(gdaltest.pg_ds.ExecuteSQL('SELECT 1')) # make sure the layers are well created
+    gdaltest.pg_ds.ReleaseResultSet(gdaltest.pg_ds.ExecuteSQL('SELECT 1'))  # make sure the layers are well created
 
     old_val = gdal.GetConfigOption('PG_USE_COPY')
     gdal.SetConfigOption('PG_USE_COPY', 'YES')

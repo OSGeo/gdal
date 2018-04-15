@@ -655,7 +655,7 @@ def getTileName(minfo,ti,xIndex,yIndex,level=-1):
         max=ti.countTilesY
     countDigits= len(str(max))
     parts=os.path.splitext(os.path.basename(minfo.filename))
-    if parts[0][0]=="@" : #remove possible leading "@"
+    if parts[0][0]=="@" :  # remove possible leading "@"
        parts = (parts[0][1:len(parts[0])], parts[1])
 
     yIndex_str = ("%0"+str(countDigits)+"i") % (yIndex,)

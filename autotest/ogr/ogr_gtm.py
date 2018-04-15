@@ -383,7 +383,7 @@ def ogr_gtm_check_write_1():
 
     # Test tracks
     lyr = ds.GetLayerByName('gtm_tracks')
-    if lyr.GetFeatureCount() != 4: # The driver converts multiline
+    if lyr.GetFeatureCount() != 4:  # The driver converts multiline
                                    # into one line for each tuple
                                    # element
         gdaltest.post_reason('Bad feature count.')

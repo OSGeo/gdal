@@ -318,7 +318,7 @@ def ogr_db2_listdrivers():
         if driverName not in formatsList:
             formatsList.append(driverName)
 
-    formatsList.sort() # Sorting the messy list of ogr drivers
+    formatsList.sort()  # Sorting the messy list of ogr drivers
 
     for i in formatsList:
         print(i)

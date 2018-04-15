@@ -811,7 +811,7 @@ def vrtderived_12():
         gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
         # CInt16/CInt32 do not map to native numpy types
         if dt == 'CInt16' or dt == 'CInt32':
-            expected_cs = 0 # error
+            expected_cs = 0  # error
         else:
             expected_cs = 100
         if cs != expected_cs:

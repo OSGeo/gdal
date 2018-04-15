@@ -69,7 +69,7 @@ def compare_ogrinfo_output(gmlfile, reffile, options=''):
         '-oo @EXPOSE_CONFIGURATION_IN_METADATA=NO' + ' ' + options,
         encoding='utf-8')
     ret = ret.replace('\r\n', '\n')
-    ret = ret.replace('data\\gmlas\\', 'data/gmlas/') # Windows
+    ret = ret.replace('data\\gmlas\\', 'data/gmlas/')  # Windows
     expected = open(reffile, 'rb').read().decode('utf-8')
     expected = expected.replace('\r\n', '\n')
     if ret != expected:
@@ -461,7 +461,7 @@ def ogr_gmlas_unexpected_repeated_element():
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
         f = lyr.GetNextFeature()
-    if f is None or f['foo'] != 'foo_again': # somewhat arbitrary to keep the latest one!
+    if f is None or f['foo'] != 'foo_again':  # somewhat arbitrary to keep the latest one!
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -490,7 +490,7 @@ def ogr_gmlas_unexpected_repeated_element_variant():
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
         f = lyr.GetNextFeature()
-    if f is None or f['foo'] != 'foo_again': # somewhat arbitrary to keep the latest one!
+    if f is None or f['foo'] != 'foo_again':  # somewhat arbitrary to keep the latest one!
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -717,7 +717,7 @@ class MyHandler:
         self.error_list = []
 
     def error_handler(self, err_type, err_no, err_msg):
-        if err_type != 1: # 1 == Debug
+        if err_type != 1:  # 1 == Debug
             self.error_list.append((err_type, err_no, err_msg))
 
 

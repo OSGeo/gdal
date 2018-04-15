@@ -260,7 +260,7 @@ def tiff_srs_angular_units():
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
     if wkt.find('UNIT["arc-second",4.848136811095361e-06]') < 0 and \
-       wkt.find('UNIT["arc-second",4.848136811095361e-006]') < 0 : # wine variant
+       wkt.find('UNIT["arc-second",4.848136811095361e-006]') < 0 :  # wine variant
         gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
@@ -518,8 +518,8 @@ tiff_srs_list = [2758,  # tmerc
                   3410,  # cea
                   3786,  # eqc spherical, method=9823
                   32663,  # eqc elliptical, method=9842
-                  4087, # eqc WGS 84 / World Equidistant Cylindrical method=1028
-                  4088, # eqc World Equidistant Cylindrical (Sphere) method=1029
+                  4087,  # eqc WGS 84 / World Equidistant Cylindrical method=1028
+                  4088,  # eqc World Equidistant Cylindrical (Sphere) method=1029
                   2934,  # merc
                   27200,  # nzmg
                   2057,  # omerc Hotine_Oblique_Mercator_Azimuth_Center
@@ -531,14 +531,14 @@ tiff_srs_list = [2758,  # tmerc
                   26943,  # lcc 2SP,
                   4328,  # geocentric
                   3994,  # mercator 2SP
-                  26920, # UTM NAD83 special case
-                  26720, # UTM NAD27 special case
-                  32630, # UTM WGS84 north special case
-                  32730, # UTM WGS84 south special case
-                  22700, # unknown datum 'Deir_ez_Zor'
-                  31491, # Germany Zone projection
-                  [3857, False, True], # Web Mercator
-                  [102113, False, True], # ESRI WGS_1984_Web_Mercator
+                  26920,  # UTM NAD83 special case
+                  26720,  # UTM NAD27 special case
+                  32630,  # UTM WGS84 north special case
+                  32730,  # UTM WGS84 south special case
+                  22700,  # unknown datum 'Deir_ez_Zor'
+                  31491,  # Germany Zone projection
+                  [3857, False, True],  # Web Mercator
+                  [102113, False, True],  # ESRI WGS_1984_Web_Mercator
                   ]
 
 for item in tiff_srs_list:
