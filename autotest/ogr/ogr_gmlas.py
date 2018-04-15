@@ -62,12 +62,12 @@ def compare_ogrinfo_output(gmlfile, reffile, options=''):
 
     tmpfilename = 'tmp/' + os.path.basename(gmlfile) + '.txt'
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() +
-        ' -ro -al GMLAS:' + gmlfile +
-        ' -oo EXPOSE_METADATA_LAYERS=YES ' +
-        '-oo @KEEP_RELATIVE_PATHS_FOR_METADATA=YES ' +
-        '-oo @EXPOSE_SCHEMAS_NAME_IN_METADATA=NO ' +
-        '-oo @EXPOSE_CONFIGURATION_IN_METADATA=NO' + ' ' + options,
-        encoding='utf-8')
+                               ' -ro -al GMLAS:' + gmlfile +
+                               ' -oo EXPOSE_METADATA_LAYERS=YES ' +
+                               '-oo @KEEP_RELATIVE_PATHS_FOR_METADATA=YES ' +
+                               '-oo @EXPOSE_SCHEMAS_NAME_IN_METADATA=NO ' +
+                               '-oo @EXPOSE_CONFIGURATION_IN_METADATA=NO' + ' ' + options,
+                               encoding='utf-8')
     ret = ret.replace('\r\n', '\n')
     ret = ret.replace('data\\gmlas\\', 'data/gmlas/')  # Windows
     expected = open(reffile, 'rb').read().decode('utf-8')
@@ -152,12 +152,12 @@ def ogr_gmlas_virtual_file():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_8.xml',
-"""<myns:main_elt xmlns:myns="http://myns"
+                           """<myns:main_elt xmlns:myns="http://myns"
                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                   xsi:schemaLocation="http://myns ogr_gmlas_8.xsd"/>""")
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_8.xsd',
-"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:myns="http://myns"
            targetNamespace="http://myns"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
@@ -300,7 +300,7 @@ def ogr_gmlas_gml_without_schema_location():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_gml_without_schema_location.xml',
-"""<MYNS:main_elt xmlns:MYNS="http://myns"/>""")
+                           """<MYNS:main_elt xmlns:MYNS="http://myns"/>""")
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_gml_without_schema_location.xml')
@@ -993,16 +993,16 @@ def ogr_gmlas_conf_ignored_xpath():
 
     # Test unsupported and invalid XPaths
     for xpath in ['',
-                   '1',
-                   '@',
-                   '@/',
-                   '.',
-                   ':',
-                   '/:',
-                   'a:',
-                   'a:1',
-                   'foo[1]',
-                   "foo[@bar='baz']"]:
+                  '1',
+                  '@',
+                  '@/',
+                  '.',
+                  ':',
+                  '/:',
+                  'a:',
+                  'a:1',
+                  'foo[1]',
+                  "foo[@bar='baz']"]:
         with gdaltest.error_handler():
             gdal.OpenEx('GMLAS:', open_options=[
                     'XSD=data/gmlas/gmlas_test1.xsd',
@@ -1022,7 +1022,7 @@ def ogr_gmlas_conf_ignored_xpath():
     with gdaltest.error_handler():
         gdal.OpenEx('GMLAS:', open_options=[
                     'XSD=data/gmlas/gmlas_test1.xsd',
-                """CONFIG_FILE=<Configuration>
+                    """CONFIG_FILE=<Configuration>
                     <IgnoredXPaths>
                         <Namespaces>
                             <Namespace prefix="ns" uri="http://ns1"/>
@@ -1192,20 +1192,20 @@ def ogr_gmlas_cache():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_cache.xml',
-"""<main_elt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                           """<main_elt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                   xsi:noNamespaceSchemaLocation="http://localhost:%d/vsimem/ogr_gmlas_cache.xsd">
     <foo>bar</foo>
 </main_elt>
 """ % webserver_port)
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_cache.xsd',
-"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:include schemaLocation="ogr_gmlas_cache_2.xsd"/>
 </xs:schema>""")
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_cache_2.xsd',
-"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:element name="main_elt">
   <xs:complexType>
@@ -1393,7 +1393,7 @@ def ogr_gmlas_instantiate_only_gml_feature():
         return 'skip'
 
     ds = gdal.OpenEx('GMLAS:',
-        open_options=['XSD=data/gmlas/gmlas_instantiate_only_gml_feature.xsd'])
+                     open_options=['XSD=data/gmlas/gmlas_instantiate_only_gml_feature.xsd'])
     if ds.GetLayerCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1538,11 +1538,11 @@ def ogr_gmlas_dataset_getnextfeature():
         return 'fail'
 
     for layers in [['_ogr_fields_metadata'],
-                    ['_ogr_layers_metadata'],
-                    ['_ogr_layer_relationships'],
-                    ['_ogr_fields_metadata', '_ogr_layers_metadata'],
-                    ['_ogr_fields_metadata', '_ogr_layer_relationships'],
-                    ['_ogr_layers_metadata', '_ogr_layer_relationships'],
+                   ['_ogr_layers_metadata'],
+                   ['_ogr_layer_relationships'],
+                   ['_ogr_fields_metadata', '_ogr_layers_metadata'],
+                   ['_ogr_fields_metadata', '_ogr_layer_relationships'],
+                   ['_ogr_layers_metadata', '_ogr_layer_relationships'],
                     ]:
 
         ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml')
@@ -1654,8 +1654,8 @@ def ogr_gmlas_validate_ignored_fixed_attribute():
     myhandler = MyHandler()
     gdal.PushErrorHandler(myhandler.error_handler)
     gdal.OpenEx('GMLAS:data/gmlas/gmlas_validate_ignored_fixed_attribute.xml',
-        open_options=['VALIDATE=YES',
-                         'CONFIG_FILE=<Configuration><IgnoredXPaths><XPath>@bar</XPath></IgnoredXPaths></Configuration>'])
+                open_options=['VALIDATE=YES',
+                              'CONFIG_FILE=<Configuration><IgnoredXPaths><XPath>@bar</XPath></IgnoredXPaths></Configuration>'])
     gdal.PopErrorHandler()
     if len(myhandler.error_list) != 0:
         gdaltest.post_reason('fail')
@@ -1675,7 +1675,7 @@ def ogr_gmlas_remove_unused_layers_and_fields():
 
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_remove_unused_layers_and_fields.xml',
                      open_options=['REMOVE_UNUSED_LAYERS=YES',
-                                     'REMOVE_UNUSED_FIELDS=YES'])
+                                   'REMOVE_UNUSED_FIELDS=YES'])
     if ds.GetLayerCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1735,7 +1735,7 @@ def ogr_gmlas_xlink_resolver():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_xlink_resolver.xsd',
-"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
               xmlns:xlink="http://fake_xlink"
               elementFormDefault="qualified"
               attributeFormDefault="unqualified">
@@ -1779,7 +1779,7 @@ def ogr_gmlas_xlink_resolver():
                            open('data/gmlas/gmlas_fake_xlink.xsd', 'rb').read())
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_xlink_resolver.xml',
-"""
+                           """
 <FeatureCollection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xmlns:xlink="http://fake_xlink"
           xsi:noNamespaceSchemaLocation="ogr_gmlas_xlink_resolver.xsd">
@@ -1802,7 +1802,7 @@ def ogr_gmlas_xlink_resolver():
 
     # Enable resolution, but only from local cache
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml',
-        open_options=["""CONFIG_FILE=<Configuration>
+                     open_options=["""CONFIG_FILE=<Configuration>
         <XLinkResolution>
             <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
             <DefaultResolution enabled="true">
@@ -1837,7 +1837,7 @@ def ogr_gmlas_xlink_resolver():
     gdal.FileFromMemBuffer('/vsimem/resource2.xml', 'baz')
     gdal.SetConfigOption('GMLAS_XLINK_RAM_CACHE_SIZE', '5')
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml',
-        open_options=["""CONFIG_FILE=<Configuration>
+                     open_options=["""CONFIG_FILE=<Configuration>
         <XLinkResolution>
             <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
             <DefaultResolution enabled="true">
@@ -1893,7 +1893,7 @@ def ogr_gmlas_xlink_resolver():
     # Enable remote resolution and caching
     gdal.FileFromMemBuffer('/vsimem/resource.xml', 'bar')
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml',
-        open_options=["""CONFIG_FILE=<Configuration>
+                     open_options=["""CONFIG_FILE=<Configuration>
         <XLinkResolution>
             <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
             <DefaultResolution enabled="true">
@@ -1917,7 +1917,7 @@ def ogr_gmlas_xlink_resolver():
     # Enable remote resolution and caching and REFRESH_CACHE
     gdal.FileFromMemBuffer('/vsimem/resource.xml', 'baz')
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml',
-        open_options=['REFRESH_CACHE=YES', """CONFIG_FILE=<Configuration>
+                     open_options=['REFRESH_CACHE=YES', """CONFIG_FILE=<Configuration>
         <XLinkResolution>
             <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
             <DefaultResolution enabled="true">
@@ -1940,14 +1940,14 @@ def ogr_gmlas_xlink_resolver():
 
     # Test absent remote resource
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_xlink_resolver_absent_resource.xml',
-"""
+                           """
 <main_elt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xmlns:xlink="http://fake_xlink"
           xsi:noNamespaceSchemaLocation="ogr_gmlas_xlink_resolver.xsd">
     <my_link xlink:href="http://localhost:%d/vsimem/resource_not_existing.xml"/>
 </main_elt>""" % webserver_port)
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_xlink_resolver_absent_resource.xml',
-        open_options=["""CONFIG_FILE=<Configuration>
+                     open_options=["""CONFIG_FILE=<Configuration>
         <XLinkResolution>
             <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
             <DefaultResolution enabled="true">
@@ -1967,7 +1967,7 @@ def ogr_gmlas_xlink_resolver():
     # Test file size limit
     gdal.Unlink(cached_file)
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml',
-        open_options=["""CONFIG_FILE=<Configuration>
+                     open_options=["""CONFIG_FILE=<Configuration>
         <XLinkResolution>
             <MaxFileSize>1</MaxFileSize>
             <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
@@ -1993,7 +1993,7 @@ def ogr_gmlas_xlink_resolver():
     # Test with URL specific rule with RawContent resolution
     gdal.FileFromMemBuffer('/vsimem/resource.xml', 'bar')
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml',
-        open_options=["""CONFIG_FILE=<Configuration>
+                     open_options=["""CONFIG_FILE=<Configuration>
         <XLinkResolution>
             <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
             <URLSpecificResolution>
@@ -2041,7 +2041,7 @@ def ogr_gmlas_xlink_resolver():
     gdal.FileFromMemBuffer('/vsimem/non_matching_resource.xml', 'foo')
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_xlink_resolver.xml',
-"""
+                           """
 <FeatureCollection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xmlns:xlink="http://fake_xlink"
           xsi:noNamespaceSchemaLocation="ogr_gmlas_xlink_resolver.xsd">
@@ -2121,7 +2121,7 @@ def ogr_gmlas_xlink_resolver():
         </XLinkResolution></Configuration>""" % (webserver_port, webserver_port)
 
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml',
-        open_options=['CONFIG_FILE=' + config_file])
+                     open_options=['CONFIG_FILE=' + config_file])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['my_link_attr_before'] != 'a' or \
@@ -2157,7 +2157,7 @@ bar""" or \
 
     # Test caching
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml',
-        open_options=['CONFIG_FILE=' + config_file])
+                     open_options=['CONFIG_FILE=' + config_file])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['my_link_attr_before'] != 'a' or \
@@ -2511,11 +2511,11 @@ def ogr_gmlas_writer_check_xml_read_back():
 
     # Compare the ogrinfo dump of the generated .xml with a reference one
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() +
-        ' -ro -al GMLAS:tmp/gmlas_test1_generated.xml -oo VALIDATE=YES ' +
-        '-oo EXPOSE_METADATA_LAYERS=YES ' +
-        '-oo @KEEP_RELATIVE_PATHS_FOR_METADATA=YES ' +
-        '-oo @EXPOSE_SCHEMAS_NAME_IN_METADATA=NO ' +
-        '-oo @EXPOSE_CONFIGURATION_IN_METADATA=NO -oo @HASH=fake_hash')
+                               ' -ro -al GMLAS:tmp/gmlas_test1_generated.xml -oo VALIDATE=YES ' +
+                               '-oo EXPOSE_METADATA_LAYERS=YES ' +
+                               '-oo @KEEP_RELATIVE_PATHS_FOR_METADATA=YES ' +
+                               '-oo @EXPOSE_SCHEMAS_NAME_IN_METADATA=NO ' +
+                               '-oo @EXPOSE_CONFIGURATION_IN_METADATA=NO -oo @HASH=fake_hash')
     expected = open('data/gmlas/gmlas_test1.txt', 'rt').read()
     expected = expected.replace('\r\n', '\n')
     expected = expected.replace('data/gmlas/gmlas_test1.xml', 'tmp/gmlas_test1_generated.xml')
@@ -2564,15 +2564,15 @@ def ogr_gmlas_writer_gml():
         return 'skip'
 
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml',
-                    open_options=['EXPOSE_METADATA_LAYERS=YES', '@HASH=hash'])
+                         open_options=['EXPOSE_METADATA_LAYERS=YES', '@HASH=hash'])
     tmp_ds = gdal.VectorTranslate('', src_ds, format='Memory')
     src_ds = None
     # Test also with GMLAS: prefix as it is likely people might use it
     # as it is needed for the read side.
     ret_ds = gdal.VectorTranslate('GMLAS:/vsimem/ogr_gmlas_writer_gml.xml', tmp_ds, \
-        format='GMLAS', \
-        datasetCreationOptions=['WRAPPING=GMLAS_FEATURECOLLECTION',
-                                  'LAYERS={SPATIAL_LAYERS}'])
+                                  format='GMLAS', \
+                                  datasetCreationOptions=['WRAPPING=GMLAS_FEATURECOLLECTION',
+                                                          'LAYERS={SPATIAL_LAYERS}'])
     tmp_ds = None
 
     if ret_ds is None:
@@ -2626,14 +2626,14 @@ def ogr_gmlas_writer_gml_assign_srs():
         return 'skip'
 
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml',
-                    open_options=['EXPOSE_METADATA_LAYERS=YES', '@HASH=hash'])
+                         open_options=['EXPOSE_METADATA_LAYERS=YES', '@HASH=hash'])
     tmp_ds = gdal.VectorTranslate('', src_ds, format='Memory')
     src_ds = None
 
     ret_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer_gml.xml', tmp_ds, \
-        format='GMLAS', \
-        dstSRS='EPSG:32631', \
-        reproject=False)
+                                  format='GMLAS', \
+                                  dstSRS='EPSG:32631', \
+                                  reproject=False)
     tmp_ds = None
 
     if ret_ds is None:
@@ -2661,15 +2661,15 @@ def ogr_gmlas_writer_gml_assign_srs():
     tmp_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer.db', src_ds, format='SQLite')
     src_ds = None
     gdal.VectorTranslate('/vsimem/gmlas_test1_generated_ref0.xml', tmp_ds, \
-                                  format='GMLAS', \
-                                  dstSRS='EPSG:32631', \
-                                  reproject=False, \
-                                  datasetCreationOptions=['WRAPPING=GMLAS_FEATURECOLLECTION'])
+                         format='GMLAS', \
+                         dstSRS='EPSG:32631', \
+                         reproject=False, \
+                         datasetCreationOptions=['WRAPPING=GMLAS_FEATURECOLLECTION'])
     gdal.VectorTranslate('/vsimem/gmlas_test1_generated_asrs.xml', tmp_ds, \
-                                  format='GMLAS', \
-                                  dstSRS='EPSG:32631', \
-                                  reproject=False, \
-                                  datasetCreationOptions=['WRAPPING=GMLAS_FEATURECOLLECTION'])
+                         format='GMLAS', \
+                         dstSRS='EPSG:32631', \
+                         reproject=False, \
+                         datasetCreationOptions=['WRAPPING=GMLAS_FEATURECOLLECTION'])
     tmp_ds = None
     gdal.Unlink('/vsimem/ogr_gmlas_writer.db')
 
@@ -2696,8 +2696,8 @@ def ogr_gmlas_writer_gml_original_xml():
         return 'skip'
 
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml',
-                    open_options=['EXPOSE_METADATA_LAYERS=YES',
-                                     'CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>true</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>'])
+                         open_options=['EXPOSE_METADATA_LAYERS=YES',
+                                       'CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>true</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>'])
     tmp_ds = gdal.VectorTranslate('', src_ds, format='Memory')
     src_ds = None
     ret_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer_gml.xml', tmp_ds, format='GMLAS', \
@@ -2755,13 +2755,13 @@ def ogr_gmlas_writer_options():
     tmp_ds = gdal.VectorTranslate('', src_ds, format='Memory')
     src_ds = None
     ret_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer_options.xml', tmp_ds, format='GMLAS',
-        datasetCreationOptions=['LAYERS=test',
-                                  'WRAPPING=GMLAS_FEATURECOLLECTION',
-                                  'INPUT_XSD=data/gmlas/gmlas_geometryproperty_gml32.xsd',
-                                  'INDENT_SIZE=4',
-                                  'COMMENT=---a comment---',
-                                  'SRSNAME_FORMAT=OGC_URN',
-                                  'OUTPUT_XSD_FILENAME=/vsimem/my_schema.xsd'])
+                                  datasetCreationOptions=['LAYERS=test',
+                                                          'WRAPPING=GMLAS_FEATURECOLLECTION',
+                                                          'INPUT_XSD=data/gmlas/gmlas_geometryproperty_gml32.xsd',
+                                                          'INDENT_SIZE=4',
+                                                          'COMMENT=---a comment---',
+                                                          'SRSNAME_FORMAT=OGC_URN',
+                                                          'OUTPUT_XSD_FILENAME=/vsimem/my_schema.xsd'])
     tmp_ds = None
 
     if ret_ds is None:
@@ -2809,11 +2809,11 @@ def ogr_gmlas_writer_options():
 
     # Test TIMESTAMP option
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml', \
-        open_options=['@HASH=hash', 'EXPOSE_METADATA_LAYERS=YES'])
+                         open_options=['@HASH=hash', 'EXPOSE_METADATA_LAYERS=YES'])
     tmp_ds = gdal.VectorTranslate('', src_ds, format='Memory')
     src_ds = None
     ret_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer_options.xml', tmp_ds, format='GMLAS',
-        datasetCreationOptions=['TIMESTAMP=1970-01-01T12:34:56Z', '@REOPEN_DATASET_WITH_GMLAS=NO'])
+                                  datasetCreationOptions=['TIMESTAMP=1970-01-01T12:34:56Z', '@REOPEN_DATASET_WITH_GMLAS=NO'])
     tmp_ds = None
 
     if ret_ds is None:
@@ -2841,11 +2841,11 @@ def ogr_gmlas_writer_options():
 
     # Test WFS20_SCHEMALOCATION option
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml', \
-        open_options=['@HASH=hash', 'EXPOSE_METADATA_LAYERS=YES'])
+                         open_options=['@HASH=hash', 'EXPOSE_METADATA_LAYERS=YES'])
     tmp_ds = gdal.VectorTranslate('', src_ds, format='Memory')
     src_ds = None
     ret_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer_options.xml', tmp_ds, format='GMLAS',
-        datasetCreationOptions=['WFS20_SCHEMALOCATION=/vsimem/fake_wfs.xsd'])
+                                  datasetCreationOptions=['WFS20_SCHEMALOCATION=/vsimem/fake_wfs.xsd'])
     tmp_ds = None
 
     if ret_ds is None:
@@ -2853,7 +2853,7 @@ def ogr_gmlas_writer_options():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/fake_wfs.xsd',
-"""
+                           """
 <!-- fake wfs schema enough for our purposes -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            targetNamespace="http://www.opengis.net/wfs/2.0"
@@ -2937,7 +2937,7 @@ def ogr_gmlas_writer_errors():
 
     # Invalid output .xml name
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml', \
-                open_options=['EXPOSE_METADATA_LAYERS=YES'])
+                         open_options=['EXPOSE_METADATA_LAYERS=YES'])
     tmp_ds = gdal.VectorTranslate('', src_ds, format='Memory')
     src_ds = None
     with gdaltest.error_handler():
@@ -2961,7 +2961,7 @@ def ogr_gmlas_writer_errors():
     with gdaltest.error_handler():
         ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format='GMLAS', \
                                       datasetCreationOptions=['WRAPPING=GMLAS_FEATURECOLLECTION',
-                                                                 'OUTPUT_XSD_FILENAME=/i_am/not/valid.xsd'])
+                                                              'OUTPUT_XSD_FILENAME=/i_am/not/valid.xsd'])
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Cannot create /i_am/not/valid.xsd') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
@@ -3077,7 +3077,7 @@ def ogr_gmlas_typing_constraints():
 
     # One substitution, no repetition
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_typing_constraints_one_subst_no_repetition.xml',
-        open_options=["""CONFIG_FILE=<Configuration>
+                     open_options=["""CONFIG_FILE=<Configuration>
 <TypingConstraints>
         <Namespaces>
             <Namespace prefix="myns_modified_for_fun" uri="http://myns"/>
@@ -3107,7 +3107,7 @@ def ogr_gmlas_typing_constraints():
     # One substitution, with repetition
 
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_typing_constraints_one_subst_with_repetition.xml',
-        open_options=["""CONFIG_FILE=<Configuration>
+                     open_options=["""CONFIG_FILE=<Configuration>
 <TypingConstraints>
         <Namespaces>
             <Namespace prefix="myns_modified_for_fun" uri="http://myns"/>
@@ -3139,7 +3139,7 @@ def ogr_gmlas_typing_constraints():
 
     # 2 substitutions
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_typing_constraints_two_subst.xml',
-        open_options=["""CONFIG_FILE=<Configuration>
+                     open_options=["""CONFIG_FILE=<Configuration>
 <TypingConstraints>
         <Namespaces>
             <Namespace prefix="myns_modified_for_fun" uri="http://myns"/>

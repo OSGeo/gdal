@@ -51,14 +51,14 @@ def rasterize_1():
     # Create a memory raster to rasterize into.
 
     target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 3,
-                                                    gdal.GDT_Byte)
+                                                   gdal.GDT_Byte)
     target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
 
     rast_ogr_ds = \
-              ogr.GetDriverByName('Memory').CreateDataSource('wrk')
+    ogr.GetDriverByName('Memory').CreateDataSource('wrk')
     rast_mem_lyr = rast_ogr_ds.CreateLayer('poly', srs=sr)
 
     # Add a polygon.
@@ -82,7 +82,7 @@ def rasterize_1():
     # Run the algorithm.
 
     err = gdal.RasterizeLayer(target_ds, [3, 2, 1], rast_mem_lyr,
-                               burn_values=[200, 220, 240])
+                              burn_values=[200, 220, 240])
 
     if err != 0:
         print(err)
@@ -114,7 +114,7 @@ def rasterize_2():
     # Create a memory raster to rasterize into.
 
     target_ds = gdal.GetDriverByName('MEM').Create('', 12, 12, 3,
-                                                    gdal.GDT_Byte)
+                                                   gdal.GDT_Byte)
     target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
@@ -126,8 +126,8 @@ def rasterize_2():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     err = gdal.RasterizeLayer(target_ds, [3, 2, 1], cutline_ds.GetLayer(0),
-                               burn_values=[200, 220, 240],
-                               options=["ALL_TOUCHED=TRUE"])
+                              burn_values=[200, 220, 240],
+                              options=["ALL_TOUCHED=TRUE"])
     gdal.PopErrorHandler()
 
     if err != 0:
@@ -161,14 +161,14 @@ def rasterize_3():
     # Create a memory raster to rasterize into.
 
     target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 3,
-                                                    gdal.GDT_Byte)
+                                                   gdal.GDT_Byte)
     target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
 
     rast_ogr_ds = \
-              ogr.GetDriverByName('Memory').CreateDataSource('wrk')
+    ogr.GetDriverByName('Memory').CreateDataSource('wrk')
     rast_mem_lyr = rast_ogr_ds.CreateLayer('poly', srs=sr)
 
     # Add polygons and linestrings.
@@ -185,7 +185,7 @@ def rasterize_3():
     # Run the algorithm.
 
     err = gdal.RasterizeLayer(target_ds, [3, 2, 1], rast_mem_lyr,
-                               burn_values=[10, 10, 55], options=["BURN_VALUE_FROM=Z"])
+                              burn_values=[10, 10, 55], options=["BURN_VALUE_FROM=Z"])
 
     if err != 0:
         print(err)
@@ -216,7 +216,7 @@ def rasterize_4():
 
     # Create a memory raster to rasterize into.
     target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 3,
-                                                    gdal.GDT_Byte)
+                                                   gdal.GDT_Byte)
     target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
@@ -225,7 +225,7 @@ def rasterize_4():
     rast_mem_lyr = rast_ogr_ds.CreateLayer('poly', srs=sr)
     # Setup Schema
     ogrtest.quick_create_layer_def(rast_mem_lyr,
-                                    [('CELSIUS', ogr.OFTReal)])
+                                   [('CELSIUS', ogr.OFTReal)])
 
     # Add polygons and linestrings and a field named CELSIUS.
     wkt_geom = ['POLYGON((1020 1030 40,1020 1045 30,1050 1045 20,1050 1030 35,1020 1030 40))',
@@ -245,7 +245,7 @@ def rasterize_4():
 
     # Run the algorithm.
     err = gdal.RasterizeLayer(target_ds, [1, 2, 3], rast_mem_lyr,
-                               options=["ATTRIBUTE=CELSIUS"])
+                              options=["ATTRIBUTE=CELSIUS"])
 
     if err != 0:
         print(err)
@@ -276,14 +276,14 @@ def rasterize_5():
     # Create a memory raster to rasterize into.
 
     target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 3,
-                                                    gdal.GDT_Byte)
+                                                   gdal.GDT_Byte)
     target_ds.SetGeoTransform((1000, 1, 0, 1100, 0, -1))
     target_ds.SetProjection(sr_wkt)
 
     # Create a memory layer to rasterize from.
 
     rast_ogr_ds = \
-              ogr.GetDriverByName('Memory').CreateDataSource('wrk')
+    ogr.GetDriverByName('Memory').CreateDataSource('wrk')
     rast_mem_lyr = rast_ogr_ds.CreateLayer('poly', srs=sr)
 
     # Add polygons.
@@ -313,8 +313,8 @@ def rasterize_5():
     # Run the algorithm.
 
     err = gdal.RasterizeLayer(target_ds, [1, 2, 3], rast_mem_lyr,
-                               burn_values=[100, 110, 120],
-                               options=["MERGE_ALG=ADD"])
+                              burn_values=[100, 110, 120],
+                              options=["MERGE_ALG=ADD"])
 
     if err != 0:
         print(err)

@@ -469,8 +469,8 @@ def rasterio_8():
     ds = gdal.Open('data/rgbsmall.tif')
     last_pct = [0]
     data = ds.ReadRaster(resample_alg=gdal.GRIORA_NearestNeighbour,
-                  callback=rasterio_8_progress_callback_2,
-                  callback_data=last_pct)
+                         callback=rasterio_8_progress_callback_2,
+                         callback_data=last_pct)
     if data is None or abs(last_pct[0] - 1.0) > 1e-5:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -489,8 +489,8 @@ def rasterio_8():
     ds = gdal.Open('data/rgbsmall_cmyk.tif')
     last_pct = [0]
     data = ds.ReadRaster(resample_alg=gdal.GRIORA_NearestNeighbour,
-                  callback=rasterio_8_progress_callback_2,
-                  callback_data=last_pct)
+                         callback=rasterio_8_progress_callback_2,
+                         callback_data=last_pct)
     if data is None or abs(last_pct[0] - 1.0) > 1e-5:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -588,11 +588,11 @@ def rasterio_9():
     src_ds_uint16 = gdal.Open('data/uint16.tif')
     tab = [0, None]
     data = src_ds_uint16.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_UInt16,
-                                          buf_xsize=10,
-                                          buf_ysize=10,
-                                          resample_alg=gdal.GRIORA_Bilinear,
-                                          callback=rasterio_9_progress_callback,
-                                          callback_data=tab)
+                                                     buf_xsize=10,
+                                                     buf_ysize=10,
+                                                     resample_alg=gdal.GRIORA_Bilinear,
+                                                     callback=rasterio_9_progress_callback,
+                                                     callback_data=tab)
     if data is None:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -699,8 +699,8 @@ def rasterio_9():
 
     # Same with UInt16
     data = src_ds_uint16.GetRasterBand(1).ReadRaster(buf_xsize=5,
-                                          buf_ysize=5,
-                                          resample_alg=gdal.GRIORA_Cubic)
+                                                     buf_ysize=5,
+                                                     resample_alg=gdal.GRIORA_Cubic)
     if data is None:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -781,10 +781,10 @@ def rasterio_9():
     ds = gdal.Open('data/stefan_full_rgba.png')
     tab = [0, None]
     data = ds.GetRasterBand(1).ReadRaster(buf_xsize=162 * 16,
-                         buf_ysize=150 * 16,
-                         resample_alg=gdal.GRIORA_Cubic,
-                         callback=rasterio_9_progress_callback,
-                         callback_data=tab)
+                                          buf_ysize=150 * 16,
+                                          resample_alg=gdal.GRIORA_Cubic,
+                                          callback=rasterio_9_progress_callback,
+                                          callback_data=tab)
     if data is None:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -975,7 +975,7 @@ def rasterio_13():
 def rasterio_14():
 
     gdal.FileFromMemBuffer('/vsimem/rasterio_14.asc',
-"""ncols        6
+                           """ncols        6
 nrows        6
 xllcorner    0
 yllcorner    0
@@ -1039,7 +1039,7 @@ cellsize     0
 def rasterio_15():
 
     gdal.FileFromMemBuffer('/vsimem/rasterio_15.asc',
-"""ncols        2
+                           """ncols        2
 nrows        2
 xllcorner    0
 yllcorner    0
@@ -1071,7 +1071,7 @@ cellsize     0
 def rasterio_16():
 
     gdal.FileFromMemBuffer('/vsimem/rasterio_16.asc',
-"""ncols        6
+                           """ncols        6
 nrows        6
 xllcorner    0
 yllcorner    0

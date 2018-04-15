@@ -113,8 +113,8 @@ def mrsid_1():
         AUTHORITY["EPSG","9001"]]]"""
 
     ret = tst.testOpen(check_gt=gt, \
-        check_stat=(0.0, 255.0, 103.319, 55.153), \
-        check_approx_stat=(2.0, 243.0, 103.131, 43.978))
+                       check_stat=(0.0, 255.0, 103.319, 55.153), \
+                       check_approx_stat=(2.0, 243.0, 103.131, 43.978))
 
     if ret != 'success':
         return ret
@@ -246,8 +246,8 @@ def mrsid_4():
         AUTHORITY["EPSG","9001"]]]"""
 
     ret = tst.testOpen(check_gt=gt, check_prj=prj, \
-        check_stat=(0.0, 255.0, 103.112, 52.477), \
-        check_approx_stat=(0.0, 255.0, 102.684, 51.614))
+                       check_stat=(0.0, 255.0, 103.112, 52.477), \
+                       check_approx_stat=(0.0, 255.0, 102.684, 51.614))
 
     try:
         os.remove('data/mercator_new.sid.aux.xml')

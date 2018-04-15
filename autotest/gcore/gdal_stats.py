@@ -379,7 +379,7 @@ def stats_nodata_posinf_msvc():
 def stats_stddev_huge_values():
 
     gdal.FileFromMemBuffer('/vsimem/stats_stddev_huge_values.asc',
-"""ncols        4
+                           """ncols        4
 nrows        4
 xllcorner    0
 yllcorner    0
@@ -696,7 +696,7 @@ def stats_uint16():
 
     for fill_val in [0, 1, 32767, 32768, 65535]:
         ds = gdal.GetDriverByName('GTiff').Create('/vsimem/stats_uint16_tiled.tif', 1000, 512, 1, gdal.GDT_UInt16,
-                                                options=['TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512'])
+                                                  options=['TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512'])
         ds.GetRasterBand(1).Fill(fill_val)
         stats = ds.GetRasterBand(1).GetStatistics(0, 1)
         ds = None

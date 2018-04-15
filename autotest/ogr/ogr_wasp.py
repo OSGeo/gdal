@@ -69,8 +69,8 @@ def ogr_wasp_elevation_from_linestring_z():
     ref.ImportFromProj4('+proj=lcc +lat_1=46.8 +lat_0=46.8 +lon_0=0 +k_0=0.99987742 +x_0=600000 +y_0=2200000 +a=6378249.2 +b=6356514.999978254 +pm=2.337229167 +units=m +no_defs')
 
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
-                                          ref,
-                                          geom_type=ogr.wkbLineString25D)
+                                         ref,
+                                         geom_type=ogr.wkbLineString25D)
 
     if layer is None:
         gdaltest.post_reason('unable to create layer')
@@ -132,9 +132,9 @@ def ogr_wasp_elevation_from_linestring_z_toler():
     if not ogrtest.have_geos() :
         gdal.PushErrorHandler('CPLQuietErrorHandler')
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
-                                          ref,
-                                          options=['WASP_TOLERANCE=.1'],
-                                          geom_type=ogr.wkbLineString25D)
+                                         ref,
+                                         options=['WASP_TOLERANCE=.1'],
+                                         geom_type=ogr.wkbLineString25D)
     if not ogrtest.have_geos() :
         gdal.PopErrorHandler()
 
@@ -197,8 +197,8 @@ def ogr_wasp_elevation_from_linestring_field():
         return 'skip'
 
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
-                                          options=['WASP_FIELDS=elevation'],
-                                          geom_type=ogr.wkbLineString)
+                                         options=['WASP_FIELDS=elevation'],
+                                         geom_type=ogr.wkbLineString)
 
     if layer is None:
         gdaltest.post_reason('unable to create layer')
@@ -252,8 +252,8 @@ def ogr_wasp_roughness_from_linestring_fields():
         return 'skip'
 
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
-                                          options=['WASP_FIELDS=z_left,z_right'],
-                                          geom_type=ogr.wkbLineString)
+                                         options=['WASP_FIELDS=z_left,z_right'],
+                                         geom_type=ogr.wkbLineString)
 
     if layer is None:
         gdaltest.post_reason('unable to create layer')
@@ -317,7 +317,7 @@ def ogr_wasp_roughness_from_polygon_z():
     if not ogrtest.have_geos() :
         gdal.PushErrorHandler('CPLQuietErrorHandler')
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
-                                          geom_type=ogr.wkbPolygon25D)
+                                         geom_type=ogr.wkbPolygon25D)
     if not ogrtest.have_geos() :
         gdal.PopErrorHandler()
 
@@ -388,8 +388,8 @@ def ogr_wasp_roughness_from_polygon_field():
     if not ogrtest.have_geos() :
         gdal.PushErrorHandler('CPLQuietErrorHandler')
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
-                                          options=['WASP_FIELDS=roughness'],
-                                          geom_type=ogr.wkbPolygon)
+                                         options=['WASP_FIELDS=roughness'],
+                                         geom_type=ogr.wkbPolygon)
     if not ogrtest.have_geos() :
         gdal.PopErrorHandler()
 
@@ -464,7 +464,7 @@ def ogr_wasp_merge():
     if not ogrtest.have_geos() :
         gdal.PushErrorHandler('CPLQuietErrorHandler')
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
-                                          geom_type=ogr.wkbPolygon25D)
+                                         geom_type=ogr.wkbPolygon25D)
     if not ogrtest.have_geos() :
         gdal.PopErrorHandler()
 

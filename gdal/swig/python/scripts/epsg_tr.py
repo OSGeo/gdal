@@ -134,7 +134,7 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
                 proj4text = prj_srs.ExportToProj4()
 
                 print('%d\t%d%s\t%d\t%d%s\t%d%s\n' \
-                       % (code, 4, 'EPSG', code, len(wkt), wkt,
+                      % (code, 4, 'EPSG', code, len(wkt), wkt,
                           len(proj4text), proj4text))
             except:
                 pass

@@ -59,32 +59,32 @@ def osr_basic_1():
         return 'fail'
 
     parm_list = \
-              [(osr.SRS_PP_CENTRAL_MERIDIAN, -117.0),
-                (osr.SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
-                (osr.SRS_PP_SCALE_FACTOR, 0.9996),
-                (osr.SRS_PP_FALSE_EASTING, 500000.0),
-                (osr.SRS_PP_FALSE_NORTHING, 0.0)]
+    [(osr.SRS_PP_CENTRAL_MERIDIAN, -117.0),
+     (osr.SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
+     (osr.SRS_PP_SCALE_FACTOR, 0.9996),
+     (osr.SRS_PP_FALSE_EASTING, 500000.0),
+     (osr.SRS_PP_FALSE_NORTHING, 0.0)]
 
     for parm in parm_list:
         value = utm_srs.GetProjParm(parm[0], -1111)
         if abs(value - parm[1]) > .00000000000010:
             gdaltest.post_reason('got %g for %s instead of %g.' \
-                                  % (value, parm[0], parm[1]))
+                                 % (value, parm[0], parm[1]))
             return 'fail'
 
     auth_list = [('GEOGCS', '4326'),
-                  ('DATUM', '6326')]
+                 ('DATUM', '6326')]
 
     for auth in auth_list:
         if utm_srs.GetAuthorityName(auth[0]) != 'EPSG':
             gdaltest.post_reason('Got authority %s instead of EPSG for %s' \
-                                  % (utm_srs.GetAuthorityName(auth[0]),
+                                 % (utm_srs.GetAuthorityName(auth[0]),
                                      auth[0]))
             return 'fail'
 
         if str(utm_srs.GetAuthorityCode(auth[0])) != auth[1]:
             gdaltest.post_reason('Got code %s instead of %s for %s' \
-                                  % (utm_srs.GetAuthorityName(auth[0]),
+                                 % (utm_srs.GetAuthorityName(auth[0]),
                                      auth[1], auth[0]))
             return 'fail'
 
@@ -101,35 +101,35 @@ def osr_basic_2():
     #print srs.ExportToPrettyWkt()
 
     parm_list = \
-              [(osr.SRS_PP_STANDARD_PARALLEL_1, 38.43333333333333),
-                (osr.SRS_PP_STANDARD_PARALLEL_2, 37.06666666666667),
-                (osr.SRS_PP_LATITUDE_OF_ORIGIN, 36.5),
-                (osr.SRS_PP_CENTRAL_MERIDIAN, -120.5),
-                (osr.SRS_PP_FALSE_EASTING, 2000000.0),
-                (osr.SRS_PP_FALSE_NORTHING, 500000.0)]
+    [(osr.SRS_PP_STANDARD_PARALLEL_1, 38.43333333333333),
+     (osr.SRS_PP_STANDARD_PARALLEL_2, 37.06666666666667),
+     (osr.SRS_PP_LATITUDE_OF_ORIGIN, 36.5),
+     (osr.SRS_PP_CENTRAL_MERIDIAN, -120.5),
+     (osr.SRS_PP_FALSE_EASTING, 2000000.0),
+     (osr.SRS_PP_FALSE_NORTHING, 500000.0)]
 
     for parm in parm_list:
         value = srs.GetProjParm(parm[0], -1111)
         if not gdaltest.approx_equal(parm[1], value):
             gdaltest.post_reason('got %.16g for %s instead of %.16g.' \
-                                  % (value, parm[0], parm[1]))
+                                 % (value, parm[0], parm[1]))
             return 'fail'
 
     auth_list = [('GEOGCS', '4269'),
-                  ('DATUM', '6269'),
-                  ('PROJCS', '26943'),
-                  ('PROJCS|UNIT', '9001')]
+                 ('DATUM', '6269'),
+                 ('PROJCS', '26943'),
+                 ('PROJCS|UNIT', '9001')]
 
     for auth in auth_list:
         if srs.GetAuthorityName(auth[0]) != 'EPSG':
             gdaltest.post_reason('Got authority %s instead of EPSG for %s' \
-                                  % (srs.GetAuthorityName(auth[0]),
+                                 % (srs.GetAuthorityName(auth[0]),
                                      auth[0]))
             return 'fail'
 
         if str(srs.GetAuthorityCode(auth[0])) != auth[1]:
             gdaltest.post_reason('Got code %s instead of %s for %s' \
-                                  % (srs.GetAuthorityCode(auth[0]),
+                                 % (srs.GetAuthorityCode(auth[0]),
                                      auth[1], auth[0]))
             return 'fail'
 
@@ -148,33 +148,33 @@ def osr_basic_3():
     #print srs.ExportToPrettyWkt()
 
     parm_list = \
-              [(osr.SRS_PP_STANDARD_PARALLEL_1, 38.43333333333333),
-                (osr.SRS_PP_STANDARD_PARALLEL_2, 37.06666666666667),
-                (osr.SRS_PP_LATITUDE_OF_ORIGIN, 36.5),
-                (osr.SRS_PP_CENTRAL_MERIDIAN, -120.5),
-                (osr.SRS_PP_FALSE_EASTING, 6561666.666666667),
-                (osr.SRS_PP_FALSE_NORTHING, 1640416.666666667)]
+    [(osr.SRS_PP_STANDARD_PARALLEL_1, 38.43333333333333),
+     (osr.SRS_PP_STANDARD_PARALLEL_2, 37.06666666666667),
+     (osr.SRS_PP_LATITUDE_OF_ORIGIN, 36.5),
+     (osr.SRS_PP_CENTRAL_MERIDIAN, -120.5),
+     (osr.SRS_PP_FALSE_EASTING, 6561666.666666667),
+     (osr.SRS_PP_FALSE_NORTHING, 1640416.666666667)]
 
     for parm in parm_list:
         value = srs.GetProjParm(parm[0], -1111)
         if not gdaltest.approx_equal(parm[1], value):
             gdaltest.post_reason('got %.16g for %s instead of %.16g.' \
-                                  % (value, parm[0], parm[1]))
+                                 % (value, parm[0], parm[1]))
             return 'fail'
 
     auth_list = [('GEOGCS', '4269'),
-                  ('DATUM', '6269')]
+                 ('DATUM', '6269')]
 
     for auth in auth_list:
         if srs.GetAuthorityName(auth[0]) != 'EPSG':
             gdaltest.post_reason('Got authority %s instead of EPSG for %s' \
-                                  % (srs.GetAuthorityName(auth[0]),
+                                 % (srs.GetAuthorityName(auth[0]),
                                      auth[0]))
             return 'fail'
 
         if str(srs.GetAuthorityCode(auth[0])) != auth[1]:
             gdaltest.post_reason('Got code %s instead of %s for %s' \
-                                  % (srs.GetAuthorityCode(auth[0]),
+                                 % (srs.GetAuthorityCode(auth[0]),
                                      auth[1], auth[0]))
             return 'fail'
 
@@ -217,7 +217,7 @@ def osr_basic_4():
     srs = osr.SpatialReference()
     srs.SetGS(cm=-117.0, fe=100000.0, fn=100000)
     srs.SetGeogCS('Test GCS', 'Test Datum', 'WGS84',
-                   osr.SRS_WGS84_SEMIMAJOR, osr.SRS_WGS84_INVFLATTENING)
+                  osr.SRS_WGS84_SEMIMAJOR, osr.SRS_WGS84_INVFLATTENING)
 
     srs.SetTOWGS84(1, 2, 3)
 

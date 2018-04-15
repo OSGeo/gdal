@@ -119,8 +119,8 @@ def mrf_overview_near_fact_2():
     gdal.Unlink('/vsimem/out.tif')
 
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
-                gdal.GDT_Int32, gdal.GDT_UInt32,
-                gdal.GDT_Float32, gdal.GDT_Float64]:
+               gdal.GDT_Int32, gdal.GDT_UInt32,
+               gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format='MRF',
@@ -151,8 +151,8 @@ def mrf_overview_near_fact_2():
 def mrf_overview_near_with_nodata_fact_2():
 
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
-                gdal.GDT_Int32, gdal.GDT_UInt32,
-                gdal.GDT_Float32, gdal.GDT_Float64]:
+               gdal.GDT_Int32, gdal.GDT_UInt32,
+               gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format='MRF',
@@ -185,8 +185,8 @@ def mrf_overview_near_with_nodata_fact_2():
 def mrf_overview_avg_fact_2():
 
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
-                gdal.GDT_Int32, gdal.GDT_UInt32,
-                gdal.GDT_Float32, gdal.GDT_Float64]:
+               gdal.GDT_Int32, gdal.GDT_UInt32,
+               gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format='MRF',
@@ -219,8 +219,8 @@ def mrf_overview_avg_fact_2():
 def mrf_overview_avg_with_nodata_fact_2():
 
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
-                gdal.GDT_Int32, gdal.GDT_UInt32,
-                gdal.GDT_Float32, gdal.GDT_Float64]:
+               gdal.GDT_Int32, gdal.GDT_UInt32,
+               gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format='MRF',
@@ -308,8 +308,8 @@ def mrf_overview_avg_fact_3():
 def mrf_overview_avg_with_nodata_fact_3():
 
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
-                gdal.GDT_Int32, gdal.GDT_UInt32,
-                gdal.GDT_Float32, gdal.GDT_Float64]:
+               gdal.GDT_Int32, gdal.GDT_UInt32,
+               gdal.GDT_Float32, gdal.GDT_Float64]:
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format='MRF',
@@ -636,7 +636,7 @@ def mrf_versioned():
     # Caching MRF
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF')
     gdal.FileFromMemBuffer('/vsimem/out.mrf',
-"""<MRF_META>
+                           """<MRF_META>
   <Raster versioned="on">
     <Size x="20" y="20" c="1" />
     <PageSize x="512" y="512" c="1" />

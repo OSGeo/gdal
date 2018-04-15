@@ -240,14 +240,14 @@ netcdf_cfproj_tuples = [
     ("AEA", "Albers Equal Area", "EPSG:3577", "albers_conical_equal_area",
         ['standard_parallel', 'longitude_of_central_meridian',
          'latitude_of_projection_origin', 'false_easting', 'false_northing'],
-         ['projection_x_coordinate', 'projection_y_coordinate']),
+     ['projection_x_coordinate', 'projection_y_coordinate']),
     ("AZE", "Azimuthal Equidistant",
         #Didn't have EPSG suitable for AU
         "+proj=aeqd +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
         "azimuthal_equidistant",
         ['longitude_of_projection_origin',
          'latitude_of_projection_origin', 'false_easting', 'false_northing'],
-         ['projection_x_coordinate', 'projection_y_coordinate']),
+     ['projection_x_coordinate', 'projection_y_coordinate']),
     ("LAZEA", "Lambert azimuthal equal area",
         # Specify proj4 since no appropriate LAZEA for AU.
         #"+proj=laea +lat_0=0 +lon_0=134 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
@@ -255,12 +255,12 @@ netcdf_cfproj_tuples = [
         "lambert_azimuthal_equal_area",
         ['longitude_of_projection_origin',
          'latitude_of_projection_origin', 'false_easting', 'false_northing'],
-         ['projection_x_coordinate', 'projection_y_coordinate']),
+     ['projection_x_coordinate', 'projection_y_coordinate']),
     ("LC_2SP", "Lambert conformal", "EPSG:3112", "lambert_conformal_conic",
         ['standard_parallel',
          'longitude_of_central_meridian',
          'latitude_of_projection_origin', 'false_easting', 'false_northing'],
-         ['projection_x_coordinate', 'projection_y_coordinate']),
+     ['projection_x_coordinate', 'projection_y_coordinate']),
     # TODO: Test LCC with 1SP
     ("LCEA", "Lambert Cylindrical Equal Area",
         "+proj=cea +lat_ts=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
@@ -268,7 +268,7 @@ netcdf_cfproj_tuples = [
         ['longitude_of_central_meridian',
          'standard_parallel',  # TODO: OR 'scale_factor_at_projection_origin'
          'false_easting', 'false_northing'],
-         ['projection_x_coordinate', 'projection_y_coordinate']),
+     ['projection_x_coordinate', 'projection_y_coordinate']),
     # 2 entries for Mercator, since attribs different for 1SP or 2SP
     ("M-1SP", "Mercator",
         "+proj=merc +lon_0=145 +k_0=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
@@ -276,7 +276,7 @@ netcdf_cfproj_tuples = [
         ['longitude_of_projection_origin',
          'scale_factor_at_projection_origin',
          'false_easting', 'false_northing'],
-         ['projection_x_coordinate', 'projection_y_coordinate']),
+     ['projection_x_coordinate', 'projection_y_coordinate']),
     # Commented out as it seems GDAL itself's support of Mercator with 2SP
     #  is a bit dodgy
     ("M-2SP", "Mercator",
@@ -287,33 +287,33 @@ netcdf_cfproj_tuples = [
         ['longitude_of_projection_origin',
          'standard_parallel',
          'false_easting', 'false_northing'],
-         ['projection_x_coordinate', 'projection_y_coordinate']),
+     ['projection_x_coordinate', 'projection_y_coordinate']),
     ("Ortho", "Orthographic",
         "+proj=ortho +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
         "orthographic",
         ['longitude_of_projection_origin',
          'latitude_of_projection_origin',
          'false_easting', 'false_northing'],
-         ['projection_x_coordinate', 'projection_y_coordinate']),
+     ['projection_x_coordinate', 'projection_y_coordinate']),
     # Seems GDAL may have problems with Polar stereographic, as it
     #  considers these "local coordinate systems"
     ("PSt", "Polar stereographic",
         "+proj=stere +lat_ts=-37 +lat_0=-90 +lon_0=145 +k_0=1.0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
         "polar_stereographic",
         ['straight_vertical_longitude_from_pole',
-        'latitude_of_projection_origin',
+         'latitude_of_projection_origin',
          'standard_parallel',
          'false_easting', 'false_northing'],
-         ['projection_x_coordinate', 'projection_y_coordinate']),
+     ['projection_x_coordinate', 'projection_y_coordinate']),
     ("St", "Stereographic",
         "+proj=stere +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
         #'PROJCS["unnamed", GEOGCS["WGS 84", DATUM["WGS_1984", SPHEROID["WGS 84",6378137,298.257223563, AUTHORITY["EPSG","7030"]], AUTHORITY["EPSG","6326"]], PRIMEM["Greenwich",0], UNIT["degree",0.0174532925199433], AUTHORITY["EPSG","4326"]], PROJECTION["Stereographic"], PARAMETER["latitude_of_origin",-37.5], PARAMETER["central_meridian",145], PARAMETER["scale_factor",1], PARAMETER["false_easting",0], PARAMETER["false_northing",0], UNIT["metre",1, AUTHORITY["EPSG","9001"]]]',
         "stereographic",
         ['longitude_of_projection_origin',
-        'latitude_of_projection_origin',
+         'latitude_of_projection_origin',
          'scale_factor_at_projection_origin',
          'false_easting', 'false_northing'],
-         ['projection_x_coordinate', 'projection_y_coordinate']),
+     ['projection_x_coordinate', 'projection_y_coordinate']),
     #Note: Rotated Pole not in this list, as seems not GDAL-supported
     ("TM", "Transverse Mercator", "EPSG:32655",  # UTM Zone 55N
         "transverse_mercator",
@@ -322,13 +322,13 @@ netcdf_cfproj_tuples = [
         'longitude_of_central_meridian',
         'latitude_of_projection_origin',
             'false_easting', 'false_northing'],
-         ['projection_x_coordinate', 'projection_y_coordinate']),
+     ['projection_x_coordinate', 'projection_y_coordinate']),
     ("GEOS", "Geostationary_satellite",
         "+proj=geos +h=35785831 +lon_0=145 +datum=WGS84 +sweep=y +units=m",
         "geostationary",
         ['longitude_of_projection_origin',
-          'perspective_point_height',
-          'sweep_angle_axis',
+         'perspective_point_height',
+         'sweep_angle_axis',
          'false_easting', 'false_northing'],
         ['projection_x_coordinate', 'projection_y_coordinate'])
     ]
@@ -347,7 +347,7 @@ netcdf_cfproj_int_fmt_maps = {
     }
 
 netcdf_cfproj_format_fnames = {"HFA": "img", "GTiff": "tif", "NITF": "nitf",
-    "ERS": "ers"}
+                               "ERS": "ers"}
 
 ###############################################################################
 # Check support for given projection tuple definitions
@@ -355,7 +355,7 @@ netcdf_cfproj_format_fnames = {"HFA": "img", "GTiff": "tif", "NITF": "nitf",
 
 
 def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
-        resFilename):
+                           resFilename):
     """Test a Geotiff file can be converted to NetCDF, and projection in
     CF-1 conventions can be successfully maintained. Save results to file.
 
@@ -430,7 +430,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         #projVrt = os.path.join(outPath, "%s_%s.vrt" % \
         #    (origTiff.rstrip('.tif'), proj[0] ))
         projRaster = os.path.join(outPath, "%s_%s.%s" % \
-            (origTiff.rstrip('.tif'), proj[0], intExt))
+                                  (origTiff.rstrip('.tif'), proj[0], intExt))
         srs = osr.SpatialReference()
         srs.SetFromUserInput(proj[2])
         t_srs_wkt = srs.ExportToWkt()
@@ -444,7 +444,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
             print("Warped %s to %s" % (proj[0], projRaster))
 
         projNc = os.path.join(outPath, "%s_%s.nc" % \
-            (origTiff.rstrip('.tif'), proj[0]))
+                              (origTiff.rstrip('.tif'), proj[0]))
         #Force GDAL tags to be written to make testing easier, with preserved datum etc
         #ncCoOpts = "-co WRITE_GDAL_TAGS=yes"
         if not silent:
@@ -468,21 +468,21 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
             resFile.write("BAD\n")
             if 'missingProjName' in resPerProj[proj[0]]:
                 resFile.write("\tMissing proj name '%s'\n" % \
-                    (resPerProj[proj[0]]['missingProjName']))
+                              (resPerProj[proj[0]]['missingProjName']))
             for attrib in resPerProj[proj[0]]['missingAttrs']:
                 resFile.write("\tMissing attrib '%s'\n" % (attrib))
             for cVarStdName in resPerProj[proj[0]]['missingCoordVarStdNames']:
                 resFile.write("\tMissing coord var with std name '%s'\n" \
-                    % (cVarStdName))
+                              % (cVarStdName))
             if 'cfcheck_error' in resPerProj[proj[0]]:
                 resFile.write("\tFailed cf check: %s\n" % \
-                    (resPerProj[proj[0]]['cfcheck_error']))
+                              (resPerProj[proj[0]]['cfcheck_error']))
 
         # test file copy
         # We now copy to a new file, just to be safe
         projNc2 = projNc.rstrip('.nc') + '2.nc'
         projRaster2 = os.path.join(outPath, "%s_%s2.%s" % \
-            (origTiff.rstrip('.tif'), proj[0], intExt))
+                                   (origTiff.rstrip('.tif'), proj[0], intExt))
 
         tst_res[i_t + 1] = netcdf_test_copy(projRaster, 1, None, projNc2, [], 'NETCDF')
         tst_res[i_t + 2] = netcdf_test_copy(projNc2, 1, None, projRaster2, [], intFmt)
@@ -503,7 +503,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
     resStr = resFile.read()
     if resStr.find('BAD') != -1:
         print('\nCF projection tests failed, here is the output (stored in file %s)\n' % \
-             (os.path.join(outPath, resFilename)))
+              (os.path.join(outPath, resFilename)))
         print(resStr)
         result = 'fail'
 
@@ -671,7 +671,7 @@ def netcdf_cf_5():
 
         if lat_origin != 60:
             gdaltest.post_reason('Latitude of origin in %s does not match expected: %f'
-                                  % (ifile, lat_origin))
+                                 % (ifile, lat_origin))
             return 'fail'
 
     return 'success'

@@ -217,12 +217,12 @@ def tiff_copy_options_colorimetric_data():
     tifftag_transferfunction = (list(range(1, 256 * 4, 4)), list(range(2, 256 * 4 + 1, 4)), list(range(3, 256 * 4 + 2, 4)))
 
     options = ['SOURCE_PRIMARIES_RED=' + cvtTuple2String(source_primaries[0]),
-        'SOURCE_PRIMARIES_GREEN=' + cvtTuple2String(source_primaries[1]),
-        'SOURCE_PRIMARIES_BLUE=' + cvtTuple2String(source_primaries[2]),
-        'SOURCE_WHITEPOINT=' + cvtTuple2String(source_whitepoint),
-        'TIFFTAG_TRANSFERFUNCTION_RED=' + cvtTuple2String(tifftag_transferfunction[0]),
-        'TIFFTAG_TRANSFERFUNCTION_GREEN=' + cvtTuple2String(tifftag_transferfunction[1]),
-        'TIFFTAG_TRANSFERFUNCTION_BLUE=' + cvtTuple2String(tifftag_transferfunction[2])
+               'SOURCE_PRIMARIES_GREEN=' + cvtTuple2String(source_primaries[1]),
+               'SOURCE_PRIMARIES_BLUE=' + cvtTuple2String(source_primaries[2]),
+               'SOURCE_WHITEPOINT=' + cvtTuple2String(source_whitepoint),
+               'TIFFTAG_TRANSFERFUNCTION_RED=' + cvtTuple2String(tifftag_transferfunction[0]),
+               'TIFFTAG_TRANSFERFUNCTION_GREEN=' + cvtTuple2String(tifftag_transferfunction[1]),
+               'TIFFTAG_TRANSFERFUNCTION_BLUE=' + cvtTuple2String(tifftag_transferfunction[2])
                 ]
 
     driver = gdal.GetDriverByName('GTiff')
@@ -309,12 +309,12 @@ def tiff_copy_colorimetric_data():
     tifftag_transferfunction = (list(range(1, 256 * 4, 4)), list(range(2, 256 * 4 + 1, 4)), list(range(3, 256 * 4 + 2, 4)))
 
     options = ['SOURCE_PRIMARIES_RED=' + cvtTuple2String(source_primaries[0]),
-        'SOURCE_PRIMARIES_GREEN=' + cvtTuple2String(source_primaries[1]),
-        'SOURCE_PRIMARIES_BLUE=' + cvtTuple2String(source_primaries[2]),
-        'SOURCE_WHITEPOINT=' + cvtTuple2String(source_whitepoint),
-        'TIFFTAG_TRANSFERFUNCTION_RED=' + cvtTuple2String(tifftag_transferfunction[0]),
-        'TIFFTAG_TRANSFERFUNCTION_GREEN=' + cvtTuple2String(tifftag_transferfunction[1]),
-        'TIFFTAG_TRANSFERFUNCTION_BLUE=' + cvtTuple2String(tifftag_transferfunction[2])
+               'SOURCE_PRIMARIES_GREEN=' + cvtTuple2String(source_primaries[1]),
+               'SOURCE_PRIMARIES_BLUE=' + cvtTuple2String(source_primaries[2]),
+               'SOURCE_WHITEPOINT=' + cvtTuple2String(source_whitepoint),
+               'TIFFTAG_TRANSFERFUNCTION_RED=' + cvtTuple2String(tifftag_transferfunction[0]),
+               'TIFFTAG_TRANSFERFUNCTION_GREEN=' + cvtTuple2String(tifftag_transferfunction[1]),
+               'TIFFTAG_TRANSFERFUNCTION_BLUE=' + cvtTuple2String(tifftag_transferfunction[2])
                 ]
 
     driver = gdal.GetDriverByName('GTiff')

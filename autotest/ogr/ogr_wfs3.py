@@ -220,7 +220,7 @@ def ogr_wfs3_schema_from_api():
     handler = webserver.SequentialHandler()
     # Fake openapi response
     handler.add('GET', '/wfs3/api', 200, {'Content-Type': 'application/json'},
-        """{
+                """{
             "openapi": "3.0.0",
             "paths" : {
                 "/foo/{id}": {
@@ -554,7 +554,7 @@ def ogr_wfs3_fc_links_next_headers():
     link_val = '<http://data.example.org/buildings.json>; rel="self"; type="application/geo+json"\r\nLink: <http://localhost:%d/wfs3/foo_next>; rel="next"; type="application/geo+json"' % gdaltest.webserver_port
     handler.add('GET', '/wfs3/foo?count=10', 200,
                 {'Content-Type': 'application/geo+json',
-                  'Link': link_val},
+                 'Link': link_val},
                 """{ "type": "FeatureCollection",
                     "features": [
                     {
@@ -703,7 +703,7 @@ def ogr_wfs3_get_feature_count():
     handler = webserver.SequentialHandler()
     # Fake openapi response
     handler.add('GET', '/wfs3/api', 200, {'Content-Type': 'application/json'},
-        """{
+                """{
             "openapi": "3.0.0",
             "paths" : {
                 "/foo": {
@@ -770,7 +770,7 @@ def ogr_wfs3_attribute_filter():
     handler = webserver.SequentialHandler()
     # Fake openapi response
     handler.add('GET', '/wfs3/api', 200, {'Content-Type': 'application/json'},
-        """{
+                """{
             "openapi": "3.0.0",
             "paths" : {
                 "/foo": {

@@ -108,15 +108,15 @@ fpout = open(outfile, "wt")
 fpout.write("DSAA\n")
 fpout.write(str(band.XSize) + " " + str(band.YSize) + "\n")
 fpout.write(str(geotransform[0] + geotransform[1] / 2) + " " +
-    str(geotransform[0] + geotransform[1] * (band.XSize - 0.5)) + "\n")
+            str(geotransform[0] + geotransform[1] * (band.XSize - 0.5)) + "\n")
 if geotransform[5] < 0:
     fpout.write(str(geotransform[3] + geotransform[5] * (band.YSize - 0.5)) + " " +
-    str(geotransform[3] + geotransform[5] / 2) + "\n")
+                str(geotransform[3] + geotransform[5] / 2) + "\n")
 else:
     fpout.write(str(geotransform[3] + geotransform[5] / 2) + " " +
-    str(geotransform[3] + geotransform[5] * (band.YSize - 0.5)) + "\n")
+                str(geotransform[3] + geotransform[5] * (band.YSize - 0.5)) + "\n")
 fpout.write(str(band.ComputeRasterMinMax(0)[0]) + " " +
-    str(band.ComputeRasterMinMax(0)[1]) + "\n")
+            str(band.ComputeRasterMinMax(0)[1]) + "\n")
 
 for i in range(band.YSize - 1, -1, -1):
     scanline = band.ReadAsArray(0, i, band.XSize, 1, band.XSize, 1)

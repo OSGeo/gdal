@@ -260,9 +260,9 @@ def ogr_fgdb_stress_test_cleanup():
 gdaltest_list = []
 
 explicit_gdaltest_list = [ogr_fgdb_stress_test_init,
-                           ogr_fgdb_stress_test_1,
-                           ogr_fgdb_stress_test_2,
-                           ogr_fgdb_stress_test_cleanup]
+                          ogr_fgdb_stress_test_1,
+                          ogr_fgdb_stress_test_2,
+                          ogr_fgdb_stress_test_cleanup]
 
 if __name__ == '__main__':
 

@@ -72,9 +72,9 @@ def ogr_shape_2():
     #######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(gdaltest.shape_lyr,
-                                    [('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString)])
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger),
+                                    ('PRFEDEA', ogr.OFTString)])
 
     #######################################################
     # Copy in poly.shp
@@ -114,7 +114,7 @@ def ogr_shape_3():
 
     gdaltest.shape_lyr.SetAttributeFilter('eas_id < 170')
     tr = ogrtest.check_features_against_list(gdaltest.shape_lyr,
-                                              'eas_id', expect)
+                                             'eas_id', expect)
     gdaltest.shape_lyr.SetAttributeFilter(None)
 
     for i in range(len(gdaltest.poly_feat)):
@@ -235,7 +235,7 @@ def ogr_shape_7():
     geom.Destroy()
 
     tr = ogrtest.check_features_against_list(gdaltest.shape_lyr, 'eas_id',
-                                              [158])
+                                             [158])
 
     gdaltest.shape_lyr.SetSpatialFilter(None)
 
@@ -266,7 +266,7 @@ def ogr_shape_8():
     geom.Destroy()
 
     tr = ogrtest.check_features_against_list(gdaltest.shape_lyr, 'eas_id',
-                                              [158])
+                                             [158])
 
     gdaltest.shape_lyr.SetSpatialFilter(None)
 
@@ -318,7 +318,7 @@ def ogr_shape_10():
     gdaltest.shape_lyr.SetSpatialFilterRect(-400, 22, -120, 400)
 
     tr = ogrtest.check_features_against_list(gdaltest.shape_lyr, 'FID',
-                                              [0, 4, 8])
+                                             [0, 4, 8])
 
     if tr:
         return 'success'
@@ -338,7 +338,7 @@ def ogr_shape_11():
     gdaltest.shape_lyr.SetSpatialFilterRect(-400, 22, -120, 400)
 
     tr = ogrtest.check_features_against_list(gdaltest.shape_lyr, 'FID',
-                                              [])
+                                             [])
 
     if not tr:
         return 'fail'
@@ -347,7 +347,7 @@ def ogr_shape_11():
     gdaltest.shape_lyr.SetSpatialFilterRect(-400, 22, -120, 400)
 
     tr = ogrtest.check_features_against_list(gdaltest.shape_lyr, 'FID',
-                                              [4])
+                                             [4])
 
     gdaltest.shape_lyr.SetAttributeFilter(None)
     gdaltest.shape_lyr.SetSpatialFilter(None)
@@ -398,7 +398,7 @@ def ogr_shape_12():
         pnt_count = poly.GetGeometryRef(0).GetPointCount()
         if pnt_count != counts[i]:
             gdaltest.post_reason(('Polygon %d has %d points instead of %d.' %
-                                   (i, pnt_count, counts[i])))
+                                  (i, pnt_count, counts[i])))
             return 'fail'
 
     return 'success'
@@ -745,10 +745,10 @@ def ogr_shape_21():
         return 'skip'
 
     files = ['data/buggypoint.shp',
-              'data/buggymultipoint.shp',
-              'data/buggymultiline.shp',
-              'data/buggymultipoly.shp',
-              'data/buggymultipoly2.shp']
+             'data/buggymultipoint.shp',
+             'data/buggymultiline.shp',
+             'data/buggymultipoly.shp',
+             'data/buggymultipoly2.shp']
     for file in files:
 
         ds = ogr.Open(file)
@@ -792,10 +792,10 @@ def ogr_shape_22():
     #######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(gdaltest.shape_lyr,
-                                    [('REAL', ogr.OFTReal),
-                                      ('INTEGER', ogr.OFTInteger),
-                                      ('STRING', ogr.OFTString),
-                                      ('DATE', ogr.OFTDate)])
+                                   [('REAL', ogr.OFTReal),
+                                    ('INTEGER', ogr.OFTInteger),
+                                    ('STRING', ogr.OFTString),
+                                    ('DATE', ogr.OFTDate)])
 
     #######################################################
     # Create a feature
@@ -863,7 +863,7 @@ def ogr_shape_23_write_valid_and_invalid(layer_name, wkt, invalid_wkt, wkbType, 
         return 'success'
 
     if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt(wkt),
-                                max_error=0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         print(feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
 
@@ -905,7 +905,7 @@ def ogr_shape_23_write_geom(layer_name, geom, expected_geom, wkbType):
             return 'success'
 
     if ogrtest.check_feature_geometry(feat_read, expected_geom,
-                                max_error=0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         print(feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
 
@@ -1000,7 +1000,7 @@ def ogr_shape_23():
     feat_read = read_lyr.GetNextFeature()
 
     if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0 0,0 10,10 10,0 0),(0.25 0.5,1 1,0.5 1,0.25 0.5)),((100 0,100 10,110 10,100 0),(100.25 0.5,100.5 1,100 1,100.25 0.5)))'),
-                                max_error=0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         print(feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
 
@@ -1348,46 +1348,46 @@ def ogr_shape_31():
         return 'skip'
 
     fields = [('a', ogr.OFTReal),
-               ('A', ogr.OFTInteger),
-               ('A_1', ogr.OFTInteger),
-               ('A_1', ogr.OFTInteger),
-               ('a_1_2', ogr.OFTInteger),
-               ('aaaaaAAAAAb', ogr.OFTInteger),
-               ('aAaaaAAAAAc', ogr.OFTInteger),
-               ('aaaaaAAAABa', ogr.OFTInteger),
-               ('aaaaaAAAABb', ogr.OFTInteger),
-               ('aaaaaAAA_1', ogr.OFTInteger),
-               ('aaaaaAAAABc', ogr.OFTInteger),
-               ('aaaaaAAAABd', ogr.OFTInteger),
-               ('aaaaaAAAABe', ogr.OFTInteger),
-               ('aaaaaAAAABf', ogr.OFTInteger),
-               ('aaaaaAAAABg', ogr.OFTInteger),
-               ('aaaaaAAAABh', ogr.OFTInteger),
-               ('aaaaaAAAABi', ogr.OFTInteger),
-               ('aaaaaAAA10', ogr.OFTString),
-               ('', ogr.OFTInteger),
-               ('', ogr.OFTInteger)]
+              ('A', ogr.OFTInteger),
+              ('A_1', ogr.OFTInteger),
+              ('A_1', ogr.OFTInteger),
+              ('a_1_2', ogr.OFTInteger),
+              ('aaaaaAAAAAb', ogr.OFTInteger),
+              ('aAaaaAAAAAc', ogr.OFTInteger),
+              ('aaaaaAAAABa', ogr.OFTInteger),
+              ('aaaaaAAAABb', ogr.OFTInteger),
+              ('aaaaaAAA_1', ogr.OFTInteger),
+              ('aaaaaAAAABc', ogr.OFTInteger),
+              ('aaaaaAAAABd', ogr.OFTInteger),
+              ('aaaaaAAAABe', ogr.OFTInteger),
+              ('aaaaaAAAABf', ogr.OFTInteger),
+              ('aaaaaAAAABg', ogr.OFTInteger),
+              ('aaaaaAAAABh', ogr.OFTInteger),
+              ('aaaaaAAAABi', ogr.OFTInteger),
+              ('aaaaaAAA10', ogr.OFTString),
+              ('', ogr.OFTInteger),
+              ('', ogr.OFTInteger)]
 
     expected_fields = ['a',
-                        'A_1',
-                        'A_1_1',
-                        'A_1_2',
-                        'a_1_2_1',
-                        'aaaaaAAAAA',
-                        'aAaaaAAA_1',
-                        'aaaaaAAAAB',
-                        'aaaaaAAA_2',
-                        'aaaaaAAA_3',
-                        'aaaaaAAA_4',
-                        'aaaaaAAA_5',
-                        'aaaaaAAA_6',
-                        'aaaaaAAA_7',
-                        'aaaaaAAA_8',
-                        'aaaaaAAA_9',
-                        'aaaaaAAA10',
-                        'aaaaaAAA11',
-                        '',
-                        '_1']
+                       'A_1',
+                       'A_1_1',
+                       'A_1_2',
+                       'a_1_2_1',
+                       'aaaaaAAAAA',
+                       'aAaaaAAA_1',
+                       'aaaaaAAAAB',
+                       'aaaaaAAA_2',
+                       'aaaaaAAA_3',
+                       'aaaaaAAA_4',
+                       'aaaaaAAA_5',
+                       'aaaaaAAA_6',
+                       'aaaaaAAA_7',
+                       'aaaaaAAA_8',
+                       'aaaaaAAA_9',
+                       'aaaaaAAA10',
+                       'aaaaaAAA11',
+                       '',
+                       '_1']
 
     #######################################################
     # Create Layer
@@ -1470,7 +1470,7 @@ def ogr_shape_32():
         print('Could not retrieve geometry at FID', i)
         return 'fail'
       if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1.1,0.5 1,0.25 0.5))'),
-                                max_error=0.000000001) != 0:
+                                        max_error=0.000000001) != 0:
         print('Wrong geometry encountered at FID', i, ':', (feat_read.GetGeometryRef().ExportToWkt()))
         return 'fail'
 
@@ -1488,7 +1488,7 @@ def ogr_shape_33():
     feat_read = lyr.GetNextFeature()
 
     if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('MULTIPOLYGON( ((0 0,0 1,1 1,1 0,0 0)),((100000000000 100000000000,100000000000 100000000001,100000000001 100000000001,100000000001 100000000000,100000000000 100000000000)) )'),
-                                max_error=0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
 
@@ -1515,7 +1515,7 @@ def ogr_shape_34():
     feat_read = lyr.GetNextFeature()
 
     if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('MULTIPOLYGON( ((0 0,0 1,1 1,1 0,0 0)),((100000000000 100000000000,100000000000 100000000001,100000000001 100000000001,100000000001 100000000000,100000000000 100000000000)) )'),
-                                max_error=0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
 
@@ -1548,7 +1548,7 @@ def ogr_shape_35():
     feat_read = lyr.GetNextFeature()
 
     if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('POINT(0 1)'),
-                                max_error=0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
 
@@ -1574,7 +1574,7 @@ def ogr_shape_36():
 
     feat_read = lyr.GetFeature(9)
     if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('POLYGON ((479750.6875 4764702.0,479658.59375 4764670.0,479640.09375 4764721.0,479735.90625 4764752.0,479750.6875 4764702.0))'),
-                                max_error=0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
 
@@ -1602,14 +1602,14 @@ def ogr_shape_37():
         feat_read = lyr.GetNextFeature()
         if i == 9:
             if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('POLYGON ((479750.6875 4764702.0,479658.59375 4764670.0,479640.09375 4764721.0,479735.90625 4764752.0,479750.6875 4764702.0))'),
-                                        max_error=0.000000001) != 0:
+                                              max_error=0.000000001) != 0:
                 print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
                 return 'fail'
 
     lyr.ResetReading()
     feat_read = lyr.GetFeature(9)
     if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('POLYGON ((479750.6875 4764702.0,479658.59375 4764670.0,479640.09375 4764721.0,479735.90625 4764752.0,479750.6875 4764702.0))'),
-                                max_error=0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
 
@@ -1640,14 +1640,14 @@ def ogr_shape_37_bis():
         feat_read = lyr.GetNextFeature()
         if i == 9:
             if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('POLYGON ((479750.6875 4764702.0,479658.59375 4764670.0,479640.09375 4764721.0,479735.90625 4764752.0,479750.6875 4764702.0))'),
-                                        max_error=0.000000001) != 0:
+                                              max_error=0.000000001) != 0:
                 print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
                 return 'fail'
 
     lyr.ResetReading()
     feat_read = lyr.GetFeature(9)
     if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('POLYGON ((479750.6875 4764702.0,479658.59375 4764670.0,479640.09375 4764721.0,479735.90625 4764752.0,479750.6875 4764702.0))'),
-                                max_error=0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
 
@@ -1683,7 +1683,7 @@ def ogr_shape_39():
     feat_read = lyr.GetNextFeature()
 
     if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (TIN (((5 4 10,0 0 5,10 0 5,5 4 10)),((5 4 10,10 0 5,10 8 5,5 4 10)),((5 4 10,10 8 5,0 8 5,5 4 10)),((5 4 10,0 8 5,0 0 5,5 4 10))),TIN (((10 0 5,10 0 0,10 8 5,10 0 5)),((10 0 0,10 8 5,10 8 0,10 0 0)),((10 8 5,10 8 0,0 8 5,10 8 5)),((10 8 0,0 8 5,0 8 0,10 8 0)),((0 8 5,0 8 0,0 0 5,0 8 5)),((0 8 0,0 0 5,0 0 0,0 8 0))),MULTIPOLYGON (((0 0 0,0 0 5,10 0 5,10 0 0,6 0 0,6 0 3,4 0 3,4 0 0,0 0 0),(1 0 2,3 0 2,3 0 4,1 0 4,1 0 2),(7 0 2,9 0 2,9 0 4,7 0 4,7 0 2))))'),
-                                max_error=0.000000001) != 0:
+                                      max_error=0.000000001) != 0:
         print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
 
@@ -2854,17 +2854,17 @@ def ogr_shape_58():
     ds = shape_drv.CreateDataSource(ds_name)
 
     wkt_list = ['POINT (0 1)',
-                 'POINT (0 1 2)',
-                 'MULTIPOINT (0 1,2 3)',
-                 'MULTIPOINT (0 1 2,3 4 5)',
-                 'LINESTRING (0 1,2 3)',
-                 'LINESTRING (0 1 2,3 4 5)',
-                 'MULTILINESTRING ((0 1,2 3),(0 1,2 3))',
-                 'MULTILINESTRING ((0 1 2,3 4 5),(0 1 2,3 4 5))',
-                 'POLYGON ((0 0,0 1,1 1,1 0,0 0))',
-                 'POLYGON ((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2))',
-                 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)),((0 0,0 1,1 1,1 0,0 0)))',
-                 'MULTIPOLYGON (((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2)),((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2)))']
+                'POINT (0 1 2)',
+                'MULTIPOINT (0 1,2 3)',
+                'MULTIPOINT (0 1 2,3 4 5)',
+                'LINESTRING (0 1,2 3)',
+                'LINESTRING (0 1 2,3 4 5)',
+                'MULTILINESTRING ((0 1,2 3),(0 1,2 3))',
+                'MULTILINESTRING ((0 1 2,3 4 5),(0 1 2,3 4 5))',
+                'POLYGON ((0 0,0 1,1 1,1 0,0 0))',
+                'POLYGON ((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2))',
+                'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)),((0 0,0 1,1 1,1 0,0 0)))',
+                'MULTIPOLYGON (((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2)),((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2)))']
 
     for wkt in wkt_list:
         geom = ogr.CreateGeometryFromWkt(wkt)
@@ -4394,29 +4394,29 @@ def ogr_shape_93():
 def ogr_shape_94():
 
     tests = [["POINT", ogr.wkbPoint, "POINT (1 2)"],
-              ["POINTM", ogr.wkbPointM, "POINT M (1 2 3)"],
-              ["POINTZ", ogr.wkbPoint25D, "POINT Z (1 2 3)"],
-              ["POINTZM", ogr.wkbPointZM, "POINT ZM (1 2 3 4)"],
-              ["MULTIPOINT", ogr.wkbMultiPoint, "MULTIPOINT ((1 2))"],
-              ["MULTIPOINTM", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3))"],
-              ["MULTIPOINTZ", ogr.wkbMultiPoint25D, "MULTIPOINT Z ((1 2 3))"],
-              ["MULTIPOINTZM", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4))"],
-              ["ARC", ogr.wkbLineString, "LINESTRING (1 2,3 4)"],
-              ["ARCM", ogr.wkbLineStringM, "LINESTRING M (1 2 3,5 6 7)"],
-              ["ARCZ", ogr.wkbLineString25D, "LINESTRING Z (1 2 3,5 6 7)"],
-              ["ARCZM", ogr.wkbLineStringZM, "LINESTRING ZM (1 2 3 4,5 6 7 8)"],
-              ["ARC", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4),(1 2,3 4))"],
-              ["ARCM", ogr.wkbMultiLineStringM, "MULTILINESTRING M ((1 2 3,5 6 7),(1 2 3,5 6 7))"],
-              ["ARCZ", ogr.wkbMultiLineString25D, "MULTILINESTRING Z ((1 2 3,5 6 7),(1 2 3,5 6 7))"],
-              ["ARCZM", ogr.wkbMultiLineStringZM, "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8),(1 2 3 4,5 6 7 8))"],
-              ["POLYGON", ogr.wkbPolygon, "POLYGON ((0 0,0 1,1 1,1 0))"],
-              ["POLYGONM", ogr.wkbPolygonM, "POLYGON M ((0 0 2,0 1 2,1 1 2,1 0 2))"],
-              ["POLYGONZ", ogr.wkbPolygon25D, "POLYGON Z ((0 0 2,0 1 2,1 1 2,1 0 2))"],
-              ["POLYGONZM", ogr.wkbPolygonZM, "POLYGON ZM ((0 0 2 3,0 1 2 3,1 1 2 3,1 0 2 3))"],
-              ["POLYGON", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0)),((0 0,0 1,1 1,1 0)))"],
-              ["POLYGONM", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 2,0 1 2,1 1 2,1 0 2)),((0 0 2,0 1 2,1 1 2,1 0 2)))"],
-              ["POLYGONZ", ogr.wkbMultiPolygon25D, "MULTIPOLYGON Z (((0 0 2,0 1 2,1 1 2,1 0 2)),((0 0 2,0 1 2,1 1 2,1 0 2)))"],
-              ["POLYGONZM", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 2 3,0 1 2 3,1 1 2 3,1 0 2 3)),((0 0 2 3,0 1 2 3,1 1 2 3,1 0 2 3)))"],
+             ["POINTM", ogr.wkbPointM, "POINT M (1 2 3)"],
+             ["POINTZ", ogr.wkbPoint25D, "POINT Z (1 2 3)"],
+             ["POINTZM", ogr.wkbPointZM, "POINT ZM (1 2 3 4)"],
+             ["MULTIPOINT", ogr.wkbMultiPoint, "MULTIPOINT ((1 2))"],
+             ["MULTIPOINTM", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3))"],
+             ["MULTIPOINTZ", ogr.wkbMultiPoint25D, "MULTIPOINT Z ((1 2 3))"],
+             ["MULTIPOINTZM", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4))"],
+             ["ARC", ogr.wkbLineString, "LINESTRING (1 2,3 4)"],
+             ["ARCM", ogr.wkbLineStringM, "LINESTRING M (1 2 3,5 6 7)"],
+             ["ARCZ", ogr.wkbLineString25D, "LINESTRING Z (1 2 3,5 6 7)"],
+             ["ARCZM", ogr.wkbLineStringZM, "LINESTRING ZM (1 2 3 4,5 6 7 8)"],
+             ["ARC", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4),(1 2,3 4))"],
+             ["ARCM", ogr.wkbMultiLineStringM, "MULTILINESTRING M ((1 2 3,5 6 7),(1 2 3,5 6 7))"],
+             ["ARCZ", ogr.wkbMultiLineString25D, "MULTILINESTRING Z ((1 2 3,5 6 7),(1 2 3,5 6 7))"],
+             ["ARCZM", ogr.wkbMultiLineStringZM, "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8),(1 2 3 4,5 6 7 8))"],
+             ["POLYGON", ogr.wkbPolygon, "POLYGON ((0 0,0 1,1 1,1 0))"],
+             ["POLYGONM", ogr.wkbPolygonM, "POLYGON M ((0 0 2,0 1 2,1 1 2,1 0 2))"],
+             ["POLYGONZ", ogr.wkbPolygon25D, "POLYGON Z ((0 0 2,0 1 2,1 1 2,1 0 2))"],
+             ["POLYGONZM", ogr.wkbPolygonZM, "POLYGON ZM ((0 0 2 3,0 1 2 3,1 1 2 3,1 0 2 3))"],
+             ["POLYGON", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0)),((0 0,0 1,1 1,1 0)))"],
+             ["POLYGONM", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 2,0 1 2,1 1 2,1 0 2)),((0 0 2,0 1 2,1 1 2,1 0 2)))"],
+             ["POLYGONZ", ogr.wkbMultiPolygon25D, "MULTIPOLYGON Z (((0 0 2,0 1 2,1 1 2,1 0 2)),((0 0 2,0 1 2,1 1 2,1 0 2)))"],
+             ["POLYGONZM", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 2 3,0 1 2 3,1 1 2 3,1 0 2 3)),((0 0 2 3,0 1 2 3,1 1 2 3,1 0 2 3)))"],
               ]
 
     for test in tests:
@@ -5139,18 +5139,18 @@ def ogr_shape_104():
 
     for (wkt, lyr_type, options, expected_wkt) in \
                 [['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [], None],
-                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,1 1 3,2 2 4,0 0 0)))', ogr.wkbUnknown, [], None],  # triangle fan
-                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 1 2,1 1 3,4 4 5,0 1 2)))', ogr.wkbUnknown, [], None],  # triangle strip
-                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [], None],  # no fan no strip
-                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [],
-                        'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))'],
-                        # no fan no strip with duplicated triangle (as found in #5888)
-                  ['POLYHEDRALSURFACE Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
-                  ['GEOMETRYCOLLECTION Z (TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0))))', ogr.wkbUnknown, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
-                  ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbUnknown, ['SHPT=MULTIPATCH'], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
-                  ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
-                  ['POLYGON Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
-                  ['MULTIPOLYGON Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                 ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,1 1 3,2 2 4,0 0 0)))', ogr.wkbUnknown, [], None],  # triangle fan
+                 ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 1 2,1 1 3,4 4 5,0 1 2)))', ogr.wkbUnknown, [], None],  # triangle strip
+                 ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [], None],  # no fan no strip
+                 ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [],
+                  'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))'],
+                 # no fan no strip with duplicated triangle (as found in #5888)
+                 ['POLYHEDRALSURFACE Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                 ['GEOMETRYCOLLECTION Z (TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0))))', ogr.wkbUnknown, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                 ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbUnknown, ['SHPT=MULTIPATCH'], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                 ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                 ['POLYGON Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                 ['MULTIPOLYGON Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
                   ]:
 
         if expected_wkt is None:

@@ -93,8 +93,8 @@ def netcdf_setup():
         gdaltest.netcdf_drv_has_hdf4 = True
 
     print('NOTICE: using netcdf version ' + gdaltest.netcdf_drv_version + \
-               '  has_nc2: ' + str(gdaltest.netcdf_drv_has_nc2) + '  has_nc4: ' + \
-               str(gdaltest.netcdf_drv_has_nc4))
+          '  has_nc2: ' + str(gdaltest.netcdf_drv_has_nc2) + '  has_nc4: ' + \
+          str(gdaltest.netcdf_drv_has_nc4))
 
     return 'success'
 
@@ -232,7 +232,7 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
         mk = metadata[k].lstrip('{ ').rstrip('} ')
         if mk != v:
             gdaltest.post_reason("invalid value [%s] for metadata [%s]=[%s]" \
-                                     % (str(mk), str(k), str(v)))
+                                 % (str(mk), str(k), str(v)))
             return 'fail'
 
     metadata = metadata_band
@@ -247,7 +247,7 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
         mk = metadata[k].lstrip('{ ').rstrip('} ')
         if mk != v:
             gdaltest.post_reason("invalid value [%s] for metadata [%s]=[%s]" \
-                                     % (str(mk), str(k), str(v)))
+                                 % (str(mk), str(k), str(v)))
             return 'fail'
 
     return 'success'
@@ -269,7 +269,7 @@ def netcdf_1():
         return 'skip'
 
     tst = gdaltest.GDALTest('NetCDF', 'NETCDF:"data/bug636.nc":tas', 1, 31621,
-                             filename_absolute=1)
+                            filename_absolute=1)
 
     # We don't want to gum up the test stream output with the
     # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
@@ -294,8 +294,8 @@ def netcdf_2():
     gdaltest.netcdf_drv.CreateCopy('tmp/netcdf2.nc', src_ds)
 
     tst = gdaltest.GDALTest('NetCDF', 'tmp/netcdf2.nc',
-                             1, 4672,
-                             filename_absolute=1)
+                            1, 4672,
+                            filename_absolute=1)
 
     wkt = """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
@@ -363,8 +363,8 @@ def netcdf_4():
         return 'skip'
 
     tst = gdaltest.GDALTest('NetCDF',
-                             'NETCDF:data/foo_5dimensional.nc:temperature',
-                             3, 1218, filename_absolute=1)
+                            'NETCDF:data/foo_5dimensional.nc:temperature',
+                            3, 1218, filename_absolute=1)
 
     # We don't want to gum up the test stream output with the
     # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
@@ -386,8 +386,8 @@ def netcdf_5():
         return 'skip'
 
     tst = gdaltest.GDALTest('NetCDF',
-                             'NETCDF:data/foo_5dimensional.nc:temperature',
-                             7, 1227, filename_absolute=1)
+                            'NETCDF:data/foo_5dimensional.nc:temperature',
+                            7, 1227, filename_absolute=1)
 
     # We don't want to gum up the test stream output with the
     # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
@@ -417,7 +417,7 @@ def netcdf_6():
 
     if lat_origin != 25:
         gdaltest.post_reason('Latitude of origin does not match expected:\n%f'
-                              % lat_origin)
+                             % lat_origin)
         return 'fail'
 
     ds = None
@@ -444,7 +444,7 @@ def netcdf_7():
 
     if std_p1 != 33.0 or std_p2 != 45.0:
         gdaltest.post_reason('Standard Parallels do not match expected:\n%f,%f'
-                              % (std_p1, std_p2))
+                             % (std_p1, std_p2))
         return 'fail'
 
     ds = None
@@ -506,7 +506,7 @@ def netcdf_9():
 
     if spheroid != 'WGS 84':
         gdaltest.post_reason('Incorrect spheroid read from file\n%s'
-                              % (spheroid))
+                             % (spheroid))
         return 'fail'
 
     ds = None
@@ -530,11 +530,11 @@ def netcdf_10():
     gt = ds.GetGeoTransform()
 
     gt1 = (-1897186.0290038721, 5079.3608398440065,
-            0.0, 2674684.0244560046,
-            0.0, -5079.4721679684635)
+           0.0, 2674684.0244560046,
+           0.0, -5079.4721679684635)
     gt2 = (-1897.186029003872, 5.079360839844003,
-             0.0, 2674.6840244560044,
-             0.0, -5.079472167968456)
+           0.0, 2674.6840244560044,
+           0.0, -5.079472167968456)
 
     if gt != gt1:
         sr = osr.SpatialReference()
@@ -796,7 +796,7 @@ def netcdf_19():
         return 'skip'
 
     tst = gdaltest.GDALTest('NetCDF', 'data/trmm-nc4z.nc', 1, 50235,
-                              filename_absolute=1)
+                            filename_absolute=1)
 
     result = tst.testOpen(skip_checksum=True)
 
@@ -1079,7 +1079,7 @@ def netcdf_26():
 
     #test WRITE_BOTTOMUP=NO
     test = gdaltest.GDALTest('NETCDF', '../data/int16-nogeo.nc', 1, 4855,
-                              options=['WRITE_BOTTOMUP=NO'])
+                             options=['WRITE_BOTTOMUP=NO'])
     result = test.testCreateCopy(check_gt=0, check_srs=0, check_minmax=0)
 
     if result != 'success':
@@ -1138,7 +1138,7 @@ def netcdf_test_4dfile(ofile):
         subds_count = len(md) / 2
     if ds.RasterCount != 8 or subds_count != 0:
         gdaltest.post_reason('copy has %d bands (expected 8) and has %d subdatasets'\
-                                  ' (expected 0)' % (ds.RasterCount, subds_count))
+                             ' (expected 0)' % (ds.RasterCount, subds_count))
         return 'fail'
     ds is None
 
@@ -2787,7 +2787,7 @@ def netcdf_66():
         gdal.VectorTranslate('tmp/netcdf_66.nc', 'data/profile.nc', format='netCDF', datasetCreationOptions=['CONFIG_FILE=<Configuration>'])
 
     myconfig = \
-"""<Configuration>
+    """<Configuration>
     <!-- comment -->
     <unrecognized_elt/>
     <DatasetCreationOption/>
@@ -2827,7 +2827,7 @@ def netcdf_66():
 
     # Now with a correct configuration
     myconfig = \
-"""<Configuration>
+    """<Configuration>
     <DatasetCreationOption name="WRITE_GDAL_TAGS" value="NO"/>
     <LayerCreationOption name="STRING_DEFAULT_WIDTH" value="1"/>
     <Attribute name="foo" value="bar"/>
@@ -3082,7 +3082,7 @@ def netcdf_75():
         return 'skip'
 
     tst = gdaltest.GDALTest('NetCDF', 'byte.nc.txt',
-                             1, 4672)
+                            1, 4672)
 
     wkt = """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",

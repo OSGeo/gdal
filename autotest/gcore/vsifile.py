@@ -460,7 +460,7 @@ def vsifile_9():
 def vsifile_10():
 
     gdal.FileFromMemBuffer('/vsimem/vsifile_10.tar',
-"""FUZZER_FRIENDLY_ARCHIVE
+                           """FUZZER_FRIENDLY_ARCHIVE
 ***NEWFILE***:test.txt
 abc***NEWFILE***:huge.txt
 01234567890123456789012345678901234567890123456789012345678901234567890123456789
@@ -535,7 +535,7 @@ a""")
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/vsifile_10.tar',
-"""FUZZER_FRIENDLY_ARCHIVE
+                           """FUZZER_FRIENDLY_ARCHIVE
 ***NEWFILE***:x
 abc""")
     contents = gdal.ReadDir('/vsitar//vsimem/vsifile_10.tar')
@@ -545,7 +545,7 @@ abc""")
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/vsifile_10.tar',
-"""FUZZER_FRIENDLY_ARCHIVE
+                           """FUZZER_FRIENDLY_ARCHIVE
 ***NEWFILE***:x
 abc***NEWFILE***:""")
     contents = gdal.ReadDir('/vsitar//vsimem/vsifile_10.tar')
@@ -760,24 +760,24 @@ def vsifile_19():
 
 
 gdaltest_list = [vsifile_1,
-                  vsifile_2,
-                  vsifile_3,
-                  vsifile_4,
-                  vsifile_5,
-                  vsifile_6,
-                  vsifile_7,
-                  vsifile_8,
-                  vsifile_9,
-                  vsifile_10,
-                  vsifile_11,
-                  vsifile_12,
-                  vsifile_13,
-                  vsifile_14,
-                  vsifile_15,
-                  vsifile_16,
-                  vsifile_17,
-                  vsifile_18,
-                  vsifile_19]
+                 vsifile_2,
+                 vsifile_3,
+                 vsifile_4,
+                 vsifile_5,
+                 vsifile_6,
+                 vsifile_7,
+                 vsifile_8,
+                 vsifile_9,
+                 vsifile_10,
+                 vsifile_11,
+                 vsifile_12,
+                 vsifile_13,
+                 vsifile_14,
+                 vsifile_15,
+                 vsifile_16,
+                 vsifile_17,
+                 vsifile_18,
+                 vsifile_19]
 
 if __name__ == '__main__':
 

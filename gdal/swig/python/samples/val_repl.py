@@ -135,5 +135,5 @@ for iBand in range(1, indataset.RasterCount + 1):
     for i in range(inband.YSize - 1, -1, -1):
         scanline = inband.ReadAsArray(0, i, inband.XSize, 1, inband.XSize, 1)
         scanline = numpy.choose(numpy.equal(scanline, inNoData),
-                                       (scanline, outNoData))
+                                (scanline, outNoData))
         outband.WriteArray(scanline, 0, i)

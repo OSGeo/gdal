@@ -149,7 +149,7 @@ def vsiaz_start_webserver():
         return 'skip'
 
     gdal.SetConfigOption('AZURE_STORAGE_CONNECTION_STRING',
-        'DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;EndpointSuffix=127.0.0.1:%d' % gdaltest.webserver_port)
+                         'DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;EndpointSuffix=127.0.0.1:%d' % gdaltest.webserver_port)
     gdal.SetConfigOption('AZURE_STORAGE_ACCOUNT', '')
     gdal.SetConfigOption('AZURE_STORAGE_ACCESS_KEY', '')
     gdal.SetConfigOption('CPL_AZURE_TIMESTAMP', 'my_timestamp')
@@ -356,7 +356,7 @@ def vsiaz_fake_readdir():
     # List containers (empty result)
     handler = webserver.SequentialHandler()
     handler.add('GET', '/azure/blob/myaccount/?comp=list', 200, {'Content-type': 'application/xml'},
-        """<?xml version="1.0" encoding="UTF-8"?>
+                """<?xml version="1.0" encoding="UTF-8"?>
         <EnumerationResults ServiceEndpoint="https://myaccount.blob.core.windows.net">
             <Containers/>
             </EnumerationResults>
@@ -373,7 +373,7 @@ def vsiaz_fake_readdir():
     # List containers
     handler = webserver.SequentialHandler()
     handler.add('GET', '/azure/blob/myaccount/?comp=list', 200, {'Content-type': 'application/xml'},
-        """<?xml version="1.0" encoding="UTF-8"?>
+                """<?xml version="1.0" encoding="UTF-8"?>
         <EnumerationResults>
             <Containers>
                 <Container>
@@ -384,7 +384,7 @@ def vsiaz_fake_readdir():
             </EnumerationResults>
         """)
     handler.add('GET', '/azure/blob/myaccount/?comp=list&marker=bla', 200, {'Content-type': 'application/xml'},
-        """<?xml version="1.0" encoding="UTF-8"?>
+                """<?xml version="1.0" encoding="UTF-8"?>
         <EnumerationResults>
             <Containers>
                 <Container>
@@ -1064,15 +1064,15 @@ def vsiaz_cleanup():
 
 
 gdaltest_list = [vsiaz_init,
-                  vsiaz_real_server_errors,
-                  vsiaz_start_webserver,
-                  vsiaz_fake_basic,
-                  vsiaz_fake_readdir,
-                  vsiaz_fake_write,
-                  vsiaz_fake_unlink,
-                  vsiaz_fake_mkdir_rmdir,
-                  vsiaz_stop_webserver,
-                  vsiaz_cleanup]
+                 vsiaz_real_server_errors,
+                 vsiaz_start_webserver,
+                 vsiaz_fake_basic,
+                 vsiaz_fake_readdir,
+                 vsiaz_fake_write,
+                 vsiaz_fake_unlink,
+                 vsiaz_fake_mkdir_rmdir,
+                 vsiaz_stop_webserver,
+                 vsiaz_cleanup]
 
 # gdaltest_list = [ vsiaz_init, vsiaz_start_webserver, vsiaz_fake_mkdir_rmdir, vsiaz_stop_webserver, vsiaz_cleanup ]
 

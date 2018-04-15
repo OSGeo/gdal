@@ -49,7 +49,7 @@ def pds_1():
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
     ret = tst.testOpen(check_prj=expected_prj,
-                         check_gt=expected_gt)
+                       check_gt=expected_gt)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
     return ret
@@ -75,7 +75,7 @@ def pds_2():
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
     ret = tst.testOpen(check_prj=expected_prj,
-                     check_gt=expected_gt)
+                       check_gt=expected_gt)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
     if ret != 'success':
@@ -190,7 +190,7 @@ def pds_6():
 def pds_7():
 
     tst = gdaltest.GDALTest('PDS', 'LDEM_4.LBL', 1, 50938,
-                             0, 0, 1440, 2)
+                            0, 0, 1440, 2)
     gt_expected = (-5450622.3254203796, 7580.8377265930176, 0.0, 2721520.7438468933, 0.0, -7580.8377265930176)
     prj_expected = """PROJCS["SIMPLE_CYLINDRICAL MOON",
     GEOGCS["GCS_MOON",
@@ -208,7 +208,7 @@ def pds_7():
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
     ret = tst.testOpen(check_prj=prj_expected,
-                        check_gt=gt_expected)
+                       check_gt=gt_expected)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
     if ret != 'success':
@@ -277,7 +277,7 @@ def pds_9():
 def pds_10():
 
     gdal.FileFromMemBuffer('/vsimem/pds_10',
-"""PDS_VERSION_ID                       = "PDS3"
+                           """PDS_VERSION_ID                       = "PDS3"
 DATA_FORMAT                          = "PDS"
 ^IMAGE                               = 1 <BYTES>
 
@@ -310,7 +310,7 @@ END
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/pds_10',
-"""PDS_VERSION_ID                       = "PDS3"
+                           """PDS_VERSION_ID                       = "PDS3"
 # Unpaired
 NOTE                                 = (x, y}
 END
@@ -320,7 +320,7 @@ END
         gdal.Open('/vsimem/pds_10')
 
     gdal.FileFromMemBuffer('/vsimem/pds_10',
-"""PDS_VERSION_ID                       = "PDS3"
+                           """PDS_VERSION_ID                       = "PDS3"
 # Unpaired
 NOTE                                 = {x, y)
 END

@@ -617,9 +617,9 @@ def gdal_api_proxy_sub_clean():
 
 
 gdaltest_list = [gdal_api_proxy_1,
-                  gdal_api_proxy_2,
-                  gdal_api_proxy_3,
-                  gdal_api_proxy_4]
+                 gdal_api_proxy_2,
+                 gdal_api_proxy_3,
+                 gdal_api_proxy_4]
 
 if __name__ == '__main__':
 

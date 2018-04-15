@@ -128,7 +128,7 @@ def aaigrid_3():
 def aaigrid_4():
 
     tst = gdaltest.GDALTest('aaigrid', 'pixel_per_line.asc', 1, 187,
-                             5, 5, 5, 5)
+                            5, 5, 5, 5)
     return tst.testOpen()
 
 ###############################################################################
@@ -319,7 +319,7 @@ def aaigrid_12():
 
     ds = gdal.Open('data/nodata_float.asc')
     ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds,
-                               options=['DECIMAL_PRECISION=3'])
+                                                     options=['DECIMAL_PRECISION=3'])
     del ds2
 
     aai = open('tmp/aaigrid.tmp')
@@ -348,7 +348,7 @@ def aaigrid_13():
 
     ds = gdal.Open('data/nodata_float.asc')
     ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds,
-                               options=['SIGNIFICANT_DIGITS=3'])
+                                                     options=['SIGNIFICANT_DIGITS=3'])
     del ds2
 
     aai = open('tmp/aaigrid.tmp')

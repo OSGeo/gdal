@@ -424,9 +424,9 @@ def wms_8():
     file4 = hashlib.md5((server_url + wmstms_version + '/1/1/1.png').encode('utf-8')).hexdigest()
 
     expected_files = ['tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file1[0], file1[1], file1),
-                       'tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file2[0], file2[1], file2),
-                       'tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file3[0], file3[1], file3),
-                       'tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file4[0], file4[1], file4)]
+                      'tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file2[0], file2[1], file2),
+                      'tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file3[0], file3[1], file3),
+                      'tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file4[0], file4[1], file4)]
     for expected_file in expected_files:
         try:
             os.stat(expected_file)
@@ -851,7 +851,7 @@ def wms_16():
         return 'skip'
 
     if val is not None and (val.find('Gateway Time-out') >= 0 or \
-       val.find('HTTP error code : 5') >= 0):
+                            val.find('HTTP error code : 5') >= 0):
         return 'skip'
 
     if val is None or val.find('<og:cat>86</og:cat>') == -1:

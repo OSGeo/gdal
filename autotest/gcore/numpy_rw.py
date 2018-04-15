@@ -346,16 +346,16 @@ def numpy_rw_11():
     from osgeo import gdal_array
 
     type_tuples = [('uint8', gdal.GDT_Byte, numpy.uint8, 255),
-                    ('uint16', gdal.GDT_UInt16, numpy.uint16, 65535),
-                    ('int16', gdal.GDT_Int16, numpy.int16, -32767),
-                    ('uint32', gdal.GDT_UInt32, numpy.uint32, 4294967295),
-                    ('int32', gdal.GDT_Int32, numpy.int32, -2147483648),
-                    ('float32', gdal.GDT_Float32, numpy.float32, 1.23),
-                    ('float64', gdal.GDT_Float64, numpy.float64, 1.23456789),
-                    ('cint16', gdal.GDT_CInt16, numpy.complex64, -32768 + 32767j),
-                    ('cint32', gdal.GDT_CInt32, numpy.complex64, -32769 + 32768j),
-                    ('cfloat32', gdal.GDT_CFloat32, numpy.complex64, -32768.5 + 32767.5j),
-                    ('cfloat64', gdal.GDT_CFloat64, numpy.complex128, -32768.123456 + 32767.123456j)]
+                   ('uint16', gdal.GDT_UInt16, numpy.uint16, 65535),
+                   ('int16', gdal.GDT_Int16, numpy.int16, -32767),
+                   ('uint32', gdal.GDT_UInt32, numpy.uint32, 4294967295),
+                   ('int32', gdal.GDT_Int32, numpy.int32, -2147483648),
+                   ('float32', gdal.GDT_Float32, numpy.float32, 1.23),
+                   ('float64', gdal.GDT_Float64, numpy.float64, 1.23456789),
+                   ('cint16', gdal.GDT_CInt16, numpy.complex64, -32768 + 32767j),
+                   ('cint32', gdal.GDT_CInt32, numpy.complex64, -32769 + 32768j),
+                   ('cfloat32', gdal.GDT_CFloat32, numpy.complex64, -32768.5 + 32767.5j),
+                   ('cfloat64', gdal.GDT_CFloat64, numpy.complex128, -32768.123456 + 32767.123456j)]
 
     for type_tuple in type_tuples:
         ds = gdal.GetDriverByName('GTiff').Create('/vsimem/' + type_tuple[0], 1, 1, 1, type_tuple[1])
@@ -474,7 +474,7 @@ def numpy_rw_13():
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
     try:
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2,
-                                         buf_ysize=2)
+                                        buf_ysize=2)
         gdaltest.post_reason('expected "Specified buf_ysize not consistent '
                              'with buffer shape"')
         return 'fail'
@@ -485,7 +485,7 @@ def numpy_rw_13():
     ar = numpy.empty([1, 1, 2], dtype=numpy.uint8)
     try:
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2,
-                                         buf_ysize=2)
+                                        buf_ysize=2)
         gdaltest.post_reason('expected "Specified buf_ysize not consistent '
                              'with buffer shape"')
         return 'fail'
@@ -496,7 +496,7 @@ def numpy_rw_13():
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
     try:
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=1,
-                                         buf_ysize=1)
+                                        buf_ysize=1)
         gdaltest.post_reason('expected "Specified buf_xsize not consistent '
                              'with buffer shape"')
         return 'fail'
@@ -507,7 +507,7 @@ def numpy_rw_13():
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
     try:
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar,
-                                         buf_type=gdal.GDT_Int16)
+                                        buf_type=gdal.GDT_Int16)
         gdaltest.post_reason('expected "Specified buf_type not consistent '
                              'with array type"')
         return 'fail'
@@ -688,8 +688,8 @@ def numpy_rw_14():
     # Test RasterBand.ReadAsArray
     tab = [0.05, True]
     data = ds.GetRasterBand(1).ReadAsArray(resample_alg=gdal.GRIORA_NearestNeighbour,
-                                          callback=numpy_rw_14_progress_callback,
-                                          callback_data=tab)
+                                           callback=numpy_rw_14_progress_callback,
+                                           callback_data=tab)
     if data is None:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -711,8 +711,8 @@ def numpy_rw_14():
     # Test Dataset.ReadAsArray
     tab = [0.05, True]
     data = ds.ReadAsArray(resample_alg=gdal.GRIORA_NearestNeighbour,
-                         callback=numpy_rw_14_progress_callback,
-                         callback_data=tab)
+                          callback=numpy_rw_14_progress_callback,
+                          callback_data=tab)
     if data is None:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -723,7 +723,7 @@ def numpy_rw_14():
     # Same with interruption
     tab = [0]
     data = ds.ReadAsArray(callback=numpy_rw_14_progress_interrupt_callback,
-                         callback_data=tab)
+                          callback_data=tab)
     if data is not None or tab[0] < 0.50:
         gdaltest.post_reason('failure')
         return 'fail'

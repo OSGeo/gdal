@@ -87,7 +87,7 @@ def osr_epsg_3():
 
         for i in range(6):
             if abs(float(srs.GetAttrValue('TOWGS84', i)) \
-                - expected_towgs84[i]) > 0.0005:
+                   - expected_towgs84[i]) > 0.0005:
                 gdaltest.post_reason('For EPSG:%d. Wrong TOWGS84, override missed?' % epsg)
                 print(srs.ExportToPrettyWkt())
                 return 'fail'

@@ -82,10 +82,10 @@ def proximity_2():
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.ComputeProximity(src_band, dst_band,
-                           options=['VALUES=65,64',
-                                       'MAXDIST=12',
-                                       'NODATA=-1',
-                                       'FIXED_BUF_VAL=255'])
+                          options=['VALUES=65,64',
+                                   'MAXDIST=12',
+                                   'NODATA=-1',
+                                   'FIXED_BUF_VAL=255'])
 
     cs_expected = 3256
     cs = dst_band.Checksum()
@@ -119,9 +119,9 @@ def proximity_3():
 
     gdal.ComputeProximity(src_band, dst_band,
                           options=['VALUES=65,64',
-                                      'MAXDIST=12',
-                                      'USE_INPUT_NODATA=YES',
-                                      'NODATA=0'])
+                                   'MAXDIST=12',
+                                   'USE_INPUT_NODATA=YES',
+                                   'NODATA=0'])
 
     cs_expected = 1465
     cs = dst_band.Checksum()

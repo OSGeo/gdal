@@ -56,7 +56,7 @@ def isis2_1():
     PARAMETER["false_northing",0]]"""
     expected_gt = (10157400.403618813, 1200.0000476837158, 0.0, -585000.02324581146, 0.0, -1200.0000476837158)
     return tst.testOpen(check_prj=expected_prj,
-                         check_gt=expected_gt)
+                        check_gt=expected_gt)
 
 
 ###############################################################################
@@ -75,7 +75,7 @@ def isis2_2():
 def isis2_3():
 
     tst = gdaltest.GDALTest('ISIS2', 'float32.tif', 1, 4672,
-                             options=['LABELING_METHOD=DETACHED', 'IMAGE_EXTENSION=qub'])
+                            options=['LABELING_METHOD=DETACHED', 'IMAGE_EXTENSION=qub'])
 
     return tst.testCreateCopy(vsimem=1)
 

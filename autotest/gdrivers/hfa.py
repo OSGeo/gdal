@@ -499,7 +499,7 @@ def hfa_clean_ige():
     src_ds = gdal.Open('data/byte.tif')
 
     out_ds = drv.CreateCopy('tmp/igetest.img', src_ds,
-                    options=['USE_SPILL=YES'])
+                            options=['USE_SPILL=YES'])
     out_ds = None
 
     try:
@@ -600,7 +600,7 @@ def hfa_nodata_write():
 
     for line in range(7):
         ds.WriteRaster(0, line, 7, 1, raw_data,
-                        buf_type=gdal.GDT_Int16)
+                       buf_type=gdal.GDT_Int16)
 
     b = ds.GetRasterBand(1)
     b.SetNoDataValue(1)
@@ -658,7 +658,7 @@ def hfa_rotated_read():
     ds = gdal.Open('data/fg118-91.aux')
 
     check_gt = (11856857.07898215, 0.895867662235625, 0.02684252936279331,
-                 7041861.472946444, 0.01962103617166367, -0.9007880319529181)
+                7041861.472946444, 0.01962103617166367, -0.9007880319529181)
 
     gt_epsilon = (abs(check_gt[1]) + abs(check_gt[2])) / 100.0
 
@@ -690,7 +690,7 @@ def hfa_rotated_write():
     ds = drv.Create('tmp/rot.img', 100, 150, 1, gdal.GDT_Byte)
 
     check_gt = (11856857.07898215, 0.895867662235625, 0.02684252936279331,
-                 7041861.472946444, 0.01962103617166367, -0.9007880319529181)
+                7041861.472946444, 0.01962103617166367, -0.9007880319529181)
 
     expected_wkt = """PROJCS["NAD83 / Virginia North",
     GEOGCS["NAD83",
@@ -924,7 +924,7 @@ def hfa_xforms_3rd():
 
         if abs(value - check_item[1]) > abs(value / 100000.0):
             gdaltest.post_reason('metadata item %s has wrong value: %.15g' % \
-                                  (check_item[0], value))
+                                 (check_item[0], value))
             return 'fail'
 
     # Check that the GCPs are as expected implying that the evaluation
@@ -1124,7 +1124,7 @@ def hfa_write_bit2grayscale():
 
     ds = gdal.Open('tmp/small1bit.img', gdal.GA_Update)
     ds.BuildOverviews(resampling='average_bit2grayscale',
-                       overviewlist=[2])
+                      overviewlist=[2])
 
     ov = ds.GetRasterBand(1).GetOverview(1)
 
@@ -1160,10 +1160,10 @@ def hfa_camera_md():
     md = ds.GetMetadata('CAMERA_MODEL')
 
     check_list = [('direction', 'EMOD_FORWARD'),
-                   ('forSrcAffine[0]', '0.025004093931786'),
-                   ('invDstAffine[0]', '1'),
-                   ('coeffs[1]', '-0.008'),
-                   ('elevationType', 'EPRJ_ELEVATION_TYPE_HEIGHT')]
+                  ('forSrcAffine[0]', '0.025004093931786'),
+                  ('invDstAffine[0]', '1'),
+                  ('coeffs[1]', '-0.008'),
+                  ('elevationType', 'EPRJ_ELEVATION_TYPE_HEIGHT')]
     for check_item in check_list:
         try:
             value = md[check_item[0]]
@@ -1173,7 +1173,7 @@ def hfa_camera_md():
 
         if value != check_item[1]:
             gdaltest.post_reason('metadata item %s has wrong value: %s' % \
-                                  (check_item[0], value))
+                                 (check_item[0], value))
             return 'fail'
 
     # Check that the SRS is reasonable.

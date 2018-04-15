@@ -141,7 +141,7 @@ def ogr_plscenes_data_v1_nominal():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types',
-"""{ "item_types": [
+                           """{ "item_types": [
     {"display_description" : "display_description",
      "display_name" : "display_name",
      "id": "PSOrthoTile"}
@@ -193,7 +193,7 @@ def ogr_plscenes_data_v1_nominal():
 
     # Regular /items/ fetching
     gdal.FileFromMemBuffer("""/vsimem/data_v1/quick-search?_page_size=250&POSTFIELDS={"item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[]}}""",
-"""{
+                           """{
     "_links":
     {
         "_next": "/vsimem/data_v1/quick-search?page=2"
@@ -222,7 +222,7 @@ def ogr_plscenes_data_v1_nominal():
 }""")
 
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets',
-"""{
+                           """{
   "analytic" : {
       "_permissions": ["download"],
       "_links": {
@@ -264,7 +264,7 @@ def ogr_plscenes_data_v1_nominal():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/data_v1/quick-search?page=2',
-"""{
+                           """{
     "features" : [
         {
             "id": "id2"
@@ -302,7 +302,7 @@ def ogr_plscenes_data_v1_nominal():
         return 'fail'
 
     gdal.FileFromMemBuffer("""/vsimem/data_v1/quick-search?_page_size=250&POSTFIELDS={"item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"GeometryFilter","field_name":"geometry","config":{"type":"Point","coordinates":[2.0,49.0]}}]}}""",
-"""{"features" : [ { "id": "id3", "geometry": { "type": "Point", "coordinates": [2,49]} } ] }""")
+                           """{"features" : [ { "id": "id3", "geometry": { "type": "Point", "coordinates": [2,49]} } ] }""")
 
     # POINT spatial filter
     lyr.SetSpatialFilterRect(2, 49, 2, 49)
@@ -329,7 +329,7 @@ def ogr_plscenes_data_v1_nominal():
     # Test attribute filter on id
     lyr.SetAttributeFilter("id = 'filtered_id'")
     gdal.FileFromMemBuffer("""/vsimem/data_v1/quick-search?_page_size=250&POSTFIELDS={"item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"StringInFilter","field_name":"id","config":["filtered_id"]}]}}""",
-"""{
+                           """{
     "id": "filtered_id",
     "properties": {}
 }""")
@@ -376,7 +376,7 @@ def ogr_plscenes_data_v1_nominal():
     # Partly server / partly client
     lyr.SetAttributeFilter("id = 'filtered_3' AND id > 'a'")
     gdal.FileFromMemBuffer("""/vsimem/data_v1/quick-search?_page_size=250&POSTFIELDS={"item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"StringInFilter","field_name":"id","config":["filtered_3"]}]}}""",
-"""{
+                           """{
     "features" : [
         {
             "id": "filtered_3",
@@ -441,7 +441,7 @@ def ogr_plscenes_data_v1_nominal():
 
     # visual not an object
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets',
-"""{ "visual": false }""")
+                           """{ "visual": false }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/data_v1/')
     with gdaltest.error_handler():
         ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options=['VERSION=data_v1', 'API_KEY=foo', 'ITEMTYPES=PSOrthoTile', 'SCENE=id'])
@@ -452,7 +452,7 @@ def ogr_plscenes_data_v1_nominal():
 
     # Inactive file, and activation link not working
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets',
-"""{
+                           """{
   "analytic" : {
       "_links": {
         "_self": "analytic_links_self",
@@ -472,7 +472,7 @@ def ogr_plscenes_data_v1_nominal():
 
     # File in activation
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets',
-"""{
+                           """{
   "analytic" : {
       "_links": {
         "_self": "analytic_links_self",
@@ -491,7 +491,7 @@ def ogr_plscenes_data_v1_nominal():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets',
-"""{
+                           """{
   "analytic" : {
       "_permissions": ["download"],
       "_links": {
@@ -549,7 +549,7 @@ def ogr_plscenes_data_v1_nominal():
 
     # Test metadata items attached to dataset
     gdal.FileFromMemBuffer("""/vsimem/data_v1/quick-search?_page_size=250&POSTFIELDS={"item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"StringInFilter","field_name":"id","config":["id"]}]}}""",
-"""{
+                           """{
     "id": "id",
     "properties": {
         "anomalous_pixels": 1.23
