@@ -1261,7 +1261,7 @@ int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
-        int nResult = _wstat( pwszFilename, (struct _stat *) pStatBuf );
+        int nResult = _wstat( pwszFilename, reinterpret_cast<struct _stat *>(pStatBuf) );
 
         CPLFree( pwszFilename );
 
@@ -1296,7 +1296,7 @@ unsigned long VSITime( unsigned long * pnTimeToSet )
 const char *VSICTime( unsigned long nTime )
 
 {
-    time_t tTime = (time_t) nTime;
+    time_t tTime = static_cast<time_t>(nTime);
 
     return reinterpret_cast<const char *>(ctime( &tTime ));
 }

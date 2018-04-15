@@ -15,6 +15,8 @@ endif
 
 CPPFLAGS	:= $(CPPFLAGS)	$(CURL_INC) $(JSON_INCLUDE) $(XTRA_OPT) -DINST_DATA=\"$(INST_DATA)\"
 
+CXXFLAGS	:=	$(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
+
 OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o cplstringlist.o \
 	cpl_strtod.o cpl_path.o cpl_csv.o cpl_findfile.o cpl_minixml.o \
 	cpl_multiproc.o cpl_list.o cpl_getexecpath.o cplstring.o \

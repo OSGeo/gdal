@@ -266,7 +266,7 @@ bool CPLKeywordParser::ReadWord( CPLString &osWord )
     while( *pszHeaderNext != '\0'
            && *pszHeaderNext != '='
            && *pszHeaderNext != ';'
-           && !isspace((unsigned char)*pszHeaderNext) )
+           && !isspace(static_cast<unsigned char>(*pszHeaderNext)) )
     {
         if( *pszHeaderNext == '"' )
         {
@@ -315,7 +315,7 @@ void CPLKeywordParser::SkipWhite()
     for( ; true; )
     {
         // Skip white space (newline, space, tab, etc )
-        if( isspace( (unsigned char)*pszHeaderNext ) )
+        if( isspace( static_cast<unsigned char>(*pszHeaderNext) ) )
         {
             pszHeaderNext++;
             continue;

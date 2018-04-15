@@ -140,7 +140,7 @@ static GUInt32 burnStack( int size )
     memset(buf, static_cast<GByte>(size & 0xff), sizeof(buf));
     for( size_t i = 0; i < sizeof(buf); i++ )
         ret += ret * buf[i];
-    size -= (int)sizeof(buf);
+    size -= static_cast<int>(sizeof(buf));
     if( size > 0 )
         ret += burnStack(size);
     return ret;
@@ -431,7 +431,7 @@ void CPL_SHA256Final( CPL_SHA256Context * sc, GByte hash[CPL_SHA256_HASH_SIZE] )
     {
         for( int i = 0; i < CPL_SHA256_HASH_WORDS; i++ )
         {
-            *((GUInt32 *) hash) = BYTESWAP(sc->hash[i]);
+            *reinterpret_cast<GUInt32 *>(hash) = BYTESWAP(sc->hash[i]);
             hash += 4;
         }
     }
@@ -605,7 +605,7 @@ GByte* CPL_RSA_SHA256_Sign(const char* pszPrivateKey,
     CryptoPP::Base64Decoder decoder;
 
     decoder.Attach(new CryptoPP::Redirector(queue));
-    decoder.Put((const byte*)osKeyB64.data(), osKeyB64.length());
+    decoder.Put(reinterpret_cast<const byte*>(osKeyB64.data()), osKeyB64.length());
     decoder.MessageEnd();
 
     CryptoPP::RSA::PrivateKey rsaPrivate;

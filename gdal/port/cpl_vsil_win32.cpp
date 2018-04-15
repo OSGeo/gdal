@@ -96,7 +96,7 @@ class VSIWin32Handle final : public VSIVirtualHandle
     virtual int       Flush() override;
     virtual int       Close() override;
     virtual int       Truncate( vsi_l_offset nNewSize ) override;
-    virtual void     *GetNativeFileDescriptor() override { return (void*) hFile; }
+    virtual void     *GetNativeFileDescriptor() override { return static_cast<void*>(hFile); }
     virtual VSIRangeStatus GetRangeStatus( vsi_l_offset nOffset,
                                            vsi_l_offset nLength ) override;
 };
@@ -205,7 +205,7 @@ int VSIWin32Handle::Close()
 int VSIWin32Handle::Seek( vsi_l_offset nOffset, int nWhence )
 
 {
-    GUInt32       dwMoveMethod, dwMoveHigh;
+    LONG       dwMoveMethod, dwMoveHigh;
     GUInt32       nMoveLow;
     LARGE_INTEGER li;
 
@@ -230,7 +230,7 @@ int VSIWin32Handle::Seek( vsi_l_offset nOffset, int nWhence )
     dwMoveHigh = li.HighPart;
 
     SetLastError( 0 );
-    SetFilePointer(hFile, (LONG) nMoveLow, (PLONG)&dwMoveHigh,
+    SetFilePointer(hFile, nMoveLow, &dwMoveHigh,
                        dwMoveMethod);
 
     if( GetLastError() != NO_ERROR )
@@ -247,7 +247,7 @@ int VSIWin32Handle::Seek( vsi_l_offset nOffset, int nWhence )
 
         printf( "[ERROR %d]\n %s\n", GetLastError(), (char *) lpMsgBuf );/*ok*/
         printf( "nOffset=%u, nMoveLow=%u, dwMoveHigh=%u\n",/*ok*/
-                (GUInt32) nOffset, nMoveLow, dwMoveHigh );
+                static_cast<GUInt32>(nOffset), nMoveLow, dwMoveHigh );
 #endif
         errno = ErrnoFromGetLastError();
         return -1;
@@ -266,7 +266,7 @@ vsi_l_offset VSIWin32Handle::Tell()
     LARGE_INTEGER   li;
 
     li.HighPart = 0;
-    li.LowPart = SetFilePointer( hFile, 0, (PLONG) &(li.HighPart),
+    li.LowPart = SetFilePointer( hFile, 0, &(li.HighPart),
                                  FILE_CURRENT );
 
     return (static_cast<vsi_l_offset>(li.QuadPart));
@@ -299,7 +299,7 @@ size_t VSIWin32Handle::Read( void * pBuffer, size_t nSize, size_t nCount )
     DWORD dwSizeRead = 0;
     size_t nResult = 0;
 
-    if( !ReadFile( hFile, pBuffer, (DWORD)(nSize*nCount), &dwSizeRead, nullptr ) )
+    if( !ReadFile( hFile, pBuffer, static_cast<DWORD>(nSize*nCount), &dwSizeRead, nullptr ) )
     {
         nResult = 0;
         errno = ErrnoFromGetLastError();
@@ -325,8 +325,8 @@ size_t VSIWin32Handle::Write( const void *pBuffer, size_t nSize, size_t nCount)
     DWORD dwSizeWritten = 0;
     size_t nResult = 0;
 
-    if( !WriteFile(hFile, (void *)pBuffer,
-                   (DWORD)(nSize*nCount),&dwSizeWritten,nullptr) )
+    if( !WriteFile(hFile, pBuffer,
+                   static_cast<DWORD>(nSize*nCount),&dwSizeWritten,nullptr) )
     {
         nResult = 0;
         errno = ErrnoFromGetLastError();
@@ -437,7 +437,7 @@ static const char* CPLGetWineVersion()
         return nullptr;
 
     static const char * (CDECL *pwine_get_version)(void);
-    pwine_get_version = ( const char* (*)(void) ) GetProcAddress(hntdll, "wine_get_version");
+    pwine_get_version = reinterpret_cast<const char* (*)(void)>(GetProcAddress(hntdll, "wine_get_version"));
     if( pwine_get_version == nullptr )
         return nullptr;
 

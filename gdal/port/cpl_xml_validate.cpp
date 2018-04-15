@@ -1188,7 +1188,7 @@ int CPLValidateXML( const char* pszXMLFilename,
         return FALSE;
 
     xmlSchemaValidCtxtPtr pSchemaValidCtxt =
-        xmlSchemaNewValidCtxt((xmlSchemaPtr)pSchema);
+        xmlSchemaNewValidCtxt(static_cast<xmlSchemaPtr>(pSchema));
 
     if( pSchemaValidCtxt == nullptr )
     {

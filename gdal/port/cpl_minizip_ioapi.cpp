@@ -83,7 +83,7 @@ static
 uLong64 ZCALLBACK ftell_file_func ( voidpf /* opaque */, voidpf stream )
 {
     uLong64 ret;
-    ret = VSIFTellL((VSILFILE *)stream);
+    ret = VSIFTellL(reinterpret_cast<VSILFILE*>(stream));
     return ret;
 }
 
@@ -105,13 +105,13 @@ long ZCALLBACK fseek_file_func ( voidpf /* opaque */, voidpf stream,
         break;
     default: return -1;
     }
-    return VSIFSeekL((VSILFILE *)stream, offset, fseek_origin);
+    return VSIFSeekL(reinterpret_cast<VSILFILE*>(stream), offset, fseek_origin);
 }
 
 static
 int ZCALLBACK fclose_file_func ( voidpf /* opaque */, voidpf stream )
 {
-    return VSIFCloseL((VSILFILE *)stream);
+    return VSIFCloseL(reinterpret_cast<VSILFILE*>(stream));
 }
 
 static

@@ -221,6 +221,16 @@ typedef unsigned char   GByte;
 typedef int             GBool;
 #endif
 
+/*! @cond Doxygen_Suppress */
+#ifdef __cplusplus
+#define CPL_STATIC_CAST(type, expr) static_cast<type>(expr)
+#define CPL_REINTERPRET_CAST(type, expr) reinterpret_cast<type>(expr)
+#else
+#define CPL_STATIC_CAST(type, expr) ((type)(expr))
+#define CPL_REINTERPRET_CAST(type, expr) ((type)(expr))
+#endif
+/*! @endcond */
+
 /* -------------------------------------------------------------------- */
 /*      64bit support                                                   */
 /* -------------------------------------------------------------------- */
@@ -239,11 +249,11 @@ typedef long long        GIntBig;
 typedef unsigned long long GUIntBig;
 
 /** Minimum GIntBig value */
-#define GINTBIG_MIN     ((GIntBig)(0x80000000) << 32)
+#define GINTBIG_MIN     (CPL_STATIC_CAST(GIntBig, 0x80000000) << 32)
 /** Maximum GIntBig value */
-#define GINTBIG_MAX     (((GIntBig)(0x7FFFFFFF) << 32) | 0xFFFFFFFFU)
+#define GINTBIG_MAX     ((CPL_STATIC_CAST(GIntBig, 0x7FFFFFFF) << 32) | 0xFFFFFFFFU)
 /** Maximum GUIntBig value */
-#define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
+#define GUINTBIG_MAX    ((CPL_STATIC_CAST(GUIntBig, 0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
 /*! @cond Doxygen_Suppress */
 #define CPL_HAS_GINT64 1
@@ -293,11 +303,7 @@ typedef GUIntBig GUIntptr_t;
 typedef unsigned int  GUIntptr_t;
 #endif
 
-#ifdef __cplusplus
-#define CPL_IS_ALIGNED(ptr, quant) ((reinterpret_cast<GUIntptr_t>(static_cast<const void*>(ptr)) % (quant)) == 0)
-#else
-#define CPL_IS_ALIGNED(ptr, quant) (((GUIntptr_t)(ptr) % (quant)) == 0)
-#endif
+#define CPL_IS_ALIGNED(ptr, quant) ((CPL_REINTERPRET_CAST(GUIntptr_t, CPL_STATIC_CAST(const void*, ptr)) % (quant)) == 0)
 
 #endif
 
@@ -316,14 +322,14 @@ typedef unsigned int  GUIntptr_t;
 #define CPL_FRMT_GUIB    "%" CPL_FRMT_GB_WITHOUT_PREFIX "u"
 
 /*! @cond Doxygen_Suppress */
-#define GUINTBIG_TO_DOUBLE(x) (double)(x)
+#define GUINTBIG_TO_DOUBLE(x) CPL_STATIC_CAST(double, x)
 /*! @endcond */
 
 /*! @cond Doxygen_Suppress */
 #ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
 #define CPL_INT64_FITS_ON_INT32(x) ((x) >= INT_MIN && (x) <= INT_MAX)
 #else
-#define CPL_INT64_FITS_ON_INT32(x) (((GIntBig)(int)(x)) == (x))
+#define CPL_INT64_FITS_ON_INT32(x) (CPL_STATIC_CAST(GIntBig, CPL_STATIC_CAST(int, x)) == (x))
 #endif
 /*! @endcond */
 
@@ -690,7 +696,7 @@ template<> struct CPLStaticAssert<true>
  *--------------------------------------------------------------------*/
 
 /** Byte-swap a 16bit unsigned integer */
-#define CPL_SWAP16(x) ((GUInt16)( ((GUInt16)(x) << 8) | ((GUInt16)(x) >> 8) ))
+#define CPL_SWAP16(x) CPL_STATIC_CAST(GUInt16, (CPL_STATIC_CAST(GUInt16, x) << 8) | (CPL_STATIC_CAST(GUInt16, x) >> 8) )
 
 #if defined(HAVE_GCC_BSWAP) && (defined(__i386__) || defined(__x86_64__))
 /* Could potentially be extended to other architectures but must be checked */
@@ -698,32 +704,32 @@ template<> struct CPLStaticAssert<true>
 /* GCC (at least 4.6  or above) need that include */
 #include <x86intrin.h>
 /** Byte-swap a 32bit unsigned integer */
-#define CPL_SWAP32(x) ((GUInt32)(__builtin_bswap32((GUInt32)(x))))
+#define CPL_SWAP32(x) CPL_STATIC_CAST(GUInt32, __builtin_bswap32(CPL_STATIC_CAST(GUInt32, x)))
 /** Byte-swap a 64bit unsigned integer */
-#define CPL_SWAP64(x) ((GUInt64)(__builtin_bswap64((GUInt64)(x))))
+#define CPL_SWAP64(x) CPL_STATIC_CAST(GUInt64, __builtin_bswap64(CPL_STATIC_CAST(GUInt64, x)))
 #elif defined(_MSC_VER)
-#define CPL_SWAP32(x) ((GUInt32)(_byteswap_ulong((GUInt32)(x))))
-#define CPL_SWAP64(x) ((GUInt64)(_byteswap_uint64((GUInt64)(x))))
+#define CPL_SWAP32(x) CPL_STATIC_CAST(GUInt32, _byteswap_ulong(CPL_STATIC_CAST(GUInt32, x)))
+#define CPL_SWAP64(x) CPL_STATIC_CAST(GUInt64, _byteswap_uint64(CPL_STATIC_CAST(GUInt64, x)))
 #else
 /** Byte-swap a 32bit unsigned integer */
 #define CPL_SWAP32(x) \
-        ((GUInt32)( \
-            (((GUInt32)(x) & (GUInt32)0x000000ffUL) << 24) | \
-            (((GUInt32)(x) & (GUInt32)0x0000ff00UL) <<  8) | \
-            (((GUInt32)(x) & (GUInt32)0x00ff0000UL) >>  8) | \
-            (((GUInt32)(x) & (GUInt32)0xff000000UL) >> 24) ))
+        CPL_STATIC_CAST(GUInt32, \
+            ((CPL_STATIC_CAST(GUInt32, x) & 0x000000ffU) << 24) | \
+            ((CPL_STATIC_CAST(GUInt32, x) & 0x0000ff00U) <<  8) | \
+            ((CPL_STATIC_CAST(GUInt32, x) & 0x00ff0000U) >>  8) | \
+            ((CPL_STATIC_CAST(GUInt32, x) & 0xff000000U) >> 24) )
 
 /** Byte-swap a 64bit unsigned integer */
 #define CPL_SWAP64(x) \
-            (((GUInt64)(CPL_SWAP32((GUInt32)(x))) << 32) | \
-             (GUInt64)(CPL_SWAP32((GUInt32)((GUInt64)(x) >> 32))))
+            ((CPL_STATIC_CAST(GUInt64, CPL_SWAP32(CPL_STATIC_CAST(GUInt32, x))) << 32) | \
+             (CPL_STATIC_CAST(GUInt64, CPL_SWAP32(CPL_STATIC_CAST(GUInt32, CPL_STATIC_CAST(GUInt64, x) >> 32)))))
 
 #endif
 
 /** Byte-swap a 16 bit pointer */
 #define CPL_SWAP16PTR(x) \
 {                                                                 \
-    GByte       byTemp, *_pabyDataT = (GByte *) (x);              \
+    GByte       byTemp, *_pabyDataT = CPL_REINTERPRET_CAST(GByte*, x);              \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 2); \
                                                                   \
     byTemp = _pabyDataT[0];                                       \
@@ -736,7 +742,7 @@ template<> struct CPLStaticAssert<true>
 /** Byte-swap a 32 bit pointer */
 #define CPL_SWAP32PTR(x) \
 {                                                                 \
-    GByte       byTemp, *_pabyDataT = (GByte *) (x);              \
+    GByte       byTemp, *_pabyDataT = CPL_REINTERPRET_CAST(GByte*, x);              \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4);  \
                                                                   \
     byTemp = _pabyDataT[0];                                       \
@@ -750,7 +756,7 @@ template<> struct CPLStaticAssert<true>
 /** Byte-swap a 64 bit pointer */
 #define CPL_SWAP64PTR(x) \
 {                                                                 \
-    GByte       byTemp, *_pabyDataT = (GByte *) (x);              \
+    GByte       byTemp, *_pabyDataT = CPL_REINTERPRET_CAST(GByte*, x);              \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8); \
                                                                   \
     byTemp = _pabyDataT[0];                                       \
@@ -833,25 +839,25 @@ template<> struct CPLStaticAssert<true>
 /** Return a Int16 from the 2 bytes ordered in LSB order at address x.
  * @deprecated Use rather CPL_LSBSINT16PTR or CPL_LSBUINT16PTR for explicit
  * signedness. */
-#define CPL_LSBINT16PTR(x)    ((*(GByte*)(x)) | (*(((GByte*)(x))+1) << 8))
+#define CPL_LSBINT16PTR(x)    ((*CPL_REINTERPRET_CAST(const GByte*, x)) | (*((CPL_REINTERPRET_CAST(const GByte*, x))+1) << 8))
 
 /** Return a Int32 from the 4 bytes ordered in LSB order at address x.
  * @deprecated Use rather CPL_LSBSINT32PTR or CPL_LSBUINT32PTR for explicit
  * signedness. */
-#define CPL_LSBINT32PTR(x)    ((*(GByte*)(x)) | (*(((GByte*)(x))+1) << 8) | \
-                              (*(((GByte*)(x))+2) << 16) | (*(((GByte*)(x))+3) << 24))
+#define CPL_LSBINT32PTR(x)    ((*CPL_REINTERPRET_CAST(const GByte*, x)) | (*((CPL_REINTERPRET_CAST(const GByte*, x))+1) << 8) | \
+                              (*((CPL_REINTERPRET_CAST(const GByte*, x))+2) << 16) | (*((CPL_REINTERPRET_CAST(const GByte*, x))+3) << 24))
 
 /** Return a signed Int16 from the 2 bytes ordered in LSB order at address x */
-#define CPL_LSBSINT16PTR(x) ((GInt16) CPL_LSBINT16PTR(x))
+#define CPL_LSBSINT16PTR(x) CPL_STATIC_CAST(GInt16,CPL_LSBINT16PTR(x))
 
 /** Return a unsigned Int16 from the 2 bytes ordered in LSB order at address x */
-#define CPL_LSBUINT16PTR(x) ((GUInt16)CPL_LSBINT16PTR(x))
+#define CPL_LSBUINT16PTR(x) CPL_STATIC_CAST(GUInt16, CPL_LSBINT16PTR(x))
 
 /** Return a signed Int32 from the 4 bytes ordered in LSB order at address x */
-#define CPL_LSBSINT32PTR(x) ((GInt32) CPL_LSBINT32PTR(x))
+#define CPL_LSBSINT32PTR(x) CPL_STATIC_CAST(GInt32, CPL_LSBINT32PTR(x))
 
 /** Return a unsigned Int32 from the 4 bytes ordered in LSB order at address x */
-#define CPL_LSBUINT32PTR(x) ((GUInt32)CPL_LSBINT32PTR(x))
+#define CPL_LSBUINT32PTR(x) CPL_STATIC_CAST(GUInt32, CPL_LSBINT32PTR(x))
 
 /*! @cond Doxygen_Suppress */
 /* Utility macro to explicitly mark intentionally unreferenced parameters. */

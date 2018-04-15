@@ -475,7 +475,7 @@ int CPLIsUTF8Stub(const char* pabyData, int nLen)
 {
     if( nLen < 0 )
         nLen = static_cast<int>(strlen(pabyData));
-    return utf8test(pabyData, (unsigned)nLen) != 0;
+    return utf8test(pabyData, static_cast<unsigned>(nLen)) != 0;
 }
 
 /************************************************************************/
@@ -533,7 +533,7 @@ constexpr unsigned short cp1252[32] = {
 
     If \a p points at an illegal UTF-8 encoding, including one that
     would go past \e end, or where a code is uses more bytes than
-    necessary, then *(unsigned char*)p is translated as though it is
+    necessary, then *reinterpret_cast<const unsigned char*>(p) is translated as though it is
     in the Microsoft CP1252 character set and \e len is set to 1.
     Treating errors this way allows this to decode almost any
     ISO-8859-1 or CP1252 text that has been mistakenly placed where
@@ -562,7 +562,7 @@ constexpr unsigned short cp1252[32] = {
 */
 static unsigned utf8decode(const char* p, const char* end, int* len)
 {
-  unsigned char c = *(unsigned char*)p;
+  unsigned char c = *reinterpret_cast<const unsigned char*>(p);
   if( c < 0x80 )
   {
     *len = 1;
@@ -589,21 +589,21 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
   }
   else if( c == 0xe0 )
   {
-    if( ((unsigned char*)p)[1] < 0xa0 ) goto FAIL;
+    if( (reinterpret_cast<const unsigned char*>(p))[1] < 0xa0 ) goto FAIL;
     goto UTF8_3;
 #if STRICT_RFC3629
   }
   else if( c == 0xed )
   {
     // RFC 3629 says surrogate chars are illegal.
-    if( ((unsigned char*)p)[1] >= 0xa0 ) goto FAIL;
+    if( (reinterpret_cast<const unsigned char*>(p))[1] >= 0xa0 ) goto FAIL;
     goto UTF8_3;
   }
   else if( c == 0xef )
   {
     // 0xfffe and 0xffff are also illegal characters.
-    if( ((unsigned char*)p)[1]==0xbf &&
-        ((unsigned char*)p)[2]>=0xbe ) goto FAIL;
+    if( (reinterpret_cast<const unsigned char*>(p))[1]==0xbf &&
+        (reinterpret_cast<const unsigned char*>(p))[2]>=0xbe ) goto FAIL;
     goto UTF8_3;
 #endif
   }
@@ -619,7 +619,7 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
   }
   else if( c == 0xf0 )
   {
-    if( ((unsigned char*)p)[1] < 0x90 ) goto FAIL;
+    if( (reinterpret_cast<const unsigned char*>(p))[1] < 0x90 ) goto FAIL;
     goto UTF8_4;
   }
   else if( c < 0xf4 )
@@ -630,8 +630,8 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
 #if STRICT_RFC3629
     // RFC 3629 says all codes ending in fffe or ffff are illegal:
     if( (p[1]&0xf)==0xf &&
-        ((unsigned char*)p)[2] == 0xbf &&
-        ((unsigned char*)p)[3] >= 0xbe ) goto FAIL;
+        (reinterpret_cast<const unsigned char*>(p))[2] == 0xbf &&
+        (reinterpret_cast<const unsigned char*>(p))[3] >= 0xbe ) goto FAIL;
 #endif
     return
       ((p[0] & 0x07) << 18) +
@@ -641,7 +641,7 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
   }
   else if( c == 0xf4 )
   {
-    if( ((unsigned char*)p)[1] > 0x8f ) goto FAIL; // After 0x10ffff.
+    if( (reinterpret_cast<const unsigned char*>(p))[1] > 0x8f ) goto FAIL; // After 0x10ffff.
     goto UTF8_4;
   }
   else
@@ -717,7 +717,7 @@ static unsigned utf8towc(const char* src, unsigned srclen,
 #ifdef _WIN32
       if( ucs < 0x10000 )
       {
-          dst[count] = (wchar_t)ucs;
+          dst[count] = static_cast<wchar_t>(ucs);
       }
       else
       {
@@ -728,11 +728,11 @@ static unsigned utf8towc(const char* src, unsigned srclen,
             count += 2;
             break;
         }
-        dst[count] = (wchar_t)((((ucs-0x10000u)>>10)&0x3ff) | 0xd800);
-        dst[++count] = (wchar_t)((ucs&0x3ff) | 0xdc00);
+        dst[count] = static_cast<wchar_t>((((ucs-0x10000u)>>10)&0x3ff) | 0xd800);
+        dst[++count] = static_cast<wchar_t>((ucs&0x3ff) | 0xdc00);
       }
 #else
-      dst[count] = (wchar_t)ucs;
+      dst[count] = static_cast<wchar_t>(ucs);
 #endif
     }
     if( ++count == dstlen )
@@ -802,7 +802,7 @@ static unsigned int utf8toa( const char* src, unsigned srclen,
         dst[count] = 0;
         return count;
     }
-    unsigned char c = *(unsigned char*)p;
+    unsigned char c = *reinterpret_cast<const unsigned char*>(p);
     if( c < 0xC2 )
     {
         // ASCII or bad code.
@@ -1036,7 +1036,8 @@ static unsigned utf8froma(char* dst, unsigned dstlen,
             dst[count] = 0;
             return count;
         }
-        unsigned char ucs = *(unsigned char*)p++;
+        unsigned char ucs = *reinterpret_cast<const unsigned char*>(p);
+        p++;
         if( ucs < 0x80U )
         {
             dst[count++] = ucs;
@@ -1063,7 +1064,8 @@ static unsigned utf8froma(char* dst, unsigned dstlen,
     // We filled dst, measure the rest:
     while( p < e )
     {
-        unsigned char ucs = *(unsigned char*)p++;
+        unsigned char ucs = *reinterpret_cast<const unsigned char*>(p);
+        p++;
         if( ucs < 0x80U )
         {
             count++;

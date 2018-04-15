@@ -228,7 +228,7 @@ int CPLODBCSession::ClearTransaction()
     {
         // Switch the connection to auto commit mode (default).
         if( Failed( SQLSetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT,
-                                       (SQLPOINTER)SQL_AUTOCOMMIT_ON, 0 ) ) )
+                                       reinterpret_cast<SQLPOINTER>(SQL_AUTOCOMMIT_ON), 0 ) ) )
             return FALSE;
     }
 
@@ -263,7 +263,7 @@ int CPLODBCSession::BeginTransaction()
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
         if( Failed( SQLSetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT,
-                                       (SQLPOINTER)SQL_AUTOCOMMIT_OFF, 0 ) ) )
+                                       reinterpret_cast<SQLPOINTER>(SQL_AUTOCOMMIT_OFF), 0 ) ) )
             return FALSE;
 #ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
 #pragma GCC diagnostic pop
@@ -343,7 +343,7 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
     SQLINTEGER nNativeError = 0;
     SQLSMALLINT nTextLength = 0;
     SQLError( m_hEnv, m_hDBC, hStmt, achSQLState, &nNativeError,
-              (SQLCHAR *) m_szLastError, sizeof(m_szLastError)-1,
+              reinterpret_cast<SQLCHAR *>(m_szLastError), sizeof(m_szLastError)-1,
               &nTextLength );
     m_szLastError[nTextLength] = '\0';
 
@@ -414,7 +414,8 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
 
         bFailed = CPL_TO_BOOL(Failed(
             SQLDriverConnect( m_hDBC, nullptr,
-                              (SQLCHAR *) pszDSN, (SQLSMALLINT)strlen(pszDSN),
+                              reinterpret_cast<SQLCHAR*>(const_cast<char*>(pszDSN)),
+                              static_cast<SQLSMALLINT>(strlen(pszDSN)),
                               szOutConnString, sizeof(szOutConnString),
                               &nOutConnStringLen, SQL_DRIVER_NOPROMPT ) ));
     }
@@ -422,9 +423,9 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
     {
         CPLDebug( "ODBC", "SQLConnect(%s)", pszDSN );
         bFailed = CPL_TO_BOOL(Failed(
-            SQLConnect( m_hDBC, (SQLCHAR *) pszDSN, SQL_NTS,
-                        (SQLCHAR *) pszUserid, SQL_NTS,
-                        (SQLCHAR *) pszPassword, SQL_NTS ) ));
+            SQLConnect( m_hDBC, reinterpret_cast<SQLCHAR*>(const_cast<char*>(pszDSN)), SQL_NTS,
+                        reinterpret_cast<SQLCHAR*>(const_cast<char*>(pszUserid)), SQL_NTS,
+                        reinterpret_cast<SQLCHAR*>(const_cast<char*>(pszPassword)), SQL_NTS ) ));
     }
 
     if( bFailed )
@@ -551,7 +552,7 @@ int CPLODBCStatement::ExecuteSQL( const char *pszStatement )
     // SQL_NTS=-3 is a valid value for SQLExecDirect.
     // coverity[negative_returns]
     if( Failed(
-            SQLExecDirect( m_hStmt, (SQLCHAR *) m_pszStatement, SQL_NTS ) ) )
+            SQLExecDirect( m_hStmt, reinterpret_cast<SQLCHAR *>(m_pszStatement), SQL_NTS ) ) )
         return FALSE;
 
     return CollectResultsInfo();
@@ -938,9 +939,9 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         // Assume big result: should check for state=SQLSATE 01004.
         else if( nRetCode == SQL_SUCCESS_WITH_INFO )
         {
-            if( cbDataLen >= (CPL_SQLLEN)(sizeof(szWrkData)-1) )
+            if( cbDataLen >= static_cast<CPL_SQLLEN>(sizeof(szWrkData)-1) )
             {
-                cbDataLen = (CPL_SQLLEN)(sizeof(szWrkData)-1);
+                cbDataLen = static_cast<CPL_SQLLEN>(sizeof(szWrkData)-1);
                 if( nFetchType == SQL_C_CHAR )
                     while( (cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0) )
                         --cbDataLen;  // Trimming the extra terminators: bug 990
@@ -1029,7 +1030,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         if( nFetchType == SQL_C_WCHAR && m_papszColValues[iCol] != nullptr
             && m_panColValueLengths[iCol] > 0 )
         {
-            wchar_t *pwszSrc = (wchar_t *) m_papszColValues[iCol];
+            wchar_t *pwszSrc = reinterpret_cast<wchar_t*>(m_papszColValues[iCol]);
 
             m_papszColValues[iCol] =
                 CPLRecodeFromWChar( pwszSrc, CPL_ENC_UCS2, CPL_ENC_UTF8 );
@@ -1454,10 +1455,10 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 /*      Fetch columns resultset for this table.                         */
 /* -------------------------------------------------------------------- */
     if( Failed( SQLColumns( m_hStmt,
-                            (SQLCHAR *) pszCatalog, SQL_NTS,
-                            (SQLCHAR *) pszSchema, SQL_NTS,
-                            (SQLCHAR *) pszTable, SQL_NTS,
-                            (SQLCHAR *) nullptr /* "" */, SQL_NTS ) ) )
+                            reinterpret_cast<SQLCHAR *>(const_cast<char*>(pszCatalog)), SQL_NTS,
+                            reinterpret_cast<SQLCHAR *>(const_cast<char*>(pszSchema)), SQL_NTS,
+                            reinterpret_cast<SQLCHAR *>(const_cast<char*>(pszTable)), SQL_NTS,
+                            nullptr /* "" */, SQL_NTS ) ) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1594,9 +1595,9 @@ int CPLODBCStatement::GetPrimaryKeys( const char *pszTable,
 /*      Fetch columns resultset for this table.                         */
 /* -------------------------------------------------------------------- */
     if( Failed( SQLPrimaryKeys( m_hStmt,
-                                (SQLCHAR *) pszCatalog, SQL_NTS,
-                                (SQLCHAR *) pszSchema, SQL_NTS,
-                                (SQLCHAR *) pszTable, SQL_NTS ) ) )
+                                reinterpret_cast<SQLCHAR *>(const_cast<char*>(pszCatalog)), SQL_NTS,
+                                reinterpret_cast<SQLCHAR *>(const_cast<char*>(pszSchema)), SQL_NTS,
+                                reinterpret_cast<SQLCHAR *>(const_cast<char*>(pszTable)), SQL_NTS ) ) )
         return FALSE;
 
     return CollectResultsInfo();
@@ -1644,10 +1645,10 @@ int CPLODBCStatement::GetTables( const char *pszCatalog,
 /*      Fetch columns resultset for this table.                         */
 /* -------------------------------------------------------------------- */
     if( Failed( SQLTables( m_hStmt,
-                           (SQLCHAR *) pszCatalog, SQL_NTS,
-                           (SQLCHAR *) pszSchema, SQL_NTS,
-                           (SQLCHAR *) nullptr, SQL_NTS,
-                           (SQLCHAR *) "'TABLE','VIEW'", SQL_NTS ) ) )
+                           reinterpret_cast<SQLCHAR *>(const_cast<char*>(pszCatalog)), SQL_NTS,
+                           reinterpret_cast<SQLCHAR *>(const_cast<char*>(pszSchema)), SQL_NTS,
+                           nullptr, SQL_NTS,
+                           reinterpret_cast<SQLCHAR *>(const_cast<char*>("'TABLE','VIEW'")), SQL_NTS ) ) )
         return FALSE;
 
     return CollectResultsInfo();

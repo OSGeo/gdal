@@ -101,7 +101,7 @@ CPLWorkerThreadPool::~CPLWorkerThreadPool()
 
 void CPLWorkerThreadPool::WorkerThreadFunction(void* user_data)
 {
-    CPLWorkerThread* psWT = (CPLWorkerThread* ) user_data;
+    CPLWorkerThread* psWT = static_cast<CPLWorkerThread*>(user_data);
     CPLWorkerThreadPool* poTP = psWT->poTP;
 
     if( psWT->pfnInitFunc )
@@ -267,7 +267,7 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
         {
             CPLWorkerThread* psWorkerThread;
 
-            psWorkerThread = (CPLWorkerThread*)psWaitingWorkerThreadsList->pData;
+            psWorkerThread = static_cast<CPLWorkerThread*>(psWaitingWorkerThreadsList->pData);
 
             CPLAssert( psWorkerThread->bMarkedAsWaiting );
             psWorkerThread->bMarkedAsWaiting = FALSE;
@@ -452,7 +452,7 @@ CPLWorkerThreadPool::GetNextJob( CPLWorkerThread* psWorkerThread )
             CPLDebug("JOB", "%p got a job", psWorkerThread);
 #endif
             CPLWorkerThreadJob* psJob =
-                (CPLWorkerThreadJob*)psTopJobIter->pData;
+                static_cast<CPLWorkerThreadJob*>(psTopJobIter->pData);
             CPLReleaseMutex(hMutex);
             CPLFree(psTopJobIter);
             return psJob;
