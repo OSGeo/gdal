@@ -420,7 +420,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                 iArg = iArg + 4
 
             elif (len(args[iArg + 1]) >= 7 and EQUAL(args[iArg + 1][0:7], "POLYGON")) or \
-            (len(args[iArg + 1]) >= 12 and EQUAL(args[iArg + 1][0:12], "MULTIPOLYGON")) :
+            (len(args[iArg + 1]) >= 12 and EQUAL(args[iArg + 1][0:12], "MULTIPOLYGON")):
                 poClipSrc = ogr.CreateGeometryFromWkt(args[iArg + 1])
                 if poClipSrc is None:
                     print("FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n")
@@ -463,7 +463,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                 iArg = iArg + 4
 
             elif (len(args[iArg + 1]) >= 7 and EQUAL(args[iArg + 1][0:7], "POLYGON")) or \
-            (len(args[iArg + 1]) >= 12 and EQUAL(args[iArg + 1][0:12], "MULTIPOLYGON")) :
+            (len(args[iArg + 1]) >= 12 and EQUAL(args[iArg + 1][0:12], "MULTIPOLYGON")):
                 poClipDst = ogr.CreateGeometryFromWkt(args[iArg + 1])
                 if poClipDst is None:
                     print("FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n")
@@ -615,7 +615,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
            (len(papszLayers) > 1 or \
             (len(papszLayers) == 0 and poDS.GetLayerCount() > 1)) and \
             pszNewLayerName is None and \
-            EQUAL(os.path.splitext(pszDestDataSource)[1], ".SHP") :
+            EQUAL(os.path.splitext(pszDestDataSource)[1], ".SHP"):
 
             try:
                 os.stat(pszDestDataSource)
@@ -1204,7 +1204,7 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                      bTransform, poOutputSRS, bNullifyOutputSRS, poSourceSRS, papszSelFields, \
                      bAppend, eGType, bPromoteToMulti, nCoordDim, bOverwrite, \
                      papszFieldTypesToString, bWrapDateline, \
-                     bExplodeCollections, pszZField, pszWHERE) :
+                     bExplodeCollections, pszZField, pszWHERE):
 
     if pszNewLayerName is None:
         pszNewLayerName = poSrcLayer.GetLayerDefn().GetName()
@@ -1510,7 +1510,7 @@ def TranslateLayer(psInfo, poSrcDS, poSrcLayer, poDstDS,  \
                    eGType, bPromoteToMulti, nCoordDim, eGeomOp, dfGeomOpParam, \
                    nCountLayerFeatures, \
                    poClipSrc, poClipDst, bExplodeCollections, nSrcFileSize, \
-                   pnReadFeatureCount, pfnProgress, pProgressArg) :
+                   pnReadFeatureCount, pfnProgress, pProgressArg):
 
     bForceToPolygon = False
     bForceToMultiPolygon = False
@@ -1588,7 +1588,7 @@ def TranslateLayer(psInfo, poSrcDS, poSrcLayer, poDstDS,  \
                 if nGroupTransactions > 0:
                     poDstLayer.CommitTransaction()
 
-                print("Unable to translate feature %d from layer %s" % (poFeature.GetFID() , poSrcLayer.GetName()))
+                print("Unable to translate feature %d from layer %s" % (poFeature.GetFID(), poSrcLayer.GetName()))
 
                 return False
 

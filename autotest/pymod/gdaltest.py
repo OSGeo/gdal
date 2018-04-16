@@ -310,7 +310,7 @@ def run_all(dirlist, run_as_external=False):
                         else:
                             backup_asan_options = None
                         os.environ['ASAN_OPTIONS'] = os.environ['GDALTEST_ASAN_OPTIONS']
-                    ret = runexternal(python_exe + """ -c "import %s; import sys; sys.path.append('../pymod'); import gdaltest; gdaltest.run_tests( %s.gdaltest_list ); gdaltest.summarize()" """ % (module, module) , display_live_on_parent_stdout=True)
+                    ret = runexternal(python_exe + """ -c "import %s; import sys; sys.path.append('../pymod'); import gdaltest; gdaltest.run_tests( %s.gdaltest_list ); gdaltest.summarize()" """ % (module, module), display_live_on_parent_stdout=True)
                     if 'GDALTEST_ASAN_OPTIONS' in os.environ:
                         if backup_asan_options is None:
                             del os.environ['ASAN_OPTIONS']
@@ -773,7 +773,7 @@ class GDALTest:
         new_ds = None
         src_ds = None
 
-        if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON' and delete_copy == 1 :
+        if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON' and delete_copy == 1:
             self.driver.Delete(new_filename)
 
         return 'success'
@@ -1616,7 +1616,7 @@ def filesystem_supports_sparse_files(path):
         ret.find('xfs') == -1 and \
         ret.find('jfs') == -1 and \
         ret.find('zfs') == -1 and \
-        ret.find('ntfs') == -1 :
+        ret.find('ntfs') == -1:
         post_reason('Filesystem %s is not believed to support sparse files' % ret)
         return False
 

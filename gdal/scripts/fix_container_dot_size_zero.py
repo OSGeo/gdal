@@ -128,7 +128,7 @@ while True:
         pos_cur += 1
         if (content[pos_after:].startswith(' ?') or \
             content[pos_after:].startswith('?')) and \
-           (content[pos_cur - 1] == '(' or content[pos_cur - 1] == ',') :
+           (content[pos_cur - 1] == '(' or content[pos_cur - 1] == ','):
             non_empty = True
         elif content[pos_cur - 3:pos_cur] == 'if(':
             non_empty = True

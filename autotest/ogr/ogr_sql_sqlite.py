@@ -217,7 +217,7 @@ def ogr_sql_sqlite_1():
            feat.GetField('nullablefield') is not None or \
            feat.GetField('doublefield') != 3.45 or \
            feat.GetField('strfield') != 'bar' or \
-           feat.GetStyleString() != 'cool_style' :
+           feat.GetStyleString() != 'cool_style':
             gdaltest.post_reason('failure')
             feat.DumpReadable()
             return 'fail'

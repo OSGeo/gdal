@@ -1248,7 +1248,7 @@ def jpeg_28():
         return 'fail'
     ds = gdal.Open(tmpfilename)
     got_md = ds.GetMetadata()
-    if got_md != {'EXIF_GPSLatitudeRef': 'N', 'EXIF_GPSLatitude' : '(49) (34) (56.5)'}:
+    if got_md != {'EXIF_GPSLatitudeRef': 'N', 'EXIF_GPSLatitude': '(49) (34) (56.5)'}:
         gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'

@@ -436,7 +436,7 @@ def pdf_jpx_compression(filename, drv_name=None):
         if pdf_get_J2KDriver('JP2KAK') is None and \
            pdf_get_J2KDriver('JP2ECW') is None and \
            pdf_get_J2KDriver('JP2OpenJpeg') is None and \
-           pdf_get_J2KDriver('JPEG2000') is None :
+           pdf_get_J2KDriver('JPEG2000') is None:
             return 'skip'
     elif pdf_get_J2KDriver(drv_name) is None:
         return 'skip'

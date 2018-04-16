@@ -164,7 +164,7 @@ for dirname, dirnames, filenames in os.walk('.'):
                     line = lines[i]
                     if (line.find('Copyright') < 0 and len(line.strip()) < 10) or line.find('Permission to use') > 0:
                         break
-                if minyear < maxyear :
+                if minyear < maxyear:
                     f2.write('%sCopyright (c) %d-%d, %s\n' % (prefix, minyear, maxyear, full_author))
                 else:
                     f2.write('%sCopyright (c) %d, %s\n' % (prefix, minyear, full_author))

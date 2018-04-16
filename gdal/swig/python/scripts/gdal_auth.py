@@ -37,7 +37,7 @@ import webbrowser
 from osgeo import gdal
 
 SCOPES = {
-    'ft' : 'https://www.googleapis.com/auth/fusiontables',
+    'ft': 'https://www.googleapis.com/auth/fusiontables',
     'storage': 'https://www.googleapis.com/auth/devstorage.read_only',
     'storage-rw': 'https://www.googleapis.com/auth/devstorage.read_write'
     }

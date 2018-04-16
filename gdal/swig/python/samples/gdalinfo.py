@@ -246,7 +246,7 @@ def main(argv=None):
         papszMetadata = hDataset.GetMetadata_List()
     else:
         papszMetadata = None
-    if bShowMetadata and papszMetadata is not None and len(papszMetadata) > 0 :
+    if bShowMetadata and papszMetadata is not None and len(papszMetadata) > 0:
         print("Metadata:")
         for metadata in papszMetadata:
             print("  %s" % metadata)
@@ -254,7 +254,7 @@ def main(argv=None):
     if bShowMetadata:
         for extra_domain in papszExtraMDDomains:
             papszMetadata = hDataset.GetMetadata_List(extra_domain)
-            if papszMetadata is not None and len(papszMetadata) > 0 :
+            if papszMetadata is not None and len(papszMetadata) > 0:
                 print("Metadata (%s):" % extra_domain)
                 for metadata in papszMetadata:
                   print("  %s" % metadata)
@@ -266,7 +266,7 @@ def main(argv=None):
         papszMetadata = hDataset.GetMetadata_List("IMAGE_STRUCTURE")
     else:
         papszMetadata = None
-    if bShowMetadata and papszMetadata is not None and len(papszMetadata) > 0 :
+    if bShowMetadata and papszMetadata is not None and len(papszMetadata) > 0:
         print("Image Structure Metadata:")
         for metadata in papszMetadata:
             print("  %s" % metadata)
@@ -275,7 +275,7 @@ def main(argv=None):
 #      Report subdatasets.
 # --------------------------------------------------------------------
     papszMetadata = hDataset.GetMetadata_List("SUBDATASETS")
-    if papszMetadata is not None and len(papszMetadata) > 0 :
+    if papszMetadata is not None and len(papszMetadata) > 0:
         print("Subdatasets:")
         for metadata in papszMetadata:
             print("  %s" % metadata)
@@ -287,7 +287,7 @@ def main(argv=None):
         papszMetadata = hDataset.GetMetadata_List("GEOLOCATION")
     else:
         papszMetadata = None
-    if bShowMetadata and papszMetadata is not None and len(papszMetadata) > 0 :
+    if bShowMetadata and papszMetadata is not None and len(papszMetadata) > 0:
         print("Geolocation:")
         for metadata in papszMetadata:
             print("  %s" % metadata)
@@ -299,7 +299,7 @@ def main(argv=None):
         papszMetadata = hDataset.GetMetadata_List("RPC")
     else:
         papszMetadata = None
-    if bShowMetadata and papszMetadata is not None and len(papszMetadata) > 0 :
+    if bShowMetadata and papszMetadata is not None and len(papszMetadata) > 0:
         print("RPC Metadata:")
         for metadata in papszMetadata:
             print("  %s" % metadata)
@@ -360,7 +360,7 @@ def main(argv=None):
                     hBand.GetRasterColorInterpretation())))
 
         if hBand.GetDescription() is not None \
-            and len(hBand.GetDescription()) > 0 :
+            and len(hBand.GetDescription()) > 0:
             print("  Description = %s" % hBand.GetDescription())
 
         dfMin = hBand.GetMinimum()
@@ -421,7 +421,7 @@ def main(argv=None):
             line = "  Overviews: "
             for iOverview in range(hBand.GetOverviewCount()):
 
-                if iOverview != 0 :
+                if iOverview != 0:
                     line = line +  ", "
 
                 hOverview = hBand.GetOverview(iOverview)
@@ -511,7 +511,7 @@ def main(argv=None):
             papszMetadata = hBand.GetMetadata_List()
         else:
             papszMetadata = None
-        if bShowMetadata and papszMetadata is not None and len(papszMetadata) > 0 :
+        if bShowMetadata and papszMetadata is not None and len(papszMetadata) > 0:
             print("  Metadata:")
             for metadata in papszMetadata:
                 print("    %s" % metadata)
@@ -520,7 +520,7 @@ def main(argv=None):
             papszMetadata = hBand.GetMetadata_List("IMAGE_STRUCTURE")
         else:
             papszMetadata = None
-        if bShowMetadata and papszMetadata is not None and len(papszMetadata) > 0 :
+        if bShowMetadata and papszMetadata is not None and len(papszMetadata) > 0:
             print("  Image Structure Metadata:")
             for metadata in papszMetadata:
                 print("    %s" % metadata)

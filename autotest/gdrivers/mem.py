@@ -394,7 +394,7 @@ def mem_9():
     src_ds = gdal.Open('data/rgbsmall.tif')
     drv = gdal.GetDriverByName('MEM')
 
-    for interleave in ['BAND', 'PIXEL'] :
+    for interleave in ['BAND', 'PIXEL']:
         out_ds = drv.CreateCopy('', src_ds, options=['INTERLEAVE=%s' % interleave])
         ref_data = src_ds.GetRasterBand(2).ReadRaster(20, 8, 4, 5)
         got_data = out_ds.GetRasterBand(2).ReadRaster(20, 8, 4, 5)

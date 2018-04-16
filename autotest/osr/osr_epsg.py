@@ -103,7 +103,7 @@ def osr_epsg_4():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
 
-    if srs.EPSGTreatsAsLatLong() :
+    if srs.EPSGTreatsAsLatLong():
         gdaltest.post_reason('not supposed to be treated as lat/long')
         return 'fail'
 
@@ -122,7 +122,7 @@ def osr_epsg_5():
     srs = osr.SpatialReference()
     srs.ImportFromEPSGA(4326)
 
-    if not srs.EPSGTreatsAsLatLong() :
+    if not srs.EPSGTreatsAsLatLong():
         gdaltest.post_reason('supposed to be treated as lat/long')
         return 'fail'
 
@@ -157,7 +157,7 @@ def osr_epsg_7():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(2193)
 
-    if srs.EPSGTreatsAsNorthingEasting() :
+    if srs.EPSGTreatsAsNorthingEasting():
         gdaltest.post_reason('not supposed to be treated as n/e')
         return 'fail'
 
@@ -176,7 +176,7 @@ def osr_epsg_8():
     srs = osr.SpatialReference()
     srs.ImportFromEPSGA(2193)
 
-    if not srs.EPSGTreatsAsNorthingEasting() :
+    if not srs.EPSGTreatsAsNorthingEasting():
         gdaltest.post_reason('supposed to be treated as n/e')
         return 'fail'
 

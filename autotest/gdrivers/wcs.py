@@ -393,94 +393,94 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
 
 def setupFct():
     return {
-        'SimpleGeoServer' : {
-            'URL' : 'https://msp.smartsea.fmi.fi/geoserver/wcs',
-            'Options' : [
+        'SimpleGeoServer': {
+            'URL': 'https://msp.smartsea.fmi.fi/geoserver/wcs',
+            'Options': [
                 "",
                 "-oo OuterExtents",
                 "-oo OuterExtents",
                 ""
                 ],
-            'Projwin' : "-projwin 145300 6737500 209680 6688700",
-            'Outsize' : "-outsize $size 0",
-            'Coverage' : [
+            'Projwin': "-projwin 145300 6737500 209680 6688700",
+            'Outsize': "-outsize $size 0",
+            'Coverage': [
                 'smartsea:eusm2016', 'smartsea:eusm2016',
                 'smartsea:eusm2016', 'smartsea__eusm2016'],
-            'Versions' : [100, 110, 111, 201],
+            'Versions': [100, 110, 111, 201],
         },
-        'GeoServer2' : {
-            'URL' : 'https://msp.smartsea.fmi.fi/geoserver/wcs',
-            'Options' : [
+        'GeoServer2': {
+            'URL': 'https://msp.smartsea.fmi.fi/geoserver/wcs',
+            'Options': [
                 "",
                 "-oo OuterExtents -oo NoGridAxisSwap",
                 "-oo OuterExtents -oo NoGridAxisSwap",
                 "-oo NoGridAxisSwap -oo SubsetAxisSwap"
                 ],
-            'Projwin' : "-projwin 145300 6737500 209680 6688700",
-            'Outsize' : "-outsize $size 0",
-            'Coverage' : ['smartsea:south', 'smartsea:south', 'smartsea:south', 'smartsea__south'],
-            'Versions' : [100, 110, 111, 201],
-            'Range' : ['GREEN_BAND', 'BLUE_BAND']
+            'Projwin': "-projwin 145300 6737500 209680 6688700",
+            'Outsize': "-outsize $size 0",
+            'Coverage': ['smartsea:south', 'smartsea:south', 'smartsea:south', 'smartsea__south'],
+            'Versions': [100, 110, 111, 201],
+            'Range': ['GREEN_BAND', 'BLUE_BAND']
         },
-        'GeoServer' : {
-            'URL' : 'https://msp.smartsea.fmi.fi/geoserver/wcs',
-            'Options' : [
+        'GeoServer': {
+            'URL': 'https://msp.smartsea.fmi.fi/geoserver/wcs',
+            'Options': [
                 "",
                 "-oo OuterExtents -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap",
                 "-oo OuterExtents -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap",
                 "-oo NoGridAxisSwap -oo SubsetAxisSwap",
                 ],
-            'Projwin' : "-projwin 3200000 6670000 3280000 6620000",
-            'Outsize' : "-outsize $size 0",
-            'Coverage' : [
+            'Projwin': "-projwin 3200000 6670000 3280000 6620000",
+            'Outsize': "-outsize $size 0",
+            'Coverage': [
                 'smartsea:eusm2016-EPSG2393', 'smartsea:eusm2016-EPSG2393',
                 'smartsea:eusm2016-EPSG2393', 'smartsea__eusm2016-EPSG2393'],
-            'Versions' : [100, 110, 111, 201]
+            'Versions': [100, 110, 111, 201]
         },
-        'MapServer' : {
-            'URL' : 'http://194.66.252.155/cgi-bin/BGS_EMODnet_bathymetry/ows',
-            'Options' : [
+        'MapServer': {
+            'URL': 'http://194.66.252.155/cgi-bin/BGS_EMODnet_bathymetry/ows',
+            'Options': [
                 "-oo INTERLEAVE=PIXEL -oo OriginAtBoundary -oo BandIdentifier=none",
                 "-oo INTERLEAVE=PIXEL -oo OffsetsPositive -oo NrOffsets=2 -oo NoGridAxisSwap -oo BandIdentifier=none",
                 "-oo INTERLEAVE=PIXEL -oo OffsetsPositive -oo NrOffsets=2 -oo NoGridAxisSwap -oo BandIdentifier=none",
                 "-oo INTERLEAVE=PIXEL -oo OffsetsPositive -oo NrOffsets=2 -oo NoGridAxisSwap -oo BandIdentifier=none",
                 "-oo OriginAtBoundary",
                 ],
-            'Projwin' : "-projwin 10 45 15 35",
-            'Outsize' : "-outsize $size 0",
-            'Coverage' : 'BGS_EMODNET_CentralMed-MCol',
-            'Versions' : [100, 110, 111, 112, 201]
+            'Projwin': "-projwin 10 45 15 35",
+            'Outsize': "-outsize $size 0",
+            'Coverage': 'BGS_EMODNET_CentralMed-MCol',
+            'Versions': [100, 110, 111, 112, 201]
         },
-        'Rasdaman' : {
-            'URL' : 'http://ows.rasdaman.org/rasdaman/ows',
-            'Options' : "",
-            'Projwin' : "-projwin 10 45 15 35",
-            'Outsize' : "-outsize $size 0",
-            'Coverage' : 'BlueMarbleCov',
-            'Versions' : [201]
+        'Rasdaman': {
+            'URL': 'http://ows.rasdaman.org/rasdaman/ows',
+            'Options': "",
+            'Projwin': "-projwin 10 45 15 35",
+            'Outsize': "-outsize $size 0",
+            'Coverage': 'BlueMarbleCov',
+            'Versions': [201]
         },
-        'Rasdaman2' : {
-            'URL' : 'http://ows.rasdaman.org/rasdaman/ows',
-            'Options' : '-oo subset=unix("2008-01-05T01:58:30.000Z")',
-            'Projwin' : "-projwin 100000 5400000 150000 5100000",
-            'Outsize' : "-outsize $size 0",
-            'Coverage' : 'test_irr_cube_2',
-            'Versions' : [201],
-            'Dimension' : "unix(\"2008-01-05T01:58:30.000Z\")"
+        'Rasdaman2': {
+            'URL': 'http://ows.rasdaman.org/rasdaman/ows',
+            'Options': '-oo subset=unix("2008-01-05T01:58:30.000Z")',
+            'Projwin': "-projwin 100000 5400000 150000 5100000",
+            'Outsize': "-outsize $size 0",
+            'Coverage': 'test_irr_cube_2',
+            'Versions': [201],
+            'Dimension': "unix(\"2008-01-05T01:58:30.000Z\")"
         },
-        'ArcGIS' : {
-            'URL' : 'http://paikkatieto.ymparisto.fi/arcgis/services/Testit/Velmu_wcs_testi/MapServer/WCSServer',
-            'Options' : [
+        'ArcGIS': {
+            'URL': 'http://paikkatieto.ymparisto.fi/arcgis/services/Testit/Velmu_wcs_testi/MapServer/WCSServer',
+            'Options': [
                 "",
                 "-oo NrOffsets=2",
                 "-oo NrOffsets=2",
                 "-oo NrOffsets=2",
                 "-oo UseScaleFactor"
                 ],
-            'Projwin' : "-projwin 181000 7005000 200000 6980000",
-            'Outsize' : "-outsize $size 0",
-            'Coverage' : [2, 2, 2, 2, 'Coverage2'],
-            'Versions' : [100, 110, 111, 112, 201]
+            'Projwin': "-projwin 181000 7005000 200000 6980000",
+            'Outsize': "-outsize $size 0",
+            'Coverage': [2, 2, 2, 2, 'Coverage2'],
+            'Versions': [100, 110, 111, 112, 201]
         }
     }
 

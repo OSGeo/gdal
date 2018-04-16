@@ -619,7 +619,7 @@ def ogr_mysql_20():
 
     layer = gdaltest.mysql_ds.CreateLayer('select', options=['ENGINE=MyISAM'])
     ogrtest.quick_create_layer_def(layer,
-                                   [('desc', ogr.OFTString) ,
+                                   [('desc', ogr.OFTString),
                                     ('select', ogr.OFTString)])
     dst_feat = ogr.Feature(feature_def=layer.GetLayerDefn())
 

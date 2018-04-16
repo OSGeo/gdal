@@ -923,7 +923,7 @@ def mask_21():
 def mask_22():
 
     drv = gdal.GetDriverByName('GTiff')
-    ds = drv.Create('tmp/mask_22.tif', 20 , 20)
+    ds = drv.Create('tmp/mask_22.tif', 20, 20)
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()

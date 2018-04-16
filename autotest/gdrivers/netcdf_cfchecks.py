@@ -532,7 +532,7 @@ class CFChecker:
                 rc = 0
 
         if var in gridMappingVars:
-            if not self.chkGridMappingVar(var) :
+            if not self.chkGridMappingVar(var):
                 rc = 0
 
         # print "Axes:",axes
@@ -1041,22 +1041,17 @@ class CFChecker:
       self.formulas['atmosphere_ln_pressure_coordinate'] = ['p(k)=p0*exp(-lev(k))']
       self.formulas['sigma'] = ['p(n,k,j,i)=ptop+sigma(k)*(ps(n,j,i)-ptop)']
 
-      self.formulas['hybrid_sigma_pressure'] = ['p(n,k,j,i)=a(k)*p0+b(k)*ps(n,j,i)'
-                                                , 'p(n,k,j,i)=ap(k)+b(k)*ps(n,j,i)']
+      self.formulas['hybrid_sigma_pressure'] = ['p(n,k,j,i)=a(k)*p0+b(k)*ps(n,j,i)', 'p(n,k,j,i)=ap(k)+b(k)*ps(n,j,i)']
 
       self.formulas['atmosphere_hybrid_height_coordinate'] = ['z(n,k,j,i)=a(k)+b(k)*orog(n,j,i)']
 
       self.formulas['ocean_sigma_coordinate'] = ['z(n,k,j,i)=eta(n,j,i)+sigma(k)*(depth(j,i)+eta(n,j,i))']
 
-      self.formulas['ocean_s_coordinate'] = ['z(n,k,j,i)=eta(n,j,i)*(1+s(k))+depth_c*s(k)+(depth(j,i)-depth_c)*C(k)'
-                                             , 'C(k)=(1-b)*sinh(a*s(k))/sinh(a)+b*[tanh(a*(s(k)+0.5))/(2*tanh(0.5*a))-0.5]']
+      self.formulas['ocean_s_coordinate'] = ['z(n,k,j,i)=eta(n,j,i)*(1+s(k))+depth_c*s(k)+(depth(j,i)-depth_c)*C(k)', 'C(k)=(1-b)*sinh(a*s(k))/sinh(a)+b*[tanh(a*(s(k)+0.5))/(2*tanh(0.5*a))-0.5]']
 
-      self.formulas['ocean_sigma_z_coordinate'] = ['z(n,k,j,i)=eta(n,j,i)+sigma(k)*(min(depth_c,depth(j,i))+eta(n,j,i))'
-                                                   , 'z(n,k,j,i)=zlev(k)']
+      self.formulas['ocean_sigma_z_coordinate'] = ['z(n,k,j,i)=eta(n,j,i)+sigma(k)*(min(depth_c,depth(j,i))+eta(n,j,i))', 'z(n,k,j,i)=zlev(k)']
 
-      self.formulas['ocean_double_sigma_coordinate'] = ['z(k,j,i)=sigma(k)*f(j,i)'
-                                                        , 'z(k,j,i)=f(j,i)+(sigma(k)-1)*(depth(j,i)-f(j,i))'
-                                                        , 'f(j,i)=0.5*(z1+z2)+0.5*(z1-z2)*tanh(2*a/(z1-z2)*(depth(j,i)-href))']
+      self.formulas['ocean_double_sigma_coordinate'] = ['z(k,j,i)=sigma(k)*f(j,i)', 'z(k,j,i)=f(j,i)+(sigma(k)-1)*(depth(j,i)-f(j,i))', 'f(j,i)=0.5*(z1+z2)+0.5*(z1-z2)*tanh(2*a/(z1-z2)*(depth(j,i)-href))']
 
   # ----------------------------------------
   def parseBlankSeparatedList(self, list):
@@ -1404,7 +1399,7 @@ class CFChecker:
             if 'units' in var.attributes:
                 varUnits = udunits.ut_parse(self.unitSystem, var.attributes['units'], "UT_ASCII")
                 secsSinceEpoch = udunits.ut_parse(self.unitSystem, "seconds since 1970-01-01", "UT_ASCII")
-                if not udunits.ut_are_convertible(varUnits, secsSinceEpoch) :
+                if not udunits.ut_are_convertible(varUnits, secsSinceEpoch):
                     print("ERROR (4.4.1): Attribute", attribute, "may only be attached to time coordinate variable")
                     self.err = self.err + 1
                     rc = 0

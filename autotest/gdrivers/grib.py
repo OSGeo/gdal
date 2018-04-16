@@ -308,7 +308,7 @@ def grib_grib2_read_template_4_32():
         print(cs)
         return 'fail'
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_REF_TIME': '  1508479200 sec UTC', 'GRIB_VALID_TIME': '  1508479200 sec UTC', 'GRIB_FORECAST_SECONDS': '0 sec', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '5 7 2 0 0 0 0 0 1 0 0 0 0 1 0 31 1 29 67 140 2 0 0 238 217', 'GRIB_PDS_PDTN': '32', 'GRIB_COMMENT': 'Brightness Temperature [C]', 'GRIB_SHORT_NAME': '0 undefined', 'GRIB_ELEMENT': 'BRTEMP', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES' : '5 7 2 0 0 0 0 1 0 1 31 285 17292 2 61145'}
+    expected_md = {'GRIB_REF_TIME': '  1508479200 sec UTC', 'GRIB_VALID_TIME': '  1508479200 sec UTC', 'GRIB_FORECAST_SECONDS': '0 sec', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '5 7 2 0 0 0 0 0 1 0 0 0 0 1 0 31 1 29 67 140 2 0 0 238 217', 'GRIB_PDS_PDTN': '32', 'GRIB_COMMENT': 'Brightness Temperature [C]', 'GRIB_SHORT_NAME': '0 undefined', 'GRIB_ELEMENT': 'BRTEMP', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '5 7 2 0 0 0 0 1 0 1 31 285 17292 2 61145'}
     for k in expected_md:
         if k not in md or md[k] != expected_md[k]:
             gdaltest.post_reason('Did not get expected metadata')
@@ -786,7 +786,7 @@ def grib_grib2_write_creation_options():
                    ])
     ds = gdal.Open(tmpfilename)
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_PDS_PDTN': '40', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES' : '20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647'}
+    expected_md = {'GRIB_PDS_PDTN': '40', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647'}
     for k in expected_md:
         if k not in md or md[k] != expected_md[k]:
             gdaltest.post_reason('Did not get expected metadata')
@@ -808,7 +808,7 @@ def grib_grib2_write_creation_options():
     out_ds = None
     ds = gdal.Open(tmpfilename)
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_PDS_PDTN': '40', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES' : '20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647'}
+    expected_md = {'GRIB_PDS_PDTN': '40', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647'}
     for k in expected_md:
         if k not in md or md[k] != expected_md[k]:
             gdaltest.post_reason('Did not get expected metadata')
@@ -837,7 +837,7 @@ def grib_grib2_write_creation_options():
                    ])
     ds = gdal.Open(tmpfilename)
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_PDS_PDTN': '32', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES' : '5 7 2 0 0 0 0 1 0 2 31 285 17292 2 61145 31 285 17292 2 61145'}
+    expected_md = {'GRIB_PDS_PDTN': '32', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '5 7 2 0 0 0 0 1 0 2 31 285 17292 2 61145 31 285 17292 2 61145'}
     for k in expected_md:
         if k not in md or md[k] != expected_md[k]:
             gdaltest.post_reason('Did not get expected metadata')
@@ -867,7 +867,7 @@ def grib_grib2_write_creation_options():
                    ])
     ds = gdal.Open(tmpfilename)
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_PDS_PDTN': '32', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES' : '5 7 2 0 0 0 0 1 0 2 31 285 17292 2 61145 31 285 17292 2 61145'}
+    expected_md = {'GRIB_PDS_PDTN': '32', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '5 7 2 0 0 0 0 1 0 2 31 285 17292 2 61145 31 285 17292 2 61145'}
     for k in expected_md:
         if k not in md or md[k] != expected_md[k]:
             gdaltest.post_reason('Did not get expected metadata')
@@ -884,7 +884,7 @@ def grib_grib2_write_creation_options():
                    ])
     ds = gdal.Open(tmpfilename)
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_PDS_PDTN': '32', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES' : '5 7 2 0 0 0 0 1 0 2 31 285 17292 2 61145 31 285 17292 2 61145'}
+    expected_md = {'GRIB_PDS_PDTN': '32', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '5 7 2 0 0 0 0 1 0 2 31 285 17292 2 61145 31 285 17292 2 61145'}
     for k in expected_md:
         if k not in md or md[k] != expected_md[k]:
             gdaltest.post_reason('Did not get expected metadata')
@@ -907,7 +907,7 @@ def grib_grib2_write_creation_options():
     with gdaltest.error_handler():
         ds = gdal.Open(tmpfilename)
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_PDS_PDTN': '65535', 'GRIB_PDS_TEMPLATE_NUMBERS' : '1 2 3 4 5'}
+    expected_md = {'GRIB_PDS_PDTN': '65535', 'GRIB_PDS_TEMPLATE_NUMBERS': '1 2 3 4 5'}
     for k in expected_md:
         if k not in md or md[k] != expected_md[k]:
             gdaltest.post_reason('Did not get expected metadata')

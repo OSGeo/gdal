@@ -2728,7 +2728,7 @@ def gpkg_28():
     expected_cs = [src_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     src_ds = None
 
-    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 400 , 200, 3, options=['TILE_FORMAT=PNG', 'BLOCKXSIZE=400', 'BLOCKYSIZE=200'])
+    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 400, 200, 3, options=['TILE_FORMAT=PNG', 'BLOCKXSIZE=400', 'BLOCKYSIZE=200'])
     out_ds.SetGeoTransform([0, 10, 0, 0, 0, -10])
 
     out_ds.GetRasterBand(1).WriteRaster(0, 0, 400, 200, data[0])
@@ -2773,7 +2773,7 @@ def gpkg_29(x=0):
     expected_cs = [src_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     src_ds = None
 
-    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 400 , 200, 3, options=['TILE_FORMAT=PNG', 'BLOCKXSIZE=200', 'BLOCKYSIZE=200'])
+    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 400, 200, 3, options=['TILE_FORMAT=PNG', 'BLOCKXSIZE=200', 'BLOCKYSIZE=200'])
     out_ds.SetGeoTransform([0, 10, 0, 0, 0, -10])
 
     out_ds.GetRasterBand(1).WriteRaster(0, 0, 200, 200, left[0])

@@ -341,7 +341,7 @@ def tileImage(minfo, ti):
             offsetX = (xIndex - 1) * (ti.tileWidth - ti.overlap)
             height = ti.tileHeight
             width = ti.tileWidth
-            if UseDirForEachRow :
+            if UseDirForEachRow:
                 tilename = getTileName(minfo, ti, xIndex, yIndex, 0)
             else:
                 tilename = getTileName(minfo, ti, xIndex, yIndex)
@@ -383,7 +383,7 @@ def copyTileIndexToDisk(OGRDS, fileName):
           break
       newFeature = feature.Clone()
       basename = os.path.basename(feature.GetField(0))
-      if UseDirForEachRow :
+      if UseDirForEachRow:
           t = os.path.split(os.path.dirname(feature.GetField(0)))
           basename = t[1] + "/" + basename
       newFeature.SetField(0, basename)
@@ -399,7 +399,7 @@ def copyTileIndexToCSV(OGRDS, fileName):
       if feature is None:
           break
       basename = os.path.basename(feature.GetField(0))
-      if UseDirForEachRow :
+      if UseDirForEachRow:
           t = os.path.split(os.path.dirname(feature.GetField(0)))
           basename = t[1] + "/" + basename
       csvfile.write(basename)
@@ -655,18 +655,18 @@ def getTileName(minfo, ti, xIndex, yIndex, level=-1):
         max = ti.countTilesY
     countDigits = len(str(max))
     parts = os.path.splitext(os.path.basename(minfo.filename))
-    if parts[0][0] == "@" :  # remove possible leading "@"
+    if parts[0][0] == "@":  # remove possible leading "@"
        parts = (parts[0][1:len(parts[0])], parts[1])
 
     yIndex_str = ("%0" + str(countDigits) + "i") % (yIndex,)
     xIndex_str = ("%0" + str(countDigits) + "i") % (xIndex,)
 
-    if UseDirForEachRow :
+    if UseDirForEachRow:
         format = getTargetDir(level) + str(yIndex) + os.sep + parts[0] + "_" + yIndex_str + "_" + xIndex_str
         # See if there was a switch in the row, if so then create new dir for row.
-        if LastRowIndx < yIndex :
+        if LastRowIndx < yIndex:
             LastRowIndx = yIndex
-            if (os.path.exists(getTargetDir(level) + str(yIndex)) == False) :
+            if (os.path.exists(getTargetDir(level) + str(yIndex)) == False):
                 os.mkdir(getTargetDir(level) + str(yIndex))
     else:
         format = getTargetDir(level) + parts[0] + "_" + yIndex_str + "_" + xIndex_str
@@ -867,7 +867,7 @@ def main(args=None):
         return 1
 
     # create level 0 directory if needed
-    if(UseDirForEachRow and PyramidOnly == False) :
+    if(UseDirForEachRow and PyramidOnly == False):
         leveldir = TargetDir + str(0) + os.sep
         if (os.path.exists(leveldir) == False):
             os.mkdir(leveldir)
@@ -882,7 +882,7 @@ def main(args=None):
             if (os.path.exists(leveldir) == False):
                 print("Cannot create level dir: %s" % leveldir)
                 return 1
-            if Verbose :
+            if Verbose:
                 print("Created level dir: %s" % leveldir)
 
     Driver = gdal.GetDriverByName(Format)
@@ -903,7 +903,7 @@ def main(args=None):
     minfo = mosaic_info(Names[0], tileIndexDS)
     ti = tile_info(minfo.xsize, minfo.ysize, TileWidth, TileHeight, Overlap)
 
-    if Source_SRS is None and len(minfo.projection) > 0 :
+    if Source_SRS is None and len(minfo.projection) > 0:
        Source_SRS = osr.SpatialReference()
        if Source_SRS.SetFromUserInput(minfo.projection) != 0:
            print('invalid projection  ' + minfo.projection)

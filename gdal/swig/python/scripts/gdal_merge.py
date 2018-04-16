@@ -537,7 +537,7 @@ def main(argv=None):
             bands = 0
             for fi in file_infos:
                 bands = bands + fi.bands
-            if t_fh.RasterCount < bands :
+            if t_fh.RasterCount < bands:
                 print('Existing output file has less bands than the input files. You should delete it before. Terminating gdal_merge.')
                 sys.exit(1)
         else:
@@ -576,7 +576,7 @@ def main(argv=None):
                      int(round((time.time() - start_time) / 60.0))))
             fi.report()
 
-        if separate == 0 :
+        if separate == 0:
             for band in range(1, bands + 1):
                 fi.copy_into(t_fh, band, band, nodata)
         else:

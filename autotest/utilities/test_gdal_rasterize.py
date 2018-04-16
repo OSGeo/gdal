@@ -105,7 +105,7 @@ def test_gdal_rasterize_1():
 
     # Run the algorithm.
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_rasterize_path() + ' -b 3 -b 2 -b 1 -burn 200 -burn 220 -burn 240 -l rast1 tmp/rast1.tab tmp/rast1.tif')
-    if not (err is None or err == '') :
+    if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
         return 'fail'
@@ -243,7 +243,7 @@ def test_gdal_rasterize_4():
 
     # Allow output to grow by 1/2 cell, as per #6058
     if abs(gt[0] + (gt[1] / 2) - gt_ref[0]) > 1e-6 or \
-       abs(gt[3] + (gt[5] / 2) - gt_ref[3]) > 1e-6 :
+       abs(gt[3] + (gt[5] / 2) - gt_ref[3]) > 1e-6:
         gdaltest.post_reason('did not get expected geotransform')
         print(gt)
         print(gt_ref)

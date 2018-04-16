@@ -37,7 +37,7 @@ sys.path.append('pymod')
 import gdaltest
 from osgeo import gdal
 
-all_test_list = ['ogr', 'gcore', 'gdrivers', 'osr' , 'alg', 'gnm', 'utilities', 'pyscripts']
+all_test_list = ['ogr', 'gcore', 'gdrivers', 'osr', 'alg', 'gnm', 'utilities', 'pyscripts']
 
 run_as_external = False
 

@@ -428,7 +428,7 @@ def hdf5_12():
 
     ds = gdal.Open('tmp/cache/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf')
     got_projection = ds.GetProjection()
-    if got_projection.find('Azimuthal_Equidistant') < 0 :
+    if got_projection.find('Azimuthal_Equidistant') < 0:
         print(got_projection)
         gdaltest.post_reason('fail')
         return 'fail'

@@ -96,7 +96,7 @@ def test_gdal_contour_1():
     ds = None
 
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_contour_path() + ' -a elev -i 10 tmp/gdal_contour.tif tmp/contour.shp')
-    if not (err is None or err == '') :
+    if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
         return 'fail'
