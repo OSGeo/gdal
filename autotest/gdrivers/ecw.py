@@ -136,11 +136,11 @@ def ecw_2():
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 467498.5) > 0.1 \
-        or abs(geotransform[1] - 16.5475) > 0.001 \
-        or abs(geotransform[2] - 0) > 0.001 \
-        or abs(geotransform[3] - 5077883.2825) > 0.1 \
-        or abs(geotransform[4] - 0) > 0.001 \
-        or abs(geotransform[5] - -16.5475) > 0.001:
+            or abs(geotransform[1] - 16.5475) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 5077883.2825) > 0.1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -16.5475) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -210,11 +210,11 @@ def ecw_4():
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 467498.5) > 0.1 \
-        or abs(geotransform[1] - 16.5475) > 0.001 \
-        or abs(geotransform[2] - 0) > 0.001 \
-        or abs(geotransform[3] - 5077883.2825) > 0.1 \
-        or abs(geotransform[4] - 0) > 0.001 \
-        or abs(geotransform[5] - -16.5475) > 0.001:
+            or abs(geotransform[1] - 16.5475) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 5077883.2825) > 0.1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -16.5475) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -280,11 +280,11 @@ def ecw_6():
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 440720) > 0.1 \
-        or abs(geotransform[1] - 60) > 0.001 \
-        or abs(geotransform[2] - 0) > 0.001 \
-        or abs(geotransform[3] - 3751320) > 0.1 \
-        or abs(geotransform[4] - 0) > 0.001 \
-        or abs(geotransform[5] - -60) > 0.001:
+            or abs(geotransform[1] - 60) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 3751320) > 0.1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -335,11 +335,11 @@ def ecw_8():
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 440720) > 0.1 \
-        or abs(geotransform[1] - 60) > 0.001 \
-        or abs(geotransform[2] - 0) > 0.001 \
-        or abs(geotransform[3] - 3751320) > 0.1 \
-        or abs(geotransform[4] - 0) > 0.001 \
-        or abs(geotransform[5] - -60) > 0.001:
+            or abs(geotransform[1] - 60) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 3751320) > 0.1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -410,11 +410,11 @@ def ecw_10():
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 100) > 0.1 \
-        or abs(geotransform[1] - 0.1) > 0.001 \
-        or abs(geotransform[2] - 0) > 0.001 \
-        or abs(geotransform[3] - 30) > 0.1 \
-        or abs(geotransform[4] - 0) > 0.001 \
-        or abs(geotransform[5] - -0.1) > 0.001:
+            or abs(geotransform[1] - 0.1) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 30) > 0.1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -0.1) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -464,11 +464,11 @@ def ecw_12():
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 100) > 0.1 \
-        or abs(geotransform[1] - 0.1) > 0.001 \
-        or abs(geotransform[2] - 0) > 0.001 \
-        or abs(geotransform[3] - 30.0) > 0.1 \
-        or abs(geotransform[4] - 0) > 0.001 \
-        or abs(geotransform[5] - -0.1) > 0.001:
+            or abs(geotransform[1] - 0.1) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 30.0) > 0.1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -0.1) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -1029,11 +1029,11 @@ def ecw_27():
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 440720) > 0.1 \
-        or abs(geotransform[1] - 60) > 0.001 \
-        or abs(geotransform[2] - 0) > 0.001 \
-        or abs(geotransform[3] - 3751320) > 0.1 \
-        or abs(geotransform[4] - 0) > 0.001 \
-        or abs(geotransform[5] - -60) > 0.001:
+            or abs(geotransform[1] - 60) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 3751320) > 0.1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'

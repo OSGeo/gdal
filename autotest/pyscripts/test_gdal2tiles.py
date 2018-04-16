@@ -86,8 +86,8 @@ def test_gdal2tiles_py_zoom_option():
     # Ubuntu 12.04 and socket.setdefaulttimeout()
     # as well as on Windows that doesn't manage to fork
     test_py_scripts.run_py_script_as_external_script(
-         script_path,
-         'gdal2tiles',
+        script_path,
+        'gdal2tiles',
         '-q --processes=2 -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/1/0/0.png')

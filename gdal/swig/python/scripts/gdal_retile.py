@@ -212,7 +212,7 @@ class mosaic_info:
         resultDS.SetGeoTransform([minx, self.scaleX, 0, maxy, 0, self.scaleY])
 
         for feature in features:
-            featureName =  feature.GetField(0)
+            featureName = feature.GetField(0)
             sourceDS = self.cache.get(featureName)
             dec = AffineTransformDecorator(sourceDS.GetGeoTransform())
 
@@ -776,7 +776,7 @@ def main(args=None):
                 print("TargetDir " + TargetDir + " does not exist")
                 return 1
             if TargetDir[len(TargetDir) - 1:] != os.sep:
-                TargetDir =  TargetDir + os.sep
+                TargetDir = TargetDir + os.sep
 
         elif arg == '-ps':
             i += 1
@@ -817,7 +817,7 @@ def main(args=None):
                 print('invalid -s_srs: ' + argv[i])
                 return 1
 
-        elif arg ==  "-pyramidOnly":
+        elif arg == "-pyramidOnly":
             PyramidOnly = True
         elif arg == '-tileIndex':
             i += 1

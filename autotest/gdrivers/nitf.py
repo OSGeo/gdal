@@ -154,11 +154,11 @@ def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 100) > 0.1 \
-        or abs(geotransform[1] - 0.1) > 0.001 \
-        or abs(geotransform[2] - 0) > 0.001 \
-        or abs(geotransform[3] - 30.0) > 0.1 \
-        or abs(geotransform[4] - 0) > 0.001 \
-        or abs(geotransform[5] - -0.1) > 0.001:
+            or abs(geotransform[1] - 0.1) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 30.0) > 0.1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -0.1) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -1619,14 +1619,14 @@ def nitf_49():
 def nitf_50():
 
     options = [  # "IC=C8",
-                "TEXT=DATA_0=COUCOU",
-                "TEXT=HEADER_0=ABC",  # This content is invalid but who cares here
-                "CGM=SEGMENT_COUNT=1",
-                "CGM=SEGMENT_0_SLOC_ROW=25",
-                "CGM=SEGMENT_0_SLOC_COL=25",
-                "CGM=SEGMENT_0_SDLVL=2",
-                "CGM=SEGMENT_0_SALVL=1",
-                "CGM=SEGMENT_0_DATA=XYZ"]
+        "TEXT=DATA_0=COUCOU",
+        "TEXT=HEADER_0=ABC",  # This content is invalid but who cares here
+        "CGM=SEGMENT_COUNT=1",
+        "CGM=SEGMENT_0_SLOC_ROW=25",
+        "CGM=SEGMENT_0_SLOC_COL=25",
+        "CGM=SEGMENT_0_SDLVL=2",
+        "CGM=SEGMENT_0_SALVL=1",
+        "CGM=SEGMENT_0_DATA=XYZ"]
 
     try:
         os.remove('tmp/nitf50.ntf')
@@ -3599,7 +3599,7 @@ def nitf_online_18():
     # If we do not have a functioning coordinate transformer.
     else:
         if prj != '' \
-             or not gdaltest.geotransform_equals(gt, (0, 1, 0, 0, 0, 1), 0.00000001):
+                or not gdaltest.geotransform_equals(gt, (0, 1, 0, 0, 0, 1), 0.00000001):
             print(gt)
             print(prj)
             gdaltest.post_reason('did not get expected empty gt/projection')

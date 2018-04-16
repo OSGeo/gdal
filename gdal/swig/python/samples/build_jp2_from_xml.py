@@ -70,7 +70,7 @@ def get_attribute_val(ar, attr_name):
     if node is None or node[XML_TYPE_IDX] != gdal.CXT_Attribute:
         return None
     if len(ar) > XML_FIRST_CHILD_IDX and \
-        node[XML_FIRST_CHILD_IDX][XML_TYPE_IDX] == gdal.CXT_Text:
+            node[XML_FIRST_CHILD_IDX][XML_TYPE_IDX] == gdal.CXT_Text:
         return node[XML_FIRST_CHILD_IDX][XML_VALUE_IDX]
     return None
 
@@ -99,7 +99,7 @@ def hex_letter_to_number(ch):
 def write_hexstring_as_binary(hex_binary_content, out_f):
     for i in range(int(len(hex_binary_content) / 2)):
         val = hex_letter_to_number(hex_binary_content[2 * i]) * 16 + \
-              hex_letter_to_number(hex_binary_content[2 * i + 1])
+            hex_letter_to_number(hex_binary_content[2 * i + 1])
         if sys.version_info >= (3, 0, 0):
             out_f.write(chr(val).encode('latin1'))
         else:

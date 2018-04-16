@@ -178,8 +178,8 @@ lsrcaz = lsrcaz / 180.0 * math.pi
 lsrcel = lsrcel / 180.0 * math.pi
 
 lx = -math.sin(lsrcaz) * math.cos(lsrcel)
-ly =  math.cos(lsrcaz) * math.cos(lsrcel)
-lz =  math.sin(lsrcel)
+ly = math.cos(lsrcaz) * math.cos(lsrcel)
+lz = math.sin(lsrcel)
 lxyz = math.sqrt(lx**2 + ly**2 + lz**2)
 
 indataset = gdal.Open(infile, gdal.GA_ReadOnly)

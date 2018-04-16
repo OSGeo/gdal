@@ -2203,7 +2203,7 @@ def gpkg_21():
             return 'fail'
         md = out_ds.GetMetadata()
         if len(md) != 3 or md['foo'] != foo_value or \
-            md['IDENTIFIER'] != 'tmp' or md['ZOOM_LEVEL'] != '0':
+                md['IDENTIFIER'] != 'tmp' or md['ZOOM_LEVEL'] != '0':
             gdaltest.post_reason('fail')
             print(md)
             feat.DumpReadable()
@@ -2333,12 +2333,12 @@ def gpkg_21():
     sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata_reference')
     feat = sql_lyr.GetNextFeature()
     if feat.GetField('reference_scope') != 'geopackage' or \
-        not feat.IsFieldNull('table_name') or \
-        not feat.IsFieldNull('column_name') or \
-        not feat.IsFieldNull('row_id_value') or \
-        not feat.IsFieldSet('timestamp') or \
-        feat.GetField('md_file_id') != 1 or \
-        not feat.IsFieldNull('md_parent_id'):
+            not feat.IsFieldNull('table_name') or \
+            not feat.IsFieldNull('column_name') or \
+            not feat.IsFieldNull('row_id_value') or \
+            not feat.IsFieldSet('timestamp') or \
+            feat.GetField('md_file_id') != 1 or \
+            not feat.IsFieldNull('md_parent_id'):
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         out_ds.ReleaseResultSet(sql_lyr)
@@ -3687,7 +3687,7 @@ def gpkg_41():
     with gdaltest.error_handler():
         gdal.Translate('/vsimem/gpkg_41.gpkg', 'data/huge_line.tif',
                        format='GPKG', creationOptions=[
-                            'BLOCKXSIZE=500000000', 'BLOCKYSIZE=1'])
+                           'BLOCKXSIZE=500000000', 'BLOCKYSIZE=1'])
     gdal.SetConfigOption('GPKG_ALLOW_CRAZY_SETTINGS', None)
 
     gdal.Unlink('/vsimem/gpkg_41.gpkg')

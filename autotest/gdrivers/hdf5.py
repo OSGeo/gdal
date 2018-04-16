@@ -491,8 +491,8 @@ def hdf5_14():
         return 'fail'
 
     if sds_list['SUBDATASET_1_NAME'] != 'HDF5:"data/complex.h5"://f16' \
-        or sds_list['SUBDATASET_2_NAME'] != 'HDF5:"data/complex.h5"://f32' \
-        or sds_list['SUBDATASET_3_NAME'] != 'HDF5:"data/complex.h5"://f64':
+            or sds_list['SUBDATASET_2_NAME'] != 'HDF5:"data/complex.h5"://f32' \
+            or sds_list['SUBDATASET_3_NAME'] != 'HDF5:"data/complex.h5"://f64':
             print(sds_list)
             gdaltest.post_reason('did not get expected subdatasets.')
             return 'fail'

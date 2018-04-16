@@ -227,7 +227,7 @@ def tiff_write_5():
     new_ds = gdaltest.tiff_drv.CreateCopy('tmp/test_5.tif', src_ds)
 
     if new_ds.GetGCPProjection().find(
-                   'AUTHORITY["EPSG","26711"]') == -1:
+            'AUTHORITY["EPSG","26711"]') == -1:
         gdaltest.post_reason('GCP Projection not set properly.')
         return 'fail'
 
@@ -1340,7 +1340,7 @@ def tiff_write_30():
 
     # Check BigTIFF signature
     if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
-        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+            and (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -1373,7 +1373,7 @@ def tiff_write_31():
 
     # Check BigTIFF signature
     if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
-        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+            and (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -2366,7 +2366,7 @@ def tiff_write_61():
 
     # Check classical TIFF signature
     if ((binvalues[2] != 0x2A or binvalues[3] != 0) \
-        and (binvalues[3] != 0x2A or binvalues[2] != 0)):
+            and (binvalues[3] != 0x2A or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -2399,7 +2399,7 @@ def tiff_write_62():
 
     # Check BigTIFF signature
     if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
-        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+            and (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -2815,7 +2815,7 @@ def tiff_write_74():
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', old_accum)
 
     if gdal.GetLastErrorMsg().find(
-                   'Unsupported JPEG data precision 12') != -1:
+            'Unsupported JPEG data precision 12') != -1:
         sys.stdout.write('(12bit jpeg not available) ... ')
         return 'skip'
 
@@ -3283,7 +3283,7 @@ def tiff_write_81():
     ds = gdal.Open('tmp/tiff_write_81.tif')
 
     if ds.GetGCPProjection().find(
-                   'AUTHORITY["EPSG","26711"]') == -1:
+            'AUTHORITY["EPSG","26711"]') == -1:
         gdaltest.post_reason('GCP Projection not set properly.')
         return 'fail'
 

@@ -2489,8 +2489,8 @@ def ogr_sqlite_32():
 
     feat = lyr.GetNextFeature()
     if feat.GetField('datetimefield') != '2012/08/23 21:24:00' or \
-        feat.GetField('datefield') != '2012/08/23' or \
-        feat.GetField('timefield') != '21:24:00':
+            feat.GetField('datefield') != '2012/08/23' or \
+            feat.GetField('timefield') != '21:24:00':
         gdaltest.post_reason('failure')
         feat.DumpReadable()
         return 'fail'

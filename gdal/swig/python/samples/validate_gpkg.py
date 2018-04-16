@@ -56,7 +56,7 @@ def _is_valid_data_type(type):
     return type in ('BOOLEAN', 'TINYINT', 'SMALLINT', 'MEDIUMINT',
                     'INT', 'INTEGER', 'FLOAT', 'DOUBLE', 'REAL',
                     'TEXT', 'BLOB', 'DATE', 'DATETIME') or \
-            type.startswith('TEXT(') or type.startswith('BLOB(')
+        type.startswith('TEXT(') or type.startswith('BLOB(')
 
 
 class GPKGCheckException(Exception):
@@ -458,8 +458,8 @@ class GPKGChecker:
             self._assert(len(found_geom_types) == 0 or
                          len(found_geom_types.difference(
                              set(['GEOMETRYCOLLECTION', 'MULTIPOINT',
-                                 'MULTILINESTRING', 'MULTIPOLYGON',
-                                 'MULTICURVE', 'MULTISURFACE']))) == 0, 32,
+                                  'MULTILINESTRING', 'MULTIPOLYGON',
+                                  'MULTICURVE', 'MULTISURFACE']))) == 0, 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
         elif geometry_type_name in ('CURVEPOLYGON', 'SURFACE'):
@@ -484,7 +484,7 @@ class GPKGChecker:
             self._assert(len(found_geom_types) == 0 or
                          len(found_geom_types.difference(
                              set(['LINESTRING', 'CIRCULARSTRING',
-                                 'COMPOUNDCURVE']))) == 0, 32,
+                                  'COMPOUNDCURVE']))) == 0, 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
 

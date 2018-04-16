@@ -415,7 +415,7 @@ def main(argv=None):
             for iLayer in range(cnt):
                 poLayer = output_ds.GetLayer(iLayer)
                 if poLayer is not None \
-                    and poLayer.GetName() == output_lyr_name:
+                        and poLayer.GetName() == output_lyr_name:
                     break
             if iLayer != cnt:
                 if output_ds.DeleteLayer(iLayer) != 0:

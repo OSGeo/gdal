@@ -347,7 +347,7 @@ def vsicurl_test_redirect():
     def method(request):
         # We should go there after expiration of the first signed URL
         if 'Range' in request.headers and \
-            request.headers['Range'] == 'bytes=16384-49151':
+                request.headers['Range'] == 'bytes=16384-49151':
             request.protocol_version = 'HTTP/1.1'
             request.send_response(302)
             # Return a new signed URL
@@ -361,7 +361,7 @@ def vsicurl_test_redirect():
     def method(request):
         # Second signed URL
         if 'Range' in request.headers and \
-            request.headers['Range'] == 'bytes=16384-49151':
+                request.headers['Range'] == 'bytes=16384-49151':
             request.protocol_version = 'HTTP/1.1'
             request.send_response(200)
             request.send_header('Content-type', 'text/plain')

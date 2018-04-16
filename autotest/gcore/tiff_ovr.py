@@ -475,7 +475,7 @@ def tiff_ovr_11():
 
     md = gdaltest.tiff_drv.GetMetadata()
     if (md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1 or
-        int(gdal.VersionInfo('VERSION_NUM')) < 1700):
+            int(gdal.VersionInfo('VERSION_NUM')) < 1700):
         # The two following lines are necessary with inverted endianness
         # for the moment with older libtiff
         # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
@@ -522,7 +522,7 @@ def tiff_ovr_12():
 
     md = gdaltest.tiff_drv.GetMetadata()
     if (md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1 or
-        int(gdal.VersionInfo('VERSION_NUM')) < 1700):
+            int(gdal.VersionInfo('VERSION_NUM')) < 1700):
         # The two following lines are necessary with inverted endianness
         # for the moment with older libtiff
         # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
@@ -635,7 +635,7 @@ def tiff_ovr_15():
 
     md = gdaltest.tiff_drv.GetMetadata()
     if (md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1 or
-        int(gdal.VersionInfo('VERSION_NUM')) < 1700):
+            int(gdal.VersionInfo('VERSION_NUM')) < 1700):
         # The two following lines are necessary with inverted endianness
         # for the moment with older libtiff
         # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
@@ -837,7 +837,7 @@ def tiff_ovr_20():
 
     # Check BigTIFF signature
     if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
-        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+            and (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -875,7 +875,7 @@ def tiff_ovr_21():
 
     # Check BigTIFF signature
     if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
-        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+            and (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -951,7 +951,7 @@ def tiff_ovr_23():
 
     # Check Classical TIFF signature
     if ((binvalues[2] != 0x2A or binvalues[3] != 0) \
-        and (binvalues[3] != 0x2A or binvalues[2] != 0)):
+            and (binvalues[3] != 0x2A or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -991,7 +991,7 @@ def tiff_ovr_24():
 
     # Check BigTIFF signature
     if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
-        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+            and (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -1733,7 +1733,7 @@ def tiff_ovr_43():
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', old_accum)
 
     if gdal.GetLastErrorMsg().find(
-                   'Unsupported JPEG data precision 12') != -1:
+            'Unsupported JPEG data precision 12') != -1:
         sys.stdout.write('(12bit jpeg not available) ... ')
         return 'skip'
 

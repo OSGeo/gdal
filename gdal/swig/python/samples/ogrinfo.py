@@ -392,10 +392,10 @@ def ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter, options):
             poField = poDefn.GetFieldDefn(iAttr)
 
             print("%s: %s (%d.%d)" % ( \
-                    poField.GetNameRef(), \
-                    poField.GetFieldTypeName(poField.GetType()), \
-                    poField.GetWidth(), \
-                    poField.GetPrecision()))
+                poField.GetNameRef(), \
+                poField.GetFieldTypeName(poField.GetType()), \
+                poField.GetWidth(), \
+                poField.GetPrecision()))
 
 # --------------------------------------------------------------------
 #      Read, and dump features.
@@ -431,9 +431,9 @@ def DumpReadableFeature(poFeature, options=None):
 
             poFDefn = poDefn.GetFieldDefn(iField)
 
-            line =  "  %s (%s) = " % ( \
-                    poFDefn.GetNameRef(), \
-                    ogr.GetFieldTypeName(poFDefn.GetType()))
+            line = "  %s (%s) = " % ( \
+                poFDefn.GetNameRef(), \
+                ogr.GetFieldTypeName(poFDefn.GetType()))
 
             if poFeature.IsFieldSet(iField):
                 try:
@@ -498,13 +498,13 @@ def DumpReadableGeometry(poGeometry, pszPrefix, options):
             print(line)
 
         elif eType == ogr.wkbMultiPoint or \
-            eType == ogr.wkbMultiPoint25D or \
-            eType == ogr.wkbMultiLineString or \
-            eType == ogr.wkbMultiLineString25D or \
-            eType == ogr.wkbMultiPolygon or \
-            eType == ogr.wkbMultiPolygon25D or \
-            eType == ogr.wkbGeometryCollection or \
-            eType == ogr.wkbGeometryCollection25D:
+                eType == ogr.wkbMultiPoint25D or \
+                eType == ogr.wkbMultiLineString or \
+                eType == ogr.wkbMultiLineString25D or \
+                eType == ogr.wkbMultiPolygon or \
+                eType == ogr.wkbMultiPolygon25D or \
+                eType == ogr.wkbGeometryCollection or \
+                eType == ogr.wkbGeometryCollection25D:
 
                 line = line + "%d geometries:" % poGeometry.GetGeometryCount()
                 print(line)

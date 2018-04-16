@@ -516,7 +516,7 @@ def ogr_gmlas_geometryproperty():
         return 'skip'
 
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32.gml', open_options=[
-            'CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>true</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>'])
+        'CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>true</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>'])
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
         geom_field_count = lyr.GetLayerDefn().GetGeomFieldCount()
@@ -677,7 +677,7 @@ def ogr_gmlas_abstractgeometry():
         return 'skip'
 
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_abstractgeometry_gml32.gml', open_options=[
-            'CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>true</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>'])
+        'CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>true</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>'])
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetGeomFieldCount() != 2:
         gdaltest.post_reason('fail')
@@ -778,7 +778,7 @@ def ogr_gmlas_validate():
     myhandler = MyHandler()
     gdal.PushErrorHandler(myhandler.error_handler)
     ds = gdal.OpenEx('GMLAS:/vsimem/gmlas_test1.xml', open_options=[
-                'XSD=' + os.getcwd() + '/data/gmlas/gmlas_test1.xsd', 'VALIDATE=YES'])
+        'XSD=' + os.getcwd() + '/data/gmlas/gmlas_test1.xsd', 'VALIDATE=YES'])
     gdal.PopErrorHandler()
     gdal.Unlink('/vsimem/gmlas_test1.xml')
     if ds is None:
@@ -907,7 +907,7 @@ def ogr_gmlas_conf():
 
     # Inlined conf file + UseArrays = false
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options=[
-            'CONFIG_FILE=<Configuration><LayerBuildingRules><UseArrays>false</UseArrays></LayerBuildingRules></Configuration>'])
+        'CONFIG_FILE=<Configuration><LayerBuildingRules><UseArrays>false</UseArrays></LayerBuildingRules></Configuration>'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -918,7 +918,7 @@ def ogr_gmlas_conf():
 
     # AlwaysGenerateOGRId = true
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options=[
-            'CONFIG_FILE=<Configuration><LayerBuildingRules><AlwaysGenerateOGRId>true</AlwaysGenerateOGRId></LayerBuildingRules></Configuration>'])
+        'CONFIG_FILE=<Configuration><LayerBuildingRules><AlwaysGenerateOGRId>true</AlwaysGenerateOGRId></LayerBuildingRules></Configuration>'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -932,7 +932,7 @@ def ogr_gmlas_conf():
 
     # IncludeGeometryXML = false
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32.gml', open_options=[
-            'CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>false</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>'])
+        'CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>false</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -951,7 +951,7 @@ def ogr_gmlas_conf():
 
     # ExposeMetadataLayers = true
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_abstractgeometry_gml32.gml', open_options=[
-            'CONFIG_FILE=<Configuration><ExposeMetadataLayers>true</ExposeMetadataLayers></Configuration>'])
+        'CONFIG_FILE=<Configuration><ExposeMetadataLayers>true</ExposeMetadataLayers></Configuration>'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -961,8 +961,8 @@ def ogr_gmlas_conf():
         return 'fail'
     # Test override with open option
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_abstractgeometry_gml32.gml', open_options=[
-            'EXPOSE_METADATA_LAYERS=NO',
-            'CONFIG_FILE=<Configuration><ExposeMetadataLayers>true</ExposeMetadataLayers></Configuration>'])
+        'EXPOSE_METADATA_LAYERS=NO',
+        'CONFIG_FILE=<Configuration><ExposeMetadataLayers>true</ExposeMetadataLayers></Configuration>'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1005,8 +1005,8 @@ def ogr_gmlas_conf_ignored_xpath():
                   "foo[@bar='baz']"]:
         with gdaltest.error_handler():
             gdal.OpenEx('GMLAS:', open_options=[
-                    'XSD=data/gmlas/gmlas_test1.xsd',
-                    """CONFIG_FILE=<Configuration>
+                'XSD=data/gmlas/gmlas_test1.xsd',
+                """CONFIG_FILE=<Configuration>
                         <IgnoredXPaths>
                             <WarnIfIgnoredXPathFoundInDocInstance>true</WarnIfIgnoredXPathFoundInDocInstance>
                             <XPath>%s</XPath>
@@ -1037,7 +1037,7 @@ def ogr_gmlas_conf_ignored_xpath():
 
     # Test XPath with implicit namespace, and warning
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options=[
-            """CONFIG_FILE=<Configuration>
+        """CONFIG_FILE=<Configuration>
                 <IgnoredXPaths>
                     <WarnIfIgnoredXPathFoundInDocInstance>true</WarnIfIgnoredXPathFoundInDocInstance>
                     <XPath>@otherns:id</XPath>
@@ -1059,7 +1059,7 @@ def ogr_gmlas_conf_ignored_xpath():
 
     # Test XPath with explicit namespace, and warning suppression
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options=[
-            """CONFIG_FILE=<Configuration>
+        """CONFIG_FILE=<Configuration>
                 <IgnoredXPaths>
                     <Namespaces>
                         <Namespace prefix="other_ns" uri="http://other_ns"/>
@@ -1079,8 +1079,8 @@ def ogr_gmlas_conf_ignored_xpath():
 
     # Test various XPath syntaxes
     ds = gdal.OpenEx('GMLAS:', open_options=[
-                    'XSD=data/gmlas/gmlas_test1.xsd',
-            """CONFIG_FILE=<Configuration>
+        'XSD=data/gmlas/gmlas_test1.xsd',
+        """CONFIG_FILE=<Configuration>
                 <IgnoredXPaths>
                     <WarnIfIgnoredXPathFoundInDocInstance>false</WarnIfIgnoredXPathFoundInDocInstance>
                     <XPath>myns:main_elt/@optionalStrAttr</XPath>
@@ -1241,7 +1241,7 @@ def ogr_gmlas_cache():
 
     # Will create the directory and download and cache
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_cache.xml', open_options=[
-            'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
+        'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
     if ds is None:
         gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
@@ -1256,7 +1256,7 @@ def ogr_gmlas_cache():
 
     # Will reuse the directory and download and cache
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_cache.xml', open_options=[
-            'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
+        'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
     if ds is None:
         gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
@@ -1268,8 +1268,8 @@ def ogr_gmlas_cache():
 
     # With XSD open option
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_cache.xml', open_options=[
-            'XSD=http://localhost:%d/vsimem/ogr_gmlas_cache.xsd' % webserver_port,
-            'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
+        'XSD=http://localhost:%d/vsimem/ogr_gmlas_cache.xsd' % webserver_port,
+        'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
     if ds is None:
         gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
@@ -1283,7 +1283,7 @@ def ogr_gmlas_cache():
 
     # Now re-open with the webserver turned off
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_cache.xml', open_options=[
-            'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
+        'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2296,8 +2296,8 @@ def ogr_gmlas_identifier_truncation():
         return 'skip'
 
     ds = gdal.OpenEx('GMLAS:', open_options=[
-            'XSD=data/gmlas/gmlas_identifier_truncation.xsd',
-            'CONFIG_FILE=<Configuration><LayerBuildingRules><IdentifierMaxLength>10</IdentifierMaxLength><PostgreSQLIdentifierLaundering>false</PostgreSQLIdentifierLaundering></LayerBuildingRules></Configuration>'])
+        'XSD=data/gmlas/gmlas_identifier_truncation.xsd',
+        'CONFIG_FILE=<Configuration><LayerBuildingRules><IdentifierMaxLength>10</IdentifierMaxLength><PostgreSQLIdentifierLaundering>false</PostgreSQLIdentifierLaundering></LayerBuildingRules></Configuration>'])
     lyr = ds.GetLayerByName('v_l_i_clas')
     if lyr is None:
         gdaltest.post_reason('fail')
@@ -2367,8 +2367,8 @@ def ogr_gmlas_identifier_case_ambiguity():
         return 'skip'
 
     ds = gdal.OpenEx('GMLAS:', open_options=[
-            'XSD=data/gmlas/gmlas_identifier_case_ambiguity.xsd',
-            'CONFIG_FILE=<Configuration><LayerBuildingRules><PostgreSQLIdentifierLaundering>false</PostgreSQLIdentifierLaundering></LayerBuildingRules></Configuration>'])
+        'XSD=data/gmlas/gmlas_identifier_case_ambiguity.xsd',
+        'CONFIG_FILE=<Configuration><LayerBuildingRules><PostgreSQLIdentifierLaundering>false</PostgreSQLIdentifierLaundering></LayerBuildingRules></Configuration>'])
     lyr = ds.GetLayerByName('differentcase1')
     if lyr is None:
         gdaltest.post_reason('fail')

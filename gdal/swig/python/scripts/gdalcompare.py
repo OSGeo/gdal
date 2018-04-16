@@ -99,7 +99,7 @@ def compare_band(golden_band, new_band, id, options=[]):
 
   if golden_band.GetColorInterpretation() != new_band.GetColorInterpretation():
     print('Band %s color interpretation values differ.' % id)
-    print('  Golden: ' +  gdal.GetColorInterpretationName(golden_band.GetColorInterpretation()))
+    print('  Golden: ' + gdal.GetColorInterpretationName(golden_band.GetColorInterpretation()))
     print('  New:    ' + gdal.GetColorInterpretationName(new_band.GetColorInterpretation()))
     found_diff += 1
 

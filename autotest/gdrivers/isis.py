@@ -509,12 +509,12 @@ def isis_16():
     for read_before_write in [False, True]:
         for init_nd in [False, True]:
             for dt, cs, nd, options in [
-                                    [gdal.GDT_Byte, 0, 0, []],
-                                    [gdal.GDT_Byte, 0, 0, ['TILED=YES']],
-                                    [gdal.GDT_Byte, 0, 0, ['DATA_LOCATION=GEOTIFF', 'GEOTIFF_OPTIONS=COMPRESS=LZW']],
-                                    [gdal.GDT_Int16, 65525, -32768, []],
-                                    [gdal.GDT_UInt16, 0, 0, []],
-                                    [gdal.GDT_Float32, 65534, -3.4028226550889045e+38, []]
+                [gdal.GDT_Byte, 0, 0, []],
+                [gdal.GDT_Byte, 0, 0, ['TILED=YES']],
+                [gdal.GDT_Byte, 0, 0, ['DATA_LOCATION=GEOTIFF', 'GEOTIFF_OPTIONS=COMPRESS=LZW']],
+                [gdal.GDT_Int16, 65525, -32768, []],
+                [gdal.GDT_UInt16, 0, 0, []],
+                [gdal.GDT_Float32, 65534, -3.4028226550889045e+38, []]
             ]:
 
                 ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl',

@@ -292,8 +292,8 @@ def doit(opts, args):
             # loop through Y lines
             for Y in range(0, nYBlocks):
                 ProgressCt += 1
-                if 10 * ProgressCt / ProgressEnd%10 != ProgressMk and not opts.quiet:
-                    ProgressMk = 10 * ProgressCt / ProgressEnd%10
+                if 10 * ProgressCt / ProgressEnd % 10 != ProgressMk and not opts.quiet:
+                    ProgressMk = 10 * ProgressCt / ProgressEnd % 10
                     from sys import version_info
                     if version_info >= (3, 0, 0):
                         exec('print("%d.." % (10*ProgressMk), end=" ")')

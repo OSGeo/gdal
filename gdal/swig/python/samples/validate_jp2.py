@@ -74,7 +74,7 @@ def get_attribute_val(ar, attr_name):
     if node is None or node[XML_TYPE_IDX] != gdal.CXT_Attribute:
         return None
     if len(ar) > XML_FIRST_CHILD_IDX and \
-        node[XML_FIRST_CHILD_IDX][XML_TYPE_IDX] == gdal.CXT_Text:
+            node[XML_FIRST_CHILD_IDX][XML_TYPE_IDX] == gdal.CXT_Text:
         return node[XML_FIRST_CHILD_IDX][XML_VALUE_IDX]
     return None
 
@@ -742,7 +742,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
                 cn_mapping = {}
                 typ_alpha_used = False
                 asoc_mapping = {}
-                asoc_whole_used  = False
+                asoc_whole_used = False
                 for i in range(16384):
                     cn = get_field_val(cdef, 'Cn%d' % i)
                     if cn is None:

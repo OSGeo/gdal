@@ -70,9 +70,9 @@ def validate_xml(filename):
         return 'skip'
 
     ds = gdal.OpenEx('GMLAS:' + filename, open_options=[
-                'VALIDATE=YES',
-                'FAIL_IF_VALIDATION_ERROR=YES',
-                'CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>false</AllowRemoteSchemaDownload><SchemaCache><Directory>tmp/cache</Directory></SchemaCache></Configuration>'])
+        'VALIDATE=YES',
+        'FAIL_IF_VALIDATION_ERROR=YES',
+        'CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>false</AllowRemoteSchemaDownload><SchemaCache><Directory>tmp/cache</Directory></SchemaCache></Configuration>'])
     if ds is None:
         return 'fail'
     return 'success'

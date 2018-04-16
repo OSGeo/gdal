@@ -1948,9 +1948,9 @@ def ogr_geom_circularstring():
     a1 = math.pi / 4
     a2 = math.pi / 6
     in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-            cx + r * math.cos(a0), cy + r * math.sin(a0), \
-            cx + r * math.cos(a1), cy + r * math.sin(a1), \
-            cx + r * math.cos(a2), cy + r * math.sin(a2))
+        cx + r * math.cos(a0), cy + r * math.sin(a0), \
+        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+        cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
     expected_env = (cx + r * math.cos(a0), cx + r * math.cos(a2), cy + r * math.sin(a2), cy + r * math.sin(a0))
@@ -1965,9 +1965,9 @@ def ogr_geom_circularstring():
     a1 = math.pi / 6
     a2 = -math.pi / 6
     in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-            cx + r * math.cos(a0), cy + r * math.sin(a0), \
-            cx + r * math.cos(a1), cy + r * math.sin(a1), \
-            cx + r * math.cos(a2), cy + r * math.sin(a2))
+        cx + r * math.cos(a0), cy + r * math.sin(a0), \
+        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+        cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
     expected_env = (cx + r * math.cos(a0), cx + r, cy + r * math.sin(a2), cy + r * math.sin(a0))
@@ -1982,9 +1982,9 @@ def ogr_geom_circularstring():
     a1 = math.pi - math.pi / 3
     a2 = -math.pi / 6
     in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-            cx + r * math.cos(a0), cy + r * math.sin(a0), \
-            cx + r * math.cos(a1), cy + r * math.sin(a1), \
-            cx + r * math.cos(a2), cy + r * math.sin(a2))
+        cx + r * math.cos(a0), cy + r * math.sin(a0), \
+        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+        cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
     expected_env = (cx - r, cx + r * math.cos(a2), cy - r, cy + r)
@@ -1999,9 +1999,9 @@ def ogr_geom_circularstring():
     a1 = math.pi - math.pi / 3
     a2 = math.pi / 6
     in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-            cx + r * math.cos(a0), cy + r * math.sin(a0), \
-            cx + r * math.cos(a1), cy + r * math.sin(a1), \
-            cx + r * math.cos(a2), cy + r * math.sin(a2))
+        cx + r * math.cos(a0), cy + r * math.sin(a0), \
+        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+        cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
     expected_env = (cx - r, cx + r, cy - r, cy + r)
@@ -2016,9 +2016,9 @@ def ogr_geom_circularstring():
     a1 = math.pi + math.pi / 3
     a2 = math.pi / 3
     in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-            cx + r * math.cos(a0), cy + r * math.sin(a0), \
-            cx + r * math.cos(a1), cy + r * math.sin(a1), \
-            cx + r * math.cos(a2), cy + r * math.sin(a2))
+        cx + r * math.cos(a0), cy + r * math.sin(a0), \
+        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+        cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
     expected_env = (cx - r, cx + r, cy - r, cy + r)

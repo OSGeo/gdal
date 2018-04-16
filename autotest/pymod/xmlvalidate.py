@@ -59,7 +59,7 @@ def ingest_file_and_strip_mime(filename):
 
 def substitute_ogc_schemas_location(location, ogc_schemas_location):
     if ogc_schemas_location is not None and \
-        location.startswith('http://schemas.opengis.net/'):
+            location.startswith('http://schemas.opengis.net/'):
         location = ogc_schemas_location + '/' + location[len('http://schemas.opengis.net/'):]
     return location
 
@@ -69,7 +69,7 @@ def substitute_ogc_schemas_location(location, ogc_schemas_location):
 
 def substitute_inspire_schemas_location(location, inspire_schemas_location):
     if inspire_schemas_location is not None and \
-        location.startswith('http://inspire.ec.europa.eu/schemas/'):
+            location.startswith('http://inspire.ec.europa.eu/schemas/'):
         location = inspire_schemas_location + '/' + location[len('http://inspire.ec.europa.eu/schemas/'):]
     return location
 
@@ -120,8 +120,8 @@ def validate(xml_filename_or_content, xsd_filename=None, \
 
     # get schema locations
     schema_def = etree.Element("schema", attrib={
-            "elementFormDefault": "qualified",
-            "version": "1.0.0",
+        "elementFormDefault": "qualified",
+        "version": "1.0.0",
         }, nsmap={
             None: "http://www.w3.org/2001/XMLSchema"
         }
@@ -161,8 +161,8 @@ def validate(xml_filename_or_content, xsd_filename=None, \
                     import_dict[sub_ns] = sub_location
 
             etree.SubElement(schema_def, "import", attrib={
-                    "namespace": ns,
-                    "schemaLocation": location
+                "namespace": ns,
+                "schemaLocation": location
                 }
             )
             import_dict[ns] = location
@@ -175,8 +175,8 @@ def validate(xml_filename_or_content, xsd_filename=None, \
         location = substitute_inspire_schemas_location(location, inspire_schemas_location)
         if ns not in import_dict:
             etree.SubElement(schema_def, "import", attrib={
-                    "namespace": ns,
-                    "schemaLocation": location
+                "namespace": ns,
+                "schemaLocation": location
                 }
             )
             import_dict[ns] = location

@@ -783,7 +783,7 @@ def tiff_12bitjpeg():
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', old_accum)
 
     if gdal.GetLastErrorMsg().find(
-                   'Unsupported JPEG data precision 12') != -1:
+            'Unsupported JPEG data precision 12') != -1:
         sys.stdout.write('(12bit jpeg not available) ... ')
         return 'skip'
     elif ds is None:
@@ -1062,7 +1062,7 @@ def tiff_read_rpc_txt():
         return 'fail'
 
     if rpc_md['LINE_DEN_COEFF'].find(
-        '+1.000000000000000E+00 -5.207696939454288E-03') != 0:
+            '+1.000000000000000E+00 -5.207696939454288E-03') != 0:
         print(rpc_md['LINE_DEN_COEFF'])
         gdaltest.post_reason('LINE_DEN_COEFF wrong')
         return 'fail'

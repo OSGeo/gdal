@@ -280,11 +280,11 @@ def jp2openjpeg_9():
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 440720) > 0.1 \
-        or abs(geotransform[1] - 60) > 0.001 \
-        or abs(geotransform[2] - 0) > 0.001 \
-        or abs(geotransform[3] - 3751320) > 0.1 \
-        or abs(geotransform[4] - 0) > 0.001 \
-        or abs(geotransform[5] - -60) > 0.001:
+            or abs(geotransform[1] - 60) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 3751320) > 0.1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -1343,7 +1343,7 @@ def get_attribute_val(ar, attr_name):
     if node is None or node[XML_TYPE_IDX] != gdal.CXT_Attribute:
         return None
     if len(ar) > XML_FIRST_CHILD_IDX and \
-        node[XML_FIRST_CHILD_IDX][XML_TYPE_IDX] == gdal.CXT_Text:
+            node[XML_FIRST_CHILD_IDX][XML_TYPE_IDX] == gdal.CXT_Text:
         return node[XML_FIRST_CHILD_IDX][XML_VALUE_IDX]
     return None
 
@@ -1512,10 +1512,10 @@ def jp2openjpeg_30():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_30.jp2', src_ds)
     ct = out_ds.GetRasterBand(1).GetRasterColorTable()
     if ct.GetCount() != 4 or \
-        ct.GetColorEntry(0) != (0, 0, 0, 0) or \
-        ct.GetColorEntry(1) != (255, 255, 0, 255) or \
-        ct.GetColorEntry(2) != (255, 0, 255, 255) or \
-        ct.GetColorEntry(3) != (0, 255, 255, 255):
+            ct.GetColorEntry(0) != (0, 0, 0, 0) or \
+            ct.GetColorEntry(1) != (255, 255, 0, 255) or \
+            ct.GetColorEntry(2) != (255, 0, 255, 255) or \
+            ct.GetColorEntry(3) != (0, 255, 255, 255):
         gdaltest.post_reason('Wrong color table entry.')
         return 'fail'
     del out_ds
@@ -1532,10 +1532,10 @@ def jp2openjpeg_30():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_30.jp2', src_ds, options=['CT_COMPONENTS=3'])
     ct = out_ds.GetRasterBand(1).GetRasterColorTable()
     if ct.GetCount() != 4 or \
-        ct.GetColorEntry(0) != (0, 0, 0, 255) or \
-        ct.GetColorEntry(1) != (255, 255, 0, 255) or \
-        ct.GetColorEntry(2) != (255, 0, 255, 255) or \
-        ct.GetColorEntry(3) != (0, 255, 255, 255):
+            ct.GetColorEntry(0) != (0, 0, 0, 255) or \
+            ct.GetColorEntry(1) != (255, 255, 0, 255) or \
+            ct.GetColorEntry(2) != (255, 0, 255, 255) or \
+            ct.GetColorEntry(3) != (0, 255, 255, 255):
         gdaltest.post_reason('Wrong color table entry.')
         return 'fail'
     del out_ds
@@ -2569,49 +2569,49 @@ def jp2openjpeg_45():
         "grid_coverage_range_type_file": "/vsimem/i_dont_exist.xml",
 
         "metadata": [
-                "<invalid_root/>",
-                "/vsimem/i_dont_exist.xml",
-                {
-                    "file": "/vsimem/third_metadata.xml",
-                    "parent_node": "CoverageCollection"
+            "<invalid_root/>",
+            "/vsimem/i_dont_exist.xml",
+            {
+                "file": "/vsimem/third_metadata.xml",
+                "parent_node": "CoverageCollection"
                 },
-                {
-                    "content": "<invalid_content",
-                    "parent_node": "invalid_value"
+            {
+                "content": "<invalid_content",
+                "parent_node": "invalid_value"
                 }
             ],
 
         "annotations": [
-                "/vsimem/i_dont_exist.shp",
-                "/vsimem/i_dont_exist.kml",
-                "../gcore/data/byte.tif"
+            "/vsimem/i_dont_exist.shp",
+            "/vsimem/i_dont_exist.kml",
+            "../gcore/data/byte.tif"
             ],
 
         "gml_filelist": [
-                "/vsimem/i_dont_exist.xml",
-                "../gcore/data/byte.tif",
-                {
-                    "file": "/vsimem/i_dont_exist.shp",
-                    "parent_node": "invalid_value",
-                    "schema_location": "gmljp2://xml/schema_that_does_not_exist.xsd"
+            "/vsimem/i_dont_exist.xml",
+            "../gcore/data/byte.tif",
+            {
+                "file": "/vsimem/i_dont_exist.shp",
+                "parent_node": "invalid_value",
+                "schema_location": "gmljp2://xml/schema_that_does_not_exist.xsd"
                 },
             ],
 
         "styles": [
-                "/vsimem/i_dont_exist.xml",
-                "../gcore/data/byte.tif",
-                {
-                    "file": "/vsimem/i_dont_exist.xml",
-                    "parent_node": "invalid_value"
+            "/vsimem/i_dont_exist.xml",
+            "../gcore/data/byte.tif",
+            {
+                "file": "/vsimem/i_dont_exist.xml",
+                "parent_node": "invalid_value"
                 }
             ],
 
         "extensions": [
-                "/vsimem/i_dont_exist.xml",
-                "../gcore/data/byte.tif",
-                {
-                    "file": "/vsimem/i_dont_exist.xml",
-                    "parent_node": "invalid_value"
+            "/vsimem/i_dont_exist.xml",
+            "../gcore/data/byte.tif",
+            {
+                "file": "/vsimem/i_dont_exist.xml",
+                "parent_node": "invalid_value"
                 }
             ]
     },
@@ -2756,14 +2756,14 @@ def jp2openjpeg_45():
     "root_instance": {
         "grid_coverage_file": "/vsimem/grid_coverage_file.xml",
         "metadata": [
-                "<gmljp2:metadata>First metadata</gmljp2:metadata>",
-                "/vsimem/second_metadata.xml",
-                {
-                    "file": "/vsimem/third_metadata.xml",
-                    "parent_node": "CoverageCollection"
+            "<gmljp2:metadata>First metadata</gmljp2:metadata>",
+            "/vsimem/second_metadata.xml",
+            {
+                "file": "/vsimem/third_metadata.xml",
+                "parent_node": "CoverageCollection"
                 },
-                {
-                    "content":
+            {
+                "content":
 """<?xml version="1.0" encoding="UTF-8"?>
 <!-- some comments -->
 <gmljp2:eopMetadata>
@@ -2788,64 +2788,64 @@ def jp2openjpeg_45():
             ],
 
         "annotations": [
-                "/vsimem/myshape.shp",
-                "/vsimem/empty.kml"
+            "/vsimem/myshape.shp",
+            "/vsimem/empty.kml"
             ],
 
         "gml_filelist": [
-                "/vsimem/feature.xml",
-                {
-                    "file": "/vsimem/myshape.shp",
-                    "inline": false,
-                    "parent_node": "CoverageCollection"
+            "/vsimem/feature.xml",
+            {
+                "file": "/vsimem/myshape.shp",
+                "inline": false,
+                "parent_node": "CoverageCollection"
                 },
-                {
-                    "file": "/vsimem/myshape2.shp",
-                    "namespace": "http://ogr.maptools.org/",
-                    "inline": false,
-                    "schema_location": "gmljp2://xml/a_schema.xsd",
-                    "parent_node": "GridCoverage"
+            {
+                "file": "/vsimem/myshape2.shp",
+                "namespace": "http://ogr.maptools.org/",
+                "inline": false,
+                "schema_location": "gmljp2://xml/a_schema.xsd",
+                "parent_node": "GridCoverage"
                 },
-                {
-                    "file": "/vsimem/feature2.gml",
-                    "inline": false,
-                    "schema_location": "gmljp2://xml/a_schema.xsd"
+            {
+                "file": "/vsimem/feature2.gml",
+                "inline": false,
+                "schema_location": "gmljp2://xml/a_schema.xsd"
                 },
-                {
-                    "file": "/vsimem/feature3.gml",
-                    "inline": false,
-                    "namespace": "http://ogr.maptools.org/",
-                    "schema_location": "gmljp2://xml/a_schema.xsd"
+            {
+                "file": "/vsimem/feature3.gml",
+                "inline": false,
+                "namespace": "http://ogr.maptools.org/",
+                "schema_location": "gmljp2://xml/a_schema.xsd"
                 }
             ],
 
         "styles": [
-                "/vsimem/style1.xml",
-                {
-                    "file": "/vsimem/style2.xml",
-                    "parent_node": "GridCoverage"
+            "/vsimem/style1.xml",
+            {
+                "file": "/vsimem/style2.xml",
+                "parent_node": "GridCoverage"
                 },
-                {
-                    "file": "/vsimem/style3.xml",
-                    "parent_node": "CoverageCollection"
+            {
+                "file": "/vsimem/style3.xml",
+                "parent_node": "CoverageCollection"
                 },
-                {
-                    "file": "/vsimem/style4.xml"
+            {
+                "file": "/vsimem/style4.xml"
                 }
             ],
 
         "extensions": [
-                "/vsimem/extension1.xml",
-                {
-                    "file": "/vsimem/extension2.xml",
-                    "parent_node": "GridCoverage"
+            "/vsimem/extension1.xml",
+            {
+                "file": "/vsimem/extension2.xml",
+                "parent_node": "GridCoverage"
                 },
-                {
-                    "file": "/vsimem/extension3.xml",
-                    "parent_node": "CoverageCollection"
+            {
+                "file": "/vsimem/extension3.xml",
+                "parent_node": "CoverageCollection"
                 },
-                {
-                    "file": "/vsimem/extension4.xml"
+            {
+                "file": "/vsimem/extension4.xml"
                 }
             ]
     },
@@ -3148,8 +3148,8 @@ def jp2openjpeg_46():
     conf = {
     "root_instance": {
         "metadata": [
-                {
-                    "dynamic_metadata":
+            {
+                "dynamic_metadata":
                     {
                         "template": "/vsimem/template.xml",
                         "source": "/vsimem/source.xml",
@@ -3231,8 +3231,8 @@ yeah: """) < 0:
     conf = {
     "root_instance": {
         "metadata": [
-                {
-                    "dynamic_metadata":
+            {
+                "dynamic_metadata":
                     {
                         "template": "/vsimem/not_existing_template.xml",
                         "source": "/vsimem/source.xml",
@@ -3255,8 +3255,8 @@ yeah: """) < 0:
     conf = {
     "root_instance": {
         "metadata": [
-                {
-                    "dynamic_metadata":
+            {
+                "dynamic_metadata":
                     {
                         "template": "/vsimem/template.xml",
                         "source": "/vsimem/not_existing_source.xml",
@@ -3279,8 +3279,8 @@ yeah: """) < 0:
     conf = {
     "root_instance": {
         "metadata": [
-                {
-                    "dynamic_metadata":
+            {
+                "dynamic_metadata":
                     {
                         "template": "/vsimem/template.xml",
                         "source": "/vsimem/source.xml",

@@ -975,12 +975,12 @@ def ogr_gpkg_15():
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
     for (expected_type, actual_type, expected_result) in [
-                ('POINT', 'POINT', 1),
-                ('LINESTRING', 'POINT', 0),
-                ('GEOMETRY', 'POINT', 1),
-                ('POINT', 'GEOMETRY', 0),
-                ('GEOMETRYCOLLECTION', 'MULTIPOINT', 1),
-                ('GEOMETRYCOLLECTION', 'POINT', 0)]:
+        ('POINT', 'POINT', 1),
+        ('LINESTRING', 'POINT', 0),
+        ('GEOMETRY', 'POINT', 1),
+        ('POINT', 'GEOMETRY', 0),
+        ('GEOMETRYCOLLECTION', 'MULTIPOINT', 1),
+            ('GEOMETRYCOLLECTION', 'POINT', 0)]:
         sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT GPKG_IsAssignable('%s', '%s')" % (expected_type, actual_type))
         feat = sql_lyr.GetNextFeature()
         got_result = feat.GetField(0)

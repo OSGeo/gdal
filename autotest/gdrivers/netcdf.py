@@ -1662,7 +1662,7 @@ def netcdf_42():
         'X_BAND': '1',
         'LINE_STEP': '1',
         'Y_DATASET': 'NETCDF:"tmp/netcdf_42.nc":lat',
-        'Y_BAND': '1'}:
+            'Y_BAND': '1'}:
         gdaltest.post_reason('failure')
         print(ds.GetMetadata('GEOLOCATION'))
         return 'fail'
@@ -1703,7 +1703,7 @@ def netcdf_43():
         'X_BAND': '1',
         'LINE_STEP': '1',
         'Y_DATASET': 'NETCDF:"tmp/netcdf_43.nc":lat',
-        'Y_BAND': '1'}:
+            'Y_BAND': '1'}:
         gdaltest.post_reason('failure')
         print(ds.GetMetadata('GEOLOCATION'))
         return 'fail'

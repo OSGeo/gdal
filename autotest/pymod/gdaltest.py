@@ -903,11 +903,11 @@ class GDALTest:
         eps = 0.00000001
         new_gt = new_ds.GetGeoTransform()
         if abs(new_gt[0] - gt[0]) > eps \
-            or abs(new_gt[1] - gt[1]) > eps \
-            or abs(new_gt[2] - gt[2]) > eps \
-            or abs(new_gt[3] - gt[3]) > eps \
-            or abs(new_gt[4] - gt[4]) > eps \
-            or abs(new_gt[5] - gt[5]) > eps:
+                or abs(new_gt[1] - gt[1]) > eps \
+                or abs(new_gt[2] - gt[2]) > eps \
+                or abs(new_gt[3] - gt[3]) > eps \
+                or abs(new_gt[4] - gt[4]) > eps \
+                or abs(new_gt[5] - gt[5]) > eps:
             print('')
             print('old = ', gt)
             print('new = ', new_gt)
@@ -1611,12 +1611,12 @@ def filesystem_supports_sparse_files(path):
     # Add here any missing filesystem supporting sparse files
     # See http://en.wikipedia.org/wiki/Comparison_of_file_systems
     if ret.find('ext3') == -1 and \
-        ret.find('ext4') == -1 and \
-        ret.find('reiser') == -1 and \
-        ret.find('xfs') == -1 and \
-        ret.find('jfs') == -1 and \
-        ret.find('zfs') == -1 and \
-        ret.find('ntfs') == -1:
+            ret.find('ext4') == -1 and \
+            ret.find('reiser') == -1 and \
+            ret.find('xfs') == -1 and \
+            ret.find('jfs') == -1 and \
+            ret.find('zfs') == -1 and \
+            ret.find('ntfs') == -1:
         post_reason('Filesystem %s is not believed to support sparse files' % ret)
         return False
 

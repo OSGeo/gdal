@@ -1224,7 +1224,7 @@ def osr_esri_25():
     (exp_x, exp_y, exp_z) = (62.882069888366, 53.091818769596, 0.0)
     if (abs(exp_x - x) > 0.00001 or
         abs(exp_y - y) > 0.00001 or
-        abs(exp_z - z) > 0.00001):
+            abs(exp_z - z) > 0.00001):
       print('Got:      (%f, %f, %f)' % (x, y, z))
       print('Expected: (%f, %f, %f)' % (exp_x, exp_y, exp_z))
       return 'fail'

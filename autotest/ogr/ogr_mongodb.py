@@ -564,8 +564,8 @@ def ogr_mongodb_2():
             return 'fail'
     for i in range(f_ref.GetDefnRef().GetGeomFieldCount()):
         if not f.GetGeomFieldRef(i).Equals(f_ref.GetGeomFieldRef(i)) or \
-               f.GetGeomFieldDefnRef(i).GetName() != f_ref.GetGeomFieldDefnRef(i).GetName() or \
-               f.GetGeomFieldDefnRef(i).GetType() != f_ref.GetGeomFieldDefnRef(i).GetType():
+                f.GetGeomFieldDefnRef(i).GetName() != f_ref.GetGeomFieldDefnRef(i).GetName() or \
+                f.GetGeomFieldDefnRef(i).GetType() != f_ref.GetGeomFieldDefnRef(i).GetType():
             gdaltest.post_reason('fail')
             f.DumpReadable()
             f_ref.DumpReadable()
@@ -751,8 +751,8 @@ def ogr_mongodb_2():
         # Order might be a bit different...
         j = f.GetDefnRef().GetGeomFieldIndex(f_ref.GetGeomFieldDefnRef(i).GetNameRef())
         if not f.GetGeomFieldRef(j).Equals(f_ref.GetGeomFieldRef(i)) or \
-            f.GetGeomFieldDefnRef(j).GetName() != f_ref.GetGeomFieldDefnRef(i).GetName() or \
-            f.GetGeomFieldDefnRef(j).GetType() != f_ref.GetGeomFieldDefnRef(i).GetType():
+                f.GetGeomFieldDefnRef(j).GetName() != f_ref.GetGeomFieldDefnRef(i).GetName() or \
+                f.GetGeomFieldDefnRef(j).GetType() != f_ref.GetGeomFieldDefnRef(i).GetType():
             gdaltest.post_reason('fail')
             f.DumpReadable()
             f_ref.DumpReadable()

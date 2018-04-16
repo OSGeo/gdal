@@ -701,7 +701,7 @@ def ogr_openfilegdb_4():
             feat = lyr.GetNextFeature()
             if feat is None or \
                (start is not None and \
-                feat.GetFID() != i * 4 + start):
+                    feat.GetFID() != i * 4 + start):
                 print(where_clause, count)
                 gdaltest.post_reason('fail')
                 return 'fail'
@@ -797,27 +797,27 @@ def ogr_openfilegdb_7():
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
 
     tests = [  # Optimized:
-              ("select * from point order by id", 5, 1, 1),
-              ("select id, str from point order by id desc", 5, 5, 1),
-              ("select * from point where id = 1 order by id", 1, 1, 1),
-              ("select * from big_layer order by real", 86 + 3 * 85, 1, 1),
-              ("select * from big_layer order by real desc", 86 + 3 * 85, 4 * 85, 1),
-              # Invalid :
-              ("select foo from", None, None, None),
-              ("select foo from bar", None, None, None),
-              ("select * from point order by foo", None, None, None),
-              # Non-optimized :
-              ("select * from point order by xml", None, None, 0),
-              ("select fid from point order by id", None, None, 0),
-              ("select cast(id as float) from point order by id", None, None, 0),
-              ("select distinct id from point order by id", None, None, 0),
-              ("select 1 from point order by id", None, None, 0),
-              ("select count(*) from point order by id", None, None, 0),
-              ("select * from point order by nullint", None, None, 0),
-              ("select * from point where id = 1 or id = 2 order by id", None, None, 0),
-              ("select * from point where id = 1 order by id, float", None, None, 0),
-              ("select * from point where float > 0 order by id", None, None, 0),
-            ]
+        ("select * from point order by id", 5, 1, 1),
+        ("select id, str from point order by id desc", 5, 5, 1),
+        ("select * from point where id = 1 order by id", 1, 1, 1),
+        ("select * from big_layer order by real", 86 + 3 * 85, 1, 1),
+        ("select * from big_layer order by real desc", 86 + 3 * 85, 4 * 85, 1),
+        # Invalid :
+        ("select foo from", None, None, None),
+        ("select foo from bar", None, None, None),
+        ("select * from point order by foo", None, None, None),
+        # Non-optimized :
+        ("select * from point order by xml", None, None, 0),
+        ("select fid from point order by id", None, None, 0),
+        ("select cast(id as float) from point order by id", None, None, 0),
+        ("select distinct id from point order by id", None, None, 0),
+        ("select 1 from point order by id", None, None, 0),
+        ("select count(*) from point order by id", None, None, 0),
+        ("select * from point order by nullint", None, None, 0),
+        ("select * from point where id = 1 or id = 2 order by id", None, None, 0),
+        ("select * from point where id = 1 order by id, float", None, None, 0),
+        ("select * from point where float > 0 order by id", None, None, 0),
+        ]
 
     for (sql, feat_count, first_fid, expected_optimized) in tests:
         if expected_optimized is None:

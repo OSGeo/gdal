@@ -1188,8 +1188,8 @@ def ogr_pg_22():
     # Create Layer
     gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer(layer_name,
                                                  options=[
-                                                      'DIM=3',
-                                                      'SCHEMA=' + schema_name]
+                                                     'DIM=3',
+                                                     'SCHEMA=' + schema_name]
                                                   )
 
     ######################################################
@@ -3611,7 +3611,7 @@ def ogr_pg_65():
         return 'fail'
     feat = lyr.GetNextFeature()
     if feat.GetGeomFieldRef('geom1') is not None or \
-        feat.GetGeomFieldRef('geom2') is not None:
+            feat.GetGeomFieldRef('geom2') is not None:
         feat.DumpReadable()
         gdaltest.post_reason('fail')
         return 'fail'

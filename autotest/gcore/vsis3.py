@@ -434,7 +434,7 @@ def vsis3_2():
     def method(request):
         # /vsis3_streaming/ should have remembered the change of region and endpoint
         if request.headers['Authorization'].find('us-west-2') < 0 or \
-            not request.headers['Host'].startswith('localhost'):
+                not request.headers['Host'].startswith('localhost'):
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
 
@@ -720,7 +720,7 @@ def vsis3_3():
     def method(request):
         # /vsis3/ should have remembered the change of region and endpoint
         if request.headers['Authorization'].find('us-west-2') < 0 or \
-            not request.headers['Host'].startswith('localhost'):
+                not request.headers['Host'].startswith('localhost'):
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
 

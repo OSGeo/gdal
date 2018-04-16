@@ -1438,7 +1438,7 @@ def warp_38():
     exp_cs = 30546
     if cs != exp_cs:
         gdaltest.post_reason('Got %d instead of expected checksum %d.' % (
-                cs, exp_cs))
+            cs, exp_cs))
         return 'fail'
 
     os.unlink(out_file)
@@ -1474,7 +1474,7 @@ def warp_39():
     exp_cs = 30546
     if cs != exp_cs:
         gdaltest.post_reason('Got %d instead of expected checksum %d.' % (
-                cs, exp_cs))
+            cs, exp_cs))
         return 'fail'
 
     os.unlink(out_file)

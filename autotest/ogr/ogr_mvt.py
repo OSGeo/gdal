@@ -419,22 +419,22 @@ def ogr_mvt_tileset_json_field():
     f = lyr.GetNextFeature()
     d = json.loads(f.GetFieldAsString("json"))
     if d != {
-        "bool_true": True,
-        "bool_false": False,
-        "pos_int_value": 1,
-        "pos_int64_value": 123456789012345,
-        "neg_int_value": -1,
-        "neg_int64_value": -123456789012345,
-        "pos_sint_value": 1,
-        "pos_sint64_value": 123456789012345,
-        "neg_sint_value": -1,
-        "neg_sint64_value": -123456789012345,
-        "uint_value": 2000000000,
-        "uint64_value": 4000000000,
-        "float_value": 1.25,
-        "real_value": 1.23456789,
-        "string_value": "str"
-        }:
+            "bool_true": True,
+            "bool_false": False,
+            "pos_int_value": 1,
+            "pos_int64_value": 123456789012345,
+            "neg_int_value": -1,
+            "neg_int64_value": -123456789012345,
+            "pos_sint_value": 1,
+            "pos_sint64_value": 123456789012345,
+            "neg_sint_value": -1,
+            "neg_sint64_value": -123456789012345,
+            "uint_value": 2000000000,
+            "uint64_value": 4000000000,
+            "float_value": 1.25,
+            "real_value": 1.23456789,
+            "string_value": "str"
+            }:
         gdaltest.post_reason('fail')
         print(f.GetFieldAsString("json"))
         return 'fail'
@@ -1223,9 +1223,9 @@ def ogr_mvt_write_conf():
     lyr.CreateFeature(f)
 
     conf = {'mylayer': {'target_name': 'TheLayer',
-                         'description': 'the layer',
-                         'minzoom': 1,
-                         'maxzoom': 2}}
+                        'description': 'the layer',
+                        'minzoom': 1,
+                        'maxzoom': 2}}
     out_ds = gdal.VectorTranslate('/vsimem/outmvt', src_ds,
                                   format='MVT', datasetCreationOptions=["CONF=%s" % json.dumps(conf)])
     if out_ds is None:

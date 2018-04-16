@@ -2568,6 +2568,8 @@ def ogr_csv_49():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_csv_more_than_100_geom_fields():
 
     with gdaltest.error_handler():

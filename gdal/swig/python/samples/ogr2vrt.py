@@ -224,7 +224,7 @@ for name in layer_list:
         vrt += '    <OpenOptions>\n'
         for option in openoptions:
             (key, value) = option.split('=')
-            vrt += '        <OOI key="%s">%s</OOI>\n'  % (Esc(key), Esc(value))
+            vrt += '        <OOI key="%s">%s</OOI>\n' % (Esc(key), Esc(value))
         vrt += '    </OpenOptions>\n'
 
     if schema:
@@ -263,7 +263,7 @@ for name in layer_list:
             srs = src_fd.GetSpatialRef()
             if srs is not None:
                 vrt += '      <SRS>%s</SRS>\n' \
-                        % (Esc(srs.ExportToWkt()))
+                    % (Esc(srs.ExportToWkt()))
             if extent:
                 (xmin, xmax, ymin, ymax) = layer.GetExtent(geom_field=fld_index)
                 vrt += '      <ExtentXMin>%.15g</ExtentXMin>\n' % xmin

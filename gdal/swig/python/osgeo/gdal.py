@@ -779,7 +779,7 @@ def DEMProcessingOptions(options=[], colorFilename=None, format=None,
                 new_options += ['-co', opt]
         if computeEdges:
             new_options += ['-compute_edges']
-        if alg ==  'ZevenbergenThorne':
+        if alg == 'ZevenbergenThorne':
             new_options += ['-alg', 'ZevenbergenThorne']
         new_options += ['-b', str(band)]
         if zFactor is not None:

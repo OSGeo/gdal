@@ -90,7 +90,7 @@ class Doxy2SWIG:
         nodes.
 
         """
-        pm = getattr(self, "parse_%s"%node.__class__.__name__)
+        pm = getattr(self, "parse_%s" % node.__class__.__name__)
         pm(node)
 
     def parse_Document(self, node):
@@ -181,7 +181,7 @@ class Doxy2SWIG:
     def do_compoundname(self, node):
         self.add_text('\n\n')
         data = node.firstChild.data
-        self.add_text('%%feature("docstring") %s "\n'%data)
+        self.add_text('%%feature("docstring") %s "\n' % data)
 
     def do_compounddef(self, node):
         kind = node.attributes['kind'].value
@@ -218,7 +218,7 @@ class Doxy2SWIG:
 
     def do_parametername(self, node):
         self.add_text('\n')
-        self.add_text("%s: "%node.firstChild.data)
+        self.add_text("%s: " % node.firstChild.data)
 
     def do_parameterdefinition(self, node):
         self.generic_parse(node, pad=1)
@@ -255,14 +255,14 @@ class Doxy2SWIG:
                     ns_node = anc.getElementsByTagName('compoundname')
                 if ns_node:
                     ns = ns_node[0].firstChild.data
-                    self.add_text(' %s::%s "\n%s'%(ns, name, defn))
+                    self.add_text(' %s::%s "\n%s' % (ns, name, defn))
                 else:
-                    self.add_text(' %s "\n%s'%(name, defn))
+                    self.add_text(' %s "\n%s' % (name, defn))
             elif cdef_kind in ('class', 'struct'):
                 # Get the full function name.
                 anc_node = anc.getElementsByTagName('compoundname')
                 cname = anc_node[0].firstChild.data
-                self.add_text(' %s::%s "\n%s'%(cname, name, defn))
+                self.add_text(' %s::%s "\n%s' % (cname, name, defn))
 
             for n in node.childNodes:
                 if n not in first.values():
@@ -271,7 +271,7 @@ class Doxy2SWIG:
 
     def do_definition(self, node):
         data = node.firstChild.data
-        self.add_text('%s "\n%s'%(data, data))
+        self.add_text('%s "\n%s' % (data, data))
 
     def do_sectiondef(self, node):
         kind = node.attributes['kind'].value
@@ -309,7 +309,7 @@ class Doxy2SWIG:
             fname = refid + '.xml'
             if not os.path.exists(fname):
                 fname = os.path.join(self.my_dir, fname)
-            print "parsing file: %s"%fname
+            print "parsing file: %s" % fname
             p = Doxy2SWIG(fname)
             p.generate()
             self.pieces.extend(self.clean_pieces(p.pieces))

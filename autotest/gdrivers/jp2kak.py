@@ -366,7 +366,7 @@ def jp2kak_17():
         abs(gt[1] - gte[1]) > 0.000000000005 or
         abs(gt[2] - gte[2]) > 0.000000000005 or
         abs(gt[4] - gte[4]) > 0.000000000005 or
-        abs(gt[5] - gte[5]) > 0.000000000005):
+            abs(gt[5] - gte[5]) > 0.000000000005):
         gdaltest.post_reason('did not get expected geotransform')
         print('got: ', gt)
         gdal.SetConfigOption('GDAL_JP2K_ALT_OFFSETVECTOR_ORDER', 'NO')
