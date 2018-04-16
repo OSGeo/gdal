@@ -636,7 +636,7 @@ gdaltest_list = [
     test_gdal_translate_lib_geolocation_vrt_path,
     test_gdal_translate_lib_colorinterp,
     test_gdal_translate_lib_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

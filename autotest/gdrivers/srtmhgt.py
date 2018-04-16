@@ -175,7 +175,7 @@ gdaltest_list = [
     srtmhgt_3,
     srtmhgt_4,
     srtmhgt_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

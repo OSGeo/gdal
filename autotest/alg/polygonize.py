@@ -229,7 +229,7 @@ gdaltest_list = [
     polygonize_2,
     polygonize_3,
     polygonize_4
-    ]
+]
 
 if __name__ == '__main__':
 

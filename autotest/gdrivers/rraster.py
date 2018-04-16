@@ -494,7 +494,7 @@ gdaltest_list = [
     rraster_nodata_and_metadata,
     rraster_update,
     rraster_colorinterpretation,
-    ]
+]
 
 
 if __name__ == '__main__':

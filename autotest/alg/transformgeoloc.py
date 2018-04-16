@@ -87,7 +87,7 @@ def transformgeoloc_1():
 
 gdaltest_list = [
     transformgeoloc_1,
-    ]
+]
 
 if __name__ == '__main__':
 

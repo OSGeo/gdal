@@ -122,9 +122,9 @@ def validate(xml_filename_or_content, xsd_filename=None, \
     schema_def = etree.Element("schema", attrib={
             "elementFormDefault": "qualified",
             "version": "1.0.0",
-        }, nsmap={
+    }, nsmap={
             None: "http://www.w3.org/2001/XMLSchema"
-        }
+    }
     )
 
     tempfiles = []
@@ -156,14 +156,14 @@ def validate(xml_filename_or_content, xsd_filename=None, \
                     etree.SubElement(schema_def, "import", attrib={
                         "namespace": sub_ns,
                         "schemaLocation": sub_location
-                        }
+                    }
                     )
                     import_dict[sub_ns] = sub_location
 
             etree.SubElement(schema_def, "import", attrib={
                     "namespace": ns,
                     "schemaLocation": location
-                }
+            }
             )
             import_dict[ns] = location
 
@@ -177,7 +177,7 @@ def validate(xml_filename_or_content, xsd_filename=None, \
             etree.SubElement(schema_def, "import", attrib={
                     "namespace": ns,
                     "schemaLocation": location
-                }
+            }
             )
             import_dict[ns] = location
 

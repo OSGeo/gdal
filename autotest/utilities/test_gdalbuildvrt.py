@@ -620,7 +620,7 @@ gdaltest_list = [
     test_gdalbuildvrt_15,
     test_gdalbuildvrt_16,
     test_gdalbuildvrt_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

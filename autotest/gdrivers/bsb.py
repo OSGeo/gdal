@@ -148,7 +148,7 @@ gdaltest_list = [
     bsb_4,
     bsb_5,
     bsb_6
-    ]
+]
 
 
 if __name__ == '__main__':

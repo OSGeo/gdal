@@ -135,7 +135,7 @@ gdaltest_list = [
     ogr_db2_hack_1,
     ogr_db2_hack_2,
     ogr_db2_hack_3
-    ]
+]
 
 if __name__ == '__main__':
 

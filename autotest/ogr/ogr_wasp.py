@@ -571,7 +571,7 @@ gdaltest_list = [
     ogr_wasp_merge,
     ogr_wasp_reading,
     ogr_wasp_cleanup
-    ]
+]
 
 if __name__ == '__main__':
     gdal.PushErrorHandler('CPLQuietErrorHandler')

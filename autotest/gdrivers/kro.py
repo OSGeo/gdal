@@ -105,7 +105,7 @@ gdaltest_list = [
     kro_3,
     kro_4,
     kro_5,
-    ]
+]
 
 
 if __name__ == '__main__':

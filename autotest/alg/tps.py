@@ -50,7 +50,7 @@ def tps_1():
         gdal.GCP(50, 0, 0, 50, 0),
         gdal.GCP(50, 50, 0, 50, 50),
         gdal.GCP(0 * 25, 0 * 25, 0, 25, 25),
-        ]
+    ]
     ds.SetGCPs(gcp_list, osr.GetUserInputAsWKT('WGS84'))
     utm_wkt = osr.GetUserInputAsWKT('+proj=utm +zone=11 +datum=WGS84')
 
@@ -66,7 +66,7 @@ def tps_1():
 
 gdaltest_list = [
     tps_1,
-    ]
+]
 
 if __name__ == '__main__':
 

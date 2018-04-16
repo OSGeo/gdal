@@ -1014,7 +1014,7 @@ def ogr_gpkg_15():
             ("SELECT CreateSpatialIndex('point_no_spi-but-with-dashes', 'geom')", 1),
             # Final DisableSpatialIndex: will be effectively deleted at dataset closing
             ("SELECT DisableSpatialIndex('point_no_spi-but-with-dashes', 'geom')", 1),
-            ]:
+    ]:
         if expected_result == 0:
             gdal.PushErrorHandler('CPLQuietErrorHandler')
         sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(sql)

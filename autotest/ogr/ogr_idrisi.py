@@ -276,7 +276,7 @@ gdaltest_list = [
     ogr_idrisi_1,
     ogr_idrisi_2,
     ogr_idrisi_3,
-    ]
+]
 
 if __name__ == '__main__':
 

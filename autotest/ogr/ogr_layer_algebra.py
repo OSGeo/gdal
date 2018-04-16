@@ -713,7 +713,7 @@ gdaltest_list = [
     algebra_clip,
     algebra_erase,
     algebra_cleanup,
-    ]
+]
 
 if __name__ == '__main__':
 

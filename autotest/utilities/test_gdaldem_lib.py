@@ -630,7 +630,7 @@ gdaltest_list = [
     test_gdaldem_lib_slope_ZevenbergenThorne,
     test_gdaldem_lib_aspect_ZevenbergenThorne,
     test_gdaldem_lib_nodata
-    ]
+]
 
 
 if __name__ == '__main__':

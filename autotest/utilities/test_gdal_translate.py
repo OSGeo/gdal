@@ -1166,7 +1166,7 @@ gdaltest_list = [
     test_gdal_translate_34,
     test_gdal_translate_35,
     test_gdal_translate_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

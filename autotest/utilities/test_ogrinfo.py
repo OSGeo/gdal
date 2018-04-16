@@ -779,7 +779,7 @@ gdaltest_list = [
     test_ogrinfo_23,
     test_ogrinfo_24,
     test_ogrinfo_25,
-    ]
+]
 
 
 if __name__ == '__main__':

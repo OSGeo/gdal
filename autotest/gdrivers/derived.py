@@ -187,7 +187,7 @@ gdaltest_list = [
     derived_test1,
     derived_test2,
     derived_test3
-    ]
+]
 
 if __name__ == '__main__':
 

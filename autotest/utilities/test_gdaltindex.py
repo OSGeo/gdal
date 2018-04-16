@@ -312,7 +312,7 @@ gdaltest_list = [
     test_gdaltindex_5,
     test_gdaltindex_6,
     test_gdaltindex_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

@@ -160,7 +160,7 @@ gdaltest_list = [
     ogr_couchdb_1,
     ogr_couchdb_2,
     ogr_couchdb_cleanup
-    ]
+]
 
 if __name__ == '__main__':
 

@@ -393,7 +393,7 @@ gdaltest_list = [
     test_ogrinfo_py_11,
     test_ogrinfo_py_22,
     test_ogrinfo_py_23,
-    ]
+]
 
 
 if __name__ == '__main__':

@@ -357,7 +357,7 @@ gdaltest_list = [
     sieve_6,
     sieve_7,
     sieve_8
-    ]
+]
 
 if __name__ == '__main__':
 
