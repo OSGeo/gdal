@@ -1530,11 +1530,10 @@ def ecw_38():
     if gdaltest.ecw_drv is None:
         return 'skip'
 
-    gdaltest.ecw_38_fname = ''
     if version_info >= (3, 0, 0):
-        exec("""gdaltest.ecw_38_fname = 'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'""")
+        gdaltest.ecw_38_fname = 'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'
     else:
-        exec("""gdaltest.ecw_38_fname = u'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'""")
+        gdaltest.ecw_38_fname = u'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'
     fname = gdaltest.ecw_38_fname
 
     if gdaltest.ecw_drv.major_version < 4:
@@ -2486,12 +2485,10 @@ def ecw_cleanup():
         pass
 
     try:
-        fname = gdaltest.ecw_38_fname
         os.remove(fname)
     except OSError:
         pass
     try:
-        fname = gdaltest.ecw_38_fname
         os.remove(fname + '.aux.xml')
     except OSError:
         pass
