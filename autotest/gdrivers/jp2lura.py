@@ -1504,7 +1504,7 @@ def jp2lura_37():
         gdal.Unlink('/vsimem/jp2lura_37.jp2')
 
     # Special xml:IPR metadata domain
-    #for options in [ ['WRITE_METADATA=YES'] ]:
+    # for options in [ ['WRITE_METADATA=YES'] ]:
     #    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
     #    src_ds.SetMetadata( [ '<fake_ipr_box/>' ], 'xml:IPR')
     #    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_37.jp2', src_ds, options = options)
@@ -1752,7 +1752,7 @@ def jp2lura_41():
                                              options=['USE_SRC_CODESTREAM=YES', 'QUALITY=1'])
     gdal.PopErrorHandler()
     del out_ds
-    #if gdal.GetLastErrorMsg() == '':
+    # if gdal.GetLastErrorMsg() == '':
     #    gdaltest.post_reason('fail')
     #    return 'fail'
     gdal.Unlink('/vsimem/jp2lura_41.jp2')
@@ -2090,7 +2090,7 @@ def jp2lura_online_6():
     #cs1 = ds.GetRasterBand(1).Checksum()
     #cs2 = ds.GetRasterBand(2).Checksum()
     #cs3 = ds.GetRasterBand(3).Checksum()
-    #if cs1 != 26140 or cs2 != 32689 or cs3 != 48247:
+    # if cs1 != 26140 or cs2 != 32689 or cs3 != 48247:
     #    print(cs1, cs2, cs3)
     #    gdaltest.post_reason('Did not get expected checksums')
     #    return 'fail'
@@ -2488,8 +2488,8 @@ gdaltest_list = [
     jp2lura_7,
     jp2lura_8,
     jp2lura_9,
-    #jp2lura_10,
-    #jp2lura_11,
+    # jp2lura_10,
+    # jp2lura_11,
     jp2lura_12,
     jp2lura_13,
     jp2lura_14,
@@ -2498,19 +2498,19 @@ gdaltest_list = [
     jp2lura_18,
     jp2lura_19,
     jp2lura_20,
-    #jp2lura_21,
+    # jp2lura_21,
     jp2lura_22,
-    #jp2lura_23,
+    # jp2lura_23,
     jp2lura_24,
     jp2lura_25,
-    #jp2lura_26,
+    # jp2lura_26,
     jp2lura_27,
     jp2lura_28,
-    #jp2lura_29,
+    # jp2lura_29,
     jp2lura_30,
-    #jp2lura_31,
-    #jp2lura_32,
-    #jp2lura_33,
+    # jp2lura_31,
+    # jp2lura_32,
+    # jp2lura_33,
     jp2lura_34,
     jp2lura_35,
     jp2lura_36,
@@ -2519,11 +2519,11 @@ gdaltest_list = [
     jp2lura_39,
     jp2lura_40,
     jp2lura_41,
-    #jp2lura_42,
+    # jp2lura_42,
     jp2lura_43,
-    #jp2lura_44,
+    # jp2lura_44,
     jp2lura_45,
-    #jp2lura_46,
+    # jp2lura_46,
     jp2lura_47,
     jp2lura_48,
     jp2lura_49,

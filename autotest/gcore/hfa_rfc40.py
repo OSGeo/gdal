@@ -158,7 +158,7 @@ def CreateAndWriteRAT(fname):
         raise HFATestError("Failed to write doubles to string column")
 
     #print('Succeeding writing data')
-    #ds.FlushCache()
+    # ds.FlushCache()
     ds = None
 
     return 'success'
@@ -251,7 +251,7 @@ def CheckSetGetValues(fname):
         rat.SetValueAsString(i, 2, STRING_DATA[i])
 
     #print("Get/SetValue OK")
-    #ds.FlushCache()
+    # ds.FlushCache()
     ds = None
 
     return 'success'
@@ -278,7 +278,7 @@ def ExtendAndWrite(fname):
         raise HFATestError("Failed to write string column")
 
     #print('extend ok')
-    #ds.FlushCache()
+    # ds.FlushCache()
     ds = None
 
     return 'success'
@@ -318,7 +318,7 @@ def WriteLongStrings(fname):
         raise HFATestError("Failed to write string column")
 
     #print("wrote long strings ok")
-    #ds.FlushCache()
+    # ds.FlushCache()
     ds = None
 
     return 'success'
@@ -348,7 +348,7 @@ def SetLinearBinning(fname):
         raise HFATestError("Error in SetLinearBinning")
 
     #print("set linear binning ok")
-    #ds.FlushCache()
+    # ds.FlushCache()
     ds = None
 
     return 'success'

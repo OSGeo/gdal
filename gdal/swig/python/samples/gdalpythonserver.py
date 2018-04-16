@@ -1,13 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#*****************************************************************************
+# *****************************************************************************
 # $Id$
 #
 # Project:  GDAL
 # Purpose:  GDAL API_PROXY server written in Python
 # Author:   Even Rouault, <even dot rouault at mines-paris dot org>
 #
-#*****************************************************************************
+# *****************************************************************************
 # Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -27,7 +27,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
-#***************************************************************************/
+# ***************************************************************************/
 
 # WARNING: only Python 2 compatible for now
 
@@ -262,7 +262,7 @@ INSTR_Band_GetUnitType = 72
 INSTR_Band_GetDefaultRAT = 75
 #INSTR_Band_SetDefaultRAT = 76
 #INSTR_Band_AdviseRead = 77
-#INSTR_Band_DeleteNoDataValue=78
+# INSTR_Band_DeleteNoDataValue=78
 INSTR_Band_End = 79
 #INSTR_END = 80
 
@@ -271,80 +271,80 @@ caps_list = [
     INSTR_EXIT,
     INSTR_EXIT_FAIL,
     INSTR_SetConfigOption,
-    #INSTR_Progress,
+    # INSTR_Progress,
     INSTR_Reset,
     INSTR_Open,
     INSTR_Identify,
     INSTR_Create,
     INSTR_CreateCopy,
     INSTR_QuietDelete,
-    #INSTR_AddBand,
+    # INSTR_AddBand,
     INSTR_GetGeoTransform,
-    #INSTR_SetGeoTransform,
+    # INSTR_SetGeoTransform,
     INSTR_GetProjectionRef,
-    #INSTR_SetProjection,
+    # INSTR_SetProjection,
     INSTR_GetGCPCount,
-    #INSTR_GetGCPProjection,
-    #INSTR_GetGCPs,
-    #INSTR_SetGCPs,
+    # INSTR_GetGCPProjection,
+    # INSTR_GetGCPs,
+    # INSTR_SetGCPs,
     INSTR_GetFileList,
     INSTR_FlushCache,
-    #INSTR_SetDescription,
+    # INSTR_SetDescription,
     INSTR_GetMetadata,
     INSTR_GetMetadataItem,
-    #INSTR_SetMetadata,
-    #INSTR_SetMetadataItem,
+    # INSTR_SetMetadata,
+    # INSTR_SetMetadataItem,
     INSTR_IRasterIO_Read,
-    #INSTR_IRasterIO_Write,
-    #INSTR_IBuildOverviews,
-    #INSTR_AdviseRead,
-    #INSTR_CreateMaskBand,
-    #INSTR_Band_First,
+    # INSTR_IRasterIO_Write,
+    # INSTR_IBuildOverviews,
+    # INSTR_AdviseRead,
+    # INSTR_CreateMaskBand,
+    # INSTR_Band_First,
     INSTR_Band_FlushCache,
     INSTR_Band_GetCategoryNames,
-    #INSTR_Band_SetCategoryNames,
-    #INSTR_Band_SetDescription,
+    # INSTR_Band_SetCategoryNames,
+    # INSTR_Band_SetDescription,
     INSTR_Band_GetMetadata,
     INSTR_Band_GetMetadataItem,
     INSTR_Band_SetMetadata,
     INSTR_Band_SetMetadataItem,
     INSTR_Band_GetColorInterpretation,
-    #INSTR_Band_SetColorInterpretation,
+    # INSTR_Band_SetColorInterpretation,
     INSTR_Band_GetNoDataValue,
     INSTR_Band_GetMinimum,
     INSTR_Band_GetMaximum,
     INSTR_Band_GetOffset,
     INSTR_Band_GetScale,
-    #INSTR_Band_SetNoDataValue,
-    #INSTR_Band_SetOffset,
-    #INSTR_Band_SetScale,
+    # INSTR_Band_SetNoDataValue,
+    # INSTR_Band_SetOffset,
+    # INSTR_Band_SetScale,
     INSTR_Band_IReadBlock,
-    #INSTR_Band_IWriteBlock,
+    # INSTR_Band_IWriteBlock,
     INSTR_Band_IRasterIO_Read,
-    #INSTR_Band_IRasterIO_Write,
+    # INSTR_Band_IRasterIO_Write,
     INSTR_Band_GetStatistics,
-    #INSTR_Band_ComputeStatistics,
-    #INSTR_Band_SetStatistics,
+    # INSTR_Band_ComputeStatistics,
+    # INSTR_Band_SetStatistics,
     INSTR_Band_ComputeRasterMinMax,
     INSTR_Band_GetHistogram,
-    #INSTR_Band_GetDefaultHistogram,
-    #INSTR_Band_SetDefaultHistogram,
+    # INSTR_Band_GetDefaultHistogram,
+    # INSTR_Band_SetDefaultHistogram,
     INSTR_Band_HasArbitraryOverviews,
     INSTR_Band_GetOverviewCount,
     INSTR_Band_GetOverview,
     INSTR_Band_GetMaskBand,
     INSTR_Band_GetMaskFlags,
-    #INSTR_Band_CreateMaskBand,
-    #INSTR_Band_Fill,
+    # INSTR_Band_CreateMaskBand,
+    # INSTR_Band_Fill,
     INSTR_Band_GetColorTable,
-    #INSTR_Band_SetColorTable,
+    # INSTR_Band_SetColorTable,
     INSTR_Band_GetUnitType,
-    #INSTR_Band_SetUnitType,
-    #INSTR_Band_BuildOverviews,
-    #INSTR_Band_GetDefaultRAT,
-    #INSTR_Band_SetDefaultRAT,
+    # INSTR_Band_SetUnitType,
+    # INSTR_Band_BuildOverviews,
+    # INSTR_Band_GetDefaultRAT,
+    # INSTR_Band_SetDefaultRAT,
     #INSTR_Band_AdviseRead ,
-    #INSTR_Band_End,
+    # INSTR_Band_End,
     #INSTR_END = 80
 ]
 
@@ -534,7 +534,7 @@ def main_loop():
                 sys.stderr.write('val=%s\n' % val)
             continue
         elif instr == INSTR_Reset:
-            #if server_ds is not None:
+            # if server_ds is not None:
             #    sys.stderr.write('Reset(%s)\n' % server_ds.GetDescription())
             server_ds = None
             server_bands = []
@@ -821,7 +821,7 @@ def main_loop():
                 write_int(len(val) * 8)
                 for i in range(len(val)):
                     write_uint64(val[i])
-        #elif instr == INSTR_Band_GetDefaultHistogram:
+        # elif instr == INSTR_Band_GetDefaultHistogram:
         #    bForce = read_int()
         #    write_marker()
         #    write_int(CE_Failure)
@@ -858,7 +858,7 @@ def main_loop():
             val = band.GetUnitType()
             write_marker()
             write_str(val)
-        #elif instr == INSTR_Band_GetDefaultRAT:
+        # elif instr == INSTR_Band_GetDefaultRAT:
         #    write_marker()
         #    # FIXME
         #    write_int(0)

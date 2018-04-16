@@ -451,7 +451,7 @@ def jp2kak_20():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    #if jp2_fourth_band_data != gtiff_fourth_band_data:
+    # if jp2_fourth_band_data != gtiff_fourth_band_data:
     #    gdaltest.post_reason('fail')
     #    return 'fail'
 

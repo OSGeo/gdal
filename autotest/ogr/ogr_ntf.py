@@ -44,32 +44,32 @@
 # between you and Ordnance Survey for your use of the Sample Data. Please read these terms carefully. If you do
 # not agree to these terms and conditions, you should not use, download or access the Sample Data.
 #
-#1  The Sample Data belongs to the Crown (or its suppliers).
+# 1  The Sample Data belongs to the Crown (or its suppliers).
 #
-#2  Ordnance Survey grants you a limited, personal, non-exclusive, non-transferable, free-of-charge and fully terminable
+# 2  Ordnance Survey grants you a limited, personal, non-exclusive, non-transferable, free-of-charge and fully terminable
 # licence to use the Sample Data for the purpose of internal testing and evaluation only. By way of example, this means
 # that you are not permitted to (i) sub-license, transfer, share or otherwise #distribute the Sample Data to any other
 # person; (ii) incorporate the Sample Data into your products or services (unless solely for the purposes of internal
 # testing and evaluation); or (iii) commercially exploit the Sample Data.
 #
-#3  The Sample Data is provided "as is" and without any warranty as to quality, fitness for purpose, accuracy, availability
+# 3  The Sample Data is provided "as is" and without any warranty as to quality, fitness for purpose, accuracy, availability
 # or otherwise. You acknowledge that it is your responsibility to ensure that the Sample Data is suitable for your intended
 # purposes.
 #
-#4  To the fullest extent permitted by law, Ordnance Survey excludes all liability for any loss or damage of whatever nature
+# 4  To the fullest extent permitted by law, Ordnance Survey excludes all liability for any loss or damage of whatever nature
 # arising from any use of the Sample Data.
 #
-#5  You agree that Ordnance Survey (and its suppliers) shall retain all rights, title and interest in the Sample Data, including
+# 5  You agree that Ordnance Survey (and its suppliers) shall retain all rights, title and interest in the Sample Data, including
 # but not limited to any and all copyrights, patents, trade marks, trade secrets and all other intellectual property rights.
 #
-#6  You agree not to tamper with or remove any copyright, trade mark, trade mark symbol or other proprietary notice of
+# 6  You agree not to tamper with or remove any copyright, trade mark, trade mark symbol or other proprietary notice of
 # Ordnance Survey (or its suppliers) contained in the Sample Data.
 #
-#7  Ordnance Survey may terminate this agreement immediately if you breach any of the terms and conditions.
+# 7  Ordnance Survey may terminate this agreement immediately if you breach any of the terms and conditions.
 # Ordnance Survey also reserves the right to terminate the agreement at any time on giving you thirty (30) days written
 # notice (which may be given by email or by posting a notification on Ordnance Survey's website).
 #
-#8  These terms and conditions are governed by English law, and you agree to the exclusive jurisdiction of the English courts.
+# 8  These terms and conditions are governed by English law, and you agree to the exclusive jurisdiction of the English courts.
 # (C) Crown copyright and/or database right 2009 Ordnance Survey
 #
 # v1.0 May 2009

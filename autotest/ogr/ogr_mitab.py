@@ -432,7 +432,7 @@ def ogr_mitab_13():
 
     ds = ogr.Open('tmp/testlyrdef.tab')
 
-    #Check if the width and precision are as preserved.
+    # Check if the width and precision are as preserved.
     lyr = ds.GetLayer('testlyrdef')
     if lyr is None:
         gdaltest.post_reason('Layer missing.')
@@ -483,7 +483,7 @@ def ogr_mitab_14():
 
     ds = ogr.Open('tmp/testlyrdef.mif')
 
-    #Check if the width and precision are as preserved.
+    # Check if the width and precision are as preserved.
     lyr = ds.GetLayer('testlyrdef')
     if lyr is None:
         gdaltest.post_reason('Layer missing.')
@@ -1813,7 +1813,7 @@ def ogr_mitab_35():
     for mif_unit in ['mi', 'km', 'in', 'ft', 'yd', 'mm', 'cm', 'm', 'survey ft', 'nmi', 'li', 'ch', 'rd']:
         coordsys = 'CoordSys NonEarth Units "%s"' % mif_unit
         srs = get_srs_from_coordsys(coordsys)
-        #print(srs)
+        # print(srs)
         got_coordsys = get_coordsys_from_srs(srs)
         if coordsys != got_coordsys:
             gdaltest.post_reason('fail')
@@ -1891,16 +1891,16 @@ def ogr_mitab_35():
                      'CoordSys Earth Projection 26, 104, "m", 1, 2',
                      'CoordSys Earth Projection 27, 104, "m", 1, 2, 3, 4',
                      'CoordSys Earth Projection 28, 104, "m", 1, 2, 90',
-                     #'CoordSys Earth Projection 29, 104, "m", 1, 90, 90', # alias of 4
+                     # 'CoordSys Earth Projection 29, 104, "m", 1, 90, 90', # alias of 4
                      'CoordSys Earth Projection 30, 104, "m", 1, 2, 3, 4',
                      'CoordSys Earth Projection 31, 104, "m", 1, 2, 3, 4, 5',
                      'CoordSys Earth Projection 32, 104, "m", 1, 2, 3, 4, 5, 6',
                      'CoordSys Earth Projection 33, 104, "m", 1, 2, 3, 4',
                       ]:
         srs = get_srs_from_coordsys(coordsys)
-        #print(srs)
+        # print(srs)
         got_coordsys = get_coordsys_from_srs(srs)
-        #if got_coordsys.find(' Bounds') >= 0:
+        # if got_coordsys.find(' Bounds') >= 0:
         #    got_coordsys = got_coordsys[0:got_coordsys.find(' Bounds')]
         if coordsys != got_coordsys:
             gdaltest.post_reason('fail')
@@ -2311,7 +2311,7 @@ def ogr_mitab_44():
     return 'success'
 
 ###############################################################################
-#Test read/write MapInfo layers with encoding specified
+# Test read/write MapInfo layers with encoding specified
 
 
 def ogr_mitab_45():
@@ -2414,7 +2414,7 @@ def ogr_mitab_45():
     return 'success'
 
 ###############################################################################
-#Test read MapInfo layers with encoding specified
+# Test read MapInfo layers with encoding specified
 
 
 def ogr_mitab_46():
@@ -2476,7 +2476,7 @@ def ogr_mitab_46():
     return 'success'
 
 ###############################################################################
-#Test opening a dataset with a .ind file
+# Test opening a dataset with a .ind file
 
 
 def ogr_mitab_47():
@@ -2502,7 +2502,7 @@ def ogr_mitab_47():
     return 'success'
 
 ###############################################################################
-#Test writing and reading LCC_1SP
+# Test writing and reading LCC_1SP
 
 
 def ogr_mitab_48():

@@ -260,7 +260,7 @@ def ogr_geom_polyhedral_surface():
         gdaltest.post_reason("Wrong WkbSize() of PolyhedralSurface")
         return 'fail'
 
-    #if ogrtest.have_sfcgal():
+    # if ogrtest.have_sfcgal():
     #    geom = ps.DelaunayTriangulation(0.0,True)
     #    wkt_geom_dt = 'MULTILINESTRING ((0 1 0,1 1 0),(0 0 0,0 1 0),(0 0 0,1 0 0),(1 0 0,1 1 0),(0 1 0,1 0 0))'
     #    wkt_geom = geom.ExportToWkt()
@@ -369,13 +369,13 @@ def ogr_geom_tin():
     #geom = tin.DelaunayTriangulation(0.0,True)
     #wkt_geom_dt = 'MULTILINESTRING ((0 1 0,1 1 0),(0 0 0,0 1 0),(0 0 0,1 1 0))'
     #wkt_geom = geom.ExportToWkt()
-    #if wkt_geom != wkt_geom_dt:
+    # if wkt_geom != wkt_geom_dt:
     #    gdaltest.post_reason ("Failure in DelaunayTriangulation() of TIN")
     #    print(wkt_geom)
     #    return 'fail'
 
     #geom = ogr.CreateGeometryFromWkb(wkb_string)
-    #if tin.Contains(geom) != True:
+    # if tin.Contains(geom) != True:
     #    gdaltest.post_reason ("Failure in Contains() of TIN")
     #    return 'fail'
 
@@ -411,7 +411,7 @@ def ogr_geom_tin():
     #point = tin.PointOnSurface()
     #point_wkt = point.ExportToWkt()
     #point_correct_wkt = 'POINT (0.25 0.5)'
-    #if point_wkt != point_correct_wkt:
+    # if point_wkt != point_correct_wkt:
     #    gdaltest.post_reason ("Wrong Point Obtained for PointOnSurface() in TIN")
     #    print(point_wkt)
     #    return 'fail'
@@ -575,7 +575,7 @@ def ogr_geom_build_from_edges_1():
 
     for wkt in wkt_array:
         geom = ogr.CreateGeometryFromWkt(wkt)
-        #print "geom is",geom
+        # print "geom is",geom
         link_coll.AddGeometry(geom)
 
     try:
@@ -680,7 +680,7 @@ def ogr_geom_build_from_edges_4():
 
     for wkt in wkt_array:
         geom = ogr.CreateGeometryFromWkt(wkt)
-        #print "geom is",geom
+        # print "geom is",geom
         link_coll.AddGeometry(geom)
 
     try:
@@ -3232,11 +3232,11 @@ def ogr_geom_getcurvegeometry():
                 if not g3.Equals(g1):
                     # FIXME sometime... but avoid failing. for now. This randomly fails, but this is not
                     # the end of the world...
-                    #gdaltest.post_reason('fail')
+                    # gdaltest.post_reason('fail')
                     print('Difference found :')
                     print(g1)
                     print(g3)
-                    #return 'fail'
+                    # return 'fail'
 
     # Really random arcs in random displacements, but with small radius
     for i in range(1000):
@@ -3252,11 +3252,11 @@ def ogr_geom_getcurvegeometry():
                 if not g3.Equals(g1):
                     # FIXME sometime... but avoid failing. for now. This randomly fails, but this is not
                     # the end of the world...
-                    #gdaltest.post_reason('fail')
+                    # gdaltest.post_reason('fail')
                     print('Difference found :')
                     print(g1)
                     print(g3)
-                    #return 'fail'
+                    # return 'fail'
 
     # Really random arcs with coordinates in the [-1000000,1000000] range
     for i in range(1000):
@@ -3270,11 +3270,11 @@ def ogr_geom_getcurvegeometry():
                 if not g3.Equals(g1):
                     # FIXME sometime... but avoid failing. for now. This randomly fails, but this is not
                     # the end of the world...
-                    #gdaltest.post_reason('fail')
+                    # gdaltest.post_reason('fail')
                     print('Difference found :')
                     print(g1)
                     print(g3)
-                    #return 'fail'
+                    # return 'fail'
 
     # 5 points full circle
     g1 = ogr.CreateGeometryFromWkt('CIRCULARSTRING (0 0,0.5 -0.5,1 0,0.5 0.5,0 0)')

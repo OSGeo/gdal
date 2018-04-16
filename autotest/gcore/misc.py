@@ -179,7 +179,7 @@ def misc_5_internal(drv, datatype, nBands):
                     print(got_gt)
                     return -1
 
-        #if ds.RasterCount > 0:
+        # if ds.RasterCount > 0:
         #    ds.GetRasterBand(1).Fill(255)
     ds = None
     ds = gdal.Open(filename)
@@ -188,7 +188,7 @@ def misc_5_internal(drv, datatype, nBands):
         # gdaltest.post_reason(reason)
         # TODO: Why not return -1?
         pass
-    #else:
+    # else:
     #    if ds.RasterCount > 0:
     #        print ds.GetRasterBand(1).Checksum()
     ds = None

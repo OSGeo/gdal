@@ -99,7 +99,7 @@ def generate_tif(comb_val):
                 has_strip = True
             count_non_none = count_non_none + 1
         #    print('%s : %d' % (tags[level][0], val))
-        #else:
+        # else:
         #    print('%s : None' % (tags[level][0]))
 
     content = '\x49\x49\x2A\x00\x08\x00\x00\x00' + ('%c' % count_non_none) + '\x00'
@@ -128,8 +128,8 @@ while True:
     content = generate_tif(comb_val)
 
     #f = open('test.tif', 'wb')
-    #f.write(content)
-    #f.close()
+    # f.write(content)
+    # f.close()
 
     #print(struct.unpack('B' * len(content), content))
 
@@ -138,11 +138,11 @@ while True:
 
     print('iter = %d, comb_val_init = %d' % (iter, comb_val))
     ds = gdal.Open('/vsimem/test.tif')
-    #if ds is not None and ds.RasterCount == 1:
+    # if ds is not None and ds.RasterCount == 1:
     #    (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
     #    if blockxsize == ds.RasterXSize:
     #        ds.GetRasterBand(1).Checksum()
     ds = None
 
     # Release memory associated to the in-memory file
-    #gdal.Unlink('/vsimem/test.tif')
+    # gdal.Unlink('/vsimem/test.tif')

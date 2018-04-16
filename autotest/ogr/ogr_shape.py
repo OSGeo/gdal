@@ -662,7 +662,7 @@ def ogr_shape_18():
     # data/poly.shp has arbitrarily assigned EPSG:27700
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(27700)
-    #srs.StripCTParms()
+    # srs.StripCTParms()
 
     if not srs_lyr.IsSame(srs):
         print('')
@@ -2701,7 +2701,7 @@ def ogr_shape_54():
     lyr.ResetReading()
     lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    #if gdal.GetLastErrorMsg() == '':
+    # if gdal.GetLastErrorMsg() == '':
     #    gdaltest.post_reason('failed')
     #    return 'fail'
     gdal.ErrorReset()
@@ -2823,7 +2823,7 @@ def ogr_shape_57():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr.CreateField(field_defn)
     gdal.PopErrorHandler()
-    #print(gdal.GetLastErrorMsg())
+    # print(gdal.GetLastErrorMsg())
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('expecting a warning')
         return 'fail'
@@ -2835,7 +2835,7 @@ def ogr_shape_57():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr.CreateFeature(feat)
     gdal.PopErrorHandler()
-    #print(gdal.GetLastErrorMsg())
+    # print(gdal.GetLastErrorMsg())
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('expecting a warning')
         return 'fail'
@@ -3405,11 +3405,11 @@ def ogr_shape_68():
             if ret == 0:
                 gdaltest.post_reason('expected failure on DeleteFeature()')
                 return 'fail'
-            #gdal.ErrorReset()
-            #gdal.PushErrorHandler('CPLQuietErrorHandler')
+            # gdal.ErrorReset()
+            # gdal.PushErrorHandler('CPLQuietErrorHandler')
             ds.ExecuteSQL('REPACK mixedcase')
-            #gdal.PopErrorHandler()
-            #if gdal.GetLastErrorMsg() == '':
+            # gdal.PopErrorHandler()
+            # if gdal.GetLastErrorMsg() == '':
             #    gdaltest.post_reason('expected failure on REPACK mixedcase')
             #    return 'fail'
 
@@ -3976,7 +3976,7 @@ def ogr_shape_82():
     # create ogrlayer to test cut long strings with UTF-8 encoding
     gdaltest.shape_lyr = gdaltest.shape_ds.CreateLayer('test_utf_cut', geom_type=ogr.wkbPoint, options=['ENCODING=UTF-8'])
 
-    #create field to put strings to automatic cut (254 is longest field length)
+    # create field to put strings to automatic cut (254 is longest field length)
     field_defn = ogr.FieldDefn('cut_field', ogr.OFTString)
     field_defn.SetWidth(254)
 
@@ -5509,7 +5509,7 @@ gdaltest_list = [
     ogr_shape_41,
     ogr_shape_42,
     ogr_shape_43,
-    #ogr_shape_44,
+    # ogr_shape_44,
     ogr_shape_45,
     ogr_shape_46,
     ogr_shape_47,

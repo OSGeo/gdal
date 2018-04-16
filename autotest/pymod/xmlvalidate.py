@@ -182,7 +182,7 @@ def validate(xml_filename_or_content, xsd_filename=None, \
             import_dict[ns] = location
 
     # TODO: ugly workaround. But otherwise, the doc is not recognized as schema
-    #print(etree.tostring(schema_def))
+    # print(etree.tostring(schema_def))
     schema = etree.XMLSchema(etree.XML(etree.tostring(schema_def)))
 
     try:
@@ -207,8 +207,8 @@ def transform_abs_links_to_ref_links(path, level=0):
         if os.path.isdir(filename) and filename.find('examples') < 0:
             transform_abs_links_to_ref_links(filename, level + 1)
         elif filename.endswith('.xsd'):
-            #print(level)
-            #print(filename)
+            # print(level)
+            # print(filename)
             f = open(filename, 'rt')
             lines = f.readlines()
             f.close()
@@ -262,8 +262,8 @@ def transform_inspire_abs_links_to_ref_links(path, level=0):
         if os.path.isdir(filename) and filename.find('examples') < 0:
             transform_inspire_abs_links_to_ref_links(filename, level + 1)
         elif filename.endswith('.xsd'):
-            #print(level)
-            #print(filename)
+            # print(level)
+            # print(filename)
             f = open(filename, 'rt')
             lines = f.readlines()
             f.close()
@@ -519,7 +519,7 @@ if __name__ == '__main__':
 
     if has_local_inspire_schemas('inspire_schemas'):
         inspire_schemas_location = 'inspire_schemas'
-        #transform_inspire_abs_links_to_ref_links('inspire_schemas')
+        # transform_inspire_abs_links_to_ref_links('inspire_schemas')
 
     target_dir = '.'
 

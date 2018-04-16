@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#******************************************************************************
+# ******************************************************************************
 #  $Id$
 #
 #  Project:  GDAL Python Interface
 #  Purpose:  Application for executing OGR layer algebra operations
 #  Author:   Even Rouault, even dot rouault at mines-paris dot org
 #
-#******************************************************************************
+# ******************************************************************************
 #  Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
@@ -27,7 +27,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
+# ******************************************************************************
 
 import os
 import sys

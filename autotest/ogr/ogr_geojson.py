@@ -622,7 +622,7 @@ def ogr_geojson_14():
         for feat in lyr:
             geom = feat.GetGeometryRef()
             if geom is not None:
-                #print(geom)
+                # print(geom)
                 out_feat = ogr.Feature(feature_def=out_lyr.GetLayerDefn())
                 out_feat.SetGeometry(geom)
                 out_lyr.CreateFeature(out_feat)
@@ -2577,7 +2577,7 @@ def ogr_geojson_47():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
-    #ERROR 6: Update from inline definition not supported
+    # ERROR 6: Update from inline definition not supported
     with gdaltest.error_handler():
         ds = ogr.Open('{"type": "FeatureCollection", "features":[]}', update=1)
     if ds is not None:

@@ -1447,7 +1447,7 @@ def jp2openjpeg_29():
             return 'fail'
         # Not sure if that could be easily checked
         del out_ds
-        #print gdal.GetJPEG2000StructureAsString('/vsimem/jp2openjpeg_29.jp2', ['ALL=YES'])
+        # print gdal.GetJPEG2000StructureAsString('/vsimem/jp2openjpeg_29.jp2', ['ALL=YES'])
 
     gdal.Unlink('/vsimem/jp2openjpeg_29.jp2')
 
@@ -2977,7 +2977,7 @@ def jp2openjpeg_45():
         gdaltest.post_reason('fail')
         print(gmljp2)
         return 'fail'
-    #print(gmljp2)
+    # print(gmljp2)
 
     myshape_gml = ds.GetMetadata_List("xml:myshape.gml")[0]
     if myshape_gml.find("""<ogr1:FeatureCollection gml:id="ID_GMLJP2_0_1_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/1 gmljp2://xml/myshape.xsd" xmlns:ogr1="http://ogr.maptools.org/1" xmlns:gml="http://www.opengis.net/gml/3.2">""") < 0:
@@ -3298,7 +3298,7 @@ yeah: """) < 0:
     gdal.Unlink("/vsimem/source.xml")
     #ds = gdal.Open('/vsimem/jp2openjpeg_46.jp2')
     #gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
-    #print(gmljp2)
+    # print(gmljp2)
     #ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
 

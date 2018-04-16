@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#******************************************************************************
+# ******************************************************************************
 #  $Id: pct2rgb.py 13087 2007-11-26 20:56:29Z hobu $
 #
 #  Name:     gdal_lut
@@ -7,7 +7,7 @@
 #  Purpose:  Utility to apply a lookup table provided in a text file.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
 #
-#******************************************************************************
+# ******************************************************************************
 #  Copyright (c) 2008, Frank Warmerdam
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
@@ -27,7 +27,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
+# ******************************************************************************
 
 import sys
 

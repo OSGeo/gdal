@@ -163,7 +163,7 @@ def ogr_openfilegdb_make_test_data():
         lyr = ds.CreateLayer('big_layer', geom_type=ogr.wkbNone)
         lyr.CreateField(ogr.FieldDefn("real", ogr.OFTReal))
         gdal.SetConfigOption('FGDB_BULK_LOAD', 'YES')
-        #for i in range(340*341+1):
+        # for i in range(340*341+1):
         for i in range(340 + 1):
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetField(0, i % 4)
@@ -982,10 +982,10 @@ def ogr_openfilegdb_10():
             last_error_msg = ''
             last_offset = -1
             for offset in range(os.stat(filename).st_size):
-                #print(offset)
+                # print(offset)
                 backup = fuzz(filename, offset)
                 gdal.ErrorReset()
-                #print(offset)
+                # print(offset)
                 ds = ogr.Open('tmp/testopenfilegdb_fuzzed.gdb')
                 error_msg = gdal.GetLastErrorMsg()
                 feat = None
@@ -1019,10 +1019,10 @@ def ogr_openfilegdb_10():
             last_error_msg = ''
             last_offset = -1
             for offset in range(os.stat(filename).st_size):
-                #print(offset)
+                # print(offset)
                 backup = fuzz(filename, offset)
                 gdal.ErrorReset()
-                #print(offset)
+                # print(offset)
                 ds = ogr.Open('tmp/testopenfilegdb_fuzzed.gdb')
                 error_msg = gdal.GetLastErrorMsg()
                 feat = None
@@ -1080,7 +1080,7 @@ def ogr_openfilegdb_10():
         for (filename, offsets) in [('tmp/testopenfilegdb_fuzzed.gdb/a00000004.gdbindexes', [0, 4, 5, 44, 45, 66, 67, 100, 101, 116, 117, 148, 149, 162, 163, 206, 207, 220, 221, 224, 280, 281]),
                                     ('tmp/testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx', [4, 12, 8196, 8300, 8460, 8620, 8780, 8940, 9100, 12290, 12294, 12298])]:
             for offset in offsets:
-                #print(offset)
+                # print(offset)
                 backup = fuzz(filename, offset)
                 gdal.PushErrorHandler('CPLQuietErrorHandler')
                 gdal.ErrorReset()
@@ -1610,7 +1610,7 @@ def ogr_openfilegdb_cleanup():
 
 gdaltest_list = [
     ogr_openfilegdb_init,
-    #ogr_openfilegdb_make_test_data,
+    # ogr_openfilegdb_make_test_data,
     ogr_openfilegdb_1,
     ogr_openfilegdb_1_92,
     ogr_openfilegdb_1_93,

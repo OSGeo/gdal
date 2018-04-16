@@ -156,7 +156,7 @@ def ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
         feat = lyr.GetNextFeature()
     # This won't work properly until text support is added to the
     # PDF vector feature reader
-    #if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT(2 49)')) != 0:
+    # if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT(2 49)')) != 0:
     #    feat.DumpReadable()
     #    gdaltest.post_reason('fail')
     #    return 'fail'

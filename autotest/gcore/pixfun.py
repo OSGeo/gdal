@@ -889,7 +889,7 @@ def pixfun_dB2amp():
         return 'fail'
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    #if not numpy.alltrue(data == 10.**(refdata/20.)):
+    # if not numpy.alltrue(data == 10.**(refdata/20.)):
     if not numpy.allclose(data, 10.**(refdata / 20.)):
         return 'fail'
 

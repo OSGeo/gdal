@@ -1420,7 +1420,7 @@ def gpkg_14():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         ds.GetRasterBand(4).Fill(255)
-        #sys.exit(0)
+        # sys.exit(0)
         return 'fail'
     ds = None
 

@@ -168,11 +168,11 @@ def ogr_gpkg_3():
         return 'skip'
 
     # Test invalid FORMAT
-    #gdal.PushErrorHandler('CPLQuietErrorHandler')
+    # gdal.PushErrorHandler('CPLQuietErrorHandler')
     srs4326 = osr.SpatialReference()
     srs4326.ImportFromEPSG(4326)
     lyr = gdaltest.gpkg_ds.CreateLayer('first_layer', geom_type=ogr.wkbPoint, srs=srs4326, options=['GEOMETRY_NAME=gpkg_geometry', 'SPATIAL_INDEX=NO'])
-    #gdal.PopErrorHandler()
+    # gdal.PopErrorHandler()
     if lyr is None:
         return 'fail'
 
@@ -2231,8 +2231,8 @@ def ogr_gpkg_24():
     lyr.CreateField(field_defn)
 
     #field_defn = ogr.FieldDefn( 'field_time', ogr.OFTTime )
-    #field_defn.SetDefault("CURRENT_TIME")
-    #lyr.CreateField(field_defn)
+    # field_defn.SetDefault("CURRENT_TIME")
+    # lyr.CreateField(field_defn)
 
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
@@ -2253,8 +2253,8 @@ def ogr_gpkg_24():
 
     # Doesn't work currently. Would require rewriting the whole table
     #field_defn = ogr.FieldDefn( 'field_datetimeX', ogr.OFTDateTime )
-    #field_defn.SetDefault("CURRENT_TIMESTAMP")
-    #lyr.CreateField(field_defn)
+    # field_defn.SetDefault("CURRENT_TIMESTAMP")
+    # lyr.CreateField(field_defn)
 
     ds = None
 
@@ -2291,7 +2291,7 @@ def ogr_gpkg_24():
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_date')).GetDefault() != "CURRENT_DATE":
         gdaltest.post_reason('fail')
         return 'fail'
-    #if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_time')).GetDefault() != "CURRENT_TIME":
+    # if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_time')).GetDefault() != "CURRENT_TIME":
     #    gdaltest.post_reason('fail')
     #    return 'fail'
     f = lyr.GetNextFeature()
@@ -2556,12 +2556,12 @@ def ogr_gpkg_26():
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
         ret = lyr.CreateFeature(f)
 
-        #ds.CommitTransaction()
+        # ds.CommitTransaction()
         ds.ReleaseResultSet(ds.ExecuteSQL('SELECT 1'))
         #ds = None
         #ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update = 1)
         #lyr = ds.GetLayerByName('test3')
-        #ds.StartTransaction()
+        # ds.StartTransaction()
 
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
@@ -2894,7 +2894,7 @@ def ogr_gpkg_test_ogrsf():
         return 'skip'
 
     gdaltest.gpkg_ds = None
-    #sys.exit(0)
+    # sys.exit(0)
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/gpkg_test.gpkg --config OGR_SQLITE_SYNCHRONOUS OFF')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
