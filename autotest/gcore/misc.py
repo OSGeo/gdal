@@ -154,11 +154,11 @@ def misc_5_internal(drv, datatype, nBands):
     #print('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
     try:
         os.mkdir(dirname)
-    except:
+    except OSError:
         try:
             os.stat(dirname)
             # Hum the directory already exists... Not expected, but let's try to go on
-        except:
+        except OSError:
             reason = 'Cannot create %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
             gdaltest.post_reason(reason)
             return 0
@@ -195,7 +195,7 @@ def misc_5_internal(drv, datatype, nBands):
 
     try:
         shutil.rmtree(dirname)
-    except:
+    except OSError:
         reason = 'Cannot remove %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
         gdaltest.post_reason(reason)
         return 0
@@ -209,7 +209,7 @@ def misc_5():
 
     try:
         shutil.rmtree('tmp/tmp')
-    except:
+    except OSError:
         pass
 
     try:
@@ -218,7 +218,7 @@ def misc_5():
         try:
             os.stat('tmp/tmp')
             # Hum the directory already exists... Not expected, but let's try to go on
-        except:
+        except OSError:
             gdaltest.post_reason('Cannot create tmp/tmp')
             return 'fail'
 
@@ -305,11 +305,11 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                 dirname = 'tmp/tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
                 try:
                     os.mkdir(dirname)
-                except:
+                except OSError:
                     try:
                         os.stat(dirname)
                         # Hum the directory already exists... Not expected, but let's try to go on
-                    except:
+                    except OSError:
                         reason = 'Cannot create %s before drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
                         gdaltest.post_reason(reason)
                         return 'fail'
@@ -327,7 +327,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
 
                 try:
                     shutil.rmtree(dirname)
-                except:
+                except OSError:
                     reason = 'Cannot remove %s after drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
                     gdaltest.post_reason(reason)
                     return 'fail'
@@ -375,7 +375,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
 
                             try:
                                 shutil.rmtree(dirname)
-                            except:
+                            except OSError:
                                 pass
 
                             return 'fail'
@@ -384,11 +384,11 @@ def misc_6_internal(datatype, nBands, setDriversDone):
 
                         try:
                             shutil.rmtree(dirname)
-                        except:
+                        except OSError:
                             pass
                         try:
                             os.mkdir(dirname)
-                        except:
+                        except OSError:
                             reason = 'Cannot create %s before drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
                             gdaltest.post_reason(reason)
                             return 'fail'
@@ -403,16 +403,16 @@ def misc_6():
 
     try:
         shutil.rmtree('tmp/tmp')
-    except:
+    except OSError:
         pass
 
     try:
         os.mkdir('tmp/tmp')
-    except:
+    except OSError:
         try:
             os.stat('tmp/tmp')
             # Hum the directory already exists... Not expected, but let's try to go on
-        except:
+        except OSError:
             gdaltest.post_reason('Cannot create tmp/tmp')
             return 'fail'
 
@@ -514,7 +514,7 @@ def misc_10():
 
     try:
         os.remove('data/byte.tif.gz.properties')
-    except:
+    except OSError:
         pass
 
     f = gdal.VSIFOpenL('/vsigzip/./data/byte.tif.gz', 'rb')
@@ -531,7 +531,7 @@ def misc_10():
 
     try:
         os.remove('data/byte.tif.gz.properties')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -548,7 +548,7 @@ def misc_11():
 
     try:
         os.unlink('tmp/symlink.tif')
-    except:
+    except OSError:
         pass
     os.symlink('GTIFF_DIR:1:data/byte.tif', 'tmp/symlink.tif')
 
@@ -670,7 +670,7 @@ def misc_cleanup():
 
     try:
         shutil.rmtree('tmp/tmp')
-    except:
+    except OSError:
         pass
 
     return 'success'

@@ -62,7 +62,7 @@ def urlescape(url):
     try:
         import urllib
         url = urllib.quote(url)
-    except:
+    except ImportError:
         pass
     return url
 

@@ -67,7 +67,7 @@ def ogr_sqlite_1():
 
     try:
         os.remove('tmp/sqlite_test.db')
-    except:
+    except OSError:
         pass
 
     # This is to speed-up the runtime of tests on EXT4 filesystems

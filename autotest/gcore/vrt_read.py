@@ -271,7 +271,7 @@ def vrt_read_6():
     try:
         os.unlink('data/byte.tif.aux.xml')
         print('Removed data/byte.tif.aux.xml. Was not supposed to exist...')
-    except:
+    except OSError:
         pass
 
     src_ds = gdal.Open('data/byte.tif')
@@ -498,7 +498,7 @@ def vrt_read_11():
     try:
         os.remove('tmp/byte.vrt')
         print('Removed tmp/byte.vrt. Was not supposed to exist...')
-    except:
+    except OSError:
         pass
 
     os.symlink(os.path.join(os.getcwd(), 'data/byte.vrt'), 'tmp/byte.vrt')
@@ -525,7 +525,7 @@ def vrt_read_12():
     try:
         os.remove('tmp/byte.vrt')
         print('Removed tmp/byte.vrt. Was not supposed to exist...')
-    except:
+    except OSError:
         pass
 
     os.symlink('../data/byte.vrt', 'tmp/byte.vrt')
@@ -551,12 +551,12 @@ def vrt_read_13():
     try:
         os.remove('tmp/byte.vrt')
         print('Removed tmp/byte.vrt. Was not supposed to exist...')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/other_byte.vrt')
         print('Removed tmp/other_byte.vrt. Was not supposed to exist...')
-    except:
+    except OSError:
         pass
 
     os.symlink('../data/byte.vrt', 'tmp/byte.vrt')

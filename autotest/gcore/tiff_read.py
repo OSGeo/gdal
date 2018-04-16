@@ -331,7 +331,7 @@ def tiff_read_gzip():
         os.stat('data/byte.tif.gz.properties')
         gdaltest.post_reason('did not expect data/byte.tif.gz.properties')
         return 'fail'
-    except:
+    except OSError:
         return 'success'
 
 ###############################################################################
@@ -831,7 +831,7 @@ def tiff_read_stats_from_pam():
     ds = None
     try:
         os.stat('data/byte.tif.aux.xml')
-    except:
+    except OSError:
         gdaltest.post_reason('Expected generation of data/byte.tif.aux.xml')
         return 'fail'
 
@@ -887,7 +887,7 @@ Definition Table
         os.stat('tmp/tiff_read_from_tab.tab')
         gdaltest.post_reason('did not expect to find .tab file at that point')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     if gt != (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0):
@@ -1894,7 +1894,7 @@ def tiff_read_md1():
         os.stat('data/md_dg.tif.aux.xml')
         gdaltest.post_reason('Expected not generation of data/md_dg.tif.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -1944,7 +1944,7 @@ def tiff_read_md2():
         os.stat('data/md_dg_2.tif.aux.xml')
         gdaltest.post_reason('Expected not generation of data/md_dg_2.tif.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -1994,7 +1994,7 @@ def tiff_read_md3():
         os.stat('data/md_ge_rgb_0010000.tif.aux.xml')
         gdaltest.post_reason('Expected not generation of data/md_ge_rgb_0010000.tif.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -2044,7 +2044,7 @@ def tiff_read_md4():
         os.stat('data/md_ov.tif.aux.xml')
         gdaltest.post_reason('Expected not generation of data/md_ov.tif.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -2094,7 +2094,7 @@ def tiff_read_md5():
         os.stat('data/md_rdk1.tif.aux.xml')
         gdaltest.post_reason('Expected not generation of data/md_rdk1.tif.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -2144,7 +2144,7 @@ def tiff_read_md6():
         os.stat('data/md_ls_b1.tif.aux.xml')
         gdaltest.post_reason('Expected not generation of data/md_ls_b1.tif.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -2194,7 +2194,7 @@ def tiff_read_md7():
         os.stat('data/spot/md_spot.tif.aux.xml')
         gdaltest.post_reason('Expected not generation of data/spot/md_spot.tif.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -2244,7 +2244,7 @@ def tiff_read_md8():
         os.stat('data/md_re.tif.aux.xml')
         gdaltest.post_reason('Expected not generation of data/md_re.tif.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -2291,7 +2291,7 @@ def tiff_read_md9():
         os.stat('data/alos/IMG-md_alos.tif.aux.xml')
         gdaltest.post_reason('Expected not generation of data/alos/IMG-md_alos.tif.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -2341,7 +2341,7 @@ def tiff_read_md10():
         os.stat('data/md_eros.tif.aux.xml')
         gdaltest.post_reason('Expected not generation of data/md_eros.tif.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -2391,7 +2391,7 @@ def tiff_read_md11():
         os.stat('data/md_kompsat.tif.aux.xml')
         gdaltest.post_reason('Expected not generation of data/md_kompsat.tif.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -2443,7 +2443,7 @@ def tiff_read_md12():
         os.stat('data/md_kompsat.tif.aux.xml')
         gdaltest.post_reason('Expected not generation of data/md_kompsat.tif.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'

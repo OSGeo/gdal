@@ -50,11 +50,11 @@ def test_gdaltindex_1():
 
     try:
         os.remove('tmp/tileindex.shp')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/tileindex.dbf')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/tileindex.shx')
@@ -62,7 +62,7 @@ def test_gdaltindex_1():
         pass
     try:
         os.remove('tmp/tileindex.prj')
-    except:
+    except OSError:
         pass
 
     drv = gdal.GetDriverByName('GTiff')

@@ -1440,7 +1440,7 @@ def test_ogr2ogr_39():
 
     try:
         os.mkdir('tmp/test_ogr2ogr_39_src')
-    except:
+    except OSError:
         pass
     shutil.copy('../ogr/data/poly.shp', 'tmp/test_ogr2ogr_39_src')
     shutil.copy('../ogr/data/poly.shx', 'tmp/test_ogr2ogr_39_src')

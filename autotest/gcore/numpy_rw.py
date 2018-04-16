@@ -46,7 +46,7 @@ def numpy_rw_1():
     try:
         from osgeo import gdalnumeric
         gdalnumeric.zeros
-    except:
+    except (ImportError, AttributeError):
         return 'skip'
 
     gdal.AllRegister()

@@ -996,7 +996,7 @@ def test_gdalwarp_34():
 
     try:
         os.remove('tmp/testgdalwarp34.tif')
-    except:
+    except OSError:
         pass
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/testgdalwarp34src_1.tif -srcwin 0 0 10 20')
@@ -1583,96 +1583,96 @@ def test_gdalwarp_cleanup():
     for i in range(37):
         try:
             os.remove('tmp/testgdalwarp' + str(i + 1) + '.tif')
-        except:
+        except OSError:
             pass
         try:
             os.remove('tmp/testgdalwarp' + str(i + 1) + '.vrt')
-        except:
+        except OSError:
             pass
         try:
             os.remove('tmp/testgdalwarp' + str(i + 1) + '.tif.aux.xml')
-        except:
+        except OSError:
             pass
     try:
         os.remove('tmp/testgdalwarp_gcp.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/testgdalwarp24src.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/testgdalwarp24dst.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/testgdalwarp30_1.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/testgdalwarp30_2.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/testgdalwarp30_3.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/testgdalwarp33_mask.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/testgdalwarp37.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/testgdalwarp38.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_gdalwarp_39.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_gdalwarp_40_src.tif')
         os.remove('tmp/test_gdalwarp_40.tif')
         os.remove('tmp/test_gdalwarp_40.vrt')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_gdalwarp_41_src.tif')
         os.remove('tmp/test_gdalwarp_41.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/small_world_left.tif')
         os.remove('tmp/small_world_right.tif')
         os.remove('tmp/test_gdalwarp_42.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/small_world.tif')
         os.remove('tmp/test_gdalwarp_43.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_gdalwarp_44.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_gdalwarp_45.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_gdalwarp_46.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/cutline_4326.shp')
         os.remove('tmp/cutline_4326.shx')
         os.remove('tmp/cutline_4326.dbf')
         os.remove('tmp/cutline_4326.prj')
-    except:
+    except OSError:
         pass
 
     return 'success'

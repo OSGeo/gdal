@@ -657,7 +657,7 @@ def test_gdal_translate_23():
         os.stat('tmp/test_gdal_translate_23.tif.aux.xml')
         gdaltest.post_reason('did not expect .aux.xml file presence')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     gdal.Unlink('../gcore/data/byte.tif.aux.xml')
@@ -1026,47 +1026,47 @@ def test_gdal_translate_cleanup():
     for i in range(14):
         try:
             os.remove('tmp/test' + str(i + 1) + '.tif')
-        except:
+        except OSError:
             pass
         try:
             os.remove('tmp/test' + str(i + 1) + '.tif.aux.xml')
-        except:
+        except OSError:
             pass
     try:
         os.remove('tmp/test15_1.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test16.vrt')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test17.vrt')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test18_1.vrt')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test18_2.vrt')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test18_2.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_gdal_translate_19_src.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_gdal_translate_19_dst.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_gdal_translate_20_src.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_gdal_translate_20_dst.tif')
@@ -1086,7 +1086,7 @@ def test_gdal_translate_cleanup():
         pass
     try:
         os.remove('tmp/test_gdal_translate_24.tif')
-    except:
+    except OSError:
         pass
     try:
         gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_translate_25.tif')
@@ -1108,23 +1108,23 @@ def test_gdal_translate_cleanup():
         pass
     try:
         os.remove('tmp/test_gdal_translate_29.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_gdal_translate_29.vrt')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_gdal_translate_30.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_gdal_translate_31.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_gdal_translate_32.tif')
-    except:
+    except OSError:
         pass
     return 'success'
 

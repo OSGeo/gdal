@@ -120,7 +120,7 @@ def test_gdaladdo_3():
 
     try:
         os.stat('tmp/test_gdaladdo_3.tif.ovr')
-    except:
+    except OSError:
         gdaltest.post_reason('no external overview.')
         return 'fail'
 
@@ -148,7 +148,7 @@ def test_gdaladdo_4():
         os.stat('tmp/test_gdaladdo_3.tif.ovr')
         gdaltest.post_reason('.ovr file still exists')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     os.remove('tmp/test_gdaladdo_3.tif')

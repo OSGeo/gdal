@@ -242,7 +242,7 @@ def overviewds_4():
 
     try:
         os.remove('tmp/byte_rpc.txt')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -346,17 +346,17 @@ def overviewds_cleanup():
     gdal.GetDriverByName('GTiff').Delete('tmp/byte.tif')
     try:
         os.remove('tmp/byte_rpc.txt')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/sstgeo.tif')
         os.remove('tmp/sstgeo.vrt')
         os.remove('tmp/sstgeo.vrt.ovr')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/byte.vrt')
-    except:
+    except OSError:
         pass
 
     return 'success'

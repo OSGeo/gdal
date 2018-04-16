@@ -52,15 +52,15 @@ def test_gdal_contour_1():
 
     try:
         os.remove('tmp/contour.shp')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/contour.dbf')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/contour.shx')
-    except:
+    except OSError:
         pass
 
     drv = gdal.GetDriverByName('GTiff')
@@ -151,15 +151,15 @@ def test_gdal_contour_2():
 
     try:
         os.remove('tmp/contour.shp')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/contour.dbf')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/contour.shx')
-    except:
+    except OSError:
         pass
 
     # put -3d just after -fl to test #2793
@@ -216,15 +216,15 @@ def test_gdal_contour_3():
 
     try:
         os.remove('tmp/contour.shp')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/contour.dbf')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/contour.shx')
-    except:
+    except OSError:
         pass
 
     # put -3d just after -fl to test #2793
@@ -262,15 +262,15 @@ def test_gdal_contour_4():
 
     try:
         os.remove('tmp/contour_orientation.shp')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/contour_orientation.dbf')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/contour_orientation.shx')
-    except:
+    except OSError:
         pass
 
     drv = gdal.GetDriverByName('GTiff')
@@ -424,7 +424,7 @@ def test_gdal_contour_cleanup():
     try:
         os.remove('tmp/gdal_contour.tif')
         os.remove('tmp/gdal_contour_orientation.tif')
-    except:
+    except OSError:
         pass
 
     return 'success'

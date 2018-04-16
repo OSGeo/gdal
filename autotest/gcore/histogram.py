@@ -117,7 +117,7 @@ def histogram_4():
 
     try:
         os.unlink('data/int32_withneg.grd.aux.xml')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -142,7 +142,7 @@ def histogram_5():
 
     try:
         os.unlink('data/utmsmall.tif.aux.xml')
-    except:
+    except OSError:
         pass
 
     return 'success'

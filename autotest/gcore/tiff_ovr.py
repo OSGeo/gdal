@@ -290,7 +290,7 @@ def tiff_ovr_6():
 
     try:
         os.stat('tmp/ovr6.aux')
-    except:
+    except OSError:
         gdaltest.post_reason('no external overview.')
         return 'fail'
 
