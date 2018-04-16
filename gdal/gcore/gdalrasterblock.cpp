@@ -89,7 +89,7 @@ static CPLLockType GetLockType()
         bDebugContention = CPLTestBool(
             CPLGetConfigOption("GDAL_RB_LOCK_DEBUG_CONTENTION", "NO"));
     }
-    return (CPLLockType) nLockType;
+    return static_cast<CPLLockType>(nLockType);
 }
 
 #define INITIALIZE_LOCK         CPLLockHolderD( &hRBLock, GetLockType() ); \
@@ -212,7 +212,7 @@ int CPL_STDCALL GDALGetCacheMax()
         }
         nRes = INT_MAX;
     }
-    return (int)nRes;
+    return static_cast<int>(nRes);
 }
 
 /************************************************************************/

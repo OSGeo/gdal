@@ -272,7 +272,8 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
 
   case TIFF_SBYTE:
     for(;count>0;count--) {
-      snprintf(szTemp, sizeof(szTemp), "%s%d", sep, *(const char *)data++);
+      snprintf(szTemp, sizeof(szTemp), "%s%d", sep, *reinterpret_cast<const char *>(data));
+      data ++;
       sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
@@ -287,7 +288,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
     break;
 
   case TIFF_SHORT: {
-    const GUInt16 *wp = (const GUInt16*)data;
+    const GUInt16 *wp = reinterpret_cast<const GUInt16 *>(data);
     for(;count>0;count--) {
       snprintf(szTemp, sizeof(szTemp), "%s%u", sep, *wp++);
       sep = " ";
@@ -299,7 +300,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
     break;
   }
   case TIFF_SSHORT: {
-    const GInt16 *wp = (const GInt16*)data;
+    const GInt16 *wp = reinterpret_cast<const GInt16 *>(data);
     for(;count>0;count--) {
       snprintf(szTemp, sizeof(szTemp), "%s%d", sep, *wp++);
       sep = " ";
@@ -311,9 +312,10 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
     break;
   }
   case TIFF_LONG: {
-    const GUInt32 *lp = (const GUInt32*)data;
+    const GUInt32 *lp = reinterpret_cast<const GUInt32 *>(data);
     for(;count>0;count--) {
-      snprintf(szTemp, sizeof(szTemp), "%s%lu", sep, (unsigned long) *lp++);
+      snprintf(szTemp, sizeof(szTemp), "%s%u", sep, *lp);
+      lp++;
       sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
@@ -323,9 +325,10 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
     break;
   }
   case TIFF_SLONG: {
-    const GInt32 *lp = (const GInt32*)data;
+    const GInt32 *lp = reinterpret_cast<const GInt32 *>(data);
     for(;count>0;count--) {
-      snprintf(szTemp, sizeof(szTemp), "%s%ld", sep, (long) *lp++);
+      snprintf(szTemp, sizeof(szTemp), "%s%d", sep, *lp++);
+      lp++;
       sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
@@ -335,7 +338,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
     break;
   }
   case TIFF_RATIONAL: {
-    const GUInt32 *lp = (const GUInt32*)data;
+    const GUInt32 *lp = reinterpret_cast<const GUInt32 *>(data);
       //      if(bSwabflag)
       //      TIFFSwabArrayOfLong((GUInt32*) data, 2*count);
     for(;count>0;count--) {
@@ -344,7 +347,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
       }
       else{
           CPLsnprintf(szTemp, sizeof(szTemp), "%s(%g)", sep,
-              (double) lp[0]/ (double)lp[1]);
+              static_cast<double>(lp[0])/ static_cast<double>(lp[1]));
       }
       sep = " ";
       lp += 2;
@@ -356,14 +359,14 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
     break;
   }
   case TIFF_SRATIONAL: {
-    const GInt32 *lp = (const GInt32*)data;
+    const GInt32 *lp = reinterpret_cast<const GInt32 *>(data);
     for(;count>0;count--) {
       if( (lp[0]==0) || (lp[1] == 0) ) {
           snprintf(szTemp, sizeof(szTemp), "%s(0)",sep);
       }
       else{
         CPLsnprintf(szTemp, sizeof(szTemp), "%s(%g)", sep,
-            (double) lp[0]/ (double) lp[1]);
+            static_cast<double>(lp[0])/ static_cast<double>(lp[1]));
       }
       sep = " ";
       lp += 2;
@@ -375,7 +378,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
     break;
   }
   case TIFF_FLOAT: {
-    const float *fp = (const float *)data;
+    const float *fp = reinterpret_cast<const float *>(data);
     for(;count>0;count--) {
       CPLsnprintf(szTemp, sizeof(szTemp), "%s%g", sep, *fp++);
       sep = " ";
@@ -387,7 +390,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
     break;
   }
   case TIFF_DOUBLE: {
-    const double *dp = (const double *)data;
+    const double *dp = reinterpret_cast<const double *>(data);
     for(;count>0;count--) {
       CPLsnprintf(szTemp, sizeof(szTemp), "%s%g", sep, *dp++);
       sep = " ";
@@ -618,7 +621,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 /*      Print tags                                                      */
 /* -------------------------------------------------------------------- */
         const int nDataWidth =
-            EXIF_TIFFDataWidth((GDALEXIFTIFFDataType) poTIFFDirEntry->tdir_type);
+            EXIF_TIFFDataWidth(static_cast<GDALEXIFTIFFDataType>(poTIFFDirEntry->tdir_type));
         const int space = poTIFFDirEntry->tdir_count * nDataWidth;
 
         /* Previous multiplication could overflow, hence this additional check */
@@ -681,7 +684,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 /* -------------------------------------------------------------------- */
         else if (space > 0 && space < MAXSTRINGLENGTH)
         {
-            unsigned char *data = (unsigned char *)VSIMalloc(space);
+            unsigned char *data = static_cast<unsigned char *>(VSIMalloc(space));
 
             if (data) {
                 CPL_IGNORE_RET_VAL(VSIFSeekL(fp,poTIFFDirEntry->tdir_offset+nTIFFHEADER,SEEK_SET));
@@ -739,7 +742,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Invalid EXIF header size: %ld, ignoring tag.",
-                      (long) space );
+                      static_cast<long>(space) );
         }
 
         papszMetadata = CSLSetNameValue(papszMetadata, szName, szTemp);

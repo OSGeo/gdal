@@ -423,7 +423,7 @@ void GDALVirtualMem::DoIOPixelInterleaved(
     }
 
     // How many whole lines can we store/load ?
-    coord_type nLineCount = (coord_type)((nBytes - nOffsetShift) / nLineSpace);
+    coord_type nLineCount = static_cast<coord_type>((nBytes - nOffsetShift) / nLineSpace);
     if( y + nLineCount > nBufYSize )
         nLineCount = nBufYSize - y;
     if( nLineCount > 0 )
@@ -516,7 +516,7 @@ void GDALVirtualMem::DoIOBandSequential(
     }
 
     // Yes, enough place to read/write until end of line
-    if( x > 0 || nBytes - nOffsetShift < (size_t)nLineSpace )
+    if( x > 0 || nBytes - nOffsetShift < static_cast<size_t>(nLineSpace) )
     {
         CPL_IGNORE_RET_VAL(GDALRasterIO(
             hBand ? hBand : GDALGetRasterBand(hDS, panBandMap[band]),
@@ -537,7 +537,7 @@ void GDALVirtualMem::DoIOBandSequential(
     }
 
     // How many whole lines can we store/load ?
-    coord_type nLineCount = (coord_type)((nBytes - nOffsetShift) / nLineSpace);
+    coord_type nLineCount = static_cast<coord_type>((nBytes - nOffsetShift) / nLineSpace);
     if( y + nLineCount > nBufYSize )
         nLineCount = nBufYSize - y;
     if( nLineCount > 0 )
@@ -566,7 +566,7 @@ void GDALVirtualMem::DoIOBandSequential(
     if( nOffsetShift < nBytes )
     {
         DoIOBandSequential( eRWFlag, nOffsetRecompute,
-               (char*) pPage + nOffsetShift, nBytes - nOffsetShift );
+               static_cast<char*>(pPage) + nOffsetShift, nBytes - nOffsetShift );
     }
 }
 
@@ -791,7 +791,7 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
         nReqMem = nBandCount * nBandSpace;
     else
         nReqMem = nBufYSize * nLineSpace;
-    if( nReqMem != (GUIntBig)(size_t)nReqMem )
+    if( nReqMem != static_cast<GUIntBig>(static_cast<size_t>(nReqMem)) )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
                   "Cannot reserve " CPL_FRMT_GUIB " bytes", nReqMem );
@@ -1372,9 +1372,9 @@ static CPLVirtualMem* GDALGetTiledVirtualMem(
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     int nTilesPerRow = (nXSize + nTileXSize - 1) / nTileXSize;
     int nTilesPerCol = (nYSize + nTileYSize - 1) / nTileYSize;
-    GUIntBig nReqMem = (GUIntBig)nTilesPerRow * nTilesPerCol *
+    GUIntBig nReqMem = static_cast<GUIntBig>(nTilesPerRow) * nTilesPerCol *
                         nTileXSize * nTileYSize * nBandCount * nDataTypeSize;
-    if( nReqMem != (GUIntBig)(size_t)nReqMem )
+    if( nReqMem != static_cast<GUIntBig>(static_cast<size_t>(nReqMem)) )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
                   "Cannot reserve " CPL_FRMT_GUIB " bytes", nReqMem );

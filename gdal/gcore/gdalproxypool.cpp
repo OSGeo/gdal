@@ -330,7 +330,7 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
     else
     {
         /* Prepend */
-        cur = (GDALProxyPoolCacheEntry*) CPLMalloc(sizeof(GDALProxyPoolCacheEntry));
+        cur = static_cast<GDALProxyPoolCacheEntry*>(CPLMalloc(sizeof(GDALProxyPoolCacheEntry)));
         if (lastEntry == nullptr)
             lastEntry = cur;
         cur->prev = nullptr;
@@ -513,8 +513,6 @@ void GDALDatasetPool::CloseDataset(const char* pszFileName, GDALAccess eAccess)
     singleton->_CloseDataset(pszFileName, eAccess);
 }
 
-CPL_C_START
-
 typedef struct
 {
     char* pszDomain;
@@ -524,22 +522,22 @@ typedef struct
 static
 unsigned long hash_func_get_metadata(const void* _elt)
 {
-    GetMetadataElt* elt = (GetMetadataElt*) _elt;
+    const GetMetadataElt* elt = static_cast<const GetMetadataElt*>(_elt);
     return CPLHashSetHashStr(elt->pszDomain);
 }
 
 static
 int equal_func_get_metadata(const void* _elt1, const void* _elt2)
 {
-    GetMetadataElt* elt1 = (GetMetadataElt*) _elt1;
-    GetMetadataElt* elt2 = (GetMetadataElt*) _elt2;
+    const GetMetadataElt* elt1 = static_cast<const GetMetadataElt*>(_elt1);
+    const GetMetadataElt* elt2 = static_cast<const GetMetadataElt*>(_elt2);
     return CPLHashSetEqualStr(elt1->pszDomain, elt2->pszDomain);
 }
 
 static
 void free_func_get_metadata(void* _elt)
 {
-    GetMetadataElt* elt = (GetMetadataElt*) _elt;
+    GetMetadataElt* elt = static_cast<GetMetadataElt*>(_elt);
     CPLFree(elt->pszDomain);
     CSLDestroy(elt->papszMetadata);
     CPLFree(elt);
@@ -555,15 +553,15 @@ typedef struct
 static
 unsigned long hash_func_get_metadata_item(const void* _elt)
 {
-    GetMetadataItemElt* elt = (GetMetadataItemElt*) _elt;
+    const GetMetadataItemElt* elt = static_cast<const GetMetadataItemElt*>(_elt);
     return CPLHashSetHashStr(elt->pszName) ^ CPLHashSetHashStr(elt->pszDomain);
 }
 
 static
 int equal_func_get_metadata_item(const void* _elt1, const void* _elt2)
 {
-    GetMetadataItemElt* elt1 = (GetMetadataItemElt*) _elt1;
-    GetMetadataItemElt* elt2 = (GetMetadataItemElt*) _elt2;
+    const GetMetadataItemElt* elt1 = static_cast<const GetMetadataItemElt*>(_elt1);
+    const GetMetadataItemElt* elt2 = static_cast<const GetMetadataItemElt*>(_elt2);
     return CPLHashSetEqualStr(elt1->pszName, elt2->pszName) &&
            CPLHashSetEqualStr(elt1->pszDomain, elt2->pszDomain);
 }
@@ -571,14 +569,12 @@ int equal_func_get_metadata_item(const void* _elt1, const void* _elt2)
 static
 void free_func_get_metadata_item(void* _elt)
 {
-    GetMetadataItemElt* elt = (GetMetadataItemElt*) _elt;
+    GetMetadataItemElt* elt = static_cast<GetMetadataItemElt*>(_elt);
     CPLFree(elt->pszName);
     CPLFree(elt->pszDomain);
     CPLFree(elt->pszMetadataItem);
     CPLFree(elt);
 }
-
-CPL_C_END
 
 /* ******************************************************************** */
 /*                     GDALProxyPoolDataset                             */
@@ -842,7 +838,7 @@ char      **GDALProxyPoolDataset::GetMetadata( const char * pszDomain  )
 
     char** papszUnderlyingMetadata = poUnderlyingDataset->GetMetadata(pszDomain);
 
-    GetMetadataElt* pElt = (GetMetadataElt*) CPLMalloc(sizeof(GetMetadataElt));
+    GetMetadataElt* pElt = static_cast<GetMetadataElt*>(CPLMalloc(sizeof(GetMetadataElt)));
     pElt->pszDomain = (pszDomain) ? CPLStrdup(pszDomain) : nullptr;
     pElt->papszMetadata = CSLDuplicate(papszUnderlyingMetadata);
     CPLHashSetInsert(metadataSet, pElt);
@@ -871,7 +867,7 @@ const char *GDALProxyPoolDataset::GetMetadataItem( const char * pszName,
     const char* pszUnderlyingMetadataItem =
             poUnderlyingDataset->GetMetadataItem(pszName, pszDomain);
 
-    GetMetadataItemElt* pElt = (GetMetadataItemElt*) CPLMalloc(sizeof(GetMetadataItemElt));
+    GetMetadataItemElt* pElt = static_cast<GetMetadataItemElt*>(CPLMalloc(sizeof(GetMetadataItemElt)));
     pElt->pszName = (pszName) ? CPLStrdup(pszName) : nullptr;
     pElt->pszDomain = (pszDomain) ? CPLStrdup(pszDomain) : nullptr;
     pElt->pszMetadataItem = (pszUnderlyingMetadataItem) ? CPLStrdup(pszUnderlyingMetadataItem) : nullptr;
@@ -1142,7 +1138,7 @@ char      **GDALProxyPoolRasterBand::GetMetadata( const char * pszDomain  )
 
     char** papszUnderlyingMetadata = poUnderlyingRasterBand->GetMetadata(pszDomain);
 
-    GetMetadataElt* pElt = (GetMetadataElt*) CPLMalloc(sizeof(GetMetadataElt));
+    GetMetadataElt* pElt = static_cast<GetMetadataElt*>(CPLMalloc(sizeof(GetMetadataElt)));
     pElt->pszDomain = (pszDomain) ? CPLStrdup(pszDomain) : nullptr;
     pElt->papszMetadata = CSLDuplicate(papszUnderlyingMetadata);
     CPLHashSetInsert(metadataSet, pElt);
@@ -1171,7 +1167,7 @@ const char *GDALProxyPoolRasterBand::GetMetadataItem( const char * pszName,
     const char* pszUnderlyingMetadataItem =
             poUnderlyingRasterBand->GetMetadataItem(pszName, pszDomain);
 
-    GetMetadataItemElt* pElt = (GetMetadataItemElt*) CPLMalloc(sizeof(GetMetadataItemElt));
+    GetMetadataItemElt* pElt = static_cast<GetMetadataItemElt*>(CPLMalloc(sizeof(GetMetadataItemElt)));
     pElt->pszName = (pszName) ? CPLStrdup(pszName) : nullptr;
     pElt->pszDomain = (pszDomain) ? CPLStrdup(pszDomain) : nullptr;
     pElt->pszMetadataItem = (pszUnderlyingMetadataItem) ? CPLStrdup(pszUnderlyingMetadataItem) : nullptr;

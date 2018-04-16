@@ -146,21 +146,21 @@ static inline GDALm256i GDALmm256_setzero_si256()
 static inline GDALm256i GDALmm256_load_si256(GDALm256i const * p)
 {
     GDALm256i reg;
-    reg.low = _mm_load_si128((__m128i const*)p);
-    reg.high = _mm_load_si128((__m128i const*)((char*)p+16));
+    reg.low = _mm_load_si128(reinterpret_cast<__m128i const*>(p));
+    reg.high = _mm_load_si128(reinterpret_cast<__m128i const*>(reinterpret_cast<const char*>(p)+16));
     return reg;
 }
 
 static inline void GDALmm256_store_si256(GDALm256i * p, GDALm256i reg)
 {
-    _mm_store_si128((__m128i*)p, reg.low);
-    _mm_store_si128((__m128i*)((char*)p+16), reg.high);
+    _mm_store_si128(reinterpret_cast<__m128i*>(p), reg.low);
+    _mm_store_si128(reinterpret_cast<__m128i*>(reinterpret_cast<char*>(p)+16), reg.high);
 }
 
 static inline void GDALmm256_storeu_si256(GDALm256i * p, GDALm256i reg)
 {
-    _mm_storeu_si128((__m128i*)p, reg.low);
-    _mm_storeu_si128((__m128i*)((char*)p+16), reg.high);
+    _mm_storeu_si128(reinterpret_cast<__m128i*>(p), reg.low);
+    _mm_storeu_si128(reinterpret_cast<__m128i*>(reinterpret_cast<char*>(p)+16), reg.high);
 }
 
 #define DEFINE_BINARY_MM256(mm256name, mm128name) \

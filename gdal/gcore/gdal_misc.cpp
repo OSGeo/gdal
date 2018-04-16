@@ -206,7 +206,7 @@ static int GetMinBitsForValue(double dValue)
             dValue >= std::numeric_limits<GUInt32>::min() )
             return 32;
     }
-    else if( ((float)dValue) == dValue )
+    else if( static_cast<float>(dValue) == dValue )
     {
         return 32;
     }
@@ -630,10 +630,11 @@ GDALDataType CPL_STDCALL GDALGetDataTypeByName( const char *pszName )
 
     for( int iType = 1; iType < GDT_TypeCount; iType++ )
     {
-        if( GDALGetDataTypeName((GDALDataType)iType) != nullptr
-            && EQUAL(GDALGetDataTypeName((GDALDataType)iType), pszName) )
+        const auto eType = static_cast<GDALDataType>(iType);
+        if( GDALGetDataTypeName(eType) != nullptr
+            && EQUAL(GDALGetDataTypeName(eType), pszName) )
         {
-            return (GDALDataType)iType;
+            return eType;
         }
     }
 
@@ -793,11 +794,11 @@ GDALAsyncStatusType CPL_DLL CPL_STDCALL GDALGetAsyncStatusTypeByName(
 
     for( int iType = 0; iType < GARIO_TypeCount; iType++ )
     {
-        if( GDALGetAsyncStatusTypeName((GDALAsyncStatusType)iType) != nullptr
-            && EQUAL(GDALGetAsyncStatusTypeName((GDALAsyncStatusType)iType),
-                     pszName) )
+        const auto eType = static_cast<GDALAsyncStatusType>(iType);
+        if( GDALGetAsyncStatusTypeName(eType) != nullptr
+            && EQUAL(GDALGetAsyncStatusTypeName(eType), pszName) )
         {
-            return (GDALAsyncStatusType)iType;
+            return eType;
         }
     }
 
@@ -987,10 +988,10 @@ GDALColorInterp GDALGetColorInterpretationByName( const char *pszName )
 
     for( int iType = 0; iType <= GCI_Max; iType++ )
     {
-        if( EQUAL(GDALGetColorInterpretationName((GDALColorInterp)iType),
+        if( EQUAL(GDALGetColorInterpretationName(static_cast<GDALColorInterp>(iType)),
                   pszName) )
         {
-            return (GDALColorInterp)iType;
+            return static_cast<GDALColorInterp>(iType);
         }
     }
 
@@ -1104,52 +1105,52 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
                 switch( poBlock->GetDataType() )
                 {
                   case GDT_Byte:
-                    dfValue = ((GByte *) pDataRef)[iOffset];
+                    dfValue = reinterpret_cast<const GByte*>(pDataRef)[iOffset];
                     break;
                   case GDT_UInt16:
-                    dfValue = ((GUInt16 *) pDataRef)[iOffset];
+                    dfValue = reinterpret_cast<const GUInt16*>(pDataRef)[iOffset];
                     break;
                   case GDT_Int16:
-                    dfValue = ((GInt16 *) pDataRef)[iOffset];
+                    dfValue = reinterpret_cast<const GInt16*>(pDataRef)[iOffset];
                     break;
                   case GDT_UInt32:
-                    dfValue = ((GUInt32 *) pDataRef)[iOffset];
+                    dfValue = reinterpret_cast<const GUInt32*>(pDataRef)[iOffset];
                     break;
                   case GDT_Int32:
-                    dfValue = ((GInt32 *) pDataRef)[iOffset];
+                    dfValue = reinterpret_cast<const GInt32*>(pDataRef)[iOffset];
                     break;
                   case GDT_Float32:
-                    dfValue = ((float *) pDataRef)[iOffset];
+                    dfValue = reinterpret_cast<const float*>(pDataRef)[iOffset];
                     break;
                   case GDT_Float64:
-                    dfValue = ((double *) pDataRef)[iOffset];
+                    dfValue = reinterpret_cast<const double*>(pDataRef)[iOffset];
                     break;
                   case GDT_CInt16:
                   {
                     // TODO(schwehr): Clean up casts.
-                    const double dfReal = ((GInt16 *) pDataRef)[iOffset*2];
-                    const double dfImag = ((GInt16 *) pDataRef)[iOffset*2+1];
+                    const double dfReal = reinterpret_cast<const GInt16*>(pDataRef)[iOffset*2];
+                    const double dfImag = reinterpret_cast<const GInt16*>(pDataRef)[iOffset*2+1];
                     dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
                     break;
                   }
                   case GDT_CInt32:
                   {
-                    const double dfReal = ((GInt32 *) pDataRef)[iOffset*2];
-                    const double dfImag = ((GInt32 *) pDataRef)[iOffset*2+1];
+                    const double dfReal = reinterpret_cast<const GInt32*>(pDataRef)[iOffset*2];
+                    const double dfImag = reinterpret_cast<const GInt32*>(pDataRef)[iOffset*2+1];
                     dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
                     break;
                   }
                   case GDT_CFloat32:
                   {
-                    const double dfReal = ((float *) pDataRef)[iOffset*2];
-                    const double dfImag = ((float *) pDataRef)[iOffset*2+1];
+                    const double dfReal = reinterpret_cast<const float*>(pDataRef)[iOffset*2];
+                    const double dfImag = reinterpret_cast<const float*>(pDataRef)[iOffset*2+1];
                     dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
                     break;
                   }
                   case GDT_CFloat64:
                   {
-                    const double dfReal = ((double *) pDataRef)[iOffset*2];
-                    const double dfImag = ((double *) pDataRef)[iOffset*2+1];
+                    const double dfReal = reinterpret_cast<const double*>(pDataRef)[iOffset*2];
+                    const double dfImag = reinterpret_cast<const double*>(pDataRef)[iOffset*2+1];
                     dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
                     break;
                   }
@@ -1161,7 +1162,7 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
                     continue;
 
                 if( nActualSamples < nSamples )
-                    pafSampleBuf[nActualSamples++] = (float) dfValue;
+                    pafSampleBuf[nActualSamples++] = static_cast<float>(dfValue);
             }
 
             iRemainder = iX - iXValid;
@@ -2143,7 +2144,7 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
         return FALSE;
 
     const int bRet =
-        VSIFWriteL( (void *) osTFWText.c_str(), osTFWText.size(), 1, fpTFW )
+        VSIFWriteL( osTFWText.c_str(), osTFWText.size(), 1, fpTFW )
         == 1;
     if( VSIFCloseL( fpTFW ) != 0 )
         return FALSE;
@@ -3487,7 +3488,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
     if( fp != nullptr )
     {
         if( VSIFReadL( abyHeader, 1, 32, fp ) == 32 &&
-            STARTS_WITH_CI((char *) abyHeader, "EHFA_HEADER_TAG") )
+            STARTS_WITH_CI(reinterpret_cast<const char *>(abyHeader), "EHFA_HEADER_TAG") )
         {
             /* Avoid causing failure in opening of main file from SWIG bindings */
             /* when auxiliary file cannot be opened (#3269) */
@@ -3584,7 +3585,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
         if( fp != nullptr )
         {
             if( VSIFReadL( abyHeader, 1, 32, fp ) == 32 &&
-                STARTS_WITH_CI((char *) abyHeader, "EHFA_HEADER_TAG") )
+                STARTS_WITH_CI(reinterpret_cast<const char *>(abyHeader), "EHFA_HEADER_TAG") )
             {
                 /* Avoid causing failure in opening of main file from SWIG bindings */
                 /* when auxiliary file cannot be opened (#3269) */

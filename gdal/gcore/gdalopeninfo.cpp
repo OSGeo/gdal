@@ -64,7 +64,7 @@ CPL_CVSID("$Id$")
  * @param papszSiblingsIn list of sibling files, or NULL.
  */
 GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
-                            char **papszSiblingsIn ) :
+                            const char * const * papszSiblingsIn ) :
     bHasGotSiblingFiles(false),
     papszSiblingFiles(nullptr),
     nHeaderBytesTried(0),

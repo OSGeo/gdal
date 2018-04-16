@@ -47,21 +47,21 @@ GDALMDReaderRapidEye::GDALMDReaderRapidEye(const char *pszPath,
     const char* pszDirName = CPLGetDirname(pszPath);
     const char* pszBaseName = CPLGetBasename(pszPath);
 
-    const char* pszIMDSourceFilename = CPLFormFilename( pszDirName,
+    CPLString osIMDSourceFilename = CPLFormFilename( pszDirName,
                                                         CPLSPrintf("%s_metadata",
                                                         pszBaseName), "xml" );
-    if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+    if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
-        m_osXMLSourceFilename = pszIMDSourceFilename;
+        m_osXMLSourceFilename = osIMDSourceFilename;
     }
     else
     {
-        pszIMDSourceFilename = CPLFormFilename( pszDirName,
+        osIMDSourceFilename = CPLFormFilename( pszDirName,
                                                 CPLSPrintf("%s_METADATA",
                                                 pszBaseName), "XML" );
-        if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+        if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osXMLSourceFilename = pszIMDSourceFilename;
+            m_osXMLSourceFilename = osIMDSourceFilename;
         }
     }
 

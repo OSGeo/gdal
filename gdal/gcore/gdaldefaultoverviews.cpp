@@ -422,7 +422,7 @@ int GDALOvLevelAdjust( int nOvLevel, int nXSize )
 {
     int nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
 
-    return (int) (0.5 + nXSize / (double) nOXSize);
+    return static_cast<int>(0.5 + nXSize / static_cast<double>(nOXSize));
 }
 
 int GDALOvLevelAdjust2( int nOvLevel, int nXSize, int nYSize )
@@ -813,9 +813,9 @@ GDALDefaultOverviews::BuildOverviews(
                     dfOffset + dfScale * iBand / nBands,
                     dfOffset + dfScale * (iBand+1) / nBands,
                     pfnProgress, pProgressData );
-            eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand,
+            eErr = GDALRegenerateOverviews( GDALRasterBand::ToHandle(poBand),
                                             nNewOverviews,
-                                            (GDALRasterBandH*)papoOverviewBands,
+                                            reinterpret_cast<GDALRasterBandH*>(papoOverviewBands),
                                             pszResampling,
                                             GDALScaledProgress, pScaledProgress );
             GDALDestroyScaledProgress( pScaledProgress );

@@ -1660,7 +1660,7 @@ int GDALValidateOptions( const char* pszOptionList,
         {
             if( bWarnIfMissingKey &&
                 (!EQUAL(pszErrorMessageOptionType, "open option") ||
-                 CPLFetchBool((char**)papszOptionsToValidate,
+                 CPLFetchBool(papszOptionsToValidate,
                               "VALIDATE_OPEN_OPTIONS", true)) )
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
@@ -1867,11 +1867,11 @@ int GDALValidateOptions( const char* pszOptionList,
                 const char* pszMaxSize = CPLGetXMLValue(psChildNode, "maxsize", nullptr);
                 if (pszMaxSize != nullptr)
                 {
-                    if ((int)strlen(pszValue) > atoi(pszMaxSize))
+                    if (static_cast<int>(strlen(pszValue)) > atoi(pszMaxSize))
                     {
                         CPLError(CE_Warning, CPLE_NotSupported,
                              "'%s' is of size %d, whereas maximum size for %s %s is %d.",
-                             pszValue, (int)strlen(pszValue), pszKey,
+                             pszValue, static_cast<int>(strlen(pszValue)), pszKey,
                                  pszErrorMessageOptionType, atoi(pszMaxSize));
                         bRet = false;
                     }
@@ -1994,7 +1994,7 @@ GDALIdentifyDriverEx( const char* pszFilename,
 {
     GDALDriverManager  *poDM = GetGDALDriverManager();
     CPLAssert( nullptr != poDM );
-    GDALOpenInfo oOpenInfo( pszFilename, GA_ReadOnly, (char**)papszFileList );
+    GDALOpenInfo oOpenInfo( pszFilename, GA_ReadOnly, papszFileList );
 
     CPLErrorReset();
 
@@ -2011,7 +2011,7 @@ GDALIdentifyDriverEx( const char* pszFilename,
         {
             poDriver = poDM->GetDriver( iDriver );
             if (papszAllowedDrivers != nullptr &&
-                CSLFindString((char**)papszAllowedDrivers,
+                CSLFindString(papszAllowedDrivers,
                               GDALGetDriverShortName(poDriver)) == -1)
                 continue;
         }
@@ -2024,7 +2024,7 @@ GDALIdentifyDriverEx( const char* pszFilename,
         }
 
         if (papszAllowedDrivers != nullptr &&
-            CSLFindString((char**)papszAllowedDrivers,
+            CSLFindString(papszAllowedDrivers,
                           GDALGetDriverShortName(poDriver)) == -1)
             continue;
         if( (nIdentifyFlags & GDAL_OF_RASTER) != 0 &&
@@ -2051,7 +2051,7 @@ GDALIdentifyDriverEx( const char* pszFilename,
         {
             poDriver = poDM->GetDriver( iDriver );
             if (papszAllowedDrivers != nullptr &&
-                CSLFindString((char**)papszAllowedDrivers,
+                CSLFindString(papszAllowedDrivers,
                               GDALGetDriverShortName(poDriver)) == -1)
                 continue;
         }
@@ -2080,7 +2080,7 @@ GDALIdentifyDriverEx( const char* pszFilename,
             if( poDS != nullptr )
             {
                 delete poDS;
-                return (GDALDriverH) poDriver;
+                return GDALDriver::ToHandle(poDriver);
             }
 
             if( CPLGetLastErrorNo() != 0 )
@@ -2092,7 +2092,7 @@ GDALIdentifyDriverEx( const char* pszFilename,
             if( poDS != nullptr )
             {
                 delete poDS;
-                return (GDALDriverH) poDriver;
+                return GDALDriver::ToHandle(poDriver);
             }
 
             if( CPLGetLastErrorNo() != 0 )

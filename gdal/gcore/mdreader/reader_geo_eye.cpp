@@ -71,39 +71,39 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
 
     // form metadata file name
     CPLStrlcpy(szMetadataName + i, "_metadata.txt", 14);
-    const char* pszIMDSourceFilename = CPLFormFilename( pszDirName,
+    CPLString osIMDSourceFilename = CPLFormFilename( pszDirName,
                                                         szMetadataName, nullptr );
-    if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+    if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
-        m_osIMDSourceFilename = pszIMDSourceFilename;
+        m_osIMDSourceFilename = osIMDSourceFilename;
     }
     else
     {
         CPLStrlcpy(szMetadataName + i, "_METADATA.TXT", 14);
-        pszIMDSourceFilename = CPLFormFilename( pszDirName, szMetadataName, nullptr );
-        if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+        osIMDSourceFilename = CPLFormFilename( pszDirName, szMetadataName, nullptr );
+        if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osIMDSourceFilename = pszIMDSourceFilename;
+            m_osIMDSourceFilename = osIMDSourceFilename;
         }
     }
 
     // get _rpc.txt file
 
-    const char* pszRPBSourceFilename = CPLFormFilename( pszDirName,
+    CPLString osRPBSourceFilename = CPLFormFilename( pszDirName,
                                                         CPLSPrintf("%s_rpc",
                                                         pszBaseName),
                                                         "txt" );
-    if (CPLCheckForFile((char*)pszRPBSourceFilename, papszSiblingFiles))
+    if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
     {
-        m_osRPBSourceFilename = pszRPBSourceFilename;
+        m_osRPBSourceFilename = osRPBSourceFilename;
     }
     else
     {
-        pszRPBSourceFilename = CPLFormFilename( pszDirName, CPLSPrintf("%s_RPC",
+        osRPBSourceFilename = CPLFormFilename( pszDirName, CPLSPrintf("%s_RPC",
                                                 pszBaseName), "TXT" );
-        if (CPLCheckForFile((char*)pszRPBSourceFilename, papszSiblingFiles))
+        if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = pszRPBSourceFilename;
+            m_osRPBSourceFilename = osRPBSourceFilename;
         }
     }
 

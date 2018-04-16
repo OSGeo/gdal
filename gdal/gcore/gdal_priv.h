@@ -270,7 +270,7 @@ class CPL_DLL GDALOpenInfo
 
   public:
                 GDALOpenInfo( const char * pszFile, int nOpenFlagsIn,
-                              char **papszSiblingFiles = nullptr );
+                              const char * const * papszSiblingFiles = nullptr );
                 ~GDALOpenInfo( void );
 
     /** Filename */
