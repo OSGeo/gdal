@@ -272,16 +272,16 @@ def test_gdal_merge_5():
 def test_gdal_merge_cleanup():
 
     lst = ['tmp/test_gdal_merge_1.tif',
-            'tmp/test_gdal_merge_2.tif',
-            'tmp/test_gdal_merge_3.tif',
-            'tmp/test_gdal_merge_4.tif',
-            'tmp/test_gdal_merge_5.tif',
-            'tmp/in1.tif',
-            'tmp/in2.tif',
-            'tmp/in3.tif',
-            'tmp/in4.tif',
-            'tmp/in5.tif',
-            'tmp/in6.tif']
+           'tmp/test_gdal_merge_2.tif',
+           'tmp/test_gdal_merge_3.tif',
+           'tmp/test_gdal_merge_4.tif',
+           'tmp/test_gdal_merge_5.tif',
+           'tmp/in1.tif',
+           'tmp/in2.tif',
+           'tmp/in3.tif',
+           'tmp/in4.tif',
+           'tmp/in5.tif',
+           'tmp/in6.tif']
     for filename in lst:
         try:
             os.remove(filename)

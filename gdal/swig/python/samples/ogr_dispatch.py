@@ -202,7 +202,7 @@ def get_layer_and_map(out_lyr_name, src_lyr, dst_ds, layerMap, geom_type, option
             if not options.bQuiet:
                 print('Creating layer %s' % out_lyr_name)
             out_lyr = dst_ds.CreateLayer(out_lyr_name, srs=srs, \
-                                geom_type=geom_type, options=options.lco)
+                                         geom_type=geom_type, options=options.lco)
             if out_lyr is None:
                 return 1
             src_field_count = src_lyr.GetLayerDefn().GetFieldCount()

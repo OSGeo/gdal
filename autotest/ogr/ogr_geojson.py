@@ -126,7 +126,7 @@ def verify_geojson_copy(name, fids, names):
             return False
 
         if ogrtest.check_feature_geometry(feat, orig_feat.GetGeometryRef(),
-                                           max_error=0.001) != 0:
+                                          max_error=0.001) != 0:
             print('Geometry test failed')
             gdaltest.gjpoint_feat = None
             return False
@@ -169,7 +169,7 @@ def copy_shape_to_geojson(gjname, compress=None):
     # Setup schema (all test shapefiles use common schmea)
     ogrtest.quick_create_layer_def(lyr,
                                    [('FID', ogr.OFTReal),
-                                     ('NAME', ogr.OFTString)])
+                                    ('NAME', ogr.OFTString)])
 
     ######################################################
     # Copy in gjpoint.shp
@@ -2251,7 +2251,7 @@ def ogr_geojson_42():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1&returnCountOnly=true',
-"""{ "count": 123456}""")
+                           """{ "count": 123456}""")
     fc = lyr.GetFeatureCount()
     if fc != 123456:
         gdaltest.post_reason('fail')
@@ -2266,7 +2266,7 @@ def ogr_geojson_42():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1&returnExtentOnly=true&f=geojson',
-"""{"type":"FeatureCollection","bbox":[1, 2, 3, 4],"features":[]}""")
+                           """{"type":"FeatureCollection","bbox":[1, 2, 3, 4],"features":[]}""")
     extent = lyr.GetExtent()
     if extent != (1.0, 3.0, 2.0, 4.0):
         gdaltest.post_reason('fail')
@@ -2585,7 +2585,7 @@ def ogr_geojson_47():
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_geojson_47.json',
-"""{"type": "FeatureCollection", "foo": "bar",
+                           """{"type": "FeatureCollection", "foo": "bar",
     "features":[ { "type": "Feature", "bar": "baz", "properties": { "myprop": "myvalue" }, "geometry": null } ]}""")
 
     # Test read support
@@ -2760,7 +2760,7 @@ def ogr_geojson_48():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_geojson_48.json',
-"""{ "type": "Feature", "bar": "baz", "bbox": [2,49,2,49], "properties": { "myprop": "myvalue" }, "geometry": {"type": "Point", "coordinates": [ 2, 49]} }""")
+                           """{ "type": "Feature", "bar": "baz", "bbox": [2,49,2,49], "properties": { "myprop": "myvalue" }, "geometry": {"type": "Point", "coordinates": [ 2, 49]} }""")
 
     # Test read support
     ds = ogr.Open('/vsimem/ogr_geojson_48.json', update=1)
@@ -2801,7 +2801,7 @@ def ogr_geojson_49():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_geojson_49.json',
-"""{ "type": "Feature", "properties": { "foo": ["bar"] }, "geometry": null }""")
+                           """{ "type": "Feature", "properties": { "foo": ["bar"] }, "geometry": null }""")
 
     # Test read support
     ds = gdal.OpenEx('/vsimem/ogr_geojson_49.json', open_options=['ARRAY_AS_STRING=YES'])
@@ -3680,7 +3680,7 @@ def ogr_geojson_61():
 
     # Empty property name
     gdal.FileFromMemBuffer('/vsimem/ogr_geojson_61.json',
-            """{ "type": "FeatureCollection", "features": [ { "type": "Feature", "properties": {"": 1}, "geometry": null }] }""")
+                           """{ "type": "FeatureCollection", "features": [ { "type": "Feature", "properties": {"": 1}, "geometry": null }] }""")
     ds = gdal.OpenEx('/vsimem/ogr_geojson_61.json')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -3799,22 +3799,22 @@ def ogr_geojson_64():
 
     g = ogr.CreateGeometryFromWkt('POINT ZM(1 2 3 4)')
     if ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(g.ExportToJson()),
-                            ogr.CreateGeometryFromWkt('POINT Z(1 2 3)')) != 0:
+                                      ogr.CreateGeometryFromWkt('POINT Z(1 2 3)')) != 0:
         return 'fail'
 
     g = ogr.CreateGeometryFromWkt('POINT M(1 2 3)')
     if ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(g.ExportToJson()),
-                            ogr.CreateGeometryFromWkt('POINT (1 2)')) != 0:
+                                      ogr.CreateGeometryFromWkt('POINT (1 2)')) != 0:
         return 'fail'
 
     g = ogr.CreateGeometryFromWkt('LINESTRING ZM(1 2 3 4,5 6 7 8)')
     if ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(g.ExportToJson()),
-                            ogr.CreateGeometryFromWkt('LINESTRING Z(1 2 3,5 6 7)')) != 0:
+                                      ogr.CreateGeometryFromWkt('LINESTRING Z(1 2 3,5 6 7)')) != 0:
         return 'fail'
 
     g = ogr.CreateGeometryFromWkt('LINESTRING M(1 2 3,4 5 6)')
     if ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(g.ExportToJson()),
-                            ogr.CreateGeometryFromWkt('LINESTRING (1 2,4 5)')) != 0:
+                                      ogr.CreateGeometryFromWkt('LINESTRING (1 2,4 5)')) != 0:
         return 'fail'
 
     return 'success'

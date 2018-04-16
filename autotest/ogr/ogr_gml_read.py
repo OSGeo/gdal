@@ -1194,8 +1194,8 @@ def ogr_gml_29():
     ds = ogr.Open('data/testfmegml.gml')
 
     expected_results = [[ogr.wkbMultiPoint, 'MULTIPOINT (2 49)'],
-                         [ogr.wkbMultiPolygon, 'MULTIPOLYGON (((2 49,3 49,3 50,2 50,2 49)))'],
-                         [ogr.wkbMultiLineString, 'MULTILINESTRING ((2 49,3 50))'],
+                        [ogr.wkbMultiPolygon, 'MULTIPOLYGON (((2 49,3 49,3 50,2 50,2 49)))'],
+                        [ogr.wkbMultiLineString, 'MULTILINESTRING ((2 49,3 50))'],
                          ]
 
     for j in range(len(expected_results)):
@@ -1366,18 +1366,18 @@ def ogr_gml_33():
     gdal.SetConfigOption('GML_READ_MODE', None)
 
     read_sequence = [[0, 1],
-                      [0, None],
-                      [1, 3],
-                      [2, 5],
-                      [2, None],
-                      [0, 2],
-                      [1, 4],
-                      [1, None],
-                      [2, 6],
-                      [2, None],
-                      [0, None],
-                      [1, None],
-                      [2, None]]
+                     [0, None],
+                     [1, 3],
+                     [2, 5],
+                     [2, None],
+                     [0, 2],
+                     [1, 4],
+                     [1, None],
+                     [2, 6],
+                     [2, None],
+                     [0, None],
+                     [1, None],
+                     [2, None]]
 
     for i in range(len(read_sequence)):
         lyr = ds.GetLayer(read_sequence[i][0])
@@ -1867,20 +1867,20 @@ def ogr_gml_46():
         return 'skip'
 
     wkt_list = ['',
-                 'POINT (0 1)',
-                 # 'POINT (0 1 2)',
-                 'LINESTRING (0 1,2 3)',
-                 # 'LINESTRING (0 1 2,3 4 5)',
-                 'POLYGON ((0 0,0 1,1 1,1 0,0 0))',
-                 # 'POLYGON ((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10))',
-                 'MULTIPOINT (0 1)',
-                 # 'MULTIPOINT (0 1 2)',
-                 'MULTILINESTRING ((0 1,2 3))',
-                 # 'MULTILINESTRING ((0 1 2,3 4 5))',
-                 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))',
-                 # 'MULTIPOLYGON (((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10)))',
-                 'GEOMETRYCOLLECTION (POINT (0 1))',
-                 # 'GEOMETRYCOLLECTION (POINT (0 1 2))'
+                'POINT (0 1)',
+                # 'POINT (0 1 2)',
+                'LINESTRING (0 1,2 3)',
+                # 'LINESTRING (0 1 2,3 4 5)',
+                'POLYGON ((0 0,0 1,1 1,1 0,0 0))',
+                # 'POLYGON ((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10))',
+                'MULTIPOINT (0 1)',
+                # 'MULTIPOINT (0 1 2)',
+                'MULTILINESTRING ((0 1,2 3))',
+                # 'MULTILINESTRING ((0 1 2,3 4 5))',
+                'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))',
+                # 'MULTIPOLYGON (((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10)))',
+                'GEOMETRYCOLLECTION (POINT (0 1))',
+                # 'GEOMETRYCOLLECTION (POINT (0 1 2))'
                  ]
 
     format_list = ['GML2', 'GML3', 'GML3Deegree', 'GML3.2']
@@ -2515,19 +2515,19 @@ def ogr_gml_58():
 
     feat = lyr.GetNextFeature()
     expected = [('gml_id', 'CadastralParcel-01'),
-                 ('areaValue', 10.0),
-                 ('areaValue_uom', 'm2'),
-                 ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
-                 ('endLifespanVersion', '2001-01-01T00:00:00.0Z'),
-                 ('inspireId_localId', 'CadastralParcel-01-localId'),
-                 ('inspireId_namespace', 'namespace'),
-                 ('label', 'label'),
-                 ('nationalCadastralReference', 'nationalCadastralReference'),
-                 ('validFrom', '2002-01-01T00:00:00.0Z'),
-                 ('validTo', '2003-01-01T00:00:00.0Z'),
-                 ('basicPropertyUnit_href', ['#BPU.1', '#BPU.2']),
-                 ('administrativeUnit_href', '#AU.1'),
-                 ('zoning_href', '#CZ.1')]
+                ('areaValue', 10.0),
+                ('areaValue_uom', 'm2'),
+                ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
+                ('endLifespanVersion', '2001-01-01T00:00:00.0Z'),
+                ('inspireId_localId', 'CadastralParcel-01-localId'),
+                ('inspireId_namespace', 'namespace'),
+                ('label', 'label'),
+                ('nationalCadastralReference', 'nationalCadastralReference'),
+                ('validFrom', '2002-01-01T00:00:00.0Z'),
+                ('validTo', '2003-01-01T00:00:00.0Z'),
+                ('basicPropertyUnit_href', ['#BPU.1', '#BPU.2']),
+                ('administrativeUnit_href', '#AU.1'),
+                ('zoning_href', '#CZ.1')]
     for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
@@ -2544,19 +2544,19 @@ def ogr_gml_58():
 
     feat = lyr.GetNextFeature()
     expected = [('gml_id', 'CadastralParcel-02'),
-                 ('areaValue', None),
-                 ('areaValue_uom', None),
-                 ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
-                 ('endLifespanVersion', None),
-                 ('inspireId_localId', 'CadastralParcel-02-localId'),
-                 ('inspireId_namespace', 'namespace'),
-                 ('label', 'label'),
-                 ('nationalCadastralReference', 'nationalCadastralReference'),
-                 ('validFrom', None),
-                 ('validTo', None),
-                 ('basicPropertyUnit_href', None),
-                 ('administrativeUnit_href', None),
-                 ('zoning_href', None)]
+                ('areaValue', None),
+                ('areaValue_uom', None),
+                ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
+                ('endLifespanVersion', None),
+                ('inspireId_localId', 'CadastralParcel-02-localId'),
+                ('inspireId_namespace', 'namespace'),
+                ('label', 'label'),
+                ('nationalCadastralReference', 'nationalCadastralReference'),
+                ('validFrom', None),
+                ('validTo', None),
+                ('basicPropertyUnit_href', None),
+                ('administrativeUnit_href', None),
+                ('zoning_href', None)]
     for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
@@ -2583,16 +2583,16 @@ def ogr_gml_58():
 
     feat = lyr.GetNextFeature()
     expected = [('gml_id', 'BasicPropertyUnit-01'),
-                 ('inspireId_localId', 'BasicPropertyUnit-01-localId'),
-                 ('inspireId_namespace', 'namespace'),
-                 ('nationalCadastralReference', 'nationalCadastralReference'),
-                 ('areaValue', 10.0),
-                 ('areaValue_uom', 'm2'),
-                 ('validFrom', '2000-01-01T00:00:00.0Z'),
-                 ('validTo', '2001-01-01T00:00:00.0Z'),
-                 ('beginLifespanVersion', '2002-01-01T00:00:00.0Z'),
-                 ('endLifespanVersion', '2003-01-01T00:00:00.0Z'),
-                 ('administrativeUnit_href', '#AU.1')]
+                ('inspireId_localId', 'BasicPropertyUnit-01-localId'),
+                ('inspireId_namespace', 'namespace'),
+                ('nationalCadastralReference', 'nationalCadastralReference'),
+                ('areaValue', 10.0),
+                ('areaValue_uom', 'm2'),
+                ('validFrom', '2000-01-01T00:00:00.0Z'),
+                ('validTo', '2001-01-01T00:00:00.0Z'),
+                ('beginLifespanVersion', '2002-01-01T00:00:00.0Z'),
+                ('endLifespanVersion', '2003-01-01T00:00:00.0Z'),
+                ('administrativeUnit_href', '#AU.1')]
     for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
@@ -2603,16 +2603,16 @@ def ogr_gml_58():
 
     feat = lyr.GetNextFeature()
     expected = [('gml_id', 'BasicPropertyUnit-02'),
-                 ('inspireId_localId', 'BasicPropertyUnit-02-localId'),
-                 ('inspireId_namespace', 'namespace'),
-                 ('nationalCadastralReference', 'nationalCadastralReference'),
-                 ('areaValue', None),
-                 ('areaValue_uom', None),
-                 ('validFrom', '2000-01-01T00:00:00.0Z'),
-                 ('validTo', None),
-                 ('beginLifespanVersion', '2002-01-01T00:00:00.0Z'),
-                 ('endLifespanVersion', None),
-                 ('administrativeUnit_href', None)]
+                ('inspireId_localId', 'BasicPropertyUnit-02-localId'),
+                ('inspireId_namespace', 'namespace'),
+                ('nationalCadastralReference', 'nationalCadastralReference'),
+                ('areaValue', None),
+                ('areaValue_uom', None),
+                ('validFrom', '2000-01-01T00:00:00.0Z'),
+                ('validTo', None),
+                ('beginLifespanVersion', '2002-01-01T00:00:00.0Z'),
+                ('endLifespanVersion', None),
+                ('administrativeUnit_href', None)]
     for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
@@ -2639,15 +2639,15 @@ def ogr_gml_58():
 
     feat = lyr.GetNextFeature()
     expected = [('gml_id', 'CadastralBoundary-01'),
-                 ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
-                 ('endLifespanVersion', '2001-01-01T00:00:00.0Z'),
-                 ('estimatedAccuracy', 1.0),
-                 ('estimatedAccuracy_uom', 'm'),
-                 ('inspireId_localId', 'CadastralBoundary-01-localId'),
-                 ('inspireId_namespace', 'namespace'),
-                 ('validFrom', '2002-01-01T00:00:00.0Z'),
-                 ('validTo', '2003-01-01T00:00:00.0Z'),
-                 ('parcel_href', ['#Parcel.1', '#Parcel.2'])]
+                ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
+                ('endLifespanVersion', '2001-01-01T00:00:00.0Z'),
+                ('estimatedAccuracy', 1.0),
+                ('estimatedAccuracy_uom', 'm'),
+                ('inspireId_localId', 'CadastralBoundary-01-localId'),
+                ('inspireId_namespace', 'namespace'),
+                ('validFrom', '2002-01-01T00:00:00.0Z'),
+                ('validTo', '2003-01-01T00:00:00.0Z'),
+                ('parcel_href', ['#Parcel.1', '#Parcel.2'])]
     for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
@@ -2661,15 +2661,15 @@ def ogr_gml_58():
 
     feat = lyr.GetNextFeature()
     expected = [('gml_id', 'CadastralBoundary-02'),
-                 ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
-                 ('endLifespanVersion', None),
-                 ('estimatedAccuracy', None),
-                 ('estimatedAccuracy_uom', None),
-                 ('inspireId_localId', 'CadastralBoundary-02-localId'),
-                 ('inspireId_namespace', 'namespace'),
-                 ('validFrom', None),
-                 ('validTo', None),
-                 ('parcel_href', None)]
+                ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
+                ('endLifespanVersion', None),
+                ('estimatedAccuracy', None),
+                ('estimatedAccuracy_uom', None),
+                ('inspireId_localId', 'CadastralBoundary-02-localId'),
+                ('inspireId_namespace', 'namespace'),
+                ('validFrom', None),
+                ('validTo', None),
+                ('parcel_href', None)]
     for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
@@ -2705,26 +2705,26 @@ def ogr_gml_58():
 
     feat = lyr.GetNextFeature()
     expected = [('gml_id', 'CadastralZoning-01'),
-                 ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
-                 ('endLifespanVersion', '2001-01-01T00:00:00.0Z'),
-                 ('estimatedAccuracy', 1.0),
-                 ('estimatedAccuracy_uom', 'm'),
-                 ('inspireId_localId', 'CadastralZoning-01-localId'),
-                 ('inspireId_namespace', 'namespace'),
-                 ('label', 'label'),
-                 ('level', '3'),
-                 ('levelName', ['English', 'Francais', 'Deutsch']),
-                 ('levelName_locale', ['en', 'fr', 'de']),
-                 ('name_language', ['language']),
-                 ('name_nativeness', ['nativeness']),
-                 ('name_nameStatus', ['nameStatus']),
-                 ('name_pronunciation', None),
-                 ('name_spelling_text', ['text']),
-                 ('name_spelling_script', ['script']),
-                 ('nationalCadastalZoningReference', 'nationalCadastalZoningReference'),
-                 ('validFrom', '2002-01-01T00:00:00.0Z'),
-                 ('validTo', '2003-01-01T00:00:00.0Z'),
-                 ('upperLevelUnit_href', '#ulu.1')]
+                ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
+                ('endLifespanVersion', '2001-01-01T00:00:00.0Z'),
+                ('estimatedAccuracy', 1.0),
+                ('estimatedAccuracy_uom', 'm'),
+                ('inspireId_localId', 'CadastralZoning-01-localId'),
+                ('inspireId_namespace', 'namespace'),
+                ('label', 'label'),
+                ('level', '3'),
+                ('levelName', ['English', 'Francais', 'Deutsch']),
+                ('levelName_locale', ['en', 'fr', 'de']),
+                ('name_language', ['language']),
+                ('name_nativeness', ['nativeness']),
+                ('name_nameStatus', ['nameStatus']),
+                ('name_pronunciation', None),
+                ('name_spelling_text', ['text']),
+                ('name_spelling_script', ['script']),
+                ('nationalCadastalZoningReference', 'nationalCadastalZoningReference'),
+                ('validFrom', '2002-01-01T00:00:00.0Z'),
+                ('validTo', '2003-01-01T00:00:00.0Z'),
+                ('upperLevelUnit_href', '#ulu.1')]
     for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
@@ -2741,26 +2741,26 @@ def ogr_gml_58():
 
     feat = lyr.GetNextFeature()
     expected = [('gml_id', 'CadastralZoning-02'),
-                 ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
-                 ('endLifespanVersion', None),
-                 ('estimatedAccuracy', None),
-                 ('estimatedAccuracy_uom', None),
-                 ('inspireId_localId', None),
-                 ('inspireId_namespace', None),
-                 ('label', 'label'),
-                 ('level', '3'),
-                 ('levelName', ['English']),
-                 ('levelName_locale', ['en']),
-                 ('name_language', None),
-                 ('name_nativeness', None),
-                 ('name_nameStatus', None),
-                 ('name_pronunciation', None),
-                 ('name_spelling_text', None),
-                 ('name_spelling_script', None),
-                 ('nationalCadastalZoningReference', 'nationalCadastalZoningReference'),
-                 ('validFrom', None),
-                 ('validTo', None),
-                 ('upperLevelUnit_href', None)]
+                ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
+                ('endLifespanVersion', None),
+                ('estimatedAccuracy', None),
+                ('estimatedAccuracy_uom', None),
+                ('inspireId_localId', None),
+                ('inspireId_namespace', None),
+                ('label', 'label'),
+                ('level', '3'),
+                ('levelName', ['English']),
+                ('levelName_locale', ['en']),
+                ('name_language', None),
+                ('name_nativeness', None),
+                ('name_nameStatus', None),
+                ('name_pronunciation', None),
+                ('name_spelling_text', None),
+                ('name_spelling_script', None),
+                ('nationalCadastalZoningReference', 'nationalCadastalZoningReference'),
+                ('validFrom', None),
+                ('validTo', None),
+                ('upperLevelUnit_href', None)]
     for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
@@ -2808,9 +2808,9 @@ def ogr_gml_59():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     expected = [('name_en', 'English name'),
-                 ('name_fr', 'Nom francais'),
-                 ('name_others_lang', ['de']),
-                 ('name_others', ['Deutsche name'])]
+                ('name_fr', 'Nom francais'),
+                ('name_others_lang', ['de']),
+                ('name_others', ['Deutsche name'])]
     for (key, val) in expected:
         if feat.GetField(key) != val:
             print(key)
@@ -3074,8 +3074,8 @@ def ogr_gml_65():
         return 'skip'
 
     option_expected_list = [['SRSDIMENSION_LOC=GEOMETRY', '<ogr:geometryProperty><gml:MultiSurface srsDimension="3"><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 1 2 3 4 5 6 7 8 0 1 2</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface></ogr:geometryProperty>'],
-                             ['SRSDIMENSION_LOC=POSLIST', '<ogr:geometryProperty><gml:MultiSurface><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 1 2 3 4 5 6 7 8 0 1 2</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface></ogr:geometryProperty>'],
-                             ['SRSDIMENSION_LOC=GEOMETRY,POSLIST', '<ogr:geometryProperty><gml:MultiSurface srsDimension="3"><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 1 2 3 4 5 6 7 8 0 1 2</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface></ogr:geometryProperty>'],
+                            ['SRSDIMENSION_LOC=POSLIST', '<ogr:geometryProperty><gml:MultiSurface><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 1 2 3 4 5 6 7 8 0 1 2</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface></ogr:geometryProperty>'],
+                            ['SRSDIMENSION_LOC=GEOMETRY,POSLIST', '<ogr:geometryProperty><gml:MultiSurface srsDimension="3"><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 1 2 3 4 5 6 7 8 0 1 2</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface></ogr:geometryProperty>'],
                              ]
     for (option, expected) in option_expected_list:
         filename = '/vsimem/ogr_gml_65.gml'
@@ -3574,7 +3574,7 @@ def ogr_gml_68():
     ds = ogr.Open('data/choicepolygonmultipolygon.gml')
 
     expected_results = ['MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))',
-                         'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)),((10 0,10 1,11 1,11 0,10 0)))']
+                        'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)),((10 0,10 1,11 1,11 0,10 0)))']
 
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbMultiPolygon:
@@ -3719,11 +3719,11 @@ def ogr_gml_71_helper(ds):
         print(lyr.GetName())
         return 'fail'
     fields = [('table1.gml_id', ogr.OFTString),
-               ('table1.foo', ogr.OFTInteger),
-               ('table1.bar', ogr.OFTInteger),
-               ('table2.gml_id', ogr.OFTString),
-               ('table2.bar', ogr.OFTInteger),
-               ('table2.baz', ogr.OFTString)]
+              ('table1.foo', ogr.OFTInteger),
+              ('table1.bar', ogr.OFTInteger),
+              ('table2.gml_id', ogr.OFTString),
+              ('table2.bar', ogr.OFTInteger),
+              ('table2.baz', ogr.OFTString)]
     layer_defn = lyr.GetLayerDefn()
     if layer_defn.GetFieldCount() != len(fields):
         gdaltest.post_reason('fail')
@@ -3988,7 +3988,7 @@ def ogr_gml_75():
         return 'skip'
 
     gdal.FileFromMemBuffer("/vsimem/ogr_gml_75.xml",
-    """<?xml version="1.0" encoding="UTF-8"?>
+                           """<?xml version="1.0" encoding="UTF-8"?>
 <Capabilities xmlns="http://www.opengis.net/wmts/1.0"
 xmlns:ows="http://www.opengis.net/ows/1.1"
 xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -4057,7 +4057,7 @@ def ogr_gml_77():
         return 'skip'
 
     gdal.FileFromMemBuffer("/vsimem/ogr_gml_77.xml",
-    """<?xml version="1.0" encoding="utf-8" ?>
+                           """<?xml version="1.0" encoding="utf-8" ?>
 <ogr:FeatureCollection
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xmlns:ogr="http://ogr.maptools.org/"
@@ -4113,7 +4113,7 @@ def ogr_gml_78():
         return 'skip'
 
     gdal.FileFromMemBuffer("/vsimem/ogr_gml_78.xml",
-    """<?xml version="1.0" encoding="utf-8" ?>
+                           """<?xml version="1.0" encoding="utf-8" ?>
 <ogr:FeatureCollection
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xmlns:ogr="http://ogr.maptools.org/"
@@ -4169,13 +4169,13 @@ def ogr_gml_79():
     sr.ImportFromEPSG(4326)
 
     tests = [['SHORT', 'EPSG:4326', '2 49'],
-              ['OGC_URN', 'urn:ogc:def:crs:EPSG::4326', '49 2'],
-              ['OGC_URL', 'http://www.opengis.net/def/crs/EPSG/0/4326', '49 2']
+             ['OGC_URN', 'urn:ogc:def:crs:EPSG::4326', '49 2'],
+             ['OGC_URL', 'http://www.opengis.net/def/crs/EPSG/0/4326', '49 2']
               ]
     for (srsname_format, expected_srsname, expected_coords) in tests:
 
         ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_79.xml', \
-                options=['FORMAT=GML3', 'SRSNAME_FORMAT=' + srsname_format])
+                                                         options=['FORMAT=GML3', 'SRSNAME_FORMAT=' + srsname_format])
         lyr = ds.CreateLayer('firstlayer', srs=sr)
         feat = ogr.Feature(lyr.GetLayerDefn())
         geom = ogr.CreateGeometryFromWkt('POINT (2 49)')
@@ -4284,9 +4284,9 @@ def ogr_gml_82():
         return 'skip'
 
     gdal.VectorTranslate('/vsimem/ogr_gml_82.gml', 'data/poly.shp',
-            format='GML',
-            datasetCreationOptions=['FORMAT=GML3',
-                                      'GML_FEATURE_COLLECTION=YES'])
+                         format='GML',
+                         datasetCreationOptions=['FORMAT=GML3',
+                                                 'GML_FEATURE_COLLECTION=YES'])
 
     ds = ogr.Open('/vsimem/ogr_gml_82.gml')
     lyr = ds.GetLayer(0)

@@ -43,7 +43,7 @@ from osgeo import osr
 
 def Usage():
     print("Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n" + \
-            "                [-norat] [-noct] [-nofl] [-checksum] [-mdd domain]* datasetname")
+          "                [-norat] [-noct] [-nofl] [-checksum] [-mdd domain]* datasetname")
     return 1
 
 
@@ -104,7 +104,7 @@ def main(argv=None):
 
         if EQUAL(argv[i], "--utility_version"):
             print("%s is running against GDAL %s" %
-                   (argv[0], gdal.VersionInfo("RELEASE_NAME")))
+                  (argv[0], gdal.VersionInfo("RELEASE_NAME")))
             return 0
         elif EQUAL(argv[i], "-mm"):
             bComputeMinMax = True
@@ -202,8 +202,8 @@ def main(argv=None):
 
         else:
             print("GeoTransform =\n" \
-                    "  %.16g, %.16g, %.16g\n" \
-                    "  %.16g, %.16g, %.16g" % ( \
+                  "  %.16g, %.16g, %.16g\n" \
+                  "  %.16g, %.16g, %.16g" % ( \
                     adfGeoTransform[0], \
                     adfGeoTransform[1], \
                     adfGeoTransform[2], \
@@ -226,14 +226,14 @@ def main(argv=None):
 
             else:
                 print("GCP Projection = %s" % \
-                        pszProjection)
+                      pszProjection)
 
         gcps = hDataset.GetGCPs()
         i = 0
         for gcp in gcps:
 
             print("GCP[%3d]: Id=%s, Info=%s\n" \
-                    "          (%.15g,%.15g) -> (%.15g,%.15g,%.15g)" % ( \
+                  "          (%.15g,%.15g) -> (%.15g,%.15g,%.15g)" % ( \
                     i, gcp.Id, gcp.Info, \
                     gcp.GCPPixel, gcp.GCPLine, \
                     gcp.GCPX, gcp.GCPY, gcp.GCPZ))
@@ -324,17 +324,17 @@ def main(argv=None):
 # --------------------------------------------------------------------
     print("Corner Coordinates:")
     GDALInfoReportCorner(hDataset, hTransform, "Upper Left", \
-                          0.0, 0.0)
+                         0.0, 0.0)
     GDALInfoReportCorner(hDataset, hTransform, "Lower Left", \
-                          0.0, hDataset.RasterYSize)
+                         0.0, hDataset.RasterYSize)
     GDALInfoReportCorner(hDataset, hTransform, "Upper Right", \
-                          hDataset.RasterXSize, 0.0)
+                         hDataset.RasterXSize, 0.0)
     GDALInfoReportCorner(hDataset, hTransform, "Lower Right", \
-                          hDataset.RasterXSize, \
-                          hDataset.RasterYSize)
+                         hDataset.RasterXSize, \
+                         hDataset.RasterYSize)
     GDALInfoReportCorner(hDataset, hTransform, "Center", \
-                          hDataset.RasterXSize / 2.0, \
-                          hDataset.RasterYSize / 2.0)
+                         hDataset.RasterXSize / 2.0, \
+                         hDataset.RasterYSize / 2.0)
 
 # ====================================================================
 #      Loop over bands.
@@ -354,9 +354,9 @@ def main(argv=None):
 
         (nBlockXSize, nBlockYSize) = hBand.GetBlockSize()
         print("Band %d Block=%dx%d Type=%s, ColorInterp=%s" % (iBand + 1, \
-                nBlockXSize, nBlockYSize, \
-                gdal.GetDataTypeName(hBand.DataType), \
-                gdal.GetColorInterpretationName( \
+                                                               nBlockXSize, nBlockYSize, \
+                                                               gdal.GetDataTypeName(hBand.DataType), \
+                                                               gdal.GetColorInterpretationName( \
                     hBand.GetRasterColorInterpretation())))
 
         if hBand.GetDescription() is not None \
@@ -505,7 +505,7 @@ def main(argv=None):
 
         if hBand.GetScale() != 1.0 or hBand.GetOffset() != 0.0:
             print("  Offset: %.15g,   Scale:%.15g" % \
-                        (hBand.GetOffset(), hBand.GetScale()))
+                  (hBand.GetOffset(), hBand.GetScale()))
 
         if bShowMetadata:
             papszMetadata = hBand.GetMetadata_List()

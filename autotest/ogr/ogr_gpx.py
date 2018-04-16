@@ -148,12 +148,12 @@ def ogr_gpx_1():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT (1 0)',
-                                       max_error=0.0001) != 0:
+                                      max_error=0.0001) != 0:
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT (4 3)',
-                                       max_error=0.0001) != 0:
+                                      max_error=0.0001) != 0:
         return 'fail'
 
     return 'success'
@@ -373,7 +373,7 @@ def ogr_gpx_7():
     bna_lyr = bna_ds.GetLayerByName('bna_for_gpx_points')
 
     gdaltest.gpx_ds = ogr.GetDriverByName('GPX').CreateDataSource('tmp/gpx.gpx',
-                                                          options=co_opts)
+                                                                  options=co_opts)
 
     gpx_lyr = gdaltest.gpx_ds.CreateLayer('waypoints', geom_type=ogr.wkbPoint)
 

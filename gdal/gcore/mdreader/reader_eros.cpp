@@ -49,7 +49,6 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
     CPLString osBaseName = CPLGetBasename(pszPath);
     CPLString osDirName = CPLGetDirname(pszPath);
     char szMetadataName[512] = {0};
-    const char* pszPassFileName;
     size_t i;
     if( osBaseName.size() > 511 )
         return;
@@ -57,20 +56,20 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
     {
         if(STARTS_WITH_CI(osBaseName + i, "."))
         {
-            pszPassFileName = CPLFormFilename( osDirName, szMetadataName,
+            CPLString osPassFileName = CPLFormFilename( osDirName, szMetadataName,
                                                "pass" );
-            if (CPLCheckForFile((char*)pszPassFileName, papszSiblingFiles))
+            if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
             {
-                m_osIMDSourceFilename = pszPassFileName;
+                m_osIMDSourceFilename = osPassFileName;
                 break;
             }
             else
             {
-                pszPassFileName = CPLFormFilename( osDirName, szMetadataName,
+                osPassFileName = CPLFormFilename( osDirName, szMetadataName,
                                                    "PASS" );
-                if (CPLCheckForFile((char*)pszPassFileName, papszSiblingFiles))
+                if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
                 {
-                    m_osIMDSourceFilename = pszPassFileName;
+                    m_osIMDSourceFilename = osPassFileName;
                     break;
                 }
             }
@@ -80,33 +79,33 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
 
     if(m_osIMDSourceFilename.empty())
     {
-        pszPassFileName = CPLFormFilename( osDirName, szMetadataName, "pass" );
-        if (CPLCheckForFile((char*)pszPassFileName, papszSiblingFiles))
+        CPLString osPassFileName = CPLFormFilename( osDirName, szMetadataName, "pass" );
+        if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
         {
-            m_osIMDSourceFilename = pszPassFileName;
+            m_osIMDSourceFilename = osPassFileName;
         }
         else
         {
-            pszPassFileName = CPLFormFilename( osDirName, szMetadataName, "PASS" );
-            if (CPLCheckForFile((char*)pszPassFileName, papszSiblingFiles))
+            osPassFileName = CPLFormFilename( osDirName, szMetadataName, "PASS" );
+            if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
             {
-                m_osIMDSourceFilename = pszPassFileName;
+                m_osIMDSourceFilename = osPassFileName;
             }
         }
     }
 
-    const char* pszRPCFileName = CPLFormFilename( osDirName, szMetadataName,
+    CPLString osRPCFileName = CPLFormFilename( osDirName, szMetadataName,
                                                   "rpc" );
-    if (CPLCheckForFile((char*)pszRPCFileName, papszSiblingFiles))
+    if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
     {
-        m_osRPBSourceFilename = pszRPCFileName;
+        m_osRPBSourceFilename = osRPCFileName;
     }
     else
     {
-        pszRPCFileName = CPLFormFilename( osDirName, szMetadataName, "RPC" );
-        if (CPLCheckForFile((char*)pszRPCFileName, papszSiblingFiles))
+        osRPCFileName = CPLFormFilename( osDirName, szMetadataName, "RPC" );
+        if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = pszRPCFileName;
+            m_osRPBSourceFilename = osRPCFileName;
         }
     }
 

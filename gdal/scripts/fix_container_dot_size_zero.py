@@ -146,8 +146,8 @@ while True:
         modified = True
         pos_start_identifier = find_start_identifier_pos(content, pos - 1)
         content = content[0:pos_start_identifier] + '!' + \
-                  content[pos_start_identifier:pos] + separator + 'empty()' + \
-                  extra_space + content[pos_after:]
+        content[pos_start_identifier:pos] + separator + 'empty()' + \
+        extra_space + content[pos_after:]
 
     pos += 1
 

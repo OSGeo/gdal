@@ -42,40 +42,40 @@ from osgeo import ogr
 from osgeo import osr
 
 ogrtest.openfilegdb_datalist = [["none", ogr.wkbNone, None],
-                ["point", ogr.wkbPoint, "POINT (1 2)"],
-                ["multipoint", ogr.wkbMultiPoint, "MULTIPOINT (1 2,3 4)"],
-                ["linestring", ogr.wkbLineString, "LINESTRING (1 2,3 4)", "MULTILINESTRING ((1 2,3 4))"],
-                ["multilinestring", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4))"],
-                ["multilinestring_multipart", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4),(5 6,7 8))"],
-                ["polygon", ogr.wkbPolygon, "POLYGON ((0 0,0 1,1 1,1 0,0 0))", "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))"],
-                ["multipolygon", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.75 0.25,0.75 0.75,0.25 0.75,0.25 0.25)),((2 0,2 1,3 1,3 0,2 0)))"],
-                ["point25D", ogr.wkbPoint25D, "POINT (1 2 3)"],
-                ["multipoint25D", ogr.wkbMultiPoint25D, "MULTIPOINT (1 2 -10,3 4 -20)"],
-                ["linestring25D", ogr.wkbLineString25D, "LINESTRING (1 2 -10,3 4 -20)", "MULTILINESTRING ((1 2 -10,3 4 -20))"],
-                ["multilinestring25D", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20))"],
-                ["multilinestring25D_multipart", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20),(5 6 -30,7 8 -40))"],
-                ["polygon25D", ogr.wkbPolygon25D, "POLYGON ((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10))", "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))"],
-                ["multipolygon25D", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))"],
-                ["multipatch", ogr.wkbGeometryCollection25D, "GEOMETRYCOLLECTION Z (TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0))),TIN Z (((10.0 0.0 0,10.0 1.0 0,11.0 0.0 0,10.0 0.0 0)),((10.0 0.0 0,11.0 0.0 0,10.0 -1.0 0,10.0 0.0 0))),TIN Z (((5.0 0.0 0,5.0 1.0 0,6.0 0.0 0,5.0 0.0 0))),MULTIPOLYGON Z (((100.0 0.0 0,100.0 1.0 0,101.0 1.0 0,101.0 0.0 0,100.0 0.0 0),(100.25 0.25 0,100.75 0.25 0,100.75 0.75 0,100.75 0.25 0,100.25 0.25 0))))"],
-                ["null_polygon", ogr.wkbPolygon, None],
-                ["empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
-                ["empty_multipoint", ogr.wkbMultiPoint, "MULTIPOINT EMPTY", None],
+                                ["point", ogr.wkbPoint, "POINT (1 2)"],
+                                ["multipoint", ogr.wkbMultiPoint, "MULTIPOINT (1 2,3 4)"],
+                                ["linestring", ogr.wkbLineString, "LINESTRING (1 2,3 4)", "MULTILINESTRING ((1 2,3 4))"],
+                                ["multilinestring", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4))"],
+                                ["multilinestring_multipart", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4),(5 6,7 8))"],
+                                ["polygon", ogr.wkbPolygon, "POLYGON ((0 0,0 1,1 1,1 0,0 0))", "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))"],
+                                ["multipolygon", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.75 0.25,0.75 0.75,0.25 0.75,0.25 0.25)),((2 0,2 1,3 1,3 0,2 0)))"],
+                                ["point25D", ogr.wkbPoint25D, "POINT (1 2 3)"],
+                                ["multipoint25D", ogr.wkbMultiPoint25D, "MULTIPOINT (1 2 -10,3 4 -20)"],
+                                ["linestring25D", ogr.wkbLineString25D, "LINESTRING (1 2 -10,3 4 -20)", "MULTILINESTRING ((1 2 -10,3 4 -20))"],
+                                ["multilinestring25D", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20))"],
+                                ["multilinestring25D_multipart", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20),(5 6 -30,7 8 -40))"],
+                                ["polygon25D", ogr.wkbPolygon25D, "POLYGON ((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10))", "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))"],
+                                ["multipolygon25D", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))"],
+                                ["multipatch", ogr.wkbGeometryCollection25D, "GEOMETRYCOLLECTION Z (TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0))),TIN Z (((10.0 0.0 0,10.0 1.0 0,11.0 0.0 0,10.0 0.0 0)),((10.0 0.0 0,11.0 0.0 0,10.0 -1.0 0,10.0 0.0 0))),TIN Z (((5.0 0.0 0,5.0 1.0 0,6.0 0.0 0,5.0 0.0 0))),MULTIPOLYGON Z (((100.0 0.0 0,100.0 1.0 0,101.0 1.0 0,101.0 0.0 0,100.0 0.0 0),(100.25 0.25 0,100.75 0.25 0,100.75 0.75 0,100.75 0.25 0,100.25 0.25 0))))"],
+                                ["null_polygon", ogr.wkbPolygon, None],
+                                ["empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
+                                ["empty_multipoint", ogr.wkbMultiPoint, "MULTIPOINT EMPTY", None],
             ]
 
 
 ogrtest.openfilegdb_datalist_m = [["pointm", ogr.wkbPointM, "POINT M (1 2 3)"],
-                 ["pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)"],
-                 ["multipointm", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3),(4 5 6))"],
-                 ["multipointzm", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4),(5 6 7 8))"],
-                 ["linestringm", ogr.wkbLineStringM, "LINESTRING M (1 2 3,4 5 6)", "MULTILINESTRING M ((1 2 3,4 5 6))"],
-                 ["linestringzm", ogr.wkbLineStringZM, "LINESTRING ZM (1 2 3 4,5 6 7 8)", "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))"],
-                 ["multilinestringm", ogr.wkbMultiLineStringM, "MULTILINESTRING M ((1 2 3,4 5 6))"],
-                 ["multilinestringzm", ogr.wkbMultiLineStringZM, "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))"],
-                 ["polygonm", ogr.wkbPolygonM, "POLYGON M ((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1))", "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))"],
-                 ["polygonzm", ogr.wkbPolygonZM, "POLYGON ZM ((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1))", "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))"],
-                 ["multipolygonm", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))"],
-                 ["multipolygonzm", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))"],
-                 ["empty_polygonm", ogr.wkbPolygonM, 'POLYGON M EMPTY', None],
+                                  ["pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)"],
+                                  ["multipointm", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3),(4 5 6))"],
+                                  ["multipointzm", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4),(5 6 7 8))"],
+                                  ["linestringm", ogr.wkbLineStringM, "LINESTRING M (1 2 3,4 5 6)", "MULTILINESTRING M ((1 2 3,4 5 6))"],
+                                  ["linestringzm", ogr.wkbLineStringZM, "LINESTRING ZM (1 2 3 4,5 6 7 8)", "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))"],
+                                  ["multilinestringm", ogr.wkbMultiLineStringM, "MULTILINESTRING M ((1 2 3,4 5 6))"],
+                                  ["multilinestringzm", ogr.wkbMultiLineStringZM, "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))"],
+                                  ["polygonm", ogr.wkbPolygonM, "POLYGON M ((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1))", "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))"],
+                                  ["polygonzm", ogr.wkbPolygonZM, "POLYGON ZM ((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1))", "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))"],
+                                  ["multipolygonm", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))"],
+                                  ["multipolygonzm", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))"],
+                                  ["empty_polygonm", ogr.wkbPolygonM, 'POLYGON M EMPTY', None],
                ]
 
 
@@ -501,107 +501,107 @@ def ogr_openfilegdb_4():
 
     lyr = ds.GetLayerByName('point')
     tests = [('id = 1', [1]),
-              ('1 = id', [1]),
-              ('id = 5', [5]),
-              ('id = 0', []),
-              ('id = 6', []),
-              ('id <= 1', [1]),
-              ('1 >= id', [1]),
-              ('id >= 5', [5]),
-              ('5 <= id', [5]),
-              ('id < 1', []),
-              ('1 > id', []),
-              ('id >= 1', [1, 2, 3, 4, 5]),
-              ('id > 0', [1, 2, 3, 4, 5]),
-              ('0 < id', [1, 2, 3, 4, 5]),
-              ('id <= 5', [1, 2, 3, 4, 5]),
-              ('id < 6', [1, 2, 3, 4, 5]),
-              ('id <> 0', [1, 2, 3, 4, 5]),
-              ('id IS NOT NULL', [1, 2, 3, 4, 5]),
-              ('id IS NULL', []),
-              ('nullint IS NOT NULL', []),
-              ('nullint IS NULL', [1, 2, 3, 4, 5]),
-              ("str = 'foo_e'", []),
-              ("str = 'foo_é'", [1, 2, 3, 4, 5]),
-              ("str <= 'foo_é'", [1, 2, 3, 4, 5]),
-              ("str >= 'foo_é'", [1, 2, 3, 4, 5]),
-              ("str <> 'foo_é'", []),
-              ("str < 'foo_é'", []),
-              ("str > 'foo_é'", []),
-              ('smallint = -13', [1, 2, 3, 4, 5]),
-              ('smallint <= -13', [1, 2, 3, 4, 5]),
-              ('smallint >= -13', [1, 2, 3, 4, 5]),
-              ('smallint < -13', []),
-              ('smallint > -13', []),
-              ('int = 123', [1, 2, 3, 4, 5]),
-              ('int <= 123', [1, 2, 3, 4, 5]),
-              ('int >= 123', [1, 2, 3, 4, 5]),
-              ('int < 123', []),
-              ('int > 123', []),
-              ('float = 1.5', [1, 2, 3, 4, 5]),
-              ('float <= 1.5', [1, 2, 3, 4, 5]),
-              ('float >= 1.5', [1, 2, 3, 4, 5]),
-              ('float < 1.5', []),
-              ('float > 1.5', []),
-              ('real = 4.56', [1, 2, 3, 4, 5]),
-              ('real <= 4.56', [1, 2, 3, 4, 5]),
-              ('real >= 4.56', [1, 2, 3, 4, 5]),
-              ('real < 4.56', []),
-              ('real > 4.56', []),
-              ("adate = '2013/12/26 12:34:56'", [1, 2, 3, 4, 5]),
-              ("adate <= '2013/12/26 12:34:56'", [1, 2, 3, 4, 5]),
-              ("adate >= '2013/12/26 12:34:56'", [1, 2, 3, 4, 5]),
-              ("adate < '2013/12/26 12:34:56'", []),
-              ("adate > '2013/12/26 12:34:56'", []),
-              ("guid = '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", [1, 2, 3, 4, 5]),
-              ("guid <= '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", [1, 2, 3, 4, 5]),
-              ("guid >= '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", [1, 2, 3, 4, 5]),
-              ("guid < '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", []),
-              ("guid > '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", []),
-              ("guid = '{'", []),
-              ("guid > '{'", [1, 2, 3, 4, 5]),
-              ("NOT(id = 1)", [2, 3, 4, 5]),
-              ("id = 1 OR id = -1", [1]),
-              ("id = -1 OR id = 1", [1]),
-              ("id = 1 OR id = 1", [1]),
-              ("id = 1 OR id = 2", [1, 2]),  # exclusive branches
-              ("id < 3 OR id > 3", [1, 2, 4, 5]),  # exclusive branches
-              ("id > 3 OR id < 3", [1, 2, 4, 5]),  # exclusive branches
-              ("id <= 3 OR id >= 4", [1, 2, 3, 4, 5]),  # exclusive branches
-              ("id >= 4 OR id <= 3", [1, 2, 3, 4, 5]),  # exclusive branches
-              ("id < 3 OR id >= 3", [1, 2, 3, 4, 5]),
-              ("id <= 3 OR id >= 3", [1, 2, 3, 4, 5]),
-              ("id <= 5 OR id >= 1", [1, 2, 3, 4, 5]),
-              ("id <= 1.5 OR id >= 2", [1, 2, 3, 4, 5]),
-              ('id IS NULL OR id IS NOT NULL', [1, 2, 3, 4, 5]),
-              ('float < 1.5 OR float > 1.5', []),
-              ('float <= 1.5 OR float >= 1.5', [1, 2, 3, 4, 5]),
-              ('float < 1.5 OR float > 2', []),
-              ('float < 1 OR float > 2.5', []),
-              ("str < 'foo_é' OR str > 'z'", []),
-              ("adate < '2013/12/26 12:34:56' OR adate > '2014/01/01'", []),
-              ("id = 1 AND id = -1", []),
-              ("id = -1 AND id = 1", []),
-              ("id = 1 AND id = 1", [1]),
-              ("id = 1 AND id = 2", []),
-              ("id <= 5 AND id >= 1", [1, 2, 3, 4, 5]),
-              ("id <= 3 AND id >= 3", [3]),
-              ("id = 1 AND float = 1.5", [1]),
-              ("id BETWEEN 1 AND 5", [1, 2, 3, 4, 5]),
-              ("id IN (1)", [1]),
-              ("id IN (5,4,3,2,1)", [1, 2, 3, 4, 5]),
-              ('fid = 1', [1], 0),  # no index used
-              ('fid BETWEEN 1 AND 1', [1], 0),  # no index used
-              ('fid IN (1)', [1], 0),  # no index used
-              ('fid IS NULL', [], 0),  # no index used
-              ('fid IS NOT NULL', [1, 2, 3, 4, 5], 0),  # no index used
-              ("xml <> ''", [1, 2, 3, 4, 5], 0),  # no index used
-              ("id = 1 AND xml <> ''", [1], 1),  # index partially used
-              ("xml <> '' AND id = 1", [1], 1),  # index partially used
-              ("NOT(id = 1 AND xml <> '')", [2, 3, 4, 5], 0),  # no index used
-              ("id = 1 OR xml <> ''", [1, 2, 3, 4, 5], 0),  # no index used
-              ('id = id', [1, 2, 3, 4, 5], 0),  # no index used
-              ('id = 1 + 0', [1], 0),  # no index used (currently...)
+             ('1 = id', [1]),
+             ('id = 5', [5]),
+             ('id = 0', []),
+             ('id = 6', []),
+             ('id <= 1', [1]),
+             ('1 >= id', [1]),
+             ('id >= 5', [5]),
+             ('5 <= id', [5]),
+             ('id < 1', []),
+             ('1 > id', []),
+             ('id >= 1', [1, 2, 3, 4, 5]),
+             ('id > 0', [1, 2, 3, 4, 5]),
+             ('0 < id', [1, 2, 3, 4, 5]),
+             ('id <= 5', [1, 2, 3, 4, 5]),
+             ('id < 6', [1, 2, 3, 4, 5]),
+             ('id <> 0', [1, 2, 3, 4, 5]),
+             ('id IS NOT NULL', [1, 2, 3, 4, 5]),
+             ('id IS NULL', []),
+             ('nullint IS NOT NULL', []),
+             ('nullint IS NULL', [1, 2, 3, 4, 5]),
+             ("str = 'foo_e'", []),
+             ("str = 'foo_é'", [1, 2, 3, 4, 5]),
+             ("str <= 'foo_é'", [1, 2, 3, 4, 5]),
+             ("str >= 'foo_é'", [1, 2, 3, 4, 5]),
+             ("str <> 'foo_é'", []),
+             ("str < 'foo_é'", []),
+             ("str > 'foo_é'", []),
+             ('smallint = -13', [1, 2, 3, 4, 5]),
+             ('smallint <= -13', [1, 2, 3, 4, 5]),
+             ('smallint >= -13', [1, 2, 3, 4, 5]),
+             ('smallint < -13', []),
+             ('smallint > -13', []),
+             ('int = 123', [1, 2, 3, 4, 5]),
+             ('int <= 123', [1, 2, 3, 4, 5]),
+             ('int >= 123', [1, 2, 3, 4, 5]),
+             ('int < 123', []),
+             ('int > 123', []),
+             ('float = 1.5', [1, 2, 3, 4, 5]),
+             ('float <= 1.5', [1, 2, 3, 4, 5]),
+             ('float >= 1.5', [1, 2, 3, 4, 5]),
+             ('float < 1.5', []),
+             ('float > 1.5', []),
+             ('real = 4.56', [1, 2, 3, 4, 5]),
+             ('real <= 4.56', [1, 2, 3, 4, 5]),
+             ('real >= 4.56', [1, 2, 3, 4, 5]),
+             ('real < 4.56', []),
+             ('real > 4.56', []),
+             ("adate = '2013/12/26 12:34:56'", [1, 2, 3, 4, 5]),
+             ("adate <= '2013/12/26 12:34:56'", [1, 2, 3, 4, 5]),
+             ("adate >= '2013/12/26 12:34:56'", [1, 2, 3, 4, 5]),
+             ("adate < '2013/12/26 12:34:56'", []),
+             ("adate > '2013/12/26 12:34:56'", []),
+             ("guid = '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", [1, 2, 3, 4, 5]),
+             ("guid <= '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", [1, 2, 3, 4, 5]),
+             ("guid >= '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", [1, 2, 3, 4, 5]),
+             ("guid < '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", []),
+             ("guid > '{12345678-9ABC-DEF0-1234-567890ABCDEF}'", []),
+             ("guid = '{'", []),
+             ("guid > '{'", [1, 2, 3, 4, 5]),
+             ("NOT(id = 1)", [2, 3, 4, 5]),
+             ("id = 1 OR id = -1", [1]),
+             ("id = -1 OR id = 1", [1]),
+             ("id = 1 OR id = 1", [1]),
+             ("id = 1 OR id = 2", [1, 2]),  # exclusive branches
+             ("id < 3 OR id > 3", [1, 2, 4, 5]),  # exclusive branches
+             ("id > 3 OR id < 3", [1, 2, 4, 5]),  # exclusive branches
+             ("id <= 3 OR id >= 4", [1, 2, 3, 4, 5]),  # exclusive branches
+             ("id >= 4 OR id <= 3", [1, 2, 3, 4, 5]),  # exclusive branches
+             ("id < 3 OR id >= 3", [1, 2, 3, 4, 5]),
+             ("id <= 3 OR id >= 3", [1, 2, 3, 4, 5]),
+             ("id <= 5 OR id >= 1", [1, 2, 3, 4, 5]),
+             ("id <= 1.5 OR id >= 2", [1, 2, 3, 4, 5]),
+             ('id IS NULL OR id IS NOT NULL', [1, 2, 3, 4, 5]),
+             ('float < 1.5 OR float > 1.5', []),
+             ('float <= 1.5 OR float >= 1.5', [1, 2, 3, 4, 5]),
+             ('float < 1.5 OR float > 2', []),
+             ('float < 1 OR float > 2.5', []),
+             ("str < 'foo_é' OR str > 'z'", []),
+             ("adate < '2013/12/26 12:34:56' OR adate > '2014/01/01'", []),
+             ("id = 1 AND id = -1", []),
+             ("id = -1 AND id = 1", []),
+             ("id = 1 AND id = 1", [1]),
+             ("id = 1 AND id = 2", []),
+             ("id <= 5 AND id >= 1", [1, 2, 3, 4, 5]),
+             ("id <= 3 AND id >= 3", [3]),
+             ("id = 1 AND float = 1.5", [1]),
+             ("id BETWEEN 1 AND 5", [1, 2, 3, 4, 5]),
+             ("id IN (1)", [1]),
+             ("id IN (5,4,3,2,1)", [1, 2, 3, 4, 5]),
+             ('fid = 1', [1], 0),  # no index used
+             ('fid BETWEEN 1 AND 1', [1], 0),  # no index used
+             ('fid IN (1)', [1], 0),  # no index used
+             ('fid IS NULL', [], 0),  # no index used
+             ('fid IS NOT NULL', [1, 2, 3, 4, 5], 0),  # no index used
+             ("xml <> ''", [1, 2, 3, 4, 5], 0),  # no index used
+             ("id = 1 AND xml <> ''", [1], 1),  # index partially used
+             ("xml <> '' AND id = 1", [1], 1),  # index partially used
+             ("NOT(id = 1 AND xml <> '')", [2, 3, 4, 5], 0),  # no index used
+             ("id = 1 OR xml <> ''", [1, 2, 3, 4, 5], 0),  # no index used
+             ('id = id', [1, 2, 3, 4, 5], 0),  # no index used
+             ('id = 1 + 0', [1], 0),  # no index used (currently...)
               ]
     for test in tests:
 
@@ -639,11 +639,11 @@ def ogr_openfilegdb_4():
 
     lyr = ds.GetLayerByName('none')
     tests = [('id = 1', [1]),
-              ('id IS NULL', [6]),
-              ('id IS NOT NULL', [1, 2, 3, 4, 5]),
-              ('id IS NULL OR id IS NOT NULL', [1, 2, 3, 4, 5, 6]),
-              ('id = 1 OR id IS NULL', [1, 6]),
-              ('id IS NULL OR id = 1', [1, 6]),
+             ('id IS NULL', [6]),
+             ('id IS NOT NULL', [1, 2, 3, 4, 5]),
+             ('id IS NULL OR id IS NOT NULL', [1, 2, 3, 4, 5, 6]),
+             ('id = 1 OR id IS NULL', [1, 6]),
+             ('id IS NULL OR id = 1', [1, 6]),
               ]
     for test in tests:
 
@@ -681,13 +681,13 @@ def ogr_openfilegdb_4():
 
     lyr = ds.GetLayerByName('big_layer')
     tests = [('real = 0', 86, 1),
-              ('real = 1', 85, 2),
-              ('real = 2', 85, 3),
-              ('real = 3', 85, 4),
-              ('real >= 0', 86 + 3 * 85, None),
-              ('real < 4', 86 + 3 * 85, None),
-              ('real > 1 AND real < 2', 0, None),
-              ('real < 0', 0, None),
+             ('real = 1', 85, 2),
+             ('real = 2', 85, 3),
+             ('real = 3', 85, 4),
+             ('real >= 0', 86 + 3 * 85, None),
+             ('real < 4', 86 + 3 * 85, None),
+             ('real > 1 AND real < 2', 0, None),
+             ('real < 0', 0, None),
               ]
     for (where_clause, count, start) in tests:
 
@@ -976,7 +976,7 @@ def ogr_openfilegdb_10():
 
     if False:
         for filename in ['tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtable',
-                        'tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtablx']:
+                         'tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtablx']:
             errors = set()
             offsets = []
             last_error_msg = ''
@@ -1053,7 +1053,7 @@ def ogr_openfilegdb_10():
     else:
 
         for (filename, offsets) in [('tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtable', [4, 5, 6, 7, 32, 33, 41, 42, 52, 59, 60, 63, 64, 72, 73, 77, 78, 79, 80, 81, 101, 102, 104, 105, 111, 180]),
-                          ('tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtablx', [4, 7, 11, 12, 16, 31, 5136, 5140, 5142, 5144])]:
+                                    ('tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtablx', [4, 7, 11, 12, 16, 31, 5136, 5140, 5142, 5144])]:
             for offset in offsets:
                 backup = fuzz(filename, offset)
                 gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -1078,7 +1078,7 @@ def ogr_openfilegdb_10():
                 unfuzz(backup)
 
         for (filename, offsets) in [('tmp/testopenfilegdb_fuzzed.gdb/a00000004.gdbindexes', [0, 4, 5, 44, 45, 66, 67, 100, 101, 116, 117, 148, 149, 162, 163, 206, 207, 220, 221, 224, 280, 281]),
-                          ('tmp/testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx', [4, 12, 8196, 8300, 8460, 8620, 8780, 8940, 9100, 12290, 12294, 12298])]:
+                                    ('tmp/testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx', [4, 12, 8196, 8300, 8460, 8620, 8780, 8940, 9100, 12290, 12294, 12298])]:
             for offset in offsets:
                 #print(offset)
                 backup = fuzz(filename, offset)

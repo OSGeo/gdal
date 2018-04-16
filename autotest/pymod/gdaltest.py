@@ -651,9 +651,9 @@ class GDALTest:
             gdal.PushErrorHandler('CPLQuietErrorHandler')
         if interrupt_during_copy:
             new_ds = self.driver.CreateCopy(new_filename, src_ds,
-                                         strict=strict_in,
-                                         options=self.options,
-                                         callback=testCreateCopyInterruptCallback)
+                                            strict=strict_in,
+                                            options=self.options,
+                                            callback=testCreateCopyInterruptCallback)
         else:
             new_ds = self.driver.CreateCopy(new_filename, src_ds,
                                             strict=strict_in,
@@ -675,7 +675,7 @@ class GDALTest:
 
         if new_ds is None:
             post_reason('Failed to create test file using CreateCopy method.'\
-                         + '\n' + gdal.GetLastErrorMsg())
+                        + '\n' + gdal.GetLastErrorMsg())
             return 'fail'
 
         if new_ds.GetDriver().ShortName != gdal.GetDriverByName(self.drivername).ShortName:
@@ -723,8 +723,8 @@ class GDALTest:
                     return 'fail'
             elif self.chksum_after_reopening is not None and bnd.Checksum() not in self.chksum_after_reopening:
                 post_reason('Did not get expected checksum on reopened file.\n'
-                             '    Got %d instead of %s.' \
-                             % (bnd.Checksum(), str(self.chksum_after_reopening)))
+                            '    Got %d instead of %s.' \
+                            % (bnd.Checksum(), str(self.chksum_after_reopening)))
                 return 'fail'
 
             if check_minmax:
@@ -805,8 +805,8 @@ class GDALTest:
                 new_filename = 'tmp/' + self.filename + '.tst'
 
         new_ds = self.driver.Create(new_filename, xsize, ysize, out_bands,
-                                     src_ds.GetRasterBand(self.band).DataType,
-                                     options=self.options)
+                                    src_ds.GetRasterBand(self.band).DataType,
+                                    options=self.options)
         if new_ds is None:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
@@ -851,8 +851,8 @@ class GDALTest:
             if self.chksum is not None \
                and new_ds.GetRasterBand(band).Checksum() != self.chksum:
                 post_reason('Did not get expected checksum on reopened file.' \
-                    '    Got %d instead of %d.' \
-                    % (new_ds.GetRasterBand(band).Checksum(), self.chksum))
+                            '    Got %d instead of %d.' \
+                            % (new_ds.GetRasterBand(band).Checksum(), self.chksum))
                 return 'fail'
 
             if new_ds.GetRasterBand(band).ComputeRasterMinMax() != minmax and check_minmax:
@@ -881,8 +881,8 @@ class GDALTest:
 
         new_filename = 'tmp/' + self.filename + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
-                                     src_ds.GetRasterBand(self.band).DataType,
-                                     options=self.options)
+                                    src_ds.GetRasterBand(self.band).DataType,
+                                    options=self.options)
         if new_ds is None:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
@@ -936,8 +936,8 @@ class GDALTest:
 
         new_filename = 'tmp/' + self.filename + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
-                                     src_ds.GetRasterBand(self.band).DataType,
-                                     options=self.options)
+                                    src_ds.GetRasterBand(self.band).DataType,
+                                    options=self.options)
         if new_ds is None:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
@@ -1001,8 +1001,8 @@ class GDALTest:
 
         new_filename = 'tmp/' + self.filename + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
-                                     src_ds.GetRasterBand(self.band).DataType,
-                                     options=self.options)
+                                    src_ds.GetRasterBand(self.band).DataType,
+                                    options=self.options)
         if new_ds is None:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
@@ -1056,8 +1056,8 @@ class GDALTest:
 
         new_filename = 'tmp/' + self.filename + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
-                                     src_ds.GetRasterBand(self.band).DataType,
-                                     options=self.options)
+                                    src_ds.GetRasterBand(self.band).DataType,
+                                    options=self.options)
         if new_ds is None:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
@@ -1123,8 +1123,8 @@ class GDALTest:
 
         new_filename = 'tmp/' + self.filename + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
-                                     src_ds.GetRasterBand(self.band).DataType,
-                                     options=self.options)
+                                    src_ds.GetRasterBand(self.band).DataType,
+                                    options=self.options)
         if new_ds is None:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
@@ -1166,8 +1166,8 @@ class GDALTest:
 
         new_filename = 'tmp/' + self.filename + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
-                                     src_ds.GetRasterBand(self.band).DataType,
-                                     options=self.options)
+                                    src_ds.GetRasterBand(self.band).DataType,
+                                    options=self.options)
         if new_ds is None:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
@@ -1243,10 +1243,10 @@ def equal_srs_from_wkt(expected_wkt, got_wkt):
 def rpcs_equal(md1, md2):
 
     simple_fields = ['LINE_OFF', 'SAMP_OFF', 'LAT_OFF', 'LONG_OFF',
-                      'HEIGHT_OFF', 'LINE_SCALE', 'SAMP_SCALE', 'LAT_SCALE',
-                      'LONG_SCALE', 'HEIGHT_SCALE']
+                     'HEIGHT_OFF', 'LINE_SCALE', 'SAMP_SCALE', 'LAT_SCALE',
+                     'LONG_SCALE', 'HEIGHT_SCALE']
     coef_fields = ['LINE_NUM_COEFF', 'LINE_DEN_COEFF',
-                    'SAMP_NUM_COEFF', 'SAMP_DEN_COEFF']
+                   'SAMP_NUM_COEFF', 'SAMP_DEN_COEFF']
 
     for sf in simple_fields:
 

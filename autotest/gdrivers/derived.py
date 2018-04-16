@@ -113,12 +113,12 @@ def derived_test2():
                      'DERIVED_SUBDATASET_7_DESC' : 'log10 of amplitude of input bands from ../gcore/data/cint_sar.tif'}
 
     expected_cs = {'DERIVED_SUBDATASET_1_NAME' : 345,
-                    'DERIVED_SUBDATASET_2_NAME' : 10,
-                    'DERIVED_SUBDATASET_3_NAME' : 159,
-                    'DERIVED_SUBDATASET_4_NAME' : 142,
-                    'DERIVED_SUBDATASET_5_NAME' : 110,
-                    'DERIVED_SUBDATASET_6_NAME' : 314,
-                    'DERIVED_SUBDATASET_7_NAME' : 55}
+                   'DERIVED_SUBDATASET_2_NAME' : 10,
+                   'DERIVED_SUBDATASET_3_NAME' : 159,
+                   'DERIVED_SUBDATASET_4_NAME' : 142,
+                   'DERIVED_SUBDATASET_5_NAME' : 110,
+                   'DERIVED_SUBDATASET_6_NAME' : 314,
+                   'DERIVED_SUBDATASET_7_NAME' : 55}
 
     if got_dsds != expected_dsds:
         gdaltest.post_reason('fail')
@@ -174,8 +174,8 @@ def derived_test3():
         return 'fail'
 
     for function in ['real', 'imag', 'complex', 'mod', 'phase', 'conj',
-                      'sum', 'diff', 'mul', 'cmul', 'inv', 'intensity',
-                      'sqrt', 'log10', 'dB', 'dB2amp', 'dB2pow']:
+                     'sum', 'diff', 'mul', 'cmul', 'inv', 'intensity',
+                     'sqrt', 'log10', 'dB', 'dB2amp', 'dB2pow']:
         ds = gdal.Open('<VRTDataset rasterXSize="1" rasterYSize="1"><VRTRasterBand subClass="VRTDerivedRasterBand"><PixelFunctionType>%s</PixelFunctionType></VRTRasterBand></VRTDataset>' % function)
         with gdaltest.error_handler():
             ds.GetRasterBand(1).Checksum()

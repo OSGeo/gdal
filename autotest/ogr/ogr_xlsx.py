@@ -85,17 +85,17 @@ def ogr_xlsx_check(ds):
         return 'fail'
 
     type_array = [ogr.OFTString,
-                   ogr.OFTInteger,
-                   ogr.OFTReal,
-                   ogr.OFTReal,
-                   ogr.OFTDate,
-                   ogr.OFTDateTime,
-                   ogr.OFTReal,
-                   ogr.OFTTime,
-                   ogr.OFTReal,
-                   ogr.OFTInteger,
-                   ogr.OFTReal,
-                   ogr.OFTDateTime]
+                  ogr.OFTInteger,
+                  ogr.OFTReal,
+                  ogr.OFTReal,
+                  ogr.OFTDate,
+                  ogr.OFTDateTime,
+                  ogr.OFTReal,
+                  ogr.OFTTime,
+                  ogr.OFTReal,
+                  ogr.OFTInteger,
+                  ogr.OFTReal,
+                  ogr.OFTDateTime]
 
     for i in range(len(type_array)):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
@@ -507,23 +507,23 @@ def ogr_xlsx_13():
         return 'fail'
 
     type_array = [ogr.OFTInteger,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTInteger,
-                   ogr.OFTString,
-                   ogr.OFTDate,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTDate,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTString]
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTInteger,
+                  ogr.OFTString,
+                  ogr.OFTDate,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTDate,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTString]
 
     for i in range(len(type_array)):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
@@ -559,23 +559,23 @@ def ogr_xlsx_14():
         return 'fail'
 
     type_array = [ogr.OFTInteger,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTInteger,
-                   ogr.OFTString,
-                   ogr.OFTDate,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTDate,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTString,
-                   ogr.OFTString]
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTInteger,
+                  ogr.OFTString,
+                  ogr.OFTDate,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTDate,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTString,
+                  ogr.OFTString]
 
     for i in range(len(type_array)):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:

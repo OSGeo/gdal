@@ -83,8 +83,8 @@ def histogram_3():
 
     ds = gdal.Open('data/int32_withneg.grd')
     hist = ds.GetRasterBand(1).GetHistogram(buckets=21, max=100, min=-100,
-                                             include_out_of_range=1,
-                                             approx_ok=0)
+                                            include_out_of_range=1,
+                                            approx_ok=0)
 
     exp_hist = [0, 0, 0, 0, 0, 1, 0, 1, 1, 3, 3, 2, 0, 5, 3, 4, 0, 1, 1, 2, 3]
 
@@ -103,8 +103,8 @@ def histogram_4():
 
     ds = gdal.Open('data/int32_withneg.grd')
     hist = ds.GetRasterBand(1).GetHistogram(buckets=21, max=100, min=-100,
-                                             include_out_of_range=0,
-                                             approx_ok=0)
+                                            include_out_of_range=0,
+                                            approx_ok=0)
 
     exp_hist = [0, 0, 0, 0, 0, 1, 0, 1, 1, 3, 3, 2, 0, 5, 3, 4, 0, 1, 1, 2, 0]
 

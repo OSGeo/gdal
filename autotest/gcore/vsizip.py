@@ -664,19 +664,19 @@ def vsizip_14():
 
 
 gdaltest_list = [vsizip_1,
-                  vsizip_2,
-                  vsizip_3,
-                  vsizip_4,
-                  vsizip_5,
-                  vsizip_6,
-                  vsizip_7,
-                  vsizip_8,
-                  vsizip_9,
-                  vsizip_10,
-                  vsizip_11,
-                  vsizip_12,
-                  vsizip_13,
-                  vsizip_14
+                 vsizip_2,
+                 vsizip_3,
+                 vsizip_4,
+                 vsizip_5,
+                 vsizip_6,
+                 vsizip_7,
+                 vsizip_8,
+                 vsizip_9,
+                 vsizip_10,
+                 vsizip_11,
+                 vsizip_12,
+                 vsizip_13,
+                 vsizip_14
                   ]
 
 

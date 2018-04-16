@@ -134,8 +134,8 @@ def test_gdal_proximity_3():
 def test_gdal_proximity_cleanup():
 
     lst = ['tmp/proximity_1.tif',
-            'tmp/proximity_2.tif',
-            'tmp/proximity_3.tif']
+           'tmp/proximity_2.tif',
+           'tmp/proximity_3.tif']
     for filename in lst:
         try:
             os.remove(filename)

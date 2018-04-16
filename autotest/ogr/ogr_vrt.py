@@ -2006,15 +2006,15 @@ def ogr_vrt_29():
 def ogr_vrt_30():
 
     for filename in ['tmp/ogr_vrt_30_1.shp',
-                      'tmp/ogr_vrt_30_1.shx',
-                      'tmp/ogr_vrt_30_1.dbf',
-                      'tmp/ogr_vrt_30_1.prj',
-                      'tmp/ogr_vrt_30_1.qix',
-                      'tmp/ogr_vrt_30_2.shp',
-                      'tmp/ogr_vrt_30_2.shx',
-                      'tmp/ogr_vrt_30_2.dbf',
-                      'tmp/ogr_vrt_30_2.prj',
-                      'tmp/ogr_vrt_30_2.qix']:
+                     'tmp/ogr_vrt_30_1.shx',
+                     'tmp/ogr_vrt_30_1.dbf',
+                     'tmp/ogr_vrt_30_1.prj',
+                     'tmp/ogr_vrt_30_1.qix',
+                     'tmp/ogr_vrt_30_2.shp',
+                     'tmp/ogr_vrt_30_2.shx',
+                     'tmp/ogr_vrt_30_2.dbf',
+                     'tmp/ogr_vrt_30_2.prj',
+                     'tmp/ogr_vrt_30_2.qix']:
         try:
             os.unlink(filename)
         except OSError:
@@ -2495,15 +2495,15 @@ def ogr_vrt_30():
         ds = None
 
     for filename in ['tmp/ogr_vrt_30_1.shp',
-                      'tmp/ogr_vrt_30_1.shx',
-                      'tmp/ogr_vrt_30_1.dbf',
-                      'tmp/ogr_vrt_30_1.prj',
-                      'tmp/ogr_vrt_30_1.qix',
-                      'tmp/ogr_vrt_30_2.shp',
-                      'tmp/ogr_vrt_30_2.shx',
-                      'tmp/ogr_vrt_30_2.dbf',
-                      'tmp/ogr_vrt_30_2.prj',
-                      'tmp/ogr_vrt_30_2.qix']:
+                     'tmp/ogr_vrt_30_1.shx',
+                     'tmp/ogr_vrt_30_1.dbf',
+                     'tmp/ogr_vrt_30_1.prj',
+                     'tmp/ogr_vrt_30_1.qix',
+                     'tmp/ogr_vrt_30_2.shp',
+                     'tmp/ogr_vrt_30_2.shx',
+                     'tmp/ogr_vrt_30_2.dbf',
+                     'tmp/ogr_vrt_30_2.prj',
+                     'tmp/ogr_vrt_30_2.qix']:
         try:
             os.unlink(filename)
         except OSError:
@@ -2955,9 +2955,9 @@ def ogr_vrt_33():
     ds = ogr.Open(ds_str)
     lyr = ds.GetLayer(0)
     geom_fields = [['geom__WKT_EPSG_4326_POINT', ogr.wkbPoint, '4326'],
-                    ['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon, '32632'],
-                    ['geom__WKT_EPSG_4326_LINESTRING', ogr.wkbLineString, '4326'],
-                    ['geom__WKT_EPSG_32631_POINT', ogr.wkbPoint, '32631']]
+                   ['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon, '32632'],
+                   ['geom__WKT_EPSG_4326_LINESTRING', ogr.wkbLineString, '4326'],
+                   ['geom__WKT_EPSG_32631_POINT', ogr.wkbPoint, '32631']]
     if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3019,7 +3019,7 @@ def ogr_vrt_33():
     ds = ogr.Open(ds_str)
     lyr = ds.GetLayer(0)
     geom_fields = [['geom__WKT_EPSG_4326_POINT', ogr.wkbPoint, '4326'],
-                    ['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon, '32632']]
+                   ['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon, '32632']]
     if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3077,8 +3077,8 @@ def ogr_vrt_33():
     ds = ogr.Open(ds_str)
     lyr = ds.GetLayer(0)
     geom_fields = [['geom__WKT_EPSG_4326_POINT', ogr.wkbPoint, '4326'],
-                    ['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon, '32632'],
-                    ['geom__WKT_EPSG_4326_LINESTRING', ogr.wkbLineString, '4326']]
+                   ['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon, '32632'],
+                   ['geom__WKT_EPSG_4326_LINESTRING', ogr.wkbLineString, '4326']]
     if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3137,7 +3137,7 @@ def ogr_vrt_33():
     ds = ogr.Open(ds_str)
     lyr = ds.GetLayer(0)
     geom_fields = [['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon, '32632'],
-                    ['geom__WKT_EPSG_4326_POINT', ogr.wkbPoint, '4326']]
+                   ['geom__WKT_EPSG_4326_POINT', ogr.wkbPoint, '4326']]
     if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3200,7 +3200,7 @@ def ogr_vrt_33():
     ds = ogr.Open(ds_str)
     lyr = ds.GetLayer(0)
     geom_fields = [['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon25D, '32632'],
-                    ['geom__WKT_EPSG_4326_POINT', ogr.wkbPoint, '4322']]
+                   ['geom__WKT_EPSG_4326_POINT', ogr.wkbPoint, '4322']]
     if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3288,9 +3288,9 @@ def ogr_vrt_33():
     ds = ogr.Open('tmp/ogr_vrt_33')
     sql_lyr = ds.ExecuteSQL('SELECT * FROM test UNION ALL SELECT * FROM test2')
     geom_fields = [['geom__WKT_EPSG_4326_POINT', ogr.wkbPoint, '4326'],
-                    ['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon, '32632'],
-                    ['geom__WKT_EPSG_4326_LINESTRING', ogr.wkbLineString, '4326'],
-                    ['geom__WKT_EPSG_32631_POINT', ogr.wkbPoint, '32631']]
+                   ['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon, '32632'],
+                   ['geom__WKT_EPSG_4326_LINESTRING', ogr.wkbLineString, '4326'],
+                   ['geom__WKT_EPSG_32631_POINT', ogr.wkbPoint, '32631']]
     if sql_lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3467,7 +3467,7 @@ def ogr_vrt_36():
     ds = None
 
     gdal.FileFromMemBuffer('/vsimem/ogr_vrt_36.vrt',
-"""<OGRVRTDataSource>
+                           """<OGRVRTDataSource>
     <OGRVRTLayer name="ogr_vrt_36">
         <SrcDataSource relativeToVRT="1">/vsimem/ogr_vrt_36.shp</SrcDataSource>
         <GeometryType>wkbPoint</GeometryType>
@@ -3528,19 +3528,19 @@ def ogr_vrt_38():
         return 'skip'
 
     types = [['Point', ogr.wkbPoint],
-              ['LineString', ogr.wkbLineString],
-              ['Polygon', ogr.wkbPolygon],
-              ['MultiPoint', ogr.wkbMultiPoint],
-              ['MultiLineString', ogr.wkbMultiLineString],
-              ['MultiPolygon', ogr.wkbMultiPolygon],
-              ['GeometryCollection', ogr.wkbGeometryCollection],
-              ['CircularString', ogr.wkbCircularString],
-              ['CompoundCurve', ogr.wkbCompoundCurve],
-              ['CurvePolygon', ogr.wkbCurvePolygon],
-              ['MultiCurve', ogr.wkbMultiCurve],
-              ['MultiSurface', ogr.wkbMultiSurface],
-              ['Curve', ogr.wkbCurve],
-              ['Surface', ogr.wkbSurface]
+             ['LineString', ogr.wkbLineString],
+             ['Polygon', ogr.wkbPolygon],
+             ['MultiPoint', ogr.wkbMultiPoint],
+             ['MultiLineString', ogr.wkbMultiLineString],
+             ['MultiPolygon', ogr.wkbMultiPolygon],
+             ['GeometryCollection', ogr.wkbGeometryCollection],
+             ['CircularString', ogr.wkbCircularString],
+             ['CompoundCurve', ogr.wkbCompoundCurve],
+             ['CurvePolygon', ogr.wkbCurvePolygon],
+             ['MultiCurve', ogr.wkbMultiCurve],
+             ['MultiSurface', ogr.wkbMultiSurface],
+             ['Curve', ogr.wkbCurve],
+             ['Surface', ogr.wkbSurface]
               ]
 
     for (type_str, ogr_type) in types:
@@ -3550,7 +3550,7 @@ def ogr_vrt_38():
         if qualifier == '25D' and ogr_type > ogr.wkbGeometryCollection:
             continue
         gdal.FileFromMemBuffer('/vsimem/ogr_vrt_38.vrt',
-    """<OGRVRTDataSource>
+                               """<OGRVRTDataSource>
         <OGRVRTLayer name="ogr_vrt_38">
             <SrcDataSource relativeToVRT="1">/vsimem/ogr_vrt_38.shp</SrcDataSource>
             <GeometryType>wkb%s%s</GeometryType>
@@ -3583,17 +3583,17 @@ def ogr_vrt_39():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_vrt_39.csv',
-"""my_fid,val
+                           """my_fid,val
 30,1
 25,2
 """)
 
     gdal.FileFromMemBuffer('/vsimem/ogr_vrt_39.csvt',
-"""Integer,Integer
+                           """Integer,Integer
 """)
 
     gdal.FileFromMemBuffer('/vsimem/ogr_vrt_39.vrt',
-"""<OGRVRTDataSource>
+                           """<OGRVRTDataSource>
     <OGRVRTLayer name="ogr_vrt_39">
         <SrcDataSource relativeToVRT="1">/vsimem/ogr_vrt_39.csv</SrcDataSource>
         <GeometryType>wkbNone</GeometryType>
@@ -3627,12 +3627,12 @@ def ogr_vrt_40():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_vrt_40.csv',
-"""id,x,y,z,m
+                           """id,x,y,z,m
 1,1,2,3,4
 """)
 
     gdal.FileFromMemBuffer('/vsimem/ogr_vrt_40.vrt',
-"""<OGRVRTDataSource>
+                           """<OGRVRTDataSource>
   <OGRVRTLayer name="ogr_vrt_40">
     <SrcDataSource relativeToVRT="1">ogr_vrt_40.csv</SrcDataSource>
     <SrcLayer>ogr_vrt_40</SrcLayer>

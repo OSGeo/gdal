@@ -73,7 +73,7 @@ def idrisi_4():
     tst = gdaltest.GDALTest('RST', 'rgbsmall.tif', 2, 21053)
 
     return tst.testCreateCopy(check_gt=1, check_srs=1,
-                               new_filename='tmp/rgbsmall_cc.rst', vsimem=1)
+                              new_filename='tmp/rgbsmall_cc.rst', vsimem=1)
 
 ###############################################################################
 # Cleanup.

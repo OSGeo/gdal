@@ -216,8 +216,8 @@ if dst_ds is None:
 
     drv = gdal.GetDriverByName(format)
     dst_ds = drv.Create(dst_filename,
-                         src_ds.RasterXSize, src_ds.RasterYSize, 1,
-                         gdal.GetDataTypeByName(creation_type), creation_options)
+                        src_ds.RasterXSize, src_ds.RasterYSize, 1,
+                        gdal.GetDataTypeByName(creation_type), creation_options)
 
     dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
     dst_ds.SetProjection(src_ds.GetProjectionRef())
@@ -234,7 +234,7 @@ else:
     prog_func = gdal.TermProgress
 
 gdal.ComputeProximity(srcband, dstband, options,
-                       callback=prog_func)
+                      callback=prog_func)
 
 srcband = None
 dstband = None

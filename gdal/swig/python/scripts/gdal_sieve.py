@@ -207,7 +207,7 @@ if dst_filename is not None:
 
     drv = gdal.GetDriverByName(format)
     dst_ds = drv.Create(dst_filename, src_ds.RasterXSize, src_ds.RasterYSize, 1,
-                         srcband.DataType)
+                        srcband.DataType)
     wkt = src_ds.GetProjection()
     if wkt != '':
         dst_ds.SetProjection(wkt)
@@ -227,8 +227,8 @@ else:
     prog_func = gdal.TermProgress
 
 result = gdal.SieveFilter(srcband, maskband, dstband,
-                           threshold, connectedness,
-                           callback=prog_func)
+                          threshold, connectedness,
+                          callback=prog_func)
 
 src_ds = None
 dst_ds = None

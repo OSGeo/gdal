@@ -128,29 +128,29 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     gdal.Unlink("/vsimem/style.txt")
 
     ds_options = ['author_name=Even Rouault',
-                'author_uri=http://gdal.org',
-                'author_email=foo@bar.com',
-                'link=http://gdal.org',
-                'phonenumber=tel:12345678',
-                'NLC_MINREFRESHPERIOD=3600',
-                'NLC_MAXSESSIONLENGTH=-1',
-                'NLC_COOKIE=cookie',
-                'NLC_MESSAGE=message',
-                'NLC_LINKNAME=linkname',
-                'NLC_LINKDESCRIPTION=linkdescription',
-                'NLC_LINKSNIPPET=linksnippet',
-                'NLC_EXPIRES=2014-12-31T23:59:59Z',
-                'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png',
-                'eiffel_tower_normal_balloonstyle_bgcolor=#FFFF00']
+                  'author_uri=http://gdal.org',
+                  'author_email=foo@bar.com',
+                  'link=http://gdal.org',
+                  'phonenumber=tel:12345678',
+                  'NLC_MINREFRESHPERIOD=3600',
+                  'NLC_MAXSESSIONLENGTH=-1',
+                  'NLC_COOKIE=cookie',
+                  'NLC_MESSAGE=message',
+                  'NLC_LINKNAME=linkname',
+                  'NLC_LINKDESCRIPTION=linkdescription',
+                  'NLC_LINKSNIPPET=linksnippet',
+                  'NLC_EXPIRES=2014-12-31T23:59:59Z',
+                  'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png',
+                  'eiffel_tower_normal_balloonstyle_bgcolor=#FFFF00']
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename, options=ds_options)
 
     ds.SetStyleTable(style_table)
 
     lyr_options = ['LOOKAT_LONGITUDE=2.2945', 'LOOKAT_LATITUDE=48.85825', 'LOOKAT_RANGE=300',
-                    'LOOKAT_ALTITUDE=30', 'LOOKAT_HEADING=0', 'LOOKAT_TILT=70', 'LOOKAT_ALTITUDEMODE=relativeToGround',
-                    'ADD_REGION=YES', 'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000', \
-                    'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2', 'SO_HREF=http://www.gdal.org/gdalicon.png',
-                    'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png']
+                   'LOOKAT_ALTITUDE=30', 'LOOKAT_HEADING=0', 'LOOKAT_TILT=70', 'LOOKAT_ALTITUDEMODE=relativeToGround',
+                   'ADD_REGION=YES', 'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000', \
+                   'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2', 'SO_HREF=http://www.gdal.org/gdalicon.png',
+                   'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png']
     lyr = ds.CreateLayer('test', options=lyr_options)
     lyr.CreateField(ogr.FieldDefn('name', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('description', ogr.OFTString))
@@ -304,8 +304,8 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     # lyr.CreateFeature(feat)
 
     lyr_options = ['CAMERA_LONGITUDE=2.2945', 'CAMERA_LATITUDE=48.85825', 'CAMERA_ALTITUDE=30',
-                    'CAMERA_HEADING=120', 'CAMERA_TILT=70', 'CAMERA_ROLL=10', 'CAMERA_ALTITUDEMODE=relativeToGround',
-                    'FOLDER=YES', 'NAME=layer_name', 'DESCRIPTION=description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=snippet']
+                   'CAMERA_HEADING=120', 'CAMERA_TILT=70', 'CAMERA_ROLL=10', 'CAMERA_ALTITUDEMODE=relativeToGround',
+                   'FOLDER=YES', 'NAME=layer_name', 'DESCRIPTION=description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=snippet']
     ds.CreateLayer('test2', options=lyr_options)
 
     gdal.SetConfigOption('LIBKML_USE_SIMPLEFIELD', 'NO')
@@ -336,7 +336,7 @@ def generate_libkml_update(filename):
         pass
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename,
-        options=['UPDATE_TARGETHREF=http://even.rouault.free.fr/kml/gdal_2.1/test_ogrlibkml.kml'])
+                                                        options=['UPDATE_TARGETHREF=http://even.rouault.free.fr/kml/gdal_2.1/test_ogrlibkml.kml'])
     lyr = ds.CreateLayer('test')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(100)

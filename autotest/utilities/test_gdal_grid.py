@@ -90,8 +90,8 @@ def test_gdal_grid_1():
     for j in range(121):
         for i in range(121):
             wkt = 'POINT(%f %f %s)' % (geotransform[0] + (i + .5) * geotransform[1],
-                                        geotransform[3] + (j + .5) * geotransform[5],
-                                        array_val[j * 121 + i])
+                                       geotransform[3] + (j + .5) * geotransform[5],
+                                       array_val[j * 121 + i])
             dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
             dst_feat.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
             shape_lyr.CreateFeature(dst_feat)

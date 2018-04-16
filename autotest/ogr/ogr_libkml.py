@@ -983,7 +983,7 @@ def ogr_libkml_write_layer_lookat():
     options = ['LOOKAT_LONGITUDE=2', 'LOOKAT_LATITUDE=49', 'LOOKAT_RANGE=150']
     ds.CreateLayer('test', options=options)
     options = ['LOOKAT_LONGITUDE=3', 'LOOKAT_LATITUDE=50', 'LOOKAT_RANGE=250',
-                'LOOKAT_ALTITUDE=100', 'LOOKAT_HEADING=70', 'LOOKAT_TILT=50', 'LOOKAT_ALTITUDEMODE=relativeToGround']
+               'LOOKAT_ALTITUDE=100', 'LOOKAT_HEADING=70', 'LOOKAT_TILT=50', 'LOOKAT_ALTITUDEMODE=relativeToGround']
     ds.CreateLayer('test2', options=options)
     ds = None
 
@@ -1025,7 +1025,7 @@ def ogr_libkml_write_layer_camera():
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_layer_camera.kml")
     options = ['CAMERA_LONGITUDE=3', 'CAMERA_LATITUDE=50', 'CAMERA_ALTITUDE=100',
-                'CAMERA_HEADING=70', 'CAMERA_TILT=50', 'CAMERA_ROLL=10', 'CAMERA_ALTITUDEMODE=relativeToGround']
+               'CAMERA_HEADING=70', 'CAMERA_TILT=50', 'CAMERA_ROLL=10', 'CAMERA_ALTITUDEMODE=relativeToGround']
     ds.CreateLayer('test', options=options)
     ds = None
 
@@ -1234,9 +1234,9 @@ def ogr_libkml_write_region():
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48))'))
     lyr.CreateFeature(feat)
     lyr = ds.CreateLayer('manual', options=['ADD_REGION=YES', 'REGION_XMIN=-180', \
-        'REGION_XMAX=180', 'REGION_YMIN=-90', 'REGION_YMAX=90', \
-        'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000', \
-        'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2'])
+                                            'REGION_XMAX=180', 'REGION_YMIN=-90', 'REGION_YMAX=90', \
+                                            'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000', \
+                                            'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2'])
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_region.kml', 'rb')
@@ -1280,20 +1280,20 @@ def ogr_libkml_write_screenoverlay():
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_screenoverlay.kml")
     ds.CreateLayer('auto', options=['SO_HREF=http://foo'])
     ds.CreateLayer('manual', options=['SO_HREF=http://bar',
-                                              'SO_NAME=name',
-                                              'SO_DESCRIPTION=description',
-                                              'SO_OVERLAY_X=10',
-                                              'SO_OVERLAY_Y=20',
-                                              'SO_OVERLAY_XUNITS=pixels',
-                                              'SO_OVERLAY_YUNITS=pixels',
-                                              'SO_SCREEN_X=0.4',
-                                              'SO_SCREEN_Y=0.5',
-                                              'SO_SCREEN_XUNITS=fraction',
-                                              'SO_SCREEN_YUNITS=fraction',
-                                              'SO_SIZE_X=1.1',
-                                              'SO_SIZE_Y=1.2',
-                                              'SO_SIZE_XUNITS=fraction',
-                                              'SO_SIZE_YUNITS=fraction'])
+                                      'SO_NAME=name',
+                                      'SO_DESCRIPTION=description',
+                                      'SO_OVERLAY_X=10',
+                                      'SO_OVERLAY_Y=20',
+                                      'SO_OVERLAY_XUNITS=pixels',
+                                      'SO_OVERLAY_YUNITS=pixels',
+                                      'SO_SCREEN_X=0.4',
+                                      'SO_SCREEN_Y=0.5',
+                                      'SO_SCREEN_XUNITS=fraction',
+                                      'SO_SCREEN_YUNITS=fraction',
+                                      'SO_SIZE_X=1.1',
+                                      'SO_SIZE_Y=1.2',
+                                      'SO_SIZE_XUNITS=fraction',
+                                      'SO_SIZE_YUNITS=fraction'])
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_screenoverlay.kml', 'rb')
@@ -1384,7 +1384,7 @@ def ogr_libkml_write_model():
     # This can only appear if HTTP resource is available and GDAL is built with curl/http support
     if gdal.GetDriverByName('HTTP') is not None and \
        (data.find('<targetHref>http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.gif</targetHref>') == -1 or \
-       data.find('<sourceHref>cube.gif</sourceHref>') == -1):
+        data.find('<sourceHref>cube.gif</sourceHref>') == -1):
 
         if gdaltest.gdalurlopen('http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae') is not None:
             print(data)
@@ -1479,7 +1479,7 @@ def ogr_libkml_read_write_style():
     style_table = src_ds.GetStyleTable()
 
     options = ['style1_balloonstyle_bgcolor=#FFFF00',
-                'style1_balloonstyle_text=This is $[name], whose description is:<br/>$[description]']
+               'style1_balloonstyle_text=This is $[name], whose description is:<br/>$[description]']
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource('/vsimem/ogr_libkml_read_write_style_write.kml', options=options)
     ds.SetStyleTable(style_table)
     ds = None
@@ -1718,13 +1718,13 @@ def ogr_libkml_write_networklinkcontrol():
         return 'skip'
 
     options = ['NLC_MINREFRESHPERIOD=3600',
-                'NLC_MAXSESSIONLENGTH=-1',
-                'NLC_COOKIE=cookie',
-                'NLC_MESSAGE=message',
-                'NLC_LINKNAME=linkname',
-                'NLC_LINKDESCRIPTION=linkdescription',
-                'NLC_LINKSNIPPET=linksnippet',
-                'NLC_EXPIRES=2014-12-31T23:59:59Z']
+               'NLC_MAXSESSIONLENGTH=-1',
+               'NLC_COOKIE=cookie',
+               'NLC_MESSAGE=message',
+               'NLC_LINKNAME=linkname',
+               'NLC_LINKDESCRIPTION=linkdescription',
+               'NLC_LINKSNIPPET=linksnippet',
+               'NLC_EXPIRES=2014-12-31T23:59:59Z']
 
     for i in range(3):
 
@@ -2049,7 +2049,7 @@ def ogr_libkml_write_container_properties():
         return 'skip'
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_container_properties.kml",
-                                 options=['NAME=ds_name', 'DESCRIPTION=ds_description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=ds_snippet'])
+                                                        options=['NAME=ds_name', 'DESCRIPTION=ds_description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=ds_snippet'])
     ds.CreateLayer('test', options=['NAME=lyr_name', 'DESCRIPTION=lyr_description', 'OPEN=0', 'VISIBILITY=0', 'SNIPPET=lyr_snippet'])
     ds = None
 

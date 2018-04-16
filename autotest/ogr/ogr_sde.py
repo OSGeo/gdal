@@ -90,10 +90,10 @@ def ogr_sde_2():
 #    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon)
 
     ogrtest.quick_create_layer_def(lyr,
-                                    [('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString),
-                                      ('WHEN', ogr.OFTDateTime)])
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger),
+                                    ('PRFEDEA', ogr.OFTString),
+                                    ('WHEN', ogr.OFTDateTime)])
 
     #######################################################
     # Copy in poly.shp
@@ -301,10 +301,10 @@ def ogr_sde_8():
     ref.ImportFromEPSG(4326)
     lyr = ds.CreateLayer('SDE.TPOLY' , geom_type=ogr.wkbPolygon, srs=ref, options=['OVERWRITE=YES'])
     ogrtest.quick_create_layer_def(lyr,
-                                    [('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString),
-                                      ('WHEN', ogr.OFTDateTime)])
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger),
+                                    ('PRFEDEA', ogr.OFTString),
+                                    ('WHEN', ogr.OFTDateTime)])
 
     #######################################################
     # Copy in poly.shp

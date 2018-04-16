@@ -55,7 +55,7 @@ def _get_mds_num(filename):
 
     sph = fd.read(sph_size)
     sph = '\n'.join(line.decode('iso8859-1').rstrip()
-                                                for line in sph.splitlines())
+                    for line in sph.splitlines())
     count = 0
     for block in sph.split('\n\n'):
         if block.startswith('DS_NAME'):
@@ -240,7 +240,7 @@ class TestEnvisatASAR(TestEnvisat):
                 if key0 not in record_md and key1 not in record_md:
                     gdaltest.post_reason(
                         'No "%s" or "%s" key in "RECORDS" domain.' %
-                                                            (key0, key1))
+                        (key0, key1))
                     return 'fail'
         else:
             for mds in range(1, ds.RasterCount + 1):
@@ -252,7 +252,7 @@ class TestEnvisatASAR(TestEnvisat):
                     if key0 not in record_md and key1 not in record_md:
                         gdaltest.post_reason(
                             'No "%s" or "%s" key in "RECORDS" domain.' %
-                                                            (key0, key1))
+                            (key0, key1))
                         return 'fail'
 
         return 'success'
@@ -304,7 +304,7 @@ class TestEnvisatMERIS(TestEnvisat):
             if key0 not in record_md and key1 not in record_md:
                 gdaltest.post_reason(
                     'No "%s" or "%s" key in "RECORDS" domain.' %
-                                                        (key0, key1))
+                    (key0, key1))
                 return 'fail'
 
         return 'success'

@@ -104,14 +104,14 @@ def ecrgtoc_1():
         return 'fail'
 
     ds2 = gdal.GetDriverByName('NITF').Create('/vsimem/clfc/2/000000009s0013.lf2', 2304, 2304, 3, \
-        options=['ICORDS=G', 'TRE=GEOLOB=000605184000800256-85.43147208122+33.16698656430'])
+                                              options=['ICORDS=G', 'TRE=GEOLOB=000605184000800256-85.43147208122+33.16698656430'])
     ds2.SetGeoTransform([-85.43147208122, 0.00059486040609137061, 0.0, 33.16698656430, 0.0, -0.00044985604606525913])
     ds2.SetProjection(wkt)
     ds2.GetRasterBand(1).Fill(255)
     ds2 = None
 
     ds2 = gdal.GetDriverByName('NITF').Create('/vsimem/clfc/2/000000009t0013.lf2', 2304, 2304, 3, \
-        options=['ICORDS=G', 'TRE=GEOLOB=000605184000800256-84.06091370558+33.16698656430'])
+                                              options=['ICORDS=G', 'TRE=GEOLOB=000605184000800256-84.06091370558+33.16698656430'])
     ds2.SetGeoTransform([-84.06091370558, 0.00059486040609137061, 0.0, 33.16698656430, 0.0, -0.00044985604606525913])
     ds2.SetProjection(wkt)
     ds2 = None
@@ -157,16 +157,16 @@ def ecrgtoc_3():
 
     # Try different errors
     for name in ['ECRG_TOC_ENTRY:',
-                  'ECRG_TOC_ENTRY:ProductTitle',
-                  'ECRG_TOC_ENTRY:ProductTitle:DiscId',
-                  'ECRG_TOC_ENTRY:ProductTitle:DiscId:not_existing',
-                  'ECRG_TOC_ENTRY:ProductTitle:DiscId:c:/not_existing',
-                  'ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:not_existing',
-                  'ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:c:/not_existing',
-                  'ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:c:/not_existing:extra',
-                  'ECRG_TOC_ENTRY:ProductTitle:DiscId:inexisting_scale:/vsimem/TOC.xml',
-                  'ECRG_TOC_ENTRY:ProductTitle:DiscId2:/vsimem/TOC.xml',
-                  'ECRG_TOC_ENTRY:ProductTitle2:DiscId:/vsimem/TOC.xml']:
+                 'ECRG_TOC_ENTRY:ProductTitle',
+                 'ECRG_TOC_ENTRY:ProductTitle:DiscId',
+                 'ECRG_TOC_ENTRY:ProductTitle:DiscId:not_existing',
+                 'ECRG_TOC_ENTRY:ProductTitle:DiscId:c:/not_existing',
+                 'ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:not_existing',
+                 'ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:c:/not_existing',
+                 'ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:c:/not_existing:extra',
+                 'ECRG_TOC_ENTRY:ProductTitle:DiscId:inexisting_scale:/vsimem/TOC.xml',
+                 'ECRG_TOC_ENTRY:ProductTitle:DiscId2:/vsimem/TOC.xml',
+                 'ECRG_TOC_ENTRY:ProductTitle2:DiscId:/vsimem/TOC.xml']:
 
         gdal.PushErrorHandler()
         ds = gdal.Open(name)

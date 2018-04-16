@@ -853,8 +853,8 @@ def mask_19():
 def mask_20():
 
     types = [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
-              gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64,
-              gdal.GDT_CFloat32, gdal.GDT_CFloat64]
+             gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64,
+             gdal.GDT_CFloat32, gdal.GDT_CFloat64]
 
     nodatavalue = [1, -1, 1, -1, 1, 0.5, 0.5, 0.5, 0.5]
 
@@ -886,8 +886,8 @@ def mask_20():
 def mask_21():
 
     types = [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
-              gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64,
-              gdal.GDT_CFloat32, gdal.GDT_CFloat64]
+             gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64,
+             gdal.GDT_CFloat32, gdal.GDT_CFloat64]
 
     nodatavalue = [1, -1, 1, -1, 1, 0.5, 0.5, 0.5, 0.5]
 
@@ -1016,7 +1016,7 @@ def mask_23():
 def mask_24():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_24.tif', 100, 100, 4, \
-                gdal.GDT_UInt16, options=['PHOTOMETRIC=RGB', 'ALPHA=YES'])
+                                              gdal.GDT_UInt16, options=['PHOTOMETRIC=RGB', 'ALPHA=YES'])
     ds.GetRasterBand(1).Fill(65565)
     ds.GetRasterBand(2).Fill(65565)
     ds.GetRasterBand(3).Fill(65565)

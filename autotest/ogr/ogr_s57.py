@@ -70,18 +70,18 @@ def ogr_s57_2():
         return 'skip'
 
     layer_list = [('DSID', ogr.wkbNone, 1),
-                   ('COALNE', ogr.wkbUnknown, 1),
-                   ('DEPARE', ogr.wkbUnknown, 4),
-                   ('DEPCNT', ogr.wkbUnknown, 4),
-                   ('LNDARE', ogr.wkbUnknown, 1),
-                   ('LNDELV', ogr.wkbUnknown, 2),
-                   ('SBDARE', ogr.wkbUnknown, 2),
-                   ('SLCONS', ogr.wkbUnknown, 1),
-                   ('SLOTOP', ogr.wkbUnknown, 1),
-                   ('SOUNDG', ogr.wkbMultiPoint25D, 2),
-                   ('M_COVR', ogr.wkbPolygon, 1),
-                   ('M_NSYS', ogr.wkbPolygon, 1),
-                   ('M_QUAL', ogr.wkbPolygon, 1)]
+                  ('COALNE', ogr.wkbUnknown, 1),
+                  ('DEPARE', ogr.wkbUnknown, 4),
+                  ('DEPCNT', ogr.wkbUnknown, 4),
+                  ('LNDARE', ogr.wkbUnknown, 1),
+                  ('LNDELV', ogr.wkbUnknown, 2),
+                  ('SBDARE', ogr.wkbUnknown, 2),
+                  ('SLCONS', ogr.wkbUnknown, 1),
+                  ('SLOTOP', ogr.wkbUnknown, 1),
+                  ('SOUNDG', ogr.wkbMultiPoint25D, 2),
+                  ('M_COVR', ogr.wkbPolygon, 1),
+                  ('M_NSYS', ogr.wkbPolygon, 1),
+                  ('M_QUAL', ogr.wkbPolygon, 1)]
 
     if gdaltest.s57_ds.GetLayerCount() != len(layer_list):
         gdaltest.post_reason('Did not get expected number of layers, likely cannot find support files.')
@@ -93,7 +93,7 @@ def ogr_s57_2():
 
         if lyr.GetName() != lyr_info[0]:
             gdaltest.post_reason('Expected layer %d to be %s but it was %s.'\
-                                  % (i + 1, lyr_info[0], lyr.GetName()))
+                                 % (i + 1, lyr_info[0], lyr.GetName()))
             return 'fail'
 
         count = lyr.GetFeatureCount(force=1)
@@ -122,9 +122,9 @@ def ogr_s57_3():
         return 'fail'
 
     if feat.GetField('RCID') != 1 \
-           or feat.GetField('LNAM') != 'FFFF7F4F0FB002D3' \
-           or feat.GetField('OBJL') != 30 \
-           or feat.GetField('AGEN') != 65535:
+    or feat.GetField('LNAM') != 'FFFF7F4F0FB002D3' \
+    or feat.GetField('OBJL') != 30 \
+    or feat.GetField('AGEN') != 65535:
         gdaltest.post_reason('COALNE: did not get expected attributes')
         return 'fail'
 
@@ -150,8 +150,8 @@ def ogr_s57_4():
         return 'fail'
 
     if feat.GetField('RCID') != 15 \
-           or feat.GetField('OBJL') != 308 \
-           or feat.GetField('AGEN') != 65535:
+    or feat.GetField('OBJL') != 308 \
+    or feat.GetField('AGEN') != 65535:
         gdaltest.post_reason('M_QUAL: did not get expected attributes')
         return 'fail'
 
@@ -177,8 +177,8 @@ def ogr_s57_5():
         return 'fail'
 
     if feat.GetField('RCID') != 20 \
-           or feat.GetField('OBJL') != 129 \
-           or feat.GetField('AGEN') != 65535:
+    or feat.GetField('OBJL') != 129 \
+    or feat.GetField('AGEN') != 65535:
         gdaltest.post_reason('SOUNDG: did not get expected attributes')
         return 'fail'
 
@@ -449,7 +449,7 @@ def ogr_s57_online_3():
     feat = lyr.GetFeature(975)
     if feat is None:
         gdaltest.post_reason('unexpected did not get feature id 975 '
-                              'after update!')
+                             'after update!')
         return 'fail'
 
     feat = None

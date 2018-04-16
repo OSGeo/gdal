@@ -2724,27 +2724,27 @@ def tiff_read_one_strip_no_bytecount():
 def tiff_read_nogeoref():
 
     tests = [(None, True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-              (None, True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-              (None, False, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
-              (None, True, False, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-              (None, False, True, False, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              (None, False, False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ('INTERNAL', True, True, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ('INTERNAL,PAM', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-              ('INTERNAL,WORLDFILE', True, True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('INTERNAL,PAM,WORLDFILE', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-              ('INTERNAL,WORLDFILE,PAM', True, True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('WORLDFILE,PAM,INTERNAL', False, False, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ('PAM,WORLDFILE,INTERNAL', False, False, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ('TABFILE,WORLDFILE,INTERNAL', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
-              ('PAM', True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-              ('PAM,WORLDFILE', True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-              ('WORLDFILE', True, True, False, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('WORLDFILE,PAM', True, True, False, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('WORLDFILE,INTERNAL', True, True, False, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('WORLDFILE,PAM,INTERNAL', True, True, False, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('WORLDFILE,INTERNAL,PAM', True, True, False, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('NONE', True, True, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+             (None, True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+             (None, False, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+             (None, True, False, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+             (None, False, True, False, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             (None, False, False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+             ('INTERNAL', True, True, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+             ('INTERNAL,PAM', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+             ('INTERNAL,WORLDFILE', True, True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('INTERNAL,PAM,WORLDFILE', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+             ('INTERNAL,WORLDFILE,PAM', True, True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('WORLDFILE,PAM,INTERNAL', False, False, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+             ('PAM,WORLDFILE,INTERNAL', False, False, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+             ('TABFILE,WORLDFILE,INTERNAL', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+             ('PAM', True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+             ('PAM,WORLDFILE', True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+             ('WORLDFILE', True, True, False, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('WORLDFILE,PAM', True, True, False, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('WORLDFILE,INTERNAL', True, True, False, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('WORLDFILE,PAM,INTERNAL', True, True, False, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('WORLDFILE,INTERNAL,PAM', True, True, False, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('NONE', True, True, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
               ]
 
     for (config_option_value, copy_pam, copy_worldfile, copy_tabfile, expected_srs, expected_gt) in tests:
@@ -2793,20 +2793,20 @@ def tiff_read_nogeoref():
 def tiff_read_inconsistent_georef():
 
     tests = [(None, True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-              (None, False, True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              (None, False, False, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              (None, False, True, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              (None, False, False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              (None, True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-              (None, True, False, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-              (None, True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-              (None, True, False, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-              ('INTERNAL', True, True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
-              ('PAM', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-              ('PAM,TABFILE', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-              ('WORLDFILE', True, True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-              ('TABFILE', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
-              ('TABFILE,PAM', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+             (None, False, True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             (None, False, False, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             (None, False, True, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             (None, False, False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             (None, True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+             (None, True, False, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+             (None, True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+             (None, True, False, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+             ('INTERNAL', True, True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+             ('PAM', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+             ('PAM,TABFILE', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
+             ('WORLDFILE', True, True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+             ('TABFILE', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+             ('TABFILE,PAM', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
               ]
 
     for (config_option_value, copy_pam, copy_worldfile, copy_tabfile, expected_srs, expected_gt) in tests:
@@ -2854,15 +2854,15 @@ def tiff_read_inconsistent_georef():
 def tiff_read_gcp_internal_and_auxxml():
 
     tests = [(None, True, 'LOCAL_CS["PAM"]', 1),
-              (None, False, '4326', 2),
-              ('INTERNAL', True, '4326', 2),
-              ('INTERNAL', False, '4326', 2),
-              ('INTERNAL,PAM', True, '4326', 2),
-              ('INTERNAL,PAM', False, '4326', 2),
-              ('PAM', True, 'LOCAL_CS["PAM"]', 1),
-              ('PAM', False, '', 0),
-              ('PAM,INTERNAL', True, 'LOCAL_CS["PAM"]', 1),
-              ('PAM,INTERNAL', False, '4326', 2),
+             (None, False, '4326', 2),
+             ('INTERNAL', True, '4326', 2),
+             ('INTERNAL', False, '4326', 2),
+             ('INTERNAL,PAM', True, '4326', 2),
+             ('INTERNAL,PAM', False, '4326', 2),
+             ('PAM', True, 'LOCAL_CS["PAM"]', 1),
+             ('PAM', False, '', 0),
+             ('PAM,INTERNAL', True, 'LOCAL_CS["PAM"]', 1),
+             ('PAM,INTERNAL', False, '4326', 2),
               ]
 
     for (config_option_value, copy_pam, expected_srs, expected_gcp_count) in tests:
@@ -2992,16 +2992,16 @@ def tiff_read_corrupted_jpeg_cloud_optimized():
 def tiff_read_ycbcr_lzw():
 
     tests = [('ycbcr_11_lzw.tif', 13459, 12939, 12414),
-              ('ycbcr_12_lzw.tif', 13565, 13105, 12660),
-              ('ycbcr_14_lzw.tif', 0, 0, 0),  # not supported
-              ('ycbcr_21_lzw.tif', 13587, 13297, 12760),
-              ('ycbcr_22_lzw.tif', 13393, 13137, 12656),
-              ('ycbcr_24_lzw.tif', 0, 0, 0),  # not supported
-              ('ycbcr_41_lzw.tif', 13218, 12758, 12592),
-              ('ycbcr_42_lzw.tif', 13277, 12779, 12614),
-              ('ycbcr_42_lzw_optimized.tif', 19918, 20120, 19087),
-              ('ycbcr_44_lzw.tif', 12994, 13229, 12149),
-              ('ycbcr_44_lzw_optimized.tif', 19666, 19860, 18836)]
+             ('ycbcr_12_lzw.tif', 13565, 13105, 12660),
+             ('ycbcr_14_lzw.tif', 0, 0, 0),  # not supported
+             ('ycbcr_21_lzw.tif', 13587, 13297, 12760),
+             ('ycbcr_22_lzw.tif', 13393, 13137, 12656),
+             ('ycbcr_24_lzw.tif', 0, 0, 0),  # not supported
+             ('ycbcr_41_lzw.tif', 13218, 12758, 12592),
+             ('ycbcr_42_lzw.tif', 13277, 12779, 12614),
+             ('ycbcr_42_lzw_optimized.tif', 19918, 20120, 19087),
+             ('ycbcr_44_lzw.tif', 12994, 13229, 12149),
+             ('ycbcr_44_lzw_optimized.tif', 19666, 19860, 18836)]
 
     for (filename, cs1, cs2, cs3) in tests:
         ds = gdal.Open('data/' + filename)
@@ -3618,7 +3618,7 @@ def tiff_read_mmap_interface():
     src_ds = gdal.Open('data/byte.tif')
     tmpfile = '/vsimem/tiff_read_mmap_interface.tif'
     for options in [[], ['TILED=YES'],
-                     ['COMPRESS=LZW'], ['COMPRESS=LZW', 'TILED=YES']]:
+                    ['COMPRESS=LZW'], ['COMPRESS=LZW', 'TILED=YES']]:
         gdal.GetDriverByName('GTiff').CreateCopy(tmpfile,
                                                  src_ds,
                                                  options=options)

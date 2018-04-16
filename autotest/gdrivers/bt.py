@@ -46,7 +46,7 @@ def bt_1():
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('NAD27')
     return tst.testCreateCopy(vsimem=1, check_srs=srs.ExportToWkt(),
-                               check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
+                              check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
 
 ###############################################################################
 # Test CreateCopy() of int32.tif
@@ -58,7 +58,7 @@ def bt_2():
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('NAD27')
     return tst.testCreateCopy(check_srs=srs.ExportToWkt(),
-                               check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
+                              check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
 
 ###############################################################################
 # Test CreateCopy() of float32.tif
@@ -70,7 +70,7 @@ def bt_3():
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('NAD27')
     return tst.testCreateCopy(check_srs=srs.ExportToWkt(),
-                               check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
+                              check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
 
 ###############################################################################
 # Test Create() of float32.tif

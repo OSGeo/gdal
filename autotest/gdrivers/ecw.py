@@ -264,8 +264,8 @@ def ecw_6():
     # Linux, but I don't know why.
     if abs(mean - exp_mean) > 1.5 or abs(stddev - exp_stddev) > 6:
         gdaltest.post_reason('mean/stddev of (%g,%g) diffs from '
-                              'expected(%g,%g)' % (mean, stddev, exp_mean,
-                                                    exp_stddev))
+                             'expected(%g,%g)' % (mean, stddev, exp_mean,
+                                                  exp_stddev))
         return 'fail'
 
     (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
@@ -274,8 +274,8 @@ def ecw_6():
     # Linux, but I don't know why.
     if abs(mean - exp_mean) > 1.0 or abs(stddev - exp_stddev) > 6:
         gdaltest.post_reason('mean/stddev of (%g,%g) diffs from '
-                              'expected(%g,%g)' % (mean, stddev, exp_mean,
-                                                    exp_stddev))
+                             'expected(%g,%g)' % (mean, stddev, exp_mean,
+                                                  exp_stddev))
         return 'fail'
 
     geotransform = ds.GetGeoTransform()
@@ -370,7 +370,7 @@ def ecw_9():
         pass
 
     ds = gdaltest.jp2ecw_drv.Create('tmp/ecw9.jp2', 200, 100, 1,
-                                     gdal.GDT_Int16, options=['TARGET=75'])
+                                    gdal.GDT_Int16, options=['TARGET=75'])
     ds.SetGeoTransform((100, 0.1, 0.0, 30.0, 0.0, -0.1))
 
     ds.SetProjection('GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]')
@@ -379,7 +379,7 @@ def ecw_9():
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
-                        buf_type=gdal.GDT_Int16)
+                       buf_type=gdal.GDT_Int16)
     ds = None
 
     return 'success'
@@ -433,7 +433,7 @@ def ecw_11():
 
     drv = gdal.GetDriverByName('NITF')
     ds = drv.Create('tmp/test_11.ntf', 200, 100, 3, gdal.GDT_Byte,
-                     ['ICORDS=G'])
+                    ['ICORDS=G'])
     ds.SetGeoTransform((100, 0.1, 0.0, 30.0, 0.0, -0.1))
 
     my_list = list(range(200)) + list(range(20, 220)) + list(range(30, 230))
@@ -441,8 +441,8 @@ def ecw_11():
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
-                        buf_type=gdal.GDT_Int16,
-                        band_list=[1, 2, 3])
+                       buf_type=gdal.GDT_Int16,
+                       band_list=[1, 2, 3])
 
     ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_BlueBand)
     ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
@@ -504,7 +504,7 @@ def ecw_13():
 
     wrktype = gdal.GDT_Float32
     raw_data = ds.ReadRaster(10, 10, 40, 40, buf_type=wrktype,
-                              band_list=[3, 2, 1])
+                             band_list=[3, 2, 1])
     ds = None
 
     drv = gdal.GetDriverByName('MEM')
@@ -512,8 +512,8 @@ def ecw_13():
     ds.WriteRaster(0, 0, 40, 40, raw_data, buf_type=wrktype)
 
     checksums = (ds.GetRasterBand(1).Checksum(),
-                  ds.GetRasterBand(2).Checksum(),
-                  ds.GetRasterBand(3).Checksum())
+                 ds.GetRasterBand(2).Checksum(),
+                 ds.GetRasterBand(3).Checksum())
     ds = None
 
     if checksums != (19253, 17848, 19127):
@@ -723,8 +723,8 @@ def ecw_20():
 
     if abs(mean - exp_mean) > 0.5 or abs(stddev - exp_stddev) > 0.5:
         gdaltest.post_reason('mean/stddev of (%g,%g) diffs from '
-                              'expected(%g,%g)' % (mean, stddev, exp_mean,
-                                                   exp_stddev))
+                             'expected(%g,%g)' % (mean, stddev, exp_mean,
+                                                  exp_stddev))
         return 'fail'
 
     return 'success'

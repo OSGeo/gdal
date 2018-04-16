@@ -67,7 +67,7 @@ def vrtwarp_2():
     expected = 21504
     if checksum != expected:
         gdaltest.post_reason('Got checksum of %d instead of expected %d.' \
-                              % (checksum, expected))
+                             % (checksum, expected))
         return 'fail'
 
     return 'success'
@@ -92,7 +92,7 @@ def vrtwarp_3():
 
     if checksum != expected:
         gdaltest.post_reason('Got checksum of %d instead of expected %d.' \
-                              % (checksum, expected))
+                             % (checksum, expected))
         return 'fail'
 
     return 'success'

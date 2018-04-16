@@ -86,9 +86,9 @@ def ogr_ogdi_1():
         return 'fail'
 
     layers = [('libref@libref(*)_line', ogr.wkbLineString, 15),
-               ('libreft@libref(*)_text', ogr.wkbPoint, 4),
-               ('markersp@bnd(*)_point', ogr.wkbPoint, 40),
-               ('polbnda@bnd(*)_area', ogr.wkbPolygon, 6)]
+              ('libreft@libref(*)_text', ogr.wkbPoint, 4),
+              ('markersp@bnd(*)_point', ogr.wkbPoint, 40),
+              ('polbnda@bnd(*)_area', ogr.wkbPolygon, 6)]
 
     for l in layers:
         lyr = ds.GetLayerByName(l[0])

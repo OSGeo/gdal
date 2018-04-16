@@ -265,7 +265,7 @@ def ogr_mongodb_1():
         open_options += ['PORT=' + str(ogrtest.mongodb_test_port)]
         open_options += ['DBNAME=' + ogrtest.mongodb_test_dbname]
         open_options += ['AUTH_JSON={ "mechanism" : "SCRAM-SHA-1", "db": "%s", "user": "%s", "pwd": "%s" }' % \
-            (ogrtest.mongodb_test_dbname, ogrtest.mongodb_test_user, ogrtest.mongodb_test_password)]
+                         (ogrtest.mongodb_test_dbname, ogrtest.mongodb_test_user, ogrtest.mongodb_test_password)]
         ds = gdal.OpenEx('mongodb:', open_options=open_options)
         if ds is None:
             gdaltest.post_reason('fail')
@@ -544,7 +544,7 @@ def ogr_mongodb_2():
         return 'fail'
 
     ogrtest.mongodb_ds = gdal.OpenEx(ogrtest.mongodb_test_uri, gdal.OF_UPDATE,
-        open_options=['FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN=-1', 'BULK_INSERT=NO', 'JSON_FIELD=TRUE'])
+                                     open_options=['FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN=-1', 'BULK_INSERT=NO', 'JSON_FIELD=TRUE'])
 
     # Check after reopening
     lyr = ogrtest.mongodb_ds.GetLayerByName(ogrtest.mongodb_layer_name)

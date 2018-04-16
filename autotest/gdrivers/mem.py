@@ -59,8 +59,8 @@ def mem_1():
 
     raw_data = array.array('f', list(range(150))).tostring()
     ds.WriteRaster(0, 0, 50, 3, raw_data,
-                    buf_type=gdal.GDT_Float32,
-                    band_list=[1])
+                   buf_type=gdal.GDT_Float32,
+                   band_list=[1])
 
     wkt = gdaltest.user_srs_to_wkt('EPSG:26711')
     ds.SetProjection(wkt)

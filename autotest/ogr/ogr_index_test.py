@@ -90,11 +90,11 @@ def ogr_index_2():
     drv = ogr.GetDriverByName('ESRI Shapefile')
     gdaltest.s_ds = drv.CreateDataSource('join_t.dbf')
     gdaltest.s_lyr = gdaltest.s_ds.CreateLayer('join_t',
-                                                geom_type=ogr.wkbNone)
+                                               geom_type=ogr.wkbNone)
 
     ogrtest.quick_create_layer_def(gdaltest.s_lyr,
-                                    [('SKEY', ogr.OFTInteger),
-                                     ('VALUE', ogr.OFTString, 16)])
+                                   [('SKEY', ogr.OFTInteger),
+                                    ('VALUE', ogr.OFTString, 16)])
 
     for i in range(20):
         ogrtest.quick_create_feature(gdaltest.s_lyr, [i, 'Value ' + str(i)], None)
@@ -119,7 +119,7 @@ def ogr_index_2():
 def ogr_index_3():
 
     expect = ['Value 5', 'Value 10', 'Value 9', 'Value 4', 'Value 3',
-               'Value 1']
+              'Value 1']
 
     sql_lyr = gdaltest.p_ds.ExecuteSQL( \
         'SELECT * FROM index_p p ' \
@@ -208,7 +208,7 @@ def ogr_index_7():
 def ogr_index_8():
 
     expect = ['Value 5', 'Value 10', 'Value 9', 'Value 4', 'Value 3',
-               'Value 1']
+              'Value 1']
 
     sql_lyr = gdaltest.p_ds.ExecuteSQL( \
         'SELECT * FROM index_p p ' \

@@ -247,15 +247,15 @@ def misc_5():
 
             for nBands in [1, 3]:
                 for datatype in (gdal.GDT_UInt16,
-                                gdal.GDT_Int16,
-                                gdal.GDT_UInt32,
-                                gdal.GDT_Int32,
-                                gdal.GDT_Float32,
-                                gdal.GDT_Float64,
-                                gdal.GDT_CInt16,
-                                gdal.GDT_CInt32,
-                                gdal.GDT_CFloat32,
-                                gdal.GDT_CFloat64):
+                                 gdal.GDT_Int16,
+                                 gdal.GDT_UInt32,
+                                 gdal.GDT_Int32,
+                                 gdal.GDT_Float32,
+                                 gdal.GDT_Float64,
+                                 gdal.GDT_CInt16,
+                                 gdal.GDT_CInt32,
+                                 gdal.GDT_CFloat32,
+                                 gdal.GDT_CFloat64):
                     if misc_5_internal(drv, datatype, nBands) < 0:
                         ret = 'fail'
 
@@ -677,19 +677,19 @@ def misc_cleanup():
 
 
 gdaltest_list = [misc_1,
-                  misc_2,
-                  misc_3,
-                  misc_4,
-                  misc_5,
-                  misc_6,
-                  misc_7,
-                  misc_8,
-                  misc_9,
-                  misc_10,
-                  misc_11,
-                  misc_12,
-                  misc_13,
-                  misc_cleanup]
+                 misc_2,
+                 misc_3,
+                 misc_4,
+                 misc_5,
+                 misc_6,
+                 misc_7,
+                 misc_8,
+                 misc_9,
+                 misc_10,
+                 misc_11,
+                 misc_12,
+                 misc_13,
+                 misc_cleanup]
 
 #gdaltest_list = [ misc_6 ]
 

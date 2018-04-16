@@ -46,7 +46,7 @@ bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1
 
 class ProjTest:
     def __init__(self, src_srs, src_xyz, src_error,
-                  dst_srs, dst_xyz, dst_error, options, requirements):
+                 dst_srs, dst_xyz, dst_error, options, requirements):
         self.src_srs = src_srs
         self.src_xyz = src_xyz
         self.src_error = src_error
@@ -115,12 +115,12 @@ class ProjTest:
         result = ct.TransformPoint(self.src_xyz[0], self.src_xyz[1], self.src_xyz[2])
 
         error = abs(result[0] - self.dst_xyz[0]) \
-                + abs(result[1] - self.dst_xyz[1]) \
-                + abs(result[2] - self.dst_xyz[2])
+        + abs(result[1] - self.dst_xyz[1]) \
+        + abs(result[2] - self.dst_xyz[2])
 
         if error > self.dst_error:
             gdaltest.post_reason('Dest error is %g, got (%.15g,%.15g,%.15g)%s' \
-                                  % (error, result[0], result[1], result[2], additionnal_error_str))
+                                 % (error, result[0], result[1], result[2], additionnal_error_str))
             return 'fail'
 
         ######################################################################
@@ -131,8 +131,8 @@ class ProjTest:
         result = ct.TransformPoint(result[0], result[1], result[2])
 
         error = abs(result[0] - self.src_xyz[0]) \
-                + abs(result[1] - self.src_xyz[1]) \
-                + abs(result[2] - self.src_xyz[2])
+        + abs(result[1] - self.src_xyz[1]) \
+        + abs(result[2] - self.src_xyz[2])
 
         if error > self.src_error:
             gdaltest.post_reason('Back to source error is %g.%s' % (error, additionnal_error_str))
@@ -237,8 +237,8 @@ gdaltest_list = []
 
 for item in transform_list:
     ut = ProjTest(item[0], item[1], item[2],
-                   item[3], item[4], item[5],
-                   item[7], item[8])
+                  item[3], item[4], item[5],
+                  item[7], item[8])
     gdaltest_list.append((ut.testProj, item[6]))
 
 if __name__ == '__main__':

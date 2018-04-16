@@ -114,22 +114,22 @@ def ogr_fgdb_1():
     ds = ogrtest.fgdb_drv.CreateDataSource("tmp/test.gdb")
 
     datalist = [["none", ogr.wkbNone, None],
-                 ["point", ogr.wkbPoint, "POINT (1 2)"],
-                 ["multipoint", ogr.wkbMultiPoint, "MULTIPOINT (1 2,3 4)"],
-                 ["linestring", ogr.wkbLineString, "LINESTRING (1 2,3 4)", "MULTILINESTRING ((1 2,3 4))"],
-                 ["multilinestring", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4),(5 6,7 8))"],
-                 ["polygon", ogr.wkbPolygon, "POLYGON ((0 0,0 1,1 1,1 0,0 0))", "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))"],
-                 ["multipolygon", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.75 0.25,0.75 0.75,0.25 0.75,0.25 0.25)),((2 0,2 1,3 1,3 0,2 0)))"],
-                 ["point25D", ogr.wkbPoint25D, "POINT (1 2 3)"],
-                 ["multipoint25D", ogr.wkbMultiPoint25D, "MULTIPOINT (1 2 -10,3 4 -20)"],
-                 ["linestring25D", ogr.wkbLineString25D, "LINESTRING (1 2 -10,3 4 -20)", "MULTILINESTRING ((1 2 -10,3 4 -20))"],
-                 ["multilinestring25D", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20))"],
-                 ["polygon25D", ogr.wkbPolygon25D, "POLYGON ((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10))", "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))"],
-                 ["multipolygon25D", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))"],
-                 ["multipatch", ogr.wkbMultiPolygon25D, "GEOMETRYCOLLECTION Z (TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0))),TIN Z (((10.0 0.0 0,10.0 1.0 0,11.0 0.0 0,10.0 0.0 0)),((10.0 0.0 0,11.0 0.0 0,10.0 -1.0 0,10.0 0.0 0))),TIN Z (((5.0 0.0 0,5.0 1.0 0,6.0 0.0 0,5.0 0.0 0))),MULTIPOLYGON Z (((100.0 0.0 0,100.0 1.0 0,101.0 1.0 0,101.0 0.0 0,100.0 0.0 0),(100.25 0.25 0,100.75 0.25 0,100.75 0.75 0,100.75 0.25 0,100.25 0.25 0))))"],
-                 ["tin", ogr.wkbTINZ, "TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0)))"],
-                 ["null_polygon", ogr.wkbPolygon, None],
-                 ["empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
+                ["point", ogr.wkbPoint, "POINT (1 2)"],
+                ["multipoint", ogr.wkbMultiPoint, "MULTIPOINT (1 2,3 4)"],
+                ["linestring", ogr.wkbLineString, "LINESTRING (1 2,3 4)", "MULTILINESTRING ((1 2,3 4))"],
+                ["multilinestring", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4),(5 6,7 8))"],
+                ["polygon", ogr.wkbPolygon, "POLYGON ((0 0,0 1,1 1,1 0,0 0))", "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))"],
+                ["multipolygon", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.75 0.25,0.75 0.75,0.25 0.75,0.25 0.25)),((2 0,2 1,3 1,3 0,2 0)))"],
+                ["point25D", ogr.wkbPoint25D, "POINT (1 2 3)"],
+                ["multipoint25D", ogr.wkbMultiPoint25D, "MULTIPOINT (1 2 -10,3 4 -20)"],
+                ["linestring25D", ogr.wkbLineString25D, "LINESTRING (1 2 -10,3 4 -20)", "MULTILINESTRING ((1 2 -10,3 4 -20))"],
+                ["multilinestring25D", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20))"],
+                ["polygon25D", ogr.wkbPolygon25D, "POLYGON ((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10))", "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))"],
+                ["multipolygon25D", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))"],
+                ["multipatch", ogr.wkbMultiPolygon25D, "GEOMETRYCOLLECTION Z (TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0))),TIN Z (((10.0 0.0 0,10.0 1.0 0,11.0 0.0 0,10.0 0.0 0)),((10.0 0.0 0,11.0 0.0 0,10.0 -1.0 0,10.0 0.0 0))),TIN Z (((5.0 0.0 0,5.0 1.0 0,6.0 0.0 0,5.0 0.0 0))),MULTIPOLYGON Z (((100.0 0.0 0,100.0 1.0 0,101.0 1.0 0,101.0 0.0 0,100.0 0.0 0),(100.25 0.25 0,100.75 0.25 0,100.75 0.75 0,100.75 0.25 0,100.25 0.25 0))))"],
+                ["tin", ogr.wkbTINZ, "TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0)))"],
+                ["null_polygon", ogr.wkbPolygon, None],
+                ["empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
                  ]
 
     options = ['COLUMN_TYPES=smallint=esriFieldTypeSmallInteger,float=esriFieldTypeSingle,guid=esriFieldTypeGUID,xml=esriFieldTypeXML']
@@ -574,9 +574,9 @@ def ogr_fgdb_8():
 
     lyr_defn = lyr.GetLayerDefn()
     expected_names = ['FROM_', '_1NUMBER', 'WITH_SPACE_AND_______special_characters',
-                       'A123456789012345678901234567890123456789012345678901234567890123',
-                       'A1234567890123456789012345678901234567890123456789012345678901_1',
-                       'A1234567890123456789012345678901234567890123456789012345678901_2']
+                      'A123456789012345678901234567890123456789012345678901234567890123',
+                      'A1234567890123456789012345678901234567890123456789012345678901_1',
+                      'A1234567890123456789012345678901234567890123456789012345678901_2']
     for i in range(5):
         if lyr_defn.GetFieldIndex(expected_names[i]) != i:
             gdaltest.post_reason('did not find %s' % expected_names[i])
@@ -603,12 +603,12 @@ def ogr_fgdb_9():
     _160char = ''.join(['A123456789' for i in range(16)])
 
     in_names = ['FROM',  # reserved keyword
-                 '1NUMBER',  # starting with a number
-                 'WITH SPACE AND !$*!- special characters',  # banned characters
-                 'sde_foo',  # reserved prefixes
-                 _160char,  # OK
-                 _160char + 'A',  # too long
-                 _160char + 'B',  # still too long
+                '1NUMBER',  # starting with a number
+                'WITH SPACE AND !$*!- special characters',  # banned characters
+                'sde_foo',  # reserved prefixes
+                _160char,  # OK
+                _160char + 'A',  # too long
+                _160char + 'B',  # still too long
                  ]
 
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
@@ -619,12 +619,12 @@ def ogr_fgdb_9():
 
     lyr.GetLayerDefn()
     expected_names = ['FROM_',
-                       '_1NUMBER',
-                       'WITH_SPACE_AND_______special_characters',
-                       '_sde_foo',
-                       _160char,
-                       _160char[0:158] + '_1',
-                       _160char[0:158] + '_2']
+                      '_1NUMBER',
+                      'WITH_SPACE_AND_______special_characters',
+                      '_sde_foo',
+                      _160char,
+                      _160char[0:158] + '_1',
+                      _160char[0:158] + '_2']
     for i in range(len(expected_names)):
         if ds.GetLayerByIndex(i).GetName() != expected_names[i]:
             gdaltest.post_reason('did not find %s' % expected_names[i])
@@ -2399,18 +2399,18 @@ def ogr_fgdb_21():
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
 
     datalist = [["pointm", ogr.wkbPointM, "POINT M (1 2 3)"],
-                 ["pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)"],
-                 ["multipointm", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3),(4 5 6))"],
-                 ["multipointzm", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4),(5 6 7 8))"],
-                 ["linestringm", ogr.wkbLineStringM, "LINESTRING M (1 2 3,4 5 6)", "MULTILINESTRING M ((1 2 3,4 5 6))"],
-                 ["linestringzm", ogr.wkbLineStringZM, "LINESTRING ZM (1 2 3 4,5 6 7 8)", "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))"],
-                 ["multilinestringm", ogr.wkbMultiLineStringM, "MULTILINESTRING M ((1 2 3,4 5 6))"],
-                 ["multilinestringzm", ogr.wkbMultiLineStringZM, "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))"],
-                 ["polygonm", ogr.wkbPolygonM, "POLYGON M ((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1))", "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))"],
-                 ["polygonzm", ogr.wkbPolygonZM, "POLYGON ZM ((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1))", "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))"],
-                 ["multipolygonm", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))"],
-                 ["multipolygonzm", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))"],
-                 ["empty_polygonm", ogr.wkbPolygonM, 'POLYGON M EMPTY', None],
+                ["pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)"],
+                ["multipointm", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3),(4 5 6))"],
+                ["multipointzm", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4),(5 6 7 8))"],
+                ["linestringm", ogr.wkbLineStringM, "LINESTRING M (1 2 3,4 5 6)", "MULTILINESTRING M ((1 2 3,4 5 6))"],
+                ["linestringzm", ogr.wkbLineStringZM, "LINESTRING ZM (1 2 3 4,5 6 7 8)", "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))"],
+                ["multilinestringm", ogr.wkbMultiLineStringM, "MULTILINESTRING M ((1 2 3,4 5 6))"],
+                ["multilinestringzm", ogr.wkbMultiLineStringZM, "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))"],
+                ["polygonm", ogr.wkbPolygonM, "POLYGON M ((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1))", "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))"],
+                ["polygonzm", ogr.wkbPolygonZM, "POLYGON ZM ((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1))", "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))"],
+                ["multipolygonm", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))"],
+                ["multipolygonzm", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))"],
+                ["empty_polygonm", ogr.wkbPolygonM, 'POLYGON M EMPTY', None],
                  ]
 
     srs = osr.SpatialReference()

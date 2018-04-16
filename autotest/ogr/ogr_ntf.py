@@ -109,10 +109,10 @@ def ogr_ntf_1():
         return 'fail'
 
     layers = [('STRATEGI_POINT', ogr.wkbPoint, 9193),
-               ('STRATEGI_LINE', ogr.wkbLineString, 8369),
-               ('STRATEGI_TEXT', ogr.wkbPoint, 1335),
-               ('STRATEGI_NODE', ogr.wkbNone, 10991),
-               ('FEATURE_CLASSES', ogr.wkbNone, 224)]
+              ('STRATEGI_LINE', ogr.wkbLineString, 8369),
+              ('STRATEGI_TEXT', ogr.wkbPoint, 1335),
+              ('STRATEGI_NODE', ogr.wkbNone, 10991),
+              ('FEATURE_CLASSES', ogr.wkbNone, 224)]
 
     for l in layers:
         lyr = ds.GetLayerByName(l[0])
@@ -159,10 +159,10 @@ def ogr_ntf_2():
         return 'fail'
 
     layers = [('MERIDIAN2_POINT', ogr.wkbPoint, 408),
-               ('MERIDIAN2_LINE', ogr.wkbLineString, 513),
-               ('MERIDIAN2_TEXT', ogr.wkbPoint, 7),
-               ('MERIDIAN2_NODE', ogr.wkbNone, 397),
-               ('FEATURE_CLASSES', ogr.wkbNone, 50)]
+              ('MERIDIAN2_LINE', ogr.wkbLineString, 513),
+              ('MERIDIAN2_TEXT', ogr.wkbPoint, 7),
+              ('MERIDIAN2_NODE', ogr.wkbNone, 397),
+              ('FEATURE_CLASSES', ogr.wkbNone, 50)]
 
     for l in layers:
         lyr = ds.GetLayerByName(l[0])

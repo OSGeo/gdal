@@ -72,10 +72,10 @@ def ogr_mem_2():
     #######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(gdaltest.mem_lyr,
-                                    [('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString),
-                                      ('WHEN', ogr.OFTDateTime)])
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger),
+                                    ('PRFEDEA', ogr.OFTString),
+                                    ('WHEN', ogr.OFTDateTime)])
 
     #######################################################
     # Copy in poly.shp
@@ -115,7 +115,7 @@ def ogr_mem_3():
 
     gdaltest.mem_lyr.SetAttributeFilter('eas_id < 170')
     tr = ogrtest.check_features_against_list(gdaltest.mem_lyr,
-                                              'eas_id', expect)
+                                             'eas_id', expect)
     gdaltest.mem_lyr.SetAttributeFilter(None)
 
     for i in range(len(gdaltest.poly_feat)):
@@ -244,7 +244,7 @@ def ogr_mem_7():
         return 'fail'
 
     tr = ogrtest.check_features_against_list(gdaltest.mem_lyr, 'eas_id',
-                                              [158])
+                                             [158])
 
     gdaltest.mem_lyr.SetSpatialFilter(None)
 
@@ -288,7 +288,7 @@ def ogr_mem_8():
     gdaltest.mem_lyr.SetAttributeFilter("PRFEDEA IN ( '2', '1' )")
 
     tr = ogrtest.check_features_against_list(gdaltest.mem_lyr, 'new_string',
-                                              ['test1', None])
+                                             ['test1', None])
 
     gdaltest.mem_lyr.SetAttributeFilter(None)
 
@@ -331,7 +331,7 @@ def ogr_mem_9():
     new_count = gdaltest.mem_lyr.GetFeatureCount()
     if new_count != old_count - 1:
         gdaltest.post_reason('got feature count of %d, not expected %d.' \
-                              % (new_count, old_count - 1))
+                             % (new_count, old_count - 1))
 
     if not gdaltest.mem_lyr.TestCapability(ogr.OLCRandomRead):
         gdaltest.post_reason('OLCRandomRead capability test failed.')

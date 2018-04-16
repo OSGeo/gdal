@@ -746,16 +746,16 @@ def warp_19():
         return 'skip'
 
     datatypes = [gdal.GDT_Byte,
-                  gdal.GDT_Int16,
-                  gdal.GDT_CInt16,
-                  gdal.GDT_UInt16,
-                  gdal.GDT_Int32,
-                  gdal.GDT_CInt32,
-                  gdal.GDT_UInt32,
-                  gdal.GDT_Float32,
-                  gdal.GDT_CFloat32,
-                  gdal.GDT_Float64,
-                  gdal.GDT_CFloat64]
+                 gdal.GDT_Int16,
+                 gdal.GDT_CInt16,
+                 gdal.GDT_UInt16,
+                 gdal.GDT_Int32,
+                 gdal.GDT_CInt32,
+                 gdal.GDT_UInt32,
+                 gdal.GDT_Float32,
+                 gdal.GDT_CFloat32,
+                 gdal.GDT_Float64,
+                 gdal.GDT_CFloat64]
 
     methods = ['near', 'bilinear', 'cubic', 'cubicspline', 'lanczos']
 
@@ -979,10 +979,10 @@ def warp_25():
 def warp_26():
 
     gdal.Translate('tmp/warp_25_gcp.vrt', '../gcore/data/byte.tif',
-                    options='-of VRT -gcp 0 0 0 20 -gcp 0 20 0  0 '
-                              '-gcp 20 0 20 20 -gcp 20 20 20 0')
+                   options='-of VRT -gcp 0 0 0 20 -gcp 0 20 0  0 '
+                   '-gcp 20 0 20 20 -gcp 20 20 20 0')
     gdal.Warp('tmp/warp_25_warp.vrt', 'tmp/warp_25_gcp.vrt',
-               options='-of VRT -tps')
+              options='-of VRT -tps')
 
     ds = gdal.Open('tmp/warp_25_warp.vrt')
     cs = ds.GetRasterBand(1).Checksum()
@@ -1022,10 +1022,10 @@ def warp_27():
 
     # Call AutoCreateWarpedVRT() to fetch default values for target raster dimensions and geotransform
     tmp_ds = gdal.AutoCreateWarpedVRT(src_ds, \
-                                       None,  # src_wkt : left to default value --> will use the one from source \
-                                       dst_wkt, \
-                                       resampling, \
-                                       error_threshold)
+                                      None,  # src_wkt : left to default value --> will use the one from source \
+                                      dst_wkt, \
+                                      resampling, \
+                                      error_threshold)
     dst_xsize = tmp_ds.RasterXSize
     dst_ysize = tmp_ds.RasterYSize
     dst_gt = tmp_ds.GetGeoTransform()
@@ -1043,14 +1043,14 @@ def warp_27():
     cbk_user_data = None  # value for last parameter of above warp_27_progress_callback
 
     gdal.ReprojectImage(src_ds, \
-                         dst_ds, \
-                         None,  # src_wkt : left to default value --> will use the one from source \
-                         None,  # dst_wkt : left to default value --> will use the one from destination \
-                         resampling, \
-                         0,  # WarpMemoryLimit : left to default value \
-                         error_threshold,
-                         cbk,  # Progress callback : could be left to None or unspecified for silent progress
-                         cbk_user_data)  # Progress callback user data
+                        dst_ds, \
+                        None,  # src_wkt : left to default value --> will use the one from source \
+                        None,  # dst_wkt : left to default value --> will use the one from destination \
+                        resampling, \
+                        0,  # WarpMemoryLimit : left to default value \
+                        error_threshold,
+                        cbk,  # Progress callback : could be left to None or unspecified for silent progress
+                        cbk_user_data)  # Progress callback user data
 
     # Done !
     dst_ds = None
@@ -1185,10 +1185,10 @@ def warp_30():
 
     # Call AutoCreateWarpedVRT() to fetch default values for target raster dimensions and geotransform
     tmp_ds = gdal.AutoCreateWarpedVRT(src_ds, \
-                                       None,  # src_wkt : left to default value --> will use the one from source \
-                                       dst_wkt, \
-                                       resampling, \
-                                       error_threshold)
+                                      None,  # src_wkt : left to default value --> will use the one from source \
+                                      dst_wkt, \
+                                      resampling, \
+                                      error_threshold)
     dst_xsize = tmp_ds.RasterXSize
     dst_ysize = tmp_ds.RasterYSize
     dst_gt = tmp_ds.GetGeoTransform()
@@ -1207,14 +1207,14 @@ def warp_30():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = gdal.ReprojectImage(src_ds, \
-                         dst_ds, \
-                         None,  # src_wkt : left to default value --> will use the one from source \
-                         None,  # dst_wkt : left to default value --> will use the one from destination \
-                         resampling, \
-                         0,  # WarpMemoryLimit : left to default value \
-                         error_threshold,
-                         cbk,  # Progress callback : could be left to None or unspecified for silent progress
-                         cbk_user_data)  # Progress callback user data
+                              dst_ds, \
+                              None,  # src_wkt : left to default value --> will use the one from source \
+                              None,  # dst_wkt : left to default value --> will use the one from destination \
+                              resampling, \
+                              0,  # WarpMemoryLimit : left to default value \
+                              error_threshold,
+                              cbk,  # Progress callback : could be left to None or unspecified for silent progress
+                              cbk_user_data)  # Progress callback user data
     gdal.PopErrorHandler()
 
     if ret == 0:
@@ -1225,14 +1225,14 @@ def warp_30():
     gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = gdal.ReprojectImage(src_ds, \
-                         dst_ds, \
-                         None,  # src_wkt : left to default value --> will use the one from source \
-                         None,  # dst_wkt : left to default value --> will use the one from destination \
-                         resampling, \
-                         0,  # WarpMemoryLimit : left to default value \
-                         error_threshold,
-                         cbk,  # Progress callback : could be left to None or unspecified for silent progress
-                         cbk_user_data)  # Progress callback user data
+                              dst_ds, \
+                              None,  # src_wkt : left to default value --> will use the one from source \
+                              None,  # dst_wkt : left to default value --> will use the one from destination \
+                              resampling, \
+                              0,  # WarpMemoryLimit : left to default value \
+                              error_threshold,
+                              cbk,  # Progress callback : could be left to None or unspecified for silent progress
+                              cbk_user_data)  # Progress callback user data
     gdal.PopErrorHandler()
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
 
@@ -1778,15 +1778,15 @@ def warp_52():
     start = time.time()
 
     out_ds = gdal.Warp('', src_ds, format='MEM',
-              outputBounds=[8453323.83095, 4676723.13796, 8472891.71018, 4696291.0172],
-              xRes=4.77731426716,
-              yRes=4.77731426716,
-              dstSRS='EPSG:3857',
-              warpOptions=['SKIP_NOSOURCE=YES', 'DST_ALPHA_MAX=255'],
-              transformerOptions=['RPC_DEM=data/warp_52_dem.tif'],
-              dstAlpha=True,
-              errorThreshold=0,
-              resampleAlg=gdal.GRA_Cubic)
+                       outputBounds=[8453323.83095, 4676723.13796, 8472891.71018, 4696291.0172],
+                       xRes=4.77731426716,
+                       yRes=4.77731426716,
+                       dstSRS='EPSG:3857',
+                       warpOptions=['SKIP_NOSOURCE=YES', 'DST_ALPHA_MAX=255'],
+                       transformerOptions=['RPC_DEM=data/warp_52_dem.tif'],
+                       dstAlpha=True,
+                       errorThreshold=0,
+                       resampleAlg=gdal.GRA_Cubic)
 
     end = time.time()
     if end - start > 5:
@@ -1822,9 +1822,9 @@ def warp_53():
         for option in ('-wo USE_GENERAL_CASE=TRUE', ''):
             # First checksum is proj 4.8, second proj 4.9.2
             for alg_name, expected_cs in (('near', [3781, 3843]),
-                                           ('cubic', [3942, 4133]),
-                                           ('cubicspline', [3874, 4076]),
-                                           ('bilinear', [4019, 3991])):
+                                          ('cubic', [3942, 4133]),
+                                          ('cubicspline', [3874, 4076]),
+                                          ('bilinear', [4019, 3991])):
                 dst_ds.GetRasterBand(1).Fill(0)
                 dst_ds.GetRasterBand(2).Fill(0)
                 gdal.Warp(dst_ds, src_ds,

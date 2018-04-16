@@ -283,7 +283,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     if( !bHasNoData )
         tNoDataValue = 0;
     else
-        tNoDataValue = (T)fNoDataValue;
+        tNoDataValue = static_cast<T>(fNoDataValue);
 
     int nChunkRightXOff = nChunkXOff + nChunkXSize;
     int nChunkBottomYOff = nChunkYOff + nChunkYSize;
@@ -436,7 +436,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                         + pSrcScanlineShifted[nChunkXSize]
                         + pSrcScanlineShifted[1+nChunkXSize];
 
-                    pDstScanline[iDstPixel] = (T) ((nTotal + 2) / 4);
+                    pDstScanline[iDstPixel] = static_cast<T>((nTotal + 2) / 4);
                     pSrcScanlineShifted += 2;
                 }
             }
@@ -526,8 +526,8 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     int nR = (nTotalR + nCount / 2) / nCount,
                         nG = (nTotalG + nCount / 2) / nCount,
                         nB = (nTotalB + nCount / 2) / nCount;
-                    pDstScanline[iDstPixel] = (T)GDALFindBestEntry(
-                        nEntryCount, aEntries, nR, nG, nB);
+                    pDstScanline[iDstPixel] = static_cast<T>(GDALFindBestEntry(
+                        nEntryCount, aEntries, nR, nG, nB));
                 }
             }
         }
@@ -2948,7 +2948,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     if( bUseNoDataMask )
     {
         pabyChunkNodataMask =
-            (GByte*) VSI_MALLOC2_VERBOSE( nMaxChunkYSizeQueried, nWidth );
+            static_cast<GByte*>(VSI_MALLOC2_VERBOSE( nMaxChunkYSizeQueried, nWidth ));
     }
 
     if( pChunk == nullptr || (bUseNoDataMask && pabyChunkNodataMask == nullptr))

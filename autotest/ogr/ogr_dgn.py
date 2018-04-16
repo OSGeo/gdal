@@ -186,7 +186,7 @@ def ogr_dgn_7():
         return 'skip'
 
     co_opts = ['UOR_PER_SUB_UNIT=100', 'SUB_UNITS_PER_MASTER_UNIT=100',
-                'ORIGIN=-50,-50,0']
+               'ORIGIN=-50,-50,0']
 
     dgn2_ds = ogr.GetDriverByName('DGN').CreateDataSource('tmp/dgn7.dgn',
                                                           options=co_opts)

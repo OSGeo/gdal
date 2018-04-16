@@ -716,10 +716,10 @@ def vrtderived_10():
 
     # GDAL_VRT_PYTHON_TRUSTED_MODULES *NOT* matching our module
     for val in ['vrtderive',
-                 'vrtderivedX',
-                 'vrtderivedX*',
-                 'vrtderive.*'
-                 'vrtderivedX.*'] :
+                'vrtderivedX',
+                'vrtderivedX*',
+                'vrtderive.*'
+                'vrtderivedX.*'] :
         ds = gdal.Open(content)
         gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', val)
         with gdaltest.error_handler():
@@ -733,10 +733,10 @@ def vrtderived_10():
 
     # GDAL_VRT_PYTHON_TRUSTED_MODULES matching our module
     for val in ['foo,vrtderived,bar',
-                  '*',
-                 'foo,vrtderived*,bar',
-                 'foo,vrtderived.*,bar',
-                 'foo,vrtderi*,bar'] :
+                '*',
+                'foo,vrtderived*,bar',
+                'foo,vrtderived.*,bar',
+                'foo,vrtderi*,bar'] :
         ds = gdal.Open(content)
         gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', val)
         cs = ds.GetRasterBand(1).Checksum()
@@ -795,8 +795,8 @@ def vrtderived_12():
         return 'skip'
 
     for dt in ["Byte", "UInt16", "Int16", "UInt32", "Int32",
-                "Float32", "Float64",
-                "CInt16", "CInt32", "CFloat32", "CFloat64"]:
+               "Float32", "Float64",
+               "CInt16", "CInt32", "CFloat32", "CFloat64"]:
         ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
 <VRTRasterBand dataType="%s" band="1" subClass="VRTDerivedRasterBand">
     <ColorInterp>Gray</ColorInterp>

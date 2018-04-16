@@ -267,9 +267,9 @@ def osr_ct_7():
         return 'fail'
 
     pnt = ogr.CreateGeometryFromWkt('POINT(%g %g)' % (7000000, 7000000),
-                                     pm_srs)
+                                    pm_srs)
     expected_pnt = ogr.CreateGeometryFromWkt('POINT(%.10f %.10f)' % (exp_x, exp_y),
-                                     ll_srs)
+                                             ll_srs)
     result = pnt.Transform(gdaltest.ct)
     if result != 0:
         return 'fail'

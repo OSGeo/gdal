@@ -58,8 +58,8 @@ def test_gdal_grid_lib_1():
     for j in range(121):
         for i in range(121):
             wkt = 'POINT(%f %f %s)' % (geotransform[0] + (i + .5) * geotransform[1],
-                                        geotransform[3] + (j + .5) * geotransform[5],
-                                        array_val[j * 121 + i])
+                                       geotransform[3] + (j + .5) * geotransform[5],
+                                       array_val[j * 121 + i])
             dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
             dst_feat.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
             shape_lyr.CreateFeature(dst_feat)
@@ -145,8 +145,8 @@ def test_gdal_grid_lib_3():
     polygon = ogr.CreateGeometryFromWkt(wkt)
 
     gdal.Grid('', polygon.ExportToJson(), \
-        width=115, height=93, outputBounds=[37.3495161160827, 55.6901531392856, 37.3497618734837, 55.6902650179072], \
-        format='MEM', algorithm='linear')
+              width=115, height=93, outputBounds=[37.3495161160827, 55.6901531392856, 37.3497618734837, 55.6902650179072], \
+              format='MEM', algorithm='linear')
 
     return 'success'
 

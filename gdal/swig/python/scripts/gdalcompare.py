@@ -119,9 +119,9 @@ def compare_band(golden_band, new_band, id, options=[]):
   else:
     for i in range(golden_band.GetOverviewCount()):
       found_diff += compare_band(golden_band.GetOverview(i),
-                   new_band.GetOverview(i),
-                   id + ' overview ' + str(i),
-                   options)
+                                 new_band.GetOverview(i),
+                                 id + ' overview ' + str(i),
+                                 options)
 
   # Metadata
   if 'SKIP_METADATA' not in options:
@@ -187,7 +187,7 @@ def compare_db(golden_db, new_db, options=[]):
   # Bands
   if golden_db.RasterCount != new_db.RasterCount:
     print('Band count mismatch (golden=%d, new=%d)' \
-        % (golden_db.RasterCount, new_db.RasterCount))
+          % (golden_db.RasterCount, new_db.RasterCount))
     found_diff += 1
 
   # Dimensions

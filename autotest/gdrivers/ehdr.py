@@ -83,7 +83,7 @@ def ehdr_4():
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
-                        buf_type=gdal.GDT_Int16)
+                       buf_type=gdal.GDT_Int16)
 
     ct = gdal.ColorTable()
     ct.SetColorEntry(0, (255, 255, 255, 255))
@@ -237,7 +237,7 @@ def ehdr_12():
 
     src_ds = gdal.Open('../gcore/data/1bit.bmp')
     ds = gdal.GetDriverByName('EHDR').CreateCopy('/vsimem/1bit.bil', src_ds,
-                                                  options=['NBITS=1'])
+                                                 options=['NBITS=1'])
     ds = None
 
     ds = gdal.Open('/vsimem/1bit.bil')

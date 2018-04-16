@@ -497,11 +497,11 @@ def wmts_13():
         return 'fail'
 
     for connection_str in ['WMTS:/vsimem/minimal.xml,layer=',
-                            'WMTS:/vsimem/minimal.xml,style=',
-                            'WMTS:/vsimem/minimal.xml,tilematrixset=',
-                            'WMTS:/vsimem/minimal.xml,tilematrix=',
-                            'WMTS:/vsimem/minimal.xml,zoom_level=',
-                            'WMTS:/vsimem/minimal.xml,layer=,style=,tilematrixset=']:
+                           'WMTS:/vsimem/minimal.xml,style=',
+                           'WMTS:/vsimem/minimal.xml,tilematrixset=',
+                           'WMTS:/vsimem/minimal.xml,tilematrix=',
+                           'WMTS:/vsimem/minimal.xml,zoom_level=',
+                           'WMTS:/vsimem/minimal.xml,layer=,style=,tilematrixset=']:
         ds = gdal.Open(connection_str)
         if ds is None:
             gdaltest.post_reason('fail')
@@ -510,10 +510,10 @@ def wmts_13():
         ds = None
 
     for connection_str in ['WMTS:/vsimem/minimal.xml,layer=foo',
-                            'WMTS:/vsimem/minimal.xml,style=bar',
-                            'WMTS:/vsimem/minimal.xml,tilematrixset=baz',
-                            'WMTS:/vsimem/minimal.xml,tilematrix=baw',
-                            'WMTS:/vsimem/minimal.xml,zoom_level=30']:
+                           'WMTS:/vsimem/minimal.xml,style=bar',
+                           'WMTS:/vsimem/minimal.xml,tilematrixset=baz',
+                           'WMTS:/vsimem/minimal.xml,tilematrix=baw',
+                           'WMTS:/vsimem/minimal.xml,zoom_level=30']:
         gdal.PushErrorHandler()
         ds = gdal.Open(connection_str)
         gdal.PopErrorHandler()
@@ -651,11 +651,11 @@ def wmts_14():
         return 'fail'
     if ds.GetSubDatasets() != [('WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=tms,style="style=auto"',
                                 'Layer My layer1, tile matrix set tms, style "Default style"'),
-                                ('WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=tms,style=another_style',
+                               ('WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=tms,style=another_style',
                                 'Layer My layer1, tile matrix set tms, style "Another style"'),
-                                ('WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=another_tms,style="style=auto"',
+                               ('WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=another_tms,style="style=auto"',
                                 'Layer My layer1, tile matrix set another_tms, style "Default style"'),
-                                ('WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=another_tms,style=another_style',
+                               ('WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=another_tms,style=another_style',
                                 'Layer My layer1, tile matrix set another_tms, style "Another style"')]:
         gdaltest.post_reason('fail')
         print(ds.GetSubDatasets())
@@ -731,15 +731,15 @@ def wmts_14():
         return 'fail'
 
     for open_options in [['URL=/vsimem/nominal.xml'],
-                          ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'TILEMATRIXSET=tms']]:
+                         ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'TILEMATRIXSET=tms']]:
         ds = gdal.OpenEx('WMTS:', open_options=open_options)
         if ds is None:
             gdaltest.post_reason('fail')
             return 'fail'
 
     for open_options in [['URL=/vsimem/nominal.xml', 'STYLE=x', 'TILEMATRIXSET=y'],
-                          ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'TILEMATRIX=30'],
-                          ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'ZOOM_LEVEL=30']]:
+                         ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'TILEMATRIX=30'],
+                         ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'ZOOM_LEVEL=30']]:
         gdal.PushErrorHandler()
         ds = gdal.OpenEx('WMTS:', open_options=open_options)
         gdal.PopErrorHandler()

@@ -360,7 +360,7 @@ def process(argv, progress=None, progress_arg=None):
     else:
         if gdal.VSIStatL(dst_filename) and not overwrite_ds:
             print('ERROR: Destination dataset already exists, ' +
-                    'but -overwrite_ds are specified')
+                  'but -overwrite_ds are specified')
             return 1
         vrt_filename = dst_filename
 

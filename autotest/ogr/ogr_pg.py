@@ -156,7 +156,7 @@ def ogr_pg_2():
     ######################################################
     # Create Layer
     gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer('tpoly',
-                                                  options=['DIM=3'])
+                                                 options=['DIM=3'])
 
     ######################################################
     # Check capabilities
@@ -196,11 +196,11 @@ def ogr_pg_2():
     ######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(gdaltest.pg_lyr,
-                                    [('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString),
-                                      ('SHORTNAME', ogr.OFTString, 8),
-                                      ('REALLIST', ogr.OFTRealList)])
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger),
+                                    ('PRFEDEA', ogr.OFTString),
+                                    ('SHORTNAME', ogr.OFTString, 8),
+                                    ('REALLIST', ogr.OFTRealList)])
 
     ######################################################
     # Copy in poly.shp
@@ -251,7 +251,7 @@ def ogr_pg_3():
 
     gdaltest.pg_lyr.SetAttributeFilter('eas_id < 170')
     tr = ogrtest.check_features_against_list(gdaltest.pg_lyr,
-                                              'eas_id', expect)
+                                             'eas_id', expect)
 
     if gdaltest.pg_lyr.GetFeatureCount() != 5:
         gdaltest.post_reason('GetFeatureCount() returned %d instead of 5' % gdaltest.pg_lyr.GetFeatureCount())
@@ -416,7 +416,7 @@ def ogr_pg_7():
         return 'fail'
 
     tr = ogrtest.check_features_against_list(gdaltest.pg_lyr, 'eas_id',
-                                              [158])
+                                             [158])
 
     gdaltest.pg_lyr.SetAttributeFilter('eas_id = 158')
 
@@ -463,7 +463,7 @@ def ogr_pg_8():
 
     if feat_read.GetField('shortname') != 'Crazy"\'L':
         gdaltest.post_reason('Vvalue not properly escaped or truncated:' \
-                              + feat_read.GetField('shortname'))
+                             + feat_read.GetField('shortname'))
         return 'fail'
 
     feat_read.Destroy()
@@ -505,7 +505,7 @@ def ogr_pg_9():
     shortname = feat.GetField('SHORTNAME')
     if shortname[:5] != 'Reset':
         gdaltest.post_reason('SetFeature() did not update SHORTNAME, got %s.'\
-                              % shortname)
+                             % shortname)
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, 'POINT(5 6 7)') != 0:
@@ -605,10 +605,10 @@ def ogr_pg_11():
     ######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(gdaltest.pgc_lyr,
-                                    [('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString),
-                                      ('SHORTNAME', ogr.OFTString, 8)])
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger),
+                                    ('PRFEDEA', ogr.OFTString),
+                                    ('SHORTNAME', ogr.OFTString, 8)])
 
     ######################################################
     # Copy in poly.shp
@@ -688,8 +688,8 @@ def ogr_pg_13():
     ######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(lyr, [('ogrdate', ogr.OFTDate),
-                                           ('ogrtime', ogr.OFTTime),
-                                           ('ogrdatetime', ogr.OFTDateTime)])
+                                         ('ogrtime', ogr.OFTTime),
+                                         ('ogrdatetime', ogr.OFTDateTime)])
 
     ######################################################
     # add some custom date fields.
@@ -788,7 +788,7 @@ def ogr_pg_15():
 
     gdaltest.pg_lyr.SetAttributeFilter(query)
     tr = ogrtest.check_features_against_list(gdaltest.pg_lyr,
-                                              'eas_id', expect)
+                                             'eas_id', expect)
     gdaltest.pg_lyr.SetAttributeFilter(None)
 
     if tr:
@@ -958,25 +958,25 @@ def ogr_pg_20():
     # ( <EWKT>, <WKT> ) <=> ( <tested>, <expected> )
     geometries = (
         ('POINT (10 20 5 5)',
-          'POINT ZM (10 20 5 5)'),
+         'POINT ZM (10 20 5 5)'),
         ('LINESTRING (10 10 1 2,20 20 3 4,30 30 5 6,40 40 7 8)',
-          'LINESTRING ZM (10 10 1 2,20 20 3 4,30 30 5 6,40 40 7 8)'),
+         'LINESTRING ZM (10 10 1 2,20 20 3 4,30 30 5 6,40 40 7 8)'),
         ('POLYGON ((0 0 1 2,4 0 3 4,4 4 5 6,0 4 7 8,0 0 1 2))',
-          'POLYGON ZM ((0 0 1 2,4 0 3 4,4 4 5 6,0 4 7 8,0 0 1 2))'),
+         'POLYGON ZM ((0 0 1 2,4 0 3 4,4 4 5 6,0 4 7 8,0 0 1 2))'),
         ('MULTIPOINT (10 20 5 5,30 30 7 7)',
-          'MULTIPOINT ZM ((10 20 5 5),(30 30 7 7))'),
+         'MULTIPOINT ZM ((10 20 5 5),(30 30 7 7))'),
         ('MULTILINESTRING ((10 10 1 2,20 20 3 4),(30 30 5 6,40 40 7 8))',
-          'MULTILINESTRING ZM ((10 10 1 2,20 20 3 4),(30 30 5 6,40 40 7 8))'),
+         'MULTILINESTRING ZM ((10 10 1 2,20 20 3 4),(30 30 5 6,40 40 7 8))'),
         ('MULTIPOLYGON(((0 0 0 1,4 0 0 1,4 4 0 1,0 4 0 1,0 0 0 1),(1 1 0 5,2 1 0 5,2 2 0 5,1 2 0 5,1 1 0 5)),((-1 -1 0 10,-1 -2 0 10,-2 -2 0 10,-2 -1 0 10,-1 -1 0 10)))',
-          'MULTIPOLYGON ZM (((0 0 0 1,4 0 0 1,4 4 0 1,0 4 0 1,0 0 0 1),(1 1 0 5,2 1 0 5,2 2 0 5,1 2 0 5,1 1 0 5)),((-1 -1 0 10,-1 -2 0 10,-2 -2 0 10,-2 -1 0 10,-1 -1 0 10)))'),
+         'MULTIPOLYGON ZM (((0 0 0 1,4 0 0 1,4 4 0 1,0 4 0 1,0 0 0 1),(1 1 0 5,2 1 0 5,2 2 0 5,1 2 0 5,1 1 0 5)),((-1 -1 0 10,-1 -2 0 10,-2 -2 0 10,-2 -1 0 10,-1 -1 0 10)))'),
         ('GEOMETRYCOLLECTION(POINT(2 3 11 101),LINESTRING(2 3 12 102,3 4 13 103))',
-          'GEOMETRYCOLLECTION ZM (POINT ZM (2 3 11 101),LINESTRING ZM (2 3 12 102,3 4 13 103))'),
+         'GEOMETRYCOLLECTION ZM (POINT ZM (2 3 11 101),LINESTRING ZM (2 3 12 102,3 4 13 103))'),
         ('TRIANGLE ((0 0 0 0,100 0 100 1,0 100 100 0,0 0 0 0))',
-          'TRIANGLE ZM ((0 0 0 0,100 0 100 1,0 100 100 0,0 0 0 0))'),
+         'TRIANGLE ZM ((0 0 0 0,100 0 100 1,0 100 100 0,0 0 0 0))'),
         ('TIN (((0 0 0 0,0 0 1 0,0 1 0 0,0 0 0 0)),((0 0 0 0,0 1 0 0,1 1 0 0,0 0 0 0)))',
-          'TIN ZM (((0 0 0 0,0 0 1 0,0 1 0 0,0 0 0 0)),((0 0 0 0,0 1 0 0,1 1 0 0,0 0 0 0)))'),
+         'TIN ZM (((0 0 0 0,0 0 1 0,0 1 0 0,0 0 0 0)),((0 0 0 0,0 1 0 0,1 1 0 0,0 0 0 0)))'),
         ('POLYHEDRALSURFACE (((0 0 0 0,0 0 1 0,0 1 1 0,0 1 0 0,0 0 0 0)),((0 0 0 0,0 1 0 0,1 1 0 0,1 0 0 0,0 0 0 0)),((0 0 0 0,1 0 0 0,1 0 1 0,0 0 1 0,0 0 0 0)),((1 1 0 0,1 1 1 0,1 0 1 0,1 0 0 0,1 1 0 0)),((0 1 0 0,0 1 1 0,1 1 1 0,1 1 0 0,0 1 0 0)),((0 0 1 0,1 0 1 0,1 1 1 0,0 1 1 0,0 0 1 0)))',
-          'POLYHEDRALSURFACE ZM (((0 0 0 0,0 0 1 0,0 1 1 0,0 1 0 0,0 0 0 0)),((0 0 0 0,0 1 0 0,1 1 0 0,1 0 0 0,0 0 0 0)),((0 0 0 0,1 0 0 0,1 0 1 0,0 0 1 0,0 0 0 0)),((1 1 0 0,1 1 1 0,1 0 1 0,1 0 0 0,1 1 0 0)),((0 1 0 0,0 1 1 0,1 1 1 0,1 1 0 0,0 1 0 0)),((0 0 1 0,1 0 1 0,1 1 1 0,0 1 1 0,0 0 1 0)))')
+         'POLYHEDRALSURFACE ZM (((0 0 0 0,0 0 1 0,0 1 1 0,0 1 0 0,0 0 0 0)),((0 0 0 0,0 1 0 0,1 1 0 0,1 0 0 0,0 0 0 0)),((0 0 0 0,1 0 0 0,1 0 1 0,0 0 1 0,0 0 0 0)),((1 1 0 0,1 1 1 0,1 0 1 0,1 0 0 0,1 1 0 0)),((0 1 0 0,0 1 1 0,1 1 1 0,1 1 0 0,0 1 0 0)),((0 0 1 0,1 0 1 0,1 1 1 0,0 1 1 0,0 0 1 0)))')
     )
 
     # This layer is also used in ogr_pg_21() test.
@@ -1076,14 +1076,14 @@ def ogr_pg_21_subgeoms():
         return 'skip'
 
     subgeom_PS = ['POLYGON ZM ((0 0 0 0,0 0 1 0,0 1 1 0,0 1 0 0,0 0 0 0))',
-                    'POLYGON ZM ((0 0 0 0,0 1 0 0,1 1 0 0,1 0 0 0,0 0 0 0))',
-                    'POLYGON ZM ((0 0 0 0,1 0 0 0,1 0 1 0,0 0 1 0,0 0 0 0))',
-                    'POLYGON ZM ((1 1 0 0,1 1 1 0,1 0 1 0,1 0 0 0,1 1 0 0))',
-                    'POLYGON ZM ((0 1 0 0,0 1 1 0,1 1 1 0,1 1 0 0,0 1 0 0))',
-                    'POLYGON ZM ((0 0 1 0,1 0 1 0,1 1 1 0,0 1 1 0,0 0 1 0))']
+                  'POLYGON ZM ((0 0 0 0,0 1 0 0,1 1 0 0,1 0 0 0,0 0 0 0))',
+                  'POLYGON ZM ((0 0 0 0,1 0 0 0,1 0 1 0,0 0 1 0,0 0 0 0))',
+                  'POLYGON ZM ((1 1 0 0,1 1 1 0,1 0 1 0,1 0 0 0,1 1 0 0))',
+                  'POLYGON ZM ((0 1 0 0,0 1 1 0,1 1 1 0,1 1 0 0,0 1 0 0))',
+                  'POLYGON ZM ((0 0 1 0,1 0 1 0,1 1 1 0,0 1 1 0,0 0 1 0))']
 
     subgeom_TIN = ['TRIANGLE ZM ((0 0 0 0,0 0 1 0,0 1 0 0,0 0 0 0))',
-                    'TRIANGLE ZM ((0 0 0 0,0 1 0 0,1 1 0 0,0 0 0 0))']
+                   'TRIANGLE ZM ((0 0 0 0,0 1 0 0,1 1 0 0,0 0 0 0))']
 
     layer = gdaltest.pg_ds.GetLayerByName('testgeom')
     for i in range(8, 10):
@@ -1187,7 +1187,7 @@ def ogr_pg_22():
     ######################################################
     # Create Layer
     gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer(layer_name,
-                                                  options=[
+                                                 options=[
                                                       'DIM=3',
                                                       'SCHEMA=' + schema_name]
                                                   )
@@ -1195,10 +1195,10 @@ def ogr_pg_22():
     ######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(gdaltest.pg_lyr,
-                                    [('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString),
-                                      ('SHORTNAME', ogr.OFTString, 8)])
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger),
+                                    ('PRFEDEA', ogr.OFTString),
+                                    ('SHORTNAME', ogr.OFTString, 8)])
 
     ######################################################
     # Copy 3 features from the poly.shp
@@ -3278,7 +3278,7 @@ def ogr_pg_60():
 
     gdaltest.pg_ds = None
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string,
-                               update=1)
+                              update=1)
     lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_60')
     if lyr.GetFIDColumn() != 'id':
         gdaltest.post_reason('did not get expected name for FID column')
@@ -3890,28 +3890,28 @@ def ogr_pg_71():
     curve_lyr2.ResetReading()
 
     for wkt in ['CIRCULARSTRING EMPTY',
-                 'CIRCULARSTRING Z EMPTY',
-                 'CIRCULARSTRING (0 1,2 3,4 5)',
-                 'CIRCULARSTRING Z (0 1 2,4 5 6,7 8 9)',
-                 'COMPOUNDCURVE EMPTY',
-                 'TRIANGLE ((0 0 0,100 0 100,0 100 100,0 0 0))',
-                 'COMPOUNDCURVE ((0 1,2 3,4 5))',
-                 'COMPOUNDCURVE Z ((0 1 2,4 5 6,7 8 9))',
-                 'COMPOUNDCURVE ((0 1,2 3,4 5),CIRCULARSTRING (4 5,6 7,8 9))',
-                 'COMPOUNDCURVE Z ((0 1 2,4 5 6,7 8 9),CIRCULARSTRING Z (7 8 9,10 11 12,13 14 15))',
-                 'CURVEPOLYGON EMPTY',
-                 'CURVEPOLYGON ((0 0,0 1,1 1,1 0,0 0))',
-                 'CURVEPOLYGON Z ((0 0 2,0 1 3,1 1 4,1 0 5,0 0 2))',
-                 'CURVEPOLYGON (COMPOUNDCURVE (CIRCULARSTRING (0 0,1 0,0 0)))',
-                 'CURVEPOLYGON Z (COMPOUNDCURVE Z (CIRCULARSTRING Z (0 0 2,1 0 3,0 0 2)))',
-                 'MULTICURVE EMPTY',
-                 'MULTICURVE (CIRCULARSTRING (0 0,1 0,0 0),(0 0,1 1))',
-                 'MULTICURVE Z (CIRCULARSTRING Z (0 0 1,1 0 1,0 0 1),(0 0 1,1 1 1))',
-                 'MULTICURVE (CIRCULARSTRING (0 0,1 0,0 0),(0 0,1 1),COMPOUNDCURVE ((0 0,1 1),CIRCULARSTRING (1 1,2 2,3 3)))',
-                 'MULTISURFACE EMPTY',
-                 'MULTISURFACE (((0 0,0 10,10 10,10 0,0 0)),CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0)))',
-                 'MULTISURFACE Z (((0 0 1,0 10 1,10 10 1,10 0 1,0 0 1)),CURVEPOLYGON Z (CIRCULARSTRING Z (0 0 1,1 0 1,0 0 1)))',
-                 'GEOMETRYCOLLECTION (CIRCULARSTRING (0 1,2 3,4 5),COMPOUNDCURVE ((0 1,2 3,4 5)),CURVEPOLYGON ((0 0,0 1,1 1,1 0,0 0)),MULTICURVE ((0 0,1 1)),MULTISURFACE (((0 0,0 10,10 10,10 0,0 0))))',
+                'CIRCULARSTRING Z EMPTY',
+                'CIRCULARSTRING (0 1,2 3,4 5)',
+                'CIRCULARSTRING Z (0 1 2,4 5 6,7 8 9)',
+                'COMPOUNDCURVE EMPTY',
+                'TRIANGLE ((0 0 0,100 0 100,0 100 100,0 0 0))',
+                'COMPOUNDCURVE ((0 1,2 3,4 5))',
+                'COMPOUNDCURVE Z ((0 1 2,4 5 6,7 8 9))',
+                'COMPOUNDCURVE ((0 1,2 3,4 5),CIRCULARSTRING (4 5,6 7,8 9))',
+                'COMPOUNDCURVE Z ((0 1 2,4 5 6,7 8 9),CIRCULARSTRING Z (7 8 9,10 11 12,13 14 15))',
+                'CURVEPOLYGON EMPTY',
+                'CURVEPOLYGON ((0 0,0 1,1 1,1 0,0 0))',
+                'CURVEPOLYGON Z ((0 0 2,0 1 3,1 1 4,1 0 5,0 0 2))',
+                'CURVEPOLYGON (COMPOUNDCURVE (CIRCULARSTRING (0 0,1 0,0 0)))',
+                'CURVEPOLYGON Z (COMPOUNDCURVE Z (CIRCULARSTRING Z (0 0 2,1 0 3,0 0 2)))',
+                'MULTICURVE EMPTY',
+                'MULTICURVE (CIRCULARSTRING (0 0,1 0,0 0),(0 0,1 1))',
+                'MULTICURVE Z (CIRCULARSTRING Z (0 0 1,1 0 1,0 0 1),(0 0 1,1 1 1))',
+                'MULTICURVE (CIRCULARSTRING (0 0,1 0,0 0),(0 0,1 1),COMPOUNDCURVE ((0 0,1 1),CIRCULARSTRING (1 1,2 2,3 3)))',
+                'MULTISURFACE EMPTY',
+                'MULTISURFACE (((0 0,0 10,10 10,10 0,0 0)),CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0)))',
+                'MULTISURFACE Z (((0 0 1,0 10 1,10 10 1,10 0 1,0 0 1)),CURVEPOLYGON Z (CIRCULARSTRING Z (0 0 1,1 0 1,0 0 1)))',
+                'GEOMETRYCOLLECTION (CIRCULARSTRING (0 1,2 3,4 5),COMPOUNDCURVE ((0 1,2 3,4 5)),CURVEPOLYGON ((0 0,0 1,1 1,1 0,0 0)),MULTICURVE ((0 0,1 1)),MULTISURFACE (((0 0,0 10,10 10,10 0,0 0))))',
                  ]:
 
         # would cause PostGIS 1.X to crash
@@ -4478,9 +4478,9 @@ def ogr_pg_75():
 
 def ogr_pg_76_get_transaction_state(ds):
     return (ds.GetMetadataItem("osDebugLastTransactionCommand", "_DEBUG_"),
-             int(ds.GetMetadataItem("nSoftTransactionLevel", "_DEBUG_")),
-             int(ds.GetMetadataItem("bSavePointActive", "_DEBUG_")),
-             int(ds.GetMetadataItem("bUserTransactionActive", "_DEBUG_")))
+            int(ds.GetMetadataItem("nSoftTransactionLevel", "_DEBUG_")),
+            int(ds.GetMetadataItem("bSavePointActive", "_DEBUG_")),
+            int(ds.GetMetadataItem("bUserTransactionActive", "_DEBUG_")))
 
 
 def ogr_pg_76():
@@ -5121,9 +5121,9 @@ def ogr_pg_79():
 
     # PRELUDE_STATEMENTS starting with BEGIN (use case: pg_bouncer in transaction pooling)
     ds = gdal.OpenEx('PG:' + gdaltest.pg_connection_string, \
-        gdal.OF_VECTOR | gdal.OF_UPDATE, \
-        open_options=['PRELUDE_STATEMENTS=BEGIN; SET LOCAL statement_timeout TO "1h";',
-                        'CLOSING_STATEMENTS=COMMIT;'])
+                     gdal.OF_VECTOR | gdal.OF_UPDATE, \
+                     open_options=['PRELUDE_STATEMENTS=BEGIN; SET LOCAL statement_timeout TO "1h";',
+                                   'CLOSING_STATEMENTS=COMMIT;'])
     sql_lyr = ds.ExecuteSQL('SHOW statement_timeout')
     f = sql_lyr.GetNextFeature()
     if f.GetField(0) != '1h':
@@ -5147,8 +5147,8 @@ def ogr_pg_79():
 
     # random PRELUDE_STATEMENTS
     ds = gdal.OpenEx('PG:' + gdaltest.pg_connection_string, \
-        gdal.OF_VECTOR | gdal.OF_UPDATE, \
-        open_options=['PRELUDE_STATEMENTS=SET statement_timeout TO "1h"'])
+                     gdal.OF_VECTOR | gdal.OF_UPDATE, \
+                     open_options=['PRELUDE_STATEMENTS=SET statement_timeout TO "1h"'])
     sql_lyr = ds.ExecuteSQL('SHOW statement_timeout')
     f = sql_lyr.GetNextFeature()
     if f.GetField(0) != '1h':
@@ -5173,18 +5173,18 @@ def ogr_pg_79():
     # Test wrong PRELUDE_STATEMENTS
     with gdaltest.error_handler():
         ds = gdal.OpenEx('PG:' + gdaltest.pg_connection_string, \
-            gdal.OF_VECTOR | gdal.OF_UPDATE, \
-            open_options=['PRELUDE_STATEMENTS=BEGIN;error SET LOCAL statement_timeout TO "1h";',
-                            'CLOSING_STATEMENTS=COMMIT;'])
+                         gdal.OF_VECTOR | gdal.OF_UPDATE, \
+                         open_options=['PRELUDE_STATEMENTS=BEGIN;error SET LOCAL statement_timeout TO "1h";',
+                                       'CLOSING_STATEMENTS=COMMIT;'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Test wrong CLOSING_STATEMENTS
     ds = gdal.OpenEx('PG:' + gdaltest.pg_connection_string, \
-        gdal.OF_VECTOR | gdal.OF_UPDATE, \
-        open_options=['PRELUDE_STATEMENTS=BEGIN; SET LOCAL statement_timeout TO "1h";',
-                        'CLOSING_STATEMENTS=COMMIT;error'])
+                     gdal.OF_VECTOR | gdal.OF_UPDATE, \
+                     open_options=['PRELUDE_STATEMENTS=BEGIN; SET LOCAL statement_timeout TO "1h";',
+                                   'CLOSING_STATEMENTS=COMMIT;error'])
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = None
@@ -5230,17 +5230,17 @@ def ogr_pg_81():
     # 0755 = 493
     gdal.Mkdir('/vsimem/ogr_pg_81', 493)
     gdal.FileFromMemBuffer('/vsimem/ogr_pg_81/ogr_pg_81_1.csv',
-"""id,foo
+                           """id,foo
 1,1""")
 
     gdal.FileFromMemBuffer('/vsimem/ogr_pg_81/ogr_pg_81_2.csv',
-"""id,foo
+                           """id,foo
 1,1""")
 
     gdal.VectorTranslate('PG:' + gdaltest.pg_connection_string, '/vsimem/ogr_pg_81', accessMode='append')
 
     gdal.FileFromMemBuffer('/vsimem/ogr_pg_81/ogr_pg_81_2.csv',
-"""id,foo
+                           """id,foo
 2,2""")
 
     with gdaltest.error_handler():
@@ -5292,13 +5292,13 @@ def ogr_pg_83():
         return 'skip'
 
     tests = [[ogr.wkbUnknown, [], 'POINT ZM (1 2 3 4)', 'POINT (1 2)'],
-              [ogr.wkbUnknown, ['DIM=XYZM'], 'POINT ZM (1 2 3 4)', 'POINT ZM (1 2 3 4)'],
-              [ogr.wkbUnknown, ['DIM=XYZ'], 'POINT ZM (1 2 3 4)', 'POINT Z (1 2 3)'],
-              [ogr.wkbUnknown, ['DIM=XYM'], 'POINT M (1 2 4)', 'POINT M (1 2 4)'],
-              [ogr.wkbPointZM, [], 'POINT ZM (1 2 3 4)', 'POINT ZM (1 2 3 4)'],
-              [ogr.wkbPoint25D, [], 'POINT ZM (1 2 3 4)', 'POINT Z (1 2 3)'],
-              [ogr.wkbPointM, [], 'POINT ZM (1 2 3 4)', 'POINT M (1 2 4)'],
-              [ogr.wkbUnknown, ['GEOM_TYPE=geography', 'DIM=XYM'], 'POINT ZM (1 2 3 4)', 'POINT M (1 2 4)'],
+             [ogr.wkbUnknown, ['DIM=XYZM'], 'POINT ZM (1 2 3 4)', 'POINT ZM (1 2 3 4)'],
+             [ogr.wkbUnknown, ['DIM=XYZ'], 'POINT ZM (1 2 3 4)', 'POINT Z (1 2 3)'],
+             [ogr.wkbUnknown, ['DIM=XYM'], 'POINT M (1 2 4)', 'POINT M (1 2 4)'],
+             [ogr.wkbPointZM, [], 'POINT ZM (1 2 3 4)', 'POINT ZM (1 2 3 4)'],
+             [ogr.wkbPoint25D, [], 'POINT ZM (1 2 3 4)', 'POINT Z (1 2 3)'],
+             [ogr.wkbPointM, [], 'POINT ZM (1 2 3 4)', 'POINT M (1 2 4)'],
+             [ogr.wkbUnknown, ['GEOM_TYPE=geography', 'DIM=XYM'], 'POINT ZM (1 2 3 4)', 'POINT M (1 2 4)'],
               ]
 
     for (geom_type, options, wkt, expected_wkt) in tests:
@@ -5470,11 +5470,11 @@ def ogr_pg_85():
     # 0755 = 493
     gdal.Mkdir('/vsimem/ogr_pg_85', 493)
     gdal.FileFromMemBuffer('/vsimem/ogr_pg_85/ogr_pg_85_1.csv',
-"""id,foo
+                           """id,foo
 1,1""")
 
     gdal.FileFromMemBuffer('/vsimem/ogr_pg_85/ogr_pg_85_2.csv',
-"""id,foo
+                           """id,foo
 1,1""")
 
     gdal.VectorTranslate('PG:' + gdaltest.pg_connection_string, '/vsimem/ogr_pg_85', accessMode='append')

@@ -69,7 +69,7 @@ def osr_url_test(url, expected_wkt):
         return 'skip'
 
     if not gdaltest.equal_srs_from_wkt(expected_wkt,
-                                        srs.ExportToWkt()):
+                                       srs.ExportToWkt()):
         return 'fail'
 
     return 'success'

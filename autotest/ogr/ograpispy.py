@@ -66,8 +66,8 @@ def ograpispy_1():
         gdaltest.post_reason('did not get expected script')
         print()
         for line in unified_diff(ref_data.splitlines(), got_data.splitlines(),
-                                     fromfile='expected', tofile='got',
-                                     linterm=""):
+                                 fromfile='expected', tofile='got',
+                                 linterm=""):
             print(line)
         return 'fail'
 

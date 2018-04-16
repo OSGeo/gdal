@@ -83,7 +83,7 @@ def ogr_cad_2():
     defn = gdaltest.cad_layer.GetLayerDefn()
     if defn.GetFieldCount() != 5:
         gdaltest.post_reason('did not get expected number of fields in defn. got %d'
-                              % defn.GetFieldCount())
+                             % defn.GetFieldCount())
         return 'fail'
 
     fc = gdaltest.cad_layer.GetFeatureCount()
@@ -101,7 +101,7 @@ def ogr_cad_2():
 
     if feat.cadgeom_type != 'CADEllipse':
         gdaltest.post_reason('cad geometry type is wrong. Expected CADEllipse, got: %s'
-                              % feat.cadgeom_type)
+                             % feat.cadgeom_type)
         return 'fail'
 
     if feat.GetFID() != 0:
@@ -110,7 +110,7 @@ def ogr_cad_2():
 
     if feat.thickness != 0:
         gdaltest.post_reason('did not get expected thickness. expected 0, got: %f'
-                              % feat.thickness)
+                             % feat.thickness)
         return 'fail'
 
     if feat.extentity_data is not None:
@@ -120,7 +120,7 @@ def ogr_cad_2():
     expected_style = 'PEN(c:#FFFFFFFF,w:5px)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason('got unexpected style string on feature 0:\n%s\ninstead of:\n%s.'
-                              % (feat.GetStyleString(), expected_style))
+                             % (feat.GetStyleString(), expected_style))
         return 'fail'
 
     geom = feat.GetGeometryRef()
@@ -162,7 +162,7 @@ def ogr_cad_3():
     defn = gdaltest.cad_layer.GetLayerDefn()
     if defn.GetFieldCount() != 5:
         gdaltest.post_reason('did not get expected number of fields in defn. got %d'
-                              % defn.GetFieldCount())
+                             % defn.GetFieldCount())
         return 'fail'
 
     fc = gdaltest.cad_layer.GetFeatureCount()
@@ -176,12 +176,12 @@ def ogr_cad_3():
 
     if feat.cadgeom_type != 'CADCircle':
         gdaltest.post_reason('cad geometry type is wrong. Expected CADCircle, got: %s'
-                              % feat.cadgeom_type)
+                             % feat.cadgeom_type)
         return 'fail'
 
     if feat.thickness != 1.2:
         gdaltest.post_reason('did not get expected thickness. expected 1.2, got: %f'
-                              % feat.thickness)
+                             % feat.thickness)
         return 'fail'
 
     if feat.extentity_data is not None:
@@ -191,7 +191,7 @@ def ogr_cad_3():
     expected_style = 'PEN(c:#FFFFFFFF,w:5px)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason('Got unexpected style string on feature 0:\n%s\ninstead of:\n%s.'
-                              % (feat.GetStyleString(), expected_style))
+                             % (feat.GetStyleString(), expected_style))
         return 'fail'
 
     geom = feat.GetGeometryRef()
@@ -209,7 +209,7 @@ def ogr_cad_3():
     defn = gdaltest.cad_layer.GetLayerDefn()
     if defn.GetFieldCount() != 5:
         gdaltest.post_reason('did not get expected number of fields in defn. got %d'
-                              % defn.GetFieldCount())
+                             % defn.GetFieldCount())
         return 'fail'
 
     fc = gdaltest.cad_layer.GetFeatureCount()
@@ -223,12 +223,12 @@ def ogr_cad_3():
 
     if feat.cadgeom_type != 'CADCircle':
         gdaltest.post_reason('cad geometry type is wrong. Expected CADCircle, got: %s'
-                              % feat.cadgeom_type)
+                             % feat.cadgeom_type)
         return 'fail'
 
     if feat.thickness != 0.8:
         gdaltest.post_reason('did not get expected thickness. expected 0.8, got: %f'
-                              % feat.thickness)
+                             % feat.thickness)
         return 'fail'
 
     if feat.extentity_data is not None:
@@ -238,7 +238,7 @@ def ogr_cad_3():
     expected_style = 'PEN(c:#FFFFFFFF,w:5px)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason('Got unexpected style string on feature 0:\n%s\ninstead of:\n%s.'
-                              % (feat.GetStyleString(), expected_style))
+                             % (feat.GetStyleString(), expected_style))
         return 'fail'
 
     geom = feat.GetGeometryRef()
@@ -256,7 +256,7 @@ def ogr_cad_3():
     defn = gdaltest.cad_layer.GetLayerDefn()
     if defn.GetFieldCount() != 5:
         gdaltest.post_reason('did not get expected number of fields in defn. got %d'
-                              % defn.GetFieldCount())
+                             % defn.GetFieldCount())
         return 'fail'
 
     fc = gdaltest.cad_layer.GetFeatureCount()
@@ -270,12 +270,12 @@ def ogr_cad_3():
 
     if feat.cadgeom_type != 'CADCircle':
         gdaltest.post_reason('cad geometry type is wrong. Expected CADCircle, got: %s'
-                              % feat.cadgeom_type)
+                             % feat.cadgeom_type)
         return 'fail'
 
     if feat.thickness != 1.8:
         gdaltest.post_reason('did not get expected thickness. expected 1.8, got: %f'
-                              % feat.thickness)
+                             % feat.thickness)
         return 'fail'
 
     if feat.extentity_data is not None:
@@ -285,7 +285,7 @@ def ogr_cad_3():
     expected_style = 'PEN(c:#FFFFFFFF,w:5px)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason('Got unexpected style string on feature 0:\n%s\ninstead of:\n%s.'
-                              % (feat.GetStyleString(), expected_style))
+                             % (feat.GetStyleString(), expected_style))
         return 'fail'
 
     geom = feat.GetGeometryRef()
@@ -373,7 +373,7 @@ def ogr_cad_6():
 
     if gdaltest.cad_layer.GetFeatureCount() != 3:
         gdaltest.post_reason('expected 3 features, got: %d'
-                              % gdaltest.cad_layer.GetFeatureCount())
+                             % gdaltest.cad_layer.GetFeatureCount())
         return 'fail'
 
     feat = gdaltest.cad_layer.GetNextFeature()
@@ -384,7 +384,7 @@ def ogr_cad_6():
     expected_style = 'LABEL(f:"Arial",t:"Русские буквы",c:#FFFFFFFF)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s.'
-                              % (feat.GetStyleString(), expected_style))
+                             % (feat.GetStyleString(), expected_style))
         return 'expected_fail'  # cannot sure iconv is buildin
 
     return 'success'
@@ -405,7 +405,7 @@ def ogr_cad_7():
     expected_style = 'LABEL(f:"Arial",t:"English letters",c:#FFFFFFFF)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s.'
-                              % (feat.GetStyleString(), expected_style))
+                             % (feat.GetStyleString(), expected_style))
         return 'fail'
 
     return 'success'
@@ -426,7 +426,7 @@ def ogr_cad_8():
     expected_style = 'LABEL(f:"Arial",t:"TESTTAG",c:#FFFFFFFF)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s.'
-                              % (feat.GetStyleString(), expected_style))
+                             % (feat.GetStyleString(), expected_style))
         return 'fail'
 
     return 'success'

@@ -70,16 +70,16 @@ def kmlsuperoverlay_3():
     src_ds = None
 
     filelist = ['tmp/0/0/0.jpg',
-                 'tmp/0/0/0.kml',
-                 'tmp/1/0/0.jpg',
-                 'tmp/1/0/0.kml',
-                 'tmp/1/0/1.jpg',
-                 'tmp/1/0/1.kml',
-                 'tmp/1/1/0.jpg',
-                 'tmp/1/1/0.kml',
-                 'tmp/1/1/1.jpg',
-                 'tmp/1/1/1.kml',
-                 'tmp/tmp.kml']
+                'tmp/0/0/0.kml',
+                'tmp/1/0/0.jpg',
+                'tmp/1/0/0.kml',
+                'tmp/1/0/1.jpg',
+                'tmp/1/0/1.kml',
+                'tmp/1/1/0.jpg',
+                'tmp/1/1/0.kml',
+                'tmp/1/1/1.jpg',
+                'tmp/1/1/1.kml',
+                'tmp/tmp.kml']
     for filename in filelist:
         try:
             os.remove(filename)
@@ -422,7 +422,7 @@ def kmlsuperoverlay_8():
       gdaltest.post_reason('failure')
       return 'fail'
     if set(os.listdir('tmp/3/1')) != set(('0.jpg', '0.kml', '1.jpg', '1.kml', '2.jpg', '2.kml', '3.jpg', '3.kml',
-        '4.jpg', '4.kml', '5.jpg', '5.kml', '6.jpg', '6.kml', '7.jpg', '7.kml',)):
+                                          '4.jpg', '4.kml', '5.jpg', '5.kml', '6.jpg', '6.kml', '7.jpg', '7.kml',)):
       gdaltest.post_reason('failure')
       return 'fail'
     if set(os.listdir('tmp/3/2')) != set():

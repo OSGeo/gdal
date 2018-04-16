@@ -363,12 +363,12 @@ def overviewds_cleanup():
 
 
 gdaltest_list = [overviewds_1,
-                  overviewds_2,
-                  overviewds_3,
-                  overviewds_4,
-                  overviewds_5,
-                  overviewds_6,
-                  overviewds_cleanup]
+                 overviewds_2,
+                 overviewds_3,
+                 overviewds_4,
+                 overviewds_5,
+                 overviewds_6,
+                 overviewds_cleanup]
 
 if __name__ == '__main__':
 

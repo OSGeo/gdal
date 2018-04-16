@@ -126,13 +126,13 @@ def ogr_sqlite_2():
     # Setup Schema
 
     fields = [('AREA', ogr.OFTReal),
-               ('EAS_ID', ogr.OFTInteger),
-               ('PRFEDEA', ogr.OFTString),
-               ('BINCONTENT', ogr.OFTBinary),
-               ('INT64', ogr.OFTInteger64)]
+              ('EAS_ID', ogr.OFTInteger),
+              ('PRFEDEA', ogr.OFTString),
+              ('BINCONTENT', ogr.OFTBinary),
+              ('INT64', ogr.OFTInteger64)]
 
     ogrtest.quick_create_layer_def(gdaltest.sl_lyr,
-                                    fields)
+                                   fields)
     fld_defn = ogr.FieldDefn('fld_boolean', ogr.OFTInteger)
     fld_defn.SetSubType(ogr.OFSTBoolean)
     gdaltest.sl_lyr.CreateField(fld_defn)
@@ -153,8 +153,8 @@ def ogr_sqlite_2():
         field_defn = feature_def.GetFieldDefn(feature_def.GetFieldIndex(field_desc[0]))
         if field_defn.GetType() != field_desc[1]:
             print('Expected type for %s is %s, not %s' % \
-                (field_desc[0], field_defn.GetFieldTypeName(field_defn.GetType()), \
-                 field_defn.GetFieldTypeName(field_desc[1])))
+                  (field_desc[0], field_defn.GetFieldTypeName(field_defn.GetType()), \
+                   field_defn.GetFieldTypeName(field_desc[1])))
     field_defn = feature_def.GetFieldDefn(feature_def.GetFieldIndex('fld_boolean'))
     if field_defn.GetType() != ogr.OFTInteger or field_defn.GetSubType() != ogr.OFSTBoolean:
         gdaltest.post_reason('failure')
@@ -215,7 +215,7 @@ def ogr_sqlite_3():
 
     gdaltest.sl_lyr.SetAttributeFilter('eas_id < 170')
     tr = ogrtest.check_features_against_list(gdaltest.sl_lyr,
-                                              'eas_id', expect)
+                                             'eas_id', expect)
 
     if gdaltest.sl_lyr.GetFeatureCount() != 5:
         gdaltest.post_reason('GetFeatureCount() returned %d instead of 5' % gdaltest.sl_lyr.GetFeatureCount())
@@ -365,7 +365,7 @@ def ogr_sqlite_7():
         return 'fail'
 
     tr = ogrtest.check_features_against_list(gdaltest.sl_lyr, 'eas_id',
-                                              [158])
+                                             [158])
 
     gdaltest.sl_lyr.SetAttributeFilter('eas_id = 158')
 
@@ -676,11 +676,11 @@ def ogr_sqlite_14():
 
     gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer('testtypes')
     ogrtest.quick_create_layer_def(gdaltest.sl_lyr,
-                                    [('INTEGER', ogr.OFTInteger),
-                                      ('FLOAT', ogr.OFTReal),
-                                      ('STRING', ogr.OFTString),
-                                      ('BLOB', ogr.OFTBinary),
-                                      ('BLOB2', ogr.OFTBinary)])
+                                   [('INTEGER', ogr.OFTInteger),
+                                    ('FLOAT', ogr.OFTReal),
+                                    ('STRING', ogr.OFTString),
+                                    ('BLOB', ogr.OFTBinary),
+                                    ('BLOB2', ogr.OFTBinary)])
 
     dst_feat = ogr.Feature(feature_def=gdaltest.sl_lyr.GetLayerDefn())
 
@@ -732,20 +732,20 @@ def ogr_sqlite_15():
         gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer('geomspatialite', options=['FORMAT=SPATIALITE'])
 
     geoms = [ogr.CreateGeometryFromWkt('POINT(0 1)'),
-              ogr.CreateGeometryFromWkt('MULTIPOINT EMPTY'),
-              ogr.CreateGeometryFromWkt('MULTIPOINT (0 1,2 3)'),
-              ogr.CreateGeometryFromWkt('LINESTRING EMPTY'),
-              ogr.CreateGeometryFromWkt('LINESTRING (1 2,3 4)'),
-              ogr.CreateGeometryFromWkt('MULTILINESTRING EMPTY'),
-              ogr.CreateGeometryFromWkt('MULTILINESTRING ((1 2,3 4),(5 6,7 8))'),
-              ogr.CreateGeometryFromWkt('POLYGON EMPTY'),
-              ogr.CreateGeometryFromWkt('POLYGON ((1 2,3 4))'),
-              ogr.CreateGeometryFromWkt('POLYGON ((1 2,3 4),(5 6,7 8))'),
-              ogr.CreateGeometryFromWkt('MULTIPOLYGON EMPTY'),
-              ogr.CreateGeometryFromWkt('MULTIPOLYGON (((1 2,3 4)),((5 6,7 8)))'),
-              ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION EMPTY'),
-              ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POLYGON ((5 6,7 8)))'),
-              ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POINT(0 1))')]
+             ogr.CreateGeometryFromWkt('MULTIPOINT EMPTY'),
+             ogr.CreateGeometryFromWkt('MULTIPOINT (0 1,2 3)'),
+             ogr.CreateGeometryFromWkt('LINESTRING EMPTY'),
+             ogr.CreateGeometryFromWkt('LINESTRING (1 2,3 4)'),
+             ogr.CreateGeometryFromWkt('MULTILINESTRING EMPTY'),
+             ogr.CreateGeometryFromWkt('MULTILINESTRING ((1 2,3 4),(5 6,7 8))'),
+             ogr.CreateGeometryFromWkt('POLYGON EMPTY'),
+             ogr.CreateGeometryFromWkt('POLYGON ((1 2,3 4))'),
+             ogr.CreateGeometryFromWkt('POLYGON ((1 2,3 4),(5 6,7 8))'),
+             ogr.CreateGeometryFromWkt('MULTIPOLYGON EMPTY'),
+             ogr.CreateGeometryFromWkt('MULTIPOLYGON (((1 2,3 4)),((5 6,7 8)))'),
+             ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION EMPTY'),
+             ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POLYGON ((5 6,7 8)))'),
+             ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POINT(0 1))')]
 
     gdaltest.sl_lyr.StartTransaction()
 
@@ -1759,7 +1759,7 @@ def ogr_spatialite_3():
     lyr.SetSpatialFilterRect(-400, 22, -120, 400)
 
     tr = ogrtest.check_features_against_list(lyr, 'FID',
-                                              [0, 4, 8])
+                                             [0, 4, 8])
 
     ds.Destroy()
 
@@ -2050,10 +2050,10 @@ def ogr_spatialite_6():
 
     if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) >= 4:
         ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column, read_only) VALUES " + \
-                    "('%s', '%s', '%s', '%s', Lower('%s'), 1)" % (viewname_single, thegeom_single, pkid_single, layername_single, geometryname))
+                      "('%s', '%s', '%s', '%s', Lower('%s'), 1)" % (viewname_single, thegeom_single, pkid_single, layername_single, geometryname))
     else:
         ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column) VALUES " + \
-                    "('%s', '%s', '%s', '%s', '%s')" % (viewname_single, thegeom_single, pkid_single, layername_single, geometryname))
+                      "('%s', '%s', '%s', '%s', '%s')" % (viewname_single, thegeom_single, pkid_single, layername_single, geometryname))
 
     ds = None
 
@@ -2208,10 +2208,10 @@ def ogr_spatialite_8():
         readonly_val = ''
 
     ds.ExecuteSQL(("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column%s) VALUES " % readonly_col) + \
-                    ("('view_test_geom1', 'renamed_geom1', 'pk_id', 'test', 'geom1'%s)" % readonly_val))
+                  ("('view_test_geom1', 'renamed_geom1', 'pk_id', 'test', 'geom1'%s)" % readonly_val))
     ds.ExecuteSQL('CREATE VIEW view_test_geom2 AS SELECT OGC_FID AS pk_id, foo, geom2 AS renamed_geom2 FROM test')
     ds.ExecuteSQL(("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column%s) VALUES " % readonly_col) + \
-                    ("('view_test_geom2', 'renamed_geom2', 'pk_id', 'test', 'geom2'%s)" % readonly_val))
+                  ("('view_test_geom2', 'renamed_geom2', 'pk_id', 'test', 'geom2'%s)" % readonly_val))
     ds = None
 
     ds = ogr.Open('tmp/ogr_spatialite_8.sqlite')
@@ -2684,13 +2684,13 @@ def ogr_sqlite_35():
     feat = None
 
     for sql in ["SELECT * FROM test",
-                    "SELECT * FROM test GROUP BY foo",
-                    "SELECT * FROM test ORDER BY foo",
-                    "SELECT * FROM test LIMIT 1",
-                    "SELECT * FROM test WHERE 1=1",
-                    "SELECT * FROM test WHERE 1=1 GROUP BY foo",
-                    "SELECT * FROM test WHERE 1=1 ORDER BY foo",
-                    "SELECT * FROM test WHERE 1=1 LIMIT 1"]:
+                "SELECT * FROM test GROUP BY foo",
+                "SELECT * FROM test ORDER BY foo",
+                "SELECT * FROM test LIMIT 1",
+                "SELECT * FROM test WHERE 1=1",
+                "SELECT * FROM test WHERE 1=1 GROUP BY foo",
+                "SELECT * FROM test WHERE 1=1 ORDER BY foo",
+                "SELECT * FROM test WHERE 1=1 LIMIT 1"]:
         sql_lyr = ds.ExecuteSQL(sql)
 
         sql_lyr.SetAttributeFilter("foo = 'bar'")
@@ -3496,7 +3496,7 @@ def ogr_sqlite_44():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_sqlite_44.csvt', 'JsonStringList,JsonIntegerList,JsonInteger64List,JsonRealList,WKT')
     gdal.FileFromMemBuffer('/vsimem/ogr_sqlite_44.csv',
-"""stringlist,intlist,int64list,reallist,WKT
+                           """stringlist,intlist,int64list,reallist,WKT
 "[""a"",null]","[1]","[1234567890123]","[0.125]",
 """)
 

@@ -46,23 +46,22 @@ CPL_CVSID("$Id$")
 GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
         char **papszSiblingFiles) : GDALMDReaderPleiades(pszPath, papszSiblingFiles)
 {
-    const char* pszIMDSourceFilename;
     const char* pszDirName = CPLGetDirname(pszPath);
 
     if(m_osIMDSourceFilename.empty())
     {
-        pszIMDSourceFilename = CPLFormFilename( pszDirName, "METADATA.DIM", nullptr );
+        CPLString osIMDSourceFilename = CPLFormFilename( pszDirName, "METADATA.DIM", nullptr );
 
-        if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+        if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osIMDSourceFilename = pszIMDSourceFilename;
+            m_osIMDSourceFilename = osIMDSourceFilename;
         }
         else
         {
-            pszIMDSourceFilename = CPLFormFilename( pszDirName, "metadata.dim", nullptr );
-            if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+            osIMDSourceFilename = CPLFormFilename( pszDirName, "metadata.dim", nullptr );
+            if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
             {
-                m_osIMDSourceFilename = pszIMDSourceFilename;
+                m_osIMDSourceFilename = osIMDSourceFilename;
             }
         }
     }
@@ -74,20 +73,20 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
     {
         if(EQUAL(CPLGetFilename(pszPath), "IMAGERY.TIF"))
         {
-            pszIMDSourceFilename = CPLSPrintf( "%s\\METADATA.DIM",
+            CPLString osIMDSourceFilename = CPLSPrintf( "%s\\METADATA.DIM",
                                                            CPLGetPath(pszPath));
 
-            if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+            if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
             {
-                m_osIMDSourceFilename = pszIMDSourceFilename;
+                m_osIMDSourceFilename = osIMDSourceFilename;
             }
             else
             {
-                pszIMDSourceFilename = CPLSPrintf( "%s\\metadata.dim",
+                osIMDSourceFilename = CPLSPrintf( "%s\\metadata.dim",
                                                            CPLGetPath(pszPath));
-                if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+                if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
                 {
-                    m_osIMDSourceFilename = pszIMDSourceFilename;
+                    m_osIMDSourceFilename = osIMDSourceFilename;
                 }
             }
         }

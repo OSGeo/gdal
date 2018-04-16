@@ -52,21 +52,21 @@ GDALMDReaderOrbView::GDALMDReaderOrbView(const char *pszPath,
     const char* pszBaseName = CPLGetBasename(pszPath);
     const char* pszDirName = CPLGetDirname(pszPath);
 
-    const char* pszRPBSourceFilename = CPLFormFilename( pszDirName,
+    CPLString osRPBSourceFilename = CPLFormFilename( pszDirName,
                                                         CPLSPrintf("%s_rpc",
                                                         pszBaseName),
                                                         "txt" );
-    if (CPLCheckForFile((char*)pszRPBSourceFilename, papszSiblingFiles))
+    if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
     {
-        m_osRPBSourceFilename = pszRPBSourceFilename;
+        m_osRPBSourceFilename = osRPBSourceFilename;
     }
     else
     {
-        pszRPBSourceFilename = CPLFormFilename( pszDirName, CPLSPrintf("%s_RPC",
+        osRPBSourceFilename = CPLFormFilename( pszDirName, CPLSPrintf("%s_RPC",
                                                 pszBaseName), "TXT" );
-        if (CPLCheckForFile((char*)pszRPBSourceFilename, papszSiblingFiles))
+        if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = pszRPBSourceFilename;
+            m_osRPBSourceFilename = osRPBSourceFilename;
         }
     }
 

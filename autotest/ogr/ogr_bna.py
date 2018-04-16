@@ -57,12 +57,12 @@ def ogr_bna_1():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT (573.736 476.563)',
-                                       max_error=0.0001) != 0:
+                                      max_error=0.0001) != 0:
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT (532.991 429.121)',
-                                       max_error=0.0001) != 0:
+                                      max_error=0.0001) != 0:
         return 'fail'
 
     return 'success'
@@ -158,7 +158,7 @@ def ogr_bna_check_content(lyr1, lyr2):
                 return 'fail'
 
         if ogrtest.check_feature_geometry(feat1, feat2.GetGeometryRef(),
-                                        max_error=0.000000001) != 0:
+                                          max_error=0.000000001) != 0:
             return 'fail'
 
         feat1 = lyr1.GetNextFeature()

@@ -151,7 +151,7 @@ def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src=True, cla
     if clamp_output:
         mem_ds = gdal.GetDriverByName('MEM').Create('', src_ds.RasterXSize, src_ds.RasterYSize, working_bands)
         mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
-                        tmp_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize))
+                           tmp_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize))
         expected_cs = [mem_ds.GetRasterBand(i + 1).Checksum() for i in range(working_bands)]
     else:
         tmp_ds.FlushCache()
@@ -657,7 +657,7 @@ def get_georeferenced_rgba_ds(alpha_fully_transparent=False, alpha_fully_opaque=
     assert(not (alpha_fully_transparent and alpha_fully_opaque))
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tmp.tif',
-                                    src_ds.RasterXSize, src_ds.RasterYSize, 4)
+                                                  src_ds.RasterXSize, src_ds.RasterYSize, 4)
     tmp_ds.SetGeoTransform([0, 10, 0, 0, 0, -10])
     tmp_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
                        src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize))
@@ -776,7 +776,7 @@ def gpkg_9():
 def get_georeferenced_ds_with_pct32():
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba_pct32.png')
     tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tmp.tif',
-                                    src_ds.RasterXSize, src_ds.RasterYSize)
+                                                  src_ds.RasterXSize, src_ds.RasterYSize)
     tmp_ds.SetGeoTransform([0, 10, 0, 0, 0, -10])
     tmp_ds.GetRasterBand(1).SetColorTable(src_ds.GetRasterBand(1).GetColorTable())
     tmp_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
@@ -2445,7 +2445,7 @@ def gpkg_21():
 def get_georeferenced_greyalpha_ds():
     src_ds = gdal.Open('../gcore/data/stefan_full_greyalpha.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tmp.tif',
-                                    src_ds.RasterXSize, src_ds.RasterYSize, 2)
+                                                  src_ds.RasterXSize, src_ds.RasterYSize, 2)
     tmp_ds.SetGeoTransform([0, 10, 0, 0, 0, -10])
     tmp_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
                        src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize))
@@ -2561,15 +2561,15 @@ def gpkg_26():
     gdal.Unlink('/vsimem/tmp.gpkg')
 
     tests = [('CUSTOM', [4672, 4672, 4672, 4873], None),
-               ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], None),
-               ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], ['RESAMPLING=BILINEAR']),
-               ('GoogleCRS84Quad', [3417, 3417, 3417, 3691], ['RESAMPLING=CUBIC']),
-               ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], ['ZOOM_LEVEL_STRATEGY=AUTO']),
-               ('GoogleCRS84Quad', [14445, 14445, 14445, 14448], ['ZOOM_LEVEL_STRATEGY=UPPER']),
-               ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], ['ZOOM_LEVEL_STRATEGY=LOWER']),
-               ('GoogleMapsCompatible', [4118, 4118, 4118, 4406], None),
-               ('PseudoTMS_GlobalGeodetic', [3562, 3562, 3562, 3691], None),
-               ('PseudoTMS_GlobalMercator', [4118, 4118, 4118, 4406], None)]
+             ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], None),
+             ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], ['RESAMPLING=BILINEAR']),
+             ('GoogleCRS84Quad', [3417, 3417, 3417, 3691], ['RESAMPLING=CUBIC']),
+             ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], ['ZOOM_LEVEL_STRATEGY=AUTO']),
+             ('GoogleCRS84Quad', [14445, 14445, 14445, 14448], ['ZOOM_LEVEL_STRATEGY=UPPER']),
+             ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], ['ZOOM_LEVEL_STRATEGY=LOWER']),
+             ('GoogleMapsCompatible', [4118, 4118, 4118, 4406], None),
+             ('PseudoTMS_GlobalGeodetic', [3562, 3562, 3562, 3691], None),
+             ('PseudoTMS_GlobalMercator', [4118, 4118, 4118, 4406], None)]
 
     for (scheme, expected_cs, other_options) in tests:
 
@@ -2594,7 +2594,7 @@ def gpkg_26():
         gdal.Unlink('/vsimem/tmp.gpkg')
 
     tests = [('GoogleCRS84Quad', [[42255, 47336, 24963, 35707], [42253, 47333, 24961, 35707]], None),
-               ('GoogleMapsCompatible', [[35429, 36787, 20035, 17849]], None)]
+             ('GoogleMapsCompatible', [[35429, 36787, 20035, 17849]], None)]
 
     for (scheme, expected_cs, other_options) in tests:
 
@@ -3397,7 +3397,7 @@ def gpkg_39():
 
     # Particular case with nodata = -32768 for Int16
     gdal.FileFromMemBuffer('/vsimem/gpkg_39.asc',
-"""ncols        6
+                           """ncols        6
 nrows        1
 xllcorner    440720
 yllcorner    3750120
@@ -3424,7 +3424,7 @@ NODATA_value -32768
 
     # Particular case with nodata = 65535 for UInt16
     gdal.FileFromMemBuffer('/vsimem/gpkg_39.asc',
-"""ncols        6
+                           """ncols        6
 nrows        1
 xllcorner    440720
 yllcorner    3750120
@@ -3451,7 +3451,7 @@ NODATA_value 65535
 
     # Particular case with nodata = 0 for UInt16
     gdal.FileFromMemBuffer('/vsimem/gpkg_39.asc',
-"""ncols        6
+                           """ncols        6
 nrows        1
 xllcorner    440720
 yllcorner    3750120
@@ -3478,7 +3478,7 @@ NODATA_value 0
 
     # Test large dynamic for Float32 and TILE_FORMAT=PNG
     gdal.FileFromMemBuffer('/vsimem/gpkg_39.asc',
-"""ncols        2
+                           """ncols        2
 nrows        1
 xllcorner    440720
 yllcorner    3750120
@@ -3505,7 +3505,7 @@ cellsize     60
 
     # Test large dynamic for Float32 and TILE_FORMAT=PNG and nodata
     gdal.FileFromMemBuffer('/vsimem/gpkg_39.asc',
-"""ncols        2
+                           """ncols        2
 nrows        1
 xllcorner    440720
 yllcorner    3750120
@@ -3686,7 +3686,7 @@ def gpkg_41():
     gdal.SetConfigOption('GPKG_ALLOW_CRAZY_SETTINGS', 'YES')
     with gdaltest.error_handler():
         gdal.Translate('/vsimem/gpkg_41.gpkg', 'data/huge_line.tif',
-                        format='GPKG', creationOptions=[
+                       format='GPKG', creationOptions=[
                             'BLOCKXSIZE=500000000', 'BLOCKYSIZE=1'])
     gdal.SetConfigOption('GPKG_ALLOW_CRAZY_SETTINGS', None)
 

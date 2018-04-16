@@ -67,19 +67,19 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     // form metadata file name
     CPLStrlcpy(szMetadataName + i, "_MTL.txt", 9);
 
-    const char* pszIMDSourceFilename = CPLFormFilename( pszDirName,
+    CPLString osIMDSourceFilename = CPLFormFilename( pszDirName,
                                                         szMetadataName, nullptr );
-    if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+    if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
-        m_osIMDSourceFilename = pszIMDSourceFilename;
+        m_osIMDSourceFilename = osIMDSourceFilename;
     }
     else
     {
         CPLStrlcpy(szMetadataName + i, "_MTL.TXT", 9);
-        pszIMDSourceFilename = CPLFormFilename( pszDirName, szMetadataName, nullptr );
-        if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+        osIMDSourceFilename = CPLFormFilename( pszDirName, szMetadataName, nullptr );
+        if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osIMDSourceFilename = pszIMDSourceFilename;
+            m_osIMDSourceFilename = osIMDSourceFilename;
         }
     }
 

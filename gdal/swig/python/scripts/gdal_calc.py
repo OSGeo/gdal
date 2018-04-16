@@ -56,7 +56,7 @@ from osgeo import gdalnumeric
 
 # create alphabetic list for storing input layers
 AlphaList = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-           "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+             "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 
 # set up some default nodatavalues for each datatype
 DefaultNDVLookup = {'Byte': 255, 'UInt16': 65535, 'Int16': -32767, 'UInt32': 4294967293, 'Int32': -2147483647, 'Float32': 3.402823466E+38, 'Float64': 1.7976931348623158E+308}
@@ -120,7 +120,7 @@ def doit(opts, args):
 
     # set up global namespace for eval with all functions of gdalnumeric
     global_namespace = dict([(key, getattr(gdalnumeric, key))
-        for key in dir(gdalnumeric) if not key.startswith('__')])
+                             for key in dir(gdalnumeric) if not key.startswith('__')])
 
     if not opts.calc:
         raise Exception("No calculation provided.")
@@ -166,7 +166,7 @@ def doit(opts, args):
             if DimensionsCheck:
                 if DimensionsCheck != [myFile.RasterXSize, myFile.RasterYSize]:
                     raise Exception("Error! Dimensions of file %s (%i, %i) are different from other files (%i, %i).  Cannot proceed" % \
-                            (myF, myFile.RasterXSize, myFile.RasterYSize, DimensionsCheck[0], DimensionsCheck[1]))
+                                    (myF, myFile.RasterXSize, myFile.RasterYSize, DimensionsCheck[0], DimensionsCheck[1]))
             else:
                 DimensionsCheck = [myFile.RasterXSize, myFile.RasterYSize]
 
@@ -323,8 +323,8 @@ def doit(opts, args):
                     else:
                         myBandNo = myBands[i]
                     myval = gdalnumeric.BandReadAsArray(myFiles[i].GetRasterBand(myBandNo),
-                                          xoff=myX, yoff=myY,
-                                          win_xsize=nXValid, win_ysize=nYValid)
+                                                        xoff=myX, yoff=myY,
+                                                        win_xsize=nXValid, win_ysize=nYValid)
 
                     # fill in nodata values
                     if myNDV[i] is not None:

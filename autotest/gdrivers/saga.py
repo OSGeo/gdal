@@ -83,12 +83,12 @@ def saga_3():
 def saga_4():
 
     src_files = ['byte.tif',
-                  'int16.tif',
-                  '../../gcore/data/uint16.tif',
-                  '../../gcore/data/int32.tif',
-                  '../../gcore/data/uint32.tif',
-                  '../../gcore/data/float32.tif',
-                  '../../gcore/data/float64.tif']
+                 'int16.tif',
+                 '../../gcore/data/uint16.tif',
+                 '../../gcore/data/int32.tif',
+                 '../../gcore/data/uint32.tif',
+                 '../../gcore/data/float32.tif',
+                 '../../gcore/data/float64.tif']
 
     for src_file in src_files:
         tst = gdaltest.GDALTest('SAGA', src_file, 1, 4672)
@@ -109,12 +109,12 @@ def saga_4():
 def saga_5():
 
     src_files = ['byte.tif',
-                  'int16.tif',
-                  '../../gcore/data/uint16.tif',
-                  '../../gcore/data/int32.tif',
-                  '../../gcore/data/uint32.tif',
-                  '../../gcore/data/float32.tif',
-                  '../../gcore/data/float64.tif']
+                 'int16.tif',
+                 '../../gcore/data/uint16.tif',
+                 '../../gcore/data/int32.tif',
+                 '../../gcore/data/uint32.tif',
+                 '../../gcore/data/float32.tif',
+                 '../../gcore/data/float64.tif']
 
     for src_file in src_files:
         tst = gdaltest.GDALTest('SAGA', src_file, 1, 4672)

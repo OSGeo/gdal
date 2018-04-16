@@ -47,7 +47,7 @@ def usgsdem_1():
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('NAD27')
     return tst.testOpen(check_prj=srs.ExportToWkt(),
-                         check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
+                        check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
 
 ###############################################################################
 # Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/114p01_0100_deme.dem
@@ -59,7 +59,7 @@ def usgsdem_2():
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('NAD27')
     return tst.testOpen(check_prj=srs.ExportToWkt(),
-                         check_gt=(-136.25010416667, 0.000208333, 0.0, 59.25010416667, 0.0, -0.000208333))
+                        check_gt=(-136.25010416667, 0.000208333, 0.0, 59.25010416667, 0.0, -0.000208333))
 
 ###############################################################################
 # Test truncated version of file that triggered bug #2348
@@ -72,7 +72,7 @@ def usgsdem_3():
     srs.SetWellKnownGeogCS('WGS72')
     srs.SetUTM(17)
     return tst.testOpen(check_prj=srs.ExportToWkt(),
-                         check_gt=(606855.0, 30.0, 0.0, 4414605.0, 0.0, -30.0))
+                        check_gt=(606855.0, 30.0, 0.0, 4414605.0, 0.0, -30.0))
 
 ###############################################################################
 # Test CreateCopy()
@@ -81,7 +81,7 @@ def usgsdem_3():
 def usgsdem_4():
 
     tst = gdaltest.GDALTest('USGSDEM', '39079G6_truncated.dem', 1, 61424, \
-        options=['RESAMPLE=Nearest'])
+                            options=['RESAMPLE=Nearest'])
     return tst.testCreateCopy(check_gt=1, check_srs=1, vsimem=1)
 
 
@@ -92,7 +92,7 @@ def usgsdem_5():
 
     ds = gdal.Open('data/n43.dt0')
     ds2 = gdal.GetDriverByName('USGSDEM').CreateCopy('tmp/n43.dem', ds, \
-        options=['RESAMPLE=Nearest'])
+                                                     options=['RESAMPLE=Nearest'])
 
     if ds.GetRasterBand(1).Checksum() != ds2.GetRasterBand(1).Checksum():
         gdaltest.post_reason('Bad checksum.')
@@ -131,11 +131,11 @@ def usgsdem_6():
 
     ds = gdal.Open('data/n43.dt0')
     ds2 = gdal.GetDriverByName('USGSDEM').CreateCopy('tmp/file_1.dem', ds, \
-        options=['PRODUCER=GDAL', 'OriginCode=GDAL', 'ProcessCode=A', \
-        'RESAMPLE=Nearest'])
+                                                     options=['PRODUCER=GDAL', 'OriginCode=GDAL', 'ProcessCode=A', \
+                                                              'RESAMPLE=Nearest'])
 
     ds3 = gdal.GetDriverByName('USGSDEM').CreateCopy('tmp/file_2.dem', ds2, \
-        options=['TEMPLATE=tmp/file_1.dem', 'RESAMPLE=Nearest'])
+                                                     options=['TEMPLATE=tmp/file_1.dem', 'RESAMPLE=Nearest'])
 
     del ds2
     del ds3
@@ -210,7 +210,7 @@ def usgsdem_8():
     srs.SetWellKnownGeogCS('NAD27')
     srs.SetUTM(12)
     return tst.testOpen(check_prj=srs.ExportToWkt(),
-                         check_gt=(660055.0, 10.0, 0.0, 4429465.0, 0.0, -10.0))
+                        check_gt=(660055.0, 10.0, 0.0, 4429465.0, 0.0, -10.0))
 
 ###############################################################################
 # Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/various.zip/4619old.dem
@@ -223,7 +223,7 @@ def usgsdem_9():
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('NAD27')
     return tst.testOpen(check_prj=srs.ExportToWkt(),
-                         check_gt=(18.99958333, 0.0008333, 0.0, 47.000416667, 0.0, -0.0008333))
+                        check_gt=(18.99958333, 0.0008333, 0.0, 47.000416667, 0.0, -0.0008333))
 
 ###############################################################################
 # Cleanup

@@ -85,16 +85,16 @@ def ogr_mysql_2():
     ######################################################
     # Create Layer
     gdaltest.mysql_lyr = gdaltest.mysql_ds.CreateLayer('tpoly', srs=shp_lyr.GetSpatialRef(),
-                                                  options=['ENGINE=MyISAM'])
+                                                       options=['ENGINE=MyISAM'])
 
     ######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(gdaltest.mysql_lyr,
-                                    [('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString),
-                                      ('SHORTNAME', ogr.OFTString, 8),
-                                      ('INT64', ogr.OFTInteger64)])
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger),
+                                    ('PRFEDEA', ogr.OFTString),
+                                    ('SHORTNAME', ogr.OFTString, 8),
+                                    ('INT64', ogr.OFTInteger64)])
 
     ######################################################
     # Copy in poly.shp
@@ -146,7 +146,7 @@ def ogr_mysql_3():
 
     gdaltest.mysql_lyr.SetAttributeFilter('eas_id < 170')
     tr = ogrtest.check_features_against_list(gdaltest.mysql_lyr,
-                                              'eas_id', expect)
+                                             'eas_id', expect)
 
     if gdaltest.mysql_lyr.GetFeatureCount() != 5:
         gdaltest.post_reason('GetFeatureCount() returned %d instead of 5' % gdaltest.mysql_lyr.GetFeatureCount())
@@ -332,7 +332,7 @@ def ogr_mysql_7():
         return 'fail'
 
     tr = ogrtest.check_features_against_list(gdaltest.mysql_lyr, 'eas_id',
-                                              [158])
+                                             [158])
 
     gdaltest.mysql_lyr.SetAttributeFilter('eas_id = 158')
 
@@ -381,7 +381,7 @@ def ogr_mysql_8():
 
     if feat_read.GetField('shortname') != 'Crazy"\'L':
         gdaltest.post_reason('Vvalue not properly escaped or truncated:' \
-                              + feat_read.GetField('shortname'))
+                             + feat_read.GetField('shortname'))
         return 'fail'
 
     feat_read.Destroy()
@@ -423,7 +423,7 @@ def ogr_mysql_9():
     shortname = feat.GetField('SHORTNAME')
     if shortname[:5] != 'Reset':
         gdaltest.post_reason('SetFeature() did not update SHORTNAME, got %s.'\
-                              % shortname)
+                             % shortname)
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, 'POINT(5 6)') != 0:
@@ -497,7 +497,7 @@ def ogr_mysql_15():
 
     gdaltest.mysql_lyr.SetAttributeFilter(query)
     tr = ogrtest.check_features_against_list(gdaltest.mysql_lyr,
-                                              'eas_id', expect)
+                                             'eas_id', expect)
     gdaltest.mysql_lyr.SetAttributeFilter(None)
 
     if tr:
@@ -619,8 +619,8 @@ def ogr_mysql_20():
 
     layer = gdaltest.mysql_ds.CreateLayer('select', options=['ENGINE=MyISAM'])
     ogrtest.quick_create_layer_def(layer,
-                                    [('desc', ogr.OFTString) ,
-                                      ('select', ogr.OFTString)])
+                                   [('desc', ogr.OFTString) ,
+                                    ('select', ogr.OFTString)])
     dst_feat = ogr.Feature(feature_def=layer.GetLayerDefn())
 
     dst_feat.SetField('desc', 'desc')

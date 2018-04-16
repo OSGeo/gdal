@@ -63,7 +63,7 @@ def fast_2():
     # so the checksum is 0 expected.
 
     tst = gdaltest.GDALTest('fast', 'L71118038_03820020111_HPN.FST', 1, 60323,
-                             0, 0, 5000, 1)
+                            0, 0, 5000, 1)
     return tst.testOpen()
 
 ###############################################################################
@@ -151,7 +151,7 @@ def fast_5():
         return 'skip'
 
     tst = gdaltest.GDALTest('fast', 'L71230079_07920021111_HTM.FST', 2, 19110,
-                             0, 0, 7000, 1)
+                            0, 0, 7000, 1)
 
     # Expected parameters of the geotransform
     gt = (528417.25, 30.0, 0.0, 7071187.0, 0.0, -30.0)

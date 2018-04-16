@@ -106,9 +106,9 @@ def test_ogrtindex_1(srs=None):
             return 'fail'
 
     expected_wkts = ['POLYGON ((49 2,49 2,49 2,49 2,49 2))',
-                    'POLYGON ((49 3,49 3,49 3,49 3,49 3))',
-                    'POLYGON ((48 2,48 2,48 2,48 2,48 2))',
-                    'POLYGON ((48 3,48 3,48 3,48 3,48 3))']
+                     'POLYGON ((49 3,49 3,49 3,49 3,49 3))',
+                     'POLYGON ((48 2,48 2,48 2,48 2,48 2))',
+                     'POLYGON ((48 3,48 3,48 3,48 3,48 3))']
     i = 0
     feat = ds.GetLayer(0).GetNextFeature()
     while feat is not None:
@@ -211,7 +211,7 @@ def test_ogrtindex_3():
             return 'fail'
 
         expected_wkts = ['POLYGON ((2 49,2 49,2 49,2 49,2 49))',
-                        'POLYGON ((3 50,3 50,3 50,3 50,3 50))']
+                         'POLYGON ((3 50,3 50,3 50,3 50,3 50))']
         i = 0
         feat = ds.GetLayer(0).GetNextFeature()
         while feat is not None:

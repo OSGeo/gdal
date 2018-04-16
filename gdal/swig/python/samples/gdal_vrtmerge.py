@@ -127,9 +127,9 @@ class file_info:
         tw_xoff = int((tgw_ulx - t_geotransform[0]) / t_geotransform[1] + 0.1)
         tw_yoff = int((tgw_uly - t_geotransform[3]) / t_geotransform[5] + 0.1)
         tw_xsize = int((tgw_lrx - t_geotransform[0]) / t_geotransform[1] + 0.5) \
-                   - tw_xoff
+        - tw_xoff
         tw_ysize = int((tgw_lry - t_geotransform[3]) / t_geotransform[5] + 0.5) \
-                   - tw_yoff
+        - tw_yoff
 
         if tw_xsize < 1 or tw_ysize < 1:
             return 1
@@ -147,17 +147,17 @@ class file_info:
 
         t_fh.write('\t\t<SimpleSource>\n')
         t_fh.write(('\t\t\t<SourceFilename relativeToVRT="1">%s' +
-            '</SourceFilename>\n') % self.filename)
+                    '</SourceFilename>\n') % self.filename)
         t_fh.write('\t\t\t<SourceBand>%i</SourceBand>\n' % s_band)
         data_type_name = gdal.GetDataTypeName(self.band_types[s_band])
         block_size_x, block_size_y = self.block_sizes[s_band]
         t_fh.write('\t\t\t<SourceProperties RasterXSize="%i" RasterYSize="%i"' \
-                    ' DataType="%s" BlockXSize="%i" BlockYSize="%i"/>\n' \
-                    % (self.xsize, self.ysize, data_type_name, block_size_x, block_size_y))
+                   ' DataType="%s" BlockXSize="%i" BlockYSize="%i"/>\n' \
+                   % (self.xsize, self.ysize, data_type_name, block_size_x, block_size_y))
         t_fh.write('\t\t\t<SrcRect xOff="%i" yOff="%i" xSize="%i" ySize="%i"/>\n' \
-            % (sw_xoff, sw_yoff, sw_xsize, sw_ysize))
+                   % (sw_xoff, sw_yoff, sw_xsize, sw_ysize))
         t_fh.write('\t\t\t<DstRect xOff="%i" yOff="%i" xSize="%i" ySize="%i"/>\n' \
-            % (tw_xoff, tw_yoff, tw_xsize, tw_ysize))
+                   % (tw_xoff, tw_yoff, tw_xsize, tw_ysize))
         t_fh.write('\t\t</SimpleSource>\n')
 
 # =============================================================================
@@ -254,7 +254,7 @@ if __name__ == '__main__':
     for fi in file_infos:
         if fi.geotransform[1] != psize_x or fi.geotransform[5] != psize_y:
             print("All files must have the same scale; %s does not" \
-                % fi.filename)
+                  % fi.filename)
             sys.exit(1)
 
         if fi.geotransform[2] != 0 or fi.geotransform[4] != 0:
@@ -263,7 +263,7 @@ if __name__ == '__main__':
 
         if fi.projection != projection:
             print("All files must be in the same projection; %s is not" \
-                % fi.filename)
+                  % fi.filename)
             sys.exit(1)
 
     geotransform = (ulx, psize_x, 0.0, uly, 0.0, psize_y)
@@ -278,9 +278,9 @@ if __name__ == '__main__':
 
     t_fh = open(out_file, 'w')
     t_fh.write('<VRTDataset rasterXSize="%i" rasterYSize="%i">\n'
-        % (xsize, ysize))
+               % (xsize, ysize))
     t_fh.write('\t<GeoTransform>%24.16f, %24.16f, %24.16f, %24.16f, %24.16f, %24.16f</GeoTransform>\n'
-        % geotransform)
+               % geotransform)
 
     if len(projection) > 0:
         t_fh.write('\t<SRS>%s</SRS>\n' % projection)
@@ -291,13 +291,13 @@ if __name__ == '__main__':
             band_n = band_n + 1
             if len(fi.band_types) != 2:
                 print('File %s has %d bands. Only first band will be taken '
-                        'into account' % (fi.filename, len(fi.band_types) - 1))
+                      'into account' % (fi.filename, len(fi.band_types) - 1))
             dataType = gdal.GetDataTypeName(fi.band_types[1])
 
             t_fh.write('\t<VRTRasterBand dataType="%s" band="%i">\n'
-                % (dataType, band_n))
+                       % (dataType, band_n))
             t_fh.write('\t\t<ColorInterp>%s</ColorInterp>\n' %
-                gdal.GetColorInterpretationName(fi.color_interps[1]))
+                       gdal.GetColorInterpretationName(fi.color_interps[1]))
             fi.write_source(t_fh, geotransform, xsize, ysize, 1)
             t_fh.write('\t</VRTRasterBand>\n')
     else:
@@ -305,12 +305,12 @@ if __name__ == '__main__':
             dataType = gdal.GetDataTypeName(file_infos[0].band_types[band])
 
             t_fh.write('\t<VRTRasterBand dataType="%s" band="%i">\n'
-                % (dataType, band))
+                       % (dataType, band))
             if file_infos[0].nodata != [None]:
                 t_fh.write('\t\t<NoDataValue>%f</NoDataValue>\n' %
-                    file_infos[0].nodata[band])
+                           file_infos[0].nodata[band])
             t_fh.write('\t\t<ColorInterp>%s</ColorInterp>\n' %
-                gdal.GetColorInterpretationName(
+                       gdal.GetColorInterpretationName(
                     file_infos[0].color_interps[band]))
 
             ct = file_infos[0].cts[band]
@@ -319,7 +319,7 @@ if __name__ == '__main__':
                 for i in range(ct.GetCount()):
                     t_fh.write(
                         '\t\t\t<Entry c1="%i" c2="%i" c3="%i" c4="%i"/>\n'
-                            % ct.GetColorEntry(i))
+                        % ct.GetColorEntry(i))
                 t_fh.write('\t\t</ColorTable>\n')
 
             for fi in file_infos:

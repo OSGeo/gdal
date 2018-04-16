@@ -2863,7 +2863,7 @@ GDALDatasetH CPL_STDCALL GDALGetBandDataset( GDALRasterBandH hBand )
     VALIDATE_POINTER1( hBand, "GDALGetBandDataset", nullptr );
 
     GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
-    return (GDALDatasetH) poBand->GetDataset();
+    return GDALDataset::ToHandle(poBand->GetDataset());
 }
 
 /************************************************************************/
@@ -2990,8 +2990,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
         int nYReduced = nRasterYSize;
         if ( dfReduction > 1.0 )
         {
-            nXReduced = (int)( nRasterXSize / dfReduction );
-            nYReduced = (int)( nRasterYSize / dfReduction );
+            nXReduced = static_cast<int>( nRasterXSize / dfReduction );
+            nYReduced = static_cast<int>( nRasterYSize / dfReduction );
 
             // Catch the case of huge resizing ratios here
             if ( nXReduced == 0 )
@@ -3197,7 +3197,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
 
                 for( int i = 0; i < nPixels; i++ )
                     if( ! (bGotNoDataValue &&
-                           (pabyData[i] == (GByte)dfNoDataValue)))
+                           (pabyData[i] == static_cast<GByte>(dfNoDataValue))))
                     {
                         panHistogram[pabyData[i]]++;
                     }
@@ -3855,7 +3855,7 @@ class GDALUInt128
         static GDALUInt128 Mul(GUIntBig first, GUIntBig second)
         {
             // Evaluates to just a single mul on x86_64
-            return GDALUInt128((__uint128_t)first * second);
+            return GDALUInt128(static_cast<__uint128_t>(first) * second);
         }
 
         GDALUInt128 operator- (const GDALUInt128& other) const
@@ -3900,7 +3900,7 @@ class GDALUInt128
                     static_cast<GUIntBig>(firstHigh) * secondLow;
             const GUIntBig middleTerm = firstLowSecondHigh + firstHighSecondLow;
             if( middleTerm < firstLowSecondHigh ) // check for overflow
-                highRes += ((GUIntBig)1) << 32;
+                highRes += static_cast<GUIntBig>(1) << 32;
             const GUIntBig firstLowSecondLow =
                     static_cast<GUIntBig>(firstLow) * secondLow;
             GUIntBig lowRes = firstLowSecondLow + (middleTerm << 32);
@@ -4273,11 +4273,11 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
         // 32-byte alignment may not be enforced by linker, so do it at hand
         GByte aby32ByteUnaligned[32+32+32+32+32];
         GByte* paby32ByteAligned = aby32ByteUnaligned +
-                                    (32 - ((GUIntptr_t)aby32ByteUnaligned % 32));
+                                    (32 - (reinterpret_cast<GUIntptr_t>(aby32ByteUnaligned) % 32));
         GByte* pabyMin = paby32ByteAligned;
         GByte* pabyMax = paby32ByteAligned + 32;
-        GUInt32* panSum = (GUInt32*)(paby32ByteAligned + 32*2);
-        GUInt32* panSumSquare = (GUInt32*)(paby32ByteAligned + 32*3);
+        GUInt32* panSum = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*2);
+        GUInt32* panSumSquare = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*3);
 
         int i = 0;
         // Make sure that sumSquare can fit on uint32
@@ -4313,7 +4313,7 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
             const int iInit = i;
             for( ;i+31<iMax; i+=32 )
             {
-                const GDALm256i ymm = GDALmm256_load_si256((GDALm256i*)(pData + i));
+                const GDALm256i ymm = GDALmm256_load_si256(reinterpret_cast<const GDALm256i*>(pData + i));
 
                 // Check which values are nodata
                 const GDALm256i ymm_eq_nodata =
@@ -4366,14 +4366,14 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
             }
 
             GUInt32* panCoutNoDataMul255 = panSum;
-            GDALmm256_store_si256((GDALm256i*)panCoutNoDataMul255,
+            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panCoutNoDataMul255),
                                ymm_count_nodata_mul_255);
             nSampleCount += (i - iInit) -
                         (panCoutNoDataMul255[0] + panCoutNoDataMul255[2] +
                          panCoutNoDataMul255[4] + panCoutNoDataMul255[6]) / 255;
 
-            GDALmm256_store_si256((GDALm256i*)panSum, ymm_sum);
-            GDALmm256_store_si256((GDALm256i*)panSumSquare, ymm_sumsquare);
+            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSum), ymm_sum);
+            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSumSquare), ymm_sumsquare);
             nSum += panSum[0] + panSum[2] + panSum[4] + panSum[6];
             nSumSquare += static_cast<GUIntBig>(panSumSquare[0]) +
                           panSumSquare[1] + panSumSquare[2] + panSumSquare[3] +
@@ -4383,8 +4383,8 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
 
         if( bComputeMinMax )
         {
-            GDALmm256_store_si256((GDALm256i*)pabyMin, ymm_min);
-            GDALmm256_store_si256((GDALm256i*)pabyMax, ymm_max);
+            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(pabyMin), ymm_min);
+            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(pabyMax), ymm_max);
             for(int j=0;j<32;j++)
             {
                 if( pabyMin[j] < nMin ) nMin = pabyMin[j];
@@ -4411,11 +4411,11 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
         // 32-byte alignment may not be enforced by linker, so do it at hand
         GByte aby32ByteUnaligned[32+32+32+32+32];
         GByte* paby32ByteAligned = aby32ByteUnaligned +
-                                    (32 - ((GUIntptr_t)aby32ByteUnaligned % 32));
+                                    (32 - (reinterpret_cast<GUIntptr_t>(aby32ByteUnaligned) % 32));
         GByte* pabyMin = paby32ByteAligned;
         GByte* pabyMax = paby32ByteAligned + 32;
-        GUInt32* panSum = (GUInt32*)(paby32ByteAligned + 32*2);
-        GUInt32* panSumSquare = (GUInt32*)(paby32ByteAligned + 32*3);
+        GUInt32* panSum = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*2);
+        GUInt32* panSumSquare = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*3);
 
         int i = 0;
         // Make sure that sumSquare can fit on uint32
@@ -4426,7 +4426,7 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
         if( ((nXCheck * nYCheck) % nMaxIterationsPerInnerLoop) != 0 )
             nOuterLoops ++;
 
-        GDALm256i ymm_min = GDALmm256_load_si256((GDALm256i*)(pData + i));
+        GDALm256i ymm_min = GDALmm256_load_si256(reinterpret_cast<const GDALm256i*>(pData + i));
         GDALm256i ymm_max = ymm_min;
 
         const bool bComputeMinMax = nMin > 0 || nMax < 255;
@@ -4442,7 +4442,7 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
             GDALm256i ymm_sumsquare = ZERO256; // holds 8 uint32 sums
             for( ;i+31<iMax; i+=32 )
             {
-                const GDALm256i ymm = GDALmm256_load_si256((GDALm256i*)(pData + i));
+                const GDALm256i ymm = GDALmm256_load_si256(reinterpret_cast<const GDALm256i*>(pData + i));
                 if( bComputeMinMax )
                 {
                     ymm_min = GDALmm256_min_epu8 (ymm_min, ymm);
@@ -4471,8 +4471,8 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
                                            GDALmm256_sad_epu8(ymm, ZERO256));
             }
 
-            GDALmm256_store_si256((GDALm256i*)panSum, ymm_sum);
-            GDALmm256_store_si256((GDALm256i*)panSumSquare, ymm_sumsquare);
+            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSum), ymm_sum);
+            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSumSquare), ymm_sumsquare);
 
             nSum += panSum[0] + panSum[2] + panSum[4] + panSum[6];
             nSumSquare += static_cast<GUIntBig>(panSumSquare[0]) +
@@ -4483,8 +4483,8 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
 
         if( bComputeMinMax )
         {
-            GDALmm256_store_si256((GDALm256i*)pabyMin, ymm_min);
-            GDALmm256_store_si256((GDALm256i*)pabyMax, ymm_max);
+            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(pabyMin), ymm_min);
+            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(pabyMax), ymm_max);
             for(int j=0;j<32;j++)
             {
                 if( pabyMin[j] < nMin ) nMin = pabyMin[j];
@@ -4545,7 +4545,7 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
         // UInt16 to SInt16 to be able to use min_epi16 and max_epi16.
         // Furthermore the shift is also needed to use madd_epi16
         const GDALm256i ymm_m32768 = GDALmm256_set1_epi16(-32768);
-        GDALm256i ymm_min = GDALmm256_load_si256((GDALm256i*)(pData + i));
+        GDALm256i ymm_min = GDALmm256_load_si256(reinterpret_cast<const GDALm256i*>(pData + i));
         ymm_min = GDALmm256_add_epi16(ymm_min, ymm_m32768);
         GDALm256i ymm_max = ymm_min;
         GDALm256i ymm_sumsquare = ZERO256; // holds 4 uint64 sums
@@ -4570,7 +4570,7 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
             GDALm256i ymm_sum = ZERO256; // holds 8 uint32 sums
             for( ;i+15<iMax ; i+=16 )
             {
-                const GDALm256i ymm = GDALmm256_load_si256((GDALm256i*)(pData + i));
+                const GDALm256i ymm = GDALmm256_load_si256(reinterpret_cast<const GDALm256i*>(pData + i));
                 const GDALm256i ymm_shifted = GDALmm256_add_epi16(ymm, ymm_m32768);
                 if( bComputeMinMax )
                 {
@@ -4627,7 +4627,7 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
             }
 
             GUInt32 anSum[8];
-            GDALmm256_storeu_si256((GDALm256i*)anSum, ymm_sum);
+            GDALmm256_storeu_si256(reinterpret_cast<GDALm256i*>(anSum), ymm_sum);
             nSumThis += static_cast<GUIntBig>(anSum[0]) + anSum[1] +
                     anSum[2] + anSum[3] + anSum[4] + anSum[5] +
                     anSum[6] + anSum[7];
@@ -4641,8 +4641,8 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
             // Unshift the result
             ymm_min = GDALmm256_sub_epi16(ymm_min, ymm_m32768);
             ymm_max = GDALmm256_sub_epi16(ymm_max, ymm_m32768);
-            GDALmm256_storeu_si256((GDALm256i*)anMin, ymm_min);
-            GDALmm256_storeu_si256((GDALm256i*)anMax, ymm_max);
+            GDALmm256_storeu_si256(reinterpret_cast<GDALm256i*>(anMin), ymm_min);
+            GDALmm256_storeu_si256(reinterpret_cast<GDALm256i*>(anMax), ymm_max);
             for(int j=0;j<16;j++)
             {
                 if( anMin[j] < nMin ) nMin = anMin[j];
@@ -4651,7 +4651,7 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
         }
 
         GUIntBig anSumSquare[4];
-        GDALmm256_storeu_si256((GDALm256i*)anSumSquare, ymm_sumsquare);
+        GDALmm256_storeu_si256(reinterpret_cast<GDALm256i*>(anSumSquare), ymm_sumsquare);
         nSumSquare += anSumSquare[0] +
                         anSumSquare[1] + anSumSquare[2] + anSumSquare[3];
 #ifndef naive_version
@@ -5120,26 +5120,26 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                       {
                         if( bSignedByte )
                             dfValue =
-                                static_cast<signed char *>(pData)[iOffset];
+                                static_cast<const signed char *>(pData)[iOffset];
                         else
-                            dfValue = static_cast<GByte *>(pData)[iOffset];
+                            dfValue = static_cast<const GByte *>(pData)[iOffset];
                         break;
                       }
                       case GDT_UInt16:
-                        dfValue = static_cast<GUInt16 *>(pData)[iOffset];
+                        dfValue = static_cast<const GUInt16 *>(pData)[iOffset];
                         break;
                       case GDT_Int16:
-                        dfValue = static_cast<GInt16 *>(pData)[iOffset];
+                        dfValue = static_cast<const GInt16 *>(pData)[iOffset];
                         break;
                       case GDT_UInt32:
-                        dfValue = static_cast<GUInt32 *>(pData)[iOffset];
+                        dfValue = static_cast<const GUInt32 *>(pData)[iOffset];
                         break;
                       case GDT_Int32:
-                        dfValue = static_cast<GInt32 *>(pData)[iOffset];
+                        dfValue = static_cast<const GInt32 *>(pData)[iOffset];
                         break;
                       case GDT_Float32:
                       {
-                        const float fValue = static_cast<float *>(pData)[iOffset];
+                        const float fValue = static_cast<const float *>(pData)[iOffset];
                         if( CPLIsNan(fValue) ||
                             (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
                             continue;
@@ -5147,23 +5147,23 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                         break;
                       }
                       case GDT_Float64:
-                        dfValue = ((double *)pData)[iOffset];
+                        dfValue = static_cast<const double *>(pData)[iOffset];
                         if( CPLIsNan(dfValue) )
                             continue;
                         break;
                       case GDT_CInt16:
-                        dfValue = static_cast<GInt16 *>(pData)[iOffset*2];
+                        dfValue = static_cast<const GInt16 *>(pData)[iOffset*2];
                         break;
                       case GDT_CInt32:
-                        dfValue = static_cast<GInt32 *>(pData)[iOffset*2];
+                        dfValue = static_cast<const GInt32 *>(pData)[iOffset*2];
                         break;
                       case GDT_CFloat32:
-                        dfValue = static_cast<float *>(pData)[iOffset*2];
+                        dfValue = static_cast<const float *>(pData)[iOffset*2];
                         if( CPLIsNan(dfValue) )
                             continue;
                         break;
                       case GDT_CFloat64:
-                        dfValue = static_cast<double *>(pData)[iOffset*2];
+                        dfValue = static_cast<const double *>(pData)[iOffset*2];
                         if( CPLIsNan(dfValue) )
                             continue;
                         break;
@@ -5442,8 +5442,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
         int nYReduced = nRasterYSize;
         if ( dfReduction > 1.0 )
         {
-            nXReduced = (int)( nRasterXSize / dfReduction );
-            nYReduced = (int)( nRasterYSize / dfReduction );
+            nXReduced = static_cast<int>( nRasterXSize / dfReduction );
+            nYReduced = static_cast<int>( nRasterYSize / dfReduction );
 
             // Catch the case of huge resizing ratios here
             if ( nXReduced == 0 )
@@ -5775,7 +5775,7 @@ CPLErr CPL_STDCALL GDALSetDefaultHistogram( GDALRasterBandH hBand,
 
     for( int i = 0; i < nBuckets; ++i )
     {
-        panHistogramTemp[i] = (GUIntBig)panHistogram[i];
+        panHistogramTemp[i] = static_cast<GUIntBig>(panHistogram[i]);
     }
 
     const CPLErr eErr =

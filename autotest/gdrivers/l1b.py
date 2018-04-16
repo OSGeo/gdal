@@ -77,14 +77,14 @@ def l1b_geoloc():
     ds = gdal.Open('tmp/cache/n12gac8bit.l1b')
     md = ds.GetMetadata('GEOLOCATION')
     expected_md = {
-      'LINE_OFFSET' : '0',
-      'LINE_STEP' : '1',
-      'PIXEL_OFFSET' : '0',
-      'PIXEL_STEP' : '1',
-      'X_BAND' : '1',
-      'X_DATASET' : 'L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"',
-      'Y_BAND' : '2',
-      'Y_DATASET' : 'L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"'}
+        'LINE_OFFSET' : '0',
+        'LINE_STEP' : '1',
+        'PIXEL_OFFSET' : '0',
+        'PIXEL_STEP' : '1',
+        'X_BAND' : '1',
+        'X_DATASET' : 'L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"',
+        'Y_BAND' : '2',
+        'Y_DATASET' : 'L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"'}
     for key in expected_md:
         if md[key] != expected_md[key]:
             print(md)
@@ -118,8 +118,8 @@ def l1b_solar_zenith_angles_before_noaa_15():
     ds = gdal.Open('tmp/cache/n12gac10bit.l1b')
     md = ds.GetMetadata('SUBDATASETS')
     expected_md = {
-      'SUBDATASET_1_NAME' : 'L1B_SOLAR_ZENITH_ANGLES:"tmp/cache/n12gac10bit.l1b"',
-      'SUBDATASET_1_DESC' : 'Solar zenith angles'
+        'SUBDATASET_1_NAME' : 'L1B_SOLAR_ZENITH_ANGLES:"tmp/cache/n12gac10bit.l1b"',
+        'SUBDATASET_1_DESC' : 'Solar zenith angles'
     }
     for key in expected_md:
         if md[key] != expected_md[key]:
@@ -181,8 +181,8 @@ def l1b_angles_after_noaa_15():
     ds = gdal.Open('tmp/cache/n16gac10bit.l1b')
     md = ds.GetMetadata('SUBDATASETS')
     expected_md = {
-      'SUBDATASET_1_NAME' : 'L1B_ANGLES:"tmp/cache/n16gac10bit.l1b"',
-      'SUBDATASET_1_DESC' : 'Solar zenith angles, satellite zenith angles and relative azimuth angles'
+        'SUBDATASET_1_NAME' : 'L1B_ANGLES:"tmp/cache/n16gac10bit.l1b"',
+        'SUBDATASET_1_DESC' : 'Solar zenith angles, satellite zenith angles and relative azimuth angles'
     }
     for key in expected_md:
         if md[key] != expected_md[key]:
@@ -222,8 +222,8 @@ def l1b_clouds_after_noaa_15():
     ds = gdal.Open('tmp/cache/n16gac10bit.l1b')
     md = ds.GetMetadata('SUBDATASETS')
     expected_md = {
-      'SUBDATASET_2_NAME' : 'L1B_CLOUDS:"tmp/cache/n16gac10bit.l1b"',
-      'SUBDATASET_2_DESC' : 'Clouds from AVHRR (CLAVR)'
+        'SUBDATASET_2_NAME' : 'L1B_CLOUDS:"tmp/cache/n16gac10bit.l1b"',
+        'SUBDATASET_2_DESC' : 'Clouds from AVHRR (CLAVR)'
     }
     for key in expected_md:
         if md[key] != expected_md[key]:
@@ -299,18 +299,18 @@ def l1b_little_endian():
 gdaltest_list = []
 
 l1b_list = [('http://download.osgeo.org/gdal/data/l1b', 'n12gac8bit.l1b', 51754, -1, 1938),
-             ('http://download.osgeo.org/gdal/data/l1b', 'n12gac10bit.l1b', 46039, -1, 1887),
-             ('http://download.osgeo.org/gdal/data/l1b', 'n12gac10bit_ebcdic.l1b', 46039, -1, 1887),  # 2848
-             ('http://download.osgeo.org/gdal/data/l1b', 'n14gac16bit.l1b', 42286, -1, 2142),
-             ('http://download.osgeo.org/gdal/data/l1b', 'n15gac8bit.l1b', 55772, -1, 2091),
-             ('http://download.osgeo.org/gdal/data/l1b', 'n16gac10bit.l1b', 6749, -1, 2142),
-             ('http://download.osgeo.org/gdal/data/l1b', 'n17gac16bit.l1b', 61561, -1, 2040),
-             ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'frang.1b', 33700, 30000, 357),  # 10 bit guess
-             ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'franh.1b', 56702, 100000, 255),  # 10 bit guess
-             ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'calfirel.1b', 55071, 30000, 255),  # 16 bit guess
-             ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'rapnzg.1b', 58084, 30000, 612),  # 16 bit guess
-             ('http://www.sat.dundee.ac.uk/testdata/new_noaa/new_klm_format/', 'noaa18.n1b', 50229, 50000, 102),
-             ('http://www.sat.dundee.ac.uk/testdata/metop', 'noaa1b', 62411, 150000, 408)
+            ('http://download.osgeo.org/gdal/data/l1b', 'n12gac10bit.l1b', 46039, -1, 1887),
+            ('http://download.osgeo.org/gdal/data/l1b', 'n12gac10bit_ebcdic.l1b', 46039, -1, 1887),  # 2848
+            ('http://download.osgeo.org/gdal/data/l1b', 'n14gac16bit.l1b', 42286, -1, 2142),
+            ('http://download.osgeo.org/gdal/data/l1b', 'n15gac8bit.l1b', 55772, -1, 2091),
+            ('http://download.osgeo.org/gdal/data/l1b', 'n16gac10bit.l1b', 6749, -1, 2142),
+            ('http://download.osgeo.org/gdal/data/l1b', 'n17gac16bit.l1b', 61561, -1, 2040),
+            ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'frang.1b', 33700, 30000, 357),  # 10 bit guess
+            ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'franh.1b', 56702, 100000, 255),  # 10 bit guess
+            ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'calfirel.1b', 55071, 30000, 255),  # 16 bit guess
+            ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'rapnzg.1b', 58084, 30000, 612),  # 16 bit guess
+            ('http://www.sat.dundee.ac.uk/testdata/new_noaa/new_klm_format/', 'noaa18.n1b', 50229, 50000, 102),
+            ('http://www.sat.dundee.ac.uk/testdata/metop', 'noaa1b', 62411, 150000, 408)
              ]
 
 for item in l1b_list:

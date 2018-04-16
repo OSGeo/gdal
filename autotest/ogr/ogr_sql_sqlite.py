@@ -228,15 +228,15 @@ def ogr_sql_sqlite_1():
 
         # Success filters
         for cond in ['intfield = 2', 'intfield > 1', 'intfield >= 2', 'intfield < 3', 'intfield <= 2',
-                      'int64field = 234567890123',
-                        'doublefield = 3.45', 'doublefield > 3', 'doublefield >= 3.45', 'doublefield < 3.46', 'doublefield <= 3.45',
-                        "strfield = 'bar'", "strfield > 'baq'", "strfield >= 'bar'", "strfield < 'bas'", "strfield <= 'bar'",
-                        'nullablefield IS NULL',
-                        "binaryfield = x'0001FF'",
-                        "OGR_STYLE = 'cool_style'",
-                        'intfield = 2 AND doublefield = 3.45',
-                        'ROWID = 0',
-                        "\"from\" = 'from_val'"]:
+                     'int64field = 234567890123',
+                     'doublefield = 3.45', 'doublefield > 3', 'doublefield >= 3.45', 'doublefield < 3.46', 'doublefield <= 3.45',
+                     "strfield = 'bar'", "strfield > 'baq'", "strfield >= 'bar'", "strfield < 'bas'", "strfield <= 'bar'",
+                     'nullablefield IS NULL',
+                     "binaryfield = x'0001FF'",
+                     "OGR_STYLE = 'cool_style'",
+                     'intfield = 2 AND doublefield = 3.45',
+                     'ROWID = 0',
+                     "\"from\" = 'from_val'"]:
             sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer WHERE " + cond, dialect='SQLite')
             feat = sql_lyr.GetNextFeature()
             if feat is None:
@@ -248,11 +248,11 @@ def ogr_sql_sqlite_1():
 
         # Failed filters
         for cond in ['intfield = 0', 'intfield > 3', 'intfield >= 3', 'intfield < 0', 'intfield <= 0',
-                        'doublefield = 0', 'doublefield > 3.46', 'doublefield >= 3.46', 'doublefield < 3.45', 'doublefield <= 0',
-                        "strfield = 'XXX'", "strfield > 'bas'", "strfield >= 'bas'", "strfield < 'bar'", "strfield <= 'baq'",
-                        'intfield = 2 AND doublefield = 0',
-                        'ROWID = 10000',
-                        "\"from\" = 'other_val'"]:
+                     'doublefield = 0', 'doublefield > 3.46', 'doublefield >= 3.46', 'doublefield < 3.45', 'doublefield <= 0',
+                     "strfield = 'XXX'", "strfield > 'bas'", "strfield >= 'bas'", "strfield < 'bar'", "strfield <= 'baq'",
+                     'intfield = 2 AND doublefield = 0',
+                     'ROWID = 10000',
+                     "\"from\" = 'other_val'"]:
             sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer WHERE " + cond, dialect='SQLite')
             feat = sql_lyr.GetNextFeature()
             if feat is not None:
@@ -1350,7 +1350,7 @@ def ogr_sql_sqlite_16(service=None, template='http://127.0.0.1:%d/geocoding?q=%%
                 break
 
             if ((sql == "SELECT ogr_geocode('Paris')" or \
-                sql == "SELECT ogr_geocode('Paris', 'geometry')") and feat.GetGeometryRef() is None) or \
+                 sql == "SELECT ogr_geocode('Paris', 'geometry')") and feat.GetGeometryRef() is None) or \
             (sql == "SELECT ogr_geocode('Paris', '%s')" % name_field and not feat.IsFieldSet(name_field)) or \
             (sql == "SELECT ogr_geocode('Paris', 'raw')" and not feat.IsFieldSet('raw')):
                 feat.DumpReadable()
@@ -1472,9 +1472,9 @@ def ogr_sql_sqlite_17(service=None, template='http://127.0.0.1:%d/reversegeocodi
             name_field = "display_name"
 
         sql_list = ["SELECT ogr_geocode_reverse(2,49,'%s') AS %s" % (name_field, name_field),
-                     "SELECT ogr_geocode_reverse(2,49,'%s','zoom=12') AS %s" % (name_field, name_field),
-                     "SELECT ogr_geocode_reverse(2.0,49.0,'%s') AS %s" % (name_field, name_field),
-                     "SELECT ogr_geocode_reverse(2.0,49.0,'raw') AS raw"]
+                    "SELECT ogr_geocode_reverse(2,49,'%s','zoom=12') AS %s" % (name_field, name_field),
+                    "SELECT ogr_geocode_reverse(2.0,49.0,'%s') AS %s" % (name_field, name_field),
+                    "SELECT ogr_geocode_reverse(2.0,49.0,'raw') AS raw"]
         if ogrtest.has_spatialite:
             sql_list.append("SELECT ogr_geocode_reverse(MakePoint(2,49),'%s') AS %s" % (name_field, name_field))
             sql_list.append("SELECT ogr_geocode_reverse(MakePoint(2,49),'%s','zoom=12') AS %s" % (name_field, name_field))
@@ -1847,12 +1847,12 @@ def ogr_sql_sqlite_26():
                     return 'fail'
 
     for op_str in ["Intersects", "Equals", "Disjoint",
-                    "Touches", "Crosses", "Within",
-                    "Contains", "Overlaps"]:
+                   "Touches", "Crosses", "Within",
+                   "Contains", "Overlaps"]:
         for (geomA_wkt, geomB_wkt) in [(geom1_wkt, geom1_wkt),
-                                (geom1_wkt, geom2_wkt),
-                                (geom1_wkt, geom3_wkt),
-                                (geom1_wkt, geom4_wkt)]:
+                                       (geom1_wkt, geom2_wkt),
+                                       (geom1_wkt, geom3_wkt),
+                                       (geom1_wkt, geom4_wkt)]:
             sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), ST_GeomFromText('%s'))" % (op_str, geomA_wkt, geomB_wkt), dialect='SQLite')
             feat = sql_lyr.GetNextFeature()
             b_sql = feat.GetField(0)
@@ -1872,9 +1872,9 @@ def ogr_sql_sqlite_26():
 
     for op_str in ["Intersection", "Difference", "Union", "SymDifference"]:
         for (geomA_wkt, geomB_wkt) in [(geom1_wkt, geom1_wkt),
-                                (geom1_wkt, geom2_wkt),
-                                (geom1_wkt, geom3_wkt),
-                                (geom1_wkt, geom4_wkt)]:
+                                       (geom1_wkt, geom2_wkt),
+                                       (geom1_wkt, geom3_wkt),
+                                       (geom1_wkt, geom4_wkt)]:
             sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), ST_GeomFromText('%s'))" % (op_str, geomA_wkt, geomB_wkt), dialect='SQLite')
             feat = sql_lyr.GetNextFeature()
             geom_sql = feat.GetGeometryRef()
@@ -1995,10 +1995,10 @@ def ogr_sql_sqlite_28():
 
     # Invalid hstore syntax or empty result
     for sql in ["SELECT hstore_get_value('a', null)",
-                 "SELECT hstore_get_value(null, 'a')",
-                 "SELECT hstore_get_value(1,'a')",
-                 "SELECT hstore_get_value('a',1)",
-                 "SELECT hstore_get_value('a=>b','c')"]:
+                "SELECT hstore_get_value(null, 'a')",
+                "SELECT hstore_get_value(1,'a')",
+                "SELECT hstore_get_value('a',1)",
+                "SELECT hstore_get_value('a=>b','c')"]:
         sql_lyr = ds.ExecuteSQL(sql, dialect='SQLite')
         f = sql_lyr.GetNextFeature()
         if not f.IsFieldNull(0):
