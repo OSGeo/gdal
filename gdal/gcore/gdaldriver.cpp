@@ -1029,8 +1029,8 @@ CPLErr GDALDriver::QuietDelete( const char *pszName )
  * The driver will attempt to delete the named dataset in a driver specific
  * fashion.  Full featured drivers will delete all associated files,
  * database objects, or whatever is appropriate.  The default behaviour when
- * no driver specific behaviour is provided is to attempt to delete the
- * passed name as a single file.
+ * no driver specific behaviour is provided is to attempt to delete all the
+ * files that are returned by GDALGetFileList() on the dataset handle.
  *
  * It is unwise to have open dataset handles on this dataset when it is
  * deleted.
