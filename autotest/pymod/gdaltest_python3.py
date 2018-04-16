@@ -77,11 +77,11 @@ def gdalurlopen(url, timeout=10):
 
         if 'GDAL_HTTP_PROXYUSERPWD' in os.environ:
             proxyuserpwd = os.environ['GDAL_HTTP_PROXYUSERPWD']
-            proxyHandler = urllib.request.ProxyHandler({"http" : \
+            proxyHandler = urllib.request.ProxyHandler({"http": \
                                                         "http://%s@%s" % (proxyuserpwd, proxy)})
         else:
             proxyuserpwd = None
-            proxyHandler = urllib.request.ProxyHandler({"http" : \
+            proxyHandler = urllib.request.ProxyHandler({"http": \
                                                         "http://%s" % (proxy)})
 
         opener = urllib.request.build_opener(proxyHandler, urllib.request.HTTPHandler)

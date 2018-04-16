@@ -46,14 +46,14 @@ def ogr_sdts_1():
     if gdaltest.sdts_ds is None:
         return 'fail'
 
-    layers = [('ARDF' , 164, ogr.wkbNone, [('ENTITY_LABEL', '1700005')]),
-              ('ARDM' , 21, ogr.wkbNone, [('ROUTE_NUMBER', 'SR 1200')]),
-              ('AHDR' , 1, ogr.wkbNone, [('BANNER', 'USGS-NMD  DLG DATA - CHARACTER FORMAT - 09-29-87 VERSION                ')]),
-              ('NP01' , 4, ogr.wkbPoint, [('RCID', '1')]),
-              ('NA01' , 34, ogr.wkbPoint, [('RCID', '2')]),
-              ('NO01' , 88, ogr.wkbPoint, [('RCID', '1')]),
-              ('LE01' , 27, ogr.wkbLineString, [('RCID', '1')]),
-              ('PC01' , 35, ogr.wkbPolygon, [('RCID', '1')])
+    layers = [('ARDF', 164, ogr.wkbNone, [('ENTITY_LABEL', '1700005')]),
+              ('ARDM', 21, ogr.wkbNone, [('ROUTE_NUMBER', 'SR 1200')]),
+              ('AHDR', 1, ogr.wkbNone, [('BANNER', 'USGS-NMD  DLG DATA - CHARACTER FORMAT - 09-29-87 VERSION                ')]),
+              ('NP01', 4, ogr.wkbPoint, [('RCID', '1')]),
+              ('NA01', 34, ogr.wkbPoint, [('RCID', '2')]),
+              ('NO01', 88, ogr.wkbPoint, [('RCID', '1')]),
+              ('LE01', 27, ogr.wkbLineString, [('RCID', '1')]),
+              ('PC01', 35, ogr.wkbPolygon, [('RCID', '1')])
               ]
 
     for layer in layers:
@@ -61,7 +61,7 @@ def ogr_sdts_1():
         if lyr is None:
             gdaltest.post_reason('could not get layer %s' % (layer[0]))
             return 'fail'
-        if lyr.GetFeatureCount() != layer[1] :
+        if lyr.GetFeatureCount() != layer[1]:
             gdaltest.post_reason('wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]))
             return 'fail'
         if lyr.GetLayerDefn().GetGeomType() != layer[2]:

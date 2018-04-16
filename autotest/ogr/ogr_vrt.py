@@ -3544,7 +3544,7 @@ def ogr_vrt_38():
              ]
 
     for (type_str, ogr_type) in types:
-      for qualifier in ['', 'Z', 'M', 'ZM', '25D'] :
+      for qualifier in ['', 'Z', 'M', 'ZM', '25D']:
         if qualifier == 'Z' and ogr_type <= ogr.wkbGeometryCollection:
             continue
         if qualifier == '25D' and ogr_type > ogr.wkbGeometryCollection:

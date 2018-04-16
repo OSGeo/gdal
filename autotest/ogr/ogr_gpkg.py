@@ -2304,7 +2304,7 @@ def ogr_gpkg_24():
        not f.IsFieldSet('field_date') or \
        f.GetField('field_datetime5') != '2016/06/30 12:34:56.123+00' or \
        f.GetField('field_datetime6') != '2016/06/30 12:34:56+00' or \
-       f.GetField('field_string2') != 'X' :
+       f.GetField('field_string2') != 'X':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'

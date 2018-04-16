@@ -2142,7 +2142,7 @@ def ogr_mitab_39():
                 return 'fail'
             break
         if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0 or \
-           f.GetStyleString() != f_ref.GetStyleString() :
+           f.GetStyleString() != f_ref.GetStyleString():
             gdaltest.post_reason('fail')
             f.DumpReadable()
             f_ref.DumpReadable()
@@ -2191,7 +2191,7 @@ def ogr_mitab_41():
                 return 'fail'
             break
         if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0 or \
-           f.GetStyleString() != f_ref.GetStyleString() :
+           f.GetStyleString() != f_ref.GetStyleString():
             gdaltest.post_reason('fail')
             f.DumpReadable()
             f_ref.DumpReadable()
@@ -2219,7 +2219,7 @@ def ogr_mitab_42():
                 return 'fail'
             break
         if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0 or \
-           f.GetStyleString() != f_ref.GetStyleString() :
+           f.GetStyleString() != f_ref.GetStyleString():
             gdaltest.post_reason('fail')
             f.DumpReadable()
             f_ref.DumpReadable()
@@ -2270,7 +2270,7 @@ def ogr_mitab_43():
                 return 'fail'
             break
         if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0 or \
-           f.GetStyleString() != f_ref.GetStyleString() :
+           f.GetStyleString() != f_ref.GetStyleString():
             gdaltest.post_reason('fail')
             f.DumpReadable()
             f_ref.DumpReadable()

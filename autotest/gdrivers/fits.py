@@ -87,7 +87,7 @@ def fits_metadata():
 
     ds = gdal.Open('../gcore/data/byte.tif')
     ds2 = gdaltest.fitsDriver.CreateCopy('tmp/byte.fits', ds)
-    md = {'TEST' : 'test_value'}
+    md = {'TEST': 'test_value'}
     ds2.SetMetadata(md)
     ds2 = None
     try:
@@ -103,7 +103,7 @@ def fits_metadata():
         return 'fail'
 
     ds2 = gdal.Open('tmp/byte.fits', gdal.GA_Update)
-    md = {'TEST2' : 'test_value2'}
+    md = {'TEST2': 'test_value2'}
     ds2.SetMetadata(md)
     ds2 = None
     try:

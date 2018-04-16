@@ -128,7 +128,7 @@ def sentinel2_l1c_1():
                  'SENTINEL2_L1C:%s:10m:' % filename_xml,
                  'SENTINEL2_L1C:%s:10m:EPSG_' % filename_xml,
                  'SENTINEL2_L1C:%s:50m:EPSG_32632' % filename_xml,
-                 'SENTINEL2_L1C:%s:10m:EPSG_32633' % filename_xml] :
+                 'SENTINEL2_L1C:%s:10m:EPSG_32633' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
         if ds is not None:
@@ -719,7 +719,7 @@ def sentinel2_l1c_tile_1():
     for name in ['SENTINEL2_L1C_TILE:',
                  'SENTINEL2_L1C_TILE:foo.xml:10m',
                  'SENTINEL2_L1C_TILE:%s' % filename_xml,
-                 'SENTINEL2_L1C_TILE:%s:' % filename_xml] :
+                 'SENTINEL2_L1C_TILE:%s:' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
         if ds is not None:
@@ -1191,7 +1191,7 @@ def sentinel2_l1b_1():
                  'SENTINEL2_L1B:foo.xml:10m',
                  'SENTINEL2_L1B:%s' % filename_xml,
                  'SENTINEL2_L1B:%s:' % filename_xml,
-                 'SENTINEL2_L1B:%s:30m' % filename_xml] :
+                 'SENTINEL2_L1B:%s:30m' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
         if ds is not None:
@@ -1851,7 +1851,7 @@ def sentinel2_l2a_1():
                  'SENTINEL2_L2A:%s:10m:' % filename_xml,
                  'SENTINEL2_L2A:%s:10m:EPSG_' % filename_xml,
                  'SENTINEL2_L2A:%s:50m:EPSG_32632' % filename_xml,
-                 'SENTINEL2_L2A:%s:10m:EPSG_32633' % filename_xml] :
+                 'SENTINEL2_L2A:%s:10m:EPSG_32633' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
         if ds is not None:
@@ -2191,7 +2191,7 @@ def sentinel2_l1c_safe_compact_1():
                  'SENTINEL2_L1C:%s:10m:' % filename_xml,
                  'SENTINEL2_L1C:%s:10m:EPSG_' % filename_xml,
                  'SENTINEL2_L1C:%s:50m:EPSG_32632' % filename_xml,
-                 'SENTINEL2_L1C:%s:10m:EPSG_32633' % filename_xml] :
+                 'SENTINEL2_L1C:%s:10m:EPSG_32633' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
         if ds is not None:

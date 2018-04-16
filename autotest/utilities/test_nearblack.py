@@ -48,7 +48,7 @@ def test_nearblack_1():
         return 'skip'
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif -nb 0 -of GTiff -o tmp/nearblack1.tif')
-    if not (err is None or err == '') :
+    if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
         return 'fail'
@@ -228,7 +228,7 @@ def test_nearblack_7():
 
     if ds.GetRasterBand(1).Checksum() != 418 or \
        ds.GetRasterBand(2).Checksum() != 0 or \
-       ds.GetRasterBand(3).Checksum() != 0 :
+       ds.GetRasterBand(3).Checksum() != 0:
         print(ds.GetRasterBand(1).Checksum())
         print(ds.GetRasterBand(2).Checksum())
         print(ds.GetRasterBand(3).Checksum())
@@ -252,7 +252,7 @@ def test_nearblack_8():
     src_ds = None
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_nearblack_path() + ' tmp/nearblack8.tif -nb 0')
-    if not (err is None or err == '') :
+    if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
         return 'fail'

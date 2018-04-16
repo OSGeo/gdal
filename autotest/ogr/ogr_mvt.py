@@ -1222,7 +1222,7 @@ def ogr_mvt_write_conf():
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(500000 1000000)'))
     lyr.CreateFeature(f)
 
-    conf = {'mylayer' : {'target_name': 'TheLayer',
+    conf = {'mylayer': {'target_name': 'TheLayer',
                          'description': 'the layer',
                          'minzoom': 1,
                          'maxzoom': 2}}
@@ -1587,7 +1587,7 @@ def ogr_mvt_write_custom_tiling_scheme():
         gdaltest.post_reason('fail')
         return 'fail'
     out_lyr = out_ds.GetLayerByName('mylayer')
-    if out_lyr.GetSpatialRef().ExportToWkt().find('3067') < 0 :
+    if out_lyr.GetSpatialRef().ExportToWkt().find('3067') < 0:
         gdaltest.post_reason('fail')
         return 'fail'
     out_f = out_lyr.GetNextFeature()

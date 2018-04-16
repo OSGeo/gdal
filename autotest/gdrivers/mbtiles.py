@@ -206,7 +206,7 @@ def mbtiles_http_jpeg_three_bands():
         return 'skip'
 
     handler = webserver.FileHandler(
-        {'/world_l1.mbtiles' : open('data/world_l1.mbtiles', 'rb').read()})
+        {'/world_l1.mbtiles': open('data/world_l1.mbtiles', 'rb').read()})
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/world_l1.mbtiles' % gdaltest.webserver_port)
     if ds is None:
@@ -233,7 +233,7 @@ def mbtiles_http_jpeg_single_band():
         return 'skip'
 
     handler = webserver.FileHandler(
-        {'/byte_jpeg.mbtiles' : open('data/byte_jpeg.mbtiles', 'rb').read()})
+        {'/byte_jpeg.mbtiles': open('data/byte_jpeg.mbtiles', 'rb').read()})
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/byte_jpeg.mbtiles' % gdaltest.webserver_port)
     if ds is None:
@@ -260,7 +260,7 @@ def mbtiles_http_png():
         return 'skip'
 
     handler = webserver.FileHandler(
-        {'/byte.mbtiles' : open('data/byte.mbtiles', 'rb').read()})
+        {'/byte.mbtiles': open('data/byte.mbtiles', 'rb').read()})
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/byte.mbtiles' % gdaltest.webserver_port)
     if ds is None:
@@ -373,7 +373,7 @@ def mbtiles_5():
         print(got_cs)
         return 'fail'
     got_md = ds.GetMetadata()
-    expected_md = {'ZOOM_LEVEL': '11', 'minzoom' : '11', 'maxzoom' : '11', 'name': 'mbtiles_5', 'format': 'png', 'bounds': '-117.6420540294745,33.89160566594387,-117.6290077648261,33.90243460427036', 'version': '1.1', 'type': 'overlay', 'description': 'mbtiles_5'}
+    expected_md = {'ZOOM_LEVEL': '11', 'minzoom': '11', 'maxzoom': '11', 'name': 'mbtiles_5', 'format': 'png', 'bounds': '-117.6420540294745,33.89160566594387,-117.6290077648261,33.90243460427036', 'version': '1.1', 'type': 'overlay', 'description': 'mbtiles_5'}
     if set(got_md.keys()) != set(expected_md.keys()):
         gdaltest.post_reason('fail')
         print(got_md)
@@ -421,7 +421,7 @@ def mbtiles_6():
         print(got_cs)
         return 'fail'
     got_md = ds.GetMetadata()
-    expected_md = {'ZOOM_LEVEL': '11', 'minzoom' : '11', 'maxzoom' : '11', 'format': 'jpg', 'version': 'version', 'type': 'baselayer', 'name': 'name', 'description': 'description'}
+    expected_md = {'ZOOM_LEVEL': '11', 'minzoom': '11', 'maxzoom': '11', 'format': 'jpg', 'version': 'version', 'type': 'baselayer', 'name': 'name', 'description': 'description'}
     if got_md != expected_md:
         gdaltest.post_reason('fail')
         print(got_md)

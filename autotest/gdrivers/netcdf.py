@@ -77,7 +77,7 @@ def netcdf_setup():
     #netcdf library version 4.1.1 of Mar  4 2011 12:52:19 $
     if 'NETCDF_VERSION' in metadata:
         v = metadata['NETCDF_VERSION']
-        v = v[0 : v.find(' ')].strip('"')
+        v = v[0: v.find(' ')].strip('"')
         gdaltest.netcdf_drv_version = v
 
     if 'NETCDF_HAS_NC2' in metadata \
@@ -540,7 +540,7 @@ def netcdf_10():
         sr = osr.SpatialReference()
         sr.ImportFromWkt(prj)
         #new driver uses UNIT vattribute instead of scaling values
-        if not (sr.GetAttrValue("PROJCS|UNIT", 1) == "1000" and gt == gt2) :
+        if not (sr.GetAttrValue("PROJCS|UNIT", 1) == "1000" and gt == gt2):
             gdaltest.post_reason('Incorrect geotransform, got ' + str(gt))
             return 'fail'
 

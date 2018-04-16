@@ -172,7 +172,7 @@ def test_nearblack_lib_7():
 
     if ds.GetRasterBand(1).Checksum() != 418 or \
        ds.GetRasterBand(2).Checksum() != 0 or \
-       ds.GetRasterBand(3).Checksum() != 0 :
+       ds.GetRasterBand(3).Checksum() != 0:
         print(ds.GetRasterBand(1).Checksum())
         print(ds.GetRasterBand(2).Checksum())
         print(ds.GetRasterBand(3).Checksum())

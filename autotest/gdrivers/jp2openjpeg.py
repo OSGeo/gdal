@@ -2151,7 +2151,7 @@ def jp2openjpeg_42():
     if ds.GetGCPCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
-    if len(ds.GetMetadataDomainList()) != 2 :
+    if len(ds.GetMetadataDomainList()) != 2:
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2195,7 +2195,7 @@ def jp2openjpeg_42():
         print(ds.GetGeoTransform())
         return 'fail'
     # Check that we have a GMLJP2 box
-    if ds.GetMetadataDomainList() != ['xml:gml.root-instance', 'DERIVED_SUBDATASETS'] :
+    if ds.GetMetadataDomainList() != ['xml:gml.root-instance', 'DERIVED_SUBDATASETS']:
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2616,7 +2616,7 @@ def jp2openjpeg_45():
         ]
     },
 
-    "boxes" : [
+    "boxes": [
         "/vsimem/i_dont_exist.xsd",
         {
             "file": "/vsimem/i_dont_exist_too.xsd",
@@ -2819,7 +2819,7 @@ def jp2openjpeg_45():
                 }
         ],
 
-        "styles" : [
+        "styles": [
                 "/vsimem/style1.xml",
                 {
                     "file": "/vsimem/style2.xml",
@@ -2834,7 +2834,7 @@ def jp2openjpeg_45():
                 }
         ],
 
-        "extensions" : [
+        "extensions": [
                 "/vsimem/extension1.xml",
                 {
                     "file": "/vsimem/extension2.xml",
@@ -2850,7 +2850,7 @@ def jp2openjpeg_45():
         ]
     },
 
-    "boxes" : [
+    "boxes": [
         "/vsimem/a_schema.xsd",
         {
             "file": "/vsimem/a_schema.xsd",

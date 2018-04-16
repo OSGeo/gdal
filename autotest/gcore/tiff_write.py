@@ -877,7 +877,7 @@ def tiff_write_19():
     new_ds = gdal.Open('tmp/contig_strip_7.tif')
     if new_ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum() or \
        new_ds.GetRasterBand(2).Checksum() != src_ds.GetRasterBand(2).Checksum() or \
-       new_ds.GetRasterBand(3).Checksum() != src_ds.GetRasterBand(3).Checksum() :
+       new_ds.GetRasterBand(3).Checksum() != src_ds.GetRasterBand(3).Checksum():
         gdaltest.post_reason('Didnt get expected checksum on reopened file')
         return 'fail'
 
@@ -898,19 +898,19 @@ def tiff_write_20():
 
     new_ds = gdaltest.tiff_drv.Create('tmp/tags.tif', 1, 1, 1)
 
-    values = [('TIFFTAG_DOCUMENTNAME'    , 'document_name'),
+    values = [('TIFFTAG_DOCUMENTNAME', 'document_name'),
               ('TIFFTAG_IMAGEDESCRIPTION', 'image_description'),
-              ('TIFFTAG_SOFTWARE'        , 'software'),
-              ('TIFFTAG_DATETIME'        , '2009/01/01 13:01:08'),
+              ('TIFFTAG_SOFTWARE', 'software'),
+              ('TIFFTAG_DATETIME', '2009/01/01 13:01:08'),
               # TODO: artitst?
-              ('TIFFTAG_ARTIST'          , 'artitst'),
-              ('TIFFTAG_HOSTCOMPUTER'    , 'host_computer'),
-              ('TIFFTAG_COPYRIGHT'       , 'copyright'),
-              ('TIFFTAG_XRESOLUTION'     , '100'),
-              ('TIFFTAG_YRESOLUTION'     , '101'),
-              ('TIFFTAG_RESOLUTIONUNIT'  , '2 (pixels/inch)'),
-              ('TIFFTAG_MINSAMPLEVALUE'  , '1'),
-              ('TIFFTAG_MAXSAMPLEVALUE'  , '2'),
+              ('TIFFTAG_ARTIST', 'artitst'),
+              ('TIFFTAG_HOSTCOMPUTER', 'host_computer'),
+              ('TIFFTAG_COPYRIGHT', 'copyright'),
+              ('TIFFTAG_XRESOLUTION', '100'),
+              ('TIFFTAG_YRESOLUTION', '101'),
+              ('TIFFTAG_RESOLUTIONUNIT', '2 (pixels/inch)'),
+              ('TIFFTAG_MINSAMPLEVALUE', '1'),
+              ('TIFFTAG_MAXSAMPLEVALUE', '2'),
               ]
 
     dict = {}
@@ -2819,7 +2819,7 @@ def tiff_write_74():
         sys.stdout.write('(12bit jpeg not available) ... ')
         return 'skip'
 
-    for photometric in ('YCBCR', 'RGB') :
+    for photometric in ('YCBCR', 'RGB'):
 
         drv = gdal.GetDriverByName('GTiff')
         dst_ds = drv.CreateCopy('tmp/test_74.tif', ds,
@@ -4598,33 +4598,33 @@ def tiff_write_109():
 
 
 def tiff_write_110():
-    return tiff_write_106(filename='../gdrivers/data/albania.jpg' , check_cs=False)
+    return tiff_write_106(filename='../gdrivers/data/albania.jpg', check_cs=False)
 
 # Whole copy of YCbCr *DOES* give exact pixels w.r.t. original image
 
 
 def tiff_write_111():
-    return tiff_write_106(filename='../gdrivers/data/albania.jpg' , options=['COMPRESS=JPEG', 'BLOCKYSIZE=260'])
+    return tiff_write_106(filename='../gdrivers/data/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260'])
 
 
 def tiff_write_111_bis():
-    return tiff_write_106(filename='../gdrivers/data/albania.jpg' , options=['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=PIXEL'])
+    return tiff_write_106(filename='../gdrivers/data/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=PIXEL'])
 
 
 def tiff_write_111_ter():
-    return tiff_write_106(filename='../gdrivers/data/albania.jpg' , options=['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=BAND'], check_cs=False)
+    return tiff_write_106(filename='../gdrivers/data/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=BAND'], check_cs=False)
 
 # Tiled organization of YCbCr does *NOT* give exact pixels w.r.t. original image
 
 
 def tiff_write_112():
-    return tiff_write_106(filename='../gdrivers/data/albania.jpg' , options=['COMPRESS=JPEG', 'TILED=YES'], check_cs=False)
+    return tiff_write_106(filename='../gdrivers/data/albania.jpg', options=['COMPRESS=JPEG', 'TILED=YES'], check_cs=False)
 
 # The source is a JPEG in RGB colorspace (usually it is YCbCr).
 
 
 def tiff_write_113():
-    return tiff_write_106(filename='../gdrivers/data/rgbsmall_rgb.jpg' , options=['COMPRESS=JPEG', 'BLOCKYSIZE=8'])
+    return tiff_write_106(filename='../gdrivers/data/rgbsmall_rgb.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=8'])
 
 ###############################################################################
 # Test CreateCopy() interruption
@@ -5553,7 +5553,7 @@ def tiff_write_127():
 
         ds = gdal.Open('/vsimem/tiff_write_127.tif', gdal.GA_Update)
         obj = ds if i == 0 else ds.GetRasterBand(1)
-        obj.SetMetadata({'key' : 'value'})
+        obj.SetMetadata({'key': 'value'})
         obj = None
         ds = None
 
@@ -6762,14 +6762,14 @@ def tiff_write_145():
                     {'use_tmp': True, 'xsize': 100000, 'ysize': 100000, 'creation_options': ['BIGTIFF=NO'], 'expected_failure': True},
                     {'creation_options': ['ENDIANNESS=foo'], 'expected_failure': False},
                     {'creation_options': ['NBITS=9'], 'expected_failure': False},
-                    {'datatype' : gdal.GDT_Float32, 'creation_options': ['NBITS=8'], 'expected_failure': False},
-                    {'datatype' : gdal.GDT_UInt16, 'creation_options': ['NBITS=8'], 'expected_failure': False},
-                    {'datatype' : gdal.GDT_UInt16, 'creation_options': ['NBITS=17'], 'expected_failure': False},
-                    {'datatype' : gdal.GDT_UInt32, 'creation_options': ['NBITS=16'], 'expected_failure': False},
-                    {'datatype' : gdal.GDT_UInt32, 'creation_options': ['NBITS=33'], 'expected_failure': False},
-                    {'bands' : 3, 'creation_options': ['PHOTOMETRIC=YCBCR'], 'expected_failure': True},
-                    {'bands' : 3, 'creation_options': ['PHOTOMETRIC=YCBCR', 'COMPRESS=JPEG', 'INTERLEAVE=BAND'], 'expected_failure': True},
-                    {'bands' : 1, 'creation_options': ['PHOTOMETRIC=YCBCR', 'COMPRESS=JPEG'], 'expected_failure': True},
+                    {'datatype': gdal.GDT_Float32, 'creation_options': ['NBITS=8'], 'expected_failure': False},
+                    {'datatype': gdal.GDT_UInt16, 'creation_options': ['NBITS=8'], 'expected_failure': False},
+                    {'datatype': gdal.GDT_UInt16, 'creation_options': ['NBITS=17'], 'expected_failure': False},
+                    {'datatype': gdal.GDT_UInt32, 'creation_options': ['NBITS=16'], 'expected_failure': False},
+                    {'datatype': gdal.GDT_UInt32, 'creation_options': ['NBITS=33'], 'expected_failure': False},
+                    {'bands': 3, 'creation_options': ['PHOTOMETRIC=YCBCR'], 'expected_failure': True},
+                    {'bands': 3, 'creation_options': ['PHOTOMETRIC=YCBCR', 'COMPRESS=JPEG', 'INTERLEAVE=BAND'], 'expected_failure': True},
+                    {'bands': 1, 'creation_options': ['PHOTOMETRIC=YCBCR', 'COMPRESS=JPEG'], 'expected_failure': True},
                     {'creation_options': ['PHOTOMETRIC=foo'], 'expected_failure': False},
                     {'creation_options': ['PHOTOMETRIC=RGB'], 'expected_failure': False},
                     {'creation_options': ['TILED=YES', 'BLOCKSIZE=1', 'BLOCKYSIZE=1'], 'expected_failure': True},

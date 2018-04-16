@@ -40,26 +40,26 @@ from osgeo import ogr, gdal
 
 def GeomType2Name(type):
     flat_type = ogr.GT_Flatten(type)
-    dic = {ogr.wkbUnknown : ('wkbUnknown', '25D'),
-           ogr.wkbPoint : ('wkbPoint', '25D'),
-           ogr.wkbLineString : ('wkbLineString', '25D'),
-           ogr.wkbPolygon : ('wkbPolygon', '25D'),
-           ogr.wkbMultiPoint : ('wkbMultiPoint', '25D'),
-           ogr.wkbMultiLineString : ('wkbMultiLineString', '25D'),
-           ogr.wkbMultiPolygon : ('wkbMultiPolygon', '25D'),
-           ogr.wkbGeometryCollection : ('wkbGeometryCollection', '25D'),
-           ogr.wkbNone : ('wkbNone', ''),
-           ogr.wkbLinearRing : ('wkbLinearRing', ''),
-           ogr.wkbCircularString : ('wkbCircularString', 'Z'),
-           ogr.wkbCompoundCurve : ('wkbCompoundCurve', 'Z'),
-           ogr.wkbCurvePolygon : ('wkbCurvePolygon', 'Z'),
-           ogr.wkbMultiCurve : ('wkbMultiCurve', 'Z'),
-           ogr.wkbMultiSurface : ('wkbMultiSurface', 'Z'),
-           ogr.wkbCurve : ('wkbCurve', 'Z'),
-           ogr.wkbSurface : ('wkbSurface', 'Z'),
-           ogr.wkbPolyhedralSurface : ('wkbPolyhedralSurface', 'Z'),
-           ogr.wkbTIN : ('wkbTIN', 'Z'),
-           ogr.wkbTriangle : ('wkbTriangle', 'Z')}
+    dic = {ogr.wkbUnknown: ('wkbUnknown', '25D'),
+           ogr.wkbPoint: ('wkbPoint', '25D'),
+           ogr.wkbLineString: ('wkbLineString', '25D'),
+           ogr.wkbPolygon: ('wkbPolygon', '25D'),
+           ogr.wkbMultiPoint: ('wkbMultiPoint', '25D'),
+           ogr.wkbMultiLineString: ('wkbMultiLineString', '25D'),
+           ogr.wkbMultiPolygon: ('wkbMultiPolygon', '25D'),
+           ogr.wkbGeometryCollection: ('wkbGeometryCollection', '25D'),
+           ogr.wkbNone: ('wkbNone', ''),
+           ogr.wkbLinearRing: ('wkbLinearRing', ''),
+           ogr.wkbCircularString: ('wkbCircularString', 'Z'),
+           ogr.wkbCompoundCurve: ('wkbCompoundCurve', 'Z'),
+           ogr.wkbCurvePolygon: ('wkbCurvePolygon', 'Z'),
+           ogr.wkbMultiCurve: ('wkbMultiCurve', 'Z'),
+           ogr.wkbMultiSurface: ('wkbMultiSurface', 'Z'),
+           ogr.wkbCurve: ('wkbCurve', 'Z'),
+           ogr.wkbSurface: ('wkbSurface', 'Z'),
+           ogr.wkbPolyhedralSurface: ('wkbPolyhedralSurface', 'Z'),
+           ogr.wkbTIN: ('wkbTIN', 'Z'),
+           ogr.wkbTriangle: ('wkbTriangle', 'Z')}
     ret = dic[flat_type][0]
     if flat_type != type:
         if ogr.GT_HasM(type):

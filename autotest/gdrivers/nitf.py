@@ -1601,7 +1601,7 @@ def nitf_49():
 
     md = ds2.GetMetadata('CGM')
     if 'SEGMENT_COUNT' not in md or md['SEGMENT_COUNT'] != '1' or \
-       'SEGMENT_0_DATA' not in md or md['SEGMENT_0_DATA'] != 'XYZ' :
+       'SEGMENT_0_DATA' not in md or md['SEGMENT_0_DATA'] != 'XYZ':
         gdaltest.post_reason('did not get expected CGM metadata')
         print(md)
         return 'success'
@@ -1659,7 +1659,7 @@ def nitf_50():
 
     md = ds.GetMetadata('CGM')
     if 'SEGMENT_COUNT' not in md or md['SEGMENT_COUNT'] != '1' or \
-       'SEGMENT_0_DATA' not in md or md['SEGMENT_0_DATA'] != 'XYZ' :
+       'SEGMENT_0_DATA' not in md or md['SEGMENT_0_DATA'] != 'XYZ':
         gdaltest.post_reason('did not get expected CGM metadata')
         print(md)
         return 'success'
@@ -1982,7 +1982,7 @@ def nitf_59():
     gt = ds.GetGeoTransform()
     ds = None
 
-    if wkt.find("""PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["WGS 84""") != 0 :
+    if wkt.find("""PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["WGS 84""") != 0:
         gdaltest.post_reason('did not get expected SRS')
         print(wkt)
         return 'fail'
@@ -2463,22 +2463,22 @@ def nitf_72():
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     # Use full precision
     src_md_max_precision = {
-        'ERR_BIAS' : '1234.56',
-        'ERR_RAND' : '2345.67',
-        'LINE_OFF' : '345678',
-        'SAMP_OFF' : '45678',
-        'LAT_OFF' : '-89.8765',
-        'LONG_OFF' : '-179.1234',
-        'HEIGHT_OFF' : '-9876',
-        'LINE_SCALE' : '987654',
-        'SAMP_SCALE' : '67890',
-        'LAT_SCALE' : '-12.3456',
-        'LONG_SCALE' : '-123.4567',
-        'HEIGHT_SCALE' : '-1234',
-        'LINE_NUM_COEFF' : '0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
-        'LINE_DEN_COEFF' : '1 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
-        'SAMP_NUM_COEFF' : '2 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
-        'SAMP_DEN_COEFF' : '3 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+        'ERR_BIAS': '1234.56',
+        'ERR_RAND': '2345.67',
+        'LINE_OFF': '345678',
+        'SAMP_OFF': '45678',
+        'LAT_OFF': '-89.8765',
+        'LONG_OFF': '-179.1234',
+        'HEIGHT_OFF': '-9876',
+        'LINE_SCALE': '987654',
+        'SAMP_SCALE': '67890',
+        'LAT_SCALE': '-12.3456',
+        'LONG_SCALE': '-123.4567',
+        'HEIGHT_SCALE': '-1234',
+        'LINE_NUM_COEFF': '0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+        'LINE_DEN_COEFF': '1 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+        'SAMP_NUM_COEFF': '2 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+        'SAMP_DEN_COEFF': '3 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
     }
     src_md = src_md_max_precision
     src_ds.SetMetadata(src_md, 'RPC')
@@ -2583,22 +2583,22 @@ def nitf_72():
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     # Test padding
     src_md = {
-        'ERR_BIAS' : '123',
-        'ERR_RAND' : '234',
-        'LINE_OFF' : '3456',
-        'SAMP_OFF' : '4567',
-        'LAT_OFF' : '8',
-        'LONG_OFF' : '17',
-        'HEIGHT_OFF' : '987',
-        'LINE_SCALE' : '98765',
-        'SAMP_SCALE' : '6789',
-        'LAT_SCALE' : '12',
-        'LONG_SCALE' : '109',
-        'HEIGHT_SCALE' : '34',
-        'LINE_NUM_COEFF' : '0 9.87e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
-        'LINE_DEN_COEFF' : '1 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
-        'SAMP_NUM_COEFF' : '2 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
-        'SAMP_DEN_COEFF' : '3 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+        'ERR_BIAS': '123',
+        'ERR_RAND': '234',
+        'LINE_OFF': '3456',
+        'SAMP_OFF': '4567',
+        'LAT_OFF': '8',
+        'LONG_OFF': '17',
+        'HEIGHT_OFF': '987',
+        'LINE_SCALE': '98765',
+        'SAMP_SCALE': '6789',
+        'LAT_SCALE': '12',
+        'LONG_SCALE': '109',
+        'HEIGHT_SCALE': '34',
+        'LINE_NUM_COEFF': '0 9.87e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+        'LINE_DEN_COEFF': '1 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+        'SAMP_NUM_COEFF': '2 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+        'SAMP_DEN_COEFF': '3 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
     }
     src_ds.SetMetadata(src_md, 'RPC')
 
@@ -3477,7 +3477,7 @@ def nitf_online_16(driver_to_test):
     if ds.RasterCount == 3 and \
        ds.GetRasterBand(1).Checksum() == 48954 and \
        ds.GetRasterBand(2).Checksum() == 4939 and \
-       ds.GetRasterBand(3).Checksum() == 17734 :
+       ds.GetRasterBand(3).Checksum() == 17734:
         ret = 'success'
 
     elif ds.RasterCount == 1 and \

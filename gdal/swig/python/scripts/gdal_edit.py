@@ -138,7 +138,7 @@ def gdal_edit(argv):
                 z = 0
             gcp = gdal.GCP(x, y, z, pixel, line)
             gcp_list.append(gcp)
-        elif argv[i] == '-unsetgt' :
+        elif argv[i] == '-unsetgt':
             unsetgt = True
         elif argv[i] == '-unsetstats':
             unsetstats = True

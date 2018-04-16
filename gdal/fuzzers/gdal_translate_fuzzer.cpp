@@ -193,8 +193,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                             bOKForSrc = false;
                         }
 
-                        if( static_cast<GIntBig>(nBlockXSize) * nBlockYSize *
-                                        nBands * nDTSize  > 10 * 1024 * 1024 )
+                        if( static_cast<GIntBig>(nBlockXSize) * nBlockYSize
+                                    > 10 * 1024 * 1024 / (nBands * nDTSize) )
                         {
                             bOKForSrc = false;
                         }
