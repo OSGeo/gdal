@@ -1215,9 +1215,9 @@ def osr_esri_25():
                              ' +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +no_defs')
     proj4_string = srs.ExportToProj4()
     if not (expected_proj4_string.split(' ').sort() == proj4_string.split(' ').sort()):
-      print('Got: %s' % expected_proj4_string)
-      print('Expected: %s' % proj4_string)
-      return 'fail'
+        print('Got: %s' % expected_proj4_string)
+        print('Expected: %s' % proj4_string)
+        return 'fail'
 
     # test an actual conversion
     (x, y, z) = transformer.TransformPoint(7000000, 7000000, 0)
@@ -1225,9 +1225,9 @@ def osr_esri_25():
     if (abs(exp_x - x) > 0.00001 or
         abs(exp_y - y) > 0.00001 or
         abs(exp_z - z) > 0.00001):
-      print('Got:      (%f, %f, %f)' % (x, y, z))
-      print('Expected: (%f, %f, %f)' % (exp_x, exp_y, exp_z))
-      return 'fail'
+        print('Got:      (%f, %f, %f)' % (x, y, z))
+        print('Expected: (%f, %f, %f)' % (exp_x, exp_y, exp_z))
+        return 'fail'
 
     return 'success'
 

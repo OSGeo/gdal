@@ -1458,7 +1458,7 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
             # The field may have been already created at layer creation
             iDstField = -1
             if poDstFDefn is not None:
-                 iDstField = poDstFDefn.GetFieldIndex(oFieldDefn.GetNameRef())
+                iDstField = poDstFDefn.GetFieldIndex(oFieldDefn.GetNameRef())
             if iDstField >= 0:
                 panMap[iField] = iDstField
             elif poDstLayer.CreateField(oFieldDefn) == 0:
@@ -1568,10 +1568,10 @@ def TranslateLayer(psInfo, poSrcDS, poSrcLayer, poDstDS,  \
                    eSrcType == ogr.wkbMultiLineString or \
                    eSrcType == ogr.wkbMultiPolygon or \
                    eSrcType == ogr.wkbGeometryCollection:
-                        nParts = poSrcGeometry.GetGeometryCount()
-                        nIters = nParts
-                        if nIters == 0:
-                            nIters = 1
+                    nParts = poSrcGeometry.GetGeometryCount()
+                    nIters = nParts
+                    if nIters == 0:
+                        nIters = 1
 
         for iPart in range(nIters):
             nFeaturesInTransaction = nFeaturesInTransaction + 1

@@ -680,16 +680,16 @@ class GPKGChecker:
                      'with zoom_level') % table_name)
             if prev_zoom_level is not None and \
                zoom_level == prev_zoom_level + 1 and not zoom_other_levels:
-                    self._assert(
-                        abs((pixel_x_size - prev_pixel_x_size / 2) /
-                            prev_pixel_x_size) < 1e-5, 35,
-                        "Expected pixel_x_size=%f for zoom_level=%d. Got %f" %
-                        (prev_pixel_x_size / 2, zoom_level, pixel_x_size))
-                    self._assert(
-                        abs((pixel_y_size - prev_pixel_y_size / 2) /
-                            prev_pixel_y_size) < 1e-5, 35,
-                        "Expected pixel_y_size=%f for zoom_level=%d. Got %f" %
-                        (prev_pixel_y_size / 2, zoom_level, pixel_y_size))
+                self._assert(
+                    abs((pixel_x_size - prev_pixel_x_size / 2) /
+                        prev_pixel_x_size) < 1e-5, 35,
+                    "Expected pixel_x_size=%f for zoom_level=%d. Got %f" %
+                    (prev_pixel_x_size / 2, zoom_level, pixel_x_size))
+                self._assert(
+                    abs((pixel_y_size - prev_pixel_y_size / 2) /
+                        prev_pixel_y_size) < 1e-5, 35,
+                    "Expected pixel_y_size=%f for zoom_level=%d. Got %f" %
+                    (prev_pixel_y_size / 2, zoom_level, pixel_y_size))
 
             prev_pixel_x_size = pixel_x_size
             prev_pixel_y_size = pixel_y_size

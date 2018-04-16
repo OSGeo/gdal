@@ -490,7 +490,7 @@ def setupFct():
 def wcs_6():
     driver = gdal.GetDriverByName('WCS')
     if driver is None:
-	    return 'skip'
+        return 'skip'
     # Generating various URLs from the driver and comparing them to ones
     # that have worked.
     first_call = True

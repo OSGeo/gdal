@@ -112,15 +112,15 @@ def validate(ds, check_tiled=True):
         if i == 0:
             if (ovr_band.XSize > main_band.XSize or
                 ovr_band.YSize > main_band.YSize):
-                    errors += [
-                        'First overview has larger dimension than main band']
+                errors += [
+                    'First overview has larger dimension than main band']
         else:
             prev_ovr_band = ds.GetRasterBand(1).GetOverview(i - 1)
             if (ovr_band.XSize > prev_ovr_band.XSize or
                 ovr_band.YSize > prev_ovr_band.YSize):
-                    errors += [
-                        'Overview of index %d has larger dimension than '
-                        'overview of index %d' % (i, i - 1)]
+                errors += [
+                    'Overview of index %d has larger dimension than '
+                    'overview of index %d' % (i, i - 1)]
 
         if check_tiled:
             block_size = ovr_band.GetBlockSize()

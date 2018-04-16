@@ -2370,28 +2370,28 @@ def ogr_geom_compoundcurve():
     g = ogr.Geometry(ogr.wkbCompoundCurve)
     g.AddGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
     if g.ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 1))':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     g.AddGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
     gdal.PopErrorHandler()
     if g.ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 1),(1 1,0 0))':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     g = ogr.Geometry(ogr.wkbCompoundCurve)
     g.AddGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
     if g.ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 1))':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     g.AddGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
     gdal.PopErrorHandler()
     if g.ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 1),(1 1,0 0))':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     # Cannot add compoundcurve in compoundcurve
     g = ogr.Geometry(ogr.wkbCompoundCurve)
@@ -2399,8 +2399,8 @@ def ogr_geom_compoundcurve():
     g.AddGeometryDirectly(ogr.CreateGeometryFromWkt('COMPOUNDCURVE((1 1,2 2))'))
     gdal.PopErrorHandler()
     if g.ExportToWkt() != 'COMPOUNDCURVE EMPTY':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     # Check that discretization is not sensitive to winding order
     g1 = ogr.CreateGeometryFromWkt('COMPOUNDCURVE((-1 0,0 1),CIRCULARSTRING (0 1,0.25 0,0.1 -0.5),(0.1 -0.5,-1 0))')
@@ -2413,13 +2413,13 @@ def ogr_geom_compoundcurve():
         # The curves must be exactly the same, despite our stealth mode
         if g2.GetX(i) != g3.GetX(p_count - 1 - i) or \
            g2.GetY(i) != g3.GetY(p_count - 1 - i):
-                gdaltest.post_reason('fail')
-                print(g2)
-                print(g3)
-                print(i)
-                print(abs(g2.GetX(i) - g3.GetX(p_count - 1 - i)))
-                print(abs(g2.GetY(i) - g3.GetY(p_count - 1 - i)))
-                return 'fail'
+            gdaltest.post_reason('fail')
+            print(g2)
+            print(g3)
+            print(i)
+            print(abs(g2.GetX(i) - g3.GetX(p_count - 1 - i)))
+            print(abs(g2.GetY(i) - g3.GetY(p_count - 1 - i)))
+            return 'fail'
 
     # Test Transform
     sr = osr.SpatialReference()

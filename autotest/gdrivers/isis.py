@@ -1509,68 +1509,68 @@ End_Object
 def isis_27():
 
     for src_location in ['LABEL', 'EXTERNAL']:
-      for dst_location in ['LABEL', 'EXTERNAL']:
-        gdal.GetDriverByName('ISIS3').Create('/vsimem/out.lbl', 1, 1,
-                                             options=['DATA_LOCATION=' + src_location])
-        gdal.Translate('/vsimem/out2.lbl', '/vsimem/out.lbl', format='ISIS3',
-                       creationOptions=['DATA_LOCATION=' + dst_location])
+        for dst_location in ['LABEL', 'EXTERNAL']:
+            gdal.GetDriverByName('ISIS3').Create('/vsimem/out.lbl', 1, 1,
+                                                 options=['DATA_LOCATION=' + src_location])
+            gdal.Translate('/vsimem/out2.lbl', '/vsimem/out.lbl', format='ISIS3',
+                           creationOptions=['DATA_LOCATION=' + dst_location])
 
-        f = gdal.VSIFOpenL('/vsimem/out2.lbl', 'rb')
-        content = None
-        if f is not None:
-            content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
-            gdal.VSIFCloseL(f)
-
-        ds = gdal.Open('/vsimem/out2.lbl')
-        lbl = ds.GetMetadata_List('json:ISIS3')[0]
-        lbl = json.loads(lbl)
-        offset = lbl["History"]["StartByte"] - 1
-        size = lbl["History"]["Bytes"]
-
-        if dst_location == 'EXTERNAL':
-            history_filename = lbl['History']['^History']
-            if history_filename != 'out2.History.IsisCube':
-                gdaltest.post_reason('fail')
-                print(src_location)
-                print(dst_location)
-                print(content)
-                return 'fail'
-
-            f = gdal.VSIFOpenL('/vsimem/' + history_filename, 'rb')
-            history = None
+            f = gdal.VSIFOpenL('/vsimem/out2.lbl', 'rb')
+            content = None
             if f is not None:
-                history = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
+                content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
                 gdal.VSIFCloseL(f)
 
-            if offset != 0 or size != len(history):
+            ds = gdal.Open('/vsimem/out2.lbl')
+            lbl = ds.GetMetadata_List('json:ISIS3')[0]
+            lbl = json.loads(lbl)
+            offset = lbl["History"]["StartByte"] - 1
+            size = lbl["History"]["Bytes"]
+
+            if dst_location == 'EXTERNAL':
+                history_filename = lbl['History']['^History']
+                if history_filename != 'out2.History.IsisCube':
+                    gdaltest.post_reason('fail')
+                    print(src_location)
+                    print(dst_location)
+                    print(content)
+                    return 'fail'
+
+                f = gdal.VSIFOpenL('/vsimem/' + history_filename, 'rb')
+                history = None
+                if f is not None:
+                    history = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
+                    gdal.VSIFCloseL(f)
+
+                if offset != 0 or size != len(history):
+                    gdaltest.post_reason('fail')
+                    print(src_location)
+                    print(dst_location)
+                    print(content)
+                    print(history)
+                    return 'fail'
+            else:
+                if offset + size != len(content):
+                    gdaltest.post_reason('fail')
+                    print(src_location)
+                    print(dst_location)
+                    print(content)
+                    return 'fail'
+                history = content[offset:]
+
+            if history.find('Object = ') != 0 or \
+            history.find('FROM = out.lbl') < 0 or \
+            history.find('TO   = out2.lbl') < 0 or \
+            history.find('TO = out.lbl') < 0:
                 gdaltest.post_reason('fail')
                 print(src_location)
                 print(dst_location)
                 print(content)
                 print(history)
                 return 'fail'
-        else:
-            if offset + size != len(content):
-                gdaltest.post_reason('fail')
-                print(src_location)
-                print(dst_location)
-                print(content)
-                return 'fail'
-            history = content[offset:]
 
-        if history.find('Object = ') != 0 or \
-        history.find('FROM = out.lbl') < 0 or \
-        history.find('TO   = out2.lbl') < 0 or \
-        history.find('TO = out.lbl') < 0:
-                gdaltest.post_reason('fail')
-                print(src_location)
-                print(dst_location)
-                print(content)
-                print(history)
-                return 'fail'
-
-        gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.lbl')
-        gdal.GetDriverByName('ISIS3').Delete('/vsimem/out2.lbl')
+            gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.lbl')
+            gdal.GetDriverByName('ISIS3').Delete('/vsimem/out2.lbl')
 
     # Test GDAL_HISTORY
     gdal.GetDriverByName('ISIS3').Create('/vsimem/out.lbl', 1, 1,
@@ -1631,65 +1631,65 @@ End""")
     gdal.Translate('/vsimem/in_label.lbl', '/vsimem/in.lbl', format='ISIS3')
 
     for src_location in ['LABEL', 'EXTERNAL']:
-      if src_location == 'LABEL':
-          src = '/vsimem/in_label.lbl'
-      else:
-          src = '/vsimem/in.lbl'
-      for dst_location in ['LABEL', 'EXTERNAL']:
-        gdal.Translate('/vsimem/out.lbl', src, format='ISIS3',
-                       creationOptions=['DATA_LOCATION=' + dst_location])
-        f = gdal.VSIFOpenL('/vsimem/out.lbl', 'rb')
-        content = None
-        if f is not None:
-            content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
-            gdal.VSIFCloseL(f)
-
-        ds = gdal.Open('/vsimem/out.lbl')
-        lbl = ds.GetMetadata_List('json:ISIS3')[0]
-        lbl = json.loads(lbl)
-        offset = lbl["Table_first_table"]["StartByte"] - 1
-        size = lbl["Table_first_table"]["Bytes"]
-
-        if dst_location == 'EXTERNAL':
-            table_filename = lbl['Table_first_table']['^Table']
-            if table_filename != 'out.Table.first_table':
-                gdaltest.post_reason('fail')
-                print(src_location)
-                print(dst_location)
-                print(content)
-                return 'fail'
-
-            f = gdal.VSIFOpenL('/vsimem/' + table_filename, 'rb')
-            table = None
+        if src_location == 'LABEL':
+            src = '/vsimem/in_label.lbl'
+        else:
+            src = '/vsimem/in.lbl'
+        for dst_location in ['LABEL', 'EXTERNAL']:
+            gdal.Translate('/vsimem/out.lbl', src, format='ISIS3',
+                           creationOptions=['DATA_LOCATION=' + dst_location])
+            f = gdal.VSIFOpenL('/vsimem/out.lbl', 'rb')
+            content = None
             if f is not None:
-                table = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
+                content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
                 gdal.VSIFCloseL(f)
 
-            if offset != 0 or size != 3 or size != len(table):
+            ds = gdal.Open('/vsimem/out.lbl')
+            lbl = ds.GetMetadata_List('json:ISIS3')[0]
+            lbl = json.loads(lbl)
+            offset = lbl["Table_first_table"]["StartByte"] - 1
+            size = lbl["Table_first_table"]["Bytes"]
+
+            if dst_location == 'EXTERNAL':
+                table_filename = lbl['Table_first_table']['^Table']
+                if table_filename != 'out.Table.first_table':
+                    gdaltest.post_reason('fail')
+                    print(src_location)
+                    print(dst_location)
+                    print(content)
+                    return 'fail'
+
+                f = gdal.VSIFOpenL('/vsimem/' + table_filename, 'rb')
+                table = None
+                if f is not None:
+                    table = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
+                    gdal.VSIFCloseL(f)
+
+                if offset != 0 or size != 3 or size != len(table):
+                    gdaltest.post_reason('fail')
+                    print(src_location)
+                    print(dst_location)
+                    print(content)
+                    print(table)
+                    return 'fail'
+            else:
+                if offset + size != len(content):
+                    gdaltest.post_reason('fail')
+                    print(src_location)
+                    print(dst_location)
+                    print(content)
+                    return 'fail'
+                table = content[offset:]
+
+            if table != 'FOO':
                 gdaltest.post_reason('fail')
                 print(src_location)
                 print(dst_location)
                 print(content)
                 print(table)
                 return 'fail'
-        else:
-            if offset + size != len(content):
-                gdaltest.post_reason('fail')
-                print(src_location)
-                print(dst_location)
-                print(content)
-                return 'fail'
-            table = content[offset:]
 
-        if table != 'FOO':
-                gdaltest.post_reason('fail')
-                print(src_location)
-                print(dst_location)
-                print(content)
-                print(table)
-                return 'fail'
-
-        gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.lbl')
+            gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.lbl')
 
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/in_label.lbl')
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/in.lbl')

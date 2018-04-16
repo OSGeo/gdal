@@ -107,8 +107,8 @@ def ogr_gmlas_basic():
 
     # Skip tests when -fsanitize is used
     if gdaltest.is_travis_branch('sanitize'):
-       print('Skipping because of -sanitize')
-       return 'skip'
+        print('Skipping because of -sanitize')
+        return 'skip'
 
     return compare_ogrinfo_output('data/gmlas/gmlas_test1.xml',
                                   'data/gmlas/gmlas_test1.txt')
@@ -126,8 +126,8 @@ def ogr_gmlas_test_ogrsf():
 
     # Skip tests when -fsanitize is used
     if gdaltest.is_travis_branch('sanitize'):
-       print('Skipping because of -sanitize')
-       return 'skip'
+        print('Skipping because of -sanitize')
+        return 'skip'
 
     import test_cli_utilities
 
@@ -385,9 +385,9 @@ def ogr_gmlas_gml_Reference():
        f['reference_existing_abstract_target_elt_href'] != '#BAW' or \
        f.IsFieldSet('reference_existing_abstract_target_elt_nillable_href') or \
        f['reference_existing_abstract_target_elt_nillable_nil'] != 1:
-           gdaltest.post_reason('fail')
-           f.DumpReadable()
-           return 'fail'
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
 
     return 'success'
 
@@ -2499,8 +2499,8 @@ def ogr_gmlas_writer_check_xml_read_back():
 
     # Skip tests when -fsanitize is used
     if gdaltest.is_travis_branch('sanitize'):
-       print('Skipping because of -sanitize')
-       return 'skip'
+        print('Skipping because of -sanitize')
+        return 'skip'
 
     import test_cli_utilities
 

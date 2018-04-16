@@ -1172,9 +1172,9 @@ def ogr_csv_27():
        feat.GetField('time_2011_flag') != 'u' or \
        feat.GetField('time_2012') != 2.34 or \
        feat.IsFieldSet('time_2012_flag') :
-            feat.DumpReadable()
-            gdaltest.post_reason('fail')
-            return 'fail'
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     return 'success'
 
@@ -1292,9 +1292,9 @@ def ogr_csv_31():
     f = lyr.GetNextFeature()
     if f.GetField('GEONAMEID') != '3038814' or f.GetField('LATITUDE') != 42.5 or \
        f.GetGeometryRef().ExportToWkt() != 'POINT (1.48333 42.5)':
-           gdaltest.post_reason('fail')
-           f.DumpReadable()
-           return 'fail'
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
 
     lyr.ResetReading()
     f = lyr.GetNextFeature()

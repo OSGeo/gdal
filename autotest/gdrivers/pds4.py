@@ -111,11 +111,11 @@ def hide_substitution_warnings_error_handler_cbk(type, errno, msg):
 
 @contextlib.contextmanager
 def hide_substitution_warnings_error_handler():
-  handler = gdal.PushErrorHandler(hide_substitution_warnings_error_handler_cbk)
-  try:
-    yield handler
-  finally:
-    gdal.PopErrorHandler()
+    handler = gdal.PushErrorHandler(hide_substitution_warnings_error_handler_cbk)
+    try:
+        yield handler
+    finally:
+        gdal.PopErrorHandler()
 
 ###############################################################################
 # Test CreateCopy() with defaults

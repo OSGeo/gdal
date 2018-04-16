@@ -908,9 +908,9 @@ def transformer_16():
        content.find('<MaxErrorReverse>0.1</MaxErrorReverse>') < 0 or \
        content.find('<MaxErrorForward>0.0001</MaxErrorForward>') < 0 or \
        content.find('<MaxErrorReverse>6.1</MaxErrorReverse>') < 0:
-           gdaltest.post_reason('fail')
-           print(content)
-           return 'fail'
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
     ds = gdal.Translate('', '/vsimem/transformer_16.vrt', format='MEM')
     if ds.GetRasterBand(1).Checksum() != 4727:
         gdaltest.post_reason('failure')

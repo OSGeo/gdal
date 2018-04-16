@@ -654,17 +654,17 @@ def jpeg_16():
 def jpeg_17():
     gdal.ErrorReset()
     with gdaltest.error_handler('CPLQuietErrorHandler'):
-      ds = gdal.Open('data/bogus.jpg')
-      if (ds is not None or
-          gdal.GetLastErrorType() != gdal.CE_Failure or
-          gdal.GetLastErrorMsg() == ''):
-        gdaltest.post_reason('fail')
-        return 'fail'
+        ds = gdal.Open('data/bogus.jpg')
+        if (ds is not None or
+            gdal.GetLastErrorType() != gdal.CE_Failure or
+            gdal.GetLastErrorMsg() == ''):
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     gdal.ErrorReset()
     ds = gdal.Open('data/byte_corrupted.jpg')
     with gdaltest.error_handler('CPLQuietErrorHandler'):
-        # ERROR 1: libjpeg: Huffman table 0x00 was not defined
+            # ERROR 1: libjpeg: Huffman table 0x00 was not defined
         cs = ds.GetRasterBand(1).Checksum()
     if (gdal.GetLastErrorType() != gdal.CE_Failure or
             gdal.GetLastErrorMsg() == ''):
