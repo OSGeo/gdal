@@ -3762,9 +3762,9 @@ def ogr_gml_71_helper(ds):
        f.GetField('table2.baz') != 'foo' or \
        f.GetGeomFieldRef(0) is not None or \
        f.GetGeomFieldRef(1).ExportToWkt() != 'POINT (2 49)':
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField('table1.gml_id') != 'table1-2' or \
        f.IsFieldSet('table1.foo') or \
@@ -3774,9 +3774,9 @@ def ogr_gml_71_helper(ds):
        f.GetField('table2.baz') != 'bar' or \
        f.GetGeomFieldRef(0).ExportToWkt() != 'POINT (3 50)' or \
        f.GetGeomFieldRef(1).ExportToWkt() != 'POINT (2 50)':
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
 
     return 'success'
 

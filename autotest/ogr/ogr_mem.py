@@ -441,9 +441,9 @@ def ogr_mem_12():
     expected = [2008, 3, 19, 16, 15, 0.0, 0]
     result = f.GetFieldAsDateTime(idx)
     for i, value in enumerate(result):
-      if value != expected[i]:
-        gdaltest.post_reason('%s != %s' % (result, expected))
-        return 'fail'
+        if value != expected[i]:
+            gdaltest.post_reason('%s != %s' % (result, expected))
+            return 'fail'
     return 'success'
 
 ###############################################################################

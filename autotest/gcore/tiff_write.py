@@ -375,7 +375,7 @@ def tiff_write_9():
     new_ds = gdaltest.tiff_drv.CreateCopy('tmp/test_9.tif', src_ds,
                                           options=['NBITS=5'])
     with gdaltest.error_handler():
-      new_ds = None
+        new_ds = None
 
     new_ds = gdal.Open('tmp/test_9.tif')
     bnd = new_ds.GetRasterBand(1)
@@ -2291,13 +2291,13 @@ def tiff_write_60():
     for options_tuple in tuples:
         # Create case
         with gdaltest.error_handler():
-          ds = gdaltest.tiff_drv.Create('tmp/tiff_write_60.tif', 10, 10, options=[options_tuple[0], 'PROFILE=BASELINE'])
+            ds = gdaltest.tiff_drv.Create('tmp/tiff_write_60.tif', 10, 10, options=[options_tuple[0], 'PROFILE=BASELINE'])
         gt = (0.0, 1.0, 0.0, 50.0, 0.0, -1.0)
         ds.SetGeoTransform(gt)
         ds = None
 
         with gdaltest.error_handler():
-          ds = gdal.Open('tmp/tiff_write_60.tif')
+            ds = gdal.Open('tmp/tiff_write_60.tif')
         if ds.GetGeoTransform() != gt:
             gdaltest.post_reason('case1: %s != %s' % (ds.GetGeoTransform(), gt))
             return 'fail'
@@ -2315,7 +2315,7 @@ def tiff_write_60():
         # CreateCopy case
         src_ds = gdal.Open('data/byte.tif')
         with gdaltest.error_handler():
-          ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_60.tif', src_ds, options=[options_tuple[0], 'PROFILE=BASELINE'])
+            ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_60.tif', src_ds, options=[options_tuple[0], 'PROFILE=BASELINE'])
         gt = (0.0, 1.0, 0.0, 50.0, 0.0, -1.0)
         ds.SetGeoTransform(gt)
         ds = None

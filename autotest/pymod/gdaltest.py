@@ -1641,11 +1641,11 @@ def unzip(target_dir, zipfilename, verbose=False):
         outfilename = os.path.join(target_dir, filename)
         if filename.endswith('/'):
             if not os.path.exists(outfilename):
-               os.makedirs(outfilename)
+                os.makedirs(outfilename)
         else:
             outdirname = os.path.dirname(outfilename)
             if not os.path.exists(outdirname):
-               os.makedirs(outdirname)
+                os.makedirs(outdirname)
 
             outfile = open(outfilename, 'wb')
             outfile.write(zf.read(filename))
@@ -1990,11 +1990,11 @@ def built_against_curl():
 
 @contextlib.contextmanager
 def error_handler(error_name='CPLQuietErrorHandler'):
-  handler = gdal.PushErrorHandler(error_name)
-  try:
-    yield handler
-  finally:
-    gdal.PopErrorHandler()
+    handler = gdal.PushErrorHandler(error_name)
+    try:
+        yield handler
+    finally:
+        gdal.PopErrorHandler()
 
 ###############################################################################
 # Temporarily define a new value of block cache
@@ -2002,12 +2002,12 @@ def error_handler(error_name='CPLQuietErrorHandler'):
 
 @contextlib.contextmanager
 def SetCacheMax(val):
-  oldval = gdal.GetCacheMax()
-  gdal.SetCacheMax(val)
-  try:
-    yield
-  finally:
-    gdal.SetCacheMax(oldval)
+    oldval = gdal.GetCacheMax()
+    gdal.SetCacheMax(val)
+    try:
+        yield
+    finally:
+        gdal.SetCacheMax(oldval)
 
 ###############################################################################
 # Temporarily define a configuration option
@@ -2015,12 +2015,12 @@ def SetCacheMax(val):
 
 @contextlib.contextmanager
 def config_option(key, val):
-  oldval = gdal.GetConfigOption(key)
-  gdal.SetConfigOption(key, val)
-  try:
-    yield
-  finally:
-    gdal.SetConfigOption(key, oldval)
+    oldval = gdal.GetConfigOption(key)
+    gdal.SetConfigOption(key, val)
+    try:
+        yield
+    finally:
+        gdal.SetConfigOption(key, oldval)
 
 ###############################################################################
 # Temporarily define a set of configuration options
@@ -2028,14 +2028,14 @@ def config_option(key, val):
 
 @contextlib.contextmanager
 def config_options(options):
-  oldvals = {key: gdal.GetConfigOption(key) for key in options}
-  for key in options:
-    gdal.SetConfigOption(key, options[key])
-  try:
-    yield
-  finally:
+    oldvals = {key: gdal.GetConfigOption(key) for key in options}
     for key in options:
-        gdal.SetConfigOption(key, oldvals[key])
+        gdal.SetConfigOption(key, options[key])
+    try:
+        yield
+    finally:
+        for key in options:
+            gdal.SetConfigOption(key, oldvals[key])
 
 ###############################################################################
 # Temporarily create a file
@@ -2043,11 +2043,11 @@ def config_options(options):
 
 @contextlib.contextmanager
 def tempfile(filename, content):
-  gdal.FileFromMemBuffer(filename, content)
-  try:
-      yield
-  finally:
-      gdal.Unlink(filename)
+    gdal.FileFromMemBuffer(filename, content)
+    try:
+        yield
+    finally:
+        gdal.Unlink(filename)
 
 
 ###############################################################################

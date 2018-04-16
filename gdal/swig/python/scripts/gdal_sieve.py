@@ -74,7 +74,7 @@ def GetOutputDriversFor(filename):
     # netCDF to be used by default for output.
     if ext.lower() == 'nc' and len(drv_list) == 0 and \
        drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
-           drv_list = ['NETCDF', 'GMT']
+        drv_list = ['NETCDF', 'GMT']
 
     return drv_list
 

@@ -1465,14 +1465,14 @@ def ogr_shape_32():
     read_lyr = gdaltest.shape_ds_big.GetLayerByName('bigLayer')
 
     for i in [0, 1, read_lyr.GetFeatureCount() - 1]:
-      feat_read = read_lyr.GetFeature(i)
-      if feat_read is None:
-        print('Could not retrieve geometry at FID', i)
-        return 'fail'
-      if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1.1,0.5 1,0.25 0.5))'),
-                                        max_error=0.000000001) != 0:
-        print('Wrong geometry encountered at FID', i, ':', (feat_read.GetGeometryRef().ExportToWkt()))
-        return 'fail'
+        feat_read = read_lyr.GetFeature(i)
+        if feat_read is None:
+            print('Could not retrieve geometry at FID', i)
+            return 'fail'
+        if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1.1,0.5 1,0.25 0.5))'),
+                                          max_error=0.000000001) != 0:
+            print('Wrong geometry encountered at FID', i, ':', (feat_read.GetGeometryRef().ExportToWkt()))
+            return 'fail'
 
     return 'success'
 
@@ -3536,7 +3536,7 @@ def ogr_shape_71():
     old_mode = os.stat('tmp/ogr_shape_71.dbf').st_mode
     os.chmod('tmp/ogr_shape_71.dbf', stat.S_IREAD)
     with gdaltest.error_handler():
-      ds = ogr.Open('tmp/ogr_shape_71.shp', update=1)
+        ds = ogr.Open('tmp/ogr_shape_71.shp', update=1)
     ok = ds is None
     ds = None
     os.chmod('tmp/ogr_shape_71.dbf', old_mode)
@@ -4001,7 +4001,7 @@ def ogr_shape_82():
     )
     feat.SetField('cut_field', init_rus)
     with gdaltest.error_handler():
-      gdaltest.shape_lyr.CreateFeature(feat)
+        gdaltest.shape_lyr.CreateFeature(feat)
 
     # Insert feature with long a string in Russian.  Shoe repair ad.
     init_en = (

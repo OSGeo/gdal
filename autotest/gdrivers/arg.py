@@ -157,7 +157,7 @@ def arg_getrastercount():
     for d in gdaltest.argTests:
         for (name, fmt, nodata) in d['formats']:
             with gdaltest.error_handler('CPLQuietErrorHandler'):
-              ds = gdal.Open('data/arg-' + name + '.arg')
+                ds = gdal.Open('data/arg-' + name + '.arg')
             if ds is None:
                 continue
 

@@ -141,8 +141,8 @@ def CheckFeatures(lyr, foo='foo5', bar='bar10', baz='baz15', baw='baw20'):
            (bar is not None and feat.GetField(bar) != Truncate(expected_values[i][1], lyr_defn, bar)) or \
            (baz is not None and feat.GetField(baz) != Truncate(expected_values[i][2], lyr_defn, baz)) or \
            (baw is not None and feat.GetField(baw) != Truncate(expected_values[i][3], lyr_defn, baw)):
-               feat.DumpReadable()
-               return 'fail'
+            feat.DumpReadable()
+            return 'fail'
         feat = lyr.GetNextFeature()
         i = i + 1
 

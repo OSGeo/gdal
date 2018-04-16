@@ -63,12 +63,12 @@ def GeomType2Name(type):
     ret = dic[flat_type][0]
     if flat_type != type:
         if ogr.GT_HasM(type):
-          if ogr.GT_HasZ(type):
-            ret += "ZM"
-          else:
-            ret += "M"
+            if ogr.GT_HasZ(type):
+                ret += "ZM"
+            else:
+                ret += "M"
         else:
-          ret += dic[flat_type][1]
+            ret += dic[flat_type][1]
     return ret
 
 #############################################################################

@@ -863,8 +863,8 @@ Error""")
     with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=BEGIN;INSERT INTO "table1" ("strfield", "cartodb_id") VALUES (NULL, 11);COMMIT;&api_key=foo""",
                            """{"rows":[],
             "fields":{}}"""):
-         ret = lyr.CreateFeature(f)
-         ds = None
+        ret = lyr.CreateFeature(f)
+        ds = None
 
     if ret != 0 or f.GetFID() != 11:
         gdaltest.post_reason('fail')
@@ -1003,8 +1003,8 @@ Error""")
 
     with gdaltest.tempfile('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0&api_key=foo',
                            """{"rows":[{"current_schema":"my_schema"}],"fields":{"current_schema":{"type":"unknown(19)"}}}"""):
-         with gdaltest.tempfile('/vsimem/carto&POSTFIELDS=q=SELECT CDB_UserTables() LIMIT 500 OFFSET 0&api_key=foo',
-                                """{"rows":[],"fields":{"cdb_usertables":{"type":"string"}}}"""):
+        with gdaltest.tempfile('/vsimem/carto&POSTFIELDS=q=SELECT CDB_UserTables() LIMIT 500 OFFSET 0&api_key=foo',
+                               """{"rows":[],"fields":{"cdb_usertables":{"type":"string"}}}"""):
             with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=SELECT c.relname FROM pg_class c, pg_namespace n WHERE c.relkind in ('r', 'v') AND c.relname !~ '^pg_' AND c.relnamespace=n.oid AND n.nspname = 'my_schema' LIMIT 500 OFFSET 0&api_key=foo""",
                                    """{"rows":[{"relname": "a_layer"}],"fields":{"relname":{"type":"string"}}}"""):
                 ds = ogr.Open('CARTO:foo')

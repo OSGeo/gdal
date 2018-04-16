@@ -381,15 +381,15 @@ def ogr_osm_4():
         return 'fail'
 
     with gdaltest.error_handler():
-      lyr.SetSpatialFilter(None)
+        lyr.SetSpatialFilter(None)
 
-      # Change layer
-      sql_lyr = ds.ExecuteSQL('SELECT * FROM lines')
+        # Change layer
+        sql_lyr = ds.ExecuteSQL('SELECT * FROM lines')
 
-      feat = sql_lyr.GetNextFeature()
-      is_none = feat is None
+        feat = sql_lyr.GetNextFeature()
+        is_none = feat is None
 
-      ds.ReleaseResultSet(sql_lyr)
+        ds.ReleaseResultSet(sql_lyr)
 
     if is_none:
         gdaltest.post_reason('fail')
