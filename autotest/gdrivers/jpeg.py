@@ -123,7 +123,7 @@ def jpeg_3():
                'QUALITY=50',
                'WORLDFILE=YES']
     ds = gdal.GetDriverByName('JPEG').CreateCopy('tmp/byte.jpg', ds,
-                                                  options=options)
+                                                 options=options)
 
     # IJG, MozJPEG
     expected_cs = [4794, 4787]
@@ -288,7 +288,7 @@ def jpeg_7():
     options = ['PROGRESSIVE=YES',
                'QUALITY=50']
     ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/byte.jpg', ds,
-                                                  options=options)
+                                                 options=options)
 
     # IJG, MozJPEG
     expected_cs = [4794, 4787]
@@ -656,8 +656,8 @@ def jpeg_17():
     with gdaltest.error_handler('CPLQuietErrorHandler'):
       ds = gdal.Open('data/bogus.jpg')
       if (ds is not None or
-            gdal.GetLastErrorType() != gdal.CE_Failure or
-            gdal.GetLastErrorMsg() == ''):
+          gdal.GetLastErrorType() != gdal.CE_Failure or
+          gdal.GetLastErrorMsg() == ''):
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -978,8 +978,8 @@ def jpeg_22():
     ds = gdal.GetDriverByName('JPEG').CreateCopy(
         '/vsimem/jpeg_22.jpg', src_ds,
         options=['EXIF_THUMBNAIL=YES',
-                   'THUMBNAIL_WIDTH=50',
-                   'THUMBNAIL_HEIGHT=40'])
+                 'THUMBNAIL_WIDTH=50',
+                 'THUMBNAIL_HEIGHT=40'])
     src_ds = None
     ovr = ds.GetRasterBand(1).GetOverview(3)
     if ovr.XSize != 50 or ovr.YSize != 40:
@@ -1054,7 +1054,7 @@ def jpeg_24():
     if not has_arithmetic:
         gdal.PushErrorHandler()
     ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/byte.jpg', src_ds,
-                                                  options=['ARITHMETIC=YES'])
+                                                 options=['ARITHMETIC=YES'])
     if not has_arithmetic:
         gdal.PopErrorHandler()
     else:
@@ -1303,7 +1303,7 @@ def jpeg_28():
     src_ds.SetMetadataItem('EXIF_ExifVersion', '0231')
     src_ds.SetMetadataItem('EXIF_GPSLatitudeRef', 'N')
     gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds,
-            options=['EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=32', 'THUMBNAIL_HEIGHT=32'])
+                                            options=['EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=32', 'THUMBNAIL_HEIGHT=32'])
     src_ds = None
     if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
         gdaltest.post_reason('fail')

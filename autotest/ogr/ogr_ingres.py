@@ -78,9 +78,9 @@ def ogr_ingres_2():
     #######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(gdaltest.ingres_lyr,
-                                    [('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString)])
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger),
+                                    ('PRFEDEA', ogr.OFTString)])
 
     #######################################################
     # Copy in poly.shp
@@ -117,7 +117,7 @@ def ogr_ingres_3():
 
     gdaltest.ingres_lyr.SetAttributeFilter('eas_id < 170')
     tr = ogrtest.check_features_against_list(gdaltest.ingres_lyr,
-                                              'eas_id', expect)
+                                             'eas_id', expect)
     gdaltest.ingres_lyr.SetAttributeFilter(None)
 
     for i in range(len(gdaltest.poly_feat)):
@@ -186,7 +186,7 @@ def ogr_ingres_5():
         "select * from tpoly where prfedea = '35043413'")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'prfedea',
-                                              ['35043413'])
+                                             ['35043413'])
     if tr:
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
@@ -218,7 +218,7 @@ def ogr_ingres_6():
     geom.Destroy()
 
     tr = ogrtest.check_features_against_list(gdaltest.ingres_lyr, 'eas_id',
-                                              [158])
+                                             [158])
 
     gdaltest.ingres_lyr.SetSpatialFilter(None)
 
@@ -268,7 +268,7 @@ def ogr_ingres_7():
         "PRFEDEA IN ( '35043423', '35043414' )")
 
     tr = ogrtest.check_features_against_list(gdaltest.ingres_lyr, 'new_string',
-                                              [None, 'test1'])
+                                             [None, 'test1'])
 
     gdaltest.ingres_lyr.SetAttributeFilter(None)
 
@@ -306,7 +306,7 @@ def ogr_ingres_8():
     new_count = gdaltest.ingres_lyr.GetFeatureCount()
     if new_count != old_count - 1:
         gdaltest.post_reason('got feature count of %d, not expected %d.' \
-                              % (new_count, old_count - 1))
+                             % (new_count, old_count - 1))
 
     if gdaltest.ingres_lyr.GetFeature(target_fid) is not None:
         gdaltest.post_reason('Got deleted feature!')

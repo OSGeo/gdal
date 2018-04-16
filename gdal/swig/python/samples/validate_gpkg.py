@@ -346,7 +346,7 @@ class GPKGChecker:
             else:
                 self._assert(_is_valid_data_type(type), 5,
                              ('table %s has column %s of unexpected type %s'
-                             % (table_name, name, type)))
+                              % (table_name, name, type)))
         self._assert(found_geom, 24,
                      'table %s has no %s column' %
                      (table_name, geom_column_name))
@@ -354,10 +354,10 @@ class GPKGChecker:
                      'table %s has no INTEGER PRIMARY KEY' % table_name)
 
         self._assert(z in (0, 1, 2), 27, ("z value of %s is %d. " +
-                     "Expected 0, 1 or 2") % (table_name, z))
+                                          "Expected 0, 1 or 2") % (table_name, z))
 
         self._assert(m in (0, 1, 2), 27, ("m value of %s is %d. " +
-                     "Expected 0, 1 or 2") % (table_name, m))
+                                          "Expected 0, 1 or 2") % (table_name, m))
 
         if geometry_type_name in GPKGChecker.EXT_GEOM_TYPES:
             c.execute("SELECT 1 FROM gpkg_extensions WHERE "

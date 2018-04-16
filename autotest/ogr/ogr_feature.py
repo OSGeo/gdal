@@ -128,9 +128,9 @@ def mk_src_feature():
 def check(feat, fieldname, value):
     if feat.GetField(fieldname) != value:
         gdaltest.post_reason('did not get value %s for field %s, got %s.' \
-                              % (str(value), fieldname,
+                             % (str(value), fieldname,
                                  str(feat.GetField(fieldname))),
-                              frames=3)
+                             frames=3)
         feat.DumpReadable()
         return 0
     else:

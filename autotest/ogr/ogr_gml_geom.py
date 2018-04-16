@@ -1377,18 +1377,18 @@ def gml_invalid_geoms():
 def gml_write_gml3_geometries():
 
     gml_list = ['<gml:Point><gml:pos>2 3</gml:pos></gml:Point>',
-             '<gml:Point><gml:pos>2 3 4</gml:pos></gml:Point>',
-             '<gml:LineString><gml:posList>2 3 4 5</gml:posList></gml:LineString>',
-             '<gml:Curve><gml:segments><gml:LineStringSegment><gml:posList>2 3 4 5</gml:posList></gml:LineStringSegment></gml:segments></gml:Curve>',
-             '<gml:LineString><gml:posList srsDimension="3">2 3 10 4 5 20</gml:posList></gml:LineString>',
-             '<gml:Curve><gml:segments><gml:LineStringSegment><gml:posList srsDimension="3">2 3 10 4 5 20</gml:posList></gml:LineStringSegment></gml:segments></gml:Curve>',
-             '<gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>',
-             '<gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList></gml:LinearRing></gml:exterior><gml:interior><gml:LinearRing><gml:posList>10 10 10 11 11 11 10 10</gml:posList></gml:LinearRing></gml:interior></gml:Polygon>',
-             '<gml:MultiPoint><gml:pointMember><gml:Point><gml:pos>2 3</gml:pos></gml:Point></gml:pointMember><gml:pointMember><gml:Point><gml:pos>4 5</gml:pos></gml:Point></gml:pointMember></gml:MultiPoint>',
-             '<gml:MultiCurve><gml:curveMember><gml:LineString><gml:posList>0 1 2 3 4 5</gml:posList></gml:LineString></gml:curveMember><gml:curveMember><gml:LineString><gml:posList>6 7 8 9 10 11</gml:posList></gml:LineString></gml:curveMember></gml:MultiCurve>',
-             '<gml:MultiCurve><gml:curveMember><gml:Curve><gml:segments><gml:LineStringSegment><gml:posList>0 1 2 3 4 5</gml:posList></gml:LineStringSegment></gml:segments></gml:Curve></gml:curveMember><gml:curveMember><gml:Curve><gml:segments><gml:LineStringSegment><gml:posList>6 7 8 9 10 11</gml:posList></gml:LineStringSegment></gml:segments></gml:Curve></gml:curveMember></gml:MultiCurve>',
-             '<gml:MultiSurface><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 1 2 3 4 5 0 1</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>6 7 8 9 10 11 6 7</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface>',
-             '<gml:MultiGeometry><gml:geometryMember><gml:Point><gml:pos>0 1</gml:pos></gml:Point></gml:geometryMember><gml:geometryMember><gml:LineString><gml:posList>2 3 4 5</gml:posList></gml:LineString></gml:geometryMember></gml:MultiGeometry>']
+                '<gml:Point><gml:pos>2 3 4</gml:pos></gml:Point>',
+                '<gml:LineString><gml:posList>2 3 4 5</gml:posList></gml:LineString>',
+                '<gml:Curve><gml:segments><gml:LineStringSegment><gml:posList>2 3 4 5</gml:posList></gml:LineStringSegment></gml:segments></gml:Curve>',
+                '<gml:LineString><gml:posList srsDimension="3">2 3 10 4 5 20</gml:posList></gml:LineString>',
+                '<gml:Curve><gml:segments><gml:LineStringSegment><gml:posList srsDimension="3">2 3 10 4 5 20</gml:posList></gml:LineStringSegment></gml:segments></gml:Curve>',
+                '<gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>',
+                '<gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList></gml:LinearRing></gml:exterior><gml:interior><gml:LinearRing><gml:posList>10 10 10 11 11 11 10 10</gml:posList></gml:LinearRing></gml:interior></gml:Polygon>',
+                '<gml:MultiPoint><gml:pointMember><gml:Point><gml:pos>2 3</gml:pos></gml:Point></gml:pointMember><gml:pointMember><gml:Point><gml:pos>4 5</gml:pos></gml:Point></gml:pointMember></gml:MultiPoint>',
+                '<gml:MultiCurve><gml:curveMember><gml:LineString><gml:posList>0 1 2 3 4 5</gml:posList></gml:LineString></gml:curveMember><gml:curveMember><gml:LineString><gml:posList>6 7 8 9 10 11</gml:posList></gml:LineString></gml:curveMember></gml:MultiCurve>',
+                '<gml:MultiCurve><gml:curveMember><gml:Curve><gml:segments><gml:LineStringSegment><gml:posList>0 1 2 3 4 5</gml:posList></gml:LineStringSegment></gml:segments></gml:Curve></gml:curveMember><gml:curveMember><gml:Curve><gml:segments><gml:LineStringSegment><gml:posList>6 7 8 9 10 11</gml:posList></gml:LineStringSegment></gml:segments></gml:Curve></gml:curveMember></gml:MultiCurve>',
+                '<gml:MultiSurface><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 1 2 3 4 5 0 1</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>6 7 8 9 10 11 6 7</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface>',
+                '<gml:MultiGeometry><gml:geometryMember><gml:Point><gml:pos>0 1</gml:pos></gml:Point></gml:geometryMember><gml:geometryMember><gml:LineString><gml:posList>2 3 4 5</gml:posList></gml:LineString></gml:geometryMember></gml:MultiGeometry>']
 
     for gml_in in gml_list:
         geom = ogr.CreateGeometryFromGML(gml_in)

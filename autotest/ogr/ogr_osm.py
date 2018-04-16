@@ -424,13 +424,13 @@ def ogr_osm_5():
         return 'fail'
 
     tests = [['points', '3', True],
-              ['points', 'foo', False],
-              ['lines', '1', True],
-              ['lines', 'foo', False],
-              ['multipolygons', '1', True],
-              ['multipolygons', 'foo', False],
-              ['multilinestrings', '3', True],
-              ['multilinestrings', 'foo', False]]
+             ['points', 'foo', False],
+             ['lines', '1', True],
+             ['lines', 'foo', False],
+             ['multipolygons', '1', True],
+             ['multipolygons', 'foo', False],
+             ['multilinestrings', '3', True],
+             ['multilinestrings', 'foo', False]]
 
     for test in tests:
         sql_lyr = ds.ExecuteSQL("SELECT * FROM %s WHERE osm_id = '%s'" % (test[0], test[1]))
@@ -741,7 +741,7 @@ def ogr_osm_13():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_osm_13.osm',
-"""<osm><node id="123" lon="2" lat="49"><tag k="osm_id" v="0"/></node></osm>""")
+                           """<osm><node id="123" lon="2" lat="49"><tag k="osm_id" v="0"/></node></osm>""")
 
     with gdaltest.error_handler():
         ds = ogr.Open('/vsimem/ogr_osm_13.osm')
@@ -770,7 +770,7 @@ def ogr_osm_14():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_osm_14.osm',
-"""<osm>
+                           """<osm>
   <node id="1" lat="2" lon="49"/>
   <node id="2" lat="2.1" lon="49"/>
   <node id="3" lat="2.1" lon="49.1"/>
@@ -915,7 +915,7 @@ def ogr_osm_16():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_osm_16.osm',
-"""<osm>
+                           """<osm>
   <node id="1" lat="2" lon="49">
     <tag k="foo:baar" v="val"/>
     <tag k="foo:bar" v="val2"/>
@@ -923,7 +923,7 @@ def ogr_osm_16():
 </osm>""")
 
     gdal.FileFromMemBuffer('/vsimem/ogr_osm_16_conf.ini',
-"""#
+                           """#
 attribute_name_laundering=yes
 
 [points]

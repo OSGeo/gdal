@@ -635,9 +635,9 @@ def ogr_rfc41_6():
     # Test implicit geometry column (since poly has one single geometry column)
     # then explicit geometry column
     for sql in ['SELECT intfield FROM poly',
-                 'SELECT * FROM poly',
-                 'SELECT intfield, geomfield FROM poly',
-                 'SELECT geomfield, intfield FROM poly']:
+                'SELECT * FROM poly',
+                'SELECT intfield, geomfield FROM poly',
+                'SELECT geomfield, intfield FROM poly']:
         sql_lyr = ds.ExecuteSQL(sql)
         if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbPolygon:
             gdaltest.post_reason('fail')
@@ -820,15 +820,15 @@ def ogr_rfc41_6():
 
     # Test invalid expressions with geometry
     for sql in ["SELECT geomfield + 'a' FROM poly",
-                 "SELECT geomfield * 'a' FROM poly",
-                 "SELECT geomfield + 'a' FROM poly",
-                 "SELECT geomfield - 'a' FROM poly",
-                 "SELECT geomfield % 'a' FROM poly",
-                 "SELECT CONCAT(geomfield, 'a') FROM poly",
-                 "SELECT SUBSTR(geomfield, 0, 1) FROM poly",
-                 "SELECT * FROM poly WHERE geomfield = CAST('POINT EMPTY' AS GEOMETRY)",
-                 "SELECT * FROM poly WHERE geomfield LIKE 'a'",
-                 "SELECT * FROM poly WHERE geomfield IN( 'a' )"]:
+                "SELECT geomfield * 'a' FROM poly",
+                "SELECT geomfield + 'a' FROM poly",
+                "SELECT geomfield - 'a' FROM poly",
+                "SELECT geomfield % 'a' FROM poly",
+                "SELECT CONCAT(geomfield, 'a') FROM poly",
+                "SELECT SUBSTR(geomfield, 0, 1) FROM poly",
+                "SELECT * FROM poly WHERE geomfield = CAST('POINT EMPTY' AS GEOMETRY)",
+                "SELECT * FROM poly WHERE geomfield LIKE 'a'",
+                "SELECT * FROM poly WHERE geomfield IN( 'a' )"]:
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         sql_lyr = ds.ExecuteSQL(sql)
@@ -961,8 +961,8 @@ def ogr_rfc41_6():
     feat = None
 
     for sql in ['SELECT * FROM poly',
-                 'SELECT geomfield, secondarygeom FROM poly',
-                 'SELECT secondarygeom, geomfield FROM poly']:
+                'SELECT geomfield, secondarygeom FROM poly',
+                'SELECT secondarygeom, geomfield FROM poly']:
         sql_lyr = ds.ExecuteSQL(sql)
         feat = sql_lyr.GetNextFeature()
         if feat.GetGeomFieldRef('geomfield').ExportToWkt() != 'POINT (1 2)':

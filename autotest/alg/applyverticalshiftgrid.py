@@ -185,7 +185,7 @@ def applyverticalshiftgrid_2():
         grid_ds.SetProjection(sr.ExportToWkt())
         with gdaltest.error_handler():
             out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds,
-                                                options=['BLOCKSIZE=2000000000'])
+                                                 options=['BLOCKSIZE=2000000000'])
         if out_ds is not None:
             gdaltest.post_reason('fail')
             return 'fail'
@@ -317,7 +317,7 @@ def applyverticalshiftgrid_4():
     grid_ds.SetGeoTransform([10, 1, 0, 0, 0, -1])
     grid_ds.SetProjection(sr.ExportToWkt())
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds,
-                                options=['ERROR_ON_MISSING_VERT_SHIFT=YES'])
+                                         options=['ERROR_ON_MISSING_VERT_SHIFT=YES'])
     with gdaltest.error_handler():
         data = out_ds.GetRasterBand(1).ReadRaster()
     if data is not None:
@@ -334,7 +334,7 @@ def applyverticalshiftgrid_4():
     grid_ds.SetProjection(sr.ExportToWkt())
     grid_ds.GetRasterBand(1).SetNoDataValue(0)
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds,
-                                options=['ERROR_ON_MISSING_VERT_SHIFT=YES'])
+                                         options=['ERROR_ON_MISSING_VERT_SHIFT=YES'])
     with gdaltest.error_handler():
         data = out_ds.GetRasterBand(1).ReadRaster()
     if data is not None:

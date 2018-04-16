@@ -91,8 +91,8 @@ def check_feature_geometry(feat, geom, max_error=0.0001):
 
     if f_geom.GetGeometryName() != geom.GetGeometryName():
         gdaltest.post_reason('geometry names do not match.  "%s" ! = "%s"' %
-                              (f_geom.GetGeometryName(),
-                               geom.GetGeometryName()))
+                             (f_geom.GetGeometryName(),
+                              geom.GetGeometryName()))
         return 1
 
     if f_geom.GetGeometryCount() != geom.GetGeometryCount():
@@ -107,8 +107,8 @@ def check_feature_geometry(feat, geom, max_error=0.0001):
         count = f_geom.GetGeometryCount()
         for i in range(count):
             result = check_feature_geometry(f_geom.GetGeometryRef(i),
-                                             geom.GetGeometryRef(i),
-                                             max_error)
+                                            geom.GetGeometryRef(i),
+                                            max_error)
             if result != 0:
                 return result
     else:
@@ -126,7 +126,7 @@ def check_feature_geometry(feat, geom, max_error=0.0001):
 
             if max(x_dist, y_dist, z_dist, m_dist) > max_error:
                 gdaltest.post_reason('Error in vertex %d, off by %g.'
-                                      % (i, max(x_dist, y_dist, z_dist, m_dist)))
+                                     % (i, max(x_dist, y_dist, z_dist, m_dist)))
                 #print(f_geom.GetX(i))
                 #print(geom.GetX(i))
                 #print(f_geom.GetY(i))
@@ -157,7 +157,7 @@ def check_feature(feat, feat_ref, max_error=0.0001, excluded_fields=None):
         if feat.GetField(i) != feat_ref.GetField(i):
             gdaltest.post_reason('Field %d, expected val %s, got val %s' %
                                  (i, str(feat_ref.GetField(i)),
-                                 str(feat.GetField(i))))
+                                  str(feat.GetField(i))))
             return 1
 
     return 0

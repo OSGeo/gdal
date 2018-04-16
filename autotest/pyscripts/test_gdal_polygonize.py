@@ -81,7 +81,7 @@ def test_gdal_polygonize_1():
         return 'fail'
 
     expect = [107, 123, 115, 115, 140, 148, 123, 140, 156,
-               100, 101, 102, 103]
+              100, 101, 102, 103]
 
     tr = ogrtest.check_features_against_list(shp_lyr, 'DN', expect)
 
@@ -133,7 +133,7 @@ def test_gdal_polygonize_2():
         return 'fail'
 
     expect = [107, 123, 115, 132, 115, 132, 140, 132, 148, 123, 140,
-               132, 156, 100, 101, 102, 103]
+              132, 156, 100, 101, 102, 103]
 
     tr = ogrtest.check_features_against_list(shp_lyr, 'DN', expect)
 

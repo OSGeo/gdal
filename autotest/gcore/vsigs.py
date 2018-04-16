@@ -359,7 +359,7 @@ def vsigs_readdir():
     # List buckets
     handler = webserver.SequentialHandler()
     handler.add('GET', '/', 200, {'Content-type': 'application/xml'},
-        """<?xml version="1.0" encoding="UTF-8"?>
+                """<?xml version="1.0" encoding="UTF-8"?>
         <ListAllMyBucketsResult>
         <Buckets>
             <Bucket>
@@ -688,7 +688,7 @@ gwE6fxOLyJDxuWRf
     for i in range(2):
 
         gdal.SetConfigOption('GO2A_AUD',
-                            'http://localhost:%d/oauth2/v4/token' % gdaltest.webserver_port)
+                             'http://localhost:%d/oauth2/v4/token' % gdaltest.webserver_port)
         gdal.SetConfigOption('GOA2_NOW', '123456')
 
         if i == 0:
@@ -790,7 +790,7 @@ def vsigs_read_credentials_oauth2_service_account_json_file():
     gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '/vsimem/service_account.json')
 
     gdal.SetConfigOption('GO2A_AUD',
-                        'http://localhost:%d/oauth2/v4/token' % gdaltest.webserver_port)
+                         'http://localhost:%d/oauth2/v4/token' % gdaltest.webserver_port)
     gdal.SetConfigOption('GOA2_NOW', '123456')
 
     gdal.VSICurlClearCache()
@@ -848,9 +848,9 @@ def vsigs_read_credentials_oauth2_service_account_json_file():
             gdal.VSIFCloseL(f)
 
             signed_url = gdal.GetSignedURL('/vsigs/gs_fake_bucket/resource',
-                                        ['START_DATE=20180212T123456Z'])
+                                           ['START_DATE=20180212T123456Z'])
             if signed_url not in ('http://127.0.0.1:8080/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D',
-                                'http://127.0.0.1:8081/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D'):
+                                  'http://127.0.0.1:8081/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D'):
                 gdaltest.post_reason('fail')
                 print(signed_url)
                 gdal.Unlink('/vsimem/service_account.json')
@@ -1402,21 +1402,21 @@ def vsigs_cleanup():
 
 
 gdaltest_list = [vsigs_init,
-                  vsigs_1,
-                  vsigs_start_webserver,
-                  vsigs_2,
-                  vsigs_readdir,
-                  vsigs_write,
-                  vsigs_read_credentials_refresh_token_default_gdal_app,
-                  vsigs_read_credentials_refresh_token_custom_app,
-                  vsigs_read_credentials_oauth2_service_account,
-                  vsigs_read_credentials_oauth2_service_account_json_file,
-                  vsigs_read_credentials_file,
-                  vsigs_read_credentials_file_refresh_token,
-                  vsigs_read_credentials_gce,
-                  vsigs_read_credentials_gce_expiration,
-                  vsigs_stop_webserver,
-                  vsigs_cleanup]
+                 vsigs_1,
+                 vsigs_start_webserver,
+                 vsigs_2,
+                 vsigs_readdir,
+                 vsigs_write,
+                 vsigs_read_credentials_refresh_token_default_gdal_app,
+                 vsigs_read_credentials_refresh_token_custom_app,
+                 vsigs_read_credentials_oauth2_service_account,
+                 vsigs_read_credentials_oauth2_service_account_json_file,
+                 vsigs_read_credentials_file,
+                 vsigs_read_credentials_file_refresh_token,
+                 vsigs_read_credentials_gce,
+                 vsigs_read_credentials_gce_expiration,
+                 vsigs_stop_webserver,
+                 vsigs_cleanup]
 
 # gdaltest_list = [ vsigs_init, vsigs_start_webserver, vsigs_write, vsigs_stop_webserver, vsigs_cleanup ]
 

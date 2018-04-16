@@ -80,9 +80,9 @@ def ogr_oci_2():
     ######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(gdaltest.oci_lyr,
-                                    [('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString)])
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger),
+                                    ('PRFEDEA', ogr.OFTString)])
 
     ######################################################
     # Copy in poly.shp
@@ -150,7 +150,7 @@ def ogr_oci_3():
 
     gdaltest.oci_lyr.SetAttributeFilter('eas_id < 170')
     tr = ogrtest.check_features_against_list(gdaltest.oci_lyr,
-                                              'eas_id', expect)
+                                             'eas_id', expect)
     gdaltest.oci_lyr.SetAttributeFilter(None)
 
     for i in range(len(gdaltest.poly_feat)):
@@ -295,7 +295,7 @@ def ogr_oci_7():
     geom.Destroy()
 
     tr = ogrtest.check_features_against_list(gdaltest.oci_lyr, 'eas_id',
-                                              [158])
+                                             [158])
 
     gdaltest.oci_lyr.SetSpatialFilter(None)
 
@@ -325,13 +325,13 @@ def ogr_oci_8():
     # Prepare an SRS with an ORACLE authority code.
     srs = osr.SpatialReference()
     srs.SetGeogCS("gcs_dummy", "datum_dummy", "ellipse_dummy",
-                osr.SRS_WGS84_SEMIMAJOR, osr.SRS_WGS84_INVFLATTENING)
+                  osr.SRS_WGS84_SEMIMAJOR, osr.SRS_WGS84_INVFLATTENING)
     srs.SetAuthority('GEOGCS', 'Oracle', 8241)
 
     #######################################################
     # Create Oracle Layer
     oci_lyr2 = gdaltest.oci_ds.CreateLayer('testsrs', srs=srs,
-                                        options=['INDEX=FALSE'])
+                                           options=['INDEX=FALSE'])
 
     #######################################################
     # Now check that the srs for the layer is really the built-in
@@ -377,7 +377,7 @@ def ogr_oci_9():
     #######################################################
     # Create Oracle Layer
     oci_lyr2 = gdaltest.oci_ds.CreateLayer('testsrs2', srs=srs,
-                                            options=['INDEX=FALSE'])
+                                           options=['INDEX=FALSE'])
 
     #######################################################
     # Now check that the srs for the layer is really the built-in
@@ -711,9 +711,9 @@ def ogr_oci_17():
     ######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(gdaltest.oci_lyr,
-                                    [('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString)])
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger),
+                                    ('PRFEDEA', ogr.OFTString)])
 
     ######################################################
     # Copy in poly.shp
@@ -777,9 +777,9 @@ def ogr_oci_18():
         return 'skip'
 
     wkts = ['POINT (0 1)', 'LINESTRING (0 1,2 3)', 'POLYGON ((0 0,1 0,1 1,0 1,0 0))',
-             'MULTIPOINT (0 1)', 'MULTILINESTRING ((0 1,2 3))', 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))',
-             'GEOMETRYCOLLECTION (POINT (0 1))',
-             'POINT (0 1 2)', 'LINESTRING (0 1 2,3 4 5)', 'POLYGON ((0 0 10,1 0 10,1 1 10,0 1 10,0 0 10))']
+            'MULTIPOINT (0 1)', 'MULTILINESTRING ((0 1,2 3))', 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))',
+            'GEOMETRYCOLLECTION (POINT (0 1))',
+            'POINT (0 1 2)', 'LINESTRING (0 1 2,3 4 5)', 'POLYGON ((0 0 10,1 0 10,1 1 10,0 1 10,0 0 10))']
     for wkt in wkts:
         g = ogr.CreateGeometryFromWkt(wkt)
         geomtype = g.GetGeometryType()

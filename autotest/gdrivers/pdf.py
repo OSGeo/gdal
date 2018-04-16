@@ -939,9 +939,9 @@ def pdf_update_gcps(dpi=300):
     src_ds = None
 
     gcp = [[2., 8., 0, 0],
-            [2., 18., 0, 0],
-            [16., 18., 0, 0],
-            [16., 8., 0, 0]]
+           [2., 18., 0, 0],
+           [16., 18., 0, 0],
+           [16., 8., 0, 0]]
 
     for i in range(4):
         gcp[i][2] = src_gt[0] + gcp[i][0] * src_gt[1] + gcp[i][1] * src_gt[2]
@@ -962,9 +962,9 @@ def pdf_update_gcps(dpi=300):
     </SimpleSource>
 </VRTRasterBand>
 </VRTDataset>""" % (gcp[0][0], gcp[0][1], gcp[0][2], gcp[0][3],
-                      gcp[1][0], gcp[1][1], gcp[1][2], gcp[1][3],
-                      gcp[2][0], gcp[2][1], gcp[2][2], gcp[2][3],
-                      gcp[3][0], gcp[3][1], gcp[3][2], gcp[3][3])
+                    gcp[1][0], gcp[1][1], gcp[1][2], gcp[1][3],
+                    gcp[2][0], gcp[2][1], gcp[2][2], gcp[2][3],
+                    gcp[3][0], gcp[3][1], gcp[3][2], gcp[3][3])
     vrt_ds = gdal.Open(vrt_txt)
     gcps = vrt_ds.GetGCPs()
     vrt_ds = None
@@ -1059,10 +1059,10 @@ def pdf_set_5_gcps_ogc_bp(dpi=300):
     src_ds = None
 
     gcp = [[2., 8., 0, 0],
-            [2., 10., 0, 0],
-            [2., 18., 0, 0],
-            [16., 18., 0, 0],
-            [16., 8., 0, 0]]
+           [2., 10., 0, 0],
+           [2., 18., 0, 0],
+           [16., 18., 0, 0],
+           [16., 8., 0, 0]]
 
     for i in range(len(gcp)):
         gcp[i][2] = src_gt[0] + gcp[i][0] * src_gt[1] + gcp[i][1] * src_gt[2]
@@ -1087,11 +1087,11 @@ def pdf_set_5_gcps_ogc_bp(dpi=300):
     </SimpleSource>
 </VRTRasterBand>
 </VRTDataset>""" % (src_wkt,
-                      gcp[0][0], gcp[0][1], gcp[0][2], gcp[0][3],
-                      gcp[1][0], gcp[1][1], gcp[1][2], gcp[1][3],
-                      gcp[2][0], gcp[2][1], gcp[2][2], gcp[2][3],
-                      gcp[3][0], gcp[3][1], gcp[3][2], gcp[3][3],
-                      gcp[4][0], gcp[4][1], gcp[4][2], gcp[4][3])
+                    gcp[0][0], gcp[0][1], gcp[0][2], gcp[0][3],
+                    gcp[1][0], gcp[1][1], gcp[1][2], gcp[1][3],
+                    gcp[2][0], gcp[2][1], gcp[2][2], gcp[2][3],
+                    gcp[3][0], gcp[3][1], gcp[3][2], gcp[3][3],
+                    gcp[4][0], gcp[4][1], gcp[4][2], gcp[4][3])
     vrt_ds = gdal.Open(vrt_txt)
     vrt_gcps = vrt_ds.GetGCPs()
 
@@ -1396,15 +1396,15 @@ def pdf_custom_layout():
 if (button == 4) app.launchURL('http://gdal.org/');"""
 
     options = ['LEFT_MARGIN=1',
-                'TOP_MARGIN=2',
-                'RIGHT_MARGIN=3',
-                'BOTTOM_MARGIN=4',
-                'DPI=300',
-                'LAYER_NAME=byte_tif',
-                'EXTRA_STREAM=BT 255 0 0 rg /FTimesRoman 1 Tf 1 0 0 1 1 1 Tm (Footpage string) Tj ET',
-                'EXTRA_LAYER_NAME=Footpage_and_logo',
-                'EXTRA_IMAGES=data/byte.tif,0.5,0.5,0.2,link=http://gdal.org/,data/byte.tif,0.5,1.5,0.2',
-                'JAVASCRIPT=%s' % js]
+               'TOP_MARGIN=2',
+               'RIGHT_MARGIN=3',
+               'BOTTOM_MARGIN=4',
+               'DPI=300',
+               'LAYER_NAME=byte_tif',
+               'EXTRA_STREAM=BT 255 0 0 rg /FTimesRoman 1 Tf 1 0 0 1 1 1 Tm (Footpage string) Tj ET',
+               'EXTRA_LAYER_NAME=Footpage_and_logo',
+               'EXTRA_IMAGES=data/byte.tif,0.5,0.5,0.2,link=http://gdal.org/,data/byte.tif,0.5,1.5,0.2',
+               'JAVASCRIPT=%s' % js]
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_custom_layout.pdf', src_ds, options=options)
@@ -1463,14 +1463,14 @@ def pdf_extra_rasters():
     f.close()
 
     options = ['MARGIN=1',
-                'DPI=300',
-                'WRITE_USERUNIT=YES',
-                'CLIPPING_EXTENT=440780,3750180,441860,3751260',
-                'LAYER_NAME=byte_tif',
-                'EXTRA_RASTERS=tmp/subbyte.vrt',
-                'EXTRA_RASTERS_LAYER_NAME=subbyte',
-                'OFF_LAYERS=byte_tif',
-                'EXCLUSIVE_LAYERS=byte_tif,subbyte']
+               'DPI=300',
+               'WRITE_USERUNIT=YES',
+               'CLIPPING_EXTENT=440780,3750180,441860,3751260',
+               'LAYER_NAME=byte_tif',
+               'EXTRA_RASTERS=tmp/subbyte.vrt',
+               'EXTRA_RASTERS_LAYER_NAME=subbyte',
+               'OFF_LAYERS=byte_tif',
+               'EXCLUSIVE_LAYERS=byte_tif,subbyte']
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_extra_rasters.pdf', src_ds, options=options)

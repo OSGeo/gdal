@@ -63,7 +63,7 @@ def http_1():
         gdaltest.dods_drv = None
 
     tst = gdaltest.GDALTest('PNG', 'http://gdal.org/gdalicon.png',
-                             1, 7617, filename_absolute=1)
+                            1, 7617, filename_absolute=1)
     ret = tst.testOpen()
     if ret == 'fail':
         conn = gdaltest.gdalurlopen('http://gdal.org/gdalicon.png')
@@ -89,7 +89,7 @@ def http_2():
         return 'skip'
 
     tst = gdaltest.GDALTest('GTiff', '/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gcore/data/byte.tif',
-                             1, 4672, filename_absolute=1)
+                            1, 4672, filename_absolute=1)
     ret = tst.testOpen()
     if ret == 'fail':
         conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gcore/data/byte.tif')
@@ -345,15 +345,15 @@ def http_cleanup():
 
 
 gdaltest_list = [http_1,
-                  http_2,
-                  http_3,
-                  #http_4_old,
-                  http_4,
-                  http_5,
-                  http_6,
-                  http_test_ssl_verifystatus,
-                  http_test_use_capi_store,
-                  http_cleanup]
+                 http_2,
+                 http_3,
+                 #http_4_old,
+                 http_4,
+                 http_5,
+                 http_6,
+                 http_test_ssl_verifystatus,
+                 http_test_use_capi_store,
+                 http_cleanup]
 
 # gdaltest_list = [ http_test_use_capi_store ]
 

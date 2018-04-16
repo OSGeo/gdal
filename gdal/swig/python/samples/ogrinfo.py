@@ -91,7 +91,7 @@ def main(argv=None):
 
         if EQUAL(argv[iArg], "--utility_version"):
             print("%s is running against GDAL %s" %
-                   (argv[0], gdal.VersionInfo("RELEASE_NAME")))
+                  (argv[0], gdal.VersionInfo("RELEASE_NAME")))
             return 0
 
         elif EQUAL(argv[iArg], "-ro"):
@@ -180,7 +180,7 @@ def main(argv=None):
 # --------------------------------------------------------------------
     if poDS is None:
         print("FAILURE:\n"
-                "Unable to open datasource `%s' with the following drivers." % pszDataSource)
+              "Unable to open datasource `%s' with the following drivers." % pszDataSource)
 
         for iDriver in range(ogr.GetDriverCount()):
             print("  -> %s" % ogr.GetDriver(iDriver).GetName())
@@ -194,14 +194,14 @@ def main(argv=None):
 # --------------------------------------------------------------------
     if bVerbose:
         print("INFO: Open of `%s'\n"
-                "      using driver `%s' successful." % (pszDataSource, poDriver.GetName()))
+              "      using driver `%s' successful." % (pszDataSource, poDriver.GetName()))
 
     poDS_Name = poDS.GetName()
     if str(type(pszDataSource)) == "<type 'unicode'>" and str(type(poDS_Name)) == "<type 'str'>":
         poDS_Name = poDS_Name.decode("utf8")
     if bVerbose and pszDataSource != poDS_Name:
         print("INFO: Internal data source name `%s'\n"
-                "      different from user name `%s'." % (poDS_Name, pszDataSource))
+              "      different from user name `%s'." % (poDS_Name, pszDataSource))
 
 # --------------------------------------------------------------------
 #      Special case for -sql clause.  No source layers required.
@@ -216,7 +216,7 @@ def main(argv=None):
 
         if pszGeomField is None:
             poResultSet = poDS.ExecuteSQL(pszSQLStatement, poSpatialFilter,
-                                            pszDialect)
+                                          pszDialect)
         else:
             poResultSet = poDS.ExecuteSQL(pszSQLStatement, None, pszDialect)
 
@@ -300,10 +300,10 @@ def main(argv=None):
 def Usage():
 
     print("Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]\n"
-            "               [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]\n"
-            "               [-sql statement] [-al] [-so] [-fields={YES/NO}]\n"
-            "               [-geom={YES/NO/SUMMARY}][--formats]\n"
-            "               datasource_name [layer [layer ...]]")
+          "               [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]\n"
+          "               [-sql statement] [-al] [-so] [-fields={YES/NO}]\n"
+          "               [-geom={YES/NO/SUMMARY}][--formats]\n"
+          "               datasource_name [layer [layer ...]]")
     return 1
 
 #**********************************************************************

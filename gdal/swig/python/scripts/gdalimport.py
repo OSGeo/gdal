@@ -71,14 +71,14 @@ else:
 
 print('Importing to Tiled GeoTIFF file: %s' % newfile)
 new_dataset = geotiff.CreateCopy(newfile, dataset, 0,
-                                  ['TILED=YES', ],
-                                  callback=progress_cb,
-                                  callback_data='Translate: ')
+                                 ['TILED=YES', ],
+                                 callback=progress_cb,
+                                 callback_data='Translate: ')
 dataset = None
 
 print('Building overviews')
 new_dataset.BuildOverviews("average", callback=progress_cb,
-                            callback_data='Overviews: ')
+                           callback_data='Overviews: ')
 new_dataset = None
 
 print('Done')

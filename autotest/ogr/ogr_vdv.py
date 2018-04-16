@@ -276,9 +276,9 @@ def ogr_vdv_6():
 def ogr_vdv_7():
 
     tests = [('VDV-452', 'STOP', 'POINT_LONGITUDE', 'POINT_LATITUDE'),
-              ('VDV-452-ENGLISH', 'STOP', 'POINT_LONGITUDE', 'POINT_LATITUDE'),
-              ('VDV-452', 'REC_ORT', 'ORT_POS_LAENGE', 'ORT_POS_BREITE'),
-              ('VDV-452-GERMAN', 'REC_ORT', 'ORT_POS_LAENGE', 'ORT_POS_BREITE')]
+             ('VDV-452-ENGLISH', 'STOP', 'POINT_LONGITUDE', 'POINT_LATITUDE'),
+             ('VDV-452', 'REC_ORT', 'ORT_POS_LAENGE', 'ORT_POS_BREITE'),
+             ('VDV-452-GERMAN', 'REC_ORT', 'ORT_POS_LAENGE', 'ORT_POS_BREITE')]
 
     out_filename = '/vsimem/vdv/ogr_vdv_7.x10'
 

@@ -144,8 +144,8 @@ def rda_failed_authentication():
     handler.add('POST', '/auth_url', 404)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_USERNAME': 'user_name',
-                                    'GBDX_PASSWORD': 'password'}):
+                                      'GBDX_USERNAME': 'user_name',
+                                      'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
@@ -157,8 +157,8 @@ def rda_failed_authentication():
     handler.add('POST', '/auth_url', 200, {}, 'invalid_json')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_USERNAME': 'user_name',
-                                    'GBDX_PASSWORD': 'password'}):
+                                      'GBDX_USERNAME': 'user_name',
+                                      'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
@@ -170,8 +170,8 @@ def rda_failed_authentication():
     handler.add('POST', '/auth_url', 200, {}, '{}')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_USERNAME': 'user_name',
-                                    'GBDX_PASSWORD': 'password'}):
+                                      'GBDX_USERNAME': 'user_name',
+                                      'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
@@ -197,9 +197,9 @@ def rda_error_metadata():
     handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 404)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-                                    'GBDX_USERNAME': 'user_name',
-                                    'GBDX_PASSWORD': 'password'}):
+                                      'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+                                      'GBDX_USERNAME': 'user_name',
+                                      'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
@@ -213,9 +213,9 @@ def rda_error_metadata():
     handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 404, {}, '{"error": "some error"}')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-                                    'GBDX_USERNAME': 'user_name',
-                                    'GBDX_PASSWORD': 'password'}):
+                                      'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+                                      'GBDX_USERNAME': 'user_name',
+                                      'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
@@ -229,9 +229,9 @@ def rda_error_metadata():
     handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, 'invalid json')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-                                    'GBDX_USERNAME': 'user_name',
-                                    'GBDX_PASSWORD': 'password'}):
+                                      'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+                                      'GBDX_USERNAME': 'user_name',
+                                      'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
@@ -243,9 +243,9 @@ def rda_error_metadata():
     handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, '{}')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-                                    'GBDX_USERNAME': 'user_name',
-                                    'GBDX_PASSWORD': 'password'}):
+                                      'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+                                      'GBDX_USERNAME': 'user_name',
+                                      'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
@@ -280,9 +280,9 @@ def rda_error_metadata():
     }}""")
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-                                    'GBDX_USERNAME': 'user_name',
-                                    'GBDX_PASSWORD': 'password'}):
+                                      'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+                                      'GBDX_USERNAME': 'user_name',
+                                      'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
@@ -317,9 +317,9 @@ def rda_error_metadata():
     }}""")
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-                                    'GBDX_USERNAME': 'user_name',
-                                    'GBDX_PASSWORD': 'password'}):
+                                      'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+                                      'GBDX_USERNAME': 'user_name',
+                                      'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
@@ -354,9 +354,9 @@ def rda_error_metadata():
     }}""")
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-                                    'GBDX_USERNAME': 'user_name',
-                                    'GBDX_PASSWORD': 'password'}):
+                                      'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+                                      'GBDX_USERNAME': 'user_name',
+                                      'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:

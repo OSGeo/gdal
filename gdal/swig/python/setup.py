@@ -317,35 +317,35 @@ gdal_module = Extension('osgeo._gdal',
                         extra_link_args=extra_link_args)
 
 gdalconst_module = Extension('osgeo._gdalconst',
-                    sources=['extensions/gdalconst_wrap.c'],
-                    extra_compile_args=extra_compile_args,
-                    extra_link_args=extra_link_args)
+                             sources=['extensions/gdalconst_wrap.c'],
+                             extra_compile_args=extra_compile_args,
+                             extra_link_args=extra_link_args)
 
 osr_module = Extension('osgeo._osr',
-                    sources=['extensions/osr_wrap.cpp'],
-                    extra_compile_args=extra_compile_args,
-                    extra_link_args=extra_link_args)
+                       sources=['extensions/osr_wrap.cpp'],
+                       extra_compile_args=extra_compile_args,
+                       extra_link_args=extra_link_args)
 
 ogr_module = Extension('osgeo._ogr',
-                    sources=['extensions/ogr_wrap.cpp'],
-                    extra_compile_args=extra_compile_args,
-                    extra_link_args=extra_link_args)
+                       sources=['extensions/ogr_wrap.cpp'],
+                       extra_compile_args=extra_compile_args,
+                       extra_link_args=extra_link_args)
 
 
 array_module = Extension('osgeo._gdal_array',
-                    sources=['extensions/gdal_array_wrap.cpp'],
-                    extra_compile_args=extra_compile_args,
-                    extra_link_args=extra_link_args)
+                         sources=['extensions/gdal_array_wrap.cpp'],
+                         extra_compile_args=extra_compile_args,
+                         extra_link_args=extra_link_args)
 
 gnm_module = Extension('osgeo._gnm',
-                    sources=['extensions/gnm_wrap.cpp'],
-                    extra_compile_args=extra_compile_args,
-                    extra_link_args=extra_link_args)
+                       sources=['extensions/gnm_wrap.cpp'],
+                       extra_compile_args=extra_compile_args,
+                       extra_link_args=extra_link_args)
 
 ext_modules = [gdal_module,
-              gdalconst_module,
-              osr_module,
-              ogr_module]
+               gdalconst_module,
+               osr_module,
+               ogr_module]
 
 py_modules = ['gdal',
               'ogr',

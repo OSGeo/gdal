@@ -379,8 +379,8 @@ def testnonboundtoswig_VRTDerivedBands():
 
 
 gdaltest_list = [testnonboundtoswig_init,
-                  testnonboundtoswig_GDALSimpleImageWarp,
-                  testnonboundtoswig_VRTDerivedBands]
+                 testnonboundtoswig_GDALSimpleImageWarp,
+                 testnonboundtoswig_VRTDerivedBands]
 
 if __name__ == '__main__':
 

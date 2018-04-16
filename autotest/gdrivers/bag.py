@@ -156,8 +156,8 @@ def bag_3():
 
 
 gdaltest_list = [bag_1,
-                  bag_2,
-                  bag_3]
+                 bag_2,
+                 bag_3]
 
 if __name__ == '__main__':
 

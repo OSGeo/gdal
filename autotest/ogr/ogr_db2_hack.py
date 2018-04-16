@@ -121,7 +121,7 @@ def ogr_db2_hack_3():
     geom = ogr.CreateGeometryFromWkb(wkb)
     if geom.ExportToWkt() != wkt:
         gdaltest.post_reason('Conversion to/from DB2 format seems to have '
-                              'corrupted geometry.')
+                             'corrupted geometry.')
         return 'fail'
 
     geom.Destroy()

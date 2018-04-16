@@ -64,9 +64,9 @@ def ogr_gmt_2():
     #######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(gdaltest.gmt_lyr,
-                                    [('AREA', ogr.OFTReal),
-                                      ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString)])
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger),
+                                    ('PRFEDEA', ogr.OFTString)])
 
     #######################################################
     # Copy in poly.shp
@@ -107,7 +107,7 @@ def ogr_gmt_3():
 
     gdaltest.gmt_lyr.SetAttributeFilter('eas_id < 170')
     tr = ogrtest.check_features_against_list(gdaltest.gmt_lyr,
-                                              'eas_id', expect)
+                                             'eas_id', expect)
     gdaltest.gmt_lyr.SetAttributeFilter(None)
 
     for i in range(len(gdaltest.poly_feat)):
@@ -187,7 +187,7 @@ def ogr_gmt_5():
     #######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(gdaltest.gmt_lyr,
-                                    [('ID', ogr.OFTInteger)])
+                                   [('ID', ogr.OFTInteger)])
 
     #######################################################
     # Write a first multipolygon

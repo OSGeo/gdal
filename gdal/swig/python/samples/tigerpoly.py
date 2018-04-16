@@ -97,7 +97,7 @@ shp_driver.DeleteDataSource(outfile)
 shp_ds = shp_driver.CreateDataSource(outfile)
 
 shp_layer = shp_ds.CreateLayer('out', geom_type=ogr.wkbPolygon,
-                                srs=nad83)
+                               srs=nad83)
 
 src_defn = poly_layer.GetLayerDefn()
 poly_field_count = src_defn.GetFieldCount()

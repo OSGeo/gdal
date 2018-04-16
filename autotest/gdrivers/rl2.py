@@ -251,14 +251,14 @@ def rl2_5():
         return 'fail'
 
     tests = [('RASTERLITE2:data/multi_type.rl2:uint8', gdal.GDT_Byte, 4672),
-              ('RASTERLITE2:data/multi_type.rl2:int8', gdal.GDT_Byte, 4575),
-              ('RASTERLITE2:data/multi_type.rl2:uint16', gdal.GDT_UInt16, 4457),
-              ('RASTERLITE2:data/multi_type.rl2:int16', gdal.GDT_Int16, 4457),
-              ('RASTERLITE2:data/multi_type.rl2:uint32', gdal.GDT_UInt32, 4457),
-              ('RASTERLITE2:data/multi_type.rl2:int32', gdal.GDT_Int32, 4457),
-              ('RASTERLITE2:data/multi_type.rl2:float', gdal.GDT_Float32, 4457),
-              ('RASTERLITE2:data/multi_type.rl2:double', gdal.GDT_Float64, 4457),
-              ('RASTERLITE2:data/multi_type.rl2:1bit', gdal.GDT_Byte, 4873)]
+             ('RASTERLITE2:data/multi_type.rl2:int8', gdal.GDT_Byte, 4575),
+             ('RASTERLITE2:data/multi_type.rl2:uint16', gdal.GDT_UInt16, 4457),
+             ('RASTERLITE2:data/multi_type.rl2:int16', gdal.GDT_Int16, 4457),
+             ('RASTERLITE2:data/multi_type.rl2:uint32', gdal.GDT_UInt32, 4457),
+             ('RASTERLITE2:data/multi_type.rl2:int32', gdal.GDT_Int32, 4457),
+             ('RASTERLITE2:data/multi_type.rl2:float', gdal.GDT_Float32, 4457),
+             ('RASTERLITE2:data/multi_type.rl2:double', gdal.GDT_Float64, 4457),
+             ('RASTERLITE2:data/multi_type.rl2:1bit', gdal.GDT_Byte, 4873)]
     for (subds_name, dt, expected_cs) in tests:
         ds = gdal.Open(subds_name)
         if ds.GetRasterBand(1).DataType != dt:
@@ -457,28 +457,28 @@ def rl2_20():
         return 'skip'
 
     tests = [('MONOCHROME', 2, gdal.GDT_Byte, 'NONE', None, None),
-              ('MONOCHROME', 1, gdal.GDT_UInt16, 'NONE', None, None),
-              ('PALETTE', 1, gdal.GDT_Byte, 'NONE', None, None),
-              ('PALETTE', 1, gdal.GDT_UInt16, 'NONE', None, gdal.ColorTable()),
-              ('GRAYSCALE', 2, gdal.GDT_Byte, 'NONE', None, None),
-              ('GRAYSCALE', 1, gdal.GDT_UInt16, 'NONE', None, None),
-              ('RGB', 1, gdal.GDT_Byte, 'NONE', None, None),
-              ('RGB', 3, gdal.GDT_Int16, 'NONE', None, None),
-              ('MULTIBAND', 1, gdal.GDT_Byte, 'NONE', None, None),
-              ('MULTIBAND', 256, gdal.GDT_Byte, 'NONE', None, None),
-              ('MULTIBAND', 2, gdal.GDT_Int16, 'NONE', None, None),
-              ('DATAGRID', 2, gdal.GDT_Byte, 'NONE', None, None),
-              ('DATAGRID', 1, gdal.GDT_CFloat32, 'NONE', None, None),
-              ('MONOCHROME', 1, gdal.GDT_Byte, 'JPEG', None, None),
-              ('PALETTE', 1, gdal.GDT_Byte, 'JPEG', None, gdal.ColorTable()),
-              ('GRAYSCALE', 1, gdal.GDT_Byte, 'CCITTFAX4', None, None),
-              ('RGB', 3, gdal.GDT_Byte, 'CCITTFAX4', None, None),
-              ('RGB', 3, gdal.GDT_UInt16, 'JPEG', None, None),
-              ('MULTIBAND', 3, gdal.GDT_Byte, 'CCITTFAX4', None, None),
-              ('MULTIBAND', 3, gdal.GDT_UInt16, 'CCITTFAX4', None, None),
-              ('MULTIBAND', 2, gdal.GDT_Byte, 'CCITTFAX4', None, None),
-              ('DATAGRID', 1, gdal.GDT_Byte, 'CCITTFAX4', None, None),
-              ('DATAGRID', 1, gdal.GDT_Int16, 'CCITTFAX4', None, None), ]
+             ('MONOCHROME', 1, gdal.GDT_UInt16, 'NONE', None, None),
+             ('PALETTE', 1, gdal.GDT_Byte, 'NONE', None, None),
+             ('PALETTE', 1, gdal.GDT_UInt16, 'NONE', None, gdal.ColorTable()),
+             ('GRAYSCALE', 2, gdal.GDT_Byte, 'NONE', None, None),
+             ('GRAYSCALE', 1, gdal.GDT_UInt16, 'NONE', None, None),
+             ('RGB', 1, gdal.GDT_Byte, 'NONE', None, None),
+             ('RGB', 3, gdal.GDT_Int16, 'NONE', None, None),
+             ('MULTIBAND', 1, gdal.GDT_Byte, 'NONE', None, None),
+             ('MULTIBAND', 256, gdal.GDT_Byte, 'NONE', None, None),
+             ('MULTIBAND', 2, gdal.GDT_Int16, 'NONE', None, None),
+             ('DATAGRID', 2, gdal.GDT_Byte, 'NONE', None, None),
+             ('DATAGRID', 1, gdal.GDT_CFloat32, 'NONE', None, None),
+             ('MONOCHROME', 1, gdal.GDT_Byte, 'JPEG', None, None),
+             ('PALETTE', 1, gdal.GDT_Byte, 'JPEG', None, gdal.ColorTable()),
+             ('GRAYSCALE', 1, gdal.GDT_Byte, 'CCITTFAX4', None, None),
+             ('RGB', 3, gdal.GDT_Byte, 'CCITTFAX4', None, None),
+             ('RGB', 3, gdal.GDT_UInt16, 'JPEG', None, None),
+             ('MULTIBAND', 3, gdal.GDT_Byte, 'CCITTFAX4', None, None),
+             ('MULTIBAND', 3, gdal.GDT_UInt16, 'CCITTFAX4', None, None),
+             ('MULTIBAND', 2, gdal.GDT_Byte, 'CCITTFAX4', None, None),
+             ('DATAGRID', 1, gdal.GDT_Byte, 'CCITTFAX4', None, None),
+             ('DATAGRID', 1, gdal.GDT_Int16, 'CCITTFAX4', None, None), ]
 
     for (pixel_type, band_count, dt, compress, nbits, pct) in tests:
         src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, band_count, dt)
@@ -507,18 +507,18 @@ def rl2_21():
         return 'skip'
 
     tests = [('DEFLATE', None),
-              ('LZMA', None),
-              ('PNG', None),
-              ('JPEG', None),
-              ('JPEG', 50),
-              ('JPEG', 100),
-              ('WEBP', None),
-              ('WEBP', 50),
-              ('WEBP', 100),
-              ('CHARLS', None),
-              ('JPEG2000', None),
-              ('JPEG2000', 50),
-              ('JPEG2000', 100)]
+             ('LZMA', None),
+             ('PNG', None),
+             ('JPEG', None),
+             ('JPEG', 50),
+             ('JPEG', 100),
+             ('WEBP', None),
+             ('WEBP', 50),
+             ('WEBP', 100),
+             ('CHARLS', None),
+             ('JPEG2000', None),
+             ('JPEG2000', 50),
+             ('JPEG2000', 100)]
 
     src_ds = gdal.Open('data/byte.tif')
     for (compress, quality) in tests:

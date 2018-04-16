@@ -73,13 +73,13 @@ def srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
         return 'fail'
 
     expected_md = ['SRP_CLASSIFICATION=U',
-            'SRP_CREATIONDATE=20120505',
-            'SRP_EDN=0',
-            'SRP_NAM=FKUSRP',
-            'SRP_PRODUCT=USRP',
-            'SRP_REVISIONDATE=20120505',
-            'SRP_SCA=50000',
-            'SRP_ZNA=17']
+                   'SRP_CREATIONDATE=20120505',
+                   'SRP_EDN=0',
+                   'SRP_NAM=FKUSRP',
+                   'SRP_PRODUCT=USRP',
+                   'SRP_REVISIONDATE=20120505',
+                   'SRP_SCA=50000',
+                   'SRP_ZNA=17']
 
     got_md = ds.GetMetadata()
     for md in expected_md:
@@ -137,9 +137,9 @@ def srp_5():
         return 'fail'
 
     expected_md = ['SRP_CLASSIFICATION=U',
-            'SRP_CREATIONDATE=20120505',
-            'SRP_EDN=1',
-            'SRP_VOO=           ']
+                   'SRP_CREATIONDATE=20120505',
+                   'SRP_EDN=1',
+                   'SRP_VOO=           ']
 
     got_md = ds.GetMetadata()
     for md in expected_md:

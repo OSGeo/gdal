@@ -65,20 +65,20 @@ class MetaCRSTest:
 
         try:
             self.src_xyz = (float(test_line['srcOrd1']),
-                             float(test_line['srcOrd2']),
-                             float(test_line['srcOrd3']))
+                            float(test_line['srcOrd2']),
+                            float(test_line['srcOrd3']))
         except:
             self.src_xyz = (float(test_line['srcOrd1']),
-                             float(test_line['srcOrd2']),
-                             0.0)
+                            float(test_line['srcOrd2']),
+                            0.0)
         try:
             self.dst_xyz = (float(test_line['tgtOrd1']),
-                             float(test_line['tgtOrd2']),
-                             float(test_line['tgtOrd3']))
+                            float(test_line['tgtOrd2']),
+                            float(test_line['tgtOrd3']))
         except:
             self.dst_xyz = (float(test_line['tgtOrd1']),
-                             float(test_line['tgtOrd2']),
-                             0.0)
+                            float(test_line['tgtOrd2']),
+                            0.0)
         try:
             self.dst_error = max(float(test_line['tolOrd1']),
                                  float(test_line['tolOrd2']),
@@ -141,8 +141,8 @@ class MetaCRSTest:
         ######################################################################
         # Check results.
         error = abs(result[0] - self.dst_xyz[0]) \
-                + abs(result[1] - self.dst_xyz[1]) \
-                + abs(result[2] - self.dst_xyz[2])
+        + abs(result[1] - self.dst_xyz[1]) \
+        + abs(result[2] - self.dst_xyz[2])
 
         if error > self.dst_error:
             err_msg = 'Dest error is %g, src=%g,%g,%g, dst=%g,%g,%g, exp=%g,%g,%g' \
@@ -154,7 +154,7 @@ class MetaCRSTest:
             gdaltest.post_reason(err_msg)
 
             gdal.Debug('OSR', 'Src SRS:\n%s\n\nDst SRS:\n%s\n' \
-                        % (self.src_srs.ExportToPrettyWkt(),
+                       % (self.src_srs.ExportToPrettyWkt(),
                            self.dst_srs.ExportToPrettyWkt()))
 
             return 'fail'

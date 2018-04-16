@@ -505,40 +505,40 @@ def tiff_srs_pcscitation():
 gdaltest_list = []
 
 tiff_srs_list = [2758,  # tmerc
-                  2036,  # sterea
-                  2046,  # tmerc
-                  3031,  # polar stere (ticket #3220)
-                  3032,  # polar stere (ticket #3220)
-                  32661,  # stere
-                  3035,  # laea
-                  2062,  # lcc 1SP
-                  [2065, False, True],  # krovak
-                  2066,  # cass
-                  2964,  # aea
-                  3410,  # cea
-                  3786,  # eqc spherical, method=9823
-                  32663,  # eqc elliptical, method=9842
-                  4087,  # eqc WGS 84 / World Equidistant Cylindrical method=1028
-                  4088,  # eqc World Equidistant Cylindrical (Sphere) method=1029
-                  2934,  # merc
-                  27200,  # nzmg
-                  2057,  # omerc Hotine_Oblique_Mercator_Azimuth_Center
-                  3591,  # omerc Hotine_Oblique_Mercator
-                  29100,  # poly
-                  2056,  # somerc
-                  2027,  # utm
-                  4326,  # longlat
-                  26943,  # lcc 2SP,
-                  4328,  # geocentric
-                  3994,  # mercator 2SP
-                  26920,  # UTM NAD83 special case
-                  26720,  # UTM NAD27 special case
-                  32630,  # UTM WGS84 north special case
-                  32730,  # UTM WGS84 south special case
-                  22700,  # unknown datum 'Deir_ez_Zor'
-                  31491,  # Germany Zone projection
-                  [3857, False, True],  # Web Mercator
-                  [102113, False, True],  # ESRI WGS_1984_Web_Mercator
+                 2036,  # sterea
+                 2046,  # tmerc
+                 3031,  # polar stere (ticket #3220)
+                 3032,  # polar stere (ticket #3220)
+                 32661,  # stere
+                 3035,  # laea
+                 2062,  # lcc 1SP
+                 [2065, False, True],  # krovak
+                 2066,  # cass
+                 2964,  # aea
+                 3410,  # cea
+                 3786,  # eqc spherical, method=9823
+                 32663,  # eqc elliptical, method=9842
+                 4087,  # eqc WGS 84 / World Equidistant Cylindrical method=1028
+                 4088,  # eqc World Equidistant Cylindrical (Sphere) method=1029
+                 2934,  # merc
+                 27200,  # nzmg
+                 2057,  # omerc Hotine_Oblique_Mercator_Azimuth_Center
+                 3591,  # omerc Hotine_Oblique_Mercator
+                 29100,  # poly
+                 2056,  # somerc
+                 2027,  # utm
+                 4326,  # longlat
+                 26943,  # lcc 2SP,
+                 4328,  # geocentric
+                 3994,  # mercator 2SP
+                 26920,  # UTM NAD83 special case
+                 26720,  # UTM NAD27 special case
+                 32630,  # UTM WGS84 north special case
+                 32730,  # UTM WGS84 south special case
+                 22700,  # unknown datum 'Deir_ez_Zor'
+                 31491,  # Germany Zone projection
+                 [3857, False, True],  # Web Mercator
+                 [102113, False, True],  # ESRI WGS_1984_Web_Mercator
                   ]
 
 for item in tiff_srs_list:
@@ -557,10 +557,10 @@ for item in tiff_srs_list:
     gdaltest_list.append((ut.test, "tiff_srs_proj4_of_epsg_%d" % epsg_code))
 
 tiff_srs_list_proj4 = [['eqdc', '+proj=eqdc +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g +lat_2=%.16g" +x_0=%.16g +y_0=%.16g' % (1, 2, 3, 4, 5, 6)],
-                        ['mill', '+proj=mill +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A' % (1, 2, 3, 4)],
-                        ['gnom', '+proj=gnom +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3, 4)],
-                        ['robin', '+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3)],
-                        ['sinu', '+proj=sinu +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3)],
+                       ['mill', '+proj=mill +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A' % (1, 2, 3, 4)],
+                       ['gnom', '+proj=gnom +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3, 4)],
+                       ['robin', '+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3)],
+                       ['sinu', '+proj=sinu +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3)],
                         ]
 for (title, proj4) in tiff_srs_list_proj4:
     ut = TestTiffSRS(proj4, 0, False)
