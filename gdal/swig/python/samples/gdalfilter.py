@@ -159,7 +159,7 @@ for iBand in range(vrt_ds.RasterCount):
 
     src_xml = filt_template % (iBand + 1)
 
-    band.SetMetadata({'source_0' : src_xml}, 'vrt_sources')
+    band.SetMetadata({'source_0': src_xml}, 'vrt_sources')
 
 # =============================================================================
 #	copy the results to a new file.

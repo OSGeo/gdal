@@ -48,7 +48,7 @@ def test_gdalwarp_1():
         return 'skip'
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/byte.tif tmp/testgdalwarp1.tif')
-    if not (err is None or err == '') :
+    if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
         return 'fail'
@@ -158,7 +158,7 @@ def test_gdalwarp_5():
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
-    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9) :
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9):
         gdaltest.post_reason('Bad geotransform')
         return 'fail'
 
@@ -184,7 +184,7 @@ def test_gdalwarp_6():
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
-    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9) :
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9):
         gdaltest.post_reason('Bad geotransform')
         return 'fail'
 
@@ -207,7 +207,7 @@ def test_gdalwarp_7():
         return 'fail'
 
     expected_gt = (440720.0, 120.0, 0.0, 3751320.0, 0.0, -120.0)
-    if not gdaltest.geotransform_equals(expected_gt, ds.GetGeoTransform(), 1e-9) :
+    if not gdaltest.geotransform_equals(expected_gt, ds.GetGeoTransform(), 1e-9):
         gdaltest.post_reason('Bad geotransform')
         return 'fail'
 
@@ -230,7 +230,7 @@ def test_gdalwarp_8():
         return 'fail'
 
     expected_gt = (440720.0, 120.0, 0.0, 3751320.0, 0.0, -120.0)
-    if not gdaltest.geotransform_equals(expected_gt, ds.GetGeoTransform(), 1e-9) :
+    if not gdaltest.geotransform_equals(expected_gt, ds.GetGeoTransform(), 1e-9):
         gdaltest.post_reason('Bad geotransform')
         return 'fail'
 
@@ -252,7 +252,7 @@ def test_gdalwarp_9():
     if ds is None:
         return 'fail'
 
-    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9) :
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9):
         gdaltest.post_reason('Bad geotransform')
         return 'fail'
 
@@ -928,7 +928,7 @@ def test_gdalwarp_32():
 
     expected_gt = (440700.0, 100.0, 0.0, 3751350.0, 0.0, -50.0)
     got_gt = ds.GetGeoTransform()
-    if not gdaltest.geotransform_equals(expected_gt, got_gt, 1e-9) :
+    if not gdaltest.geotransform_equals(expected_gt, got_gt, 1e-9):
         gdaltest.post_reason('Bad geotransform')
         print(got_gt)
         return 'fail'
@@ -1048,7 +1048,7 @@ def test_gdalwarp_35():
     if ds is None:
         return 'fail'
 
-    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9) :
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9):
         gdaltest.post_reason('Bad geotransform')
         return 'fail'
 
@@ -1070,7 +1070,7 @@ def test_gdalwarp_36():
     if ds is None:
         return 'fail'
 
-    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9) :
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9):
         gdaltest.post_reason('Bad geotransform')
         return 'fail'
 
@@ -1100,7 +1100,7 @@ def test_gdalwarp_37():
         return 'fail'
 
     # make sure stats not copied
-    if 'STATISTICS_MEAN' in md :
+    if 'STATISTICS_MEAN' in md:
         gdaltest.post_reason('Output file contains statistics metadata')
         return 'fail'
 

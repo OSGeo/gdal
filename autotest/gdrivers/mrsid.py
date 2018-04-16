@@ -124,7 +124,7 @@ def mrsid_1():
     ds = None
 
     if prj.find('North_American_Datum_1927') == -1 or \
-       prj.find('Mercator_1SP') == -1 :
+       prj.find('Mercator_1SP') == -1:
            gdaltest.post_reason('did not get expected projection')
            print(got_prj)
            return 'fail'

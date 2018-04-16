@@ -89,7 +89,7 @@ def test_gdaltindex_1():
     ds = None
 
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif')
-    if not (err is None or err == '') :
+    if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
         return 'fail'

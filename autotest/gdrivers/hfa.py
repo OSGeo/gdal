@@ -409,7 +409,7 @@ def hfa_metadata_1():
     ds = drv.Create('tmp/md_1.img', 100, 150, 1, gdal.GDT_Byte)
 
     md_val = '0123456789' * 60
-    md = {'test' : md_val}
+    md = {'test': md_val}
     ds.GetRasterBand(1).SetMetadata(md)
     ds = None
 
@@ -463,7 +463,7 @@ def hfa_grow_rrdlist():
 
     import shutil
 
-    shutil.copyfile('data/bug_1109.img' , 'tmp/bug_1109.img')
+    shutil.copyfile('data/bug_1109.img', 'tmp/bug_1109.img')
     #os.system("copy data\\bug_1109.img tmp")
 
     # Add two overview levels.
@@ -1116,8 +1116,8 @@ def hfa_write_bit2grayscale():
 
     import shutil
 
-    shutil.copyfile('data/small1bit.img' , 'tmp/small1bit.img')
-    shutil.copyfile('data/small1bit.rrd' , 'tmp/small1bit.rrd')
+    shutil.copyfile('data/small1bit.img', 'tmp/small1bit.img')
+    shutil.copyfile('data/small1bit.rrd', 'tmp/small1bit.rrd')
 
     gdal.SetConfigOption('USE_RRD', 'YES')
     gdal.SetConfigOption('HFA_USE_RRD', 'YES')

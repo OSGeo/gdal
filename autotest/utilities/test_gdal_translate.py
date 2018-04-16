@@ -47,7 +47,7 @@ def test_gdal_translate_1():
         return 'skip'
 
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test1.tif')
-    if not (err is None or err == '') :
+    if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
         return 'fail'
@@ -321,7 +321,7 @@ def test_gdal_translate_11():
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
-    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9) :
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9):
         gdaltest.post_reason('Bad geotransform')
         return 'fail'
 
@@ -347,7 +347,7 @@ def test_gdal_translate_12():
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
-    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9) :
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9):
         gdaltest.post_reason('Bad geotransform')
         return 'fail'
 
@@ -816,7 +816,7 @@ def test_gdal_translate_29():
         return 'skip'
 
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test_gdal_translate_29.tif -outsize 50% 50% -r cubic')
-    if not (err is None or err == '') :
+    if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
         return 'fail'
@@ -834,12 +834,12 @@ def test_gdal_translate_29():
     ds = None
 
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test_gdal_translate_29.vrt -outsize 50% 50% -r cubic -of VRT')
-    if not (err is None or err == '') :
+    if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
         return 'fail'
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' tmp/test_gdal_translate_29.vrt tmp/test_gdal_translate_29.tif')
-    if not (err is None or err == '') :
+    if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
         return 'fail'
@@ -900,7 +900,7 @@ def test_gdal_translate_31():
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
-    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-6) :
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-6):
         gdaltest.post_reason('Bad geotransform')
         return 'fail'
 

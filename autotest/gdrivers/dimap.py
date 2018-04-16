@@ -102,7 +102,7 @@ def dimap_1():
 
 def dimap_2():
 
-    for name in ['data/dimap2', 'data/dimap2/VOL_PHR.XML', 'data/dimap2/DIM_foo.XML'] :
+    for name in ['data/dimap2', 'data/dimap2/VOL_PHR.XML', 'data/dimap2/DIM_foo.XML']:
         ds = gdal.Open(name)
         if ds.RasterCount != 4 \
         or ds.RasterXSize != 20 \

@@ -274,7 +274,7 @@ def vrtmisc_10():
         gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
-    if ds.GetMetadata('some_domain') != {'bar' : 'baz'}:
+    if ds.GetMetadata('some_domain') != {'bar': 'baz'}:
         gdaltest.post_reason('fail')
         print(ds.GetMetadata('some_domain'))
         return 'fail'
@@ -291,7 +291,7 @@ def vrtmisc_10():
         gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
-    if ds.GetMetadata('some_domain') != {'bar' : 'baz'}:
+    if ds.GetMetadata('some_domain') != {'bar': 'baz'}:
         gdaltest.post_reason('fail')
         print(ds.GetMetadata('some_domain'))
         return 'fail'

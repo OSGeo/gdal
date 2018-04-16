@@ -719,7 +719,7 @@ def vrtderived_10():
                 'vrtderivedX',
                 'vrtderivedX*',
                 'vrtderive.*'
-                'vrtderivedX.*'] :
+                'vrtderivedX.*']:
         ds = gdal.Open(content)
         gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', val)
         with gdaltest.error_handler():
@@ -736,7 +736,7 @@ def vrtderived_10():
                 '*',
                 'foo,vrtderived*,bar',
                 'foo,vrtderived.*,bar',
-                'foo,vrtderi*,bar'] :
+                'foo,vrtderi*,bar']:
         ds = gdal.Open(content)
         gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', val)
         cs = ds.GetRasterBand(1).Checksum()

@@ -73,7 +73,7 @@ def ogr_osm_1(filename='data/test.pbf'):
 
     sr = lyr.GetSpatialRef()
     if sr.ExportToWkt().find('GEOGCS["WGS 84",DATUM["WGS_1984",') != 0 and \
-       sr.ExportToWkt().find('GEOGCS["GCS_WGS_1984",DATUM["WGS_1984"') != 0 :
+       sr.ExportToWkt().find('GEOGCS["GCS_WGS_1984",DATUM["WGS_1984"') != 0:
         gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         return 'fail'
@@ -87,7 +87,7 @@ def ogr_osm_1(filename='data/test.pbf'):
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('osm_id') != '3' or \
        feat.GetFieldAsString('name') != 'Some interesting point' or \
-       feat.GetFieldAsString('other_tags') != '"foo"=>"bar","bar"=>"baz"' :
+       feat.GetFieldAsString('other_tags') != '"foo"=>"bar","bar"=>"baz"':
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
@@ -113,7 +113,7 @@ def ogr_osm_1(filename='data/test.pbf'):
     if feat.GetFieldAsString('osm_id') != '1' or \
        feat.GetFieldAsString('highway') != 'motorway' or \
        feat.GetFieldAsInteger('z_order') != 9 or \
-       feat.GetFieldAsString('other_tags') != '"foo"=>"bar"' :
+       feat.GetFieldAsString('other_tags') != '"foo"=>"bar"':
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
@@ -675,7 +675,7 @@ def ogr_osm_11():
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('osm_id') != '3' or \
        feat.GetFieldAsString('name') != 'Some interesting point' or \
-       feat.GetFieldAsString('all_tags') != '"name"=>"Some interesting point","foo"=>"bar","bar"=>"baz"' :
+       feat.GetFieldAsString('all_tags') != '"name"=>"Some interesting point","foo"=>"bar","bar"=>"baz"':
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'

@@ -117,7 +117,7 @@ def netcdf_cf_setup():
     success = False
     try:
         (ret, err) = gdaltest.runexternal_out_and_err('curl')
-    except :
+    except:
         print('no curl executable')
     else:
         #make sure script is responding
@@ -183,7 +183,7 @@ def netcdf_cf_check_file(ifile, version='auto', silent=True):
         if gdaltest.netcdf_cf_method == 'http':
             print('calling ' + command)
         (ret, err) = gdaltest.runexternal_out_and_err(command)
-    except :
+    except:
         gdaltest.post_reason('ERROR with command - ' + command)
         return 'fail'
 

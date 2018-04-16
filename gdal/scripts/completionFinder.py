@@ -207,7 +207,7 @@ def getCompletionScript(name, optList):
 
 
 def main(argv):
-  if len(argv) < 2 :
+  if len(argv) < 2:
     showHelp()
     return 1
 

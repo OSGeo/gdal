@@ -174,17 +174,17 @@ import gdalconst
 import gdal
 gdal.AllRegister()
 
-codes = {gdalconst.GDT_Byte      : numpy.uint8,
-         gdalconst.GDT_UInt16    : numpy.uint16,
-         gdalconst.GDT_Int16     : numpy.int16,
-         gdalconst.GDT_UInt32    : numpy.uint32,
-         gdalconst.GDT_Int32     : numpy.int32,
-         gdalconst.GDT_Float32   : numpy.float32,
-         gdalconst.GDT_Float64   : numpy.float64,
-         gdalconst.GDT_CInt16    : numpy.complex64,
-         gdalconst.GDT_CInt32    : numpy.complex64,
-         gdalconst.GDT_CFloat32  : numpy.complex64,
-         gdalconst.GDT_CFloat64  : numpy.complex128
+codes = {gdalconst.GDT_Byte: numpy.uint8,
+         gdalconst.GDT_UInt16: numpy.uint16,
+         gdalconst.GDT_Int16: numpy.int16,
+         gdalconst.GDT_UInt32: numpy.uint32,
+         gdalconst.GDT_Int32: numpy.int32,
+         gdalconst.GDT_Float32: numpy.float32,
+         gdalconst.GDT_Float64: numpy.float64,
+         gdalconst.GDT_CInt16: numpy.complex64,
+         gdalconst.GDT_CInt32: numpy.complex64,
+         gdalconst.GDT_CFloat32: numpy.complex64,
+         gdalconst.GDT_CFloat64: numpy.complex128
         }
 
 
@@ -506,7 +506,7 @@ def CopyDatasetInfo(src, dst, xoff=0, yoff=0):
                 new_gcps.append(ngcp)
 
             try:
-                dst.SetGCPs(new_gcps , src.GetGCPProjection())
+                dst.SetGCPs(new_gcps, src.GetGCPProjection())
             except:
                 print("Failed to set GCPs")
                 return

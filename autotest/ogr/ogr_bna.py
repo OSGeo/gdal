@@ -172,7 +172,7 @@ def ogr_bna_write(creation_options):
     output_ds = ogr.GetDriverByName('BNA').CreateDataSource('tmp/out.bna', options=creation_options)
 
     # Duplicate data/test.bna into tmp/out.bna
-    for layer_name in ['points', 'lines', 'polygons', 'ellipses'] :
+    for layer_name in ['points', 'lines', 'polygons', 'ellipses']:
         src_lyr = gdaltest.bna_ds.GetLayerByName('test_' + layer_name)
         dst_lyr = output_ds.CreateLayer(layer_name, geom_type=src_lyr.GetLayerDefn().GetGeomType())
 
@@ -197,7 +197,7 @@ def ogr_bna_write(creation_options):
 
     # Check features
     output_ds = ogr.Open('tmp/out.bna')
-    for layer_name in ['points', 'lines', 'polygons', 'ellipses'] :
+    for layer_name in ['points', 'lines', 'polygons', 'ellipses']:
         src_lyr = gdaltest.bna_ds.GetLayerByName('test_' + layer_name)
         dst_lyr = output_ds.GetLayerByName('out_' + layer_name)
         if ogr_bna_check_content(src_lyr, dst_lyr) != 'success':

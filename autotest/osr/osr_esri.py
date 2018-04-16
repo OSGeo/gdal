@@ -924,7 +924,7 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
 
     if check_wkt:
         of_wkt.close()
-        if failed_wkt_count > 0 :
+        if failed_wkt_count > 0:
             print('WARNING: Failed %d WKT tests, see file %s' % (failed_wkt_count, ofile_wkt))
         else:
             os.unlink(ofile_wkt)
@@ -1091,7 +1091,7 @@ def osr_esri_test_ogc_esri_ogc(ifile, ofile_base, fix_config='NO', check_epsg=Fa
     #close files and report
     if check_epsg:
         of_epsg.close()
-        if failed_epsg_count > 0 :
+        if failed_epsg_count > 0:
             print('ERROR: Failed %d EPSG tests, see file %s' % (failed_epsg_count, ofile_epsg))
             #print(epsg_error)
             result = 'fail'
@@ -1099,14 +1099,14 @@ def osr_esri_test_ogc_esri_ogc(ifile, ofile_base, fix_config='NO', check_epsg=Fa
             os.unlink(ofile_epsg)
     if check_srs:
         of_srs.close()
-        if failed_srs_count > 0 :
+        if failed_srs_count > 0:
             print('ERROR: Failed %d SRS tests, see file %s' % (failed_srs_count, ofile_srs))
             result = 'fail'
         else:
             os.unlink(ofile_srs)
     if check_wkt:
         of_wkt.close()
-        if failed_wkt_count > 0 :
+        if failed_wkt_count > 0:
             print('WARNING: Failed %d WKT tests, see file %s' % (failed_wkt_count, ofile_wkt))
         else:
             os.unlink(ofile_wkt)

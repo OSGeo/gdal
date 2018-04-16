@@ -320,12 +320,12 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds.SetMetadata({'foo' : 'baz'}, 'OTHER')
+    ds.SetMetadata({'foo': 'baz'}, 'OTHER')
     if ds.GetMetadataItem('foo', 'OTHER') != 'baz':
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds.GetRasterBand(1).SetMetadata({'foo' : 'baw'}, 'OTHER')
+    ds.GetRasterBand(1).SetMetadata({'foo': 'baw'}, 'OTHER')
     if ds.GetRasterBand(1).GetMetadataItem('foo', 'OTHER') != 'baw':
         gdaltest.post_reason('fail')
         return 'fail'
@@ -348,7 +348,7 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds.GetRasterBand(1).SetMetadata({'foo' : 'baw'})
+    ds.GetRasterBand(1).SetMetadata({'foo': 'baw'})
     if ds.GetRasterBand(1).GetMetadataItem('foo') != 'baw':
         gdaltest.post_reason('fail')
         return 'fail'

@@ -312,7 +312,7 @@ def vsiswift_stat():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something/foo/bar', 206,
-                {'Content-Range': 'bytes 0-0/1000000'} , 'x')
+                {'Content-Range': 'bytes 0-0/1000000'}, 'x')
     with webserver.install_http_handler(handler):
         stat_res = gdal.VSIStatL('/vsiswift/foo/bar')
         if stat_res is None or stat_res.size != 1000000:
@@ -552,7 +552,7 @@ def vsiswift_fake_unlink():
     # Success
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something/foo/bar', 206,
-                {'Content-Range': 'bytes 0-0/1'} , 'x')
+                {'Content-Range': 'bytes 0-0/1'}, 'x')
     handler.add('DELETE', '/v1/AUTH_something/foo/bar', 202, {'Connection': 'close'})
     with webserver.install_http_handler(handler):
         ret = gdal.Unlink('/vsiswift/foo/bar')
@@ -563,7 +563,7 @@ def vsiswift_fake_unlink():
     # Failure
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something/foo/bar', 206,
-                {'Content-Range': 'bytes 0-0/1'} , 'x')
+                {'Content-Range': 'bytes 0-0/1'}, 'x')
     handler.add('DELETE', '/v1/AUTH_something/foo/bar', 400, {'Connection': 'close'})
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
