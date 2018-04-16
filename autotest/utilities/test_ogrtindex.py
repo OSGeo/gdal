@@ -177,7 +177,7 @@ def test_ogrtindex_3():
         ('-src_srs_format EPSG', ['EPSG:4326', 'EPSG:32631']),
         ('-src_srs_format PROJ', ['+proj=longlat +datum=WGS84 +no_defs', '+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs']),
         ('-src_srs_format WKT', [wkt_epsg_4326, wkt_epsg_32631])
-        ]:
+    ]:
 
         if os.path.exists('tmp/tileindex.shp'):
             shape_drv.DeleteDataSource('tmp/tileindex.shp')
@@ -259,7 +259,7 @@ gdaltest_list = [
     test_ogrtindex_2,
     test_ogrtindex_3,
     test_ogrtindex_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

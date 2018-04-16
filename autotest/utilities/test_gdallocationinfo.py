@@ -169,7 +169,7 @@ gdaltest_list = [
     test_gdallocationinfo_4,
     test_gdallocationinfo_5,
     test_gdallocationinfo_6,
-    ]
+]
 
 
 if __name__ == '__main__':

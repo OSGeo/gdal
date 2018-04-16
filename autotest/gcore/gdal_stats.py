@@ -828,7 +828,7 @@ gdaltest_list = [
     stats_byte_partial_tiles,
     stats_uint16,
     stats_nodata_almost_max_float32,
-    ]
+]
 
 if __name__ == '__main__':
 

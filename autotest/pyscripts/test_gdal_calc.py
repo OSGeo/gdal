@@ -351,7 +351,7 @@ def test_gdal_calc_py_cleanup():
            'tmp/test_gdal_calc_py_5_2.tif',
            'tmp/test_gdal_calc_py_5_3.tif',
            'tmp/test_gdal_calc_py_6.tif',
-            ]
+           ]
     for filename in lst:
         try:
             os.remove(filename)
@@ -369,7 +369,7 @@ gdaltest_list = [
     test_gdal_calc_py_5,
     test_gdal_calc_py_6,
     test_gdal_calc_py_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

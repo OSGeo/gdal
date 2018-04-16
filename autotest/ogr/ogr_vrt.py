@@ -3541,7 +3541,7 @@ def ogr_vrt_38():
              ['MultiSurface', ogr.wkbMultiSurface],
              ['Curve', ogr.wkbCurve],
              ['Surface', ogr.wkbSurface]
-              ]
+             ]
 
     for (type_str, ogr_type) in types:
       for qualifier in ['', 'Z', 'M', 'ZM', '25D'] :

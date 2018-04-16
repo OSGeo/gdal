@@ -334,7 +334,7 @@ gdaltest_list = [
     ogr_gft_write,
     ogr_gft_ogr2ogr_non_spatial,
     ogr_gft_ogr2ogr_spatial,
-    ]
+]
 
 if __name__ == '__main__':
 

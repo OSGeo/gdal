@@ -85,7 +85,7 @@ def ogr_grass_2():
 gdaltest_list = [
     ogr_grass_1,
     ogr_grass_2
-    ]
+]
 
 
 if __name__ == '__main__':

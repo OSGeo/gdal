@@ -434,7 +434,7 @@ def ogr_mvt_tileset_json_field():
         "float_value": 1.25,
         "real_value": 1.23456789,
         "string_value": "str"
-        }:
+    }:
         gdaltest.post_reason('fail')
         print(f.GetFieldAsString("json"))
         return 'fail'

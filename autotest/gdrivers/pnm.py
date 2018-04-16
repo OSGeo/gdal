@@ -80,7 +80,7 @@ gdaltest_list = [
     pnm_2,
     pnm_3,
     pnm_4
-    ]
+]
 
 
 if __name__ == '__main__':

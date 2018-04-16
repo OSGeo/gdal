@@ -500,7 +500,7 @@ gdaltest_list = [
     georaster_2bit,
     georaster_4bit,
     georaster_cleanup
-    ]
+]
 
 if __name__ == '__main__':
 

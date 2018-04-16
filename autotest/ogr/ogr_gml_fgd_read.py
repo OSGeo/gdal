@@ -142,7 +142,7 @@ def ogr_gml_fgd_2():
 gdaltest_list = [
     ogr_gml_fgd_1,
     ogr_gml_fgd_2
-    ]
+]
 
 
 if __name__ == '__main__':

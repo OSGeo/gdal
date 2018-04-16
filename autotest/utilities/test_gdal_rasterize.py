@@ -479,7 +479,7 @@ gdaltest_list = [
     test_gdal_rasterize_7,
     test_gdal_rasterize_8,
     test_gdal_rasterize_cleanup
-    ]
+]
 
 if __name__ == '__main__':
 

@@ -298,7 +298,7 @@ gdaltest_list = [
     test_gdal_merge_4,
     test_gdal_merge_5,
     test_gdal_merge_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

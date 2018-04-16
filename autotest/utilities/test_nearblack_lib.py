@@ -222,7 +222,7 @@ gdaltest_list = [
     test_nearblack_lib_5,
     test_nearblack_lib_7,
     test_nearblack_lib_8,
-    ]
+]
 
 
 if __name__ == '__main__':

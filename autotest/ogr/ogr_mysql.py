@@ -1020,7 +1020,7 @@ gdaltest_list = [
     ogr_mysql_25,
     ogr_mysql_26,
     ogr_mysql_cleanup
-    ]
+]
 
 if __name__ == '__main__':
 

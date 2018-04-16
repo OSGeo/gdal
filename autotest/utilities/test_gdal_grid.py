@@ -947,7 +947,7 @@ gdaltest_list = [
     test_gdal_grid_11,
     test_gdal_grid_12,
     test_gdal_grid_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

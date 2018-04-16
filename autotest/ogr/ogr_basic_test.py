@@ -424,7 +424,7 @@ def ogr_basic_9():
                         [ogr.wkbMultiPolygon25D, "3D Multi Polygon"],
                         [ogr.wkbGeometryCollection25D, "3D Geometry Collection"],
                         [123456, "Unrecognized: 123456"]
-                         ]
+                        ]
 
     for geom_type_tuple in geom_type_tuples:
         if ogr.GeometryTypeToName(geom_type_tuple[0]) != geom_type_tuple[1]:

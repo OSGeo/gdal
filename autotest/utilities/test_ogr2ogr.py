@@ -2874,7 +2874,7 @@ gdaltest_list = [
     test_ogr2ogr_65,
     test_ogr2ogr_66,
     test_ogr2ogr_67
-    ]
+]
 
 # gdaltest_list = [ test_ogr2ogr_66 ]
 

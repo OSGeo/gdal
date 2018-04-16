@@ -441,7 +441,7 @@ gdaltest_list = [
     test_gdalsrsinfo_16,
     test_gdalsrsinfo_17,
     None
-    ]
+]
 
 
 if __name__ == '__main__':

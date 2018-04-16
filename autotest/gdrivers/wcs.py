@@ -400,7 +400,7 @@ def setupFct():
                 "-oo OuterExtents",
                 "-oo OuterExtents",
                 ""
-                ],
+            ],
             'Projwin' : "-projwin 145300 6737500 209680 6688700",
             'Outsize' : "-outsize $size 0",
             'Coverage' : [
@@ -415,7 +415,7 @@ def setupFct():
                 "-oo OuterExtents -oo NoGridAxisSwap",
                 "-oo OuterExtents -oo NoGridAxisSwap",
                 "-oo NoGridAxisSwap -oo SubsetAxisSwap"
-                ],
+            ],
             'Projwin' : "-projwin 145300 6737500 209680 6688700",
             'Outsize' : "-outsize $size 0",
             'Coverage' : ['smartsea:south', 'smartsea:south', 'smartsea:south', 'smartsea__south'],
@@ -429,7 +429,7 @@ def setupFct():
                 "-oo OuterExtents -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap",
                 "-oo OuterExtents -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap",
                 "-oo NoGridAxisSwap -oo SubsetAxisSwap",
-                ],
+            ],
             'Projwin' : "-projwin 3200000 6670000 3280000 6620000",
             'Outsize' : "-outsize $size 0",
             'Coverage' : [
@@ -445,7 +445,7 @@ def setupFct():
                 "-oo INTERLEAVE=PIXEL -oo OffsetsPositive -oo NrOffsets=2 -oo NoGridAxisSwap -oo BandIdentifier=none",
                 "-oo INTERLEAVE=PIXEL -oo OffsetsPositive -oo NrOffsets=2 -oo NoGridAxisSwap -oo BandIdentifier=none",
                 "-oo OriginAtBoundary",
-                ],
+            ],
             'Projwin' : "-projwin 10 45 15 35",
             'Outsize' : "-outsize $size 0",
             'Coverage' : 'BGS_EMODNET_CentralMed-MCol',
@@ -476,7 +476,7 @@ def setupFct():
                 "-oo NrOffsets=2",
                 "-oo NrOffsets=2",
                 "-oo UseScaleFactor"
-                ],
+            ],
             'Projwin' : "-projwin 181000 7005000 200000 6980000",
             'Outsize' : "-outsize $size 0",
             'Coverage' : [2, 2, 2, 2, 'Coverage2'],

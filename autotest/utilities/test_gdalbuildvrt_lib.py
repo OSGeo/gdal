@@ -116,7 +116,7 @@ def test_gdalbuildvrt_lib_2():
 gdaltest_list = [
     test_gdalbuildvrt_lib_1,
     test_gdalbuildvrt_lib_2,
-    ]
+]
 
 
 if __name__ == '__main__':

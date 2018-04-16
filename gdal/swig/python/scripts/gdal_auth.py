@@ -40,7 +40,7 @@ SCOPES = {
     'ft' : 'https://www.googleapis.com/auth/fusiontables',
     'storage': 'https://www.googleapis.com/auth/devstorage.read_only',
     'storage-rw': 'https://www.googleapis.com/auth/devstorage.read_write'
-    }
+}
 
 # =============================================================================
 # 	Usage()

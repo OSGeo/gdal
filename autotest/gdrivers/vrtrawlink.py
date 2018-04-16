@@ -67,7 +67,7 @@ def vrtrawlink_2():
     options = [
         'subClass=VRTRawRasterBand',
         'SourceFilename=data/small.raw'
-        ]
+    ]
 
     result = ds.AddBand(gdal.GDT_Byte, options)
     if result != gdal.CE_None:
@@ -126,7 +126,7 @@ def vrtrawlink_4():
         'PixelOffset=3',
         'LineOffset=93',
         'ByteOrder=MSB'
-        ]
+    ]
 
     result = gdaltest.rawlink_ds.AddBand(gdal.GDT_UInt16, options)
     if result != gdal.CE_None:
@@ -189,7 +189,7 @@ def vrtrawlink_5():
         'PixelOffset=3',
         'LineOffset=93',
         'ByteOrder=MSB'
-        ]
+    ]
 
     result = ds.AddBand(gdal.GDT_UInt16, options)
     if result != gdal.CE_None:
@@ -238,7 +238,7 @@ def vrtrawlink_6():
         'PixelOffset=3',
         'LineOffset=93',
         'ByteOrder=MSB'
-        ]
+    ]
 
     result = ds.AddBand(gdal.GDT_UInt16, options)
     if result != gdal.CE_None:
@@ -285,7 +285,7 @@ def vrtrawlink_7():
         'PixelOffset=3',
         'LineOffset=93',
         'ByteOrder=MSB'
-        ]
+    ]
 
     result = ds.AddBand(gdal.GDT_UInt16, options)
     if result != gdal.CE_None:

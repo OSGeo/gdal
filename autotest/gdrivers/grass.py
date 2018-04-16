@@ -84,7 +84,7 @@ def grass_2():
 gdaltest_list = [
     grass_1,
     grass_2
-    ]
+]
 
 
 if __name__ == '__main__':

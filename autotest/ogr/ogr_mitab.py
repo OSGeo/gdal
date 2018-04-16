@@ -1896,7 +1896,7 @@ def ogr_mitab_35():
                      'CoordSys Earth Projection 31, 104, "m", 1, 2, 3, 4, 5',
                      'CoordSys Earth Projection 32, 104, "m", 1, 2, 3, 4, 5, 6',
                      'CoordSys Earth Projection 33, 104, "m", 1, 2, 3, 4',
-                      ]:
+                     ]:
         srs = get_srs_from_coordsys(coordsys)
         #print(srs)
         got_coordsys = get_coordsys_from_srs(srs)
@@ -2734,7 +2734,7 @@ gdaltest_list = [
     ogr_mitab_tab_field_index_creation,
     ogr_mitab_tab_view,
     ogr_mitab_cleanup
-    ]
+]
 
 if __name__ == '__main__':
 

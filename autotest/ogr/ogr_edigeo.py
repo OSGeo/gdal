@@ -88,7 +88,7 @@ def ogr_edigeo_1():
               ('TSURF_id', ogr.wkbPolygon, 3),
               ('ZONCOMMUNI_id', ogr.wkbLineString, 15),
               ('ID_S_OBJ_Z_1_2_2', ogr.wkbPoint, 248),
-               ]
+              ]
 
     for l in layers:
         lyr = ds.GetLayerByName(l[0])

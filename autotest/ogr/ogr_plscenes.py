@@ -845,7 +845,7 @@ gdaltest_list = [
     ogr_plscenes_data_v1_nominal,
     ogr_plscenes_data_v1_errors,
     ogr_plscenes_data_v1_live
-    ]
+]
 
 if __name__ == '__main__':
 

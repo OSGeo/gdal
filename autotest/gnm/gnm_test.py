@@ -292,7 +292,7 @@ gdaltest_list = [
     gnm_graph_kshortest,
     gnm_graph_connectedcomponents,
     gnm_delete
-    ]
+]
 
 if __name__ == '__main__':
 

@@ -185,7 +185,7 @@ codes = {gdalconst.GDT_Byte      : numpy.uint8,
          gdalconst.GDT_CInt32    : numpy.complex64,
          gdalconst.GDT_CFloat32  : numpy.complex64,
          gdalconst.GDT_CFloat64  : numpy.complex128
-        }
+         }
 
 
 def OpenArray(array, prototype_ds=None):

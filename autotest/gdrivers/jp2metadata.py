@@ -228,7 +228,7 @@ gdaltest_list = [
     jp2metadata_3,
     jp2metadata_4,
     jp2metadata_5
-    ]
+]
 
 
 if __name__ == '__main__':

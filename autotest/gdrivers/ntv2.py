@@ -195,7 +195,7 @@ gdaltest_list = [
     ntv2_online_1,
     ntv2_online_2,
     ntv2_online_3,
-    ]
+]
 
 
 if __name__ == '__main__':

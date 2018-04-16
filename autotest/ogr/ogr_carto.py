@@ -1276,7 +1276,7 @@ gdaltest_list = [
     ogr_carto_vsimem,
     ogr_carto_vsimem_cleanup,
     ogr_carto_test_ogrsf
-    ]
+]
 
 
 gdaltest_rw_list = [

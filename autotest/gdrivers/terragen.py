@@ -63,7 +63,7 @@ def terragen_2():
 gdaltest_list = [
     terragen_1,
     terragen_2
-    ]
+]
 
 
 if __name__ == '__main__':

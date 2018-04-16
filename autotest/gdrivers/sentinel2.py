@@ -2406,7 +2406,7 @@ gdaltest_list = [
     sentinel2_l1c_safe_compact_1,
     sentinel2_l1c_safe_compact_2,
     sentinel2_l1c_safe_compact_3
-    ]
+]
 
 if __name__ == '__main__':
 

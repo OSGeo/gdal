@@ -336,7 +336,7 @@ gdaltest_list = [
     test_gdal_retile_3,
     test_gdal_retile_4,
     test_gdal_retile_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

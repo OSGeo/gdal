@@ -369,7 +369,7 @@ gdaltest_list = [
     dted_14,
     dted_15,
     dted_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

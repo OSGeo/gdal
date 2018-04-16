@@ -300,7 +300,7 @@ gdaltest_list = [
     test_python2_does_not_give_warning_if_bad_lc_ctype_and_all_ascii_chars,
     test_python2_does_not_give_warning_if_bad_lc_ctype_and_non_ascii_chars_in_folder,
     test_gdal2tiles_py_cleanup,
-    ]
+]
 
 
 if __name__ == '__main__':

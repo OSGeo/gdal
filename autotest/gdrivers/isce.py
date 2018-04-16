@@ -101,7 +101,7 @@ gdaltest_list = [
     isce_2,
     isce_3,
     isce_4,
-    ]
+]
 
 
 if __name__ == '__main__':

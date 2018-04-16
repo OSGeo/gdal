@@ -548,7 +548,7 @@ def kea_10():
                                   (gdal.GDT_Int32, -2147483649, None),
                                   (gdal.GDT_Int32, 2147483648, None),
                                   (gdal.GDT_Float32, 0.5, 0.5),
-                                 ]:
+                                  ]:
         ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, dt)
         if ds.GetRasterBand(1).GetNoDataValue() is not None:
             gdaltest.post_reason('fail')
@@ -889,7 +889,7 @@ gdaltest_list = [
     kea_12,
     kea_13,
     kea_14
-    ]
+]
 
 if __name__ == '__main__':
 

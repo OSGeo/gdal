@@ -69,7 +69,7 @@ gdaltest_list = [
     sgi_1,
     sgi_2,
     sgi_3,
-    ]
+]
 
 
 if __name__ == '__main__':

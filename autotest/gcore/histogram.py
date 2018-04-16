@@ -173,7 +173,7 @@ gdaltest_list = [
     histogram_4,
     histogram_5,
     histogram_6
-    ]
+]
 
 if __name__ == '__main__':
 

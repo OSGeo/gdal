@@ -188,7 +188,7 @@ gdaltest_list = [
     ida_5,
     ida_6,
     ida_7
-    ]
+]
 
 
 if __name__ == '__main__':

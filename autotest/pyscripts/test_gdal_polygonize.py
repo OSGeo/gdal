@@ -225,7 +225,7 @@ gdaltest_list = [
     test_gdal_polygonize_2,
     test_gdal_polygonize_3,
     test_gdal_polygonize_4
-    ]
+]
 
 if __name__ == '__main__':
 

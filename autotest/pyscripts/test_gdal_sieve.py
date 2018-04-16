@@ -79,7 +79,7 @@ def test_gdal_sieve_1():
 
 gdaltest_list = [
     test_gdal_sieve_1,
-    ]
+]
 
 if __name__ == '__main__':
 

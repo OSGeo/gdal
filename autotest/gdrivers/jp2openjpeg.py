@@ -1394,7 +1394,7 @@ def jp2openjpeg_28():
              (['CODEBLOCK_WIDTH=128', 'CODEBLOCK_HEIGHT=128'], 64, 64, True),
              (['CODEBLOCK_WIDTH=63'], 32, 64, True),
              (['CODEBLOCK_WIDTH=32', 'CODEBLOCK_HEIGHT=32'], 32, 32, False),
-              ]
+             ]
 
     for (options, expected_cbkw, expected_cbkh, warning_expected) in tests:
         gdal.ErrorReset()
@@ -1432,7 +1432,7 @@ def jp2openjpeg_29():
              (['TILEPARTS=LAYERS', 'QUALITY=1,2'], False),
              (['TILEPARTS=COMPONENTS'], False),
              (['TILEPARTS=ILLEGAL'], True),
-              ]
+             ]
 
     for (options, warning_expected) in tests:
         gdal.ErrorReset()
@@ -1474,7 +1474,7 @@ def jp2openjpeg_30():
              (['QUALITY=100', 'REVERSIBLE=YES'], False),
              (['QUALITY=50'], True),
              (['REVERSIBLE=NO'], True),
-              ]
+             ]
 
     for (options, warning_expected) in tests:
         gdal.ErrorReset()
@@ -2579,13 +2579,13 @@ def jp2openjpeg_45():
                     "content": "<invalid_content",
                     "parent_node": "invalid_value"
                 }
-            ],
+        ],
 
         "annotations": [
                 "/vsimem/i_dont_exist.shp",
                 "/vsimem/i_dont_exist.kml",
                 "../gcore/data/byte.tif"
-            ],
+        ],
 
         "gml_filelist": [
                 "/vsimem/i_dont_exist.xml",
@@ -2595,7 +2595,7 @@ def jp2openjpeg_45():
                     "parent_node": "invalid_value",
                     "schema_location": "gmljp2://xml/schema_that_does_not_exist.xsd"
                 },
-            ],
+        ],
 
         "styles": [
                 "/vsimem/i_dont_exist.xml",
@@ -2604,7 +2604,7 @@ def jp2openjpeg_45():
                     "file": "/vsimem/i_dont_exist.xml",
                     "parent_node": "invalid_value"
                 }
-            ],
+        ],
 
         "extensions": [
                 "/vsimem/i_dont_exist.xml",
@@ -2613,7 +2613,7 @@ def jp2openjpeg_45():
                     "file": "/vsimem/i_dont_exist.xml",
                     "parent_node": "invalid_value"
                 }
-            ]
+        ]
     },
 
     "boxes" : [
@@ -2785,12 +2785,12 @@ def jp2openjpeg_45():
 </gmljp2:eopMetadata>""",
                     "parent_node": "GridCoverage"
                 }
-            ],
+        ],
 
         "annotations": [
                 "/vsimem/myshape.shp",
                 "/vsimem/empty.kml"
-            ],
+        ],
 
         "gml_filelist": [
                 "/vsimem/feature.xml",
@@ -2817,7 +2817,7 @@ def jp2openjpeg_45():
                     "namespace": "http://ogr.maptools.org/",
                     "schema_location": "gmljp2://xml/a_schema.xsd"
                 }
-            ],
+        ],
 
         "styles" : [
                 "/vsimem/style1.xml",
@@ -2832,7 +2832,7 @@ def jp2openjpeg_45():
                 {
                     "file": "/vsimem/style4.xml"
                 }
-            ],
+        ],
 
         "extensions" : [
                 "/vsimem/extension1.xml",
@@ -2847,7 +2847,7 @@ def jp2openjpeg_45():
                 {
                     "file": "/vsimem/extension4.xml"
                 }
-            ]
+        ]
     },
 
     "boxes" : [
@@ -3155,7 +3155,7 @@ def jp2openjpeg_46():
                         "source": "/vsimem/source.xml",
                     }
                 }
-            ]
+        ]
     }
 }
 
@@ -3238,7 +3238,7 @@ yeah: """) < 0:
                         "source": "/vsimem/source.xml",
                     }
                 }
-            ]
+        ]
     }
 }
     gdal.ErrorReset()
@@ -3262,7 +3262,7 @@ yeah: """) < 0:
                         "source": "/vsimem/not_existing_source.xml",
                     }
                 }
-            ]
+        ]
     }
 }
     gdal.ErrorReset()
@@ -3286,7 +3286,7 @@ yeah: """) < 0:
                         "source": "/vsimem/source.xml",
                     }
                 }
-            ]
+        ]
     }
 }
     gdal.ErrorReset()
@@ -3553,7 +3553,7 @@ def jp2openjpeg_49():
              ('WORLDFILE,PAM,INTERNAL', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('WORLDFILE,INTERNAL,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('NONE', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ]
+             ]
 
     for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
         gdal.SetConfigOption('GDAL_GEOREF_SOURCES', config_option_value)
@@ -3609,7 +3609,7 @@ def jp2openjpeg_49():
              ('WORLDFILE,PAM,INTERNAL', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('WORLDFILE,INTERNAL,PAM', True, True, '26711', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('NONE', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ]
+             ]
 
     for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
         gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2', open('data/inconsitant_geojp2_gmljp2.jp2', 'rb').read())

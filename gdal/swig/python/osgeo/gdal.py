@@ -121,7 +121,7 @@ array_modes = {gdalconst.GDT_Int16: ("%si2" % byteorders[sys.byteorder]),
                gdalconst.GDT_CFloat32: ("%sf4" % byteorders[sys.byteorder]),
                gdalconst.GDT_CFloat64: ("%sf8" % byteorders[sys.byteorder]),
                gdalconst.GDT_Byte: ("%st8" % byteorders[sys.byteorder]),
-}
+               }
 
 
 def RGBFile2PCTFile(src_filename, dst_filename):

@@ -381,7 +381,7 @@ gdaltest_list = [
     ers_9,
     ers_10,
     ers_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':
