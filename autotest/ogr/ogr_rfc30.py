@@ -37,7 +37,7 @@ sys.path.append('../pymod')
 import gdaltest
 
 ###############################################################################
-## Try ogr.Open(), Driver.CreateDataSource(), Driver.DeleteDataSource()
+# Try ogr.Open(), Driver.CreateDataSource(), Driver.DeleteDataSource()
 
 
 def ogr_rfc30_1_internal(filename, layer_name):

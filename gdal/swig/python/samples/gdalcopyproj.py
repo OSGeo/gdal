@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#******************************************************************************
+# ******************************************************************************
 #  $Id$
 #
 #  Name:     gdalcopyproj.py
@@ -10,7 +10,7 @@
 #	     ignores or discards georeferencing metadata.
 #  Author:   Schuyler Erle, schuyler@nocat.net
 #
-#******************************************************************************
+# ******************************************************************************
 #  Copyright (c) 2005, Frank Warmerdam
 #  Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
 #
@@ -31,7 +31,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
+# ******************************************************************************
 
 import sys
 

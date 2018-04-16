@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#******************************************************************************
+# ******************************************************************************
 #  $Id$
 #
 #  Project:  GDAL
 #  Purpose:  Dump JPEG2000 file structure
 #  Author:   Even Rouault, <even dot rouault at spatialys dot com>
 #
-#******************************************************************************
+# ******************************************************************************
 #  Copyright (c) 2015, European Union (European Environment Agency)
 #  Copyright (c) 2015, European Union Satellite Centre
 #
@@ -28,7 +28,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
+# ******************************************************************************
 
 import sys
 from osgeo import gdal

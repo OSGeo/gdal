@@ -665,7 +665,7 @@ def osr_esri_test(wkt_esri, wkt_ogc, proj4):
     if not silent:
         print('osr_esri_test( ) \nwkt_esri=' + wkt_esri + '\nwkt_ogc= ' + wkt_ogc + '\nproj4=' + proj4)
 
-    #esri->ogc, esri->proj
+    # esri->ogc, esri->proj
     if not silent:
         print('\nesri->ogc, esri->proj\n')
     srs_esri.SetFromUserInput(wkt_esri)
@@ -687,7 +687,7 @@ def osr_esri_test(wkt_esri, wkt_ogc, proj4):
         print('wkt_esri_to_proj4 failed for ' + proj4)
         result = 'fail'
 
-    #ogc->esri, ogc->proj
+    # ogc->esri, ogc->proj
     if not silent:
         print('\nogc->esri, ogc->proj\n')
     srs_esri.SetFromUserInput(wkt_esri)
@@ -709,7 +709,7 @@ def osr_esri_test(wkt_esri, wkt_ogc, proj4):
         print('wkt_ogc_to_proj4 failed for ' + proj4)
         result = 'fail'
 
-    #proj->esri, proj->ogc
+    # proj->esri, proj->ogc
     if not silent:
         print('\nproj->esri, proj->ogc\n')
     srs_esri.SetFromUserInput(proj4)
@@ -743,7 +743,7 @@ def osr_esri_20():
     result = 'success'
 
     # Stereographic / Stereographic / +proj=stere +lat_0=0 +lon_0=0 ...
-    #modified definitions from ESRI 'Stereographic (world).prj'
+    # modified definitions from ESRI 'Stereographic (world).prj'
     stere_esri = 'PROJCS["World_Stereographic",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Stereographic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]'
     stere_ogc = 'PROJCS["World_Stereographic",GEOGCS["GCS_WGS_1984",DATUM["WGS_84",SPHEROID["WGS_84",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Stereographic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]'
     stere_proj4 = '+proj=stere +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs '
@@ -751,14 +751,14 @@ def osr_esri_20():
     result1 = osr_esri_test(stere_esri, stere_ogc, stere_proj4)
 
     # Double_Stereographic / Oblique_Stereographic / +proj=sterea +lat_0=46 +lon_0=25 ...
-    #modified definitions from ESRI 'Stereo 1970.prj'
+    # modified definitions from ESRI 'Stereo 1970.prj'
     sterea_esri = 'PROJCS["Stereo_70",GEOGCS["GCS_Dealul_Piscului_1970",DATUM["D_Dealul_Piscului_1970",SPHEROID["Krasovsky_1940",6378245.0,298.3]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Double_Stereographic"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",500000.0],PARAMETER["Central_Meridian",25.0],PARAMETER["Scale_Factor",0.99975],PARAMETER["Latitude_Of_Origin",46.0],UNIT["Meter",1.0]]'
     sterea_ogc = 'PROJCS["Stereo_70",GEOGCS["GCS_Dealul_Piscului_1970",DATUM["Dealul_Piscului_1970",SPHEROID["Krasovsky_1940",6378245.0,298.3]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Oblique_Stereographic"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",500000.0],PARAMETER["Central_Meridian",25.0],PARAMETER["Scale_Factor",0.99975],PARAMETER["Latitude_Of_Origin",46.0],UNIT["Meter",1.0]]'
     sterea_proj4 = '+proj=sterea +lat_0=46 +lon_0=25 +k=0.99975 +x_0=500000 +y_0=500000 +ellps=krass +units=m +no_defs '
     result2 = osr_esri_test(sterea_esri, sterea_ogc, sterea_proj4)
 
     # Stereographic_North_Pole / Polar_Stereographic / +proj=stere +lat_0=90 +lat_ts=70 ...
-    #modified definitions from ESRI 'WGS 1984 NSIDC Sea Ice Polar Stereographic North.prj'
+    # modified definitions from ESRI 'WGS 1984 NSIDC Sea Ice Polar Stereographic North.prj'
     sterep_esri = 'PROJCS["WGS_1984_NSIDC_Sea_Ice_Polar_Stereographic_North",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Stereographic_North_Pole"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-45.0],PARAMETER["Standard_Parallel_1",70.0],UNIT["Meter",1.0]]'
     sterep_ogc = 'PROJCS["WGS_1984_NSIDC_Sea_Ice_Polar_Stereographic_North",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Polar_Stereographic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-45.0],PARAMETER["latitude_of_origin",70.0],UNIT["Meter",1.0]]'
     sterep_proj4 = '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs '
@@ -821,7 +821,7 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
     if check_wkt:
         of_wkt = open(ofile_wkt, 'w')
 
-    #open input file
+    # open input file
     if os.path.splitext(ifile)[1] == '.gz':
         f = gzip.open(ifile, 'rb')
     else:
@@ -830,21 +830,21 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
 
     csv.DictReader(gdal.FindFile('gdal', 'gcs.csv'), 'epsg_gcs2', 'GEOGCS', True)
 
-    #set GDAL_FIX_ESRI_WKT option
+    # set GDAL_FIX_ESRI_WKT option
     fix_config_bak = gdal.GetConfigOption('GDAL_FIX_ESRI_WKT')
     gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', fix_config)
 
-    #need to be quiet because some codes raise errors
+    # need to be quiet because some codes raise errors
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
-    #parse all lines
+    # parse all lines
     for iline in csv_reader:
 
         epsg_code = int(iline['COORD_REF_SYS_CODE'])
         if iline['WKT'] is None or iline['WKT'] == '':
             continue
 
-        #read wkt and morph from ESRI
+        # read wkt and morph from ESRI
         srs1 = osr.SpatialReference()
         srs1.ImportFromWkt(iline['WKT'])
         wkt1 = srs1.ExportToWkt()
@@ -852,12 +852,12 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
         srs2.MorphFromESRI()
         #wkt2 = srs2.ExportToWkt()
 
-        #morph back to ESRI
+        # morph back to ESRI
         srs3 = srs2.Clone()
         srs3.MorphToESRI()
         wkt3 = srs3.ExportToWkt()
 
-        #manage special cases of PROJECTION parameters that have multiple mappings
+        # manage special cases of PROJECTION parameters that have multiple mappings
         remap_proj = dict([['Transverse_Mercator', 'Gauss_Kruger'], ['Equidistant_Cylindrical', 'Plate_Carree'], \
                            ['Hotine_Oblique_Mercator_Azimuth_Natural_Origin', 'Hotine_Oblique_Mercator_Azimuth_Center']])
         proj1 = srs1.GetAttrValue('PROJCS|PROJECTION')
@@ -866,15 +866,15 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
             srs3.SetAttrValue('PROJCS|PROJECTION', remap_proj[proj3])
             wkt3 = srs3.ExportToWkt()
 
-        #check epsg
+        # check epsg
         if check_epsg:
             epsg2 = srs2.GetAuthorityCode('GEOGCS')
             if epsg2 is None or int(epsg2) != epsg_code:
-                #check why epsg codes conflict
+                # check why epsg codes conflict
                 srs4 = osr.SpatialReference()
-                #check if EPSG code imports ok
+                # check if EPSG code imports ok
                 if srs4.ImportFromEPSG(epsg_code) != 0:
-                    #of_epsg.write( 'ERROR: #'+str(epsg_code)+', EPSG does not exist\n')
+                    # of_epsg.write( 'ERROR: #'+str(epsg_code)+', EPSG does not exist\n')
                     epsg_ne = epsg_ne + ' ' + str(epsg_code)
                 else:
                     if epsg2 is None:
@@ -886,23 +886,23 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
                     failed_epsg_count = failed_epsg_count + 1
                     of_epsg.write('wkt1: ' + wkt1 + '\n' + 'wkt3: ' + wkt3 + '\n')
 
-        #check srs
+        # check srs
         if check_srs and not srs1.IsSame(srs3):
             failed_srs_count = failed_srs_count + 1
             of_srs.write('ERROR: SRS not matching for # ' + iline['COORD_REF_SYS_CODE'] + '\n')
             of_srs.write('wkt1: ' + wkt1 + '\n' + 'wkt3: ' + wkt3 + '\n')
 
-        #check wkt
+        # check wkt
         if check_wkt and wkt1 != wkt3:
             failed_wkt_count = failed_wkt_count + 1
             of_wkt.write('WARNING: WKT not matching for # ' + iline['COORD_REF_SYS_CODE'] + '\n')
             of_wkt.write('wkt1: ' + wkt1 + '\n' + 'wkt3: ' + wkt3 + '\n')
 
-    #revert
+    # revert
     gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', fix_config_bak)
     gdal.PopErrorHandler()
 
-    #close files and report
+    # close files and report
     if check_epsg:
         of_epsg.close()
         if failed_epsg_count > 0:
@@ -1002,25 +1002,25 @@ def osr_esri_test_ogc_esri_ogc(ifile, ofile_base, fix_config='NO', check_epsg=Fa
     if check_wkt:
         of_wkt = open(ofile_wkt, 'w')
 
-    #open input file
+    # open input file
     if os.path.splitext(ifile)[1] == '.gz':
         f = gzip.open(ifile, 'rb')
     else:
         f = open(ifile, 'rt')
     csv_reader = csv.DictReader(f, delimiter=',')
 
-    #set GDAL_FIX_ESRI_WKT option
+    # set GDAL_FIX_ESRI_WKT option
     fix_config_bak = gdal.GetConfigOption('GDAL_FIX_ESRI_WKT')
     gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', fix_config)
 
-    #need to be quiet because some codes raise errors
+    # need to be quiet because some codes raise errors
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
-    #parse all lines
+    # parse all lines
     for iline in csv_reader:
         epsg_code = int(iline['COORD_REF_SYS_CODE'])
 
-        #import from EPSG code
+        # import from EPSG code
         srs1 = osr.SpatialReference()
         if srs1.ImportFromEPSG(epsg_code) != 0:
             continue
@@ -1033,30 +1033,30 @@ def osr_esri_test_ogc_esri_ogc(ifile, ofile_base, fix_config='NO', check_epsg=Fa
 
         wkt1 = srs1.ExportToWkt()
 
-        #morph to ESRI
+        # morph to ESRI
         srs2 = srs1.Clone()
         srs2.MorphToESRI()
         #wkt2 = srs2.ExportToWkt()
 
-        #morph back from ESRI
+        # morph back from ESRI
         srs3 = srs2.Clone()
         srs3.MorphFromESRI()
         wkt3 = srs3.ExportToWkt()
 
-        #manage special cases
-        #missing rectified_grid_angle (e.g. EPSG:2057)
+        # manage special cases
+        # missing rectified_grid_angle (e.g. EPSG:2057)
         if srs1.GetProjParm('rectified_grid_angle') != 0:
             srs3.SetProjParm('rectified_grid_angle', srs1.GetProjParm('rectified_grid_angle'))
             wkt3 = srs3.ExportToWkt()
-        #missing scale_factor for Polar_Stereographic (e.g. EPSG:3031)
+        # missing scale_factor for Polar_Stereographic (e.g. EPSG:3031)
         if proj1 == 'Polar_Stereographic':
             if srs1.GetProjParm('scale_factor') != 0:
                 srs3.SetProjParm('scale_factor', srs1.GetProjParm('scale_factor'))
                 wkt3 = srs3.ExportToWkt()
 
-        #do checks
+        # do checks
 
-        #check epsg
+        # check epsg
         if check_epsg:
             epsg3 = srs3.GetAuthorityCode('GEOGCS')
             if epsg3 is None or int(epsg3) != epsg_code:
@@ -1066,34 +1066,34 @@ def osr_esri_test_ogc_esri_ogc(ifile, ofile_base, fix_config='NO', check_epsg=Fa
                 of_epsg.write('wkt1: ' + wkt1 + '\n' + 'wkt3: ' + wkt3 + '\n')
                 #of_epsg.write( srs1.ExportToPrettyWkt()+'\n'+srs3.ExportToPrettyWkt()+'\n' )
 
-        #strip CT - add option for this and make more tests
+        # strip CT - add option for this and make more tests
         srs1.StripCTParms()
         wkt1 = srs1.ExportToWkt()
         srs3.StripCTParms()
         wkt3 = srs3.ExportToWkt()
 
-        #check srs
+        # check srs
         if check_srs and not srs1.IsSame(srs3):
             failed_srs_count = failed_srs_count + 1
             of_srs.write('ERROR: SRS not matching for EPSG:' + str(epsg_code) + '\n')
             of_srs.write('wkt1: ' + wkt1 + '\n' + 'wkt3: ' + wkt3 + '\n')
 
-        #check wkt
+        # check wkt
         if check_wkt and wkt1 != wkt3:
             failed_wkt_count = failed_wkt_count + 1
             of_wkt.write('WARNING: WKT not matching for EPSG:' + str(epsg_code) + '\n')
             of_wkt.write('wkt1: ' + wkt1 + '\n' + 'wkt3: ' + wkt3 + '\n')
 
-    #revert
+    # revert
     gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', fix_config_bak)
     gdal.PopErrorHandler()
 
-    #close files and report
+    # close files and report
     if check_epsg:
         of_epsg.close()
         if failed_epsg_count > 0 :
             print('ERROR: Failed %d EPSG tests, see file %s' % (failed_epsg_count, ofile_epsg))
-            #print(epsg_error)
+            # print(epsg_error)
             result = 'fail'
         else:
             os.unlink(ofile_epsg)
@@ -1622,7 +1622,7 @@ if __name__ == '__main__':
 
     gdaltest.setup_run('osr_esri')
 
-    #make sure GDAL_FIX_ESRI_WKT does not interfere with tests
+    # make sure GDAL_FIX_ESRI_WKT does not interfere with tests
     gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', 'NO')
     gdaltest.run_tests(gdaltest_list)
 

@@ -869,7 +869,7 @@ def ogr_sql_28():
 
     for query in queries:
         gdal.ErrorReset()
-        #print query
+        # print query
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         sql_lyr = ds.ExecuteSQL(query)
         gdal.PopErrorHandler()

@@ -98,7 +98,7 @@ def osr_basic_2():
 
     srs = osr.SpatialReference()
     srs.SetStatePlane(403, 1)  # California III NAD83.
-    #print srs.ExportToPrettyWkt()
+    # print srs.ExportToPrettyWkt()
 
     parm_list = \
     [(osr.SRS_PP_STANDARD_PARALLEL_1, 38.43333333333333),
@@ -145,7 +145,7 @@ def osr_basic_3():
 
     # California III NAD83 (feet)
     srs.SetStatePlane(403, 1, 'Foot', 0.3048006096012192)
-    #print srs.ExportToPrettyWkt()
+    # print srs.ExportToPrettyWkt()
 
     parm_list = \
     [(osr.SRS_PP_STANDARD_PARALLEL_1, 38.43333333333333),

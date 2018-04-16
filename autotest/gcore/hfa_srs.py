@@ -52,7 +52,7 @@ class TestHFASRS:
         sr.ImportFromEPSG(self.epsg_code)
         if self.use_epsg_code == 0:
             proj4str = sr.ExportToProj4()
-            #print(proj4str)
+            # print(proj4str)
             sr.SetFromUserInput(proj4str)
 
         ds = gdal.GetDriverByName('HFA').Create('/vsimem/TestHFASRS.img', 1, 1)
@@ -77,8 +77,8 @@ class TestHFASRS:
         if (self.epsg_code == 4326 and sr2.GetAuthorityCode(None) != '4326') or sr.IsSame(sr2) != 1:
             if self.expected_fail:
                 print('did not get expected SRS. known to be broken currently. FIXME!')
-                #print(sr)
-                #print(sr2)
+                # print(sr)
+                # print(sr2)
                 return 'expected_fail'
 
             gdaltest.post_reason('did not get expected SRS')

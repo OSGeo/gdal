@@ -215,7 +215,7 @@ def vsifile_4():
 
     fp = gdal.VSIFOpenL('vsifile.py', 'rb')
     data = gdal.VSIFReadL(1000000, 1, fp)
-    #print(len(data))
+    # print(len(data))
     gdal.VSIFSeekL(fp, 0, 0)
     data = gdal.VSIFReadL(1, 1000000, fp)
     if len(data) == 0:

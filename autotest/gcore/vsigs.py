@@ -1212,10 +1212,10 @@ def vsigs_extra_1():
     if not gdaltest.built_against_curl():
         return 'skip'
 
-    #if gdal.GetConfigOption('GS_SECRET_ACCESS_KEY') is None:
+    # if gdal.GetConfigOption('GS_SECRET_ACCESS_KEY') is None:
     #    print('Missing GS_SECRET_ACCESS_KEY for running gdaltest_list_extra')
     #    return 'skip'
-    #elif gdal.GetConfigOption('GS_ACCESS_KEY_ID') is None:
+    # elif gdal.GetConfigOption('GS_ACCESS_KEY_ID') is None:
     #    print('Missing GS_ACCESS_KEY_ID for running gdaltest_list_extra')
     #    return 'skip'
 

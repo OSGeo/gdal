@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#******************************************************************************
+# ******************************************************************************
 #
 #  Project:  GDAL
 #  Purpose:  Use HTDP to generate PROJ.4 compatible datum grid shift files.
@@ -8,7 +8,7 @@
 # See also: http://www.ngs.noaa.gov/TOOLS/Htdp/Htdp.shtml
 #           http://trac.osgeo.org/proj/wiki/HTDPGrids
 #
-#******************************************************************************
+# ******************************************************************************
 #  Copyright (c) 2012, Frank Warmerdam <warmerdam@pobox.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,7 +28,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
+# ******************************************************************************
 
 import os
 import numpy

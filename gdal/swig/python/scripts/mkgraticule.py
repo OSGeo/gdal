@@ -114,7 +114,7 @@ if outfile is None:
 if substepsize > stepsize:
     substepsize = stepsize
 
-#############################################################################-
+# -
 # Do we have an alternate SRS?
 
 ct = None
@@ -131,7 +131,7 @@ else:
     t_srs_o = osr.SpatialReference()
     t_srs_o.SetFromUserInput('WGS84')
 
-#############################################################################-
+# -
 # Create graticule file.
 
 drv = ogr.GetDriverByName('ESRI Shapefile')

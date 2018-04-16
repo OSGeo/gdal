@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#******************************************************************************
+# ******************************************************************************
 #  $Id$
 #
 #  Project:  GDAL
 #  Purpose:  Validate JPEG2000 file structure
 #  Author:   Even Rouault, <even dot rouault at spatialys dot com>
 #
-#******************************************************************************
+# ******************************************************************************
 #  Copyright (c) 2015, European Union (European Environment Agency)
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
@@ -27,7 +27,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
+# ******************************************************************************
 
 import os
 import sys

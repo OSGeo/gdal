@@ -2414,7 +2414,7 @@ def ecw_online_7():
 
 def ecw_cleanup():
 
-    #gdaltest.clean_tmp()
+    # gdaltest.clean_tmp()
 
     try:
         os.remove('tmp/jrc_out.ecw')
@@ -2558,7 +2558,7 @@ gdaltest_list = [
     ecw_49,
     ecw_online_1,
     ecw_online_2,
-    #JTO this test does not make sense. It tests difference between two files pixel by pixel but compression is lossy# ecw_online_3,
+    # JTO this test does not make sense. It tests difference between two files pixel by pixel but compression is lossy# ecw_online_3,
     ecw_online_4,
     ecw_online_5,
     ecw_online_6,

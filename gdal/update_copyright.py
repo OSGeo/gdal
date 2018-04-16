@@ -67,7 +67,7 @@ for dirname, dirnames, filenames in os.walk('.'):
             continue
         fullfilename = os.path.join(dirname, filename)
 
-        #print(fullfilename)
+        # print(fullfilename)
         minyear = -1
         maxyear = -1
 

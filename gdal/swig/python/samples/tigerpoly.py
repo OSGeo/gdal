@@ -217,7 +217,7 @@ while feat is not None:
             feat = poly_layer.GetNextFeature()
             continue
 
-        #print poly.ExportToWkt()
+        # print poly.ExportToWkt()
         #feat.SetGeometryDirectly( poly )
 
         feat2 = ogr.Feature(feature_def=shp_layer.GetLayerDefn())

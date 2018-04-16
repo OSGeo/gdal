@@ -327,7 +327,7 @@ def testnonboundtoswig_VRTDerivedBands():
 
     my_cDerivedPixelFunc = DerivedPixelFuncType(my_pyDerivedPixelFunc)
 
-    #CPLErr CPL_DLL CPL_STDCALL GDALAddDerivedBandPixelFunc( const char *pszName,
+    # CPLErr CPL_DLL CPL_STDCALL GDALAddDerivedBandPixelFunc( const char *pszName,
     #                                GDALDerivedPixelFunc pfnPixelFunc );
 
     gdal_handle_stdcall.GDALAddDerivedBandPixelFunc.argtypes = [ctypes.c_char_p, DerivedPixelFuncType]

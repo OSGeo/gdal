@@ -114,10 +114,10 @@ def ogr_rfc35_sqlite_1():
 
 
 def Truncate(val, lyr_defn, fieldname):
-    #if val is None:
+    # if val is None:
     #    return val
 
-    #return val[0:lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex(fieldname)).GetWidth()]
+    # return val[0:lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex(fieldname)).GetWidth()]
     # Mem driver doesn't actually truncate
     return val
 
@@ -374,7 +374,7 @@ def ogr_rfc35_sqlite_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    #if feat.GetField("intfield") != 1234:
+    # if feat.GetField("intfield") != 1234:
     if feat.GetField("intfield") != 12345:
         gdaltest.post_reason('failed')
         return 'fail'
@@ -391,7 +391,7 @@ def ogr_rfc35_sqlite_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    #if feat.GetField("oldintfld") != '1234':
+    # if feat.GetField("oldintfld") != '1234':
     if feat.GetField("oldintfld") != '12345':
         gdaltest.post_reason('failed')
         return 'fail'
