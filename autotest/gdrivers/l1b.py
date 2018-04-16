@@ -77,14 +77,14 @@ def l1b_geoloc():
     ds = gdal.Open('tmp/cache/n12gac8bit.l1b')
     md = ds.GetMetadata('GEOLOCATION')
     expected_md = {
-      'LINE_OFFSET' : '0',
-      'LINE_STEP' : '1',
-      'PIXEL_OFFSET' : '0',
-      'PIXEL_STEP' : '1',
-      'X_BAND' : '1',
-      'X_DATASET' : 'L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"',
-      'Y_BAND' : '2',
-      'Y_DATASET' : 'L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"'}
+        'LINE_OFFSET' : '0',
+        'LINE_STEP' : '1',
+        'PIXEL_OFFSET' : '0',
+        'PIXEL_STEP' : '1',
+        'X_BAND' : '1',
+        'X_DATASET' : 'L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"',
+        'Y_BAND' : '2',
+        'Y_DATASET' : 'L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"'}
     for key in expected_md:
         if md[key] != expected_md[key]:
             print(md)
@@ -118,8 +118,8 @@ def l1b_solar_zenith_angles_before_noaa_15():
     ds = gdal.Open('tmp/cache/n12gac10bit.l1b')
     md = ds.GetMetadata('SUBDATASETS')
     expected_md = {
-      'SUBDATASET_1_NAME' : 'L1B_SOLAR_ZENITH_ANGLES:"tmp/cache/n12gac10bit.l1b"',
-      'SUBDATASET_1_DESC' : 'Solar zenith angles'
+        'SUBDATASET_1_NAME' : 'L1B_SOLAR_ZENITH_ANGLES:"tmp/cache/n12gac10bit.l1b"',
+        'SUBDATASET_1_DESC' : 'Solar zenith angles'
     }
     for key in expected_md:
         if md[key] != expected_md[key]:
@@ -181,8 +181,8 @@ def l1b_angles_after_noaa_15():
     ds = gdal.Open('tmp/cache/n16gac10bit.l1b')
     md = ds.GetMetadata('SUBDATASETS')
     expected_md = {
-      'SUBDATASET_1_NAME' : 'L1B_ANGLES:"tmp/cache/n16gac10bit.l1b"',
-      'SUBDATASET_1_DESC' : 'Solar zenith angles, satellite zenith angles and relative azimuth angles'
+        'SUBDATASET_1_NAME' : 'L1B_ANGLES:"tmp/cache/n16gac10bit.l1b"',
+        'SUBDATASET_1_DESC' : 'Solar zenith angles, satellite zenith angles and relative azimuth angles'
     }
     for key in expected_md:
         if md[key] != expected_md[key]:
@@ -222,8 +222,8 @@ def l1b_clouds_after_noaa_15():
     ds = gdal.Open('tmp/cache/n16gac10bit.l1b')
     md = ds.GetMetadata('SUBDATASETS')
     expected_md = {
-      'SUBDATASET_2_NAME' : 'L1B_CLOUDS:"tmp/cache/n16gac10bit.l1b"',
-      'SUBDATASET_2_DESC' : 'Clouds from AVHRR (CLAVR)'
+        'SUBDATASET_2_NAME' : 'L1B_CLOUDS:"tmp/cache/n16gac10bit.l1b"',
+        'SUBDATASET_2_DESC' : 'Clouds from AVHRR (CLAVR)'
     }
     for key in expected_md:
         if md[key] != expected_md[key]:

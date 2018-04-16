@@ -319,7 +319,7 @@ if __name__ == '__main__':
                 for i in range(ct.GetCount()):
                     t_fh.write(
                         '\t\t\t<Entry c1="%i" c2="%i" c3="%i" c4="%i"/>\n'
-                            % ct.GetColorEntry(i))
+                        % ct.GetColorEntry(i))
                 t_fh.write('\t\t</ColorTable>\n')
 
             for fi in file_infos:

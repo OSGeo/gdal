@@ -2581,13 +2581,13 @@ def jp2openjpeg_45():
                 }
             ],
 
-            "annotations": [
+        "annotations": [
                 "/vsimem/i_dont_exist.shp",
                 "/vsimem/i_dont_exist.kml",
                 "../gcore/data/byte.tif"
             ],
 
-            "gml_filelist": [
+        "gml_filelist": [
                 "/vsimem/i_dont_exist.xml",
                 "../gcore/data/byte.tif",
                 {
@@ -2597,7 +2597,7 @@ def jp2openjpeg_45():
                 },
             ],
 
-            "styles": [
+        "styles": [
                 "/vsimem/i_dont_exist.xml",
                 "../gcore/data/byte.tif",
                 {
@@ -2606,7 +2606,7 @@ def jp2openjpeg_45():
                 }
             ],
 
-            "extensions": [
+        "extensions": [
                 "/vsimem/i_dont_exist.xml",
                 "../gcore/data/byte.tif",
                 {
@@ -2787,12 +2787,12 @@ def jp2openjpeg_45():
                 }
             ],
 
-            "annotations": [
+        "annotations": [
                 "/vsimem/myshape.shp",
                 "/vsimem/empty.kml"
             ],
 
-            "gml_filelist": [
+        "gml_filelist": [
                 "/vsimem/feature.xml",
                 {
                     "file": "/vsimem/myshape.shp",
@@ -2819,7 +2819,7 @@ def jp2openjpeg_45():
                 }
             ],
 
-            "styles" : [
+        "styles" : [
                 "/vsimem/style1.xml",
                 {
                     "file": "/vsimem/style2.xml",
@@ -2834,7 +2834,7 @@ def jp2openjpeg_45():
                 }
             ],
 
-            "extensions" : [
+        "extensions" : [
                 "/vsimem/extension1.xml",
                 {
                     "file": "/vsimem/extension2.xml",
