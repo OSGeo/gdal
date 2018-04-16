@@ -1260,7 +1260,7 @@ bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands,
     // Currently each RawRasterBand need to allocate nLineSize
     GIntBig nLineSize =
         static_cast<GIntBig>(std::abs(nPixelOffset)) * (nXSize - 1) + nDTSize;
-    if( nBands > 0 && nLineSize > INT_MAX / nBands )
+    if( nBands > 0 && nLineSize > (INT_MAX / 2) / nBands )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Too much memory needed");
         return false;
