@@ -64,7 +64,8 @@ class ProjTest:
             return 'skip'
 
         if self.requirements is not None and self.requirements[:5] == 'GRID:':
-            if os.getenv('PROJ_LIB') is None:
+            proj_lib = os.getenv('PROJ_LIB')
+            if proj_lib is None:
                 #print( 'PROJ_LIB unset, skipping test.' )
                 return 'skip'
 
