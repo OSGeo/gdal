@@ -3294,7 +3294,7 @@ def ogr_geom_getcurvegeometry():
        g1.GetPoint(1) != g3.GetPoint(2) or \
        g1.GetPoint(2) != g3.GetPoint(4) or \
        abs((g3.GetX(1) - 0.5) * (g3.GetX(1) - 0.5) + g3.GetY(1) * g3.GetY(1) - 0.5 * 0.5) > 1e-12 or \
-       abs((g3.GetX(3) - 0.5) * (g3.GetX(3) - 0.5) + g3.GetY(3) * g3.GetY(3) - 0.5 * 0.5) > 1e-12 :
+       abs((g3.GetX(3) - 0.5) * (g3.GetX(3) - 0.5) + g3.GetY(3) * g3.GetY(3) - 0.5 * 0.5) > 1e-12:
         gdaltest.post_reason('fail')
         print(g3)
         #print(abs((g3.GetX(1) - 0.5)*(g3.GetX(1) - 0.5)+g3.GetY(1)*g3.GetY(1) - 0.5*0.5))
@@ -4043,19 +4043,19 @@ def ogr_geom_measured_geometries_to_2D_or_3D():
             print(geom.ExportToIsoWkt())
             return 'fail'
 
-    if ogr.CreateGeometryFromWkt('POINT (1 2)').CoordinateDimension() != 2 :
+    if ogr.CreateGeometryFromWkt('POINT (1 2)').CoordinateDimension() != 2:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if ogr.CreateGeometryFromWkt('POINT M (1 2 3)').CoordinateDimension() != 3 :
+    if ogr.CreateGeometryFromWkt('POINT M (1 2 3)').CoordinateDimension() != 3:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if ogr.CreateGeometryFromWkt('POINT Z (1 2 3)').CoordinateDimension() != 3 :
+    if ogr.CreateGeometryFromWkt('POINT Z (1 2 3)').CoordinateDimension() != 3:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if ogr.CreateGeometryFromWkt('POINT ZM (1 2 3 4)').CoordinateDimension() != 4 :
+    if ogr.CreateGeometryFromWkt('POINT ZM (1 2 3 4)').CoordinateDimension() != 4:
         gdaltest.post_reason('fail')
         return 'fail'
 

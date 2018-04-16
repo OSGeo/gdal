@@ -389,13 +389,13 @@ def vsicrypt_3():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ret = gdal.Rename('/vsicrypt//vsimem/file.bin' , '/vsicrypt//vsimem/subdir_crypt/file.bin')
+    ret = gdal.Rename('/vsicrypt//vsimem/file.bin', '/vsicrypt//vsimem/subdir_crypt/file.bin')
     if ret != 0:
         gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
-    ret = gdal.Rename('/vsicrypt//vsimem/subdir_crypt/file.bin' , '/vsimem/subdir_crypt/file2.bin')
+    ret = gdal.Rename('/vsicrypt//vsimem/subdir_crypt/file.bin', '/vsimem/subdir_crypt/file2.bin')
     if ret != 0:
         gdaltest.post_reason('fail')
         print(ret)

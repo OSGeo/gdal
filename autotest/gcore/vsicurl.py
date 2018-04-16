@@ -288,7 +288,7 @@ def vsicurl_test_redirect():
 
     handler.add('HEAD', '/test_redirect/test.bin', custom_method=method)
     handler.add('HEAD', '/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (current_time + 30), 403,
-                {'Server' : 'foo'}, '')
+                {'Server': 'foo'}, '')
 
     def method(request):
         if 'Range' in request.headers:

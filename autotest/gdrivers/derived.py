@@ -46,20 +46,20 @@ def derived_test1():
     got_dsds = ds.GetMetadata('DERIVED_SUBDATASETS')
     expected_gt = ds.GetGeoTransform()
     expected_prj = ds.GetProjection()
-    expected_dsds = {'DERIVED_SUBDATASET_1_NAME' : 'DERIVED_SUBDATASET:AMPLITUDE:../gcore/data/cfloat64.tif',
-                     'DERIVED_SUBDATASET_1_DESC' : 'Amplitude of input bands from ../gcore/data/cfloat64.tif',
-                     'DERIVED_SUBDATASET_2_NAME' : 'DERIVED_SUBDATASET:PHASE:../gcore/data/cfloat64.tif',
-                     'DERIVED_SUBDATASET_2_DESC' : 'Phase of input bands from ../gcore/data/cfloat64.tif',
-                     'DERIVED_SUBDATASET_3_NAME' : 'DERIVED_SUBDATASET:REAL:../gcore/data/cfloat64.tif',
-                     'DERIVED_SUBDATASET_3_DESC' : 'Real part of input bands from ../gcore/data/cfloat64.tif',
-                     'DERIVED_SUBDATASET_4_NAME' : 'DERIVED_SUBDATASET:IMAG:../gcore/data/cfloat64.tif',
-                     'DERIVED_SUBDATASET_4_DESC' : 'Imaginary part of input bands from ../gcore/data/cfloat64.tif',
-                     'DERIVED_SUBDATASET_5_NAME' : 'DERIVED_SUBDATASET:CONJ:../gcore/data/cfloat64.tif',
-                     'DERIVED_SUBDATASET_5_DESC' : 'Conjugate of input bands from ../gcore/data/cfloat64.tif',
-                     'DERIVED_SUBDATASET_6_NAME' : 'DERIVED_SUBDATASET:INTENSITY:../gcore/data/cfloat64.tif',
-                     'DERIVED_SUBDATASET_6_DESC' : 'Intensity (squared amplitude) of input bands from ../gcore/data/cfloat64.tif',
-                     'DERIVED_SUBDATASET_7_NAME' : 'DERIVED_SUBDATASET:LOGAMPLITUDE:../gcore/data/cfloat64.tif',
-                     'DERIVED_SUBDATASET_7_DESC' : 'log10 of amplitude of input bands from ../gcore/data/cfloat64.tif'}
+    expected_dsds = {'DERIVED_SUBDATASET_1_NAME': 'DERIVED_SUBDATASET:AMPLITUDE:../gcore/data/cfloat64.tif',
+                     'DERIVED_SUBDATASET_1_DESC': 'Amplitude of input bands from ../gcore/data/cfloat64.tif',
+                     'DERIVED_SUBDATASET_2_NAME': 'DERIVED_SUBDATASET:PHASE:../gcore/data/cfloat64.tif',
+                     'DERIVED_SUBDATASET_2_DESC': 'Phase of input bands from ../gcore/data/cfloat64.tif',
+                     'DERIVED_SUBDATASET_3_NAME': 'DERIVED_SUBDATASET:REAL:../gcore/data/cfloat64.tif',
+                     'DERIVED_SUBDATASET_3_DESC': 'Real part of input bands from ../gcore/data/cfloat64.tif',
+                     'DERIVED_SUBDATASET_4_NAME': 'DERIVED_SUBDATASET:IMAG:../gcore/data/cfloat64.tif',
+                     'DERIVED_SUBDATASET_4_DESC': 'Imaginary part of input bands from ../gcore/data/cfloat64.tif',
+                     'DERIVED_SUBDATASET_5_NAME': 'DERIVED_SUBDATASET:CONJ:../gcore/data/cfloat64.tif',
+                     'DERIVED_SUBDATASET_5_DESC': 'Conjugate of input bands from ../gcore/data/cfloat64.tif',
+                     'DERIVED_SUBDATASET_6_NAME': 'DERIVED_SUBDATASET:INTENSITY:../gcore/data/cfloat64.tif',
+                     'DERIVED_SUBDATASET_6_DESC': 'Intensity (squared amplitude) of input bands from ../gcore/data/cfloat64.tif',
+                     'DERIVED_SUBDATASET_7_NAME': 'DERIVED_SUBDATASET:LOGAMPLITUDE:../gcore/data/cfloat64.tif',
+                     'DERIVED_SUBDATASET_7_DESC': 'log10 of amplitude of input bands from ../gcore/data/cfloat64.tif'}
 
     if got_dsds != expected_dsds:
         gdaltest.post_reason('fail')
@@ -97,28 +97,28 @@ def derived_test2():
         gdaltest.post_reason('fail')
         return 'fail'
     got_dsds = ds.GetMetadata('DERIVED_SUBDATASETS')
-    expected_dsds = {'DERIVED_SUBDATASET_1_NAME' : 'DERIVED_SUBDATASET:AMPLITUDE:../gcore/data/cint_sar.tif',
-                     'DERIVED_SUBDATASET_1_DESC' : 'Amplitude of input bands from ../gcore/data/cint_sar.tif',
-                     'DERIVED_SUBDATASET_2_NAME' : 'DERIVED_SUBDATASET:PHASE:../gcore/data/cint_sar.tif',
-                     'DERIVED_SUBDATASET_2_DESC' : 'Phase of input bands from ../gcore/data/cint_sar.tif',
-                     'DERIVED_SUBDATASET_3_NAME' : 'DERIVED_SUBDATASET:REAL:../gcore/data/cint_sar.tif',
-                     'DERIVED_SUBDATASET_3_DESC' : 'Real part of input bands from ../gcore/data/cint_sar.tif',
-                     'DERIVED_SUBDATASET_4_NAME' : 'DERIVED_SUBDATASET:IMAG:../gcore/data/cint_sar.tif',
-                     'DERIVED_SUBDATASET_4_DESC' : 'Imaginary part of input bands from ../gcore/data/cint_sar.tif',
-                     'DERIVED_SUBDATASET_5_NAME' : 'DERIVED_SUBDATASET:CONJ:../gcore/data/cint_sar.tif',
-                     'DERIVED_SUBDATASET_5_DESC' : 'Conjugate of input bands from ../gcore/data/cint_sar.tif',
-                     'DERIVED_SUBDATASET_6_NAME' : 'DERIVED_SUBDATASET:INTENSITY:../gcore/data/cint_sar.tif',
-                     'DERIVED_SUBDATASET_6_DESC' : 'Intensity (squared amplitude) of input bands from ../gcore/data/cint_sar.tif',
-                     'DERIVED_SUBDATASET_7_NAME' : 'DERIVED_SUBDATASET:LOGAMPLITUDE:../gcore/data/cint_sar.tif',
-                     'DERIVED_SUBDATASET_7_DESC' : 'log10 of amplitude of input bands from ../gcore/data/cint_sar.tif'}
+    expected_dsds = {'DERIVED_SUBDATASET_1_NAME': 'DERIVED_SUBDATASET:AMPLITUDE:../gcore/data/cint_sar.tif',
+                     'DERIVED_SUBDATASET_1_DESC': 'Amplitude of input bands from ../gcore/data/cint_sar.tif',
+                     'DERIVED_SUBDATASET_2_NAME': 'DERIVED_SUBDATASET:PHASE:../gcore/data/cint_sar.tif',
+                     'DERIVED_SUBDATASET_2_DESC': 'Phase of input bands from ../gcore/data/cint_sar.tif',
+                     'DERIVED_SUBDATASET_3_NAME': 'DERIVED_SUBDATASET:REAL:../gcore/data/cint_sar.tif',
+                     'DERIVED_SUBDATASET_3_DESC': 'Real part of input bands from ../gcore/data/cint_sar.tif',
+                     'DERIVED_SUBDATASET_4_NAME': 'DERIVED_SUBDATASET:IMAG:../gcore/data/cint_sar.tif',
+                     'DERIVED_SUBDATASET_4_DESC': 'Imaginary part of input bands from ../gcore/data/cint_sar.tif',
+                     'DERIVED_SUBDATASET_5_NAME': 'DERIVED_SUBDATASET:CONJ:../gcore/data/cint_sar.tif',
+                     'DERIVED_SUBDATASET_5_DESC': 'Conjugate of input bands from ../gcore/data/cint_sar.tif',
+                     'DERIVED_SUBDATASET_6_NAME': 'DERIVED_SUBDATASET:INTENSITY:../gcore/data/cint_sar.tif',
+                     'DERIVED_SUBDATASET_6_DESC': 'Intensity (squared amplitude) of input bands from ../gcore/data/cint_sar.tif',
+                     'DERIVED_SUBDATASET_7_NAME': 'DERIVED_SUBDATASET:LOGAMPLITUDE:../gcore/data/cint_sar.tif',
+                     'DERIVED_SUBDATASET_7_DESC': 'log10 of amplitude of input bands from ../gcore/data/cint_sar.tif'}
 
-    expected_cs = {'DERIVED_SUBDATASET_1_NAME' : 345,
-                   'DERIVED_SUBDATASET_2_NAME' : 10,
-                   'DERIVED_SUBDATASET_3_NAME' : 159,
-                   'DERIVED_SUBDATASET_4_NAME' : 142,
-                   'DERIVED_SUBDATASET_5_NAME' : 110,
-                   'DERIVED_SUBDATASET_6_NAME' : 314,
-                   'DERIVED_SUBDATASET_7_NAME' : 55}
+    expected_cs = {'DERIVED_SUBDATASET_1_NAME': 345,
+                   'DERIVED_SUBDATASET_2_NAME': 10,
+                   'DERIVED_SUBDATASET_3_NAME': 159,
+                   'DERIVED_SUBDATASET_4_NAME': 142,
+                   'DERIVED_SUBDATASET_5_NAME': 110,
+                   'DERIVED_SUBDATASET_6_NAME': 314,
+                   'DERIVED_SUBDATASET_7_NAME': 55}
 
     if got_dsds != expected_dsds:
         gdaltest.post_reason('fail')

@@ -88,7 +88,7 @@ def pam_2():
     ds = driver.Create('tmp/pam.pnm', 10, 10)
     band = ds.GetRasterBand(1)
 
-    band.SetMetadata({'other' : 'red', 'key' : 'value'})
+    band.SetMetadata({'other': 'red', 'key': 'value'})
 
     expected_xml = """<?xml version="2.0"?>
 <TestXML>Value</TestXML>

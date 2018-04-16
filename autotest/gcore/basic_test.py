@@ -521,27 +521,27 @@ def basic_test_14():
     except:
         pass
 
-    ds.SetMetadata({'foo' : 'baz'})
+    ds.SetMetadata({'foo': 'baz'})
     if ds.GetMetadata_List() != ['foo=baz']:
         gdaltest.post_reason('failure')
         return 'fail'
 
     try:
-        ds.SetMetadata({'foo' : 5})
+        ds.SetMetadata({'foo': 5})
         gdaltest.post_reason('failure')
         return 'fail'
     except:
         pass
 
     try:
-        ds.SetMetadata({5 : 'baz'})
+        ds.SetMetadata({5: 'baz'})
         gdaltest.post_reason('failure')
         return 'fail'
     except:
         pass
 
     try:
-        ds.SetMetadata({5 : 6})
+        ds.SetMetadata({5: 6})
         gdaltest.post_reason('failure')
         return 'fail'
     except:
@@ -552,25 +552,25 @@ def basic_test_14():
     else:
         exec("val = u'\\u00e9ven'")
 
-    ds.SetMetadata({'bar' : val})
+    ds.SetMetadata({'bar': val})
     if ds.GetMetadata()['bar'] != val:
         gdaltest.post_reason('failure')
         return 'fail'
 
-    ds.SetMetadata({val : 'baz'})
+    ds.SetMetadata({val: 'baz'})
     if ds.GetMetadata()[val] != 'baz':
         gdaltest.post_reason('failure')
         return 'fail'
 
     try:
-        ds.SetMetadata({val : 5})
+        ds.SetMetadata({val: 5})
         gdaltest.post_reason('failure')
         return 'fail'
     except:
         pass
 
     try:
-        ds.SetMetadata({5 : val})
+        ds.SetMetadata({5: val})
         gdaltest.post_reason('failure')
         return 'fail'
     except:

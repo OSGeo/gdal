@@ -68,7 +68,7 @@ try:
     _object = object
     _newclass = 1
 except AttributeError:
-    class _object : pass
+    class _object: pass
     _newclass = 0
 
 
@@ -152,7 +152,7 @@ class Network(MajorObject):
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
     __swig_destroy__ = _gnm.delete_Network
-    __del__ = lambda self : None;
+    __del__ = lambda self: None;
 
     def ReleaseResultSet(self, *args):
         """ReleaseResultSet(Network self, OGRLayerShadow * layer)"""
@@ -250,7 +250,7 @@ class GenericNetwork(Network):
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
     __swig_destroy__ = _gnm.delete_GenericNetwork
-    __del__ = lambda self : None;
+    __del__ = lambda self: None;
 
     def ConnectFeatures(self, *args):
         """

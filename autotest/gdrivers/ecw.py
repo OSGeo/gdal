@@ -1089,15 +1089,15 @@ def ecw_29():
     data_ecw_supersampled_b1 = ds.GetRasterBand(1).ReadRaster(0, 0, 400, 400, 800, 800)
     ds = None
 
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_0.tif', 400 , 400, 1)
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_0.tif', 400, 400, 1)
     ds.WriteRaster(0, 0, 400, 400, data_b1)
     data_tiff_supersampled_b1 = ds.GetRasterBand(1).ReadRaster(0, 0, 400, 400, 800, 800)
     ds = None
 
-    ds1 = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_1.tif', 800 , 800, 1)
+    ds1 = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_1.tif', 800, 800, 1)
     ds1.WriteRaster(0, 0, 800, 800, data_ecw_supersampled_b1)
 
-    ds2 = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_2.tif', 800 , 800, 1)
+    ds2 = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_2.tif', 800, 800, 1)
     ds2.WriteRaster(0, 0, 800, 800, data_tiff_supersampled_b1)
 
     ret = 'success'
@@ -1114,8 +1114,8 @@ def ecw_29():
         tile = 32
         for j in range(2 * int((ds1.RasterYSize - tile / 2) / tile)):
             for i in range(2 * int((ds1.RasterXSize - tile / 2) / tile)):
-                tmp_ds1 = gdal.GetDriverByName('MEM').Create('', tile , tile, 1)
-                tmp_ds2 = gdal.GetDriverByName('MEM').Create('', tile , tile, 1)
+                tmp_ds1 = gdal.GetDriverByName('MEM').Create('', tile, tile, 1)
+                tmp_ds2 = gdal.GetDriverByName('MEM').Create('', tile, tile, 1)
                 data1 = ds1.ReadRaster(i * int(tile / 2), j * int(tile / 2), tile, tile)
                 data2 = ds2.ReadRaster(i * int(tile / 2), j * int(tile / 2), tile, tile)
                 tmp_ds1.WriteRaster(0, 0, tile, tile, data1)
@@ -1126,7 +1126,7 @@ def ecw_29():
                 sum_abs_diff_mean = sum_abs_diff_mean + abs(mean1 - mean2)
                 sum_abs_diff_stddev = sum_abs_diff_stddev + abs(stddev1 - stddev2)
                 if abs(mean1 - mean2) > (stddev1 + stddev2) / 2 or abs(stddev1 - stddev2) > 30:
-                    print("%d, %d, %f, %f" % (j, i , abs(mean1 - mean2), abs(stddev1 - stddev2)))
+                    print("%d, %d, %f, %f" % (j, i, abs(mean1 - mean2), abs(stddev1 - stddev2)))
                     ret = 'fail'
 
         if sum_abs_diff_mean / nvals > 4 or sum_abs_diff_stddev / nvals > 3:
@@ -1307,7 +1307,7 @@ def ecw_33():
     import struct
     tab1 = struct.unpack('B' * 3 * 50 * 50, multiband_data)
     tab2 = struct.unpack('B' * 3 * 50 * 50, data1_1 + data2_1 + data3_2)
-    if tab1 != tab2 :
+    if tab1 != tab2:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -1364,7 +1364,7 @@ def ecw_33_bis():
 
 def ecw_34():
 
-    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0 :
+    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
     if gdaltest.ecw_drv.major_version < 5:
         return 'skip'
@@ -1450,7 +1450,7 @@ def ecw_36():
 
     dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrc312.ecw', vrt_ds, options=['ECW_FORMAT_VERSION=3', 'TARGET=75'])
 
-    if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand :
+    if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand:
         print('Band 1 color interpretation should be Blue  but is : ' + gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
     if dswr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_RedBand:
@@ -1464,7 +1464,7 @@ def ecw_36():
 
     dsr = gdal.Open('tmp/jrc312.ecw')
 
-    if dsr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand :
+    if dsr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand:
         print('Band 1 color interpretation should be Blue  but is : ' + gdal.GetColorInterpretationName(dsr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
     if dsr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_RedBand:
@@ -1493,7 +1493,7 @@ def ecw_37():
 
     dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrc123.ecw', ds, options=['ECW_FORMAT_VERSION=3', 'TARGET=75'])
 
-    if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand :
+    if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
         print('Band 1 color interpretation should be Red but is : ' + gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
     if dswr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
@@ -1507,7 +1507,7 @@ def ecw_37():
 
     dsr = gdal.Open('tmp/jrc123.ecw')
 
-    if dsr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand :
+    if dsr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
         print('Band 1 color interpretation should be Red  but is : ' + gdal.GetColorInterpretationName(dsr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
     if dsr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
@@ -1909,7 +1909,7 @@ def ecw_44():
 
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
-    if gdaltest.ecw_drv.major_version < 5 or (gdaltest.ecw_drv.major_version == 5 and gdaltest.ecw_drv.minor_version < 1) :
+    if gdaltest.ecw_drv.major_version < 5 or (gdaltest.ecw_drv.major_version == 5 and gdaltest.ecw_drv.minor_version < 1):
         return 'skip'
 
     ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')

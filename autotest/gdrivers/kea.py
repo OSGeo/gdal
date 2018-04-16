@@ -268,8 +268,8 @@ def kea_6():
     ds.SetMetadataItem('bar', 'baw')
     ds.GetRasterBand(1).SetMetadata({'bar': 'baz'})
     ds.GetRasterBand(1).SetDescription('desc')
-    ds.GetRasterBand(2).SetMetadata({'LAYER_TYPE' : 'any_string_that_is_not_athematic_is_thematic'})
-    ds.GetRasterBand(3).SetMetadata({'LAYER_TYPE' : 'athematic'})
+    ds.GetRasterBand(2).SetMetadata({'LAYER_TYPE': 'any_string_that_is_not_athematic_is_thematic'})
+    ds.GetRasterBand(3).SetMetadata({'LAYER_TYPE': 'athematic'})
     ds.GetRasterBand(4).SetMetadataItem('LAYER_TYPE', 'thematic')
     ds.GetRasterBand(5).SetMetadataItem('LAYER_TYPE', 'athematic')
     if ds.SetMetadata({'foo': 'bar'}, 'other_domain') == 0:

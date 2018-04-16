@@ -1378,7 +1378,7 @@ def ogr_sqlite_27():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/ogr_sqlite_27.sqlite')
 
     pos = ret.find('ERROR: poLayerFeatSRS != NULL && poSQLFeatSRS == NULL.')
-    if pos != -1 :
+    if pos != -1:
         # Detect if libsqlite3 has been built with SQLITE_HAS_COLUMN_METADATA
         # If not, that explains the error.
         ds = ogr.Open(':memory:')

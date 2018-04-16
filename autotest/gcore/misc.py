@@ -593,7 +593,7 @@ def misc_12():
             datatype = gdal.GDT_Byte
             if drv.ShortName == 'BT' or drv.ShortName == 'BLX':
                 datatype = gdal.GDT_Int16
-            elif drv.ShortName == 'GTX' or drv.ShortName == 'NTv2' or drv.ShortName == 'Leveller' :
+            elif drv.ShortName == 'GTX' or drv.ShortName == 'NTv2' or drv.ShortName == 'Leveller':
                 datatype = gdal.GDT_Float32
 
             size = 1201

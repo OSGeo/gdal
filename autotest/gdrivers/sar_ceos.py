@@ -45,7 +45,7 @@ def sar_ceos_online_1():
                   'ottawa_patch.vol']
 
     for filename in list_files:
-        if not gdaltest.download_file('http://download.osgeo.org/gdal/data/ceos/' + filename , filename):
+        if not gdaltest.download_file('http://download.osgeo.org/gdal/data/ceos/' + filename, filename):
             return 'skip'
 
     tst = gdaltest.GDALTest('SAR_CEOS', 'tmp/cache/ottawa_patch.img', 1, 23026, filename_absolute=1)

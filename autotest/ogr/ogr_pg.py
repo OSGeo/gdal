@@ -1404,7 +1404,7 @@ def test_val_test_23(layer_defn, feat):
     abs(feat.my_float8array[0] - 100.12) > 1e-8 or \
     abs(feat.my_numericarray[0] - 100.12) > 1e-8 or \
     abs(feat.my_numeric5array[0] - 10) > 1e-8 or \
-    abs(feat.my_numeric5_3array[0] - 10.12) > 1e-8 :
+    abs(feat.my_numeric5_3array[0] - 10.12) > 1e-8:
         gdaltest.post_reason('Wrong values')
         feat.DumpReadable()
         return 'fail'
@@ -5270,7 +5270,7 @@ def ogr_pg_81():
 
 def ogr_pg_82():
 
-    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis or gdaltest.ogr_pg_second_run :
+    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis or gdaltest.ogr_pg_second_run:
         return 'skip'
 
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_82', geom_type=ogr.wkbNone, options=['GEOMETRY_NAME=another_name'])
@@ -5288,7 +5288,7 @@ def ogr_pg_82():
 
 def ogr_pg_83():
 
-    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis or gdaltest.ogr_pg_second_run :
+    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis or gdaltest.ogr_pg_second_run:
         return 'skip'
 
     tests = [[ogr.wkbUnknown, [], 'POINT ZM (1 2 3 4)', 'POINT (1 2)'],
@@ -5357,7 +5357,7 @@ def ogr_pg_83():
 
 def ogr_pg_84():
 
-    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run :
+    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run:
         return 'skip'
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
@@ -5438,7 +5438,7 @@ def ogr_pg_84():
 
 def ogr_pg_85():
 
-    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run :
+    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run:
         return 'skip'
 
     gdaltest.pg_ds.CreateLayer('ogr_pg_85_1')
@@ -5499,7 +5499,7 @@ def ogr_pg_85():
 
 def ogr_pg_86():
 
-    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run :
+    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run:
         return 'skip'
 
     old_val = gdal.GetConfigOption('PG_USE_COPY')
@@ -5542,7 +5542,7 @@ def ogr_pg_86():
 
 def ogr_pg_87():
 
-    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run :
+    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run:
         return 'skip'
 
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_87')

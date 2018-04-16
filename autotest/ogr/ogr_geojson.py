@@ -1856,13 +1856,13 @@ def ogr_geojson_38():
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField('dt') != '2014/11/20 12:34:56+01' or f.GetField('dt2') != '2014/11/20 00:00:00' or \
-       f.GetField('date') != '2014/11/20' or f.GetField('time') != '12:34:56' :
+       f.GetField('date') != '2014/11/20' or f.GetField('time') != '12:34:56':
         gdaltest.post_reason('failure')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField('dt') != '2014/11/20 00:00:00' or f.GetField('dt2') != '2014/11/20 12:34:56+00' or \
-       f.GetField('date') != '2014/11/20' or f.GetField('time') != '12:34:56' :
+       f.GetField('date') != '2014/11/20' or f.GetField('time') != '12:34:56':
         gdaltest.post_reason('failure')
         f.DumpReadable()
         return 'fail'

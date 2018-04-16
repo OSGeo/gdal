@@ -177,7 +177,7 @@ def aigrid_online_1():
         pass
 
     for filename in list_files:
-        if not gdaltest.download_file('http://download.osgeo.org/gdal/data/aig/nzdem/' + filename , 'nzdem/' + filename):
+        if not gdaltest.download_file('http://download.osgeo.org/gdal/data/aig/nzdem/' + filename, 'nzdem/' + filename):
             return 'skip'
 
     tst = gdaltest.GDALTest('AIG', 'tmp/cache/nzdem/nzdem500/hdr.adf', 1, 45334, filename_absolute=1)

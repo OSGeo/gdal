@@ -2968,7 +2968,7 @@ def ogr_gml_62():
         if feat.GetField('element_attr1') != '1' or \
         feat.GetField('element2_attr1') != 'a' or \
         feat.GetField('element2') != 'foo' or \
-        feat.IsFieldSet('element3_attr1') :
+        feat.IsFieldSet('element3_attr1'):
             gdaltest.post_reason('fail')
             feat.DumpReadable()
             print(i)
@@ -2986,7 +2986,7 @@ def ogr_gml_62():
         if feat.GetField('element_attr1') != 'a' or \
         feat.IsFieldSet('element2_attr1') or \
         feat.IsFieldSet('element2') or \
-        feat.IsFieldSet('element3_attr1') :
+        feat.IsFieldSet('element3_attr1'):
             gdaltest.post_reason('fail')
             feat.DumpReadable()
             print(i)
