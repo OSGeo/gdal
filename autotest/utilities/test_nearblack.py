@@ -340,7 +340,7 @@ gdaltest_list = [
     test_nearblack_7,
     test_nearblack_8,
     test_nearblack_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

@@ -210,7 +210,7 @@ gdaltest_list = [
     ogr_avc_3,
     ogr_avc_4,
     ogr_avc_5
-    ]
+]
 
 if __name__ == '__main__':
 

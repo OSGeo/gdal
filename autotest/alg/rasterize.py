@@ -368,7 +368,7 @@ gdaltest_list = [
     rasterize_4,
     rasterize_5,
     rasterize_6
-    ]
+]
 
 if __name__ == '__main__':
 

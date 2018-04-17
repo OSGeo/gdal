@@ -974,7 +974,7 @@ gdaltest_list = [
     ogr_mongodb_2,
     ogr_mongodb_3,
     ogr_mongodb_cleanup,
-    ]
+]
 
 if __name__ == '__main__':
 

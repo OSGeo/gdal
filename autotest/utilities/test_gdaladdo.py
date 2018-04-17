@@ -214,7 +214,7 @@ gdaltest_list = [
     test_gdaladdo_3,
     test_gdaladdo_4,
     test_gdaladdo_5
-    ]
+]
 
 
 if __name__ == '__main__':

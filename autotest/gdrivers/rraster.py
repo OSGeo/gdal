@@ -147,7 +147,7 @@ def rraster_rgba(filename='data/rgba_rraster.grd'):
                    'checksum': 7,
                    'colorInterpretation': 'Alpha',
                    'description': 'alpha'}]
-        }
+    }
     if not _is_dict_included_in_dict(info, expected_info):
         return 'fail'
 
@@ -189,7 +189,7 @@ def rraster_ct_rgb(filename='data/byte_rraster_ct_rgb.grd'):
                                               [11, 21, 31, 255]],
                                   'palette': 'RGB'},
                    'type': 'Byte'}]
-        }
+    }
     if not _is_dict_included_in_dict(info, expected_info):
         return 'fail'
 
@@ -225,7 +225,7 @@ def rraster_ct_rgba(filename='data/byte_rraster_ct_rgba.grd'):
                                               [11, 21, 31, 255]],
                                   'palette': 'RGB'},
                    'type': 'Byte'}]
-        }
+    }
     if not _is_dict_included_in_dict(info, expected_info):
         return 'fail'
 
@@ -321,7 +321,7 @@ def rraster_rat(filename='data/byte_rraster_rat.grd'):
                                9,
                                'baw'],
                          'index': 1}]}
-        }
+    }
     if not _is_dict_included_in_dict(info, expected_info):
         return 'fail'
 
@@ -494,7 +494,7 @@ gdaltest_list = [
     rraster_nodata_and_metadata,
     rraster_update,
     rraster_colorinterpretation,
-    ]
+]
 
 
 if __name__ == '__main__':

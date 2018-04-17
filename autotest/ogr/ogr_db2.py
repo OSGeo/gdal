@@ -336,7 +336,7 @@ gdaltest_list = [
     ogr_db2_SetSpatialFilter,
     ogr_db2_capabilities,
     ogr_db2_GetFeatureCount
-    ]
+]
 
 if __name__ == '__main__':
 

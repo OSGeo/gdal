@@ -527,7 +527,7 @@ gdaltest_list = [
     vrtwarp_10,
     vrtwarp_11,
     vrtwarp_read_vrt_of_warped_vrt
-    ]
+]
 
 
 if __name__ == '__main__':

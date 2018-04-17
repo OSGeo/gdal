@@ -129,7 +129,7 @@ gdaltest_list = [
     cutline_2,
     cutline_3,
     cutline_4
-    ]
+]
 
 if __name__ == '__main__':
 

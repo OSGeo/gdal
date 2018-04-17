@@ -677,7 +677,7 @@ gdaltest_list = [vsizip_1,
                  vsizip_12,
                  vsizip_13,
                  vsizip_14
-                  ]
+                 ]
 
 
 if __name__ == '__main__':

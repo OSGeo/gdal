@@ -911,7 +911,7 @@ def tiff_write_20():
               ('TIFFTAG_RESOLUTIONUNIT', '2 (pixels/inch)'),
               ('TIFFTAG_MINSAMPLEVALUE', '1'),
               ('TIFFTAG_MAXSAMPLEVALUE', '2'),
-               ]
+              ]
 
     dict = {}
     for item in values:
@@ -5367,7 +5367,7 @@ def tiff_write_126():
                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'BLOCKYSIZE=800'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'BLOCKYSIZE=32'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'BLOCKYSIZE=8'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),
-                     ]
+                    ]
 
     for (options, cs1, cs2, cs3, cs4) in options_list:
         os.environ['JPEGMEM'] = '500M'
@@ -5431,7 +5431,7 @@ def tiff_write_126():
                     (['COMPRESS=JPEG', 'TILED=YES'], [49887, 58937], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'BLOCKYSIZE=800'], [49887, 58937], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'BLOCKYSIZE=32'], [49887, 58937], [30829, 34806], [11664, 58937]),
-                     ]
+                    ]
 
     for (options, cs1, cs3, cs4) in options_list:
         os.environ['JPEGMEM'] = '500M'
@@ -6773,7 +6773,7 @@ def tiff_write_145():
                     {'creation_options': ['PHOTOMETRIC=foo'], 'expected_failure': False},
                     {'creation_options': ['PHOTOMETRIC=RGB'], 'expected_failure': False},
                     {'creation_options': ['TILED=YES', 'BLOCKSIZE=1', 'BLOCKYSIZE=1'], 'expected_failure': True},
-                     ]
+                    ]
 
     for options in options_list:
         xsize = options.get('xsize', 1)

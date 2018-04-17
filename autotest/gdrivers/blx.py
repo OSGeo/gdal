@@ -117,7 +117,7 @@ gdaltest_list = [
     blx_3,
     blx_4,
     blx_5
-    ]
+]
 
 
 if __name__ == '__main__':

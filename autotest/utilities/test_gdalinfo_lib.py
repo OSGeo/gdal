@@ -191,7 +191,7 @@ gdaltest_list = [
     test_gdalinfo_lib_6,
     test_gdalinfo_lib_7,
     test_gdalinfo_lib_nodatavalues,
-    ]
+]
 
 if __name__ == '__main__':
 

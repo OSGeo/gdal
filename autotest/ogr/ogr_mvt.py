@@ -434,7 +434,7 @@ def ogr_mvt_tileset_json_field():
             "float_value": 1.25,
             "real_value": 1.23456789,
             "string_value": "str"
-            }:
+    }:
         gdaltest.post_reason('fail')
         print(f.GetFieldAsString("json"))
         return 'fail'
@@ -1114,7 +1114,7 @@ def ogr_mvt_write_one_layer():
                     "datefield": "String",
                     "datetimefield": "String",
                     "boolfield": "Boolean"
-                    }
+                }
             }
         ],
         "tilestats": {
@@ -1192,8 +1192,8 @@ def ogr_mvt_write_one_layer():
                                 True
                             ]
                         }
-                        ]
-                    }
+                    ]
+                }
             ]
         }
     }
@@ -1260,8 +1260,8 @@ def ogr_mvt_write_conf():
                 "minzoom": 1,
                 "maxzoom": 2,
                 "fields": {
-                    }
                 }
+            }
         ],
         "tilestats": {
             "layerCount": 1,

@@ -212,7 +212,7 @@ gdaltest_list = [
     test_rgb2pct_3,
     test_pct2rgb_4,
     test_rgb2pct_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

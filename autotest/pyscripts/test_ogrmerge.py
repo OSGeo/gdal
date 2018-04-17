@@ -417,7 +417,7 @@ gdaltest_list = [
     test_ogrmerge_9,
     test_ogrmerge_10,
     test_ogrmerge_11
-    ]
+]
 
 
 if __name__ == '__main__':

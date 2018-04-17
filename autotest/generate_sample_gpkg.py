@@ -51,7 +51,7 @@ for (out_filename, options) in [
     ('gdal_sample_v1.2_no_extensions_with_gpkg_ogr_contents.gpkg', {'gpkg_ogr_contents': True}),
     ('gdal_sample_v1.2_spatial_index_extension.gpkg', {'spi': True}),
     ('gdal_sample_v1.2_spi_nonlinear_webp_elevation.gpkg', {'spi': True, 'nonlinear': True, 'webp': True, 'elevation': True})
-        ]:
+]:
 
     dataset_options = ['VERSION=1.2']
     if not('gpkg_ogr_contents' in options and options['gpkg_ogr_contents']):

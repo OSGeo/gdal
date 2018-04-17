@@ -1424,7 +1424,7 @@ def warp_38():
         gdal.GCP(397010, 5642000, 0, 50, 0),
         gdal.GCP(397010, 5641990, 0, 50, 50),
         gdal.GCP(397005, 5641995, 0, 25, 25),
-        ]
+    ]
     ds.SetGCPs(gcp_list, gdaltest.user_srs_to_wkt('EPSG:32632'))
     ds = None
 
@@ -1460,7 +1460,7 @@ def warp_39():
         gdal.GCP(397010, 5642000, 0, 50, 0),
         gdal.GCP(397010, 5641990, 0, 50, 50),
         gdal.GCP(397005, 5641995, 0, 25, 25),
-        ]
+    ]
     ds.SetGCPs(gcp_list, gdaltest.user_srs_to_wkt('EPSG:32632'))
     ds = None
 
@@ -2024,7 +2024,7 @@ gdaltest_list = [
     warp_54,
     warp_55,
     warp_56
-    ]
+]
 #gdaltest_list = [ warp_55 ]
 
 if __name__ == '__main__':

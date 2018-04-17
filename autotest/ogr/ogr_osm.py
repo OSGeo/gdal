@@ -1019,7 +1019,7 @@ gdaltest_list = [
     ogr_osm_16,
     ogr_osm_17,
     ogr_osm_18,
-    ]
+]
 
 if __name__ == '__main__':
 

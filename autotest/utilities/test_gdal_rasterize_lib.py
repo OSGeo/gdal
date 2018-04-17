@@ -384,7 +384,7 @@ gdaltest_list = [
     test_gdal_rasterize_lib_101,
     test_gdal_rasterize_lib_102,
     test_gdal_rasterize_lib_4
-    ]
+]
 
 if __name__ == '__main__':
 

@@ -1138,7 +1138,7 @@ gdaltest_list = [
     ogr_rfc41_6,
     ogr_rfc41_7,
     ogr_rfc41_8,
-    ]
+]
 
 if __name__ == '__main__':
 

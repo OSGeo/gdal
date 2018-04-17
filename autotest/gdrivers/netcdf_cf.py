@@ -330,7 +330,7 @@ netcdf_cfproj_tuples = [
          'sweep_angle_axis',
          'false_easting', 'false_northing'],
         ['projection_x_coordinate', 'projection_y_coordinate'])
-    ]
+]
 
 # By default, we will use GeoTIFF as the 'intermediate' raster format
 # for gdalwarp'ing into before gdal_translate to NetCDF.
@@ -343,7 +343,7 @@ netcdf_cfproj_def_int_format = "GTiff"
 
 netcdf_cfproj_int_fmt_maps = {
     "M-2SP": 'HFA'
-    }
+}
 
 netcdf_cfproj_format_fnames = {"HFA": "img", "GTiff": "tif", "NITF": "nitf",
                                "ERS": "ers"}

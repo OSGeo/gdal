@@ -89,7 +89,7 @@ def test_gdalmove_cleanup():
 gdaltest_list = [
     test_gdalmove_1,
     test_gdalmove_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

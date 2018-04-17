@@ -818,7 +818,7 @@ def nitf_30():
                                                      'BLOCKA_LRLC_LOC_01=+42.317083+020.126072',
                                                      'BLOCKA_LRFC_LOC_01=+42.281634+020.122570',
                                                      'BLOCKA_FRFC_LOC_01=+42.283881+020.074924'
-                   ])
+                                                     ])
     ds = gdal.Open('/vsimem/nitf30_override.ntf')
     md = ds.GetMetadata()
     ds = None
@@ -841,7 +841,7 @@ def nitf_30():
     # Test overriding src BLOCKA metadata with TRE=BLOCKA= creation option
     gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf30_override.ntf', src_ds,
                                             options=['TRE=BLOCKA=010000001000000000                +42.319331+020.078400+42.317083+020.126072+42.281634+020.122570+42.283881+020.074924xxxxx'
-                   ])
+                                                     ])
     ds = gdal.Open('/vsimem/nitf30_override.ntf')
     md = ds.GetMetadata()
     ds = None
@@ -3253,7 +3253,7 @@ def nitf_online_10():
         ('SEGMENT_7_CCS_COL', '1364'),
         ('SEGMENT_7_SDLVL', '8'),
         ('SEGMENT_7_SALVL', '0'),
-        ]
+    ]
 
     for item in tab:
         if mdCGM[item[0]] != item[1]:
@@ -3337,7 +3337,7 @@ def nitf_online_13():
         ('SEGMENT_2_CCS_COL', '1100'),
         ('SEGMENT_2_SDLVL', '6'),
         ('SEGMENT_2_SALVL', '3')
-        ]
+    ]
 
     for item in tab:
         if mdCGM[item[0]] != item[1]:
@@ -3351,7 +3351,7 @@ def nitf_online_13():
         ('NITF_ILOC_COLUMN', '1100'),
         ('NITF_CCS_ROW', '1100'),
         ('NITF_CCS_COLUMN', '1100'),
-        ]
+    ]
 
     for item in tab:
         if md[item[0]] != item[1]:
@@ -3704,7 +3704,7 @@ def nitf_online_22():
         ('NITF_ILOC_COLUMN', '380'),
         ('NITF_CCS_ROW', '425'),
         ('NITF_CCS_COLUMN', '410'),
-        ]
+    ]
 
     for item in tab:
         if md[item[0]] != item[1]:
@@ -3723,7 +3723,7 @@ def nitf_online_22():
         ('NITF_ILOC_COLUMN', '40'),
         ('NITF_CCS_ROW', '422'),
         ('NITF_CCS_COLUMN', '210'),
-        ]
+    ]
 
     for item in tab:
         if md[item[0]] != item[1]:
@@ -3742,7 +3742,7 @@ def nitf_online_22():
         ('NITF_ILOC_COLUMN', '240'),
         ('NITF_CCS_ROW', '-1'),
         ('NITF_CCS_COLUMN', '-1'),
-        ]
+    ]
 
     for item in tab:
         if md[item[0]] != item[1]:
@@ -3761,7 +3761,7 @@ def nitf_online_22():
         ('NITF_ILOC_COLUMN', '30'),
         ('NITF_CCS_ROW', '65'),
         ('NITF_CCS_COLUMN', '30'),
-        ]
+    ]
 
     for item in tab:
         if md[item[0]] != item[1]:

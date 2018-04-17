@@ -86,7 +86,7 @@ empty_wkt_list = [ \
     ('POINT EMPTY', 'POINT EMPTY'),
     ('LINESTRING EMPTY', 'LINESTRING EMPTY'),
     ('POLYGON EMPTY', 'POLYGON EMPTY')
-    ]
+]
 
 
 def ogr_wktempty_test_partial_empty_geoms():

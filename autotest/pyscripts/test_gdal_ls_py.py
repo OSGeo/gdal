@@ -312,7 +312,7 @@ gdaltest_list = [
     test_gdal_ls_py_6,
     test_gdal_ls_py_7,
     test_gdal_ls_py_8,
-    ]
+]
 
 if __name__ == '__main__':
 

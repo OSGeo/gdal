@@ -5506,7 +5506,7 @@ gdaltest_live_list = [
     ogr_wfs_turn_streaming_off,
     #ogr_wfs_deegree,
     #ogr_wfs_test_ogrsf,
-    ]
+]
 
 gdaltest_vsimem_list = [
     ogr_wfs_vsimem_fail_because_not_enabled,

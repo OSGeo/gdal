@@ -56,7 +56,7 @@ def loslas_online_1():
 
 gdaltest_list = [
     loslas_online_1,
-    ]
+]
 
 
 if __name__ == '__main__':

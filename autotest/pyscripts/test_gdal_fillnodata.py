@@ -98,7 +98,7 @@ gdaltest_list = [
     test_gdal_fillnodata_1,
     test_gdal_fillnodata_2,
     test_gdal_fillnodata_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':
