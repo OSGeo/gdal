@@ -618,9 +618,9 @@ def ogr_sql_sqlite_8():
     expect = [171, 172, 173, 179]
 
     sql_lyr = ds.ExecuteSQL(
-        'SELECT p.*, il.name FROM poly p '
-        + 'LEFT JOIN "data/idlink.dbf".idlink il USING (eas_id) '
-        + 'WHERE eas_id > 170 ORDER BY eas_id', dialect='SQLite')
+        'SELECT p.*, il.name FROM poly p ' +
+        'LEFT JOIN "data/idlink.dbf".idlink il USING (eas_id) ' +
+        'WHERE eas_id > 170 ORDER BY eas_id', dialect='SQLite')
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'eas_id', expect)
 

@@ -931,8 +931,8 @@ class CFChecker:
                         else:
                             i = 0
                             for value in varData:
-                                if not ((value <= boundsData[i][0] and value >= boundsData[i][1])
-                                        or (value >= boundsData[i][0] and value <= boundsData[i][1])):
+                                if not ((value <= boundsData[i][0] and value >= boundsData[i][1]) or
+                                        (value >= boundsData[i][0] and value <= boundsData[i][1])):
                                     print("WARNING (7.1): Data for variable", var, "lies outside cell boundaries")
                                     self.warn = self.warn + 1
                                     break
