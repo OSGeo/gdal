@@ -29,7 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys, os
+import os
+import sys
 import os.path as op
 
 from subprocess import call, Popen, PIPE, STDOUT
