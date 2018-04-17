@@ -598,7 +598,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 
             return False
 
-        if poDriver.TestCapability(ogr.ODrCCreateDataSource) == False:
+        if not poDriver.TestCapability(ogr.ODrCCreateDataSource):
             print("%s driver does not support data source creation." % pszFormat)
             return False
 
@@ -1322,7 +1322,7 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
         elif nCoordDim == 3:
             eGType = eGType | ogr.wkb25DBit
 
-        if poDstDS.TestCapability(ogr.ODsCCreateLayer) == False:
+        if not poDstDS.TestCapability(ogr.ODsCCreateLayer):
             print("Layer " + pszNewLayerName + "not found, and CreateLayer not supported by driver.")
             return None
 
