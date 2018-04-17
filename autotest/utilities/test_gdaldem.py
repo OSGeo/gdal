@@ -756,77 +756,77 @@ NODATA_value 5
 def test_gdaldem_cleanup():
     try:
         os.remove('tmp/n43_hillshade.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_hillshade_compressed_tiled.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_hillshade_combined.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_hillshade_compute_edges.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/pyramid.tif')
         os.remove('tmp/pyramid_shaded.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_hillshade.png')
         os.remove('tmp/n43_hillshade.png.aux.xml')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_hillshade_compute_edges.png')
         os.remove('tmp/n43_hillshade_compute_edges.png.aux.xml')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_slope.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_aspect.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_colorrelief.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_colorrelief_cpt.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_colorrelief.vrt')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_float32.tif')
         os.remove('tmp/n43_colorrelief_from_float32.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_colorrelief.png')
         os.remove('tmp/n43_colorrelief.png.aux.xml')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_colorrelief_from_float32.png')
         os.remove('tmp/n43_colorrelief_from_float32.png.aux.xml')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_colorrelief_nearest.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43_colorrelief_nearest.vrt')
-    except:
+    except OSError:
         pass
     return 'success'
 

@@ -49,7 +49,7 @@ def ogr_selafin_create_ds():
     gdaltest.selafin_ds = None
     try:
         os.remove('tmp/tmp.slf')
-    except:
+    except OSError:
         pass
     selafin_drv = ogr.GetDriverByName('Selafin')
 

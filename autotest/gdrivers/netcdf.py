@@ -1357,7 +1357,7 @@ def netcdf_34():
 
     try:
         from multiprocessing import Process
-    except:
+    except ImportError:
         print('from multiprocessing import Process failed')
         return 'skip'
 
@@ -2373,7 +2373,7 @@ def netcdf_57():
 
     try:
         shutil.rmtree('tmp/netcdf_57')
-    except:
+    except OSError:
         pass
 
     with gdaltest.error_handler():
@@ -2922,7 +2922,7 @@ def netcdf_67():
 
     try:
         import numpy
-    except:
+    except ImportError:
         return 'skip'
 
     # disable bottom-up mode to use the real file's blocks size

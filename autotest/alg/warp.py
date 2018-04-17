@@ -1925,7 +1925,7 @@ def warp_56():
         from osgeo import gdalnumeric
         gdalnumeric.zeros
         import numpy
-    except:
+    except (ImportError, AttributeError):
         return 'skip'
 
     pix_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)

@@ -67,7 +67,7 @@ def jp2metadata_2():
 
     try:
         os.remove('data/IMG_md_ple.jp2.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/IMG_md_ple.jp2', gdal.GA_ReadOnly)

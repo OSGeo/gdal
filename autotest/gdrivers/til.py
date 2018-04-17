@@ -53,7 +53,7 @@ def til_2():
 
     try:
         os.remove('data/testtil.til.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/testtil.til')
@@ -93,7 +93,7 @@ def til_3():
 
     try:
         os.remove('data/testtil.til.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/testtil2.til')

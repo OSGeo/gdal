@@ -1404,7 +1404,7 @@ def ogr_mitab_28():
 def ogr_mitab_29():
     try:
         os.stat('tmp/cache/compr_symb_deleted_records.tab')
-    except:
+    except OSError:
         try:
             gdaltest.unzip('tmp/cache', 'data/compr_symb_deleted_records.zip')
             try:

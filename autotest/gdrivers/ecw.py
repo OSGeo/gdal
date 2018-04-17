@@ -56,7 +56,7 @@ def has_write_support():
         gdaltest.b_ecw_has_write_support = True
     try:
         os.remove('tmp/jrc_out.ecw')
-    except:
+    except OSError:
         pass
     return gdaltest.b_ecw_has_write_support
 
@@ -185,7 +185,7 @@ def ecw_4():
 
     try:
         os.unlink('tmp/jrc_out.ecw.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/jrc_out.ecw')
@@ -816,7 +816,7 @@ def ecw_23():
     try:
         os.remove('tmp/spif83.ecw')
         os.remove('tmp/spif83.ecw.aux.xml')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -833,14 +833,14 @@ def ecw_24():
     shutil.copyfile('data/spif83.ecw', 'tmp/spif83.ecw')
     try:
         os.remove('tmp/spif83.ecw.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/spif83.ecw', gdal.GA_Update)
     if ds is None and gdaltest.ecw_drv.major_version == 3 and gdal.GetConfigOption('APPVEYOR') is not None:
         try:
             os.remove('tmp/spif83.ecw')
-        except:
+        except OSError:
             pass
         return 'skip'
     gt = [1, 2, 0, 3, 0, -4]
@@ -866,7 +866,7 @@ def ecw_24():
 
     try:
         os.remove('tmp/spif83.ecw')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -883,7 +883,7 @@ def ecw_25():
     shutil.copyfile('data/spif83.ecw', 'tmp/spif83.ecw')
     try:
         os.remove('tmp/spif83.ecw.aux.xml')
-    except:
+    except OSError:
         pass
 
     proj = 'NUTM31'
@@ -894,7 +894,7 @@ def ecw_25():
     if ds is None and gdaltest.ecw_drv.major_version == 3 and gdal.GetConfigOption('APPVEYOR') is not None:
         try:
             os.remove('tmp/spif83.ecw')
-        except:
+        except OSError:
             pass
         return 'skip'
     sr = osr.SpatialReference()
@@ -937,7 +937,7 @@ def ecw_25():
 
     try:
         os.remove('tmp/spif83.ecw')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -954,7 +954,7 @@ def ecw_26():
     shutil.copyfile('data/spif83.ecw', 'tmp/spif83.ecw')
     try:
         os.remove('tmp/spif83.ecw.aux.xml')
-    except:
+    except OSError:
         pass
 
     proj = 'NUTM31'
@@ -965,7 +965,7 @@ def ecw_26():
     if ds is None and gdaltest.ecw_drv.major_version == 3 and gdal.GetConfigOption('APPVEYOR') is not None:
         try:
             os.remove('tmp/spif83.ecw')
-        except:
+        except OSError:
             pass
         return 'skip'
     ds.SetMetadataItem("PROJ", proj, "ECW")
@@ -1011,7 +1011,7 @@ def ecw_26():
 
     try:
         os.remove('tmp/spif83.ecw')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -1530,11 +1530,10 @@ def ecw_38():
     if gdaltest.ecw_drv is None:
         return 'skip'
 
-    gdaltest.ecw_38_fname = ''
     if version_info >= (3, 0, 0):
-        exec("""gdaltest.ecw_38_fname = 'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'""")
+        gdaltest.ecw_38_fname = 'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'
     else:
-        exec("""gdaltest.ecw_38_fname = u'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'""")
+        gdaltest.ecw_38_fname = u'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'
     fname = gdaltest.ecw_38_fname
 
     if gdaltest.ecw_drv.major_version < 4:
@@ -1660,7 +1659,7 @@ def ecw_41():
     shutil.copy('data/stefan_full_rgba_ecwv3_meta.ecw', 'tmp/stefan_full_rgba_ecwv3_meta.ecw')
     try:
         os.remove('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
@@ -1733,7 +1732,7 @@ def ecw_41():
     # Remove the .aux.xml file
     try:
         os.remove('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
@@ -1775,7 +1774,7 @@ def ecw_42():
     shutil.copy('data/stefan_full_rgba_ecwv3_meta.ecw', 'tmp/stefan_full_rgba_ecwv3_meta.ecw')
     try:
         os.remove('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw', gdal.GA_Update)
@@ -2418,86 +2417,84 @@ def ecw_cleanup():
 
     try:
         os.remove('tmp/jrc_out.ecw')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/jrc_out.ecw.aux.xml')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/ecw_5.jp2')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/ecw_5.jp2.aux.xml')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/ecw_7.ntf')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/ecw9.jp2')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test_11.ntf')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/rgb_gcp.jp2')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/spif83.ecw')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/spif83.ecw.aux.xml')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/UInt16_big_out.ecw')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/UInt16_big_out.jp2')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/UInt16_big_out.jp2.aux.xml')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/UInt16_big_out.ecw.aux.xml')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/jrc312.ecw')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/jrc123.ecw')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/jrcstats.ecw')
-    except:
+    except OSError:
         pass
 
     try:
-        fname = gdaltest.ecw_38_fname
         os.remove(fname)
-    except:
+    except OSError:
         pass
     try:
-        fname = gdaltest.ecw_38_fname
         os.remove(fname + '.aux.xml')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/stefan_full_rgba_ecwv3_meta.ecw')
-    except:
+    except OSError:
         pass
     gdaltest.reregister_all_jpeg2000_drivers()
 

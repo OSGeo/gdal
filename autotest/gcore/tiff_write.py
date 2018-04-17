@@ -622,7 +622,7 @@ def tiff_write_17():
         open('tmp/tm_17.RPB').read()
         gdaltest.post_reason('unexpectedly found .RPB file')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     # confirm there is no _rpc.txt file created by default.
@@ -630,7 +630,7 @@ def tiff_write_17():
         open('tmp/tm_17_RPC.TXT').read()
         gdaltest.post_reason('unexpectedly found _RPC.TXT file')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     # Open the dataset, and confirm the RPC data is still intact.
@@ -683,7 +683,7 @@ def tiff_write_18():
     try:
         open('tmp/tw_18.RPB').read()
         open('tmp/tw_18.IMD').read()
-    except:
+    except IOError:
         gdaltest.post_reason('missing .RPB or .IMD file.')
         return 'fail'
 
@@ -692,7 +692,7 @@ def tiff_write_18():
         open('tmp/tw_18_RPC.TXT').read()
         gdaltest.post_reason('unexpectedly found _RPC.TXT file')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     # Open the dataset, and confirm the RPC/IMD data is still intact.
@@ -729,14 +729,14 @@ def tiff_write_18():
         open('tmp/tw_18.RPB').read()
         gdaltest.post_reason('RPB did not get cleaned up.')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     try:
         open('tmp/tw_18.IMD').read()
         gdaltest.post_reason('IMD did not get cleaned up.')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     return 'success'
@@ -788,12 +788,12 @@ def tiff_write_rpc_txt():
         open('tmp/tiff_write_rpc_txt.RPB').read()
         gdaltest.post_reason('unexpectedly found .RPB file')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     try:
         open('tmp/tiff_write_rpc_txt_RPC.TXT').read()
-    except:
+    except IOError:
         gdaltest.post_reason('missing _RPC.TXT file.')
         return 'fail'
 
@@ -813,7 +813,7 @@ def tiff_write_rpc_txt():
         open('tmp/tiff_write_rpc_txt_RPC.TXT').read()
         gdaltest.post_reason('_RPC.TXT did not get cleaned up.')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     return 'success'
@@ -845,7 +845,7 @@ def tiff_write_rpc_in_pam():
         open('tmp/tiff_write_rpc_txt.RPB').read()
         gdaltest.post_reason('unexpectedly found .RPB file')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     # Open the dataset, and confirm the RPC data is still intact.
@@ -926,7 +926,7 @@ def tiff_write_20():
         os.stat('tmp/tags.tif.aux.xml')
         gdaltest.post_reason('did not expected .aux.xml file')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     new_ds = gdal.Open('tmp/tags.tif')
@@ -951,7 +951,7 @@ def tiff_write_20():
         os.stat('tmp/tags.tif.aux.xml')
         gdaltest.post_reason('did not expected .aux.xml file')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/tags.tif')
@@ -2309,7 +2309,7 @@ def tiff_write_60():
             os.stat(options_tuple[1])
             gdaltest.post_reason('%s should have been deleted' % options_tuple[1])
             return 'fail'
-        except:
+        except OSError:
             pass
 
         # CreateCopy case
@@ -2333,7 +2333,7 @@ def tiff_write_60():
             os.stat(options_tuple[1])
             gdaltest.post_reason('%s should have been deleted' % options_tuple[1])
             return 'fail'
-        except:
+        except OSError:
             pass
 
     return 'success'
@@ -2626,7 +2626,7 @@ def tiff_write_70():
         os.stat('tmp/tiff_write_70.tif.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/tiff_write_70.tif')
@@ -3065,7 +3065,7 @@ def tiff_write_79():
                 os.stat('tmp/tiff_write_79.tif.aux.xml')
                 gdaltest.post_reason('got to PAM')
                 return 'fail'
-            except:
+            except OSError:
                 pass
 
             # So should get 'Area'
@@ -3096,7 +3096,7 @@ def tiff_write_79():
                 os.stat('tmp/tiff_write_79.tif.aux.xml')
                 gdaltest.post_reason('got to PAM')
                 return 'fail'
-            except:
+            except OSError:
                 pass
 
             # Now should get 'Point'
@@ -3157,7 +3157,7 @@ def tiff_write_80():
         os.stat('tmp/tiff_write_80.tif.aux.xml')
         gdaltest.post_reason('got to PAM, but not expected...')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/tiff_write_80.tif')
@@ -3244,7 +3244,7 @@ def tiff_write_80():
         os.stat('tmp/tiff_write_80_bis.tif.aux.xml')
         gdaltest.post_reason('PAM file should be deleted')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/tiff_write_80_bis.tif')
@@ -3421,7 +3421,7 @@ def tiff_write_85():
         os.stat('tmp/tiff_write_85.tif.aux.xml')
         gdaltest.post_reason('got to PAM, but not expected...')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/tiff_write_85.tif')
@@ -3497,7 +3497,7 @@ def tiff_write_85():
         os.stat('tmp/tiff_write_85_bis.tif.aux.xml')
         gdaltest.post_reason('PAM file should be deleted')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/tiff_write_85_bis.tif')
@@ -3644,7 +3644,7 @@ def tiff_write_87():
             gdaltest.post_reason('validate_cloud_optimized_geotiff failed')
             print(errors)
             return 'fail'
-    except:
+    except OSError:
         gdaltest.post_reason('validate_cloud_optimized_geotiff failed')
         return 'fail'
 
