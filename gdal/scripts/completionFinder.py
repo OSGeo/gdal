@@ -29,11 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import os.path as op
 
-from subprocess import call, Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE, STDOUT
 
 
 def showHelp():
