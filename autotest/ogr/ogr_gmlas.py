@@ -10,7 +10,7 @@
 # Initial development funded by the European Earth observation programme
 # Copernicus
 #
-#******************************************************************************
+# ******************************************************************************
 # Copyright (c) 2016, Even Rouault, <even dot rouault at spatialys dot com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -79,7 +79,7 @@ def compare_ogrinfo_output(gmlfile, reffile, options=''):
         open(tmpfilename, 'wb').write(ret.encode('utf-8'))
         print('Diff:')
         os.system('diff -u ' + reffile + ' ' + tmpfilename)
-        #os.unlink(tmpfilename)
+        # os.unlink(tmpfilename)
         return 'fail'
     return 'success'
 
@@ -404,7 +404,7 @@ def ogr_gmlas_same_element_in_different_ns():
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    #for i in range(ds.GetLayerCount()):
+    # for i in range(ds.GetLayerCount()):
     #    print(ds.GetLayer(i).GetName())
 
     if ds.GetLayerCount() != 5:

@@ -6799,7 +6799,7 @@ def tiff_write_145():
             print(options)
             return 'fail'
         ds = None
-        #print(gdal.GetLastErrorMsg())
+        # print(gdal.GetLastErrorMsg())
         if gdal.GetLastErrorMsg() == '':
             gdaltest.post_reason('did not get any warning/error')
             print(options)
@@ -8248,7 +8248,7 @@ gdaltest_list = [
     tiff_write_170_invalid_compresion,
     tiff_write_171_zstd,
     tiff_write_172_geometadata_tiff_rsid,
-    #tiff_write_api_proxy,
+    # tiff_write_api_proxy,
     tiff_write_cleanup]
 
 # gdaltest_list = [ tiff_write_1, tiff_write_170_invalid_compresion ]

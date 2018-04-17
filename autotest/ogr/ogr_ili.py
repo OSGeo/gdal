@@ -94,7 +94,7 @@ def ogr_interlis1_2():
         gdaltest.post_reason('feature count wrong.')
         return 'fail'
 
-    #Get 2nd feature
+    # Get 2nd feature
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
 
@@ -339,8 +339,8 @@ def ogr_interlis1_7():
 
     feat = lyr.GetNextFeature()
 
-    #Interlis 1 Encoding is ISO 8859-1 (Latin1)
-    #Pyton source code is UTF-8 encoded
+    # Interlis 1 Encoding is ISO 8859-1 (Latin1)
+    # Pyton source code is UTF-8 encoded
     field_values = [0, 'äöü', 'ÄÖÜ', '', 1]
 
     if feat.GetFieldCount() != len(field_values):
@@ -354,7 +354,7 @@ def ogr_interlis1_7():
             gdaltest.post_reason('field value wrong.')
             return 'fail'
 
-    #Write back
+    # Write back
     driver = ogr.GetDriverByName('Interlis 1')
     outfile = "tmp/interlis1_7.itf"
     dst_ds = driver.CreateDataSource(outfile + ",data/ili/format-default.imd")
@@ -508,7 +508,7 @@ def ogr_interlis1_11():
 
     feat = lyr.GetNextFeature()
 
-    #feat.DumpReadable()
+    # feat.DumpReadable()
     #        _TID (String) = 0
     #        Text1 (String) = aa bb
     #        Number (Real) = 40
@@ -1411,13 +1411,13 @@ def ogr_interlis_arc1():
 
     length_0_1_deg = 72.7181992353  # Line length with 0.1 degree segments
 
-    #Read Area lines
+    # Read Area lines
     lyr = ds.GetLayerByName('Bodenbedeckung__BoFlaechen_Form')
     if lyr.GetFeatureCount() != 4:
         gdaltest.post_reason('feature count wrong.')
         return 'fail'
 
-    #Get 3rd feature
+    # Get 3rd feature
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
@@ -1437,7 +1437,7 @@ def ogr_interlis_arc1():
         gdaltest.post_reason('line point count wrong.')
         return 'fail'
 
-    #Get 4th feature
+    # Get 4th feature
     feat = lyr.GetNextFeature()
 
     geom = feat.GetGeometryRef()

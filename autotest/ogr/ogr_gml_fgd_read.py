@@ -54,7 +54,7 @@ def ogr_gml_fgd_1():
 
     gdaltest.have_gml_fgd_reader = 0
 
-    ### open FGD GML file
+    # open FGD GML file
     try:
         ds = ogr.Open(_fgd_dir + 'ElevPt.xml')
     except:
@@ -104,7 +104,7 @@ def ogr_gml_fgd_2():
     if not gdaltest.have_gml_fgd_reader:
         return 'skip'
 
-    ### open FGD GML file
+    # open FGD GML file
     ds = ogr.Open(_fgd_dir + 'BldA.xml')
 
     # check number of layers

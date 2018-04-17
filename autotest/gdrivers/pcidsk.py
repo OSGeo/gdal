@@ -547,7 +547,7 @@ gdaltest_list = [
     pcidsk_6,
     pcidsk_7,
     pcidsk_8,
-    #pcidsk_9,
+    # pcidsk_9,
     pcidsk_10,
     pcidsk_11,
     pcidsk_12,

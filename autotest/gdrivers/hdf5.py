@@ -524,7 +524,7 @@ def hdf5_15():
 
     return 'success'
 
-#Repeat for Float64
+# Repeat for Float64
 
 
 def hdf5_16():
@@ -541,7 +541,7 @@ def hdf5_16():
 
     return 'success'
 
-#Repeat for Float16
+# Repeat for Float16
 
 
 def hdf5_17():

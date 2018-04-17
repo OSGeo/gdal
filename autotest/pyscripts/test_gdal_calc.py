@@ -48,7 +48,7 @@ try:
 except:
     gdalnumeric_not_available = True
 
-#Usage: gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename] [other_options]
+# Usage: gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename] [other_options]
 
 
 ###############################################################################

@@ -72,13 +72,13 @@ def ogr_pg_1():
         gdaltest.pg_connection_string = val
     else:
         gdaltest.pg_connection_string = 'dbname=autotest'
-    #gdaltest.pg_connection_string='dbname=autotest-postgis1.4'
+    # gdaltest.pg_connection_string='dbname=autotest-postgis1.4'
     #gdaltest.pg_connection_string='dbname=autotest port=5432'
-    #gdaltest.pg_connection_string='dbname=autotest-postgis2.0'
+    # gdaltest.pg_connection_string='dbname=autotest-postgis2.0'
     #gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5433 user=postgres'
     #gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5434 user=postgres'
     #gdaltest.pg_connection_string='dbname=autotest port=5435 host=127.0.0.1'
-    #7.4
+    # 7.4
     #gdaltest.pg_connection_string='dbname=autotest port=5436 user=postgres'
 
     try:
@@ -4052,11 +4052,11 @@ def ogr_pg_72():
     # Test with binary protocol
     #gdaltest.pg_ds = ogr.Open( 'PGB:' + gdaltest.pg_connection_string, update = 1 )
     #lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_72')
-    #if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+    # if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
     #    gdaltest.post_reason('fail')
     #    return 'fail'
     #f = lyr.GetNextFeature()
-    #if f.GetFID() != 123456789012345:
+    # if f.GetFID() != 123456789012345:
     #    gdaltest.post_reason('fail')
     #    f.DumpReadable()
     #    return 'fail'
@@ -5095,10 +5095,10 @@ def ogr_pg_78():
         if lyr.GetName() == 'ogr_pg_78_2':
             ogr_pg_78_2_found = True
             # No logic in geography_columns to get type/coordim/srid from constraints
-            #if lyr.GetGeomType() != ogr.wkbPoint25D:
+            # if lyr.GetGeomType() != ogr.wkbPoint25D:
             #    gdaltest.post_reason('fail')
             #    return 'fail'
-            #if lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
+            # if lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
             #    gdaltest.post_reason('fail')
             #    return 'fail'
     if not ogr_pg_78_found:
@@ -5698,8 +5698,8 @@ gdaltest_list_internal = [
     ogr_pg_23,
     ogr_pg_24,
     ogr_pg_25,
-    #ogr_pg_26,
-    #ogr_pg_27,
+    # ogr_pg_26,
+    # ogr_pg_27,
     ogr_pg_28,
     ogr_pg_29,
     ogr_pg_30,

@@ -3165,7 +3165,7 @@ def nitf_online_7():
         #shutil.copyfile('tmp/cache/' + file, 'tmp/' + file)
         #ds = gdal.Open('tmp/' + file, gdal.GA_Update)
         #data = ds.GetRasterBand(1).ReadRaster(0, 0, 1024, 1024)
-        #ds.GetRasterBand(1).Fill(0)
+        # ds.GetRasterBand(1).Fill(0)
         #ds = None
 
         #ds = gdal.Open('tmp/' + file, gdal.GA_Update)
@@ -3173,7 +3173,7 @@ def nitf_online_7():
         #ds = None
 
         #ds = gdal.Open('tmp/' + file)
-        #print(ds.GetRasterBand(1).Checksum())
+        # print(ds.GetRasterBand(1).Checksum())
         #ds = None
 
         #os.remove('tmp/' + file)
@@ -4052,11 +4052,11 @@ gdaltest_list = [
     nitf_43_jp2kak,
     nitf_44,
     nitf_45,
-    #nitf_46_jp2ecw,
-    #nitf_46_jp2mrsid,
-    #nitf_46_jp2kak,
+    # nitf_46_jp2ecw,
+    # nitf_46_jp2mrsid,
+    # nitf_46_jp2kak,
     nitf_46_jasper,
-    #nitf_46_openjpeg,
+    # nitf_46_openjpeg,
     nitf_47,
     nitf_48,
     nitf_49,

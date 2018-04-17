@@ -1898,7 +1898,7 @@ def ogr_spatialite_5(bUseComprGeom=False):
 
     num_layer = 0
     for wkt in geometries:
-        #print(wkt)
+        # print(wkt)
         geom = ogr.CreateGeometryFromWkt(wkt)
         if bUseComprGeom:
             options = ['COMPRESS_GEOM=YES']
@@ -1906,7 +1906,7 @@ def ogr_spatialite_5(bUseComprGeom=False):
             options = []
         lyr = ds.CreateLayer('test%d' % num_layer, geom_type=geom.GetGeometryType(), srs=srs, options=options)
         feat = ogr.Feature(lyr.GetLayerDefn())
-        #print(geom)
+        # print(geom)
         feat.SetGeometry(geom)
         lyr.CreateFeature(feat)
         num_layer = num_layer + 1
@@ -3355,12 +3355,12 @@ def ogr_sqlite_40():
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
     ret = lyr.CreateFeature(f)
 
-    #ds.CommitTransaction()
+    # ds.CommitTransaction()
     ds.ReleaseResultSet(ds.ExecuteSQL('SELECT 1'))
     #ds = None
     #ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update = 1)
     #lyr = ds.GetLayerByName('test3')
-    #ds.StartTransaction()
+    # ds.StartTransaction()
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))

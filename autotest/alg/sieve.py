@@ -229,7 +229,7 @@ def sieve_6():
     gdal.SieveFilter(band, None, band, 2, 4)
 
     #ar = band.ReadAsArray()
-    #print(ar)
+    # print(ar)
 
     cs = band.Checksum()
     if (size == 102 and cs != 60955) or (size == 3002 and cs != 63178):
@@ -282,7 +282,7 @@ NODATA_value 0
         drv.Delete('/vsimem/sieve_7.tif')
 
     # Expected:
-    #[[0 0 0 0 0 0 0]
+    # [[0 0 0 0 0 0 0]
     # [0 1 1 1 1 1 1]
     # [0 1 0 0 1 1 1]
     # [0 1 0 2 2 2 1]

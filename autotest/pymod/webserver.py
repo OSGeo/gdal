@@ -383,8 +383,8 @@ class GDAL_ThreadedHttpServer(Thread):
             raise Exception('server not started')
         count = 0
         while (timeout <= 0 or count < timeout) and self.server.running and not self.server.stop_requested:
-            #print(count)
-            #print(self.server.is_running())
+            # print(count)
+            # print(self.server.is_running())
             time.sleep(0.5)
             count = count + 0.5
         self.stop()

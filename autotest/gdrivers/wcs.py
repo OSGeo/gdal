@@ -603,10 +603,10 @@ def wcs_cleanup():
 
 gdaltest_list = [
     wcs_1,
-    #wcs_2, #FIXME: re-enable after adapting test
+    # wcs_2, #FIXME: re-enable after adapting test
     wcs_3,
     wcs_4,
-    #wcs_5, #FIXME: re-enable after adapting test
+    # wcs_5, #FIXME: re-enable after adapting test
     wcs_6,
     wcs_cleanup]
 

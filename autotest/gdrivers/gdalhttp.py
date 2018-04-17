@@ -347,7 +347,7 @@ def http_cleanup():
 gdaltest_list = [http_1,
                  http_2,
                  http_3,
-                 #http_4_old,
+                 # http_4_old,
                  http_4,
                  http_5,
                  http_6,

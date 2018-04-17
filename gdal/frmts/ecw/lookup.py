@@ -1,4 +1,4 @@
-#******************************************************************************
+# ******************************************************************************
 #  $Id$
 #
 #  Project:  GDAL ECW Driver
@@ -6,7 +6,7 @@
 #            into OGC WKT for storage in $GDAL_HOME/data/ecw_cs.wkt.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
 #
-#******************************************************************************
+# ******************************************************************************
 #  Copyright (c) 2003, Frank Warmerdam
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
@@ -26,10 +26,9 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
+# ******************************************************************************
 
 import string
-import sys
 import osr
 
 ##############################################################################
@@ -71,7 +70,7 @@ dict_dict = {}
 
 for item in dict_list:
     dict_dict[item] = load_dict(dir + item + '.dat')
-    #print 'loaded: %s' % item
+    # print 'loaded: %s' % item
 
 pfile = open(dir + 'project.dat')
 pfile.readline()
@@ -164,7 +163,7 @@ for line in pfile.readlines():
         print('cant translate: ', line)
         raise
 
-## Translate datums to their underlying spheroid information.
+# Translate datums to their underlying spheroid information.
 
 pfile = open(dir + 'datum.dat')
 pfile.readline()

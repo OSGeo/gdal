@@ -396,7 +396,7 @@ def ogr_gpx_7():
 
     gdaltest.gpx_ds = None
 
-#Now check that the extensions fields have been well written
+# Now check that the extensions fields have been well written
     gdaltest.gpx_ds = ogr.Open('tmp/gpx.gpx')
     gpx_lyr = gdaltest.gpx_ds.GetLayerByName('waypoints')
 

@@ -210,10 +210,10 @@ def gdal_ls(argv, fout=sys.stdout):
     if needsVSICurl(dirname):
         dirname = '/vsicurl/' + dirname
 
-    #if iszip(dirname) and not dirname.startswith('/vsizip'):
+    # if iszip(dirname) and not dirname.startswith('/vsizip'):
     #    dirname = '/vsizip/' + dirname
 
-    #if istgz(dirname) and not dirname.startswith('/vsitar'):
+    # if istgz(dirname) and not dirname.startswith('/vsitar'):
     #    dirname = '/vsitar/' + dirname
 
     prefix = ''

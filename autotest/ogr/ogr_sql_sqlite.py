@@ -1730,7 +1730,7 @@ def ogr_sql_sqlite_25():
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
-    #if ogrtest.has_spatialite is True:
+    # if ogrtest.has_spatialite is True:
     #    return 'skip'
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
@@ -1798,7 +1798,7 @@ def ogr_sql_sqlite_26():
     if not ogrtest.have_geos():
         return 'skip'
 
-    #if ogrtest.has_spatialite is True:
+    # if ogrtest.has_spatialite is True:
     #    return 'skip'
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")

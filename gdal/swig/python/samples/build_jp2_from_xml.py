@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#******************************************************************************
+# ******************************************************************************
 #  $Id$
 #
 #  Project:  GDAL
@@ -8,7 +8,7 @@
 #            Mostly useful to build non-conformant files
 #  Author:   Even Rouault, <even dot rouault at spatialys dot com>
 #
-#******************************************************************************
+# ******************************************************************************
 #  Copyright (c) 2015, European Union (European Environment Agency)
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,7 +28,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
+# ******************************************************************************
 
 import os
 import struct
@@ -113,7 +113,7 @@ def parse_field(xml_tree, out_f, src_jp2file):
     field_name = get_attribute_val(xml_tree, 'name')
     if field_name is None:
         print('Cannot find Field.name attribute')
-        #return False
+        # return False
     field_type = get_attribute_val(xml_tree, 'type')
     if field_type is None:
         print('Cannot find Field.type attribute')

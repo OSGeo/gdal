@@ -1018,7 +1018,7 @@ def ogr_gml_24():
 
     #sr = lyr.GetSpatialRef()
     #got_wkt = sr.ExportToWkt()
-    #if got_wkt.find('GEOGCS["WGS 84"') == -1 or \
+    # if got_wkt.find('GEOGCS["WGS 84"') == -1 or \
     #   got_wkt.find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') != -1:
     #    gdaltest.post_reason('did not get expected SRS')
     #    print(got_wkt)
@@ -3005,7 +3005,7 @@ def ogr_gml_63():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    ### test ST file type
+    # test ST file type
     ds = ogr.Open('data/ruian_st_v1.xml.gz')
 
     # check number of layers
@@ -3024,7 +3024,7 @@ def ogr_gml_63():
 
     ds = None
 
-    ### test OB file type
+    # test OB file type
     ds = ogr.Open('data/ruian_ob_v1.xml.gz')
 
     # check number of layers

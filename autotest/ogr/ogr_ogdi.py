@@ -97,7 +97,7 @@ def ogr_ogdi_1():
         if lyr.GetFeatureCount() != l[2]:
             print(lyr.GetFeatureCount())
             return 'fail'
-        #if l[1] != ogr.wkbNone:
+        # if l[1] != ogr.wkbNone:
         #    if lyr.GetSpatialRef().ExportToWkt().find('WGS 84') == -1:
         #        return 'fail'
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#*****************************************************************************
+# *****************************************************************************
 # $Id$
 #
 # Project:  OpenGIS Simple Features Reference Implementation
@@ -9,7 +9,7 @@
 #
 # Port from ogr2ogr.cpp whose author is Frank Warmerdam
 #
-#*****************************************************************************
+# *****************************************************************************
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
 # Copyright (c) 1999, Frank Warmerdam
 #
@@ -30,7 +30,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
-#**************************************************************************
+# **************************************************************************
 
 # Note : this is the most direct port of ogr2ogr.cpp possible
 # It could be made much more Python'ish !
@@ -121,9 +121,9 @@ class AssociatedLayers:
         self.poSrcLayer = None
         self.psInfo = None
 
-#**********************************************************************
+# **********************************************************************
 #                                main()
-#**********************************************************************
+# **********************************************************************
 
 
 bSkipFailures = False
@@ -398,10 +398,10 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
         elif EQUAL(args[iArg], "-progress"):
             bDisplayProgress = True
 
-        #elif EQUAL(args[iArg],"-wrapdateline") )
-        #{
+        # elif EQUAL(args[iArg],"-wrapdateline") )
+        # {
         #    bWrapDateline = True;
-        #}
+        # }
         #
         elif EQUAL(args[iArg], "-clipsrc") and iArg < nArgc - 1:
 
@@ -752,11 +752,11 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 
         gdal.SetConfigOption("OGR_INTERLEAVED_READING", "YES")
 
-        #if (bSplitListFields)
-        #{
+        # if (bSplitListFields)
+        # {
         #    fprintf( stderr, "FAILURE: -splitlistfields not supported in this mode\n" );
         #    exit( 1 );
-        #}
+        # }
 
         nSrcLayerCount = poDS.GetLayerCount()
         pasAssocLayers = [AssociatedLayers() for i in range(nSrcLayerCount)]
@@ -1030,9 +1030,9 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 
     return True
 
-#**********************************************************************
+# **********************************************************************
 #                               Usage()
-#**********************************************************************
+# **********************************************************************
 
 
 def Usage():
@@ -1044,7 +1044,7 @@ def Usage():
           "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n" +
           "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n" +
           "               [-simplify tolerance]\n" + \
-          #// "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n" + \
+          # // "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n" + \
           "               [-fieldTypeToString All|(type1[,type2]*)] [-explodecollections] \n" + \
           "               dst_datasource_name src_datasource_name\n" + \
           "               [-lco NAME=VALUE] [-nln name] [-nlt type] [-dim 2|3] [layer [layer ...]]\n" + \
@@ -1069,8 +1069,8 @@ def Usage():
           " -gt n: group n features per transaction (default 200)\n" +
           " -spat xmin ymin xmax ymax: spatial query extents\n" +
           " -simplify tolerance: distance tolerance for simplification.\n" + \
-          #//" -segmentize max_dist: maximum distance between 2 nodes.\n" + \
-          #//"                       Used to create intermediate points\n" + \
+          # //" -segmentize max_dist: maximum distance between 2 nodes.\n" + \
+          # //"                       Used to create intermediate points\n" + \
           " -dsco NAME=VALUE: Dataset creation option (format specific)\n" + \
           " -lco  NAME=VALUE: Layer creation option (format specific)\n" + \
           " -nln name: Assign an alternate name to the new layer\n" + \
@@ -1168,9 +1168,9 @@ def LoadGeometry(pszDS, pszSQL, pszLyr, pszWhere):
 def wkbFlatten(x):
     return x & (~ogr.wkb25DBit)
 
-#**********************************************************************
+# **********************************************************************
 #                               SetZ()
-#**********************************************************************
+# **********************************************************************
 
 
 def SetZ(poGeom, dfZ):
@@ -1195,9 +1195,9 @@ def SetZ(poGeom, dfZ):
         for i in range(poGeom.GetGeometryCount()):
             SetZ(poGeom.GetGeometryRef(i), dfZ)
 
-#**********************************************************************
+# **********************************************************************
 #                         SetupTargetLayer()
-#**********************************************************************
+# **********************************************************************
 
 
 def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName,
@@ -1500,9 +1500,9 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName,
 
     return psInfo
 
-#**********************************************************************
+# **********************************************************************
 #                           TranslateLayer()
-#**********************************************************************
+# **********************************************************************
 
 
 def TranslateLayer(psInfo, poSrcDS, poSrcLayer, poDstDS,
@@ -1546,7 +1546,7 @@ def TranslateLayer(psInfo, poSrcDS, poSrcLayer, poDstDS,
 
         if nFIDToFetch != ogr.NullFID:
 
-            #// Only fetch feature on first pass.
+            # // Only fetch feature on first pass.
             if nFeaturesInTransaction == 0:
                 poFeature = poSrcLayer.GetFeature(nFIDToFetch)
             else:
@@ -1616,7 +1616,7 @@ def TranslateLayer(psInfo, poSrcDS, poSrcLayer, poDstDS,
 
                 if eGeomOp == GeomOperation.SEGMENTIZE:
                     pass
-                    #if (poDstFeature.GetGeometryRef() is not None and dfGeomOpParam > 0)
+                    # if (poDstFeature.GetGeometryRef() is not None and dfGeomOpParam > 0)
                     #    poDstFeature.GetGeometryRef().segmentize(dfGeomOpParam);
                 elif eGeomOp == GeomOperation.SIMPLIFY_PRESERVE_TOPOLOGY and dfGeomOpParam > 0:
                     poNewGeom = poDstGeometry.SimplifyPreserveTopology(dfGeomOpParam)

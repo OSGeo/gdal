@@ -41,7 +41,7 @@ import test_cli_utilities
 
 ###############################################################################
 # Test create
-#gnmmanage create -f GNMFile -t_srs EPSG:4326 -dsco net_name=test_gnm -dsco net_description="Test file based GNM" /home/bishop/tmp/ --config CPL_DEBUG ON
+# gnmmanage create -f GNMFile -t_srs EPSG:4326 -dsco net_name=test_gnm -dsco net_description="Test file based GNM" /home/bishop/tmp/ --config CPL_DEBUG ON
 
 
 def test_gnmmanage_1():
