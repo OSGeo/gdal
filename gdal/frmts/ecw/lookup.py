@@ -115,15 +115,15 @@ for line in pfile.readlines():
 
         elif type == 'lambazea':
             srs.SetLAEA(r2d(dline[5]), r2d(dline[4]),
-                 fe, fn)
+                        fe, fn)
 
         elif type == 'lambert1':
             srs.SetLCC1SP(r2d(dline[5]), r2d(dline[4]),
-                   float(dline[3]), fe, fn)
+                          float(dline[3]), fe, fn)
 
         elif type == 'lamcon2':
             srs.SetLCC(r2d(dline[7]), r2d(dline[8]),
-                r2d(dline[9]), r2d(dline[6]), fe, fn)
+                       r2d(dline[9]), r2d(dline[6]), fe, fn)
 
 #	elif type == 'lambert2':
 #	    false_en = '+y_0=%.2f +x_0=%.2f' \
@@ -134,7 +134,7 @@ for line in pfile.readlines():
 
         elif type == 'albersea':
             srs.SetACEA(r2d(dline[3]), r2d(dline[4]),
-                 r2d(dline[5]), r2d(dline[6]), fe, fn)
+                        r2d(dline[5]), r2d(dline[6]), fe, fn)
 
 #	elif type == 'obmerc_b':
 #	    result = '+proj=omerc %s +lat_0=%s +lonc=%s +alpha=%s +k=%s' \
