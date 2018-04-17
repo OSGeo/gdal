@@ -63,7 +63,7 @@ def have_proj480():
     for name in ["libproj.so", "proj.dll", "proj-9.dll", "libproj-0.dll", "libproj-10.dll", "cygproj-10.dll", "libproj.dylib"]:
         try:
             handle = ctypes.cdll.LoadLibrary(name)
-        except:
+        except OSError:
             pass
     if handle is None:
         print('cannot load libproj.so, proj.dll, proj-9.dll, libproj-0.dll, libproj-10.dll, cygproj-10.dll or libproj.dylib')
@@ -72,7 +72,7 @@ def have_proj480():
 
     try:
         handle.pj_init
-    except:
+    except AttributeError:
         print('cannot find pj_init symbol : weird')
         have_proj480_flag = False
         return have_proj480_flag
@@ -82,7 +82,7 @@ def have_proj480():
         handle.pj_etmerc
         have_proj480_flag = True
         return have_proj480_flag
-    except:
+    except AttributeError:
         print('cannot find pj_etmerc : PROJ < 4.8.0')
         have_proj480_flag = False
         return have_proj480_flag

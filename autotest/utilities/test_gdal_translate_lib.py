@@ -601,11 +601,11 @@ def test_gdal_translate_lib_cleanup():
     for i in range(14):
         try:
             os.remove('tmp/test' + str(i + 1) + '.tif')
-        except:
+        except OSError:
             pass
         try:
             os.remove('tmp/test' + str(i + 1) + '.tif.aux.xml')
-        except:
+        except OSError:
             pass
 
     return 'success'

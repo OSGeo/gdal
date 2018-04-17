@@ -40,7 +40,7 @@ import sys
 def do(sqlite3name, gdalname):
     try:
         import ctypes
-    except:
+    except ImportError:
         print('skip')
         sys.exit(0)
 

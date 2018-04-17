@@ -62,19 +62,19 @@ def test_gdal_grid_1():
 
     try:
         os.remove('tmp/n43.shp')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43.dbf')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43.shx')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/n43.qix')
-    except:
+    except OSError:
         pass
 
     # Create an OGR grid from the values of n43.dt0
@@ -140,7 +140,7 @@ def test_gdal_grid_2():
     outfiles.append('tmp/grid_near.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -163,7 +163,7 @@ def test_gdal_grid_2():
     outfiles.append('tmp/grid_near_shift.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Now the same, but shift grid nodes a bit in both horizontal and vertical
@@ -183,7 +183,7 @@ def test_gdal_grid_2():
     outfiles.append('tmp/grid_near_search3.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Now try the search ellipse larger than the raster cell.
@@ -202,7 +202,7 @@ def test_gdal_grid_2():
     outfiles.append('tmp/grid_near_search1.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Search ellipse smaller than the raster cell.
@@ -221,7 +221,7 @@ def test_gdal_grid_2():
     outfiles.append('tmp/grid_near_shift_search3.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Large search ellipse and the grid shift.
@@ -240,7 +240,7 @@ def test_gdal_grid_2():
     outfiles.append('tmp/grid_near_shift_search1.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Small search ellipse and the grid shift.
@@ -270,7 +270,7 @@ def test_gdal_grid_3():
     outfiles.append('tmp/grid_invdist_generic.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -299,7 +299,7 @@ def test_gdal_grid_3():
     outfiles.append('tmp/grid_invdist_sse.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -327,7 +327,7 @@ def test_gdal_grid_3():
     outfiles.append('tmp/grid_invdist_avx.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -355,7 +355,7 @@ def test_gdal_grid_3():
     outfiles.append('tmp/grid_invdist_1thread.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -378,7 +378,7 @@ def test_gdal_grid_3():
     outfiles.append('tmp/grid_invdist_2threads.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -399,7 +399,7 @@ def test_gdal_grid_3():
     outfiles.append('tmp/grid_invdist_90_90_8p.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -431,7 +431,7 @@ def test_gdal_grid_4():
     outfiles.append('tmp/grid_average.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -454,7 +454,7 @@ def test_gdal_grid_4():
     outfiles.append('tmp/grid_average_190_190.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -476,7 +476,7 @@ def test_gdal_grid_4():
     outfiles.append('tmp/grid_average_300_100_40.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -498,7 +498,7 @@ def test_gdal_grid_4():
     outfiles.append('tmp/grid_average_90_90_8p.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -530,7 +530,7 @@ def test_gdal_grid_5():
     outfiles.append('tmp/grid_minimum.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -551,7 +551,7 @@ def test_gdal_grid_5():
     outfiles.append('tmp/grid_minimum_400_100_120.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -582,7 +582,7 @@ def test_gdal_grid_6():
     outfiles.append('tmp/grid_maximum.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -603,7 +603,7 @@ def test_gdal_grid_6():
     outfiles.append('tmp/grid_maximum_100_100.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -634,7 +634,7 @@ def test_gdal_grid_7():
     outfiles.append('tmp/grid_range.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -655,7 +655,7 @@ def test_gdal_grid_7():
     outfiles.append('tmp/grid_range_90_90_8p.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -687,7 +687,7 @@ def test_gdal_grid_8():
     outfiles.append('tmp/grid_count_70_70.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -707,7 +707,7 @@ def test_gdal_grid_8():
     outfiles.append('tmp/grid_count_300_300.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -737,7 +737,7 @@ def test_gdal_grid_9():
     outfiles.append('tmp/grid_avdist.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -760,7 +760,7 @@ def test_gdal_grid_9():
     outfiles.append('tmp/grid_avdist_150_150.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -793,7 +793,7 @@ def test_gdal_grid_10():
     outfiles.append('tmp/grid_avdist_150_50_-15.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -856,7 +856,7 @@ def test_gdal_grid_12():
     outfiles.append('tmp/grid_invdistnn_generic.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -877,7 +877,7 @@ def test_gdal_grid_12():
     outfiles.append('tmp/grid_invdistnn_250_8minp.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
@@ -900,7 +900,7 @@ def test_gdal_grid_12():
     outfiles.append('tmp/grid_invdistnn_250_10maxp_3pow.tif')
     try:
         os.remove(outfiles[-1])
-    except:
+    except OSError:
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".

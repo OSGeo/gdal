@@ -242,7 +242,7 @@ def usgsdem_cleanup():
 
         os.remove('tmp/000a00DEMz')
         os.remove('tmp/000a00DEMz.aux.xml')
-    except:
+    except OSError:
         pass
 
     return 'success'

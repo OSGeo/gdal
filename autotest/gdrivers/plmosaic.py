@@ -522,7 +522,7 @@ def plmosaic_16():
 
     try:
         shutil.rmtree('tmp/plmosaic_cache')
-    except:
+    except OSError:
         pass
 
     gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
@@ -643,7 +643,7 @@ def plmosaic_17():
 
     try:
         shutil.rmtree('tmp/plmosaic_cache')
-    except:
+    except OSError:
         pass
 
     for i in range(12):
@@ -975,7 +975,7 @@ def plmosaic_with_bbox():
 
     try:
         shutil.rmtree('tmp/plmosaic_cache')
-    except:
+    except OSError:
         pass
 
     gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
@@ -1095,7 +1095,7 @@ def plmosaic_cleanup():
 
     try:
         shutil.rmtree('tmp/plmosaic_cache')
-    except:
+    except OSError:
         pass
 
     return 'success'

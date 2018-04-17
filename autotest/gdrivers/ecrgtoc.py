@@ -328,7 +328,7 @@ def ecrgtoc_online_1():
 
     try:
         os.stat('tmp/cache/ECRG_Sample.zip')
-    except:
+    except OSError:
         return 'skip'
 
     ds = gdal.Open('/vsizip/tmp/cache/ECRG_Sample.zip/ECRG_Sample/EPF/TOC.xml')

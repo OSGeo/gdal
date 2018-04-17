@@ -658,7 +658,7 @@ def jp2openjpeg_20():
 
     try:
         import xmlvalidate
-    except:
+    except ImportError:
         print('Cannot import xmlvalidate')
         import traceback
         traceback.print_exc(file=sys.stdout)
@@ -666,7 +666,7 @@ def jp2openjpeg_20():
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET.zip')
-    except:
+    except OSError:
         try:
             os.stat('../ogr/tmp/cache/SCHEMAS_OPENGIS_NET.zip')
             shutil.copy('../ogr/tmp/cache/SCHEMAS_OPENGIS_NET.zip', 'tmp/cache')
@@ -678,17 +678,17 @@ def jp2openjpeg_20():
 
     try:
         os.mkdir('tmp/cache/SCHEMAS_OPENGIS_NET')
-    except:
+    except OSError:
         pass
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd')
-    except:
+    except OSError:
         gdaltest.unzip('tmp/cache/SCHEMAS_OPENGIS_NET', 'tmp/cache/SCHEMAS_OPENGIS_NET.zip')
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/xlink.xsd')
-    except:
+    except OSError:
         xlink_xsd_url = 'http://www.w3.org/1999/xlink.xsd'
         if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xlink.xsd', force_download=True, max_download_duration=10):
             xlink_xsd_url = 'http://even.rouault.free.fr/xlink.xsd'
@@ -698,7 +698,7 @@ def jp2openjpeg_20():
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/xml.xsd')
-    except:
+    except OSError:
         xlink_xsd_url = 'http://www.w3.org/1999/xml.xsd'
         if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xml.xsd', force_download=True, max_download_duration=10):
             xlink_xsd_url = 'http://even.rouault.free.fr/xml.xsd'
@@ -1053,7 +1053,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
 
     try:
         import validate_jp2
-    except:
+    except ImportError:
         print('Cannot run validate_jp2')
         return 'skip'
 
@@ -1878,7 +1878,7 @@ def jp2openjpeg_38():
     try:
         import xmlvalidate
         do_validate = True
-    except:
+    except ImportError:
         print('Cannot import xmlvalidate')
         pass
 

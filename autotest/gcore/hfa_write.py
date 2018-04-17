@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 from osgeo import gdal
 import shutil
@@ -191,15 +192,11 @@ def hfa_clean_external_overviews():
     ds = None
 
     try:
-        fd = open('tmp/small.rrd')
-    except:
-        fd = None
-
-    if fd is not None:
+        os.stat('tmp/small.rrd')
         gdaltest.post_reason('small.rrd still present.')
         return 'fail'
-
-    fd = None
+    except OSError:
+        pass
 
     gdal.GetDriverByName('HFA').Delete('tmp/small.img')
 

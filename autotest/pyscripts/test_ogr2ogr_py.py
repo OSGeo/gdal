@@ -660,7 +660,7 @@ def test_ogr2ogr_py_20():
 
     try:
         os.remove('tmp/Fields.dbf')
-    except:
+    except OSError:
         pass
 
     expected_fields = ['a',
@@ -737,7 +737,7 @@ def test_ogr2ogr_py_21():
 
     try:
         os.remove('tmp/testogr2ogr21.gtm')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr',
@@ -1315,7 +1315,7 @@ def test_ogr2ogr_py_39():
 
     try:
         os.mkdir('tmp/test_ogr2ogr_39_src')
-    except:
+    except OSError:
         pass
     shutil.copy('../ogr/data/poly.shp', 'tmp/test_ogr2ogr_39_src')
     shutil.copy('../ogr/data/poly.shx', 'tmp/test_ogr2ogr_39_src')
@@ -1398,7 +1398,7 @@ def test_ogr2ogr_py_44():
     try:
         os.unlink('tmp/test_ogr2ogr_44.gml')
         os.unlink('tmp/test_ogr2ogr_44.xsd')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_44_src.shp')
@@ -1456,7 +1456,7 @@ def test_ogr2ogr_py_45():
     try:
         os.unlink('tmp/test_ogr2ogr_44.gml')
         os.unlink('tmp/test_ogr2ogr_44.xsd')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_44_src.shp')
@@ -1514,7 +1514,7 @@ def test_ogr2ogr_py_46():
     try:
         os.unlink('tmp/test_ogr2ogr_45.gml')
         os.unlink('tmp/test_ogr2ogr_45.xsd')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_45_src.shp')

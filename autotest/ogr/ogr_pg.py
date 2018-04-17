@@ -4968,7 +4968,7 @@ def ogr_pg_77():
 
     try:
         shutil.rmtree('tmp/ogr_pg_77')
-    except:
+    except OSError:
         pass
     os.mkdir('tmp/ogr_pg_77')
 
@@ -5007,7 +5007,7 @@ def ogr_pg_77():
 
     try:
         shutil.rmtree('tmp/ogr_pg_77')
-    except:
+    except OSError:
         pass
 
     return 'success'

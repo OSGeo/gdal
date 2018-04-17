@@ -127,19 +127,19 @@ def test_gdalbuildvrt_2():
 
     try:
         os.remove('tmp/tileindex.shp')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/tileindex.dbf')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/tileindex.shx')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/mosaic.vrt')
-    except:
+    except OSError:
         pass
 
     gdaltest.runexternal(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
@@ -596,7 +596,7 @@ def test_gdalbuildvrt_cleanup():
     drv.Delete('tmp/test_gdalbuildvrt_11_2.tif')
     try:
         os.remove('tmp/filelist.txt')
-    except:
+    except OSError:
         pass
 
     return 'success'

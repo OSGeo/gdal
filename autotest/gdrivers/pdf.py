@@ -129,7 +129,7 @@ def pdf_online_1():
 
     try:
         os.stat('tmp/cache/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf')
-    except:
+    except OSError:
         return 'skip'
 
     ds = gdal.Open('tmp/cache/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf')
@@ -185,7 +185,7 @@ def pdf_online_2():
 
     try:
         os.stat('tmp/cache/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf')
-    except:
+    except OSError:
         return 'skip'
 
     ds = gdal.Open('PDF:1:tmp/cache/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf')

@@ -45,7 +45,7 @@ if len(sys.argv) == 2 and sys.argv[1] == '-test1':
 
     try:
         shutil.rmtree('tmppamproxydir')
-    except:
+    except OSError:
         pass
     os.mkdir('tmppamproxydir')
 

@@ -1171,7 +1171,7 @@ def ogr_shape_28():
     for filename in ('tmp/hugedbf.dbf', 'tmp/hugedbf.shp', 'tmp/hugedbf.shx'):
         try:
             os.remove(filename)
-        except:
+        except OSError:
             pass
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/hugedbf.shp')
@@ -2009,7 +2009,7 @@ def ogr_shape_47():
 
     try:
         os.unlink('tmp/poly.zip')
-    except:
+    except OSError:
         pass
     os.symlink('/vsizip/data/poly.zip', 'tmp/poly.zip')
 
@@ -3362,7 +3362,7 @@ def ogr_shape_68():
 
         try:
             shutil.rmtree('tmp/mixedcase')
-        except:
+        except OSError:
             pass
         os.mkdir('tmp/mixedcase')
         shutil.copy('data/poly.shp', 'tmp/mixedcase/mixedcase.shp')

@@ -31,7 +31,7 @@
 
 try:
     from BaseHTTPServer import BaseHTTPRequestHandler
-except:
+except ImportError:
     from http.server import BaseHTTPRequestHandler
 
 import os
@@ -1323,7 +1323,7 @@ def ogr_sql_sqlite_16(service=None, template='http://127.0.0.1:%d/geocoding?q=%%
 
         try:
             os.unlink(cache_filename)
-        except:
+        except OSError:
             pass
 
         gdal.SetConfigOption('OGR_GEOCODE_CACHE_FILE', cache_filename)
@@ -1410,7 +1410,7 @@ def ogr_sql_sqlite_16(service=None, template='http://127.0.0.1:%d/geocoding?q=%%
 
         try:
             os.unlink(cache_filename)
-        except:
+        except OSError:
             pass
 
         ds = None
@@ -1457,7 +1457,7 @@ def ogr_sql_sqlite_17(service=None, template='http://127.0.0.1:%d/reversegeocodi
 
         try:
             os.unlink(cache_filename)
-        except:
+        except OSError:
             pass
 
         gdal.SetConfigOption('OGR_GEOCODE_CACHE_FILE', cache_filename)
@@ -1535,7 +1535,7 @@ def ogr_sql_sqlite_17(service=None, template='http://127.0.0.1:%d/reversegeocodi
 
         try:
             os.unlink(cache_filename)
-        except:
+        except OSError:
             pass
 
         ds = None

@@ -138,7 +138,7 @@ def mem_2():
 
     try:
         import ctypes
-    except:
+    except ImportError:
         return 'skip'
 
     for libname in ['msvcrt', 'libc.so.6']:

@@ -1641,6 +1641,7 @@ static OGRwkbGeometryType GetOGRGeometryTypeFromGMLEltName(
     } asArray[] = {
         { "Point", wkbPoint },
         { "Polygon", wkbPolygon },
+        { "Envelope", wkbPolygon },
         { "LineString", wkbLineString },
         { "MultiPoint", wkbMultiPoint },
         { "MultiPolygon", wkbMultiPolygon },
