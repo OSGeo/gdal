@@ -167,8 +167,8 @@ def osr_ct_4():
 
     for i in range(2):
         if abs(result[i][0] - 452772.06) > 0.01 \
-            or abs(result[i][1] - 3540544.89) > 0.01 \
-            or abs(result[i][2] - 0.0) > 0.01:
+                or abs(result[i][1] - 3540544.89) > 0.01 \
+                or abs(result[i][2] - 0.0) > 0.01:
             gdaltest.post_reason('Wrong LL to UTM result')
             return 'fail'
 
@@ -197,8 +197,8 @@ def osr_ct_5():
 
     for i in range(2):
         if abs(result[i][0] - 452772.06) > 0.01 \
-            or abs(result[i][1] - 3540544.89) > 0.01 \
-            or abs(result[i][2] - 0.0) > 0.01:
+                or abs(result[i][1] - 3540544.89) > 0.01 \
+                or abs(result[i][2] - 0.0) > 0.01:
             gdaltest.post_reason('Wrong LL to UTM result')
             return 'fail'
 
@@ -232,8 +232,8 @@ def osr_ct_6():
 
     for i in range(2):
         if abs(result[i][0] - 452772.06) > 0.01 \
-            or abs(result[i][1] - 3540544.89) > 0.01 \
-            or abs(result[i][2] - 0.0) > 0.01:
+                or abs(result[i][1] - 3540544.89) > 0.01 \
+                or abs(result[i][2] - 0.0) > 0.01:
             gdaltest.post_reason('Wrong LL to UTM result')
             return 'fail'
 

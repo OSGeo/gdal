@@ -236,7 +236,7 @@ for name in layer_list:
     if layerdef.GetGeomFieldCount() == 0:
         vrt += '    <GeometryType>wkbNone</GeometryType>\n'
     elif layerdef.GetGeomFieldCount() == 1 and \
-        layerdef.GetGeomFieldDefn(0).IsNullable():
+            layerdef.GetGeomFieldDefn(0).IsNullable():
         vrt += '    <GeometryType>%s</GeometryType>\n' \
             % GeomType2Name(layerdef.GetGeomType())
         srs = layer.GetSpatialRef()

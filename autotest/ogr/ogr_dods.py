@@ -99,7 +99,7 @@ def ogr_dods_2():
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, 'POINT (4.30000019 5.36999989)')\
-        != 0:
+            != 0:
         return 'fail'
 
     feat.Destroy()
@@ -144,7 +144,7 @@ def ogr_dods_3():
             return 'fail'
 
         if ogrtest.check_feature_geometry(feat, 'POINT (4.30000019 5.36999989)')\
-            != 0:
+                != 0:
             return 'fail'
 
         feat.Destroy()

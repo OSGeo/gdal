@@ -382,11 +382,11 @@ def nitf_14():
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 400000) > .1 \
-        or abs(geotransform[1] - 10) > 0.001 \
-        or abs(geotransform[2] - 0) > 0.001 \
-        or abs(geotransform[3] - 6000000) > .1 \
-        or abs(geotransform[4] - 0) > 0.001 \
-        or abs(geotransform[5] - -10) > 0.001:
+            or abs(geotransform[1] - 10) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 6000000) > .1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -10) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -3481,8 +3481,8 @@ def nitf_online_16(driver_to_test):
         ret = 'success'
 
     elif ds.RasterCount == 1 and \
-        ds.GetRasterBand(1).Checksum() == 47664 and \
-        ds.GetRasterBand(1).GetRasterColorTable() is not None:
+            ds.GetRasterBand(1).Checksum() == 47664 and \
+            ds.GetRasterBand(1).GetRasterColorTable() is not None:
         ret = 'success'
     else:
         print(ds.RasterCount)

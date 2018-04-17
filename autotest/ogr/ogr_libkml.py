@@ -1692,16 +1692,16 @@ def ogr_libkml_write_update():
         gdal.VSIFCloseL(f)
 
         if data.find('<NetworkLinkControl>') == -1 or \
-            data.find('<Update>') == -1 or \
-            data.find('<targetHref>http://foo</targetHref>') == -1 or \
-            data.find('<Placemark/>') == -1 or \
-            data.find('<Placemark id="layer_to_edit.10"/>') == -1 or \
-            data.find('<Create>') == -1 or \
-            data.find('<Document targetId="layer_to_edit">') == -1 or \
-            data.find('<Change>') == -1 or \
-            data.find('<Placemark targetId="layer_to_edit.2"/>') == -1 or \
-            data.find('<Delete>') == -1 or \
-            data.find('<Placemark targetId="layer_to_edit.3"/>') == -1:
+                data.find('<Update>') == -1 or \
+                data.find('<targetHref>http://foo</targetHref>') == -1 or \
+                data.find('<Placemark/>') == -1 or \
+                data.find('<Placemark id="layer_to_edit.10"/>') == -1 or \
+                data.find('<Create>') == -1 or \
+                data.find('<Document targetId="layer_to_edit">') == -1 or \
+                data.find('<Change>') == -1 or \
+                data.find('<Placemark targetId="layer_to_edit.2"/>') == -1 or \
+                data.find('<Delete>') == -1 or \
+                data.find('<Placemark targetId="layer_to_edit.3"/>') == -1:
             print(data)
             gdaltest.post_reason('failure')
             return 'fail'
@@ -1755,13 +1755,13 @@ def ogr_libkml_write_networklinkcontrol():
         gdal.VSIFCloseL(f)
 
         if data.find('<minRefreshPeriod>3600</minRefreshPeriod>') == -1 or \
-            data.find('<maxSessionLength>-1</maxSessionLength>') == -1 or \
-            data.find('<cookie>cookie</cookie>') == -1 or \
-            data.find('<message>message</message>') == -1 or \
-            data.find('<linkName>linkname</linkName>') == -1 or \
-            data.find('<linkDescription>linkdescription</linkDescription>') == -1 or \
-            data.find('<linkSnippet>linksnippet</linkSnippet>') == -1 or \
-            data.find('<expires>2014-12-31T23:59:59Z</expires>') == -1:
+                data.find('<maxSessionLength>-1</maxSessionLength>') == -1 or \
+                data.find('<cookie>cookie</cookie>') == -1 or \
+                data.find('<message>message</message>') == -1 or \
+                data.find('<linkName>linkname</linkName>') == -1 or \
+                data.find('<linkDescription>linkdescription</linkDescription>') == -1 or \
+                data.find('<linkSnippet>linksnippet</linkSnippet>') == -1 or \
+                data.find('<expires>2014-12-31T23:59:59Z</expires>') == -1:
             print(data)
             gdaltest.post_reason('failure')
             return 'fail'

@@ -1013,16 +1013,16 @@ def ogr_sql_33():
         sql = 'ALTER TABLE my_layer ADD %smyfield NUMERIC(20, 8)' % extrakeyword
         ds.ExecuteSQL(sql)
         if lyr.GetLayerDefn().GetFieldIndex('myfield') == -1 or \
-            lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetType() != ogr.OFTReal or \
-            lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetWidth() != 20 or \
-            lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetPrecision() != 8:
+                lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetType() != ogr.OFTReal or \
+                lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetWidth() != 20 or \
+                lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetPrecision() != 8:
             gdaltest.post_reason('%s failed' % sql)
             return 'fail'
 
         sql = 'ALTER TABLE my_layer RENAME %smyfield TO "myfield 2"' % extrakeyword
         ds.ExecuteSQL(sql)
         if lyr.GetLayerDefn().GetFieldIndex('myfield') != -1 or \
-            lyr.GetLayerDefn().GetFieldIndex('myfield 2') == -1:
+                lyr.GetLayerDefn().GetFieldIndex('myfield 2') == -1:
             gdaltest.post_reason('%s failed' % sql)
             return 'fail'
 

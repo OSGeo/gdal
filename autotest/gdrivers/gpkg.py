@@ -2229,12 +2229,12 @@ def gpkg_21():
         sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata_reference')
         feat = sql_lyr.GetNextFeature()
         if feat.GetField('reference_scope') != 'table' or \
-            feat.GetField('table_name') != 'tmp' or \
-            not feat.IsFieldNull('column_name') or \
-            not feat.IsFieldNull('row_id_value') or \
-            not feat.IsFieldSet('timestamp') or \
-            feat.GetField('md_file_id') != 1 or \
-            not feat.IsFieldNull('md_parent_id'):
+                feat.GetField('table_name') != 'tmp' or \
+                not feat.IsFieldNull('column_name') or \
+                not feat.IsFieldNull('row_id_value') or \
+                not feat.IsFieldSet('timestamp') or \
+                feat.GetField('md_file_id') != 1 or \
+                not feat.IsFieldNull('md_parent_id'):
             gdaltest.post_reason('fail')
             print(i)
             feat.DumpReadable()

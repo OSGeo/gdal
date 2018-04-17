@@ -625,7 +625,7 @@ def misc_12():
                 # If DEBUG_VSIMALLOC_STATS is defined, this is an easy way
                 # to catch some memory leaks
                 if out.find('VSIMalloc + VSICalloc - VSIFree') != -1 and \
-                    out.find('VSIMalloc + VSICalloc - VSIFree : 0') == -1:
+                        out.find('VSIMalloc + VSICalloc - VSIFree : 0') == -1:
                     if drv.ShortName == 'Rasterlite' and out.find('VSIMalloc + VSICalloc - VSIFree : 1') != -1:
                         pass
                     else:

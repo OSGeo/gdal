@@ -979,7 +979,6 @@ def initGlobals():
     UseDirForEachRow = False
 
 
-
 #global vars
 Verbose = False
 Quiet = False

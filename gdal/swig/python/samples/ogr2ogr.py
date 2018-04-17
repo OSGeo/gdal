@@ -420,7 +420,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                 iArg = iArg + 4
 
             elif (len(args[iArg + 1]) >= 7 and EQUAL(args[iArg + 1][0:7], "POLYGON")) or \
-                (len(args[iArg + 1]) >= 12 and EQUAL(args[iArg + 1][0:12], "MULTIPOLYGON")):
+                    (len(args[iArg + 1]) >= 12 and EQUAL(args[iArg + 1][0:12], "MULTIPOLYGON")):
                 poClipSrc = ogr.CreateGeometryFromWkt(args[iArg + 1])
                 if poClipSrc is None:
                     print("FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n")
@@ -463,7 +463,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                 iArg = iArg + 4
 
             elif (len(args[iArg + 1]) >= 7 and EQUAL(args[iArg + 1][0:7], "POLYGON")) or \
-                (len(args[iArg + 1]) >= 12 and EQUAL(args[iArg + 1][0:12], "MULTIPOLYGON")):
+                    (len(args[iArg + 1]) >= 12 and EQUAL(args[iArg + 1][0:12], "MULTIPOLYGON")):
                 poClipDst = ogr.CreateGeometryFromWkt(args[iArg + 1])
                 if poClipDst is None:
                     print("FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n")
@@ -1183,15 +1183,15 @@ def SetZ(poGeom, dfZ):
         poGeom.SetPoint(0, poGeom.GetX(), poGeom.GetY(), dfZ)
 
     elif eGType == ogr.wkbLineString or \
-        eGType == ogr.wkbLinearRing:
+            eGType == ogr.wkbLinearRing:
         for i in range(poGeom.GetPointCount()):
             poGeom.SetPoint(i, poGeom.GetX(i), poGeom.GetY(i), dfZ)
 
     elif eGType == ogr.wkbPolygon or \
-        eGType == ogr.wkbMultiPoint or \
-        eGType == ogr.wkbMultiLineString or \
-        eGType == ogr.wkbMultiPolygon or \
-        eGType == ogr.wkbGeometryCollection:
+            eGType == ogr.wkbMultiPoint or \
+            eGType == ogr.wkbMultiLineString or \
+            eGType == ogr.wkbMultiPolygon or \
+            eGType == ogr.wkbGeometryCollection:
         for i in range(poGeom.GetGeometryCount()):
             SetZ(poGeom.GetGeometryRef(i), dfZ)
 

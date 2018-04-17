@@ -1922,7 +1922,7 @@ def ogr_dxf_32():
 #   LINESTRING (1 1,2 1,1 2,1 1)
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (1 1,2 1,1 2,1 1)') \
-        or feat.GetField('RawCodeValues') != ['43 0.0']:
+            or feat.GetField('RawCodeValues') != ['43 0.0']:
         feat.DumpReadable()
         return 'fail'
 
@@ -1931,7 +1931,7 @@ def ogr_dxf_32():
 #   LINESTRING Z (1 1 0,1 2 0,2 2 0,1 1 0)
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'LINESTRING Z (1 1 0,1 2 0,2 2 0,1 1 0)') \
-        or feat.GetField('RawCodeValues') != ['66      1', '10 0.0', '20 0.0', '30 0.0']:
+            or feat.GetField('RawCodeValues') != ['66      1', '10 0.0', '20 0.0', '30 0.0']:
         feat.DumpReadable()
         return 'fail'
 
@@ -3794,7 +3794,7 @@ def ogr_dxf_52():
 
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'POINT Z (62.5032851270548 42.604233016948 0)') != 0 \
-        or f.GetStyleString() != minsert_attrib_style:
+            or f.GetStyleString() != minsert_attrib_style:
         gdaltest.post_reason('Wrong geometry on INSERT attribute 1')
         f.DumpReadable()
         return 'fail'
@@ -3810,7 +3810,7 @@ def ogr_dxf_52():
 
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'POINT Z (120.965489014169 56.1012962775799 0)') != 0 \
-        or f.GetStyleString() != minsert_attrib_style:
+            or f.GetStyleString() != minsert_attrib_style:
         gdaltest.post_reason('Wrong geometry on INSERT attribute 3')
         f.DumpReadable()
         return 'fail'
@@ -3826,7 +3826,7 @@ def ogr_dxf_52():
 
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'POINT Z (145.697569870849 82.3372292036006 0)') != 0 \
-        or f.GetStyleString() != minsert_attrib_style:
+            or f.GetStyleString() != minsert_attrib_style:
         gdaltest.post_reason('Wrong geometry on INSERT attribute 8')
         f.DumpReadable()
         return 'fail'

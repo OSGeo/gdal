@@ -1097,7 +1097,7 @@ def ogr_geojson_24():
         feature = lyr.GetNextFeature()
         ref_geom = ogr.CreateGeometryFromWkt('POINT (2 49)')
         if feature.GetFieldAsString("name") != 'bar' or \
-            ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+                ogrtest.check_feature_geometry(feature, ref_geom) != 0:
             feature.DumpReadable()
             return 'fail'
 
@@ -1109,7 +1109,7 @@ def ogr_geojson_24():
         feature = lyr.GetNextFeature()
         ref_geom = ogr.CreateGeometryFromWkt('POINT (2 49)')
         if feature.GetFieldAsString("other_name") != 'baz' or \
-            ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+                ogrtest.check_feature_geometry(feature, ref_geom) != 0:
             feature.DumpReadable()
             return 'fail'
 
