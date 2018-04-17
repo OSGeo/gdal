@@ -261,7 +261,8 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_UNDEFINED:
   case TIFF_BYTE:
     for(;count>0;count--) {
-      snprintf(szTemp, sizeof(szTemp), "%s0x%02x", sep, *data++);
+      snprintf(szTemp, sizeof(szTemp), "%s0x%02x", sep, *data);
+      data++;
       sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
@@ -273,7 +274,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_SBYTE:
     for(;count>0;count--) {
       snprintf(szTemp, sizeof(szTemp), "%s%d", sep, *reinterpret_cast<const char *>(data));
-      data ++;
+      data++;
       sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
@@ -290,7 +291,8 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_SHORT: {
     const GUInt16 *wp = reinterpret_cast<const GUInt16 *>(data);
     for(;count>0;count--) {
-      snprintf(szTemp, sizeof(szTemp), "%s%u", sep, *wp++);
+      snprintf(szTemp, sizeof(szTemp), "%s%u", sep, *wp);
+      wp++;
       sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
@@ -302,7 +304,8 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_SSHORT: {
     const GInt16 *wp = reinterpret_cast<const GInt16 *>(data);
     for(;count>0;count--) {
-      snprintf(szTemp, sizeof(szTemp), "%s%d", sep, *wp++);
+      snprintf(szTemp, sizeof(szTemp), "%s%d", sep, *wp);
+      wp++;
       sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
@@ -380,7 +383,8 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_FLOAT: {
     const float *fp = reinterpret_cast<const float *>(data);
     for(;count>0;count--) {
-      CPLsnprintf(szTemp, sizeof(szTemp), "%s%g", sep, *fp++);
+      CPLsnprintf(szTemp, sizeof(szTemp), "%s%g", sep, *fp);
+      fp++;
       sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
@@ -392,7 +396,8 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_DOUBLE: {
     const double *dp = reinterpret_cast<const double *>(data);
     for(;count>0;count--) {
-      CPLsnprintf(szTemp, sizeof(szTemp), "%s%g", sep, *dp++);
+      CPLsnprintf(szTemp, sizeof(szTemp), "%s%g", sep, *dp);
+      dp++;
       sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
