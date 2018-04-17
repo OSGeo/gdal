@@ -37,7 +37,7 @@ from subprocess import call, Popen, PIPE, STDOUT
 
 
 def showHelp():
-    print "Usage : completionFinder.py  output_script"
+    print("Usage : completionFinder.py  output_script")
 
 
 def processLine(line):
@@ -272,7 +272,7 @@ function_exists _get_comp_words_by_ref || return 0
 
     for name in gdaltools:
         # verbose print
-        print name
+        print(name)
         optList = processTool(name)
         if "--help-general" in optList:
             for item in generalOptions:
@@ -281,7 +281,7 @@ function_exists _get_comp_words_by_ref || return 0
         of.writelines(getCompletionScript(name, optList))
     for name in ogrtools:
         # verbose print
-        print name
+        print(name)
         optList = processTool(name)
         if "--help-general" in optList:
             for item in generalOGROptions:

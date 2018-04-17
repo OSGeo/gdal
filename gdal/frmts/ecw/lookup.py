@@ -153,15 +153,15 @@ for line in pfile.readlines():
 
         wkt = srs.ExportToWkt()
         if len(wkt) > 0:
-            print '%s,%s' % (id, srs.ExportToWkt())
+            print('%s,%s' % (id, srs.ExportToWkt()))
         else:
-            print '%s,LOCAL_CS["%s - (unsupported)"]' % (id, id)
+            print('%s,LOCAL_CS["%s - (unsupported)"]' % (id, id))
 
     except KeyError:
-        print '%s,LOCAL_CS["%s - (unsupported)"]' % (id, id)
+        print('%s,LOCAL_CS["%s - (unsupported)"]' % (id, id))
 
     except:
-        print 'cant translate: ', line
+        print('cant translate: ', line)
         raise
 
 ## Translate datums to their underlying spheroid information.
@@ -189,4 +189,4 @@ for line in pfile.readlines():
     else:
         srs.SetGeogCS(tokens[1], id, sp_name, float(dline[2]), float(dline[4]))
 
-    print '%s,%s' % (id, srs.ExportToWkt())
+    print('%s,%s' % (id, srs.ExportToWkt()))
