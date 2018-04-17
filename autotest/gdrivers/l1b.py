@@ -247,7 +247,7 @@ def l1b_clouds_after_noaa_15():
 def l1b_metadata_after_noaa_15():
     try:
         os.stat('tmp/cache/n16gac10bit.l1b')
-    except OSError: 
+    except OSError:
         return 'skip'
 
     gdal.SetConfigOption('L1B_FETCH_METADATA', 'YES')
