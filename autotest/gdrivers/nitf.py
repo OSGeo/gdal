@@ -2825,10 +2825,10 @@ def nitf_74():
 def nitf_75():
 
     listing_AG1 = """<?xml version="1.0" encoding="UTF-8"?>
-<genc:GeopoliticalEntityEntry 
-    xmlns:genc="http://api.nsgreg.nga.mil/schema/genc/3.0" 
-    xmlns:genc-cmn="http://api.nsgreg.nga.mil/schema/genc/3.0/genc-cmn" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<genc:GeopoliticalEntityEntry
+    xmlns:genc="http://api.nsgreg.nga.mil/schema/genc/3.0"
+    xmlns:genc-cmn="http://api.nsgreg.nga.mil/schema/genc/3.0/genc-cmn"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://api.nsgreg.nga.mil/schema/genc/3.0 http://api.nsgreg.nga.mil/schema/genc/3.0.0/genc.xsd">
     <genc:encoding>
         <genc-cmn:char3Code>MMR</genc-cmn:char3Code>
@@ -2923,10 +2923,10 @@ def nitf_75():
         <field name="DETAIL_LEN" value="04108" />
         <field name="DETAIL_CMPR" value="" />
         <field name="DETAIL" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
-&lt;genc:GeopoliticalEntityEntry 
-    xmlns:genc=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0&quot; 
-    xmlns:genc-cmn=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0/genc-cmn&quot; 
-    xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; 
+&lt;genc:GeopoliticalEntityEntry
+    xmlns:genc=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0&quot;
+    xmlns:genc-cmn=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0/genc-cmn&quot;
+    xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
     xsi:schemaLocation=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0 http://api.nsgreg.nga.mil/schema/genc/3.0.0/genc.xsd&quot;&gt;
     &lt;genc:encoding&gt;
         &lt;genc-cmn:char3Code&gt;MMR&lt;/genc-cmn:char3Code&gt;
