@@ -1417,10 +1417,10 @@ def ogr_shape_31():
 
 
 def ogr_shape_32():
-# This test takes a few minutes and disk space. Hence, skipped by default.
-# To run this test, make sure that the directory BigFilePath points to has
-# 4.5 GB space available or give a new directory that does and delete the
-# directory afterwards.
+    # This test takes a few minutes and disk space. Hence, skipped by default.
+    # To run this test, make sure that the directory BigFilePath points to has
+    # 4.5 GB space available or give a new directory that does and delete the
+    # directory afterwards.
 
     return 'skip'
 

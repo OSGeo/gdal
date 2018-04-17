@@ -236,9 +236,9 @@ def main(argv=None):
 
     for iRepeat in range(nRepeatCount):
         if papszLayers is None:
-# --------------------------------------------------------------------
-#      Process each data source layer.
-# --------------------------------------------------------------------
+            # --------------------------------------------------------------------
+            # Process each data source layer.
+            # --------------------------------------------------------------------
             for iLayer in range(poDS.GetLayerCount()):
                 poLayer = poDS.GetLayer(iLayer)
 
@@ -270,9 +270,9 @@ def main(argv=None):
                     ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter, options)
 
         else:
-# --------------------------------------------------------------------
-#      Process specified data source layers.
-# --------------------------------------------------------------------
+            # --------------------------------------------------------------------
+            # Process specified data source layers.
+            # --------------------------------------------------------------------
             for papszIter in papszLayers:
                 poLayer = poDS.GetLayerByName(papszIter)
 

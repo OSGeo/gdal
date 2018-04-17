@@ -2960,9 +2960,9 @@ class Layer(MajorObject):
             import sys
             output = []
             if value.stop == sys.maxint:
-    #for an unending slice, sys.maxint is used
-    #We need to stop before that or GDAL will write an
-    ##error to stdout
+                #for an unending slice, sys.maxint is used
+                #We need to stop before that or GDAL will write an
+                ##error to stdout
                 stop = len(self) - 1
             else:
                 stop = value.stop
@@ -4614,7 +4614,7 @@ class Feature(_object):
         try:
             return self.GetFieldAsString(fld_index)
         except:
-    # For Python3 on non-UTF8 strings
+            # For Python3 on non-UTF8 strings
             return self.GetFieldAsBinary(fld_index)
 
     # With several override, SWIG cannot dispatch automatically unicode strings

@@ -87,7 +87,7 @@ try:
         print("numpy version must be > 1.0.0")
         HAVE_NUMPY = False
     else:
-#        print ('numpy include', get_numpy_include())
+        #  print ('numpy include', get_numpy_include())
         if get_numpy_include() == '.':
             print("numpy headers were not found!  Array support will not be enabled")
             HAVE_NUMPY = False

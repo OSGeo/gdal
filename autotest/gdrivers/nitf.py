@@ -1059,7 +1059,7 @@ def nitf_37():
         if int(gdal.VersionInfo('VERSION_NUM')) < 1700:
             return 'skip'
     except:
-    # OG-python bindings don't have gdal.VersionInfo. Too bad, but let's hope that GDAL's version isn't too old !
+        # OG-python bindings don't have gdal.VersionInfo. Too bad, but let's hope that GDAL's version isn't too old !
         pass
 
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf37.ntf', 1, 1, 69999)

@@ -105,7 +105,7 @@ class Translator(object):
             path, filename = os.path.split(os.path.abspath(self.options.output))
             name, ext = os.path.splitext(filename)
             if self.options.overwrite:
-            # special case the Shapefile driver, which behaves specially.
+                # special case the Shapefile driver, which behaves specially.
                 if os.path.exists(os.path.join(path, name,) + '.shp'):
                     os.remove(os.path.join(path, name,) + '.shp')
                     os.remove(os.path.join(path, name,) + '.shx')
