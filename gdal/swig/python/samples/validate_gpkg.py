@@ -56,7 +56,7 @@ def _is_valid_data_type(type):
     return type in ('BOOLEAN', 'TINYINT', 'SMALLINT', 'MEDIUMINT',
                     'INT', 'INTEGER', 'FLOAT', 'DOUBLE', 'REAL',
                     'TEXT', 'BLOB', 'DATE', 'DATETIME') or \
-            type.startswith('TEXT(') or type.startswith('BLOB(')
+        type.startswith('TEXT(') or type.startswith('BLOB(')
 
 
 class GPKGCheckException(Exception):
@@ -458,8 +458,8 @@ class GPKGChecker:
             self._assert(len(found_geom_types) == 0 or
                          len(found_geom_types.difference(
                              set(['GEOMETRYCOLLECTION', 'MULTIPOINT',
-                                 'MULTILINESTRING', 'MULTIPOLYGON',
-                                 'MULTICURVE', 'MULTISURFACE']))) == 0, 32,
+                                  'MULTILINESTRING', 'MULTIPOLYGON',
+                                  'MULTICURVE', 'MULTISURFACE']))) == 0, 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
         elif geometry_type_name in ('CURVEPOLYGON', 'SURFACE'):
@@ -484,7 +484,7 @@ class GPKGChecker:
             self._assert(len(found_geom_types) == 0 or
                          len(found_geom_types.difference(
                              set(['LINESTRING', 'CIRCULARSTRING',
-                                 'COMPOUNDCURVE']))) == 0, 32,
+                                  'COMPOUNDCURVE']))) == 0, 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
 
@@ -680,16 +680,16 @@ class GPKGChecker:
                      'with zoom_level') % table_name)
             if prev_zoom_level is not None and \
                zoom_level == prev_zoom_level + 1 and not zoom_other_levels:
-                    self._assert(
-                        abs((pixel_x_size - prev_pixel_x_size / 2) /
-                            prev_pixel_x_size) < 1e-5, 35,
-                        "Expected pixel_x_size=%f for zoom_level=%d. Got %f" %
-                        (prev_pixel_x_size / 2, zoom_level, pixel_x_size))
-                    self._assert(
-                        abs((pixel_y_size - prev_pixel_y_size / 2) /
-                            prev_pixel_y_size) < 1e-5, 35,
-                        "Expected pixel_y_size=%f for zoom_level=%d. Got %f" %
-                        (prev_pixel_y_size / 2, zoom_level, pixel_y_size))
+                self._assert(
+                    abs((pixel_x_size - prev_pixel_x_size / 2) /
+                        prev_pixel_x_size) < 1e-5, 35,
+                    "Expected pixel_x_size=%f for zoom_level=%d. Got %f" %
+                    (prev_pixel_x_size / 2, zoom_level, pixel_x_size))
+                self._assert(
+                    abs((pixel_y_size - prev_pixel_y_size / 2) /
+                        prev_pixel_y_size) < 1e-5, 35,
+                    "Expected pixel_y_size=%f for zoom_level=%d. Got %f" %
+                    (prev_pixel_y_size / 2, zoom_level, pixel_y_size))
 
             prev_pixel_x_size = pixel_x_size
             prev_pixel_y_size = pixel_y_size

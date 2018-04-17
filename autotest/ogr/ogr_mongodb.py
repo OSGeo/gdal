@@ -564,8 +564,8 @@ def ogr_mongodb_2():
             return 'fail'
     for i in range(f_ref.GetDefnRef().GetGeomFieldCount()):
         if not f.GetGeomFieldRef(i).Equals(f_ref.GetGeomFieldRef(i)) or \
-               f.GetGeomFieldDefnRef(i).GetName() != f_ref.GetGeomFieldDefnRef(i).GetName() or \
-               f.GetGeomFieldDefnRef(i).GetType() != f_ref.GetGeomFieldDefnRef(i).GetType():
+                f.GetGeomFieldDefnRef(i).GetName() != f_ref.GetGeomFieldDefnRef(i).GetName() or \
+                f.GetGeomFieldDefnRef(i).GetType() != f_ref.GetGeomFieldDefnRef(i).GetType():
             gdaltest.post_reason('fail')
             f.DumpReadable()
             f_ref.DumpReadable()
@@ -741,8 +741,8 @@ def ogr_mongodb_2():
         # Order might be a bit different...
         j = f.GetDefnRef().GetFieldIndex(f_ref.GetFieldDefnRef(i).GetNameRef())
         if f.GetField(j) != f_ref.GetField(i) or \
-        f.GetFieldDefnRef(j).GetType() != f_ref.GetFieldDefnRef(i).GetType() or \
-        f.GetFieldDefnRef(j).GetSubType() != f_ref.GetFieldDefnRef(i).GetSubType():
+            f.GetFieldDefnRef(j).GetType() != f_ref.GetFieldDefnRef(i).GetType() or \
+                f.GetFieldDefnRef(j).GetSubType() != f_ref.GetFieldDefnRef(i).GetSubType():
             gdaltest.post_reason('fail')
             f.DumpReadable()
             f_ref.DumpReadable()
@@ -751,8 +751,8 @@ def ogr_mongodb_2():
         # Order might be a bit different...
         j = f.GetDefnRef().GetGeomFieldIndex(f_ref.GetGeomFieldDefnRef(i).GetNameRef())
         if not f.GetGeomFieldRef(j).Equals(f_ref.GetGeomFieldRef(i)) or \
-            f.GetGeomFieldDefnRef(j).GetName() != f_ref.GetGeomFieldDefnRef(i).GetName() or \
-            f.GetGeomFieldDefnRef(j).GetType() != f_ref.GetGeomFieldDefnRef(i).GetType():
+                f.GetGeomFieldDefnRef(j).GetName() != f_ref.GetGeomFieldDefnRef(i).GetName() or \
+                f.GetGeomFieldDefnRef(j).GetType() != f_ref.GetGeomFieldDefnRef(i).GetType():
             gdaltest.post_reason('fail')
             f.DumpReadable()
             f_ref.DumpReadable()
@@ -770,38 +770,38 @@ def ogr_mongodb_2():
     lyr = ogrtest.mongodb_ds.GetLayerByName(ogrtest.mongodb_layer_name_guess_types)
 
     expected_fields = [
-  ("int", ogr.OFTInteger),
-  ("int64", ogr.OFTInteger64),
-  ("real", ogr.OFTReal),
-  ("intlist", ogr.OFTIntegerList),
-  ("reallist", ogr.OFTRealList),
-  ("int64list", ogr.OFTInteger64List),
-  ("int_str", ogr.OFTString),
-  ("str_int", ogr.OFTString),
-  ("int64_str", ogr.OFTString),
-  ("str_int64", ogr.OFTString),
-  ("int_int64", ogr.OFTInteger64),
-  ("int64_int", ogr.OFTInteger64),
-  ("int_real", ogr.OFTReal),
-  ("real_int", ogr.OFTReal),
-  ("int64_real", ogr.OFTReal),
-  ("real_int64", ogr.OFTReal),
-  ("real_str", ogr.OFTString),
-  ("str_real", ogr.OFTString),
-  ("int_bool", ogr.OFTInteger),
-  ("bool_int", ogr.OFTInteger),
-  ("intlist_strlist", ogr.OFTStringList),
-  ("strlist_intlist", ogr.OFTStringList),
-  ("intlist_int64list", ogr.OFTInteger64List),
-  ("int64list_intlist", ogr.OFTInteger64List),
-  ("intlist_reallist", ogr.OFTRealList),
-  ("reallist_intlist", ogr.OFTRealList),
-  ("int64list_reallist", ogr.OFTRealList),
-  ("reallist_int64list", ogr.OFTRealList),
-  ("intlist_boollist", ogr.OFTIntegerList),
-  ("boollist_intlist", ogr.OFTIntegerList),
-  ("mixedlist", ogr.OFTRealList),
-  ("mixedlist2", ogr.OFTStringList)]
+        ("int", ogr.OFTInteger),
+        ("int64", ogr.OFTInteger64),
+        ("real", ogr.OFTReal),
+        ("intlist", ogr.OFTIntegerList),
+        ("reallist", ogr.OFTRealList),
+        ("int64list", ogr.OFTInteger64List),
+        ("int_str", ogr.OFTString),
+        ("str_int", ogr.OFTString),
+        ("int64_str", ogr.OFTString),
+        ("str_int64", ogr.OFTString),
+        ("int_int64", ogr.OFTInteger64),
+        ("int64_int", ogr.OFTInteger64),
+        ("int_real", ogr.OFTReal),
+        ("real_int", ogr.OFTReal),
+        ("int64_real", ogr.OFTReal),
+        ("real_int64", ogr.OFTReal),
+        ("real_str", ogr.OFTString),
+        ("str_real", ogr.OFTString),
+        ("int_bool", ogr.OFTInteger),
+        ("bool_int", ogr.OFTInteger),
+        ("intlist_strlist", ogr.OFTStringList),
+        ("strlist_intlist", ogr.OFTStringList),
+        ("intlist_int64list", ogr.OFTInteger64List),
+        ("int64list_intlist", ogr.OFTInteger64List),
+        ("intlist_reallist", ogr.OFTRealList),
+        ("reallist_intlist", ogr.OFTRealList),
+        ("int64list_reallist", ogr.OFTRealList),
+        ("reallist_int64list", ogr.OFTRealList),
+        ("intlist_boollist", ogr.OFTIntegerList),
+        ("boollist_intlist", ogr.OFTIntegerList),
+        ("mixedlist", ogr.OFTRealList),
+        ("mixedlist2", ogr.OFTStringList)]
     for (fieldname, fieldtype) in expected_fields:
         fld_defn = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex(fieldname))
         if fld_defn.GetType() != fieldtype:
@@ -974,7 +974,7 @@ gdaltest_list = [
     ogr_mongodb_2,
     ogr_mongodb_3,
     ogr_mongodb_cleanup,
-    ]
+]
 
 if __name__ == '__main__':
 

@@ -68,7 +68,7 @@ tags = [['TIFFTAG_IMAGEWIDTH', TIFFTAG_IMAGEWIDTH, [0, 1, 0x7FFFFFFF, 0xFFFFFFFF
         ['TIFFTAG_TILEOFFSETS', TIFFTAG_TILEOFFSETS, [None, 0, 8]],
         ['TIFFTAG_TILEBYTECOUNTS', TIFFTAG_TILEBYTECOUNTS, [None, 0, 1, 0x7FFFFFFF, 0xFFFFFFFF]],
         #['TIFFTAG_SAMPLEFORMAT', TIFFTAG_SAMPLEFORMAT, [None, SAMPLEFORMAT_UINT]],
-         ]
+        ]
 
 
 def generate_tif(comb_val):
@@ -87,9 +87,9 @@ def generate_tif(comb_val):
            tag == TIFFTAG_TILELENGTH or \
            tag == TIFFTAG_TILEOFFSETS or \
            tag == TIFFTAG_TILEBYTECOUNTS:
-               if has_strip:
-                   idx_val = 0
-                   val = None
+            if has_strip:
+                idx_val = 0
+                val = None
         idx_tab.append(idx_val)
 
         if val is not None:

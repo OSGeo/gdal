@@ -209,7 +209,7 @@ def main(argv=None):
     if pszSQLStatement is not None:
         poResultSet = None
 
-        nRepeatCount = 0  #// skip layer reporting.
+        nRepeatCount = 0  # // skip layer reporting.
 
         if papszLayers is not None:
             print("layer names ignored in combination with -sql.")
@@ -236,9 +236,9 @@ def main(argv=None):
 
     for iRepeat in range(nRepeatCount):
         if papszLayers is None:
-# --------------------------------------------------------------------
-#      Process each data source layer.
-# --------------------------------------------------------------------
+            # --------------------------------------------------------------------
+            # Process each data source layer.
+            # --------------------------------------------------------------------
             for iLayer in range(poDS.GetLayerCount()):
                 poLayer = poDS.GetLayer(iLayer)
 
@@ -270,9 +270,9 @@ def main(argv=None):
                     ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter, options)
 
         else:
-# --------------------------------------------------------------------
-#      Process specified data source layers.
-# --------------------------------------------------------------------
+            # --------------------------------------------------------------------
+            # Process specified data source layers.
+            # --------------------------------------------------------------------
             for papszIter in papszLayers:
                 poLayer = poDS.GetLayerByName(papszIter)
 
@@ -392,10 +392,10 @@ def ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter, options):
             poField = poDefn.GetFieldDefn(iAttr)
 
             print("%s: %s (%d.%d)" % ( \
-                    poField.GetNameRef(), \
-                    poField.GetFieldTypeName(poField.GetType()), \
-                    poField.GetWidth(), \
-                    poField.GetPrecision()))
+                poField.GetNameRef(), \
+                poField.GetFieldTypeName(poField.GetType()), \
+                poField.GetWidth(), \
+                poField.GetPrecision()))
 
 # --------------------------------------------------------------------
 #      Read, and dump features.
@@ -431,9 +431,9 @@ def DumpReadableFeature(poFeature, options=None):
 
             poFDefn = poDefn.GetFieldDefn(iField)
 
-            line =  "  %s (%s) = " % ( \
-                    poFDefn.GetNameRef(), \
-                    ogr.GetFieldTypeName(poFDefn.GetType()))
+            line = "  %s (%s) = " % ( \
+                poFDefn.GetNameRef(), \
+                ogr.GetFieldTypeName(poFDefn.GetType()))
 
             if poFeature.IsFieldSet(iField):
                 try:
@@ -498,24 +498,24 @@ def DumpReadableGeometry(poGeometry, pszPrefix, options):
             print(line)
 
         elif eType == ogr.wkbMultiPoint or \
-            eType == ogr.wkbMultiPoint25D or \
-            eType == ogr.wkbMultiLineString or \
-            eType == ogr.wkbMultiLineString25D or \
-            eType == ogr.wkbMultiPolygon or \
-            eType == ogr.wkbMultiPolygon25D or \
-            eType == ogr.wkbGeometryCollection or \
-            eType == ogr.wkbGeometryCollection25D:
+                eType == ogr.wkbMultiPoint25D or \
+                eType == ogr.wkbMultiLineString or \
+                eType == ogr.wkbMultiLineString25D or \
+                eType == ogr.wkbMultiPolygon or \
+                eType == ogr.wkbMultiPolygon25D or \
+                eType == ogr.wkbGeometryCollection or \
+                eType == ogr.wkbGeometryCollection25D:
 
-                line = line + "%d geometries:" % poGeometry.GetGeometryCount()
-                print(line)
-                for ig in range(poGeometry.GetGeometryCount()):
-                    subgeom = poGeometry.GetGeometryRef(ig)
-                    from sys import version_info
-                    if version_info >= (3, 0, 0):
-                        exec('print("", end=" ")')
-                    else:
-                        exec('print "", ')
-                    DumpReadableGeometry(subgeom, pszPrefix, options)
+            line = line + "%d geometries:" % poGeometry.GetGeometryCount()
+            print(line)
+            for ig in range(poGeometry.GetGeometryCount()):
+                subgeom = poGeometry.GetGeometryRef(ig)
+                from sys import version_info
+                if version_info >= (3, 0, 0):
+                    exec('print("", end=" ")')
+                else:
+                    exec('print "", ')
+                DumpReadableGeometry(subgeom, pszPrefix, options)
         else:
             print(line)
 

@@ -280,11 +280,11 @@ def jp2openjpeg_9():
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 440720) > 0.1 \
-        or abs(geotransform[1] - 60) > 0.001 \
-        or abs(geotransform[2] - 0) > 0.001 \
-        or abs(geotransform[3] - 3751320) > 0.1 \
-        or abs(geotransform[4] - 0) > 0.001 \
-        or abs(geotransform[5] - -60) > 0.001:
+            or abs(geotransform[1] - 60) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 3751320) > 0.1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -1343,7 +1343,7 @@ def get_attribute_val(ar, attr_name):
     if node is None or node[XML_TYPE_IDX] != gdal.CXT_Attribute:
         return None
     if len(ar) > XML_FIRST_CHILD_IDX and \
-        node[XML_FIRST_CHILD_IDX][XML_TYPE_IDX] == gdal.CXT_Text:
+            node[XML_FIRST_CHILD_IDX][XML_TYPE_IDX] == gdal.CXT_Text:
         return node[XML_FIRST_CHILD_IDX][XML_VALUE_IDX]
     return None
 
@@ -1394,7 +1394,7 @@ def jp2openjpeg_28():
              (['CODEBLOCK_WIDTH=128', 'CODEBLOCK_HEIGHT=128'], 64, 64, True),
              (['CODEBLOCK_WIDTH=63'], 32, 64, True),
              (['CODEBLOCK_WIDTH=32', 'CODEBLOCK_HEIGHT=32'], 32, 32, False),
-              ]
+             ]
 
     for (options, expected_cbkw, expected_cbkh, warning_expected) in tests:
         gdal.ErrorReset()
@@ -1432,7 +1432,7 @@ def jp2openjpeg_29():
              (['TILEPARTS=LAYERS', 'QUALITY=1,2'], False),
              (['TILEPARTS=COMPONENTS'], False),
              (['TILEPARTS=ILLEGAL'], True),
-              ]
+             ]
 
     for (options, warning_expected) in tests:
         gdal.ErrorReset()
@@ -1474,7 +1474,7 @@ def jp2openjpeg_30():
              (['QUALITY=100', 'REVERSIBLE=YES'], False),
              (['QUALITY=50'], True),
              (['REVERSIBLE=NO'], True),
-              ]
+             ]
 
     for (options, warning_expected) in tests:
         gdal.ErrorReset()
@@ -1512,10 +1512,10 @@ def jp2openjpeg_30():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_30.jp2', src_ds)
     ct = out_ds.GetRasterBand(1).GetRasterColorTable()
     if ct.GetCount() != 4 or \
-        ct.GetColorEntry(0) != (0, 0, 0, 0) or \
-        ct.GetColorEntry(1) != (255, 255, 0, 255) or \
-        ct.GetColorEntry(2) != (255, 0, 255, 255) or \
-        ct.GetColorEntry(3) != (0, 255, 255, 255):
+            ct.GetColorEntry(0) != (0, 0, 0, 0) or \
+            ct.GetColorEntry(1) != (255, 255, 0, 255) or \
+            ct.GetColorEntry(2) != (255, 0, 255, 255) or \
+            ct.GetColorEntry(3) != (0, 255, 255, 255):
         gdaltest.post_reason('Wrong color table entry.')
         return 'fail'
     del out_ds
@@ -1532,10 +1532,10 @@ def jp2openjpeg_30():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_30.jp2', src_ds, options=['CT_COMPONENTS=3'])
     ct = out_ds.GetRasterBand(1).GetRasterColorTable()
     if ct.GetCount() != 4 or \
-        ct.GetColorEntry(0) != (0, 0, 0, 255) or \
-        ct.GetColorEntry(1) != (255, 255, 0, 255) or \
-        ct.GetColorEntry(2) != (255, 0, 255, 255) or \
-        ct.GetColorEntry(3) != (0, 255, 255, 255):
+            ct.GetColorEntry(0) != (0, 0, 0, 255) or \
+            ct.GetColorEntry(1) != (255, 255, 0, 255) or \
+            ct.GetColorEntry(2) != (255, 0, 255, 255) or \
+            ct.GetColorEntry(3) != (0, 255, 255, 255):
         gdaltest.post_reason('Wrong color table entry.')
         return 'fail'
     del out_ds
@@ -2551,10 +2551,10 @@ def jp2openjpeg_45():
     import json
 
     conf = {
-    "root_instance": {
-        "grid_coverage_file": "/vsimem/i_dont_exist.xml",
+        "root_instance": {
+            "grid_coverage_file": "/vsimem/i_dont_exist.xml",
+        }
     }
-}
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
@@ -2565,10 +2565,10 @@ def jp2openjpeg_45():
         return 'fail'
 
     conf = {
-    "root_instance": {
-        "grid_coverage_range_type_file": "/vsimem/i_dont_exist.xml",
+        "root_instance": {
+            "grid_coverage_range_type_file": "/vsimem/i_dont_exist.xml",
 
-        "metadata": [
+            "metadata": [
                 "<invalid_root/>",
                 "/vsimem/i_dont_exist.xml",
                 {
@@ -2581,13 +2581,13 @@ def jp2openjpeg_45():
                 }
             ],
 
-        "annotations": [
+            "annotations": [
                 "/vsimem/i_dont_exist.shp",
                 "/vsimem/i_dont_exist.kml",
                 "../gcore/data/byte.tif"
             ],
 
-        "gml_filelist": [
+            "gml_filelist": [
                 "/vsimem/i_dont_exist.xml",
                 "../gcore/data/byte.tif",
                 {
@@ -2597,7 +2597,7 @@ def jp2openjpeg_45():
                 },
             ],
 
-        "styles": [
+            "styles": [
                 "/vsimem/i_dont_exist.xml",
                 "../gcore/data/byte.tif",
                 {
@@ -2606,7 +2606,7 @@ def jp2openjpeg_45():
                 }
             ],
 
-        "extensions": [
+            "extensions": [
                 "/vsimem/i_dont_exist.xml",
                 "../gcore/data/byte.tif",
                 {
@@ -2614,16 +2614,16 @@ def jp2openjpeg_45():
                     "parent_node": "invalid_value"
                 }
             ]
-    },
+        },
 
-    "boxes": [
-        "/vsimem/i_dont_exist.xsd",
-        {
-            "file": "/vsimem/i_dont_exist_too.xsd",
-            "label": "i_dont_exist.xsd"
-        }
-    ]
-}
+        "boxes": [
+            "/vsimem/i_dont_exist.xsd",
+            {
+                "file": "/vsimem/i_dont_exist_too.xsd",
+                "label": "i_dont_exist.xsd"
+            }
+        ]
+    }
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
     gdal.PopErrorHandler()
@@ -2753,9 +2753,9 @@ def jp2openjpeg_45():
     false = False
 
     conf = {
-    "root_instance": {
-        "grid_coverage_file": "/vsimem/grid_coverage_file.xml",
-        "metadata": [
+        "root_instance": {
+            "grid_coverage_file": "/vsimem/grid_coverage_file.xml",
+            "metadata": [
                 "<gmljp2:metadata>First metadata</gmljp2:metadata>",
                 "/vsimem/second_metadata.xml",
                 {
@@ -2764,7 +2764,7 @@ def jp2openjpeg_45():
                 },
                 {
                     "content":
-"""<?xml version="1.0" encoding="UTF-8"?>
+                    """<?xml version="1.0" encoding="UTF-8"?>
 <!-- some comments -->
 <gmljp2:eopMetadata>
         <eop:EarthObservation xmlns:eop="http://www.opengis.net/eop/2.0" xmlns:om="http://www.opengis.net/om/2.0" gml:id="EOP1">
@@ -2787,12 +2787,12 @@ def jp2openjpeg_45():
                 }
             ],
 
-        "annotations": [
+            "annotations": [
                 "/vsimem/myshape.shp",
                 "/vsimem/empty.kml"
             ],
 
-        "gml_filelist": [
+            "gml_filelist": [
                 "/vsimem/feature.xml",
                 {
                     "file": "/vsimem/myshape.shp",
@@ -2819,7 +2819,7 @@ def jp2openjpeg_45():
                 }
             ],
 
-        "styles": [
+            "styles": [
                 "/vsimem/style1.xml",
                 {
                     "file": "/vsimem/style2.xml",
@@ -2834,7 +2834,7 @@ def jp2openjpeg_45():
                 }
             ],
 
-        "extensions": [
+            "extensions": [
                 "/vsimem/extension1.xml",
                 {
                     "file": "/vsimem/extension2.xml",
@@ -2848,16 +2848,16 @@ def jp2openjpeg_45():
                     "file": "/vsimem/extension4.xml"
                 }
             ]
-    },
+        },
 
-    "boxes": [
-        "/vsimem/a_schema.xsd",
-        {
-            "file": "/vsimem/a_schema.xsd",
-            "label": "duplicated.xsd"
-        }
-    ]
-}
+        "boxes": [
+            "/vsimem/a_schema.xsd",
+            {
+                "file": "/vsimem/a_schema.xsd",
+                "label": "duplicated.xsd"
+            }
+        ]
+    }
     gdal.FileFromMemBuffer("/vsimem/grid_coverage_file.xml",
                            """
     <gmljp2:GMLJP2RectifiedGridCoverage gml:id="my_GMLJP2RectifiedGridCoverage">
@@ -3146,8 +3146,8 @@ def jp2openjpeg_46():
     import json
 
     conf = {
-    "root_instance": {
-        "metadata": [
+        "root_instance": {
+            "metadata": [
                 {
                     "dynamic_metadata":
                     {
@@ -3156,8 +3156,8 @@ def jp2openjpeg_46():
                     }
                 }
             ]
+        }
     }
-}
 
     gdal.FileFromMemBuffer("/vsimem/template.xml",
                            """<gmljp2:metadata>{{{ XPATH(1) }}} {{{ XPATH('str') }}} {{{ XPATH(true()) }}}X{{{ XPATH(//B) }}} {{{XPATH(if(//B/text() = 'my_value',if(false(),'not_expected',concat('yeah: ',uuid())),'doh!'))}}}</gmljp2:metadata>""")
@@ -3229,8 +3229,8 @@ yeah: """) < 0:
     # Nonexistent template.
     gdal.FileFromMemBuffer("/vsimem/source.xml", """<A/>""")
     conf = {
-    "root_instance": {
-        "metadata": [
+        "root_instance": {
+            "metadata": [
                 {
                     "dynamic_metadata":
                     {
@@ -3239,8 +3239,8 @@ yeah: """) < 0:
                     }
                 }
             ]
+        }
     }
-}
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_46.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
@@ -3253,8 +3253,8 @@ yeah: """) < 0:
     gdal.FileFromMemBuffer(
         "/vsimem/template.xml", """<gmljp2:metadata></gmljp2:metadata>""")
     conf = {
-    "root_instance": {
-        "metadata": [
+        "root_instance": {
+            "metadata": [
                 {
                     "dynamic_metadata":
                     {
@@ -3263,8 +3263,8 @@ yeah: """) < 0:
                     }
                 }
             ]
+        }
     }
-}
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_46.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
@@ -3277,8 +3277,8 @@ yeah: """) < 0:
     gdal.FileFromMemBuffer("/vsimem/template.xml", """<gmljp2:metadata></gmljp2:metadata>""")
     gdal.FileFromMemBuffer("/vsimem/source.xml", """<A""")
     conf = {
-    "root_instance": {
-        "metadata": [
+        "root_instance": {
+            "metadata": [
                 {
                     "dynamic_metadata":
                     {
@@ -3287,8 +3287,8 @@ yeah: """) < 0:
                     }
                 }
             ]
+        }
     }
-}
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_46.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
@@ -3553,7 +3553,7 @@ def jp2openjpeg_49():
              ('WORLDFILE,PAM,INTERNAL', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('WORLDFILE,INTERNAL,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('NONE', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ]
+             ]
 
     for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
         gdal.SetConfigOption('GDAL_GEOREF_SOURCES', config_option_value)
@@ -3609,7 +3609,7 @@ def jp2openjpeg_49():
              ('WORLDFILE,PAM,INTERNAL', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('WORLDFILE,INTERNAL,PAM', True, True, '26711', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('NONE', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ]
+             ]
 
     for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
         gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2', open('data/inconsitant_geojp2_gmljp2.jp2', 'rb').read())

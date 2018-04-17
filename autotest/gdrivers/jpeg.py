@@ -654,17 +654,17 @@ def jpeg_16():
 def jpeg_17():
     gdal.ErrorReset()
     with gdaltest.error_handler('CPLQuietErrorHandler'):
-      ds = gdal.Open('data/bogus.jpg')
-      if (ds is not None or
-          gdal.GetLastErrorType() != gdal.CE_Failure or
-          gdal.GetLastErrorMsg() == ''):
-        gdaltest.post_reason('fail')
-        return 'fail'
+        ds = gdal.Open('data/bogus.jpg')
+        if (ds is not None or
+            gdal.GetLastErrorType() != gdal.CE_Failure or
+                gdal.GetLastErrorMsg() == ''):
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     gdal.ErrorReset()
     ds = gdal.Open('data/byte_corrupted.jpg')
     with gdaltest.error_handler('CPLQuietErrorHandler'):
-        # ERROR 1: libjpeg: Huffman table 0x00 was not defined
+            # ERROR 1: libjpeg: Huffman table 0x00 was not defined
         cs = ds.GetRasterBand(1).Checksum()
     if (gdal.GetLastErrorType() != gdal.CE_Failure or
             gdal.GetLastErrorMsg() == ''):
@@ -891,7 +891,7 @@ def jpeg_21():
         cs = ovr.Checksum()
         if (ovr.XSize != expected_w or
             ovr.YSize != expected_h or
-            cs != expected_cs):
+                cs != expected_cs):
             gdaltest.post_reason('failure')
             print(ovr.XSize)
             print(ovr.YSize)
@@ -1045,7 +1045,7 @@ def jpeg_23():
 def jpeg_24():
 
     if gdal.GetDriverByName('JPEG').GetMetadataItem(
-        'DMD_CREATIONOPTIONLIST').find('ARITHMETIC') >= 0:
+            'DMD_CREATIONOPTIONLIST').find('ARITHMETIC') >= 0:
         has_arithmetic = True
     else:
         has_arithmetic = False
@@ -1105,7 +1105,7 @@ def jpeg_26():
     src_ds = gdal.GetDriverByName('Mem').Create('', 70000, 1)
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('JPEG').CreateCopy(
-                                                '/vsimem/jpeg_26.jpg', src_ds)
+            '/vsimem/jpeg_26.jpg', src_ds)
     if ds is not None:
         return 'fail'
     gdal.Unlink('/vsimem/jpeg_26.jpg')

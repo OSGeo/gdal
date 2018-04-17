@@ -975,12 +975,12 @@ def ogr_gpkg_15():
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
     for (expected_type, actual_type, expected_result) in [
-                ('POINT', 'POINT', 1),
-                ('LINESTRING', 'POINT', 0),
-                ('GEOMETRY', 'POINT', 1),
-                ('POINT', 'GEOMETRY', 0),
-                ('GEOMETRYCOLLECTION', 'MULTIPOINT', 1),
-                ('GEOMETRYCOLLECTION', 'POINT', 0)]:
+        ('POINT', 'POINT', 1),
+        ('LINESTRING', 'POINT', 0),
+        ('GEOMETRY', 'POINT', 1),
+        ('POINT', 'GEOMETRY', 0),
+        ('GEOMETRYCOLLECTION', 'MULTIPOINT', 1),
+            ('GEOMETRYCOLLECTION', 'POINT', 0)]:
         sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT GPKG_IsAssignable('%s', '%s')" % (expected_type, actual_type))
         feat = sql_lyr.GetNextFeature()
         got_result = feat.GetField(0)
@@ -1014,7 +1014,7 @@ def ogr_gpkg_15():
             ("SELECT CreateSpatialIndex('point_no_spi-but-with-dashes', 'geom')", 1),
             # Final DisableSpatialIndex: will be effectively deleted at dataset closing
             ("SELECT DisableSpatialIndex('point_no_spi-but-with-dashes', 'geom')", 1),
-            ]:
+    ]:
         if expected_result == 0:
             gdal.PushErrorHandler('CPLQuietErrorHandler')
         sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(sql)
@@ -3243,7 +3243,7 @@ def ogr_gpkg_36():
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f.GetFID() != 10 or f['bar'] != 10.5 or \
-    f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
+            f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3375,7 +3375,7 @@ def ogr_gpkg_37():
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetFID() != 10 or f['foo'] != 'fooval' or f['bar'] != 'barval' or \
-    f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
+            f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'

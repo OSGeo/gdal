@@ -1138,10 +1138,10 @@ def pdf_set_5_gcps_ogc_bp(dpi=300):
            abs(got_gcps[i].GCPY - vrt_gcps[i].GCPY) > 1e-5 or \
            abs(got_gcps[i].GCPPixel - vrt_gcps[i].GCPPixel) > 1e-5 or \
            abs(got_gcps[i].GCPLine - vrt_gcps[i].GCPLine) > 1e-5:
-           gdaltest.post_reason('did not get expected GCP (%d)' % i)
-           print(got_gcps[i])
-           print(vrt_gcps[i])
-           return 'fail'
+            gdaltest.post_reason('did not get expected GCP (%d)' % i)
+            print(got_gcps[i])
+            print(vrt_gcps[i])
+            return 'fail'
 
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     # Not sure this is really what we want, but without any geotransform, we cannot
@@ -1842,7 +1842,7 @@ def pdf_write_huge():
             print(ds.GetMetadataItem('DPI'))
             return 'fail'
         if ds.RasterXSize != src_ds.RasterXSize or \
-        ds.RasterYSize != src_ds.RasterYSize:
+                ds.RasterYSize != src_ds.RasterYSize:
             gdaltest.post_reason('failure')
             print(ds.RasterXSize)
             print(ds.RasterYSize)

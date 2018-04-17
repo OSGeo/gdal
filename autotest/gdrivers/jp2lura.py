@@ -377,11 +377,11 @@ def jp2lura_9():
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 440720) > 0.1 \
-        or abs(geotransform[1] - 60) > 0.001 \
-        or abs(geotransform[2] - 0) > 0.001 \
-        or abs(geotransform[3] - 3751320) > 0.1 \
-        or abs(geotransform[4] - 0) > 0.001 \
-        or abs(geotransform[5] - -60) > 0.001:
+            or abs(geotransform[1] - 60) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 3751320) > 0.1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -1163,7 +1163,7 @@ def get_attribute_val(ar, attr_name):
     if node is None or node[XML_TYPE_IDX] != gdal.CXT_Attribute:
         return None
     if len(ar) > XML_FIRST_CHILD_IDX and \
-        node[XML_FIRST_CHILD_IDX][XML_TYPE_IDX] == gdal.CXT_Text:
+            node[XML_FIRST_CHILD_IDX][XML_TYPE_IDX] == gdal.CXT_Text:
         return node[XML_FIRST_CHILD_IDX][XML_VALUE_IDX]
     return None
 
@@ -1214,7 +1214,7 @@ def jp2lura_28():
              (['CODEBLOCK_WIDTH=128', 'CODEBLOCK_HEIGHT=128'], 64, 64, True),
              (['CODEBLOCK_WIDTH=63'], 32, 64, True),
              (['CODEBLOCK_WIDTH=32', 'CODEBLOCK_HEIGHT=32'], 32, 32, False),
-              ]
+             ]
 
     for (options, expected_cbkw, expected_cbkh, warning_expected) in tests:
         gdal.ErrorReset()
@@ -2128,7 +2128,7 @@ def jp2lura_49():
              ('WORLDFILE,PAM,INTERNAL', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('WORLDFILE,INTERNAL,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('NONE', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ]
+             ]
 
     for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
         gdal.SetConfigOption('GDAL_GEOREF_SOURCES', config_option_value)
@@ -2184,7 +2184,7 @@ def jp2lura_49():
              ('WORLDFILE,PAM,INTERNAL', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('WORLDFILE,INTERNAL,PAM', True, True, '26711', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('NONE', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-              ]
+             ]
 
     for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
         gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2', open('data/inconsitant_geojp2_gmljp2.jp2', 'rb').read())
@@ -2345,7 +2345,7 @@ def jp2lura_52():
              [2 ** 27 - 1, gdal.GDT_Int32, 'i'],
              [0, gdal.GDT_UInt32, 'I'],
              [2 ** 28 - 1, gdal.GDT_UInt32, 'I'],
-              ]
+             ]
     for (val, dt, fmt) in tests:
 
         src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1, dt)

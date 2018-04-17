@@ -434,7 +434,7 @@ def vsis3_2():
     def method(request):
         # /vsis3_streaming/ should have remembered the change of region and endpoint
         if request.headers['Authorization'].find('us-west-2') < 0 or \
-            not request.headers['Host'].startswith('localhost'):
+                not request.headers['Host'].startswith('localhost'):
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
 
@@ -720,7 +720,7 @@ def vsis3_3():
     def method(request):
         # /vsis3/ should have remembered the change of region and endpoint
         if request.headers['Authorization'].find('us-west-2') < 0 or \
-            not request.headers['Host'].startswith('localhost'):
+                not request.headers['Host'].startswith('localhost'):
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
 
@@ -783,73 +783,73 @@ def vsis3_3():
                                 '/vsis3/s3_non_cached:/vsis3/unrelated',
                                 '/vsis3/unrelated:/vsis3/s3_non_cached',
                                 '/vsis3/unrelated:/vsis3/s3_non_cached:/vsis3/unrelated']:
-      with gdaltest.config_option('CPL_VSIL_CURL_NON_CACHED', config_option_value):
+        with gdaltest.config_option('CPL_VSIL_CURL_NON_CACHED', config_option_value):
 
-        handler = webserver.SequentialHandler()
-        handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'foo')
+            handler = webserver.SequentialHandler()
+            handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'foo')
 
-        with webserver.install_http_handler(handler):
-            f = open_for_read('/vsis3/s3_non_cached/test.txt')
-            if f is None:
+            with webserver.install_http_handler(handler):
+                f = open_for_read('/vsis3/s3_non_cached/test.txt')
+                if f is None:
+                    gdaltest.post_reason('fail')
+                    print(config_option_value)
+                    return 'fail'
+                data = gdal.VSIFReadL(1, 3, f).decode('ascii')
+                gdal.VSIFCloseL(f)
+                if data != 'foo':
+                    gdaltest.post_reason('fail')
+                    print(config_option_value)
+                    print(data)
+                    return 'fail'
+
+            handler = webserver.SequentialHandler()
+            handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'bar2')
+
+            with webserver.install_http_handler(handler):
+                size = gdal.VSIStatL('/vsis3/s3_non_cached/test.txt').size
+            if size != 4:
                 gdaltest.post_reason('fail')
                 print(config_option_value)
-                return 'fail'
-            data = gdal.VSIFReadL(1, 3, f).decode('ascii')
-            gdal.VSIFCloseL(f)
-            if data != 'foo':
-                gdaltest.post_reason('fail')
-                print(config_option_value)
-                print(data)
+                print(size)
                 return 'fail'
 
-        handler = webserver.SequentialHandler()
-        handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'bar2')
+            handler = webserver.SequentialHandler()
+            handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'foo')
 
-        with webserver.install_http_handler(handler):
-            size = gdal.VSIStatL('/vsis3/s3_non_cached/test.txt').size
-        if size != 4:
-            gdaltest.post_reason('fail')
-            print(config_option_value)
-            print(size)
-            return 'fail'
+            with webserver.install_http_handler(handler):
+                size = gdal.VSIStatL('/vsis3/s3_non_cached/test.txt').size
+                if size != 3:
+                    gdaltest.post_reason('fail')
+                    print(config_option_value)
+                    print(data)
+                    return 'fail'
 
-        handler = webserver.SequentialHandler()
-        handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'foo')
+            handler = webserver.SequentialHandler()
+            handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'bar2')
 
-        with webserver.install_http_handler(handler):
-            size = gdal.VSIStatL('/vsis3/s3_non_cached/test.txt').size
-            if size != 3:
-                gdaltest.post_reason('fail')
-                print(config_option_value)
-                print(data)
-                return 'fail'
-
-        handler = webserver.SequentialHandler()
-        handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'bar2')
-
-        with webserver.install_http_handler(handler):
-            f = open_for_read('/vsis3/s3_non_cached/test.txt')
-            if f is None:
-                gdaltest.post_reason('fail')
-                print(config_option_value)
-                return 'fail'
-            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-            gdal.VSIFCloseL(f)
-            if data != 'bar2':
-                gdaltest.post_reason('fail')
-                print(config_option_value)
-                print(data)
-                return 'fail'
+            with webserver.install_http_handler(handler):
+                f = open_for_read('/vsis3/s3_non_cached/test.txt')
+                if f is None:
+                    gdaltest.post_reason('fail')
+                    print(config_option_value)
+                    return 'fail'
+                data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+                gdal.VSIFCloseL(f)
+                if data != 'bar2':
+                    gdaltest.post_reason('fail')
+                    print(config_option_value)
+                    print(data)
+                    return 'fail'
 
     # Retry without option
     for config_option_value in [None,
                                 '/vsis3/s3_non_cached/bar.txt']:
-      with gdaltest.config_option('CPL_VSIL_CURL_NON_CACHED', config_option_value):
+        with gdaltest.config_option('CPL_VSIL_CURL_NON_CACHED', config_option_value):
 
-        handler = webserver.SequentialHandler()
-        if config_option_value is None:
-            handler.add('GET', '/s3_non_cached/?delimiter=%2F', 200, {'Content-type': 'application/xml'},
-                        """<?xml version="1.0" encoding="UTF-8"?>
+            handler = webserver.SequentialHandler()
+            if config_option_value is None:
+                handler.add('GET', '/s3_non_cached/?delimiter=%2F', 200, {'Content-type': 'application/xml'},
+                            """<?xml version="1.0" encoding="UTF-8"?>
                         <ListBucketResult>
                             <Prefix>/</Prefix>
                             <Contents>
@@ -864,37 +864,37 @@ def vsis3_3():
                             </Contents>
                         </ListBucketResult>
                     """)
-            handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'foo')
+                handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'foo')
 
-        with webserver.install_http_handler(handler):
-            f = open_for_read('/vsis3/s3_non_cached/test.txt')
-            if f is None:
-                gdaltest.post_reason('fail')
-                print(config_option_value)
-                return 'fail'
-            data = gdal.VSIFReadL(1, 3, f).decode('ascii')
-            gdal.VSIFCloseL(f)
-            if data != 'foo':
-                gdaltest.post_reason('fail')
-                print(config_option_value)
-                print(data)
-                return 'fail'
+            with webserver.install_http_handler(handler):
+                f = open_for_read('/vsis3/s3_non_cached/test.txt')
+                if f is None:
+                    gdaltest.post_reason('fail')
+                    print(config_option_value)
+                    return 'fail'
+                data = gdal.VSIFReadL(1, 3, f).decode('ascii')
+                gdal.VSIFCloseL(f)
+                if data != 'foo':
+                    gdaltest.post_reason('fail')
+                    print(config_option_value)
+                    print(data)
+                    return 'fail'
 
-        handler = webserver.SequentialHandler()
-        with webserver.install_http_handler(handler):
-            f = open_for_read('/vsis3/s3_non_cached/test.txt')
-            if f is None:
-                gdaltest.post_reason('fail')
-                print(config_option_value)
-                return 'fail'
-            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-            gdal.VSIFCloseL(f)
-            # We should still get foo because of caching
-            if data != 'foo':
-                gdaltest.post_reason('fail')
-                print(config_option_value)
-                print(data)
-                return 'fail'
+            handler = webserver.SequentialHandler()
+            with webserver.install_http_handler(handler):
+                f = open_for_read('/vsis3/s3_non_cached/test.txt')
+                if f is None:
+                    gdaltest.post_reason('fail')
+                    print(config_option_value)
+                    return 'fail'
+                data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+                gdal.VSIFCloseL(f)
+                # We should still get foo because of caching
+                if data != 'foo':
+                    gdaltest.post_reason('fail')
+                    print(config_option_value)
+                    print(data)
+                    return 'fail'
 
     # List buckets (empty result)
     handler = webserver.SequentialHandler()
@@ -1438,26 +1438,26 @@ def vsis3_6():
     handler.add('POST', '/s3_fake_bucket4/large_file_initiate_invalid_xml_result.bin?uploads', 200, {}, 'foo')
     handler.add('POST', '/s3_fake_bucket4/large_file_initiate_no_uploadId.bin?uploads', 200, {}, '<foo/>')
     with webserver.install_http_handler(handler):
-      for filename in ['/vsis3/s3_fake_bucket4/large_file_initiate_403_error.bin',
-                       '/vsis3/s3_fake_bucket4/large_file_initiate_empty_result.bin',
-                       '/vsis3/s3_fake_bucket4/large_file_initiate_invalid_xml_result.bin',
-                       '/vsis3/s3_fake_bucket4/large_file_initiate_no_uploadId.bin']:
-        with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'):  # 1 MB
-            f = gdal.VSIFOpenL(filename, 'wb')
-        if f is None:
-            gdaltest.post_reason('fail')
-            return 'fail'
-        with gdaltest.error_handler():
-            ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
-        if ret != 0:
-            gdaltest.post_reason('fail')
-            print(ret)
-            return 'fail'
-        gdal.ErrorReset()
-        gdal.VSIFCloseL(f)
-        if gdal.GetLastErrorMsg() != '':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        for filename in ['/vsis3/s3_fake_bucket4/large_file_initiate_403_error.bin',
+                         '/vsis3/s3_fake_bucket4/large_file_initiate_empty_result.bin',
+                         '/vsis3/s3_fake_bucket4/large_file_initiate_invalid_xml_result.bin',
+                         '/vsis3/s3_fake_bucket4/large_file_initiate_no_uploadId.bin']:
+            with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'):  # 1 MB
+                f = gdal.VSIFOpenL(filename, 'wb')
+            if f is None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            with gdaltest.error_handler():
+                ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
+            if ret != 0:
+                gdaltest.post_reason('fail')
+                print(ret)
+                return 'fail'
+            gdal.ErrorReset()
+            gdal.VSIFCloseL(f)
+            if gdal.GetLastErrorMsg() != '':
+                gdaltest.post_reason('fail')
+                return 'fail'
 
     handler = webserver.SequentialHandler()
     handler.add('POST', '/s3_fake_bucket4/large_file_upload_part_403_error.bin?uploads', 200, {},
@@ -1471,27 +1471,27 @@ def vsis3_6():
     handler.add('DELETE', '/s3_fake_bucket4/large_file_upload_part_no_etag.bin?uploadId=my_id', 204)
 
     with webserver.install_http_handler(handler):
-      for filename in ['/vsis3/s3_fake_bucket4/large_file_upload_part_403_error.bin',
-                       '/vsis3/s3_fake_bucket4/large_file_upload_part_no_etag.bin']:
-        with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'):  # 1 MB
-            f = gdal.VSIFOpenL(filename, 'wb')
-        if f is None:
-            gdaltest.post_reason('fail')
-            print(filename)
-            return 'fail'
-        with gdaltest.error_handler():
-            ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
-        if ret != 0:
-            gdaltest.post_reason('fail')
-            print(filename)
-            print(ret)
-            return 'fail'
-        gdal.ErrorReset()
-        gdal.VSIFCloseL(f)
-        if gdal.GetLastErrorMsg() != '':
-            gdaltest.post_reason('fail')
-            print(filename)
-            return 'fail'
+        for filename in ['/vsis3/s3_fake_bucket4/large_file_upload_part_403_error.bin',
+                         '/vsis3/s3_fake_bucket4/large_file_upload_part_no_etag.bin']:
+            with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'):  # 1 MB
+                f = gdal.VSIFOpenL(filename, 'wb')
+            if f is None:
+                gdaltest.post_reason('fail')
+                print(filename)
+                return 'fail'
+            with gdaltest.error_handler():
+                ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
+            if ret != 0:
+                gdaltest.post_reason('fail')
+                print(filename)
+                print(ret)
+                return 'fail'
+            gdal.ErrorReset()
+            gdal.VSIFCloseL(f)
+            if gdal.GetLastErrorMsg() != '':
+                gdaltest.post_reason('fail')
+                print(filename)
+                return 'fail'
 
     # Simulate failure in AbortMultipart stage
     handler = webserver.SequentialHandler()

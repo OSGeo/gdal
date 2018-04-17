@@ -1948,9 +1948,9 @@ def ogr_geom_circularstring():
     a1 = math.pi / 4
     a2 = math.pi / 6
     in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-            cx + r * math.cos(a0), cy + r * math.sin(a0), \
-            cx + r * math.cos(a1), cy + r * math.sin(a1), \
-            cx + r * math.cos(a2), cy + r * math.sin(a2))
+        cx + r * math.cos(a0), cy + r * math.sin(a0), \
+        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+        cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
     expected_env = (cx + r * math.cos(a0), cx + r * math.cos(a2), cy + r * math.sin(a2), cy + r * math.sin(a0))
@@ -1965,9 +1965,9 @@ def ogr_geom_circularstring():
     a1 = math.pi / 6
     a2 = -math.pi / 6
     in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-            cx + r * math.cos(a0), cy + r * math.sin(a0), \
-            cx + r * math.cos(a1), cy + r * math.sin(a1), \
-            cx + r * math.cos(a2), cy + r * math.sin(a2))
+        cx + r * math.cos(a0), cy + r * math.sin(a0), \
+        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+        cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
     expected_env = (cx + r * math.cos(a0), cx + r, cy + r * math.sin(a2), cy + r * math.sin(a0))
@@ -1982,9 +1982,9 @@ def ogr_geom_circularstring():
     a1 = math.pi - math.pi / 3
     a2 = -math.pi / 6
     in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-            cx + r * math.cos(a0), cy + r * math.sin(a0), \
-            cx + r * math.cos(a1), cy + r * math.sin(a1), \
-            cx + r * math.cos(a2), cy + r * math.sin(a2))
+        cx + r * math.cos(a0), cy + r * math.sin(a0), \
+        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+        cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
     expected_env = (cx - r, cx + r * math.cos(a2), cy - r, cy + r)
@@ -1999,9 +1999,9 @@ def ogr_geom_circularstring():
     a1 = math.pi - math.pi / 3
     a2 = math.pi / 6
     in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-            cx + r * math.cos(a0), cy + r * math.sin(a0), \
-            cx + r * math.cos(a1), cy + r * math.sin(a1), \
-            cx + r * math.cos(a2), cy + r * math.sin(a2))
+        cx + r * math.cos(a0), cy + r * math.sin(a0), \
+        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+        cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
     expected_env = (cx - r, cx + r, cy - r, cy + r)
@@ -2016,9 +2016,9 @@ def ogr_geom_circularstring():
     a1 = math.pi + math.pi / 3
     a2 = math.pi / 3
     in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-            cx + r * math.cos(a0), cy + r * math.sin(a0), \
-            cx + r * math.cos(a1), cy + r * math.sin(a1), \
-            cx + r * math.cos(a2), cy + r * math.sin(a2))
+        cx + r * math.cos(a0), cy + r * math.sin(a0), \
+        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+        cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
     expected_env = (cx - r, cx + r, cy - r, cy + r)
@@ -2370,28 +2370,28 @@ def ogr_geom_compoundcurve():
     g = ogr.Geometry(ogr.wkbCompoundCurve)
     g.AddGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
     if g.ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 1))':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     g.AddGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
     gdal.PopErrorHandler()
     if g.ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 1),(1 1,0 0))':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     g = ogr.Geometry(ogr.wkbCompoundCurve)
     g.AddGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
     if g.ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 1))':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     g.AddGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
     gdal.PopErrorHandler()
     if g.ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 1),(1 1,0 0))':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     # Cannot add compoundcurve in compoundcurve
     g = ogr.Geometry(ogr.wkbCompoundCurve)
@@ -2399,8 +2399,8 @@ def ogr_geom_compoundcurve():
     g.AddGeometryDirectly(ogr.CreateGeometryFromWkt('COMPOUNDCURVE((1 1,2 2))'))
     gdal.PopErrorHandler()
     if g.ExportToWkt() != 'COMPOUNDCURVE EMPTY':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     # Check that discretization is not sensitive to winding order
     g1 = ogr.CreateGeometryFromWkt('COMPOUNDCURVE((-1 0,0 1),CIRCULARSTRING (0 1,0.25 0,0.1 -0.5),(0.1 -0.5,-1 0))')
@@ -2413,13 +2413,13 @@ def ogr_geom_compoundcurve():
         # The curves must be exactly the same, despite our stealth mode
         if g2.GetX(i) != g3.GetX(p_count - 1 - i) or \
            g2.GetY(i) != g3.GetY(p_count - 1 - i):
-                gdaltest.post_reason('fail')
-                print(g2)
-                print(g3)
-                print(i)
-                print(abs(g2.GetX(i) - g3.GetX(p_count - 1 - i)))
-                print(abs(g2.GetY(i) - g3.GetY(p_count - 1 - i)))
-                return 'fail'
+            gdaltest.post_reason('fail')
+            print(g2)
+            print(g3)
+            print(i)
+            print(abs(g2.GetX(i) - g3.GetX(p_count - 1 - i)))
+            print(abs(g2.GetY(i) - g3.GetY(p_count - 1 - i)))
+            return 'fail'
 
     # Test Transform
     sr = osr.SpatialReference()
@@ -2435,7 +2435,7 @@ def ogr_geom_compoundcurve():
                 '\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x02\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',  # subgeometry invalid: linestring with one point
                 '\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',  # subgeometry invalid: point
                 '\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x09\x00\x00\x00\x00\x00\x00\x00',  # subgeometry invalid: compoundcurve
-                 ]
+                ]
     for wkb in wkb_list:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         g = ogr.CreateGeometryFromWkb(wkb)
@@ -3705,7 +3705,7 @@ def ogr_geom_gt_functions():
               (ogr.wkbUnknown, ogr.wkbPoint, 0),
               (ogr.wkbTIN, ogr.wkbPolyhedralSurface, 1),
               (ogr.wkbPolyhedralSurface, ogr.wkbTIN, 0),
-               ]
+              ]
     for (gt, gt2, res) in tuples:
         if ogr.GT_IsSubClassOf(gt, gt2) != res:
             gdaltest.post_reason('fail')
@@ -3995,7 +3995,7 @@ def ogr_geom_measured_geometries_to_2D_or_3D():
                 ['POLYHEDRALSURFACE ZM (((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4)))', 'POLYHEDRALSURFACE (((0 0,0 1,1 1,0 0)))', 'POLYHEDRALSURFACE Z (((0 0 3,0 1 3,1 1 3,0 0 3)))'],
                 ['TIN M (((0 0 3,0 1 3,1 1 3,0 0 3)))', 'TIN (((0 0,0 1,1 1,0 0)))', 'TIN Z (((0 0 0,0 1 0,1 1 0,0 0 0)))'],
                 ['TIN ZM (((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4)))', 'TIN (((0 0,0 1,1 1,0 0)))', 'TIN Z (((0 0 3,0 1 3,1 1 3,0 0 3)))'],
-                 ]
+                ]
     for (before, after_2D, after_3D) in list_wkt:
 
         geom = ogr.CreateGeometryFromWkt(before)
@@ -4076,7 +4076,7 @@ def ogr_geom_postgis_ewkt_xym():
 
     list_wkt = [['POINTM(1 2 3)', 'POINT M (1 2 3)'],
                 ['GEOMETRYCOLLECTIONM(POINTM(1 2 3))', 'GEOMETRYCOLLECTION M (POINT M (1 2 3))'],
-                 ]
+                ]
     for (before, after) in list_wkt:
         geom = ogr.CreateGeometryFromWkt(before)
         if geom.ExportToIsoWkt() != after:
@@ -4133,7 +4133,7 @@ def ogr_geom_import_corrupted_wkb():
                 'TRIANGLE ZM ((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4))',
                 'POLYHEDRALSURFACE ZM (((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4)),((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4)))',
                 'TIN ZM (((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4)),((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4)))',
-                 ]
+                ]
 
     for wkt in list_wkt:
         g = ogr.CreateGeometryFromWkt(wkt)

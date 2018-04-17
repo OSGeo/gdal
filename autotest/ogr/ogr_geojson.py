@@ -1097,7 +1097,7 @@ def ogr_geojson_24():
         feature = lyr.GetNextFeature()
         ref_geom = ogr.CreateGeometryFromWkt('POINT (2 49)')
         if feature.GetFieldAsString("name") != 'bar' or \
-        ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+                ogrtest.check_feature_geometry(feature, ref_geom) != 0:
             feature.DumpReadable()
             return 'fail'
 
@@ -1109,7 +1109,7 @@ def ogr_geojson_24():
         feature = lyr.GetNextFeature()
         ref_geom = ogr.CreateGeometryFromWkt('POINT (2 49)')
         if feature.GetFieldAsString("other_name") != 'baz' or \
-        ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+                ogrtest.check_feature_geometry(feature, ref_geom) != 0:
             feature.DumpReadable()
             return 'fail'
 
@@ -2445,8 +2445,8 @@ def ogr_geojson_45():
 
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_45.json')
     lyr = ds.CreateLayer('test', options=[
-            'NATIVE_DATA={ "type": "ignored", "bbox": [ 0, 0, 0, 0 ], "foo": "bar", "bar": "baz", "features": "ignored" }',
-            'NATIVE_MEDIA_TYPE=application/vnd.geo+json'])
+        'NATIVE_DATA={ "type": "ignored", "bbox": [ 0, 0, 0, 0 ], "foo": "bar", "bar": "baz", "features": "ignored" }',
+        'NATIVE_MEDIA_TYPE=application/vnd.geo+json'])
     f = ogr.Feature(lyr.GetLayerDefn())
     json_geom = """{ "type": "GeometryCollection", "foo_gc": "bar_gc", "geometries" : [
                         { "type": "Point", "foo_point": "bar_point", "coordinates": [0,1,2, 3] },

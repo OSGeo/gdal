@@ -93,7 +93,7 @@ def GetOutputDriversFor(filename):
     # netCDF to be used by default for output.
     if ext.lower() == 'nc' and len(drv_list) == 0 and \
        drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
-           drv_list = ['NETCDF', 'GMT']
+        drv_list = ['NETCDF', 'GMT']
 
     return drv_list
 
@@ -292,8 +292,8 @@ def doit(opts, args):
             # loop through Y lines
             for Y in range(0, nYBlocks):
                 ProgressCt += 1
-                if 10 * ProgressCt / ProgressEnd%10 != ProgressMk and not opts.quiet:
-                    ProgressMk = 10 * ProgressCt / ProgressEnd%10
+                if 10 * ProgressCt / ProgressEnd % 10 != ProgressMk and not opts.quiet:
+                    ProgressMk = 10 * ProgressCt / ProgressEnd % 10
                     from sys import version_info
                     if version_info >= (3, 0, 0):
                         exec('print("%d.." % (10*ProgressMk), end=" ")')

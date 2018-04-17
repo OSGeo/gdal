@@ -75,7 +75,7 @@ def genbin_1():
 
 gdaltest_list = [
     genbin_1
-    ]
+]
 
 
 if __name__ == '__main__':

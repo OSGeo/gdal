@@ -145,7 +145,7 @@ gdaltest_list = [
     proximity_1,
     proximity_2,
     proximity_3
-    ]
+]
 
 if __name__ == '__main__':
 

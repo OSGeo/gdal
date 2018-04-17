@@ -37,7 +37,7 @@ import gdaltest
 gdaltest_list = []
 
 init_list = [ \
-     ('byte.tif.grd', 1, 4672, None)]
+    ('byte.tif.grd', 1, 4672, None)]
 
 for item in init_list:
     ut = gdaltest.GDALTest('AAIGrid', item[0], item[1], item[2])

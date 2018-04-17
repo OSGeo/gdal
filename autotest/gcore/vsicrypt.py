@@ -276,15 +276,15 @@ def vsicrypt_2():
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,sector_size=1,file=/vsimem/file.bin', 'wb')
     if fp is not None:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     # Sector size (16) should be at least twice larger than the block size (16) in CBC_CTS
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,sector_size=16,mode=CBC_CTS,file=/vsimem/file.bin', 'wb')
     if fp is not None:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     gdal.Unlink('/vsimem/file.bin')
 

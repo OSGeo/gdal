@@ -1727,7 +1727,7 @@ gdaltest_list = [
     test_gdalwarp_45,
     test_gdalwarp_46,
     test_gdalwarp_cleanup
-    ]
+]
 
 disabled_gdaltest_list = [
     test_gdalwarp_cleanup,

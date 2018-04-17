@@ -47,7 +47,7 @@ if dataset is None:
     print('Unable to open', input, 'for reading')
     sys.exit(1)
 
-projection   = dataset.GetProjection()
+projection = dataset.GetProjection()
 geotransform = dataset.GetGeoTransform()
 
 if projection is None and geotransform is None:

@@ -247,7 +247,7 @@ def l1b_clouds_after_noaa_15():
 def l1b_metadata_after_noaa_15():
     try:
         os.stat('tmp/cache/n16gac10bit.l1b')
-    except OSError: 
+    except OSError:
         return 'skip'
 
     gdal.SetConfigOption('L1B_FETCH_METADATA', 'YES')
@@ -311,7 +311,7 @@ l1b_list = [('http://download.osgeo.org/gdal/data/l1b', 'n12gac8bit.l1b', 51754,
             ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'rapnzg.1b', 58084, 30000, 612),  # 16 bit guess
             ('http://www.sat.dundee.ac.uk/testdata/new_noaa/new_klm_format/', 'noaa18.n1b', 50229, 50000, 102),
             ('http://www.sat.dundee.ac.uk/testdata/metop', 'noaa1b', 62411, 150000, 408)
-             ]
+            ]
 
 for item in l1b_list:
     ut = TestL1B(item[0], item[1], item[2], item[3], item[4])

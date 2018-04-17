@@ -203,8 +203,8 @@ def OpenArray(array, prototype_ds=None):
 
 def flip_code(code):
     if isinstance(code, (numpy.dtype, type)):
-# since several things map to complex64 we must carefully select
-# the opposite that is an exact match (ticket 1518)
+        # since several things map to complex64 we must carefully select
+        # the opposite that is an exact match (ticket 1518)
         if code == numpy.int8:
             return gdalconst.GDT_Byte
         if code == numpy.complex64:
@@ -430,15 +430,15 @@ def RATWriteArray(rat, array, field, start=0):
         raise ValueError("Array too big to fit into RAT from start position")
 
     if numpy.issubdtype(array.dtype, numpy.integer):
-# is some type of integer - coerce to standard int
-# TODO: must check this is fine on all platforms
-# confusingly numpy.int 64 bit even if native type 32 bit
+        # is some type of integer - coerce to standard int
+        # TODO: must check this is fine on all platforms
+        # confusingly numpy.int 64 bit even if native type 32 bit
         array = array.astype(numpy.int32)
     elif numpy.issubdtype(array.dtype, numpy.floating):
-# is some type of floating point - coerce to double
+        # is some type of floating point - coerce to double
         array = array.astype(numpy.double)
     elif numpy.issubdtype(array.dtype, numpy.character):
-# cast away any kind of Unicode etc
+        # cast away any kind of Unicode etc
         array = array.astype(numpy.character)
     else:
         raise ValueError("Array not of a supported type (integer, double or string)")

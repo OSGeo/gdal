@@ -227,7 +227,7 @@ def tiff_write_5():
     new_ds = gdaltest.tiff_drv.CreateCopy('tmp/test_5.tif', src_ds)
 
     if new_ds.GetGCPProjection().find(
-                   'AUTHORITY["EPSG","26711"]') == -1:
+            'AUTHORITY["EPSG","26711"]') == -1:
         gdaltest.post_reason('GCP Projection not set properly.')
         return 'fail'
 
@@ -375,7 +375,7 @@ def tiff_write_9():
     new_ds = gdaltest.tiff_drv.CreateCopy('tmp/test_9.tif', src_ds,
                                           options=['NBITS=5'])
     with gdaltest.error_handler():
-      new_ds = None
+        new_ds = None
 
     new_ds = gdal.Open('tmp/test_9.tif')
     bnd = new_ds.GetRasterBand(1)
@@ -911,7 +911,7 @@ def tiff_write_20():
               ('TIFFTAG_RESOLUTIONUNIT', '2 (pixels/inch)'),
               ('TIFFTAG_MINSAMPLEVALUE', '1'),
               ('TIFFTAG_MAXSAMPLEVALUE', '2'),
-               ]
+              ]
 
     dict = {}
     for item in values:
@@ -1340,7 +1340,7 @@ def tiff_write_30():
 
     # Check BigTIFF signature
     if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
-        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+            and (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -1373,7 +1373,7 @@ def tiff_write_31():
 
     # Check BigTIFF signature
     if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
-        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+            and (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -2291,13 +2291,13 @@ def tiff_write_60():
     for options_tuple in tuples:
         # Create case
         with gdaltest.error_handler():
-          ds = gdaltest.tiff_drv.Create('tmp/tiff_write_60.tif', 10, 10, options=[options_tuple[0], 'PROFILE=BASELINE'])
+            ds = gdaltest.tiff_drv.Create('tmp/tiff_write_60.tif', 10, 10, options=[options_tuple[0], 'PROFILE=BASELINE'])
         gt = (0.0, 1.0, 0.0, 50.0, 0.0, -1.0)
         ds.SetGeoTransform(gt)
         ds = None
 
         with gdaltest.error_handler():
-          ds = gdal.Open('tmp/tiff_write_60.tif')
+            ds = gdal.Open('tmp/tiff_write_60.tif')
         if ds.GetGeoTransform() != gt:
             gdaltest.post_reason('case1: %s != %s' % (ds.GetGeoTransform(), gt))
             return 'fail'
@@ -2315,7 +2315,7 @@ def tiff_write_60():
         # CreateCopy case
         src_ds = gdal.Open('data/byte.tif')
         with gdaltest.error_handler():
-          ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_60.tif', src_ds, options=[options_tuple[0], 'PROFILE=BASELINE'])
+            ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_60.tif', src_ds, options=[options_tuple[0], 'PROFILE=BASELINE'])
         gt = (0.0, 1.0, 0.0, 50.0, 0.0, -1.0)
         ds.SetGeoTransform(gt)
         ds = None
@@ -2366,7 +2366,7 @@ def tiff_write_61():
 
     # Check classical TIFF signature
     if ((binvalues[2] != 0x2A or binvalues[3] != 0) \
-        and (binvalues[3] != 0x2A or binvalues[2] != 0)):
+            and (binvalues[3] != 0x2A or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -2399,7 +2399,7 @@ def tiff_write_62():
 
     # Check BigTIFF signature
     if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
-        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+            and (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -2815,7 +2815,7 @@ def tiff_write_74():
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', old_accum)
 
     if gdal.GetLastErrorMsg().find(
-                   'Unsupported JPEG data precision 12') != -1:
+            'Unsupported JPEG data precision 12') != -1:
         sys.stdout.write('(12bit jpeg not available) ... ')
         return 'skip'
 
@@ -3283,7 +3283,7 @@ def tiff_write_81():
     ds = gdal.Open('tmp/tiff_write_81.tif')
 
     if ds.GetGCPProjection().find(
-                   'AUTHORITY["EPSG","26711"]') == -1:
+            'AUTHORITY["EPSG","26711"]') == -1:
         gdaltest.post_reason('GCP Projection not set properly.')
         return 'fail'
 
@@ -5367,7 +5367,7 @@ def tiff_write_126():
                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'BLOCKYSIZE=800'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'BLOCKYSIZE=32'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'BLOCKYSIZE=8'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),
-                     ]
+                    ]
 
     for (options, cs1, cs2, cs3, cs4) in options_list:
         os.environ['JPEGMEM'] = '500M'
@@ -5431,7 +5431,7 @@ def tiff_write_126():
                     (['COMPRESS=JPEG', 'TILED=YES'], [49887, 58937], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'BLOCKYSIZE=800'], [49887, 58937], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'BLOCKYSIZE=32'], [49887, 58937], [30829, 34806], [11664, 58937]),
-                     ]
+                    ]
 
     for (options, cs1, cs3, cs4) in options_list:
         os.environ['JPEGMEM'] = '500M'
@@ -6773,7 +6773,7 @@ def tiff_write_145():
                     {'creation_options': ['PHOTOMETRIC=foo'], 'expected_failure': False},
                     {'creation_options': ['PHOTOMETRIC=RGB'], 'expected_failure': False},
                     {'creation_options': ['TILED=YES', 'BLOCKSIZE=1', 'BLOCKYSIZE=1'], 'expected_failure': True},
-                     ]
+                    ]
 
     for options in options_list:
         xsize = options.get('xsize', 1)

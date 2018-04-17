@@ -60,7 +60,7 @@ ogrtest.openfilegdb_datalist = [["none", ogr.wkbNone, None],
                                 ["null_polygon", ogr.wkbPolygon, None],
                                 ["empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
                                 ["empty_multipoint", ogr.wkbMultiPoint, "MULTIPOINT EMPTY", None],
-            ]
+                                ]
 
 
 ogrtest.openfilegdb_datalist_m = [["pointm", ogr.wkbPointM, "POINT M (1 2 3)"],
@@ -76,7 +76,7 @@ ogrtest.openfilegdb_datalist_m = [["pointm", ogr.wkbPointM, "POINT M (1 2 3)"],
                                   ["multipolygonm", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))"],
                                   ["multipolygonzm", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))"],
                                   ["empty_polygonm", ogr.wkbPolygonM, 'POLYGON M EMPTY', None],
-               ]
+                                  ]
 
 
 ###############################################################################
@@ -602,7 +602,7 @@ def ogr_openfilegdb_4():
              ("id = 1 OR xml <> ''", [1, 2, 3, 4, 5], 0),  # no index used
              ('id = id', [1, 2, 3, 4, 5], 0),  # no index used
              ('id = 1 + 0', [1], 0),  # no index used (currently...)
-              ]
+             ]
     for test in tests:
 
         if len(test) == 2:
@@ -644,7 +644,7 @@ def ogr_openfilegdb_4():
              ('id IS NULL OR id IS NOT NULL', [1, 2, 3, 4, 5, 6]),
              ('id = 1 OR id IS NULL', [1, 6]),
              ('id IS NULL OR id = 1', [1, 6]),
-              ]
+             ]
     for test in tests:
 
         if len(test) == 2:
@@ -688,7 +688,7 @@ def ogr_openfilegdb_4():
              ('real < 4', 86 + 3 * 85, None),
              ('real > 1 AND real < 2', 0, None),
              ('real < 0', 0, None),
-              ]
+             ]
     for (where_clause, count, start) in tests:
 
         lyr.SetAttributeFilter(where_clause)
@@ -701,7 +701,7 @@ def ogr_openfilegdb_4():
             feat = lyr.GetNextFeature()
             if feat is None or \
                (start is not None and \
-                feat.GetFID() != i * 4 + start):
+                    feat.GetFID() != i * 4 + start):
                 print(where_clause, count)
                 gdaltest.post_reason('fail')
                 return 'fail'
@@ -797,27 +797,27 @@ def ogr_openfilegdb_7():
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
 
     tests = [  # Optimized:
-              ("select * from point order by id", 5, 1, 1),
-              ("select id, str from point order by id desc", 5, 5, 1),
-              ("select * from point where id = 1 order by id", 1, 1, 1),
-              ("select * from big_layer order by real", 86 + 3 * 85, 1, 1),
-              ("select * from big_layer order by real desc", 86 + 3 * 85, 4 * 85, 1),
-              # Invalid :
-              ("select foo from", None, None, None),
-              ("select foo from bar", None, None, None),
-              ("select * from point order by foo", None, None, None),
-              # Non-optimized :
-              ("select * from point order by xml", None, None, 0),
-              ("select fid from point order by id", None, None, 0),
-              ("select cast(id as float) from point order by id", None, None, 0),
-              ("select distinct id from point order by id", None, None, 0),
-              ("select 1 from point order by id", None, None, 0),
-              ("select count(*) from point order by id", None, None, 0),
-              ("select * from point order by nullint", None, None, 0),
-              ("select * from point where id = 1 or id = 2 order by id", None, None, 0),
-              ("select * from point where id = 1 order by id, float", None, None, 0),
-              ("select * from point where float > 0 order by id", None, None, 0),
-            ]
+        ("select * from point order by id", 5, 1, 1),
+        ("select id, str from point order by id desc", 5, 5, 1),
+        ("select * from point where id = 1 order by id", 1, 1, 1),
+        ("select * from big_layer order by real", 86 + 3 * 85, 1, 1),
+        ("select * from big_layer order by real desc", 86 + 3 * 85, 4 * 85, 1),
+        # Invalid :
+        ("select foo from", None, None, None),
+        ("select foo from bar", None, None, None),
+        ("select * from point order by foo", None, None, None),
+        # Non-optimized :
+        ("select * from point order by xml", None, None, 0),
+        ("select fid from point order by id", None, None, 0),
+        ("select cast(id as float) from point order by id", None, None, 0),
+        ("select distinct id from point order by id", None, None, 0),
+        ("select 1 from point order by id", None, None, 0),
+        ("select count(*) from point order by id", None, None, 0),
+        ("select * from point order by nullint", None, None, 0),
+        ("select * from point where id = 1 or id = 2 order by id", None, None, 0),
+        ("select * from point where id = 1 order by id, float", None, None, 0),
+        ("select * from point where float > 0 order by id", None, None, 0),
+    ]
 
     for (sql, feat_count, first_fid, expected_optimized) in tests:
         if expected_optimized is None:
@@ -1637,7 +1637,7 @@ gdaltest_list = [
     ogr_openfilegdb_20,
     ogr_openfilegdb_21,
     ogr_openfilegdb_cleanup,
-    ]
+]
 
 if __name__ == '__main__':
 

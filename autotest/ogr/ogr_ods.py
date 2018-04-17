@@ -215,7 +215,7 @@ def ogr_ods_kspread_1():
                   ogr.OFTInteger,
                   ogr.OFTReal,
                   ogr.OFTString,  # ogr.OFTDateTime
-                   ]
+                  ]
 
     for i in range(len(type_array)):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
@@ -348,7 +348,7 @@ def ogr_ods_6():
     src_ds = ogr.Open('ODS:data/content_formulas.xml')
     filepath = '/vsimem/content_formulas.csv'
     with gdaltest.error_handler():
-      out_ds = ogr.GetDriverByName('CSV').CopyDataSource(src_ds, filepath)
+        out_ds = ogr.GetDriverByName('CSV').CopyDataSource(src_ds, filepath)
     if out_ds is None:
         gdaltest.post_reason('Unable to create %s.' % filepath)
         return 'fail'

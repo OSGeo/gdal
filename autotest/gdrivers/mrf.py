@@ -541,7 +541,7 @@ def mrf_cached_source():
 
     open('tmp/byte.tif', 'wb').write(open('data/byte.tif', 'rb').read())
     open('tmp/out.mrf', 'wt').write(
-"""<MRF_META>
+        """<MRF_META>
   <CachedSource>
     <Source>byte.tif</Source>
   </CachedSource>
@@ -577,7 +577,7 @@ def mrf_cached_source():
 
     # Cloning MRF
     open('tmp/cloning.mrf', 'wt').write(
-"""<MRF_META>
+        """<MRF_META>
   <CachedSource>
     <Source clone="true">out.mrf</Source>
   </CachedSource>
@@ -698,22 +698,22 @@ def mrf_versioned():
 def mrf_cleanup():
 
     files = [
-'12bit_rose_extract.jpg.*',
-'byte.tif.*',
-'int16.tif.*',
-'out.idx',
-'out.mrf',
-'out.mrf.aux.xml',
-'out.ppg',
-'rgbsmall.tif.*',
-'small_world_pct.tif.*',
-'float32.tif.*',
-'float64.tif.*',
-'int32.tif.*',
-'uint16.tif.*',
-'uint32.tif.*',
-'utmsmall.tif.*',
-'cloning.*']
+        '12bit_rose_extract.jpg.*',
+        'byte.tif.*',
+        'int16.tif.*',
+        'out.idx',
+        'out.mrf',
+        'out.mrf.aux.xml',
+        'out.ppg',
+        'rgbsmall.tif.*',
+        'small_world_pct.tif.*',
+        'float32.tif.*',
+        'float64.tif.*',
+        'int32.tif.*',
+        'uint16.tif.*',
+        'uint32.tif.*',
+        'utmsmall.tif.*',
+        'cloning.*']
 
     for f in [fname for n in files for fname in glob.glob('tmp/' + n)]:
         gdal.Unlink(f)

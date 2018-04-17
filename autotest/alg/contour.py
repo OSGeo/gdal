@@ -216,7 +216,7 @@ gdaltest_list = [
     contour_1,
     contour_2,
     contour_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

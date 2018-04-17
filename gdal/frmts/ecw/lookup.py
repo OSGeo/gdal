@@ -85,45 +85,45 @@ for line in pfile.readlines():
         for i in range(len(tokens)):
             tokens[i] = string.strip(tokens[i])
 
-  	id = tokens[0]
+        id = tokens[0]
         type = tokens[1]
 
-	lsize = float(tokens[2])
-	lsize_str = tokens[2]
+        lsize = float(tokens[2])
+        lsize_str = tokens[2]
 
-	dline = dict_dict[type][id]
+        dline = dict_dict[type][id]
 
-	srs = osr.SpatialReference()
+        srs = osr.SpatialReference()
 
-	# Handle translation of the projection parameters.
+        # Handle translation of the projection parameters.
 
-	if type != 'utm':
-	    fn = float(dline[1])
-	    fe = float(dline[2])
+        if type != 'utm':
+            fn = float(dline[1])
+            fe = float(dline[2])
 
         if type == 'tranmerc':
-	    srs.SetTM(r2d(dline[5]), r2d(dline[4]), float(dline[3]), fe, fn)
+            srs.SetTM(r2d(dline[5]), r2d(dline[4]), float(dline[3]), fe, fn)
 
-	elif type == 'mercator':
-	    srs.SetMercator(r2d(dline[5]), r2d(dline[4]), float(dline[3]), fe, fn)
+        elif type == 'mercator':
+            srs.SetMercator(r2d(dline[5]), r2d(dline[4]), float(dline[3]), fe, fn)
 
-	elif type == 'grinten':
-	    srs.SetVDG(r2d(dline[3]), fe, fn)
+        elif type == 'grinten':
+            srs.SetVDG(r2d(dline[3]), fe, fn)
 
-	elif type == 'cassini':
-	    srs.SetCS(r2d(dline[4]), r2d(dline[3]), fe, fn)
+        elif type == 'cassini':
+            srs.SetCS(r2d(dline[4]), r2d(dline[3]), fe, fn)
 
-	elif type == 'lambazea':
-	    srs.SetLAEA(r2d(dline[5]), r2d(dline[4]),
-                 fe, fn)
+        elif type == 'lambazea':
+            srs.SetLAEA(r2d(dline[5]), r2d(dline[4]),
+                        fe, fn)
 
-	elif type == 'lambert1':
-	    srs.SetLCC1SP(r2d(dline[5]), r2d(dline[4]),
-                   float(dline[3]), fe, fn)
+        elif type == 'lambert1':
+            srs.SetLCC1SP(r2d(dline[5]), r2d(dline[4]),
+                          float(dline[3]), fe, fn)
 
-	elif type == 'lamcon2':
-	    srs.SetLCC(r2d(dline[7]), r2d(dline[8]),
-                r2d(dline[9]), r2d(dline[6]), fe, fn)
+        elif type == 'lamcon2':
+            srs.SetLCC(r2d(dline[7]), r2d(dline[8]),
+                       r2d(dline[9]), r2d(dline[6]), fe, fn)
 
 #	elif type == 'lambert2':
 #	    false_en = '+y_0=%.2f +x_0=%.2f' \
@@ -132,18 +132,18 @@ for line in pfile.readlines():
 #               % (false_en, r2d(dline[3]), r2d(dline[4]),
 #			r2d(dline[7]), r2d(dline[8]))
 
-	elif type == 'albersea':
-	    srs.SetACEA(r2d(dline[3]), r2d(dline[4]),
-                 r2d(dline[5]), r2d(dline[6]), fe, fn)
+        elif type == 'albersea':
+            srs.SetACEA(r2d(dline[3]), r2d(dline[4]),
+                        r2d(dline[5]), r2d(dline[6]), fe, fn)
 
 #	elif type == 'obmerc_b':
 #	    result = '+proj=omerc %s +lat_0=%s +lonc=%s +alpha=%s +k=%s' \
 #               % (false_en, r2d(dline[5]), r2d(dline[6]), r2d(dline[4]), dline[3])
 
-	elif type == 'utm':
-	    srs.SetUTM(int(dline[1]), dline[2] != 'S')
+        elif type == 'utm':
+            srs.SetUTM(int(dline[1]), dline[2] != 'S')
 
-	# Handle Units from projects.dat file.
+        # Handle Units from projects.dat file.
         if srs.IsProjected():
             srs.SetAttrValue('PROJCS', id)
             if lsize_str == '0.30480061':
@@ -153,7 +153,7 @@ for line in pfile.readlines():
 
         wkt = srs.ExportToWkt()
         if len(wkt) > 0:
-	    print '%s,%s' % (id, srs.ExportToWkt())
+            print '%s,%s' % (id, srs.ExportToWkt())
         else:
             print '%s,LOCAL_CS["%s - (unsupported)"]' % (id, id)
 
@@ -162,7 +162,7 @@ for line in pfile.readlines():
 
     except:
         print 'cant translate: ', line
-	raise
+        raise
 
 ## Translate datums to their underlying spheroid information.
 

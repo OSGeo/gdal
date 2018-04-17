@@ -154,11 +154,11 @@ def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 100) > 0.1 \
-        or abs(geotransform[1] - 0.1) > 0.001 \
-        or abs(geotransform[2] - 0) > 0.001 \
-        or abs(geotransform[3] - 30.0) > 0.1 \
-        or abs(geotransform[4] - 0) > 0.001 \
-        or abs(geotransform[5] - -0.1) > 0.001:
+            or abs(geotransform[1] - 0.1) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 30.0) > 0.1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -0.1) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -382,11 +382,11 @@ def nitf_14():
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 400000) > .1 \
-    or abs(geotransform[1] - 10) > 0.001 \
-    or abs(geotransform[2] - 0) > 0.001 \
-    or abs(geotransform[3] - 6000000) > .1 \
-    or abs(geotransform[4] - 0) > 0.001 \
-    or abs(geotransform[5] - -10) > 0.001:
+            or abs(geotransform[1] - 10) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 6000000) > .1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -10) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
@@ -818,7 +818,7 @@ def nitf_30():
                                                      'BLOCKA_LRLC_LOC_01=+42.317083+020.126072',
                                                      'BLOCKA_LRFC_LOC_01=+42.281634+020.122570',
                                                      'BLOCKA_FRFC_LOC_01=+42.283881+020.074924'
-                   ])
+                                                     ])
     ds = gdal.Open('/vsimem/nitf30_override.ntf')
     md = ds.GetMetadata()
     ds = None
@@ -841,7 +841,7 @@ def nitf_30():
     # Test overriding src BLOCKA metadata with TRE=BLOCKA= creation option
     gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf30_override.ntf', src_ds,
                                             options=['TRE=BLOCKA=010000001000000000                +42.319331+020.078400+42.317083+020.126072+42.281634+020.122570+42.283881+020.074924xxxxx'
-                   ])
+                                                     ])
     ds = gdal.Open('/vsimem/nitf30_override.ntf')
     md = ds.GetMetadata()
     ds = None
@@ -1059,7 +1059,7 @@ def nitf_37():
         if int(gdal.VersionInfo('VERSION_NUM')) < 1700:
             return 'skip'
     except:
-    # OG-python bindings don't have gdal.VersionInfo. Too bad, but let's hope that GDAL's version isn't too old !
+        # OG-python bindings don't have gdal.VersionInfo. Too bad, but let's hope that GDAL's version isn't too old !
         pass
 
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf37.ntf', 1, 1, 69999)
@@ -1619,14 +1619,14 @@ def nitf_49():
 def nitf_50():
 
     options = [  # "IC=C8",
-                "TEXT=DATA_0=COUCOU",
-                "TEXT=HEADER_0=ABC",  # This content is invalid but who cares here
-                "CGM=SEGMENT_COUNT=1",
-                "CGM=SEGMENT_0_SLOC_ROW=25",
-                "CGM=SEGMENT_0_SLOC_COL=25",
-                "CGM=SEGMENT_0_SDLVL=2",
-                "CGM=SEGMENT_0_SALVL=1",
-                "CGM=SEGMENT_0_DATA=XYZ"]
+        "TEXT=DATA_0=COUCOU",
+        "TEXT=HEADER_0=ABC",  # This content is invalid but who cares here
+        "CGM=SEGMENT_COUNT=1",
+        "CGM=SEGMENT_0_SLOC_ROW=25",
+        "CGM=SEGMENT_0_SLOC_COL=25",
+        "CGM=SEGMENT_0_SDLVL=2",
+        "CGM=SEGMENT_0_SALVL=1",
+        "CGM=SEGMENT_0_DATA=XYZ"]
 
     try:
         os.remove('tmp/nitf50.ntf')
@@ -3253,7 +3253,7 @@ def nitf_online_10():
         ('SEGMENT_7_CCS_COL', '1364'),
         ('SEGMENT_7_SDLVL', '8'),
         ('SEGMENT_7_SALVL', '0'),
-        ]
+    ]
 
     for item in tab:
         if mdCGM[item[0]] != item[1]:
@@ -3337,7 +3337,7 @@ def nitf_online_13():
         ('SEGMENT_2_CCS_COL', '1100'),
         ('SEGMENT_2_SDLVL', '6'),
         ('SEGMENT_2_SALVL', '3')
-        ]
+    ]
 
     for item in tab:
         if mdCGM[item[0]] != item[1]:
@@ -3351,7 +3351,7 @@ def nitf_online_13():
         ('NITF_ILOC_COLUMN', '1100'),
         ('NITF_CCS_ROW', '1100'),
         ('NITF_CCS_COLUMN', '1100'),
-        ]
+    ]
 
     for item in tab:
         if md[item[0]] != item[1]:
@@ -3481,8 +3481,8 @@ def nitf_online_16(driver_to_test):
         ret = 'success'
 
     elif ds.RasterCount == 1 and \
-    ds.GetRasterBand(1).Checksum() == 47664 and \
-    ds.GetRasterBand(1).GetRasterColorTable() is not None:
+            ds.GetRasterBand(1).Checksum() == 47664 and \
+            ds.GetRasterBand(1).GetRasterColorTable() is not None:
         ret = 'success'
     else:
         print(ds.RasterCount)
@@ -3599,7 +3599,7 @@ def nitf_online_18():
     # If we do not have a functioning coordinate transformer.
     else:
         if prj != '' \
-             or not gdaltest.geotransform_equals(gt, (0, 1, 0, 0, 0, 1), 0.00000001):
+                or not gdaltest.geotransform_equals(gt, (0, 1, 0, 0, 0, 1), 0.00000001):
             print(gt)
             print(prj)
             gdaltest.post_reason('did not get expected empty gt/projection')
@@ -3704,7 +3704,7 @@ def nitf_online_22():
         ('NITF_ILOC_COLUMN', '380'),
         ('NITF_CCS_ROW', '425'),
         ('NITF_CCS_COLUMN', '410'),
-        ]
+    ]
 
     for item in tab:
         if md[item[0]] != item[1]:
@@ -3723,7 +3723,7 @@ def nitf_online_22():
         ('NITF_ILOC_COLUMN', '40'),
         ('NITF_CCS_ROW', '422'),
         ('NITF_CCS_COLUMN', '210'),
-        ]
+    ]
 
     for item in tab:
         if md[item[0]] != item[1]:
@@ -3742,7 +3742,7 @@ def nitf_online_22():
         ('NITF_ILOC_COLUMN', '240'),
         ('NITF_CCS_ROW', '-1'),
         ('NITF_CCS_COLUMN', '-1'),
-        ]
+    ]
 
     for item in tab:
         if md[item[0]] != item[1]:
@@ -3761,7 +3761,7 @@ def nitf_online_22():
         ('NITF_ILOC_COLUMN', '30'),
         ('NITF_CCS_ROW', '65'),
         ('NITF_CCS_COLUMN', '30'),
-        ]
+    ]
 
     for item in tab:
         if md[item[0]] != item[1]:
@@ -3813,9 +3813,9 @@ def nitf_online_24():
        xml_tre.find('<tre name="BNDPLB"') == -1 or \
        xml_tre.find('<tre name="ACCPOB"') == -1 or \
        xml_tre.find('<tre name="SOURCB"') == -1:
-           gdaltest.post_reason('did not get expected xml:TRE')
-           print(xml_tre)
-           return 'fail'
+        gdaltest.post_reason('did not get expected xml:TRE')
+        print(xml_tre)
+        return 'fail'
 
     return 'success'
 
@@ -3839,9 +3839,9 @@ def nitf_online_25():
     ds = None
 
     if xml_tre.find('<tre name="PIAPRD"') == -1:
-           gdaltest.post_reason('did not get expected xml:TRE')
-           print(xml_tre)
-           return 'fail'
+        gdaltest.post_reason('did not get expected xml:TRE')
+        print(xml_tre)
+        return 'fail'
 
     return 'success'
 

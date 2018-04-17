@@ -976,9 +976,9 @@ def ogr_sql_sqlite_14():
         return 'skip'
 
     sql = "SELECT intfield, intfield2 FROM my_layer, my_layer2 WHERE " + \
-    "my_layer2.rowid IN (SELECT pkid FROM idx_my_layer2_geometry WHERE " + \
-    "xmax > MbrMinX(my_layer.geometry) AND xmin < MbrMaxX(my_layer.geometry) AND " + \
-    "ymax >= MbrMinY(my_layer.geometry) AND ymin <= MbrMaxY(my_layer.geometry) )"
+        "my_layer2.rowid IN (SELECT pkid FROM idx_my_layer2_geometry WHERE " + \
+        "xmax > MbrMinX(my_layer.geometry) AND xmin < MbrMaxX(my_layer.geometry) AND " + \
+        "ymax >= MbrMinY(my_layer.geometry) AND ymin <= MbrMaxY(my_layer.geometry) )"
 
     return ogr_sql_sqlite_14_and_15(sql)
 
@@ -998,7 +998,7 @@ def ogr_sql_sqlite_15():
         return 'skip'
 
     sql = "SELECT intfield, intfield2 FROM my_layer, my_layer2 WHERE " + \
-    "my_layer2.rowid IN (SELECT ROWID FROM SpatialIndex WHERE f_table_name = 'my_layer2' AND search_frame = my_layer.geometry)"
+        "my_layer2.rowid IN (SELECT ROWID FROM SpatialIndex WHERE f_table_name = 'my_layer2' AND search_frame = my_layer.geometry)"
 
     return ogr_sql_sqlite_14_and_15(sql)
 
@@ -1351,8 +1351,8 @@ def ogr_sql_sqlite_16(service=None, template='http://127.0.0.1:%d/geocoding?q=%%
 
             if ((sql == "SELECT ogr_geocode('Paris')" or \
                  sql == "SELECT ogr_geocode('Paris', 'geometry')") and feat.GetGeometryRef() is None) or \
-            (sql == "SELECT ogr_geocode('Paris', '%s')" % name_field and not feat.IsFieldSet(name_field)) or \
-            (sql == "SELECT ogr_geocode('Paris', 'raw')" and not feat.IsFieldSet('raw')):
+                (sql == "SELECT ogr_geocode('Paris', '%s')" % name_field and not feat.IsFieldSet(name_field)) or \
+                    (sql == "SELECT ogr_geocode('Paris', 'raw')" and not feat.IsFieldSet('raw')):
                 feat.DumpReadable()
                 gdaltest.post_reason('fail')
                 print(sql)

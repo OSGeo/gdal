@@ -1114,7 +1114,7 @@ gdaltest_list = [
     rasterio_14,
     rasterio_15,
     rasterio_16
-    ]
+]
 
 #gdaltest_list = [ rasterio_16 ]
 

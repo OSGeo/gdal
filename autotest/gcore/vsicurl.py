@@ -279,12 +279,12 @@ def vsicurl_test_redirect():
     current_time = 1500
 
     def method(request):
-            response = 'HTTP/1.1 302\r\n'
-            response += 'Server: foo\r\n'
-            response += 'Date: ' + time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)) + '\r\n'
-            response += 'Location: %s\r\n' % ('http://localhost:%d/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (gdaltest.webserver_port, current_time + 30))
-            response += '\r\n'
-            request.wfile.write(response.encode('ascii'))
+        response = 'HTTP/1.1 302\r\n'
+        response += 'Server: foo\r\n'
+        response += 'Date: ' + time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)) + '\r\n'
+        response += 'Location: %s\r\n' % ('http://localhost:%d/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (gdaltest.webserver_port, current_time + 30))
+        response += '\r\n'
+        request.wfile.write(response.encode('ascii'))
 
     handler.add('HEAD', '/test_redirect/test.bin', custom_method=method)
     handler.add('HEAD', '/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (current_time + 30), 403,
@@ -347,7 +347,7 @@ def vsicurl_test_redirect():
     def method(request):
         # We should go there after expiration of the first signed URL
         if 'Range' in request.headers and \
-            request.headers['Range'] == 'bytes=16384-49151':
+                request.headers['Range'] == 'bytes=16384-49151':
             request.protocol_version = 'HTTP/1.1'
             request.send_response(302)
             # Return a new signed URL
@@ -361,7 +361,7 @@ def vsicurl_test_redirect():
     def method(request):
         # Second signed URL
         if 'Range' in request.headers and \
-            request.headers['Range'] == 'bytes=16384-49151':
+                request.headers['Range'] == 'bytes=16384-49151':
             request.protocol_version = 'HTTP/1.1'
             request.send_response(200)
             request.send_header('Content-type', 'text/plain')

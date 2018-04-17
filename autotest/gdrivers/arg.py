@@ -157,7 +157,7 @@ def arg_getrastercount():
     for d in gdaltest.argTests:
         for (name, fmt, nodata) in d['formats']:
             with gdaltest.error_handler('CPLQuietErrorHandler'):
-              ds = gdal.Open('data/arg-' + name + '.arg')
+                ds = gdal.Open('data/arg-' + name + '.arg')
             if ds is None:
                 continue
 
@@ -181,11 +181,11 @@ def arg_getgeotransform():
             gt = ds.GetGeoTransform()
 
             if gt[0] != 0 or \
-                gt[1] != 1 or \
-                gt[2] != 0 or \
-                gt[3] != 2 or \
-                gt[4] != 0 or \
-                gt[5] != -1:
+                    gt[1] != 1 or \
+                    gt[2] != 0 or \
+                    gt[3] != 2 or \
+                    gt[4] != 0 or \
+                    gt[5] != -1:
                 return 'fail'
 
     return 'success'

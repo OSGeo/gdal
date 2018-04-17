@@ -212,7 +212,7 @@ gdaltest_list = [
     ogr_selafin_create_elements,
     ogr_selafin_set_field,
     ogr_selafin_cleanup
-    ]
+]
 
 if __name__ == '__main__':
     gdal.PushErrorHandler('CPLQuietErrorHandler')

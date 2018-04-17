@@ -375,15 +375,15 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 
             for token in tokens:
                 if EQUAL(token, "Integer") or \
-                    EQUAL(token, "Real") or \
-                    EQUAL(token, "String") or \
-                    EQUAL(token, "Date") or \
-                    EQUAL(token, "Time") or \
-                    EQUAL(token, "DateTime") or \
-                    EQUAL(token, "Binary") or \
-                    EQUAL(token, "IntegerList") or \
-                    EQUAL(token, "RealList") or \
-                    EQUAL(token, "StringList"):
+                        EQUAL(token, "Real") or \
+                        EQUAL(token, "String") or \
+                        EQUAL(token, "Date") or \
+                        EQUAL(token, "Time") or \
+                        EQUAL(token, "DateTime") or \
+                        EQUAL(token, "Binary") or \
+                        EQUAL(token, "IntegerList") or \
+                        EQUAL(token, "RealList") or \
+                        EQUAL(token, "StringList"):
 
                     papszFieldTypesToString.append(token)
 
@@ -420,7 +420,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                 iArg = iArg + 4
 
             elif (len(args[iArg + 1]) >= 7 and EQUAL(args[iArg + 1][0:7], "POLYGON")) or \
-            (len(args[iArg + 1]) >= 12 and EQUAL(args[iArg + 1][0:12], "MULTIPOLYGON")):
+                    (len(args[iArg + 1]) >= 12 and EQUAL(args[iArg + 1][0:12], "MULTIPOLYGON")):
                 poClipSrc = ogr.CreateGeometryFromWkt(args[iArg + 1])
                 if poClipSrc is None:
                     print("FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n")
@@ -463,7 +463,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                 iArg = iArg + 4
 
             elif (len(args[iArg + 1]) >= 7 and EQUAL(args[iArg + 1][0:7], "POLYGON")) or \
-            (len(args[iArg + 1]) >= 12 and EQUAL(args[iArg + 1][0:12], "MULTIPOLYGON")):
+                    (len(args[iArg + 1]) >= 12 and EQUAL(args[iArg + 1][0:12], "MULTIPOLYGON")):
                 poClipDst = ogr.CreateGeometryFromWkt(args[iArg + 1])
                 if poClipDst is None:
                     print("FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n")
@@ -613,9 +613,9 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
         if EQUAL(poDriver.GetName(), "ESRI Shapefile") and \
            pszSQLStatement is None and \
            (len(papszLayers) > 1 or \
-            (len(papszLayers) == 0 and poDS.GetLayerCount() > 1)) and \
-            pszNewLayerName is None and \
-            EQUAL(os.path.splitext(pszDestDataSource)[1], ".SHP"):
+                (len(papszLayers) == 0 and poDS.GetLayerCount() > 1)) and \
+                pszNewLayerName is None and \
+                EQUAL(os.path.splitext(pszDestDataSource)[1], ".SHP"):
 
             try:
                 os.stat(pszDestDataSource)
@@ -659,7 +659,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 #      For OSM file.
 # --------------------------------------------------------------------
     bSrcIsOSM = poDS.GetDriver() is not None and \
-    poDS.GetDriver().GetName() == "OSM"
+        poDS.GetDriver().GetName() == "OSM"
     nSrcFileSize = 0
     if bSrcIsOSM and poDS.GetName() != "/vsistdin/":
         sStat = gdal.VSIStatL(poDS.GetName())
@@ -700,7 +700,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 #      the layer name isn't specified
 # --------------------------------------------------------------------
             if EQUAL(poDriver.GetName(), "ESRI Shapefile") and \
-                pszNewLayerName is None:
+                    pszNewLayerName is None:
                 try:
                     mode = os.stat(pszDestDataSource).st_mode
                     if (mode & stat.S_IFDIR) == 0:
@@ -737,8 +737,8 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                                                     nSrcFileSize, None, \
                                                     pfnProgress, pProgressArg):
                 print(
-                        "Terminating translation prematurely after failed\n" + \
-                        "translation from sql statement.")
+                    "Terminating translation prematurely after failed\n" + \
+                    "translation from sql statement.")
 
                 return False
 
@@ -870,10 +870,10 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                                           nSrcFileSize,  \
                                           anReadFeatureCount, \
                                           pfnProgress, pProgressArg) \
-                        and not bSkipFailures:
+                            and not bSkipFailures:
                         print(
-                                "Terminating translation prematurely after failed\n" + \
-                                "translation of layer " + poLayer.GetName() + " (use -skipfailures to skip errors)")
+                            "Terminating translation prematurely after failed\n" + \
+                            "translation of layer " + poLayer.GetName() + " (use -skipfailures to skip errors)")
 
                         return False
                 else:
@@ -964,9 +964,9 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                 else:
                     pfnProgress = ScaledProgressFunc
                     pProgressArg = ScaledProgressObject( \
-                            nAccCountFeatures * 1.0 / nCountLayersFeatures, \
-                            (nAccCountFeatures + panLayerCountFeatures[iLayer]) * 1.0 / nCountLayersFeatures, \
-                            progress_func, progress_data)
+                        nAccCountFeatures * 1.0 / nCountLayersFeatures, \
+                        (nAccCountFeatures + panLayerCountFeatures[iLayer]) * 1.0 / nCountLayersFeatures, \
+                        progress_func, progress_data)
 
             nAccCountFeatures += panLayerCountFeatures[iLayer]
 
@@ -976,7 +976,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 #      the layer name isn't specified
 # --------------------------------------------------------------------
             if EQUAL(poDriver.GetName(), "ESRI Shapefile") and \
-                nLayerCount == 1 and pszNewLayerName is None:
+                    nLayerCount == 1 and pszNewLayerName is None:
                 try:
                     mode = os.stat(pszDestDataSource).st_mode
                     if (mode & stat.S_IFDIR) == 0:
@@ -1004,19 +1004,19 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
             poLayer.ResetReading()
 
             if (psInfo is None or \
-                not TranslateLayer(psInfo, poDS, poLayer, poODS, \
-                                   poOutputSRS, bNullifyOutputSRS, \
-                                   eGType, bPromoteToMulti, nCoordDim, \
-                                   eGeomOp, dfGeomOpParam, \
-                                   panLayerCountFeatures[iLayer], \
-                                   poClipSrc, poClipDst, \
-                                   bExplodeCollections, \
-                                   nSrcFileSize, None, \
-                                   pfnProgress, pProgressArg)) \
-                and not bSkipFailures:
+                    not TranslateLayer(psInfo, poDS, poLayer, poODS, \
+                                       poOutputSRS, bNullifyOutputSRS, \
+                                       eGType, bPromoteToMulti, nCoordDim, \
+                                       eGeomOp, dfGeomOpParam, \
+                                       panLayerCountFeatures[iLayer], \
+                                       poClipSrc, poClipDst, \
+                                       bExplodeCollections, \
+                                       nSrcFileSize, None, \
+                                       pfnProgress, pProgressArg)) \
+                    and not bSkipFailures:
                 print(
-                        "Terminating translation prematurely after failed\n" + \
-                        "translation of layer " + poLayer.GetLayerDefn().GetName() + " (use -skipfailures to skip errors)")
+                    "Terminating translation prematurely after failed\n" + \
+                    "translation of layer " + poLayer.GetLayerDefn().GetName() + " (use -skipfailures to skip errors)")
 
                 return False
 
@@ -1183,15 +1183,15 @@ def SetZ(poGeom, dfZ):
         poGeom.SetPoint(0, poGeom.GetX(), poGeom.GetY(), dfZ)
 
     elif eGType == ogr.wkbLineString or \
-    eGType == ogr.wkbLinearRing:
+            eGType == ogr.wkbLinearRing:
         for i in range(poGeom.GetPointCount()):
             poGeom.SetPoint(i, poGeom.GetX(i), poGeom.GetY(i), dfZ)
 
     elif eGType == ogr.wkbPolygon or \
-    eGType == ogr.wkbMultiPoint or \
-    eGType == ogr.wkbMultiLineString or \
-    eGType == ogr.wkbMultiPolygon or \
-    eGType == ogr.wkbGeometryCollection:
+            eGType == ogr.wkbMultiPoint or \
+            eGType == ogr.wkbMultiLineString or \
+            eGType == ogr.wkbMultiPolygon or \
+            eGType == ogr.wkbGeometryCollection:
         for i in range(poGeom.GetGeometryCount()):
             SetZ(poGeom.GetGeometryRef(i), dfZ)
 
@@ -1271,7 +1271,7 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
             # The .cpp version compares on pointers directly, but we cannot
             # do this with swig object, so just compare the names.
             if poLayer is not None \
-                and poLayer.GetName() == poDstLayer.GetName():
+                    and poLayer.GetName() == poDstLayer.GetName():
                 break
 
         if (iLayer == nLayerCount):
@@ -1397,8 +1397,8 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 
                     # Sanity check : if it fails, the driver is buggy
                     if poDstFDefn is not None and \
-                        poDstFDefn.GetFieldCount() != nDstFieldCount + 1:
-                        print("The output driver has claimed to have added the %s field, but it did not!" %  oFieldDefn.GetNameRef())
+                            poDstFDefn.GetFieldCount() != nDstFieldCount + 1:
+                        print("The output driver has claimed to have added the %s field, but it did not!" % oFieldDefn.GetNameRef())
                     else:
                         panMap[iSrcField] = nDstFieldCount
                         nDstFieldCount = nDstFieldCount + 1
@@ -1458,7 +1458,7 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
             # The field may have been already created at layer creation
             iDstField = -1
             if poDstFDefn is not None:
-                 iDstField = poDstFDefn.GetFieldIndex(oFieldDefn.GetNameRef())
+                iDstField = poDstFDefn.GetFieldIndex(oFieldDefn.GetNameRef())
             if iDstField >= 0:
                 panMap[iField] = iDstField
             elif poDstLayer.CreateField(oFieldDefn) == 0:
@@ -1468,8 +1468,8 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 
                 # Sanity check : if it fails, the driver is buggy
                 if poDstFDefn is not None and \
-                    poDstFDefn.GetFieldCount() != nDstFieldCount + 1:
-                    print("The output driver has claimed to have added the %s field, but it did not!" %  oFieldDefn.GetNameRef())
+                        poDstFDefn.GetFieldCount() != nDstFieldCount + 1:
+                    print("The output driver has claimed to have added the %s field, but it did not!" % oFieldDefn.GetNameRef())
                 else:
                     panMap[iField] = nDstFieldCount
                     nDstFieldCount = nDstFieldCount + 1
@@ -1568,10 +1568,10 @@ def TranslateLayer(psInfo, poSrcDS, poSrcLayer, poDstDS,  \
                    eSrcType == ogr.wkbMultiLineString or \
                    eSrcType == ogr.wkbMultiPolygon or \
                    eSrcType == ogr.wkbGeometryCollection:
-                        nParts = poSrcGeometry.GetGeometryCount()
-                        nIters = nParts
-                        if nIters == 0:
-                            nIters = 1
+                    nParts = poSrcGeometry.GetGeometryCount()
+                    nIters = nParts
+                    if nIters == 0:
+                        nIters = 1
 
         for iPart in range(nIters):
             nFeaturesInTransaction = nFeaturesInTransaction + 1
@@ -1676,7 +1676,7 @@ def TranslateLayer(psInfo, poSrcDS, poSrcLayer, poDstDS,  \
                 return False
 
         # Report progress
-        nCount = nCount  + 1
+        nCount = nCount + 1
         if pfnProgress is not None:
             if nSrcFileSize != 0:
                 if (nCount % 1000) == 0:

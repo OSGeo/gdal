@@ -1924,15 +1924,15 @@ def test_ogr2ogr_49_bis():
     os.unlink('tmp/test_ogr2ogr_49_bis.kml')
 
     expected_lines = [
-"""<?xml version="1.0" encoding="utf-8" ?>""",
-"""<kml xmlns="http://www.opengis.net/kml/2.2">""",
-"""<Document id="root_doc">""",
-"""<Folder><name>grid</name>""",
-"""  <Placemark>""",
-"""        <name>440750.000</name>""",
-"""  </Placemark>""",
-"""</Folder>""",
-"""</Document></kml>"""]
+        """<?xml version="1.0" encoding="utf-8" ?>""",
+        """<kml xmlns="http://www.opengis.net/kml/2.2">""",
+        """<Document id="root_doc">""",
+        """<Folder><name>grid</name>""",
+        """  <Placemark>""",
+        """        <name>440750.000</name>""",
+        """  </Placemark>""",
+        """</Folder>""",
+        """</Document></kml>"""]
 
     if len(lines) != len(expected_lines):
         print(lines)
@@ -2874,7 +2874,7 @@ gdaltest_list = [
     test_ogr2ogr_65,
     test_ogr2ogr_66,
     test_ogr2ogr_67
-    ]
+]
 
 # gdaltest_list = [ test_ogr2ogr_66 ]
 

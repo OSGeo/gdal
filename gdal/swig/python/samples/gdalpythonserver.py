@@ -381,7 +381,7 @@ def read_str():
         return None
     str = sys.stdin.read(length)
     if len(str) > 0 and str[len(str) - 1] == '\0':
-        str =  str[0:len(str) - 1]
+        str = str[0:len(str) - 1]
     return str
 
 

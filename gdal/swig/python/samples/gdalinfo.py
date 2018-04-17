@@ -159,8 +159,8 @@ def main(argv=None):
 # --------------------------------------------------------------------
     hDriver = hDataset.GetDriver()
     print("Driver: %s/%s" % ( \
-            hDriver.ShortName, \
-            hDriver.LongName))
+        hDriver.ShortName, \
+        hDriver.LongName))
 
     papszFileList = hDataset.GetFileList()
     if papszFileList is None or len(papszFileList) == 0:
@@ -195,21 +195,21 @@ def main(argv=None):
 
         if adfGeoTransform[2] == 0.0 and adfGeoTransform[4] == 0.0:
             print("Origin = (%.15f,%.15f)" % ( \
-                    adfGeoTransform[0], adfGeoTransform[3]))
+                adfGeoTransform[0], adfGeoTransform[3]))
 
             print("Pixel Size = (%.15f,%.15f)" % ( \
-                    adfGeoTransform[1], adfGeoTransform[5]))
+                adfGeoTransform[1], adfGeoTransform[5]))
 
         else:
             print("GeoTransform =\n" \
                   "  %.16g, %.16g, %.16g\n" \
                   "  %.16g, %.16g, %.16g" % ( \
-                    adfGeoTransform[0], \
-                    adfGeoTransform[1], \
-                    adfGeoTransform[2], \
-                    adfGeoTransform[3], \
-                    adfGeoTransform[4], \
-                    adfGeoTransform[5]))
+                      adfGeoTransform[0], \
+                      adfGeoTransform[1], \
+                      adfGeoTransform[2], \
+                      adfGeoTransform[3], \
+                      adfGeoTransform[4], \
+                      adfGeoTransform[5]))
 
 # --------------------------------------------------------------------
 #      Report GCPs.
@@ -234,9 +234,9 @@ def main(argv=None):
 
             print("GCP[%3d]: Id=%s, Info=%s\n" \
                   "          (%.15g,%.15g) -> (%.15g,%.15g,%.15g)" % ( \
-                    i, gcp.Id, gcp.Info, \
-                    gcp.GCPPixel, gcp.GCPLine, \
-                    gcp.GCPX, gcp.GCPY, gcp.GCPZ))
+                      i, gcp.Id, gcp.Info, \
+                      gcp.GCPPixel, gcp.GCPLine, \
+                      gcp.GCPX, gcp.GCPY, gcp.GCPZ))
             i = i + 1
 
 # --------------------------------------------------------------------
@@ -257,7 +257,7 @@ def main(argv=None):
             if papszMetadata is not None and len(papszMetadata) > 0:
                 print("Metadata (%s):" % extra_domain)
                 for metadata in papszMetadata:
-                  print("  %s" % metadata)
+                    print("  %s" % metadata)
 
 # --------------------------------------------------------------------
 #      Report "IMAGE_STRUCTURE" metadata.
@@ -357,17 +357,17 @@ def main(argv=None):
                                                                nBlockXSize, nBlockYSize, \
                                                                gdal.GetDataTypeName(hBand.DataType), \
                                                                gdal.GetColorInterpretationName( \
-                    hBand.GetRasterColorInterpretation())))
+                                                                   hBand.GetRasterColorInterpretation())))
 
         if hBand.GetDescription() is not None \
-            and len(hBand.GetDescription()) > 0:
+                and len(hBand.GetDescription()) > 0:
             print("  Description = %s" % hBand.GetDescription())
 
         dfMin = hBand.GetMinimum()
         dfMax = hBand.GetMaximum()
         if dfMin is not None or dfMax is not None or bComputeMinMax:
 
-            line =  "  "
+            line = "  "
             if dfMin is not None:
                 line = line + ("Min=%.3f " % dfMin)
             if dfMax is not None:
@@ -377,8 +377,8 @@ def main(argv=None):
                 gdal.ErrorReset()
                 adfCMinMax = hBand.ComputeRasterMinMax(False)
                 if gdal.GetLastErrorType() == gdal.CE_None:
-                  line = line + ("  Computed Min/Max=%.3f,%.3f" % ( \
-                          adfCMinMax[0], adfCMinMax[1]))
+                    line = line + ("  Computed Min/Max=%.3f,%.3f" % ( \
+                        adfCMinMax[0], adfCMinMax[1]))
 
             print(line)
 
@@ -387,7 +387,7 @@ def main(argv=None):
         # stddev is negative
         if stats[3] >= 0.0:
             print("  Minimum=%.3f, Maximum=%.3f, Mean=%.3f, StdDev=%.3f" % ( \
-                    stats[0], stats[1], stats[2], stats[3]))
+                stats[0], stats[1], stats[2], stats[3]))
 
         if bReportHistograms:
 
@@ -399,7 +399,7 @@ def main(argv=None):
                 panHistogram = hist[3]
 
                 print("  %d buckets from %g to %g:" % ( \
-                        nBucketCount, dfMin, dfMax))
+                    nBucketCount, dfMin, dfMax))
                 line = '  '
                 for bucket in panHistogram:
                     line = line + ("%d " % bucket)
@@ -422,7 +422,7 @@ def main(argv=None):
             for iOverview in range(hBand.GetOverviewCount()):
 
                 if iOverview != 0:
-                    line = line +  ", "
+                    line = line + ", "
 
                 hOverview = hBand.GetOverview(iOverview)
                 if hOverview is not None:
@@ -448,7 +448,7 @@ def main(argv=None):
                 for iOverview in range(hBand.GetOverviewCount()):
 
                     if iOverview != 0:
-                        line = line +  ", "
+                        line = line + ", "
 
                     hOverview = hBand.GetOverview(iOverview)
                     if hOverview is not None:
@@ -477,13 +477,13 @@ def main(argv=None):
             print(line)
 
             if hMaskBand is not None and \
-                hMaskBand.GetOverviewCount() > 0:
+                    hMaskBand.GetOverviewCount() > 0:
 
                 line = "  Overviews of mask band: "
                 for iOverview in range(hMaskBand.GetOverviewCount()):
 
                     if iOverview != 0:
-                        line = line +  ", "
+                        line = line + ", "
 
                     hOverview = hMaskBand.GetOverview(iOverview)
                     if hOverview is not None:
@@ -527,23 +527,23 @@ def main(argv=None):
 
         hTable = hBand.GetRasterColorTable()
         if hBand.GetRasterColorInterpretation() == gdal.GCI_PaletteIndex  \
-            and hTable is not None:
+                and hTable is not None:
 
             print("  Color Table (%s with %d entries)" % (\
-                    gdal.GetPaletteInterpretationName( \
-                        hTable.GetPaletteInterpretation()), \
-                    hTable.GetCount()))
+                gdal.GetPaletteInterpretationName( \
+                    hTable.GetPaletteInterpretation()), \
+                hTable.GetCount()))
 
             if bShowColorTable:
 
                 for i in range(hTable.GetCount()):
                     sEntry = hTable.GetColorEntry(i)
                     print("  %3d: %d,%d,%d,%d" % ( \
-                            i, \
-                            sEntry[0],\
-                            sEntry[1],\
-                            sEntry[2],\
-                            sEntry[3]))
+                        i, \
+                        sEntry[0],\
+                        sEntry[1],\
+                        sEntry[2],\
+                        sEntry[3]))
 
         if bShowRAT:
             pass

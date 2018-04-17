@@ -63,12 +63,12 @@ def GeomType2Name(type):
     ret = dic[flat_type][0]
     if flat_type != type:
         if ogr.GT_HasM(type):
-          if ogr.GT_HasZ(type):
-            ret += "ZM"
-          else:
-            ret += "M"
+            if ogr.GT_HasZ(type):
+                ret += "ZM"
+            else:
+                ret += "M"
         else:
-          ret += dic[flat_type][1]
+            ret += dic[flat_type][1]
     return ret
 
 #############################################################################
@@ -224,7 +224,7 @@ for name in layer_list:
         vrt += '    <OpenOptions>\n'
         for option in openoptions:
             (key, value) = option.split('=')
-            vrt += '        <OOI key="%s">%s</OOI>\n'  % (Esc(key), Esc(value))
+            vrt += '        <OOI key="%s">%s</OOI>\n' % (Esc(key), Esc(value))
         vrt += '    </OpenOptions>\n'
 
     if schema:
@@ -236,7 +236,7 @@ for name in layer_list:
     if layerdef.GetGeomFieldCount() == 0:
         vrt += '    <GeometryType>wkbNone</GeometryType>\n'
     elif layerdef.GetGeomFieldCount() == 1 and \
-    layerdef.GetGeomFieldDefn(0).IsNullable():
+            layerdef.GetGeomFieldDefn(0).IsNullable():
         vrt += '    <GeometryType>%s</GeometryType>\n' \
             % GeomType2Name(layerdef.GetGeomType())
         srs = layer.GetSpatialRef()
@@ -259,11 +259,11 @@ for name in layer_list:
                 vrt += ' nullable="false"'
             vrt += '>\n'
             vrt += '      <GeometryType>%s</GeometryType>\n' \
-            % GeomType2Name(src_fd.GetType())
+                % GeomType2Name(src_fd.GetType())
             srs = src_fd.GetSpatialRef()
             if srs is not None:
                 vrt += '      <SRS>%s</SRS>\n' \
-                        % (Esc(srs.ExportToWkt()))
+                    % (Esc(srs.ExportToWkt()))
             if extent:
                 (xmin, xmax, ymin, ymax) = layer.GetExtent(geom_field=fld_index)
                 vrt += '      <ExtentXMin>%.15g</ExtentXMin>\n' % xmin

@@ -697,9 +697,9 @@ class GDALTest:
                 got_minmax = bnd.ComputeRasterMinMax()
                 if got_minmax != minmax:
                     post_reason( \
-                    'Did not get expected min/max values on still-open file.\n' \
-                    '    Got %g,%g instead of %g,%g.' \
-                    % (got_minmax[0], got_minmax[1], minmax[0], minmax[1]))
+                        'Did not get expected min/max values on still-open file.\n' \
+                        '    Got %g,%g instead of %g,%g.' \
+                        % (got_minmax[0], got_minmax[1], minmax[0], minmax[1]))
                     return 'fail'
 
         bnd = None
@@ -731,9 +731,9 @@ class GDALTest:
                 got_minmax = bnd.ComputeRasterMinMax()
                 if got_minmax != minmax:
                     post_reason( \
-                    'Did not get expected min/max values on reopened file.\n' \
-                    '    Got %g,%g instead of %g,%g.' \
-                    % (got_minmax[0], got_minmax[1], minmax[0], minmax[1]))
+                        'Did not get expected min/max values on reopened file.\n' \
+                        '    Got %g,%g instead of %g,%g.' \
+                        % (got_minmax[0], got_minmax[1], minmax[0], minmax[1]))
                     return 'fail'
 
         # Do we need to check the geotransform?
@@ -903,11 +903,11 @@ class GDALTest:
         eps = 0.00000001
         new_gt = new_ds.GetGeoTransform()
         if abs(new_gt[0] - gt[0]) > eps \
-            or abs(new_gt[1] - gt[1]) > eps \
-            or abs(new_gt[2] - gt[2]) > eps \
-            or abs(new_gt[3] - gt[3]) > eps \
-            or abs(new_gt[4] - gt[4]) > eps \
-            or abs(new_gt[5] - gt[5]) > eps:
+                or abs(new_gt[1] - gt[1]) > eps \
+                or abs(new_gt[2] - gt[2]) > eps \
+                or abs(new_gt[3] - gt[3]) > eps \
+                or abs(new_gt[4] - gt[4]) > eps \
+                or abs(new_gt[5] - gt[5]) > eps:
             print('')
             print('old = ', gt)
             print('new = ', new_gt)
@@ -1611,12 +1611,12 @@ def filesystem_supports_sparse_files(path):
     # Add here any missing filesystem supporting sparse files
     # See http://en.wikipedia.org/wiki/Comparison_of_file_systems
     if ret.find('ext3') == -1 and \
-        ret.find('ext4') == -1 and \
-        ret.find('reiser') == -1 and \
-        ret.find('xfs') == -1 and \
-        ret.find('jfs') == -1 and \
-        ret.find('zfs') == -1 and \
-        ret.find('ntfs') == -1:
+            ret.find('ext4') == -1 and \
+            ret.find('reiser') == -1 and \
+            ret.find('xfs') == -1 and \
+            ret.find('jfs') == -1 and \
+            ret.find('zfs') == -1 and \
+            ret.find('ntfs') == -1:
         post_reason('Filesystem %s is not believed to support sparse files' % ret)
         return False
 
@@ -1641,11 +1641,11 @@ def unzip(target_dir, zipfilename, verbose=False):
         outfilename = os.path.join(target_dir, filename)
         if filename.endswith('/'):
             if not os.path.exists(outfilename):
-               os.makedirs(outfilename)
+                os.makedirs(outfilename)
         else:
             outdirname = os.path.dirname(outfilename)
             if not os.path.exists(outdirname):
-               os.makedirs(outdirname)
+                os.makedirs(outdirname)
 
             outfile = open(outfilename, 'wb')
             outfile.write(zf.read(filename))
@@ -1990,11 +1990,11 @@ def built_against_curl():
 
 @contextlib.contextmanager
 def error_handler(error_name='CPLQuietErrorHandler'):
-  handler = gdal.PushErrorHandler(error_name)
-  try:
-    yield handler
-  finally:
-    gdal.PopErrorHandler()
+    handler = gdal.PushErrorHandler(error_name)
+    try:
+        yield handler
+    finally:
+        gdal.PopErrorHandler()
 
 ###############################################################################
 # Temporarily define a new value of block cache
@@ -2002,12 +2002,12 @@ def error_handler(error_name='CPLQuietErrorHandler'):
 
 @contextlib.contextmanager
 def SetCacheMax(val):
-  oldval = gdal.GetCacheMax()
-  gdal.SetCacheMax(val)
-  try:
-    yield
-  finally:
-    gdal.SetCacheMax(oldval)
+    oldval = gdal.GetCacheMax()
+    gdal.SetCacheMax(val)
+    try:
+        yield
+    finally:
+        gdal.SetCacheMax(oldval)
 
 ###############################################################################
 # Temporarily define a configuration option
@@ -2015,12 +2015,12 @@ def SetCacheMax(val):
 
 @contextlib.contextmanager
 def config_option(key, val):
-  oldval = gdal.GetConfigOption(key)
-  gdal.SetConfigOption(key, val)
-  try:
-    yield
-  finally:
-    gdal.SetConfigOption(key, oldval)
+    oldval = gdal.GetConfigOption(key)
+    gdal.SetConfigOption(key, val)
+    try:
+        yield
+    finally:
+        gdal.SetConfigOption(key, oldval)
 
 ###############################################################################
 # Temporarily define a set of configuration options
@@ -2028,14 +2028,14 @@ def config_option(key, val):
 
 @contextlib.contextmanager
 def config_options(options):
-  oldvals = {key: gdal.GetConfigOption(key) for key in options}
-  for key in options:
-    gdal.SetConfigOption(key, options[key])
-  try:
-    yield
-  finally:
+    oldvals = {key: gdal.GetConfigOption(key) for key in options}
     for key in options:
-        gdal.SetConfigOption(key, oldvals[key])
+        gdal.SetConfigOption(key, options[key])
+    try:
+        yield
+    finally:
+        for key in options:
+            gdal.SetConfigOption(key, oldvals[key])
 
 ###############################################################################
 # Temporarily create a file
@@ -2043,11 +2043,11 @@ def config_options(options):
 
 @contextlib.contextmanager
 def tempfile(filename, content):
-  gdal.FileFromMemBuffer(filename, content)
-  try:
-      yield
-  finally:
-      gdal.Unlink(filename)
+    gdal.FileFromMemBuffer(filename, content)
+    try:
+        yield
+    finally:
+        gdal.Unlink(filename)
 
 
 ###############################################################################

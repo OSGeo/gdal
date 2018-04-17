@@ -169,7 +169,7 @@ def ogr_csv_3():
     #######################################################
     # Create CSV datasource (directory)
     gdaltest.csv_tmpds = \
-    ogr.GetDriverByName('CSV').CreateDataSource('tmp/csvwrk')
+        ogr.GetDriverByName('CSV').CreateDataSource('tmp/csvwrk')
 
     #######################################################
     # Create layer (.csv file)
@@ -1172,9 +1172,9 @@ def ogr_csv_27():
        feat.GetField('time_2011_flag') != 'u' or \
        feat.GetField('time_2012') != 2.34 or \
        feat.IsFieldSet('time_2012_flag'):
-            feat.DumpReadable()
-            gdaltest.post_reason('fail')
-            return 'fail'
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     return 'success'
 
@@ -1292,9 +1292,9 @@ def ogr_csv_31():
     f = lyr.GetNextFeature()
     if f.GetField('GEONAMEID') != '3038814' or f.GetField('LATITUDE') != 42.5 or \
        f.GetGeometryRef().ExportToWkt() != 'POINT (1.48333 42.5)':
-           gdaltest.post_reason('fail')
-           f.DumpReadable()
-           return 'fail'
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
 
     lyr.ResetReading()
     f = lyr.GetNextFeature()
@@ -1492,7 +1492,7 @@ def ogr_csv_32():
                 7,  # Value with a width greater than field width found in record 7 for field int1
                 8,  # Value with a width greater than field width found in record 8 for field str1
                 9,  # Value with a precision greater than field precision found in record 9 for field real1
-                 ]:
+                ]:
         ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
                          open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'AUTODETECT_WIDTH=YES'])
         lyr = ds.GetLayer(0)
@@ -2568,6 +2568,8 @@ def ogr_csv_49():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_csv_more_than_100_geom_fields():
 
     with gdaltest.error_handler():

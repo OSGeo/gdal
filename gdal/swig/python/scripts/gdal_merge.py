@@ -78,7 +78,7 @@ def GetOutputDriversFor(filename):
     # netCDF to be used by default for output.
     if ext.lower() == 'nc' and len(drv_list) == 0 and \
        drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
-           drv_list = ['NETCDF', 'GMT']
+        drv_list = ['NETCDF', 'GMT']
 
     return drv_list
 
@@ -302,9 +302,9 @@ class file_info:
         tw_xoff = int((tgw_ulx - t_geotransform[0]) / t_geotransform[1] + 0.1)
         tw_yoff = int((tgw_uly - t_geotransform[3]) / t_geotransform[5] + 0.1)
         tw_xsize = int((tgw_lrx - t_geotransform[0]) / t_geotransform[1] + 0.5) \
-        - tw_xoff
+            - tw_xoff
         tw_ysize = int((tgw_lry - t_geotransform[3]) / t_geotransform[5] + 0.5) \
-        - tw_yoff
+            - tw_yoff
 
         if tw_xsize < 1 or tw_ysize < 1:
             return 1

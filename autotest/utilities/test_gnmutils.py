@@ -191,7 +191,7 @@ gdaltest_list = [
     test_gnmanalyse_1,
     test_gnmanalyse_2,
     test_gnm_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

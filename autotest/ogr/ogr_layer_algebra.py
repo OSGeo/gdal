@@ -449,8 +449,8 @@ def algebra_symdifference():
             return 'fail'
 
     if C.GetFeatureCount() != 0:
-            gdaltest.post_reason('Layer.SymDifference returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        gdaltest.post_reason('Layer.SymDifference returned ' + str(C.GetFeatureCount()) + ' features')
+        return 'fail'
 
     return 'success'
 
@@ -649,8 +649,8 @@ def algebra_erase():
             return 'fail'
 
     if C.GetFeatureCount() != 0:
-            gdaltest.post_reason('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        gdaltest.post_reason('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
+        return 'fail'
 
     recreate_layer_C()
 
@@ -713,7 +713,7 @@ gdaltest_list = [
     algebra_clip,
     algebra_erase,
     algebra_cleanup,
-    ]
+]
 
 if __name__ == '__main__':
 

@@ -559,7 +559,7 @@ gdaltest_list = [
     ogr_gpx_4,
     ogr_gpx_5,
     ogr_gpx_6,
-# Rerun test 1, 2 and 4 with generated tmp/tmp.gpx
+    # Rerun test 1, 2 and 4 with generated tmp/tmp.gpx
     ogr_gpx_1,
     ogr_gpx_2,
     ogr_gpx_4,

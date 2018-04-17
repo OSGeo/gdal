@@ -60,8 +60,8 @@ def dted_2():
     max_error = 0.000001
 
     if abs(gt[0] - (-80.004166666666663)) > max_error or abs(gt[1] - 0.0083333333333333332) > max_error \
-        or abs(gt[2] - 0) > max_error or abs(gt[3] - 44.00416666666667) > max_error \
-        or abs(gt[4] - 0) > max_error or abs(gt[5] - (-0.0083333333333333332)) > max_error:
+            or abs(gt[2] - 0) > max_error or abs(gt[3] - 44.00416666666667) > max_error \
+            or abs(gt[4] - 0) > max_error or abs(gt[5] - (-0.0083333333333333332)) > max_error:
         gdaltest.post_reason('DTED geotransform wrong.')
         return 'fail'
 
@@ -267,8 +267,8 @@ def dted_11():
     max_error = 0.000001
 
     if abs(gt[0] - (-80.004166666666663)) > max_error or abs(gt[1] - 0.0083333333333333332) > max_error \
-        or abs(gt[2] - 0) > max_error or abs(gt[3] - 44.00416666666667) > max_error \
-        or abs(gt[4] - 0) > max_error or abs(gt[5] - (-0.0083333333333333332)) > max_error:
+            or abs(gt[2] - 0) > max_error or abs(gt[3] - 44.00416666666667) > max_error \
+            or abs(gt[4] - 0) > max_error or abs(gt[5] - (-0.0083333333333333332)) > max_error:
         gdaltest.post_reason('DTED geotransform wrong.')
         return 'fail'
 
@@ -369,7 +369,7 @@ gdaltest_list = [
     dted_14,
     dted_15,
     dted_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

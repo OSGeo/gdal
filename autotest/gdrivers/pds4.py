@@ -70,9 +70,9 @@ def validate_xml(filename):
         return 'skip'
 
     ds = gdal.OpenEx('GMLAS:' + filename, open_options=[
-                'VALIDATE=YES',
-                'FAIL_IF_VALIDATION_ERROR=YES',
-                'CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>false</AllowRemoteSchemaDownload><SchemaCache><Directory>tmp/cache</Directory></SchemaCache></Configuration>'])
+        'VALIDATE=YES',
+        'FAIL_IF_VALIDATION_ERROR=YES',
+        'CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>false</AllowRemoteSchemaDownload><SchemaCache><Directory>tmp/cache</Directory></SchemaCache></Configuration>'])
     if ds is None:
         return 'fail'
     return 'success'
@@ -111,11 +111,11 @@ def hide_substitution_warnings_error_handler_cbk(type, errno, msg):
 
 @contextlib.contextmanager
 def hide_substitution_warnings_error_handler():
-  handler = gdal.PushErrorHandler(hide_substitution_warnings_error_handler_cbk)
-  try:
-    yield handler
-  finally:
-    gdal.PopErrorHandler()
+    handler = gdal.PushErrorHandler(hide_substitution_warnings_error_handler_cbk)
+    try:
+        yield handler
+    finally:
+        gdal.PopErrorHandler()
 
 ###############################################################################
 # Test CreateCopy() with defaults
@@ -199,7 +199,7 @@ def pds4_8():
                   '+proj=poly +lat_0=9 +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
                   '+proj=sinu +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
                   '+proj=tmerc +lat_0=11 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
-                   ]:
+                  ]:
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1)
         sr = osr.SpatialReference()
         sr.ImportFromProj4(proj4)

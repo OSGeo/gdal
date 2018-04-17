@@ -2103,7 +2103,7 @@ def gml_OGRCompoundCurve():
     geom = ogr.CreateGeometryFromGML(gml)
     # We simplify it in LINESTRING
     if geom.ExportToWkt() != 'LINESTRING (0 0,1 1,2 0)':
-    #if geom.ExportToWkt() != wkt
+        #if geom.ExportToWkt() != wkt
         print(geom.ExportToWkt())
         return 'fail'
 

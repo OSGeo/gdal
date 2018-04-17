@@ -702,7 +702,6 @@ def rda_graph_nominal():
     handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
     handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 502, {}, json.dumps({"Error": "502"}))
 
-
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
@@ -712,12 +711,12 @@ def rda_graph_nominal():
                     gdaltest.post_reason('fail')
                     return 'fail'
 
-
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
     return 'success'
 
 ###############################################################################
+
 
 def rda_template_nominal():
 
@@ -827,7 +826,6 @@ def rda_template_nominal():
         return 'fail'
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
-
 
     tile_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tile_00.tif', 256, 256, 3)
     tile_ds.GetRasterBand(1).Fill(255)

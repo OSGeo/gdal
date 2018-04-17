@@ -156,9 +156,9 @@ class mosaic_info:
         self.scaleY = dec.scaleY
         ct = fhInputTile.GetRasterBand(1).GetRasterColorTable()
         if ct is not None:
-           self.ct = ct.Clone()
+            self.ct = ct.Clone()
         else:
-           self.ct = None
+            self.ct = None
         self.ci = [0] * self.bands
         for iband in range(self.bands):
             self.ci[iband] = fhInputTile.GetRasterBand(iband + 1).GetRasterColorInterpretation()
@@ -212,7 +212,7 @@ class mosaic_info:
         resultDS.SetGeoTransform([minx, self.scaleX, 0, maxy, 0, self.scaleY])
 
         for feature in features:
-            featureName =  feature.GetField(0)
+            featureName = feature.GetField(0)
             sourceDS = self.cache.get(featureName)
             dec = AffineTransformDecorator(sourceDS.GetGeoTransform())
 
@@ -293,7 +293,7 @@ def getTileIndexFromFiles(inputTiles, driverTyp):
 
         fhInputTile = gdal.Open(inputTile)
         if fhInputTile is None:
-             return None
+            return None
 
         dec = AffineTransformDecorator(fhInputTile.GetGeoTransform())
         points = dec.pointsFor(fhInputTile.RasterXSize, fhInputTile.RasterYSize)
@@ -378,16 +378,16 @@ def copyTileIndexToDisk(OGRDS, fileName):
     SHAPEDS = createTileIndex(fileName, TileIndexFieldName, OGRDS.GetLayer().GetSpatialRef(), "ESRI Shapefile")
     OGRDS.GetLayer().ResetReading()
     while True:
-      feature = OGRDS.GetLayer().GetNextFeature()
-      if feature is None:
-          break
-      newFeature = feature.Clone()
-      basename = os.path.basename(feature.GetField(0))
-      if UseDirForEachRow:
-          t = os.path.split(os.path.dirname(feature.GetField(0)))
-          basename = t[1] + "/" + basename
-      newFeature.SetField(0, basename)
-      SHAPEDS.GetLayer().CreateFeature(newFeature)
+        feature = OGRDS.GetLayer().GetNextFeature()
+        if feature is None:
+            break
+        newFeature = feature.Clone()
+        basename = os.path.basename(feature.GetField(0))
+        if UseDirForEachRow:
+            t = os.path.split(os.path.dirname(feature.GetField(0)))
+            basename = t[1] + "/" + basename
+        newFeature.SetField(0, basename)
+        SHAPEDS.GetLayer().CreateFeature(newFeature)
     closeTileIndex(SHAPEDS)
 
 
@@ -395,21 +395,21 @@ def copyTileIndexToCSV(OGRDS, fileName):
     csvfile = open(fileName, 'w')
     OGRDS.GetLayer().ResetReading()
     while True:
-      feature = OGRDS.GetLayer().GetNextFeature()
-      if feature is None:
-          break
-      basename = os.path.basename(feature.GetField(0))
-      if UseDirForEachRow:
-          t = os.path.split(os.path.dirname(feature.GetField(0)))
-          basename = t[1] + "/" + basename
-      csvfile.write(basename)
-      geom = feature.GetGeometryRef()
-      coords = geom.GetEnvelope()
+        feature = OGRDS.GetLayer().GetNextFeature()
+        if feature is None:
+            break
+        basename = os.path.basename(feature.GetField(0))
+        if UseDirForEachRow:
+            t = os.path.split(os.path.dirname(feature.GetField(0)))
+            basename = t[1] + "/" + basename
+        csvfile.write(basename)
+        geom = feature.GetGeometryRef()
+        coords = geom.GetEnvelope()
 
-      for i in range(len(coords)):
-          csvfile.write(CsvDelimiter)
-          csvfile.write("%f" % coords[i])
-      csvfile.write("\n")
+        for i in range(len(coords)):
+            csvfile.write(CsvDelimiter)
+            csvfile.write("%f" % coords[i])
+        csvfile.write("\n")
 
     csvfile.close()
 
@@ -656,7 +656,7 @@ def getTileName(minfo, ti, xIndex, yIndex, level=-1):
     countDigits = len(str(max))
     parts = os.path.splitext(os.path.basename(minfo.filename))
     if parts[0][0] == "@":  # remove possible leading "@"
-       parts = (parts[0][1:len(parts[0])], parts[1])
+        parts = (parts[0][1:len(parts[0])], parts[1])
 
     yIndex_str = ("%0" + str(countDigits) + "i") % (yIndex,)
     xIndex_str = ("%0" + str(countDigits) + "i") % (xIndex,)
@@ -682,25 +682,25 @@ def UsageFormat():
     print('Valid formats:')
     count = gdal.GetDriverCount()
     for index in range(count):
-       driver = gdal.GetDriver(index)
-       print(driver.ShortName)
+        driver = gdal.GetDriver(index)
+        print(driver.ShortName)
 
 # =============================================================================
 
 
 def Usage():
-     print('Usage: gdal_retile.py ')
-     print('        [-v] [-q] [-co NAME=VALUE]* [-of out_format]')
-     print('        [-ps pixelWidth pixelHeight]')
-     print('        [-overlap val_in_pixel]')
-     print('        [-ot  {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/')
-     print('               CInt16/CInt32/CFloat32/CFloat64}]')
-     print('        [ -tileIndex tileIndexName [-tileIndexField fieldName]]')
-     print('        [ -csv fileName [-csvDelim delimiter]]')
-     print('        [-s_srs srs_def]  [-pyramidOnly] -levels numberoflevels')
-     print('        [-r {near/bilinear/cubic/cubicspline/lanczos}]')
-     print('        [-useDirForEachRow]')
-     print('        -targetDir TileDirectory input_files')
+    print('Usage: gdal_retile.py ')
+    print('        [-v] [-q] [-co NAME=VALUE]* [-of out_format]')
+    print('        [-ps pixelWidth pixelHeight]')
+    print('        [-overlap val_in_pixel]')
+    print('        [-ot  {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/')
+    print('               CInt16/CInt32/CFloat32/CFloat64}]')
+    print('        [ -tileIndex tileIndexName [-tileIndexField fieldName]]')
+    print('        [ -csv fileName [-csvDelim delimiter]]')
+    print('        [-s_srs srs_def]  [-pyramidOnly] -levels numberoflevels')
+    print('        [-r {near/bilinear/cubic/cubicspline/lanczos}]')
+    print('        [-useDirForEachRow]')
+    print('        -targetDir TileDirectory input_files')
 
 # =============================================================================
 
@@ -776,7 +776,7 @@ def main(args=None):
                 print("TargetDir " + TargetDir + " does not exist")
                 return 1
             if TargetDir[len(TargetDir) - 1:] != os.sep:
-                TargetDir =  TargetDir + os.sep
+                TargetDir = TargetDir + os.sep
 
         elif arg == '-ps':
             i += 1
@@ -794,11 +794,11 @@ def main(args=None):
             if ResamplingMethodString == "near":
                 ResamplingMethod = gdal.GRA_NearestNeighbour
             elif ResamplingMethodString == "bilinear":
-                 ResamplingMethod = gdal.GRA_Bilinear
+                ResamplingMethod = gdal.GRA_Bilinear
             elif ResamplingMethodString == "cubic":
-                 ResamplingMethod = gdal.GRA_Cubic
+                ResamplingMethod = gdal.GRA_Cubic
             elif ResamplingMethodString == "cubicspline":
-                 ResamplingMethod = gdal.GRA_CubicSpline
+                ResamplingMethod = gdal.GRA_CubicSpline
             elif ResamplingMethodString == "lanczos":
                 ResamplingMethod = gdal.GRA_Lanczos
             else:
@@ -817,7 +817,7 @@ def main(args=None):
                 print('invalid -s_srs: ' + argv[i])
                 return 1
 
-        elif arg ==  "-pyramidOnly":
+        elif arg == "-pyramidOnly":
             PyramidOnly = True
         elif arg == '-tileIndex':
             i += 1
@@ -872,7 +872,7 @@ def main(args=None):
         if (os.path.exists(leveldir) == False):
             os.mkdir(leveldir)
 
-    if Levels > 0:    #prepare Dirs for pyramid
+    if Levels > 0:  # prepare Dirs for pyramid
         startIndx = 1
         for levelIndx in range(startIndx, Levels + 1):
             leveldir = TargetDir + str(levelIndx) + os.sep
@@ -904,23 +904,23 @@ def main(args=None):
     ti = tile_info(minfo.xsize, minfo.ysize, TileWidth, TileHeight, Overlap)
 
     if Source_SRS is None and len(minfo.projection) > 0:
-       Source_SRS = osr.SpatialReference()
-       if Source_SRS.SetFromUserInput(minfo.projection) != 0:
-           print('invalid projection  ' + minfo.projection)
-           return 1
+        Source_SRS = osr.SpatialReference()
+        if Source_SRS.SetFromUserInput(minfo.projection) != 0:
+            print('invalid projection  ' + minfo.projection)
+            return 1
 
     if Verbose:
         minfo.report()
         ti.report()
 
     if PyramidOnly == False:
-       dsCreatedTileIndex = tileImage(minfo, ti)
-       tileIndexDS.Destroy()
+        dsCreatedTileIndex = tileImage(minfo, ti)
+        tileIndexDS.Destroy()
     else:
-       dsCreatedTileIndex = tileIndexDS
+        dsCreatedTileIndex = tileIndexDS
 
     if Levels > 0:
-       buildPyramid(minfo, dsCreatedTileIndex, TileWidth, TileHeight, Overlap)
+        buildPyramid(minfo, dsCreatedTileIndex, TileWidth, TileHeight, Overlap)
 
     if Verbose:
         print("FINISHED")
@@ -977,7 +977,6 @@ def initGlobals():
     PyramidOnly = False
     LastRowIndx = -1
     UseDirForEachRow = False
-
 
 
 #global vars

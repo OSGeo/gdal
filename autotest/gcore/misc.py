@@ -298,8 +298,8 @@ def misc_6_internal(datatype, nBands, setDriversDone):
             # FIXME: A few cases that crashes and should be investigated
             if drv.ShortName == 'JPEG2000':
                 if (nBands == 2 or nBands >= 5) or \
-                    not (datatype == gdal.GDT_Byte or datatype == gdal.GDT_Int16 or datatype == gdal.GDT_UInt16):
-                        skip = True
+                        not (datatype == gdal.GDT_Byte or datatype == gdal.GDT_Int16 or datatype == gdal.GDT_UInt16):
+                    skip = True
 
             if skip is False:
                 dirname = 'tmp/tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
@@ -338,8 +338,8 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                     # The first list of drivers fail to detect short writing
                     # The second one is because they are verbose in stderr
                     if 'DCAP_VIRTUALIO' in md and size != 0 and \
-                        drv.ShortName not in ['JPEG2000', 'KMLSUPEROVERLAY', 'HF2', 'ZMap', 'DDS'] and \
-                        drv.ShortName not in ['GIF', 'JP2ECW', 'JP2Lura']:
+                            drv.ShortName not in ['JPEG2000', 'KMLSUPEROVERLAY', 'HF2', 'ZMap', 'DDS'] and \
+                            drv.ShortName not in ['GIF', 'JP2ECW', 'JP2Lura']:
 
                         for j in range(10):
                             truncated_size = (size * j) / 10
@@ -625,7 +625,7 @@ def misc_12():
                 # If DEBUG_VSIMALLOC_STATS is defined, this is an easy way
                 # to catch some memory leaks
                 if out.find('VSIMalloc + VSICalloc - VSIFree') != -1 and \
-                out.find('VSIMalloc + VSICalloc - VSIFree : 0') == -1:
+                        out.find('VSIMalloc + VSICalloc - VSIFree : 0') == -1:
                     if drv.ShortName == 'Rasterlite' and out.find('VSIMalloc + VSICalloc - VSIFree : 1') != -1:
                         pass
                     else:

@@ -346,8 +346,8 @@ def hdf5_10():
     gdal.ErrorReset()
     ds = gdal.Open('HDF5:"data/CSK_DGM.h5"://S01/QLK')
     if ds is None or gdal.GetLastErrorMsg() != '':
-           gdaltest.post_reason('fail')
-           return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
     ds = None
 
     ds = gdal.Open('HDF5:"data/CSK_DGM.h5"://S01/SBI')
@@ -359,13 +359,13 @@ def hdf5_10():
 
     got_gcps = ds.GetGCPs()
     if len(got_gcps) != 4:
-           gdaltest.post_reason('fail')
-           return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     if abs(got_gcps[0].GCPPixel - 0) > 1e-5 or abs(got_gcps[0].GCPLine - 0) > 1e-5 or \
        abs(got_gcps[0].GCPX - 12.2395902509238) > 1e-5 or abs(got_gcps[0].GCPY - 44.7280047434954) > 1e-5:
-           gdaltest.post_reason('fail')
-           return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     ds = None
     if gdaltest.is_file_open('data/CSK_DGM.h5'):
@@ -387,8 +387,8 @@ def hdf5_11():
     gdal.ErrorReset()
     ds = gdal.Open('HDF5:"data/CSK_GEC.h5"://S01/QLK')
     if ds is None or gdal.GetLastErrorMsg() != '':
-           gdaltest.post_reason('fail')
-           return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
     ds = None
 
     ds = gdal.Open('HDF5:"data/CSK_GEC.h5"://S01/SBI')
@@ -462,14 +462,14 @@ def hdf5_13():
 
     got_gcps = ds.GetGCPs()
     if len(got_gcps) != 3030:
-           gdaltest.post_reason('fail')
-           return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     if abs(got_gcps[0].GCPPixel - 0.5) > 1e-5 or abs(got_gcps[0].GCPLine - 0.5) > 1e-5 or \
        abs(got_gcps[0].GCPX - 33.1655693) > 1e-5 or abs(got_gcps[0].GCPY - 39.3207207) > 1e-5:
-           gdaltest.post_reason('fail')
-           print(got_gcps[0])
-           return 'fail'
+        gdaltest.post_reason('fail')
+        print(got_gcps[0])
+        return 'fail'
 
     return 'success'
 
@@ -491,11 +491,11 @@ def hdf5_14():
         return 'fail'
 
     if sds_list['SUBDATASET_1_NAME'] != 'HDF5:"data/complex.h5"://f16' \
-        or sds_list['SUBDATASET_2_NAME'] != 'HDF5:"data/complex.h5"://f32' \
-        or sds_list['SUBDATASET_3_NAME'] != 'HDF5:"data/complex.h5"://f64':
-            print(sds_list)
-            gdaltest.post_reason('did not get expected subdatasets.')
-            return 'fail'
+            or sds_list['SUBDATASET_2_NAME'] != 'HDF5:"data/complex.h5"://f32' \
+            or sds_list['SUBDATASET_3_NAME'] != 'HDF5:"data/complex.h5"://f64':
+        print(sds_list)
+        gdaltest.post_reason('did not get expected subdatasets.')
+        return 'fail'
 
     ds = None
 
@@ -609,7 +609,7 @@ hdf5_list = [('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/c
               'Raster_Image_#0', 3661, -1),
              ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/geospatial/DEM', 'half_moon_bay.grid',
               'HDFEOS/GRIDS/DEMGRID/Data_Fields/Elevation', 30863, -1),
-              ]
+             ]
 
 for item in hdf5_list:
     ut = TestHDF5(item[0], item[1], item[2], item[3], item[4])

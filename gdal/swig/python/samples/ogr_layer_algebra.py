@@ -292,7 +292,7 @@ def main(argv=None):
        method_ds_name is None or \
        output_ds_name is None or \
        op_str is None:
-           return Usage()
+        return Usage()
 
     if method_fields is None:
         if op_str in ('Update', 'Clip', 'Erase'):
@@ -403,8 +403,8 @@ def main(argv=None):
                 if EQUAL(drv.GetName(), "ESRI Shapefile") and \
                    EQUAL(os.path.splitext(output_ds_name)[1], ".SHP") and \
                    not EQUAL(output_lyr_name, os.path.splitext(os.path.basename(output_ds_name))[0]):
-                       print('Cannot create layer "%s" in a shapefile called "%s"' % (output_lyr_name, output_ds_name))
-                       return 1
+                    print('Cannot create layer "%s" in a shapefile called "%s"' % (output_lyr_name, output_ds_name))
+                    return 1
 
                 output_lyr = CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, input_lyr, input_fields, method_lyr, method_fields, opt)
                 if output_lyr is None:
@@ -415,7 +415,7 @@ def main(argv=None):
             for iLayer in range(cnt):
                 poLayer = output_ds.GetLayer(iLayer)
                 if poLayer is not None \
-                    and poLayer.GetName() == output_lyr_name:
+                        and poLayer.GetName() == output_lyr_name:
                     break
             if iLayer != cnt:
                 if output_ds.DeleteLayer(iLayer) != 0:

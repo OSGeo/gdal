@@ -1897,7 +1897,7 @@ gdaltest_list = [
     test_gdalwarp_lib_touching_dateline,
     test_gdalwarp_lib_override_default_output_nodata,
     test_gdalwarp_lib_cleanup,
-    ]
+]
 
 if __name__ == '__main__':
 

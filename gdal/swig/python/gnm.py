@@ -73,21 +73,21 @@ except AttributeError:
 
 
 def GetUseExceptions(*args):
-  return _gnm.GetUseExceptions(*args)
+    return _gnm.GetUseExceptions(*args)
 
 
 GetUseExceptions = _gnm.GetUseExceptions
 
 
 def UseExceptions(*args):
-  return _gnm.UseExceptions(*args)
+    return _gnm.UseExceptions(*args)
 
 
 UseExceptions = _gnm.UseExceptions
 
 
 def DontUseExceptions(*args):
-  return _gnm.DontUseExceptions(*args)
+    return _gnm.DontUseExceptions(*args)
 
 
 DontUseExceptions = _gnm.DontUseExceptions
@@ -131,13 +131,13 @@ GNM_EDGE_DIR_TGTTOSRC = _gnm.GNM_EDGE_DIR_TGTTOSRC
 
 
 def CastToNetwork(*args):
-  """CastToNetwork(MajorObject base) -> Network"""
-  return _gnm.CastToNetwork(*args)
+    """CastToNetwork(MajorObject base) -> Network"""
+    return _gnm.CastToNetwork(*args)
 
 
 def CastToGenericNetwork(*args):
-  """CastToGenericNetwork(MajorObject base) -> GenericNetwork"""
-  return _gnm.CastToGenericNetwork(*args)
+    """CastToGenericNetwork(MajorObject base) -> GenericNetwork"""
+    return _gnm.CastToGenericNetwork(*args)
 
 
 class Network(MajorObject):

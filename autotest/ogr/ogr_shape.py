@@ -1417,10 +1417,10 @@ def ogr_shape_31():
 
 
 def ogr_shape_32():
-# This test takes a few minutes and disk space. Hence, skipped by default.
-# To run this test, make sure that the directory BigFilePath points to has
-# 4.5 GB space available or give a new directory that does and delete the
-# directory afterwards.
+    # This test takes a few minutes and disk space. Hence, skipped by default.
+    # To run this test, make sure that the directory BigFilePath points to has
+    # 4.5 GB space available or give a new directory that does and delete the
+    # directory afterwards.
 
     return 'skip'
 
@@ -1465,14 +1465,14 @@ def ogr_shape_32():
     read_lyr = gdaltest.shape_ds_big.GetLayerByName('bigLayer')
 
     for i in [0, 1, read_lyr.GetFeatureCount() - 1]:
-      feat_read = read_lyr.GetFeature(i)
-      if feat_read is None:
-        print('Could not retrieve geometry at FID', i)
-        return 'fail'
-      if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1.1,0.5 1,0.25 0.5))'),
-                                        max_error=0.000000001) != 0:
-        print('Wrong geometry encountered at FID', i, ':', (feat_read.GetGeometryRef().ExportToWkt()))
-        return 'fail'
+        feat_read = read_lyr.GetFeature(i)
+        if feat_read is None:
+            print('Could not retrieve geometry at FID', i)
+            return 'fail'
+        if ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1.1,0.5 1,0.25 0.5))'),
+                                          max_error=0.000000001) != 0:
+            print('Wrong geometry encountered at FID', i, ':', (feat_read.GetGeometryRef().ExportToWkt()))
+            return 'fail'
 
     return 'success'
 
@@ -3536,7 +3536,7 @@ def ogr_shape_71():
     old_mode = os.stat('tmp/ogr_shape_71.dbf').st_mode
     os.chmod('tmp/ogr_shape_71.dbf', stat.S_IREAD)
     with gdaltest.error_handler():
-      ds = ogr.Open('tmp/ogr_shape_71.shp', update=1)
+        ds = ogr.Open('tmp/ogr_shape_71.shp', update=1)
     ok = ds is None
     ds = None
     os.chmod('tmp/ogr_shape_71.dbf', old_mode)
@@ -4001,7 +4001,7 @@ def ogr_shape_82():
     )
     feat.SetField('cut_field', init_rus)
     with gdaltest.error_handler():
-      gdaltest.shape_lyr.CreateFeature(feat)
+        gdaltest.shape_lyr.CreateFeature(feat)
 
     # Insert feature with long a string in Russian.  Shoe repair ad.
     init_en = (
@@ -4417,7 +4417,7 @@ def ogr_shape_94():
              ["POLYGONM", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 2,0 1 2,1 1 2,1 0 2)),((0 0 2,0 1 2,1 1 2,1 0 2)))"],
              ["POLYGONZ", ogr.wkbMultiPolygon25D, "MULTIPOLYGON Z (((0 0 2,0 1 2,1 1 2,1 0 2)),((0 0 2,0 1 2,1 1 2,1 0 2)))"],
              ["POLYGONZM", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 2 3,0 1 2 3,1 1 2 3,1 0 2 3)),((0 0 2 3,0 1 2 3,1 1 2 3,1 0 2 3)))"],
-              ]
+             ]
 
     for test in tests:
         try:
@@ -5138,20 +5138,20 @@ def ogr_shape_103():
 def ogr_shape_104():
 
     for (wkt, lyr_type, options, expected_wkt) in \
-                [['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [], None],
-                 ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,1 1 3,2 2 4,0 0 0)))', ogr.wkbUnknown, [], None],  # triangle fan
-                 ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 1 2,1 1 3,4 4 5,0 1 2)))', ogr.wkbUnknown, [], None],  # triangle strip
-                 ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [], None],  # no fan no strip
-                 ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [],
-                  'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))'],
-                 # no fan no strip with duplicated triangle (as found in #5888)
-                 ['POLYHEDRALSURFACE Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
-                 ['GEOMETRYCOLLECTION Z (TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0))))', ogr.wkbUnknown, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
-                 ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbUnknown, ['SHPT=MULTIPATCH'], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
-                 ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
-                 ['POLYGON Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
-                 ['MULTIPOLYGON Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
-                  ]:
+        [['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [], None],
+         ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,1 1 3,2 2 4,0 0 0)))', ogr.wkbUnknown, [], None],  # triangle fan
+         ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 1 2,1 1 3,4 4 5,0 1 2)))', ogr.wkbUnknown, [], None],  # triangle strip
+         ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [], None],  # no fan no strip
+         ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [],
+          'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))'],
+         # no fan no strip with duplicated triangle (as found in #5888)
+         ['POLYHEDRALSURFACE Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+         ['GEOMETRYCOLLECTION Z (TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0))))', ogr.wkbUnknown, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+         ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbUnknown, ['SHPT=MULTIPATCH'], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+         ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+         ['POLYGON Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+         ['MULTIPOLYGON Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+         ]:
 
         if expected_wkt is None:
             expected_wkt = wkt

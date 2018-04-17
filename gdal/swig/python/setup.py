@@ -87,7 +87,7 @@ try:
         print("numpy version must be > 1.0.0")
         HAVE_NUMPY = False
     else:
-#        print ('numpy include', get_numpy_include())
+        #  print ('numpy include', get_numpy_include())
         if get_numpy_include() == '.':
             print("numpy headers were not found!  Array support will not be enabled")
             HAVE_NUMPY = False
@@ -382,17 +382,17 @@ license = "MIT"
 url = "http://www.gdal.org"
 
 classifiers = [
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: MIT License',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: C',
-        'Programming Language :: C++',
-        'Topic :: Scientific/Engineering :: GIS',
-        'Topic :: Scientific/Engineering :: Information Analysis',
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 2',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: C',
+    'Programming Language :: C++',
+    'Topic :: Scientific/Engineering :: GIS',
+    'Topic :: Scientific/Engineering :: Information Analysis',
 
 ]
 

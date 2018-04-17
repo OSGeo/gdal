@@ -852,7 +852,7 @@ gdaltest_list = [
     test_gdaldem_color_relief_nodata_nan,
     test_gdaldem_color_relief_repeated_entry,
     test_gdaldem_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':

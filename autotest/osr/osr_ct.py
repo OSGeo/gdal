@@ -167,8 +167,8 @@ def osr_ct_4():
 
     for i in range(2):
         if abs(result[i][0] - 452772.06) > 0.01 \
-        or abs(result[i][1] - 3540544.89) > 0.01 \
-        or abs(result[i][2] - 0.0) > 0.01:
+                or abs(result[i][1] - 3540544.89) > 0.01 \
+                or abs(result[i][2] - 0.0) > 0.01:
             gdaltest.post_reason('Wrong LL to UTM result')
             return 'fail'
 
@@ -197,8 +197,8 @@ def osr_ct_5():
 
     for i in range(2):
         if abs(result[i][0] - 452772.06) > 0.01 \
-        or abs(result[i][1] - 3540544.89) > 0.01 \
-        or abs(result[i][2] - 0.0) > 0.01:
+                or abs(result[i][1] - 3540544.89) > 0.01 \
+                or abs(result[i][2] - 0.0) > 0.01:
             gdaltest.post_reason('Wrong LL to UTM result')
             return 'fail'
 
@@ -232,8 +232,8 @@ def osr_ct_6():
 
     for i in range(2):
         if abs(result[i][0] - 452772.06) > 0.01 \
-        or abs(result[i][1] - 3540544.89) > 0.01 \
-        or abs(result[i][2] - 0.0) > 0.01:
+                or abs(result[i][1] - 3540544.89) > 0.01 \
+                or abs(result[i][2] - 0.0) > 0.01:
             gdaltest.post_reason('Wrong LL to UTM result')
             return 'fail'
 
@@ -260,7 +260,7 @@ def osr_ct_7():
     (exp_x, exp_y, exp_z) = (62.8820698884, 53.0918187696, 0.0)
     if (abs(exp_x - x) > 0.00001 or
         abs(exp_y - y) > 0.00001 or
-        abs(exp_z - z) > 0.00001):
+            abs(exp_z - z) > 0.00001):
         gdaltest.post_reason('Wrong LL for Pseudo Mercator result')
         print('Got:      (%f, %f, %f)' % (x, y, z))
         print('Expected: (%f, %f, %f)' % (exp_x, exp_y, exp_z))
@@ -275,7 +275,7 @@ def osr_ct_7():
         return 'fail'
     if (abs(expected_pnt.GetX() - pnt.GetX()) > 0.00001 or
         abs(expected_pnt.GetY() - pnt.GetY()) > 0.00001 or
-        abs(expected_pnt.GetZ() - pnt.GetZ()) > 0.00001):
+            abs(expected_pnt.GetZ() - pnt.GetZ()) > 0.00001):
         gdaltest.post_reason('Failed to transform from Pseudo Mercator to LL')
         print('Got:      %s' % pnt.ExportToWkt())
         print('Expected: %s' % expected_pnt.ExportToWkt())

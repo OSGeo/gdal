@@ -92,7 +92,7 @@ def rik_online_2():
 gdaltest_list = [
     rik_online_1,
     rik_online_2
-    ]
+]
 
 
 if __name__ == '__main__':

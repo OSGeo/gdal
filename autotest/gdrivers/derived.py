@@ -135,10 +135,10 @@ def derived_test2():
                 return 'fail'
             cs = ds.GetRasterBand(1).Checksum()
             if expected_cs[key] != cs:
-                 gdaltest.post_reason('fail')
-                 import pprint
-                 pprint.pprint("Expected checksum " + str(expected_cs[key]) + ", got " + str(cs))
-                 return 'fail'
+                gdaltest.post_reason('fail')
+                import pprint
+                pprint.pprint("Expected checksum " + str(expected_cs[key]) + ", got " + str(cs))
+                return 'fail'
 
     return 'success'
 
@@ -187,7 +187,7 @@ gdaltest_list = [
     derived_test1,
     derived_test2,
     derived_test3
-    ]
+]
 
 if __name__ == '__main__':
 

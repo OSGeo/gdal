@@ -93,16 +93,16 @@ have_warned = 0
 
 
 def deprecation_warn(module):
-  global have_warned
+    global have_warned
 
-  if have_warned == 1:
-      return
+    if have_warned == 1:
+        return
 
-  have_warned = 1
+    have_warned = 1
 
-  from warnings import warn
-  warn('%s.py was placed in a namespace, it is now available as osgeo.%s' % (module, module),
-       DeprecationWarning)
+    from warnings import warn
+    warn('%s.py was placed in a namespace, it is now available as osgeo.%s' % (module, module),
+         DeprecationWarning)
 
 
 from gdalconst import *
@@ -125,35 +125,35 @@ array_modes = {gdalconst.GDT_Int16: ("%si2" % byteorders[sys.byteorder]),
 
 
 def RGBFile2PCTFile(src_filename, dst_filename):
-  src_ds = Open(src_filename)
-  if src_ds is None or src_ds == 'NULL':
-      return 1
+    src_ds = Open(src_filename)
+    if src_ds is None or src_ds == 'NULL':
+        return 1
 
-  ct = ColorTable()
-  err = ComputeMedianCutPCT(src_ds.GetRasterBand(1),
-                            src_ds.GetRasterBand(2),
-                            src_ds.GetRasterBand(3),
-                            256, ct)
-  if err != 0:
-      return err
+    ct = ColorTable()
+    err = ComputeMedianCutPCT(src_ds.GetRasterBand(1),
+                              src_ds.GetRasterBand(2),
+                              src_ds.GetRasterBand(3),
+                              256, ct)
+    if err != 0:
+        return err
 
-  gtiff_driver = GetDriverByName('GTiff')
-  if gtiff_driver is None:
-      return 1
+    gtiff_driver = GetDriverByName('GTiff')
+    if gtiff_driver is None:
+        return 1
 
-  dst_ds = gtiff_driver.Create(dst_filename,
-                               src_ds.RasterXSize, src_ds.RasterYSize)
-  dst_ds.GetRasterBand(1).SetRasterColorTable(ct)
+    dst_ds = gtiff_driver.Create(dst_filename,
+                                 src_ds.RasterXSize, src_ds.RasterYSize)
+    dst_ds.GetRasterBand(1).SetRasterColorTable(ct)
 
-  err = DitherRGB2PCT(src_ds.GetRasterBand(1),
-                      src_ds.GetRasterBand(2),
-                      src_ds.GetRasterBand(3),
-                      dst_ds.GetRasterBand(1),
-                      ct)
-  dst_ds = None
-  src_ds = None
+    err = DitherRGB2PCT(src_ds.GetRasterBand(1),
+                        src_ds.GetRasterBand(2),
+                        src_ds.GetRasterBand(3),
+                        dst_ds.GetRasterBand(1),
+                        ct)
+    dst_ds = None
+    src_ds = None
 
-  return 0
+    return 0
 
 
 def GetUseExceptions(*args):
@@ -779,7 +779,7 @@ def DEMProcessingOptions(options=[], colorFilename=None, format=None,
                 new_options += ['-co', opt]
         if computeEdges:
             new_options += ['-compute_edges']
-        if alg ==  'ZevenbergenThorne':
+        if alg == 'ZevenbergenThorne':
             new_options += ['-alg', 'ZevenbergenThorne']
         new_options += ['-b', str(band)]
         if zFactor is not None:
@@ -1619,9 +1619,9 @@ class MajorObject(_object):
         return _gdal.MajorObject_SetMetadataItem(self, *args)
 
     def GetMetadata(self, domain=''):
-      if domain[:4] == 'xml:':
-        return self.GetMetadata_List(domain)
-      return self.GetMetadata_Dict(domain)
+        if domain[:4] == 'xml:':
+            return self.GetMetadata_List(domain)
+        return self.GetMetadata_Dict(domain)
 
 
 MajorObject_swigregister = _gdal.MajorObject_swigregister
@@ -1770,26 +1770,26 @@ class GCP(_object):
     __del__ = lambda self: None
 
     def __str__(self):
-      str = '%s (%.2fP,%.2fL) -> (%.7fE,%.7fN,%.2f) %s '\
-            % (self.Id, self.GCPPixel, self.GCPLine,
-               self.GCPX, self.GCPY, self.GCPZ, self.Info)
-      return str
+        str = '%s (%.2fP,%.2fL) -> (%.7fE,%.7fN,%.2f) %s '\
+              % (self.Id, self.GCPPixel, self.GCPLine,
+                 self.GCPX, self.GCPY, self.GCPZ, self.Info)
+        return str
 
     def serialize(self, with_Z=0):
-      base = [CXT_Element, 'GCP']
-      base.append([CXT_Attribute, 'Id', [CXT_Text, self.Id]])
-      pixval = '%0.15E' % self.GCPPixel
-      lineval = '%0.15E' % self.GCPLine
-      xval = '%0.15E' % self.GCPX
-      yval = '%0.15E' % self.GCPY
-      zval = '%0.15E' % self.GCPZ
-      base.append([CXT_Attribute, 'Pixel', [CXT_Text, pixval]])
-      base.append([CXT_Attribute, 'Line', [CXT_Text, lineval]])
-      base.append([CXT_Attribute, 'X', [CXT_Text, xval]])
-      base.append([CXT_Attribute, 'Y', [CXT_Text, yval]])
-      if with_Z:
-          base.append([CXT_Attribute, 'Z', [CXT_Text, zval]])
-      return base
+        base = [CXT_Element, 'GCP']
+        base.append([CXT_Attribute, 'Id', [CXT_Text, self.Id]])
+        pixval = '%0.15E' % self.GCPPixel
+        lineval = '%0.15E' % self.GCPLine
+        xval = '%0.15E' % self.GCPX
+        yval = '%0.15E' % self.GCPY
+        zval = '%0.15E' % self.GCPZ
+        base.append([CXT_Attribute, 'Pixel', [CXT_Text, pixval]])
+        base.append([CXT_Attribute, 'Line', [CXT_Text, lineval]])
+        base.append([CXT_Attribute, 'X', [CXT_Text, xval]])
+        base.append([CXT_Attribute, 'Y', [CXT_Text, yval]])
+        if with_Z:
+            base.append([CXT_Attribute, 'Z', [CXT_Text, zval]])
+        return base
 
 
 GCP_swigregister = _gdal.GCP_swigregister
@@ -2551,20 +2551,20 @@ class Band(MajorObject):
         return _gdal.Band_ReadBlock(self, *args, **kwargs)
 
     def ComputeStatistics(self, *args):
-      """ComputeStatistics(Band self, bool approx_ok, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
+        """ComputeStatistics(Band self, bool approx_ok, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
 
     # For backward compatibility. New SWIG has stricter typing and really
     # enforces bool
-      approx_ok = args[0]
-      if approx_ok == 0:
-          approx_ok = False
-      elif approx_ok == 1:
-          approx_ok = True
-      new_args = [approx_ok]
-      for arg in args[1:]:
-          new_args.append(arg)
+        approx_ok = args[0]
+        if approx_ok == 0:
+            approx_ok = False
+        elif approx_ok == 1:
+            approx_ok = True
+        new_args = [approx_ok]
+        for arg in args[1:]:
+            new_args.append(arg)
 
-      return _gdal.Band_ComputeStatistics(self, *new_args)
+        return _gdal.Band_ComputeStatistics(self, *new_args)
 
     def ReadRaster(self, xoff=0, yoff=0, xsize=None, ysize=None,
                    buf_xsize=None, buf_ysize=None, buf_type=None,
@@ -2616,63 +2616,63 @@ class Band(MajorObject):
                            datatype=None,
                            cache_size=10 * 1024 * 1024, page_size_hint=0,
                            options=None):
-          """Return a NumPy array for the band, seen as a virtual memory mapping.
-             An element is accessed with array[y][x].
-             Any reference to the array must be dropped before the last reference to the
-             related dataset is also dropped.
-          """
-          import gdalnumeric
-          if xsize is None:
-              xsize = self.XSize
-          if ysize is None:
-              ysize = self.YSize
-          if bufxsize is None:
-              bufxsize = self.XSize
-          if bufysize is None:
-              bufysize = self.YSize
-          if datatype is None:
-              datatype = self.DataType
-          if options is None:
-              virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, cache_size, page_size_hint)
-          else:
-              virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, cache_size, page_size_hint, options)
-          return gdalnumeric.VirtualMemGetArray(virtualmem)
+        """Return a NumPy array for the band, seen as a virtual memory mapping.
+           An element is accessed with array[y][x].
+           Any reference to the array must be dropped before the last reference to the
+           related dataset is also dropped.
+        """
+        import gdalnumeric
+        if xsize is None:
+            xsize = self.XSize
+        if ysize is None:
+            ysize = self.YSize
+        if bufxsize is None:
+            bufxsize = self.XSize
+        if bufysize is None:
+            bufysize = self.YSize
+        if datatype is None:
+            datatype = self.DataType
+        if options is None:
+            virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, cache_size, page_size_hint)
+        else:
+            virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, cache_size, page_size_hint, options)
+        return gdalnumeric.VirtualMemGetArray(virtualmem)
 
     def GetVirtualMemAutoArray(self, eAccess=gdalconst.GF_Read, options=None):
-          """Return a NumPy array for the band, seen as a virtual memory mapping.
-             An element is accessed with array[y][x].
-             Any reference to the array must be dropped before the last reference to the
-             related dataset is also dropped.
-          """
-          import gdalnumeric
-          if options is None:
-              virtualmem = self.GetVirtualMemAuto(eAccess)
-          else:
-              virtualmem = self.GetVirtualMemAuto(eAccess, options)
-          return gdalnumeric.VirtualMemGetArray(virtualmem)
+        """Return a NumPy array for the band, seen as a virtual memory mapping.
+           An element is accessed with array[y][x].
+           Any reference to the array must be dropped before the last reference to the
+           related dataset is also dropped.
+        """
+        import gdalnumeric
+        if options is None:
+            virtualmem = self.GetVirtualMemAuto(eAccess)
+        else:
+            virtualmem = self.GetVirtualMemAuto(eAccess, options)
+        return gdalnumeric.VirtualMemGetArray(virtualmem)
 
     def GetTiledVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
                                 xsize=None, ysize=None, tilexsize=256, tileysize=256,
                                 datatype=None,
                                 cache_size=10 * 1024 * 1024, options=None):
-          """Return a NumPy array for the band, seen as a virtual memory mapping with
-             a tile organization.
-             An element is accessed with array[tiley][tilex][y][x].
-             Any reference to the array must be dropped before the last reference to the
-             related dataset is also dropped.
-          """
-          import gdalnumeric
-          if xsize is None:
-              xsize = self.XSize
-          if ysize is None:
-              ysize = self.YSize
-          if datatype is None:
-              datatype = self.DataType
-          if options is None:
-              virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, cache_size)
-          else:
-              virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, cache_size, options)
-          return gdalnumeric.VirtualMemGetArray(virtualmem)
+        """Return a NumPy array for the band, seen as a virtual memory mapping with
+           a tile organization.
+           An element is accessed with array[tiley][tilex][y][x].
+           Any reference to the array must be dropped before the last reference to the
+           related dataset is also dropped.
+        """
+        import gdalnumeric
+        if xsize is None:
+            xsize = self.XSize
+        if ysize is None:
+            ysize = self.YSize
+        if datatype is None:
+            datatype = self.DataType
+        if options is None:
+            virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, cache_size)
+        else:
+            virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, cache_size, options)
+        return gdalnumeric.VirtualMemGetArray(virtualmem)
 
     def __get_array_interface__(self):
         shape = [1, self.XSize, self.YSize]

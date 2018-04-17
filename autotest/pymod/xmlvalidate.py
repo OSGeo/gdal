@@ -59,7 +59,7 @@ def ingest_file_and_strip_mime(filename):
 
 def substitute_ogc_schemas_location(location, ogc_schemas_location):
     if ogc_schemas_location is not None and \
-        location.startswith('http://schemas.opengis.net/'):
+            location.startswith('http://schemas.opengis.net/'):
         location = ogc_schemas_location + '/' + location[len('http://schemas.opengis.net/'):]
     return location
 
@@ -69,7 +69,7 @@ def substitute_ogc_schemas_location(location, ogc_schemas_location):
 
 def substitute_inspire_schemas_location(location, inspire_schemas_location):
     if inspire_schemas_location is not None and \
-        location.startswith('http://inspire.ec.europa.eu/schemas/'):
+            location.startswith('http://inspire.ec.europa.eu/schemas/'):
         location = inspire_schemas_location + '/' + location[len('http://inspire.ec.europa.eu/schemas/'):]
     return location
 
@@ -95,10 +95,10 @@ def validate(xml_filename_or_content, xsd_filename=None, \
     if doc.tag == '{http://www.w3.org/2001/XMLSchema}schema':
         for child in doc:
             if child.tag == '{http://www.w3.org/2001/XMLSchema}import':
-                    location = child.get('schemaLocation')
-                    location = substitute_ogc_schemas_location(location, ogc_schemas_location)
-                    location = substitute_inspire_schemas_location(location, inspire_schemas_location)
-                    child.set('schemaLocation', location)
+                location = child.get('schemaLocation')
+                location = substitute_ogc_schemas_location(location, ogc_schemas_location)
+                location = substitute_inspire_schemas_location(location, inspire_schemas_location)
+                child.set('schemaLocation', location)
         try:
             etree.XMLSchema(etree.XML(etree.tostring(doc)))
             return True
@@ -120,11 +120,11 @@ def validate(xml_filename_or_content, xsd_filename=None, \
 
     # get schema locations
     schema_def = etree.Element("schema", attrib={
-            "elementFormDefault": "qualified",
-            "version": "1.0.0",
-        }, nsmap={
-            None: "http://www.w3.org/2001/XMLSchema"
-        }
+        "elementFormDefault": "qualified",
+        "version": "1.0.0",
+    }, nsmap={
+        None: "http://www.w3.org/2001/XMLSchema"
+    }
     )
 
     tempfiles = []
@@ -156,14 +156,14 @@ def validate(xml_filename_or_content, xsd_filename=None, \
                     etree.SubElement(schema_def, "import", attrib={
                         "namespace": sub_ns,
                         "schemaLocation": sub_location
-                        }
+                    }
                     )
                     import_dict[sub_ns] = sub_location
 
             etree.SubElement(schema_def, "import", attrib={
-                    "namespace": ns,
-                    "schemaLocation": location
-                }
+                "namespace": ns,
+                "schemaLocation": location
+            }
             )
             import_dict[ns] = location
 
@@ -175,9 +175,9 @@ def validate(xml_filename_or_content, xsd_filename=None, \
         location = substitute_inspire_schemas_location(location, inspire_schemas_location)
         if ns not in import_dict:
             etree.SubElement(schema_def, "import", attrib={
-                    "namespace": ns,
-                    "schemaLocation": location
-                }
+                "namespace": ns,
+                "schemaLocation": location
+            }
             )
             import_dict[ns] = location
 
@@ -348,8 +348,8 @@ def download_ogc_schemas(ogc_schemas_url='http://schemas.opengis.net/SCHEMAS_OPE
     try:
         os.stat(target_dir + '/' + target_subdir + '/xlink.xsd')
     except OSError:
-         if not gdaltest.download_file(xlink_xsd_url, target_dir + '/' + target_subdir + '/xlink.xsd', base_dir='.', force_download=force_download, max_download_duration=max_download_duration):
-             if not gdaltest.download_file('http://even.rouault.free.fr/xlink.xsd', target_dir + '/' + target_subdir + '/xlink.xsd', base_dir='.', force_download=force_download, max_download_duration=max_download_duration):
+        if not gdaltest.download_file(xlink_xsd_url, target_dir + '/' + target_subdir + '/xlink.xsd', base_dir='.', force_download=force_download, max_download_duration=max_download_duration):
+            if not gdaltest.download_file('http://even.rouault.free.fr/xlink.xsd', target_dir + '/' + target_subdir + '/xlink.xsd', base_dir='.', force_download=force_download, max_download_duration=max_download_duration):
                 return False
 
     try:

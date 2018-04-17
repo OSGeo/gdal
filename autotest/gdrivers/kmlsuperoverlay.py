@@ -419,16 +419,16 @@ def kmlsuperoverlay_8():
     src_ds = None
 
     if set(os.listdir('tmp/0/0')) != set(('0.kml', '0.png')):
-      gdaltest.post_reason('failure')
-      return 'fail'
+        gdaltest.post_reason('failure')
+        return 'fail'
     if set(os.listdir('tmp/3/1')) != set(('0.jpg', '0.kml', '1.jpg', '1.kml', '2.jpg', '2.kml', '3.jpg', '3.kml',
                                           '4.jpg', '4.kml', '5.jpg', '5.kml', '6.jpg', '6.kml', '7.jpg', '7.kml',)):
-      gdaltest.post_reason('failure')
-      return 'fail'
+        gdaltest.post_reason('failure')
+        return 'fail'
     if set(os.listdir('tmp/3/2')) != set():
-      # dir should be empty - 3/2 is entirely transparent so we skip generating files.
-      gdaltest.post_reason('failure')
-      return 'fail'
+        # dir should be empty - 3/2 is entirely transparent so we skip generating files.
+        gdaltest.post_reason('failure')
+        return 'fail'
 
     shutil.rmtree('tmp/0')
     shutil.rmtree('tmp/1')

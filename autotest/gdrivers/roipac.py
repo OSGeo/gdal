@@ -127,7 +127,7 @@ gdaltest_list = [
     roipac_4,
     roipac_5,
     roipac_6,
-    ]
+]
 
 
 if __name__ == '__main__':

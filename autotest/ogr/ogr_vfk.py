@@ -47,12 +47,12 @@ from osgeo import ogr
 def ogr_vfk_1():
 
     try:
-       gdaltest.vfk_drv = ogr.GetDriverByName('VFK')
+        gdaltest.vfk_drv = ogr.GetDriverByName('VFK')
     except:
-       gdaltest.vfk_drv = None
+        gdaltest.vfk_drv = None
 
     if gdaltest.vfk_drv is None:
-       return 'skip'
+        return 'skip'
 
     try:
         os.remove('data/bylany.vfk.db')
@@ -97,7 +97,7 @@ def ogr_vfk_1():
 def ogr_vfk_2():
 
     if gdaltest.vfk_drv is None:
-       return 'skip'
+        return 'skip'
 
     gdaltest.vfk_layer_par.ResetReading()
 
@@ -129,7 +129,7 @@ def ogr_vfk_2():
 def ogr_vfk_3():
 
     if gdaltest.vfk_drv is None:
-       return 'skip'
+        return 'skip'
 
     gdaltest.vfk_layer_sobr = gdaltest.vfk_ds.GetLayer(43)
 
@@ -160,7 +160,7 @@ def ogr_vfk_3():
 def ogr_vfk_4():
 
     if gdaltest.vfk_drv is None:
-       return 'skip'
+        return 'skip'
 
     gdaltest.vfk_layer_sbp = gdaltest.vfk_ds.GetLayerByName('SBP')
 
@@ -184,7 +184,7 @@ def ogr_vfk_4():
 def ogr_vfk_5():
 
     if gdaltest.vfk_drv is None:
-       return 'skip'
+        return 'skip'
 
     gdaltest.vfk_layer_hp = gdaltest.vfk_ds.GetLayerByName('HP')
 
@@ -207,7 +207,7 @@ def ogr_vfk_5():
 def ogr_vfk_6():
 
     if gdaltest.vfk_drv is None:
-       return 'skip'
+        return 'skip'
 
     gdaltest.vfk_layer_par = None
     gdaltest.vfk_layer_sobr = None
@@ -272,7 +272,7 @@ def ogr_vfk_7():
 def ogr_vfk_8():
 
     if gdaltest.vfk_drv is None:
-       return 'skip'
+        return 'skip'
 
     # open by SQLite driver first
     gdaltest.vfk_ds = None
@@ -327,7 +327,7 @@ def ogr_vfk_9():
 def ogr_vfk_cleanup():
 
     if gdaltest.vfk_drv is None:
-       return 'skip'
+        return 'skip'
 
     gdaltest.vfk_layer_par = None
     gdaltest.vfk_layer_hp = None

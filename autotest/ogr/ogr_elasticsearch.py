@@ -2421,7 +2421,7 @@ gdaltest_list = [
     ogr_elasticsearch_10,
     ogr_elasticsearch_11,
     ogr_elasticsearch_cleanup,
-    ]
+]
 
 #gdaltest_list = [ ogr_elasticsearch_init, ogr_elasticsearch_10 ]
 

@@ -1196,7 +1196,7 @@ def ogr_gml_29():
     expected_results = [[ogr.wkbMultiPoint, 'MULTIPOINT (2 49)'],
                         [ogr.wkbMultiPolygon, 'MULTIPOLYGON (((2 49,3 49,3 50,2 50,2 49)))'],
                         [ogr.wkbMultiLineString, 'MULTILINESTRING ((2 49,3 50))'],
-                         ]
+                        ]
 
     for j in range(len(expected_results)):
         lyr = ds.GetLayer(j)
@@ -1881,7 +1881,7 @@ def ogr_gml_46():
                 # 'MULTIPOLYGON (((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10)))',
                 'GEOMETRYCOLLECTION (POINT (0 1))',
                 # 'GEOMETRYCOLLECTION (POINT (0 1 2))'
-                 ]
+                ]
 
     format_list = ['GML2', 'GML3', 'GML3Deegree', 'GML3.2']
 
@@ -2218,11 +2218,11 @@ def ogr_gml_52():
 
         feat = lyr.GetNextFeature()
         if feat.GetField('gid') != '1' or \
-        feat.GetField('regular_attribute') != 5 or \
-        feat.GetField('foo_href') != 'some_ref' or \
-        feat.GetField('teksti') != 'En francais !' or \
-        feat.GetField('teksti_kieli') != 'fr' or \
-        ogrtest.check_feature_geometry(feat, 'POINT (280000 7000000 0)') != 0:
+                feat.GetField('regular_attribute') != 5 or \
+                feat.GetField('foo_href') != 'some_ref' or \
+                feat.GetField('teksti') != 'En francais !' or \
+                feat.GetField('teksti_kieli') != 'fr' or \
+                ogrtest.check_feature_geometry(feat, 'POINT (280000 7000000 0)') != 0:
             gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
@@ -2966,27 +2966,27 @@ def ogr_gml_62():
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetField('element_attr1') != '1' or \
-        feat.GetField('element2_attr1') != 'a' or \
-        feat.GetField('element2') != 'foo' or \
-        feat.IsFieldSet('element3_attr1'):
+                feat.GetField('element2_attr1') != 'a' or \
+                feat.GetField('element2') != 'foo' or \
+                feat.IsFieldSet('element3_attr1'):
             gdaltest.post_reason('fail')
             feat.DumpReadable()
             print(i)
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.IsFieldSet('element_attr1') or \
-        feat.IsFieldSet('element2_attr1') or \
-        feat.IsFieldSet('element2') or \
-        feat.GetField('element3_attr1') != 1:
+                feat.IsFieldSet('element2_attr1') or \
+                feat.IsFieldSet('element2') or \
+                feat.GetField('element3_attr1') != 1:
             gdaltest.post_reason('fail')
             feat.DumpReadable()
             print(i)
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetField('element_attr1') != 'a' or \
-        feat.IsFieldSet('element2_attr1') or \
-        feat.IsFieldSet('element2') or \
-        feat.IsFieldSet('element3_attr1'):
+                feat.IsFieldSet('element2_attr1') or \
+                feat.IsFieldSet('element2') or \
+                feat.IsFieldSet('element3_attr1'):
             gdaltest.post_reason('fail')
             feat.DumpReadable()
             print(i)
@@ -3076,7 +3076,7 @@ def ogr_gml_65():
     option_expected_list = [['SRSDIMENSION_LOC=GEOMETRY', '<ogr:geometryProperty><gml:MultiSurface srsDimension="3"><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 1 2 3 4 5 6 7 8 0 1 2</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface></ogr:geometryProperty>'],
                             ['SRSDIMENSION_LOC=POSLIST', '<ogr:geometryProperty><gml:MultiSurface><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 1 2 3 4 5 6 7 8 0 1 2</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface></ogr:geometryProperty>'],
                             ['SRSDIMENSION_LOC=GEOMETRY,POSLIST', '<ogr:geometryProperty><gml:MultiSurface srsDimension="3"><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 1 2 3 4 5 6 7 8 0 1 2</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface></ogr:geometryProperty>'],
-                             ]
+                            ]
     for (option, expected) in option_expected_list:
         filename = '/vsimem/ogr_gml_65.gml'
         #filename = 'ogr_gml_65.gml'
@@ -3523,13 +3523,13 @@ def ogr_gml_67():
             return 'fail'
         if i == 0:
             if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('short')).GetType() != ogr.OFTInteger or \
-            lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('short')).GetSubType() != ogr.OFSTInt16:
+                    lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('short')).GetSubType() != ogr.OFSTInt16:
                 print(i)
                 gdaltest.post_reason('fail')
                 return 'fail'
         if i == 0:
             if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetType() != ogr.OFTReal or \
-            lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetSubType() != ogr.OFSTFloat32:
+                    lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetSubType() != ogr.OFSTFloat32:
                 print(i)
                 gdaltest.post_reason('fail')
                 return 'fail'
@@ -3762,9 +3762,9 @@ def ogr_gml_71_helper(ds):
        f.GetField('table2.baz') != 'foo' or \
        f.GetGeomFieldRef(0) is not None or \
        f.GetGeomFieldRef(1).ExportToWkt() != 'POINT (2 49)':
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField('table1.gml_id') != 'table1-2' or \
        f.IsFieldSet('table1.foo') or \
@@ -3774,9 +3774,9 @@ def ogr_gml_71_helper(ds):
        f.GetField('table2.baz') != 'bar' or \
        f.GetGeomFieldRef(0).ExportToWkt() != 'POINT (3 50)' or \
        f.GetGeomFieldRef(1).ExportToWkt() != 'POINT (2 50)':
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
 
     return 'success'
 
@@ -4171,7 +4171,7 @@ def ogr_gml_79():
     tests = [['SHORT', 'EPSG:4326', '2 49'],
              ['OGC_URN', 'urn:ogc:def:crs:EPSG::4326', '49 2'],
              ['OGC_URL', 'http://www.opengis.net/def/crs/EPSG/0/4326', '49 2']
-              ]
+             ]
     for (srsname_format, expected_srsname, expected_coords) in tests:
 
         ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_79.xml', \

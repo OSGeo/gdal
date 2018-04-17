@@ -45,7 +45,7 @@ def iszip(filename):
 
 def istgz(filename):
     return filename.endswith('.tgz') or filename.endswith('.TGZ') or \
-           filename.endswith('.tar.gz') or filename.endswith('.TAR.GZ')
+        filename.endswith('.tar.gz') or filename.endswith('.TAR.GZ')
 
 
 def display_file(fout, dirname, prefix, filename, longformat, check_open=False):

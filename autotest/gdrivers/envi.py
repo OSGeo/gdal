@@ -382,7 +382,7 @@ gdaltest_list = [
     envi_13,
     envi_14,
     envi_15,
-    ]
+]
 
 
 if __name__ == '__main__':

@@ -80,12 +80,12 @@ class wkb_wkt_unit:
             gdaltest.post_reason('Geometry name differs!')
             return 'fail'
 
- # It turns out this test is too picky about coordinate precision. skip.
- #       if geom_wkb.Equal( geom_wkt ) == 0:
- #           gdaltest.post_reason( 'Geometries not equal!' )
- #           print geom_wkb.ExportToWkt()
- #           print geom_wkt.ExportToWkt()
- #           return 'fail'
+# It turns out this test is too picky about coordinate precision. skip.
+#       if geom_wkb.Equal( geom_wkt ) == 0:
+#           gdaltest.post_reason( 'Geometries not equal!' )
+#           print geom_wkb.ExportToWkt()
+#           print geom_wkt.ExportToWkt()
+#           return 'fail'
 
         geom_wkb.Destroy()
 
@@ -368,7 +368,7 @@ def ogr_wkbwkt_test_broken_geom():
                    'CURVEPOLYGON Z()',
                    'CURVEPOLYGON Z(EMPTY',
                    'CURVEPOLYGON Z((0 1,2 3)',
-                    ]
+                   ]
     for wkt in list_broken:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         geom = ogr.CreateGeometryFromWkt(wkt)
@@ -493,7 +493,7 @@ def ogr_wkbwkt_test_import_wkt_sf12():
 
                        ('MULTISURFACE EMPTY', 'MULTISURFACE EMPTY'),
                        ('MULTISURFACE (EMPTY)', 'MULTISURFACE EMPTY'),
-                        ]
+                       ]
 
     for wkt_tuple in list_wkt_tuples:
         geom = ogr.CreateGeometryFromWkt(wkt_tuple[0])
@@ -545,7 +545,7 @@ def ogr_wkbwkt_test_geometrycollection_wktwkb():
                 'GEOMETRYCOLLECTION (CURVEPOLYGON ((0 0,0 1,1 1,0 0)))',
                 'GEOMETRYCOLLECTION (MULTICURVE ((0 0,0 1,1 1,0 0)))',
                 'GEOMETRYCOLLECTION (MULTISURFACE (((0 0,0 1,1 1,0 0))))',
-                 ]
+                ]
     for wkt in wkt_list:
         g = ogr.CreateGeometryFromWkt(wkt)
         wkb = g.ExportToWkb()

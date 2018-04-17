@@ -752,7 +752,7 @@ def ogr_csw_vsimem_cleanup():
 
 gdaltest_live_list = [
     ogr_csw_pycsw
-    ]
+]
 
 gdaltest_vsimem_list = [
     ogr_csw_vsimem_fail_because_not_enabled,

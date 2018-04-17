@@ -162,7 +162,7 @@ gdaltest_list = [
     reproject_2,
     reproject_3,
     reproject_4
-    ]
+]
 
 if __name__ == '__main__':
 

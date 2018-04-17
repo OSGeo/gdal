@@ -767,11 +767,11 @@ def ogr_mitab_20():
         f = open('tmp/mitab_bounds.txt', 'wb')
         if i == 0:
             f.write(
-"""Source = CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000
+                """Source = CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000
 Destination=CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000001, 700000, 6600000 Bounds (-792421, 5278231) (3520778, 9741029)""".encode('ascii'))
         else:
             f.write(
-"""Source = CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000
+                """Source = CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000
 Destination=CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 700000, 6600000 Bounds (75000, 6000000) (1275000, 7200000)""".encode('ascii'))
         f.close()
 
@@ -1896,7 +1896,7 @@ def ogr_mitab_35():
                      'CoordSys Earth Projection 31, 104, "m", 1, 2, 3, 4, 5',
                      'CoordSys Earth Projection 32, 104, "m", 1, 2, 3, 4, 5, 6',
                      'CoordSys Earth Projection 33, 104, "m", 1, 2, 3, 4',
-                      ]:
+                     ]:
         srs = get_srs_from_coordsys(coordsys)
         #print(srs)
         got_coordsys = get_coordsys_from_srs(srs)
@@ -2734,7 +2734,7 @@ gdaltest_list = [
     ogr_mitab_tab_field_index_creation,
     ogr_mitab_tab_view,
     ogr_mitab_cleanup
-    ]
+]
 
 if __name__ == '__main__':
 

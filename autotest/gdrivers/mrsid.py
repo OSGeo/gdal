@@ -125,9 +125,9 @@ def mrsid_1():
 
     if prj.find('North_American_Datum_1927') == -1 or \
        prj.find('Mercator_1SP') == -1:
-           gdaltest.post_reason('did not get expected projection')
-           print(got_prj)
-           return 'fail'
+        gdaltest.post_reason('did not get expected projection')
+        print(got_prj)
+        return 'fail'
 
     if got_prj != prj:
         print('Warning: did not get exactly expected projection. Got %s' % got_prj)
@@ -439,11 +439,11 @@ def mrsid_11():
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0] - 440720) > 0.1 \
-        or abs(geotransform[1] - 60) > 0.001 \
-        or abs(geotransform[2] - 0) > 0.001 \
-        or abs(geotransform[3] - 3751320) > 0.1 \
-        or abs(geotransform[4] - 0) > 0.001 \
-        or abs(geotransform[5] - -60) > 0.001:
+            or abs(geotransform[1] - 60) > 0.001 \
+            or abs(geotransform[2] - 0) > 0.001 \
+            or abs(geotransform[3] - 3751320) > 0.1 \
+            or abs(geotransform[4] - 0) > 0.001 \
+            or abs(geotransform[5] - -60) > 0.001:
         print(geotransform)
         gdaltest.post_reason('geotransform differs from expected')
         return 'fail'

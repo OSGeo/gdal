@@ -105,7 +105,7 @@ class Translator(object):
             path, filename = os.path.split(os.path.abspath(self.options.output))
             name, ext = os.path.splitext(filename)
             if self.options.overwrite:
-            # special case the Shapefile driver, which behaves specially.
+                # special case the Shapefile driver, which behaves specially.
                 if os.path.exists(os.path.join(path, name,) + '.shp'):
                     os.remove(os.path.join(path, name,) + '.shp')
                     os.remove(os.path.join(path, name,) + '.shx')
@@ -325,11 +325,11 @@ def GetLength(geometry):
         pt_count = g.GetPointCount()
         x1, y1 = g.GetX(0), g.GetY(0)
         for pi in range(1, pt_count):
-             x2, y2 = g.GetX(pi), g.GetY(pi)
-             length = get_distance(x1, y1, x2, y2)
-             cumulative = cumulative + length
-             x1 = x2
-             y1 = y2
+            x2, y2 = g.GetX(pi), g.GetY(pi)
+            length = get_distance(x1, y1, x2, y2)
+            cumulative = cumulative + length
+            x1 = x2
+            y1 = y2
         return cumulative
 
     cumulative = 0.0

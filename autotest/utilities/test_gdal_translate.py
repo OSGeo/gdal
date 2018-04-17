@@ -923,9 +923,9 @@ def test_gdal_translate_32():
        abs(float(md['LINE_SCALE']) - 47502) > 1e-5 or \
        abs(float(md['SAMP_OFF']) - 19676.6923076923) > 1e-5 or \
        abs(float(md['SAMP_SCALE']) - 19678.1538461538) > 1e-5:
-           gdaltest.post_reason('fail')
-           print(md)
-           return 'fail'
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
 
     return 'success'
 
@@ -1166,7 +1166,7 @@ gdaltest_list = [
     test_gdal_translate_34,
     test_gdal_translate_35,
     test_gdal_translate_cleanup
-    ]
+]
 
 
 if __name__ == '__main__':
