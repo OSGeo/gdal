@@ -674,8 +674,8 @@ class GDALTest:
                 return 'fail'
 
         if new_ds is None:
-            post_reason('Failed to create test file using CreateCopy method.'
-                        + '\n' + gdal.GetLastErrorMsg())
+            post_reason('Failed to create test file using CreateCopy method.' +
+                        '\n' + gdal.GetLastErrorMsg())
             return 'fail'
 
         if new_ds.GetDriver().ShortName != gdal.GetDriverByName(self.drivername).ShortName:

@@ -462,8 +462,8 @@ def ogr_pg_8():
         return 'fail'
 
     if feat_read.GetField('shortname') != 'Crazy"\'L':
-        gdaltest.post_reason('Vvalue not properly escaped or truncated:'
-                             + feat_read.GetField('shortname'))
+        gdaltest.post_reason('Vvalue not properly escaped or truncated:' +
+                             feat_read.GetField('shortname'))
         return 'fail'
 
     feat_read.Destroy()

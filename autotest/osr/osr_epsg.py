@@ -64,8 +64,8 @@ def osr_epsg_2():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4312)
 
-    if abs(float(srs.GetAttrValue('TOWGS84', 6))
-           - 2.4232) > 0.0005:
+    if abs(float(srs.GetAttrValue('TOWGS84', 6)) -
+           2.4232) > 0.0005:
         gdaltest.post_reason('Wrong TOWGS84, override missed?')
         print(srs.ExportToPrettyWkt())
         return 'fail'
@@ -86,8 +86,8 @@ def osr_epsg_3():
         expected_towgs84 = [33.4, -146.6, -76.3, -0.359, -0.053, 0.844, -0.84]
 
         for i in range(6):
-            if abs(float(srs.GetAttrValue('TOWGS84', i))
-                   - expected_towgs84[i]) > 0.0005:
+            if abs(float(srs.GetAttrValue('TOWGS84', i)) -
+                   expected_towgs84[i]) > 0.0005:
                 gdaltest.post_reason('For EPSG:%d. Wrong TOWGS84, override missed?' % epsg)
                 print(srs.ExportToPrettyWkt())
                 return 'fail'

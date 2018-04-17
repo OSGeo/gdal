@@ -836,8 +836,8 @@ def tiff_ovr_20():
     fileobj.close()
 
     # Check BigTIFF signature
-    if ((binvalues[2] != 0x2B or binvalues[3] != 0)
-            and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+    if ((binvalues[2] != 0x2B or binvalues[3] != 0) and
+            (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -874,8 +874,8 @@ def tiff_ovr_21():
     fileobj.close()
 
     # Check BigTIFF signature
-    if ((binvalues[2] != 0x2B or binvalues[3] != 0)
-            and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+    if ((binvalues[2] != 0x2B or binvalues[3] != 0) and
+            (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -950,8 +950,8 @@ def tiff_ovr_23():
     fileobj.close()
 
     # Check Classical TIFF signature
-    if ((binvalues[2] != 0x2A or binvalues[3] != 0)
-            and (binvalues[3] != 0x2A or binvalues[2] != 0)):
+    if ((binvalues[2] != 0x2A or binvalues[3] != 0) and
+            (binvalues[3] != 0x2A or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'
@@ -990,8 +990,8 @@ def tiff_ovr_24():
     fileobj.close()
 
     # Check BigTIFF signature
-    if ((binvalues[2] != 0x2B or binvalues[3] != 0)
-            and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+    if ((binvalues[2] != 0x2B or binvalues[3] != 0) and
+            (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
     return 'success'

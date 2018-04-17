@@ -108,9 +108,9 @@ def ogr_join_4():
     expect = ['_179_', '_171_', None, None]
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
-        'SELECT poly.*, name FROM poly '
-        + 'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id '
-        + 'WHERE eas_id > 170')
+        'SELECT poly.*, name FROM poly ' +
+        'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id ' +
+        'WHERE eas_id > 170')
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'NAME', expect)
 
@@ -130,9 +130,9 @@ def ogr_join_5():
     expect = [179, 171, 173, 172]
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
-        'SELECT p.*, il.name FROM poly p '
-        + 'LEFT JOIN idlink il ON p.eas_id = il.eas_id '
-        + 'WHERE eas_id > 170')
+        'SELECT p.*, il.name FROM poly p ' +
+        'LEFT JOIN idlink il ON p.eas_id = il.eas_id ' +
+        'WHERE eas_id > 170')
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'p.eas_id', expect)
 
@@ -152,9 +152,9 @@ def ogr_join_6():
     expect = [171, 172, 173, 179]
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
-        'SELECT p.*, il.name FROM poly p '
-        + 'LEFT JOIN idlink il ON p.eas_id = il.eas_id '
-        + 'WHERE eas_id > 170 ORDER BY p.eas_id')
+        'SELECT p.*, il.name FROM poly p ' +
+        'LEFT JOIN idlink il ON p.eas_id = il.eas_id ' +
+        'WHERE eas_id > 170 ORDER BY p.eas_id')
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'p.eas_id', expect)
 
@@ -174,9 +174,9 @@ def ogr_join_7():
     expect = [171, 172, 173, 179]
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
-        'SELECT p.*, il.name FROM poly p '
-        + 'LEFT JOIN "data/idlink.dbf".idlink il ON p.eas_id = il.eas_id '
-        + 'WHERE eas_id > 170 ORDER BY p.eas_id')
+        'SELECT p.*, il.name FROM poly p ' +
+        'LEFT JOIN "data/idlink.dbf".idlink il ON p.eas_id = il.eas_id ' +
+        'WHERE eas_id > 170 ORDER BY p.eas_id')
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'p.eas_id', expect)
 
@@ -196,10 +196,10 @@ def ogr_join_8():
     expect = [171, None, None, 179]
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
-        'SELECT p.*, il.name, il2.eas_id FROM poly p '
-        + 'LEFT JOIN "data/idlink.dbf".idlink il ON p.eas_id = il.eas_id '
-        + 'LEFT JOIN idlink il2 ON p.eas_id = il2.eas_id '
-        + 'WHERE eas_id > 170 ORDER BY p.eas_id')
+        'SELECT p.*, il.name, il2.eas_id FROM poly p ' +
+        'LEFT JOIN "data/idlink.dbf".idlink il ON p.eas_id = il.eas_id ' +
+        'LEFT JOIN idlink il2 ON p.eas_id = il2.eas_id ' +
+        'WHERE eas_id > 170 ORDER BY p.eas_id')
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'il2.eas_id', expect)
 
@@ -220,9 +220,9 @@ def ogr_join_9():
     expect = [179, 171, 173, 172]
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
-        'SELECT poly.* FROM poly '
-        + 'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id '
-        + 'WHERE eas_id > 170')
+        'SELECT poly.* FROM poly ' +
+        'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id ' +
+        'WHERE eas_id > 170')
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'poly.EAS_ID', expect)
 
@@ -241,8 +241,8 @@ def ogr_join_10():
     expect = [None, None, None, None, None, None, None, None, None, None]
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
-        'SELECT * FROM poly '
-        + 'LEFT JOIN idlink2 ON poly.eas_id = idlink2.name ')
+        'SELECT * FROM poly ' +
+        'LEFT JOIN idlink2 ON poly.eas_id = idlink2.name ')
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'F3', expect)
 
@@ -301,8 +301,8 @@ def ogr_join_13():
     expect = ['_168_', '_179_', '_171_', None, None, None, '_166_', '_158_', '_165_', '_170_']
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
-        'SELECT * FROM poly '
-        + 'LEFT JOIN idlink2 ON poly.eas_id = idlink2.eas_id')
+        'SELECT * FROM poly ' +
+        'LEFT JOIN idlink2 ON poly.eas_id = idlink2.eas_id')
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'name', expect)
 
@@ -322,8 +322,8 @@ def ogr_join_14():
     expect = [168, 179, 171, 170, 165, 158, 166]
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
-        'SELECT * FROM idlink2 '
-        + 'LEFT JOIN poly ON idlink2.eas_id = poly.eas_id')
+        'SELECT * FROM idlink2 ' +
+        'LEFT JOIN poly ON idlink2.eas_id = poly.eas_id')
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'poly.EAS_ID', expect)
 
@@ -388,9 +388,9 @@ def ogr_join_16():
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.ds.ExecuteSQL(
-        'SELECT * FROM poly '
-        + 'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id '
-        + 'WHERE idlink.name = \'_165\'')
+        'SELECT * FROM poly ' +
+        'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id ' +
+        'WHERE idlink.name = \'_165\'')
     gdal.PopErrorHandler()
 
     if gdal.GetLastErrorMsg().find('Cannot use field') != 0:
@@ -410,9 +410,9 @@ def ogr_join_17():
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.ds.ExecuteSQL(
-        'SELECT * FROM poly '
-        + 'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id '
-        + 'ORDER BY name')
+        'SELECT * FROM poly ' +
+        'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id ' +
+        'ORDER BY name')
     gdal.PopErrorHandler()
 
     if gdal.GetLastErrorMsg().find('Cannot use field') != 0:
@@ -493,9 +493,9 @@ def ogr_join_21():
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.ds.ExecuteSQL(
-        'SELECT p.*, il.name, il2.eas_id FROM poly p '
-        + 'LEFT JOIN "data/idlink.dbf".idlink il ON p.eas_id = il2.eas_id '
-        + 'LEFT JOIN idlink il2 ON p.eas_id = il2.eas_id')
+        'SELECT p.*, il.name, il2.eas_id FROM poly p ' +
+        'LEFT JOIN "data/idlink.dbf".idlink il ON p.eas_id = il2.eas_id ' +
+        'LEFT JOIN idlink il2 ON p.eas_id = il2.eas_id')
     gdal.PopErrorHandler()
 
     if gdal.GetLastErrorMsg().find('Field il2.eas_id in JOIN clause does not correspond to the primary table nor the joint (secondary) table') != 0:
