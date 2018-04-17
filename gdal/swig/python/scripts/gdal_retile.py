@@ -872,7 +872,7 @@ def main(args=None):
         if (os.path.exists(leveldir) == False):
             os.mkdir(leveldir)
 
-    if Levels > 0:    #prepare Dirs for pyramid
+    if Levels > 0:  # prepare Dirs for pyramid
         startIndx = 1
         for levelIndx in range(startIndx, Levels + 1):
             leveldir = TargetDir + str(levelIndx) + os.sep

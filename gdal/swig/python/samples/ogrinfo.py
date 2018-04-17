@@ -209,7 +209,7 @@ def main(argv=None):
     if pszSQLStatement is not None:
         poResultSet = None
 
-        nRepeatCount = 0  #// skip layer reporting.
+        nRepeatCount = 0  # // skip layer reporting.
 
         if papszLayers is not None:
             print("layer names ignored in combination with -sql.")
