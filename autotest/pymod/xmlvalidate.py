@@ -123,7 +123,7 @@ def validate(xml_filename_or_content, xsd_filename=None, \
         "elementFormDefault": "qualified",
         "version": "1.0.0",
     }, nsmap={
-            None: "http://www.w3.org/2001/XMLSchema"
+        None: "http://www.w3.org/2001/XMLSchema"
     }
     )
 
