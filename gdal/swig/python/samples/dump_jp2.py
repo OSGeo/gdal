@@ -131,9 +131,9 @@ def extract_all_xml_boxes(filename, prefix):
                     else:
                         end_gmljp2_link = end_gmljp2_link_double_quote
                 elif end_gmljp2_link_space >= 0:
-                     end_gmljp2_link = end_gmljp2_link_space
+                    end_gmljp2_link = end_gmljp2_link_space
                 elif end_gmljp2_link_double_quote >= 0:
-                     end_gmljp2_link = end_gmljp2_link_double_quote
+                    end_gmljp2_link = end_gmljp2_link_double_quote
                 if end_gmljp2_link >= 0:
                     referenced_box = mdd_item[new_pos + len('gmljp2://xml/'):end_gmljp2_link]
                     if not (('xml:' + referenced_box) in mdd_list):

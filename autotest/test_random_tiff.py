@@ -87,9 +87,9 @@ def generate_tif(comb_val):
            tag == TIFFTAG_TILELENGTH or \
            tag == TIFFTAG_TILEOFFSETS or \
            tag == TIFFTAG_TILEBYTECOUNTS:
-               if has_strip:
-                   idx_val = 0
-                   val = None
+            if has_strip:
+                idx_val = 0
+                val = None
         idx_tab.append(idx_val)
 
         if val is not None:

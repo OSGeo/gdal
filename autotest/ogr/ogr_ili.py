@@ -84,9 +84,9 @@ def ogr_interlis1_2():
         return 'fail'
 
     for i in range(ds.GetLayerCount()):
-      if not ds.GetLayer(i).GetName() in layers:
-          gdaltest.post_reason('Did not get right layers')
-          return 'fail'
+        if not ds.GetLayer(i).GetName() in layers:
+            gdaltest.post_reason('Did not get right layers')
+            return 'fail'
 
     lyr = ds.GetLayerByName('Bodenbedeckung__BoFlaechen')
 
@@ -106,10 +106,10 @@ def ogr_interlis1_2():
 
     for i in range(feat.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(field_values[i]):
-          feat.DumpReadable()
-          print(feat.GetFieldAsString(i))
-          gdaltest.post_reason('field value wrong.')
-          return 'fail'
+            feat.DumpReadable()
+            print(feat.GetFieldAsString(i))
+            gdaltest.post_reason('field value wrong.')
+            return 'fail'
 
     geom = feat.GetGeomFieldRef(0)
     if geom.GetCoordinateDimension() != 2:
@@ -144,9 +144,9 @@ def ogr_interlis1_3():
         return 'fail'
 
     for i in range(ds.GetLayerCount()):
-      if not ds.GetLayer(i).GetName() in layers:
-          gdaltest.post_reason('Did not get right layers')
-          return 'fail'
+        if not ds.GetLayer(i).GetName() in layers:
+            gdaltest.post_reason('Did not get right layers')
+            return 'fail'
 
     lyr = ds.GetLayerByName('FormatTests__FormatTable')
 
@@ -164,10 +164,10 @@ def ogr_interlis1_3():
 
     for i in range(feat.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(field_values[i]):
-          feat.DumpReadable()
-          print(feat.GetFieldAsString(i))
-          gdaltest.post_reason('field value wrong.')
-          return 'fail'
+            feat.DumpReadable()
+            print(feat.GetFieldAsString(i))
+            gdaltest.post_reason('field value wrong.')
+            return 'fail'
 
     return 'success'
 
@@ -188,9 +188,9 @@ def ogr_interlis1_4():
         return 'fail'
 
     for i in range(ds.GetLayerCount()):
-      if not ds.GetLayer(i).GetName() in layers:
-          gdaltest.post_reason('Did not get right layers')
-          return 'fail'
+        if not ds.GetLayer(i).GetName() in layers:
+            gdaltest.post_reason('Did not get right layers')
+            return 'fail'
 
     lyr = ds.GetLayerByName('FormatTests__FormatTable')
 
@@ -208,10 +208,10 @@ def ogr_interlis1_4():
 
     for i in range(feat.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(field_values[i]):
-          feat.DumpReadable()
-          print(feat.GetFieldAsString(i))
-          gdaltest.post_reason('field value wrong.')
-          return 'fail'
+            feat.DumpReadable()
+            print(feat.GetFieldAsString(i))
+            gdaltest.post_reason('field value wrong.')
+            return 'fail'
 
     return 'success'
 
@@ -327,9 +327,9 @@ def ogr_interlis1_7():
         return 'fail'
 
     for i in range(ds.GetLayerCount()):
-      if not ds.GetLayer(i).GetName() in layers:
-          gdaltest.post_reason('Did not get right layers')
-          return 'fail'
+        if not ds.GetLayer(i).GetName() in layers:
+            gdaltest.post_reason('Did not get right layers')
+            return 'fail'
 
     lyr = ds.GetLayerByName('FormatTests__FormatTable')
 
@@ -349,10 +349,10 @@ def ogr_interlis1_7():
 
     for i in range(feat.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(field_values[i]):
-          feat.DumpReadable()
-          print(feat.GetFieldAsString(i))
-          gdaltest.post_reason('field value wrong.')
-          return 'fail'
+            feat.DumpReadable()
+            print(feat.GetFieldAsString(i))
+            gdaltest.post_reason('field value wrong.')
+            return 'fail'
 
     #Write back
     driver = ogr.GetDriverByName('Interlis 1')
@@ -412,9 +412,9 @@ def ogr_interlis1_9():
         return 'fail'
 
     for i in range(ds.GetLayerCount()):
-      if not ds.GetLayer(i).GetName() in layers:
-          gdaltest.post_reason('Did not get right layers')
-          return 'fail'
+        if not ds.GetLayer(i).GetName() in layers:
+            gdaltest.post_reason('Did not get right layers')
+            return 'fail'
 
     lyr = ds.GetLayerByName('BoGebaeude')
 
@@ -436,10 +436,10 @@ def ogr_interlis1_9():
 
     for i in range(feat.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(field_values[i]):
-          feat.DumpReadable()
-          print(feat.GetFieldAsString(i))
-          gdaltest.post_reason('field value wrong.')
-          return 'fail'
+            feat.DumpReadable()
+            print(feat.GetFieldAsString(i))
+            gdaltest.post_reason('field value wrong.')
+            return 'fail'
 
     return 'success'
 
@@ -496,9 +496,9 @@ def ogr_interlis1_11():
         return 'fail'
 
     for i in range(ds.GetLayerCount()):
-      if not ds.GetLayer(i).GetName() in layers:
-          gdaltest.post_reason('Did not get right layers')
-          return 'fail'
+        if not ds.GetLayer(i).GetName() in layers:
+            gdaltest.post_reason('Did not get right layers')
+            return 'fail'
 
     lyr = ds.GetLayerByName('MultigeomTests__MultigeomTable')
 
@@ -553,9 +553,9 @@ def ogr_interlis1_12():
         return 'fail'
 
     for i in range(ds.GetLayerCount()):
-      if not ds.GetLayer(i).GetName() in layers:
-          gdaltest.post_reason('Did not get right layers')
-          return 'fail'
+        if not ds.GetLayer(i).GetName() in layers:
+            gdaltest.post_reason('Did not get right layers')
+            return 'fail'
 
     lyr = ds.GetLayerByName('MulticoordTests__MulticoordTable')
 
@@ -1088,9 +1088,9 @@ def ogr_interlis2_1():
         return 'fail'
 
     for i in range(ds.GetLayerCount()):
-      if not ds.GetLayer(i).GetName() in layers:
-          gdaltest.post_reason('Did not get right layers')
-          return 'fail'
+        if not ds.GetLayer(i).GetName() in layers:
+            gdaltest.post_reason('Did not get right layers')
+            return 'fail'
 
     return 'success'
 
@@ -1119,9 +1119,9 @@ def ogr_interlis2_2():
         return 'fail'
 
     for i in range(ds.GetLayerCount()):
-      if not ds.GetLayer(i).GetName() in layers:
-          gdaltest.post_reason('Did not get right layers')
-          return 'fail'
+        if not ds.GetLayer(i).GetName() in layers:
+            gdaltest.post_reason('Did not get right layers')
+            return 'fail'
 
     lyr = ds.GetLayerByName('RoadsExdm2ien.RoadsExtended.RoadSign')
     if lyr.GetFeatureCount() != 4:
@@ -1139,10 +1139,10 @@ def ogr_interlis2_2():
 
     for i in range(feat.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(field_values[i]):
-          feat.DumpReadable()
-          print(feat.GetFieldAsString(i))
-          gdaltest.post_reason('field value wrong.')
-          return 'fail'
+            feat.DumpReadable()
+            print(feat.GetFieldAsString(i))
+            gdaltest.post_reason('field value wrong.')
+            return 'fail'
 
     geom = feat.GetGeometryRef()
     if geom.GetCoordinateDimension() != 2:

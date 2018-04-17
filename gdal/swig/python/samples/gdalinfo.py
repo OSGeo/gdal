@@ -257,7 +257,7 @@ def main(argv=None):
             if papszMetadata is not None and len(papszMetadata) > 0:
                 print("Metadata (%s):" % extra_domain)
                 for metadata in papszMetadata:
-                  print("  %s" % metadata)
+                    print("  %s" % metadata)
 
 # --------------------------------------------------------------------
 #      Report "IMAGE_STRUCTURE" metadata.
@@ -377,8 +377,8 @@ def main(argv=None):
                 gdal.ErrorReset()
                 adfCMinMax = hBand.ComputeRasterMinMax(False)
                 if gdal.GetLastErrorType() == gdal.CE_None:
-                  line = line + ("  Computed Min/Max=%.3f,%.3f" % ( \
-                      adfCMinMax[0], adfCMinMax[1]))
+                    line = line + ("  Computed Min/Max=%.3f,%.3f" % ( \
+                        adfCMinMax[0], adfCMinMax[1]))
 
             print(line)
 

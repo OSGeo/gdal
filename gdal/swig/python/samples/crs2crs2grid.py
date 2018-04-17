@@ -82,7 +82,7 @@ def read_grid_crs_to_crs(filename, shape):
 
     # report the file header defining the transformation
     for i in range(5):
-      print(fd.readline().rstrip())
+        print(fd.readline().rstrip())
 
     points_found = 0
 
@@ -370,14 +370,14 @@ if __name__ == '__main__':
 
     # Run htdp to transform the data.
     try:
-      os.unlink(out_grid_fn)
+        os.unlink(out_grid_fn)
     except OSError:
-      pass
+        pass
 
     rc = os.system(htdp_path + ' < ' + control_fn)
     if rc != 0:
-      print('htdp run failed!')
-      sys.exit(1)
+        print('htdp run failed!')
+        sys.exit(1)
 
     print('htdp run complete.')
 
@@ -391,8 +391,8 @@ if __name__ == '__main__':
 
     # cleanup working files unless they have been requested to remain.
     if kwf == 0:
-      os.unlink(in_grid_fn)
-      os.unlink(out_grid_fn)
-      os.unlink(control_fn)
+        os.unlink(in_grid_fn)
+        os.unlink(out_grid_fn)
+        os.unlink(control_fn)
 
     print('Processing complete: see ' + output_grid_name)

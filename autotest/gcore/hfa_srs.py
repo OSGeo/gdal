@@ -71,8 +71,8 @@ class TestHFASRS:
         # comparison, substitute one for another
         if sr.ExportToWkt().find('"System_Jednotne_Trigonometricke_Site_Katastralni_Ferro"') != -1 and \
            sr2.ExportToWkt().find('"System_Jednotne_Trigonometricke_Site_Katastralni"') != -1:
-               wkt2 = sr2.ExportToWkt().replace('"System_Jednotne_Trigonometricke_Site_Katastralni"', '"System_Jednotne_Trigonometricke_Site_Katastralni_Ferro"')
-               sr2.SetFromUserInput(wkt2)
+            wkt2 = sr2.ExportToWkt().replace('"System_Jednotne_Trigonometricke_Site_Katastralni"', '"System_Jednotne_Trigonometricke_Site_Katastralni_Ferro"')
+            sr2.SetFromUserInput(wkt2)
 
         if (self.epsg_code == 4326 and sr2.GetAuthorityCode(None) != '4326') or sr.IsSame(sr2) != 1:
             if self.expected_fail:

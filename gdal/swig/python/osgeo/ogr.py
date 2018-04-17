@@ -600,9 +600,9 @@ class MajorObject(_object):
         return _ogr.MajorObject_SetMetadataItem(self, *args)
 
     def GetMetadata(self, domain=''):
-      if domain[:4] == 'xml:':
-        return self.GetMetadata_List(domain)
-      return self.GetMetadata_Dict(domain)
+        if domain[:4] == 'xml:':
+            return self.GetMetadata_List(domain)
+        return self.GetMetadata_Dict(domain)
 
 
 MajorObject_swigregister = _ogr.MajorObject_swigregister
@@ -1127,22 +1127,22 @@ class DataSource(MajorObject):
         return _ogr.DataSource_RollbackTransaction(self, *args)
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_DataSource(self)
-      self.thisown = 0
+        "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
+        _ogr.delete_DataSource(self)
+        self.thisown = 0
 
     def Release(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_DataSource(self)
-      self.thisown = 0
+        "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
+        _ogr.delete_DataSource(self)
+        self.thisown = 0
 
     def Reference(self):
-      "For backwards compatibility only."
-      return self.Reference()
+        "For backwards compatibility only."
+        return self.Reference()
 
     def Dereference(self):
-      "For backwards compatibility only."
-      self.Dereference()
+        "For backwards compatibility only."
+        self.Dereference()
 
     def __len__(self):
         """Returns the number of layers on the datasource"""
@@ -2933,12 +2933,12 @@ class Layer(MajorObject):
         return _ogr.Layer_SetStyleTable(self, *args)
 
     def Reference(self):
-      "For backwards compatibility only."
-      pass
+        "For backwards compatibility only."
+        pass
 
     def Dereference(self):
-      "For backwards compatibility only."
-      pass
+        "For backwards compatibility only."
+        pass
 
     def __len__(self):
         """Returns the number of features in the layer"""
@@ -4505,15 +4505,15 @@ class Feature(_object):
         return _ogr.Feature_SetFieldString(self, *args)
 
     def Reference(self):
-      pass
+        pass
 
     def Dereference(self):
-      pass
+        pass
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_Feature(self)
-      self.thisown = 0
+        "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
+        _ogr.delete_Feature(self)
+        self.thisown = 0
 
     def __cmp__(self, other):
         """Compares a feature to another for equality"""
@@ -5234,9 +5234,9 @@ class FeatureDefn(_object):
         return _ogr.FeatureDefn_IsSame(self, *args)
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_FeatureDefn(self)
-      self.thisown = 0
+        "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
+        _ogr.delete_FeatureDefn(self)
+        self.thisown = 0
 
 
 FeatureDefn_swigregister = _ogr.FeatureDefn_swigregister
@@ -5735,9 +5735,9 @@ class FieldDefn(_object):
     justify = property(GetJustify, SetJustify)
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_FieldDefn(self)
-      self.thisown = 0
+        "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
+        _ogr.delete_FieldDefn(self)
+        self.thisown = 0
 
 
 FieldDefn_swigregister = _ogr.FieldDefn_swigregister
@@ -7608,15 +7608,15 @@ class Geometry(_object):
         return _ogr.Geometry_Value(self, *args)
 
     def Destroy(self):
-      self.__swig_destroy__(self)
-      self.__del__()
-      self.thisown = 0
+        self.__swig_destroy__(self)
+        self.__del__()
+        self.thisown = 0
 
     def __str__(self):
-      return self.ExportToWkt()
+        return self.ExportToWkt()
 
     def __reduce__(self):
-      return (self.__class__, (), self.ExportToWkb())
+        return (self.__class__, (), self.ExportToWkb())
 
     def __setstate__(self, state):
         result = CreateGeometryFromWkb(state)

@@ -3544,31 +3544,31 @@ def ogr_vrt_38():
               ]
 
     for (type_str, ogr_type) in types:
-      for qualifier in ['', 'Z', 'M', 'ZM', '25D']:
-        if qualifier == 'Z' and ogr_type <= ogr.wkbGeometryCollection:
-            continue
-        if qualifier == '25D' and ogr_type > ogr.wkbGeometryCollection:
-            continue
-        gdal.FileFromMemBuffer('/vsimem/ogr_vrt_38.vrt',
-                               """<OGRVRTDataSource>
+        for qualifier in ['', 'Z', 'M', 'ZM', '25D']:
+            if qualifier == 'Z' and ogr_type <= ogr.wkbGeometryCollection:
+                continue
+            if qualifier == '25D' and ogr_type > ogr.wkbGeometryCollection:
+                continue
+            gdal.FileFromMemBuffer('/vsimem/ogr_vrt_38.vrt',
+                                   """<OGRVRTDataSource>
         <OGRVRTLayer name="ogr_vrt_38">
             <SrcDataSource relativeToVRT="1">/vsimem/ogr_vrt_38.shp</SrcDataSource>
             <GeometryType>wkb%s%s</GeometryType>
         </OGRVRTLayer>
     </OGRVRTDataSource>""" % (type_str, qualifier))
 
-        expected_geom_type = ogr_type
-        if qualifier == 'Z' or qualifier == 'ZM' or qualifier == '25D':
-          expected_geom_type = ogr.GT_SetZ(expected_geom_type)
-        if qualifier == 'M' or qualifier == 'ZM':
-          expected_geom_type = ogr.GT_SetM(expected_geom_type)
+            expected_geom_type = ogr_type
+            if qualifier == 'Z' or qualifier == 'ZM' or qualifier == '25D':
+                expected_geom_type = ogr.GT_SetZ(expected_geom_type)
+            if qualifier == 'M' or qualifier == 'ZM':
+                expected_geom_type = ogr.GT_SetM(expected_geom_type)
 
-        ds = ogr.Open('/vsimem/ogr_vrt_38.vrt', update=1)
-        lyr = ds.GetLayer(0)
-        if lyr.GetGeomType() != expected_geom_type:
-            gdaltest.post_reason('failure')
-            print(type_str, qualifier, lyr.GetGeomType())
-            return 'fail'
+            ds = ogr.Open('/vsimem/ogr_vrt_38.vrt', update=1)
+            lyr = ds.GetLayer(0)
+            if lyr.GetGeomType() != expected_geom_type:
+                gdaltest.post_reason('failure')
+                print(type_str, qualifier, lyr.GetGeomType())
+                return 'fail'
 
     gdal.Unlink('/vsimem/ogr_vrt_38.vrt')
 

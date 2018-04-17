@@ -3813,9 +3813,9 @@ def nitf_online_24():
        xml_tre.find('<tre name="BNDPLB"') == -1 or \
        xml_tre.find('<tre name="ACCPOB"') == -1 or \
        xml_tre.find('<tre name="SOURCB"') == -1:
-           gdaltest.post_reason('did not get expected xml:TRE')
-           print(xml_tre)
-           return 'fail'
+        gdaltest.post_reason('did not get expected xml:TRE')
+        print(xml_tre)
+        return 'fail'
 
     return 'success'
 
@@ -3839,9 +3839,9 @@ def nitf_online_25():
     ds = None
 
     if xml_tre.find('<tre name="PIAPRD"') == -1:
-           gdaltest.post_reason('did not get expected xml:TRE')
-           print(xml_tre)
-           return 'fail'
+        gdaltest.post_reason('did not get expected xml:TRE')
+        print(xml_tre)
+        return 'fail'
 
     return 'success'
 

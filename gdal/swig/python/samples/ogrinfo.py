@@ -506,16 +506,16 @@ def DumpReadableGeometry(poGeometry, pszPrefix, options):
                 eType == ogr.wkbGeometryCollection or \
                 eType == ogr.wkbGeometryCollection25D:
 
-                line = line + "%d geometries:" % poGeometry.GetGeometryCount()
-                print(line)
-                for ig in range(poGeometry.GetGeometryCount()):
-                    subgeom = poGeometry.GetGeometryRef(ig)
-                    from sys import version_info
-                    if version_info >= (3, 0, 0):
-                        exec('print("", end=" ")')
-                    else:
-                        exec('print "", ')
-                    DumpReadableGeometry(subgeom, pszPrefix, options)
+            line = line + "%d geometries:" % poGeometry.GetGeometryCount()
+            print(line)
+            for ig in range(poGeometry.GetGeometryCount()):
+                subgeom = poGeometry.GetGeometryRef(ig)
+                from sys import version_info
+                if version_info >= (3, 0, 0):
+                    exec('print("", end=" ")')
+                else:
+                    exec('print "", ')
+                DumpReadableGeometry(subgeom, pszPrefix, options)
         else:
             print(line)
 

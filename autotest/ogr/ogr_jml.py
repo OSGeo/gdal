@@ -111,24 +111,24 @@ def ogr_jml_1():
        not feat.IsFieldNull('not_ignored') or \
        feat.GetStyleString() != 'BRUSH(fc:#0000FF)' or \
        feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 10,10 10,10 0,0 0))':
-            feat.DumpReadable()
-            gdaltest.post_reason('fail')
-            return 'fail'
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('datetime') != '2014/10/18 21:36:45+02' or \
        feat.GetField('R_G_B') != 'FF00FF' or \
        feat.GetStyleString() != 'PEN(c:#FF00FF)' or \
        feat.GetGeometryRef().ExportToWkt() != 'POINT (-1 -1)':
-            feat.DumpReadable()
-            gdaltest.post_reason('fail')
-            return 'fail'
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef() is not None:
-            feat.DumpReadable()
-            gdaltest.post_reason('fail')
-            return 'fail'
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     return 'success'
 
