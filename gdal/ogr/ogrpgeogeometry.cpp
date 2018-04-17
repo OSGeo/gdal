@@ -1002,7 +1002,8 @@ id,WKT
         pabyPtr += 4;
 
         // Write in the point data.
-        poLine->getPoints((OGRRawPoint*)pabyPtr, (double*)pabyPtrZ);
+        poLine->getPoints(reinterpret_cast<OGRRawPoint*>(pabyPtr),
+                          reinterpret_cast<double*>(pabyPtrZ));
         if( bHasM )
         {
             for( GUInt32 k = 0; k < nPoints; k++ )
@@ -1091,7 +1092,8 @@ id,WKT
             memcpy( pabyPtr, &nPartIndex, 4 );
 
             // Write in the point data.
-            poRing->getPoints((OGRRawPoint*)pabyPoints, (double*)pabyPtrZ);
+            poRing->getPoints(reinterpret_cast<OGRRawPoint*>(pabyPoints),
+                              reinterpret_cast<double*>(pabyPtrZ));
             if( bHasM )
             {
                 for( int k = 0; k < nRingNumPoints; k++ )
@@ -1225,7 +1227,7 @@ id,WKT
             memcpy( pabyPtr, &nPartIndex, 4 );
 
             // Write in the point data.
-            poLine->getPoints((OGRRawPoint*)pabyPoints, (double*)pabyPtrZ);
+            poLine->getPoints(reinterpret_cast<OGRRawPoint*>(pabyPoints), reinterpret_cast<double*>(pabyPtrZ));
             if( bHasM )
             {
                 for( int k = 0; k < nLineNumPoints; k++ )
@@ -1331,7 +1333,7 @@ id,WKT
                 memcpy( pabyPtr, &nPartIndex, 4 );
 
                 // Write in the point data.
-                poRing->getPoints((OGRRawPoint*)pabyPoints, (double*)pabyPtrZ);
+                poRing->getPoints(reinterpret_cast<OGRRawPoint*>(pabyPoints), reinterpret_cast<double*>(pabyPtrZ));
                 if( bHasM )
                 {
                     for( int k = 0; k < nRingNumPoints; k++ )

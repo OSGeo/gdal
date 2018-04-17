@@ -71,7 +71,7 @@ OGRErr OSRImportFromOzi( OGRSpatialReferenceH hSRS,
 {
     VALIDATE_POINTER1( hSRS, "OSRImportFromOzi", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->importFromOzi( papszLines );
+    return OGRSpatialReference::FromHandle(hSRS)->importFromOzi( papszLines );
 }
 
 /************************************************************************/
@@ -100,7 +100,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 
     Clear();
 
-    const int nLines = CSLCount((char**)papszLines);
+    const int nLines = CSLCount(papszLines);
     if( nLines < 5 )
         return OGRERR_NOT_ENOUGH_DATA;
 

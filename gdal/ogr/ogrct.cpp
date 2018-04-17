@@ -250,7 +250,7 @@ static bool LoadProjLibrary_unlocked()
     pfn_pj_init_plus = pj_init_plus;
     pfn_pj_free = pj_free;
     pfn_pj_transform = pj_transform;
-    pfn_pj_get_errno_ref = (int *(*)(void)) pj_get_errno_ref;
+    pfn_pj_get_errno_ref = reinterpret_cast<int *(*)(void)>(pj_get_errno_ref);
     pfn_pj_strerrno = pj_strerrno;
     pfn_pj_dalloc = pj_dalloc;
 #if PJ_VERSION >= 446
@@ -266,40 +266,40 @@ static bool LoadProjLibrary_unlocked()
     CPLPushErrorHandler( CPLQuietErrorHandler );
 
     // coverity[tainted_string]
-    pfn_pj_init = (projPJ (*)(int, char**)) CPLGetSymbol( pszLibName,
-                                                          "pj_init" );
+    pfn_pj_init = reinterpret_cast<projPJ (*)(int, char**)>(CPLGetSymbol( pszLibName,
+                                                          "pj_init" ));
     CPLPopErrorHandler();
 
     if( pfn_pj_init == nullptr )
        return false;
 
-    pfn_pj_init_plus = (projPJ (*)(const char *))
-        CPLGetSymbol( pszLibName, "pj_init_plus" );
-    pfn_pj_free = (void (*)(projPJ))
-        CPLGetSymbol( pszLibName, "pj_free" );
-    pfn_pj_transform = (int (*)(projPJ, projPJ, long, int, double *,
-                                double *, double *))
-        CPLGetSymbol( pszLibName, "pj_transform" );
-    pfn_pj_get_errno_ref = (int *(*)(void))
-        CPLGetSymbol( pszLibName, "pj_get_errno_ref" );
-    pfn_pj_strerrno = (char *(*)(int))
-        CPLGetSymbol( pszLibName, "pj_strerrno" );
+    pfn_pj_init_plus = reinterpret_cast<projPJ (*)(const char *)>(
+        CPLGetSymbol( pszLibName, "pj_init_plus" ));
+    pfn_pj_free = reinterpret_cast<void (*)(projPJ)>(
+        CPLGetSymbol( pszLibName, "pj_free" ));
+    pfn_pj_transform = reinterpret_cast<int (*)(projPJ, projPJ, long, int, double *,
+                                double *, double *)>(
+        CPLGetSymbol( pszLibName, "pj_transform" ));
+    pfn_pj_get_errno_ref = reinterpret_cast<int *(*)(void)>(
+        CPLGetSymbol( pszLibName, "pj_get_errno_ref" ));
+    pfn_pj_strerrno = reinterpret_cast<char *(*)(int)>(
+        CPLGetSymbol( pszLibName, "pj_strerrno" ));
 
     CPLPushErrorHandler( CPLQuietErrorHandler );
-    pfn_pj_get_def = (char *(*)(projPJ, int))
-        CPLGetSymbol( pszLibName, "pj_get_def" );
-    pfn_pj_dalloc = (void (*)(void*))
-        CPLGetSymbol( pszLibName, "pj_dalloc" );
+    pfn_pj_get_def = reinterpret_cast<char *(*)(projPJ, int)>(
+        CPLGetSymbol( pszLibName, "pj_get_def" ));
+    pfn_pj_dalloc = reinterpret_cast<void (*)(void*)>(
+        CPLGetSymbol( pszLibName, "pj_dalloc" ));
 
     // PROJ 4.8.0 symbols.
-    pfn_pj_ctx_alloc = (projCtx (*)( void ))
-        CPLGetSymbol( pszLibName, "pj_ctx_alloc" );
-    pfn_pj_ctx_free = (void (*)( projCtx ))
-        CPLGetSymbol( pszLibName, "pj_ctx_free" );
-    pfn_pj_init_plus_ctx = (projPJ (*)( projCtx, const char * ))
-        CPLGetSymbol( pszLibName, "pj_init_plus_ctx" );
-    pfn_pj_ctx_get_errno = (int (*)( projCtx ))
-        CPLGetSymbol( pszLibName, "pj_ctx_get_errno" );
+    pfn_pj_ctx_alloc = reinterpret_cast<projCtx (*)( void )>(
+        CPLGetSymbol( pszLibName, "pj_ctx_alloc" ));
+    pfn_pj_ctx_free = reinterpret_cast<void (*)( projCtx )>(
+        CPLGetSymbol( pszLibName, "pj_ctx_free" ));
+    pfn_pj_init_plus_ctx = reinterpret_cast<projPJ (*)( projCtx, const char * )>(
+        CPLGetSymbol( pszLibName, "pj_init_plus_ctx" ));
+    pfn_pj_ctx_get_errno = reinterpret_cast<int (*)( projCtx )>(
+        CPLGetSymbol( pszLibName, "pj_ctx_get_errno" ));
 
     bProjLocaleSafe = CPLGetSymbol(pszLibName, "pj_atof") != nullptr;
 
@@ -438,7 +438,7 @@ void CPL_STDCALL
 OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH hCT )
 
 {
-    delete (OGRCoordinateTransformation *) hCT;
+    delete OGRCoordinateTransformation::FromHandle(hCT);
 }
 
 /************************************************************************/
@@ -1049,7 +1049,7 @@ int CPL_STDCALL OCTTransform( OGRCoordinateTransformationH hTransform,
 {
     VALIDATE_POINTER1( hTransform, "OCTTransform", FALSE );
 
-    return ((OGRCoordinateTransformation*) hTransform)->
+    return OGRCoordinateTransformation::FromHandle(hTransform)->
         Transform( nCount, x, y, z );
 }
 
@@ -1432,6 +1432,6 @@ int CPL_STDCALL OCTTransformEx( OGRCoordinateTransformationH hTransform,
 {
     VALIDATE_POINTER1( hTransform, "OCTTransformEx", FALSE );
 
-    return ((OGRCoordinateTransformation*) hTransform)->
+    return OGRCoordinateTransformation::FromHandle(hTransform)->
         TransformEx( nCount, x, y, z, pabSuccess );
 }

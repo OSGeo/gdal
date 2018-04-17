@@ -1165,7 +1165,7 @@ static GDALPDFDictionaryRW* GDALPDFBuildOGC_BP_Projection(const OGRSpatialRefere
 
     if( poSRS->IsProjected() )
     {
-        char* pszUnitName = nullptr;
+        const char* pszUnitName = nullptr;
         double dfLinearUnits = poSRS->GetLinearUnits(&pszUnitName);
         if (dfLinearUnits == 1.0)
             poProjectionDict->Add("Units", "M");

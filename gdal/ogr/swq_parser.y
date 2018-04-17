@@ -396,7 +396,7 @@ value_expr_non_logical:
 
     | SWQT_NULL
         {
-            $$ = new swq_expr_node((const char*)nullptr);
+            $$ = new swq_expr_node(static_cast<const char*>(nullptr));
         }
 
     | '-' value_expr_non_logical %prec SWQT_UMINUS
@@ -673,7 +673,7 @@ column_spec:
             poNode->table_index = -1;
             poNode->field_index = -1;
 
-            swq_expr_node *count = new swq_expr_node( (swq_op)SWQ_COUNT );
+            swq_expr_node *count = new swq_expr_node( SWQ_COUNT );
             count->PushSubExpression( poNode );
 
             if( !context->poCurSelect->PushField( count ) )
@@ -705,7 +705,7 @@ column_spec:
             poNode->table_index = -1;
             poNode->field_index = -1;
 
-            swq_expr_node *count = new swq_expr_node( (swq_op)SWQ_COUNT );
+            swq_expr_node *count = new swq_expr_node( SWQ_COUNT );
             count->PushSubExpression( poNode );
 
             if( !context->poCurSelect->PushField( count, $5->string_value ) )

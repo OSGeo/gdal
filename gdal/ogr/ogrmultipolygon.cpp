@@ -211,8 +211,8 @@ OGRErr OGRMultiPolygon::_addGeometryDirectlyWithExpectedSubGeometryType(
 
     HomogenizeDimensionalityWith(poNewGeom);
 
-    OGRGeometry** papoNewGeoms = (OGRGeometry **) VSI_REALLOC_VERBOSE( papoGeoms,
-                                             sizeof(void*) * (nGeomCount+1) );
+    OGRGeometry** papoNewGeoms = static_cast<OGRGeometry **>(
+        VSI_REALLOC_VERBOSE( papoGeoms, sizeof(void*) * (nGeomCount+1) ));
     if( papoNewGeoms == nullptr )
         return OGRERR_FAILURE;
 

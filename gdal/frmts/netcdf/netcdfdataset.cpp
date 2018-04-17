@@ -4005,7 +4005,7 @@ void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
                                OGRSpatialReference *poSRS)
 {
     int status;
-    char *pszUnits = nullptr;
+    const char *pszUnits = nullptr;
     const char *pszUnitsToWrite = "";
 
     const double dfUnits = poSRS->GetLinearUnits(&pszUnits);

@@ -59,9 +59,9 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF,
                                              OGRBoolean* pLinearUnitIsSet );
 // char* ImagineCitationTranslation( char* psCitation, geokey_t keyID );
 // char** CitationStringParse( char* psCitation, geokey_t keyID );
-void SetLinearUnitCitation( GTIF* psGTIF, char* pszLinearUOMName );
+void SetLinearUnitCitation( GTIF* psGTIF, const char* pszLinearUOMName );
 void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
-                        char* angUnitName, int nDatum, short nSpheroid );
+                        const char* angUnitName, int nDatum, short nSpheroid );
 OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
                             geokey_t geoKey, OGRSpatialReference* poSRS,
                             OGRBoolean* linearUnitIsSet );

@@ -229,7 +229,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
 
         // collect text characters
         while( isalnum( *pszNext ) || *pszNext == '_'
-               || ((unsigned char) *pszNext) > 127 )
+               || static_cast<unsigned char>(*pszNext) > 127 )
             osToken += *(pszNext++);
 
         context->pszNext = pszNext;
@@ -820,8 +820,8 @@ static const char* const apszSQLReservedKeywords[] = {
 
 int swq_is_reserved_keyword(const char* pszStr)
 {
-    for( int i = 0;
-         i < (int)(sizeof(apszSQLReservedKeywords) / sizeof(char*));
+    for( size_t i = 0;
+         i < CPL_ARRAYSIZE(apszSQLReservedKeywords);
          i++ )
     {
         if( EQUAL(pszStr, apszSQLReservedKeywords[i]) )

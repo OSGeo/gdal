@@ -328,7 +328,7 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
 /*                                                                      */
 /*      Set linear unit Citation string                                 */
 /************************************************************************/
-void SetLinearUnitCitation( GTIF* psGTIF, char* pszLinearUOMName )
+void SetLinearUnitCitation( GTIF* psGTIF, const char* pszLinearUOMName )
 {
     char szName[512] = { '\0' };
     int n = 0;
@@ -362,7 +362,7 @@ void SetLinearUnitCitation( GTIF* psGTIF, char* pszLinearUOMName )
 /*      Set geogcs Citation string                                      */
 /************************************************************************/
 void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
-                        char* angUnitName, int nDatum, short nSpheroid )
+                        const char* angUnitName, int nDatum, short nSpheroid )
 {
     bool bRewriteGeogCitation = false;
     char szName[256] = { '\0' };
@@ -451,7 +451,7 @@ OGRBoolean SetCitationToSRS( GTIF* hGTIF, char* szCTString, int nCTStringLen,
                              OGRBoolean* linearUnitIsSet)
 {
     OGRBoolean ret = FALSE;
-    char* lUnitName = nullptr;
+    const char* lUnitName = nullptr;
 
     poSRS->GetLinearUnits( &lUnitName );
     if( !lUnitName || strlen(lUnitName) == 0 ||

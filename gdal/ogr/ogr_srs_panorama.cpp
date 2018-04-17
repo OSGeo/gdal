@@ -113,7 +113,7 @@ constexpr int aoDatums[] =
     4200    // Pulkovo, 1995
 };
 
-#define NUMBER_OF_DATUMS        (long)(sizeof(aoDatums)/sizeof(aoDatums[0]))
+#define NUMBER_OF_DATUMS        static_cast<long>(CPL_ARRAYSIZE(aoDatums))
 
 /************************************************************************/
 /*  Correspondence between "Panorama" and EPSG ellipsoid codes.         */
@@ -144,8 +144,7 @@ constexpr int aoEllips[] =
     7003   // Australian National, 1965
 };
 
-constexpr int NUMBER_OF_ELLIPSOIDS =
-    static_cast<int>(sizeof(aoEllips)/sizeof(aoEllips[0]));
+constexpr int NUMBER_OF_ELLIPSOIDS = static_cast<int>(CPL_ARRAYSIZE(aoEllips));
 
 /************************************************************************/
 /*                        OSRImportFromPanorama()                       */

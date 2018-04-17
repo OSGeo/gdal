@@ -1159,7 +1159,7 @@ int OGRParseDate( const char *pszInput,
         else if( pszInput[3] == ':'  // +HH:MM offset
                  && atoi(pszInput + 4) % 15 == 0 )
         {
-            psField->Date.TZFlag = (GByte)(100
+            psField->Date.TZFlag = static_cast<GByte>(100
                 + atoi(pszInput + 1) * 4
                 + (atoi(pszInput + 4) / 15));
 
@@ -1169,7 +1169,7 @@ int OGRParseDate( const char *pszInput,
         else if( isdigit(pszInput[3]) && isdigit(pszInput[4])  // +HHMM offset
                  && atoi(pszInput + 3) % 15 == 0 )
         {
-            psField->Date.TZFlag = (GByte)(100
+            psField->Date.TZFlag = static_cast<GByte>(100
                 + static_cast<GByte>(CPLScanLong(pszInput + 1, 2)) * 4
                 + (atoi(pszInput + 3) / 15));
 
@@ -1179,7 +1179,7 @@ int OGRParseDate( const char *pszInput,
         else if( isdigit(pszInput[3]) && pszInput[4] == '\0'  // +HMM offset
                  && atoi(pszInput + 2) % 15 == 0 )
         {
-            psField->Date.TZFlag = (GByte)(100
+            psField->Date.TZFlag = static_cast<GByte>(100
                 + static_cast<GByte>(CPLScanLong(pszInput + 1, 1)) * 4
                 + (atoi(pszInput + 2) / 15));
 
@@ -1643,7 +1643,7 @@ OGRErr OGRReadWKBGeometryType( const unsigned char * pabyData,
     int nByteOrder = DB2_V72_FIX_BYTE_ORDER(*pabyData);
     if( !( nByteOrder == wkbXDR || nByteOrder == wkbNDR ) )
         return OGRERR_CORRUPT_DATA;
-    OGRwkbByteOrder eByteOrder = (OGRwkbByteOrder) nByteOrder;
+    OGRwkbByteOrder eByteOrder = static_cast<OGRwkbByteOrder>(nByteOrder);
 
 /* -------------------------------------------------------------------- */
 /*      Get the geometry type.                                          */

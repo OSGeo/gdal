@@ -35,6 +35,7 @@
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
 
+#include <cstddef>
 #include <map>
 #include <vector>
 
@@ -109,8 +110,8 @@ class CPL_DLL OGR_SRSNode
     OGRErr      exportToPrettyWkt( char **, int = 1) const;
 
     OGRErr      applyRemapper( const char *pszNode,
-                               char **papszSrcValues,
-                               char **papszDstValues,
+                               const char * const *papszSrcValues,
+                               const char * const *papszDstValues,
                                int nStepSize = 1,
                                int bChildOfHit = FALSE );
 };
@@ -138,14 +139,14 @@ class CPL_DLL OGR_SRSNode
 
 class CPL_DLL OGRSpatialReference
 {
-    double      dfFromGreenwich;
-    double      dfToMeter;
-    double      dfToDegrees;
+    mutable double      dfFromGreenwich;
+    mutable double      dfToMeter;
+    mutable double      dfToDegrees;
 
     OGR_SRSNode *poRoot;
 
     int         nRefCount;
-    int         bNormInfoSet;
+    mutable int         bNormInfoSet;
 
     static OGRErr Validate(OGR_SRSNode *poRoot);
     static OGRErr ValidateAuthority(OGR_SRSNode *poRoot);
@@ -237,8 +238,8 @@ class CPL_DLL OGRSpatialReference
     OGRErr      FixupOrdering();
     OGRErr      Fixup();
 
-    int         EPSGTreatsAsLatLong();
-    int         EPSGTreatsAsNorthingEasting();
+    int         EPSGTreatsAsLatLong() const;
+    int         EPSGTreatsAsNorthingEasting() const;
     const char *GetAxis( const char *pszTargetKey, int iAxis,
                          OGRAxisOrientation *peOrientation ) const;
     OGRErr      SetAxes( const char *pszTargetKey,
@@ -267,14 +268,38 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetLinearUnits( const char *pszName, double dfInMeters );
     OGRErr      SetTargetLinearUnits( const char *pszTargetKey,
                                       const char *pszName, double dfInMeters );
-    double      GetLinearUnits( char ** = nullptr ) const;
+
+    double      GetLinearUnits( char ** ) const CPL_WARN_DEPRECATED("Use GetLinearUnits(const char**) instead");
+    double      GetLinearUnits( const char ** = nullptr ) const;
+/*! @cond Doxygen_Suppress */
+    double      GetLinearUnits( std::nullptr_t ) const
+        { return GetLinearUnits( static_cast<const char**>(nullptr) ); }
+/*! @endcond */
+
     double      GetTargetLinearUnits( const char *pszTargetKey,
-                                      char ** ppszRetName = nullptr ) const;
+                                      char ** ppszRetName ) const
+            CPL_WARN_DEPRECATED("Use GetTargetLinearUnits(const char*, const char**)");
+    double      GetTargetLinearUnits( const char *pszTargetKey,
+                                      const char ** ppszRetName = nullptr ) const;
+/*! @cond Doxygen_Suppress */
+    double      GetTargetLinearUnits( const char *pszTargetKey, std::nullptr_t ) const
+        { return GetTargetLinearUnits( pszTargetKey, static_cast<const char**>(nullptr) ); }
+/*! @endcond */
 
     OGRErr      SetAngularUnits( const char *pszName, double dfInRadians );
-    double      GetAngularUnits( char ** = nullptr ) const;
+    double      GetAngularUnits( char ** ) const CPL_WARN_DEPRECATED("Use GetAngularUnits(const char**) instead");
+    double      GetAngularUnits( const char ** = nullptr ) const;
+/*! @cond Doxygen_Suppress */
+    double      GetAngularUnits( std::nullptr_t ) const
+        { return GetAngularUnits( static_cast<const char**>(nullptr) ); }
+/*! @endcond */
 
-    double      GetPrimeMeridian( char ** = nullptr ) const;
+    double      GetPrimeMeridian( char ** ) const CPL_WARN_DEPRECATED("Use GetPrimeMeridian(const char**) instead");
+    double      GetPrimeMeridian( const char ** = nullptr ) const;
+/*! @cond Doxygen_Suppress */
+    double      GetPrimeMeridian( std::nullptr_t ) const
+        { return GetPrimeMeridian( static_cast<const char**>(nullptr) ); }
+/*! @endcond */
 
     int         IsGeographic() const;
     int         IsProjected() const;

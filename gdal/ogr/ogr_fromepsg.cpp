@@ -2784,7 +2784,7 @@ OGRErr OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS )
  * @return TRUE or FALSE.
  */
 
-int OGRSpatialReference::EPSGTreatsAsLatLong()
+int OGRSpatialReference::EPSGTreatsAsLatLong() const
 
 {
     if( !IsGeographic() )
@@ -2795,7 +2795,7 @@ int OGRSpatialReference::EPSGTreatsAsLatLong()
     if( pszAuth == nullptr || !EQUAL(pszAuth, "EPSG") )
         return FALSE;
 
-    OGR_SRSNode * const poFirstAxis = GetAttrNode( "GEOGCS|AXIS" );
+    const OGR_SRSNode * const poFirstAxis = GetAttrNode( "GEOGCS|AXIS" );
 
     if( poFirstAxis == nullptr )
         return FALSE;
@@ -2847,7 +2847,7 @@ int OSREPSGTreatsAsLatLong( OGRSpatialReferenceH hSRS )
  * @since OGR 1.10.0
  */
 
-int OGRSpatialReference::EPSGTreatsAsNorthingEasting()
+int OGRSpatialReference::EPSGTreatsAsNorthingEasting() const
 
 {
     if( !IsProjected() )
@@ -2858,7 +2858,7 @@ int OGRSpatialReference::EPSGTreatsAsNorthingEasting()
     if( pszAuth == nullptr || !EQUAL(pszAuth, "EPSG") )
         return FALSE;
 
-    OGR_SRSNode * const poFirstAxis = GetAttrNode( "PROJCS|AXIS" );
+    const OGR_SRSNode * const poFirstAxis = GetAttrNode( "PROJCS|AXIS" );
 
     if( poFirstAxis == nullptr )
         return FALSE;

@@ -497,7 +497,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
 /*      Setup prime meridian information.                               */
 /* -------------------------------------------------------------------- */
     const OGR_SRSNode *poPMNode = poGeogCS->GetNode( "PRIMEM" );
-    char *pszPMName = (char* ) "Greenwich";
+    const char *pszPMName = "Greenwich";
     double dfPMOffset = poSRS->GetPrimeMeridian( &pszPMName );
 
     CPLXMLNode *psPM =
@@ -749,7 +749,7 @@ OGRErr OSRExportToXML( OGRSpatialReferenceH hSRS, char **ppszRawXML,
 {
     VALIDATE_POINTER1( hSRS, "OSRExportToXML", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->exportToXML( ppszRawXML,
+    return OGRSpatialReference::FromHandle(hSRS)->exportToXML( ppszRawXML,
                                                         pszDialect );
 }
 
@@ -849,7 +849,8 @@ static void importXMLAuthority( CPLXMLNode *psSrcXML,
 
     char *pszURN = CPLStrdup(CPLGetXMLValue( psCodeSpace, "", "" ));
 
-    const char *pszAuthority, *pszCode;
+    const char *pszAuthority;
+    const char *pszCode;
     if( !parseURN( pszURN, nullptr, &pszAuthority, &pszCode ) )
     {
         CPLFree( pszURN );
@@ -857,7 +858,7 @@ static void importXMLAuthority( CPLXMLNode *psSrcXML,
     }
 
     if( strlen(pszCode) == 0 )
-        pszCode = (char *) CPLGetXMLValue( psNameNode, "", "" );
+        pszCode = CPLGetXMLValue( psNameNode, "", "" );
 
     const int nCode = pszCode != nullptr ? atoi(pszCode) :0;
 
@@ -1316,5 +1317,5 @@ OGRErr OSRImportFromXML( OGRSpatialReferenceH hSRS, const char *pszXML )
     VALIDATE_POINTER1( hSRS, "OSRImportFromXML", OGRERR_FAILURE );
     VALIDATE_POINTER1( pszXML, "OSRImportFromXML", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->importFromXML( pszXML );
+    return OGRSpatialReference::FromHandle(hSRS)->importFromXML( pszXML );
 }

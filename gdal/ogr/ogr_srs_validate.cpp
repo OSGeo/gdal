@@ -884,7 +884,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 
                     return OGRERR_CORRUPT_DATA;
                 }
-                else if( CSLFindString( (char **)papszParameters,
+                else if( CSLFindString( papszParameters,
                                         poNode->GetChild(0)->GetValue()) == -1)
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
@@ -1154,7 +1154,7 @@ OGRErr OSRValidate( OGRSpatialReferenceH hSRS )
 {
     VALIDATE_POINTER1( hSRS, "OSRValidate", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->Validate();
+    return OGRSpatialReference::FromHandle(hSRS)->Validate();
 }
 
 /************************************************************************/

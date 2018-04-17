@@ -12473,7 +12473,7 @@ void GTiffDataset::LookForProjection()
 
                 oSRS.importFromWkt( pszProjection );
 
-                char* pszVertUnit = nullptr;
+                const char* pszVertUnit = nullptr;
                 oSRS.GetTargetLinearUnits("COMPD_CS|VERT_CS", &pszVertUnit);
                 if( pszVertUnit && !EQUAL(pszVertUnit, "unknown") )
                 {

@@ -315,7 +315,7 @@ OGRErr  OGRPolyhedralSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
 /*      Set the byte order.                                             */
 /* -------------------------------------------------------------------- */
-    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER((unsigned char) eByteOrder);
+    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER(static_cast<unsigned char>(eByteOrder));
 
 /* -------------------------------------------------------------------- */
 /*      Set the geometry feature type, ensuring that 3D flag is         */
@@ -473,8 +473,8 @@ OGRErr OGRPolyhedralSurface::exportToWktInternal ( char ** ppszDstText,
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each Geom.     */
 /* -------------------------------------------------------------------- */
-    papszGeoms = (oMP.nGeomCount) ? (char **) CPLCalloc(sizeof(char *),
-                                                        oMP.nGeomCount) : nullptr;
+    papszGeoms = (oMP.nGeomCount) ? static_cast<char**>(
+        CPLCalloc(sizeof(char *), oMP.nGeomCount)) : nullptr;
 
     for( iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
     {
@@ -544,8 +544,8 @@ OGRErr OGRPolyhedralSurface::exportToWktInternal ( char ** ppszDstText,
 /* -------------------------------------------------------------------- */
 /*      Allocate the right amount of space for the aggregated string    */
 /* -------------------------------------------------------------------- */
-    *ppszDstText = (char *) VSI_MALLOC_VERBOSE(
-                                   nCumulativeLength + oMP.nGeomCount + 26);
+    *ppszDstText = static_cast<char*>(VSI_MALLOC_VERBOSE(
+                                   nCumulativeLength + oMP.nGeomCount + 26));
 
     if( *ppszDstText == nullptr )
     {
@@ -761,7 +761,7 @@ double OGRPolyhedralSurface::get_Area() const
 #else
 
     sfcgal_init();
-    sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
+    sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL(this);
     if (poThis == nullptr)
         return -1.0;
 
@@ -888,9 +888,9 @@ OGRErr OGRPolyhedralSurface::addGeometryDirectly (OGRGeometry *poNewGeom)
 
     HomogenizeDimensionalityWith(poNewGeom);
 
-    OGRGeometry** papoNewGeoms = (OGRGeometry **) VSI_REALLOC_VERBOSE(
-                                        oMP.papoGeoms,
-                                        sizeof(void*) * (oMP.nGeomCount+1) );
+    OGRGeometry** papoNewGeoms = static_cast<OGRGeometry **>(
+        VSI_REALLOC_VERBOSE( oMP.papoGeoms,
+                                        sizeof(void*) * (oMP.nGeomCount+1) ));
     if( papoNewGeoms == nullptr )
         return OGRERR_FAILURE;
 

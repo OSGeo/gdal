@@ -246,7 +246,7 @@ OGRXercesBinInputStream::~OGRXercesBinInputStream() {}
 
 XMLFilePos OGRXercesBinInputStream::curPos() const
 {
-    return (XMLFilePos)VSIFTellL(fp);
+    return static_cast<XMLFilePos>(VSIFTellL(fp));
 }
 
 /************************************************************************/
@@ -256,7 +256,7 @@ XMLFilePos OGRXercesBinInputStream::curPos() const
 XMLSize_t OGRXercesBinInputStream::readBytes(XMLByte* const toFill,
                                              const XMLSize_t maxToRead)
 {
-    XMLSize_t nRead = (XMLSize_t)VSIFReadL(toFill, 1, maxToRead, fp);
+    XMLSize_t nRead = static_cast<XMLSize_t>(VSIFReadL(toFill, 1, maxToRead, fp));
 #ifdef WORKAROUND_XERCESC_2094
     if( bFirstCallToReadBytes && nRead > 10 )
     {

@@ -4013,7 +4013,7 @@ CPLErr HFADataset::WriteProjection()
     {
         double dfClosestDiff = 100.0;
         int iClosest = -1;
-        char *pszUnitName = nullptr;
+        const char *pszUnitName = nullptr;
         const double dfActualSize = oSRS.GetLinearUnits(&pszUnitName);
 
         for( int iUnit = 0; apszUnitMap[iUnit] != nullptr; iUnit += 2 )
@@ -4416,10 +4416,14 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 
       case EPRJ_STATE_PLANE:
       {
-          char *pszUnitsName = nullptr;
-          double dfLinearUnits = oSRS.GetLinearUnits(&pszUnitsName);
-
-          pszUnitsName = CPLStrdup(pszUnitsName);
+          CPLString osUnitsName;
+          double dfLinearUnits;
+          {
+            const char *pszUnitsName = nullptr;
+            dfLinearUnits = oSRS.GetLinearUnits(&pszUnitsName);
+            if( pszUnitsName )
+                osUnitsName = pszUnitsName;
+          }
 
           // Historically, hfa used esri state plane zone code. Try esri pe
           // string first.
@@ -4432,15 +4436,14 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
           const char *pszUnits;
           if( psMapInfo )
               pszUnits = psMapInfo->units;
-          else if( pszUnitsName && strlen(pszUnitsName) > 0 )
-              pszUnits = pszUnitsName;
+          else if( !osUnitsName.empty() )
+              pszUnits = osUnitsName;
           else
               pszUnits = "meters";
           const int proNu = psPro->proNumber;
           if( oSRS.ImportFromESRIStatePlaneWKT(zoneCode, pszDatum,
                                                pszUnits, proNu) == OGRERR_NONE )
           {
-              CPLFree(pszUnitsName);
               oSRS.morphFromESRI();
               oSRS.AutoIdentifyEPSG();
               oSRS.Fixup();
@@ -4453,9 +4456,8 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
           // Set state plane zone.  Set NAD83/27 on basis of spheroid.
           oSRS.SetStatePlane(ESRIToUSGSZone(psPro->proZone),
                              fabs(psPro->proSpheroid.a - 6378137.0)< 1.0,
-                             pszUnitsName, dfLinearUnits);
-
-          CPLFree(pszUnitsName);
+                             osUnitsName.empty() ? nullptr : osUnitsName.c_str(),
+                             dfLinearUnits);
 
           // Same as the UTM, The following is needed.
           if( psMapInfo && strlen(psMapInfo->proName) > 0 &&

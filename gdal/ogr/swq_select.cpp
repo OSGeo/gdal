@@ -660,7 +660,7 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
         if( poExpr->nSubExprCount != 1 )
         {
             const swq_operation *poOp =
-                    swq_op_registrar::GetOperator( (swq_op)poExpr->nOperation );
+                    swq_op_registrar::GetOperator( static_cast<swq_op>(poExpr->nOperation) );
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Column Summary Function '%s' has "
                      "wrong number of arguments.",
@@ -677,7 +677,7 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
         else if( poExpr->papoSubExpr[0]->eNodeType != SNT_COLUMN )
         {
             const swq_operation *poOp =
-                    swq_op_registrar::GetOperator( (swq_op)poExpr->nOperation );
+                    swq_op_registrar::GetOperator( static_cast<swq_op>(poExpr->nOperation) );
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Argument of column Summary Function '%s' "
                      "should be a column.",
@@ -694,7 +694,7 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
         else
         {
             col_def->col_func =
-                (swq_col_func) poExpr->nOperation;
+                static_cast<swq_col_func>(poExpr->nOperation);
 
             swq_expr_node *poSubExpr = poExpr->papoSubExpr[0];
 
@@ -1106,7 +1106,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
         {
             // Possibly this is already enforced by the checker?
             const swq_operation *op = swq_op_registrar::GetOperator(
-                (swq_op) def->col_func );
+                static_cast<swq_op>(def->col_func) );
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Use of field function %s() on %s field %s illegal.",
                       op->pszName,

@@ -416,7 +416,7 @@ OGRErr OGRCurveCollection::exportToWkb( const OGRGeometry* poGeom,
 /* -------------------------------------------------------------------- */
 /*      Set the byte order.                                             */
 /* -------------------------------------------------------------------- */
-    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER((unsigned char) eByteOrder);
+    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER(static_cast<unsigned char>(eByteOrder));
 
 /* -------------------------------------------------------------------- */
 /*      Set the geometry feature type, ensuring that 3D flag is         */
@@ -431,8 +431,7 @@ OGRErr OGRCurveCollection::exportToWkb( const OGRGeometry* poGeom,
             nGType = POSTGIS15_CURVEPOLYGON;
         if( bIs3D )
             // Explicitly set wkb25DBit.
-            // TODO(schwehr): Clean up the casting.
-            nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse);
+            nGType = static_cast<OGRwkbGeometryType>(nGType | wkb25DBitInternalUse);
     }
 
     if( OGR_SWAP( eByteOrder ) )

@@ -1797,7 +1797,7 @@ class TABDebugFeature final : public TABFeature
 /*      deliberately export these two functions from the DLL.           */
 /* -------------------------------------------------------------------- */
 
-char CPL_DLL *MITABSpatialRef2CoordSys( OGRSpatialReference * );
+char CPL_DLL *MITABSpatialRef2CoordSys( const OGRSpatialReference * );
 OGRSpatialReference CPL_DLL * MITABCoordSys2SpatialRef( const char * );
 
 bool MITABExtractCoordSysBounds( const char * pszCoordSys,

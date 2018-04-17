@@ -254,7 +254,7 @@ typedef short int yytype_int16;
 # endif
 #endif
 
-#define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
+#define YYSIZE_MAXIMUM static_cast<YYSIZE_T>(-1)
 
 #ifndef YY_
 # if defined YYENABLE_NLS && YYENABLE_NLS
@@ -470,7 +470,7 @@ union yyalloc
 #define YYMAXUTOK   291
 
 #define YYTRANSLATE(YYX)                                                \
-  ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
+  (static_cast<unsigned int>(YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
 
 /* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex, without out-of-bounds checking.  */
@@ -1365,7 +1365,7 @@ YYSTYPE yylval YY_INITIAL_VALUE (= yyval_default);
   yyssp++;
 
  yysetstate:
-  *yyssp = (yytype_int16)yystate;
+  *yyssp = static_cast<yytype_int16>(yystate);
 
   if (yyss + yystacksize - 1 <= yyssp)
     {
@@ -1406,7 +1406,7 @@ YYSTYPE yylval YY_INITIAL_VALUE (= yyval_default);
       {
         yytype_int16 *yyss1 = yyss;
         union yyalloc *yyptr =
-          (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
+          static_cast<union yyalloc *>(YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize)));
         if (! yyptr)
           goto yyexhaustedlab;
         YYSTACK_RELOCATE (yyss_alloc, yyss);
@@ -1908,7 +1908,7 @@ yyreduce:
   case 37:
 #line 398 "swq_parser.y" /* yacc.c:1646  */
     {
-            (yyval) = new swq_expr_node((const char*)nullptr);
+            (yyval) = new swq_expr_node(static_cast<const char*>(nullptr));
         }
 #line 1914 "swq_parser.cpp" /* yacc.c:1646  */
     break;
@@ -2232,7 +2232,7 @@ yyreduce:
             poNode->table_index = -1;
             poNode->field_index = -1;
 
-            swq_expr_node *count = new swq_expr_node( (swq_op)SWQ_COUNT );
+            swq_expr_node *count = new swq_expr_node( SWQ_COUNT );
             count->PushSubExpression( poNode );
 
             if( !context->poCurSelect->PushField( count ) )
@@ -2267,7 +2267,7 @@ yyreduce:
             poNode->table_index = -1;
             poNode->field_index = -1;
 
-            swq_expr_node *count = new swq_expr_node( (swq_op)SWQ_COUNT );
+            swq_expr_node *count = new swq_expr_node( SWQ_COUNT );
             count->PushSubExpression( poNode );
 
             if( !context->poCurSelect->PushField( count, (yyvsp[0])->string_value ) )
@@ -2580,7 +2580,7 @@ yyerrlab:
           {
             if (yymsg != yymsgbuf)
               YYSTACK_FREE (yymsg);
-            yymsg = (char *) YYSTACK_ALLOC (yymsg_alloc);
+            yymsg = static_cast<char *>(YYSTACK_ALLOC (yymsg_alloc));
             if (!yymsg)
               {
                 yymsg = yymsgbuf;

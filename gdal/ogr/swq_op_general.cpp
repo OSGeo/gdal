@@ -344,7 +344,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             }
         }
 
-        switch( (swq_op) node->nOperation )
+        switch( static_cast<swq_op>(node->nOperation) )
         {
           case SWQ_EQ:
             poRet->int_value = sub_node_values[0]->float_value
@@ -427,12 +427,12 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
 
           case SWQ_MODULUS:
           {
-            GIntBig nRight = (GIntBig) sub_node_values[1]->float_value;
+            GIntBig nRight = static_cast<GIntBig>(sub_node_values[1]->float_value);
             poRet->field_type = SWQ_INTEGER;
             if( nRight == 0 )
                 poRet->int_value = INT_MAX;
             else
-                poRet->int_value = ((GIntBig) sub_node_values[0]->float_value)
+                poRet->int_value = static_cast<GIntBig>(sub_node_values[0]->float_value)
                     % nRight;
             break;
           }
@@ -474,7 +474,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             }
         }
 
-        switch( (swq_op) node->nOperation )
+        switch( static_cast<swq_op>(node->nOperation) )
         {
           case SWQ_AND:
             poRet->int_value = sub_node_values[0]->int_value
@@ -653,7 +653,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             return nullptr;
         }
 
-        switch( (swq_op) node->nOperation )
+        switch( static_cast<swq_op>(node->nOperation) )
         {
           case SWQ_GT:
             poRet->int_value = OGRCompareDate(&sField0, &sField1) > 0;
@@ -731,7 +731,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             }
         }
 
-        switch( (swq_op) node->nOperation )
+        switch( static_cast<swq_op>(node->nOperation) )
         {
           case SWQ_EQ:
           {
@@ -966,7 +966,7 @@ static void SWQAutoPromoteIntegerToInteger64OrFloat( swq_expr_node *poNode )
         {
             if( poSubNode->eNodeType == SNT_CONSTANT )
             {
-                poSubNode->float_value = (double) poSubNode->int_value;
+                poSubNode->float_value = static_cast<double>(poSubNode->int_value);
                 poSubNode->field_type = SWQ_FLOAT;
             }
         }
@@ -1077,7 +1077,7 @@ static void SWQAutoConvertStringToNumeric( swq_expr_node *poNode )
                 }
 
                 // Should also fill the integer value in this case.
-                poSubNode->int_value = (GIntBig)poSubNode->float_value;
+                poSubNode->int_value = static_cast<GIntBig>(poSubNode->float_value);
                 poSubNode->field_type = SWQ_FLOAT;
             }
         }
@@ -1118,7 +1118,7 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
     swq_field_type eArgType = SWQ_OTHER;
     // int nArgCount = -1;
 
-    switch( (swq_op) poNode->nOperation )
+    switch( static_cast<swq_op>(poNode->nOperation) )
     {
       case SWQ_AND:
       case SWQ_OR:
@@ -1266,7 +1266,7 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
       default:
       {
           const swq_operation *poOp =
-              swq_op_registrar::GetOperator((swq_op)poNode->nOperation);
+              swq_op_registrar::GetOperator(static_cast<swq_op>(poNode->nOperation));
 
           CPLError( CE_Failure, CPLE_AppDefined,
                     "SWQGeneralChecker() called on unsupported operation %s.",
@@ -1322,7 +1322,7 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
                 }
 
                 const swq_operation *poOp =
-                    swq_op_registrar::GetOperator((swq_op)poNode->nOperation);
+                    swq_op_registrar::GetOperator(static_cast<swq_op>(poNode->nOperation));
 
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Type mismatch or improper type of arguments "
@@ -1342,7 +1342,7 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
         && nArgCount != poNode->nSubExprCount )
     {
         const swq_operation *poOp =
-            swq_op_registrar::GetOperator((swq_op)poNode->nOperation);
+            swq_op_registrar::GetOperator(static_cast<swq_op>(poNode->nOperation));
 
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Expected %d arguments to %s, but got %d arguments.",
@@ -1454,7 +1454,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
 
         case SWQ_GEOMETRY:
         {
-            poRetNode = new swq_expr_node( (OGRGeometry*) nullptr );
+            poRetNode = new swq_expr_node( static_cast<OGRGeometry*>(nullptr) );
             if( !poSrcNode->is_null )
             {
                 switch( poSrcNode->field_type )

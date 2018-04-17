@@ -551,7 +551,7 @@ char **OPTGetParameterList( const char *pszProjectionMethod,
             ++i;
 
             if( ppszUserName != nullptr )
-                *ppszUserName = (char *)papszProjectionDefinitions[i];
+                *ppszUserName = const_cast<char *>(papszProjectionDefinitions[i]);
 
             ++i;
             while( papszProjectionDefinitions[i] != nullptr

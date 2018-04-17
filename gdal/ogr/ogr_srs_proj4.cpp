@@ -1434,7 +1434,7 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
 
     *ppszReturn = nullptr;
 
-    return ((OGRSpatialReference *) hSRS)->exportToProj4( ppszReturn );
+    return OGRSpatialReference::FromHandle(hSRS)->exportToProj4( ppszReturn );
 }
 
 /************************************************************************/
@@ -2657,7 +2657,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /*      Handle linear units.                                            */
 /* -------------------------------------------------------------------- */
     const char *pszPROJ4Units=nullptr;
-    char *pszLinearUnits = nullptr;
+    const char *pszLinearUnits = nullptr;
     double dfLinearConv = GetLinearUnits( &pszLinearUnits );
 
     if( strstr(szProj4, "longlat") != nullptr )

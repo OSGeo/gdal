@@ -5827,7 +5827,7 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
     }
 
     // Now write the geom type which is 4 bytes.
-    pszHex = CPLBinaryToHex( 4, (GByte*) &geomType );
+    pszHex = CPLBinaryToHex( 4, reinterpret_cast<const GByte*>(&geomType) );
     strcpy(pszTextBufCurrent, pszHex );
     CPLFree ( pszHex );
     pszTextBufCurrent += 8;
@@ -5837,7 +5837,7 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
     {
         // Force the srsid to wkbNDR (little) endianness.
         const GUInt32 nGSRSId = CPL_LSBWORD32( nSRSId );
-        pszHex = CPLBinaryToHex( sizeof(nGSRSId), (GByte*) &nGSRSId );
+        pszHex = CPLBinaryToHex( sizeof(nGSRSId), reinterpret_cast<const GByte*>(&nGSRSId) );
         strcpy(pszTextBufCurrent, pszHex );
         CPLFree ( pszHex );
         pszTextBufCurrent += 8;

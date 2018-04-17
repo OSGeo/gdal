@@ -791,7 +791,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         {
             // See #6210. In case there's an overridden linear units, take it
             // into account
-            char* pszUnitsName = nullptr;
+            const char* pszUnitsName = nullptr;
             double dfUOMLengthInMeters = oSRS.GetLinearUnits( &pszUnitsName );
             if( dfUOMLengthInMeters != oSRSTmp.GetLinearUnits(nullptr) )
             {
@@ -1509,7 +1509,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 /* -------------------------------------------------------------------- */
 /*      Get the linear units.                                           */
 /* -------------------------------------------------------------------- */
-    char *pszLinearUOMName = nullptr;
+    const char *pszLinearUOMName = nullptr;
     const double dfLinearUOM = poSRS->GetLinearUnits( &pszLinearUOMName );
     int nUOMLengthCode = 9001;  // Meters.
 
@@ -2427,7 +2427,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 /*      Write angular units.                                            */
 /* -------------------------------------------------------------------- */
 
-    char* angUnitName = nullptr;
+    const char* angUnitName = nullptr;
     double angUnitValue = poSRS->GetAngularUnits(&angUnitName);
     if(EQUAL(angUnitName, "Degree"))
         GTIFKeySet(psGTIF, GeogAngularUnitsGeoKey, TYPE_SHORT, 1,

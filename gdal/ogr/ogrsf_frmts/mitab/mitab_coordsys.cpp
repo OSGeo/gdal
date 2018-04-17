@@ -89,7 +89,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 /*      CPLFree()'d by the caller.                                      */
 /************************************************************************/
 
-char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
+char *MITABSpatialRef2CoordSys( const OGRSpatialReference * poSR )
 
 {
     if( poSR == nullptr )

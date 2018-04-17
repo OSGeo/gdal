@@ -280,7 +280,7 @@ swq_expr_node::Check( swq_field_list *poFieldList,
     const swq_operation *poOp =
         (nOperation == SWQ_CUSTOM_FUNC && poCustomFuncRegistrar != nullptr ) ?
             poCustomFuncRegistrar->GetOperator(string_value) :
-            swq_op_registrar::GetOperator((swq_op)nOperation);
+            swq_op_registrar::GetOperator(static_cast<swq_op>(nOperation));
 
     if( poOp == nullptr )
     {
@@ -323,10 +323,12 @@ void swq_expr_node::Dump( FILE * fp, int depth )
 {
     char spaces[60] = {};
 
-    int i = 0;  // Used after for.
-    for( ; i < depth*2 && i < (int) sizeof(spaces) - 1; i++ )
-        spaces[i] = ' ';
-    spaces[i] = '\0';
+    {
+        int i = 0;  // Used after for.
+        for( ; i < depth*2 && i < static_cast<int>(sizeof(spaces)) - 1; i++ )
+            spaces[i] = ' ';
+        spaces[i] = '\0';
+    }
 
     if( eNodeType == SNT_COLUMN )
     {
@@ -361,13 +363,13 @@ void swq_expr_node::Dump( FILE * fp, int depth )
     CPLAssert( eNodeType == SNT_OPERATION );
 
     const swq_operation *op_def =
-        swq_op_registrar::GetOperator( (swq_op) nOperation );
+        swq_op_registrar::GetOperator( static_cast<swq_op>(nOperation) );
     if( op_def )
         fprintf( fp, "%s%s\n", spaces, op_def->pszName );
     else
         fprintf( fp, "%s%s\n", spaces, string_value );
 
-    for( i = 0; i < nSubExprCount; i++ )
+    for( int i = 0; i < nSubExprCount; i++ )
         papoSubExpr[i]->Dump( fp, depth+1 );
 }
 
@@ -561,7 +563,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
 /*      Put things together in a fashion depending on the operator.     */
 /* -------------------------------------------------------------------- */
     const swq_operation *poOp =
-        swq_op_registrar::GetOperator( (swq_op) nOperation );
+        swq_op_registrar::GetOperator( static_cast<swq_op>(nOperation) );
 
     if( poOp == nullptr && nOperation != SWQ_CUSTOM_FUNC )
     {
@@ -798,7 +800,7 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
     if( !bError )
     {
         const swq_operation *poOp =
-            swq_op_registrar::GetOperator( (swq_op) nOperation );
+            swq_op_registrar::GetOperator( static_cast<swq_op>(nOperation) );
         if( poOp == nullptr )
         {
             if( nOperation == SWQ_CUSTOM_FUNC )

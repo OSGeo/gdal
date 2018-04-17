@@ -150,7 +150,7 @@ OGRErr OSRImportFromPCI( OGRSpatialReferenceH hSRS, const char *pszProj,
 {
     VALIDATE_POINTER1( hSRS, "OSRImportFromPCI", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->importFromPCI( pszProj,
+    return OGRSpatialReference::FromHandle(hSRS)->importFromPCI( pszProj,
                                                           pszUnits,
                                                           padfPrjParams );
 }
@@ -739,7 +739,7 @@ OGRErr OSRExportToPCI( OGRSpatialReferenceH hSRS,
     *ppszUnits = nullptr;
     *ppadfPrjParams = nullptr;
 
-    return ((OGRSpatialReference *) hSRS)->exportToPCI( ppszProj, ppszUnits,
+    return OGRSpatialReference::FromHandle(hSRS)->exportToPCI( ppszProj, ppszUnits,
                                                         ppadfPrjParams );
 }
 

@@ -1367,9 +1367,8 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
                 if( nullptr != pszAuthName && nullptr != pszAuthCode &&
                     EQUAL( pszAuthName, "EPSG" ) &&
                     eSRSNameFormat != SRSNAME_SHORT &&
-                    !(((OGRSpatialReference*)poSRS)->EPSGTreatsAsLatLong() ||
-                    ((OGRSpatialReference*)poSRS)->
-                          EPSGTreatsAsNorthingEasting()))
+                    !(poSRS->EPSGTreatsAsLatLong() ||
+                      poSRS->EPSGTreatsAsNorthingEasting()) )
                 {
                     OGRSpatialReference oSRS;
                     if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)

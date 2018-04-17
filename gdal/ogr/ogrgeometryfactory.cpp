@@ -1322,8 +1322,8 @@ struct _sPolyExtended
 
 static int OGRGeometryFactoryCompareArea(const void* p1, const void* p2)
 {
-    const sPolyExtended* psPoly1 = (const sPolyExtended*) p1;
-    const sPolyExtended* psPoly2 = (const sPolyExtended*) p2;
+    const sPolyExtended* psPoly1 = reinterpret_cast<const sPolyExtended*>(p1);
+    const sPolyExtended* psPoly2 = reinterpret_cast<const sPolyExtended*>(p2);
     if( psPoly2->dfArea < psPoly1->dfArea )
         return -1;
     else if( psPoly2->dfArea > psPoly1->dfArea )
@@ -1334,8 +1334,8 @@ static int OGRGeometryFactoryCompareArea(const void* p1, const void* p2)
 
 static int OGRGeometryFactoryCompareByIndex(const void* p1, const void* p2)
 {
-    const sPolyExtended* psPoly1 = (const sPolyExtended*) p1;
-    const sPolyExtended* psPoly2 = (const sPolyExtended*) p2;
+    const sPolyExtended* psPoly1 = reinterpret_cast<const sPolyExtended*>(p1);
+    const sPolyExtended* psPoly2 = reinterpret_cast<const sPolyExtended*>(p2);
     if( psPoly1->nInitialIndex < psPoly2->nInitialIndex )
         return -1;
     else if( psPoly1->nInitialIndex > psPoly2->nInitialIndex )
@@ -1470,7 +1470,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     bool bFoundCCW = false;
 
     const char* pszMethodValue =
-        CSLFetchNameValue( (char**)papszOptions, "METHOD" );
+        CSLFetchNameValue( papszOptions, "METHOD" );
     const char* pszMethodValueOption =
         CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", nullptr);
     if( pszMethodValueOption != nullptr && pszMethodValueOption[0] != '\0' )
@@ -2029,7 +2029,7 @@ OGRGeometry *OGRGeometryFactory::createFromGML( const char *pszData )
 
     hGeom = OGR_G_CreateFromGML( pszData );
 
-    return (OGRGeometry *) hGeom;
+    return OGRGeometry::FromHandle(hGeom);
 }
 
 /************************************************************************/
@@ -3078,7 +3078,7 @@ static void AlterPole(OGRGeometry* poGeom, OGRPoint* poPole,
 
                 poLS->setPoints(static_cast<int>(aoPoints.size()),
                                 &(aoPoints[0]),
-                                bIs3D ? &adfZ[0] : (double*)nullptr);
+                                bIs3D ? &adfZ[0] : nullptr);
             }
             break;
         }
@@ -5515,12 +5515,12 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
                 if( fabs(dfXMid) < 100000000.0 )
                 {
                     dfXMid =
-                        ((GIntBig)floor(dfXMid * 100000000+0.5)) / 100000000.0;
+                        static_cast<GIntBig>(floor(dfXMid * 100000000+0.5)) / 100000000.0;
                 }
                 if( fabs(dfYMid) < 100000000.0 )
                 {
                     dfYMid =
-                        ((GIntBig)floor(dfYMid * 100000000+0.5)) / 100000000.0;
+                        static_cast<GIntBig>(floor(dfYMid * 100000000+0.5)) / 100000000.0;
                 }
             }
         }

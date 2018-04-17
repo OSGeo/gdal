@@ -601,7 +601,7 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
       {
         OGRSimpleCurve* poSC = ToPointer(hGeom)->toSimpleCurve();
 
-        const int nSizeDouble = (int)sizeof(double);
+        const int nSizeDouble = static_cast<int>(sizeof(double));
         if( nXStride == nSizeDouble &&
             nYStride == nSizeDouble &&
             ((nZStride == 0 && pabyZ == nullptr) ||

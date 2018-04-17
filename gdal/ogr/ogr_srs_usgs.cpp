@@ -151,7 +151,7 @@ constexpr int aoEllips[] =
     0       // FIXME: WGS 60 --- skipped
 };
 
-#define NUMBER_OF_ELLIPSOIDS    (int)(sizeof(aoEllips)/sizeof(aoEllips[0]))
+#define NUMBER_OF_ELLIPSOIDS    static_cast<int>(CPL_ARRAYSIZE(aoEllips))
 
 /************************************************************************/
 /*                         OSRImportFromUSGS()                          */
@@ -168,7 +168,7 @@ OGRErr OSRImportFromUSGS( OGRSpatialReferenceH hSRS, long iProjsys,
 {
     VALIDATE_POINTER1( hSRS, "OSRImportFromUSGS", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->importFromUSGS( iProjsys, iZone,
+    return OGRSpatialReference::FromHandle(hSRS)->importFromUSGS( iProjsys, iZone,
                                                            padfPrjParams,
                                                            iDatum );
 }
@@ -807,7 +807,7 @@ OGRErr OSRExportToUSGS( OGRSpatialReferenceH hSRS,
 
     *ppadfPrjParams = nullptr;
 
-    return ((OGRSpatialReference *) hSRS)->exportToUSGS( piProjSys, piZone,
+    return OGRSpatialReference::FromHandle(hSRS)->exportToUSGS( piProjSys, piZone,
                                                          ppadfPrjParams,
                                                          piDatum );
 }

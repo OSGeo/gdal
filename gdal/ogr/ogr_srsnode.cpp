@@ -810,8 +810,8 @@ void OGR_SRSNode::MakeValueSafe()
  */
 
 OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
-                                   char **papszSrcValues,
-                                   char **papszDstValues,
+                                   const char * const *papszSrcValues,
+                                   const char * const *papszDstValues,
                                    int nStepSize, int bChildOfHit )
 
 {
@@ -957,7 +957,7 @@ OGRErr OGR_SRSNode::FixupOrdering()
 
     for( int i = 1; i < GetChildCount(); i++ )
     {
-        panChildKey[i] = CSLFindString( (char**) papszRule,
+        panChildKey[i] = CSLFindString( papszRule,
                                         GetChild(i)->GetValue() );
         if( panChildKey[i] == -1 )
         {

@@ -340,7 +340,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
                 dfX = CPLAtofDelim( pszCoordString, chDecimal);
             while( *pszCoordString != '\0'
                    && *pszCoordString != chCS
-                   && !isspace((unsigned char)*pszCoordString) )
+                   && !isspace(static_cast<unsigned char>(*pszCoordString)) )
                 pszCoordString++;
 
             if( *pszCoordString == '\0' )
@@ -350,7 +350,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
                 return false;
             }
             else if( chCS == ',' && pszCS == nullptr &&
-                     isspace((unsigned char)*pszCoordString) )
+                     isspace(static_cast<unsigned char>(*pszCoordString)) )
             {
                 // In theory, the coordinates inside a coordinate tuple should
                 // be separated by a comma. However it has been found in the
@@ -389,7 +389,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
                 while( *pszCoordString != '\0'
                        && *pszCoordString != chCS
                        && *pszCoordString != chTS
-                       && !isspace((unsigned char)*pszCoordString) )
+                       && !isspace(static_cast<unsigned char>(*pszCoordString)) )
                 pszCoordString++;
             }
 

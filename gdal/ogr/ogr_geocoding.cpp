@@ -70,7 +70,7 @@ int OGR_gettimeofday( struct timeval *tv, struct timezone * /* tzIgnored */ )
     GetSystemTimeAsFileTime(&ft);
 
     // In 100-nanosecond intervals since January 1, 1601 (UTC).
-    GUIntBig nVal = (((GUIntBig)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+    GUIntBig nVal = (static_cast<GUIntBig>(ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
     nVal /= 10;  // To microseconds.
     // There are 11 644 473 600 seconds between 1601 and 1970.
     nVal -= static_cast<GUIntBig>(116444736) * 100 * MICROSEC_IN_SEC;
@@ -434,7 +434,7 @@ static OGRLayer* OGRGeocodeGetCacheLayer( OGRGeocodingSessionH hSession,
         if( poDS == nullptr &&
             EQUAL(hSession->pszCacheFilename, DEFAULT_CACHE_SQLITE) )
         {
-            poDS = (OGRDataSource*) OGROpen(DEFAULT_CACHE_CSV, TRUE, nullptr);
+            poDS = reinterpret_cast<OGRDataSource*>(OGROpen(DEFAULT_CACHE_CSV, TRUE, nullptr));
             if( poDS != nullptr )
             {
                 CPLFree(hSession->pszCacheFilename);
@@ -1350,7 +1350,7 @@ static OGRLayerH OGRGeocodeCommon( OGRGeocodingSessionH hSession,
         }
         else
         {
-            const char* pszResult = (const char*) psResult->pabyData;
+            const char* pszResult = reinterpret_cast<const char*>(psResult->pabyData);
             if( pszResult != nullptr )
             {
                 if( hSession->bWriteCache )

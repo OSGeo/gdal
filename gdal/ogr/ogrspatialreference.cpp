@@ -1094,15 +1094,16 @@ OGRErr OSRSetAngularUnits( OGRSpatialReferenceH hSRS,
  *
  * @return the value to multiply by angular distances to transform them to
  * radians.
+ * @deprecated GDAL 2.3.0. Use GetAngularUnits(const char**) const.
  */
 
-double OGRSpatialReference::GetAngularUnits( char ** ppszName ) const
+double OGRSpatialReference::GetAngularUnits( const char ** ppszName ) const
 
 {
     const OGR_SRSNode *poCS = GetAttrNode( "GEOGCS" );
 
     if( ppszName != nullptr )
-        *ppszName = (char* ) "degree";
+        *ppszName = "degree";
 
     if( poCS == nullptr )
         return CPLAtof(SRS_UA_DEGREE_CONV);
@@ -1115,14 +1116,38 @@ double OGRSpatialReference::GetAngularUnits( char ** ppszName ) const
             && poChild->GetChildCount() >= 2 )
         {
             if( ppszName != nullptr )
-              *ppszName =
-                  const_cast<char *>(poChild->GetChild(0)->GetValue());
+              *ppszName = poChild->GetChild(0)->GetValue();
 
             return CPLAtof( poChild->GetChild(1)->GetValue() );
         }
     }
 
     return 1.0;
+}
+
+/**
+ * \brief Fetch angular geographic coordinate system units.
+ *
+ * If no units are available, a value of "degree" and SRS_UA_DEGREE_CONV
+ * will be assumed.  This method only checks directly under the GEOGCS node
+ * for units.
+ *
+ * This method does the same thing as the C function OSRGetAngularUnits().
+ *
+ * @param ppszName a pointer to be updated with the pointer to the units name.
+ * The returned value remains internal to the OGRSpatialReference and should
+ * not be freed, or modified.  It may be invalidated on the next
+ * OGRSpatialReference call.
+ *
+ * @return the value to multiply by angular distances to transform them to
+ * radians.
+ * @since GDAL 2.3.0
+ */
+
+double OGRSpatialReference::GetAngularUnits( char ** ppszName ) const
+
+{
+    return GetAngularUnits( const_cast<const char**>(ppszName) );
 }
 
 /************************************************************************/
@@ -1140,7 +1165,7 @@ double OSRGetAngularUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
     VALIDATE_POINTER1( hSRS, "OSRGetAngularUnits", 0 );
 
     return ToPointer(hSRS)->
-        GetAngularUnits( ppszName );
+        GetAngularUnits( const_cast<const char**>(ppszName) );
 }
 
 /************************************************************************/
@@ -1381,7 +1406,7 @@ OGRErr OSRSetTargetLinearUnits( OGRSpatialReferenceH hSRS,
 {
     VALIDATE_POINTER1( hSRS, "OSRSetTargetLinearUnits", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->
+    return ToPointer(hSRS)->
         SetTargetLinearUnits( pszTargetKey, pszUnits, dfInMeters );
 }
 
@@ -1405,9 +1430,35 @@ OGRErr OSRSetTargetLinearUnits( OGRSpatialReferenceH hSRS,
  *
  * @return the value to multiply by linear distances to transform them to
  * meters.
+ * @deprecated GDAL 2.3.0. Use GetLinearUnits(const char**) const.
  */
 
 double OGRSpatialReference::GetLinearUnits( char ** ppszName ) const
+
+{
+    return GetTargetLinearUnits( nullptr, const_cast<const char**>(ppszName) );
+}
+
+/**
+ * \brief Fetch linear projection units.
+ *
+ * If no units are available, a value of "Meters" and 1.0 will be assumed.
+ * This method only checks directly under the PROJCS, GEOCCS or LOCAL_CS node
+ * for units.
+ *
+ * This method does the same thing as the C function OSRGetLinearUnits()
+ *
+ * @param ppszName a pointer to be updated with the pointer to the units name.
+ * The returned value remains internal to the OGRSpatialReference and should
+ * not be freed, or modified.  It may be invalidated on the next
+ * OGRSpatialReference call.
+ *
+ * @return the value to multiply by linear distances to transform them to
+ * meters.
+ * @since GDAL 2.3.0
+ */
+
+double OGRSpatialReference::GetLinearUnits( const char ** ppszName ) const
 
 {
     return GetTargetLinearUnits( nullptr, ppszName );
@@ -1427,7 +1478,7 @@ double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
 {
     VALIDATE_POINTER1( hSRS, "OSRGetLinearUnits", 0 );
 
-    return ToPointer(hSRS)->GetLinearUnits( ppszName );
+    return ToPointer(hSRS)->GetLinearUnits( const_cast<const char**>(ppszName) );
 }
 
 /************************************************************************/
@@ -1453,10 +1504,11 @@ double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
  * meters.
  *
  * @since OGR 1.9.0
+ * @deprecated GDAL 2.3.0. Use GetTargetLinearUnits(const char*, const char**) const.
  */
 
 double OGRSpatialReference::GetTargetLinearUnits( const char *pszTargetKey,
-                                                  char ** ppszName ) const
+                                                  const char ** ppszName ) const
 
 {
     const OGR_SRSNode *poCS = nullptr;
@@ -1476,7 +1528,7 @@ double OGRSpatialReference::GetTargetLinearUnits( const char *pszTargetKey,
         poCS = GetAttrNode( pszTargetKey );
 
     if( ppszName != nullptr )
-        *ppszName = (char*) "unknown";
+        *ppszName = "unknown";
 
     if( poCS == nullptr )
         return 1.0;
@@ -1489,13 +1541,42 @@ double OGRSpatialReference::GetTargetLinearUnits( const char *pszTargetKey,
             && poChild->GetChildCount() >= 2 )
         {
             if( ppszName != nullptr )
-              *ppszName = const_cast<char *>(poChild->GetChild(0)->GetValue());
+              *ppszName = poChild->GetChild(0)->GetValue();
 
             return CPLAtof( poChild->GetChild(1)->GetValue() );
         }
     }
 
     return 1.0;
+}
+
+/**
+ * \brief Fetch linear units for target.
+ *
+ * If no units are available, a value of "Meters" and 1.0 will be assumed.
+ *
+ * This method does the same thing as the C function OSRGetTargetLinearUnits()
+ *
+ * @param pszTargetKey the key to look on. i.e. "PROJCS" or "VERT_CS". Might be
+ * NULL, in which case PROJCS will be implied (and if not found, LOCAL_CS,
+ * GEOCCS and VERT_CS are looked up)
+ * @param ppszName a pointer to be updated with the pointer to the units name.
+ * The returned value remains internal to the OGRSpatialReference and should not
+ * be freed, or modified.  It may be invalidated on the next
+ * OGRSpatialReference call. ppszName can be set to NULL.
+ *
+ * @return the value to multiply by linear distances to transform them to
+ * meters.
+ *
+ * @since GDAL 2.3.0
+ */
+
+double OGRSpatialReference::GetTargetLinearUnits( const char *pszTargetKey,
+                                                  char ** ppszName ) const
+
+{
+    return GetTargetLinearUnits( pszTargetKey,
+                                 const_cast<const char**>(ppszName) );
 }
 
 /************************************************************************/
@@ -1517,7 +1598,7 @@ double OSRGetTargetLinearUnits( OGRSpatialReferenceH hSRS,
     VALIDATE_POINTER1( hSRS, "OSRGetTargetLinearUnits", 0 );
 
     return ToPointer(hSRS)->
-        GetTargetLinearUnits( pszTargetKey, ppszName );
+        GetTargetLinearUnits( pszTargetKey, const_cast<const char**>(ppszName) );
 }
 
 /************************************************************************/
@@ -1543,9 +1624,10 @@ double OSRGetTargetLinearUnits( OGRSpatialReferenceH hSRS,
  *
  * @return the offset to the GEOGCS prime meridian from greenwich in decimal
  * degrees.
+ * @deprecated GDAL 2.3.0. Use GetPrimeMeridian(const char**) const.
  */
 
-double OGRSpatialReference::GetPrimeMeridian( char **ppszName ) const
+double OGRSpatialReference::GetPrimeMeridian( const char **ppszName ) const
 
 {
     const OGR_SRSNode *poPRIMEM = GetAttrNode( "PRIMEM" );
@@ -1554,14 +1636,42 @@ double OGRSpatialReference::GetPrimeMeridian( char **ppszName ) const
         && CPLAtof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
     {
         if( ppszName != nullptr )
-            *ppszName = const_cast<char *>(poPRIMEM->GetChild(0)->GetValue());
+            *ppszName = poPRIMEM->GetChild(0)->GetValue();
         return CPLAtof(poPRIMEM->GetChild(1)->GetValue());
     }
 
     if( ppszName != nullptr )
-        *ppszName = (char*) SRS_PM_GREENWICH;
+        *ppszName = SRS_PM_GREENWICH;
 
     return 0.0;
+}
+
+/**
+ * \brief Fetch prime meridian info.
+ *
+ * Returns the offset of the prime meridian from greenwich in degrees,
+ * and the prime meridian name (if requested).   If no PRIMEM value exists
+ * in the coordinate system definition a value of "Greenwich" and an
+ * offset of 0.0 is assumed.
+ *
+ * If the prime meridian name is returned, the pointer is to an internal
+ * copy of the name. It should not be freed, altered or depended on after
+ * the next OGR call.
+ *
+ * This method is the same as the C function OSRGetPrimeMeridian().
+ *
+ * @param ppszName return location for prime meridian name.  If NULL, name
+ * is not returned.
+ *
+ * @return the offset to the GEOGCS prime meridian from greenwich in decimal
+ * degrees.
+ * @since GDAL 2.3.0
+ */
+
+double OGRSpatialReference::GetPrimeMeridian( char **ppszName ) const
+
+{
+    return GetPrimeMeridian( const_cast<const char**>(ppszName) );
 }
 
 /************************************************************************/
@@ -1579,7 +1689,7 @@ double OSRGetPrimeMeridian( OGRSpatialReferenceH hSRS, char **ppszName )
     VALIDATE_POINTER1( hSRS, "OSRGetPrimeMeridian", 0 );
 
     return ToPointer(hSRS)->
-        GetPrimeMeridian( ppszName );
+        GetPrimeMeridian( const_cast<const char**>(ppszName) );
 }
 
 /************************************************************************/
@@ -2350,7 +2460,8 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
         return OGRERR_FAILURE;
     }
 
-    if( STARTS_WITH_CI((const char*) psResult->pabyData, "http://") )
+    const char* pszData = reinterpret_cast<const char*>(psResult->pabyData);
+    if( STARTS_WITH_CI(pszData, "http://") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "The data that was downloaded also starts with 'http://' "
@@ -2359,7 +2470,7 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
         CPLHTTPDestroyResult( psResult );
         return OGRERR_FAILURE;
     }
-    if( OGRERR_NONE != SetFromUserInput( (const char *) psResult->pabyData )) {
+    if( OGRERR_NONE != SetFromUserInput(pszData)) {
         CPLHTTPDestroyResult( psResult );
         return OGRERR_FAILURE;
     }
@@ -7788,15 +7899,13 @@ void OGRSpatialReference::GetNormInfo(void) const
 /* -------------------------------------------------------------------- */
 /*      Initialize values.                                              */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference *poThis = (OGRSpatialReference *) this;
+    bNormInfoSet = TRUE;
 
-    poThis->bNormInfoSet = TRUE;
-
-    poThis->dfFromGreenwich = GetPrimeMeridian(nullptr);
-    poThis->dfToMeter = GetLinearUnits(nullptr);
-    poThis->dfToDegrees = GetAngularUnits(nullptr) / CPLAtof(SRS_UA_DEGREE_CONV);
-    if( fabs(poThis->dfToDegrees-1.0) < 0.000000001 )
-        poThis->dfToDegrees = 1.0;
+    dfFromGreenwich = GetPrimeMeridian(nullptr);
+    dfToMeter = GetLinearUnits(nullptr);
+    dfToDegrees = GetAngularUnits(nullptr) / CPLAtof(SRS_UA_DEGREE_CONV);
+    if( fabs(dfToDegrees-1.0) < 0.000000001 )
+        dfToDegrees = 1.0;
 }
 
 /************************************************************************/
@@ -8302,7 +8411,7 @@ OGRErr OSRSetAxes( OGRSpatialReferenceH hSRS,
 }
 
 #ifdef HAVE_MITAB
-char CPL_DLL *MITABSpatialRef2CoordSys( OGRSpatialReference * );
+char CPL_DLL *MITABSpatialRef2CoordSys( const OGRSpatialReference * );
 OGRSpatialReference CPL_DLL * MITABCoordSys2SpatialRef( const char * );
 #endif
 
@@ -8347,7 +8456,7 @@ OGRErr OGRSpatialReference::exportToMICoordSys( char **ppszResult ) const
 
 {
 #ifdef HAVE_MITAB
-    *ppszResult = MITABSpatialRef2CoordSys( (OGRSpatialReference *) this );
+    *ppszResult = MITABSpatialRef2CoordSys( this );
     if( *ppszResult != nullptr && strlen(*ppszResult) > 0 )
         return OGRERR_NONE;
 

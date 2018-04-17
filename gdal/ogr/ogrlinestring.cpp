@@ -1292,16 +1292,16 @@ void OGRSimpleCurve::getPoints( void* pabyX, int nXStride,
     for( int i = 0; i < nPointCount; i++ )
     {
         if( pabyX )
-            *(double*)(static_cast<char*>(pabyX) + i * nXStride) = paoPoints[i].x;
+            *reinterpret_cast<double*>(static_cast<char*>(pabyX) + i * nXStride) = paoPoints[i].x;
         if( pabyY )
-            *(double*)(static_cast<char*>(pabyY) + i * nYStride) = paoPoints[i].y;
+            *reinterpret_cast<double*>(static_cast<char*>(pabyY) + i * nYStride) = paoPoints[i].y;
     }
 
     if( pabyZ )
     {
         for( int i = 0; i < nPointCount; i++ )
         {
-            *(double*)(static_cast<char*>(pabyZ) + i * nZStride) =
+            *reinterpret_cast<double*>(static_cast<char*>(pabyZ) + i * nZStride) =
                 padfZ ? padfZ[i] : 0.0;
         }
     }
@@ -1344,22 +1344,22 @@ void OGRSimpleCurve::getPoints( void* pabyX, int nXStride,
         return;
     for( int i = 0; i < nPointCount; i++ )
     {
-        if( pabyX ) *(double*)((char*)pabyX + i * nXStride) = paoPoints[i].x;
-        if( pabyY ) *(double*)((char*)pabyY + i * nYStride) = paoPoints[i].y;
+        if( pabyX ) *reinterpret_cast<double*>(static_cast<char*>(pabyX) + i * nXStride) = paoPoints[i].x;
+        if( pabyY ) *reinterpret_cast<double*>(static_cast<char*>(pabyY) + i * nYStride) = paoPoints[i].y;
     }
 
     if( pabyZ )
     {
         for( int i = 0; i < nPointCount; i++ )
         {
-            *(double*)((char*)pabyZ + i * nZStride) = (padfZ) ? padfZ[i] : 0.0;
+            *reinterpret_cast<double*>(static_cast<char*>(pabyZ) + i * nZStride) = (padfZ) ? padfZ[i] : 0.0;
         }
     }
     if( pabyM )
     {
         for( int i = 0; i < nPointCount; i++ )
         {
-            *(double*)((char*)pabyM + i * nZStride) = (padfM) ? padfM[i] : 0.0;
+            *reinterpret_cast<double*>(static_cast<char*>(pabyM) + i * nZStride) = (padfM) ? padfM[i] : 0.0;
         }
     }
 }
@@ -1626,7 +1626,7 @@ OGRErr OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
 /*      Set the byte order.                                             */
 /* -------------------------------------------------------------------- */
-    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER((unsigned char) eByteOrder);
+    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER(static_cast<unsigned char>(eByteOrder));
 
 /* -------------------------------------------------------------------- */
 /*      Set the geometry feature type.                                  */
@@ -1638,9 +1638,9 @@ OGRErr OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
         nGType = wkbFlatten(nGType);
         if( Is3D() )
             // Explicitly set wkb25DBit.
-            nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse);
+            nGType = static_cast<OGRwkbGeometryType>(nGType | wkb25DBitInternalUse);
         if( IsMeasured() )
-            nGType = (OGRwkbGeometryType)(nGType | 0x40000000);
+            nGType = static_cast<OGRwkbGeometryType>(nGType | 0x40000000);
     }
     else if( eWkbVariant == wkbVariantIso )
         nGType = getIsoGeometryType();
@@ -2318,7 +2318,7 @@ void OGRSimpleCurve::getEnvelope( OGREnvelope * psEnvelope ) const
 void OGRSimpleCurve::getEnvelope( OGREnvelope3D * psEnvelope ) const
 
 {
-    getEnvelope((OGREnvelope*)psEnvelope);
+    getEnvelope(static_cast<OGREnvelope*>(psEnvelope));
 
     if( IsEmpty() || padfZ == nullptr )
     {
