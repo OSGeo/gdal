@@ -289,7 +289,7 @@ def ogr_oci_7():
 
     gdaltest.oci_lyr.SetAttributeFilter(None)
 
-    geom = ogr.CreateGeometryFromWkt( \
+    geom = ogr.CreateGeometryFromWkt(
         'LINESTRING(479505 4763195,480526 4762819)')
     gdaltest.oci_lyr.SetSpatialFilter(geom)
     geom.Destroy()

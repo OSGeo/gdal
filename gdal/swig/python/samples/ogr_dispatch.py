@@ -201,7 +201,7 @@ def get_layer_and_map(out_lyr_name, src_lyr, dst_ds, layerMap, geom_type, option
         if out_lyr is None:
             if not options.bQuiet:
                 print('Creating layer %s' % out_lyr_name)
-            out_lyr = dst_ds.CreateLayer(out_lyr_name, srs=srs, \
+            out_lyr = dst_ds.CreateLayer(out_lyr_name, srs=srs,
                                          geom_type=geom_type, options=options.lco)
             if out_lyr is None:
                 return 1
@@ -252,7 +252,7 @@ def convert_layer(src_lyr, dst_ds, layerMap, options):
         else:
             geom_type = ogr.wkbUnknown
 
-        (out_lyr, panMap) = get_layer_and_map(out_lyr_name, src_lyr, dst_ds, \
+        (out_lyr, panMap) = get_layer_and_map(out_lyr_name, src_lyr, dst_ds,
                                               layerMap, geom_type, options)
 
         if options.nGroupTransactions > 0:
@@ -347,7 +347,7 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
             options.bPrefixWithLayerName = True
         elif EQUAL(arg, '-style_as_field'):
             options.bStyleAsField = True
-        elif (EQUAL(arg, "-tg") or \
+        elif (EQUAL(arg, "-tg") or
                 EQUAL(arg, "-gt")) and i + 1 < len(argv):
             i = i + 1
             options.nGroupTransactions = int(argv[i])

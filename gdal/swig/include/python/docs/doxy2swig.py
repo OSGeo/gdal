@@ -62,7 +62,7 @@ class Doxy2SWIG:
         f.close()
 
         self.pieces = []
-        self.pieces.append('\n// File: %s\n' %\
+        self.pieces.append('\n// File: %s\n' %
                            os.path.basename(f.name))
 
         self.space_re = re.compile(r'\s+')
@@ -138,8 +138,8 @@ class Doxy2SWIG:
         `ELEMENT_NODEs`, that have a `tagName` equal to the name.
 
         """
-        nodes = [(x.tagName, x) for x in node.childNodes \
-                 if x.nodeType == x.ELEMENT_NODE and \
+        nodes = [(x.tagName, x) for x in node.childNodes
+                 if x.nodeType == x.ELEMENT_NODE and
                  x.tagName in names]
         return dict(nodes)
 

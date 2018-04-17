@@ -88,7 +88,7 @@ def GetOutputDriversFor(filename):
         return ['VRT']
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
-        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or \
+        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or
             drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
            drv.GetMetadataItem(gdal.DCAP_VECTOR) is not None:
             if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):

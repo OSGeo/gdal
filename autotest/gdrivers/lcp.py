@@ -295,7 +295,7 @@ def lcp_6():
     ds = None
     try:
         os.remove('data/test_FARSITE_UTM12.LCP.aux.xml')
-    except:
+    except OSError:
         pass
 
     return retval
@@ -331,7 +331,7 @@ def lcp_7():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_7.' + ext)
-        except:
+        except OSError:
             pass
 
     return retval
@@ -368,7 +368,7 @@ def lcp_8():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_8.' + ext)
-        except:
+        except OSError:
             pass
     return retval
 
@@ -396,7 +396,7 @@ def lcp_9():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_9.' + ext)
-        except:
+        except OSError:
             pass
     return retval
 
@@ -435,7 +435,7 @@ def lcp_10():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_10.' + ext)
-        except:
+        except OSError:
             pass
 
     return retval
@@ -475,7 +475,7 @@ def lcp_11():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_11.' + ext)
-        except:
+        except OSError:
             pass
 
     return retval
@@ -514,7 +514,7 @@ def lcp_12():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_12.' + ext)
-        except:
+        except OSError:
             pass
 
     return retval
@@ -554,7 +554,7 @@ def lcp_13():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_13.' + ext)
-        except:
+        except OSError:
             pass
 
     return retval
@@ -594,7 +594,7 @@ def lcp_14():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_14.' + ext)
-        except:
+        except OSError:
             pass
 
     return retval
@@ -634,7 +634,7 @@ def lcp_15():
     for ext in ['lcp', 'prj', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_15.' + ext)
-        except:
+        except OSError:
             pass
 
     return retval
@@ -678,7 +678,7 @@ def lcp_16():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_16.' + ext)
-        except:
+        except OSError:
             pass
 
     return retval
@@ -721,7 +721,7 @@ def lcp_17():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_17.' + ext)
-        except:
+        except OSError:
             pass
 
     return retval
@@ -756,7 +756,7 @@ def lcp_18():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_18.' + ext)
-        except:
+        except OSError:
             pass
     return retval
 
@@ -790,7 +790,7 @@ def lcp_19():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_19.' + ext)
-        except:
+        except OSError:
             pass
 
     return retval
@@ -825,7 +825,7 @@ def lcp_20():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_20.' + ext)
-        except:
+        except OSError:
             pass
 
     return retval
@@ -869,7 +869,7 @@ def lcp_21():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_21.' + ext)
-        except:
+        except OSError:
             pass
 
     return retval
@@ -916,7 +916,7 @@ def lcp_22():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_22.' + ext)
-        except:
+        except OSError:
             pass
 
     return retval
@@ -954,7 +954,7 @@ def lcp_23():
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_23.' + ext)
-        except:
+        except OSError:
             pass
 
     return retval

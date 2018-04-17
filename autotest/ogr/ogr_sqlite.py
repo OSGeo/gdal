@@ -67,7 +67,7 @@ def ogr_sqlite_1():
 
     try:
         os.remove('tmp/sqlite_test.db')
-    except:
+    except OSError:
         pass
 
     # This is to speed-up the runtime of tests on EXT4 filesystems
@@ -152,8 +152,8 @@ def ogr_sqlite_2():
         feature_def = gdaltest.sl_lyr.GetLayerDefn()
         field_defn = feature_def.GetFieldDefn(feature_def.GetFieldIndex(field_desc[0]))
         if field_defn.GetType() != field_desc[1]:
-            print('Expected type for %s is %s, not %s' % \
-                  (field_desc[0], field_defn.GetFieldTypeName(field_defn.GetType()), \
+            print('Expected type for %s is %s, not %s' %
+                  (field_desc[0], field_defn.GetFieldTypeName(field_defn.GetType()),
                    field_defn.GetFieldTypeName(field_desc[1])))
     field_defn = feature_def.GetFieldDefn(feature_def.GetFieldIndex('fld_boolean'))
     if field_defn.GetType() != ogr.OFTInteger or field_defn.GetSubType() != ogr.OFSTBoolean:
@@ -355,7 +355,7 @@ def ogr_sqlite_7():
 
     gdaltest.sl_lyr.SetAttributeFilter(None)
 
-    geom = ogr.CreateGeometryFromWkt( \
+    geom = ogr.CreateGeometryFromWkt(
         'LINESTRING(479505 4763195,480526 4762819)')
     gdaltest.sl_lyr.SetSpatialFilter(geom)
     geom.Destroy()
@@ -1068,7 +1068,7 @@ def ogr_sqlite_20():
 
     try:
         os.unlink('tmp/non_spatialite_test_with_epsg.db')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/non_spatialite_test_with_epsg.db', options=['INIT_WITH_EPSG=YES'])
@@ -1219,7 +1219,7 @@ def ogr_sqlite_24():
 
     try:
         os.remove('tmp/test24.sqlite')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/test24.sqlite')
     lyr = ds.CreateLayer('test')
@@ -1470,7 +1470,7 @@ def ogr_sqlite_29():
 
     try:
         os.remove('tmp/ogr_sqlite_29.sqlite')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_29.sqlite')
 
@@ -1581,7 +1581,7 @@ def ogr_spatialite_2():
         print(extent)
         return 'fail'
 
-    geom = ogr.CreateGeometryFromWkt( \
+    geom = ogr.CreateGeometryFromWkt(
         'POLYGON((2 2,2 8,8 8,8 2,2 2))')
     lyr.SetSpatialFilter(geom)
 
@@ -1720,7 +1720,7 @@ def ogr_spatialite_2():
     ds = ogr.Open('tmp/spatialite_test.db')
     lyr = ds.GetLayerByName('test_spatialfilter')
 
-    geom = ogr.CreateGeometryFromWkt( \
+    geom = ogr.CreateGeometryFromWkt(
         'POLYGON((2 2,2 8,8 8,8 2,2 2))')
     lyr.SetSpatialFilter(geom)
     geom.Destroy()
@@ -1837,7 +1837,7 @@ def ogr_spatialite_5(bUseComprGeom=False):
 
     try:
         os.remove('tmp/ogr_spatialite_5.sqlite')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_5.sqlite', options=['SPATIALITE=YES'])
 
@@ -1992,7 +1992,7 @@ def ogr_spatialite_6():
 
     try:
         os.remove('tmp/ogr_spatialite_6.sqlite')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_6.sqlite', options=['SPATIALITE=YES'])
 
@@ -2049,10 +2049,10 @@ def ogr_spatialite_6():
     ds.ExecuteSQL("CREATE VIEW \"%s\" AS SELECT OGC_FID AS '%s', %s AS '%s', \"int'col\", realcol FROM \"%s\"" % (viewname, pkid_single, geometryname, thegeom_single, layername))
 
     if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) >= 4:
-        ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column, read_only) VALUES " + \
+        ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column, read_only) VALUES " +
                       "('%s', '%s', '%s', '%s', Lower('%s'), 1)" % (viewname_single, thegeom_single, pkid_single, layername_single, geometryname))
     else:
-        ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column) VALUES " + \
+        ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column) VALUES " +
                       "('%s', '%s', '%s', '%s', '%s')" % (viewname_single, thegeom_single, pkid_single, layername_single, geometryname))
 
     ds = None
@@ -2169,7 +2169,7 @@ def ogr_spatialite_8():
 
     try:
         os.remove('tmp/ogr_spatialite_8.sqlite')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_8.sqlite', options=['SPATIALITE=YES'])
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
@@ -2207,10 +2207,10 @@ def ogr_spatialite_8():
         readonly_col = ''
         readonly_val = ''
 
-    ds.ExecuteSQL(("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column%s) VALUES " % readonly_col) + \
+    ds.ExecuteSQL(("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column%s) VALUES " % readonly_col) +
                   ("('view_test_geom1', 'renamed_geom1', 'pk_id', 'test', 'geom1'%s)" % readonly_val))
     ds.ExecuteSQL('CREATE VIEW view_test_geom2 AS SELECT OGC_FID AS pk_id, foo, geom2 AS renamed_geom2 FROM test')
-    ds.ExecuteSQL(("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column%s) VALUES " % readonly_col) + \
+    ds.ExecuteSQL(("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column%s) VALUES " % readonly_col) +
                   ("('view_test_geom2', 'renamed_geom2', 'pk_id', 'test', 'geom2'%s)" % readonly_val))
     ds = None
 
@@ -2372,7 +2372,7 @@ def ogr_sqlite_31():
 
     try:
         os.remove('tmp/ogr_sqlite_31.sqlite')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_31.sqlite')
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
@@ -2454,7 +2454,7 @@ def ogr_sqlite_32():
 
     try:
         os.remove('tmp/ogr_sqlite_32.sqlite')
-    except:
+    except OSError:
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_32.sqlite')
     lyr = ds.CreateLayer('test')
@@ -2512,7 +2512,7 @@ def ogr_sqlite_33():
     for i in range(2):
         try:
             os.remove('tmp/ogr_sqlite_33.sqlite')
-        except:
+        except OSError:
             pass
         if i == 0:
             options = []
@@ -2669,7 +2669,7 @@ def ogr_sqlite_35():
 
     try:
         os.remove('tmp/ogr_sqlite_35.sqlite')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_35.sqlite', options=options)
@@ -2761,7 +2761,7 @@ def ogr_sqlite_36():
 
     try:
         os.remove('tmp/ogr_sqlite_36.sqlite')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_36.sqlite')
@@ -2800,7 +2800,7 @@ def ogr_sqlite_37():
 
     try:
         os.remove('tmp/ogr_sqlite_37.sqlite')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_37.sqlite')
@@ -2911,7 +2911,7 @@ def ogr_sqlite_38():
 
     try:
         os.remove('tmp/ogr_sqlite_38.sqlite')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_38.sqlite')
@@ -3076,7 +3076,7 @@ def ogr_spatialite_10():
         return 'skip'
     try:
         os.remove('tmp/ogr_spatialite_10.sqlite')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_10.sqlite', options=['SPATIALITE=YES'])
@@ -3653,90 +3653,90 @@ def ogr_sqlite_cleanup():
 
     try:
         os.remove('tmp/sqlite_test.db')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/spatialite_test.db')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/spatialite_test_with_epsg.db')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/non_spatialite_test_with_epsg.db')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/test24.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_spatialite_5.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_spatialite_6.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_27.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_29.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_spatialite_8.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_31.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_32.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_33.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_35.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_36.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_37.sqlite')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/ogr_sqlite_38.sqlite')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/ogr_spatialite_10.sqlite')
-    except:
+    except OSError:
         pass
     return 'success'
 

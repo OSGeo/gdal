@@ -271,11 +271,11 @@ class mosaic_info:
 
     def report(self):
         print('Filename: ' + self.filename)
-        print('File Size: %dx%dx%d' \
+        print('File Size: %dx%dx%d'
               % (self.xsize, self.ysize, self.bands))
-        print('Pixel Size: %f x %f' \
+        print('Pixel Size: %f x %f'
               % (self.scaleX, self.scaleY))
-        print('UL:(%f,%f)   LR:(%f,%f)' \
+        print('UL:(%f,%f)   LR:(%f,%f)'
               % (self.ulx, self.uly, self.lrx, self.lry))
 
 
@@ -358,14 +358,14 @@ def tileImage(minfo, ti):
                 progress(processed / float(total))
 
     if TileIndexName is not None:
-        if UseDirForEachRow and PyramidOnly == False:
+        if UseDirForEachRow and not PyramidOnly:
             shapeName = getTargetDir(0) + TileIndexName
         else:
             shapeName = getTargetDir() + TileIndexName
         copyTileIndexToDisk(OGRDS, shapeName)
 
     if CsvFileName is not None:
-        if UseDirForEachRow and PyramidOnly == False:
+        if UseDirForEachRow and not PyramidOnly:
             csvName = getTargetDir(0) + CsvFileName
         else:
             csvName = getTargetDir() + CsvFileName
@@ -666,7 +666,7 @@ def getTileName(minfo, ti, xIndex, yIndex, level=-1):
         #See if there was a switch in the row, if so then create new dir for row.
         if LastRowIndx < yIndex:
             LastRowIndx = yIndex
-            if (os.path.exists(getTargetDir(level) + str(yIndex)) == False):
+            if not os.path.exists(getTargetDir(level) + str(yIndex)):
                 os.mkdir(getTargetDir(level) + str(yIndex))
     else:
         format = getTargetDir(level) + parts[0] + "_" + yIndex_str + "_" + xIndex_str
@@ -772,7 +772,7 @@ def main(args=None):
             i += 1
             TargetDir = argv[i]
 
-            if os.path.exists(TargetDir) == False:
+            if not os.path.exists(TargetDir):
                 print("TargetDir " + TargetDir + " does not exist")
                 return 1
             if TargetDir[len(TargetDir) - 1:] != os.sep:
@@ -867,9 +867,9 @@ def main(args=None):
         return 1
 
     # create level 0 directory if needed
-    if(UseDirForEachRow and PyramidOnly == False):
+    if UseDirForEachRow and not PyramidOnly:
         leveldir = TargetDir + str(0) + os.sep
-        if (os.path.exists(leveldir) == False):
+        if not os.path.exists(leveldir):
             os.mkdir(leveldir)
 
     if Levels > 0:  # prepare Dirs for pyramid
@@ -879,7 +879,7 @@ def main(args=None):
             if (os.path.exists(leveldir)):
                 continue
             os.mkdir(leveldir)
-            if (os.path.exists(leveldir) == False):
+            if not os.path.exists(leveldir):
                 print("Cannot create level dir: %s" % leveldir)
                 return 1
             if Verbose:
@@ -913,7 +913,7 @@ def main(args=None):
         minfo.report()
         ti.report()
 
-    if PyramidOnly == False:
+    if not PyramidOnly:
         dsCreatedTileIndex = tileImage(minfo, ti)
         tileIndexDS.Destroy()
     else:

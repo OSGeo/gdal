@@ -1021,7 +1021,7 @@ def warp_27():
     resampling = gdal.GRA_Bilinear
 
     # Call AutoCreateWarpedVRT() to fetch default values for target raster dimensions and geotransform
-    tmp_ds = gdal.AutoCreateWarpedVRT(src_ds, \
+    tmp_ds = gdal.AutoCreateWarpedVRT(src_ds,
                                       None,  # src_wkt : left to default value --> will use the one from source \
                                       dst_wkt, \
                                       resampling, \
@@ -1042,8 +1042,8 @@ def warp_27():
     cbk = warp_27_progress_callback
     cbk_user_data = None  # value for last parameter of above warp_27_progress_callback
 
-    gdal.ReprojectImage(src_ds, \
-                        dst_ds, \
+    gdal.ReprojectImage(src_ds,
+                        dst_ds,
                         None,  # src_wkt : left to default value --> will use the one from source \
                         None,  # dst_wkt : left to default value --> will use the one from destination \
                         resampling, \
@@ -1184,7 +1184,7 @@ def warp_30():
     resampling = gdal.GRA_Bilinear
 
     # Call AutoCreateWarpedVRT() to fetch default values for target raster dimensions and geotransform
-    tmp_ds = gdal.AutoCreateWarpedVRT(src_ds, \
+    tmp_ds = gdal.AutoCreateWarpedVRT(src_ds,
                                       None,  # src_wkt : left to default value --> will use the one from source \
                                       dst_wkt, \
                                       resampling, \
@@ -1206,8 +1206,8 @@ def warp_30():
     cbk_user_data = None  # value for last parameter of above warp_27_progress_callback
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ret = gdal.ReprojectImage(src_ds, \
-                              dst_ds, \
+    ret = gdal.ReprojectImage(src_ds,
+                              dst_ds,
                               None,  # src_wkt : left to default value --> will use the one from source \
                               None,  # dst_wkt : left to default value --> will use the one from destination \
                               resampling, \
@@ -1224,8 +1224,8 @@ def warp_30():
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
     gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ret = gdal.ReprojectImage(src_ds, \
-                              dst_ds, \
+    ret = gdal.ReprojectImage(src_ds,
+                              dst_ds,
                               None,  # src_wkt : left to default value --> will use the one from source \
                               None,  # dst_wkt : left to default value --> will use the one from destination \
                               resampling, \
@@ -1925,7 +1925,7 @@ def warp_56():
         from osgeo import gdalnumeric
         gdalnumeric.zeros
         import numpy
-    except:
+    except (ImportError, AttributeError):
         return 'skip'
 
     pix_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)

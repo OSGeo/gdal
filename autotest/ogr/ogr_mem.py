@@ -206,7 +206,7 @@ def ogr_mem_6():
     if gdaltest.mem_ds is None:
         return 'skip'
 
-    sql_lyr = gdaltest.mem_ds.ExecuteSQL( \
+    sql_lyr = gdaltest.mem_ds.ExecuteSQL(
         "select * from tpoly where prfedea = '2'")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'prfedea', ['2'])
@@ -234,7 +234,7 @@ def ogr_mem_7():
 
     gdaltest.mem_lyr.SetAttributeFilter(None)
 
-    geom = ogr.CreateGeometryFromWkt( \
+    geom = ogr.CreateGeometryFromWkt(
         'LINESTRING(479505 4763195,480526 4762819)')
     gdaltest.mem_lyr.SetSpatialFilter(geom)
     geom.Destroy()
@@ -330,7 +330,7 @@ def ogr_mem_9():
     # can't be fetched.
     new_count = gdaltest.mem_lyr.GetFeatureCount()
     if new_count != old_count - 1:
-        gdaltest.post_reason('got feature count of %d, not expected %d.' \
+        gdaltest.post_reason('got feature count of %d, not expected %d.'
                              % (new_count, old_count - 1))
 
     if not gdaltest.mem_lyr.TestCapability(ogr.OLCRandomRead):

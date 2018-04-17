@@ -98,7 +98,7 @@ def ogr_openfilegdb_make_test_data():
 
     try:
         shutil.rmtree("data/testopenfilegdb.gdb")
-    except:
+    except OSError:
         pass
     ds = ogrtest.fgdb_drv.CreateDataSource('data/testopenfilegdb.gdb')
 
@@ -260,7 +260,7 @@ def ogr_openfilegdb_make_test_data():
 
     try:
         os.unlink('data/testopenfilegdb.gdb.zip')
-    except:
+    except OSError:
         pass
     os.chdir('data')
     os.system('zip -r -9 testopenfilegdb.gdb.zip testopenfilegdb.gdb')
@@ -700,7 +700,7 @@ def ogr_openfilegdb_4():
         for i in range(count):
             feat = lyr.GetNextFeature()
             if feat is None or \
-               (start is not None and \
+               (start is not None and
                     feat.GetFID() != i * 4 + start):
                 print(where_clause, count)
                 gdaltest.post_reason('fail')
@@ -722,7 +722,7 @@ def ogr_openfilegdb_5():
 
     try:
         shutil.rmtree('tmp/testopenfilegdb.gdb')
-    except:
+    except OSError:
         pass
     try:
         gdaltest.unzip('tmp/', 'data/testopenfilegdb.gdb.zip')
@@ -730,7 +730,7 @@ def ogr_openfilegdb_5():
         return 'skip'
     try:
         os.stat('tmp/testopenfilegdb.gdb')
-    except:
+    except OSError:
         return 'skip'
 
     ds = ogr.Open('tmp/testopenfilegdb.gdb')
@@ -749,7 +749,7 @@ def ogr_openfilegdb_6():
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
 
     # With indices
-    sql_lyr = ds.ExecuteSQL("select min(id), max(id), count(id), sum(id), avg(id), min(str), min(smallint), " \
+    sql_lyr = ds.ExecuteSQL("select min(id), max(id), count(id), sum(id), avg(id), min(str), min(smallint), "
                             "avg(smallint), min(float), avg(float), min(real), avg(real), min(adate), avg(adate), min(guid), min(nullint), avg(nullint) from point")
     if sql_lyr is None:
         return 'fail'
@@ -920,7 +920,7 @@ def ogr_openfilegdb_9():
 
     try:
         os.stat('tmp/testopenfilegdb.gdb')
-    except:
+    except OSError:
         return 'skip'
 
     shutil.copy('tmp/testopenfilegdb.gdb/a00000009.gdbtable', 'tmp/a00000009.gdbtable')
@@ -969,7 +969,7 @@ def ogr_openfilegdb_10():
 
     try:
         os.stat('tmp/testopenfilegdb.gdb')
-    except:
+    except OSError:
         return 'skip'
 
     shutil.copytree('tmp/testopenfilegdb.gdb', 'tmp/testopenfilegdb_fuzzed.gdb')
@@ -1593,16 +1593,16 @@ def ogr_openfilegdb_cleanup():
 
     try:
         shutil.rmtree('tmp/testopenfilegdb.gdb')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/a00000009.gdbtable')
         os.remove('tmp/a00000009.gdbtablx')
-    except:
+    except OSError:
         pass
     try:
         shutil.rmtree('tmp/testopenfilegdb_fuzzed.gdb')
-    except:
+    except OSError:
         pass
 
     return 'success'

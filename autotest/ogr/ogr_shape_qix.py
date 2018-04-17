@@ -81,7 +81,7 @@ def check_qix_non_overlapping_geoms(lyr):
 
 
 def build_rectangle_from_point(x, y, radius=0.1):
-    return ogr.CreateGeometryFromWkt('POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))' % \
+    return ogr.CreateGeometryFromWkt('POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))' %
                                      (x - radius, y - radius, x - radius, y + radius, x + radius, y + radius, x + radius, y - radius, x - radius, y - radius))
 
 ###############################################################################
@@ -228,7 +228,7 @@ def check_qix_random_geoms(lyr):
 
 
 def build_rectangle(x1, y1, x2, y2):
-    return ogr.CreateGeometryFromWkt('POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))' % \
+    return ogr.CreateGeometryFromWkt('POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))' %
                                      (x1, y1, x1, y2, x2, y2, x2, y1, x1, y1))
 
 ###############################################################################

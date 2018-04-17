@@ -192,7 +192,7 @@ def ingr_15():
 
     try:
         os.remove('data/frmt02.cot.aux.xml')
-    except:
+    except OSError:
         pass
 
     return result

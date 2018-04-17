@@ -622,7 +622,7 @@ def tiff_write_17():
         open('tmp/tm_17.RPB').read()
         gdaltest.post_reason('unexpectedly found .RPB file')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     # confirm there is no _rpc.txt file created by default.
@@ -630,7 +630,7 @@ def tiff_write_17():
         open('tmp/tm_17_RPC.TXT').read()
         gdaltest.post_reason('unexpectedly found _RPC.TXT file')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     # Open the dataset, and confirm the RPC data is still intact.
@@ -683,7 +683,7 @@ def tiff_write_18():
     try:
         open('tmp/tw_18.RPB').read()
         open('tmp/tw_18.IMD').read()
-    except:
+    except IOError:
         gdaltest.post_reason('missing .RPB or .IMD file.')
         return 'fail'
 
@@ -692,7 +692,7 @@ def tiff_write_18():
         open('tmp/tw_18_RPC.TXT').read()
         gdaltest.post_reason('unexpectedly found _RPC.TXT file')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     # Open the dataset, and confirm the RPC/IMD data is still intact.
@@ -729,14 +729,14 @@ def tiff_write_18():
         open('tmp/tw_18.RPB').read()
         gdaltest.post_reason('RPB did not get cleaned up.')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     try:
         open('tmp/tw_18.IMD').read()
         gdaltest.post_reason('IMD did not get cleaned up.')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     return 'success'
@@ -788,12 +788,12 @@ def tiff_write_rpc_txt():
         open('tmp/tiff_write_rpc_txt.RPB').read()
         gdaltest.post_reason('unexpectedly found .RPB file')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     try:
         open('tmp/tiff_write_rpc_txt_RPC.TXT').read()
-    except:
+    except IOError:
         gdaltest.post_reason('missing _RPC.TXT file.')
         return 'fail'
 
@@ -813,7 +813,7 @@ def tiff_write_rpc_txt():
         open('tmp/tiff_write_rpc_txt_RPC.TXT').read()
         gdaltest.post_reason('_RPC.TXT did not get cleaned up.')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     return 'success'
@@ -845,7 +845,7 @@ def tiff_write_rpc_in_pam():
         open('tmp/tiff_write_rpc_txt.RPB').read()
         gdaltest.post_reason('unexpectedly found .RPB file')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     # Open the dataset, and confirm the RPC data is still intact.
@@ -926,7 +926,7 @@ def tiff_write_20():
         os.stat('tmp/tags.tif.aux.xml')
         gdaltest.post_reason('did not expected .aux.xml file')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     new_ds = gdal.Open('tmp/tags.tif')
@@ -951,7 +951,7 @@ def tiff_write_20():
         os.stat('tmp/tags.tif.aux.xml')
         gdaltest.post_reason('did not expected .aux.xml file')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/tags.tif')
@@ -1339,7 +1339,7 @@ def tiff_write_30():
     gdaltest.tiff_drv.Delete('tmp/bigtiff.tif')
 
     # Check BigTIFF signature
-    if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
+    if ((binvalues[2] != 0x2B or binvalues[3] != 0)
             and (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
@@ -1372,7 +1372,7 @@ def tiff_write_31():
     gdaltest.tiff_drv.Delete('tmp/bigtiff.tif')
 
     # Check BigTIFF signature
-    if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
+    if ((binvalues[2] != 0x2B or binvalues[3] != 0)
             and (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
@@ -2309,7 +2309,7 @@ def tiff_write_60():
             os.stat(options_tuple[1])
             gdaltest.post_reason('%s should have been deleted' % options_tuple[1])
             return 'fail'
-        except:
+        except OSError:
             pass
 
         # CreateCopy case
@@ -2333,7 +2333,7 @@ def tiff_write_60():
             os.stat(options_tuple[1])
             gdaltest.post_reason('%s should have been deleted' % options_tuple[1])
             return 'fail'
-        except:
+        except OSError:
             pass
 
     return 'success'
@@ -2365,7 +2365,7 @@ def tiff_write_61():
     gdaltest.tiff_drv.Delete('tmp/bigtiff.tif')
 
     # Check classical TIFF signature
-    if ((binvalues[2] != 0x2A or binvalues[3] != 0) \
+    if ((binvalues[2] != 0x2A or binvalues[3] != 0)
             and (binvalues[3] != 0x2A or binvalues[2] != 0)):
         return 'fail'
 
@@ -2398,7 +2398,7 @@ def tiff_write_62():
     gdaltest.tiff_drv.Delete('tmp/bigtiff.tif')
 
     # Check BigTIFF signature
-    if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
+    if ((binvalues[2] != 0x2B or binvalues[3] != 0)
             and (binvalues[3] != 0x2B or binvalues[2] != 0)):
         return 'fail'
 
@@ -2626,7 +2626,7 @@ def tiff_write_70():
         os.stat('tmp/tiff_write_70.tif.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/tiff_write_70.tif')
@@ -3065,7 +3065,7 @@ def tiff_write_79():
                 os.stat('tmp/tiff_write_79.tif.aux.xml')
                 gdaltest.post_reason('got to PAM')
                 return 'fail'
-            except:
+            except OSError:
                 pass
 
             # So should get 'Area'
@@ -3096,7 +3096,7 @@ def tiff_write_79():
                 os.stat('tmp/tiff_write_79.tif.aux.xml')
                 gdaltest.post_reason('got to PAM')
                 return 'fail'
-            except:
+            except OSError:
                 pass
 
             # Now should get 'Point'
@@ -3157,7 +3157,7 @@ def tiff_write_80():
         os.stat('tmp/tiff_write_80.tif.aux.xml')
         gdaltest.post_reason('got to PAM, but not expected...')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/tiff_write_80.tif')
@@ -3244,7 +3244,7 @@ def tiff_write_80():
         os.stat('tmp/tiff_write_80_bis.tif.aux.xml')
         gdaltest.post_reason('PAM file should be deleted')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/tiff_write_80_bis.tif')
@@ -3421,7 +3421,7 @@ def tiff_write_85():
         os.stat('tmp/tiff_write_85.tif.aux.xml')
         gdaltest.post_reason('got to PAM, but not expected...')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/tiff_write_85.tif')
@@ -3497,7 +3497,7 @@ def tiff_write_85():
         os.stat('tmp/tiff_write_85_bis.tif.aux.xml')
         gdaltest.post_reason('PAM file should be deleted')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/tiff_write_85_bis.tif')
@@ -3644,7 +3644,7 @@ def tiff_write_87():
             gdaltest.post_reason('validate_cloud_optimized_geotiff failed')
             print(errors)
             return 'fail'
-    except:
+    except OSError:
         gdaltest.post_reason('validate_cloud_optimized_geotiff failed')
         return 'fail'
 
@@ -3753,7 +3753,7 @@ def tiff_write_89():
     for quality in [90, 75, 30]:
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
 
-        ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_89.tif', 1024, 1024, 3, \
+        ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_89.tif', 1024, 1024, 3,
                                                   options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality])
 
         gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
@@ -3811,7 +3811,7 @@ def tiff_write_90():
     for quality in [90, 75, 30]:
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
 
-        ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_90.tif', 1024, 1024, 3, \
+        ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_90.tif', 1024, 1024, 3,
                                                   options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality])
 
         data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
@@ -3859,7 +3859,7 @@ def tiff_write_91():
     for quality in [90, 75, 30]:
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
 
-        ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_91.tif', 1024, 1024, 3, \
+        ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_91.tif', 1024, 1024, 3,
                                                   options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality])
 
         data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
@@ -3914,7 +3914,7 @@ def tiff_write_92():
     for jpeg_quality_overview in [False, 30, 40]:
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
 
-        ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_92.tif', 1024, 1024, 3, \
+        ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_92.tif', 1024, 1024, 3,
                                                   options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality])
 
         data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
@@ -3971,7 +3971,7 @@ def tiff_write_93():
         return 'skip'
 
     src_ds = gdal.Open('../gdrivers/data/utm.tif')
-    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_93.tif', 1024, 1024, 3, \
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_93.tif', 1024, 1024, 3,
                                               options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'])
 
     data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
@@ -4374,7 +4374,7 @@ Band 1}""".encode('ascii'))
         if md['DMD_CREATIONOPTIONLIST'].find(compression_method) == -1:
             continue
 
-        ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_101.tif', src_ds, \
+        ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_101.tif', src_ds,
                                           options=['COMPRESS=' + compression_method, 'BLOCKXSIZE=2500', 'BLOCKYSIZE=4000'])
         ds = None
 
@@ -6299,7 +6299,7 @@ def tiff_write_137():
     expected_cs = src_ds.GetRasterBand(1).Checksum()
 
     # Test NUM_THREADS as creation option
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_137.tif', src_ds, \
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_137.tif', src_ds,
                                       options=['BLOCKYSIZE=16', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
     src_ds = None
     ds = None
@@ -6313,7 +6313,7 @@ def tiff_write_137():
         return 'fail'
 
     # Test NUM_THREADS as creation option with Create()
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, 1, \
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, 1,
                                   options=['BLOCKYSIZE=16', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
     ds.GetRasterBand(1).WriteRaster(0, 0, 4000, 4000, data)
     ds = None
@@ -6327,7 +6327,7 @@ def tiff_write_137():
         return 'fail'
 
     # Test NUM_THREADS as open option
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, \
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000,
                                   options=['TILED=YES', 'COMPRESS=DEFLATE', 'PREDICTOR=2', 'SPARSE_OK=YES'])
     ds = None
     ds = gdal.OpenEx('/vsimem/tiff_write_137.tif', gdal.OF_UPDATE, open_options=['NUM_THREADS=4'])
@@ -6343,7 +6343,7 @@ def tiff_write_137():
         return 'fail'
 
     # Ask data immediately while the block is compressed
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, \
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000,
                                   options=['BLOCKYSIZE=3999', 'COMPRESS=DEFLATE', 'NUM_THREADS=4'])
     ds.WriteRaster(0, 0, 1, 1, 'A')
     ds.FlushCache()
@@ -6359,7 +6359,7 @@ def tiff_write_137():
 
     # Test NUM_THREADS with raster == tile
     src_ds = gdal.Open('data/byte.tif')
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_137.tif', src_ds, \
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_137.tif', src_ds,
                                       options=['BLOCKYSIZE=20', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
     src_ds = None
     ds = None

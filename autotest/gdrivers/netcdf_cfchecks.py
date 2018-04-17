@@ -48,7 +48,10 @@ Options:
 
 '''
 
-import cdms2 as cdms, re, string, numpy
+import cdms2 as cdms
+import re
+import string
+import numpy
 import sys
 
 from cdms2.axis import FileAxis
@@ -921,14 +924,14 @@ class CFChecker:
                             # Gone for belts and braces approach here!!
                             # Variable contains only one value
                             # Bounds array will be 1 dimensional
-                            if not ((varData <= boundsData[0] and varData >= boundsData[1]) or \
+                            if not ((varData <= boundsData[0] and varData >= boundsData[1]) or
                                     (varData >= boundsData[0] and varData <= boundsData[1])):
                                 print("WARNING (7.1): Data for variable", var, "lies outside cell boundaries")
                                 self.warn = self.warn + 1
                         else:
                             i = 0
                             for value in varData:
-                                if not ((value <= boundsData[i][0] and value >= boundsData[i][1]) \
+                                if not ((value <= boundsData[i][0] and value >= boundsData[i][1])
                                         or (value >= boundsData[i][0] and value <= boundsData[i][1])):
                                     print("WARNING (7.1): Data for variable", var, "lies outside cell boundaries")
                                     self.warn = self.warn + 1

@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 from osgeo import gdal
 import shutil
@@ -191,15 +192,11 @@ def hfa_clean_external_overviews():
     ds = None
 
     try:
-        fd = open('tmp/small.rrd')
-    except:
-        fd = None
-
-    if fd is not None:
+        os.stat('tmp/small.rrd')
         gdaltest.post_reason('small.rrd still present.')
         return 'fail'
-
-    fd = None
+    except OSError:
+        pass
 
     gdal.GetDriverByName('HFA').Delete('tmp/small.img')
 
@@ -409,7 +406,7 @@ def hfa_write_invalid_wkt():
 # Get the driver, and verify a few things about it.
 
 
-init_list = [ \
+init_list = [
     ('byte.tif', 1, 4672, None),
     ('int16.tif', 1, 4672, None),
     ('uint16.tif', 1, 4672, None),
@@ -444,7 +441,7 @@ for item in init_list:
     gdaltest_list.append((ut1.testSetMetadata, item[0]))
 
 # Just a few for spill file, and compressed support.
-short_list = [ \
+short_list = [
     ('byte.tif', 1, 4672, None),
     ('uint16.tif', 1, 4672, None),
     ('float64.tif', 1, 4672, None)]

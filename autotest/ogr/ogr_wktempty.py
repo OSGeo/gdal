@@ -70,7 +70,7 @@ class TestWktEmpty:
             return 'fail'
 
 
-empty_wkt_list = [ \
+empty_wkt_list = [
     ('GEOMETRYCOLLECTION(EMPTY)', 'GEOMETRYCOLLECTION EMPTY'),
     ('MULTIPOLYGON( EMPTY )', 'MULTIPOLYGON EMPTY'),
     ('MULTILINESTRING(EMPTY)', 'MULTILINESTRING EMPTY'),

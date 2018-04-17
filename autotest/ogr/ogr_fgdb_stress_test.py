@@ -78,12 +78,12 @@ def ogr_fgdb_stress_test_init():
 
     try:
         shutil.rmtree("tmp/test.gdb")
-    except:
+    except OSError:
         pass
 
     try:
         os.unlink("tmp/test." + ogrtest.reference_ext)
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -245,12 +245,12 @@ def ogr_fgdb_stress_test_cleanup():
 
     try:
         shutil.rmtree("tmp/test.gdb")
-    except:
+    except OSError:
         pass
 
     try:
         os.unlink("tmp/test." + ogrtest.reference_ext)
-    except:
+    except OSError:
         pass
 
     return 'success'

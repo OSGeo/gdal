@@ -137,9 +137,9 @@ class file_info:
         # Compute source window in pixel coordinates.
         sw_xoff = int((tgw_ulx - self.geotransform[0]) / self.geotransform[1])
         sw_yoff = int((tgw_uly - self.geotransform[3]) / self.geotransform[5])
-        sw_xsize = int((tgw_lrx - self.geotransform[0]) \
+        sw_xsize = int((tgw_lrx - self.geotransform[0])
                        / self.geotransform[1] + 0.5) - sw_xoff
-        sw_ysize = int((tgw_lry - self.geotransform[3]) \
+        sw_ysize = int((tgw_lry - self.geotransform[3])
                        / self.geotransform[5] + 0.5) - sw_yoff
 
         if sw_xsize < 1 or sw_ysize < 1:
@@ -151,12 +151,12 @@ class file_info:
         t_fh.write('\t\t\t<SourceBand>%i</SourceBand>\n' % s_band)
         data_type_name = gdal.GetDataTypeName(self.band_types[s_band])
         block_size_x, block_size_y = self.block_sizes[s_band]
-        t_fh.write('\t\t\t<SourceProperties RasterXSize="%i" RasterYSize="%i"' \
-                   ' DataType="%s" BlockXSize="%i" BlockYSize="%i"/>\n' \
+        t_fh.write('\t\t\t<SourceProperties RasterXSize="%i" RasterYSize="%i"'
+                   ' DataType="%s" BlockXSize="%i" BlockYSize="%i"/>\n'
                    % (self.xsize, self.ysize, data_type_name, block_size_x, block_size_y))
-        t_fh.write('\t\t\t<SrcRect xOff="%i" yOff="%i" xSize="%i" ySize="%i"/>\n' \
+        t_fh.write('\t\t\t<SrcRect xOff="%i" yOff="%i" xSize="%i" ySize="%i"/>\n'
                    % (sw_xoff, sw_yoff, sw_xsize, sw_ysize))
-        t_fh.write('\t\t\t<DstRect xOff="%i" yOff="%i" xSize="%i" ySize="%i"/>\n' \
+        t_fh.write('\t\t\t<DstRect xOff="%i" yOff="%i" xSize="%i" ySize="%i"/>\n'
                    % (tw_xoff, tw_yoff, tw_xsize, tw_ysize))
         t_fh.write('\t\t</SimpleSource>\n')
 
@@ -253,7 +253,7 @@ if __name__ == '__main__':
 
     for fi in file_infos:
         if fi.geotransform[1] != psize_x or fi.geotransform[5] != psize_y:
-            print("All files must have the same scale; %s does not" \
+            print("All files must have the same scale; %s does not"
                   % fi.filename)
             sys.exit(1)
 
@@ -262,7 +262,7 @@ if __name__ == '__main__':
             sys.exit(1)
 
         if fi.projection != projection:
-            print("All files must be in the same projection; %s is not" \
+            print("All files must be in the same projection; %s is not"
                   % fi.filename)
             sys.exit(1)
 

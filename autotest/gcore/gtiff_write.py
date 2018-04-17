@@ -31,7 +31,7 @@ sys.path.append('../pymod')
 
 import gdaltest
 
-init_list = [ \
+init_list = [
     ('byte.tif', 1, 4672, None),
     ('int16.tif', 1, 4672, None),
     ('uint16.tif', 1, 4672, None),

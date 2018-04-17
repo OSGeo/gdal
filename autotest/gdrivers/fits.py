@@ -92,7 +92,7 @@ def fits_metadata():
     ds2 = None
     try:
         os.unlink('tmp/byte.fits.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds2 = gdal.Open('tmp/byte.fits')
@@ -108,7 +108,7 @@ def fits_metadata():
     ds2 = None
     try:
         os.unlink('tmp/byte.fits.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds2 = gdal.Open('tmp/byte.fits')

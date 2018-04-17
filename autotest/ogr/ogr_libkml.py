@@ -1233,9 +1233,9 @@ def ogr_libkml_write_region():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48))'))
     lyr.CreateFeature(feat)
-    lyr = ds.CreateLayer('manual', options=['ADD_REGION=YES', 'REGION_XMIN=-180', \
-                                            'REGION_XMAX=180', 'REGION_YMIN=-90', 'REGION_YMAX=90', \
-                                            'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000', \
+    lyr = ds.CreateLayer('manual', options=['ADD_REGION=YES', 'REGION_XMIN=-180',
+                                            'REGION_XMAX=180', 'REGION_YMIN=-90', 'REGION_YMAX=90',
+                                            'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000',
                                             'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2'])
     ds = None
 
@@ -1383,7 +1383,7 @@ def ogr_libkml_write_model():
 
     # This can only appear if HTTP resource is available and GDAL is built with curl/http support
     if gdal.GetDriverByName('HTTP') is not None and \
-       (data.find('<targetHref>http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.gif</targetHref>') == -1 or \
+       (data.find('<targetHref>http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.gif</targetHref>') == -1 or
             data.find('<sourceHref>cube.gif</sourceHref>') == -1):
 
         if gdaltest.gdalurlopen('http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae') is not None:

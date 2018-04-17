@@ -64,9 +64,8 @@ class ProjTest:
             return 'skip'
 
         if self.requirements is not None and self.requirements[:5] == 'GRID:':
-            try:
-                proj_lib = os.environ['PROJ_LIB']
-            except:
+            proj_lib = os.getenv('PROJ_LIB')
+            if proj_lib is None:
                 #print( 'PROJ_LIB unset, skipping test.' )
                 return 'skip'
 
@@ -121,7 +120,7 @@ class ProjTest:
             + abs(result[2] - self.dst_xyz[2])
 
         if error > self.dst_error:
-            gdaltest.post_reason('Dest error is %g, got (%.15g,%.15g,%.15g)%s' \
+            gdaltest.post_reason('Dest error is %g, got (%.15g,%.15g,%.15g)%s'
                                  % (error, result[0], result[1], result[2], additionnal_error_str))
             return 'fail'
 
@@ -161,7 +160,7 @@ class ProjTest:
 #                 or None depend on requirements for the test.
 
 
-transform_list = [ \
+transform_list = [
 
     # Simple straight forward reprojection.
     ('+proj=utm +zone=11 +datum=WGS84', (398285.45, 2654587.59, 0.0), 0.02,

@@ -139,7 +139,7 @@ def readDir(fout, dirname, prefix, longformat, recurse, depth, recurseInZip, rec
                 new_prefix = prefix + filename
                 if not new_prefix.endswith('/'):
                     new_prefix += '/'
-                readDir(fout, dirname + '/' + filename, new_prefix, \
+                readDir(fout, dirname + '/' + filename, new_prefix,
                         longformat, recurse, depth - 1, recurseInZip, recurseInTGZ)
 
 

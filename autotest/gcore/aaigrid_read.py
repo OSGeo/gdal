@@ -36,7 +36,7 @@ import gdaltest
 
 gdaltest_list = []
 
-init_list = [ \
+init_list = [
     ('byte.tif.grd', 1, 4672, None)]
 
 for item in init_list:

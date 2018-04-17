@@ -175,7 +175,7 @@ def ogr_odbc_cleanup():
 
     try:
         os.unlink('tmp/odbc.mdb')
-    except:
+    except OSError:
         pass
 
     return 'success'
