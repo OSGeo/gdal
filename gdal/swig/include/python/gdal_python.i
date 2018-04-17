@@ -1312,7 +1312,7 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
     else:
         (opts, callback, callback_data) = kwargs['options']
     if _is_str_or_unicode(srcDS):
-        srcDS = OpenEx(srcDS)
+        srcDS = OpenEx(srcDS, OF_VECTOR)
 
     if _is_str_or_unicode(destNameOrDestDS):
         return wrapper_GDALVectorTranslateDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
@@ -1690,7 +1690,7 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
     else:
         (opts, callback, callback_data) = kwargs['options']
     if _is_str_or_unicode(srcDS):
-        srcDS = OpenEx(srcDS)
+        srcDS = OpenEx(srcDS, OF_VECTOR)
 
     if _is_str_or_unicode(destNameOrDestDS):
         return wrapper_GDALRasterizeDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
