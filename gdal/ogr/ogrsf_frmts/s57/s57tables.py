@@ -53,7 +53,7 @@ def EscapeLine(line):
 
 
 if __name__ != '__main__':
-    print 'This module should only be used as a mainline.'
+    print('This module should only be used as a mainline.')
     sys.exit(1)
 
 if len(sys.argv) < 2:
@@ -62,18 +62,18 @@ else:
     directory = sys.argv[1]
 
 
-print 'char *gpapszS57Classes[] = {'
+print('char *gpapszS57Classes[] = {')
 classes = open(directory + '/s57objectclasses.csv').readlines()
 
 for line in classes:
-    print '"%s",' % EscapeLine(string.strip(line))
+    print('"%s",' % EscapeLine(string.strip(line)))
 
-print 'NULL };'
+print('NULL };')
 
-print 'char *gpapszS57attributes[] = {'
+print('char *gpapszS57attributes[] = {')
 classes = open(directory + '/s57attributes.csv').readlines()
 
 for line in classes:
-    print '"%s",' % EscapeLine(string.strip(line))
+    print('"%s",' % EscapeLine(string.strip(line)))
 
-print 'NULL };'
+print('NULL };')
