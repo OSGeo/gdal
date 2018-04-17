@@ -81,6 +81,11 @@ CExternalChannel::CExternalChannel( PCIDSKBuffer &image_headerIn,
         echannel = channelnumIn;
     }
 
+    if( exoff < 0 || eyoff < 0 || exsize < 0 || eysize < 0 )
+    {
+        ThrowPCIDSKException("Invalid data window parameters for CExternalChannel");
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Establish the file we will be accessing.                        */
 /* -------------------------------------------------------------------- */
