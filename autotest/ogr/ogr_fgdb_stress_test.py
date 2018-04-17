@@ -112,7 +112,7 @@ def ogr_fgdb_stress_test_1():
     in_transaction = False
     nfeatures_created = 0
     for i in range(100000):
-        #print(i)
+        # print(i)
         function = random.randrange(0, 500)
         if function == 0:
             if not in_transaction:
@@ -164,9 +164,9 @@ def ogr_fgdb_stress_test_1():
                 f.SetFID(fid)
                 f.SetField(0, str)
                 f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
-                #gdal.PushErrorHandler()
+                # gdal.PushErrorHandler()
                 ret.append(lyr.SetFeature(f))
-                #gdal.PopErrorHandler()
+                # gdal.PopErrorHandler()
             if ret[0] != ret[1]:
                 gdaltest.post_reason('fail')
                 print(ret)
@@ -178,9 +178,9 @@ def ogr_fgdb_stress_test_1():
             if verbose:
                 print('Delete(%d)' % fid)
             for lyr in [lyr_test, lyr_ref]:
-                #gdal.PushErrorHandler()
+                # gdal.PushErrorHandler()
                 ret.append(lyr.DeleteFeature(fid))
-                #gdal.PopErrorHandler()
+                # gdal.PopErrorHandler()
             if ret[0] != ret[1]:
                 gdaltest.post_reason('fail')
                 print(ret)
@@ -231,7 +231,7 @@ def ogr_fgdb_stress_test_2():
             print(lyr_ref.GetFeatureCount())
             return 'fail'
 
-    #sys.exit(0)
+    # sys.exit(0)
 
     return 'success'
 

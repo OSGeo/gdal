@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-#******************************************************************************
+# ******************************************************************************
 #  $Id$
 #
 #  Project:  GDAL Python Interface
 #  Purpose:  Application for applying sieve filter to raster data.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
 #
-#******************************************************************************
+# ******************************************************************************
 #  Copyright (c) 2008, Frank Warmerdam
 #  Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
 #
@@ -27,7 +27,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
+# ******************************************************************************
 
 import os.path
 import sys

@@ -154,4 +154,4 @@ while True:
 if modified:
     open(sys.argv[1], 'wb').write(content)
 
-#sys.stdout.write(content)
+# sys.stdout.write(content)

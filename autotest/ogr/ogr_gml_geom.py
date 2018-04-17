@@ -1351,7 +1351,7 @@ def gml_invalid_geoms():
 
     for (gml, expected_wkt) in gml_expected_wkt_list:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        #print gml
+        # print gml
         geom = ogr.CreateGeometryFromGML(gml)
         gdal.PopErrorHandler()
         if geom is None:
@@ -2103,7 +2103,7 @@ def gml_OGRCompoundCurve():
     geom = ogr.CreateGeometryFromGML(gml)
     # We simplify it in LINESTRING
     if geom.ExportToWkt() != 'LINESTRING (0 0,1 1,2 0)':
-        #if geom.ExportToWkt() != wkt
+        # if geom.ExportToWkt() != wkt
         print(geom.ExportToWkt())
         return 'fail'
 
@@ -2418,8 +2418,8 @@ def gml_write_gml_ns():
 ###############################################################################
 # When imported build a list of units based on the files available.
 
-#print 'hit enter'
-#sys.stdin.readline()
+# print 'hit enter'
+# sys.stdin.readline()
 
 
 gdaltest_list = []

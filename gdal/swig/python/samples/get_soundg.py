@@ -52,13 +52,13 @@ if len(sys.argv) != 3:
 s57filename = sys.argv[1]
 shpfilename = sys.argv[2]
 
-#############################################################################-
+# -
 # Open the S57 file, and find the SOUNDG layer.
 
 ds = ogr.Open(s57filename)
 src_soundg = ds.GetLayerByName('SOUNDG')
 
-#############################################################################-
+# -
 # Create the output shapefile.
 
 shp_driver = ogr.GetDriverByName('ESRI Shapefile')
@@ -71,7 +71,7 @@ shp_layer = shp_ds.CreateLayer('out', geom_type=ogr.wkbPoint25D)
 src_defn = src_soundg.GetLayerDefn()
 field_count = src_defn.GetFieldCount()
 
-#############################################################################-
+# -
 # Copy the SOUNDG schema, and add an ELEV field.
 
 out_mapping = []

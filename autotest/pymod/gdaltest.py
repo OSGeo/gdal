@@ -330,7 +330,7 @@ def run_all(dirlist, run_as_external=False):
                         exec("run_tests( " + module + ".gdaltest_list)")
                     except:
                         #import traceback
-                        #traceback.print_exc(file=sys.stderr)
+                        # traceback.print_exc(file=sys.stderr)
                         pass
 
                 os.chdir(wd)
@@ -1443,8 +1443,8 @@ def compare_ds(ds1, ds2, xoff=0, yoff=0, width=0, height=0, verbose=1):
     for i in range(width * height):
         diff = val_array1[i] - val_array2[i]
         if diff != 0:
-            #print(val_array1[i])
-            #print(val_array2[i])
+            # print(val_array1[i])
+            # print(val_array2[i])
             ndiffs = ndiffs + 1
             if abs(diff) > maxdiff:
                 maxdiff = abs(diff)

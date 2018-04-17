@@ -495,12 +495,12 @@ def mrsid_online_2():
     # The JP2MrSID driver doesn't handle GCPs
     ds = gdal.Open('tmp/cache/gcp.jp2')
     ds.GetRasterBand(1).Checksum()
-    #if len(ds.GetGCPs()) != 15:
+    # if len(ds.GetGCPs()) != 15:
     #    gdaltest.post_reason('bad number of GCP')
     #    return 'fail'
     #
     #expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]"""
-    #if ds.GetGCPProjection() != expected_wkt:
+    # if ds.GetGCPProjection() != expected_wkt:
     #    gdaltest.post_reason('bad GCP projection')
     #    return 'fail'
 

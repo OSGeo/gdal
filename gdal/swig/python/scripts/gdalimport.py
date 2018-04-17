@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#******************************************************************************
+# ******************************************************************************
 #  $Id$
 #
 #  Name:     gdalimport
@@ -7,7 +7,7 @@
 #  Purpose:  Import a GDAL supported file to Tiled GeoTIFF, and build overviews
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
 #
-#******************************************************************************
+# ******************************************************************************
 #  Copyright (c) 2000, Frank Warmerdam
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
@@ -27,7 +27,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
+# ******************************************************************************
 
 import os.path
 import sys

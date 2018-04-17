@@ -57,9 +57,9 @@ class wkb_wkt_unit:
         geom_wkt = ogr.CreateGeometryFromWkt(raw_wkt)
         normal_wkt = geom_wkt.ExportToWkt()
 
-        #print(wkb_wkt)
-        #print(normal_wkt)
-        #print(raw_wkt)
+        # print(wkb_wkt)
+        # print(normal_wkt)
+        # print(raw_wkt)
         if wkb_wkt != normal_wkt:
             gdaltest.post_reason('WKT from WKB (%s) does not match clean WKT (%s).' % (wkb_wkt, normal_wkt))
             return 'fail'
@@ -231,7 +231,7 @@ def ogr_wkbwkt_test_broken_geom():
                    'MULTIPOINT(0 1,EMPTY',
                    'MULTIPOINT((0 1),EMPTY',
                    'MULTIPOINT((0 1)',
-                   #'MULTIPOINT(0 1,2 3)', # This one is not SF compliant but supported for legacy
+                   # 'MULTIPOINT(0 1,2 3)', # This one is not SF compliant but supported for legacy
                    'MULTIPOINT((0 1),(2 3)',
                    'MULTIPOINT Z',
                    'MULTIPOINT Z UNKNOWN',
@@ -689,8 +689,8 @@ def ogr_wkt_multipolygon_corrupted():
 ###############################################################################
 # When imported build a list of units based on the files available.
 
-#print 'hit enter'
-#sys.stdin.readline()
+# print 'hit enter'
+# sys.stdin.readline()
 
 
 gdaltest_list = []

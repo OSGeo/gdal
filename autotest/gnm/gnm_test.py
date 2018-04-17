@@ -123,7 +123,7 @@ def gnm_import():
 
     ds = gdal.OpenEx('tmp/test_gnm')
 
-    #pipes
+    # pipes
     dspipes = gdal.OpenEx('data/pipes.shp', gdal.OF_VECTOR)
     lyrpipes = dspipes.GetLayerByIndex(0)
     new_lyr = ds.CopyLayer(lyrpipes, 'pipes')
@@ -133,7 +133,7 @@ def gnm_import():
     dspipes = None
     new_lyr = None
 
-    #wells
+    # wells
     dswells = gdal.OpenEx('data/wells.shp', gdal.OF_VECTOR)
     lyrwells = dswells.GetLayerByIndex(0)
     new_lyr = ds.CopyLayer(lyrwells, 'wells')

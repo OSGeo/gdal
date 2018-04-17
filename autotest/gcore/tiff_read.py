@@ -1783,7 +1783,7 @@ def tiff_direct_and_virtual_mem_io():
                         #import struct
                         #f1 = open('out1.txt', 'wb')
                         #f2 = open('out2.txt', 'wb')
-                        #for b in range(nbands):
+                        # for b in range(nbands):
                         #    for y in range(4 * ysize):
                         #        f1.write('%s\n' % str(struct.unpack('B' * 4 * xsize, ref_nbands_data_native_type_upsampled[(b * 4 * ysize + y) * 4 * xsize : (b * 4 * ysize + y + 1) * 4 * xsize])))
                         #        f2.write('%s\n' % str(struct.unpack('B' * 4 * xsize, got_nbands_data_native_type_upsampled[(b * 4 * ysize + y) * 4 * xsize : (b * 4 * ysize + y + 1) * 4 * xsize])))
@@ -1796,7 +1796,7 @@ def tiff_direct_and_virtual_mem_io():
                         #import struct
                         #f1 = open('out1.txt', 'wb')
                         #f2 = open('out2.txt', 'wb')
-                        #for b in range(nbands):
+                        # for b in range(nbands):
                         #    for y in range(32 * ysize):
                         #        f1.write('%s\n' % str(struct.unpack('B' * int(xsize/2), ref_nbands_data_native_type_downsampled_x_upsampled_y[(b * 32 * ysize + y) * int(xsize/2) : (b * 32 * ysize + y + 1) * int(xsize/2)])))
                         #        f2.write('%s\n' % str(struct.unpack('B' * int(xsize/2), got_nbands_data_native_type_downsampled_x_upsampled_y[(b * 32 * ysize + y) * int(xsize/2) : (b * 32 * ysize + y + 1) * int(xsize/2)])))
@@ -3565,7 +3565,7 @@ def tiff_read_progressive_jpeg_denial_of_service():
         return 'skip'
 
     # Should error out with 'JPEGPreDecode:Reading this strip would require
-    #libjpeg to allocate at least...'
+    # libjpeg to allocate at least...'
     gdal.ErrorReset()
     ds = gdal.Open('/vsizip/data/eofloop_valid_huff.tif.zip')
     with gdaltest.error_handler():

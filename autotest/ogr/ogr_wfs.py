@@ -295,7 +295,7 @@ def ogr_wfs_geoserver_json():
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    #if feat.GetField('name') != 'Alexander Bay' or \
+    # if feat.GetField('name') != 'Alexander Bay' or \
     if ogrtest.check_feature_geometry(feat, 'POINT (16.4827778 -28.5947222)',
                                       max_error=0.000000001) != 0:
         gdaltest.post_reason('did not get expected feature')
@@ -342,7 +342,7 @@ def ogr_wfs_geoserver_shapezip():
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    #if feat.GetField('name') != 'Alexander Bay' or \
+    # if feat.GetField('name') != 'Alexander Bay' or \
     if ogrtest.check_feature_geometry(feat, 'POINT (16.4827778 -28.5947222)',
                                       max_error=0.000000001) != 0:
         gdaltest.post_reason('did not get expected feature')
@@ -481,7 +481,7 @@ def ogr_wfs_deegree():
     # Test attribute filter with gml_id
     #lyr.SetAttributeFilter("gml_id = 'SGID024_Springs30' or gml_id = 'SGID024_Springs100'")
     #feat_count = lyr.GetFeatureCount()
-    #if feat_count != 2:
+    # if feat_count != 2:
     #    gdaltest.post_reason('did not get expected feature count after SetAttributeFilter (2)')
     #    print(feat_count)
     #    return 'fail'
@@ -1008,8 +1008,8 @@ def ogr_wfs_deegree_wfs200():
         # FIXME ! Avoid failure on ogr_wfs_deegree_wfs200 (the server is likely buggy since it worked before, but no longer whereas the WFS client code hasn't changed)
         print("gml_id = 'SGID024_MUNICIPALITIES2004_EDITED_5' filter failed")
         #gdaltest.post_reason("gml_id = 'SGID024_MUNICIPALITIES2004_EDITED_5' filter failed")
-        #print(count)
-        #return 'fail'
+        # print(count)
+        # return 'fail'
     else:
         feat = lyr.GetNextFeature()
         if feat.GetFieldAsInteger('OBJECTID') != 6:
@@ -4394,7 +4394,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         f.DumpReadable()
         return 'fail'
 
-    #if lyr.GetFeatureCount() != 3:
+    # if lyr.GetFeatureCount() != 3:
     #    gdaltest.post_reason('fail')
     #    print(lyr.GetFeatureCount())
     #    return 'fail'
@@ -5478,25 +5478,25 @@ def ogr_wfs_vsimem_cleanup():
 
 
 gdaltest_live_list = [
-    #ogr_wfs_mapserver,
-    #ogr_wfs_geoserver, #FIXME: re-enable after adapting test
-    #ogr_wfs_geoserver_json, #FIXME: re-enable after adapting test
-    #ogr_wfs_geoserver_shapezip, #FIXME: re-enable after adapting test
-    #ogr_wfs_geoserver_paging, #FIXME: re-enable after adapting test
-    #ogr_wfs_deegree,
-    #ogr_wfs_test_ogrsf,
+    # ogr_wfs_mapserver,
+    # ogr_wfs_geoserver, #FIXME: re-enable after adapting test
+    # ogr_wfs_geoserver_json, #FIXME: re-enable after adapting test
+    # ogr_wfs_geoserver_shapezip, #FIXME: re-enable after adapting test
+    # ogr_wfs_geoserver_paging, #FIXME: re-enable after adapting test
+    # ogr_wfs_deegree,
+    # ogr_wfs_test_ogrsf,
     ogr_wfs_fake_wfs_server,
-    #ogr_wfs_geoserver_wfst, #FIXME: re-enable after adapting test
-    #ogr_wfs_deegree_wfst,
-    #ogr_wfs_ionic_wfst,
-    #ogr_wfs_ionic_sql,
+    # ogr_wfs_geoserver_wfst, #FIXME: re-enable after adapting test
+    # ogr_wfs_deegree_wfst,
+    # ogr_wfs_ionic_wfst,
+    # ogr_wfs_ionic_sql,
     ogr_wfs_xmldescriptionfile,
-    #ogr_wfs_xmldescriptionfile_to_be_updated, #FIXME: re-enable after adapting test
+    # ogr_wfs_xmldescriptionfile_to_be_updated, #FIXME: re-enable after adapting test
     ogr_wfs_getcapabilitiesfile,
-    #ogr_wfs_deegree_gml321,
-    #ogr_wfs_deegree_wfs200,
-    #ogr_wfs_deegree_sortby,
-    #ogr_wfs_esri,
+    # ogr_wfs_deegree_gml321,
+    # ogr_wfs_deegree_wfs200,
+    # ogr_wfs_deegree_sortby,
+    # ogr_wfs_esri,
     ogr_wfs_esri_2,
     ogr_wfs_cubewerx,
     ogr_wfs_tinyows,
@@ -5504,8 +5504,8 @@ gdaltest_live_list = [
     ogr_wfs_intergraph,
     ogr_wfs_mapinfo,
     ogr_wfs_turn_streaming_off,
-    #ogr_wfs_deegree,
-    #ogr_wfs_test_ogrsf,
+    # ogr_wfs_deegree,
+    # ogr_wfs_test_ogrsf,
 ]
 
 gdaltest_vsimem_list = [

@@ -511,7 +511,7 @@ def pam_13():
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
 
     ds = gdal.GetDriverByName('PNM').Create('/vsimem/tmp.pnm', 1, 1)
-    #if ds.GetRasterBand(1).SetColorTable(None) == 0:
+    # if ds.GetRasterBand(1).SetColorTable(None) == 0:
     #    gdaltest.post_reason('fail')
     #    return 'fail'
     gdal.PushErrorHandler()

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python
-#******************************************************************************
+# ******************************************************************************
 #  $Id$
 #
 #  Name:     wcs_virtds_params.py
@@ -28,7 +28,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
+# ******************************************************************************
 
 import os
 import sys
@@ -137,7 +137,7 @@ while True:
     feat = lyr.GetNextFeature()
     if feat is None:
         break
-    #feat.DumpReadable()
+    # feat.DumpReadable()
 
     gdal_ds_name = feat.GetField(tileitem)
     if not os.path.isabs(gdal_ds_name):

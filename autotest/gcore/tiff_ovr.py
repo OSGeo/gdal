@@ -581,7 +581,7 @@ def tiff_ovr_13():
         gdaltest.post_reason('BuildOverviews reports an error')
         return 'fail'
 
-    #if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1225:
+    # if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1225:
     #    gdaltest.post_reason( 'bad checksum' )
     #    return 'fail'
 
@@ -1658,7 +1658,7 @@ def tiff_ovr_41():
     ds = None
 
     #ds = gdaltest.tiff_drv.Create('tmp/ovr41.tif.handmade.ovr',50,50,1,options=['NBITS=1'])
-    #ds.GetRasterBand(1).WriteRaster(0,0,50,50,data)
+    # ds.GetRasterBand(1).WriteRaster(0,0,50,50,data)
     #ds = None
 
     ds = gdal.Open('tmp/ovr41.tif')

@@ -1121,7 +1121,7 @@ def jpeg_26():
 def jpeg_27():
 
     # Should error out with 'Reading this strip would require
-    #libjpeg to allocate at least...'
+    # libjpeg to allocate at least...'
     gdal.ErrorReset()
     ds = gdal.Open('/vsisubfile/146,/vsizip/../gcore/data/eofloop_valid_huff.tif.zip')
     with gdaltest.error_handler():

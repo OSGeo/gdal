@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#******************************************************************************
+# ******************************************************************************
 #  $Id$
 #
 #  Project:  GDAL
@@ -7,7 +7,7 @@
 #            into WKT.
 #  Author:   Frank Warmerdam, warmerda@home.com
 #
-#******************************************************************************
+# ******************************************************************************
 #  Copyright (c) 2000, Frank Warmerdam
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
@@ -27,7 +27,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
+# ******************************************************************************
 
 import string
 import sys

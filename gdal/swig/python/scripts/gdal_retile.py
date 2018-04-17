@@ -197,7 +197,7 @@ class mosaic_info:
         if envelope is None:
             return None
 
-        #enlarge to query rect if necessary
+        # enlarge to query rect if necessary
         envelope = (min(minx, envelope[0]), max(maxx, envelope[1]),
                     min(miny, envelope[2]), max(maxy, envelope[3]))
 
@@ -267,7 +267,7 @@ class mosaic_info:
 
     def closeDataSet(self, memDS):
         del memDS
-        #self.TempDriver.Delete("TEMP")
+        # self.TempDriver.Delete("TEMP")
 
     def report(self):
         print('Filename: ' + self.filename)
@@ -303,7 +303,7 @@ def getTileIndexFromFiles(inputTiles, driverTyp):
 
     if Verbose:
         print("finished")
-    #ogrTileIndexDS.GetLayer().SyncToDisk()
+    # ogrTileIndexDS.GetLayer().SyncToDisk()
     return ogrTileIndexDS
 
 
@@ -663,14 +663,14 @@ def getTileName(minfo, ti, xIndex, yIndex, level=-1):
 
     if UseDirForEachRow:
         format = getTargetDir(level) + str(yIndex) + os.sep + parts[0] + "_" + yIndex_str + "_" + xIndex_str
-        #See if there was a switch in the row, if so then create new dir for row.
+        # See if there was a switch in the row, if so then create new dir for row.
         if LastRowIndx < yIndex:
             LastRowIndx = yIndex
             if (os.path.exists(getTargetDir(level) + str(yIndex)) == False):
                 os.mkdir(getTargetDir(level) + str(yIndex))
     else:
         format = getTargetDir(level) + parts[0] + "_" + yIndex_str + "_" + xIndex_str
-    #Check for the extension that should be used.
+    # Check for the extension that should be used.
     if Extension is None:
         format = format + parts[1]
     else:

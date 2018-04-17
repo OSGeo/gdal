@@ -483,7 +483,7 @@ def osr_proj4_11():
         srs = osr.SpatialReference()
         if proj4str.find("+no_defs") == -1:
             proj4str = proj4str + " +ellps=WGS84 +units=m +no_defs "
-        #print(proj4str)
+        # print(proj4str)
         srs.ImportFromProj4(proj4str)
         if srs.Validate() != 0:
             gdaltest.post_reason('does not validate')
@@ -538,7 +538,7 @@ def osr_proj4_12():
 def osr_proj4_13():
 
     proj4strlist = ['',
-                    #None,
+                    # None,
                     'foo',
                     '+a=5',
                     '+proj=foo',

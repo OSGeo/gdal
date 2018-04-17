@@ -384,7 +384,7 @@ def ogr_fgdb_3():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly.gdb')
-    #print ret
+    # print ret
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         print(ret)
@@ -1138,10 +1138,10 @@ def ogr_fgdb_18_test_results():
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nodefault')).GetDefault() is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    #if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime')).GetDefault() != 'CURRENT_TIMESTAMP':
+    # if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime')).GetDefault() != 'CURRENT_TIMESTAMP':
     #    gdaltest.post_reason('fail')
     #    return 'fail'
-    #if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault() != "'2015/06/30 12:34:56'":
+    # if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault() != "'2015/06/30 12:34:56'":
     #    gdaltest.post_reason('fail')
     #    print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault())
     #    return 'fail'
@@ -1512,7 +1512,7 @@ def ogr_fgdb_19():
     ds.CreateLayer('bar', geom_type=ogr.wkbNone)
     ds.CopyLayer(lyr, 'baz')
     ds.GetStyleTable()
-    #ds.SetStyleTableDirectly(None)
+    # ds.SetStyleTableDirectly(None)
     ds.SetStyleTable(None)
     sql_lyr = ds.ExecuteSQL('SELECT * FROM test')
     ds.ReleaseResultSet(sql_lyr)
@@ -1549,7 +1549,7 @@ def ogr_fgdb_19():
     lyr.AlterFieldDefn(0, ogr.FieldDefn('foo', ogr.OFTString), 0)
     lyr.SyncToDisk()
     lyr.GetStyleTable()
-    #lyr.SetStyleTableDirectly(None)
+    # lyr.SetStyleTableDirectly(None)
     lyr.SetStyleTable(None)
     lyr.StartTransaction()
     lyr.CommitTransaction()
@@ -2374,7 +2374,7 @@ def ogr_fgdb_20():
 
         ds = None
 
-    #sys.exit(0)
+    # sys.exit(0)
 
     return 'success'
 
@@ -2420,7 +2420,7 @@ def ogr_fgdb_21():
         lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options=[])
 
         feat = ogr.Feature(lyr.GetLayerDefn())
-        #print(data[2])
+        # print(data[2])
         feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
         lyr.CreateFeature(feat)
 
