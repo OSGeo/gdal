@@ -1020,7 +1020,7 @@ class CFChecker:
             self.warn = self.warn + 1
 
         return rc
-    
+
         #------------------------
     def setUpFormulas(self):
         #------------------------
