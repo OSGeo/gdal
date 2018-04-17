@@ -350,7 +350,7 @@ if __name__ == '__main__':
 
     if float(src_crs_date) < 1700.0 or float(src_crs_date) > 2300.0 \
        or float(dst_crs_date) < 1700.0 or float(dst_crs_date) > 2300.0:
-        print('Source or destination CRS date seems odd %s and %s.' \
+        print('Source or destination CRS date seems odd %s and %s.'
               % (src_crs_date, dst_crs_date))
         Usage(brief=0)
 

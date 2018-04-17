@@ -229,9 +229,9 @@ def ogrupdate_analyse_args(argv, progress=None, progress_arg=None):
                 print('-compare_before_update ignored since layer definitions do not match')
             compare_before_update = False
 
-    ret = ogrupdate_process(src_layer, dst_layer, matchfieldname, update_mode, \
-                            preserve_fid, compare_before_update, papszSelFields, dry_run, skip_failures, \
-                            updated_count, updated_failed, inserted_count, inserted_failed, \
+    ret = ogrupdate_process(src_layer, dst_layer, matchfieldname, update_mode,
+                            preserve_fid, compare_before_update, papszSelFields, dry_run, skip_failures,
+                            updated_count, updated_failed, inserted_count, inserted_failed,
                             progress, progress_arg)
 
     if not quiet:
@@ -273,10 +273,10 @@ def AreFeaturesEqual(src_feat, dst_feat):
 # ogrupdate_process()
 
 
-def ogrupdate_process(src_layer, dst_layer, matchfieldname=None, update_mode=DEFAULT, \
-                      preserve_fid=False, compare_before_update=False, \
-                      papszSelFields=None, dry_run=False, skip_failures=False, \
-                      updated_count_out=None, updated_failed_out=None, inserted_count_out=None, inserted_failed_out=None, \
+def ogrupdate_process(src_layer, dst_layer, matchfieldname=None, update_mode=DEFAULT,
+                      preserve_fid=False, compare_before_update=False,
+                      papszSelFields=None, dry_run=False, skip_failures=False,
+                      updated_count_out=None, updated_failed_out=None, inserted_count_out=None, inserted_failed_out=None,
                       progress=None, progress_arg=None):
 
     src_layer_defn = src_layer.GetLayerDefn()

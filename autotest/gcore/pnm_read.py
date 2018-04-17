@@ -39,7 +39,7 @@ import gdaltest
 
 gdaltest_list = []
 
-init_list = [ \
+init_list = [
     ('byte.pnm', 1, 4672, None),
     ('uint16.pnm', 1, 4672, None)]
 

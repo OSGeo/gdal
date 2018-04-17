@@ -36,7 +36,7 @@ import string
 
 
 def Usage():
-    print('Usage: gdalfilter.py [-n] [-size n] [-coefs ...] [-f format] [-co NAME=VALUE]\n' \
+    print('Usage: gdalfilter.py [-n] [-size n] [-coefs ...] [-f format] [-co NAME=VALUE]\n'
           '                     in_file out_file')
     sys.exit(1)
 
@@ -83,7 +83,7 @@ while i < len(sys.argv):
             try:
                 coefs.append(float(sys.argv[iCoef + i + 1]))
             except:
-                print("Didn't find enough valid kernel coefficients, need ", \
+                print("Didn't find enough valid kernel coefficients, need ",
                       size * size)
                 sys.exit(1)
         i = i + size * size

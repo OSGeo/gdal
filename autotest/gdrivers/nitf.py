@@ -1719,8 +1719,8 @@ def nitf_51():
 def nitf_52():
 
     # Create a fake NITF file with GeoSDE TREs (probably not conformant, but enough to test GDAL code)
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf52.ntf', 1, 1, options=['FILE_TRE=GEOPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789012345EURM                                                                                                                                                                                                                                                                                                                                                                 ', \
-                                                                              'FILE_TRE=PRJPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789AC0000000000000000000000000000000', \
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf52.ntf', 1, 1, options=['FILE_TRE=GEOPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789012345EURM                                                                                                                                                                                                                                                                                                                                                                 ',
+                                                                              'FILE_TRE=PRJPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789AC0000000000000000000000000000000',
                                                                               'TRE=MAPLOB=M  0001000010000000000100000000000005000000'])
     ds = None
 
@@ -2884,7 +2884,7 @@ def nitf_75():
     </genc:localShortName>
 </genc:GeopoliticalEntityEntry>"""
 
-    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_75.ntf', 1, 1, options=['TRE=CCINFA=0062RQ 17ge:GENC:3:3-5:PRI000002RQ 20as:ISO2:6:II-3:US-PR000002BM 17ge:GENC:3:3-5:MMR04108 ' + \
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_75.ntf', 1, 1, options=['TRE=CCINFA=0062RQ 17ge:GENC:3:3-5:PRI000002RQ 20as:ISO2:6:II-3:US-PR000002BM 17ge:GENC:3:3-5:MMR04108 ' +
                                                                                    listing_AG1 + '3MMR 19ge:ISO1:3:VII-7:MMR00000' + '2S1 19ge:GENC:3:3-alt:SCT000002YYC16gg:1059:2:ed9:3E00000'])
     ds = None
 
@@ -3152,12 +3152,12 @@ def nitf_online_7():
         for i in range(6):
             cs = ds.GetRasterBand(i + 1).Checksum()
             if cs != checksums[i]:
-                gdaltest.post_reason('got checksum %d for image %s' \
+                gdaltest.post_reason('got checksum %d for image %s'
                                      % (cs, file))
                 return 'fail'
 
             if ds.GetRasterBand(i + 1).GetRasterColorInterpretation() != colorInterpretations[i]:
-                gdaltest.post_reason('got wrong color interp for image %s' \
+                gdaltest.post_reason('got wrong color interp for image %s'
                                      % file)
                 return 'fail'
         ds = None

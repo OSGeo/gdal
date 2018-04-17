@@ -57,7 +57,7 @@ def GetOutputDriversFor(filename):
     ext = GetExtension(filename)
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
-        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or \
+        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or
             drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
            drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
             if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
@@ -143,7 +143,7 @@ if src_ds is None:
     sys.exit(1)
 
 if src_ds.RasterCount < 3:
-    print('%s has %d band(s), need 3 for inputs red, green and blue.' \
+    print('%s has %d band(s), need 3 for inputs red, green and blue.'
           % (src_filename, src_ds.RasterCount))
     sys.exit(1)
 

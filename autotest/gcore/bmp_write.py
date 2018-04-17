@@ -49,7 +49,7 @@ def bmp_vsimem():
 
 gdaltest_list = [bmp_vsimem]
 
-init_list = [ \
+init_list = [
     ('byte.tif', 1, 4672, None),
     ('utmsmall.tif', 1, 50054, None),
     ('8bit_pal.bmp', 1, 4672, None), ]

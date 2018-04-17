@@ -740,7 +740,7 @@ def test_ogr2ogr_py_21():
     except:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', \
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr',
                                   '-f GPSTrackMaker tmp/testogr2ogr21.gtm ../utilities/data/dataforogr2ogr21.csv ' +
                                   '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')
     ds = ogr.Open('tmp/testogr2ogr21.gtm')
@@ -772,7 +772,7 @@ def test_ogr2ogr_py_22():
     if script_path is None:
         return 'skip'
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', \
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr',
                                   '-f "MapInfo File" tmp/testogr2ogr22.mif ../utilities/data/dataforogr2ogr21.csv ' +
                                   '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')
     ds = ogr.Open('tmp/testogr2ogr22.mif')

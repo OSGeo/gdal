@@ -114,10 +114,10 @@ def test_gdalinfo_lib_5():
 
     ds = gdal.Open('../gdrivers/data/byte.tif')
 
-    ret = gdal.Info(ds, format='json', deserialize=True, computeMinMax=True, \
-                    reportHistograms=True, reportProj4=True, \
-                    stats=True, approxStats=True, computeChecksum=True, \
-                    showGCPs=False, showMetadata=False, showRAT=False, \
+    ret = gdal.Info(ds, format='json', deserialize=True, computeMinMax=True,
+                    reportHistograms=True, reportProj4=True,
+                    stats=True, approxStats=True, computeChecksum=True,
+                    showGCPs=False, showMetadata=False, showRAT=False,
                     showColorTable=False, listMDD=True, showFileList=False)
     if 'files' in ret:
         gdaltest.post_reason('fail')

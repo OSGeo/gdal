@@ -92,8 +92,8 @@ def netcdf_setup():
        and metadata['NETCDF_HAS_HDF4'] == 'YES':
         gdaltest.netcdf_drv_has_hdf4 = True
 
-    print('NOTICE: using netcdf version ' + gdaltest.netcdf_drv_version + \
-          '  has_nc2: ' + str(gdaltest.netcdf_drv_has_nc2) + '  has_nc4: ' + \
+    print('NOTICE: using netcdf version ' + gdaltest.netcdf_drv_version +
+          '  has_nc2: ' + str(gdaltest.netcdf_drv_has_nc2) + '  has_nc4: ' +
           str(gdaltest.netcdf_drv_has_nc4))
 
     return 'success'
@@ -231,7 +231,7 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
         # strip { and } as new driver uses these for array values
         mk = metadata[k].lstrip('{ ').rstrip('} ')
         if mk != v:
-            gdaltest.post_reason("invalid value [%s] for metadata [%s]=[%s]" \
+            gdaltest.post_reason("invalid value [%s] for metadata [%s]=[%s]"
                                  % (str(mk), str(k), str(v)))
             return 'fail'
 
@@ -246,7 +246,7 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
         # strip { and } as new driver uses these for array values
         mk = metadata[k].lstrip('{ ').rstrip('} ')
         if mk != v:
-            gdaltest.post_reason("invalid value [%s] for metadata [%s]=[%s]" \
+            gdaltest.post_reason("invalid value [%s] for metadata [%s]=[%s]"
                                  % (str(mk), str(k), str(v)))
             return 'fail'
 
@@ -1137,7 +1137,7 @@ def netcdf_test_4dfile(ofile):
     if md is not None:
         subds_count = len(md) / 2
     if ds.RasterCount != 8 or subds_count != 0:
-        gdaltest.post_reason('copy has %d bands (expected 8) and has %d subdatasets'\
+        gdaltest.post_reason('copy has %d bands (expected 8) and has %d subdatasets'
                              ' (expected 0)' % (ds.RasterCount, subds_count))
         return 'fail'
     ds is None
@@ -3380,7 +3380,7 @@ gdaltest_list = [
 ###############################################################################
 #  basic file creation tests
 
-init_list = [ \
+init_list = [
     ('byte.tif', 1, 4672, None, []),
     ('byte_signed.tif', 1, 4672, None, ['PIXELTYPE=SIGNEDBYTE']),
     ('int16.tif', 1, 4672, None, []),

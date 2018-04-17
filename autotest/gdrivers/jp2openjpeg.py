@@ -2062,7 +2062,7 @@ def jp2openjpeg_41():
         return 'skip'
 
     src_ds = gdal.Open('data/byte.jp2')
-    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds, \
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds,
                                                  options=['USE_SRC_CODESTREAM=YES', 'PROFILE=PROFILE_1', 'GEOJP2=NO', 'GMLJP2=NO'])
     if src_ds.GetRasterBand(1).Checksum() != out_ds.GetRasterBand(1).Checksum():
         gdaltest.post_reason('fail')
@@ -2077,7 +2077,7 @@ def jp2openjpeg_41():
     # Warning if ignored option
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds, \
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds,
                                                  options=['USE_SRC_CODESTREAM=YES', 'QUALITY=1'])
     gdal.PopErrorHandler()
     del out_ds
@@ -2091,7 +2091,7 @@ def jp2openjpeg_41():
     src_ds = gdal.Open('data/byte.tif')
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds, \
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds,
                                                  options=['USE_SRC_CODESTREAM=YES'])
     gdal.PopErrorHandler()
     del out_ds
@@ -2954,25 +2954,25 @@ def jp2openjpeg_45():
        feature2_pos < 0 or myshape_kml_pos < 0 or empty_kml_pos < 0 or \
        style1_pos < 0 or style2_pos < 0 or style3_pos < 0 or style4_pos < 0 or \
        extension1_pos < 0 or extension2_pos < 0 or extension3_pos < 0 or extension4_pos < 0 or \
-       not(first_metadata_pos < second_metadata_pos and \
-            second_metadata_pos < third_metadata_pos and \
-            third_metadata_pos < GMLJP2RectifiedGridCoverage_pos and \
-            GMLJP2RectifiedGridCoverage_pos < fourth_metadata_pos and \
-            fourth_metadata_pos < feature_pos and \
-            fourth_metadata_pos < feature_pos and \
-            myshape2_gml_pos < myshape_kml_pos and \
-            myshape_kml_pos < empty_kml_pos and \
-            empty_kml_pos < style2_pos and \
-            style2_pos < extension2_pos and \
-            extension2_pos < feature_pos and \
-            feature_pos < myshape_gml_pos and \
-            myshape_gml_pos < feature2_pos and \
-            feature2_pos < feature3_pos and \
-            feature3_pos < style1_pos and \
-            style1_pos < style3_pos and \
-            style3_pos < style4_pos and \
-            style4_pos < extension1_pos and \
-            extension1_pos < extension3_pos and \
+       not(first_metadata_pos < second_metadata_pos and
+            second_metadata_pos < third_metadata_pos and
+            third_metadata_pos < GMLJP2RectifiedGridCoverage_pos and
+            GMLJP2RectifiedGridCoverage_pos < fourth_metadata_pos and
+            fourth_metadata_pos < feature_pos and
+            fourth_metadata_pos < feature_pos and
+            myshape2_gml_pos < myshape_kml_pos and
+            myshape_kml_pos < empty_kml_pos and
+            empty_kml_pos < style2_pos and
+            style2_pos < extension2_pos and
+            extension2_pos < feature_pos and
+            feature_pos < myshape_gml_pos and
+            myshape_gml_pos < feature2_pos and
+            feature2_pos < feature3_pos and
+            feature3_pos < style1_pos and
+            style1_pos < style3_pos and
+            style3_pos < style4_pos and
+            style4_pos < extension1_pos and
+            extension1_pos < extension3_pos and
             extension3_pos < extension4_pos):
         gdaltest.post_reason('fail')
         print(gmljp2)

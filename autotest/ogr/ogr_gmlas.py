@@ -2408,8 +2408,8 @@ def ogr_gmlas_writer():
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options=['EXPOSE_METADATA_LAYERS=YES'])
     tmp_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer.db', src_ds, format='SQLite')
     src_ds = None
-    ret_ds = gdal.VectorTranslate('tmp/gmlas_test1_generated.xml', tmp_ds, \
-                                  format='GMLAS', \
+    ret_ds = gdal.VectorTranslate('tmp/gmlas_test1_generated.xml', tmp_ds,
+                                  format='GMLAS',
                                   datasetCreationOptions=['WRAPPING=GMLAS_FEATURECOLLECTION'])
     tmp_ds = None
     gdal.Unlink('/vsimem/ogr_gmlas_writer.db')
@@ -2569,8 +2569,8 @@ def ogr_gmlas_writer_gml():
     src_ds = None
     # Test also with GMLAS: prefix as it is likely people might use it
     # as it is needed for the read side.
-    ret_ds = gdal.VectorTranslate('GMLAS:/vsimem/ogr_gmlas_writer_gml.xml', tmp_ds, \
-                                  format='GMLAS', \
+    ret_ds = gdal.VectorTranslate('GMLAS:/vsimem/ogr_gmlas_writer_gml.xml', tmp_ds,
+                                  format='GMLAS',
                                   datasetCreationOptions=['WRAPPING=GMLAS_FEATURECOLLECTION',
                                                           'LAYERS={SPATIAL_LAYERS}'])
     tmp_ds = None
@@ -2630,9 +2630,9 @@ def ogr_gmlas_writer_gml_assign_srs():
     tmp_ds = gdal.VectorTranslate('', src_ds, format='Memory')
     src_ds = None
 
-    ret_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer_gml.xml', tmp_ds, \
-                                  format='GMLAS', \
-                                  dstSRS='EPSG:32631', \
+    ret_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer_gml.xml', tmp_ds,
+                                  format='GMLAS',
+                                  dstSRS='EPSG:32631',
                                   reproject=False)
     tmp_ds = None
 
@@ -2660,15 +2660,15 @@ def ogr_gmlas_writer_gml_assign_srs():
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options=['EXPOSE_METADATA_LAYERS=YES'])
     tmp_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer.db', src_ds, format='SQLite')
     src_ds = None
-    gdal.VectorTranslate('/vsimem/gmlas_test1_generated_ref0.xml', tmp_ds, \
-                         format='GMLAS', \
-                         dstSRS='EPSG:32631', \
-                         reproject=False, \
+    gdal.VectorTranslate('/vsimem/gmlas_test1_generated_ref0.xml', tmp_ds,
+                         format='GMLAS',
+                         dstSRS='EPSG:32631',
+                         reproject=False,
                          datasetCreationOptions=['WRAPPING=GMLAS_FEATURECOLLECTION'])
-    gdal.VectorTranslate('/vsimem/gmlas_test1_generated_asrs.xml', tmp_ds, \
-                         format='GMLAS', \
-                         dstSRS='EPSG:32631', \
-                         reproject=False, \
+    gdal.VectorTranslate('/vsimem/gmlas_test1_generated_asrs.xml', tmp_ds,
+                         format='GMLAS',
+                         dstSRS='EPSG:32631',
+                         reproject=False,
                          datasetCreationOptions=['WRAPPING=GMLAS_FEATURECOLLECTION'])
     tmp_ds = None
     gdal.Unlink('/vsimem/ogr_gmlas_writer.db')
@@ -2700,7 +2700,7 @@ def ogr_gmlas_writer_gml_original_xml():
                                        'CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>true</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>'])
     tmp_ds = gdal.VectorTranslate('', src_ds, format='Memory')
     src_ds = None
-    ret_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer_gml.xml', tmp_ds, format='GMLAS', \
+    ret_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer_gml.xml', tmp_ds, format='GMLAS',
                                   datasetCreationOptions=['WRAPPING=GMLAS_FEATURECOLLECTION'])
     tmp_ds = None
 
@@ -2808,7 +2808,7 @@ def ogr_gmlas_writer_options():
         return 'fail'
 
     # Test TIMESTAMP option
-    src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml', \
+    src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml',
                          open_options=['@HASH=hash', 'EXPOSE_METADATA_LAYERS=YES'])
     tmp_ds = gdal.VectorTranslate('', src_ds, format='Memory')
     src_ds = None
@@ -2840,7 +2840,7 @@ def ogr_gmlas_writer_options():
         return 'fail'
 
     # Test WFS20_SCHEMALOCATION option
-    src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml', \
+    src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml',
                          open_options=['@HASH=hash', 'EXPOSE_METADATA_LAYERS=YES'])
     tmp_ds = gdal.VectorTranslate('', src_ds, format='Memory')
     src_ds = None
@@ -2928,7 +2928,7 @@ def ogr_gmlas_writer_errors():
 
     # Invalid input schema
     with gdaltest.error_handler():
-        ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format='GMLAS', \
+        ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format='GMLAS',
                                       datasetCreationOptions=['INPUT_XSD=/i_do_not/exist.xsd'])
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Cannot resolve /i_do_not/exist.xsd') < 0:
         gdaltest.post_reason('fail')
@@ -2936,12 +2936,12 @@ def ogr_gmlas_writer_errors():
         return 'fail'
 
     # Invalid output .xml name
-    src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml', \
+    src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml',
                          open_options=['EXPOSE_METADATA_LAYERS=YES'])
     tmp_ds = gdal.VectorTranslate('', src_ds, format='Memory')
     src_ds = None
     with gdaltest.error_handler():
-        ret_ds = gdal.VectorTranslate('/i_am/not/valid.xml', tmp_ds, format='GMLAS', \
+        ret_ds = gdal.VectorTranslate('/i_am/not/valid.xml', tmp_ds, format='GMLAS',
                                       datasetCreationOptions=['GENERATE_XSD=NO'])
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Cannot create /i_am/not/valid.xml') < 0:
         gdaltest.post_reason('fail')
@@ -2950,7 +2950,7 @@ def ogr_gmlas_writer_errors():
 
     # .xsd extension not allowed
     with gdaltest.error_handler():
-        ret_ds = gdal.VectorTranslate('/i_am/not/valid.xsd', tmp_ds, format='GMLAS', \
+        ret_ds = gdal.VectorTranslate('/i_am/not/valid.xsd', tmp_ds, format='GMLAS',
                                       datasetCreationOptions=['GENERATE_XSD=NO'])
     if ret_ds is not None or gdal.GetLastErrorMsg().find('.xsd extension is not valid') < 0:
         gdaltest.post_reason('fail')
@@ -2959,7 +2959,7 @@ def ogr_gmlas_writer_errors():
 
     # Invalid output .xsd name
     with gdaltest.error_handler():
-        ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format='GMLAS', \
+        ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format='GMLAS',
                                       datasetCreationOptions=['WRAPPING=GMLAS_FEATURECOLLECTION',
                                                               'OUTPUT_XSD_FILENAME=/i_am/not/valid.xsd'])
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Cannot create /i_am/not/valid.xsd') < 0:
@@ -2970,7 +2970,7 @@ def ogr_gmlas_writer_errors():
 
     # Invalid CONFIG_FILE
     with gdaltest.error_handler():
-        ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format='GMLAS', \
+        ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format='GMLAS',
                                       datasetCreationOptions=['CONFIG_FILE=/i/do_not/exist'])
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Loading of configuration failed') < 0:
         gdaltest.post_reason('fail')
@@ -2979,7 +2979,7 @@ def ogr_gmlas_writer_errors():
 
     # Invalid layer name
     with gdaltest.error_handler():
-        ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format='GMLAS', \
+        ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format='GMLAS',
                                       datasetCreationOptions=['LAYERS=foo'])
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Layer foo specified in LAYERS option does not exist') < 0:
         gdaltest.post_reason('fail')

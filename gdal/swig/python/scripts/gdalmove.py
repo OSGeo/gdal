@@ -74,7 +74,7 @@ def move(filename, t_srs, s_srs=None, pixel_threshold=None):
 
     corners_s_geo = []
     for item in corners_pixel_line:
-        corners_s_geo.append( \
+        corners_s_geo.append(
             (orig_gt[0] + item[0] * orig_gt[1] + item[1] * orig_gt[2],
              orig_gt[3] + item[0] * orig_gt[4] + item[1] * orig_gt[5],
              item[2]))
@@ -155,7 +155,7 @@ def move(filename, t_srs, s_srs=None, pixel_threshold=None):
              corners_pixel_line_new[i][1] - corners_pixel_line[i][1],
              corners_pixel_line_new[i][2] - corners_pixel_line[i][2]))
 
-        print('%-11s %s %s %s %5.2f %5.2f' % \
+        print('%-11s %s %s %s %5.2f %5.2f' %
               (corners_names[i],
                fmt_loc(s_srs_obj, corners_s_geo[i]),
                fmt_loc(t_srs_obj, corners_t_geo[i]),
