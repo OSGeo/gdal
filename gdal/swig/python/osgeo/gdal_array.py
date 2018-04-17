@@ -5,6 +5,9 @@
 # the SWIG interface file instead.
 
 
+
+
+
 from sys import version_info
 if version_info >= (2, 6, 0):
     def swig_import_helper():
@@ -67,7 +70,6 @@ def _swig_getattr_nondynamic(self, class_type, name, static=1):
     else:
         raise AttributeError(name)
 
-
 def _swig_getattr(self, class_type, name):
     return _swig_getattr_nondynamic(self, class_type, name, 0)
 
@@ -79,7 +81,6 @@ def _swig_repr(self):
         strthis = ""
     return "<%s.%s; %s >" % (self.__class__.__module__, self.__class__.__name__, strthis,)
 
-
 try:
     _object = object
     _newclass = 1
@@ -90,8 +91,6 @@ except AttributeError:
 
 
 import gdal
-
-
 class VirtualMem(_object):
     """Proxy of C++ CPLVirtualMemShadow class."""
 
@@ -110,6 +109,7 @@ class VirtualMem(_object):
         """GetAddr(VirtualMem self)"""
         return _gdal_array.VirtualMem_GetAddr(self)
 
+
     def Pin(self, start_offset=0, nsize=0, bWriteOp=0):
         """
         Pin(VirtualMem self, size_t start_offset=0, size_t nsize=0, int bWriteOp=0)
@@ -119,7 +119,6 @@ class VirtualMem(_object):
         """
         return _gdal_array.VirtualMem_Pin(self, start_offset, nsize, bWriteOp)
 
-
 VirtualMem_swigregister = _gdal_array.VirtualMem_swigregister
 VirtualMem_swigregister(VirtualMem)
 
@@ -128,45 +127,36 @@ def TermProgress_nocb(dfProgress, pszMessage=None, pData=None):
     """TermProgress_nocb(double dfProgress, char const * pszMessage=None, void * pData=None) -> int"""
     return _gdal_array.TermProgress_nocb(dfProgress, pszMessage, pData)
 
-
 _gdal_array.TermProgress_swigconstant(_gdal_array)
 TermProgress = _gdal_array.TermProgress
-
 
 def OpenNumPyArray(psArray):
     """OpenNumPyArray(PyArrayObject * psArray) -> Dataset"""
     return _gdal_array.OpenNumPyArray(psArray)
 
-
 def GetArrayFilename(psArray):
     """GetArrayFilename(PyArrayObject * psArray) -> retStringAndCPLFree *"""
     return _gdal_array.GetArrayFilename(psArray)
-
 
 def BandRasterIONumPy(band, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type, resample_alg, callback=0, callback_data=None):
     """BandRasterIONumPy(Band band, int bWrite, double xoff, double yoff, double xsize, double ysize, PyArrayObject * psArray, int buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
     return _gdal_array.BandRasterIONumPy(band, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type, resample_alg, callback, callback_data)
 
-
 def DatasetIONumPy(ds, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type, resample_alg, callback=0, callback_data=None):
     """DatasetIONumPy(Dataset ds, int bWrite, int xoff, int yoff, int xsize, int ysize, PyArrayObject * psArray, int buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
     return _gdal_array.DatasetIONumPy(ds, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type, resample_alg, callback, callback_data)
-
 
 def VirtualMemGetArray(virtualmem):
     """VirtualMemGetArray(VirtualMem virtualmem)"""
     return _gdal_array.VirtualMemGetArray(virtualmem)
 
-
 def RATValuesIONumPyWrite(poRAT, nField, nStart, psArray):
     """RATValuesIONumPyWrite(RasterAttributeTable poRAT, int nField, int nStart, PyArrayObject * psArray) -> CPLErr"""
     return _gdal_array.RATValuesIONumPyWrite(poRAT, nField, nStart, psArray)
 
-
 def RATValuesIONumPyRead(poRAT, nField, nStart, nLength):
     """RATValuesIONumPyRead(RasterAttributeTable poRAT, int nField, int nStart, int nLength) -> PyObject *"""
     return _gdal_array.RATValuesIONumPyRead(poRAT, nField, nStart, nLength)
-
 
 import numpy
 
@@ -174,37 +164,36 @@ import gdalconst
 import gdal
 gdal.AllRegister()
 
-codes = {gdalconst.GDT_Byte: numpy.uint8,
-         gdalconst.GDT_UInt16: numpy.uint16,
-         gdalconst.GDT_Int16: numpy.int16,
-         gdalconst.GDT_UInt32: numpy.uint32,
-         gdalconst.GDT_Int32: numpy.int32,
-         gdalconst.GDT_Float32: numpy.float32,
-         gdalconst.GDT_Float64: numpy.float64,
-         gdalconst.GDT_CInt16: numpy.complex64,
-         gdalconst.GDT_CInt32: numpy.complex64,
-         gdalconst.GDT_CFloat32: numpy.complex64,
-         gdalconst.GDT_CFloat64: numpy.complex128
+codes = {   gdalconst.GDT_Byte      :   numpy.uint8,
+            gdalconst.GDT_UInt16    :   numpy.uint16,
+            gdalconst.GDT_Int16     :   numpy.int16,
+            gdalconst.GDT_UInt32    :   numpy.uint32,
+            gdalconst.GDT_Int32     :   numpy.int32,
+            gdalconst.GDT_Float32   :   numpy.float32,
+            gdalconst.GDT_Float64   :   numpy.float64,
+            gdalconst.GDT_CInt16    :   numpy.complex64,
+            gdalconst.GDT_CInt32    :   numpy.complex64,
+            gdalconst.GDT_CFloat32  :   numpy.complex64,
+            gdalconst.GDT_CFloat64  :   numpy.complex128
         }
 
+def OpenArray( array, prototype_ds = None ):
 
-def OpenArray(array, prototype_ds=None):
-
-    ds = OpenNumPyArray(array)
+    ds = OpenNumPyArray( array )
 
     if ds is not None and prototype_ds is not None:
         if type(prototype_ds).__name__ == 'str':
-            prototype_ds = gdal.Open(prototype_ds)
+            prototype_ds = gdal.Open( prototype_ds )
         if prototype_ds is not None:
-            CopyDatasetInfo(prototype_ds, ds)
+            CopyDatasetInfo( prototype_ds, ds )
 
     return ds
 
 
 def flip_code(code):
-    if isinstance(code, (numpy.dtype, type)):
-        # since several things map to complex64 we must carefully select
-        # the opposite that is an exact match (ticket 1518)
+    if isinstance(code, (numpy.dtype,type)):
+# since several things map to complex64 we must carefully select
+# the opposite that is an exact match (ticket 1518)
         if code == numpy.int8:
             return gdalconst.GDT_Byte
         if code == numpy.complex64:
@@ -220,43 +209,39 @@ def flip_code(code):
         except KeyError:
             return None
 
-
 def NumericTypeCodeToGDALTypeCode(numeric_type):
-    if not isinstance(numeric_type, (numpy.dtype, type)):
+    if not isinstance(numeric_type, (numpy.dtype,type)):
         raise TypeError("Input must be a type")
     return flip_code(numeric_type)
-
 
 def GDALTypeCodeToNumericTypeCode(gdal_code):
     return flip_code(gdal_code)
 
-
-def LoadFile(filename, xoff=0, yoff=0, xsize=None, ysize=None,
-             buf_xsize=None, buf_ysize=None, buf_type=None,
-             resample_alg=gdal.GRIORA_NearestNeighbour,
-             callback=None, callback_data=None):
-    ds = gdal.Open(filename)
+def LoadFile( filename, xoff=0, yoff=0, xsize=None, ysize=None,
+              buf_xsize=None, buf_ysize=None, buf_type=None,
+              resample_alg = gdal.GRIORA_NearestNeighbour,
+              callback=None, callback_data=None ):
+    ds = gdal.Open( filename )
     if ds is None:
-        raise ValueError("Can't open " + filename + "\n\n" + gdal.GetLastErrorMsg())
+        raise ValueError("Can't open "+filename+"\n\n"+gdal.GetLastErrorMsg())
 
-    return DatasetReadAsArray(ds, xoff, yoff, xsize, ysize,
-                              buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
-                              resample_alg=resample_alg,
-                              callback=callback, callback_data=callback_data)
+    return DatasetReadAsArray( ds, xoff, yoff, xsize, ysize,
+                               buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
+                               resample_alg=resample_alg,
+                               callback = callback, callback_data = callback_data )
 
-
-def SaveArray(src_array, filename, format="GTiff", prototype=None):
-    driver = gdal.GetDriverByName(format)
+def SaveArray( src_array, filename, format = "GTiff", prototype = None ):
+    driver = gdal.GetDriverByName( format )
     if driver is None:
-        raise ValueError("Can't find driver " + format)
+        raise ValueError("Can't find driver "+format)
 
-    return driver.CreateCopy(filename, OpenArray(src_array, prototype))
+    return driver.CreateCopy( filename, OpenArray(src_array,prototype) )
 
 
-def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_obj=None,
-                       buf_xsize=None, buf_ysize=None, buf_type=None,
-                       resample_alg=gdal.GRIORA_NearestNeighbour,
-                       callback=None, callback_data=None):
+def DatasetReadAsArray( ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_obj=None,
+                        buf_xsize = None, buf_ysize = None, buf_type = None,
+                        resample_alg = gdal.GRIORA_NearestNeighbour,
+                        callback=None, callback_data=None ):
     """Pure python implementation of reading a chunk of a GDAL file
     into a numpy array.  Used by the gdal.Dataset.ReadAsArray method."""
 
@@ -269,12 +254,12 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
         return None
 
     if ds.RasterCount == 1:
-        return BandReadAsArray(ds.GetRasterBand(1), xoff, yoff, win_xsize, win_ysize,
-                               buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
-                               buf_obj=buf_obj,
-                               resample_alg=resample_alg,
-                               callback=callback,
-                               callback_data=callback_data)
+        return BandReadAsArray( ds.GetRasterBand(1), xoff, yoff, win_xsize, win_ysize,
+                                buf_xsize = buf_xsize, buf_ysize = buf_ysize, buf_type = buf_type,
+                                buf_obj = buf_obj,
+                                resample_alg = resample_alg,
+                                callback = callback,
+                                callback_data = callback_data )
 
     if buf_obj is None:
         if buf_xsize is None:
@@ -283,17 +268,17 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
             buf_ysize = win_ysize
         if buf_type is None:
             buf_type = ds.GetRasterBand(1).DataType
-            for band_index in range(2, ds.RasterCount + 1):
+            for band_index in range(2,ds.RasterCount+1):
                 if buf_type != ds.GetRasterBand(band_index).DataType:
                     buf_type = gdalconst.GDT_Float32
 
-        typecode = GDALTypeCodeToNumericTypeCode(buf_type)
-        if typecode == None:
+        typecode = GDALTypeCodeToNumericTypeCode( buf_type )
+        if typecode is None:
             buf_type = gdalconst.GDT_Float32
             typecode = numpy.float32
         if buf_type == gdalconst.GDT_Byte and ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE':
             typecode = numpy.int8
-        buf_obj = numpy.empty([ds.RasterCount, buf_ysize, buf_xsize], dtype=typecode)
+        buf_obj = numpy.empty([ds.RasterCount, buf_ysize,buf_xsize], dtype = typecode)
 
     else:
         if len(buf_obj.shape) != 3:
@@ -308,24 +293,23 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
         if buf_obj.shape[0] != ds.RasterCount:
             raise ValueError('Array should have space for %d bands' % ds.RasterCount)
 
-        datatype = NumericTypeCodeToGDALTypeCode(buf_obj.dtype.type)
+        datatype = NumericTypeCodeToGDALTypeCode( buf_obj.dtype.type )
         if not datatype:
             raise ValueError("array does not have corresponding GDAL data type")
         if buf_type is not None and buf_type != datatype:
             raise ValueError("Specified buf_type not consistent with array type")
         buf_type = datatype
 
-    if DatasetIONumPy(ds, 0, xoff, yoff, win_xsize, win_ysize,
-                      buf_obj, buf_type, resample_alg, callback, callback_data) != 0:
+    if DatasetIONumPy( ds, 0, xoff, yoff, win_xsize, win_ysize,
+                       buf_obj, buf_type, resample_alg, callback, callback_data ) != 0:
         return None
 
     return buf_obj
 
-
-def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
-                    buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
-                    resample_alg=gdal.GRIORA_NearestNeighbour,
-                    callback=None, callback_data=None):
+def BandReadAsArray( band, xoff = 0, yoff = 0, win_xsize = None, win_ysize = None,
+                     buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
+                     resample_alg = gdal.GRIORA_NearestNeighbour,
+                     callback=None, callback_data=None):
     """Pure python implementation of reading a chunk of a GDAL file
     into a numpy array.  Used by the gdal.Band.ReadAsArray method."""
 
@@ -342,16 +326,16 @@ def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
         if buf_type is None:
             buf_type = band.DataType
 
-        typecode = GDALTypeCodeToNumericTypeCode(buf_type)
-        if typecode == None:
+        typecode = GDALTypeCodeToNumericTypeCode( buf_type )
+        if typecode is None:
             buf_type = gdalconst.GDT_Float32
             typecode = numpy.float32
         else:
-            buf_type = NumericTypeCodeToGDALTypeCode(typecode)
+            buf_type = NumericTypeCodeToGDALTypeCode( typecode )
 
         if buf_type == gdalconst.GDT_Byte and band.GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE':
             typecode = numpy.int8
-        buf_obj = numpy.empty([buf_ysize, buf_xsize], dtype=typecode)
+        buf_obj = numpy.empty([buf_ysize,buf_xsize], dtype = typecode)
 
     else:
         if len(buf_obj.shape) == 2:
@@ -365,23 +349,22 @@ def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
         if buf_ysize is not None and buf_ysize != shape_buf_ysize:
             raise ValueError('Specified buf_ysize not consistent with array shape')
 
-        datatype = NumericTypeCodeToGDALTypeCode(buf_obj.dtype.type)
+        datatype = NumericTypeCodeToGDALTypeCode( buf_obj.dtype.type )
         if not datatype:
             raise ValueError("array does not have corresponding GDAL data type")
         if buf_type is not None and buf_type != datatype:
             raise ValueError("Specified buf_type not consistent with array type")
         buf_type = datatype
 
-    if BandRasterIONumPy(band, 0, xoff, yoff, win_xsize, win_ysize,
-                         buf_obj, buf_type, resample_alg, callback, callback_data) != 0:
+    if BandRasterIONumPy( band, 0, xoff, yoff, win_xsize, win_ysize,
+                          buf_obj, buf_type, resample_alg, callback, callback_data ) != 0:
         return None
 
     return buf_obj
 
-
-def BandWriteArray(band, array, xoff=0, yoff=0,
-                   resample_alg=gdal.GRIORA_NearestNeighbour,
-                   callback=None, callback_data=None):
+def BandWriteArray( band, array, xoff=0, yoff=0,
+                    resample_alg = gdal.GRIORA_NearestNeighbour,
+                    callback=None, callback_data=None ):
     """Pure python implementation of writing a chunk of a GDAL file
     from a numpy array.  Used by the gdal.Band.WriteArray method."""
 
@@ -394,21 +377,20 @@ def BandWriteArray(band, array, xoff=0, yoff=0,
     if xsize + xoff > band.XSize or ysize + yoff > band.YSize:
         raise ValueError("array larger than output file, or offset off edge")
 
-    datatype = NumericTypeCodeToGDALTypeCode(array.dtype.type)
+    datatype = NumericTypeCodeToGDALTypeCode( array.dtype.type )
 
 # if we receive some odd type, like int64, try casting to a very
 # generic type we do support (#2285)
     if not datatype:
-        gdal.Debug('gdal_array', 'force array to float64')
-        array = array.astype(numpy.float64)
-        datatype = NumericTypeCodeToGDALTypeCode(array.dtype.type)
+        gdal.Debug( 'gdal_array', 'force array to float64' )
+        array = array.astype( numpy.float64 )
+        datatype = NumericTypeCodeToGDALTypeCode( array.dtype.type )
 
     if not datatype:
         raise ValueError("array does not have corresponding GDAL data type")
 
-    return BandRasterIONumPy(band, 1, xoff, yoff, xsize, ysize,
-                             array, datatype, resample_alg, callback, callback_data)
-
+    return BandRasterIONumPy( band, 1, xoff, yoff, xsize, ysize,
+                                array, datatype, resample_alg, callback, callback_data )
 
 def RATWriteArray(rat, array, field, start=0):
     """
@@ -430,21 +412,20 @@ def RATWriteArray(rat, array, field, start=0):
         raise ValueError("Array too big to fit into RAT from start position")
 
     if numpy.issubdtype(array.dtype, numpy.integer):
-        # is some type of integer - coerce to standard int
-        # TODO: must check this is fine on all platforms
-        # confusingly numpy.int 64 bit even if native type 32 bit
+# is some type of integer - coerce to standard int
+# TODO: must check this is fine on all platforms
+# confusingly numpy.int 64 bit even if native type 32 bit
         array = array.astype(numpy.int32)
     elif numpy.issubdtype(array.dtype, numpy.floating):
-        # is some type of floating point - coerce to double
+# is some type of floating point - coerce to double
         array = array.astype(numpy.double)
     elif numpy.issubdtype(array.dtype, numpy.character):
-        # cast away any kind of Unicode etc
+# cast away any kind of Unicode etc
         array = array.astype(numpy.character)
     else:
         raise ValueError("Array not of a supported type (integer, double or string)")
 
     return RATValuesIONumPyWrite(rat, field, start, array)
-
 
 def RATReadArray(rat, field, start=0, length=None):
     """
@@ -456,8 +437,7 @@ def RATReadArray(rat, field, start=0, length=None):
 
     return RATValuesIONumPyRead(rat, field, start, length)
 
-
-def CopyDatasetInfo(src, dst, xoff=0, yoff=0):
+def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
     """
     Copy georeferencing information and metadata from one dataset to another.
     src: input dataset
@@ -469,27 +449,28 @@ def CopyDatasetInfo(src, dst, xoff=0, yoff=0):
 
     """
 
-    dst.SetMetadata(src.GetMetadata())
+    dst.SetMetadata( src.GetMetadata() )
+
 
 
 #Check for geo transform
     gt = src.GetGeoTransform()
-    if gt != (0, 1, 0, 0, 0, 1):
-        dst.SetProjection(src.GetProjectionRef())
+    if gt != (0,1,0,0,0,1):
+        dst.SetProjection( src.GetProjectionRef() )
 
         if (xoff == 0) and (yoff == 0):
-            dst.SetGeoTransform(gt)
+            dst.SetGeoTransform( gt  )
         else:
-            ngt = [gt[0], gt[1], gt[2], gt[3], gt[4], gt[5]]
-            ngt[0] = gt[0] + xoff * gt[1] + yoff * gt[2];
-            ngt[3] = gt[3] + xoff * gt[4] + yoff * gt[5];
-            dst.SetGeoTransform((ngt[0], ngt[1], ngt[2], ngt[3], ngt[4], ngt[5]))
+            ngt = [gt[0],gt[1],gt[2],gt[3],gt[4],gt[5]]
+            ngt[0] = gt[0] + xoff*gt[1] + yoff*gt[2];
+            ngt[3] = gt[3] + xoff*gt[4] + yoff*gt[5];
+            dst.SetGeoTransform( ( ngt[0], ngt[1], ngt[2], ngt[3], ngt[4], ngt[5] ) )
 
 #Check for GCPs
     elif src.GetGCPCount() > 0:
 
         if (xoff == 0) and (yoff == 0):
-            dst.SetGCPs(src.GetGCPs(), src.GetGCPProjection())
+            dst.SetGCPs( src.GetGCPs(), src.GetGCPProjection() )
         else:
             gcps = src.GetGCPs()
 #Shift gcps
@@ -506,7 +487,7 @@ def CopyDatasetInfo(src, dst, xoff=0, yoff=0):
                 new_gcps.append(ngcp)
 
             try:
-                dst.SetGCPs(new_gcps, src.GetGCPProjection())
+                dst.SetGCPs( new_gcps , src.GetGCPProjection() )
             except:
                 print("Failed to set GCPs")
                 return
@@ -514,3 +495,5 @@ def CopyDatasetInfo(src, dst, xoff=0, yoff=0):
     return
 
 # This file is compatible with both classic and new-style classes.
+
+

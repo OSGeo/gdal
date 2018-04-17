@@ -5,6 +5,9 @@
 # the SWIG interface file instead.
 
 
+
+
+
 from sys import version_info
 if version_info >= (2, 6, 0):
     def swig_import_helper():
@@ -67,7 +70,6 @@ def _swig_getattr_nondynamic(self, class_type, name, static=1):
     else:
         raise AttributeError(name)
 
-
 def _swig_getattr(self, class_type, name):
     return _swig_getattr_nondynamic(self, class_type, name, 0)
 
@@ -79,7 +81,6 @@ def _swig_repr(self):
         strthis = ""
     return "<%s.%s; %s >" % (self.__class__.__module__, self.__class__.__name__, strthis,)
 
-
 try:
     _object = object
     _newclass = 1
@@ -87,6 +88,7 @@ except AttributeError:
     class _object:
         pass
     _newclass = 0
+
 
 
 _ogr.wkb25DBit_swigconstant(_ogr)
@@ -533,25 +535,18 @@ OGRERR_INVALID_HANDLE = _ogr.OGRERR_INVALID_HANDLE
 _ogr.OGRERR_NON_EXISTING_FEATURE_swigconstant(_ogr)
 OGRERR_NON_EXISTING_FEATURE = _ogr.OGRERR_NON_EXISTING_FEATURE
 
-
 def GetUseExceptions(*args):
     """GetUseExceptions() -> int"""
     return _ogr.GetUseExceptions(*args)
-
 
 def UseExceptions(*args):
     """UseExceptions()"""
     return _ogr.UseExceptions(*args)
 
-
 def DontUseExceptions(*args):
     """DontUseExceptions()"""
     return _ogr.DontUseExceptions(*args)
-
-
 import osr
-
-
 class MajorObject(_object):
     """Proxy of C++ GDALMajorObjectShadow class."""
 
@@ -568,21 +563,26 @@ class MajorObject(_object):
         """GetDescription(MajorObject self) -> char const *"""
         return _ogr.MajorObject_GetDescription(self, *args)
 
+
     def SetDescription(self, *args):
         """SetDescription(MajorObject self, char const * pszNewDesc)"""
         return _ogr.MajorObject_SetDescription(self, *args)
+
 
     def GetMetadataDomainList(self, *args):
         """GetMetadataDomainList(MajorObject self) -> char **"""
         return _ogr.MajorObject_GetMetadataDomainList(self, *args)
 
+
     def GetMetadata_Dict(self, *args):
         """GetMetadata_Dict(MajorObject self, char const * pszDomain) -> char **"""
         return _ogr.MajorObject_GetMetadata_Dict(self, *args)
 
+
     def GetMetadata_List(self, *args):
         """GetMetadata_List(MajorObject self, char const * pszDomain) -> char **"""
         return _ogr.MajorObject_GetMetadata_List(self, *args)
+
 
     def SetMetadata(self, *args):
         """
@@ -591,23 +591,24 @@ class MajorObject(_object):
         """
         return _ogr.MajorObject_SetMetadata(self, *args)
 
+
     def GetMetadataItem(self, *args):
         """GetMetadataItem(MajorObject self, char const * pszName, char const * pszDomain) -> char const *"""
         return _ogr.MajorObject_GetMetadataItem(self, *args)
+
 
     def SetMetadataItem(self, *args):
         """SetMetadataItem(MajorObject self, char const * pszName, char const * pszValue, char const * pszDomain) -> CPLErr"""
         return _ogr.MajorObject_SetMetadataItem(self, *args)
 
-    def GetMetadata(self, domain=''):
-        if domain[:4] == 'xml:':
-            return self.GetMetadata_List(domain)
-        return self.GetMetadata_Dict(domain)
 
+    def GetMetadata( self, domain = '' ):
+      if domain[:4] == 'xml:':
+        return self.GetMetadata_List( domain )
+      return self.GetMetadata_Dict( domain )
 
 MajorObject_swigregister = _ogr.MajorObject_swigregister
 MajorObject_swigregister(MajorObject)
-
 
 class StyleTable(_object):
     """Proxy of C++ OGRStyleTableShadow class."""
@@ -632,34 +633,38 @@ class StyleTable(_object):
         """AddStyle(StyleTable self, char const * pszName, char const * pszStyleString) -> int"""
         return _ogr.StyleTable_AddStyle(self, *args)
 
+
     def LoadStyleTable(self, *args):
         """LoadStyleTable(StyleTable self, char const * utf8_path) -> int"""
         return _ogr.StyleTable_LoadStyleTable(self, *args)
+
 
     def SaveStyleTable(self, *args):
         """SaveStyleTable(StyleTable self, char const * utf8_path) -> int"""
         return _ogr.StyleTable_SaveStyleTable(self, *args)
 
+
     def Find(self, *args):
         """Find(StyleTable self, char const * pszName) -> char const *"""
         return _ogr.StyleTable_Find(self, *args)
+
 
     def ResetStyleStringReading(self, *args):
         """ResetStyleStringReading(StyleTable self)"""
         return _ogr.StyleTable_ResetStyleStringReading(self, *args)
 
+
     def GetNextStyle(self, *args):
         """GetNextStyle(StyleTable self) -> char const *"""
         return _ogr.StyleTable_GetNextStyle(self, *args)
+
 
     def GetLastStyleName(self, *args):
         """GetLastStyleName(StyleTable self) -> char const *"""
         return _ogr.StyleTable_GetLastStyleName(self, *args)
 
-
 StyleTable_swigregister = _ogr.StyleTable_swigregister
 StyleTable_swigregister(StyleTable)
-
 
 class Driver(MajorObject):
     """Proxy of C++ OGRDriverShadow class."""
@@ -684,38 +689,43 @@ class Driver(MajorObject):
         """CreateDataSource(Driver self, char const * utf8_path, char ** options=None) -> DataSource"""
         return _ogr.Driver_CreateDataSource(self, *args, **kwargs)
 
+
     def CopyDataSource(self, *args, **kwargs):
         """CopyDataSource(Driver self, DataSource copy_ds, char const * utf8_path, char ** options=None) -> DataSource"""
         return _ogr.Driver_CopyDataSource(self, *args, **kwargs)
+
 
     def Open(self, *args, **kwargs):
         """Open(Driver self, char const * utf8_path, int update=0) -> DataSource"""
         return _ogr.Driver_Open(self, *args, **kwargs)
 
+
     def DeleteDataSource(self, *args):
         """DeleteDataSource(Driver self, char const * utf8_path) -> int"""
         return _ogr.Driver_DeleteDataSource(self, *args)
+
 
     def TestCapability(self, *args):
         """TestCapability(Driver self, char const * cap) -> bool"""
         return _ogr.Driver_TestCapability(self, *args)
 
+
     def GetName(self, *args):
         """GetName(Driver self) -> char const *"""
         return _ogr.Driver_GetName(self, *args)
+
 
     def Register(self, *args):
         """Register(Driver self)"""
         return _ogr.Driver_Register(self, *args)
 
+
     def Deregister(self, *args):
         """Deregister(Driver self)"""
         return _ogr.Driver_Deregister(self, *args)
 
-
 Driver_swigregister = _ogr.Driver_swigregister
 Driver_swigregister(Driver)
-
 
 class DataSource(MajorObject):
     """Proxy of C++ OGRDataSourceShadow class."""
@@ -747,6 +757,7 @@ class DataSource(MajorObject):
         """
         return _ogr.DataSource_GetRefCount(self, *args)
 
+
     def GetSummaryRefCount(self, *args):
         """
         GetSummaryRefCount(DataSource self) -> int
@@ -755,6 +766,7 @@ class DataSource(MajorObject):
         OGR_DS_GetSummaryRefCount(OGRDataSourceH hDataSource) 
         """
         return _ogr.DataSource_GetSummaryRefCount(self, *args)
+
 
     def GetLayerCount(self, *args):
         """
@@ -776,6 +788,7 @@ class DataSource(MajorObject):
         layer count. 
         """
         return _ogr.DataSource_GetLayerCount(self, *args)
+
 
     def GetDriver(self, *args):
         """
@@ -801,6 +814,7 @@ class DataSource(MajorObject):
         the OGRSFDriverManager. 
         """
         return _ogr.DataSource_GetDriver(self, *args)
+
 
     def GetName(self, *args):
         """
@@ -828,6 +842,7 @@ class DataSource(MajorObject):
         """
         return _ogr.DataSource_GetName(self, *args)
 
+
     def DeleteLayer(self, *args):
         """
         DeleteLayer(DataSource self, int index) -> OGRErr
@@ -854,6 +869,7 @@ class DataSource(MajorObject):
         """
         return _ogr.DataSource_DeleteLayer(self, *args)
 
+
     def SyncToDisk(self, *args):
         """
         SyncToDisk(DataSource self) -> OGRErr
@@ -867,9 +883,11 @@ class DataSource(MajorObject):
         """
         return _ogr.DataSource_SyncToDisk(self, *args)
 
+
     def FlushCache(self, *args):
         """FlushCache(DataSource self)"""
         return _ogr.DataSource_FlushCache(self, *args)
+
 
     def CreateLayer(self, *args, **kwargs):
         """
@@ -915,6 +933,7 @@ class DataSource(MajorObject):
         """
         return _ogr.DataSource_CreateLayer(self, *args, **kwargs)
 
+
     def CopyLayer(self, *args, **kwargs):
         """
         CopyLayer(DataSource self, Layer src_layer, char const * new_name, char ** options=None) -> Layer
@@ -950,9 +969,11 @@ class DataSource(MajorObject):
         """
         return _ogr.DataSource_CopyLayer(self, *args, **kwargs)
 
+
     def GetLayerByIndex(self, *args):
         """GetLayerByIndex(DataSource self, int index=0) -> Layer"""
         return _ogr.DataSource_GetLayerByIndex(self, *args)
+
 
     def GetLayerByName(self, *args):
         """
@@ -979,6 +1000,7 @@ class DataSource(MajorObject):
         occurs. 
         """
         return _ogr.DataSource_GetLayerByName(self, *args)
+
 
     def TestCapability(self, *args):
         """
@@ -1019,6 +1041,7 @@ class DataSource(MajorObject):
         TRUE if capability available otherwise FALSE. 
         """
         return _ogr.DataSource_TestCapability(self, *args)
+
 
     def ExecuteSQL(self, *args, **kwargs):
         """
@@ -1066,6 +1089,7 @@ class DataSource(MajorObject):
         """
         return _ogr.DataSource_ExecuteSQL(self, *args, **kwargs)
 
+
     def ReleaseResultSet(self, *args):
         """
         ReleaseResultSet(DataSource self, Layer layer)
@@ -1092,6 +1116,7 @@ class DataSource(MajorObject):
         """
         return _ogr.DataSource_ReleaseResultSet(self, *args)
 
+
     def GetStyleTable(self, *args):
         """
         GetStyleTable(DataSource self) -> StyleTable
@@ -1102,6 +1127,7 @@ class DataSource(MajorObject):
         Get style table. 
         """
         return _ogr.DataSource_GetStyleTable(self, *args)
+
 
     def SetStyleTable(self, *args):
         """
@@ -1114,35 +1140,39 @@ class DataSource(MajorObject):
         """
         return _ogr.DataSource_SetStyleTable(self, *args)
 
+
     def StartTransaction(self, *args, **kwargs):
         """StartTransaction(DataSource self, int force=False) -> OGRErr"""
         return _ogr.DataSource_StartTransaction(self, *args, **kwargs)
+
 
     def CommitTransaction(self, *args):
         """CommitTransaction(DataSource self) -> OGRErr"""
         return _ogr.DataSource_CommitTransaction(self, *args)
 
+
     def RollbackTransaction(self, *args):
         """RollbackTransaction(DataSource self) -> OGRErr"""
         return _ogr.DataSource_RollbackTransaction(self, *args)
 
+
     def Destroy(self):
-        "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-        _ogr.delete_DataSource(self)
-        self.thisown = 0
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
+      _ogr.delete_DataSource( self )
+      self.thisown = 0
 
     def Release(self):
-        "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-        _ogr.delete_DataSource(self)
-        self.thisown = 0
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
+      _ogr.delete_DataSource( self )
+      self.thisown = 0
 
     def Reference(self):
-        "For backwards compatibility only."
-        return self.Reference()
+      "For backwards compatibility only."
+      return self.Reference()
 
     def Dereference(self):
-        "For backwards compatibility only."
-        self.Dereference()
+      "For backwards compatibility only."
+      self.Dereference()
 
     def __len__(self):
         """Returns the number of layers on the datasource"""
@@ -1155,14 +1185,14 @@ class DataSource(MajorObject):
         ds[0:4] would return a list of the first four layers."""
         if isinstance(value, slice):
             output = []
-            for i in xrange(value.start, value.stop, value.step):
+            for i in xrange(value.start,value.stop,value.step):
                 try:
                     output.append(self.GetLayer(i))
-                except OGRError:  # we're done because we're off the end
+                except OGRError: #we're done because we're off the end
                     return output
             return output
         if isinstance(value, int):
-            if value > len(self) - 1:
+            if value > len(self)-1:
                 raise IndexError
             return self.GetLayer(value)
         elif isinstance(value, str):
@@ -1170,7 +1200,7 @@ class DataSource(MajorObject):
         else:
             raise TypeError('Input %s is not of String or Int type' % type(value))
 
-    def GetLayer(self, iLayer=0):
+    def GetLayer(self,iLayer=0):
         """Return the layer given an index or a name"""
         if isinstance(iLayer, str):
             return self.GetLayerByName(str(iLayer))
@@ -1192,10 +1222,8 @@ class DataSource(MajorObject):
         else:
             raise TypeError("Input %s is not of String or Int type" % type(value))
 
-
 DataSource_swigregister = _ogr.DataSource_swigregister
 DataSource_swigregister(DataSource)
-
 
 class Layer(MajorObject):
     """Proxy of C++ OGRLayerShadow class."""
@@ -1221,6 +1249,7 @@ class Layer(MajorObject):
         hLayer) 
         """
         return _ogr.Layer_GetRefCount(self, *args)
+
 
     def SetSpatialFilter(self, *args):
         """
@@ -1268,6 +1297,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_SetSpatialFilter(self, *args)
 
+
     def SetSpatialFilterRect(self, *args):
         """
         SetSpatialFilterRect(Layer self, double minx, double miny, double maxx, double maxy)
@@ -1310,6 +1340,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_SetSpatialFilterRect(self, *args)
 
+
     def GetSpatialFilter(self, *args):
         """
         GetSpatialFilter(Layer self) -> Geometry
@@ -1333,6 +1364,7 @@ class Layer(MajorObject):
         an handle to the spatial filter geometry. 
         """
         return _ogr.Layer_GetSpatialFilter(self, *args)
+
 
     def SetAttributeFilter(self, *args):
         """
@@ -1375,6 +1407,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_SetAttributeFilter(self, *args)
 
+
     def ResetReading(self, *args):
         """
         ResetReading(Layer self)
@@ -1394,6 +1427,7 @@ class Layer(MajorObject):
         hLayer:  handle to the layer on which features are read. 
         """
         return _ogr.Layer_ResetReading(self, *args)
+
 
     def GetName(self, *args):
         """
@@ -1421,6 +1455,7 @@ class Layer(MajorObject):
         OGR 1.8.0 
         """
         return _ogr.Layer_GetName(self, *args)
+
 
     def GetGeomType(self, *args):
         """
@@ -1455,6 +1490,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_GetGeomType(self, *args)
 
+
     def GetGeometryColumn(self, *args):
         """
         GetGeometryColumn(Layer self) -> char const *
@@ -1482,6 +1518,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_GetGeometryColumn(self, *args)
 
+
     def GetFIDColumn(self, *args):
         """
         GetFIDColumn(Layer self) -> char const *
@@ -1502,6 +1539,7 @@ class Layer(MajorObject):
         fid column name. 
         """
         return _ogr.Layer_GetFIDColumn(self, *args)
+
 
     def GetFeature(self, *args):
         """
@@ -1544,6 +1582,7 @@ class Layer(MajorObject):
         an handle to a feature now owned by the caller, or NULL on failure. 
         """
         return _ogr.Layer_GetFeature(self, *args)
+
 
     def GetNextFeature(self, *args):
         """
@@ -1588,6 +1627,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_GetNextFeature(self, *args)
 
+
     def SetNextByIndex(self, *args):
         """
         SetNextByIndex(Layer self, GIntBig new_index) -> OGRErr
@@ -1625,6 +1665,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_SetNextByIndex(self, *args)
 
+
     def SetFeature(self, *args):
         """
         SetFeature(Layer self, Feature feature) -> OGRErr
@@ -1655,6 +1696,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_SetFeature(self, *args)
 
+
     def CreateFeature(self, *args):
         """
         CreateFeature(Layer self, Feature feature) -> OGRErr
@@ -1683,6 +1725,7 @@ class Layer(MajorObject):
         OGRERR_NONE on success. 
         """
         return _ogr.Layer_CreateFeature(self, *args)
+
 
     def DeleteFeature(self, *args):
         """
@@ -1713,6 +1756,7 @@ class Layer(MajorObject):
 
         """
         return _ogr.Layer_DeleteFeature(self, *args)
+
 
     def SyncToDisk(self, *args):
         """
@@ -1747,6 +1791,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_SyncToDisk(self, *args)
 
+
     def GetLayerDefn(self, *args):
         """
         GetLayerDefn(Layer self) -> FeatureDefn
@@ -1770,6 +1815,7 @@ class Layer(MajorObject):
         an handle to the feature definition. 
         """
         return _ogr.Layer_GetLayerDefn(self, *args)
+
 
     def GetFeatureCount(self, *args, **kwargs):
         """
@@ -1807,6 +1853,7 @@ class Layer(MajorObject):
         feature count, -1 if count not known. 
         """
         return _ogr.Layer_GetFeatureCount(self, *args, **kwargs)
+
 
     def GetExtent(self, *args, **kwargs):
         """
@@ -1848,6 +1895,7 @@ class Layer(MajorObject):
         OGRERR_NONE on success, OGRERR_FAILURE if extent not known. 
         """
         return _ogr.Layer_GetExtent(self, *args, **kwargs)
+
 
     def TestCapability(self, *args):
         """
@@ -1946,6 +1994,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_TestCapability(self, *args)
 
+
     def CreateField(self, *args, **kwargs):
         """
         CreateField(Layer self, FieldDefn field_def, int approx_ok=1) -> OGRErr
@@ -1991,6 +2040,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_CreateField(self, *args, **kwargs)
 
+
     def DeleteField(self, *args):
         """
         DeleteField(Layer self, int iField) -> OGRErr
@@ -2029,6 +2079,7 @@ class Layer(MajorObject):
         OGR 1.9.0 
         """
         return _ogr.Layer_DeleteField(self, *args)
+
 
     def ReorderField(self, *args):
         """
@@ -2085,6 +2136,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_ReorderField(self, *args)
 
+
     def ReorderFields(self, *args):
         """
         ReorderFields(Layer self, int nList) -> OGRErr
@@ -2132,6 +2184,7 @@ class Layer(MajorObject):
         OGR 1.9.0 
         """
         return _ogr.Layer_ReorderFields(self, *args)
+
 
     def AlterFieldDefn(self, *args):
         """
@@ -2183,6 +2236,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_AlterFieldDefn(self, *args)
 
+
     def CreateGeomField(self, *args, **kwargs):
         """
         CreateGeomField(Layer self, GeomFieldDefn field_def, int approx_ok=1) -> OGRErr
@@ -2230,6 +2284,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_CreateGeomField(self, *args, **kwargs)
 
+
     def StartTransaction(self, *args):
         """
         StartTransaction(Layer self) -> OGRErr
@@ -2262,6 +2317,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_StartTransaction(self, *args)
 
+
     def CommitTransaction(self, *args):
         """
         CommitTransaction(Layer self) -> OGRErr
@@ -2287,6 +2343,7 @@ class Layer(MajorObject):
         OGRERR_NONE on success. 
         """
         return _ogr.Layer_CommitTransaction(self, *args)
+
 
     def RollbackTransaction(self, *args):
         """
@@ -2315,6 +2372,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_RollbackTransaction(self, *args)
 
+
     def FindFieldIndex(self, *args):
         """
         FindFieldIndex(Layer self, char const * pszFieldName, int bExactMatch) -> int
@@ -2339,6 +2397,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_FindFieldIndex(self, *args)
 
+
     def GetSpatialRef(self, *args):
         """
         GetSpatialRef(Layer self) -> SpatialReference
@@ -2362,6 +2421,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_GetSpatialRef(self, *args)
 
+
     def GetFeaturesRead(self, *args):
         """
         GetFeaturesRead(Layer self) -> GIntBig
@@ -2370,6 +2430,7 @@ class Layer(MajorObject):
         OGR_L_GetFeaturesRead(OGRLayerH hLayer) 
         """
         return _ogr.Layer_GetFeaturesRead(self, *args)
+
 
     def SetIgnoredFields(self, *args):
         """
@@ -2404,6 +2465,7 @@ class Layer(MajorObject):
         does not support this method) 
         """
         return _ogr.Layer_SetIgnoredFields(self, *args)
+
 
     def Intersection(self, *args, **kwargs):
         """
@@ -2488,6 +2550,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_Intersection(self, *args, **kwargs)
 
+
     def Union(self, *args, **kwargs):
         """
         Union(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> OGRErr
@@ -2567,6 +2630,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_Union(self, *args, **kwargs)
 
+
     def SymDifference(self, *args, **kwargs):
         """
         SymDifference(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> OGRErr
@@ -2637,6 +2701,7 @@ class Layer(MajorObject):
         OGR 1.10 
         """
         return _ogr.Layer_SymDifference(self, *args, **kwargs)
+
 
     def Identity(self, *args, **kwargs):
         """
@@ -2715,6 +2780,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_Identity(self, *args, **kwargs)
 
+
     def Update(self, *args, **kwargs):
         """
         Update(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> OGRErr
@@ -2785,6 +2851,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_Update(self, *args, **kwargs)
 
+
     def Clip(self, *args, **kwargs):
         """
         Clip(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> OGRErr
@@ -2848,6 +2915,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_Clip(self, *args, **kwargs)
 
+
     def Erase(self, *args, **kwargs):
         """
         Erase(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> OGRErr
@@ -2910,6 +2978,7 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_Erase(self, *args, **kwargs)
 
+
     def GetStyleTable(self, *args):
         """
         GetStyleTable(Layer self) -> StyleTable
@@ -2920,6 +2989,7 @@ class Layer(MajorObject):
         Get style table. 
         """
         return _ogr.Layer_GetStyleTable(self, *args)
+
 
     def SetStyleTable(self, *args):
         """
@@ -2932,13 +3002,14 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_SetStyleTable(self, *args)
 
+
     def Reference(self):
-        "For backwards compatibility only."
-        pass
+      "For backwards compatibility only."
+      pass
 
     def Dereference(self):
-        "For backwards compatibility only."
-        pass
+      "For backwards compatibility only."
+      pass
 
     def __len__(self):
         """Returns the number of features in the layer"""
@@ -2960,13 +3031,13 @@ class Layer(MajorObject):
             import sys
             output = []
             if value.stop == sys.maxint:
-                #for an unending slice, sys.maxint is used
-                #We need to stop before that or GDAL will write an
-                ##error to stdout
+    #for an unending slice, sys.maxint is used
+    #We need to stop before that or GDAL will write an
+    ##error to stdout
                 stop = len(self) - 1
             else:
                 stop = value.stop
-            for i in xrange(value.start, stop, value.step):
+            for i in xrange(value.start,stop,value.step):
                 feature = self.GetFeature(i)
                 if feature:
                     output.append(feature)
@@ -2974,7 +3045,7 @@ class Layer(MajorObject):
                     return output
             return output
         if isinstance(value, int):
-            if value > len(self) - 1:
+            if value > len(self)-1:
                 raise IndexError
             return self.GetFeature(value)
         else:
@@ -3006,7 +3077,6 @@ class Layer(MajorObject):
 
 Layer_swigregister = _ogr.Layer_swigregister
 Layer_swigregister(Layer)
-
 
 class Feature(_object):
     """Proxy of C++ OGRFeatureShadow class."""
@@ -3048,6 +3118,7 @@ class Feature(_object):
         """
         return _ogr.Feature_GetDefnRef(self, *args)
 
+
     def SetGeometry(self, *args):
         """
         SetGeometry(Feature self, Geometry geom) -> OGRErr
@@ -3081,6 +3152,7 @@ class Feature(_object):
         implemented). 
         """
         return _ogr.Feature_SetGeometry(self, *args)
+
 
     def SetGeometryDirectly(self, *args):
         """
@@ -3117,6 +3189,7 @@ class Feature(_object):
         """
         return _ogr.Feature_SetGeometryDirectly(self, *args)
 
+
     def GetGeometryRef(self, *args):
         """
         GetGeometryRef(Feature self) -> Geometry
@@ -3139,6 +3212,7 @@ class Feature(_object):
         modified. 
         """
         return _ogr.Feature_GetGeometryRef(self, *args)
+
 
     def SetGeomField(self, *args):
         """
@@ -3170,6 +3244,7 @@ class Feature(_object):
         implemented). 
         """
         return _ogr.Feature_SetGeomField(self, *args)
+
 
     def SetGeomFieldDirectly(self, *args):
         """
@@ -3206,6 +3281,7 @@ class Feature(_object):
         """
         return _ogr.Feature_SetGeomFieldDirectly(self, *args)
 
+
     def GetGeomFieldRef(self, *args):
         """
         GetGeomFieldRef(Feature self, int iField) -> Geometry
@@ -3233,6 +3309,7 @@ class Feature(_object):
         """
         return _ogr.Feature_GetGeomFieldRef(self, *args)
 
+
     def Clone(self, *args):
         """
         Clone(Feature self) -> Feature
@@ -3255,6 +3332,7 @@ class Feature(_object):
         an handle to the new feature, exactly matching this feature. 
         """
         return _ogr.Feature_Clone(self, *args)
+
 
     def Equal(self, *args):
         """
@@ -3282,6 +3360,7 @@ class Feature(_object):
         """
         return _ogr.Feature_Equal(self, *args)
 
+
     def GetFieldCount(self, *args):
         """
         GetFieldCount(Feature self) -> int
@@ -3303,6 +3382,7 @@ class Feature(_object):
         count of fields. 
         """
         return _ogr.Feature_GetFieldCount(self, *args)
+
 
     def GetFieldDefnRef(self, *args):
         """
@@ -3329,6 +3409,7 @@ class Feature(_object):
         """
         return _ogr.Feature_GetFieldDefnRef(self, *args)
 
+
     def GetGeomFieldCount(self, *args):
         """
         GetGeomFieldCount(Feature self) -> int
@@ -3352,6 +3433,7 @@ class Feature(_object):
         GDAL 1.11 
         """
         return _ogr.Feature_GetGeomFieldCount(self, *args)
+
 
     def GetGeomFieldDefnRef(self, *args):
         """
@@ -3379,6 +3461,7 @@ class Feature(_object):
         GDAL 1.11 
         """
         return _ogr.Feature_GetGeomFieldDefnRef(self, *args)
+
 
     def GetFieldAsString(self, *args):
         """
@@ -3409,6 +3492,7 @@ class Feature(_object):
         """
         return _ogr.Feature_GetFieldAsString(self, *args)
 
+
     def GetFieldAsInteger(self, *args):
         """
         GetFieldAsInteger(Feature self, int id) -> int
@@ -3436,6 +3520,7 @@ class Feature(_object):
         the field value. 
         """
         return _ogr.Feature_GetFieldAsInteger(self, *args)
+
 
     def GetFieldAsInteger64(self, *args):
         """
@@ -3468,6 +3553,7 @@ class Feature(_object):
         """
         return _ogr.Feature_GetFieldAsInteger64(self, *args)
 
+
     def GetFieldAsDouble(self, *args):
         """
         GetFieldAsDouble(Feature self, int id) -> double
@@ -3495,6 +3581,7 @@ class Feature(_object):
         the field value. 
         """
         return _ogr.Feature_GetFieldAsDouble(self, *args)
+
 
     def GetFieldAsDateTime(self, *args):
         """
@@ -3543,6 +3630,7 @@ class Feature(_object):
         """
         return _ogr.Feature_GetFieldAsDateTime(self, *args)
 
+
     def GetFieldAsIntegerList(self, *args):
         """
         GetFieldAsIntegerList(Feature self, int id)
@@ -3573,6 +3661,7 @@ class Feature(_object):
         the returned pointer may be NULL or non-NULL. 
         """
         return _ogr.Feature_GetFieldAsIntegerList(self, *args)
+
 
     def GetFieldAsInteger64List(self, *args):
         """
@@ -3606,6 +3695,7 @@ class Feature(_object):
         """
         return _ogr.Feature_GetFieldAsInteger64List(self, *args)
 
+
     def GetFieldAsDoubleList(self, *args):
         """
         GetFieldAsDoubleList(Feature self, int id)
@@ -3637,6 +3727,7 @@ class Feature(_object):
         """
         return _ogr.Feature_GetFieldAsDoubleList(self, *args)
 
+
     def GetFieldAsStringList(self, *args):
         """
         GetFieldAsStringList(Feature self, int id) -> char **
@@ -3665,6 +3756,7 @@ class Feature(_object):
         freed. Its lifetime may be very brief. 
         """
         return _ogr.Feature_GetFieldAsStringList(self, *args)
+
 
     def GetFieldAsBinary(self, *args):
         """
@@ -3695,6 +3787,7 @@ class Feature(_object):
         """
         return _ogr.Feature_GetFieldAsBinary(self, *args)
 
+
     def IsFieldSet(self, *args):
         """
         IsFieldSet(Feature self, int id) -> bool
@@ -3717,6 +3810,7 @@ class Feature(_object):
         TRUE if the field has been set, otherwise false. 
         """
         return _ogr.Feature_IsFieldSet(self, *args)
+
 
     def IsFieldNull(self, *args):
         """
@@ -3742,6 +3836,7 @@ class Feature(_object):
         GDAL 2.2 
         """
         return _ogr.Feature_IsFieldNull(self, *args)
+
 
     def IsFieldSetAndNotNull(self, *args):
         """
@@ -3769,6 +3864,7 @@ class Feature(_object):
         """
         return _ogr.Feature_IsFieldSetAndNotNull(self, *args)
 
+
     def GetFieldIndex(self, *args):
         """
         GetFieldIndex(Feature self, char const * field_name) -> int
@@ -3793,6 +3889,7 @@ class Feature(_object):
         the field index, or -1 if no matching field is found. 
         """
         return _ogr.Feature_GetFieldIndex(self, *args)
+
 
     def GetGeomFieldIndex(self, *args):
         """
@@ -3822,6 +3919,7 @@ class Feature(_object):
         """
         return _ogr.Feature_GetGeomFieldIndex(self, *args)
 
+
     def GetFID(self, *args):
         """
         GetFID(Feature self) -> GIntBig
@@ -3844,6 +3942,7 @@ class Feature(_object):
         feature id or OGRNullFID if none has been assigned. 
         """
         return _ogr.Feature_GetFID(self, *args)
+
 
     def SetFID(self, *args):
         """
@@ -3872,6 +3971,7 @@ class Feature(_object):
         """
         return _ogr.Feature_SetFID(self, *args)
 
+
     def DumpReadable(self, *args):
         """
         DumpReadable(Feature self)
@@ -3897,6 +3997,7 @@ class Feature(_object):
         """
         return _ogr.Feature_DumpReadable(self, *args)
 
+
     def UnsetField(self, *args):
         """
         UnsetField(Feature self, int id)
@@ -3917,6 +4018,7 @@ class Feature(_object):
         iField:  the field to unset. 
         """
         return _ogr.Feature_UnsetField(self, *args)
+
 
     def SetFieldNull(self, *args):
         """
@@ -3941,6 +4043,7 @@ class Feature(_object):
         GDAL 2.2 
         """
         return _ogr.Feature_SetFieldNull(self, *args)
+
 
     def SetFieldInteger64(self, *args):
         """
@@ -3977,6 +4080,7 @@ class Feature(_object):
         """
         return _ogr.Feature_SetFieldInteger64(self, *args)
 
+
     def SetField(self, *args):
         """
         SetField(Feature self, int id, char const * value)
@@ -3987,6 +4091,7 @@ class Feature(_object):
         SetField(Feature self, char const * field_name, int year, int month, int day, int hour, int minute, float second, int tzflag)
         """
         return _ogr.Feature_SetField(self, *args)
+
 
     def SetFieldIntegerList(self, *args):
         """
@@ -4021,6 +4126,7 @@ class Feature(_object):
         panValues:  the values to assign. 
         """
         return _ogr.Feature_SetFieldIntegerList(self, *args)
+
 
     def SetFieldInteger64List(self, *args):
         """
@@ -4058,6 +4164,7 @@ class Feature(_object):
         """
         return _ogr.Feature_SetFieldInteger64List(self, *args)
 
+
     def SetFieldDoubleList(self, *args):
         """
         SetFieldDoubleList(Feature self, int id, int nList)
@@ -4092,6 +4199,7 @@ class Feature(_object):
         """
         return _ogr.Feature_SetFieldDoubleList(self, *args)
 
+
     def SetFieldStringList(self, *args):
         """
         SetFieldStringList(Feature self, int id, char ** pList)
@@ -4123,12 +4231,14 @@ class Feature(_object):
         """
         return _ogr.Feature_SetFieldStringList(self, *args)
 
+
     def SetFieldBinaryFromHexString(self, *args):
         """
         SetFieldBinaryFromHexString(Feature self, int id, char const * pszValue)
         SetFieldBinaryFromHexString(Feature self, char const * field_name, char const * pszValue)
         """
         return _ogr.Feature_SetFieldBinaryFromHexString(self, *args)
+
 
     def SetFrom(self, *args, **kwargs):
         """
@@ -4162,6 +4272,7 @@ class Feature(_object):
         transferred, otherwise an error code. 
         """
         return _ogr.Feature_SetFrom(self, *args, **kwargs)
+
 
     def SetFromWithMap(self, *args):
         """
@@ -4206,6 +4317,7 @@ class Feature(_object):
         """
         return _ogr.Feature_SetFromWithMap(self, *args)
 
+
     def GetStyleString(self, *args):
         """
         GetStyleString(Feature self) -> char const *
@@ -4231,6 +4343,7 @@ class Feature(_object):
         isn't one. 
         """
         return _ogr.Feature_GetStyleString(self, *args)
+
 
     def SetStyleString(self, *args):
         """
@@ -4258,12 +4371,14 @@ class Feature(_object):
         """
         return _ogr.Feature_SetStyleString(self, *args)
 
+
     def GetFieldType(self, *args):
         """
         GetFieldType(Feature self, int id) -> OGRFieldType
         GetFieldType(Feature self, char const * field_name) -> OGRFieldType
         """
         return _ogr.Feature_GetFieldType(self, *args)
+
 
     def Validate(self, *args):
         """
@@ -4301,6 +4416,7 @@ class Feature(_object):
         """
         return _ogr.Feature_Validate(self, *args)
 
+
     def FillUnsetWithDefault(self, *args):
         """
         FillUnsetWithDefault(Feature self, int bNotNullableOnly=False, char ** options=None)
@@ -4327,6 +4443,7 @@ class Feature(_object):
         GDAL 2.0 
         """
         return _ogr.Feature_FillUnsetWithDefault(self, *args)
+
 
     def GetNativeData(self, *args):
         """
@@ -4370,6 +4487,7 @@ class Feature(_object):
         """
         return _ogr.Feature_GetNativeData(self, *args)
 
+
     def GetNativeMediaType(self, *args):
         """
         GetNativeMediaType(Feature self) -> char const *
@@ -4401,6 +4519,7 @@ class Feature(_object):
 
         """
         return _ogr.Feature_GetNativeMediaType(self, *args)
+
 
     def SetNativeData(self, *args):
         """
@@ -4435,6 +4554,7 @@ class Feature(_object):
         """
         return _ogr.Feature_SetNativeData(self, *args)
 
+
     def SetNativeMediaType(self, *args):
         """
         SetNativeMediaType(Feature self, char const * nativeMediaType)
@@ -4468,6 +4588,7 @@ class Feature(_object):
 
         """
         return _ogr.Feature_SetNativeMediaType(self, *args)
+
 
     def SetFieldString(self, *args):
         """
@@ -4504,16 +4625,17 @@ class Feature(_object):
         """
         return _ogr.Feature_SetFieldString(self, *args)
 
+
     def Reference(self):
-        pass
+      pass
 
     def Dereference(self):
-        pass
+      pass
 
     def Destroy(self):
-        "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-        _ogr.delete_Feature(self)
-        self.thisown = 0
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
+      _ogr.delete_Feature( self )
+      self.thisown = 0
 
     def __cmp__(self, other):
         """Compares a feature to another for equality"""
@@ -4548,7 +4670,7 @@ class Feature(_object):
         else:
             idx = self.GetFieldIndex(key)
             if idx != -1:
-                self.SetField2(idx, value)
+                self.SetField2(idx,value)
             else:
                 idx = self.GetGeomFieldIndex(key)
                 if idx != -1:
@@ -4582,9 +4704,9 @@ class Feature(_object):
             if fld_index < 0:
                 raise ValueError("Illegal field requested in SetField()")
             else:
-                return self.SetGeomField(fld_index, value)
+                return self.SetGeomField( fld_index, value )
         else:
-            return self.SetField2(fld_index, value)
+            return self.SetField2( fld_index, value )
 
     def GetField(self, fld_index):
         if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
@@ -4614,7 +4736,7 @@ class Feature(_object):
         try:
             return self.GetFieldAsString(fld_index)
         except:
-            # For Python3 on non-UTF8 strings
+    # For Python3 on non-UTF8 strings
             return self.GetFieldAsBinary(fld_index)
 
     # With several override, SWIG cannot dispatch automatically unicode strings
@@ -4642,6 +4764,7 @@ class Feature(_object):
                 fld_index = self.GetFieldIndex(fld_index)
             return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
 
+
         if len(args) == 2 and str(type(args[1])) == "<type 'unicode'>":
             fld_index = args[0]
             if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
@@ -4657,29 +4780,29 @@ class Feature(_object):
             raise ValueError("Illegal field requested in SetField2()")
 
         if value is None:
-            self.SetFieldNull(fld_index)
+            self.SetFieldNull( fld_index )
             return
 
-        if isinstance(value, list):
+        if isinstance(value,list):
             if len(value) == 0:
-                self.SetFieldNull(fld_index)
+                self.SetFieldNull( fld_index )
                 return
-            if isinstance(value[0], type(1)) or isinstance(value[0], type(12345678901234)):
-                self.SetFieldInteger64List(fld_index, value)
+            if isinstance(value[0],type(1)) or isinstance(value[0],type(12345678901234)):
+                self.SetFieldInteger64List(fld_index,value)
                 return
-            elif isinstance(value[0], float):
-                self.SetFieldDoubleList(fld_index, value)
+            elif isinstance(value[0],float):
+                self.SetFieldDoubleList(fld_index,value)
                 return
-            elif isinstance(value[0], str):
-                self.SetFieldStringList(fld_index, value)
+            elif isinstance(value[0],str):
+                self.SetFieldStringList(fld_index,value)
                 return
             else:
-                raise TypeError('Unsupported type of list in SetField2(). Type of element is %s' % str(type(value[0])))
+                raise TypeError( 'Unsupported type of list in SetField2(). Type of element is %s' % str(type(value[0])) )
 
         try:
-            self.SetField(fld_index, value)
+            self.SetField( fld_index, value )
         except:
-            self.SetField(fld_index, str(value))
+            self.SetField( fld_index, str(value) )
         return
 
     def keys(self):
@@ -4695,11 +4818,10 @@ class Feature(_object):
         for key in keys:
             output[key] = self.GetField(key)
         return output
-
     def geometry(self):
         return self.GetGeometryRef()
 
-    def ExportToJson(self, as_object=False, options=None):
+    def ExportToJson(self, as_object = False, options = None):
         """Exports a GeoJSON object which represents the Feature. The
            as_object parameter determines whether the returned value
            should be a Python object instead of a string. Defaults to False.
@@ -4717,14 +4839,14 @@ class Feature(_object):
         if geom is not None:
             if options is None:
                 options = []
-            geom_json_string = geom.ExportToJson(options=options)
+            geom_json_string = geom.ExportToJson(options = options)
             geom_json_object = simplejson.loads(geom_json_string)
         else:
             geom_json_object = None
 
-        output = {'type': 'Feature',
-                  'geometry': geom_json_object,
-                  'properties': {}
+        output = {'type':'Feature',
+                   'geometry': geom_json_object,
+                   'properties': {}
                   }
 
         fid = self.GetFID()
@@ -4747,9 +4869,9 @@ class Feature(_object):
         return output
 
 
+
 Feature_swigregister = _ogr.Feature_swigregister
 Feature_swigregister(Feature)
-
 
 class FeatureDefn(_object):
     """Proxy of C++ OGRFeatureDefnShadow class."""
@@ -4791,6 +4913,7 @@ class FeatureDefn(_object):
         """
         return _ogr.FeatureDefn_GetName(self, *args)
 
+
     def GetFieldCount(self, *args):
         """
         GetFieldCount(FeatureDefn self) -> int
@@ -4810,6 +4933,7 @@ class FeatureDefn(_object):
         count of fields. 
         """
         return _ogr.FeatureDefn_GetFieldCount(self, *args)
+
 
     def GetFieldDefn(self, *args):
         """
@@ -4840,6 +4964,7 @@ class FeatureDefn(_object):
         """
         return _ogr.FeatureDefn_GetFieldDefn(self, *args)
 
+
     def GetFieldIndex(self, *args):
         """
         GetFieldIndex(FeatureDefn self, char const * field_name) -> int
@@ -4865,6 +4990,7 @@ class FeatureDefn(_object):
         the field index, or -1 if no match found. 
         """
         return _ogr.FeatureDefn_GetFieldIndex(self, *args)
+
 
     def AddFieldDefn(self, *args):
         """
@@ -4895,6 +5021,7 @@ class FeatureDefn(_object):
         """
         return _ogr.FeatureDefn_AddFieldDefn(self, *args)
 
+
     def GetGeomFieldCount(self, *args):
         """
         GetGeomFieldCount(FeatureDefn self) -> int
@@ -4917,6 +5044,7 @@ class FeatureDefn(_object):
         GDAL 1.11 
         """
         return _ogr.FeatureDefn_GetGeomFieldCount(self, *args)
+
 
     def GetGeomFieldDefn(self, *args):
         """
@@ -4946,6 +5074,7 @@ class FeatureDefn(_object):
         """
         return _ogr.FeatureDefn_GetGeomFieldDefn(self, *args)
 
+
     def GetGeomFieldIndex(self, *args):
         """
         GetGeomFieldIndex(FeatureDefn self, char const * field_name) -> int
@@ -4972,6 +5101,7 @@ class FeatureDefn(_object):
         the geometry field index, or -1 if no match found. 
         """
         return _ogr.FeatureDefn_GetGeomFieldIndex(self, *args)
+
 
     def AddGeomFieldDefn(self, *args):
         """
@@ -5006,6 +5136,7 @@ class FeatureDefn(_object):
         """
         return _ogr.FeatureDefn_AddGeomFieldDefn(self, *args)
 
+
     def DeleteGeomFieldDefn(self, *args):
         """
         DeleteGeomFieldDefn(FeatureDefn self, int idx) -> OGRErr
@@ -5038,6 +5169,7 @@ class FeatureDefn(_object):
         """
         return _ogr.FeatureDefn_DeleteGeomFieldDefn(self, *args)
 
+
     def GetGeomType(self, *args):
         """
         GetGeomType(FeatureDefn self) -> OGRwkbGeometryType
@@ -5062,6 +5194,7 @@ class FeatureDefn(_object):
         the base type for all geometry related to this definition. 
         """
         return _ogr.FeatureDefn_GetGeomType(self, *args)
+
 
     def SetGeomType(self, *args):
         """
@@ -5094,6 +5227,7 @@ class FeatureDefn(_object):
         """
         return _ogr.FeatureDefn_SetGeomType(self, *args)
 
+
     def GetReferenceCount(self, *args):
         """
         GetReferenceCount(FeatureDefn self) -> int
@@ -5115,6 +5249,7 @@ class FeatureDefn(_object):
         the current reference count. 
         """
         return _ogr.FeatureDefn_GetReferenceCount(self, *args)
+
 
     def IsGeometryIgnored(self, *args):
         """
@@ -5141,6 +5276,7 @@ class FeatureDefn(_object):
         """
         return _ogr.FeatureDefn_IsGeometryIgnored(self, *args)
 
+
     def SetGeometryIgnored(self, *args):
         """
         SetGeometryIgnored(FeatureDefn self, int bIgnored)
@@ -5166,6 +5302,7 @@ class FeatureDefn(_object):
         """
         return _ogr.FeatureDefn_SetGeometryIgnored(self, *args)
 
+
     def IsStyleIgnored(self, *args):
         """
         IsStyleIgnored(FeatureDefn self) -> int
@@ -5188,6 +5325,7 @@ class FeatureDefn(_object):
         """
         return _ogr.FeatureDefn_IsStyleIgnored(self, *args)
 
+
     def SetStyleIgnored(self, *args):
         """
         SetStyleIgnored(FeatureDefn self, int bIgnored)
@@ -5209,6 +5347,7 @@ class FeatureDefn(_object):
         bIgnore:  ignore state 
         """
         return _ogr.FeatureDefn_SetStyleIgnored(self, *args)
+
 
     def IsSame(self, *args):
         """
@@ -5233,15 +5372,15 @@ class FeatureDefn(_object):
         """
         return _ogr.FeatureDefn_IsSame(self, *args)
 
+
     def Destroy(self):
-        "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-        _ogr.delete_FeatureDefn(self)
-        self.thisown = 0
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
+      _ogr.delete_FeatureDefn( self )
+      self.thisown = 0
 
 
 FeatureDefn_swigregister = _ogr.FeatureDefn_swigregister
 FeatureDefn_swigregister(FeatureDefn)
-
 
 class FieldDefn(_object):
     """Proxy of C++ OGRFieldDefnShadow class."""
@@ -5266,6 +5405,7 @@ class FieldDefn(_object):
         """GetName(FieldDefn self) -> char const *"""
         return _ogr.FieldDefn_GetName(self, *args)
 
+
     def GetNameRef(self, *args):
         """
         GetNameRef(FieldDefn self) -> char const *
@@ -5287,6 +5427,7 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_GetNameRef(self, *args)
 
+
     def SetName(self, *args):
         """
         SetName(FieldDefn self, char const * name)
@@ -5307,6 +5448,7 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_SetName(self, *args)
 
+
     def GetType(self, *args):
         """
         GetType(FieldDefn self) -> OGRFieldType
@@ -5326,6 +5468,7 @@ class FieldDefn(_object):
         field type. 
         """
         return _ogr.FieldDefn_GetType(self, *args)
+
 
     def SetType(self, *args):
         """
@@ -5350,6 +5493,7 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_SetType(self, *args)
 
+
     def GetSubType(self, *args):
         """
         GetSubType(FieldDefn self) -> OGRFieldSubType
@@ -5372,6 +5516,7 @@ class FieldDefn(_object):
         GDAL 2.0 
         """
         return _ogr.FieldDefn_GetSubType(self, *args)
+
 
     def SetSubType(self, *args):
         """
@@ -5399,6 +5544,7 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_SetSubType(self, *args)
 
+
     def GetJustify(self, *args):
         """
         GetJustify(FieldDefn self) -> OGRJustification
@@ -5421,6 +5567,7 @@ class FieldDefn(_object):
         the justification. 
         """
         return _ogr.FieldDefn_GetJustify(self, *args)
+
 
     def SetJustify(self, *args):
         """
@@ -5445,6 +5592,7 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_SetJustify(self, *args)
 
+
     def GetWidth(self, *args):
         """
         GetWidth(FieldDefn self) -> int
@@ -5465,6 +5613,7 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_GetWidth(self, *args)
 
+
     def SetWidth(self, *args):
         """
         SetWidth(FieldDefn self, int width)
@@ -5484,6 +5633,7 @@ class FieldDefn(_object):
         nNewWidth:  the new width. 
         """
         return _ogr.FieldDefn_SetWidth(self, *args)
+
 
     def GetPrecision(self, *args):
         """
@@ -5508,6 +5658,7 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_GetPrecision(self, *args)
 
+
     def SetPrecision(self, *args):
         """
         SetPrecision(FieldDefn self, int precision)
@@ -5531,13 +5682,16 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_SetPrecision(self, *args)
 
+
     def GetTypeName(self, *args):
         """GetTypeName(FieldDefn self) -> char const *"""
         return _ogr.FieldDefn_GetTypeName(self, *args)
 
+
     def GetFieldTypeName(self, *args):
         """GetFieldTypeName(FieldDefn self, OGRFieldType type) -> char const *"""
         return _ogr.FieldDefn_GetFieldTypeName(self, *args)
+
 
     def IsIgnored(self, *args):
         """
@@ -5559,6 +5713,7 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_IsIgnored(self, *args)
 
+
     def SetIgnored(self, *args):
         """
         SetIgnored(FieldDefn self, int bIgnored)
@@ -5578,6 +5733,7 @@ class FieldDefn(_object):
         ignore:  ignore state 
         """
         return _ogr.FieldDefn_SetIgnored(self, *args)
+
 
     def IsNullable(self, *args):
         """
@@ -5608,6 +5764,7 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_IsNullable(self, *args)
 
+
     def SetNullable(self, *args):
         """
         SetNullable(FieldDefn self, int bNullable)
@@ -5636,6 +5793,7 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_SetNullable(self, *args)
 
+
     def GetDefault(self, *args):
         """
         GetDefault(FieldDefn self) -> char const *
@@ -5658,6 +5816,7 @@ class FieldDefn(_object):
         GDAL 2.0 
         """
         return _ogr.FieldDefn_GetDefault(self, *args)
+
 
     def SetDefault(self, *args):
         """
@@ -5700,6 +5859,7 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_SetDefault(self, *args)
 
+
     def IsDefaultDriverSpecific(self, *args):
         """
         IsDefaultDriverSpecific(FieldDefn self) -> int
@@ -5728,21 +5888,21 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_IsDefaultDriverSpecific(self, *args)
 
+
     width = property(GetWidth, SetWidth)
     type = property(GetType, SetType)
     precision = property(GetPrecision, SetPrecision)
     name = property(GetName, SetName)
     justify = property(GetJustify, SetJustify)
 
-    def Destroy(self):
-        "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-        _ogr.delete_FieldDefn(self)
-        self.thisown = 0
 
+    def Destroy(self):
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
+      _ogr.delete_FieldDefn( self )
+      self.thisown = 0
 
 FieldDefn_swigregister = _ogr.FieldDefn_swigregister
 FieldDefn_swigregister(FieldDefn)
-
 
 class GeomFieldDefn(_object):
     """Proxy of C++ OGRGeomFieldDefnShadow class."""
@@ -5767,50 +5927,60 @@ class GeomFieldDefn(_object):
         """GetName(GeomFieldDefn self) -> char const *"""
         return _ogr.GeomFieldDefn_GetName(self, *args)
 
+
     def GetNameRef(self, *args):
         """GetNameRef(GeomFieldDefn self) -> char const *"""
         return _ogr.GeomFieldDefn_GetNameRef(self, *args)
+
 
     def SetName(self, *args):
         """SetName(GeomFieldDefn self, char const * name)"""
         return _ogr.GeomFieldDefn_SetName(self, *args)
 
+
     def GetType(self, *args):
         """GetType(GeomFieldDefn self) -> OGRwkbGeometryType"""
         return _ogr.GeomFieldDefn_GetType(self, *args)
+
 
     def SetType(self, *args):
         """SetType(GeomFieldDefn self, OGRwkbGeometryType type)"""
         return _ogr.GeomFieldDefn_SetType(self, *args)
 
+
     def GetSpatialRef(self, *args):
         """GetSpatialRef(GeomFieldDefn self) -> SpatialReference"""
         return _ogr.GeomFieldDefn_GetSpatialRef(self, *args)
+
 
     def SetSpatialRef(self, *args):
         """SetSpatialRef(GeomFieldDefn self, SpatialReference srs)"""
         return _ogr.GeomFieldDefn_SetSpatialRef(self, *args)
 
+
     def IsIgnored(self, *args):
         """IsIgnored(GeomFieldDefn self) -> int"""
         return _ogr.GeomFieldDefn_IsIgnored(self, *args)
+
 
     def SetIgnored(self, *args):
         """SetIgnored(GeomFieldDefn self, int bIgnored)"""
         return _ogr.GeomFieldDefn_SetIgnored(self, *args)
 
+
     def IsNullable(self, *args):
         """IsNullable(GeomFieldDefn self) -> int"""
         return _ogr.GeomFieldDefn_IsNullable(self, *args)
+
 
     def SetNullable(self, *args):
         """SetNullable(GeomFieldDefn self, int bNullable)"""
         return _ogr.GeomFieldDefn_SetNullable(self, *args)
 
+
     type = property(GetType, SetType)
     name = property(GetName, SetName)
     srs = property(GetSpatialRef, SetSpatialRef)
-
 
 GeomFieldDefn_swigregister = _ogr.GeomFieldDefn_swigregister
 GeomFieldDefn_swigregister(GeomFieldDefn)
@@ -5820,62 +5990,49 @@ def CreateGeometryFromWkb(*args, **kwargs):
     """CreateGeometryFromWkb(int len, SpatialReference reference=None) -> Geometry"""
     return _ogr.CreateGeometryFromWkb(*args, **kwargs)
 
-
 def CreateGeometryFromWkt(*args, **kwargs):
     """CreateGeometryFromWkt(char ** val, SpatialReference reference=None) -> Geometry"""
     return _ogr.CreateGeometryFromWkt(*args, **kwargs)
-
 
 def CreateGeometryFromGML(*args):
     """CreateGeometryFromGML(char const * input_string) -> Geometry"""
     return _ogr.CreateGeometryFromGML(*args)
 
-
 def CreateGeometryFromJson(*args):
     """CreateGeometryFromJson(char const * input_string) -> Geometry"""
     return _ogr.CreateGeometryFromJson(*args)
-
 
 def BuildPolygonFromEdges(*args, **kwargs):
     """BuildPolygonFromEdges(Geometry hLineCollection, int bBestEffort=0, int bAutoClose=0, double dfTolerance=0) -> Geometry"""
     return _ogr.BuildPolygonFromEdges(*args, **kwargs)
 
-
 def ApproximateArcAngles(*args, **kwargs):
     """ApproximateArcAngles(double dfCenterX, double dfCenterY, double dfZ, double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation, double dfStartAngle, double dfEndAngle, double dfMaxAngleStepSizeDegrees) -> Geometry"""
     return _ogr.ApproximateArcAngles(*args, **kwargs)
-
 
 def ForceToPolygon(*args):
     """ForceToPolygon(Geometry geom_in) -> Geometry"""
     return _ogr.ForceToPolygon(*args)
 
-
 def ForceToLineString(*args):
     """ForceToLineString(Geometry geom_in) -> Geometry"""
     return _ogr.ForceToLineString(*args)
-
 
 def ForceToMultiPolygon(*args):
     """ForceToMultiPolygon(Geometry geom_in) -> Geometry"""
     return _ogr.ForceToMultiPolygon(*args)
 
-
 def ForceToMultiPoint(*args):
     """ForceToMultiPoint(Geometry geom_in) -> Geometry"""
     return _ogr.ForceToMultiPoint(*args)
-
 
 def ForceToMultiLineString(*args):
     """ForceToMultiLineString(Geometry geom_in) -> Geometry"""
     return _ogr.ForceToMultiLineString(*args)
 
-
 def ForceTo(*args):
     """ForceTo(Geometry geom_in, OGRwkbGeometryType eTargetType, char ** options=None) -> Geometry"""
     return _ogr.ForceTo(*args)
-
-
 class Geometry(_object):
     """Proxy of C++ OGRGeometryShadow class."""
 
@@ -5927,6 +6084,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_ExportToWkt(self, *args)
 
+
     def ExportToIsoWkt(self, *args):
         """
         ExportToIsoWkt(Geometry self) -> OGRErr
@@ -5958,6 +6116,7 @@ class Geometry(_object):
         GDAL 2.0 
         """
         return _ogr.Geometry_ExportToIsoWkt(self, *args)
+
 
     def ExportToWkb(self, *args, **kwargs):
         """
@@ -5996,6 +6155,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_ExportToWkb(self, *args, **kwargs)
 
+
     def ExportToIsoWkb(self, *args, **kwargs):
         """
         ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order) -> OGRErr
@@ -6033,45 +6193,56 @@ class Geometry(_object):
         """
         return _ogr.Geometry_ExportToIsoWkb(self, *args, **kwargs)
 
+
     def ExportToGML(self, *args, **kwargs):
         """ExportToGML(Geometry self, char ** options=None) -> retStringAndCPLFree *"""
         return _ogr.Geometry_ExportToGML(self, *args, **kwargs)
+
 
     def ExportToKML(self, *args):
         """ExportToKML(Geometry self, char const * altitude_mode=None) -> retStringAndCPLFree *"""
         return _ogr.Geometry_ExportToKML(self, *args)
 
+
     def ExportToJson(self, *args, **kwargs):
         """ExportToJson(Geometry self, char ** options=None) -> retStringAndCPLFree *"""
         return _ogr.Geometry_ExportToJson(self, *args, **kwargs)
+
 
     def AddPoint(self, *args, **kwargs):
         """AddPoint(Geometry self, double x, double y, double z=0)"""
         return _ogr.Geometry_AddPoint(self, *args, **kwargs)
 
+
     def AddPointM(self, *args, **kwargs):
         """AddPointM(Geometry self, double x, double y, double m)"""
         return _ogr.Geometry_AddPointM(self, *args, **kwargs)
+
 
     def AddPointZM(self, *args, **kwargs):
         """AddPointZM(Geometry self, double x, double y, double z, double m)"""
         return _ogr.Geometry_AddPointZM(self, *args, **kwargs)
 
+
     def AddPoint_2D(self, *args):
         """AddPoint_2D(Geometry self, double x, double y)"""
         return _ogr.Geometry_AddPoint_2D(self, *args)
+
 
     def AddGeometryDirectly(self, *args):
         """AddGeometryDirectly(Geometry self, Geometry other_disown) -> OGRErr"""
         return _ogr.Geometry_AddGeometryDirectly(self, *args)
 
+
     def AddGeometry(self, *args):
         """AddGeometry(Geometry self, Geometry other) -> OGRErr"""
         return _ogr.Geometry_AddGeometry(self, *args)
 
+
     def RemoveGeometry(self, *args):
         """RemoveGeometry(Geometry self, int iSubGeom) -> OGRErr"""
         return _ogr.Geometry_RemoveGeometry(self, *args)
+
 
     def Clone(self, *args):
         """
@@ -6095,6 +6266,7 @@ class Geometry(_object):
         system as the original. 
         """
         return _ogr.Geometry_Clone(self, *args)
+
 
     def GetGeometryType(self, *args):
         """
@@ -6121,6 +6293,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_GetGeometryType(self, *args)
 
+
     def GetGeometryName(self, *args):
         """
         GetGeometryName(Geometry self) -> char const *
@@ -6144,73 +6317,91 @@ class Geometry(_object):
         """
         return _ogr.Geometry_GetGeometryName(self, *args)
 
+
     def Length(self, *args):
         """Length(Geometry self) -> double"""
         return _ogr.Geometry_Length(self, *args)
+
 
     def Area(self, *args):
         """Area(Geometry self) -> double"""
         return _ogr.Geometry_Area(self, *args)
 
+
     def GetArea(self, *args):
         """GetArea(Geometry self) -> double"""
         return _ogr.Geometry_GetArea(self, *args)
+
 
     def GetPointCount(self, *args):
         """GetPointCount(Geometry self) -> int"""
         return _ogr.Geometry_GetPointCount(self, *args)
 
+
     def GetPoints(self, *args, **kwargs):
         """GetPoints(Geometry self, int nCoordDimension=0)"""
         return _ogr.Geometry_GetPoints(self, *args, **kwargs)
+
 
     def GetX(self, *args, **kwargs):
         """GetX(Geometry self, int point=0) -> double"""
         return _ogr.Geometry_GetX(self, *args, **kwargs)
 
+
     def GetY(self, *args, **kwargs):
         """GetY(Geometry self, int point=0) -> double"""
         return _ogr.Geometry_GetY(self, *args, **kwargs)
+
 
     def GetZ(self, *args, **kwargs):
         """GetZ(Geometry self, int point=0) -> double"""
         return _ogr.Geometry_GetZ(self, *args, **kwargs)
 
+
     def GetM(self, *args, **kwargs):
         """GetM(Geometry self, int point=0) -> double"""
         return _ogr.Geometry_GetM(self, *args, **kwargs)
+
 
     def GetPoint(self, *args):
         """GetPoint(Geometry self, int iPoint=0)"""
         return _ogr.Geometry_GetPoint(self, *args)
 
+
     def GetPointZM(self, *args):
         """GetPointZM(Geometry self, int iPoint=0)"""
         return _ogr.Geometry_GetPointZM(self, *args)
+
 
     def GetPoint_2D(self, *args):
         """GetPoint_2D(Geometry self, int iPoint=0)"""
         return _ogr.Geometry_GetPoint_2D(self, *args)
 
+
     def GetGeometryCount(self, *args):
         """GetGeometryCount(Geometry self) -> int"""
         return _ogr.Geometry_GetGeometryCount(self, *args)
+
 
     def SetPoint(self, *args, **kwargs):
         """SetPoint(Geometry self, int point, double x, double y, double z=0)"""
         return _ogr.Geometry_SetPoint(self, *args, **kwargs)
 
+
     def SetPointM(self, *args, **kwargs):
         """SetPointM(Geometry self, int point, double x, double y, double m)"""
         return _ogr.Geometry_SetPointM(self, *args, **kwargs)
+
 
     def SetPointZM(self, *args, **kwargs):
         """SetPointZM(Geometry self, int point, double x, double y, double z, double m)"""
         return _ogr.Geometry_SetPointZM(self, *args, **kwargs)
 
+
     def SetPoint_2D(self, *args, **kwargs):
         """SetPoint_2D(Geometry self, int point, double x, double y)"""
         return _ogr.Geometry_SetPoint_2D(self, *args, **kwargs)
+
 
     def SwapXY(self, *args):
         """
@@ -6229,9 +6420,11 @@ class Geometry(_object):
         """
         return _ogr.Geometry_SwapXY(self, *args)
 
+
     def GetGeometryRef(self, *args):
         """GetGeometryRef(Geometry self, int geom) -> Geometry"""
         return _ogr.Geometry_GetGeometryRef(self, *args)
+
 
     def Simplify(self, *args):
         """
@@ -6262,6 +6455,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Simplify(self, *args)
 
+
     def SimplifyPreserveTopology(self, *args):
         """
         SimplifyPreserveTopology(Geometry self, double tolerance) -> Geometry
@@ -6291,6 +6485,7 @@ class Geometry(_object):
         OGR 1.9.0 
         """
         return _ogr.Geometry_SimplifyPreserveTopology(self, *args)
+
 
     def DelaunayTriangulation(self, *args, **kwargs):
         """
@@ -6327,6 +6522,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_DelaunayTriangulation(self, *args, **kwargs)
 
+
     def Polygonize(self, *args):
         """
         Polygonize(Geometry self) -> Geometry
@@ -6360,6 +6556,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Polygonize(self, *args)
 
+
     def Boundary(self, *args):
         """
         Boundary(Geometry self) -> Geometry
@@ -6391,6 +6588,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Boundary(self, *args)
 
+
     def GetBoundary(self, *args):
         """
         GetBoundary(Geometry self) -> Geometry
@@ -6405,6 +6603,7 @@ class Geometry(_object):
         See:   OGR_G_Boundary() 
         """
         return _ogr.Geometry_GetBoundary(self, *args)
+
 
     def ConvexHull(self, *args):
         """
@@ -6434,6 +6633,7 @@ class Geometry(_object):
         NULL on failure. 
         """
         return _ogr.Geometry_ConvexHull(self, *args)
+
 
     def Buffer(self, *args, **kwargs):
         """
@@ -6477,6 +6677,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Buffer(self, *args, **kwargs)
 
+
     def Intersection(self, *args):
         """
         Intersection(Geometry self, Geometry other) -> Geometry
@@ -6510,6 +6711,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Intersection(self, *args)
 
+
     def Union(self, *args):
         """
         Union(Geometry self, Geometry other) -> Geometry
@@ -6540,6 +6742,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Union(self, *args)
 
+
     def UnionCascaded(self, *args):
         """
         UnionCascaded(Geometry self) -> Geometry
@@ -6565,6 +6768,7 @@ class Geometry(_object):
         a new geometry representing the union or NULL if an error occurs. 
         """
         return _ogr.Geometry_UnionCascaded(self, *args)
+
 
     def Difference(self, *args):
         """
@@ -6596,6 +6800,7 @@ class Geometry(_object):
         is empty or an error occurs. 
         """
         return _ogr.Geometry_Difference(self, *args)
+
 
     def SymDifference(self, *args):
         """
@@ -6631,6 +6836,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_SymDifference(self, *args)
 
+
     def SymmetricDifference(self, *args):
         """
         SymmetricDifference(Geometry self, Geometry other) -> Geometry
@@ -6645,6 +6851,7 @@ class Geometry(_object):
         See:  OGR_G_SymmetricDifference() 
         """
         return _ogr.Geometry_SymmetricDifference(self, *args)
+
 
     def Distance(self, *args):
         """
@@ -6675,6 +6882,7 @@ class Geometry(_object):
         the distance between the geometries or -1 if an error occurs. 
         """
         return _ogr.Geometry_Distance(self, *args)
+
 
     def Distance3D(self, *args):
         """
@@ -6709,6 +6917,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Distance3D(self, *args)
 
+
     def Empty(self, *args):
         """
         Empty(Geometry self)
@@ -6731,6 +6940,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Empty(self, *args)
 
+
     def IsEmpty(self, *args):
         """
         IsEmpty(Geometry self) -> bool
@@ -6749,6 +6959,7 @@ class Geometry(_object):
         TRUE if the geometry has no points, otherwise FALSE. 
         """
         return _ogr.Geometry_IsEmpty(self, *args)
+
 
     def IsValid(self, *args):
         """
@@ -6772,6 +6983,7 @@ class Geometry(_object):
         TRUE if the geometry has no points, otherwise FALSE. 
         """
         return _ogr.Geometry_IsValid(self, *args)
+
 
     def IsSimple(self, *args):
         """
@@ -6802,6 +7014,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_IsSimple(self, *args)
 
+
     def IsRing(self, *args):
         """
         IsRing(Geometry self) -> bool
@@ -6824,6 +7037,7 @@ class Geometry(_object):
         TRUE if the geometry has no points, otherwise FALSE. 
         """
         return _ogr.Geometry_IsRing(self, *args)
+
 
     def Intersects(self, *args):
         """
@@ -6851,9 +7065,11 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Intersects(self, *args)
 
+
     def Intersect(self, *args):
         """Intersect(Geometry self, Geometry other) -> bool"""
         return _ogr.Geometry_Intersect(self, *args)
+
 
     def Equals(self, *args):
         """
@@ -6887,9 +7103,11 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Equals(self, *args)
 
+
     def Equal(self, *args):
         """Equal(Geometry self, Geometry other) -> bool"""
         return _ogr.Geometry_Equal(self, *args)
+
 
     def Disjoint(self, *args):
         """
@@ -6920,6 +7138,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Disjoint(self, *args)
 
+
     def Touches(self, *args):
         """
         Touches(Geometry self, Geometry other) -> bool
@@ -6948,6 +7167,7 @@ class Geometry(_object):
         TRUE if they are touching, otherwise FALSE. 
         """
         return _ogr.Geometry_Touches(self, *args)
+
 
     def Crosses(self, *args):
         """
@@ -6978,6 +7198,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Crosses(self, *args)
 
+
     def Within(self, *args):
         """
         Within(Geometry self, Geometry other) -> bool
@@ -7006,6 +7227,7 @@ class Geometry(_object):
         TRUE if hThis is within hOther, otherwise FALSE. 
         """
         return _ogr.Geometry_Within(self, *args)
+
 
     def Contains(self, *args):
         """
@@ -7036,6 +7258,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Contains(self, *args)
 
+
     def Overlaps(self, *args):
         """
         Overlaps(Geometry self, Geometry other) -> bool
@@ -7065,6 +7288,7 @@ class Geometry(_object):
         TRUE if they are overlapping, otherwise FALSE. 
         """
         return _ogr.Geometry_Overlaps(self, *args)
+
 
     def TransformTo(self, *args):
         """
@@ -7104,6 +7328,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_TransformTo(self, *args)
 
+
     def Transform(self, *args):
         """
         Transform(Geometry self, CoordinateTransformation trans) -> OGRErr
@@ -7139,6 +7364,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Transform(self, *args)
 
+
     def GetSpatialReference(self, *args):
         """
         GetSpatialReference(Geometry self) -> SpatialReference
@@ -7162,6 +7388,7 @@ class Geometry(_object):
         a reference to the spatial reference geometry. 
         """
         return _ogr.Geometry_GetSpatialReference(self, *args)
+
 
     def AssignSpatialReference(self, *args):
         """
@@ -7199,6 +7426,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_AssignSpatialReference(self, *args)
 
+
     def CloseRings(self, *args):
         """
         CloseRings(Geometry self)
@@ -7218,6 +7446,7 @@ class Geometry(_object):
         hGeom:  handle to the geometry. 
         """
         return _ogr.Geometry_CloseRings(self, *args)
+
 
     def FlattenTo2D(self, *args):
         """
@@ -7239,6 +7468,7 @@ class Geometry(_object):
         hGeom:  handle on the geometry to convert. 
         """
         return _ogr.Geometry_FlattenTo2D(self, *args)
+
 
     def Segmentize(self, *args):
         """
@@ -7265,6 +7495,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Segmentize(self, *args)
 
+
     def GetEnvelope(self, *args):
         """
         GetEnvelope(Geometry self)
@@ -7286,6 +7517,7 @@ class Geometry(_object):
         psEnvelope:  the structure in which to place the results. 
         """
         return _ogr.Geometry_GetEnvelope(self, *args)
+
 
     def GetEnvelope3D(self, *args):
         """
@@ -7310,6 +7542,7 @@ class Geometry(_object):
         OGR 1.9.0 
         """
         return _ogr.Geometry_GetEnvelope3D(self, *args)
+
 
     def Centroid(self, *args):
         """
@@ -7341,6 +7574,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Centroid(self, *args)
 
+
     def PointOnSurface(self, *args):
         """
         PointOnSurface(Geometry self) -> Geometry
@@ -7370,6 +7604,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_PointOnSurface(self, *args)
 
+
     def WkbSize(self, *args):
         """
         WkbSize(Geometry self) -> int
@@ -7394,6 +7629,7 @@ class Geometry(_object):
         size of binary representation in bytes. 
         """
         return _ogr.Geometry_WkbSize(self, *args)
+
 
     def GetCoordinateDimension(self, *args):
         """
@@ -7420,6 +7656,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_GetCoordinateDimension(self, *args)
 
+
     def CoordinateDimension(self, *args):
         """
         CoordinateDimension(Geometry self) -> int
@@ -7444,6 +7681,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_CoordinateDimension(self, *args)
 
+
     def Is3D(self, *args):
         """
         Is3D(Geometry self) -> int
@@ -7464,6 +7702,7 @@ class Geometry(_object):
         GDAL 2.1 
         """
         return _ogr.Geometry_Is3D(self, *args)
+
 
     def IsMeasured(self, *args):
         """
@@ -7486,6 +7725,7 @@ class Geometry(_object):
         GDAL 2.1 
         """
         return _ogr.Geometry_IsMeasured(self, *args)
+
 
     def SetCoordinateDimension(self, *args):
         """
@@ -7514,6 +7754,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_SetCoordinateDimension(self, *args)
 
+
     def Set3D(self, *args):
         """
         Set3D(Geometry self, int b3D)
@@ -7538,6 +7779,7 @@ class Geometry(_object):
         GDAL 2.1 
         """
         return _ogr.Geometry_Set3D(self, *args)
+
 
     def SetMeasured(self, *args):
         """
@@ -7565,6 +7807,7 @@ class Geometry(_object):
         """
         return _ogr.Geometry_SetMeasured(self, *args)
 
+
     def GetDimension(self, *args):
         """
         GetDimension(Geometry self) -> int
@@ -7591,32 +7834,38 @@ class Geometry(_object):
         """
         return _ogr.Geometry_GetDimension(self, *args)
 
+
     def HasCurveGeometry(self, *args):
         """HasCurveGeometry(Geometry self, int bLookForCircular=False) -> int"""
         return _ogr.Geometry_HasCurveGeometry(self, *args)
+
 
     def GetLinearGeometry(self, *args, **kwargs):
         """GetLinearGeometry(Geometry self, double dfMaxAngleStepSizeDegrees=0.0, char ** options=None) -> Geometry"""
         return _ogr.Geometry_GetLinearGeometry(self, *args, **kwargs)
 
+
     def GetCurveGeometry(self, *args, **kwargs):
         """GetCurveGeometry(Geometry self, char ** options=None) -> Geometry"""
         return _ogr.Geometry_GetCurveGeometry(self, *args, **kwargs)
+
 
     def Value(self, *args):
         """Value(Geometry self, double dfDistance) -> Geometry"""
         return _ogr.Geometry_Value(self, *args)
 
+
     def Destroy(self):
-        self.__swig_destroy__(self)
-        self.__del__()
-        self.thisown = 0
+      self.__swig_destroy__(self)
+      self.__del__()
+      self.thisown = 0
 
     def __str__(self):
-        return self.ExportToWkt()
+      return self.ExportToWkt()
+
 
     def __reduce__(self):
-        return (self.__class__, (), self.ExportToWkb())
+      return (self.__class__, (), self.ExportToWkb())
 
     def __setstate__(self, state):
         result = CreateGeometryFromWkb(state)
@@ -7634,7 +7883,6 @@ class Geometry(_object):
         else:
             raise StopIteration
 
-
 Geometry_swigregister = _ogr.Geometry_swigregister
 Geometry_swigregister(Geometry)
 
@@ -7643,147 +7891,120 @@ def GetDriverCount(*args):
     """GetDriverCount() -> int"""
     return _ogr.GetDriverCount(*args)
 
-
 def GetOpenDSCount(*args):
     """GetOpenDSCount() -> int"""
     return _ogr.GetOpenDSCount(*args)
-
 
 def SetGenerate_DB2_V72_BYTE_ORDER(*args):
     """SetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER) -> OGRErr"""
     return _ogr.SetGenerate_DB2_V72_BYTE_ORDER(*args)
 
-
 def RegisterAll(*args):
     """RegisterAll()"""
     return _ogr.RegisterAll(*args)
-
 
 def GeometryTypeToName(*args):
     """GeometryTypeToName(OGRwkbGeometryType eType) -> char const *"""
     return _ogr.GeometryTypeToName(*args)
 
-
 def GetFieldTypeName(*args):
     """GetFieldTypeName(OGRFieldType type) -> char const *"""
     return _ogr.GetFieldTypeName(*args)
-
 
 def GetFieldSubTypeName(*args):
     """GetFieldSubTypeName(OGRFieldSubType type) -> char const *"""
     return _ogr.GetFieldSubTypeName(*args)
 
-
 def GT_Flatten(*args):
     """GT_Flatten(OGRwkbGeometryType eType) -> OGRwkbGeometryType"""
     return _ogr.GT_Flatten(*args)
-
 
 def GT_SetZ(*args):
     """GT_SetZ(OGRwkbGeometryType eType) -> OGRwkbGeometryType"""
     return _ogr.GT_SetZ(*args)
 
-
 def GT_SetM(*args):
     """GT_SetM(OGRwkbGeometryType eType) -> OGRwkbGeometryType"""
     return _ogr.GT_SetM(*args)
-
 
 def GT_SetModifier(*args):
     """GT_SetModifier(OGRwkbGeometryType eType, int bSetZ, int bSetM=False) -> OGRwkbGeometryType"""
     return _ogr.GT_SetModifier(*args)
 
-
 def GT_HasZ(*args):
     """GT_HasZ(OGRwkbGeometryType eType) -> int"""
     return _ogr.GT_HasZ(*args)
-
 
 def GT_HasM(*args):
     """GT_HasM(OGRwkbGeometryType eType) -> int"""
     return _ogr.GT_HasM(*args)
 
-
 def GT_IsSubClassOf(*args):
     """GT_IsSubClassOf(OGRwkbGeometryType eType, OGRwkbGeometryType eSuperType) -> int"""
     return _ogr.GT_IsSubClassOf(*args)
-
 
 def GT_IsCurve(*args):
     """GT_IsCurve(OGRwkbGeometryType arg1) -> int"""
     return _ogr.GT_IsCurve(*args)
 
-
 def GT_IsSurface(*args):
     """GT_IsSurface(OGRwkbGeometryType arg1) -> int"""
     return _ogr.GT_IsSurface(*args)
-
 
 def GT_IsNonLinear(*args):
     """GT_IsNonLinear(OGRwkbGeometryType arg1) -> int"""
     return _ogr.GT_IsNonLinear(*args)
 
-
 def GT_GetCollection(*args):
     """GT_GetCollection(OGRwkbGeometryType eType) -> OGRwkbGeometryType"""
     return _ogr.GT_GetCollection(*args)
-
 
 def GT_GetCurve(*args):
     """GT_GetCurve(OGRwkbGeometryType eType) -> OGRwkbGeometryType"""
     return _ogr.GT_GetCurve(*args)
 
-
 def GT_GetLinear(*args):
     """GT_GetLinear(OGRwkbGeometryType eType) -> OGRwkbGeometryType"""
     return _ogr.GT_GetLinear(*args)
-
 
 def SetNonLinearGeometriesEnabledFlag(*args):
     """SetNonLinearGeometriesEnabledFlag(int bFlag)"""
     return _ogr.SetNonLinearGeometriesEnabledFlag(*args)
 
-
 def GetNonLinearGeometriesEnabledFlag(*args):
     """GetNonLinearGeometriesEnabledFlag() -> int"""
     return _ogr.GetNonLinearGeometriesEnabledFlag(*args)
-
 
 def GetOpenDS(*args):
     """GetOpenDS(int ds_number) -> DataSource"""
     return _ogr.GetOpenDS(*args)
 
-
 def Open(*args, **kwargs):
     """Open(char const * utf8_path, int update=0) -> DataSource"""
     return _ogr.Open(*args, **kwargs)
-
 
 def OpenShared(*args, **kwargs):
     """OpenShared(char const * utf8_path, int update=0) -> DataSource"""
     return _ogr.OpenShared(*args, **kwargs)
 
-
 def GetDriverByName(*args):
     """GetDriverByName(char const * name) -> Driver"""
     return _ogr.GetDriverByName(*args)
-
 
 def GetDriver(*args):
     """GetDriver(int driver_number) -> Driver"""
     return _ogr.GetDriver(*args)
 
-
 def GeneralCmdLineProcessor(*args):
     """GeneralCmdLineProcessor(char ** papszArgv, int nOptions=0) -> char **"""
     return _ogr.GeneralCmdLineProcessor(*args)
-
 
 def TermProgress_nocb(*args, **kwargs):
     """TermProgress_nocb(double dfProgress, char const * pszMessage=None, void * pData=None) -> int"""
     return _ogr.TermProgress_nocb(*args, **kwargs)
 
-
 _ogr.TermProgress_swigconstant(_ogr)
 TermProgress = _ogr.TermProgress
 # This file is compatible with both classic and new-style classes.
+
+

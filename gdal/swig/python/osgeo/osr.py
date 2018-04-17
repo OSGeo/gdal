@@ -5,6 +5,9 @@
 # the SWIG interface file instead.
 
 
+
+
+
 from sys import version_info
 if version_info >= (2, 6, 0):
     def swig_import_helper():
@@ -67,7 +70,6 @@ def _swig_getattr_nondynamic(self, class_type, name, static=1):
     else:
         raise AttributeError(name)
 
-
 def _swig_getattr(self, class_type, name):
     return _swig_getattr_nondynamic(self, class_type, name, 0)
 
@@ -79,7 +81,6 @@ def _swig_repr(self):
         strthis = ""
     return "<%s.%s; %s >" % (self.__class__.__module__, self.__class__.__name__, strthis,)
 
-
 try:
     _object = object
     _newclass = 1
@@ -87,6 +88,7 @@ except AttributeError:
     class _object:
         pass
     _newclass = 0
+
 
 
 _osr.SRS_WKT_WGS84_swigconstant(_osr)
@@ -608,32 +610,25 @@ OAO_Up = _osr.OAO_Up
 _osr.OAO_Down_swigconstant(_osr)
 OAO_Down = _osr.OAO_Down
 
-
 def GetUseExceptions(*args):
     """GetUseExceptions() -> int"""
     return _osr.GetUseExceptions(*args)
-
 
 def UseExceptions(*args):
     """UseExceptions()"""
     return _osr.UseExceptions(*args)
 
-
 def DontUseExceptions(*args):
     """DontUseExceptions()"""
     return _osr.DontUseExceptions(*args)
-
 
 def GetWellKnownGeogCSAsWKT(*args):
     """GetWellKnownGeogCSAsWKT(char const * name) -> OGRErr"""
     return _osr.GetWellKnownGeogCSAsWKT(*args)
 
-
 def GetUserInputAsWKT(*args):
     """GetUserInputAsWKT(char const * name) -> OGRErr"""
     return _osr.GetUserInputAsWKT(*args)
-
-
 class SpatialReference(_object):
     """Proxy of C++ OSRSpatialReferenceShadow class."""
 
@@ -657,491 +652,609 @@ class SpatialReference(_object):
         """__str__(SpatialReference self) -> retStringAndCPLFree *"""
         return _osr.SpatialReference___str__(self, *args)
 
+
     def IsSame(self, *args):
         """IsSame(SpatialReference self, SpatialReference rhs) -> int"""
         return _osr.SpatialReference_IsSame(self, *args)
+
 
     def IsSameGeogCS(self, *args):
         """IsSameGeogCS(SpatialReference self, SpatialReference rhs) -> int"""
         return _osr.SpatialReference_IsSameGeogCS(self, *args)
 
+
     def IsSameVertCS(self, *args):
         """IsSameVertCS(SpatialReference self, SpatialReference rhs) -> int"""
         return _osr.SpatialReference_IsSameVertCS(self, *args)
+
 
     def IsGeographic(self, *args):
         """IsGeographic(SpatialReference self) -> int"""
         return _osr.SpatialReference_IsGeographic(self, *args)
 
+
     def IsProjected(self, *args):
         """IsProjected(SpatialReference self) -> int"""
         return _osr.SpatialReference_IsProjected(self, *args)
+
 
     def IsCompound(self, *args):
         """IsCompound(SpatialReference self) -> int"""
         return _osr.SpatialReference_IsCompound(self, *args)
 
+
     def IsGeocentric(self, *args):
         """IsGeocentric(SpatialReference self) -> int"""
         return _osr.SpatialReference_IsGeocentric(self, *args)
+
 
     def IsLocal(self, *args):
         """IsLocal(SpatialReference self) -> int"""
         return _osr.SpatialReference_IsLocal(self, *args)
 
+
     def IsVertical(self, *args):
         """IsVertical(SpatialReference self) -> int"""
         return _osr.SpatialReference_IsVertical(self, *args)
+
 
     def EPSGTreatsAsLatLong(self, *args):
         """EPSGTreatsAsLatLong(SpatialReference self) -> int"""
         return _osr.SpatialReference_EPSGTreatsAsLatLong(self, *args)
 
+
     def EPSGTreatsAsNorthingEasting(self, *args):
         """EPSGTreatsAsNorthingEasting(SpatialReference self) -> int"""
         return _osr.SpatialReference_EPSGTreatsAsNorthingEasting(self, *args)
+
 
     def SetAuthority(self, *args):
         """SetAuthority(SpatialReference self, char const * pszTargetKey, char const * pszAuthority, int nCode) -> OGRErr"""
         return _osr.SpatialReference_SetAuthority(self, *args)
 
+
     def GetAttrValue(self, *args):
         """GetAttrValue(SpatialReference self, char const * name, int child=0) -> char const *"""
         return _osr.SpatialReference_GetAttrValue(self, *args)
+
 
     def SetAttrValue(self, *args):
         """SetAttrValue(SpatialReference self, char const * name, char const * value) -> OGRErr"""
         return _osr.SpatialReference_SetAttrValue(self, *args)
 
+
     def SetAngularUnits(self, *args):
         """SetAngularUnits(SpatialReference self, char const * name, double to_radians) -> OGRErr"""
         return _osr.SpatialReference_SetAngularUnits(self, *args)
+
 
     def GetAngularUnits(self, *args):
         """GetAngularUnits(SpatialReference self) -> double"""
         return _osr.SpatialReference_GetAngularUnits(self, *args)
 
+
     def GetAngularUnitsName(self, *args):
         """GetAngularUnitsName(SpatialReference self) -> char const *"""
         return _osr.SpatialReference_GetAngularUnitsName(self, *args)
+
 
     def SetTargetLinearUnits(self, *args):
         """SetTargetLinearUnits(SpatialReference self, char const * target, char const * name, double to_meters) -> OGRErr"""
         return _osr.SpatialReference_SetTargetLinearUnits(self, *args)
 
+
     def SetLinearUnits(self, *args):
         """SetLinearUnits(SpatialReference self, char const * name, double to_meters) -> OGRErr"""
         return _osr.SpatialReference_SetLinearUnits(self, *args)
+
 
     def SetLinearUnitsAndUpdateParameters(self, *args):
         """SetLinearUnitsAndUpdateParameters(SpatialReference self, char const * name, double to_meters) -> OGRErr"""
         return _osr.SpatialReference_SetLinearUnitsAndUpdateParameters(self, *args)
 
+
     def GetTargetLinearUnits(self, *args):
         """GetTargetLinearUnits(SpatialReference self, char const * target_key) -> double"""
         return _osr.SpatialReference_GetTargetLinearUnits(self, *args)
+
 
     def GetLinearUnits(self, *args):
         """GetLinearUnits(SpatialReference self) -> double"""
         return _osr.SpatialReference_GetLinearUnits(self, *args)
 
+
     def GetLinearUnitsName(self, *args):
         """GetLinearUnitsName(SpatialReference self) -> char const *"""
         return _osr.SpatialReference_GetLinearUnitsName(self, *args)
+
 
     def GetAuthorityCode(self, *args):
         """GetAuthorityCode(SpatialReference self, char const * target_key) -> char const *"""
         return _osr.SpatialReference_GetAuthorityCode(self, *args)
 
+
     def GetAuthorityName(self, *args):
         """GetAuthorityName(SpatialReference self, char const * target_key) -> char const *"""
         return _osr.SpatialReference_GetAuthorityName(self, *args)
+
 
     def GetAxisName(self, *args):
         """GetAxisName(SpatialReference self, char const * target_key, int iAxis) -> char const *"""
         return _osr.SpatialReference_GetAxisName(self, *args)
 
+
     def GetAxisOrientation(self, *args):
         """GetAxisOrientation(SpatialReference self, char const * target_key, int iAxis) -> OGRAxisOrientation"""
         return _osr.SpatialReference_GetAxisOrientation(self, *args)
+
 
     def SetUTM(self, *args):
         """SetUTM(SpatialReference self, int zone, int north=1) -> OGRErr"""
         return _osr.SpatialReference_SetUTM(self, *args)
 
+
     def GetUTMZone(self, *args):
         """GetUTMZone(SpatialReference self) -> int"""
         return _osr.SpatialReference_GetUTMZone(self, *args)
+
 
     def SetStatePlane(self, *args):
         """SetStatePlane(SpatialReference self, int zone, int is_nad83=1, char const * unitsname, double units=0.0) -> OGRErr"""
         return _osr.SpatialReference_SetStatePlane(self, *args)
 
+
     def AutoIdentifyEPSG(self, *args):
         """AutoIdentifyEPSG(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_AutoIdentifyEPSG(self, *args)
+
 
     def FindMatches(self, *args):
         """FindMatches(SpatialReference self, char ** options=None)"""
         return _osr.SpatialReference_FindMatches(self, *args)
 
+
     def SetProjection(self, *args):
         """SetProjection(SpatialReference self, char const * arg) -> OGRErr"""
         return _osr.SpatialReference_SetProjection(self, *args)
+
 
     def SetProjParm(self, *args):
         """SetProjParm(SpatialReference self, char const * name, double val) -> OGRErr"""
         return _osr.SpatialReference_SetProjParm(self, *args)
 
+
     def GetProjParm(self, *args):
         """GetProjParm(SpatialReference self, char const * name, double default_val=0.0) -> double"""
         return _osr.SpatialReference_GetProjParm(self, *args)
+
 
     def SetNormProjParm(self, *args):
         """SetNormProjParm(SpatialReference self, char const * name, double val) -> OGRErr"""
         return _osr.SpatialReference_SetNormProjParm(self, *args)
 
+
     def GetNormProjParm(self, *args):
         """GetNormProjParm(SpatialReference self, char const * name, double default_val=0.0) -> double"""
         return _osr.SpatialReference_GetNormProjParm(self, *args)
+
 
     def GetSemiMajor(self, *args):
         """GetSemiMajor(SpatialReference self) -> double"""
         return _osr.SpatialReference_GetSemiMajor(self, *args)
 
+
     def GetSemiMinor(self, *args):
         """GetSemiMinor(SpatialReference self) -> double"""
         return _osr.SpatialReference_GetSemiMinor(self, *args)
+
 
     def GetInvFlattening(self, *args):
         """GetInvFlattening(SpatialReference self) -> double"""
         return _osr.SpatialReference_GetInvFlattening(self, *args)
 
+
     def SetACEA(self, *args, **kwargs):
         """SetACEA(SpatialReference self, double stdp1, double stdp2, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetACEA(self, *args, **kwargs)
+
 
     def SetAE(self, *args, **kwargs):
         """SetAE(SpatialReference self, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetAE(self, *args, **kwargs)
 
+
     def SetBonne(self, *args, **kwargs):
         """SetBonne(SpatialReference self, double stdp, double cm, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetBonne(self, *args, **kwargs)
+
 
     def SetCEA(self, *args, **kwargs):
         """SetCEA(SpatialReference self, double stdp1, double cm, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetCEA(self, *args, **kwargs)
 
+
     def SetCS(self, *args, **kwargs):
         """SetCS(SpatialReference self, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetCS(self, *args, **kwargs)
+
 
     def SetEC(self, *args, **kwargs):
         """SetEC(SpatialReference self, double stdp1, double stdp2, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetEC(self, *args, **kwargs)
 
+
     def SetEckertIV(self, *args, **kwargs):
         """SetEckertIV(SpatialReference self, double cm, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetEckertIV(self, *args, **kwargs)
+
 
     def SetEckertVI(self, *args, **kwargs):
         """SetEckertVI(SpatialReference self, double cm, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetEckertVI(self, *args, **kwargs)
 
+
     def SetEquirectangular(self, *args, **kwargs):
         """SetEquirectangular(SpatialReference self, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetEquirectangular(self, *args, **kwargs)
+
 
     def SetEquirectangular2(self, *args, **kwargs):
         """SetEquirectangular2(SpatialReference self, double clat, double clong, double pseudostdparallellat, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetEquirectangular2(self, *args, **kwargs)
 
+
     def SetGaussSchreiberTMercator(self, *args, **kwargs):
         """SetGaussSchreiberTMercator(SpatialReference self, double clat, double clong, double sc, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetGaussSchreiberTMercator(self, *args, **kwargs)
+
 
     def SetGS(self, *args, **kwargs):
         """SetGS(SpatialReference self, double cm, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetGS(self, *args, **kwargs)
 
+
     def SetGH(self, *args, **kwargs):
         """SetGH(SpatialReference self, double cm, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetGH(self, *args, **kwargs)
+
 
     def SetIGH(self, *args):
         """SetIGH(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_SetIGH(self, *args)
 
+
     def SetGEOS(self, *args, **kwargs):
         """SetGEOS(SpatialReference self, double cm, double satelliteheight, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetGEOS(self, *args, **kwargs)
+
 
     def SetGnomonic(self, *args, **kwargs):
         """SetGnomonic(SpatialReference self, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetGnomonic(self, *args, **kwargs)
 
+
     def SetHOM(self, *args, **kwargs):
         """SetHOM(SpatialReference self, double clat, double clong, double azimuth, double recttoskew, double scale, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetHOM(self, *args, **kwargs)
+
 
     def SetHOM2PNO(self, *args, **kwargs):
         """SetHOM2PNO(SpatialReference self, double clat, double dfLat1, double dfLong1, double dfLat2, double dfLong2, double scale, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetHOM2PNO(self, *args, **kwargs)
 
+
     def SetKrovak(self, *args, **kwargs):
         """SetKrovak(SpatialReference self, double clat, double clong, double azimuth, double pseudostdparallellat, double scale, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetKrovak(self, *args, **kwargs)
+
 
     def SetLAEA(self, *args, **kwargs):
         """SetLAEA(SpatialReference self, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetLAEA(self, *args, **kwargs)
 
+
     def SetLCC(self, *args, **kwargs):
         """SetLCC(SpatialReference self, double stdp1, double stdp2, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetLCC(self, *args, **kwargs)
+
 
     def SetLCC1SP(self, *args, **kwargs):
         """SetLCC1SP(SpatialReference self, double clat, double clong, double scale, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetLCC1SP(self, *args, **kwargs)
 
+
     def SetLCCB(self, *args, **kwargs):
         """SetLCCB(SpatialReference self, double stdp1, double stdp2, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetLCCB(self, *args, **kwargs)
+
 
     def SetMC(self, *args, **kwargs):
         """SetMC(SpatialReference self, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetMC(self, *args, **kwargs)
 
+
     def SetMercator(self, *args, **kwargs):
         """SetMercator(SpatialReference self, double clat, double clong, double scale, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetMercator(self, *args, **kwargs)
+
 
     def SetMercator2SP(self, *args, **kwargs):
         """SetMercator2SP(SpatialReference self, double stdp1, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetMercator2SP(self, *args, **kwargs)
 
+
     def SetMollweide(self, *args, **kwargs):
         """SetMollweide(SpatialReference self, double cm, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetMollweide(self, *args, **kwargs)
+
 
     def SetNZMG(self, *args, **kwargs):
         """SetNZMG(SpatialReference self, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetNZMG(self, *args, **kwargs)
 
+
     def SetOS(self, *args, **kwargs):
         """SetOS(SpatialReference self, double dfOriginLat, double dfCMeridian, double scale, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetOS(self, *args, **kwargs)
+
 
     def SetOrthographic(self, *args, **kwargs):
         """SetOrthographic(SpatialReference self, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetOrthographic(self, *args, **kwargs)
 
+
     def SetPolyconic(self, *args, **kwargs):
         """SetPolyconic(SpatialReference self, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetPolyconic(self, *args, **kwargs)
+
 
     def SetPS(self, *args, **kwargs):
         """SetPS(SpatialReference self, double clat, double clong, double scale, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetPS(self, *args, **kwargs)
 
+
     def SetRobinson(self, *args, **kwargs):
         """SetRobinson(SpatialReference self, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetRobinson(self, *args, **kwargs)
+
 
     def SetSinusoidal(self, *args, **kwargs):
         """SetSinusoidal(SpatialReference self, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetSinusoidal(self, *args, **kwargs)
 
+
     def SetStereographic(self, *args, **kwargs):
         """SetStereographic(SpatialReference self, double clat, double clong, double scale, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetStereographic(self, *args, **kwargs)
+
 
     def SetSOC(self, *args, **kwargs):
         """SetSOC(SpatialReference self, double latitudeoforigin, double cm, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetSOC(self, *args, **kwargs)
 
+
     def SetTM(self, *args, **kwargs):
         """SetTM(SpatialReference self, double clat, double clong, double scale, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetTM(self, *args, **kwargs)
+
 
     def SetTMVariant(self, *args, **kwargs):
         """SetTMVariant(SpatialReference self, char const * pszVariantName, double clat, double clong, double scale, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetTMVariant(self, *args, **kwargs)
 
+
     def SetTMG(self, *args, **kwargs):
         """SetTMG(SpatialReference self, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetTMG(self, *args, **kwargs)
+
 
     def SetTMSO(self, *args, **kwargs):
         """SetTMSO(SpatialReference self, double clat, double clong, double scale, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetTMSO(self, *args, **kwargs)
 
+
     def SetVDG(self, *args, **kwargs):
         """SetVDG(SpatialReference self, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetVDG(self, *args, **kwargs)
+
 
     def SetWellKnownGeogCS(self, *args):
         """SetWellKnownGeogCS(SpatialReference self, char const * name) -> OGRErr"""
         return _osr.SpatialReference_SetWellKnownGeogCS(self, *args)
 
+
     def SetFromUserInput(self, *args):
         """SetFromUserInput(SpatialReference self, char const * name) -> OGRErr"""
         return _osr.SpatialReference_SetFromUserInput(self, *args)
+
 
     def CopyGeogCSFrom(self, *args):
         """CopyGeogCSFrom(SpatialReference self, SpatialReference rhs) -> OGRErr"""
         return _osr.SpatialReference_CopyGeogCSFrom(self, *args)
 
+
     def SetTOWGS84(self, *args):
         """SetTOWGS84(SpatialReference self, double p1, double p2, double p3, double p4=0.0, double p5=0.0, double p6=0.0, double p7=0.0) -> OGRErr"""
         return _osr.SpatialReference_SetTOWGS84(self, *args)
+
 
     def GetTOWGS84(self, *args):
         """GetTOWGS84(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_GetTOWGS84(self, *args)
 
+
     def SetLocalCS(self, *args):
         """SetLocalCS(SpatialReference self, char const * pszName) -> OGRErr"""
         return _osr.SpatialReference_SetLocalCS(self, *args)
+
 
     def SetGeogCS(self, *args):
         """SetGeogCS(SpatialReference self, char const * pszGeogName, char const * pszDatumName, char const * pszEllipsoidName, double dfSemiMajor, double dfInvFlattening, char const * pszPMName, double dfPMOffset=0.0, char const * pszUnits, double dfConvertToRadians=0.0174532925199433) -> OGRErr"""
         return _osr.SpatialReference_SetGeogCS(self, *args)
 
+
     def SetProjCS(self, *args):
         """SetProjCS(SpatialReference self, char const * name) -> OGRErr"""
         return _osr.SpatialReference_SetProjCS(self, *args)
+
 
     def SetGeocCS(self, *args):
         """SetGeocCS(SpatialReference self, char const * name) -> OGRErr"""
         return _osr.SpatialReference_SetGeocCS(self, *args)
 
+
     def SetVertCS(self, *args):
         """SetVertCS(SpatialReference self, char const * VertCSName, char const * VertDatumName, int VertDatumType=0) -> OGRErr"""
         return _osr.SpatialReference_SetVertCS(self, *args)
+
 
     def SetCompoundCS(self, *args):
         """SetCompoundCS(SpatialReference self, char const * name, SpatialReference horizcs, SpatialReference vertcs) -> OGRErr"""
         return _osr.SpatialReference_SetCompoundCS(self, *args)
 
+
     def ImportFromWkt(self, *args):
         """ImportFromWkt(SpatialReference self, char ** ppszInput) -> OGRErr"""
         return _osr.SpatialReference_ImportFromWkt(self, *args)
+
 
     def ImportFromProj4(self, *args):
         """ImportFromProj4(SpatialReference self, char * ppszInput) -> OGRErr"""
         return _osr.SpatialReference_ImportFromProj4(self, *args)
 
+
     def ImportFromUrl(self, *args):
         """ImportFromUrl(SpatialReference self, char * url) -> OGRErr"""
         return _osr.SpatialReference_ImportFromUrl(self, *args)
+
 
     def ImportFromESRI(self, *args):
         """ImportFromESRI(SpatialReference self, char ** ppszInput) -> OGRErr"""
         return _osr.SpatialReference_ImportFromESRI(self, *args)
 
+
     def ImportFromEPSG(self, *args):
         """ImportFromEPSG(SpatialReference self, int arg) -> OGRErr"""
         return _osr.SpatialReference_ImportFromEPSG(self, *args)
+
 
     def ImportFromEPSGA(self, *args):
         """ImportFromEPSGA(SpatialReference self, int arg) -> OGRErr"""
         return _osr.SpatialReference_ImportFromEPSGA(self, *args)
 
+
     def ImportFromPCI(self, *args):
         """ImportFromPCI(SpatialReference self, char const * proj, char const * units, double [17] argin=0) -> OGRErr"""
         return _osr.SpatialReference_ImportFromPCI(self, *args)
+
 
     def ImportFromUSGS(self, *args):
         """ImportFromUSGS(SpatialReference self, long proj_code, long zone=0, double [15] argin=0, long datum_code=0) -> OGRErr"""
         return _osr.SpatialReference_ImportFromUSGS(self, *args)
 
+
     def ImportFromXML(self, *args):
         """ImportFromXML(SpatialReference self, char const * xmlString) -> OGRErr"""
         return _osr.SpatialReference_ImportFromXML(self, *args)
+
 
     def ImportFromERM(self, *args):
         """ImportFromERM(SpatialReference self, char const * proj, char const * datum, char const * units) -> OGRErr"""
         return _osr.SpatialReference_ImportFromERM(self, *args)
 
+
     def ImportFromMICoordSys(self, *args):
         """ImportFromMICoordSys(SpatialReference self, char const * pszCoordSys) -> OGRErr"""
         return _osr.SpatialReference_ImportFromMICoordSys(self, *args)
+
 
     def ImportFromOzi(self, *args):
         """ImportFromOzi(SpatialReference self, char const *const * papszLines) -> OGRErr"""
         return _osr.SpatialReference_ImportFromOzi(self, *args)
 
+
     def ExportToWkt(self, *args):
         """ExportToWkt(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_ExportToWkt(self, *args)
+
 
     def ExportToPrettyWkt(self, *args):
         """ExportToPrettyWkt(SpatialReference self, int simplify=0) -> OGRErr"""
         return _osr.SpatialReference_ExportToPrettyWkt(self, *args)
 
+
     def ExportToProj4(self, *args):
         """ExportToProj4(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_ExportToProj4(self, *args)
+
 
     def ExportToPCI(self, *args):
         """ExportToPCI(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_ExportToPCI(self, *args)
 
+
     def ExportToUSGS(self, *args):
         """ExportToUSGS(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_ExportToUSGS(self, *args)
+
 
     def ExportToXML(self, *args):
         """ExportToXML(SpatialReference self, char const * dialect) -> OGRErr"""
         return _osr.SpatialReference_ExportToXML(self, *args)
 
+
     def ExportToMICoordSys(self, *args):
         """ExportToMICoordSys(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_ExportToMICoordSys(self, *args)
+
 
     def CloneGeogCS(self, *args):
         """CloneGeogCS(SpatialReference self) -> SpatialReference"""
         return _osr.SpatialReference_CloneGeogCS(self, *args)
 
+
     def Clone(self, *args):
         """Clone(SpatialReference self) -> SpatialReference"""
         return _osr.SpatialReference_Clone(self, *args)
+
 
     def Validate(self, *args):
         """Validate(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_Validate(self, *args)
 
+
     def StripCTParms(self, *args):
         """StripCTParms(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_StripCTParms(self, *args)
+
 
     def FixupOrdering(self, *args):
         """FixupOrdering(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_FixupOrdering(self, *args)
 
+
     def Fixup(self, *args):
         """Fixup(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_Fixup(self, *args)
+
 
     def MorphToESRI(self, *args):
         """MorphToESRI(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_MorphToESRI(self, *args)
 
+
     def MorphFromESRI(self, *args):
         """MorphFromESRI(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_MorphFromESRI(self, *args)
+
 
     def ConvertToOtherProjection(self, *args):
         """ConvertToOtherProjection(SpatialReference self, char const * other_projection, char ** options=None) -> SpatialReference"""
         return _osr.SpatialReference_ConvertToOtherProjection(self, *args)
 
-
 SpatialReference_swigregister = _osr.SpatialReference_swigregister
 SpatialReference_swigregister(SpatialReference)
 GetProjectionMethods = _osr.GetProjectionMethods
-
 
 class CoordinateTransformation(_object):
     """Proxy of C++ OSRCoordinateTransformationShadow class."""
@@ -1169,10 +1282,10 @@ class CoordinateTransformation(_object):
         """
         return _osr.CoordinateTransformation_TransformPoint(self, *args)
 
+
     def TransformPoints(self, *args):
         """TransformPoints(CoordinateTransformation self, int nCount)"""
         return _osr.CoordinateTransformation_TransformPoints(self, *args)
-
 
 CoordinateTransformation_swigregister = _osr.CoordinateTransformation_swigregister
 CoordinateTransformation_swigregister(CoordinateTransformation)
@@ -1182,3 +1295,5 @@ def CreateCoordinateTransformation(*args):
     """CreateCoordinateTransformation(SpatialReference src, SpatialReference dst) -> CoordinateTransformation"""
     return _osr.CreateCoordinateTransformation(*args)
 # This file is compatible with both classic and new-style classes.
+
+
