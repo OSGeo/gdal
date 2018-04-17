@@ -1842,7 +1842,7 @@ def pdf_write_huge():
             print(ds.GetMetadataItem('DPI'))
             return 'fail'
         if ds.RasterXSize != src_ds.RasterXSize or \
-        ds.RasterYSize != src_ds.RasterYSize:
+            ds.RasterYSize != src_ds.RasterYSize:
             gdaltest.post_reason('failure')
             print(ds.RasterXSize)
             print(ds.RasterYSize)

@@ -71,7 +71,7 @@ def test_gdal_rasterize_1():
     # Create a layer to rasterize from.
 
     rast_ogr_ds = \
-    ogr.GetDriverByName('MapInfo File').CreateDataSource('tmp/rast1.tab')
+        ogr.GetDriverByName('MapInfo File').CreateDataSource('tmp/rast1.tab')
     rast_lyr = rast_ogr_ds.CreateLayer('rast1', srs=sr)
 
     rast_lyr.GetLayerDefn()

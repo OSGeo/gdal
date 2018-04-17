@@ -697,9 +697,9 @@ class GDALTest:
                 got_minmax = bnd.ComputeRasterMinMax()
                 if got_minmax != minmax:
                     post_reason( \
-                    'Did not get expected min/max values on still-open file.\n' \
-                    '    Got %g,%g instead of %g,%g.' \
-                    % (got_minmax[0], got_minmax[1], minmax[0], minmax[1]))
+                        'Did not get expected min/max values on still-open file.\n' \
+                        '    Got %g,%g instead of %g,%g.' \
+                        % (got_minmax[0], got_minmax[1], minmax[0], minmax[1]))
                     return 'fail'
 
         bnd = None
@@ -731,9 +731,9 @@ class GDALTest:
                 got_minmax = bnd.ComputeRasterMinMax()
                 if got_minmax != minmax:
                     post_reason( \
-                    'Did not get expected min/max values on reopened file.\n' \
-                    '    Got %g,%g instead of %g,%g.' \
-                    % (got_minmax[0], got_minmax[1], minmax[0], minmax[1]))
+                        'Did not get expected min/max values on reopened file.\n' \
+                        '    Got %g,%g instead of %g,%g.' \
+                        % (got_minmax[0], got_minmax[1], minmax[0], minmax[1]))
                     return 'fail'
 
         # Do we need to check the geotransform?

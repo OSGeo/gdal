@@ -127,9 +127,9 @@ class file_info:
         tw_xoff = int((tgw_ulx - t_geotransform[0]) / t_geotransform[1] + 0.1)
         tw_yoff = int((tgw_uly - t_geotransform[3]) / t_geotransform[5] + 0.1)
         tw_xsize = int((tgw_lrx - t_geotransform[0]) / t_geotransform[1] + 0.5) \
-        - tw_xoff
+            - tw_xoff
         tw_ysize = int((tgw_lry - t_geotransform[3]) / t_geotransform[5] + 0.5) \
-        - tw_yoff
+            - tw_yoff
 
         if tw_xsize < 1 or tw_ysize < 1:
             return 1
@@ -311,7 +311,7 @@ if __name__ == '__main__':
                            file_infos[0].nodata[band])
             t_fh.write('\t\t<ColorInterp>%s</ColorInterp>\n' %
                        gdal.GetColorInterpretationName(
-                    file_infos[0].color_interps[band]))
+                           file_infos[0].color_interps[band]))
 
             ct = file_infos[0].cts[band]
             if ct is not None:

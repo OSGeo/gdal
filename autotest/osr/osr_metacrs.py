@@ -141,8 +141,8 @@ class MetaCRSTest:
         ######################################################################
         # Check results.
         error = abs(result[0] - self.dst_xyz[0]) \
-        + abs(result[1] - self.dst_xyz[1]) \
-        + abs(result[2] - self.dst_xyz[2])
+            + abs(result[1] - self.dst_xyz[1]) \
+            + abs(result[2] - self.dst_xyz[2])
 
         if error > self.dst_error:
             err_msg = 'Dest error is %g, src=%g,%g,%g, dst=%g,%g,%g, exp=%g,%g,%g' \

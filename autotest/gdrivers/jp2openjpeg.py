@@ -2551,10 +2551,10 @@ def jp2openjpeg_45():
     import json
 
     conf = {
-    "root_instance": {
-        "grid_coverage_file": "/vsimem/i_dont_exist.xml",
-    }
-}
+        "root_instance": {
+            "grid_coverage_file": "/vsimem/i_dont_exist.xml",
+            }
+        }
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
@@ -2565,65 +2565,65 @@ def jp2openjpeg_45():
         return 'fail'
 
     conf = {
-    "root_instance": {
-        "grid_coverage_range_type_file": "/vsimem/i_dont_exist.xml",
+        "root_instance": {
+            "grid_coverage_range_type_file": "/vsimem/i_dont_exist.xml",
 
-        "metadata": [
-            "<invalid_root/>",
-            "/vsimem/i_dont_exist.xml",
-            {
-                "file": "/vsimem/third_metadata.xml",
-                "parent_node": "CoverageCollection"
+            "metadata": [
+                "<invalid_root/>",
+                "/vsimem/i_dont_exist.xml",
+                {
+                    "file": "/vsimem/third_metadata.xml",
+                    "parent_node": "CoverageCollection"
                 },
-            {
-                "content": "<invalid_content",
-                "parent_node": "invalid_value"
+                {
+                    "content": "<invalid_content",
+                    "parent_node": "invalid_value"
                 }
             ],
 
-        "annotations": [
-            "/vsimem/i_dont_exist.shp",
-            "/vsimem/i_dont_exist.kml",
-            "../gcore/data/byte.tif"
+            "annotations": [
+                "/vsimem/i_dont_exist.shp",
+                "/vsimem/i_dont_exist.kml",
+                "../gcore/data/byte.tif"
             ],
 
-        "gml_filelist": [
-            "/vsimem/i_dont_exist.xml",
-            "../gcore/data/byte.tif",
-            {
-                "file": "/vsimem/i_dont_exist.shp",
-                "parent_node": "invalid_value",
-                "schema_location": "gmljp2://xml/schema_that_does_not_exist.xsd"
+            "gml_filelist": [
+                "/vsimem/i_dont_exist.xml",
+                "../gcore/data/byte.tif",
+                {
+                    "file": "/vsimem/i_dont_exist.shp",
+                    "parent_node": "invalid_value",
+                    "schema_location": "gmljp2://xml/schema_that_does_not_exist.xsd"
                 },
             ],
 
-        "styles": [
-            "/vsimem/i_dont_exist.xml",
-            "../gcore/data/byte.tif",
-            {
-                "file": "/vsimem/i_dont_exist.xml",
-                "parent_node": "invalid_value"
+            "styles": [
+                "/vsimem/i_dont_exist.xml",
+                "../gcore/data/byte.tif",
+                {
+                    "file": "/vsimem/i_dont_exist.xml",
+                    "parent_node": "invalid_value"
                 }
             ],
 
-        "extensions": [
-            "/vsimem/i_dont_exist.xml",
-            "../gcore/data/byte.tif",
-            {
-                "file": "/vsimem/i_dont_exist.xml",
-                "parent_node": "invalid_value"
+            "extensions": [
+                "/vsimem/i_dont_exist.xml",
+                "../gcore/data/byte.tif",
+                {
+                    "file": "/vsimem/i_dont_exist.xml",
+                    "parent_node": "invalid_value"
                 }
             ]
-    },
+            },
 
-    "boxes": [
-        "/vsimem/i_dont_exist.xsd",
-        {
-            "file": "/vsimem/i_dont_exist_too.xsd",
-            "label": "i_dont_exist.xsd"
+        "boxes": [
+            "/vsimem/i_dont_exist.xsd",
+            {
+                "file": "/vsimem/i_dont_exist_too.xsd",
+                "label": "i_dont_exist.xsd"
+                }
+            ]
         }
-    ]
-}
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
     gdal.PopErrorHandler()
@@ -2753,18 +2753,18 @@ def jp2openjpeg_45():
     false = False
 
     conf = {
-    "root_instance": {
-        "grid_coverage_file": "/vsimem/grid_coverage_file.xml",
-        "metadata": [
-            "<gmljp2:metadata>First metadata</gmljp2:metadata>",
-            "/vsimem/second_metadata.xml",
-            {
-                "file": "/vsimem/third_metadata.xml",
-                "parent_node": "CoverageCollection"
+        "root_instance": {
+            "grid_coverage_file": "/vsimem/grid_coverage_file.xml",
+            "metadata": [
+                "<gmljp2:metadata>First metadata</gmljp2:metadata>",
+                "/vsimem/second_metadata.xml",
+                {
+                    "file": "/vsimem/third_metadata.xml",
+                    "parent_node": "CoverageCollection"
                 },
-            {
-                "content":
-"""<?xml version="1.0" encoding="UTF-8"?>
+                {
+                    "content":
+                    """<?xml version="1.0" encoding="UTF-8"?>
 <!-- some comments -->
 <gmljp2:eopMetadata>
         <eop:EarthObservation xmlns:eop="http://www.opengis.net/eop/2.0" xmlns:om="http://www.opengis.net/om/2.0" gml:id="EOP1">
@@ -2787,77 +2787,77 @@ def jp2openjpeg_45():
                 }
             ],
 
-        "annotations": [
-            "/vsimem/myshape.shp",
-            "/vsimem/empty.kml"
+            "annotations": [
+                "/vsimem/myshape.shp",
+                "/vsimem/empty.kml"
             ],
 
-        "gml_filelist": [
-            "/vsimem/feature.xml",
-            {
-                "file": "/vsimem/myshape.shp",
-                "inline": false,
-                "parent_node": "CoverageCollection"
+            "gml_filelist": [
+                "/vsimem/feature.xml",
+                {
+                    "file": "/vsimem/myshape.shp",
+                    "inline": false,
+                    "parent_node": "CoverageCollection"
                 },
-            {
-                "file": "/vsimem/myshape2.shp",
-                "namespace": "http://ogr.maptools.org/",
-                "inline": false,
-                "schema_location": "gmljp2://xml/a_schema.xsd",
-                "parent_node": "GridCoverage"
+                {
+                    "file": "/vsimem/myshape2.shp",
+                    "namespace": "http://ogr.maptools.org/",
+                    "inline": false,
+                    "schema_location": "gmljp2://xml/a_schema.xsd",
+                    "parent_node": "GridCoverage"
                 },
-            {
-                "file": "/vsimem/feature2.gml",
-                "inline": false,
-                "schema_location": "gmljp2://xml/a_schema.xsd"
+                {
+                    "file": "/vsimem/feature2.gml",
+                    "inline": false,
+                    "schema_location": "gmljp2://xml/a_schema.xsd"
                 },
-            {
-                "file": "/vsimem/feature3.gml",
-                "inline": false,
-                "namespace": "http://ogr.maptools.org/",
-                "schema_location": "gmljp2://xml/a_schema.xsd"
+                {
+                    "file": "/vsimem/feature3.gml",
+                    "inline": false,
+                    "namespace": "http://ogr.maptools.org/",
+                    "schema_location": "gmljp2://xml/a_schema.xsd"
                 }
             ],
 
-        "styles": [
-            "/vsimem/style1.xml",
-            {
-                "file": "/vsimem/style2.xml",
-                "parent_node": "GridCoverage"
+            "styles": [
+                "/vsimem/style1.xml",
+                {
+                    "file": "/vsimem/style2.xml",
+                    "parent_node": "GridCoverage"
                 },
-            {
-                "file": "/vsimem/style3.xml",
-                "parent_node": "CoverageCollection"
+                {
+                    "file": "/vsimem/style3.xml",
+                    "parent_node": "CoverageCollection"
                 },
-            {
-                "file": "/vsimem/style4.xml"
+                {
+                    "file": "/vsimem/style4.xml"
                 }
             ],
 
-        "extensions": [
-            "/vsimem/extension1.xml",
-            {
-                "file": "/vsimem/extension2.xml",
-                "parent_node": "GridCoverage"
+            "extensions": [
+                "/vsimem/extension1.xml",
+                {
+                    "file": "/vsimem/extension2.xml",
+                    "parent_node": "GridCoverage"
                 },
-            {
-                "file": "/vsimem/extension3.xml",
-                "parent_node": "CoverageCollection"
+                {
+                    "file": "/vsimem/extension3.xml",
+                    "parent_node": "CoverageCollection"
                 },
-            {
-                "file": "/vsimem/extension4.xml"
+                {
+                    "file": "/vsimem/extension4.xml"
                 }
             ]
-    },
+            },
 
-    "boxes": [
-        "/vsimem/a_schema.xsd",
-        {
-            "file": "/vsimem/a_schema.xsd",
-            "label": "duplicated.xsd"
+        "boxes": [
+            "/vsimem/a_schema.xsd",
+            {
+                "file": "/vsimem/a_schema.xsd",
+                "label": "duplicated.xsd"
+                }
+            ]
         }
-    ]
-}
     gdal.FileFromMemBuffer("/vsimem/grid_coverage_file.xml",
                            """
     <gmljp2:GMLJP2RectifiedGridCoverage gml:id="my_GMLJP2RectifiedGridCoverage">
@@ -3146,18 +3146,18 @@ def jp2openjpeg_46():
     import json
 
     conf = {
-    "root_instance": {
-        "metadata": [
-            {
-                "dynamic_metadata":
+        "root_instance": {
+            "metadata": [
+                {
+                    "dynamic_metadata":
                     {
                         "template": "/vsimem/template.xml",
                         "source": "/vsimem/source.xml",
                     }
                 }
             ]
-    }
-}
+            }
+        }
 
     gdal.FileFromMemBuffer("/vsimem/template.xml",
                            """<gmljp2:metadata>{{{ XPATH(1) }}} {{{ XPATH('str') }}} {{{ XPATH(true()) }}}X{{{ XPATH(//B) }}} {{{XPATH(if(//B/text() = 'my_value',if(false(),'not_expected',concat('yeah: ',uuid())),'doh!'))}}}</gmljp2:metadata>""")
@@ -3229,18 +3229,18 @@ yeah: """) < 0:
     # Nonexistent template.
     gdal.FileFromMemBuffer("/vsimem/source.xml", """<A/>""")
     conf = {
-    "root_instance": {
-        "metadata": [
-            {
-                "dynamic_metadata":
+        "root_instance": {
+            "metadata": [
+                {
+                    "dynamic_metadata":
                     {
                         "template": "/vsimem/not_existing_template.xml",
                         "source": "/vsimem/source.xml",
                     }
                 }
             ]
-    }
-}
+            }
+        }
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_46.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
@@ -3253,18 +3253,18 @@ yeah: """) < 0:
     gdal.FileFromMemBuffer(
         "/vsimem/template.xml", """<gmljp2:metadata></gmljp2:metadata>""")
     conf = {
-    "root_instance": {
-        "metadata": [
-            {
-                "dynamic_metadata":
+        "root_instance": {
+            "metadata": [
+                {
+                    "dynamic_metadata":
                     {
                         "template": "/vsimem/template.xml",
                         "source": "/vsimem/not_existing_source.xml",
                     }
                 }
             ]
-    }
-}
+            }
+        }
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_46.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
@@ -3277,18 +3277,18 @@ yeah: """) < 0:
     gdal.FileFromMemBuffer("/vsimem/template.xml", """<gmljp2:metadata></gmljp2:metadata>""")
     gdal.FileFromMemBuffer("/vsimem/source.xml", """<A""")
     conf = {
-    "root_instance": {
-        "metadata": [
-            {
-                "dynamic_metadata":
+        "root_instance": {
+            "metadata": [
+                {
+                    "dynamic_metadata":
                     {
                         "template": "/vsimem/template.xml",
                         "source": "/vsimem/source.xml",
                     }
                 }
             ]
-    }
-}
+            }
+        }
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_46.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])

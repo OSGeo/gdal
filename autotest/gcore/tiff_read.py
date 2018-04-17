@@ -64,7 +64,7 @@ init_list = [
     ('cint32.tif', 1, 5028, None),
     ('cfloat32.tif', 1, 5028, None),
     ('cfloat64.tif', 1, 5028, None),
-# The following four related partial final strip/tiles (#1179)
+    # The following four related partial final strip/tiles (#1179)
     ('separate_tiled.tif', 2, 15234, None),
     ('seperate_strip.tif', 2, 15234, None),  # TODO: Spelling.
     ('contig_tiled.tif', 2, 15234, None),

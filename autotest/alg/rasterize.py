@@ -58,7 +58,7 @@ def rasterize_1():
     # Create a memory layer to rasterize from.
 
     rast_ogr_ds = \
-    ogr.GetDriverByName('Memory').CreateDataSource('wrk')
+        ogr.GetDriverByName('Memory').CreateDataSource('wrk')
     rast_mem_lyr = rast_ogr_ds.CreateLayer('poly', srs=sr)
 
     # Add a polygon.
@@ -168,7 +168,7 @@ def rasterize_3():
     # Create a memory layer to rasterize from.
 
     rast_ogr_ds = \
-    ogr.GetDriverByName('Memory').CreateDataSource('wrk')
+        ogr.GetDriverByName('Memory').CreateDataSource('wrk')
     rast_mem_lyr = rast_ogr_ds.CreateLayer('poly', srs=sr)
 
     # Add polygons and linestrings.
@@ -283,7 +283,7 @@ def rasterize_5():
     # Create a memory layer to rasterize from.
 
     rast_ogr_ds = \
-    ogr.GetDriverByName('Memory').CreateDataSource('wrk')
+        ogr.GetDriverByName('Memory').CreateDataSource('wrk')
     rast_mem_lyr = rast_ogr_ds.CreateLayer('poly', srs=sr)
 
     # Add polygons.

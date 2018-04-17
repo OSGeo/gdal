@@ -59,11 +59,11 @@ def osr_basic_1():
         return 'fail'
 
     parm_list = \
-    [(osr.SRS_PP_CENTRAL_MERIDIAN, -117.0),
+        [(osr.SRS_PP_CENTRAL_MERIDIAN, -117.0),
      (osr.SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
-     (osr.SRS_PP_SCALE_FACTOR, 0.9996),
-     (osr.SRS_PP_FALSE_EASTING, 500000.0),
-     (osr.SRS_PP_FALSE_NORTHING, 0.0)]
+            (osr.SRS_PP_SCALE_FACTOR, 0.9996),
+            (osr.SRS_PP_FALSE_EASTING, 500000.0),
+            (osr.SRS_PP_FALSE_NORTHING, 0.0)]
 
     for parm in parm_list:
         value = utm_srs.GetProjParm(parm[0], -1111)
@@ -101,12 +101,12 @@ def osr_basic_2():
     #print srs.ExportToPrettyWkt()
 
     parm_list = \
-    [(osr.SRS_PP_STANDARD_PARALLEL_1, 38.43333333333333),
+        [(osr.SRS_PP_STANDARD_PARALLEL_1, 38.43333333333333),
      (osr.SRS_PP_STANDARD_PARALLEL_2, 37.06666666666667),
-     (osr.SRS_PP_LATITUDE_OF_ORIGIN, 36.5),
-     (osr.SRS_PP_CENTRAL_MERIDIAN, -120.5),
-     (osr.SRS_PP_FALSE_EASTING, 2000000.0),
-     (osr.SRS_PP_FALSE_NORTHING, 500000.0)]
+            (osr.SRS_PP_LATITUDE_OF_ORIGIN, 36.5),
+            (osr.SRS_PP_CENTRAL_MERIDIAN, -120.5),
+            (osr.SRS_PP_FALSE_EASTING, 2000000.0),
+            (osr.SRS_PP_FALSE_NORTHING, 500000.0)]
 
     for parm in parm_list:
         value = srs.GetProjParm(parm[0], -1111)
@@ -148,12 +148,12 @@ def osr_basic_3():
     #print srs.ExportToPrettyWkt()
 
     parm_list = \
-    [(osr.SRS_PP_STANDARD_PARALLEL_1, 38.43333333333333),
+        [(osr.SRS_PP_STANDARD_PARALLEL_1, 38.43333333333333),
      (osr.SRS_PP_STANDARD_PARALLEL_2, 37.06666666666667),
-     (osr.SRS_PP_LATITUDE_OF_ORIGIN, 36.5),
-     (osr.SRS_PP_CENTRAL_MERIDIAN, -120.5),
-     (osr.SRS_PP_FALSE_EASTING, 6561666.666666667),
-     (osr.SRS_PP_FALSE_NORTHING, 1640416.666666667)]
+            (osr.SRS_PP_LATITUDE_OF_ORIGIN, 36.5),
+            (osr.SRS_PP_CENTRAL_MERIDIAN, -120.5),
+            (osr.SRS_PP_FALSE_EASTING, 6561666.666666667),
+            (osr.SRS_PP_FALSE_NORTHING, 1640416.666666667)]
 
     for parm in parm_list:
         value = srs.GetProjParm(parm[0], -1111)

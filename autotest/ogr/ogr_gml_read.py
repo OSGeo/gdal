@@ -2218,11 +2218,11 @@ def ogr_gml_52():
 
         feat = lyr.GetNextFeature()
         if feat.GetField('gid') != '1' or \
-        feat.GetField('regular_attribute') != 5 or \
-        feat.GetField('foo_href') != 'some_ref' or \
-        feat.GetField('teksti') != 'En francais !' or \
-        feat.GetField('teksti_kieli') != 'fr' or \
-        ogrtest.check_feature_geometry(feat, 'POINT (280000 7000000 0)') != 0:
+            feat.GetField('regular_attribute') != 5 or \
+            feat.GetField('foo_href') != 'some_ref' or \
+            feat.GetField('teksti') != 'En francais !' or \
+            feat.GetField('teksti_kieli') != 'fr' or \
+            ogrtest.check_feature_geometry(feat, 'POINT (280000 7000000 0)') != 0:
             gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
@@ -2966,27 +2966,27 @@ def ogr_gml_62():
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetField('element_attr1') != '1' or \
-        feat.GetField('element2_attr1') != 'a' or \
-        feat.GetField('element2') != 'foo' or \
-        feat.IsFieldSet('element3_attr1'):
+            feat.GetField('element2_attr1') != 'a' or \
+            feat.GetField('element2') != 'foo' or \
+            feat.IsFieldSet('element3_attr1'):
             gdaltest.post_reason('fail')
             feat.DumpReadable()
             print(i)
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.IsFieldSet('element_attr1') or \
-        feat.IsFieldSet('element2_attr1') or \
-        feat.IsFieldSet('element2') or \
-        feat.GetField('element3_attr1') != 1:
+            feat.IsFieldSet('element2_attr1') or \
+            feat.IsFieldSet('element2') or \
+            feat.GetField('element3_attr1') != 1:
             gdaltest.post_reason('fail')
             feat.DumpReadable()
             print(i)
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetField('element_attr1') != 'a' or \
-        feat.IsFieldSet('element2_attr1') or \
-        feat.IsFieldSet('element2') or \
-        feat.IsFieldSet('element3_attr1'):
+            feat.IsFieldSet('element2_attr1') or \
+            feat.IsFieldSet('element2') or \
+            feat.IsFieldSet('element3_attr1'):
             gdaltest.post_reason('fail')
             feat.DumpReadable()
             print(i)
@@ -3523,13 +3523,13 @@ def ogr_gml_67():
             return 'fail'
         if i == 0:
             if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('short')).GetType() != ogr.OFTInteger or \
-            lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('short')).GetSubType() != ogr.OFSTInt16:
+                lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('short')).GetSubType() != ogr.OFSTInt16:
                 print(i)
                 gdaltest.post_reason('fail')
                 return 'fail'
         if i == 0:
             if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetType() != ogr.OFTReal or \
-            lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetSubType() != ogr.OFSTFloat32:
+                lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetSubType() != ogr.OFSTFloat32:
                 print(i)
                 gdaltest.post_reason('fail')
                 return 'fail'

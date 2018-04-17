@@ -1102,98 +1102,98 @@ def ogr_mvt_write_one_layer():
     expected_json_json = {
         "vector_layers": [
             {
-            "id": "mylayer",
-            "description": "",
-            "minzoom": 0,
-            "maxzoom": 5,
-            "fields": {
-                "strfield": "String",
-                "intfield": "Number",
-                "int64field": "Number",
-                "realfield": "Number",
-                "datefield": "String",
-                "datetimefield": "String",
-                "boolfield": "Boolean"
-            }
+                "id": "mylayer",
+                "description": "",
+                "minzoom": 0,
+                "maxzoom": 5,
+                "fields": {
+                    "strfield": "String",
+                    "intfield": "Number",
+                    "int64field": "Number",
+                    "realfield": "Number",
+                    "datefield": "String",
+                    "datetimefield": "String",
+                    "boolfield": "Boolean"
+                    }
             }
         ],
         "tilestats": {
             "layerCount": 1,
             "layers": [
-            {
-                "layer": "mylayer",
-                "count": 7,
-                "geometry": "LineString",
-                "attributeCount": 7,
-                "attributes": [
                 {
-                    "attribute": "strfield",
-                    "count": 2,
-                    "type": "string",
-                    "values": [
-                        "foo",
-                        "foobarbazbaw"
-                    ]
-                },
-                {
-                    "attribute": "intfield",
-                    "count": 2,
-                    "type": "numeric",
-                    "values": [
-                        -1,
-                        1
-                    ],
-                    "min":-1,
-                    "max":1
-                },
-                {
-                    "attribute": "int64field",
-                    "count": 2,
-                    "type": "numeric",
-                    "values": [
-                        -123456789012345,
-                        123456789012345
-                    ],
-                    "min":-123456789012345,
-                    "max":123456789012345
-                },
-                {
-                    "attribute": "realfield",
-                    "count": 2,
-                    "type": "numeric",
-                    "values": [
-                        -1.256780,
-                        1.250000
-                    ],
-                    "min":-1.25678,
-                    "max":1.25
-                },
-                {
-                    "attribute": "datefield",
-                    "count": 1,
-                    "type": "string",
-                    "values": [
-                    "2018-02-01"
-                    ]
-                },
-                {
-                    "attribute": "datetimefield",
-                    "count": 1,
-                    "type": "string",
-                    "values": [
-                        "2018-02-01T12:34:56Z"
-                    ]
-                },
-                {
-                    "attribute": "boolfield",
-                    "count": 1,
-                    "type": "boolean",
-                    "values": [
-                        True
-                    ]
-                }
-                ]
-            }
+                    "layer": "mylayer",
+                    "count": 7,
+                    "geometry": "LineString",
+                    "attributeCount": 7,
+                    "attributes": [
+                        {
+                            "attribute": "strfield",
+                            "count": 2,
+                            "type": "string",
+                            "values": [
+                                "foo",
+                                "foobarbazbaw"
+                            ]
+                        },
+                        {
+                            "attribute": "intfield",
+                            "count": 2,
+                            "type": "numeric",
+                            "values": [
+                                -1,
+                                1
+                            ],
+                            "min":-1,
+                            "max":1
+                        },
+                        {
+                            "attribute": "int64field",
+                            "count": 2,
+                            "type": "numeric",
+                            "values": [
+                                -123456789012345,
+                                123456789012345
+                            ],
+                            "min":-123456789012345,
+                            "max":123456789012345
+                        },
+                        {
+                            "attribute": "realfield",
+                            "count": 2,
+                            "type": "numeric",
+                            "values": [
+                                -1.256780,
+                                1.250000
+                            ],
+                            "min":-1.25678,
+                            "max":1.25
+                        },
+                        {
+                            "attribute": "datefield",
+                            "count": 1,
+                            "type": "string",
+                            "values": [
+                                "2018-02-01"
+                            ]
+                        },
+                        {
+                            "attribute": "datetimefield",
+                            "count": 1,
+                            "type": "string",
+                            "values": [
+                                "2018-02-01T12:34:56Z"
+                            ]
+                        },
+                        {
+                            "attribute": "boolfield",
+                            "count": 1,
+                            "type": "boolean",
+                            "values": [
+                                True
+                            ]
+                        }
+                        ]
+                    }
             ]
         }
     }
@@ -1254,14 +1254,14 @@ def ogr_mvt_write_conf():
     json_json = json.loads(data_json['json'])
     expected_json_json = {
         "vector_layers": [
-        {
-            "id": "TheLayer",
-            "description": "the layer",
-            "minzoom": 1,
-            "maxzoom": 2,
-            "fields": {
-            }
-        }
+            {
+                "id": "TheLayer",
+                "description": "the layer",
+                "minzoom": 1,
+                "maxzoom": 2,
+                "fields": {
+                    }
+                }
         ],
         "tilestats": {
             "layerCount": 1,

@@ -994,7 +994,7 @@ def ogr_mysql_cleanup():
 
 gdaltest_list = [
     ogr_mysql_1,
-#    ogr_mysql_cleanup,
+    #    ogr_mysql_cleanup,
     ogr_mysql_2,
     ogr_mysql_19,
     ogr_mysql_3,
@@ -1005,12 +1005,12 @@ gdaltest_list = [
     ogr_mysql_8,
     ogr_mysql_9,
     ogr_mysql_10,
-# ogr_mysql_11 to _14 are PG only features
+    # ogr_mysql_11 to _14 are PG only features
     ogr_mysql_15,
     ogr_mysql_16,
     ogr_mysql_17,
-# Fails but it is probably OK
-#    ogr_mysql_18,
+    # Fails but it is probably OK
+    #    ogr_mysql_18,
     ogr_mysql_20,
     ogr_mysql_21,
     ogr_mysql_22,

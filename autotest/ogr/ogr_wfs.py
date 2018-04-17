@@ -531,7 +531,7 @@ class WFSHTTPHandler(BaseHTTPRequestHandler):
             if self.path.find('/fakewfs') != -1:
 
                 if self.path == '/fakewfs?SERVICE=WFS&REQUEST=GetCapabilities' or \
-                self.path == '/fakewfs?SERVICE=WFS&REQUEST=GetCapabilities&ACCEPTVERSIONS=1.1.0,1.0.0':
+                    self.path == '/fakewfs?SERVICE=WFS&REQUEST=GetCapabilities&ACCEPTVERSIONS=1.1.0,1.0.0':
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')
                     self.end_headers()
@@ -3868,7 +3868,7 @@ def ogr_wfs_vsimem_wfs110_schema_not_understood():
     lyr = ds.GetLayer(0)
 
     content = \
-    """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"

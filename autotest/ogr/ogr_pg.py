@@ -746,10 +746,10 @@ def ogr_pg_14():
         feat = lyr.GetNextFeature()
 
         if feat.GetFieldAsString('ogrdatetime') != '2005/10/12 13:11:33-0230' \
-        or feat.GetFieldAsString('tsz') != '2005/10/12 13:11:33-0230' \
-        or feat.GetFieldAsString('ts') != '2005/10/12 10:41:33' \
-        or feat.GetFieldAsString('dt') != '2005/10/12' \
-        or feat.GetFieldAsString('tm') != '10:41:33':
+            or feat.GetFieldAsString('tsz') != '2005/10/12 13:11:33-0230' \
+            or feat.GetFieldAsString('ts') != '2005/10/12 10:41:33' \
+            or feat.GetFieldAsString('dt') != '2005/10/12' \
+            or feat.GetFieldAsString('tm') != '10:41:33':
             gdaltest.post_reason('Newfoundland value wrong')
             feat.DumpReadable()
             return 'fail'
@@ -1375,36 +1375,36 @@ def test_val_test_23(layer_defn, feat):
         return 'fail'
 
     if abs(feat.my_numeric - 1.2) > 1e-8 or \
-    feat.my_numeric5 != 12345 or \
-    feat.my_numeric5_3 != 0.123 or \
-    feat.my_bool != 1 or \
-    feat.my_int2 != 12345 or \
-    feat.my_int4 != 12345678 or \
-    feat.my_int8 != 1234567901234 or \
-    abs(feat.my_float4 - 0.123) > 1e-8 or \
-    feat.my_float8 != 0.12345678 or \
-    abs(feat.my_real - 0.876) > 1e-6 or \
-    feat.my_char != 'a' or \
-    feat.my_varchar != 'ab' or \
-    feat.my_varchar10 != 'varchar10 ' or \
-    feat.my_text != 'abc' or \
-    feat.GetFieldAsString('my_bytea') != '78797A' or \
-    feat.GetFieldAsString('my_time') != '12:34:56' or \
-    feat.GetFieldAsString('my_date') != '2000/01/01' or \
-    (feat.GetFieldAsString('my_timestamp') != '2000/01/01 00:00:00' and feat.GetFieldAsString('my_timestamp') != '2000/01/01 00:00:00+00') or \
-    (layer_defn.GetFieldIndex('my_timestamptz') >= 0 and feat.GetFieldAsString('my_timestamptz') != '2000/01/01 00:00:00+00') or \
-    feat.GetFieldAsString('my_chararray') != '(2:a,b)' or \
-    feat.GetFieldAsString('my_textarray') != '(2:aa,bb)' or \
-    feat.GetFieldAsString('my_varchararray') != '(2:cc,dd)' or \
-    feat.GetFieldAsString('my_int2array') != '(2:100,200)' or \
-    feat.GetFieldAsString('my_int4array') != '(2:100,200)' or \
-    feat.my_int8array != [1234567901234] or \
-    feat.GetFieldAsString('my_boolarray') != '(2:1,0)' or \
-    abs(feat.my_float4array[0] - 100.1) > 1e-6 or \
-    abs(feat.my_float8array[0] - 100.12) > 1e-8 or \
-    abs(feat.my_numericarray[0] - 100.12) > 1e-8 or \
-    abs(feat.my_numeric5array[0] - 10) > 1e-8 or \
-    abs(feat.my_numeric5_3array[0] - 10.12) > 1e-8:
+        feat.my_numeric5 != 12345 or \
+        feat.my_numeric5_3 != 0.123 or \
+        feat.my_bool != 1 or \
+        feat.my_int2 != 12345 or \
+        feat.my_int4 != 12345678 or \
+        feat.my_int8 != 1234567901234 or \
+        abs(feat.my_float4 - 0.123) > 1e-8 or \
+        feat.my_float8 != 0.12345678 or \
+        abs(feat.my_real - 0.876) > 1e-6 or \
+        feat.my_char != 'a' or \
+        feat.my_varchar != 'ab' or \
+        feat.my_varchar10 != 'varchar10 ' or \
+        feat.my_text != 'abc' or \
+        feat.GetFieldAsString('my_bytea') != '78797A' or \
+        feat.GetFieldAsString('my_time') != '12:34:56' or \
+        feat.GetFieldAsString('my_date') != '2000/01/01' or \
+        (feat.GetFieldAsString('my_timestamp') != '2000/01/01 00:00:00' and feat.GetFieldAsString('my_timestamp') != '2000/01/01 00:00:00+00') or \
+        (layer_defn.GetFieldIndex('my_timestamptz') >= 0 and feat.GetFieldAsString('my_timestamptz') != '2000/01/01 00:00:00+00') or \
+        feat.GetFieldAsString('my_chararray') != '(2:a,b)' or \
+        feat.GetFieldAsString('my_textarray') != '(2:aa,bb)' or \
+        feat.GetFieldAsString('my_varchararray') != '(2:cc,dd)' or \
+        feat.GetFieldAsString('my_int2array') != '(2:100,200)' or \
+        feat.GetFieldAsString('my_int4array') != '(2:100,200)' or \
+        feat.my_int8array != [1234567901234] or \
+        feat.GetFieldAsString('my_boolarray') != '(2:1,0)' or \
+        abs(feat.my_float4array[0] - 100.1) > 1e-6 or \
+        abs(feat.my_float8array[0] - 100.12) > 1e-8 or \
+        abs(feat.my_numericarray[0] - 100.12) > 1e-8 or \
+        abs(feat.my_numeric5array[0] - 10) > 1e-8 or \
+        abs(feat.my_numeric5_3array[0] - 10.12) > 1e-8:
         gdaltest.post_reason('Wrong values')
         feat.DumpReadable()
         return 'fail'
@@ -3570,8 +3570,8 @@ def ogr_pg_65():
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetField('intfield') != 123 or \
-        feat.GetGeomFieldRef('geom1').ExportToWkt() != 'POINT (1 2)' or \
-        feat.GetGeomFieldRef('geom2').ExportToWkt() != 'LINESTRING (3 4 5,6 7 8)':
+            feat.GetGeomFieldRef('geom1').ExportToWkt() != 'POINT (1 2)' or \
+            feat.GetGeomFieldRef('geom2').ExportToWkt() != 'LINESTRING (3 4 5,6 7 8)':
             feat.DumpReadable()
             gdaltest.post_reason('fail')
             return 'fail'

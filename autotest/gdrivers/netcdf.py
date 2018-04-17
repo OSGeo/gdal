@@ -1637,15 +1637,15 @@ def netcdf_42():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 60, 39, 1)
     src_ds.SetMetadata([
-  'LINE_OFFSET=0',
-  'LINE_STEP=1',
-  'PIXEL_OFFSET=0',
-  'PIXEL_STEP=1',
-  'SRS=GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4326"]]',
-  'X_BAND=1',
-  'X_DATASET=../gcore/data/sstgeo.tif',
-  'Y_BAND=2',
-  'Y_DATASET=../gcore/data/sstgeo.tif'], 'GEOLOCATION')
+        'LINE_OFFSET=0',
+        'LINE_STEP=1',
+        'PIXEL_OFFSET=0',
+        'PIXEL_STEP=1',
+        'SRS=GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4326"]]',
+        'X_BAND=1',
+        'X_DATASET=../gcore/data/sstgeo.tif',
+        'Y_BAND=2',
+        'Y_DATASET=../gcore/data/sstgeo.tif'], 'GEOLOCATION')
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
     src_ds.SetProjection(sr.ExportToWkt())
@@ -2787,7 +2787,7 @@ def netcdf_66():
         gdal.VectorTranslate('tmp/netcdf_66.nc', 'data/profile.nc', format='netCDF', datasetCreationOptions=['CONFIG_FILE=<Configuration>'])
 
     myconfig = \
-    """<Configuration>
+        """<Configuration>
     <!-- comment -->
     <unrecognized_elt/>
     <DatasetCreationOption/>
@@ -2827,7 +2827,7 @@ def netcdf_66():
 
     # Now with a correct configuration
     myconfig = \
-    """<Configuration>
+        """<Configuration>
     <DatasetCreationOption name="WRITE_GDAL_TAGS" value="NO"/>
     <LayerCreationOption name="STRING_DEFAULT_WIDTH" value="1"/>
     <Attribute name="foo" value="bar"/>

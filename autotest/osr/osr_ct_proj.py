@@ -117,8 +117,8 @@ class ProjTest:
         result = ct.TransformPoint(self.src_xyz[0], self.src_xyz[1], self.src_xyz[2])
 
         error = abs(result[0] - self.dst_xyz[0]) \
-        + abs(result[1] - self.dst_xyz[1]) \
-        + abs(result[2] - self.dst_xyz[2])
+            + abs(result[1] - self.dst_xyz[1]) \
+            + abs(result[2] - self.dst_xyz[2])
 
         if error > self.dst_error:
             gdaltest.post_reason('Dest error is %g, got (%.15g,%.15g,%.15g)%s' \
@@ -133,8 +133,8 @@ class ProjTest:
         result = ct.TransformPoint(result[0], result[1], result[2])
 
         error = abs(result[0] - self.src_xyz[0]) \
-        + abs(result[1] - self.src_xyz[1]) \
-        + abs(result[2] - self.src_xyz[2])
+            + abs(result[1] - self.src_xyz[1]) \
+            + abs(result[2] - self.src_xyz[2])
 
         if error > self.src_error:
             gdaltest.post_reason('Back to source error is %g.%s' % (error, additionnal_error_str))
@@ -171,9 +171,9 @@ transform_list = [ \
     # Ensure that prime meridian *and* axis orientation changes are applied.
     # Note that this test will fail with PROJ.4 4.7 or earlier, it requires
     # axis support in PROJ 4.8.0.
-#    ('EPSG:27391', (40000, 20000, 0.0), 0.02,
-#     'EPSG:4273', (6.397933,58.358709,0.000000), 0.00001,
-#     'NGO_Oslo_zone1_NGO', None, '4.8.0' ),
+    #    ('EPSG:27391', (40000, 20000, 0.0), 0.02,
+    #     'EPSG:4273', (6.397933,58.358709,0.000000), 0.00001,
+    #     'NGO_Oslo_zone1_NGO', None, '4.8.0' ),
 
     # Verify that 26592 "pcs.override" is working well.
     ('EPSG:26591', (1550000, 10000, 0.0), 0.02,

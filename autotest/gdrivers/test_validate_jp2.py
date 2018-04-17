@@ -231,13 +231,13 @@ def test_validate_jp2_4():
     gdal.Unlink('/vsimem/out.jp2')
 
     expected_errors = [
- 'ERROR[GENERAL]: "ftyp" box not found',
- 'ERROR[GENERAL]: "jp2h" box not found',
- 'ERROR[GENERAL]: No SIZ marker found',
- 'ERROR[GENERAL]: No COD marker found',
- 'ERROR[GENERAL]: No QCD marker found',
- 'ERROR[GENERAL]: No SOT marker found',
- 'ERROR[GENERAL]: No EOC marker found']
+        'ERROR[GENERAL]: "ftyp" box not found',
+        'ERROR[GENERAL]: "jp2h" box not found',
+        'ERROR[GENERAL]: No SIZ marker found',
+        'ERROR[GENERAL]: No COD marker found',
+        'ERROR[GENERAL]: No QCD marker found',
+        'ERROR[GENERAL]: No SOT marker found',
+        'ERROR[GENERAL]: No EOC marker found']
 
     if error_report.error_array != expected_errors:
         gdaltest.post_reason('did not get expected errors')
@@ -276,16 +276,16 @@ def test_validate_jp2_5():
     gdal.Unlink('/vsimem/out.jp2')
 
     expected_errors = [
- 'ERROR[INSPIRE_TG]: "jpx " not found in compatibility list of ftyp, but GMLJP2 box present',
- 'ERROR[INSPIRE_TG]: "rreq" box not found, but GMLJP2 box present',
- 'ERROR[INSPIRE_TG]: pclr box found but ihdr.nc = 2',
- 'ERROR[INSPIRE_TG, Conformance class A.8.6]: pclr.NPC(=4) != 3 (for color table)',
- 'ERROR[INSPIRE_TG]: cmap.MTYP[1] = 0 is invalid',
- 'ERROR[GENERAL]: cmap.CMP[2] = 2 is invalid',
- 'ERROR[GENERAL]: cmap.PCOL[2] = 0 is invalid since already used',
- 'ERROR[GENERAL]: ihdr_nc(=2) != Csiz (=1)',
- 'ERROR[INSPIRE_TG, Conformance class A.8.8]: Inconsistent geotransform between OrthoImagery ((440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)) and GMLJP2/GeoJP2 ((40720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0))',
- 'ERROR[INSPIRE_TG, Requirement 26, Conformance class A.8.16]: RGN marker found, which is not allowed']
+        'ERROR[INSPIRE_TG]: "jpx " not found in compatibility list of ftyp, but GMLJP2 box present',
+        'ERROR[INSPIRE_TG]: "rreq" box not found, but GMLJP2 box present',
+        'ERROR[INSPIRE_TG]: pclr box found but ihdr.nc = 2',
+        'ERROR[INSPIRE_TG, Conformance class A.8.6]: pclr.NPC(=4) != 3 (for color table)',
+        'ERROR[INSPIRE_TG]: cmap.MTYP[1] = 0 is invalid',
+        'ERROR[GENERAL]: cmap.CMP[2] = 2 is invalid',
+        'ERROR[GENERAL]: cmap.PCOL[2] = 0 is invalid since already used',
+        'ERROR[GENERAL]: ihdr_nc(=2) != Csiz (=1)',
+        'ERROR[INSPIRE_TG, Conformance class A.8.8]: Inconsistent geotransform between OrthoImagery ((440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)) and GMLJP2/GeoJP2 ((40720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0))',
+        'ERROR[INSPIRE_TG, Requirement 26, Conformance class A.8.16]: RGN marker found, which is not allowed']
 
     if error_report.error_array != expected_errors:
         gdaltest.post_reason('did not get expected errors')

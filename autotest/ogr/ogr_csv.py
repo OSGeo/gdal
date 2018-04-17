@@ -169,7 +169,7 @@ def ogr_csv_3():
     #######################################################
     # Create CSV datasource (directory)
     gdaltest.csv_tmpds = \
-    ogr.GetDriverByName('CSV').CreateDataSource('tmp/csvwrk')
+        ogr.GetDriverByName('CSV').CreateDataSource('tmp/csvwrk')
 
     #######################################################
     # Create layer (.csv file)

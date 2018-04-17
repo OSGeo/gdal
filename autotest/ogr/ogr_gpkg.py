@@ -3243,7 +3243,7 @@ def ogr_gpkg_36():
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f.GetFID() != 10 or f['bar'] != 10.5 or \
-    f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
+        f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3375,7 +3375,7 @@ def ogr_gpkg_37():
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetFID() != 10 or f['foo'] != 'fooval' or f['bar'] != 'barval' or \
-    f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
+        f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'

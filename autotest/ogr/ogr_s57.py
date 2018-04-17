@@ -122,9 +122,9 @@ def ogr_s57_3():
         return 'fail'
 
     if feat.GetField('RCID') != 1 \
-    or feat.GetField('LNAM') != 'FFFF7F4F0FB002D3' \
-    or feat.GetField('OBJL') != 30 \
-    or feat.GetField('AGEN') != 65535:
+        or feat.GetField('LNAM') != 'FFFF7F4F0FB002D3' \
+        or feat.GetField('OBJL') != 30 \
+        or feat.GetField('AGEN') != 65535:
         gdaltest.post_reason('COALNE: did not get expected attributes')
         return 'fail'
 
@@ -150,8 +150,8 @@ def ogr_s57_4():
         return 'fail'
 
     if feat.GetField('RCID') != 15 \
-    or feat.GetField('OBJL') != 308 \
-    or feat.GetField('AGEN') != 65535:
+        or feat.GetField('OBJL') != 308 \
+        or feat.GetField('AGEN') != 65535:
         gdaltest.post_reason('M_QUAL: did not get expected attributes')
         return 'fail'
 
@@ -177,8 +177,8 @@ def ogr_s57_5():
         return 'fail'
 
     if feat.GetField('RCID') != 20 \
-    or feat.GetField('OBJL') != 129 \
-    or feat.GetField('AGEN') != 65535:
+        or feat.GetField('OBJL') != 129 \
+        or feat.GetField('AGEN') != 65535:
         gdaltest.post_reason('SOUNDG: did not get expected attributes')
         return 'fail'
 

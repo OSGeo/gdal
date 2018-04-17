@@ -98,11 +98,11 @@ def ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
 
     # Do a quick test to make sure the text came out OK.
     wantedstream = 'BT\n' + \
-    '362.038672 362.038672 -362.038672 362.038672 18.039040 528.960960 Tm\n' + \
-    '0.000000 0.000000 0.000000 rg\n' + \
-    '/F1 0.023438 Tf\n' + \
-    '(super tex !) Tj\n' + \
-    'ET'
+        '362.038672 362.038672 -362.038672 362.038672 18.039040 528.960960 Tm\n' + \
+        '0.000000 0.000000 0.000000 rg\n' + \
+        '/F1 0.023438 Tf\n' + \
+        '(super tex !) Tj\n' + \
+        'ET'
 
     with open(name, 'rb') as file:
         data = file.read(8192)

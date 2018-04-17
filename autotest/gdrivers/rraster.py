@@ -127,7 +127,7 @@ def rraster_rgba(filename='data/rgba_rraster.grd'):
     ds = gdal.Open(filename)
     info = gdal.Info(ds, computeChecksum=True, format='json')
     expected_info = {
-'bands': [{'band': 1,
+        'bands': [{'band': 1,
            'block': [2, 1],
            'checksum': 19,
            'colorInterpretation': 'Red',
@@ -147,7 +147,7 @@ def rraster_rgba(filename='data/rgba_rraster.grd'):
            'checksum': 7,
            'colorInterpretation': 'Alpha',
            'description': 'alpha'}]
-}
+        }
     if not _is_dict_included_in_dict(info, expected_info):
         return 'fail'
 
@@ -182,14 +182,14 @@ def rraster_ct_rgb(filename='data/byte_rraster_ct_rgb.grd'):
     ds = gdal.Open(filename)
     info = gdal.Info(ds, format='json')
     expected_info = {
-'bands': [{'band': 1,
+        'bands': [{'band': 1,
            'colorInterpretation': 'Palette',
            'colorTable': {'count': 2,
                           'entries': [[10, 20, 30, 255],
                                       [11, 21, 31, 255]],
                           'palette': 'RGB'},
            'type': 'Byte'}]
-}
+        }
     if not _is_dict_included_in_dict(info, expected_info):
         return 'fail'
 
@@ -218,14 +218,14 @@ def rraster_ct_rgba(filename='data/byte_rraster_ct_rgba.grd'):
     ds = gdal.Open(filename)
     info = gdal.Info(ds, format='json')
     expected_info = {
-'bands': [{'band': 1,
+        'bands': [{'band': 1,
            'colorInterpretation': 'Palette',
            'colorTable': {'count': 2,
                           'entries': [[10, 20, 30, 0],
                                       [11, 21, 31, 255]],
                           'palette': 'RGB'},
            'type': 'Byte'}]
-}
+        }
     if not _is_dict_included_in_dict(info, expected_info):
         return 'fail'
 
@@ -254,12 +254,12 @@ def rraster_rat(filename='data/byte_rraster_rat.grd'):
     ds = gdal.Open(filename)
     info = gdal.Info(ds, format='json')
     expected_info = {
-'bands': [{'band': 1,
+        'bands': [{'band': 1,
            'block': [20, 1],
            'colorInterpretation': 'Undefined',
            'metadata': {},
            'type': 'Byte'}],
-'rat': {'fieldDefn': [{'index': 0,
+        'rat': {'fieldDefn': [{'index': 0,
                        'name': 'ID',
                        'type': 0,
                        'usage': 0},
@@ -321,7 +321,7 @@ def rraster_rat(filename='data/byte_rraster_rat.grd'):
                        9,
                        'baw'],
                  'index': 1}]}
-}
+        }
     if not _is_dict_included_in_dict(info, expected_info):
         return 'fail'
 

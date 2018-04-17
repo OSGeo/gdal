@@ -313,7 +313,7 @@ def vrtmisc_11():
 
     f = open('tmp/vrtmisc_11.vrt', 'wt')
     f.write(
-"""<VRTDataset rasterXSize="1" rasterYSize="1">
+        """<VRTDataset rasterXSize="1" rasterYSize="1">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
       <SourceFilename relativeToVRT="1">../data/byte.tif</SourceFilename>

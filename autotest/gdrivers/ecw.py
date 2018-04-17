@@ -1611,23 +1611,23 @@ def ecw_40():
             return 'fail'
 
     expected_md = [
-  ('CLOCKWISE_ROTATION_DEG', '0.000000'),
-  ('COLORSPACE', 'RGB'),
-  ('COMPRESSION_DATE', '2013-04-04T09:20:03Z'),
-  ('COMPRESSION_RATE_ACTUAL', '3.165093'),
-  ('COMPRESSION_RATE_TARGET', '20'),
-  ('FILE_METADATA_COMPRESSION_SOFTWARE', 'python2.7/GDAL v1.10.0.0/ECWJP2 SDK v5.0.0.0'),
-  ('FILE_METADATA_ACQUISITION_DATE', '2012-09-12'),
-  ('FILE_METADATA_ACQUISITION_SENSOR_NAME', 'Leica ADS-80'),
-  ('FILE_METADATA_ADDRESS', '2 Abbotsford Street, West Leederville WA 6007 Australia'),
-  ('FILE_METADATA_AUTHOR', 'Unknown'),
-  ('FILE_METADATA_CLASSIFICATION', 'test gdal image'),
-  ('FILE_METADATA_COMPANY', 'ERDAS-QA'),
-  ('FILE_METADATA_COMPRESSION_SOFTWARE', 'python2.7/GDAL v1.10.0.0/ECWJP2 SDK v5.0.0.0'),
-  ('FILE_METADATA_COPYRIGHT', 'Intergraph 2013'),
-  ('FILE_METADATA_EMAIL', 'support@intergraph.com'),
-  ('FILE_METADATA_TELEPHONE', '+61 8 9388 2900'),
-  ('VERSION', '3')]
+        ('CLOCKWISE_ROTATION_DEG', '0.000000'),
+        ('COLORSPACE', 'RGB'),
+        ('COMPRESSION_DATE', '2013-04-04T09:20:03Z'),
+        ('COMPRESSION_RATE_ACTUAL', '3.165093'),
+        ('COMPRESSION_RATE_TARGET', '20'),
+        ('FILE_METADATA_COMPRESSION_SOFTWARE', 'python2.7/GDAL v1.10.0.0/ECWJP2 SDK v5.0.0.0'),
+        ('FILE_METADATA_ACQUISITION_DATE', '2012-09-12'),
+        ('FILE_METADATA_ACQUISITION_SENSOR_NAME', 'Leica ADS-80'),
+        ('FILE_METADATA_ADDRESS', '2 Abbotsford Street, West Leederville WA 6007 Australia'),
+        ('FILE_METADATA_AUTHOR', 'Unknown'),
+        ('FILE_METADATA_CLASSIFICATION', 'test gdal image'),
+        ('FILE_METADATA_COMPANY', 'ERDAS-QA'),
+        ('FILE_METADATA_COMPRESSION_SOFTWARE', 'python2.7/GDAL v1.10.0.0/ECWJP2 SDK v5.0.0.0'),
+        ('FILE_METADATA_COPYRIGHT', 'Intergraph 2013'),
+        ('FILE_METADATA_EMAIL', 'support@intergraph.com'),
+        ('FILE_METADATA_TELEPHONE', '+61 8 9388 2900'),
+        ('VERSION', '3')]
 
     got_md = ds.GetMetadata()
     for (key, value) in expected_md:
@@ -1915,24 +1915,24 @@ def ecw_44():
     ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
 
     expected_md = [
-  ('CODE_BLOCK_SIZE_X', '64'),
-  ('CODE_BLOCK_SIZE_Y', '64'),
-  ('GML_JP2_DATA', 'FALSE'),
-  ('PRECINCT_SIZE_X', '128,128'),
-  ('PRECINCT_SIZE_Y', '128,128'),
-  ('PRECISION', '8,8,8,1'),
-  ('PROFILE', '0'),
-  ('PROGRESSION_ORDER', 'RPCL'),
-  ('QUALITY_LAYERS', '1'),
-  ('RESOLUTION_LEVELS', '2'),
-  ('PROGRESSION_ORDER', 'RPCL'),
-  ('TILE_HEIGHT', '150'),
-  ('TILE_WIDTH', '162'),
-  ('TILES_X', '1'),
-  ('TILES_Y', '1'),
-  ('TRANSFORMATION_TYPE', '5x3'),
-  ('USE_EPH', 'TRUE'),
-  ('USE_SOP', 'FALSE')]
+        ('CODE_BLOCK_SIZE_X', '64'),
+        ('CODE_BLOCK_SIZE_Y', '64'),
+        ('GML_JP2_DATA', 'FALSE'),
+        ('PRECINCT_SIZE_X', '128,128'),
+        ('PRECINCT_SIZE_Y', '128,128'),
+        ('PRECISION', '8,8,8,1'),
+        ('PROFILE', '0'),
+        ('PROGRESSION_ORDER', 'RPCL'),
+        ('QUALITY_LAYERS', '1'),
+        ('RESOLUTION_LEVELS', '2'),
+        ('PROGRESSION_ORDER', 'RPCL'),
+        ('TILE_HEIGHT', '150'),
+        ('TILE_WIDTH', '162'),
+        ('TILES_X', '1'),
+        ('TILES_Y', '1'),
+        ('TRANSFORMATION_TYPE', '5x3'),
+        ('USE_EPH', 'TRUE'),
+        ('USE_SOP', 'FALSE')]
 
     got_md = ds.GetMetadata('JPEG2000')
     for (key, value) in expected_md:

@@ -140,7 +140,7 @@ for i in range(coef_list_size):
 # =============================================================================
 
 filt_template = \
-'''<KernelFilteredSource>
+    '''<KernelFilteredSource>
   <SourceFilename>%s</SourceFilename>
   <SourceBand>%%d</SourceBand>
   <Kernel normalized="%d">

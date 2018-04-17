@@ -1474,7 +1474,7 @@ End""")
     gdal.VSIFCloseL(f)
 
     if content.find(
-"""Object = Table
+        """Object = Table
   Name = first_table
 End_Object
 
@@ -1559,9 +1559,9 @@ def isis_27():
             history = content[offset:]
 
         if history.find('Object = ') != 0 or \
-        history.find('FROM = out.lbl') < 0 or \
-        history.find('TO   = out2.lbl') < 0 or \
-        history.find('TO = out.lbl') < 0:
+            history.find('FROM = out.lbl') < 0 or \
+            history.find('TO   = out2.lbl') < 0 or \
+            history.find('TO = out.lbl') < 0:
                 gdaltest.post_reason('fail')
                 print(src_location)
                 print(dst_location)

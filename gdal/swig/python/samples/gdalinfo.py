@@ -357,7 +357,7 @@ def main(argv=None):
                                                                nBlockXSize, nBlockYSize, \
                                                                gdal.GetDataTypeName(hBand.DataType), \
                                                                gdal.GetColorInterpretationName( \
-                    hBand.GetRasterColorInterpretation())))
+                                                                   hBand.GetRasterColorInterpretation())))
 
         if hBand.GetDescription() is not None \
                 and len(hBand.GetDescription()) > 0:
