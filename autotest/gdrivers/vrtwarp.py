@@ -54,7 +54,7 @@ def vrtwarp_2():
 
     try:
         os.remove('tmp/warp.vrt')
-    except:
+    except OSError:
         pass
 
     gcp_ds = gdal.OpenShared('data/rgb_gcp.vrt', gdal.GA_ReadOnly)
@@ -66,7 +66,7 @@ def vrtwarp_2():
     checksum = gdaltest.vrtwarp_ds.GetRasterBand(2).Checksum()
     expected = 21504
     if checksum != expected:
-        gdaltest.post_reason('Got checksum of %d instead of expected %d.' \
+        gdaltest.post_reason('Got checksum of %d instead of expected %d.'
                              % (checksum, expected))
         return 'fail'
 
@@ -91,7 +91,7 @@ def vrtwarp_3():
     gdal.GetDriverByName('VRT').Delete('tmp/warp.vrt')
 
     if checksum != expected:
-        gdaltest.post_reason('Got checksum of %d instead of expected %d.' \
+        gdaltest.post_reason('Got checksum of %d instead of expected %d.'
                              % (checksum, expected))
         return 'fail'
 

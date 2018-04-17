@@ -54,7 +54,7 @@ def ogr_rfc35_sqlite_1():
 
     try:
         os.unlink('tmp/rfc35_test.sqlite')
-    except:
+    except OSError:
         pass
 
     # This is to speed-up the runtime of tests on EXT4 filesystems

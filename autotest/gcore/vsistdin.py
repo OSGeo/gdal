@@ -56,7 +56,7 @@ def vsistdin_1():
 
     try:
         os.unlink("tmp/vsistdin_1_src.tif")
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open("tmp/vsistdin_1_out.tif")
@@ -69,7 +69,7 @@ def vsistdin_1():
 
     try:
         os.unlink("tmp/vsistdin_1_out.tif")
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -90,7 +90,7 @@ def vsistdin_2():
 
     try:
         os.unlink("tmp/vsistdin_2_src.tif")
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open("tmp/vsistdin_2_out.tif")
@@ -100,7 +100,7 @@ def vsistdin_2():
 
     try:
         os.unlink("tmp/vsistdin_2_out.tif")
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -147,7 +147,7 @@ def vsistdin_4():
 
     try:
         os.unlink("tmp/vsistdin_4_src.vrt")
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open("tmp/vsistdin_4_out.tif")

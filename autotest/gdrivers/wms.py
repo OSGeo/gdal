@@ -393,7 +393,7 @@ def wms_8():
 
     try:
         shutil.rmtree('tmp/gdalwmscache')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open(tms)
@@ -430,7 +430,7 @@ def wms_8():
     for expected_file in expected_files:
         try:
             os.stat(expected_file)
-        except:
+        except OSError:
             gdaltest.post_reason('%s should exist' % expected_file)
             return 'fail'
 
@@ -850,7 +850,7 @@ def wms_16():
         print(val)
         return 'skip'
 
-    if val is not None and (val.find('Gateway Time-out') >= 0 or \
+    if val is not None and (val.find('Gateway Time-out') >= 0 or
                             val.find('HTTP error code : 5') >= 0):
         return 'skip'
 
@@ -1005,7 +1005,7 @@ def wms_cleanup():
 
     try:
         shutil.rmtree('gdalwmscache')
-    except:
+    except OSError:
         pass
 
     return 'success'

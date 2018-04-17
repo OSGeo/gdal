@@ -124,7 +124,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
 
     try:
         import validate_jp2
-    except:
+    except ImportError:
         print('Cannot run validate_jp2')
         return 'skip'
 
@@ -753,17 +753,17 @@ def jp2lura_20():
 
     try:
         os.mkdir('tmp/cache/SCHEMAS_OPENGIS_NET')
-    except:
+    except OSError:
         pass
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd')
-    except:
+    except OSError:
         gdaltest.unzip('tmp/cache/SCHEMAS_OPENGIS_NET', 'tmp/cache/SCHEMAS_OPENGIS_NET.zip')
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/xlink.xsd')
-    except:
+    except OSError:
         xlink_xsd_url = 'http://www.w3.org/1999/xlink.xsd'
         if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xlink.xsd', force_download=True, max_download_duration=10):
             xlink_xsd_url = 'http://even.rouault.free.fr/xlink.xsd'
@@ -773,7 +773,7 @@ def jp2lura_20():
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/xml.xsd')
-    except:
+    except OSError:
         xlink_xsd_url = 'http://www.w3.org/1999/xml.xsd'
         if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xml.xsd', force_download=True, max_download_duration=10):
             xlink_xsd_url = 'http://even.rouault.free.fr/xml.xsd'
@@ -1555,7 +1555,7 @@ def jp2lura_38():
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET')
-    except:
+    except OSError:
         do_validate = False
 
     if do_validate:
@@ -1733,7 +1733,7 @@ def jp2lura_41():
         return 'skip'
 
     src_ds = gdal.Open('data/byte.jp2')
-    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds, \
+    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds,
                                              options=['USE_SRC_CODESTREAM=YES', '@PROFILE=PROFILE_1', 'GEOJP2=NO', 'GMLJP2=NO'])
     if src_ds.GetRasterBand(1).Checksum() != out_ds.GetRasterBand(1).Checksum():
         gdaltest.post_reason('fail')
@@ -1748,7 +1748,7 @@ def jp2lura_41():
     # Warning if ignored option
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds, \
+    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds,
                                              options=['USE_SRC_CODESTREAM=YES', 'QUALITY=1'])
     gdal.PopErrorHandler()
     del out_ds
@@ -1762,7 +1762,7 @@ def jp2lura_41():
     src_ds = gdal.Open('data/byte.tif')
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds, \
+    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds,
                                              options=['USE_SRC_CODESTREAM=YES'])
     gdal.PopErrorHandler()
     del out_ds

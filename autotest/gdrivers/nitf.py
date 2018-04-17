@@ -81,7 +81,7 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
 
     try:
         os.remove('tmp/test_create.ntf')
-    except:
+    except OSError:
         pass
 
     if createcopy:
@@ -1268,7 +1268,7 @@ def nitf_41():
 
     try:
         os.remove('data/U_4017A.NTF.aux.xml')
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('data/U_4017A.NTF')
@@ -1282,7 +1282,7 @@ def nitf_41():
 
     try:
         os.remove('data/U_4017A.NTF.aux.xml')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -1406,7 +1406,7 @@ def nitf_45():
 
     try:
         os.remove('tmp/nitf45.ntf.aux.xml')
-    except:
+    except OSError:
         pass
 
     shutil.copyfile('data/two_images_jpeg.ntf', 'tmp/nitf45.ntf')
@@ -1446,12 +1446,12 @@ def nitf_46(driver_to_test):
 
     try:
         os.remove('tmp/nitf46.ntf.aux.xml')
-    except:
+    except OSError:
         pass
 
     try:
         os.remove('tmp/nitf46.ntf_0.ovr')
-    except:
+    except OSError:
         pass
 
     shutil.copyfile('data/two_images_jp2.ntf', 'tmp/nitf46.ntf')
@@ -1534,7 +1534,7 @@ def nitf_48():
         os.remove('tmp/rset.ntf.r1')
         os.remove('tmp/rset.ntf.r2')
         os.remove('tmp/rset.ntf.r0.ovr')
-    except:
+    except OSError:
         pass
 
     shutil.copyfile('data/rset.ntf.r0', 'tmp/rset.ntf.r0')
@@ -1563,7 +1563,7 @@ def nitf_48():
         os.remove('tmp/rset.ntf.r1')
         os.remove('tmp/rset.ntf.r2')
         os.remove('tmp/rset.ntf.r0.ovr')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -1630,7 +1630,7 @@ def nitf_50():
 
     try:
         os.remove('tmp/nitf50.ntf')
-    except:
+    except OSError:
         pass
 
     # This will check that the creation option overrides the TEXT metadata domain from the source
@@ -1719,8 +1719,8 @@ def nitf_51():
 def nitf_52():
 
     # Create a fake NITF file with GeoSDE TREs (probably not conformant, but enough to test GDAL code)
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf52.ntf', 1, 1, options=['FILE_TRE=GEOPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789012345EURM                                                                                                                                                                                                                                                                                                                                                                 ', \
-                                                                              'FILE_TRE=PRJPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789AC0000000000000000000000000000000', \
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf52.ntf', 1, 1, options=['FILE_TRE=GEOPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789012345EURM                                                                                                                                                                                                                                                                                                                                                                 ',
+                                                                              'FILE_TRE=PRJPSB=01234567890123456789012345678901234567890123456789012345678901234567890123456789AC0000000000000000000000000000000',
                                                                               'TRE=MAPLOB=M  0001000010000000000100000000000005000000'])
     ds = None
 
@@ -2884,7 +2884,7 @@ def nitf_75():
     </genc:localShortName>
 </genc:GeopoliticalEntityEntry>"""
 
-    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_75.ntf', 1, 1, options=['TRE=CCINFA=0062RQ 17ge:GENC:3:3-5:PRI000002RQ 20as:ISO2:6:II-3:US-PR000002BM 17ge:GENC:3:3-5:MMR04108 ' + \
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_75.ntf', 1, 1, options=['TRE=CCINFA=0062RQ 17ge:GENC:3:3-5:PRI000002RQ 20as:ISO2:6:II-3:US-PR000002BM 17ge:GENC:3:3-5:MMR04108 ' +
                                                                                    listing_AG1 + '3MMR 19ge:ISO1:3:VII-7:MMR00000' + '2S1 19ge:GENC:3:3-alt:SCT000002YYC16gg:1059:2:ed9:3E00000'])
     ds = None
 
@@ -3152,12 +3152,12 @@ def nitf_online_7():
         for i in range(6):
             cs = ds.GetRasterBand(i + 1).Checksum()
             if cs != checksums[i]:
-                gdaltest.post_reason('got checksum %d for image %s' \
+                gdaltest.post_reason('got checksum %d for image %s'
                                      % (cs, file))
                 return 'fail'
 
             if ds.GetRasterBand(i + 1).GetRasterColorInterpretation() != colorInterpretations[i]:
-                gdaltest.post_reason('got wrong color interp for image %s' \
+                gdaltest.post_reason('got wrong color interp for image %s'
                                      % file)
                 return 'fail'
         ds = None
@@ -3372,7 +3372,7 @@ def nitf_online_14():
 
     try:
         os.remove('tmp/cache/U_4020h.ntf.aux.xml')
-    except:
+    except OSError:
         pass
 
     if gdaltest.jpeg_version == '9b':
@@ -3396,7 +3396,7 @@ def nitf_online_14():
 
     try:
         os.remove('tmp/cache/U_4020h.ntf.aux.xml')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -3795,7 +3795,7 @@ def nitf_online_24():
 
     try:
         os.stat('tmp/cache/ECRG_Sample.zip')
-    except:
+    except OSError:
         return 'skip'
 
     oldval = gdal.GetConfigOption('NITF_OPEN_UNDERLYING_DS')

@@ -236,7 +236,7 @@ def summarize():
     if cur_name is not None:
         print('Test Script: %s' % cur_name)
     print('Succeeded: %d' % success_counter)
-    print('Failed:    %d (%d blew exceptions)' \
+    print('Failed:    %d (%d blew exceptions)'
           % (failure_counter + blow_counter, blow_counter))
     print('Skipped:   %d' % skip_counter)
     print('Expected fail:%d' % expected_failure_counter)
@@ -418,9 +418,9 @@ class GDALTest:
 
         return 'success'
 
-    def testOpen(self, check_prj=None, check_gt=None, gt_epsilon=None, \
-                 check_stat=None, check_approx_stat=None, \
-                 stat_epsilon=None, skip_checksum=None, check_min=None, \
+    def testOpen(self, check_prj=None, check_gt=None, gt_epsilon=None,
+                 check_stat=None, check_approx_stat=None,
+                 stat_epsilon=None, skip_checksum=None, check_min=None,
                  check_max=None, check_filelist=True):
         """check_prj - projection reference, check_gt - geotransformation
         matrix (tuple), gt_epsilon - geotransformation tolerance,
@@ -487,7 +487,7 @@ class GDALTest:
                 for i in range(gdal.GetDriverCount()):
                     drv_name = gdal.GetDriver(i).ShortName
                     if drv_name.lower() != self.drivername.lower() and not \
-                        ((drv_name.lower() == 'gif' and self.drivername.lower() == 'biggif') or \
+                        ((drv_name.lower() == 'gif' and self.drivername.lower() == 'biggif') or
                          (drv_name.lower() == 'biggif' and self.drivername.lower() == 'gif')):
                         drivers += [drv_name]
                 other_ds = gdal.OpenEx(main_virtual_filename, gdal.OF_RASTER, allowed_drivers=drivers)
@@ -612,7 +612,7 @@ class GDALTest:
         elif self.chksum is None or chksum == self.chksum:
             return 'success'
         else:
-            post_reason('Checksum for band %d in "%s" is %d, but expected %d.' \
+            post_reason('Checksum for band %d in "%s" is %d, but expected %d.'
                         % (self.band, self.filename, chksum, self.chksum))
             return 'fail'
 
@@ -674,7 +674,7 @@ class GDALTest:
                 return 'fail'
 
         if new_ds is None:
-            post_reason('Failed to create test file using CreateCopy method.'\
+            post_reason('Failed to create test file using CreateCopy method.'
                         + '\n' + gdal.GetLastErrorMsg())
             return 'fail'
 
@@ -690,15 +690,15 @@ class GDALTest:
                     return 'fail'
             elif self.chksum is not None and bnd.Checksum() != self.chksum:
                 post_reason(
-                    'Did not get expected checksum on still-open file.\n' \
+                    'Did not get expected checksum on still-open file.\n'
                     '    Got %d instead of %d.' % (bnd.Checksum(), self.chksum))
                 return 'fail'
             if check_minmax:
                 got_minmax = bnd.ComputeRasterMinMax()
                 if got_minmax != minmax:
-                    post_reason( \
-                        'Did not get expected min/max values on still-open file.\n' \
-                        '    Got %g,%g instead of %g,%g.' \
+                    post_reason(
+                        'Did not get expected min/max values on still-open file.\n'
+                        '    Got %g,%g instead of %g,%g.'
                         % (got_minmax[0], got_minmax[1], minmax[0], minmax[1]))
                     return 'fail'
 
@@ -723,16 +723,16 @@ class GDALTest:
                     return 'fail'
             elif self.chksum_after_reopening is not None and bnd.Checksum() not in self.chksum_after_reopening:
                 post_reason('Did not get expected checksum on reopened file.\n'
-                            '    Got %d instead of %s.' \
+                            '    Got %d instead of %s.'
                             % (bnd.Checksum(), str(self.chksum_after_reopening)))
                 return 'fail'
 
             if check_minmax:
                 got_minmax = bnd.ComputeRasterMinMax()
                 if got_minmax != minmax:
-                    post_reason( \
-                        'Did not get expected min/max values on reopened file.\n' \
-                        '    Got %g,%g instead of %g,%g.' \
+                    post_reason(
+                        'Did not get expected min/max values on reopened file.\n'
+                        '    Got %g,%g instead of %g,%g.'
                         % (got_minmax[0], got_minmax[1], minmax[0], minmax[1]))
                     return 'fail'
 
@@ -824,8 +824,8 @@ class GDALTest:
             if self.chksum is not None \
                and new_ds.GetRasterBand(band).Checksum() != self.chksum:
                 post_reason(
-                    'Did not get expected checksum on still-open file.\n' \
-                    '    Got %d instead of %d.' \
+                    'Did not get expected checksum on still-open file.\n'
+                    '    Got %d instead of %d.'
                     % (new_ds.GetRasterBand(band).Checksum(), self.chksum))
 
                 return 'fail'
@@ -850,8 +850,8 @@ class GDALTest:
         for band in range(1, out_bands + 1):
             if self.chksum is not None \
                and new_ds.GetRasterBand(band).Checksum() != self.chksum:
-                post_reason('Did not get expected checksum on reopened file.' \
-                            '    Got %d instead of %d.' \
+                post_reason('Did not get expected checksum on reopened file.'
+                            '    Got %d instead of %d.'
                             % (new_ds.GetRasterBand(band).Checksum(), self.chksum))
                 return 'fail'
 
@@ -1326,7 +1326,7 @@ def download_file(url, filename=None, download_size=-1, force_download=False, ma
     try:
         os.stat(base_dir + '/' + filename)
         return True
-    except:
+    except OSError:
         if 'GDAL_DOWNLOAD_TEST_DATA' in os.environ or force_download:
             val = None
             import time
@@ -1631,7 +1631,7 @@ def unzip(target_dir, zipfilename, verbose=False):
     try:
         import zipfile
         zf = zipfile.ZipFile(zipfilename)
-    except:
+    except ImportError:
         os.system('unzip -d ' + target_dir + ' ' + zipfilename)
         return
 
@@ -1961,7 +1961,7 @@ def get_opened_files():
             filename = os.readlink('%s/%s' % (fdpath, fd))
             if not filename.startswith('/dev/') and not filename.startswith('pipe:'):
                 filenames.append(filename)
-        except:
+        except OSError:
             pass
     return filenames
 

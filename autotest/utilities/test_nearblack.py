@@ -285,47 +285,47 @@ def test_nearblack_8():
 def test_nearblack_cleanup():
     try:
         os.remove('tmp/nearblack1.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/nearblack2.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/nearblack3.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/nearblack4_src.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/nearblack4.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/nearblack5.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/nearblack5.tif.msk')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/nearblack6.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/nearblack6.tif.msk')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/nearblack7.tif')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/nearblack8.tif')
-    except:
+    except OSError:
         pass
     return 'success'
 

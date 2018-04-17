@@ -548,7 +548,7 @@ def mask_13():
 
     try:
         os.stat('tmp/byte_with_mask.tif.msk')
-    except:
+    except OSError:
         gdaltest.post_reason('tmp/byte_with_mask.tif.msk is absent')
         return 'fail'
 
@@ -645,7 +645,7 @@ def mask_14():
         os.stat('tmp/byte_with_mask.tif.msk')
         gdaltest.post_reason('tmp/byte_with_mask.tif.msk should not exist')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
@@ -747,7 +747,7 @@ def mask_and_ovr(order, method):
         os.stat('tmp/byte_with_ovr_and_mask.tif.msk')
         gdaltest.post_reason('tmp/byte_with_mask.tif.msk should not exist')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
@@ -944,7 +944,7 @@ def mask_22():
 
     try:
         os.stat('tmp/mask_22.tif.msk')
-    except:
+    except OSError:
         gdaltest.post_reason('tmp/mask_22.tif.msk is absent')
         return 'fail'
 
@@ -968,7 +968,7 @@ def mask_22():
         os.stat('tmp/mask_22.tif.msk')
         gdaltest.post_reason('tmp/mask_22.tif.msk is still there')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -1015,7 +1015,7 @@ def mask_23():
 
 def mask_24():
 
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_24.tif', 100, 100, 4, \
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_24.tif', 100, 100, 4,
                                               gdal.GDT_UInt16, options=['PHOTOMETRIC=RGB', 'ALPHA=YES'])
     ds.GetRasterBand(1).Fill(65565)
     ds.GetRasterBand(2).Fill(65565)

@@ -1310,8 +1310,8 @@ def ogr_geom_getenvelope3d():
 
 def ogr_geom_z_empty():
 
-    for geom in ['POINT', 'LINESTRING', 'POLYGON', 'MULTIPOINT', 'MULTILINESTRING', \
-                 'MULTIPOLYGON', 'GEOMETRYCOLLECTION', 'CIRCULARSTRING', 'COMPOUNDCURVE', \
+    for geom in ['POINT', 'LINESTRING', 'POLYGON', 'MULTIPOINT', 'MULTILINESTRING',
+                 'MULTIPOLYGON', 'GEOMETRYCOLLECTION', 'CIRCULARSTRING', 'COMPOUNDCURVE',
                  'CURVEPOLYGON', 'MULTICURVE', 'MULTISURFACE']:
         in_wkt = geom + ' Z EMPTY'
         g1 = ogr.CreateGeometryFromWkt(in_wkt)
@@ -1947,9 +1947,9 @@ def ogr_geom_circularstring():
     a0 = math.pi / 3
     a1 = math.pi / 4
     a2 = math.pi / 6
-    in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-        cx + r * math.cos(a0), cy + r * math.sin(a0), \
-        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+    in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % (
+        cx + r * math.cos(a0), cy + r * math.sin(a0),
+        cx + r * math.cos(a1), cy + r * math.sin(a1),
         cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
@@ -1964,9 +1964,9 @@ def ogr_geom_circularstring():
     a0 = math.pi / 3
     a1 = math.pi / 6
     a2 = -math.pi / 6
-    in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-        cx + r * math.cos(a0), cy + r * math.sin(a0), \
-        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+    in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % (
+        cx + r * math.cos(a0), cy + r * math.sin(a0),
+        cx + r * math.cos(a1), cy + r * math.sin(a1),
         cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
@@ -1981,9 +1981,9 @@ def ogr_geom_circularstring():
     a0 = math.pi / 3
     a1 = math.pi - math.pi / 3
     a2 = -math.pi / 6
-    in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-        cx + r * math.cos(a0), cy + r * math.sin(a0), \
-        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+    in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % (
+        cx + r * math.cos(a0), cy + r * math.sin(a0),
+        cx + r * math.cos(a1), cy + r * math.sin(a1),
         cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
@@ -1998,9 +1998,9 @@ def ogr_geom_circularstring():
     a0 = math.pi / 3
     a1 = math.pi - math.pi / 3
     a2 = math.pi / 6
-    in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-        cx + r * math.cos(a0), cy + r * math.sin(a0), \
-        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+    in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % (
+        cx + r * math.cos(a0), cy + r * math.sin(a0),
+        cx + r * math.cos(a1), cy + r * math.sin(a1),
         cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
@@ -2015,9 +2015,9 @@ def ogr_geom_circularstring():
     a0 = math.pi / 3
     a1 = math.pi + math.pi / 3
     a2 = math.pi / 3
-    in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % ( \
-        cx + r * math.cos(a0), cy + r * math.sin(a0), \
-        cx + r * math.cos(a1), cy + r * math.sin(a1), \
+    in_wkt = 'CIRCULARSTRING(%.16g %.16g,%.16g %.16g,%.16g %.16g)' % (
+        cx + r * math.cos(a0), cy + r * math.sin(a0),
+        cx + r * math.cos(a1), cy + r * math.sin(a1),
         cx + r * math.cos(a2), cy + r * math.sin(a2))
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     env = g1.GetEnvelope()
@@ -4198,7 +4198,7 @@ def ogr_geom_triangle_ps_tin_conversion():
             g = ogr.CreateGeometryFromWkt(wkt)
             g2 = ogr.CreateGeometryFromWkt(wkt_target)
             got_wkt = ogr.ForceTo(g, g2.GetGeometryType()).ExportToWkt()
-            if not (g.GetGeometryType() in [ogr.wkbTriangle, ogr.wkbTIN, ogr.wkbPolyhedralSurface] or \
+            if not (g.GetGeometryType() in [ogr.wkbTriangle, ogr.wkbTIN, ogr.wkbPolyhedralSurface] or
                     g2.GetGeometryType() in [ogr.wkbTriangle, ogr.wkbTIN, ogr.wkbPolyhedralSurface]):
                 continue
             wkt_expected = wkt_target

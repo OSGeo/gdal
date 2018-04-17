@@ -51,11 +51,11 @@ def ogr_tiger_1():
 
     try:
         os.stat('tmp/cache/TGR01001/TGR01001.MET')
-    except:
+    except OSError:
         try:
             try:
                 os.stat('tmp/cache/TGR01001')
-            except:
+            except OSError:
                 os.mkdir('tmp/cache/TGR01001')
             gdaltest.unzip('tmp/cache/TGR01001', 'tmp/cache/TGR01001.ZIP')
             try:
@@ -137,7 +137,7 @@ def ogr_tiger_3():
 
     try:
         shutil.rmtree('tmp/outtiger')
-    except:
+    except OSError:
         pass
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f TIGER tmp/outtiger tmp/cache/TGR01001 -dsco VERSION=1006')
@@ -167,7 +167,7 @@ def ogr_tiger_3():
 
     try:
         shutil.rmtree('tmp/outtiger')
-    except:
+    except OSError:
         pass
 
     return ret

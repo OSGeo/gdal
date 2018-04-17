@@ -47,7 +47,7 @@ def ogr_pgdump_1():
 
     try:
         os.remove('tmp/tpoly.sql')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('tmp/tpoly.sql')
@@ -115,7 +115,7 @@ def ogr_pgdump_2():
 
     try:
         os.remove('tmp/tpoly.sql')
-    except:
+    except OSError:
         pass
 
     gdal.SetConfigOption('PG_USE_COPY', 'YES')
@@ -189,7 +189,7 @@ def ogr_pgdump_3():
 
     try:
         os.remove('tmp/tpoly.sql')
-    except:
+    except OSError:
         pass
 
     gdal.SetConfigOption('PG_USE_COPY', 'YES')
@@ -1032,11 +1032,11 @@ def ogr_pgdump_cleanup():
 
     try:
         os.remove('tmp/tpoly.sql')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/ogr_pgdump_4.sql')
-    except:
+    except OSError:
         pass
     return 'success'
 

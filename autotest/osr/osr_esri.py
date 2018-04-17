@@ -56,21 +56,21 @@ def osr_esri_1():
     srs.ImportFromEPSG(4202)
 
     if srs.GetAttrValue('DATUM') != 'Australian_Geodetic_Datum_1966':
-        gdaltest.post_reason('Got wrong DATUM name (%s) after EPSG import.' %\
+        gdaltest.post_reason('Got wrong DATUM name (%s) after EPSG import.' %
                              srs.GetAttrValue('DATUM'))
         return 'fail'
 
     srs.MorphToESRI()
 
     if srs.GetAttrValue('DATUM') != 'D_Australian_1966':
-        gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI morph.' %\
+        gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI morph.' %
                              srs.GetAttrValue('DATUM'))
         return 'fail'
 
     srs.MorphFromESRI()
 
     if srs.GetAttrValue('DATUM') != 'Australian_Geodetic_Datum_1966':
-        gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI unmorph.' %\
+        gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI unmorph.' %
                              srs.GetAttrValue('DATUM'))
         return 'fail'
 
@@ -89,12 +89,12 @@ def osr_esri_2():
     srs.MorphToESRI()
 
     if srs.GetAttrValue('GEOGCS') != 'GCS_WGS_1984':
-        gdaltest.post_reason('Got wrong GEOGCS name (%s) after ESRI morph.' %\
+        gdaltest.post_reason('Got wrong GEOGCS name (%s) after ESRI morph.' %
                              srs.GetAttrValue('GEOGCS'))
         return 'fail'
 
     if srs.GetAttrValue('PROJCS') != 'WGS_1984_UTM_Zone_11S':
-        gdaltest.post_reason('Got wrong PROJCS name (%s) after ESRI morph.' %\
+        gdaltest.post_reason('Got wrong PROJCS name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJCS'))
         return 'fail'
 
@@ -112,7 +112,7 @@ def osr_esri_3():
     srs.MorphToESRI()
 
     if srs.GetAttrValue('PROJCS') != 'Miller_Cylindrical':
-        gdaltest.post_reason('Got wrong PROJCS name (%s) after ESRI morph.' %\
+        gdaltest.post_reason('Got wrong PROJCS name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJCS'))
         return 'fail'
 
@@ -130,12 +130,12 @@ def osr_esri_4():
     srs.MorphToESRI()
 
     if srs.GetAttrValue('PROJECTION') != 'Stereographic_South_Pole':
-        gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' %\
+        gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJECTION'))
         return 'fail'
 
     if srs.GetProjParm('standard_parallel_1') != -80.2333:
-        gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' %\
+        gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' %
                              srs.GetProjParm('standard_parallel_1'))
         return 'fail'
 
@@ -153,12 +153,12 @@ def osr_esri_5():
     srs.MorphFromESRI()
 
     if srs.GetAttrValue('PROJECTION') != 'Polar_Stereographic':
-        gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' %\
+        gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJECTION'))
         return 'fail'
 
     if srs.GetProjParm('latitude_of_origin') != -80.2333:
-        gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' %\
+        gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' %
                              srs.GetProjParm('latitude_of_origin'))
         return 'fail'
 
@@ -177,8 +177,8 @@ def osr_esri_6():
     srs.MorphFromESRI()
 
     if srs.GetAttrValue('PROJECTION') != 'Lambert_Conformal_Conic_2SP':
-        gdaltest.post_reason( \
-            'Got wrong PROJECTION name (%s) after ESRI morph, expected 2SP' %\
+        gdaltest.post_reason(
+            'Got wrong PROJECTION name (%s) after ESRI morph, expected 2SP' %
             srs.GetAttrValue('PROJECTION'))
         return 'fail'
 
@@ -396,21 +396,21 @@ def osr_esri_12():
     # No MorphFromESRI() is required
 
     if srs.GetAttrValue('PROJECTION') != 'Lambert_Conformal_Conic_2SP':
-        gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' % \
+        gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJECTION'))
         return 'fail'
 
     if abs(srs.GetProjParm('standard_parallel_1') - 34.333333333) > 0.00001:
-        gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' % \
+        gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' %
                              srs.GetProjParm('standard_parallel_1'))
         return 'fail'
 
     if srs.GetAttrValue('DATUM') != 'North_American_Datum_1983':
-        gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI morph.' % \
+        gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI morph.' %
                              srs.GetAttrValue('DATUM'))
 
     if srs.GetAttrValue('UNIT') != 'Meter':
-        gdaltest.post_reason('Got wrong UNIT name (%s) after ESRI morph.' % \
+        gdaltest.post_reason('Got wrong UNIT name (%s) after ESRI morph.' %
                              srs.GetAttrValue('UNIT'))
         return 'fail'
 
@@ -429,21 +429,21 @@ def osr_esri_13():
     # No MorphFromESRI() is required
 
     if srs.GetAttrValue('PROJECTION') != 'Lambert_Conformal_Conic_2SP':
-        gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' % \
+        gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJECTION'))
         return 'fail'
 
     if abs(srs.GetProjParm('standard_parallel_1') - 34.333333333) > 0.00001:
-        gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' % \
+        gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' %
                              srs.GetProjParm('standard_parallel_1'))
         return 'fail'
 
     if srs.GetAttrValue('DATUM') != 'North_American_Datum_1983':
-        gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI morph.' % \
+        gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI morph.' %
                              srs.GetAttrValue('DATUM'))
 
     if srs.GetAttrValue('UNIT') != 'Meter':
-        gdaltest.post_reason('Got wrong UNIT name (%s) after ESRI morph.' % \
+        gdaltest.post_reason('Got wrong UNIT name (%s) after ESRI morph.' %
                              srs.GetAttrValue('UNIT'))
         return 'fail'
 
@@ -858,7 +858,7 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
         wkt3 = srs3.ExportToWkt()
 
         # manage special cases of PROJECTION parameters that have multiple mappings
-        remap_proj = dict([['Transverse_Mercator', 'Gauss_Kruger'], ['Equidistant_Cylindrical', 'Plate_Carree'], \
+        remap_proj = dict([['Transverse_Mercator', 'Gauss_Kruger'], ['Equidistant_Cylindrical', 'Plate_Carree'],
                            ['Hotine_Oblique_Mercator_Azimuth_Natural_Origin', 'Hotine_Oblique_Mercator_Azimuth_Center']])
         proj1 = srs1.GetAttrValue('PROJCS|PROJECTION')
         proj3 = srs3.GetAttrValue('PROJCS|PROJECTION')

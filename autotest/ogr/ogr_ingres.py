@@ -71,7 +71,7 @@ def ogr_ingres_2():
 
     #######################################################
     # Create Layer
-    gdaltest.ingres_lyr = gdaltest.ingres_ds.CreateLayer( \
+    gdaltest.ingres_lyr = gdaltest.ingres_ds.CreateLayer(
         'tpoly', geom_type=ogr.wkbPolygon,
         options=['OVERWRITE=YES'])
 
@@ -182,7 +182,7 @@ def ogr_ingres_5():
 
     return 'skip'
 
-    sql_lyr = gdaltest.ingres_ds.ExecuteSQL( \
+    sql_lyr = gdaltest.ingres_ds.ExecuteSQL(
         "select * from tpoly where prfedea = '35043413'")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'prfedea',
@@ -212,7 +212,7 @@ def ogr_ingres_6():
 
     gdaltest.ingres_lyr.SetAttributeFilter(None)
 
-    geom = ogr.CreateGeometryFromWkt( \
+    geom = ogr.CreateGeometryFromWkt(
         'LINESTRING(479505 4763195,480526 4762819)')
     gdaltest.ingres_lyr.SetSpatialFilter(geom)
     geom.Destroy()
@@ -264,7 +264,7 @@ def ogr_ingres_7():
     ####################################################################
     # Now fetch two features and verify the new column works OK.
 
-    gdaltest.ingres_lyr.SetAttributeFilter( \
+    gdaltest.ingres_lyr.SetAttributeFilter(
         "PRFEDEA IN ( '35043423', '35043414' )")
 
     tr = ogrtest.check_features_against_list(gdaltest.ingres_lyr, 'new_string',
@@ -305,7 +305,7 @@ def ogr_ingres_8():
     # can't be fetched.
     new_count = gdaltest.ingres_lyr.GetFeatureCount()
     if new_count != old_count - 1:
-        gdaltest.post_reason('got feature count of %d, not expected %d.' \
+        gdaltest.post_reason('got feature count of %d, not expected %d.'
                              % (new_count, old_count - 1))
 
     if gdaltest.ingres_lyr.GetFeature(target_fid) is not None:

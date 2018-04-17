@@ -60,8 +60,8 @@ def EQUAL(a, b):
 ###############################################################################
 
 
-def CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, \
-                input_lyr, input_fields, \
+def CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco,
+                input_lyr, input_fields,
                 method_lyr, method_fields, opt):
 
     output_lyr = output_ds.CreateLayer(output_lyr_name, srs, geom_type, lco)

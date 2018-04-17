@@ -50,7 +50,7 @@ def gnm_filenetwork_create():
 
     try:
         shutil.rmtree('tmp/test_gnm')
-    except:
+    except OSError:
         pass
 
     ogrtest.drv = None

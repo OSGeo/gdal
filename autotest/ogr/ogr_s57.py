@@ -92,7 +92,7 @@ def ogr_s57_2():
         lyr_info = layer_list[i]
 
         if lyr.GetName() != lyr_info[0]:
-            gdaltest.post_reason('Expected layer %d to be %s but it was %s.'\
+            gdaltest.post_reason('Expected layer %d to be %s but it was %s.'
                                  % (i + 1, lyr_info[0], lyr.GetName()))
             return 'fail'
 
@@ -259,7 +259,7 @@ def ogr_s57_9():
 
     try:
         os.unlink('tmp/ogr_s57_9.000')
-    except:
+    except OSError:
         pass
 
     gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON')
@@ -295,7 +295,7 @@ def ogr_s57_9():
 
     try:
         os.unlink('tmp/ogr_s57_9.000')
-    except:
+    except OSError:
         pass
 
     gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON')
@@ -319,7 +319,7 @@ def ogr_s57_9():
 
     try:
         os.unlink('tmp/ogr_s57_9.000')
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -471,12 +471,12 @@ def ogr_s57_online_4():
 
     try:
         os.stat('tmp/cache/ENC_ROOT/JP34NC94.000')
-    except:
+    except OSError:
         try:
             gdaltest.unzip('tmp/cache', 'tmp/cache/sample.zip')
             try:
                 os.stat('tmp/cache/ENC_ROOT/JP34NC94.000')
-            except:
+            except OSError:
                 return 'skip'
         except:
             return 'skip'

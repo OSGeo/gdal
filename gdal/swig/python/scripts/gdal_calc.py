@@ -79,7 +79,7 @@ def GetOutputDriversFor(filename):
     ext = GetExtension(filename)
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
-        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or \
+        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or
             drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
            drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
             if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
@@ -165,7 +165,7 @@ def doit(opts, args):
             # check that the dimensions of each layer are the same
             if DimensionsCheck:
                 if DimensionsCheck != [myFile.RasterXSize, myFile.RasterYSize]:
-                    raise Exception("Error! Dimensions of file %s (%i, %i) are different from other files (%i, %i).  Cannot proceed" % \
+                    raise Exception("Error! Dimensions of file %s (%i, %i) are different from other files (%i, %i).  Cannot proceed" %
                                     (myF, myFile.RasterXSize, myFile.RasterYSize, DimensionsCheck[0], DimensionsCheck[1]))
             else:
                 DimensionsCheck = [myFile.RasterXSize, myFile.RasterYSize]

@@ -65,7 +65,7 @@ def test_gdalsrsinfo_2():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o proj4 ../gcore/data/byte.tif')
 
     if ret.strip() != "+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs":
@@ -82,7 +82,7 @@ def test_gdalsrsinfo_3():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt ../gcore/data/byte.tif')
 
     first_val = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982139006,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","26711"]]'
@@ -102,7 +102,7 @@ def test_gdalsrsinfo_4():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt_esri ../gcore/data/byte.tif')
 
     if ret.strip() != 'PROJCS["NAD_1927_UTM_Zone_11N",GEOGCS["GCS_North_American_1927",DATUM["D_North_American_1927",SPHEROID["Clarke_1866",6378206.4,294.9786982]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]':
@@ -118,7 +118,7 @@ def test_gdalsrsinfo_5():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt_noct ../gcore/data/byte.tif')
 
     first_val = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982139006]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1]]'
@@ -137,7 +137,7 @@ def test_gdalsrsinfo_6():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt_simple ../gcore/data/byte.tif')
     ret = ret.replace('\r\n', '\n')
 
@@ -182,7 +182,7 @@ def test_gdalsrsinfo_7():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o mapinfo ../gcore/data/byte.tif')
 
     if ret.strip() != """'Earth Projection 8, 62, "m", -117, 0, 0.9996, 500000, 0'""":
@@ -198,7 +198,7 @@ def test_gdalsrsinfo_8():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt -p EPSG:4326')
     ret = ret.replace('\r\n', '\n')
 
@@ -244,10 +244,10 @@ def test_gdalsrsinfo_10():
     if sys.platform == 'win32':
         # Win32 shell quoting oddities
         wkt = wkt.replace('"', '\\"')
-        ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+        ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                    " -V -o proj4 \"" + wkt + "\"")
     else:
-        ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+        ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                    " -V -o proj4 '" + wkt + "'")
 
     if ret.find('Validate Succeeds') == -1:
@@ -268,10 +268,10 @@ def test_gdalsrsinfo_11():
     if sys.platform == 'win32':
         # Win32 shell quoting oddities
         wkt = wkt.replace('"', '\\"')
-        ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+        ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                    " -V -o proj4 \"" + wkt + "\"")
     else:
-        ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+        ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                    " -V -o proj4 '" + wkt + "'")
 
     if ret.find('Validate Fails') == -1:
@@ -287,7 +287,7 @@ def test_gdalsrsinfo_12():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt EPSG:4326')
 
     if ret.strip() != """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]""":
@@ -303,7 +303,7 @@ def test_gdalsrsinfo_13():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt "+proj=longlat +datum=WGS84 +no_defs"')
 
     if ret.strip() != """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]""":
@@ -319,7 +319,7 @@ def test_gdalsrsinfo_14():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o proj4 /vsizip/../gcore/data/byte.tif.zip')
 
     if ret.strip() != "+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs":
@@ -335,7 +335,7 @@ def test_gdalsrsinfo_14bis():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o proj4 ../ogr/data/Stacks.shp')
 
     if ret.strip() != "+proj=lcc +lat_1=30.28333333333333 +lat_2=28.38333333333333 +lat_0=27.83333333333333 +lon_0=-99 +x_0=600000 +y_0=3999999.9998984 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=us-ft +no_defs":
@@ -351,7 +351,7 @@ def test_gdalsrsinfo_15():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o proj4 ../osr/data/lcc_esri.prj')
 
     if ret.strip() != "+proj=lcc +lat_1=34.33333333333334 +lat_2=36.16666666666666 +lat_0=33.75 +lon_0=-79 +x_0=609601.22 +y_0=0 +datum=NAD83 +units=m +no_defs":
@@ -390,7 +390,7 @@ def test_gdalsrsinfo_17():
         return 'skip'
 
     # Zero match
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -e "LOCAL_CS[foo]"')
 
     if ret.find('EPSG:-1') < 0:
@@ -399,7 +399,7 @@ def test_gdalsrsinfo_17():
         return 'fail'
 
     # One match
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -e ../osr/data/lcc_esri.prj')
 
     if ret.find('EPSG:32119') < 0:
@@ -408,7 +408,7 @@ def test_gdalsrsinfo_17():
         return 'fail'
 
     # Two matches
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                """ -e "GEOGCS[\"myLKS94\",DATUM[\"Lithuania_1994_ETRS89\",SPHEROID[\"GRS_1980\",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]" """)
     if ret.find('EPSG:4126') < 0 or ret.find('EPSG:4669') < 0:
         gdaltest.post_reason('fail')

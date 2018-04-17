@@ -54,7 +54,7 @@ def test_ogrtindex_1(srs=None):
         for extension in ['shp', 'dbf', 'shx', 'prj']:
             try:
                 os.remove('tmp/%s.%s' % (basename, extension))
-            except:
+            except OSError:
                 pass
 
     shape_ds = shape_drv.CreateDataSource('tmp')
@@ -147,7 +147,7 @@ def test_ogrtindex_3():
         for extension in ['shp', 'dbf', 'shx', 'prj']:
             try:
                 os.remove('tmp/%s.%s' % (basename, extension))
-            except:
+            except OSError:
                 pass
 
     shape_ds = shape_drv.CreateDataSource('tmp')

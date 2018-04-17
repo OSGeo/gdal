@@ -179,8 +179,8 @@ def ogr_virtualogr_2():
 
     # Add suspicious trigger
     ds = ogr.Open('/vsimem/ogr_virtualogr_2.db', update=1)
-    ds.ExecuteSQL("CREATE TRIGGER spy_trigger INSERT ON regular_table BEGIN " + \
-                  "INSERT OR REPLACE INTO spy_table (spy_content) " + \
+    ds.ExecuteSQL("CREATE TRIGGER spy_trigger INSERT ON regular_table BEGIN " +
+                  "INSERT OR REPLACE INTO spy_table (spy_content) " +
                   "SELECT OGR_STYLE FROM foo; END;")
     ds = None
 

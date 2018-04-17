@@ -54,7 +54,7 @@ def hf2_2():
     ret = tst.testCreateCopy(new_filename='tmp/hf2_2.hfz')
     try:
         os.remove('tmp/hf2_2.hfz.properties')
-    except:
+    except OSError:
         pass
     return ret
 

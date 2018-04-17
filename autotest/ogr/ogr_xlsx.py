@@ -283,7 +283,7 @@ def ogr_xlsx_7():
 
     try:
         os.unlink('tmp/ogr_xlsx_7.xlsx')
-    except:
+    except OSError:
         pass
     shutil.copy('data/test.xlsx', 'tmp/ogr_xlsx_7.xlsx')
 

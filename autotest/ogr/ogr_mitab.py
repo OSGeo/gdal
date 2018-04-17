@@ -162,7 +162,7 @@ def ogr_mitab_4():
     if gdaltest.mapinfo_ds is None:
         return 'skip'
 
-    sql_lyr = gdaltest.mapinfo_ds.ExecuteSQL( \
+    sql_lyr = gdaltest.mapinfo_ds.ExecuteSQL(
         "select * from tpoly where prfedea = '35043413'")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'prfedea', ['35043413'])
@@ -1404,7 +1404,7 @@ def ogr_mitab_28():
 def ogr_mitab_29():
     try:
         os.stat('tmp/cache/compr_symb_deleted_records.tab')
-    except:
+    except OSError:
         try:
             gdaltest.unzip('tmp/cache', 'data/compr_symb_deleted_records.zip')
             try:

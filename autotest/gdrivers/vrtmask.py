@@ -273,7 +273,7 @@ def vrtmask_7():
         return 'skip'
     try:
         os.remove('tmp/vrtmask_7_rgba.tif.msk')
-    except:
+    except OSError:
         pass
 
     gdal.Translate('tmp/vrtmask_7_rgba.tif',

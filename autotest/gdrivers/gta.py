@@ -38,7 +38,7 @@ from osgeo import gdal
 
 gdaltest_list = []
 
-init_list = [ \
+init_list = [
     ('byte.tif', 1, 4672, []),
     ('byte_signed.tif', 1, 4672, []),
     ('int16.tif', 1, 4672, []),

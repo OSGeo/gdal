@@ -148,7 +148,7 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
 
     lyr_options = ['LOOKAT_LONGITUDE=2.2945', 'LOOKAT_LATITUDE=48.85825', 'LOOKAT_RANGE=300',
                    'LOOKAT_ALTITUDE=30', 'LOOKAT_HEADING=0', 'LOOKAT_TILT=70', 'LOOKAT_ALTITUDEMODE=relativeToGround',
-                   'ADD_REGION=YES', 'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000', \
+                   'ADD_REGION=YES', 'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000',
                    'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2', 'SO_HREF=http://www.gdal.org/gdalicon.png',
                    'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png']
     lyr = ds.CreateLayer('test', options=lyr_options)

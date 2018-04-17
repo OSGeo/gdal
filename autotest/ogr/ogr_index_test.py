@@ -121,8 +121,8 @@ def ogr_index_3():
     expect = ['Value 5', 'Value 10', 'Value 9', 'Value 4', 'Value 3',
               'Value 1']
 
-    sql_lyr = gdaltest.p_ds.ExecuteSQL( \
-        'SELECT * FROM index_p p ' \
+    sql_lyr = gdaltest.p_ds.ExecuteSQL(
+        'SELECT * FROM index_p p '
         + 'LEFT JOIN "join_t.dbf".join_t j ON p.PKEY = j.SKEY ')
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'VALUE', expect)
@@ -210,8 +210,8 @@ def ogr_index_8():
     expect = ['Value 5', 'Value 10', 'Value 9', 'Value 4', 'Value 3',
               'Value 1']
 
-    sql_lyr = gdaltest.p_ds.ExecuteSQL( \
-        'SELECT * FROM index_p p ' \
+    sql_lyr = gdaltest.p_ds.ExecuteSQL(
+        'SELECT * FROM index_p p '
         + 'LEFT JOIN "join_t.dbf".join_t j ON p.PKEY = j.SKEY ')
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'VALUE', expect)
@@ -261,7 +261,7 @@ def ogr_index_9():
     for filename in ['join_t.idm', 'join_t.ind']:
         try:
             os.stat(filename)
-        except:
+        except OSError:
             gdaltest.post_reason("%s should exist" % filename)
             return 'fail'
             pass
