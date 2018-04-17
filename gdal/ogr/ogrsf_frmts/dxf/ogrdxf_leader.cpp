@@ -1258,6 +1258,18 @@ static std::vector<DXFTriple> GetBSplineControlPoints(
     CPLAssert( nPoints > 0 );
     CPLAssert( nPoints == static_cast<int>( adfParameters.size() ) );
 
+    // RAM consumption is quadratic in the number of control points.
+    if( nPoints > atoi(CPLGetConfigOption(
+                        "DXF_MAX_BSPLINE_CONTROL_POINTS", "2000")) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too many number of control points (%d) for B-Spline. "
+                 "Set DXF_MAX_BSPLINE_CONTROL_POINTS configuration "
+                 "option to a higher value to remove this limitation "
+                 "(at the cost of significant RAM consumption)", nPoints);
+        return std::vector<DXFTriple>();
+    }
+
     // We want to solve the linear system NP=D for P, where N is a coefficient
     // matrix made up of values of the basis functions at each parameter
     // value, with two additional rows for the endpoint tangent information.

@@ -3014,6 +3014,15 @@ def ogr_dxf_43():
 
 def ogr_dxf_44():
 
+    with gdaltest.config_option('DXF_MAX_BSPLINE_CONTROL_POINTS', '1'):
+        ds = ogr.Open('data/leader-mleader.dxf')
+        lyr = ds.GetLayer(0)
+        with gdaltest.error_handler():
+            lyr.GetFeatureCount()
+        if gdal.GetLastErrorMsg().find('DXF_MAX_BSPLINE_CONTROL_POINTS') < 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
     ds = ogr.Open('data/leader-mleader.dxf')
     lyr = ds.GetLayer(0)
 
