@@ -283,7 +283,7 @@ if __name__ == '__main__':
         i = i + 1
         # next argument
 
-    #### Compare Files ####
+    # Compare Files
 
     found_diff = 0
 
