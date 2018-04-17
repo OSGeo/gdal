@@ -789,7 +789,7 @@ class CFChecker:
 # dimensions.sort()
 # if not self.uniqueList(dimensions):
 # print "ERROR: variable has repeated dimensions"
-##                 self.err = self.err+1
+#                 self.err = self.err+1
 
             # ------------------------
             # Auxiliary Coord Checks
@@ -1286,7 +1286,7 @@ class CFChecker:
 # dim is not a valid trailing dimension. (valid trailing dimensions e.g. for bounds
 # vars; do not need to have an associated coordinate variable CF doc 7.1)
 # print "WARNING: Dimension:",dim,"does not have an associated coordinate variable"
-##                 self.warn = self.warn+1
+#                 self.warn = self.warn+1
 
         # -------------------------------------------------------
     def getTypeCode(self, obj):
@@ -2000,7 +2000,7 @@ class CFChecker:
         rc = 1
         var = self.f[varName]
 
-##    varType = self.getTypeCode(var)
+#       varType = self.getTypeCode(var)
 
         if '_FillValue' in var.__dict__:
             fillValue = var.__dict__['_FillValue']
@@ -2010,11 +2010,11 @@ class CFChecker:
 # if varType == 'c' or varType == types.StringType:
 # if type(fillValue) != types.StringType:
 # print "ERROR (2.5.1): _FillValue of different type to variable"
-##                 self.err = self.err+1
+#                 self.err = self.err+1
 # rc=0
 # elif varType != self.getTypeCode(fillValue):
 # print "ERROR (2.5.1): _FillValue of different type to variable"
-##             self.err = self.err+1
+#             self.err = self.err+1
 # rc=0
 
             if 'valid_range' in var.attributes:
@@ -2052,20 +2052,20 @@ class CFChecker:
 # else:
 # _FillValue not present
 # print "WARNING (2.5.1): Use of 'missing_value' attribute is deprecated"
-##                self.warn = self.warn+1
+#                self.warn = self.warn+1
 
 # 05.02.08 No longer needed as this is now detected by chkAttribute as missing_value
 # has an attribute type of 'D'. See Trac #022
-##             typeError = 0
+#             typeError = 0
 # if varType == 'c':
 # if type(missingValue) != types.StringType:
-##                     typeError = 1
+#                     typeError = 1
 # elif varType != self.getTypeCode(missingValue):
-##                 typeError = 1
-##
+#                 typeError = 1
+#
 # if typeError:
 # print "ERROR (2.5.1): missing_value of different type to variable"
-##                 self.err = self.err+1
+#                 self.err = self.err+1
 # rc=0
 
                     if var.id in self.boundsVars:
