@@ -617,9 +617,9 @@ def ogr_sql_sqlite_8():
 
     expect = [171, 172, 173, 179]
 
-    sql_lyr = ds.ExecuteSQL(   \
-        'SELECT p.*, il.name FROM poly p ' \
-        + 'LEFT JOIN "data/idlink.dbf".idlink il USING (eas_id) ' \
+    sql_lyr = ds.ExecuteSQL(
+        'SELECT p.*, il.name FROM poly p '
+        + 'LEFT JOIN "data/idlink.dbf".idlink il USING (eas_id) '
         + 'WHERE eas_id > 170 ORDER BY eas_id', dialect='SQLite')
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'eas_id', expect)
@@ -1349,7 +1349,7 @@ def ogr_sql_sqlite_16(service=None, template='http://127.0.0.1:%d/geocoding?q=%%
                 ds.ReleaseResultSet(sql_lyr)
                 break
 
-            if ((sql == "SELECT ogr_geocode('Paris')" or \
+            if ((sql == "SELECT ogr_geocode('Paris')" or
                  sql == "SELECT ogr_geocode('Paris', 'geometry')") and feat.GetGeometryRef() is None) or \
                 (sql == "SELECT ogr_geocode('Paris', '%s')" % name_field and not feat.IsFieldSet(name_field)) or \
                     (sql == "SELECT ogr_geocode('Paris', 'raw')" and not feat.IsFieldSet('raw')):

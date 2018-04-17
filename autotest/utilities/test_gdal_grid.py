@@ -151,7 +151,7 @@ def test_gdal_grid_2():
     ds = gdal.Open(outfiles[-1])
     if ds.GetRasterBand(1).Checksum() != checksum_ref:
         gdaltest.post_reason('bad checksum')
-        print('bad checksum : got %d, expected %d' % \
+        print('bad checksum : got %d, expected %d' %
               (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
     if ds.GetRasterBand(1).GetNoDataValue() != 0.0:
@@ -174,7 +174,7 @@ def test_gdal_grid_2():
     ds = gdal.Open(outfiles[-1])
     if ds.GetRasterBand(1).Checksum() != checksum_ref:
         gdaltest.post_reason('bad checksum')
-        print('bad checksum : got %d, expected %d' % \
+        print('bad checksum : got %d, expected %d' %
               (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
     ds = None
@@ -193,7 +193,7 @@ def test_gdal_grid_2():
     ds = gdal.Open(outfiles[-1])
     if ds.GetRasterBand(1).Checksum() != checksum_ref:
         gdaltest.post_reason('bad checksum')
-        print('bad checksum : got %d, expected %d' % \
+        print('bad checksum : got %d, expected %d' %
               (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
     ds = None
@@ -212,7 +212,7 @@ def test_gdal_grid_2():
     ds = gdal.Open(outfiles[-1])
     if ds.GetRasterBand(1).Checksum() != checksum_ref:
         gdaltest.post_reason('bad checksum')
-        print('bad checksum : got %d, expected %d' % \
+        print('bad checksum : got %d, expected %d' %
               (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
     ds = None
@@ -231,7 +231,7 @@ def test_gdal_grid_2():
     ds = gdal.Open(outfiles[-1])
     if ds.GetRasterBand(1).Checksum() != checksum_ref:
         gdaltest.post_reason('bad checksum')
-        print('bad checksum : got %d, expected %d' % \
+        print('bad checksum : got %d, expected %d' %
               (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
     ds = None
@@ -250,7 +250,7 @@ def test_gdal_grid_2():
     ds = gdal.Open(outfiles[-1])
     if ds.GetRasterBand(1).Checksum() != checksum_ref:
         gdaltest.post_reason('bad checksum')
-        print('bad checksum : got %d, expected %d' % \
+        print('bad checksum : got %d, expected %d' %
               (ds.GetRasterBand(1).Checksum(), checksum_ref))
         return 'fail'
     ds = None
@@ -541,7 +541,7 @@ def test_gdal_grid_5():
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_minimum.tif')
     if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
-        print('bad checksum : got %d, expected %d' % \
+        print('bad checksum : got %d, expected %d' %
               (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
         return 'fail'
     ds_ref = None
@@ -562,7 +562,7 @@ def test_gdal_grid_5():
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_minimum_400_100_120.tif')
     if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
-        print('bad checksum : got %d, expected %d' % \
+        print('bad checksum : got %d, expected %d' %
               (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
         return 'fail'
     ds_ref = None
@@ -593,7 +593,7 @@ def test_gdal_grid_6():
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_maximum.tif')
     if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
-        print('bad checksum : got %d, expected %d' % \
+        print('bad checksum : got %d, expected %d' %
               (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
         return 'fail'
     ds_ref = None
@@ -614,7 +614,7 @@ def test_gdal_grid_6():
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_maximum_100_100.tif')
     if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
-        print('bad checksum : got %d, expected %d' % \
+        print('bad checksum : got %d, expected %d' %
               (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
         return 'fail'
     ds_ref = None
@@ -645,7 +645,7 @@ def test_gdal_grid_7():
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_range.tif')
     if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
-        print('bad checksum : got %d, expected %d' % \
+        print('bad checksum : got %d, expected %d' %
               (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
         return 'fail'
     ds_ref = None
@@ -667,7 +667,7 @@ def test_gdal_grid_7():
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_range_90_90_8p.tif')
     if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
-        print('bad checksum : got %d, expected %d' % \
+        print('bad checksum : got %d, expected %d' %
               (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
         return 'fail'
     ds_ref = None
@@ -697,7 +697,7 @@ def test_gdal_grid_8():
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_count_70_70.tif')
     if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
-        print('bad checksum : got %d, expected %d' % \
+        print('bad checksum : got %d, expected %d' %
               (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
         return 'fail'
     ds_ref = None
@@ -717,7 +717,7 @@ def test_gdal_grid_8():
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_count_300_300.tif')
     if ds.GetRasterBand(1).Checksum() != ds_ref.GetRasterBand(1).Checksum():
-        print('bad checksum : got %d, expected %d' % \
+        print('bad checksum : got %d, expected %d' %
               (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
         return 'fail'
     ds_ref = None

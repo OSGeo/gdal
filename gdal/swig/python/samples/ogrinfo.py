@@ -391,10 +391,10 @@ def ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter, options):
         for iAttr in range(poDefn.GetFieldCount()):
             poField = poDefn.GetFieldDefn(iAttr)
 
-            print("%s: %s (%d.%d)" % ( \
-                poField.GetNameRef(), \
-                poField.GetFieldTypeName(poField.GetType()), \
-                poField.GetWidth(), \
+            print("%s: %s (%d.%d)" % (
+                poField.GetNameRef(),
+                poField.GetFieldTypeName(poField.GetType()),
+                poField.GetWidth(),
                 poField.GetPrecision()))
 
 # --------------------------------------------------------------------
@@ -431,8 +431,8 @@ def DumpReadableFeature(poFeature, options=None):
 
             poFDefn = poDefn.GetFieldDefn(iField)
 
-            line = "  %s (%s) = " % ( \
-                poFDefn.GetNameRef(), \
+            line = "  %s (%s) = " % (
+                poFDefn.GetNameRef(),
                 ogr.GetFieldTypeName(poFDefn.GetType()))
 
             if poFeature.IsFieldSet(iField):

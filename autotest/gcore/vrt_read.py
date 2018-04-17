@@ -46,7 +46,7 @@ import test_cli_utilities
 
 gdaltest_list = []
 
-init_list = [ \
+init_list = [
     ('byte.vrt', 1, 4672, None),
     ('int16.vrt', 1, 4672, None),
     ('uint16.vrt', 1, 4672, None),

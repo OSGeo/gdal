@@ -177,11 +177,11 @@ class GDALPythonServerDataset:
         self.gdal_ds.FlushCache()
         return
 
-    def IRasterIO_Read(self, nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, \
+    def IRasterIO_Read(self, nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                        nBufType, panBandMap, nPixelSpace, nLineSpace, nBandSpace):
-        return self.gdal_ds.ReadRaster(nXOff, nYOff, nXSize, nYSize, \
-                                       buf_xsize=nBufXSize, buf_ysize=nBufYSize, \
-                                       buf_type=nBufType, band_list=panBandMap, \
+        return self.gdal_ds.ReadRaster(nXOff, nYOff, nXSize, nYSize,
+                                       buf_xsize=nBufXSize, buf_ysize=nBufYSize,
+                                       buf_type=nBufType, band_list=panBandMap,
                                        buf_pixel_space=nPixelSpace, buf_line_space=nLineSpace, buf_band_space=nBandSpace)
 
 

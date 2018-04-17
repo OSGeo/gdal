@@ -170,7 +170,7 @@ def gdal_edit(argv):
             elif val.lower() == 'undefined':
                 val = gdal.GCI_Undefined
             else:
-                sys.stderr.write('Unsupported color interpretation %s.\n' % val + \
+                sys.stderr.write('Unsupported color interpretation %s.\n' % val +
                                  'Only red, green, blue, alpha, gray, undefined are supported.\n')
                 return Usage()
             colorinterp[band] = val

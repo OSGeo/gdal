@@ -110,14 +110,14 @@ while True:
         non_empty = True
         pos_after += len('>0')
 
-    if not empty and not non_empty and ( \
-            content[pos_after:].startswith(' )') or \
-            content[pos_after:].startswith(')') or \
-            content[pos_after:].startswith(' &&') or \
-            content[pos_after:].startswith(' ||') or \
-            content[pos_after:].startswith('&&') or \
-            content[pos_after:].startswith('||') or \
-            content[pos_after:].startswith(' ?') or \
+    if not empty and not non_empty and (
+            content[pos_after:].startswith(' )') or
+            content[pos_after:].startswith(')') or
+            content[pos_after:].startswith(' &&') or
+            content[pos_after:].startswith(' ||') or
+            content[pos_after:].startswith('&&') or
+            content[pos_after:].startswith('||') or
+            content[pos_after:].startswith(' ?') or
             content[pos_after:].startswith('?')):
         if content[pos_after] != ' ':
             extra_space = ' '
@@ -126,7 +126,7 @@ while True:
         while content[pos_cur] in [' ', '\n', '\t']:
             pos_cur -= 1
         pos_cur += 1
-        if (content[pos_after:].startswith(' ?') or \
+        if (content[pos_after:].startswith(' ?') or
             content[pos_after:].startswith('?')) and \
            (content[pos_cur - 1] == '(' or content[pos_cur - 1] == ','):
             non_empty = True

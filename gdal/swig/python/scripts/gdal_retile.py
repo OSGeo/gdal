@@ -271,11 +271,11 @@ class mosaic_info:
 
     def report(self):
         print('Filename: ' + self.filename)
-        print('File Size: %dx%dx%d' \
+        print('File Size: %dx%dx%d'
               % (self.xsize, self.ysize, self.bands))
-        print('Pixel Size: %f x %f' \
+        print('Pixel Size: %f x %f'
               % (self.scaleX, self.scaleY))
-        print('UL:(%f,%f)   LR:(%f,%f)' \
+        print('UL:(%f,%f)   LR:(%f,%f)'
               % (self.ulx, self.uly, self.lrx, self.lry))
 
 

@@ -59,7 +59,7 @@ def envi_1():
 
 gdaltest_list = []
 
-init_list = [ \
+init_list = [
     ('byte.raw', 1, 4672, None),
     ('int16.raw', 1, 4672, None),
     ('uint16.raw', 1, 4672, None),

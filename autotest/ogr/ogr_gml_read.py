@@ -4174,7 +4174,7 @@ def ogr_gml_79():
              ]
     for (srsname_format, expected_srsname, expected_coords) in tests:
 
-        ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_79.xml', \
+        ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_79.xml',
                                                          options=['FORMAT=GML3', 'SRSNAME_FORMAT=' + srsname_format])
         lyr = ds.CreateLayer('firstlayer', srs=sr)
         feat = ogr.Feature(lyr.GetLayerDefn())
