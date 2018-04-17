@@ -231,8 +231,6 @@ class Doxy2SWIG:
 
     def do_memberdef(self, node):
         prot = node.attributes['prot'].value
-        id = node.attributes['id'].value
-        kind = node.attributes['kind'].value
         tmp = node.parentNode.parentNode.parentNode
         compdef = tmp.getElementsByTagName('compounddef')[0]
         cdef_kind = compdef.attributes['kind'].value
