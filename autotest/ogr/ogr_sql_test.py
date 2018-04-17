@@ -692,10 +692,10 @@ def ogr_sql_27():
 
     ds = ogr.Open('data/testdatetime.csv')
 
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM testdatetime WHERE " \
-                            "timestamp < '2010/04/01 00:00:00' AND " \
-                            "timestamp > '2009/11/15 11:59:59' AND " \
-                            "timestamp != '2009/12/31 23:00:00' " \
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM testdatetime WHERE "
+                            "timestamp < '2010/04/01 00:00:00' AND "
+                            "timestamp > '2009/11/15 11:59:59' AND "
+                            "timestamp != '2009/12/31 23:00:00' "
                             "ORDER BY timestamp DESC")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'name', ['foo5', 'foo4'])

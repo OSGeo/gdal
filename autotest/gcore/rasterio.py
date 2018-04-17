@@ -896,8 +896,8 @@ def rasterio_12():
         mem_ds.GetRasterBand(i + 1).WriteArray(numpy.array([[0, 0, 0, 0], [0, 255, 0, 0], [0, 0, 0, 0]]))
 
     tab = [0]
-    ar_ds = mem_ds.ReadAsArray(0, 0, 4, 3, buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic, \
-                               callback=rasterio_12_progress_callback, \
+    ar_ds = mem_ds.ReadAsArray(0, 0, 4, 3, buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic,
+                               callback=rasterio_12_progress_callback,
                                callback_data=tab)
     if tab[0] != 1.0:
         gdaltest.post_reason('failure')

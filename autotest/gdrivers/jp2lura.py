@@ -1733,7 +1733,7 @@ def jp2lura_41():
         return 'skip'
 
     src_ds = gdal.Open('data/byte.jp2')
-    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds, \
+    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds,
                                              options=['USE_SRC_CODESTREAM=YES', '@PROFILE=PROFILE_1', 'GEOJP2=NO', 'GMLJP2=NO'])
     if src_ds.GetRasterBand(1).Checksum() != out_ds.GetRasterBand(1).Checksum():
         gdaltest.post_reason('fail')
@@ -1748,7 +1748,7 @@ def jp2lura_41():
     # Warning if ignored option
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds, \
+    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds,
                                              options=['USE_SRC_CODESTREAM=YES', 'QUALITY=1'])
     gdal.PopErrorHandler()
     del out_ds
@@ -1762,7 +1762,7 @@ def jp2lura_41():
     src_ds = gdal.Open('data/byte.tif')
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds, \
+    out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds,
                                              options=['USE_SRC_CODESTREAM=YES'])
     gdal.PopErrorHandler()
     del out_ds

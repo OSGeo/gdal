@@ -923,7 +923,7 @@ def hfa_xforms_3rd():
             return 'fail'
 
         if abs(value - check_item[1]) > abs(value / 100000.0):
-            gdaltest.post_reason('metadata item %s has wrong value: %.15g' % \
+            gdaltest.post_reason('metadata item %s has wrong value: %.15g' %
                                  (check_item[0], value))
             return 'fail'
 
@@ -1172,7 +1172,7 @@ def hfa_camera_md():
             return 'fail'
 
         if value != check_item[1]:
-            gdaltest.post_reason('metadata item %s has wrong value: %s' % \
+            gdaltest.post_reason('metadata item %s has wrong value: %s' %
                                  (check_item[0], value))
             return 'fail'
 

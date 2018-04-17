@@ -186,7 +186,7 @@ def compare_db(golden_db, new_db, options=[]):
 
     # Bands
     if golden_db.RasterCount != new_db.RasterCount:
-        print('Band count mismatch (golden=%d, new=%d)' \
+        print('Band count mismatch (golden=%d, new=%d)'
               % (golden_db.RasterCount, new_db.RasterCount))
         found_diff += 1
 
@@ -231,7 +231,7 @@ def compare_sds(golden_db, new_db, options=[]):
         sds_diff = compare_db(sub_golden_db, sub_new_db, options)
         found_diff += sds_diff
         if sds_diff > 0:
-            print('%d differences found between:\n  %s\n  %s' \
+            print('%d differences found between:\n  %s\n  %s'
                   % (sds_diff, golden_sds[key], new_sds[key]))
 
     return found_diff

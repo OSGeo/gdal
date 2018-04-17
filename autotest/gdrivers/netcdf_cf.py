@@ -428,7 +428,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
             print("About to create raster in chosen SRS")
         # projVrt = os.path.join(outPath, "%s_%s.vrt" % \
         #    (origTiff.rstrip('.tif'), proj[0] ))
-        projRaster = os.path.join(outPath, "%s_%s.%s" % \
+        projRaster = os.path.join(outPath, "%s_%s.%s" %
                                   (origTiff.rstrip('.tif'), proj[0], intExt))
         srs = osr.SpatialReference()
         srs.SetFromUserInput(proj[2])
@@ -442,7 +442,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         if not silent:
             print("Warped %s to %s" % (proj[0], projRaster))
 
-        projNc = os.path.join(outPath, "%s_%s.nc" % \
+        projNc = os.path.join(outPath, "%s_%s.nc" %
                               (origTiff.rstrip('.tif'), proj[0]))
         # Force GDAL tags to be written to make testing easier, with preserved datum etc
         #ncCoOpts = "-co WRITE_GDAL_TAGS=yes"
@@ -466,21 +466,21 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         else:
             resFile.write("BAD\n")
             if 'missingProjName' in resPerProj[proj[0]]:
-                resFile.write("\tMissing proj name '%s'\n" % \
+                resFile.write("\tMissing proj name '%s'\n" %
                               (resPerProj[proj[0]]['missingProjName']))
             for attrib in resPerProj[proj[0]]['missingAttrs']:
                 resFile.write("\tMissing attrib '%s'\n" % (attrib))
             for cVarStdName in resPerProj[proj[0]]['missingCoordVarStdNames']:
-                resFile.write("\tMissing coord var with std name '%s'\n" \
+                resFile.write("\tMissing coord var with std name '%s'\n"
                               % (cVarStdName))
             if 'cfcheck_error' in resPerProj[proj[0]]:
-                resFile.write("\tFailed cf check: %s\n" % \
+                resFile.write("\tFailed cf check: %s\n" %
                               (resPerProj[proj[0]]['cfcheck_error']))
 
         # test file copy
         # We now copy to a new file, just to be safe
         projNc2 = projNc.rstrip('.nc') + '2.nc'
-        projRaster2 = os.path.join(outPath, "%s_%s2.%s" % \
+        projRaster2 = os.path.join(outPath, "%s_%s2.%s" %
                                    (origTiff.rstrip('.tif'), proj[0], intExt))
 
         tst_res[i_t + 1] = netcdf_test_copy(projRaster, 1, None, projNc2, [], 'NETCDF')
@@ -501,7 +501,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
     resFile = open(os.path.join(outPath, resFilename), "r")
     resStr = resFile.read()
     if resStr.find('BAD') != -1:
-        print('\nCF projection tests failed, here is the output (stored in file %s)\n' % \
+        print('\nCF projection tests failed, here is the output (stored in file %s)\n' %
               (os.path.join(outPath, resFilename)))
         print(resStr)
         result = 'fail'

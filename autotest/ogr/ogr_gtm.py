@@ -309,7 +309,7 @@ def ogr_gtm_write_1():
     dst_feat.SetField('name', '3rd Street')
     dst_feat.SetField('type', 2)
     dst_feat.SetField('color', 0x000000)
-    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTILINESTRING ((-21.12 -47.1, -21.22 -47.2, -21.32 -47.3, -21.42 -47.4),' + \
+    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTILINESTRING ((-21.12 -47.1, -21.22 -47.2, -21.32 -47.3, -21.42 -47.4),' +
                                                    '(-21.12 -47.1, -21.02 -47.0, -20.92 -46.9))'))
     if lyr.CreateFeature(dst_feat) != 0:
         gdaltest.post_reason('CreateFeature failed.')

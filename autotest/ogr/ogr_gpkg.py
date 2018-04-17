@@ -951,7 +951,7 @@ def ogr_gpkg_15():
         return 'skip'
 
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(
-        'SELECT ST_IsEmpty(geom), ST_SRID(geom), ST_GeometryType(geom), ' + \
+        'SELECT ST_IsEmpty(geom), ST_SRID(geom), ST_GeometryType(geom), ' +
         'ST_MinX(geom), ST_MinY(geom), ST_MaxX(geom), ST_MaxY(geom) FROM \"point_no_spi-but-with-dashes\" WHERE fid = 1')
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != 0 or feat.GetField(1) != 32631 or \
@@ -964,7 +964,7 @@ def ogr_gpkg_15():
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(
-        'SELECT ST_IsEmpty(geom), ST_SRID(geom), ST_GeometryType(geom), ' + \
+        'SELECT ST_IsEmpty(geom), ST_SRID(geom), ST_GeometryType(geom), ' +
         'ST_MinX(geom), ST_MinY(geom), ST_MaxX(geom), ST_MaxY(geom) FROM tbl_linestring_renamed WHERE geom IS NULL')
     feat = sql_lyr.GetNextFeature()
     if not feat.IsFieldNull(0) or not feat.IsFieldNull(1) or not feat.IsFieldNull(2) or \
@@ -1359,7 +1359,7 @@ def ogr_gpkg_16():
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpk_16.gpkg')
     ds.CreateLayer('foo')
-    ds.ExecuteSQL("INSERT INTO gpkg_extensions ( table_name, column_name, " + \
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions ( table_name, column_name, " +
                   "extension_name, definition, scope ) VALUES ( 'foo', 'geom', 'myext', 'some ext', 'write-only' ) ")
     ds = None
 
@@ -1411,7 +1411,7 @@ def ogr_gpkg_16():
     # Test with unsupported geometry type
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpk_16.gpkg')
     ds.CreateLayer('foo')
-    ds.ExecuteSQL("INSERT INTO gpkg_extensions ( table_name, column_name, " + \
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions ( table_name, column_name, " +
                   "extension_name, definition, scope ) VALUES ( 'foo', 'geom', 'gpkg_geom_XXXX', 'some ext', 'read-write' ) ")
     ds = None
 
@@ -1429,7 +1429,7 @@ def ogr_gpkg_16():
     # Test with database wide unknown extension
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpk_16.gpkg')
     ds.CreateLayer('foo')
-    ds.ExecuteSQL("INSERT INTO gpkg_extensions ( " + \
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions ( " +
                   "extension_name, definition, scope ) VALUES ( 'myext', 'some ext', 'write-only' ) ")
     ds = None
 

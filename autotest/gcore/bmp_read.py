@@ -37,7 +37,7 @@ import gdaltest
 
 gdaltest_list = []
 
-init_list = [ \
+init_list = [
     ('1bit.bmp', 1, 200, None),
     ('4bit_pal.bmp', 1, 2587, None),
     ('8bit_pal.bmp', 1, 4672, None),

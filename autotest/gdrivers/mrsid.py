@@ -112,8 +112,8 @@ def mrsid_1():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
 
-    ret = tst.testOpen(check_gt=gt, \
-                       check_stat=(0.0, 255.0, 103.319, 55.153), \
+    ret = tst.testOpen(check_gt=gt,
+                       check_stat=(0.0, 255.0, 103.319, 55.153),
                        check_approx_stat=(2.0, 243.0, 103.131, 43.978))
 
     if ret != 'success':
@@ -245,8 +245,8 @@ def mrsid_4():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
 
-    ret = tst.testOpen(check_gt=gt, check_prj=prj, \
-                       check_stat=(0.0, 255.0, 103.112, 52.477), \
+    ret = tst.testOpen(check_gt=gt, check_prj=prj,
+                       check_stat=(0.0, 255.0, 103.112, 52.477),
                        check_approx_stat=(0.0, 255.0, 102.684, 51.614))
 
     try:

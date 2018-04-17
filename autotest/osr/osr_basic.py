@@ -68,7 +68,7 @@ def osr_basic_1():
     for parm in parm_list:
         value = utm_srs.GetProjParm(parm[0], -1111)
         if abs(value - parm[1]) > .00000000000010:
-            gdaltest.post_reason('got %g for %s instead of %g.' \
+            gdaltest.post_reason('got %g for %s instead of %g.'
                                  % (value, parm[0], parm[1]))
             return 'fail'
 
@@ -77,13 +77,13 @@ def osr_basic_1():
 
     for auth in auth_list:
         if utm_srs.GetAuthorityName(auth[0]) != 'EPSG':
-            gdaltest.post_reason('Got authority %s instead of EPSG for %s' \
+            gdaltest.post_reason('Got authority %s instead of EPSG for %s'
                                  % (utm_srs.GetAuthorityName(auth[0]),
                                      auth[0]))
             return 'fail'
 
         if str(utm_srs.GetAuthorityCode(auth[0])) != auth[1]:
-            gdaltest.post_reason('Got code %s instead of %s for %s' \
+            gdaltest.post_reason('Got code %s instead of %s for %s'
                                  % (utm_srs.GetAuthorityName(auth[0]),
                                      auth[1], auth[0]))
             return 'fail'
@@ -111,7 +111,7 @@ def osr_basic_2():
     for parm in parm_list:
         value = srs.GetProjParm(parm[0], -1111)
         if not gdaltest.approx_equal(parm[1], value):
-            gdaltest.post_reason('got %.16g for %s instead of %.16g.' \
+            gdaltest.post_reason('got %.16g for %s instead of %.16g.'
                                  % (value, parm[0], parm[1]))
             return 'fail'
 
@@ -122,13 +122,13 @@ def osr_basic_2():
 
     for auth in auth_list:
         if srs.GetAuthorityName(auth[0]) != 'EPSG':
-            gdaltest.post_reason('Got authority %s instead of EPSG for %s' \
+            gdaltest.post_reason('Got authority %s instead of EPSG for %s'
                                  % (srs.GetAuthorityName(auth[0]),
                                      auth[0]))
             return 'fail'
 
         if str(srs.GetAuthorityCode(auth[0])) != auth[1]:
-            gdaltest.post_reason('Got code %s instead of %s for %s' \
+            gdaltest.post_reason('Got code %s instead of %s for %s'
                                  % (srs.GetAuthorityCode(auth[0]),
                                      auth[1], auth[0]))
             return 'fail'
@@ -158,7 +158,7 @@ def osr_basic_3():
     for parm in parm_list:
         value = srs.GetProjParm(parm[0], -1111)
         if not gdaltest.approx_equal(parm[1], value):
-            gdaltest.post_reason('got %.16g for %s instead of %.16g.' \
+            gdaltest.post_reason('got %.16g for %s instead of %.16g.'
                                  % (value, parm[0], parm[1]))
             return 'fail'
 
@@ -167,13 +167,13 @@ def osr_basic_3():
 
     for auth in auth_list:
         if srs.GetAuthorityName(auth[0]) != 'EPSG':
-            gdaltest.post_reason('Got authority %s instead of EPSG for %s' \
+            gdaltest.post_reason('Got authority %s instead of EPSG for %s'
                                  % (srs.GetAuthorityName(auth[0]),
                                      auth[0]))
             return 'fail'
 
         if str(srs.GetAuthorityCode(auth[0])) != auth[1]:
-            gdaltest.post_reason('Got code %s instead of %s for %s' \
+            gdaltest.post_reason('Got code %s instead of %s for %s'
                                  % (srs.GetAuthorityCode(auth[0]),
                                      auth[1], auth[0]))
             return 'fail'

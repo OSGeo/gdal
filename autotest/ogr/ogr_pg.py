@@ -375,7 +375,7 @@ def ogr_pg_6():
 
     sql_lyr.ResetReading()
 
-    geom = ogr.CreateGeometryFromWkt( \
+    geom = ogr.CreateGeometryFromWkt(
         'LINESTRING(-10 -10,0 0)')
     sql_lyr.SetSpatialFilter(geom)
     geom.Destroy()
@@ -406,7 +406,7 @@ def ogr_pg_7():
 
     gdaltest.pg_lyr.SetAttributeFilter(None)
 
-    geom = ogr.CreateGeometryFromWkt( \
+    geom = ogr.CreateGeometryFromWkt(
         'LINESTRING(479505 4763195,480526 4762819)')
     gdaltest.pg_lyr.SetSpatialFilter(geom)
     geom.Destroy()
@@ -462,7 +462,7 @@ def ogr_pg_8():
         return 'fail'
 
     if feat_read.GetField('shortname') != 'Crazy"\'L':
-        gdaltest.post_reason('Vvalue not properly escaped or truncated:' \
+        gdaltest.post_reason('Vvalue not properly escaped or truncated:'
                              + feat_read.GetField('shortname'))
         return 'fail'
 
@@ -504,7 +504,7 @@ def ogr_pg_9():
 
     shortname = feat.GetField('SHORTNAME')
     if shortname[:5] != 'Reset':
-        gdaltest.post_reason('SetFeature() did not update SHORTNAME, got %s.'\
+        gdaltest.post_reason('SetFeature() did not update SHORTNAME, got %s.'
                              % shortname)
         return 'fail'
 
@@ -5120,8 +5120,8 @@ def ogr_pg_79():
         return 'skip'
 
     # PRELUDE_STATEMENTS starting with BEGIN (use case: pg_bouncer in transaction pooling)
-    ds = gdal.OpenEx('PG:' + gdaltest.pg_connection_string, \
-                     gdal.OF_VECTOR | gdal.OF_UPDATE, \
+    ds = gdal.OpenEx('PG:' + gdaltest.pg_connection_string,
+                     gdal.OF_VECTOR | gdal.OF_UPDATE,
                      open_options=['PRELUDE_STATEMENTS=BEGIN; SET LOCAL statement_timeout TO "1h";',
                                    'CLOSING_STATEMENTS=COMMIT;'])
     sql_lyr = ds.ExecuteSQL('SHOW statement_timeout')
@@ -5146,8 +5146,8 @@ def ogr_pg_79():
         return 'fail'
 
     # random PRELUDE_STATEMENTS
-    ds = gdal.OpenEx('PG:' + gdaltest.pg_connection_string, \
-                     gdal.OF_VECTOR | gdal.OF_UPDATE, \
+    ds = gdal.OpenEx('PG:' + gdaltest.pg_connection_string,
+                     gdal.OF_VECTOR | gdal.OF_UPDATE,
                      open_options=['PRELUDE_STATEMENTS=SET statement_timeout TO "1h"'])
     sql_lyr = ds.ExecuteSQL('SHOW statement_timeout')
     f = sql_lyr.GetNextFeature()
@@ -5172,8 +5172,8 @@ def ogr_pg_79():
 
     # Test wrong PRELUDE_STATEMENTS
     with gdaltest.error_handler():
-        ds = gdal.OpenEx('PG:' + gdaltest.pg_connection_string, \
-                         gdal.OF_VECTOR | gdal.OF_UPDATE, \
+        ds = gdal.OpenEx('PG:' + gdaltest.pg_connection_string,
+                         gdal.OF_VECTOR | gdal.OF_UPDATE,
                          open_options=['PRELUDE_STATEMENTS=BEGIN;error SET LOCAL statement_timeout TO "1h";',
                                        'CLOSING_STATEMENTS=COMMIT;'])
     if ds is not None:
@@ -5181,8 +5181,8 @@ def ogr_pg_79():
         return 'fail'
 
     # Test wrong CLOSING_STATEMENTS
-    ds = gdal.OpenEx('PG:' + gdaltest.pg_connection_string, \
-                     gdal.OF_VECTOR | gdal.OF_UPDATE, \
+    ds = gdal.OpenEx('PG:' + gdaltest.pg_connection_string,
+                     gdal.OF_VECTOR | gdal.OF_UPDATE,
                      open_options=['PRELUDE_STATEMENTS=BEGIN; SET LOCAL statement_timeout TO "1h";',
                                    'CLOSING_STATEMENTS=COMMIT;error'])
     gdal.ErrorReset()

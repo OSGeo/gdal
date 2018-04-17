@@ -77,9 +77,9 @@ def substitute_inspire_schemas_location(location, inspire_schemas_location):
 # Validation function
 
 
-def validate(xml_filename_or_content, xsd_filename=None, \
-             application_schema_ns=None, \
-             ogc_schemas_location=None, \
+def validate(xml_filename_or_content, xsd_filename=None,
+             application_schema_ns=None,
+             ogc_schemas_location=None,
              inspire_schemas_location=None):
 
     try:
@@ -312,10 +312,10 @@ def transform_inspire_abs_links_to_ref_links(path, level=0):
 # Download OGC schemas
 
 
-def download_ogc_schemas(ogc_schemas_url='http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip', \
-                         xlink_xsd_url='http://www.w3.org/1999/xlink.xsd', \
-                         xml_xsd_url='http://www.w3.org/2001/xml.xsd', \
-                         target_dir='.', \
+def download_ogc_schemas(ogc_schemas_url='http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip',
+                         xlink_xsd_url='http://www.w3.org/1999/xlink.xsd',
+                         xml_xsd_url='http://www.w3.org/2001/xml.xsd',
+                         target_dir='.',
                          target_subdir='SCHEMAS_OPENGIS_NET',
                          force_download=False,
                          max_download_duration=None):
@@ -367,7 +367,7 @@ def download_ogc_schemas(ogc_schemas_url='http://schemas.opengis.net/SCHEMAS_OPE
 # Download INSPIRE schemas
 
 
-def download_inspire_schemas(target_dir='.', \
+def download_inspire_schemas(target_dir='.',
                              target_subdir='inspire_schemas',
                              force_download=False):
 
@@ -565,8 +565,8 @@ if __name__ == '__main__':
     if filename is None:
         Usage()
 
-    if validate(filename, xsd_filename=xsd_filename, \
-                application_schema_ns=application_schema_ns, \
+    if validate(filename, xsd_filename=xsd_filename,
+                application_schema_ns=application_schema_ns,
                 ogc_schemas_location=ogc_schemas_location,
                 inspire_schemas_location=inspire_schemas_location):
         sys.exit(0)

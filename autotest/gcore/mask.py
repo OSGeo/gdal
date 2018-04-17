@@ -1015,7 +1015,7 @@ def mask_23():
 
 def mask_24():
 
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_24.tif', 100, 100, 4, \
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_24.tif', 100, 100, 4,
                                               gdal.GDT_UInt16, options=['PHOTOMETRIC=RGB', 'ALPHA=YES'])
     ds.GetRasterBand(1).Fill(65565)
     ds.GetRasterBand(2).Fill(65565)

@@ -175,7 +175,7 @@ if (colordataset.RasterCount != 3 and colordataset.RasterCount != 4):
 
 # define output format, name, size, type and set projection
 out_driver = gdal.GetDriverByName(format)
-outdataset = out_driver.Create(dst_color_filename, colordataset.RasterXSize, \
+outdataset = out_driver.Create(dst_color_filename, colordataset.RasterXSize,
                                colordataset.RasterYSize, colordataset.RasterCount, datatype)
 outdataset.SetProjection(hilldataset.GetProjection())
 outdataset.SetGeoTransform(hilldataset.GetGeoTransform())

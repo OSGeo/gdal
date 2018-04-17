@@ -38,7 +38,7 @@ from osgeo import gdal
 
 gdaltest_list = []
 
-init_list = [ \
+init_list = [
     ('byte_3.hdf', 1, 4672, None),
     ('int16_3.hdf', 1, 4672, None),
     ('uint16_3.hdf', 1, 4672, None),

@@ -879,7 +879,7 @@ def ogr_csv_20():
     lyr.ResetReading()
 
     expect = ['1 - 2', '2-3']
-    got = [lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef(),\
+    got = [lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef(),
            lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef()]
     if got[0] != expect[0]:
         print('column 0 got name %s expected %s' % (str(got[0]), str(expect[0])))
@@ -900,7 +900,7 @@ def ogr_csv_20():
     lyr.ResetReading()
 
     expect = ['field_1', 'field_2']
-    got = [lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef(),\
+    got = [lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef(),
            lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef()]
     if got[0] != expect[0]:
         print('column 0 got name %s expected %s' % (str(got[0]), str(expect[0])))
@@ -1317,7 +1317,7 @@ def ogr_csv_31():
 def ogr_csv_32():
 
     # Without limit, everything will be detected as string
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1338,7 +1338,7 @@ def ogr_csv_32():
             return 'fail'
 
     # Without limit, everything will be detected as string
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=0'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1357,7 +1357,7 @@ def ogr_csv_32():
             return 'fail'
 
     # We limit to the first "1.5" line
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=300', 'QUOTED_FIELDS_AS_STRING=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1381,7 +1381,7 @@ def ogr_csv_32():
             return 'fail'
 
     # Without QUOTED_FIELDS_AS_STRING=YES, str3 will be detected as integer
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=300'])
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('str3')).GetType() != ogr.OFTInteger:
@@ -1389,7 +1389,7 @@ def ogr_csv_32():
         return 'fail'
 
     # We limit to the first 2 lines
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'QUOTED_FIELDS_AS_STRING=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1413,7 +1413,7 @@ def ogr_csv_32():
             return 'fail'
 
     # Test AUTODETECT_WIDTH=YES
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'AUTODETECT_WIDTH=YES', 'QUOTED_FIELDS_AS_STRING=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1437,7 +1437,7 @@ def ogr_csv_32():
             return 'fail'
 
     # Test AUTODETECT_WIDTH=STRING_ONLY
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'AUTODETECT_WIDTH=STRING_ONLY', 'QUOTED_FIELDS_AS_STRING=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1461,11 +1461,11 @@ def ogr_csv_32():
             return 'fail'
 
     # Test KEEP_SOURCE_COLUMNS=YES
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'KEEP_SOURCE_COLUMNS=YES', 'QUOTED_FIELDS_AS_STRING=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    col_values = ['', 1.5, '1.5', 1, '1', 1.5, '1.5', 2, '2', None, None, \
+    col_values = ['', 1.5, '1.5', 1, '1', 1.5, '1.5', 2, '2', None, None,
                   '2014/09/27 19:01:00', '2014-09-27 19:01:00', '2014/09/27 00:00:00', '2014-09-27', '2014/09/27 20:00:00', '2014-09-27 20:00:00',
                   '2014/09/27', '2014-09-27', '12:34:56', '12:34:56', 'a', 'a', '1', '1', '1.5', '2014-09-27 19:01:00', '2014-09-27', '19:01:00',
                   '2014/09/27 00:00:00+00', '2014-09-27T00:00:00Z']
@@ -1493,7 +1493,7 @@ def ogr_csv_32():
                 8,  # Value with a width greater than field width found in record 8 for field str1
                 9,  # Value with a precision greater than field precision found in record 9 for field real1
                 ]:
-        ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+        ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
                          open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'AUTODETECT_WIDTH=YES'])
         lyr = ds.GetLayer(0)
         gdal.ErrorReset()
@@ -1511,7 +1511,7 @@ def ogr_csv_32():
                            """foo,bar
 1.2,
 1234567890123,""")
-    ds = gdal.OpenEx('/vsimem/testtypeautodetect.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('/vsimem/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES'])
     gdal.Unlink('/vsimem/testtypeautodetect.csv')
     lyr = ds.GetLayer(0)
@@ -1529,7 +1529,7 @@ def ogr_csv_32():
 
 def ogr_csv_33():
 
-    ds = gdal.OpenEx('data/testtypeautodetectboolean.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('data/testtypeautodetectboolean.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1599,7 +1599,7 @@ def ogr_csv_33():
 
 def ogr_csv_34():
 
-    ds = gdal.OpenEx('data/testtypeautodetectinteger64.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('data/testtypeautodetectinteger64.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1655,7 +1655,7 @@ def ogr_csv_35():
 VAL1   "VAL 2"   "VAL 3"
 """)
 
-    ds = gdal.OpenEx('/vsimem/ogr_csv_35.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('/vsimem/ogr_csv_35.csv', gdal.OF_VECTOR,
                      open_options=['MERGE_SEPARATOR=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1705,7 +1705,7 @@ def ogr_csv_36():
 5,something else,something else
 """)
 
-    ds = gdal.OpenEx('/vsimem/ogr_csv_36.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('/vsimem/ogr_csv_36.csv', gdal.OF_VECTOR,
                      open_options=['GEOM_POSSIBLE_NAMES=mygeometry,another_field'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1736,7 +1736,7 @@ def ogr_csv_36():
     ds = None
 
     # Test prefix* pattern
-    ds = gdal.OpenEx('/vsimem/ogr_csv_36.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('/vsimem/ogr_csv_36.csv', gdal.OF_VECTOR,
                      open_options=['GEOM_POSSIBLE_NAMES=mygeom*'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1747,7 +1747,7 @@ def ogr_csv_36():
     ds = None
 
     # Test *suffix pattern
-    ds = gdal.OpenEx('/vsimem/ogr_csv_36.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('/vsimem/ogr_csv_36.csv', gdal.OF_VECTOR,
                      open_options=['GEOM_POSSIBLE_NAMES=*geometry'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1758,7 +1758,7 @@ def ogr_csv_36():
     ds = None
 
     # Test *middle* pattern
-    ds = gdal.OpenEx('/vsimem/ogr_csv_36.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('/vsimem/ogr_csv_36.csv', gdal.OF_VECTOR,
                      open_options=['GEOM_POSSIBLE_NAMES=*geom*'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1769,7 +1769,7 @@ def ogr_csv_36():
     ds = None
 
     # Test non matching pattern
-    ds = gdal.OpenEx('/vsimem/ogr_csv_36.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('/vsimem/ogr_csv_36.csv', gdal.OF_VECTOR,
                      open_options=['GEOM_POSSIBLE_NAMES=bla'])
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetGeomFieldCount() != 0:
@@ -1778,7 +1778,7 @@ def ogr_csv_36():
     ds = None
 
     # Check KEEP_GEOM_COLUMNS=NO
-    ds = gdal.OpenEx('/vsimem/ogr_csv_36.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('/vsimem/ogr_csv_36.csv', gdal.OF_VECTOR,
                      open_options=['GEOM_POSSIBLE_NAMES=mygeometry', 'KEEP_GEOM_COLUMNS=NO'])
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldCount() != 2:
@@ -1808,7 +1808,7 @@ def ogr_csv_37():
 3,49,c,
 """)
 
-    ds = gdal.OpenEx('/vsimem/ogr_csv_37.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('/vsimem/ogr_csv_37.csv', gdal.OF_VECTOR,
                      open_options=['X_POSSIBLE_NAMES=long,x', 'Y_POSSIBLE_NAMES=lat,y'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1829,7 +1829,7 @@ def ogr_csv_37():
     ds = None
 
     # Check Z_POSSIBLE_NAMES
-    ds = gdal.OpenEx('/vsimem/ogr_csv_37.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('/vsimem/ogr_csv_37.csv', gdal.OF_VECTOR,
                      open_options=['X_POSSIBLE_NAMES=long,x', 'Y_POSSIBLE_NAMES=lat,y', 'Z_POSSIBLE_NAMES=z'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1850,7 +1850,7 @@ def ogr_csv_37():
     ds = None
 
     # Check KEEP_GEOM_COLUMNS=NO
-    ds = gdal.OpenEx('/vsimem/ogr_csv_37.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('/vsimem/ogr_csv_37.csv', gdal.OF_VECTOR,
                      open_options=['X_POSSIBLE_NAMES=long,x', 'Y_POSSIBLE_NAMES=lat,y', 'KEEP_GEOM_COLUMNS=NO'])
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldCount() != 3:
@@ -1945,7 +1945,7 @@ def ogr_csv_40():
 49,2,0101000020E61000004486E281C5C257C068B89DDA998F4640,1
 """)
 
-    ds = gdal.OpenEx('/vsimem/ogr_csv_40.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('/vsimem/ogr_csv_40.csv', gdal.OF_VECTOR,
                      open_options=['X_POSSIBLE_NAMES=longitude', 'Y_POSSIBLE_NAMES=latitude', 'GEOM_POSSIBLE_NAMES=the_geom', 'KEEP_GEOM_COLUMNS=NO'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1963,7 +1963,7 @@ def ogr_csv_40():
 0101000020E61000004486E281C5C257C068B89DDA998F4640,49,2,1
 """)
 
-    ds = gdal.OpenEx('/vsimem/ogr_csv_40.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('/vsimem/ogr_csv_40.csv', gdal.OF_VECTOR,
                      open_options=['X_POSSIBLE_NAMES=longitude', 'Y_POSSIBLE_NAMES=latitude', 'GEOM_POSSIBLE_NAMES=the_geom', 'KEEP_GEOM_COLUMNS=NO'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1989,7 +1989,7 @@ def ogr_csv_41():
 1,,bar
 """)
 
-    ds = gdal.OpenEx('/vsimem/ogr_csv_41.csv', gdal.OF_VECTOR, \
+    ds = gdal.OpenEx('/vsimem/ogr_csv_41.csv', gdal.OF_VECTOR,
                      open_options=['GEOM_POSSIBLE_NAMES=the_geom', 'KEEP_GEOM_COLUMNS=NO'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
