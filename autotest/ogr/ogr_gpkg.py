@@ -100,7 +100,7 @@ def ogr_gpkg_1():
 
     try:
         os.remove('tmp/gpkg_test.gpkg')
-    except:
+    except OSError:
         pass
 
     # This is to speed-up the runtime of tests on EXT4 filesystems
@@ -4687,7 +4687,7 @@ def ogr_gpkg_cleanup():
 
     try:
         os.remove('tmp/gpkg_test.gpkg')
-    except:
+    except OSError:
         pass
 
     return 'success'

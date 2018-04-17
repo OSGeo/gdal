@@ -343,7 +343,7 @@ def test_gdal_edit_py_cleanup():
 
     try:
         os.unlink('tmp/test_gdal_edit_py.tif')
-    except:
+    except OSError:
         pass
 
     return 'success'

@@ -37,7 +37,7 @@ sys.path.append('../pymod')
 
 try:
     import ctypes
-except:
+except ImportError:
     pass
 
 import gdaltest
@@ -70,7 +70,7 @@ def testnonboundtoswig_init():
 
     try:
         ctypes.cdll
-    except:
+    except ImportError:
         print('cannot find ctypes')
         return 'skip'
 

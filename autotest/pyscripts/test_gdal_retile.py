@@ -51,7 +51,7 @@ def test_gdal_retile_1():
 
     try:
         os.mkdir('tmp/outretile')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile ../gcore/data/byte.tif')
@@ -94,7 +94,7 @@ def test_gdal_retile_2():
 
     try:
         os.mkdir('tmp/outretile2')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile2 ../gcore/data/rgba.tif')
@@ -164,7 +164,7 @@ def test_gdal_retile_3():
 
     try:
         os.mkdir('tmp/outretile3')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile3 tmp/in1.tif tmp/in2.tif')
@@ -207,7 +207,7 @@ def test_gdal_retile_4():
 
     try:
         os.mkdir('tmp/outretile4')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -ps 8 7 -overlap 3 -targetDir tmp/outretile4 ../gcore/data/byte.tif')
@@ -319,10 +319,10 @@ def test_gdal_retile_cleanup():
     for filename in lst:
         try:
             os.remove(filename)
-        except:
+        except OSError:
             try:
                 os.rmdir(filename)
-            except:
+            except OSError:
                 pass
 
     shutil.rmtree('tmp/outretile4')

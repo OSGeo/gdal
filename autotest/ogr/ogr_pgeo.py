@@ -77,12 +77,12 @@ def ogr_pgeo_1(tested_driver='PGeo', other_driver='MDB'):
 
     try:
         os.stat('tmp/cache/Autodesk Test.mdb')
-    except:
+    except OSError:
         try:
             gdaltest.unzip('tmp/cache', 'tmp/cache/PGeoTest.zip')
             try:
                 os.stat('tmp/cache/Autodesk Test.mdb')
-            except:
+            except OSError:
                 return 'skip'
         except:
             return 'skip'

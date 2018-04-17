@@ -147,7 +147,7 @@ def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
     out_folder = 'tmp/out_gdal2tiles_bounds_approx'
     try:
         shutil.rmtree(out_folder)
-    except:
+    except OSError:
         pass
 
     script_path = test_py_scripts.get_py_script('gdal2tiles')
@@ -240,7 +240,7 @@ def _test_utf8(should_raise_unicode=False,
 
     try:
         shutil.rmtree(out_folder)
-    except:
+    except OSError:
         pass
 
     args = '-z 21 %s %s' % (input_file, out_folder)

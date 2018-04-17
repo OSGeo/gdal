@@ -386,7 +386,7 @@ def vrtrawlink_cleanup():
         os.remove('tmp/rawlink5.dat')
         os.remove('tmp/rawlink6.dat')
         os.remove('tmp/rawlink7.dat')
-    except:
+    except OSError:
         pass
     return 'success'
 

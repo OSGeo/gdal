@@ -47,12 +47,12 @@ def ozi_online_1():
 
     try:
         os.stat('tmp/cache/Europe 2001_OZF.map')
-    except:
+    except OSError:
         try:
             gdaltest.unzip('tmp/cache', 'tmp/cache/Europe2001_setup.exe')
             try:
                 os.stat('tmp/cache/Europe 2001_OZF.map')
-            except:
+            except OSError:
                 return 'skip'
         except:
             return 'skip'

@@ -135,7 +135,7 @@ def grib_read_units():
 
     try:
         os.unlink('tmp/ds.mint.bin.aux.xml')
-    except:
+    except OSError:
         pass
 
     shutil.copy('data/grib/ds.mint.bin', 'tmp/ds.mint.bin')
