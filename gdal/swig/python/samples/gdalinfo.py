@@ -205,11 +205,11 @@ def main(argv=None):
                   "  %.16g, %.16g, %.16g\n" \
                   "  %.16g, %.16g, %.16g" % ( \
                       adfGeoTransform[0], \
-                    adfGeoTransform[1], \
-                    adfGeoTransform[2], \
-                    adfGeoTransform[3], \
-                    adfGeoTransform[4], \
-                    adfGeoTransform[5]))
+                      adfGeoTransform[1], \
+                      adfGeoTransform[2], \
+                      adfGeoTransform[3], \
+                      adfGeoTransform[4], \
+                      adfGeoTransform[5]))
 
 # --------------------------------------------------------------------
 #      Report GCPs.
@@ -235,8 +235,8 @@ def main(argv=None):
             print("GCP[%3d]: Id=%s, Info=%s\n" \
                   "          (%.15g,%.15g) -> (%.15g,%.15g,%.15g)" % ( \
                       i, gcp.Id, gcp.Info, \
-                    gcp.GCPPixel, gcp.GCPLine, \
-                    gcp.GCPX, gcp.GCPY, gcp.GCPZ))
+                      gcp.GCPPixel, gcp.GCPLine, \
+                      gcp.GCPX, gcp.GCPY, gcp.GCPZ))
             i = i + 1
 
 # --------------------------------------------------------------------
