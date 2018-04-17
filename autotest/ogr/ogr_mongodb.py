@@ -742,7 +742,7 @@ def ogr_mongodb_2():
         j = f.GetDefnRef().GetFieldIndex(f_ref.GetFieldDefnRef(i).GetNameRef())
         if f.GetField(j) != f_ref.GetField(i) or \
             f.GetFieldDefnRef(j).GetType() != f_ref.GetFieldDefnRef(i).GetType() or \
-            f.GetFieldDefnRef(j).GetSubType() != f_ref.GetFieldDefnRef(i).GetSubType():
+                f.GetFieldDefnRef(j).GetSubType() != f_ref.GetFieldDefnRef(i).GetSubType():
             gdaltest.post_reason('fail')
             f.DumpReadable()
             f_ref.DumpReadable()

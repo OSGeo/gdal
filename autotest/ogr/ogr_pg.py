@@ -1404,7 +1404,7 @@ def test_val_test_23(layer_defn, feat):
         abs(feat.my_float8array[0] - 100.12) > 1e-8 or \
         abs(feat.my_numericarray[0] - 100.12) > 1e-8 or \
         abs(feat.my_numeric5array[0] - 10) > 1e-8 or \
-        abs(feat.my_numeric5_3array[0] - 10.12) > 1e-8:
+            abs(feat.my_numeric5_3array[0] - 10.12) > 1e-8:
         gdaltest.post_reason('Wrong values')
         feat.DumpReadable()
         return 'fail'

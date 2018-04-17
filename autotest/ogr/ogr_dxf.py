@@ -2758,14 +2758,14 @@ def ogr_dxf_38():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (0 2)' \
-        or f.GetStyleString() != 'PEN(c:#000000)':
+            or f.GetStyleString() != 'PEN(c:#000000)':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (0.5 2.0,1 2)' \
-        or f.GetStyleString() != 'PEN(c:#000000)':
+            or f.GetStyleString() != 'PEN(c:#000000)':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3037,14 +3037,14 @@ def ogr_dxf_44():
     # Basic LEADER with no dimension style or override information
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'PEN(c:#ff0000)' \
-        or ogrtest.check_feature_geometry(f, 'LINESTRING Z (-20.9782552979609 38.1443878852919 30,-12.2152357926375 44.793971841437 30,-13.7256166009765 49.0748560186272 30,-13.9025293262723 49.0416613258524 30)') != 0:
+            or ogrtest.check_feature_geometry(f, 'LINESTRING Z (-20.9782552979609 38.1443878852919 30,-12.2152357926375 44.793971841437 30,-13.7256166009765 49.0748560186272 30,-13.9025293262723 49.0416613258524 30)') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'BRUSH(fc:#ff0000)' \
-        or ogrtest.check_feature_geometry(f, 'POLYGON Z ((-20.9601206293303 38.1204894796201 30,-21.121645731992 38.035579873508 30,-20.9963899665916 38.1682862909638 30,-20.9601206293303 38.1204894796201 30))') != 0:
+            or ogrtest.check_feature_geometry(f, 'POLYGON Z ((-20.9601206293303 38.1204894796201 30,-21.121645731992 38.035579873508 30,-20.9963899665916 38.1682862909638 30,-20.9601206293303 38.1204894796201 30))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3052,21 +3052,21 @@ def ogr_dxf_44():
     # LEADER with a custom arrowhead that consists of a polygon and line
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'PEN(c:#00ff00)' \
-        or ogrtest.check_feature_geometry(f, 'LINESTRING Z (26.8 77.6 0,10 65 0,25 55 0,25 50 0,40 65 0,48 65 0,169.282571623465 65.0 0)') != 0:
+            or ogrtest.check_feature_geometry(f, 'LINESTRING Z (26.8 77.6 0,10 65 0,25 55 0,25 50 0,40 65 0,48 65 0,169.282571623465 65.0 0)') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'BRUSH(fc:#00ff00)' \
-        or ogrtest.check_feature_geometry(f, 'POLYGON ((27.2 80.4,30.4 82.8,32.8 79.6,29.6 77.2,27.2 80.4))') != 0:
+            or ogrtest.check_feature_geometry(f, 'POLYGON ((27.2 80.4,30.4 82.8,32.8 79.6,29.6 77.2,27.2 80.4))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'PEN(c:#00ff00)' \
-        or ogrtest.check_feature_geometry(f, 'LINESTRING Z (28.4 78.8 0,26.8 77.6 0)') != 0:
+            or ogrtest.check_feature_geometry(f, 'LINESTRING Z (28.4 78.8 0,26.8 77.6 0)') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3136,21 +3136,21 @@ def ogr_dxf_44():
     # MULTILEADER with multiple leader lines and formatted text
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'PEN(c:#0000ff)' \
-        or ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((7.6425115795681 -8.00285406769102,18.2 -20.0),(19.2913880067389 -13.9367332958948,18.2 -20.0),(18.2 -20.0,38 -20),(54.8204921137545 -22.5800753657327,60.2227692307692 -20.0),(60.2227692307692 -20.0,52.2227692307692 -20.0))') != 0:
+            or ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((7.6425115795681 -8.00285406769102,18.2 -20.0),(19.2913880067389 -13.9367332958948,18.2 -20.0),(18.2 -20.0,38 -20),(54.8204921137545 -22.5800753657327,60.2227692307692 -20.0),(60.2227692307692 -20.0,52.2227692307692 -20.0))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'BRUSH(fc:#0000ff)' \
-        or ogrtest.check_feature_geometry(f, 'POLYGON Z ((7.1420359016196 -8.4432726642857 0,5 -5 0,8.1429872575166 -7.56243547109634 0,7.1420359016196 -8.4432726642857 0))') != 0:
+            or ogrtest.check_feature_geometry(f, 'POLYGON Z ((7.1420359016196 -8.4432726642857 0,5 -5 0,8.1429872575166 -7.56243547109634 0,7.1420359016196 -8.4432726642857 0))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'BRUSH(fc:#0000ff)' \
-        or ogrtest.check_feature_geometry(f, 'POLYGON Z ((18.6352657907565 -13.8186312970179 0,20 -10 0,19.9475102227214 -14.0548352947716 0,18.6352657907565 -13.8186312970179 0))') != 0:
+            or ogrtest.check_feature_geometry(f, 'POLYGON Z ((18.6352657907565 -13.8186312970179 0,20 -10 0,19.9475102227214 -14.0548352947716 0,18.6352657907565 -13.8186312970179 0))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3158,7 +3158,7 @@ def ogr_dxf_44():
     # Note, the text actually is nine question marks, this is not an encoding error
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'LABEL(f:"Calibri",it:1,t:"?????????",p:7,s:4g,w:40,c:#0000ff)' \
-        or ogrtest.check_feature_geometry(f, 'POINT (40.0 -17.9846153846154)') != 0:
+            or ogrtest.check_feature_geometry(f, 'POINT (40.0 -17.9846153846154)') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3167,7 +3167,7 @@ def ogr_dxf_44():
     # different leader color
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'PEN(c:#ff00ff)' \
-        or ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((-41.8919467995818 -22.8930851139176,-36.1215379759023 -17.6108145786645),(-36.1215379759023 -17.6108145786645,-44.0 -19.0))') != 0:
+            or ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((-41.8919467995818 -22.8930851139176,-36.1215379759023 -17.6108145786645),(-36.1215379759023 -17.6108145786645,-44.0 -19.0))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3187,7 +3187,7 @@ def ogr_dxf_44():
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'LABEL(f:"Arial",t:"' + test_text + '",p:2,s:1g,c:#ff0000,a:10)' \
         or f.GetField('Text') != test_text \
-        or ogrtest.check_feature_geometry(f, 'POINT Z (-42.7597068401767 -14.5165110820149 0)') != 0:
+            or ogrtest.check_feature_geometry(f, 'POINT Z (-42.7597068401767 -14.5165110820149 0)') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3240,7 +3240,7 @@ def ogr_dxf_44():
 
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'LABEL(f:"Arial",t:"Splines",p:7,a:342,s:2g,c:#000000)' \
-        or ogrtest.check_feature_geometry(f, 'POINT (110.7043505591 -4.20673403616296)') != 0:
+            or ogrtest.check_feature_geometry(f, 'POINT (110.7043505591 -4.20673403616296)') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
