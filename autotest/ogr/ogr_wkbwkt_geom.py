@@ -80,12 +80,12 @@ class wkb_wkt_unit:
             gdaltest.post_reason('Geometry name differs!')
             return 'fail'
 
- # It turns out this test is too picky about coordinate precision. skip.
- #       if geom_wkb.Equal( geom_wkt ) == 0:
- #           gdaltest.post_reason( 'Geometries not equal!' )
- #           print geom_wkb.ExportToWkt()
- #           print geom_wkt.ExportToWkt()
- #           return 'fail'
+# It turns out this test is too picky about coordinate precision. skip.
+#       if geom_wkb.Equal( geom_wkt ) == 0:
+#           gdaltest.post_reason( 'Geometries not equal!' )
+#           print geom_wkb.ExportToWkt()
+#           print geom_wkt.ExportToWkt()
+#           return 'fail'
 
         geom_wkb.Destroy()
 
