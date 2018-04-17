@@ -39,7 +39,7 @@ from osgeo import gdal
 import gdaltest
 import test_py_scripts
 
-#Usage: gdal_edit [--help-general] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
+# Usage: gdal_edit [--help-general] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
 #                 [-tr xres yres] [-a_nodata value]
 #                 [-unsetgt] [-stats] [-approx_stats]
 #                 [-gcp pixel line easting northing [elevation]]*

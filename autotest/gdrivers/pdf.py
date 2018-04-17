@@ -257,7 +257,7 @@ def pdf_1():
 
     if pdf_checksum_available():
         cs = ds.GetRasterBand(1).Checksum()
-        #if cs != 17740 and cs != 19346:
+        # if cs != 17740 and cs != 19346:
         if cs == 0:
             gdaltest.post_reason('bad checksum')
             print(cs)
@@ -683,10 +683,10 @@ def pdf_info():
 
     src_ds = gdal.Open('data/byte.tif')
     out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_info.pdf', src_ds, options=options)
-    #print(out_ds.GetMetadata())
+    # print(out_ds.GetMetadata())
     out_ds2 = gdaltest.pdf_drv.CreateCopy('tmp/pdf_info_2.pdf', out_ds)
     md = out_ds2.GetMetadata()
-    #print(md)
+    # print(md)
     out_ds2 = None
     out_ds = None
     src_ds = None
@@ -1340,7 +1340,7 @@ def pdf_layers():
     cs1 = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    #if layers != ['LAYER_00_INIT_STATE=ON', 'LAYER_00_NAME=New_Data_Frame', 'LAYER_01_INIT_STATE=ON', 'LAYER_01_NAME=New_Data_Frame.Graticule', 'LAYER_02_INIT_STATE=ON', 'LAYER_02_NAME=Layers', 'LAYER_03_INIT_STATE=ON', 'LAYER_03_NAME=Layers.Measured_Grid', 'LAYER_04_INIT_STATE=ON', 'LAYER_04_NAME=Layers.Graticule']:
+    # if layers != ['LAYER_00_INIT_STATE=ON', 'LAYER_00_NAME=New_Data_Frame', 'LAYER_01_INIT_STATE=ON', 'LAYER_01_NAME=New_Data_Frame.Graticule', 'LAYER_02_INIT_STATE=ON', 'LAYER_02_NAME=Layers', 'LAYER_03_INIT_STATE=ON', 'LAYER_03_NAME=Layers.Measured_Grid', 'LAYER_04_INIT_STATE=ON', 'LAYER_04_NAME=Layers.Graticule']:
     if layers != ['LAYER_00_NAME=New_Data_Frame', 'LAYER_01_NAME=New_Data_Frame.Graticule', 'LAYER_02_NAME=Layers', 'LAYER_03_NAME=Layers.Measured_Grid', 'LAYER_04_NAME=Layers.Graticule']:
         gdaltest.post_reason('did not get expected layers')
         print(layers)

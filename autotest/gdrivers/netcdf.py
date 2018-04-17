@@ -67,14 +67,14 @@ def netcdf_setup():
         print('NOTICE: netcdf not supported, skipping checks')
         return 'skip'
 
-    #get capabilities from driver
+    # get capabilities from driver
     metadata = gdaltest.netcdf_drv.GetMetadata()
     if metadata is None:
         print('NOTICE: netcdf metadata not found, skipping checks')
         return 'skip'
 
-    #netcdf library version "3.6.3" of Dec 22 2009 06:10:17 $
-    #netcdf library version 4.1.1 of Mar  4 2011 12:52:19 $
+    # netcdf library version "3.6.3" of Dec 22 2009 06:10:17 $
+    # netcdf library version 4.1.1 of Mar  4 2011 12:52:19 $
     if 'NETCDF_VERSION' in metadata:
         v = metadata['NETCDF_VERSION']
         v = v[0: v.find(' ')].strip('"')
@@ -108,7 +108,7 @@ def netcdf_test_copy(ifile, band, checksum, ofile, opts=[], driver='NETCDF'):
     return test.testCreateCopy(check_gt=0, check_srs=0, new_filename=ofile, delete_copy=0, check_minmax=0)
 
 ###############################################################################
-#test file copy, optional timeout arg
+# test file copy, optional timeout arg
 
 
 def netcdf_test_copy_timeout(ifile, band, checksum, ofile, opts=[], driver='NETCDF', timeout=None):
@@ -145,7 +145,7 @@ def netcdf_test_copy_timeout(ifile, band, checksum, ofile, opts=[], driver='NETC
     return result
 
 ###############################################################################
-#check support for DEFLATE compression, requires HDF5 and zlib
+# check support for DEFLATE compression, requires HDF5 and zlib
 
 
 def netcdf_test_deflate(ifile, checksum, zlevel=1, timeout=None):
@@ -262,7 +262,7 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
 
 def netcdf_1():
 
-    #setup netcdf environment
+    # setup netcdf environment
     netcdf_setup()
 
     if gdaltest.netcdf_drv is None:
@@ -369,7 +369,7 @@ def netcdf_4():
     # We don't want to gum up the test stream output with the
     # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    #don't test for checksum (see bug #4284)
+    # don't test for checksum (see bug #4284)
     result = tst.testOpen(skip_checksum=True)
     gdal.PopErrorHandler()
 
@@ -392,15 +392,15 @@ def netcdf_5():
     # We don't want to gum up the test stream output with the
     # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    #don't test for checksum (see bug #4284)
+    # don't test for checksum (see bug #4284)
     result = tst.testOpen(skip_checksum=True)
     gdal.PopErrorHandler()
 
     return result
 
 ###############################################################################
-#ticket #3324 check spatial reference reading for cf-1.4 lambert conformal
-#1 standard parallel.
+# ticket #3324 check spatial reference reading for cf-1.4 lambert conformal
+# 1 standard parallel.
 
 
 def netcdf_6():
@@ -425,8 +425,8 @@ def netcdf_6():
     return 'success'
 
 ###############################################################################
-#ticket #3324 check spatial reference reading for cf-1.4 lambert conformal
-#2 standard parallels.
+# ticket #3324 check spatial reference reading for cf-1.4 lambert conformal
+# 2 standard parallels.
 
 
 def netcdf_7():
@@ -453,7 +453,7 @@ def netcdf_7():
     return 'success'
 
 ###############################################################################
-#check for cf convention read of albers equal area
+# check for cf convention read of albers equal area
 # Previous version compared entire wkt, which varies slightly among driver versions
 # now just look for PROJECTION=Albers_Conic_Equal_Area and some parameters
 
@@ -488,7 +488,7 @@ def netcdf_8():
     return 'success'
 
 ###############################################################################
-#check to see if projected systems default to wgs84 if no spheroid def
+# check to see if projected systems default to wgs84 if no spheroid def
 
 
 def netcdf_9():
@@ -515,7 +515,7 @@ def netcdf_9():
     return 'success'
 
 ###############################################################################
-#check if km pixel size makes it through to gt
+# check if km pixel size makes it through to gt
 
 
 def netcdf_10():
@@ -539,7 +539,7 @@ def netcdf_10():
     if gt != gt1:
         sr = osr.SpatialReference()
         sr.ImportFromWkt(prj)
-        #new driver uses UNIT vattribute instead of scaling values
+        # new driver uses UNIT vattribute instead of scaling values
         if not (sr.GetAttrValue("PROJCS|UNIT", 1) == "1000" and gt == gt2):
             gdaltest.post_reason('Incorrect geotransform, got ' + str(gt))
             return 'fail'
@@ -549,7 +549,7 @@ def netcdf_10():
     return 'success'
 
 ###############################################################################
-#check if ll gets caught in km pixel size check
+# check if ll gets caught in km pixel size check
 
 
 def netcdf_11():
@@ -571,7 +571,7 @@ def netcdf_11():
     return 'success'
 
 ###############################################################################
-#check for scale/offset set/get.
+# check for scale/offset set/get.
 
 
 def netcdf_12():
@@ -593,7 +593,7 @@ def netcdf_12():
     return 'success'
 
 ###############################################################################
-#check for scale/offset = None if no scale or offset is available
+# check for scale/offset = None if no scale or offset is available
 
 
 def netcdf_13():
@@ -615,7 +615,7 @@ def netcdf_13():
     return 'success'
 
 ###############################################################################
-#check for scale/offset for two variables
+# check for scale/offset for two variables
 
 
 def netcdf_14():
@@ -649,7 +649,7 @@ def netcdf_14():
     return 'success'
 
 ###############################################################################
-#check support for netcdf-2 (64 bit)
+# check support for netcdf-2 (64 bit)
 # This test fails in 1.8.1, because the driver does not support NC2 (bug #3890)
 
 
@@ -671,7 +671,7 @@ def netcdf_15():
     return 'success'
 
 ###############################################################################
-#check support for netcdf-4
+# check support for netcdf-4
 
 
 def netcdf_16():
@@ -691,7 +691,7 @@ def netcdf_16():
         else:
             name = ds.GetDriver().GetDescription()
             ds = None
-            #return fail if did not open with the netCDF driver (i.e. HDF5Image)
+            # return fail if did not open with the netCDF driver (i.e. HDF5Image)
             if name != 'netCDF':
                 gdaltest.post_reason('netcdf driver did not open file')
                 return 'fail'
@@ -708,7 +708,7 @@ def netcdf_16():
     return 'success'
 
 ###############################################################################
-#check support for netcdf-4 - make sure hdf5 is not read by netcdf driver
+# check support for netcdf-4 - make sure hdf5 is not read by netcdf driver
 
 
 def netcdf_17():
@@ -718,14 +718,14 @@ def netcdf_17():
 
     ifile = 'data/groups.h5'
 
-    #skip test if Hdf5 is not enabled
+    # skip test if Hdf5 is not enabled
     if gdal.GetDriverByName('HDF5') is None and \
             gdal.GetDriverByName('HDF5Image') is None:
         return 'skip'
 
     if gdaltest.netcdf_drv_has_nc4:
 
-        #test with Open()
+        # test with Open()
         ds = gdal.Open(ifile)
         if ds is None:
             gdaltest.post_reason('GDAL did not open hdf5 file')
@@ -750,7 +750,7 @@ def netcdf_17():
     return 'success'
 
 ###############################################################################
-#check support for netcdf-4 classic (NC4C)
+# check support for netcdf-4 classic (NC4C)
 
 
 def netcdf_18():
@@ -769,7 +769,7 @@ def netcdf_18():
         else:
             name = ds.GetDriver().GetDescription()
             ds = None
-            #return fail if did not open with the netCDF driver (i.e. HDF5Image)
+            # return fail if did not open with the netCDF driver (i.e. HDF5Image)
             if name != 'netCDF':
                 return 'fail'
 
@@ -784,7 +784,7 @@ def netcdf_18():
     return 'success'
 
 ###############################################################################
-#check support for reading with DEFLATE compression, requires NC4
+# check support for reading with DEFLATE compression, requires NC4
 
 
 def netcdf_19():
@@ -803,7 +803,7 @@ def netcdf_19():
     return result
 
 ###############################################################################
-#check support for writing with DEFLATE compression, requires NC4
+# check support for writing with DEFLATE compression, requires NC4
 
 
 def netcdf_20():
@@ -814,13 +814,13 @@ def netcdf_20():
     if not gdaltest.netcdf_drv_has_nc4:
         return 'skip'
 
-    #simple test with tiny file
+    # simple test with tiny file
     return netcdf_test_deflate('data/utm.tif', 50235)
 
 
 ###############################################################################
-#check support for writing large file with DEFLATE compression
-#if chunking is not defined properly within the netcdf driver, this test can take 1h
+# check support for writing large file with DEFLATE compression
+# if chunking is not defined properly within the netcdf driver, this test can take 1h
 def netcdf_21():
 
     if gdaltest.netcdf_drv is None:
@@ -837,14 +837,14 @@ def netcdf_21():
     sys.stdout.write('.')
     sys.stdout.flush()
 
-    #create cache dir if absent
+    # create cache dir if absent
     if not os.path.exists('tmp/cache'):
         os.mkdir('tmp/cache')
 
-    #look for large gtiff in cache
+    # look for large gtiff in cache
     if not os.path.exists(bigfile):
 
-        #create large gtiff
+        # create large gtiff
         if test_cli_utilities.get_gdalwarp_path() is None:
             gdaltest.post_reason('gdalwarp not found')
             return 'skip'
@@ -868,7 +868,7 @@ def netcdf_21():
 
 
 ###############################################################################
-#check support for hdf4
+# check support for hdf4
 def netcdf_22():
 
     if gdaltest.netcdf_drv is None:
@@ -879,7 +879,7 @@ def netcdf_22():
 
     ifile = 'data/hdifftst2.hdf'
 
-    #suppress warning
+    # suppress warning
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('NETCDF:' + ifile)
     gdal.PopErrorHandler()
@@ -893,25 +893,25 @@ def netcdf_22():
     return 'success'
 
 ###############################################################################
-#check support for hdf4 - make sure  hdf4 file is not read by netcdf driver
+# check support for hdf4 - make sure  hdf4 file is not read by netcdf driver
 
 
 def netcdf_23():
 
-    #don't skip if netcdf is not enabled in GDAL
-    #if gdaltest.netcdf_drv is None:
+    # don't skip if netcdf is not enabled in GDAL
+    # if gdaltest.netcdf_drv is None:
     #    return 'skip'
-    #if not gdaltest.netcdf_drv_has_hdf4:
+    # if not gdaltest.netcdf_drv_has_hdf4:
     #    return 'skip'
 
-    #skip test if Hdf4 is not enabled in GDAL
+    # skip test if Hdf4 is not enabled in GDAL
     if gdal.GetDriverByName('HDF4') is None and \
             gdal.GetDriverByName('HDF4Image') is None:
         return 'skip'
 
     ifile = 'data/hdifftst2.hdf'
 
-    #test with Open()
+    # test with Open()
     ds = gdal.Open(ifile)
     if ds is None:
         gdaltest.post_reason('GDAL did not open hdf4 file')
@@ -919,7 +919,7 @@ def netcdf_23():
     else:
         name = ds.GetDriver().GetDescription()
         ds = None
-        #return fail if opened with the netCDF driver
+        # return fail if opened with the netCDF driver
         if name == 'netCDF':
             gdaltest.post_reason('netcdf driver opened hdf4 file')
             return 'fail'
@@ -1067,7 +1067,7 @@ def netcdf_26():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    #test default config
+    # test default config
     test = gdaltest.GDALTest('NETCDF', '../data/int16-nogeo.nc', 1, 4672)
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     result = test.testCreateCopy(check_gt=0, check_srs=0, check_minmax=0)
@@ -1077,7 +1077,7 @@ def netcdf_26():
         print('failed create copy without WRITE_BOTTOMUP')
         return result
 
-    #test WRITE_BOTTOMUP=NO
+    # test WRITE_BOTTOMUP=NO
     test = gdaltest.GDALTest('NETCDF', '../data/int16-nogeo.nc', 1, 4855,
                              options=['WRITE_BOTTOMUP=NO'])
     result = test.testCreateCopy(check_gt=0, check_srs=0, check_minmax=0)
@@ -1097,7 +1097,7 @@ def netcdf_27():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    #test default config
+    # test default config
     test = gdaltest.GDALTest('NETCDF', '../data/int16-nogeo.nc', 1, 4672)
     config_bak = gdal.GetConfigOption('GDAL_NETCDF_BOTTOMUP')
     gdal.SetConfigOption('GDAL_NETCDF_BOTTOMUP', None)
@@ -1108,7 +1108,7 @@ def netcdf_27():
         print('failed open without GDAL_NETCDF_BOTTOMUP')
         return result
 
-    #test GDAL_NETCDF_BOTTOMUP=NO
+    # test GDAL_NETCDF_BOTTOMUP=NO
     test = gdaltest.GDALTest('NETCDF', '../data/int16-nogeo.nc', 1, 4855)
     config_bak = gdal.GetConfigOption('GDAL_NETCDF_BOTTOMUP')
     gdal.SetConfigOption('GDAL_NETCDF_BOTTOMUP', 'NO')
@@ -1169,7 +1169,7 @@ def netcdf_test_4dfile(ofile):
     if 'double time(time) ;' not in ret:
         err = err + 'time variable is missing or incorrect\n'
     # uncomment this to get full header in output
-    #if err != '':
+    # if err != '':
     #    err = err + ret
     if err != '':
         gdaltest.post_reason(err)
@@ -1265,8 +1265,8 @@ def netcdf_30():
     return result
 
 ###############################################################################
-#check if 2x2 file has proper geotransform
-#1 pixel (in width or height) still unsupported because we can't get the pixel dimensions
+# check if 2x2 file has proper geotransform
+# 1 pixel (in width or height) still unsupported because we can't get the pixel dimensions
 
 
 def netcdf_31():
@@ -1368,7 +1368,7 @@ def netcdf_34():
     sys.stdout.flush()
 
     tst = gdaltest.GDALTest('NetCDF', '../tmp/cache/' + filename, 1, 31621)
-    #tst.testOpen()
+    # tst.testOpen()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     proc = Process(target=tst.testOpen)
@@ -2450,7 +2450,7 @@ def netcdf_58():
     return 'success'
 
 ###############################################################################
-#check for UnitType set/get.
+# check for UnitType set/get.
 
 
 def netcdf_59():
@@ -3393,11 +3393,11 @@ init_list = [
 item = init_list[0]
 ut = gdaltest.GDALTest('netcdf', item[0], item[1], item[2], options=item[4])
 
-#test geotransform and projection
+# test geotransform and projection
 gdaltest_list.append((ut.testSetGeoTransform, item[0]))
 gdaltest_list.append((ut.testSetProjection, item[0]))
 
-#SetMetadata() not supported
+# SetMetadata() not supported
 #gdaltest_list.append( (ut.testSetMetadata, item[0]) )
 
 # gdaltest_list = [ netcdf_1, netcdf_82 ]
@@ -3421,7 +3421,7 @@ if __name__ == '__main__':
 
     gdaltest.run_tests(gdaltest_list)
 
-    #make sure we cleanup
+    # make sure we cleanup
     gdaltest.clean_tmp()
 
     gdaltest.summarize()

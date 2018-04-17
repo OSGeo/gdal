@@ -170,10 +170,10 @@ def test_gdal_ls_py_5():
 
     #ret, ret_str = run_gdal_ls(['', '-R', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
     #
-    #if ret != 'success':
+    # if ret != 'success':
     #    return ret
     #
-    #if ret_str.find('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/wkb_wkt/3d_broken_line.wkb') == -1:
+    # if ret_str.find('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/wkb_wkt/3d_broken_line.wkb') == -1:
     #    print(ret_str)
     #    return 'fail'
 
@@ -250,10 +250,10 @@ def test_gdal_ls_py_7():
 
     #ret, ret_str = run_gdal_ls(['', '-R', '-Rzip', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
 
-    #if ret != 'success':
+    # if ret != 'success':
     #    return ret
 
-    #if ret_str.find('/vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
+    # if ret_str.find('/vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
     #    print(ret_str)
     #    return 'fail'
 

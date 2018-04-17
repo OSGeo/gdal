@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#*****************************************************************************
+# *****************************************************************************
 # $Id$
 #
 # Project:  GDAL Utilities
@@ -8,7 +8,7 @@
 #
 # Port from gdalinfo.c whose author is Frank Warmerdam
 #
-#*****************************************************************************
+# *****************************************************************************
 # Copyright (c) 2010-2011, Even Rouault <even dot rouault at mines-paris dot org>
 # Copyright (c) 1998, Frank Warmerdam
 #
@@ -29,16 +29,16 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
-#***************************************************************************/
+# ***************************************************************************/
 
 import sys
 
 from osgeo import gdal
 from osgeo import osr
 
-#**********************************************************************
+# **********************************************************************
 #                               Usage()
-#**********************************************************************
+# **********************************************************************
 
 
 def Usage():
@@ -50,9 +50,9 @@ def Usage():
 def EQUAL(a, b):
     return a.lower() == b.lower()
 
-#**********************************************************************
+# **********************************************************************
 #                                main()
-#**********************************************************************
+# **********************************************************************
 
 
 def main(argv=None):
@@ -75,17 +75,17 @@ def main(argv=None):
     # Must process GDAL_SKIP before GDALAllRegister(), but we can't call
     # GDALGeneralCmdLineProcessor before it needs the drivers to be registered
     # for the --format or --formats options
-    #for( i = 1; i < argc; i++ )
-    #{
+    # for( i = 1; i < argc; i++ )
+    # {
     #    if EQUAL(argv[i],"--config") and i + 2 < argc and EQUAL(argv[i + 1], "GDAL_SKIP"):
     #    {
     #        CPLSetConfigOption( argv[i+1], argv[i+2] );
     #
     #        i += 2;
     #    }
-    #}
+    # }
     #
-    #GDALAllRegister();
+    # GDALAllRegister();
 
     if argv is None:
         argv = sys.argv
@@ -343,14 +343,14 @@ def main(argv=None):
 
         hBand = hDataset.GetRasterBand(iBand + 1)
 
-        #if( bSample )
-        #{
+        # if( bSample )
+        # {
         #    float afSample[10000];
         #    int   nCount;
         #
         #    nCount = GDALGetRandomRasterSample( hBand, 10000, afSample );
         #    print( "Got %d samples.\n", nCount );
-        #}
+        # }
 
         (nBlockXSize, nBlockYSize) = hBand.GetBlockSize()
         print("Band %d Block=%dx%d Type=%s, ColorInterp=%s" % (iBand + 1,
@@ -553,9 +553,9 @@ def main(argv=None):
 
     return 0
 
-#**********************************************************************
+# **********************************************************************
 #                        GDALInfoReportCorner()
-#**********************************************************************
+# **********************************************************************
 
 
 def GDALInfoReportCorner(hDataset, hTransform, corner_name, x, y):

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#******************************************************************************
+# ******************************************************************************
 #
 #  Project:  GDAL
 #  Purpose:  Command line raster calculator with numpy syntax
 #  Author:   Chris Yesson, chris.yesson@ioz.ac.uk
 #
-#******************************************************************************
+# ******************************************************************************
 #  Copyright (c) 2010, Chris Yesson <chris.yesson@ioz.ac.uk>
 #  Copyright (c) 2010-2011, Even Rouault <even dot rouault at mines-paris dot org>
 #  Copyright (c) 2016, Piers Titus van der Torren <pierstitus@gmail.com>
@@ -28,7 +28,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
+# ******************************************************************************
 
 ################################################################
 # Command line raster calculator with numpy syntax. Use any basic arithmetic supported by numpy arrays such as +-*\ along with logical operators such as >.  Note that all files must have the same dimensions, but no projection checking is performed.  Use gdal_calc.py --help for list of options.

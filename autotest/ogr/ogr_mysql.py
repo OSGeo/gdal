@@ -910,12 +910,12 @@ def ogr_mysql_26():
     lyr.CreateField(field_defn)
 
     #field_defn = ogr.FieldDefn( 'field_date', ogr.OFTDate )
-    #field_defn.SetDefault("CURRENT_DATE")
-    #lyr.CreateField(field_defn)
+    # field_defn.SetDefault("CURRENT_DATE")
+    # lyr.CreateField(field_defn)
 
     #field_defn = ogr.FieldDefn( 'field_time', ogr.OFTTime )
-    #field_defn.SetDefault("CURRENT_TIME")
-    #lyr.CreateField(field_defn)
+    # field_defn.SetDefault("CURRENT_TIME")
+    # lyr.CreateField(field_defn)
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFieldNull('field_string_null')
@@ -945,11 +945,11 @@ def ogr_mysql_26():
         gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault())
         return 'fail'
-    #if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_date')).GetDefault() != "CURRENT_DATE":
+    # if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_date')).GetDefault() != "CURRENT_DATE":
     #    gdaltest.post_reason('fail')
     #    print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_date')).GetDefault())
     #    return 'fail'
-    #if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_time')).GetDefault() != "CURRENT_TIME":
+    # if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_time')).GetDefault() != "CURRENT_TIME":
     #    gdaltest.post_reason('fail')
     #    return 'fail'
     f = lyr.GetNextFeature()

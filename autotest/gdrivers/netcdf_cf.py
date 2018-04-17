@@ -46,7 +46,7 @@ from netcdf import netcdf_setup, netcdf_test_copy
 ###############################################################################
 
 ###############################################################################
-#check for necessary files and software
+# check for necessary files and software
 
 
 def netcdf_cf_setup():
@@ -56,16 +56,16 @@ def netcdf_cf_setup():
     gdaltest.netcdf_cf_files = None
     gdaltest.netcdf_cf_check_error = ''
 
-    #if netcdf is not supported, skip detection
+    # if netcdf is not supported, skip detection
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    #skip if on windows
+    # skip if on windows
     if os.name != 'posix':
         print('NOTICE: will skip CF checks because OS is not posix!')
         return 'skip'
 
-    #try local method
+    # try local method
     cdms2_installed = False
     try:
         imp.find_module('cdms2')
@@ -80,19 +80,19 @@ def netcdf_cf_setup():
         files = dict()
         files['a'] = xml_dir + '/area-type-table.xml'
         files['s'] = tmp_dir + '/cf-standard-name-table-v18.xml'
-        #either find udunits path in UDUNITS_PATH, or based on location of udunits app, or copy all .xml files to data
+        # either find udunits path in UDUNITS_PATH, or based on location of udunits app, or copy all .xml files to data
         #opt_u = '/home/soft/share/udunits/udunits2.xml'
         files['u'] = xml_dir + '/udunits2.xml'
-        #look for xml files
+        # look for xml files
         if not (os.path.exists(files['a']) and os.path.exists(files['s']) and os.path.exists(files['u'])):
             print('NOTICE: cdms2 installed, but necessary xml files are not found!')
             print('        the following files must exist:')
             print('        ' + xml_dir + '/area-type-table.xml from http://cf-pcmdi.llnl.gov/documents/cf-standard-names/area-type-table/1/area-type-table.xml')
             print('        ' + tmp_dir + '/cf-standard-name-table-v18.xml - http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/18/cf-standard-name-table.xml')
             print('        ' + xml_dir + '/udunits2*.xml from a UDUNITS2 install')
-            #try to get cf-standard-name-table
+            # try to get cf-standard-name-table
             if not os.path.exists(files['s']):
-                #print '        downloading cf-standard-name-table.xml (v18) from http://cf-pcmdi.llnl.gov ...'
+                # print '        downloading cf-standard-name-table.xml (v18) from http://cf-pcmdi.llnl.gov ...'
                 if not gdaltest.download_file('http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/18/cf-standard-name-table.xml',
                                               'cf-standard-name-table-v18.xml'):
                     print('        Failed to download, please get it and try again.')
@@ -103,7 +103,7 @@ def netcdf_cf_setup():
             print('NOTICE: netcdf CF compliance checks: using local checker script')
             return 'success'
 
-    #skip http method if GDAL_DOWNLOAD_TEST_DATA and GDAL_RUN_SLOW_TESTS are not defined
+    # skip http method if GDAL_DOWNLOAD_TEST_DATA and GDAL_RUN_SLOW_TESTS are not defined
     if 'GDAL_DOWNLOAD_TEST_DATA' not in os.environ:
         print('NOTICE: skipping netcdf CF compliance checks')
         print('to enable remote http checker script, define GDAL_DOWNLOAD_TEST_DATA')
@@ -113,14 +113,14 @@ def netcdf_cf_setup():
         print('NOTICE: skipping netcdf CF compliance checks')
         return 'success'
 
-    #http method with curl, should use python module but easier for now
+    # http method with curl, should use python module but easier for now
     success = False
     try:
         (ret, err) = gdaltest.runexternal_out_and_err('curl')
     except:
         print('no curl executable')
     else:
-        #make sure script is responding
+        # make sure script is responding
         handle = gdaltest.gdalurlopen("http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl")
         if handle is not None:
             success = True
@@ -138,13 +138,13 @@ def netcdf_cf_setup():
     return 'success'
 
 ###############################################################################
-#build a command used to check ifile
+# build a command used to check ifile
 
 
 def netcdf_cf_get_command(ifile, version='auto'):
 
     command = ''
-    #fetch method obtained previously
+    # fetch method obtained previously
     method = gdaltest.netcdf_cf_method
     if method is not None:
         if method is 'local':
@@ -154,7 +154,7 @@ def netcdf_cf_get_command(ifile, version='auto'):
                 + ' -v ' + version + ' ' + ifile
         elif method is 'http':
             #command = shlex.split( 'curl --form cfversion="1.5" --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"' )
-            #switch to 1.5 as driver now supports, and auto when it becomes available
+            # switch to 1.5 as driver now supports, and auto when it becomes available
             version = '1.5'
             command = 'curl --form cfversion=' + version + ' --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"'
 
@@ -165,7 +165,7 @@ def netcdf_cf_get_command(ifile, version='auto'):
 # Check a file for CF compliance
 def netcdf_cf_check_file(ifile, version='auto', silent=True):
 
-    #if not silent:
+    # if not silent:
     #    print 'checking file ' + ifile
     gdaltest.netcdf_cf_check_error = ''
 
@@ -199,7 +199,7 @@ def netcdf_cf_check_file(ifile, version='auto', silent=True):
     output_warn = ''
 
     for line in output_all.splitlines():
-        #optimize this with regex
+        # optimize this with regex
         if 'ERROR' in line and 'ERRORS' not in line:
             output_err = output_err + '\n' + line
         elif 'WARNING' in line and 'WARNINGS' not in line:
@@ -242,7 +242,7 @@ netcdf_cfproj_tuples = [
          'latitude_of_projection_origin', 'false_easting', 'false_northing'],
      ['projection_x_coordinate', 'projection_y_coordinate']),
     ("AZE", "Azimuthal Equidistant",
-        #Didn't have EPSG suitable for AU
+        # Didn't have EPSG suitable for AU
         "+proj=aeqd +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
         "azimuthal_equidistant",
         ['longitude_of_projection_origin',
@@ -314,7 +314,7 @@ netcdf_cfproj_tuples = [
          'scale_factor_at_projection_origin',
          'false_easting', 'false_northing'],
      ['projection_x_coordinate', 'projection_y_coordinate']),
-    #Note: Rotated Pole not in this list, as seems not GDAL-supported
+    # Note: Rotated Pole not in this list, as seems not GDAL-supported
     ("TM", "Transverse Mercator", "EPSG:32655",  # UTM Zone 55N
         "transverse_mercator",
         ['scale_factor_at_central_meridian',
@@ -377,12 +377,12 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
     try:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
     except:
-        #nothing is supported as ncdump not found
+        # nothing is supported as ncdump not found
         print('NOTICE: netcdf version not found')
         return 'skip'
 
     i = err.find('netcdf library version ')
-    #version not found
+    # version not found
     if i == -1:
         print('NOTICE: netcdf version not found')
         return 'skip'
@@ -407,7 +407,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
     dsTiff = gdal.Open(os.path.join(inPath, origTiff), gdal.GA_ReadOnly)
     s_srs_wkt = dsTiff.GetProjection()
 
-    #objects to hold the various tests
+    # objects to hold the various tests
     i_t = 0
     tst_res = {}
 
@@ -426,7 +426,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
 
         if not silent:
             print("About to create raster in chosen SRS")
-        #projVrt = os.path.join(outPath, "%s_%s.vrt" % \
+        # projVrt = os.path.join(outPath, "%s_%s.vrt" % \
         #    (origTiff.rstrip('.tif'), proj[0] ))
         projRaster = os.path.join(outPath, "%s_%s.%s" %
                                   (origTiff.rstrip('.tif'), proj[0], intExt))
@@ -444,12 +444,12 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
 
         projNc = os.path.join(outPath, "%s_%s.nc" %
                               (origTiff.rstrip('.tif'), proj[0]))
-        #Force GDAL tags to be written to make testing easier, with preserved datum etc
+        # Force GDAL tags to be written to make testing easier, with preserved datum etc
         #ncCoOpts = "-co WRITE_GDAL_TAGS=yes"
         if not silent:
             print("About to translate to NetCDF")
         dst = drv_netcdf.CreateCopy(projNc, dsw, 0, ['WRITE_GDAL_TAGS=' + bWriteGdalTags])
-        #For drivers like HFA, line below ESSENTIAL so that all info is
+        # For drivers like HFA, line below ESSENTIAL so that all info is
         # saved to new raster file - which we'll reopen later and want
         # to be fully updated.
         dsw = None
@@ -560,10 +560,10 @@ def netcdf_cfproj_test_cf(proj, projNc):
 ###############################################################################
 
 ###############################################################################
-#test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, tif->nc->tif
+# test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, tif->nc->tif
 def netcdf_cf_1():
 
-    #setup netcdf and netcdf_cf environment
+    # setup netcdf and netcdf_cf environment
     netcdf_setup()
     netcdf_cf_setup()
 
@@ -589,7 +589,7 @@ def netcdf_cf_1():
 
 
 ###############################################################################
-#test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, nc->nc
+# test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, nc->nc
 def netcdf_cf_2():
 
     if gdaltest.netcdf_drv is None:
@@ -608,7 +608,7 @@ def netcdf_cf_2():
 
 
 ###############################################################################
-#test copy and CF compliance for lat/lon (W*S84) file, tif->nc->tif
+# test copy and CF compliance for lat/lon (W*S84) file, tif->nc->tif
 # note: this test fails in trunk (before r23246)
 def netcdf_cf_3():
 
@@ -635,7 +635,7 @@ def netcdf_cf_3():
         return 'fail'
 
 ###############################################################################
-#test support for various CF projections
+# test support for various CF projections
 
 
 def netcdf_cf_4():
@@ -652,7 +652,7 @@ def netcdf_cf_4():
     return result
 
 ###############################################################################
-#test support for PS variants (bug #2893)
+# test support for PS variants (bug #2893)
 
 
 def netcdf_cf_5():
@@ -692,7 +692,7 @@ if __name__ == '__main__':
 
     gdaltest.run_tests(gdaltest_list)
 
-    #make sure we cleanup
+    # make sure we cleanup
     gdaltest.clean_tmp()
 
     gdaltest.summarize()

@@ -845,7 +845,7 @@ def ogr_osm_15():
                 gdaltest.post_reason('fail')
                 return 'fail'
             break
-        #f.DumpReadable()
+        # f.DumpReadable()
         count += 1
         if f.GetDefnRef().GetName() != l.GetName():
             gdaltest.post_reason('fail')
@@ -871,7 +871,7 @@ def ogr_osm_15():
     ds.ResetReading()
     for i in range(count):
         f, lyr = ds.GetNextFeature()
-        #f.DumpReadable()
+        # f.DumpReadable()
         if f is None or lyr is None:
             gdaltest.post_reason('fail')
             print(i)
@@ -896,10 +896,10 @@ def ogr_osm_15():
 
     #ds = gdal.OpenEx('/home/even/gdal/data/osm/france.osm.pbf')
     #ds.ExecuteSQL('SET interest_layers = relations')
-    #def test(pct, msg, unused):
+    # def test(pct, msg, unused):
     #    print(pct)
     #f, l = ds.GetNextFeature( callback = test)
-    #print(f)
+    # print(f)
 
     ds = None
 

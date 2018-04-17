@@ -55,7 +55,7 @@ class TermProgress:
         if self.nThisTick > 40:
             self.nThisTick = 40
 
-        #// Have we started a new progress run?
+        # // Have we started a new progress run?
         if self.nThisTick < self.nLastTick and self.nLastTick >= 39:
             self.nLastTick = -1
 

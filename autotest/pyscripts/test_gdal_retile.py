@@ -66,7 +66,7 @@ def test_gdal_retile_1():
     if ds.RasterXSize != 10:
         print(ds.RasterXSize)
         return 'fail'
-    #if ds.GetRasterBand(1).Checksum() != 1152:
+    # if ds.GetRasterBand(1).Checksum() != 1152:
     #    print(ds.GetRasterBand(1).Checksum())
     #    return 'fail'
     ds = None
@@ -75,7 +75,7 @@ def test_gdal_retile_1():
     if ds.RasterXSize != 5:
         print(ds.RasterXSize)
         return 'fail'
-    #if ds.GetRasterBand(1).Checksum() != 215:
+    # if ds.GetRasterBand(1).Checksum() != 215:
     #    print(ds.GetRasterBand(1).Checksum())
     #    return 'fail'
     ds = None

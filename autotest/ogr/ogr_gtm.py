@@ -184,7 +184,7 @@ def ogr_gtm_read_2():
         gdaltest.post_reason('Wrong color field value')
         return 'fail'
 
-    #if feat.GetField('time') is not None:
+    # if feat.GetField('time') is not None:
     #    gdaltest.post_reason( 'Wrong time field value' )
     #    return 'fail'
 
@@ -211,7 +211,7 @@ def ogr_gtm_read_2():
         gdaltest.post_reason('Wrong color field value')
         return 'fail'
 
-    #if feat.GetField('time') is not None:
+    # if feat.GetField('time') is not None:
     #    gdaltest.post_reason( 'Wrong time field value' )
     #    return 'fail'
 
@@ -237,7 +237,7 @@ def ogr_gtm_read_2():
         gdaltest.post_reason('Wrong color field value')
         return 'fail'
 
-    #if feat.GetField('time') is not None:
+    # if feat.GetField('time') is not None:
     #    gdaltest.post_reason( 'Wrong time field value' )
     #    return 'fail'
 

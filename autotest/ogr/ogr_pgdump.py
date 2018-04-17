@@ -528,7 +528,7 @@ def ogr_pgdump_7():
 
     #feat.SetField('str', 'foo')
     #ret = lyr.SetFeature(feat)
-    #if ret != 0:
+    # if ret != 0:
     #    gdaltest.post_reason('fail')
     #    return 'fail'
 
@@ -542,18 +542,18 @@ def ogr_pgdump_7():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    #gdal.PushErrorHandler()
+    # gdal.PushErrorHandler()
     #ret = lyr.SetFeature(feat)
-    #gdal.PopErrorHandler()
-    #if ret == 0:
+    # gdal.PopErrorHandler()
+    # if ret == 0:
     #    gdaltest.post_reason('fail')
     #    return 'fail'
 
-    #feat.UnsetField('myfid')
-    #gdal.PushErrorHandler()
+    # feat.UnsetField('myfid')
+    # gdal.PushErrorHandler()
     #ret = lyr.SetFeature(feat)
-    #gdal.PopErrorHandler()
-    #if ret == 0:
+    # gdal.PopErrorHandler()
+    # if ret == 0:
     #    gdaltest.post_reason('fail')
     #    return 'fail'
 
@@ -643,7 +643,7 @@ def ogr_pgdump_8():
 
     #feat.SetField('str', 'foo')
     #ret = lyr.SetFeature(feat)
-    #if ret != 0:
+    # if ret != 0:
     #    gdaltest.post_reason('fail')
     #    return 'fail'
 
@@ -659,18 +659,18 @@ def ogr_pgdump_8():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    #gdal.PushErrorHandler()
+    # gdal.PushErrorHandler()
     #ret = lyr.SetFeature(feat)
-    #gdal.PopErrorHandler()
-    #if ret == 0:
+    # gdal.PopErrorHandler()
+    # if ret == 0:
     #    gdaltest.post_reason('fail')
     #    return 'fail'
 
-    #feat.UnsetField('myfid')
-    #gdal.PushErrorHandler()
+    # feat.UnsetField('myfid')
+    # gdal.PushErrorHandler()
     #ret = lyr.SetFeature(feat)
-    #gdal.PopErrorHandler()
-    #if ret == 0:
+    # gdal.PopErrorHandler()
+    # if ret == 0:
     #    gdaltest.post_reason('fail')
     #    return 'fail'
 

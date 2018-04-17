@@ -148,7 +148,7 @@ def test_gdalinfo_py_6():
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/int.img')
     if ret.find('Overviews') == -1:
         return 'fail'
-    #if ret.find('GDALRasterAttributeTable') == -1:
+    # if ret.find('GDALRasterAttributeTable') == -1:
     #    return 'fail'
 
     return 'success'
