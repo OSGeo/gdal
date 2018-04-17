@@ -48,7 +48,10 @@ Options:
 
 '''
 
-import cdms2 as cdms, re, string, numpy
+import cdms2 as cdms
+import re
+import string
+import numpy
 import sys
 
 from cdms2.axis import FileAxis
