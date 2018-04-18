@@ -685,7 +685,8 @@ const std::map< CPLString, std::vector<GPKGExtensionDesc> > &
             "'gpkg_geom_COMPOUNDCURVE', 'gpkg_geom_CURVEPOLYGON', 'gpkg_geom_MULTICURVE', "
             "'gpkg_geom_MULTISURFACE', 'gpkg_geom_CURVE', 'gpkg_geom_SURFACE', "
             "'gpkg_geom_POLYHEDRALSURFACE', 'gpkg_geom_TIN', 'gpkg_geom_TRIANGLE', "
-            "'gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger')");
+            "'gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger', "
+            "'gpkg_crs_wkt')");
     const int nTableLimit =
                 atoi(CPLGetConfigOption("OGR_TABLE_LIMIT", "10000"));
     if( nTableLimit > 0 )
@@ -3716,6 +3717,19 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         if( CPLTestBool(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")) &&
             !CreateMetadataTables() )
             return FALSE;
+
+        if( m_bHasDefinition12_063 )
+        {
+            CreateExtensionsTableIfNecessary();
+            if( OGRERR_NONE != SQLCommand(hDB,
+                "INSERT INTO gpkg_extensions "
+                "(table_name, column_name, extension_name, definition, scope) "
+                "VALUES "
+                "(NULL, NULL, 'gpkg_crs_wkt', 'http://www.geopackage.org/spec/#extension_crs_wkt', 'read-write')") )
+            {
+                return FALSE;
+            }
+        }
     }
 
     if( nBandsIn != 0 )
@@ -5483,12 +5497,14 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
             "AND extension_name IS NOT NULL "
             "AND definition IS NOT NULL "
             "AND scope IS NOT NULL "
-            "AND extension_name != 'gdal_aspatial' "
-            "AND extension_name != 'gpkg_elevation_tiles' " // Old name before GPKG 1.2 approval
-            "AND extension_name != '2d_gridded_coverage' " // Old name after GPKG 1.2 and before OGC 17-066r1 finalization
-            "AND extension_name != 'gpkg_2d_gridded_coverage' " // Name in OGC 17-066r1 final
-            "AND extension_name != 'gpkg_metadata' "
-            "AND extension_name != 'gpkg_schema') "
+            "AND extension_name NOT IN ("
+            "'gdal_aspatial', "
+            "'gpkg_elevation_tiles', " // Old name before GPKG 1.2 approval
+            "'2d_gridded_coverage', " // Old name after GPKG 1.2 and before OGC 17-066r1 finalization
+            "'gpkg_2d_gridded_coverage', " // Name in OGC 17-066r1 final
+            "'gpkg_metadata', "
+            "'gpkg_schema', "
+            "'gpkg_crs_wkt')) "
 #ifdef WORKAROUND_SQLITE3_BUGS
             "OR 0 "
 #endif
@@ -5501,11 +5517,13 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
             "AND extension_name IS NOT NULL "
             "AND definition IS NOT NULL "
             "AND scope IS NOT NULL "
-            "AND extension_name != 'gpkg_elevation_tiles' " // Old name before GPKG 1.2 approval
-            "AND extension_name != '2d_gridded_coverage' " // Old name after GPKG 1.2 and before OGC 17-066r1 finalization
-            "AND extension_name != 'gpkg_2d_gridded_coverage' " // Name in OGC 17-066r1 final
-            "AND extension_name != 'gpkg_metadata' "
-            "AND extension_name != 'gpkg_schema') "
+            "AND extension_name NOT IN ("
+            "'gpkg_elevation_tiles', " // Old name before GPKG 1.2 approval
+            "'2d_gridded_coverage', " // Old name after GPKG 1.2 and before OGC 17-066r1 finalization
+            "'gpkg_2d_gridded_coverage', " // Name in OGC 17-066r1 final
+            "'gpkg_metadata', "
+            "'gpkg_schema', "
+            "'gpkg_crs_wkt')) "
 #ifdef WORKAROUND_SQLITE3_BUGS
             "OR 0 "
 #endif

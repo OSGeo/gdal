@@ -145,6 +145,26 @@ class GPKGChecker:
             if name == 'definition_12_063':
                 has_definition_12_063 = True
 
+        c.execute("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_extensions'")
+        row = None
+        if c.fetchone() is not None:
+            c.execute("SELECT scope FROM gpkg_extensions WHERE "
+                    "extension_name = 'gpkg_crs_wkt'")
+            row = c.fetchone()
+        if row:
+            scope, = row
+            self._assert(scope == 'read-write', 145,
+                         'scope of gpkg_crs_wkt extension should be read-write')
+            self._assert(
+                has_definition_12_063, 145,
+                "gpkg_spatial_ref_sys should have a definition_12_063 column, "
+                "as gpkg_crs_wkt extension is declared")
+        else:
+            self._assert(
+                not has_definition_12_063, 145,
+                "gpkg_extensions should declare gpkg_crs_wkt extension "
+                "as gpkg_spatial_ref_sys has a definition_12_063 column")
+
         if has_definition_12_063:
             expected_columns = [
                 (0, 'srs_name', 'TEXT', 1, None, 0),
