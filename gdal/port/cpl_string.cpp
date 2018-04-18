@@ -2179,9 +2179,10 @@ char *CPLEscapeString( const char *pszInput, int nLength,
         }
         pszOutput[iOut++] = '\0';
     }
-    else if( nScheme == CPLES_CSV )
+    else if( nScheme == CPLES_CSV || nScheme == CPLES_CSV_FORCE_QUOTING )
     {
-        if( static_cast<int>(strcspn( pszInput, "\",;\t\n\r" )) == nLength )
+        if( nScheme == CPLES_CSV &&
+            static_cast<int>(strcspn( pszInput, "\",;\t\n\r" )) == nLength )
         {
             memcpy( pszOutput, pszInput, nLength + 1 );
             iOut = nLength + 1;

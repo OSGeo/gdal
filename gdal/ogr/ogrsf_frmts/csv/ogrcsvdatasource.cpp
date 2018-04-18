@@ -107,6 +107,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
     poCSVTmpLayer->SetCRLF(m_poCSVLayer->GetCRLF());
     poCSVTmpLayer->SetCreateCSVT(bCreateCSVT || bHasCSVT);
     poCSVTmpLayer->SetWriteBOM(m_poCSVLayer->GetWriteBOM());
+    poCSVTmpLayer->SetStringQuoting(m_poCSVLayer->GetStringQuoting());
 
     if( m_poCSVLayer->GetGeometryFormat() == OGR_CSV_GEOM_AS_WKT )
         poCSVTmpLayer->SetWriteGeometry(wkbNone, OGR_CSV_GEOM_AS_WKT, nullptr);
@@ -945,6 +946,9 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
     }
 
     poCSVLayer->SetCRLF(bUseCRLF);
+
+    poCSVLayer->SetStringQuoting(
+        CPLFetchBool(papszOptions, "STRING_QUOTING", false));
 
     // Should we write the geometry?
     const char *pszGeometry = CSLFetchNameValue(papszOptions, "GEOMETRY");

@@ -388,6 +388,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
                                     CSLT_PRESERVEQUOTES));
             nFieldCount = CSLCount(papszTokens);
 
+            m_bForceStringQuoting = nFieldCount > 0 && papszTokens[0][0] == '"';
+
             const char *pszCSVHeaders =
                 CSLFetchNameValueDef(papszOpenOptions, "HEADERS", "AUTO");
 
@@ -2093,7 +2095,7 @@ OGRErr OGRCSVLayer::WriteHeader()
 
             char *pszEscaped = CPLEscapeString(
                 poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), -1,
-                CPLES_CSV);
+                m_bForceStringQuoting ? CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
 
             if( fpCSV )
             {
@@ -2393,7 +2395,8 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
                 char *pszJSon = poNewFeature->GetFieldAsSerializedJSon(iField);
                 if( pszJSon )
                 {
-                    pszEscaped = CPLEscapeString(pszJSon, -1, CPLES_CSV);
+                    pszEscaped = CPLEscapeString(pszJSon, -1,
+                        m_bForceStringQuoting ? CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
                 }
                 else
                 {
@@ -2404,7 +2407,8 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
             else
             {
                 pszEscaped = CPLEscapeString(
-                    poNewFeature->GetFieldAsString(iField), -1, CPLES_CSV);
+                    poNewFeature->GetFieldAsString(iField), -1,
+                    m_bForceStringQuoting ? CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
             }
         }
 

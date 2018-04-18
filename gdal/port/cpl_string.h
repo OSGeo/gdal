@@ -175,6 +175,8 @@ char CPL_DLL ** CSLParseCommandLine(const char* pszCommandLine);
 #define CPLES_CSV               4
 /** Scheme for CPLEscapeString()/CPLUnescapeString() for XML (preserves quotes) */
 #define CPLES_XML_BUT_QUOTES    5
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for CSV (forced quoting) */
+#define CPLES_CSV_FORCE_QUOTING 6
 
 char CPL_DLL *CPLEscapeString( const char *pszString, int nLength,
                                int nScheme ) CPL_WARN_UNUSED_RESULT;

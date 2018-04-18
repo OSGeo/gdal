@@ -127,6 +127,8 @@ class OGRCSVLayer : public OGRLayer
 
     bool                bEmptyStringNull;
 
+    bool                m_bForceStringQuoting = false;
+
     char              **GetNextLineTokens();
 
     static bool         Matches( const char *pszFieldName,
@@ -180,6 +182,9 @@ class OGRCSVLayer : public OGRLayer
                                          const char *pszGeomCol = nullptr);
     void                SetCreateCSVT( bool bCreateCSVT );
     void                SetWriteBOM( bool bWriteBOM );
+
+    void                SetStringQuoting( bool bStringQuoting ) { m_bForceStringQuoting = bStringQuoting; }
+    bool                GetStringQuoting() const { return m_bForceStringQuoting; }
 
     virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
     virtual OGRErr      SyncToDisk() override;

@@ -2580,6 +2580,45 @@ def ogr_csv_more_than_100_geom_fields():
     return 'success'
 
 ###############################################################################
+
+
+def ogr_csv_force_string_quoting():
+
+    gdal.VectorTranslate('/vsimem/ogr_csv_force_string_quoting.csv',
+                         'data/poly.shp', format='CSV',
+                         where='FID = 0',
+                         layerCreationOptions=['CREATE_CSVT=YES', 'STRING_QUOTING=YES'])
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_csv_force_string_quoting.csv', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    if data.find('"AREA","EAS_ID","PRFEDEA"\n215229.266,"168","35043411"') != 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    ds = gdal.OpenEx('/vsimem/ogr_csv_force_string_quoting.csv', gdal.OF_UPDATE | gdal.OF_VECTOR)
+    gdal.VectorTranslate(ds, 'data/poly.shp',
+                         layerName='ogr_csv_force_string_quoting',
+                         where='FID = 1', accessMode='append')
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_csv_force_string_quoting.csv', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    if data.find('"AREA","EAS_ID","PRFEDEA"\n215229.266,"168","35043411"\n247328.172,"179","35043423"') != 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_csv_force_string_quoting.csv')
+    gdal.Unlink('/vsimem/ogr_csv_force_string_quoting.csvt')
+
+    return 'success'
+
+###############################################################################
 #
 
 
@@ -2666,6 +2705,7 @@ gdaltest_list = [
     ogr_csv_48,
     ogr_csv_49,
     ogr_csv_more_than_100_geom_fields,
+    ogr_csv_force_string_quoting,
     ogr_csv_cleanup]
 
 if __name__ == '__main__':
