@@ -2587,7 +2587,7 @@ def ogr_csv_force_string_quoting():
     gdal.VectorTranslate('/vsimem/ogr_csv_force_string_quoting.csv',
                          'data/poly.shp', format='CSV',
                          where='FID = 0',
-                         layerCreationOptions=['CREATE_CSVT=YES', 'STRING_QUOTING=YES'])
+                         layerCreationOptions=['CREATE_CSVT=YES', 'STRING_QUOTING=YES', 'LINEFORMAT=LF'])
 
     f = gdal.VSIFOpenL('/vsimem/ogr_csv_force_string_quoting.csv', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
