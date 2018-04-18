@@ -172,7 +172,7 @@ _gdal_edit.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -ro -a_srs -a_ullr -tr -unsetgt -a_nodata -unsetnodata -offset -scale -unsetstats -stats -approx_stats -gcp -unsetmd -oo -mo --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -ro -a_srs -a_ullr -tr -unsetgt -a_nodata -unsetnodata -offset -scale -colorinterp_X -unsetstats -stats -approx_stats -gcp -unsetmd -oo -mo --version --license --formats --format --optfile --config --debug --pause --locale "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -343,7 +343,7 @@ _gdalmanage()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-r -u -f -f -f "
+      key_list="-r -fr -u -f -f -f "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -574,7 +574,7 @@ _gdal_translate()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general --long-usage -ot -strict -of -b -mask -expand -outsize -tr -r -unscale -scale -exponent -srcwin -epo -eco -projwin -projwin_srs -a_srs -a_ullr -a_nodata -gcp -mo -q -sds -co -stats -norat -oo --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general --long-usage -ot -strict -of -b -mask -expand -outsize -tr -r -unscale -scale -exponent -srcwin -epo -eco -projwin -projwin_srs -a_srs -a_ullr -a_nodata -a_scale -a_offset -gcp -colorinterp{_bn} -colorinterp -mo -q -sds -co -stats -norat -oo --version --license --formats --format --optfile --config --debug --pause --locale "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
