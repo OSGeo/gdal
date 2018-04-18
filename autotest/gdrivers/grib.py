@@ -264,7 +264,7 @@ def grib_grib2_read_template_4_15():
         print(err)
         return 'fail'
 
-    #ds = gdal.Open('data/template4_15.grib')
+    # ds = gdal.Open('data/template4_15.grib')
     # if ds is None:
     #    return 'fail'
 

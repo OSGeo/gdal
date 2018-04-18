@@ -526,8 +526,8 @@ def ogr_pgdump_7():
         feat.DumpReadable()
         return 'fail'
 
-    #feat.SetField('str', 'foo')
-    #ret = lyr.SetFeature(feat)
+    # feat.SetField('str', 'foo')
+    # ret = lyr.SetFeature(feat)
     # if ret != 0:
     #    gdaltest.post_reason('fail')
     #    return 'fail'
@@ -543,7 +543,7 @@ def ogr_pgdump_7():
         return 'fail'
 
     # gdal.PushErrorHandler()
-    #ret = lyr.SetFeature(feat)
+    # ret = lyr.SetFeature(feat)
     # gdal.PopErrorHandler()
     # if ret == 0:
     #    gdaltest.post_reason('fail')
@@ -551,7 +551,7 @@ def ogr_pgdump_7():
 
     # feat.UnsetField('myfid')
     # gdal.PushErrorHandler()
-    #ret = lyr.SetFeature(feat)
+    # ret = lyr.SetFeature(feat)
     # gdal.PopErrorHandler()
     # if ret == 0:
     #    gdaltest.post_reason('fail')
@@ -641,8 +641,8 @@ def ogr_pgdump_8():
         feat.DumpReadable()
         return 'fail'
 
-    #feat.SetField('str', 'foo')
-    #ret = lyr.SetFeature(feat)
+    # feat.SetField('str', 'foo')
+    # ret = lyr.SetFeature(feat)
     # if ret != 0:
     #    gdaltest.post_reason('fail')
     #    return 'fail'
@@ -660,7 +660,7 @@ def ogr_pgdump_8():
         return 'fail'
 
     # gdal.PushErrorHandler()
-    #ret = lyr.SetFeature(feat)
+    # ret = lyr.SetFeature(feat)
     # gdal.PopErrorHandler()
     # if ret == 0:
     #    gdaltest.post_reason('fail')
@@ -668,7 +668,7 @@ def ogr_pgdump_8():
 
     # feat.UnsetField('myfid')
     # gdal.PushErrorHandler()
-    #ret = lyr.SetFeature(feat)
+    # ret = lyr.SetFeature(feat)
     # gdal.PopErrorHandler()
     # if ret == 0:
     #    gdaltest.post_reason('fail')

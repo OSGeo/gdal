@@ -711,7 +711,7 @@ def lcp_17():
             break
         units = lcp_ds.GetRasterBand(9).GetMetadataItem("DUFF_UNIT_NAME")
         if units.lower() != answers[i].lower():
-            #gdaltest.post_reason('Could not set DUFF_UNIT')
+            # gdaltest.post_reason('Could not set DUFF_UNIT')
             retval = 'expected_fail'
             lcp_ds = None
             break

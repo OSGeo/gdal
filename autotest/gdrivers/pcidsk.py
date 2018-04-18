@@ -286,8 +286,8 @@ def pcidsk_10():
     ds = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_10.pix', src_ds)
     src_ds = None
 
-    #ds = None
-    #ds = gdal.Open( '/vsimem/pcidsk_10.pix', gdal.GA_Update )
+    # ds = None
+    # ds = gdal.Open( '/vsimem/pcidsk_10.pix', gdal.GA_Update )
 
     band = ds.GetRasterBand(1)
     ds.BuildOverviews('NEAR', [2])

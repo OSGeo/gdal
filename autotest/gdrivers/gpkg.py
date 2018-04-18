@@ -1855,8 +1855,8 @@ def gpkg_18():
     tmp_ds.BuildOverviews('CUBIC', [2, 4])
     expected_cs_ov0 = [tmp_ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(3)]
     expected_cs_ov1 = [tmp_ds.GetRasterBand(i + 1).GetOverview(1).Checksum() for i in range(3)]
-    #tmp_ds.BuildOverviews('NEAR', [3])
-    #expected_cs_ov_factor3 = [tmp_ds.GetRasterBand(i+1).GetOverview(2).Checksum() for i in range(3)]
+    # tmp_ds.BuildOverviews('NEAR', [3])
+    # expected_cs_ov_factor3 = [tmp_ds.GetRasterBand(i+1).GetOverview(2).Checksum() for i in range(3)]
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tmp.tif')
 
@@ -4057,7 +4057,7 @@ gdaltest_list = [
     gpkg_GeneralCmdLineProcessor,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_47, gpkg_cleanup ]
+# gdaltest_list = [ gpkg_init, gpkg_47, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run('gpkg')

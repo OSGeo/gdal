@@ -157,7 +157,7 @@ def CreateAndWriteRAT(fname):
     if rat.WriteArray(DOUBLE_DATA, 8) != gdal.CE_None:
         raise HFATestError("Failed to write doubles to string column")
 
-    #print('Succeeding writing data')
+    # print('Succeeding writing data')
     # ds.FlushCache()
     ds = None
 
@@ -250,7 +250,7 @@ def CheckSetGetValues(fname):
         rat.SetValueAsDouble(i, 1, DOUBLE_DATA[i])
         rat.SetValueAsString(i, 2, STRING_DATA[i])
 
-    #print("Get/SetValue OK")
+    # print("Get/SetValue OK")
     # ds.FlushCache()
     ds = None
 
@@ -277,7 +277,7 @@ def ExtendAndWrite(fname):
     if rat.WriteArray(STRING_DATA, 2, 10) != gdal.CE_None:
         raise HFATestError("Failed to write string column")
 
-    #print('extend ok')
+    # print('extend ok')
     # ds.FlushCache()
     ds = None
 
@@ -301,7 +301,7 @@ def CheckExtension(fname):
     if not (data == STRING_DATA.astype(numpy.character)).all():
         raise HFATestError("String column does not match")
 
-    #print('extension data ok')
+    # print('extension data ok')
     ds = None
 
     return 'success'
@@ -317,7 +317,7 @@ def WriteLongStrings(fname):
     if rat.WriteArray(LONG_STRING_DATA, 2, 10) != gdal.CE_None:
         raise HFATestError("Failed to write string column")
 
-    #print("wrote long strings ok")
+    # print("wrote long strings ok")
     # ds.FlushCache()
     ds = None
 
@@ -333,7 +333,7 @@ def CheckLongStrings(fname):
     if not (data == LONG_STRING_DATA.astype(numpy.character)).all():
         raise HFATestError("String column does not match")
 
-    #print("checked long strings ok")
+    # print("checked long strings ok")
     ds = None
 
     return 'success'
@@ -347,7 +347,7 @@ def SetLinearBinning(fname):
     if rat.SetLinearBinning(0, 1) != gdal.CE_None:
         raise HFATestError("Error in SetLinearBinning")
 
-    #print("set linear binning ok")
+    # print("set linear binning ok")
     # ds.FlushCache()
     ds = None
 
@@ -369,7 +369,7 @@ def CheckLinearBinning(fname):
     if rat.GetRowOfValue(3) != 3:
         raise HFATestError("GetRowOfValue value wrong")
 
-    #print('linear binning ok')
+    # print('linear binning ok')
     ds = None
 
     return 'success'
@@ -389,7 +389,7 @@ def CheckClone(fname):
     if cloned.GetValueAsString(1, 2) != "wess":
         raise HFATestError("Cloned info wrong string")
 
-    #print("cloned ok")
+    # print("cloned ok")
     ds = None
 
     return 'success'

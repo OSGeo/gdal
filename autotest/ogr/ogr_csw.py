@@ -771,7 +771,7 @@ gdaltest_vsimem_list = [
 
 gdaltest_list = [ogr_csw_init]
 gdaltest_list += gdaltest_vsimem_list
-#gdaltest_list += gdaltest_live_list
+# gdaltest_list += gdaltest_live_list
 
 if __name__ == '__main__':
 

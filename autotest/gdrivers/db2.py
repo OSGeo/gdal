@@ -243,7 +243,7 @@ gdaltest_list = [
     gpkg_init,
     gpkg_1
 ]
-#gdaltest_list = [ gpkg_init, gpkg_26, gpkg_cleanup ]
+# gdaltest_list = [ gpkg_init, gpkg_26, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run('gpkg')

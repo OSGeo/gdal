@@ -168,7 +168,7 @@ def test_gdal_ls_py_5():
     if len(d) == 0:
         return 'skip'
 
-    #ret, ret_str = run_gdal_ls(['', '-R', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
+    # ret, ret_str = run_gdal_ls(['', '-R', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
     #
     # if ret != 'success':
     #    return ret
@@ -248,7 +248,7 @@ def test_gdal_ls_py_7():
     if len(d) == 0:
         return 'skip'
 
-    #ret, ret_str = run_gdal_ls(['', '-R', '-Rzip', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
+    # ret, ret_str = run_gdal_ls(['', '-R', '-Rzip', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
 
     # if ret != 'success':
     #    return ret

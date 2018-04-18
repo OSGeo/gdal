@@ -366,15 +366,15 @@ def ogr_geom_tin():
         gdaltest.post_reason("Wrong WkbSize() of TIN")
         return 'fail'
 
-    #geom = tin.DelaunayTriangulation(0.0,True)
-    #wkt_geom_dt = 'MULTILINESTRING ((0 1 0,1 1 0),(0 0 0,0 1 0),(0 0 0,1 1 0))'
-    #wkt_geom = geom.ExportToWkt()
+    # geom = tin.DelaunayTriangulation(0.0,True)
+    # wkt_geom_dt = 'MULTILINESTRING ((0 1 0,1 1 0),(0 0 0,0 1 0),(0 0 0,1 1 0))'
+    # wkt_geom = geom.ExportToWkt()
     # if wkt_geom != wkt_geom_dt:
     #    gdaltest.post_reason ("Failure in DelaunayTriangulation() of TIN")
     #    print(wkt_geom)
     #    return 'fail'
 
-    #geom = ogr.CreateGeometryFromWkb(wkb_string)
+    # geom = ogr.CreateGeometryFromWkb(wkb_string)
     # if tin.Contains(geom) != True:
     #    gdaltest.post_reason ("Failure in Contains() of TIN")
     #    return 'fail'
@@ -408,9 +408,9 @@ def ogr_geom_tin():
             return 'fail'
 
     tin = ogr.CreateGeometryFromWkt(wkt_original)
-    #point = tin.PointOnSurface()
-    #point_wkt = point.ExportToWkt()
-    #point_correct_wkt = 'POINT (0.25 0.5)'
+    # point = tin.PointOnSurface()
+    # point_wkt = point.ExportToWkt()
+    # point_correct_wkt = 'POINT (0.25 0.5)'
     # if point_wkt != point_correct_wkt:
     #    gdaltest.post_reason ("Wrong Point Obtained for PointOnSurface() in TIN")
     #    print(point_wkt)
@@ -3297,8 +3297,8 @@ def ogr_geom_getcurvegeometry():
        abs((g3.GetX(3) - 0.5) * (g3.GetX(3) - 0.5) + g3.GetY(3) * g3.GetY(3) - 0.5 * 0.5) > 1e-12:
         gdaltest.post_reason('fail')
         print(g3)
-        #print(abs((g3.GetX(1) - 0.5)*(g3.GetX(1) - 0.5)+g3.GetY(1)*g3.GetY(1) - 0.5*0.5))
-        #print(abs((g3.GetX(3) - 0.5)*(g3.GetX(3) - 0.5)+g3.GetY(3)*g3.GetY(3) - 0.5*0.5))
+        # print(abs((g3.GetX(1) - 0.5)*(g3.GetX(1) - 0.5)+g3.GetY(1)*g3.GetY(1) - 0.5*0.5))
+        # print(abs((g3.GetX(3) - 0.5)*(g3.GetX(3) - 0.5)+g3.GetY(3)*g3.GetY(3) - 0.5*0.5))
         return 'fail'
 
     # 3 points full circle in a CurvePolygon
@@ -4194,7 +4194,7 @@ def ogr_geom_triangle_ps_tin_conversion():
 
     for wkt in wkts:
         for wkt_target in wkts:
-            #print(wkt, wkt_target)
+            # print(wkt, wkt_target)
             g = ogr.CreateGeometryFromWkt(wkt)
             g2 = ogr.CreateGeometryFromWkt(wkt_target)
             got_wkt = ogr.ForceTo(g, g2.GetGeometryType()).ExportToWkt()

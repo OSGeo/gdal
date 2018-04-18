@@ -317,10 +317,10 @@ def vsis3_2():
     handler.add('GET', '/s3_fake_bucket/resource2.bin', custom_method=method)
 
     with webserver.install_http_handler(handler):
-        #old_val = gdal.GetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN')
-        #gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', 'EMPTY_DIR')
+        # old_val = gdal.GetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN')
+        # gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', 'EMPTY_DIR')
         stat_res = gdal.VSIStatL('/vsis3/s3_fake_bucket/resource2.bin')
-        #gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', old_val)
+        # gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', old_val)
         if stat_res is None or stat_res.size != 1000000:
             gdaltest.post_reason('fail')
             if stat_res is not None:
@@ -1530,7 +1530,7 @@ def vsis3_6():
     handler.add('PUT', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=1&uploadId=my_id', 200, {'ETag': 'first_etag'}, '')
     handler.add('PUT', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=2&uploadId=my_id', 200, {'ETag': 'second_etag'}, '')
     handler.add('POST', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?uploadId=my_id', 403)
-    #handler.add('DELETE', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?uploadId=my_id', 204)
+    # handler.add('DELETE', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?uploadId=my_id', 204)
 
     filename = '/vsis3/s3_fake_bucket4/large_file_completemultipart_403_error.bin'
     with webserver.install_http_handler(handler):

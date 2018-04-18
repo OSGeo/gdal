@@ -894,11 +894,11 @@ def ogr_osm_15():
         print(pct_array)
         return 'fail'
 
-    #ds = gdal.OpenEx('/home/even/gdal/data/osm/france.osm.pbf')
-    #ds.ExecuteSQL('SET interest_layers = relations')
+    # ds = gdal.OpenEx('/home/even/gdal/data/osm/france.osm.pbf')
+    # ds.ExecuteSQL('SET interest_layers = relations')
     # def test(pct, msg, unused):
     #    print(pct)
-    #f, l = ds.GetNextFeature( callback = test)
+    # f, l = ds.GetNextFeature( callback = test)
     # print(f)
 
     ds = None

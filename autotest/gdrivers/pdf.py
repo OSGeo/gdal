@@ -495,7 +495,7 @@ def pdf_rgba_default_compression(options_param=[]):
     out_ds = gdaltest.pdf_drv.CreateCopy('tmp/rgba.pdf', src_ds, options=options_param)
     out_ds = None
 
-    #gdal.SetConfigOption('GDAL_PDF_BANDS', '4')
+    # gdal.SetConfigOption('GDAL_PDF_BANDS', '4')
     gdal.SetConfigOption('PDF_DUMP_OBJECT', 'tmp/rgba.pdf.txt')
     gdal.SetConfigOption('PDF_DUMP_PARENT', 'YES')
     out_ds = gdal.Open('tmp/rgba.pdf')
@@ -516,7 +516,7 @@ def pdf_rgba_default_compression(options_param=[]):
     src_cs3 = src_ds.GetRasterBand(3).Checksum()
     src_cs4 = src_ds.GetRasterBand(4).Checksum()
     out_ds = None
-    #gdal.SetConfigOption('GDAL_PDF_BANDS', None)
+    # gdal.SetConfigOption('GDAL_PDF_BANDS', None)
 
     gdal.GetDriverByName('PDF').Delete('tmp/rgba.pdf')
 
@@ -1568,7 +1568,7 @@ def pdf_write_ogr():
 
         # Test that all combinations give a different result
         for i in range(len(rendering_options)):
-            #print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
+            # print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
             for j in range(i + 1, len(rendering_options)):
                 if cs_tab[i] == cs_tab[j] and cs_tab[i] >= 0 and cs_tab[j] >= 0:
                     gdaltest.post_reason('fail')
@@ -2222,7 +2222,7 @@ def pdf_run_all():
 
 
 gdaltest_list = [pdf_run_all]
-#gdaltest_list = [ pdf_init, pdf_metadata ]
+# gdaltest_list = [ pdf_init, pdf_metadata ]
 
 if __name__ == '__main__':
 

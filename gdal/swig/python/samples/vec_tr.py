@@ -117,7 +117,7 @@ else:
 in_defn = in_layer.GetLayerDefn()
 
 #############################################################################
-#	Create output file with similar information.
+# Create output file with similar information.
 
 shp_driver = ogr.GetDriverByName('ESRI Shapefile')
 shp_driver.DeleteDataSource(outfile)

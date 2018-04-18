@@ -727,7 +727,7 @@ class CFChecker:
             # Don't print this message out o/w it is repeated for every variable
             # that has this dimension.  CRM033 return "None" instead
             # print "ERROR: Invalid units:",units
-            #self.err = self.err+1
+            # self.err = self.err+1
             return None
 
 #    print "here"

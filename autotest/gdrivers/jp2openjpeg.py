@@ -353,7 +353,7 @@ def jp2openjpeg_11():
     got_cs = fourth_band.Checksum()
     gtiff_bands_data = tmp_ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     gtiff_fourth_band_data = fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
-    #gtiff_fourth_band_subsampled_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,ds.RasterXSize/16,ds.RasterYSize/16)
+    # gtiff_fourth_band_subsampled_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,ds.RasterXSize/16,ds.RasterYSize/16)
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/jp2openjpeg_11.tif')
     if got_cs != 8527:
@@ -1305,7 +1305,7 @@ def jp2openjpeg_27():
     src_ds = gdal.GetDriverByName('MEM').Create('', 2049, 2049, 4)
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_27.jp2', src_ds, options=['RESOLUTIONS=1', 'BLOCKXSIZE=2048', 'BLOCKYSIZE=2048'])
     src_ds = None
-    #print('End of JP2 decoding')
+    # print('End of JP2 decoding')
     out2_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/jp2openjpeg_27.tif', out_ds, options=['TILED=YES'])
     out_ds = None
     del out2_ds
@@ -1324,7 +1324,7 @@ XML_FIRST_CHILD_IDX = 2
 
 
 def find_xml_node(ar, element_name, only_attributes=False):
-    #type = ar[XML_TYPE_IDX]
+    # type = ar[XML_TYPE_IDX]
     value = ar[XML_VALUE_IDX]
     if value == element_name:
         return ar
@@ -3209,7 +3209,7 @@ yeah: """) < 0:
         gdal.PushErrorHandler()
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_46.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
         gdal.PopErrorHandler()
-        #print('error : ' + gdal.GetLastErrorMsg())
+        # print('error : ' + gdal.GetLastErrorMsg())
         gdal.Unlink("/vsimem/template.xml")
         gdal.Unlink("/vsimem/source.xml")
         del out_ds
@@ -3296,10 +3296,10 @@ yeah: """) < 0:
     del out_ds
     gdal.Unlink("/vsimem/template.xml")
     gdal.Unlink("/vsimem/source.xml")
-    #ds = gdal.Open('/vsimem/jp2openjpeg_46.jp2')
-    #gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
+    # ds = gdal.Open('/vsimem/jp2openjpeg_46.jp2')
+    # gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
     # print(gmljp2)
-    #ds = None
+    # ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
 
     return 'success'

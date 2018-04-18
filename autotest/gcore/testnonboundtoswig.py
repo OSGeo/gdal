@@ -81,7 +81,7 @@ def testnonboundtoswig_init():
     print('Found libgdal we are running against : %s' % name)
 
     static_version = gdal.VersionInfo(None)
-    #short_static_version = static_version[0:2]
+    # short_static_version = static_version[0:2]
 
     try:
         gdal_handle = ctypes.cdll.LoadLibrary(name)

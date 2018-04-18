@@ -479,8 +479,8 @@ def ogr_wfs_deegree():
             return 'fail'
 
     # Test attribute filter with gml_id
-    #lyr.SetAttributeFilter("gml_id = 'SGID024_Springs30' or gml_id = 'SGID024_Springs100'")
-    #feat_count = lyr.GetFeatureCount()
+    # lyr.SetAttributeFilter("gml_id = 'SGID024_Springs30' or gml_id = 'SGID024_Springs100'")
+    # feat_count = lyr.GetFeatureCount()
     # if feat_count != 2:
     #    gdaltest.post_reason('did not get expected feature count after SetAttributeFilter (2)')
     #    print(feat_count)
@@ -635,7 +635,7 @@ def ogr_wfs_geoserver_wfst():
     geom = ogr.CreateGeometryFromWkt('POINT(0 89.5)')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(geom)
-    #feat.SetField('name', 'name_set_by_ogr_wfs_8_test')
+    # feat.SetField('name', 'name_set_by_ogr_wfs_8_test')
     feat.SetField('type', 'type_set_by_ogr_wfs_8_test')
     if lyr.CreateFeature(feat) != 0:
         # Likely a bug in the current GeoServer version ??
@@ -667,7 +667,7 @@ def ogr_wfs_geoserver_wfst():
     geom = ogr.CreateGeometryFromWkt('POINT(0 89.5)')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(geom)
-    #feat.SetField('name', 'name_set_by_ogr_wfs_8_test')
+    # feat.SetField('name', 'name_set_by_ogr_wfs_8_test')
     feat.SetField('type', 'type_set_by_ogr_wfs_8_test')
     if lyr.CreateFeature(feat) != 0:
         gdaltest.post_reason('cannot create feature')
@@ -675,7 +675,7 @@ def ogr_wfs_geoserver_wfst():
     geom = ogr.CreateGeometryFromWkt('POINT(0 89.5)')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(geom)
-    #feat.SetField('name', 'name_set_by_ogr_wfs_8_test_2')
+    # feat.SetField('name', 'name_set_by_ogr_wfs_8_test_2')
     feat.SetField('type', 'type_set_by_ogr_wfs_8_test_2')
     if lyr.CreateFeature(feat) != 0:
         gdaltest.post_reason('cannot create feature')
@@ -1007,7 +1007,7 @@ def ogr_wfs_deegree_wfs200():
     if count != 1:
         # FIXME ! Avoid failure on ogr_wfs_deegree_wfs200 (the server is likely buggy since it worked before, but no longer whereas the WFS client code hasn't changed)
         print("gml_id = 'SGID024_MUNICIPALITIES2004_EDITED_5' filter failed")
-        #gdaltest.post_reason("gml_id = 'SGID024_MUNICIPALITIES2004_EDITED_5' filter failed")
+        # gdaltest.post_reason("gml_id = 'SGID024_MUNICIPALITIES2004_EDITED_5' filter failed")
         # print(count)
         # return 'fail'
     else:

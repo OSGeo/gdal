@@ -53,7 +53,7 @@ def ogr_edigeo_1():
                 'EDAB01T1.VEC',
                 'EDAB01T2.VEC',
                 'EDAB01T3.VEC']
-    #base_url = 'http://svn.geotools.org/trunk/modules/unsupported/edigeo/src/test/resources/org/geotools/data/edigeo/test-data/'
+    # base_url = 'http://svn.geotools.org/trunk/modules/unsupported/edigeo/src/test/resources/org/geotools/data/edigeo/test-data/'
     base_url = 'https://raw.githubusercontent.com/geotools/geotools/master/modules/unsupported/edigeo/src/test/resources/org/geotools/data/edigeo/test-data/'
 
     for filename in filelist:

@@ -931,7 +931,7 @@ def ogr_interlis1_13_linear():
 
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
-    #field_values = ['106', 3, 3, 1, 23, 25000, 20060111]
+    # field_values = ['106', 3, 3, 1, 23, 25000, 20060111]
     field_values = ['105', 3, 3, 1, 23, 25000, 20060111]
 
     if feat.GetFieldCount() != len(field_values):
@@ -1404,7 +1404,7 @@ def ogr_interlis_arc1():
         return 'skip'
 
     gdal.SetConfigOption('OGR_STROKE_CURVE', 'TRUE')
-    #gdal.SetConfigOption('OGR_ARC_STEPSIZE', '0.96')
+    # gdal.SetConfigOption('OGR_ARC_STEPSIZE', '0.96')
     ds = ogr.Open('data/ili/Beispiel.itf,data/ili/Beispiel.imd')
 
     gdal.SetConfigOption('OGR_STROKE_CURVE', None)

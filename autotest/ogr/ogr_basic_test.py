@@ -810,7 +810,7 @@ gdaltest_list = [
     ogr_basic_invalid_unicode,
     ogr_basic_cleanup]
 
-#gdaltest_list = [ ogr_basic_13 ]
+# gdaltest_list = [ ogr_basic_13 ]
 
 if __name__ == '__main__':
 

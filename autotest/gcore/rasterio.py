@@ -1116,7 +1116,7 @@ gdaltest_list = [
     rasterio_16
 ]
 
-#gdaltest_list = [ rasterio_16 ]
+# gdaltest_list = [ rasterio_16 ]
 
 if __name__ == '__main__':
 

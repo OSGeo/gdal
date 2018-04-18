@@ -2423,7 +2423,7 @@ gdaltest_list = [
     ogr_elasticsearch_cleanup,
 ]
 
-#gdaltest_list = [ ogr_elasticsearch_init, ogr_elasticsearch_10 ]
+# gdaltest_list = [ ogr_elasticsearch_init, ogr_elasticsearch_10 ]
 
 if __name__ == '__main__':
 

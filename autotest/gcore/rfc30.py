@@ -84,7 +84,7 @@ def rfc30_2():
     else:
         exec("filename =  u'tmp/yy\u4E2D\u6587.\u4E2D\u6587'")
         # The typemaps should accept Unicode strings directly
-        #filename = filename.encode( 'utf-8' )
+        # filename = filename.encode( 'utf-8' )
 
     fd = gdal.VSIFOpenL(filename, 'w')
     if fd is None:

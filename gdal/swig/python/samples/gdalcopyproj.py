@@ -5,9 +5,9 @@
 #  Name:     gdalcopyproj.py
 #  Project:  GDAL Python Interface
 #  Purpose:  Duplicate the geotransform and projection metadata from
-#	     one raster dataset to another, which can be useful after
-#	     performing image manipulations with other software that
-#	     ignores or discards georeferencing metadata.
+#            one raster dataset to another, which can be useful after
+#            performing image manipulations with other software that
+#            ignores or discards georeferencing metadata.
 #  Author:   Schuyler Erle, schuyler@nocat.net
 #
 # ******************************************************************************

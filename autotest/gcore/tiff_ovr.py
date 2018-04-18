@@ -1325,7 +1325,7 @@ def tiff_ovr_32():
     tmp2_ovr_ds.WriteRaster(0, 0, tmp_ovr_ds.RasterXSize, tmp_ovr_ds.RasterYSize, src_data)
 
     cs = tmp2_ds.GetRasterBand(1).GetOverview(0).Checksum()
-    #expected_cs = 21656
+    # expected_cs = 21656
     expected_cs = 21168
     if cs != expected_cs:
         gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
@@ -1653,13 +1653,13 @@ def tiff_ovr_41():
     shutil.copyfile('data/oddsize_1bit2b.tif', 'tmp/ovr41.tif')
 
     ds = gdal.Open('tmp/ovr41.tif')
-    #data = wrk_ds.GetRasterBand(1).ReadRaster(0,0,99,99,50,50)
+    # data = wrk_ds.GetRasterBand(1).ReadRaster(0,0,99,99,50,50)
     ds.BuildOverviews('NEAREST', overviewlist=[2])
     ds = None
 
-    #ds = gdaltest.tiff_drv.Create('tmp/ovr41.tif.handmade.ovr',50,50,1,options=['NBITS=1'])
+    # ds = gdaltest.tiff_drv.Create('tmp/ovr41.tif.handmade.ovr',50,50,1,options=['NBITS=1'])
     # ds.GetRasterBand(1).WriteRaster(0,0,50,50,data)
-    #ds = None
+    # ds = None
 
     ds = gdal.Open('tmp/ovr41.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()

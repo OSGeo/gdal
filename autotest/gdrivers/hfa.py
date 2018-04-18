@@ -464,7 +464,7 @@ def hfa_grow_rrdlist():
     import shutil
 
     shutil.copyfile('data/bug_1109.img', 'tmp/bug_1109.img')
-    #os.system("copy data\\bug_1109.img tmp")
+    # os.system("copy data\\bug_1109.img tmp")
 
     # Add two overview levels.
     ds = gdal.Open('tmp/bug_1109.img', gdal.GA_Update)

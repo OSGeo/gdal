@@ -56,8 +56,8 @@ TIFFTAG_SAMPLEFORMAT = 339
 tags = [['TIFFTAG_IMAGEWIDTH', TIFFTAG_IMAGEWIDTH, [0, 1, 0x7FFFFFFF, 0xFFFFFFFF]],
         ['TIFFTAG_IMAGELENGTH', TIFFTAG_IMAGELENGTH, [0, 1, 0x7FFFFFFF, 0xFFFFFFFF]],
         ['TIFFTAG_BITSPERSAMPLE', TIFFTAG_BITSPERSAMPLE, [None, 1, 8, 255]],
-        #['TIFFTAG_COMPRESSION', TIFFTAG_COMPRESSION, [None, COMPRESSION_NONE]],
-        #['TIFFTAG_PHOTOMETRIC', TIFFTAG_PHOTOMETRIC, [None, PHOTOMETRIC_MINISBLACK]],
+        # ['TIFFTAG_COMPRESSION', TIFFTAG_COMPRESSION, [None, COMPRESSION_NONE]],
+        # ['TIFFTAG_PHOTOMETRIC', TIFFTAG_PHOTOMETRIC, [None, PHOTOMETRIC_MINISBLACK]],
         ['TIFFTAG_STRIPOFFSETS', TIFFTAG_STRIPOFFSETS, [None, 0, 8]],
         ['TIFFTAG_SAMPLESPERPIXEL', TIFFTAG_SAMPLESPERPIXEL, [None, 1, 255, 65535]],
         ['TIFFTAG_ROWSPERSTRIP', TIFFTAG_ROWSPERSTRIP, [None, 0, 1, 0x7FFFFFFF, 0xFFFFFFFF]],
@@ -67,7 +67,7 @@ tags = [['TIFFTAG_IMAGEWIDTH', TIFFTAG_IMAGEWIDTH, [0, 1, 0x7FFFFFFF, 0xFFFFFFFF
         ['TIFFTAG_TILELENGTH', TIFFTAG_TILELENGTH, [None, 0, 8, 256, 65536, 0x7FFFFFFF]],
         ['TIFFTAG_TILEOFFSETS', TIFFTAG_TILEOFFSETS, [None, 0, 8]],
         ['TIFFTAG_TILEBYTECOUNTS', TIFFTAG_TILEBYTECOUNTS, [None, 0, 1, 0x7FFFFFFF, 0xFFFFFFFF]],
-        #['TIFFTAG_SAMPLEFORMAT', TIFFTAG_SAMPLEFORMAT, [None, SAMPLEFORMAT_UINT]],
+        # ['TIFFTAG_SAMPLEFORMAT', TIFFTAG_SAMPLEFORMAT, [None, SAMPLEFORMAT_UINT]],
         ]
 
 
@@ -127,11 +127,11 @@ while True:
     comb_val = random.randrange(0, nVals)
     content = generate_tif(comb_val)
 
-    #f = open('test.tif', 'wb')
+    # f = open('test.tif', 'wb')
     # f.write(content)
     # f.close()
 
-    #print(struct.unpack('B' * len(content), content))
+    # print(struct.unpack('B' * len(content), content))
 
     # Create in-memory file
     gdal.FileFromMemBuffer('/vsimem/test.tif', content)

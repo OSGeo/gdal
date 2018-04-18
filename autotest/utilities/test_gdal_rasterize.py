@@ -52,8 +52,8 @@ def test_gdal_rasterize_1():
         return 'skip'
 
     # Setup working spatial reference
-    #sr_wkt = 'LOCAL_CS["arbitrary"]'
-    #sr = osr.SpatialReference( sr_wkt )
+    # sr_wkt = 'LOCAL_CS["arbitrary"]'
+    # sr = osr.SpatialReference( sr_wkt )
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
     sr_wkt = sr.ExportToWkt()

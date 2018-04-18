@@ -112,7 +112,7 @@ def auto_noaa(options, loslas_list):
     original_metadata = options.metadata
 
     have_nad27 = 0
-    #have_hpgn = 0
+    # have_hpgn = 0
 
     for los in loslas_list:
 

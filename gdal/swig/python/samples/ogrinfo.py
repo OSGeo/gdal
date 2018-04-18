@@ -232,7 +232,7 @@ def main(argv=None):
                 ReportOnLayer(poResultSet, None, None, None, options)
             poDS.ReleaseResultSet(poResultSet)
 
-    #gdal.Debug( "OGR", "GetLayerCount() = %d\n", poDS.GetLayerCount() )
+    # gdal.Debug( "OGR", "GetLayerCount() = %d\n", poDS.GetLayerCount() )
 
     for iRepeat in range(nRepeatCount):
         if papszLayers is None:

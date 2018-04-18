@@ -86,7 +86,7 @@ ds = ogr.Open(infile, update=0)
 poly_layer = ds.GetLayerByName('Polygon')
 
 #############################################################################
-#	Create output file for the composed polygons.
+# Create output file for the composed polygons.
 
 nad83 = osr.SpatialReference()
 nad83.SetFromUserInput('NAD83')
@@ -218,7 +218,7 @@ while feat is not None:
             continue
 
         # print poly.ExportToWkt()
-        #feat.SetGeometryDirectly( poly )
+        # feat.SetGeometryDirectly( poly )
 
         feat2 = ogr.Feature(feature_def=shp_layer.GetLayerDefn())
 

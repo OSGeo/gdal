@@ -1067,7 +1067,7 @@ def visoss_6():
     handler.add('PUT', '/oss_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=1&uploadId=my_id', 200, {'ETag': 'first_etag'}, '')
     handler.add('PUT', '/oss_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=2&uploadId=my_id', 200, {'ETag': 'second_etag'}, '')
     handler.add('POST', '/oss_fake_bucket4/large_file_completemultipart_403_error.bin?uploadId=my_id', 403)
-    #handler.add('DELETE', '/oss_fake_bucket4/large_file_completemultipart_403_error.bin?uploadId=my_id', 204)
+    # handler.add('DELETE', '/oss_fake_bucket4/large_file_completemultipart_403_error.bin?uploadId=my_id', 204)
 
     filename = '/vsioss/oss_fake_bucket4/large_file_completemultipart_403_error.bin'
     with webserver.install_http_handler(handler):

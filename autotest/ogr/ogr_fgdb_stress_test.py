@@ -143,7 +143,7 @@ def ogr_fgdb_stress_test_1():
                 gdal.PopErrorHandler()
                 # So to ensure lyr_ref will use the same FID as the tested layer
                 fid = f.GetFID()
-                #print("created %d" % fid)
+                # print("created %d" % fid)
             if ret[0] != ret[1]:
                 gdaltest.post_reason('fail')
                 print(ret)

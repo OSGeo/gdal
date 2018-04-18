@@ -2025,7 +2025,7 @@ gdaltest_list = [
     warp_55,
     warp_56
 ]
-#gdaltest_list = [ warp_55 ]
+# gdaltest_list = [ warp_55 ]
 
 if __name__ == '__main__':
 
