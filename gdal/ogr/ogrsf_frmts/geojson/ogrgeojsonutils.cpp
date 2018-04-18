@@ -80,20 +80,25 @@ static bool IsJSONObject( const char* pszText )
 
 static bool IsTypeSomething( const char* pszText, const char* pszTypeValue )
 {
-    const char* pszIter = strstr(pszText, "\"type\"");
-    if( pszIter == nullptr )
-        return false;
-    pszIter += strlen("\"type\"");
-    while( isspace(*pszIter) )
+    const char* pszIter = pszText;
+    while( true )
+    {
+        pszIter = strstr(pszIter, "\"type\"");
+        if( pszIter == nullptr )
+            return false;
+        pszIter += strlen("\"type\"");
+        while( isspace(*pszIter) )
+            pszIter ++;
+        if( *pszIter != ':' )
+            return false;
         pszIter ++;
-    if( *pszIter != ':' )
-        return false;
-    pszIter ++;
-    while( isspace(*pszIter) )
-        pszIter ++;
-    CPLString osValue;
-    osValue.Printf("\"%s\"", pszTypeValue);
-    return STARTS_WITH(pszIter, osValue.c_str());
+        while( isspace(*pszIter) )
+            pszIter ++;
+        CPLString osValue;
+        osValue.Printf("\"%s\"", pszTypeValue);
+        if( STARTS_WITH(pszIter, osValue.c_str()) )
+            return true;
+    }
 }
 
 /************************************************************************/
@@ -152,6 +157,9 @@ static CPLString GetCompactJSon( const char* pszText, size_t nMaxSize )
 bool GeoJSONIsObject( const char* pszText )
 {
     if( !IsJSONObject(pszText) )
+        return false;
+
+    if( IsTypeSomething(pszText, "Topology") )
         return false;
 
     if( IsTypeSomething(pszText, "Feature") ||

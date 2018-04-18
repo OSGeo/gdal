@@ -4078,6 +4078,26 @@ def ogr_geojson_geom_export_failure():
 ###############################################################################
 
 
+def ogr_geojson_starting_with_crs():
+
+    ds = ogr.Open("""{
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32631" } },
+"type": "FeatureCollection",
+"features": [{
+"type": "Feature",
+"geometry": {
+"type": "Point",
+"coordinates": [500000,4500000]},
+"properties": {
+}}]}""")
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+
 def ogr_geojson_cleanup():
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
@@ -4184,6 +4204,7 @@ gdaltest_list = [
     ogr_geojson_68,
     ogr_geojson_id_field_and_id_type,
     ogr_geojson_geom_export_failure,
+    ogr_geojson_starting_with_crs,
     ogr_geojson_cleanup]
 
 if __name__ == '__main__':
