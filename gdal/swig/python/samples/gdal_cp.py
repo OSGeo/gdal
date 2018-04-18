@@ -124,7 +124,7 @@ def gdal_cp_single(srcfile, targetfile, progress):
     buffer_max_size = 4096
     copied = 0
     ret = 0
-    #print('Copying %s...' % srcfile)
+    # print('Copying %s...' % srcfile)
     if progress is not None:
         if not progress.Progress(0.0, 'Copying %s' % srcfile):
             print('Copy stopped by user')

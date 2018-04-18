@@ -86,7 +86,7 @@ if attr_filter is not None:
     in_layer.SetAttributeFilter(attr_filter)
 
 #############################################################################
-#	Connect to ODBC DSN.
+# Connect to ODBC DSN.
 
 if odbc_dsn == 'stdout':
     out_ds = None
@@ -101,7 +101,7 @@ else:
         sys.exit(1)
 
 #############################################################################
-#	Fetch layer definition, and defined output table on the same basis.
+# Fetch layer definition, and defined output table on the same basis.
 
 try:
     cmd = 'drop table ' + layername

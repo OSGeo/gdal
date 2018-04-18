@@ -3162,21 +3162,21 @@ def nitf_online_7():
                 return 'fail'
         ds = None
 
-        #shutil.copyfile('tmp/cache/' + file, 'tmp/' + file)
-        #ds = gdal.Open('tmp/' + file, gdal.GA_Update)
-        #data = ds.GetRasterBand(1).ReadRaster(0, 0, 1024, 1024)
+        # shutil.copyfile('tmp/cache/' + file, 'tmp/' + file)
+        # ds = gdal.Open('tmp/' + file, gdal.GA_Update)
+        # data = ds.GetRasterBand(1).ReadRaster(0, 0, 1024, 1024)
         # ds.GetRasterBand(1).Fill(0)
-        #ds = None
+        # ds = None
 
-        #ds = gdal.Open('tmp/' + file, gdal.GA_Update)
-        #ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
-        #ds = None
+        # ds = gdal.Open('tmp/' + file, gdal.GA_Update)
+        # ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
+        # ds = None
 
-        #ds = gdal.Open('tmp/' + file)
+        # ds = gdal.Open('tmp/' + file)
         # print(ds.GetRasterBand(1).Checksum())
-        #ds = None
+        # ds = None
 
-        #os.remove('tmp/' + file)
+        # os.remove('tmp/' + file)
 
     return 'success'
 

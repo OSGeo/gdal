@@ -1344,7 +1344,7 @@ def ogr_mitab_28():
         x = int(n / N2)
         y = n % N2
         f = ogr.Feature(lyr.GetLayerDefn())
-        #f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%d %d)' % (x,y)))
+        # f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%d %d)' % (x,y)))
         f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(%d %d,%f %f,%f %f)' % (x, y, x + 0.1, y, x + 0.2, y)))
         lyr.CreateFeature(f)
 
@@ -1359,7 +1359,7 @@ def ogr_mitab_28():
         x = int(n / N2)
         y = n % N2
         f = ogr.Feature(lyr.GetLayerDefn())
-        #f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%d %d)' % (x,y)))
+        # f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%d %d)' % (x,y)))
         f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(%d %d,%f %f,%f %f)' % (x, y, x + 0.1, y, x + 0.2, y)))
         f.SetFID(i + 1)
         i = i + 1
@@ -2362,7 +2362,7 @@ def ogr_mitab_45():
                 lyr.CreateFeature(feat)
         ds = None
 
-        #reopen and check
+        # reopen and check
         ds = ogr.Open(dsName)
         if ds is None:
             gdaltest.post_reason('Can\'t reopen dataset: ' + dsName)

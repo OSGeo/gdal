@@ -547,9 +547,9 @@ def main(argv=None):
 
         if bShowRAT:
             pass
-            #hRAT = hBand.GetDefaultRAT()
+            # hRAT = hBand.GetDefaultRAT()
 
-            #GDALRATDumpReadable( hRAT, None );
+            # GDALRATDumpReadable( hRAT, None );
 
     return 0
 

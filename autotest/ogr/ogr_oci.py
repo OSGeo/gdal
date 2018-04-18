@@ -1004,11 +1004,11 @@ def ogr_oci_21():
     field_defn.SetDefault("'2015/06/30 12:34:56'")
     lyr.CreateField(field_defn)
 
-    #field_defn = ogr.FieldDefn( 'field_date', ogr.OFTDate )
+    # field_defn = ogr.FieldDefn( 'field_date', ogr.OFTDate )
     # field_defn.SetDefault("CURRENT_DATE")
     # lyr.CreateField(field_defn)
 
-    #field_defn = ogr.FieldDefn( 'field_time', ogr.OFTTime )
+    # field_defn = ogr.FieldDefn( 'field_time', ogr.OFTTime )
     # field_defn.SetDefault("CURRENT_TIME")
     # lyr.CreateField(field_defn)
 

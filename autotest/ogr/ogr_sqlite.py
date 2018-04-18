@@ -1842,7 +1842,7 @@ def ogr_spatialite_5(bUseComprGeom=False):
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_5.sqlite', options=['SPATIALITE=YES'])
 
     geometries = [
-        #'POINT EMPTY',
+        # 'POINT EMPTY',
         'POINT (1 2)',
         'POINT Z (1 2 3)',
         'POINT M (1 2 3)',
@@ -1880,7 +1880,7 @@ def ogr_spatialite_5(bUseComprGeom=False):
         'MULTIPOLYGON M (((1 2 -4,1 3 -3,2 3 -3,2 2 -3,1 2 -6)),((-1 -2 0,-1 -3 0,-2 -3 0,-2 -2 0,-1 -2 0)))',
         'MULTIPOLYGON ZM (((1 2 -4 -40,1 3 -3 -30,2 3 -3 -30,2 2 -3 30,1 2 -6 -60)),((-1 -2 0 0,-1 -3 0 0,-2 -3 0 0,-2 -2 0 0,-1 -2 0 0)))',
         'GEOMETRYCOLLECTION EMPTY',
-        #'GEOMETRYCOLLECTION (GEOMETRYCOLLECTION EMPTY)',
+        # 'GEOMETRYCOLLECTION (GEOMETRYCOLLECTION EMPTY)',
         'GEOMETRYCOLLECTION (POINT (1 2))',
         'GEOMETRYCOLLECTION Z (POINT Z (1 2 3))',
         'GEOMETRYCOLLECTION M (POINT M (1 2 3))',
@@ -3357,9 +3357,9 @@ def ogr_sqlite_40():
 
     # ds.CommitTransaction()
     ds.ReleaseResultSet(ds.ExecuteSQL('SELECT 1'))
-    #ds = None
-    #ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update = 1)
-    #lyr = ds.GetLayerByName('test3')
+    # ds = None
+    # ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update = 1)
+    # lyr = ds.GetLayerByName('test3')
     # ds.StartTransaction()
 
     f = ogr.Feature(lyr.GetLayerDefn())

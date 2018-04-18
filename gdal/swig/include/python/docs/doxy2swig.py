@@ -75,7 +75,7 @@ class Doxy2SWIG:
                         'collaborationgraph', 'reimplements',
                         'reimplementedby', 'derivedcompoundref',
                         'basecompoundref')
-        #self.generics = []
+        # self.generics = []
 
     def generate(self):
         """Parses the file set in the initialization.  The resulting
@@ -123,7 +123,7 @@ class Doxy2SWIG:
             handlerMethod(node)
         else:
             self.generic_parse(node)
-            #if name not in self.generics: self.generics.append(name)
+            # if name not in self.generics: self.generics.append(name)
 
     def add_text(self, value):
         """Adds text corresponding to `value` into `self.pieces`."""

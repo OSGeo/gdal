@@ -66,13 +66,13 @@ class ProjTest:
         if self.requirements is not None and self.requirements[:5] == 'GRID:':
             proj_lib = os.getenv('PROJ_LIB')
             if proj_lib is None:
-                #print( 'PROJ_LIB unset, skipping test.' )
+                # print( 'PROJ_LIB unset, skipping test.' )
                 return 'skip'
 
             try:
                 open(proj_lib + '/' + self.requirements[5:])
             except:
-                #print( 'Did not find GRID:%s' % self.requirements[5:] )
+                # print( 'Did not find GRID:%s' % self.requirements[5:] )
                 return 'skip'
 
         src = osr.SpatialReference()

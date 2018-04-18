@@ -1305,7 +1305,7 @@ def netcdf_32():
     ifile = 'data/byte.tif'
     ofile = 'tmp/netcdf_32.nc'
 
-    #gdal.SetConfigOption('CPL_DEBUG', 'ON')
+    # gdal.SetConfigOption('CPL_DEBUG', 'ON')
 
     # test basic read/write
     result = netcdf_test_copy(ifile, 1, 4672, ofile, ['FORMAT=NC4'])
@@ -3398,7 +3398,7 @@ gdaltest_list.append((ut.testSetGeoTransform, item[0]))
 gdaltest_list.append((ut.testSetProjection, item[0]))
 
 # SetMetadata() not supported
-#gdaltest_list.append( (ut.testSetMetadata, item[0]) )
+# gdaltest_list.append( (ut.testSetMetadata, item[0]) )
 
 # gdaltest_list = [ netcdf_1, netcdf_82 ]
 

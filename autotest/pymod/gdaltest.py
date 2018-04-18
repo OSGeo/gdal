@@ -303,7 +303,7 @@ def run_all(dirlist, run_as_external=False):
                         python_exe = python_exe.replace('\\', '/')
 
                     print('Running %s/%s...' % (dir_name, file))
-                    #ret = runexternal(python_exe + ' ' + file, display_live_on_parent_stdout = True)
+                    # ret = runexternal(python_exe + ' ' + file, display_live_on_parent_stdout = True)
                     if 'GDALTEST_ASAN_OPTIONS' in os.environ:
                         if 'ASAN_OPTIONS' in os.environ:
                             backup_asan_options = os.environ['ASAN_OPTIONS']
@@ -329,7 +329,7 @@ def run_all(dirlist, run_as_external=False):
                         setup_run('%s/%s' % (dir_name, file))
                         exec("run_tests( " + module + ".gdaltest_list)")
                     except:
-                        #import traceback
+                        # import traceback
                         # traceback.print_exc(file=sys.stderr)
                         pass
 

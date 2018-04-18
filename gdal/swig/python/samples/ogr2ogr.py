@@ -111,7 +111,7 @@ class TargetLayerInfo:
     def __init__(self):
         self.poDstLayer = None
         self.poCT = None
-        #self.papszTransformOptions = None
+        # self.papszTransformOptions = None
         self.panMap = None
         self.iSrcZField = None
 
@@ -190,8 +190,8 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
     pszClipDstSQL = None
     pszClipDstLayer = None
     pszClipDstWhere = None
-    #pszSrcEncoding = None
-    #pszDstEncoding = None
+    # pszSrcEncoding = None
+    # pszDstEncoding = None
     bWrapDateline = False
     bExplodeCollections = False
     pszZField = None
@@ -1494,7 +1494,7 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName,
     psInfo = TargetLayerInfo()
     psInfo.poDstLayer = poDstLayer
     psInfo.poCT = poCT
-    #psInfo.papszTransformOptions = papszTransformOptions
+    # psInfo.papszTransformOptions = papszTransformOptions
     psInfo.panMap = panMap
     psInfo.iSrcZField = iSrcZField
 
@@ -1517,7 +1517,7 @@ def TranslateLayer(psInfo, poSrcDS, poSrcLayer, poDstDS,
     bForceToMultiLineString = False
 
     poDstLayer = psInfo.poDstLayer
-    #papszTransformOptions = psInfo.papszTransformOptions
+    # papszTransformOptions = psInfo.papszTransformOptions
     poCT = psInfo.poCT
     panMap = psInfo.panMap
     iSrcZField = psInfo.iSrcZField

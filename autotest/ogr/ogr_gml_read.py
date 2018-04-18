@@ -1016,8 +1016,8 @@ def ogr_gml_24():
 
     # Because we read the .xsd, we (currently) don't find the SRS
 
-    #sr = lyr.GetSpatialRef()
-    #got_wkt = sr.ExportToWkt()
+    # sr = lyr.GetSpatialRef()
+    # got_wkt = sr.ExportToWkt()
     # if got_wkt.find('GEOGCS["WGS 84"') == -1 or \
     #   got_wkt.find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') != -1:
     #    gdaltest.post_reason('did not get expected SRS')
@@ -3079,7 +3079,7 @@ def ogr_gml_65():
                             ]
     for (option, expected) in option_expected_list:
         filename = '/vsimem/ogr_gml_65.gml'
-        #filename = 'ogr_gml_65.gml'
+        # filename = 'ogr_gml_65.gml'
         ds = ogr.GetDriverByName('GML').CreateDataSource(filename, options=['FORMAT=GML3', option])
         lyr = ds.CreateLayer('lyr')
         feat = ogr.Feature(lyr.GetLayerDefn())
@@ -3119,7 +3119,7 @@ def ogr_gml_66():
         return 'skip'
 
     filename = '/vsimem/ogr_gml_66.gml'
-    #filename = 'ogr_gml_66.gml'
+    # filename = 'ogr_gml_66.gml'
     ds = ogr.GetDriverByName('GML').CreateDataSource(filename, options=['FORMAT=GML3'])
     lyr = ds.CreateLayer('compoundcurve', geom_type=ogr.wkbCompoundCurve)
     f = ogr.Feature(lyr.GetLayerDefn())

@@ -656,7 +656,7 @@ def osr_esri_19():
 def osr_esri_test(wkt_esri, wkt_ogc, proj4):
 
     silent = True
-    #silent = False
+    # silent = False
 
     result = 'success'
     srs_esri = osr.SpatialReference()
@@ -747,7 +747,7 @@ def osr_esri_20():
     stere_esri = 'PROJCS["World_Stereographic",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Stereographic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]'
     stere_ogc = 'PROJCS["World_Stereographic",GEOGCS["GCS_WGS_1984",DATUM["WGS_84",SPHEROID["WGS_84",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Stereographic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]'
     stere_proj4 = '+proj=stere +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs '
-    #result1 = 'success'
+    # result1 = 'success'
     result1 = osr_esri_test(stere_esri, stere_ogc, stere_proj4)
 
     # Double_Stereographic / Oblique_Stereographic / +proj=sterea +lat_0=46 +lon_0=25 ...
@@ -850,7 +850,7 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
         wkt1 = srs1.ExportToWkt()
         srs2 = srs1.Clone()
         srs2.MorphFromESRI()
-        #wkt2 = srs2.ExportToWkt()
+        # wkt2 = srs2.ExportToWkt()
 
         # morph back to ESRI
         srs3 = srs2.Clone()
@@ -907,9 +907,9 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
         of_epsg.close()
         if failed_epsg_count > 0:
             print('ERROR: Failed %d EPSG tests, see file %s' % (failed_epsg_count, ofile_epsg))
-            #print('epsg_ne: '+epsg_ne)
-            #print('epsg_none: '+epsg_none)
-            #print('epsg_other: '+epsg_other)
+            # print('epsg_ne: '+epsg_ne)
+            # print('epsg_none: '+epsg_none)
+            # print('epsg_other: '+epsg_other)
             result = 'fail'
         else:
             os.unlink(ofile_epsg)
@@ -1036,7 +1036,7 @@ def osr_esri_test_ogc_esri_ogc(ifile, ofile_base, fix_config='NO', check_epsg=Fa
         # morph to ESRI
         srs2 = srs1.Clone()
         srs2.MorphToESRI()
-        #wkt2 = srs2.ExportToWkt()
+        # wkt2 = srs2.ExportToWkt()
 
         # morph back from ESRI
         srs3 = srs2.Clone()
@@ -1064,7 +1064,7 @@ def osr_esri_test_ogc_esri_ogc(ifile, ofile_base, fix_config='NO', check_epsg=Fa
                 epsg_error = epsg_error + ' ' + str(epsg_code)
                 of_epsg.write('ERROR: EPSG not matching for EPSG:' + str(epsg_code) + ', got EPSG:' + str(epsg3) + '\n')
                 of_epsg.write('wkt1: ' + wkt1 + '\n' + 'wkt3: ' + wkt3 + '\n')
-                #of_epsg.write( srs1.ExportToPrettyWkt()+'\n'+srs3.ExportToPrettyWkt()+'\n' )
+                # of_epsg.write( srs1.ExportToPrettyWkt()+'\n'+srs3.ExportToPrettyWkt()+'\n' )
 
         # strip CT - add option for this and make more tests
         srs1.StripCTParms()

@@ -1328,7 +1328,7 @@ def ogr_gpkg_15():
             version = float(version)
             if version >= 4.3:
                 has_spatialite_4_3_or_later = True
-                #print('Spatialite 4.3 or later found')
+                # print('Spatialite 4.3 or later found')
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
     if has_spatialite_4_3_or_later:
         sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(
@@ -2230,7 +2230,7 @@ def ogr_gpkg_24():
     field_defn.SetDefault("CURRENT_DATE")
     lyr.CreateField(field_defn)
 
-    #field_defn = ogr.FieldDefn( 'field_time', ogr.OFTTime )
+    # field_defn = ogr.FieldDefn( 'field_time', ogr.OFTTime )
     # field_defn.SetDefault("CURRENT_TIME")
     # lyr.CreateField(field_defn)
 
@@ -2252,7 +2252,7 @@ def ogr_gpkg_24():
     lyr.CreateField(field_defn)
 
     # Doesn't work currently. Would require rewriting the whole table
-    #field_defn = ogr.FieldDefn( 'field_datetimeX', ogr.OFTDateTime )
+    # field_defn = ogr.FieldDefn( 'field_datetimeX', ogr.OFTDateTime )
     # field_defn.SetDefault("CURRENT_TIMESTAMP")
     # lyr.CreateField(field_defn)
 
@@ -2558,9 +2558,9 @@ def ogr_gpkg_26():
 
         # ds.CommitTransaction()
         ds.ReleaseResultSet(ds.ExecuteSQL('SELECT 1'))
-        #ds = None
-        #ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update = 1)
-        #lyr = ds.GetLayerByName('test3')
+        # ds = None
+        # ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update = 1)
+        # lyr = ds.GetLayerByName('test3')
         # ds.StartTransaction()
 
         f = ogr.Feature(lyr.GetLayerDefn())

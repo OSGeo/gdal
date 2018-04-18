@@ -420,9 +420,9 @@ def osr_proj4_11():
                     '+proj=stere +lat_0=-90 +lat_ts=-1 +lon_0=2 +k=2 +x_0=3 +y_0=4',
                     '+proj=sterea +lat_0=45 +lon_0=2 +k=2 +x_0=3 +y_0=4',
 
-                    #'+proj=stere +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
+                    # '+proj=stere +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
                     '+proj=eqc +lat_ts=0 +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
-                    #'+proj=eqc +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
+                    # '+proj=eqc +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
                     '+proj=gstmerc +lat_0=1 +lon_0=2 +k_0=5 +x_0=3 +y_0=4',
                     '+proj=gnom +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
                     '+proj=ortho +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',

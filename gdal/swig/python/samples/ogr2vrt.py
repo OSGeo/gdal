@@ -188,7 +188,7 @@ if mdd_list is not None:
 
 
 #############################################################################
-#	Process each source layer.
+# Process each source layer.
 
 for name in layer_list:
     layer = src_ds.GetLayerByName(name)

@@ -73,13 +73,13 @@ def ogr_pg_1():
     else:
         gdaltest.pg_connection_string = 'dbname=autotest'
     # gdaltest.pg_connection_string='dbname=autotest-postgis1.4'
-    #gdaltest.pg_connection_string='dbname=autotest port=5432'
+    # gdaltest.pg_connection_string='dbname=autotest port=5432'
     # gdaltest.pg_connection_string='dbname=autotest-postgis2.0'
-    #gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5433 user=postgres'
-    #gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5434 user=postgres'
-    #gdaltest.pg_connection_string='dbname=autotest port=5435 host=127.0.0.1'
+    # gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5433 user=postgres'
+    # gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5434 user=postgres'
+    # gdaltest.pg_connection_string='dbname=autotest port=5435 host=127.0.0.1'
     # 7.4
-    #gdaltest.pg_connection_string='dbname=autotest port=5436 user=postgres'
+    # gdaltest.pg_connection_string='dbname=autotest port=5436 user=postgres'
 
     try:
         gdaltest.pg_dr = ogr.GetDriverByName('PostgreSQL')
@@ -1252,17 +1252,17 @@ def ogr_pg_23(layer_name='datatypetest', include_timestamptz=True):
     gdaltest.pg_ds.ExecuteSQL('ALTER TABLE ' + layer_name + ' ADD COLUMN my_numeric numeric')
     gdaltest.pg_ds.ExecuteSQL('ALTER TABLE ' + layer_name + ' ADD COLUMN my_numeric5 numeric(5)')
     gdaltest.pg_ds.ExecuteSQL('ALTER TABLE ' + layer_name + ' ADD COLUMN my_numeric5_3 numeric(5,3)')
-    #gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_bool bool' )
+    # gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_bool bool' )
     fld = ogr.FieldDefn('my_bool', ogr.OFTInteger)
     fld.SetSubType(ogr.OFSTBoolean)
     lyr.CreateField(fld)
-    #gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_int2 int2' )
+    # gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_int2 int2' )
     fld = ogr.FieldDefn('my_int2', ogr.OFTInteger)
     fld.SetSubType(ogr.OFSTInt16)
     lyr.CreateField(fld)
     gdaltest.pg_ds.ExecuteSQL('ALTER TABLE ' + layer_name + ' ADD COLUMN my_int4 int4')
     lyr.CreateField(ogr.FieldDefn('my_int8', ogr.OFTInteger64))
-    #gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_float4 float4' )
+    # gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE ' + layer_name + ' ADD COLUMN my_float4 float4' )
     fld = ogr.FieldDefn('my_float4', ogr.OFTReal)
     fld.SetSubType(ogr.OFSTFloat32)
     lyr.CreateField(fld)
@@ -1816,21 +1816,21 @@ def ogr_pg_32():
     # Test getting SRS and geom type without requiring to fetch the layer defn
 
     for i in range(2):
-        #sys.stderr.write('BEFORE OPEN\n')
+        # sys.stderr.write('BEFORE OPEN\n')
         ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
-        #sys.stderr.write('AFTER Open\n')
+        # sys.stderr.write('AFTER Open\n')
         lyr = ds.GetLayerByName('testsrtext4')
-        #sys.stderr.write('AFTER GetLayerByName\n')
+        # sys.stderr.write('AFTER GetLayerByName\n')
         if i == 0:
             sr = lyr.GetSpatialRef()
-            #sys.stderr.write('AFTER GetSpatialRef\n')
+            # sys.stderr.write('AFTER GetSpatialRef\n')
             geom_type = lyr.GetGeomType()
-            #sys.stderr.write('AFTER GetGeomType\n')
+            # sys.stderr.write('AFTER GetGeomType\n')
         else:
             geom_type = lyr.GetGeomType()
-            #sys.stderr.write('AFTER GetGeomType\n')
+            # sys.stderr.write('AFTER GetGeomType\n')
             sr = lyr.GetSpatialRef()
-            #sys.stderr.write('AFTER GetSpatialRef\n')
+            # sys.stderr.write('AFTER GetSpatialRef\n')
 
         if sr.ExportToWkt().find('26632') == -1:
             gdaltest.post_reason('did not get expected SRS')
@@ -1971,7 +1971,7 @@ def ogr_pg_36():
 
     # Test fix for #3636 when 2 inherited tables with same name exist in 2 different schemas
     if gdaltest.pg_has_postgis:
-        #lyr = gdaltest.pg_ds.CreateLayer( 'table36_base', geom_type = ogr.wkbLineString, options = ['SCHEMA=AutoTest-schema'] )
+        # lyr = gdaltest.pg_ds.CreateLayer( 'table36_base', geom_type = ogr.wkbLineString, options = ['SCHEMA=AutoTest-schema'] )
         lyr = gdaltest.pg_ds.CreateLayer('AutoTest-schema.table36_base', geom_type=ogr.wkbLineString)
     else:
         lyr = gdaltest.pg_ds.CreateLayer('table36_base', options=['SCHEMA=AutoTest-schema'])
@@ -4050,17 +4050,17 @@ def ogr_pg_72():
         return 'fail'
     gdaltest.pg_ds = None
     # Test with binary protocol
-    #gdaltest.pg_ds = ogr.Open( 'PGB:' + gdaltest.pg_connection_string, update = 1 )
-    #lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_72')
+    # gdaltest.pg_ds = ogr.Open( 'PGB:' + gdaltest.pg_connection_string, update = 1 )
+    # lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_72')
     # if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
     #    gdaltest.post_reason('fail')
     #    return 'fail'
-    #f = lyr.GetNextFeature()
+    # f = lyr.GetNextFeature()
     # if f.GetFID() != 123456789012345:
     #    gdaltest.post_reason('fail')
     #    f.DumpReadable()
     #    return 'fail'
-    #gdaltest.pg_ds = None
+    # gdaltest.pg_ds = None
     # Test with normal protocol
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
     lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_72')
@@ -4528,7 +4528,7 @@ def ogr_pg_76():
     lyr2 = gdaltest.pg_ds.CreateLayer('ogr_pg_76_lyr2', geom_type=ogr.wkbNone, options=['OVERWRITE=YES'])
     gdal.SetConfigOption('OGR_PG_CURSOR_PAGE', None)
     lyr1.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
-    #lyr2.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    # lyr2.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
     lyr2.CreateFeature(ogr.Feature(lyr2.GetLayerDefn()))
     lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
@@ -5587,7 +5587,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:datetest')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:testgeom')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:datatypetest')
-    #gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest_withouttimestamptz' )
+    # gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest_withouttimestamptz' )
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:datatypetest2')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:testsrtext')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:testsrtext2')
@@ -5781,8 +5781,8 @@ def ogr_pg_with_and_without_postgis():
     gdaltest.run_tests([ogr_pg_1])
     if gdaltest.pg_ds is None:
         return 'skip'
-    #gdaltest.run_tests( [ ogr_pg_71 ] )
-    #gdaltest.run_tests( [ ogr_pg_cleanup ] )
+    # gdaltest.run_tests( [ ogr_pg_71 ] )
+    # gdaltest.run_tests( [ ogr_pg_cleanup ] )
     if True:
         gdaltest.run_tests(gdaltest_list_internal)
 

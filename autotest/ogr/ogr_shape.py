@@ -2589,7 +2589,7 @@ def ogr_shape_54():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds_name = '/vsimem/ogr_shape_54'
-    #ds_name = 'tmp/ogr_shape_54'
+    # ds_name = 'tmp/ogr_shape_54'
     N = 500
     LRUListSize = 100
 

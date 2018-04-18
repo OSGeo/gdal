@@ -82,8 +82,8 @@ for dirname, dirnames, filenames in os.walk('.'):
             line = lines[i][0:-1]
             if line.find('Author:') == 0 and line.find(git_author) >= 0:
                 i = i + 1
-                #line = lines[i][0:-1]
-                #year = int(line.split(' ')[7])
+                # line = lines[i][0:-1]
+                # year = int(line.split(' ')[7])
                 i = i + 1
                 i = i + 1
                 commit_number = lines[i - 4][7:15]

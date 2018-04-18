@@ -179,7 +179,7 @@ except:
     sys.exit(1)
 
 # =============================================================================
-#	Open source file
+# Open source file
 # =============================================================================
 
 src_ds = gdal.Open(src_filename)
@@ -257,7 +257,7 @@ else:
             print("Warning: cannot find field '%s' in layer '%s'" % (dst_fieldname, dst_layername))
 
 # =============================================================================
-#	Invoke algorithm.
+# Invoke algorithm.
 # =============================================================================
 
 if quiet_flag:

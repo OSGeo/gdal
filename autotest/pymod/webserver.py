@@ -297,7 +297,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
-                #sys.stderr.write('stop requested\n')
+                # sys.stderr.write('stop requested\n')
                 self.server.stop_requested = True
                 return
 

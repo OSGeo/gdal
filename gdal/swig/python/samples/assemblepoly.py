@@ -35,7 +35,7 @@ from osgeo import ogr
 # -
 # Open the datasource to operate on.
 
-#ds = ogr.Open( '/u/data/ntf/bl2000/HALTON.NTF' )
+# ds = ogr.Open( '/u/data/ntf/bl2000/HALTON.NTF' )
 ds = ogr.Open('PG:dbname=test', update=1)
 
 layer_count = ds.GetLayerCount()

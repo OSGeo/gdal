@@ -157,11 +157,11 @@ def ogr_tiger_3():
             data2 = f.read()
             f.close()
             if data1 != data2:
-                #gdaltest.post_reason('%s is different' % filename)
+                # gdaltest.post_reason('%s is different' % filename)
                 print('%s is different' % filename)
                 ret = 'fail'
         except:
-            #gdaltest.post_reason('could not find %s' % filename)
+            # gdaltest.post_reason('could not find %s' % filename)
             print('could not find %s' % filename)
             ret = 'fail'
 

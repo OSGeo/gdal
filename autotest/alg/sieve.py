@@ -116,7 +116,7 @@ def sieve_3():
 
     gdal.SieveFilter(src_band, None, dst_band, 2, 8)
 
-    #cs_expected = 472
+    # cs_expected = 472
     cs_expected = 451
     cs = dst_band.Checksum()
 
@@ -212,7 +212,7 @@ def sieve_6():
         return 'skip'
 
     # Try 3002. Should run in less than 10 seconds
-    #size = 3002
+    # size = 3002
     size = 102
     ds = gdal.GetDriverByName('MEM').Create('', size + 1, size)
     ar = numpy.zeros((size, size + 1), dtype=numpy.uint8)
@@ -228,7 +228,7 @@ def sieve_6():
 
     gdal.SieveFilter(band, None, band, 2, 4)
 
-    #ar = band.ReadAsArray()
+    # ar = band.ReadAsArray()
     # print(ar)
 
     cs = band.Checksum()

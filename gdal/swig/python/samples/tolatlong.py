@@ -4,8 +4,8 @@
 #
 # Project:  GDAL Python samples
 # Purpose:  Script to read coordinate system and geotransformation matrix
-#	    from input file and report latitude/longitude coordinates for the
-#	    specified pixel.
+#           from input file and report latitude/longitude coordinates for the
+#           specified pixel.
 # Author:   Andrey Kiselev, dron@remotesensing.org
 #
 ###############################################################################

@@ -47,7 +47,7 @@ def Usage():
 
 
 def find_xml_node(ar, element_name, immediate_child=False, only_attributes=False):
-    #type = ar[XML_TYPE_IDX]
+    # type = ar[XML_TYPE_IDX]
     value = ar[XML_VALUE_IDX]
     if not immediate_child and value == element_name:
         return ar
@@ -425,7 +425,7 @@ def build_file(inname, outname):
         print('Cannot parse %s' % inname)
         return False
 
-    #out_f = open(outname, 'wb+')
+    # out_f = open(outname, 'wb+')
     out_f = VSILFile(outname, 'wb+')
     if xml_tree[XML_TYPE_IDX] == gdal.CXT_Element and xml_tree[XML_VALUE_IDX] == 'JP2File':
         ret = parse_jp2file(inpath, xml_tree, out_f)

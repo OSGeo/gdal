@@ -151,7 +151,7 @@ def get_filename(drv, dirname):
 def misc_5_internal(drv, datatype, nBands):
 
     dirname = 'tmp/tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-    #print('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
+    # print('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
     try:
         os.mkdir(dirname)
     except OSError:
@@ -292,7 +292,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
         drv = gdal.GetDriver(i)
         md = drv.GetMetadata()
         if ('DCAP_CREATECOPY' in md or 'DCAP_CREATE' in md) and 'DCAP_RASTER' in md:
-            #print ('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
+            # print ('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
 
             skip = False
             # FIXME: A few cases that crashes and should be investigated
@@ -344,7 +344,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                         for j in range(10):
                             truncated_size = (size * j) / 10
                             vsimem_filename = ('/vsimem/test_truncate/||maxlength=%d||' % truncated_size) + get_filename(drv, '')[1:]
-                            #print('drv = %s, nBands = %d, datatype = %s, truncated_size = %d' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype), truncated_size))
+                            # print('drv = %s, nBands = %d, datatype = %s, truncated_size = %d' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype), truncated_size))
                             dst_ds = drv.CreateCopy(vsimem_filename, ds)
                             error_detected = False
                             if dst_ds is None:
@@ -691,7 +691,7 @@ gdaltest_list = [misc_1,
                  misc_13,
                  misc_cleanup]
 
-#gdaltest_list = [ misc_6 ]
+# gdaltest_list = [ misc_6 ]
 
 if __name__ == '__main__':
 

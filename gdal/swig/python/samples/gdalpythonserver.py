@@ -189,82 +189,82 @@ INSTR_GetGDALVersion = 1
 INSTR_EXIT = 2
 INSTR_EXIT_FAIL = 3
 INSTR_SetConfigOption = 4
-#INSTR_Progress = 5
+# INSTR_Progress = 5
 INSTR_Reset = 6
 INSTR_Open = 7
 INSTR_Identify = 8
 INSTR_Create = 9
 INSTR_CreateCopy = 10
 INSTR_QuietDelete = 11
-#INSTR_AddBand = 12
+# INSTR_AddBand = 12
 INSTR_GetGeoTransform = 13
-#INSTR_SetGeoTransform = 14
+# INSTR_SetGeoTransform = 14
 INSTR_GetProjectionRef = 15
-#INSTR_SetProjection = 16
+# INSTR_SetProjection = 16
 INSTR_GetGCPCount = 17
-#INSTR_GetGCPProjection = 18
-#INSTR_GetGCPs = 19
-#INSTR_SetGCPs = 20
+# INSTR_GetGCPProjection = 18
+# INSTR_GetGCPs = 19
+# INSTR_SetGCPs = 20
 INSTR_GetFileList = 21
 INSTR_FlushCache = 22
-#INSTR_SetDescription = 23
+# INSTR_SetDescription = 23
 INSTR_GetMetadata = 24
 INSTR_GetMetadataItem = 25
-#INSTR_SetMetadata = 26
-#INSTR_SetMetadataItem = 27
+# INSTR_SetMetadata = 26
+# INSTR_SetMetadataItem = 27
 INSTR_IRasterIO_Read = 28
-#INSTR_IRasterIO_Write = 29
-#INSTR_IBuildOverviews = 30
-#INSTR_AdviseRead = 31
-#INSTR_CreateMaskBand = 32
+# INSTR_IRasterIO_Write = 29
+# INSTR_IBuildOverviews = 30
+# INSTR_AdviseRead = 31
+# INSTR_CreateMaskBand = 32
 INSTR_Band_First = 33
 INSTR_Band_FlushCache = 34
 INSTR_Band_GetCategoryNames = 35
-#INSTR_Band_SetCategoryNames = 36
-#INSTR_Band_SetDescription = 37
+# INSTR_Band_SetCategoryNames = 36
+# INSTR_Band_SetDescription = 37
 INSTR_Band_GetMetadata = 38
 INSTR_Band_GetMetadataItem = 39
 INSTR_Band_SetMetadata = 40
 INSTR_Band_SetMetadataItem = 41
 INSTR_Band_GetColorInterpretation = 42
-#INSTR_Band_SetColorInterpretation = 43
+# INSTR_Band_SetColorInterpretation = 43
 INSTR_Band_GetNoDataValue = 44
 INSTR_Band_GetMinimum = 45
 INSTR_Band_GetMaximum = 46
 INSTR_Band_GetOffset = 47
 INSTR_Band_GetScale = 48
-#INSTR_Band_SetNoDataValue = 49
-#INSTR_Band_SetOffset = 50
-#INSTR_Band_SetScale = 51
+# INSTR_Band_SetNoDataValue = 49
+# INSTR_Band_SetOffset = 50
+# INSTR_Band_SetScale = 51
 INSTR_Band_IReadBlock = 52
-#INSTR_Band_IWriteBlock = 53
+# INSTR_Band_IWriteBlock = 53
 INSTR_Band_IRasterIO_Read = 54
-#INSTR_Band_IRasterIO_Write = 55
+# INSTR_Band_IRasterIO_Write = 55
 INSTR_Band_GetStatistics = 56
-#INSTR_Band_ComputeStatistics = 57
-#INSTR_Band_SetStatistics = 58
+# INSTR_Band_ComputeStatistics = 57
+# INSTR_Band_SetStatistics = 58
 INSTR_Band_ComputeRasterMinMax = 59
 INSTR_Band_GetHistogram = 60
 INSTR_Band_GetDefaultHistogram = 61
-#INSTR_Band_SetDefaultHistogram = 62
+# INSTR_Band_SetDefaultHistogram = 62
 INSTR_Band_HasArbitraryOverviews = 63
 INSTR_Band_GetOverviewCount = 64
 INSTR_Band_GetOverview = 65
 INSTR_Band_GetMaskBand = 66
 INSTR_Band_GetMaskFlags = 67
-#INSTR_Band_CreateMaskBand = 68
-#INSTR_Band_Fill = 69
+# INSTR_Band_CreateMaskBand = 68
+# INSTR_Band_Fill = 69
 INSTR_Band_GetColorTable = 70
-#INSTR_Band_SetColorTable = 71
+# INSTR_Band_SetColorTable = 71
 INSTR_Band_GetUnitType = 72
-#INSTR_Band_SetUnitType = 73
-#INSTR_Band_BuildOverviews = 74
+# INSTR_Band_SetUnitType = 73
+# INSTR_Band_BuildOverviews = 74
 INSTR_Band_GetDefaultRAT = 75
-#INSTR_Band_SetDefaultRAT = 76
-#INSTR_Band_AdviseRead = 77
+# INSTR_Band_SetDefaultRAT = 76
+# INSTR_Band_AdviseRead = 77
 # INSTR_Band_DeleteNoDataValue=78
 INSTR_Band_End = 79
-#INSTR_END = 80
+# INSTR_END = 80
 
 caps_list = [
     INSTR_GetGDALVersion,
@@ -343,9 +343,9 @@ caps_list = [
     # INSTR_Band_BuildOverviews,
     # INSTR_Band_GetDefaultRAT,
     # INSTR_Band_SetDefaultRAT,
-    #INSTR_Band_AdviseRead ,
+    # INSTR_Band_AdviseRead ,
     # INSTR_Band_End,
-    #INSTR_END = 80
+    # INSTR_END = 80
 ]
 
 CE_None = 0
@@ -552,7 +552,7 @@ def main_loop():
                 sys.stderr.write('filename=%s\n' % filename)
                 sys.stderr.write('cwd=%s\n' % cwd)
                 sys.stderr.write('open_options=%s\n' % str(open_options))
-            #sys.stderr.write('Open(%s)\n' % filename)
+            # sys.stderr.write('Open(%s)\n' % filename)
             try:
                 server_ds = GDALPythonServerDataset(filename, access, open_options)
             except:

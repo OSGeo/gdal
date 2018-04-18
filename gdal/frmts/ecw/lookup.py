@@ -60,7 +60,7 @@ def load_dict(filename):
 # Mainline
 
 
-#dir = 'M:/software/ER Viewer 2.0c/GDT_Data/'
+# dir = 'M:/software/ER Viewer 2.0c/GDT_Data/'
 dir = '/u/data/ecw/gdt/'
 
 dict_list = ['tranmerc', 'lambert1', 'lamcon2', 'utm', 'albersea', 'mercator',
@@ -124,20 +124,20 @@ for line in pfile.readlines():
             srs.SetLCC(r2d(dline[7]), r2d(dline[8]),
                        r2d(dline[9]), r2d(dline[6]), fe, fn)
 
-#	elif type == 'lambert2':
-#	    false_en = '+y_0=%.2f +x_0=%.2f' \
-#		% (float(dline[12])*lsize, float(dline[13])*lsize)
-#	    result = '+proj=lcc %s +lat_0=%s +lon_0=%s +lat_1=%s +lat_2=%s' \
-#               % (false_en, r2d(dline[3]), r2d(dline[4]),
-#			r2d(dline[7]), r2d(dline[8]))
+# elif type == 'lambert2':
+#   false_en = '+y_0=%.2f +x_0=%.2f' \
+#   % (float(dline[12])*lsize, float(dline[13])*lsize)
+#     result = '+proj=lcc %s +lat_0=%s +lon_0=%s +lat_1=%s +lat_2=%s' \
+#           % (false_en, r2d(dline[3]), r2d(dline[4]),
+#           r2d(dline[7]), r2d(dline[8]))
 
         elif type == 'albersea':
             srs.SetACEA(r2d(dline[3]), r2d(dline[4]),
                         r2d(dline[5]), r2d(dline[6]), fe, fn)
 
-#	elif type == 'obmerc_b':
-#	    result = '+proj=omerc %s +lat_0=%s +lonc=%s +alpha=%s +k=%s' \
-#               % (false_en, r2d(dline[5]), r2d(dline[6]), r2d(dline[4]), dline[3])
+# elif type == 'obmerc_b':
+#     result = '+proj=omerc %s +lat_0=%s +lonc=%s +alpha=%s +k=%s' \
+#              % (false_en, r2d(dline[5]), r2d(dline[6]), r2d(dline[4]), dline[3])
 
         elif type == 'utm':
             srs.SetUTM(int(dline[1]), dline[2] != 'S')

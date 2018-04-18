@@ -55,7 +55,7 @@ XML_FIRST_CHILD_IDX = 2
 
 
 def find_xml_node(ar, element_name, only_attributes=False):
-    #type = ar[XML_TYPE_IDX]
+    # type = ar[XML_TYPE_IDX]
     value = ar[XML_VALUE_IDX]
     if value == element_name:
         return ar

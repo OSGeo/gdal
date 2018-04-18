@@ -51,7 +51,7 @@ from netcdf import netcdf_setup, netcdf_test_copy
 
 def netcdf_cf_setup():
 
-    #global vars
+    # global vars
     gdaltest.netcdf_cf_method = None
     gdaltest.netcdf_cf_files = None
     gdaltest.netcdf_cf_check_error = ''
@@ -81,7 +81,7 @@ def netcdf_cf_setup():
         files['a'] = xml_dir + '/area-type-table.xml'
         files['s'] = tmp_dir + '/cf-standard-name-table-v18.xml'
         # either find udunits path in UDUNITS_PATH, or based on location of udunits app, or copy all .xml files to data
-        #opt_u = '/home/soft/share/udunits/udunits2.xml'
+        # opt_u = '/home/soft/share/udunits/udunits2.xml'
         files['u'] = xml_dir + '/udunits2.xml'
         # look for xml files
         if not (os.path.exists(files['a']) and os.path.exists(files['s']) and os.path.exists(files['u'])):
@@ -153,7 +153,7 @@ def netcdf_cf_get_command(ifile, version='auto'):
                 + ' -u ' + gdaltest.netcdf_cf_files['u'] \
                 + ' -v ' + version + ' ' + ifile
         elif method is 'http':
-            #command = shlex.split( 'curl --form cfversion="1.5" --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"' )
+            # command = shlex.split( 'curl --form cfversion="1.5" --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"' )
             # switch to 1.5 as driver now supports, and auto when it becomes available
             version = '1.5'
             command = 'curl --form cfversion=' + version + ' --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"'
@@ -250,7 +250,7 @@ netcdf_cfproj_tuples = [
      ['projection_x_coordinate', 'projection_y_coordinate']),
     ("LAZEA", "Lambert azimuthal equal area",
         # Specify proj4 since no appropriate LAZEA for AU.
-        #"+proj=laea +lat_0=0 +lon_0=134 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
+        # "+proj=laea +lat_0=0 +lon_0=134 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
         "+proj=laea +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
         "lambert_azimuthal_equal_area",
         ['longitude_of_projection_origin',
@@ -282,7 +282,7 @@ netcdf_cfproj_tuples = [
     ("M-2SP", "Mercator",
         "+proj=merc +lat_ts=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
         # Trying with full WKT:
-        #"""PROJCS["unnamed", GEOGCS["WGS 84", DATUM["WGS_1984", SPHEROID["WGS 84",6378137,298.257223563, AUTHORITY["EPSG","7030"]], AUTHORITY["EPSG","6326"]], PRIMEM["Greenwich",0], UNIT["degree",0.0174532925199433], AUTHORITY["EPSG","4326"]], PROJECTION["Mercator_2SP"], PARAMETER["central_meridian",146], PARAMETER["standard_parallel_1",-37], PARAMETER["latitude_of_origin",0], PARAMETER["false_easting",0], PARAMETER["false_northing",0], UNIT["metre",1, AUTHORITY["EPSG","9001"]]]""",
+        # """PROJCS["unnamed", GEOGCS["WGS 84", DATUM["WGS_1984", SPHEROID["WGS 84",6378137,298.257223563, AUTHORITY["EPSG","7030"]], AUTHORITY["EPSG","6326"]], PRIMEM["Greenwich",0], UNIT["degree",0.0174532925199433], AUTHORITY["EPSG","4326"]], PROJECTION["Mercator_2SP"], PARAMETER["central_meridian",146], PARAMETER["standard_parallel_1",-37], PARAMETER["latitude_of_origin",0], PARAMETER["false_easting",0], PARAMETER["false_northing",0], UNIT["metre",1, AUTHORITY["EPSG","9001"]]]""",
         "mercator",
         ['longitude_of_projection_origin',
          'standard_parallel',
@@ -307,7 +307,7 @@ netcdf_cfproj_tuples = [
      ['projection_x_coordinate', 'projection_y_coordinate']),
     ("St", "Stereographic",
         "+proj=stere +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
-        #'PROJCS["unnamed", GEOGCS["WGS 84", DATUM["WGS_1984", SPHEROID["WGS 84",6378137,298.257223563, AUTHORITY["EPSG","7030"]], AUTHORITY["EPSG","6326"]], PRIMEM["Greenwich",0], UNIT["degree",0.0174532925199433], AUTHORITY["EPSG","4326"]], PROJECTION["Stereographic"], PARAMETER["latitude_of_origin",-37.5], PARAMETER["central_meridian",145], PARAMETER["scale_factor",1], PARAMETER["false_easting",0], PARAMETER["false_northing",0], UNIT["metre",1, AUTHORITY["EPSG","9001"]]]',
+        # 'PROJCS["unnamed", GEOGCS["WGS 84", DATUM["WGS_1984", SPHEROID["WGS 84",6378137,298.257223563, AUTHORITY["EPSG","7030"]], AUTHORITY["EPSG","6326"]], PRIMEM["Greenwich",0], UNIT["degree",0.0174532925199433], AUTHORITY["EPSG","4326"]], PROJECTION["Stereographic"], PARAMETER["latitude_of_origin",-37.5], PARAMETER["central_meridian",145], PARAMETER["scale_factor",1], PARAMETER["false_easting",0], PARAMETER["false_northing",0], UNIT["metre",1, AUTHORITY["EPSG","9001"]]]',
         "stereographic",
         ['longitude_of_projection_origin',
          'latitude_of_projection_origin',
@@ -367,7 +367,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
     silent = True
     gdaltest.netcdf_drv_silent = True
     bWriteGdalTags = "YES"
-    #silent = False
+    # silent = False
     gdaltest.netcdf_drv_silent = False
 #    bWriteGdalTags="NO"
 
@@ -445,7 +445,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         projNc = os.path.join(outPath, "%s_%s.nc" %
                               (origTiff.rstrip('.tif'), proj[0]))
         # Force GDAL tags to be written to make testing easier, with preserved datum etc
-        #ncCoOpts = "-co WRITE_GDAL_TAGS=yes"
+        # ncCoOpts = "-co WRITE_GDAL_TAGS=yes"
         if not silent:
             print("About to translate to NetCDF")
         dst = drv_netcdf.CreateCopy(projNc, dsw, 0, ['WRITE_GDAL_TAGS=' + bWriteGdalTags])
@@ -497,7 +497,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         print("\n" + "*" * 80)
         print("Saved results to file %s" % (os.path.join(outPath, resFilename)))
 
-    #result = 'success'
+    # result = 'success'
     resFile = open(os.path.join(outPath, resFilename), "r")
     resStr = resFile.read()
     if resStr.find('BAD') != -1:
@@ -570,12 +570,12 @@ def netcdf_cf_1():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    #tst1 = gdaltest.GDALTest( 'NETCDF', 'trmm.tif', 1, 14 )
-    #result = tst1.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.nc', delete_copy = 0)
+    # tst1 = gdaltest.GDALTest( 'NETCDF', 'trmm.tif', 1, 14 )
+    # result = tst1.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.nc', delete_copy = 0)
     result = netcdf_test_copy('data/trmm.nc', 1, 14, 'tmp/netcdf_cf_1.nc')
     if result != 'fail':
-        #tst2 = gdaltest.GDALTest( 'GTIFF', '../tmp/netcdf_cf_1.nc', 1, 14 )
-        #result = tst2.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.tiff', delete_copy = 0)
+        # tst2 = gdaltest.GDALTest( 'GTIFF', '../tmp/netcdf_cf_1.nc', 1, 14 )
+        # result = tst2.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.tiff', delete_copy = 0)
         result = netcdf_test_copy('tmp/netcdf_cf_1.nc', 1, 14, 'tmp/netcdf_cf_1.tif', [], 'GTIFF')
 
     result_cf = 'success'
@@ -621,8 +621,8 @@ def netcdf_cf_3():
     result = netcdf_test_copy('data/trmm-wgs84.tif', 1, 14, 'tmp/netcdf_cf_3.nc')
 
     if result == 'success':
-        #tst = gdaltest.GDALTest( 'GTIFF', '../tmp/netcdf_cf_3.nc', 1, 14 )
-        #result = tst.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_3.tif', delete_copy = 0)
+        # tst = gdaltest.GDALTest( 'GTIFF', '../tmp/netcdf_cf_3.nc', 1, 14 )
+        # result = tst.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_3.tif', delete_copy = 0)
         result = netcdf_test_copy('tmp/netcdf_cf_3.nc', 1, 14, 'tmp/netcdf_cf_3.tif', [], 'GTIFF')
 
     result_cf = 'success'
