@@ -72,7 +72,7 @@ CPLString GetCompressionSoftwareName(){
                  GDAL_VERSION_BUILD,
                  NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
     return osRet;
-};
+}
 #endif
 
 class GDALECWCompressor : public CNCSFile {
