@@ -61,9 +61,8 @@ Perl module maintainer to make a CPAN release.
    - Deleting interfaces / compatibility issues - bump CURRENT, others to zero.
 
 5) Prepare release overview in the NEWS file. For example, to get all changes
-   from v2.2.0 to current HEAD.
-
-     git log v2.2.0..
+   from v2.2.0 to current HEAD (from gdal/ subdirectory)
+     git log --reverse -v v2.2.0..HEAD .
 
   - commit new version to NEWS file.
 
