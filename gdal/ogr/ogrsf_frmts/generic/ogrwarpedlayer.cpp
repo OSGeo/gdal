@@ -430,12 +430,12 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
     double dfXStep = (psEnvelope->MaxX - psEnvelope->MinX) / NSTEP;
     double dfYStep = (psEnvelope->MaxY - psEnvelope->MinY) / NSTEP;
 
-    double *padfX = (double*)
-        VSI_MALLOC_VERBOSE((NSTEP + 1) * (NSTEP + 1) * sizeof(double));
-    double *padfY = (double*)
-        VSI_MALLOC_VERBOSE((NSTEP + 1) * (NSTEP + 1) * sizeof(double));
-    int* pabSuccess = (int*)
-        VSI_MALLOC_VERBOSE((NSTEP + 1) * (NSTEP + 1) * sizeof(int));
+    double *padfX = static_cast<double*>(
+        VSI_MALLOC_VERBOSE((NSTEP + 1) * (NSTEP + 1) * sizeof(double)));
+    double *padfY = static_cast<double*>(
+        VSI_MALLOC_VERBOSE((NSTEP + 1) * (NSTEP + 1) * sizeof(double)));
+    int* pabSuccess = static_cast<int*>(
+        VSI_MALLOC_VERBOSE((NSTEP + 1) * (NSTEP + 1) * sizeof(int)));
     if( padfX == nullptr || padfY == nullptr || pabSuccess == nullptr)
     {
         VSIFree(padfX);

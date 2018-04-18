@@ -414,7 +414,8 @@ int OGRLayer::AttributeFilterEvaluationNeedsGeometry()
     if( !m_poAttrQuery )
         return FALSE;
 
-    swq_expr_node* expr = (swq_expr_node *) m_poAttrQuery->GetSWQExpr();
+    swq_expr_node* expr = static_cast<swq_expr_node *>(
+        m_poAttrQuery->GetSWQExpr());
     int nLayerFieldCount = GetLayerDefn()->GetFieldCount();
 
     return ContainGeomSpecialField(expr, nLayerFieldCount);
@@ -782,7 +783,7 @@ OGRErr OGRLayer::ReorderField( int iOldFieldPos, int iNewFieldPos )
     if (iNewFieldPos == iOldFieldPos)
         return OGRERR_NONE;
 
-    int* panMap = (int*) CPLMalloc(sizeof(int) * nFieldCount);
+    int* panMap = static_cast<int*>(CPLMalloc(sizeof(int) * nFieldCount));
     if (iOldFieldPos < iNewFieldPos)
     {
         /* "0","1","2","3","4" (1,3) -> "0","2","3","1","4" */
@@ -1686,7 +1687,8 @@ OGRStyleTableH OGR_L_GetStyleTable( OGRLayerH hLayer )
 {
     VALIDATE_POINTER1( hLayer, "OGR_L_GetStyleTable", nullptr );
 
-    return (OGRStyleTableH) OGRLayer::FromHandle(hLayer)->GetStyleTable( );
+    return reinterpret_cast<OGRStyleTableH>(
+        OGRLayer::FromHandle(hLayer)->GetStyleTable( ));
 }
 
 /************************************************************************/
@@ -1699,7 +1701,8 @@ void OGR_L_SetStyleTableDirectly( OGRLayerH hLayer,
 {
     VALIDATE_POINTER0( hLayer, "OGR_L_SetStyleTableDirectly" );
 
-    OGRLayer::FromHandle(hLayer)->SetStyleTableDirectly( (OGRStyleTable *) hStyleTable);
+    OGRLayer::FromHandle(hLayer)->SetStyleTableDirectly(
+        reinterpret_cast<OGRStyleTable *>(hStyleTable) );
 }
 
 /************************************************************************/
@@ -1713,7 +1716,8 @@ void OGR_L_SetStyleTable( OGRLayerH hLayer,
     VALIDATE_POINTER0( hLayer, "OGR_L_SetStyleTable" );
     VALIDATE_POINTER0( hStyleTable, "OGR_L_SetStyleTable" );
 
-    OGRLayer::FromHandle(hLayer)->SetStyleTable( (OGRStyleTable *) hStyleTable);
+    OGRLayer::FromHandle(hLayer)->SetStyleTable(
+        reinterpret_cast<OGRStyleTable *>(hStyleTable) );
 }
 
 /************************************************************************/
@@ -1871,7 +1875,7 @@ OGRErr create_field_map(OGRFeatureDefn *poDefn, int **map)
     OGRErr ret = OGRERR_NONE;
     int n = poDefn->GetFieldCount();
     if (n > 0) {
-        *map = (int*)VSI_MALLOC_VERBOSE(sizeof(int) * n);
+        *map = static_cast<int*>(VSI_MALLOC_VERBOSE(sizeof(int) * n));
         if (!(*map)) return OGRERR_NOT_ENOUGH_MEMORY;
         for(int i=0;i<n;i++)
             (*map)[i] = -1;
@@ -2065,7 +2069,7 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
     int *mapMethod = nullptr;
     OGREnvelope sEnvelopeMethod;
     GBool bEnvelopeSet;
-    double progress_max = (double) GetFeatureCount(0);
+    double progress_max = static_cast<double>(GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;
     int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
@@ -2410,7 +2414,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
     OGRGeometry *pGeometryInputFilter = nullptr;
     int *mapInput = nullptr;
     int *mapMethod = nullptr;
-    double progress_max = (double) GetFeatureCount(0) + (double) pLayerMethod->GetFeatureCount(0);
+    double progress_max = static_cast<double>(GetFeatureCount(FALSE)) + static_cast<double>(pLayerMethod->GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;
     int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
@@ -2840,7 +2844,7 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
     OGRGeometry *pGeometryInputFilter = nullptr;
     int *mapInput = nullptr;
     int *mapMethod = nullptr;
-    double progress_max = (double) GetFeatureCount(0) + (double) pLayerMethod->GetFeatureCount(0);
+    double progress_max = static_cast<double>(GetFeatureCount(FALSE)) + static_cast<double>(pLayerMethod->GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;
     int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
@@ -3184,7 +3188,7 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
     OGRGeometry *pGeometryMethodFilter = nullptr;
     int *mapInput = nullptr;
     int *mapMethod = nullptr;
-    double progress_max = (double) GetFeatureCount(0);
+    double progress_max = static_cast<double>(GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;
     int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
@@ -3529,7 +3533,7 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
     OGRGeometry *pGeometryMethodFilter = nullptr;
     int *mapInput = nullptr;
     int *mapMethod = nullptr;
-    double progress_max = (double) GetFeatureCount(0) + (double) pLayerMethod->GetFeatureCount(0);
+    double progress_max = static_cast<double>(GetFeatureCount(FALSE)) + static_cast<double>(pLayerMethod->GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;
     int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
@@ -3819,7 +3823,7 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
     OGRFeatureDefn *poDefnResult = nullptr;
     OGRGeometry *pGeometryMethodFilter = nullptr;
     int *mapInput = nullptr;
-    double progress_max = (double) GetFeatureCount(0);
+    double progress_max = static_cast<double>(GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;
     int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
@@ -4078,7 +4082,7 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
     OGRFeatureDefn *poDefnResult = nullptr;
     OGRGeometry *pGeometryMethodFilter = nullptr;
     int *mapInput = nullptr;
-    double progress_max = (double) GetFeatureCount(0);
+    double progress_max = static_cast<double>(GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;
     int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));

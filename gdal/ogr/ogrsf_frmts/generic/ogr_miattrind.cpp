@@ -291,9 +291,9 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
         return OGRERR_FAILURE;
     }
 
-    char *pszRawXML = (char *) CPLMalloc((size_t)nXMLSize+1);
+    char *pszRawXML = static_cast<char *>(CPLMalloc(static_cast<size_t>(nXMLSize)+1));
     pszRawXML[nXMLSize] = '\0';
-    if( VSIFReadL( pszRawXML, (size_t)nXMLSize, 1, fp ) != 1 )
+    if( VSIFReadL( pszRawXML, static_cast<size_t>(nXMLSize), 1, fp ) != 1 )
     {
         VSIFCloseL(fp);
         return OGRERR_FAILURE;
@@ -583,8 +583,8 @@ void OGRMILayerAttrIndex::AddAttrInd( int iField, int iINDIndex )
     OGRMIAttrIndex *poAttrInd = new OGRMIAttrIndex( this, iINDIndex, iField);
 
     nIndexCount++;
-    papoIndexList = (OGRMIAttrIndex **)
-        CPLRealloc(papoIndexList, sizeof(void*) * nIndexCount);
+    papoIndexList = static_cast<OGRMIAttrIndex **>(
+        CPLRealloc(papoIndexList, sizeof(void*) * nIndexCount));
 
     papoIndexList[nIndexCount-1] = poAttrInd;
 }
@@ -707,7 +707,7 @@ OGRErr OGRMIAttrIndex::AddEntry( OGRField *psKey, GIntBig nFID )
     if( pabyKey == nullptr )
         return OGRERR_FAILURE;
 
-    if( poINDFile->AddEntry( iIndex, pabyKey, (int)nFID+1 ) != 0 )
+    if( poINDFile->AddEntry( iIndex, pabyKey, static_cast<int>(nFID)+1 ) != 0 )
         return OGRERR_FAILURE;
     else
         return OGRERR_NONE;
@@ -744,7 +744,7 @@ GByte *OGRMIAttrIndex::BuildKey( OGRField *psKey )
             CPLError(CE_Warning, CPLE_NotSupported,
                      "64bit integer value passed to OGRMIAttrIndex::BuildKey()");
         }
-        ret = poINDFile->BuildKey( iIndex, (int)psKey->Integer64 );
+        ret = poINDFile->BuildKey( iIndex, static_cast<int>(psKey->Integer64) );
         break;
       }
 
@@ -788,7 +788,7 @@ GIntBig *OGRMIAttrIndex::GetAllMatches( OGRField *psKey, GIntBig* panFIDList, in
 
     if (panFIDList == nullptr)
     {
-        panFIDList = (GIntBig *) CPLMalloc(sizeof(GIntBig) * 2);
+        panFIDList = static_cast<GIntBig *>(CPLMalloc(sizeof(GIntBig) * 2));
         *nFIDCount = 0;
         *nLength = 2;
     }
@@ -799,7 +799,7 @@ GIntBig *OGRMIAttrIndex::GetAllMatches( OGRField *psKey, GIntBig* panFIDList, in
         if( *nFIDCount >= *nLength-1 )
         {
             *nLength = (*nLength) * 2 + 10;
-            panFIDList = (GIntBig *) CPLRealloc(panFIDList, sizeof(GIntBig)* (*nLength));
+            panFIDList = static_cast<GIntBig *>(CPLRealloc(panFIDList, sizeof(GIntBig)* (*nLength)));
         }
         panFIDList[(*nFIDCount)++] = nFID - 1;
 

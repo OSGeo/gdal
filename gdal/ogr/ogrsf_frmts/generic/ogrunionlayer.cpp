@@ -163,15 +163,15 @@ void OGRUnionLayer::SetFields(FieldUnionStrategy eFieldStrategyIn,
     if( nFieldsIn )
     {
         nFields = nFieldsIn;
-        papoFields = (OGRFieldDefn** )CPLMalloc(nFields * sizeof(OGRFieldDefn*));
+        papoFields = static_cast<OGRFieldDefn**>(CPLMalloc(nFields * sizeof(OGRFieldDefn*)));
         for(int i=0;i<nFields;i++)
             papoFields[i] = new OGRFieldDefn(papoFieldsIn[i]);
     }
     nGeomFields = nGeomFieldsIn;
     if( nGeomFields > 0 )
     {
-        papoGeomFields = (OGRUnionLayerGeomFieldDefn** )CPLMalloc(
-                            nGeomFields * sizeof(OGRUnionLayerGeomFieldDefn*));
+        papoGeomFields = static_cast<OGRUnionLayerGeomFieldDefn** >(CPLMalloc(
+                            nGeomFields * sizeof(OGRUnionLayerGeomFieldDefn*)));
         for(int i=0;i<nGeomFields;i++)
             papoGeomFields[i] = new OGRUnionLayerGeomFieldDefn(papoGeomFieldsIn[i]);
     }
@@ -277,7 +277,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
             poFeatureDefn->AddGeomFieldDefn(
                 new OGRUnionLayerGeomFieldDefn(papoGeomFields[i]), FALSE);
             OGRUnionLayerGeomFieldDefn* poGeomFieldDefn =
-                (OGRUnionLayerGeomFieldDefn* ) poFeatureDefn->GetGeomFieldDefn(i);
+                cpl::down_cast<OGRUnionLayerGeomFieldDefn*>(poFeatureDefn->GetGeomFieldDefn(i));
 
             if( poGeomFieldDefn->bGeomTypeSet == FALSE ||
                 poGeomFieldDefn->bSRSSet == FALSE )
@@ -373,7 +373,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
                         GetSpatialRef() != nullptr )
                     {
                         OGRUnionLayerGeomFieldDefn* poGeomFieldDefn =
-                            (OGRUnionLayerGeomFieldDefn* ) poFeatureDefn->GetGeomFieldDefn(0);
+                            cpl::down_cast<OGRUnionLayerGeomFieldDefn*>(poFeatureDefn->GetGeomFieldDefn(0));
                         poGeomFieldDefn->bSRSSet = TRUE;
                         poGeomFieldDefn->SetSpatialRef(GetSpatialRef());
                     }
@@ -383,7 +383,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
                     if( nIndex == 0 && nGeomFields == 1 )
                     {
                         OGRUnionLayerGeomFieldDefn* poGeomFieldDefn =
-                            (OGRUnionLayerGeomFieldDefn* ) poFeatureDefn->GetGeomFieldDefn(0);
+                            cpl::down_cast<OGRUnionLayerGeomFieldDefn*>(poFeatureDefn->GetGeomFieldDefn(0));
                         if( poGeomFieldDefn->bGeomTypeSet == FALSE )
                         {
                             poGeomFieldDefn->bGeomTypeSet = TRUE;
@@ -520,7 +520,7 @@ void OGRUnionLayer::ConfigureActiveLayer()
     GetLayerDefn();
     OGRFeatureDefn* poSrcFeatureDefn = papoSrcLayers[iCurLayer]->GetLayerDefn();
     CPLFree(panMap);
-    panMap = (int*) CPLMalloc(poSrcFeatureDefn->GetFieldCount() * sizeof(int));
+    panMap = static_cast<int*>(CPLMalloc(poSrcFeatureDefn->GetFieldCount() * sizeof(int)));
     for(int i=0; i < poSrcFeatureDefn->GetFieldCount(); i++)
     {
         OGRFieldDefn* poSrcFieldDefn = poSrcFeatureDefn->GetFieldDefn(i);
@@ -554,8 +554,8 @@ void OGRUnionLayer::ConfigureActiveLayer()
         }
 
         /* Attribute fields */
-        int* panSrcFieldsUsed = (int*) CPLCalloc(sizeof(int),
-                                          poSrcFeatureDefn->GetFieldCount());
+        int* panSrcFieldsUsed = static_cast<int*>(CPLCalloc(sizeof(int),
+                                          poSrcFeatureDefn->GetFieldCount()));
         for(int iField = 0;
                 iField < poFeatureDefn->GetFieldCount(); iField++)
         {
@@ -579,8 +579,8 @@ void OGRUnionLayer::ConfigureActiveLayer()
         CPLFree(panSrcFieldsUsed);
 
         /* geometry fields now */
-        panSrcFieldsUsed = (int*) CPLCalloc(sizeof(int),
-                                          poSrcFeatureDefn->GetGeomFieldCount());
+        panSrcFieldsUsed = static_cast<int*>(CPLCalloc(sizeof(int),
+                                    poSrcFeatureDefn->GetGeomFieldCount()));
         for(int iField = 0;
                 iField < poFeatureDefn->GetGeomFieldCount(); iField++)
         {
@@ -603,7 +603,8 @@ void OGRUnionLayer::ConfigureActiveLayer()
         }
         CPLFree(panSrcFieldsUsed);
 
-        papoSrcLayers[iCurLayer]->SetIgnoredFields((const char**)papszFieldsSrc);
+        papoSrcLayers[iCurLayer]->SetIgnoredFields(
+            const_cast<const char**>(papszFieldsSrc));
 
         CSLDestroy(papszFieldsSrc);
     }
@@ -1272,7 +1273,7 @@ OGRErr OGRUnionLayer::SetIgnoredFields( const char **papszFields )
         return eErr;
 
     CSLDestroy(papszIgnoredFields);
-    papszIgnoredFields = papszFields ? CSLDuplicate((char**)papszFields) : nullptr;
+    papszIgnoredFields = papszFields ? CSLDuplicate(papszFields) : nullptr;
 
     return eErr;
 }

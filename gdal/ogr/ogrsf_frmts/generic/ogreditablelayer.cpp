@@ -174,7 +174,7 @@ OGRFeature* OGREditableLayer::Translate(OGRFeatureDefn* poTargetDefn,
         return nullptr;
     OGRFeature* poRet = new OGRFeature(poTargetDefn);
 
-    int* panMap = (int *) CPLMalloc( sizeof(int) * poSrcFeature->GetFieldCount() );
+    int* panMap = static_cast<int *>(CPLMalloc( sizeof(int) * poSrcFeature->GetFieldCount() ));
     for( int iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
     {
         const char* pszFieldName = poSrcFeature->GetFieldDefnRef(iField)->GetNameRef();

@@ -69,16 +69,18 @@ OGRDataSourceH OGR_Dr_CreateDataSource( OGRSFDriverH hDriver,
 {
     VALIDATE_POINTER1( hDriver, "OGR_Dr_CreateDataSource", nullptr );
 
-    GDALDriver* poDriver = (GDALDriver*)hDriver;
+    GDALDriver* poDriver = reinterpret_cast<GDALDriver*>(hDriver);
 
     /* MapServer had the bad habit of calling with NULL name for a memory datasource */
     if( pszName == nullptr )
         pszName = "";
 
-    OGRDataSourceH hDS = (OGRDataSourceH) poDriver->Create( pszName, 0, 0, 0, GDT_Unknown, papszOptions );
+    OGRDataSourceH hDS = reinterpret_cast<OGRDataSourceH>(
+        poDriver->Create( pszName, 0, 0, 0, GDT_Unknown, papszOptions ));
 
 #ifdef OGRAPISPY_ENABLED
-    OGRAPISpyCreateDataSource(hDriver, pszName, papszOptions, (OGRDataSourceH) hDS);
+    OGRAPISpyCreateDataSource(hDriver, pszName, papszOptions,
+                              reinterpret_cast<OGRDataSourceH>(hDS));
 #endif
 
     return hDS;
@@ -113,7 +115,7 @@ OGRErr OGR_Dr_DeleteDataSource( OGRSFDriverH hDriver,
     OGRAPISpyDeleteDataSource(hDriver, pszDataSource);
 #endif
 
-    CPLErr eErr = ((GDALDriver *) hDriver)->Delete( pszDataSource );
+    CPLErr eErr = reinterpret_cast<GDALDriver *>(hDriver)->Delete( pszDataSource );
     if( eErr == CE_None )
         return OGRERR_NONE;
     else
@@ -129,7 +131,7 @@ const char *OGR_Dr_GetName( OGRSFDriverH hDriver )
 {
     VALIDATE_POINTER1( hDriver, "OGR_Dr_GetName", nullptr );
 
-    return ((GDALDriver*)hDriver)->GetDescription();
+    return reinterpret_cast<GDALDriver*>(hDriver)->GetDescription();
 }
 
 /************************************************************************/
@@ -142,8 +144,9 @@ OGRDataSourceH OGR_Dr_Open( OGRSFDriverH hDriver, const char *pszName,
 {
     VALIDATE_POINTER1( hDriver, "OGR_Dr_Open", nullptr );
 
-    const char* const apszDrivers[] = { ((GDALDriver*)hDriver)->GetDescription(),
-                                   nullptr };
+    const char* const apszDrivers[] = {
+        reinterpret_cast<GDALDriver*>(hDriver)->GetDescription(),
+        nullptr };
 
 #ifdef OGRAPISPY_ENABLED
     int iSnapshot = OGRAPISpyOpenTakeSnapshot(pszName, bUpdate);
@@ -158,7 +161,7 @@ OGRDataSourceH OGR_Dr_Open( OGRSFDriverH hDriver, const char *pszName,
     OGRAPISpyOpen(pszName, bUpdate, iSnapshot, &hDS);
 #endif
 
-    return (OGRDataSourceH) hDS;
+    return reinterpret_cast<OGRDataSourceH>(hDS);
 }
 
 /************************************************************************/
@@ -171,7 +174,7 @@ int OGR_Dr_TestCapability( OGRSFDriverH hDriver, const char *pszCap )
     VALIDATE_POINTER1( hDriver, "OGR_Dr_TestCapability", 0 );
     VALIDATE_POINTER1( pszCap, "OGR_Dr_TestCapability", 0 );
 
-    GDALDriver* poDriver = (GDALDriver *) hDriver;
+    GDALDriver* poDriver = reinterpret_cast<GDALDriver *>(hDriver);
     if( EQUAL(pszCap, ODrCCreateDataSource) )
     {
         return poDriver->pfnCreate != nullptr ||
@@ -200,7 +203,7 @@ OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH hDriver,
     VALIDATE_POINTER1( hSrcDS, "OGR_Dr_CopyDataSource", nullptr );
     VALIDATE_POINTER1( pszNewName, "OGR_Dr_CopyDataSource", nullptr );
 
-    GDALDriver* poDriver = (GDALDriver*)hDriver;
+    GDALDriver* poDriver = reinterpret_cast<GDALDriver*>(hDriver);
     if( !poDriver->GetMetadataItem( GDAL_DCAP_CREATE ) )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -209,7 +212,7 @@ OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH hDriver,
         return nullptr;
     }
 
-    GDALDataset *poSrcDS = (GDALDataset*) hSrcDS;
+    GDALDataset *poSrcDS = GDALDataset::FromHandle(hSrcDS);
     GDALDataset *poODS =
         poDriver->Create( pszNewName, 0, 0, 0, GDT_Unknown, papszOptions );
     if( poODS == nullptr )
@@ -229,7 +232,7 @@ OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH hDriver,
                           papszOptions );
     }
 
-    return (OGRDataSourceH)poODS;
+    return reinterpret_cast<OGRDataSourceH>(poODS);
 }
 
 //! @endcond

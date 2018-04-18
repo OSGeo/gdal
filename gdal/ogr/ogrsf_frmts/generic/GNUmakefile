@@ -11,6 +11,8 @@ OBJ	=	ogrsfdriverregistrar.o ogrlayer.o ogrdatasource.o \
 
 CXXFLAGS :=     $(CXXFLAGS) $(SHADOW_WFLAGS) -DINST_DATA=\"$(INST_DATA)\"
 
+CXXFLAGS        :=      $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
+
 BASEFORMATS = \
 	-DAVCBIN_ENABLED \
 	-DBNA_ENABLED \

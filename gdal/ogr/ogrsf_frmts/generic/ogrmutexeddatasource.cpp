@@ -169,7 +169,8 @@ void        OGRMutexedDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
     if( poResultsSet && m_bWrapLayersInMutexedLayer )
     {
-        std::map<OGRMutexedLayer*, OGRLayer*>::iterator oIter = m_oReverseMapLayers.find((OGRMutexedLayer*)poResultsSet);
+        std::map<OGRMutexedLayer*, OGRLayer*>::iterator oIter =
+            m_oReverseMapLayers.find(cpl::down_cast<OGRMutexedLayer*>(poResultsSet));
         CPLAssert(oIter != m_oReverseMapLayers.end());
         delete poResultsSet;
         poResultsSet = oIter->second;
