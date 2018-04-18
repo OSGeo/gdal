@@ -340,7 +340,8 @@ namespace tut
         T value3;
         value3 = *poOrigin;
         value3 = *poOrigin;
-        value3 = value3;
+        auto& value3Ref(value3);
+        value3 = value3Ref;
 
         std::ostringstream strErrorAssign;
         strErrorAssign << poOrigin->getGeometryName() << ": assignment operator changed a value";
@@ -836,7 +837,7 @@ namespace tut
             CPL_IGNORE_RET_VAL(elt);
         }
         ensure_equals(nCount, nExpectedPointCount);
-    };
+    }
 
     template<typename Concrete, typename Abstract = Concrete> void TestIterator(
                                            const char* pszWKT = nullptr,
@@ -848,7 +849,7 @@ namespace tut
             obj.importFromWkt(&pszWKT);
         }
         TestIterator<Abstract>(&obj, nExpectedPointCount);
-    };
+    }
 
     // Test geometry visitor
     template<>
@@ -1167,7 +1168,8 @@ namespace tut
             {
                 // Proxy reference
                 auto&& x= oFeatureTmp[0];
-                x = x;
+                auto& xRef(x);
+                x = xRef;
                 ensure_equals( oFeatureTmp[0].GetString(), "bar" );
             }
             {

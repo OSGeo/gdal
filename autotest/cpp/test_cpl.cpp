@@ -601,7 +601,8 @@ namespace tut
         }
         ensure( "c1", EQUAL(oCopy[0],"test") );
 
-        oCopy = oCopy;
+        auto& oCopyRef(oCopy);
+        oCopy = oCopyRef;
         ensure( "c2", EQUAL(oCopy[0],"test") );
 
         // Test copy constructor.
@@ -2049,9 +2050,11 @@ namespace tut
             CPLJSONObject oObj2(oObj);
             // Assignment operator
             oDocument2 = oDocument;
-            oDocument2 = oDocument2;
+            auto& oDocument2Ref(oDocument2);
+            oDocument2 = oDocument2Ref;
             oObj2 = oObj;
-            oObj2 = oObj2;
+            auto& oObj2Ref(oObj2);
+            oObj2 = oObj2Ref;
         }
         {
             // Save
