@@ -109,9 +109,9 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
         if( EQUALN(pszLine, pszCode, strlen(pszCode))
             && pszLine[strlen(pszCode)] == ',' )
         {
-            char *pszWKT = const_cast<char *>(pszLine) + strlen(pszCode)+1;
+            const char *pszWKT = pszLine + strlen(pszCode)+1;
 
-            eErr = importFromWkt( &pszWKT );
+            eErr = importFromWkt( pszWKT );
             if( eErr == OGRERR_NONE && osDictFile.find("esri_") == 0 )
             {
                 morphFromESRI();

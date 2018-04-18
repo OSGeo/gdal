@@ -607,16 +607,42 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
  *
  * @return OGRERR_NONE if import succeeds, or OGRERR_CORRUPT_DATA if it
  * fails for any reason.
+ * @deprecated GDAL 2.3. Use importFromWkt(const char**) instead.
  */
 
 OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput )
 
 {
     int nNodes = 0;
+    return importFromWkt( const_cast<const char**>(ppszInput), 0, &nNodes );
+}
+
+/**
+ * Import from WKT string.
+ *
+ * This method will wipe the existing children and value of this node, and
+ * reassign them based on the contents of the passed WKT string.  Only as
+ * much of the input string as needed to construct this node, and its
+ * children is consumed from the input string, and the input string pointer
+ * is then updated to point to the remaining (unused) input.
+ *
+ * @param ppszInput Pointer to pointer to input.  The pointer is updated to
+ * point to remaining unused input text.
+ *
+ * @return OGRERR_NONE if import succeeds, or OGRERR_CORRUPT_DATA if it
+ * fails for any reason.
+ *
+ * @since GDAL 2.3
+ */
+
+OGRErr OGR_SRSNode::importFromWkt( const char ** ppszInput )
+
+{
+    int nNodes = 0;
     return importFromWkt( ppszInput, 0, &nNodes );
 }
 
-OGRErr OGR_SRSNode::importFromWkt( char **ppszInput, int nRecLevel,
+OGRErr OGR_SRSNode::importFromWkt( const char **ppszInput, int nRecLevel,
                                    int* pnNodes )
 
 {
@@ -694,7 +720,7 @@ OGRErr OGR_SRSNode::importFromWkt( char **ppszInput, int nRecLevel,
             (*pnNodes)++;
             const OGRErr eErr =
                 poNewChild->importFromWkt(
-                    const_cast<char **>( &pszInput ),
+                    &pszInput,
                     nRecLevel + 1, pnNodes );
             if( eErr != OGRERR_NONE )
             {
@@ -715,7 +741,7 @@ OGRErr OGR_SRSNode::importFromWkt( char **ppszInput, int nRecLevel,
         pszInput++;
     }
 
-    *ppszInput = const_cast<char *>(pszInput);
+    *ppszInput = pszInput;
 
     return OGRERR_NONE;
 }

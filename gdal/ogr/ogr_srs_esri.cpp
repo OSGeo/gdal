@@ -733,8 +733,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                 CPLRealloc(pszWKT, strlen(pszWKT)+strlen(papszPrj[i]) + 1));
             strcat( pszWKT, papszPrj[i] );
         }
-        char *pszWKT2 = pszWKT;
-        OGRErr eErr = importFromWkt( &pszWKT2 );
+        OGRErr eErr = importFromWkt( pszWKT );
         CPLFree( pszWKT );
 
         if( eErr == OGRERR_NONE )

@@ -72,7 +72,7 @@ class CPL_DLL OGR_SRSNode
     int         nChildren;
 
     int         NeedsQuoting() const;
-    OGRErr      importFromWkt( char **, int nRecLevel, int* pnNodes );
+    OGRErr      importFromWkt( const char **, int nRecLevel, int* pnNodes );
 
   public:
     explicit     OGR_SRSNode(const char * = nullptr);
@@ -105,7 +105,9 @@ class CPL_DLL OGR_SRSNode
 
     OGR_SRSNode *Clone() const;
 
-    OGRErr      importFromWkt( char ** );
+    OGRErr      importFromWkt( char ** )
+                    CPL_WARN_DEPRECATED("Use importFromWkt(const char**)");
+    OGRErr      importFromWkt( const char ** );
     OGRErr      exportToWkt( char ** ) const;
     OGRErr      exportToPrettyWkt( char **, int = 1) const;
 
@@ -198,7 +200,10 @@ class CPL_DLL OGRSpatialReference
     OGRErr      exportToERM( char *pszProj, char *pszDatum, char *pszUnits );
     OGRErr      exportToMICoordSys( char ** ) const;
 
-    OGRErr      importFromWkt( char ** );
+
+    OGRErr      importFromWkt( char ** )
+        CPL_WARN_DEPRECATED("Use importFromWkt(const char**) or importFromWkt(const char*)");
+    OGRErr      importFromWkt( const char ** );
     OGRErr      importFromWkt( const char* );
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
@@ -232,7 +237,7 @@ class CPL_DLL OGRSpatialReference
                                     const char* pszTargetProjection,
                                     const char* const* papszOptions = nullptr ) const;
 
-    OGRErr      Validate();
+    OGRErr      Validate() const;
     OGRErr      StripCTParms( OGR_SRSNode * = nullptr );
     OGRErr      StripVertical();
     OGRErr      FixupOrdering();

@@ -579,7 +579,7 @@ static const char * const papszAliasGroupList[] = {
  * but contains non-standard PROJECTION[] values.
  */
 
-OGRErr OGRSpatialReference::Validate()
+OGRErr OGRSpatialReference::Validate() const
 
 {
 /* -------------------------------------------------------------------- */

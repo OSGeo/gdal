@@ -784,9 +784,10 @@ OGRErr CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH hSRS,
  *
  * @return OGRERR_NONE if import succeeds, or OGRERR_CORRUPT_DATA if it
  * fails for any reason.
+ * @since GDAL 2.3
  */
 
-OGRErr OGRSpatialReference::importFromWkt( char ** ppszInput )
+OGRErr OGRSpatialReference::importFromWkt( const char ** ppszInput )
 
 {
     if( !ppszInput || !*ppszInput )
@@ -827,6 +828,34 @@ OGRErr OGRSpatialReference::importFromWkt( char ** ppszInput )
  * much of the input string as needed to construct this SRS is consumed from
  * the input string, and the input string pointer
  * is then updated to point to the remaining (unused) input.
+ * 
+ * Consult also the <a href="wktproblems.html">OGC WKT Coordinate System Issues</a> page
+ * for implementation details of WKT in OGR.
+ *
+ * This method is the same as the C function OSRImportFromWkt().
+ *
+ * @param ppszInput Pointer to pointer to input.  The pointer is updated to
+ * point to remaining unused input text.
+ *
+ * @return OGRERR_NONE if import succeeds, or OGRERR_CORRUPT_DATA if it
+ * fails for any reason.
+ * @deprecated GDAL 2.3. Use importFromWkt(const char**) or importFromWkt(const char*)
+ */
+
+OGRErr OGRSpatialReference::importFromWkt( char ** ppszInput )
+
+{
+    return importFromWkt( const_cast<const char**>(ppszInput) );
+}
+
+/**
+ * \brief Import from WKT string.
+ *
+ * This method will wipe the existing SRS definition, and
+ * reassign it based on the contents of the passed WKT string.  Only as
+ * much of the input string as needed to construct this SRS is consumed from
+ * the input string, and the input string pointer
+ * is then updated to point to the remaining (unused) input.
  *
  * Consult also the <a href="wktproblems.html">OGC WKT Coordinate System Issues</a> page
  * for implementation details of WKT in OGR.
@@ -840,8 +869,7 @@ OGRErr OGRSpatialReference::importFromWkt( char ** ppszInput )
 
 OGRErr OGRSpatialReference::importFromWkt( const char* pszInput )
 {
-    char* pszTemp = const_cast<char*>(pszInput);
-    return importFromWkt(&pszTemp);
+    return importFromWkt(&pszInput);
 }
 
 /************************************************************************/
@@ -862,9 +890,8 @@ OGRErr OSRImportFromWkt( OGRSpatialReferenceH hSRS, char **ppszInput )
 {
     VALIDATE_POINTER1( hSRS, "OSRImportFromWkt", OGRERR_FAILURE );
 
-    return
-        ToPointer(hSRS)->
-            importFromWkt( ppszInput );
+    return ToPointer(hSRS)->importFromWkt(
+                const_cast<const char**>(ppszInput) );
 }
 
 /************************************************************************/
