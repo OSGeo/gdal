@@ -371,7 +371,7 @@ class CPL_DLL OGRSpatialReference
                                        int* pnEntries,
                                        int** ppanMatchConfidence ) const;
 
-    int         GetEPSGGeogCS();
+    int         GetEPSGGeogCS() const;
 
     const char *GetAuthorityCode( const char * pszTargetKey ) const;
     const char *GetAuthorityName( const char * pszTargetKey ) const;

@@ -2542,7 +2542,7 @@ OGRErr OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
 
 // TODO: We really need to do some name lookups.
 
-int OGRSpatialReference::GetEPSGGeogCS()
+int OGRSpatialReference::GetEPSGGeogCS() const
 
 {
     const char *pszAuthName = GetAuthorityName( "GEOGCS" );
