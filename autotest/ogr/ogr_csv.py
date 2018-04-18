@@ -2615,6 +2615,7 @@ def ogr_csv_force_string_quoting():
 
     gdal.Unlink('/vsimem/ogr_csv_force_string_quoting.csv')
     gdal.Unlink('/vsimem/ogr_csv_force_string_quoting.csvt')
+    gdal.Unlink('/vsimem/ogr_csv_force_string_quoting.prj')
 
     return 'success'
 
