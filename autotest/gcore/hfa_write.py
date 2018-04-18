@@ -240,14 +240,10 @@ def hfa_use_rrd():
     ds = None
 
     try:
-        fd = open('tmp/small.rrd')
-    except:
-        fd = None
-
-    if fd is None:
+        os.stat('tmp/small.rrd')
+    except OSError:
         gdaltest.post_reason('small.rrd not present.')
         return 'fail'
-    fd.close()
 
     ds = gdal.Open('tmp/small.img')
     if ds.GetRasterBand(1).GetOverview(0).Checksum() != 26148:

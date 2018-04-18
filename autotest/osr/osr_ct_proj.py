@@ -71,7 +71,7 @@ class ProjTest:
 
             try:
                 open(proj_lib + '/' + self.requirements[5:])
-            except:
+            except IOError:
                 # print( 'Did not find GRID:%s' % self.requirements[5:] )
                 return 'skip'
 

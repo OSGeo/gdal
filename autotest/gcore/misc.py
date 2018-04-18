@@ -214,7 +214,7 @@ def misc_5():
 
     try:
         os.mkdir('tmp/tmp')
-    except:
+    except OSError:
         try:
             os.stat('tmp/tmp')
             # Hum the directory already exists... Not expected, but let's try to go on

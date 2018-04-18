@@ -842,7 +842,7 @@ def rasterio_11():
         from osgeo import gdalnumeric
         gdalnumeric.zeros
         import numpy
-    except:
+    except (ImportError, AttributeError):
         return 'skip'
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3)
@@ -885,7 +885,7 @@ def rasterio_12():
         from osgeo import gdalnumeric
         gdalnumeric.zeros
         import numpy
-    except:
+    except (ImportError, AttributeError):
         return 'skip'
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, 4)
@@ -947,7 +947,7 @@ def rasterio_13():
         from osgeo import gdalnumeric
         gdalnumeric.zeros
         import numpy
-    except:
+    except (ImportError, AttributeError):
         return 'skip'
 
     for dt in [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32]:

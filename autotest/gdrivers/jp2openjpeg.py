@@ -1884,7 +1884,7 @@ def jp2openjpeg_38():
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET')
-    except:
+    except OSError:
         do_validate = False
 
     if do_validate:

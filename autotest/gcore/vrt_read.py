@@ -1052,7 +1052,7 @@ def vrt_read_23():
         from osgeo import gdalnumeric
         gdalnumeric.zeros
         import numpy
-    except:
+    except (ImportError, AttributeError):
         return 'skip'
 
     mem_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrt_read_23.tif', 2, 1)

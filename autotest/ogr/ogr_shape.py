@@ -3338,7 +3338,7 @@ def ogr_shape_67():
     try:
         os.stat('tmp/emptyshapefilewithsbn.sbn')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     os.unlink('tmp/emptyshapefilewithsbn.shp')

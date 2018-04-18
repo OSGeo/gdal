@@ -60,7 +60,7 @@ def ogr_tiger_1():
             gdaltest.unzip('tmp/cache/TGR01001', 'tmp/cache/TGR01001.ZIP')
             try:
                 os.stat('tmp/cache/TGR01001/TGR01001.MET')
-            except:
+            except OSError:
                 return 'skip'
         except:
             return 'skip'

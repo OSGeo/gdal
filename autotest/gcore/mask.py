@@ -572,7 +572,7 @@ def mask_13():
         os.stat('tmp/byte_with_mask.tif.msk')
         gdaltest.post_reason('tmp/byte_with_mask.tif.msk is still there')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
