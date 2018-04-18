@@ -186,6 +186,15 @@ def ogr_feature_cp_integer():
     if not check(dst_feature, 'field_stringlist', None):
         return 'fail'
 
+    vals = []
+    for val in dst_feature:
+        vals.append(val)
+    if vals != [17, 2147483647, 18, 0, None, None, None, None, 15,
+                2147483647, 17, None]:
+        gdaltest.post_reason('fail')
+        print(vals)
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

@@ -262,10 +262,14 @@
     # This makes it possible to fetch fields in the form "feature['area']".
     def __getitem__(self, key):
         """Returns the values of fields by the given name / field_index"""
-        if isinstance(key, str):
+        if isinstance(key, str) or isinstance(key, type(u'')):
             fld_index = self.GetFieldIndex(key)
+        else:
+            fld_index = key
+            if key == self.GetFieldCount():
+                raise IndexError
         if fld_index < 0:
-            if isinstance(key, str):
+            if isinstance(key, str) or isinstance(key, type(u'')):
                 fld_index = self.GetGeomFieldIndex(key)
             if fld_index < 0:
                 raise ValueError("Illegal field requested in GetField()")
@@ -277,10 +281,14 @@
     # This makes it possible to set fields in the form "feature['area'] = 123".
     def __setitem__(self, key, value):
         """Returns the value of a field by field name / index"""
-        if isinstance(key, str):
+        if isinstance(key, str) or isinstance(key, type(u'')):
             fld_index = self.GetFieldIndex(key)
+        else:
+            fld_index = key
+            if key == self.GetFieldCount():
+                raise IndexError
         if fld_index < 0:
-            if isinstance(key, str):
+            if isinstance(key, str) or isinstance(key, type(u'')):
                 fld_index = self.GetGeomFieldIndex(key)
             if fld_index < 0:
                 raise ValueError("Illegal field requested in SetField()")
