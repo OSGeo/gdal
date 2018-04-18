@@ -1391,7 +1391,7 @@ def download_file(url, filename=None, download_size=-1, force_download=False, ma
             try:
                 open(base_dir + '/' + filename, 'wb').write(val)
                 return True
-            except IOErrror:
+            except IOError:
                 print('Cannot write %s' % (filename))
                 return False
         else:
