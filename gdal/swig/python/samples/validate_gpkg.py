@@ -149,7 +149,7 @@ class GPKGChecker:
         row = None
         if c.fetchone() is not None:
             c.execute("SELECT scope FROM gpkg_extensions WHERE "
-                    "extension_name = 'gpkg_crs_wkt'")
+                      "extension_name = 'gpkg_crs_wkt'")
             row = c.fetchone()
         if row:
             scope, = row
