@@ -106,7 +106,10 @@ class CPL_DLL OGR_SRSNode
     OGR_SRSNode *Clone() const;
 
     OGRErr      importFromWkt( char ** )
-                    CPL_WARN_DEPRECATED("Use importFromWkt(const char**)");
+/*! @cond Doxygen_Suppress */
+                    CPL_WARN_DEPRECATED("Use importFromWkt(const char**)")
+/*! @endcond */
+                    ;
     OGRErr      importFromWkt( const char ** );
     OGRErr      exportToWkt( char ** ) const;
     OGRErr      exportToPrettyWkt( char **, int = 1) const;
@@ -202,7 +205,11 @@ class CPL_DLL OGRSpatialReference
 
 
     OGRErr      importFromWkt( char ** )
-        CPL_WARN_DEPRECATED("Use importFromWkt(const char**) or importFromWkt(const char*)");
+/*! @cond Doxygen_Suppress */
+        CPL_WARN_DEPRECATED("Use importFromWkt(const char**) or importFromWkt(const char*)")
+/*! @endcond */
+        ;
+
     OGRErr      importFromWkt( const char ** );
     OGRErr      importFromWkt( const char* );
     OGRErr      importFromProj4( const char * );
