@@ -87,7 +87,7 @@ def idrisi_cleanup():
         os.unlink('data/frmt09.cot.aux.xml')
         os.unlink('data/byte.rst.aux.xml')
         print('FIXME?: data/rgbsmall.tif.aux.xml is produced by those tests')
-    except:
+    except OSError:
         pass
     return 'success'
 

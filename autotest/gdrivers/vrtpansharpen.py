@@ -1335,7 +1335,7 @@ def vrtpansharpen_6():
         from osgeo import gdalnumeric
         gdalnumeric.zeros
         import numpy
-    except:
+    except (ImportError, AttributeError):
         return 'skip'
 
     # i = 0: VRT has <BitDepth>7</BitDepth>

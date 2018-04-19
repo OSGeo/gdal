@@ -58,11 +58,7 @@ def encode(fmt, nodata, values):
 
 
 def arg_init():
-    try:
-        gdaltest.argDriver = gdal.GetDriverByName('ARG')
-    except:
-        gdaltest.argDriver = None
-
+    gdaltest.argDriver = gdal.GetDriverByName('ARG')
     if gdaltest.argDriver is None:
         return 'skip'
 

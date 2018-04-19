@@ -40,10 +40,7 @@ import gdaltest
 
 def jpegls_1():
 
-    try:
-        if gdal.GetDriverByName('JPEGLS') is None:
-            return 'skip'
-    except:
+    if gdal.GetDriverByName('JPEGLS') is None:
         return 'skip'
 
     tst = gdaltest.GDALTest('JPEGLS', 'byte.tif', 1, 4672)
@@ -54,10 +51,7 @@ def jpegls_1():
 
 def jpegls_2():
 
-    try:
-        if gdal.GetDriverByName('JPEGLS') is None:
-            return 'skip'
-    except:
+    if gdal.GetDriverByName('JPEGLS') is None:
         return 'skip'
 
     tst = gdaltest.GDALTest('JPEGLS', 'int16.tif', 1, 4672)

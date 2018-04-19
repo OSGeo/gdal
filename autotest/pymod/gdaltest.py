@@ -126,7 +126,7 @@ def run_tests(test_list):
                 outline = '  TEST: ' + func.__name__[4:] + ': ' + name + ' ... '
             else:
                 outline = '  TEST: ' + func.__name__ + ': ' + name + ' ... '
-        except:
+        except TypeError:
             func = test_item
             name = func.__name__
             outline = '  TEST: ' + name + ' ... '

@@ -84,27 +84,13 @@ def gpkg_init():
 
     gdaltest.gpkg_dr = None
 
-    try:
-        gdaltest.gpkg_dr = gdal.GetDriverByName('GPKG')
-        if gdaltest.gpkg_dr is None:
-            return 'skip'
-    except:
+    gdaltest.gpkg_dr = gdal.GetDriverByName('GPKG')
+    if gdaltest.gpkg_dr is None:
         return 'skip'
 
-    try:
-        gdaltest.png_dr = gdal.GetDriverByName('PNG')
-    except:
-        gdaltest.png_dr = None
-
-    try:
-        gdaltest.jpeg_dr = gdal.GetDriverByName('JPEG')
-    except:
-        gdaltest.jpeg_dr = None
-
-    try:
-        gdaltest.webp_dr = gdal.GetDriverByName('WEBP')
-    except:
-        gdaltest.webp_dr = None
+    gdaltest.png_dr = gdal.GetDriverByName('PNG')
+    gdaltest.jpeg_dr = gdal.GetDriverByName('JPEG')
+    gdaltest.webp_dr = gdal.GetDriverByName('WEBP')
     gdaltest.webp_supports_rgba = False
     if gdaltest.webp_dr is not None and gdal.GetConfigOption("GPKG_SIMUL_WEBP_3BAND") is None:
         md = gdaltest.webp_dr.GetMetadata()
@@ -1840,10 +1826,7 @@ def gpkg_18():
         return 'skip'
     if gdaltest.png_dr is None:
         return 'skip'
-    try:
-        gdal.Unlink('/vsimem/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding, immediately after create copy
     ds = gdal.Open('data/small_world.tif')

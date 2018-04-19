@@ -156,11 +156,8 @@ def mrsid_2():
     ds = None
 
     is_bytes = False
-    try:
-        if (isinstance(data, bytes) and not isinstance(data, str)):
-            is_bytes = True
-    except:
-        pass
+    if (isinstance(data, bytes) and not isinstance(data, str)):
+        is_bytes = True
 
     # check that we got roughly the right values by checking mean.
     sum = 0

@@ -40,11 +40,7 @@ import gdaltest
 
 
 def bsb_0():
-    try:
-        gdaltest.bsb_dr = gdal.GetDriverByName('BSB')
-    except:
-        gdaltest.bsb_dr = None
-
+    gdaltest.bsb_dr = gdal.GetDriverByName('BSB')
     if gdaltest.bsb_dr is None:
         return 'skip'
 

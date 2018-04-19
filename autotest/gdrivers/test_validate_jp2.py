@@ -58,7 +58,7 @@ def test_validate_jp2_1():
         import build_jp2_from_xml
         validate_jp2.validate
         build_jp2_from_xml.build_file
-    except:
+    except (ImportError, AttributeError):
         return 'skip'
 
     gdaltest.has_validate_jp2_and_build_jp2 = True
@@ -74,14 +74,14 @@ def validate(filename, inspire_tg=True, expected_gmljp2=True, oidoc=None):
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET')
         ogc_schemas_location = 'tmp/cache/SCHEMAS_OPENGIS_NET'
-    except:
+    except OSError:
         ogc_schemas_location = 'disabled'
 
     if ogc_schemas_location != 'disabled':
         try:
             import xmlvalidate
             xmlvalidate.validate  # to make pyflakes happy
-        except:
+        except (ImportError, AttributeError):
             ogc_schemas_location = 'disabled'
 
     import validate_jp2

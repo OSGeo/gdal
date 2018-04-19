@@ -705,7 +705,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                     mode = os.stat(pszDestDataSource).st_mode
                     if (mode & stat.S_IFDIR) == 0:
                         pszNewLayerName = os.path.splitext(os.path.basename(pszDestDataSource))[0]
-                except:
+                except OSError:
                     pass
 
             psInfo = SetupTargetLayer(poDS,
@@ -773,7 +773,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                 mode = os.stat(pszDestDataSource).st_mode
                 if (mode & stat.S_IFDIR) == 0:
                     pszNewLayerName = os.path.splitext(os.path.basename(pszDestDataSource))[0]
-            except:
+            except OSError:
                 pass
 
         if bDisplayProgress and bSrcIsOSM:
@@ -981,7 +981,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                     mode = os.stat(pszDestDataSource).st_mode
                     if (mode & stat.S_IFDIR) == 0:
                         pszNewLayerName = os.path.splitext(os.path.basename(pszDestDataSource))[0]
-                except:
+                except OSError:
                     pass
 
             psInfo = SetupTargetLayer(poDS,

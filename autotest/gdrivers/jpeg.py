@@ -176,7 +176,7 @@ def jpeg_3():
         os.stat('tmp/byte.wld')
         gdaltest.post_reason('did not expect to find .wld file at that point')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -216,7 +216,7 @@ def jpeg_5():
 
     try:
         gdalconst.GMF_ALL_VALID
-    except:
+    except AttributeError:
         return 'skip'
 
     ds = gdal.Open('data/masked.jpg')

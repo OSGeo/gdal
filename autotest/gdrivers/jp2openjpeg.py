@@ -670,7 +670,7 @@ def jp2openjpeg_20():
         try:
             os.stat('../ogr/tmp/cache/SCHEMAS_OPENGIS_NET.zip')
             shutil.copy('../ogr/tmp/cache/SCHEMAS_OPENGIS_NET.zip', 'tmp/cache')
-        except:
+        except OSError:
             url = 'http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip'
             if not gdaltest.download_file(url, 'SCHEMAS_OPENGIS_NET.zip', force_download=True, max_download_duration=20):
                 print('Cannot get SCHEMAS_OPENGIS_NET.zip')
@@ -1069,7 +1069,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
         try:
             import xmlvalidate
             xmlvalidate.validate  # to make pyflakes happy
-        except:
+        except (ImportError, AttributeError):
             ogc_schemas_location = 'disabled'
 
     res = validate_jp2.validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)

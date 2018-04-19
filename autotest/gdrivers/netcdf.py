@@ -153,7 +153,7 @@ def netcdf_test_deflate(ifile, checksum, zlevel=1, timeout=None):
     try:
         from multiprocessing import Process
         Process.is_alive
-    except:
+    except (ImportError, AttributeError):
         print('from multiprocessing import Process failed')
         return 'skip'
 
@@ -183,7 +183,7 @@ def netcdf_test_deflate(ifile, checksum, zlevel=1, timeout=None):
     try:
         size1 = os.path.getsize(ofile1)
         size2 = os.path.getsize(ofile2)
-    except:
+    except OSError:
         gdaltest.post_reason('Error getting file sizes.')
         return 'fail'
 

@@ -171,7 +171,7 @@ if dst_layername is None:
 # =============================================================================
 try:
     gdal.Polygonize
-except:
+except AttributeError:
     print('')
     print('gdal.Polygonize() not available.  You are likely using "old gen"')
     print('bindings or an older version of the next gen bindings.')

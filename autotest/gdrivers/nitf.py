@@ -3409,10 +3409,7 @@ def nitf_online_15(driver_to_test, expected_cs=1054):
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/p0_01/p0_01a.ntf', 'p0_01a.ntf'):
         return 'skip'
 
-    try:
-        jp2_drv = gdal.GetDriverByName(driver_to_test)
-    except:
-        jp2_drv = None
+    jp2_drv = gdal.GetDriverByName(driver_to_test)
 
     if jp2_drv is None:
         return 'skip'
@@ -3461,10 +3458,7 @@ def nitf_online_16(driver_to_test):
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9_jp2_2places.ntf', 'file9_jp2_2places.ntf'):
         return 'skip'
 
-    try:
-        jp2_drv = gdal.GetDriverByName(driver_to_test)
-    except:
-        jp2_drv = None
+    jp2_drv = gdal.GetDriverByName(driver_to_test)
 
     if jp2_drv is None:
         return 'skip'
@@ -3525,10 +3519,7 @@ def nitf_online_17(driver_to_test):
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9_j2c.ntf', 'file9_j2c.ntf'):
         return 'skip'
 
-    try:
-        jp2_drv = gdal.GetDriverByName(driver_to_test)
-    except:
-        jp2_drv = None
+    jp2_drv = gdal.GetDriverByName(driver_to_test)
 
     if jp2_drv is None:
         return 'skip'
