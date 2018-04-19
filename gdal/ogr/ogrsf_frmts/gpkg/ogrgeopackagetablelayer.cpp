@@ -2747,7 +2747,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
         "INSERT INTO gpkg_extensions "
         "(table_name,column_name,extension_name,definition,scope) "
         "VALUES ('%q', '%q', 'gpkg_rtree_index', "
-        "'GeoPackage 1.0 Specification Annex L', 'write-only')",
+        "'http://www.geopackage.org/spec120/#extension_rtree', 'write-only')",
         pszT, pszC );
     osSQL += pszSQL;
     sqlite3_free(pszSQL);
@@ -3012,7 +3012,7 @@ bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(OGRwkbGeometryT
         pszSQL = sqlite3_mprintf(
                     "INSERT INTO gpkg_extensions "
                     "(table_name,column_name,extension_name,definition,scope) "
-                    "VALUES ('%q', '%q', 'gpkg_geom_%s', 'GeoPackage 1.0 Specification Annex J', 'read-write')",
+                    "VALUES ('%q', '%q', 'gpkg_geom_%s', 'http://www.geopackage.org/spec120/#extension_geometry_types', 'read-write')",
                     pszT, pszC, pszGeometryType);
         OGRErr err = SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);

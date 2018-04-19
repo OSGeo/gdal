@@ -2857,7 +2857,13 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
 void GDALGeoPackageDataset::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed by the method */
                                           const char* pszTableName)
 {
-    int bIsEmpty = (psXMLNode == nullptr);
+    const bool bIsEmpty = (psXMLNode == nullptr);
+    if( !HasMetadataTables() )
+    {
+        if( bIsEmpty || !CreateMetadataTables() )
+            return;
+    }
+
     char *pszXML = nullptr;
     if( !bIsEmpty )
     {
@@ -3122,6 +3128,23 @@ bool GDALGeoPackageDataset::CreateMetadataTables()
         osSQL += pszMetadataReferenceTriggers;
     }
 
+    if( CreateExtensionsTableIfNecessary() != OGRERR_NONE )
+        return false;
+
+    osSQL += ";";
+    osSQL +=
+        "INSERT INTO gpkg_extensions "
+        "(table_name, column_name, extension_name, definition, scope) "
+        "VALUES "
+        "('gpkg_metadata', NULL, 'gpkg_metadata', 'http://www.geopackage.org/spec120/#extension_metadata', 'read-write')";
+
+    osSQL += ";";
+    osSQL +=
+        "INSERT INTO gpkg_extensions "
+        "(table_name, column_name, extension_name, definition, scope) "
+        "VALUES "
+        "('gpkg_metadata_reference', NULL, 'gpkg_metadata', 'http://www.geopackage.org/spec120/#extension_metadata', 'read-write')";
+
     return SQLCommand(hDB, osSQL) == OGRERR_NONE;
 }
 
@@ -3134,8 +3157,6 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
     if( !m_bMetadataDirty || m_poParentDS != nullptr ||
         !CPLTestBool(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")) )
         return CE_None;
-    if( !HasMetadataTables() && !CreateMetadataTables() )
-        return CE_Failure;
     m_bMetadataDirty = false;
 
     bool bCanWriteAreaOrPoint = !m_bGridCellEncodingAsCO &&
@@ -3204,9 +3225,13 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
             continue;
         if( STARTS_WITH_CI(*papszIter, "GPKG_METADATA_ITEM_") )
             continue;
-        if( !bCanWriteAreaOrPoint &&
+        if( (m_eTF == GPKG_TF_PNG_16BIT ||
+             m_eTF == GPKG_TF_TIFF_32BIT_FLOAT) &&
+             !bCanWriteAreaOrPoint &&
             STARTS_WITH_CI(*papszIter, GDALMD_AREA_OR_POINT) )
+        {
             continue;
+        }
         papszMDDup = CSLInsertString(papszMDDup, -1, *papszIter);
     }
 
@@ -3714,7 +3739,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
 
     if( !bFileExists )
     {
-        if( CPLTestBool(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")) &&
+        if( CPLTestBool(CPLGetConfigOption("CREATE_METADATA_TABLES", "NO")) &&
             !CreateMetadataTables() )
             return FALSE;
 
@@ -3725,7 +3750,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
                 "INSERT INTO gpkg_extensions "
                 "(table_name, column_name, extension_name, definition, scope) "
                 "VALUES "
-                "(NULL, NULL, 'gpkg_crs_wkt', 'http://www.geopackage.org/spec/#extension_crs_wkt', 'read-write')") )
+                "('gpkg_spatial_ref_sys', 'definition_12_063', 'gpkg_crs_wkt', 'http://www.geopackage.org/spec120/#extension_crs_wkt', 'read-write')") )
             {
                 return FALSE;
             }
@@ -4643,7 +4668,7 @@ bool GDALGeoPackageDataset::RegisterWebPExtension()
         "INSERT INTO gpkg_extensions "
         "(table_name, column_name, extension_name, definition, scope) "
         "VALUES "
-        "('%q', 'tile_data', 'gpkg_webp', 'GeoPackage 1.0 Specification Annex P', 'read-write')",
+        "('%q', 'tile_data', 'gpkg_webp', 'http://www.geopackage.org/spec120/#extension_tiles_webp', 'read-write')",
         m_osRasterTable.c_str());
     const OGRErr eErr = SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
@@ -4664,7 +4689,7 @@ bool GDALGeoPackageDataset::RegisterZoomOtherExtension()
         "INSERT INTO gpkg_extensions "
         "(table_name, column_name, extension_name, definition, scope) "
         "VALUES "
-        "('%q', 'tile_data', 'gpkg_zoom_other', 'GeoPackage 1.0 Specification Annex O', 'read-write')",
+        "('%q', 'tile_data', 'gpkg_zoom_other', 'http://www.geopackage.org/spec120/#extension_zoom_other_intervals', 'read-write')",
         m_osRasterTable.c_str());
     const OGRErr eErr = SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
