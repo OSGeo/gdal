@@ -344,6 +344,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 /*      Precompute inner loop constants.                                */
 /* ==================================================================== */
     bool bSrcXSpacingIsTwo = true;
+    int nLastSrcXOff2 = -1;
     for( int iDstPixel = nDstXOff; iDstPixel < nDstXOff2; ++iDstPixel )
     {
         double dfSrcXOff = dfSrcXDelta + iDstPixel * dfXRatioDstToSrc;
@@ -376,8 +377,12 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         panSrcXOffShifted[2 * (iDstPixel - nDstXOff)] = nSrcXOff - nChunkXOff;
         panSrcXOffShifted[2 * (iDstPixel - nDstXOff) + 1] =
             nSrcXOff2 - nChunkXOff;
-        if( nSrcXOff2 - nSrcXOff != 2 )
+        if( nSrcXOff2 - nSrcXOff != 2 ||
+            (nLastSrcXOff2 >= 0 && nLastSrcXOff2 != nSrcXOff) )
+        {
             bSrcXSpacingIsTwo = false;
+        }
+        nLastSrcXOff2 = nSrcXOff2;
     }
 
 /* ==================================================================== */
