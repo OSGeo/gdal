@@ -93,7 +93,7 @@ def display_file(fout, dirname, prefix, filename, longformat, check_open=False):
 
     try:
         fout.write(line.encode('utf-8'))
-    except UnicodeEncodeError:
+    except (TypeError, UnicodeEncodeError):
         fout.write(line)
 
 
