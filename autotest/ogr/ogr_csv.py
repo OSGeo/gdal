@@ -2582,14 +2582,14 @@ def ogr_csv_more_than_100_geom_fields():
 ###############################################################################
 
 
-def ogr_csv_force_string_quoting():
+def ogr_csv_string_quoting_always():
 
-    gdal.VectorTranslate('/vsimem/ogr_csv_force_string_quoting.csv',
+    gdal.VectorTranslate('/vsimem/ogr_csv_string_quoting_always.csv',
                          'data/poly.shp', format='CSV',
                          where='FID = 0',
-                         layerCreationOptions=['CREATE_CSVT=YES', 'STRING_QUOTING=YES', 'LINEFORMAT=LF'])
+                         layerCreationOptions=['CREATE_CSVT=YES', 'STRING_QUOTING=ALWAYS', 'LINEFORMAT=LF'])
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_csv_force_string_quoting.csv', 'rb')
+    f = gdal.VSIFOpenL('/vsimem/ogr_csv_string_quoting_always.csv', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
@@ -2598,13 +2598,13 @@ def ogr_csv_force_string_quoting():
         print(data)
         return 'fail'
 
-    ds = gdal.OpenEx('/vsimem/ogr_csv_force_string_quoting.csv', gdal.OF_UPDATE | gdal.OF_VECTOR)
+    ds = gdal.OpenEx('/vsimem/ogr_csv_string_quoting_always.csv', gdal.OF_UPDATE | gdal.OF_VECTOR)
     gdal.VectorTranslate(ds, 'data/poly.shp',
-                         layerName='ogr_csv_force_string_quoting',
+                         layerName='ogr_csv_string_quoting_always',
                          where='FID = 1', accessMode='append')
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_csv_force_string_quoting.csv', 'rb')
+    f = gdal.VSIFOpenL('/vsimem/ogr_csv_string_quoting_always.csv', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
@@ -2613,9 +2613,74 @@ def ogr_csv_force_string_quoting():
         print(data)
         return 'fail'
 
-    gdal.Unlink('/vsimem/ogr_csv_force_string_quoting.csv')
-    gdal.Unlink('/vsimem/ogr_csv_force_string_quoting.csvt')
-    gdal.Unlink('/vsimem/ogr_csv_force_string_quoting.prj')
+    gdal.Unlink('/vsimem/ogr_csv_string_quoting_always.csv')
+    gdal.Unlink('/vsimem/ogr_csv_string_quoting_always.csvt')
+    gdal.Unlink('/vsimem/ogr_csv_string_quoting_always.prj')
+
+    return 'success'
+
+###############################################################################
+
+
+def ogr_csv_string_quoting_if_ambiguous():
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    lyr = src_ds.CreateLayer('layer')
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    lyr.CreateField(ogr.FieldDefn('bar'))
+    lyr.CreateField(ogr.FieldDefn('baz'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['foo'] = '00123'
+    f['bar'] = 'x'
+    f['baz'] = '1.25'
+    lyr.CreateFeature(f)
+
+    gdal.VectorTranslate('/vsimem/ogr_csv_string_quoting_if_ambiguous.csv',
+                         src_ds, format='CSV')
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_csv_string_quoting_if_ambiguous.csv', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    if data.find('"00123",x,"1.25"') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_csv_string_quoting_if_ambiguous.csv')
+
+    return 'success'
+
+###############################################################################
+
+
+def ogr_csv_string_quoting_if_needed():
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    lyr = src_ds.CreateLayer('layer')
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    lyr.CreateField(ogr.FieldDefn('bar'))
+    lyr.CreateField(ogr.FieldDefn('baz'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['foo'] = '00123'
+    f['bar'] = 'x'
+    f['baz'] = '1.25'
+    lyr.CreateFeature(f)
+
+    gdal.VectorTranslate('/vsimem/ogr_csv_string_quoting_if_needed.csv',
+                         src_ds, format='CSV',
+                         layerCreationOptions=['STRING_QUOTING=IF_NEEDED'])
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_csv_string_quoting_if_needed.csv', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    if data.find('00123,x,1.25') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_csv_string_quoting_if_needed.csv')
 
     return 'success'
 
@@ -2706,7 +2771,9 @@ gdaltest_list = [
     ogr_csv_48,
     ogr_csv_49,
     ogr_csv_more_than_100_geom_fields,
-    ogr_csv_force_string_quoting,
+    ogr_csv_string_quoting_always,
+    ogr_csv_string_quoting_if_ambiguous,
+    ogr_csv_string_quoting_if_needed,
     ogr_csv_cleanup]
 
 if __name__ == '__main__':
