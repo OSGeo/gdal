@@ -869,7 +869,8 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
                 {
                     osJournalMode = pszEqual + 1;
                     osJournalMode.Trim();
-                    break;
+                    // Only apply journal_mode after changing page_size
+                    continue;
                 }
             }
 
