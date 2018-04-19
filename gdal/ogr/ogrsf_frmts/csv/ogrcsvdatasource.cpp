@@ -947,8 +947,13 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
 
     poCSVLayer->SetCRLF(bUseCRLF);
 
+    const char* pszStringQuoting =
+        CSLFetchNameValueDef(papszOptions, "STRING_QUOTING", "IF_AMBIGUOUS");
     poCSVLayer->SetStringQuoting(
-        CPLFetchBool(papszOptions, "STRING_QUOTING", false));
+        EQUAL(pszStringQuoting, "IF_NEEDED") ? OGRCSVLayer::StringQuoting::IF_NEEDED:
+        EQUAL(pszStringQuoting, "ALWAYS") ?    OGRCSVLayer::StringQuoting::ALWAYS:
+                                               OGRCSVLayer::StringQuoting::IF_AMBIGUOUS
+    );
 
     // Should we write the geometry?
     const char *pszGeometry = CSLFetchNameValue(papszOptions, "GEOMETRY");

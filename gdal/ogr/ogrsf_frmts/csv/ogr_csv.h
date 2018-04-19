@@ -72,6 +72,16 @@ void OGRCSVDriverRemoveFromMap(const char *pszName, GDALDataset *poDS);
 
 class OGRCSVLayer : public OGRLayer
 {
+  public:
+
+    enum class StringQuoting
+    {
+        IF_NEEDED,
+        IF_AMBIGUOUS,
+        ALWAYS
+    };
+
+  private:
     OGRFeatureDefn     *poFeatureDefn;
 
     VSILFILE           *fpCSV;
@@ -127,7 +137,7 @@ class OGRCSVLayer : public OGRLayer
 
     bool                bEmptyStringNull;
 
-    bool                m_bForceStringQuoting = false;
+    StringQuoting       m_eStringQuoting = StringQuoting::IF_AMBIGUOUS;
 
     char              **GetNextLineTokens();
 
@@ -135,6 +145,7 @@ class OGRCSVLayer : public OGRLayer
                                  char **papszPossibleNames );
 
   public:
+
     OGRCSVLayer( const char *pszName, VSILFILE *fp, const char *pszFilename,
                  int bNew, int bInWriteMode, char chDelimiter );
     virtual ~OGRCSVLayer() GDAL_OVERRIDE;
@@ -183,8 +194,8 @@ class OGRCSVLayer : public OGRLayer
     void                SetCreateCSVT( bool bCreateCSVT );
     void                SetWriteBOM( bool bWriteBOM );
 
-    void                SetStringQuoting( bool bStringQuoting ) { m_bForceStringQuoting = bStringQuoting; }
-    bool                GetStringQuoting() const { return m_bForceStringQuoting; }
+    void                SetStringQuoting( StringQuoting eVal ) { m_eStringQuoting = eVal; }
+    StringQuoting       GetStringQuoting() const { return m_eStringQuoting; }
 
     virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
     virtual OGRErr      SyncToDisk() override;

@@ -388,7 +388,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
                                     CSLT_PRESERVEQUOTES));
             nFieldCount = CSLCount(papszTokens);
 
-            m_bForceStringQuoting = nFieldCount > 0 && papszTokens[0][0] == '"';
+            if( nFieldCount > 0 && papszTokens[0][0] == '"' )
+                m_eStringQuoting = StringQuoting::ALWAYS;
 
             const char *pszCSVHeaders =
                 CSLFetchNameValueDef(papszOpenOptions, "HEADERS", "AUTO");
@@ -2095,7 +2096,8 @@ OGRErr OGRCSVLayer::WriteHeader()
 
             char *pszEscaped = CPLEscapeString(
                 poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), -1,
-                m_bForceStringQuoting ? CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
+                m_eStringQuoting == StringQuoting::ALWAYS ?
+                    CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
 
             if( fpCSV )
             {
@@ -2396,7 +2398,8 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
                 if( pszJSon )
                 {
                     pszEscaped = CPLEscapeString(pszJSon, -1,
-                        m_bForceStringQuoting ? CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
+                        m_eStringQuoting == StringQuoting::ALWAYS ?
+                            CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
                 }
                 else
                 {
@@ -2409,9 +2412,10 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
                 const char* pszContent = poNewFeature->GetFieldAsString(iField);
                 pszEscaped = CPLEscapeString(
                     pszContent, -1,
-                    (m_bForceStringQuoting ||
-                    CPLGetValueType(pszContent) != CPL_VALUE_STRING) ?
-                        CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
+                    (m_eStringQuoting == StringQuoting::ALWAYS ||
+                     (m_eStringQuoting == StringQuoting::IF_AMBIGUOUS &
+                      CPLGetValueType(pszContent) != CPL_VALUE_STRING)) ?
+                            CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
             }
         }
 

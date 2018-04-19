@@ -335,7 +335,11 @@ void RegisterOGRCSV()
 "  <Option name='CREATE_CSVT' type='boolean' description='whether to create a .csvt file' default='NO'/>"
 "  <Option name='WRITE_BOM' type='boolean' description='whether to write a UTF-8 BOM prefix' default='NO'/>"
 "  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column. Only used if GEOMETRY=AS_WKT' default='WKT'/>"
-"  <Option name='STRING_QUOTING' type='boolean' description='whether to force double-quoting of strings' default='NO'/>"
+"  <Option name='STRING_QUOTING' type='string-select' description='whether to double-quote strings. IF_AMBIGUOUS means that string values that look like numbers will be quoted (it also implies IF_NEEDED).' default='IF_AMBIGUOUS'>"
+"    <Value>IF_NEEDED</Value>"
+"    <Value>IF_AMBIGUOUS</Value>"
+"    <Value>ALWAYS</Value>"
+"  </Option>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
