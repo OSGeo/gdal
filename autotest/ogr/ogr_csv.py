@@ -2620,6 +2620,38 @@ def ogr_csv_force_string_quoting():
     return 'success'
 
 ###############################################################################
+
+
+def ogr_csv_auto_string_quoting():
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    lyr = src_ds.CreateLayer('layer')
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    lyr.CreateField(ogr.FieldDefn('bar'))
+    lyr.CreateField(ogr.FieldDefn('baz'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['foo'] = '00123'
+    f['bar'] = 'x'
+    f['baz'] = '1.25'
+    lyr.CreateFeature(f)
+
+    gdal.VectorTranslate('/vsimem/ogr_csv_auto_string_quoting.csv',
+                         src_ds, format='CSV')
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_csv_auto_string_quoting.csv', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    if data.find('"00123",x,"1.25"') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_csv_auto_string_quoting.csv')
+
+    return 'success'
+
+###############################################################################
 #
 
 
@@ -2707,6 +2739,7 @@ gdaltest_list = [
     ogr_csv_49,
     ogr_csv_more_than_100_geom_fields,
     ogr_csv_force_string_quoting,
+    ogr_csv_auto_string_quoting,
     ogr_csv_cleanup]
 
 if __name__ == '__main__':

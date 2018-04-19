@@ -2406,9 +2406,12 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
             }
             else
             {
+                const char* pszContent = poNewFeature->GetFieldAsString(iField);
                 pszEscaped = CPLEscapeString(
-                    poNewFeature->GetFieldAsString(iField), -1,
-                    m_bForceStringQuoting ? CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
+                    pszContent, -1,
+                    (m_bForceStringQuoting ||
+                    CPLGetValueType(pszContent) != CPL_VALUE_STRING) ?
+                        CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
             }
         }
 
