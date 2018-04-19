@@ -103,7 +103,7 @@ def gdalurlopen(url, timeout=10):
         socket.setdefaulttimeout(old_timeout)
         return None
     except urllib.error.ContentTooShort:
-        print('HTTP conect too short for %s.' % url)
+        print('HTTP content too short for %s.' % url)
         socket.setdefaulttimeout(old_timeout)
         return None
 
