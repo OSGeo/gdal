@@ -2413,7 +2413,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
                 pszEscaped = CPLEscapeString(
                     pszContent, -1,
                     (m_eStringQuoting == StringQuoting::ALWAYS ||
-                     (m_eStringQuoting == StringQuoting::IF_AMBIGUOUS &
+                     (m_eStringQuoting == StringQuoting::IF_AMBIGUOUS &&
                       CPLGetValueType(pszContent) != CPL_VALUE_STRING)) ?
                             CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
             }
