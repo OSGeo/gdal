@@ -102,7 +102,7 @@ Perl module maintainer to make a CPAN release.
  i.e. On www.gdal.org:
  % cd /var/www/gdal
  % ./gdal-web-refresh.sh
- % zip -r ~/gdal230beta1doc.zip gdal-web --exclude "gdal-web/1.11/*"
+ % zip -r ~/gdal230beta1doc.zip gdal-web --exclude "gdal-web/1.11/*" --exclude "gdal-web/daily/*"
 
 12) Publish the resulting files in download.osgeo.org/gdal/X.Y.Z (where X.Y.Z is the version number)
     and add a symlink from X.Y.Z to CURRENT (except for stable releases in a "old" branch).
