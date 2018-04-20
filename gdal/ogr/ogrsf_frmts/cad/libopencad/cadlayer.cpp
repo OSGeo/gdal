@@ -156,15 +156,12 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
 #endif //_DEBUG
     if( type == CADObject::ATTRIB || type == CADObject::ATTDEF )
     {
-        CADGeometry* pCADGeometry = pCADFile->GetGeometry( getId() - 1, handle );
-        std::unique_ptr<CADAttdef> attdef( dynamic_cast<CADAttdef*>(pCADGeometry) );
+        auto pCADGeometryPtr = pCADFile->GetGeometry( getId() - 1, handle );
+        std::unique_ptr<CADGeometry> pCADGeometry( pCADGeometryPtr );
+        CADAttdef* attdef = dynamic_cast<CADAttdef*>(pCADGeometry.get());
         if(attdef)
         {
             attributesNames.insert( attdef->getTag() );
-        }
-        else
-        {
-            delete pCADGeometry;
         }
     }
 
@@ -172,7 +169,8 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
     {
         // TODO: transform insert to block of objects (do we need to transform
         // coordinates according to insert point)?
-        std::unique_ptr<CADObject> insert( pCADFile->GetObject( handle, false ) );
+        auto insertPtr = pCADFile->GetObject( handle, false );
+        std::unique_ptr<CADObject> insert( insertPtr );
         CADInsertObject * pInsert = dynamic_cast<CADInsertObject *>(insert.get());
         if( nullptr != pInsert )
         {
