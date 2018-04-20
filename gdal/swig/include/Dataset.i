@@ -150,6 +150,8 @@ CPLErr DSReadRaster_internal( GDALDatasetShadow *obj,
 
 #endif
 
+#if !defined(SWIGJAVA)
+
 //************************************************************************/
 //
 // Define the extensions for GDALAsyncReader (nee GDALAsyncReaderShadow)
@@ -294,6 +296,8 @@ public:
 
     } /* extend */
 }; /* GDALAsyncReaderShadow */
+
+#endif // !defined(SWIGJAVA)
 
 //************************************************************************/
 //

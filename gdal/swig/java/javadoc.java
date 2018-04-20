@@ -286,8 +286,8 @@ public class gdal:public static int Unlink(String fileName)
  * The backslash, quote, '\\0' and newline characters are all escaped in
  * the usual C style.
  *
- * <li>gdalconst.CPLES_XML(1): This scheme converts the '<', '<' and '&' characters into
- * their XML/HTML equivalent (&gt;, &lt; and &amp;) making a string safe
+ * <li>gdalconst.CPLES_XML(1): This scheme converts the '&lt;', '&gt;' and '&amp;' characters into
+ * their XML/HTML equivalent (&amp;gt;, &amp;lt; and &amp;amp;) making a string safe
  * to embed as CDATA within an XML element.  The '\\0' is not escaped and
  * should not be included in the input.
  *
@@ -3008,7 +3008,7 @@ public class Band:public int getDataType()
  *      int nBucketCount = panHistogram[0].length;
  *      System.out.print( "  " + nBucketCount + " buckets from " +
  *                         dfMin[0] + " to " + dfMax[0] + ":\n  " );
- *      for( iBucket = 0; iBucket < nBucketCount; iBucket++ )
+ *      for( iBucket = 0; iBucket &lt; nBucketCount; iBucket++ )
  *          System.out.print( panHistogram[0][iBucket] + " ");
  *      System.out.print( "\n" );
  *  }
@@ -5568,8 +5568,8 @@ public interface gdalconstConstants:public final static int CPLES_BackslashQuota
 /**
  * CPLES_XML(1).
  * <p>
- * This scheme converts the '<', '<' and '&' characters into
- * their XML/HTML equivalent (&gt;, &lt; and &amp;) making a string safe
+ * This scheme converts the '&lt;', '&gt;' and '&amp;' characters into
+ * their XML/HTML equivalent (&amp;gt;, &amp;lt; and &amp;amp;) making a string safe
  * to embed as CDATA within an XML element.  The '\\0' is not escaped and
  * should not be included in the input.
  */
@@ -6864,7 +6864,7 @@ public class Layer:public int GetGeomType()
  Fetch the next available feature from this layer.
  <p>
  Only features matching the current spatial filter (set with
- <a href="#SetSpatialFilter(org.gdal.ogr.Geometry)")>SetSpatialFilter()</a> will be returned.
+ <a href="#SetSpatialFilter(org.gdal.ogr.Geometry)">SetSpatialFilter()</a> will be returned.
  <p>
  This method implements sequential access to the features of a layer.  The
  ResetReading() method can be used to start at the beginning again.
@@ -6914,7 +6914,7 @@ public class Layer:public void ResetReading()
  the query evaluates as true will be returned.
  <p>
  The query string should be in the format of an SQL WHERE clause.  For
- instance "population > 1000000 and population < 5000000" where population
+ instance "population &gt; 1000000 and population &lt; 5000000" where population
  is an attribute in the layer.  The query format is a restricted form of SQL
  WHERE clause as defined "eq_format=restricted_where" about half way through
  this document:
@@ -8799,7 +8799,7 @@ public class Geometry:public String GetGeometryName()
  * IGeometryCollection::get_Geometry() method.
  * <p>
  * For a polygon, OGR_G_GetGeometryRef(iSubGeom) returns the exterior ring
- * if iSubGeom == 0, and the interior rings for iSubGeom > 0.
+ * if iSubGeom == 0, and the interior rings for iSubGeom &gt; 0.
  *
  * @param iSubGeom the index of the geometry to fetch, between 0 and
  *          GetGeometryCount() - 1.
@@ -10444,6 +10444,7 @@ public class SpatialReference:public int ExportToXML(String[] argout, String dia
  * <li>Fixup the ordering of nodes to match the BNF WKT ordering, using
  * the FixupOrdering() method.</li>
  * <li>Add missing linear or angular units nodes.</li>
+ * </ul>
  *
  * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
@@ -10911,7 +10912,7 @@ public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone,
  * <pre>
  * ----------------------------------------------------------------------------
  *                         |                    Array Element
- *  Code & Projection Id   |---------------------------------------------------
+ *  Code &amp; Projection Id   |---------------------------------------------------
  *                         |   0  |   1  |  2   |  3   |   4   |    5    |6 | 7
  * ----------------------------------------------------------------------------
  *  0 Geographic           |      |      |      |      |       |         |  |
@@ -10952,7 +10953,7 @@ public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone,
  *
  *       ----------------------------------------------------
  *                               |      Array Element       |
- *         Code & Projection Id  |---------------------------
+ *         Code &amp; Projection Id  |---------------------------
  *                               |  8  |  9 |  10 | 11 | 12 |
  *       ----------------------------------------------------
  *        0 Geographic           |     |    |     |    |    |
