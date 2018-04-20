@@ -1,4 +1,4 @@
-= GDAL/OGR 2.3.0 *PRELIMINARY* Release Notes (to 4a1f1d2ec47f0fb8ee3f6a95a715cf01f6b5482a) =
+= GDAL/OGR 2.3.0 *PRELIMINARY* Release Notes (to 1121758f74589f8850193a5baced7ab1335a4b39) =
 
 Note: due to the change of SCM during the development, #XXXX still refers to
 Trac tickets. GitHub tickets are explicitly indicated with github #XXXX
@@ -192,6 +192,7 @@ Utilities:
  * gdal_retile.py: fix failure if the filename contains % (percent) symbol (#7186)
  * gdalbuildvrt: make warnings about heterogeneous projection/band characteristics more explicit (#6829)
  * gdalbuildvrt: add support for band scale and offset (#3221)
+ * gdal_fillnodata.py, gdal_pansharpen.py, gdal_polygonize.py, gdal_proximity.py, gdal_sieve.py, rgb2pct.py: avoid potential problem on Windows in verbose mode (github #458)
 
 Sample Python scripts:
  * Add gdal_mkdir.py, gdal_rm.py and gdal_rmdir.py samples scripts
@@ -228,7 +229,7 @@ ERS driver:
    add extension metadata (github #320)
  
 GeoPackage driver:
-  update from 'tiled gridded extension' to now OGC approved 'tiled gridded coverage data extension' (OGC 17-066r1) (#7159)
+ * update from 'tiled gridded extension' to now OGC approved 'tiled gridded coverage data extension' (OGC 17-066r1) (#7159)
  * avoid corruption of gpkg_tile_matrix when building overviews, down to a level where they are smaller than the tile size (#6932)
  * fix opening subdatasets with absolute filenames on Windows (https://issues.qgis.org/issues/16997)
  * fix possible assertion / corruption when creating a raster GeoPackage (#7022)
@@ -506,7 +507,8 @@ OGRSpatialReference:
  * Fix OGRSpatialReference::IsSame() to return FALSE when comparing EPSG:3857 (web_mercator) and EPSG:3395 (WGS84 Mercator) (#7029)
  * importFromProj4(): implement import of Hotine Oblique Mercator Two Points Natural Origin, and fix OGRSpatialReference::Validate() for that formulation (#7042)
  * morphFromESRI(): fix remapping from DATUM = D_S_JTSK + PRIMEM = Ferro to OGC DATUM System_Jednotne_Trigonometricke_Site_Katastralni_Ferro
- *  Add alternate simpler signature for OGRGeometryFactory::createFromWkt()
+ * Add alternate simpler signature for OGRGeometryFactory::createFromWkt()
+ * Add importFromWkt(const char**)
 
 Utilities:
  * ogrmerge.py: fix '-single -o out.shp in.shp' case (#6888)
@@ -546,6 +548,7 @@ Carto driver:
  * fix missing features when iterating over a SQL result layer with pagination (#6880)
 
 CSV driver:
+ * add a STRING_QUOTING=IF_NEEDED/IF_AMBIGUOUS/ALWAYS layer creation option, that defaults to IF_AMBIGUOUS (quote strings that look like numbers)
  * temporarily disable spatial and attribute filter when rewriting CSV file (#7123)
  * fix autodetection of types when a Real value is followed by a Integer64 one (#343)
 
@@ -636,6 +639,9 @@ GeoPackage driver:
  * when inserting a SRS with a non-EPSG code, then avoid using srs_id that could be later assigned to a EPSG code
  * when deleting a layer, delete from gpkg_metadata metadata records that are only referenced by the table we are about to drop
  * fix incorrect rtree_<t>_<c>_update3 trigger statement (https://github.com/opengeospatial/geopackage/issues/414)
+ * fix definition of extensions
+ * only create metadata table if needed, and register it as extension
+ * declare gpkg_crs_wkt extension when using GPKG_ADD_DEFINITION_12_063=YES config option, and do not emit warning when finding it declared
 
 GeoRSS driver:
  * fix detection of field type (#7108)
@@ -773,6 +779,7 @@ SQLite/Spatialite driver:
  * don't invalidate statistics when running a PRAGMA (https://issues.qgis.org/issues/17424)
  * SQLite dialect: avoid erroring out if source layer has a OGR_STYLE field
  * SQLite dialect: support SQLite 3.21, and LIKE, <>, IS NOT, IS NOT NULL, IS NULL and IS operators (fixes #7149)
+ * SQLite/GPKG: avoid parsing of OGR_SQLITE_JOURNAL to stop on JOURNAL_MODE keyword
 
 VFK driver:
  * fix collecting linestrings for sbp layer
@@ -837,6 +844,7 @@ Python bindings:
  * lots of PEP8-related fixes in scripts and autotest
  * add NULL checks after PyUnicode_AsUTF8String() in case the unicode cannot be translated to UTF-8 and workaround SWIG bug to avoid crashes with Python 3. (github #356)
  * make sure gdal.VectorTranslate() and gdal.Grid() open their source dataset with a vector driver (github #449)
+ * make 'for field_val in feature' work (github #451)
 
 = GDAL/OGR 2.2.0 Release Notes =
 
