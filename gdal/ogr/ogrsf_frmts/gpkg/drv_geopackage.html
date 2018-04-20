@@ -181,7 +181,7 @@ NOT_REGISTERED option, in which case the non spatial table is not registered at
 all in any GeoPackage system tables.<p>
 </ul>
 
-<h3>Metadata</h3>
+<h2>Metadata</h2>
 
 <p>(GDAL &gt;=2.0) GDAL uses the standardized <a href="http://www.geopackage.org/spec/#_metadata_table">
 <code>gpkg_metadata</code></a> and <a href="http://www.geopackage.org/spec/#_metadata_reference_table">
@@ -223,7 +223,7 @@ GeoPackage 1.2 "attributes" data type as well. Starting with GDAL 2.2, non
 spatial tables are by default created following the GeoPackage 1.2 "attributes"
 data type (can be controlled with the ASPATIAL_VARIANT layer creation option)</p>
 
-<h3>Spatial views</h3>
+<h2>Spatial views</h2>
 
 <p>Views can be created and recognized as valid spatial layers if a corresponding
 record is inserted into the gpkg_contents and gpkg_geometry_columns table.</p>
@@ -246,6 +246,20 @@ INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, 
 and SQLite3 with the SQLITE_ENABLE_COLUMN_METADATA option. Starting with GDAL 2.3,
 this can be easily verified if the SQLITE_HAS_COLUMN_METADATA=YES driver metadata item
 is declared (for example with "ogrinfo --format GPKG")</p>
+
+<h2>Level of support of GeoPackage Extensions</h2>
+
+(Restricted to those have a vector scope)
+
+<table border="1">
+<th>Extension name</th><th>OGC adopted extension ?</th><th>Supported by GDAL?</th>
+<tr><td><a href="http://www.geopackage.org/guidance/extensions/nonlinear_geometry_types.html">Non-Linear Geometry Types</a></td><td>Yes</td><td>Yes, since GDAL 2.1</td></tr>
+<tr><td><a href="http://www.geopackage.org/guidance/extensions/rtree_spatial_indexes.html">RTree Spatial Indexes</a></td><td>Yes</td><td>Yes, since GDAL 2.0</td></tr>
+<tr><td><a href="http://www.geopackage.org/guidance/extensions/metadata.html">Metadata</a></td><td>Yes</td><td>Yes, since GDAL 1.11</td></tr>
+<tr><td><a href="http://www.geopackage.org/guidance/extensions/schema.html">Schema</a></td><td>Yes</td><td>No</td></tr>
+<tr><td><a href="http://www.geopackage.org/guidance/extensions/wkt_for_crs.md">WKT for Coordinate Reference Systems</a> (WKT v2)</td><td>Yes</td><td>Partially, since GDAL 2.2. GDAL can read databases using this extension, but cannot interpret a SRS entry that has only a WKT v2 entry.</td></tr>
+<tr><td><a href="file:///home/even/gdal/git/gdal/gdal/ogr/ogrsf_frmts/gpkg/geopackage_aspatial.html">Aspatial support</a></td><td>No</td><td>Yes, since GDAL 2.0. Deprecated in GDAL 2.2 for the <i>attributes</i> official data_type</td></tr>
+</table>
 
 <h3>Examples</h3>
 
@@ -284,10 +298,11 @@ The file <code>filename.gpkg</code> must <strong>not</strong> already exist, as 
 <h3>See Also</h3>
 
 <ul>
-<li> <a href="http://sqlite.org/">SQLite</a><p>
 <li> <a href="drv_geopackage_raster.html">GeoPackage raster</a> documentation page</li><p>
+<li> <a href="http://www.geopackage.org/guidance/getting-started.html">Getting Started With GeoPackage</a></li><p>
 <li> <a href="http://www.geopackage.org/spec/">OGC GeoPackage format standard</a> specification, HTML format (current/development version of the standard)</li><p>
 <li> <a href="http://www.opengeospatial.org/standards/geopackage">OGC GeoPackage Encoding Standard</a> page</li><p>
+<li> <a href="http://sqlite.org/">SQLite</a><p>
 </ul>
 
 </body>
