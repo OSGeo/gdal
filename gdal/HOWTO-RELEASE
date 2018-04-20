@@ -91,7 +91,11 @@ Perl module maintainer to make a CPAN release.
    information (after promotion to official release, filename renaming will have
    to be done)
 
-   % mkgdaldist.sh 1.4.2 -branch v1.4.2 -rc RC1
+   % mkgdaldist.sh 2.3.0 -tag v2.3.0 -rc RC1
+
+   For a beta version:
+
+   % mkgdaldist.sh 2.3.0beta1 -tag v2.3.0beta1
 
 10) Create a snapshot of the documentation.
 
