@@ -165,8 +165,7 @@ if pct_filename is None:
                                    src_ds.GetRasterBand(2),
                                    src_ds.GetRasterBand(3),
                                    color_count, ct,
-                                   callback=gdal.TermProgress,
-                                   callback_data='Generate PCT')
+                                   callback=gdal.TermProgress_nocb)
 else:
     pct_ds = gdal.Open(pct_filename)
     ct = pct_ds.GetRasterBand(1).GetRasterColorTable().Clone()
@@ -203,8 +202,7 @@ err = gdal.DitherRGB2PCT(src_ds.GetRasterBand(1),
                          src_ds.GetRasterBand(3),
                          tif_ds.GetRasterBand(1),
                          ct,
-                         callback=gdal.TermProgress,
-                         callback_data='Generate PCT')
+                         callback=gdal.TermProgress_nocb)
 
 tif_ds = None
 

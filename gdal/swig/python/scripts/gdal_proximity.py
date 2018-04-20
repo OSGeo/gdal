@@ -231,7 +231,7 @@ if dst_ds is None:
 if quiet_flag:
     prog_func = None
 else:
-    prog_func = gdal.TermProgress
+    prog_func = gdal.TermProgress_nocb
 
 gdal.ComputeProximity(srcband, dstband, options,
                       callback=prog_func)

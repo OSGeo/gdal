@@ -224,7 +224,7 @@ else:
 if quiet_flag:
     prog_func = None
 else:
-    prog_func = gdal.TermProgress
+    prog_func = gdal.TermProgress_nocb
 
 result = gdal.SieveFilter(srcband, maskband, dstband,
                           threshold, connectedness,

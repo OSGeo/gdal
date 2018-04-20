@@ -35,10 +35,7 @@ import sys
 
 from osgeo import gdal
 
-try:
-    progress = gdal.TermProgress_nocb
-except AttributeError:
-    progress = gdal.TermProgress
+progress = gdal.TermProgress_nocb
 
 try:
     import numpy as Numeric
