@@ -431,6 +431,7 @@ static void RemoveSQLComments(char*& pszSQL)
             osSQL += " ";
         }
     }
+    CSLDestroy(papszLines);
     CPLFree(pszSQL);
     pszSQL = CPLStrdup(osSQL);
 }
