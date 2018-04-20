@@ -51,8 +51,17 @@ clean:
 docs:
 	(cd ..; $(MAKE) docs)
 
+INST_H_FILES = \
+	gdal_alg.h \
+	gdal_alg_priv.h \
+	gdalgrid.h \
+	gdalgrid_priv.h \
+	gdalpansharpen.h \
+	gdal_simplesurf.h \
+	gdalwarper.h
+
 install:
-	for f in *.h ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
+	for f in $(INST_H_FILES) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
 
 lib:	$(OBJ:.o=.$(OBJ_EXT))
 	(cd .. ; $(MAKE) force-lib)
