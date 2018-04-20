@@ -375,7 +375,7 @@ psEnvelope:  the structure in which to place the results.
 OGR 1.9.0 ";
 
 %feature("docstring")  ImportFromWkb "OGRErr
-OGR_G_ImportFromWkb(OGRGeometryH hGeom, unsigned char *pabyData, int
+OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void *pabyData, int
 nSize)
 
 Assign geometry from well known binary data.
@@ -615,7 +615,7 @@ a reference to the spatial reference geometry. ";
 
 Clear geometry information.
 
-This restores the geometry to it's initial state after construction,
+This restores the geometry to its initial state after construction,
 and before assignment of actual geometry.
 
 This function relates to the SFCOM IGeometry::Empty() method.

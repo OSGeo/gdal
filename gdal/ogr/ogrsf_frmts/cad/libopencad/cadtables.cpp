@@ -85,13 +85,12 @@ CADHandle CADTables::GetTableHandle( enum TableType eType )
 int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHandle )
 {
     // Reading Layer Control obj, and aLayers.
-    CADObject* pCADObject = pCADFile->GetObject( dLayerControlHandle );
+    unique_ptr<CADObject> pCADObject( pCADFile->GetObject( dLayerControlHandle ) );
 
-    unique_ptr<CADLayerControlObject> spLayerControl(
-            dynamic_cast<CADLayerControlObject *>(pCADObject) );
+    CADLayerControlObject* spLayerControl =
+            dynamic_cast<CADLayerControlObject *>(pCADObject.get());
     if( !spLayerControl )
     {
-        delete pCADObject;
         return CADErrorCodes::TABLE_READ_FAILED;
     }
 

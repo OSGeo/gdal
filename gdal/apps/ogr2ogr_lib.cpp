@@ -4785,6 +4785,23 @@ static void RemoveBOM(GByte* pabyData)
     }
 }
 
+static void RemoveSQLComments(char*& pszSQL)
+{
+    char** papszLines = CSLTokenizeStringComplex(pszSQL, "\r\n", FALSE, FALSE);
+    CPLString osSQL;
+    for( char** papszIter = papszLines; papszIter && *papszIter; ++papszIter )
+    {
+        if( !STARTS_WITH(*papszIter, "--") )
+        {
+            osSQL += *papszIter;
+            osSQL += " ";
+        }
+    }
+    CSLDestroy(papszLines);
+    CPLFree(pszSQL);
+    pszSQL = CPLStrdup(osSQL);
+}
+
 /************************************************************************/
 /*                       GDALVectorTranslateOptionsNew()                */
 /************************************************************************/
@@ -4955,6 +4972,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
             {
                 RemoveBOM(pabyRet);
                 psOptions->pszSQLStatement = reinterpret_cast<char*>(pabyRet);
+                RemoveSQLComments(psOptions->pszSQLStatement);
             }
             else
             {

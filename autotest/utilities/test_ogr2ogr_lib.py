@@ -73,7 +73,7 @@ def test_ogr2ogr_lib_2():
         return 'fail'
 
     # Test @filename syntax
-    gdal.FileFromMemBuffer('/vsimem/sql.txt', 'select * from poly')
+    gdal.FileFromMemBuffer('/vsimem/sql.txt', '-- initial comment\nselect * from poly\n-- trailing comment')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', SQLStatement='@/vsimem/sql.txt')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         gdaltest.post_reason('fail')

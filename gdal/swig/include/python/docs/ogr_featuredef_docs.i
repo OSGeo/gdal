@@ -82,9 +82,6 @@ Fetch field definition of the passed feature definition.
 This function is the same as the C++ method
 OGRFeatureDefn::GetFieldDefn().
 
-Starting with GDAL 1.7.0, this method will also issue an error if the
-index is not valid.
-
 Parameters:
 -----------
 

@@ -1096,13 +1096,12 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
 CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long dBlockRefHandle )
 {
     CADGeometry * poGeometry = nullptr;
-    CADObject *pCADEntityObject = GetObject( dHandle );
-    unique_ptr<CADEntityObject> readedObject(
-                dynamic_cast<CADEntityObject *>( pCADEntityObject ) );
+    unique_ptr<CADObject> pCADEntityObject( GetObject( dHandle ) );
+    CADEntityObject* readedObject =
+                dynamic_cast<CADEntityObject *>( pCADEntityObject.get() );
 
     if( !readedObject )
     {
-        delete pCADEntityObject;
         return nullptr;
     }
 
@@ -1112,7 +1111,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADArc * arc = new CADArc();
             CADArcObject * cadArc = static_cast<CADArcObject *>(
-                    readedObject.get());
+                    readedObject);
 
             arc->setPosition( cadArc->vertPosition );
             arc->setExtrusion( cadArc->vectExtrusion );
@@ -1129,7 +1128,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADPoint3D * point = new CADPoint3D();
             CADPointObject * cadPoint = static_cast<CADPointObject *>(
-                    readedObject.get());
+                    readedObject);
 
             point->setPosition( cadPoint->vertPosition );
             point->setExtrusion( cadPoint->vectExtrusion );
@@ -1144,7 +1143,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADPolyline3D * polyline = new CADPolyline3D();
             CADPolyline3DObject * cadPolyline3D = static_cast<CADPolyline3DObject *>(
-                    readedObject.get());
+                    readedObject);
 
             // TODO: code can be much simplified if CADHandle will be used.
             // to do so, == and ++ operators should be implemented.
@@ -1199,7 +1198,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADLWPolyline * lwPolyline = new CADLWPolyline();
             CADLWPolylineObject * cadlwPolyline = static_cast<CADLWPolylineObject *>(
-                    readedObject.get());
+                    readedObject);
 
             lwPolyline->setBulges( cadlwPolyline->adfBulges );
             lwPolyline->setClosed( cadlwPolyline->bClosed );
@@ -1218,7 +1217,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADCircle * circle = new CADCircle();
             CADCircleObject * cadCircle = static_cast<CADCircleObject *>(
-                    readedObject.get());
+                    readedObject);
 
             circle->setPosition( cadCircle->vertPosition );
             circle->setExtrusion( cadCircle->vectExtrusion );
@@ -1233,7 +1232,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADAttrib * attrib = new CADAttrib();
             CADAttribObject * cadAttrib = static_cast<CADAttribObject *>(
-                    readedObject.get() );
+                    readedObject );
 
             attrib->setPosition( cadAttrib->vertInsetionPoint );
             attrib->setExtrusion( cadAttrib->vectExtrusion );
@@ -1255,7 +1254,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADAttdef * attdef = new CADAttdef();
             CADAttdefObject * cadAttrib = static_cast<CADAttdefObject*>(
-                    readedObject.get() );
+                    readedObject );
 
             attdef->setPosition( cadAttrib->vertInsetionPoint );
             attdef->setExtrusion( cadAttrib->vectExtrusion );
@@ -1278,7 +1277,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADEllipse * ellipse = new CADEllipse();
             CADEllipseObject * cadEllipse = static_cast<CADEllipseObject *>(
-                    readedObject.get());
+                    readedObject);
 
             ellipse->setPosition( cadEllipse->vertPosition );
             ellipse->setSMAxis( cadEllipse->vectSMAxis );
@@ -1293,7 +1292,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         case CADObject::LINE:
         {
             CADLineObject * cadLine = static_cast<CADLineObject *>(
-                    readedObject.get());
+                    readedObject);
 
             CADPoint3D ptBeg( cadLine->vertStart, cadLine->dfThickness );
             CADPoint3D ptEnd( cadLine->vertEnd, cadLine->dfThickness );
@@ -1308,7 +1307,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADRay * ray = new CADRay();
             CADRayObject * cadRay = static_cast<CADRayObject *>(
-                    readedObject.get());
+                    readedObject);
 
             ray->setVectVector( cadRay->vectVector );
             ray->setPosition( cadRay->vertPosition );
@@ -1321,7 +1320,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADSpline * spline = new CADSpline();
             CADSplineObject * cadSpline = static_cast<CADSplineObject *>(
-                    readedObject.get());
+                    readedObject);
 
             spline->setScenario( cadSpline->dScenario );
             spline->setDegree( cadSpline->dDegree );
@@ -1352,7 +1351,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADText * text = new CADText();
             CADTextObject * cadText = static_cast<CADTextObject *>(
-                    readedObject.get());
+                    readedObject);
 
             text->setPosition( cadText->vertInsetionPoint );
             text->setTextValue( cadText->sTextValue );
@@ -1369,7 +1368,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADSolid * solid = new CADSolid();
             CADSolidObject * cadSolid = static_cast<CADSolidObject *>(
-                    readedObject.get());
+                    readedObject);
 
             solid->setElevation( cadSolid->dfElevation );
             solid->setThickness( cadSolid->dfThickness );
@@ -1384,7 +1383,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         case CADObject::IMAGE:
         {
             CADImageObject * cadImage = static_cast<CADImageObject *>(
-                    readedObject.get());
+                    readedObject);
 
             CADObject *pCADImageDefObject = GetObject( cadImage->hImageDef.getAsLong() );
             unique_ptr<CADImageDefObject> cadImageDef(
@@ -1427,7 +1426,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADMLine * mline = new CADMLine();
             CADMLineObject * cadmLine = static_cast<CADMLineObject *>(
-                    readedObject.get());
+                    readedObject);
 
             mline->setScale( cadmLine->dfScale );
             mline->setOpened( cadmLine->dOpenClosed == 1 ? true : false );
@@ -1442,7 +1441,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADMText * mtext = new CADMText();
             CADMTextObject * cadmText = static_cast<CADMTextObject *>(
-                    readedObject.get());
+                    readedObject);
 
             mtext->setTextValue( cadmText->sTextValue );
             mtext->setXAxisAng( cadmText->vectXAxisDir.getX() ); //TODO: is this needed?
@@ -1463,7 +1462,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADPolylinePFace * polyline = new CADPolylinePFace();
             CADPolylinePFaceObject * cadpolyPface = static_cast<CADPolylinePFaceObject *>(
-                    readedObject.get());
+                    readedObject);
 
             // TODO: code can be much simplified if CADHandle will be used.
             // to do so, == and ++ operators should be implemented.
@@ -1524,7 +1523,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADXLine * xline = new CADXLine();
             CADXLineObject * cadxLine = static_cast<CADXLineObject *>(
-                    readedObject.get());
+                    readedObject);
 
             xline->setVectVector( cadxLine->vectVector );
             xline->setPosition( cadxLine->vertPosition );
@@ -1537,7 +1536,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             CADFace3D * face = new CADFace3D();
             CAD3DFaceObject * cad3DFace = static_cast<CAD3DFaceObject *>(
-                    readedObject.get());
+                    readedObject);
 
             for( const CADVector& corner : cad3DFace->avertCorners )
                 face->addCorner( corner );
@@ -3832,14 +3831,13 @@ int DWGFileR2000::ReadSectionLocators()
 CADDictionary DWGFileR2000::GetNOD()
 {
     CADDictionary stNOD;
-    CADObject *pCADDictionaryObject = GetObject( oTables.GetTableHandle(
-                                  CADTables::NamedObjectsDict ).getAsLong() );
+    unique_ptr<CADObject> pCADDictionaryObject( GetObject( oTables.GetTableHandle(
+                                  CADTables::NamedObjectsDict ).getAsLong() ) );
 
-    unique_ptr<CADDictionaryObject> spoNamedDictObj(
-            dynamic_cast<CADDictionaryObject*>( pCADDictionaryObject ) );
+    CADDictionaryObject* spoNamedDictObj =
+            dynamic_cast<CADDictionaryObject*>( pCADDictionaryObject.get() );
     if( !spoNamedDictObj )
     {
-        delete pCADDictionaryObject;
         return stNOD;
     }
 

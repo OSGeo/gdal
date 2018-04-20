@@ -382,6 +382,19 @@ the gpkg_contents table.</p>
 <p>You can set the CREATE_METADATA_TABLES configuration option to NO to avoid
 creating and filling the metadata tables.</p>
 
+<h2>Level of support of GeoPackage Extensions</h2>
+
+(Restricted to those have a raster scope)
+
+<table border="1">
+<th>Extension name</th><th>OGC adopted extension ?</th><th>Supported by GDAL?</th>
+<tr><td><a href="http://www.geopackage.org/guidance/extensions/zoom_other_intervals.html">Zoom Other intervals</a></td><td>Yes</td><td>Yes, since GDAL 2.0</td></tr>
+<tr><td><a href="http://www.geopackage.org/guidance/extensions/tiles_encoding_webp.html">Tiles Encoding WebP</a></td><td>Yes</td><td>Yes, since GDAL 2.0</td></tr>
+<tr><td><a href="http://www.geopackage.org/guidance/extensions/metadata.html">Metadata</a></td><td>Yes</td><td>Yes, since GDAL 1.11</td></tr>
+<tr><td><a href="http://www.geopackage.org/guidance/extensions/wkt_for_crs.md">WKT for Coordinate Reference Systems</a> (WKT v2)</td><td>Yes</td><td>Partially, since GDAL 2.2. GDAL can read databases using this extension, but cannot interpret a SRS entry that has only a WKT v2 entry.</td></tr>
+<tr><td><a href="http://www.geopackage.org/guidance/extensions/tiled_gridded_coverage_data.html">Tiled Gridded Coverage Data</a></td><td>Yes</td><td>Yes, since GDAL 2.3 (GDAL 2.2 supported a preliminary version of this extension)</td></tr>
+</table>
+
 <h2>Examples</h2>
 
 <ul>
@@ -442,8 +455,11 @@ Open a specific raster table in a GeoPackage
 <h3>See Also</h3>
 
 <ul>
-<li> <a href="http://sqlite.org/">SQLite</a>
 <li> <a href="drv_geopackage.html">GeoPackage vector</a> documentation page</li>
+<li> <a href="http://www.geopackage.org/guidance/getting-started.html">Getting Started With GeoPackage</a></li>
+<li> <a href="http://www.geopackage.org/spec/">OGC GeoPackage format standard</a> specification, HTML format (current/development version of the standard)</li>
+<li> <a href="http://www.opengeospatial.org/standards/geopackage">OGC GeoPackage Encoding Standard</a> page</li>
+<li> <a href="http://sqlite.org/">SQLite</a>
 <li> <a href="frmt_various.html#PNG">PNG driver</a> documentation page</li>
 <li> <a href="frmt_jpeg.html">JPEG driver</a> documentation page</li>
 <li> <a href="frmt_webp.html">WEBP driver</a> documentation page</li>

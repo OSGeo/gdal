@@ -5,7 +5,7 @@ OGR_F_Create(OGRFeatureDefnH hDefn)
 
 Feature factory.
 
-Note that the OGRFeature will increment the reference count of it's
+Note that the OGRFeature will increment the reference count of its
 defining OGRFeatureDefn. Destruction of the OGRFeatureDefn before
 destruction of all OGRFeatures that depend on it is likely to result
 in a crash.
@@ -219,7 +219,7 @@ hFeat)
 
 Duplicate feature.
 
-The newly created feature is owned by the caller, and will have it's
+The newly created feature is owned by the caller, and will have its
 own reference to the OGRFeatureDefn.
 
 This function is the same as the C++ method OGRFeature::Clone().
@@ -854,7 +854,7 @@ pszValue:  the value to assign. ";
 
 %feature("docstring")  SetFieldIntegerList "void
 OGR_F_SetFieldIntegerList(OGRFeatureH hFeat, int iField, int nCount,
-int *panValues)
+const int *panValues)
 
 Set field to list of integers value.
 
@@ -912,7 +912,7 @@ GDAL 2.0 ";
 
 %feature("docstring")  SetFieldDoubleList "void
 OGR_F_SetFieldDoubleList(OGRFeatureH hFeat, int iField, int nCount,
-double *padfValues)
+const double *padfValues)
 
 Set field to list of doubles value.
 
@@ -939,8 +939,8 @@ nCount:  the number of values in the list being assigned.
 padfValues:  the values to assign. ";
 
 %feature("docstring")  SetFieldStringList "void
-OGR_F_SetFieldStringList(OGRFeatureH hFeat, int iField, char
-**papszValues)
+OGR_F_SetFieldStringList(OGRFeatureH hFeat, int iField, CSLConstList
+papszValues)
 
 Set field to list of strings value.
 
@@ -1202,7 +1202,7 @@ transferred, otherwise an error code. ";
 
 %feature("docstring")  SetFromWithMap "OGRErr
 OGR_F_SetFromWithMap(OGRFeatureH hFeat, OGRFeatureH hOtherFeat, int
-bForgiving, int *panMap)
+bForgiving, const int *panMap)
 
 Set one feature from another.
 
