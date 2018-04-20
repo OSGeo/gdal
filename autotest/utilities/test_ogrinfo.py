@@ -761,7 +761,7 @@ def test_ogrinfo_sql_filename():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    open('tmp/my.sql', 'wb').write('-- initial comment\nselect * from poly\n-- trailing comment')
+    open('tmp/my.sql', 'wt').write('-- initial comment\nselect * from poly\n-- trailing comment')
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' -q ../ogr/data/poly.shp -sql @tmp/my.sql')
     os.unlink('tmp/my.sql')
     if not (err is None or err == ''):
