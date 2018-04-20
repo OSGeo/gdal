@@ -638,9 +638,10 @@ def ogr_rfc28_27():
 
 
 def ogr_rfc28_28_test(formula, expected_val):
-    lyr = gdaltest.ds.ExecuteSQL("SELECT " + formula + " from poly where fid = 0")
-    f = lyr.GetNextFeature()
+    sql_lyr = gdaltest.ds.ExecuteSQL("SELECT " + formula + " from poly where fid = 0")
+    f = sql_lyr.GetNextFeature()
     got = f.GetField(0)
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if got != expected_val:
         gdaltest.post_reason('bad result for %s : %s' % (formula, str(expected_val)))
