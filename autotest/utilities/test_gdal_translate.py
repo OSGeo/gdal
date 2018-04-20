@@ -1070,7 +1070,7 @@ def test_gdal_translate_cleanup():
         pass
     try:
         os.remove('tmp/test_gdal_translate_20_dst.tif')
-    except:
+    except OSError:
         pass
     try:
         gdal.GetDriverByName('HFA').Delete('tmp/test_gdal_translate_21.img')

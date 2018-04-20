@@ -48,14 +48,14 @@ def get_py_script(script_name):
             test_file_path = os.path.join(test_path, script_name + '.py')
             os.stat(test_file_path)
             return test_path
-        except:
+        except OSError:
             try:
                 # Test FrankW's directory layout : {root_dir}/gdal, {root_dir}/gdal/autotest
                 test_path = os.path.join(os.getcwd(), '..', '..', 'swig', 'python', subdir)
                 test_file_path = os.path.join(test_path, script_name + '.py')
                 os.stat(test_file_path)
                 return test_path
-            except:
+            except OSError:
                 pass
 
     return None

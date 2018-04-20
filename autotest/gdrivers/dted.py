@@ -347,7 +347,7 @@ def dted_cleanup():
         os.remove('tmp/n43.dt2.tif')
         os.remove('tmp/n43.dt2.aux.xml')
         os.remove('tmp/n43.dt2')
-    except:
+    except OSError:
         pass
     return 'success'
 

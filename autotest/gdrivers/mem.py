@@ -144,7 +144,7 @@ def mem_2():
     for libname in ['msvcrt', 'libc.so.6']:
         try:
             crt = ctypes.CDLL(libname)
-        except:
+        except OSError:
             crt = None
         if crt is not None:
             break

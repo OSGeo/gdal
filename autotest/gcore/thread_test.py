@@ -61,7 +61,7 @@ def thread_test_1():
     try:
         from osgeo import gdalnumeric
         gdalnumeric.zeros
-    except:
+    except (ImportError, AttributeError):
         return 'skip'
 
     threads = []

@@ -413,7 +413,7 @@ def pam_11():
         if f is not None:
             f.close()
             return 'skip'
-    except:
+    except IOError:
         pass
 
     # Compute statistics --> the saving as .aux.xml should fail

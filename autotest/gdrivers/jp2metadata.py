@@ -103,7 +103,7 @@ def jp2metadata_2():
         os.stat('data/IMG_md_ple.jp2.aux.xml')
         gdaltest.post_reason('Expected not generation of data/IMG_md_ple.jp2.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'

@@ -69,7 +69,7 @@ def tiff_write_icc():
         os.stat('tmp/icc_test.tiff.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     if md['SOURCE_ICC_PROFILE'] != icc:
@@ -101,7 +101,7 @@ def tiff_write_icc():
         os.stat('tmp/icc_test.tiff.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     if source_icc_profile != icc:

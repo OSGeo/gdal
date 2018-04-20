@@ -243,7 +243,7 @@ def http_5():
         os.stat(filename)
         gdaltest.post_reason('file %s should have been removed' % filename)
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'

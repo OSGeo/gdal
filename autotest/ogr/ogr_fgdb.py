@@ -1445,14 +1445,14 @@ def ogr_fgdb_19():
         os.stat('tmp/test.gdb.ogredited')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     try:
         os.stat('tmp/test.gdb.ogrtmp')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     if lyr.GetFeatureCount() != old_count:

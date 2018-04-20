@@ -43,10 +43,8 @@ import gdaltest
 
 def bag_1():
 
-    try:
-        gdaltest.bag_drv = gdal.GetDriverByName('BAG')
-    except:
-        gdaltest.bag_drv = None
+    gdaltest.bag_drv = gdal.GetDriverByName('BAG')
+    if gdaltest.bag_drv is None:
         return 'skip'
 
     return 'success'

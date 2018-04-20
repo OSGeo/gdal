@@ -80,7 +80,7 @@ def til_2():
         os.stat('data/testtil.til.aux.xml')
         gdaltest.post_reason('Expected not generation of data/testtil.til.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -120,7 +120,7 @@ def til_3():
         os.stat('data/testtil.til.aux.xml')
         gdaltest.post_reason('Expected not generation of data/testtil.til.aux.xml')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'

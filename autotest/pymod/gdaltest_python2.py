@@ -195,7 +195,7 @@ def runexternal(cmd, strin=None, check_memleak=True, display_live_on_parent_stdo
             subprocess.Popen
             shlex.split
             has_subprocess = True
-        except:
+        except (ImportError, AttributeError):
             pass
         if has_subprocess:
             return _runexternal_subprocess(cmd,
@@ -284,7 +284,7 @@ def runexternal_out_and_err(cmd, check_memleak=True):
             subprocess.Popen
             shlex.split
             has_subprocess = True
-        except:
+        except (ImportError, AttributeError):
             pass
         if has_subprocess:
             return _runexternal_out_and_err_subprocess(cmd, check_memleak=check_memleak)

@@ -58,7 +58,7 @@ def test_gdaltindex_1():
         pass
     try:
         os.remove('tmp/tileindex.shx')
-    except:
+    except OSError:
         pass
     try:
         os.remove('tmp/tileindex.prj')

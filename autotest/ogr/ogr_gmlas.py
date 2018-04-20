@@ -34,7 +34,7 @@
 
 try:
     from BaseHTTPServer import BaseHTTPRequestHandler
-except:
+except ImportError:
     from http.server import BaseHTTPRequestHandler
 
 import os

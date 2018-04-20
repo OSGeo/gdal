@@ -44,10 +44,8 @@ import gdaltest
 
 def hdf5_1():
 
-    try:
-        gdaltest.hdf5_drv = gdal.GetDriverByName('HDF5')
-    except:
-        gdaltest.hdf5_drv = None
+    gdaltest.hdf5_drv = gdal.GetDriverByName('HDF5')
+    if gdaltest.hdf5_drv is None:
         return 'skip'
 
     return 'success'

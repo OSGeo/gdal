@@ -39,7 +39,7 @@ from osgeo import gdal
 
 try:
     progress = gdal.TermProgress_nocb
-except:
+except AttributeError:
     progress = gdal.TermProgress
 
 __version__ = '$id$'[5:-1]

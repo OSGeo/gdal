@@ -61,7 +61,7 @@ def mg4lidar_1():
             gdaltest.unzip('tmp/cache', 'tmp/cache/GDAL_MG4Lidar_Src.zip')
             try:
                 os.stat('tmp/cache/GDAL_MG4Lidar_Src')
-            except:
+            except OSError:
                 return 'skip'
         except:
             return 'skip'

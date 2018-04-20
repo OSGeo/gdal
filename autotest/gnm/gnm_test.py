@@ -277,7 +277,7 @@ def gnm_delete():
         os.stat('tmp/test_gnm')
         gdaltest.post_reason('Expected delete tmp/test_gnm')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'

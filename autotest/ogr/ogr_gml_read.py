@@ -1600,7 +1600,7 @@ def ogr_gml_38(resolver='HUGE'):
             os.stat('tmp/sample_gml_face_hole_negative_no.sqlite')
             gdaltest.post_reason('did not expect tmp/sample_gml_face_hole_negative_no.sqlite')
             return 'fail'
-        except:
+        except OSError:
             pass
 
     if gdal.GetLastErrorMsg() != '':
@@ -1733,7 +1733,7 @@ def ogr_gml_43():
     try:
         os.stat('data/wfs_typefeature.gfs')
         gfs_found = True
-    except:
+    except OSError:
         gfs_found = False
 
     if gfs_found:
@@ -2327,7 +2327,7 @@ def ogr_gml_55():
     try:
         os.unlink('data/ogr_gml_55.gfs')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -2401,7 +2401,7 @@ def ogr_gml_56():
     try:
         os.unlink('data/ogr_gml_56.gfs')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -3801,7 +3801,7 @@ def ogr_gml_71():
         os.unlink('data/wfsjointlayer.gfs')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     # With .xsd but that is only partially understood

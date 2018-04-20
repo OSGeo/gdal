@@ -39,7 +39,7 @@ from osgeo import osr
 
 try:
     progress = gdal.TermProgress_nocb
-except:
+except AttributeError:
     progress = gdal.TermProgress
 
 

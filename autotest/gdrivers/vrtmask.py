@@ -300,7 +300,7 @@ def vrtmask_7():
         os.remove('tmp/vrtmask_7_rgba.tif.msk')
         gdaltest.post_reason('did not expect tmp/vrtmask_7_rgba.tif.msk')
         return 'fail'
-    except:
+    except OSError:
         pass
     os.remove('tmp/vrtmask_7_rgbmask.vrt')
 

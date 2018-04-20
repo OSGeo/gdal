@@ -32,7 +32,7 @@ import sys
 import os
 try:
     os.putenv('CPL_SHOW_MEM_STATS', '')
-except:
+except OSError:
     pass
 
 # Must to be launched from pam.py/pam_11()

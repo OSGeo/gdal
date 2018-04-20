@@ -194,11 +194,8 @@ def tiff_ovr_4():
     pix_count = ovband.XSize * ovband.YSize
     sum = 0.0
     is_bytes = False
-    try:
-        if (isinstance(ovimage, bytes) and not isinstance(ovimage, str)):
-            is_bytes = True
-    except:
-        pass
+    if (isinstance(ovimage, bytes) and not isinstance(ovimage, str)):
+        is_bytes = True
 
     if is_bytes is True:
         for i in range(pix_count):
@@ -1138,10 +1135,10 @@ def tiff_ovr_29():
     png_ds = None
 
     try:
-        open('tmp/ovr29.png.ovr')
+        os.stat('tmp/ovr29.png.ovr')
         gdaltest.post_reason('.ovr file still present')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     gdal.GetDriverByName('PNG').Delete('tmp/ovr29.png')
@@ -1597,11 +1594,8 @@ def tiff_ovr_40():
     pix_count = ovband.XSize * ovband.YSize
     sum = 0.0
     is_bytes = False
-    try:
-        if (isinstance(ovimage, bytes) and not isinstance(ovimage, str)):
-            is_bytes = True
-    except:
-        pass
+    if (isinstance(ovimage, bytes) and not isinstance(ovimage, str)):
+        is_bytes = True
 
     if is_bytes is True:
         for i in range(pix_count):

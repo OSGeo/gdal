@@ -126,7 +126,7 @@ def run_tests(test_list):
                 outline = '  TEST: ' + func.__name__[4:] + ': ' + name + ' ... '
             else:
                 outline = '  TEST: ' + func.__name__ + ': ' + name + ' ... '
-        except:
+        except TypeError:
             func = test_item
             name = func.__name__
             outline = '  TEST: ' + name + ' ... '
@@ -367,7 +367,7 @@ def clean_tmp():
 
         try:
             os.remove('tmp/' + file)
-        except:
+        except OSError:
             pass
     return 'success'
 
@@ -1391,7 +1391,7 @@ def download_file(url, filename=None, download_size=-1, force_download=False, ma
             try:
                 open(base_dir + '/' + filename, 'wb').write(val)
                 return True
-            except:
+            except IOError:
                 print('Cannot write %s' % (filename))
                 return False
         else:

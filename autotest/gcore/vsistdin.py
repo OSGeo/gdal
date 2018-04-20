@@ -157,7 +157,7 @@ def vsistdin_4():
 
     try:
         os.unlink("tmp/vsistdin_4_out.tif")
-    except:
+    except OSError:
         pass
 
     return 'success'

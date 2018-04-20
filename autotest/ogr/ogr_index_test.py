@@ -250,7 +250,7 @@ def ogr_index_9():
             os.stat(filename)
             gdaltest.post_reason("%s should not exist" % filename)
             return 'fail'
-        except:
+        except OSError:
             pass
 
     # Re-create an index
@@ -526,7 +526,7 @@ def ogr_index_cleanup():
             os.stat(filename)
             gdaltest.post_reason("%s should not exist" % filename)
             return 'fail'
-        except:
+        except OSError:
             pass
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(

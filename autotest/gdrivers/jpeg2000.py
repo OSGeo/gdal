@@ -66,11 +66,7 @@ def is_buggy_jasper():
 
 def jpeg2000_1():
 
-    try:
-        gdaltest.jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
-    except:
-        gdaltest.jpeg2000_drv = None
-        return 'skip'
+    gdaltest.jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JPEG2000')
 

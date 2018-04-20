@@ -1758,7 +1758,7 @@ def ecw_41():
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -1798,7 +1798,7 @@ def ecw_42():
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     # Check item values
@@ -1833,7 +1833,7 @@ def ecw_42():
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     # Check item values

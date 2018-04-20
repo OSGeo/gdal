@@ -733,7 +733,7 @@ def jp2lura_20():
 
     try:
         import xmlvalidate
-    except:
+    except ImportError:
         print('Cannot import xmlvalidate')
         import traceback
         traceback.print_exc(file=sys.stdout)
@@ -741,11 +741,11 @@ def jp2lura_20():
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET.zip')
-    except:
+    except OSError:
         try:
             os.stat('../ogr/tmp/cache/SCHEMAS_OPENGIS_NET.zip')
             shutil.copy('../ogr/tmp/cache/SCHEMAS_OPENGIS_NET.zip', 'tmp/cache')
-        except:
+        except OSError:
             url = 'http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip'
             if not gdaltest.download_file(url, 'SCHEMAS_OPENGIS_NET.zip', force_download=True, max_download_duration=20):
                 print('Cannot get SCHEMAS_OPENGIS_NET.zip')
@@ -1549,7 +1549,7 @@ def jp2lura_38():
     try:
         import xmlvalidate
         do_validate = True
-    except:
+    except ImportError:
         print('Cannot import xmlvalidate')
         pass
 

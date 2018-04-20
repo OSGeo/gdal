@@ -76,7 +76,7 @@ def png_copy_icc():
         os.stat('tmp/icc_test.png.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     # Check again with dataset from Open()
@@ -88,7 +88,7 @@ def png_copy_icc():
         os.stat('tmp/icc_test.png.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     if md['SOURCE_ICC_PROFILE'] != icc:
@@ -104,7 +104,7 @@ def png_copy_icc():
         os.stat('tmp/icc_test.png.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     if source_icc_profile != icc:

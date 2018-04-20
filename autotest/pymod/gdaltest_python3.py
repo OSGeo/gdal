@@ -51,7 +51,7 @@ def run_func(func):
         traceback.print_exc()
 
         raise x
-    except:
+    except Exception:
         result = 'fail (blowup)'
         print(result)
 
@@ -102,8 +102,8 @@ def gdalurlopen(url, timeout=10):
         print('HTTP service for %s is down (URL Error: %s)' % (url, e.reason))
         socket.setdefaulttimeout(old_timeout)
         return None
-    except:
-        print('HTTP service for %s is down.' % (url))
+    except urllib.error.ContentTooShort:
+        print('HTTP content too short for %s.' % url)
         socket.setdefaulttimeout(old_timeout)
         return None
 
@@ -113,7 +113,7 @@ def spawn_async(cmd):
     try:
         process = subprocess.Popen(command, stdout=subprocess.PIPE)
         return (process, process.stdout)
-    except:
+    except OSError:
         return (None, None)
 
 

@@ -55,7 +55,7 @@ import osr_proj4
 try:
     import validate_gpkg
     has_validate = True
-except:
+except ImportError:
     has_validate = False
 
 

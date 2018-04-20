@@ -532,7 +532,7 @@ def hfa_clean_ige():
         open('tmp/igetest.ige')
         gdaltest.post_reason('ige file not cleaned up properly.')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     drv.Delete('tmp/igetest.img')
@@ -918,7 +918,7 @@ def hfa_xforms_3rd():
     for check_item in check_list:
         try:
             value = float(xform_md[check_item[0]])
-        except:
+        except (TypeError, ValueError):
             gdaltest.post_reason('metadata item %d missing' % check_item[0])
             return 'fail'
 
@@ -1144,7 +1144,7 @@ def hfa_write_bit2grayscale():
         open('tmp/small1bit.rrd')
         gdaltest.post_reason('tmp/small1bit.rrd not deleted!')
         return 'fail'
-    except:
+    except IOError:
         pass
 
     return 'success'

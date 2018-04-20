@@ -55,7 +55,7 @@ def rik_online_1():
     try:
         os.stat('tmp/cache/sverige500_swe99.rik')
         file_to_test = 'tmp/cache/sverige500_swe99.rik'
-    except:
+    except OSError:
         try:
             print('Uncompressing ZIP file...')
             import zipfile
