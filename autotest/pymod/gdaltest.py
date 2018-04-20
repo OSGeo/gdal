@@ -1538,12 +1538,12 @@ def reregister_all_jpeg2000_drivers():
 
     if jp2openjpeg_drv_unregistered:
         jp2openjpeg_drv.Register()
-        jp2openjpeg_drv = False
+        jp2openjpeg_drv_unregistered = False
         gdal.Debug('gdaltest', 'Registering JP2OpenJPEG')
 
     if jp2lura_drv_unregistered:
         jp2lura_drv.Register()
-        jp2lura_drv = False
+        jp2lura_drv_unregistered = False
         gdal.Debug('gdaltest', 'Registering JP2Lura')
 
     return True
