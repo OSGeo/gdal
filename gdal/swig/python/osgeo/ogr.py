@@ -3319,7 +3319,7 @@ class Feature(_object):
 
         Duplicate feature.
 
-        The newly created feature is owned by the caller, and will have it's
+        The newly created feature is owned by the caller, and will have its
         own reference to the OGRFeatureDefn.
 
         This function is the same as the C++ method OGRFeature::Clone().
@@ -4099,7 +4099,7 @@ class Feature(_object):
 
         void
         OGR_F_SetFieldIntegerList(OGRFeatureH hFeat, int iField, int nCount,
-        int *panValues)
+        const int *panValues)
 
         Set field to list of integers value.
 
@@ -4171,7 +4171,7 @@ class Feature(_object):
 
         void
         OGR_F_SetFieldDoubleList(OGRFeatureH hFeat, int iField, int nCount,
-        double *padfValues)
+        const double *padfValues)
 
         Set field to list of doubles value.
 
@@ -4205,8 +4205,8 @@ class Feature(_object):
         SetFieldStringList(Feature self, int id, char ** pList)
 
         void
-        OGR_F_SetFieldStringList(OGRFeatureH hFeat, int iField, char
-        **papszValues)
+        OGR_F_SetFieldStringList(OGRFeatureH hFeat, int iField, CSLConstList
+        papszValues)
 
         Set field to list of strings value.
 
@@ -4280,7 +4280,7 @@ class Feature(_object):
 
         OGRErr
         OGR_F_SetFromWithMap(OGRFeatureH hFeat, OGRFeatureH hOtherFeat, int
-        bForgiving, int *panMap)
+        bForgiving, const int *panMap)
 
         Set one feature from another.
 
@@ -4954,9 +4954,6 @@ class FeatureDefn(_object):
 
         This function is the same as the C++ method
         OGRFeatureDefn::GetFieldDefn().
-
-        Starting with GDAL 1.7.0, this method will also issue an error if the
-        index is not valid.
 
         Parameters:
         -----------
@@ -6934,7 +6931,7 @@ class Geometry(_object):
 
         Clear geometry information.
 
-        This restores the geometry to it's initial state after construction,
+        This restores the geometry to its initial state after construction,
         and before assignment of actual geometry.
 
         This function relates to the SFCOM IGeometry::Empty() method.
