@@ -1617,6 +1617,9 @@ GDALSetRasterCategoryNames( GDALRasterBandH hBand, CSLConstList papszNames )
  * value used to mark pixels that are not valid data.  Such pixels should
  * generally not be displayed, nor contribute to analysis operations.
  *
+ * The no data value returned is 'raw', meaning that it has no offset and
+ * scale applied.
+ *
  * This method is the same as the C function GDALGetRasterNoDataValue().
  *
  * @param pbSuccess pointer to a boolean to use to indicate if a value
