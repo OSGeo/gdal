@@ -3486,6 +3486,7 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
     if( PyErr_Occurred() != NULL )
     {
+        PyErr_Print();
         PyErr_Clear();
         SWIG_PYTHON_THREAD_END_BLOCK;
         return FALSE;

@@ -37,10 +37,7 @@ import time
 
 from osgeo import gdal
 
-try:
-    progress = gdal.TermProgress_nocb
-except AttributeError:
-    progress = gdal.TermProgress
+progress = gdal.TermProgress_nocb
 
 __version__ = '$id$'[5:-1]
 verbose = 0

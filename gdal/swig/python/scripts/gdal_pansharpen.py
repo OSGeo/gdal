@@ -111,7 +111,7 @@ def gdal_pansharpen(argv):
     weights = []
     format = None
     creation_options = []
-    callback = gdal.TermProgress
+    callback = gdal.TermProgress_nocb
     resampling = None
     spat_adjust = None
     verbose_vrt = False

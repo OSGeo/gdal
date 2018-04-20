@@ -2443,7 +2443,7 @@ const char *OGRFeature::GetFieldAsString( int iField ) const
     else if( eType == OFTTime )
     {
         const int ms = OGR_GET_MS(pauFields[iField].Date.Second);
-        if( ms != 0 )
+        if( ms != 0 || CPLIsNan(pauFields[iField].Date.Second) )
             snprintf(
                 szTempBuffer, TEMP_BUFFER_SIZE, "%02d:%02d:%06.3f",
                 pauFields[iField].Date.Hour,

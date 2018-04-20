@@ -1617,6 +1617,9 @@ GDALSetRasterCategoryNames( GDALRasterBandH hBand, CSLConstList papszNames )
  * value used to mark pixels that are not valid data.  Such pixels should
  * generally not be displayed, nor contribute to analysis operations.
  *
+ * The no data value returned is 'raw', meaning that it has no offset and
+ * scale applied.
+ *
  * This method is the same as the C function GDALGetRasterNoDataValue().
  *
  * @param pbSuccess pointer to a boolean to use to indicate if a value
@@ -2414,12 +2417,15 @@ CPLErr GDALRasterBand::BuildOverviews( const char* /*pszResampling*/,
 /**
  * \brief Fetch the raster value offset.
  *
- * This value (in combination with the GetScale() value) is used to
- * transform raw pixel values into the units returned by GetUnits().
+ * This value (in combination with the GetScale() value) can be used to
+ * transform raw pixel values into the units returned by GetUnitType().
  * For example this might be used to store elevations in GUInt16 bands
  * with a precision of 0.1, and starting from -100.
  *
  * Units value = (raw value * scale) + offset
+ *
+ * Note that applying scale and offset is of the responsibility of the user,
+ * and is not done by methods such as RasterIO() or ReadBlock().
  *
  * For file formats that don't know this intrinsically a value of zero
  * is returned.
@@ -2517,12 +2523,15 @@ GDALSetRasterOffset( GDALRasterBandH hBand, double dfNewOffset )
 /**
  * \brief Fetch the raster value scale.
  *
- * This value (in combination with the GetOffset() value) is used to
- * transform raw pixel values into the units returned by GetUnits().
+ * This value (in combination with the GetOffset() value) can be used to
+ * transform raw pixel values into the units returned by GetUnitType().
  * For example this might be used to store elevations in GUInt16 bands
  * with a precision of 0.1, and starting from -100.
  *
  * Units value = (raw value * scale) + offset
+ *
+ * Note that applying scale and offset is of the responsibility of the user,
+ * and is not done by methods such as RasterIO() or ReadBlock().
  *
  * For file formats that don't know this intrinsically a value of one
  * is returned.

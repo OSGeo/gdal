@@ -1753,7 +1753,7 @@ def netcdf_45():
     ds = gdal.OpenEx('data/test_ogr_nc3.nc', gdal.OF_VECTOR)
 
     with gdaltest.error_handler():
-        gdal.VectorTranslate('/vsimem/netcdf_45.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'])
+        gdal.VectorTranslate('/vsimem/netcdf_45.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_45.csv', 'rb')
     if fp is not None:
@@ -1827,7 +1827,7 @@ def netcdf_47():
     ds = gdal.OpenEx('data/test_ogr_nc4.nc', gdal.OF_VECTOR)
 
     with gdaltest.error_handler():
-        gdal.VectorTranslate('/vsimem/netcdf_47.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'])
+        gdal.VectorTranslate('/vsimem/netcdf_47.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_47.csv', 'rb')
     if fp is not None:
@@ -1892,7 +1892,7 @@ def netcdf_49():
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('data/test_ogr_xyz_float.nc', gdal.OF_VECTOR)
-        gdal.VectorTranslate('/vsimem/netcdf_49.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'])
+        gdal.VectorTranslate('/vsimem/netcdf_49.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_49.csv', 'rb')
     if fp is not None:
@@ -1976,7 +1976,7 @@ def netcdf_51():
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('tmp/netcdf_51.nc', gdal.OF_VECTOR)
-        gdal.VectorTranslate('/vsimem/netcdf_51.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'])
+        gdal.VectorTranslate('/vsimem/netcdf_51.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
         ds = None
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_51.csv', 'rb')
@@ -2059,7 +2059,7 @@ def netcdf_51_no_gdal_tags():
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('tmp/netcdf_51_no_gdal_tags.nc', gdal.OF_VECTOR)
-        gdal.VectorTranslate('/vsimem/netcdf_51_no_gdal_tags.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'])
+        gdal.VectorTranslate('/vsimem/netcdf_51_no_gdal_tags.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
         ds = None
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_51_no_gdal_tags.csv', 'rb')
@@ -2113,7 +2113,7 @@ def netcdf_52():
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('tmp/netcdf_52.nc', gdal.OF_VECTOR)
-        gdal.VectorTranslate('/vsimem/netcdf_52.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT'])
+        gdal.VectorTranslate('/vsimem/netcdf_52.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
         ds = None
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_52.csv', 'rb')
@@ -2496,7 +2496,7 @@ def netcdf_60():
         return 'fail'
 
     with gdaltest.error_handler():
-        gdal.VectorTranslate('/vsimem/netcdf_60.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'])
+        gdal.VectorTranslate('/vsimem/netcdf_60.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_60.csv', 'rb')
     if fp is not None:
@@ -2528,7 +2528,7 @@ def netcdf_61():
 
     shutil.copy('data/profile.nc', 'tmp/netcdf_61.nc')
     ds = gdal.VectorTranslate('tmp/netcdf_61.nc', 'data/profile.nc', accessMode='append')
-    gdal.VectorTranslate('/vsimem/netcdf_61.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'])
+    gdal.VectorTranslate('/vsimem/netcdf_61.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_61.csv', 'rb')
     if fp is not None:
@@ -2564,7 +2564,7 @@ def netcdf_62():
         return 'skip'
 
     ds = gdal.VectorTranslate('tmp/netcdf_62.nc', 'data/profile.nc', format='netCDF', layerCreationOptions=['FEATURE_TYPE=PROFILE', 'PROFILE_DIM_INIT_SIZE=1', 'PROFILE_VARIABLES=station'])
-    gdal.VectorTranslate('/vsimem/netcdf_62.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'])
+    gdal.VectorTranslate('/vsimem/netcdf_62.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_62.csv', 'rb')
     if fp is not None:
@@ -2646,7 +2646,7 @@ def netcdf_63():
 
     shutil.copy('data/profile.nc', 'tmp/netcdf_63.nc')
     ds = gdal.VectorTranslate('tmp/netcdf_63.nc', 'data/profile.nc', format='netCDF', datasetCreationOptions=['FORMAT=NC4'], layerCreationOptions=['FEATURE_TYPE=PROFILE', 'USE_STRING_IN_NC4=NO', 'STRING_DEFAULT_WIDTH=1'])
-    gdal.VectorTranslate('/vsimem/netcdf_63.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'])
+    gdal.VectorTranslate('/vsimem/netcdf_63.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_63.csv', 'rb')
     if fp is not None:
@@ -2712,7 +2712,7 @@ def netcdf_64():
         return 'skip'
 
     gdal.VectorTranslate('tmp/netcdf_64.nc', 'data/profile.nc', format='netCDF', selectFields=['id,station,foo'], layerCreationOptions=['FEATURE_TYPE=PROFILE', 'PROFILE_DIM_NAME=profile_dim', 'PROFILE_DIM_INIT_SIZE=1'])
-    gdal.VectorTranslate('/vsimem/netcdf_64.csv', 'tmp/netcdf_64.nc', format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'])
+    gdal.VectorTranslate('/vsimem/netcdf_64.csv', 'tmp/netcdf_64.nc', format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_64.csv', 'rb')
     if fp is not None:
@@ -2853,7 +2853,7 @@ def netcdf_66():
 """
 
     gdal.VectorTranslate('tmp/netcdf_66.nc', 'data/profile.nc', format='netCDF', datasetCreationOptions=['CONFIG_FILE=' + myconfig])
-    gdal.VectorTranslate('/vsimem/netcdf_66.csv', 'tmp/netcdf_66.nc', format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT'])
+    gdal.VectorTranslate('/vsimem/netcdf_66.csv', 'tmp/netcdf_66.nc', format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_66.csv', 'rb')
     if fp is not None:

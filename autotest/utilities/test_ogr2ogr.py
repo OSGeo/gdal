@@ -2000,13 +2000,13 @@ def test_ogr2ogr_51():
     f.close()
 
     # Test conversion from a multi-geometry format into a multi-geometry format
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f CSV tmp/test_ogr2ogr_51_dst.csv tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst -dsco GEOMETRY=AS_WKT')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f CSV tmp/test_ogr2ogr_51_dst.csv tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst -dsco GEOMETRY=AS_WKT -lco STRING_QUOTING=ALWAYS')
 
     f = open('tmp/test_ogr2ogr_51_dst.csv', 'rt')
     lines = f.readlines()
     f.close()
 
-    expected_lines = ['_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631,id,foo', '"POINT (1 2)","POINT (3 4)",1,bar']
+    expected_lines = ['"_WKTgeom1_EPSG_4326","_WKTgeom2_EPSG_32631","id","foo"', '"POINT (1 2)","POINT (3 4)","1","bar"']
     for i in range(2):
         if lines[i].strip() != expected_lines[i]:
             gdaltest.post_reason('fail')
@@ -2037,9 +2037,9 @@ def test_ogr2ogr_51():
     lines = f.readlines()
     f.close()
 
-    expected_lines = ['_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631,id,foo',
-                      '"POINT (1 2)","POINT (3 4)",1,bar',
-                      '"POINT (1 2)","POINT (3 4)",1,bar']
+    expected_lines = ['"_WKTgeom1_EPSG_4326","_WKTgeom2_EPSG_32631","id","foo"',
+                      '"POINT (1 2)","POINT (3 4)","1","bar"',
+                      '"POINT (1 2)","POINT (3 4)","1","bar"']
     for i in range(3):
         if lines[i].strip() != expected_lines[i]:
             gdaltest.post_reason('fail')
@@ -2049,13 +2049,13 @@ def test_ogr2ogr_51():
     os.unlink('tmp/test_ogr2ogr_51_dst.csv')
 
     # Test -select with geometry field names
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -select foo,geom__WKTgeom2_EPSG_32631,id,geom__WKTgeom1_EPSG_4326 -f CSV tmp/test_ogr2ogr_51_dst.csv tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst -dsco GEOMETRY=AS_WKT')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -select foo,geom__WKTgeom2_EPSG_32631,id,geom__WKTgeom1_EPSG_4326 -f CSV tmp/test_ogr2ogr_51_dst.csv tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst -dsco GEOMETRY=AS_WKT -lco STRING_QUOTING=ALWAYS')
 
     f = open('tmp/test_ogr2ogr_51_dst.csv', 'rt')
     lines = f.readlines()
     f.close()
 
-    expected_lines = ['_WKTgeom2_EPSG_32631,_WKTgeom1_EPSG_4326,foo,id', '"POINT (3 4)","POINT (1 2)",bar,1']
+    expected_lines = ['"_WKTgeom2_EPSG_32631","_WKTgeom1_EPSG_4326","foo","id"', '"POINT (3 4)","POINT (1 2)","bar","1"']
     for i in range(2):
         if lines[i].strip() != expected_lines[i]:
             gdaltest.post_reason('fail')
@@ -2069,9 +2069,9 @@ def test_ogr2ogr_51():
     lines = f.readlines()
     f.close()
 
-    expected_lines = ['_WKTgeom2_EPSG_32631,_WKTgeom1_EPSG_4326,foo,id',
-                      '"POINT (3 4)","POINT (1 2)",bar,1',
-                      '"POINT (3 4)","POINT (1 2)",bar,1']
+    expected_lines = ['"_WKTgeom2_EPSG_32631","_WKTgeom1_EPSG_4326","foo","id"',
+                      '"POINT (3 4)","POINT (1 2)","bar","1"',
+                      '"POINT (3 4)","POINT (1 2)","bar","1"']
     for i in range(2):
         if lines[i].strip() != expected_lines[i]:
             gdaltest.post_reason('fail')
@@ -2876,7 +2876,7 @@ gdaltest_list = [
     test_ogr2ogr_67
 ]
 
-# gdaltest_list = [ test_ogr2ogr_66 ]
+# gdaltest_list = [ test_ogr2ogr_51 ]
 
 if __name__ == '__main__':
 

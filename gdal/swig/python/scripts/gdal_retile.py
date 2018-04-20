@@ -37,10 +37,7 @@ from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 
-try:
-    progress = gdal.TermProgress_nocb
-except AttributeError:
-    progress = gdal.TermProgress
+progress = gdal.TermProgress_nocb
 
 
 class AffineTransformDecorator:

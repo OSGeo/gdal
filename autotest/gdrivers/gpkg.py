@@ -218,8 +218,8 @@ def gpkg_1():
     clamped_expected_cs = get_expected_checksums(ds, gdaltest.png_dr, 1, clamp_output=False)[0]
     expected_gt = ds.GetGeoTransform()
     expected_wkt = ds.GetProjectionRef()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options=['TILE_FORMAT=PNG'])
-    out_ds = None
+    with gdaltest.config_option('CREATE_METADATA_TABLES', 'NO'):
+        gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options=['TILE_FORMAT=PNG'])
     ds = None
 
     if not validate('/vsimem/tmp.gpkg'):
@@ -336,8 +336,8 @@ def gpkg_2():
     clamped_expected_cs = get_expected_checksums(ds, gdaltest.jpeg_dr, 3, clamp_output=False)
     clamped_expected_cs.append(17849)
 
-    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options=['TILE_FORMAT=JPEG'])
-    out_ds = None
+    with gdaltest.config_option('CREATE_METADATA_TABLES', 'NO'):
+        gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options=['TILE_FORMAT=JPEG'])
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
     expected_cs = [expected_cs, expected_cs, expected_cs, 4873]
@@ -1710,8 +1710,8 @@ def gpkg_17():
 
     # Without padding, after reopening
     ds = gdal.Open('data/byte.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options=['TILE_FORMAT=PNG', 'BLOCKSIZE=10'])
-    out_ds = None
+    with gdaltest.config_option('CREATE_METADATA_TABLES', 'NO'):
+        gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options=['TILE_FORMAT=PNG', 'BLOCKSIZE=10'])
     # FIXME? Should we eventually write the driver somewhere in metadata ?
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options=['TILE_FORMAT=PNG'])
     out_ds.BuildOverviews('NEAR', [2])
@@ -1949,12 +1949,15 @@ def gpkg_18():
 
     # Without padding, immediately after create copy
     ds = gdal.Open('data/small_world.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options=['TILE_FORMAT=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'])
-    # Should not result in gpkg_zoom_other
-    ret = out_ds.BuildOverviews('NEAR', [8])
-    if ret != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    with gdaltest.config_option('CREATE_METADATA_TABLES', 'NO'):
+        out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options=['TILE_FORMAT=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'])
+        # Should not result in gpkg_zoom_other
+        ret = out_ds.BuildOverviews('NEAR', [8])
+        if ret != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        out_ds = None
+
     # Check that there's no extensions
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
     sql_lyr = out_ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE type = 'table' AND name = 'gpkg_extensions'")
@@ -2150,21 +2153,12 @@ def gpkg_21():
     out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
 
     # No metadata for now
-    sql_lyr = out_ds.ExecuteSQL('SELECT count(*) FROM gpkg_metadata')
+    sql_lyr = out_ds.ExecuteSQL("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_metadata'")
     feat = sql_lyr.GetNextFeature()
-    v = feat.GetField(0)
     out_ds.ReleaseResultSet(sql_lyr)
-    if v != 0:
+    feat_is_none = feat is None
+    if not feat_is_none:
         gdaltest.post_reason('fail')
-        print(v)
-        return 'fail'
-    sql_lyr = out_ds.ExecuteSQL('SELECT count(*) FROM gpkg_metadata_reference')
-    feat = sql_lyr.GetNextFeature()
-    v = feat.GetField(0)
-    out_ds.ReleaseResultSet(sql_lyr)
-    if v != 0:
-        gdaltest.post_reason('fail')
-        print(v)
         return 'fail'
 
     # Set a metadata item now
@@ -3125,13 +3119,14 @@ def gpkg_39():
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
-    sql_lyr = ds.ExecuteSQL('SELECT metadata FROM gpkg_metadata')
-    f = sql_lyr.GetNextFeature()
-    if f is not None and f['metadata'].find('AREA_OR_POINT') >= 0:
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
+    # No metadata for now
+    sql_lyr = ds.ExecuteSQL("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_metadata'")
+    feat = sql_lyr.GetNextFeature()
     ds.ReleaseResultSet(sql_lyr)
+    feat_is_none = feat is None
+    if not feat_is_none:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     sql_lyr = ds.ExecuteSQL('PRAGMA application_id')
     f = sql_lyr.GetNextFeature()
@@ -3183,13 +3178,14 @@ def gpkg_39():
         print(ds.GetRasterBand(1).GetMetadataItem())
         return 'fail'
 
-    sql_lyr = ds.ExecuteSQL('SELECT metadata FROM gpkg_metadata')
-    f = sql_lyr.GetNextFeature()
-    if f is not None and f['metadata'].find('AREA_OR_POINT') >= 0:
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
+    # No metadata for now
+    sql_lyr = ds.ExecuteSQL("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_metadata'")
+    feat = sql_lyr.GetNextFeature()
     ds.ReleaseResultSet(sql_lyr)
+    feat_is_none = feat is None
+    if not feat_is_none:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     ds = None
 

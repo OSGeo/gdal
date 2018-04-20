@@ -263,7 +263,7 @@ else:
 if quiet_flag:
     prog_func = None
 else:
-    prog_func = gdal.TermProgress
+    prog_func = gdal.TermProgress_nocb
 
 result = gdal.Polygonize(srcband, maskband, dst_layer, dst_field, options,
                          callback=prog_func)

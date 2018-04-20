@@ -193,7 +193,7 @@ else:
 if quiet_flag:
     prog_func = None
 else:
-    prog_func = gdal.TermProgress
+    prog_func = gdal.TermProgress_nocb
 
 result = gdal.FillNodata(dstband, maskband,
                          max_distance, smoothing_iterations, options,
