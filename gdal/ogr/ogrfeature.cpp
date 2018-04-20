@@ -5741,8 +5741,7 @@ OGRErr OGRFeature::SetFrom( const OGRFeature * poSrcFeature, int bForgiving )
             return OGRERR_FAILURE;
         return SetFrom( poSrcFeature, nullptr, bForgiving );
     }
-    // FIXME when SetFrom() accepts a const int*
-    return SetFrom( poSrcFeature, const_cast<int*>(oMap.data()), bForgiving );
+    return SetFrom( poSrcFeature, oMap.data(), bForgiving );
 }
 
 /************************************************************************/
