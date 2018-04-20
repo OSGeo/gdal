@@ -75,7 +75,7 @@ Perl module maintainer to make a CPAN release.
 
    git checkout master
    git pull origin master
-   git checkout -b master release/2.3
+   git checkout -b release/2.3
    git push origin release/2.3
 
 8) Tag the release set in git:
