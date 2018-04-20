@@ -753,6 +753,29 @@ def test_ogrinfo_25():
     return 'success'
 
 
+###############################################################################
+# Test SQLStatement with -sql @filename syntax
+
+
+def test_ogrinfo_sql_filename():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    open('tmp/my.sql', 'wb').write('-- initial comment\nselect * from poly\n-- trailing comment')
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' -q ../ogr/data/poly.shp -sql @tmp/my.sql')
+    os.unlink('tmp/my.sql')
+    if not (err is None or err == ''):
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
+    if ret.find('OGRFeature(poly):0') < 0 or ret.find('OGRFeature(poly):9') < 0:
+        gdaltest.post_reason('wrong output')
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = [
     test_ogrinfo_1,
     test_ogrinfo_2,
@@ -779,6 +802,7 @@ gdaltest_list = [
     test_ogrinfo_23,
     test_ogrinfo_24,
     test_ogrinfo_25,
+    test_ogrinfo_sql_filename,
 ]
 
 
