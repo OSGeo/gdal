@@ -57,5 +57,18 @@ gdaldrivermanager.$(OBJ_EXT):	gdaldrivermanager.cpp ../GDALmake.opt
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) -DINST_DATA=\"$(INST_DATA)\" \
 		$< -o $@
 
+INST_H_FILES = \
+	gdal_frmts.h \
+	gdalgeorefpamdataset.h \
+	gdal.h \
+	gdaljp2abstractdataset.h \
+	gdaljp2metadata.h \
+	gdal_mdreader.h \
+	gdal_pam.h \
+	gdal_priv.h \
+	gdal_proxy.h \
+	gdal_rat.h \
+	gdal_version.h
+
 install:
-	for f in *.h ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
+	for f in $(INST_H_FILES) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
