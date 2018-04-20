@@ -241,7 +241,7 @@ def rasterio_5():
         # This should only fail on a 32bit build
         try:
             maxsize = sys.maxint
-        except:
+        except AttributeError:
             maxsize = sys.maxsize
 
         # On win64, maxsize == 2147483647 and ReadRaster()

@@ -48,11 +48,7 @@ def ogr_carto_init():
 
     ogrtest.carto_drv = None
 
-    try:
-        ogrtest.carto_drv = ogr.GetDriverByName('Carto')
-    except:
-        pass
-
+    ogrtest.carto_drv = ogr.GetDriverByName('Carto')
     if ogrtest.carto_drv is None:
         return 'skip'
 
@@ -1076,11 +1072,7 @@ def ogr_carto_rw_init():
         print('CARTO_API_KEY missing')
         return 'skip'
 
-    try:
-        ogrtest.carto_drv = ogr.GetDriverByName('Carto')
-    except:
-        pass
-
+    ogrtest.carto_drv = ogr.GetDriverByName('Carto')
     if ogrtest.carto_drv is None:
         return 'skip'
 

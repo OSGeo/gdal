@@ -46,11 +46,7 @@ from osgeo import ogr
 
 def ogr_vfk_1():
 
-    try:
-        gdaltest.vfk_drv = ogr.GetDriverByName('VFK')
-    except:
-        gdaltest.vfk_drv = None
-
+    gdaltest.vfk_drv = ogr.GetDriverByName('VFK')
     if gdaltest.vfk_drv is None:
         return 'skip'
 

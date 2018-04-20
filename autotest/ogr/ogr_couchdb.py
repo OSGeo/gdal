@@ -48,11 +48,7 @@ def ogr_couchdb_init():
 
     ogrtest.couchdb_drv = None
 
-    try:
-        ogrtest.couchdb_drv = ogr.GetDriverByName('CouchDB')
-    except:
-        pass
-
+    ogrtest.couchdb_drv = ogr.GetDriverByName('CouchDB')
     if ogrtest.couchdb_drv is None:
         return 'skip'
 

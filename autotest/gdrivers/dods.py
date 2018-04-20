@@ -43,11 +43,7 @@ def dods_1():
     gdaltest.dods_ds = None
     gdaltest.dods_dr = None
 
-    try:
-        gdaltest.dods_dr = gdal.GetDriverByName('DODS')
-    except:
-        return 'skip'
-
+    gdaltest.dods_dr = gdal.GetDriverByName('DODS')
     if gdaltest.dods_dr is None:
         return 'skip'
 

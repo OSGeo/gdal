@@ -48,11 +48,7 @@ class TestXMPRead:
         self.expect_xmp = expect_xmp
 
     def test(self):
-        try:
-            drv = gdal.GetDriverByName(self.drivername)
-        except:
-            drv = None
-
+        drv = gdal.GetDriverByName(self.drivername)
         if drv is None:
             return 'skip'
 

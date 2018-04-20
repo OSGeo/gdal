@@ -44,15 +44,8 @@ import gdaltest
 
 def rasterlite_1():
 
-    try:
-        gdaltest.rasterlite_drv = gdal.GetDriverByName('RASTERLITE')
-    except:
-        gdaltest.rasterlite_drv = None
-
-    try:
-        gdaltest.epsilon_drv = gdal.GetDriverByName('EPSILON')
-    except:
-        gdaltest.epsilon_drv = None
+    gdaltest.rasterlite_drv = gdal.GetDriverByName('RASTERLITE')
+    gdaltest.epsilon_drv = gdal.GetDriverByName('EPSILON')
 
     # This is to speed-up the runtime of tests on EXT4 filesystems
     # Do not use this for production environment if you care about data safety

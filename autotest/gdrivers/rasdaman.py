@@ -47,11 +47,7 @@ import gdaltest
 
 
 def rasdaman_1():
-    try:
-        gdaltest.rasdamanDriver = gdal.GetDriverByName('RASDAMAN')
-    except:
-        gdaltest.rasdamanDriver = None
-
+    gdaltest.rasdamanDriver = gdal.GetDriverByName('RASDAMAN')
     if gdaltest.rasdamanDriver is None:
         return 'skip'
 

@@ -54,11 +54,7 @@ def ogr_csw_init():
     if gdaltest.csw_drv is None:
         return 'skip'
 
-    try:
-        gml_ds = ogr.Open('data/ionic_wfs.gml')
-    except:
-        gml_ds = None
-
+    gml_ds = ogr.Open('data/ionic_wfs.gml')
     if gml_ds is None:
         gdaltest.csw_drv = None
         if gdal.GetLastErrorMsg().find('Xerces') != -1:

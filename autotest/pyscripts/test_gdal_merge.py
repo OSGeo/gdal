@@ -192,7 +192,7 @@ def test_gdal_merge_5():
     try:
         from osgeo import gdalnumeric
         gdalnumeric.BandRasterIONumPy
-    except:
+    except (ImportError, AttributeError):
         return 'skip'
 
     script_path = test_py_scripts.get_py_script('gdal_merge')

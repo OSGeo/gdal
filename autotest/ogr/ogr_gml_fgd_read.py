@@ -55,10 +55,7 @@ def ogr_gml_fgd_1():
     gdaltest.have_gml_fgd_reader = 0
 
     # open FGD GML file
-    try:
-        ds = ogr.Open(_fgd_dir + 'ElevPt.xml')
-    except:
-        ds = None
+    ds = ogr.Open(_fgd_dir + 'ElevPt.xml')
 
     if ds is None:
         if gdal.GetLastErrorMsg().find('Xerces') != -1:

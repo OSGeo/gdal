@@ -50,11 +50,7 @@ def ogr_ogdi_1():
         ogrtest.ogdi_drv = None
         return 'skip'
 
-    try:
-        ogrtest.ogdi_drv = ogr.GetDriverByName('OGDI')
-    except:
-        ogrtest.ogdi_drv = None
-
+    ogrtest.ogdi_drv = ogr.GetDriverByName('OGDI')
     if ogrtest.ogdi_drv is None:
         return 'skip'
 

@@ -55,10 +55,7 @@ def ogr_db2_check_driver():
 
     ogrtest.db2_drv = None
 
-    try:
-        ogrtest.db2_drv = ogr.GetDriverByName('DB2ODBC')
-    except:
-        pass
+    ogrtest.db2_drv = ogr.GetDriverByName('DB2ODBC')
 
     if ogrtest.db2_drv is None:
         return 'skip'

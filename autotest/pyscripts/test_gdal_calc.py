@@ -45,7 +45,7 @@ gdalnumeric_not_available = False
 try:
     from osgeo import gdalnumeric
     gdalnumeric.BandRasterIONumPy
-except:
+except (ImportError, AttributeError):
     gdalnumeric_not_available = True
 
 # Usage: gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename] [other_options]

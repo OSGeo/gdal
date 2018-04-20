@@ -44,18 +44,12 @@ def ogr_ingres_1():
 
     gdaltest.ingres_ds = None
 
-    try:
-        drv = ogr.GetDriverByName('Ingres')
-        if drv is None:
-            return 'skip'
-    except:
+    drv = ogr.GetDriverByName('Ingres')
+    if drv is None:
         return 'skip'
 
-    try:
-        gdaltest.ingres_ds = ogr.Open('@driver=ingres,dbname=test', update=1)
-        if gdaltest.ingres_ds is None:
-            return 'skip'
-    except:
+    gdaltest.ingres_ds = ogr.Open('@driver=ingres,dbname=test', update=1)
+    if gdaltest.ingres_ds is None:
         return 'skip'
 
     return 'success'

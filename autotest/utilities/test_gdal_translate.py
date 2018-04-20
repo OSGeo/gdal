@@ -1074,15 +1074,15 @@ def test_gdal_translate_cleanup():
         pass
     try:
         gdal.GetDriverByName('HFA').Delete('tmp/test_gdal_translate_21.img')
-    except:
+    except (AttributeError, RuntimeError):
         pass
     try:
         gdal.GetDriverByName('HFA').Delete('tmp/test_gdal_translate_22.img')
-    except:
+    except (AttributeError, RuntimeError):
         pass
     try:
         gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_translate_23.tif')
-    except:
+    except (AttributeError, RuntimeError):
         pass
     try:
         os.remove('tmp/test_gdal_translate_24.tif')
@@ -1090,21 +1090,21 @@ def test_gdal_translate_cleanup():
         pass
     try:
         gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_translate_25.tif')
-    except:
+    except (AttributeError, RuntimeError):
         pass
     try:
         gdal.GetDriverByName('XYZ').Delete('tmp/test_gdal_translate_26.xyz')
         gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_translate_26.tif')
-    except:
+    except (AttributeError, RuntimeError):
         pass
     try:
         gdal.GetDriverByName('AAIGRID').Delete('tmp/test_gdal_translate_27.asc')
         gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_translate_27.tif')
-    except:
+    except (AttributeError, RuntimeError):
         pass
     try:
         gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_translate_28.tif')
-    except:
+    except (AttributeError, RuntimeError):
         pass
     try:
         os.remove('tmp/test_gdal_translate_29.tif')

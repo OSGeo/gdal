@@ -41,10 +41,8 @@ import gdaltest
 
 def ogr_grass_1():
 
-    try:
-        gdaltest.ogr_grass_drv = ogr.GetDriverByName('GRASS')
-    except:
-        gdaltest.ogr_grass_drv = None
+    gdaltest.ogr_grass_drv = ogr.GetDriverByName('GRASS')
+    if gdaltest.ogr_grass_drv is None:
         return 'skip'
 
     return 'success'

@@ -41,11 +41,7 @@ from osgeo import gdal
 
 def ogr_dods_1():
     gdaltest.dods_ds = None
-    try:
-        ogrtest.dods_drv = ogr.GetDriverByName('DODS')
-    except:
-        ogrtest.dods_drv = None
-        return 'skip'
+    ogrtest.dods_drv = ogr.GetDriverByName('DODS')
 
     if ogrtest.dods_drv is None:
         return 'skip'

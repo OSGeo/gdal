@@ -42,11 +42,7 @@ from osgeo import gdal
 def ogr_gpx_init():
     gdaltest.gpx_ds = None
 
-    try:
-        gdaltest.gpx_ds = ogr.Open('data/test.gpx')
-    except:
-        gdaltest.gpx_ds = None
-
+    gdaltest.gpx_ds = ogr.Open('data/test.gpx')
     if gdaltest.gpx_ds is None:
         gdaltest.have_gpx = 0
     else:

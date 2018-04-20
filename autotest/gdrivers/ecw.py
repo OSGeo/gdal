@@ -75,12 +75,8 @@ def ecw_init():
 
 def ecw_1():
 
-    try:
-        gdaltest.ecw_drv = gdal.GetDriverByName('ECW')
-        gdaltest.jp2ecw_drv = gdal.GetDriverByName('JP2ECW')
-    except:
-        gdaltest.ecw_drv = None
-        gdaltest.jp2ecw_drv = None
+    gdaltest.ecw_drv = gdal.GetDriverByName('ECW')
+    gdaltest.jp2ecw_drv = gdal.GetDriverByName('JP2ECW')
 
     gdaltest.ecw_write = 0
 
@@ -851,7 +847,7 @@ def ecw_24():
         os.stat('tmp/spif83.ecw.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/spif83.ecw')
@@ -977,7 +973,7 @@ def ecw_26():
         os.stat('tmp/spif83.ecw.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/spif83.ecw')
@@ -1696,7 +1692,7 @@ def ecw_41():
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
@@ -2348,20 +2344,13 @@ def ecw_online_6():
     if gdaltest.ecw_drv is None:
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 
-    try:
-        dods_drv = gdal.GetDriverByName('DODS')
-        if dods_drv is not None:
-            dods_drv.Deregister()
-    except:
-        dods_drv = None
+    dods_drv = gdal.GetDriverByName('DODS')
+    if dods_drv is not None:
+        dods_drv.Deregister()
 
     url = 'http://download.osgeo.org/gdal/data/ecw/spif83.ecw'
     ds = gdal.Open(url)

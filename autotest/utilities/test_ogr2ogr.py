@@ -1811,10 +1811,7 @@ def test_ogr2ogr_47():
     except OSError:
         pass
 
-    try:
-        ds = ogr.Open('tmp/test_ogr2ogr_47_src.gml')
-    except:
-        ds = None
+    ds = ogr.Open('tmp/test_ogr2ogr_47_src.gml')
 
     if ds is None:
         os.unlink('tmp/test_ogr2ogr_47_src.gml')

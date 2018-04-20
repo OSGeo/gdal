@@ -51,11 +51,8 @@ def cpl_debug_reset():
 def ogr_interlis1_1():
 
     gdaltest.have_ili_reader = 0
-    try:
-        driver = ogr.GetDriverByName('Interlis 1')
-        if driver is None:
-            return 'skip'
-    except:
+    driver = ogr.GetDriverByName('Interlis 1')
+    if driver is None:
         return 'skip'
 
     gdaltest.have_ili_reader = 1

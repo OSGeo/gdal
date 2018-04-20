@@ -208,7 +208,7 @@ def get_lineno_2framesback(frames):
             frames = frames - 1
 
         return frame.f_lineno
-    except:
+    except ImportError:
         return -1
 
 ###############################################################################
@@ -1469,59 +1469,41 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
 
     # Deregister other potential conflicting JPEG2000 drivers that will
     # be re-registered in the cleanup
-    try:
-        jp2kak_drv = gdal.GetDriverByName('JP2KAK')
-        if name_of_driver_to_keep != 'JP2KAK' and jp2kak_drv:
-            gdal.Debug('gdaltest', 'Deregistering JP2KAK')
-            jp2kak_drv.Deregister()
-            jp2kak_drv_unregistered = True
-    except:
-        pass
+    jp2kak_drv = gdal.GetDriverByName('JP2KAK')
+    if name_of_driver_to_keep != 'JP2KAK' and jp2kak_drv:
+        gdal.Debug('gdaltest', 'Deregistering JP2KAK')
+        jp2kak_drv.Deregister()
+        jp2kak_drv_unregistered = True
 
-    try:
-        jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
-        if name_of_driver_to_keep != 'JPEG2000' and jpeg2000_drv:
-            gdal.Debug('gdaltest', 'Deregistering JPEG2000')
-            jpeg2000_drv.Deregister()
-            jpeg2000_drv_unregistered = True
-    except:
-        pass
+    jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
+    if name_of_driver_to_keep != 'JPEG2000' and jpeg2000_drv:
+        gdal.Debug('gdaltest', 'Deregistering JPEG2000')
+        jpeg2000_drv.Deregister()
+        jpeg2000_drv_unregistered = True
 
-    try:
-        jp2ecw_drv = gdal.GetDriverByName('JP2ECW')
-        if name_of_driver_to_keep != 'JP2ECW' and jp2ecw_drv:
-            gdal.Debug('gdaltest.', 'Deregistering JP2ECW')
-            jp2ecw_drv.Deregister()
-            jp2ecw_drv_unregistered = True
-    except:
-        pass
+    jp2ecw_drv = gdal.GetDriverByName('JP2ECW')
+    if name_of_driver_to_keep != 'JP2ECW' and jp2ecw_drv:
+        gdal.Debug('gdaltest.', 'Deregistering JP2ECW')
+        jp2ecw_drv.Deregister()
+        jp2ecw_drv_unregistered = True
 
-    try:
-        jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
-        if name_of_driver_to_keep != 'JP2MrSID' and jp2mrsid_drv:
-            gdal.Debug('gdaltest.', 'Deregistering JP2MrSID')
-            jp2mrsid_drv.Deregister()
-            jp2mrsid_drv_unregistered = True
-    except:
-        pass
+    jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
+    if name_of_driver_to_keep != 'JP2MrSID' and jp2mrsid_drv:
+        gdal.Debug('gdaltest.', 'Deregistering JP2MrSID')
+        jp2mrsid_drv.Deregister()
+        jp2mrsid_drv_unregistered = True
 
-    try:
-        jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
-        if name_of_driver_to_keep != 'JP2OpenJPEG' and jp2openjpeg_drv:
-            gdal.Debug('gdaltest.', 'Deregistering JP2OpenJPEG')
-            jp2openjpeg_drv.Deregister()
-            jp2openjpeg_drv_unregistered = True
-    except:
-        pass
+    jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
+    if name_of_driver_to_keep != 'JP2OpenJPEG' and jp2openjpeg_drv:
+        gdal.Debug('gdaltest.', 'Deregistering JP2OpenJPEG')
+        jp2openjpeg_drv.Deregister()
+        jp2openjpeg_drv_unregistered = True
 
-    try:
-        jp2lura_drv = gdal.GetDriverByName('JP2Lura')
-        if name_of_driver_to_keep != 'JP2Lura' and jp2lura_drv:
-            gdal.Debug('gdaltest.', 'Deregistering JP2Lura')
-            jp2lura_drv.Deregister()
-            jp2lura_drv_unregistered = True
-    except:
-        pass
+    jp2lura_drv = gdal.GetDriverByName('JP2Lura')
+    if name_of_driver_to_keep != 'JP2Lura' and jp2lura_drv:
+        gdal.Debug('gdaltest.', 'Deregistering JP2Lura')
+        jp2lura_drv.Deregister()
+        jp2lura_drv_unregistered = True
 
     return True
 
@@ -1534,53 +1516,35 @@ def reregister_all_jpeg2000_drivers():
     global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv, jp2lura_drv
     global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered, jp2lura_drv_unregistered
 
-    try:
-        if jp2kak_drv_unregistered:
-            jp2kak_drv.Register()
-            jp2kak_drv_unregistered = False
-            gdal.Debug('gdaltest', 'Registering JP2KAK')
-    except:
-        pass
+    if jp2kak_drv_unregistered:
+        jp2kak_drv.Register()
+        jp2kak_drv_unregistered = False
+        gdal.Debug('gdaltest', 'Registering JP2KAK')
 
-    try:
-        if jpeg2000_drv_unregistered:
-            jpeg2000_drv.Register()
-            jpeg2000_drv_unregistered = False
-            gdal.Debug('gdaltest', 'Registering JPEG2000')
-    except:
-        pass
+    if jpeg2000_drv_unregistered:
+        jpeg2000_drv.Register()
+        jpeg2000_drv_unregistered = False
+        gdal.Debug('gdaltest', 'Registering JPEG2000')
 
-    try:
-        if jp2ecw_drv_unregistered:
-            jp2ecw_drv.Register()
-            jp2ecw_drv_unregistered = False
-            gdal.Debug('gdaltest', 'Registering JP2ECW')
-    except:
-        pass
+    if jp2ecw_drv_unregistered:
+        jp2ecw_drv.Register()
+        jp2ecw_drv_unregistered = False
+        gdal.Debug('gdaltest', 'Registering JP2ECW')
 
-    try:
-        if jp2mrsid_drv_unregistered:
-            jp2mrsid_drv.Register()
-            jp2mrsid_drv_unregistered = False
-            gdal.Debug('gdaltest', 'Registering JP2MrSID')
-    except:
-        pass
+    if jp2mrsid_drv_unregistered:
+        jp2mrsid_drv.Register()
+        jp2mrsid_drv_unregistered = False
+        gdal.Debug('gdaltest', 'Registering JP2MrSID')
 
-    try:
-        if jp2openjpeg_drv_unregistered:
-            jp2openjpeg_drv.Register()
-            jp2openjpeg_drv = False
-            gdal.Debug('gdaltest', 'Registering JP2OpenJPEG')
-    except:
-        pass
+    if jp2openjpeg_drv_unregistered:
+        jp2openjpeg_drv.Register()
+        jp2openjpeg_drv = False
+        gdal.Debug('gdaltest', 'Registering JP2OpenJPEG')
 
-    try:
-        if jp2lura_drv_unregistered:
-            jp2lura_drv.Register()
-            jp2lura_drv = False
-            gdal.Debug('gdaltest', 'Registering JP2Lura')
-    except:
-        pass
+    if jp2lura_drv_unregistered:
+        jp2lura_drv.Register()
+        jp2lura_drv = False
+        gdal.Debug('gdaltest', 'Registering JP2Lura')
 
     return True
 

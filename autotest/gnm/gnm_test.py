@@ -56,10 +56,7 @@ def gnm_filenetwork_create():
     ogrtest.drv = None
     ogrtest.have_gnm = 0
 
-    try:
-        ogrtest.drv = gdal.GetDriverByName('GNMFile')
-    except:
-        pass
+    ogrtest.drv = gdal.GetDriverByName('GNMFile')
 
     if ogrtest.drv is None:
         return 'skip'

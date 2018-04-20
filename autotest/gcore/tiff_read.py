@@ -670,7 +670,7 @@ def tiff_vsimem():
 
     try:
         gdal.FileFromMemBuffer
-    except:
+    except AttributeError:
         return 'skip'
 
     content = open('data/byte.tif', mode='rb').read()
@@ -711,7 +711,7 @@ def tiff_vsizip_and_mem():
 
     try:
         gdal.FileFromMemBuffer
-    except:
+    except AttributeError:
         return 'skip'
 
     content = open('data/byte.tif.zip', mode='rb').read()

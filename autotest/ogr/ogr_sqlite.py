@@ -58,11 +58,8 @@ def ogr_sqlite_1():
     gdaltest.sl_ds = None
     gdaltest.has_spatialite = False
 
-    try:
-        sqlite_dr = ogr.GetDriverByName('SQLite')
-        if sqlite_dr is None:
-            return 'skip'
-    except:
+    sqlite_dr = ogr.GetDriverByName('SQLite')
+    if sqlite_dr is None:
         return 'skip'
 
     try:
@@ -1296,10 +1293,7 @@ def ogr_sqlite_25():
     feat = None
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
+    drv = gdal.GetDriverByName('HTTP')
 
     if drv is None:
         return 'skip'

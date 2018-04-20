@@ -41,10 +41,7 @@ import gdaltest
 
 
 def vsicurl_streaming_1():
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
+    drv = gdal.GetDriverByName('HTTP')
 
     if drv is None:
         return 'skip'

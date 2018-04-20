@@ -45,11 +45,8 @@ def ogr_rfc35_sqlite_1():
 
     gdaltest.rfc35_sqlite_ds = None
     gdaltest.rfc35_sqlite_ds_name = None
-    try:
-        sqlite_dr = ogr.GetDriverByName('SQLite')
-        if sqlite_dr is None:
-            return 'skip'
-    except:
+    sqlite_dr = ogr.GetDriverByName('SQLite')
+    if sqlite_dr is None:
         return 'skip'
 
     try:

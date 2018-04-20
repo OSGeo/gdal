@@ -155,7 +155,7 @@ def test_pct2rgb_4():
     try:
         from osgeo import gdalnumeric
         gdalnumeric.BandRasterIONumPy
-    except:
+    except (ImportError, AttributeError):
         return 'skip'
 
     script_path = test_py_scripts.get_py_script('pct2rgb')

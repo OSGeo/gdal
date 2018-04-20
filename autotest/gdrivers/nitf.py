@@ -613,11 +613,7 @@ def nitf_28_jp2mrsid():
     if not gdaltest.nitf_28_jp2ecw_is_ok:
         return 'skip'
 
-    try:
-        jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
-    except:
-        jp2mrsid_drv = None
-
+    jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
     if jp2mrsid_drv is None:
         return 'skip'
 
@@ -638,11 +634,7 @@ def nitf_28_jp2kak():
     if not gdaltest.nitf_28_jp2ecw_is_ok:
         return 'skip'
 
-    try:
-        jp2kak_drv = gdal.GetDriverByName('JP2KAK')
-    except:
-        jp2kak_drv = None
-
+    jp2kak_drv = gdal.GetDriverByName('JP2KAK')
     if jp2kak_drv is None:
         return 'skip'
 
@@ -663,11 +655,7 @@ def nitf_28_jp2openjpeg():
     if not gdaltest.nitf_28_jp2ecw_is_ok:
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName('JP2OpenJPEG')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('JP2OpenJPEG')
     if drv is None:
         return 'skip'
 
@@ -685,11 +673,7 @@ def nitf_28_jp2openjpeg():
 
 
 def nitf_28_jp2openjpeg_bis():
-    try:
-        drv = gdal.GetDriverByName('JP2OpenJPEG')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('JP2OpenJPEG')
     if drv is None:
         return 'skip'
 
@@ -1324,13 +1308,10 @@ def nitf_42():
 
 def nitf_43(driver_to_test, options):
 
-    try:
-        jp2_drv = gdal.GetDriverByName(driver_to_test)
-        if driver_to_test == 'JP2ECW' and jp2_drv is not None:
-            if 'DMD_CREATIONOPTIONLIST' not in jp2_drv.GetMetadata():
-                jp2_drv = None
-    except:
-        jp2_drv = None
+    jp2_drv = gdal.GetDriverByName(driver_to_test)
+    if driver_to_test == 'JP2ECW' and jp2_drv is not None:
+        if 'DMD_CREATIONOPTIONLIST' not in jp2_drv.GetMetadata():
+            jp2_drv = None
 
     if jp2_drv is None:
         return 'skip'
@@ -1433,11 +1414,7 @@ def nitf_45():
 
 def nitf_46(driver_to_test):
 
-    try:
-        jp2_drv = gdal.GetDriverByName(driver_to_test)
-    except:
-        jp2_drv = None
-
+    jp2_drv = gdal.GetDriverByName(driver_to_test)
     if jp2_drv is None:
         return 'skip'
 

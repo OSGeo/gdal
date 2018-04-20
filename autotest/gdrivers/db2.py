@@ -50,27 +50,13 @@ def gpkg_init():
 
     gdaltest.db2_drv = None
 
-    try:
-        gdaltest.db2_drv = gdal.GetDriverByName('DB2ODBC')
-        if gdaltest.db2_drv is None:
-            return 'skip'
-    except:
+    gdaltest.db2_drv = gdal.GetDriverByName('DB2ODBC')
+    if gdaltest.db2_drv is None:
         return 'skip'
 
-    try:
-        gdaltest.png_dr = gdal.GetDriverByName('PNG')
-    except:
-        gdaltest.png_dr = None
-
-    try:
-        gdaltest.jpeg_dr = gdal.GetDriverByName('JPEG')
-    except:
-        gdaltest.jpeg_dr = None
-
-    try:
-        gdaltest.webp_dr = gdal.GetDriverByName('WEBP')
-    except:
-        gdaltest.webp_dr = None
+    gdaltest.png_dr = gdal.GetDriverByName('PNG')
+    gdaltest.jpeg_dr = gdal.GetDriverByName('JPEG')
+    gdaltest.webp_dr = gdal.GetDriverByName('WEBP')
     gdaltest.webp_supports_rgba = False
     if gdaltest.webp_dr is not None and gdal.GetConfigOption("GPKG_SIMUL_WEBP_3BAND") is None:
         md = gdaltest.webp_dr.GetMetadata()

@@ -362,11 +362,7 @@ def ogr_mem_10():
     d = ogr.GetDriverByName('Memory')
     ds = d.CreateDataSource('xxxxxx')
 
-    try:
-        d2 = ds.GetDriver()
-    except:
-        d2 = None
-
+    d2 = ds.GetDriver()
     if d2 is None or d2.GetName() != 'Memory':
         gdaltest.post_reason('Did not get expected driver name.')
         return 'fail'
@@ -466,7 +462,7 @@ def ogr_mem_13():
 
     try:
         feat.SetFieldStringList
-    except:
+    except AttributeError:
         # OG python bindings
         return 'skip'
 

@@ -60,11 +60,7 @@ def georaster_init():
 
     gdaltest.oci_ds = None
 
-    try:
-        gdaltest.georasterDriver = gdal.GetDriverByName('GeoRaster')
-    except:
-        gdaltest.georasterDriver = None
-
+    gdaltest.georasterDriver = gdal.GetDriverByName('GeoRaster')
     if gdaltest.georasterDriver is None:
         return 'skip'
 

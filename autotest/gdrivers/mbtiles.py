@@ -44,10 +44,7 @@ import webserver
 
 def mbtiles_1():
 
-    try:
-        gdaltest.mbtiles_drv = gdal.GetDriverByName('MBTiles')
-    except:
-        gdaltest.mbtiles_drv = None
+    gdaltest.mbtiles_drv = gdal.GetDriverByName('MBTiles')
 
     return 'success'
 

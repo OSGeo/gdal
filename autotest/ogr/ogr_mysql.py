@@ -59,11 +59,7 @@ def ogr_mysql_1():
     except:
         return 'skip'
 
-    try:
-        gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update=1)
-    except:
-        gdaltest.mysql_ds = None
-
+    gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update=1)
     if gdaltest.mysql_ds is not None:
         return 'success'
     else:
@@ -544,11 +540,7 @@ def ogr_mysql_17():
         return 'skip'
 
     count = gdaltest.mysql_ds.GetLayerCount()
-    try:
-        layer = gdaltest.mysql_ds.GetLayerByName('JunkTableName')
-    except:
-        layer = None
-
+    layer = gdaltest.mysql_ds.GetLayerByName('JunkTableName')
     if layer is not None:
         gdaltest.post_reason('got layer for non-existent table!')
         return 'fail'

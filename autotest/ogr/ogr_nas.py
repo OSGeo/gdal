@@ -49,11 +49,7 @@ from osgeo import ogr
 
 def ogr_nas_1():
 
-    try:
-        drv = ogr.GetDriverByName('NAS')
-    except:
-        drv = None
-
+    drv = ogr.GetDriverByName('NAS')
     if drv is None:
         return 'skip'
 
@@ -113,11 +109,7 @@ def ogr_nas_1():
 
 def ogr_nas_2():
 
-    try:
-        drv = ogr.GetDriverByName('NAS')
-    except:
-        drv = None
-
+    drv = ogr.GetDriverByName('NAS')
     if drv is None:
         return 'skip'
 
@@ -178,11 +170,7 @@ def ogr_nas_2():
 
 def ogr_nas_3():
 
-    try:
-        drv = ogr.GetDriverByName('NAS')
-    except:
-        drv = None
-
+    drv = ogr.GetDriverByName('NAS')
     if drv is None:
         return 'skip'
 
@@ -207,11 +195,7 @@ def ogr_nas_3():
 
 def ogr_nas_4():
 
-    try:
-        drv = ogr.GetDriverByName('NAS')
-    except:
-        drv = None
-
+    drv = ogr.GetDriverByName('NAS')
     if drv is None:
         return 'skip'
 
@@ -268,11 +252,7 @@ def ogr_nas_4():
 
 def ogr_nas_5():
 
-    try:
-        drv = ogr.GetDriverByName('NAS')
-    except:
-        drv = None
-
+    drv = ogr.GetDriverByName('NAS')
     if drv is None:
         return 'skip'
 

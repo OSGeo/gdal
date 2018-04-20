@@ -42,7 +42,7 @@ class TestWktEmpty:
     def isEmpty(self, geom):
         try:
             ogr.Geometry.IsEmpty
-        except:
+        except AttributeError:
             return 'skip'
 
         if not geom.IsEmpty():

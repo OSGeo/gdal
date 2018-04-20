@@ -55,11 +55,7 @@ def ogr_wfs_init():
 
     gdaltest.wfs_drv = None
 
-    try:
-        gdaltest.wfs_drv = ogr.GetDriverByName('WFS')
-    except:
-        pass
-
+    gdaltest.wfs_drv = ogr.GetDriverByName('WFS')
     if gdaltest.wfs_drv is None:
         return 'skip'
 
@@ -67,11 +63,7 @@ def ogr_wfs_init():
     gdaltest.deegree_wfs = None
     gdaltest.ionic_wfs = None
 
-    try:
-        gml_ds = ogr.Open('data/ionic_wfs.gml')
-    except:
-        gml_ds = None
-
+    gml_ds = ogr.Open('data/ionic_wfs.gml')
     if gml_ds is None:
         gdaltest.wfs_drv = None
         if gdal.GetLastErrorMsg().find('Xerces') != -1:

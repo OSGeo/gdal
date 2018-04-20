@@ -81,11 +81,7 @@ def ogr_pg_1():
     # 7.4
     # gdaltest.pg_connection_string='dbname=autotest port=5436 user=postgres'
 
-    try:
-        gdaltest.pg_dr = ogr.GetDriverByName('PostgreSQL')
-    except:
-        return 'skip'
-
+    gdaltest.pg_dr = ogr.GetDriverByName('PostgreSQL')
     if gdaltest.pg_dr is None:
         return 'skip'
 
@@ -991,11 +987,8 @@ def ogr_pg_20():
 
     # We need to re-read layers
     gdaltest.pg_ds.Destroy()
-    gdaltest.pg_ds = None
-    try:
-        gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
-    except:
-        gdaltest.pg_ds = None
+    gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
+    if gdaltest.pg_ds is None:
         gdaltest.post_reason('can not re-open datasource')
         return 'fail'
 
@@ -1141,10 +1134,8 @@ def ogr_pg_21_3d_geometries():
     gdaltest.pg_ds.Destroy()
     gdaltest.pg_ds = None
 
-    try:
-        gdaltest.pg_ds = ogr.Open('PG:' + connection_string, update=1)
-    except:
-        gdaltest.pg_ds = None
+    gdaltest.pg_ds = ogr.Open('PG:' + connection_string, update=1)
+    if gdaltest.pg_ds is None:
         gdaltest.post_reason('Cannot open the dataset')
         return 'fail'
 

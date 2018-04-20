@@ -1179,10 +1179,7 @@ def ogr_gmlas_cache():
     if ogr.GetDriverByName('GMLAS') is None:
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
+    drv = gdal.GetDriverByName('HTTP')
 
     if drv is None:
         return 'skip'
@@ -1722,11 +1719,7 @@ def ogr_gmlas_xlink_resolver():
     if ogr.GetDriverByName('GMLAS') is None:
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 

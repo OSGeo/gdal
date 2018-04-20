@@ -40,10 +40,7 @@ from osgeo import ogr
 def ogr_svg_init():
     gdaltest.svg_ds = None
 
-    try:
-        gdaltest.svg_ds = ogr.Open('data/test.svg')
-    except:
-        gdaltest.svg_ds = None
+    gdaltest.svg_ds = ogr.Open('data/test.svg')
 
     if gdaltest.svg_ds is None:
         gdaltest.have_svg = 0

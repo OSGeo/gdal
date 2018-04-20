@@ -47,11 +47,7 @@ import gdaltest
 
 
 def postgisraster_init():
-    try:
-        gdaltest.postgisrasterDriver = gdal.GetDriverByName('PostGISRaster')
-    except:
-        gdaltest.postgisrasterDriver = None
-
+    gdaltest.postgisrasterDriver = gdal.GetDriverByName('PostGISRaster')
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 

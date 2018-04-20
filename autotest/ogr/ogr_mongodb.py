@@ -49,11 +49,7 @@ def ogr_mongodb_init():
 
     ogrtest.mongodb_drv = None
 
-    try:
-        ogrtest.mongodb_drv = ogr.GetDriverByName('MongoDB')
-    except:
-        pass
-
+    ogrtest.mongodb_drv = ogr.GetDriverByName('MongoDB')
     if ogrtest.mongodb_drv is None:
         return 'skip'
 

@@ -41,11 +41,7 @@ import gdaltest
 
 
 def fits_init():
-    try:
-        gdaltest.fitsDriver = gdal.GetDriverByName('FITS')
-    except:
-        gdaltest.fitsDriver = None
-
+    gdaltest.fitsDriver = gdal.GetDriverByName('FITS')
     if gdaltest.fitsDriver is None:
         return 'skip'
 

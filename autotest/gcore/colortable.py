@@ -82,7 +82,7 @@ def colortable_3():
     ct = gdal.ColorTable()
     try:
         ct.CreateColorRamp
-    except:
+    except AttributeError:
         return 'skip'
 
     ct.CreateColorRamp(0, (255, 0, 0), 255, (0, 0, 255))

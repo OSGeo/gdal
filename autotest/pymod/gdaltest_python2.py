@@ -48,7 +48,7 @@ def run_func(func):
         traceback.print_exc()
 
         raise x
-    except:
+    except Exception:
         result = 'fail (blowup)'
         print(result)
 
@@ -123,7 +123,7 @@ def spawn_async26(cmd):
     try:
         process = subprocess.Popen(command, stdout=subprocess.PIPE)
         return (process, process.stdout)
-    except:
+    except OSError:
         return (None, None)
 
 
@@ -134,7 +134,7 @@ def spawn_async(cmd):
     import popen2
     try:
         process = popen2.Popen3(cmd)
-    except:
+    except OSError:
         return (None, None)
     if process is None:
         return (None, None)

@@ -45,11 +45,7 @@ import gdaltest
 def test_validate_jp2_1():
 
     gdaltest.has_validate_jp2_and_build_jp2 = False
-    try:
-        gdaltest.jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
-    except:
-        gdaltest.jp2openjpeg_drv = None
-        return 'skip'
+    gdaltest.jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
 

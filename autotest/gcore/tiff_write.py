@@ -141,7 +141,7 @@ def tiff_write_4():
         data_red = gdalnumeric.zeros((50, 40))
         data_green = gdalnumeric.zeros((50, 40))
         data_blue = gdalnumeric.zeros((50, 40))
-    except:
+    except AttributeError:
         import numpy
         data_red = numpy.zeros((50, 40))
         data_green = numpy.zeros((50, 40))

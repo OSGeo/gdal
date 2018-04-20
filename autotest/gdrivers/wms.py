@@ -47,12 +47,7 @@ import gdaltest
 
 def wms_1():
 
-    try:
-        gdaltest.wms_drv = gdal.GetDriverByName('WMS')
-    except:
-        gdaltest.wms_drv = None
-
-    if gdaltest.wms_drv is None:
+    if gdal.GetDriverByName('WMS') is None:
         return 'skip'
     else:
         return 'success'

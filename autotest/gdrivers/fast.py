@@ -42,10 +42,8 @@ import gdaltest
 
 def fast_1():
 
-    try:
-        gdaltest.fast_drv = gdal.GetDriverByName('FAST')
-    except:
-        gdaltest.fast_drv = None
+    gdaltest.fast_drv = gdal.GetDriverByName('FAST')
+    if gdaltest.fast_drv is None:
         return 'skip'
 
     return 'success'

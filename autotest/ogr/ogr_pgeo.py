@@ -46,10 +46,7 @@ def ogr_pgeo_1(tested_driver='PGeo', other_driver='MDB'):
 
     ogrtest.pgeo_ds = None
 
-    try:
-        ogrtest.other_driver = ogr.GetDriverByName(other_driver)
-    except:
-        ogrtest.other_driver = None
+    ogrtest.other_driver = ogr.GetDriverByName(other_driver)
     if ogrtest.other_driver is not None:
         print('Unregistering %s driver' % ogrtest.other_driver.GetName())
         ogrtest.other_driver.Deregister()
@@ -64,10 +61,7 @@ def ogr_pgeo_1(tested_driver='PGeo', other_driver='MDB'):
                 walk_driver.Deregister()
                 walk_driver.Register()
 
-    try:
-        drv = ogr.GetDriverByName(tested_driver)
-    except:
-        drv = None
+    drv = ogr.GetDriverByName(tested_driver)
 
     if drv is None:
         return 'skip'

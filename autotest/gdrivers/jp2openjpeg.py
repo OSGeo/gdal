@@ -48,10 +48,8 @@ import gdaltest
 
 def jp2openjpeg_1():
 
-    try:
-        gdaltest.jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
-    except:
-        gdaltest.jp2openjpeg_drv = None
+    gdaltest.jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
+    if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
@@ -1062,7 +1060,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/xlink.xsd')
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/xml.xsd')
         ogc_schemas_location = 'tmp/cache/SCHEMAS_OPENGIS_NET'
-    except:
+    except OSError:
         ogc_schemas_location = 'disabled'
 
     if ogc_schemas_location != 'disabled':
