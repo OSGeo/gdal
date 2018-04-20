@@ -176,7 +176,7 @@ def jp2kak_11():
 
     ds = gdal.Open('data/gtsmall_11_int16.jp2')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 63475 and cs != 63472 and cs != 63452:
+    if cs not in (63475, 63472, 63452, 63471):
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
@@ -228,9 +228,7 @@ def jp2kak_13():
     # levels the overview is actually generated with no discard levels
     # and in the debug output we see 500x7 -> 500x7 -> 250x4.
     checksum = ov_band.Checksum()
-    expected = 11776
-
-    if checksum != expected and checksum != 11736:
+    if checksum not in (11776, 11736, 11801):
         print(checksum)
         gdaltest.post_reason('did not get expected overview checksum')
         return 'fail'
@@ -262,9 +260,7 @@ def jp2kak_14():
         return 'fail'
 
     checksum = ov_band.Checksum()
-    expected = 12288
-
-    if checksum != expected and checksum != 12272:
+    if checksum not in (12288, 12272, 12224):
         print(checksum)
         gdaltest.post_reason('did not get expected overview checksum')
         return 'fail'
@@ -275,9 +271,7 @@ def jp2kak_14():
         return 'fail'
 
     checksum = ov_band.Checksum()
-    expected = 2957
-
-    if checksum != expected and checksum != 2980:
+    if checksum not in (2957, 2980, 2990):
         print(checksum)
         gdaltest.post_reason('did not get expected overview checksum (2)')
         return 'fail'
