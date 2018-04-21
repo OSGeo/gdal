@@ -351,7 +351,7 @@ int GDALRDADataset::Identify( GDALOpenInfo* poOpenInfo )
     }
     else if( poOpenInfo->fpL != nullptr )
     {
-        if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "RDA"))
+        if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "DGRDA"))
         {
             const char* pszHeader = reinterpret_cast<const char*>(
                 poOpenInfo->pabyHeader);
@@ -607,7 +607,7 @@ bool GDALRDADataset::ParseAuthorizationResponse(const CPLString& osAuth)
 bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
 {
     CPLString osConnectionString;
-    if(EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "RDA"))
+    if(EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "DGRDA"))
     {
         CSLUniquePtr papszContent(CSLLoad2( poOpenInfo->pszFilename,
                                             -1, -1, nullptr));
@@ -2136,6 +2136,7 @@ void GDALRegister_RDA()
                                "DigitalGlobe Raster Data Access driver" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                "frmt_rda.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dgrda" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

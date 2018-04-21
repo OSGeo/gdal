@@ -458,6 +458,54 @@ def rda_graph_nominal():
 
     ds = None
 
+    # File open
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(config_options):
+            with open('tmp/rda_test1.dgrda', "w") as fd:
+                fd.write('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
+            ds = gdal.Open('tmp/rda_test1.dgrda')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterCount != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 320:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterYSize != 300:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    expected_md = {
+        'SENSOR_NAME': 'SENSOR_NAME',
+        'CLOUD_COVER': '1.2',
+        'SUN_AZIMUTH': '2.2',
+        'SAT_AZIMUTH': '4.2',
+        'ACQUISITION_DATE': 'ACQUISITION_DATE',
+        'SENSOR_PLATFORM_NAME': 'SENSOR_PLATFORM_NAME',
+        'SUN_ELEVATION': '3.2',
+        'GSD': '1.250 m',
+        'SAT_ELEVATION': '5.2'
+    }
+    got_md = ds.GetMetadata()
+    if got_md != expected_md:
+        gdaltest.post_reason('fail')
+        print(got_md)
+        return 'fail'
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ds.GetProjectionRef() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    try:
+        os.remove('tmp/rda_test1.dgrda')
+    except OSError:
+        pass
+
+    ds = None
     # Retry without any network setup to test caching
     with gdaltest.config_options(config_options):
         ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
