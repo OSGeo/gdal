@@ -425,7 +425,7 @@ def ogr_mitab_13():
     try:
         os.stat('tmp/testlyrdef.tab')
         ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testlyrdef.tab')
-    except:
+    except (OSError, AttributeError):
         pass
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f "MapInfo File" tmp/testlyrdef.tab ../ogr/data/testlyrdef.gml')
@@ -476,7 +476,7 @@ def ogr_mitab_14():
     try:
         os.stat('tmp/testlyrdef.mif')
         ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testlyrdef.mif')
-    except:
+    except (OSError, AttributeError):
         pass
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f "MapInfo File" -dsco FORMAT=MIF tmp/testlyrdef.mif ../ogr/data/testlyrdef.gml')

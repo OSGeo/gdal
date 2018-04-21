@@ -338,7 +338,7 @@ def test_ogr2ogr_lib_14():
     # Null dest name and no option
     try:
         gdal.wrapper_GDALVectorTranslateDestName(None, gdal.OpenEx('../ogr/data/poly.shp'), None)
-    except:
+    except RuntimeError:
         pass
 
     return 'success'

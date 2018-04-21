@@ -602,7 +602,7 @@ def ogr_gml_14():
         fp = open('tmp/cache/expected1.gml', 'r')
         expectedtext = fp.read()
         fp.close()
-    except:
+    except (IOError, OSError):
         return 'fail'
 
     if text != expectedtext:
@@ -617,7 +617,7 @@ def ogr_gml_14():
         fp = open('tmp/cache/expected2.gml', 'r')
         expectedtext = fp.read()
         fp.close()
-    except:
+    except (IOError, OSError):
         return 'fail'
 
     if text != expectedtext:
@@ -816,7 +816,7 @@ def ogr_gml_20():
         os.stat('data/archsites.gfs')
         gdaltest.post_reason('did not expected .gfs -> XSD parsing failed')
         return 'fail'
-    except:
+    except OSError:
         return 'success'
 
 ###############################################################################
@@ -1456,7 +1456,7 @@ def ogr_gml_35():
         os.stat('tmp/GmlTopo-sample.sqlite')
         gdaltest.post_reason('did not expect tmp/GmlTopo-sample.sqlite')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     if gdal.GetLastErrorMsg() != '':

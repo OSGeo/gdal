@@ -181,17 +181,11 @@ def ogr_basic_5():
 def ogr_basic_6():
 
     # Put inside try/except for OG python bindings
-    try:
-        if ogr.Open('') is not None:
-            return 'fail'
-    except:
-        pass
+    if ogr.Open('') is not None:
+        return 'fail'
 
-    try:
-        if ogr.Open('non_existing') is not None:
-            return 'fail'
-    except:
-        pass
+    if ogr.Open('non_existing') is not None:
+        return 'fail'
 
     return 'success'
 

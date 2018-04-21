@@ -3820,149 +3820,149 @@ def nitf_online_25():
 def nitf_cleanup():
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/test_create.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf9.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/test_13.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/test_29.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/test_29_copy.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf36.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf37.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf38.ntf')
         os.unlink('tmp/nitf38.ntf_0.ovr')
-    except:
+    except (RuntimeError, OSError):
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf39.ntf')
-    except:
+    except (RuntimeError, OSError):
         pass
 
     try:
         os.stat('tmp/nitf40.ntf')
         gdal.GetDriverByName('NITF').Delete('tmp/nitf40.ntf')
-    except:
+    except (RuntimeError, OSError):
         pass
 
     try:
         os.stat('tmp/nitf42.ntf')
         gdal.GetDriverByName('NITF').Delete('tmp/nitf42.ntf')
-    except:
+    except (OSError, RuntimeError):
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf44.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf45.ntf')
         os.unlink('tmp/nitf45.ntf_0.ovr')
-    except:
+    except (RuntimeError, OSError):
         pass
 
     try:
         os.stat('tmp/nitf46.ntf')
         gdal.GetDriverByName('NITF').Delete('tmp/nitf46.ntf')
         os.unlink('tmp/nitf46.ntf_0.ovr')
-    except:
+    except (RuntimeError, OSError):
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf49.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf49_2.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf50.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf51.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf52.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf53.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf54.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf55.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf56.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf57.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf58.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         os.remove('tmp/nitf59.hdr')
         gdal.GetDriverByName('NITF').Delete('tmp/nitf59.ntf')
-    except:
+    except (OSError, RuntimeError):
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf62.ntf')
-    except:
+    except RuntimeError:
         pass
 
     try:
         gdal.GetDriverByName('NITF').Delete('tmp/nitf63.ntf')
-    except:
+    except RuntimeError:
         pass
 
     return 'success'

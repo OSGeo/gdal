@@ -469,7 +469,7 @@ def has_local_ogc_schemas(path):
                 f.close()
             os.environ['XML_CATALOG_FILES'] = path + '/ogc_catalog.xml'
         return True
-    except:
+    except OSError:
         return False
 
 ###############################################################################

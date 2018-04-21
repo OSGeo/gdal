@@ -903,7 +903,7 @@ def ecw_25():
         os.stat('tmp/spif83.ecw.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ds = gdal.Open('tmp/spif83.ecw')

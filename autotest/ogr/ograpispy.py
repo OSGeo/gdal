@@ -157,7 +157,7 @@ def ograpispy_cleanup():
     try:
         os.stat('tmp/ograpispy_2.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/ograpispy_2.shp')
-    except:
+    except (OSError, AttributeError):
         pass
     gdal.Unlink('/vsimem/test2.csv')
 

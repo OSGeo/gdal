@@ -648,7 +648,7 @@ if __name__ == '__main__':
                 break
             try:
                 p.terminate()
-            except:
+            except (AttributeError, OSError):
                 pass
             p.wait()
             p = None
@@ -679,7 +679,7 @@ if __name__ == '__main__':
         else:
             try:
                 p.terminate()
-            except:
+            except (AttributeError, OSError):
                 pass
             p.wait()
             gdaltest_list = []
@@ -701,7 +701,7 @@ if __name__ == '__main__':
         else:
             try:
                 p.terminate()
-            except:
+            except (AttributeError, OSError):
                 pass
             p.wait()
             gdaltest_list = []

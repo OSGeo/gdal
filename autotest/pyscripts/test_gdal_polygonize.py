@@ -55,7 +55,7 @@ def test_gdal_polygonize_1():
     try:
         os.stat('tmp/poly.shp')
         shp_drv.DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     shp_ds = shp_drv.CreateDataSource('tmp/poly.shp')
@@ -117,7 +117,7 @@ def test_gdal_polygonize_2():
     try:
         os.stat('tmp/out.shp')
         shp_drv.DeleteDataSource('tmp/out.shp')
-    except:
+    except OSError:
         pass
 
     # run the algorithm.
@@ -160,7 +160,7 @@ def test_gdal_polygonize_3():
     try:
         os.stat('tmp/out.gpkg')
         drv.DeleteDataSource('tmp/out.gpkg')
-    except:
+    except OSError:
         pass
 
     # run the algorithm.

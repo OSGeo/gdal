@@ -147,7 +147,7 @@ def test_ogr2ogr_py_4():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except (OSError, AttributeError):
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp -where "EAS_ID=171"')
@@ -173,7 +173,7 @@ def test_ogr2ogr_py_5():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except (OSError, AttributeError):
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp')
@@ -276,7 +276,7 @@ def test_ogr2ogr_py_8():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-t_srs EPSG:4326 tmp/poly.shp ../ogr/data/poly.shp')
@@ -302,7 +302,7 @@ def test_ogr2ogr_py_9():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-a_srs EPSG:4326 tmp/poly.shp ../ogr/data/poly.shp')
@@ -328,7 +328,7 @@ def test_ogr2ogr_py_10():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     # Voluntary don't use the exact case of the source field names (#4502)
@@ -368,7 +368,7 @@ def test_ogr2ogr_py_11():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-lco SHPT=POLYGONZ tmp/poly.shp ../ogr/data/poly.shp')
@@ -395,7 +395,7 @@ def test_ogr2ogr_py_12():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-nlt POLYGON25D tmp/poly.shp ../ogr/data/poly.shp')
@@ -421,7 +421,7 @@ def test_ogr2ogr_py_13():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp poly')
@@ -447,7 +447,7 @@ def test_ogr2ogr_py_14():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-segmentize 100 tmp/poly.shp ../ogr/data/poly.shp poly')
@@ -477,7 +477,7 @@ def test_ogr2ogr_py_15():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp')
@@ -510,7 +510,7 @@ def test_ogr2ogr_py_16():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-fid 8 tmp/poly.shp ../ogr/data/poly.shp')
@@ -541,7 +541,7 @@ def test_ogr2ogr_py_17():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     ret = test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-progress tmp/poly.shp ../ogr/data/poly.shp')
@@ -572,13 +572,13 @@ def test_ogr2ogr_py_18():
     try:
         os.stat('tmp/wrapdateline_src.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_src.shp')
-    except:
+    except OSError:
         pass
 
     try:
         os.stat('tmp/wrapdateline_dst.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_dst.shp')
-    except:
+    except OSError:
         pass
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/wrapdateline_src.shp')
@@ -627,7 +627,7 @@ def test_ogr2ogr_py_19():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp -clipsrc spat_extent -spat 479609 4764629 479764 4764817')
@@ -844,7 +844,7 @@ def test_ogr2ogr_py_24():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp -clipsrc "POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"')
@@ -879,7 +879,7 @@ def test_ogr2ogr_py_25():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     f = open('tmp/clip.csv', 'wt')
@@ -920,7 +920,7 @@ def test_ogr2ogr_py_26():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp -clipdst "POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"')
@@ -955,7 +955,7 @@ def test_ogr2ogr_py_27():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     f = open('tmp/clip.csv', 'wt')
@@ -994,7 +994,7 @@ def test_ogr2ogr_py_31():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -overwrite tmp/poly.shp ../ogr/data/poly.shp')
@@ -1020,7 +1020,7 @@ def test_ogr2ogr_py_32():
     try:
         os.stat('tmp/test_ogr2ogr_32.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_32.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp')
@@ -1056,13 +1056,13 @@ def test_ogr2ogr_py_33():
     try:
         os.stat('tmp/test_ogr2ogr_33_src.csv')
         ogr.GetDriverByName('CSV').DeleteDataSource('tmp/test_ogr2ogr_33_src.csv')
-    except:
+    except OSError:
         pass
 
     try:
         os.stat('tmp/test_ogr2ogr_33_dst.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_33_dst.shp')
-    except:
+    except OSError:
         pass
 
     f = open('tmp/test_ogr2ogr_33_src.csv', 'wt')
@@ -1125,7 +1125,7 @@ def test_ogr2ogr_py_34():
     try:
         os.stat('tmp/test_ogr2ogr_34_dir')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_34_dir')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_34_dir ../ogr/data/poly.shp -nln test_ogr2ogr_34_dir')
@@ -1168,7 +1168,7 @@ def test_ogr2ogr_py_35():
     try:
         os.stat('tmp/test_ogr2ogr_35_dir')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_35_dir')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp ')
@@ -1211,7 +1211,7 @@ def test_ogr2ogr_py_36():
     try:
         os.stat('tmp/test_ogr2ogr_36.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_36.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_36.shp ../ogr/data/poly.shp -zfield EAS_ID')
@@ -1241,12 +1241,12 @@ def test_ogr2ogr_py_37():
     try:
         os.stat('tmp/test_ogr2ogr_37_dir.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_37_dir.shp')
-    except:
+    except OSError:
         pass
 
     try:
         os.mkdir('tmp/test_ogr2ogr_37_src')
-    except:
+    except OSError:
         pass
     shutil.copy('../ogr/data/poly.shp', 'tmp/test_ogr2ogr_37_src')
     shutil.copy('../ogr/data/poly.shx', 'tmp/test_ogr2ogr_37_src')
@@ -1281,7 +1281,7 @@ def test_ogr2ogr_py_38():
     try:
         os.stat('tmp/test_ogr2ogr_38.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_38.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_38.shp ../ogr/data/poly.shp -select AREA -where "EAS_ID = 170"')
@@ -1310,7 +1310,7 @@ def test_ogr2ogr_py_39():
     try:
         os.stat('tmp/test_ogr2ogr_39_dir.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_39.shp')
-    except:
+    except OSError:
         pass
 
     try:
@@ -1349,7 +1349,7 @@ def test_ogr2ogr_py_43():
     try:
         os.stat('tmp/test_ogr2ogr_43_3d.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_43_3d.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_43_3d.shp ../ogr/data/poly.shp -dim 3')
@@ -1363,7 +1363,7 @@ def test_ogr2ogr_py_43():
     try:
         os.stat('tmp/test_ogr2ogr_43_2d.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_43_2d.shp')
-    except:
+    except OSError:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_43_2d.shp tmp/test_ogr2ogr_43_3d.shp -dim 2')
@@ -1392,7 +1392,7 @@ def test_ogr2ogr_py_44():
     try:
         os.stat('tmp/test_ogr2ogr_44_src.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_44_src.shp')
-    except:
+    except OSError:
         pass
 
     try:
@@ -1450,7 +1450,7 @@ def test_ogr2ogr_py_45():
     try:
         os.stat('tmp/test_ogr2ogr_44_src.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_44_src.shp')
-    except:
+    except OSError:
         pass
 
     try:

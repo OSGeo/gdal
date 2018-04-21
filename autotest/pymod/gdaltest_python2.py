@@ -99,10 +99,6 @@ def gdalurlopen(url, timeout=10):
         print('HTTP service for %s is down (HTTP Error: %s)' % (url, e.reason))
         socket.setdefaulttimeout(old_timeout)
         return None
-    except:
-        print('HTTP service for %s is down.' % (url))
-        socket.setdefaulttimeout(old_timeout)
-        return None
 
 
 def warn_if_memleak(cmd, out_str):
