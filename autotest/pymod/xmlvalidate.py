@@ -449,25 +449,6 @@ def has_local_ogc_schemas(path):
         os.stat(path + '/wfs')
         os.stat(path + '/xlink.xsd')
         os.stat(path + '/xml.xsd')
-
-        if False:
-            try:
-                os.stat(path + '/ogc_catalog.xml')
-            except OSError:
-                f = open(path + '/ogc_catalog.xml', 'wb')
-                f.write("""<?xml version="1.0"?>
-    <!DOCTYPE catalog PUBLIC "-//OASIS//DTD Entity Resolution XML Catalog V1.0//EN" "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd">
-    <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
-    <rewriteSystem systemIdStartString="http://schemas.opengis.net/" rewritePrefix="./"/>
-    <rewriteURI uriStartString="http://schemas.opengis.net/" rewritePrefix="./"/>
-
-    <rewriteURI uriStartString="http://www.w3.org/1999/xlink.xsd" rewritePrefix="./xlink.xsd"/>
-
-    <rewriteURI uriStartString="http://www.w3.org/2001/xml.xsd" rewritePrefix="./xml.xsd"/>
-    </catalog>
-    """)
-                f.close()
-            os.environ['XML_CATALOG_FILES'] = path + '/ogc_catalog.xml'
         return True
     except:
         return False
