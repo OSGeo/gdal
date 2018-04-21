@@ -3281,6 +3281,8 @@ void OGRDXFLayer::TranslateINSERTCore(
         catch( const std::invalid_argument& )
         {
             // Block doesn't exist
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Block %s does not exist", osBlockName.c_str());
             delete poFeature;
             return;
         }
