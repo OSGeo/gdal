@@ -273,8 +273,11 @@ static long GCIOAPI_CALL _read_GCIO (
   {
     if( c ==  '\r' )            /* PC '\r\n' line, MAC '\r' */
     {
-      VSIFReadL(&c, 1, 1, h);
-      if( c !='\n')
+      if( VSIFReadL(&c, 1, 1, h) != 1 )
+      {
+        c = '\n';
+      }
+      else if( c !='\n')
       {
         VSIFSeekL(h, VSIFTellL(h)-1, SEEK_SET);
         c= '\n';
