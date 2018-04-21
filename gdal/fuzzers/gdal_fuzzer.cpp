@@ -160,6 +160,21 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     break;
                 }
 
+                // Limit to 10000 blocks read for each band.
+                while( (nXSizeToRead > 1 || nYSizeToRead > 1) &&
+                       (DIV_ROUND_UP(nXSizeToRead, nBXSize) *
+                        DIV_ROUND_UP(nYSizeToRead, nBYSize) > 10000) )
+                {
+                    if( nXSizeToRead > 1 &&
+                        DIV_ROUND_UP(nXSizeToRead, nBXSize) >
+                            DIV_ROUND_UP(nYSizeToRead, nBYSize) )
+                        nXSizeToRead /= 2;
+                    else if( nYSizeToRead > 1 )
+                        nYSizeToRead /= 2;
+                    else
+                        nXSizeToRead /= 2;
+                }
+
                 // Currently decoding of PIXARLOG compressed TIFF requires
                 // a temporary buffer for the whole strip (if stripped) or
                 // image (if tiled), so be careful for a

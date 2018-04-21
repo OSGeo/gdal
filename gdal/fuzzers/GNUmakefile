@@ -19,11 +19,15 @@ default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	$(RM) *.o $(O_OBJ) libFuzzingEngine.a
+	$(RM) gdal_fuzzer$(EXE)
 	$(RM) gdal_translate_fuzzer$(EXE)
 	$(RM) gdal_vector_translate_fuzzer$(EXE)
 	$(RM) aig_fuzzer$(EXE)
 	$(RM) ogr_fuzzer$(EXE)
 	$(RM) mitab_tab_fuzzer$(EXE)
+
+gdal_fuzzer$(EXE): gdal_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) gdal_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdal_translate_fuzzer$(EXE): gdal_translate_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) gdal_translate_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
