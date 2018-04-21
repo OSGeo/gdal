@@ -461,9 +461,9 @@ def rda_graph_nominal():
     # File open
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
-            with open('/tmp/rda_test1.dgrda', "w") as fd:
+            with open('tmp/rda_test1.dgrda', "w") as fd:
                 fd.write('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-            ds = gdal.Open('/tmp/rda_test1.dgrda')
+            ds = gdal.Open('tmp/rda_test1.dgrda')
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -501,7 +501,7 @@ def rda_graph_nominal():
         return 'fail'
 
     try:
-        os.remove('/tmp/rda_test1.dgrda')
+        os.remove('tmp/rda_test1.dgrda')
     except OSError:
         pass
 
