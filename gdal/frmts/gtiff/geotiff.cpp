@@ -6875,8 +6875,8 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     else
     {
-        int iPixelBitSkip = 0;
-        int iBandBitOffset = 0;
+        unsigned iPixelBitSkip = 0;
+        unsigned iBandBitOffset = 0;
 
         if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
         {
@@ -6889,23 +6889,42 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
 
         // Bits per line rounds up to next byte boundary.
-        GIntBig nBitsPerLine = static_cast<GIntBig>(nBlockXSize) * iPixelBitSkip;
+        GUIntBig nBitsPerLine = static_cast<GUIntBig>(nBlockXSize) * iPixelBitSkip;
         if( (nBitsPerLine & 7) != 0 )
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
         const GByte * const pabyBlockBuf = poGDS->pabyBlockBuf;
-        const int nBitsPerSample = poGDS->nBitsPerSample;
-        int iPixel = 0;
+        const unsigned nBitsPerSample = poGDS->nBitsPerSample;
+        unsigned iPixel = 0;
 
-        for( int iY = 0; iY < nBlockYSize; ++iY )
+        if( nBitsPerSample == 1 && eDataType == GDT_Byte )
         {
-            GIntBig iBitOffset = iBandBitOffset + iY * nBitsPerLine;
+          for( unsigned iY = 0; iY < static_cast<unsigned>(nBlockYSize); ++iY )
+          {
+            GUIntBig iBitOffset = iBandBitOffset + iY * nBitsPerLine;
 
-            for( int iX = 0; iX < nBlockXSize; ++iX )
+            for( unsigned iX = 0; iX < static_cast<unsigned>(nBlockXSize); ++iX )
             {
-                int nOutWord = 0;
+                if( pabyBlockBuf[iBitOffset>>3] & (0x80 >>(iBitOffset & 7)) )
+                    static_cast<GByte *>(pImage)[iPixel] = 1;
+                else
+                    static_cast<GByte *>(pImage)[iPixel] = 0;
+                iBitOffset += iPixelBitSkip;
+                iPixel++;
+            }
+          }
+        }
+        else
+        {
+          for( unsigned iY = 0; iY < static_cast<unsigned>(nBlockYSize); ++iY )
+          {
+            GUIntBig iBitOffset = iBandBitOffset + iY * nBitsPerLine;
 
-                for( int iBit = 0; iBit < nBitsPerSample; ++iBit )
+            for( unsigned iX = 0; iX < static_cast<unsigned>(nBlockXSize); ++iX )
+            {
+                unsigned nOutWord = 0;
+
+                for( unsigned iBit = 0; iBit < nBitsPerSample; ++iBit )
                 {
                     if( pabyBlockBuf[iBitOffset>>3]
                         & (0x80 >>(iBitOffset & 7)) )
@@ -6934,6 +6953,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     CPLAssert(false);
                 }
             }
+          }
         }
     }
 

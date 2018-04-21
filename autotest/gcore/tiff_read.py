@@ -3751,6 +3751,17 @@ def tiff_read_zstd_corrupted2():
 ###############################################################################
 
 
+def tiff_read_1bit_2bands():
+    ds = gdal.Open('data/1bit_2bands.tif')
+    cs = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
+    if cs != (200, 824):
+        print(cs)
+        return 'fail'
+    return 'success'
+
+###############################################################################
+
+
 for item in init_list:
     ut = gdaltest.GDALTest('GTiff', item[0], item[1], item[2])
     if ut is None:
@@ -3876,6 +3887,7 @@ gdaltest_list.append((tiff_read_negative_scaley))
 gdaltest_list.append((tiff_read_zstd))
 gdaltest_list.append((tiff_read_zstd_corrupted))
 gdaltest_list.append((tiff_read_zstd_corrupted2))
+gdaltest_list.append((tiff_read_1bit_2bands))
 
 gdaltest_list.append((tiff_read_online_1))
 gdaltest_list.append((tiff_read_online_2))
