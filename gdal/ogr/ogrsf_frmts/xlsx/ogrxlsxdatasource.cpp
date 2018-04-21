@@ -1404,9 +1404,12 @@ void OGRXLSXDataSource::startElementWBCbk(const char *pszNameIn,
         {
             papoLayers = (OGRLayer**)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
             CPLString osFilename;
-            if( !oMapRelsIdToTarget[pszId].empty() &&
-                oMapRelsIdToTarget[pszId][0] == '/' )
+            if( oMapRelsIdToTarget[pszId].empty() )
+                return;
+            if( oMapRelsIdToTarget[pszId][0] == '/' )
             {
+                if( oMapRelsIdToTarget[pszId][1] == '\0' )
+                    return;
                 // Is it an "absolute" path ?
                 osFilename = osPrefixedFilename +
                              oMapRelsIdToTarget[pszId];
