@@ -1004,6 +1004,18 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
             if (apoCurLineValues.size() >
                 (size_t)poCurLayer->GetLayerDefn()->GetFieldCount())
             {
+                GIntBig nFeatureCount = poCurLayer->GetFeatureCount(false);
+                if( nFeatureCount > 0 &&
+                    static_cast<size_t>(apoCurLineValues.size() -
+                        poCurLayer->GetLayerDefn()->GetFieldCount()) >
+                            static_cast<size_t>(100000 / nFeatureCount) )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Adding too many columns to too many "
+                             "existing features");
+                    bEndTableParsing = true;
+                    return;
+                }
                 for( i = static_cast<size_t>(
                          poCurLayer->GetLayerDefn()->GetFieldCount());
                      i < apoCurLineValues.size();
