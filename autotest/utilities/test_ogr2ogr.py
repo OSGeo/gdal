@@ -466,7 +466,7 @@ def test_ogr2ogr_15():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except (OSErorr, AttributeError):
+    except (OSError, AttributeError):
         pass
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp')
