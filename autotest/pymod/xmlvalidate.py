@@ -450,7 +450,7 @@ def has_local_ogc_schemas(path):
         os.stat(path + '/xlink.xsd')
         os.stat(path + '/xml.xsd')
         return True
-    except:
+    except OSError:
         return False
 
 ###############################################################################

@@ -162,7 +162,7 @@ def tiff_write_4():
             data_red = data_red.astype(gdalnumeric.uint8)
             data_green = data_green.astype(gdalnumeric.uint8)
             data_blue = data_blue.astype(gdalnumeric.uint8)
-        except:
+        except AttributeError:
             pass
 
     new_ds.GetRasterBand(1).WriteArray(data_red)

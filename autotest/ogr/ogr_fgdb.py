@@ -472,7 +472,7 @@ def ogr_fgdb_5():
         os.stat("tmp/test.gdb")
         gdaltest.post_reason("tmp/test.gdb still existing")
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'
@@ -1272,7 +1272,7 @@ def ogr_fgdb_19():
         os.stat('tmp/test.gdb.ogrtmp')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     ret = lyr.CreateField(ogr.FieldDefn('foobar', ogr.OFTString))

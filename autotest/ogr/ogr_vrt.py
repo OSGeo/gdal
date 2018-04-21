@@ -567,7 +567,7 @@ def ogr_vrt_14():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     try:
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test.shp')
-    except:
+    except AttributeError:
         pass
     gdal.PopErrorHandler()
 
@@ -941,7 +941,7 @@ def ogr_vrt_20():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     try:
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test.shp')
-    except:
+    except AttributeError:
         pass
     gdal.PopErrorHandler()
 

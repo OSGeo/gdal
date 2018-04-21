@@ -212,7 +212,7 @@ def test_gdal_edit_py_4():
         os.stat('tmp/test_gdal_edit_py.tif.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     return 'success'

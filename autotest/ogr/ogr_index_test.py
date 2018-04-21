@@ -45,11 +45,11 @@ def ogr_index_1():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     try:
         ogr.GetDriverByName('MapInfo File').DeleteDataSource('index_p.mif')
-    except:
+    except AttributeError:
         pass
     try:
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('join_t.dbf')
-    except:
+    except AttributeError:
         pass
 
     gdal.PopErrorHandler()

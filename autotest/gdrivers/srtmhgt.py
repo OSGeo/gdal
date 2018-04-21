@@ -164,7 +164,7 @@ def srtmhgt_cleanup():
         gdal.GetDriverByName("SRTMHGT").Delete('/vsimem/n43w080.hgt')
         gdal.Unlink('/vsimem/N43W080.SRTMGL1.hgt.zip')
         os.remove('tmp/n43.dt1.tif')
-    except:
+    except (RuntimeError, OSError):
         pass
     return 'success'
 

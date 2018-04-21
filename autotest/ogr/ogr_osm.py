@@ -470,7 +470,7 @@ def ogr_osm_6():
     try:
         os.stat('tmp/ogr_osm_6')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/ogr_osm_6')
-    except:
+    except (OSError, AttributeError):
         pass
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/ogr_osm_6 data/test.pbf -sql "select * from multipolygons" -progress')

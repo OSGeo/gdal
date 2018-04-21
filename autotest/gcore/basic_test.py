@@ -373,7 +373,7 @@ def basic_test_11():
     got_exception = False
     try:
         ds = gdal.OpenEx('non existing')
-    except:
+    except RuntimeError:
         got_exception = True
     if old_use_exceptions_status == 0:
         gdal.DontUseExceptions()
@@ -661,7 +661,7 @@ def basic_test_17():
         gdal.UseExceptions()
         try:
             gdal.Open('do_not_exist')
-        except:
+        except RuntimeError:
             pass
         gdal.DontUseExceptions()
         ogr.DontUseExceptions()
@@ -677,7 +677,7 @@ def basic_test_17():
         gdal.UseExceptions()
         try:
             gdal.Open('do_not_exist')
-        except:
+        except RuntimeError:
             pass
         flag = False
         try:
