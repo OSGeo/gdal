@@ -102,7 +102,9 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     if( hDS )
     {
         const int nLayers = OGR_DS_GetLayerCount(hDS);
-        for( int i = 0; i < 10 && i < nLayers; i++ )
+        time_t nStartTime = time(nullptr);
+        bool bStop = false;
+        for( int i = 0; !bStop && i < 10 && i < nLayers; i++ )
         {
             OGRLayerH hLayer = OGR_DS_GetLayer(hDS, i);
             OGR_L_GetSpatialRef(hLayer);
@@ -110,11 +112,29 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             OGR_L_GetFIDColumn(hLayer);
             OGR_L_GetGeometryColumn(hLayer);
             OGRFeatureH hFeature;
-            for( int j = 0; j < 1000 &&
-                    (hFeature = OGR_L_GetNextFeature(hLayer)) != nullptr; j++ )
+            OGRFeatureH hFeaturePrev = nullptr;
+            while( !bStop &&
+                    (hFeature = OGR_L_GetNextFeature(hLayer)) != nullptr )
             {
-                OGR_F_Destroy(hFeature);
+                // Limit runtime to 20 seconds if features returned are
+                // different. Otherwise this may be a sign of a bug in the
+                // reader and we want the infinite loop to be revealed.
+                if( time(nullptr) - nStartTime > 20 )
+                {
+                    bool bIsSameAsPrevious =
+                        (hFeaturePrev != nullptr &&
+                         OGR_F_Equal(hFeature, hFeaturePrev));
+                    if( !bIsSameAsPrevious )
+                    {
+                        bStop = true;
+                    }
+                }
+                if( hFeaturePrev )
+                    OGR_F_Destroy(hFeaturePrev);
+                hFeaturePrev = hFeature;
             }
+            if( hFeaturePrev )
+                OGR_F_Destroy(hFeaturePrev);
         }
         OGR_DS_Destroy(hDS);
     }
