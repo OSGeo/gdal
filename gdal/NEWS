@@ -10,7 +10,7 @@ Trac tickets. GitHub tickets are explicitly indicated with github #XXXX
    - RDA: DigitalGlobe Raster Data Access (read-only)
  * New OGR drivers:
    - MVT: add read/write driver for Mapbox Vector Tile standalone files or tilesets
-   - ESRIJson and TopoJSON: created from existing code of the GeoJSON driver
+   - ESRIJson and TopoJSON: read-only, splitted from existing code of the GeoJSON driver
    - WFS3: *experimental* read-only driver
  * RFC 68: Make C++11 a build requirement
     https://trac.osgeo.org/gdal/wiki/rfc68_cplusplus11
