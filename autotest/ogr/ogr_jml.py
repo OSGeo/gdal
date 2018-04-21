@@ -41,10 +41,7 @@ from osgeo import gdal
 
 def ogr_jml_init():
 
-    try:
-        ds = ogr.Open('data/test.jml')
-    except:
-        ds = None
+    ds = ogr.Open('data/test.jml')
 
     if ds is None:
         gdaltest.jml_read_support = 0

@@ -49,18 +49,11 @@ def ogr_fgdb_init():
 
     ogrtest.fgdb_drv = None
 
-    try:
-        ogrtest.fgdb_drv = ogr.GetDriverByName('FileGDB')
-    except:
-        pass
-
+    ogrtest.fgdb_drv = ogr.GetDriverByName('FileGDB')
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
-    try:
-        ogrtest.openfilegdb_drv = ogr.GetDriverByName('OpenFileGDB')
-    except:
-        ogrtest.openfilegdb_drv = None
+    ogrtest.openfilegdb_drv = ogr.GetDriverByName('OpenFileGDB')
     if ogrtest.openfilegdb_drv is not None:
         ogrtest.openfilegdb_drv.Deregister()
 
@@ -1373,14 +1366,14 @@ def ogr_fgdb_19():
         os.stat('tmp/test.gdb.ogredited')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     try:
         os.stat('tmp/test.gdb.ogrtmp')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     lst = gdal.ReadDir('tmp/test.gdb')

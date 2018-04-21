@@ -47,11 +47,7 @@ import ogrtest
 
 def pdf_init():
 
-    try:
-        gdaltest.pdf_drv = gdal.GetDriverByName('PDF')
-    except:
-        gdaltest.pdf_drv = None
-
+    gdaltest.pdf_drv = gdal.GetDriverByName('PDF')
     if gdaltest.pdf_drv is None:
         return 'skip'
 

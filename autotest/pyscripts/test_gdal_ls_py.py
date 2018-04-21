@@ -49,7 +49,7 @@ def run_gdal_ls(argv):
     sys.path.append(script_path)
     try:
         import gdal_ls
-    except:
+    except ImportError:
         sys.path = saved_syspath
         return ('fail', None)
 
@@ -148,11 +148,7 @@ def test_gdal_ls_py_4():
 
 def test_gdal_ls_py_5():
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 
@@ -185,11 +181,7 @@ def test_gdal_ls_py_5():
 
 def test_gdal_ls_py_6():
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 
@@ -228,11 +220,7 @@ def test_gdal_ls_py_7():
         print('Slow on AppVeyor')
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 
@@ -267,11 +255,7 @@ def test_gdal_ls_py_8():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 

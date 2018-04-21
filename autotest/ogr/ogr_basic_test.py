@@ -208,7 +208,7 @@ def ogr_basic_7():
 
     try:
         feat.SetFieldIntegerList
-    except:
+    except AttributeError:
         return 'skip'
 
     feat_clone = feat.Clone()

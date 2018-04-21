@@ -52,22 +52,10 @@ def ogr_fgdb_stress_test_init():
     ogrtest.fgdb_drv = None
     ogrtest.openfilegdb_drv = None
 
-    try:
-        ogrtest.fgdb_drv = ogr.GetDriverByName('FileGDB')
-    except:
-        pass
-
-    try:
-        ogrtest.reference_drv = ogr.GetDriverByName('GPKG')
-    except:
-        ogrtest.reference_drv = None
-
+    ogrtest.fgdb_drv = ogr.GetDriverByName('FileGDB')
+    ogrtest.reference_drv = ogr.GetDriverByName('GPKG')
     ogrtest.reference_ext = 'gpkg'
-
-    try:
-        ogrtest.openfilegdb_drv = ogr.GetDriverByName('OpenFileGDB')
-    except:
-        pass
+    ogrtest.openfilegdb_drv = ogr.GetDriverByName('OpenFileGDB')
 
     if ogrtest.fgdb_drv is None:
         return 'skip'

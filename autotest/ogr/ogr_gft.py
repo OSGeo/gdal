@@ -47,10 +47,7 @@ def ogr_gft_init():
 
     ogrtest.gft_drv = None
 
-    try:
-        ogrtest.gft_drv = ogr.GetDriverByName('GFT')
-    except:
-        pass
+    ogrtest.gft_drv = ogr.GetDriverByName('GFT')
 
     if ogrtest.gft_drv is None:
         return 'skip'

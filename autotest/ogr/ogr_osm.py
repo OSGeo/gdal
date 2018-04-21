@@ -45,10 +45,7 @@ import ogrtest
 
 def ogr_osm_1(filename='data/test.pbf'):
 
-    try:
-        ogrtest.osm_drv = ogr.GetDriverByName('OSM')
-    except:
-        ogrtest.osm_drv = None
+    ogrtest.osm_drv = ogr.GetDriverByName('OSM')
     if ogrtest.osm_drv is None:
         return 'skip'
 

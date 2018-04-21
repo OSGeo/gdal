@@ -51,11 +51,7 @@ def ogr_gml_1():
 
     gdaltest.have_gml_reader = 0
 
-    try:
-        gml_ds = ogr.Open('data/ionic_wfs.gml')
-    except:
-        gml_ds = None
-
+    gml_ds = ogr.Open('data/ionic_wfs.gml')
     if gml_ds is None:
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
             return 'skip'
@@ -573,10 +569,7 @@ def ogr_gml_14():
 
     # We need CURL for xlink resolution, and a sign that Curl is available
     # is the availability of the WMS driver
-    try:
-        gdaltest.wms_drv = gdal.GetDriverByName('WMS')
-    except:
-        gdaltest.wms_drv = None
+    gdaltest.wms_drv = gdal.GetDriverByName('WMS')
     if gdaltest.wms_drv is None:
         return 'skip'
 

@@ -1829,11 +1829,7 @@ def ogr_shape_42():
 
 def ogr_shape_43():
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 
@@ -1868,11 +1864,7 @@ def ogr_shape_43():
 
 def ogr_shape_44_DISABLED():
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 

@@ -42,10 +42,8 @@ import gdaltest
 
 def webp_1():
 
-    try:
-        gdaltest.webp_drv = gdal.GetDriverByName('WEBP')
-    except:
-        gdaltest.webp_drv = None
+    gdaltest.webp_drv = gdal.GetDriverByName('WEBP')
+    if gdaltest.webp_drv is None:
         return 'skip'
 
     return 'success'

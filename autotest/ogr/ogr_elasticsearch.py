@@ -49,11 +49,7 @@ def ogr_elasticsearch_init():
     ogrtest.srs_wgs84 = osr.SpatialReference()
     ogrtest.srs_wgs84.SetFromUserInput('WGS84')
 
-    try:
-        ogrtest.elasticsearch_drv = ogr.GetDriverByName('ElasticSearch')
-    except:
-        pass
-
+    ogrtest.elasticsearch_drv = ogr.GetDriverByName('ElasticSearch')
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 

@@ -51,30 +51,18 @@ def ogr_libkml_datastore():
     ogrtest.kml_drv = None
     ogrtest.libkml_drv = None
 
-    try:
-        ogrtest.kml_drv = ogr.GetDriverByName('LIBKML')
-    except:
-        pass
-
+    ogrtest.kml_drv = ogr.GetDriverByName('LIBKML')
     if ogrtest.kml_drv is None:
         return 'skip'
 
-    try:
-        ogrtest.kml_drv = ogr.GetDriverByName('KML')
-    except:
-        pass
-
+    ogrtest.kml_drv = ogr.GetDriverByName('KML')
     # Unregister KML driver if present as its behaviour is not identical
     # to new LIBKML driver
     if ogrtest.kml_drv is not None:
         print('Unregister KML driver')
         ogrtest.kml_drv.Deregister()
 
-    try:
-        ogrtest.kml_ds = ogr.Open('data/samples.kml')
-    except:
-        pass
-
+    ogrtest.kml_ds = ogr.Open('data/samples.kml')
     if ogrtest.kml_ds is not None:
         ogrtest.have_read_libkml = 1
 

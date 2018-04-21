@@ -40,10 +40,7 @@ import gdaltest
 
 
 def kea_init():
-    try:
-        gdaltest.kea_driver = gdal.GetDriverByName('KEA')
-    except:
-        gdaltest.kea_driver = None
+    gdaltest.kea_driver = gdal.GetDriverByName('KEA')
 
     return 'success'
 

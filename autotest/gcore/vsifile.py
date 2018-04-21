@@ -705,7 +705,7 @@ def vsifile_16():
     try:
         gdal.Rename('/tmp/i_dont_exist_vsifile_16.tif', '/tmp/me_neither.tif')
         ret = 'fail'
-    except:
+    except RuntimeError:
         ret = 'success'
     if not old_val:
         gdal.DontUseExceptions()

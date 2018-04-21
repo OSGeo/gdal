@@ -59,10 +59,8 @@ init_list = [
 
 def gta_1():
 
-    try:
-        gdaltest.gta_drv = gdal.GetDriverByName('GTA')
-    except:
-        gdaltest.gta_drv = None
+    gdaltest.gta_drv = gdal.GetDriverByName('GTA')
+    if gdaltest.gta_drv is None:
         return 'skip'
 
     return 'success'

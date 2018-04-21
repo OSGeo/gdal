@@ -42,10 +42,7 @@ from osgeo import ogr
 def ogr_gtm_init():
     gdaltest.gtm_ds = None
 
-    try:
-        gdaltest.gtm_ds = ogr.Open('data/samplemap.gtm')
-    except:
-        gdaltest.gtm_ds = None
+    gdaltest.gtm_ds = ogr.Open('data/samplemap.gtm')
 
     if gdaltest.gtm_ds is None:
         gdaltest.have_gtm = 0

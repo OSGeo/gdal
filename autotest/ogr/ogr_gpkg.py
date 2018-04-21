@@ -91,11 +91,8 @@ def ogr_gpkg_1():
     gdaltest.gpkg_ds = None
     gdaltest.gpkg_dr = None
 
-    try:
-        gdaltest.gpkg_dr = ogr.GetDriverByName('GPKG')
-        if gdaltest.gpkg_dr is None:
-            return 'skip'
-    except:
+    gdaltest.gpkg_dr = ogr.GetDriverByName('GPKG')
+    if gdaltest.gpkg_dr is None:
         return 'skip'
 
     try:

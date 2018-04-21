@@ -457,7 +457,7 @@ def misc_7():
 
     try:
         gdal.InvGeoTransform
-    except:
+    except AttributeError:
         return 'skip'
 
     gt = (10, 0.1, 0, 20, 0, -1.0)
@@ -478,7 +478,7 @@ def misc_8():
 
     try:
         gdal.ApplyGeoTransform
-    except:
+    except AttributeError:
         return 'skip'
 
     gt = (10, 0.1, 0, 20, 0, -1.0)

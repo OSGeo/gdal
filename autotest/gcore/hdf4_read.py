@@ -62,10 +62,7 @@ init_list = [
 
 def hdf4_read_online_1():
 
-    try:
-        gdaltest.hdf4_drv = gdal.GetDriverByName('HDF4')
-    except:
-        gdaltest.hdf4_drv = None
+    gdaltest.hdf4_drv = gdal.GetDriverByName('HDF4')
 
     if gdaltest.hdf4_drv is None:
         return 'skip'

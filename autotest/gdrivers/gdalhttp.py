@@ -47,20 +47,13 @@ def http_1():
 
     gdaltest.dods_drv = None
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 
-    try:
-        gdaltest.dods_drv = gdal.GetDriverByName('DODS')
-        if gdaltest.dods_drv is not None:
-            gdaltest.dods_drv.Deregister()
-    except:
-        gdaltest.dods_drv = None
+    gdaltest.dods_drv = gdal.GetDriverByName('DODS')
+    if gdaltest.dods_drv is not None:
+        gdaltest.dods_drv.Deregister()
 
     tst = gdaltest.GDALTest('PNG', 'http://gdal.org/gdalicon.png',
                             1, 7617, filename_absolute=1)
@@ -80,11 +73,7 @@ def http_1():
 
 def http_2():
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 
@@ -106,11 +95,7 @@ def http_2():
 
 def http_3():
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 
@@ -133,11 +118,7 @@ def http_3():
 
 def http_4_old():
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 
@@ -174,11 +155,7 @@ def http_4():
     if gdaltest.skip_on_travis():
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 
@@ -214,11 +191,7 @@ def http_4():
 
 def http_5():
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 
@@ -254,11 +227,7 @@ def http_5():
 
 def http_6():
 
-    try:
-        drv = gdal.GetDriverByName('HTTP')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         return 'skip'
 

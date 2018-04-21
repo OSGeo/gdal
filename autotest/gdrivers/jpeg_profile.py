@@ -201,7 +201,7 @@ def jpeg_copy_icc_64K():
         os.stat('tmp/icc_test.jpg.aux.xml')
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except OSError:
         pass
 
     if source_icc_profile != icc:

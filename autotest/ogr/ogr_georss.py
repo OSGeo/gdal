@@ -42,11 +42,7 @@ from osgeo import gdal
 
 def ogr_georss_init():
 
-    try:
-        ds = ogr.Open('data/atom_rfc_sample.xml')
-    except:
-        ds = None
-
+    ds = ogr.Open('data/atom_rfc_sample.xml')
     if ds is None:
         gdaltest.georss_read_support = 0
     else:
@@ -506,10 +502,7 @@ def ogr_georss_12():
 
     open('tmp/broken.rss', 'wt').write('<?xml version="1.0"?><rss><item><a></item></rss>')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    try:
-        ds = ogr.Open('tmp/broken.rss')
-    except:
-        ds = None
+    ds = ogr.Open('tmp/broken.rss')
     gdal.PopErrorHandler()
     if ds is not None:
         return 'fail'
@@ -609,7 +602,7 @@ def ogr_georss_15():
 
     try:
         gdal.FileFromMemBuffer
-    except:
+    except AttributeError:
         return 'skip'
 
     content = """<?xml version="1.0" encoding="UTF-8"?>

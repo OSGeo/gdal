@@ -55,12 +55,7 @@ import gdaltest
 def wcs_1():
 
     # Disable wcs tests till we have a more reliable test server.
-    gdaltest.wcs_drv = None
-
-    try:
-        gdaltest.wcs_drv = gdal.GetDriverByName('WCS')
-    except:
-        gdaltest.wcs_drv = None
+    gdaltest.wcs_drv = gdal.GetDriverByName('WCS')
 
     # NOTE - mloskot:
     # This is a dirty hack checking if remote WCS service is online.

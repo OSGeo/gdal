@@ -189,7 +189,7 @@ def jpeg_4():
 
     try:
         gdalconst.GMF_ALL_VALID
-    except:
+    except AttributeError:
         return 'skip'
 
     ds = gdal.Open('data/masked.jpg')

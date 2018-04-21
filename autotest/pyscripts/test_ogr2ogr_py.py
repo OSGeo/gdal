@@ -1508,7 +1508,7 @@ def test_ogr2ogr_py_46():
     try:
         os.stat('tmp/test_ogr2ogr_45_src.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_45_src.shp')
-    except:
+    except OSError:
         pass
 
     try:

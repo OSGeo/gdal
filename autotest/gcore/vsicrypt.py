@@ -150,7 +150,7 @@ def vsicrypt_2():
             fp = gdal.VSIFOpenL('/vsimem/file.bin', 'wb')
             try:
                 new_byte = chr(val).encode('latin1')
-            except:
+            except (UnicodeDecodeError, UnicodeEncodeError):
                 new_byte = chr(val)
             header_new = header[0:i] + new_byte + header[i + 1:]
             gdal.VSIFWriteL(header_new, 1, 46, fp)

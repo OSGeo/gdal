@@ -48,11 +48,8 @@ def ogr_cad_1():
     gdaltest.cad_ds = None
     gdaltest.cad_dr = None
 
-    try:
-        gdaltest.cad_dr = ogr.GetDriverByName('CAD')
-        if gdaltest.cad_dr is None:
-            return 'skip'
-    except:
+    gdaltest.cad_dr = ogr.GetDriverByName('CAD')
+    if gdaltest.cad_dr is None:
         return 'skip'
 
     return 'success'

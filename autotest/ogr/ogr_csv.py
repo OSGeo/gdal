@@ -2695,12 +2695,9 @@ def ogr_csv_cleanup():
 
     gdaltest.csv_ds = None
 
-    try:
-        gdaltest.csv_lyr1 = None
-        gdaltest.csv_lyr2 = None
-        gdaltest.csv_tmpds = None
-    except:
-        pass
+    gdaltest.csv_lyr1 = None
+    gdaltest.csv_lyr2 = None
+    gdaltest.csv_tmpds = None
 
     try:
         gdal.PushErrorHandler('CPLQuietErrorHandler')

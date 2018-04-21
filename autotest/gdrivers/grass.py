@@ -41,10 +41,8 @@ import gdaltest
 
 def grass_1():
 
-    try:
-        gdaltest.grass_drv = gdal.GetDriverByName('GRASS')
-    except:
-        gdaltest.grass_drv = None
+    gdaltest.grass_drv = gdal.GetDriverByName('GRASS')
+    if gdaltest.grass_drv is None:
         return 'skip'
 
     return 'success'

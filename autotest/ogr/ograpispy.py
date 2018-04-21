@@ -55,7 +55,7 @@ def ograpispy_1():
     try:
         os.stat('tmp/ograpispy_1.py')
         ogrtest.has_apispy = True
-    except:
+    except OSError:
         ogrtest.has_apispy = False
         return 'skip'
 

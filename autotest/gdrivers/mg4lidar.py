@@ -43,11 +43,7 @@ from osgeo import gdal
 
 def mg4lidar_1():
 
-    try:
-        drv = gdal.GetDriverByName('MG4Lidar')
-    except:
-        drv = None
-
+    drv = gdal.GetDriverByName('MG4Lidar')
     if drv is None:
         return 'skip'
 

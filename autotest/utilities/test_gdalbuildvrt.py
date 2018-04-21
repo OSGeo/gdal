@@ -260,7 +260,7 @@ def test_gdalbuildvrt_7():
 
     try:
         ff = '\xff'.encode('latin1')
-    except:
+    except UnicodeDecodeError:
         ff = '\xff'
 
     out_ds.GetRasterBand(1).WriteRaster(0, 0, 10, 10, ff, buf_type=gdal.GDT_Byte, buf_xsize=1, buf_ysize=1)

@@ -54,10 +54,7 @@ def ogr_gpsbabel_init():
         print('Cannot access GPSBabel utility')
         return 'skip'
 
-    try:
-        ds = ogr.Open('data/test.gpx')
-    except:
-        ds = None
+    ds = ogr.Open('data/test.gpx')
 
     if ds is None:
         print('GPX driver not configured for read support')
