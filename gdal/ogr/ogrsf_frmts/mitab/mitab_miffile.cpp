@@ -1664,19 +1664,21 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     strncpy(szNewFieldName, pszName, sizeof(szNewFieldName)-1);
     szNewFieldName[sizeof(szNewFieldName)-1] = '\0';
 
-    while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 10)
+    while (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end() &&
+           nRenameNum < 10)
     {
       CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s_%.1u", pszName, nRenameNum );
       nRenameNum ++;
     }
 
-    while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 100)
+    while (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end() &&
+           nRenameNum < 100)
     {
       CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s%.2u", pszName, nRenameNum );
       nRenameNum ++;
     }
 
-    if (m_poDefn->GetFieldIndex(szNewFieldName) >= 0)
+    if (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end())
     {
       CPLError( CE_Failure, CPLE_NotSupported,
                 "Too many field names like '%s' when truncated to 31 letters "
@@ -1790,6 +1792,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
      * Add the FieldDefn to the FeatureDefn
      *----------------------------------------------------*/
     m_poDefn->AddFieldDefn(poFieldDefn);
+    m_oSetFields.insert(CPLString(poFieldDefn->GetNameRef()).toupper());
     delete poFieldDefn;
 
     /*-----------------------------------------------------------------

@@ -38,6 +38,8 @@
 #include "ogr_featurestyle.h"
 #include "ogrsf_frmts.h"
 
+#include <set>
+
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
@@ -641,6 +643,7 @@ class MIFFile final : public IMapInfoFile
     MIDDATAFile  *m_poMIFFile;   // Mif File
 
     OGRFeatureDefn *m_poDefn;
+    std::set<CPLString> m_oSetFields;
     OGRSpatialReference *m_poSpatialRef;
 
     int         m_nFeatureCount;
