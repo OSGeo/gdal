@@ -97,7 +97,8 @@ INST_H_FILES = \
 	cpl_time.h \
 	cpl_virtualmem.h \
 	cpl_vsi.h \
-	cpl_vsi_virtual.h
+	cpl_vsi_virtual.h \
+	gdal_csv.h
 
 install:
 	for f in $(INST_H_FILES) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
