@@ -324,7 +324,7 @@ def test_ogr2ogr_10():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except (OSError, AttibuteError):
+    except (OSError, AttributeError):
         pass
 
     # Voluntary don't use the exact case of the source field names (#4502)
