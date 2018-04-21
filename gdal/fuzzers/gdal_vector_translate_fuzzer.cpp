@@ -75,8 +75,15 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             osOutFilename = pszLine;
             osOutFilename = osOutFilename.replaceAll('/', '_');
         }
+        int nCandidateLayerNames = 0;
         while( (pszLine = CPLReadLineL(fp)) != nullptr )
         {
+            if( pszLine[0] != '-' )
+            {
+                nCandidateLayerNames ++;
+                if( nCandidateLayerNames == 10 )
+                    break;
+            }
             papszArgv = CSLAddString(papszArgv, pszLine);
         }
         VSIFCloseL(fp);
