@@ -1624,7 +1624,7 @@ def ogr_sql_sqlite_24():
     ds.ReleaseResultSet(sql_lyr)
 
     # Big very compressible string
-    bigstr = ''.join(['a' for i in range(10000)])
+    bigstr = 'a' * 10000
     sql_lyr = ds.ExecuteSQL("SELECT CAST(ogr_inflate(ogr_deflate('%s')) AS VARCHAR)" % bigstr, dialect='SQLite')
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != bigstr:

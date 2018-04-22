@@ -593,7 +593,7 @@ def ogr_fgdb_9():
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
 
-    _160char = ''.join(['A123456789' for i in range(16)])
+    _160char = 'A123456789' * 16
 
     in_names = ['FROM',  # reserved keyword
                 '1NUMBER',  # starting with a number

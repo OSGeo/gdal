@@ -2821,7 +2821,7 @@ def ogr_shape_57():
         return 'fail'
 
     feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField(0, '0123456789'.join(['' for i in range(27)]))
+    feat.SetField(0, '0123456789' * 27)
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -3009,7 +3009,7 @@ def ogr_shape_61():
     lyr.CreateField(field_defn)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField(0, ''.join(['0123456789' for i in range(8)]))
+    feat.SetField(0, '0123456789' * 8)
     feat.SetField(1, 2)
     lyr.CreateFeature(feat)
     feat = None
@@ -3021,7 +3021,7 @@ def ogr_shape_61():
         return 'fail'
 
     feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField(0, ''.join(['0123456789' for i in range(9)]))
+    feat.SetField(0, '0123456789' * 9)
     feat.SetField(1, 34)
     lyr.CreateFeature(feat)
     feat = None
@@ -3050,7 +3050,7 @@ def ogr_shape_61():
 
     feat = lyr.GetFeature(1)
     val = feat.GetFieldAsString(0)
-    if val != ''.join(['0123456789' for i in range(9)]):
+    if val != '0123456789' * 9
         gdaltest.post_reason('did not get expected field value')
         print(val)
         return 'fail'
