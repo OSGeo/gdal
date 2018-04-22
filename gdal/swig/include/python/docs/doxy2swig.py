@@ -26,7 +26,6 @@ from xml.dom import minidom
 import re
 import textwrap
 import sys
-import types
 import os.path
 
 
