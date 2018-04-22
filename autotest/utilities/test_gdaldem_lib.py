@@ -541,7 +541,7 @@ def test_gdaldem_lib_aspect_ZevenbergenThorne():
 
 def test_gdaldem_lib_nodata():
 
-    for (value, type) in [(0, gdal.GDT_Byte),
+    for (value, typ) in [(0, gdal.GDT_Byte),
                           (1, gdal.GDT_Byte),
                           (255, gdal.GDT_Byte),
                           (0, gdal.GDT_UInt16),
@@ -550,7 +550,7 @@ def test_gdaldem_lib_nodata():
                           (0, gdal.GDT_Int16),
                           (-32678, gdal.GDT_Int16),
                           (32767, gdal.GDT_Int16)]:
-        src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1, type)
+        src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1, typ)
         src_ds.GetRasterBand(1).SetNoDataValue(value)
         src_ds.GetRasterBand(1).Fill(value)
 

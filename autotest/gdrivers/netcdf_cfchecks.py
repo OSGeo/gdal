@@ -651,13 +651,13 @@ class CFChecker:
         return
 
         # ---------------------------
-    def uniqueList(self, list):
+    def uniqueList(self, lst):
         # ---------------------------
         """Determine if list has any repeated elements."""
         # Rewrite to allow list to be either a list or a Numeric array
         seen = []
 
-        for x in list:
+        for x in lst:
             if x in seen:
                 return 0
             else:
@@ -1057,30 +1057,30 @@ class CFChecker:
         self.formulas['ocean_double_sigma_coordinate'] = ['z(k,j,i)=sigma(k)*f(j,i)', 'z(k,j,i)=f(j,i)+(sigma(k)-1)*(depth(j,i)-f(j,i))', 'f(j,i)=0.5*(z1+z2)+0.5*(z1-z2)*tanh(2*a/(z1-z2)*(depth(j,i)-href))']
 
         # ----------------------------------------
-    def parseBlankSeparatedList(self, list):
+    def parseBlankSeparatedList(self, lst):
         # ----------------------------------------
         """Parse blank separated list"""
-        if re.match("^[a-zA-Z0-9_ ]*$", list):
+        if re.match("^[a-zA-Z0-9_ ]*$", lst):
             return 1
         else:
             return 0
 
         # -------------------------------------------
-    def extendedBlankSeparatedList(self, list):
+    def extendedBlankSeparatedList(self, lst):
         # -------------------------------------------
         """Check list is a blank separated list of words containing alphanumeric characters
         plus underscore '_', period '.', plus '+', hyphen '-', or "at" sign '@'."""
-        if re.match("^[a-zA-Z0-9_ @\-\+\.]*$", list):
+        if re.match("^[a-zA-Z0-9_ @\-\+\.]*$", lst):
             return 1
         else:
             return 0
 
         # -------------------------------------------
-    def commaOrBlankSeparatedList(self, list):
+    def commaOrBlankSeparatedList(self, lst):
         # -------------------------------------------
         """Check list is a blank or comma separated list of words containing alphanumeric
         characters plus underscore '_', period '.', plus '+', hyphen '-', or "at" sign '@'."""
-        if re.match("^[a-zA-Z0-9_ @\-\+\.,]*$", list):
+        if re.match("^[a-zA-Z0-9_ @\-\+\.,]*$", lst):
             return 1
         else:
             return 0
@@ -1549,7 +1549,7 @@ class CFChecker:
         return rc
 
         # ---------------------------------------------------
-    def isValidCellMethodTypeValue(self, type, value):
+    def isValidCellMethodTypeValue(self, typ, value):
         # ---------------------------------------------------
         """ Is <type1> or <type2> in the cell_methods attribute a valid value"""
         rc = 1
@@ -1557,7 +1557,7 @@ class CFChecker:
         if value in self.auxCoordVars:
             if self.getTypeCode(self.f[value]) != 'c':
                 rc = 0
-            elif type == "type2":
+            elif typ == "type2":
                 # <type2> has the additional requirement that it is not allowed a leading dimension of more than one
                 leadingDim = self.f[value].getAxisIds()[0]
                 # Must not be a value of more than one
