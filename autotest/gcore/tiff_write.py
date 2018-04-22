@@ -182,9 +182,7 @@ def tiff_write_4():
         gdaltest.post_reason('Wrong geotransform.')
         return 'fail'
 
-    dict = {}
-    dict['TEST_KEY'] = 'TestValue'
-    new_ds.SetMetadata(dict)
+    new_ds.SetMetadata({'TEST_KEY': 'TestValue'})
 
     new_ds = None
 
@@ -2706,9 +2704,7 @@ def tiff_write_72():
 
     shutil.copyfile('data/byte.tif', 'tmp/byte.tif')
     ds = gdal.Open('tmp/byte.tif', gdal.GA_Update)
-    dict = {}
-    dict['TEST_KEY'] = 'TestValue'
-    ds.SetMetadata(dict)
+    ds.SetMetadata({'TEST_KEY': 'TestValue'})
     ds = None
 
     for profile in ('GDALGeotiff', 'GEOTIFF', 'BASELINE'):
@@ -2748,9 +2744,7 @@ def tiff_write_73():
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:32601')
     out_ds.SetProjection(srs.ExportToWkt())
-    dict = {}
-    dict['TEST_KEY'] = 'TestValue'
-    out_ds.SetMetadata(dict)
+    out_ds.SetMetadata({'TEST_KEY': 'TestValue'})
     out_ds.BuildOverviews('NONE', [2])
     out_ds.GetRasterBand(1).Fill(255)
     out_ds = None
