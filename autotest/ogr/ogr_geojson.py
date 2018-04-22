@@ -59,7 +59,7 @@ def validate_layer(lyr, name, features, type, fields, box):
         print('Layer definition is none')
         return False
 
-    if type != lyrDefn.GetGeomType():
+    if typ != lyrDefn.GetGeomType():
         print('Wrong geometry type')
         print(lyrDefn.GetGeomType())
         return False
@@ -1737,8 +1737,8 @@ def ogr_geojson_35():
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
-    for id in range(2, 8):
-        if data.find('{ "type": "Feature", "id": %d, "properties": { }, "geometry": null }' % id) == -1:
+    for ident in range(2, 8):
+        if data.find('{ "type": "Feature", "id": %d, "properties": { }, "geometry": null }' % ident) == -1:
             gdaltest.post_reason('fail')
             print(data)
             return 'fail'

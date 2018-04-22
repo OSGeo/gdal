@@ -121,11 +121,7 @@ lst = [["GTiff", "data/byte_with_xmp.tif", True],
        ["WEBP", "data/rgbsmall.webp", False],
        ]
 
-for item in lst:
-    drivername = item[0]
-    filename = item[1]
-    expect_xmp = item[2]
-
+for drivername, filename, expect_xmp in lst:
     ut = TestXMPRead(drivername, filename, expect_xmp)
     gdaltest_list.append((ut.test, "xmp_read_%s_%s" % (drivername, "true" if expect_xmp is True else "false")))
 

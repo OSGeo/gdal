@@ -488,8 +488,8 @@ def ogr_mysql_15():
 
     query = 'eas_id = 169'
 
-    for id in range(1000):
-        query = query + (' or eas_id = %d' % (id + 1000))
+    for i in range(1000):
+        query = query + (' or eas_id = %d' % (i + 1000))
 
     gdaltest.mysql_lyr.SetAttributeFilter(query)
     tr = ogrtest.check_features_against_list(gdaltest.mysql_lyr,
@@ -514,8 +514,8 @@ def ogr_mysql_16():
 
     query = 'eas_id = 169'
 
-    for id in range(1000):
-        query = query + (' or eas_id = %d' % (id + 1000))
+    for ident in range(1000):
+        query = query + (' or eas_id = %d' % (ident + 1000))
 
     statement = 'select eas_id from tpoly where ' + query
 

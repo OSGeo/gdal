@@ -431,10 +431,10 @@ def test_gdal_translate_lib_101():
 def test_gdal_translate_lib_102():
 
     ds = gdal.Translate('', gdal.Open('../gcore/data/byte.tif'), format='MEM', scaleParams=[[0, 255, 0, 65535]], outputType=gdal.GDT_UInt16)
-    (min, max) = ds.GetRasterBand(1).ComputeRasterMinMax(False)
-    if (min, max) != (19018.0, 65535.0):
+    result = ds.GetRasterBand(1).ComputeRasterMinMax(False)
+    if result != (19018.0, 65535.0):
         gdaltest.post_reason('failure')
-        print(min, max)
+        print(result)
         return 'fail'
 
     (approx_min, approx_max) = ds.GetRasterBand(1).ComputeRasterMinMax(True)

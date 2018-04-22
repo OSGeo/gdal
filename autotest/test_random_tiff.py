@@ -123,7 +123,7 @@ for level in range(len(tags)):
     nVals = nVals * len_possible_vals
 itern = 0
 while True:
-    itern = itern + 1
+    itern += 1
     comb_val = random.randrange(0, nVals)
     content = generate_tif(comb_val)
 

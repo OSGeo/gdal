@@ -911,10 +911,7 @@ def tiff_write_20():
               ('TIFFTAG_MAXSAMPLEVALUE', '2'),
               ]
 
-    dict = {}
-    for item in values:
-        dict[item[0]] = item[1]
-    new_ds.SetMetadata(dict)
+    new_ds.SetMetadata(dict(values))
 
     new_ds = None
 
@@ -3690,9 +3687,9 @@ def tiff_write_88():
     # so that the CreateCopy() aborts quickly
     f = open('tmp/tiff_write_88_src.tif', 'rb')
     f.seek(0, 2)
-    len = f.tell()
+    length = f.tell()
     f.seek(0, 0)
-    data = f.read(len - 1)
+    data = f.read(length - 1)
     f.close()
     f = open('tmp/tiff_write_88_src.tif', 'wb')
     f.write(data)

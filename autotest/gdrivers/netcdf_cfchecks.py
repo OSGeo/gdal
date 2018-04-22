@@ -149,8 +149,7 @@ class ConstructDict(ContentHandler):
     def startElement(self, name, attrs):
         # If it's an entry element, save the id
         if name == 'entry':
-            id = normalize_whitespace(attrs.get('id', ""))
-            self.this_id = id
+            self.this_id = normalize_whitespace(attrs.get('id', ""))
 
         # If it's the start of a canonical_units element
         elif name == 'canonical_units':
@@ -229,8 +228,7 @@ class ConstructList(ContentHandler):
     def startElement(self, name, attrs):
         # If it's an entry element, save the id
         if name == 'entry':
-            id = normalize_whitespace(attrs.get('id', ""))
-            self.list.append(id)
+            self.list.append(normalize_whitespace(attrs.get('id', "")))
 
         elif name == 'version_number':
             self.inVersionNoContent = 1

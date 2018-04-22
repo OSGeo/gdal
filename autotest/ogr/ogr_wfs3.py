@@ -315,14 +315,14 @@ def ogr_wfs3_schema_from_api():
         ("boolean_attr", ogr.OFTInteger, ogr.OFSTBoolean),
         ("string_attr", ogr.OFTString, ogr.OFSTNone),
     ]
-    for (attr_name, type, subtype) in expected_attrs:
+    for (attr_name, typ, subtype) in expected_attrs:
         fld_idx = lyr.GetLayerDefn().GetFieldIndex(attr_name)
         if fld_idx < 0:
             gdaltest.post_reason('fail')
             print(attr_name)
             return 'fail'
         fld_defn = lyr.GetLayerDefn().GetFieldDefn(fld_idx)
-        if fld_defn.GetType() != type and fld_defn.GetSubType() != subtype:
+        if fld_defn.GetType() != typ and fld_defn.GetSubType() != subtype:
             gdaltest.post_reason('fail')
             print(attr_name, fld_defn.GetType(), fld_defn.GetSubType())
             return 'fail'

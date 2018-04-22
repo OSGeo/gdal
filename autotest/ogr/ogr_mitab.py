@@ -2326,12 +2326,12 @@ def ogr_mitab_45():
     dsExts = ['.mif', '.tab', '', '']
 
     for formatN in range(len(formats)):
-        format = formats[formatN]
+        frmt = formats[formatN]
         lyrCount = lyrNums[formatN]
         ext = dsExts[formatN]
-        dsName = '/vsimem/45/ogr_mitab_45_%s_%s%s' % (format, lyrCount, ext)
+        dsName = '/vsimem/45/ogr_mitab_45_%s_%s%s' % (frmt, lyrCount, ext)
 
-        ds = gdaltest.mapinfo_drv.CreateDataSource(dsName, options=['FORMAT=' + format])
+        ds = gdaltest.mapinfo_drv.CreateDataSource(dsName, options=['FORMAT=' + frmt])
 
         if ds is None:
             gdaltest.post_reason('Can\'t create dataset: ' + dsName)

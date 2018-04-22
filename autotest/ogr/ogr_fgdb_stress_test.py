@@ -117,14 +117,13 @@ def ogr_fgdb_stress_test_1():
             fid = -1
             if random.randrange(0, 2) == 0:
                 fid = 1 + random.randrange(0, 1000)
-            str = '%d' % random.randrange(0, 1000)
             wkt = 'POINT (%d %d)' % (random.randrange(0, 100), random.randrange(0, 100))
             if verbose:
                 print('Create(%d)' % fid)
             for lyr in [lyr_test, lyr_ref]:
                 f = ogr.Feature(lyr.GetLayerDefn())
                 f.SetFID(fid)
-                f.SetField(0, str)
+                f.SetField(0, '%d' % random.randrange(0, 1000))
                 f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
                 gdal.PushErrorHandler()
                 ret.append(lyr.CreateFeature(f))
@@ -145,12 +144,11 @@ def ogr_fgdb_stress_test_1():
             fid = 1 + random.randrange(0, 1000)
             if verbose:
                 print('Update(%d)' % fid)
-            str = '%d' % random.randrange(0, 1000)
             wkt = 'POINT (%d %d)' % (random.randrange(0, 100), random.randrange(0, 100))
             for lyr in [lyr_test, lyr_ref]:
                 f = ogr.Feature(lyr.GetLayerDefn())
                 f.SetFID(fid)
-                f.SetField(0, str)
+                f.SetField(0, '%d' % random.randrange(0, 1000))
                 f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
                 # gdal.PushErrorHandler()
                 ret.append(lyr.SetFeature(f))

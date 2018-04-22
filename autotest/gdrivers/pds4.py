@@ -305,11 +305,11 @@ def pds4_9():
 
     filename = '/vsimem/out.xml'
     # Test copy of all specialConstants and overide noData
-    for format in ['RAW', 'GEOTIFF']:
+    for frmt in ['RAW', 'GEOTIFF']:
         with hide_substitution_warnings_error_handler():
             gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4',
                            noData=75,
-                           creationOptions=['IMAGE_FORMAT=' + format])
+                           creationOptions=['IMAGE_FORMAT=' + frmt])
 
         ret = validate_xml(filename)
         if ret == 'fail':
@@ -338,11 +338,11 @@ def pds4_9():
         ds = None
 
     # Test just setting noData
-    for format in ['RAW', 'GEOTIFF']:
+    for frmt in ['RAW', 'GEOTIFF']:
         with hide_substitution_warnings_error_handler():
             gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4',
                            creationOptions=['USE_SRC_LABEL=NO',
-                                            'IMAGE_FORMAT=' + format])
+                                            'IMAGE_FORMAT=' + frmt])
 
         ret = validate_xml(filename)
         if ret == 'fail':
@@ -353,7 +353,7 @@ def pds4_9():
         ndv = ds.GetRasterBand(1).GetNoDataValue()
         if ndv != 74:
             gdaltest.post_reason('fail')
-            print(format)
+            print(frmt)
             print(ndv)
             return 'fail'
 
@@ -361,7 +361,7 @@ def pds4_9():
 
         # Test filling with nodata
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                                 options=['IMAGE_FORMAT=' + format])
+                                                 options=['IMAGE_FORMAT=' + frmt])
         ds.GetRasterBand(1).SetNoDataValue(1)
         with hide_substitution_warnings_error_handler():
             ds = None
@@ -370,7 +370,7 @@ def pds4_9():
         cs = ds.GetRasterBand(1).Checksum()
         if cs != 1:
             gdaltest.post_reason('fail')
-            print(format)
+            print(frmt)
             print(cs)
             return 'fail'
         ds = None
