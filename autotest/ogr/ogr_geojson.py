@@ -44,7 +44,7 @@ import ogrtest
 # Test utilities
 
 
-def validate_layer(lyr, name, features, type, fields, box):
+def validate_layer(lyr, name, features, typ, fields, box):
 
     if name is not None and name != lyr.GetName():
         print('Wrong layer name')
