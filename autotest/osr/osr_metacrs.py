@@ -89,8 +89,8 @@ class MetaCRSTest:
 
         return 'success'
 
-    def build_srs(self, type, crstext):
-        if type == 'EPSG':
+    def build_srs(self, typ, crstext):
+        if typ == 'EPSG':
             srs = osr.SpatialReference()
             if srs.ImportFromEPSGA(int(crstext)) == 0:
                 return srs
@@ -98,7 +98,7 @@ class MetaCRSTest:
                 gdaltest.post_reason('failed to translate EPSG:' + crstext)
                 return None
         else:
-            gdaltest.post_reason('unsupported srs type: ' + type)
+            gdaltest.post_reason('unsupported srs type: ' + typ)
             return None
 
     def testMetaCRS(self):

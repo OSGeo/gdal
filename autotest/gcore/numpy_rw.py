@@ -427,9 +427,8 @@ def numpy_rw_12():
 
     drv = gdal.GetDriverByName('MEM')
     ds = drv.Create('', 1, 2, 1, gdal.GDT_Byte)
-    slice = ar[:, 1:]
 
-    ds.GetRasterBand(1).WriteArray(slice)
+    ds.GetRasterBand(1).WriteArray(ar[:, 1:])
 
     ar_read = numpy.zeros_like(ar)
     slice_read = ar_read[:, 1:]

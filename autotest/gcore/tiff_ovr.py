@@ -192,19 +192,19 @@ def tiff_ovr_4():
     ovimage = ovband.ReadRaster(0, 0, ovband.XSize, ovband.YSize)
 
     pix_count = ovband.XSize * ovband.YSize
-    sum = 0.0
+    total = 0.0
     is_bytes = False
     if (isinstance(ovimage, bytes) and not isinstance(ovimage, str)):
         is_bytes = True
 
     if is_bytes is True:
         for i in range(pix_count):
-            sum = sum + ovimage[i]
+            total += ovimage[i]
     else:
         for i in range(pix_count):
-            sum = sum + ord(ovimage[i])
+            total += ord(ovimage[i])
 
-    average = sum / pix_count
+    average = total / pix_count
     exp_average = 153.0656
     if abs(average - exp_average) > 0.1:
         print(average)
@@ -219,14 +219,14 @@ def tiff_ovr_4():
                                 ovband.XSize, ovband.YSize)
 
     pix_count = ovband.XSize * ovband.YSize
-    sum = 0.0
+    total = 0.0
     if is_bytes is True:
         for i in range(pix_count):
-            sum = sum + ovimage[i]
+            total += ovimage[i]
     else:
         for i in range(pix_count):
-            sum = sum + ord(ovimage[i])
-    average = sum / pix_count
+            total += ord(ovimage[i])
+    average = total / pix_count
     exp_average = 0.6096
 
     if abs(average - exp_average) > 0.01:
@@ -1156,9 +1156,7 @@ def tiff_ovr_30():
     ds = None
 
     ds = gdal.Open('tmp/ovr30.tif', gdal.GA_Update)
-    dict = {}
-    dict['TEST_KEY'] = 'TestValue'
-    ds.SetMetadata(dict)
+    ds.SetMetadata({'TEST_KEY': 'TestValue'})
     ds = None
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr30.tif', 20, 20, 1)
@@ -1592,19 +1590,19 @@ def tiff_ovr_40():
     ovimage = ovband.ReadRaster(0, 0, ovband.XSize, ovband.YSize)
 
     pix_count = ovband.XSize * ovband.YSize
-    sum = 0.0
+    total = 0.0
     is_bytes = False
     if (isinstance(ovimage, bytes) and not isinstance(ovimage, str)):
         is_bytes = True
 
     if is_bytes is True:
         for i in range(pix_count):
-            sum = sum + ovimage[i]
+            total += ovimage[i]
     else:
         for i in range(pix_count):
-            sum = sum + ord(ovimage[i])
+            total += ord(ovimage[i])
 
-    average = sum / pix_count
+    average = total / pix_count
     exp_average = 153.0656
     if abs(average - exp_average) > 0.1:
         print(average)
@@ -1619,14 +1617,14 @@ def tiff_ovr_40():
                                 ovband.XSize, ovband.YSize)
 
     pix_count = ovband.XSize * ovband.YSize
-    sum = 0.0
+    total = 0.0
     if is_bytes is True:
         for i in range(pix_count):
-            sum = sum + ovimage[i]
+            total += ovimage[i]
     else:
         for i in range(pix_count):
-            sum = sum + ord(ovimage[i])
-    average = sum / pix_count
+            total += ord(ovimage[i])
+    average = total / pix_count
     exp_average = 0.6096
 
     if abs(average - exp_average) > 0.01:

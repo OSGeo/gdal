@@ -1287,21 +1287,21 @@ def ogr_shape_29():
     ds.ExecuteSQL('REPACK UPPERCASE')
     ds = None
 
-    list = gdal.ReadDir('tmp/UPPERCASE')
+    lst = gdal.ReadDir('tmp/UPPERCASE')
 
-    if len(list) != 6:
-        print(list)
+    if len(lst) != 6:
+        print(lst)
         return 'fail'
 
-    for filename in list:
+    for filename in lst:
         if filename not in ['.', '..', 'UPPERCASE.SHP', 'UPPERCASE.SHX', 'UPPERCASE.DBF', 'UPPERCASE.CPG']:
             gdaltest.post_reason('fail')
-            print(list)
+            print(lst)
             print(filename)
             return 'fail'
         if filename.find('packed') >= 0:
             gdaltest.post_reason('fail')
-            print(list)
+            print(lst)
             print(filename)
             return 'fail'
 
@@ -1324,15 +1324,15 @@ def ogr_shape_30():
     ds.ExecuteSQL('REPACK lowercase')
     ds = None
 
-    list = gdal.ReadDir('tmp/lowercase')
+    lst = gdal.ReadDir('tmp/lowercase')
 
-    if len(list) != 5:
-        print(list)
+    if len(lst) != 5:
+        print(lst)
         return 'fail'
 
-    for filename in list:
+    for filename in lst:
         if filename not in ['.', '..', 'lowercase.shp', 'lowercase.shx', 'lowercase.dbf']:
-            print(list)
+            print(lst)
             return 'fail'
 
     return 'success'

@@ -244,13 +244,13 @@ def hfa_float_stats_1():
 
     tolerance = 0.0001
 
-    min = float(md['STATISTICS_MINIMUM'])
-    if abs(min - 40.91858291626) > tolerance:
+    mini = float(md['STATISTICS_MINIMUM'])
+    if abs(mini - 40.91858291626) > tolerance:
         gdaltest.post_reason('STATISTICS_MINIMUM is wrong.')
         return 'fail'
 
-    max = float(md['STATISTICS_MAXIMUM'])
-    if abs(max - 41.134323120117) > tolerance:
+    maxi = float(md['STATISTICS_MAXIMUM'])
+    if abs(maxi - 41.134323120117) > tolerance:
         gdaltest.post_reason('STATISTICS_MAXIMUM is wrong.')
         return 'fail'
 

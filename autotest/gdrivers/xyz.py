@@ -116,10 +116,7 @@ def xyz_3():
 
 def xyz_4_checkline(ds, i, expected_bytes):
     buf = ds.ReadRaster(0, i, ds.RasterXSize, 1)
-    bytes = struct.unpack('B' * ds.RasterXSize, buf)
-    if bytes != expected_bytes:
-        return False
-    return True
+    return struct.unpack('B' * ds.RasterXSize, buf) == expected_bytes
 
 
 def xyz_4():

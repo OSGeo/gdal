@@ -359,11 +359,11 @@ def CheckLinearBinning(fname):
     band = ds.GetRasterBand(1)
     rat = band.GetDefaultRAT()
 
-    (state, min, size) = rat.GetLinearBinning()
+    (state, mini, size) = rat.GetLinearBinning()
     if not state:
         raise HFATestError("GetLinearBinning failed")
 
-    if min != 0 or size != 1:
+    if mini != 0 or size != 1:
         raise HFATestError("GetLinearBinning values wrong")
 
     if rat.GetRowOfValue(3) != 3:

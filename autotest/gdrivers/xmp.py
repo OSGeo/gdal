@@ -97,35 +97,31 @@ class TestXMPRead:
 
 gdaltest_list = []
 
-list = [["GTiff", "data/byte_with_xmp.tif", True],
-        ["GTiff", "data/byte.tif", False],
-        ["GIF", "data/byte_with_xmp.gif", True],
-        ["BIGGIF", "data/fakebig.gif", False],
-        ["JPEG", "data/byte_with_xmp.jpg", True],
-        ["JPEG", "data/rgbsmall_rgb.jpg", False],
-        ["PNG", "data/byte_with_xmp.png", True],
-        ["PNG", "data/test.png", False],
-        ["JP2ECW", "data/byte_with_xmp.jp2", True],
-        ["JP2ECW", "data/byte.jp2", False],
-        ["JP2MrSID", "data/byte_with_xmp.jp2", True],
-        ["JP2MrSID", "data/byte.jp2", False],
-        ["JPEG2000", "data/byte_with_xmp.jp2", True],
-        ["JPEG2000", "data/byte.jp2", False],
-        ["JP2OpenJPEG", "data/byte_with_xmp.jp2", True],
-        ["JP2OpenJPEG", "data/byte.jp2", False],
-        ["JP2KAK", "data/byte_with_xmp.jp2", True],
-        ["JP2KAK", "data/byte.jp2", False],
-        ["PDF", "data/adobe_style_geospatial_with_xmp.pdf", True],
-        ["PDF", "data/adobe_style_geospatial.pdf", False],
-        ["WEBP", "data/rgbsmall_with_xmp.webp", True],
-        ["WEBP", "data/rgbsmall.webp", False],
-        ]
+lst = [["GTiff", "data/byte_with_xmp.tif", True],
+       ["GTiff", "data/byte.tif", False],
+       ["GIF", "data/byte_with_xmp.gif", True],
+       ["BIGGIF", "data/fakebig.gif", False],
+       ["JPEG", "data/byte_with_xmp.jpg", True],
+       ["JPEG", "data/rgbsmall_rgb.jpg", False],
+       ["PNG", "data/byte_with_xmp.png", True],
+       ["PNG", "data/test.png", False],
+       ["JP2ECW", "data/byte_with_xmp.jp2", True],
+       ["JP2ECW", "data/byte.jp2", False],
+       ["JP2MrSID", "data/byte_with_xmp.jp2", True],
+       ["JP2MrSID", "data/byte.jp2", False],
+       ["JPEG2000", "data/byte_with_xmp.jp2", True],
+       ["JPEG2000", "data/byte.jp2", False],
+       ["JP2OpenJPEG", "data/byte_with_xmp.jp2", True],
+       ["JP2OpenJPEG", "data/byte.jp2", False],
+       ["JP2KAK", "data/byte_with_xmp.jp2", True],
+       ["JP2KAK", "data/byte.jp2", False],
+       ["PDF", "data/adobe_style_geospatial_with_xmp.pdf", True],
+       ["PDF", "data/adobe_style_geospatial.pdf", False],
+       ["WEBP", "data/rgbsmall_with_xmp.webp", True],
+       ["WEBP", "data/rgbsmall.webp", False],
+       ]
 
-for item in list:
-    drivername = item[0]
-    filename = item[1]
-    expect_xmp = item[2]
-
+for drivername, filename, expect_xmp in lst:
     ut = TestXMPRead(drivername, filename, expect_xmp)
     gdaltest_list.append((ut.test, "xmp_read_%s_%s" % (drivername, "true" if expect_xmp is True else "false")))
 
