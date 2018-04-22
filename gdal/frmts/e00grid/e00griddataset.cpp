@@ -205,7 +205,10 @@ CPLErr E00GRIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         {
             //CPLDebug("E00GRID", "Forward skip to %d from %d", nBlockYOff, poGDS->nLastYOff);
             for(int i=poGDS->nLastYOff + 1; i < nBlockYOff;i++)
-                IReadBlock(0, i, pImage);
+            {
+                if( IReadBlock(0, i, pImage) != CE_None )
+                    return CE_Failure;
+            }
         }
 
         if (nBlockYOff > poGDS->nMaxYOffset)
@@ -222,7 +225,12 @@ CPLErr E00GRIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             {
                 pszLine = E00ReadNextLine(poGDS->e00ReadPtr);
                 if (pszLine == nullptr || strlen(pszLine) < 5 * E00_FLOAT_SIZE)
+                {
+                    CPLError(CE_Failure, CPLE_FileIO,
+                             "Could not find enough values for line %d",
+                             nBlockYOff);
                     return CE_Failure;
+                }
             }
             if (eDataType == GDT_Float32)
             {
@@ -251,7 +259,12 @@ CPLErr E00GRIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     for(int i=0;i<nBlockXSize;i++)
     {
         if (VSIFReadL(szVal, E00_FLOAT_SIZE, 1, poGDS->fp) != 1)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                             "Could not find enough values for line %d",
+                             nBlockYOff);
             return CE_Failure;
+        }
 
         if (eDataType == GDT_Float32)
         {
