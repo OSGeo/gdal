@@ -1487,24 +1487,18 @@ def gml_write_gml3_srs():
 
 def gml_nested():
 
-    gml = ''
-    for i in range(31):
-        gml = gml + '<gml:MultiGeometry><gml:geometryMember>'
-    gml = gml + '<gml:MultiPolygon></gml:MultiPolygon>'
-    for i in range(31):
-        gml = gml + '</gml:geometryMember></gml:MultiGeometry>'
+    gml = '<gml:MultiGeometry><gml:geometryMember>' * 31
+    gml += '<gml:MultiPolygon></gml:MultiPolygon>'
+    gml += '</gml:geometryMember></gml:MultiGeometry>' * 31
 
     geom = ogr.CreateGeometryFromGML(gml)
     if geom is None:
         gdaltest.post_reason('expected a geometry')
         return 'fail'
 
-    gml = ''
-    for i in range(32):
-        gml = gml + '<gml:MultiGeometry><gml:geometryMember>'
-    gml = gml + '<gml:MultiPolygon></gml:MultiPolygon>'
-    for i in range(32):
-        gml = gml + '</gml:geometryMember></gml:MultiGeometry>'
+    gml = '<gml:MultiGeometry><gml:geometryMember>' * 32
+    gml += '<gml:MultiPolygon></gml:MultiPolygon>'
+    gml += '</gml:geometryMember></gml:MultiGeometry>' * 32
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     geom = ogr.CreateGeometryFromGML(gml)

@@ -356,9 +356,7 @@ def vsizip_5():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    filename = "a"
-    for i in range(1000):
-        filename = filename + "/a"
+    filename = "a" + "/a" * 1000
     finside = gdal.VSIFOpenL('/vsizip/vsimem/bigdepthzip.zip/' + filename, 'wb')
     if finside is None:
         gdaltest.post_reason('fail')

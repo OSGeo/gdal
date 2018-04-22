@@ -1292,7 +1292,7 @@ def jpeg_28():
 
     # Too much content for EXIF
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
-    src_ds.SetMetadataItem('EXIF_UserComment', ''.join(['x' for i in range(65535)]))
+    src_ds.SetMetadataItem('EXIF_UserComment', 'x' * 65535)
     with gdaltest.error_handler():
         gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
     src_ds = None

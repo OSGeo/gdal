@@ -565,12 +565,7 @@ def ogr_wkbwkt_test_geometrycollection_wktwkb():
 
 def ogr_wkbwkt_test_geometrycollection_wkt_recursion():
 
-    wkt = ''
-    for i in range(31):
-        wkt = wkt + 'GEOMETRYCOLLECTION ('
-    wkt = wkt + 'GEOMETRYCOLLECTION EMPTY'
-    for i in range(31):
-        wkt = wkt + ')'
+    wkt = 'GEOMETRYCOLLECTION (' * 31 + 'GEOMETRYCOLLECTION EMPTY' + ')' * 31
 
     geom = ogr.CreateGeometryFromWkt(wkt)
     if geom.ExportToWkt() != wkt:
@@ -578,12 +573,7 @@ def ogr_wkbwkt_test_geometrycollection_wkt_recursion():
         print(geom.ExportToWkt())
         return 'fail'
 
-    wkt = ''
-    for i in range(32):
-        wkt = wkt + 'GEOMETRYCOLLECTION ('
-    wkt = wkt + 'GEOMETRYCOLLECTION EMPTY'
-    for i in range(32):
-        wkt = wkt + ')'
+    wkt = 'GEOMETRYCOLLECTION (' * 32 + 'GEOMETRYCOLLECTION EMPTY' + ')' * 32
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     geom = ogr.CreateGeometryFromWkt(wkt)
@@ -604,20 +594,14 @@ def ogr_wkbwkt_test_geometrycollection_wkb_recursion():
     wkb_repeat = struct.pack('B' * 9, 0, 0, 0, 0, 7, 0, 0, 0, 1)
     wkb_end = struct.pack('B' * 9, 0, 0, 0, 0, 7, 0, 0, 0, 0)
 
-    wkb = struct.pack('B' * 0)
-    for i in range(31):
-        wkb = wkb + wkb_repeat
-    wkb = wkb + wkb_end
+    wkb = wkb_repeat * 31 + wkb_end
 
     geom = ogr.CreateGeometryFromWkb(wkb)
     if geom is None:
         gdaltest.post_reason('expected a geometry')
         return 'fail'
 
-    wkb = struct.pack('B' * 0)
-    for i in range(32):
-        wkb = wkb + wkb_repeat
-    wkb = wkb + wkb_end
+    wkb = struct.pack('B' * 0) + wkb_repeat * 32 + wkb_end
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     geom = ogr.CreateGeometryFromWkb(wkb)
