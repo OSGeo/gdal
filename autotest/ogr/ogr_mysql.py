@@ -835,19 +835,6 @@ def ogr_mysql_25():
         return 'fail'
     f = None
 
-    # Error case: missing non-nullable field
-    if False:
-        # hum mysql seems OK with unset non-nullable fields ??
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
-        gdal.PushErrorHandler()
-        ret = lyr.CreateFeature(f)
-        gdal.PopErrorHandler()
-        if ret == 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
-        f = None
-
     gdaltest.mysql_ds = None
     gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update=1)
     lyr = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_25')

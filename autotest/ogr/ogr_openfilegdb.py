@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+e#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -149,15 +149,6 @@ def ogr_openfilegdb_make_test_data():
             # Create empty feature
             feat = ogr.Feature(lyr.GetLayerDefn())
             lyr.CreateFeature(feat)
-
-    if False:
-        lyr = ds.CreateLayer('sparse_layer', geom_type=ogr.wkbPoint)
-        for i in range(4096):
-            feat = ogr.Feature(lyr.GetLayerDefn())
-            lyr.CreateFeature(feat)
-            lyr.DeleteFeature(feat.GetFID())
-        feat = ogr.Feature(lyr.GetLayerDefn())
-        lyr.CreateFeature(feat)
 
     if True:
         lyr = ds.CreateLayer('big_layer', geom_type=ogr.wkbNone)

@@ -2443,11 +2443,6 @@ def ogr_gml_57():
         feat = None
         ds = None
 
-        if False:
-            f = gdal.VSIFOpenL('/vsimem/ogr_gml_57.gml', 'rb')
-            print(gdal.VSIFReadL(1, 1000, f))
-            gdal.VSIFCloseL(f)
-
         ds = ogr.Open('/vsimem/ogr_gml_57.gml')
         lyr = ds.GetLayer(0)
         feat = lyr.GetNextFeature()

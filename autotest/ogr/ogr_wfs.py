@@ -233,20 +233,6 @@ def ogr_wfs_geoserver():
         feat.DumpReadable()
         return 'fail'
 
-    if False:
-        # This GeoServer version doesn't understand <GmlObjectId>
-        lyr.SetAttributeFilter("gml_id = 'poi.1'")
-        feat_count = lyr.GetFeatureCount()
-        if feat_count != 1:
-            gdaltest.post_reason('did not get expected feature count after SetAttributeFilter (2)')
-            print(feat_count)
-            return 'fail'
-        feat = lyr.GetNextFeature()
-        if feat.GetField('gml_id') != 'poi.1':
-            gdaltest.post_reason('did not get expected feature (4)')
-            feat.DumpReadable()
-            return 'fail'
-
     return 'success'
 
 ###############################################################################
