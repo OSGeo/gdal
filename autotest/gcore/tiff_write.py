@@ -6068,7 +6068,7 @@ def tiff_write_133():
     # Test reading strips in not increasing order
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options=['BLOCKYSIZE=1'])
     for y in range(1000):
-        ds.WriteRaster(0, 1000 - y - 1, 1024, 1, ''.join('a' for i in range(3 * 1024)))
+        ds.WriteRaster(0, 1000 - y - 1, 1024, 1, 'a' * (3 * 1024))
         ds.FlushCache()
     ds = None
 
@@ -6092,7 +6092,7 @@ def tiff_write_133():
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options=['STREAMABLE_OUTPUT=YES', 'BLOCKYSIZE=1'])
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    ret = ds.WriteRaster(0, 999, 1024, 1, ''.join('a' for i in range(3 * 1024)))
+    ret = ds.WriteRaster(0, 999, 1024, 1, 'a' * (3 * 1024))
     ds.FlushCache()
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
@@ -6104,7 +6104,7 @@ def tiff_write_133():
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options=['STREAMABLE_OUTPUT=YES', 'TILED=YES'])
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    ret = ds.WriteRaster(256, 256, 256, 256, ''.join('a' for i in range(3 * 256 * 256)))
+    ret = ds.WriteRaster(256, 256, 256, 256, 'a' * (3 * 256 * 256))
     ds.FlushCache()
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':

@@ -305,14 +305,14 @@ def vsis3_2():
             request.send_header('Content-Length', 16384)
             request.send_header('Connection', 'close')
             request.end_headers()
-            request.wfile.write(''.join('a' for i in range(16384)).encode('ascii'))
+            request.wfile.write(('a' * 16384).encode('ascii'))
         else:
             request.send_response(200)
             request.send_header('Content-type', 'text/plain')
             request.send_header('Content-Length', 1000000)
             request.send_header('Connection', 'close')
             request.end_headers()
-            request.wfile.write(''.join('a' for i in range(1000000)).encode('ascii'))
+            request.wfile.write(('a' * 1000000).encode('ascii'))
 
     handler.add('GET', '/s3_fake_bucket/resource2.bin', custom_method=method)
 
@@ -1333,7 +1333,7 @@ def vsis3_6():
         gdaltest.post_reason('fail')
         return 'fail'
     size = 1024 * 1024 + 1
-    big_buffer = ''.join('a' for i in range(size))
+    big_buffer = 'a' * size
 
     handler = webserver.SequentialHandler()
 

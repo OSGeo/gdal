@@ -308,8 +308,8 @@ def minixml_7():
 
 def minixml_8():
 
-    xml_str = ''.join('<a>' for i in range(10001))
-    xml_str += ''.join('</a>' for i in range(10001))
+    xml_str = '<a>' * 10001
+    xml_str += '</a>' * 10001
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
