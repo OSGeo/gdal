@@ -3050,7 +3050,7 @@ def ogr_shape_61():
 
     feat = lyr.GetFeature(1)
     val = feat.GetFieldAsString(0)
-    if val != '0123456789' * 9
+    if val != '0123456789' * 9:
         gdaltest.post_reason('did not get expected field value')
         print(val)
         return 'fail'
