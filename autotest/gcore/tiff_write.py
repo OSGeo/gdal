@@ -913,10 +913,7 @@ def tiff_write_20():
               ('TIFFTAG_MAXSAMPLEVALUE', '2'),
               ]
 
-    dict = {}
-    for item in values:
-        dict[item[0]] = item[1]
-    new_ds.SetMetadata(dict)
+    new_ds.SetMetadata(dict(values))
 
     new_ds = None
 
