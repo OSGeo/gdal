@@ -121,9 +121,9 @@ for level in range(len(tags)):
     len_possible_vals = len(tags[level][2])
     tags[level].append(len_possible_vals)
     nVals = nVals * len_possible_vals
-iter = 0
+itern = 0
 while True:
-    iter = iter + 1
+    itern += 1
     comb_val = random.randrange(0, nVals)
     content = generate_tif(comb_val)
 
@@ -136,7 +136,7 @@ while True:
     # Create in-memory file
     gdal.FileFromMemBuffer('/vsimem/test.tif', content)
 
-    print('iter = %d, comb_val_init = %d' % (iter, comb_val))
+    print('iter = %d, comb_val_init = %d' % (itern, comb_val))
     ds = gdal.Open('/vsimem/test.tif')
     # if ds is not None and ds.RasterCount == 1:
     #    (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()

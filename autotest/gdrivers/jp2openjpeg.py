@@ -1347,9 +1347,9 @@ def get_attribute_val(ar, attr_name):
 
 
 def find_element_with_name(ar, element_name, name):
-    type = ar[XML_TYPE_IDX]
+    typ = ar[XML_TYPE_IDX]
     value = ar[XML_VALUE_IDX]
-    if type == gdal.CXT_Element and value == element_name and get_attribute_val(ar, 'name') == name:
+    if typ == gdal.CXT_Element and value == element_name and get_attribute_val(ar, 'name') == name:
         return ar
     for child_idx in range(XML_FIRST_CHILD_IDX, len(ar)):
         child = ar[child_idx]

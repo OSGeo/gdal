@@ -68,8 +68,8 @@ class RequestResponse:
 
 
 class FileHandler:
-    def __init__(self, dict):
-        self.dict = dict
+    def __init__(self, _dict):
+        self.dict = _dict
 
     def final_check(self):
         pass

@@ -160,15 +160,15 @@ def mrsid_2():
         is_bytes = True
 
     # check that we got roughly the right values by checking mean.
-    sum = 0
+    total = 0
     if is_bytes is True:
         for i in range(len(data)):
-            sum = sum + data[i]
+            total += data[i]
     else:
         for i in range(len(data)):
-            sum = sum + ord(data[i])
+            total += ord(data[i])
 
-    mean = float(sum) / len(data)
+    mean = float(total) / len(data)
 
     if mean < 95 or mean > 105:
         gdaltest.post_reason('image mean out of range.')

@@ -324,11 +324,10 @@ def test_gdal_calc_py_6():
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
-    (min, max) = ds.GetRasterBand(1).ComputeRasterMinMax()
-    if min != 90 or max != 255:
+    result = ds.GetRasterBand(1).ComputeRasterMinMax()
+    if result != (90, 255):
         gdaltest.post_reason('failure')
-        print(min)
-        print(max)
+        print(result)
         return 'fail'
 
     return 'success'

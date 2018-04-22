@@ -105,9 +105,8 @@ def arg_init():
 
     for d in gdaltest.argTests:
         for (name, fmt, nodata) in d['formats']:
-            bytes = encode(fmt, nodata, d['data'])
             arg = open('data/arg-' + name + '.arg', 'wb')
-            arg.write(bytes)
+            arg.write(encode(fmt, nodata, d['data']))
             arg.close()
 
             meta = copy(gdaltest.argDefaults)

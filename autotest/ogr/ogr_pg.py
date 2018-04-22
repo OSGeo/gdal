@@ -779,8 +779,8 @@ def ogr_pg_15():
 
     query = 'eas_id = 169'
 
-    for id in range(1000):
-        query = query + (' or eas_id = %d' % (id + 1000))
+    for ident in range(1000):
+        query = query + (' or eas_id = %d' % (ident + 1000))
 
     gdaltest.pg_lyr.SetAttributeFilter(query)
     tr = ogrtest.check_features_against_list(gdaltest.pg_lyr,
@@ -805,8 +805,8 @@ def ogr_pg_16():
 
     query = 'eas_id = 169'
 
-    for id in range(1000):
-        query = query + (' or eas_id = %d' % (id + 1000))
+    for ident in range(1000):
+        query = query + (' or eas_id = %d' % (ident + 1000))
 
     statement = 'select eas_id from tpoly where ' + query
 
@@ -1200,8 +1200,8 @@ def ogr_pg_22():
     shp_lyr = shp_ds.GetLayer(0)
 
     # Insert 3 features only
-    for id in range(0, 3):
-        feat = shp_lyr.GetFeature(id)
+    for ident in range(0, 3):
+        feat = shp_lyr.GetFeature(ident)
         dst_feat.SetFrom(feat)
         gdaltest.pg_lyr.CreateFeature(dst_feat)
 

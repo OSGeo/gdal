@@ -316,9 +316,9 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
     def log_request(self, code='-', size='-'):
         return
 
-    def Headers(self, type):
+    def Headers(self, typ):
         self.send_response(200)
-        self.send_header('Content-Type', type)
+        self.send_header('Content-Type', typ)
         self.end_headers()
 
     def Respond(self, request, brand, version, test):
