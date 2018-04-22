@@ -1602,7 +1602,7 @@ def tiff_ovr_40():
         for i in range(pix_count):
             total += ord(ovimage[i])
 
-    average = sum / pix_count
+    average = total / pix_count
     exp_average = 153.0656
     if abs(average - exp_average) > 0.1:
         print(average)

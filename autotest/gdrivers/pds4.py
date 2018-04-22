@@ -377,7 +377,7 @@ def pds4_9():
 
         # Test setting nodata and then explicit Fill()
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                                 options=['IMAGE_FORMAT=' + format])
+                                                 options=['IMAGE_FORMAT=' + frmt])
         ds.GetRasterBand(1).SetNoDataValue(10)
         ds.GetRasterBand(1).Fill(1)
         with hide_substitution_warnings_error_handler():
