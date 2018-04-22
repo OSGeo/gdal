@@ -66,7 +66,7 @@ print('char *gpapszS57Classes[] = {')
 classes = open(directory + '/s57objectclasses.csv').readlines()
 
 for line in classes:
-    print('"%s",' % EscapeLine(string.strip(line)))
+    print('"%s",' % EscapeLine(line.strip()))
 
 print('NULL };')
 
@@ -74,6 +74,6 @@ print('char *gpapszS57attributes[] = {')
 classes = open(directory + '/s57attributes.csv').readlines()
 
 for line in classes:
-    print('"%s",' % EscapeLine(string.strip(line)))
+    print('"%s",' % EscapeLine(line.strip()))
 
 print('NULL };')
