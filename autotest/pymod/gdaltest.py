@@ -1007,7 +1007,7 @@ class GDALTest:
             post_reason('Failed to create test file using Create method.')
             return 'fail'
 
-        new_ds.SetMetadata({'TEST_KEY': 'TestValue')
+        new_ds.SetMetadata({'TEST_KEY': 'TestValue'})
         # FIXME
         # if new_ds.SetMetadata( dict ) is not gdal.CE_None:
         #     print new_ds.SetMetadata( dict )
