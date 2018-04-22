@@ -1373,8 +1373,8 @@ def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
             dst.SetGeoTransform( gt  )
         else:
             ngt = [gt[0],gt[1],gt[2],gt[3],gt[4],gt[5]]
-            ngt[0] = gt[0] + xoff*gt[1] + yoff*gt[2];
-            ngt[3] = gt[3] + xoff*gt[4] + yoff*gt[5];
+            ngt[0] = gt[0] + xoff*gt[1] + yoff*gt[2]
+            ngt[3] = gt[3] + xoff*gt[4] + yoff*gt[5]
             dst.SetGeoTransform( ( ngt[0], ngt[1], ngt[2], ngt[3], ngt[4], ngt[5] ) )
 
     #Check for GCPs
