@@ -29,7 +29,6 @@
 ###############################################################################
 
 import os
-import string
 import sys
 from osgeo import gdal
 from osgeo import ogr

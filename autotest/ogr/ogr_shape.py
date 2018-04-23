@@ -3136,8 +3136,6 @@ def ogr_shape_62():
 
 def ogr_shape_63():
 
-    import struct
-
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_63.dbf')
     lyr = ds.CreateLayer('ogr_shape_63', geom_type=ogr.wkbNone)
     gdaltest.fieldname = '\xc3\xa9'
@@ -3551,7 +3549,6 @@ def ogr_shape_72():
     if gdaltest.filesystem_supports_sparse_files('tmp') is False:
         return 'skip'
 
-    import struct
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_shape_72.shp')
     lyr = ds.CreateLayer('2gb', geom_type=ogr.wkbPoint)
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -4287,8 +4284,6 @@ def ogr_shape_89():
 
 
 def ogr_shape_90():
-
-    import struct
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_90.shp')
     lyr = ds.CreateLayer('ogr_shape_90')
