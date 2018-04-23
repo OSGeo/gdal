@@ -100,7 +100,7 @@ class CFVersion(object):
             return False
 
     def __str__(self):
-        return "CF-%s" % string.join(map(str, self.tuple), ".")
+        return "CF-%s" % '.'.join(map(str, self.tuple))
 
     def __cmp__(self, other):
         # maybe overkill but allow for different lengths in future e.g. 3.2 and 3.2.1
@@ -322,7 +322,7 @@ class CFChecker:
 
         print("")
         if self.uploader:
-            realfile = string.split(file, ".nc")[0] + ".nc"
+            realfile = nc.split(".nc")[0] + ".nc"
             print("CHECKING NetCDF FILE:", realfile)
         elif self.useFileName == "no":
             print("CHECKING NetCDF FILE")
@@ -680,7 +680,7 @@ class CFChecker:
         attDict = var.attributes
         if attName not in attDict.keys():
             return None
-        bits = string.split(attDict[attName])
+        bits = attDict[attName].split()
         if bits:
             return bits[0]
         else:
@@ -696,7 +696,7 @@ class CFChecker:
         if attName not in attDict.keys():
             return None
 
-        bits = string.split(attDict[attName])
+        bits = attDict[attName].split()
 
         if len(bits) == 1:
             # Only standard_name part present
@@ -798,7 +798,7 @@ class CFChecker:
                     print("ERROR (5): Invalid syntax for 'coordinates' attribute in", var)
                     self.err = self.err + 1
                 else:
-                    coordinates = string.split(self.f[var].attributes['coordinates'])
+                    coordinates = self.f[var].attributes['coordinates'].split()
                     for dataVar in coordinates:
                         if dataVar in variables:
 
@@ -1100,9 +1100,9 @@ class CFChecker:
                 # Split string up into component parts
                 # If a comma is present we assume a comma separated list as names cannot contain commas
                 if re.match("^.*,.*$", conventions):
-                    conventionList = string.split(conventions, ",")
+                    conventionList = conventions.split(",")
                 else:
-                    conventionList = string.split(conventions)
+                    conventionList = conventions.split()
 
                 found = 0
                 for convention in conventionList:
@@ -1152,9 +1152,9 @@ class CFChecker:
             # Split string up into component parts
             # If a comma is present we assume a comma separated list as names cannot contain commas
             if re.match("^.*,.*$", conventions):
-                conventionList = string.split(conventions, ",")
+                conventionList = conventions.split(",")
             else:
-                conventionList = string.split(conventions)
+                conventionList = conventions.split()
 
             found = 0
             coards = 0
@@ -1713,7 +1713,7 @@ class CFChecker:
                 rc = 0
             else:
                 # Need to validate the measure + name
-                split = string.split(cellMeasures)
+                split = cellMeasures.split()
                 splitIter = iter(split)
                 try:
                     while 1:
@@ -1804,7 +1804,7 @@ class CFChecker:
                 rc = 0
             else:
                 # Need to validate the term & var
-                split = string.split(formulaTerms)
+                split = formulaTerms.split()
                 for x in split[:]:
                     if not re.search("^[a-zA-Z0-9_]+:$", x):
                         # Variable - should be declared in netCDF file
@@ -1963,7 +1963,7 @@ class CFChecker:
 
         # units must be recognizable by the BADC units file
         for line in units_lines:
-            if hasattr(var, 'units') and var.attributes['units'] in string.split(line):
+            if hasattr(var, 'units') and var.attributes['units'] in line.split():
                 print("Valid units in BADC list:", var.attributes['units'])
                 rc = 1
                 break
@@ -2229,7 +2229,7 @@ class CFChecker:
 
             # standard_name attribute can comprise a standard_name only or a standard_name
             # followed by a modifier (E.g. atmosphere_cloud_liquid_water_content status_flag)
-            std_name_el = string.split(std_name)
+            std_name_el = std_name.split()
             if not std_name_el:
                 print("ERROR (3.3): Empty string for 'standard_name' attribute")
                 self.err = self.err + 1
@@ -2275,7 +2275,7 @@ class CFChecker:
                 self.err = self.err + 1
                 rc = 0
             else:
-                dimensions = string.split(compress)
+                dimensions = compress.split()
                 dimProduct = 1
                 for x in dimensions:
                     found = 'false'
