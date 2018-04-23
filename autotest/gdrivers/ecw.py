@@ -1712,7 +1712,6 @@ def ecw_41():
             print(stats[i])
             print(expected_stats[i])
             return 'fail'
-        pass
     ds = None
 
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')

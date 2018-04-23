@@ -56,7 +56,6 @@ def test_gnmmanage_1():
 
     try:
         os.stat('tmp/test_gnm')
-        pass
     except OSError:
         gdaltest.post_reason('Expected create tmp/test_gnm')
         return 'fail'

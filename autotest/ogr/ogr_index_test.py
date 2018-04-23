@@ -264,7 +264,6 @@ def ogr_index_9():
         except OSError:
             gdaltest.post_reason("%s should exist" % filename)
             return 'fail'
-            pass
 
     f = open('join_t.idm', 'rt')
     xml = f.read()

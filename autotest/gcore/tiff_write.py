@@ -573,7 +573,6 @@ def tiff_write_16():
         except OSError:
             gdaltest.post_reason('No .aux.xml file.')
             return 'fail'
-            pass
 
     ds = gdal.Open('tmp/tw_16.tif')
 
@@ -1451,7 +1450,6 @@ def tiff_write_33():
         except OSError:
             gdaltest.post_reason('No .aux.xml file.')
             return 'fail'
-            pass
 
     ds = gdal.Open('tmp/tw_33.tif')
 
@@ -1507,7 +1505,6 @@ def tiff_write_34():
         except OSError:
             gdaltest.post_reason('No .aux.xml file.')
             return 'fail'
-            pass
 
     ds = gdal.Open('tmp/tw_34.tif')
 
@@ -1570,7 +1567,6 @@ def tiff_write_35():
     except OSError:
         gdaltest.post_reason('No .aux.xml file.')
         return 'fail'
-        pass
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('tmp/tw_35.tif')
