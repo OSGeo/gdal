@@ -184,7 +184,7 @@ def gpkg_1():
 #   clamped_expected_cs = get_expected_checksums(ds, gdaltest.png_dr, 1, clamp_output = False)[0]
     expected_gt = ds.GetGeoTransform()
     expected_wkt = ds.GetProjectionRef()
-    out_ds = gdaltest.db2_dr.CreateCopy('DB2ODBC:database=samp105;DSN=SAMP105A', ds, options=['TILE_FORMAT=PNG'])
+    out_ds = gdaltest.db2_drv.CreateCopy('DB2ODBC:database=samp105;DSN=SAMP105A', ds, options=['TILE_FORMAT=PNG'])
     out_ds = None
     ds = None
 
