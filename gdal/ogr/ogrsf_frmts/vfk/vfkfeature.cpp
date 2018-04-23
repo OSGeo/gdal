@@ -404,6 +404,8 @@ bool VFKFeature::SetProperties(const char *pszLine)
                        -> only last two quotes used */
                     poChar -= 2;
                 }
+                else if( *poChar == '\0' )
+                    break;
                 /* odd number of quotes -> none of quotes used */
             }
         }
