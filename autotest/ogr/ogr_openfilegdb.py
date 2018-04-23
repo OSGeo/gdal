@@ -944,7 +944,6 @@ def fuzz(filename, offset):
     f.seek(offset, 0)
     v = ord(f.read(1))
     f.seek(offset, 0)
-    import sys
     if sys.version_info >= (3, 0, 0):
         f.write(('%c' % (255 - v)).encode('ISO-8859-1'))
     else:
@@ -957,7 +956,6 @@ def unfuzz(backup):
     (filename, offset, v) = backup
     f = open(filename, "rb+")
     f.seek(offset, 0)
-    import sys
     if sys.version_info >= (3, 0, 0):
         f.write(('%c' % (v)).encode('ISO-8859-1'))
     else:

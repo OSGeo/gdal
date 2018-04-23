@@ -735,7 +735,6 @@ NODATA_value 5
     val = ds.GetRasterBand(1).ReadRaster()
     ds = None
 
-    import struct
     val = struct.unpack('B' * 6, val)
     if val != (1, 1, 5, 10, 10, 25):
         gdaltest.post_reason('fail')

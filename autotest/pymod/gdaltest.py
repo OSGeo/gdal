@@ -1327,7 +1327,6 @@ def download_file(url, filename=None, download_size=-1, force_download=False, ma
     except OSError:
         if 'GDAL_DOWNLOAD_TEST_DATA' in os.environ or force_download:
             val = None
-            import time
             start_time = time.time()
             try:
                 handle = gdalurlopen(url)
