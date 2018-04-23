@@ -2633,11 +2633,9 @@ def getargs(arglist):
 
 if __name__ == '__main__':
 
-    from sys import argv, exit
-
-    (badc, coards, uploader, useFileName, standardName, areaTypes, udunitsDat, version, files) = getargs(argv)
+    (badc, coards, uploader, useFileName, standardName, areaTypes, udunitsDat, version, files) = getargs(sys.argv)
 
     inst = CFChecker(uploader=uploader, useFileName=useFileName, badc=badc, coards=coards, cfStandardNamesXML=standardName, cfAreaTypesXML=areaTypes, udunitsDat=udunitsDat, version=version)
     for file in files:
         rc = inst.checker(file)
-        exit(rc)
+        sys.exit(rc)
