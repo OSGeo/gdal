@@ -322,7 +322,7 @@ class CFChecker:
 
         print("")
         if self.uploader:
-            realfile = nc.split(".nc")[0] + ".nc"
+            realfile = file.split(".nc")[0] + ".nc"
             print("CHECKING NetCDF FILE:", realfile)
         elif self.useFileName == "no":
             print("CHECKING NetCDF FILE")
