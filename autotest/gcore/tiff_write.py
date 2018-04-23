@@ -4330,7 +4330,6 @@ def tiff_write_101():
         f.close()
     else:
         import random
-        import array
         rand_array = array.array('B')
         for i in range(10 * 1024 * 1024):
             rand_array.append(random.randint(0, 255))

@@ -48,9 +48,9 @@ def load_dict(filename):
     this_dict = {}
     for line in lines:
         if line[:8] != 'proj_name':
-            tokens = string.split(line, ',')
+            tokens = line.split(',')
             for i in range(len(tokens)):
-                tokens[i] = string.strip(tokens[i])
+                tokens[i] = tokens[i].strip()
 
             this_dict[tokens[0]] = tokens
 
@@ -77,12 +77,12 @@ pfile.readline()
 
 for line in pfile.readlines():
     try:
-        tokens = string.split(string.strip(line), ',')
+        tokens = line.strip().split(',')
         if len(tokens) < 3:
             continue
 
         for i in range(len(tokens)):
-            tokens[i] = string.strip(tokens[i])
+            tokens[i] = tokens[i].strip()
 
         id = tokens[0]
         type = tokens[1]
@@ -169,9 +169,9 @@ pfile = open(dir + 'datum.dat')
 pfile.readline()
 
 for line in pfile.readlines():
-    tokens = string.split(string.strip(line), ',')
+    tokens = line.strip().split(',')
     for i in range(len(tokens)):
-        tokens[i] = string.strip(tokens[i])
+        tokens[i] = tokens[i].strip()
 
     id = tokens[0]
 

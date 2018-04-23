@@ -31,7 +31,6 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-import string
 import sys
 
 from osgeo import osr
@@ -217,7 +216,7 @@ if __name__ == '__main__':
                 if c_offset > 0:
                     line = line[:c_offset]
 
-                code = string.atoi(line)
+                code = int(line)
             except:
                 code = -1
 
