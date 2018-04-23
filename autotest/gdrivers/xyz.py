@@ -86,23 +86,19 @@ def xyz_3():
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
     ds = gdal.Open('/vsimem/grid.xyz')
     buf = ds.ReadRaster(0, 2, 2, 1)
-    bytes = struct.unpack('B' * 2, buf)
-    if bytes != (69, 70):
+    if struct.unpack('B' * 2, buf) != (69, 70):
         print(buf)
         return 'fail'
     buf = ds.ReadRaster(0, 1, 2, 1)
-    bytes = struct.unpack('B' * 2, buf)
-    if bytes != (67, 68):
+    if struct.unpack('B' * 2, buf) != (67, 68):
         print(buf)
         return 'fail'
     buf = ds.ReadRaster(0, 0, 2, 1)
-    bytes = struct.unpack('B' * 2, buf)
-    if bytes != (65, 66):
+    if struct.unpack('B' * 2, buf) != (65, 66):
         print(buf)
         return 'fail'
     buf = ds.ReadRaster(0, 2, 2, 1)
-    bytes = struct.unpack('B' * 2, buf)
-    if bytes != (69, 70):
+    if struct.unpack('B' * 2, buf) != (69, 70):
         print(buf)
         return 'fail'
     ds = None

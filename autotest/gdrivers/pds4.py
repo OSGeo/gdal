@@ -104,7 +104,7 @@ def pds4_1():
 # hide_substitution_warnings_error_handler()
 
 
-def hide_substitution_warnings_error_handler_cbk(type, errno, msg):
+def hide_substitution_warnings_error_handler_cbk(typ, errno, msg):
     if msg.find('substituted') < 0 and msg.find('VAR_TITLE not defined') < 0:
         print(msg)
 
