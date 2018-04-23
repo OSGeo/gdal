@@ -803,12 +803,12 @@ def ogr_plscenes_data_v1_live():
         elif string_field < 0 and typ == ogr.OFTString and f.IsFieldSet(i):
             string_field = i
 
-    filter = "acquired='%s'" % f.GetFieldAsString(acquired_field)
+    filtr = "acquired='%s'" % f.GetFieldAsString(acquired_field)
     if int_field >= 0:
         name = lyr_defn.GetFieldDefn(int_field).GetName()
         mini = f.GetField(int_field) - 1
         maxi = f.GetField(int_field) + 1
-        filter += ' AND %s >= %d AND %s <= %d' % (name, mini, name, maxi)
+        filtr += ' AND %s >= %d AND %s <= %d' % (name, mini, name, maxi)
     if float_field >= 0:
         name = lyr_defn.GetFieldDefn(float_field).GetName()
         mini = f.GetField(float_field) - 0.01
