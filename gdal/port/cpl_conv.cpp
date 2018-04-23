@@ -652,6 +652,36 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
                            CPL_UNUSED CSLConstList papszOptions )
 
 {
+    int nBufLength;
+    return CPLReadLine3L( fp, nMaxCars,
+                          &nBufLength,
+                          papszOptions );
+}
+
+/************************************************************************/
+/*                           CPLReadLine3L()                            */
+/************************************************************************/
+
+/**
+ * Simplified line reading from text file.
+ *
+ * Similar to CPLReadLine(), but reading from a large file API handle.
+ *
+ * @param fp file pointer opened with VSIFOpenL().
+ * @param nMaxCars  maximum number of characters allowed, or -1 for no limit.
+ * @param papszOptions NULL-terminated array of options. Unused for now.
+ * @param[out] pnBufLength size of output string (must be non-NULL)
+
+ * @return pointer to an internal buffer containing a line of text read
+ * from the file or NULL if the end of file was encountered or the maximum
+ * number of characters allowed reached.
+ *
+ * @since GDAL 2.4.0
+ */
+const char *CPLReadLine3L( VSILFILE *fp, int nMaxCars,
+                           int *pnBufLength,
+                           CPL_UNUSED CSLConstList papszOptions )
+{
 /* -------------------------------------------------------------------- */
 /*      Cleanup case.                                                   */
 /* -------------------------------------------------------------------- */
@@ -669,9 +699,9 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
     const size_t nChunkSize = 40;
     char szChunk[nChunkSize] = {};
     size_t nChunkBytesRead = 0;
-    int nBufLength = 0;
     size_t nChunkBytesConsumed = 0;
 
+    *pnBufLength = 0;
     szChunk[0] = 0;
 
     while( true )
@@ -679,7 +709,7 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
 /* -------------------------------------------------------------------- */
 /*      Read a chunk from the input file.                               */
 /* -------------------------------------------------------------------- */
-        if( nBufLength > INT_MAX - static_cast<int>(nChunkSize) - 1 )
+        if( *pnBufLength > INT_MAX - static_cast<int>(nChunkSize) - 1 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Too big line : more than 2 billion characters!.");
@@ -688,7 +718,7 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
         }
 
         pszRLBuffer =
-            CPLReadLineBuffer(static_cast<int>(nBufLength + nChunkSize + 1));
+            CPLReadLineBuffer(static_cast<int>(*pnBufLength + nChunkSize + 1));
         if( pszRLBuffer == nullptr )
             return nullptr;
 
@@ -709,7 +739,7 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
             nChunkBytesRead = VSIFReadL(szChunk, 1, nChunkSize, fp);
             if( nChunkBytesRead == 0 )
             {
-                if( nBufLength == 0 )
+                if( *pnBufLength == 0 )
                     return nullptr;
 
                 break;
@@ -738,8 +768,8 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
             }
             else
             {
-                pszRLBuffer[nBufLength++] = szChunk[nChunkBytesConsumed++];
-                if( nMaxCars >= 0 && nBufLength == nMaxCars )
+                pszRLBuffer[(*pnBufLength)++] = szChunk[nChunkBytesConsumed++];
+                if( nMaxCars >= 0 && *pnBufLength == nMaxCars )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Maximum number of characters allowed reached.");
@@ -766,7 +796,7 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
                 break;
             }
 
-            pszRLBuffer[nBufLength++] = szChunk[nChunkBytesConsumed++];
+            pszRLBuffer[(*pnBufLength)++] = szChunk[nChunkBytesConsumed++];
             break;
         }
     }
@@ -783,7 +813,7 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
             return nullptr;
     }
 
-    pszRLBuffer[nBufLength] = '\0';
+    pszRLBuffer[*pnBufLength] = '\0';
 
     return pszRLBuffer;
 }
