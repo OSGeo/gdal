@@ -26,7 +26,6 @@ from xml.dom import minidom
 import re
 import textwrap
 import sys
-import types
 import os.path
 
 
@@ -127,7 +126,7 @@ class Doxy2SWIG:
 
     def add_text(self, value):
         """Adds text corresponding to `value` into `self.pieces`."""
-        if type(value) in (types.ListType, types.TupleType):
+        if isinstance(value, list) or isinstance(value, tuple):
             self.pieces.extend(value)
         else:
             self.pieces.append(value)

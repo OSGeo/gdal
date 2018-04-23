@@ -885,7 +885,7 @@ def visoss_6():
         gdaltest.post_reason('fail')
         return 'fail'
     size = 1024 * 1024 + 1
-    big_buffer = ''.join('a' for i in range(size))
+    big_buffer = 'a' * size
 
     handler = webserver.SequentialHandler()
 

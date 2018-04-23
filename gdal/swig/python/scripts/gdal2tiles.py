@@ -57,6 +57,7 @@ try:
     import osgeo.gdal_array as gdalarray
 except Exception:
     # 'antialias' resampling is not available
+    numpy = None
     pass
 
 __version__ = "$Id$"
@@ -1260,7 +1261,7 @@ def options_post_processing(options, input_file, output_folder):
 
     elif options.resampling == 'antialias':
         try:
-            if numpy:     # pylint:disable=W0125
+            if numpy is not None:
                 pass
         except Exception:
             exit_with_error("'antialias' resampling algorithm is not available.",
