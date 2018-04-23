@@ -157,8 +157,7 @@ class ConstructDict(ContentHandler):
             self.units = ""
 
         elif name == 'alias':
-            id = normalize_whitespace(attrs.get('id', ""))
-            self.this_id = id
+            self.this_id = normalize_whitespace(attrs.get('id', ""))
 
         elif name == 'entry_id':
             self.inEntryIdContent = 1

@@ -1104,8 +1104,7 @@ def test_gdalwarp_37():
         gdaltest.post_reason('Output file contains statistics metadata')
         return 'fail'
 
-    min = ds.GetRasterBand(1).GetMinimum()
-    if min is not None:
+    if ds.GetRasterBand(1).GetMinimum() is not None:
         gdaltest.post_reason('Output file has statistics')
         return 'fail'
 

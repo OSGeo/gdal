@@ -811,15 +811,15 @@ def ogr_plscenes_data_v1_live():
         filter += ' AND %s >= %d AND %s <= %d' % (name, mini, name, maxi)
     if float_field >= 0:
         name = lyr_defn.GetFieldDefn(float_field).GetName()
-        min = f.GetField(float_field) - 0.01
-        max = f.GetField(float_field) + 0.01
-        filter += ' AND %s BETWEEN %f AND %f' % (name, min, max)
+        mini = f.GetField(float_field) - 0.01
+        maxi = f.GetField(float_field) + 0.01
+        filtr += ' AND %s BETWEEN %f AND %f' % (name, mini, maxi)
     if string_field >= 0:
         name = lyr_defn.GetFieldDefn(string_field).GetName()
         value = f.GetField(string_field)
-        filter += " AND %s = '%s'" % (name, value)
+        filtr += " AND %s = '%s'" % (name, value)
 
-    lyr.SetAttributeFilter(filter)
+    lyr.SetAttributeFilter(filtr)
     f = lyr.GetNextFeature()
     if f is None:
         gdaltest.post_reason('fail')
