@@ -50,7 +50,6 @@ Options:
 
 import cdms2 as cdms
 import re
-import string
 import numpy
 import sys
 
