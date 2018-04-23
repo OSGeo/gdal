@@ -661,7 +661,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
         else
         {
             nLineOffset = nPixelOffset * nWidth;
-            if( nBands > 1 )
+            if( nBands > 1 && nLineOffset < INT_MAX / nBands )
             {
                 // GDAL 2.1.0 had a value of nLineOffset that was equal to the theoretical
                 // nLineOffset multiplied by nBands...
