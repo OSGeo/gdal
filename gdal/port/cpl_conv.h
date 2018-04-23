@@ -86,8 +86,8 @@ char CPL_DLL *CPLStrlwr( char *);
 char CPL_DLL *CPLFGets( char *, int, FILE *);
 const char CPL_DLL *CPLReadLine( FILE * );
 const char CPL_DLL *CPLReadLineL( VSILFILE * );
-const char CPL_DLL *CPLReadLine2L( VSILFILE * , int nMaxCols,
-                                   CSLConstList papszOptions );
+const char CPL_DLL *CPLReadLine2L( VSILFILE *, int, CSLConstList );
+const char CPL_DLL *CPLReadLine3L( VSILFILE *, int, int *, CSLConstList );
 
 /* -------------------------------------------------------------------- */
 /*      Convert ASCII string to floating point number                  */
