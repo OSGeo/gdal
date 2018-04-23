@@ -1549,7 +1549,6 @@ def jp2lura_38():
         do_validate = True
     except ImportError:
         print('Cannot import xmlvalidate')
-        pass
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET')
