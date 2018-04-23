@@ -175,7 +175,6 @@ def ogr_csv_3():
     # Create layer (.csv file)
     gdaltest.csv_lyr1 = ogr_csv_copy_layer('pm1', None)
 
-    # No longer valid since we have editing capabilities
     return 'success'
 
 
