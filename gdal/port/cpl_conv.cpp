@@ -670,7 +670,7 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
  * @param fp file pointer opened with VSIFOpenL().
  * @param nMaxCars  maximum number of characters allowed, or -1 for no limit.
  * @param papszOptions NULL-terminated array of options. Unused for now.
- * @param pnBufLength[out] size of output string (must be non-NULL)
+ * @param[out] pnBufLength size of output string (must be non-NULL)
 
  * @return pointer to an internal buffer containing a line of text read
  * from the file or NULL if the end of file was encountered or the maximum
