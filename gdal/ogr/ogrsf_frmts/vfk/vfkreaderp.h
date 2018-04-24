@@ -51,7 +51,7 @@ private:
     bool           m_bLatin2;
 
     VSILFILE      *m_poFD;
-    char          *ReadLine( bool = false );
+    char          *ReadLine();
 
     void          AddInfo(const char *) override;
 
