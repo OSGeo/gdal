@@ -58,7 +58,6 @@ try:
 except Exception:
     # 'antialias' resampling is not available
     numpy = None
-    pass
 
 __version__ = "$Id$"
 

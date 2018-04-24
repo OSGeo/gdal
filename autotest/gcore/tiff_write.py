@@ -272,9 +272,7 @@ def tiff_write_6():
                                   gdal.GDT_Byte, options)
 
     # make a 32x32 byte buffer
-    buf = array.array('B', list(range(32))).tostring()
-    for i in range(5):
-        buf = buf + buf
+    buf = array.array('B', list(range(32))).tostring() * 32
 
     ds.WriteRaster(0, 0, 32, 32, buf, buf_type=gdal.GDT_Byte)
     ds.FlushCache()
@@ -311,9 +309,7 @@ def tiff_write_7():
                                   gdal.GDT_Byte, options)
 
     # make a 32x32 byte buffer
-    buf = array.array('B', list(range(32))).tostring()
-    for i in range(5):
-        buf = buf + buf
+    buf = array.array('B', list(range(32))).tostring() * 32
 
     ds.WriteRaster(0, 0, 32, 32, buf, buf_type=gdal.GDT_Byte)
     ds.FlushCache()
@@ -342,9 +338,7 @@ def tiff_write_8():
                                   gdal.GDT_Byte, options)
 
     # make a 32x32 byte buffer
-    buf = array.array('B', list(range(32))).tostring()
-    for i in range(5):
-        buf = buf + buf
+    buf = array.array('B', list(range(32))).tostring() * 32
 
     ds.WriteRaster(0, 0, 32, 32, buf, buf_type=gdal.GDT_Byte)
     ds.FlushCache()
@@ -4530,7 +4524,10 @@ def tiff_write_105():
 # Test the direct copy mechanism of JPEG source
 
 
-def tiff_write_106(filename='../gdrivers/data/byte_with_xmp.jpg', options=['COMPRESS=JPEG'], check_cs=True):
+def tiff_write_106(filename='../gdrivers/data/byte_with_xmp.jpg', options=None, check_cs=True):
+
+    if options is None:
+        options = ['COMPRESS=JPEG']
 
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:

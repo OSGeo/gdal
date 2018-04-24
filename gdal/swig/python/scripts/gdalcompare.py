@@ -82,8 +82,10 @@ def compare_image_pixels(golden_band, new_band, id, options=[]):
 #######################################################
 
 
-def compare_band(golden_band, new_band, id, options=[]):
+def compare_band(golden_band, new_band, id, options=None):
     found_diff = 0
+
+    options = [] if options is None else options
 
     if golden_band.DataType != new_band.DataType:
         print('Band %s pixel types differ.' % id)
@@ -160,8 +162,10 @@ def compare_srs(golden_wkt, new_wkt):
 #######################################################
 
 
-def compare_db(golden_db, new_db, options=[]):
+def compare_db(golden_db, new_db, options=None):
     found_diff = 0
+
+    options = [] if options is None else options
 
     # SRS
     if 'SKIP_SRS' not in options:
@@ -215,8 +219,10 @@ def compare_db(golden_db, new_db, options=[]):
 #######################################################
 
 
-def compare_sds(golden_db, new_db, options=[]):
+def compare_sds(golden_db, new_db, options=None):
     found_diff = 0
+
+    options = [] if options is None else options
 
     golden_sds = golden_db.GetMetadata('SUBDATASETS')
     new_sds = new_db.GetMetadata('SUBDATASETS')

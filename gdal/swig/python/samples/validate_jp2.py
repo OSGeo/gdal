@@ -436,7 +436,6 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
             error_report.EmitError('INSPIRE_TG', 'GMLJP2 v2 box found, but Inspire TG require GMLJP2 v1', conformance_class='A.8.6')
         if gmljp2_found and ogc_schemas_location != 'disabled':
             if ogc_schemas_location is not None:
-                import os
                 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/../../../../autotest/pymod')
                 try:
                     import xmlvalidate

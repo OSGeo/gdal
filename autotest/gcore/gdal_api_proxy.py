@@ -641,6 +641,8 @@ if __name__ == '__main__':
         import time
 
         p = None
+        # set port to None in case the loop has no iterations
+        port = None
         for port in [8080, 8081, 8082]:
             p = subprocess.Popen([gdalserver_path, '-tcpserver', '%d' % port])
             time.sleep(1)

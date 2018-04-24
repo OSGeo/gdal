@@ -152,7 +152,6 @@ def fetch_config(option, gdal_config='gdal-config'):
             try:
                 p = subprocess.Popen([command, args], stdout=subprocess.PIPE)
             except OSError:
-                import sys
                 e = sys.exc_info()[1]
                 raise gdal_config_error(e)
             r = p.stdout.readline().decode('ascii').strip()
