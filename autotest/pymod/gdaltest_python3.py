@@ -160,6 +160,7 @@ def read_in_thread(f, q):
 
 
 def runexternal_out_and_err(cmd, check_memleak=True):
+    # pylint: disable=unused-argument
     command = shlex.split(cmd)
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 

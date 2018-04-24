@@ -200,6 +200,7 @@ class DispatcherHttpHandler(BaseHTTPRequestHandler):
     # protocol_version = 'HTTP/1.1'
 
     def log_request(self, code='-', size='-'):
+        # pylint: disable=unused-argument
         return
 
     def do_HEAD(self):
