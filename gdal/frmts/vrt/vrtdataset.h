@@ -693,6 +693,7 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
 
     void SetPixelFunctionName( const char *pszFuncName );
     void SetSourceTransferType( GDALDataType eDataType );
+    void SetPixelFunctionLanguage( const char* pszLanguage );
 
     virtual CPLErr         XMLInit( CPLXMLNode *, const char *, void* ) override;
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath ) override;
