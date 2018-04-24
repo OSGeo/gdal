@@ -313,7 +313,8 @@ wcs_6_ok = True
 
 class WCSHTTPHandler(BaseHTTPRequestHandler):
 
-    def log_request(self, code='-', size='-'):
+    def log_request(self, code, size):
+        # pylint: disable=unused-argument
         return
 
     def Headers(self, typ):

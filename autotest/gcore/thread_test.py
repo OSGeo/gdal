@@ -39,6 +39,7 @@ from osgeo import gdal
 
 
 def my_error_handler(err_type, err_no, err_msg):
+    # pylint: disable=unused-argument
     pass
 
 

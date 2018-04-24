@@ -2907,6 +2907,7 @@ class myHandlerClass:
         self.msg = None
 
     def handler(self, eErrClass, err_no, msg):
+        # pylint: disable=unused-argument
         if msg.find('File open of') >= 0:
             self.msg = msg
 
