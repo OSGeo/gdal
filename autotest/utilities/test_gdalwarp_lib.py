@@ -1791,7 +1791,7 @@ def test_gdalwarp_lib_override_default_output_nodata():
 
     for frmt in formats:
         gdal.Warp('tmp/out.nc', '../gcore/data/byte.tif', srcNodata=255,
-                  format='netCDF', creationOptions=['FORMAT=' + format])
+                  format='netCDF', creationOptions=['FORMAT=' + frmt])
         ds = gdal.Open('tmp/out.nc')
         if ds.GetRasterBand(1).GetNoDataValue() != 255:
             gdaltest.post_reason('fail')

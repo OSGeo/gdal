@@ -127,8 +127,8 @@ def doit(opts, args):
     elif not opts.outF:
         raise Exception("No output file provided.")
 
-    if opts.format is None:
-        opts.format = GetOutputDriverFor(opts.outF)
+    if opts.frmt is None:
+        opts.frmt = GetOutputDriverFor(opts.outF)
 
     ################################################################
     # fetch details of input layers
@@ -218,7 +218,7 @@ def doit(opts, args):
             myOutType = opts.type
 
         # create file
-        myOutDrv = gdal.GetDriverByName(opts.format)
+        myOutDrv = gdal.GetDriverByName(opts.frmt)
         myOut = myOutDrv.Create(
             opts.outF, DimensionsCheck[0], DimensionsCheck[1], allBandsCount,
             gdal.GetDataTypeByName(myOutType), opts.creation_options)
