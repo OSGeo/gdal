@@ -1354,18 +1354,6 @@ def vsigs_extra_1():
         print(ret)
         return 'fail'
 
-    if False:  # we actually try to read at read() time and bSetError = false
-        # Invalid bucket : "The specified bucket does not exist"
-        gdal.ErrorReset()
-        f = open_for_read('/vsigs/not_existing_bucket/foo')
-        with gdaltest.error_handler():
-            gdal.VSIFReadL(1, 1, f)
-        gdal.VSIFCloseL(f)
-        if gdal.VSIGetLastErrorMsg() == '':
-            gdaltest.post_reason('fail')
-            print(gdal.VSIGetLastErrorMsg())
-            return 'fail'
-
     # Invalid resource
     gdal.ErrorReset()
     f = open_for_read('/vsigs_streaming/' + gs_resource + '/invalid_resource.baz')

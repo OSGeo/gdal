@@ -400,51 +400,7 @@ def ogr_rfc35_mitab_4():
         gdaltest.post_reason(ret)
         return ret
 
-    if False:
-        fd.SetWidth(5)
-        lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
-
-        lyr.ResetReading()
-        feat = lyr.GetNextFeature()
-        if feat.GetField("intfield") != 12345:
-            gdaltest.post_reason('fail')
-            return 'fail'
-        feat = None
-
-        ret = CheckFeatures(lyr, baz='baz5')
-        if ret != 'success':
-            gdaltest.post_reason(ret)
-            return ret
-
     ds = None
-
-    if False:
-        ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
-        lyr = ds.GetLayer(0)
-        lyr_defn = lyr.GetLayerDefn()
-
-        fd.SetWidth(4)
-        lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
-
-        lyr.ResetReading()
-        feat = lyr.GetNextFeature()
-        if feat.GetField("intfield") != 1234:
-            gdaltest.post_reason('fail')
-            return 'fail'
-        feat = None
-
-        ret = CheckFeatures(lyr, baz='baz5')
-        if ret != 'success':
-            gdaltest.post_reason(ret)
-            return ret
-
-        ds = None
-
-        # Check that the file size has decreased after column shrinking
-        ret = CheckFileSize('/vsimem/rfc35_test.tab')
-        if ret == 'fail':
-            gdaltest.post_reason(ret)
-            return ret
 
     ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)

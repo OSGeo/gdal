@@ -152,44 +152,6 @@ def kea_4():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Disabled for now since some of them cause memory leaks or
-    # crash in the HDF5 library finalizer
-    if False:
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
-        ret = ds.SetMetadataItem('foo', 'bar')
-        gdal.PopErrorHandler()
-        if ret == 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
-
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
-        ret = ds.SetMetadata({'foo': 'bar'})
-        gdal.PopErrorHandler()
-        if ret == 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
-
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
-        ret = ds.GetRasterBand(1).SetMetadataItem('foo', 'bar')
-        gdal.PopErrorHandler()
-        if ret == 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
-
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
-        ret = ds.GetRasterBand(1).SetMetadata({'foo': 'bar'})
-        gdal.PopErrorHandler()
-        if ret == 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
-
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
-        ret = ds.SetGCPs([], "")
-        gdal.PopErrorHandler()
-        if ret == 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
-
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = ds.AddBand(gdal.GDT_Byte)
     gdal.PopErrorHandler()

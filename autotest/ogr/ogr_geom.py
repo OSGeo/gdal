@@ -991,21 +991,6 @@ def ogr_geom_linestring_limits():
     if gdal.GetLastErrorType() == 0:
         return 'fail'
 
-    if False:
-        gdal.ErrorReset()
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
-        geom.SetPoint(2147000000, 5, 6, 7)
-        gdal.PopErrorHandler()
-        if gdal.GetLastErrorType() == 0:
-            return 'fail'
-
-        gdal.ErrorReset()
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
-        geom.SetPoint_2D(2147000000, 5, 6)
-        gdal.PopErrorHandler()
-        if gdal.GetLastErrorType() == 0:
-            return 'fail'
-
     geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0)')
     if geom.Length() != 0:
         return 'fail'

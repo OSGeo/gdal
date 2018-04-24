@@ -606,25 +606,6 @@ def ogr_basic_12():
         return 'fail'
     feat_def.AddFieldDefn(field_def)
 
-    if False:
-        f = ogr.Feature(feat_def)
-        gdal.ErrorReset()
-        f.SetField('fld', '1.23')
-        if gdal.GetLastErrorMsg() != '':
-            gdaltest.post_reason('fail')
-            return 'fail'
-        gdal.ErrorReset()
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
-        f.SetField('fld', 1.230000000001)
-        gdal.PopErrorHandler()
-        if gdal.GetLastErrorMsg() == '':
-            gdaltest.post_reason('fail')
-            return 'fail'
-        if abs(f.GetField('fld') - 1.23) < 1e-8:
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
-
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     field_def = ogr.FieldDefn('fld', ogr.OFSTFloat32)
