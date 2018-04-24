@@ -385,7 +385,7 @@ def testCreateCopyInterruptCallback(pct, message, user_data):
 
 class GDALTest:
     def __init__(self, drivername, filename, band, chksum,
-                 xoff=0, yoff=0, xsize=0, ysize=0, options=[],
+                 xoff=0, yoff=0, xsize=0, ysize=0, options=None,
                  filename_absolute=0, chksum_after_reopening=None, open_options=None):
         self.driver = None
         self.drivername = drivername
@@ -406,7 +406,7 @@ class GDALTest:
         self.yoff = yoff
         self.xsize = xsize
         self.ysize = ysize
-        self.options = options
+        self.options = [] if options is None else options
         self.open_options = open_options
 
     def testDriver(self):

@@ -111,7 +111,6 @@ def run_py_script_as_external_script(script_path, script_name, concatenated_argv
 
 
 def run_py_script_as_py_module(script_path, script_name, concatenated_argv):
-    import sys
 
     # Save original sys variables
     saved_syspath = sys.path

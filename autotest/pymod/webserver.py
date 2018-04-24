@@ -56,14 +56,14 @@ def install_http_handler(handler_instance):
 
 
 class RequestResponse:
-    def __init__(self, method, path, code, headers={}, body=None, custom_method=None, expected_headers={}, expected_body=None):
+    def __init__(self, method, path, code, headers=None, body=None, custom_method=None, expected_headers=None, expected_body=None):
         self.method = method
         self.path = path
         self.code = code
-        self.headers = headers
+        self.headers = {} if headers is None else headers
         self.body = body
         self.custom_method = custom_method
-        self.expected_headers = expected_headers
+        self.expected_headers = {} if expected_headers is None else expected_headers
         self.expected_body = expected_body
 
 
@@ -122,8 +122,10 @@ class SequentialHandler:
         assert len(self.req_resp_map) == 0
         self.req_resp.append(RequestResponse(method, path, code, headers, body, custom_method, expected_headers, expected_body))
 
-    def add_unordered(self, method, path, code=None, headers={}, body=None, custom_method=None, expected_headers={}, expected_body=None):
-        self.req_resp_map[(method, path)] = RequestResponse(method, path, code, headers, body, custom_method, expected_headers, expected_body)
+    def add_unordered(self, method, path, code=None, headers=None, body=None, custom_method=None, expected_headers=None, expected_body=None):
+        hdrs = {} if headers is None else headers
+        expected_hdrs = {} if expected_headers is None else expected_headers
+        self.req_resp_map[(method, path)] = RequestResponse(method, path, code, hdrs, body, custom_method, expected_hdrs, expected_body)
 
     @staticmethod
     def _process_req_resp(req_resp, request):
