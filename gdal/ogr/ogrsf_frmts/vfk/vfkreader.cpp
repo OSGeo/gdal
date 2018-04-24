@@ -132,20 +132,24 @@ char *GetDataBlockName(const char *pszLine)
 
   \return a NULL terminated string which should be freed with CPLFree().
 */
-char *VFKReader::ReadLine( bool bRecode )
+char *VFKReader::ReadLine()
 {
-    const char *pszRawLine = CPLReadLine2L(m_poFD, 100 * 1024, nullptr);
-    if (pszRawLine == nullptr)
+    int nBufLength;
+    const char *pszRawLine = CPLReadLine3L( m_poFD, 100 * 1024, &nBufLength, nullptr );
+    if( pszRawLine == nullptr )
         return nullptr;
 
-    if( bRecode )
-        return CPLRecode(pszRawLine,
-                         m_bLatin2 ? "ISO-8859-2" : "WINDOWS-1250",
-                         CPL_ENC_UTF8);
+    char *pszLine = (char *) CPLMalloc(nBufLength + 1);
+    memcpy(pszLine, pszRawLine, nBufLength + 1);
 
-    const size_t nLineLen = strlen(pszRawLine);
-    char *pszLine = (char *) CPLMalloc(nLineLen + 1);
-    memcpy(pszLine, pszRawLine, nLineLen + 1);
+    const int nLineLength = static_cast<int>(strlen(pszRawLine));
+    if( nLineLength != nBufLength ) {
+        /* replace nul characters in line by spaces */
+        for( int i = nLineLength; i < nBufLength; i++ ) {
+            if( pszLine[i] == '\0' )
+                pszLine[i] = ' ';
+        }
+    }
 
     return pszLine;
 }
