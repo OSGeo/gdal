@@ -39,9 +39,11 @@ elif git log -1 >/dev/null 2>/dev/null && grep dev gdal_version.h.in >/dev/null;
         rm -f gdal_version.h.bak
         rm -f gdal_version.h.new
 else
-        diff -u gdal_version.h gdal_version.h.in 2>/dev/null >/dev/null || \
+        echo "/* This is a generated file from gdal_version.h.in. DO NOT MODIFY !!!! */" > gdal_version.h.new
+        echo "" >> gdal_version.h.new
+        cat gdal_version.h.in >> gdal_version.h.new
+        diff -u gdal_version.h.new gdal_version.h 2>/dev/null >/dev/null || \
             (echo "Update gdal_version.h"; \
-             echo "/* This is a generated file from gdal_version.h.in. DO NOT MODIFY !!!! */" > gdal_version.h; \
-             echo "" >> gdal_version.h ; \
-             cat gdal_version.h.in >> gdal_version.h )
+             cp gdal_version.h.new gdal_version.h)
+        rm -f gdal_version.h.new
 fi
