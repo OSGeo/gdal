@@ -106,7 +106,7 @@ def ParseType(type):
 infile = None
 outfile = None
 iBand = 1	    # The first band will be converted by default
-format = 'GTiff'
+frmt = 'GTiff'
 type = gdal.GDT_Byte
 
 lsrcaz = None
@@ -191,7 +191,7 @@ if indataset.RasterXSize < 3 or indataset.RasterYSize < 3:
     print('Input image is too small to process, minimum size is 3x3')
     sys.exit(3)
 
-out_driver = gdal.GetDriverByName(format)
+out_driver = gdal.GetDriverByName(frmt)
 outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, type)
 outband = outdataset.GetRasterBand(1)
 

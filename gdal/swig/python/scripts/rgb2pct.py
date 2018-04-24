@@ -94,7 +94,7 @@ def GetOutputDriverFor(filename):
 
 
 color_count = 256
-format = None
+frmt = None
 src_filename = None
 dst_filename = None
 pct_filename = None
@@ -111,7 +111,7 @@ while i < len(argv):
 
     if arg == '-of' or arg == '-f':
         i = i + 1
-        format = argv[i]
+        frmt = argv[i]
 
     elif arg == '-n':
         i = i + 1
@@ -149,12 +149,12 @@ if src_ds.RasterCount < 3:
 
 # Ensure we recognise the driver.
 
-if format is None:
-    format = GetOutputDriverFor(dst_filename)
+if frmt is None:
+    frmt = GetOutputDriverFor(dst_filename)
 
-dst_driver = gdal.GetDriverByName(format)
+dst_driver = gdal.GetDriverByName(frmt)
 if dst_driver is None:
-    print('"%s" driver not registered.' % format)
+    print('"%s" driver not registered.' % frmt)
     sys.exit(1)
 
 # Generate palette

@@ -129,7 +129,7 @@ argv = gdal.GeneralCmdLineProcessor(sys.argv)
 if argv is None:
     sys.exit(0)
 
-format = 'GTiff'
+frmt = 'GTiff'
 src_color_filename = None
 src_greyscale_filename = None
 dst_color_filename = None
@@ -142,7 +142,7 @@ while i < len(argv):
 
     if arg == '-of':
         i = i + 1
-        format = argv[i]
+        frmt = argv[i]
 
     elif arg == '-q' or arg == '-quiet':
         quiet = True
@@ -174,7 +174,7 @@ if (colordataset.RasterCount != 3 and colordataset.RasterCount != 4):
     sys.exit(1)
 
 # define output format, name, size, type and set projection
-out_driver = gdal.GetDriverByName(format)
+out_driver = gdal.GetDriverByName(frmt)
 outdataset = out_driver.Create(dst_color_filename, colordataset.RasterXSize,
                                colordataset.RasterYSize, colordataset.RasterCount, datatype)
 outdataset.SetProjection(hilldataset.GetProjection())
