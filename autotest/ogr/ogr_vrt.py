@@ -2710,12 +2710,13 @@ def ogr_vrt_33():
                 if lyr.GetGeometryColumn() != 'foo':
                     gdaltest.post_reason('fail')
                     return 'fail'
-            elif j == 3:
+            elif i == 3:
                 if lyr.TestCapability(ogr.OLCFastGetExtent) != 1:
                     gdaltest.post_reason('fail')
                     return 'fail'
-                if lyr.GetExtent(geom_field=0) != (1, 2, 3, 4):
+                if lyr.GetExtent(geom_field=0) != (1, 3, 2, 4):
                     gdaltest.post_reason('fail')
+                    print(lyr.GetExtent(geom_field=0))
                     return 'fail'
             elif i == 4:
                 if lyr.TestCapability(ogr.OLCFastFeatureCount) != 0:
