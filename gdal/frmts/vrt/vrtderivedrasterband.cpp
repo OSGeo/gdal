@@ -1100,6 +1100,22 @@ void VRTDerivedRasterBand::SetPixelFunctionName( const char *pszFuncNameIn )
 }
 
 /************************************************************************/
+/*                         SetPixelFunctionLanguage()                   */
+/************************************************************************/
+
+/**
+ * Set the language of the pixel function.
+ *
+ * @param pszLanguage Language of the pixel function (only "C" and "Python"
+ * are supported currently)
+ * @since GDAL 2.3
+ */
+void VRTDerivedRasterBand::SetPixelFunctionLanguage( const char* pszLanguage )
+{
+    m_poPrivate->m_osLanguage = pszLanguage;
+}
+
+/************************************************************************/
 /*                         SetSourceTransferType()                      */
 /************************************************************************/
 
