@@ -78,8 +78,8 @@ def ParseType(type):
 
 infile = None
 outfile = None
-format = 'GTiff'
 type = None
+frmt = 'GTiff'
 transformation = 'forward'
 
 # Parse command line arguments.
@@ -94,7 +94,7 @@ while i < len(sys.argv):
 
     elif arg == '-of':
         i = i + 1
-        format = sys.argv[i]
+        frmt = sys.argv[i]
 
     elif arg == '-ot':
         i = i + 1
@@ -122,8 +122,8 @@ if type is None:
 
 indataset = gdal.Open(infile, gdal.GA_ReadOnly)
 
-out_driver = gdal.GetDriverByName(format)
 outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, type)
+out_driver = gdal.GetDriverByName(frmt)
 
 for iBand in range(1, indataset.RasterCount + 1):
     inband = indataset.GetRasterBand(iBand)
