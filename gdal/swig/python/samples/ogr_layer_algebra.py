@@ -124,7 +124,7 @@ def CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco,
 
 def main(argv=None):
 
-    format = 'ESRI Shapefile'
+    frmt = 'ESRI Shapefile'
     quiet_flag = 0
     input_ds_name = None
     input_lyr_name = None
@@ -154,7 +154,7 @@ def main(argv=None):
 
         if arg == '-f' and i + 1 < len(argv):
             i = i + 1
-            format = argv[i]
+            frmt = argv[i]
 
         elif arg == '-input_ds' and i + 1 < len(argv):
             i = i + 1
@@ -364,9 +364,9 @@ def main(argv=None):
             print('Output datasource "%s" exists, but cannot be opened in update mode' % output_ds_name)
             return 1
 
-        drv = ogr.GetDriverByName(format)
+        drv = ogr.GetDriverByName(frmt)
         if drv is None:
-            print('Cannot find driver %s' % format)
+            print('Cannot find driver %s' % frmt)
             return 1
 
         output_ds = drv.CreateDataSource(output_ds_name, options=dsco)

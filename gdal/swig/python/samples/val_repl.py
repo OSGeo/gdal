@@ -71,7 +71,7 @@ inNoData = None
 outNoData = None
 infile = None
 outfile = None
-format = 'GTiff'
+frmt = 'GTiff'
 type = gdal.GDT_Byte
 
 # Parse command line arguments.
@@ -89,7 +89,7 @@ while i < len(sys.argv):
 
     elif arg == '-of':
         i = i + 1
-        format = sys.argv[i]
+        frmt = sys.argv[i]
 
     elif arg == '-ot':
         i = i + 1
@@ -117,7 +117,7 @@ if outNoData is None:
 
 indataset = gdal.Open(infile, gdal.GA_ReadOnly)
 
-out_driver = gdal.GetDriverByName(format)
+out_driver = gdal.GetDriverByName(frmt)
 outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, type)
 
 gt = indataset.GetGeoTransform()

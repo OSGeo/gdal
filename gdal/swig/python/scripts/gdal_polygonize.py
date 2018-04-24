@@ -93,7 +93,7 @@ def GetOutputDriverFor(filename):
 # =============================================================================
 
 
-format = None
+frmt = None
 options = []
 quiet_flag = 0
 src_filename = None
@@ -118,7 +118,7 @@ while i < len(argv):
 
     if arg == '-f' or arg == '-of':
         i = i + 1
-        format = argv[i]
+        frmt = argv[i]
 
     elif arg == '-q' or arg == '-quiet':
         quiet_flag = 1
@@ -160,8 +160,8 @@ while i < len(argv):
 if src_filename is None or dst_filename is None:
     Usage()
 
-if format is None:
-    format = GetOutputDriverFor(dst_filename)
+if frmt is None:
+    frmt = GetOutputDriverFor(dst_filename)
 
 if dst_layername is None:
     dst_layername = 'out'
@@ -222,9 +222,9 @@ except:
 # 	Create output file.
 # =============================================================================
 if dst_ds is None:
-    drv = ogr.GetDriverByName(format)
+    drv = ogr.GetDriverByName(frmt)
     if not quiet_flag:
-        print('Creating output %s of format %s.' % (dst_filename, format))
+        print('Creating output %s of format %s.' % (dst_filename, frmt))
     dst_ds = drv.CreateDataSource(dst_filename)
 
 # =============================================================================
