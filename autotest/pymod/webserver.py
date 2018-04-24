@@ -249,7 +249,7 @@ class DispatcherHttpHandler(BaseHTTPRequestHandler):
 
 
 class GDAL_Handler(BaseHTTPRequestHandler):
-
+    # pylint: disable=unused-argument
     def log_request(self, code='-', size='-'):
         return
 

@@ -122,6 +122,7 @@ def wait_process(process):
 
 
 def runexternal(cmd, strin=None, check_memleak=True, display_live_on_parent_stdout=False, encoding='latin1'):
+    # pylint: disable=unused-argument
     command = shlex.split(cmd)
     if strin is None:
         p = subprocess.Popen(command, stdout=subprocess.PIPE)
