@@ -63,6 +63,11 @@ class Translator(object):
         self.opts = options
         self.construct_parser()
         self.options, self.args = self.parser.parse_args(args=arguments)
+        self.in_srs = None
+        self.out_srs = None
+        self.in_ds = None
+        self.out_ds = None
+        self.out_drv = None
 
     def process(self):
         self.open()

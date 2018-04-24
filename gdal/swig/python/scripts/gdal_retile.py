@@ -44,6 +44,8 @@ class AffineTransformDecorator:
     """ A class providing some useful methods for affine Transformations """
 
     def __init__(self, transform):
+        self.lrx = None
+        self.lry = None
         self.geotransform = transform
         self.scaleX = self.geotransform[1]
         self.scaleY = self.geotransform[5]
