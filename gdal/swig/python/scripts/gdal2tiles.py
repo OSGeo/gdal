@@ -55,7 +55,7 @@ try:
     from PIL import Image
     import numpy
     import osgeo.gdal_array as gdalarray
-except Exception:
+except ImportError:
     # 'antialias' resampling is not available
     numpy = None
 
@@ -1254,7 +1254,7 @@ def options_post_processing(options, input_file, output_folder):
         try:
             if gdal.RegenerateOverview:
                 pass
-        except Exception:
+        except AttributeError:
             exit_with_error("'average' resampling algorithm is not available.",
                             "Please use -r 'near' argument or upgrade to newer version of GDAL.")
 

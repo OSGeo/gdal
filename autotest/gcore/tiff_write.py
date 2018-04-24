@@ -4735,7 +4735,6 @@ def tiff_write_117():
         return 'skip'
 
     import random
-    from osgeo import gdal
 
     # so that we have always the same random :-)
     random.seed(0)

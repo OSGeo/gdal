@@ -377,7 +377,7 @@ author_email = "warmerdam@pobox.com"
 maintainer = "Howard Butler"
 maintainer_email = "hobu.inc@gmail.com"
 description = "GDAL: Geospatial Data Abstraction Library"
-license = "MIT"
+license_type = "MIT"
 url = "http://www.gdal.org"
 
 classifiers = [
@@ -413,7 +413,7 @@ setup_kwargs = dict(
     maintainer_email=maintainer_email,
     long_description=readme,
     description=description,
-    license=license,
+    license=license_type,
     classifiers=classifiers,
     py_modules=py_modules,
     packages=packages,
