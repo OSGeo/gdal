@@ -122,8 +122,8 @@ if type is None:
 
 indataset = gdal.Open(infile, gdal.GA_ReadOnly)
 
-outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, type)
 out_driver = gdal.GetDriverByName(frmt)
+outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, type)
 
 for iBand in range(1, indataset.RasterCount + 1):
     inband = indataset.GetRasterBand(iBand)

@@ -387,7 +387,7 @@ def pds4_9():
         cs = ds.GetRasterBand(1).Checksum()
         if cs != 1:
             gdaltest.post_reason('fail')
-            print(format)
+            print(frmt)
             print(cs)
             return 'fail'
         ds = None
