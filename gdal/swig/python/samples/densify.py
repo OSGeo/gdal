@@ -318,7 +318,6 @@ def GetLength(geometry):
 
     def get_distance(x1, y1, x2, y2):
         """Return the euclidean distance between this point and another."""
-        import math
         deltax = x1 - x2
         deltay = y1 - y2
         d2 = (deltax**2) + (deltay**2)

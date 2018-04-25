@@ -28,7 +28,6 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-import string
 import osr
 
 ##############################################################################
@@ -61,7 +60,7 @@ def load_dict(filename):
 
 
 # dir = 'M:/software/ER Viewer 2.0c/GDT_Data/'
-dir = '/u/data/ecw/gdt/'
+directory = '/u/data/ecw/gdt/'
 
 dict_list = ['tranmerc', 'lambert1', 'lamcon2', 'utm', 'albersea', 'mercator',
              'obmerc_b', 'grinten', 'cassini', 'lambazea', 'datum_sp']
@@ -69,10 +68,10 @@ dict_list = ['tranmerc', 'lambert1', 'lamcon2', 'utm', 'albersea', 'mercator',
 dict_dict = {}
 
 for item in dict_list:
-    dict_dict[item] = load_dict(dir + item + '.dat')
+    dict_dict[item] = load_dict(directory + item + '.dat')
     # print 'loaded: %s' % item
 
-pfile = open(dir + 'project.dat')
+pfile = open(directory + 'project.dat')
 pfile.readline()
 
 for line in pfile.readlines():
@@ -165,7 +164,7 @@ for line in pfile.readlines():
 
 # Translate datums to their underlying spheroid information.
 
-pfile = open(dir + 'datum.dat')
+pfile = open(directory + 'datum.dat')
 pfile.readline()
 
 for line in pfile.readlines():

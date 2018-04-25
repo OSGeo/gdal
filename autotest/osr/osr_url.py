@@ -46,7 +46,7 @@ def osr_url_test(url, expected_wkt):
     if gdaltest.gdalurlopen(url) is None:
         return 'skip'
 
-    """Depend on the Accepts headers that ImportFromUrl sets to request SRS from sr.org"""
+    # Depend on the Accepts headers that ImportFromUrl sets to request SRS from sr.org
     srs = osr.SpatialReference()
     from osgeo import gdal
     gdal.PushErrorHandler('CPLQuietErrorHandler')

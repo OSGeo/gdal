@@ -52,6 +52,8 @@ def run_func(func):
 
         raise x
     except Exception:
+        # We really do want to catch most exceptions percolating up to here
+        # pylint: disable=broad-except
         result = 'fail (blowup)'
         print(result)
 
