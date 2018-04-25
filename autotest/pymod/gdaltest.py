@@ -375,6 +375,7 @@ def clean_tmp():
 
 
 def testCreateCopyInterruptCallback(pct, message, user_data):
+    # pylint: disable=unused-argument
     if pct > 0.5:
         return 0  # to stop
     else:

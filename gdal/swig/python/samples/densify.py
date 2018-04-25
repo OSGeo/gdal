@@ -151,6 +151,7 @@ class Translator(object):
                 self.output.CreateField(fld)
 
     def translate(self, geometry_callback=None, attribute_callback=None):
+        # pylint: disable=unused-argument
         f = self.input.GetNextFeature()
         trans = None
         if self.options.t_srs:

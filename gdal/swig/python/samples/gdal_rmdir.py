@@ -39,6 +39,7 @@ def Usage():
 
 
 def gdal_rm(argv, progress=None):
+    # pylint: disable=unused-argument
     filename = None
 
     argv = gdal.GeneralCmdLineProcessor(argv)

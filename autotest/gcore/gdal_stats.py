@@ -311,6 +311,7 @@ def stats_nan_8():
 
 
 def stats_nodata_inf_progress_cbk(value, string, extra):
+    # pylint: disable=unused-argument
     extra[0] = value
 
 

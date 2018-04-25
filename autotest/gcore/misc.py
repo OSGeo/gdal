@@ -270,6 +270,7 @@ class misc_6_interrupt_callback_class:
         pass
 
     def cbk(self, pct, message, user_data):
+        # pylint: disable=unused-argument
         if pct > 0.5:
             return 0  # to stop
         else:
