@@ -293,6 +293,7 @@ def test_ogr2ogr_lib_11():
 
 
 def mycallback(pct, msg, user_data):
+    # pylint: disable=unused-argument
     user_data[0] = pct
     return 1
 

@@ -103,7 +103,7 @@ quiet_flag = 0
 src_filename = None
 
 dst_filename = None
-format = None
+frmt = None
 
 mask = 'default'
 
@@ -119,7 +119,7 @@ while i < len(argv):
 
     if arg == '-of' or arg == '-f':
         i = i + 1
-        format = argv[i]
+        frmt = argv[i]
 
     elif arg == '-4':
         connectedness = 4
@@ -202,10 +202,10 @@ else:
 # =============================================================================
 
 if dst_filename is not None:
-    if format is None:
-        format = GetOutputDriverFor(dst_filename)
+    if frmt is None:
+        frmt = GetOutputDriverFor(dst_filename)
 
-    drv = gdal.GetDriverByName(format)
+    drv = gdal.GetDriverByName(frmt)
     dst_ds = drv.Create(dst_filename, src_ds.RasterXSize, src_ds.RasterYSize, 1,
                         srcband.DataType)
     wkt = src_ds.GetProjection()

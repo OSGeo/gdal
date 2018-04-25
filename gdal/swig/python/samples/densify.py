@@ -63,6 +63,11 @@ class Translator(object):
         self.opts = options
         self.construct_parser()
         self.options, self.args = self.parser.parse_args(args=arguments)
+        self.in_srs = None
+        self.out_srs = None
+        self.in_ds = None
+        self.out_ds = None
+        self.out_drv = None
 
     def process(self):
         self.open()
@@ -146,6 +151,7 @@ class Translator(object):
                 self.output.CreateField(fld)
 
     def translate(self, geometry_callback=None, attribute_callback=None):
+        # pylint: disable=unused-argument
         f = self.input.GetNextFeature()
         trans = None
         if self.options.t_srs:

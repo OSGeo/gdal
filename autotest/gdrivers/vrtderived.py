@@ -108,6 +108,7 @@ def vrtderived_2():
     options = [
         'subClass=VRTDerivedRasterBand',
         'PixelFunctionType=dummy',
+        'PixelFunctionLanguage=Python',
     ]
     vrt_ds.AddBand(gdal.GDT_Byte, options)
 
@@ -137,10 +138,15 @@ def vrtderived_2():
 
     node = gdal.ParseXMLString(xmlstring)
     node = _xmlsearch(node, gdal.CXT_Element, 'VRTRasterBand')
-    node = _xmlsearch(node, gdal.CXT_Element, 'PixelFunctionType')
-    node = _xmlsearch(node, gdal.CXT_Text, 'dummy')
-    if node is None:
+    pixelfunctiontype = _xmlsearch(node, gdal.CXT_Element, 'PixelFunctionType')
+    pixelfunctiontype = _xmlsearch(pixelfunctiontype, gdal.CXT_Text, 'dummy')
+    if pixelfunctiontype is None:
         gdaltest.post_reason('incorrect PixelFunctionType value')
+        return 'fail'
+    pixelfunctionlanguage = _xmlsearch(node, gdal.CXT_Element, 'PixelFunctionLanguage')
+    pixelfunctionlanguage = _xmlsearch(pixelfunctionlanguage, gdal.CXT_Text, 'Python')
+    if pixelfunctionlanguage is None:
+        gdaltest.post_reason('incorrect PixelFunctionLanguage value')
         return 'fail'
 
     return 'success'

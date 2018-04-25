@@ -1013,6 +1013,7 @@ def isis_23():
 
 
 def cancel_cbk(pct, msg, user_data):
+    # pylint: disable=unused-argument
     return 0
 
 # Test error cases

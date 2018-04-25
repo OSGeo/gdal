@@ -1002,6 +1002,11 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
             if( pszFuncName != nullptr )
                 poDerivedBand->SetPixelFunctionName(pszFuncName);
 
+            const char* pszLanguage =
+                CSLFetchNameValue(papszOptions, "PixelFunctionLanguage");
+            if( pszLanguage != nullptr )
+                poDerivedBand->SetPixelFunctionLanguage(pszLanguage);
+
             const char* pszTransferTypeName =
                 CSLFetchNameValue(papszOptions, "SourceTransferType");
             if( pszTransferTypeName != nullptr )

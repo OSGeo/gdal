@@ -37,7 +37,12 @@ import sys
 
 
 class Options:
-    pass
+    def __init__(self):
+        self.verbose_flag = 0
+        self.append = 0
+        self.create_self = []
+        self.metadata = []
+        self.negate = 0
 
 # =============================================================================
 
@@ -161,11 +166,6 @@ if __name__ == '__main__':
     auto_flag = 0
 
     options = Options()
-    options.verbose_flag = 0
-    options.append = 0
-    options.create_options = []
-    options.metadata = []
-    options.negate = 0
 
     argv = gdal.GeneralCmdLineProcessor(sys.argv)
     if argv is None:

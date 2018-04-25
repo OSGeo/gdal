@@ -100,7 +100,7 @@ def GetOutputDriverFor(filename):
 # =============================================================================
 
 
-format = None
+frmt = None
 creation_options = []
 options = []
 src_filename = None
@@ -122,7 +122,7 @@ while i < len(argv):
 
     if arg == '-of' or arg == '-f':
         i = i + 1
-        format = argv[i]
+        frmt = argv[i]
 
     elif arg == '-co':
         i = i + 1
@@ -211,10 +211,10 @@ except:
 #     Create output file.
 # =============================================================================
 if dst_ds is None:
-    if format is None:
-        format = GetOutputDriverFor(dst_filename)
+    if frmt is None:
+        frmt = GetOutputDriverFor(dst_filename)
 
-    drv = gdal.GetDriverByName(format)
+    drv = gdal.GetDriverByName(frmt)
     dst_ds = drv.Create(dst_filename,
                         src_ds.RasterXSize, src_ds.RasterYSize, 1,
                         gdal.GetDataTypeByName(creation_type), creation_options)

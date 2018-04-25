@@ -143,9 +143,9 @@ if __name__ == '__main__':
     if abs(gt[0]) < 180 and abs(gt[3]) < 180 \
        and abs(srcds.RasterXSize * gt[1]) < 180 \
        and abs(srcds.RasterYSize * gt[5]) < 180:
-        format = '%.10g' + delim + '%.10g' + delim + '%s'
+        frmt = '%.10g' + delim + '%.10g' + delim + '%s'
     else:
-        format = '%.3f' + delim + '%.3f' + delim + '%s'
+        frmt = '%.3f' + delim + '%.3f' + delim + '%s'
 
     # Loop emitting data.
 
@@ -171,6 +171,6 @@ if __name__ == '__main__':
 
             band_str = band_format % tuple(x_i_data)
 
-            line = format % (float(geo_x), float(geo_y), band_str)
+            line = frmt % (float(geo_x), float(geo_y), band_str)
 
             dst_fh.write(line)

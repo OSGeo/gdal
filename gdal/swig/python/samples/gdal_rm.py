@@ -75,6 +75,7 @@ def gdal_rm_recurse(filename, simulate=False):
 
 
 def gdal_rm(argv, progress=None):
+    # pylint: disable=unused-argument
     filename = None
     recurse = False
     simulate = False

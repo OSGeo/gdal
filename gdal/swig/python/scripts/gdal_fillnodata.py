@@ -62,7 +62,7 @@ src_filename = None
 src_band = 1
 
 dst_filename = None
-format = 'GTiff'
+frmt = 'GTiff'
 creation_options = []
 
 mask = 'default'
@@ -79,7 +79,7 @@ while i < len(argv):
 
     if arg == '-of' or arg == '-f':
         i = i + 1
-        format = argv[i]
+        frmt = argv[i]
 
     elif arg == '-co':
         i = i + 1
@@ -169,7 +169,7 @@ else:
 
 if dst_filename is not None:
 
-    drv = gdal.GetDriverByName(format)
+    drv = gdal.GetDriverByName(frmt)
     dst_ds = drv.Create(dst_filename, src_ds.RasterXSize, src_ds.RasterYSize, 1,
                         srcband.DataType, creation_options)
     wkt = src_ds.GetProjection()

@@ -1387,6 +1387,9 @@ class GDAL2Tiles(object):
         self.input_file = None
         self.output_folder = None
 
+        self.isepsg4326 = None
+        self.in_srs_wkt = None
+
         # Tile format
         self.tilesize = 256
         self.tiledriver = 'PNG'

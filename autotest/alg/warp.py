@@ -1003,7 +1003,7 @@ def warp_26():
 
 
 def warp_27_progress_callback(pct, message, user_data):
-    # print(pct)
+    # pylint: disable=unused-argument
     return 1  # 1 to continue, 0 to stop
 
 
@@ -1164,6 +1164,7 @@ def warp_29():
 
 
 def warp_30_progress_callback(pct, message, user_data):
+    # pylint: disable=unused-argument
     if pct > 0.2:
         return 0  # stop
     else:

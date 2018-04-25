@@ -114,6 +114,7 @@ def GetOutputDriverFor(filename):
 
 
 def doit(opts, args):
+    # pylint: disable=unused-argument
 
     if opts.debug:
         print("gdal_calc.py starting calculation %s" % (opts.calc))
@@ -400,6 +401,7 @@ def Calc(calc, outfile, NoDataValue=None, type=None, format=None, creation_optio
 
 
 def store_input_file(option, opt_str, value, parser):
+    # pylint: disable=unused-argument
     if not hasattr(parser.values, 'input_files'):
         parser.values.input_files = {}
     parser.values.input_files[opt_str.lstrip('-')] = value

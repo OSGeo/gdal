@@ -109,7 +109,7 @@ def gdal_pansharpen(argv):
     out_name = None
     bands = []
     weights = []
-    format = None
+    frmt = None
     creation_options = []
     callback = gdal.TermProgress_nocb
     resampling = None
@@ -123,7 +123,7 @@ def gdal_pansharpen(argv):
     argc = len(argv)
     while i < argc:
         if (argv[i] == '-of' or argv[i] == '-f') and i < len(argv) - 1:
-            format = argv[i + 1]
+            frmt = argv[i + 1]
             i = i + 1
         elif argv[i] == '-r' and i < len(argv) - 1:
             resampling = argv[i + 1]
@@ -190,8 +190,8 @@ def gdal_pansharpen(argv):
         return Usage()
     out_name = last_name
 
-    if format is None:
-        format = GetOutputDriverFor(out_name)
+    if frmt is None:
+        frmt = GetOutputDriverFor(out_name)
 
     if len(bands) == 0:
         bands = [j + 1 for j in range(len(spectral_bands))]
@@ -243,7 +243,7 @@ def gdal_pansharpen(argv):
         vrt_xml += '      <SpatialExtentAdjustment>%s</SpatialExtentAdjustment>\n' % spat_adjust
 
     pan_relative = '0'
-    if format.upper() == 'VRT':
+    if frmt.upper() == 'VRT':
         if not os.path.isabs(pan_name):
             pan_relative = '1'
             pan_name = os.path.relpath(pan_name, os.path.dirname(out_name))
@@ -262,7 +262,7 @@ def gdal_pansharpen(argv):
 
         ms_relative = '0'
         ms_name = spectral_ds[i].GetDescription()
-        if format.upper() == 'VRT':
+        if frmt.upper() == 'VRT':
             if not os.path.isabs(ms_name):
                 ms_relative = '1'
                 ms_name = os.path.relpath(ms_name, os.path.dirname(out_name))
@@ -275,7 +275,7 @@ def gdal_pansharpen(argv):
     vrt_xml += """  </PansharpeningOptions>\n"""
     vrt_xml += """</VRTDataset>\n"""
 
-    if format.upper() == 'VRT':
+    if frmt.upper() == 'VRT':
         f = gdal.VSIFOpenL(out_name, 'wb')
         if f is None:
             print('Cannot create %s' % out_name)
@@ -293,7 +293,7 @@ def gdal_pansharpen(argv):
         return 0
 
     vrt_ds = gdal.Open(vrt_xml)
-    out_ds = gdal.GetDriverByName(format).CreateCopy(out_name, vrt_ds, 0, creation_options, callback=callback)
+    out_ds = gdal.GetDriverByName(frmt).CreateCopy(out_name, vrt_ds, 0, creation_options, callback=callback)
     if out_ds is None:
         return 1
     return 0
