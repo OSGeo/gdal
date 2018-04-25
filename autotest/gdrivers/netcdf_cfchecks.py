@@ -2551,7 +2551,7 @@ def getargs(arglist):
 
     from getopt import getopt, GetoptError
     from os import environ
-    from sys import stderr, exit
+    from sys import stderr
 
     udunitskey = 'UDUNITS'
     standardnamekey = 'CF_STANDARD_NAMES'
@@ -2578,7 +2578,7 @@ def getargs(arglist):
         (opts, args) = getopt(arglist[1:], 'a:bchlnu:s:v:', ['area_types=', 'badc', 'coards', 'help', 'uploader', 'noname', 'udunits=', 'cf_standard_names=', 'version='])
     except GetoptError:
         stderr.write('%s\n' % __doc__)
-        exit(1)
+        sys.exit(1)
 
     for a, v in opts:
         if a in ('-a', '--area_types'):
@@ -2592,7 +2592,7 @@ def getargs(arglist):
             continue
         if a in ('-h', '--help'):
             print(__doc__)
-            exit(0)
+            sys.exit(0)
         if a in ('-l', '--uploader'):
             uploader = "yes"
             continue
@@ -2622,7 +2622,7 @@ def getargs(arglist):
 
     if len(args) == 0:
         stderr.write('ERROR in command line\n\nusage:\n%s\n' % __doc__)
-        exit(1)
+        sys.exit(1)
 
     return (badc, coards, uploader, useFileName, standardname, areatypes, udunits, version, args)
 
