@@ -101,9 +101,9 @@ class Translator(object):
             self.input.SetAttributeFilter(self.options.where)
 
         if not self.out_drv:
-            raise Exception("The '%s' driver was not found, did you misspell it or is it not available in this GDAL build?", self.options.driver)
+            raise Exception("The '%s' driver was not found, did you misspell it or is it not available in this GDAL build?" % self.options.driver)
         if not self.out_drv.TestCapability('CreateDataSource'):
-            raise Exception("The '%s' driver does not support creating layers, you will have to choose another output driver", self.options.driver)
+            raise Exception("The '%s' driver does not support creating layers, you will have to choose another output driver" % self.options.driver)
         if not self.options.output:
             raise Exception("No output layer was specified")
         if self.options.driver == 'ESRI Shapefile':
