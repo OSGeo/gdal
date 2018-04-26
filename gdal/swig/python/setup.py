@@ -359,8 +359,6 @@ if os.path.exists('setup_vars.ini'):
 
 if GNM_ENABLED:
     ext_modules.append(gnm_module)
-    py_modules.append('gnm')
-
 
 if HAVE_NUMPY:
     ext_modules.append(array_module)
