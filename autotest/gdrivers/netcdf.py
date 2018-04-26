@@ -1139,7 +1139,7 @@ def netcdf_test_4dfile(ofile):
         gdaltest.post_reason('copy has %d bands (expected 8) and has %d subdatasets'
                              ' (expected 0)' % (ds.RasterCount, subds_count))
         return 'fail'
-    ds is None
+    ds = None
 
     # get file header with ncdump (if available)
     try:
