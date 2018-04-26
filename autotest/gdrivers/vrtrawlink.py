@@ -43,8 +43,6 @@ def _xmlsearch(root, nodetype, name):
     for node in root[2:]:
         if node[0] == nodetype and node[1] == name:
             return node
-    else:
-        None
 
 ###############################################################################
 # Verify reading from simple existing raw definition.
