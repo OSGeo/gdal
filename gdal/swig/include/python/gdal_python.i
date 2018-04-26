@@ -651,9 +651,9 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
                     buf_pixel_space = None, buf_line_space = None, buf_band_space = None ):
 
         if buf_xsize is None:
-            buf_xsize = xsize;
+            buf_xsize = xsize
         if buf_ysize is None:
-            buf_ysize = ysize;
+            buf_ysize = ysize
         if band_list is None:
             band_list = range(1,self.RasterCount+1)
         if buf_type is None:
@@ -679,9 +679,9 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
         if band_list is None:
             band_list = range(1,self.RasterCount+1)
         if buf_xsize is None:
-            buf_xsize = xsize;
+            buf_xsize = xsize
         if buf_ysize is None:
-            buf_ysize = ysize;
+            buf_ysize = ysize
 
         if buf_type is None:
             buf_type = self.GetRasterBand(1).DataType;
