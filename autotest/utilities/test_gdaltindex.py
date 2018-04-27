@@ -201,7 +201,7 @@ def test_gdaltindex_4():
     ds.SetGeoTransform([47, 0.1, 0, 2, 0, -0.1])
     ds = None
 
-    _ = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -t_srs EPSG:4326 tmp/tileindex.shp tmp/gdaltindex5.tif')
+    gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -t_srs EPSG:4326 tmp/tileindex.shp tmp/gdaltindex5.tif')
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 5:
@@ -232,7 +232,7 @@ def test_gdaltindex_5():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_gdaltindex_5.shp')
         gdal.PopErrorHandler()
-        _ = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -src_srs_name src_srs %s -t_srs EPSG:4326 tmp/test_gdaltindex_5.shp tmp/gdaltindex1.tif tmp/gdaltindex6.tif' % src_srs_format)
+        gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -src_srs_name src_srs %s -t_srs EPSG:4326 tmp/test_gdaltindex_5.shp tmp/gdaltindex1.tif tmp/gdaltindex6.tif' % src_srs_format)
 
         ds = ogr.Open('tmp/test_gdaltindex_5.shp')
         lyr = ds.GetLayer(0)
@@ -272,7 +272,7 @@ def test_gdaltindex_6():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_gdaltindex_6.mif')
         gdal.PopErrorHandler()
-        _ = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -f "MapInfo File" %s tmp/test_gdaltindex_6.mif tmp/gdaltindex1.tif' % option)
+        gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -f "MapInfo File" %s tmp/test_gdaltindex_6.mif tmp/gdaltindex1.tif' % option)
         ds = ogr.Open('tmp/test_gdaltindex_6.mif')
         lyr = ds.GetLayer(0)
         if lyr.GetFeatureCount() != 1:
