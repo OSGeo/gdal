@@ -357,7 +357,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             if( strstr( pszWKT,
                         "PROJCS[\"WGS_1984_Web_Mercator_Auxiliary_Sphere\"" ) )
             {
-                oSRS.SetFromUserInput(pszWKT);
+                oSRS.importFromWkt(pszWKT);
                 oSRS.SetExtension(
                     "PROJCS", "PROJ4",
                     "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 "
