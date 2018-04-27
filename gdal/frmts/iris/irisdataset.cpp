@@ -476,6 +476,8 @@ void IRISDataset::LoadProjection()
 
     const float fScaleX = CPL_LSBSINT32PTR(abyHeader + 88 + 12 ) / 100.0f;
     const float fScaleY = CPL_LSBSINT32PTR(abyHeader + 92 + 12 ) / 100.0f;
+    if( fScaleX < 0.0f || fScaleY < 0.0f )
+        return;
 
     OGRSpatialReference oSRSOut;
 
