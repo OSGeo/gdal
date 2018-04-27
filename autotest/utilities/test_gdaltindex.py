@@ -88,7 +88,7 @@ def test_gdaltindex_1():
     ds.SetGeoTransform([48, 0.1, 0, 3, 0, -0.1])
     ds = None
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
@@ -135,7 +135,7 @@ def test_gdaltindex_2():
     if test_cli_utilities.get_gdaltindex_path() is None:
         return 'skip'
 
-    (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif tmp/gdaltindex3.tif tmp/gdaltindex4.tif')
+    (_, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif tmp/gdaltindex3.tif tmp/gdaltindex4.tif')
 
     if ret_stderr.find('File tmp/gdaltindex1.tif is already in tileindex. Skipping it.') == -1 or \
        ret_stderr.find('File tmp/gdaltindex2.tif is already in tileindex. Skipping it.') == -1 or \
@@ -169,7 +169,7 @@ def test_gdaltindex_3():
     ds.SetGeoTransform([47, 0.1, 0, 2, 0, -0.1])
     ds = None
 
-    (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/gdaltindex5.tif')
+    (_, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/gdaltindex5.tif')
 
     if ret_stderr.find('Warning : tmp/gdaltindex5.tif is not using the same projection system as other files in the tileindex.') == -1 or \
        ret_stderr.find('Use -t_srs option to set target projection system (not supported by MapServer).') == -1:
@@ -201,7 +201,7 @@ def test_gdaltindex_4():
     ds.SetGeoTransform([47, 0.1, 0, 2, 0, -0.1])
     ds = None
 
-    (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -t_srs EPSG:4326 tmp/tileindex.shp tmp/gdaltindex5.tif')
+    _ = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -t_srs EPSG:4326 tmp/tileindex.shp tmp/gdaltindex5.tif')
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 5:
@@ -232,7 +232,7 @@ def test_gdaltindex_5():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_gdaltindex_5.shp')
         gdal.PopErrorHandler()
-        (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -src_srs_name src_srs %s -t_srs EPSG:4326 tmp/test_gdaltindex_5.shp tmp/gdaltindex1.tif tmp/gdaltindex6.tif' % src_srs_format)
+        _ = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -src_srs_name src_srs %s -t_srs EPSG:4326 tmp/test_gdaltindex_5.shp tmp/gdaltindex1.tif tmp/gdaltindex6.tif' % src_srs_format)
 
         ds = ogr.Open('tmp/test_gdaltindex_5.shp')
         lyr = ds.GetLayer(0)
@@ -272,7 +272,7 @@ def test_gdaltindex_6():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_gdaltindex_6.mif')
         gdal.PopErrorHandler()
-        (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -f "MapInfo File" %s tmp/test_gdaltindex_6.mif tmp/gdaltindex1.tif' % option)
+        _ = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -f "MapInfo File" %s tmp/test_gdaltindex_6.mif tmp/gdaltindex1.tif' % option)
         ds = ogr.Open('tmp/test_gdaltindex_6.mif')
         lyr = ds.GetLayer(0)
         if lyr.GetFeatureCount() != 1:

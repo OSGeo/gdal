@@ -101,7 +101,7 @@ def pdf_checksum_available():
         gdaltest.pdf_is_checksum_available = True
         return gdaltest.pdf_is_checksum_available
 
-    (out, err) = gdaltest.runexternal_out_and_err("pdftoppm -v")
+    (_, err) = gdaltest.runexternal_out_and_err("pdftoppm -v")
     if err.find('pdftoppm version') == 0:
         gdaltest.pdf_is_checksum_available = True
         return gdaltest.pdf_is_checksum_available

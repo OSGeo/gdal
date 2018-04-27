@@ -619,7 +619,7 @@ def misc_12():
             if gdal_translate_path is not None:
                 # Test to detect memleaks
                 ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/misc_12.vrt', src_ds)
-                (out, err) = gdaltest.runexternal_out_and_err(gdal_translate_path + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/' + get_filename(drv, ''), check_memleak=False)
+                (out, _) = gdaltest.runexternal_out_and_err(gdal_translate_path + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/' + get_filename(drv, ''), check_memleak=False)
                 del ds
                 gdal.Unlink('tmp/misc_12.vrt')
 

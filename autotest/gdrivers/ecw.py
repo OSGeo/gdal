@@ -1116,8 +1116,8 @@ def ecw_29():
                 data2 = ds2.ReadRaster(i * int(tile / 2), j * int(tile / 2), tile, tile)
                 tmp_ds1.WriteRaster(0, 0, tile, tile, data1)
                 tmp_ds2.WriteRaster(0, 0, tile, tile, data2)
-                (ignored, ignored, mean1, stddev1) = tmp_ds1.GetRasterBand(1).GetStatistics(1, 1)
-                (ignored, ignored, mean2, stddev2) = tmp_ds2.GetRasterBand(1).GetStatistics(1, 1)
+                (_, _, mean1, stddev1) = tmp_ds1.GetRasterBand(1).GetStatistics(1, 1)
+                (_, _, mean2, stddev2) = tmp_ds2.GetRasterBand(1).GetStatistics(1, 1)
                 nvals = nvals + 1
                 sum_abs_diff_mean = sum_abs_diff_mean + abs(mean1 - mean2)
                 sum_abs_diff_stddev = sum_abs_diff_stddev + abs(stddev1 - stddev2)

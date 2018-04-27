@@ -374,7 +374,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
 
     # Test if ncdump is available
     try:
-        (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
+        (_, err) = gdaltest.runexternal_out_and_err('ncdump -h')
     except:
         # nothing is supported as ncdump not found
         print('NOTICE: netcdf version not found')

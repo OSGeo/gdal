@@ -372,9 +372,9 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             test = query2['test'][0]
         key = server + '-' + version
         if key in urls and test in urls[key]:
-            tmp, got = self.path.split('SERVICE=WCS')
+            _, got = self.path.split('SERVICE=WCS')
             got = re.sub('\&test=.*', '', got)
-            tmp, have = urls[key][test].split('SERVICE=WCS')
+            _, have = urls[key][test].split('SERVICE=WCS')
             have += '&server=' + server
             if got == have:
                 ok = 'ok'

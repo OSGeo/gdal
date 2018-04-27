@@ -224,7 +224,7 @@ def test_gdalsrsinfo_9():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    ret, err = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_gdalsrsinfo_path() + ' nonexistent_file')
 
     if err.strip() != "ERROR 1: ERROR - failed to load SRS definition from nonexistent_file":
@@ -371,7 +371,7 @@ def test_gdalsrsinfo_16():
         ' GTIFF_RAW:../gcore/data/byte.tif'
 
     try:
-        (ret, err) = gdaltest.runexternal_out_and_err(cmd)
+        (_, err) = gdaltest.runexternal_out_and_err(cmd)
     except:
         gdaltest.post_reason('gdalsrsinfo execution failed')
         return 'fail'

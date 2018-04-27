@@ -2964,7 +2964,7 @@ def tiff_write_78():
     # new_ds = gdal.Open('tmp/tiff_write_78.tif')
 
     if 'GetBlockSize' in dir(gdal.Band):
-        (blockx, blocky) = new_ds.GetRasterBand(1).GetBlockSize()
+        (_, blocky) = new_ds.GetRasterBand(1).GetBlockSize()
         if blocky != 1:
             print('')
             print('using regular band (libtiff <= 3.9.2 or <= 4.0.0beta5, or SplitBand disabled by config option)')
