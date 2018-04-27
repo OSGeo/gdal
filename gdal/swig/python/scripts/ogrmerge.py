@@ -157,7 +157,7 @@ class XMLWriter:
         self.elements = []
 
     def _indent(self):
-        return ''.join(['  ' for i in range(self.inc)])
+        return '  ' * self.inc
 
     def open_element(self, name, attrs=None):
         xml_attrs = ''

@@ -1222,9 +1222,7 @@ def ogr_gml_30():
     for i in range(11):
         field1 = field1 + field1
 
-    geom = "0 1 "
-    for i in range(9):
-        geom = geom + geom
+    geom = "0 1 " * 512
 
     data = """<FeatureCollection xmlns:gml="http://www.opengis.net/gml">
   <gml:featureMember>
