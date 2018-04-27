@@ -145,7 +145,7 @@ def lcp_2():
 
     ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
     if ds.RasterCount != 8:
-        gdal.post_reason('wrong number of bands')
+        gdaltest.post_reason('wrong number of bands')
         return 'fail'
 
     metadata = [('LATITUDE', '48'),
