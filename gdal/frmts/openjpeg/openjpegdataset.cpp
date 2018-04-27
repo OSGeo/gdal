@@ -2606,9 +2606,10 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     }
 
     const char* pszYCC = CSLFetchNameValue(papszOptions, "YCC");
-    int bYCC = ((nBands == 3 || nBands == 4) && eDataType == GDT_Byte &&
+    int bYCC = ((nBands == 3 || nBands == 4) &&
             CPLTestBool(CSLFetchNameValueDef(papszOptions, "YCC", "TRUE")));
 
+#if OPJ_VERSION_MAJOR == 2 && OPJ_VERSION_MINOR < 2
     /* TODO: when OpenJPEG 2.2 is released, make this conditional */
     /* Depending on the way OpenJPEG <= r2950 is built, YCC with 4 bands might work on
      * Debug mode, but this relies on unreliable stack buffer overflows, so
@@ -2623,6 +2624,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
         bYCC = FALSE;
     }
+#endif
 
     if( bYCBCR420 && bYCC )
     {
