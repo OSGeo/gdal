@@ -64,12 +64,12 @@ def pcraster_2():
 
     if gt[0] != 182140.0 or gt[1] != 10 or gt[2] != 0 \
        or gt[3] != 327880.0 or gt[4] != 0 or gt[5] != -10:
-        gdal.post_reason('PCRaster geotransform wrong.')
+        gdaltest.post_reason('PCRaster geotransform wrong.')
         return 'fail'
 
     band1 = ds.GetRasterBand(1)
     if band1.GetNoDataValue() != 255:
-        gdal.post_reason('PCRaster NODATA value wrong or missing.')
+        gdaltest.post_reason('PCRaster NODATA value wrong or missing.')
         return 'fail'
 
     return 'success'

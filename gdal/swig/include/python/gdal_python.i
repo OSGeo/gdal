@@ -651,9 +651,9 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
                     buf_pixel_space = None, buf_line_space = None, buf_band_space = None ):
 
         if buf_xsize is None:
-            buf_xsize = xsize;
+            buf_xsize = xsize
         if buf_ysize is None:
-            buf_ysize = ysize;
+            buf_ysize = ysize
         if band_list is None:
             band_list = range(1,self.RasterCount+1)
         if buf_type is None:
@@ -679,9 +679,9 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
         if band_list is None:
             band_list = range(1,self.RasterCount+1)
         if buf_xsize is None:
-            buf_xsize = xsize;
+            buf_xsize = xsize
         if buf_ysize is None:
-            buf_ysize = ysize;
+            buf_ysize = ysize
 
         if buf_type is None:
             buf_type = self.GetRasterBand(1).DataType;
@@ -769,7 +769,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
             i = i + 1
         return sd_list
 
-    def BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj = None, buf_xsize = None, buf_ysize = None, buf_type = None, band_list = None, options=[]):
+    def BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj = None, buf_xsize = None, buf_ysize = None, buf_type = None, band_list = None, options=None):
         if band_list is None:
             band_list = range(1, self.RasterCount + 1)
         if buf_xsize is None:
@@ -783,6 +783,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
             buf_xsize = xsize
         if buf_ysize <= 0:
             buf_ysize = ysize
+        options = [] if options is None else options
 
         if buf_obj is None:
             from sys import version_info
@@ -850,7 +851,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
 def _is_str_or_unicode(o):
     return isinstance(o, str) or str(type(o)) == "<type 'unicode'>"
 
-def InfoOptions(options = [], format = 'text', deserialize = True,
+def InfoOptions(options = None, format = 'text', deserialize = True,
          computeMinMax = False, reportHistograms = False, reportProj4 = False,
          stats = False, approxStats = False, computeChecksum = False,
          showGCPs = True, showMetadata = True, showRAT = True, showColorTable = True,
@@ -858,7 +859,8 @@ def InfoOptions(options = [], format = 'text', deserialize = True,
          extraMDDomains = None):
     """ Create a InfoOptions() object that can be passed to gdal.Info()
         options can be be an array of strings, a string or let empty and filled from other keywords."""
-    import copy
+
+    options = [] if options is None else options
 
     if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
@@ -866,7 +868,7 @@ def InfoOptions(options = [], format = 'text', deserialize = True,
         if '-json' in new_options:
             format = 'json'
     else:
-        new_options = copy.copy(options)
+        new_options = options
         if format == 'json':
             new_options += ['-json']
         if computeMinMax:
@@ -924,7 +926,7 @@ def Info(ds, **kwargs):
 def _strHighPrec(x):
     return x if _is_str_or_unicode(x) else '%.18g' % x
 
-def TranslateOptions(options = [], format = None,
+def TranslateOptions(options = None, format = None,
               outputType = GDT_Unknown, bandList = None, maskBand = None,
               width = 0, height = 0, widthPct = 0.0, heightPct = 0.0,
               xRes = 0.0, yRes = 0.0,
@@ -968,12 +970,12 @@ def TranslateOptions(options = [], format = None,
           callback --- callback method
           callback_data --- user data for callback
     """
-    import copy
+    options = [] if options is None else options
 
     if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
-        new_options = copy.copy(options)
+        new_options = options
         if format is not None:
             new_options += ['-of', format]
         if outputType != GDT_Unknown:
@@ -1067,7 +1069,7 @@ def Translate(destName, srcDS, **kwargs):
 
     return TranslateInternal(destName, srcDS, opts, callback, callback_data)
 
-def WarpOptions(options = [], format = None,
+def WarpOptions(options = None, format = None,
          outputBounds = None,
          outputBoundsSRS = None,
          xRes = None, yRes = None, targetAlignedPixels = False,
@@ -1125,12 +1127,12 @@ def WarpOptions(options = [], format = None,
           callback --- callback method
           callback_data --- user data for callback
     """
-    import copy
+    options = [] if options is None else options
 
     if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
-        new_options = copy.copy(options)
+        new_options = options
         if format is not None:
             new_options += ['-of', format]
         if outputType != GDT_Unknown:
@@ -1254,7 +1256,7 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
         return wrapper_GDALWarpDestDS(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
 
 
-def VectorTranslateOptions(options = [], format = None,
+def VectorTranslateOptions(options = None, format = None,
          accessMode = None,
          srcSRS = None, dstSRS = None, reproject = True,
          SQLStatement = None, SQLDialect = None, where = None, selectFields = None,
@@ -1301,12 +1303,12 @@ def VectorTranslateOptions(options = [], format = None,
           callback --- callback method
           callback_data --- user data for callback
     """
-    import copy
+    options = [] if options is None else options
 
     if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
-        new_options = copy.copy(options)
+        new_options = options
         if format is not None:
             new_options += ['-f', format]
         if srcSRS is not None:
@@ -1399,7 +1401,7 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
     else:
         return wrapper_GDALVectorTranslateDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
-def DEMProcessingOptions(options = [], colorFilename = None, format = None,
+def DEMProcessingOptions(options = None, colorFilename = None, format = None,
               creationOptions = None, computeEdges = False, alg = 'Horn', band = 1,
               zFactor = None, scale = None, azimuth = None, altitude = None,
               combined = False, multiDirectional = False,
@@ -1428,12 +1430,12 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = None,
           callback --- callback method
           callback_data --- user data for callback
     """
-    import copy
+    options = [] if options is None else options
 
     if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
-        new_options = copy.copy(options)
+        new_options = options
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
@@ -1488,7 +1490,7 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
     return DEMProcessingInternal(destName, srcDS, processing, colorFilename, opts, callback, callback_data)
 
 
-def NearblackOptions(options = [], format = None,
+def NearblackOptions(options = None, format = None,
          creationOptions = None, white = False, colors = None,
          maxNonBlack = None, nearDist = None, setAlpha = False, setMask = False,
          callback = None, callback_data = None):
@@ -1506,12 +1508,12 @@ def NearblackOptions(options = [], format = None,
           callback --- callback method
           callback_data --- user data for callback
     """
-    import copy
+    options = [] if options is None else options
 
     if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
-        new_options = copy.copy(options)
+        new_options = options
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
@@ -1561,7 +1563,7 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
         return wrapper_GDALNearblackDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 
-def GridOptions(options = [], format = None,
+def GridOptions(options = None, format = None,
               outputType = GDT_Unknown,
               width = 0, height = 0,
               creationOptions = None,
@@ -1599,12 +1601,12 @@ def GridOptions(options = [], format = None,
           callback --- callback method
           callback_data --- user data for callback
     """
-    import copy
+    options = [] if options is None else options
 
     if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
-        new_options = copy.copy(options)
+        new_options = options
         if format is not None:
             new_options += ['-of', format]
         if outputType != GDT_Unknown:
@@ -1660,7 +1662,7 @@ def Grid(destName, srcDS, **kwargs):
 
     return GridInternal(destName, srcDS, opts, callback, callback_data)
 
-def RasterizeOptions(options = [], format = None,
+def RasterizeOptions(options = None, format = None,
          outputType = GDT_Unknown,
          creationOptions = None, noData = None, initValues = None,
          outputBounds = None, outputSRS = None,
@@ -1699,12 +1701,12 @@ def RasterizeOptions(options = [], format = None,
           callback --- callback method
           callback_data --- user data for callback
     """
-    import copy
+    options = [] if options is None else options
 
     if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
-        new_options = copy.copy(options)
+        new_options = options
         if format is not None:
             new_options += ['-of', format]
         if outputType != GDT_Unknown:
@@ -1792,7 +1794,7 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
         return wrapper_GDALRasterizeDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 
-def BuildVRTOptions(options = [],
+def BuildVRTOptions(options = None,
                     resolution = None,
                     outputBounds = None,
                     xRes = None, yRes = None,
@@ -1826,12 +1828,12 @@ def BuildVRTOptions(options = [],
           callback --- callback method.
           callback_data --- user data for callback.
     """
-    import copy
+    options = [] if options is None else options
 
     if _is_str_or_unicode(options):
         new_options = ParseCommandLine(options)
     else:
-        new_options = copy.copy(options)
+        new_options = options
         if resolution is not None:
             new_options += ['-resolution', str(resolution) ]
         if outputBounds is not None:

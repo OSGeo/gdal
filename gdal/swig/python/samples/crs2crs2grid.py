@@ -120,16 +120,10 @@ def new_create_grid(griddef):
     lat_axis = numpy.linspace(lat_start, lat_end, lat_steps)
     lon_axis = numpy.linspace(lon_start, lon_end, lon_steps)
 
-    lon_list = []
-    for i in range(lat_steps):
-        lon_list.append(lon_axis)
-
+    lon_list = [lon_axis] * lat_steps
     lon_band = numpy.vstack(lon_list)
 
-    lat_list = []
-    for i in range(lon_steps):
-        lat_list.append(lat_axis)
-
+    lat_list = [lat_axis] * lon_steps
     lat_band = numpy.column_stack(lat_list)
 
     return numpy.array([lon_band, lat_band])

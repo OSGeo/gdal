@@ -433,11 +433,8 @@ bool NASReader::IsAttributeElement( const char *pszElement )
         osElemPath += pszElement;
     }
 
-    for( int i = 0; i < poClass->GetPropertyCount(); i++ )
-        if( EQUAL(poClass->GetProperty(i)->GetSrcElement(),osElemPath) )
-            return true;
-
-    return false;
+    return poClass->GetPropertyIndexBySrcElement(osElemPath.c_str(),
+                                    static_cast<int>(osElemPath.size())) >= 0;
 }
 
 /************************************************************************/
@@ -573,16 +570,11 @@ void NASReader::SetFeaturePropertyDirectly( const char *pszElement,
 /*      it.                                                             */
 /* -------------------------------------------------------------------- */
     GMLFeatureClass *poClass = poFeature->GetClass();
-    int iProperty = 0;
+    int iProperty =
+        poClass->GetPropertyIndexBySrcElement(pszElement,
+                                    static_cast<int>(strlen(pszElement)));
 
-    for( ; iProperty < poClass->GetPropertyCount(); iProperty++ )
-    {
-        if( EQUAL(poClass->GetProperty( iProperty )->GetSrcElement(),
-                  pszElement ) )
-            break;
-    }
-
-    if( iProperty == poClass->GetPropertyCount() )
+    if( iProperty < 0 )
     {
         if( poClass->IsSchemaLocked() )
         {
@@ -590,6 +582,8 @@ void NASReader::SetFeaturePropertyDirectly( const char *pszElement,
             CPLFree(pszValue);
             return;
         }
+
+        iProperty = poClass->GetPropertyCount();
 
         CPLString osFieldName;
 

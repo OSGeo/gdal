@@ -464,9 +464,7 @@ def transformer_9():
     for method in ['near', 'bilinear', 'cubic']:
         tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/dem.tif', 'RPC_DEMINTERPOLATION=%s' % method])
 
-        points = []
-        for i in range(10):
-            points.append((125.64828521533849, 39.869345204440144))
+        points = [(125.64828521533849, 39.869345204440144)] * 10
         (pnt, success) = tr.TransformPoints(1, points)
         if not success[0]:
             gdaltest.post_reason('failure')

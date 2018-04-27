@@ -985,8 +985,7 @@ def netcdf_24_nc4():
                  'valid_range_l': '0,255',
                  'valid_range_ul': '0,4000000000',
                  'valid_range_d': '0.1111112222222,255.555555555556',
-                 'valid_range_f': '0.1111111,255.5556',
-                 'valid_range_s': '0,255'}
+                 'valid_range_f': '0.1111111,255.5556'}
 
     return netcdf_check_vars('data/nc4_vars.nc', vals_global, vals_band)
 
@@ -1140,7 +1139,7 @@ def netcdf_test_4dfile(ofile):
         gdaltest.post_reason('copy has %d bands (expected 8) and has %d subdatasets'
                              ' (expected 0)' % (ds.RasterCount, subds_count))
         return 'fail'
-    ds is None
+    ds = None
 
     # get file header with ncdump (if available)
     try:

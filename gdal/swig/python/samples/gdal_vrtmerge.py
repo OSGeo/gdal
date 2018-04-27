@@ -56,6 +56,24 @@ def names_to_fileinfos(names):
 class file_info:
     """A class holding information about a GDAL file."""
 
+    def __init__(self):
+        self.band_types = [None]
+        self.block_sizes = [None]
+        self.nodata = [None]
+        self.cts = [None]
+        self.color_interps = [None]
+
+        self.filename = None
+        self.bands = None
+        self.xsize = None
+        self.ysize = None
+        self.projection = None
+        self.geotransform = None
+        self.ulx = None
+        self.uly = None
+        self.lrx = None
+        self.lry = None
+
     def init_from_name(self, filename):
         """
         Initialize file_info from filename

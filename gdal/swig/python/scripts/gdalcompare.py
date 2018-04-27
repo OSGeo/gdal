@@ -38,7 +38,9 @@ from osgeo import osr
 #######################################################
 
 
-def compare_metadata(golden_md, new_md, id, options=[]):
+def compare_metadata(golden_md, new_md, id, options=None):
+    # pylint: disable=unused-argument
+
     if golden_md is None and new_md is None:
         return 0
 
@@ -65,7 +67,9 @@ def compare_metadata(golden_md, new_md, id, options=[]):
 
 #######################################################
 # Review and report on the actual image pixels that differ.
-def compare_image_pixels(golden_band, new_band, id, options=[]):
+def compare_image_pixels(golden_band, new_band, id, options=None):
+    # pylint: disable=unused-argument
+
     diff_count = 0
     max_diff = 0
 
@@ -82,8 +86,10 @@ def compare_image_pixels(golden_band, new_band, id, options=[]):
 #######################################################
 
 
-def compare_band(golden_band, new_band, id, options=[]):
+def compare_band(golden_band, new_band, id, options=None):
     found_diff = 0
+
+    options = [] if options is None else options
 
     if golden_band.DataType != new_band.DataType:
         print('Band %s pixel types differ.' % id)
@@ -160,8 +166,10 @@ def compare_srs(golden_wkt, new_wkt):
 #######################################################
 
 
-def compare_db(golden_db, new_db, options=[]):
+def compare_db(golden_db, new_db, options=None):
     found_diff = 0
+
+    options = [] if options is None else options
 
     # SRS
     if 'SKIP_SRS' not in options:
@@ -215,8 +223,10 @@ def compare_db(golden_db, new_db, options=[]):
 #######################################################
 
 
-def compare_sds(golden_db, new_db, options=[]):
+def compare_sds(golden_db, new_db, options=None):
     found_diff = 0
+
+    options = [] if options is None else options
 
     golden_sds = golden_db.GetMetadata('SUBDATASETS')
     new_sds = new_db.GetMetadata('SUBDATASETS')

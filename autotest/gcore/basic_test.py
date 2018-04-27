@@ -587,10 +587,12 @@ def basic_test_15_cbk_no_argument():
 
 
 def basic_test_15_cbk_no_ret(a, b, c):
+    # pylint: disable=unused-argument
     return None
 
 
 def basic_test_15_cbk_bad_ret(a, b, c):
+    # pylint: disable=unused-argument
     return 'ok'
 
 

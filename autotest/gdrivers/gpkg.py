@@ -2099,7 +2099,6 @@ def gpkg_20():
     # Without padding, with small tiles (<=256x256), but especially less
     # than 256 colors.
     ds = gdal.GetDriverByName('MEM').Create('', 50, 50, 3)
-    ds.SetGeoTransform
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(2).Fill(2)
     ds.GetRasterBand(3).Fill(3)

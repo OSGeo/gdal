@@ -1828,6 +1828,10 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                     hDstDS = nullptr;
                 }
             }
+
+            if( hDstDS )
+                oProgress.Do(1);
+
             return hDstDS;
         }
 

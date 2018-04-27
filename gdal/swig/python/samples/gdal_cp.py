@@ -48,9 +48,10 @@ def Usage():
 class TermProgress:
     def __init__(self):
         self.nLastTick = -1
+        self.nThisTick = 0
 
     def Progress(self, dfComplete, message):
-
+        # pylint: disable=unused-argument
         self.nThisTick = int(dfComplete * 40.0)
         if self.nThisTick > 40:
             self.nThisTick = 40

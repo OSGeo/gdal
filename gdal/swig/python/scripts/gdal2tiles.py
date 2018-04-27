@@ -55,10 +55,10 @@ try:
     from PIL import Image
     import numpy
     import osgeo.gdal_array as gdalarray
-except Exception:
+    numpy_available = True
+except ImportError:
     # 'antialias' resampling is not available
-    numpy = None
-    pass
+    numpy_available = False
 
 __version__ = "$Id$"
 
@@ -614,7 +614,7 @@ def scale_query_to_tile(dsquery, dstile, tiledriver, options, tilefilename=''):
                 exit_with_error("RegenerateOverview() failed on %s, error %d" % (
                     tilefilename, res))
 
-    elif options.resampling == 'antialias':
+    elif options.resampling == 'antialias' and numpy_available:
 
         # Scaling by PIL (Python Imaging Library) - improved Lanczos
         array = numpy.zeros((querysize, querysize, tilebands), numpy.uint8)
@@ -1255,17 +1255,13 @@ def options_post_processing(options, input_file, output_folder):
         try:
             if gdal.RegenerateOverview:
                 pass
-        except Exception:
+        except AttributeError:
             exit_with_error("'average' resampling algorithm is not available.",
                             "Please use -r 'near' argument or upgrade to newer version of GDAL.")
 
-    elif options.resampling == 'antialias':
-        try:
-            if numpy is not None:
-                pass
-        except Exception:
-            exit_with_error("'antialias' resampling algorithm is not available.",
-                            "Install PIL (Python Imaging Library) and numpy.")
+    elif options.resampling == 'antialias' and not numpy_available:
+        exit_with_error("'antialias' resampling algorithm is not available.",
+                        "Install PIL (Python Imaging Library) and numpy.")
 
     try:
         os.path.basename(input_file).encode('ascii')
@@ -1387,6 +1383,9 @@ class GDAL2Tiles(object):
 
         self.input_file = None
         self.output_folder = None
+
+        self.isepsg4326 = None
+        self.in_srs_wkt = None
 
         # Tile format
         self.tilesize = 256

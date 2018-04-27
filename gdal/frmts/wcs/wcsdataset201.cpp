@@ -665,6 +665,16 @@ bool WCSDataset201::ExtractGridInfo()
     // also axis order swap is set
     CPLString path = "boundedBy.Envelope";
     CPLXMLNode *envelope = CPLGetXMLNode(coverage, path);
+    if( envelope == nullptr )
+    {
+        path = "boundedBy.EnvelopeWithTimePeriod";
+        envelope = CPLGetXMLNode(coverage, path);
+        if( envelope == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Missing boundedBy.Envelope");
+            return false;
+        }
+    }
     std::vector<CPLString> bbox = ParseBoundingBox(envelope);
     if (!SetCRS(ParseCRS(envelope), true) || bbox.size() < 2) {
         return false;
@@ -740,7 +750,7 @@ bool WCSDataset201::ExtractGridInfo()
         if (i < 2) {
             metadata = CSLSetNameValue(metadata, (key + "INTERVAL").c_str(),
                                        CPLString().Printf("%.15g,%.15g", low[i], high[i]));
-        } else {
+        } else if( i < slow.size() && i < shigh.size() ) {
             metadata = CSLSetNameValue(metadata, (key + "INTERVAL").c_str(),
                                        CPLString().Printf("%s,%s", slow[i].c_str(), shigh[i].c_str()));
         }

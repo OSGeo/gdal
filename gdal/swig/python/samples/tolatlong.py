@@ -105,9 +105,9 @@ if srs.ImportFromWkt(indataset.GetProjection()) != 0:
 
 srsLatLong = srs.CloneGeogCS()
 ct = osr.CoordinateTransformation(srs, srsLatLong)
-(int, lat, height) = ct.TransformPoint(X, Y)
+(lon, lat, height) = ct.TransformPoint(X, Y)
 
 # Report results
 print('pixel: %g\t\t\tline: %g' % (pixel, line))
-print('latitude: %fd\t\tlongitude: %fd' % (lat, int))
-print('latitude: %s\t\tlongitude: %s' % (gdal.DecToDMS(lat, 'Lat', 2), gdal.DecToDMS(int, 'Long', 2)))
+print('latitude: %fd\t\tlongitude: %fd' % (lat, lon))
+print('latitude: %s\t\tlongitude: %s' % (gdal.DecToDMS(lat, 'Lat', 2), gdal.DecToDMS(lon, 'Long', 2)))

@@ -237,7 +237,7 @@ static bool approx_equal(double a, double b)
 
 class LevellerRasterBand;
 
-class LevellerDataset : public GDALPamDataset
+class LevellerDataset final: public GDALPamDataset
 {
     friend class LevellerRasterBand;
     friend class digital_axis;
@@ -278,9 +278,9 @@ class LevellerDataset : public GDALPamDataset
     bool write(double);
     bool write_byte(size_t);
 
-    const measurement_unit* get_uom(const char*) const;
-    const measurement_unit* get_uom(UNITLABEL) const;
-    const measurement_unit* get_uom(double) const;
+    static const measurement_unit* get_uom(const char*);
+    static const measurement_unit* get_uom(UNITLABEL);
+    static const measurement_unit* get_uom(double);
 
     static bool convert_measure(double, double&, const char* pszUnitsFrom);
     bool make_local_coordsys(const char* pszName, const char* pszUnits);
@@ -391,7 +391,7 @@ class digital_axis
 /* ==================================================================== */
 /************************************************************************/
 
-class LevellerRasterBand : public GDALPamRasterBand
+class LevellerRasterBand final: public GDALPamRasterBand
 {
     friend class LevellerDataset;
 
@@ -1154,7 +1154,7 @@ const char* LevellerDataset::code_to_id(UNITLABEL code) const
     return pu != nullptr ? pu->pszID : nullptr;
 }
 
-const measurement_unit* LevellerDataset::get_uom(const char* pszUnits) const
+const measurement_unit* LevellerDataset::get_uom(const char* pszUnits)
 {
     for(size_t i = 0; i < CPL_ARRAYSIZE(kUnits); i++)
     {
@@ -1166,7 +1166,7 @@ const measurement_unit* LevellerDataset::get_uom(const char* pszUnits) const
     return nullptr;
 }
 
-const measurement_unit* LevellerDataset::get_uom(UNITLABEL code) const
+const measurement_unit* LevellerDataset::get_uom(UNITLABEL code)
 {
     for(size_t i = 0; i < CPL_ARRAYSIZE(kUnits); i++)
     {
@@ -1178,7 +1178,7 @@ const measurement_unit* LevellerDataset::get_uom(UNITLABEL code) const
     return nullptr;
 }
 
-const measurement_unit* LevellerDataset::get_uom(double dM) const
+const measurement_unit* LevellerDataset::get_uom(double dM)
 {
     for(size_t i = kFirstLinearMeasureIdx; i < CPL_ARRAYSIZE(kUnits); i++)
     {

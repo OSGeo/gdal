@@ -648,6 +648,7 @@ def numpy_rw_13():
 
 
 def numpy_rw_14_progress_callback(pct, message, user_data):
+    # pylint: disable=unused-argument
     if abs(pct - user_data[0]) > 1e-5:
         print('Expected %f, got %f' % (user_data[0], pct))
         user_data[1] = False
@@ -656,6 +657,7 @@ def numpy_rw_14_progress_callback(pct, message, user_data):
 
 
 def numpy_rw_14_progress_interrupt_callback(pct, message, user_data):
+    # pylint: disable=unused-argument
     user_data[0] = pct
     if pct >= 0.5:
         return 0
@@ -663,6 +665,7 @@ def numpy_rw_14_progress_interrupt_callback(pct, message, user_data):
 
 
 def numpy_rw_14_progress_callback_2(pct, message, user_data):
+    # pylint: disable=unused-argument
     if pct < user_data[0]:
         print('Got %f, last pct was %f' % (pct, user_data[0]))
         return 0

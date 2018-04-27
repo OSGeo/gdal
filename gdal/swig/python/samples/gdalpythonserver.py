@@ -379,9 +379,9 @@ def read_str():
     length = read_int()
     if length <= 0:
         return None
-    str = sys.stdin.read(length)
-    if len(str) > 0 and str[len(str) - 1] == '\0':
-        str = str[0:len(str) - 1]
+    line = sys.stdin.read(length)
+    if len(line) > 0 and line[-1] == '\0':
+        line = line[:-1]
     return str
 
 

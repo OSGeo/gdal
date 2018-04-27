@@ -130,7 +130,7 @@ def EQUAL(x, y):
 
 def _GetGeomType(src_geom_type_name):
     if EQUAL(src_geom_type_name, "GEOMETRY"):
-        return ogr.wkbGeometry
+        return ogr.wkbUnknown
     try:
         max_geom_type = ogr.wkbTriangle
     except:

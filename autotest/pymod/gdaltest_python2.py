@@ -145,6 +145,7 @@ def wait_process(process):
 
 
 def _runexternal_subprocess(cmd, strin=None, check_memleak=True, display_live_on_parent_stdout=False, encoding=None):
+    # pylint: disable=unused-argument
     import subprocess
     import shlex
     command = shlex.split(cmd)
@@ -188,9 +189,8 @@ def runexternal(cmd, strin=None, check_memleak=True, display_live_on_parent_stdo
         try:
             import subprocess
             import shlex
-            subprocess.Popen
-            shlex.split
-            has_subprocess = True
+            if hasattr(subprocess, 'Popen') and hasattr(shlex, 'split'):
+                has_subprocess = True
         except (ImportError, AttributeError):
             pass
         if has_subprocess:
@@ -236,6 +236,7 @@ def read_in_thread(f, q):
 
 
 def _runexternal_out_and_err_subprocess(cmd, check_memleak=True):
+    # pylint: disable=unused-argument
     import subprocess
     import shlex
     command = shlex.split(cmd)
@@ -277,9 +278,8 @@ def runexternal_out_and_err(cmd, check_memleak=True):
         try:
             import subprocess
             import shlex
-            subprocess.Popen
-            shlex.split
-            has_subprocess = True
+            if hasattr(subprocess, 'Popen') and hasattr(shlex, 'split'):
+                has_subprocess = True
         except (ImportError, AttributeError):
             pass
         if has_subprocess:

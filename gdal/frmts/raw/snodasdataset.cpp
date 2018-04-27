@@ -292,7 +292,7 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
     int nStopSecond = -1;
 
     const char *pszLine = nullptr;
-    while( (pszLine = CPLReadLine2L( poOpenInfo->fpL, 256, nullptr )) != nullptr )
+    while( (pszLine = CPLReadLine2L( poOpenInfo->fpL, 1024, nullptr )) != nullptr )
     {
         char** papszTokens =
             CSLTokenizeStringComplex( pszLine, ":", TRUE, FALSE );

@@ -292,7 +292,7 @@ def convert_layer(src_lyr, dst_ds, layerMap, options):
 
 
 def ogr_dispatch(argv, progress=None, progress_arg=None):
-
+    # pylint: disable=unused-argument
     src_filename = None
     dst_filename = None
     frmt = "ESRI Shapefile"

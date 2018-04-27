@@ -46,6 +46,11 @@ from osgeo import osr, gdal
 class MetaCRSTest:
     def __init__(self, test_line):
         self.test_line = test_line
+        self.src_xyz = None
+        self.dst_xyz = None
+        self.src_srs = None
+        self.dst_srs = None
+        self.dst_error = None
 
     def parse_line(self):
         test_line = self.test_line

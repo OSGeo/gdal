@@ -571,18 +571,35 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
         ExecuteSQL(osCommand.c_str()); /* CREATE TABLE */
 
         /* create indices */
+
+        /* ogr_fid */
         osCommand.Printf("%s_%s", pszBlockName, FID_COLUMN);
         CreateIndex(osCommand.c_str(), pszBlockName, FID_COLUMN,
                     !EQUAL(pszBlockName, "SBP"));
 
-        const char *pszKey = ((VFKDataBlockSQLite *) poDataBlock)->GetKey();
-        if (pszKey) {
-            osCommand.Printf("%s_%s", pszBlockName, pszKey);
-            CreateIndex(osCommand.c_str(), pszBlockName, pszKey, !m_bAmendment);
+        if( EQUAL (pszBlockName, "SOBR") ||
+            EQUAL (pszBlockName, "OBBP") ||
+            EQUAL (pszBlockName, "SPOL") ||
+            EQUAL (pszBlockName, "OB") ||
+            EQUAL (pszBlockName, "OP") ||
+            EQUAL (pszBlockName, "OBPEJ") ||
+            EQUAL (pszBlockName, "SBP") ||
+            EQUAL (pszBlockName, "HP") ||
+            EQUAL (pszBlockName, "DPM") ||
+            EQUAL (pszBlockName, "ZVB") ||
+            EQUAL (pszBlockName, "PAR") ||
+            EQUAL (pszBlockName, "BUD") ) {
+            const char *pszKey = ((VFKDataBlockSQLite *) poDataBlock)->GetKey();
+            if (pszKey) {
+                /* ID */
+                osCommand.Printf("%s_%s", pszBlockName, pszKey);
+                CreateIndex(osCommand.c_str(), pszBlockName, pszKey, !m_bAmendment);
+            }
         }
 
+        /* create other indices used for building geometry */
         if (EQUAL(pszBlockName, "SBP")) {
-            /* create extra indices for SBP */
+            /* SBP */
             CreateIndex("SBP_OB",        pszBlockName, "OB_ID", false);
             CreateIndex("SBP_HP",        pszBlockName, "HP_ID", false);
             CreateIndex("SBP_DPM",       pszBlockName, "DPM_ID", false);
@@ -592,12 +609,12 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
             CreateIndex("SBP_DPM_POR",   pszBlockName, "DPM_ID,PORADOVE_CISLO_BODU", false);
         }
         else if (EQUAL(pszBlockName, "HP")) {
-            /* create extra indices for HP */
+            /* HP */
             CreateIndex("HP_PAR1",        pszBlockName, "PAR_ID_1", false);
             CreateIndex("HP_PAR2",        pszBlockName, "PAR_ID_2", false);
         }
         else if (EQUAL(pszBlockName, "OB")) {
-            /* create extra indices for OP */
+            /* OP */
             CreateIndex("OB_BUD",        pszBlockName, "BUD_ID", false);
         }
 
