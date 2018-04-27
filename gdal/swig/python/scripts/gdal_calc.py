@@ -365,7 +365,7 @@ def doit(opts, args):
 ################################################################
 
 
-def Calc(calc, outfile, NoDataValue=None, type=None, frmt=None, creation_options=[], allBands='', overwrite=False, debug=False, quiet=False, **input_files):
+def Calc(calc, outfile, NoDataValue=None, type=None, frmt=None, creation_options=None, allBands='', overwrite=False, debug=False, quiet=False, **input_files):
     """ Perform raster calculations with numpy syntax.
     Use any basic arithmetic supported by numpy arrays such as +-*\ along with logical
     operators such as >. Note that all files must have the same dimensions, but no projection checking is performed.
@@ -390,13 +390,8 @@ def Calc(calc, outfile, NoDataValue=None, type=None, frmt=None, creation_options
     opts.outF = outfile
     opts.NoDataValue = NoDataValue
     opts.type = type
-<<<<<<< HEAD
-    opts.creation_options = creation_options
-    opts.frmt = frmt
-=======
     opts.format = format
     opts.creation_options = [] if creation_options is None else creation_options
->>>>>>> a3639e71c368846e06bb57874d4a724b73ea8e4e
     opts.allBands = allBands
     opts.overwrite = overwrite
     opts.debug = debug
