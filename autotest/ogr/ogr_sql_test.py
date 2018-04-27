@@ -1080,7 +1080,7 @@ def ogr_sql_34():
 def ogr_sql_35():
 
     cols = "area"
-    for i in range(10):
+    for _ in range(10):
         cols = cols + "," + cols
     sql_lyr = gdaltest.ds.ExecuteSQL("select %s from poly" % cols)
 

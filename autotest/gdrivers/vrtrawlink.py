@@ -317,7 +317,7 @@ def vrtrawlink_7():
 
 def vrtrawlink_8():
 
-    for i in range(2):
+    for _ in range(2):
         with gdaltest.error_handler():
             ds = gdal.Open("""<VRTDataset rasterXSize="200000" rasterYSize="1">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTRawRasterBand">

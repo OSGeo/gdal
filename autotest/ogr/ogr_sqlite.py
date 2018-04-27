@@ -702,7 +702,7 @@ def ogr_sqlite_14():
 
     # Check the 2 records
     gdaltest.sl_lyr.ResetReading()
-    for i in range(2):
+    for _ in range(2):
         feat_read = gdaltest.sl_lyr.GetNextFeature()
         if feat_read.GetField('INTEGER') != 1 or \
            feat_read.GetField('FLOAT') != 1.2 or \
@@ -867,7 +867,7 @@ def ogr_sqlite_16():
         return 'fail'
 
     # Test invalid geometries
-    for i in range(3):
+    for _ in range(3):
         feat = gdaltest.sl_lyr.GetNextFeature()
         geom = feat.GetGeometryRef()
         if geom is not None:
@@ -2635,7 +2635,7 @@ def ogr_sqlite_34():
         return 'fail'
 
     # Test cache
-    for j in range(2):
+    for _ in range(2):
         for i in range(17):
             regexp = chr(ord('a') + i)
             sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT '%s' REGEXP '%s'" % (regexp, regexp))

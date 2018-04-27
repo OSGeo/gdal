@@ -323,7 +323,7 @@ def basic_test_11():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ar_ds = [gdal.OpenEx('data/byte.tif', gdal.OF_SHARED) for i in range(1024)]
+    ar_ds = [gdal.OpenEx('data/byte.tif', gdal.OF_SHARED) for _ in range(1024)]
     if ar_ds[1023] is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -658,7 +658,7 @@ def basic_test_17():
 
     from osgeo import ogr
 
-    for i in range(2):
+    for _ in range(2):
         ogr.UseExceptions()
         gdal.UseExceptions()
         try:
@@ -674,7 +674,7 @@ def basic_test_17():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    for i in range(2):
+    for _ in range(2):
         ogr.UseExceptions()
         gdal.UseExceptions()
         try:

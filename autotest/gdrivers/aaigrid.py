@@ -325,7 +325,7 @@ def aaigrid_12():
     aai = open('tmp/aaigrid.tmp')
     if not aai:
         return 'fail'
-    for i in range(5):
+    for _ in range(5):
         aai.readline()
     ndv = aai.readline().strip().lower()
     aai.close()
@@ -354,7 +354,7 @@ def aaigrid_13():
     aai = open('tmp/aaigrid.tmp')
     if not aai:
         return 'fail'
-    for i in range(5):
+    for _ in range(5):
         aai.readline()
     ndv = aai.readline().strip().lower()
     aai.close()

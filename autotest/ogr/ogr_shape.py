@@ -4330,12 +4330,12 @@ def ogr_shape_91():
 
     ds = ogr.Open('data/arcm_without_m.shp')
     lyr = ds.GetLayer(0)
-    for f in lyr:
+    for _ in lyr:
         pass
 
     ds = ogr.Open('data/polygonm_without_m.shp')
     lyr = ds.GetLayer(0)
-    for f in lyr:
+    for _ in lyr:
         pass
 
     return 'success'

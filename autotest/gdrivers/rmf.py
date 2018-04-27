@@ -258,7 +258,7 @@ def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_coun
         gdaltest.post_reason('Failed to create test dataset copy.')
         return 'fail'
 
-    for pass_n in range(pass_count):
+    for _ in range(pass_count):
         if reopen:
             src_ds = None
             src_ds = gdal.Open(test_ds_name, gdal.GA_Update)
