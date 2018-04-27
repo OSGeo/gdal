@@ -631,18 +631,25 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
             }
             CPLString path3;
             path3.Printf( "SUBDATASET_%d_", index);
+            index += 1;
+
+            // the name and description of the subdataset:
+            // GDAL Data Model:
+            // The value of the _NAME is a string that can be passed to GDALOpen() to access the file.
 
             CPLXMLNode *node = CPLGetXMLNode(summary, "name");
             if (node) {
-                CPLString name = path3 + "NAME";
+                CPLString name = CPLGetXMLValue(node, nullptr, "");
                 CPLString value = DescribeCoverageURL;
                 value = CPLURLAddKVP(value, "SERVICE", "WCS");
                 value = CPLURLAddKVP(value, "VERSION", this->Version());
-                value = CPLURLAddKVP(value, "COVERAGE", CPLGetXMLValue(node, nullptr, ""));
-                // GDAL Data Model:
-                // The value of the _NAME is a string that can be passed to GDALOpen() to access the file.
-                metadata = CSLSetNameValue(metadata, name, value);
+                value = CPLURLAddKVP(value, "COVERAGE", name);
+                CPLString key2 = path3 + "NAME";
+                metadata = CSLSetNameValue(metadata, key2, value);
+                key2 = path3 + "DESC";
+                metadata = CSLSetNameValue(metadata, key2, name);
             }
+            continue; // the metadata below may be against GDAL Data Model(?)
 
             node = CPLGetXMLNode(summary, "label");
             if (node) {
@@ -677,20 +684,9 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
                 metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, nullptr, ""));
             }
 
-            index++;
         }
     }
     this->SetMetadata( metadata, "SUBDATASETS" );
     CSLDestroy( metadata );
     return CE_None;
-}
-
-/************************************************************************/
-/*                          ExceptionNodeName()                         */
-/*                                                                      */
-/************************************************************************/
-
-const char *WCSDataset100::ExceptionNodeName()
-{
-    return "=ServiceExceptionReport.ServiceException";
 }

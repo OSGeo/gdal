@@ -816,17 +816,11 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
             }
             CPLString path3;
             path3.Printf( "SUBDATASET_%d_", index);
+            index += 1;
 
-            CPLString keywords = GetKeywords(summary, "Keywords", "Keyword");
-            if (keywords != "") {
-                CPLString name = path3 + "KEYWORDS";
-                metadata = CSLSetNameValue(metadata, name, keywords);
-            }
-            crs = GetKeywords(summary, "", "SupportedCRS");
-            if (crs != "") {
-                CPLString name = path3 + "SUPPORTED_CRS";
-                metadata = CSLSetNameValue(metadata, name, crs);
-            }
+            // the name and description of the subdataset:
+            // GDAL Data Model:
+            // The value of the _NAME is a string that can be passed to GDALOpen() to access the file.
 
             CPLXMLNode *node = CPLGetXMLNode(summary, "CoverageId");
             if (!node) {
@@ -835,20 +829,22 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
 
             if (node)
             {
-                CPLString name = path3 + "NAME";
                 CPLString value = DescribeCoverageURL;
                 value = CPLURLAddKVP(value, "service", "WCS");
                 value = CPLURLAddKVP(value, "version", this->Version());
+                CPLString name = CPLGetXMLValue(node, nullptr, "");
                 if (EQUAL(node->pszValue, "CoverageId")) {
-                    value = CPLURLAddKVP(value, "coverageId", CPLGetXMLValue(node, nullptr, ""));
+                    value = CPLURLAddKVP(value, "coverageId", name);
                 } else {
-                    value = CPLURLAddKVP(value, "identifiers", CPLGetXMLValue(node, nullptr, ""));
+                    value = CPLURLAddKVP(value, "identifiers", name);
                 }
                 value = "WCS:" + value;
-                // GDAL Data Model:
-                // The value of the _NAME is a string that can be passed to GDALOpen() to access the file.
-                metadata = CSLSetNameValue(metadata, name, value);
+                CPLString key2 = path3 + "NAME";
+                metadata = CSLSetNameValue(metadata, key2, value);
+                key2 = path3 + "DESC";
+                metadata = CSLSetNameValue(metadata, key2, name);
             }
+            continue; // the metadata below may be against GDAL Data Model(?)
 
             node = CPLGetXMLNode(summary, "WGS84BoundingBox");
             if (node) {
@@ -898,20 +894,20 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
                 metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, nullptr, ""));
             }
 
-            index++;
+            CPLString keywords = GetKeywords(summary, "Keywords", "Keyword");
+            if (keywords != "") {
+                CPLString name = path3 + "KEYWORDS";
+                metadata = CSLSetNameValue(metadata, name, keywords);
+            }
+            crs = GetKeywords(summary, "", "SupportedCRS");
+            if (crs != "") {
+                CPLString name = path3 + "SUPPORTED_CRS";
+                metadata = CSLSetNameValue(metadata, name, crs);
+            }
+
         }
     }
     this->SetMetadata( metadata, "SUBDATASETS" );
     CSLDestroy( metadata );
     return CE_None;
-}
-
-/************************************************************************/
-/*                          ExceptionNodeName()                         */
-/*                                                                      */
-/************************************************************************/
-
-const char *WCSDataset110::ExceptionNodeName()
-{
-    return "=ExceptionReport.Exception.ExceptionText";
 }
