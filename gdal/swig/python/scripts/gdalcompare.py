@@ -41,6 +41,7 @@ from osgeo import osr
 def compare_metadata(golden_md, new_md, id, options=None):
     # pylint: disable=unused-argument
 
+    options = [] if options is None else options
     if golden_md is None and new_md is None:
         return 0
 
@@ -70,6 +71,7 @@ def compare_metadata(golden_md, new_md, id, options=None):
 def compare_image_pixels(golden_band, new_band, id, options=None):
     # pylint: disable=unused-argument
 
+    options = [] if options is None else options
     diff_count = 0
     max_diff = 0
 
