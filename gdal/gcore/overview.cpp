@@ -3094,9 +3094,9 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             const int nDstHeight = papoOvrBands[iOverview]->GetYSize();
 
             const double dfXRatioDstToSrc =
-                std::round(static_cast<double>(nWidth) / nDstWidth);
+                static_cast<double>(nWidth) / nDstWidth;
             const double dfYRatioDstToSrc =
-                std::round(static_cast<double>(nHeight) / nDstHeight);
+                static_cast<double>(nHeight) / nDstHeight;
 
 /* -------------------------------------------------------------------- */
 /*      Figure out the line to start writing to, and the first line     */
