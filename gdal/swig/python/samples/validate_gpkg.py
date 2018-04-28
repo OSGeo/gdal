@@ -97,7 +97,7 @@ class GPKGChecker:
         for (_, expected_name, expected_type, expected_notnull,
              expected_default, expected_pk) in expected_columns:
             found = False
-            for (_, name, _, notnull, default, pk) in columns:
+            for (_, name, type, notnull, default, pk) in columns:
                 if name != expected_name:
                     continue
 
