@@ -540,7 +540,7 @@ class CFChecker:
                 # I.e. Multi-dimensional coordinate var with a dimension of the same name
                 # or an axis that hasn't been identified through the coordinates attribute
                 # CRM035 (17.04.07)
-                if not (isinstance(self.f[var], FileAxis) or isinstance(self.f[var], FileAuxAxis1D)):
+                if not isinstance(self.f[var], (FileAxis, FileAuxAxis1D)):
                     print("WARNING (5): Possible incorrect declaration of a coordinate variable.")
                     self.warn = self.warn + 1
                 else:
@@ -1332,7 +1332,7 @@ class CFChecker:
 
             if isinstance(value, str):
                 attrType = 'S'
-            elif isinstance(value, int) or isinstance(value, float):
+            elif isinstance(value, (int, float)):
                 attrType = 'N'
             elif isinstance(value, numpy.ndarray):
                 attrType = 'N'
