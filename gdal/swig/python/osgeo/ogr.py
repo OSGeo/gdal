@@ -4863,13 +4863,7 @@ class Feature(_object):
 
         for key in self.keys():
             fld_defn = self.GetFieldDefnRef(self.GetFieldIndex(key))
-            if fld_defn.GetType() == _ogr.OFTInteger and fld_defn.GetSubType() == _ogr.OFSTBoolean:
-                if self.GetField(key):
-                    output['properties'][key] = True
-                else:
-                    output['properties'][key] = False
-            else:
-                output['properties'][key] = self.GetField(key)
+            output['properties'][key] = bool(self.GetField(key))
 
         if not as_object:
             output = simplejson.dumps(output)

@@ -1829,10 +1829,7 @@ def ogr_sql_sqlite_26():
             b_sql = feat.GetField(0)
             ds.ReleaseResultSet(sql_lyr)
 
-            if b_sql == 1:
-                b_sql = True
-            else:
-                b_sql = False
+            b_sql = bool(b_sql == 1)
             geom = ogr.CreateGeometryFromWkt(wkt)
             op = getattr(geom, op_str)
             b_geos = op()
@@ -1858,10 +1855,7 @@ def ogr_sql_sqlite_26():
             b_sql = feat.GetField(0)
             ds.ReleaseResultSet(sql_lyr)
 
-            if b_sql == 1:
-                b_sql = True
-            else:
-                b_sql = False
+            b_sql = bool(b_sql == 1)
             geomA = ogr.CreateGeometryFromWkt(geomA_wkt)
             geomB = ogr.CreateGeometryFromWkt(geomB_wkt)
             op = getattr(geomA, op_str)

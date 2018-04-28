@@ -93,10 +93,7 @@ class CFVersion(object):
             self.tuple = value
 
     def __nonzero__(self):
-        if self.tuple:
-            return True
-        else:
-            return False
+        return bool(self.tuple)
 
     def __str__(self):
         return "CF-%s" % '.'.join(map(str, self.tuple))

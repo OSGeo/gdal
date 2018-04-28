@@ -79,10 +79,7 @@ def pdf_is_pdfium():
 
     md = gdaltest.pdf_drv.GetMetadata()
     val = gdal.GetConfigOption("GDAL_PDF_LIB", "PDFIUM")
-    if val == 'PDFIUM' and 'HAVE_PDFIUM' in md:
-        return True
-    else:
-        return False
+    return bool(val == 'PDFIUM' and 'HAVE_PDFIUM' in md)
 
 ###############################################################################
 # Returns True if we can compute the checksum
