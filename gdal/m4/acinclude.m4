@@ -40,7 +40,7 @@ AC_DEFUN([AC_HAVE_LONG_LONG],
     AC_DEFINE(HAVE_LONG_LONG, 1, [Define to 1, if your compiler supports long long data type])
     AC_MSG_RESULT([long long])
   else
-    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([long long not found])
   fi
   rm -f conftest*
 ])
