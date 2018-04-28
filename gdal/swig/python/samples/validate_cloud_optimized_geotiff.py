@@ -65,7 +65,7 @@ def validate(ds, check_tiled=True):
             'GDAL 2.2 or above required')
 
     unicode_type = type(''.encode('utf-8').decode('utf-8'))
-    if isinstance(ds, str) or isinstance(ds, unicode_type):
+    if isinstance(ds, (str, unicode_type)):
         gdal.PushErrorHandler()
         ds = gdal.Open(ds)
         gdal.PopErrorHandler()

@@ -49,8 +49,7 @@ def ogr_csv_1():
 
     if gdaltest.csv_ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 
 ###############################################################################

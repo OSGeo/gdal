@@ -89,7 +89,7 @@ class GDALPythonServerRasterBand:
 
     def GetOverview(self, iovr):
         if self.ovr_bands is None:
-            self.ovr_bands = [None for i in range(self.GetOverviewCount())]
+            self.ovr_bands = [None] * self.GetOverviewCount()
         if self.ovr_bands[iovr] is None:
             gdal_ovr_band = self.gdal_band.GetOverview(iovr)
             if gdal_ovr_band is not None:
@@ -356,22 +356,19 @@ VERBOSE = 0
 def read_int():
     if sys.version_info >= (3, 0, 0):
         return struct.unpack('i', sys.stdin.read(4).encode('latin1'))[0]
-    else:
-        return struct.unpack('i', sys.stdin.read(4))[0]
+    return struct.unpack('i', sys.stdin.read(4))[0]
 
 
 def read_bigint():
     if sys.version_info >= (3, 0, 0):
         return struct.unpack('q', sys.stdin.read(8).encode('latin1'))[0]
-    else:
-        return struct.unpack('q', sys.stdin.read(8))[0]
+    return struct.unpack('q', sys.stdin.read(8))[0]
 
 
 def read_double():
     if sys.version_info >= (3, 0, 0):
         return struct.unpack('d', sys.stdin.read(8).encode('latin1'))[0]
-    else:
-        return struct.unpack('d', sys.stdin.read(8))[0]
+    return struct.unpack('d', sys.stdin.read(8))[0]
 
 
 def read_str():
@@ -387,7 +384,7 @@ def read_str():
 def read_strlist():
     count = read_int()
     strlist = []
-    for i in range(count):
+    for _ in range(count):
         strlist.append(read_str())
     return strlist
 

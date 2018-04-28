@@ -128,10 +128,7 @@ def ogr_gmt_3():
     gdaltest.gmt_lyr = None
     gdaltest.gmt_ds = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify reading of multilinestring file. (#3802)

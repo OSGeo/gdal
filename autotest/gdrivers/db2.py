@@ -143,8 +143,7 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
     if expected_format is None:
         if mime_type is None:
             return 'success'
-        else:
-            return 'fail'
+        return 'fail'
 
     if expected_format == 'PNG':
         expected_mime_type = 'image/png'

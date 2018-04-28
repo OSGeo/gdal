@@ -309,8 +309,7 @@ def getTileIndexFromFiles(inputTiles, driverTyp):
 def getTargetDir(level=-1):
     if level == -1:
         return TargetDir
-    else:
-        return TargetDir + str(level) + os.sep
+    return TargetDir + str(level) + os.sep
 
 
 def tileImage(minfo, ti):

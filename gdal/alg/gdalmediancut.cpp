@@ -171,7 +171,6 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
     }
     else
     {
-#ifdef CPL_HAS_GINT64
         return GDALComputeMedianCutPCTInternal(hRed, hGreen, hBlue,
                                                nullptr, nullptr, nullptr,
                                                pfnIncludePixel, nColors,
@@ -179,9 +178,6 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
                                                static_cast<GUIntBig * >(nullptr),
                                                hColorTable,
                                                pfnProgress, pProgressArg);
-#else
-        return CE_Failure;
-#endif
     }
 }
 

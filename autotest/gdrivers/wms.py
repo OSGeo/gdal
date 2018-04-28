@@ -50,8 +50,7 @@ def wms_1():
     gdaltest.wms_drv = gdal.GetDriverByName('WMS')
     if gdaltest.wms_drv is None:
         return 'skip'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Open the WMS dataset
@@ -77,9 +76,8 @@ def wms_2():
 
     if gdaltest.wms_ds is not None:
         return 'success'
-    else:
-        gdaltest.post_reason('open failed.')
-        return 'fail'
+    gdaltest.post_reason('open failed.')
+    return 'fail'
 
 ###############################################################################
 # Check various things about the configuration.

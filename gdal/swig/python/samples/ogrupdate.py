@@ -262,12 +262,11 @@ def AreFeaturesEqual(src_feat, dst_feat):
     dst_geom = dst_feat.GetGeometryRef()
     if src_geom is None and dst_geom is not None:
         return False
-    elif src_geom is not None and dst_geom is None:
+    if src_geom is not None and dst_geom is None:
         return False
-    elif src_geom is not None and dst_geom is not None:
+    if src_geom is not None and dst_geom is not None:
         return src_geom.Equals(dst_geom)
-    else:
-        return True
+    return True
 
 ###############################################################
 # ogrupdate_process()

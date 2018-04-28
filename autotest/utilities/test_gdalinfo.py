@@ -309,7 +309,7 @@ def test_gdalinfo_14():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --config', check_memleak=False)
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --config', check_memleak=False)
     if err.find('--config option given without a key and value argument') < 0:
         print(err)
         return 'fail'
@@ -324,7 +324,7 @@ def test_gdalinfo_15():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --mempreload', check_memleak=False)
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --mempreload', check_memleak=False)
     if err.find('--mempreload option given without directory path') < 0:
         print(err)
         return 'fail'
@@ -339,7 +339,7 @@ def test_gdalinfo_16():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug on --mempreload ../gcore/data /vsimem/byte.tif', check_memleak=False)
+    (ret, _) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug on --mempreload ../gcore/data /vsimem/byte.tif', check_memleak=False)
     if ret.find('Driver: GTiff/GeoTIFF') != 0:
         print(ret)
         return 'fail'
@@ -354,7 +354,7 @@ def test_gdalinfo_17():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug', check_memleak=False)
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug', check_memleak=False)
     if err.find('--debug option given without debug level') < 0:
         print(err)
         return 'fail'
@@ -369,13 +369,13 @@ def test_gdalinfo_18():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile', check_memleak=False)
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile', check_memleak=False)
     if err.find('--optfile option given without filename') < 0:
         gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile /foo/bar', check_memleak=False)
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile /foo/bar', check_memleak=False)
     if err.find('Unable to open optfile') < 0:
         gdaltest.post_reason('fail')
         print(err)
@@ -426,13 +426,13 @@ def test_gdalinfo_21():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format', check_memleak=False)
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format', check_memleak=False)
     if err.find('--format option given without a format code') < 0:
         gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format foo_bar', check_memleak=False)
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format foo_bar', check_memleak=False)
     if err.find('--format option given with format') < 0:
         gdaltest.post_reason('fail')
         print(err)

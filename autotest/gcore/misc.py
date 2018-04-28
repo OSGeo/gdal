@@ -271,10 +271,7 @@ class misc_6_interrupt_callback_class:
 
     def cbk(self, pct, message, user_data):
         # pylint: disable=unused-argument
-        if pct > 0.5:
-            return 0  # to stop
-        else:
-            return 1  # to continue
+        return pct <= 0.5
 
 ###############################################################################
 # Test CreateCopy() with a source dataset with various band numbers (including 0) and datatype
@@ -619,7 +616,7 @@ def misc_12():
             if gdal_translate_path is not None:
                 # Test to detect memleaks
                 ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/misc_12.vrt', src_ds)
-                (out, err) = gdaltest.runexternal_out_and_err(gdal_translate_path + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/' + get_filename(drv, ''), check_memleak=False)
+                (out, _) = gdaltest.runexternal_out_and_err(gdal_translate_path + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/' + get_filename(drv, ''), check_memleak=False)
                 del ds
                 gdal.Unlink('tmp/misc_12.vrt')
 

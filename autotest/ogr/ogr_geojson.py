@@ -209,8 +209,7 @@ def ogr_geojson_1():
 
     if gdaltest.geojson_drv is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test file-based DS with standalone "Point" feature object.

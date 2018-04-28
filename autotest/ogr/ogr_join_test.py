@@ -72,10 +72,7 @@ def ogr_join_2():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Try various naming conversions for the selected fields.
@@ -94,10 +91,7 @@ def ogr_join_3():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify that records for which a join can't be found work ok.
@@ -116,10 +110,7 @@ def ogr_join_4():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify that table aliases work
@@ -138,10 +129,7 @@ def ogr_join_5():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Again, ordering by a primary field.
@@ -160,10 +148,7 @@ def ogr_join_6():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test joining to an external datasource.
@@ -182,10 +167,7 @@ def ogr_join_7():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test doing two joins at once.
@@ -205,10 +187,7 @@ def ogr_join_8():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify fix for #2788 (memory corruption on wildcard expansion in SQL request
@@ -228,10 +207,7 @@ def ogr_join_9():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 
@@ -248,10 +224,7 @@ def ogr_join_10():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test join on string field
@@ -268,10 +241,7 @@ def ogr_join_11():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test fix for #4112 (join between 2 datasources)
@@ -308,10 +278,7 @@ def ogr_join_13():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test joining a string column with a float column (#4321, actually addressed by #4259)
@@ -329,10 +296,7 @@ def ogr_join_14():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test multiple joins with expressions (#4521)
@@ -398,8 +362,7 @@ def ogr_join_16():
 
     if sql_lyr is None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test non-support of a secondarytable.fieldname in a order by clause
@@ -421,8 +384,7 @@ def ogr_join_17():
 
     if sql_lyr is None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test inverted order of fields in ON
@@ -460,8 +422,7 @@ def ogr_join_19():
 
     if sql_lyr is None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test unrecognized secondary field
@@ -481,8 +442,7 @@ def ogr_join_20():
 
     if sql_lyr is None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test unexpected secondary table
@@ -504,8 +464,7 @@ def ogr_join_21():
 
     if sql_lyr is None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test join with a complex expression as ON

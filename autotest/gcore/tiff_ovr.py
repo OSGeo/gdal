@@ -909,8 +909,7 @@ def tiff_ovr_22():
 
     if err != 0:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Same as before, but BigTIFF might be not needed as we use a compression

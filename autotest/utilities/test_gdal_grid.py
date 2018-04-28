@@ -103,7 +103,7 @@ def test_gdal_grid_1():
     shape_ds.Destroy()
 
     # Create a GDAL dataset from the previous generated OGR grid
-    (out, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -a nearest:radius1=0.0:radius2=0.0:angle=0.0 -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 tmp/n43.shp ' + outfiles[-1])
+    (_, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -a nearest:radius1=0.0:radius2=0.0:angle=0.0 -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 tmp/n43.shp ' + outfiles[-1])
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
@@ -275,7 +275,7 @@ def test_gdal_grid_3():
 
     # Create a GDAL dataset from the values of "grid.csv".
     print('Step 1: Disabling AVX/SSE optimized versions...')
-    (out, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' --debug on --config GDAL_USE_AVX NO --config GDAL_USE_SSE NO -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+    (_, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' --debug on --config GDAL_USE_AVX NO --config GDAL_USE_SSE NO -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
     pos = err.find(' threads')
     if pos >= 0:
         pos_blank = err[0:pos - 1].rfind(' ')
@@ -304,7 +304,7 @@ def test_gdal_grid_3():
 
     # Create a GDAL dataset from the values of "grid.csv".
     print('Step 2: Trying SSE optimized version...')
-    (out, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' --debug on --config GDAL_USE_AVX NO -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+    (_, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' --debug on --config GDAL_USE_AVX NO -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
     if err.find('SSE') >= 0:
         print('...SSE optimized version used')
     else:
@@ -332,7 +332,7 @@ def test_gdal_grid_3():
 
     # Create a GDAL dataset from the values of "grid.csv".
     print('Step 3: Trying AVX optimized version...')
-    (out, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' --debug on -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+    (_, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' --debug on -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
     if err.find('AVX') >= 0:
         print('...AVX optimized version used')
     else:
@@ -825,7 +825,7 @@ def test_gdal_grid_11():
     outfiles.append('tmp/n43_linear.tif')
 
     # Create a GDAL dataset from the previous generated OGR grid
-    (out, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -l n43 -a linear -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 tmp/n43.shp ' + outfiles[-1])
+    (_, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -l n43 -a linear -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 tmp/n43.shp ' + outfiles[-1])
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
@@ -860,7 +860,7 @@ def test_gdal_grid_12():
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
-    (out, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdistnn:power=2.0:radius=1.0:max_points=12:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+    (_, _) = gdaltest.runexternal_out_and_err(gdal_grid + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdistnn:power=2.0:radius=1.0:max_points=12:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
 
     # We should get the same values as in "ref_data/gdal_invdistnn.tif"
     ds = gdal.Open(outfiles[-1])

@@ -115,8 +115,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             OGR_L_GetGeometryColumn(hLayer);
             OGRFeatureH hFeature;
             OGRFeatureH hFeaturePrev = nullptr;
-            while( !bStop &&
-                    (hFeature = OGR_L_GetNextFeature(hLayer)) != nullptr )
+            for( int j = 0; j < 1000 && !bStop &&
+                    (hFeature = OGR_L_GetNextFeature(hLayer)) != nullptr; j++ )
             {
                 // Limit runtime to 20 seconds if features returned are
                 // different. Otherwise this may be a sign of a bug in the

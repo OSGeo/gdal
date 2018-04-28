@@ -99,8 +99,7 @@ def ogr_fgdb_stress_test_1():
     random.seed(0)
     in_transaction = False
     nfeatures_created = 0
-    for i in range(100000):
-        # print(i)
+    for _ in range(100000):
         function = random.randrange(0, 500)
         if function == 0:
             if not in_transaction:

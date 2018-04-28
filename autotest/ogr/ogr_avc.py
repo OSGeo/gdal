@@ -73,8 +73,7 @@ def ogr_avc_1():
 
     if avc_ds is not None:
         return check_content(avc_ds)
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Open AVCBin datasource.
@@ -89,8 +88,7 @@ def ogr_avc_2():
 
     if avc_ds is not None:
         return check_content(avc_ds)
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Try opening a compressed E00 (which is not supported)

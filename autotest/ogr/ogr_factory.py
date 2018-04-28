@@ -56,8 +56,7 @@ def ogr_factory_1():
 
     if ogrtest.check_feature_geometry(geom, expected_geom):
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Test forceToPolygon()

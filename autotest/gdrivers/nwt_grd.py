@@ -52,8 +52,7 @@ def nwt_grd_1():
     status4 = tst4.testOpen()
     if status1 == 'success' and status2 == 'success' and status3 == 'success' and status4 == 'success':
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 
 def nwt_grd_2():

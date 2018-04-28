@@ -155,7 +155,7 @@ def ogr_rfc41_2():
         return 'fail'
 
     # Check setting to wkbNone and implicitly destroying the field.
-    for i in range(2):
+    for _ in range(2):
         feature_defn.SetGeomType(ogr.wkbNone)
         if feature_defn.GetGeomFieldCount() != 0:
             gdaltest.post_reason('fail')
