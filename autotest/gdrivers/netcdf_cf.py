@@ -146,12 +146,12 @@ def netcdf_cf_get_command(ifile, version='auto'):
     # fetch method obtained previously
     method = gdaltest.netcdf_cf_method
     if method is not None:
-        if method is 'local':
+        if method == 'local':
             command = './netcdf_cfchecks.py -a ' + gdaltest.netcdf_cf_files['a'] \
                 + ' -s ' + gdaltest.netcdf_cf_files['s'] \
                 + ' -u ' + gdaltest.netcdf_cf_files['u'] \
                 + ' -v ' + version + ' ' + ifile
-        elif method is 'http':
+        elif method == 'http':
             # command = shlex.split( 'curl --form cfversion="1.5" --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"' )
             # switch to 1.5 as driver now supports, and auto when it becomes available
             version = '1.5'

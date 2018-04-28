@@ -199,9 +199,9 @@ elif isinstance(src_band_n, str) and src_band_n.startswith('mask,'):
 else:
     srcband = src_ds.GetRasterBand(src_band_n)
 
-if mask is 'default':
+if mask == 'default':
     maskband = srcband.GetMaskBand()
-elif mask is 'none':
+elif mask == 'none':
     maskband = None
 else:
     mask_ds = gdal.Open(mask)

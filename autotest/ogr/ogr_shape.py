@@ -516,7 +516,7 @@ def ogr_shape_15():
         count = count + 1
         feat = gdaltest.shape_lyr.GetNextFeature()
 
-    if count is not 10:
+    if count != 10:
         gdaltest.post_reason('Did not get expected FID count.')
         return 'fail'
 
@@ -547,7 +547,7 @@ def ogr_shape_16():
         count = count + 1
         feat = gdaltest.shape_lyr.GetNextFeature()
 
-    if count is not 10:
+    if count != 10:
         gdaltest.post_reason('Did not get expected FID count.')
         return 'fail'
 
