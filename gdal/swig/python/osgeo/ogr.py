@@ -4863,7 +4863,7 @@ class Feature(_object):
 
         for key in self.keys():
             fld_defn = self.GetFieldDefnRef(self.GetFieldIndex(key))
-            output['properties'][key] = bool(self.GetField(key))
+            output['properties'][key] = self.GetField(key)
 
         if not as_object:
             output = simplejson.dumps(output)
