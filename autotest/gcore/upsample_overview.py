@@ -160,17 +160,19 @@ def downsample_warp_vs_translate(sx, sy):
     src_ds = None
 
     # Run reproject tool
+    rep_ds_name = prefix + 'downsample_via_reproject.tif'
     src_ds = gdal.Open(src_name)
-    rep_ds = drv.Create(prefix + 'downsample_via_reproject.tif', result_sx, result_sy, gdal.GDT_Byte)
+    rep_ds = drv.Create(rep_ds_name, result_sx, result_sy, gdal.GDT_Byte)
     rep_ds.SetGeoTransform([10, scale, 0, 10, 0, -scale])
     rep_ds.SetProjection(wkt)
-    gdal.ReprojectImage(src_ds, rep_ds, wkt, wkt, gdal.GRA_Bilinear)
+    gdal.ReprojectImage(src_ds, rep_ds, wkt, wkt, gdal.GRA_Average)
     rep_ds = None
     src_ds = None
 
     # Run Translate without overviews
-    gdal.Translate(prefix + 'downsample_via_translate_no_ov.tif', src_name,
-                   format='Gtiff', xRes=scale, yRes=scale)
+    translate_no_ov_ds_name = prefix + 'downsample_via_translate_no_ov.tif'
+    gdal.Translate(translate_no_ov_ds_name, src_name,
+                   format=drv_name, xRes=scale, yRes=scale)
 
     # Build overviews
     src_ds = gdal.Open(src_name)
@@ -178,17 +180,46 @@ def downsample_warp_vs_translate(sx, sy):
     src_ds = None
 
     # Run Translate with overviews
-    gdal.Translate(prefix + 'downsample_via_translate_with_ov.tif', src_name,
-                   format='Gtiff', xRes=scale, yRes=scale)
+    translate_with_ov_ds_name = prefix + 'downsample_via_translate_with_ov.tif'
+    gdal.Translate(translate_with_ov_ds_name, src_name,
+                   format=drv_name, xRes=scale, yRes=scale)
 
-    return 'success'
+    # Dump top overview from source
+    ov_ds_name = prefix + 'overview_dump.tif'
+    src_ds = gdal.Open(src_name)
+    ov_ar = src_ds.GetRasterBand(1).GetOverview(lod-1).ReadAsArray()
+    ov_ds = drv.Create(ov_ds_name, ov_ar.shape[1], ov_ar.shape[0], gdal.GDT_Byte)
+    ov_ds.GetRasterBand(1).WriteArray(ov_ar)
+    ov_ds = None
+
+    # Compare with warp pipeline as a reference
+    rep_ds = gdal.Open(rep_ds_name)
+    translate_no_ov_ds = gdal.Open(translate_no_ov_ds_name)
+    translate_with_ov_ds = gdal.Open(translate_with_ov_ds_name)
+    ov_ds = gdal.Open(ov_ds_name)
+
+    ret = 'success'
+    if gdaltest.compare_ds(rep_ds, translate_no_ov_ds) > 1:
+        gdaltest.post_reason('Warped dataset is not equal to '
+                             'downsampled without overviews')
+        ret = 'fail'
+
+    if gdaltest.compare_ds(rep_ds, translate_with_ov_ds) > 1:
+        gdaltest.post_reason('Warped dataset is not equal to '
+                             'downsampled with overviews')
+        ret = 'fail'
+
+    if gdaltest.compare_ds(rep_ds, ov_ds) > 1:
+        gdaltest.post_reason('Warped dataset is not equal to '
+                             'dumped overview')
+        ret = 'fail'
+
+    return ret
 
 
 def upsample_overview_3():
 
-    downsample_warp_vs_translate(10117, 5578)
-
-    return 'success'
+    return downsample_warp_vs_translate(10117, 5578)
 
 
 ###############################################################################
