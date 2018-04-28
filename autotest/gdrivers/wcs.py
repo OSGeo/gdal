@@ -315,7 +315,7 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
 
     def log_request(self, code=',', size=','):
         # pylint: disable=unused-argument
-        return
+        pass
 
     def Headers(self, typ):
         self.send_response(200)
@@ -384,7 +384,6 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
                 wcs_6_ok = False
             print('test ' + server + ' ' + test + ' WCS ' + version + ' ' + ok)
         self.Respond(request, server, version, test)
-        return
 
 
 def setupFct():

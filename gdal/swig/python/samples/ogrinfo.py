@@ -465,8 +465,6 @@ def DumpReadableFeature(poFeature, options=None):
 
     print('')
 
-    return
-
 
 def DumpReadableGeometry(poGeometry, pszPrefix, options):
 
@@ -523,8 +521,6 @@ def DumpReadableGeometry(poGeometry, pszPrefix, options):
             or EQUAL(options['DISPLAY_GEOMETRY'], 'WKT'):
 
         print("%s%s" % (pszPrefix, poGeometry.ExportToWkt()))
-
-    return
 
 
 if __name__ == '__main__':

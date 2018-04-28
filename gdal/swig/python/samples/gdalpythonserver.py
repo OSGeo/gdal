@@ -175,7 +175,6 @@ class GDALPythonServerDataset:
 
     def FlushCache(self):
         self.gdal_ds.FlushCache()
-        return
 
     def IRasterIO_Read(self, nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                        nBufType, panBandMap, nPixelSpace, nLineSpace, nBandSpace):

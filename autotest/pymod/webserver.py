@@ -205,7 +205,7 @@ class DispatcherHttpHandler(BaseHTTPRequestHandler):
 
     def log_request(self, code='-', size='-'):
         # pylint: disable=unused-argument
-        return
+        pass
 
     def do_HEAD(self):
 
@@ -256,7 +256,7 @@ class DispatcherHttpHandler(BaseHTTPRequestHandler):
 class GDAL_Handler(BaseHTTPRequestHandler):
     # pylint: disable=unused-argument
     def log_request(self, code='-', size='-'):
-        return
+        pass
 
     def do_HEAD(self):
         if do_log:
