@@ -89,7 +89,7 @@ class GDALPythonServerRasterBand:
 
     def GetOverview(self, iovr):
         if self.ovr_bands is None:
-            self.ovr_bands = [None for i in range(self.GetOverviewCount())]
+            self.ovr_bands = [None] * self.GetOverviewCount()
         if self.ovr_bands[iovr] is None:
             gdal_ovr_band = self.gdal_band.GetOverview(iovr)
             if gdal_ovr_band is not None:

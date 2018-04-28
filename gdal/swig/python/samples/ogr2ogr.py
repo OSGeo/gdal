@@ -784,7 +784,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 #      If no target layer specified, use all source layers.
 # --------------------------------------------------------------------
         if len(papszLayers) == 0:
-            papszLayers = [None for i in range(nSrcLayerCount)]
+            papszLayers = [None] * nSrcLayerCount
             for iLayer in range(nSrcLayerCount):
                 poLayer = poDS.GetLayer(iLayer)
                 if poLayer is None:
@@ -897,7 +897,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 # --------------------------------------------------------------------
         if len(papszLayers) == 0:
             nLayerCount = poDS.GetLayerCount()
-            papoLayers = [None for i in range(nLayerCount)]
+            papoLayers = [None] * nLayerCount
             iLayer = 0
 
             for iLayer in range(nLayerCount):
@@ -915,7 +915,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 # --------------------------------------------------------------------
         else:
             nLayerCount = len(papszLayers)
-            papoLayers = [None for i in range(nLayerCount)]
+            papoLayers = [None] * nLayerCount
             iLayer = 0
 
             for layername in papszLayers:
@@ -928,7 +928,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                 papoLayers[iLayer] = poLayer
                 iLayer = iLayer + 1
 
-        panLayerCountFeatures = [0 for i in range(nLayerCount)]
+        panLayerCountFeatures = [0] * nLayerCount
         nCountLayersFeatures = 0
         nAccCountFeatures = 0
 
@@ -1357,7 +1357,7 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName,
 
     # Initialize the index-to-index map to -1's
     nSrcFieldCount = poSrcFDefn.GetFieldCount()
-    panMap = [-1 for i in range(nSrcFieldCount)]
+    panMap = [-1] * nSrcFieldCount
 
     poDstFDefn = poDstLayer.GetLayerDefn()
 
