@@ -36,6 +36,21 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import gdal
+import osr
+
+
+def generate_chessboard(drv, ds_name, sx, sy, size):
+
+    ds = drv.Create(ds_name, sx, sy, 1, gdal.GDT_Byte )
+    chess = numpy.zeros((size,size), dtype = numpy.uint8)
+    chess[0:size/2,0:size/2] = 255
+    chess[size/2:size,size/2:size] = 255
+    for y in range(sy/size):
+        for x in range(sx/size):
+            ds.GetRasterBand(1).WriteArray(chess, x*size, y*size)
+
+    return ds
+
 
 ###############################################################################
 # Comparison of the upsampled overview image with the original
@@ -54,14 +69,8 @@ def checkupsampled(sx, sy):
     scale = 1 << lod
     ds_name = 'tmp/ov_test1.tif'
     tst_name = 'tmp/ov_test2.tif'
-    ds = drv.Create(ds_name, sx, sy, 1, gdal.GDT_Byte )
 
-    chess = numpy.zeros((size,size), dtype = numpy.uint8)
-    chess[0:size/2,0:size/2] = 255
-    chess[size/2:size,size/2:size] = 255
-    for y in range(sy/size):
-        for x in range(sx/size):
-            ds.GetRasterBand(1).WriteArray(chess, x*size, y*size)
+    ds = generate_chessboard(drv, ds_name, sx, sy, size)
     ds = None
 
     # Build overviews
@@ -122,10 +131,72 @@ def upsample_overview_2():
     return checkupsampled(1011, 1011)
 
 ###############################################################################
+# Compare warp and overview sampling pipelines
+
+def downsample_warp_vs_translate(sx, sy):
+
+    drv_name = 'Gtiff'
+    drv = gdal.GetDriverByName(drv_name)
+    if drv is None:
+        gdaltest.post_reason(drv_name + ' driver not found.')
+        return 'fail'
+
+    size = 1024
+    lod = 6
+    scale = 1 << lod
+    result_sx = sx/scale
+    result_sy = sy/scale
+    prefix = 'tmp/' + str(sx) + "x" + str(sy) + "_"
+    src_name = prefix + 'chessboard_3.tif'
+
+    sref = osr.SpatialReference()
+    sref.ImportFromEPSG(4326)
+    wkt = sref.ExportToWkt()
+
+    # Create test dataset
+    src_ds = generate_chessboard(drv, src_name, sx, sy, size)
+    src_ds.SetGeoTransform([10, 1.0, 0, 10, 0, -1.0])
+    src_ds.SetProjection(wkt)
+    src_ds = None
+
+    # Run reproject tool
+    src_ds = gdal.Open(src_name)
+    rep_ds = drv.Create(prefix + 'downsample_via_reproject.tif', result_sx, result_sy, gdal.GDT_Byte)
+    rep_ds.SetGeoTransform([10, scale, 0, 10, 0, -scale])
+    rep_ds.SetProjection(wkt)
+    gdal.ReprojectImage(src_ds, rep_ds, wkt, wkt, gdal.GRA_Bilinear)
+    rep_ds = None
+    src_ds = None
+
+    # Run Translate without overviews
+    gdal.Translate(prefix + 'downsample_via_translate_no_ov.tif', src_name,
+                   format='Gtiff', xRes=scale, yRes=scale)
+
+    # Build overviews
+    src_ds = gdal.Open(src_name)
+    src_ds.BuildOverviews('AVERAGE', overviewlist = [2, 4, 8, 16, 32, 64])
+    src_ds = None
+
+    # Run Translate with overviews
+    gdal.Translate(prefix + 'downsample_via_translate_with_ov.tif', src_name,
+                   format='Gtiff', xRes=scale, yRes=scale)
+
+    return 'success'
+
+
+def upsample_overview_3():
+
+    downsample_warp_vs_translate(10117, 5578)
+
+    return 'success'
+
+
+###############################################################################
 
 gdaltest_list = [
     upsample_overview_1,
     upsample_overview_2,
+    upsample_overview_3,
 ]
 
 if __name__ == '__main__':
