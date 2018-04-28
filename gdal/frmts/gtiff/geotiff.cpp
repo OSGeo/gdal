@@ -12013,12 +12013,6 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
     vsi_l_offset nMaxOffset = 0;
     if( bBigTIFF )
     {
-#ifndef CPL_HAS_GINT64
-        CPLError(CE_Failure, CPLE_NotSupported, "BigTIFF not supported");
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
-        VSIUnlink(osTmpFilename);
-        return false;
-#else
         GUInt64 nTmp = 0;
         memcpy(&nTmp, pabyBuffer + 8, 8);
         if( bSwap ) CPL_SWAP64PTR(&nTmp);
@@ -12091,7 +12085,6 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
                     nMaxOffset = nTmp + nTagSize;
             }
         }
-#endif
     }
     else
     {
