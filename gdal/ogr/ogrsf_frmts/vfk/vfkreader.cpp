@@ -128,8 +128,6 @@ char *GetDataBlockName(const char *pszLine)
 /*!
   \brief Read a line from file
 
-  \param bRecode do recoding
-
   \return a NULL terminated string which should be freed with CPLFree().
 */
 char *VFKReader::ReadLine()
