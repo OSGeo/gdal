@@ -78,8 +78,7 @@ def postgisraster_test_open_error1():
                    "table='nonexistent'")
     if ds is None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 #
@@ -93,8 +92,7 @@ def postgisraster_test_open_error2():
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
     if ds is None:
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 #
@@ -111,10 +109,7 @@ def postgisraster_compare_utm():
     dst_ds = gdal.Open(dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'])
 
     diff = gdaltest.compare_ds(src_ds, dst_ds, width=100, height=100, verbose=1)
-    if diff == 0:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if diff == 0 else 'fail'
 
 ###############################################################################
 #
@@ -131,10 +126,7 @@ def postgisraster_compare_small_world():
     dst_ds = gdal.Open(dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'])
 
     diff = gdaltest.compare_ds(src_ds, dst_ds, width=40, height=20, verbose=1)
-    if diff == 0:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if diff == 0 else 'fail'
 
 ###############################################################################
 #
@@ -244,10 +236,7 @@ def postgisraster_test_create_copy_bad_conn_string():
 
     new_ds = gdaltest.postgisrasterDriver.CreateCopy("bogus connection string", src_ds, strict=True)
 
-    if new_ds is None:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if new_ds is None else 'fail'
 
 
 def postgisraster_test_create_copy_no_dbname():
@@ -262,10 +251,7 @@ def postgisraster_test_create_copy_no_dbname():
 
     new_ds = gdaltest.postgisrasterDriver.CreateCopy("PG: no database name", src_ds, strict=True, options=options)
 
-    if new_ds is None:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if new_ds is None else 'fail'
 
 
 def postgisraster_test_create_copy_no_tablename():
@@ -280,10 +266,7 @@ def postgisraster_test_create_copy_no_tablename():
 
     new_ds = gdaltest.postgisrasterDriver.CreateCopy(gdaltest.postgisraster_connection_string, src_ds, strict=True, options=options)
 
-    if new_ds is None:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if new_ds is None else 'fail'
 
 
 def postgisraster_test_create_copy_and_delete():
@@ -303,10 +286,7 @@ def postgisraster_test_create_copy_and_delete():
 
     deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy'")
 
-    if deleted:
-        return 'fail'
-    else:
-        return 'success'
+    return 'fail' if deleted else 'success'
 
 
 def postgisraster_test_create_copy_and_delete_phases():

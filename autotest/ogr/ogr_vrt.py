@@ -51,8 +51,7 @@ def ogr_vrt_1():
 
     if gdaltest.vrt_ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Verify the geometries, in the "test2" layer based on x,y,z columns.

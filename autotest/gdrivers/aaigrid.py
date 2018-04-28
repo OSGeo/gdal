@@ -240,8 +240,7 @@ def aaigrid_9():
 
     if abs(got_minmax[0] - -0.84) < 1e-7:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test AAIGRID_DATATYPE configuration option and DATATYPE open options
@@ -308,8 +307,7 @@ def aaigrid_11():
 
     if abs(got_minmax[0] - -0.84) < 1e-7:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test no data is written to correct precision with DECIMAL_PRECISION.

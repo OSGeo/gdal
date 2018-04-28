@@ -353,10 +353,7 @@ def test_gdal_contour_4():
     ds.ReleaseResultSet(lyr)
     ds.Destroy()
 
-    if test_failed:
-        return 'fail'
-    else:
-        return 'success'
+    return 'fail' if test_failed else 'success'
 
 ###############################################################################
 # Test contour orientation
@@ -405,10 +402,7 @@ def test_gdal_contour_5():
     ds.ReleaseResultSet(lyr)
     ds.Destroy()
 
-    if test_failed:
-        return 'fail'
-    else:
-        return 'success'
+    return 'fail' if test_failed else 'success'
 
 ###############################################################################
 # Cleanup

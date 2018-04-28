@@ -73,8 +73,7 @@ def test_gdal_sieve_1():
         print('Got: ', cs)
         gdaltest.post_reason('got wrong checksum')
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 
 gdaltest_list = [

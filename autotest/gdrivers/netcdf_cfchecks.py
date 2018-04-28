@@ -93,10 +93,7 @@ class CFVersion(object):
             self.tuple = value
 
     def __nonzero__(self):
-        if self.tuple:
-            return True
-        else:
-            return False
+        return bool(self.tuple)
 
     def __str__(self):
         return "CF-%s" % '.'.join(map(str, self.tuple))
@@ -117,8 +114,8 @@ class CFVersion(object):
             else:
                 if in_o:  # and not in_s
                     return -1  # e.g. 3.2 < 3.2.1
-                else:  # not in_s and not in_o
-                    return 0  # e.g. 3.2 == 3.2
+                # not in_s and not in_o
+                return 0  # e.g. 3.2 == 3.2
             pos += 1
 
 
@@ -584,12 +581,11 @@ class CFChecker:
         if self.err:
             # Return number of errors found
             return self.err
-        elif self.warn:
+        if self.warn:
             # No errors, but some warnings found
             return -(self.warn)
-        else:
-            # No errors or warnings - return success!
-            return 0
+        # No errors or warnings - return success!
+        return 0
 
         # -----------------------------
     def setUpAttributeList(self):
@@ -681,8 +677,7 @@ class CFChecker:
         bits = attDict[attName].split()
         if bits:
             return bits[0]
-        else:
-            return ""
+        return ""
 
         # -------------------------
     def getStdName(self, var):
@@ -699,13 +694,12 @@ class CFChecker:
         if len(bits) == 1:
             # Only standard_name part present
             return (bits[0], "")
-        elif len(bits) == 0:
+        if len(bits) == 0:
             # Standard Name is blank
             return ("", "")
-        else:
-            # At least 2 elements so return the first 2.
-            # If there are more than 2, which is invalid syntax, this will have been picked up by chkDescription()
-            return (bits[0], bits[1])
+        # At least 2 elements so return the first 2.
+        # If there are more than 2, which is invalid syntax, this will have been picked up by chkDescription()
+        return (bits[0], bits[1])
 
         # --------------------------------------------------
     def getInterpretation(self, units, positive=None):
@@ -1058,8 +1052,7 @@ class CFChecker:
         """Parse blank separated list"""
         if re.match("^[a-zA-Z0-9_ ]*$", lst):
             return 1
-        else:
-            return 0
+        return 0
 
         # -------------------------------------------
     def extendedBlankSeparatedList(self, lst):
@@ -1068,8 +1061,7 @@ class CFChecker:
         plus underscore '_', period '.', plus '+', hyphen '-', or "at" sign '@'."""
         if re.match("^[a-zA-Z0-9_ @\-\+\.]*$", lst):
             return 1
-        else:
-            return 0
+        return 0
 
         # -------------------------------------------
     def commaOrBlankSeparatedList(self, lst):
@@ -1078,8 +1070,7 @@ class CFChecker:
         characters plus underscore '_', period '.', plus '+', hyphen '-', or "at" sign '@'."""
         if re.match("^[a-zA-Z0-9_ @\-\+\.,]*$", lst):
             return 1
-        else:
-            return 0
+        return 0
 
         # ------------------------------
     def chkGlobalAttributes(self):
@@ -2444,15 +2435,14 @@ class CFChecker:
         if isinstance(arg, numpy.ndarray):
             return "array"
 
-        elif type(arg) == str:
+        if type(arg) == str:
             return "str"
 
-        elif type(arg) == list:
+        if type(arg) == list:
             return "list"
 
-        else:
-            print("<cfchecker> ERROR: Unknown Type in getType(" + arg + ")")
-            return 0
+        print("<cfchecker> ERROR: Unknown Type in getType(" + arg + ")")
+        return 0
 
         # ----------------------------------------
     def equalNumOfValues(self, arg1, arg2):

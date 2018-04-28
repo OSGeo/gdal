@@ -46,8 +46,7 @@ def ogr_basic_1():
 
     if gdaltest.ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test Feature counting.

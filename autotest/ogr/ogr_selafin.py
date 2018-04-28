@@ -57,8 +57,7 @@ def ogr_selafin_create_ds():
 
     if gdaltest.selafin_ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Add a few points to the datasource

@@ -376,10 +376,7 @@ def clean_tmp():
 
 def testCreateCopyInterruptCallback(pct, message, user_data):
     # pylint: disable=unused-argument
-    if pct > 0.5:
-        return 0  # to stop
-    else:
-        return 1  # to continue
+    return pct <= 0.5
 
 ###############################################################################
 
@@ -610,12 +607,11 @@ class GDALTest:
 
         if skip_checksum is not None:
             return 'success'
-        elif self.chksum is None or chksum == self.chksum:
+        if self.chksum is None or chksum == self.chksum:
             return 'success'
-        else:
-            post_reason('Checksum for band %d in "%s" is %d, but expected %d.'
-                        % (self.band, self.filename, chksum, self.chksum))
-            return 'fail'
+        post_reason('Checksum for band %d in "%s" is %d, but expected %d.'
+                    % (self.band, self.filename, chksum, self.chksum))
+        return 'fail'
 
     def testCreateCopy(self, check_minmax=1, check_gt=0, check_srs=None,
                        vsimem=0, new_filename=None, strict_in=0,
@@ -668,11 +664,10 @@ class GDALTest:
                 self.driver.Delete(new_filename)
                 gdal.PopErrorHandler()
                 return 'success'
-            else:
-                post_reason('CreateCopy() should have failed due to interruption')
-                new_ds = None
-                self.driver.Delete(new_filename)
-                return 'fail'
+            post_reason('CreateCopy() should have failed due to interruption')
+            new_ds = None
+            self.driver.Delete(new_filename)
+            return 'fail'
 
         if new_ds is None:
             post_reason('Failed to create test file using CreateCopy method.' +
@@ -1208,8 +1203,7 @@ def approx_equal(a, b):
 
     if abs(b / a - 1.0) > .00000000001:
         return 0
-    else:
-        return 1
+    return 1
 
 
 def user_srs_to_wkt(user_text):
@@ -1227,12 +1221,11 @@ def equal_srs_from_wkt(expected_wkt, got_wkt):
 
     if got_srs.IsSame(expected_srs):
         return 1
-    else:
-        print('Expected:\n%s' % expected_wkt)
-        print('Got:     \n%s' % got_wkt)
+    print('Expected:\n%s' % expected_wkt)
+    print('Got:     \n%s' % got_wkt)
 
-        post_reason('SRS differs from expected.')
-        return 0
+    post_reason('SRS differs from expected.')
+    return 0
 
 ###############################################################################
 # Compare two sets of RPC metadata, and establish if they are essentially
@@ -1625,10 +1618,8 @@ def isnan(val):
         val_str = '%f' % val
         if val_str == 'nan':
             return True
-        else:
-            return False
-    else:
-        return True
+        return False
+    return True
 
 
 ###############################################################################
@@ -1890,14 +1881,13 @@ def find_lib_windows(libname):
 def find_lib(mylib):
     if sys.platform.startswith('linux'):
         return find_lib_linux(mylib)
-    elif sys.platform.startswith('sunos'):
+    if sys.platform.startswith('sunos'):
         return find_lib_sunos(mylib)
-    elif sys.platform.startswith('win32'):
+    if sys.platform.startswith('win32'):
         return find_lib_windows(mylib)
-    else:
-        # sorry mac users or other BSDs
-        # should be doable
-        return None
+    # sorry mac users or other BSDs
+    # should be doable
+    return None
 
 ###############################################################################
 # get_opened_files()

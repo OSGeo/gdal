@@ -357,22 +357,19 @@ VERBOSE = 0
 def read_int():
     if sys.version_info >= (3, 0, 0):
         return struct.unpack('i', sys.stdin.read(4).encode('latin1'))[0]
-    else:
-        return struct.unpack('i', sys.stdin.read(4))[0]
+    return struct.unpack('i', sys.stdin.read(4))[0]
 
 
 def read_bigint():
     if sys.version_info >= (3, 0, 0):
         return struct.unpack('q', sys.stdin.read(8).encode('latin1'))[0]
-    else:
-        return struct.unpack('q', sys.stdin.read(8))[0]
+    return struct.unpack('q', sys.stdin.read(8))[0]
 
 
 def read_double():
     if sys.version_info >= (3, 0, 0):
         return struct.unpack('d', sys.stdin.read(8).encode('latin1'))[0]
-    else:
-        return struct.unpack('d', sys.stdin.read(8))[0]
+    return struct.unpack('d', sys.stdin.read(8))[0]
 
 
 def read_str():

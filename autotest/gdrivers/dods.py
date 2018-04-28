@@ -114,8 +114,7 @@ def dods_6():
         gdaltest.post_reason('nodata value wrong or missing.')
         print(nd)
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Cleanup

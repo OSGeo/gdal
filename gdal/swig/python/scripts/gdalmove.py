@@ -39,8 +39,7 @@ from osgeo import gdal, osr
 def fmt_loc(srs_obj, loc):
     if srs_obj.IsProjected():
         return '%12.3f %12.3f' % (loc[0], loc[1])
-    else:
-        return '%12.8f %12.8f' % (loc[0], loc[1])
+    return '%12.8f %12.8f' % (loc[0], loc[1])
 
 ###############################################################################
 

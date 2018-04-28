@@ -67,8 +67,7 @@ def wcs_1():
     gdaltest.wcs_ds = None
     if gdaltest.wcs_drv is None:
         return 'skip'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Open the GeoServer WCS service.
@@ -87,9 +86,8 @@ def wcs_2():
 
     if gdaltest.wcs_ds is not None:
         return 'success'
-    else:
-        gdaltest.post_reason('open failed.')
-        return 'fail'
+    gdaltest.post_reason('open failed.')
+    return 'fail'
 
 ###############################################################################
 # Check various things about the configuration.
@@ -198,9 +196,8 @@ def old_wcs_2():
 
     if gdaltest.wcs_ds is not None:
         return 'success'
-    else:
-        gdaltest.post_reason('open failed.')
-        return 'fail'
+    gdaltest.post_reason('open failed.')
+    return 'fail'
 
 ###############################################################################
 # Check various things about the configuration.
@@ -571,10 +568,8 @@ def wcs_6():
             else:
                 print(server + ' ' + version + ' non_scaled skipped (no response file)')
     webserver.server_stop(process, port)
-    if wcs_6_ok:
-        return 'success'
-    else:
-        return 'fail'
+    
+    return 'success' if  wcs_6_ok else 'fail'
 
 ###############################################################################
 

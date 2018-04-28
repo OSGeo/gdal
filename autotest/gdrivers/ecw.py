@@ -1599,12 +1599,10 @@ def ecw_40():
         if gdaltest.ecw_drv.major_version < 5:
             if gdal.GetLastErrorMsg().find('requires ECW SDK 5.0') >= 0:
                 return 'skip'
-            else:
-                gdaltest.post_reason('explicit error message expected')
-                return 'fail'
-        else:
-            gdaltest.post_reason('fail')
+            gdaltest.post_reason('explicit error message expected')
             return 'fail'
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     expected_md = [
         ('CLOCKWISE_ROTATION_DEG', '0.000000'),

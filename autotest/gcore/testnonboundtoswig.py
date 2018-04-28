@@ -254,20 +254,19 @@ def GDALTypeToCTypes(gdaltype):
 
     if gdaltype == gdal.GDT_Byte:
         return ctypes.c_ubyte
-    elif gdaltype == gdal.GDT_Int16:
+    if gdaltype == gdal.GDT_Int16:
         return ctypes.c_short
-    elif gdaltype == gdal.GDT_UInt16:
+    if gdaltype == gdal.GDT_UInt16:
         return ctypes.c_ushort
-    elif gdaltype == gdal.GDT_Int32:
+    if gdaltype == gdal.GDT_Int32:
         return ctypes.c_int
-    elif gdaltype == gdal.GDT_UInt32:
+    if gdaltype == gdal.GDT_UInt32:
         return ctypes.c_uint
-    elif gdaltype == gdal.GDT_Float32:
+    if gdaltype == gdal.GDT_Float32:
         return ctypes.c_float
-    elif gdaltype == gdal.GDT_Float64:
+    if gdaltype == gdal.GDT_Float64:
         return ctypes.c_double
-    else:
-        return None
+    return None
 
 
 def my_pyDerivedPixelFunc(papoSources, nSources, pData, nBufXSize, nBufYSize, eSrcType, eBufType, nPixelSpace, nLineSpace):
