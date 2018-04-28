@@ -48,7 +48,7 @@ def test_gnmmanage_1():
     if test_cli_utilities.get_gnmmanage_path() is None:
         return 'skip'
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' create -f GNMFile -t_srs EPSG:4326 -dsco net_name=test_gnm -dsco net_description="Test file based GNM" tmp')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' create -f GNMFile -t_srs EPSG:4326 -dsco net_name=test_gnm -dsco net_description="Test file based GNM" tmp')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
@@ -72,13 +72,13 @@ def test_gnmmanage_2():
     if test_cli_utilities.get_gnmmanage_path() is None:
         return 'skip'
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' import ../gnm/data/pipes.shp tmp/test_gnm')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' import ../gnm/data/pipes.shp tmp/test_gnm')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
         return 'fail'
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' import ../gnm/data/wells.shp tmp/test_gnm')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' import ../gnm/data/wells.shp tmp/test_gnm')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
@@ -166,7 +166,7 @@ def test_gnm_cleanup():
     if test_cli_utilities.get_gnmmanage_path() is None:
         return 'skip'
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' delete tmp/test_gnm')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' delete tmp/test_gnm')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)

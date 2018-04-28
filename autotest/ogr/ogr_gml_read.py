@@ -537,7 +537,7 @@ def ogr_gml_13():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    for i in range(2):
+    for _ in range(2):
         ds = ogr.Open('data/testlistfields.gml')
         lyr = ds.GetLayer(0)
         feat = lyr.GetNextFeature()
@@ -1196,7 +1196,7 @@ def ogr_gml_29():
         if lyr.GetGeomType() != expected_results[j][0]:
             gdaltest.post_reason('layer %d, did not get expected layer geometry type' % j)
             return 'fail'
-        for i in range(2):
+        for _ in range(2):
             feat = lyr.GetNextFeature()
             geom = feat.GetGeometryRef()
             got_wkt = geom.ExportToWkt()
@@ -1219,7 +1219,7 @@ def ogr_gml_30():
         return 'skip'
 
     field1 = " "
-    for i in range(11):
+    for _ in range(11):
         field1 = field1 + field1
 
     geom = "0 1 " * 512
@@ -2189,7 +2189,7 @@ def ogr_gml_52():
     except OSError:
         pass
 
-    for i in range(2):
+    for _ in range(2):
 
         ds = ogr.Open('data/fake_mtkgml.xml')
 
@@ -2831,7 +2831,7 @@ def ogr_gml_60():
     except OSError:
         pass
 
-    for i in range(2):
+    for _ in range(2):
         ds = ogr.Open('data/wfs_200_multiplelayers.gml')
         lyr = ds.GetLayerByName('road')
         if lyr.GetFeatureCount() != 1:
@@ -3043,7 +3043,7 @@ def ogr_gml_64():
         return 'skip'
 
     for parser in ['XERCES', 'EXPAT']:
-        for i in range(2):
+        for _ in range(2):
             gdal.SetConfigOption('GML_PARSER', parser)
             ds = ogr.Open('data/rnf_eg.gml')
             gdal.SetConfigOption('GML_PARSER', None)

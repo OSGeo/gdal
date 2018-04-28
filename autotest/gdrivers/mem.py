@@ -532,7 +532,7 @@ def mem_10():
 
     # Single band case
     ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.Open('data/byte.tif'))
-    for i in range(2):
+    for _ in range(2):
         ret = ds.BuildOverviews('NEAR', [2])
         if ret != 0:
             gdaltest.post_reason('fail')

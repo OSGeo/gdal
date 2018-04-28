@@ -759,7 +759,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
         # }
 
         nSrcLayerCount = poDS.GetLayerCount()
-        pasAssocLayers = [AssociatedLayers() for i in range(nSrcLayerCount)]
+        pasAssocLayers = [AssociatedLayers() for _ in range(nSrcLayerCount)]
 
 # --------------------------------------------------------------------
 #      Special case to improve user experience when translating into

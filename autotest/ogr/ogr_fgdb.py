@@ -904,7 +904,7 @@ def ogr_fgdb_14():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
-    for i in range(3):
+    for _ in range(3):
         ds1 = ogr.Open("tmp/test.gdb")
         if ds1 is None:
             gdaltest.post_reason('fail')

@@ -2652,15 +2652,15 @@ def tiff_write_71():
     # Write StripByteCounts tag
     # 100,000 in little endian
     if version_info >= (3, 0, 0):
-        for i in range(100000):
+        for _ in range(100000):
             exec("f.write(b'\\xa0\\x86\\x01\\x00\\x00\\x00\\x00\\x00')")
     else:
-        for i in range(100000):
+        for _ in range(100000):
             f.write('\xa0\x86\x01\x00\x00\x00\x00\x00')
 
     # Write StripOffsets tag
     offset = 1600252
-    for i in range(100000):
+    for _ in range(100000):
         f.write(struct.pack('<Q', offset))
         offset = offset + 100000
 
@@ -2964,7 +2964,7 @@ def tiff_write_78():
     # new_ds = gdal.Open('tmp/tiff_write_78.tif')
 
     if 'GetBlockSize' in dir(gdal.Band):
-        (blockx, blocky) = new_ds.GetRasterBand(1).GetBlockSize()
+        (_, blocky) = new_ds.GetRasterBand(1).GetBlockSize()
         if blocky != 1:
             print('')
             print('using regular band (libtiff <= 3.9.2 or <= 4.0.0beta5, or SplitBand disabled by config option)')
@@ -4325,7 +4325,7 @@ def tiff_write_101():
     else:
         import random
         rand_array = array.array('B')
-        for i in range(10 * 1024 * 1024):
+        for _ in range(10 * 1024 * 1024):
             rand_array.append(random.randint(0, 255))
 
     f = open('tmp/tiff_write_101.bin', 'wb')
@@ -4757,7 +4757,7 @@ def tiff_write_117():
     ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256)
 
     # The new bytecount will be greater than 2048
-    data = ''.join([('%c' % random.randint(0, 255)) for i in range(256 * 256)])
+    data = ''.join([('%c' % random.randint(0, 255)) for _ in range(256 * 256)])
     ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
 
     # Make sure that data is written now

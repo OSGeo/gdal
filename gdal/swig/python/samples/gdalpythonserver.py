@@ -388,7 +388,7 @@ def read_str():
 def read_strlist():
     count = read_int()
     strlist = []
-    for i in range(count):
+    for _ in range(count):
         strlist.append(read_str())
     return strlist
 

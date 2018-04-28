@@ -1275,7 +1275,7 @@ def ogr_mitab_27():
     lyr = ds.GetLayer(0)
 
     f = lyr.GetFeature(1)
-    for i in range(100):
+    for _ in range(100):
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (2 3)'))
         if lyr.SetFeature(f) != 0:
             gdaltest.post_reason('fail')
@@ -1315,7 +1315,7 @@ def ogr_mitab_27():
 
 def generate_permutation(n):
     tab = [i for i in range(n)]
-    for i in range(10 * n):
+    for _ in range(10 * n):
         ind = random.randint(0, n - 1)
         tmp = tab[0]
         tab[0] = tab[ind]
@@ -1547,7 +1547,7 @@ def ogr_mitab_30(update=0):
                 gdaltest.post_reason('fail')
                 return 'fail'
             lyr2.ResetReading()
-            for k in range(j + 1):
+            for _ in range(j + 1):
                 feat2 = lyr2.GetNextFeature()
             if feat2.GetField('ID') != j + 1 or feat2.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (j, j):
                 print(j)
@@ -1690,7 +1690,7 @@ def ogr_mitab_34():
     geom = ogr.Geometry(ogr.wkbLineString)
     for i in range(1000):
         geom.AddPoint_2D(i, i)
-    for j in range(2):
+    for _ in range(2):
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometry(geom)
         lyr.CreateFeature(f)
@@ -2164,7 +2164,7 @@ def ogr_mitab_40():
             ds = ogr.Open('/vsimem/ogr_mitab_40.mif')
             if ds is not None:
                 lyr = ds.GetLayer(0)
-                for f in lyr:
+                for _ in lyr:
                     pass
 
     gdal.Unlink('/vsimem/ogr_mitab_40.mif')

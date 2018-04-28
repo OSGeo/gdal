@@ -407,7 +407,7 @@ def ogr_sql_sqlite_2():
         print(layer_srs)
         return 'fail'
 
-    for i in range(2):
+    for _ in range(2):
         feat = sql_lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
             gdaltest.post_reason('failure')
@@ -942,7 +942,7 @@ def ogr_sql_sqlite_14_and_15(sql):
     got_two = False
 
     sql_lyr = ds.ExecuteSQL(sql, dialect='SQLite')
-    for i in range(2):
+    for _ in range(2):
         feat = sql_lyr.GetNextFeature()
         i1 = feat.GetField('intfield')
         i2 = feat.GetField('intfield2')

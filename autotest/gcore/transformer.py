@@ -457,7 +457,7 @@ def transformer_9():
     ds_dem.SetGeoTransform([125.647968621436, 1.2111052640051412e-05, 0, 39.869926216038, 0, -8.6569068979969188e-06])
     import random
     random.seed(0)
-    data = ''.join([chr(40 + int(10 * random.random())) for i in range(100 * 100)])
+    data = ''.join([chr(40 + int(10 * random.random())) for _ in range(100 * 100)])
     ds_dem.GetRasterBand(1).WriteRaster(0, 0, 100, 100, data)
     ds_dem = None
 
@@ -520,7 +520,7 @@ def transformer_10():
     ds_dem.SetGeoTransform([125.647968621436, 1.2111052640051412e-05, 0, 39.869926216038, 0, -8.6569068979969188e-06])
     import random
     random.seed(0)
-    data = ''.join([chr(40 + int(10 * random.random())) for i in range(100 * 100)])
+    data = ''.join([chr(40 + int(10 * random.random())) for _ in range(100 * 100)])
     ds_dem.GetRasterBand(1).WriteRaster(0, 0, 100, 100, data)
     ds_dem = None
 

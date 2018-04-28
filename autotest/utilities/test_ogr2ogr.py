@@ -55,7 +55,7 @@ def test_ogr2ogr_1():
     except (OSError, AttributeError):
         pass
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)

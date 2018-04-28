@@ -46,7 +46,7 @@ def test_gdal_translate_1():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test1.tif')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test1.tif')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
@@ -502,7 +502,7 @@ def test_gdal_translate_18():
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/8bit_pal.bmp -of VRT tmp/test18_1.vrt')
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' tmp/test18_1.vrt -expand rgb -of VRT tmp/test18_2.vrt')
-    (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' tmp/test18_2.vrt tmp/test18_2.tif')
+    (_, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' tmp/test18_2.vrt tmp/test18_2.tif')
 
     # Check that all datasets are closed
     if ret_stderr.find('Open GDAL Datasets') != -1:
@@ -815,7 +815,7 @@ def test_gdal_translate_29():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test_gdal_translate_29.tif -outsize 50% 50% -r cubic')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test_gdal_translate_29.tif -outsize 50% 50% -r cubic')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
@@ -833,12 +833,12 @@ def test_gdal_translate_29():
 
     ds = None
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test_gdal_translate_29.vrt -outsize 50% 50% -r cubic -of VRT')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test_gdal_translate_29.vrt -outsize 50% 50% -r cubic -of VRT')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
         return 'fail'
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' tmp/test_gdal_translate_29.vrt tmp/test_gdal_translate_29.tif')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' tmp/test_gdal_translate_29.vrt tmp/test_gdal_translate_29.tif')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
@@ -957,7 +957,7 @@ def test_gdal_translate_33():
 
     os.unlink('tmp/test_gdal_translate_33.tif')
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -outsize 0 0 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -outsize 0 0 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
     if err.find('-outsize 0 0 invalid') < 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -992,25 +992,25 @@ def test_gdal_translate_35():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path())
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path())
     if err.find('No source dataset specified') < 0:
         gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif')
     if err.find('No target dataset specified') < 0:
         gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' /non_existing_path/non_existing.tif /vsimem/out.tif')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' /non_existing_path/non_existing.tif /vsimem/out.tif')
     if err.find('does not exist in the file system') < 0 and err.find('No such file or directory') < 0:
         gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif /non_existing_path/non_existing.tif')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif /non_existing_path/non_existing.tif')
     if err.find('Attempt to create new tiff file') < 0:
         gdaltest.post_reason('fail')
         print(err)
