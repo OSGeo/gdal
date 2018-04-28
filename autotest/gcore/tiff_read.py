@@ -288,9 +288,8 @@ def tiff_read_ojpeg():
     if ds is None:
         if gdal.GetLastErrorMsg().find('Cannot open TIFF file due to missing codec') == 0:
             return 'skip'
-        else:
-            print(gdal.GetLastErrorMsg())
-            return 'fail'
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     got_cs = ds.GetRasterBand(1).Checksum()
@@ -611,7 +610,7 @@ def tiff_g4_split():
 
     ds = gdal.Open('data/slim_g4.tif')
 
-    (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
+    (_, blocky) = ds.GetRasterBand(1).GetBlockSize()
 
     if blocky != 1:
         gdaltest.post_reason('Did not get scanline sized blocks.')
@@ -2481,7 +2480,7 @@ def tiff_read_strace_check():
         "ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE');"
         " \" ")
     try:
-        (out, err) = gdaltest.runexternal_out_and_err(cmd)
+        (_, err) = gdaltest.runexternal_out_and_err(cmd)
     except:
         # strace not available
         return 'skip'

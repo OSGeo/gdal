@@ -273,10 +273,7 @@ def ogr_pg_3():
 
     gdaltest.poly_feat = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
@@ -345,10 +342,7 @@ def ogr_pg_5():
 
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -386,10 +380,7 @@ def ogr_pg_6():
 
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test spatial filtering.
@@ -424,10 +415,7 @@ def ogr_pg_7():
 
     gdaltest.pg_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Write a feature with too long a text value for a fixed length text field.
@@ -787,10 +775,8 @@ def ogr_pg_15():
                                              'eas_id', expect)
     gdaltest.pg_lyr.SetAttributeFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
+
 
 
 ###############################################################################
@@ -816,10 +802,7 @@ def ogr_pg_16():
 
     gdaltest.pg_ds.ReleaseResultSet(lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test requesting a non-existent table by name (bug 1480).

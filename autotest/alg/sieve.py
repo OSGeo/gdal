@@ -66,8 +66,7 @@ def sieve_1():
         print('Got: ', cs)
         gdaltest.post_reason('got wrong checksum')
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Try eight connected.
@@ -98,8 +97,7 @@ def sieve_2():
         print('Got: ', cs)
         gdaltest.post_reason('got wrong checksum')
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Do a sieve resulting in unmergable polygons.
@@ -131,8 +129,7 @@ def sieve_3():
         print('Got: ', cs)
         gdaltest.post_reason('got wrong checksum')
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Try the bug 2634 simplified data.
@@ -163,8 +160,7 @@ def sieve_4():
         print('Got: ', cs)
         gdaltest.post_reason('got wrong checksum')
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 
 ###############################################################################
@@ -196,8 +192,7 @@ def sieve_5():
         print('Got: ', cs)
         gdaltest.post_reason('got wrong checksum')
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Performance test. When increasing the 'size' parameter, performance
@@ -294,8 +289,7 @@ NODATA_value 0
         print('Got: ', cs)
         gdaltest.post_reason('got wrong checksum')
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Test propagation in our search of biggest neighbour
@@ -344,8 +338,7 @@ cellsize     60.000000000000
         print('Got: ', cs)
         gdaltest.post_reason('got wrong checksum')
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 
 gdaltest_list = [

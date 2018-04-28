@@ -243,7 +243,7 @@ def ogr_shape_qix_4():
 
     # The 1000,200,10 figures are such that there are
     # a bit of overlapping between the geometries
-    for x in range(1000):
+    for _ in range(1000):
         feat = ogr.Feature(lyr.GetLayerDefn())
         x1 = random.randint(0, 200)
         y1 = random.randint(0, 200)
@@ -254,7 +254,7 @@ def ogr_shape_qix_4():
         feat = None
 
     # And add statistically non overlapping features
-    for x in range(1000):
+    for _ in range(1000):
         feat = ogr.Feature(lyr.GetLayerDefn())
         x1 = random.randint(0, 10000)
         y1 = random.randint(0, 10000)

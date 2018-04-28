@@ -182,7 +182,7 @@ def osr_basic_3():
         gdaltest.post_reason('Got a PROJCS Authority but we should not')
         return 'fail'
 
-    if str(srs.GetAuthorityCode('PROJCS|UNIT')) is '9001':
+    if str(srs.GetAuthorityCode('PROJCS|UNIT')) == '9001':
         gdaltest.post_reason('Got METER authority code on linear units.')
         return 'fail'
 

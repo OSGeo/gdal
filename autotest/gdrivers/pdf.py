@@ -68,8 +68,7 @@ def pdf_is_poppler():
     val = gdal.GetConfigOption("GDAL_PDF_LIB", "POPPLER")
     if val == 'POPPLER' and 'HAVE_POPPLER' in md:
         return not pdf_is_pdfium()
-    else:
-        return False
+    return False
 
 ###############################################################################
 # Returns True if we run with pdfium
@@ -79,7 +78,9 @@ def pdf_is_pdfium():
 
     md = gdaltest.pdf_drv.GetMetadata()
     val = gdal.GetConfigOption("GDAL_PDF_LIB", "PDFIUM")
-    return bool(val == 'PDFIUM' and 'HAVE_PDFIUM' in md)
+    if val == 'PDFIUM' and 'HAVE_PDFIUM' in md:
+        return True
+    return False
 
 ###############################################################################
 # Returns True if we can compute the checksum
@@ -98,15 +99,14 @@ def pdf_checksum_available():
         gdaltest.pdf_is_checksum_available = True
         return gdaltest.pdf_is_checksum_available
 
-    (out, err) = gdaltest.runexternal_out_and_err("pdftoppm -v")
+    (_, err) = gdaltest.runexternal_out_and_err("pdftoppm -v")
     if err.find('pdftoppm version') == 0:
         gdaltest.pdf_is_checksum_available = True
         return gdaltest.pdf_is_checksum_available
-    else:
-        print('Cannot compute to checksum due to missing pdftoppm')
-        print(err)
-        gdaltest.pdf_is_checksum_available = False
-        return gdaltest.pdf_is_checksum_available
+    print('Cannot compute to checksum due to missing pdftoppm')
+    print(err)
+    gdaltest.pdf_is_checksum_available = False
+    return gdaltest.pdf_is_checksum_available
 
 ###############################################################################
 # Test OGC best practice geospatial PDF

@@ -20547,16 +20547,15 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for 64bit integer type" >&5
 $as_echo_n "checking for 64bit integer type... " >&6; }
 
-  echo 'int main() { long long off=0; }' >> conftest.c
-  if test -z "`${CC} ${CCFLAGS} -o conftest conftest.c 2>&1`" ; then
+  echo 'int main() { return (int)(long long)(0); }' >> conftest.c
+  if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
 
 $as_echo "#define HAVE_LONG_LONG 1" >>confdefs.h
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: long long" >&5
 $as_echo "long long" >&6; }
   else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
+    as_fn_error $? "long long not found" "$LINENO" 5
   fi
   rm -f conftest*
 
@@ -20580,7 +20579,7 @@ $as_echo_n "checking for 64bit file io... " >&6; }
     echo '#include <sys/types.h>' >> conftest.c
     echo '#include <sys/stat.h>' >> conftest.c
     echo 'int main() { struct __stat64 buf; _stat64( "", &buf ); return 0; }' >> conftest.c
-    if test -z "`${CC} ${CCFLAGS} -o conftest conftest.c 2>&1`" ; then
+    if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
         with_unix_stdio_64=no
 
 cat >>confdefs.h <<_ACEOF
@@ -20604,7 +20603,7 @@ _ACEOF
   if test x"$with_unix_stdio_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.c
     echo 'int main() { long long off=0; fseek64(NULL, off, SEEK_SET); off = ftell64(NULL); return 0; }' >> conftest.c
-    if test -z "`${CC} ${CCFLAGS} -o conftest conftest.c 2>&1`" ; then
+    if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftell64
       VSI_FSEEK64=fseek64
@@ -20655,7 +20654,7 @@ $as_echo "#define VSI_NEED_LARGEFILE64_SOURCE 1" >>confdefs.h
   if test x"$with_unix_stdio_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.c
     echo 'int main() { fpos_t off=0; fseeko(NULL, off, SEEK_SET); off = ftello(NULL); return 0; }' >> conftest.c
-    if test -z "`${CC} ${CCFLAGS} -o conftest conftest.c 2>&1`" ; then
+    if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello
       VSI_FSEEK64=fseeko

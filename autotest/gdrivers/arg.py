@@ -131,7 +131,7 @@ def arg_unsupported():
 
     # int8 is unsupported
     for d in gdaltest.argTests:
-        for (name, fmt, nodata) in d['formats']:
+        for (name, _, _) in d['formats']:
             if name == 'int64' or name == 'uint64':
                 with gdaltest.error_handler('CPLQuietErrorHandler'):
                     ds = gdal.Open('data/arg-' + name + '.arg')
@@ -150,7 +150,7 @@ def arg_getrastercount():
         return 'skip'
 
     for d in gdaltest.argTests:
-        for (name, fmt, nodata) in d['formats']:
+        for (name, _, _) in d['formats']:
             with gdaltest.error_handler('CPLQuietErrorHandler'):
                 ds = gdal.Open('data/arg-' + name + '.arg')
             if ds is None:
@@ -167,7 +167,7 @@ def arg_getgeotransform():
         return 'skip'
 
     for d in gdaltest.argTests:
-        for (name, fmt, nodata) in d['formats']:
+        for (name, _, _) in d['formats']:
             with gdaltest.error_handler('CPLQuietErrorHandler'):
                 ds = gdal.Open('data/arg-' + name + '.arg')
             if ds is None:
@@ -294,7 +294,7 @@ def arg_byteorder():
         return 'fail'
 
     for d in gdaltest.argTests:
-        for (name, fmt, nodata) in d['formats']:
+        for (name, _, _) in d['formats']:
 
             basename = 'data/arg-' + name
             with gdaltest.error_handler('CPLQuietErrorHandler'):
@@ -337,7 +337,7 @@ def arg_destroy():
         return 'skip'
 
     for d in gdaltest.argTests:
-        for (name, fmt, nodata) in d['formats']:
+        for (name, _, _) in d['formats']:
             os.remove('data/arg-' + name + '.arg')
             os.remove('data/arg-' + name + '.json')
 

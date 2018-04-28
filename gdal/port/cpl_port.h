@@ -275,14 +275,8 @@ typedef GUIntBig         GUInt64;
 
 #else
 
-// NOTE: we don't really support such platforms ! Many things might break
+#error "64bit integer support required"
 
-typedef long             GIntBig;
-typedef unsigned long    GUIntBig;
-
-#define GINTBIG_MIN     INT_MIN
-#define GINTBIG_MAX     INT_MAX
-#define GUINTBIG_MAX     UINT_MAX
 #endif
 
 #if SIZEOF_VOIDP == 8

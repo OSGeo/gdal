@@ -150,10 +150,7 @@ def ogr_dgn_5():
     tr = ogrtest.check_features_against_list(gdaltest.dgn_lyr, 'Type', [15])
     gdaltest.dgn_lyr.SetAttributeFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Use spatial filter to just pick the big circle.
@@ -171,10 +168,7 @@ def ogr_dgn_6():
     tr = ogrtest.check_features_against_list(gdaltest.dgn_lyr, 'Type', [15])
     gdaltest.dgn_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Copy our small dgn file to a new dgn file.

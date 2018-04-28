@@ -50,8 +50,7 @@ def plmosaic_1():
 
     if gdaltest.plmosaic_drv is not None:
         return 'success'
-    else:
-        return 'skip'
+    return 'skip'
 
 ###############################################################################
 # Error: no API_KEY

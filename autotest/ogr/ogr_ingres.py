@@ -134,10 +134,7 @@ def ogr_ingres_3():
     # automating this in the driver.
     read_feat = gdaltest.ingres_lyr.GetNextFeature()
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
@@ -156,10 +153,7 @@ def ogr_ingres_4():
 
     gdaltest.ingres_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -190,10 +184,7 @@ def ogr_ingres_5():
 
     gdaltest.ingres_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test spatial filtering.
@@ -216,10 +207,7 @@ def ogr_ingres_6():
 
     gdaltest.ingres_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test adding a new field.
@@ -266,10 +254,7 @@ def ogr_ingres_7():
 
     gdaltest.ingres_lyr.SetAttributeFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test deleting a feature.

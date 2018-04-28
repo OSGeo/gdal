@@ -35,12 +35,12 @@ AC_DEFUN([AC_HAVE_LONG_LONG],
 [
   AC_MSG_CHECKING([for 64bit integer type])
 
-  echo 'int main() { long long off=0; }' >> conftest.c
-  if test -z "`${CC} ${CCFLAGS} -o conftest conftest.c 2>&1`" ; then
+  echo 'int main() { return (int)(long long)(0); }' >> conftest.c
+  if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
     AC_DEFINE(HAVE_LONG_LONG, 1, [Define to 1, if your compiler supports long long data type])
     AC_MSG_RESULT([long long])
   else
-    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([long long not found])
   fi
   rm -f conftest*
 ])
@@ -108,7 +108,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
     echo '#include <sys/types.h>' >> conftest.c
     echo '#include <sys/stat.h>' >> conftest.c
     echo 'int main() { struct __stat64 buf; _stat64( "", &buf ); return 0; }' >> conftest.c
-    if test -z "`${CC} ${CCFLAGS} -o conftest conftest.c 2>&1`" ; then
+    if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
         with_unix_stdio_64=no
         AC_DEFINE_UNQUOTED(VSI_STAT64,_stat64, [Define to name of 64bit stat function])
         AC_DEFINE_UNQUOTED(VSI_STAT64_T,__stat64, [Define to name of 64bit stat structure])
@@ -124,7 +124,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
   if test x"$with_unix_stdio_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.c
     echo 'int main() { long long off=0; fseek64(NULL, off, SEEK_SET); off = ftell64(NULL); return 0; }' >> conftest.c
-    if test -z "`${CC} ${CCFLAGS} -o conftest conftest.c 2>&1`" ; then
+    if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftell64
       VSI_FSEEK64=fseek64
@@ -181,7 +181,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
   if test x"$with_unix_stdio_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.c
     echo 'int main() { fpos_t off=0; fseeko(NULL, off, SEEK_SET); off = ftello(NULL); return 0; }' >> conftest.c
-    if test -z "`${CC} ${CCFLAGS} -o conftest conftest.c 2>&1`" ; then
+    if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello
       VSI_FSEEK64=fseeko

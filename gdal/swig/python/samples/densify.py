@@ -256,7 +256,7 @@ class Densify(Translator):
 
                     x = x0
                     y = y0
-                    for p in range(1, segcount):
+                    for _ in range(1, segcount):
                         x = x + dx
                         y = y + dy
                         g.AddPoint(x, y)
@@ -265,7 +265,7 @@ class Densify(Translator):
                     segcount = int(math.floor(d / threshold))
                     xa = None
                     ya = None
-                    for p in range(1, segcount):
+                    for _ in range(1, segcount):
                         if not xa:
                             xn, yn = self.calcpoint(x0, x1, y0, y1, threshold)
                             d = self.distance(x0, xn, y0, yn)
@@ -288,7 +288,7 @@ class Densify(Translator):
                     # xb = x0
                     # yb = y0
                     remainder = d % threshold
-                    for p in range(segcount):
+                    for _ in range(segcount):
                         if not xa:
                             xn, yn = self.calcpoint(x0, x1, y0, y1, remainder)
 

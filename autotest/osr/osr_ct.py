@@ -67,9 +67,8 @@ def osr_ct_1():
         if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
             gdaltest.post_reason('PROJ.4 missing, transforms not available.')
             return 'skip'
-        else:
-            gdaltest.post_reason(gdal.GetLastErrorMsg())
-            return 'fail'
+        gdaltest.post_reason(gdal.GetLastErrorMsg())
+        return 'fail'
 
     if ct is None or ct.this is None:
         gdaltest.post_reason('Unable to create simple CoordinateTransformat.')
@@ -103,8 +102,7 @@ def osr_ct_2():
        or abs(result[2] - 0.0) > 0.01:
         gdaltest.post_reason('Wrong LL to UTM result')
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Transform an OGR geometry ... this is mostly aimed at ensuring that

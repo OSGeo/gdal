@@ -27,11 +27,11 @@ Starting with GDAL 2.3, the following open options can be specified
 ogr2ogr):
 
 <ul>
-<li><b>SUPPRESS_GEOMETRY</b>=YES/NO (defaults to NO). Setting it to NO
-will skip resolving geometry. All layers will be recognized with no
-geometry type. Mostly useful when user is interested at attributes
-only. Suppressing geometry causes significant performance gain when
-reading features by the driver.</li>
+<li><b>SUPPRESS_GEOMETRY</b>=YES/NO (defaults to NO). Setting it to
+YES will skip resolving geometry. All layers will be recognized with
+no geometry type. Mostly useful when user is interested at attributes
+only. Note that suppressing geometry can cause significant performance
+gain when reading input VFK data by the driver.</li>
 </ul>
 
 <h3>Configuration options</h3>

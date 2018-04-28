@@ -98,10 +98,7 @@ def test_gdal_polygonize_1():
     shp_drv = ogr.GetDriverByName('ESRI Shapefile')
     shp_drv.DeleteDataSource('tmp/poly.shp')
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test a simple case without masking.
@@ -142,10 +139,7 @@ def test_gdal_polygonize_2():
     shp_drv = ogr.GetDriverByName('ESRI Shapefile')
     shp_drv.DeleteDataSource('tmp/out.shp')
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 
 def test_gdal_polygonize_3():
@@ -179,9 +173,8 @@ def test_gdal_polygonize_3():
 
     if geom_is_polygon:
         return 'success'
-    else:
-        gdaltest.post_reason('GetGeomType() returned %d instead of %d or %d (ogr.wkbPolygon or ogr.wkbMultiPolygon)' % (geom_type, ogr.wkbPolygon, ogr.wkbMultiPolygon))
-        return 'fail'
+    gdaltest.post_reason('GetGeomType() returned %d instead of %d or %d (ogr.wkbPolygon or ogr.wkbMultiPolygon)' % (geom_type, ogr.wkbPolygon, ogr.wkbMultiPolygon))
+    return 'fail'
 
 ###############################################################################
 # Test -b mask

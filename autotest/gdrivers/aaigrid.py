@@ -240,8 +240,7 @@ def aaigrid_9():
 
     if abs(got_minmax[0] - -0.84) < 1e-7:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test AAIGRID_DATATYPE configuration option and DATATYPE open options
@@ -308,8 +307,7 @@ def aaigrid_11():
 
     if abs(got_minmax[0] - -0.84) < 1e-7:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test no data is written to correct precision with DECIMAL_PRECISION.
@@ -325,7 +323,7 @@ def aaigrid_12():
     aai = open('tmp/aaigrid.tmp')
     if not aai:
         return 'fail'
-    for i in range(5):
+    for _ in range(5):
         aai.readline()
     ndv = aai.readline().strip().lower()
     aai.close()
@@ -354,7 +352,7 @@ def aaigrid_13():
     aai = open('tmp/aaigrid.tmp')
     if not aai:
         return 'fail'
-    for i in range(5):
+    for _ in range(5):
         aai.readline()
     ndv = aai.readline().strip().lower()
     aai.close()

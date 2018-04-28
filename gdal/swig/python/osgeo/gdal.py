@@ -578,8 +578,7 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
 
     if _is_str_or_unicode(destNameOrDestDS):
         return wrapper_GDALWarpDestName(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
-    else:
-        return wrapper_GDALWarpDestDS(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
+    return wrapper_GDALWarpDestDS(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
 
 
 def VectorTranslateOptions(options = None, format = None,
@@ -724,8 +723,7 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
 
     if _is_str_or_unicode(destNameOrDestDS):
         return wrapper_GDALVectorTranslateDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
-    else:
-        return wrapper_GDALVectorTranslateDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
+    return wrapper_GDALVectorTranslateDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 def DEMProcessingOptions(options = None, colorFilename = None, format = None,
               creationOptions = None, computeEdges = False, alg = 'Horn', band = 1,
@@ -885,8 +883,7 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
 
     if _is_str_or_unicode(destNameOrDestDS):
         return wrapper_GDALNearblackDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
-    else:
-        return wrapper_GDALNearblackDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
+    return wrapper_GDALNearblackDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 
 def GridOptions(options = None, format = None,
@@ -1116,8 +1113,7 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
 
     if _is_str_or_unicode(destNameOrDestDS):
         return wrapper_GDALRasterizeDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
-    else:
-        return wrapper_GDALRasterizeDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
+    return wrapper_GDALRasterizeDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 
 def BuildVRTOptions(options = None,
@@ -1239,8 +1235,7 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
 
     if len(srcDSTab) > 0:
         return BuildVRTInternalObjects(destName, srcDSTab, opts, callback, callback_data)
-    else:
-        return BuildVRTInternalNames(destName, srcDSNamesTab, opts, callback, callback_data)
+    return BuildVRTInternalNames(destName, srcDSNamesTab, opts, callback, callback_data)
 
 
 

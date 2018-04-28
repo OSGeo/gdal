@@ -930,7 +930,7 @@ def vrtderived_15_worker(args_dict):
 </VRTDataset>
 """
     ds = gdal.Open(content)
-    for j in range(5):
+    for _ in range(5):
         cs = ds.GetRasterBand(1).Checksum()
         if cs != 2304:
             print(cs)

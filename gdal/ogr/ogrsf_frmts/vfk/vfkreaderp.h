@@ -6,7 +6,7 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2009-2010, 2012-2013, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2012-2018, Martin Landa <landa.martin gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -108,6 +108,7 @@ private:
     void           StoreInfo2DB();
 
     void           CreateIndex(const char *, const char *, const char *, bool = true);
+    void           CreateIndices();
 
     friend class   VFKFeatureSQLite;
 public:

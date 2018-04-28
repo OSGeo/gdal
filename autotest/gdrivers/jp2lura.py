@@ -144,10 +144,9 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
     res = validate_jp2.validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
     if return_error_count:
         return (res.error_count, res.warning_count)
-    elif res.error_count == 0 and res.warning_count == 0:
+    if res.error_count == 0 and res.warning_count == 0:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Open byte.jp2

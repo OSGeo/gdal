@@ -662,9 +662,8 @@ def netcdf_15():
         ds = gdal.Open('data/trmm-nc2.nc')
         if ds is None:
             return 'fail'
-        else:
-            ds = None
-            return 'success'
+        ds = None
+        return 'success'
     else:
         return 'skip'
 

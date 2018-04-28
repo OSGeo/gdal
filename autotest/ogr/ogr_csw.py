@@ -59,9 +59,8 @@ def ogr_csw_init():
         gdaltest.csw_drv = None
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
             return 'skip'
-        else:
-            gdaltest.post_reason('failed to open test file.')
-            return 'skip'
+        gdaltest.post_reason('failed to open test file.')
+        return 'skip'
 
     return 'success'
 

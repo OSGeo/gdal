@@ -56,8 +56,7 @@ def wmts_1():
         gdal.SetConfigOption('GDAL_DEFAULT_WMS_CACHE_PATH', '/vsimem/cache')
 
         return 'success'
-    else:
-        return 'skip'
+    return 'skip'
 
 ###############################################################################
 # Error: no URL and invalid GDAL_WMTS service file documents

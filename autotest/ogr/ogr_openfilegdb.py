@@ -145,7 +145,7 @@ def ogr_openfilegdb_make_test_data():
             feat.SetFieldBinaryFromHexString("binary2", "123456")
             lyr.CreateFeature(feat)
 
-        if data[0] is 'none':
+        if data[0] == 'none':
             # Create empty feature
             feat = ogr.Feature(lyr.GetLayerDefn())
             lyr.CreateFeature(feat)

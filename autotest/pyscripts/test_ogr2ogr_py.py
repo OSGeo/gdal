@@ -607,10 +607,7 @@ def test_ogr2ogr_py_18():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_src.shp')
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_dst.shp')
 
-    if ret == 0:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if ret == 0 else 'fail'
 
 ###############################################################################
 # Test -clipsrc
