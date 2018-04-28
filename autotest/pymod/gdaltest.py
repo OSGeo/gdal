@@ -1613,13 +1613,7 @@ def unzip(target_dir, zipfilename, verbose=False):
 
 
 def isnan(val):
-    if val == val:
-        # Python 2.3 unlike later versions return True for nan == nan
-        val_str = '%f' % val
-        if val_str == 'nan':
-            return True
-        return False
-    return True
+    return val != val
 
 
 ###############################################################################
