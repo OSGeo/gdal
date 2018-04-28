@@ -1136,7 +1136,7 @@ do_log = False
 class GMLASHTTPHandler(BaseHTTPRequestHandler):
 
     def log_request(self, code='-', size='-'):
-        return
+        pass
 
     def do_GET(self):
 
