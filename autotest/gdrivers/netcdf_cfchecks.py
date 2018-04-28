@@ -640,8 +640,6 @@ class CFChecker:
             self.AttrList['instance_dimension'] = ['S', 'D']
             self.AttrList['sample_dimension'] = ['S', 'D']
 
-        return
-
         # ---------------------------
     def uniqueList(self, lst):
         # ---------------------------

@@ -2531,8 +2531,7 @@ def ogr_shape_54_create_layer(ds, layer_index):
         feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (%d %d)' % (layer_index, layer_index + 1)))
     lyr.CreateFeature(feat)
     feat = None
-    return
-
+ 
 
 def ogr_shape_54_test_layer(ds, layer_index):
     lyr = ds.GetLayerByName('layer%03d' % layer_index)

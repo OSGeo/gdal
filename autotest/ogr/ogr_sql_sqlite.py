@@ -1007,7 +1007,7 @@ do_log = False
 class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 
     def log_request(self, code='-', size='-'):
-        return
+        pass
 
     def do_GET(self):
 

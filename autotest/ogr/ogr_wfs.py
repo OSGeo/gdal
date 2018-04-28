@@ -509,7 +509,7 @@ do_log = False
 class WFSHTTPHandler(BaseHTTPRequestHandler):
 
     def log_request(self, code='-', size='-'):
-        return
+        pass
 
     def do_GET(self):
 
