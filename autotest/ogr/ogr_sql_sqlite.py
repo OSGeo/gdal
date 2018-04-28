@@ -1050,7 +1050,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 <!-- nws03.maps.bf1.yahoo.com uncompressed/chunked Sat Dec 29 04:59:06 PST 2012 -->
 <!-- wws09.geotech.bf1.yahoo.com uncompressed/chunked Sat Dec 29 04:59:06 PST 2012 -->""".encode('ascii'))
                     return
-                elif self.path == '/yahoogeocoding?q=NonExistingPlace':
+                if self.path == '/yahoogeocoding?q=NonExistingPlace':
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')
                     self.end_headers()
@@ -1059,9 +1059,8 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 <!-- wws08.geotech.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:00:45 PST 2012 -->""".encode('ascii'))
                     return
 
-                else:
-                    self.send_error(404, 'File Not Found: %s' % self.path)
-                    return
+                self.send_error(404, 'File Not Found: %s' % self.path)
+                return
 
             elif self.path.find('/geonamesgeocoding') != -1:
                 if self.path == '/geonamesgeocoding?q=Paris&username=demo':
@@ -1084,7 +1083,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 </geoname>
 </geonames>""".encode('ascii'))
                     return
-                elif self.path == '/geonamesgeocoding?q=NonExistingPlace&username=demo':
+                if self.path == '/geonamesgeocoding?q=NonExistingPlace&username=demo':
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')
                     self.end_headers()
@@ -1094,9 +1093,8 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 </geonames>""".encode('ascii'))
                     return
 
-                else:
-                    self.send_error(404, 'File Not Found: %s' % self.path)
-                    return
+                self.send_error(404, 'File Not Found: %s' % self.path)
+                return
 
             elif self.path.find('/binggeocoding') != -1:
                 if self.path == '/binggeocoding?q=Paris&key=fakekey':
@@ -1139,7 +1137,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
   </ResourceSets>
 </Response>""".encode('ascii'))
                     return
-                elif self.path == '/binggeocoding?q=NonExistingPlace&key=fakekey':
+                if self.path == '/binggeocoding?q=NonExistingPlace&key=fakekey':
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')
                     self.end_headers()
@@ -1153,9 +1151,8 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 </Response>""".encode('ascii'))
                     return
 
-                else:
-                    self.send_error(404, 'File Not Found: %s' % self.path)
-                    return
+                self.send_error(404, 'File Not Found: %s' % self.path)
+                return
 
             # Below is for reverse geocoding
             elif self.path.find('/reversegeocoding') != -1:
@@ -1179,9 +1176,8 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
   </addressparts>
 </reversegeocode>""".encode('ascii'))
                     return
-                else:
-                    self.send_error(404, 'File Not Found: %s' % self.path)
-                    return
+                self.send_error(404, 'File Not Found: %s' % self.path)
+                return
 
             elif self.path.find('/yahooreversegeocoding') != -1:
                 if self.path == '/yahooreversegeocoding?q=49.00000000,2.00000000&gflags=R':

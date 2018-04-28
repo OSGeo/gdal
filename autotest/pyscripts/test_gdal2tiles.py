@@ -253,10 +253,8 @@ def _test_utf8(should_raise_unicode=False,
     except UnicodeEncodeError:
         if should_raise_unicode:
             return 'success'
-        else:
-            gdaltest.post_reason(
-                'Should be handling filenames with utf8 characters in this context')
-            return 'fail'
+        gdaltest.post_reason('Should be handling filenames with utf8 characters in this context')
+        return 'fail'
 
     if should_raise_unicode:
         gdaltest.post_reason(

@@ -114,8 +114,8 @@ class CFVersion(object):
             else:
                 if in_o:  # and not in_s
                     return -1  # e.g. 3.2 < 3.2.1
-                else:  # not in_s and not in_o
-                    return 0  # e.g. 3.2 == 3.2
+                # not in_s and not in_o
+                return 0  # e.g. 3.2 == 3.2
             pos += 1
 
 

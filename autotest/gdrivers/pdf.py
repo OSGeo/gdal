@@ -103,11 +103,10 @@ def pdf_checksum_available():
     if err.find('pdftoppm version') == 0:
         gdaltest.pdf_is_checksum_available = True
         return gdaltest.pdf_is_checksum_available
-    else:
-        print('Cannot compute to checksum due to missing pdftoppm')
-        print(err)
-        gdaltest.pdf_is_checksum_available = False
-        return gdaltest.pdf_is_checksum_available
+    print('Cannot compute to checksum due to missing pdftoppm')
+    print(err)
+    gdaltest.pdf_is_checksum_available = False
+    return gdaltest.pdf_is_checksum_available
 
 ###############################################################################
 # Test OGC best practice geospatial PDF
