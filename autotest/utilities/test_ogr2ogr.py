@@ -599,9 +599,8 @@ def test_ogr2ogr_18():
 
     if ret == 0:
         return 'success'
-    else:
-        print(got_wkt)
-        return 'fail'
+    print(got_wkt)
+    return 'fail'
 
 ###############################################################################
 # Test -clipsrc
@@ -1003,10 +1002,7 @@ def test_ogr2ogr_28():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_src.shp')
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_dst.shp')
 
-    if ret == 0:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if ret == 0 else 'fail'
 
 ###############################################################################
 # Test -wrapdateline on polygons
@@ -2775,10 +2771,7 @@ def check_identity_transformation(x, y, srid):
     shape_drv.DeleteDataSource('tmp/output_point.shp')
     os.remove('tmp/input_point.csv')
 
-    if ok:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if ok else 'fail'
 
 ###############################################################################
 # Test coordinates values are preserved for identity transformations

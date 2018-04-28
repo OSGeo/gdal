@@ -137,7 +137,7 @@ def GeometryTypeToName(eGeomType, options):
     if eGeomType == ogr.wkbMultiLineString25D:
         return 'LINESTRING25D' if options.bMultiAsSingle else 'MULTILINESTRING25D'
     if eGeomType == ogr.wkbMultiPolygon25D:
-        return 'POLYGON25D' if if options.bMultiAsSingle else 'MULTIPOLYGON25D'
+        return 'POLYGON25D' if options.bMultiAsSingle else 'MULTIPOLYGON25D'
     if eGeomType == ogr.wkbGeometryCollection25D:
         return 'GEOMETRYCOLLECTION25D'
     # Shouldn't happen

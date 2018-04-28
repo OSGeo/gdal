@@ -88,8 +88,7 @@ def rasterlite_2():
             gdaltest.rasterlite_drv = None
             gdaltest.post_reason('Please upgrade your sqlite3 library to be able to read Rasterlite DBs!')
             return 'skip'
-        else:
-            return 'fail'
+        return 'fail'
 
     if ds.RasterCount != 3:
         gdaltest.post_reason('expected 3 bands')

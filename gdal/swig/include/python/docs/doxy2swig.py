@@ -32,15 +32,13 @@ import os.path
 def my_open_read(source):
     if hasattr(source, "read"):
         return source
-    else:
-        return open(source)
+    return open(source)
 
 
 def my_open_write(dest):
     if hasattr(dest, "write"):
         return dest
-    else:
-        return open(dest, 'w')
+    return open(dest, 'w')
 
 
 class Doxy2SWIG:

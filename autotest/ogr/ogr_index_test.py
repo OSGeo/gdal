@@ -129,10 +129,7 @@ def ogr_index_3():
 
     gdaltest.p_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Create an INDEX on the SKEY and VALUE field in the join table.

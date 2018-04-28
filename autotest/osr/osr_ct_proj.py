@@ -102,9 +102,8 @@ class ProjTest:
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
                 gdaltest.post_reason('PROJ.4 missing, transforms not available.')
                 return 'skip'
-            else:
-                gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
-                return 'fail'
+            gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
+            return 'fail'
         except:
             gdal.PopErrorHandler()
             gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())

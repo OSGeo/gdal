@@ -288,10 +288,9 @@ def ogr_shape_9():
 
     if ogrtest.have_geos() and gdaltest.shape_lyr.GetFeatureCount() == 0:
         return 'success'
-    elif not ogrtest.have_geos() and gdaltest.shape_lyr.GetFeatureCount() == 1:
+    if not ogrtest.have_geos() and gdaltest.shape_lyr.GetFeatureCount() == 1:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Do a fair size query that should pull in a few shapes.
@@ -882,8 +881,7 @@ def ogr_shape_23_write_geom(layer_name, geom, expected_geom, wkbType):
         if feat_read.GetGeometryRef() is not None:
             print(feat_read.GetGeometryRef().ExportToWkt())
             return 'fail'
-        else:
-            return 'success'
+        return 'success'
 
     if ogrtest.check_feature_geometry(feat_read, expected_geom,
                                       max_error=0.000000001) != 0:

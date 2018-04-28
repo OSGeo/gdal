@@ -133,8 +133,7 @@ def check(feat, fieldname, value):
                              frames=3)
         feat.DumpReadable()
         return 0
-    else:
-        return 1
+    return 1
 
 ###############################################################################
 # Copy to Integer

@@ -578,8 +578,7 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
 
     if _is_str_or_unicode(destNameOrDestDS):
         return wrapper_GDALWarpDestName(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
-    else:
-        return wrapper_GDALWarpDestDS(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
+    return wrapper_GDALWarpDestDS(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
 
 
 def VectorTranslateOptions(options = None, format = None,
