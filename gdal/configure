@@ -20547,7 +20547,7 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for 64bit integer type" >&5
 $as_echo_n "checking for 64bit integer type... " >&6; }
 
-  echo 'int main() { long long off=0; }' >> conftest.c
+  echo 'int main() { return (int)(long long)(0); }' >> conftest.c
   if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
 
 $as_echo "#define HAVE_LONG_LONG 1" >>confdefs.h

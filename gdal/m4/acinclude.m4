@@ -35,7 +35,7 @@ AC_DEFUN([AC_HAVE_LONG_LONG],
 [
   AC_MSG_CHECKING([for 64bit integer type])
 
-  echo 'int main() { long long off=0; }' >> conftest.c
+  echo 'int main() { return (int)(long long)(0); }' >> conftest.c
   if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
     AC_DEFINE(HAVE_LONG_LONG, 1, [Define to 1, if your compiler supports long long data type])
     AC_MSG_RESULT([long long])
