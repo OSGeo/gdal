@@ -56,7 +56,7 @@ def snodas_1():
     AUTHORITY["EPSG","4326"]]"""
     ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs, skip_checksum=True)
 
-    if ret is 'success':
+    if ret == 'success':
         ds = gdal.Open('data/fake_snodas.hdr')
         ds.GetFileList()
         if ds.GetRasterBand(1).GetNoDataValue() != -9999:
