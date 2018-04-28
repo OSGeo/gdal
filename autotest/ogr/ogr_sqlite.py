@@ -76,8 +76,7 @@ def ogr_sqlite_1():
 
     if gdaltest.sl_ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -244,10 +243,7 @@ def ogr_sqlite_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
@@ -311,10 +307,7 @@ def ogr_sqlite_5():
 
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -336,10 +329,7 @@ def ogr_sqlite_6():
 
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test spatial filtering.
@@ -374,10 +364,7 @@ def ogr_sqlite_7():
 
     gdaltest.sl_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test transactions with rollback.
@@ -1757,10 +1744,7 @@ def ogr_spatialite_3():
 
     ds.Destroy()
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test updating a spatialite DB (#3471 and #3474)

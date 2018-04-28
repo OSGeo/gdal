@@ -55,9 +55,8 @@ def ogr_gml_1():
     if gml_ds is None:
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
             return 'skip'
-        else:
-            gdaltest.post_reason('failed to open test file.')
-            return 'fail'
+        gdaltest.post_reason('failed to open test file.')
+        return 'fail'
 
     gdaltest.have_gml_reader = 1
 

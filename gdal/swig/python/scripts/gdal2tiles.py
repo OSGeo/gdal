@@ -294,8 +294,7 @@ class GlobalMercator(object):
             if pixelSize > self.Resolution(i):
                 if i != -1:
                     return i - 1
-                else:
-                    return 0    # We don't want to scale up
+                return 0    # We don't want to scale up
 
     def GoogleTile(self, tx, ty, zoom):
         "Converts TMS tile coordinates to Google Tile coordinates"
@@ -400,8 +399,7 @@ class GlobalGeodetic(object):
             if pixelSize > self.Resolution(i):
                 if i != 0:
                     return i - 1
-                else:
-                    return 0    # We don't want to scale up
+                return 0    # We don't want to scale up
 
     def TileBounds(self, tx, ty, zoom):
         "Returns bounds of the given tile"
@@ -904,8 +902,7 @@ def nb_data_bands(dataset):
             dataset.RasterCount == 4 or
             dataset.RasterCount == 2):
         return dataset.RasterCount - 1
-    else:
-        return dataset.RasterCount
+    return dataset.RasterCount
 
 
 def gettempfilename(suffix):

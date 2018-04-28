@@ -288,9 +288,8 @@ def tiff_read_ojpeg():
     if ds is None:
         if gdal.GetLastErrorMsg().find('Cannot open TIFF file due to missing codec') == 0:
             return 'skip'
-        else:
-            print(gdal.GetLastErrorMsg())
-            return 'fail'
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     got_cs = ds.GetRasterBand(1).Checksum()

@@ -53,8 +53,7 @@ def ogr_mitab_1():
 
     if gdaltest.mapinfo_ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -148,10 +147,7 @@ def ogr_mitab_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -174,10 +170,7 @@ def ogr_mitab_4():
 
     gdaltest.mapinfo_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test spatial filtering.
@@ -198,10 +191,7 @@ def ogr_mitab_5():
 
     gdaltest.mapinfo_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify that Non-WGS84 datums are populated correctly
@@ -234,8 +224,7 @@ def ogr_mitab_7():
 
     if gdaltest.mapinfo_ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -319,10 +308,7 @@ def ogr_mitab_9():
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Read mif file with 2 character .mid delimiter and verify operation.

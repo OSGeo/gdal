@@ -73,10 +73,7 @@ def ogr_sql_2():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ORDER BY handling
@@ -92,10 +89,7 @@ def ogr_sql_3():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ORDER BY DESC handling
@@ -111,10 +105,7 @@ def ogr_sql_3_desc():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test DISTINCT and ORDER BY on strings.
@@ -130,10 +121,7 @@ def ogr_sql_4():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test column functions.
@@ -181,10 +169,7 @@ def ogr_sql_6():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify that selecting the FID works properly.
@@ -200,10 +185,7 @@ def ogr_sql_7():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify that wildcard expansion works properly.
@@ -219,10 +201,7 @@ def ogr_sql_8():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify that quoted table names work.
@@ -238,10 +217,7 @@ def ogr_sql_9():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test the ILIKE operator.
@@ -257,10 +233,7 @@ def ogr_sql_10():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test MAX() on empty dataset.
@@ -276,10 +249,7 @@ def ogr_sql_11():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test DISTINCT on empty dataset.
@@ -295,10 +265,7 @@ def ogr_sql_12():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify selection of, and on ogr_geometry.
@@ -315,10 +282,7 @@ def ogr_sql_13():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify selection of, and on ogr_style and ogr_geom_wkt.

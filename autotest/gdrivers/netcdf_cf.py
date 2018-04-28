@@ -583,8 +583,7 @@ def netcdf_cf_1():
 
     if result != 'fail' and result_cf != 'fail':
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 
 ###############################################################################
@@ -602,8 +601,7 @@ def netcdf_cf_2():
 
     if result != 'fail' and result_cf != 'fail':
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 
 ###############################################################################
@@ -630,8 +628,7 @@ def netcdf_cf_3():
 
     if result != 'fail' and result_cf != 'fail':
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # test support for various CF projections

@@ -398,8 +398,7 @@ def ogr_join_16():
 
     if sql_lyr is None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test non-support of a secondarytable.fieldname in a order by clause
@@ -421,8 +420,7 @@ def ogr_join_17():
 
     if sql_lyr is None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test inverted order of fields in ON
@@ -460,8 +458,7 @@ def ogr_join_19():
 
     if sql_lyr is None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test unrecognized secondary field
@@ -481,8 +478,7 @@ def ogr_join_20():
 
     if sql_lyr is None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test unexpected secondary table
@@ -504,8 +500,7 @@ def ogr_join_21():
 
     if sql_lyr is None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test join with a complex expression as ON

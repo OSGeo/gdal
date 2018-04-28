@@ -53,8 +53,7 @@ def ogr_shape_1():
 
     if gdaltest.shape_ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -132,10 +131,7 @@ def ogr_shape_3():
 
     gdaltest.poly_feat = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Write a feature without a geometry, and verify that it works OK.
@@ -187,10 +183,7 @@ def ogr_shape_5():
 
     gdaltest.shape_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -213,10 +206,7 @@ def ogr_shape_6():
 
     gdaltest.shape_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test spatial filtering.
@@ -239,10 +229,7 @@ def ogr_shape_7():
 
     gdaltest.shape_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Create spatial index, and verify we get the same results.
@@ -320,10 +307,7 @@ def ogr_shape_10():
     tr = ogrtest.check_features_against_list(gdaltest.shape_lyr, 'FID',
                                              [0, 4, 8])
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Do a mixed indexed attribute and spatial query.
@@ -352,10 +336,7 @@ def ogr_shape_11():
     gdaltest.shape_lyr.SetAttributeFilter(None)
     gdaltest.shape_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Check that multipolygon of asm.shp is properly returned.

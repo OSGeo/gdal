@@ -48,8 +48,7 @@ def ogr_plscenes_init():
 
     if gdaltest.plscenes_drv is not None:
         return 'success'
-    else:
-        return 'skip'
+    return 'skip'
 
 ###############################################################################
 # Test Data V1 API catalog listing with a single catalog

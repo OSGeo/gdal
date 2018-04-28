@@ -70,8 +70,7 @@ libraries = ['gdal']
 def get_numpy_include():
     if HAVE_NUMPY:
         return numpy.get_include()
-    else:
-        return '.'
+    return '.'
 
 
 # ---------------------------------------------------------------------------

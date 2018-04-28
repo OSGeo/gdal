@@ -271,10 +271,7 @@ class misc_6_interrupt_callback_class:
 
     def cbk(self, pct, message, user_data):
         # pylint: disable=unused-argument
-        if pct > 0.5:
-            return 0  # to stop
-        else:
-            return 1  # to continue
+        return pct <= 0.5
 
 ###############################################################################
 # Test CreateCopy() with a source dataset with various band numbers (including 0) and datatype

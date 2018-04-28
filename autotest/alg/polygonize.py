@@ -85,10 +85,7 @@ def polygonize_1(is_int_polygonize=True):
             tr = 0
         feat_read.Destroy()
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 
 def polygonize_1_float():
@@ -130,10 +127,7 @@ def polygonize_2():
 
     tr = ogrtest.check_features_against_list(mem_layer, 'DN', expect)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # A more involved case with a complex looping.
@@ -176,10 +170,7 @@ def polygonize_3():
         tr = 1
     feat_read.Destroy()
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test a simple case without masking but with 8-connectedness.
@@ -217,10 +208,7 @@ def polygonize_4():
 
     tr = ogrtest.check_features_against_list(mem_layer, 'DN', expect)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 
 gdaltest_list = [

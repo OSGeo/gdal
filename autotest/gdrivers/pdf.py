@@ -68,8 +68,7 @@ def pdf_is_poppler():
     val = gdal.GetConfigOption("GDAL_PDF_LIB", "POPPLER")
     if val == 'POPPLER' and 'HAVE_POPPLER' in md:
         return not pdf_is_pdfium()
-    else:
-        return False
+    return False
 
 ###############################################################################
 # Returns True if we run with pdfium
@@ -81,8 +80,7 @@ def pdf_is_pdfium():
     val = gdal.GetConfigOption("GDAL_PDF_LIB", "PDFIUM")
     if val == 'PDFIUM' and 'HAVE_PDFIUM' in md:
         return True
-    else:
-        return False
+    return False
 
 ###############################################################################
 # Returns True if we can compute the checksum

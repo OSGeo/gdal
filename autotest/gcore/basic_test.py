@@ -54,9 +54,8 @@ def basic_test_1():
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
-    else:
-        gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
-        return 'fail'
+    gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
+    return 'fail'
 
 
 def basic_test_2():
@@ -65,9 +64,8 @@ def basic_test_2():
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
-    else:
-        gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
-        return 'fail'
+    gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
+    return 'fail'
 
 
 def basic_test_3():
@@ -76,9 +74,8 @@ def basic_test_3():
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
-    else:
-        gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
-        return 'fail'
+    gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
+    return 'fail'
 
 
 def basic_test_4():
@@ -87,9 +84,8 @@ def basic_test_4():
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
-    else:
-        gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
-        return 'fail'
+    gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
+    return 'fail'
 
 
 def basic_test_5():
@@ -100,8 +96,7 @@ def basic_test_5():
     expected = '`data/doctype.xml\' not recognized as a supported file format'
     if ds is None and expected in last_error:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Issue several AllRegister() to check that GDAL drivers are good citizens
