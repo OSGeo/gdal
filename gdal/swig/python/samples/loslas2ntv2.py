@@ -36,7 +36,7 @@ import sys
 # dummy object to hold options
 
 
-class Options:
+class Options(object):
     def __init__(self):
         self.verbose_flag = 0
         self.append = 0

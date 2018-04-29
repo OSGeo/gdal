@@ -557,7 +557,7 @@ def hdf5_17():
     return 'success'
 
 
-class TestHDF5:
+class TestHDF5(object):
     def __init__(self, downloadURL, fileName, subdatasetname, checksum, download_size):
         self.downloadURL = downloadURL
         self.fileName = fileName

@@ -44,7 +44,7 @@ bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1
 # Class to perform the tests.
 
 
-class ProjTest:
+class ProjTest(object):
     def __init__(self, src_srs, src_xyz, src_error,
                  dst_srs, dst_xyz, dst_error, options, requirements):
         self.src_srs = src_srs

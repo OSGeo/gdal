@@ -41,7 +41,7 @@ import gdaltest
 ###############################################################################
 # Write a geotiff and read it back to check its SRS
 
-class TestTiffSRS:
+class TestTiffSRS(object):
     def __init__(self, epsg_code, use_epsg_code, expected_fail):
         self.epsg_code = epsg_code
         self.use_epsg_code = use_epsg_code

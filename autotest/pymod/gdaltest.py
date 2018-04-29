@@ -381,7 +381,7 @@ def testCreateCopyInterruptCallback(pct, message, user_data):
 ###############################################################################
 
 
-class GDALTest:
+class GDALTest(object):
     def __init__(self, drivername, filename, band, chksum,
                  xoff=0, yoff=0, xsize=0, ysize=0, options=None,
                  filename_absolute=0, chksum_after_reopening=None, open_options=None):

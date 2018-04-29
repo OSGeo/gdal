@@ -39,7 +39,7 @@ from osgeo import gdal
 ###############################################################################
 
 
-class wkb_wkt_unit:
+class wkb_wkt_unit(object):
     def __init__(self, unit):
         self.unit = unit
 

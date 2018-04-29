@@ -712,7 +712,7 @@ def ogr_gmlas_abstractgeometry():
 # Test validation against schema
 
 
-class MyHandler:
+class MyHandler(object):
     def __init__(self):
         self.error_list = []
 

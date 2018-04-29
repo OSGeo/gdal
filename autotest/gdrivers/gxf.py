@@ -73,7 +73,7 @@ def gxf_2():
 #
 
 
-class TestGXF:
+class TestGXF(object):
     def __init__(self, downloadURL, fileName, checksum, download_size):
         self.downloadURL = downloadURL
         self.fileName = fileName
