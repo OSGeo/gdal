@@ -125,7 +125,7 @@ if gt is not None and gt != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0):
     outdataset.SetGeoTransform(gt)
 
 prj = indataset.GetProjectionRef()
-if prj is not None and prj:
+if prj:
     outdataset.SetProjection(prj)
 
 for iBand in range(1, indataset.RasterCount + 1):

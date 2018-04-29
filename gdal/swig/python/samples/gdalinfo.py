@@ -246,7 +246,7 @@ def main(argv=None):
         papszMetadata = hDataset.GetMetadata_List()
     else:
         papszMetadata = None
-    if bShowMetadata and papszMetadata is not None and papszMetadata:
+    if bShowMetadata and papszMetadata:
         print("Metadata:")
         for metadata in papszMetadata:
             print("  %s" % metadata)
@@ -254,7 +254,7 @@ def main(argv=None):
     if bShowMetadata:
         for extra_domain in papszExtraMDDomains:
             papszMetadata = hDataset.GetMetadata_List(extra_domain)
-            if papszMetadata is not None and papszMetadata:
+            if papszMetadata:
                 print("Metadata (%s):" % extra_domain)
                 for metadata in papszMetadata:
                     print("  %s" % metadata)
@@ -266,7 +266,7 @@ def main(argv=None):
         papszMetadata = hDataset.GetMetadata_List("IMAGE_STRUCTURE")
     else:
         papszMetadata = None
-    if bShowMetadata and papszMetadata is not None and papszMetadata:
+    if bShowMetadata and papszMetadata:
         print("Image Structure Metadata:")
         for metadata in papszMetadata:
             print("  %s" % metadata)
@@ -275,7 +275,7 @@ def main(argv=None):
 #      Report subdatasets.
 # --------------------------------------------------------------------
     papszMetadata = hDataset.GetMetadata_List("SUBDATASETS")
-    if papszMetadata is not None and papszMetadata:
+    if papszMetadata:
         print("Subdatasets:")
         for metadata in papszMetadata:
             print("  %s" % metadata)
@@ -287,7 +287,7 @@ def main(argv=None):
         papszMetadata = hDataset.GetMetadata_List("GEOLOCATION")
     else:
         papszMetadata = None
-    if bShowMetadata and papszMetadata is not None and papszMetadata:
+    if bShowMetadata and papszMetadata:
         print("Geolocation:")
         for metadata in papszMetadata:
             print("  %s" % metadata)
@@ -299,7 +299,7 @@ def main(argv=None):
         papszMetadata = hDataset.GetMetadata_List("RPC")
     else:
         papszMetadata = None
-    if bShowMetadata and papszMetadata is not None and papszMetadata:
+    if bShowMetadata and papszMetadata:
         print("RPC Metadata:")
         for metadata in papszMetadata:
             print("  %s" % metadata)
@@ -307,7 +307,7 @@ def main(argv=None):
 # --------------------------------------------------------------------
 #      Setup projected to lat/long transform if appropriate.
 # --------------------------------------------------------------------
-    if pszProjection is not None and pszProjection:
+    if pszProjection:
         hProj = osr.SpatialReference(pszProjection)
         if hProj is not None:
             hLatLong = hProj.CloneGeogCS()
@@ -511,7 +511,7 @@ def main(argv=None):
             papszMetadata = hBand.GetMetadata_List()
         else:
             papszMetadata = None
-        if bShowMetadata and papszMetadata is not None and papszMetadata:
+        if bShowMetadata and papszMetadata:
             print("  Metadata:")
             for metadata in papszMetadata:
                 print("    %s" % metadata)
@@ -520,7 +520,7 @@ def main(argv=None):
             papszMetadata = hBand.GetMetadata_List("IMAGE_STRUCTURE")
         else:
             papszMetadata = None
-        if bShowMetadata and papszMetadata is not None and papszMetadata:
+        if bShowMetadata and papszMetadata:
             print("  Image Structure Metadata:")
             for metadata in papszMetadata:
                 print("    %s" % metadata)
