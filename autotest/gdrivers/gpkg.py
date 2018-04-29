@@ -639,7 +639,7 @@ def gpkg_6():
 
 
 def get_georeferenced_rgba_ds(alpha_fully_transparent=False, alpha_fully_opaque=False):
-    assert(not (alpha_fully_transparent and alpha_fully_opaque))
+    assert not (alpha_fully_transparent and alpha_fully_opaque)
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tmp.tif',
                                                   src_ds.RasterXSize, src_ds.RasterYSize, 4)
@@ -2168,7 +2168,7 @@ def gpkg_21():
 
         out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
 
-        if len(out_ds.GetMetadata('GEOPACKAGE')) != 0:
+        if out_ds.GetMetadata('GEOPACKAGE'):
             gdaltest.post_reason('fail')
             return 'fail'
         if out_ds.GetMetadataItem('foo') != foo_value:
