@@ -52,10 +52,6 @@ def misc_1():
         tab_ds[i] = drv.Create(name, 1, 1, 1)
         if tab_ds[i] is None:
             return 'fail'
-
-    for i in range(len(tab_ds)):
-        tab_ds[i] = None
-
     return 'success'
 
 ###############################################################################
