@@ -76,6 +76,7 @@ class OGRAVCLayer : public OGRLayer
 class OGRAVCDataSource : public OGRDataSource
 {
   protected:
+    bool                 m_bSRSFetched = false;
     OGRSpatialReference *poSRS;
     char                *pszCoverageName;
 
