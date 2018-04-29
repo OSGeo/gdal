@@ -2735,7 +2735,16 @@ OGRGeometry *OGRDXFLayer::SimplifyBlockGeometry(
         {
             OGRGeometry *poGeom = poCollection->getGeometryRef(0);
             poCollection->removeGeometry(0,FALSE);
-            aosPolygons.push_back(poGeom);
+            if( !aosPolygons.empty() && aosPolygons[0]->Equals(poGeom) )
+            {
+                // Avoids a performance issue as in
+                // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=8067
+                delete poGeom;
+            }
+            else
+            {
+                aosPolygons.push_back(poGeom);
+            }
         }
         delete poCollection;
         int bIsValidGeometry;
