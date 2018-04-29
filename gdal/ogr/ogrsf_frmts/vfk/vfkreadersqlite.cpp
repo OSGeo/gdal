@@ -261,9 +261,6 @@ VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
 */
 VFKReaderSQLite::~VFKReaderSQLite()
 {
-    // Create indices if not exist
-    CreateIndices();
-
     // Close tmp SQLite DB.
     if( SQLITE_OK != sqlite3_close(m_poDB) )
     {
@@ -450,7 +447,7 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
         poDataBlockCurrent = nullptr;
         for( int iDataBlock = 0;
              iDataBlock < GetDataBlockCount();
-             iDataBlock++)
+             iDataBlock++ )
         {
             poDataBlockCurrent = GetDataBlock(iDataBlock);
 
@@ -464,6 +461,9 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
 
             ExecuteSQL(osSQL);
         }
+
+        /* create indices if not exist */
+        CreateIndices();
 
         /* commit transaction */
         ExecuteSQL("COMMIT");
@@ -527,6 +527,11 @@ void VFKReaderSQLite::CreateIndices()
         /* create index on ogr_fid */
         CreateIndex(osIndexName.c_str(), pszBlockName, FID_COLUMN,
                     !EQUAL(pszBlockName, "SBP"));
+
+        if ( poDataBlock->GetGeometryType() == wkbNone ) {
+            /* skip geometry-related indices */
+            continue;
+        }
 
         if( EQUAL (pszBlockName, "SOBR") ||
             EQUAL (pszBlockName, "OBBP") ||
