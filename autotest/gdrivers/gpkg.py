@@ -3963,6 +3963,27 @@ def gpkg_GeneralCmdLineProcessor():
     return 'success'
 
 ###############################################################################
+
+
+def gpkg_match_overview_factor():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/gpkg_match_overview_factor.gpkg',
+                           open('data/test_match_overview_factor.gpkg', 'rb').read())
+
+    ds = gdal.Open('/vsimem/gpkg_match_overview_factor.gpkg', gdal.GA_Update)
+    ret = ds.BuildOverviews('NONE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048])
+    if ret != 0 or gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/gpkg_match_overview_factor.gpkg')
+    return 'success'
+
+###############################################################################
 #
 
 
@@ -4034,6 +4055,7 @@ gdaltest_list = [
     gpkg_delete_raster_layer,
     gpkg_open_old_gpkg_elevation_tiles_extension,
     gpkg_GeneralCmdLineProcessor,
+    gpkg_match_overview_factor,
     gpkg_cleanup,
 ]
 # gdaltest_list = [ gpkg_init, gpkg_47, gpkg_cleanup ]
