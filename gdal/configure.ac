@@ -5075,20 +5075,6 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
-dnl Ruby bindings.
-dnl ---------------------------------------------------------------------------
-
-dnl AC_ARG_WITH(ruby,[  --with-ruby           Enable Ruby bindings],,)
-
-dnl AC_MSG_CHECKING([for ruby bindings])
-dnl if test "$with_ruby" = "yes" ; then
-dnl   BINDINGS="ruby $BINDINGS"
-dnl   AC_MSG_RESULT([enabled])
-dnl else
-dnl   AC_MSG_RESULT([disabled])
-dnl fi
-
-dnl ---------------------------------------------------------------------------
 dnl NG Python bindings.
 dnl ---------------------------------------------------------------------------
 
