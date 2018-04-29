@@ -38,7 +38,7 @@ import sys
 from osgeo import gdal
 
 
-class GDALPythonServerRasterBand:
+class GDALPythonServerRasterBand(object):
 
     def __init__(self, gdal_band):
         self.gdal_band = gdal_band
@@ -124,7 +124,7 @@ class GDALPythonServerRasterBand:
         return self.gdal_band.GetHistogram(dfMin, dfMax, nBuckets, include_out_of_range=bIncludeOutOfRange, approx_ok=bApproxOK)
 
 
-class GDALPythonServerDataset:
+class GDALPythonServerDataset(object):
 
     def __init__(self, filename, access=gdal.GA_ReadOnly, open_options=None):
         nFlags = 0

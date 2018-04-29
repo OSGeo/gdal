@@ -124,13 +124,13 @@ def osr_basic_2():
         if srs.GetAuthorityName(auth[0]) != 'EPSG':
             gdaltest.post_reason('Got authority %s instead of EPSG for %s'
                                  % (srs.GetAuthorityName(auth[0]),
-                                     auth[0]))
+                                    auth[0]))
             return 'fail'
 
         if str(srs.GetAuthorityCode(auth[0])) != auth[1]:
             gdaltest.post_reason('Got code %s instead of %s for %s'
                                  % (srs.GetAuthorityCode(auth[0]),
-                                     auth[1], auth[0]))
+                                    auth[1], auth[0]))
             return 'fail'
 
     return 'success'
@@ -169,13 +169,13 @@ def osr_basic_3():
         if srs.GetAuthorityName(auth[0]) != 'EPSG':
             gdaltest.post_reason('Got authority %s instead of EPSG for %s'
                                  % (srs.GetAuthorityName(auth[0]),
-                                     auth[0]))
+                                    auth[0]))
             return 'fail'
 
         if str(srs.GetAuthorityCode(auth[0])) != auth[1]:
             gdaltest.post_reason('Got code %s instead of %s for %s'
                                  % (srs.GetAuthorityCode(auth[0]),
-                                     auth[1], auth[0]))
+                                    auth[1], auth[0]))
             return 'fail'
 
     if srs.GetAuthorityName('PROJCS') is not None:

@@ -712,7 +712,7 @@ def ogr_gmlas_abstractgeometry():
 # Test validation against schema
 
 
-class MyHandler:
+class MyHandler(object):
     def __init__(self):
         self.error_list = []
 
@@ -1540,7 +1540,7 @@ def ogr_gmlas_dataset_getnextfeature():
                    ['_ogr_fields_metadata', '_ogr_layers_metadata'],
                    ['_ogr_fields_metadata', '_ogr_layer_relationships'],
                    ['_ogr_layers_metadata', '_ogr_layer_relationships'],
-                   ]:
+                  ]:
 
         ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml')
         expected_count = base_count

@@ -730,7 +730,7 @@ def mrf_cleanup():
 gdaltest_list = []
 
 
-class myTestCreateCopyWrapper:
+class myTestCreateCopyWrapper(object):
 
     def __init__(self, ut):
         self.ut = ut

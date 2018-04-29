@@ -5140,10 +5140,10 @@ SWIGINTERN void GDALRasterBandShadow_GetActualBlockSize(GDALRasterBandShadow *se
     *pisvalid = (GDALGetActualBlockSize(self, nXBlockOff, nYBlockOff, pnxvalid, pnyvalid) == CE_None);
   }
 SWIGINTERN GDALColorInterp GDALRasterBandShadow_GetColorInterpretation(GDALRasterBandShadow *self){
-    return GDALGetRasterColorInterpretation( self );
+    return GDALGetRasterColorInterpretation(self);
   }
 SWIGINTERN GDALColorInterp GDALRasterBandShadow_GetRasterColorInterpretation(GDALRasterBandShadow *self){
-    return GDALGetRasterColorInterpretation( self );
+    return GDALGetRasterColorInterpretation(self);
   }
 SWIGINTERN CPLErr GDALRasterBandShadow_SetColorInterpretation(GDALRasterBandShadow *self,GDALColorInterp val){
     return GDALSetRasterColorInterpretation( self, val );
@@ -5158,16 +5158,16 @@ SWIGINTERN CPLErr GDALRasterBandShadow_SetNoDataValue(GDALRasterBandShadow *self
     return GDALSetRasterNoDataValue( self, d );
   }
 SWIGINTERN CPLErr GDALRasterBandShadow_DeleteNoDataValue(GDALRasterBandShadow *self){
-    return GDALDeleteRasterNoDataValue( self );
+    return GDALDeleteRasterNoDataValue(self);
   }
 SWIGINTERN char const *GDALRasterBandShadow_GetUnitType(GDALRasterBandShadow *self){
-      return GDALGetRasterUnitType( self );
+      return GDALGetRasterUnitType(self);
   }
 SWIGINTERN CPLErr GDALRasterBandShadow_SetUnitType(GDALRasterBandShadow *self,char const *val){
     return GDALSetRasterUnitType( self, val );
   }
 SWIGINTERN char **GDALRasterBandShadow_GetRasterCategoryNames(GDALRasterBandShadow *self){
-    return GDALGetRasterCategoryNames( self );
+    return GDALGetRasterCategoryNames(self);
   }
 SWIGINTERN CPLErr GDALRasterBandShadow_SetRasterCategoryNames(GDALRasterBandShadow *self,char **names){
     return GDALSetRasterCategoryNames( self, names );
@@ -5205,7 +5205,7 @@ SWIGINTERN CPLErr GDALRasterBandShadow_SetStatistics(GDALRasterBandShadow *self,
     return GDALSetRasterStatistics( self, min, max, mean, stddev );
   }
 SWIGINTERN int GDALRasterBandShadow_GetOverviewCount(GDALRasterBandShadow *self){
-    return GDALGetOverviewCount( self );
+    return GDALGetOverviewCount(self);
   }
 SWIGINTERN GDALRasterBandShadow *GDALRasterBandShadow_GetOverview(GDALRasterBandShadow *self,int i){
     return (GDALRasterBandShadow*) GDALGetOverview( self, i );

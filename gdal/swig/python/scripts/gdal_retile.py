@@ -40,7 +40,7 @@ from osgeo import osr
 progress = gdal.TermProgress_nocb
 
 
-class AffineTransformDecorator:
+class AffineTransformDecorator(object):
     """ A class providing some useful methods for affine Transformations """
 
     def __init__(self, transform):
@@ -71,7 +71,7 @@ class AffineTransformDecorator:
         return [xlist, ylist]
 
 
-class DataSetCache:
+class DataSetCache(object):
     """ A class for caching source tiles """
 
     def __init__(self):
@@ -101,7 +101,7 @@ class DataSetCache:
         del self.dict
 
 
-class tile_info:
+class tile_info(object):
     """ A class holding info how to tile """
 
     def __init__(self, xsize, ysize, tileWidth, tileHeight, overlap):
@@ -125,7 +125,7 @@ class tile_info:
         print('overlap:     %d' % self.overlap)
 
 
-class mosaic_info:
+class mosaic_info(object):
     """A class holding information about a GDAL file or a GDAL fileset"""
 
     def __init__(self, filename, inputDS):
