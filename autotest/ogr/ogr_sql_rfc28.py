@@ -732,7 +732,7 @@ def ogr_rfc28_31():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    
+
     return 'success' if count != 6 + 7 else 'fail'
 
 ###############################################################################
@@ -1571,7 +1571,7 @@ def ogr_rfc28_int_overflows():
              ('SELECT -9223372036854775808*-1 FROM lyr', None),
              ('SELECT -9223372036854775808/-1 FROM lyr', None),
              ('SELECT 1/0 FROM lyr', 2147483647),
-             ]
+            ]
     for sql, res in tests:
         sql_lyr = ds.ExecuteSQL(sql)
         if res is None:

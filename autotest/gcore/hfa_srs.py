@@ -110,7 +110,7 @@ hfa_srs_list = [2758,  # tmerc
                 2056,  # somerc
                 2027,  # utm
                 4326,  # longlat
-                ]
+               ]
 
 for item in hfa_srs_list:
     try:
