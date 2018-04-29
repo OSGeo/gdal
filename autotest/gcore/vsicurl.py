@@ -29,8 +29,8 @@
 ###############################################################################
 
 import sys
-import time
 from sys import version_info
+import time
 from osgeo import gdal
 from osgeo import ogr
 

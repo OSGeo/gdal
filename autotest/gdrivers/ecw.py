@@ -33,9 +33,9 @@
 import os
 import os.path
 import sys
+from sys import version_info
 import array
 import shutil
-from sys import version_info
 from osgeo import gdal
 from osgeo import osr
 
