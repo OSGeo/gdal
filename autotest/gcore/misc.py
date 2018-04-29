@@ -29,10 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
 import sys
 import os
 import shutil
+from osgeo import gdal
 
 sys.path.append('../pymod')
 

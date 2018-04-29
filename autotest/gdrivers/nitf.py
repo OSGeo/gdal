@@ -33,12 +33,12 @@
 import copy
 import os
 import sys
-from osgeo import gdal
-from osgeo import osr
+from sys import version_info
 import array
 import struct
 import shutil
-from sys import version_info
+from osgeo import gdal
+from osgeo import osr
 
 sys.path.append('../pymod')
 

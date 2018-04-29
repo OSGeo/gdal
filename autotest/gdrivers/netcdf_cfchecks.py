@@ -48,26 +48,26 @@ Options:
 
 '''
 
-import cdms2 as cdms
 import re
-import numpy
 import sys
+import ctypes
+from xml.sax import ContentHandler
+from xml.sax import make_parser
+from xml.sax.handler import feature_namespaces
+import numpy
+import cdms2 as cdms
 
 from cdms2.axis import FileAxis
 from cdms2.auxcoord import FileAuxAxis1D
 
 # Use ctypes to interface to the UDUNITS-2 shared library
 # The udunits2 library needs to be in a standard path o/w export LD_LIBRARY_PATH
-import ctypes
 udunits = ctypes.CDLL("libudunits2.so")
 
 STANDARDNAME = 'http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml'
 AREATYPES = 'http://cfconventions.org/Data/area-type-table/current/src/area-type-table.xml'
 
 # -----------------------------------------------------------
-from xml.sax import ContentHandler
-from xml.sax import make_parser
-from xml.sax.handler import feature_namespaces
 
 
 def normalize_whitespace(text):

@@ -30,9 +30,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import sys
 from osgeo import ogr
 from osgeo import osr
-import sys
 
 ###############################################################
 # Usage()

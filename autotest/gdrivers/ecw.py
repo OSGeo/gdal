@@ -35,9 +35,9 @@ import os.path
 import sys
 import array
 import shutil
+from sys import version_info
 from osgeo import gdal
 from osgeo import osr
-from sys import version_info
 
 sys.path.append('../pymod')
 

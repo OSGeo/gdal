@@ -30,8 +30,8 @@
 ###############################################################################
 
 import os
-import requests
 import sys
+import requests
 
 ok_set = dict()
 broken_set = {}

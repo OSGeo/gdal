@@ -30,9 +30,9 @@
 
 import sys
 import time
+from sys import version_info
 from osgeo import gdal
 from osgeo import ogr
-from sys import version_info
 
 sys.path.append('../pymod')
 

@@ -37,8 +37,8 @@ from threading import Thread
 import contextlib
 import time
 import sys
-import gdaltest
 from sys import version_info
+import gdaltest
 
 do_log = False
 custom_handler = None

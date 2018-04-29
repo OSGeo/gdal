@@ -31,6 +31,8 @@
 
 import os
 import sys
+import subprocess
+import time
 from osgeo import gdal
 
 sys.path.append('../pymod')
@@ -637,9 +639,6 @@ if __name__ == '__main__':
 
         gdalserver_path = sys.argv[1]
 
-        import subprocess
-        import time
-
         p = None
         for port in [8080, 8081, 8082]:
             p = subprocess.Popen([gdalserver_path, '-tcpserver', '%d' % port])
@@ -666,9 +665,6 @@ if __name__ == '__main__':
 
         gdalserver_path = sys.argv[1]
 
-        import subprocess
-        import time
-
         p = subprocess.Popen([gdalserver_path, '-unixserver', 'tmp/gdalapiproxysocket'])
         time.sleep(1)
         if p.poll() is None:
@@ -687,9 +683,6 @@ if __name__ == '__main__':
     elif len(sys.argv) >= 3 and sys.argv[2] == '-4':
 
         gdalserver_path = sys.argv[1]
-
-        import subprocess
-        import time
 
         p = subprocess.Popen([gdalserver_path, '-nofork', '-unixserver', 'tmp/gdalapiproxysocket'])
         time.sleep(1)
