@@ -75,7 +75,7 @@ def _get_mds_num(filename):
 #
 
 
-class TestEnvisat:
+class TestEnvisat(object):
     # Just a base class
 
     def __init__(self, downloadURL, fileName, size, checksum):

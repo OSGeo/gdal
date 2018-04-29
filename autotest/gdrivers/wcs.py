@@ -567,7 +567,7 @@ def wcs_6():
             else:
                 print(server + ' ' + version + ' non_scaled skipped (no response file)')
     webserver.server_stop(process, port)
-    
+
     return 'success' if  wcs_6_ok else 'fail'
 
 ###############################################################################

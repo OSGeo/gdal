@@ -163,11 +163,7 @@ def vsistdin_4():
     return 'success'
 
 
-gdaltest_list = [vsistdin_1,
-                 vsistdin_2,
-                 vsistdin_3,
-                 vsistdin_4
-                 ]
+gdaltest_list = [vsistdin_1, vsistdin_2, vsistdin_3, vsistdin_4]
 
 
 if __name__ == '__main__':

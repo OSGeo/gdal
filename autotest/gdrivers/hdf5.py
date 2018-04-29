@@ -557,7 +557,7 @@ def hdf5_17():
     return 'success'
 
 
-class TestHDF5:
+class TestHDF5(object):
     def __init__(self, downloadURL, fileName, subdatasetname, checksum, download_size):
         self.downloadURL = downloadURL
         self.fileName = fileName
@@ -607,7 +607,7 @@ hdf5_list = [('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/c
               'Raster_Image_#0', 3661, -1),
              ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/geospatial/DEM', 'half_moon_bay.grid',
               'HDFEOS/GRIDS/DEMGRID/Data_Fields/Elevation', 30863, -1),
-             ]
+            ]
 
 for item in hdf5_list:
     ut = TestHDF5(item[0], item[1], item[2], item[3], item[4])

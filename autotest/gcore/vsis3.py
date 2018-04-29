@@ -584,7 +584,7 @@ def vsis3_2():
     # Test temporary redirect
     handler = webserver.SequentialHandler()
 
-    class HandlerClass:
+    class HandlerClass(object):
         def __init__(self, response_value):
             self.old_authorization = None
             self.response_value = response_value
@@ -936,7 +936,7 @@ def vsis3_3():
     # Test temporary redirect
     handler = webserver.SequentialHandler()
 
-    class HandlerClass:
+    class HandlerClass(object):
         def __init__(self, response_value):
             self.old_authorization = None
             self.response_value = response_value

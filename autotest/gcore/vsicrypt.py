@@ -185,7 +185,7 @@ def vsicrypt_2():
                          0,  # size of key check
                          0, 0, 0, 0, 0, 0, 0, 0,  # size of unencrypted file
                          0, 0  # size of extra content
-                         )
+                        )
     fp = gdal.VSIFOpenL('/vsimem/file.bin', 'wb')
     gdal.VSIFWriteL(header, 1, len(header), fp)
     gdal.VSIFCloseL(fp)
@@ -213,7 +213,7 @@ def vsicrypt_2():
                          0,  # key check
                          0, 0, 0, 0, 0, 0, 0, 0,  # size of unencrypted file
                          0, 0  # size of extra content
-                         )
+                        )
     fp = gdal.VSIFOpenL('/vsimem/file.bin', 'wb')
     gdal.VSIFWriteL(header, 1, len(header), fp)
     gdal.VSIFCloseL(fp)

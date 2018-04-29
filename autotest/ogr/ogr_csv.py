@@ -1491,7 +1491,7 @@ def ogr_csv_32():
                 7,  # Value with a width greater than field width found in record 7 for field int1
                 8,  # Value with a width greater than field width found in record 8 for field str1
                 9,  # Value with a precision greater than field precision found in record 9 for field real1
-                ]:
+               ]:
         ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
                          open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'AUTODETECT_WIDTH=YES'])
         lyr = ds.GetLayer(0)

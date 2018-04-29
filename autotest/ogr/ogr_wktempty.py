@@ -34,7 +34,7 @@ import gdaltest
 from osgeo import ogr
 
 
-class TestWktEmpty:
+class TestWktEmpty(object):
     def __init__(self, inString, expectedOutString):
         self.inString = inString
         self.expectedOutString = expectedOutString

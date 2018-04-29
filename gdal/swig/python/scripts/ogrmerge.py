@@ -149,7 +149,7 @@ def _Esc(x):
     return gdal.EscapeString(x, gdal.CPLES_XML)
 
 
-class XMLWriter:
+class XMLWriter(object):
 
     def __init__(self, f):
         self.f = f

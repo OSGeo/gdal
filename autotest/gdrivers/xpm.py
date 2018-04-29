@@ -38,7 +38,7 @@ import gdaltest
 
 ###############################################################################
 #
-class TestXPM:
+class TestXPM(object):
     def __init__(self, downloadURL, fileName, checksum, download_size):
         self.downloadURL = downloadURL
         self.fileName = fileName
