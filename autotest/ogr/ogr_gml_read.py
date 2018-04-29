@@ -1188,7 +1188,7 @@ def ogr_gml_29():
     expected_results = [[ogr.wkbMultiPoint, 'MULTIPOINT (2 49)'],
                         [ogr.wkbMultiPolygon, 'MULTIPOLYGON (((2 49,3 49,3 50,2 50,2 49)))'],
                         [ogr.wkbMultiLineString, 'MULTILINESTRING ((2 49,3 50))'],
-                        ]
+                       ]
 
     for j in range(len(expected_results)):
         lyr = ds.GetLayer(j)
@@ -4161,7 +4161,7 @@ def ogr_gml_79():
     tests = [['SHORT', 'EPSG:4326', '2 49'],
              ['OGC_URN', 'urn:ogc:def:crs:EPSG::4326', '49 2'],
              ['OGC_URL', 'http://www.opengis.net/def/crs/EPSG/0/4326', '49 2']
-             ]
+            ]
     for (srsname_format, expected_srsname, expected_coords) in tests:
 
         ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_79.xml',

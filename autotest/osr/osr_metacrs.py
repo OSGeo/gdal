@@ -157,7 +157,7 @@ class MetaCRSTest(object):
 
             gdal.Debug('OSR', 'Src SRS:\n%s\n\nDst SRS:\n%s\n'
                        % (self.src_srs.ExportToPrettyWkt(),
-                           self.dst_srs.ExportToPrettyWkt()))
+                          self.dst_srs.ExportToPrettyWkt()))
 
             return 'fail'
 

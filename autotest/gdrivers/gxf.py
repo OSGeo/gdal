@@ -101,7 +101,7 @@ gxf_list = [('http://download.osgeo.org/gdal/data/gxf', 'SAMPLE.GXF', 24068, -1)
             ('http://download.osgeo.org/gdal/data/gxf', 'gxf_ul_r.gxf', 19930, -1),
             ('http://download.osgeo.org/gdal/data/gxf', 'latlong.gxf', 12243, -1),
             ('http://download.osgeo.org/gdal/data/gxf', 'spif83.gxf', 28752, -1)
-            ]
+           ]
 
 for item in gxf_list:
     ut = TestGXF(item[0], item[1], item[2], item[3])

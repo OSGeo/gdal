@@ -539,7 +539,7 @@ tiff_srs_list = [2758,  # tmerc
                  31491,  # Germany Zone projection
                  [3857, False, True],  # Web Mercator
                  [102113, False, True],  # ESRI WGS_1984_Web_Mercator
-                 ]
+                ]
 
 for item in tiff_srs_list:
     try:
@@ -561,7 +561,7 @@ tiff_srs_list_proj4 = [['eqdc', '+proj=eqdc +lat_0=%.16g +lon_0=%.16g +lat_1=%.1
                        ['gnom', '+proj=gnom +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3, 4)],
                        ['robin', '+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3)],
                        ['sinu', '+proj=sinu +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3)],
-                       ]
+                      ]
 for (title, proj4) in tiff_srs_list_proj4:
     ut = TestTiffSRS(proj4, 0, False)
     gdaltest_list.append((ut.test, "tiff_srs_proj4_%s" % title))
