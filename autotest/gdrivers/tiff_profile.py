@@ -198,7 +198,7 @@ def tiff_copy_options_icc():
 
 
 def cvtTuple2String(t):
-    return str(t).lstrip(')').rstrip(')')
+    return str(t).lstrip('(').rstrip(')')
 
 ###############################################################################
 # Test writing and reading of ICC colorimetric data from options

@@ -118,7 +118,7 @@ def png_copy_icc():
 
 
 def cvtTuple2String(t):
-    return str(t).lstrip(')').rstrip(')')
+    return str(t).lstrip('(').rstrip(')')
 
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy() options
