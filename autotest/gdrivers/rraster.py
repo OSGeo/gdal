@@ -92,8 +92,8 @@ def _compare_val(got, expected, key_name, to_print):
             print('Unexpected number of elements for %s. Got %d, expected %d' % (key_name, len(got), len(expected)))
             pprint.pprint(to_print)
             return False
-        for idx in range(len(got)):
-            if not _compare_val(got[idx], expected[idx], '%s[%d]' % (key_name, idx), to_print):
+        for i, val in enumerate(got):
+            if not _compare_val(val, expected[i], '%s[%d]' % (key_name, i), to_print):
                 return False
     elif isinstance(got, dict) and isinstance(expected, dict):
         if not _is_dict_included_in_dict(got, expected, key_name, to_print):

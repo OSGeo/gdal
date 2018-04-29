@@ -606,8 +606,8 @@ def ogr_fgdb_9():
 
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    for i in range(len(in_names)):
-        lyr = ds.CreateLayer(in_names[i], srs=srs, geom_type=ogr.wkbPoint)
+    for in_name in in_names:
+        lyr = ds.CreateLayer(in_name, srs=srs, geom_type=ogr.wkbPoint)
     gdal.PopErrorHandler()
 
     lyr.GetLayerDefn()
@@ -618,9 +618,9 @@ def ogr_fgdb_9():
                       _160char,
                       _160char[0:158] + '_1',
                       _160char[0:158] + '_2']
-    for i in range(len(expected_names)):
-        if ds.GetLayerByIndex(i).GetName() != expected_names[i]:
-            gdaltest.post_reason('did not find %s' % expected_names[i])
+    for i, exp_name in enumerate(expected_names):
+        if ds.GetLayerByIndex(i).GetName() != exp_name:
+            gdaltest.post_reason('did not find %s' % exp_name)
             return 'fail'
 
     return 'success'

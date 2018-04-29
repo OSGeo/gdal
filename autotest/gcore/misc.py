@@ -45,7 +45,7 @@ import gdaltest
 
 def misc_1():
 
-    tab_ds = [None for i in range(5000)]
+    tab_ds = [None] * 5000
     drv = gdal.GetDriverByName('MEM')
     for i in range(len(tab_ds)):
         name = 'mem_%d' % i

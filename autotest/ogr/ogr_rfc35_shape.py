@@ -147,8 +147,8 @@ def CheckFeatures(lyr, foo='foo5', bar='bar10', baz='baz15', baw='baw20'):
 def CheckColumnOrder(lyr, expected_order):
 
     lyr_defn = lyr.GetLayerDefn()
-    for i in range(len(expected_order)):
-        if lyr_defn.GetFieldDefn(i).GetName() != expected_order[i]:
+    for i, exp_order in enumerate(expected_order):
+        if lyr_defn.GetFieldDefn(i).GetName() != exp_order:
             return 'fail'
 
     return 'success'

@@ -707,7 +707,7 @@ def ogr_geojson_16():
     ref = lyr.GetSpatialRef()
     gcs = int(ref.GetAuthorityCode('GEOGCS'))
 
-    if not gcs == 4326:
+    if gcs != 4326:
         gdaltest.post_reason("Spatial reference was not valid")
         return 'fail'
 
@@ -1384,7 +1384,7 @@ def ogr_geojson_28():
     ref = lyr.GetSpatialRef()
     gcs = int(ref.GetAuthorityCode('GEOGCS'))
 
-    if not gcs == 4326:
+    if gcs != 4326:
         gdaltest.post_reason("Spatial reference was not valid")
         return 'fail'
 

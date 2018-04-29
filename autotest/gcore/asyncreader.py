@@ -62,10 +62,10 @@ def asyncreader_1():
     out_ds = None
     gdal.Unlink('/vsimem/asyncresult.tif')
 
-    for i in range(len(cs)):
-        if cs[i] != expected_cs[i]:
+    for i, csum in enumerate(cs):
+        if csum != expected_cs[i]:
             gdaltest.post_reason('did not get expected checksum for band %d' % (i + 1))
-            print(cs[i])
+            print(csum)
             print(expected_cs[i])
             return 'fail'
 

@@ -171,8 +171,7 @@ def gdalOpenWithOpenJPEGDriverPreferably(filename):
     # Re-register drivers
     if jp2openjpeg_drv:
         jp2openjpeg_drv.Deregister()
-        for i in range(len(drivers)):
-            drv = drivers[i]
+        for drv in drivers:
             if drv is not None:
                 drv.Register()
 
