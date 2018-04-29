@@ -136,7 +136,7 @@ def vsicurl_6():
         return 'skip'
 
     fl = gdal.ReadDir('/vsicurl/ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif')
-    if len(fl) == 0:
+    if not fl:
         return 'fail'
 
     return 'success'
@@ -153,7 +153,7 @@ def vsicurl_7():
         return 'skip'
 
     fl = gdal.ReadDir('/vsicurl/http://ortho.linz.govt.nz/tifs/2005_06')
-    if len(fl) == 0:
+    if not fl:
         return 'fail'
 
     return 'success'
@@ -237,7 +237,7 @@ def vsicurl_11():
     gdal.VSIFCloseL(f)
 
     filelist = gdal.ReadDir('/vsicurl/http://download.osgeo.org/gdal/data/gtiff')
-    if filelist is None or len(filelist) == 0:
+    if filelist is None or not filelist:
         return 'fail'
 
     return 'success'

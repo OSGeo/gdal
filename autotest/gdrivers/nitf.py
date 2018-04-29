@@ -2232,7 +2232,7 @@ def nitf_68():
     ds = None
 
     ds = gdal.Open('data/rgb.ntf')
-    if len(ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA')) == 0:
+    if not ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA'):
         print(ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA'))
         return 'fail'
     ds = None

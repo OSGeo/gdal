@@ -288,7 +288,7 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
     dsco = []
     pszWHERE = None
 
-    if len(argv) == 0:
+    if not argv:
         return Usage()
 
     i = 0
@@ -356,7 +356,7 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
         print('Missing -dst')
         return 1
 
-    if len(options.dispatch_fields) == 0:
+    if not options.dispatch_fields:
         print('Missing -dispatch_field')
         return 1
 
@@ -367,7 +367,7 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
 
     dst_ds = ogr.Open(dst_filename, update=1)
     if dst_ds is not None:
-        if len(dsco) != 0:
+        if dsco:
             print('-dsco should not be specified for an existing datasource')
             return 1
     else:

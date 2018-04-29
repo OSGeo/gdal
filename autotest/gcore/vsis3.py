@@ -1093,7 +1093,7 @@ def vsis3_4():
             return 'fail'
         with gdaltest.error_handler():
             ret = gdal.VSIFReadL(1, 1, f)
-        if len(ret) != 0:
+        if ret:
             gdaltest.post_reason('fail')
             return 'fail'
         gdal.VSIFCloseL(f)

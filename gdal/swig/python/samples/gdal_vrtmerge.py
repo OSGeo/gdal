@@ -240,14 +240,14 @@ if __name__ == '__main__':
 
         i = i + 1
 
-    if len(names) == 0:
+    if not names:
         print('No input files selected.')
         Usage()
         sys.exit(1)
 
     # Collect information on all the source files.
     file_infos = names_to_fileinfos(names)
-    if len(file_infos) == 0:
+    if not file_infos:
         print('Nothing to process, exiting.')
         sys.exit(1)
 
@@ -300,7 +300,7 @@ if __name__ == '__main__':
     t_fh.write('\t<GeoTransform>%24.16f, %24.16f, %24.16f, %24.16f, %24.16f, %24.16f</GeoTransform>\n'
                % geotransform)
 
-    if len(projection) > 0:
+    if projection:
         t_fh.write('\t<SRS>%s</SRS>\n' % projection)
 
     if separate:

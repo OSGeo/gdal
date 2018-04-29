@@ -738,7 +738,7 @@ def ogr_gmlas_validate():
     lyr.GetFeatureCount()
     gdal.SetConfigOption('GMLAS_WARN_UNEXPECTED', 'YES')
     gdal.PopErrorHandler()
-    if len(myhandler.error_list) != 0:
+    if myhandler.error_list:
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
@@ -767,7 +767,7 @@ def ogr_gmlas_validate():
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
-    if len(myhandler.error_list) != 0:
+    if myhandler.error_list:
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
@@ -785,7 +785,7 @@ def ogr_gmlas_validate():
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
-    if len(myhandler.error_list) != 0:
+    if myhandler.error_list:
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
@@ -827,7 +827,7 @@ def ogr_gmlas_validate():
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
-    if len(myhandler.error_list) != 0:
+    if myhandler.error_list:
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
@@ -1654,7 +1654,7 @@ def ogr_gmlas_validate_ignored_fixed_attribute():
                 open_options=['VALIDATE=YES',
                               'CONFIG_FILE=<Configuration><IgnoredXPaths><XPath>@bar</XPath></IgnoredXPaths></Configuration>'])
     gdal.PopErrorHandler()
-    if len(myhandler.error_list) != 0:
+    if myhandler.error_list:
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'

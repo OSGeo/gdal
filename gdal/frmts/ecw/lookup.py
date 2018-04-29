@@ -150,7 +150,7 @@ for line in pfile.readlines():
                 srs.SetLinearUnits('unnamed', float(lsize_str))
 
         wkt = srs.ExportToWkt()
-        if len(wkt) > 0:
+        if wkt:
             print('%s,%s' % (id, srs.ExportToWkt()))
         else:
             print('%s,LOCAL_CS["%s - (unsupported)"]' % (id, id))

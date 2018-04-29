@@ -229,7 +229,7 @@ def hdf5_8():
     metadata = ds.GetMetadata()
     ds = None
 
-    if len(metadata) == 0:
+    if not metadata:
         gdaltest.post_reason('no metadata found')
         return 'fail'
 

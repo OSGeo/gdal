@@ -264,7 +264,7 @@ def pds_9():
         print(got_nd)
         return 'fail'
 
-    if len(ds.GetProjectionRef()) == 0:
+    if not ds.GetProjectionRef():
         gdaltest.post_reason('fail')
         return 'fail'
 

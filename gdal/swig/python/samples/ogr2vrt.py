@@ -156,7 +156,7 @@ src_ds = gdal.OpenEx(infile, gdal.OF_VECTOR, open_options=openoptions)
 if schema:
     infile = '@dummy@'
 
-if len(layer_list) == 0:
+if not layer_list:
     for lyr_idx in range(src_ds.GetLayerCount()):
         layer_list.append(src_ds.GetLayer(lyr_idx).GetLayerDefn().GetName())
 
@@ -220,7 +220,7 @@ for name in layer_list:
     vrt += '    <SrcDataSource relativeToVRT="%s" shared="%d">%s</SrcDataSource>\n' \
            % (relative, not schema, Esc(infile))
 
-    if len(openoptions) > 0:
+    if openoptions:
         vrt += '    <OpenOptions>\n'
         for option in openoptions:
             (key, value) = option.split('=')

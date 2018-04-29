@@ -1140,7 +1140,7 @@ def tiff_read_exif_and_gps():
     exif_md = ds.GetMetadata('EXIF')
     ds = None
 
-    if exif_md is None or len(exif_md) == 0:
+    if exif_md is None or not exif_md:
         gdaltest.post_reason('failed')
         return 'fail'
 
@@ -1157,7 +1157,7 @@ def tiff_read_exif_and_gps():
     exif_md = ds.GetMetadata('EXIF')
     ds = None
 
-    if not (exif_md is None or len(exif_md) == 0):
+    if not (exif_md is None or not exif_md):
         gdaltest.post_reason('failed')
         return 'fail'
 
@@ -3535,7 +3535,7 @@ def tiff_read_stripoffset_types():
     for (filename, expected_offsets) in tests:
 
         # Only when built against internal libtiff we reject byte datatype
-        if len(expected_offsets) == 0 and \
+        if not expected_offsets and \
            gdal.GetDriverByName('GTiff').GetMetadataItem('LIBTIFF') != 'INTERNAL':
             continue
 

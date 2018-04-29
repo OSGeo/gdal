@@ -2331,7 +2331,7 @@ def gpkg_21():
     out_ds = None
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
-    if len(out_ds.GetMetadata('GEOPACKAGE')) != 0:
+    if out_ds.GetMetadata('GEOPACKAGE'):
         gdaltest.post_reason('fail')
         return 'fail'
 
