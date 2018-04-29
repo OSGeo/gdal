@@ -504,7 +504,7 @@ class GPKGChecker:
             self._assert(not found_geom_types or
                          not found_geom_types.difference(
                              set(['LINESTRING', 'CIRCULARSTRING',
-                                  'COMPOUNDCURVE']), 32,
+                                  'COMPOUNDCURVE'])), 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
 
