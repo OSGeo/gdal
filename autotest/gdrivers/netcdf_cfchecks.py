@@ -294,7 +294,7 @@ def chkDerivedName(name):
 # ======================
 # Checking class
 # ======================
-class CFChecker:
+class CFChecker(object):
 
     def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=None, cfAreaTypesXML=None, udunitsDat=None, version=newest_version):
         self.uploader = uploader

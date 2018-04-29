@@ -63,7 +63,7 @@ class GPKGCheckException(Exception):
     pass
 
 
-class GPKGChecker:
+class GPKGChecker(object):
 
     EXT_GEOM_TYPES = ('CIRCULARSTRING', 'COMPOUNDCURVE', 'CURVEPOLYGON',
                       'MULTICURVE', 'MULTISURFACE', 'CURVE', 'SURFACE')

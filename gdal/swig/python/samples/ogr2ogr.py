@@ -46,7 +46,7 @@ from osgeo import osr
 ###############################################################################
 
 
-class ScaledProgressObject:
+class ScaledProgressObject(object):
     def __init__(self, min, max, cbk, cbk_data=None):
         self.min = min
         self.max = max
@@ -107,7 +107,7 @@ def TermProgress(dfComplete, pszMessage, pProgressArg):
     return True
 
 
-class TargetLayerInfo:
+class TargetLayerInfo(object):
     def __init__(self):
         self.poDstLayer = None
         self.poCT = None
@@ -116,7 +116,7 @@ class TargetLayerInfo:
         self.iSrcZField = None
 
 
-class AssociatedLayers:
+class AssociatedLayers(object):
     def __init__(self):
         self.poSrcLayer = None
         self.psInfo = None

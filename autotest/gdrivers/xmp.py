@@ -41,7 +41,7 @@ import gdaltest
 #
 
 
-class TestXMPRead:
+class TestXMPRead(object):
     def __init__(self, drivername, filename, expect_xmp):
         self.drivername = drivername
         self.filename = filename
@@ -119,7 +119,7 @@ lst = [["GTiff", "data/byte_with_xmp.tif", True],
        ["PDF", "data/adobe_style_geospatial.pdf", False],
        ["WEBP", "data/rgbsmall_with_xmp.webp", True],
        ["WEBP", "data/rgbsmall.webp", False],
-       ]
+      ]
 
 for drivername, filename, expect_xmp in lst:
     ut = TestXMPRead(drivername, filename, expect_xmp)

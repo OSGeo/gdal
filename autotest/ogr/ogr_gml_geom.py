@@ -41,7 +41,7 @@ from osgeo import gdal
 ###############################################################################
 
 
-class gml_geom_unit:
+class gml_geom_unit(object):
     def __init__(self, unit):
         self.unit = unit
 

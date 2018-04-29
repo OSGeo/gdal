@@ -218,7 +218,7 @@ def basic_test_9():
 # Test gdal.PushErrorHandler() with a Python error handler as a method (#5186)
 
 
-class my_python_error_handler_class:
+class my_python_error_handler_class(object):
     def __init__(self):
         self.eErrClass = None
         self.err_no = None

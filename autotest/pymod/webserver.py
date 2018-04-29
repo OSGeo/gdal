@@ -55,7 +55,7 @@ def install_http_handler(handler_instance):
         custom_handler = None
 
 
-class RequestResponse:
+class RequestResponse(object):
     def __init__(self, method, path, code, headers=None, body=None, custom_method=None, expected_headers=None, expected_body=None):
         self.method = method
         self.path = path
@@ -67,7 +67,7 @@ class RequestResponse:
         self.expected_body = expected_body
 
 
-class FileHandler:
+class FileHandler(object):
     def __init__(self, _dict):
         self.dict = _dict
 
@@ -108,7 +108,7 @@ class FileHandler:
             request.wfile.write(filedata[start:end])
 
 
-class SequentialHandler:
+class SequentialHandler(object):
     def __init__(self):
         self.req_count = 0
         self.req_resp = []
