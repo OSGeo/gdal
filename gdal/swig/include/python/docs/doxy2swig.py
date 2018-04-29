@@ -41,7 +41,7 @@ def my_open_write(dest):
     return open(dest, 'w')
 
 
-class Doxy2SWIG:
+class Doxy2SWIG(object):
     """Converts Doxygen generated XML files into a file containing
     docstrings that can be used by SWIG-1.3.x that have support for
     feature("docstring").  Once the data is parsed it is stored in

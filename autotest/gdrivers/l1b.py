@@ -40,7 +40,7 @@ import gdaltest
 
 ###############################################################################
 #
-class TestL1B:
+class TestL1B(object):
     def __init__(self, downloadURL, fileName, checksum, download_size, gcpNumber):
         self.downloadURL = downloadURL
         self.fileName = fileName

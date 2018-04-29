@@ -51,7 +51,7 @@ def fits_init():
 #
 
 
-class TestFITS:
+class TestFITS(object):
     def __init__(self, fileName):
         self.fileName = fileName
 

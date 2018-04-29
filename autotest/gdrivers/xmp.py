@@ -41,7 +41,7 @@ import gdaltest
 #
 
 
-class TestXMPRead:
+class TestXMPRead(object):
     def __init__(self, drivername, filename, expect_xmp):
         self.drivername = drivername
         self.filename = filename

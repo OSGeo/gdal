@@ -43,7 +43,7 @@ from osgeo import osr, gdal
 # Class to perform the tests.
 
 
-class MetaCRSTest:
+class MetaCRSTest(object):
     def __init__(self, test_line):
         self.test_line = test_line
         self.src_xyz = None
