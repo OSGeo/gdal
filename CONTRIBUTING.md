@@ -21,7 +21,7 @@ gdalinfo --version
 Run autotest suite:
 ```
 cd ../autotest
-python run_test.py
+python run_all.py
 ```
 
 Git workflows with GDAL
