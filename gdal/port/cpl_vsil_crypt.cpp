@@ -101,6 +101,14 @@ static const unsigned int VSICRYPT_WRITE = 0x2;
 #ifdef _MSC_VER
 #pragma warning( pop )
 #endif
+
+// Fix compatibility with Crypto++
+#if CRYPTOPP_VERSION >= 600
+typedef CryptoPP::byte cryptopp_byte;
+#else
+typedef byte cryptopp_byte;
+#endif
+
 /* End of crypto++ headers */
 
 // I don't really understand why this is necessary, especially
@@ -447,7 +455,7 @@ VSICryptFileHeader::CryptKeyCheck( CryptoPP::BlockCipher* poEncCipher )
     CryptoPP::StringSink* poSink = new CryptoPP::StringSink(osKeyCheckRes);
     CryptoPP::StreamTransformation* poMode =
         new CryptoPP::CBC_Mode_ExternalCipher::Encryption(
-            *poEncCipher, (const byte*)osCheckIV.c_str());
+            *poEncCipher, reinterpret_cast<const cryptopp_byte*>(osCheckIV.c_str()));
     CryptoPP::StreamTransformationFilter* poEnc =
         new CryptoPP::StreamTransformationFilter(
             *poMode, poSink,
@@ -455,7 +463,7 @@ VSICryptFileHeader::CryptKeyCheck( CryptoPP::BlockCipher* poEncCipher )
     // Not sure if it is add extra security, but pick up something that is
     // unlikely to be a plain text (random number).
     poEnc->Put(
-        reinterpret_cast<const byte*>(
+        reinterpret_cast<const cryptopp_byte*>(
             "\xDB\x31\xB9\x1B\xD3\x1C\xFA\x3E\x84\x06\xC1\x42\xC3\xEC\xCD\x9A"
             "\x02\x36\x22\x15\x58\x88\x74\x65\x00\x2F\x98\xBC\x69\x22\xE1\x63"),
         std::min(32U, poEncCipher->BlockSize()));
@@ -592,7 +600,7 @@ int VSICryptFileHeader::ReadFromFile( VSIVirtualHandle* fp,
             {
                 const int nKeySize =
                     std::min(nMaxKeySize, static_cast<int>(osKey.size()));
-                poEncCipher->SetKey((const byte*)osKey.c_str(), nKeySize);
+                poEncCipher->SetKey(reinterpret_cast<const cryptopp_byte*>(osKey.c_str()), nKeySize);
             }
             else if( pabyGlobalKey )
             {
@@ -845,8 +853,8 @@ int VSICryptFileHandle::Init( const CPLString& osKey, bool bWriteHeader )
         {
             const int nKeySize =
                 std::min(nMaxKeySize, static_cast<int>(osKey.size()));
-            poEncCipher->SetKey((const byte*)osKey.c_str(), nKeySize);
-            poDecCipher->SetKey((const byte*)osKey.c_str(), nKeySize);
+            poEncCipher->SetKey(reinterpret_cast<const cryptopp_byte*>(osKey.c_str()), nKeySize);
+            poDecCipher->SetKey(reinterpret_cast<const cryptopp_byte*>(osKey.c_str()), nKeySize);
         }
         else if( pabyGlobalKey )
         {
@@ -905,19 +913,19 @@ void VSICryptFileHandle::EncryptBlock( GByte* pabyData, vsi_l_offset nOffset )
     CryptoPP::StreamTransformation* poMode;
     if( poHeader->eMode == MODE_CBC )
         poMode = new CryptoPP::CBC_Mode_ExternalCipher::Encryption(
-            *poEncCipher, reinterpret_cast<const byte *>(osIV.c_str()) );
+            *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
     else if( poHeader->eMode == MODE_CFB )
         poMode = new CryptoPP::CFB_Mode_ExternalCipher::Encryption(
-            *poEncCipher, reinterpret_cast<const byte *>(osIV.c_str()) );
+            *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
     else if( poHeader->eMode == MODE_OFB )
         poMode = new CryptoPP::OFB_Mode_ExternalCipher::Encryption(
-            *poEncCipher, reinterpret_cast<const byte *>(osIV.c_str()) );
+            *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
     else if( poHeader->eMode == MODE_CTR )
         poMode = new CryptoPP::CTR_Mode_ExternalCipher::Encryption(
-            *poEncCipher, reinterpret_cast<const byte *>(osIV.c_str()) );
+            *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
     else
         poMode = new CryptoPP::CBC_CTS_Mode_ExternalCipher::Encryption(
-            *poEncCipher, reinterpret_cast<const byte *>(osIV.c_str()) );
+            *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
     CryptoPP::StreamTransformationFilter* poEnc =
         new CryptoPP::StreamTransformationFilter(
             *poMode, poSink, CryptoPP::StreamTransformationFilter::NO_PADDING);
@@ -949,22 +957,22 @@ bool VSICryptFileHandle::DecryptBlock( GByte* pabyData, vsi_l_offset nOffset )
         // Yes, some modes need the encryption cipher.
         if( poHeader->eMode == MODE_CBC )
             poMode = new CryptoPP::CBC_Mode_ExternalCipher::Decryption(
-                *poDecCipher, (const byte*)osIV.c_str() );
+                *poDecCipher, reinterpret_cast<const cryptopp_byte*>(osIV.c_str()) );
         else if( poHeader->eMode == MODE_CFB )
             poMode = new CryptoPP::CFB_Mode_ExternalCipher::Decryption(
-                *poEncCipher, (const byte*)osIV.c_str() );
+                *poEncCipher, reinterpret_cast<const cryptopp_byte*>(osIV.c_str()) );
         else if( poHeader->eMode == MODE_OFB )
             poMode = new CryptoPP::OFB_Mode_ExternalCipher::Decryption(
-                *poEncCipher, (const byte*)osIV.c_str() );
+                *poEncCipher, reinterpret_cast<const cryptopp_byte*>(osIV.c_str()) );
         else if( poHeader->eMode == MODE_CTR )
             poMode = new CryptoPP::CTR_Mode_ExternalCipher::Decryption(
-                *poEncCipher, (const byte*)osIV.c_str() );
+                *poEncCipher, reinterpret_cast<const cryptopp_byte*>(osIV.c_str()) );
         else
             poMode = new CryptoPP::CBC_CTS_Mode_ExternalCipher::Decryption(
-                *poDecCipher, (const byte*)osIV.c_str() );
+                *poDecCipher, reinterpret_cast<const cryptopp_byte*>(osIV.c_str()) );
         poDec = new CryptoPP::StreamTransformationFilter(
             *poMode, poSink, CryptoPP::StreamTransformationFilter::NO_PADDING);
-        poDec->Put((const byte*)pabyData, poHeader->nSectorSize);
+        poDec->Put(reinterpret_cast<const cryptopp_byte*>(pabyData), poHeader->nSectorSize);
         poDec->MessageEnd();
         delete poDec;
         delete poMode;
@@ -1361,7 +1369,7 @@ int VSICryptFileHandle::Flush()
 #endif
                 CryptoPP::OS_GenerateRandomBlock(
                     false, // Do not need cryptographic randomness.
-                    (byte*)(pabyWB +
+                    reinterpret_cast<cryptopp_byte*>(pabyWB +
                             poHeader->nPayloadFileSize - nLastSectorOffset),
                     static_cast<int>(
                         poHeader->nSectorSize -
@@ -1654,7 +1662,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
             osIV.resize(nBlockSize);
             CryptoPP::OS_GenerateRandomBlock(
                 false,  // Do not need cryptographic randomness.
-                (byte*)osIV.c_str(), osIV.size());
+                reinterpret_cast<cryptopp_byte*>(const_cast<char*>(osIV.c_str())), osIV.size());
         }
 
         if( EQUAL(osKey, "GENERATE_IT") )
@@ -1667,10 +1675,10 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
                 // Config option for speeding tests.
                 CPLTestBool(CPLGetConfigOption("VSICRYPT_CRYPTO_RANDOM",
                                                "TRUE")),
-                (byte*)osKey.c_str(), osKey.size());
+                reinterpret_cast<cryptopp_byte*>(const_cast<char*>(osKey.c_str())), osKey.size());
 
             char* pszB64 = CPLBase64Encode(static_cast<int>(osKey.size()),
-                                           (const GByte*)osKey.c_str());
+                                           reinterpret_cast<const GByte*>(osKey.c_str()));
             if( CPLTestBool(CPLGetConfigOption("VSICRYPT_DISPLAY_GENERATED_KEY",
                                                "TRUE")) )
             {
