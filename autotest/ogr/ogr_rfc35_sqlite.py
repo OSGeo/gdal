@@ -119,7 +119,7 @@ def Truncate(val, lyr_defn, fieldname):
     return val
 
 
-def CheckFeatures(lyr, foo='foo5', bar='bar10', baz='baz15', baw='baw20'):
+def CheckFeatures(lyr, field1='foo5', field2='bar10', field3='baz15', field4='baw20'):
 
     expected_values = [
         ['foo0', None, None, None],
@@ -134,10 +134,10 @@ def CheckFeatures(lyr, foo='foo5', bar='bar10', baz='baz15', baw='baw20'):
     feat = lyr.GetNextFeature()
     i = 0
     while feat is not None:
-        if (foo is not None and feat.GetField(foo) != Truncate(expected_values[i][0], lyr_defn, foo)) or \
-           (bar is not None and feat.GetField(bar) != Truncate(expected_values[i][1], lyr_defn, bar)) or \
-           (baz is not None and feat.GetField(baz) != Truncate(expected_values[i][2], lyr_defn, baz)) or \
-           (baw is not None and feat.GetField(baw) != Truncate(expected_values[i][3], lyr_defn, baw)):
+        if (field1 is not None and feat.GetField(field1) != Truncate(expected_values[i][0], lyr_defn, field1)) or \
+           (field2 is not None and feat.GetField(field2) != Truncate(expected_values[i][1], lyr_defn, field2)) or \
+           (field3 is not None and feat.GetField(field3) != Truncate(expected_values[i][2], lyr_defn, field3)) or \
+           (field4 is not None and feat.GetField(field4) != Truncate(expected_values[i][3], lyr_defn, field4)):
             feat.DumpReadable()
             return 'fail'
         feat = lyr.GetNextFeature()
@@ -280,7 +280,7 @@ def ogr_rfc35_sqlite_3():
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, baz='baz25')
+    ret = CheckFeatures(lyr, field3='baz25')
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
@@ -291,7 +291,7 @@ def ogr_rfc35_sqlite_3():
     lyr_defn = lyr.GetLayerDefn()
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz25"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
@@ -302,7 +302,7 @@ def ogr_rfc35_sqlite_3():
         gdaltest.post_reason('failed')
         return 'fail'
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
@@ -346,7 +346,7 @@ def ogr_rfc35_sqlite_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
@@ -361,7 +361,7 @@ def ogr_rfc35_sqlite_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
@@ -377,7 +377,7 @@ def ogr_rfc35_sqlite_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
@@ -394,7 +394,7 @@ def ogr_rfc35_sqlite_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
@@ -430,7 +430,7 @@ def ogr_rfc35_sqlite_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
@@ -471,7 +471,7 @@ def ogr_rfc35_sqlite_5():
         gdaltest.post_reason('failed')
         return 'fail'
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
@@ -480,7 +480,7 @@ def ogr_rfc35_sqlite_5():
         gdaltest.post_reason('failed')
         return 'fail'
 
-    ret = CheckFeatures(lyr, baz='baz5', baw=None)
+    ret = CheckFeatures(lyr, field3='baz5', field4=None)
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
@@ -489,7 +489,7 @@ def ogr_rfc35_sqlite_5():
         gdaltest.post_reason('failed')
         return 'fail'
 
-    ret = CheckFeatures(lyr, baz=None, baw=None)
+    ret = CheckFeatures(lyr, field3=None, field4=None)
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
@@ -502,7 +502,7 @@ def ogr_rfc35_sqlite_5():
         gdaltest.post_reason('failed')
         return 'fail'
 
-    ret = CheckFeatures(lyr, foo=None, bar=None, baz=None, baw=None)
+    ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
     if ret != 'success':
         gdaltest.post_reason('failed')
         return ret
