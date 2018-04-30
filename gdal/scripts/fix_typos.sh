@@ -50,9 +50,7 @@ if ! test -d fix_typos; then
     mkdir fix_typos
     cd fix_typos
     git clone https://github.com/rouault/codespell
-    cd codespell
-    git checkout gdal_improvements
-    cd ..
+    git checkout codespell/gdal_improvements
     # Aggregate base dictionary + QGIS one + Debian Lintian one
     curl https://raw.githubusercontent.com/qgis/QGIS/master/scripts/spelling.dat | sed "s/:/->/" | grep -v "colour->" | grep -v "colours->" > qgis.txt
     curl https://anonscm.debian.org/cgit/lintian/lintian.git/plain/data/spelling/corrections| grep "||" | grep -v "#" | sed "s/||/->/" > debian.txt
