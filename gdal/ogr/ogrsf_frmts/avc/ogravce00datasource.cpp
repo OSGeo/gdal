@@ -216,8 +216,9 @@ OGRLayer *OGRAVCE00DataSource::GetLayer( int iLayer )
 /************************************************************************/
 OGRSpatialReference *OGRAVCE00DataSource::GetSpatialRef()
 {
-    if (poSRS != nullptr)
+    if (m_bSRSFetched)
         return poSRS;
+    m_bSRSFetched = true;
     if (psE00 == nullptr)
         return nullptr;
 

@@ -2435,7 +2435,7 @@ def ogr_geom_compoundcurve():
                 '\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x02\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',  # subgeometry invalid: linestring with one point
                 '\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',  # subgeometry invalid: point
                 '\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x09\x00\x00\x00\x00\x00\x00\x00',  # subgeometry invalid: compoundcurve
-                ]
+               ]
     for wkb in wkb_list:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         g = ogr.CreateGeometryFromWkb(wkb)
@@ -3705,7 +3705,7 @@ def ogr_geom_gt_functions():
               (ogr.wkbUnknown, ogr.wkbPoint, 0),
               (ogr.wkbTIN, ogr.wkbPolyhedralSurface, 1),
               (ogr.wkbPolyhedralSurface, ogr.wkbTIN, 0),
-              ]
+             ]
     for (gt, gt2, res) in tuples:
         if ogr.GT_IsSubClassOf(gt, gt2) != res:
             gdaltest.post_reason('fail')
@@ -3995,7 +3995,7 @@ def ogr_geom_measured_geometries_to_2D_or_3D():
                 ['POLYHEDRALSURFACE ZM (((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4)))', 'POLYHEDRALSURFACE (((0 0,0 1,1 1,0 0)))', 'POLYHEDRALSURFACE Z (((0 0 3,0 1 3,1 1 3,0 0 3)))'],
                 ['TIN M (((0 0 3,0 1 3,1 1 3,0 0 3)))', 'TIN (((0 0,0 1,1 1,0 0)))', 'TIN Z (((0 0 0,0 1 0,1 1 0,0 0 0)))'],
                 ['TIN ZM (((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4)))', 'TIN (((0 0,0 1,1 1,0 0)))', 'TIN Z (((0 0 3,0 1 3,1 1 3,0 0 3)))'],
-                ]
+               ]
     for (before, after_2D, after_3D) in list_wkt:
 
         geom = ogr.CreateGeometryFromWkt(before)
@@ -4076,7 +4076,7 @@ def ogr_geom_postgis_ewkt_xym():
 
     list_wkt = [['POINTM(1 2 3)', 'POINT M (1 2 3)'],
                 ['GEOMETRYCOLLECTIONM(POINTM(1 2 3))', 'GEOMETRYCOLLECTION M (POINT M (1 2 3))'],
-                ]
+               ]
     for (before, after) in list_wkt:
         geom = ogr.CreateGeometryFromWkt(before)
         if geom.ExportToIsoWkt() != after:
@@ -4133,7 +4133,7 @@ def ogr_geom_import_corrupted_wkb():
                 'TRIANGLE ZM ((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4))',
                 'POLYHEDRALSURFACE ZM (((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4)),((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4)))',
                 'TIN ZM (((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4)),((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4)))',
-                ]
+               ]
 
     for wkt in list_wkt:
         g = ogr.CreateGeometryFromWkt(wkt)

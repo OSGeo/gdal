@@ -36,7 +36,7 @@ from osgeo import osr
 
 
 #############################################################################
-class Module:
+class Module(object):
 
     def __init__(self):
         self.lines = {}

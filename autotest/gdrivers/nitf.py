@@ -802,7 +802,7 @@ def nitf_30():
                                                      'BLOCKA_LRLC_LOC_01=+42.317083+020.126072',
                                                      'BLOCKA_LRFC_LOC_01=+42.281634+020.122570',
                                                      'BLOCKA_FRFC_LOC_01=+42.283881+020.074924'
-                                                     ])
+                                                    ])
     ds = gdal.Open('/vsimem/nitf30_override.ntf')
     md = ds.GetMetadata()
     ds = None
@@ -2232,7 +2232,7 @@ def nitf_68():
     ds = None
 
     ds = gdal.Open('data/rgb.ntf')
-    if len(ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA')) == 0:
+    if not ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA'):
         print(ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA'))
         return 'fail'
     ds = None

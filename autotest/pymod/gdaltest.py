@@ -349,7 +349,7 @@ def run_all(dirlist, run_as_external=False):
     end_time = time.time()
     cur_name = None
 
-    if len(failure_summary) > 0:
+    if failure_summary:
         print('')
         print(' ------------ Failures ------------')
         for item in failure_summary:
@@ -381,7 +381,7 @@ def testCreateCopyInterruptCallback(pct, message, user_data):
 ###############################################################################
 
 
-class GDALTest:
+class GDALTest(object):
     def __init__(self, drivername, filename, band, chksum,
                  xoff=0, yoff=0, xsize=0, ysize=0, options=None,
                  filename_absolute=0, chksum_after_reopening=None, open_options=None):
@@ -451,7 +451,7 @@ class GDALTest:
 
         if check_filelist and ds.GetDriver().GetMetadataItem('DCAP_VIRTUALIO') is not None:
             fl = ds.GetFileList()
-            if fl is not None and len(fl) != 0 and wrk_filename == fl[0]:
+            if fl is not None and fl and wrk_filename == fl[0]:
 
                 # Copy all files in /vsimem/
                 mainfile_dirname = os.path.dirname(fl[0])

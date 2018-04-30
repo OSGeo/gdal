@@ -209,12 +209,12 @@ public:
   // Preferred name to match C++ API
   /* Interface method added for GDAL 1.7.0 */
   GDALColorInterp GetColorInterpretation() {
-    return GDALGetRasterColorInterpretation( self );
+    return GDALGetRasterColorInterpretation(self);
   }
 
   // Deprecated name
   GDALColorInterp GetRasterColorInterpretation() {
-    return GDALGetRasterColorInterpretation( self );
+    return GDALGetRasterColorInterpretation(self);
   }
 
   // Preferred name to match C++ API
@@ -237,12 +237,12 @@ public:
   }
 
   CPLErr DeleteNoDataValue() {
-    return GDALDeleteRasterNoDataValue( self );
+    return GDALDeleteRasterNoDataValue(self);
   }
 
   /* Interface method added for GDAL 1.7.0 */
   const char* GetUnitType() {
-      return GDALGetRasterUnitType( self );
+      return GDALGetRasterUnitType(self);
   }
 
   /* Interface method added for GDAL 1.8.0 */
@@ -252,7 +252,7 @@ public:
 
   %apply (char **options) { (char **) };
   char** GetRasterCategoryNames( ) {
-    return GDALGetRasterCategoryNames( self );
+    return GDALGetRasterCategoryNames(self);
   }
   %clear (char **);
 
@@ -315,7 +315,7 @@ public:
   }
 
   int GetOverviewCount() {
-    return GDALGetOverviewCount( self );
+    return GDALGetOverviewCount(self);
   }
 
   GDALRasterBandShadow *GetOverview(int i) {

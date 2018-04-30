@@ -88,7 +88,7 @@ def overviewds_2():
             print(expected_gt)
             print(gt)
             return 'fail'
-    if ds.GetGCPCount() != 0 or ds.GetGCPProjection() != src_ds.GetGCPProjection() or len(ds.GetGCPs()) != 0:
+    if ds.GetGCPCount() != 0 or ds.GetGCPProjection() != src_ds.GetGCPProjection() or ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     expected_data = src_ds.ReadRaster(0, 0, 20, 20, 10, 10)
@@ -114,10 +114,10 @@ def overviewds_2():
     if ds.GetMetadataItem('AREA_OR_POINT') != src_ds.GetMetadataItem('AREA_OR_POINT'):
         gdaltest.post_reason('fail')
         return 'fail'
-    if len(ds.GetMetadata('RPC')) != 0:
+    if ds.GetMetadata('RPC'):
         gdaltest.post_reason('fail')
         return 'fail'
-    if len(ds.GetMetadata('GEOLOCATION')) != 0:
+    if ds.GetMetadata('GEOLOCATION'):
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetMetadataItem('RPC', 'FOO') is not None:

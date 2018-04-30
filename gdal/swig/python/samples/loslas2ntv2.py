@@ -36,7 +36,7 @@ import sys
 # dummy object to hold options
 
 
-class Options:
+class Options(object):
     def __init__(self):
         self.verbose_flag = 0
         self.append = 0
@@ -101,7 +101,7 @@ def TranslateLOSLAS(los, ntv2_filename, options):
         data = -1 * data
     ntv2_db.GetRasterBand(2).WriteArray(data)
 
-    if len(options.metadata) > 0:
+    if options.metadata:
         ntv2_db.SetMetadata(options.metadata)
 
 # =============================================================================
@@ -252,7 +252,7 @@ if __name__ == '__main__':
 
         i = i + 1
 
-    if len(loslas_list) == 0:
+    if not loslas_list:
         print('No .los/.las files specified as input.')
         Usage()
 

@@ -39,7 +39,7 @@ from osgeo import gdal
 ###############################################################################
 
 
-class wkb_wkt_unit:
+class wkb_wkt_unit(object):
     def __init__(self, unit):
         self.unit = unit
 
@@ -368,7 +368,7 @@ def ogr_wkbwkt_test_broken_geom():
                    'CURVEPOLYGON Z()',
                    'CURVEPOLYGON Z(EMPTY',
                    'CURVEPOLYGON Z((0 1,2 3)',
-                   ]
+                  ]
     for wkt in list_broken:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         geom = ogr.CreateGeometryFromWkt(wkt)
@@ -493,7 +493,7 @@ def ogr_wkbwkt_test_import_wkt_sf12():
 
                        ('MULTISURFACE EMPTY', 'MULTISURFACE EMPTY'),
                        ('MULTISURFACE (EMPTY)', 'MULTISURFACE EMPTY'),
-                       ]
+                      ]
 
     for wkt_tuple in list_wkt_tuples:
         geom = ogr.CreateGeometryFromWkt(wkt_tuple[0])
@@ -545,7 +545,7 @@ def ogr_wkbwkt_test_geometrycollection_wktwkb():
                 'GEOMETRYCOLLECTION (CURVEPOLYGON ((0 0,0 1,1 1,0 0)))',
                 'GEOMETRYCOLLECTION (MULTICURVE ((0 0,0 1,1 1,0 0)))',
                 'GEOMETRYCOLLECTION (MULTISURFACE (((0 0,0 1,1 1,0 0))))',
-                ]
+               ]
     for wkt in wkt_list:
         g = ogr.CreateGeometryFromWkt(wkt)
         wkb = g.ExportToWkb()

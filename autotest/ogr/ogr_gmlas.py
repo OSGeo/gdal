@@ -712,7 +712,7 @@ def ogr_gmlas_abstractgeometry():
 # Test validation against schema
 
 
-class MyHandler:
+class MyHandler(object):
     def __init__(self):
         self.error_list = []
 
@@ -738,7 +738,7 @@ def ogr_gmlas_validate():
     lyr.GetFeatureCount()
     gdal.SetConfigOption('GMLAS_WARN_UNEXPECTED', 'YES')
     gdal.PopErrorHandler()
-    if len(myhandler.error_list) != 0:
+    if myhandler.error_list:
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
@@ -767,7 +767,7 @@ def ogr_gmlas_validate():
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
-    if len(myhandler.error_list) != 0:
+    if myhandler.error_list:
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
@@ -785,7 +785,7 @@ def ogr_gmlas_validate():
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
-    if len(myhandler.error_list) != 0:
+    if myhandler.error_list:
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
@@ -827,7 +827,7 @@ def ogr_gmlas_validate():
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
-    if len(myhandler.error_list) != 0:
+    if myhandler.error_list:
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
@@ -1540,7 +1540,7 @@ def ogr_gmlas_dataset_getnextfeature():
                    ['_ogr_fields_metadata', '_ogr_layers_metadata'],
                    ['_ogr_fields_metadata', '_ogr_layer_relationships'],
                    ['_ogr_layers_metadata', '_ogr_layer_relationships'],
-                   ]:
+                  ]:
 
         ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml')
         expected_count = base_count
@@ -1654,7 +1654,7 @@ def ogr_gmlas_validate_ignored_fixed_attribute():
                 open_options=['VALIDATE=YES',
                               'CONFIG_FILE=<Configuration><IgnoredXPaths><XPath>@bar</XPath></IgnoredXPaths></Configuration>'])
     gdal.PopErrorHandler()
-    if len(myhandler.error_list) != 0:
+    if myhandler.error_list:
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'

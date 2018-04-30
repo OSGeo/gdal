@@ -161,7 +161,7 @@ def test_gdal_ls_py_5():
         return 'skip'
     d = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
-    if len(d) == 0:
+    if not d:
         return 'skip'
 
     # ret, ret_str = run_gdal_ls(['', '-R', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
@@ -190,7 +190,7 @@ def test_gdal_ls_py_6():
         return 'skip'
     d = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
-    if len(d) == 0:
+    if not d:
         return 'skip'
 
     ret, ret_str = run_gdal_ls(['', '-l', '/vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip'])
@@ -233,7 +233,7 @@ def test_gdal_ls_py_7():
         return 'skip'
     d = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
-    if len(d) == 0:
+    if not d:
         return 'skip'
 
     # ret, ret_str = run_gdal_ls(['', '-R', '-Rzip', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
@@ -268,7 +268,7 @@ def test_gdal_ls_py_8():
         return 'skip'
     d = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
-    if len(d) == 0:
+    if not d:
         return 'skip'
 
     ret, ret_str = run_gdal_ls(['', '-l', '-R', '-Rzip', 'ftp://download.osgeo.org/gdal/data/aig'])

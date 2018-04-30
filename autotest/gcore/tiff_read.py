@@ -1140,7 +1140,7 @@ def tiff_read_exif_and_gps():
     exif_md = ds.GetMetadata('EXIF')
     ds = None
 
-    if exif_md is None or len(exif_md) == 0:
+    if exif_md is None or not exif_md:
         gdaltest.post_reason('failed')
         return 'fail'
 
@@ -1157,7 +1157,7 @@ def tiff_read_exif_and_gps():
     exif_md = ds.GetMetadata('EXIF')
     ds = None
 
-    if not (exif_md is None or len(exif_md) == 0):
+    if not (exif_md is None or not exif_md):
         gdaltest.post_reason('failed')
         return 'fail'
 
@@ -2744,7 +2744,7 @@ def tiff_read_nogeoref():
              ('WORLDFILE,PAM,INTERNAL', True, True, False, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('WORLDFILE,INTERNAL,PAM', True, True, False, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('NONE', True, True, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-             ]
+            ]
 
     for (config_option_value, copy_pam, copy_worldfile, copy_tabfile, expected_srs, expected_gt) in tests:
         for iteration in range(2):
@@ -2806,7 +2806,7 @@ def tiff_read_inconsistent_georef():
              ('WORLDFILE', True, True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('TABFILE', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
              ('TABFILE,PAM', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
-             ]
+            ]
 
     for (config_option_value, copy_pam, copy_worldfile, copy_tabfile, expected_srs, expected_gt) in tests:
         for iteration in range(2):
@@ -2862,7 +2862,7 @@ def tiff_read_gcp_internal_and_auxxml():
              ('PAM', False, '', 0),
              ('PAM,INTERNAL', True, 'LOCAL_CS["PAM"]', 1),
              ('PAM,INTERNAL', False, '4326', 2),
-             ]
+            ]
 
     for (config_option_value, copy_pam, expected_srs, expected_gcp_count) in tests:
         for iteration in range(2):
@@ -2901,7 +2901,7 @@ def tiff_read_gcp_internal_and_auxxml():
 # Test reading .tif + .aux
 
 
-class myHandlerClass:
+class myHandlerClass(object):
     def __init__(self):
         self.msg = None
 
@@ -3535,7 +3535,7 @@ def tiff_read_stripoffset_types():
     for (filename, expected_offsets) in tests:
 
         # Only when built against internal libtiff we reject byte datatype
-        if len(expected_offsets) == 0 and \
+        if not expected_offsets and \
            gdal.GetDriverByName('GTiff').GetMetadataItem('LIBTIFF') != 'INTERNAL':
             continue
 

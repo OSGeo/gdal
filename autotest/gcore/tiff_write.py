@@ -902,7 +902,7 @@ def tiff_write_20():
               ('TIFFTAG_RESOLUTIONUNIT', '2 (pixels/inch)'),
               ('TIFFTAG_MINSAMPLEVALUE', '1'),
               ('TIFFTAG_MAXSAMPLEVALUE', '2'),
-              ]
+             ]
 
     new_ds.SetMetadata(dict(values))
 
@@ -3444,7 +3444,7 @@ def tiff_write_85():
 
     # Third part : test storing and retrieving unittype from PAM metadata
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_85_bis.tif', 1, 1)
-    if len(ds.GetRasterBand(1).GetUnitType()) != 0:
+    if ds.GetRasterBand(1).GetUnitType():
         gdaltest.post_reason('expected None values')
         return 'fail'
     ds = None
@@ -3621,7 +3621,7 @@ def tiff_write_87():
     import validate_cloud_optimized_geotiff
     try:
         errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled=False)
-        if len(errors) != 0:
+        if errors:
             gdaltest.post_reason('validate_cloud_optimized_geotiff failed')
             print(errors)
             return 'fail'
@@ -4793,7 +4793,7 @@ def tiff_write_118():
 
     gdal.Unlink('/vsimem/tiff_write_118.tif')
 
-    if len(md) != 0:
+    if md:
         print(md)
         return 'fail'
 
@@ -5349,7 +5349,7 @@ def tiff_write_126():
                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'BLOCKYSIZE=800'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'BLOCKYSIZE=32'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'BLOCKYSIZE=8'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),
-                    ]
+                   ]
 
     for (options, cs1, cs2, cs3, cs4) in options_list:
         os.environ['JPEGMEM'] = '500M'
@@ -5413,7 +5413,7 @@ def tiff_write_126():
                     (['COMPRESS=JPEG', 'TILED=YES'], [49887, 58937], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'BLOCKYSIZE=800'], [49887, 58937], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'BLOCKYSIZE=32'], [49887, 58937], [30829, 34806], [11664, 58937]),
-                    ]
+                   ]
 
     for (options, cs1, cs3, cs4) in options_list:
         os.environ['JPEGMEM'] = '500M'
@@ -5552,7 +5552,7 @@ def tiff_write_127():
 
         ds = gdal.Open('/vsimem/tiff_write_127.tif', gdal.GA_Update)
         obj = ds if i == 0 else ds.GetRasterBand(1)
-        if len(obj.GetMetadata()) != 0:
+        if obj.GetMetadata():
             gdaltest.post_reason('fail')
             print(i)
             return 'fail'
@@ -5572,7 +5572,7 @@ def tiff_write_127():
 
         ds = gdal.Open('/vsimem/tiff_write_127.tif', gdal.GA_Update)
         obj = ds if i == 0 else ds.GetRasterBand(1)
-        if len(obj.GetMetadata()) != 0:
+        if obj.GetMetadata():
             gdaltest.post_reason('fail')
             print(i)
             return 'fail'
@@ -6187,7 +6187,7 @@ def tiff_write_135():
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_135.tif')
-    if len(ds.GetGCPs()) != 0:
+    if ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetGCPProjection() != '':
@@ -6206,7 +6206,7 @@ def tiff_write_135():
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_135.tif')
-    if len(ds.GetGCPs()) != 0:
+    if ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetGCPProjection() != '':
@@ -6228,7 +6228,7 @@ def tiff_write_135():
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_135.tif')
-    if len(ds.GetGCPs()) != 0:
+    if ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetGeoTransform() != (1, 2, 3, 4, 5, -6):
@@ -6755,7 +6755,7 @@ def tiff_write_145():
                     {'creation_options': ['PHOTOMETRIC=foo'], 'expected_failure': False},
                     {'creation_options': ['PHOTOMETRIC=RGB'], 'expected_failure': False},
                     {'creation_options': ['TILED=YES', 'BLOCKSIZE=1', 'BLOCKYSIZE=1'], 'expected_failure': True},
-                    ]
+                   ]
 
     for options in options_list:
         xsize = options.get('xsize', 1)
@@ -7304,7 +7304,7 @@ def tiff_write_157():
                        0x83FF,  # Largest negative denormalized value
                        0x0400,  # Smallest positive normalized value
                        0x8400,  # Smallest negative normalized value
-                       )
+                      )
 
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_157.tif', 14, 1, 1, gdal.GDT_Float32, options=['NBITS=16'])
     ds = None
@@ -7381,7 +7381,7 @@ def tiff_write_157():
                        0x80800000,  # Smallest negative normalized value
                        0x33800000,  # 5.9604644775390625e-08 = Smallest number that can be converted as a float16 denormalized value
                        0x47800000,  # 65536 --> converted to infinity
-                       )
+                      )
     ds.GetRasterBand(1).WriteRaster(0, 0, 18, 1, vals, buf_type=gdal.GDT_Float32)
     with gdaltest.error_handler():
         ds.FlushCache()
@@ -7597,7 +7597,7 @@ def tiff_write_161():
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_161.tif', gdal.GA_Update)
-    if len(ds.GetGCPs()) == 0:
+    if not ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetGeoTransform(can_return_null=True) is not None:
@@ -7610,13 +7610,13 @@ def tiff_write_161():
     if ds.GetGeoTransform() != (0.0, 1.0, 2.0, 3.0, 4.0, 5.0):
         gdaltest.post_reason('fail')
         return 'fail'
-    if len(ds.GetGCPs()) != 0:
+    if ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_161.tif', gdal.GA_Update)
-    if len(ds.GetGCPs()) != 0:
+    if ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetGeoTransform() != (0.0, 1.0, 2.0, 3.0, 4.0, 5.0):

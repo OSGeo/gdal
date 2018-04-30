@@ -41,7 +41,7 @@ import gdaltest
 #
 
 
-class TestXMPRead:
+class TestXMPRead(object):
     def __init__(self, drivername, filename, expect_xmp):
         self.drivername = drivername
         self.filename = filename
@@ -78,13 +78,13 @@ class TestXMPRead:
                 gdaltest.post_reason('opened with wrong driver')
                 print(ds.GetDriver().ShortName)
                 ret = 'failure'
-            elif self.expect_xmp and len(xmp_md) == 0:
+            elif self.expect_xmp and not xmp_md:
                 gdaltest.post_reason('did not find xml:XMP metadata')
                 ret = 'failure'
             elif self.expect_xmp and 'xml:XMP' not in ds.GetMetadataDomainList():
                 gdaltest.post_reason('did not find xml:XMP metadata domain')
                 ret = 'failure'
-            elif (not self.expect_xmp) and xmp_md is not None and len(xmp_md) != 0:
+            elif (not self.expect_xmp) and xmp_md:
                 gdaltest.post_reason('found unexpected xml:XMP metadata')
                 ret = 'failure'
         ds = None
@@ -119,7 +119,7 @@ lst = [["GTiff", "data/byte_with_xmp.tif", True],
        ["PDF", "data/adobe_style_geospatial.pdf", False],
        ["WEBP", "data/rgbsmall_with_xmp.webp", True],
        ["WEBP", "data/rgbsmall.webp", False],
-       ]
+      ]
 
 for drivername, filename, expect_xmp in lst:
     ut = TestXMPRead(drivername, filename, expect_xmp)

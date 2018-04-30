@@ -1214,9 +1214,9 @@ def process_args(argv):
     options, args = parser.parse_args(args=argv)
 
     # Args should be either an input file OR an input file and an output folder
-    if (len(args) == 0):
+    if not args:
         exit_with_error("You need to specify at least an input file as argument to the script")
-    if (len(args) > 2):
+    if len(args) > 2:
         exit_with_error("Processing of several input files is not supported.",
                         "Please first use a tool like gdal_vrtmerge.py or gdal_merge.py on the "
                         "files: gdal_vrtmerge.py -o merged.vrt %s" % " ".join(args))
