@@ -47,7 +47,7 @@ if dataset is None:
 
 gcps = dataset.GetGCPs()
 
-if gcps is None or len(gcps) == 0:
+if gcps is None or not gcps:
     print('No GCPs found on file ' + filename)
     sys.exit(1)
 

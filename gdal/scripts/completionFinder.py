@@ -84,7 +84,7 @@ def processTool(toolName):
 
     while index < len(lines):
         cleanLine = lines[index].strip('\t\r ')
-        if (len(cleanLine) == 0):
+        if not cleanLine:
             break
         options += processLine(cleanLine)
         index += 1

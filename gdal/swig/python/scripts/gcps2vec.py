@@ -93,7 +93,7 @@ gcps = ds.GetGCPs()
 
 ds = None
 
-if gcps is None or len(gcps) == 0:
+if gcps is None or not gcps:
     print('No GCPs on file %s!' % in_file)
     sys.exit(1)
 

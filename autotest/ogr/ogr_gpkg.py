@@ -1621,11 +1621,11 @@ def ogr_gpkg_19():
         return 'skip'
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_19.gpkg')
-    if len(ds.GetMetadata()) != 0:
+    if ds.GetMetadata():
         gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.CreateLayer('test_without_md')
-    if len(lyr.GetMetadata()) != 0:
+    if lyr.GetMetadata():
         gdaltest.post_reason('fail')
         return 'fail'
 

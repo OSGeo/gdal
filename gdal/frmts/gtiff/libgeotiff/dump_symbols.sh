@@ -2,7 +2,7 @@
 # GDAL specific script to extract exported libtiff symbols that can be renamed
 # to keep them internal to GDAL as much as possible
 
-gcc *.c -fPIC -shared -o libgeotiff.so -I. -I../../../port
+gcc ./*.c -fPIC -shared -o libgeotiff.so -I. -I../../../port
 
 OUT_FILE=gdal_libgeotiff_symbol_rename.h
 
@@ -17,7 +17,7 @@ do
 done
 
 rodata_symbol_list=$(objdump -t libgeotiff.so  | grep "\.rodata" |  awk '{print $6}' | grep -v "\.")
-for symbol in $data_symbol_list
+for symbol in $rodata_symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
