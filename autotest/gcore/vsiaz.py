@@ -464,7 +464,7 @@ def vsiaz_fake_write():
         return 'fail'
     with gdaltest.error_handler():
         ret = gdal.VSIFReadL(1, 1, f)
-    if len(ret) != 0:
+    if ret:
         gdaltest.post_reason('fail')
         print(ret)
         return 'fail'

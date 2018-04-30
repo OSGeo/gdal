@@ -100,7 +100,7 @@ def ogrupdate_analyse_args(argv, progress=None, progress_arg=None):
 
     dry_run = False
 
-    if len(argv) == 0:
+    if not argv:
         return Usage()
 
     i = 0

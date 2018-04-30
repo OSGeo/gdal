@@ -84,7 +84,7 @@ def gdal_rm(argv, progress=None):
         return -1
 
     for i in range(1, len(argv)):
-        if len(argv[i]) == 0:
+        if not argv[i]:
             return Usage()
 
         if argv[i] == '-r':
