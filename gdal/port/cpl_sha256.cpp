@@ -605,7 +605,7 @@ GByte* CPL_RSA_SHA256_Sign(const char* pszPrivateKey,
     CryptoPP::Base64Decoder decoder;
 
     decoder.Attach(new CryptoPP::Redirector(queue));
-    decoder.Put(reinterpret_cast<const byte*>(osKeyB64.data()), osKeyB64.length());
+    decoder.Put(reinterpret_cast<const CryptoPP::byte*>(osKeyB64.data()), osKeyB64.length());
     decoder.MessageEnd();
 
     CryptoPP::RSA::PrivateKey rsaPrivate;
