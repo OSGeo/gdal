@@ -32,7 +32,7 @@ do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
 
-cat $OUT_FILE | sort -u > $OUT_FILE.tmp
+sort -u < $OUT_FILE > $OUT_FILE.tmp
 
 echo "/* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */" > $OUT_FILE
 cat $OUT_FILE.tmp >> $OUT_FILE

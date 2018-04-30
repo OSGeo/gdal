@@ -32,7 +32,7 @@ fi
 # Processing script input arguments
 #
 GDAL_VERSION=$1
-COMPRESSED_VERSION=`echo $GDAL_VERSION | tr -d .`
+COMPRESSED_VERSION=$(echo "$GDAL_VERSION" | tr -d .)
 
 if test "$2" = "-date" ; then
   forcedate=$3
@@ -121,7 +121,7 @@ for i in `find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.dox" \
               -o -name "*.py" -o -name "*.i" -o -name "*.sh" -o -name "*.cs" \
               -o -name "*.java" -o -name "*.m4" -o -name "*.xml" \
               -o -name "*.xsd"`; do
-    ID="`basename $i` `git log -1 --format='%H %ai %aN' $i | sed 's/ +0000/Z/'`";
+    ID="$(basename $i) $(git log -1 --format='%H %ai %aN' $i | sed 's/ +0000/Z/')";
     sed -i "s/\\\$Id\\\$/\\\$Id: ${ID} \\\$/" $i;
 done
 
@@ -144,7 +144,7 @@ fi
 rm -f doxygen_sqlite3.db
 rm -f man/man1/*_dist_wrk_gdal_gdal_apps_.1
 
-cd ${CWD}
+cd "$CWD"
 
 # They currently require SWIG 1.3.X, which is not convenient as we need
 # newer SWIG for newer Python versions
@@ -203,7 +203,7 @@ cd ../../..
 
 echo "* Generating MD5 sums ..."
 
-OSTYPE=`uname -s`
+OSTYPE=$(uname -s)
 if test "$OSTYPE" = "Darwin" ; then
 MD5=md5
 else

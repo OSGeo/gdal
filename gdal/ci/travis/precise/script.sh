@@ -58,7 +58,7 @@ cd ..
 git checkout ogr/ogr_fgdb.py
 git checkout ogr/ogr_pgeo.py
 git checkout ogr/ogr_mongodb.py
-if test `git diff | wc -l` != "0"; then
+if test "$(git diff | wc -l)" != 0; then
     echo "Files have been modified duing testsuite run:"
     git diff
     exit 1
