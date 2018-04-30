@@ -117,10 +117,10 @@ echo "* Cleaning .gitignore under $PWD..."
 rm -f gdal/.gitignore
 
 echo "* Substituting \$Id\$..."
-for i in `find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.dox" \
+for i in $(find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.dox" \
               -o -name "*.py" -o -name "*.i" -o -name "*.sh" -o -name "*.cs" \
               -o -name "*.java" -o -name "*.m4" -o -name "*.xml" \
-              -o -name "*.xsd"`; do
+              -o -name "*.xsd"); do
     ID="$(basename $i) $(git log -1 --format='%H %ai %aN' $i | sed 's/ +0000/Z/')";
     sed -i "s/\\\$Id\\\$/\\\$Id: ${ID} \\\$/" $i;
 done
