@@ -8,13 +8,13 @@ export CCACHE_CPP2=yes
 
 ARCH_FLAGS=""
 AVX2_AVAIL=1
-cat /proc/cpuinfo | grep avx2 >/dev/null || AVX2_AVAIL=0
+grep avx2 /proc/cpuinfo >/dev/null || AVX2_AVAIL=0
 if [[ "${AVX2_AVAIL}" == "1" ]]; then
         ARCH_FLAGS="-mavx2"
         echo "AVX2 available on CPU"
 else
         echo "AVX2 not available on CPU."
-        cat /proc/cpuinfo  | grep flags | head -n 1
+        grep flags /proc/cpuinfo | head -n 1
 fi
 
 CFLAGS=$ARCH_FLAGS CXXFLAGS=$ARCH_FLAGS CC="ccache clang" CXX="ccache clang" LDFLAGS="-lstdc++" ./configure --prefix=/usr --without-libtool --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-null -with-libtiff=internal
