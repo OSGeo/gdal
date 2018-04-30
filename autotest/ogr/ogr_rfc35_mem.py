@@ -237,7 +237,7 @@ def ogr_rfc35_mem_3():
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, baz='baz25')
+    ret = CheckFeatures(lyr, field3='baz25')
     if ret != 'success':
         return ret
 
@@ -247,7 +247,7 @@ def ogr_rfc35_mem_3():
     lyr_defn = lyr.GetLayerDefn()
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz25"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         return ret
 
@@ -256,7 +256,7 @@ def ogr_rfc35_mem_3():
     if fld_defn.GetWidth() != 5:
         return 'fail'
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         return ret
 
@@ -294,7 +294,7 @@ def ogr_rfc35_mem_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         return ret
 
@@ -307,7 +307,7 @@ def ogr_rfc35_mem_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         return ret
 
@@ -321,7 +321,7 @@ def ogr_rfc35_mem_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         return ret
 
@@ -336,7 +336,7 @@ def ogr_rfc35_mem_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         return ret
 
@@ -367,7 +367,7 @@ def ogr_rfc35_mem_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         return ret
 
@@ -400,21 +400,21 @@ def ogr_rfc35_mem_5():
     if lyr.DeleteField(0) != 0:
         return 'fail'
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         return ret
 
     if lyr.DeleteField(lyr_defn.GetFieldIndex('baw20')) != 0:
         return 'fail'
 
-    ret = CheckFeatures(lyr, baz='baz5', baw=None)
+    ret = CheckFeatures(lyr, field3='baz5', field4=None)
     if ret != 'success':
         return ret
 
     if lyr.DeleteField(lyr_defn.GetFieldIndex('baz5')) != 0:
         return 'fail'
 
-    ret = CheckFeatures(lyr, baz=None, baw=None)
+    ret = CheckFeatures(lyr, field3=None, field4=None)
     if ret != 'success':
         return ret
 
@@ -424,7 +424,7 @@ def ogr_rfc35_mem_5():
     if lyr.DeleteField(lyr_defn.GetFieldIndex('bar10')) != 0:
         return 'fail'
 
-    ret = CheckFeatures(lyr, foo=None, bar=None, baz=None, baw=None)
+    ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
     if ret != 'success':
         return ret
 

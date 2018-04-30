@@ -323,7 +323,7 @@ def ogr_rfc35_mitab_3():
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, baz='baz25')
+    ret = CheckFeatures(lyr, field3='baz25')
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
@@ -334,7 +334,7 @@ def ogr_rfc35_mitab_3():
     lyr_defn = lyr.GetLayerDefn()
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz25"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
@@ -349,7 +349,7 @@ def ogr_rfc35_mitab_3():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         return ret
 
@@ -395,7 +395,7 @@ def ogr_rfc35_mitab_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
@@ -411,7 +411,7 @@ def ogr_rfc35_mitab_4():
             return 'fail'
         feat = None
 
-        ret = CheckFeatures(lyr, baz='baz5')
+        ret = CheckFeatures(lyr, field3='baz5')
         if ret != 'success':
             gdaltest.post_reason(ret)
             return ret
@@ -433,7 +433,7 @@ def ogr_rfc35_mitab_4():
             return 'fail'
         feat = None
 
-        ret = CheckFeatures(lyr, baz='baz5')
+        ret = CheckFeatures(lyr, field3='baz5')
         if ret != 'success':
             gdaltest.post_reason(ret)
             return ret
@@ -461,7 +461,7 @@ def ogr_rfc35_mitab_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
@@ -479,7 +479,7 @@ def ogr_rfc35_mitab_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
@@ -515,7 +515,7 @@ def ogr_rfc35_mitab_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
@@ -533,7 +533,7 @@ def ogr_rfc35_mitab_4():
         return 'fail'
     feat = None
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
@@ -572,7 +572,7 @@ def ogr_rfc35_mitab_5():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ret = CheckFeatures(lyr, baz='baz5')
+    ret = CheckFeatures(lyr, field3='baz5')
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
@@ -593,7 +593,7 @@ def ogr_rfc35_mitab_5():
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    ret = CheckFeatures(lyr, baz='baz5', baw=None)
+    ret = CheckFeatures(lyr, field3='baz5', field4=None)
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
@@ -602,7 +602,7 @@ def ogr_rfc35_mitab_5():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ret = CheckFeatures(lyr, baz=None, baw=None)
+    ret = CheckFeatures(lyr, field3=None, field4=None)
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
@@ -619,7 +619,7 @@ def ogr_rfc35_mitab_5():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ret = CheckFeatures(lyr, foo=None, bar=None, baz=None, baw=None)
+    ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
@@ -630,7 +630,7 @@ def ogr_rfc35_mitab_5():
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    ret = CheckFeatures(lyr, foo=None, bar=None, baz=None, baw=None)
+    ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
