@@ -191,8 +191,8 @@ def gdal_edit(argv):
 
     if (srs is None and lry is None and yres is None and not unsetgt and
             not unsetstats and not stats and nodata is None and
-            len(molist) == 0 and not unsetmd and len(gcp_list) == 0 and
-            not unsetnodata and len(colorinterp) == 0 and
+            not molist and not unsetmd and not gcp_list and
+            not unsetnodata and not colorinterp and
             scale is None and offset is None):
         print('No option specified')
         print('')
@@ -242,7 +242,7 @@ def gdal_edit(argv):
             print('Failed to process SRS definition: %s' % srs)
             return -1
         wkt = sr.ExportToWkt()
-        if len(gcp_list) == 0:
+        if not gcp_list:
             ds.SetProjection(wkt)
 
     if lry is not None:
@@ -266,7 +266,7 @@ def gdal_edit(argv):
         else:
             ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
 
-    if len(gcp_list) > 0:
+    if gcp_list:
         if wkt is None:
             wkt = ds.GetGCPProjection()
         if wkt is None:
@@ -299,7 +299,7 @@ def gdal_edit(argv):
         for i in range(ds.RasterCount):
             ds.GetRasterBand(i + 1).ComputeStatistics(approx_stats)
 
-    if len(molist) != 0:
+    if molist:
         if unsetmd:
             md = {}
         else:

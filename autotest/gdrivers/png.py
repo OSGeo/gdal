@@ -160,7 +160,7 @@ def png_8():
     ds_src = gdal.Open('data/idat_broken.png')
 
     md = ds_src.GetMetadata()
-    if len(md) > 0:
+    if md:
         gdaltest.post_reason('metadata list not expected')
         return 'fail'
 
