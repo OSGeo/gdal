@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # read version
-version=`cat ../../VERSION | xargs echo -n`
+version=$(xargs echo -n < ../../VERSION)
 
 # Patch the generated SIWG Java files to add the Javadoc into them
 # thanks to the small utility add_javadoc
