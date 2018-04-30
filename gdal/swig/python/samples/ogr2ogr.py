@@ -577,7 +577,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
                       "Unable to open existing output datasource `%s'." % pszDestDataSource)
                 return False
 
-        elif len(papszDSCO) > 0:
+        elif papszDSCO:
             print("WARNING: Datasource creation options ignored since an existing datasource\n" +
                   "         being updated.")
 
@@ -613,7 +613,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
         if EQUAL(poDriver.GetName(), "ESRI Shapefile") and \
            pszSQLStatement is None and \
            (len(papszLayers) > 1 or
-                (len(papszLayers) == 0 and poDS.GetLayerCount() > 1)) and \
+                (not papszLayers and poDS.GetLayerCount() > 1)) and \
                 pszNewLayerName is None and \
                 EQUAL(os.path.splitext(pszDestDataSource)[1], ".SHP"):
 
@@ -672,7 +672,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
     if pszSQLStatement is not None:
         if pszWHERE is not None:
             print("-where clause ignored in combination with -sql.")
-        if len(papszLayers) > 0:
+        if papszLayers:
             print("layer names ignored in combination with -sql.")
 
         poResultSet = poDS.ExecuteSQL(pszSQLStatement, poSpatialFilter,
@@ -783,7 +783,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 # --------------------------------------------------------------------
 #      If no target layer specified, use all source layers.
 # --------------------------------------------------------------------
-        if len(papszLayers) == 0:
+        if not papszLayers:
             papszLayers = [None] * nSrcLayerCount
             for iLayer in range(nSrcLayerCount):
                 poLayer = poDS.GetLayer(iLayer)
@@ -895,7 +895,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 # --------------------------------------------------------------------
 #      Process each data source layer.
 # --------------------------------------------------------------------
-        if len(papszLayers) == 0:
+        if not papszLayers:
             nLayerCount = poDS.GetLayerCount()
             papoLayers = [None] * nLayerCount
             iLayer = 0
@@ -1274,7 +1274,7 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName,
                     and poLayer.GetName() == poDstLayer.GetName():
                 break
 
-        if (iLayer == nLayerCount):
+        if iLayer == nLayerCount:
             # Shouldn't happen with an ideal driver
             poDstLayer = None
 
@@ -1344,7 +1344,7 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName,
               "        Consider using -append, or -overwrite.")
         return None
     else:
-        if len(papszLCO) > 0:
+        if papszLCO:
             print("WARNING: Layer creation options ignored since an existing layer is\n" +
                   "         being appended to.")
 

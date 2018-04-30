@@ -148,7 +148,7 @@ def extract_all_xml_boxes(filename, prefix):
             f.close()
             print('INFO: %s written' % out_filename)
 
-    if len(mdd_list) == 0:
+    if not mdd_list:
         print('No XML box found')
         return 1
     return 0

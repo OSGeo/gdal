@@ -55,7 +55,7 @@ class gml_geom_unit(object):
 
         gml = geom_wkt.ExportToGML()
 
-        if gml is None or len(gml) == 0:
+        if gml is None or not gml:
             gdaltest.post_reason('Conversion to GML failed.')
             return 'fail'
 
@@ -236,7 +236,7 @@ def gml_out_point_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or len(gml) == 0:
+    if gml is None or not gml:
         gdaltest.post_reason('Conversion to GML failed.')
         return 'fail'
 
@@ -256,7 +256,7 @@ def gml_out_point3d_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or len(gml) == 0:
+    if gml is None or not gml:
         gdaltest.post_reason('Conversion to GML failed.')
         return 'fail'
 
@@ -276,7 +276,7 @@ def gml_out_linestring_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or len(gml) == 0:
+    if gml is None or not gml:
         gdaltest.post_reason('Conversion to GML failed.')
         return 'fail'
 
@@ -296,7 +296,7 @@ def gml_out_polygon_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or len(gml) == 0:
+    if gml is None or not gml:
         gdaltest.post_reason('Conversion to GML failed.')
         return 'fail'
 
@@ -316,7 +316,7 @@ def gml_out_multipoint_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or len(gml) == 0:
+    if gml is None or not gml:
         gdaltest.post_reason('Conversion to GML failed.')
         return 'fail'
 
@@ -336,7 +336,7 @@ def gml_out_multilinestring_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or len(gml) == 0:
+    if gml is None or not gml:
         gdaltest.post_reason('Conversion to GML failed.')
         return 'fail'
 
@@ -356,7 +356,7 @@ def gml_out_multipolygon_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or len(gml) == 0:
+    if gml is None or not gml:
         gdaltest.post_reason('Conversion to GML failed.')
         return 'fail'
 
@@ -383,7 +383,7 @@ def gml_out_geometrycollection_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or len(gml) == 0:
+    if gml is None or not gml:
         gdaltest.post_reason('Conversion to GML failed.')
         return 'fail'
 
