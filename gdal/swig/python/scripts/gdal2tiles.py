@@ -50,11 +50,11 @@ from xml.etree import ElementTree
 
 from osgeo import gdal
 from osgeo import osr
+import osgeo.gdal_array as gdalarray
 
 try:
     from PIL import Image
     import numpy
-    import osgeo.gdal_array as gdalarray
     numpy_available = True
 except ImportError:
     # 'antialias' resampling is not available
