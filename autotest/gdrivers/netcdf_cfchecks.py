@@ -692,7 +692,7 @@ class CFChecker(object):
         if len(bits) == 1:
             # Only standard_name part present
             return (bits[0], "")
-        if len(bits) == 0:
+        if not bits:
             # Standard Name is blank
             return ("", "")
         # At least 2 elements so return the first 2.
@@ -1006,7 +1006,7 @@ class CFChecker(object):
             self.err = self.err + 1
             rc = 0
 
-        if len(var.getAxisIds()) != 0:
+        if var.getAxisIds():
             print("WARNING (5.6): A grid mapping variable should have 0 dimensions")
             self.warn = self.warn + 1
 
@@ -1931,7 +1931,7 @@ class CFChecker(object):
 
                 dimensions = self.f[var.id].getAxisIds()
 
-                if not hasattr(var, 'flag_values') and len(dimensions) != 0 and self.f[var.id].typecode() != 'c':
+                if not hasattr(var, 'flag_values') and dimensions and self.f[var.id].typecode() != 'c':
                     # Variable is not a flag variable or a scalar or a label
 
                     print("INFO (3.1): No units attribute set.  Please consider adding a units attribute for completeness.")
@@ -2606,7 +2606,7 @@ def getargs(arglist):
                     version = newest_version
             continue
 
-    if len(args) == 0:
+    if not args:
         stderr.write('ERROR in command line\n\nusage:\n%s\n' % __doc__)
         sys.exit(1)
 

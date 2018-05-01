@@ -1134,7 +1134,7 @@ def _grib_read_section(filename, sect_num_to_read):
     ret = None
     while True:
         sect_size_bytes = gdal.VSIFReadL(1, 4, f)
-        if len(sect_size_bytes) == 0:
+        if not sect_size_bytes:
             break
         sect_size_num = struct.unpack('>I', sect_size_bytes)[0]
         sect_num_bytes = gdal.VSIFReadL(1, 1, f)
@@ -1209,7 +1209,7 @@ def grib_grib2_write_data_encodings():
                 if ecw.has_write_support():
                     found_j2k_drivers.append(drvname)
 
-    if len(found_j2k_drivers) > 0:
+    if found_j2k_drivers:
         tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000'], 4672, GS5_JPEG2000]]
         tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'COMPRESSION_RATIO=2'], 4672, GS5_JPEG2000]]  # COMPRESSION_RATIO ignored in that case
         tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'NBITS=8'], 4672, GS5_JPEG2000]]
@@ -1243,7 +1243,7 @@ def grib_grib2_write_data_encodings():
     tests += [[one_ds, ['DATA_ENCODING=COMPLEX_PACKING'], 1, GS5_CMPLX]]
     if gdal.GetDriverByName('PNG') is not None:
         tests += [[one_ds, ['DATA_ENCODING=PNG'], 1, GS5_PNG]]
-    if len(found_j2k_drivers) > 0:
+    if found_j2k_drivers:
         tests += [[one_ds, ['DATA_ENCODING=JPEG2000'], 1, GS5_JPEG2000]]
 
     nodata_never_hit_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
@@ -1310,7 +1310,7 @@ def grib_grib2_write_data_encodings():
     if gdal.GetDriverByName('PNG') is not None:
         encodings += ['PNG']
     # JPEG2000 doesn't result in an appropriate result
-    if len(found_j2k_drivers) > 0 and found_j2k_drivers != ['JPEG2000'] and found_j2k_drivers != ['JPEG2000', 'JP2ECW']:
+    if found_j2k_drivers and found_j2k_drivers != ['JPEG2000'] and found_j2k_drivers != ['JPEG2000', 'JP2ECW']:
         encodings += ['JPEG2000']
 
     for encoding in encodings:
@@ -1354,7 +1354,7 @@ def grib_grib2_write_data_encodings():
     if gdal.GetDriverByName('PNG') is not None:
         encodings += ['PNG']
     # JP2ECW doesn't manage to compress such a small file
-    if len(found_j2k_drivers) > 0 and found_j2k_drivers != ['JP2ECW'] and found_j2k_drivers != ['JPEG2000', 'JP2ECW']:
+    if found_j2k_drivers and found_j2k_drivers != ['JP2ECW'] and found_j2k_drivers != ['JPEG2000', 'JP2ECW']:
         encodings += ['JPEG2000']
 
     for encoding in encodings:

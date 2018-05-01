@@ -218,7 +218,7 @@ def vsifile_4():
     # print(len(data))
     gdal.VSIFSeekL(fp, 0, 0)
     data = gdal.VSIFReadL(1, 1000000, fp)
-    if len(data) == 0:
+    if not data:
         return 'fail'
     gdal.VSIFCloseL(fp)
 
@@ -382,7 +382,7 @@ def vsifile_7():
     if gdal.VSIFTellL(fp) != 0x7FFFFFFFFFFFFFFF:
         gdaltest.post_reason('fail')
         return 'fail'
-    if len(gdal.VSIFReadL(1, 1, fp)) != 0:
+    if gdal.VSIFReadL(1, 1, fp):
         gdaltest.post_reason('fail')
         return 'fail'
     if gdal.VSIFEofL(fp) != 1:

@@ -3141,7 +3141,7 @@ def netcdf_77():
         return 'fail'
 
     ds = gdal.Open('NETCDF:"data/fake_Oa01_radiance.nc":Oa01_radiance')
-    if len(ds.GetMetadata('GEOLOCATION')) != 0:
+    if ds.GetMetadata('GEOLOCATION'):
         gdaltest.post_reason('fail')
         return 'fail'
 

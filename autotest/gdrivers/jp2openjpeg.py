@@ -2285,7 +2285,7 @@ def jp2openjpeg_42():
 
     # Check it (a GeoJP2 box has been added and GMLJP2 removed)
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
-    if len(ds.GetGCPs()) == 0:
+    if not ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetMetadataDomainList() != ['DERIVED_SUBDATASETS']:
