@@ -76,7 +76,7 @@ def processTool(toolName):
     index = 0
 
     while index < len(lines):
-        if (lines[index].find("Usage:") >= 0):
+        if lines[index].find("Usage:") >= 0:
             break
         index += 1
 
@@ -102,7 +102,7 @@ def parseGDALGeneralOptions():
     while index < len(lines):
         cleanLine = lines[index].strip('\t\r ')
         parts = cleanLine.split(':')
-        if (parts[0].find('--') == 0):
+        if parts[0].find('--') == 0:
             words = parts[0].split(' ')
             options.append(words[0])
         index += 1
@@ -119,7 +119,7 @@ def parseOGRGeneralOptions():
     while index < len(lines):
         cleanLine = lines[index].strip('\t\r ')
         parts = cleanLine.split(':')
-        if (parts[0].find('--') == 0):
+        if parts[0].find('--') == 0:
             words = parts[0].split(' ')
             options.append(words[0])
         index += 1
@@ -152,7 +152,7 @@ def getCompletionScript(name, optList):
     # adapt format parsing command : GDAL type of OGR type
 
     isGdal = True
-    if (name.find("ogr") == 0):
+    if name.find("ogr") == 0:
         isGdal = False
 
     # gdal type
@@ -181,7 +181,7 @@ def getCompletionScript(name, optList):
     else:
         # ogr type
         formatParsingCmd = "$tool --formats | tail -n +2 | grep -o -E '\"[^\"]+\"' | sed 's/\ /__/'"
-        if ("-f" in optList):
+        if "-f" in optList:
             # replace ogrtindex by ogr2ogr to check --formats
             output.append("  tool=${COMP_WORDS[0]/ogrtindex/ogr2ogr}\n")
             output.append("  case \"$prev\" in\n")
