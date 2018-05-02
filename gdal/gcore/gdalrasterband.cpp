@@ -3781,16 +3781,19 @@ CPLErr GDALRasterBand::GetStatistics( int bApproxOK, int bForce,
      && (pdfMean == nullptr || GetMetadataItem("STATISTICS_MEAN") != nullptr)
      && (pdfStdDev == nullptr || GetMetadataItem("STATISTICS_STDDEV") != nullptr) )
     {
-        if( pdfMin != nullptr )
-            *pdfMin = CPLAtofM(GetMetadataItem("STATISTICS_MINIMUM"));
-        if( pdfMax != nullptr )
-            *pdfMax = CPLAtofM(GetMetadataItem("STATISTICS_MAXIMUM"));
-        if( pdfMean != nullptr )
-            *pdfMean = CPLAtofM(GetMetadataItem("STATISTICS_MEAN"));
-        if( pdfStdDev != nullptr )
-            *pdfStdDev = CPLAtofM(GetMetadataItem("STATISTICS_STDDEV"));
+        if( !(GetMetadataItem("STATISTICS_APPROXIMATE") && !bApproxOK) )
+        {
+            if( pdfMin != nullptr )
+                *pdfMin = CPLAtofM(GetMetadataItem("STATISTICS_MINIMUM"));
+            if( pdfMax != nullptr )
+                *pdfMax = CPLAtofM(GetMetadataItem("STATISTICS_MAXIMUM"));
+            if( pdfMean != nullptr )
+                *pdfMean = CPLAtofM(GetMetadataItem("STATISTICS_MEAN"));
+            if( pdfStdDev != nullptr )
+                *pdfStdDev = CPLAtofM(GetMetadataItem("STATISTICS_STDDEV"));
 
-        return CE_None;
+            return CE_None;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -4753,10 +4756,28 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
             = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
 
         if( poBand != this )
-            return poBand->ComputeStatistics( FALSE,
+        {
+            CPLErr eErr = poBand->ComputeStatistics( FALSE,
                                               pdfMin, pdfMax,
                                               pdfMean, pdfStdDev,
                                               pfnProgress, pProgressData );
+            if( eErr == CE_None )
+            {
+                if( pdfMin && pdfMax && pdfMean && pdfStdDev )
+                {
+                    if( bApproxOK )
+                    {
+                        SetMetadataItem( "STATISTICS_APPROXIMATE", "YES" );
+                    }
+                    else if( GetMetadataItem( "STATISTICS_APPROXIMATE" ) )
+                    {
+                        SetMetadataItem( "STATISTICS_APPROXIMATE",  nullptr );
+                    }
+                    SetStatistics( *pdfMin,*pdfMax, *pdfMean, *pdfStdDev );
+                }
+            }
+            return eErr;
+        }
     }
 
     if( !pfnProgress( 0.0, "Compute Statistics", pProgressData ) )
@@ -4803,7 +4824,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 
     GUIntBig nSampleCount = 0;
 
-  if ( bApproxOK && HasArbitraryOverviews() )
+    if ( bApproxOK && HasArbitraryOverviews() )
     {
 /* -------------------------------------------------------------------- */
 /*      Figure out how much the image should be reduced to get an       */
@@ -4954,6 +4975,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
             if( nSampleRate == nBlocksPerRow && nBlocksPerRow > 1 )
               nSampleRate += 1;
         }
+        if( nSampleRate == 1 )
+            bApproxOK = false;
 
 #ifdef CPL_HAS_GINT64
         // Particular case for GDT_Byte that only use integral types for all
@@ -5068,7 +5091,17 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     0.0;
 
             if( nSampleCount > 0 )
+            {
+                if( bApproxOK )
+                {
+                    SetMetadataItem( "STATISTICS_APPROXIMATE", "YES" );
+                }
+                else if( GetMetadataItem( "STATISTICS_APPROXIMATE" ) )
+                {
+                    SetMetadataItem( "STATISTICS_APPROXIMATE",  nullptr );
+                }
                 SetStatistics( nMin, nMax, dfMean, dfStdDev );
+            }
 
 /* -------------------------------------------------------------------- */
 /*      Record results.                                                 */
@@ -5229,7 +5262,17 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
         nSampleCount > 0 ? sqrt(dfM2 / nSampleCount) : 0.0;
 
     if( nSampleCount > 0 )
+    {
+        if( bApproxOK )
+        {
+            SetMetadataItem( "STATISTICS_APPROXIMATE", "YES" );
+        }
+        else if( GetMetadataItem( "STATISTICS_APPROXIMATE" ) )
+        {
+            SetMetadataItem( "STATISTICS_APPROXIMATE",  nullptr );
+        }
         SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Record results.                                                 */
