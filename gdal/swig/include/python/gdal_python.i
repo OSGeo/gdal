@@ -66,7 +66,7 @@ static void update_buffer_size(void* obj, char* data, char* data_aligned, size_t
 
 
   have_warned = 0
-  def deprecation_warn( module ):
+  def deprecation_warn(module):
     global have_warned
 
     if have_warned == 1:
@@ -103,10 +103,10 @@ static void update_buffer_size(void* obj, char* data, char* data_aligned, size_t
         return 1
 
     ct = ColorTable()
-    err = ComputeMedianCutPCT( src_ds.GetRasterBand(1),
-                               src_ds.GetRasterBand(2),
-                               src_ds.GetRasterBand(3),
-                               256, ct )
+    err = ComputeMedianCutPCT(src_ds.GetRasterBand(1),
+                              src_ds.GetRasterBand(2),
+                              src_ds.GetRasterBand(3),
+                              256, ct)
     if err != 0:
         return err
 
@@ -114,15 +114,15 @@ static void update_buffer_size(void* obj, char* data, char* data_aligned, size_t
     if gtiff_driver is None:
         return 1
 
-    dst_ds = gtiff_driver.Create( dst_filename,
-                                  src_ds.RasterXSize, src_ds.RasterYSize )
-    dst_ds.GetRasterBand(1).SetRasterColorTable( ct )
+    dst_ds = gtiff_driver.Create(dst_filename,
+                                 src_ds.RasterXSize, src_ds.RasterYSize)
+    dst_ds.GetRasterBand(1).SetRasterColorTable(ct)
 
-    err = DitherRGB2PCT( src_ds.GetRasterBand(1),
-                         src_ds.GetRasterBand(2),
-                         src_ds.GetRasterBand(3),
-                         dst_ds.GetRasterBand(1),
-                         ct )
+    err = DitherRGB2PCT(src_ds.GetRasterBand(1),
+                        src_ds.GetRasterBand(2),
+                        src_ds.GetRasterBand(3),
+                        dst_ds.GetRasterBand(1),
+                        ct)
     dst_ds = None
     src_ds = None
 
@@ -401,12 +401,12 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
     return _gdal.Band_ComputeStatistics(self, *new_args)
 
 
-  def ReadRaster(self, xoff = 0, yoff = 0, xsize=None, ysize=None,
-                   buf_xsize=None, buf_ysize=None, buf_type=None,
-                   buf_pixel_space=None, buf_line_space=None,
-                   resample_alg = GRIORA_NearestNeighbour,
-                   callback=None,
-                   callback_data=None):
+  def ReadRaster(self, xoff=0, yoff=0, xsize=None, ysize=None,
+                 buf_xsize=None, buf_ysize=None, buf_type=None,
+                 buf_pixel_space=None, buf_line_space=None,
+                 resample_alg=GRIORA_NearestNeighbour,
+                 callback=None,
+                 callback_data=None):
 
       if xsize is None:
           xsize = self.XSize
@@ -420,7 +420,7 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
 
   def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                   buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
-                  resample_alg = GRIORA_NearestNeighbour,
+                  resample_alg=GRIORA_NearestNeighbour,
                   callback=None,
                   callback_data=None):
       """ Reading a chunk of a GDAL band into a numpy array. The optional (buf_xsize,buf_ysize,buf_type)
@@ -428,23 +428,23 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
 
       import gdalnumeric
 
-      return gdalnumeric.BandReadAsArray( self, xoff, yoff,
-                                          win_xsize, win_ysize,
-                                          buf_xsize, buf_ysize, buf_type, buf_obj,
-                                          resample_alg = resample_alg,
-                                          callback = callback,
-                                          callback_data = callback_data)
+      return gdalnumeric.BandReadAsArray(self, xoff, yoff,
+                                         win_xsize, win_ysize,
+                                         buf_xsize, buf_ysize, buf_type, buf_obj,
+                                         resample_alg=resample_alg,
+                                         callback=callback,
+                                         callback_data=callback_data)
 
   def WriteArray(self, array, xoff=0, yoff=0,
-                 resample_alg = GRIORA_NearestNeighbour,
+                 resample_alg=GRIORA_NearestNeighbour,
                  callback=None,
                  callback_data=None):
       import gdalnumeric
 
-      return gdalnumeric.BandWriteArray( self, array, xoff, yoff,
-                                         resample_alg = resample_alg,
-                                         callback = callback,
-                                         callback_data = callback_data )
+      return gdalnumeric.BandWriteArray(self, array, xoff, yoff,
+                                        resample_alg=resample_alg,
+                                        callback=callback,
+                                        callback_data=callback_data)
 
   def GetVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
                          xsize=None, ysize=None, bufxsize=None, bufysize=None,
@@ -468,9 +468,9 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
         if datatype is None:
             datatype = self.DataType
         if options is None:
-            virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,cache_size,page_size_hint)
+            virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, cache_size, page_size_hint)
         else:
-            virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,cache_size,page_size_hint,options)
+            virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, cache_size, page_size_hint, options)
         return gdalnumeric.VirtualMemGetArray(virtualmem)
 
   def GetVirtualMemAutoArray(self, eAccess=gdalconst.GF_Read, options=None):
@@ -631,7 +631,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
 
     def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None,
                     buf_xsize=None, buf_ysize=None, buf_type=None,
-                    resample_alg = GRIORA_NearestNeighbour,
+                    resample_alg=GRIORA_NearestNeighbour,
                     callback=None,
                     callback_data=None,
                     interleave='band'):
@@ -639,12 +639,12 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
         parameters should generally not be specified if buf_obj is specified. The array is returned"""
 
         import gdalnumeric
-        return gdalnumeric.DatasetReadAsArray( self, xoff, yoff, xsize, ysize, buf_obj,
-                                               buf_xsize, buf_ysize, buf_type,
-                                               resample_alg = resample_alg,
-                                               callback = callback,
-                                               callback_data = callback_data,
-                                               interleave=interleave )
+        return gdalnumeric.DatasetReadAsArray(self, xoff, yoff, xsize, ysize, buf_obj,
+                                              buf_xsize, buf_ysize, buf_type,
+                                              resample_alg=resample_alg,
+                                              callback=callback,
+                                              callback_data=callback_data,
+                                              interleave=interleave )
 
     def WriteRaster(self, xoff, yoff, xsize, ysize,
                     buf_string,
@@ -666,11 +666,11 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
                 buf_string, buf_xsize, buf_ysize, buf_type, band_list,
                 buf_pixel_space, buf_line_space, buf_band_space )
 
-    def ReadRaster(self, xoff = 0, yoff = 0, xsize=None, ysize=None,
+    def ReadRaster(self, xoff=0, yoff=0, xsize=None, ysize=None,
                    buf_xsize=None, buf_ysize=None, buf_type=None,
                    band_list=None,
                    buf_pixel_space=None, buf_line_space=None, buf_band_space=None,
-                   resample_alg = GRIORA_NearestNeighbour,
+                   resample_alg=GRIORA_NearestNeighbour,
                    callback=None,
                    callback_data=None):
 
@@ -721,9 +721,9 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
         if band_list is None:
             band_list = range(1,self.RasterCount+1)
         if options is None:
-            virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,band_list,band_sequential,cache_size,page_size_hint)
+            virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, band_list, band_sequential, cache_size, page_size_hint)
         else:
-            virtualmem = self.GetVirtualMem(eAccess,xoff,yoff,xsize,ysize,bufxsize,bufysize,datatype,band_list,band_sequential,cache_size,page_size_hint, options)
+            virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, band_list, band_sequential, cache_size, page_size_hint,  options)
         return gdalnumeric.VirtualMemGetArray( virtualmem )
 
     def GetTiledVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
@@ -766,8 +766,8 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
 
         i = 1
         while 'SUBDATASET_'+str(i)+'_NAME' in sd:
-            sd_list.append( ( sd['SUBDATASET_'+str(i)+'_NAME'],
-                              sd['SUBDATASET_'+str(i)+'_DESC'] ) )
+            sd_list.append((sd['SUBDATASET_'+str(i)+'_NAME'],
+                            sd['SUBDATASET_'+str(i)+'_DESC']))
             i = i + 1
         return sd_list
 
@@ -851,7 +851,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
 %pythoncode %{
 
 def _is_str_or_unicode(o):
-    return isinstance(o, str) or str(type(o)) == "<type 'unicode'>"
+    return isinstance(o, (str, type(u'')))
 
 def InfoOptions(options=None, format='text', deserialize=True,
          computeMinMax=False, reportHistograms=False, reportProj4=False,
@@ -913,7 +913,7 @@ def Info(ds, **kwargs):
           options --- return of gdal.InfoOptions(), string or array of strings
           other keywords arguments of gdal.InfoOptions()
         If options is provided as a gdal.InfoOptions() object, other keywords are ignored. """
-    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or isinstance(kwargs['options'], list) or _is_str_or_unicode(kwargs['options']):
         (opts, format, deserialize) = InfoOptions(**kwargs)
     else:
         (opts, format, deserialize) = kwargs['options']
@@ -1062,7 +1062,7 @@ def Translate(destName, srcDS, **kwargs):
           other keywords arguments of gdal.TranslateOptions()
         If options is provided as a gdal.TranslateOptions() object, other keywords are ignored. """
 
-    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or isinstance(kwargs['options'], list) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = TranslateOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
@@ -1236,13 +1236,13 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
           other keywords arguments of gdal.WarpOptions()
         If options is provided as a gdal.WarpOptions() object, other keywords are ignored. """
 
-    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or isinstance(kwargs['options'], list) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = WarpOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
     if _is_str_or_unicode(srcDSOrSrcDSTab):
         srcDSTab = [Open(srcDSOrSrcDSTab)]
-    elif type(srcDSOrSrcDSTab) == type([]):
+    elif isinstance(srcDSOrSrcDSTab, list):
         srcDSTab = []
         for elt in srcDSOrSrcDSTab:
             if _is_str_or_unicode(elt):
@@ -1391,7 +1391,7 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
           other keywords arguments of gdal.VectorTranslateOptions()
         If options is provided as a gdal.VectorTranslateOptions() object, other keywords are ignored. """
 
-    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or isinstance(kwargs['options'], list) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = VectorTranslateOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
@@ -1404,10 +1404,10 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
         return wrapper_GDALVectorTranslateDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 def DEMProcessingOptions(options=None, colorFilename=None, format=None,
-              creationOptions=None, computeEdges = False, alg = 'Horn', band = 1,
+              creationOptions=None, computeEdges=False, alg='Horn', band=1,
               zFactor=None, scale=None, azimuth=None, altitude=None,
-              combined = False, multiDirectional = False,
-              slopeFormat=None, trigonometric = False, zeroForFlat = False,
+              combined=False, multiDirectional=False,
+              slopeFormat=None, trigonometric=False, zeroForFlat=False,
               addAlpha=None,
               callback=None, callback_data=None):
     """ Create a DEMProcessingOptions() object that can be passed to gdal.DEMProcessing()
@@ -1482,7 +1482,7 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
           other keywords arguments of gdal.DEMProcessingOptions()
         If options is provided as a gdal.DEMProcessingOptions() object, other keywords are ignored. """
 
-    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or isinstance(kwargs['options'], list) or _is_str_or_unicode(kwargs['options']):
         (opts, colorFilename, callback, callback_data) = DEMProcessingOptions(**kwargs)
     else:
         (opts, colorFilename, callback, callback_data) = kwargs['options']
@@ -1552,7 +1552,7 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
           other keywords arguments of gdal.NearblackOptions()
         If options is provided as a gdal.NearblackOptions() object, other keywords are ignored. """
 
-    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or isinstance(kwargs['options'], list) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = NearblackOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
@@ -1566,8 +1566,8 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
 
 
 def GridOptions(options=None, format=None,
-              outputType = GDT_Unknown,
-              width = 0, height = 0,
+              outputType=GDT_Unknown,
+              width=0, height=0,
               creationOptions=None,
               outputBounds=None,
               outputSRS=None,
@@ -1625,7 +1625,7 @@ def GridOptions(options=None, format=None,
         if algorithm is not None:
             new_options += ['-a', algorithm]
         if layers is not None:
-            if type(layers) == type(()) or type(layers) == type([]):
+            if isinstance(layers, (tuple, list)):
                 for layer in layers:
                     new_options += ['-l', layer]
             else:
@@ -1655,7 +1655,7 @@ def Grid(destName, srcDS, **kwargs):
           other keywords arguments of gdal.GridOptions()
         If options is provided as a gdal.GridOptions() object, other keywords are ignored. """
 
-    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or isinstance(kwargs['options'], list) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = GridOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
@@ -1665,14 +1665,14 @@ def Grid(destName, srcDS, **kwargs):
     return GridInternal(destName, srcDS, opts, callback, callback_data)
 
 def RasterizeOptions(options=None, format=None,
-         outputType = GDT_Unknown,
+         outputType=GDT_Unknown,
          creationOptions=None, noData=None, initValues=None,
          outputBounds=None, outputSRS=None,
          transformerOptions=None,
          width=None, height=None,
-         xRes=None, yRes=None, targetAlignedPixels = False,
-         bands=None, inverse = False, allTouched = False,
-         burnValues=None, attribute=None, useZ = False, layers=None,
+         xRes=None, yRes=None, targetAlignedPixels=False,
+         bands=None, inverse=False, allTouched=False,
+         burnValues=None, attribute=None, useZ=False, layers=None,
          SQLStatement=None, SQLDialect=None, where=None, optim=None,
          callback=None, callback_data=None):
     """ Create a RasterizeOptions() object that can be passed to gdal.Rasterize()
@@ -1722,7 +1722,7 @@ def RasterizeOptions(options=None, format=None,
         if noData is not None:
             new_options += ['-a_nodata', str(noData)]
         if initValues is not None:
-            if type(initValues) == type(()) or type(initValues) == type([]):
+            if instance(initValues, (tuple, list)):
                 for val in initValues:
                     new_options += ['-init', str(val)]
             else:
@@ -1747,7 +1747,7 @@ def RasterizeOptions(options=None, format=None,
         if burnValues is not None:
             if attribute is not None:
                 raise Exception('burnValues and attribute option are exclusive.')
-            if type(burnValues) == type(()) or type(burnValues) == type([]):
+            if isinstance(burnValues, (tuple, list)):
                 for val in burnValues:
                     new_options += ['-burn', str(val)]
             else:
@@ -1757,7 +1757,7 @@ def RasterizeOptions(options=None, format=None,
         if useZ:
             new_options += ['-3d']
         if layers is not None:
-            if type(layers) == type(()) or type(layers) == type([]):
+            if instance(layers, ((tuple, list)):
                 for layer in layers:
                     new_options += ['-l', layer]
             else:
@@ -1783,7 +1783,7 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
           other keywords arguments of gdal.RasterizeOptions()
         If options is provided as a gdal.RasterizeOptions() object, other keywords are ignored. """
 
-    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or isinstance(kwargs['options'], list) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = RasterizeOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
@@ -1893,7 +1893,7 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
           other keywords arguments of gdal.BuildVRTOptions()
         If options is provided as a gdal.BuildVRTOptions() object, other keywords are ignored. """
 
-    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or isinstance(kwargs['options'], list) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = BuildVRTOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
@@ -1902,18 +1902,18 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
     srcDSNamesTab = []
     if _is_str_or_unicode(srcDSOrSrcDSTab):
         srcDSNamesTab = [srcDSOrSrcDSTab]
-    elif type(srcDSOrSrcDSTab) == type([]):
+    elif isinstance(srcDSOrSrcDSTab, list):
         for elt in srcDSOrSrcDSTab:
             if _is_str_or_unicode(elt):
                 srcDSNamesTab.append(elt)
             else:
                 srcDSTab.append(elt)
-        if len(srcDSTab) != 0 and len(srcDSNamesTab) != 0:
+        if srcDSTab and srcDSNamesTab:
             raise Exception('Mix of names and dataset objects not supported')
     else:
         srcDSTab = [srcDSOrSrcDSTab]
 
-    if len(srcDSTab) > 0:
+    if srcDSTab:
         return BuildVRTInternalObjects(destName, srcDSTab, opts, callback, callback_data)
     else:
         return BuildVRTInternalNames(destName, srcDSNamesTab, opts, callback, callback_data)

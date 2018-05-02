@@ -34,6 +34,7 @@ import os
 import os.path
 import stat
 import sys
+from sys import version_info
 import time
 
 from osgeo import gdal
@@ -67,7 +68,6 @@ jp2mrsid_drv_unregistered = False
 jp2openjpeg_drv_unregistered = False
 jp2lura_drv_unregistered = False
 
-from sys import version_info
 if version_info >= (3, 0, 0):
     import gdaltest_python3 as gdaltestaux
 else:

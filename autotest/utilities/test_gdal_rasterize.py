@@ -381,8 +381,8 @@ def test_gdal_rasterize_7():
     x = (0, 0, 50, 50, 25)
     y = (0, 50, 0, 50, 25)
     f.write('WKT,Value\n'.encode('ascii'))
-    for i in range(len(x)):
-        r = 'POINT(%d %d),1\n' % (x[i], y[i])
+    for i, xi in enumerate(x):
+        r = 'POINT(%d %d),1\n' % (xi, y[i])
         f.write(r.encode('ascii'))
 
     f.close()
