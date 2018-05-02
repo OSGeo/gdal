@@ -547,7 +547,6 @@ def wcs_6():
                              open_options=options)
             if not ds:
                 print("OpenEx failed: WCS:" + url + "/?" + query)
-                global wcs_6_ok
                 wcs_6_ok = False
                 break
             projwin = setup[server]['Projwin'].replace('-projwin ', '').split()
@@ -566,7 +565,6 @@ def wcs_6():
                                  open_options=options)
                 if not ds:
                     print("OpenEx failed: WCS:" + url + "/?" + query)
-                    global wcs_6_ok
                     wcs_6_ok = False
                     break
                 options = [cache]

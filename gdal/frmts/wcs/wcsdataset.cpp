@@ -327,6 +327,8 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
     return eErr;
 }
 
+static bool ProcessError( CPLHTTPResult *psResult );
+
 /************************************************************************/
 /*                            GetCoverage()                             */
 /*                                                                      */
@@ -474,7 +476,7 @@ int WCSDataset::DescribeCoverage()
 /*      or FALSE if the result seems ok.                                */
 /************************************************************************/
 
-int WCSDataset::ProcessError( CPLHTTPResult *psResult )
+static bool ProcessError( CPLHTTPResult *psResult )
 
 {
 /* -------------------------------------------------------------------- */
@@ -512,16 +514,14 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
 /*      check based on the Content-type, but this seems quite           */
 /*      undependable, even from MapServer!                              */
 /* -------------------------------------------------------------------- */
-    if( strstr((const char *)psResult->pabyData, "ServiceException")
-        || strstr((const char *)psResult->pabyData, "ExceptionReport") )
+    if( strstr((const char *)psResult->pabyData, "ExceptionReport") )
     {
-        CPLXMLNode *psTree = CPLParseXMLString( (const char *)
-                                                psResult->pabyData );
-
+        CPLXMLNode *psTree = CPLParseXMLString( (const char *)psResult->pabyData );
         CPLStripXMLNamespace( psTree, nullptr, TRUE );
-
-        const char *pszMsg = CPLGetXMLValue(psTree, this->ExceptionNodeName(), nullptr);
-
+        const char *pszMsg = CPLGetXMLValue(psTree, "=ServiceExceptionReport.ServiceException", nullptr);
+        if (!pszMsg) {
+            pszMsg = CPLGetXMLValue(psTree, "=ExceptionReport.Exception.ExceptionText", nullptr);
+        }
         if( pszMsg )
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s", pszMsg );
@@ -529,7 +529,6 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Corrupt Service Exception:\n%s",
                       (const char *) psResult->pabyData );
-
         CPLDestroyXMLNode( psTree );
         CPLHTTPDestroyResult( psResult );
         return TRUE;
@@ -895,8 +894,7 @@ static bool FetchCapabilities(GDALOpenInfo * poOpenInfo, CPLString url, CPLStrin
     }
     CPLHTTPResult *psResult = CPLHTTPFetch(url.c_str(), options);
     CSLDestroy(options);
-    if (psResult == nullptr || psResult->nDataLen == 0) {
-        CPLHTTPDestroyResult(psResult);
+    if (ProcessError(psResult)) {
         return false;
     }
     CPLXMLTreeCloser doc(CPLParseXMLString((const char*)psResult->pabyData));
@@ -1010,7 +1008,6 @@ static WCSDataset *BootstrapGlobal(GDALOpenInfo * poOpenInfo, const CPLString &c
 {
     // do we have the capabilities file
     CPLString filename;
-    // we should lock the cache for our use in case we need to add an entry
     bool cached;
     if (SearchCache(cache, url, filename, ".xml", cached) != CE_None) {
         return nullptr; // error in cache
@@ -1018,23 +1015,20 @@ static WCSDataset *BootstrapGlobal(GDALOpenInfo * poOpenInfo, const CPLString &c
     if (!cached) {
         filename = "XXXXX";
         if (AddEntryToCache(cache, url, filename, ".xml") != CE_None) {
-            // release the cache lock
             return nullptr; // error in cache
         }
         if (!FetchCapabilities(poOpenInfo, url, filename)) {
-            // release the cache lock
+            DeleteEntryFromCache(cache, "", url);
             return nullptr;
         }
-        // release the cache lock
         return WCSDataset::CreateFromCapabilities(cache, filename, url);
     }
-    // release the cache lock
-    filename = RemoveExt(filename) + ".aux.xml";
+    CPLString metadata = RemoveExt(filename) + ".aux.xml";
     bool recreate_meta = CPLFetchBool(poOpenInfo->papszOpenOptions, "RECREATE_META", false);
-    if (FileIsReadable(filename) && !recreate_meta) {
-        return WCSDataset::CreateFromMetadata(cache, filename);
+    if (FileIsReadable(metadata) && !recreate_meta) {
+        return WCSDataset::CreateFromMetadata(cache, metadata);
     }
-    // we capabilities but not meta
+    // we have capabilities but not meta
     return WCSDataset::CreateFromCapabilities(cache, filename, url);
 }
 
@@ -1291,7 +1285,9 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*          Get capabilities.                                           */
 /* -------------------------------------------------------------------- */
             CPLString url2 = CPLURLAddKVP(url, "version", version);
-            url2 += "&" + parameters;
+            if (parameters != "") {
+                url2 += "&" + parameters;
+            }
             WCSDataset *global = BootstrapGlobal(poOpenInfo, cache, url2);
             if (!global) {
                 return nullptr;
