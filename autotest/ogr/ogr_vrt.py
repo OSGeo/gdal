@@ -3151,7 +3151,7 @@ def ogr_vrt_33():
             print(geom_field[1])
             gdaltest.post_reason('fail')
             return 'fail'
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_fields[2]) < 0:
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_field[2]) < 0:
             gdaltest.post_reason('fail')
             return 'fail'
     feat = lyr.GetNextFeature()
