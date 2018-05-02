@@ -114,10 +114,6 @@ class WCSDataset : public GDALPamDataset
 
     virtual CPLErr      ParseCapabilities( CPLXMLNode *, CPLString ) = 0;
 
-    virtual const char *ExceptionNodeName() = 0;
-
-    int         ProcessError( CPLHTTPResult *psResult );
-
     GDALDataset *GDALOpenResult( CPLHTTPResult *psResult );
 
     void        FlushMemoryResult();
@@ -162,7 +158,6 @@ class WCSDataset100 : public WCSDataset
     CPLXMLNode *CoverageOffering(CPLXMLNode *psDC) override;
     bool        ExtractGridInfo() override;
     CPLErr      ParseCapabilities( CPLXMLNode *, CPLString ) override;
-    const char *ExceptionNodeName() override;
 
   public:
 
@@ -182,7 +177,6 @@ class WCSDataset110 : public WCSDataset
     CPLXMLNode *CoverageOffering(CPLXMLNode *psDC) override;
     bool        ExtractGridInfo() override;
     CPLErr      ParseCapabilities( CPLXMLNode *, CPLString ) override;
-    const char *ExceptionNodeName() override;
 
   public:
 
