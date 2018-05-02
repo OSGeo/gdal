@@ -178,6 +178,7 @@ ok(defined($x), "GetMaximum");
 @list = $band->GetStatistics(1,0);
 ok(@list == 4, "GetStatistics");
 
+$band->SetMetadataItem('STATISTICS_APPROXIMATE',undef);
 $band->SetStatistics(0, 1, 2, 3);
 @list = $band->GetStatistics(0,0);
 ok($list[3] == 3, "SetStatistics");
