@@ -136,7 +136,7 @@ def extract_all_xml_boxes(filename, prefix):
                     end_gmljp2_link = end_gmljp2_link_double_quote
                 if end_gmljp2_link >= 0:
                     referenced_box = mdd_item[new_pos + len('gmljp2://xml/'):end_gmljp2_link]
-                    if ('xml:' + referenced_box) not in mdd_list:
+                    if not (('xml:' + referenced_box) in mdd_list):
                         print('Warning: box %s reference box %s, but the latter is not found' % (boxname, referenced_box))
 
                 out_content += mdd_item[pos:new_pos]

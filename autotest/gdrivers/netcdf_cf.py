@@ -168,7 +168,7 @@ def netcdf_cf_check_file(ifile, version='auto', silent=True):
     #    print 'checking file ' + ifile
     gdaltest.netcdf_cf_check_error = ''
 
-    if not os.path.exists(ifile):
+    if (not os.path.exists(ifile)):
         return 'skip'
 
     output_all = ''

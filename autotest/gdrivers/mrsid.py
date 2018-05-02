@@ -160,10 +160,13 @@ def mrsid_2():
         is_bytes = True
 
     # check that we got roughly the right values by checking mean.
+    total = 0
     if is_bytes is True:
-        total = sum(data)
+        for i in range(len(data)):
+            total += data[i]
     else:
-        total = sum([ord(c) for c in data])
+        for i in range(len(data)):
+            total += ord(data[i])
 
     mean = float(total) / len(data)
 

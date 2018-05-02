@@ -45,13 +45,17 @@ import gdaltest
 
 def misc_1():
 
-    tab_ds = [None] * 5000
+    tab_ds = [None for i in range(5000)]
     drv = gdal.GetDriverByName('MEM')
     for i, _ in enumerate(tab_ds):
         name = 'mem_%d' % i
         tab_ds[i] = drv.Create(name, 1, 1, 1)
         if tab_ds[i] is None:
             return 'fail'
+
+    for i in range(len(tab_ds)):
+        tab_ds[i] = None
+
     return 'success'
 
 ###############################################################################
@@ -67,6 +71,9 @@ def misc_2():
         tab_ds[i] = gdal.OpenShared('data/byte.tif')
         if tab_ds[i] is None:
             return 'fail'
+
+    for i in range(len(tab_ds)):
+        tab_ds[i] = None
 
     return 'success'
 

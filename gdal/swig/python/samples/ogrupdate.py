@@ -351,7 +351,7 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname=None, update_mode=DEF
 
             else:
                 dst_fid = dst_feat.GetFID()
-                assert dst_fid == src_fid
+                assert(dst_fid == src_fid)
                 if compare_before_update and AreFeaturesEqual(src_feat, dst_feat):
                     continue
                 if papszSelFields is not None:

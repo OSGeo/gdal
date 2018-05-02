@@ -220,7 +220,7 @@ def gdal_api_proxy_sub():
 
     ds.GetRasterBand(1).Fill(0)
     got_cs = ds.GetRasterBand(1).Checksum()
-    if got_cs != 0:
+    if 0 != got_cs:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -232,7 +232,7 @@ def gdal_api_proxy_sub():
 
     ds.GetRasterBand(1).Fill(0)
     got_cs = ds.GetRasterBand(1).Checksum()
-    if got_cs != 0:
+    if 0 != got_cs:
         gdaltest.post_reason('fail')
         return 'fail'
 

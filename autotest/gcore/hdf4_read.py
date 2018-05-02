@@ -124,7 +124,7 @@ def hdf4_read_online_3():
     gt = ds.GetGeoTransform()
     expected_gt = [-180.0, 0.3515625, 0.0, 90.0, 0.0, -0.3515625]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-8:
+        if (abs(gt[i] - expected_gt[i]) > 1e-8):
             print(gt)
             gdaltest.post_reason('did not get expected gt')
             return 'fail'

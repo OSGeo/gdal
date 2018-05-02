@@ -30,8 +30,8 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-import sys
 from osgeo import gdal
+import sys
 
 # dummy object to hold options
 

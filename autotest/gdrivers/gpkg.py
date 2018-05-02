@@ -639,7 +639,7 @@ def gpkg_6():
 
 
 def get_georeferenced_rgba_ds(alpha_fully_transparent=False, alpha_fully_opaque=False):
-    assert not (alpha_fully_transparent and alpha_fully_opaque)
+    assert(not (alpha_fully_transparent and alpha_fully_opaque))
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tmp.tif',
                                                   src_ds.RasterXSize, src_ds.RasterYSize, 4)
