@@ -4424,6 +4424,10 @@ AC_ARG_ENABLE(pdf_plugin,
 PDF_PLUGIN=no
 if test "x$enable_pdf_plugin" = "xyes" ; then
 
+  if test "$with_libtool" = "yes"; then
+    AC_MSG_ERROR([--enable-pdf-plugin not supported together --with-libtool])
+  fi
+
   PDF_PLUGIN=yes
 
   AC_MSG_RESULT([yes])

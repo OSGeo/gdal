@@ -2078,7 +2078,8 @@ class Dataset(MajorObject):
                     buf_xsize=None, buf_ysize=None, buf_type=None,
                     resample_alg = GRIORA_NearestNeighbour,
                     callback=None,
-                    callback_data=None):
+                    callback_data=None,
+                    interleave='band'):
         """ Reading a chunk of a GDAL band into a numpy array. The optional (buf_xsize,buf_ysize,buf_type)
         parameters should generally not be specified if buf_obj is specified. The array is returned"""
 
@@ -2087,7 +2088,8 @@ class Dataset(MajorObject):
                                                buf_xsize, buf_ysize, buf_type,
                                                resample_alg = resample_alg,
                                                callback = callback,
-                                               callback_data = callback_data )
+                                               callback_data = callback_data,
+                                               interleave=interleave )
 
     def WriteRaster(self, xoff, yoff, xsize, ysize,
                     buf_string,

@@ -328,6 +328,8 @@ def run_all(dirlist, run_as_external=False):
                         print('Running tests from %s/%s' % (dir_name, file))
                         setup_run('%s/%s' % (dir_name, file))
                         exec("run_tests( " + module + ".gdaltest_list)")
+                    except KeyboardInterrupt:
+                        raise
                     except:
                         # import traceback
                         # traceback.print_exc(file=sys.stderr)
@@ -335,6 +337,8 @@ def run_all(dirlist, run_as_external=False):
 
                 os.chdir(wd)
 
+            except KeyboardInterrupt:
+                raise
             except:
                 os.chdir(wd)
                 print('... failed to load %s ... skipping.' % file)

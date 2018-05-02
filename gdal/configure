@@ -34357,6 +34357,10 @@ fi
 PDF_PLUGIN=no
 if test "x$enable_pdf_plugin" = "xyes" ; then
 
+  if test "$with_libtool" = "yes"; then
+    as_fn_error $? "--enable-pdf-plugin not supported together --with-libtool" "$LINENO" 5
+  fi
+
   PDF_PLUGIN=yes
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
