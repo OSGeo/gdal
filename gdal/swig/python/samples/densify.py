@@ -247,7 +247,7 @@ class Densify(Translator):
                 else:
                     # duplicate point... throw it out
                     continue
-            if (d > threshold):
+            if d > threshold:
                 if self.options.remainder.upper() == "UNIFORM":
                     segcount = int(math.ceil(d / threshold))
 

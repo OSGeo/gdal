@@ -1133,7 +1133,7 @@ def ogr_pg_21_3d_geometries():
 
         wkt = geom.ExportToIsoWkt()
 
-        if (wkt != wkt_expected[i]):
+        if wkt != wkt_expected[i]:
             gdaltest.post_reason('Unexpected WKT, expected %s and got %s' % (wkt_expected[i], wkt))
             return 'fail'
 
