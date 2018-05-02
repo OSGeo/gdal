@@ -674,6 +674,7 @@ bool WCSDataset201::ExtractGridInfo()
             CPLError(CE_Failure, CPLE_AppDefined, "Missing boundedBy.Envelope");
             return false;
         }
+        // todo: get time interval
     }
     std::vector<CPLString> bbox = ParseBoundingBox(envelope);
     if (!SetCRS(ParseCRS(envelope), true) || bbox.size() < 2) {

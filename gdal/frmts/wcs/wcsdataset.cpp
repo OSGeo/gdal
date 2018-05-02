@@ -514,7 +514,7 @@ static bool ProcessError( CPLHTTPResult *psResult )
 /*      check based on the Content-type, but this seems quite           */
 /*      undependable, even from MapServer!                              */
 /* -------------------------------------------------------------------- */
-    if( strstr((const char *)psResult->pabyData, "Exception") )
+    if( strstr((const char *)psResult->pabyData, "ExceptionReport") )
     {
         CPLXMLNode *psTree = CPLParseXMLString( (const char *)psResult->pabyData );
         CPLStripXMLNamespace( psTree, nullptr, TRUE );
@@ -1285,7 +1285,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*          Get capabilities.                                           */
 /* -------------------------------------------------------------------- */
             CPLString url2 = CPLURLAddKVP(url, "version", version);
-            if (parameters == "!") {
+            if (parameters != "") {
                 url2 += "&" + parameters;
             }
             WCSDataset *global = BootstrapGlobal(poOpenInfo, cache, url2);
