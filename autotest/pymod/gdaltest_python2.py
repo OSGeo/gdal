@@ -280,7 +280,7 @@ def runexternal_out_and_err(cmd, check_memleak=True):
             import shlex
             if hasattr(subprocess, 'Popen') and hasattr(shlex, 'split'):
                 has_subprocess = True
-        except (ImportError, AttributeError):
+        except ImportError:
             pass
         if has_subprocess:
             return _runexternal_out_and_err_subprocess(cmd, check_memleak=check_memleak)
