@@ -1274,7 +1274,7 @@ def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
     return buf_obj
 
 def BandWriteArray(band, array, xoff=0, yoff=0,
-                   resample_alg = gdal.GRIORA_NearestNeighbour,
+                   resample_alg=gdal.GRIORA_NearestNeighbour,
                    callback=None, callback_data=None):
     """Pure python implementation of writing a chunk of a GDAL file
     from a numpy array.  Used by the gdal.Band.WriteArray method."""
