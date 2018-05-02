@@ -664,6 +664,8 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
     // make sure this is a capabilities document
     if( strcmp(Capabilities->pszValue, "Capabilities") != 0 )
     {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Error in capabilities document.\n" );
         return CE_Failure;
     }
 
@@ -822,88 +824,47 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
             // GDAL Data Model:
             // The value of the _NAME is a string that can be passed to GDALOpen() to access the file.
 
+            CPLString key2 = path3 + "NAME";
+
+            CPLString name = DescribeCoverageURL;
+            name = CPLURLAddKVP(name, "service", "WCS");
+            name = CPLURLAddKVP(name, "version", this->Version());
+
             CPLXMLNode *node = CPLGetXMLNode(summary, "CoverageId");
-            if (!node) {
+            CPLString id;
+            if (node) {
+                id = CPLGetXMLValue(node, nullptr, "");
+                name = CPLURLAddKVP(name, "coverageId", id);
+            } else {
                 node = CPLGetXMLNode(summary, "Identifier");
-            }
-
-            if (node)
-            {
-                CPLString value = DescribeCoverageURL;
-                value = CPLURLAddKVP(value, "service", "WCS");
-                value = CPLURLAddKVP(value, "version", this->Version());
-                CPLString name = CPLGetXMLValue(node, nullptr, "");
-                if (EQUAL(node->pszValue, "CoverageId")) {
-                    value = CPLURLAddKVP(value, "coverageId", name);
+                if (node) {
+                    id = CPLGetXMLValue(node, nullptr, "");
+                    name = CPLURLAddKVP(name, "identifiers", id);
                 } else {
-                    value = CPLURLAddKVP(value, "identifiers", name);
-                }
-                value = "WCS:" + value;
-                CPLString key2 = path3 + "NAME";
-                metadata = CSLSetNameValue(metadata, key2, value);
-                key2 = path3 + "DESC";
-                metadata = CSLSetNameValue(metadata, key2, name);
-            }
-            continue; // the metadata below may be against GDAL Data Model(?)
-
-            node = CPLGetXMLNode(summary, "WGS84BoundingBox");
-            if (node) {
-                CPLString name = path3 + "WGS84BBOX";
-                // WGS84BoundingBox is always lon,lat
-                std::vector<CPLString> bbox = ParseBoundingBox(node);
-                if (bbox.size() >= 2) {
-                    std::vector<double> low = Flist(Split(bbox[0], " "), 0, 2);
-                    std::vector<double> high = Flist(Split(bbox[1], " "), 0, 2);
-                    CPLString tmp;
-                    tmp.Printf("%.15g,%.15g,%.15g,%.15g", low[0], low[1], high[0], high[1]);
-                    metadata = CSLSetNameValue(metadata, name, tmp);
+                    CSLDestroy( metadata );
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "Error in capabilities document.\n" );
+                    return CE_Failure;
                 }
             }
+            name = "WCS:" + name;
+            metadata = CSLSetNameValue(metadata, key2, name);
 
-            node = CPLGetXMLNode(summary, "BoundingBox");
+            key2 = path3 + "DESC";
+            CPLString desc;
+
+            node = CPLGetXMLNode(summary, "Title");
             if (node) {
-                CPLString CRS = ParseCRS(node);
-                std::vector<CPLString> bbox = ParseBoundingBox(node);
-                if (bbox.size() >= 2) {
-                    // We don't care if CRSImpliesAxisOrderSwap fails
-                    bool swap;
-                    CRSImpliesAxisOrderSwap(CRS, swap, nullptr);
-                    std::vector<CPLString> b = Split(bbox[0], " ", swap);
-                    std::vector<double> low;
-                    if (b.size() >= 2) {
-                        low = Flist(b, 0, 2);
-                    }
-                    std::vector<double> high;
-                    b = Split(bbox[1], " ", swap);
-                    if (b.size() >= 2) {
-                        high = Flist(b, 0, 2);
-                    }
-                    if (low.size() >= 2 && high.size() >= 2) {
-                        CPLString tmp;
-                        tmp.Printf("%.15g,%.15g,%.15g,%.15g,%s",
-                                   low[0], low[1], high[0], high[1], CRS.c_str());
-                        CPLString name = path3 + "BBOX(minX,minY,maxX,maxY)";
-                        metadata = CSLSetNameValue(metadata, name, tmp);
-                    }
-                }
+                desc = CPLGetXMLValue(node, nullptr, "");
+            } else {
+                desc = id;
             }
 
-            node = CPLGetXMLNode(summary, "CoverageSubtype");
-            if (node) {
-                CPLString name = path3 + "TYPE";
-                metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, nullptr, ""));
-            }
+            metadata = CSLSetNameValue(metadata, key2, desc);
 
-            CPLString keywords = GetKeywords(summary, "Keywords", "Keyword");
-            if (keywords != "") {
-                CPLString name = path3 + "KEYWORDS";
-                metadata = CSLSetNameValue(metadata, name, keywords);
-            }
-            crs = GetKeywords(summary, "", "SupportedCRS");
-            if (crs != "") {
-                CPLString name = path3 + "SUPPORTED_CRS";
-                metadata = CSLSetNameValue(metadata, name, crs);
-            }
+            // skipping optional parameters
+            // Abstract, WGS84BoundingBox, BoundingBox, Keywords, SupportedCRS, etc
+            // skipping required (in v2) coverageSubtype
 
         }
     }

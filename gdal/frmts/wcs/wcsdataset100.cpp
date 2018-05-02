@@ -542,6 +542,8 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
     CPLStripXMLNamespace(Capabilities, nullptr, TRUE);
 
     if (strcmp(Capabilities->pszValue, "WCS_Capabilities") != 0) {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Error in capabilities document.\n" );
         return CE_Failure;
     }
 
@@ -639,50 +641,33 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
 
             CPLXMLNode *node = CPLGetXMLNode(summary, "name");
             if (node) {
+                CPLString key2 = path3 + "NAME";
                 CPLString name = CPLGetXMLValue(node, nullptr, "");
                 CPLString value = DescribeCoverageURL;
                 value = CPLURLAddKVP(value, "SERVICE", "WCS");
                 value = CPLURLAddKVP(value, "VERSION", this->Version());
                 value = CPLURLAddKVP(value, "COVERAGE", name);
-                CPLString key2 = path3 + "NAME";
                 metadata = CSLSetNameValue(metadata, key2, value);
-                key2 = path3 + "DESC";
-                metadata = CSLSetNameValue(metadata, key2, name);
+            } else {
+                CSLDestroy( metadata );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Error in capabilities document.\n" );
+                return CE_Failure;
             }
-            continue; // the metadata below may be against GDAL Data Model(?)
 
             node = CPLGetXMLNode(summary, "label");
             if (node) {
-                CPLString name = path3 + "LABEL";
-                metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, nullptr, ""));
+                CPLString key2 = path3 + "DESC";
+                metadata = CSLSetNameValue(metadata, key2, CPLGetXMLValue(node, nullptr, ""));
+            } else {
+                CSLDestroy( metadata );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Error in capabilities document.\n" );
+                return CE_Failure;
             }
 
-            node = CPLGetXMLNode(summary, "lonlatEnvelope");
-            if (node) {
-                CPLString name = path3 + "lonlatEnvelope";
-                CPLString CRS = ParseCRS(node);
-                std::vector<CPLString> bbox = ParseBoundingBox(node);
-                if (bbox.size() >= 2) {
-                    // lonlat => no need for axis order swap
-                    std::vector<double> low = Flist(Split(bbox[0], " "), 0, 2);
-                    std::vector<double> high = Flist(Split(bbox[1], " "), 0, 2);
-                    CPLString str;
-                    str.Printf("%.15g,%.15g,%.15g,%.15g", low[0], low[1], high[0], high[1]);
-                    metadata = CSLSetNameValue(metadata, name, str);
-                }
-            }
-
-            CPLString kw = GetKeywords(summary, "keywords", "keyword");
-            if (kw != "") {
-                CPLString name = path3 + "keywords";
-                metadata = CSLSetNameValue(metadata, name, kw);
-            }
-
-            node = CPLGetXMLNode(summary, "description");
-            if (node) {
-                CPLString name = path3 + "description";
-                metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, nullptr, ""));
-            }
+            // skip optional metadataLink, description, and keywords
+            // skip requred lonLatEnvelope
 
         }
     }
