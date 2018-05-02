@@ -1672,8 +1672,8 @@ def tiff_ovr_42():
     ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255)]
 
     ct = gdal.ColorTable()
-    for i in range(len(ct_data)):
-        ct.SetColorEntry(i, ct_data[i])
+    for i, data in enumerate(ct_data):
+        ct.SetColorEntry(i, data)
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr42.tif', 1, 1)
     ds.GetRasterBand(1).SetRasterColorTable(ct)

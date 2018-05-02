@@ -169,11 +169,11 @@ def ers_8():
         gdaltest.post_reason('did not get expected GCP number')
         return 'fail'
 
-    for i in range(len(gcps)):
-        if abs(gcps[i].GCPPixel - expected_gcps[i].GCPPixel) > 1e-6 or \
-           abs(gcps[i].GCPLine - expected_gcps[i].GCPLine) > 1e-6 or \
-           abs(gcps[i].GCPX - expected_gcps[i].GCPX) > 1e-6 or \
-           abs(gcps[i].GCPY - expected_gcps[i].GCPY) > 1e-6:
+    for i, gcp in enumerate(gcps):
+        if abs(gcp.GCPPixel - expected_gcps[i].GCPPixel) > 1e-6 or \
+           abs(gcp.GCPLine - expected_gcps[i].GCPLine) > 1e-6 or \
+           abs(gcp.GCPX - expected_gcps[i].GCPX) > 1e-6 or \
+           abs(gcp.GCPY - expected_gcps[i].GCPY) > 1e-6:
             gdaltest.post_reason('did not get expected GCP %d' % i)
             print(gcps[i])
             return 'fail'

@@ -350,9 +350,9 @@ def jp2lura_8():
 
     expected_checksums = [64570, 57277, 56048]  # 61292]
 
-    for i in range(len(expected_checksums)):
-        if ds.GetRasterBand(i + 1).Checksum() != expected_checksums[i]:
-            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i + 1))
+    for i, csum in enumerate(expected_checksums):
+        if ds.GetRasterBand(i + 1).Checksum() != csum:
+            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (csum, i + 1))
             return 'fail'
 
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:

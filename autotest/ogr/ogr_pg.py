@@ -990,18 +990,18 @@ def ogr_pg_20():
         layer.SetFeature(feat)
 
     # Test we get them back as expected
-    for i in range(len(geometries)):
+    for i, geoms in enumerate(geometries):
         feat = layer.GetFeature(i)
         geom = feat.GetGeometryRef()
         if geom is None:
-            gdaltest.post_reason('did not get geometry, expected %s' % geometries[i][1])
+            gdaltest.post_reason('did not get geometry, expected %s' % geoms[1])
             return 'fail'
         wkt = geom.ExportToIsoWkt()
         feat.Destroy()
         feat = None
 
-        if wkt != geometries[i][1]:
-            gdaltest.post_reason('WKT do not match: expected %s, got %s' % (geometries[i][1], wkt))
+        if wkt != geoms[1]:
+            gdaltest.post_reason('WKT do not match: expected %s, got %s' % (geoms[1], wkt))
             return 'fail'
 
     layer = None
