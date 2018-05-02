@@ -272,15 +272,15 @@ def ogr_vfk_8():
 
     # open by SQLite driver first
     vfk_ds_db = ogr.Open('data/bylany.db')
-    count1 = gdaltest.vfk_ds.GetLayerCount()
+    count1 = vfk_ds_db.GetLayerCount()
     vfk_ds_db = None
-    
+
     # then open by VFK driver
     os.environ['OGR_VFK_DB_READ'] = 'YES'
     vfk_ds_db = ogr.Open('data/bylany.db')
-    count2 = gdaltest.vfk_ds.GetLayerCount()
+    count2 = vfk_ds_db.GetLayerCount()
     vfk_ds_db = None
-    
+
     if count1 != count2:
         gdaltest.post_reason('layer count differs when opening DB by SQLite and VFK drivers')
         return 'fail'
