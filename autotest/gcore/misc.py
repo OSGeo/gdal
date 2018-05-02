@@ -68,9 +68,6 @@ def misc_2():
         if tab_ds[i] is None:
             return 'fail'
 
-    for i in range(len(tab_ds)):
-        tab_ds[i] = None
-
     return 'success'
 
 ###############################################################################
