@@ -872,3 +872,52 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
     CSLDestroy( metadata );
     return CE_None;
 }
+
+static void add_meta(CPLXMLNode *summary, CPLXMLNode *metadata, CPLString key) {
+    CPLXMLNode *node = CPLGetXMLNode(summary, key);
+    if (node) {
+        CPLAddXMLAttributeAndValue(
+            CPLCreateXMLElementAndValue(metadata, "MDI",
+                                        CPLGetXMLValue(node, nullptr, "")), "key", key);
+    }
+}
+
+void WCSDataset110::ParseCoverageCapabilities(CPLXMLNode *capabilities, const CPLString &coverage, CPLXMLNode *metadata)
+{
+    CPLStripXMLNamespace(capabilities, nullptr, TRUE);
+    CPLXMLNode *contents = CPLGetXMLNode(capabilities, "Contents");
+    if( contents )
+    {
+        for( CPLXMLNode *summary = contents->psChild; summary != nullptr; summary = summary->psNext)
+        {
+            if( summary->eType != CXT_Element
+                || !EQUAL(summary->pszValue, "CoverageSummary") )
+            {
+                continue;
+            }
+            CPLXMLNode *node = CPLGetXMLNode(summary, "CoverageId");
+            CPLString id;
+            if (node) {
+                id = CPLGetXMLValue(node, nullptr, "");
+            } else {
+                node = CPLGetXMLNode(summary, "Identifier");
+                if (node) {
+                    id = CPLGetXMLValue(node, nullptr, "");
+                } else {
+                    id = "";
+                }
+            }
+            if (id != coverage) {
+                continue;
+            }
+
+            add_meta(summary, metadata, "Title");
+            add_meta(summary, metadata, "CoverageSubtype");
+
+            // skipping optional parameters
+            // Abstract, WGS84BoundingBox, BoundingBox, Keywords, SupportedCRS, etc
+            // skipping required (in v2) coverageSubtype
+
+        }
+    }
+}

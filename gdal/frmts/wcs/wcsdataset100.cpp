@@ -675,3 +675,35 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
     CSLDestroy( metadata );
     return CE_None;
 }
+
+void WCSDataset100::ParseCoverageCapabilities(CPLXMLNode *capabilities, const CPLString &coverage, CPLXMLNode *metadata)
+{
+    CPLStripXMLNamespace(capabilities, nullptr, TRUE);
+    if( CPLXMLNode *contents = CPLGetXMLNode(capabilities, "ContentMetadata") )
+    {
+        for( CPLXMLNode *summary = contents->psChild; summary != nullptr; summary = summary->psNext)
+        {
+            if( summary->eType != CXT_Element
+                || !EQUAL(summary->pszValue, "CoverageOfferingBrief") )
+            {
+                continue;
+            }
+
+            CPLXMLNode *node = CPLGetXMLNode(summary, "name");
+            if (node) {
+                CPLString name = CPLGetXMLValue(node, nullptr, "");
+                if (name != coverage) {
+                    continue;
+                }
+            }
+
+            node = CPLGetXMLNode(summary, "label");
+            if (node) {
+                CPLAddXMLAttributeAndValue(CPLCreateXMLElementAndValue(metadata, "MDI", CPLGetXMLValue(node, nullptr, "")), "key", "label");
+            }
+            // skip optional metadataLink, description, and keywords
+            // skip requred lonLatEnvelope
+
+        }
+    }
+}

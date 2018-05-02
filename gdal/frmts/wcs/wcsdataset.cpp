@@ -1033,57 +1033,6 @@ static WCSDataset *BootstrapGlobal(GDALOpenInfo * poOpenInfo, const CPLString &c
 }
 
 /************************************************************************/
-/*                        CreateServiceMetadata()                       */
-/************************************************************************/
-
-// master filename is the name of the global metadata file
-// filename is the name of the metadata file of the service file
-static void CreateServiceMetadata(const CPLString &coverage,
-                                  const CPLString &master_filename,
-                                  const CPLString &meta_filename)
-{
-    CPLXMLTreeCloser doc(CPLParseXMLFile(master_filename));
-    CPLXMLNode *metadata = doc.getDocumentElement();
-    // remove other subdatasets than the current
-    int subdataset = 0;
-    CPLXMLNode *domain = SearchChildWithValue(metadata, "domain", "SUBDATASETS");
-    if (domain == nullptr) {
-        return;
-    }
-    for (CPLXMLNode *node = domain->psChild; node != nullptr; node = node->psNext) {
-        if (node->eType != CXT_Element) {
-            continue;
-        }
-        CPLString key = CPLGetXMLValue(node, "key", "");
-        if (!STARTS_WITH(key, "SUBDATASET_")) {
-            continue;
-        }
-        CPLString value = CPLGetXMLValue(node, nullptr, "");
-        if (value.find(coverage) != std::string::npos) {
-            key.erase(0, 11); // SUBDATASET_
-            key.erase(key.find("_"), std::string::npos);
-            subdataset = atoi(key);
-            break;
-        }
-    }
-    if (subdataset > 0) {
-        CPLXMLNode *next = nullptr;
-        for (CPLXMLNode *node = domain->psChild; node != nullptr; node = next) {
-            next = node->psNext;
-            if (node->eType != CXT_Element) {
-                continue;
-            }
-            CPLString key = CPLGetXMLValue(node, "key", "");
-            if (key.find(CPLString().Printf("SUBDATASET_%i_", subdataset)) == std::string::npos) {
-                CPLRemoveXMLChild(domain, node);
-                CPLDestroyXMLNode(node);
-            }
-        }
-    }
-    CPLSerializeXMLTreeToFile(metadata, meta_filename);
-}
-
-/************************************************************************/
 /*                          CreateService()                             */
 /************************************************************************/
 
@@ -1298,8 +1247,6 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             if (version == "") {
                 version = global->Version();
             }
-            CPLString global_meta = CPLString(global->GetDescription()) + ".aux.xml";
-            delete global;
             service = CreateService(url, version, coverage, parameters);
 /* -------------------------------------------------------------------- */
 /*          The filename for the new service file.                      */
@@ -1308,8 +1255,24 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             if (AddEntryToCache(cache, full_url, filename, ".xml") != CE_None) {
                 return nullptr; // error in cache
             }
-            CreateServiceMetadata(coverage, global_meta, filename + ".aux.xml");
-            CPLSetXMLValue(service, "Parameters", parameters);
+            // Create basic service metadata
+            // copy global metadata (not SUBDATASETS metadata)
+            CPLString global_base = CPLString(global->GetDescription());
+            CPLString global_meta = global_base + ".aux.xml";
+            CPLString capabilities = global_base + ".xml";
+            CPLXMLTreeCloser doc(CPLParseXMLFile(global_meta));
+            CPLXMLNode *metadata = doc.getDocumentElement();
+            CPLXMLNode *domain = SearchChildWithValue(metadata, "domain", "SUBDATASETS");
+            if (domain != nullptr) {
+                CPLRemoveXMLChild(metadata, domain);
+                CPLDestroyXMLNode(domain);
+            }
+            // get metadata for this coverage from the capabilities XML
+            CPLXMLTreeCloser doc2(CPLParseXMLFile(capabilities));
+            global->ParseCoverageCapabilities(doc2.getDocumentElement(), coverage, metadata->psChild);
+            delete global;
+            CPLString metadata_filename = filename + ".aux.xml";
+            CPLSerializeXMLTreeToFile(metadata, metadata_filename);
             updated = true;
         }
         CPLFree(poOpenInfo->pszFilename);

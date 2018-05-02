@@ -709,6 +709,15 @@ CPLString GetKeywords(CPLXMLNode *root,
                     pajazzo = 1;
                 }
                 if (i == epsg_codes.size()) {
+                    // must empty the pajazzo before leaving
+                    if (codes != "") {
+                        codes += ",";
+                    }
+                    if (pajazzo == 1) {
+                        codes += CPLString().Printf("%i", a);
+                    } else if (pajazzo == 2) {
+                        codes += CPLString().Printf("%i:%i", a, b);
+                    }
                     break;
                 }
                 ++i;
