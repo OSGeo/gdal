@@ -31,8 +31,8 @@
 # ******************************************************************************
 
 import os
-import numpy
 import sys
+import numpy
 
 from osgeo import gdal
 from osgeo import gdal_array
