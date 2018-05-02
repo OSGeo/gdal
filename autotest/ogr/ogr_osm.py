@@ -436,7 +436,7 @@ def ogr_osm_5():
         feat = None
         ds.ReleaseResultSet(sql_lyr)
 
-        if not test[2] ^ is_none:
+        if not (test[2] ^ is_none):
             gdaltest.post_reason('fail')
             print(test)
             return 'fail'
