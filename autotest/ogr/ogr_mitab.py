@@ -2437,7 +2437,8 @@ def ogr_mitab_46():
 
         for featFldVal in fldVal:
             feat = lyr.GetNextFeature()
-            for fldN, expectedValue in enumerate(fldNames):
+            for fldN, fldName in enumerate(fldNames):
+                expectedValue = featFldVal[fldN]
                 # column value by number
                 value = feat.GetField(fldN)
                 if value != expectedValue:
@@ -2447,7 +2448,7 @@ def ogr_mitab_46():
                                          ' from dataset :' + dsName)
                     return 'fail'
                 # column value by name
-                value = feat.GetField(fldNames[fldN])
+                value = feat.GetField(fldName)
                 if value != expectedValue:
                     gdaltest.post_reason('Can\'t get field value by name\n' +
                                          ' result value:   "' + value + '"\n'
