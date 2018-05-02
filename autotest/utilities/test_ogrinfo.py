@@ -552,7 +552,7 @@ OGRFeature(test_ogrinfo_23):2
 """
     expected_lines = expected_ret.splitlines()
     lines = ret.splitlines()
-    for i, exp_line in expected_lines:
+    for i, exp_line in enumerate(expected_lines):
         if exp_line != lines[i]:
             print(ret)
             return 'fail'
