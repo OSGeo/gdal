@@ -853,6 +853,38 @@ def numpy_rw_17():
 
     return 'success'
 
+###############################################################################
+# Test the pixel interleave options
+
+
+def numpy_rw_18():
+
+    if gdaltest.numpy_drv is None:
+        return 'skip'
+
+    import numpy
+    import numpy.random
+    from osgeo import gdal_array
+
+    img = numpy.random.randint(0, 255, size=(256, 200, 3)).astype('uint8')
+    ds = gdal_array.OpenArray(img, interleave='pixel')
+    if ds is None:
+        gdaltest.post_reason('Failed to open memory array as dataset.')
+        return 'fail'
+
+    bnd1 = ds.GetRasterBand(1).ReadAsArray()
+    bnd2 = ds.GetRasterBand(2).ReadAsArray()
+    bnd3 = ds.GetRasterBand(3).ReadAsArray()
+
+    res = numpy.dstack((bnd1, bnd2, bnd3))
+    if not numpy.all(img == res):
+        return 'fail'
+
+    res = ds.ReadAsArray(interleave='pixel')
+    if not numpy.all(img == res):
+        return 'fail'
+
+    return 'success'
 
 def numpy_rw_cleanup():
     gdaltest.numpy_drv = None
@@ -878,6 +910,7 @@ gdaltest_list = [
     numpy_rw_15,
     numpy_rw_16,
     numpy_rw_17,
+    numpy_rw_18,
     numpy_rw_cleanup]
 
 if __name__ == '__main__':
