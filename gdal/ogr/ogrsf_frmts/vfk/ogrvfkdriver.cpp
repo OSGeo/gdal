@@ -5,7 +5,7 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2009-2010, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2009-2018, Martin Landa <landa.martin gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -104,6 +104,7 @@ void RegisterOGRVFK()
     poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='SUPPRESS_GEOMETRY' type='boolean' description='whether to suppress geometry' default='NO'/>"
+"  <Option name='FILE_FIELD' type='boolean' description='whether to include VFK filename field' default='NO'/>"
 "</OpenOptionList>");
 
     poDriver->pfnOpen = OGRVFKDriverOpen;
