@@ -5061,34 +5061,6 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
-dnl PHP bindings.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(php,[  --with-php            Enable php bindings],,)
-
-AC_MSG_CHECKING([for php bindings])
-if test "$with_php" = "yes" ; then
-  BINDINGS="php $BINDINGS"
-  AC_MSG_RESULT([enabled])
-else
-  AC_MSG_RESULT([disabled])
-fi
-
-dnl ---------------------------------------------------------------------------
-dnl Ruby bindings.
-dnl ---------------------------------------------------------------------------
-
-dnl AC_ARG_WITH(ruby,[  --with-ruby           Enable Ruby bindings],,)
-
-dnl AC_MSG_CHECKING([for ruby bindings])
-dnl if test "$with_ruby" = "yes" ; then
-dnl   BINDINGS="ruby $BINDINGS"
-dnl   AC_MSG_RESULT([enabled])
-dnl else
-dnl   AC_MSG_RESULT([disabled])
-dnl fi
-
-dnl ---------------------------------------------------------------------------
 dnl NG Python bindings.
 dnl ---------------------------------------------------------------------------
 

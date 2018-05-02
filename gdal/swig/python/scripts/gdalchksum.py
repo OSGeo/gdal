@@ -89,7 +89,7 @@ if ds is None:
 if srcwin is None:
     srcwin = [0, 0, ds.RasterXSize, ds.RasterYSize]
 
-if len(bands) == 0:
+if not bands:
     bands = list(range(1, (ds.RasterCount + 1)))
 
 

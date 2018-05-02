@@ -35,25 +35,20 @@ mkdir disabled
 mv ogr_fgdb.* disabled
 cd ..
 # Run ogr_pgeo.py in isolation from the rest
-cd ogr
-python ogr_pgeo.py
-mv ogr_pgeo.* disabled
-cd ..
+(cd ogr && python ogr_pgeo.py && mv ogr_pgeo.* disabled)
 
 # ABI issue with mongodb
-cd ogr
-mv ogr_mongodb.* disabled
-cd ..
+(cd ogr && mv ogr_mongodb.* disabled)
 
 # Run all the Python autotests
 GDAL_SKIP="JP2ECW ECW" python run_all.py
 # A bit messy, but force testing with libspatialite 4.0dev (that has been patched a bit to remove any hard-coded SRS definition so it is very small)
-cd ogr
-wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/libspatialite4.0dev_ubuntu12.04-64bit_srs_stripped.tar.gz
-tar xzf libspatialite4.0dev_ubuntu12.04-64bit_srs_stripped.tar.gz
-ln -s install-libspatialite-4.0dev/lib/libspatialite.so.5.0.1 libspatialite.so.3
-LD_LIBRARY_PATH=$PWD python ogr_sqlite.py
-cd ..
+(cd ogr
+  wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/libspatialite4.0dev_ubuntu12.04-64bit_srs_stripped.tar.gz
+  tar xzf libspatialite4.0dev_ubuntu12.04-64bit_srs_stripped.tar.gz
+  ln -s install-libspatialite-4.0dev/lib/libspatialite.so.5.0.1 libspatialite.so.3
+  LD_LIBRARY_PATH=$PWD python ogr_sqlite.py
+)
 
 git checkout ogr/ogr_fgdb.py
 git checkout ogr/ogr_pgeo.py

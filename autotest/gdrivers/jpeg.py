@@ -1155,7 +1155,7 @@ def jpeg_28():
     ds = gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
     src_ds = None
     ds = gdal.Open(tmpfilename)
-    if len(ds.GetMetadata()) != 0:
+    if ds.GetMetadata():
         gdaltest.post_reason('fail')
         return 'fail'
 

@@ -854,7 +854,7 @@ def netcdf_21():
 
         try:
             (ret, err) = gdaltest.runexternal_out_and_err(warp_cmd)
-        except:
+        except OSError:
             gdaltest.post_reason('gdalwarp execution failed')
             return 'fail'
 
@@ -1143,7 +1143,7 @@ def netcdf_test_4dfile(ofile):
     # get file header with ncdump (if available)
     try:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
-    except:
+    except OSError:
         print('NOTICE: ncdump not found')
         return 'success'
     if err is None or 'netcdf library version' not in err:
@@ -1223,7 +1223,7 @@ def netcdf_29():
         (test_cli_utilities.get_gdalwarp_path(), ifile, ofile1)
     try:
         (ret, err) = gdaltest.runexternal_out_and_err(warp_cmd)
-    except:
+    except OSError:
         gdaltest.post_reason('gdalwarp execution failed')
         return 'fail'
 
@@ -2593,7 +2593,7 @@ def netcdf_62_ncdump_check():
     # get file header with ncdump (if available)
     try:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
-    except:
+    except OSError:
         err = None
     if err is not None and 'netcdf library version' in err:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h tmp/netcdf_62.nc')
@@ -2678,7 +2678,7 @@ def netcdf_63_ncdump_check():
     # get file header with ncdump (if available)
     try:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
-    except:
+    except OSError:
         err = None
     if err is not None and 'netcdf library version' in err:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h tmp/netcdf_63.nc')
@@ -2882,7 +2882,7 @@ def netcdf_66_ncdump_check():
     # get file header with ncdump (if available)
     try:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
-    except:
+    except OSError:
         err = None
     if err is not None and 'netcdf library version' in err:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h tmp/netcdf_66.nc')
@@ -3141,7 +3141,7 @@ def netcdf_77():
         return 'fail'
 
     ds = gdal.Open('NETCDF:"data/fake_Oa01_radiance.nc":Oa01_radiance')
-    if len(ds.GetMetadata('GEOLOCATION')) != 0:
+    if ds.GetMetadata('GEOLOCATION'):
         gdaltest.post_reason('fail')
         return 'fail'
 

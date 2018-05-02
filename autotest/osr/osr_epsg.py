@@ -364,7 +364,7 @@ def osr_epsg_13():
     UNIT["degree",0.0174532925199433]]
 """)
     matches = sr.FindMatches()
-    if len(matches) != 0:
+    if matches:
         gdaltest.post_reason('fail')
         print(matches)
         return 'fail'

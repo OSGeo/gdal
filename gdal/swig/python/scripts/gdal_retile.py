@@ -649,7 +649,7 @@ def getTileName(minfo, ti, xIndex, yIndex, level=-1):
     global LastRowIndx
 
     max = ti.countTilesX
-    if (ti.countTilesY > max):
+    if ti.countTilesY > max:
         max = ti.countTilesY
     countDigits = len(str(max))
     parts = os.path.splitext(os.path.basename(minfo.filename))
@@ -821,7 +821,7 @@ def main(args=None):
             i += 1
             TileIndexName = argv[i]
             parts = os.path.splitext(TileIndexName)
-            if len(parts[1]) == 0:
+            if not parts[1]:
                 TileIndexName += ".shp"
 
         elif arg == '-tileIndexField':
@@ -831,7 +831,7 @@ def main(args=None):
             i += 1
             CsvFileName = argv[i]
             parts = os.path.splitext(CsvFileName)
-            if len(parts[1]) == 0:
+            if not parts[1]:
                 CsvFileName += ".csv"
         elif arg == '-csvDelim':
             i += 1
@@ -847,7 +847,7 @@ def main(args=None):
             Names.append(arg)
         i += 1
 
-    if len(Names) == 0:
+    if not Names:
         print('No input files selected.')
         Usage()
         return 1
@@ -859,7 +859,7 @@ def main(args=None):
         print("Overlap too big w.r.t tile height/width")
         return 1
 
-    if (TargetDir is None):
+    if TargetDir is None:
         print("Missing Directory for Tiles -targetDir")
         Usage()
         return 1
@@ -874,7 +874,7 @@ def main(args=None):
         startIndx = 1
         for levelIndx in range(startIndx, Levels + 1):
             leveldir = TargetDir + str(levelIndx) + os.sep
-            if (os.path.exists(leveldir)):
+            if os.path.exists(leveldir):
                 continue
             os.mkdir(leveldir)
             if not os.path.exists(leveldir):
@@ -901,7 +901,7 @@ def main(args=None):
     minfo = mosaic_info(Names[0], tileIndexDS)
     ti = tile_info(minfo.xsize, minfo.ysize, TileWidth, TileHeight, Overlap)
 
-    if Source_SRS is None and len(minfo.projection) > 0:
+    if Source_SRS is None and minfo.projection:
         Source_SRS = osr.SpatialReference()
         if Source_SRS.SetFromUserInput(minfo.projection) != 0:
             print('invalid projection  ' + minfo.projection)
