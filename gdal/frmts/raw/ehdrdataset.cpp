@@ -1559,7 +1559,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
             CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 
-            if (utmZone != 0 && bUTM && bWGS84 && (bNorth || bSouth))
+            if (utmZone >= 1 && utmZone <= 60 &&
+                bUTM && bWGS84 && (bNorth || bSouth))
             {
                 char projCSStr[64] = { '\0' };
                 snprintf(projCSStr, sizeof(projCSStr), "WGS 84 / UTM zone %d%c",
