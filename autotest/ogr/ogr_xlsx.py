@@ -97,7 +97,7 @@ def ogr_xlsx_check(ds):
                   ogr.OFTReal,
                   ogr.OFTDateTime]
 
-    for i, typ in type_array:
+    for i, typ in enumerate(type_array):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != typ:
             gdaltest.post_reason('fail')
             print(i)
