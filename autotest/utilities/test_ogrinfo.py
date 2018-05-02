@@ -676,7 +676,7 @@ PRFEDEA: String (16.0)
 """
     expected_lines = expected_ret.splitlines()
     lines = ret.splitlines()
-    for i in enumerate(expected_lines):
+    for i, exp_line in enumerate(expected_lines):
         if exp_line != lines[i]:
             print(ret)
             if gdaltest.is_travis_branch('mingw'):
@@ -721,7 +721,7 @@ PRFEDEA: String (16.0)
 """
     expected_lines = expected_ret.splitlines()
     lines = ret.splitlines()
-    for i in enumerate(expected_lines):
+    for i, exp_line in enumerate(expected_lines):
         if exp_line != lines[i]:
             print(ret)
             if gdaltest.is_travis_branch('mingw'):
