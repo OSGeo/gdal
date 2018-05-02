@@ -2371,7 +2371,7 @@ class CFChecker(object):
                     rc = 0
 
                 # flag_values values must be mutually exclusive
-                if type(values) == str:
+                if isinstance(values, str):
                     values = values.split()
 
                 if not self.uniqueList(values):
@@ -2433,10 +2433,10 @@ class CFChecker(object):
         if isinstance(arg, numpy.ndarray):
             return "array"
 
-        if type(arg) == str:
+        if isinstance(arg, str):
             return "str"
 
-        if type(arg) == list:
+        if isinstance(arg, list):
             return "list"
 
         print("<cfchecker> ERROR: Unknown Type in getType(" + arg + ")")

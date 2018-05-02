@@ -404,9 +404,9 @@ def copyTileIndexToCSV(OGRDS, fileName):
         geom = feature.GetGeometryRef()
         coords = geom.GetEnvelope()
 
-        for i in range(len(coords)):
+        for coord in coords:
             csvfile.write(CsvDelimiter)
-            csvfile.write("%f" % coords[i])
+            csvfile.write("%f" % coord)
         csvfile.write("\n")
 
     csvfile.close()
@@ -585,7 +585,7 @@ def addFeature(OGRDataSource, location, xlist, ylist):
     wkt = 'POLYGON ((%f %f,%f %f,%f %f,%f %f,%f %f ))' % (xlist[0], ylist[0],
                                                           xlist[1], ylist[1], xlist[2], ylist[2], xlist[3], ylist[3], xlist[0], ylist[0])
     OGRGeometry = ogr.CreateGeometryFromWkt(wkt, OGRLayer.GetSpatialRef())
-    if (OGRGeometry is None):
+    if OGRGeometry is None:
         print('Could not create Geometry')
         sys.exit(1)
 
@@ -649,7 +649,7 @@ def getTileName(minfo, ti, xIndex, yIndex, level=-1):
     global LastRowIndx
 
     max = ti.countTilesX
-    if (ti.countTilesY > max):
+    if ti.countTilesY > max:
         max = ti.countTilesY
     countDigits = len(str(max))
     parts = os.path.splitext(os.path.basename(minfo.filename))
@@ -859,7 +859,7 @@ def main(args=None):
         print("Overlap too big w.r.t tile height/width")
         return 1
 
-    if (TargetDir is None):
+    if TargetDir is None:
         print("Missing Directory for Tiles -targetDir")
         Usage()
         return 1
@@ -874,7 +874,7 @@ def main(args=None):
         startIndx = 1
         for levelIndx in range(startIndx, Levels + 1):
             leveldir = TargetDir + str(levelIndx) + os.sep
-            if (os.path.exists(leveldir)):
+            if os.path.exists(leveldir):
                 continue
             os.mkdir(leveldir)
             if not os.path.exists(leveldir):

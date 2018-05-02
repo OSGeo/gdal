@@ -964,9 +964,9 @@ def ogr_pg_20():
     # XXX - mloskot - if 'public' is omitted, then OGRPGDataSource::DeleteLayer fails, line 438
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT AddGeometryColumn('public','testgeom','wkb_geometry',-1,'GEOMETRY',4)")
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
-    for i in range(len(geometries)):
+    for i, geom in enumerate(geometries):
         gdaltest.pg_ds.ExecuteSQL("INSERT INTO testgeom (ogc_fid,wkb_geometry) \
-                                    VALUES (%d,GeomFromEWKT('%s'))" % (i, geometries[i][0]))
+                                    VALUES (%d,GeomFromEWKT('%s'))" % (i, geom[0]))
 
     # We need to re-read layers
     gdaltest.pg_ds.Destroy()
@@ -1133,7 +1133,7 @@ def ogr_pg_21_3d_geometries():
 
         wkt = geom.ExportToIsoWkt()
 
-        if (wkt != wkt_expected[i]):
+        if wkt != wkt_expected[i]:
             gdaltest.post_reason('Unexpected WKT, expected %s and got %s' % (wkt_expected[i], wkt))
             return 'fail'
 
