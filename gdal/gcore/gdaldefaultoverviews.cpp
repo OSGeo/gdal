@@ -642,8 +642,28 @@ GDALDefaultOverviews::BuildOverviews(
         CPLCalloc(sizeof(int), nOverviews) );
     double dfAreaNewOverviews = 0;
     double dfAreaRefreshedOverviews = 0;
+    std::vector<bool> abValidLevel;
+    abValidLevel.resize(nOverviews);
+    std::vector<bool> abRequireRefresh;
+    abRequireRefresh.resize(nOverviews);
+    bool bFoundSinglePixelOverview = false;
     for( int i = 0; i < nOverviews && poBand != nullptr; i++ )
     {
+        abValidLevel[i] = true;
+        abRequireRefresh[i] = false;
+
+        // If we already have a 1x1 overview and this new one would result
+        // in it too, then don't create it.
+        if( bFoundSinglePixelOverview &&
+            (poBand->GetXSize() + panOverviewList[i] - 1)
+                / panOverviewList[i] == 1 &&
+            (poBand->GetXSize() + panOverviewList[i] - 1)
+                / panOverviewList[i] == 1 )
+        {
+            abValidLevel[i] = false;
+            continue;
+        }
+
         for( int j = 0; j < poBand->GetOverviewCount(); j++ )
         {
             GDALRasterBand * poOverview = poBand->GetOverview( j );
@@ -661,16 +681,28 @@ GDALDefaultOverviews::BuildOverviews(
                                                    poBand->GetXSize(),
                                                    poBand->GetYSize() ) )
             {
-                panOverviewList[i] *= -1;
+                abRequireRefresh[i] = true;
+                break;
             }
         }
 
-        const double dfArea = 1.0 / (panOverviewList[i] * panOverviewList[i]);
-        dfAreaRefreshedOverviews += dfArea;
-        if( panOverviewList[i] > 0 )
+        if( abValidLevel[i] )
         {
-            dfAreaNewOverviews += dfArea;
-            panNewOverviewList[nNewOverviews++] = panOverviewList[i];
+            const double dfArea = 1.0 / (panOverviewList[i] * panOverviewList[i]);
+            dfAreaRefreshedOverviews += dfArea;
+            if( !abRequireRefresh[i] )
+            {
+                dfAreaNewOverviews += dfArea;
+                panNewOverviewList[nNewOverviews++] = panOverviewList[i];
+            }
+
+            if( (poBand->GetXSize() + panOverviewList[i] - 1)
+                    / panOverviewList[i] == 1 &&
+                (poBand->GetXSize() + panOverviewList[i] - 1)
+                    / panOverviewList[i] == 1 )
+            {
+                bFoundSinglePixelOverview = true;
+            }
         }
     }
 
@@ -713,8 +745,8 @@ GDALDefaultOverviews::BuildOverviews(
         }
         for( int j = 0; j < nOverviews; j++ )
         {
-            if( panOverviewList[j] > 0 )
-                panOverviewList[j] *= -1;
+            if( abValidLevel[j] )
+                abRequireRefresh[j] = true;
         }
     }
 
@@ -771,12 +803,26 @@ GDALDefaultOverviews::BuildOverviews(
     for( int iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
     {
         poBand = poDS->GetRasterBand( panBandList[iBand] );
+        if( poBand == nullptr )
+        {
+            eErr = CE_Failure;
+            break;
+        }
 
         nNewOverviews = 0;
-        for( int i = 0; i < nOverviews && poBand != nullptr; i++ )
+        std::vector<bool> abAlreadyUsedOverviewBand;
+        abAlreadyUsedOverviewBand.resize(poBand->GetOverviewCount());
+
+        for( int i = 0; i < nOverviews; i++ )
         {
+            if( !abValidLevel[i] || !abRequireRefresh[i] )
+                continue;
+
             for( int j = 0; j < poBand->GetOverviewCount(); j++ )
             {
+                if( abAlreadyUsedOverviewBand[j] )
+                    continue;
+
                 GDALRasterBand * poOverview = poBand->GetOverview( j );
                 if( poOverview == nullptr )
                     continue;
@@ -793,12 +839,13 @@ GDALDefaultOverviews::BuildOverviews(
                                         poOverview->GetYSize(),
                                         poBand->GetYSize());
 
-                if( nOvFactor == - panOverviewList[i]
-                    || (panOverviewList[i] < 0 &&
-                        nOvFactor == GDALOvLevelAdjust2( -panOverviewList[i],
+                if( nOvFactor == panOverviewList[i] ||
+                    nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
                                                        poBand->GetXSize(),
-                                                       poBand->GetYSize() )) )
+                                                       poBand->GetYSize() ))
                 {
+                    abAlreadyUsedOverviewBand[j] = true;
+                    CPLAssert(nNewOverviews < poBand->GetOverviewCount());
                     papoOverviewBands[nNewOverviews++] = poOverview;
                     break;
                 }
