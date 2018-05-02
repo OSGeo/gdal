@@ -33,16 +33,11 @@ unzip PGeoTest.zip
 cd ../../..
 # Run ogr_fgdb.py in isolation from the rest
 export PYTHONPATH=/usr/lib/python2.7/dist-packages
-cd ogr
-python ogr_fgdb.py
-mkdir disabled
-mv ogr_fgdb.* disabled
-cd ..
+(cd ogr && python ogr_fgdb.py)
+(cd ogr && mkdir disabled && mv ogr_fgdb.* disabled)
 # Run ogr_pgeo.py in isolation from the rest
-cd ogr
 # This crashes on Trusty since travis-ci upgraded their Trusty workers
 #python ogr_pgeo.py
-mv ogr_pgeo.* disabled
-cd ..
+(cd ogr && mv ogr_pgeo.* disabled)
 # Run all the Python autotests
 GDAL_SKIP="JP2ECW ECW" python run_all.py

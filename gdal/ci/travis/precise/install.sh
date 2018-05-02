@@ -21,18 +21,14 @@ cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf
 cd ..
 
-cd swig/java
-cp java.opt java.opt.bak
-cat java.opt | sed "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-7-openjdk-amd64\//" > java.opt.tmp
-mv java.opt.tmp java.opt
-make
-mv java.opt.bak java.opt
-cd ../..
+(cd swig/java
+ sed -i.bak "s,JAVA_HOME =.*,JAVA_HOME = /usr/lib/jvm/java-7-openjdk-amd64/," java.opt
+ make
+ mv java.opt.bak java.opt
+)
 
-cd swig/perl
-make generate
-make
-cd ../..
+(cd swig/perl && make generate && make)
+
 sudo rm -f /usr/lib/libgdal.so*
 sudo make install
 sudo ldconfig

@@ -61,9 +61,9 @@ make -j4
 sudo make install
 cd ../..
 sudo ldconfig
-cd gdal
-wget http://even.rouault.free.fr/clang-3.7.0-light/libstdc++.so.6.tar.bz2
-wget http://even.rouault.free.fr/clang-3.7.0-light/install-llvm-3.7.0-light.tar.bz2
-tar xJf libstdc++.so.6.tar.bz2
-tar xJf install-llvm-3.7.0-light.tar.bz2
-cd ..
+(cd gdal
+ wget http://even.rouault.free.fr/clang-3.7.0-light/libstdc++.so.6.tar.bz2
+ wget http://even.rouault.free.fr/clang-3.7.0-light/install-llvm-3.7.0-light.tar.bz2
+ tar xJf libstdc++.so.6.tar.bz2
+ tar xJf install-llvm-3.7.0-light.tar.bz2
+)
