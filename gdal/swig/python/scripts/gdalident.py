@@ -102,7 +102,7 @@ while i < len(argv):
 
     i = i + 1
 
-if len(files) == 0:
+if not files:
     Usage()
 
 for file in files:

@@ -70,7 +70,7 @@ def ctg_1():
     if ret == 'success':
         ds = gdal.Open('data/fake_grid_cell')
         lst = ds.GetRasterBand(1).GetCategoryNames()
-        if lst is None or len(lst) == 0:
+        if lst is None or not lst:
             gdaltest.post_reason('expected non empty category names for band 1')
             return 'fail'
         lst = ds.GetRasterBand(2).GetCategoryNames()

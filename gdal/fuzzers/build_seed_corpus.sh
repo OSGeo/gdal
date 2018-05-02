@@ -70,19 +70,19 @@ rm test.tar
 echo "Building gtiff_fuzzer_seed_corpus.zip"
 rm -f $OUT/gtiff_fuzzer_seed_corpus.zip
 cd $(dirname $0)/../../autotest/gcore/data
-zip -r $OUT/gtiff_fuzzer_seed_corpus.zip *.tif >/dev/null
+zip -r $OUT/gtiff_fuzzer_seed_corpus.zip ./*.tif >/dev/null
 cd $OLDPWD
 cd $(dirname $0)/../../autotest/gdrivers/data
-zip -r $OUT/gtiff_fuzzer_seed_corpus.zip *.tif >/dev/null
+zip -r $OUT/gtiff_fuzzer_seed_corpus.zip ./*.tif >/dev/null
 cd $OLDPWD
 
 echo "Building hfa_fuzzer_seed_corpus.zip"
 rm -f $OUT/hfa_fuzzer_seed_corpus.zip
 cd $(dirname $0)/../../autotest/gcore/data
-zip -r $OUT/hfa_fuzzer_seed_corpus.zip *.img >/dev/null
+zip -r $OUT/hfa_fuzzer_seed_corpus.zip ./*.img >/dev/null
 cd $OLDPWD
 cd $(dirname $0)/../../autotest/gdrivers/data
-zip -r $OUT/hfa_fuzzer_seed_corpus.zip *.img >/dev/null
+zip -r $OUT/hfa_fuzzer_seed_corpus.zip ./*.img >/dev/null
 cd $OLDPWD
 
 echo "Building adrg_fuzzer_seed_corpus.zip"
@@ -280,7 +280,7 @@ cd $(dirname $0)/../../autotest/ogr/data
 rm -f $OUT/ogr_fuzzer_seed_corpus.zip
 zip -r $OUT/ogr_fuzzer_seed_corpus.zip . >/dev/null
 cd mvt
-zip $OUT/ogr_fuzzer_seed_corpus.zip * >/dev/null
+zip $OUT/ogr_fuzzer_seed_corpus.zip ./* >/dev/null
 cd ..
 cd $CUR_DIR
 
@@ -293,7 +293,7 @@ cd $OLDPWD
 echo "Building csv_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/ogr/data
 rm -f $OUT/csv_fuzzer_seed_corpus.zip
-zip -r $OUT/csv_fuzzer_seed_corpus.zip *.csv >/dev/null
+zip -r $OUT/csv_fuzzer_seed_corpus.zip ./*.csv >/dev/null
 cd $OLDPWD
 
 echo "Building bna_fuzzer_seed_corpus.zip"
@@ -328,14 +328,12 @@ CUR_DIR=$PWD
 cd  $(dirname $0)/../../autotest/ogr/data
 for filename in *.ods; do
     mkdir tmpods
-    cd tmpods
-    unzip ../$filename >/dev/null
+    unzip -d tmpods $filename >/dev/null
     printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/ods_$filename.tar
-    for i in `find -type f`; do
+    for i in $(find -type f); do
         printf "***NEWFILE***:$i\n" >> $CUR_DIR/ods_$filename.tar
         cat $i >> $CUR_DIR/ods_$filename.tar
     done
-    cd ..
     rm -rf tmpods
 done
 cd $CUR_DIR
@@ -444,7 +442,7 @@ echo "Building avce00_fuzzer_seed_corpus.zip"
 rm -f $OUT/avce00_fuzzer_seed_corpus.zip
 cd $(dirname $0)/../../autotest/ogr/data
 rm -f $OUT/avce00_fuzzer_seed_corpus.zip
-zip -r $OUT/avce00_fuzzer_seed_corpus.zip *.e00 >/dev/null
+zip -r $OUT/avce00_fuzzer_seed_corpus.zip ./*.e00 >/dev/null
 cd $OLDPWD
 
 echo "Building gml_fuzzer_seed_corpus.zip"

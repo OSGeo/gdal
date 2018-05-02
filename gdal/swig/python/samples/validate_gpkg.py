@@ -470,41 +470,41 @@ class GPKGChecker(object):
         if geometry_type_name in ('POINT', 'LINESTRING', 'POLYGON',
                                   'MULTIPOINT', 'MULTILINESTRING',
                                   'MULTIPOLYGON'):
-            self._assert(len(found_geom_types) == 0 or
+            self._assert(not found_geom_types or
                          found_geom_types == set([geometry_type_name]), 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
         elif geometry_type_name == 'GEOMETRYCOLLECTION':
-            self._assert(len(found_geom_types) == 0 or
-                         len(found_geom_types.difference(
+            self._assert(not found_geom_types or
+                         not found_geom_types.difference(
                              set(['GEOMETRYCOLLECTION', 'MULTIPOINT',
                                   'MULTILINESTRING', 'MULTIPOLYGON',
-                                  'MULTICURVE', 'MULTISURFACE']))) == 0, 32,
+                                  'MULTICURVE', 'MULTISURFACE'])), 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
         elif geometry_type_name in ('CURVEPOLYGON', 'SURFACE'):
-            self._assert(len(found_geom_types) == 0 or
-                         len(found_geom_types.difference(
-                             set(['POLYGON', 'CURVEPOLYGON']))) == 0, 32,
+            self._assert(not found_geom_types or
+                         not found_geom_types.difference(
+                             set(['POLYGON', 'CURVEPOLYGON'])), 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
         elif geometry_type_name == 'MULTICURVE':
-            self._assert(len(found_geom_types) == 0 or
-                         len(found_geom_types.difference(
-                             set(['MULTILINESTRING', 'MULTICURVE']))) == 0, 32,
+            self._assert(not found_geom_types or
+                         not found_geom_types.difference(
+                             set(['MULTILINESTRING', 'MULTICURVE'])), 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
         elif geometry_type_name == 'MULTISURFACE':
-            self._assert(len(found_geom_types) == 0 or
-                         len(found_geom_types.difference(
-                             set(['MULTIPOLYGON', 'MULTISURFACE']))) == 0, 32,
+            self._assert(not found_geom_types or
+                         not found_geom_types.difference(
+                             set(['MULTIPOLYGON', 'MULTISURFACE'])), 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
         elif geometry_type_name == 'CURVE':
-            self._assert(len(found_geom_types) == 0 or
-                         len(found_geom_types.difference(
+            self._assert(not found_geom_types or
+                         not found_geom_types.difference(
                              set(['LINESTRING', 'CIRCULARSTRING',
-                                  'COMPOUNDCURVE']))) == 0, 32,
+                                  'COMPOUNDCURVE'])), 32,
                          'in table %s, found geometry types %s' %
                          (table_name, str(found_geom_types)))
 
@@ -619,7 +619,7 @@ class GPKGChecker(object):
         c.execute("SELECT table_name FROM gpkg_contents WHERE "
                   "data_type = 'attributes'")
         rows = c.fetchall()
-        if len(rows) == 0:
+        if not rows:
             self._log('... No attributes table')
         for (table_name,) in rows:
             self._log('Checking attributes table ' + table_name)
@@ -725,7 +725,7 @@ class GPKGChecker(object):
                   "ON tm.table_name = tms.table_name WHERE tm.table_name = ?",
                   (table_name,))
         rows = c.fetchall()
-        if len(rows) != 0:
+        if rows:
             (dx, min_dx, max_dx, dy, min_dy, max_dy) = rows[0]
             self._assert(abs((min_dx - dx) / dx) < 1e-3 and
                          abs((max_dx - dx) / dx) < 1e-3 and
@@ -748,7 +748,7 @@ class GPKGChecker(object):
                       "WHERE table_name = ? AND zoom_level = ?",
                       (table_name, zoom_level))
             rows2 = c.fetchall()
-            if len(rows2) == 0:
+            if not rows2:
                 self._assert(False, 55,
                              "Invalid zoom_level in %s" % table_name)
             else:
@@ -911,7 +911,7 @@ class GPKGChecker(object):
         c.execute("SELECT table_name FROM gpkg_contents WHERE "
                   "data_type = '2d-gridded-coverage'")
         tables = c.fetchall()
-        if len(tables) == 0:
+        if not tables:
             self._log('... No tiled gridded coverage table')
             return
         tables = [tables[i][0] for i in range(len(tables))]
@@ -1169,7 +1169,7 @@ class GPKGChecker(object):
                                          'Invalid tile %d in %s' %
                                          (id, table_name))
                             ovr_count = ds.GetRasterBand(1).GetOverviewCount()
-                            self._assert(len(ds.GetSubDatasets()) == 0 and
+                            self._assert(not ds.GetSubDatasets() and
                                          ovr_count == 0, 'gpkg_2d_gridded_coverage#19',
                                          'Invalid tile %d in %s' %
                                          (id, table_name))
@@ -1610,7 +1610,7 @@ if __name__ == '__main__':
     ret = check(filename, abort_at_first_error=abort_at_first_error,
                 verbose=verbose)
     if not abort_at_first_error:
-        if len(ret) == 0:
+        if not ret:
             sys.exit(0)
         else:
             for (req, msg) in ret:

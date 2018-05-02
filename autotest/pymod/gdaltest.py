@@ -108,7 +108,7 @@ def run_tests(test_list):
     before_vsimem = gdal.ReadDirRecursive('/vsimem/')
     try:
         git_status_before = git_status()
-    except:
+    except OSError:
         git_status_before = ''
 
     set_time = start_time is None
@@ -186,7 +186,7 @@ def run_tests(test_list):
 
     try:
         git_status_after = git_status()
-    except:
+    except OSError:
         git_status_after = ''
     if git_status_after != git_status_before:
         failure_counter = failure_counter + 1
@@ -349,7 +349,7 @@ def run_all(dirlist, run_as_external=False):
     end_time = time.time()
     cur_name = None
 
-    if len(failure_summary) > 0:
+    if failure_summary:
         print('')
         print(' ------------ Failures ------------')
         for item in failure_summary:
@@ -451,7 +451,7 @@ class GDALTest(object):
 
         if check_filelist and ds.GetDriver().GetMetadataItem('DCAP_VIRTUALIO') is not None:
             fl = ds.GetFileList()
-            if fl is not None and len(fl) != 0 and wrk_filename == fl[0]:
+            if fl is not None and fl and wrk_filename == fl[0]:
 
                 # Copy all files in /vsimem/
                 mainfile_dirname = os.path.dirname(fl[0])
@@ -1552,7 +1552,7 @@ def filesystem_supports_sparse_files(path):
 
     try:
         (ret, err) = runexternal_out_and_err('stat -f -c "%T" ' + path)
-    except:
+    except OSError:
         return False
 
     if err != '':
