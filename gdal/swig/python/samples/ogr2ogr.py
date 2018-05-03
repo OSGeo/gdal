@@ -1205,7 +1205,7 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName,
                      bAppend, eGType, bPromoteToMulti, nCoordDim, bOverwrite,
                      papszFieldTypesToString, bWrapDateline,
                      bExplodeCollections, pszZField, pszWHERE):
-
+    # pylint: disable=unused-argument
     if pszNewLayerName is None:
         pszNewLayerName = poSrcLayer.GetLayerDefn().GetName()
 

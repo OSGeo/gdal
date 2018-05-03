@@ -1401,7 +1401,7 @@ def ogr_shape_32():
     # 4.5 GB space available or give a new directory that does and delete the
     # directory afterwards.
 
-    return 'skip'
+    return 'skip'  # pylint: disable=unreachable
 
     from decimal import Decimal
 
