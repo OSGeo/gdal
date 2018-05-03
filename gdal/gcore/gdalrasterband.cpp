@@ -4765,14 +4765,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
             {
                 if( pdfMin && pdfMax && pdfMean && pdfStdDev )
                 {
-                    if( bApproxOK )
-                    {
-                        SetMetadataItem( "STATISTICS_APPROXIMATE", "YES" );
-                    }
-                    else if( GetMetadataItem( "STATISTICS_APPROXIMATE" ) )
-                    {
-                        SetMetadataItem( "STATISTICS_APPROXIMATE",  nullptr );
-                    }
+                    SetMetadataItem( "STATISTICS_APPROXIMATE", "YES" );
                     SetStatistics( *pdfMin,*pdfMax, *pdfMean, *pdfStdDev );
                 }
             }
