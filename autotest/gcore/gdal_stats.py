@@ -851,6 +851,34 @@ def stats_approx_stats_flag(dt=gdal.GDT_Byte, struct_frmt='B'):
 def stats_approx_stats_flag_float():
     return stats_approx_stats_flag(dt=gdal.GDT_Float32, struct_frmt='f')
 
+
+def stats_all_nodata():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000)
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    approx_ok = 1
+    force = 1
+    with gdaltest.error_handler():
+        stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
+    if stats != [0.0, 0.0, 0.0, 0.0]:
+        gdaltest.post_reason('did not get expected stats')
+        printstats(md)
+        return 'fail'
+
+    ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000, 1,
+                                            gdal.GDT_Float32)
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    approx_ok = 1
+    force = 1
+    with gdaltest.error_handler():
+        stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
+    if stats != [0.0, 0.0, 0.0, 0.0]:
+        gdaltest.post_reason('did not get expected stats')
+        printstats(md)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Run tests
 
@@ -881,6 +909,7 @@ gdaltest_list = [
     stats_nodata_almost_max_float32,
     stats_approx_stats_flag,
     stats_approx_stats_flag_float,
+    stats_all_nodata,
 ]
 
 if __name__ == '__main__':
