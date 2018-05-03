@@ -1722,7 +1722,7 @@ def RasterizeOptions(options=None, format=None,
         if noData is not None:
             new_options += ['-a_nodata', str(noData)]
         if initValues is not None:
-            if instance(initValues, (tuple, list)):
+            if isinstance(initValues, (tuple, list)):
                 for val in initValues:
                     new_options += ['-init', str(val)]
             else:
@@ -1757,7 +1757,7 @@ def RasterizeOptions(options=None, format=None,
         if useZ:
             new_options += ['-3d']
         if layers is not None:
-            if instance(layers, ((tuple, list)):
+            if isinstance(layers, ((tuple, list))):
                 for layer in layers:
                     new_options += ['-l', layer]
             else:

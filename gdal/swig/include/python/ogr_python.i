@@ -262,7 +262,7 @@
     # This makes it possible to fetch fields in the form "feature['area']".
     def __getitem__(self, key):
         """Returns the values of fields by the given name / field_index"""
-        if isinstance(key, (str type(u''))):
+        if isinstance(key, (str, type(u''))):
             fld_index = self.GetFieldIndex(key)
         else:
             fld_index = key
