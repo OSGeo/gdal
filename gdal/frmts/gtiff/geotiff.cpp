@@ -10050,7 +10050,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
 /* -------------------------------------------------------------------- */
     CPLString osMetadata;
 
-    GTIFFBuildOverviewMetadata( "NONE", this, osMetadata );
+    GTIFFBuildOverviewMetadata( "NONE", this, 0, osMetadata );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch extra sample tag                                          */
@@ -10415,7 +10415,7 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
     CPLString osMetadata;
 
-    GTIFFBuildOverviewMetadata( pszResampling, this, osMetadata );
+    GTIFFBuildOverviewMetadata( pszResampling, this, 0, osMetadata );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch extra sample tag                                          */
