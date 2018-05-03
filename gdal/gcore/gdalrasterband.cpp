@@ -3187,13 +3187,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
 
             void *pData = poBlock->GetDataRef();
 
-            int nXCheck = nBlockXSize;
-            if( (iXBlock+1) * nBlockXSize > GetXSize() )
-                nXCheck = GetXSize() - iXBlock * nBlockXSize;
-
-            int nYCheck = nBlockYSize;
-            if( (iYBlock+1) * nBlockYSize > GetYSize() )
-                nYCheck = GetYSize() - iYBlock * nBlockYSize;
+            int nXCheck, nYCheck;
+            GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
             // this is a special case for a common situation.
             if( eDataType == GDT_Byte && !bSignedByte
@@ -5058,13 +5053,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 
                 void* const pData = poBlock->GetDataRef();
 
-                int nXCheck = nBlockXSize;
-                if( (iXBlock+1) * nBlockXSize > GetXSize() )
-                    nXCheck = GetXSize() - iXBlock * nBlockXSize;
-
-                int nYCheck = nBlockYSize;
-                if( (iYBlock+1) * nBlockYSize > GetYSize() )
-                    nYCheck = GetYSize() - iYBlock * nBlockYSize;
+                int nXCheck, nYCheck;
+                GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
                 if( eDataType == GDT_Byte )
                 {
@@ -5177,13 +5167,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 
             void* const pData = poBlock->GetDataRef();
 
-            int nXCheck = nBlockXSize;
-            if( (iXBlock+1) * nBlockXSize > GetXSize() )
-                nXCheck = GetXSize() - iXBlock * nBlockXSize;
-
-            int nYCheck = nBlockYSize;
-            if( (iYBlock+1) * nBlockYSize > GetYSize() )
-                nYCheck = GetYSize() - iYBlock * nBlockYSize;
+            int nXCheck, nYCheck;
+            GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
             // This isn't the fastest way to do this, but is easier for now.
             for( int iY = 0; iY < nYCheck; iY++ )
@@ -5577,13 +5562,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
 
             void * const pData = poBlock->GetDataRef();
 
-            int nXCheck = nBlockXSize;
-            if( (iXBlock+1) * nBlockXSize > GetXSize() )
-                nXCheck = GetXSize() - iXBlock * nBlockXSize;
-
-            int nYCheck = nBlockYSize;
-            if( (iYBlock+1) * nBlockYSize > GetYSize() )
-                nYCheck = GetYSize() - iYBlock * nBlockYSize;
+            int nXCheck, nYCheck;
+            GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
             // This isn't the fastest way to do this, but is easier for now.
             for( int iY = 0; iY < nYCheck; iY++ )
