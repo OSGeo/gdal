@@ -210,7 +210,6 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
             offsets = CPLString().Printf("%.15g,0,0,%.15g", offset_1, offset_2);
         }
     }
-    //request += CPLString().Printf("&WIDTH=%i&HEIGHT=%i", nBufXSize, nBufYSize);
     bool do_not_include = CPLGetXMLBoolean(psService, "GridCRSOptional") && !scaled;
     if (!do_not_include) {
         request += CPLString().Printf(
@@ -240,6 +239,7 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
             request = CPLURLAddKVP(request, pair[0], pair[1]);
         }
     }
+    CPLDebug("WCS", "Requesting %s", request.c_str());
     return request;
 }
 
@@ -841,6 +841,7 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
                     id = CPLGetXMLValue(node, nullptr, "");
                     name = CPLURLAddKVP(name, "identifiers", id);
                 } else {
+                    // todo: maybe not an error since CoverageSummary may be within CoverageSummary (07-067r5 Fig4)
                     CSLDestroy( metadata );
                     CPLError( CE_Failure, CPLE_AppDefined,
                               "Error in capabilities document.\n" );
@@ -862,24 +863,15 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
 
             metadata = CSLSetNameValue(metadata, key2, desc);
 
-            // skipping optional parameters
-            // Abstract, WGS84BoundingBox, BoundingBox, Keywords, SupportedCRS, etc
-            // skipping required (in v2) coverageSubtype
+            // todo: compose global bounding box from WGS84BoundingBox and BoundingBox
+
+            // further subdataset (coverage) parameters are parsed in ParseCoverageCapabilities
 
         }
     }
     this->SetMetadata( metadata, "SUBDATASETS" );
     CSLDestroy( metadata );
     return CE_None;
-}
-
-static void add_meta(CPLXMLNode *summary, CPLXMLNode *metadata, CPLString key) {
-    CPLXMLNode *node = CPLGetXMLNode(summary, key);
-    if (node) {
-        CPLAddXMLAttributeAndValue(
-            CPLCreateXMLElementAndValue(metadata, "MDI",
-                                        CPLGetXMLValue(node, nullptr, "")), "key", key);
-    }
 }
 
 void WCSDataset110::ParseCoverageCapabilities(CPLXMLNode *capabilities, const CPLString &coverage, CPLXMLNode *metadata)
@@ -911,12 +903,33 @@ void WCSDataset110::ParseCoverageCapabilities(CPLXMLNode *capabilities, const CP
                 continue;
             }
 
-            add_meta(summary, metadata, "Title");
-            add_meta(summary, metadata, "CoverageSubtype");
+            // Description
+            // todo: there could be Title and Abstract for each supported language
+            XMLCopyMetadata(summary, metadata, "Title");
+            XMLCopyMetadata(summary, metadata, "Abstract");
 
-            // skipping optional parameters
-            // Abstract, WGS84BoundingBox, BoundingBox, Keywords, SupportedCRS, etc
-            // skipping required (in v2) coverageSubtype
+            // 2.0.1 stuff
+            XMLCopyMetadata(summary, metadata, "CoverageSubtype");
+
+            // Keywords
+            CPLString kw = GetKeywords(summary, "Keywords", "Keyword");
+            CPLAddXMLAttributeAndValue(
+                CPLCreateXMLElementAndValue(metadata, "MDI", kw), "key", "Keywords");
+
+            // WCSContents
+            const char *tags[] = {
+                "SupportedCRS",
+                "SupportedFormat",
+                "OtherSource"
+            };
+            for (unsigned int i = 0; i < CPL_ARRAYSIZE(tags); i++) {
+                kw = GetKeywords(summary, "", tags[i]);
+                CPLAddXMLAttributeAndValue(
+                    CPLCreateXMLElementAndValue(metadata, "MDI", kw), "key", tags[i]);
+            }
+
+            // skipping WGS84BoundingBox, BoundingBox, Metadata, Extension
+            // since those we'll get from coverage description
 
         }
     }

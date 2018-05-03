@@ -518,13 +518,17 @@ static bool ProcessError( CPLHTTPResult *psResult )
     {
         CPLXMLNode *psTree = CPLParseXMLString( (const char *)psResult->pabyData );
         CPLStripXMLNamespace( psTree, nullptr, TRUE );
-        const char *pszMsg = CPLGetXMLValue(psTree, "=ServiceExceptionReport.ServiceException", nullptr);
-        if (!pszMsg) {
-            pszMsg = CPLGetXMLValue(psTree, "=ExceptionReport.Exception.ExceptionText", nullptr);
+        CPLString msg = CPLGetXMLValue(psTree, "=ServiceExceptionReport.ServiceException", "");
+        if (msg == "") {
+            msg = CPLGetXMLValue(psTree, "=ExceptionReport.Exception.exceptionCode", "");
+            if (msg != "") {
+                msg += ": ";
+            }
+            msg += CPLGetXMLValue(psTree, "=ExceptionReport.Exception.ExceptionText", "");
         }
-        if( pszMsg )
+        if( msg != "" )
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s", pszMsg );
+                      "%s", msg.c_str() );
         else
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Corrupt Service Exception:\n%s",
@@ -1480,7 +1484,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     for( iBand = 0; iBand < nBandCount; iBand++ ) {
         WCSRasterBand *band = new WCSRasterBand(poDS, iBand+1, -1);
         // copy band specific metadata to the band
-        char **md_from = poDS->GetMetadata("SUBDATASETS");
+        char **md_from = poDS->GetMetadata("");
         char **md_to = nullptr;
         CPLString our_key = CPLString().Printf("FIELD_%d_", iBand + 1);
         for (char **from = md_from; *from != nullptr; ++from) {

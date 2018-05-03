@@ -196,7 +196,9 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         "%.17g", MIN(adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1], extent[2]));
     */
 
-    request += CPLString().Printf("&SUBSET=%s%%28%s,%s%%29", x, a.c_str(), b.c_str());
+    // 09-147 KVP Protocol: subset keys must be unique
+
+    request += CPLString().Printf("&SUBSETx=%s%%28%s,%s%%29", x, a.c_str(), b.c_str());
 
     a = CPLString().Printf("%.17g", extent[1]);
     if (low.size() > 1 && CompareNumbers(low[1], a) > 0) {
@@ -213,7 +215,7 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         "%.17g", MIN(adfGeoTransform[3], extent[3]));
     */
 
-    request += CPLString().Printf("&SUBSET=%s%%28%s,%s%%29", y, a.c_str(), b.c_str());
+    request += CPLString().Printf("&SUBSETy=%s%%28%s,%s%%29", y, a.c_str(), b.c_str());
 
     // Dimension and range parameters:
     std::vector<CPLString> dimensions;
@@ -229,7 +231,7 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
             continue;
         }
         std::vector<CPLString> params = Split(FromParenthesis(dimensions[i]), ",");
-        request += "&SUBSET=" + dim + "%28"; // (
+        request += "&SUBSET" + CPLString().Printf("%i", i) + "=" + dim + "%28"; // (
         for (unsigned int j = 0; j < params.size(); ++j) {
             // todo: %22 (") should be used only for non-numbers
             request += "%22" + params[j] + "%22";
@@ -251,7 +253,8 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
                 grid_axes.push_back("E");
                 grid_axes.push_back("N");
             }
-            tmp.Printf("&SCALESIZE=%s(%i),%s(%i)", grid_axes[0].c_str(), nBufXSize, grid_axes[1].c_str(), nBufYSize);
+            tmp.Printf("&SCALESIZE=%s%%28%i%%29,%s%%28%i%%29",
+                       grid_axes[0].c_str(), nBufXSize, grid_axes[1].c_str(), nBufYSize);
         }
         request += tmp;
     }
@@ -295,6 +298,7 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         }
     }
 
+    CPLDebug("WCS", "Requesting %s", request.c_str());
     return request;
 
 }
@@ -328,6 +332,7 @@ CPLString WCSDataset201::DescribeCoverageRequest()
             request = CPLURLAddKVP(request, pair[0], pair[1]);
         }
     }
+    CPLDebug("WCS", "Requesting %s", request.c_str());
     return request;
 }
 
@@ -674,7 +679,6 @@ bool WCSDataset201::ExtractGridInfo()
             CPLError(CE_Failure, CPLE_AppDefined, "Missing boundedBy.Envelope");
             return false;
         }
-        // todo: get time interval
     }
     std::vector<CPLString> bbox = ParseBoundingBox(envelope);
     if (!SetCRS(ParseCRS(envelope), true) || bbox.size() < 2) {
@@ -755,6 +759,8 @@ bool WCSDataset201::ExtractGridInfo()
         } else if( i < slow.size() && i < shigh.size() ) {
             metadata = CSLSetNameValue(metadata, (key + "INTERVAL").c_str(),
                                        CPLString().Printf("%s,%s", slow[i].c_str(), shigh[i].c_str()));
+        } else if (i < bbox.size()) {
+            metadata = CSLSetNameValue(metadata, (key + "INTERVAL").c_str(), bbox[i].c_str());
         }
     }
 

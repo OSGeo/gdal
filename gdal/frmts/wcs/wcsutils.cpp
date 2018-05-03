@@ -361,6 +361,20 @@ bool CPLUpdateXML(CPLXMLNode *poRoot, const char *pszPath, const char *new_value
 }
 
 /* -------------------------------------------------------------------- */
+/*      XMLCopyMetadata                                                 */
+/*      Copy child node 'key' into metadata as MDI element.             */
+/* -------------------------------------------------------------------- */
+
+void XMLCopyMetadata(CPLXMLNode *parent, CPLXMLNode *metadata, CPLString key) {
+    CPLXMLNode *node = CPLGetXMLNode(parent, key);
+    if (node) {
+        CPLAddXMLAttributeAndValue(
+            CPLCreateXMLElementAndValue(metadata, "MDI",
+                                        CPLGetXMLValue(node, nullptr, "")), "key", key);
+    }
+}
+
+/* -------------------------------------------------------------------- */
 /*      SetupCache                                                      */
 /*      Cache is a directory                                            */
 /* -------------------------------------------------------------------- */
@@ -645,14 +659,20 @@ CPLString GetKeywords(CPLXMLNode *root,
                 CPLString word = CPLGetXMLValue(node, nullptr, "");
                 word.Trim();
 
-                // crs, replace "http://www.opengis.net/def/crs/EPSG/0/" with EPSG:
-                const char *epsg = "http://www.opengis.net/def/crs/EPSG/0/";
-                size_t pos = word.find(epsg);
-                if (pos == 0) {
-                    CPLString code = word.substr(strlen(epsg), std::string::npos);
-                    if (code.find_first_not_of(DIGITS) == std::string::npos) {
-                        epsg_codes.push_back(atoi(code));
-                        continue;
+                // crs, replace "http://www.opengis.net/def/crs/EPSG/0/"
+                // or "urn:ogc:def:crs:EPSG::" with EPSG:
+                const char *epsg[] = {
+                    "http://www.opengis.net/def/crs/EPSG/0/",
+                    "urn:ogc:def:crs:EPSG::"
+                };
+                for (unsigned int i = 0; i < CPL_ARRAYSIZE(epsg); i++) {
+                    size_t pos = word.find(epsg[i]);
+                    if (pos == 0) {
+                        CPLString code = word.substr(strlen(epsg[i]), std::string::npos);
+                        if (code.find_first_not_of(DIGITS) == std::string::npos) {
+                            epsg_codes.push_back(atoi(code));
+                            continue;
+                        }
                     }
                 }
 
@@ -664,7 +684,7 @@ CPLString GetKeywords(CPLXMLNode *root,
                     "http://www.opengis.net/def/interpolation/OGC/1/"
                 };
                 for (unsigned int i = 0; i < CPL_ARRAYSIZE(spec); i++) {
-                    pos = word.find(spec[i]);
+                    size_t pos = word.find(spec[i]);
                     if (pos != std::string::npos) {
                         word.erase(pos, strlen(spec[i]));
                     }
@@ -875,6 +895,12 @@ std::vector<CPLString> ParseBoundingBox(CPLXMLNode *node)
     if (lc != "" && uc != "") {
         bbox.push_back(lc);
         bbox.push_back(uc);
+    }
+    // time extent if node is an EnvelopeWithTimePeriod
+    lc = CPLGetXMLValue(node, "beginPosition", "");
+    if (lc != "") {
+        uc = CPLGetXMLValue(node, "endPosition", "");
+        bbox.push_back(lc + "," + uc);
     }
     return bbox;
 }

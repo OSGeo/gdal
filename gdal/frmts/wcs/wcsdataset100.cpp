@@ -138,7 +138,7 @@ CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
     if (interpolation != "") {
         request += "&INTERPOLATION=" + interpolation;
     }
-    
+
     if( osTime != "" )
     {
         request += "&time=";
@@ -666,8 +666,9 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
                 return CE_Failure;
             }
 
-            // skip optional metadataLink, description, and keywords
-            // skip requred lonLatEnvelope
+            // todo: compose global bounding box from lonLatEnvelope
+
+            // further subdataset (coverage) parameters are parsed in ParseCoverageCapabilities
 
         }
     }
@@ -697,12 +698,14 @@ void WCSDataset100::ParseCoverageCapabilities(CPLXMLNode *capabilities, const CP
                 }
             }
 
-            node = CPLGetXMLNode(summary, "label");
-            if (node) {
-                CPLAddXMLAttributeAndValue(CPLCreateXMLElementAndValue(metadata, "MDI", CPLGetXMLValue(node, nullptr, "")), "key", "label");
-            }
-            // skip optional metadataLink, description, and keywords
-            // skip requred lonLatEnvelope
+            XMLCopyMetadata(summary, metadata, "label");
+            XMLCopyMetadata(summary, metadata, "description");
+
+            CPLString kw = GetKeywords(summary, "keywords", "keyword");
+            CPLAddXMLAttributeAndValue(
+                CPLCreateXMLElementAndValue(metadata, "MDI", kw), "key", "keywords");
+
+            // skip metadataLink
 
         }
     }
