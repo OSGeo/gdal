@@ -2721,7 +2721,7 @@ def hexify_double(val):
     return val.rstrip('L').lstrip('0x').zfill(16).upper()
 
 
-def check_identity_transformation(x, y, srid):
+def check_identity_transformation(x, y):
     import struct
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -2787,7 +2787,7 @@ def test_ogr2ogr_67():
 
     # Now we will check the value of x is preserved in a transformation with same target and source SRS,
     # both as latitutude/longitude in degrees.
-    ret = check_identity_transformation(x, y, 4326)
+    ret = check_identity_transformation(x, y)
     return ret
 
 

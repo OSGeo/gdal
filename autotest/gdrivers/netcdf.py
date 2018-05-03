@@ -1044,7 +1044,6 @@ def netcdf_25_nc4():
                  'valid_min': '10.1',
                  'valid_range_b': '1,10',
                  'valid_range_ub': '1,200',
-                 'valid_range_s': '0,255',
                  'valid_range_us': '0,32000',
                  'valid_range_l': '0,255',
                  'valid_range_ul': '0,4000000000',
