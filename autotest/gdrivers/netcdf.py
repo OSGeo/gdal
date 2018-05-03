@@ -103,7 +103,9 @@ def netcdf_setup():
 # helper function needed so we can call Process() on it from netcdf_test_copy_timeout()
 
 
-def netcdf_test_copy(ifile, band, checksum, ofile, opts=[], driver='NETCDF'):
+def netcdf_test_copy(ifile, band, checksum, ofile, opts=None, driver='NETCDF'):
+    # pylint: disable=unused-argument
+    opts = [] if opts is None else opts
     test = gdaltest.GDALTest('NETCDF', '../' + ifile, band, checksum, options=opts)
     return test.testCreateCopy(check_gt=0, check_srs=0, new_filename=ofile, delete_copy=0, check_minmax=0)
 
