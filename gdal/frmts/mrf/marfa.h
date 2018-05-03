@@ -515,6 +515,9 @@ public:
     virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
     virtual CPLErr IWriteBlock(int xblk, int yblk, void *buffer) override;
 
+    // Check that the respective block has data, without reading it
+    virtual bool TestBlock(int xblk, int yblk);
+
     virtual GDALColorTable *GetColorTable() override { return poDS->poColorTable; }
 
     CPLErr SetColorInterpretation(GDALColorInterp ci) override { img.ci = ci; return CE_None; }
