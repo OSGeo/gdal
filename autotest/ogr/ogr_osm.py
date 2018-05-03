@@ -979,7 +979,9 @@ def ogr_osm_18():
 
     ds = ogr.Open('data/two_points.pbf')
     lyr = ds.GetLayerByName('points')
-    count = len(lyr)
+    count = 0
+    for f in lyr:
+        count += 1
     ds = None
 
     if count != 2:
