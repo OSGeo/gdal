@@ -212,6 +212,8 @@ class OGRXercesInputSource : public InputSource
 {
     OGRXercesBinInputStream* pBinInputStream;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRXercesInputSource)
+
   public:
     OGRXercesInputSource(VSILFILE* fp,
                          MemoryManager* const manager =

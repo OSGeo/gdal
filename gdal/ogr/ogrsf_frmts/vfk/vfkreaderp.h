@@ -55,6 +55,8 @@ private:
 
     void          AddInfo(const char *) override;
 
+    CPL_DISALLOW_COPY_ASSIGN(VFKReader)
+
 protected:
     char           *m_pszFilename;
     VSIStatBuf     *m_poFStat;

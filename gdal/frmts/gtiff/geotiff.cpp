@@ -6972,6 +6972,8 @@ class GTiffBitmapBand : public GTiffOddBitsBand
 
     GDALColorTable *poColorTable;
 
+    CPL_DISALLOW_COPY_ASSIGN(GTiffBitmapBand)
+
   public:
 
                    GTiffBitmapBand( GTiffDataset *, int );

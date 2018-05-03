@@ -91,6 +91,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     friend inline FeatureIterator begin(OGRLayer* poLayer);
     friend inline FeatureIterator end(OGRLayer* poLayer);
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRLayer)
+
   protected:
 //! @cond Doxygen_Suppress
     int          m_bFilterIsEnvelope;

@@ -101,6 +101,8 @@ class OGRS57DataSource : public OGRDataSource
     bool                bExtentsSet;
     OGREnvelope         oExtents;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRS57DataSource)
+
   public:
     explicit            OGRS57DataSource(char** papszOpenOptions = nullptr);
                         ~OGRS57DataSource();
