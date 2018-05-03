@@ -2767,6 +2767,11 @@ static double GDALGetOverviewRatio( GDALRasterBand* poSrcBand,
 {
     GDALDataset* poSrcDS(poSrcBand->GetDataset());
     GDALDataset* poDstDS(poOvBand->GetDataset());
+
+    if( poSrcDS == NULL ||
+        poDstDS == NULL )
+        return 0.0;
+
     const char* pszSrcOverviewFactor =
           poSrcDS->GetMetadataItem("OVERVIEW_FACTOR", "GDAL_INTERNAL");
     const char* pszDstOverviewFactor =
