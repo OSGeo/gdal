@@ -2125,8 +2125,8 @@ def tiff_write_56():
     test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
 
     test_ct = gdal.ColorTable()
-    for i in range(len(test_ct_data)):
-        test_ct.SetColorEntry(i, test_ct_data[i])
+    for i, data in enumerate(test_ct_data):
+        test_ct.SetColorEntry(i, data)
 
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_56.tif',
                                   30, 50, 1,

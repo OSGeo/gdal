@@ -795,10 +795,10 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
         else:
             if bSrcIsOSM:
                 osInterestLayers = "SET interest_layers ="
-                for iLayer in range(len(papszLayers)):
+                for iLayer, papszLayer in enumerate(papszLayers):
                     if iLayer != 0:
                         osInterestLayers = osInterestLayers + ","
-                    osInterestLayers = osInterestLayers + papszLayers[iLayer]
+                    osInterestLayers = osInterestLayers + papszLayer
 
                 poDS.ExecuteSQL(osInterestLayers, None, None)
 
@@ -1367,9 +1367,9 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName,
         if poDstFDefn is not None:
             nDstFieldCount = poDstFDefn.GetFieldCount()
 
-        for iField in range(len(papszSelFields)):
+        for papszSelField in papszSelFields:
 
-            iSrcField = poSrcFDefn.GetFieldIndex(papszSelFields[iField])
+            iSrcField = poSrcFDefn.GetFieldIndex(papszSelField)
             if iSrcField >= 0:
                 poSrcFieldDefn = poSrcFDefn.GetFieldDefn(iSrcField)
                 oFieldDefn = ogr.FieldDefn(poSrcFieldDefn.GetNameRef(),
@@ -1404,7 +1404,7 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName,
                         nDstFieldCount = nDstFieldCount + 1
 
             else:
-                print("Field '" + papszSelFields[iField] + "' not found in source layer.")
+                print("Field '" + papszSelField + "' not found in source layer.")
                 if not bSkipFailures:
                     return None
 
@@ -1420,8 +1420,8 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName,
             for iSrcField in range(nSrcFieldCount):
                 pszFieldName = poSrcFDefn.GetFieldDefn(iSrcField).GetNameRef()
                 bFieldRequested = False
-                for iField in range(len(papszSelFields)):
-                    if EQUAL(pszFieldName, papszSelFields[iField]):
+                for papszSelField in papszSelFields:
+                    if EQUAL(pszFieldName, papszSelField):
                         bFieldRequested = True
                         break
 

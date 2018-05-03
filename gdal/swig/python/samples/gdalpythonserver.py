@@ -634,8 +634,8 @@ def main_loop():
             write_marker()
             fl = server_ds.GetFileList()
             write_int(len(fl))
-            for i in range(len(fl)):
-                write_str(fl[i])
+            for f in fl:
+                write_str(f)
         elif instr == INSTR_GetMetadata:
             domain = read_str()
             md = server_ds.GetMetadata(domain)
@@ -815,8 +815,8 @@ def main_loop():
             else:
                 write_int(CE_None)
                 write_int(len(val) * 8)
-                for i in range(len(val)):
-                    write_uint64(val[i])
+                for v in val:
+                    write_uint64(v)
         # elif instr == INSTR_Band_GetDefaultHistogram:
         #    bForce = read_int()
         #    write_marker()

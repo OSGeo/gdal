@@ -2311,8 +2311,7 @@ def ogr_mitab_45():
     lyrNums = [1, 1, 2, 2]
     dsExts = ['.mif', '.tab', '', '']
 
-    for formatN in range(len(formats)):
-        frmt = formats[formatN]
+    for formatN, frmt in enumerate(formats):
         lyrCount = lyrNums[formatN]
         ext = dsExts[formatN]
         dsName = '/vsimem/45/ogr_mitab_45_%s_%s%s' % (frmt, lyrCount, ext)
@@ -2339,12 +2338,12 @@ def ogr_mitab_45():
                 fld_defn.SetWidth(254)
                 lyr.CreateField(fld_defn)
 
-            for featN in range(len(featNames)):
+            for featN, featName in enumerate(featNames):
                 feat = ogr.Feature(lyr.GetLayerDefn())
                 feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (25 72)"))
-                for fldN in range(len(fldNames)):
-                    featValue = fldNames[fldN] + ' ' + featNames[featN]
-                    feat.SetField(fldNames[fldN], featValue)
+                for fldN, fldName in enumerate(fldNames):
+                    featValue = fldName + ' ' + featName
+                    feat.SetField(fldName, featValue)
                 lyr.CreateFeature(feat)
         ds = None
 
@@ -2361,9 +2360,8 @@ def ogr_mitab_45():
                                      ' from ' + dsName)
                 return 'fail'
 
-            for fldN in range(len(fldNames)):
+            for fldN, expectedName in enumerate(fldNames):
                 fldName = lyr.GetLayerDefn().GetFieldDefn(fldN).GetName()
-                expectedName = fldNames[fldN]
                 if fldName != expectedName:
                     gdaltest.post_reason('Can\'t get field name\n' +
                                          ' result name:   "' + fldName + '"\n'
@@ -2372,10 +2370,10 @@ def ogr_mitab_45():
                                          ' from dataset :' + dsName)
                     return 'fail'
 
-            for featN in range(len(featNames)):
+            for featN, featName in enumerate(featNames):
                 feat = lyr.GetNextFeature()
-                for fldN in range(len(fldNames)):
-                    expectedValue = fldNames[fldN] + ' ' + featNames[featN]
+                for fldN, fldName in enumerate(fldNames):
+                    expectedValue = fldName + ' ' + featName
                     # column value by number
                     value = feat.GetField(fldN)
                     if value != expectedValue:
@@ -2428,9 +2426,8 @@ def ogr_mitab_46():
             gdaltest.post_reason('skipping test: recode is not possible')
             return 'skip'
 
-        for fldN in range(len(fldNames)):
+        for fldN, expectedName in enumerate(fldNames):
             fldName = lyr.GetLayerDefn().GetFieldDefn(fldN).GetName()
-            expectedName = fldNames[fldN]
             if fldName != expectedName:
                 gdaltest.post_reason('Can\'t get field\n' +
                                      ' result name:   "' + fldName + '"\n'
@@ -2440,7 +2437,7 @@ def ogr_mitab_46():
 
         for featFldVal in fldVal:
             feat = lyr.GetNextFeature()
-            for fldN in range(len(fldNames)):
+            for fldN, fldName in enumerate(fldNames):
                 expectedValue = featFldVal[fldN]
                 # column value by number
                 value = feat.GetField(fldN)
@@ -2451,7 +2448,7 @@ def ogr_mitab_46():
                                          ' from dataset :' + dsName)
                     return 'fail'
                 # column value by name
-                value = feat.GetField(fldNames[fldN])
+                value = feat.GetField(fldName)
                 if value != expectedValue:
                     gdaltest.post_reason('Can\'t get field value by name\n' +
                                          ' result value:   "' + value + '"\n'

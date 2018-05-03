@@ -5,8 +5,7 @@ import sys
 f = open(sys.argv[1], "rt")
 lines = f.readlines()
 ret = 0
-for i in range(len(lines)):
-    line = lines[i]
+for i, line in enumerate(lines):
     if line and line[len(line) - 1] == '\n':
         line = line[0:-1]
     tab = line.split('=')
