@@ -2370,7 +2370,7 @@ def ogr_mitab_45():
                                          ' from dataset :' + dsName)
                     return 'fail'
 
-            for featN, featName in enumerate(featNames):
+            for featName in featNames:
                 feat = lyr.GetNextFeature()
                 for fldN, fldName in enumerate(fldNames):
                     expectedValue = fldName + ' ' + featName
