@@ -862,7 +862,7 @@ def stats_all_nodata():
         stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
     if stats != [0.0, 0.0, 0.0, 0.0]:
         gdaltest.post_reason('did not get expected stats')
-        printstats(md)
+        print(stats)
         return 'fail'
 
     ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000, 1,
@@ -874,7 +874,7 @@ def stats_all_nodata():
         stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
     if stats != [0.0, 0.0, 0.0, 0.0]:
         gdaltest.post_reason('did not get expected stats')
-        printstats(md)
+        print(stats)
         return 'fail'
 
     return 'success'
