@@ -133,7 +133,7 @@ def upsample_overview_2():
 ###############################################################################
 # Compare warp and overview sampling pipelines
 
-def downsample_warp_vs_translate(sx, sy):
+def downsample_warp_vs_translate(sx, sy, overview_alg, translate_alg):
 
     drv_name = 'Gtiff'
     drv = gdal.GetDriverByName(drv_name)
@@ -142,11 +142,12 @@ def downsample_warp_vs_translate(sx, sy):
         return 'fail'
 
     size = 1024
-    lod = 6
+    lod = 5
     scale = 1 << lod
     result_sx = sx/scale
     result_sy = sy/scale
-    prefix = 'tmp/' + str(sx) + "x" + str(sy) + "_"
+    prefix = 'tmp/' + str(sx) + "x" + str(sy) + "_" + \
+             overview_alg + "_" + translate_alg + "_"
     src_name = prefix + 'chessboard_3.tif'
 
     sref = osr.SpatialReference()
@@ -172,17 +173,19 @@ def downsample_warp_vs_translate(sx, sy):
     # Run Translate without overviews
     translate_no_ov_ds_name = prefix + 'downsample_via_translate_no_ov.tif'
     gdal.Translate(translate_no_ov_ds_name, src_name,
-                   format=drv_name, xRes=scale, yRes=scale)
+                   format=drv_name, xRes=scale, yRes=scale,
+                   resampleAlg=translate_alg)
 
     # Build overviews
     src_ds = gdal.Open(src_name)
-    src_ds.BuildOverviews('AVERAGE', overviewlist = [2, 4, 8, 16, 32, 64])
+    src_ds.BuildOverviews(overview_alg, overviewlist = [2, 4, 8, 16, 32, 64])
     src_ds = None
 
     # Run Translate with overviews
     translate_with_ov_ds_name = prefix + 'downsample_via_translate_with_ov.tif'
     gdal.Translate(translate_with_ov_ds_name, src_name,
-                   format=drv_name, xRes=scale, yRes=scale)
+                   format=drv_name, xRes=scale, yRes=scale,
+                   resampleAlg=translate_alg)
 
     # Dump top overview from source
     ov_ds_name = prefix + 'overview_dump.tif'
@@ -217,9 +220,29 @@ def downsample_warp_vs_translate(sx, sy):
     return ret
 
 
-def upsample_overview_3():
+def upsample_overview_3a():
 
-    return downsample_warp_vs_translate(10117, 5578)
+    return downsample_warp_vs_translate(10117, 5578, 'AVERAGE', 'NEAR')
+
+
+def upsample_overview_3b():
+
+    res = downsample_warp_vs_translate(10117, 5578, 'BILINEAR', 'BILINEAR')
+    if res is 'fail':
+        res = 'expected_fail'
+    else:
+        res = 'fail'
+    return res;
+
+
+def upsample_overview_3c():
+
+    res = downsample_warp_vs_translate(10117, 5578, 'AVERAGE', 'BILINEAR')
+    if res is 'fail':
+        res = 'expected_fail'
+    else:
+        res = 'fail'
+    return res;
 
 
 ###############################################################################
@@ -227,7 +250,9 @@ def upsample_overview_3():
 gdaltest_list = [
     upsample_overview_1,
     upsample_overview_2,
-    upsample_overview_3,
+    upsample_overview_3a,
+    upsample_overview_3b,
+    upsample_overview_3c,
 ]
 
 if __name__ == '__main__':
