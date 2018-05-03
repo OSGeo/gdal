@@ -111,10 +111,7 @@ def ogr_rfc35_sqlite_1():
 
 
 def Truncate(val, lyr_defn, fieldname):
-    # if val is None:
-    #    return val
-
-    # return val[0:lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex(fieldname)).GetWidth()]
+    # pylint: disable=unused-argument
     # Mem driver doesn't actually truncate
     return val
 

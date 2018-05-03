@@ -88,6 +88,8 @@ def ogr_rfc35_mem_1():
 
 
 def Truncate(val, lyr_defn, fieldname):
+    # pylint: disable=argument-unused
+
     # if val is None:
     #    return val
 

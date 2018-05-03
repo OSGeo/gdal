@@ -105,6 +105,7 @@ def pds4_1():
 
 
 def hide_substitution_warnings_error_handler_cbk(typ, errno, msg):
+    # pylint: disable=unused-argument
     if msg.find('substituted') < 0 and msg.find('VAR_TITLE not defined') < 0:
         print(msg)
 
