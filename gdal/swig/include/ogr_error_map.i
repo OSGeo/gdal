@@ -27,11 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#ifdef SWIGRUBY
-%header
-#else
 %fragment("OGRErrMessages","header")
-#endif
+
 %{
 
 #include "ogr_core.h"
