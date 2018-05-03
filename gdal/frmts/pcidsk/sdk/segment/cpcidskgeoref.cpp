@@ -104,7 +104,8 @@ void CPCIDSKGeoref::Load()
 /* -------------------------------------------------------------------- */
 /*      Handle simple case of a POLYNOMIAL.                             */
 /* -------------------------------------------------------------------- */
-    if( STARTS_WITH(seg_data.buffer, "POLYNOMIAL") )
+    if( seg_data.buffer_size >= static_cast<int>(strlen("POLYNOMIAL")) &&
+        STARTS_WITH(seg_data.buffer, "POLYNOMIAL") )
     {
         seg_data.Get(32,16,geosys);
         
@@ -124,12 +125,13 @@ void CPCIDSKGeoref::Load()
 /*      Handle the case of a PROJECTION segment - for now we ignore     */
 /*      the actual projection parameters.                               */
 /* -------------------------------------------------------------------- */
-    else if( STARTS_WITH(seg_data.buffer, "PROJECTION") )
+    else if( seg_data.buffer_size >= static_cast<int>(strlen("PROJECTION")) &&
+             STARTS_WITH(seg_data.buffer, "PROJECTION") )
     {
         seg_data.Get(32,16,geosys);
         
         if( seg_data.GetInt(48,8) != 3 || seg_data.GetInt(56,8) != 3 )
-            return ThrowPCIDSKException( "Unexpected number of coefficients in POLYNOMIAL GEO segment." );
+            return ThrowPCIDSKException( "Unexpected number of coefficients in PROJECTION GEO segment." );
 
         a1   = seg_data.GetDouble(1980+26*0,26);
         a2   = seg_data.GetDouble(1980+26*1,26);
@@ -143,7 +145,7 @@ void CPCIDSKGeoref::Load()
 /* -------------------------------------------------------------------- */
 /*      Blank segment, just created and we just initialize things a bit.*/
 /* -------------------------------------------------------------------- */
-    else if( memcmp(seg_data.buffer,
+    else if( seg_data.buffer_size >= 16 && memcmp(seg_data.buffer,
                     "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",16) == 0 )
     {
         geosys = "";
