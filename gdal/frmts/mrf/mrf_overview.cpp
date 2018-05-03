@@ -279,6 +279,10 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
     // Allocate space for four blocks
     void *buffer = CPLMalloc(buffer_size *4 );
 
+    // If the page is interleaved, we only need to check the page exists
+    // otherwise we need to check each band block
+    int check_bands = (bands == current.pagesize.c) ? 1 : bands;
+
     //
     // The inner loop is the band, so it is efficient for interleaved data.
     // There is no penalty for separate bands either.
@@ -289,6 +293,31 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
         for (int x=0; x<WidthOut; x++) {
             int dst_offset_x = BlockXOut + x;
             int src_offset_x = dst_offset_x * 2;
+
+            // If none of the source blocks exists, there is no need to read/write the blocks themselves
+            bool has_data = false;
+            for (int band = 0; band < check_bands; band++) {
+                GDALMRFRasterBand *bsrc = reinterpret_cast<GDALMRFRasterBand *>(src_b[band]);
+                has_data = has_data || bsrc->TestBlock(src_offset_x, src_offset_y);
+                has_data = has_data || bsrc->TestBlock(src_offset_x + 1, src_offset_y);
+                has_data = has_data || bsrc->TestBlock(src_offset_x, src_offset_y + 1);
+                has_data = has_data || bsrc->TestBlock(src_offset_x + 1, src_offset_y + 1);
+            }
+
+            // No data in any of the bands
+            if (!has_data) {
+                // check that the output already is void, otherwise write an empty block
+                for (int band = 0; band < check_bands; band++) {
+                    GDALMRFRasterBand *bdst = reinterpret_cast<GDALMRFRasterBand *>(dst_b[band]);
+                    if (bdst->TestBlock(dst_offset_x, dst_offset_y)) {
+                        // Output block exists, but it should not, force it
+                        ILSize req(dst_offset_x, dst_offset_y, 0, band, bdst->m_l);
+                        WriteTile(nullptr, IdxOffset(req, bdst->img));
+                    }
+                }
+                // No blocks in -> No block out
+                continue;
+            }
 
             // Do it band at a time so we can work in grayscale
             for (int band=0; band<bands; band++) { // Counting from zero in a vector
@@ -417,6 +446,7 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
                     ,nullptr
 #endif
                 ); // Pixel and line space
+
                 if( eErr != CE_None )
                 {
                     // TODO ?
@@ -433,7 +463,7 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
     CPLFree(buffer);
 
     for (int band=0; band<bands; band++)
-        dst_b[band]->FlushCache(); // Commit the output to disk
+        dst_b[band]->FlushCache(); // Commit the output to disk after each overview
 
     if (!recursive)
         return CE_None;
