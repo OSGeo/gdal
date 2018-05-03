@@ -813,6 +813,7 @@ def ogr_osm_15_progresscbk_return_true(pct, msg, user_data):
 
 
 def ogr_osm_15_progresscbk_return_false(pct, msg, user_data):
+    # pylint: disable=unused-argument
     return 0
 
 
