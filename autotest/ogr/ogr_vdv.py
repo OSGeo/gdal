@@ -98,7 +98,10 @@ def ogr_idf_2():
 # Create a VDV file
 
 
-def ogr_vdv_1(filename='tmp/test.x10', dsco=[], lco=[]):
+def ogr_vdv_1(filename='tmp/test.x10', dsco=None, lco=None):
+
+    dsco = [] if dsco is None else dsco
+    lco = [] if lco is None else lco
 
     ds = ogr.GetDriverByName('VDV').CreateDataSource(filename, options=dsco)
     ds.CreateLayer('empty', options=lco)

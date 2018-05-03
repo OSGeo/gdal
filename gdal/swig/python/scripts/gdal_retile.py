@@ -95,7 +95,7 @@ class DataSetCache(object):
         return result
 
     def __del__(self):
-        for name, dataset in self.dict.items():
+        for dataset in self.dict.values():
             del dataset
         del self.queue
         del self.dict
