@@ -355,10 +355,10 @@ class Doxy2SWIG(object):
         return ret
 
 
-def main(input, output):
-    p = Doxy2SWIG(input)
+def main(inp, outp):
+    p = Doxy2SWIG(inp)
     p.generate()
-    p.write(output)
+    p.write(outp)
 
 
 if __name__ == '__main__':

@@ -476,8 +476,8 @@ def pdf_jpeg_compression_rgb():
 # Test RGBA
 
 
-def pdf_rgba_default_compression(options_param=[]):
-
+def pdf_rgba_default_compression(options_param=None):
+    options_param = [] if options_param is None else options_param
     if gdaltest.pdf_drv is None:
         return 'skip'
 

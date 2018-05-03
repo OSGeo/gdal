@@ -648,10 +648,10 @@ def getTileName(minfo, ti, xIndex, yIndex, level=-1):
     """
     global LastRowIndx
 
-    max = ti.countTilesX
-    if ti.countTilesY > max:
-        max = ti.countTilesY
-    countDigits = len(str(max))
+    maxim = ti.countTilesX
+    if ti.countTilesY > maxim:
+        maxim = ti.countTilesY
+    countDigits = len(str(maxim))
     parts = os.path.splitext(os.path.basename(minfo.filename))
     if parts[0][0] == "@":  # remove possible leading "@"
         parts = (parts[0][1:len(parts[0])], parts[1])
