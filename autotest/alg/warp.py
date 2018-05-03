@@ -761,10 +761,10 @@ def warp_19():
 
     sizes = [1, 2, 3, 7]
 
-    for k, size in enumerate(sizes):
+    for size in sizes:
         print('Testing size = %d ...' % size)
-        for j, method in enumerate(methods):
-            for i, datatype in enumerate(datatypes):
+        for method in methods:
+            for datatype in datatypes:
                 if warp_19_internal(size, datatype, method) != 'success':
                     print('fail with size = %d, data type = %d and method %s' % (size, datatype, method))
                     return 'fail'

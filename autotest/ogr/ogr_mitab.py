@@ -2338,10 +2338,10 @@ def ogr_mitab_45():
                 fld_defn.SetWidth(254)
                 lyr.CreateField(fld_defn)
 
-            for featN, featName in enumerate(featNames):
+            for featName in featNames:
                 feat = ogr.Feature(lyr.GetLayerDefn())
                 feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (25 72)"))
-                for fldN, fldName in enumerate(fldNames):
+                for fldName in fldNames:
                     featValue = fldName + ' ' + featName
                     feat.SetField(fldName, featValue)
                 lyr.CreateFeature(feat)
@@ -2370,7 +2370,7 @@ def ogr_mitab_45():
                                          ' from dataset :' + dsName)
                     return 'fail'
 
-            for featN, featName in enumerate(featNames):
+            for featName in featNames:
                 feat = lyr.GetNextFeature()
                 for fldN, fldName in enumerate(fldNames):
                     expectedValue = fldName + ' ' + featName
