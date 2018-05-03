@@ -123,7 +123,7 @@ def ogr_fgdb_1():
                 ["tin", ogr.wkbTINZ, "TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0)))"],
                 ["null_polygon", ogr.wkbPolygon, None],
                 ["empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
-                ]
+               ]
 
     options = ['COLUMN_TYPES=smallint=esriFieldTypeSmallInteger,float=esriFieldTypeSingle,guid=esriFieldTypeGUID,xml=esriFieldTypeXML']
 
@@ -602,12 +602,12 @@ def ogr_fgdb_9():
                 _160char,  # OK
                 _160char + 'A',  # too long
                 _160char + 'B',  # still too long
-                ]
+               ]
 
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    for i in range(len(in_names)):
-        lyr = ds.CreateLayer(in_names[i], srs=srs, geom_type=ogr.wkbPoint)
+    for in_name in in_names:
+        lyr = ds.CreateLayer(in_name, srs=srs, geom_type=ogr.wkbPoint)
     gdal.PopErrorHandler()
 
     lyr.GetLayerDefn()
@@ -618,9 +618,9 @@ def ogr_fgdb_9():
                       _160char,
                       _160char[0:158] + '_1',
                       _160char[0:158] + '_2']
-    for i in range(len(expected_names)):
-        if ds.GetLayerByIndex(i).GetName() != expected_names[i]:
-            gdaltest.post_reason('did not find %s' % expected_names[i])
+    for i, exp_name in enumerate(expected_names):
+        if ds.GetLayerByIndex(i).GetName() != exp_name:
+            gdaltest.post_reason('did not find %s' % exp_name)
             return 'fail'
 
     return 'success'
@@ -904,7 +904,7 @@ def ogr_fgdb_14():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
-    for i in range(3):
+    for _ in range(3):
         ds1 = ogr.Open("tmp/test.gdb")
         if ds1 is None:
             gdaltest.post_reason('fail')
@@ -2404,7 +2404,7 @@ def ogr_fgdb_21():
                 ["multipolygonm", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))"],
                 ["multipolygonzm", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))"],
                 ["empty_polygonm", ogr.wkbPolygonM, 'POLYGON M EMPTY', None],
-                ]
+               ]
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")

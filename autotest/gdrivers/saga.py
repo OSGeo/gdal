@@ -144,9 +144,9 @@ def saga_6():
 
     expected_nodata = [255, -32767, 65535, -2147483647, 4294967295, -99999.0, -99999.0]
 
-    for i in range(len(gdal_types)):
+    for i, gdal_type in enumerate(gdal_types):
 
-        ds = gdal.GetDriverByName('SAGA').Create('tmp/test6.sdat', 2, 2, 1, gdal_types[i])
+        ds = gdal.GetDriverByName('SAGA').Create('tmp/test6.sdat', 2, 2, 1, gdal_type)
         ds = None
 
         ds = gdal.Open('tmp/test6.sdat')

@@ -62,8 +62,7 @@ def ogr_mysql_1():
     gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update=1)
     if gdaltest.mysql_ds is not None:
         return 'success'
-    else:
-        return 'skip'
+    return 'skip'
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -172,10 +171,7 @@ def ogr_mysql_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds.Destroy()
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
@@ -262,10 +258,7 @@ def ogr_mysql_5():
 
     gdaltest.mysql_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -302,10 +295,7 @@ def ogr_mysql_6():
 
     gdaltest.mysql_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test spatial filtering.
@@ -340,10 +330,7 @@ def ogr_mysql_7():
 
     gdaltest.mysql_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Write a feature with too long a text value for a fixed length text field.
@@ -496,10 +483,7 @@ def ogr_mysql_15():
                                              'eas_id', expect)
     gdaltest.mysql_lyr.SetAttributeFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 
 ###############################################################################
@@ -525,10 +509,7 @@ def ogr_mysql_16():
 
     gdaltest.mysql_ds.ReleaseResultSet(lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test requesting a non-existent table by name (bug 1480).
@@ -627,8 +608,7 @@ def ogr_mysql_20():
     feat = layer.GetNextFeature()
     if feat.desc == 'desc' and feat.select == 'select':
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test inserting NULL geometries into a table with a spatial index -> must FAIL

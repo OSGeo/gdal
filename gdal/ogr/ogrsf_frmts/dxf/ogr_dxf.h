@@ -444,7 +444,8 @@ class OGRDXFLayer : public OGRLayer
                                                 int nKnots,
                                                 std::vector<double>& adfWeights );
     static OGRGeometry *SimplifyBlockGeometry( OGRGeometryCollection * );
-    OGRDXFFeature *     InsertBlockInline( const CPLString& osBlockName,
+    OGRDXFFeature *     InsertBlockInline( GUInt32 nInitialErrorCounter,
+                                           const CPLString& osBlockName,
                                            OGRDXFInsertTransformer oTransformer,
                                            OGRDXFFeature* const poFeature,
                                            OGRDXFFeatureQueue& apoExtraFeatures,

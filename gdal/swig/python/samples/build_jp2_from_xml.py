@@ -132,12 +132,12 @@ def parse_field(xml_tree, out_f, src_jp2file):
     elif field_type == 'string':
         field_size = get_attribute_val(xml_tree, 'size')
         if field_size is not None:
-            assert(len(val) == int(field_size))
+            assert len(val) == int(field_size)
         out_f.write(val.encode('latin1'))
     elif field_type == 'hexint':
         field_size = get_attribute_val(xml_tree, 'size')
         if field_size is not None:
-            assert(len(val) == 2 + 2 * int(field_size))
+            assert len(val) == 2 + 2 * int(field_size)
         write_hexstring_as_binary(val[2:], out_f)
     else:
         print('Unhandled type %s' % field_type)
@@ -400,7 +400,7 @@ def parse_jp2file(inpath, xml_tree, out_f):
 # Wrapper class for GDAL VSI*L API with class Python file interface
 
 
-class VSILFile:
+class VSILFile(object):
     def __init__(self, filename, access):
         self.f = gdal.VSIFOpenL(filename, access)
 

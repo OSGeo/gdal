@@ -1107,7 +1107,9 @@ The value will be burned into all output bands.</dd>
 
 <dt> <b>-3d</b>: </dt><dd>
 Indicates that a burn value should be extracted from the "Z" values of the
-feature. As of now, only points and lines are drawn in 3D.</dd>
+feature. Works with points and lines (linear interpolation along each segment).
+For polygons, works properly only if the are flat (same Z value for all
+vertices).</dd>
 
 <dt> <b>-add</b>: </dt><dd>
 Instead of burning a new value, this adds the new value to the existing raster.

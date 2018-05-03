@@ -909,8 +909,7 @@ def tiff_ovr_22():
 
     if err != 0:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Same as before, but BigTIFF might be not needed as we use a compression
@@ -1673,8 +1672,8 @@ def tiff_ovr_42():
     ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255)]
 
     ct = gdal.ColorTable()
-    for i in range(len(ct_data)):
-        ct.SetColorEntry(i, ct_data[i])
+    for i, data in enumerate(ct_data):
+        ct.SetColorEntry(i, data)
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr42.tif', 1, 1)
     ds.GetRasterBand(1).SetRasterColorTable(ct)
@@ -2233,6 +2232,73 @@ def tiff_ovr_54():
     return 'success'
 
 ###############################################################################
+
+
+def tiff_ovr_too_many_levels_contig():
+
+    src_ds = gdal.Open('data/byte.tif')
+    tmpfilename = '/vsimem/tiff_ovr_too_many_levels_contig.tif'
+    ds = gdal.GetDriverByName('GTiff').CreateCopy(tmpfilename, src_ds)
+    ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
+    if ds.GetRasterBand(1).GetOverviewCount() != 5:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetOverviewCount())
+        return 'fail'
+    ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
+    if ds.GetRasterBand(1).GetOverviewCount() != 5:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.GetDriverByName('GTiff').Delete(tmpfilename)
+
+    return 'success'
+
+###############################################################################
+
+
+def tiff_ovr_too_many_levels_separate():
+
+    src_ds = gdal.Open('data/separate_tiled.tif')
+    tmpfilename = '/vsimem/tiff_ovr_too_many_levels_separate.tif'
+    ds = gdal.GetDriverByName('GTiff').CreateCopy(tmpfilename, src_ds)
+    ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
+    if ds.GetRasterBand(1).GetOverviewCount() != 6:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetOverviewCount())
+        return 'fail'
+    if ds.GetRasterBand(1).GetOverviewCount() != 6:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetOverviewCount())
+        return 'fail'
+    ds = None
+    gdal.GetDriverByName('GTiff').Delete(tmpfilename)
+
+    return 'success'
+
+###############################################################################
+
+
+def tiff_ovr_too_many_levels_external():
+
+    src_ds = gdal.Open('data/byte.tif')
+    tmpfilename = '/vsimem/tiff_ovr_too_many_levels_contig.tif'
+    gdal.GetDriverByName('GTiff').CreateCopy(tmpfilename, src_ds)
+    ds = gdal.Open(tmpfilename)
+    ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
+    if ds.GetRasterBand(1).GetOverviewCount() != 5:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
+    if ds.GetRasterBand(1).GetOverviewCount() != 5:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.GetDriverByName('GTiff').Delete(tmpfilename)
+
+    return 'success'
+
+
+###############################################################################
 # Cleanup
 
 
@@ -2355,7 +2421,10 @@ gdaltest_list.append(tiff_ovr_restore_endianness)
 gdaltest_list += [tiff_ovr_51,
                   tiff_ovr_52,
                   tiff_ovr_53,
-                  tiff_ovr_54]
+                  tiff_ovr_54,
+                  tiff_ovr_too_many_levels_contig,
+                  tiff_ovr_too_many_levels_separate,
+                  tiff_ovr_too_many_levels_external]
 
 if __name__ == '__main__':
 

@@ -6972,6 +6972,8 @@ class GTiffBitmapBand : public GTiffOddBitsBand
 
     GDALColorTable *poColorTable;
 
+    CPL_DISALLOW_COPY_ASSIGN(GTiffBitmapBand)
+
   public:
 
                    GTiffBitmapBand( GTiffDataset *, int );
@@ -10474,8 +10476,11 @@ CPLErr GTiffDataset::IBuildOverviews(
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
     GTIFFGetOverviewBlockSize(&nOvrBlockXSize, &nOvrBlockYSize);
+    std::vector<bool> abRequireNewOverview;
+    abRequireNewOverview.resize(nOverviews);
     for( int i = 0; i < nOverviews && eErr == CE_None; ++i )
     {
+        abRequireNewOverview[i] = true;
         for( int j = 0; j < nOverviewCount && eErr == CE_None; ++j )
         {
             GTiffDataset *poODS = papoOverviewDS[j];
@@ -10486,14 +10491,30 @@ CPLErr GTiffDataset::IBuildOverviews(
                                     poODS->GetRasterYSize(),
                                     GetRasterYSize());
 
+            // If we already have a 1x1 overview and this new one would result
+            // in it too, then don't create it.
+            if( poODS->GetRasterXSize() == 1 &&
+                poODS->GetRasterYSize() == 1 &&
+                (GetRasterXSize() + panOverviewList[i] - 1)
+                    / panOverviewList[i] == 1 &&
+                (GetRasterYSize() + panOverviewList[i] - 1)
+                    / panOverviewList[i] == 1 )
+            {
+                abRequireNewOverview[i] = false;
+                break;
+            }
+
             if( nOvFactor == panOverviewList[i]
                 || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
                                                     GetRasterXSize(),
                                                     GetRasterYSize() ) )
-                panOverviewList[i] *= -1;
+            {
+                abRequireNewOverview[i] = false;
+                break;
+            }
         }
 
-        if( panOverviewList[i] > 0 )
+        if( abRequireNewOverview[i] )
         {
             const int nOXSize =
                 (GetRasterXSize() + panOverviewList[i] - 1)
@@ -10539,10 +10560,6 @@ CPLErr GTiffDataset::IBuildOverviews(
             else
                 eErr = RegisterNewOverviewDataset(nOverviewOffset,
                                                   nOvrJpegQuality);
-        }
-        else
-        {
-            panOverviewList[i] *= -1;
         }
     }
 
@@ -10622,10 +10639,16 @@ CPLErr GTiffDataset::IBuildOverviews(
                     sizeof(void*), poBand->GetOverviewCount()) );
 
             int iCurOverview = 0;
+            std::vector<bool> abAlreadyUsedOverviewBand;
+            abAlreadyUsedOverviewBand.resize(poBand->GetOverviewCount());
+
             for( int i = 0; i < nOverviews; ++i )
             {
                 for( int j = 0; j < poBand->GetOverviewCount(); ++j )
                 {
+                    if( abAlreadyUsedOverviewBand[j] )
+                        continue;
+
                     int    nOvFactor;
                     GDALRasterBand * poOverview = poBand->GetOverview( j );
 
@@ -10646,6 +10669,8 @@ CPLErr GTiffDataset::IBuildOverviews(
                                             poBand->GetXSize(),
                                             poBand->GetYSize() ) )
                     {
+                        abAlreadyUsedOverviewBand[j] = true;
+                        CPLAssert(iCurOverview < poBand->GetOverviewCount());
                         papapoOverviewBands[iBand][iCurOverview] = poOverview;
                         ++iCurOverview ;
                         break;
@@ -10684,12 +10709,23 @@ CPLErr GTiffDataset::IBuildOverviews(
         for( int iBand = 0; iBand < nBandsIn && eErr == CE_None; ++iBand )
         {
             GDALRasterBand *poBand = GetRasterBand( panBandList[iBand] );
+            if( poBand == nullptr )
+            {
+                eErr = CE_Failure;
+                break;
+            }
+
+            std::vector<bool> abAlreadyUsedOverviewBand;
+            abAlreadyUsedOverviewBand.resize(poBand->GetOverviewCount());
 
             int nNewOverviews = 0;
-            for( int i = 0; i < nOverviews && poBand != nullptr; ++i )
+            for( int i = 0; i < nOverviews; ++i )
             {
                 for( int j = 0; j < poBand->GetOverviewCount(); ++j )
                 {
+                    if( abAlreadyUsedOverviewBand[j] )
+                        continue;
+
                     GDALRasterBand * poOverview = poBand->GetOverview( j );
 
                     int bHasNoData = FALSE;
@@ -10710,6 +10746,8 @@ CPLErr GTiffDataset::IBuildOverviews(
                                             poBand->GetXSize(),
                                             poBand->GetYSize() ) )
                     {
+                        abAlreadyUsedOverviewBand[j] = true;
+                        CPLAssert(nNewOverviews < poBand->GetOverviewCount());
                         papoOverviewBands[nNewOverviews++] = poOverview;
                         break;
                     }
@@ -12033,12 +12071,6 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
     vsi_l_offset nMaxOffset = 0;
     if( bBigTIFF )
     {
-#ifndef CPL_HAS_GINT64
-        CPLError(CE_Failure, CPLE_NotSupported, "BigTIFF not supported");
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
-        VSIUnlink(osTmpFilename);
-        return false;
-#else
         GUInt64 nTmp = 0;
         memcpy(&nTmp, pabyBuffer + 8, 8);
         if( bSwap ) CPL_SWAP64PTR(&nTmp);
@@ -12111,7 +12143,6 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
                     nMaxOffset = nTmp + nTagSize;
             }
         }
-#endif
     }
     else
     {

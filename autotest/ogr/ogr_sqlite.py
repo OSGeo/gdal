@@ -76,8 +76,7 @@ def ogr_sqlite_1():
 
     if gdaltest.sl_ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -244,10 +243,7 @@ def ogr_sqlite_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
@@ -311,10 +307,7 @@ def ogr_sqlite_5():
 
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -336,10 +329,7 @@ def ogr_sqlite_6():
 
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test spatial filtering.
@@ -374,10 +364,7 @@ def ogr_sqlite_7():
 
     gdaltest.sl_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test transactions with rollback.
@@ -702,7 +689,7 @@ def ogr_sqlite_14():
 
     # Check the 2 records
     gdaltest.sl_lyr.ResetReading()
-    for i in range(2):
+    for _ in range(2):
         feat_read = gdaltest.sl_lyr.GetNextFeature()
         if feat_read.GetField('INTEGER') != 1 or \
            feat_read.GetField('FLOAT') != 1.2 or \
@@ -867,7 +854,7 @@ def ogr_sqlite_16():
         return 'fail'
 
     # Test invalid geometries
-    for i in range(3):
+    for _ in range(3):
         feat = gdaltest.sl_lyr.GetNextFeature()
         geom = feat.GetGeometryRef()
         if geom is not None:
@@ -1757,10 +1744,7 @@ def ogr_spatialite_3():
 
     ds.Destroy()
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test updating a spatialite DB (#3471 and #3474)
@@ -2635,7 +2619,7 @@ def ogr_sqlite_34():
         return 'fail'
 
     # Test cache
-    for j in range(2):
+    for _ in range(2):
         for i in range(17):
             regexp = chr(ord('a') + i)
             sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT '%s' REGEXP '%s'" % (regexp, regexp))

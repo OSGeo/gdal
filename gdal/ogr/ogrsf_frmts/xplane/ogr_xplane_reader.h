@@ -49,6 +49,8 @@ class OGRXPlaneDataSource;
 
 class OGRXPlaneReader
 {
+        CPL_DISALLOW_COPY_ASSIGN(OGRXPlaneReader)
+
     protected:
         int             nLineNumber;
         char**          papszTokens;

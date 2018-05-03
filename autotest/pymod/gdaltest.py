@@ -34,6 +34,7 @@ import os
 import os.path
 import stat
 import sys
+from sys import version_info
 import time
 
 from osgeo import gdal
@@ -67,7 +68,6 @@ jp2mrsid_drv_unregistered = False
 jp2openjpeg_drv_unregistered = False
 jp2lura_drv_unregistered = False
 
-from sys import version_info
 if version_info >= (3, 0, 0):
     import gdaltest_python3 as gdaltestaux
 else:
@@ -108,7 +108,7 @@ def run_tests(test_list):
     before_vsimem = gdal.ReadDirRecursive('/vsimem/')
     try:
         git_status_before = git_status()
-    except:
+    except OSError:
         git_status_before = ''
 
     set_time = start_time is None
@@ -186,7 +186,7 @@ def run_tests(test_list):
 
     try:
         git_status_after = git_status()
-    except:
+    except OSError:
         git_status_after = ''
     if git_status_after != git_status_before:
         failure_counter = failure_counter + 1
@@ -256,7 +256,7 @@ def summarize():
     sys.path.append('../gcore')
     import testnonboundtoswig
     # Do it twice to ensure that cleanup routines properly do their jobs
-    for i in range(2):
+    for _ in range(2):
         testnonboundtoswig.OSRCleanup()
         testnonboundtoswig.GDALDestroyDriverManager()
         testnonboundtoswig.OGRCleanupAll()
@@ -328,6 +328,8 @@ def run_all(dirlist, run_as_external=False):
                         print('Running tests from %s/%s' % (dir_name, file))
                         setup_run('%s/%s' % (dir_name, file))
                         exec("run_tests( " + module + ".gdaltest_list)")
+                    except KeyboardInterrupt:
+                        raise
                     except:
                         # import traceback
                         # traceback.print_exc(file=sys.stderr)
@@ -335,6 +337,8 @@ def run_all(dirlist, run_as_external=False):
 
                 os.chdir(wd)
 
+            except KeyboardInterrupt:
+                raise
             except:
                 os.chdir(wd)
                 print('... failed to load %s ... skipping.' % file)
@@ -349,7 +353,7 @@ def run_all(dirlist, run_as_external=False):
     end_time = time.time()
     cur_name = None
 
-    if len(failure_summary) > 0:
+    if failure_summary:
         print('')
         print(' ------------ Failures ------------')
         for item in failure_summary:
@@ -376,15 +380,12 @@ def clean_tmp():
 
 def testCreateCopyInterruptCallback(pct, message, user_data):
     # pylint: disable=unused-argument
-    if pct > 0.5:
-        return 0  # to stop
-    else:
-        return 1  # to continue
+    return pct <= 0.5
 
 ###############################################################################
 
 
-class GDALTest:
+class GDALTest(object):
     def __init__(self, drivername, filename, band, chksum,
                  xoff=0, yoff=0, xsize=0, ysize=0, options=None,
                  filename_absolute=0, chksum_after_reopening=None, open_options=None):
@@ -454,7 +455,7 @@ class GDALTest:
 
         if check_filelist and ds.GetDriver().GetMetadataItem('DCAP_VIRTUALIO') is not None:
             fl = ds.GetFileList()
-            if fl is not None and len(fl) != 0 and wrk_filename == fl[0]:
+            if fl is not None and fl and wrk_filename == fl[0]:
 
                 # Copy all files in /vsimem/
                 mainfile_dirname = os.path.dirname(fl[0])
@@ -610,12 +611,11 @@ class GDALTest:
 
         if skip_checksum is not None:
             return 'success'
-        elif self.chksum is None or chksum == self.chksum:
+        if self.chksum is None or chksum == self.chksum:
             return 'success'
-        else:
-            post_reason('Checksum for band %d in "%s" is %d, but expected %d.'
-                        % (self.band, self.filename, chksum, self.chksum))
-            return 'fail'
+        post_reason('Checksum for band %d in "%s" is %d, but expected %d.'
+                    % (self.band, self.filename, chksum, self.chksum))
+        return 'fail'
 
     def testCreateCopy(self, check_minmax=1, check_gt=0, check_srs=None,
                        vsimem=0, new_filename=None, strict_in=0,
@@ -668,11 +668,10 @@ class GDALTest:
                 self.driver.Delete(new_filename)
                 gdal.PopErrorHandler()
                 return 'success'
-            else:
-                post_reason('CreateCopy() should have failed due to interruption')
-                new_ds = None
-                self.driver.Delete(new_filename)
-                return 'fail'
+            post_reason('CreateCopy() should have failed due to interruption')
+            new_ds = None
+            self.driver.Delete(new_filename)
+            return 'fail'
 
         if new_ds is None:
             post_reason('Failed to create test file using CreateCopy method.' +
@@ -1208,8 +1207,7 @@ def approx_equal(a, b):
 
     if abs(b / a - 1.0) > .00000000001:
         return 0
-    else:
-        return 1
+    return 1
 
 
 def user_srs_to_wkt(user_text):
@@ -1227,12 +1225,11 @@ def equal_srs_from_wkt(expected_wkt, got_wkt):
 
     if got_srs.IsSame(expected_srs):
         return 1
-    else:
-        print('Expected:\n%s' % expected_wkt)
-        print('Got:     \n%s' % got_wkt)
+    print('Expected:\n%s' % expected_wkt)
+    print('Got:     \n%s' % got_wkt)
 
-        post_reason('SRS differs from expected.')
-        return 0
+    post_reason('SRS differs from expected.')
+    return 0
 
 ###############################################################################
 # Compare two sets of RPC metadata, and establish if they are essentially
@@ -1559,7 +1556,7 @@ def filesystem_supports_sparse_files(path):
 
     try:
         (ret, err) = runexternal_out_and_err('stat -f -c "%T" ' + path)
-    except:
+    except OSError:
         return False
 
     if err != '':
@@ -1620,15 +1617,7 @@ def unzip(target_dir, zipfilename, verbose=False):
 
 
 def isnan(val):
-    if val == val:
-        # Python 2.3 unlike later versions return True for nan == nan
-        val_str = '%f' % val
-        if val_str == 'nan':
-            return True
-        else:
-            return False
-    else:
-        return True
+    return val != val
 
 
 ###############################################################################
@@ -1890,14 +1879,13 @@ def find_lib_windows(libname):
 def find_lib(mylib):
     if sys.platform.startswith('linux'):
         return find_lib_linux(mylib)
-    elif sys.platform.startswith('sunos'):
+    if sys.platform.startswith('sunos'):
         return find_lib_sunos(mylib)
-    elif sys.platform.startswith('win32'):
+    if sys.platform.startswith('win32'):
         return find_lib_windows(mylib)
-    else:
-        # sorry mac users or other BSDs
-        # should be doable
-        return None
+    # sorry mac users or other BSDs
+    # should be doable
+    return None
 
 ###############################################################################
 # get_opened_files()

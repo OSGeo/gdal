@@ -876,7 +876,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
             OGRDXFFeatureQueue apoExtraFeatures;
             try
             {
-                poBlockFeature = InsertBlockInline( osBlockName,
+                poBlockFeature = InsertBlockInline(
+                    CPLGetErrorCounter(), osBlockName,
                     oBlockTransformer, poBlockFeature, apoExtraFeatures,
                     true, poDS->ShouldMergeBlockGeometries() );
             }
@@ -1155,7 +1156,8 @@ void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
         // Insert the block.
         try
         {
-            poArrowheadFeature = InsertBlockInline( osBlockName,
+            poArrowheadFeature = InsertBlockInline(
+                CPLGetErrorCounter(), osBlockName,
                 oTransformer, poArrowheadFeature, apoExtraFeatures,
                 true, false );
         }

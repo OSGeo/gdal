@@ -250,7 +250,7 @@ def test_ogrinfo_13():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --config', check_memleak=False)
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --config', check_memleak=False)
     if err.find('--config option given without a key and value argument') < 0:
         print(err)
         return 'fail'
@@ -265,7 +265,7 @@ def test_ogrinfo_14():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --mempreload', check_memleak=False)
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --mempreload', check_memleak=False)
     if err.find('--mempreload option given without directory path') < 0:
         print(err)
         return 'fail'
@@ -280,7 +280,7 @@ def test_ogrinfo_15():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --debug on --mempreload ../ogr/data /vsimem/poly.shp', check_memleak=False)
+    (ret, _) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --debug on --mempreload ../ogr/data /vsimem/poly.shp', check_memleak=False)
     if ret.find("ESRI Shapefile") < 0:
         print(ret)
         return 'fail'
@@ -295,7 +295,7 @@ def test_ogrinfo_16():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --debug', check_memleak=False)
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --debug', check_memleak=False)
     if err.find('--debug option given without debug level') < 0:
         print(err)
         return 'fail'
@@ -310,13 +310,13 @@ def test_ogrinfo_17():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile', check_memleak=False)
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile', check_memleak=False)
     if err.find('--optfile option given without filename') < 0:
         gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile /foo/bar', check_memleak=False)
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile /foo/bar', check_memleak=False)
     if err.find('Unable to open optfile') < 0:
         gdaltest.post_reason('fail')
         print(err)
@@ -325,7 +325,7 @@ def test_ogrinfo_17():
     f = open('tmp/optfile.txt', 'wt')
     f.write('--config foo\n')
     f.close()
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile tmp/optfile.txt', check_memleak=False)
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile tmp/optfile.txt', check_memleak=False)
     os.unlink('tmp/optfile.txt')
     if err.find('--config option given without a key and value argument') < 0:
         gdaltest.post_reason('fail')
@@ -473,8 +473,8 @@ OGRFeature(test_ogrinfo_22):1
 """
     expected_lines = expected_ret.splitlines()
     lines = ret.splitlines()
-    for i in range(len(expected_lines)):
-        if expected_lines[i] != lines[i]:
+    for i, exp_line in enumerate(expected_lines):
+        if exp_line != lines[i]:
             print(ret)
             return 'fail'
 
@@ -552,8 +552,8 @@ OGRFeature(test_ogrinfo_23):2
 """
     expected_lines = expected_ret.splitlines()
     lines = ret.splitlines()
-    for i in range(len(expected_lines)):
-        if expected_lines[i] != lines[i]:
+    for i, exp_line in enumerate(expected_lines):
+        if exp_line != lines[i]:
             print(ret)
             return 'fail'
 
@@ -626,8 +626,8 @@ PROJCS["OSGB 1936 / British National Grid",
 """
     expected_lines = expected_ret.splitlines()
     lines = ret.splitlines()
-    for i in range(len(expected_lines)):
-        if expected_lines[i] != lines[i]:
+    for i, exp_line in enumerate(expected_lines):
+        if exp_line != lines[i]:
             print(ret)
             if gdaltest.is_travis_branch('mingw'):
                 return 'expected_fail'
@@ -676,8 +676,8 @@ PRFEDEA: String (16.0)
 """
     expected_lines = expected_ret.splitlines()
     lines = ret.splitlines()
-    for i in range(len(expected_lines)):
-        if expected_lines[i] != lines[i]:
+    for i, exp_line in enumerate(expected_lines):
+        if exp_line != lines[i]:
             print(ret)
             if gdaltest.is_travis_branch('mingw'):
                 return 'expected_fail'
@@ -721,8 +721,8 @@ PRFEDEA: String (16.0)
 """
     expected_lines = expected_ret.splitlines()
     lines = ret.splitlines()
-    for i in range(len(expected_lines)):
-        if expected_lines[i] != lines[i]:
+    for i, exp_line in enumerate(expected_lines):
+        if exp_line != lines[i]:
             print(ret)
             if gdaltest.is_travis_branch('mingw'):
                 return 'expected_fail'

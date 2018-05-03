@@ -109,8 +109,8 @@ def mk_src_feature():
     src_feature.SetField('field_datetime', 2011, 11, 11, 14, 10, 35.123, 0)
     got_vals = src_feature.GetFieldAsDateTime(feat_def.GetFieldIndex('field_datetime'))
     expected_vals = [2011, 11, 11, 14, 10, 35.123, 0]
-    for i in range(len(expected_vals)):
-        if abs(got_vals[i] - expected_vals[i]) > 1e-4:
+    for i, exp_val in enumerate(expected_vals):
+        if abs(got_vals[i] - exp_val) > 1e-4:
             gdaltest.post_reason('fail')
             print(got_vals)
             print(expected_vals)
@@ -129,12 +129,11 @@ def check(feat, fieldname, value):
     if feat.GetField(fieldname) != value:
         gdaltest.post_reason('did not get value %s for field %s, got %s.'
                              % (str(value), fieldname,
-                                 str(feat.GetField(fieldname))),
+                                str(feat.GetField(fieldname))),
                              frames=3)
         feat.DumpReadable()
         return 0
-    else:
-        return 1
+    return 1
 
 ###############################################################################
 # Copy to Integer

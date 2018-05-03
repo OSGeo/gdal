@@ -68,8 +68,7 @@ def pdf_is_poppler():
     val = gdal.GetConfigOption("GDAL_PDF_LIB", "POPPLER")
     if val == 'POPPLER' and 'HAVE_POPPLER' in md:
         return not pdf_is_pdfium()
-    else:
-        return False
+    return False
 
 ###############################################################################
 # Returns True if we run with pdfium
@@ -81,8 +80,7 @@ def pdf_is_pdfium():
     val = gdal.GetConfigOption("GDAL_PDF_LIB", "PDFIUM")
     if val == 'PDFIUM' and 'HAVE_PDFIUM' in md:
         return True
-    else:
-        return False
+    return False
 
 ###############################################################################
 # Returns True if we can compute the checksum
@@ -101,15 +99,14 @@ def pdf_checksum_available():
         gdaltest.pdf_is_checksum_available = True
         return gdaltest.pdf_is_checksum_available
 
-    (out, err) = gdaltest.runexternal_out_and_err("pdftoppm -v")
+    (_, err) = gdaltest.runexternal_out_and_err("pdftoppm -v")
     if err.find('pdftoppm version') == 0:
         gdaltest.pdf_is_checksum_available = True
         return gdaltest.pdf_is_checksum_available
-    else:
-        print('Cannot compute to checksum due to missing pdftoppm')
-        print(err)
-        gdaltest.pdf_is_checksum_available = False
-        return gdaltest.pdf_is_checksum_available
+    print('Cannot compute to checksum due to missing pdftoppm')
+    print(err)
+    gdaltest.pdf_is_checksum_available = False
+    return gdaltest.pdf_is_checksum_available
 
 ###############################################################################
 # Test OGC best practice geospatial PDF
@@ -1060,7 +1057,7 @@ def pdf_set_5_gcps_ogc_bp(dpi=300):
            [16., 18., 0, 0],
            [16., 8., 0, 0]]
 
-    for i in range(len(gcp)):
+    for i, gcpi in enumerate(gcp):
         gcp[i][2] = src_gt[0] + gcp[i][0] * src_gt[1] + gcp[i][1] * src_gt[2]
         gcp[i][3] = src_gt[3] + gcp[i][0] * src_gt[4] + gcp[i][1] * src_gt[5]
 
@@ -1563,12 +1560,12 @@ def pdf_write_ogr():
             ds = None
 
         # Test that all combinations give a different result
-        for i in range(len(rendering_options)):
+        for i, roi in enumerate(rendering_options):
             # print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
             for j in range(i + 1, len(rendering_options)):
                 if cs_tab[i] == cs_tab[j] and cs_tab[i] >= 0 and cs_tab[j] >= 0:
                     gdaltest.post_reason('fail')
-                    print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]))
+                    print('Checksum %s: %d' % (roi, cs_tab[i]))
                     print('Checksum %s: %d' % (rendering_options[j], cs_tab[j]))
                     return 'fail'
 

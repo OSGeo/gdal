@@ -47,7 +47,7 @@ def test_gdaldem_hillshade():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade.tif')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade.tif')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
@@ -93,7 +93,7 @@ def test_gdaldem_hillshade_compressed_tiled_output():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade_compressed_tiled.tif -co TILED=YES -co COMPRESS=DEFLATE --config GDAL_CACHEMAX 0')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade_compressed_tiled.tif -co TILED=YES -co COMPRESS=DEFLATE --config GDAL_CACHEMAX 0')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)

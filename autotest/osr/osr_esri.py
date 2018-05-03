@@ -1214,7 +1214,7 @@ def osr_esri_25():
     expected_proj4_string = ('+a=6378137 +b=6378137 +proj=merc +lat_ts=0'
                              ' +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +no_defs')
     proj4_string = srs.ExportToProj4()
-    if not (expected_proj4_string.split(' ').sort() == proj4_string.split(' ').sort()):
+    if not (expected_proj4_string.split(' ').sort() == proj4_string.split(' ').sort()):  # pylint: disable=superfluous-parens
         print('Got: %s' % expected_proj4_string)
         print('Expected: %s' % proj4_string)
         return 'fail'

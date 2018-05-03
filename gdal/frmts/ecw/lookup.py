@@ -47,9 +47,7 @@ def load_dict(filename):
     this_dict = {}
     for line in lines:
         if line[:8] != 'proj_name':
-            tokens = line.split(',')
-            for i in range(len(tokens)):
-                tokens[i] = tokens[i].strip()
+            tokens = [token.strip() for token in line.split(',')]
 
             this_dict[tokens[0]] = tokens
 
@@ -80,8 +78,7 @@ for line in pfile.readlines():
         if len(tokens) < 3:
             continue
 
-        for i in range(len(tokens)):
-            tokens[i] = tokens[i].strip()
+        tokens = [token.strip() for token in tokens]
 
         id = tokens[0]
         type = tokens[1]
@@ -150,7 +147,7 @@ for line in pfile.readlines():
                 srs.SetLinearUnits('unnamed', float(lsize_str))
 
         wkt = srs.ExportToWkt()
-        if len(wkt) > 0:
+        if wkt:
             print('%s,%s' % (id, srs.ExportToWkt()))
         else:
             print('%s,LOCAL_CS["%s - (unsupported)"]' % (id, id))
@@ -168,9 +165,7 @@ pfile = open(directory + 'datum.dat')
 pfile.readline()
 
 for line in pfile.readlines():
-    tokens = line.strip().split(',')
-    for i in range(len(tokens)):
-        tokens[i] = tokens[i].strip()
+    tokens = [token.strip() for token in line.strip().split(',')]
 
     id = tokens[0]
 

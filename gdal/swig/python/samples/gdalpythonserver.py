@@ -38,7 +38,7 @@ import sys
 from osgeo import gdal
 
 
-class GDALPythonServerRasterBand:
+class GDALPythonServerRasterBand(object):
 
     def __init__(self, gdal_band):
         self.gdal_band = gdal_band
@@ -89,7 +89,7 @@ class GDALPythonServerRasterBand:
 
     def GetOverview(self, iovr):
         if self.ovr_bands is None:
-            self.ovr_bands = [None for i in range(self.GetOverviewCount())]
+            self.ovr_bands = [None] * self.GetOverviewCount()
         if self.ovr_bands[iovr] is None:
             gdal_ovr_band = self.gdal_band.GetOverview(iovr)
             if gdal_ovr_band is not None:
@@ -124,7 +124,7 @@ class GDALPythonServerRasterBand:
         return self.gdal_band.GetHistogram(dfMin, dfMax, nBuckets, include_out_of_range=bIncludeOutOfRange, approx_ok=bApproxOK)
 
 
-class GDALPythonServerDataset:
+class GDALPythonServerDataset(object):
 
     def __init__(self, filename, access=gdal.GA_ReadOnly, open_options=None):
         nFlags = 0
@@ -175,7 +175,6 @@ class GDALPythonServerDataset:
 
     def FlushCache(self):
         self.gdal_ds.FlushCache()
-        return
 
     def IRasterIO_Read(self, nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                        nBufType, panBandMap, nPixelSpace, nLineSpace, nBandSpace):
@@ -357,22 +356,19 @@ VERBOSE = 0
 def read_int():
     if sys.version_info >= (3, 0, 0):
         return struct.unpack('i', sys.stdin.read(4).encode('latin1'))[0]
-    else:
-        return struct.unpack('i', sys.stdin.read(4))[0]
+    return struct.unpack('i', sys.stdin.read(4))[0]
 
 
 def read_bigint():
     if sys.version_info >= (3, 0, 0):
         return struct.unpack('q', sys.stdin.read(8).encode('latin1'))[0]
-    else:
-        return struct.unpack('q', sys.stdin.read(8))[0]
+    return struct.unpack('q', sys.stdin.read(8))[0]
 
 
 def read_double():
     if sys.version_info >= (3, 0, 0):
         return struct.unpack('d', sys.stdin.read(8).encode('latin1'))[0]
-    else:
-        return struct.unpack('d', sys.stdin.read(8))[0]
+    return struct.unpack('d', sys.stdin.read(8))[0]
 
 
 def read_str():
@@ -380,7 +376,7 @@ def read_str():
     if length <= 0:
         return None
     line = sys.stdin.read(length)
-    if len(line) > 0 and line[-1] == '\0':
+    if line and line[-1] == '\0':
         line = line[:-1]
     return str
 
@@ -388,7 +384,7 @@ def read_str():
 def read_strlist():
     count = read_int()
     strlist = []
-    for i in range(count):
+    for _ in range(count):
         strlist.append(read_str())
     return strlist
 
@@ -638,8 +634,8 @@ def main_loop():
             write_marker()
             fl = server_ds.GetFileList()
             write_int(len(fl))
-            for i in range(len(fl)):
-                write_str(fl[i])
+            for f in fl:
+                write_str(f)
         elif instr == INSTR_GetMetadata:
             domain = read_str()
             md = server_ds.GetMetadata(domain)
@@ -819,8 +815,8 @@ def main_loop():
             else:
                 write_int(CE_None)
                 write_int(len(val) * 8)
-                for i in range(len(val)):
-                    write_uint64(val[i])
+                for v in val:
+                    write_uint64(v)
         # elif instr == INSTR_Band_GetDefaultHistogram:
         #    bForce = read_int()
         #    write_marker()

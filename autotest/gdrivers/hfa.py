@@ -583,8 +583,7 @@ def hfa_mapinformation_units():
 
     if gdaltest.equal_srs_from_wkt(expected_wkt, wkt):
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Write nodata value.

@@ -70,8 +70,7 @@ def gdal_rm_recurse(filename, simulate=False):
         if simulate:
             print('Unlink(%s)' % filename)
             return 0
-        else:
-            return gdal.Unlink(filename)
+        return gdal.Unlink(filename)
 
 
 def gdal_rm(argv, progress=None):
@@ -85,7 +84,7 @@ def gdal_rm(argv, progress=None):
         return -1
 
     for i in range(1, len(argv)):
-        if len(argv[i]) == 0:
+        if not argv[i]:
             return Usage()
 
         if argv[i] == '-r':

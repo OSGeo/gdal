@@ -185,7 +185,7 @@ def vsicrypt_2():
                          0,  # size of key check
                          0, 0, 0, 0, 0, 0, 0, 0,  # size of unencrypted file
                          0, 0  # size of extra content
-                         )
+                        )
     fp = gdal.VSIFOpenL('/vsimem/file.bin', 'wb')
     gdal.VSIFWriteL(header, 1, len(header), fp)
     gdal.VSIFCloseL(fp)
@@ -213,7 +213,7 @@ def vsicrypt_2():
                          0,  # key check
                          0, 0, 0, 0, 0, 0, 0, 0,  # size of unencrypted file
                          0, 0  # size of extra content
-                         )
+                        )
     fp = gdal.VSIFOpenL('/vsimem/file.bin', 'wb')
     gdal.VSIFWriteL(header, 1, len(header), fp)
     gdal.VSIFCloseL(fp)
@@ -434,13 +434,13 @@ def vsicrypt_4():
         import random
         random.seed(seed)
 
-        for i in range(20):
+        for _ in range(20):
             random_offset = random.randint(0, 1000)
             gdal.VSIFSeekL(test_f, random_offset, 0)
             gdal.VSIFSeekL(ref_f, random_offset, 0)
 
             random_size = random.randint(1, 80)
-            random_content = ''.join([chr(40 + int(10 * random.random())) for i in range(random_size)])
+            random_content = ''.join([chr(40 + int(10 * random.random())) for _ in range(random_size)])
             gdal.VSIFWriteL(random_content, 1, random_size, test_f)
             gdal.VSIFWriteL(random_content, 1, random_size, ref_f)
 

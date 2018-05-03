@@ -46,8 +46,7 @@ def ogr_basic_1():
 
     if gdaltest.ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test Feature counting.
@@ -418,7 +417,7 @@ def ogr_basic_9():
                         [ogr.wkbMultiPolygon25D, "3D Multi Polygon"],
                         [ogr.wkbGeometryCollection25D, "3D Geometry Collection"],
                         [123456, "Unrecognized: 123456"]
-                        ]
+                       ]
 
     for geom_type_tuple in geom_type_tuples:
         if ogr.GeometryTypeToName(geom_type_tuple[0]) != geom_type_tuple[1]:
@@ -456,7 +455,7 @@ def ogr_basic_11():
         return 'skip'
 
     used_exceptions_before = ogr.GetUseExceptions()
-    for i in range(2):
+    for _ in range(2):
         ogr.UseExceptions()
         geom = ogr.CreateGeometryFromWkt('POLYGON ((-65 0, -30 -30, -30 0, -65 -30, -65 0))')
         with gdaltest.error_handler():

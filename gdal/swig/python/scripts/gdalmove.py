@@ -39,8 +39,7 @@ from osgeo import gdal, osr
 def fmt_loc(srs_obj, loc):
     if srs_obj.IsProjected():
         return '%12.3f %12.3f' % (loc[0], loc[1])
-    else:
-        return '%12.8f %12.8f' % (loc[0], loc[1])
+    return '%12.8f %12.8f' % (loc[0], loc[1])
 
 ###############################################################################
 
@@ -132,7 +131,7 @@ def move(filename, t_srs, s_srs=None, pixel_threshold=None):
 
     print('___Corner___ ________Original________  _______Adjusted_________   ______ Err (geo) ______ _Err (pix)_')
 
-    for i in range(len(corners_s_geo)):
+    for i in range(len(corners_s_geo)):  # pylint: disable=consider-using-enumerate
 
         item = corners_pixel_line[i]
         corners_t_new_geo.append(

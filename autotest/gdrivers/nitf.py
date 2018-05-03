@@ -802,7 +802,7 @@ def nitf_30():
                                                      'BLOCKA_LRLC_LOC_01=+42.317083+020.126072',
                                                      'BLOCKA_LRFC_LOC_01=+42.281634+020.122570',
                                                      'BLOCKA_FRFC_LOC_01=+42.283881+020.074924'
-                                                     ])
+                                                    ])
     ds = gdal.Open('/vsimem/nitf30_override.ntf')
     md = ds.GetMetadata()
     ds = None
@@ -997,13 +997,13 @@ def nitf_36():
         gdaltest.post_reason('Did not expect to have minimum value at that point.')
         return 'fail'
 
-    (minval, maxval, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
+    (_, _, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
     if stddev >= 0:
         gdaltest.post_reason('Did not expect to have statistics at that point.')
         return 'fail'
 
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
-    (minval, maxval, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, True)
+    (_, _, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, True)
 
     if abs(exp_mean - mean) > 0.1 or abs(exp_stddev - stddev) > 0.1:
         print(mean, stddev)
@@ -1024,7 +1024,7 @@ def nitf_36():
         gdaltest.post_reason('Should have minimum value at that point.')
         return 'fail'
 
-    (minval, maxval, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
+    (_, _, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
     if abs(exp_mean - mean) > 0.1 or abs(exp_stddev - stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason('Should have statistics at that point.')
@@ -1369,7 +1369,7 @@ def nitf_44():
     ds = gdal.Open('tmp/nitf44.ntf')
 
     if 'GetBlockSize' in dir(gdal.Band):
-        (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
+        (blockx, _) = ds.GetRasterBand(1).GetBlockSize()
         if blockx != 10000:
             return 'fail'
 
@@ -2159,7 +2159,7 @@ def nitf_65():
     ds = None
 
     ds = gdal.Open('/vsimem/nitf_65.ntf')
-    (block_xsize, block_ysize) = ds.GetRasterBand(1).GetBlockSize()
+    (block_xsize, _) = ds.GetRasterBand(1).GetBlockSize()
     ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -2181,7 +2181,7 @@ def nitf_66():
     ds = None
 
     ds = gdal.Open('/vsimem/nitf_66.ntf')
-    (block_xsize, block_ysize) = ds.GetRasterBand(1).GetBlockSize()
+    (_, block_ysize) = ds.GetRasterBand(1).GetBlockSize()
     ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -2232,7 +2232,7 @@ def nitf_68():
     ds = None
 
     ds = gdal.Open('data/rgb.ntf')
-    if len(ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA')) == 0:
+    if not ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA'):
         print(ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA'))
         return 'fail'
     ds = None

@@ -61,7 +61,7 @@ for arg in gdaltest.argv[1:]:
     else:
         test_list.append(arg)
 
-if len(test_list) == 0:
+if not test_list:
     test_list = all_test_list
 
 # we set ECW to not resolve projection and datum strings to get 3.x behavior.

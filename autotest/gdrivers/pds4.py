@@ -105,6 +105,7 @@ def pds4_1():
 
 
 def hide_substitution_warnings_error_handler_cbk(typ, errno, msg):
+    # pylint: disable=unused-argument
     if msg.find('substituted') < 0 and msg.find('VAR_TITLE not defined') < 0:
         print(msg)
 
@@ -199,7 +200,7 @@ def pds4_8():
                   '+proj=poly +lat_0=9 +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
                   '+proj=sinu +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
                   '+proj=tmerc +lat_0=11 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
-                  ]:
+                 ]:
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1)
         sr = osr.SpatialReference()
         sr.ImportFromProj4(proj4)

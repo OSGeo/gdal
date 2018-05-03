@@ -902,7 +902,7 @@ def tiff_write_20():
               ('TIFFTAG_RESOLUTIONUNIT', '2 (pixels/inch)'),
               ('TIFFTAG_MINSAMPLEVALUE', '1'),
               ('TIFFTAG_MAXSAMPLEVALUE', '2'),
-              ]
+             ]
 
     new_ds.SetMetadata(dict(values))
 
@@ -1780,8 +1780,8 @@ def tiff_write_46():
 
         # We expect (1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
         got = struct.unpack('B' * 10, data)
-        for i in range(len(got)):
-            if got[i] != 1:
+        for g in got:
+            if g != 1:
                 print(got)
                 return 'fail'
 
@@ -1956,8 +1956,8 @@ def tiff_write_52():
     test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
 
     test_ct = gdal.ColorTable()
-    for i in range(len(test_ct_data)):
-        test_ct.SetColorEntry(i, test_ct_data[i])
+    for i, data in enumerate(test_ct_data):
+        test_ct.SetColorEntry(i, data)
 
     ds = gdal.Open('tmp/tiff_write_52.tif', gdal.GA_Update)
     ds.GetRasterBand(1).SetRasterColorTable(test_ct)
@@ -1986,8 +1986,8 @@ def tiff_write_53():
     test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
 
     test_ct = gdal.ColorTable()
-    for i in range(len(test_ct_data)):
-        test_ct.SetColorEntry(i, test_ct_data[i])
+    for i, data in enumerate(test_ct_data):
+        test_ct.SetColorEntry(i, data)
 
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_53.tif',
                                   30, 50, 1,
@@ -2023,8 +2023,8 @@ def tiff_write_53_bis():
     test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
 
     test_ct = gdal.ColorTable()
-    for i in range(len(test_ct_data)):
-        test_ct.SetColorEntry(i, test_ct_data[i])
+    for i, data in enumerate(test_ct_data):
+        test_ct.SetColorEntry(i, data)
 
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_53_bis.tif',
                                   30, 50, 1,
@@ -2125,8 +2125,8 @@ def tiff_write_56():
     test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
 
     test_ct = gdal.ColorTable()
-    for i in range(len(test_ct_data)):
-        test_ct.SetColorEntry(i, test_ct_data[i])
+    for i, data in enumerate(test_ct_data):
+        test_ct.SetColorEntry(i, data)
 
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_56.tif',
                                   30, 50, 1,
@@ -2252,8 +2252,8 @@ def tiff_write_59():
 
             # We expect zeros
             got = struct.unpack(ctype * 10, data)
-            for i in range(len(got)):
-                if got[i] != 0:
+            for g in got:
+                if g != 0:
                     print(('nbands=%d, NBITS=%d' % (nbands, nbits)))
                     print(got)
                     ret = 'fail'
@@ -2652,15 +2652,15 @@ def tiff_write_71():
     # Write StripByteCounts tag
     # 100,000 in little endian
     if version_info >= (3, 0, 0):
-        for i in range(100000):
+        for _ in range(100000):
             exec("f.write(b'\\xa0\\x86\\x01\\x00\\x00\\x00\\x00\\x00')")
     else:
-        for i in range(100000):
+        for _ in range(100000):
             f.write('\xa0\x86\x01\x00\x00\x00\x00\x00')
 
     # Write StripOffsets tag
     offset = 1600252
-    for i in range(100000):
+    for _ in range(100000):
         f.write(struct.pack('<Q', offset))
         offset = offset + 100000
 
@@ -2964,7 +2964,7 @@ def tiff_write_78():
     # new_ds = gdal.Open('tmp/tiff_write_78.tif')
 
     if 'GetBlockSize' in dir(gdal.Band):
-        (blockx, blocky) = new_ds.GetRasterBand(1).GetBlockSize()
+        (_, blocky) = new_ds.GetRasterBand(1).GetBlockSize()
         if blocky != 1:
             print('')
             print('using regular band (libtiff <= 3.9.2 or <= 4.0.0beta5, or SplitBand disabled by config option)')
@@ -3444,7 +3444,7 @@ def tiff_write_85():
 
     # Third part : test storing and retrieving unittype from PAM metadata
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_85_bis.tif', 1, 1)
-    if len(ds.GetRasterBand(1).GetUnitType()) != 0:
+    if ds.GetRasterBand(1).GetUnitType():
         gdaltest.post_reason('expected None values')
         return 'fail'
     ds = None
@@ -3621,7 +3621,7 @@ def tiff_write_87():
     import validate_cloud_optimized_geotiff
     try:
         errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled=False)
-        if len(errors) != 0:
+        if errors:
             gdaltest.post_reason('validate_cloud_optimized_geotiff failed')
             print(errors)
             return 'fail'
@@ -4325,7 +4325,7 @@ def tiff_write_101():
     else:
         import random
         rand_array = array.array('B')
-        for i in range(10 * 1024 * 1024):
+        for _ in range(10 * 1024 * 1024):
             rand_array.append(random.randint(0, 255))
 
     f = open('tmp/tiff_write_101.bin', 'wb')
@@ -4743,7 +4743,7 @@ def tiff_write_117():
 
     # Write first tile so that its byte count of that tile is 2048 (a multiple of 1024)
     adjust = 1254
-    data = ''.join(['0' for i in range(65536 - adjust)]) + ''.join([('%c' % random.randint(0, 255)) for i in range(adjust)])
+    data = '0' * (65536 - adjust) + ''.join([('%c' % random.randint(0, 255)) for i in range(adjust)])
     ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
 
     # Second tile will be implicitly written at closing, or we could write
@@ -4757,7 +4757,7 @@ def tiff_write_117():
     ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256)
 
     # The new bytecount will be greater than 2048
-    data = ''.join([('%c' % random.randint(0, 255)) for i in range(256 * 256)])
+    data = ''.join([('%c' % random.randint(0, 255)) for _ in range(256 * 256)])
     ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
 
     # Make sure that data is written now
@@ -4793,7 +4793,7 @@ def tiff_write_118():
 
     gdal.Unlink('/vsimem/tiff_write_118.tif')
 
-    if len(md) != 0:
+    if md:
         print(md)
         return 'fail'
 
@@ -5349,7 +5349,7 @@ def tiff_write_126():
                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'BLOCKYSIZE=800'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'BLOCKYSIZE=32'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'BLOCKYSIZE=8'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),
-                    ]
+                   ]
 
     for (options, cs1, cs2, cs3, cs4) in options_list:
         os.environ['JPEGMEM'] = '500M'
@@ -5366,25 +5366,25 @@ def tiff_write_126():
             return 'fail'
         # But they do exist...
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if not(cs in cs1):
+        if cs not in cs1:
             print(options)
             print(cs)
             gdaltest.post_reason('fail')
             return 'fail'
         cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
-        if not(cs in cs2):
+        if cs not in cs2:
             print(options)
             print(cs)
             gdaltest.post_reason('fail')
             return 'fail'
         cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-        if not(cs in cs3):
+        if cs not in cs3:
             print(options)
             print(cs)
             gdaltest.post_reason('fail')
             return 'fail'
         cs = ds.GetRasterBand(1).GetOverview(2).Checksum()
-        if not(cs in cs4):
+        if cs not in cs4:
             print(options)
             print(cs)
             gdaltest.post_reason('fail')
@@ -5413,7 +5413,7 @@ def tiff_write_126():
                     (['COMPRESS=JPEG', 'TILED=YES'], [49887, 58937], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'BLOCKYSIZE=800'], [49887, 58937], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'BLOCKYSIZE=32'], [49887, 58937], [30829, 34806], [11664, 58937]),
-                    ]
+                   ]
 
     for (options, cs1, cs3, cs4) in options_list:
         os.environ['JPEGMEM'] = '500M'
@@ -5430,19 +5430,19 @@ def tiff_write_126():
             return 'fail'
         # But they do exist...
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if not(cs in cs1):
+        if cs not in cs1:
             print(options)
             print(cs)
             gdaltest.post_reason('fail')
             return 'fail'
         cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-        if not(cs in cs3):
+        if cs not in cs3:
             print(options)
             print(cs)
             gdaltest.post_reason('fail')
             return 'fail'
         cs = ds.GetRasterBand(1).GetOverview(2).Checksum()
-        if not(cs in cs4):
+        if cs not in cs4:
             print(options)
             print(cs)
             gdaltest.post_reason('fail')
@@ -5552,7 +5552,7 @@ def tiff_write_127():
 
         ds = gdal.Open('/vsimem/tiff_write_127.tif', gdal.GA_Update)
         obj = ds if i == 0 else ds.GetRasterBand(1)
-        if len(obj.GetMetadata()) != 0:
+        if obj.GetMetadata():
             gdaltest.post_reason('fail')
             print(i)
             return 'fail'
@@ -5572,7 +5572,7 @@ def tiff_write_127():
 
         ds = gdal.Open('/vsimem/tiff_write_127.tif', gdal.GA_Update)
         obj = ds if i == 0 else ds.GetRasterBand(1)
-        if len(obj.GetMetadata()) != 0:
+        if obj.GetMetadata():
             gdaltest.post_reason('fail')
             print(i)
             return 'fail'
@@ -6187,7 +6187,7 @@ def tiff_write_135():
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_135.tif')
-    if len(ds.GetGCPs()) != 0:
+    if ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetGCPProjection() != '':
@@ -6206,7 +6206,7 @@ def tiff_write_135():
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_135.tif')
-    if len(ds.GetGCPs()) != 0:
+    if ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetGCPProjection() != '':
@@ -6228,7 +6228,7 @@ def tiff_write_135():
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_135.tif')
-    if len(ds.GetGCPs()) != 0:
+    if ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetGeoTransform() != (1, 2, 3, 4, 5, -6):
@@ -6755,7 +6755,7 @@ def tiff_write_145():
                     {'creation_options': ['PHOTOMETRIC=foo'], 'expected_failure': False},
                     {'creation_options': ['PHOTOMETRIC=RGB'], 'expected_failure': False},
                     {'creation_options': ['TILED=YES', 'BLOCKSIZE=1', 'BLOCKYSIZE=1'], 'expected_failure': True},
-                    ]
+                   ]
 
     for options in options_list:
         xsize = options.get('xsize', 1)
@@ -7304,7 +7304,7 @@ def tiff_write_157():
                        0x83FF,  # Largest negative denormalized value
                        0x0400,  # Smallest positive normalized value
                        0x8400,  # Smallest negative normalized value
-                       )
+                      )
 
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_157.tif', 14, 1, 1, gdal.GDT_Float32, options=['NBITS=16'])
     ds = None
@@ -7381,7 +7381,7 @@ def tiff_write_157():
                        0x80800000,  # Smallest negative normalized value
                        0x33800000,  # 5.9604644775390625e-08 = Smallest number that can be converted as a float16 denormalized value
                        0x47800000,  # 65536 --> converted to infinity
-                       )
+                      )
     ds.GetRasterBand(1).WriteRaster(0, 0, 18, 1, vals, buf_type=gdal.GDT_Float32)
     with gdaltest.error_handler():
         ds.FlushCache()
@@ -7597,7 +7597,7 @@ def tiff_write_161():
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_161.tif', gdal.GA_Update)
-    if len(ds.GetGCPs()) == 0:
+    if not ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetGeoTransform(can_return_null=True) is not None:
@@ -7610,13 +7610,13 @@ def tiff_write_161():
     if ds.GetGeoTransform() != (0.0, 1.0, 2.0, 3.0, 4.0, 5.0):
         gdaltest.post_reason('fail')
         return 'fail'
-    if len(ds.GetGCPs()) != 0:
+    if ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_161.tif', gdal.GA_Update)
-    if len(ds.GetGCPs()) != 0:
+    if ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetGeoTransform() != (0.0, 1.0, 2.0, 3.0, 4.0, 5.0):

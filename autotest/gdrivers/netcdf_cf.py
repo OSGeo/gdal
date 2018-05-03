@@ -116,7 +116,7 @@ def netcdf_cf_setup():
     success = False
     try:
         (ret, err) = gdaltest.runexternal_out_and_err('curl')
-    except:
+    except OSError:
         print('no curl executable')
     else:
         # make sure script is responding
@@ -146,12 +146,12 @@ def netcdf_cf_get_command(ifile, version='auto'):
     # fetch method obtained previously
     method = gdaltest.netcdf_cf_method
     if method is not None:
-        if method is 'local':
+        if method == 'local':
             command = './netcdf_cfchecks.py -a ' + gdaltest.netcdf_cf_files['a'] \
                 + ' -s ' + gdaltest.netcdf_cf_files['s'] \
                 + ' -u ' + gdaltest.netcdf_cf_files['u'] \
                 + ' -v ' + version + ' ' + ifile
-        elif method is 'http':
+        elif method == 'http':
             # command = shlex.split( 'curl --form cfversion="1.5" --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"' )
             # switch to 1.5 as driver now supports, and auto when it becomes available
             version = '1.5'
@@ -168,7 +168,7 @@ def netcdf_cf_check_file(ifile, version='auto', silent=True):
     #    print 'checking file ' + ifile
     gdaltest.netcdf_cf_check_error = ''
 
-    if (not os.path.exists(ifile)):
+    if not os.path.exists(ifile):
         return 'skip'
 
     output_all = ''
@@ -182,7 +182,7 @@ def netcdf_cf_check_file(ifile, version='auto', silent=True):
         if gdaltest.netcdf_cf_method == 'http':
             print('calling ' + command)
         (ret, err) = gdaltest.runexternal_out_and_err(command)
-    except:
+    except OSError:
         gdaltest.post_reason('ERROR with command - ' + command)
         return 'fail'
 
@@ -374,8 +374,8 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
 
     # Test if ncdump is available
     try:
-        (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
-    except:
+        (_, err) = gdaltest.runexternal_out_and_err('ncdump -h')
+    except OSError:
         # nothing is supported as ncdump not found
         print('NOTICE: netcdf version not found')
         return 'skip'
@@ -583,8 +583,7 @@ def netcdf_cf_1():
 
     if result != 'fail' and result_cf != 'fail':
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 
 ###############################################################################
@@ -602,8 +601,7 @@ def netcdf_cf_2():
 
     if result != 'fail' and result_cf != 'fail':
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 
 ###############################################################################
@@ -630,8 +628,7 @@ def netcdf_cf_3():
 
     if result != 'fail' and result_cf != 'fail':
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # test support for various CF projections

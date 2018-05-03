@@ -1073,10 +1073,9 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
     res = validate_jp2.validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
     if return_error_count:
         return (res.error_count, res.warning_count)
-    elif res.error_count == 0 and res.warning_count == 0:
+    if res.error_count == 0 and res.warning_count == 0:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test INSPIRE_TG support
@@ -1392,7 +1391,7 @@ def jp2openjpeg_28():
              (['CODEBLOCK_WIDTH=128', 'CODEBLOCK_HEIGHT=128'], 64, 64, True),
              (['CODEBLOCK_WIDTH=63'], 32, 64, True),
              (['CODEBLOCK_WIDTH=32', 'CODEBLOCK_HEIGHT=32'], 32, 32, False),
-             ]
+            ]
 
     for (options, expected_cbkw, expected_cbkh, warning_expected) in tests:
         gdal.ErrorReset()
@@ -1430,7 +1429,7 @@ def jp2openjpeg_29():
              (['TILEPARTS=LAYERS', 'QUALITY=1,2'], False),
              (['TILEPARTS=COMPONENTS'], False),
              (['TILEPARTS=ILLEGAL'], True),
-             ]
+            ]
 
     for (options, warning_expected) in tests:
         gdal.ErrorReset()
@@ -1472,7 +1471,7 @@ def jp2openjpeg_30():
              (['QUALITY=100', 'REVERSIBLE=YES'], False),
              (['QUALITY=50'], True),
              (['REVERSIBLE=NO'], True),
-             ]
+            ]
 
     for (options, warning_expected) in tests:
         gdal.ErrorReset()
@@ -2286,7 +2285,7 @@ def jp2openjpeg_42():
 
     # Check it (a GeoJP2 box has been added and GMLJP2 removed)
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
-    if len(ds.GetGCPs()) == 0:
+    if not ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetMetadataDomainList() != ['DERIVED_SUBDATASETS']:

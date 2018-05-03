@@ -59,9 +59,8 @@ def osr_url_test(url, expected_wkt):
         if gdal.GetLastErrorMsg() == "GDAL/OGR not compiled with libcurl support, remote requests not supported." or \
            gdal.GetLastErrorMsg().find("timed out") != -1:
             return 'skip'
-        else:
-            gdaltest.post_reason('exception: ' + gdal.GetLastErrorMsg())
-            return 'fail'
+        gdaltest.post_reason('exception: ' + gdal.GetLastErrorMsg())
+        return 'fail'
 
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == "GDAL/OGR not compiled with libcurl support, remote requests not supported." or \

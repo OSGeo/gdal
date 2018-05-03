@@ -51,28 +51,27 @@ def Usage():
 def ParseType(type):
     if type == 'Byte':
         return gdal.GDT_Byte
-    elif type == 'Int16':
+    if type == 'Int16':
         return gdal.GDT_Int16
-    elif type == 'UInt16':
+    if type == 'UInt16':
         return gdal.GDT_UInt16
-    elif type == 'Int32':
+    if type == 'Int32':
         return gdal.GDT_Int32
-    elif type == 'UInt32':
+    if type == 'UInt32':
         return gdal.GDT_UInt32
-    elif type == 'Float32':
+    if type == 'Float32':
         return gdal.GDT_Float32
-    elif type == 'Float64':
+    if type == 'Float64':
         return gdal.GDT_Float64
-    elif type == 'CInt16':
+    if type == 'CInt16':
         return gdal.GDT_CInt16
-    elif type == 'CInt32':
+    if type == 'CInt32':
         return gdal.GDT_CInt32
-    elif type == 'CFloat32':
+    if type == 'CFloat32':
         return gdal.GDT_CFloat32
-    elif type == 'CFloat64':
+    if type == 'CFloat64':
         return gdal.GDT_CFloat64
-    else:
-        return gdal.GDT_Byte
+    return gdal.GDT_Byte
 # =============================================================================
 
 

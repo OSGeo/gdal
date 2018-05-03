@@ -45,7 +45,7 @@ def Usage():
     return -1
 
 
-class TermProgress:
+class TermProgress(object):
     def __init__(self):
         self.nLastTick = -1
         self.nThisTick = 0
@@ -79,7 +79,7 @@ class TermProgress:
         return True
 
 
-class ScaledProgress:
+class ScaledProgress(object):
     def __init__(self, dfMin, dfMax, UnderlyingProgress):
         self.dfMin = dfMin
         self.dfMax = dfMax
@@ -98,7 +98,7 @@ def gdal_cp_single(srcfile, targetfile, progress):
 
     if (stat_res is None and targetfile.endswith('/')) or \
        (stat_res is not None and stat.S_ISDIR(stat_res.mode)):
-        (head, tail) = os.path.split(srcfile)
+        (_, tail) = os.path.split(srcfile)
         if targetfile.endswith('/'):
             targetfile = targetfile + tail
         else:
@@ -313,8 +313,7 @@ def gdal_cp(argv, progress=None):
     (srcdir, pattern) = os.path.split(srcfile)
     if pattern.find('*') != -1 or pattern.find('?') != -1:
         return gdal_cp_pattern_match(srcdir, pattern, targetfile, progress, skip_failure)
-    else:
-        return gdal_cp_single(srcfile, targetfile, progress)
+    return gdal_cp_single(srcfile, targetfile, progress)
 
 
 if __name__ == '__main__':

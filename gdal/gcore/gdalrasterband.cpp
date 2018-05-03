@@ -3187,13 +3187,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
 
             void *pData = poBlock->GetDataRef();
 
-            int nXCheck = nBlockXSize;
-            if( (iXBlock+1) * nBlockXSize > GetXSize() )
-                nXCheck = GetXSize() - iXBlock * nBlockXSize;
-
-            int nYCheck = nBlockYSize;
-            if( (iYBlock+1) * nBlockYSize > GetYSize() )
-                nYCheck = GetYSize() - iYBlock * nBlockYSize;
+            int nXCheck, nYCheck;
+            GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
             // this is a special case for a common situation.
             if( eDataType == GDT_Byte && !bSignedByte
@@ -3781,16 +3776,19 @@ CPLErr GDALRasterBand::GetStatistics( int bApproxOK, int bForce,
      && (pdfMean == nullptr || GetMetadataItem("STATISTICS_MEAN") != nullptr)
      && (pdfStdDev == nullptr || GetMetadataItem("STATISTICS_STDDEV") != nullptr) )
     {
-        if( pdfMin != nullptr )
-            *pdfMin = CPLAtofM(GetMetadataItem("STATISTICS_MINIMUM"));
-        if( pdfMax != nullptr )
-            *pdfMax = CPLAtofM(GetMetadataItem("STATISTICS_MAXIMUM"));
-        if( pdfMean != nullptr )
-            *pdfMean = CPLAtofM(GetMetadataItem("STATISTICS_MEAN"));
-        if( pdfStdDev != nullptr )
-            *pdfStdDev = CPLAtofM(GetMetadataItem("STATISTICS_STDDEV"));
+        if( !(GetMetadataItem("STATISTICS_APPROXIMATE") && !bApproxOK) )
+        {
+            if( pdfMin != nullptr )
+                *pdfMin = CPLAtofM(GetMetadataItem("STATISTICS_MINIMUM"));
+            if( pdfMax != nullptr )
+                *pdfMax = CPLAtofM(GetMetadataItem("STATISTICS_MAXIMUM"));
+            if( pdfMean != nullptr )
+                *pdfMean = CPLAtofM(GetMetadataItem("STATISTICS_MEAN"));
+            if( pdfStdDev != nullptr )
+                *pdfStdDev = CPLAtofM(GetMetadataItem("STATISTICS_STDDEV"));
 
-        return CE_None;
+            return CE_None;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -4696,6 +4694,101 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
 
 #endif // CPL_HAS_GINT64
 
+
+/************************************************************************/
+/*                          GetPixelValue()                             */
+/************************************************************************/
+
+static
+inline double GetPixelValue( GDALDataType eDataType,
+                             bool bSignedByte,
+                             const void* pData,
+                             int iOffset,
+                             bool bGotNoDataValue,
+                             double dfNoDataValue,
+                             bool bGotFloatNoDataValue,
+                             float fNoDataValue,
+                             bool& bValid )
+{
+    bValid = true;
+    double dfValue;
+    switch( eDataType )
+    {
+        case GDT_Byte:
+        {
+            if( bSignedByte )
+                dfValue = static_cast<const signed char *>(pData)[iOffset];
+            else
+                dfValue = static_cast<const GByte *>(pData)[iOffset];
+            break;
+        }
+        case GDT_UInt16:
+            dfValue = static_cast<const GUInt16 *>(pData)[iOffset];
+            break;
+        case GDT_Int16:
+            dfValue = static_cast<const GInt16 *>(pData)[iOffset];
+            break;
+        case GDT_UInt32:
+            dfValue = static_cast<const GUInt32 *>(pData)[iOffset];
+            break;
+        case GDT_Int32:
+            dfValue = static_cast<const GInt32 *>(pData)[iOffset];
+            break;
+        case GDT_Float32:
+        {
+            const float fValue = static_cast<const float *>(pData)[iOffset];
+            if( CPLIsNan(fValue) ||
+                (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
+            {
+                bValid = false;
+                return 0.0;
+            }
+            dfValue = fValue;
+            return dfValue;
+        }
+        case GDT_Float64:
+            dfValue = static_cast<const double *>(pData)[iOffset];
+            if( CPLIsNan(dfValue) )
+            {
+                bValid = false;
+                return 0.0;
+            }
+            break;
+        case GDT_CInt16:
+            dfValue = static_cast<const GInt16 *>(pData)[iOffset*2];
+            break;
+        case GDT_CInt32:
+            dfValue = static_cast<const GInt32 *>(pData)[iOffset*2];
+            break;
+        case GDT_CFloat32:
+            dfValue = static_cast<const float *>(pData)[iOffset*2];
+            if( CPLIsNan(dfValue) )
+            {
+                bValid = false;
+                return 0.0;
+            }
+            break;
+        case GDT_CFloat64:
+            dfValue = static_cast<const double *>(pData)[iOffset*2];
+            if( CPLIsNan(dfValue) )
+            {
+                bValid = false;
+                return 0.0;
+            }
+            break;
+        default:
+            dfValue = 0.0;
+            CPLAssert( false );
+    }
+
+    if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+    {
+        bValid = false;
+        return 0.0;
+    }
+    return dfValue;
+}
+
 /************************************************************************/
 /*                         ComputeStatistics()                          */
 /************************************************************************/
@@ -4753,10 +4846,21 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
             = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
 
         if( poBand != this )
-            return poBand->ComputeStatistics( FALSE,
+        {
+            CPLErr eErr = poBand->ComputeStatistics( FALSE,
                                               pdfMin, pdfMax,
                                               pdfMean, pdfStdDev,
                                               pfnProgress, pProgressData );
+            if( eErr == CE_None )
+            {
+                if( pdfMin && pdfMax && pdfMean && pdfStdDev )
+                {
+                    SetMetadataItem( "STATISTICS_APPROXIMATE", "YES" );
+                    SetStatistics( *pdfMin,*pdfMax, *pdfMean, *pdfStdDev );
+                }
+            }
+            return eErr;
+        }
     }
 
     if( !pfnProgress( 0.0, "Compute Statistics", pProgressData ) )
@@ -4803,7 +4907,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 
     GUIntBig nSampleCount = 0;
 
-  if ( bApproxOK && HasArbitraryOverviews() )
+    if ( bApproxOK && HasArbitraryOverviews() )
     {
 /* -------------------------------------------------------------------- */
 /*      Figure out how much the image should be reduced to get an       */
@@ -4846,68 +4950,17 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
             for( int iX = 0; iX < nXReduced; iX++ )
             {
                 const int iOffset = iX + iY * nXReduced;
-                double dfValue = 0.0;
-
-                // TODO(schwehr): This switch is repeated multiple times.
-                // Factor out to an inline function.
-                switch( eDataType )
-                {
-                  case GDT_Byte:
-                  {
-                    if( bSignedByte )
-                        dfValue = static_cast<signed char *>(pData)[iOffset];
-                    else
-                        dfValue = static_cast<GByte *>(pData)[iOffset];
-                    break;
-                  }
-                  case GDT_UInt16:
-                    dfValue = static_cast<GUInt16 *>(pData)[iOffset];
-                    break;
-                  case GDT_Int16:
-                    dfValue = static_cast<GInt16 *>(pData)[iOffset];
-                    break;
-                  case GDT_UInt32:
-                    dfValue = static_cast<GUInt32 *>(pData)[iOffset];
-                    break;
-                  case GDT_Int32:
-                    dfValue = static_cast<GInt32 *>(pData)[iOffset];
-                    break;
-                  case GDT_Float32:
-                  {
-                    const float fValue = static_cast<float *>(pData)[iOffset];
-                    if( CPLIsNan(fValue) ||
-                        (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
-                        continue;
-                    dfValue = fValue;
-                    break;
-                  }
-                  case GDT_Float64:
-                    dfValue = static_cast<double *>(pData)[iOffset];
-                    if( CPLIsNan(dfValue) )
-                        continue;
-                    break;
-                  case GDT_CInt16:
-                    dfValue = static_cast<GInt16 *>(pData)[iOffset*2];
-                    break;
-                  case GDT_CInt32:
-                    dfValue = static_cast<GInt32 *>(pData)[iOffset*2];
-                    break;
-                  case GDT_CFloat32:
-                    dfValue = static_cast<float *>(pData)[iOffset*2];
-                    if( CPLIsNan(dfValue) )
-                        continue;
-                    break;
-                  case GDT_CFloat64:
-                    dfValue = static_cast<double *>(pData)[iOffset*2];
-                    if( CPLIsNan(dfValue) )
-                        continue;
-                    break;
-                  default:
-                    CPLAssert( false );
-                }
-
-                if( eDataType != GDT_Float32 &&
-                    bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                bool bValid = true;
+                double dfValue = GetPixelValue( eDataType,
+                                                bSignedByte,
+                                                pData,
+                                                iOffset,
+                                                CPL_TO_BOOL(bGotNoDataValue),
+                                                dfNoDataValue,
+                                                bGotFloatNoDataValue,
+                                                fNoDataValue,
+                                                bValid );
+                if( !bValid )
                     continue;
 
                 if( bFirstValue )
@@ -4954,6 +5007,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
             if( nSampleRate == nBlocksPerRow && nBlocksPerRow > 1 )
               nSampleRate += 1;
         }
+        if( nSampleRate == 1 )
+            bApproxOK = false;
 
 #ifdef CPL_HAS_GINT64
         // Particular case for GDT_Byte that only use integral types for all
@@ -4998,13 +5053,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 
                 void* const pData = poBlock->GetDataRef();
 
-                int nXCheck = nBlockXSize;
-                if( (iXBlock+1) * nBlockXSize > GetXSize() )
-                    nXCheck = GetXSize() - iXBlock * nBlockXSize;
-
-                int nYCheck = nBlockYSize;
-                if( (iYBlock+1) * nBlockYSize > GetYSize() )
-                    nYCheck = GetYSize() - iYBlock * nBlockYSize;
+                int nXCheck, nYCheck;
+                GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
                 if( eDataType == GDT_Byte )
                 {
@@ -5068,7 +5118,17 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     0.0;
 
             if( nSampleCount > 0 )
+            {
+                if( bApproxOK )
+                {
+                    SetMetadataItem( "STATISTICS_APPROXIMATE", "YES" );
+                }
+                else if( GetMetadataItem( "STATISTICS_APPROXIMATE" ) )
+                {
+                    SetMetadataItem( "STATISTICS_APPROXIMATE",  nullptr );
+                }
                 SetStatistics( nMin, nMax, dfMean, dfStdDev );
+            }
 
 /* -------------------------------------------------------------------- */
 /*      Record results.                                                 */
@@ -5107,13 +5167,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 
             void* const pData = poBlock->GetDataRef();
 
-            int nXCheck = nBlockXSize;
-            if( (iXBlock+1) * nBlockXSize > GetXSize() )
-                nXCheck = GetXSize() - iXBlock * nBlockXSize;
-
-            int nYCheck = nBlockYSize;
-            if( (iYBlock+1) * nBlockYSize > GetYSize() )
-                nYCheck = GetYSize() - iYBlock * nBlockYSize;
+            int nXCheck, nYCheck;
+            GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
             // This isn't the fastest way to do this, but is easier for now.
             for( int iY = 0; iY < nYCheck; iY++ )
@@ -5121,67 +5176,17 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 for( int iX = 0; iX < nXCheck; iX++ )
                 {
                     const int iOffset = iX + iY * nBlockXSize;
-                    double dfValue = 0.0;
-
-                    switch( eDataType )
-                    {
-                      case GDT_Byte:
-                      {
-                        if( bSignedByte )
-                            dfValue =
-                                static_cast<const signed char *>(pData)[iOffset];
-                        else
-                            dfValue = static_cast<const GByte *>(pData)[iOffset];
-                        break;
-                      }
-                      case GDT_UInt16:
-                        dfValue = static_cast<const GUInt16 *>(pData)[iOffset];
-                        break;
-                      case GDT_Int16:
-                        dfValue = static_cast<const GInt16 *>(pData)[iOffset];
-                        break;
-                      case GDT_UInt32:
-                        dfValue = static_cast<const GUInt32 *>(pData)[iOffset];
-                        break;
-                      case GDT_Int32:
-                        dfValue = static_cast<const GInt32 *>(pData)[iOffset];
-                        break;
-                      case GDT_Float32:
-                      {
-                        const float fValue = static_cast<const float *>(pData)[iOffset];
-                        if( CPLIsNan(fValue) ||
-                            (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
-                            continue;
-                        dfValue = fValue;
-                        break;
-                      }
-                      case GDT_Float64:
-                        dfValue = static_cast<const double *>(pData)[iOffset];
-                        if( CPLIsNan(dfValue) )
-                            continue;
-                        break;
-                      case GDT_CInt16:
-                        dfValue = static_cast<const GInt16 *>(pData)[iOffset*2];
-                        break;
-                      case GDT_CInt32:
-                        dfValue = static_cast<const GInt32 *>(pData)[iOffset*2];
-                        break;
-                      case GDT_CFloat32:
-                        dfValue = static_cast<const float *>(pData)[iOffset*2];
-                        if( CPLIsNan(dfValue) )
-                            continue;
-                        break;
-                      case GDT_CFloat64:
-                        dfValue = static_cast<const double *>(pData)[iOffset*2];
-                        if( CPLIsNan(dfValue) )
-                            continue;
-                        break;
-                      default:
-                        CPLAssert( false );
-                    }
-
-                    if( eDataType != GDT_Float32 && bGotNoDataValue &&
-                        ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                    bool bValid = true;
+                    double dfValue = GetPixelValue( eDataType,
+                                                    bSignedByte,
+                                                    pData,
+                                                    iOffset,
+                                                    CPL_TO_BOOL(bGotNoDataValue),
+                                                    dfNoDataValue,
+                                                    bGotFloatNoDataValue,
+                                                    fNoDataValue,
+                                                    bValid );
+                    if( !bValid )
                         continue;
 
                     if( bFirstValue )
@@ -5229,7 +5234,17 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
         nSampleCount > 0 ? sqrt(dfM2 / nSampleCount) : 0.0;
 
     if( nSampleCount > 0 )
+    {
+        if( bApproxOK )
+        {
+            SetMetadataItem( "STATISTICS_APPROXIMATE", "YES" );
+        }
+        else if( GetMetadataItem( "STATISTICS_APPROXIMATE" ) )
+        {
+            SetMetadataItem( "STATISTICS_APPROXIMATE",  nullptr );
+        }
         SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Record results.                                                 */
@@ -5480,66 +5495,17 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
             for( int iX = 0; iX < nXReduced; iX++ )
             {
                 const int iOffset = iX + iY * nXReduced;
-                double dfValue = 0.0;
-
-                switch( eDataType )
-                {
-                  case GDT_Byte:
-                  {
-                    if( bSignedByte )
-                        dfValue = static_cast<signed char *>(pData)[iOffset];
-                    else
-                        dfValue = static_cast<GByte *>(pData)[iOffset];
-                    break;
-                  }
-                  case GDT_UInt16:
-                    dfValue = static_cast<GUInt16 *>(pData)[iOffset];
-                    break;
-                  case GDT_Int16:
-                    dfValue = static_cast<GInt16 *>(pData)[iOffset];
-                    break;
-                  case GDT_UInt32:
-                    dfValue = static_cast<GUInt32 *>(pData)[iOffset];
-                    break;
-                  case GDT_Int32:
-                    dfValue = static_cast<GInt32 *>(pData)[iOffset];
-                    break;
-                  case GDT_Float32:
-                  {
-                    const float fValue = static_cast<float *>(pData)[iOffset];
-                    if( CPLIsNan(fValue) ||
-                        (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
-                        continue;
-                    dfValue = fValue;
-                    break;
-                  }
-                  case GDT_Float64:
-                    dfValue = static_cast<double *>(pData)[iOffset];
-                    if( CPLIsNan(dfValue) )
-                        continue;
-                    break;
-                  case GDT_CInt16:
-                    dfValue = static_cast<GInt16 *>(pData)[iOffset*2];
-                    break;
-                  case GDT_CInt32:
-                    dfValue = static_cast<GInt32 *>(pData)[iOffset*2];
-                    break;
-                  case GDT_CFloat32:
-                    dfValue = static_cast<float *>(pData)[iOffset*2];
-                    if( CPLIsNan(dfValue) )
-                        continue;
-                    break;
-                  case GDT_CFloat64:
-                    dfValue = static_cast<double *>(pData)[iOffset*2];
-                    if( CPLIsNan(dfValue) )
-                        continue;
-                    break;
-                  default:
-                    CPLAssert( false );
-                }
-
-                if( eDataType != GDT_Float32 &&
-                    bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                bool bValid = true;
+                double dfValue = GetPixelValue( eDataType,
+                                                bSignedByte,
+                                                pData,
+                                                iOffset,
+                                                CPL_TO_BOOL(bGotNoDataValue),
+                                                dfNoDataValue,
+                                                bGotFloatNoDataValue,
+                                                fNoDataValue,
+                                                bValid );
+                if( !bValid )
                     continue;
 
                 if( bFirstValue )
@@ -5596,13 +5562,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
 
             void * const pData = poBlock->GetDataRef();
 
-            int nXCheck = nBlockXSize;
-            if( (iXBlock+1) * nBlockXSize > GetXSize() )
-                nXCheck = GetXSize() - iXBlock * nBlockXSize;
-
-            int nYCheck = nBlockYSize;
-            if( (iYBlock+1) * nBlockYSize > GetYSize() )
-                nYCheck = GetYSize() - iYBlock * nBlockYSize;
+            int nXCheck, nYCheck;
+            GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
             // This isn't the fastest way to do this, but is easier for now.
             for( int iY = 0; iY < nYCheck; iY++ )
@@ -5610,66 +5571,17 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                 for( int iX = 0; iX < nXCheck; iX++ )
                 {
                     const int iOffset = iX + iY * nBlockXSize;
-                    double dfValue = 0.0;
-
-                    switch( eDataType )
-                    {
-                      case GDT_Byte:
-                      {
-                        if (bSignedByte)
-                            dfValue = static_cast<signed char *>(pData)[iOffset];
-                        else
-                            dfValue = static_cast<GByte *>(pData)[iOffset];
-                        break;
-                      }
-                      case GDT_UInt16:
-                        dfValue = static_cast<GUInt16 *>(pData)[iOffset];
-                        break;
-                      case GDT_Int16:
-                        dfValue = static_cast<GInt16 *>(pData)[iOffset];
-                        break;
-                      case GDT_UInt32:
-                        dfValue = static_cast<GUInt32 *>(pData)[iOffset];
-                        break;
-                      case GDT_Int32:
-                        dfValue = static_cast<GInt32 *>(pData)[iOffset];
-                        break;
-                      case GDT_Float32:
-                      {
-                          const float fValue = static_cast<float *>(pData)[iOffset];
-                          if( CPLIsNan(fValue) ||
-                              (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
-                              continue;
-                          dfValue = fValue;
-                          break;
-                      }
-                      case GDT_Float64:
-                        dfValue = static_cast<double *>(pData)[iOffset];
-                        if( CPLIsNan(dfValue) )
-                            continue;
-                        break;
-                      case GDT_CInt16:
-                        dfValue = static_cast<GInt16 *>(pData)[iOffset*2];
-                        break;
-                      case GDT_CInt32:
-                        dfValue = static_cast<GInt32 *>(pData)[iOffset*2];
-                        break;
-                      case GDT_CFloat32:
-                        dfValue = static_cast<float *>(pData)[iOffset*2];
-                        if( CPLIsNan(dfValue) )
-                            continue;
-                        break;
-                      case GDT_CFloat64:
-                        dfValue = static_cast<double *>(pData)[iOffset*2];
-                        if( CPLIsNan(dfValue) )
-                            continue;
-                        break;
-                      default:
-                        CPLAssert( false );
-                    }
-
-                    if( eDataType != GDT_Float32 && bGotNoDataValue &&
-                        ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                    bool bValid = true;
+                    double dfValue = GetPixelValue( eDataType,
+                                                    bSignedByte,
+                                                    pData,
+                                                    iOffset,
+                                                    CPL_TO_BOOL(bGotNoDataValue),
+                                                    dfNoDataValue,
+                                                    bGotFloatNoDataValue,
+                                                    fNoDataValue,
+                                                    bValid );
+                    if( !bValid )
                         continue;
 
                     if( bFirstValue )

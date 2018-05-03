@@ -50,7 +50,7 @@ def test_ogrlineref_1():
     if os.path.exists('tmp/parts.shp'):
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/parts.shp')
 
-    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrlineref_path() + ' -create -l data/path.shp -p data/mstones.shp -pm pos -o tmp/parts.shp -s 1000')
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrlineref_path() + ' -create -l data/path.shp -p data/mstones.shp -pm pos -o tmp/parts.shp -s 1000')
     if err is not None and err != '':
         gdaltest.post_reason('got error/warning: "%s"' % err)
         return 'fail'

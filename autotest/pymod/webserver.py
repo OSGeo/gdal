@@ -55,7 +55,7 @@ def install_http_handler(handler_instance):
         custom_handler = None
 
 
-class RequestResponse:
+class RequestResponse(object):
     def __init__(self, method, path, code, headers=None, body=None, custom_method=None, expected_headers=None, expected_body=None):
         self.method = method
         self.path = path
@@ -67,7 +67,7 @@ class RequestResponse:
         self.expected_body = expected_body
 
 
-class FileHandler:
+class FileHandler(object):
     def __init__(self, _dict):
         self.dict = _dict
 
@@ -108,7 +108,7 @@ class FileHandler:
             request.wfile.write(filedata[start:end])
 
 
-class SequentialHandler:
+class SequentialHandler(object):
     def __init__(self):
         self.req_count = 0
         self.req_resp = []
@@ -116,12 +116,12 @@ class SequentialHandler:
 
     def final_check(self):
         assert self.req_count == len(self.req_resp), (self.req_count, len(self.req_resp))
-        assert len(self.req_resp_map) == 0
+        assert not self.req_resp_map
 
     def add(self, method, path, code=None, headers=None, body=None, custom_method=None, expected_headers=None, expected_body=None):
         hdrs = {} if headers is None else headers
         expected_hdrs = {} if expected_headers is None else expected_headers
-        assert len(self.req_resp_map) == 0
+        assert not self.req_resp_map
         self.req_resp.append(RequestResponse(method, path, code, hdrs, body, custom_method, expected_hdrs, expected_body))
 
     def add_unordered(self, method, path, code=None, headers=None, body=None, custom_method=None, expected_headers=None, expected_body=None):
@@ -205,7 +205,7 @@ class DispatcherHttpHandler(BaseHTTPRequestHandler):
 
     def log_request(self, code='-', size='-'):
         # pylint: disable=unused-argument
-        return
+        pass
 
     def do_HEAD(self):
 
@@ -256,7 +256,7 @@ class DispatcherHttpHandler(BaseHTTPRequestHandler):
 class GDAL_Handler(BaseHTTPRequestHandler):
     # pylint: disable=unused-argument
     def log_request(self, code='-', size='-'):
-        return
+        pass
 
     def do_HEAD(self):
         if do_log:

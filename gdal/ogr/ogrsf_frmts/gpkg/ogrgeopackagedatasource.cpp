@@ -2431,17 +2431,26 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                                                 GetRasterXSize(),
                                                 poODS->GetRasterYSize(),
                                                 GetRasterYSize());
-            if( nOvFactor > 64 &&
-                std::abs(nOvFactor - GetFloorPowerOfTwo(nOvFactor)) <= 2 )
+            if( GetRasterXSize() / panOverviewList[i] == poODS->GetRasterXSize() &&
+                GetRasterYSize() / panOverviewList[i] == poODS->GetRasterYSize() )
             {
-                nOvFactor = GetFloorPowerOfTwo(nOvFactor);
+                nOvFactor = panOverviewList[i];
             }
+            else if( nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
+                                                      GetRasterXSize(),
+                                                      GetRasterYSize() ) )
+            {
+                nOvFactor = panOverviewList[i];
+            }
+            else if( nOvFactor > 64 &&
+                     std::abs(nOvFactor - GetFloorPowerOfTwo(nOvFactor+2)) <= 2 )
+            {
+                nOvFactor = GetFloorPowerOfTwo(nOvFactor+2);
+            }
+
             nMaxOvFactor = nOvFactor;
 
-            if( nOvFactor == panOverviewList[i]
-                || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
-                                                    GetRasterXSize(),
-                                                    GetRasterYSize() ) )
+            if( nOvFactor == panOverviewList[i] )
             {
                 bFound = true;
                 break;
@@ -2620,16 +2629,24 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                                         GetRasterXSize(),
                                         poODS->GetRasterYSize(),
                                         GetRasterYSize());
-                if( nOvFactor > 64 &&
-                    std::abs(nOvFactor - GetFloorPowerOfTwo(nOvFactor)) <= 2 )
+                if( GetRasterXSize() / panOverviewList[i] == poODS->GetRasterXSize() &&
+                    GetRasterYSize() / panOverviewList[i] == poODS->GetRasterYSize() )
                 {
-                    nOvFactor = GetFloorPowerOfTwo(nOvFactor);
+                    nOvFactor = panOverviewList[i];
                 }
-
-                if( nOvFactor == panOverviewList[i]
-                    || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
+                else if( nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
                                                         GetRasterXSize(),
                                                         GetRasterYSize() ) )
+                {
+                    nOvFactor = panOverviewList[i];
+                }
+                else if( nOvFactor > 64 &&
+                        std::abs(nOvFactor - GetFloorPowerOfTwo(nOvFactor+2)) <= 2 )
+                {
+                    nOvFactor = GetFloorPowerOfTwo(nOvFactor+2);
+                }
+
+                if( nOvFactor == panOverviewList[i] )
                 {
                     papapoOverviewBands[iBand][iCurOverview] = poODS->GetRasterBand(iBand+1);
                     iCurOverview++ ;

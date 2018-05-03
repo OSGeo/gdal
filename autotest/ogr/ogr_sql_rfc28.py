@@ -178,10 +178,7 @@ def ogr_rfc28_8_wrong_quoting():
 
     gdaltest.ds.ReleaseResultSet(ql)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 
 def ogr_rfc28_8_good_quoting():
@@ -197,10 +194,7 @@ def ogr_rfc28_8_good_quoting():
 
     gdaltest.ds.ReleaseResultSet(ql)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test with quoted funky (non-identifier) name.
@@ -218,10 +212,7 @@ def ogr_rfc28_9():
 
     expect = ['8902']
     tr = ogrtest.check_features_against_list(lyr, 'PRIME_MERIDIAN_CODE', expect)
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 # TODO: unparse quoting?
 ###############################################################################
@@ -241,10 +232,7 @@ def ogr_rfc28_10():
     tr = ogrtest.check_features_against_list(lyr, 'PRIME_MERIDIAN_CODE', expect)
     ds.ReleaseResultSet(lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # test quoted funky names in output columns list.
@@ -263,10 +251,7 @@ def ogr_rfc28_11():
     tr = ogrtest.check_features_against_list(lyr, 'Funky @Name', expect)
     ds.ReleaseResultSet(lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # test selecting fixed string fields.
@@ -295,10 +280,7 @@ def ogr_rfc28_12():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test SUBSTR operator in the context of a WHERE clause.
@@ -327,10 +309,7 @@ def ogr_rfc28_14():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test CONCAT with more than two arguments.
@@ -344,10 +323,7 @@ def ogr_rfc28_15():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test parse support for negative numbers (#3724)
@@ -377,10 +353,7 @@ def ogr_rfc28_16():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test evaluation of division - had a problem with type conversion.
@@ -406,10 +379,7 @@ def ogr_rfc28_17():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 
 ###############################################################################
@@ -427,10 +397,7 @@ def ogr_rfc28_18():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 
 ###############################################################################
@@ -611,10 +578,7 @@ def ogr_rfc28_26():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test that we correctly let floating point values as floating point, and not as integer (#4634)"
@@ -628,10 +592,7 @@ def ogr_rfc28_27():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    if count == 10:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if count == 10 else 'fail'
 
 ###############################################################################
 # Extensive test of the evaluation of arithmetic and logical operators
@@ -743,10 +704,7 @@ def ogr_rfc28_29():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    if count == 0:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if count == 0 else 'fail'
 
 ###############################################################################
 # Test behaviour of binary operations on strings when one operand is a NULL value
@@ -760,10 +718,7 @@ def ogr_rfc28_30():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    if count == 0:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if count == 0 else 'fail'
 
 ###############################################################################
 # Test UNION ALL
@@ -777,10 +732,8 @@ def ogr_rfc28_31():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    if count != 6 + 7:
-        return 'success'
-    else:
-        return 'fail'
+
+    return 'success' if count != 6 + 7 else 'fail'
 
 ###############################################################################
 # Test UNION ALL with parenthesis
@@ -794,10 +747,7 @@ def ogr_rfc28_32():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    if count != 6 + 7:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if count != 6 + 7 else 'fail'
 
 ###############################################################################
 # Test lack of end-of-string character
@@ -809,10 +759,7 @@ def ogr_rfc28_33():
     lyr = gdaltest.ds.ExecuteSQL("select * from idlink where name='foo")
     gdal.PopErrorHandler()
 
-    if lyr is None:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if lyr is None else 'fail'
 
 ###############################################################################
 # Test wildcard expansion of an unknown table.
@@ -828,10 +775,7 @@ def ogr_rfc28_34():
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    if lyr is None:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if lyr is None else 'fail'
 
 ###############################################################################
 # Test selecting more than one distinct
@@ -846,10 +790,7 @@ def ogr_rfc28_35():
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    if lyr is None:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if lyr is None else 'fail'
 
 ###############################################################################
 # Test selecting more than one distinct
@@ -864,10 +805,7 @@ def ogr_rfc28_35_bis():
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    if lyr is None:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if lyr is None else 'fail'
 
 ###############################################################################
 # Test selecting more than one distinct
@@ -882,10 +820,7 @@ def ogr_rfc28_35_ter():
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    if lyr is None:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if lyr is None else 'fail'
 
 ###############################################################################
 # Test ORDER BY a DISTINCT list by more than one key
@@ -963,10 +898,7 @@ def ogr_rfc28_39():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test MIN(), MAX() and AVG() on a date (#5333)
@@ -1639,7 +1571,7 @@ def ogr_rfc28_int_overflows():
              ('SELECT -9223372036854775808*-1 FROM lyr', None),
              ('SELECT -9223372036854775808/-1 FROM lyr', None),
              ('SELECT 1/0 FROM lyr', 2147483647),
-             ]
+            ]
     for sql, res in tests:
         sql_lyr = ds.ExecuteSQL(sql)
         if res is None:

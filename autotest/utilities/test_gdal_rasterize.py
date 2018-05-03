@@ -104,7 +104,7 @@ def test_gdal_rasterize_1():
     rast_ogr_ds.Destroy()
 
     # Run the algorithm.
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_rasterize_path() + ' -b 3 -b 2 -b 1 -burn 200 -burn 220 -burn 240 -l rast1 tmp/rast1.tab tmp/rast1.tif')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_rasterize_path() + ' -b 3 -b 2 -b 1 -burn 200 -burn 220 -burn 240 -l rast1 tmp/rast1.tab tmp/rast1.tif')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
@@ -191,7 +191,7 @@ def test_gdal_rasterize_3():
     gt_ref = ds_ref.GetGeoTransform()
     gt = ds.GetGeoTransform()
     for i in range(6):
-        if (abs(gt[i] - gt_ref[i]) > 1e-6):
+        if abs(gt[i] - gt_ref[i]) > 1e-6:
             gdaltest.post_reason('did not get expected geotransform')
             print(gt)
             print(gt_ref)
@@ -298,7 +298,7 @@ def test_gdal_rasterize_5():
     gt_ref = [0, 1, 0, 3, 0, -1]
     gt = ds.GetGeoTransform()
     for i in range(6):
-        if (abs(gt[i] - gt_ref[i]) > 1e-6):
+        if abs(gt[i] - gt_ref[i]) > 1e-6:
             gdaltest.post_reason('did not get expected geotransform')
             print(gt)
             print(gt_ref)
@@ -381,8 +381,8 @@ def test_gdal_rasterize_7():
     x = (0, 0, 50, 50, 25)
     y = (0, 50, 0, 50, 25)
     f.write('WKT,Value\n'.encode('ascii'))
-    for i in range(len(x)):
-        r = 'POINT(%d %d),1\n' % (x[i], y[i])
+    for i, xi in enumerate(x):
+        r = 'POINT(%d %d),1\n' % (xi, y[i])
         f.write(r.encode('ascii'))
 
     f.close()

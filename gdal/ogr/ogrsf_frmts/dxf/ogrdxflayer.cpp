@@ -2735,7 +2735,16 @@ OGRGeometry *OGRDXFLayer::SimplifyBlockGeometry(
         {
             OGRGeometry *poGeom = poCollection->getGeometryRef(0);
             poCollection->removeGeometry(0,FALSE);
-            aosPolygons.push_back(poGeom);
+            if( !aosPolygons.empty() && aosPolygons[0]->Equals(poGeom) )
+            {
+                // Avoids a performance issue as in
+                // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=8067
+                delete poGeom;
+            }
+            else
+            {
+                aosPolygons.push_back(poGeom);
+            }
         }
         delete poCollection;
         int bIsValidGeometry;
@@ -2811,7 +2820,8 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockReference(
 /*       GeometryCollection which is returned by the function.          */
 /************************************************************************/
 
-OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
+OGRDXFFeature *OGRDXFLayer::InsertBlockInline( GUInt32 nInitialErrorCounter,
+    const CPLString& osBlockName,
     OGRDXFInsertTransformer oTransformer,
     OGRDXFFeature* const poFeature,
     OGRDXFFeatureQueue& apoExtraFeatures,
@@ -2893,7 +2903,8 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
             // Insert this block recursively
             try
             {
-                poSubFeature = InsertBlockInline( poSubFeature->osBlockName,
+                poSubFeature = InsertBlockInline(
+                    nInitialErrorCounter, poSubFeature->osBlockName,
                     oInnerTransformer, poSubFeature, apoInnerExtraFeatures,
                     true, bMergeGeometry );
             }
@@ -2901,11 +2912,19 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
             {
                 // Block doesn't exist. Skip it and keep going
                 delete poSubFeature;
+                if( CPLGetErrorCounter() > nInitialErrorCounter + 1000 )
+                {
+                    break;
+                }
                 continue;
             }
 
             if( !poSubFeature )
             {
+                if( CPLGetErrorCounter() > nInitialErrorCounter + 1000 )
+                {
+                    break;
+                }
                 if ( apoInnerExtraFeatures.empty() )
                 {
                     // Block is empty. Skip it and keep going
@@ -3274,7 +3293,9 @@ void OGRDXFLayer::TranslateINSERTCore(
         OGRDXFFeatureQueue apoExtraFeatures;
         try
         {
-            poFeature = InsertBlockInline( osBlockName,
+            poFeature = InsertBlockInline(
+                CPLGetErrorCounter(),
+                osBlockName,
                 oTransformer, poFeature, apoExtraFeatures,
                 true, poDS->ShouldMergeBlockGeometries() );
         }

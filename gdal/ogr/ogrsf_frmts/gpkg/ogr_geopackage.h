@@ -579,6 +579,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
 class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer, public IOGRSQLiteSelectLayer
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRGeoPackageSelectLayer)
+
     OGRSQLiteSelectLayerCommonBehaviour* poBehaviour;
 
     virtual OGRErr      ResetStatement() override;

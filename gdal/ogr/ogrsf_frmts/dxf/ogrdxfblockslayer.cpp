@@ -133,7 +133,8 @@ OGRDXFFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
 
         // Let's insert this block at the origin with no rotation and scale.
         OGRDXFLayer oTempLayer(poDS);
-        poFeature = oTempLayer.InsertBlockInline( oIt->first,
+        poFeature = oTempLayer.InsertBlockInline(
+            CPLGetErrorCounter(), oIt->first,
             OGRDXFInsertTransformer(), poFeature, apoPendingFeatures,
             false, poDS->ShouldMergeBlockGeometries() );
 

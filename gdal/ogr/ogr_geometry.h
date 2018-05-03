@@ -1240,6 +1240,7 @@ inline OGRSimpleCurve::ConstIterator end(const OGRSimpleCurve* poCurve) { return
 
 class CPL_DLL OGRLineString : public OGRSimpleCurve
 {
+    // cppcheck-suppress unusedPrivateFunction
     static OGRLinearRing*          CasterToLinearRing(OGRCurve* poCurve);
 
   protected:
@@ -1591,7 +1592,9 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     OGRLineString* CurveToLineInternal( double dfMaxAngleStepSizeDegrees,
                                         const char* const* papszOptions,
                                         int bIsLinearRing ) const;
+    // cppcheck-suppress unusedPrivateFunction
     static OGRLineString* CasterToLineString( OGRCurve* poCurve );
+    // cppcheck-suppress unusedPrivateFunction
     static OGRLinearRing* CasterToLinearRing( OGRCurve* poCurve );
 
   protected:
@@ -2032,6 +2035,7 @@ inline OGRPolygon::ChildType** end(OGRPolygon* poGeom) { return poGeom->end(); }
 class CPL_DLL OGRTriangle : public OGRPolygon
 {
   private:
+    // cppcheck-suppress unusedPrivateFunction
     static OGRPolygon*          CasterToPolygon(OGRSurface* poSurface);
     bool quickValidityCheck() const;
 

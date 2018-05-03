@@ -5,7 +5,7 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2012-2013, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2012-2018, Martin Landa <landa.martin gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -226,7 +226,8 @@ OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
     if (ExecuteSQL(osSQL.c_str()) != OGRERR_NONE)
         return OGRERR_FAILURE;
 
-    for (int iField = 0; iField < m_poDataBlock->GetPropertyCount(); iField++) {
+    int nPropertyCount = m_poDataBlock->GetPropertyCount();
+    for( int iField = 0; iField < nPropertyCount; iField++ ) {
         if (sqlite3_column_type(m_hStmt, iField) == SQLITE_NULL) /* skip null values */
             continue;
         OGRFieldType fType = poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
@@ -248,6 +249,13 @@ OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
                                 (const char *) sqlite3_column_text(m_hStmt, iField));
             break;
         }
+    }
+
+    if ( m_poDataBlock->GetReader()->HasFileField() ) {
+        /* open option FILE_FIELD=YES specified, append extra
+         * attribute */
+        poFeature->SetField( nPropertyCount,
+                             CPLGetFilename(m_poDataBlock->GetReader()->GetFilename()) );
     }
 
     FinalizeSQL();

@@ -47,7 +47,7 @@ def test_gdalwarp_1():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/byte.tif tmp/testgdalwarp1.tif')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/byte.tif tmp/testgdalwarp1.tif')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
@@ -471,7 +471,7 @@ def test_gdalwarp_18():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -wm 20 -multi ../gcore/data/byte.tif tmp/testgdalwarp18.tif')
+    (_, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -wm 20 -multi ../gcore/data/byte.tif tmp/testgdalwarp18.tif')
 
     # This error will be returned if GDAL is not compiled with thread support
     if ret_stderr.find('CPLCreateThread() failed in ChunkAndWarpMulti()') != -1:
@@ -886,13 +886,13 @@ def test_gdalwarp_31():
     cs1 = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + " ../gcore/data/byte.tif tmp/testgdalwarp31.tif -t_srs EPSG:4326")
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + " ../gcore/data/byte.tif tmp/testgdalwarp31.tif -t_srs EPSG:4326")
 
     ds = gdal.Open('tmp/testgdalwarp31.tif')
     cs2 = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    (out, err2) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + " ../gcore/data/byte.tif tmp/testgdalwarp31.tif -t_srs EPSG:4326 -overwrite")
+    (_, err2) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + " ../gcore/data/byte.tif tmp/testgdalwarp31.tif -t_srs EPSG:4326 -overwrite")
 
     ds = gdal.Open('tmp/testgdalwarp31.tif')
     cs3 = ds.GetRasterBand(1).Checksum()
@@ -914,7 +914,7 @@ def test_gdalwarp_32():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -tap ../gcore/data/byte.tif tmp/testgdalwarp32.tif',
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -tap ../gcore/data/byte.tif tmp/testgdalwarp32.tif',
                                                   check_memleak=False)
     if err.find('-tap option cannot be used without using -tr') == -1:
         gdaltest.post_reason('expected error')

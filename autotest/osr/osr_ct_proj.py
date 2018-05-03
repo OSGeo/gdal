@@ -44,7 +44,7 @@ bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1
 # Class to perform the tests.
 
 
-class ProjTest:
+class ProjTest(object):
     def __init__(self, src_srs, src_xyz, src_error,
                  dst_srs, dst_xyz, dst_error, options, requirements):
         self.src_srs = src_srs
@@ -102,9 +102,8 @@ class ProjTest:
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
                 gdaltest.post_reason('PROJ.4 missing, transforms not available.')
                 return 'skip'
-            else:
-                gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
-                return 'fail'
+            gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
+            return 'fail'
         except:
             gdal.PopErrorHandler()
             gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())

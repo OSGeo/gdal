@@ -53,8 +53,7 @@ def ogr_shape_1():
 
     if gdaltest.shape_ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -132,10 +131,7 @@ def ogr_shape_3():
 
     gdaltest.poly_feat = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Write a feature without a geometry, and verify that it works OK.
@@ -187,10 +183,7 @@ def ogr_shape_5():
 
     gdaltest.shape_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -213,10 +206,7 @@ def ogr_shape_6():
 
     gdaltest.shape_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test spatial filtering.
@@ -239,10 +229,7 @@ def ogr_shape_7():
 
     gdaltest.shape_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Create spatial index, and verify we get the same results.
@@ -301,10 +288,9 @@ def ogr_shape_9():
 
     if ogrtest.have_geos() and gdaltest.shape_lyr.GetFeatureCount() == 0:
         return 'success'
-    elif not ogrtest.have_geos() and gdaltest.shape_lyr.GetFeatureCount() == 1:
+    if not ogrtest.have_geos() and gdaltest.shape_lyr.GetFeatureCount() == 1:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Do a fair size query that should pull in a few shapes.
@@ -320,10 +306,7 @@ def ogr_shape_10():
     tr = ogrtest.check_features_against_list(gdaltest.shape_lyr, 'FID',
                                              [0, 4, 8])
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Do a mixed indexed attribute and spatial query.
@@ -352,10 +335,7 @@ def ogr_shape_11():
     gdaltest.shape_lyr.SetAttributeFilter(None)
     gdaltest.shape_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Check that multipolygon of asm.shp is properly returned.
@@ -516,7 +496,7 @@ def ogr_shape_15():
         count = count + 1
         feat = gdaltest.shape_lyr.GetNextFeature()
 
-    if count is not 10:
+    if count != 10:
         gdaltest.post_reason('Did not get expected FID count.')
         return 'fail'
 
@@ -547,7 +527,7 @@ def ogr_shape_16():
         count = count + 1
         feat = gdaltest.shape_lyr.GetNextFeature()
 
-    if count is not 10:
+    if count != 10:
         gdaltest.post_reason('Did not get expected FID count.')
         return 'fail'
 
@@ -901,8 +881,7 @@ def ogr_shape_23_write_geom(layer_name, geom, expected_geom, wkbType):
         if feat_read.GetGeometryRef() is not None:
             print(feat_read.GetGeometryRef().ExportToWkt())
             return 'fail'
-        else:
-            return 'success'
+        return 'success'
 
     if ogrtest.check_feature_geometry(feat_read, expected_geom,
                                       max_error=0.000000001) != 0:
@@ -2552,7 +2531,6 @@ def ogr_shape_54_create_layer(ds, layer_index):
         feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (%d %d)' % (layer_index, layer_index + 1)))
     lyr.CreateFeature(feat)
     feat = None
-    return
 
 
 def ogr_shape_54_test_layer(ds, layer_index):
@@ -4330,12 +4308,12 @@ def ogr_shape_91():
 
     ds = ogr.Open('data/arcm_without_m.shp')
     lyr = ds.GetLayer(0)
-    for f in lyr:
+    for _ in lyr:
         pass
 
     ds = ogr.Open('data/polygonm_without_m.shp')
     lyr = ds.GetLayer(0)
-    for f in lyr:
+    for _ in lyr:
         pass
 
     return 'success'

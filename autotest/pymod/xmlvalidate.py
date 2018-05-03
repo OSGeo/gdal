@@ -207,14 +207,11 @@ def transform_abs_links_to_ref_links(path, level=0):
         if os.path.isdir(filename) and filename.find('examples') < 0:
             transform_abs_links_to_ref_links(filename, level + 1)
         elif filename.endswith('.xsd'):
-            # print(level)
-            # print(filename)
             f = open(filename, 'rt')
             lines = f.readlines()
             f.close()
             rewrite = False
-            for i in range(len(lines)):
-                ln = lines[i]
+            for i, ln in enumerate(lines):
                 if ln[-1] == '\n':
                     ln = ln[0:-1]
                 pos = ln.find('http://schemas.opengis.net/')
@@ -259,13 +256,11 @@ def transform_inspire_abs_links_to_ref_links(path, level=0):
         if os.path.isdir(filename) and filename.find('examples') < 0:
             transform_inspire_abs_links_to_ref_links(filename, level + 1)
         elif filename.endswith('.xsd'):
-            # print(level)
-            # print(filename)
             f = open(filename, 'rt')
             lines = f.readlines()
             f.close()
             rewrite = False
-            for i in range(len(lines)):
+            for i, ln in enumerate(lines):
                 ln = lines[i]
                 if ln[-1] == '\n':
                     ln = ln[0:-1]

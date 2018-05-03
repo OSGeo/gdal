@@ -319,8 +319,6 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
 
     ds = None
 
-    return
-
 ###############################################################################
 # Generate a .kml file with OGR LIBKML driver covering the Update KML features
 #
@@ -346,8 +344,6 @@ def generate_libkml_update(filename):
     lyr.DeleteFeature(1)
     ds = None
 
-    return
-
 ###############################################################################
 # Generate a .kml file with GDAL KMLSuperOverlay driver covering the GroundOverlay KML features
 #
@@ -364,8 +360,6 @@ def generate_kmlsuperoverlay(filename):
     ds = gdal.GetDriverByName('KMLSuperOverlay').CreateCopy(filename, src_ds)
     del ds
     src_ds = None
-
-    return
 
 
 gdaltest_list = []

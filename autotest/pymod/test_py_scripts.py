@@ -81,8 +81,7 @@ def run_py_script(script_path, script_name, concatenated_argv):
 
     if run_as_external_script == 'yes' or run_as_external_script == 'YES':
         return run_py_script_as_external_script(script_path, script_name, concatenated_argv)
-    else:
-        return run_py_script_as_py_module(script_path, script_name, concatenated_argv)
+    return run_py_script_as_py_module(script_path, script_name, concatenated_argv)
 
 
 ###############################################################################

@@ -1258,7 +1258,7 @@ def vrt_read_29():
 
     f = open('data/byte.tif')
     lst_before = gdaltest.get_opened_files()
-    if len(lst_before) == 0:
+    if not lst_before:
         return 'skip'
     f.close()
     lst_before = gdaltest.get_opened_files()

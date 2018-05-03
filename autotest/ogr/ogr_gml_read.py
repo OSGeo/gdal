@@ -55,9 +55,8 @@ def ogr_gml_1():
     if gml_ds is None:
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
             return 'skip'
-        else:
-            gdaltest.post_reason('failed to open test file.')
-            return 'fail'
+        gdaltest.post_reason('failed to open test file.')
+        return 'fail'
 
     gdaltest.have_gml_reader = 1
 
@@ -537,7 +536,7 @@ def ogr_gml_13():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    for i in range(2):
+    for _ in range(2):
         ds = ogr.Open('data/testlistfields.gml')
         lyr = ds.GetLayer(0)
         feat = lyr.GetNextFeature()
@@ -1189,18 +1188,18 @@ def ogr_gml_29():
     expected_results = [[ogr.wkbMultiPoint, 'MULTIPOINT (2 49)'],
                         [ogr.wkbMultiPolygon, 'MULTIPOLYGON (((2 49,3 49,3 50,2 50,2 49)))'],
                         [ogr.wkbMultiLineString, 'MULTILINESTRING ((2 49,3 50))'],
-                        ]
+                       ]
 
-    for j in range(len(expected_results)):
+    for j, expected_result in enumerate(expected_results):
         lyr = ds.GetLayer(j)
-        if lyr.GetGeomType() != expected_results[j][0]:
+        if lyr.GetGeomType() != expected_result[0]:
             gdaltest.post_reason('layer %d, did not get expected layer geometry type' % j)
             return 'fail'
-        for i in range(2):
+        for _ in range(2):
             feat = lyr.GetNextFeature()
             geom = feat.GetGeometryRef()
             got_wkt = geom.ExportToWkt()
-            if got_wkt != expected_results[j][1]:
+            if got_wkt != expected_result[1]:
                 gdaltest.post_reason('layer %d, did not get expected geometry' % j)
                 print(got_wkt)
                 return 'fail'
@@ -1219,12 +1218,10 @@ def ogr_gml_30():
         return 'skip'
 
     field1 = " "
-    for i in range(11):
+    for _ in range(11):
         field1 = field1 + field1
 
-    geom = "0 1 "
-    for i in range(9):
-        geom = geom + geom
+    geom = "0 1 " * 512
 
     data = """<FeatureCollection xmlns:gml="http://www.opengis.net/gml">
   <gml:featureMember>
@@ -1372,14 +1369,14 @@ def ogr_gml_33():
                      [1, None],
                      [2, None]]
 
-    for i in range(len(read_sequence)):
-        lyr = ds.GetLayer(read_sequence[i][0])
+    for i, read_seq in enumerate(read_sequence):
+        lyr = ds.GetLayer(read_seq[0])
         feat = lyr.GetNextFeature()
         if feat is None:
             fid = None
         else:
             fid = feat.GetFID()
-        expected_fid = read_sequence[i][1]
+        expected_fid = read_seq[1]
         if fid != expected_fid:
             gdaltest.post_reason('failed at step %d' % i)
             return 'fail'
@@ -2191,7 +2188,7 @@ def ogr_gml_52():
     except OSError:
         pass
 
-    for i in range(2):
+    for _ in range(2):
 
         ds = ogr.Open('data/fake_mtkgml.xml')
 
@@ -2833,7 +2830,7 @@ def ogr_gml_60():
     except OSError:
         pass
 
-    for i in range(2):
+    for _ in range(2):
         ds = ogr.Open('data/wfs_200_multiplelayers.gml')
         lyr = ds.GetLayerByName('road')
         if lyr.GetFeatureCount() != 1:
@@ -3045,7 +3042,7 @@ def ogr_gml_64():
         return 'skip'
 
     for parser in ['XERCES', 'EXPAT']:
-        for i in range(2):
+        for _ in range(2):
             gdal.SetConfigOption('GML_PARSER', parser)
             ds = ogr.Open('data/rnf_eg.gml')
             gdal.SetConfigOption('GML_PARSER', None)
@@ -3722,14 +3719,14 @@ def ogr_gml_71_helper(ds):
         gdaltest.post_reason('fail')
         print(layer_defn.GetFieldCount())
         return 'fail'
-    for i in range(len(fields)):
+    for i, field in enumerate(fields):
         fld_defn = layer_defn.GetFieldDefn(i)
-        if fld_defn.GetName() != fields[i][0]:
+        if fld_defn.GetName() != field[0]:
             gdaltest.post_reason('fail')
             print(i)
             print(fld_defn.GetName())
             return 'fail'
-        if fld_defn.GetType() != fields[i][1]:
+        if fld_defn.GetType() != field[1]:
             gdaltest.post_reason('fail')
             print(i)
             print(fld_defn.GetType())
@@ -4164,7 +4161,7 @@ def ogr_gml_79():
     tests = [['SHORT', 'EPSG:4326', '2 49'],
              ['OGC_URN', 'urn:ogc:def:crs:EPSG::4326', '49 2'],
              ['OGC_URL', 'http://www.opengis.net/def/crs/EPSG/0/4326', '49 2']
-             ]
+            ]
     for (srsname_format, expected_srsname, expected_coords) in tests:
 
         ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_79.xml',

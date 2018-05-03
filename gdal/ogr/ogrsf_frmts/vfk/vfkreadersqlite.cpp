@@ -5,8 +5,8 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2012-2016, Martin Landa <landa.martin gmail.com>
- * Copyright (c) 2012-2016, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2018, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2012-2018, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -46,8 +46,8 @@ CPL_CVSID("$Id$")
 /*!
   \brief VFKReaderSQLite constructor
 */
-VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
-    VFKReader(pszFileName),
+VFKReaderSQLite::VFKReaderSQLite( const GDALOpenInfo* poOpenInfo ) :
+    VFKReader( poOpenInfo ),
     m_pszDBname(nullptr),
     m_poDB(nullptr),
     // True - build geometry from DB
@@ -58,12 +58,9 @@ VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
 {
     size_t nLen = 0;
     VSIStatBufL sStatBufDb;
-    {
-        GDALOpenInfo *poOpenInfo = new GDALOpenInfo(pszFileName, GA_ReadOnly);
-        m_bDbSource = poOpenInfo->nHeaderBytes >= 16 &&
-            STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3");
-        delete poOpenInfo;
-    }
+
+    m_bDbSource = poOpenInfo->nHeaderBytes >= 16 &&
+        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3");
 
     const char *pszDbNameConf = CPLGetConfigOption("OGR_VFK_DB_NAME", nullptr);
     CPLString osDbName;
@@ -90,8 +87,8 @@ VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
     else
     {
         // m_bNewDb = false;
-        nLen = strlen(pszFileName);
-        osDbName = pszFileName;
+        nLen = strlen(m_pszFilename);
+        osDbName = m_pszFilename;
     }
 
     m_pszDBname = new char [nLen+1];
@@ -447,13 +444,14 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
         poDataBlockCurrent = nullptr;
         for( int iDataBlock = 0;
              iDataBlock < GetDataBlockCount();
-             iDataBlock++)
+             iDataBlock++ )
         {
             poDataBlockCurrent = GetDataBlock(iDataBlock);
 
             if (poDataBlock && poDataBlock != poDataBlockCurrent)
                 continue;
 
+            /* update number of records in metadata table */
             osSQL.Printf("UPDATE %s SET num_records = %d WHERE "
                          "table_name = '%s'",
                          VFK_DB_TABLE, poDataBlockCurrent->GetRecordCount(),
@@ -461,6 +459,9 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
 
             ExecuteSQL(osSQL);
         }
+
+        /* create indices if not exist */
+        CreateIndices();
 
         /* commit transaction */
         ExecuteSQL("COMMIT");
@@ -486,6 +487,90 @@ void VFKReaderSQLite::StoreInfo2DB()
                      VFK_DB_HEADER_TABLE, i->first.c_str(),
                      q, value, q);
         ExecuteSQL(osSQL);
+    }
+}
+
+/*!
+  \brief Create indices for newly added db tables (datablocks)
+*/
+void VFKReaderSQLite::CreateIndices()
+{
+    const char *pszBlockName;
+    CPLString osIndexName, osSQL;
+    VFKDataBlockSQLite *poDataBlock;
+
+    sqlite3_stmt *hStmt;
+
+    for( int iLayer = 0; iLayer < GetDataBlockCount(); iLayer++ ) {
+        poDataBlock = (VFKDataBlockSQLite *) GetDataBlock(iLayer);
+        pszBlockName = poDataBlock->GetName();
+
+        /* ogr_fid */
+        osIndexName.Printf("%s_%s", pszBlockName, FID_COLUMN);
+
+        /* check if index on ogr_fid column exists */
+        osSQL.Printf("SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = '%s'",
+                     osIndexName.c_str());
+        hStmt = PrepareStatement(osSQL.c_str());
+
+        if( ExecuteSQL(hStmt) == OGRERR_NONE &&
+            sqlite3_column_int(hStmt, 0) > 0 ) {
+            /* index on ogr_fid column exists, skip creating indices
+               for current datablock */
+            sqlite3_finalize(hStmt);
+            continue;
+        }
+        sqlite3_finalize(hStmt);
+
+        /* create index on ogr_fid */
+        CreateIndex(osIndexName.c_str(), pszBlockName, FID_COLUMN,
+                    !EQUAL(pszBlockName, "SBP"));
+
+        if ( poDataBlock->GetGeometryType() == wkbNone ) {
+            /* skip geometry-related indices */
+            continue;
+        }
+
+        if( EQUAL (pszBlockName, "SOBR") ||
+            EQUAL (pszBlockName, "OBBP") ||
+            EQUAL (pszBlockName, "SPOL") ||
+            EQUAL (pszBlockName, "OB") ||
+            EQUAL (pszBlockName, "OP") ||
+            EQUAL (pszBlockName, "OBPEJ") ||
+            EQUAL (pszBlockName, "SBP") ||
+            EQUAL (pszBlockName, "HP") ||
+            EQUAL (pszBlockName, "DPM") ||
+            EQUAL (pszBlockName, "ZVB") ||
+            EQUAL (pszBlockName, "PAR") ||
+            EQUAL (pszBlockName, "BUD") ) {
+            const char *pszKey = ((VFKDataBlockSQLite *) poDataBlock)->GetKey();
+            if( pszKey ) {
+                /* ID */
+                osIndexName.Printf("%s_%s", pszBlockName, pszKey);
+                CreateIndex(osIndexName.c_str(), pszBlockName, pszKey, !m_bAmendment);
+            }
+        }
+
+        /* create other indices used for building geometry */
+        if( EQUAL(pszBlockName, "SBP") ) {
+            /* SBP */
+            CreateIndex("SBP_OB",        pszBlockName, "OB_ID", false);
+            CreateIndex("SBP_HP",        pszBlockName, "HP_ID", false);
+            CreateIndex("SBP_DPM",       pszBlockName, "DPM_ID", false);
+            CreateIndex("SBP_OB_HP_DPM", pszBlockName, "OB_ID,HP_ID,DPM_ID", true);
+            CreateIndex("SBP_OB_POR",    pszBlockName, "OB_ID,PORADOVE_CISLO_BODU", false);
+            CreateIndex("SBP_HP_POR",    pszBlockName, "HP_ID,PORADOVE_CISLO_BODU", false);
+            CreateIndex("SBP_DPM_POR",   pszBlockName, "DPM_ID,PORADOVE_CISLO_BODU", false);
+        }
+        else if( EQUAL(pszBlockName, "HP") ) {
+            /* HP */
+            CreateIndex("HP_PAR1",        pszBlockName, "PAR_ID_1", false);
+            CreateIndex("HP_PAR2",        pszBlockName, "PAR_ID_2", false);
+        }
+        else if( EQUAL(pszBlockName, "OB") ) {
+            /* OP */
+            CreateIndex("OB_BUD",        pszBlockName, "BUD_ID", false);
+        }
     }
 }
 
@@ -550,93 +635,44 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
 
     if (ExecuteSQL(hStmt) == OGRERR_NONE )
     {
-      if( sqlite3_column_int(hStmt, 0) == 0) {
+        if( sqlite3_column_int(hStmt, 0) == 0) {
 
-        osCommand.Printf("CREATE TABLE IF NOT EXISTS '%s' (", pszBlockName);
-        for (int i = 0; i < poDataBlock->GetPropertyCount(); i++) {
-            VFKPropertyDefn *poPropertyDefn = poDataBlock->GetProperty(i);
-            if (i > 0)
-                osCommand += ",";
-            osColumn.Printf("%s %s", poPropertyDefn->GetName(),
-                            poPropertyDefn->GetTypeSQL().c_str());
-            osCommand += osColumn;
-        }
-        osColumn.Printf(",%s integer", FID_COLUMN);
-        osCommand += osColumn;
-        if (poDataBlock->GetGeometryType() != wkbNone) {
-            osColumn.Printf(",%s blob", GEOM_COLUMN);
-            osCommand += osColumn;
-        }
-        osCommand += ")";
-        ExecuteSQL(osCommand.c_str()); /* CREATE TABLE */
-
-        /* create indices */
-
-        /* ogr_fid */
-        osCommand.Printf("%s_%s", pszBlockName, FID_COLUMN);
-        CreateIndex(osCommand.c_str(), pszBlockName, FID_COLUMN,
-                    !EQUAL(pszBlockName, "SBP"));
-
-        if( EQUAL (pszBlockName, "SOBR") ||
-            EQUAL (pszBlockName, "OBBP") ||
-            EQUAL (pszBlockName, "SPOL") ||
-            EQUAL (pszBlockName, "OB") ||
-            EQUAL (pszBlockName, "OP") ||
-            EQUAL (pszBlockName, "OBPEJ") ||
-            EQUAL (pszBlockName, "SBP") ||
-            EQUAL (pszBlockName, "HP") ||
-            EQUAL (pszBlockName, "DPM") ||
-            EQUAL (pszBlockName, "ZVB") ||
-            EQUAL (pszBlockName, "PAR") ||
-            EQUAL (pszBlockName, "BUD") ) {
-            const char *pszKey = ((VFKDataBlockSQLite *) poDataBlock)->GetKey();
-            if (pszKey) {
-                /* ID */
-                osCommand.Printf("%s_%s", pszBlockName, pszKey);
-                CreateIndex(osCommand.c_str(), pszBlockName, pszKey, !m_bAmendment);
+            osCommand.Printf("CREATE TABLE IF NOT EXISTS '%s' (", pszBlockName);
+            for (int i = 0; i < poDataBlock->GetPropertyCount(); i++) {
+                VFKPropertyDefn *poPropertyDefn = poDataBlock->GetProperty(i);
+                if (i > 0)
+                    osCommand += ",";
+                osColumn.Printf("%s %s", poPropertyDefn->GetName(),
+                                poPropertyDefn->GetTypeSQL().c_str());
+                osCommand += osColumn;
             }
-        }
+            osColumn.Printf(",%s integer", FID_COLUMN);
+            osCommand += osColumn;
+            if (poDataBlock->GetGeometryType() != wkbNone) {
+                osColumn.Printf(",%s blob", GEOM_COLUMN);
+                osCommand += osColumn;
+            }
+            osCommand += ")";
+            ExecuteSQL(osCommand.c_str()); /* CREATE TABLE */
 
-        /* create other indices used for building geometry */
-        if (EQUAL(pszBlockName, "SBP")) {
-            /* SBP */
-            CreateIndex("SBP_OB",        pszBlockName, "OB_ID", false);
-            CreateIndex("SBP_HP",        pszBlockName, "HP_ID", false);
-            CreateIndex("SBP_DPM",       pszBlockName, "DPM_ID", false);
-            CreateIndex("SBP_OB_HP_DPM", pszBlockName, "OB_ID,HP_ID,DPM_ID", true);
-            CreateIndex("SBP_OB_POR",    pszBlockName, "OB_ID,PORADOVE_CISLO_BODU", false);
-            CreateIndex("SBP_HP_POR",    pszBlockName, "HP_ID,PORADOVE_CISLO_BODU", false);
-            CreateIndex("SBP_DPM_POR",   pszBlockName, "DPM_ID,PORADOVE_CISLO_BODU", false);
-        }
-        else if (EQUAL(pszBlockName, "HP")) {
-            /* HP */
-            CreateIndex("HP_PAR1",        pszBlockName, "PAR_ID_1", false);
-            CreateIndex("HP_PAR2",        pszBlockName, "PAR_ID_2", false);
-        }
-        else if (EQUAL(pszBlockName, "OB")) {
-            /* OP */
-            CreateIndex("OB_BUD",        pszBlockName, "BUD_ID", false);
-        }
+            /* update VFK_DB_TABLE meta-table */
+            osCommand.Printf("INSERT INTO %s (file_name, file_size, table_name, "
+                             "num_records, num_features, num_geometries, table_defn) VALUES "
+                             "('%s', " CPL_FRMT_GUIB ", '%s', -1, 0, 0, '%s')",
+                             VFK_DB_TABLE, CPLGetFilename(m_pszFilename),
+                             (GUIntBig) m_poFStat->st_size,
+                             pszBlockName, pszDefn);
+            ExecuteSQL(osCommand.c_str());
 
-        /* update VFK_DB_TABLE meta-table */
-        osCommand.Printf("INSERT INTO %s (file_name, file_size, table_name, "
-                         "num_records, num_features, num_geometries, table_defn) VALUES "
-                         "('%s', " CPL_FRMT_GUIB ", '%s', -1, 0, 0, '%s')",
-                         VFK_DB_TABLE, CPLGetFilename(m_pszFilename),
-                         (GUIntBig) m_poFStat->st_size,
-                         pszBlockName, pszDefn);
-        ExecuteSQL(osCommand.c_str());
-
-        int geom_type = ((VFKDataBlockSQLite *) poDataBlock)->GetGeometrySQLType();
-        /* update VFK_DB_GEOMETRY_TABLE */
-        osCommand.Printf("INSERT INTO %s (f_table_name, f_geometry_column, geometry_type, "
-                         "coord_dimension, srid, geometry_format) VALUES "
-                         "('%s', '%s', %d, 2, 5514, 'WKB')",
-                         VFK_DB_GEOMETRY_TABLE, pszBlockName, GEOM_COLUMN, geom_type);
-        ExecuteSQL(osCommand.c_str());
-      }
-
-      sqlite3_finalize(hStmt);
+            int geom_type = ((VFKDataBlockSQLite *) poDataBlock)->GetGeometrySQLType();
+            /* update VFK_DB_GEOMETRY_TABLE */
+            osCommand.Printf("INSERT INTO %s (f_table_name, f_geometry_column, geometry_type, "
+                             "coord_dimension, srid, geometry_format) VALUES "
+                             "('%s', '%s', %d, 2, 5514, 'WKB')",
+                             VFK_DB_GEOMETRY_TABLE, pszBlockName, GEOM_COLUMN, geom_type);
+            ExecuteSQL(osCommand.c_str());
+        }
+        sqlite3_finalize(hStmt);
     }
 
     return VFKReader::AddDataBlock(poDataBlock, nullptr);
@@ -787,8 +823,8 @@ OGRErr VFKReaderSQLite::AddFeature( IVFKDataBlock *poDataBlock,
     if (poDataBlock->GetGeometryType() != wkbNone) {
         osValue += ",NULL";
     }
-    osValue += ")";
     osCommand += osValue;
+    osCommand += ")";
 
     if( ExecuteSQL(osCommand.c_str(), CE_Warning) != OGRERR_NONE )
         return OGRERR_FAILURE;

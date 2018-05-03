@@ -85,7 +85,7 @@ def test_ogrtindex_1(srs=None):
 
     shape_ds.Destroy()
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrtindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/point1.shp tmp/point2.shp tmp/point3.shp tmp/point4.shp')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrtindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/point1.shp tmp/point2.shp tmp/point3.shp tmp/point4.shp')
     if not (err is None or err == ''):
         gdaltest.post_reason('got error/warning')
         print(err)
@@ -192,7 +192,7 @@ def test_ogrtindex_3():
             output_filename = 'tmp/tileindex.db'
             output_format = ' -f SQLite'
 
-        (ret, err) = gdaltest.runexternal_out_and_err(
+        (_, err) = gdaltest.runexternal_out_and_err(
             test_cli_utilities.get_ogrtindex_path() +
             ' -src_srs_name src_srs -t_srs EPSG:4326 ' + output_filename + ' tmp/point1.shp tmp/point2.shp ' + src_srs_format + output_format)
 

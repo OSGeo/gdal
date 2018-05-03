@@ -64,8 +64,7 @@ def reproject_1():
         print('Got: ', cs)
         gdaltest.post_reason('got wrong checksum')
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Test a real reprojection case.
@@ -98,8 +97,7 @@ def reproject_2():
         print('Got: ', cs)
         gdaltest.post_reason('got wrong checksum')
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Test nodata values

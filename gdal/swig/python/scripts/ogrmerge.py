@@ -91,7 +91,7 @@ def GetOutputDriversFor(filename):
         if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or
             drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
            drv.GetMetadataItem(gdal.DCAP_VECTOR) is not None:
-            if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
+            if ext and DoesDriverHandleExtension(drv, ext):
                 drv_list.append(drv.ShortName)
             else:
                 prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
@@ -103,9 +103,9 @@ def GetOutputDriversFor(filename):
 
 def GetOutputDriverFor(filename):
     drv_list = GetOutputDriversFor(filename)
-    if len(drv_list) == 0:
+    if not drv_list:
         ext = GetExtension(filename)
-        if len(ext) == 0:
+        if not ext:
             return 'ESRI Shapefile'
         else:
             raise Exception("Cannot guess driver for %s" % filename)
@@ -149,7 +149,7 @@ def _Esc(x):
     return gdal.EscapeString(x, gdal.CPLES_XML)
 
 
-class XMLWriter:
+class XMLWriter(object):
 
     def __init__(self, f):
         self.f = f
@@ -157,7 +157,7 @@ class XMLWriter:
         self.elements = []
 
     def _indent(self):
-        return ''.join(['  ' for i in range(self.inc)])
+        return '  ' * self.inc
 
     def open_element(self, name, attrs=None):
         xml_attrs = ''
@@ -192,7 +192,7 @@ class XMLWriter:
 
 def process(argv, progress=None, progress_arg=None):
 
-    if len(argv) == 0:
+    if not argv:
         return Usage()
 
     dst_filename = None
@@ -298,7 +298,7 @@ def process(argv, progress=None, progress_arg=None):
         if output_format is not None:
             print('ERROR: -f incompatible with -update')
             return 1
-        if len(dsco) != 0:
+        if dsco:
             print('ERROR: -dsco incompatible with -update')
             return 1
         output_format = ''
@@ -317,7 +317,7 @@ def process(argv, progress=None, progress_arg=None):
               'shapefile output')
         return 1
 
-    if len(src_datasets) == 0:
+    if not src_datasets:
         print('ERROR: No source datasets')
         return 1
 
@@ -386,7 +386,7 @@ def process(argv, progress=None, progress_arg=None):
                 gdal.Unlink(vrt_filename)
                 return 1
             for src_lyr_idx, src_lyr in enumerate(src_ds):
-                if len(src_geom_types) != 0:
+                if src_geom_types:
                     gt = ogr.GT_Flatten(src_lyr.GetGeomType())
                     if gt not in src_geom_types:
                         continue
@@ -480,7 +480,7 @@ def process(argv, progress=None, progress_arg=None):
                 gdal.Unlink(vrt_filename)
                 return 1
             for src_lyr_idx, src_lyr in enumerate(src_ds):
-                if len(src_geom_types) != 0:
+                if src_geom_types:
                     gt = ogr.GT_Flatten(src_lyr.GetGeomType())
                     if gt not in src_geom_types:
                         continue

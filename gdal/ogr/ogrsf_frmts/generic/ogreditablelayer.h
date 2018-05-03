@@ -45,6 +45,8 @@ class CPL_DLL IOGREditableLayerSynchronizer
 
 class CPL_DLL OGREditableLayer : public OGRLayerDecorator
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGREditableLayer)
+
   protected:
 
     IOGREditableLayerSynchronizer *m_poSynchronizer;

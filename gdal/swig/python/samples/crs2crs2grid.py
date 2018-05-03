@@ -31,8 +31,8 @@
 # ******************************************************************************
 
 import os
-import numpy
 import sys
+import numpy
 
 from osgeo import gdal
 from osgeo import gdal_array
@@ -81,7 +81,7 @@ def read_grid_crs_to_crs(filename, shape):
     grid = numpy.zeros(shape)
 
     # report the file header defining the transformation
-    for i in range(5):
+    for _ in range(5):
         print(fd.readline().rstrip())
 
     points_found = 0

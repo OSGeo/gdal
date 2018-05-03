@@ -43,7 +43,7 @@ from osgeo import osr, gdal
 # Class to perform the tests.
 
 
-class MetaCRSTest:
+class MetaCRSTest(object):
     def __init__(self, test_line):
         self.test_line = test_line
         self.src_xyz = None
@@ -99,12 +99,10 @@ class MetaCRSTest:
             srs = osr.SpatialReference()
             if srs.ImportFromEPSGA(int(crstext)) == 0:
                 return srs
-            else:
-                gdaltest.post_reason('failed to translate EPSG:' + crstext)
-                return None
-        else:
-            gdaltest.post_reason('unsupported srs type: ' + typ)
+            gdaltest.post_reason('failed to translate EPSG:' + crstext)
             return None
+        gdaltest.post_reason('unsupported srs type: ' + typ)
+        return None
 
     def testMetaCRS(self):
         result = self.parse_line()
@@ -123,9 +121,8 @@ class MetaCRSTest:
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
                 gdaltest.post_reason('PROJ.4 missing, transforms not available.')
                 return 'skip'
-            else:
-                gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
-                return 'fail'
+            gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
+            return 'fail'
         except:
             gdal.PopErrorHandler()
             gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
@@ -160,7 +157,7 @@ class MetaCRSTest:
 
             gdal.Debug('OSR', 'Src SRS:\n%s\n\nDst SRS:\n%s\n'
                        % (self.src_srs.ExportToPrettyWkt(),
-                           self.dst_srs.ExportToPrettyWkt()))
+                          self.dst_srs.ExportToPrettyWkt()))
 
             return 'fail'
 

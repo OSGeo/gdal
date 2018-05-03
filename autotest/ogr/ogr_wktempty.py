@@ -34,7 +34,7 @@ import gdaltest
 from osgeo import ogr
 
 
-class TestWktEmpty:
+class TestWktEmpty(object):
     def __init__(self, inString, expectedOutString):
         self.inString = inString
         self.expectedOutString = expectedOutString
@@ -63,8 +63,7 @@ class TestWktEmpty:
         if wkt == self.expectedOutString:
             if self.isEmpty(geom) == 'fail':
                 return 'fail'
-            else:
-                return 'success'
+            return 'success'
         else:
             gdaltest.post_reason('WKT is wrong: ' + wkt + '. Expected value is: ' + self.expectedOutString)
             return 'fail'

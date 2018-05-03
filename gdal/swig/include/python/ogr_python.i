@@ -52,12 +52,12 @@
   %pythoncode {
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_DataSource( self )
+      _ogr.delete_DataSource(self)
       self.thisown = 0
 
     def Release(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_DataSource( self )
+      _ogr.delete_DataSource(self)
       self.thisown = 0
 
     def Reference(self):
@@ -79,14 +79,14 @@
         ds[0:4] would return a list of the first four layers."""
         if isinstance(value, slice):
             output = []
-            for i in xrange(value.start,value.stop,value.step):
+            for i in xrange(value.start, value.stop, value.step):
                 try:
                     output.append(self.GetLayer(i))
                 except OGRError: #we're done because we're off the end
                     return output
             return output
         if isinstance(value, int):
-            if value > len(self)-1:
+            if value > len(self) - 1:
                 raise IndexError
             return self.GetLayer(value)
         elif isinstance(value, str):
@@ -94,7 +94,7 @@
         else:
             raise TypeError('Input %s is not of String or Int type' % type(value))
 
-    def GetLayer(self,iLayer=0):
+    def GetLayer(self, iLayer=0):
         """Return the layer given an index or a name"""
         if isinstance(iLayer, str):
             return self.GetLayerByName(str(iLayer))
@@ -157,7 +157,7 @@
                 stop = len(self) - 1
             else:
                 stop = value.stop
-            for i in xrange(value.start,stop,value.step):
+            for i in xrange(value.start, stop, value.step):
                 feature = self.GetFeature(i)
                 if feature:
                     output.append(feature)
@@ -165,7 +165,7 @@
                     return output
             return output
         if isinstance(value, int):
-            if value > len(self)-1:
+            if value > len(self) - 1:
                 raise IndexError
             return self.GetFeature(value)
         else:
@@ -215,7 +215,7 @@
 
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_Feature( self )
+      _ogr.delete_Feature(self)
       self.thisown = 0
 
     def __cmp__(self, other):
@@ -251,7 +251,7 @@
         else:
             idx = self.GetFieldIndex(key)
             if idx != -1:
-                self.SetField2(idx,value)
+                self.SetField2(idx, value)
             else:
                 idx = self.GetGeomFieldIndex(key)
                 if idx != -1:
@@ -262,14 +262,14 @@
     # This makes it possible to fetch fields in the form "feature['area']".
     def __getitem__(self, key):
         """Returns the values of fields by the given name / field_index"""
-        if isinstance(key, str) or isinstance(key, type(u'')):
+        if isinstance(key, (str, type(u''))):
             fld_index = self.GetFieldIndex(key)
         else:
             fld_index = key
             if key == self.GetFieldCount():
                 raise IndexError
         if fld_index < 0:
-            if isinstance(key, str) or isinstance(key, type(u'')):
+            if isinstance(key, (str, type(u''))):
                 fld_index = self.GetGeomFieldIndex(key)
             if fld_index < 0:
                 raise ValueError("Illegal field requested in GetField()")
@@ -281,24 +281,24 @@
     # This makes it possible to set fields in the form "feature['area'] = 123".
     def __setitem__(self, key, value):
         """Returns the value of a field by field name / index"""
-        if isinstance(key, str) or isinstance(key, type(u'')):
+        if isinstance(key, (str, type(u''))):
             fld_index = self.GetFieldIndex(key)
         else:
             fld_index = key
             if key == self.GetFieldCount():
                 raise IndexError
         if fld_index < 0:
-            if isinstance(key, str) or isinstance(key, type(u'')):
+            if isinstance(key, (str, type(u''))):
                 fld_index = self.GetGeomFieldIndex(key)
             if fld_index < 0:
                 raise ValueError("Illegal field requested in SetField()")
             else:
-                return self.SetGeomField( fld_index, value )
+                return self.SetGeomField(fld_index, value)
         else:
-            return self.SetField2( fld_index, value )
+            return self.SetField2(fld_index, value)
 
     def GetField(self, fld_index):
-        if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
+        if isinstance(fld_index, (str, type(u''))):
             fld_index = self.GetFieldIndex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise ValueError("Illegal field requested in GetField()")
@@ -354,7 +354,7 @@
             return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
 
 
-        if len(args) == 2 and str(type(args[1])) == "<type 'unicode'>":
+        if len(args) == 2 and isinstance(args[1], type(u'')):
             fld_index = args[0]
             if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
                 fld_index = self.GetFieldIndex(fld_index)
@@ -369,29 +369,29 @@
             raise ValueError("Illegal field requested in SetField2()")
 
         if value is None:
-            self.SetFieldNull( fld_index )
+            self.SetFieldNull(fld_index)
             return
 
-        if isinstance(value,list):
-            if len(value) == 0:
-                self.SetFieldNull( fld_index )
+        if isinstance(value, list):
+            if not value:
+                self.SetFieldNull(fld_index)
                 return
-            if isinstance(value[0],type(1)) or isinstance(value[0],type(12345678901234)):
-                self.SetFieldInteger64List(fld_index,value)
+            if isinstance(value[0], type(1)) or isinstance(value[0], type(12345678901234)):
+                self.SetFieldInteger64List(fld_index, value)
                 return
-            elif isinstance(value[0],float):
-                self.SetFieldDoubleList(fld_index,value)
+            elif isinstance(value[0], float):
+                self.SetFieldDoubleList(fld_index, value)
                 return
-            elif isinstance(value[0],str):
-                self.SetFieldStringList(fld_index,value)
+            elif isinstance(value[0], str):
+                self.SetFieldStringList(fld_index, value)
                 return
             else:
-                raise TypeError( 'Unsupported type of list in SetField2(). Type of element is %s' % str(type(value[0])) )
+                raise TypeError('Unsupported type of list in SetField2(). Type of element is %s' % str(type(value[0])))
 
         try:
-            self.SetField( fld_index, value )
+            self.SetField(fld_index, value)
         except:
-            self.SetField( fld_index, str(value) )
+            self.SetField(fld_index, str(value))
         return
 
     def keys(self):
@@ -410,7 +410,7 @@
     def geometry(self):
         return self.GetGeometryRef()
 
-    def ExportToJson(self, as_object = False, options = None):
+    def ExportToJson(self, as_object=False, options=None):
         """Exports a GeoJSON object which represents the Feature. The
            as_object parameter determines whether the returned value
            should be a Python object instead of a string. Defaults to False.
@@ -428,7 +428,7 @@
         if geom is not None:
             if options is None:
                 options = []
-            geom_json_string = geom.ExportToJson(options = options)
+            geom_json_string = geom.ExportToJson(options=options)
             geom_json_object = simplejson.loads(geom_json_string)
         else:
             geom_json_object = None
@@ -445,10 +445,7 @@
         for key in self.keys():
             fld_defn = self.GetFieldDefnRef(self.GetFieldIndex(key))
             if fld_defn.GetType() == _ogr.OFTInteger and fld_defn.GetSubType() == _ogr.OFSTBoolean:
-                if self.GetField(key):
-                    output['properties'][key] = True
-                else:
-                    output['properties'][key] = False
+                output['properties'][key] = bool(self.GetField(key))
             else:
                 output['properties'][key] = self.GetField(key)
 
@@ -517,7 +514,7 @@
 %pythoncode {
   def Destroy(self):
     "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-    _ogr.delete_FeatureDefn( self )
+    _ogr.delete_FeatureDefn(self)
     self.thisown = 0
 
 }
@@ -527,7 +524,7 @@
 %pythoncode %{
   def Destroy(self):
     "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-    _ogr.delete_FieldDefn( self )
+    _ogr.delete_FieldDefn(self)
     self.thisown = 0
 %}
 }
@@ -540,10 +537,10 @@
 
 %extend GDALMajorObjectShadow {
 %pythoncode %{
-  def GetMetadata( self, domain = '' ):
+  def GetMetadata(self, domain=''):
     if domain[:4] == 'xml:':
-      return self.GetMetadata_List( domain )
-    return self.GetMetadata_Dict( domain )
+      return self.GetMetadata_List(domain)
+    return self.GetMetadata_Dict(domain)
 %}
 }
 #endif

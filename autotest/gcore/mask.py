@@ -859,18 +859,18 @@ def mask_20():
     nodatavalue = [1, -1, 1, -1, 1, 0.5, 0.5, 0.5, 0.5]
 
     drv = gdal.GetDriverByName('GTiff')
-    for i in range(len(types)):
-        ds = drv.Create('tmp/mask20.tif', 1, 1, 1, types[i])
+    for i, typ in enumerate(types):
+        ds = drv.Create('tmp/mask20.tif', 1, 1, 1, typ)
         ds.GetRasterBand(1).Fill(nodatavalue[i])
         ds.GetRasterBand(1).SetNoDataValue(nodatavalue[i])
 
         if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_NODATA:
-            gdaltest.post_reason('did not get expected mask flags for type %s' % gdal.GetDataTypeName(types[i]))
+            gdaltest.post_reason('did not get expected mask flags for type %s' % gdal.GetDataTypeName(typ))
             return 'fail'
 
         msk = ds.GetRasterBand(1).GetMaskBand()
         if msk.Checksum() != 0:
-            gdaltest.post_reason('did not get expected mask checksum for type %s : %d' % (gdal.GetDataTypeName(types[i]), msk.Checksum()))
+            gdaltest.post_reason('did not get expected mask checksum for type %s : %d' % gdal.GetDataTypeName(typ, msk.Checksum()))
             return 'fail'
 
         msk = None
@@ -892,8 +892,8 @@ def mask_21():
     nodatavalue = [1, -1, 1, -1, 1, 0.5, 0.5, 0.5, 0.5]
 
     drv = gdal.GetDriverByName('GTiff')
-    for i in range(len(types)):
-        ds = drv.Create('tmp/mask21.tif', 1, 1, 3, types[i])
+    for i, typ in enumerate(types):
+        ds = drv.Create('tmp/mask21.tif', 1, 1, 3, typ)
         md = {}
         md['NODATA_VALUES'] = '%f %f %f' % (nodatavalue[i], nodatavalue[i], nodatavalue[i])
         ds.SetMetadata(md)
@@ -902,12 +902,12 @@ def mask_21():
         ds.GetRasterBand(3).Fill(nodatavalue[i])
 
         if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET + gdal.GMF_NODATA:
-            gdaltest.post_reason('did not get expected mask flags for type %s' % gdal.GetDataTypeName(types[i]))
+            gdaltest.post_reason('did not get expected mask flags for type %s' % gdal.GetDataTypeName(typ))
             return 'fail'
 
         msk = ds.GetRasterBand(1).GetMaskBand()
         if msk.Checksum() != 0:
-            gdaltest.post_reason('did not get expected mask checksum for type %s : %d' % (gdal.GetDataTypeName(types[i]), msk.Checksum()))
+            gdaltest.post_reason('did not get expected mask checksum for type %s : %d' % gdal.GetDataTypeName(typ, msk.Checksum()))
             return 'fail'
 
         msk = None

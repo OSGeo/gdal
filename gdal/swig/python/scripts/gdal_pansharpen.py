@@ -55,7 +55,7 @@ def GetOutputDriversFor(filename):
         if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or
             drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
            drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
-            if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
+            if ext and DoesDriverHandleExtension(drv, ext):
                 drv_list.append(drv.ShortName)
             else:
                 prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
@@ -64,7 +64,7 @@ def GetOutputDriversFor(filename):
 
     # GMT is registered before netCDF for opening reasons, but we want
     # netCDF to be used by default for output.
-    if ext.lower() == 'nc' and len(drv_list) == 0 and \
+    if ext.lower() == 'nc' and not drv_list and \
        drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
         drv_list = ['NETCDF', 'GMT']
 
@@ -73,9 +73,9 @@ def GetOutputDriversFor(filename):
 
 def GetOutputDriverFor(filename):
     drv_list = GetOutputDriversFor(filename)
-    if len(drv_list) == 0:
+    if not drv_list:
         ext = GetExtension(filename)
-        if len(ext) == 0:
+        if not ext:
             return 'GTiff'
         else:
             raise Exception("Cannot guess driver for %s" % filename)
@@ -186,44 +186,44 @@ def gdal_pansharpen(argv):
 
         i = i + 1
 
-    if pan_name is None or len(spectral_bands) == 0:
+    if pan_name is None or not spectral_bands:
         return Usage()
     out_name = last_name
 
     if frmt is None:
         frmt = GetOutputDriverFor(out_name)
 
-    if len(bands) == 0:
+    if not bands:
         bands = [j + 1 for j in range(len(spectral_bands))]
     else:
-        for i in range(len(bands)):
-            if bands[i] < 0 or bands[i] > len(spectral_bands):
-                print('Invalid band number in -b: %d' % bands[i])
+        for band in bands:
+            if band < 0 or band > len(spectral_bands):
+                print('Invalid band number in -b: %d' % band)
                 return 1
 
-    if len(weights) != 0 and len(weights) != len(spectral_bands):
+    if weights and len(weights) != len(spectral_bands):
         print('There must be as many -w values specified as input spectral bands')
         return 1
 
     vrt_xml = """<VRTDataset subClass="VRTPansharpenedDataset">\n"""
     if bands != [j + 1 for j in range(len(spectral_bands))]:
-        for i in range(len(bands)):
-            band = spectral_bands[bands[i] - 1]
-            datatype = gdal.GetDataTypeName(band.DataType)
-            colorname = gdal.GetColorInterpretationName(band.GetColorInterpretation())
+        for i, band in enumerate(bands):
+            sband = spectral_bands[band - 1]
+            datatype = gdal.GetDataTypeName(sband.DataType)
+            colorname = gdal.GetColorInterpretationName(sband.GetColorInterpretation())
             vrt_xml += """  <VRTRasterBand dataType="%s" band="%d" subClass="VRTPansharpenedRasterBand">
       <ColorInterp>%s</ColorInterp>
   </VRTRasterBand>\n""" % (datatype, i + 1, colorname)
 
     vrt_xml += """  <PansharpeningOptions>\n"""
 
-    if len(weights) != 0:
+    if weights:
         vrt_xml += """      <AlgorithmOptions>\n"""
         vrt_xml += """        <Weights>"""
-        for i in range(len(weights)):
+        for i, weight in enumerate(weights):
             if i > 0:
                 vrt_xml += ","
-            vrt_xml += "%.16g" % weights[i]
+            vrt_xml += "%.16g" % weight
         vrt_xml += "</Weights>\n"
         vrt_xml += """      </AlgorithmOptions>\n"""
 
@@ -253,10 +253,10 @@ def gdal_pansharpen(argv):
       <SourceBand>1</SourceBand>
     </PanchroBand>\n""" % (pan_relative, pan_name)
 
-    for i in range(len(spectral_bands)):
+    for i, sband in enumerate(spectral_bands):
         dstband = ''
-        for j in range(len(bands)):
-            if i + 1 == bands[j]:
+        for j, band in enumerate(bands):
+            if i + 1 == band:
                 dstband = ' dstBand="%d"' % (j + 1)
                 break
 
@@ -270,7 +270,7 @@ def gdal_pansharpen(argv):
         vrt_xml += """    <SpectralBand%s>
       <SourceFilename relativeToVRT="%s">%s</SourceFilename>
       <SourceBand>%d</SourceBand>
-    </SpectralBand>\n""" % (dstband, ms_relative, ms_name, spectral_bands[i].GetBand())
+    </SpectralBand>\n""" % (dstband, ms_relative, ms_name, sband.GetBand())
 
     vrt_xml += """  </PansharpeningOptions>\n"""
     vrt_xml += """</VRTDataset>\n"""

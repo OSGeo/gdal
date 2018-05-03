@@ -129,10 +129,7 @@ def ogr_index_3():
 
     gdaltest.p_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Create an INDEX on the SKEY and VALUE field in the join table.
@@ -156,10 +153,7 @@ def ogr_index_5():
     expect = ['Value 5']
 
     tr = ogrtest.check_features_against_list(gdaltest.s_lyr, 'VALUE', expect)
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Check that indexable single string lookup works.
@@ -179,10 +173,8 @@ def ogr_index_6():
     expect = [5]
 
     tr = ogrtest.check_features_against_list(gdaltest.s_lyr, 'SKEY', expect)
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
+
 
 ###############################################################################
 # Check that range query that isn't currently implemented using index works.
@@ -196,10 +188,7 @@ def ogr_index_7():
 
     tr = ogrtest.check_features_against_list(gdaltest.s_lyr, 'SKEY', expect)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Try join again.
@@ -218,10 +207,7 @@ def ogr_index_8():
 
     gdaltest.p_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify that dropping both indexes gets rid of them, and that results still
@@ -445,12 +431,12 @@ def ogr_index_10():
 def ogr_index_11_check(lyr, expected_fids):
 
     lyr.ResetReading()
-    for i in range(len(expected_fids)):
+    for expected_fid in expected_fids:
         feat = lyr.GetNextFeature()
         if feat is None:
             gdaltest.post_reason('failed')
             return 'fail'
-        if feat.GetFID() != expected_fids[i]:
+        if feat.GetFID() != expected_fid:
             gdaltest.post_reason('failed')
             return 'fail'
 

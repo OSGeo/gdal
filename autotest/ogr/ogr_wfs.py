@@ -68,9 +68,8 @@ def ogr_wfs_init():
         gdaltest.wfs_drv = None
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
             return 'skip'
-        else:
-            gdaltest.post_reason('failed to open test file.')
-            return 'skip'
+        gdaltest.post_reason('failed to open test file.')
+        return 'skip'
 
     return 'success'
 
@@ -510,7 +509,7 @@ do_log = False
 class WFSHTTPHandler(BaseHTTPRequestHandler):
 
     def log_request(self, code='-', size='-'):
-        return
+        pass
 
     def do_GET(self):
 

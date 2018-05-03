@@ -174,7 +174,7 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if len(ds.GetGCPs()) != 0:
+    if ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -200,7 +200,7 @@ def gdal_api_proxy_sub():
 
     ds.SetGCPs([], "")
 
-    if len(ds.GetGCPs()) != 0:
+    if ds.GetGCPs():
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -220,7 +220,7 @@ def gdal_api_proxy_sub():
 
     ds.GetRasterBand(1).Fill(0)
     got_cs = ds.GetRasterBand(1).Checksum()
-    if 0 != got_cs:
+    if got_cs != 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -232,7 +232,7 @@ def gdal_api_proxy_sub():
 
     ds.GetRasterBand(1).Fill(0)
     got_cs = ds.GetRasterBand(1).Checksum()
-    if 0 != got_cs:
+    if got_cs != 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -334,7 +334,7 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if len(ds.GetRasterBand(1).GetMetadata()) != 0:
+    if ds.GetRasterBand(1).GetMetadata():
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetMetadata())
         return 'fail'

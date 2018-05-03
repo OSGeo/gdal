@@ -4,16 +4,8 @@ set -e
 
 . $(dirname $0)/../csa_common/install.sh
 
-cd gdal
-
-for dirname in port gcore frmts alg gnm; do
-    cd $dirname
-    scan-build -o scanbuildoutput -plist -v -enable-checker alpha.unix.cstring.OutOfBounds,alpha.unix.cstring.BufferOverlap make -j4
-    cd ..
+for dirname in gdal/port gdal/gcore gdal/frmts gdal/alg gdal/gnm ; do
+    (cd $dirname; scan-build -o scanbuildoutput -plist -v -enable-checker alpha.unix.cstring.OutOfBounds,alpha.unix.cstring.BufferOverlap make -j4)
 done
 
-cd apps
-scan-build -o scanbuildoutput -plist -v -enable-checker alpha.unix.cstring.OutOfBounds,alpha.unix.cstring.BufferOverlap make -j4 appslib
-cd ..
-
-cd ..
+(cd gdal/apps; scan-build -o scanbuildoutput -plist -v -enable-checker alpha.unix.cstring.OutOfBounds,alpha.unix.cstring.BufferOverlap make -j4 appslib)

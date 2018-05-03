@@ -436,7 +436,7 @@ def ogr_osm_5():
         feat = None
         ds.ReleaseResultSet(sql_lyr)
 
-        if not (test[2] ^ is_none):
+        if not (test[2] ^ is_none):  # pylint: disable=superfluous-parens
             gdaltest.post_reason('fail')
             print(test)
             return 'fail'
@@ -813,6 +813,7 @@ def ogr_osm_15_progresscbk_return_true(pct, msg, user_data):
 
 
 def ogr_osm_15_progresscbk_return_false(pct, msg, user_data):
+    # pylint: disable=unused-argument
     return 0
 
 

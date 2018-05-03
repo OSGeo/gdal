@@ -209,8 +209,7 @@ def ogr_geojson_1():
 
     if gdaltest.geojson_drv is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Test file-based DS with standalone "Point" feature object.
@@ -708,7 +707,7 @@ def ogr_geojson_16():
     ref = lyr.GetSpatialRef()
     gcs = int(ref.GetAuthorityCode('GEOGCS'))
 
-    if not gcs == 4326:
+    if gcs != 4326:
         gdaltest.post_reason("Spatial reference was not valid")
         return 'fail'
 
@@ -1179,14 +1178,14 @@ def ogr_geojson_25():
     if lyr.GetFeatureCount() != len(expected_results):
         gdaltest.post_reason('failure')
         return 'fail'
-    for i in range(len(expected_results)):
+    for i, exp_result in enumerate(expected_results):
         feat = lyr.GetNextFeature()
-        if feat.GetField('id') != expected_results[i][0] or \
-           feat.GetField('name') != expected_results[i][1] or \
-           feat.GetGeometryRef().ExportToWkt() != expected_results[i][2]:
+        if feat.GetField('id') != exp_result[0] or \
+           feat.GetField('name') != exp_result[1] or \
+           feat.GetGeometryRef().ExportToWkt() != exp_result[2]:
             gdaltest.post_reason('failure at feat index %d' % i)
             feat.DumpReadable()
-            print(expected_results[i])
+            print(exp_result)
             print(feat.GetField('name'))
             return 'fail'
     ds = None
@@ -1385,7 +1384,7 @@ def ogr_geojson_28():
     ref = lyr.GetSpatialRef()
     gcs = int(ref.GetAuthorityCode('GEOGCS'))
 
-    if not gcs == 4326:
+    if gcs != 4326:
         gdaltest.post_reason("Spatial reference was not valid")
         return 'fail'
 

@@ -53,8 +53,7 @@ def ogr_mitab_1():
 
     if gdaltest.mapinfo_ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -148,10 +147,7 @@ def ogr_mitab_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -174,10 +170,7 @@ def ogr_mitab_4():
 
     gdaltest.mapinfo_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test spatial filtering.
@@ -198,10 +191,7 @@ def ogr_mitab_5():
 
     gdaltest.mapinfo_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify that Non-WGS84 datums are populated correctly
@@ -234,8 +224,7 @@ def ogr_mitab_7():
 
     if gdaltest.mapinfo_ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -319,10 +308,7 @@ def ogr_mitab_9():
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Read mif file with 2 character .mid delimiter and verify operation.
@@ -1275,7 +1261,7 @@ def ogr_mitab_27():
     lyr = ds.GetLayer(0)
 
     f = lyr.GetFeature(1)
-    for i in range(100):
+    for _ in range(100):
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (2 3)'))
         if lyr.SetFeature(f) != 0:
             gdaltest.post_reason('fail')
@@ -1315,7 +1301,7 @@ def ogr_mitab_27():
 
 def generate_permutation(n):
     tab = [i for i in range(n)]
-    for i in range(10 * n):
+    for _ in range(10 * n):
         ind = random.randint(0, n - 1)
         tmp = tab[0]
         tab[0] = tab[ind]
@@ -1411,7 +1397,7 @@ def ogr_mitab_29():
                 os.stat('tmp/cache/compr_symb_deleted_records.tab')
             except OSError:
                 return 'skip'
-        except:
+        except OSError:
             return 'skip'
 
     shutil.copy('tmp/cache/compr_symb_deleted_records.tab', 'tmp')
@@ -1547,7 +1533,7 @@ def ogr_mitab_30(update=0):
                 gdaltest.post_reason('fail')
                 return 'fail'
             lyr2.ResetReading()
-            for k in range(j + 1):
+            for _ in range(j + 1):
                 feat2 = lyr2.GetNextFeature()
             if feat2.GetField('ID') != j + 1 or feat2.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (j, j):
                 print(j)
@@ -1690,7 +1676,7 @@ def ogr_mitab_34():
     geom = ogr.Geometry(ogr.wkbLineString)
     for i in range(1000):
         geom.AddPoint_2D(i, i)
-    for j in range(2):
+    for _ in range(2):
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometry(geom)
         lyr.CreateFeature(f)
@@ -2164,7 +2150,7 @@ def ogr_mitab_40():
             ds = ogr.Open('/vsimem/ogr_mitab_40.mif')
             if ds is not None:
                 lyr = ds.GetLayer(0)
-                for f in lyr:
+                for _ in lyr:
                     pass
 
     gdal.Unlink('/vsimem/ogr_mitab_40.mif')
@@ -2325,8 +2311,7 @@ def ogr_mitab_45():
     lyrNums = [1, 1, 2, 2]
     dsExts = ['.mif', '.tab', '', '']
 
-    for formatN in range(len(formats)):
-        frmt = formats[formatN]
+    for formatN, frmt in enumerate(formats):
         lyrCount = lyrNums[formatN]
         ext = dsExts[formatN]
         dsName = '/vsimem/45/ogr_mitab_45_%s_%s%s' % (frmt, lyrCount, ext)
@@ -2353,12 +2338,12 @@ def ogr_mitab_45():
                 fld_defn.SetWidth(254)
                 lyr.CreateField(fld_defn)
 
-            for featN in range(len(featNames)):
+            for featName in featNames:
                 feat = ogr.Feature(lyr.GetLayerDefn())
                 feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (25 72)"))
-                for fldN in range(len(fldNames)):
-                    featValue = fldNames[fldN] + ' ' + featNames[featN]
-                    feat.SetField(fldNames[fldN], featValue)
+                for fldName in fldNames:
+                    featValue = fldName + ' ' + featName
+                    feat.SetField(fldName, featValue)
                 lyr.CreateFeature(feat)
         ds = None
 
@@ -2375,9 +2360,8 @@ def ogr_mitab_45():
                                      ' from ' + dsName)
                 return 'fail'
 
-            for fldN in range(len(fldNames)):
+            for fldN, expectedName in enumerate(fldNames):
                 fldName = lyr.GetLayerDefn().GetFieldDefn(fldN).GetName()
-                expectedName = fldNames[fldN]
                 if fldName != expectedName:
                     gdaltest.post_reason('Can\'t get field name\n' +
                                          ' result name:   "' + fldName + '"\n'
@@ -2386,10 +2370,10 @@ def ogr_mitab_45():
                                          ' from dataset :' + dsName)
                     return 'fail'
 
-            for featN in range(len(featNames)):
+            for featName in featNames:
                 feat = lyr.GetNextFeature()
-                for fldN in range(len(fldNames)):
-                    expectedValue = fldNames[fldN] + ' ' + featNames[featN]
+                for fldN, fldName in enumerate(fldNames):
+                    expectedValue = fldName + ' ' + featName
                     # column value by number
                     value = feat.GetField(fldN)
                     if value != expectedValue:
@@ -2442,9 +2426,8 @@ def ogr_mitab_46():
             gdaltest.post_reason('skipping test: recode is not possible')
             return 'skip'
 
-        for fldN in range(len(fldNames)):
+        for fldN, expectedName in enumerate(fldNames):
             fldName = lyr.GetLayerDefn().GetFieldDefn(fldN).GetName()
-            expectedName = fldNames[fldN]
             if fldName != expectedName:
                 gdaltest.post_reason('Can\'t get field\n' +
                                      ' result name:   "' + fldName + '"\n'
@@ -2454,7 +2437,7 @@ def ogr_mitab_46():
 
         for featFldVal in fldVal:
             feat = lyr.GetNextFeature()
-            for fldN in range(len(fldNames)):
+            for fldN, fldName in enumerate(fldNames):
                 expectedValue = featFldVal[fldN]
                 # column value by number
                 value = feat.GetField(fldN)
@@ -2465,7 +2448,7 @@ def ogr_mitab_46():
                                          ' from dataset :' + dsName)
                     return 'fail'
                 # column value by name
-                value = feat.GetField(fldNames[fldN])
+                value = feat.GetField(fldName)
                 if value != expectedValue:
                     gdaltest.post_reason('Can\'t get field value by name\n' +
                                          ' result value:   "' + value + '"\n'

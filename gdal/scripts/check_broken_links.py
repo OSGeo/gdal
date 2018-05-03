@@ -41,8 +41,8 @@ def check(filename):
     f = open(filename, 'r')
     lines = f.readlines()
 
-    for i in range(len(lines)):
-        line = lines[i].strip('\n')
+    for i, line in enumerate(lines):
+        line = line.strip('\n')
         pos = line.find('<a href="')
         if pos >= 0:
             pos += len('<a href="')

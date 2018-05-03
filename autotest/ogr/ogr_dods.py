@@ -70,8 +70,7 @@ def ogr_dods_1():
         gdaltest.dods_ds = None
         gdaltest.post_reason('profiles layer missing, likely AIS stuff not working.')
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Read a single feature from the profiles layer and verify a few things.

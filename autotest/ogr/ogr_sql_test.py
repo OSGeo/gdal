@@ -73,10 +73,7 @@ def ogr_sql_2():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ORDER BY handling
@@ -92,10 +89,7 @@ def ogr_sql_3():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ORDER BY DESC handling
@@ -111,10 +105,7 @@ def ogr_sql_3_desc():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test DISTINCT and ORDER BY on strings.
@@ -130,10 +121,7 @@ def ogr_sql_4():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test column functions.
@@ -181,10 +169,7 @@ def ogr_sql_6():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify that selecting the FID works properly.
@@ -200,10 +185,7 @@ def ogr_sql_7():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify that wildcard expansion works properly.
@@ -219,10 +201,7 @@ def ogr_sql_8():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify that quoted table names work.
@@ -238,10 +217,7 @@ def ogr_sql_9():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test the ILIKE operator.
@@ -257,10 +233,7 @@ def ogr_sql_10():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test MAX() on empty dataset.
@@ -276,10 +249,7 @@ def ogr_sql_11():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test DISTINCT on empty dataset.
@@ -295,10 +265,7 @@ def ogr_sql_12():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify selection of, and on ogr_geometry.
@@ -315,10 +282,7 @@ def ogr_sql_13():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify selection of, and on ogr_style and ogr_geom_wkt.
@@ -338,10 +302,7 @@ def ogr_sql_14():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Verify that selecting with filtering by FID works properly.
@@ -357,10 +318,7 @@ def ogr_sql_15():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 
@@ -377,10 +335,7 @@ def ogr_sql_16():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 
 ###############################################################################
@@ -432,10 +387,7 @@ def ogr_sql_17():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 
 ###############################################################################
@@ -703,10 +655,7 @@ def ogr_sql_27():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 
 ###############################################################################
@@ -947,10 +896,7 @@ def ogr_sql_30():
     if gdal.GetLastErrorMsg() != '':
         return 'fail'
 
-    if val_count == 10:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if val_count == 10 else 'fail'
 
 ###############################################################################
 # Regression test for #4022
@@ -970,10 +916,7 @@ def ogr_sql_31():
     if gdal.GetLastErrorMsg() != '':
         return 'fail'
 
-    if val is None:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if val is None else 'fail'
 
 ###############################################################################
 # Regression test for #4022 (same as above, but with dialect = 'OGRSQL')
@@ -994,10 +937,7 @@ def ogr_sql_32():
     if gdal.GetLastErrorMsg() != '':
         return 'fail'
 
-    if val is None:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if val is None else 'fail'
 
 ###############################################################################
 # Check ALTER TABLE commands
@@ -1080,7 +1020,7 @@ def ogr_sql_34():
 def ogr_sql_35():
 
     cols = "area"
-    for i in range(10):
+    for _ in range(10):
         cols = cols + "," + cols
     sql_lyr = gdaltest.ds.ExecuteSQL("select %s from poly" % cols)
 
@@ -1088,10 +1028,7 @@ def ogr_sql_35():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if count_cols == 1024:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if count_cols == 1024 else 'fail'
 
 ###############################################################################
 # Test select distinct on null values (#4353)
@@ -1258,9 +1195,8 @@ def ogr_sql_38():
 
     if abs(val - 1634833.39062) < 1e-5:
         return 'success'
-    else:
-        print(val)
-        return 'fail'
+    print(val)
+    return 'fail'
 
 ###############################################################################
 # Test ORDER BY on a float special field
@@ -1277,9 +1213,8 @@ def ogr_sql_39():
 
     if abs(val - 5268.813) < 1e-5:
         return 'success'
-    else:
-        print(val)
-        return 'fail'
+    print(val)
+    return 'fail'
 
 ###############################################################################
 # Test ORDER BY on a int special field
@@ -1293,10 +1228,7 @@ def ogr_sql_40():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if feat.GetFID() == 9:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if feat.GetFID() == 9 else 'fail'
 
 ###############################################################################
 # Test ORDER BY on a string special field
@@ -1310,10 +1242,7 @@ def ogr_sql_41():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if feat.GetFID() == 0:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if feat.GetFID() == 0 else 'fail'
 
 ###############################################################################
 # Test comparing to empty string

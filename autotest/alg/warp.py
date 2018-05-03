@@ -761,12 +761,12 @@ def warp_19():
 
     sizes = [1, 2, 3, 7]
 
-    for k in range(len(sizes)):
-        print('Testing size = %d ...' % (sizes[k]))
-        for j in range(len(methods)):
-            for i in range(len(datatypes)):
-                if warp_19_internal(sizes[k], datatypes[i], methods[j]) != 'success':
-                    print('fail with size = %d, data type = %d and method %s' % (sizes[k], datatypes[i], methods[j]))
+    for size in sizes:
+        print('Testing size = %d ...' % size)
+        for method in methods:
+            for datatype in datatypes:
+                if warp_19_internal(size, datatype, method) != 'success':
+                    print('fail with size = %d, data type = %d and method %s' % (size, datatype, method))
                     return 'fail'
 
     return 'success'
@@ -921,9 +921,9 @@ def warp_23():
     sr.ImportFromEPSG(4326)
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/test3582.tif', 70, 170, 4, options=['SPARSE_OK=YES'])
-    for i in range(len(gcps)):
-        gcps[i].GCPPixel = gcps[i].GCPPixel / 10
-        gcps[i].GCPLine = gcps[i].GCPLine / 10
+    for i, gcp in enumerate(gcps):
+        gcps[i].GCPPixel = gcp.GCPPixel / 10
+        gcps[i].GCPLine = gcp.GCPLine / 10
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
 
@@ -1165,10 +1165,7 @@ def warp_29():
 
 def warp_30_progress_callback(pct, message, user_data):
     # pylint: disable=unused-argument
-    if pct > 0.2:
-        return 0  # stop
-    else:
-        return 1  # continue
+    return bool(pct <= 0.2)
 
 
 def warp_30():

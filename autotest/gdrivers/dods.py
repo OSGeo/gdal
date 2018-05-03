@@ -108,14 +108,14 @@ def dods_6():
 
     return 'skip'
 
+    # pylint: disable=unreachable
     gdaltest.dods_grid_ds = gdal.Open('http://g0dup05u.ecs.nasa.gov/opendap/AIRS/AIRX3STD.003/2004.12.28/AIRS.2004.12.28.L3.RetStd001.v4.0.9.0.G05253115303.hdf?TotH2OVap_A[y][x]')
     nd = gdaltest.dods_grid_ds.GetRasterBand(1).GetNoDataValue()
     if nd != -9999.0:
         gdaltest.post_reason('nodata value wrong or missing.')
         print(nd)
         return 'fail'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Cleanup

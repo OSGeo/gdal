@@ -45,17 +45,13 @@ import gdaltest
 
 def misc_1():
 
-    tab_ds = [None for i in range(5000)]
+    tab_ds = [None] * 5000
     drv = gdal.GetDriverByName('MEM')
-    for i in range(len(tab_ds)):
+    for i, _ in enumerate(tab_ds):
         name = 'mem_%d' % i
         tab_ds[i] = drv.Create(name, 1, 1, 1)
         if tab_ds[i] is None:
             return 'fail'
-
-    for i in range(len(tab_ds)):
-        tab_ds[i] = None
-
     return 'success'
 
 ###############################################################################
@@ -67,13 +63,10 @@ def misc_1():
 def misc_2():
 
     tab_ds = [None for i in range(5000)]
-    for i in range(len(tab_ds)):
+    for i, _ in enumerate(tab_ds):
         tab_ds[i] = gdal.OpenShared('data/byte.tif')
         if tab_ds[i] is None:
             return 'fail'
-
-    for i in range(len(tab_ds)):
-        tab_ds[i] = None
 
     return 'success'
 
@@ -265,16 +258,13 @@ def misc_5():
 
 
 ###############################################################################
-class misc_6_interrupt_callback_class:
+class misc_6_interrupt_callback_class(object):
     def __init__(self):
         pass
 
     def cbk(self, pct, message, user_data):
         # pylint: disable=unused-argument
-        if pct > 0.5:
-            return 0  # to stop
-        else:
-            return 1  # to continue
+        return pct <= 0.5
 
 ###############################################################################
 # Test CreateCopy() with a source dataset with various band numbers (including 0) and datatype
@@ -619,7 +609,7 @@ def misc_12():
             if gdal_translate_path is not None:
                 # Test to detect memleaks
                 ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/misc_12.vrt', src_ds)
-                (out, err) = gdaltest.runexternal_out_and_err(gdal_translate_path + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/' + get_filename(drv, ''), check_memleak=False)
+                (out, _) = gdaltest.runexternal_out_and_err(gdal_translate_path + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/' + get_filename(drv, ''), check_memleak=False)
                 del ds
                 gdal.Unlink('tmp/misc_12.vrt')
 

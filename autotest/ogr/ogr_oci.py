@@ -57,8 +57,7 @@ def ogr_oci_1():
 
     if gdaltest.oci_ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Create Oracle table from data/poly.shp
@@ -180,10 +179,7 @@ def ogr_oci_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds.Destroy()
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
@@ -244,10 +240,7 @@ def ogr_oci_5():
 
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -273,10 +266,7 @@ def ogr_oci_6():
 
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test spatial filtering.
@@ -299,10 +289,7 @@ def ogr_oci_7():
 
     gdaltest.oci_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test that we can create a layer with a coordinate system that is mapped
@@ -444,10 +431,7 @@ SDO_ORDINATE_ARRAY(1,1, 5,7) -- only 2 points needed to
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test handling of specialized Oracle circle Geometries.
@@ -486,10 +470,7 @@ SDO_ORDINATE_ARRAY(8,7, 10,9, 8,11)
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test handling of specialized Oracle circular arc linestring Geometries.
@@ -527,10 +508,8 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
+
 ###############################################################################
 # Test handling of specialized Oracle circular arc polygon Geometries.
 
@@ -568,10 +547,7 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test handling of compount linestring.
@@ -610,10 +586,7 @@ SDO_ORDINATE_ARRAY(10,10, 10,14, 6,10, 14,10)
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test handling of compount polygon.
@@ -652,10 +625,7 @@ SDO_ORDINATE_ARRAY(-10,10, 10,10, 0,0, -10,10)
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test deleting an existing layer.

@@ -78,10 +78,7 @@ def rasdaman_2():
         return 'skip'
 
     ds = gdal.Open("rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from notexisting as a'")
-    if ds is None:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if ds is None else 'fail'
 
 ###############################################################################
 # Test syntax error
@@ -92,10 +89,8 @@ def rasdaman_3():
         return 'skip'
 
     ds = gdal.Open("rasdaman:query='select'")
-    if ds is None:
-        return 'success'
-    else:
-        return 'fail'
+
+    return 'success' if ds is None else 'fail'
 
 
 gdaltest_list = [

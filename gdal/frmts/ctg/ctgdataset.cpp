@@ -546,10 +546,10 @@ GDALDataset *CTGDataset::Open( GDALOpenInfo * poOpenInfo )
 CPLErr CTGDataset::GetGeoTransform( double * padfTransform )
 
 {
-    padfTransform[0] = nNWEasting - nCellSize / 2;
+    padfTransform[0] = static_cast<double>(nNWEasting) - nCellSize / 2;
     padfTransform[1] = nCellSize;
     padfTransform[2] = 0;
-    padfTransform[3] = nNWNorthing + nCellSize / 2;
+    padfTransform[3] = static_cast<double>(nNWNorthing) + nCellSize / 2;
     padfTransform[4] = 0.;
     padfTransform[5] = -nCellSize;
 

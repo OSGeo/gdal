@@ -89,7 +89,7 @@ def wkbFlatten(x):
 ###############################################################
 
 
-class Options:
+class Options(object):
     def __init__(self):
         self.lco = []
         self.dispatch_fields = []
@@ -114,47 +114,34 @@ def GeometryTypeToName(eGeomType, options):
 
     if eGeomType == ogr.wkbPoint:
         return 'POINT'
-    elif eGeomType == ogr.wkbLineString:
+    if eGeomType == ogr.wkbLineString:
         return 'LINESTRING'
-    elif eGeomType == ogr.wkbPolygon:
+    if eGeomType == ogr.wkbPolygon:
         return 'POLYGON'
-    elif eGeomType == ogr.wkbMultiPoint:
+    if eGeomType == ogr.wkbMultiPoint:
         return 'MULTIPOINT'
-    elif eGeomType == ogr.wkbMultiLineString:
-        if options.bMultiAsSingle:
-            return 'LINESTRING'
-        else:
-            return 'MULTILINESTRING'
-    elif eGeomType == ogr.wkbMultiPolygon:
-        if options.bMultiAsSingle:
-            return 'POLYGON'
-        else:
-            return 'MULTIPOLYGON'
-    elif eGeomType == ogr.wkbGeometryCollection:
+    if eGeomType == ogr.wkbMultiLineString:
+        return 'LINESTRING' if options.bMultiAsSingle else 'MULTILINESTRING'
+    if eGeomType == ogr.wkbMultiPolygon:
+        return 'POLYGON' if options.bMultiAsSingle else 'MULTIPOLYGON'
+    if eGeomType == ogr.wkbGeometryCollection:
         return 'GEOMETRYCOLLECTION'
-    elif eGeomType == ogr.wkbPoint25D:
+    if eGeomType == ogr.wkbPoint25D:
         return 'POINT25D'
-    elif eGeomType == ogr.wkbLineString25D:
+    if eGeomType == ogr.wkbLineString25D:
         return 'LINESTRING25D'
-    elif eGeomType == ogr.wkbPolygon25D:
+    if eGeomType == ogr.wkbPolygon25D:
         return 'POLYGON25D'
-    elif eGeomType == ogr.wkbMultiPoint25D:
+    if eGeomType == ogr.wkbMultiPoint25D:
         return 'MULTIPOINT25D'
-    elif eGeomType == ogr.wkbMultiLineString25D:
-        if options.bMultiAsSingle:
-            return 'LINESTRING25D'
-        else:
-            return 'MULTILINESTRING25D'
-    elif eGeomType == ogr.wkbMultiPolygon25D:
-        if options.bMultiAsSingle:
-            return 'POLYGON25D'
-        else:
-            return 'MULTIPOLYGON25D'
-    elif eGeomType == ogr.wkbGeometryCollection25D:
+    if eGeomType == ogr.wkbMultiLineString25D:
+        return 'LINESTRING25D' if options.bMultiAsSingle else 'MULTILINESTRING25D'
+    if eGeomType == ogr.wkbMultiPolygon25D:
+        return 'POLYGON25D' if options.bMultiAsSingle else 'MULTIPOLYGON25D'
+    if eGeomType == ogr.wkbGeometryCollection25D:
         return 'GEOMETRYCOLLECTION25D'
-    else:
-        # Shouldn't happen
-        return 'UNKNOWN'
+    # Shouldn't happen
+    return 'UNKNOWN'
 
 ###############################################################
 # get_out_lyr_name()
@@ -301,7 +288,7 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
     dsco = []
     pszWHERE = None
 
-    if len(argv) == 0:
+    if not argv:
         return Usage()
 
     i = 0
@@ -369,7 +356,7 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
         print('Missing -dst')
         return 1
 
-    if len(options.dispatch_fields) == 0:
+    if not options.dispatch_fields:
         print('Missing -dispatch_field')
         return 1
 
@@ -380,7 +367,7 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
 
     dst_ds = ogr.Open(dst_filename, update=1)
     if dst_ds is not None:
-        if len(dsco) != 0:
+        if dsco:
             print('-dsco should not be specified for an existing datasource')
             return 1
     else:

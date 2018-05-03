@@ -1044,11 +1044,8 @@ def jpeg_23():
 
 def jpeg_24():
 
-    if gdal.GetDriverByName('JPEG').GetMetadataItem(
-            'DMD_CREATIONOPTIONLIST').find('ARITHMETIC') >= 0:
-        has_arithmetic = True
-    else:
-        has_arithmetic = False
+    has_arithmetic = bool(gdal.GetDriverByName('JPEG').GetMetadataItem(
+        'DMD_CREATIONOPTIONLIST').find('ARITHMETIC') >= 0)
 
     src_ds = gdal.Open('data/byte.tif')
     if not has_arithmetic:
@@ -1158,7 +1155,7 @@ def jpeg_28():
     ds = gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
     src_ds = None
     ds = gdal.Open(tmpfilename)
-    if len(ds.GetMetadata()) != 0:
+    if ds.GetMetadata():
         gdaltest.post_reason('fail')
         return 'fail'
 

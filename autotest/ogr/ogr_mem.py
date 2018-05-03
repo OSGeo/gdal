@@ -134,10 +134,7 @@ def ogr_mem_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
@@ -192,10 +189,7 @@ def ogr_mem_5():
 
     gdaltest.mem_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -218,10 +212,7 @@ def ogr_mem_6():
 
     gdaltest.mem_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test spatial filtering.
@@ -248,10 +239,7 @@ def ogr_mem_7():
 
     gdaltest.mem_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test adding a new field.
@@ -292,10 +280,7 @@ def ogr_mem_8():
 
     gdaltest.mem_lyr.SetAttributeFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test deleting a feature.

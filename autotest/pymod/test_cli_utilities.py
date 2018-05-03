@@ -55,7 +55,7 @@ def get_cli_utility_path_internal(cli_utility_name):
 
             if ret.find('GDAL') != -1:
                 return cli_utility_path
-    except:
+    except OSError:
         pass
 
     # Second try : the autotest directory is a subdirectory of gdal/ (FrankW's layout)
@@ -68,7 +68,7 @@ def get_cli_utility_path_internal(cli_utility_name):
 
             if ret.find('GDAL') != -1:
                 return cli_utility_path
-    except:
+    except OSError:
         pass
 
     # Otherwise look up in the system path
@@ -78,7 +78,7 @@ def get_cli_utility_path_internal(cli_utility_name):
 
         if ret.find('GDAL') != -1:
             return cli_utility_path
-    except:
+    except OSError:
         pass
 
     return None
@@ -91,9 +91,8 @@ def get_cli_utility_path(cli_utility_name):
     global cli_exe_path
     if cli_utility_name in cli_exe_path:
         return cli_exe_path[cli_utility_name]
-    else:
-        cli_exe_path[cli_utility_name] = get_cli_utility_path_internal(cli_utility_name)
-        return cli_exe_path[cli_utility_name]
+    cli_exe_path[cli_utility_name] = get_cli_utility_path_internal(cli_utility_name)
+    return cli_exe_path[cli_utility_name]
 
 ###############################################################################
 #

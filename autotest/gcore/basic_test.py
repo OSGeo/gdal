@@ -54,9 +54,8 @@ def basic_test_1():
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
-    else:
-        gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
-        return 'fail'
+    gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
+    return 'fail'
 
 
 def basic_test_2():
@@ -65,9 +64,8 @@ def basic_test_2():
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
-    else:
-        gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
-        return 'fail'
+    gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
+    return 'fail'
 
 
 def basic_test_3():
@@ -76,9 +74,8 @@ def basic_test_3():
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
-    else:
-        gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
-        return 'fail'
+    gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
+    return 'fail'
 
 
 def basic_test_4():
@@ -87,9 +84,8 @@ def basic_test_4():
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
-    else:
-        gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
-        return 'fail'
+    gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
+    return 'fail'
 
 
 def basic_test_5():
@@ -100,8 +96,7 @@ def basic_test_5():
     expected = '`data/doctype.xml\' not recognized as a supported file format'
     if ds is None and expected in last_error:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Issue several AllRegister() to check that GDAL drivers are good citizens
@@ -223,7 +218,7 @@ def basic_test_9():
 # Test gdal.PushErrorHandler() with a Python error handler as a method (#5186)
 
 
-class my_python_error_handler_class:
+class my_python_error_handler_class(object):
     def __init__(self):
         self.eErrClass = None
         self.err_no = None
@@ -323,7 +318,7 @@ def basic_test_11():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ar_ds = [gdal.OpenEx('data/byte.tif', gdal.OF_SHARED) for i in range(1024)]
+    ar_ds = [gdal.OpenEx('data/byte.tif', gdal.OF_SHARED) for _ in range(1024)]
     if ar_ds[1023] is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -658,7 +653,7 @@ def basic_test_17():
 
     from osgeo import ogr
 
-    for i in range(2):
+    for _ in range(2):
         ogr.UseExceptions()
         gdal.UseExceptions()
         try:
@@ -674,7 +669,7 @@ def basic_test_17():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    for i in range(2):
+    for _ in range(2):
         ogr.UseExceptions()
         gdal.UseExceptions()
         try:

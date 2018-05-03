@@ -241,8 +241,7 @@ def ogr_pdf_4_podofo():
         ret = ogr_pdf_4()
         gdal.SetConfigOption("GDAL_PDF_LIB", None)
         return ret
-    else:
-        return 'skip'
+    return 'skip'
 
 ###############################################################################
 # Test read support with OGR_PDF_READ_NON_STRUCTURED=YES

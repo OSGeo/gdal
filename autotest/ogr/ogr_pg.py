@@ -273,10 +273,7 @@ def ogr_pg_3():
 
     gdaltest.poly_feat = None
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
@@ -345,10 +342,7 @@ def ogr_pg_5():
 
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -386,10 +380,7 @@ def ogr_pg_6():
 
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test spatial filtering.
@@ -424,10 +415,7 @@ def ogr_pg_7():
 
     gdaltest.pg_lyr.SetSpatialFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Write a feature with too long a text value for a fixed length text field.
@@ -787,10 +775,8 @@ def ogr_pg_15():
                                              'eas_id', expect)
     gdaltest.pg_lyr.SetAttributeFilter(None)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
+
 
 
 ###############################################################################
@@ -816,10 +802,7 @@ def ogr_pg_16():
 
     gdaltest.pg_ds.ReleaseResultSet(lyr)
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success' if tr else 'fail'
 
 ###############################################################################
 # Test requesting a non-existent table by name (bug 1480).
@@ -981,9 +964,9 @@ def ogr_pg_20():
     # XXX - mloskot - if 'public' is omitted, then OGRPGDataSource::DeleteLayer fails, line 438
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT AddGeometryColumn('public','testgeom','wkb_geometry',-1,'GEOMETRY',4)")
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
-    for i in range(len(geometries)):
+    for i, geom in enumerate(geometries):
         gdaltest.pg_ds.ExecuteSQL("INSERT INTO testgeom (ogc_fid,wkb_geometry) \
-                                    VALUES (%d,GeomFromEWKT('%s'))" % (i, geometries[i][0]))
+                                    VALUES (%d,GeomFromEWKT('%s'))" % (i, geom[0]))
 
     # We need to re-read layers
     gdaltest.pg_ds.Destroy()
@@ -1007,18 +990,18 @@ def ogr_pg_20():
         layer.SetFeature(feat)
 
     # Test we get them back as expected
-    for i in range(len(geometries)):
+    for i, geoms in enumerate(geometries):
         feat = layer.GetFeature(i)
         geom = feat.GetGeometryRef()
         if geom is None:
-            gdaltest.post_reason('did not get geometry, expected %s' % geometries[i][1])
+            gdaltest.post_reason('did not get geometry, expected %s' % geoms[1])
             return 'fail'
         wkt = geom.ExportToIsoWkt()
         feat.Destroy()
         feat = None
 
-        if wkt != geometries[i][1]:
-            gdaltest.post_reason('WKT do not match: expected %s, got %s' % (geometries[i][1], wkt))
+        if wkt != geoms[1]:
+            gdaltest.post_reason('WKT do not match: expected %s, got %s' % (geoms[1], wkt))
             return 'fail'
 
     layer = None
@@ -1150,7 +1133,7 @@ def ogr_pg_21_3d_geometries():
 
         wkt = geom.ExportToIsoWkt()
 
-        if (wkt != wkt_expected[i]):
+        if wkt != wkt_expected[i]:
             gdaltest.post_reason('Unexpected WKT, expected %s and got %s' % (wkt_expected[i], wkt))
             return 'fail'
 
@@ -1181,7 +1164,7 @@ def ogr_pg_22():
                                                  options=[
                                                      'DIM=3',
                                                      'SCHEMA=' + schema_name]
-                                                 )
+                                                )
 
     ######################################################
     # Setup Schema
@@ -3903,7 +3886,7 @@ def ogr_pg_71():
                 'MULTISURFACE (((0 0,0 10,10 10,10 0,0 0)),CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0)))',
                 'MULTISURFACE Z (((0 0 1,0 10 1,10 10 1,10 0 1,0 0 1)),CURVEPOLYGON Z (CIRCULARSTRING Z (0 0 1,1 0 1,0 0 1)))',
                 'GEOMETRYCOLLECTION (CIRCULARSTRING (0 1,2 3,4 5),COMPOUNDCURVE ((0 1,2 3,4 5)),CURVEPOLYGON ((0 0,0 1,1 1,1 0,0 0)),MULTICURVE ((0 0,1 1)),MULTISURFACE (((0 0,0 10,10 10,10 0,0 0))))',
-                ]:
+               ]:
 
         # would cause PostGIS 1.X to crash
         if not gdaltest.pg_has_postgis_2 and wkt == 'CURVEPOLYGON EMPTY':
@@ -5290,7 +5273,7 @@ def ogr_pg_83():
              [ogr.wkbPoint25D, [], 'POINT ZM (1 2 3 4)', 'POINT Z (1 2 3)'],
              [ogr.wkbPointM, [], 'POINT ZM (1 2 3 4)', 'POINT M (1 2 4)'],
              [ogr.wkbUnknown, ['GEOM_TYPE=geography', 'DIM=XYM'], 'POINT ZM (1 2 3 4)', 'POINT M (1 2 4)'],
-             ]
+            ]
 
     for (geom_type, options, wkt, expected_wkt) in tests:
         lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_83', geom_type=geom_type, options=options + ['OVERWRITE=YES'])

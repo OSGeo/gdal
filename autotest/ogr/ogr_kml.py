@@ -694,8 +694,8 @@ def compare_output(content, expected_content):
         gdaltest.post_reason('fail')
         print(content)
         return 'fail'
-    for i in range(len(content_lines)):
-        if content_lines[i].strip() != expected_lines[i].strip():
+    for i, content_line in enumerate(content_lines):
+        if content_line.strip() != expected_lines[i].strip():
             gdaltest.post_reason('fail')
             print(content)
             return 'fail'

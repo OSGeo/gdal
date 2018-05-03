@@ -46,8 +46,7 @@ def ogr_sxf_1():
 
     if gdaltest.sxf_ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 
 ###############################################################################

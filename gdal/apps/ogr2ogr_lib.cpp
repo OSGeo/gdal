@@ -32,6 +32,7 @@
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 
+#include <cassert>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
@@ -4535,6 +4536,7 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                     poDstGeometry->toGeometryCollection()->removeGeometry(iPart, FALSE);
                     delete poDstGeometry;
                     poDstGeometry = poPart;
+                    assert(poDstGeometry);
                 }
 
                 if (iSrcZField != -1)

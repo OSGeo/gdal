@@ -50,8 +50,7 @@ def wms_1():
     gdaltest.wms_drv = gdal.GetDriverByName('WMS')
     if gdaltest.wms_drv is None:
         return 'skip'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Open the WMS dataset
@@ -77,9 +76,8 @@ def wms_2():
 
     if gdaltest.wms_ds is not None:
         return 'success'
-    else:
-        gdaltest.post_reason('open failed.')
-        return 'fail'
+    gdaltest.post_reason('open failed.')
+    return 'fail'
 
 ###############################################################################
 # Check various things about the configuration.
@@ -400,7 +398,7 @@ def wms_8():
 
     # Check cache metadata item
     cache_path = ds.GetMetadataItem("CACHE_PATH")
-    if len(cache_path) == 0:
+    if not cache_path:
         gdaltest.post_reason('did not get expected cache path metadata item')
         return 'fail'
 
@@ -564,7 +562,7 @@ def wms_10():
         return 'fail'
 
     subdatasets = ds.GetMetadata("SUBDATASETS")
-    if len(subdatasets) == 0:
+    if not subdatasets:
         gdaltest.post_reason('did not get expected subdataset count')
         print(subdatasets)
         return 'fail'
@@ -604,7 +602,7 @@ def wms_11():
         return 'fail'
 
     subdatasets = ds.GetMetadata("SUBDATASETS")
-    if len(subdatasets) == 0:
+    if not subdatasets:
         gdaltest.post_reason('did not get expected subdataset count')
         print(subdatasets)
         return 'fail'
@@ -642,7 +640,7 @@ def wms_12():
         return 'fail'
 
     subdatasets = ds.GetMetadata("SUBDATASETS")
-    if len(subdatasets) == 0:
+    if not subdatasets:
         gdaltest.post_reason('did not get expected subdataset count')
         print(subdatasets)
         return 'fail'
@@ -810,7 +808,7 @@ def wms_16():
         return 'fail'
 
     subdatasets = ds.GetMetadata("SUBDATASETS")
-    if len(subdatasets) == 0:
+    if not subdatasets:
         gdaltest.post_reason('did not get expected subdataset count')
         print(subdatasets)
         return 'fail'

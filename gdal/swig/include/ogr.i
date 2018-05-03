@@ -486,10 +486,6 @@ typedef int OGRErr;
 
 #if defined(SWIGPYTHON)
 %include ogr_python.i
-#elif defined(SWIGRUBY)
-%include ogr_ruby.i
-#elif defined(SWIGPHP4)
-%include ogr_php.i
 #elif defined(SWIGCSHARP)
 %include ogr_csharp.i
 #elif defined(SWIGPERL)

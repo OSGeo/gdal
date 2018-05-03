@@ -67,8 +67,7 @@ def wcs_1():
     gdaltest.wcs_ds = None
     if gdaltest.wcs_drv is None:
         return 'skip'
-    else:
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Open the GeoServer WCS service.
@@ -87,9 +86,8 @@ def wcs_2():
 
     if gdaltest.wcs_ds is not None:
         return 'success'
-    else:
-        gdaltest.post_reason('open failed.')
-        return 'fail'
+    gdaltest.post_reason('open failed.')
+    return 'fail'
 
 ###############################################################################
 # Check various things about the configuration.
@@ -198,9 +196,8 @@ def old_wcs_2():
 
     if gdaltest.wcs_ds is not None:
         return 'success'
-    else:
-        gdaltest.post_reason('open failed.')
-        return 'fail'
+    gdaltest.post_reason('open failed.')
+    return 'fail'
 
 ###############################################################################
 # Check various things about the configuration.
@@ -315,7 +312,7 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
 
     def log_request(self, code=',', size=','):
         # pylint: disable=unused-argument
-        return
+        pass
 
     def Headers(self, typ):
         self.send_response(200)
@@ -372,9 +369,9 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             test = query2['test'][0]
         key = server + '-' + version
         if key in urls and test in urls[key]:
-            tmp, got = self.path.split('SERVICE=WCS')
+            _, got = self.path.split('SERVICE=WCS')
             got = re.sub('\&test=.*', '', got)
-            tmp, have = urls[key][test].split('SERVICE=WCS')
+            _, have = urls[key][test].split('SERVICE=WCS')
             have += '&server=' + server
             if got == have:
                 ok = 'ok'
@@ -384,7 +381,6 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
                 wcs_6_ok = False
             print('test ' + server + ' ' + test + ' WCS ' + version + ' ' + ok)
         self.Respond(request, server, version, test)
-        return
 
 
 def setupFct():
@@ -543,7 +539,6 @@ def wcs_6():
                              open_options=options)
             if not ds:
                 print("OpenEx failed: WCS:" + url + "/?" + query)
-                global wcs_6_ok
                 wcs_6_ok = False
                 break
             projwin = setup[server]['Projwin'].replace('-projwin ', '').split()
@@ -562,7 +557,6 @@ def wcs_6():
                                  open_options=options)
                 if not ds:
                     print("OpenEx failed: WCS:" + url + "/?" + query)
-                    global wcs_6_ok
                     wcs_6_ok = False
                     break
                 options = [cache]
@@ -571,10 +565,8 @@ def wcs_6():
             else:
                 print(server + ' ' + version + ' non_scaled skipped (no response file)')
     webserver.server_stop(process, port)
-    if wcs_6_ok:
-        return 'success'
-    else:
-        return 'fail'
+
+    return 'success' if  wcs_6_ok else 'fail'
 
 ###############################################################################
 

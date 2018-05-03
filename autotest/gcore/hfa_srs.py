@@ -41,7 +41,7 @@ import gdaltest
 ###############################################################################
 # Write a HFA/Imagine and read it back to check its SRS
 
-class TestHFASRS:
+class TestHFASRS(object):
     def __init__(self, epsg_code, use_epsg_code, expected_fail):
         self.epsg_code = epsg_code
         self.use_epsg_code = use_epsg_code
@@ -110,17 +110,15 @@ hfa_srs_list = [2758,  # tmerc
                 2056,  # somerc
                 2027,  # utm
                 4326,  # longlat
-                ]
+               ]
 
 for item in hfa_srs_list:
     try:
         epsg_code = item[0]
         epsg_broken = item[1]
-        # epsg_proj4_broken = item[2]
-    except:
+    except TypeError:
         epsg_code = item
         epsg_broken = False
-        # epsg_proj4_broken = False
 
     ut = TestHFASRS(epsg_code, 1, epsg_broken)
     gdaltest_list.append((ut.test, "hfa_srs_epsg_%d" % epsg_code))

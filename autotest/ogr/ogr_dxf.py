@@ -308,7 +308,7 @@ def ogr_dxf_8():
 def ogr_dxf_9():
 
     # Skip two dimensions each with a line, two arrowheads and text.
-    for x in range(8):
+    for _ in range(8):
         feat = gdaltest.dxf_layer.GetNextFeature()
 
     # block (merged geometries)
@@ -3808,7 +3808,7 @@ def ogr_dxf_52():
         f.DumpReadable()
         return 'fail'
 
-    for x in range(2):
+    for _ in range(2):
         f = lyr.GetNextFeature()
 
     f = lyr.GetNextFeature()
@@ -3824,7 +3824,7 @@ def ogr_dxf_52():
         f.DumpReadable()
         return 'fail'
 
-    for x in range(8):
+    for _ in range(8):
         f = lyr.GetNextFeature()
 
     f = lyr.GetNextFeature()

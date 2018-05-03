@@ -53,8 +53,7 @@ def ogr_wasp_create_ds():
 
     if gdaltest.wasp_ds is not None:
         return 'success'
-    else:
-        return 'fail'
+    return 'fail'
 
 ###############################################################################
 # Create elevation .map from linestrings z
@@ -325,8 +324,7 @@ def ogr_wasp_roughness_from_polygon_z():
         if ogrtest.have_geos():
             gdaltest.post_reason('unable to create layer')
             return 'fail'
-        else:
-            return 'success'
+        return 'success'
 
     dfn = ogr.FeatureDefn()
 
@@ -397,8 +395,7 @@ def ogr_wasp_roughness_from_polygon_field():
         if ogrtest.have_geos():
             gdaltest.post_reason('unable to create layer')
             return 'fail'
-        else:
-            return 'success'
+        return 'success'
 
     layer.CreateField(ogr.FieldDefn('roughness', ogr.OFTReal))
     layer.CreateField(ogr.FieldDefn('dummy', ogr.OFTString))
@@ -472,8 +469,7 @@ def ogr_wasp_merge():
         if ogrtest.have_geos():
             gdaltest.post_reason('unable to create layer')
             return 'fail'
-        else:
-            return 'success'
+        return 'success'
 
     dfn = ogr.FeatureDefn()
 
@@ -518,7 +514,7 @@ def ogr_wasp_merge():
         gdaltest.post_reason('there should be 6 boundaries and there are %d' % j)
         return 'fail'
 
-    if res != [(0, 1) for k in range(6)]:
+    if res != [(0, 1)] * 6:
         print(res)
         gdaltest.post_reason('wrong values f=in boundaries')
         return 'fail'
