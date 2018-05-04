@@ -113,8 +113,6 @@ def ogr_gmlas_basic():
     return compare_ogrinfo_output('data/gmlas/gmlas_test1.xml',
                                   'data/gmlas/gmlas_test1.txt')
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
