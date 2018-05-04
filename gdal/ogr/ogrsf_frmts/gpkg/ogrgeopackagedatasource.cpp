@@ -2878,7 +2878,10 @@ void GDALGeoPackageDataset::WriteMetadata(CPLXMLNode* psXMLNode, /* will be dest
     if( !HasMetadataTables() )
     {
         if( bIsEmpty || !CreateMetadataTables() )
+        {
+            CPLDestroyXMLNode(psXMLNode);
             return;
+        }
     }
 
     char *pszXML = nullptr;
