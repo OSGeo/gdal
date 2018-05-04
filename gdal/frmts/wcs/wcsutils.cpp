@@ -377,6 +377,7 @@ void XMLCopyMetadata(CPLXMLNode *parent, CPLXMLNode *metadata, CPLString key) {
 /* -------------------------------------------------------------------- */
 /*      SetupCache                                                      */
 /*      Cache is a directory                                            */
+/*      The file db is the cache index with lines of unique_key=URL     */
 /* -------------------------------------------------------------------- */
 
 bool SetupCache(CPLString &cache, bool clear)
@@ -474,7 +475,7 @@ std::vector<CPLString> ReadCache(const CPLString &cache)
 
 bool DeleteEntryFromCache(const CPLString &cache, const CPLString &key, const CPLString &value)
 {
-    // depending on which one of key & value is not "" delete the relevant entry
+    // Depending on which one of key and value is not "" delete the relevant entry.
     CPLString db = CPLFormFilename(cache, "db", nullptr);
     char **data = CSLLoad(db); // returns NULL in error and for empty files
     char **data2 = CSLAddNameValue(nullptr, "foo", "bar");
@@ -661,7 +662,7 @@ CPLString GetKeywords(CPLXMLNode *root,
 
                 // crs, replace "http://www.opengis.net/def/crs/EPSG/0/"
                 // or "urn:ogc:def:crs:EPSG::" with EPSG:
-                const char *epsg[] = {
+                const char const *epsg[] = {
                     "http://www.opengis.net/def/crs/EPSG/0/",
                     "urn:ogc:def:crs:EPSG::"
                 };
@@ -679,7 +680,7 @@ CPLString GetKeywords(CPLXMLNode *root,
                 // profiles, remove http://www.opengis.net/spec/
                 // interpolation, remove http://www.opengis.net/def/interpolation/OGC/1/
 
-                const char *spec[] = {
+                const char const *spec[] = {
                     "http://www.opengis.net/spec/",
                     "http://www.opengis.net/def/interpolation/OGC/1/"
                 };

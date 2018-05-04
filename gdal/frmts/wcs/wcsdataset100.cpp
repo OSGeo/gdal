@@ -644,7 +644,6 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
                 CPLString key2 = path3 + "NAME";
                 CPLString name = CPLGetXMLValue(node, nullptr, "");
                 CPLString value = DescribeCoverageURL;
-                value = CPLURLAddKVP(value, "SERVICE", "WCS");
                 value = CPLURLAddKVP(value, "VERSION", this->Version());
                 value = CPLURLAddKVP(value, "COVERAGE", name);
                 metadata = CSLSetNameValue(metadata, key2, value);

@@ -197,8 +197,9 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
     */
 
     // 09-147 KVP Protocol: subset keys must be unique
+    // GeoServer: seems to require plain SUBSET for x and y
 
-    request += CPLString().Printf("&SUBSETx=%s%%28%s,%s%%29", x, a.c_str(), b.c_str());
+    request += CPLString().Printf("&SUBSET=%s%%28%s,%s%%29", x, a.c_str(), b.c_str());
 
     a = CPLString().Printf("%.17g", extent[1]);
     if (low.size() > 1 && CompareNumbers(low[1], a) > 0) {
@@ -215,7 +216,7 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         "%.17g", MIN(adfGeoTransform[3], extent[3]));
     */
 
-    request += CPLString().Printf("&SUBSETy=%s%%28%s,%s%%29", y, a.c_str(), b.c_str());
+    request += CPLString().Printf("&SUBSET=%s%%28%s,%s%%29", y, a.c_str(), b.c_str());
 
     // Dimension and range parameters:
     std::vector<CPLString> dimensions;
@@ -637,8 +638,7 @@ int WCSDataset201::ParseRange(CPLXMLNode *coverage, const CPLString &range_subse
         CPLError(CE_Failure, CPLE_AppDefined, "No data fields found (bad Range?).");
     } else {
         // todo: default to the first one?
-        CPLSetXMLValue(psService, "NoDataValue", Join(nodata_array, ","));
-        bServiceDirty = true;
+        bServiceDirty = CPLUpdateXML(psService, "NoDataValue", Join(nodata_array, ",")) || bServiceDirty;
     }
 
     return fields;
@@ -729,6 +729,28 @@ bool WCSDataset201::ExtractGridInfo()
 
     metadata = CSLSetNameValue(metadata, "DOMAIN", Join(domain, ","));
 
+    // add coverage metadata: GeoServer TimeDomain
+
+    CPLXMLNode *timedomain = CPLGetXMLNode(coverage, "metadata.Extension.TimeDomain");
+    if (timedomain) {
+        std::vector<CPLString> timePositions;
+        // "//timePosition"
+        for (CPLXMLNode *node = timedomain->psChild; node != nullptr; node = node->psNext) {
+            if (node->eType != CXT_Element || strcmp(node->pszValue, "TimeInstant") != 0) {
+                continue;
+            }
+            for (CPLXMLNode *node2 = node->psChild; node2 != nullptr; node2 = node2->psNext) {
+                if (node2->eType != CXT_Element || strcmp(node2->pszValue, "timePosition") != 0) {
+                    continue;
+                }
+                timePositions.push_back(CPLGetXMLValue(node2, "", ""));
+            }
+        }
+        metadata = CSLSetNameValue(metadata, "TimeDomain", Join(timePositions, ","));
+    }
+
+    // dimension metadata
+
     std::vector<CPLString> slow = Split(bbox[0], " ", axis_order_swap);
     std::vector<CPLString> shigh = Split(bbox[1], " ", axis_order_swap);
     bServiceDirty = CPLUpdateXML(psService, "Low", Join(slow, ",")) || bServiceDirty;
@@ -744,7 +766,6 @@ bool WCSDataset201::ExtractGridInfo()
     std::vector<double> env;
     env.insert(env.end(), low.begin(), low.begin() + 2);
     env.insert(env.end(), high.begin(), high.begin() + 2);
-    // todo: EnvelopeWithTimePeriod
 
     for (unsigned int i = 0; i < axes.size(); ++i) {
         CPLString key;
@@ -849,6 +870,7 @@ bool WCSDataset201::ExtractGridInfo()
             dimensions_are_ok = false;
         }
     }
+    // todo: add metadata: note: no bands, you need to subset to get data
 
     // check for CRS override
     CPLString crs = CPLGetXMLValue(psService, "SRS", "");
@@ -877,6 +899,7 @@ bool WCSDataset201::ExtractGridInfo()
     // and she wants to see the resulting metadata and not just an error message
     // situation is ~the same when bands == 0 when we exit here
 
+    // todo: do this only if metadata is dirty
     this->SetMetadata(metadata, md_domain);
     CSLDestroy(metadata);
     TrySaveXML();

@@ -827,19 +827,16 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
             CPLString key2 = path3 + "NAME";
 
             CPLString name = DescribeCoverageURL;
-            name = CPLURLAddKVP(name, "service", "WCS");
             name = CPLURLAddKVP(name, "version", this->Version());
 
             CPLXMLNode *node = CPLGetXMLNode(summary, "CoverageId");
             CPLString id;
             if (node) {
                 id = CPLGetXMLValue(node, nullptr, "");
-                name = CPLURLAddKVP(name, "coverageId", id);
             } else {
                 node = CPLGetXMLNode(summary, "Identifier");
                 if (node) {
                     id = CPLGetXMLValue(node, nullptr, "");
-                    name = CPLURLAddKVP(name, "identifiers", id);
                 } else {
                     // todo: maybe not an error since CoverageSummary may be within CoverageSummary (07-067r5 Fig4)
                     CSLDestroy( metadata );
@@ -848,6 +845,7 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
                     return CE_Failure;
                 }
             }
+            name = CPLURLAddKVP(name, "coverage", id);
             name = "WCS:" + name;
             metadata = CSLSetNameValue(metadata, key2, name);
 
