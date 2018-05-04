@@ -1050,20 +1050,14 @@ bool GDALMRFRasterBand::TestBlock(int xblk, int yblk)
     
     if (CE_None != poDS->ReadTileIdx(tinfo, req, img))
         // Got an error reading the tile index
-        if (poDS->no_errors)
-            return false;  // Don't attempt to read, since reading fails
-        else
-            return true;   // Unknown, could exist
+        return !poDS->no_errors;
 
     // Got an index, if the size is readable, the block does exist
     if (0 < tinfo.size && tinfo.size < poDS->pbsize *2)
         return true;
 
     // We are caching, but the tile has not been checked, so it could exist
-    if (!poDS->source.empty() && 0 == tinfo.offset)
-        return true;
-
-    return false;
+    return (!poDS->source.empty() && 0 == tinfo.offset);
 }
 
 int GDALMRFRasterBand::GetOverviewCount()
