@@ -668,6 +668,8 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
     VRTDerivedRasterBandPrivateData* m_poPrivate;
     bool InitializePython();
 
+    CPL_DISALLOW_COPY_ASSIGN(VRTDerivedRasterBand)
+
  public:
     char *pszFuncName;
     GDALDataType eSourceTransferType;

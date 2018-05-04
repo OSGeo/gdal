@@ -2239,8 +2239,6 @@ def jp2lura_50():
     tst = gdaltest.GDALTest('JP2Lura', 'float32_ieee754_split_reversible.jp2', 1, 4672)
     return tst.testOpen()
 
-    return 'success'
-
 ###############################################################################
 # Test split IEEE-754 Float32
 

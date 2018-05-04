@@ -95,6 +95,8 @@ class OGRILI2DataSource : public OGRDataSource
     int         nLayers;
     OGRILI2Layer** papoLayers;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRILI2DataSource)
+
   public:
                 OGRILI2DataSource();
                virtual ~OGRILI2DataSource();

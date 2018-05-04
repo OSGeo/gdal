@@ -77,6 +77,8 @@ class OGRPDSLayer final: public OGRLayer
     void               ReadStructure(CPLString osStructureFilename);
     OGRFeature        *GetNextRawFeature();
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRPDSLayer)
+
   public:
                         OGRPDSLayer(CPLString osTableID,
                                          const char* pszLayerName, VSILFILE* fp,

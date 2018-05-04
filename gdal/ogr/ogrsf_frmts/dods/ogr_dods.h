@@ -246,6 +246,8 @@ class OGRDODSGridLayer : public OGRDODSLayer
                                            int iArrayIndex,
                                            OGRFeature *poFeature, int iField );
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRDODSGridLayer)
+
 protected:
     virtual bool        ProvideDataDDS() override;
 
@@ -272,6 +274,8 @@ class OGRDODSDataSource : public OGRDataSource
     char               *pszName;
 
     void                AddLayer( OGRDODSLayer * );
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRDODSDataSource)
 
   public: // Just intended for read access by layer classes.
     AISConnect         *poConnection;

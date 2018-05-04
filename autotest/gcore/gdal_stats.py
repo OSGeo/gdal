@@ -806,10 +806,10 @@ def stats_nodata_almost_max_float32():
 # Test STATISTICS_APPROXIMATE
 
 
-def stats_approx_stats_flag():
+def stats_approx_stats_flag(dt=gdal.GDT_Byte, struct_frmt='B'):
 
-    ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000)
-    ds.GetRasterBand(1).WriteRaster(1000, 1000, 1, 1, struct.pack('B' * 1, 20))
+    ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000, 1, dt)
+    ds.GetRasterBand(1).WriteRaster(1000, 1000, 1, 1, struct.pack(struct_frmt * 1, 20))
 
     approx_ok = 1
     force = 1
@@ -847,6 +847,38 @@ def stats_approx_stats_flag():
 
     return 'success'
 
+
+def stats_approx_stats_flag_float():
+    return stats_approx_stats_flag(dt=gdal.GDT_Float32, struct_frmt='f')
+
+
+def stats_all_nodata():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000)
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    approx_ok = 1
+    force = 1
+    with gdaltest.error_handler():
+        stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
+    if stats != [0.0, 0.0, 0.0, 0.0]:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+
+    ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000, 1,
+                                            gdal.GDT_Float32)
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    approx_ok = 1
+    force = 1
+    with gdaltest.error_handler():
+        stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
+    if stats != [0.0, 0.0, 0.0, 0.0]:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Run tests
 
@@ -876,6 +908,8 @@ gdaltest_list = [
     stats_uint16,
     stats_nodata_almost_max_float32,
     stats_approx_stats_flag,
+    stats_approx_stats_flag_float,
+    stats_all_nodata,
 ]
 
 if __name__ == '__main__':

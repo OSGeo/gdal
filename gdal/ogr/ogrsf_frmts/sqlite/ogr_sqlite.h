@@ -621,6 +621,8 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
 
     virtual OGRErr      ResetStatement() override;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteSelectLayer)
+
   public:
                         OGRSQLiteSelectLayer( OGRSQLiteDataSource *,
                                               CPLString osSQL,

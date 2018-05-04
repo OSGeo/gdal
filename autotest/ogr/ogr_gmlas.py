@@ -1147,7 +1147,6 @@ class GMLASHTTPHandler(BaseHTTPRequestHandler):
                 f.close()
 
             if self.path.startswith('/vsimem/'):
-                from osgeo import gdal
                 f = gdal.VSIFOpenL(self.path, "rb")
                 if f is None:
                     self.send_response(404)

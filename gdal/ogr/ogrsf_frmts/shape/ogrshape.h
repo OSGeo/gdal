@@ -270,6 +270,8 @@ class OGRShapeDataSource final: public OGRDataSource
     bool                b2GBLimit;
     char              **papszOpenOptions;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRShapeDataSource)
+
   public:
                         OGRShapeDataSource();
     virtual            ~OGRShapeDataSource();

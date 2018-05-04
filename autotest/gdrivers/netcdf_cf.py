@@ -115,7 +115,7 @@ def netcdf_cf_setup():
     # http method with curl, should use python module but easier for now
     success = False
     try:
-        (ret, err) = gdaltest.runexternal_out_and_err('curl')
+        gdaltest.runexternal_out_and_err('curl')
     except OSError:
         print('no curl executable')
     else:
