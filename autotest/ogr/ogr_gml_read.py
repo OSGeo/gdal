@@ -1712,6 +1712,7 @@ def ogr_gml_43():
     # The service times out
     return 'skip'
 
+    # pylint: disable=unreachable
     if not gdaltest.have_gml_reader:
         return 'skip'
 
