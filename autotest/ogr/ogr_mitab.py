@@ -2644,6 +2644,54 @@ def ogr_mitab_tab_view():
 
     return 'success'
 
+
+###############################################################################
+
+
+def ogr_mitab_style():
+
+    tmpfile = '/vsimem/ogr_mitab_style.tab'
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(tmpfile)
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,0 0))'))
+    f.SetStyleString("BRUSH(fc:#AABBCC,bc:#DDEEFF);PEN(c:#DDEEFF)")
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,0 0))'))
+    f.SetStyleString('BRUSH(fc:#AABBCC,id:"mapinfo-brush-1")')
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,0 0))'))
+    f.SetStyleString('BRUSH(fc:#AABBCC00,bc:#ddeeff00)')
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(tmpfile)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetStyleString() != 'BRUSH(fc:#aabbcc,bc:#ddeeff,id:"mapinfo-brush-2,ogr-brush-0");PEN(w:1px,c:#ddeeff,id:"mapinfo-pen-2,ogr-pen-0")':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetStyleString() != 'BRUSH(fc:#aabbcc,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetStyleString() != 'BRUSH(fc:#aabbcc,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(tmpfile)
+
+    return 'success'
+
+
 ###############################################################################
 #
 
@@ -2715,6 +2763,7 @@ gdaltest_list = [
     ogr_mitab_49_aspatial,
     ogr_mitab_tab_field_index_creation,
     ogr_mitab_tab_view,
+    ogr_mitab_style,
     ogr_mitab_cleanup
 ]
 
