@@ -569,7 +569,6 @@ def ogr_mitab_17():
     if ogr_gml_read.ogr_gml_1() != 'success':
         return 'skip'
 
-    import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
 
@@ -1359,7 +1358,7 @@ def ogr_mitab_28():
     # Check sequential enumeration
     for f in lyr:
         g = f.GetGeometryRef()
-        (x, y, z) = g.GetPoint(0)
+        (x, y, _) = g.GetPoint(0)
         n = permutation[i]
         x_ref = int(n / N2)
         y_ref = n % N2

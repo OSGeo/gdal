@@ -325,7 +325,6 @@ def ogr_join_15():
 
     ds = None
 
-    from osgeo import gdal
     gdal.Unlink('/vsimem/ogr_join_14/first.csv')
     gdal.Unlink('/vsimem/ogr_join_14/second.csv')
     gdal.Unlink('/vsimem/ogr_join_14/third.csv')

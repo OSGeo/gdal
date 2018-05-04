@@ -263,12 +263,10 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
         interleave = True
         xdim = 2
         ydim = 1
-        bdim = 0
     elif interleave == 'pixel':
         interleave = False
         xdim = 1
         ydim = 0
-        bdim = 2
     else:
         raise ValueError('Interleave should be band or pixel')
 
