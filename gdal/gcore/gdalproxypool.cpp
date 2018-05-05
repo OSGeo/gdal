@@ -623,13 +623,13 @@ GDALProxyPoolDataset::GDALProxyPoolDataset(const char* pszSourceDatasetDescripti
 
     if (pszProjectionRefIn)
     {
-        pszProjectionRef = nullptr;
-        bHasSrcProjection = FALSE;
+        pszProjectionRef = CPLStrdup(pszProjectionRefIn);
+        bHasSrcProjection = TRUE;
     }
     else
     {
-        pszProjectionRef = CPLStrdup(pszProjectionRefIn);
-        bHasSrcProjection = TRUE;
+        pszProjectionRef = nullptr;
+        bHasSrcProjection = FALSE;
     }
     if (padfGeoTransform)
     {
