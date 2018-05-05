@@ -2689,10 +2689,6 @@ class Band(MajorObject):
               virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size,options)
           return gdalnumeric.VirtualMemGetArray( virtualmem )
 
-    def __get_array_interface__(self):
-        shape = [1, self.XSize, self.YSize]
-
-
 Band_swigregister = _gdal.Band_swigregister
 Band_swigregister(Band)
 

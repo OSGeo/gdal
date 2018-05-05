@@ -510,10 +510,6 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
         else:
             virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size,options)
         return gdalnumeric.VirtualMemGetArray( virtualmem )
-
-  def __get_array_interface__(self):
-      shape = [1, self.XSize, self.YSize]
-
 %}
 }
 
