@@ -145,6 +145,7 @@ static void update_buffer_size(void* obj, char* data, char* data_aligned, size_t
 %rename (VSIFReadL) wrapper_VSIFReadL;
 
 %apply ( void **outPythonObject ) { (void **buf ) };
+%apply Pointer NONNULL {VSILFILE* fp};
 %inline %{
 unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int nMembCount, VSILFILE *fp)
 {
@@ -200,6 +201,7 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
 }
 %}
 %clear (void **buf );
+%clear VSILFILE* fp;
 
 /* -------------------------------------------------------------------- */
 /*      GDAL_GCP                                                        */
