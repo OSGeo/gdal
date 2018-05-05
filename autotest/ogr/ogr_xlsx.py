@@ -281,10 +281,7 @@ def ogr_xlsx_7():
     if drv is None:
         return 'skip'
 
-    try:
-        os.unlink('tmp/ogr_xlsx_7.xlsx')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/ogr_xlsx_7.xlsx')
     shutil.copy('data/test.xlsx', 'tmp/ogr_xlsx_7.xlsx')
 
     ds = ogr.Open('tmp/ogr_xlsx_7.xlsx', update=1)

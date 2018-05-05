@@ -86,10 +86,7 @@ def fits_metadata():
     md = {'TEST': 'test_value'}
     ds2.SetMetadata(md)
     ds2 = None
-    try:
-        os.unlink('tmp/byte.fits.aux.xml')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/byte.fits.aux.xml')
 
     ds2 = gdal.Open('tmp/byte.fits')
     md = ds2.GetMetadata()
@@ -102,10 +99,7 @@ def fits_metadata():
     md = {'TEST2': 'test_value2'}
     ds2.SetMetadata(md)
     ds2 = None
-    try:
-        os.unlink('tmp/byte.fits.aux.xml')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/byte.fits.aux.xml')
 
     ds2 = gdal.Open('tmp/byte.fits')
     md = ds2.GetMetadata()

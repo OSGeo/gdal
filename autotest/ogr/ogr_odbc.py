@@ -173,10 +173,7 @@ def ogr_odbc_cleanup():
     if ogrtest.odbc_drv is None:
         return 'skip'
 
-    try:
-        os.unlink('tmp/odbc.mdb')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/odbc.mdb')
 
     return 'success'
 

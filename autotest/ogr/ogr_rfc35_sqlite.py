@@ -49,10 +49,7 @@ def ogr_rfc35_sqlite_1():
     if sqlite_dr is None:
         return 'skip'
 
-    try:
-        os.unlink('tmp/rfc35_test.sqlite')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/rfc35_test.sqlite')
 
     # This is to speed-up the runtime of tests on EXT4 filesystems
     # Do not use this for production environment if you care about data safety

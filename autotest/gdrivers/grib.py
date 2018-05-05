@@ -133,10 +133,7 @@ def grib_read_units():
     if gdaltest.grib_drv is None:
         return 'skip'
 
-    try:
-        os.unlink('tmp/ds.mint.bin.aux.xml')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/ds.mint.bin.aux.xml')
 
     shutil.copy('data/grib/ds.mint.bin', 'tmp/ds.mint.bin')
     ds = gdal.Open('tmp/ds.mint.bin')

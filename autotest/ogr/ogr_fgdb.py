@@ -814,10 +814,7 @@ def ogr_fgdb_12():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    try:
-        os.unlink('tmp/dummy.gdb')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/dummy.gdb')
     try:
         shutil.rmtree('tmp/dummy.gdb')
     except OSError:
