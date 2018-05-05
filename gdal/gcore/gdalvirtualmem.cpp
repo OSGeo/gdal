@@ -50,23 +50,23 @@ typedef int spacing_type;
 
 class GDALVirtualMem
 {
-    GDALDatasetH hDS;
-    GDALRasterBandH hBand;
-    coord_type nXOff;
-    coord_type nYOff;
+    GDALDatasetH hDS = nullptr;
+    GDALRasterBandH hBand = nullptr;
+    coord_type nXOff = 0;
+    coord_type nYOff = 0;
     // int nXSize;
     // int nYSize;
-    coord_type nBufXSize;
-    coord_type nBufYSize;
-    GDALDataType eBufType;
-    int nBandCount;
-    int* panBandMap;
-    int nPixelSpace;
-    GIntBig nLineSpace;
-    GIntBig nBandSpace;
+    coord_type nBufXSize = 0;
+    coord_type nBufYSize = 0;
+    GDALDataType eBufType = GDT_Byte;
+    int nBandCount = 0;
+    int* panBandMap = nullptr;
+    int nPixelSpace = 0;
+    GIntBig nLineSpace = 0;
+    GIntBig nBandSpace = 0;
 
-    bool bIsCompact;
-    bool bIsBandSequential;
+    bool bIsCompact = false;
+    bool bIsBandSequential = false;
 
     bool IsCompact() const { return bIsCompact; }
     bool IsBandSequential() const { return bIsBandSequential; }
@@ -80,6 +80,8 @@ class GDALVirtualMem
                              void* pPage, size_t nBytes ) const;
     void DoIOPixelInterleaved( GDALRWFlag eRWFlag, size_t nOffset,
                                void* pPage, size_t nBytes ) const;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALVirtualMem)
 
 public:
              GDALVirtualMem( GDALDatasetH hDS,
@@ -1103,21 +1105,23 @@ CPLVirtualMem* GDALRasterBandGetVirtualMem( GDALRasterBandH hBand,
 
 class GDALTiledVirtualMem
 {
-    GDALDatasetH hDS;
-    GDALRasterBandH hBand;
-    int nXOff;
-    int nYOff;
-    int nXSize;
-    int nYSize;
-    int nTileXSize;
-    int nTileYSize;
-    GDALDataType eBufType;
-    int nBandCount;
-    int* panBandMap;
-    GDALTileOrganization eTileOrganization;
+    GDALDatasetH hDS = nullptr;
+    GDALRasterBandH hBand = nullptr;
+    int nXOff = 0;
+    int nYOff = 0;
+    int nXSize = 0;
+    int nYSize = 0;
+    int nTileXSize = 0;
+    int nTileYSize = 0;
+    GDALDataType eBufType = GDT_Byte;
+    int nBandCount = 0;
+    int* panBandMap = nullptr;
+    GDALTileOrganization eTileOrganization = GTO_TIP;
 
     void DoIO( GDALRWFlag eRWFlag, size_t nOffset,
                void* pPage, size_t nBytes ) const;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALTiledVirtualMem)
 
 public:
              GDALTiledVirtualMem( GDALDatasetH hDS,

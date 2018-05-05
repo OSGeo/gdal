@@ -61,9 +61,9 @@ public:
 protected:
     virtual void LoadMetadata() override;
 protected:
-    CPLString m_osBaseFilename;
-    CPLString m_osIMDSourceFilename;
-    CPLString m_osRPBSourceFilename;
+    CPLString m_osBaseFilename{};
+    CPLString m_osIMDSourceFilename{};
+    CPLString m_osRPBSourceFilename{};
 private:
     GDALMDReaderPleiades();
 };

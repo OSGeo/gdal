@@ -144,6 +144,8 @@ class CPL_DLL CPLMutexHolder
     const char *pszFile;
     int         nLine;
 
+    CPL_DISALLOW_COPY_ASSIGN(CPLMutexHolder)
+
   public:
 
     /** Instantiates the mutex if not already done. */
@@ -175,6 +177,8 @@ class CPL_DLL CPLLockHolder
     CPLLock    *hLock;
     const char *pszFile;
     int         nLine;
+
+    CPL_DISALLOW_COPY_ASSIGN(CPLLockHolder)
 
   public:
 

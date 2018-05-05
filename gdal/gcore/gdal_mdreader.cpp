@@ -94,9 +94,7 @@ static const char * const apszRPCTXT20ValItems[] =
 /**
  * GDALMDReaderManager()
  */
-GDALMDReaderManager::GDALMDReaderManager() :
-    m_pReader(nullptr)
-{}
+GDALMDReaderManager::GDALMDReaderManager() = default;
 
 /**
  * ~GDALMDReaderManager()

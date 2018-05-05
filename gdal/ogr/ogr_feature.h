@@ -816,6 +816,9 @@ class CPL_DLL OGRFeatureQuery
     OGRErr      Compile( OGRLayer *, OGRFeatureDefn*, const char *,
                          int bCheck,
                          swq_custom_func_registrar* poCustomFuncRegistrar );
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRFeatureQuery)
+
   public:
                 OGRFeatureQuery();
                ~OGRFeatureQuery();

@@ -89,6 +89,8 @@ class CPL_DLL OGRStyleTable
     CPLString osLastRequestedStyleName;
     int iNextStyle;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRStyleTable)
+
   public:
     OGRStyleTable();
     ~OGRStyleTable();
@@ -119,6 +121,8 @@ class CPL_DLL OGRStyleMgr
   private:
     OGRStyleTable   *m_poDataSetStyleTable;
     char            *m_pszStyleString;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRStyleMgr)
 
   public:
     explicit OGRStyleMgr(OGRStyleTable *poDataSetStyleTable = nullptr);
@@ -169,6 +173,8 @@ class CPL_DLL OGRStyleTool
     char *m_pszStyleString;
 
     virtual GBool Parse() = 0;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRStyleTool)
 
   protected:
 #ifndef DOXYGEN_SKIP
@@ -264,6 +270,8 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
 
     GBool Parse() override;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRStylePen)
+
   public:
 
     OGRStylePen();
@@ -312,6 +320,8 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
 
     GBool Parse() override;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRStyleBrush)
+
   public:
 
     OGRStyleBrush();
@@ -357,6 +367,8 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     OGRStyleValue    *m_pasStyleValue;
 
     GBool Parse() override;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRStyleSymbol)
 
   public:
 
@@ -411,6 +423,8 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     OGRStyleValue    *m_pasStyleValue;
 
     GBool Parse() override;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRStyleLabel)
 
   public:
 

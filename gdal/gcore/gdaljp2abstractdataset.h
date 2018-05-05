@@ -36,11 +36,13 @@
 
 class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
 {
-    char*               pszWldFilename;
+    char*               pszWldFilename = nullptr;
 
-    GDALDataset*        poMemDS;
-    char**              papszMetadataFiles;
-    int                 m_nWORLDFILEIndex;
+    GDALDataset*        poMemDS = nullptr;
+    char**              papszMetadataFiles = nullptr;
+    int                 m_nWORLDFILEIndex = -1;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALJP2AbstractDataset)
 
   protected:
     int CloseDependentDatasets() override;

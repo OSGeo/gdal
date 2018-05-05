@@ -58,7 +58,7 @@ protected:
     virtual char** AddXMLNameValueToList(char** papszList, const char *pszName,
                                          const char *pszValue) override;
 protected:
-    CPLString m_osXMLSourceFilename;
+    CPLString m_osXMLSourceFilename{};
 };
 
 #endif // READER_RDK1_H_INCLUDED

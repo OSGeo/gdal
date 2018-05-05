@@ -46,17 +46,15 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 class LayerDesc
 {
     public:
-        LayerDesc() {}
-
         bool operator < ( const LayerDesc& other ) const
         {
             return osOriginalStr < other.osOriginalStr;
         }
 
-        CPLString osOriginalStr;
-        CPLString osSubstitutedName;
-        CPLString osDSName;
-        CPLString osLayerName;
+        CPLString osOriginalStr{};
+        CPLString osSubstitutedName{};
+        CPLString osDSName{};
+        CPLString osLayerName{};
 };
 
 std::set<LayerDesc> OGRSQLiteGetReferencedLayers(const char* pszStatement);

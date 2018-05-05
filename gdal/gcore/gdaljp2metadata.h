@@ -59,6 +59,8 @@ class CPL_DLL GDALJP2Box
 
     GByte      *pabyData;
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALJP2Box)
+
 public:
     explicit    GDALJP2Box( VSILFILE * = nullptr );
                 ~GDALJP2Box();
@@ -139,6 +141,8 @@ private:
     static CPLXMLNode* CreateGDALMultiDomainMetadataXML(
                                        GDALDataset* poSrcDS,
                                        int bMainMDDomainOnly );
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALJP2Metadata)
 
 public:
     char  **papszGMLMetadata;

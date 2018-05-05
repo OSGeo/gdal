@@ -74,6 +74,8 @@ class CPL_DLL OGR_SRSNode
     int         NeedsQuoting() const;
     OGRErr      importFromWkt( const char **, int nRecLevel, int* pnNodes );
 
+    CPL_DISALLOW_COPY_ASSIGN(OGR_SRSNode)
+
   public:
     explicit     OGR_SRSNode(const char * = nullptr);
                 ~OGR_SRSNode();

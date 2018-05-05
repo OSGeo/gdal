@@ -55,6 +55,8 @@ class CPLKeywordParser
     bool    ReadPair( CPLString &osName, CPLString &osValue );
     bool    ReadGroup( const char *pszPathPrefix, int nRecLevel );
 
+    CPL_DISALLOW_COPY_ASSIGN(CPLKeywordParser)
+
 public:
     CPLKeywordParser();
     ~CPLKeywordParser();
