@@ -362,7 +362,6 @@ class CFChecker(object):
             print("\nCould not open file, please check that NetCDF is formatted correctly.\n".upper())
             print("ERRORS detected:", 1)
             raise
-            exit(1)
 
         # if 'auto' version, check the CF version in the file
         # if none found, use the default
@@ -2070,7 +2069,6 @@ class CFChecker(object):
                 print("ValueError:", sys.exc_info()[1])
                 print("INFO: Could not complete tests on missing_value attribute")
                 raise
-                rc = 0
 
         return rc
 

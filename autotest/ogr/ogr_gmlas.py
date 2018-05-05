@@ -113,8 +113,6 @@ def ogr_gmlas_basic():
     return compare_ogrinfo_output('data/gmlas/gmlas_test1.xml',
                                   'data/gmlas/gmlas_test1.txt')
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -1147,7 +1145,6 @@ class GMLASHTTPHandler(BaseHTTPRequestHandler):
                 f.close()
 
             if self.path.startswith('/vsimem/'):
-                from osgeo import gdal
                 f = gdal.VSIFOpenL(self.path, "rb")
                 if f is None:
                     self.send_response(404)

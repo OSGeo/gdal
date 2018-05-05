@@ -476,8 +476,8 @@ def pdf_jpeg_compression_rgb():
 # Test RGBA
 
 
-def pdf_rgba_default_compression(options_param=[]):
-
+def pdf_rgba_default_compression(options_param=None):
+    options_param = [] if options_param is None else options_param
     if gdaltest.pdf_drv is None:
         return 'skip'
 
@@ -1057,7 +1057,7 @@ def pdf_set_5_gcps_ogc_bp(dpi=300):
            [16., 18., 0, 0],
            [16., 8., 0, 0]]
 
-    for i, gcpi in enumerate(gcp):
+    for i, _ in enumerate(gcp):
         gcp[i][2] = src_gt[0] + gcp[i][0] * src_gt[1] + gcp[i][1] * src_gt[2]
         gcp[i][3] = src_gt[3] + gcp[i][0] * src_gt[4] + gcp[i][1] * src_gt[5]
 

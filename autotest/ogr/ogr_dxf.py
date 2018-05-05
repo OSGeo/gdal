@@ -3867,6 +3867,15 @@ def ogr_dxf_53():
 
     return 'success'
 
+
+###############################################################################
+def ogr_dxf_insert_too_many_errors():
+
+    with gdaltest.error_handler():
+        ogr.Open('data/insert-too-many-errors.dxf')
+
+    return 'success'
+
 ###############################################################################
 # cleanup
 
@@ -3935,6 +3944,7 @@ gdaltest_list = [
     ogr_dxf_51,
     ogr_dxf_52,
     ogr_dxf_53,
+    ogr_dxf_insert_too_many_errors,
     ogr_dxf_cleanup]
 
 if __name__ == '__main__':

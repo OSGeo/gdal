@@ -84,7 +84,7 @@ def osr_usgs_2():
     PARAMETER["false_easting",0],PARAMETER["false_northing",0],\
     UNIT["metre",1,AUTHORITY["EPSG","9001"]]]""")
 
-    (proj_code, zone, parms, datum_code) = srs.ExportToUSGS()
+    (proj_code, _, parms, datum_code) = srs.ExportToUSGS()
 
     if proj_code != 4 or datum_code != 0 \
        or abs(gdal.PackedDMSToDec(parms[2]) - 33.90363403) > 0.0000005 \
