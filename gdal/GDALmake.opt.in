@@ -80,6 +80,7 @@ NO_SIGN_COMPARE = @NO_SIGN_COMPARE@
 NO_NON_VIRTUAL_DTOR_FLAG = @NO_NON_VIRTUAL_DTOR_FLAG@
 NO_LOGICAL_OP_FLAG = @NO_LOGICAL_OP_FLAG@
 WARN_OLD_STYLE_CAST = @WARN_OLD_STYLE_CAST@
+WARN_EFFCPLUSPLUS = @WARN_EFFCPLUSPLUS@
 
 # Also available -DAFL_FRIENDLY for strcmp(), etc.. variants that will
 # work better with American Fuzzy Lop branch examination logic

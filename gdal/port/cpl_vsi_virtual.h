@@ -124,12 +124,14 @@ public:
 class CPL_DLL VSIFileManager
 {
 private:
-    VSIFilesystemHandler *poDefaultHandler;
-    std::map<std::string, VSIFilesystemHandler *> oHandlers;
+    VSIFilesystemHandler *poDefaultHandler = nullptr;
+    std::map<std::string, VSIFilesystemHandler *> oHandlers{};
 
     VSIFileManager();
 
     static VSIFileManager *Get();
+
+    CPL_DISALLOW_COPY_ASSIGN(VSIFileManager)
 
 public:
     ~VSIFileManager();
@@ -170,12 +172,11 @@ typedef struct
 class VSIArchiveContent
 {
 public:
-    time_t       mTime;
-    vsi_l_offset nFileSize;
-    int nEntries;
-    VSIArchiveEntry* entries;
+    time_t       mTime = 0;
+    vsi_l_offset nFileSize = 0;
+    int nEntries = 0;
+    VSIArchiveEntry* entries = nullptr;
 
-    VSIArchiveContent() : mTime(0), nFileSize(0), nEntries(0), entries(nullptr) {}
     ~VSIArchiveContent();
 };
 
@@ -195,12 +196,14 @@ class VSIArchiveReader
 
 class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
 {
+    CPL_DISALLOW_COPY_ASSIGN(VSIArchiveFilesystemHandler)
+
 protected:
-    CPLMutex* hMutex;
+    CPLMutex* hMutex = nullptr;
     /* We use a cache that contains the list of files contained in a VSIArchive file as */
     /* unarchive.c is quite inefficient in listing them. This speeds up access to VSIArchive files */
     /* containing ~1000 files like a CADRG product */
-    std::map<CPLString,VSIArchiveContent*>   oFileList;
+    std::map<CPLString,VSIArchiveContent*>   oFileList{};
 
     virtual const char* GetPrefix() = 0;
     virtual std::vector<CPLString> GetExtensions() = 0;

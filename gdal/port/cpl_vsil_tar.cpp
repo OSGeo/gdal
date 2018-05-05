@@ -65,18 +65,14 @@ constexpr int BUFFER_SIZE = 2 * HALF_BUFFER_SIZE;
 class VSITarEntryFileOffset final : public VSIArchiveEntryFileOffset
 {
 public:
-        GUIntBig m_nOffset;
+        GUIntBig m_nOffset = 0;
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
-        GUIntBig m_nFileSize;
-        CPLString m_osFileName;
+        GUIntBig m_nFileSize = 0;
+        CPLString m_osFileName{};
 #endif
 
-        explicit VSITarEntryFileOffset(GUIntBig nOffset)
+        explicit VSITarEntryFileOffset(GUIntBig nOffset): m_nOffset(nOffset)
         {
-            m_nOffset = nOffset;
-#ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
-            m_nFileSize = 0;
-#endif
         }
 
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
@@ -98,17 +94,20 @@ public:
 class VSITarReader final : public VSIArchiveReader
 {
     private:
-        VSILFILE* fp;
-        GUIntBig nCurOffset;
-        GUIntBig nNextFileSize;
-        CPLString osNextFileName;
-        GIntBig nModifiedTime;
+
+        CPL_DISALLOW_COPY_ASSIGN(VSITarReader)
+
+        VSILFILE* fp = nullptr;
+        GUIntBig nCurOffset = 0;
+        GUIntBig nNextFileSize = 0;
+        CPLString osNextFileName{};
+        GIntBig nModifiedTime = 0;
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
-        bool m_bIsFuzzerFriendly;
+        bool m_bIsFuzzerFriendly = false;
         GByte m_abyBuffer[BUFFER_SIZE+1] = {};
-        int m_abyBufferIdx;
-        int m_abyBufferSize;
-        GUIntBig m_nCurOffsetOld;
+        int m_abyBufferIdx = 0;
+        int m_abyBufferSize = 0;
+        GUIntBig m_nCurOffsetOld = 0;
 #endif
 
   public:
@@ -147,16 +146,9 @@ static bool VSIIsTGZ(const char* pszFilename)
 // And make it a symbolic constant.
 
 VSITarReader::VSITarReader(const char* pszTarFileName) :
-    nCurOffset(0),
-    nNextFileSize(0),
-    nModifiedTime(0)
+    fp(VSIFOpenL(pszTarFileName, "rb"))
 {
-    fp = VSIFOpenL(pszTarFileName, "rb");
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
-    m_bIsFuzzerFriendly = false;
-    m_abyBufferIdx = 0;
-    m_abyBufferSize = 0;
-    m_nCurOffsetOld = 0;
     if( fp != nullptr )
     {
         GByte abySignature[24] = {};

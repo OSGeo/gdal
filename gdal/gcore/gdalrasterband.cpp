@@ -60,45 +60,18 @@ CPL_CVSID("$Id$")
 
 /*! Constructor. Applications should never create GDALRasterBands directly. */
 
-GDALRasterBand::GDALRasterBand()
-
+GDALRasterBand::GDALRasterBand() :
+    GDALRasterBand(CPLTestBool( CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") ) )
 {
-    Init(CPLTestBool( CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") ) );
 }
 
 /** Constructor. Applications should never create GDALRasterBands directly.
  * @param bForceCachedIOIn Whether cached IO should be forced.
  */
-GDALRasterBand::GDALRasterBand(int bForceCachedIOIn)
+GDALRasterBand::GDALRasterBand(int bForceCachedIOIn):
+    bForceCachedIO(bForceCachedIOIn)
 
 {
-    Init(bForceCachedIOIn);
-}
-
-void GDALRasterBand::Init(int bForceCachedIOIn)
-{
-    poDS = nullptr;
-    nBand = 0;
-    nRasterXSize = 0;
-    nRasterYSize = 0;
-
-    eAccess = GA_ReadOnly;
-    nBlockXSize = -1;
-    nBlockYSize = -1;
-    eDataType = GDT_Byte;
-
-    nBlocksPerRow = 0;
-    nBlocksPerColumn = 0;
-
-    poMask = nullptr;
-    bOwnMask = false;
-    nMaskFlags = 0;
-
-    nBlockReads = 0;
-    bForceCachedIO = bForceCachedIOIn;
-
-    eFlushBlockErr = CE_None;
-    poBandBlockCache = nullptr;
 }
 
 /************************************************************************/

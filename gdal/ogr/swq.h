@@ -107,6 +107,9 @@ typedef swq_field_type (*swq_op_checker)( swq_expr_node *op,
 class swq_custom_func_registrar;
 
 class swq_expr_node {
+
+    CPL_DISALLOW_COPY_ASSIGN(swq_expr_node)
+
 public:
     swq_expr_node();
 
@@ -302,17 +305,15 @@ public:
         bool    operator() (const CPLString&, const CPLString &) const;
     };
 
-    GIntBig     count;
+    GIntBig     count = 0;
 
-    std::vector<CPLString>          oVectorDistinctValues;
-    std::set<CPLString, Comparator> oSetDistinctValues;
-    double      sum;
-    double      min;
-    double      max;
-    CPLString   osMin;
-    CPLString   osMax;
-
-        swq_summary() : count(0), sum(0.0), min(0.0), max(0.0) {}
+    std::vector<CPLString>          oVectorDistinctValues{};
+    std::set<CPLString, Comparator> oSetDistinctValues{};
+    double      sum = 0.0;
+    double      min = 0.0;
+    double      max = 0.0;
+    CPLString   osMin{};
+    CPLString   osMax{};
 };
 
 typedef struct {
@@ -349,6 +350,8 @@ public:
 class swq_select
 {
     void        postpreparse();
+
+    CPL_DISALLOW_COPY_ASSIGN(swq_select)
 
 public:
     swq_select();

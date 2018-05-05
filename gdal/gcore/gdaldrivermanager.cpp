@@ -114,9 +114,7 @@ GDALDriverManager * GetGDALDriverManager()
 /*                         GDALDriverManager()                          */
 /************************************************************************/
 
-GDALDriverManager::GDALDriverManager() :
-    nDrivers(0),
-    papoDrivers(nullptr)
+GDALDriverManager::GDALDriverManager()
 {
     CPLAssert( poDM == nullptr );
 

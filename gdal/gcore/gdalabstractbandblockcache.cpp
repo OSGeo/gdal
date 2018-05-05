@@ -51,12 +51,10 @@ static int nAllBandsKeptAlivedBlocks = 0;
 GDALAbstractBandBlockCache::GDALAbstractBandBlockCache(
     GDALRasterBand* poBandIn ) :
     hSpinLock(CPLCreateLock(LOCK_SPIN)),
-    psListBlocksToFree(nullptr),
     hCond(CPLCreateCond()),
     hCondMutex(CPLCreateMutex()),
-    nKeepAliveCounter(0)
+    poBand(poBandIn)
 {
-    poBand = poBandIn;
     if( hCondMutex )
         CPLReleaseMutex(hCondMutex);
 }

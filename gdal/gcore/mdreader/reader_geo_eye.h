@@ -60,8 +60,8 @@ protected:
     char **LoadRPCWktFile() const;
     char **LoadIMDWktFile() const;
 protected:
-    CPLString m_osIMDSourceFilename;
-    CPLString m_osRPBSourceFilename;
+    CPLString m_osIMDSourceFilename{};
+    CPLString m_osRPBSourceFilename{};
 };
 
 #endif // READER_GEO_EYE_H_INCLUDED

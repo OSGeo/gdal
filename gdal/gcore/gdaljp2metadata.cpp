@@ -1674,58 +1674,51 @@ static void GDALGMLJP2PatchFeatureCollectionSubstitutionGroup(CPLXMLNode* psRoot
 class GMLJP2V2GMLFileDesc
 {
     public:
-        CPLString osFile;
-        CPLString osRemoteResource;
-        CPLString osNamespace;
-        CPLString osNamespacePrefix;
-        CPLString osSchemaLocation;
-        int       bInline;
-        int       bParentCoverageCollection;
-
-            GMLJP2V2GMLFileDesc(): bInline(TRUE), bParentCoverageCollection(TRUE) {}
+        CPLString osFile{};
+        CPLString osRemoteResource{};
+        CPLString osNamespace{};
+        CPLString osNamespacePrefix{};
+        CPLString osSchemaLocation{};
+        int       bInline = true;
+        int       bParentCoverageCollection = true;
 };
 
 class GMLJP2V2AnnotationDesc
 {
     public:
-        CPLString osFile;
+        CPLString osFile{};
 };
 
 class GMLJP2V2MetadataDesc
 {
     public:
-        CPLString osFile;
-        CPLString osContent;
-        CPLString osTemplateFile;
-        CPLString osSourceFile;
-        int       bGDALMetadata;
-        int       bParentCoverageCollection;
-
-            GMLJP2V2MetadataDesc(): bGDALMetadata(FALSE), bParentCoverageCollection(TRUE) {}
+        CPLString osFile{};
+        CPLString osContent{};
+        CPLString osTemplateFile{};
+        CPLString osSourceFile{};
+        int       bGDALMetadata = false;
+        int       bParentCoverageCollection = true;
 };
 
 class GMLJP2V2StyleDesc
 {
     public:
-        CPLString osFile;
-        int       bParentCoverageCollection;
-
-            GMLJP2V2StyleDesc(): bParentCoverageCollection(TRUE) {}
+        CPLString osFile{};
+        int       bParentCoverageCollection = true;
 };
 
 class GMLJP2V2ExtensionDesc
 {
     public:
-        CPLString osFile;
-        int       bParentCoverageCollection;
-
-            GMLJP2V2ExtensionDesc(): bParentCoverageCollection(TRUE) {}
+        CPLString osFile{};
+        int       bParentCoverageCollection = true;
 };
+
 class GMLJP2V2BoxDesc
 {
     public:
-        CPLString osFile;
-        CPLString osLabel;
+        CPLString osFile{};
+        CPLString osLabel{};
 };
 
 GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
