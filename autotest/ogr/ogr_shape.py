@@ -1403,6 +1403,7 @@ def ogr_shape_32():
 
     return 'skip'
 
+    # pylint: disable=unreachable
     from decimal import Decimal
 
     BigFilePath = '/tmp'
