@@ -52,7 +52,7 @@ CPL_CVSID("$Id$")
 #define handleErrRetNULL(err) if((err) != CL_SUCCESS) { \
     (*clErr) = err; \
     CPLError(CE_Failure, CPLE_AppDefined, "Error at file %s line %d: %s", __FILE__, __LINE__, getCLErrorString(err)); \
-    return NULL; \
+    return nullptr; \
 }
 
 #define handleErrGoto(err, goto_label) if((err) != CL_SUCCESS) { \
@@ -62,13 +62,13 @@ CPL_CVSID("$Id$")
 }
 
 #define freeCLMem(clMem, fallBackMem)  do { \
-    if ((clMem) != NULL) { \
+    if ((clMem) != nullptr) { \
         handleErr(err = clReleaseMemObject(clMem)); \
-        clMem = NULL; \
-        fallBackMem = NULL; \
-    } else if ((fallBackMem) != NULL) { \
+        clMem = nullptr; \
+        fallBackMem = nullptr; \
+    } else if ((fallBackMem) != nullptr) { \
         CPLFree(fallBackMem); \
-        fallBackMem = NULL; \
+        fallBackMem = nullptr; \
     } \
 } while( false )
 
@@ -263,7 +263,7 @@ static cl_device_id get_device(OCLVendor *peVendor)
     cl_platform_id platforms[10];
     cl_uint num_platforms;
     cl_uint i;
-    cl_device_id preferred_device_id = NULL;
+    cl_device_id preferred_device_id = nullptr;
     int preferred_is_gpu = FALSE;
 
     static bool gbBuggyOpenCL = false;
@@ -290,7 +290,7 @@ static cl_device_id get_device(OCLVendor *peVendor)
     // default, unless the PREFERRED_OPENCL_VENDOR config option is specified.
     for( i=0; i<num_platforms;i++)
     {
-        cl_device_id device = NULL;
+        cl_device_id device = nullptr;
         const char* pszBlacklistedVendor;
         const char* pszPreferredVendor;
         int is_gpu;
@@ -308,7 +308,7 @@ static cl_device_id get_device(OCLVendor *peVendor)
             // Find the CPU CL device, as a fallback
             err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_CPU, 1,
                                  &device, nullptr);
-            if( err != CL_SUCCESS || device == 0 )
+            if( err != CL_SUCCESS || device == nullptr )
                 continue;
         }
 
@@ -325,7 +325,7 @@ static cl_device_id get_device(OCLVendor *peVendor)
         
         pszBlacklistedVendor = CPLGetConfigOption("BLACKLISTED_OPENCL_VENDOR", nullptr);
         if( pszBlacklistedVendor &&
-            EQUAL( (const char*)vendor_name, pszBlacklistedVendor ) ) 
+            EQUAL( reinterpret_cast<const char*>(vendor_name), pszBlacklistedVendor ) ) 
         {
             CPLDebug("OpenCL", "Blacklisted vendor='%s' / device='%s' implementation skipped",
                      vendor_name, device_name);
@@ -341,14 +341,14 @@ static cl_device_id get_device(OCLVendor *peVendor)
         pszPreferredVendor = CPLGetConfigOption("PREFERRED_OPENCL_VENDOR", nullptr);
         if( pszPreferredVendor )
         {
-            if( EQUAL( (const char*)vendor_name, pszPreferredVendor ) )
+            if( EQUAL( reinterpret_cast<const char*>(vendor_name), pszPreferredVendor ) )
             {
                 preferred_device_id = device;
                 preferred_is_gpu = is_gpu;
                 break;
             }
         }
-        else if( is_gpu && !STARTS_WITH((const char*)vendor_name, "Intel") )
+        else if( is_gpu && !STARTS_WITH(reinterpret_cast<const char*>(vendor_name), "Intel") )
         {
             preferred_device_id = device;
             preferred_is_gpu = is_gpu;
@@ -368,9 +368,9 @@ static cl_device_id get_device(OCLVendor *peVendor)
     CPLDebug( "OpenCL", "Connected to vendor='%s' / device='%s' (%s implementation).",
               vendor_name, device_name, (preferred_is_gpu) ? "GPU" : "CPU");
 
-    if (STARTS_WITH((const char*)vendor_name, "Advanced Micro Devices"))
+    if (STARTS_WITH(reinterpret_cast<const char*>(vendor_name), "Advanced Micro Devices"))
         *peVendor = VENDOR_AMD;
-    else if (STARTS_WITH((const char*)vendor_name, "Intel"))
+    else if (STARTS_WITH(reinterpret_cast<const char*>(vendor_name), "Intel"))
         *peVendor = VENDOR_INTEL;
     else
         *peVendor = VENDOR_OTHER;
@@ -389,7 +389,8 @@ static cl_int set_supported_formats(struct oclWarper *warper,
                              unsigned int *chosenSize,
                              cl_channel_type dataType )
 {
-    cl_image_format *fmtBuf = (cl_image_format *)calloc(256, sizeof(cl_image_format));
+    cl_image_format *fmtBuf = static_cast<cl_image_format *>(
+        calloc(256, sizeof(cl_image_format)));
     cl_uint numRet;
     cl_uint i;
     cl_uint extraSpace = 9999;
@@ -441,7 +442,8 @@ static cl_int set_supported_formats(struct oclWarper *warper,
     {
         CPLDebug("OpenCL",
                  "Cannot find supported format for dataType = %s and minOrderSize = %d",
-                 getCLDataTypeString(dataType), (int)minOrderSize);
+                 getCLDataTypeString(dataType),
+                 static_cast<int>(minOrderSize));
     }
     return (bFound) ? CL_SUCCESS : CL_INVALID_OPERATION;
 }
@@ -468,17 +470,17 @@ cl_int alloc_pinned_mem(struct oclWarper *warper, int imgNum, size_t dataSz,
                                    dataSz, nullptr, &err);
 
     if (err == CL_SUCCESS) {
-        wrkPtr[imgNum] = (void *)clEnqueueMapBuffer(warper->queue, wrkCL[imgNum],
+        wrkPtr[imgNum] = clEnqueueMapBuffer(warper->queue, wrkCL[imgNum],
                                                     CL_FALSE, CL_MAP_WRITE,
                                                     0, dataSz, 0, nullptr, nullptr, &err);
         handleErr(err);
     } else {
-        wrkCL[imgNum] = NULL;
+        wrkCL[imgNum] = nullptr;
 #ifdef DEBUG_OPENCL
         CPLDebug("OpenCL", "Using fallback non-pinned memory!");
 #endif
         //Fallback to regular allocation
-        wrkPtr[imgNum] = (void *)VSI_MALLOC_VERBOSE(dataSz);
+        wrkPtr[imgNum] = VSI_MALLOC_VERBOSE(dataSz);
 
         if (wrkPtr[imgNum] == NULL)
             handleErr(err = CL_OUT_OF_HOST_MEMORY);
@@ -519,20 +521,20 @@ cl_int alloc_working_arr(struct oclWarper *warper,
     }
 
     //Alloc space for pointers to the main image data
-    warper->realWork.v = (void **)VSI_CALLOC_VERBOSE(ptrSz, warper->numImages);
-    warper->dstRealWork.v = (void **)VSI_CALLOC_VERBOSE(ptrSz, warper->numImages);
+    warper->realWork.v = static_cast<void **>(VSI_CALLOC_VERBOSE(ptrSz, warper->numImages));
+    warper->dstRealWork.v = static_cast<void **>(VSI_CALLOC_VERBOSE(ptrSz, warper->numImages));
     if (warper->realWork.v == NULL || warper->dstRealWork.v == NULL)
         handleErr(err = CL_OUT_OF_HOST_MEMORY);
 
     if (warper->imagWorkCL != NULL) {
         //Alloc space for pointers to the extra channel, if it exists
-        warper->imagWork.v = (void **)VSI_CALLOC_VERBOSE(ptrSz, warper->numImages);
-        warper->dstImagWork.v = (void **)VSI_CALLOC_VERBOSE(ptrSz, warper->numImages);
+        warper->imagWork.v = static_cast<void **>(VSI_CALLOC_VERBOSE(ptrSz, warper->numImages));
+        warper->dstImagWork.v = static_cast<void **>(VSI_CALLOC_VERBOSE(ptrSz, warper->numImages));
         if (warper->imagWork.v == NULL || warper->dstImagWork.v == NULL)
             handleErr(err = CL_OUT_OF_HOST_MEMORY);
     } else {
-        warper->imagWork.v = NULL;
-        warper->dstImagWork.v = NULL;
+        warper->imagWork.v = nullptr;
+        warper->dstImagWork.v = nullptr;
     }
 
     //Calc the sizes we need
@@ -612,8 +614,8 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
     cl_kernel kernel;
     cl_int err = CL_SUCCESS;
 #define PROGBUF_SIZE 128000
-    char *buffer = (char *)CPLCalloc(PROGBUF_SIZE, sizeof(char));
-    char *progBuf = (char *)CPLCalloc(PROGBUF_SIZE, sizeof(char));
+    char *buffer = static_cast<char *>(CPLCalloc(PROGBUF_SIZE, sizeof(char)));
+    char *progBuf = static_cast<char *>(CPLCalloc(PROGBUF_SIZE, sizeof(char)));
     float dstMinVal = 0.f, dstMaxVal = 0.0;
 
     const char *outType;
@@ -1318,8 +1320,9 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
         snprintf(progBuf, PROGBUF_SIZE, "%s\n%s", kernGenFuncs, kernResampler);
 
     //Actually make the program from assembled source
-    program = clCreateProgramWithSource(warper->context, 1, (const char**)&progBuf,
-                                        NULL, &err);
+    program = clCreateProgramWithSource(warper->context, 1,
+                                        const_cast<const char**>(reinterpret_cast<char**>(&progBuf)),
+                                        nullptr, &err);
     handleErrGoto(err, error_final);
 
     //Assemble the compiler arg string for speed. All invariants should be defined here.
@@ -1337,12 +1340,12 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
             (warper->imageFormat == CL_FLOAT) ? "-D USE_CLAMP_TO_DST_FLOAT=1 " : "",
             warper->srcWidth, warper->srcHeight, warper->dstWidth, warper->dstHeight,
             warper->useUnifiedSrcDensity, warper->useUnifiedSrcValid,
-            warper->useDstDensity, warper->useDstValid, warper->imagWorkCL != NULL,
+            warper->useDstDensity, warper->useDstValid, warper->imagWorkCL != nullptr,
             dfXScale, dfYScale, dfXFilter, dfYFilter,
             nXRadius, nYRadius, nFiltInitX, nFiltInitY,
-            M_PI, outType, dstMinVal, dstMaxVal, warper->fDstNoDataRealCL != NULL,
+            M_PI, outType, dstMinVal, dstMaxVal, warper->fDstNoDataRealCL != nullptr,
             dVecf, dUseVec, warper->resampAlg == OCL_CubicSpline,
-            warper->nBandSrcValidCL != NULL, warper->coordMult);
+            warper->nBandSrcValidCL != nullptr, warper->coordMult);
 
     (*clErr) = err = clBuildProgram(program, 1, &(warper->dev), buffer, nullptr, nullptr);
 
@@ -1416,9 +1419,9 @@ cl_int set_coord_data (struct oclWarper *warper, cl_mem *xy)
 #endif
     (*xy) = clCreateImage2D(warper->context,
                             CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &imgFmt,
-                            (size_t) warper->xyWidth,
-                            (size_t) warper->xyHeight,
-                            (size_t) sizeof(float) * warper->xyChSize * warper->xyWidth,
+                            static_cast<size_t>(warper->xyWidth),
+                            static_cast<size_t>(warper->xyHeight),
+                            sizeof(float) * warper->xyChSize * warper->xyWidth,
                             warper->xyWork, &err);
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || defined(__clang__)
 #pragma GCC diagnostic pop
@@ -1458,9 +1461,9 @@ cl_int set_unified_data(struct oclWarper *warper,
 {
     cl_int err = CL_SUCCESS;
     size_t sz = warper->srcWidth * warper->srcHeight;
-    int useValid = warper->nBandSrcValidCL != NULL;
+    int useValid = warper->nBandSrcValidCL != nullptr;
     //32 bits in the mask
-    int validSz = (int)(sizeof(int) * ((31 + sz) >> 5));
+    int validSz = static_cast<int>(sizeof(int) * ((31 + sz) >> 5));
 
     //Copy unifiedSrcDensity if it exists
     if (unifiedSrcDensity == NULL) {
@@ -1554,7 +1557,7 @@ cl_int set_src_rast_data (struct oclWarper *warper, int iNum, size_t sz,
 {
     cl_image_format imgFmt;
     cl_int err = CL_SUCCESS;
-    int useImagWork = warper->imagWork.v != NULL && warper->imagWork.v[iNum] != NULL;
+    int useImagWork = warper->imagWork.v != NULL && warper->imagWork.v[iNum] != nullptr;
 
     //Set up image vars
     imgFmt.image_channel_order = chOrder;
@@ -1568,7 +1571,8 @@ cl_int set_src_rast_data (struct oclWarper *warper, int iNum, size_t sz,
 
     (*srcReal) = clCreateImage2D(warper->context,
                                  CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &imgFmt,
-                                 (size_t) warper->srcWidth, (size_t) warper->srcHeight,
+                                 static_cast<size_t>(warper->srcWidth),
+                                 static_cast<size_t>(warper->srcHeight),
                                  sz * warper->srcWidth, warper->realWork.v[iNum], &err);
     handleErr(err);
 
@@ -1576,7 +1580,8 @@ cl_int set_src_rast_data (struct oclWarper *warper, int iNum, size_t sz,
     if (useImagWork) {
         (*srcImag) = clCreateImage2D(warper->context,
                                      CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &imgFmt,
-                                     (size_t) warper->srcWidth, (size_t) warper->srcHeight,
+                                     static_cast<size_t>(warper->srcWidth),
+                                     static_cast<size_t>(warper->srcHeight),
                                      sz * warper->srcWidth, warper->imagWork.v[iNum], &err);
         handleErr(err);
     } else {
@@ -1838,11 +1843,11 @@ cl_int set_img_data(struct oclWarper *warper, void *srcImgData,
     unsigned int iSrcY, i;
     unsigned int vecOff = 0;
     unsigned int imgNum = bandNum;
-    void *dstReal = NULL;
-    void *dstImag = NULL;
+    void *dstReal = nullptr;
+    void *dstImag = nullptr;
 
     // Handle vector if needed
-    if (warper->useVec && (int)bandNum < warper->numBands - warper->numBands % 4) {
+    if (warper->useVec && static_cast<int>(bandNum) < warper->numBands - warper->numBands % 4) {
         imgChSize = warper->imgChSize4;
         vecOff = bandNum % 4;
         imgNum = bandNum / 4;
@@ -1853,7 +1858,7 @@ cl_int set_img_data(struct oclWarper *warper, void *srcImgData,
     // Set the images as needed
     dstReal = dstRealImgs[imgNum];
     if(dstImagImgs == NULL)
-        dstImag = NULL;
+        dstImag = nullptr;
     else
         dstImag = dstImagImgs[imgNum];
 
@@ -1870,31 +1875,31 @@ cl_int set_img_data(struct oclWarper *warper, void *srcImgData,
         switch (warper->imageFormat) {
             case CL_UNORM_INT8:
             {
-                unsigned char *realDst = &(((unsigned char *)dstReal)[vecOff]);
+                unsigned char *realDst = &((static_cast<unsigned char *>(dstReal))[vecOff]);
                 memcpy(realDst, srcImgData, width*height*sizeof(unsigned char));
                 break;
             }
             case CL_SNORM_INT8:
             {
-                char *realDst = &(((char *)dstReal)[vecOff]);
+                char *realDst = &((static_cast<char *>(dstReal))[vecOff]);
                 memcpy(realDst, srcImgData, width*height*sizeof(char));
                 break;
             }
             case CL_UNORM_INT16:
             {
-                unsigned short *realDst = &(((unsigned short *)dstReal)[vecOff]);
+                unsigned short *realDst = &((static_cast<unsigned short *>(dstReal))[vecOff]);
                 memcpy(realDst, srcImgData, width*height*sizeof(unsigned short));
                 break;
             }
             case CL_SNORM_INT16:
             {
-                short *realDst = &(((short *)dstReal)[vecOff]);
+                short *realDst = &((static_cast<short *>(dstReal))[vecOff]);
                 memcpy(realDst, srcImgData, width*height*sizeof(short));
                 break;
             }
             case CL_FLOAT:
             {
-                float *realDst = &(((float *)dstReal)[vecOff]);
+                float *realDst = &((static_cast<float *>(dstReal))[vecOff]);
                 memcpy(realDst, srcImgData, width*height*sizeof(float));
                 break;
             }
@@ -1909,40 +1914,40 @@ cl_int set_img_data(struct oclWarper *warper, void *srcImgData,
             switch (warper->imageFormat) {
                 case CL_UNORM_INT8:
                 {
-                    unsigned char *realDst = &(((unsigned char *)dstReal)[imgOff]);
-                    unsigned char *dataSrc = &(((unsigned char *)srcImgData)[pxOff]);
+                    unsigned char *realDst = &((static_cast<unsigned char *>(dstReal))[imgOff]);
+                    unsigned char *dataSrc = &((static_cast<unsigned char *>(srcImgData))[pxOff]);
                     for (i = 0; i < width; ++i)
                         realDst[imgChSize*i] = dataSrc[i];
                 }
                     break;
                 case CL_SNORM_INT8:
                 {
-                    char *realDst = &(((char *)dstReal)[imgOff]);
-                    char *dataSrc = &(((char *)srcImgData)[pxOff]);
+                    char *realDst = &((static_cast<char *>(dstReal))[imgOff]);
+                    char *dataSrc = &((static_cast<char *>(srcImgData))[pxOff]);
                     for (i = 0; i < width; ++i)
                         realDst[imgChSize*i] = dataSrc[i];
                 }
                     break;
                 case CL_UNORM_INT16:
                 {
-                    unsigned short *realDst = &(((unsigned short *)dstReal)[imgOff]);
-                    unsigned short *dataSrc = &(((unsigned short *)srcImgData)[pxOff]);
+                    unsigned short *realDst = &((static_cast<unsigned short *>(dstReal))[imgOff]);
+                    unsigned short *dataSrc = &((static_cast<unsigned short *>(srcImgData))[pxOff]);
                     for (i = 0; i < width; ++i)
                         realDst[imgChSize*i] = dataSrc[i];
                 }
                     break;
                 case CL_SNORM_INT16:
                 {
-                    short *realDst = &(((short *)dstReal)[imgOff]);
-                    short *dataSrc = &(((short *)srcImgData)[pxOff]);
+                    short *realDst = &((static_cast<short *>(dstReal))[imgOff]);
+                    short *dataSrc = &((static_cast<short *>(srcImgData))[pxOff]);
                     for (i = 0; i < width; ++i)
                         realDst[imgChSize*i] = dataSrc[i];
                 }
                     break;
                 case CL_FLOAT:
                 {
-                    float *realDst = &(((float *)dstReal)[imgOff]);
-                    float *dataSrc = &(((float *)srcImgData)[pxOff]);
+                    float *realDst = &((static_cast<float *>(dstReal))[imgOff]);
+                    float *dataSrc = &((static_cast<float *>(srcImgData))[pxOff]);
                     for (i = 0; i < width; ++i)
                         realDst[imgChSize*i] = dataSrc[i];
                 }
@@ -1959,9 +1964,9 @@ cl_int set_img_data(struct oclWarper *warper, void *srcImgData,
             switch (warper->imageFormat) {
                 case CL_FLOAT:
                 {
-                    float *realDst = &(((float *)dstReal)[imgOff]);
-                    float *imagDst = &(((float *)dstImag)[imgOff]);
-                    float *dataSrc = &(((float *)srcImgData)[pxOff]);
+                    float *realDst = &((static_cast<float *>(dstReal))[imgOff]);
+                    float *imagDst = &((static_cast<float *>(dstImag))[imgOff]);
+                    float *dataSrc = &((static_cast<float *>(srcImgData))[pxOff]);
                     for (i = 0; i < width; ++i) {
                         realDst[imgChSize*i] = dataSrc[i*2  ];
                         imagDst[imgChSize*i] = dataSrc[i*2+1];
@@ -1970,9 +1975,9 @@ cl_int set_img_data(struct oclWarper *warper, void *srcImgData,
                     break;
                 case CL_SNORM_INT8:
                 {
-                    char *realDst = &(((char *)dstReal)[imgOff]);
-                    char *imagDst = &(((char *)dstImag)[imgOff]);
-                    char *dataSrc = &(((char *)srcImgData)[pxOff]);
+                    char *realDst = &((static_cast<char *>(dstReal))[imgOff]);
+                    char *imagDst = &((static_cast<char *>(dstImag))[imgOff]);
+                    char *dataSrc = &((static_cast<char *>(srcImgData))[pxOff]);
                     for (i = 0; i < width; ++i) {
                         realDst[imgChSize*i] = dataSrc[i*2  ];
                         imagDst[imgChSize*i] = dataSrc[i*2+1];
@@ -1981,9 +1986,9 @@ cl_int set_img_data(struct oclWarper *warper, void *srcImgData,
                     break;
                 case CL_UNORM_INT8:
                 {
-                    unsigned char *realDst = &(((unsigned char *)dstReal)[imgOff]);
-                    unsigned char *imagDst = &(((unsigned char *)dstImag)[imgOff]);
-                    unsigned char *dataSrc = &(((unsigned char *)srcImgData)[pxOff]);
+                    unsigned char *realDst = &((static_cast<unsigned char *>(dstReal))[imgOff]);
+                    unsigned char *imagDst = &((static_cast<unsigned char *>(dstImag))[imgOff]);
+                    unsigned char *dataSrc = &((static_cast<unsigned char *>(srcImgData))[pxOff]);
                     for (i = 0; i < width; ++i) {
                         realDst[imgChSize*i] = dataSrc[i*2  ];
                         imagDst[imgChSize*i] = dataSrc[i*2+1];
@@ -1992,9 +1997,9 @@ cl_int set_img_data(struct oclWarper *warper, void *srcImgData,
                     break;
                 case CL_SNORM_INT16:
                 {
-                    short *realDst = &(((short *)dstReal)[imgOff]);
-                    short *imagDst = &(((short *)dstImag)[imgOff]);
-                    short *dataSrc = &(((short *)srcImgData)[pxOff]);
+                    short *realDst = &((static_cast<short *>(dstReal))[imgOff]);
+                    short *imagDst = &((static_cast<short *>(dstImag))[imgOff]);
+                    short *dataSrc = &((static_cast<short *>(srcImgData))[pxOff]);
                     for (i = 0; i < width; ++i) {
                         realDst[imgChSize*i] = dataSrc[i*2  ];
                         imagDst[imgChSize*i] = dataSrc[i*2+1];
@@ -2003,9 +2008,9 @@ cl_int set_img_data(struct oclWarper *warper, void *srcImgData,
                     break;
                 case CL_UNORM_INT16:
                 {
-                    unsigned short *realDst = &(((unsigned short *)dstReal)[imgOff]);
-                    unsigned short *imagDst = &(((unsigned short *)dstImag)[imgOff]);
-                    unsigned short *dataSrc = &(((unsigned short *)srcImgData)[pxOff]);
+                    unsigned short *realDst = &((static_cast<unsigned short *>(dstReal))[imgOff]);
+                    unsigned short *imagDst = &((static_cast<unsigned short *>(dstImag))[imgOff]);
+                    unsigned short *dataSrc = &((static_cast<unsigned short *>(srcImgData))[pxOff]);
                     for (i = 0; i < width; ++i) {
                         realDst[imgChSize*i] = dataSrc[i*2  ];
                         imagDst[imgChSize*i] = dataSrc[i*2+1];
@@ -2063,7 +2068,7 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     }
 
     // Set up warper environment.
-    warper = (struct oclWarper *)CPLCalloc(1, sizeof(struct oclWarper));
+    warper = static_cast<struct oclWarper *>(CPLCalloc(1, sizeof(struct oclWarper)));
 
     warper->eCLVendor = eCLVendor;
 
@@ -2083,20 +2088,20 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     warper->useDstDensity = FALSE;
     warper->useDstValid = FALSE;
 
-    warper->imagWorkCL = NULL;
-    warper->dstImagWorkCL = NULL;
-    warper->useBandSrcValidCL = NULL;
-    warper->useBandSrcValid = NULL;
-    warper->nBandSrcValidCL = NULL;
-    warper->nBandSrcValid = NULL;
-    warper->fDstNoDataRealCL = NULL;
-    warper->fDstNoDataReal = NULL;
-    warper->kern1 = NULL;
-    warper->kern4 = NULL;
+    warper->imagWorkCL = nullptr;
+    warper->dstImagWorkCL = nullptr;
+    warper->useBandSrcValidCL = nullptr;
+    warper->useBandSrcValid = nullptr;
+    warper->nBandSrcValidCL = nullptr;
+    warper->nBandSrcValid = nullptr;
+    warper->fDstNoDataRealCL = nullptr;
+    warper->fDstNoDataReal = nullptr;
+    warper->kern1 = nullptr;
+    warper->kern4 = nullptr;
 
     warper->dev = device;
 
-    warper->context = clCreateContext(0, 1, &(warper->dev), nullptr, nullptr, &err);
+    warper->context = clCreateContext(nullptr, 1, &(warper->dev), nullptr, nullptr, &err);
     handleErrGoto(err, error_label);
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || defined(__clang__)
 #pragma GCC diagnostic push
@@ -2113,7 +2118,8 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     handleErrGoto(err, error_label);
     err = clGetDeviceInfo(warper->dev, CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(size_t), &maxHeight, &sz);
     handleErrGoto(err, error_label);
-    if (maxWidth < (size_t)srcWidth || maxHeight < (size_t)srcHeight) {
+    if (maxWidth < static_cast<size_t>(srcWidth) ||
+        maxHeight < static_cast<size_t>(srcHeight)) {
         err = CL_INVALID_IMAGE_SIZE;
         handleErrGoto(err, error_label);
     }
@@ -2130,13 +2136,13 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     }
 
     //Make the pointer space for the real images
-    warper->realWorkCL = (cl_mem *)CPLCalloc(sizeof(cl_mem), warper->numImages);
-    warper->dstRealWorkCL = (cl_mem *)CPLCalloc(sizeof(cl_mem), warper->numImages);
+    warper->realWorkCL = static_cast<cl_mem*>(CPLCalloc(sizeof(cl_mem), warper->numImages));
+    warper->dstRealWorkCL = static_cast<cl_mem*>(CPLCalloc(sizeof(cl_mem), warper->numImages));
 
     //Make space for the per-channel Imag data (if exists)
     if (useImag) {
-        warper->imagWorkCL = (cl_mem *)CPLCalloc(sizeof(cl_mem), warper->numImages);
-        warper->dstImagWorkCL = (cl_mem *)CPLCalloc(sizeof(cl_mem), warper->numImages);
+        warper->imagWorkCL = static_cast<cl_mem*>(CPLCalloc(sizeof(cl_mem), warper->numImages));
+        warper->dstImagWorkCL = static_cast<cl_mem*>(CPLCalloc(sizeof(cl_mem), warper->numImages));
     }
 
     //Make space for the per-band BandSrcValid data (if exists)
@@ -2146,7 +2152,7 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
 
         //Allocate some space for the validity of the validity mask
         err = alloc_pinned_mem(warper, 0, warper->numBands*sizeof(char),
-                               (void **)&(warper->useBandSrcValid),
+                               reinterpret_cast<void **>(&(warper->useBandSrcValid)),
                                &(warper->useBandSrcValidCL));
         handleErrGoto(err, error_label);
 
@@ -2156,7 +2162,7 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
         // Allocate one array for all the band validity masks.
         // Remember that the masks don't use much memory (they're bitwise).
         err = alloc_pinned_mem(warper, 0, sz * sizeof(int),
-                               (void **)&(warper->nBandSrcValid),
+                               reinterpret_cast<void **>(&(warper->nBandSrcValid)),
                                &(warper->nBandSrcValidCL));
         handleErrGoto(err, error_label);
     }
@@ -2164,11 +2170,12 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     //Make space for the per-band
     if (dfDstNoDataReal != NULL) {
         alloc_pinned_mem(warper, 0, warper->numBands,
-                         (void **)&(warper->fDstNoDataReal), &(warper->fDstNoDataRealCL));
+                         reinterpret_cast<void **>(&(warper->fDstNoDataReal)),
+                         &(warper->fDstNoDataRealCL));
 
         //Copy over values
         for (i = 0; i < warper->numBands; ++i)
-            warper->fDstNoDataReal[i] = (float) dfDstNoDataReal[i];
+            warper->fDstNoDataReal[i] = static_cast<float>(dfDstNoDataReal[i]);
     }
 
     //Alloc working host image memory
@@ -2199,12 +2206,12 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     handleErrGoto(err, error_label);
 
     //Set coordinate image dimensions
-    warper->xyWidth  = (int)ceil(((float)warper->dstWidth  + (float)warper->coordMult-1)/(float)warper->coordMult);
-    warper->xyHeight = (int)ceil(((float)warper->dstHeight + (float)warper->coordMult-1)/(float)warper->coordMult);
+    warper->xyWidth  = static_cast<int>(ceil((static_cast<float>(warper->dstWidth)  + static_cast<float>(warper->coordMult)-1)/static_cast<float>(warper->coordMult)));
+    warper->xyHeight = static_cast<int>(ceil((static_cast<float>(warper->dstHeight) + static_cast<float>(warper->coordMult)-1)/static_cast<float>(warper->coordMult)));
 
     //Alloc coord memory
     sz = sizeof(float) * warper->xyChSize * warper->xyWidth * warper->xyHeight;
-    err = alloc_pinned_mem(warper, 0, sz, (void **)&(warper->xyWork),
+    err = alloc_pinned_mem(warper, 0, sz, reinterpret_cast<void **>(&(warper->xyWork)),
                            &(warper->xyWorkCL));
     handleErrGoto(err, error_label);
 
@@ -2248,7 +2255,7 @@ cl_int GDALWarpKernelOpenCL_setSrcValid(struct oclWarper *warper,
 cl_int GDALWarpKernelOpenCL_setSrcImg(struct oclWarper *warper, void *imgData,
                                       int bandNum)
 {
-    void **imagWorkPtr = NULL;
+    void **imagWorkPtr = nullptr;
 
     if (warper->imagWorkCL != NULL)
         imagWorkPtr = warper->imagWork.v;
@@ -2266,7 +2273,7 @@ cl_int GDALWarpKernelOpenCL_setSrcImg(struct oclWarper *warper, void *imgData,
 cl_int GDALWarpKernelOpenCL_setDstImg(struct oclWarper *warper, void *imgData,
                                       int bandNum)
 {
-    void **dstImagWorkPtr = NULL;
+    void **dstImagWorkPtr = nullptr;
 
     if (warper->dstImagWorkCL != NULL)
         dstImagWorkPtr = warper->dstImagWork.v;
@@ -2303,7 +2310,7 @@ cl_int GDALWarpKernelOpenCL_setCoordRow(struct oclWarper *warper,
     int xyWidth = warper->xyWidth;
     int i;
     int xyChSize = warper->xyChSize;
-    float *xyPtr, *xyPrevPtr = NULL;
+    float *xyPtr, *xyPrevPtr = nullptr;
     int lastRow = rowNum == height - 1;
     double dstHeightMod = 1.0, dstWidthMod = 1.0;
 
@@ -2321,19 +2328,19 @@ cl_int GDALWarpKernelOpenCL_setCoordRow(struct oclWarper *warper,
         xyPrevPtr = &(warper->xyWork[xyWidth * xyChSize * (warper->xyHeight - 2)]);
 
         if((height-1) % coordMult)
-            dstHeightMod = (double)coordMult / (double)((height-1) % coordMult);
+            dstHeightMod = static_cast<double>(coordMult) / static_cast<double>((height-1) % coordMult);
     }
 
     //Copy selected coordinates
     for (i = 0; i < width; i += coordMult) {
         if (success[i]) {
-            xyPtr[0] = (float) (rowSrcX[i] - srcXOff);
-            xyPtr[1] = (float) (rowSrcY[i] - srcYOff);
+            xyPtr[0] = static_cast<float>(rowSrcX[i] - srcXOff);
+            xyPtr[1] = static_cast<float>(rowSrcY[i] - srcYOff);
 
             if(lastRow) {
                 //Adjust bottom row so interpolator returns correct value
-                xyPtr[0] = (float) (dstHeightMod * (xyPtr[0] - xyPrevPtr[0]) + xyPrevPtr[0]);
-                xyPtr[1] = (float) (dstHeightMod * (xyPtr[1] - xyPrevPtr[1]) + xyPrevPtr[1]);
+                xyPtr[0] = static_cast<float>(dstHeightMod * (xyPtr[0] - xyPrevPtr[0]) + xyPrevPtr[0]);
+                xyPtr[1] = static_cast<float>(dstHeightMod * (xyPtr[1] - xyPrevPtr[1]) + xyPrevPtr[1]);
             }
         } else {
             xyPtr[0] = -99.0f;
@@ -2346,7 +2353,7 @@ cl_int GDALWarpKernelOpenCL_setCoordRow(struct oclWarper *warper,
 
     //Copy remaining coordinate
     if((width-1) % coordMult){
-        dstWidthMod = (double)coordMult / (double)((width-1) % coordMult);
+        dstWidthMod = static_cast<double>(coordMult) / static_cast<double>((width-1) % coordMult);
         xyPtr -= xyChSize;
         xyPrevPtr -= xyChSize;
     } else {
@@ -2362,22 +2369,22 @@ cl_int GDALWarpKernelOpenCL_setCoordRow(struct oclWarper *warper,
         // Calculate the needed x/y values using an equation from the OpenCL Spec
         // section 8.2, solving for Ti1j1
         if((width -1) % coordMult)
-            a = ((width -1) % coordMult)/(double)coordMult;
+            a = ((width -1) % coordMult)/static_cast<double>(coordMult);
 
         if((height-1) % coordMult)
-            b = ((height-1) % coordMult)/(double)coordMult;
+            b = ((height-1) % coordMult)/static_cast<double>(coordMult);
 
-        xyPtr[xyChSize  ] = (float) ((((1.0 - a) * (1.0 - b) * xyPrevPtr[0]
+        xyPtr[xyChSize  ] = static_cast<float>((((1.0 - a) * (1.0 - b) * xyPrevPtr[0]
                               + a * (1.0 - b) * xyPrevPtr[xyChSize]
                               + (1.0 - a) * b * xyPtr[0]) - origX)/(-a * b));
 
-        xyPtr[xyChSize+1] = (float) ((((1.0 - a) * (1.0 - b) * xyPrevPtr[1]
+        xyPtr[xyChSize+1] = static_cast<float>((((1.0 - a) * (1.0 - b) * xyPrevPtr[1]
                               + a * (1.0 - b) * xyPrevPtr[xyChSize+1]
                               + (1.0 - a) * b * xyPtr[1]) - origY)/(-a * b));
     } else {
         //Adjust last coordinate so interpolator returns correct value
-        xyPtr[xyChSize  ] = (float) (dstWidthMod * (rowSrcX[width-1] - srcXOff - xyPtr[0]) + xyPtr[0]);
-        xyPtr[xyChSize+1] = (float) (dstWidthMod * (rowSrcY[width-1] - srcYOff - xyPtr[1]) + xyPtr[1]);
+        xyPtr[xyChSize  ] = static_cast<float>(dstWidthMod * (rowSrcX[width-1] - srcXOff - xyPtr[0]) + xyPtr[0]);
+        xyPtr[xyChSize+1] = static_cast<float>(dstWidthMod * (rowSrcY[width-1] - srcYOff - xyPtr[1]) + xyPtr[1]);
     }
 
     return CL_SUCCESS;
@@ -2408,11 +2415,11 @@ cl_int GDALWarpKernelOpenCL_runResamp(struct oclWarper *warper,
     cl_mem dstDensityCL, dstValidCL, dstNoDataRealCL;
     cl_mem useBandSrcValidCL, nBandSrcValidCL;
     size_t groupSize, wordSize = 0;
-    cl_kernel kern = NULL;
+    cl_kernel kern = nullptr;
     cl_channel_order chOrder;
 
-    warper->useUnifiedSrcDensity = unifiedSrcDensity != NULL;
-    warper->useUnifiedSrcValid = unifiedSrcValid != NULL;
+    warper->useUnifiedSrcDensity = unifiedSrcDensity != nullptr;
+    warper->useUnifiedSrcValid = unifiedSrcValid != nullptr;
 
     //Check the word size
     switch (warper->imageFormat) {
@@ -2589,7 +2596,7 @@ cl_int GDALWarpKernelOpenCL_getRow(struct oclWarper *warper,
     }
 
     if (warper->dstImagWorkCL == NULL) {
-        (*rowImag) = NULL;
+        (*rowImag) = nullptr;
     } else {
         switch (warper->imageFormat) {
             case CL_FLOAT:
@@ -2626,7 +2633,7 @@ cl_int GDALWarpKernelOpenCL_deleteEnv(struct oclWarper *warper)
 
     for (i = 0; i < warper->numImages; ++i) {
         // Run free!!
-        void* dummy = NULL;
+        void* dummy = nullptr;
         if( warper->realWork.v )
             freeCLMem(warper->realWorkCL[i], warper->realWork.v[i]);
         else
