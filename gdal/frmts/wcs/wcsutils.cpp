@@ -662,7 +662,7 @@ CPLString GetKeywords(CPLXMLNode *root,
 
                 // crs, replace "http://www.opengis.net/def/crs/EPSG/0/"
                 // or "urn:ogc:def:crs:EPSG::" with EPSG:
-                const char const *epsg[] = {
+                const char* const epsg[] = {
                     "http://www.opengis.net/def/crs/EPSG/0/",
                     "urn:ogc:def:crs:EPSG::"
                 };
@@ -680,7 +680,7 @@ CPLString GetKeywords(CPLXMLNode *root,
                 // profiles, remove http://www.opengis.net/spec/
                 // interpolation, remove http://www.opengis.net/def/interpolation/OGC/1/
 
-                const char const *spec[] = {
+                const char* const spec[] = {
                     "http://www.opengis.net/spec/",
                     "http://www.opengis.net/def/interpolation/OGC/1/"
                 };
