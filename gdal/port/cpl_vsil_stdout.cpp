@@ -77,7 +77,11 @@ void VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream )
 
 class VSIStdoutFilesystemHandler final : public VSIFilesystemHandler
 {
+    CPL_DISALLOW_COPY_ASSIGN(VSIStdoutFilesystemHandler)
+
   public:
+    VSIStdoutFilesystemHandler() = default;
+
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
                             bool bSetError ) override;
@@ -93,11 +97,13 @@ class VSIStdoutFilesystemHandler final : public VSIFilesystemHandler
 
 class VSIStdoutHandle final : public VSIVirtualHandle
 {
-    vsi_l_offset      m_nOffset;
+    CPL_DISALLOW_COPY_ASSIGN(VSIStdoutHandle)
+
+    vsi_l_offset      m_nOffset = 0;
 
   public:
-    VSIStdoutHandle() : m_nOffset(0) {}
-    ~VSIStdoutHandle() override {}
+    VSIStdoutHandle() = default;
+    ~VSIStdoutHandle() override = default;
 
     int Seek( vsi_l_offset nOffset, int nWhence ) override;
     vsi_l_offset Tell() override;
@@ -259,7 +265,10 @@ class VSIStdoutRedirectFilesystemHandler final : public VSIFilesystemHandler
 
 class VSIStdoutRedirectHandle final : public VSIVirtualHandle
 {
-    VSIVirtualHandle* m_poHandle;
+    VSIVirtualHandle* m_poHandle = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(VSIStdoutRedirectHandle)
+
   public:
     explicit VSIStdoutRedirectHandle( VSIVirtualHandle* poHandle );
     ~VSIStdoutRedirectHandle() override;
@@ -277,9 +286,9 @@ class VSIStdoutRedirectHandle final : public VSIVirtualHandle
 /*                        VSIStdoutRedirectHandle()                    */
 /************************************************************************/
 
-VSIStdoutRedirectHandle::VSIStdoutRedirectHandle(VSIVirtualHandle* poHandle)
+VSIStdoutRedirectHandle::VSIStdoutRedirectHandle(VSIVirtualHandle* poHandle):
+    m_poHandle(poHandle)
 {
-    m_poHandle = poHandle;
 }
 
 /************************************************************************/

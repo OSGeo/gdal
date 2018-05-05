@@ -139,10 +139,10 @@ CPL_C_END
 class CPL_DLL CPLMutexHolder
 {
   private:
-    CPLMutex   *hMutex;
+    CPLMutex   *hMutex = nullptr;
     // Only used for debugging.
-    const char *pszFile;
-    int         nLine;
+    const char *pszFile = nullptr;
+    int         nLine = 0;
 
     CPL_DISALLOW_COPY_ASSIGN(CPLMutexHolder)
 
@@ -174,9 +174,9 @@ class CPL_DLL CPLMutexHolder
 class CPL_DLL CPLLockHolder
 {
   private:
-    CPLLock    *hLock;
-    const char *pszFile;
-    int         nLine;
+    CPLLock    *hLock = nullptr;
+    const char *pszFile = nullptr;
+    int         nLine = 0;
 
     CPL_DISALLOW_COPY_ASSIGN(CPLLockHolder)
 

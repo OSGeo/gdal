@@ -45,14 +45,16 @@
 
 class VSIOSSHandleHelper final: public IVSIS3LikeHandleHelper
 {
-        CPLString m_osURL;
-        CPLString m_osSecretAccessKey;
-        CPLString m_osAccessKeyId;
-        CPLString m_osEndpoint;
-        CPLString m_osBucket;
-        CPLString m_osObjectKey;
-        bool m_bUseHTTPS;
-        bool m_bUseVirtualHosting;
+        CPL_DISALLOW_COPY_ASSIGN(VSIOSSHandleHelper)
+
+        CPLString m_osURL{};
+        CPLString m_osSecretAccessKey{};
+        CPLString m_osAccessKeyId{};
+        CPLString m_osEndpoint{};
+        CPLString m_osBucket{};
+        CPLString m_osObjectKey{};
+        bool m_bUseHTTPS = false;
+        bool m_bUseVirtualHosting = false;
 
         void RebuildURL() override;
 
@@ -104,9 +106,9 @@ class VSIOSSHandleHelper final: public IVSIS3LikeHandleHelper
 class VSIOSSUpdateParams
 {
     public:
-        CPLString m_osEndpoint;
+        CPLString m_osEndpoint{};
 
-        VSIOSSUpdateParams() {}
+        VSIOSSUpdateParams() = default;
 
         explicit VSIOSSUpdateParams(const VSIOSSHandleHelper* poHelper) :
             m_osEndpoint(poHelper->GetEndpoint()) {}

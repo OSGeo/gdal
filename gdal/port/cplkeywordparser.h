@@ -45,10 +45,10 @@
 
 class CPLKeywordParser
 {
-    char     **papszKeywordList;
+    char     **papszKeywordList = nullptr;
 
-    CPLString osHeaderText;
-    const char *pszHeaderNext;
+    CPLString osHeaderText{};
+    const char *pszHeaderNext = nullptr;
 
     void    SkipWhite();
     bool    ReadWord( CPLString &osWord );
