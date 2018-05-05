@@ -84,10 +84,10 @@ typedef struct ogr_style_value
 class CPL_DLL OGRStyleTable
 {
   private:
-    char **m_papszStyleTable;
+    char **m_papszStyleTable = nullptr;
 
-    CPLString osLastRequestedStyleName;
-    int iNextStyle;
+    CPLString osLastRequestedStyleName{};
+    int iNextStyle = 0;
 
     CPL_DISALLOW_COPY_ASSIGN(OGRStyleTable)
 
@@ -119,8 +119,8 @@ class OGRStyleTool;
 class CPL_DLL OGRStyleMgr
 {
   private:
-    OGRStyleTable   *m_poDataSetStyleTable;
-    char            *m_pszStyleString;
+    OGRStyleTable   *m_poDataSetStyleTable = nullptr;
+    char            *m_pszStyleString = nullptr;
 
     CPL_DISALLOW_COPY_ASSIGN(OGRStyleMgr)
 
@@ -165,12 +165,12 @@ class CPL_DLL OGRStyleMgr
 class CPL_DLL OGRStyleTool
 {
   private:
-    GBool m_bModified;
-    GBool m_bParsed;
-    double m_dfScale;
-    OGRSTUnitId m_eUnit;
-    OGRSTClassId m_eClassId;
-    char *m_pszStyleString;
+    GBool m_bModified = false;
+    GBool m_bParsed = false;
+    double m_dfScale = 1.0;
+    OGRSTUnitId m_eUnit = OGRSTUMM;
+    OGRSTClassId m_eClassId = OGRSTCNone;
+    char *m_pszStyleString = nullptr;
 
     virtual GBool Parse() = 0;
 

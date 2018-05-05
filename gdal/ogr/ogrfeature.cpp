@@ -7028,12 +7028,14 @@ void OGRFeatureUniquePtrDeleter::operator()(OGRFeature* poFeature) const
 
 struct OGRFeature::FieldValue::Private
 {
-    OGRFeature* m_poSelf;
-    int m_nPos;
-    mutable std::vector<int> m_anList;
-    mutable std::vector<GIntBig> m_anList64;
-    mutable std::vector<double> m_adfList;
-    mutable std::vector<std::string> m_aosList;
+    CPL_DISALLOW_COPY_ASSIGN(Private)
+
+    OGRFeature* m_poSelf = nullptr;
+    int m_nPos = 0;
+    mutable std::vector<int> m_anList{};
+    mutable std::vector<GIntBig> m_anList64{};
+    mutable std::vector<double> m_adfList{};
+    mutable std::vector<std::string> m_aosList{};
 
     Private(const OGRFeature* poSelf, int iFieldIndex):
         m_poSelf(const_cast<OGRFeature*>(poSelf)), m_nPos(iFieldIndex)
@@ -7045,6 +7047,8 @@ struct OGRFeature::FieldValue::Private
 
 struct OGRFeature::ConstFieldIterator::Private
 {
+    CPL_DISALLOW_COPY_ASSIGN(Private)
+
     OGRFeature::FieldValue m_oValue;
     int m_nPos = 0;
 

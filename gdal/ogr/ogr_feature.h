@@ -183,12 +183,12 @@ class CPL_DLL OGRGeomFieldDefn
 {
 protected:
 //! @cond Doxygen_Suppress
-        char                *pszName;
-        OGRwkbGeometryType   eGeomType; /* all values possible except wkbNone */
-        mutable OGRSpatialReference* poSRS;
+        char                *pszName = nullptr;
+        OGRwkbGeometryType   eGeomType = wkbUnknown; /* all values possible except wkbNone */
+        mutable OGRSpatialReference* poSRS = nullptr;
 
-        int                 bIgnore;
-        mutable int         bNullable;
+        int                 bIgnore = false;
+        mutable int         bNullable = true;
 
         void                Initialize( const char *, OGRwkbGeometryType );
 //! @endcond

@@ -150,6 +150,8 @@ void OCTCleanupProjMutex()
 
 class OGRProj4CT : public OGRCoordinateTransformation
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRProj4CT)
+
     OGRSpatialReference *poSRSSource = nullptr;
     bool        bSourceLatLong = false;
     double      dfSourceToRadians = 0.0;

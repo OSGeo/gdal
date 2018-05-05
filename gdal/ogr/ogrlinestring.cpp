@@ -2630,13 +2630,14 @@ void OGRSimpleCurve::swapXY()
 
 class OGRSimpleCurvePointIterator final: public OGRPointIterator
 {
-        const OGRSimpleCurve* poSC;
-        int                   iCurPoint;
+        CPL_DISALLOW_COPY_ASSIGN(OGRSimpleCurvePointIterator)
+
+        const OGRSimpleCurve* poSC = nullptr;
+        int                   iCurPoint = 0;
 
     public:
         explicit OGRSimpleCurvePointIterator(const OGRSimpleCurve* poSCIn) :
-            poSC(poSCIn),
-            iCurPoint(0) {}
+            poSC(poSCIn) {}
 
         virtual OGRBoolean getNextPoint( OGRPoint* p ) override;
 };

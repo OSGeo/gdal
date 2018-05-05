@@ -49,7 +49,7 @@ CPL_CVSID("$Id$")
  * \brief Create an empty curve polygon.
  */
 
-OGRCurvePolygon::OGRCurvePolygon() {}
+OGRCurvePolygon::OGRCurvePolygon() = default;
 
 /************************************************************************/
 /*               OGRCurvePolygon( const OGRCurvePolygon& )              */

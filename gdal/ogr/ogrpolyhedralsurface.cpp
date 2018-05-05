@@ -44,9 +44,7 @@ CPL_CVSID("$Id$")
  * \brief Create an empty PolyhedralSurface
  */
 
-OGRPolyhedralSurface::OGRPolyhedralSurface()
-
-{ }
+OGRPolyhedralSurface::OGRPolyhedralSurface() = default;
 
 /************************************************************************/
 /*         OGRPolyhedralSurface( const OGRPolyhedralSurface& )          */

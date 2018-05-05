@@ -1307,17 +1307,20 @@ typedef struct _sPolyExtended sPolyExtended;
 
 struct _sPolyExtended
 {
-    OGRGeometry* poGeometry;
-    OGRCurvePolygon* poPolygon;
-    OGREnvelope     sEnvelope;
-    OGRCurve*  poExteriorRing;
-    OGRPoint        poAPoint;
-    int             nInitialIndex;
-    OGRCurvePolygon*     poEnclosingPolygon;
-    double          dfArea;
-    bool            bIsTopLevel;
-    bool            bIsCW;
-    bool            bIsPolygon;
+    CPL_DISALLOW_COPY_ASSIGN(_sPolyExtended)
+    _sPolyExtended() = default;
+
+    OGRGeometry* poGeometry = nullptr;
+    OGRCurvePolygon* poPolygon = nullptr;
+    OGREnvelope     sEnvelope{};
+    OGRCurve*  poExteriorRing = nullptr;
+    OGRPoint        poAPoint{};
+    int             nInitialIndex = 0;
+    OGRCurvePolygon*     poEnclosingPolygon = nullptr;
+    double          dfArea = 0.0;
+    bool            bIsTopLevel = false;
+    bool            bIsCW = false;
+    bool            bIsPolygon = false;
 };
 
 static int OGRGeometryFactoryCompareArea(const void* p1, const void* p2)

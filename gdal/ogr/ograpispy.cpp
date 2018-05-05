@@ -62,19 +62,19 @@ namespace
 class LayerDescription
 {
   public:
-    int iLayer;
+    int iLayer = -1;
 
-    LayerDescription(): iLayer(-1) {}
+    LayerDescription() = default;
     explicit LayerDescription( int iLayerIn ): iLayer(iLayerIn) {}
 };
 
 class DatasetDescription
 {
   public:
-    int iDS;
-    std::map<OGRLayerH, LayerDescription> oMapLayer;
+    int iDS = -1;
+    std::map<OGRLayerH, LayerDescription> oMapLayer{};
 
-    DatasetDescription() : iDS(-1) {}
+    DatasetDescription() = default;
     explicit DatasetDescription( int iDSIn ) : iDS(iDSIn) {}
     ~DatasetDescription();
 };
@@ -82,14 +82,18 @@ class DatasetDescription
 class FeatureDefnDescription
 {
   public:
-    OGRFeatureDefnH hFDefn;
-    int iUniqueNumber;
-    std::map<OGRFieldDefnH, int> oMapFieldDefn;
-    std::map<OGRGeomFieldDefnH, int> oMapGeomFieldDefn;
+    OGRFeatureDefnH hFDefn = nullptr;
+    int iUniqueNumber = -1;
+    std::map<OGRFieldDefnH, int> oMapFieldDefn{};
+    std::map<OGRGeomFieldDefnH, int> oMapGeomFieldDefn{};
 
-    FeatureDefnDescription(): hFDefn(nullptr), iUniqueNumber(-1) {}
+    FeatureDefnDescription() = default;
     FeatureDefnDescription( OGRFeatureDefnH hFDefnIn, int iUniqueNumberIn ):
         hFDefn(hFDefnIn), iUniqueNumber(iUniqueNumberIn) {}
+
+    FeatureDefnDescription(const FeatureDefnDescription&) = default;
+    FeatureDefnDescription& operator=(const FeatureDefnDescription&) = default;
+
     void Free();
 };
 

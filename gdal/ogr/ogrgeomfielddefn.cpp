@@ -119,9 +119,6 @@ void OGRGeomFieldDefn::Initialize( const char * pszNameIn,
 {
     pszName = CPLStrdup( pszNameIn );
     eGeomType = eTypeIn;
-    poSRS = nullptr;
-    bIgnore = FALSE;
-    bNullable = TRUE;
 }
 //! @endcond
 
