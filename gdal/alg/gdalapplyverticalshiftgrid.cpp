@@ -55,11 +55,13 @@ class GDALApplyVSGDataset final: public GDALDataset
 {
         friend class GDALApplyVSGRasterBand;
 
-        GDALDataset* m_poSrcDataset;
-        GDALDataset* m_poReprojectedGrid;
-        bool         m_bInverse;
-        double       m_dfSrcUnitToMeter;
-        double       m_dfDstUnitToMeter;
+        GDALDataset* m_poSrcDataset = nullptr;
+        GDALDataset* m_poReprojectedGrid = nullptr;
+        bool         m_bInverse = false;
+        double       m_dfSrcUnitToMeter = 0.0;
+        double       m_dfDstUnitToMeter = 0.0;
+
+        CPL_DISALLOW_COPY_ASSIGN(GDALApplyVSGDataset)
 
     public:
         GDALApplyVSGDataset( GDALDataset* poSrcDataset,
@@ -87,8 +89,10 @@ class GDALApplyVSGRasterBand final: public GDALRasterBand
 {
         friend class GDALApplyVSGDataset;
 
-        float       *m_pafSrcData;
-        float       *m_pafGridData;
+        float       *m_pafSrcData = nullptr;
+        float       *m_pafGridData = nullptr;
+
+        CPL_DISALLOW_COPY_ASSIGN(GDALApplyVSGRasterBand)
 
     public:
         GDALApplyVSGRasterBand( GDALDataType eDT,

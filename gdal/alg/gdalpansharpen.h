@@ -187,13 +187,15 @@ typedef struct
  */
 class GDALPansharpenOperation
 {
-        GDALPansharpenOptions* psOptions;
-        std::vector<int> anInputBands;
-        std::vector<GDALDataset*> aVDS; // to destroy
-        std::vector<GDALRasterBand*> aMSBands; // original multispectral bands potentially warped into a VRT
-        int bPositiveWeights;
-        CPLWorkerThreadPool* poThreadPool;
-        int nKernelRadius;
+        CPL_DISALLOW_COPY_ASSIGN(GDALPansharpenOperation)
+
+        GDALPansharpenOptions* psOptions = nullptr;
+        std::vector<int> anInputBands{};
+        std::vector<GDALDataset*> aVDS{}; // to destroy
+        std::vector<GDALRasterBand*> aMSBands{}; // original multispectral bands potentially warped into a VRT
+        int bPositiveWeights = TRUE;
+        CPLWorkerThreadPool* poThreadPool = nullptr;
+        int nKernelRadius = 0;
 
         static void PansharpenJobThreadFunc(void* pUserData);
         static void PansharpenResampleJobThreadFunc(void* pUserData);

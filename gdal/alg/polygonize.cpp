@@ -62,13 +62,12 @@ CPL_CVSID("$Id$")
 
 class RPolygon {
 public:
-    explicit RPolygon( double dfValue )
-        { dfPolyValue = dfValue; nLastLineUpdated = -1; }
+    double           dfPolyValue = 0.0;
+    int              nLastLineUpdated = -1;
 
-    double           dfPolyValue;
-    int              nLastLineUpdated;
+    std::vector< std::vector<int> > aanXY{};
 
-    std::vector< std::vector<int> > aanXY;
+    explicit RPolygon( double dfValue ): dfPolyValue(dfValue) {}
 
     void             AddSegment( int x1, int y1, int x2, int y2 );
     void             Dump() const;
