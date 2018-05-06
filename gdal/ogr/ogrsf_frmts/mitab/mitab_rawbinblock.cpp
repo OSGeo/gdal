@@ -724,7 +724,7 @@ GInt16  TABRawBinBlock::ReadInt16()
     ReadBytes(2, reinterpret_cast<GByte*>(&n16Value));
 
 #ifdef CPL_MSB
-    return (GInt16)CPL_SWAP16(n16Value);
+    return static_cast<GInt16>(CPL_SWAP16(n16Value));
 #else
     return n16Value;
 #endif
@@ -737,7 +737,7 @@ GInt32  TABRawBinBlock::ReadInt32()
     ReadBytes(4, reinterpret_cast<GByte*>(&n32Value));
 
 #ifdef CPL_MSB
-    return (GInt32)CPL_SWAP32(n32Value);
+    return static_cast<GInt32>(CPL_SWAP32(n32Value));
 #else
     return n32Value;
 #endif
@@ -846,7 +846,7 @@ int  TABRawBinBlock::WriteByte(GByte byValue)
 int  TABRawBinBlock::WriteInt16(GInt16 n16Value)
 {
 #ifdef CPL_MSB
-    n16Value = (GInt16)CPL_SWAP16(n16Value);
+    n16Value = static_cast<GInt16>(CPL_SWAP16(n16Value));
 #endif
 
     return WriteBytes(2, reinterpret_cast<GByte*>(&n16Value));
@@ -855,7 +855,7 @@ int  TABRawBinBlock::WriteInt16(GInt16 n16Value)
 int  TABRawBinBlock::WriteInt32(GInt32 n32Value)
 {
 #ifdef CPL_MSB
-    n32Value = (GInt32)CPL_SWAP32(n32Value);
+    n32Value = static_cast<GInt32>(CPL_SWAP32(n32Value));
 #endif
 
     return WriteBytes(4, reinterpret_cast<GByte*>(&n32Value));
