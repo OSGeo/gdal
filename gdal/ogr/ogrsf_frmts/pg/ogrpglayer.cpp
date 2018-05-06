@@ -110,7 +110,7 @@ OGRPGLayer::~OGRPGLayer()
                   poFeatureDefn->GetName() );
     }
 
-    OGRPGLayer::ResetReading();
+    CloseCursor();
 
     CPLFree( pszFIDColumn );
     CPLFree( pszQueryStatement );
@@ -123,8 +123,6 @@ OGRPGLayer::~OGRPGLayer()
         poFeatureDefn->UnsetLayer();
         poFeatureDefn->Release();
     }
-
-    CloseCursor();
 }
 
 /************************************************************************/

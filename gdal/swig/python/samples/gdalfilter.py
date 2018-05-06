@@ -28,11 +28,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-gdal.TermProgress = gdal.TermProgress_nocb
-
 import sys
+from osgeo import gdal
 
+gdal.TermProgress = gdal.TermProgress_nocb
 
 def Usage():
     print('Usage: gdalfilter.py [-n] [-size n] [-coefs ...] [-f format] [-co NAME=VALUE]\n'

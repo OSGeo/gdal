@@ -91,19 +91,21 @@ CPL_CVSID("$Id$")
 
 class VSIMemFile
 {
+    CPL_DISALLOW_COPY_ASSIGN(VSIMemFile)
+
 public:
-    CPLString     osFilename;
-    volatile int  nRefCount;
+    CPLString     osFilename{};
+    volatile int  nRefCount = 0;
 
-    bool          bIsDirectory;
+    bool          bIsDirectory = false;
 
-    bool          bOwnData;
-    GByte        *pabyData;
-    vsi_l_offset  nLength;
-    vsi_l_offset  nAllocLength;
-    vsi_l_offset  nMaxLength;
+    bool          bOwnData = true;
+    GByte        *pabyData = nullptr;
+    vsi_l_offset  nLength = 0;
+    vsi_l_offset  nAllocLength = 0;
+    vsi_l_offset  nMaxLength = GUINTBIG_MAX;
 
-    time_t        mTime;
+    time_t        mTime = 0;
 
     VSIMemFile();
     virtual ~VSIMemFile();
@@ -119,20 +121,17 @@ public:
 
 class VSIMemHandle final : public VSIVirtualHandle
 {
-  public:
-    VSIMemFile    *poFile;
-    vsi_l_offset  m_nOffset;
-    bool          bUpdate;
-    bool          bEOF;
-    bool          bExtendFileAtNextWrite;
+    CPL_DISALLOW_COPY_ASSIGN(VSIMemHandle)
 
-    VSIMemHandle() :
-        poFile(nullptr),
-        m_nOffset(0),
-        bUpdate(false),
-        bEOF(false),
-        bExtendFileAtNextWrite(false) {}
-    ~VSIMemHandle() override {}
+  public:
+    VSIMemFile    *poFile = nullptr;
+    vsi_l_offset  m_nOffset = 0;
+    bool          bUpdate = false;
+    bool          bEOF = false;
+    bool          bExtendFileAtNextWrite = false;
+
+    VSIMemHandle() = default;
+    ~VSIMemHandle() override = default;
 
     int Seek( vsi_l_offset nOffset, int nWhence ) override;
     vsi_l_offset Tell() override;
@@ -153,11 +152,13 @@ class VSIMemHandle final : public VSIVirtualHandle
 
 class VSIMemFilesystemHandler final : public VSIFilesystemHandler
 {
-  public:
-    std::map<CPLString, VSIMemFile*> oFileList;
-    CPLMutex        *hMutex;
+    CPL_DISALLOW_COPY_ASSIGN(VSIMemFilesystemHandler)
 
-    VSIMemFilesystemHandler();
+  public:
+    std::map<CPLString, VSIMemFile*> oFileList{};
+    CPLMutex        *hMutex = nullptr;
+
+    VSIMemFilesystemHandler() = default;
     ~VSIMemFilesystemHandler() override;
 
     // TODO(schwehr): Fix VSIFileFromMemBuffer so that using is not needed.
@@ -192,14 +193,7 @@ class VSIMemFilesystemHandler final : public VSIFilesystemHandler
 /*                             VSIMemFile()                             */
 /************************************************************************/
 
-VSIMemFile::VSIMemFile() :
-    nRefCount(0),
-    bIsDirectory(false),
-    bOwnData(true),
-    pabyData(nullptr),
-    nLength(0),
-    nAllocLength(0),
-    nMaxLength(GUINTBIG_MAX)
+VSIMemFile::VSIMemFile()
 {
     time(&mTime);
 }
@@ -471,14 +465,6 @@ int VSIMemHandle::Truncate( vsi_l_offset nNewSize )
 /*                       VSIMemFilesystemHandler                        */
 /* ==================================================================== */
 /************************************************************************/
-
-/************************************************************************/
-/*                      VSIMemFilesystemHandler()                       */
-/************************************************************************/
-
-VSIMemFilesystemHandler::VSIMemFilesystemHandler() :
-    hMutex(nullptr)
-{}
 
 /************************************************************************/
 /*                      ~VSIMemFilesystemHandler()                      */

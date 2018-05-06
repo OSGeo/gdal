@@ -29,10 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-import gdaltest
 import os
 import sys
+import gdaltest
+from osgeo import gdal
 
 ###############################################################################
 # Return the path in which the Python script is found

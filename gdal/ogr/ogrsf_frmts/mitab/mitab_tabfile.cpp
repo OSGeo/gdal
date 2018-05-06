@@ -691,7 +691,7 @@ int TABFile::ParseTABFileFields()
          * Tokenize the next .TAB line, and check first keyword
          *------------------------------------------------------------*/
         const char *pszStr = m_papszTABFile[iLine];
-        while(*pszStr != '\0' && isspace((unsigned char)*pszStr))
+        while(*pszStr != '\0' && isspace(static_cast<unsigned char>(*pszStr)))
             pszStr++;
 
         if (STARTS_WITH_CI(pszStr, "Fields") && CPLStrnlen(pszStr, 7) >= 7)
@@ -712,7 +712,7 @@ int TABFile::ParseTABFileFields()
             }
 
             // Alloc the array to keep track of indexed fields
-            m_panIndexNo = (int *)CPLCalloc(numFields, sizeof(int));
+            m_panIndexNo = static_cast<int *>(CPLCalloc(numFields, sizeof(int)));
 
             iLine++;
             poFieldDefn = nullptr;
@@ -1192,7 +1192,7 @@ GIntBig TABFile::GetNextFeatureId(GIntBig nPrevId)
      * Are we using spatial rather than .ID based traversal?
      *----------------------------------------------------------------*/
     if( bUseSpatialTraversal )
-        return m_poMAPFile->GetNextFeatureId( (int)nPrevId );
+        return m_poMAPFile->GetNextFeatureId( static_cast<int>(nPrevId) );
 
     /*-----------------------------------------------------------------
      * Should we use an attribute index traversal?
@@ -1222,7 +1222,7 @@ GIntBig TABFile::GetNextFeatureId(GIntBig nPrevId)
     if (nPrevId <= 0 && m_nLastFeatureId > 0)
         nFeatureId = 1;       // Feature Ids start at 1
     else if (nPrevId > 0 && nPrevId < m_nLastFeatureId)
-        nFeatureId = (int)nPrevId + 1;
+        nFeatureId = static_cast<int>(nPrevId) + 1;
     else
     {
         // This was the last feature
@@ -1327,8 +1327,8 @@ TABFeature *TABFile::GetFeatureRef(GIntBig nFeatureId)
     m_bLastOpWasRead = TRUE;
 
     if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId ||
-        m_poMAPFile->MoveToObjId((int)nFeatureId) != 0 ||
-        m_poDATFile->GetRecordBlock((int)nFeatureId) == nullptr )
+        m_poMAPFile->MoveToObjId(static_cast<int>(nFeatureId)) != 0 ||
+        m_poDATFile->GetRecordBlock(static_cast<int>(nFeatureId)) == nullptr )
     {
         //     CPLError(CE_Failure, CPLE_IllegalArg,
         //    "GetFeatureRef() failed: invalid feature id %d",
@@ -1435,8 +1435,8 @@ OGRErr TABFile::DeleteFeature(GIntBig nFeatureId)
         ResetReading();
 
     if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId ||
-        m_poMAPFile->MoveToObjId((int)nFeatureId) != 0 ||
-        m_poDATFile->GetRecordBlock((int)nFeatureId) == nullptr )
+        m_poMAPFile->MoveToObjId(static_cast<int>(nFeatureId)) != 0 ||
+        m_poDATFile->GetRecordBlock(static_cast<int>(nFeatureId)) == nullptr )
     {
         /*CPLError(CE_Failure, CPLE_IllegalArg,
                  "DeleteFeature() failed: invalid feature id " CPL_FRMT_GIB,
@@ -1493,7 +1493,7 @@ int TABFile::WriteFeature(TABFeature *poFeature)
     int nFeatureId = 0;
     if ( poFeature->GetFID() >= 0 )
     {
-        nFeatureId = (int)poFeature->GetFID();
+        nFeatureId = static_cast<int>(poFeature->GetFID());
     }
     else if (m_nLastFeatureId < 1)
     {
@@ -1640,7 +1640,7 @@ OGRErr TABFile::CreateFeature(TABFeature *poFeature)
             return OGRERR_FAILURE;
         }
 
-        if( m_poDATFile->GetRecordBlock((int)nFeatureId) == nullptr ||
+        if( m_poDATFile->GetRecordBlock(static_cast<int>(nFeatureId)) == nullptr ||
             !m_poDATFile->IsCurrentRecordDeleted() )
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
@@ -1715,7 +1715,7 @@ OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
     if( m_bLastOpWasWrite )
         ResetReading();
 
-    if (m_poDATFile->GetRecordBlock((int)nFeatureId) == nullptr )
+    if (m_poDATFile->GetRecordBlock(static_cast<int>(nFeatureId)) == nullptr )
     {
         /*CPLError(CE_Failure, CPLE_IllegalArg,
                  "SetFeature() failed: invalid feature id " CPL_FRMT_GIB,
@@ -1903,7 +1903,7 @@ int TABFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
     /*-----------------------------------------------------------------
      * Alloc the array to keep track of indexed fields (default=NOT indexed)
      *----------------------------------------------------------------*/
-    m_panIndexNo = (int *)CPLCalloc(numFields, sizeof(int));
+    m_panIndexNo = static_cast<int *>(CPLCalloc(numFields, sizeof(int)));
 
     return nStatus;
 }
@@ -2094,8 +2094,8 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     /*-----------------------------------------------------------------
      * Extend the array to keep track of indexed fields (default=NOT indexed)
      *----------------------------------------------------------------*/
-    m_panIndexNo = (int *)CPLRealloc(m_panIndexNo,
-                                     m_poDefn->GetFieldCount()*sizeof(int));
+    m_panIndexNo = static_cast<int *>(CPLRealloc(m_panIndexNo,
+                                     m_poDefn->GetFieldCount()*sizeof(int)));
     m_panIndexNo[m_poDefn->GetFieldCount()-1] = 0;
 
      /*-----------------------------------------------------------------
@@ -2649,7 +2649,7 @@ OGRErr TABFile::ReorderFields( int* panMap )
     {
         m_bNeedTABRewrite = TRUE;
 
-        int* panNewIndexedField = (int*) CPLMalloc(sizeof(int)*m_poDefn->GetFieldCount());
+        int* panNewIndexedField = static_cast<int*>(CPLMalloc(sizeof(int)*m_poDefn->GetFieldCount()));
         for(int i=0;i<m_poDefn->GetFieldCount();i++)
         {
             panNewIndexedField[i] = m_panIndexNo[panMap[i]];

@@ -86,47 +86,39 @@ GDALGetDefaultAsyncReader( GDALDataset *poDS,
                            int nBandSpace, char **papszOptions );
 CPL_C_END
 
-typedef enum
+enum class GDALAllowReadWriteMutexState
 {
     RW_MUTEX_STATE_UNKNOWN,
     RW_MUTEX_STATE_ALLOWED,
     RW_MUTEX_STATE_DISABLED
-} GDALAllowReadWriteMutexState;
+};
 
 const GIntBig TOTAL_FEATURES_NOT_INIT = -2;
 const GIntBig TOTAL_FEATURES_UNKNOWN = -1;
 
 class GDALDataset::Private
 {
-  public:
-    CPLMutex *hMutex;
-    std::map<GIntBig, int> oMapThreadToMutexTakenCount;
-#ifdef DEBUG_EXTRA
-    std::map<GIntBig, int> oMapThreadToMutexTakenCountSaved;
-#endif
-    GDALAllowReadWriteMutexState eStateReadWriteMutex;
-    int nCurrentLayerIdx;
-    int nLayerCount;
-    GIntBig nFeatureReadInLayer;
-    GIntBig nFeatureReadInDataset;
-    GIntBig nTotalFeaturesInLayer;
-    GIntBig nTotalFeatures;
-    OGRLayer *poCurrentLayer;
+    CPL_DISALLOW_COPY_ASSIGN(Private)
 
-    Private() :
-        hMutex(nullptr),
-        eStateReadWriteMutex(RW_MUTEX_STATE_UNKNOWN),
-        nCurrentLayerIdx(0),
-        nLayerCount(-1),
-        nFeatureReadInLayer(0),
-        nFeatureReadInDataset(0),
-        nTotalFeaturesInLayer(TOTAL_FEATURES_NOT_INIT),
-        nTotalFeatures(TOTAL_FEATURES_NOT_INIT),
-        poCurrentLayer(nullptr)
-        {}
+  public:
+    CPLMutex *hMutex = nullptr;
+    std::map<GIntBig, int> oMapThreadToMutexTakenCount{};
+#ifdef DEBUG_EXTRA
+    std::map<GIntBig, int> oMapThreadToMutexTakenCountSaved{};
+#endif
+    GDALAllowReadWriteMutexState eStateReadWriteMutex = GDALAllowReadWriteMutexState::RW_MUTEX_STATE_UNKNOWN;
+    int nCurrentLayerIdx = 0;
+    int nLayerCount = -1;
+    GIntBig nFeatureReadInLayer = 0;
+    GIntBig nFeatureReadInDataset = 0;
+    GIntBig nTotalFeaturesInLayer = TOTAL_FEATURES_NOT_INIT;
+    GIntBig nTotalFeatures = TOTAL_FEATURES_NOT_INIT;
+    OGRLayer *poCurrentLayer = nullptr;
+
+    Private() = default;
 };
 
-typedef struct
+struct SharedDatasetCtxt
 {
     // PID of the thread that mark the dataset as shared
     // This may not be the actual PID, but the responsiblePID.
@@ -135,7 +127,7 @@ typedef struct
     GDALAccess eAccess;
 
     GDALDataset *poDS;
-} SharedDatasetCtxt;
+};
 
 // Set of datasets opened as shared datasets (with GDALOpenShared)
 // The values in the set are of type SharedDatasetCtxt.
@@ -236,40 +228,15 @@ GIntBig GDALGetResponsiblePIDForCurrentThread()
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-GDALDataset::GDALDataset()
-
+GDALDataset::GDALDataset():
+    GDALDataset(CPLTestBool(CPLGetConfigOption("GDAL_FORCE_CACHING", "NO")))
 {
-    Init(CPLTestBool(CPLGetConfigOption("GDAL_FORCE_CACHING", "NO")));
 }
 
-GDALDataset::GDALDataset(int bForceCachedIOIn)
-
+GDALDataset::GDALDataset(int bForceCachedIOIn):
+    bForceCachedIO(CPL_TO_BOOL(bForceCachedIOIn)),
+    m_poPrivate(new(std::nothrow) GDALDataset::Private)
 {
-    Init(CPL_TO_BOOL(bForceCachedIOIn));
-}
-
-void GDALDataset::Init(bool bForceCachedIOIn)
-{
-    poDriver = nullptr;
-    eAccess = GA_ReadOnly;
-    nRasterXSize = 512;
-    nRasterYSize = 512;
-    nBands = 0;
-    papoBands = nullptr;
-    nRefCount = 1;
-    nOpenFlags = 0;
-    bShared = false;
-    bIsInternal = true;
-    bSuppressOnClose = false;
-    papszOpenOptions = nullptr;
-
-/* -------------------------------------------------------------------- */
-/*      Set forced caching flag.                                        */
-/* -------------------------------------------------------------------- */
-    bForceCachedIO = bForceCachedIOIn;
-
-    m_poStyleTable = nullptr;
-    m_poPrivate = new(std::nothrow) Private;
 }
 //! @endcond
 
@@ -3153,11 +3120,9 @@ int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
 
     CPL_IGNORE_RET_VAL(VSIFPrintf(fp, "Open GDAL Datasets:\n"));
 
-    for( std::map<GDALDataset *, GIntBig>::iterator oIter =
-             poAllDatasetMap->begin();
-         oIter != poAllDatasetMap->end(); ++oIter )
+    for( auto oIter: *poAllDatasetMap )
     {
-        GDALDumpOpenDatasetsForeach(oIter->first, fp);
+        GDALDumpOpenDatasetsForeach(oIter.first, fp);
     }
 
     if (phSharedDatasetSet != nullptr)
@@ -6694,7 +6659,7 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
 {
     if( m_poPrivate != nullptr && eAccess == GA_Update )
     {
-        if( m_poPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_UNKNOWN )
+        if( m_poPrivate->eStateReadWriteMutex == GDALAllowReadWriteMutexState::RW_MUTEX_STATE_UNKNOWN )
         {
             // In case dead-lock would occur, which is not impossible,
             // this can be used to prevent it, but at the risk of other
@@ -6702,14 +6667,14 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
             if(CPLTestBool(
                    CPLGetConfigOption("GDAL_ENABLE_READ_WRITE_MUTEX", "YES")))
             {
-                m_poPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_ALLOWED;
+                m_poPrivate->eStateReadWriteMutex = GDALAllowReadWriteMutexState::RW_MUTEX_STATE_ALLOWED;
             }
             else
             {
-                m_poPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_DISABLED;
+                m_poPrivate->eStateReadWriteMutex = GDALAllowReadWriteMutexState::RW_MUTEX_STATE_DISABLED;
             }
         }
-        if( m_poPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_ALLOWED &&
+        if( m_poPrivate->eStateReadWriteMutex == GDALAllowReadWriteMutexState::RW_MUTEX_STATE_ALLOWED &&
             (eRWFlag == GF_Write || m_poPrivate->hMutex != nullptr) )
         {
             // There should be no race related to creating this mutex since
@@ -6754,7 +6719,7 @@ void GDALDataset::InitRWLock()
 {
     if( m_poPrivate )
     {
-        if( m_poPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_UNKNOWN )
+        if( m_poPrivate->eStateReadWriteMutex == GDALAllowReadWriteMutexState::RW_MUTEX_STATE_UNKNOWN )
         {
             if( EnterReadWrite(GF_Write) )
                 LeaveReadWrite();
@@ -6774,7 +6739,7 @@ void GDALDataset::DisableReadWriteMutex()
 {
     if( m_poPrivate )
     {
-        m_poPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_DISABLED;
+        m_poPrivate->eStateReadWriteMutex = GDALAllowReadWriteMutexState::RW_MUTEX_STATE_DISABLED;
     }
 }
 
@@ -6860,7 +6825,7 @@ void GDALDataset::ReleaseMutex()
 
 struct GDALDataset::Features::Iterator::Private
 {
-    GDALDataset::FeatureLayerPair m_oPair;
+    GDALDataset::FeatureLayerPair m_oPair{};
     GDALDataset* m_poDS = nullptr;
     bool m_bEOF = true;
 };
@@ -6879,9 +6844,7 @@ GDALDataset::Features::Iterator::Iterator(GDALDataset* poDS, bool bStart):
     }
 }
 
-GDALDataset::Features::Iterator::~Iterator()
-{
-}
+GDALDataset::Features::Iterator::~Iterator() = default;
 
 const GDALDataset::FeatureLayerPair&
                 GDALDataset::Features::Iterator::operator*() const
@@ -6989,7 +6952,7 @@ GDALDataset::Layers::Iterator::Iterator(const Iterator& oOther):
 {
 }
 
-GDALDataset::Layers::Iterator::Iterator(Iterator&& oOther):
+GDALDataset::Layers::Iterator::Iterator(Iterator&& oOther) noexcept:
     m_poPrivate(std::move(oOther.m_poPrivate))
 {
 }
@@ -7010,9 +6973,7 @@ GDALDataset::Layers::Iterator::Iterator(GDALDataset* poDS, bool bStart):
     }
 }
 
-GDALDataset::Layers::Iterator::~Iterator()
-{
-}
+GDALDataset::Layers::Iterator::~Iterator() = default;
 
 // False positive of cppcheck 1.72
 // cppcheck-suppress operatorEqVarError
@@ -7024,7 +6985,7 @@ GDALDataset::Layers::Iterator& GDALDataset::Layers::Iterator::operator=(
 }
 
 GDALDataset::Layers::Iterator& GDALDataset::Layers::Iterator::operator=(
-                                GDALDataset::Layers::Iterator&& oOther)
+                                GDALDataset::Layers::Iterator&& oOther) noexcept
 {
     m_poPrivate = std::move(oOther.m_poPrivate);
     return *this;
@@ -7225,9 +7186,7 @@ GDALDataset::Bands::Iterator::Iterator(GDALDataset* poDS, bool bStart):
     }
 }
 
-GDALDataset::Bands::Iterator::~Iterator()
-{
-}
+GDALDataset::Bands::Iterator::~Iterator() = default;
 
 GDALRasterBand* GDALDataset::Bands::Iterator::operator*()
 {

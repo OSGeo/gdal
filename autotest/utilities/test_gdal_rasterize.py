@@ -37,9 +37,9 @@ sys.path.append('../pymod')
 sys.path.append('../gcore')
 
 from osgeo import gdal
-import gdaltest
 from osgeo import ogr
 from osgeo import osr
+import gdaltest
 import test_cli_utilities
 
 ###############################################################################

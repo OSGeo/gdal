@@ -553,11 +553,7 @@ char** GOA2GetAccessTokenFromServiceAccount(const char* pszPrivateKey,
 /************************************************************************/
 
 /** Constructor */
-GOA2Manager::GOA2Manager() :
-    m_nExpirationTime(0),
-    m_eMethod(NONE)
-{
-}
+GOA2Manager::GOA2Manager() = default;
 
 /************************************************************************/
 /*                         SetAuthFromGCE()                             */

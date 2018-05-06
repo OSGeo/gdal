@@ -34,7 +34,11 @@
 
 #include <math.h>
 extern "C" {
+/* Older versions of OGDI have register keywords as qualifier for arguments
+ * of functions, which is illegal in C++17 */
+#define register
 #include "ecs.h"
+#undef register
 }
 #include "ogrsf_frmts.h"
 

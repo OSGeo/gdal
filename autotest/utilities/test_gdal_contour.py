@@ -31,6 +31,7 @@
 
 import sys
 import os
+import array
 
 sys.path.append('../pymod')
 
@@ -40,7 +41,6 @@ from osgeo import osr
 import gdaltest
 import ogrtest
 import test_cli_utilities
-import array
 
 ###############################################################################
 # Test with -a and -i options

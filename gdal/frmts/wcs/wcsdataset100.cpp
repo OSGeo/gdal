@@ -138,7 +138,7 @@ CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
     if (interpolation != "") {
         request += "&INTERPOLATION=" + interpolation;
     }
-    
+
     if( osTime != "" )
     {
         request += "&time=";
@@ -644,7 +644,6 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
                 CPLString key2 = path3 + "NAME";
                 CPLString name = CPLGetXMLValue(node, nullptr, "");
                 CPLString value = DescribeCoverageURL;
-                value = CPLURLAddKVP(value, "SERVICE", "WCS");
                 value = CPLURLAddKVP(value, "VERSION", this->Version());
                 value = CPLURLAddKVP(value, "COVERAGE", name);
                 metadata = CSLSetNameValue(metadata, key2, value);
@@ -666,12 +665,47 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
                 return CE_Failure;
             }
 
-            // skip optional metadataLink, description, and keywords
-            // skip requred lonLatEnvelope
+            // todo: compose global bounding box from lonLatEnvelope
+
+            // further subdataset (coverage) parameters are parsed in ParseCoverageCapabilities
 
         }
     }
     this->SetMetadata( metadata, "SUBDATASETS" );
     CSLDestroy( metadata );
     return CE_None;
+}
+
+void WCSDataset100::ParseCoverageCapabilities(CPLXMLNode *capabilities, const CPLString &coverage, CPLXMLNode *metadata)
+{
+    CPLStripXMLNamespace(capabilities, nullptr, TRUE);
+    if( CPLXMLNode *contents = CPLGetXMLNode(capabilities, "ContentMetadata") )
+    {
+        for( CPLXMLNode *summary = contents->psChild; summary != nullptr; summary = summary->psNext)
+        {
+            if( summary->eType != CXT_Element
+                || !EQUAL(summary->pszValue, "CoverageOfferingBrief") )
+            {
+                continue;
+            }
+
+            CPLXMLNode *node = CPLGetXMLNode(summary, "name");
+            if (node) {
+                CPLString name = CPLGetXMLValue(node, nullptr, "");
+                if (name != coverage) {
+                    continue;
+                }
+            }
+
+            XMLCopyMetadata(summary, metadata, "label");
+            XMLCopyMetadata(summary, metadata, "description");
+
+            CPLString kw = GetKeywords(summary, "keywords", "keyword");
+            CPLAddXMLAttributeAndValue(
+                CPLCreateXMLElementAndValue(metadata, "MDI", kw), "key", "keywords");
+
+            // skip metadataLink
+
+        }
+    }
 }

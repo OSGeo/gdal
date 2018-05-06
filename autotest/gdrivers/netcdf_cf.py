@@ -31,15 +31,14 @@
 
 import os
 import sys
+import imp  # for netcdf_cf_setup()
+from netcdf import netcdf_setup, netcdf_test_copy
 from osgeo import gdal
 from osgeo import osr
 
 sys.path.append('../pymod')
 
 import gdaltest
-
-import imp  # for netcdf_cf_setup()
-from netcdf import netcdf_setup, netcdf_test_copy
 
 ###############################################################################
 # Netcdf CF compliance Functions

@@ -48,7 +48,7 @@ CPL_CVSID("$Id$")
  * \brief Create an empty compound curve.
  */
 
-OGRCompoundCurve::OGRCompoundCurve() {}
+OGRCompoundCurve::OGRCompoundCurve() = default;
 
 /************************************************************************/
 /*             OGRCompoundCurve( const OGRCompoundCurve& )              */
@@ -63,16 +63,13 @@ OGRCompoundCurve::OGRCompoundCurve() {}
  * @since GDAL 2.1
  */
 
-OGRCompoundCurve::OGRCompoundCurve( const OGRCompoundCurve& other ) :
-    OGRCurve(other),
-    oCC(other.oCC)
-{}
+OGRCompoundCurve::OGRCompoundCurve( const OGRCompoundCurve& ) = default;
 
 /************************************************************************/
 /*                         ~OGRCompoundCurve()                          */
 /************************************************************************/
 
-OGRCompoundCurve::~OGRCompoundCurve() {}
+OGRCompoundCurve::~OGRCompoundCurve() = default;
 
 /************************************************************************/
 /*                 operator=( const OGRCompoundCurve&)                  */
@@ -705,16 +702,18 @@ int OGRCompoundCurve::getNumPoints() const
 
 class OGRCompoundCurvePointIterator final: public OGRPointIterator
 {
-        const OGRCompoundCurve *poCC;
-        int                     iCurCurve;
-        OGRPointIterator       *poCurveIter;
+        CPL_DISALLOW_COPY_ASSIGN(OGRCompoundCurvePointIterator)
+
+        const OGRCompoundCurve *poCC = nullptr;
+        int                     iCurCurve = 0;
+        OGRPointIterator       *poCurveIter = nullptr;
 
     public:
         explicit OGRCompoundCurvePointIterator( const OGRCompoundCurve* poCCIn ) :
-            poCC(poCCIn), iCurCurve(0), poCurveIter(nullptr) {}
-        virtual ~OGRCompoundCurvePointIterator() { delete poCurveIter; }
+            poCC(poCCIn) {}
+        ~OGRCompoundCurvePointIterator() override { delete poCurveIter; }
 
-        virtual OGRBoolean getNextPoint( OGRPoint* p ) override;
+        OGRBoolean getNextPoint( OGRPoint* p ) override;
 };
 
 /************************************************************************/

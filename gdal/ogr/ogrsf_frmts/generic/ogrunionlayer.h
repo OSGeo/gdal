@@ -42,9 +42,9 @@ class OGRUnionLayerGeomFieldDefn: public OGRGeomFieldDefn
 {
     public:
 
-    int             bGeomTypeSet;
-    int             bSRSSet;
-    OGREnvelope     sStaticEnvelope;
+    int             bGeomTypeSet = false;
+    int             bSRSSet = false;
+    OGREnvelope     sStaticEnvelope{};
 
             OGRUnionLayerGeomFieldDefn(const char* pszName, OGRwkbGeometryType eType);
    explicit OGRUnionLayerGeomFieldDefn(OGRGeomFieldDefn* poSrc);
@@ -66,6 +66,8 @@ typedef enum
 
 class OGRUnionLayer : public OGRLayer
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRUnionLayer)
+
   protected:
     CPLString           osName;
     int                 nSrcLayers;
@@ -78,7 +80,7 @@ class OGRUnionLayer : public OGRLayer
     int                 nGeomFields;
     OGRUnionLayerGeomFieldDefn **papoGeomFields;
     FieldUnionStrategy eFieldStrategy;
-    CPLString           osSourceLayerFieldName;
+    CPLString           osSourceLayerFieldName{};
 
     int                 bPreserveSrcFID;
 

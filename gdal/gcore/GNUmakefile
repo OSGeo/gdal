@@ -29,7 +29,7 @@ ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	$(CPPFLAGS) -DHAVE_GEOS=1 $(GEOS_CFLAGS)
 endif
 
-CXXFLAGS        :=      $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
+CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS) $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
 
 GENERATE_GDAL_VERSION_H := $(shell ./generate_gdal_version_h.sh)
 

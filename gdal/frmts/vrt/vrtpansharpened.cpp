@@ -153,6 +153,7 @@ VRTPansharpenedDataset::VRTPansharpenedDataset( int nXSize, int nYSize ) :
 VRTPansharpenedDataset::~VRTPansharpenedDataset()
 
 {
+    VRTPansharpenedDataset::FlushCache();
     VRTPansharpenedDataset::CloseDependentDatasets();
     CPLFree(m_pabyLastBufferBandRasterIO);
 }
@@ -165,7 +166,6 @@ int VRTPansharpenedDataset::CloseDependentDatasets()
 {
     if( m_poMainDataset == nullptr )
         return FALSE;
-    FlushCache();
 
     VRTPansharpenedDataset* poMainDatasetLocal = m_poMainDataset;
     m_poMainDataset = nullptr;

@@ -107,6 +107,9 @@ typedef swq_field_type (*swq_op_checker)( swq_expr_node *op,
 class swq_custom_func_registrar;
 
 class swq_expr_node {
+
+    CPL_DISALLOW_COPY_ASSIGN(swq_expr_node)
+
 public:
     swq_expr_node();
 
@@ -119,7 +122,6 @@ public:
 
     ~swq_expr_node();
 
-    void           Initialize();
     void           MarkAsTimestamp();
     CPLString      UnparseOperationFromUnparsedSubExpr(char** apszSubExpr);
     char          *Unparse( swq_field_list *, char chColumnQuote );
@@ -133,30 +135,30 @@ public:
 
     void           ReplaceBetweenByGEAndLERecurse();
 
-    swq_node_type eNodeType;
-    swq_field_type field_type;
+    swq_node_type eNodeType = SNT_CONSTANT;
+    swq_field_type field_type = SWQ_INTEGER;
 
     /* only for SNT_OPERATION */
     void        PushSubExpression( swq_expr_node * );
     void        ReverseSubExpressions();
-    int         nOperation;
-    int         nSubExprCount;
-    swq_expr_node **papoSubExpr;
+    int         nOperation = 0;
+    int         nSubExprCount = 0;
+    swq_expr_node **papoSubExpr = nullptr;
 
     /* only for SNT_COLUMN */
-    int         field_index;
-    int         table_index;
-    char        *table_name;
+    int         field_index = 0;
+    int         table_index = 0;
+    char        *table_name = nullptr;
 
     /* only for SNT_CONSTANT */
-    int         is_null;
-    GIntBig     int_value;
-    double      float_value;
-    OGRGeometry *geometry_value;
+    int         is_null = false;
+    GIntBig     int_value = 0;
+    double      float_value = 0.0;
+    OGRGeometry *geometry_value = nullptr;
 
     /* shared by SNT_COLUMN, SNT_CONSTANT and also possibly SNT_OPERATION when */
     /* nOperation == SWQ_CUSTOM_FUNC */
-    char        *string_value; /* column name when SNT_COLUMN */
+    char        *string_value = nullptr; /* column name when SNT_COLUMN */
 
     static CPLString   QuoteIfNecessary( const CPLString &, char chQuote = '\'' );
     static CPLString   Quote( const CPLString &, char chQuote = '\'' );
@@ -302,17 +304,15 @@ public:
         bool    operator() (const CPLString&, const CPLString &) const;
     };
 
-    GIntBig     count;
+    GIntBig     count = 0;
 
-    std::vector<CPLString>          oVectorDistinctValues;
-    std::set<CPLString, Comparator> oSetDistinctValues;
-    double      sum;
-    double      min;
-    double      max;
-    CPLString   osMin;
-    CPLString   osMax;
-
-        swq_summary() : count(0), sum(0.0), min(0.0), max(0.0) {}
+    std::vector<CPLString>          oVectorDistinctValues{};
+    std::set<CPLString, Comparator> oSetDistinctValues{};
+    double      sum = 0.0;
+    double      min = 0.0;
+    double      max = 0.0;
+    CPLString   osMin{};
+    CPLString   osMax{};
 };
 
 typedef struct {
@@ -350,43 +350,45 @@ class swq_select
 {
     void        postpreparse();
 
+    CPL_DISALLOW_COPY_ASSIGN(swq_select)
+
 public:
     swq_select();
     ~swq_select();
 
-    int         query_mode;
+    int         query_mode = 0;
 
-    char        *raw_select;
+    char        *raw_select = nullptr;
 
     int         PushField( swq_expr_node *poExpr, const char *pszAlias=nullptr,
                            int distinct_flag = FALSE );
-    int         result_columns;
-    swq_col_def *column_defs;
-    std::vector<swq_summary> column_summary;
+    int         result_columns = 0;
+    swq_col_def *column_defs = nullptr;
+    std::vector<swq_summary> column_summary{};
 
     int         PushTableDef( const char *pszDataSource,
                               const char *pszTableName,
                               const char *pszAlias );
-    int         table_count;
-    swq_table_def *table_defs;
+    int         table_count = 0;
+    swq_table_def *table_defs = nullptr;
 
     void        PushJoin( int iSecondaryTable, swq_expr_node* poExpr );
-    int         join_count;
-    swq_join_def *join_defs;
+    int         join_count = 0;
+    swq_join_def *join_defs = nullptr;
 
-    swq_expr_node *where_expr;
+    swq_expr_node *where_expr = nullptr;
 
     void        PushOrderBy( const char* pszTableName, const char *pszFieldName, int bAscending );
-    int         order_specs;
-    swq_order_def *order_defs;
+    int         order_specs = 0;
+    swq_order_def *order_defs = nullptr;
 
     void        SetLimit( GIntBig nLimit );
-    GIntBig     limit;
+    GIntBig     limit = -1;
 
     void        SetOffset( GIntBig nOffset );
-    GIntBig     offset;
+    GIntBig     offset = 0;
 
-    swq_select *poOtherSelect;
+    swq_select *poOtherSelect = nullptr;
     void        PushUnionAll( swq_select* poOtherSelectIn );
 
     CPLErr      preparse( const char *select_statement,

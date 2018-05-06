@@ -137,14 +137,14 @@ int TABView::Open(const char *pszFname, TABAccess eAccess,
     if (eAccess == TABRead)
     {
         m_eAccessMode = TABRead;
-        nStatus = (char)OpenForRead(pszFname, bTestOpenNoError);
+        nStatus = static_cast<char>(OpenForRead(pszFname, bTestOpenNoError));
     }
     else if (eAccess == TABWrite)
     {
         m_eAccessMode = TABWrite;
         if( pszCharset != nullptr )
             SetCharset( pszCharset );
-        nStatus = (char)OpenForWrite(pszFname);
+        nStatus = static_cast<char>(OpenForWrite(pszFname));
     }
     else
     {
@@ -213,7 +213,7 @@ int TABView::OpenForRead(const char *pszFname,
          i++)
     {
         const char *pszStr = m_papszTABFile[i];
-        while(*pszStr != '\0' && isspace((unsigned char)*pszStr))
+        while(*pszStr != '\0' && isspace(static_cast<unsigned char>(*pszStr)))
             pszStr++;
         if (STARTS_WITH_CI(pszStr, "create view"))
             bCreateViewFound = TRUE;
@@ -283,7 +283,7 @@ int TABView::OpenForRead(const char *pszFname,
     /*-----------------------------------------------------------------
      * Open all the tab files listed in the view
      *----------------------------------------------------------------*/
-    m_papoTABFiles = (TABFile**)CPLCalloc(m_numTABFiles, sizeof(TABFile*));
+    m_papoTABFiles = static_cast<TABFile**>(CPLCalloc(m_numTABFiles, sizeof(TABFile*)));
 
     for (int iFile=0; iFile < m_numTABFiles; iFile++)
     {
@@ -384,7 +384,7 @@ int TABView::OpenForWrite(const char *pszFname)
     m_nMainTableIndex = 0;
     m_bRelFieldsCreated = FALSE;
 
-    m_papoTABFiles = (TABFile**)CPLCalloc(m_numTABFiles, sizeof(TABFile*));
+    m_papoTABFiles = static_cast<TABFile**>(CPLCalloc(m_numTABFiles, sizeof(TABFile*)));
 
     for (int iFile=0; iFile < m_numTABFiles; iFile++)
     {
@@ -818,7 +818,7 @@ TABFeature *TABView::GetFeatureRef(GIntBig nFeatureId)
         m_poCurFeature = nullptr;
     }
 
-    m_poCurFeature = m_poRelation->GetFeature((int)nFeatureId);
+    m_poCurFeature = m_poRelation->GetFeature(static_cast<int>(nFeatureId));
     m_nCurFeatureId = nFeatureId;
     if( m_poCurFeature )
     {
@@ -1342,10 +1342,10 @@ int  TABRelation::Init(const char *pszViewName,
     const int numFields1 = poMainDefn ? poMainDefn->GetFieldCount() : 0;
     const int numFields2 = poRelDefn ? poRelDefn->GetFieldCount() : 0;
 
-    m_panMainTableFieldMap = (int*)CPLMalloc((numFields1+1)*sizeof(int));
+    m_panMainTableFieldMap = static_cast<int*>(CPLMalloc((numFields1+1)*sizeof(int)));
     for( int i = 0; i < numFields1; i++ )
         m_panMainTableFieldMap[i] = -1;
-    m_panRelTableFieldMap = (int*)CPLMalloc((numFields2+1)*sizeof(int));
+    m_panRelTableFieldMap = static_cast<int*>(CPLMalloc((numFields2+1)*sizeof(int)));
     for( int i = 0; i<numFields2; i++ )
         m_panRelTableFieldMap[i] = -1;
 
@@ -1483,12 +1483,12 @@ int  TABRelation::CreateRelFields()
     OGRFeatureDefn *poMainDefn = m_poMainTable->GetLayerDefn();
     OGRFeatureDefn *poRelDefn = m_poRelTable->GetLayerDefn();
 
-    m_panMainTableFieldMap = (int*)CPLRealloc(m_panMainTableFieldMap,
-                                      poMainDefn->GetFieldCount()*sizeof(int));
+    m_panMainTableFieldMap = static_cast<int*>(CPLRealloc(m_panMainTableFieldMap,
+                                      poMainDefn->GetFieldCount()*sizeof(int)));
     m_panMainTableFieldMap[poMainDefn->GetFieldCount()-1] = -1;
 
-    m_panRelTableFieldMap = (int*)CPLRealloc(m_panRelTableFieldMap,
-                                      poRelDefn->GetFieldCount()*sizeof(int));
+    m_panRelTableFieldMap = static_cast<int*>(CPLRealloc(m_panRelTableFieldMap,
+                                      poRelDefn->GetFieldCount()*sizeof(int)));
     m_panRelTableFieldMap[poRelDefn->GetFieldCount()-1] = -1;
 
     /*-----------------------------------------------------------------
@@ -1731,8 +1731,8 @@ int TABRelation::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
 
         OGRFeatureDefn *poMainDefn = m_poMainTable->GetLayerDefn();
 
-        m_panMainTableFieldMap = (int*)CPLRealloc(m_panMainTableFieldMap,
-                                      poMainDefn->GetFieldCount()*sizeof(int));
+        m_panMainTableFieldMap = static_cast<int*>(CPLRealloc(m_panMainTableFieldMap,
+                                      poMainDefn->GetFieldCount()*sizeof(int)));
 
         m_poDefn->AddFieldDefn(poMainDefn->GetFieldDefn(poMainDefn->
                                                           GetFieldCount()-1));
@@ -1752,8 +1752,8 @@ int TABRelation::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
 
         OGRFeatureDefn *poRelDefn = m_poRelTable->GetLayerDefn();
 
-        m_panRelTableFieldMap = (int*)CPLRealloc(m_panRelTableFieldMap,
-                                      poRelDefn->GetFieldCount()*sizeof(int));
+        m_panRelTableFieldMap = static_cast<int*>(CPLRealloc(m_panRelTableFieldMap,
+                                      poRelDefn->GetFieldCount()*sizeof(int)));
 
         m_poDefn->AddFieldDefn(poRelDefn->GetFieldDefn(poRelDefn->
                                                          GetFieldCount()-1));
@@ -1988,7 +1988,7 @@ int TABRelation::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
     poMainFeature->SetField(m_nMainFieldNo, nRecordNo);
 
     if (m_poMainTable->CreateFeature(poMainFeature) != OGRERR_NONE)
-        nFeatureId = (int) poMainFeature->GetFID();
+        nFeatureId = static_cast<int>(poMainFeature->GetFID());
     else
         nFeatureId = -1;
 

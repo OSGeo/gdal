@@ -37,6 +37,8 @@ class OGRDataSourceWithTransaction;
 
 class OGRLayerWithTransaction final: public OGRLayerDecorator
 {
+        CPL_DISALLOW_COPY_ASSIGN(OGRLayerWithTransaction)
+
     protected:
         friend class OGRDataSourceWithTransaction;
 
@@ -69,6 +71,8 @@ class OGRLayerWithTransaction final: public OGRLayerDecorator
 
 class OGRDataSourceWithTransaction final: public OGRDataSource
 {
+        CPL_DISALLOW_COPY_ASSIGN(OGRDataSourceWithTransaction)
+
   protected:
     OGRDataSource *m_poBaseDataSource;
     IOGRTransactionBehaviour* m_poTransactionBehaviour;
@@ -76,9 +80,9 @@ class OGRDataSourceWithTransaction final: public OGRDataSource
     int            m_bHasOwnershipTransactionBehaviour;
     int            m_bInTransaction;
 
-    std::map<CPLString, OGRLayerWithTransaction* > m_oMapLayers;
-    std::set<OGRLayerWithTransaction*> m_oSetLayers;
-    std::set<OGRLayer*> m_oSetExecuteSQLLayers;
+    std::map<CPLString, OGRLayerWithTransaction* > m_oMapLayers{};
+    std::set<OGRLayerWithTransaction*> m_oSetLayers{};
+    std::set<OGRLayer*> m_oSetExecuteSQLLayers{};
 
     OGRLayer*     WrapLayer(OGRLayer* poLayer);
     void          RemapLayers();

@@ -721,7 +721,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
                      strstr(szCTString, "NAD = 27") )
                 strcpy(nad, "NAD27");
             if( poSRS->ImportFromESRIStatePlaneWKT(
-                    statePlaneZone, (const char*)nad, (const char*)units,
+                    statePlaneZone, nad, units,
                     psDefn->PCS) == OGRERR_NONE )
                 return TRUE;
         }
@@ -735,7 +735,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
     // Check state plane again to see if a pe string is available.
     if( psDefn->PCS != KvUserDefined )
     {
-        if( poSRS->ImportFromESRIStatePlaneWKT( 0, nullptr, (const char*)units,
+        if( poSRS->ImportFromESRIStatePlaneWKT( 0, nullptr, units,
                                                 psDefn->PCS) == OGRERR_NONE )
             return TRUE;
     }

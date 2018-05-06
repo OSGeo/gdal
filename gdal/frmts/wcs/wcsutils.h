@@ -88,6 +88,8 @@ CPLXMLNode *SearchChildWithValue(CPLXMLNode *node, const char *path, const char 
 bool CPLGetXMLBoolean(CPLXMLNode *poRoot, const char *pszPath);
 
 bool CPLUpdateXML(CPLXMLNode *poRoot, const char *pszPath, const char *new_value);
+
+void XMLCopyMetadata(CPLXMLNode *node, CPLXMLNode *metadata, CPLString key);
     
 bool SetupCache(CPLString &cache,
                 bool clear);

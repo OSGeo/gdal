@@ -28,8 +28,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
 import random
+from osgeo import gdal
 
 COMPRESSION_NONE = 1
 PHOTOMETRIC_MINISBLACK = 1

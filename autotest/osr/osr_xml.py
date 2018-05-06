@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import re
 import sys
 
 sys.path.append('../pymod')
@@ -35,7 +36,6 @@ sys.path.append('../pymod')
 import gdaltest
 from osgeo import osr
 
-import re
 
 ###############################################################################
 # Test the osr.SpatialReference.ImportFromXML() function.

@@ -36,7 +36,7 @@
 #include "libkea_headers.h"
 
 // class that implements a GDAL dataset
-class KEADataset : public GDALPamDataset
+class KEADataset final: public GDALPamDataset
 {
     static H5::H5File *CreateLL( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,

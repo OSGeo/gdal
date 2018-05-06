@@ -69,14 +69,14 @@ constexpr char COND_OPTIONAL = 'O';
 constexpr char COND_NOT_ALLOWED = 'N';
 constexpr char COND_NOT_ALLOWED_EVEN_IN_JPEG_MARKER = 'J';
 
-typedef struct
+struct EXIFTagDesc
 {
     GUInt16              tag;
     GDALEXIFTIFFDataType datatype;
     GUInt32              length;
     const char*          name;
     char                 comprCond;
-} EXIFTagDesc;
+};
 
 static const EXIFTagDesc gpstags [] = {
     { 0x00, TIFF_BYTE, 4, "EXIF_GPSVersionID", COND_OPTIONAL },
@@ -868,7 +868,7 @@ static GByte* ParseUndefined(const char* pszVal, GUInt32* pnLength)
 /*                           EXIFTagSort()                              */
 /************************************************************************/
 
-typedef struct
+struct TagValue
 {
     GUInt16              tag;
     GDALEXIFTIFFDataType datatype;
@@ -876,7 +876,7 @@ typedef struct
     GUInt32              nLength;
     GUInt32              nLengthBytes;
     int                  nRelOffset;
-} TagValue;
+};
 
 static bool EXIFTagSort(const TagValue& a, const TagValue& b)
 {
@@ -968,12 +968,12 @@ static bool GetNumDenomFromDouble(GDALEXIFTIFFDataType datatype, double dfVal,
 /*                       EXIFFormatTagValue()                           */
 /************************************************************************/
 
-typedef enum
+enum class EXIFLocation
 {
     MAIN_IFD,
     EXIF_IFD,
     GPS_IFD
-} EXIFLocation;
+};
 
 static
 std::vector<TagValue> EXIFFormatTagValue(char** papszEXIFMetadata,
@@ -983,16 +983,16 @@ std::vector<TagValue> EXIFFormatTagValue(char** papszEXIFMetadata,
     std::vector<TagValue> tags;
     int nRelOffset = 0;
     const EXIFTagDesc* tagdescArray =
-                                (location == GPS_IFD) ? gpstags: exiftags;
+                                (location == EXIFLocation::GPS_IFD) ? gpstags: exiftags;
 
     for(char** papszIter = papszEXIFMetadata;
                             papszIter && *papszIter; ++papszIter )
     {
         if( !STARTS_WITH_CI(*papszIter, "EXIF_") )
             continue;
-        if( location == GPS_IFD && !STARTS_WITH_CI(*papszIter, "EXIF_GPS") )
+        if( location == EXIFLocation::GPS_IFD && !STARTS_WITH_CI(*papszIter, "EXIF_GPS") )
             continue;
-        if( location != GPS_IFD && STARTS_WITH_CI(*papszIter, "EXIF_GPS") )
+        if( location != EXIFLocation::GPS_IFD && STARTS_WITH_CI(*papszIter, "EXIF_GPS") )
             continue;
 
         bool bFound = false;
@@ -1007,14 +1007,14 @@ std::vector<TagValue> EXIFFormatTagValue(char** papszEXIFMetadata,
             }
         }
 
-        if( location == MAIN_IFD )
+        if( location == EXIFLocation::MAIN_IFD )
         {
             if( tagdescArray[i].tag > 0x8298 ) // EXIF_Copyright
             {
                 continue;
             }
         }
-        else if( location == EXIF_IFD )
+        else if( location == EXIFLocation::EXIF_IFD )
         {
             if( tagdescArray[i].tag <= 0x8298 ) // EXIF_Copyright
             {
@@ -1268,28 +1268,28 @@ static void WriteTags(GByte* pabyData, GUInt32& nBufferOff,
                       GUInt32 offsetIFDData,
                       std::vector<TagValue>& tags)
 {
-    for( size_t i = 0; i < tags.size(); i++ )
+    for( auto& tag: tags )
     {
-        WriteLEUInt16(pabyData, nBufferOff, tags[i].tag);
+        WriteLEUInt16(pabyData, nBufferOff, tag.tag);
         WriteLEUInt16(pabyData, nBufferOff,
-                      static_cast<GUInt16>(tags[i].datatype));
-        WriteLEUInt32(pabyData, nBufferOff, tags[i].nLength);
-        if( tags[i].nRelOffset < 0 )
+                      static_cast<GUInt16>(tag.datatype));
+        WriteLEUInt32(pabyData, nBufferOff, tag.nLength);
+        if( tag.nRelOffset < 0 )
         {
-            CPLAssert(tags[i].nLengthBytes <= 4);
+            CPLAssert(tag.nLengthBytes <= 4);
             memcpy(pabyData + nBufferOff,
-                tags[i].pabyVal,
-                tags[i].nLengthBytes);
+                tag.pabyVal,
+                tag.nLengthBytes);
             nBufferOff += 4;
         }
         else
         {
             WriteLEUInt32(pabyData, nBufferOff,
-                        tags[i].nRelOffset + offsetIFDData);
+                        tag.nRelOffset + offsetIFDData);
             memcpy(pabyData + EXIF_HEADER_SIZE +
-                                tags[i].nRelOffset + offsetIFDData,
-                   tags[i].pabyVal,
-                   tags[i].nLengthBytes);
+                                tag.nRelOffset + offsetIFDData,
+                   tag.pabyVal,
+                   tag.nLengthBytes);
         }
     }
 }
@@ -1300,9 +1300,9 @@ static void WriteTags(GByte* pabyData, GUInt32& nBufferOff,
 
 static void FreeTags(std::vector<TagValue>& tags)
 {
-    for(size_t i = 0; i < tags.size(); i++ )
+    for( auto& tag: tags )
     {
-        CPLFree(tags[i].pabyVal);
+        CPLFree(tag.pabyVal);
     }
 }
 
@@ -1337,17 +1337,17 @@ GByte* EXIFCreate(char**   papszEXIFMetadata,
 
     GUInt32 nOfflineSizeMain = 0;
     std::vector<TagValue> mainTags = EXIFFormatTagValue(papszEXIFMetadata,
-                                                        MAIN_IFD,
+                                                        EXIFLocation::MAIN_IFD,
                                                         &nOfflineSizeMain);
 
     GUInt32 nOfflineSizeEXIF = 0;
     std::vector<TagValue> exifTags = EXIFFormatTagValue(papszEXIFMetadata,
-                                                        EXIF_IFD,
+                                                        EXIFLocation::EXIF_IFD,
                                                         &nOfflineSizeEXIF);
 
     GUInt32 nOfflineSizeGPS = 0;
     std::vector<TagValue> gpsTags = EXIFFormatTagValue(papszEXIFMetadata,
-                                                        GPS_IFD,
+                                                        EXIFLocation::GPS_IFD,
                                                         &nOfflineSizeGPS);
 
     const GUInt16 nEXIFTags = static_cast<GUInt16>(exifTags.size());

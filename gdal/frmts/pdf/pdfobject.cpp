@@ -1055,7 +1055,12 @@ const CPLString& GDALPDFObjectPoppler::GetString()
 {
     if (GetType() == PDFObjectType_String)
     {
+#ifdef POPPLER_0_58_OR_LATER
+        // At least available since poppler 0.41
+        const GooString* gooString = m_po->getString();
+#else
         GooString* gooString = m_po->getString();
+#endif
         return (osStr = GDALPDFGetUTF8StringFromBytes(reinterpret_cast<const GByte*>(gooString->getCString()),
                                                       static_cast<int>(gooString->getLength())));
     }

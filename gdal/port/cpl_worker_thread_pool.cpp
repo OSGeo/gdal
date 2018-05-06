@@ -49,14 +49,8 @@ CPL_CVSID("$Id$")
  * must be called.
  */
 CPLWorkerThreadPool::CPLWorkerThreadPool() :
-    hCond(nullptr),
-    eState(CPLWTS_OK),
-    psJobQueue(nullptr),
-    nPendingJobs(0),
-    psWaitingWorkerThreadsList(nullptr),
-    nWaitingWorkerThreads(0)
+    hMutex( CPLCreateMutexEx(CPL_MUTEX_REGULAR) )
 {
-    hMutex = CPLCreateMutexEx(CPL_MUTEX_REGULAR);
     CPLReleaseMutex(hMutex);
 }
 

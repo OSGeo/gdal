@@ -34,6 +34,9 @@ endif
 
 CPPFLAGS	:=	 -I.. $(JPEG_FLAGS)  $(GEOTIFF_INCLUDE) $(TIFF_OPTS) $(CPPFLAGS)
 
+CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS)  $(CXXFLAGS)
+# issue with $(WARN_OLD_STYLE_CAST) with x86_64-w64-mingw32-g++. See https://travis-ci.org/OSGeo/gdal/jobs/375654138
+
 default:	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 
 clean:

@@ -97,6 +97,9 @@ typedef enum {
  * The base class for all metadata readers
  */
 class GDALMDReaderBase{
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALMDReaderBase)
+
 public:
     GDALMDReaderBase(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderBase();
@@ -161,11 +164,11 @@ protected:
                                          const char *pszValue);
 protected:
 //! @cond Doxygen_Suppress
-    char **m_papszIMDMD;
-    char **m_papszRPCMD;
-    char **m_papszIMAGERYMD;
-    char **m_papszDEFAULTMD;
-    bool m_bIsMetadataLoad;
+    char **m_papszIMDMD = nullptr;
+    char **m_papszRPCMD = nullptr;
+    char **m_papszIMAGERYMD = nullptr;
+    char **m_papszDEFAULTMD = nullptr;
+    bool m_bIsMetadataLoad = false;
 //! @endcond
 };
 
@@ -175,6 +178,9 @@ protected:
  * for provided path.
  */
 class CPL_DLL GDALMDReaderManager{
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALMDReaderManager)
+
 public:
     GDALMDReaderManager();
     virtual ~GDALMDReaderManager();
@@ -194,7 +200,7 @@ public:
                                         GUInt32 nType = MDR_ANY);
 protected:
 //! @cond Doxygen_Suppress
-    GDALMDReaderBase *m_pReader;
+    GDALMDReaderBase *m_pReader = nullptr;
 //! @endcond
 };
 

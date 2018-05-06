@@ -105,7 +105,8 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
     iFIDFieldIndex(),
     nExtraDSCount(0),
     papoExtraDS(nullptr),
-    nIteratedFeatures(-1)
+    nIteratedFeatures(-1),
+    m_oDistinctList{}
 {
     swq_select *psSelectInfo = static_cast<swq_select*>(pSelectInfoIn);
 

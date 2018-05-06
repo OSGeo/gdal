@@ -46,14 +46,10 @@ CPL_CVSID("$Id$")
 template<class DataType, class EqualityTest>
 GDALRasterPolygonEnumeratorT<DataType,
                              EqualityTest>::GDALRasterPolygonEnumeratorT(
-    int nConnectednessIn )
+    int nConnectednessIn ) :
+    nConnectedness( nConnectednessIn )
 
 {
-    panPolyIdMap = nullptr;
-    panPolyValue = nullptr;
-    nNextPolygonId = 0;
-    nPolyAlloc = 0;
-    nConnectedness = nConnectednessIn;
     CPLAssert( nConnectedness == 4 || nConnectedness == 8 );
 }
 

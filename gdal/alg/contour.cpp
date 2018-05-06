@@ -62,6 +62,8 @@ constexpr double JOIN_DIST = 0.0001;
 /************************************************************************/
 class GDALContourItem
 {
+    CPL_DISALLOW_COPY_ASSIGN(GDALContourItem)
+
 public:
     bool bRecentlyAccessed;
     double dfLevel;
@@ -93,6 +95,8 @@ public:
 /************************************************************************/
 class GDALContourLevel
 {
+    CPL_DISALLOW_COPY_ASSIGN(GDALContourLevel)
+
     double dfLevel;
 
     int nEntryMax;
@@ -117,6 +121,8 @@ public:
 /************************************************************************/
 class GDALContourGenerator
 {
+    CPL_DISALLOW_COPY_ASSIGN(GDALContourGenerator)
+
     int    nWidth;
     int    nHeight;
     int    iLine;

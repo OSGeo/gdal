@@ -47,7 +47,7 @@
 #define MITAB_VERSION_INT  2000000  /* version x.y.z -> xxxyyyzzz */
 
 #ifndef ROUND_INT
-#  define ROUND_INT(dX) ((int)((dX) < 0.0 ? (dX)-0.5 : (dX)+0.5 ))
+#  define ROUND_INT(dX) static_cast<int>((dX) < 0.0 ? (dX)-0.5 : (dX)+0.5 )
 #endif
 
 #define MITAB_AREA(x1, y1, x2, y2)  ((static_cast<double>(x2)-(x1))*(static_cast<double>(y2)-(y1)))
@@ -77,6 +77,8 @@ typedef enum
 
 class IMapInfoFile : public OGRLayer
 {
+    CPL_DISALLOW_COPY_ASSIGN(IMapInfoFile)
+
   protected:
     GIntBig             m_nCurFeatureId;
     TABFeature         *m_poCurFeature;
@@ -199,6 +201,8 @@ class IMapInfoFile : public OGRLayer
  *--------------------------------------------------------------------*/
 class TABFile final : public IMapInfoFile
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABFile)
+
   private:
     char        *m_pszFname;
     TABAccess   m_eAccessMode;
@@ -359,6 +363,8 @@ class TABFile final : public IMapInfoFile
  *--------------------------------------------------------------------*/
 class TABView final : public IMapInfoFile
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABView)
+
   private:
     char        *m_pszFname;
     TABAccess   m_eAccessMode;
@@ -485,6 +491,8 @@ class TABView final : public IMapInfoFile
  *--------------------------------------------------------------------*/
 class TABSeamless final : public IMapInfoFile
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABSeamless)
+
   private:
     char        *m_pszFname;
     char        *m_pszPath;
@@ -605,6 +613,8 @@ class TABSeamless final : public IMapInfoFile
  *--------------------------------------------------------------------*/
 class MIFFile final : public IMapInfoFile
 {
+    CPL_DISALLOW_COPY_ASSIGN(MIFFile)
+
   private:
     char        *m_pszFname;
     TABAccess    m_eAccessMode;
@@ -631,7 +641,7 @@ class MIFFile final : public IMapInfoFile
 
     /* extents, as cached by MIFFile::PreParseFile() */
     int         m_bExtentsSet;
-    OGREnvelope m_sExtents;
+    OGREnvelope m_sExtents{};
 
     int         m_nPoints;
     int         m_nLines;
@@ -643,7 +653,7 @@ class MIFFile final : public IMapInfoFile
     MIDDATAFile  *m_poMIFFile;   // Mif File
 
     OGRFeatureDefn *m_poDefn;
-    std::set<CPLString> m_oSetFields;
+    std::set<CPLString> m_oSetFields{};
     OGRSpatialReference *m_poSpatialRef;
 
     int         m_nFeatureCount;
@@ -851,7 +861,7 @@ class ITABFeaturePen
     TABPenDef   m_sPenDef;
   public:
     ITABFeaturePen();
-    ~ITABFeaturePen() {}
+    virtual ~ITABFeaturePen() {}
     int         GetPenDefIndex() const {return m_nPenDefIndex;}
     TABPenDef  *GetPenDefRef() {return &m_sPenDef;}
     const TABPenDef  *GetPenDefRef() const {return &m_sPenDef;}
@@ -882,7 +892,7 @@ class ITABFeatureBrush
     TABBrushDef m_sBrushDef;
   public:
     ITABFeatureBrush();
-    ~ITABFeatureBrush() {}
+    virtual ~ITABFeatureBrush() {}
     int         GetBrushDefIndex() const {return m_nBrushDefIndex;}
     TABBrushDef *GetBrushDefRef() {return &m_sBrushDef;}
     const TABBrushDef *GetBrushDefRef() const {return &m_sBrushDef;}
@@ -911,7 +921,7 @@ class ITABFeatureFont
     TABFontDef  m_sFontDef;
   public:
     ITABFeatureFont();
-    ~ITABFeatureFont() {}
+    virtual ~ITABFeatureFont() {}
     int         GetFontDefIndex() const {return m_nFontDefIndex;}
     TABFontDef *GetFontDefRef() {return &m_sFontDef;}
     const TABFontDef *GetFontDefRef() const {return &m_sFontDef;}
@@ -930,7 +940,7 @@ class ITABFeatureSymbol
     TABSymbolDef m_sSymbolDef;
   public:
     ITABFeatureSymbol();
-    ~ITABFeatureSymbol() {}
+    virtual ~ITABFeatureSymbol() {}
     int         GetSymbolDefIndex() const {return m_nSymbolDefIndex;}
     TABSymbolDef *GetSymbolDefRef() {return &m_sSymbolDef;}
     const TABSymbolDef *GetSymbolDefRef() const {return &m_sSymbolDef;}
@@ -1075,6 +1085,8 @@ class TABFeature : public OGRFeature
 class TABPoint: public TABFeature,
                 public ITABFeatureSymbol
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABPoint)
+
   public:
     explicit TABPoint(OGRFeatureDefn *poDefnIn);
     virtual ~TABPoint();
@@ -1118,6 +1130,8 @@ class TABPoint: public TABFeature,
 class TABFontPoint final : public TABPoint,
                     public ITABFeatureFont
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABFontPoint)
+
   protected:
     double      m_dAngle;
     GInt16      m_nFontStyle;           // Bold/shadow/halo/etc.
@@ -1148,7 +1162,7 @@ class TABFontPoint final : public TABPoint,
     int         GetFontStyleMIFValue();
     void        SetFontStyleMIFValue(int nStyle);
     int         GetFontStyleTABValue()           {return m_nFontStyle;}
-    void        SetFontStyleTABValue(int nStyle){m_nFontStyle=(GInt16)nStyle;}
+    void        SetFontStyleTABValue(int nStyle){m_nFontStyle=static_cast<GInt16>(nStyle);}
 
     // GetSymbolAngle(): Return angle in degrees counterclockwise
     double      GetSymbolAngle() const {return m_dAngle;}
@@ -1536,6 +1550,8 @@ class TABText final : public TABFeature,
                public ITABFeatureFont,
                public ITABFeaturePen
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABText)
+
   protected:
     char        *m_pszString;
 
@@ -1621,7 +1637,7 @@ class TABText final : public TABFeature,
     GBool       IsFontItalic() const;
     GBool       IsFontUnderline() const;
     int         GetFontStyleTABValue() const {return m_nFontStyle;}
-    void        SetFontStyleTABValue(int nStyle){m_nFontStyle=(GInt16)nStyle;}
+    void        SetFontStyleTABValue(int nStyle){m_nFontStyle=static_cast<GInt16>(nStyle);}
 };
 
 /*---------------------------------------------------------------------
@@ -1705,6 +1721,8 @@ class TABMultiPoint final : public TABFeature,
 class TABCollection final : public TABFeature,
                      public ITABFeatureSymbol
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABCollection)
+
   private:
     TABRegion       *m_poRegion;
     TABPolyline     *m_poPline;

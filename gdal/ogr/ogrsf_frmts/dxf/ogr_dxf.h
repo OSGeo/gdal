@@ -90,7 +90,7 @@ class OGRDXFFeatureQueue
 /*                          OGRDXFBlocksLayer                           */
 /************************************************************************/
 
-class OGRDXFBlocksLayer : public OGRLayer
+class OGRDXFBlocksLayer final: public OGRLayer
 {
     OGRDXFDataSource   *poDS;
 
@@ -123,7 +123,7 @@ class OGRDXFBlocksLayer : public OGRLayer
 /*      Stores the transformation needed to insert a block reference.   */
 /************************************************************************/
 
-class OGRDXFInsertTransformer : public OGRCoordinateTransformation
+class OGRDXFInsertTransformer final: public OGRCoordinateTransformation
 {
 public:
     OGRDXFInsertTransformer() :
@@ -258,7 +258,7 @@ public:
 /*                         OGRDXFOCSTransformer                         */
 /************************************************************************/
 
-class OGRDXFOCSTransformer : public OGRCoordinateTransformation
+class OGRDXFOCSTransformer final: public OGRCoordinateTransformation
 {
 private:
     double adfN[3];
@@ -335,7 +335,7 @@ struct DXFTriple
 /*                                                                      */
 /*     Extends OGRFeature with some DXF-specific members.               */
 /************************************************************************/
-class OGRDXFFeature : public OGRFeature
+class OGRDXFFeature final: public OGRFeature
 {
     friend class OGRDXFLayer;
 
@@ -386,7 +386,7 @@ class OGRDXFFeature : public OGRFeature
 /************************************************************************/
 /*                             OGRDXFLayer                              */
 /************************************************************************/
-class OGRDXFLayer : public OGRLayer
+class OGRDXFLayer final: public OGRLayer
 {
     friend class OGRDXFBlocksLayer;
 
@@ -539,7 +539,7 @@ enum OGRDXFFieldModes
 /*                           OGRDXFDataSource                           */
 /************************************************************************/
 
-class OGRDXFDataSource : public OGRDataSource
+class OGRDXFDataSource final: public OGRDataSource
 {
     VSILFILE           *fp;
 
@@ -662,7 +662,7 @@ class OGRDXFDataSource : public OGRDataSource
 
 class OGRDXFWriterDS;
 
-class OGRDXFWriterLayer : public OGRLayer
+class OGRDXFWriterLayer final: public OGRLayer
 {
     VSILFILE           *fp;
     OGRFeatureDefn     *poFeatureDefn;
@@ -716,7 +716,7 @@ class OGRDXFWriterLayer : public OGRLayer
 /*                       OGRDXFBlocksWriterLayer                        */
 /************************************************************************/
 
-class OGRDXFBlocksWriterLayer : public OGRLayer
+class OGRDXFBlocksWriterLayer final: public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
 
@@ -742,7 +742,7 @@ class OGRDXFBlocksWriterLayer : public OGRLayer
 /*                           OGRDXFWriterDS                             */
 /************************************************************************/
 
-class OGRDXFWriterDS : public OGRDataSource
+class OGRDXFWriterDS final: public OGRDataSource
 {
     friend class OGRDXFWriterLayer;
 

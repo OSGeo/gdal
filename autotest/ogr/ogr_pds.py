@@ -76,10 +76,25 @@ def ogr_pds_1():
 
     return 'success'
 
+###############################################################################
+# Read IEEE_FLOAT columns (see https://github.com/OSGeo/gdal/issues/570)
+
+
+def ogr_pds_2():
+
+    ds = ogr.Open('data/virsvd_orb_11187_050618.lbl')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if abs(f['INCIDENCE_ANGLE'] - 3.56775538) > 1e-7 or abs(f['TEMP_2'] - 28.1240005493164) > 1e-7:
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
 
 gdaltest_list = [
-    ogr_pds_1]
-
+    ogr_pds_1,
+    ogr_pds_2,
+]
 
 if __name__ == '__main__':
 

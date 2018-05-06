@@ -214,7 +214,7 @@ GDALMRFRasterBand::GDALMRFRasterBand( GDALMRFDataset *parent_dataset,
     nBlockYSize = img.pagesize.y;
     nBlocksPerRow = img.pagecount.x;
     nBlocksPerColumn = img.pagecount.y;
-    img.NoDataValue = GetNoDataValue(&img.hasNoData);
+    img.NoDataValue = GDALMRFRasterBand::GetNoDataValue(&img.hasNoData);
 
     // Pick up the twists, aka GZ, RAWZ headers
     if( GetOptlist().FetchBoolean("GZ", FALSE) )

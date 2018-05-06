@@ -143,24 +143,14 @@ typedef enum
 class CachedFileProp
 {
   public:
-    ExistStatus     eExists;
-    bool            bHasComputedFileSize;
-    vsi_l_offset    fileSize;
-    bool            bIsDirectory;
-    time_t          mTime;
-    bool            bS3LikeRedirect;
-    time_t          nExpireTimestampLocal;
-    CPLString       osRedirectURL;
-
-                    CachedFileProp() :
-                        eExists(EXIST_UNKNOWN),
-                        bHasComputedFileSize(false),
-                        fileSize(0),
-                        bIsDirectory(false),
-                        mTime(0),
-                        bS3LikeRedirect(false),
-                        nExpireTimestampLocal(0)
-                        {}
+    ExistStatus     eExists = EXIST_UNKNOWN;
+    bool            bHasComputedFileSize = false;
+    vsi_l_offset    fileSize = 0;
+    bool            bIsDirectory = false;
+    time_t          mTime = 0;
+    bool            bS3LikeRedirect = false;
+    time_t          nExpireTimestampLocal = 0;
+    CPLString       osRedirectURL{};
 };
 
 typedef struct
@@ -288,16 +278,18 @@ class VSICurlHandle;
 
 class VSICurlFilesystemHandler : public VSIFilesystemHandler
 {
-    CachedRegion  **papsRegions;
-    int             nRegions;
+    CPL_DISALLOW_COPY_ASSIGN(VSICurlFilesystemHandler)
 
-    std::map<CPLString, CachedFileProp*>   cacheFileSize;
-    std::map<CPLString, CachedDirList*>        cacheDirList;
+    CachedRegion  **papsRegions = nullptr;
+    int             nRegions = 0;
 
-    bool            bUseCacheDisk;
+    std::map<CPLString, CachedFileProp*>   cacheFileSize{};
+    std::map<CPLString, CachedDirList*>        cacheDirList{};
+
+    bool            bUseCacheDisk = false;
 
     // Per-thread Curl connection cache.
-    std::map<GIntBig, CachedConnection*> mapConnections;
+    std::map<GIntBig, CachedConnection*> mapConnections{};
 
     char**              ParseHTMLFileList(const char* pszFilename,
                                           int nMaxFiles,
@@ -305,7 +297,7 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
                                           bool* pbGotFileList);
 
 protected:
-    CPLMutex       *hMutex;
+    CPLMutex       *hMutex = nullptr;
 
     virtual VSICurlHandle* CreateFileHandle(const char* pszFilename);
     virtual char** GetFileList(const char *pszFilename,
@@ -409,44 +401,45 @@ public:
 
 class VSICurlHandle : public VSIVirtualHandle
 {
+    CPL_DISALLOW_COPY_ASSIGN(VSICurlHandle)
 
   protected:
-    VSICurlFilesystemHandler* poFS;
+    VSICurlFilesystemHandler* poFS = nullptr;
 
-    bool            m_bCached;
+    bool            m_bCached = true;
 
-    vsi_l_offset    fileSize;
-    bool            bHasComputedFileSize;
-    ExistStatus     eExists;
-    bool            bIsDirectory;
-    CPLString       m_osFilename; // e.g "/vsicurl/http://example.com/foo"
-    char*           m_pszURL;     // e.g "http://example.com/foo"
+    vsi_l_offset    fileSize = 0;
+    bool            bHasComputedFileSize = false;
+    ExistStatus     eExists = EXIST_UNKNOWN;
+    bool            bIsDirectory = false;
+    CPLString       m_osFilename{}; // e.g "/vsicurl/http://example.com/foo"
+    char*           m_pszURL = nullptr;     // e.g "http://example.com/foo"
 
-    char          **m_papszHTTPOptions;
+    char          **m_papszHTTPOptions = nullptr;
 
   private:
 
-    vsi_l_offset    curOffset;
-    time_t          mTime;
+    vsi_l_offset    curOffset = 0;
+    time_t          mTime = 0;
 
-    vsi_l_offset    lastDownloadedOffset;
-    int             nBlocksToDownload;
-    bool            bEOF;
+    vsi_l_offset    lastDownloadedOffset = VSI_L_OFFSET_MAX;
+    int             nBlocksToDownload = 1;
+    bool            bEOF = false;
 
     bool            DownloadRegion(vsi_l_offset startOffset, int nBlocks);
 
-    VSICurlReadCbkFunc  pfnReadCbk;
-    void               *pReadCbkUserData;
-    bool                bStopOnInterruptUntilUninstall;
-    bool                bInterrupted;
+    VSICurlReadCbkFunc  pfnReadCbk = nullptr;
+    void               *pReadCbkUserData = nullptr;
+    bool                bStopOnInterruptUntilUninstall = false;
+    bool                bInterrupted = false;
 
-    bool                m_bS3LikeRedirect;
-    time_t              m_nExpireTimestampLocal;
-    CPLString           m_osRedirectURL;
+    bool                m_bS3LikeRedirect = false;
+    time_t              m_nExpireTimestampLocal = 0;
+    CPLString           m_osRedirectURL{};
 
-    int                 m_nMaxRetry;
-    double              m_dfRetryDelay;
-    bool                m_bUseHead;
+    int                 m_nMaxRetry = 0;
+    double              m_dfRetryDelay = 0.0;
+    bool                m_bUseHead = false;
 
     int          ReadMultiRangeSingleGet( int nRanges, void ** ppData,
                                          const vsi_l_offset* panOffsets,
@@ -623,17 +616,6 @@ VSICurlHandle::VSICurlHandle( VSICurlFilesystemHandler* poFSIn,
                               const char* pszFilename,
                               const char* pszURLIn ) :
     poFS(poFSIn),
-    m_bCached(true),
-    curOffset(0),
-    lastDownloadedOffset(VSI_L_OFFSET_MAX),
-    nBlocksToDownload(1),
-    bEOF(false),
-    pfnReadCbk(nullptr),
-    pReadCbkUserData(nullptr),
-    bStopOnInterruptUntilUninstall(false),
-    bInterrupted(false),
-    m_bS3LikeRedirect(false),
-    m_nExpireTimestampLocal(0),
     m_nMaxRetry(atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
                                    CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)))),
     m_dfRetryDelay(CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
@@ -2574,13 +2556,10 @@ int       VSICurlHandle::Close()
 /*                   VSICurlFilesystemHandler()                         */
 /************************************************************************/
 
-VSICurlFilesystemHandler::VSICurlFilesystemHandler()
+VSICurlFilesystemHandler::VSICurlFilesystemHandler():
+    bUseCacheDisk(
+        CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_CACHE", "NO")))
 {
-    hMutex = nullptr;
-    papsRegions = nullptr;
-    nRegions = 0;
-    bUseCacheDisk =
-        CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_CACHE", "NO"));
 }
 
 /************************************************************************/
@@ -2589,7 +2568,7 @@ VSICurlFilesystemHandler::VSICurlFilesystemHandler()
 
 VSICurlFilesystemHandler::~VSICurlFilesystemHandler()
 {
-    ClearCache();
+    VSICurlFilesystemHandler::ClearCache();
 
     if( hMutex != nullptr )
         CPLDestroyMutex( hMutex );
@@ -4742,6 +4721,8 @@ char** VSICurlFilesystemHandler::ReadDirEx( const char *pszDirname,
 
 class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 {
+    CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeFSHandler)
+
   protected:
     char** GetFileList( const char *pszFilename,
                         int nMaxFiles,
@@ -4749,6 +4730,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 
     virtual IVSIS3LikeHandleHelper* CreateHandleHelper(
             const char* pszURI, bool bAllowNoObject) = 0;
+
+    IVSIS3LikeFSHandler() = default;
 
   public:
     int Unlink( const char *pszFilename ) override;
@@ -4771,7 +4754,9 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 
 class VSIS3FSHandler final : public IVSIS3LikeFSHandler
 {
-    std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
+    CPL_DISALLOW_COPY_ASSIGN(VSIS3FSHandler)
+
+    std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params{};
 
   protected:
     VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
@@ -4787,7 +4772,7 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
     void ClearCache() override;
 
   public:
-    VSIS3FSHandler() {}
+    VSIS3FSHandler() = default;
     ~VSIS3FSHandler() override;
 
     VSIVirtualHandle *Open( const char *pszFilename,
@@ -4810,6 +4795,8 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
 
 class IVSIS3LikeHandle:  public VSICurlHandle
 {
+    CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeHandle)
+
   protected:
     bool UseLimitRangeGetInsteadOfHead() override { return true; }
     bool IsDirectoryFromExists( const char* pszVerb,
@@ -4838,7 +4825,9 @@ class IVSIS3LikeHandle:  public VSICurlHandle
 
 class VSIS3Handle final : public IVSIS3LikeHandle
 {
-    VSIS3HandleHelper* m_poS3HandleHelper;
+    CPL_DISALLOW_COPY_ASSIGN(VSIS3Handle)
+
+    VSIS3HandleHelper* m_poS3HandleHelper = nullptr;
 
   protected:
     struct curl_slist* GetCurlHeaders(
@@ -4861,30 +4850,32 @@ class VSIS3Handle final : public IVSIS3LikeHandle
 
 class VSIS3WriteHandle final : public VSIVirtualHandle
 {
-    IVSIS3LikeFSHandler     *m_poFS;
-    CPLString           m_osFilename;
-    IVSIS3LikeHandleHelper  *m_poS3HandleHelper;
-    bool                m_bUseChunked;
+    CPL_DISALLOW_COPY_ASSIGN(VSIS3WriteHandle)
 
-    vsi_l_offset        m_nCurOffset;
-    int                 m_nBufferOff;
-    int                 m_nBufferSize;
-    int                 m_nBufferOffReadCallback;
-    bool                m_bClosed;
-    GByte              *m_pabyBuffer;
-    CPLString           m_osUploadID;
-    int                 m_nPartNumber;
-    std::vector<CPLString> m_aosEtags;
-    CPLString           m_osXML;
-    int                 m_nOffsetInXML;
-    bool                m_bError;
+    IVSIS3LikeFSHandler     *m_poFS = nullptr;
+    CPLString           m_osFilename{};
+    IVSIS3LikeHandleHelper  *m_poS3HandleHelper = nullptr;
+    bool                m_bUseChunked = false;
 
-    CURLM              *m_hCurlMulti;
-    CURL               *m_hCurl;
-    const void         *m_pBuffer;
-    CPLString           m_osCurlErrBuf;
-    size_t              m_nChunkedBufferOff;
-    size_t              m_nChunkedBufferSize;
+    vsi_l_offset        m_nCurOffset = 0;
+    int                 m_nBufferOff = 0;
+    int                 m_nBufferSize = 0;
+    int                 m_nBufferOffReadCallback = 0;
+    bool                m_bClosed = false;
+    GByte              *m_pabyBuffer = nullptr;
+    CPLString           m_osUploadID{};
+    int                 m_nPartNumber = 0;
+    std::vector<CPLString> m_aosEtags{};
+    CPLString           m_osXML{};
+    int                 m_nOffsetInXML = 0;
+    bool                m_bError = false;
+
+    CURLM              *m_hCurlMulti = nullptr;
+    CURL               *m_hCurl = nullptr;
+    const void         *m_pBuffer = nullptr;
+    CPLString           m_osCurlErrBuf{};
+    size_t              m_nChunkedBufferOff = 0;
+    size_t              m_nChunkedBufferSize = 0;
 
     static size_t       ReadCallBackBuffer( char *buffer, size_t size,
                                             size_t nitems, void *instream );
@@ -4931,21 +4922,7 @@ VSIS3WriteHandle::VSIS3WriteHandle( IVSIS3LikeFSHandler* poFS,
                                     bool bUseChunked ) :
         m_poFS(poFS), m_osFilename(pszFilename),
         m_poS3HandleHelper(poS3HandleHelper),
-        m_bUseChunked(bUseChunked),
-        m_nCurOffset(0),
-        m_nBufferOff(0),
-        m_nBufferSize(0),
-        m_nBufferOffReadCallback(0),
-        m_bClosed(false),
-        m_pabyBuffer(nullptr),
-        m_nPartNumber(0),
-        m_nOffsetInXML(0),
-        m_bError(false),
-        m_hCurlMulti(nullptr),
-        m_hCurl(nullptr),
-        m_pBuffer(nullptr),
-        m_nChunkedBufferOff(0),
-        m_nChunkedBufferSize(0)
+        m_bUseChunked(bUseChunked)
 {
     // AWS S3 does not support chunked PUT in a convenient way, since you must
     // know in advance the total size... See
@@ -5833,6 +5810,7 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
 
 VSIS3FSHandler::~VSIS3FSHandler()
 {
+    VSIS3FSHandler::ClearCache();
     VSIS3HandleHelper::CleanMutex();
 }
 
@@ -6464,6 +6442,8 @@ bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg,
 
 class VSIGSFSHandler final : public IVSIS3LikeFSHandler
 {
+    CPL_DISALLOW_COPY_ASSIGN(VSIGSFSHandler)
+
   protected:
     VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
     const char* GetDebugKey() const override { return "GS"; }
@@ -6477,7 +6457,7 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
     void ClearCache() override;
 
   public:
-    VSIGSFSHandler() {}
+    VSIGSFSHandler() = default;
     ~VSIGSFSHandler() override;
 
     VSIVirtualHandle *Open( const char *pszFilename,
@@ -6495,7 +6475,9 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
 
 class VSIGSHandle final : public IVSIS3LikeHandle
 {
-    VSIGSHandleHelper* m_poHandleHelper;
+    CPL_DISALLOW_COPY_ASSIGN(VSIGSHandle)
+
+    VSIGSHandleHelper* m_poHandleHelper = nullptr;
 
   protected:
     struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
@@ -6513,6 +6495,7 @@ class VSIGSHandle final : public IVSIS3LikeHandle
 
 VSIGSFSHandler::~VSIGSFSHandler()
 {
+    VSICurlFilesystemHandler::ClearCache();
     VSIGSHandleHelper::CleanMutex();
 }
 
@@ -6709,6 +6692,8 @@ struct curl_slist* VSIGSHandle::GetCurlHeaders( const CPLString& osVerb,
 
 class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 {
+    CPL_DISALLOW_COPY_ASSIGN(VSIAzureFSHandler)
+
   protected:
     VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
     CPLString GetURLFromDirname( const CPLString& osDirname ) override;
@@ -6723,8 +6708,8 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     void InvalidateRecursive( const CPLString& osDirnameIn );
 
   public:
-    VSIAzureFSHandler() {}
-    ~VSIAzureFSHandler() override;
+    VSIAzureFSHandler() = default;
+    ~VSIAzureFSHandler() override = default;
 
     CPLString GetFSPrefix() override { return "/vsiaz/"; }
     const char* GetDebugKey() const override { return "AZURE"; }
@@ -6753,7 +6738,9 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
 class VSIAzureHandle final : public VSICurlHandle
 {
-    VSIAzureBlobHandleHelper* m_poHandleHelper;
+    CPL_DISALLOW_COPY_ASSIGN(VSIAzureHandle)
+
+    VSIAzureBlobHandleHelper* m_poHandleHelper = nullptr;
 
   protected:
         virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
@@ -6766,14 +6753,6 @@ class VSIAzureHandle final : public VSICurlHandle
                      VSIAzureBlobHandleHelper* poHandleHelper);
         virtual ~VSIAzureHandle();
 };
-
-/************************************************************************/
-/*                        ~VSIAzureFSHandler()                          */
-/************************************************************************/
-
-VSIAzureFSHandler::~VSIAzureFSHandler()
-{
-}
 
 /************************************************************************/
 /*                          CreateFileHandle()                          */
@@ -6795,17 +6774,19 @@ VSICurlHandle* VSIAzureFSHandler::CreateFileHandle(const char* pszFilename)
 
 class VSIAzureWriteHandle final : public VSIVirtualHandle
 {
-    VSIAzureFSHandler  *m_poFS;
-    CPLString           m_osFilename;
-    VSIAzureBlobHandleHelper  *m_poHandleHelper;
+    CPL_DISALLOW_COPY_ASSIGN(VSIAzureWriteHandle)
 
-    vsi_l_offset        m_nCurOffset;
-    int                 m_nBufferOff;
-    int                 m_nBufferSize;
-    int                 m_nBufferOffReadCallback;
-    bool                m_bClosed;
-    GByte              *m_pabyBuffer;
-    bool                m_bError;
+    VSIAzureFSHandler  *m_poFS = nullptr;
+    CPLString           m_osFilename{};
+    VSIAzureBlobHandleHelper  *m_poHandleHelper = nullptr;
+
+    vsi_l_offset        m_nCurOffset = 0;
+    int                 m_nBufferOff = 0;
+    int                 m_nBufferSize = 0;
+    int                 m_nBufferOffReadCallback = 0;
+    bool                m_bClosed = false;
+    GByte              *m_pabyBuffer = nullptr;
+    bool                m_bError = false;
 
     static size_t       ReadCallBackBuffer( char *buffer, size_t size,
                                             size_t nitems, void *instream );
@@ -6838,14 +6819,7 @@ VSIAzureWriteHandle::VSIAzureWriteHandle( VSIAzureFSHandler* poFS,
                                     VSIAzureBlobHandleHelper* poHandleHelper) :
         m_poFS(poFS),
         m_osFilename(pszFilename),
-        m_poHandleHelper(poHandleHelper),
-        m_nCurOffset(0),
-        m_nBufferOff(0),
-        m_nBufferSize(0),
-        m_nBufferOffReadCallback(0),
-        m_bClosed(false),
-        m_pabyBuffer(nullptr),
-        m_bError(false)
+        m_poHandleHelper(poHandleHelper)
 {
     int nChunkSizeMB = atoi(CPLGetConfigOption("VSIAZ_CHUNK_SIZE", "4"));
     if( nChunkSizeMB <= 0 || nChunkSizeMB > 4 )
@@ -7589,7 +7563,9 @@ bool VSIAzureHandle::IsDirectoryFromExists( const char* /*pszVerb*/,
 
 class VSIOSSFSHandler final : public IVSIS3LikeFSHandler
 {
-    std::map< CPLString, VSIOSSUpdateParams > oMapBucketsToOSSParams;
+    CPL_DISALLOW_COPY_ASSIGN(VSIOSSFSHandler)
+
+    std::map< CPLString, VSIOSSUpdateParams > oMapBucketsToOSSParams{};
 
 protected:
         VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
@@ -7605,7 +7581,7 @@ protected:
         void ClearCache() override;
 
 public:
-        VSIOSSFSHandler() {}
+        VSIOSSFSHandler() = default;
         ~VSIOSSFSHandler() override;
 
         VSIVirtualHandle *Open( const char *pszFilename,
@@ -7628,7 +7604,9 @@ public:
 
 class VSIOSSHandle final : public IVSIS3LikeHandle
 {
-    VSIOSSHandleHelper* m_poHandleHelper;
+    CPL_DISALLOW_COPY_ASSIGN(VSIOSSHandle)
+
+    VSIOSSHandleHelper* m_poHandleHelper = nullptr;
 
   protected:
     struct curl_slist* GetCurlHeaders(
@@ -7688,6 +7666,7 @@ VSIVirtualHandle* VSIOSSFSHandler::Open( const char *pszFilename,
 
 VSIOSSFSHandler::~VSIOSSFSHandler()
 {
+    VSIOSSFSHandler::ClearCache();
 }
 
 /************************************************************************/
@@ -7895,6 +7874,8 @@ bool VSIOSSHandle::CanRestartOnError(const char* pszErrorMsg,
 
 class VSISwiftFSHandler final : public IVSIS3LikeFSHandler
 {
+    CPL_DISALLOW_COPY_ASSIGN(VSISwiftFSHandler)
+
 protected:
         VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
         CPLString GetURLFromDirname( const CPLString& osDirname ) override;
@@ -7913,7 +7894,7 @@ protected:
         void ClearCache() override;
 
 public:
-        VSISwiftFSHandler() {}
+        VSISwiftFSHandler() = default;
         ~VSISwiftFSHandler() override;
 
         VSIVirtualHandle *Open( const char *pszFilename,
@@ -7932,7 +7913,9 @@ public:
 
 class VSISwiftHandle final : public IVSIS3LikeHandle
 {
-    VSISwiftHandleHelper* m_poHandleHelper;
+    CPL_DISALLOW_COPY_ASSIGN(VSISwiftHandle)
+
+    VSISwiftHandleHelper* m_poHandleHelper = nullptr;
 
   protected:
     struct curl_slist* GetCurlHeaders(
@@ -7991,6 +7974,7 @@ VSIVirtualHandle* VSISwiftFSHandler::Open( const char *pszFilename,
 
 VSISwiftFSHandler::~VSISwiftFSHandler()
 {
+    VSISwiftFSHandler::ClearCache();
     VSISwiftHandleHelper::CleanMutex();
 }
 

@@ -54,10 +54,7 @@ def vsistdin_1():
     # Should work on both Unix and Windows
     os.system(test_cli_utilities.get_gdal_translate_path() + " /vsistdin/ tmp/vsistdin_1_out.tif -q < tmp/vsistdin_1_src.tif")
 
-    try:
-        os.unlink("tmp/vsistdin_1_src.tif")
-    except OSError:
-        pass
+    gdal.Unlink("tmp/vsistdin_1_src.tif")
 
     ds = gdal.Open("tmp/vsistdin_1_out.tif")
     if ds is None:
@@ -67,10 +64,7 @@ def vsistdin_1():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    try:
-        os.unlink("tmp/vsistdin_1_out.tif")
-    except OSError:
-        pass
+    gdal.Unlink("tmp/vsistdin_1_out.tif")
 
     return 'success'
 
@@ -88,20 +82,14 @@ def vsistdin_2():
     # Should work on both Unix and Windows
     os.system(test_cli_utilities.get_gdal_translate_path() + " /vsistdin/ tmp/vsistdin_2_out.tif -q < tmp/vsistdin_2_src.tif")
 
-    try:
-        os.unlink("tmp/vsistdin_2_src.tif")
-    except OSError:
-        pass
+    gdal.Unlink("tmp/vsistdin_2_src.tif")
 
     ds = gdal.Open("tmp/vsistdin_2_out.tif")
     if ds is None:
         return 'fail'
     ds = None
 
-    try:
-        os.unlink("tmp/vsistdin_2_out.tif")
-    except OSError:
-        pass
+    gdal.Unlink("tmp/vsistdin_2_out.tif")
 
     return 'success'
 
@@ -145,20 +133,14 @@ def vsistdin_4():
     # Should work on both Unix and Windows
     os.system(test_cli_utilities.get_gdal_translate_path() + " /vsistdin/ tmp/vsistdin_4_out.tif -q < tmp/vsistdin_4_src.vrt")
 
-    try:
-        os.unlink("tmp/vsistdin_4_src.vrt")
-    except OSError:
-        pass
+    gdal.Unlink("tmp/vsistdin_4_src.vrt")
 
     ds = gdal.Open("tmp/vsistdin_4_out.tif")
     if ds is None:
         return 'fail'
     ds = None
 
-    try:
-        os.unlink("tmp/vsistdin_4_out.tif")
-    except OSError:
-        pass
+    gdal.Unlink("tmp/vsistdin_4_out.tif")
 
     return 'success'
 

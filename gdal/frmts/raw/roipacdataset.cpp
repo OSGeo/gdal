@@ -40,7 +40,7 @@ CPL_CVSID("$Id$")
 
 class ROIPACRasterBand;
 
-class ROIPACDataset : public RawDataset
+class ROIPACDataset final: public RawDataset
 {
     friend class ROIPACRasterBand;
 
@@ -77,7 +77,7 @@ class ROIPACDataset : public RawDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ROIPACRasterBand : public RawRasterBand
+class ROIPACRasterBand final: public RawRasterBand
 {
     public:
                 ROIPACRasterBand( GDALDataset *poDS, int nBand, void *fpRaw,
@@ -151,7 +151,7 @@ ROIPACDataset::ROIPACDataset() :
 
 ROIPACDataset::~ROIPACDataset()
 {
-    FlushCache();
+    ROIPACDataset::FlushCache();
     if ( fpRsc != nullptr && VSIFCloseL( fpRsc ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
@@ -483,7 +483,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Set all the other header metadata into the ROI_PAC domain       */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < CSLCount( papszRsc ); i++ )
+    for( int i = 0; papszRsc != nullptr && papszRsc[i] != nullptr; i++ )
     {
         char **papszTokens = CSLTokenizeString2( papszRsc[i],
                                                  "=",

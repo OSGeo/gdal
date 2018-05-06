@@ -55,7 +55,7 @@ static inline double dist(double x0, double y0, double x1, double y1)
  * \brief Create an empty circular string.
  */
 
-OGRCircularString::OGRCircularString() {}
+OGRCircularString::OGRCircularString() = default;
 
 /************************************************************************/
 /*              OGRCircularString( const OGRCircularString& )           */
@@ -70,15 +70,13 @@ OGRCircularString::OGRCircularString() {}
  * @since GDAL 2.1
  */
 
-OGRCircularString::OGRCircularString( const OGRCircularString& other ) :
-    OGRSimpleCurve( other )
-{}
+OGRCircularString::OGRCircularString( const OGRCircularString& ) = default;
 
 /************************************************************************/
 /*                        ~OGRCircularString()                          */
 /************************************************************************/
 
-OGRCircularString::~OGRCircularString() {}
+OGRCircularString::~OGRCircularString() = default;
 
 /************************************************************************/
 /*                  operator=( const OGRCircularString& )               */
@@ -383,9 +381,9 @@ void OGRCircularString::segmentize( double dfMaxLength )
         double alpha1 = 0.0;
         double alpha2 = 0.0;
 
-        aoRawPoint.push_back(OGRRawPoint(x0, y0));
+        aoRawPoint.emplace_back(x0, y0);
         if( padfZ )
-            adfZ.push_back(padfZ[i]);
+            adfZ.emplace_back(padfZ[i]);
 
         // We have strong constraints on the number of intermediate points
         // we can add.
@@ -419,20 +417,20 @@ void OGRCircularString::segmentize( double dfMaxLength )
                     double alpha = alpha0 + dfStep * j;
                     const double x = cx + R * cos(alpha);
                     const double y = cy + R * sin(alpha);
-                    aoRawPoint.push_back(OGRRawPoint(x, y));
+                    aoRawPoint.emplace_back(x, y);
                     if( padfZ )
                     {
                         const double z =
                             padfZ[i] +
                             (padfZ[i+1] - padfZ[i]) * (alpha - alpha0) /
                             (alpha1 - alpha0);
-                        adfZ.push_back(z);
+                        adfZ.emplace_back(z);
                     }
                 }
             }
-            aoRawPoint.push_back(OGRRawPoint(x1, y1));
+            aoRawPoint.emplace_back(x1, y1);
             if( padfZ )
-                adfZ.push_back(padfZ[i+1]);
+                adfZ.emplace_back(padfZ[i+1]);
 
             if( dfSegmentLength1 > dfMaxLength ||
                 dfSegmentLength2 > dfMaxLength )
@@ -456,14 +454,14 @@ void OGRCircularString::segmentize( double dfMaxLength )
                     const double alpha = alpha1 + dfStep * j;
                     const double x = cx + R * cos(alpha);
                     const double y = cy + R * sin(alpha);
-                    aoRawPoint.push_back(OGRRawPoint(x, y));
+                    aoRawPoint.emplace_back(x, y);
                     if( padfZ )
                     {
                         const double z =
                             padfZ[i+1] +
                             (padfZ[i+2] - padfZ[i+1]) *
                             (alpha - alpha1) / (alpha2 - alpha1);
-                        adfZ.push_back(z);
+                        adfZ.emplace_back(z);
                     }
                 }
             }
@@ -490,18 +488,18 @@ void OGRCircularString::segmentize( double dfMaxLength )
                 int nIntermediatePoints = static_cast<int>(dfVal);
                 for( int j = 1; j <= nIntermediatePoints; ++j )
                 {
-                    aoRawPoint.push_back(OGRRawPoint(
+                    aoRawPoint.emplace_back(
                             x0 + j * (x1-x0) / (nIntermediatePoints + 1),
-                            y0 + j * (y1-y0) / (nIntermediatePoints + 1)));
+                            y0 + j * (y1-y0) / (nIntermediatePoints + 1));
                     if( padfZ )
-                        adfZ.push_back(padfZ[i] + j * (padfZ[i+1]-padfZ[i]) /
+                        adfZ.emplace_back(padfZ[i] + j * (padfZ[i+1]-padfZ[i]) /
                                        (nIntermediatePoints + 1));
                 }
             }
 
-            aoRawPoint.push_back(OGRRawPoint(x1, y1));
+            aoRawPoint.emplace_back(x1, y1);
             if( padfZ )
-                adfZ.push_back(padfZ[i+1]);
+                adfZ.emplace_back(padfZ[i+1]);
 
             if( dfSegmentLength1 > dfMaxLength ||
                 dfSegmentLength2 > dfMaxLength )
@@ -521,11 +519,11 @@ void OGRCircularString::segmentize( double dfMaxLength )
 
                 for( int j = 1; j <= nIntermediatePoints; ++j )
                 {
-                    aoRawPoint.push_back(OGRRawPoint(
+                    aoRawPoint.emplace_back(
                             x1 + j * (x2-x1) / (nIntermediatePoints + 1),
-                            y1 + j * (y2-y1) / (nIntermediatePoints + 1)));
+                            y1 + j * (y2-y1) / (nIntermediatePoints + 1));
                     if( padfZ )
-                        adfZ.push_back(padfZ[i+1] + j * (padfZ[i+2]-padfZ[i+1])
+                        adfZ.emplace_back(padfZ[i+1] + j * (padfZ[i+2]-padfZ[i+1])
                                        / (nIntermediatePoints + 1));
                 }
             }

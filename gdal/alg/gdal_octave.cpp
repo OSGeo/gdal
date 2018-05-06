@@ -35,12 +35,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-GDALIntegralImage::GDALIntegralImage()
-{
-    pMatrix = nullptr;
-    nHeight = 0;
-    nWidth = 0;
-}
+GDALIntegralImage::GDALIntegralImage() = default;
 
 int GDALIntegralImage::GetHeight() { return nHeight; }
 

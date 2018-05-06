@@ -29,9 +29,9 @@
 
 import os
 import sys
-from osgeo import gdal
 import array
 import shutil
+from osgeo import gdal
 from osgeo import osr
 
 sys.path.append('../pymod')

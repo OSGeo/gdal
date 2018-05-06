@@ -195,7 +195,7 @@ int     TABMAPToolBlock::CommitToFile()
 
     WriteInt16(TABMAP_TOOL_BLOCK);    // Block type code
     CPLAssert(m_nSizeUsed >= MAP_TOOL_HEADER_SIZE && m_nSizeUsed < MAP_TOOL_HEADER_SIZE + 32768);
-    WriteInt16((GInt16)(m_nSizeUsed - MAP_TOOL_HEADER_SIZE)); // num. bytes used
+    WriteInt16(static_cast<GInt16>(m_nSizeUsed - MAP_TOOL_HEADER_SIZE)); // num. bytes used
     WriteInt32(m_nNextToolBlock);
 
     nStatus = CPLGetLastErrorNo();

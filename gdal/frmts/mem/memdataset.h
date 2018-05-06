@@ -54,6 +54,8 @@ class MEMRasterBand;
 
 class CPL_DLL MEMDataset : public GDALDataset
 {
+    CPL_DISALLOW_COPY_ASSIGN(MEMDataset)
+
     friend class MEMRasterBand;
 
     int         bGeoTransformSet;
@@ -126,6 +128,8 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
   private:
                 MEMRasterBand( GByte *pabyDataIn, GDALDataType eTypeIn,
                                int nXSizeIn, int nYSizeIn );
+
+    CPL_DISALLOW_COPY_ASSIGN(MEMRasterBand)
 
   protected:
     friend      class MEMDataset;
