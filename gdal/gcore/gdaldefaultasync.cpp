@@ -81,9 +81,7 @@ GDALAsyncReader::GDALAsyncReader() :
 /************************************************************************/
 /*                         ~GDALAsyncReader()                           */
 /************************************************************************/
-GDALAsyncReader::~GDALAsyncReader()
-{
-}
+GDALAsyncReader::~GDALAsyncReader() = default;
 
 /************************************************************************/
 /*                        GetNextUpdatedRegion()                        */

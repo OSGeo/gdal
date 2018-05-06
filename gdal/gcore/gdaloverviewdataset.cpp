@@ -87,7 +87,7 @@ class GDALOverviewDataset final: public GDALDataset
                          int bThisLevelOnly );
     ~GDALOverviewDataset() override;
 
-    const char *GetProjectionRef( void ) override;
+    const char *GetProjectionRef() override;
     CPLErr GetGeoTransform( double * ) override;
 
     int GetGCPCount() override;
