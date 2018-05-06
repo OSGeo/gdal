@@ -243,7 +243,7 @@ typedef struct
 
 class GTiffDataset final : public GDALPamDataset
 {
-    CPL_DISALLOW_COPY_ASSIGN(GTiffDataset);
+    CPL_DISALLOW_COPY_ASSIGN(GTiffDataset)
 
     friend class GTiffBitmapBand;
     friend class GTiffJPEGOverviewDS;
@@ -616,7 +616,7 @@ class GTiffDataset final : public GDALPamDataset
 
 class GTiffJPEGOverviewDS final : public GDALDataset
 {
-    CPL_DISALLOW_COPY_ASSIGN(GTiffJPEGOverviewDS);
+    CPL_DISALLOW_COPY_ASSIGN(GTiffJPEGOverviewDS)
 
     friend class GTiffJPEGOverviewBand;
     GTiffDataset* poParentDS;
@@ -1104,7 +1104,7 @@ void GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode )
 
 class GTiffRasterBand : public GDALPamRasterBand
 {
-    CPL_DISALLOW_COPY_ASSIGN(GTiffRasterBand);
+    CPL_DISALLOW_COPY_ASSIGN(GTiffRasterBand)
 
     friend class GTiffDataset;
 
@@ -18622,7 +18622,7 @@ int GTiffOneTimeInit()
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
-    pfnVersion = (const char* (*)(void)) dlsym(RTLD_DEFAULT, "TIFFGetVersion");
+    pfnVersion = reinterpret_cast<const char* (*)(void)>(dlsym(RTLD_DEFAULT, "TIFFGetVersion"));
 #ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
 #pragma GCC diagnostic pop
 #endif
