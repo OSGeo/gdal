@@ -33,7 +33,6 @@
 
 from osgeo import gdal
 from osgeo import ogr
-import os
 
 ###############################################################################
 # Generate a .kml/.kmz file with OGR LIBKML driver covering most requirements

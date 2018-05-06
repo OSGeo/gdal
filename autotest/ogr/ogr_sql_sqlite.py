@@ -34,7 +34,6 @@ try:
 except ImportError:
     from http.server import BaseHTTPRequestHandler
 
-import os
 import sys
 
 sys.path.append('../pymod')

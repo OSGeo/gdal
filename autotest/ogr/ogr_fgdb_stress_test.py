@@ -33,7 +33,6 @@
 import random
 import sys
 import shutil
-import os
 
 sys.path.append('../pymod')
 
