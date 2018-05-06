@@ -237,7 +237,7 @@ public:
 
     CachedFileProp*     GetCachedFileProp(const char*     pszURL);
 
-    virtual void    ClearCache();
+    void    ClearCache();
 };
 
 /************************************************************************/
