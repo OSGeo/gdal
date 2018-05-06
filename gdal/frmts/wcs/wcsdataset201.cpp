@@ -196,6 +196,9 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         "%.17g", MIN(adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1], extent[2]));
     */
 
+    // 09-147 KVP Protocol: subset keys must be unique
+    // GeoServer: seems to require plain SUBSET for x and y
+
     request += CPLString().Printf("&SUBSET=%s%%28%s,%s%%29", x, a.c_str(), b.c_str());
 
     a = CPLString().Printf("%.17g", extent[1]);
@@ -229,7 +232,7 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
             continue;
         }
         std::vector<CPLString> params = Split(FromParenthesis(dimensions[i]), ",");
-        request += "&SUBSET=" + dim + "%28"; // (
+        request += "&SUBSET" + CPLString().Printf("%i", i) + "=" + dim + "%28"; // (
         for (unsigned int j = 0; j < params.size(); ++j) {
             // todo: %22 (") should be used only for non-numbers
             request += "%22" + params[j] + "%22";
@@ -251,7 +254,8 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
                 grid_axes.push_back("E");
                 grid_axes.push_back("N");
             }
-            tmp.Printf("&SCALESIZE=%s(%i),%s(%i)", grid_axes[0].c_str(), nBufXSize, grid_axes[1].c_str(), nBufYSize);
+            tmp.Printf("&SCALESIZE=%s%%28%i%%29,%s%%28%i%%29",
+                       grid_axes[0].c_str(), nBufXSize, grid_axes[1].c_str(), nBufYSize);
         }
         request += tmp;
     }
@@ -295,6 +299,7 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         }
     }
 
+    CPLDebug("WCS", "Requesting %s", request.c_str());
     return request;
 
 }
@@ -328,6 +333,7 @@ CPLString WCSDataset201::DescribeCoverageRequest()
             request = CPLURLAddKVP(request, pair[0], pair[1]);
         }
     }
+    CPLDebug("WCS", "Requesting %s", request.c_str());
     return request;
 }
 
@@ -632,8 +638,7 @@ int WCSDataset201::ParseRange(CPLXMLNode *coverage, const CPLString &range_subse
         CPLError(CE_Failure, CPLE_AppDefined, "No data fields found (bad Range?).");
     } else {
         // todo: default to the first one?
-        CPLSetXMLValue(psService, "NoDataValue", Join(nodata_array, ","));
-        bServiceDirty = true;
+        bServiceDirty = CPLUpdateXML(psService, "NoDataValue", Join(nodata_array, ",")) || bServiceDirty;
     }
 
     return fields;
@@ -674,7 +679,6 @@ bool WCSDataset201::ExtractGridInfo()
             CPLError(CE_Failure, CPLE_AppDefined, "Missing boundedBy.Envelope");
             return false;
         }
-        // todo: get time interval
     }
     std::vector<CPLString> bbox = ParseBoundingBox(envelope);
     if (!SetCRS(ParseCRS(envelope), true) || bbox.size() < 2) {
@@ -725,6 +729,28 @@ bool WCSDataset201::ExtractGridInfo()
 
     metadata = CSLSetNameValue(metadata, "DOMAIN", Join(domain, ","));
 
+    // add coverage metadata: GeoServer TimeDomain
+
+    CPLXMLNode *timedomain = CPLGetXMLNode(coverage, "metadata.Extension.TimeDomain");
+    if (timedomain) {
+        std::vector<CPLString> timePositions;
+        // "//timePosition"
+        for (CPLXMLNode *node = timedomain->psChild; node != nullptr; node = node->psNext) {
+            if (node->eType != CXT_Element || strcmp(node->pszValue, "TimeInstant") != 0) {
+                continue;
+            }
+            for (CPLXMLNode *node2 = node->psChild; node2 != nullptr; node2 = node2->psNext) {
+                if (node2->eType != CXT_Element || strcmp(node2->pszValue, "timePosition") != 0) {
+                    continue;
+                }
+                timePositions.push_back(CPLGetXMLValue(node2, "", ""));
+            }
+        }
+        metadata = CSLSetNameValue(metadata, "TimeDomain", Join(timePositions, ","));
+    }
+
+    // dimension metadata
+
     std::vector<CPLString> slow = Split(bbox[0], " ", axis_order_swap);
     std::vector<CPLString> shigh = Split(bbox[1], " ", axis_order_swap);
     bServiceDirty = CPLUpdateXML(psService, "Low", Join(slow, ",")) || bServiceDirty;
@@ -740,7 +766,6 @@ bool WCSDataset201::ExtractGridInfo()
     std::vector<double> env;
     env.insert(env.end(), low.begin(), low.begin() + 2);
     env.insert(env.end(), high.begin(), high.begin() + 2);
-    // todo: EnvelopeWithTimePeriod
 
     for (unsigned int i = 0; i < axes.size(); ++i) {
         CPLString key;
@@ -755,6 +780,8 @@ bool WCSDataset201::ExtractGridInfo()
         } else if( i < slow.size() && i < shigh.size() ) {
             metadata = CSLSetNameValue(metadata, (key + "INTERVAL").c_str(),
                                        CPLString().Printf("%s,%s", slow[i].c_str(), shigh[i].c_str()));
+        } else if (i < bbox.size()) {
+            metadata = CSLSetNameValue(metadata, (key + "INTERVAL").c_str(), bbox[i].c_str());
         }
     }
 
@@ -843,6 +870,7 @@ bool WCSDataset201::ExtractGridInfo()
             dimensions_are_ok = false;
         }
     }
+    // todo: add metadata: note: no bands, you need to subset to get data
 
     // check for CRS override
     CPLString crs = CPLGetXMLValue(psService, "SRS", "");
@@ -871,6 +899,7 @@ bool WCSDataset201::ExtractGridInfo()
     // and she wants to see the resulting metadata and not just an error message
     // situation is ~the same when bands == 0 when we exit here
 
+    // todo: do this only if metadata is dirty
     this->SetMetadata(metadata, md_domain);
     CSLDestroy(metadata);
     TrySaveXML();
