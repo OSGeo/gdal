@@ -458,7 +458,7 @@ void OGRPointIterator::destroy( OGRPointIterator* poIter )
 
 struct OGRSimpleCurve::Iterator::Private
 {
-    CPL_DISALLOW_COPY_ASSIGN(Private);
+    CPL_DISALLOW_COPY_ASSIGN(Private)
     Private() = default;
 
     bool m_bUpdateChecked = true;
@@ -530,7 +530,7 @@ OGRSimpleCurve::Iterator OGRSimpleCurve::end()
 
 struct OGRSimpleCurve::ConstIterator::Private
 {
-    CPL_DISALLOW_COPY_ASSIGN(Private);
+    CPL_DISALLOW_COPY_ASSIGN(Private)
     Private() = default;
 
     mutable OGRPoint m_oPoint{};
@@ -582,7 +582,7 @@ OGRSimpleCurve::ConstIterator OGRSimpleCurve::end() const
 
 struct OGRCurve::ConstIterator::Private
 {
-    CPL_DISALLOW_COPY_ASSIGN(Private);
+    CPL_DISALLOW_COPY_ASSIGN(Private)
     Private() = default;
 
     OGRPoint m_oPoint{};
