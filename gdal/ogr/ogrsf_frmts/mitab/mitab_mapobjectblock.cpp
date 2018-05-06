@@ -237,7 +237,7 @@ int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
     if( m_nCurObjectOffset + 5 < m_numDataBytes + 20 )
     {
         GotoByteInBlock( m_nCurObjectOffset );
-        m_nCurObjectType = (TABGeomType)ReadByte();
+        m_nCurObjectType = static_cast<TABGeomType>(ReadByte());
     }
     else
     {
@@ -258,7 +258,7 @@ int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
         // I check both the top bits but I have only seen this occur
         // with the second highest bit set (i.e. in usa/states.tab). NFW.
 
-        if( (((GUInt32)m_nCurObjectId) & (GUInt32) 0xC0000000) != 0 )
+        if( (static_cast<GUInt32>(m_nCurObjectId) & 0xC0000000U) != 0 )
         {
             m_nCurObjectId = AdvanceToNextObject( poHeader );
         }
@@ -305,7 +305,7 @@ int     TABMAPObjectBlock::CommitToFile()
     WriteInt16(TABMAP_OBJECT_BLOCK);    // Block type code
     m_numDataBytes = m_nSizeUsed - MAP_OBJECT_HEADER_SIZE;
     CPLAssert(m_numDataBytes >= 0 && m_numDataBytes < 32768);
-    WriteInt16((GInt16)m_numDataBytes);         // num. bytes used
+    WriteInt16(static_cast<GInt16>(m_numDataBytes));         // num. bytes used
 
     WriteInt32(m_nCenterX);
     WriteInt32(m_nCenterY);
@@ -453,8 +453,8 @@ int     TABMAPObjectBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
      * Write coords to the file.
      *----------------------------------------------------------------*/
     if ((!bCompressed && (WriteInt32(nX) != 0 || WriteInt32(nY) != 0 ) ) ||
-        (bCompressed && (WriteInt16((GInt16)(nX - m_nCenterX)) != 0 ||
-                         WriteInt16((GInt16)(nY - m_nCenterY)) != 0) ) )
+        (bCompressed && (WriteInt16(static_cast<GInt16>(nX - m_nCenterX)) != 0 ||
+                         WriteInt16(static_cast<GInt16>(nY - m_nCenterY)) != 0) ) )
     {
         return -1;
     }
@@ -700,7 +700,7 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
                      "Failed reading header block.");
             return;
         }
-        TABMAPHeaderBlock *poHeader = (TABMAPHeaderBlock *)poBlock;
+        TABMAPHeaderBlock *poHeader = cpl::down_cast<TABMAPHeaderBlock *>(poBlock);
 
         Rewind();
         TABMAPObjHdr *poObjHdr = nullptr;
@@ -878,7 +878,7 @@ GBool TABMAPObjHdr::IsCompressedType()
  **********************************************************************/
 int TABMAPObjHdr::WriteObjTypeAndId(TABMAPObjectBlock *poObjBlock)
 {
-    poObjBlock->WriteByte((GByte)m_nType);
+    poObjBlock->WriteByte(static_cast<GByte>(m_nType));
     return poObjBlock->WriteInt32(m_nId);
 }
 
@@ -1127,7 +1127,7 @@ int TABMAPObjPLine::WriteObj(TABMAPObjectBlock *poObjBlock)
              m_nType != TAB_GEOM_PLINE )
     {
         /* V300 and V450 REGIONS/MULTIPLINES use an int16 */
-        poObjBlock->WriteInt16((GInt16)m_numLineSections);
+        poObjBlock->WriteInt16(static_cast<GInt16>(m_numLineSections));
     }
 
     if (IsCompressedType())
@@ -1412,8 +1412,8 @@ int TABMAPObjRectEllipse::WriteObj(TABMAPObjectBlock *poObjBlock)
     {
         if (IsCompressedType())
         {
-            poObjBlock->WriteInt16((GInt16)m_nCornerWidth);
-            poObjBlock->WriteInt16((GInt16)m_nCornerHeight);
+            poObjBlock->WriteInt16(static_cast<GInt16>(m_nCornerWidth));
+            poObjBlock->WriteInt16(static_cast<GInt16>(m_nCornerHeight));
         }
         else
         {
@@ -1479,8 +1479,8 @@ int TABMAPObjArc::WriteObj(TABMAPObjectBlock *poObjBlock)
     // Write object type and id
     TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
 
-    poObjBlock->WriteInt16((GInt16)m_nStartAngle);
-    poObjBlock->WriteInt16((GInt16)m_nEndAngle);
+    poObjBlock->WriteInt16(static_cast<GInt16>(m_nStartAngle));
+    poObjBlock->WriteInt16(static_cast<GInt16>(m_nEndAngle));
 
     // An arc is defined by its defining ellipse's MBR:
     poObjBlock->WriteIntMBRCoord(m_nArcEllipseMinX, m_nArcEllipseMinY,
@@ -1569,10 +1569,10 @@ int TABMAPObjText::WriteObj(TABMAPObjectBlock *poObjBlock)
     TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
 
     poObjBlock->WriteInt32(m_nCoordBlockPtr);     // String position
-    poObjBlock->WriteInt16((GInt16)m_nCoordDataSize);     // String length
-    poObjBlock->WriteInt16((GInt16)m_nTextAlignment);     // just./spacing/arrow
+    poObjBlock->WriteInt16(static_cast<GInt16>(m_nCoordDataSize));     // String length
+    poObjBlock->WriteInt16(static_cast<GInt16>(m_nTextAlignment));     // just./spacing/arrow
 
-    poObjBlock->WriteInt16((GInt16)m_nAngle);             // Tenths of degree
+    poObjBlock->WriteInt16(static_cast<GInt16>(m_nAngle));             // Tenths of degree
 
     poObjBlock->WriteInt16(m_nFontStyle);         // Font style/effect
 
@@ -1589,7 +1589,7 @@ int TABMAPObjText::WriteObj(TABMAPObjectBlock *poObjBlock)
 
     // Text Height
     if (IsCompressedType())
-        poObjBlock->WriteInt16((GInt16)m_nHeight);
+        poObjBlock->WriteInt16(static_cast<GInt16>(m_nHeight));
     else
         poObjBlock->WriteInt32(m_nHeight);
 
@@ -2048,8 +2048,8 @@ int TABMAPObjCollection::WriteObj(TABMAPObjectBlock *poObjBlock)
     if (nVersion < 800)
     {
         // Num Region/Pline section headers (int16 in V650)
-        poObjBlock->WriteInt16((GInt16)m_nNumRegSections);
-        poObjBlock->WriteInt16((GInt16)m_nNumPLineSections);
+        poObjBlock->WriteInt16(static_cast<GInt16>(m_nNumRegSections));
+        poObjBlock->WriteInt16(static_cast<GInt16>(m_nNumPLineSections));
     }
     else
     {

@@ -897,7 +897,7 @@ class TABMAPHeaderBlock final : public TABRawBinBlock
     void        UpdatePrecision();
 
   protected:
-    TABProjInfo m_sProj;
+    TABProjInfo m_sProj{};
 
   public:
     explicit TABMAPHeaderBlock(TABAccess eAccessMode = TABRead);
@@ -938,44 +938,44 @@ class TABMAPHeaderBlock final : public TABRawBinBlock
     // members public and we will initialize them in the overloaded
     // LoadFromFile().  For this reason, this class should be used with care.
 
-    GInt16      m_nMAPVersionNumber;
-    GInt16      m_nRegularBlockSize;
+    GInt16      m_nMAPVersionNumber{};
+    GInt16      m_nRegularBlockSize{};
 
-    double      m_dCoordsys2DistUnits;
-    GInt32      m_nXMin;
-    GInt32      m_nYMin;
-    GInt32      m_nXMax;
-    GInt32      m_nYMax;
-    GBool       m_bIntBoundsOverflow;  // Set to TRUE if coordinates
+    double      m_dCoordsys2DistUnits{};
+    GInt32      m_nXMin{};
+    GInt32      m_nYMin{};
+    GInt32      m_nXMax{};
+    GInt32      m_nYMax{};
+    GBool       m_bIntBoundsOverflow{};  // Set to TRUE if coordinates
                                        // outside of bounds were written
 
-    GInt32      m_nFirstIndexBlock;
-    GInt32      m_nFirstGarbageBlock;
-    GInt32      m_nFirstToolBlock;
-    GInt32      m_numPointObjects;
-    GInt32      m_numLineObjects;
-    GInt32      m_numRegionObjects;
-    GInt32      m_numTextObjects;
-    GInt32      m_nMaxCoordBufSize;
+    GInt32      m_nFirstIndexBlock{};
+    GInt32      m_nFirstGarbageBlock{};
+    GInt32      m_nFirstToolBlock{};
+    GInt32      m_numPointObjects{};
+    GInt32      m_numLineObjects{};
+    GInt32      m_numRegionObjects{};
+    GInt32      m_numTextObjects{};
+    GInt32      m_nMaxCoordBufSize{};
 
-    GByte       m_nDistUnitsCode;       // See Appendix F
-    GByte       m_nMaxSpIndexDepth;
-    GByte       m_nCoordPrecision;      // Num. decimal places on coord.
-    GByte       m_nCoordOriginQuadrant;
-    GByte       m_nReflectXAxisCoord;
-    GByte       m_nMaxObjLenArrayId;     // See gabyObjLenArray[]
-    GByte       m_numPenDefs;
-    GByte       m_numBrushDefs;
-    GByte       m_numSymbolDefs;
-    GByte       m_numFontDefs;
-    GInt16      m_numMapToolBlocks;
+    GByte       m_nDistUnitsCode{};       // See Appendix F
+    GByte       m_nMaxSpIndexDepth{};
+    GByte       m_nCoordPrecision{};      // Num. decimal places on coord.
+    GByte       m_nCoordOriginQuadrant{};
+    GByte       m_nReflectXAxisCoord{};
+    GByte       m_nMaxObjLenArrayId{};     // See gabyObjLenArray[]
+    GByte       m_numPenDefs{};
+    GByte       m_numBrushDefs{};
+    GByte       m_numSymbolDefs{};
+    GByte       m_numFontDefs{};
+    GInt16      m_numMapToolBlocks{};
 
-    double      m_XScale;
-    double      m_YScale;
-    double      m_XDispl;
-    double      m_YDispl;
-    double      m_XPrecision; // maximum achievable precision along X axis depending on bounds extent
-    double      m_YPrecision; // maximum achievable precision along Y axis depending on bounds extent
+    double      m_XScale{};
+    double      m_YScale{};
+    double      m_XDispl{};
+    double      m_YDispl{};
+    double      m_XPrecision{}; // maximum achievable precision along X axis depending on bounds extent
+    double      m_YPrecision{}; // maximum achievable precision along Y axis depending on bounds extent
 };
 
 /*---------------------------------------------------------------------
@@ -1361,7 +1361,7 @@ class TABMAPFile
     VSILFILE    *m_fp;
     TABAccess   m_eAccessMode;
 
-    TABBinBlockManager m_oBlockManager;
+    TABBinBlockManager m_oBlockManager{};
 
     TABMAPHeaderBlock   *m_poHeader;
 
@@ -1385,8 +1385,8 @@ class TABMAPFile
     TABToolDefTable *m_poToolDefTable;
 
     // Coordinates filter... default is MBR of the whole file
-    TABVertex   m_sMinFilter;
-    TABVertex   m_sMaxFilter;
+    TABVertex   m_sMinFilter{};
+    TABVertex   m_sMaxFilter{};
     GInt32      m_XMinFilter;
     GInt32      m_YMinFilter;
     GInt32      m_XMaxFilter;
@@ -1603,7 +1603,7 @@ class TABINDFile
     VSILFILE    *m_fp;
     TABAccess   m_eAccessMode;
 
-    TABBinBlockManager m_oBlockManager;
+    TABBinBlockManager m_oBlockManager{};
 
     int         m_numIndexes;
     TABINDNode  **m_papoIndexRootNodes;

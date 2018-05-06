@@ -139,7 +139,7 @@ int TABSeamless::Open(const char *pszFname, TABAccess eAccess,
     if (eAccess == TABRead)
     {
         m_eAccessMode = TABRead;
-        nStatus = (char)OpenForRead(pszFname, bTestOpenNoError);
+        nStatus = static_cast<char>(OpenForRead(pszFname, bTestOpenNoError));
     }
     else
     {
@@ -206,7 +206,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
     for (int i=0; !bSeamlessFound && papszTABFile && papszTABFile[i]; i++)
     {
         const char *pszStr = papszTABFile[i];
-        while(*pszStr != '\0' && isspace((unsigned char)*pszStr))
+        while(*pszStr != '\0' && isspace(static_cast<unsigned char>(*pszStr)))
             pszStr++;
         if (STARTS_WITH_CI(pszStr, "\"\\IsSeamless\" = \"TRUE\""))
             bSeamlessFound = TRUE;
@@ -347,8 +347,8 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
      * base table ids.
      *----------------------------------------------------------------*/
     GIntBig nTableId64 = poIndexFeature->GetFID();
-    int nTableId = (int)nTableId64;
-    CPLAssert((GIntBig)nTableId == nTableId64);
+    int nTableId = static_cast<int>(nTableId64);
+    CPLAssert(static_cast<GIntBig>(nTableId) == nTableId64);
 
     if (m_nCurBaseTableId == nTableId && m_poCurBaseTable != nullptr)
     {
@@ -467,7 +467,7 @@ int TABSeamless::OpenNextBaseTable(GBool bTestOpenNoError /*=FALSE*/)
 {
     CPLAssert(m_poIndexTable);
 
-    TABFeature *poIndexFeature = (TABFeature*)m_poIndexTable->GetNextFeature();
+    TABFeature *poIndexFeature = cpl::down_cast<TABFeature*>(m_poIndexTable->GetNextFeature());
 
     if (poIndexFeature)
     {
@@ -505,7 +505,7 @@ GIntBig TABSeamless::EncodeFeatureId(int nTableId, int nBaseFeatureId)
     /* Feature encoding is now based on the numbers of bits on the number
        of features in the index table. */
 
-    return ((GIntBig)nTableId<<32) + nBaseFeatureId;
+    return (static_cast<GIntBig>(nTableId)<<32) + nBaseFeatureId;
 }
 
 int TABSeamless::ExtractBaseTableId(GIntBig nEncodedFeatureId)
@@ -513,7 +513,7 @@ int TABSeamless::ExtractBaseTableId(GIntBig nEncodedFeatureId)
     if (nEncodedFeatureId == -1)
         return -1;
 
-    return (int)(nEncodedFeatureId>>32);
+    return static_cast<int>(nEncodedFeatureId>>32);
 }
 
 int TABSeamless::ExtractBaseFeatureId(GIntBig nEncodedFeatureId)
@@ -521,7 +521,7 @@ int TABSeamless::ExtractBaseFeatureId(GIntBig nEncodedFeatureId)
     if (nEncodedFeatureId == -1)
         return -1;
 
-    return (int)(nEncodedFeatureId & 0xffffffff);
+    return static_cast<int>(nEncodedFeatureId & 0xffffffff);
 }
 
 /**********************************************************************
@@ -544,7 +544,7 @@ GIntBig TABSeamless::GetNextFeatureId(GIntBig nPrevId)
     int nId = ExtractBaseFeatureId(nPrevId);
     do
     {
-        nId = (int) m_poCurBaseTable->GetNextFeatureId(nId);
+        nId = static_cast<int>(m_poCurBaseTable->GetNextFeatureId(nId));
         if (nId != -1)
             return EncodeFeatureId(m_nCurBaseTableId, nId);  // Found one!
         else
@@ -588,7 +588,7 @@ TABFeature *TABSeamless::GetFeatureRef(GIntBig nFeatureId)
             delete m_poCurFeature;
         m_poCurFeature = nullptr;
 
-        TABFeature* poCurFeature = (TABFeature*)m_poCurBaseTable->GetFeature(ExtractBaseFeatureId(nFeatureId));
+        TABFeature* poCurFeature = static_cast<TABFeature*>(m_poCurBaseTable->GetFeature(ExtractBaseFeatureId(nFeatureId)));
         if( poCurFeature == nullptr )
             return nullptr;
         m_poCurFeature = new TABFeature(m_poFeatureDefnRef);
