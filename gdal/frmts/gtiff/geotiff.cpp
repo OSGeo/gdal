@@ -38,6 +38,7 @@
 #include "cpl_port.h"  // Must be first.
 #include "gtiff.h"
 
+#include <cassert>
 #include <cerrno>
 #include <climits>
 #include <cmath>
