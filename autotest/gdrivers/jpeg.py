@@ -580,10 +580,7 @@ def jpeg_15():
 def jpeg_16():
 
     shutil.copy('data/albania.jpg', 'tmp/albania.jpg')
-    try:
-        os.unlink('tmp/albania.jpg.ovr')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/albania.jpg.ovr')
 
     ds = gdal.Open('tmp/albania.jpg')
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
@@ -1325,16 +1322,8 @@ def jpeg_28():
 
 
 def jpeg_cleanup():
-
-    try:
-        os.unlink('tmp/albania.jpg')
-    except OSError:
-        pass
-    try:
-        os.unlink('tmp/albania.jpg.ovr')
-    except OSError:
-        pass
-
+    gdal.Unlink('tmp/albania.jpg')
+    gdal.Unlink('tmp/albania.jpg.ovr')
     return 'success'
 
 
