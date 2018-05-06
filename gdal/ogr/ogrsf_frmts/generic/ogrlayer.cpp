@@ -50,6 +50,7 @@ OGRLayer::OGRLayer() :
     m_bFilterIsEnvelope(FALSE),
     m_poFilterGeom(nullptr),
     m_pPreparedFilterGeom(nullptr),
+    m_sFilterEnvelope{},
     m_iGeomFieldFilter(0),
     m_poStyleTable(nullptr),
     m_poAttrQuery(nullptr),
@@ -4268,7 +4269,10 @@ OGRErr OGR_L_Erase( OGRLayerH pLayerInput,
 
 struct OGRLayer::FeatureIterator::Private
 {
-    OGRFeatureUniquePtr m_poFeature;
+    CPL_DISALLOW_COPY_ASSIGN(Private);
+    Private() = default;
+
+    OGRFeatureUniquePtr m_poFeature{};
     OGRLayer* m_poLayer = nullptr;
     bool m_bError = false;
     bool m_bEOF = true;

@@ -347,6 +347,8 @@ typedef struct TABSymbolDef_t
 
 class TABToolDefTable
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABToolDefTable)
+
   protected:
     TABPenDef   **m_papsPen;
     int         m_numPen;
@@ -431,8 +433,8 @@ class TABMAPObjHdr
 class TABMAPObjHdrWithCoord : public TABMAPObjHdr
 {
   public:
-    GInt32      m_nCoordBlockPtr;
-    GInt32      m_nCoordDataSize;
+    GInt32      m_nCoordBlockPtr = 0;
+    GInt32      m_nCoordDataSize = 0;
 
     /* Eventually this class may have methods to help maintaining refs to
      * coord. blocks when splitting object blocks.
@@ -759,6 +761,8 @@ typedef struct TABBlockRef_t
  *--------------------------------------------------------------------*/
 class TABBinBlockManager
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABBinBlockManager)
+
   protected:
     int         m_nBlockSize;
     GInt32      m_nLastAllocatedBlock;
@@ -794,6 +798,8 @@ class TABBinBlockManager
 
 class TABRawBinBlock
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABRawBinBlock)
+
   protected:
     VSILFILE    *m_fp;          /* Associated file handle               */
     TABAccess   m_eAccess;      /* Read/Write access mode               */
@@ -980,6 +986,8 @@ class TABMAPHeaderBlock final : public TABRawBinBlock
 
 class TABMAPIndexBlock final : public TABRawBinBlock
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABMAPIndexBlock)
+
   protected:
     int         m_numEntries;
     TABMAPIndexEntry m_asEntries[TAB_MAX_ENTRIES_INDEX_BLOCK];
@@ -1092,6 +1100,8 @@ class TABMAPIndexBlock final : public TABRawBinBlock
 
 class TABMAPObjectBlock final : public TABRawBinBlock
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABMAPObjectBlock)
+
   protected:
     int         m_numDataBytes; /* Excluding first 4 bytes header */
     GInt32      m_nFirstCoordBlock;
@@ -1167,6 +1177,8 @@ class TABMAPObjectBlock final : public TABRawBinBlock
 
 class TABMAPCoordBlock final : public TABRawBinBlock
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABMAPCoordBlock)
+
   protected:
     int         m_numDataBytes; /* Excluding first 8 bytes header */
     GInt32      m_nNextCoordBlock;
@@ -1250,6 +1262,8 @@ class TABMAPCoordBlock final : public TABRawBinBlock
 
 class TABMAPToolBlock final : public TABRawBinBlock
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABMAPToolBlock)
+
   protected:
     int         m_numDataBytes; /* Excluding first 8 bytes header */
     GInt32      m_nNextToolBlock;
@@ -1299,6 +1313,8 @@ class TABMAPToolBlock final : public TABRawBinBlock
 
 class TABIDFile
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABIDFile)
+
   private:
     char        *m_pszFname;
     VSILFILE    *m_fp;
@@ -1337,6 +1353,8 @@ class TABIDFile
 
 class TABMAPFile
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABMAPFile)
+
   private:
     int         m_nMinTABVersion;
     char        *m_pszFname;
@@ -1487,6 +1505,8 @@ class TABMAPFile
 
 class TABINDNode
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABINDNode)
+
   private:
     VSILFILE    *m_fp;
     TABAccess   m_eAccessMode;
@@ -1576,6 +1596,8 @@ class TABINDNode
 
 class TABINDFile
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABINDFile)
+
   private:
     char        *m_pszFname;
     VSILFILE    *m_fp;
@@ -1625,6 +1647,8 @@ class TABINDFile
 
 class TABDATFile
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABDATFile)
+
   private:
     char        *m_pszFname;
     VSILFILE    *m_fp;
@@ -1753,6 +1777,8 @@ class TABDATFile
 
 class TABRelation
 {
+    CPL_DISALLOW_COPY_ASSIGN(TABRelation)
+
   private:
     /* Information about the main table.
      */
@@ -1826,6 +1852,8 @@ class TABRelation
 
 class MIDDATAFile
 {
+    CPL_DISALLOW_COPY_ASSIGN(MIDDATAFile)
+
    public:
       explicit MIDDATAFile( const char* pszEncoding );
      ~MIDDATAFile();
