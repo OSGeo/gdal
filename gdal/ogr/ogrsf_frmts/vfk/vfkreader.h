@@ -53,6 +53,7 @@ typedef std::vector<VFKFeatureSQLite *> VFKFeatureSQLiteList;
 
 #define FID_COLUMN   "ogr_fid"
 #define GEOM_COLUMN  "geometry"
+#define FILE_COLUMN  "VFK_FILENAME"
 
 #define VFK_DB_HEADER_TABLE      "vfk_header"
 #define VFK_DB_TABLE             "vfk_tables"
@@ -363,10 +364,13 @@ protected:
 public:
     virtual ~IVFKReader();
 
+    virtual const char    *GetFilename() const = 0;
+
     virtual bool           IsLatin2() const = 0;
     virtual bool           IsSpatial() const = 0;
     virtual bool           IsPreProcessed() const = 0;
     virtual bool           IsValid() const = 0;
+    virtual bool           HasFileField() const = 0;
     virtual int            ReadDataBlocks(bool = false) = 0;
     virtual int            ReadDataRecords(IVFKDataBlock * = nullptr) = 0;
     virtual int            LoadGeometry() = 0;
@@ -378,6 +382,6 @@ public:
     virtual const char    *GetInfo(const char *) = 0;
 };
 
-IVFKReader *CreateVFKReader(const char *);
+IVFKReader *CreateVFKReader( const GDALOpenInfo * );
 
 #endif // GDAL_OGR_VFK_VFKREADER_H_INCLUDED

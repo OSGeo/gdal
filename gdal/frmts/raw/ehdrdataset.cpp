@@ -1559,7 +1559,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
             CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 
-            if (utmZone != 0 && bUTM && bWGS84 && (bNorth || bSouth))
+            if (utmZone >= 1 && utmZone <= 60 &&
+                bUTM && bWGS84 && (bNorth || bSouth))
             {
                 char projCSStr[64] = { '\0' };
                 snprintf(projCSStr, sizeof(projCSStr), "WGS 84 / UTM zone %d%c",
@@ -1908,13 +1909,16 @@ CPLErr EHdrRasterBand::GetStatistics(
     double *pdfMin, double *pdfMax,
     double *pdfMean, double *pdfStdDev )
 {
-    if( (minmaxmeanstddev & HAS_ALL_FLAGS) == HAS_ALL_FLAGS)
+    if( !(GetMetadataItem("STATISTICS_APPROXIMATE") && !bApproxOK) )
     {
-        if( pdfMin ) *pdfMin = dfMin;
-        if( pdfMax ) *pdfMax = dfMax;
-        if( pdfMean ) *pdfMean = dfMean;
-        if( pdfStdDev ) *pdfStdDev = dfStdDev;
-        return CE_None;
+        if( (minmaxmeanstddev & HAS_ALL_FLAGS) == HAS_ALL_FLAGS)
+        {
+            if( pdfMin ) *pdfMin = dfMin;
+            if( pdfMax ) *pdfMax = dfMax;
+            if( pdfMean ) *pdfMean = dfMean;
+            if( pdfStdDev ) *pdfStdDev = dfStdDev;
+            return CE_None;
+        }
     }
 
     const CPLErr eErr = RawRasterBand::GetStatistics(bApproxOK, bForce,
@@ -1927,7 +1931,7 @@ CPLErr EHdrRasterBand::GetStatistics(
 
     minmaxmeanstddev = HAS_ALL_FLAGS;
 
-    if( poEDS->RewriteSTX() != CE_None )
+    if( !bApproxOK && poEDS->RewriteSTX() != CE_None )
         RawRasterBand::SetStatistics(dfMin, dfMax, dfMean, dfStdDev);
 
     if( pdfMin )
@@ -1966,11 +1970,20 @@ CPLErr EHdrRasterBand::SetStatistics( double dfMinIn, double dfMaxIn,
 
     EHdrDataset *poEDS = reinterpret_cast<EHdrDataset *>(poDS);
 
-    if( poEDS->RewriteSTX() != CE_None )
-        return RawRasterBand::SetStatistics(
-            dfMinIn, dfMaxIn, dfMeanIn, dfStdDevIn);
+    if( GetMetadataItem( "STATISTICS_APPROXIMATE" ) == nullptr )
+    {
+        if( GetMetadataItem("STATISTICS_MINIMUM") )
+        {
+            SetMetadataItem( "STATISTICS_MINIMUM", nullptr );
+            SetMetadataItem( "STATISTICS_MAXIMUM", nullptr );
+            SetMetadataItem( "STATISTICS_MEAN", nullptr );
+            SetMetadataItem( "STATISTICS_STDDEV", nullptr );
+        }
+        return poEDS->RewriteSTX();
+    }
 
-    return CE_None;
+    return RawRasterBand::SetStatistics(
+        dfMinIn, dfMaxIn, dfMeanIn, dfStdDevIn);
 }
 
 /************************************************************************/

@@ -164,13 +164,11 @@ echo "SWIG C# interfaces *NOT* generated !"
 #
 echo "* Generating SWIG Perl interfaces..."
 CWD=${PWD}
-cd gdal/swig/perl
 
-rm *wrap*
-touch ../../GDALmake.opt
-make generate
-rm -f ../../GDALmake.opt
-cd ${CWD}
+rm gdal/swig/perl/*wrap*
+touch gdal/GDALmake.opt
+(cd gdal/swig/perl && make generate)
+rm gdal/GDALmake.opt
 
 #
 # Make distribution packages

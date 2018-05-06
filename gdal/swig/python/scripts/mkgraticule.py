@@ -38,11 +38,11 @@ from osgeo import osr
 def float_range(*args):
     start = 0.0
     step = 1.0
-    if (len(args) == 1):
+    if len(args) == 1:
         (stop,) = args
-    elif (len(args) == 2):
+    elif len(args) == 2:
         (start, stop) = args
-    elif (len(args) == 3):
+    elif len(args) == 3:
         (start, stop, step) = args
     else:
         raise TypeError("float_range needs 1-3 float arguments")

@@ -518,7 +518,12 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 if( lastCode != LZW_NO_SUCH_CODE &&
                     lastAdded != LZW_CODES - 1 )
                 {
-                    prefix[++lastAdded] = lastCode;
+                    ++lastAdded;
+                    if( lastAdded >= 8192 )
+                    {
+                        throw "Decode error";
+                    }
+                    prefix[lastAdded] = lastCode;
                     character[lastAdded] = lastOutput;
                 }
 

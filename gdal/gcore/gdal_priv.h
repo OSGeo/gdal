@@ -323,10 +323,6 @@ class swq_select_parse_options;
 typedef struct GDALSQLParseInfo GDALSQLParseInfo;
 //! @endcond
 
-#ifdef DETECT_OLD_IRASTERIO
-typedef void signature_changed;
-#endif
-
 //! @cond Doxygen_Suppress
 #ifdef GDAL_COMPILATION
 #define OPTIONAL_OUTSIDE_GDAL(val)
@@ -383,12 +379,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
-
-#ifdef DETECT_OLD_IRASTERIO
-    virtual signature_changed IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              int, int *, int, int, int ) {};
-#endif
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
@@ -1096,12 +1086,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
   protected:
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void * pData ) = 0;
     virtual CPLErr IWriteBlock( int nBlockXOff, int nBlockYOff, void * pData );
-
-#ifdef DETECT_OLD_IRASTERIO
-    virtual signature_changed IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              int, int ) {};
-#endif
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,

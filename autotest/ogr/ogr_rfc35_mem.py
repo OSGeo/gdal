@@ -88,6 +88,8 @@ def ogr_rfc35_mem_1():
 
 
 def Truncate(val, lyr_defn, fieldname):
+    # pylint: disable=argument-unused
+
     # if val is None:
     #    return val
 
@@ -126,8 +128,8 @@ def CheckFeatures(lyr, field1='foo5', field2='bar10', field3='baz15', field4='ba
 def CheckColumnOrder(lyr, expected_order):
 
     lyr_defn = lyr.GetLayerDefn()
-    for i in range(len(expected_order)):
-        if lyr_defn.GetFieldDefn(i).GetName() != expected_order[i]:
+    for i, exp_order in enumerate(expected_order):
+        if lyr_defn.GetFieldDefn(i).GetName() != exp_order:
             return 'fail'
 
     return 'success'

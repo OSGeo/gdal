@@ -564,7 +564,9 @@ CPLErr AddEntryToCache(const CPLString &cache,
                        CPLString &filename,
                        const CPLString &ext)
 {
-    // assuming the cache was locked to us and the url is not in the cache
+    // todo: check for lock and do something if locked(?)
+    // todo: lock the cache
+    // assuming the url is not in the cache
     CPLString store = filename;
     CPLString db = CPLFormFilename(cache, "db", nullptr);
     VSILFILE *f = VSIFOpenL(db, "a");

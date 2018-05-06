@@ -44,18 +44,18 @@ def check_features_against_list(layer, field_name, value_list):
         gdaltest.post_reason('did not find required field ' + field_name)
         return 0
 
-    for i in range(len(value_list)):
+    for i, value in enumerate(value_list):
         feat = layer.GetNextFeature()
         if feat is None:
             gdaltest.post_reason('Got only %d features, not the expected %d features.' % (i, len(value_list)))
             return 0
 
-        if isinstance(value_list[i], type('str')):
-            isok = (feat.GetFieldAsString(field_index) != value_list[i])
+        if isinstance(value, type('str')):
+            isok = (feat.GetFieldAsString(field_index) != value)
         else:
-            isok = (feat.GetField(field_index) != value_list[i])
+            isok = (feat.GetField(field_index) != value)
         if isok:
-            gdaltest.post_reason('field %s feature %d did not match expected value %s, got %s.' % (field_name, i, str(value_list[i]), str(feat.GetField(field_index))))
+            gdaltest.post_reason('field %s feature %d did not match expected value %s, got %s.' % (field_name, i, str(value), str(feat.GetField(field_index))))
             return 0
 
     feat = layer.GetNextFeature()
@@ -214,8 +214,8 @@ def quick_create_layer_def(lyr, field_list):
 def quick_create_feature(layer, field_values, wkt_geometry):
     feature = ogr.Feature(feature_def=layer.GetLayerDefn())
 
-    for i in range(len(field_values)):
-        feature.SetField(i, field_values[i])
+    for i, field_value in enumerate(field_values):
+        feature.SetField(i, field_value)
 
     if wkt_geometry is not None:
         geom = ogr.CreateGeometryFromWkt(wkt_geometry)

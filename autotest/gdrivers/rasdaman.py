@@ -89,7 +89,7 @@ def rasdaman_3():
         return 'skip'
 
     ds = gdal.Open("rasdaman:query='select'")
-    
+
     return 'success' if ds is None else 'fail'
 
 

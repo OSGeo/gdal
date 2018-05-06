@@ -1,0 +1,68 @@
+PDS_VERSION_ID                 = "PDS3" 
+
+/*** FILE FORMAT ***/
+RECORD_TYPE                    = FIXED_LENGTH
+RECORD_BYTES                   = 10458
+FILE_RECORDS                   = 802
+
+/*** GENERAL DATA DESCRIPTION PARAMETERS ***/
+PRODUCT_ID                     = "VIRSVD_ORB_11187_050618_DAT"
+PRODUCT_VERSION_ID             = "V1 " 
+PRODUCT_CREATION_TIME          = 2017-02-18T03:42:45
+PRODUCT_TYPE                   = "DDR"
+SOFTWARE_NAME                  = "PIPE-MASCS2DDR"
+SOFTWARE_VERSION_ID            = "1.0"
+INSTRUMENT_HOST_NAME           = "MESSENGER"
+INSTRUMENT_NAME                = "
+ MERCURY ATMOSPHERIC AND SURFACE COMPOSITION SPECTROMETER"
+INSTRUMENT_ID                  = "MASCS"
+DETECTOR_ID                    = "VIRS"
+DATA_SET_ID                    = "MESS-E/V/H-MASCS-4-VIRS-DDR-V2.0"
+STANDARD_DATA_PRODUCT_ID       = "VIRSDVIS"
+MISSION_PHASE_NAME             = "MERCURY ORBIT"
+TARGET_NAME                    = "MERCURY"
+SITE_ID                        = "N/A"
+START_TIME                     = 2011-07-06T05:06:19
+STOP_TIME                      = 2011-07-06T05:23:01
+SPACECRAFT_CLOCK_START_COUNT   = "1/218416246.224"
+SPACECRAFT_CLOCK_STOP_COUNT    = "1/218417248.759"
+^TABLE                         = "VIRSVD_ORB_11187_050618.DAT"
+
+OBJECT                         = TABLE
+   COLUMNS                        = 62
+   INTERCHANGE_FORMAT             = BINARY
+   ROW_BYTES                      = 10458
+   ROWS                           = 1
+   DESCRIPTION                    = "
+       This table contains MESSENGER VIRS spectra collected in the visible
+       wavelength, converted to reflectance and photometrically normalized
+       as well as instrument engineering data.
+       
+       Detailed descriptions for the parameters defined below are contained
+       in the CDR/DDR SIS document.
+
+       The complete column definitions are contained in an external file
+       found in the LABEL directory of the archive volume.   
+   "  
+
+  NOTE                         = "
+     SPICE Kernels:
+     msgr20110705.bc
+     msgr20110706.bc
+     msgr20110707.bc
+     msgr_dyn_v600.tf
+     msgr_v231.tf
+     msgr_mascs_v100.ti
+     naif0011.tls
+     pck00010_MSGR_v21.tpc
+     messenger_2548.tsc
+     msgr_20040803_20150430_od431sc_2.bsp
+
+  "
+  
+   ^STRUCTURE = "VIRSVD.FMT" 
+END_OBJECT                     = TABLE
+END
+
+
+

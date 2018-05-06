@@ -1441,7 +1441,7 @@ class GDAL2Tiles(object):
         self.mem_drv = gdal.GetDriverByName('MEM')
 
         if not self.out_drv:
-            raise Exception("The '%s' driver was not found, is it available in this GDAL build?",
+            raise Exception("The '%s' driver was not found, is it available in this GDAL build?" %
                             self.tiledriver)
         if not self.mem_drv:
             raise Exception("The 'MEM' driver was not found, is it available in this GDAL build?")

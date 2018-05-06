@@ -1,4 +1,6 @@
 #!/bin/bash
+# WARNING: this script is used by https://github.com/google/oss-fuzz/blob/master/projects/gdal/build.sh
+# and should not be renamed or moved without updating the above
 
 set -e
 
@@ -328,14 +330,12 @@ CUR_DIR=$PWD
 cd  $(dirname $0)/../../autotest/ogr/data
 for filename in *.ods; do
     mkdir tmpods
-    cd tmpods
-    unzip ../$filename >/dev/null
+    unzip -d tmpods $filename >/dev/null
     printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/ods_$filename.tar
-    for i in `find -type f`; do
+    for i in $(find -type f); do
         printf "***NEWFILE***:$i\n" >> $CUR_DIR/ods_$filename.tar
         cat $i >> $CUR_DIR/ods_$filename.tar
     done
-    cd ..
     rm -rf tmpods
 done
 cd $CUR_DIR

@@ -23,20 +23,16 @@ CFLAGS=$ARCH_FLAGS CXXFLAGS=$ARCH_FLAGS CC="ccache clang" CXX="ccache clang" LDF
 sudo ln -s /usr/local/clang-3.5.0/bin/clang /usr/bin/clang
 sudo ln -s /usr/local/clang-3.5.0/bin/clang++ /usr/bin/clang++
 make USER_DEFS="-Wextra -Werror" -j3
-cd apps
-make USER_DEFS="-Wextra -Werror" test_ogrsf
-cd ..
+(cd apps && make USER_DEFS="-Wextra -Werror" test_ogrsf)
 
-cd swig/java
-cp java.opt java.opt.bak
-cat java.opt | sed "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-8-openjdk-amd64\//" > java.opt.tmp
-mv java.opt.tmp java.opt
-export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
-export PATH=$JAVA_HOME/jre/bin:$PATH
-java -version
-make
-mv java.opt.bak java.opt
-cd ../..
+(cd swig/java
+  sed -i.bak "s,JAVA_HOME =.*,JAVA_HOME = /usr/lib/jvm/java-8-openjdk-amd64/," java.opt
+  export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+  export PATH=$JAVA_HOME/jre/bin:$PATH
+  java -version
+  make
+  mv java.opt.bak java.opt
+)
 
 cd swig/perl
 make generate

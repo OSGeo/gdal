@@ -34,6 +34,7 @@ import os
 import os.path
 import stat
 import sys
+from sys import version_info
 import time
 from sys import version_info
 
@@ -94,7 +95,7 @@ def setup_run(name):
 
 def git_status():
 
-    out, err = runexternal_out_and_err('git status --porcelain .')
+    out, _ = runexternal_out_and_err('git status --porcelain .')
     return out
 
 ###############################################################################
@@ -108,7 +109,7 @@ def run_tests(test_list):
     before_vsimem = gdal.ReadDirRecursive('/vsimem/')
     try:
         git_status_before = git_status()
-    except:
+    except OSError:
         git_status_before = ''
 
     set_time = start_time is None
@@ -186,7 +187,7 @@ def run_tests(test_list):
 
     try:
         git_status_after = git_status()
-    except:
+    except OSError:
         git_status_after = ''
     if git_status_after != git_status_before:
         failure_counter = failure_counter + 1
@@ -328,6 +329,8 @@ def run_all(dirlist, run_as_external=False):
                         print('Running tests from %s/%s' % (dir_name, file))
                         setup_run('%s/%s' % (dir_name, file))
                         exec("run_tests( " + module + ".gdaltest_list)")
+                    except KeyboardInterrupt:
+                        raise
                     except:
                         # import traceback
                         # traceback.print_exc(file=sys.stderr)
@@ -335,6 +338,8 @@ def run_all(dirlist, run_as_external=False):
 
                 os.chdir(wd)
 
+            except KeyboardInterrupt:
+                raise
             except:
                 os.chdir(wd)
                 print('... failed to load %s ... skipping.' % file)
@@ -1552,7 +1557,7 @@ def filesystem_supports_sparse_files(path):
 
     try:
         (ret, err) = runexternal_out_and_err('stat -f -c "%T" ' + path)
-    except:
+    except OSError:
         return False
 
     if err != '':
@@ -1757,7 +1762,7 @@ def find_lib_linux(libname):
 def find_lib_sunos(libname):
 
     pid = os.getpid()
-    (lines, err) = runexternal_out_and_err('pmap %d' % pid)
+    lines, _ = runexternal_out_and_err('pmap %d' % pid)
 
     for line in lines.split('\n'):
         if line.rfind('/lib' + libname) == -1 or line.find('.so') == -1:

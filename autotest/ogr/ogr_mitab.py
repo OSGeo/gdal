@@ -569,7 +569,6 @@ def ogr_mitab_17():
     if ogr_gml_read.ogr_gml_1() != 'success':
         return 'skip'
 
-    import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
 
@@ -1359,7 +1358,7 @@ def ogr_mitab_28():
     # Check sequential enumeration
     for f in lyr:
         g = f.GetGeometryRef()
-        (x, y, z) = g.GetPoint(0)
+        (x, y, _) = g.GetPoint(0)
         n = permutation[i]
         x_ref = int(n / N2)
         y_ref = n % N2
@@ -1397,7 +1396,7 @@ def ogr_mitab_29():
                 os.stat('tmp/cache/compr_symb_deleted_records.tab')
             except OSError:
                 return 'skip'
-        except:
+        except OSError:
             return 'skip'
 
     shutil.copy('tmp/cache/compr_symb_deleted_records.tab', 'tmp')
@@ -2311,8 +2310,7 @@ def ogr_mitab_45():
     lyrNums = [1, 1, 2, 2]
     dsExts = ['.mif', '.tab', '', '']
 
-    for formatN in range(len(formats)):
-        frmt = formats[formatN]
+    for formatN, frmt in enumerate(formats):
         lyrCount = lyrNums[formatN]
         ext = dsExts[formatN]
         dsName = '/vsimem/45/ogr_mitab_45_%s_%s%s' % (frmt, lyrCount, ext)
@@ -2339,12 +2337,12 @@ def ogr_mitab_45():
                 fld_defn.SetWidth(254)
                 lyr.CreateField(fld_defn)
 
-            for featN in range(len(featNames)):
+            for featName in featNames:
                 feat = ogr.Feature(lyr.GetLayerDefn())
                 feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (25 72)"))
-                for fldN in range(len(fldNames)):
-                    featValue = fldNames[fldN] + ' ' + featNames[featN]
-                    feat.SetField(fldNames[fldN], featValue)
+                for fldName in fldNames:
+                    featValue = fldName + ' ' + featName
+                    feat.SetField(fldName, featValue)
                 lyr.CreateFeature(feat)
         ds = None
 
@@ -2361,9 +2359,8 @@ def ogr_mitab_45():
                                      ' from ' + dsName)
                 return 'fail'
 
-            for fldN in range(len(fldNames)):
+            for fldN, expectedName in enumerate(fldNames):
                 fldName = lyr.GetLayerDefn().GetFieldDefn(fldN).GetName()
-                expectedName = fldNames[fldN]
                 if fldName != expectedName:
                     gdaltest.post_reason('Can\'t get field name\n' +
                                          ' result name:   "' + fldName + '"\n'
@@ -2372,10 +2369,10 @@ def ogr_mitab_45():
                                          ' from dataset :' + dsName)
                     return 'fail'
 
-            for featN in range(len(featNames)):
+            for featName in featNames:
                 feat = lyr.GetNextFeature()
-                for fldN in range(len(fldNames)):
-                    expectedValue = fldNames[fldN] + ' ' + featNames[featN]
+                for fldN, fldName in enumerate(fldNames):
+                    expectedValue = fldName + ' ' + featName
                     # column value by number
                     value = feat.GetField(fldN)
                     if value != expectedValue:
@@ -2428,9 +2425,8 @@ def ogr_mitab_46():
             gdaltest.post_reason('skipping test: recode is not possible')
             return 'skip'
 
-        for fldN in range(len(fldNames)):
+        for fldN, expectedName in enumerate(fldNames):
             fldName = lyr.GetLayerDefn().GetFieldDefn(fldN).GetName()
-            expectedName = fldNames[fldN]
             if fldName != expectedName:
                 gdaltest.post_reason('Can\'t get field\n' +
                                      ' result name:   "' + fldName + '"\n'
@@ -2440,7 +2436,7 @@ def ogr_mitab_46():
 
         for featFldVal in fldVal:
             feat = lyr.GetNextFeature()
-            for fldN in range(len(fldNames)):
+            for fldN, fldName in enumerate(fldNames):
                 expectedValue = featFldVal[fldN]
                 # column value by number
                 value = feat.GetField(fldN)
@@ -2451,7 +2447,7 @@ def ogr_mitab_46():
                                          ' from dataset :' + dsName)
                     return 'fail'
                 # column value by name
-                value = feat.GetField(fldNames[fldN])
+                value = feat.GetField(fldName)
                 if value != expectedValue:
                     gdaltest.post_reason('Can\'t get field value by name\n' +
                                          ' result value:   "' + value + '"\n'
@@ -2648,6 +2644,54 @@ def ogr_mitab_tab_view():
 
     return 'success'
 
+
+###############################################################################
+
+
+def ogr_mitab_style():
+
+    tmpfile = '/vsimem/ogr_mitab_style.tab'
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(tmpfile)
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,0 0))'))
+    f.SetStyleString("BRUSH(fc:#AABBCC,bc:#DDEEFF);PEN(c:#DDEEFF)")
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,0 0))'))
+    f.SetStyleString('BRUSH(fc:#AABBCC,id:"mapinfo-brush-1")')
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,0 0))'))
+    f.SetStyleString('BRUSH(fc:#AABBCC00,bc:#ddeeff00)')
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(tmpfile)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetStyleString() != 'BRUSH(fc:#aabbcc,bc:#ddeeff,id:"mapinfo-brush-2,ogr-brush-0");PEN(w:1px,c:#ddeeff,id:"mapinfo-pen-2,ogr-pen-0")':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetStyleString() != 'BRUSH(fc:#aabbcc,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetStyleString() != 'BRUSH(fc:#aabbcc,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(tmpfile)
+
+    return 'success'
+
+
 ###############################################################################
 #
 
@@ -2719,6 +2763,7 @@ gdaltest_list = [
     ogr_mitab_49_aspatial,
     ogr_mitab_tab_field_index_creation,
     ogr_mitab_tab_view,
+    ogr_mitab_style,
     ogr_mitab_cleanup
 ]
 

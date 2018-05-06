@@ -6,6 +6,9 @@
 # http://www.initd.org/tracker/psycopg/browser/psycopg2/trunk/setup.py
 # Howard Butler hobu.inc@gmail.com
 
+
+gdal_version = '2.3.0'
+
 import sys
 import os
 
@@ -14,8 +17,6 @@ from distutils.sysconfig import get_config_vars
 from distutils.command.build_ext import build_ext
 from distutils.ccompiler import get_default_compiler
 from distutils.errors import CompileError
-
-gdal_version = '2.3.0'
 
 # Strip -Wstrict-prototypes from compiler options, if present. This is
 # not required when compiling a C++ extension.

@@ -398,8 +398,8 @@ class TestEnvisatMERIS(TestEnvisat):
         ]
 
         for r, v in zip(ref, gcp_values):
-            for i in range(len(r)):
-                if abs(float(r[i]) - float(v[i])) > 1e-10:
+            for i, ri in enumerate(r):
+                if abs(float(ri) - float(v[i])) > 1e-10:
                     gdaltest.post_reason('Wrong GCP coordinates.')
                     print(r)
                     print(v)

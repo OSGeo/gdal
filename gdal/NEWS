@@ -1,4 +1,4 @@
-= GDAL/OGR 2.3.0 *PRELIMINARY* Release Notes (to 1121758f74589f8850193a5baced7ab1335a4b39) =
+= GDAL/OGR 2.3.0 Release Notes =
 
 Note: due to the change of SCM during the development, #XXXX still refers to
 Trac tickets. GitHub tickets are explicitly indicated with github #XXXX
@@ -43,7 +43,7 @@ Trac tickets. GitHub tickets are explicitly indicated with github #XXXX
 
 See MIGRATION_GUIDE.TXT
 
-== GDAL/OGR 2.3.0 - General Changes ==
+== GDAL/OGR 2.3.0 - Build changes ==
 
 Build(Unix):
  * refresh config.{guess,sub} from latest upstream; upgrade to libtool 2.4.6 files
@@ -57,6 +57,8 @@ Build(Unix):
  * use .exe extension when building with mingw64* toolchains (#6919)
  * Pass --silent to libtool in compile (C and C++), link, install and clean modes.
  * Limit number of installed cpl*.h files installed to a fixed list.
+ * configure / m4/acinclude.m4: replace use of CCFLAGS by plain CFLAGS (github #529)
+ * configure / m4/acinclude.m4: require 'long long' type (github #530)
 
 Build(Windows):
  * always build the PDF driver, even when none of poppler/podofo/pdfium are available, in which case it is write-only (#6938)
@@ -66,6 +68,9 @@ Build(Windows):
  * nmake.opt: use /MDd for OPTFLAGS for DEBUG=1 builds (#7059)
  * nmake.opt: avoid some settings to be defined unconditionally (#5286)
  * nmake.opt: add configuration to enable openssl (which is needed for thread-safe curl use)
+
+Build(All):
+ * fix compilation error with Crypto++ 7.0.0 (github #541)
 
 Developer corner:
  * Add scripts/setdevenv.sh to setup env variables needed for running GDAL without installing it
@@ -138,6 +143,8 @@ Core:
  * Add GDALDataset::Open()
  * Add C++ iterators for layers, bands and features in GDALDataset
  * External .ovr: make sure that ExtraSamples tag is written
+ * Overview creation: avoid creating too many levels, and fix related heap buffer overflow (github #557)
+ * SetStatistics(): write a STATISTICS_APPROXIMATE=YES metadata item if bApproxOK=true, and take it into account in GetStatistics() (#4857,#4576)
 
 Algorithms:
  * Contour: make sure no 3D geometry is created unless -3d switch is defined (#336)
@@ -221,6 +228,7 @@ ECW driver:
 
 EHdr driver:
  * support reading/writing .clr as/from RAT (#3253)
+ * only write .stx if bApproxOK=false (github #514)
 
 ENVI driver:
  * support 'major frame offsets' keyword (#7114)
@@ -239,6 +247,7 @@ GeoPackage driver:
  * make DELLAYER:rastertable / DROP TABLE rastertable delete the table and all references to it (#7013)
  * create single tiled TIFF tiles if they are not bigger than 512x512 pixels
  * avoid multi-threading issues when creating TIFF tiles with GDAL_NUM_THREADS defined.
+ * fix overview creation with big overview factors on some datasets
 
 GeoRaster driver:
  * handle memory allocation failures (#6884)
@@ -330,6 +339,7 @@ JP2OpenJPEG driver:
  * add support for OpenJPEG 2.2 (#7002) and 2.3 (#7074). Drop support for openjpeg 2.0
  * fix performance issues with small images with very small tile size, such as some Sentinel2 quicklooks (#7012)
  * emit warning if GMLJP2v2 explicitly requested but georeferencing implemented
+ * allow YCC for non-Byte datasets; and allow 4-band MCT with openjpeg >= 2.2
 
 JPEG driver:
  * Add compatibility with libjpeg-turbo 1.5.2 that honours max_memory_to_use
@@ -425,6 +435,9 @@ Sentinel2 driver:
  * make sure that the True Color Image subdatset really uses the R,G,B bands and not the R,R,R (#7251)
  * add support for direct opening of .zip files of new safe_compact L1C products (#7085)
 
+SNODAS driver:
+ * accept header lines up to 1024 characters (github #506)
+
 SRTMHGT driver:
  * set appropriate description when opening a .hgt.zip file
  * recognizes the .hgt.gz extension (#7016)
@@ -451,6 +464,7 @@ VRT driver:
  * VRTDerivedRasterBand: fix detection of Python runtime already loaded when more than 100 modules are linked. Fixes QGIS3 use case (#7213)
  * add RAT support
  * for consistency, make sure that VRT intermediate datatype demotion is done, e.g that a VRT band of type Byte, with a source of type Float32, requested as Float32 buffer involves Float32 -> Byte -> Float32 conversions
+ * VRTDataset::AddBand(): honour 'PixelFunctionLanguage' option (github #501)
 
 WCS driver:
  * add support for WCS 2.0
@@ -515,6 +529,7 @@ Utilities:
  * ogrmerge.py: allow using wildchar '*' in source names and use glob.glob to expand it
  * ogrmerge.py: correctly guess vrt format
  * ogrmerge.py: error when outputting to a existing vrt if -overwrite_ds is not specified
+ * ogrmerge.py: use ogr.wkbUnknown to fix -nlt GEOMETRY
  * ogr2ogr: fix crash when using -f PDF -a_srs (#6920)
  * ogr2ogr: make -f GMT work again (#6993)
  * ogr2ogr: make it fail if GetNextFeature() returned NULL with an error
@@ -525,6 +540,7 @@ Utilities:
  * gnmmanage: fix crash on shape files with linestring and multilinestring geometries mixing
  * ogrtindex: fix crash when using -f SQLITE -t_srs XXXX (#7053)
  * ogrinfo: always open in read-only mode, unless -sql without -ro is specified
+ * ogrinfo/ogr2ogr with -sql @filename: remove lines starting with '--' (github #459)
 
 Multi driver changes:
  * port/tag ILI, NAS, DGN, NTF, SDTS, OGR_GMT, Geoconcept, AVCE00, AVCBin to VirtualIO API
@@ -581,7 +597,7 @@ DXF driver:
  * defer inlining of blocks until actually required (#7106)
  * Read DIMSTYLEs and block record handles
  * Handle linetype scales (#7129)
- * mproved support for DIMENSION entities (#7120)
+ * Improved support for DIMENSION entities (#7120)
  * handle ByBlock colors (#7130)
  * Fix parsing of complex linetypes (#7134)
  * Correct color for ByBlock text features; respect hidden objects (#5592, #7099, #7121)
@@ -703,6 +719,7 @@ MITAB driver:
  * support 'CREATE INDEX ON layer_name USING field_name' (if called after field creation and before first feature insertion)
  * avoid reporting invalid extent on empty .mif
  * report aspatial .tab as wkbNone geometry type
+ * export BRUSH(fc:#.....) with mapinfo brush pattern 2 (solid fill)
 
 mongoDB driver:
  * compilation fix on Windows
@@ -753,6 +770,9 @@ OpenFileGDB driver:
 PDF driver:
  * make OGR_PDF_READ_NON_STRUCTURED=YES configuration option work with documents without layers (#6359)
  * Improvements to text and dash pattern support in writer (#7185)
+
+PDS driver:
+ * fix reading 8-byte IEEE_REAL fields (github #570)
 
 PG driver:
  * do not be confused by a 'geometry' table in a non-PostGIS enabled database (#6896)

@@ -182,6 +182,8 @@ class VSIGZipHandle final : public VSIVirtualHandle
     int gzrewind ();
     uLong getLong ();
 
+    CPL_DISALLOW_COPY_ASSIGN(VSIGZipHandle)
+
   public:
 
     VSIGZipHandle( VSIVirtualHandle* poBaseHandle,

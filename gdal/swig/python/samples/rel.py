@@ -32,9 +32,6 @@
 import math
 import sys
 
-from osgeo import gdal
-gdal.TermProgress = gdal.TermProgress_nocb
-
 try:
     import numpy as Numeric
     Numeric.arrayrange = Numeric.arange
@@ -43,6 +40,8 @@ except ImportError:
 
 try:
     from osgeo import gdal_array as gdalnumeric
+    from osgeo import gdal
+    gdal.TermProgress = gdal.TermProgress_nocb
 except ImportError:
     import gdalnumeric
 

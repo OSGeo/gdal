@@ -103,7 +103,8 @@ def netcdf_setup():
 # helper function needed so we can call Process() on it from netcdf_test_copy_timeout()
 
 
-def netcdf_test_copy(ifile, band, checksum, ofile, opts=[], driver='NETCDF'):
+def netcdf_test_copy(ifile, band, checksum, ofile, opts=None, driver='NETCDF'):
+    opts = [] if opts is None else opts
     test = gdaltest.GDALTest('NETCDF', '../' + ifile, band, checksum, options=opts)
     return test.testCreateCopy(check_gt=0, check_srs=0, new_filename=ofile, delete_copy=0, check_minmax=0)
 
@@ -111,7 +112,7 @@ def netcdf_test_copy(ifile, band, checksum, ofile, opts=[], driver='NETCDF'):
 # test file copy, optional timeout arg
 
 
-def netcdf_test_copy_timeout(ifile, band, checksum, ofile, opts=[], driver='NETCDF', timeout=None):
+def netcdf_test_copy_timeout(ifile, band, checksum, ofile, opts=None, driver='NETCDF', timeout=None):
 
     from multiprocessing import Process
 
@@ -854,7 +855,7 @@ def netcdf_21():
 
         try:
             (ret, err) = gdaltest.runexternal_out_and_err(warp_cmd)
-        except:
+        except OSError:
             gdaltest.post_reason('gdalwarp execution failed')
             return 'fail'
 
@@ -1044,7 +1045,6 @@ def netcdf_25_nc4():
                  'valid_min': '10.1',
                  'valid_range_b': '1,10',
                  'valid_range_ub': '1,200',
-                 'valid_range_s': '0,255',
                  'valid_range_us': '0,32000',
                  'valid_range_l': '0,255',
                  'valid_range_ul': '0,4000000000',
@@ -1143,7 +1143,7 @@ def netcdf_test_4dfile(ofile):
     # get file header with ncdump (if available)
     try:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
-    except:
+    except OSError:
         print('NOTICE: ncdump not found')
         return 'success'
     if err is None or 'netcdf library version' not in err:
@@ -1223,7 +1223,7 @@ def netcdf_29():
         (test_cli_utilities.get_gdalwarp_path(), ifile, ofile1)
     try:
         (ret, err) = gdaltest.runexternal_out_and_err(warp_cmd)
-    except:
+    except OSError:
         gdaltest.post_reason('gdalwarp execution failed')
         return 'fail'
 
@@ -2593,7 +2593,7 @@ def netcdf_62_ncdump_check():
     # get file header with ncdump (if available)
     try:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
-    except:
+    except OSError:
         err = None
     if err is not None and 'netcdf library version' in err:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h tmp/netcdf_62.nc')
@@ -2678,7 +2678,7 @@ def netcdf_63_ncdump_check():
     # get file header with ncdump (if available)
     try:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
-    except:
+    except OSError:
         err = None
     if err is not None and 'netcdf library version' in err:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h tmp/netcdf_63.nc')
@@ -2882,7 +2882,7 @@ def netcdf_66_ncdump_check():
     # get file header with ncdump (if available)
     try:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
-    except:
+    except OSError:
         err = None
     if err is not None and 'netcdf library version' in err:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h tmp/netcdf_66.nc')

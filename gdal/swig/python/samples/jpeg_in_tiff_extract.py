@@ -165,10 +165,10 @@ def jpeg_in_tiff_extract(argv):
     radix_jpg_filename = jpg_filename
     extensions = ['.jpg', '.jpeg', '.JPG', '.JPEG']
     extension = None
-    for i in range(len(extensions)):
-        pos = radix_jpg_filename.find(extensions[i])
+    for ext in extensions:
+        pos = radix_jpg_filename.find(ext)
         if pos >= 0:
-            extension = extensions[i]
+            extension = ext
             radix_jpg_filename = radix_jpg_filename[0:pos]
             break
     if pos < 0:

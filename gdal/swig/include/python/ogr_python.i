@@ -86,7 +86,7 @@
                     return output
             return output
         if isinstance(value, int):
-            if value > len(self)-1:
+            if value > len(self) - 1:
                 raise IndexError
             return self.GetLayer(value)
         elif isinstance(value, str):
@@ -165,7 +165,7 @@
                     return output
             return output
         if isinstance(value, int):
-            if value > len(self)-1:
+            if value > len(self) - 1:
                 raise IndexError
             return self.GetFeature(value)
         else:
@@ -262,14 +262,14 @@
     # This makes it possible to fetch fields in the form "feature['area']".
     def __getitem__(self, key):
         """Returns the values of fields by the given name / field_index"""
-        if isinstance(key, str) or isinstance(key, type(u'')):
+        if isinstance(key, (str, type(u''))):
             fld_index = self.GetFieldIndex(key)
         else:
             fld_index = key
             if key == self.GetFieldCount():
                 raise IndexError
         if fld_index < 0:
-            if isinstance(key, str) or isinstance(key, type(u'')):
+            if isinstance(key, (str, type(u''))):
                 fld_index = self.GetGeomFieldIndex(key)
             if fld_index < 0:
                 raise ValueError("Illegal field requested in GetField()")
@@ -281,14 +281,14 @@
     # This makes it possible to set fields in the form "feature['area'] = 123".
     def __setitem__(self, key, value):
         """Returns the value of a field by field name / index"""
-        if isinstance(key, str) or isinstance(key, type(u'')):
+        if isinstance(key, (str, type(u''))):
             fld_index = self.GetFieldIndex(key)
         else:
             fld_index = key
             if key == self.GetFieldCount():
                 raise IndexError
         if fld_index < 0:
-            if isinstance(key, str) or isinstance(key, type(u'')):
+            if isinstance(key, (str, type(u''))):
                 fld_index = self.GetGeomFieldIndex(key)
             if fld_index < 0:
                 raise ValueError("Illegal field requested in SetField()")
@@ -298,7 +298,7 @@
             return self.SetField2(fld_index, value)
 
     def GetField(self, fld_index):
-        if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
+        if isinstance(fld_index, (str, type(u''))):
             fld_index = self.GetFieldIndex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise ValueError("Illegal field requested in GetField()")
@@ -354,7 +354,7 @@
             return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
 
 
-        if len(args) == 2 and str(type(args[1])) == "<type 'unicode'>":
+        if len(args) == 2 and isinstance(args[1], type(u'')):
             fld_index = args[0]
             if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
                 fld_index = self.GetFieldIndex(fld_index)
@@ -373,7 +373,7 @@
             return
 
         if isinstance(value, list):
-            if len(value) == 0:
+            if not value:
                 self.SetFieldNull(fld_index)
                 return
             if isinstance(value[0], type(1)) or isinstance(value[0], type(12345678901234)):

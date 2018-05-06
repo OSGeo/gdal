@@ -1926,8 +1926,8 @@ def test_ogr2ogr_49_bis():
     if len(lines) != len(expected_lines):
         print(lines)
         return 'fail'
-    for i in range(len(lines)):
-        if lines[i].strip() != expected_lines[i].strip():
+    for i, line in enumerate(lines):
+        if line.strip() != expected_lines[i].strip():
             print(lines)
             return 'fail'
 

@@ -32,6 +32,7 @@
 
 import array
 import os
+import struct
 import sys
 
 from osgeo import gdal
@@ -423,6 +424,67 @@ def ehdr_rat():
     return 'success'
 
 
+###############################################################################
+# Test STATISTICS_APPROXIMATE
+
+
+def ehdr_approx_stats_flag():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000)
+    src_ds.GetRasterBand(1).WriteRaster(1000, 1000, 1, 1, struct.pack('B' * 1, 20))
+    tmpfile = '/vsimem/ehdr_approx_stats_flag.bil'
+    gdal.Translate(tmpfile, src_ds, format='EHdr')
+
+    ds = gdal.Open(tmpfile, gdal.GA_Update)
+    approx_ok = 1
+    force = 1
+    stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
+    if stats != [0.0, 0.0, 0.0, 0.0]:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+    md = ds.GetRasterBand(1).GetMetadata()
+    if 'STATISTICS_APPROXIMATE' not in md:
+        gdaltest.post_reason('did not get expected metadata')
+        print(md)
+        return 'fail'
+
+    approx_ok = 0
+    force = 0
+    stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
+    if stats != [0.0, 0.0, 0.0, -1.0]:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+
+    ds = gdal.Open(tmpfile, gdal.GA_Update)
+    approx_ok = 0
+    force = 0
+    stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
+    if stats != [0.0, 0.0, 0.0, -1.0]:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+
+    approx_ok = 0
+    force = 1
+    stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
+    if stats[1] != 20.0:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+    md = ds.GetRasterBand(1).GetMetadata()
+    if 'STATISTICS_APPROXIMATE' in md:
+        gdaltest.post_reason('did not get expected metadata')
+        print(md)
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('EHDR').Delete(tmpfile)
+
+    return 'success'
+
+
 gdaltest_list = [
     ehdr_1,
     ehdr_2,
@@ -438,7 +500,8 @@ gdaltest_list = [
     ehdr_12,
     ehdr_13,
     ehdr_14,
-    ehdr_rat]
+    ehdr_rat,
+    ehdr_approx_stats_flag]
 
 if __name__ == '__main__':
 

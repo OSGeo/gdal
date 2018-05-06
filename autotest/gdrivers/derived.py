@@ -67,7 +67,7 @@ def derived_test1():
         pprint.pprint(got_dsds)
         return 'fail'
 
-    for key in expected_dsds.keys():
+    for key in expected_dsds:
         val = expected_dsds[key]
         if key.endswith('_NAME'):
             ds = gdal.Open(val)
@@ -126,7 +126,7 @@ def derived_test2():
         pprint.pprint(got_dsds)
         return 'fail'
 
-    for key in expected_dsds.keys():
+    for key in expected_dsds:
         val = expected_dsds[key]
         if key.endswith('_NAME'):
             ds = gdal.Open(val)

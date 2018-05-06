@@ -88,9 +88,9 @@ def ogr_jml_1():
     if lyr.GetLayerDefn().GetFieldCount() != len(fields):
         gdaltest.post_reason('fail')
         return 'fail'
-    for i in range(len(fields)):
+    for i, field in enumerate(fields):
         field_defn = lyr.GetLayerDefn().GetFieldDefn(i)
-        if field_defn.GetName() != fields[i][0] or field_defn.GetType() != fields[i][1]:
+        if field_defn.GetName() != field[0] or field_defn.GetType() != field[1]:
             print(i)
             gdaltest.post_reason('fail')
             return 'fail'

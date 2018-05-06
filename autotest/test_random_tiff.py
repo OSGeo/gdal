@@ -75,10 +75,10 @@ def generate_tif(comb_val):
     idx_tab = []
     count_non_none = 0
     has_strip = False
-    for level in range(len(tags)):
-        tag = tags[level][1]
-        possible_vals = tags[level][2]
-        len_possible_vals = tags[level][3]
+    for tag in tags:
+        tag = tag[1]
+        possible_vals = tag[2]
+        len_possible_vals = tag[3]
         idx_val = comb_val % len_possible_vals
         comb_val = int(comb_val / len_possible_vals)
         val = possible_vals[idx_val]
@@ -98,14 +98,11 @@ def generate_tif(comb_val):
                tag == TIFFTAG_STRIPBYTECOUNTS:
                 has_strip = True
             count_non_none = count_non_none + 1
-        #    print('%s : %d' % (tags[level][0], val))
-        # else:
-        #    print('%s : None' % (tags[level][0]))
 
     content = '\x49\x49\x2A\x00\x08\x00\x00\x00' + ('%c' % count_non_none) + '\x00'
-    for level in range(len(tags)):
-        tag = tags[level][1]
-        possible_vals = tags[level][2]
+    for level, tag in enumerate(tags):
+        tag = tag[1]
+        possible_vals = tag[2]
         idx = idx_tab[level]
         val = possible_vals[idx]
         if val is not None:
@@ -117,8 +114,8 @@ def generate_tif(comb_val):
 
 
 nVals = 1
-for level in range(len(tags)):
-    len_possible_vals = len(tags[level][2])
+for level, tag in enumerate(tags):
+    len_possible_vals = len(tag[2])
     tags[level].append(len_possible_vals)
     nVals = nVals * len_possible_vals
 itern = 0

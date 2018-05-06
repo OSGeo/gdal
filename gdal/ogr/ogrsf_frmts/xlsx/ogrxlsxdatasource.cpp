@@ -905,6 +905,17 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
             if (apoCurLineValues.size() >
                 (size_t)poCurLayer->GetLayerDefn()->GetFieldCount())
             {
+                GIntBig nFeatureCount = poCurLayer->GetFeatureCount(false);
+                if( nFeatureCount > 0 &&
+                    static_cast<size_t>(apoCurLineValues.size() -
+                        poCurLayer->GetLayerDefn()->GetFieldCount()) >
+                            static_cast<size_t>(100000 / nFeatureCount) )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Adding too many columns to too many "
+                             "existing features");
+                    return;
+                }
                 for( size_t i = (size_t)poCurLayer->GetLayerDefn()->GetFieldCount();
                      i < apoCurLineValues.size();
                      i++ )

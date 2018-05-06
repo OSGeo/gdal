@@ -1650,8 +1650,6 @@ def nitf_50():
 
 
 def nitf_51():
-    import struct
-
     for xsize in range(1, 9):
         for nbpp in [1, 2, 3, 4, 5, 6, 7, 12]:
             ds = gdal.GetDriverByName('NITF').Create('tmp/nitf51.ntf', xsize, 1)

@@ -1780,8 +1780,8 @@ def tiff_write_46():
 
         # We expect (1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
         got = struct.unpack('B' * 10, data)
-        for i in range(len(got)):
-            if got[i] != 1:
+        for g in got:
+            if g != 1:
                 print(got)
                 return 'fail'
 
@@ -1956,8 +1956,8 @@ def tiff_write_52():
     test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
 
     test_ct = gdal.ColorTable()
-    for i in range(len(test_ct_data)):
-        test_ct.SetColorEntry(i, test_ct_data[i])
+    for i, data in enumerate(test_ct_data):
+        test_ct.SetColorEntry(i, data)
 
     ds = gdal.Open('tmp/tiff_write_52.tif', gdal.GA_Update)
     ds.GetRasterBand(1).SetRasterColorTable(test_ct)
@@ -1986,8 +1986,8 @@ def tiff_write_53():
     test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
 
     test_ct = gdal.ColorTable()
-    for i in range(len(test_ct_data)):
-        test_ct.SetColorEntry(i, test_ct_data[i])
+    for i, data in enumerate(test_ct_data):
+        test_ct.SetColorEntry(i, data)
 
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_53.tif',
                                   30, 50, 1,
@@ -2023,8 +2023,8 @@ def tiff_write_53_bis():
     test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
 
     test_ct = gdal.ColorTable()
-    for i in range(len(test_ct_data)):
-        test_ct.SetColorEntry(i, test_ct_data[i])
+    for i, data in enumerate(test_ct_data):
+        test_ct.SetColorEntry(i, data)
 
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_53_bis.tif',
                                   30, 50, 1,
@@ -2125,8 +2125,8 @@ def tiff_write_56():
     test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
 
     test_ct = gdal.ColorTable()
-    for i in range(len(test_ct_data)):
-        test_ct.SetColorEntry(i, test_ct_data[i])
+    for i, data in enumerate(test_ct_data):
+        test_ct.SetColorEntry(i, data)
 
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_56.tif',
                                   30, 50, 1,
@@ -2252,8 +2252,8 @@ def tiff_write_59():
 
             # We expect zeros
             got = struct.unpack(ctype * 10, data)
-            for i in range(len(got)):
-                if got[i] != 0:
+            for g in got:
+                if g != 0:
                     print(('nbands=%d, NBITS=%d' % (nbands, nbits)))
                     print(got)
                     ret = 'fail'
@@ -4743,7 +4743,7 @@ def tiff_write_117():
 
     # Write first tile so that its byte count of that tile is 2048 (a multiple of 1024)
     adjust = 1254
-    data = '0' * (65536 - adjust) + ''.join([('%c' % random.randint(0, 255)) for i in range(adjust)])
+    data = '0' * (65536 - adjust) + ''.join([('%c' % random.randint(0, 255)) for _ in range(adjust)])
     ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
 
     # Second tile will be implicitly written at closing, or we could write
@@ -5366,25 +5366,25 @@ def tiff_write_126():
             return 'fail'
         # But they do exist...
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if not(cs in cs1):
+        if cs not in cs1:
             print(options)
             print(cs)
             gdaltest.post_reason('fail')
             return 'fail'
         cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
-        if not(cs in cs2):
+        if cs not in cs2:
             print(options)
             print(cs)
             gdaltest.post_reason('fail')
             return 'fail'
         cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-        if not(cs in cs3):
+        if cs not in cs3:
             print(options)
             print(cs)
             gdaltest.post_reason('fail')
             return 'fail'
         cs = ds.GetRasterBand(1).GetOverview(2).Checksum()
-        if not(cs in cs4):
+        if cs not in cs4:
             print(options)
             print(cs)
             gdaltest.post_reason('fail')
@@ -5430,19 +5430,19 @@ def tiff_write_126():
             return 'fail'
         # But they do exist...
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if not(cs in cs1):
+        if cs not in cs1:
             print(options)
             print(cs)
             gdaltest.post_reason('fail')
             return 'fail'
         cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-        if not(cs in cs3):
+        if cs not in cs3:
             print(options)
             print(cs)
             gdaltest.post_reason('fail')
             return 'fail'
         cs = ds.GetRasterBand(1).GetOverview(2).Checksum()
-        if not(cs in cs4):
+        if cs not in cs4:
             print(options)
             print(cs)
             gdaltest.post_reason('fail')

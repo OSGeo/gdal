@@ -4140,7 +4140,7 @@ def ogr_geom_import_corrupted_wkb():
         wkb = bytearray(g.ExportToWkb())
 
         # Test altering the WKB
-        for i in range(len(wkb)):
+        for i, _ in enumerate(wkb):
             for method in range(4 + 4 + 4 + 1):
                 init_val = wkb[i]
                 if method < 4:
