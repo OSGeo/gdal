@@ -48,12 +48,7 @@ CPL_CVSID("$Id$")
 /*                         OGRCurveCollection()                         */
 /************************************************************************/
 
-OGRCurveCollection::OGRCurveCollection()
-
-{
-    nCurveCount = 0;
-    papoCurves = nullptr;
-}
+OGRCurveCollection::OGRCurveCollection() = default;
 
 /************************************************************************/
 /*             OGRCurveCollection( const OGRCurveCollection& )          */

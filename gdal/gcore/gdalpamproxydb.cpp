@@ -64,14 +64,12 @@ CPL_CVSID("$Id$")
 class GDALPamProxyDB
 {
   public:
-    GDALPamProxyDB() { nUpdateCounter = -1; }
+    CPLString   osProxyDBDir{};
 
-    CPLString   osProxyDBDir;
+    int         nUpdateCounter = -1;
 
-    int         nUpdateCounter;
-
-    std::vector<CPLString> aosOriginalFiles;
-    std::vector<CPLString> aosProxyFiles;
+    std::vector<CPLString> aosOriginalFiles{};
+    std::vector<CPLString> aosProxyFiles{};
 
     void        CheckLoadDB();
     void        LoadDB();

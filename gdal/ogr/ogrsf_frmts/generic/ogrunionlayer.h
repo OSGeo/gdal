@@ -66,6 +66,8 @@ typedef enum
 
 class OGRUnionLayer : public OGRLayer
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRUnionLayer)
+
   protected:
     CPLString           osName;
     int                 nSrcLayers;

@@ -71,28 +71,16 @@ class OGRCoordinateTransformation;
 class OGRGeoJSONWriteOptions
 {
     public:
-        bool bWriteBBOX;
-        bool bBBOXRFC7946;
-        int  nCoordPrecision;
-        int  nSignificantFigures;
-        bool bPolygonRightHandRule;
-        bool bCanPatchCoordinatesWithNativeData;
-        bool bHonourReservedRFC7946Members;
-        CPLString osIDField;
-        bool bForceIDFieldType;
-        OGRFieldType eForcedIDFieldType;
-
-        OGRGeoJSONWriteOptions():
-            bWriteBBOX(false),
-            bBBOXRFC7946(false),
-            nCoordPrecision(-1),
-            nSignificantFigures(-1),
-            bPolygonRightHandRule(false),
-            bCanPatchCoordinatesWithNativeData(true),
-            bHonourReservedRFC7946Members(false),
-            bForceIDFieldType(false),
-            eForcedIDFieldType(OFTString)
-        {}
+        bool bWriteBBOX = false;
+        bool bBBOXRFC7946 = false;
+        int  nCoordPrecision = -1;
+        int  nSignificantFigures = -1;
+        bool bPolygonRightHandRule = false;
+        bool bCanPatchCoordinatesWithNativeData = true;
+        bool bHonourReservedRFC7946Members = false;
+        CPLString osIDField{};
+        bool bForceIDFieldType = false;
+        OGRFieldType eForcedIDFieldType = OFTString;
 
         void SetRFC7946Settings();
 };

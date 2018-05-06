@@ -161,12 +161,7 @@ GDALPansharpenOptions* GDALClonePansharpenOptions(
  *
  * The object is ready to be used after Initialize() has been called.
  */
-GDALPansharpenOperation::GDALPansharpenOperation() :
-    psOptions(nullptr),
-    bPositiveWeights(TRUE),
-    poThreadPool(nullptr),
-    nKernelRadius(0)
-{}
+GDALPansharpenOperation::GDALPansharpenOperation() = default;
 
 /************************************************************************/
 /*                       ~GDALPansharpenOperation()                     */

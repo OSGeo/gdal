@@ -72,7 +72,7 @@ class GDALGMLJP2Expr
 
   public:
     GDALGMLJP2ExprType           eType;
-    CPLString                    osValue;
+    CPLString                    osValue{};
 
     GDALGMLJP2Expr() : eType(GDALGMLJP2Expr_Unknown) {}
     GDALGMLJP2Expr( const char* pszVal ) :

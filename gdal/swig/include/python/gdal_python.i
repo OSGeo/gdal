@@ -216,19 +216,19 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
     return str
 
   def serialize(self, with_Z=0):
-    base = [CXT_Element,'GCP']
-    base.append([CXT_Attribute,'Id',[CXT_Text,self.Id]])
+    base = [gdalconst.CXT_Element,'GCP']
+    base.append([gdalconst.CXT_Attribute,'Id',[gdalconst.CXT_Text,self.Id]])
     pixval = '%0.15E' % self.GCPPixel
     lineval = '%0.15E' % self.GCPLine
     xval = '%0.15E' % self.GCPX
     yval = '%0.15E' % self.GCPY
     zval = '%0.15E' % self.GCPZ
-    base.append([CXT_Attribute,'Pixel',[CXT_Text,pixval]])
-    base.append([CXT_Attribute,'Line',[CXT_Text,lineval]])
-    base.append([CXT_Attribute,'X',[CXT_Text,xval]])
-    base.append([CXT_Attribute,'Y',[CXT_Text,yval]])
+    base.append([gdalconst.CXT_Attribute,'Pixel',[gdalconst.CXT_Text,pixval]])
+    base.append([gdalconst.CXT_Attribute,'Line',[gdalconst.CXT_Text,lineval]])
+    base.append([gdalconst.CXT_Attribute,'X',[gdalconst.CXT_Text,xval]])
+    base.append([gdalconst.CXT_Attribute,'Y',[gdalconst.CXT_Text,yval]])
     if with_Z:
-        base.append([CXT_Attribute,'Z',[CXT_Text,zval]])
+        base.append([gdalconst.CXT_Attribute,'Z',[gdalconst.CXT_Text,zval]])
     return base
 %} /* pythoncode */
 }
@@ -406,7 +406,7 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
   def ReadRaster(self, xoff=0, yoff=0, xsize=None, ysize=None,
                  buf_xsize=None, buf_ysize=None, buf_type=None,
                  buf_pixel_space=None, buf_line_space=None,
-                 resample_alg=GRIORA_NearestNeighbour,
+                 resample_alg=gdalconst.GRIORA_NearestNeighbour,
                  callback=None,
                  callback_data=None):
 
@@ -422,7 +422,7 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
 
   def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                   buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
-                  resample_alg=GRIORA_NearestNeighbour,
+                  resample_alg=gdalconst.GRIORA_NearestNeighbour,
                   callback=None,
                   callback_data=None):
       """ Reading a chunk of a GDAL band into a numpy array. The optional (buf_xsize,buf_ysize,buf_type)
@@ -438,7 +438,7 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
                                          callback_data=callback_data)
 
   def WriteArray(self, array, xoff=0, yoff=0,
-                 resample_alg=GRIORA_NearestNeighbour,
+                 resample_alg=gdalconst.GRIORA_NearestNeighbour,
                  callback=None,
                  callback_data=None):
       import gdalnumeric
@@ -510,10 +510,6 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
         else:
             virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size,options)
         return gdalnumeric.VirtualMemGetArray( virtualmem )
-
-  def __get_array_interface__(self):
-      shape = [1, self.XSize, self.YSize]
-
 %}
 }
 
@@ -633,7 +629,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
 
     def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None,
                     buf_xsize=None, buf_ysize=None, buf_type=None,
-                    resample_alg=GRIORA_NearestNeighbour,
+                    resample_alg=gdalconst.GRIORA_NearestNeighbour,
                     callback=None,
                     callback_data=None,
                     interleave='band'):
@@ -672,7 +668,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
                    buf_xsize=None, buf_ysize=None, buf_type=None,
                    band_list=None,
                    buf_pixel_space=None, buf_line_space=None, buf_band_space=None,
-                   resample_alg=GRIORA_NearestNeighbour,
+                   resample_alg=gdalconst.GRIORA_NearestNeighbour,
                    callback=None,
                    callback_data=None):
 
@@ -781,7 +777,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
         if buf_ysize is None:
             buf_ysize = 0;
         if buf_type is None:
-            buf_type = GDT_Byte
+            buf_type = gdalconst.GDT_Byte
 
         if buf_xsize <= 0:
             buf_xsize = xsize
@@ -931,7 +927,7 @@ def _strHighPrec(x):
     return x if _is_str_or_unicode(x) else '%.18g' % x
 
 def TranslateOptions(options=None, format=None,
-              outputType = GDT_Unknown, bandList=None, maskBand=None,
+              outputType = gdalconst.GDT_Unknown, bandList=None, maskBand=None,
               width = 0, height = 0, widthPct = 0.0, heightPct = 0.0,
               xRes = 0.0, yRes = 0.0,
               creationOptions=None, srcWin=None, projWin=None, projWinSRS=None, strict = False,
@@ -945,7 +941,7 @@ def TranslateOptions(options=None, format=None,
         Keyword arguments are :
           options --- can be be an array of strings, a string or let empty and filled from other keywords.
           format --- output format ("GTiff", etc...)
-          outputType --- output type (gdal.GDT_Byte, etc...)
+          outputType --- output type (gdalconst.GDT_Byte, etc...)
           bandList --- array of band numbers (index start at 1)
           maskBand --- mask band to generate or not ("none", "auto", "mask", 1, ...)
           width --- width of the output raster in pixel
@@ -982,7 +978,7 @@ def TranslateOptions(options=None, format=None,
         new_options = options
         if format is not None:
             new_options += ['-of', format]
-        if outputType != GDT_Unknown:
+        if outputType != gdalconst.GDT_Unknown:
             new_options += ['-ot', GetDataTypeName(outputType)]
         if maskBand != None:
             new_options += ['-mask', str(maskBand)]
@@ -1033,19 +1029,19 @@ def TranslateOptions(options=None, format=None,
         if not rat:
             new_options += ['-norat']
         if resampleAlg is not None:
-            if resampleAlg == GRA_NearestNeighbour:
+            if resampleAlg == gdalconst.GRA_NearestNeighbour:
                 new_options += ['-r', 'near']
-            elif resampleAlg == GRA_Bilinear:
+            elif resampleAlg == gdalconst.GRA_Bilinear:
                 new_options += ['-r', 'bilinear']
-            elif resampleAlg == GRA_Cubic:
+            elif resampleAlg == gdalconst.GRA_Cubic:
                 new_options += ['-r', 'cubic']
-            elif resampleAlg == GRA_CubicSpline:
+            elif resampleAlg == gdalconst.GRA_CubicSpline:
                 new_options += ['-r', 'cubicspline']
-            elif resampleAlg == GRA_Lanczos:
+            elif resampleAlg == gdalconst.GRA_Lanczos:
                 new_options += ['-r', 'lanczos']
-            elif resampleAlg == GRA_Average:
+            elif resampleAlg == gdalconst.GRA_Average:
                 new_options += ['-r', 'average']
-            elif resampleAlg == GRA_Mode:
+            elif resampleAlg == gdalconst.GRA_Mode:
                 new_options += ['-r', 'mode']
             else:
                 new_options += ['-r', str(resampleAlg)]
@@ -1081,8 +1077,8 @@ def WarpOptions(options=None, format=None,
          srcSRS=None, dstSRS=None,
          srcAlpha = False, dstAlpha = False,
          warpOptions=None, errorThreshold=None,
-         warpMemoryLimit=None, creationOptions=None, outputType = GDT_Unknown,
-         workingType = GDT_Unknown, resampleAlg=None,
+         warpMemoryLimit=None, creationOptions=None, outputType = gdalconst.GDT_Unknown,
+         workingType = gdalconst.GDT_Unknown, resampleAlg=None,
          srcNodata=None, dstNodata=None, multithread = False,
          tps = False, rpc = False, geoloc = False, polynomialOrder=None,
          transformerOptions=None, cutlineDSName=None,
@@ -1104,8 +1100,8 @@ def WarpOptions(options=None, format=None,
           dstSRS --- output SRS
           srcAlpha --- whether to force the last band of the input dataset to be considered as an alpha band
           dstAlpha --- whether to force the creation of an output alpha band
-          outputType --- output type (gdal.GDT_Byte, etc...)
-          workingType --- working type (gdal.GDT_Byte, etc...)
+          outputType --- output type (gdalconst.GDT_Byte, etc...)
+          workingType --- working type (gdalconst.GDT_Byte, etc...)
           warpOptions --- list of warping options
           errorThreshold --- error threshold for approximation transformer (in pixels)
           warpMemoryLimit --- size of working buffer in bytes
@@ -1139,9 +1135,9 @@ def WarpOptions(options=None, format=None,
         new_options = options
         if format is not None:
             new_options += ['-of', format]
-        if outputType != GDT_Unknown:
+        if outputType != gdalconst.GDT_Unknown:
             new_options += ['-ot', GetDataTypeName(outputType)]
-        if workingType != GDT_Unknown:
+        if workingType != gdalconst.GDT_Unknown:
             new_options += ['-wt', GetDataTypeName(workingType)]
         if outputBounds is not None:
             new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
@@ -1167,21 +1163,21 @@ def WarpOptions(options=None, format=None,
         if errorThreshold is not None:
             new_options += ['-et', _strHighPrec(errorThreshold)]
         if resampleAlg is not None:
-            if resampleAlg == GRIORA_NearestNeighbour:
+            if resampleAlg == gdalconst.GRIORA_NearestNeighbour:
                 new_options += ['-r', 'near']
-            elif resampleAlg == GRIORA_Bilinear:
+            elif resampleAlg == gdalconst.GRIORA_Bilinear:
                 new_options += ['-rb']
-            elif resampleAlg == GRIORA_Cubic:
+            elif resampleAlg == gdalconst.GRIORA_Cubic:
                 new_options += ['-rc']
-            elif resampleAlg == GRIORA_CubicSpline:
+            elif resampleAlg == gdalconst.GRIORA_CubicSpline:
                 new_options += ['-rcs']
-            elif resampleAlg == GRIORA_Lanczos:
+            elif resampleAlg == gdalconst.GRIORA_Lanczos:
                 new_options += ['-r', 'lanczos']
-            elif resampleAlg == GRIORA_Average:
+            elif resampleAlg == gdalconst.GRIORA_Average:
                 new_options += ['-r', 'average']
-            elif resampleAlg == GRIORA_Mode:
+            elif resampleAlg == gdalconst.GRIORA_Mode:
                 new_options += ['-r', 'mode']
-            elif resampleAlg == GRIORA_Gauss:
+            elif resampleAlg == gdalconst.GRIORA_Gauss:
                 new_options += ['-r', 'gauss']
             else:
                 new_options += ['-r', str(resampleAlg)]
@@ -1398,7 +1394,7 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
     else:
         (opts, callback, callback_data) = kwargs['options']
     if _is_str_or_unicode(srcDS):
-        srcDS = OpenEx(srcDS, OF_VECTOR)
+        srcDS = OpenEx(srcDS, gdalconst.OF_VECTOR)
 
     if _is_str_or_unicode(destNameOrDestDS):
         return wrapper_GDALVectorTranslateDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
@@ -1568,7 +1564,7 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
 
 
 def GridOptions(options=None, format=None,
-              outputType=GDT_Unknown,
+              outputType=gdalconst.GDT_Unknown,
               width=0, height=0,
               creationOptions=None,
               outputBounds=None,
@@ -1587,7 +1583,7 @@ def GridOptions(options=None, format=None,
         Keyword arguments are :
           options --- can be be an array of strings, a string or let empty and filled from other keywords.
           format --- output format ("GTiff", etc...)
-          outputType --- output type (gdal.GDT_Byte, etc...)
+          outputType --- output type (gdalconst.GDT_Byte, etc...)
           width --- width of the output raster in pixel
           height --- height of the output raster in pixel
           creationOptions --- list of creation options
@@ -1613,7 +1609,7 @@ def GridOptions(options=None, format=None,
         new_options = options
         if format is not None:
             new_options += ['-of', format]
-        if outputType != GDT_Unknown:
+        if outputType != gdalconst.GDT_Unknown:
             new_options += ['-ot', GetDataTypeName(outputType)]
         if width != 0 or height != 0:
             new_options += ['-outsize', str(width), str(height)]
@@ -1662,12 +1658,12 @@ def Grid(destName, srcDS, **kwargs):
     else:
         (opts, callback, callback_data) = kwargs['options']
     if _is_str_or_unicode(srcDS):
-        srcDS = OpenEx(srcDS, OF_VECTOR)
+        srcDS = OpenEx(srcDS, gdalconst.OF_VECTOR)
 
     return GridInternal(destName, srcDS, opts, callback, callback_data)
 
 def RasterizeOptions(options=None, format=None,
-         outputType=GDT_Unknown,
+         outputType=gdalconst.GDT_Unknown,
          creationOptions=None, noData=None, initValues=None,
          outputBounds=None, outputSRS=None,
          transformerOptions=None,
@@ -1681,7 +1677,7 @@ def RasterizeOptions(options=None, format=None,
         Keyword arguments are :
           options --- can be be an array of strings, a string or let empty and filled from other keywords.
           format --- output format ("GTiff", etc...)
-          outputType --- output type (gdal.GDT_Byte, etc...)
+          outputType --- output type (gdalconst.GDT_Byte, etc...)
           creationOptions --- list of creation options
           outputBounds --- assigned output bounds: [minx, miny, maxx, maxy]
           outputSRS --- assigned output SRS
@@ -1713,7 +1709,7 @@ def RasterizeOptions(options=None, format=None,
         new_options = options
         if format is not None:
             new_options += ['-of', format]
-        if outputType != GDT_Unknown:
+        if outputType != gdalconst.GDT_Unknown:
             new_options += ['-ot', GetDataTypeName(outputType)]
         if creationOptions is not None:
             for opt in creationOptions:
@@ -1790,7 +1786,7 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
     else:
         (opts, callback, callback_data) = kwargs['options']
     if _is_str_or_unicode(srcDS):
-        srcDS = OpenEx(srcDS, OF_VECTOR)
+        srcDS = OpenEx(srcDS, gdalconst.OF_VECTOR)
 
     if _is_str_or_unicode(destNameOrDestDS):
         return wrapper_GDALRasterizeDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
@@ -1854,21 +1850,21 @@ def BuildVRTOptions(options=None,
         if addAlpha:
             new_options += ['-addalpha']
         if resampleAlg is not None:
-            if resampleAlg == GRIORA_NearestNeighbour:
+            if resampleAlg == gdalconst.GRIORA_NearestNeighbour:
                 new_options += ['-r', 'near']
-            elif resampleAlg == GRIORA_Bilinear:
+            elif resampleAlg == gdalconst.GRIORA_Bilinear:
                 new_options += ['-rb']
-            elif resampleAlg == GRIORA_Cubic:
+            elif resampleAlg == gdalconst.GRIORA_Cubic:
                 new_options += ['-rc']
-            elif resampleAlg == GRIORA_CubicSpline:
+            elif resampleAlg == gdalconst.GRIORA_CubicSpline:
                 new_options += ['-rcs']
-            elif resampleAlg == GRIORA_Lanczos:
+            elif resampleAlg == gdalconst.GRIORA_Lanczos:
                 new_options += ['-r', 'lanczos']
-            elif resampleAlg == GRIORA_Average:
+            elif resampleAlg == gdalconst.GRIORA_Average:
                 new_options += ['-r', 'average']
-            elif resampleAlg == GRIORA_Mode:
+            elif resampleAlg == gdalconst.GRIORA_Mode:
                 new_options += ['-r', 'mode']
-            elif resampleAlg == GRIORA_Gauss:
+            elif resampleAlg == gdalconst.GRIORA_Gauss:
                 new_options += ['-r', 'gauss']
             else:
                 new_options += ['-r', str(resampleAlg)]

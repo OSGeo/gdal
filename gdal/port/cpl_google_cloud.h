@@ -43,6 +43,8 @@
 
 class VSIGSHandleHelper final: public IVSIS3LikeHandleHelper
 {
+        CPL_DISALLOW_COPY_ASSIGN(VSIGSHandleHelper)
+
         CPLString m_osURL;
         CPLString m_osEndpoint;
         CPLString m_osBucketObjectKey;

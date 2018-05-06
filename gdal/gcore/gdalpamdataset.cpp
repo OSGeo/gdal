@@ -313,14 +313,6 @@ void GDALPamDataset::PamInitialize()
         nPamFlags |= GPF_AUXMODE;
 
     psPam = new GDALDatasetPamInfo;
-    psPam->pszPamFilename = nullptr;
-    psPam->pszProjection = nullptr;
-    psPam->bHaveGeoTransform = FALSE;
-    psPam->nGCPCount = 0;
-    psPam->pasGCPList = nullptr;
-    psPam->pszGCPProjection = nullptr;
-    psPam->bHasMetadata = FALSE;
-
     for( int iBand = 0; iBand < GetRasterCount(); iBand++ )
     {
         GDALRasterBand *poBand = GetRasterBand(iBand+1);

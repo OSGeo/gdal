@@ -87,12 +87,7 @@ static void OGRGEOSWarningHandler(const char *fmt, ...)
 /*                            OGRGeometry()                             */
 /************************************************************************/
 
-OGRGeometry::OGRGeometry()
-
-{
-    poSRS = nullptr;
-    flags = 0;
-}
+OGRGeometry::OGRGeometry() = default;
 
 /************************************************************************/
 /*                   OGRGeometry( const OGRGeometry& )                  */

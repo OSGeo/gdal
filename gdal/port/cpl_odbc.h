@@ -159,11 +159,14 @@ class CPLODBCStatement;
  */
 
 class CPL_DLL CPLODBCSession {
-    char      m_szLastError[SQL_MAX_MESSAGE_LENGTH + 1];
-    HENV      m_hEnv;
-    HDBC      m_hDBC;
-    int       m_bInTransaction;
-    int       m_bAutoCommit;
+
+    CPL_DISALLOW_COPY_ASSIGN(CPLODBCSession)
+
+    char      m_szLastError[SQL_MAX_MESSAGE_LENGTH + 1] = { '\0' };
+    HENV      m_hEnv = nullptr;
+    HDBC      m_hDBC = nullptr;
+    int       m_bInTransaction = false;
+    int       m_bAutoCommit = true;
 
   public:
     CPLODBCSession();
@@ -205,26 +208,28 @@ class CPL_DLL CPLODBCSession {
 
 class CPL_DLL CPLODBCStatement {
 
-    CPLODBCSession     *m_poSession;
-    HSTMT               m_hStmt;
+    CPL_DISALLOW_COPY_ASSIGN(CPLODBCStatement)
 
-    SQLSMALLINT    m_nColCount;
-    char         **m_papszColNames;
-    SQLSMALLINT   *m_panColType;
-    char         **m_papszColTypeNames;
-    CPL_SQLULEN      *m_panColSize;
-    SQLSMALLINT   *m_panColPrecision;
-    SQLSMALLINT   *m_panColNullable;
-    char         **m_papszColColumnDef;
+    CPLODBCSession     *m_poSession = nullptr;
+    HSTMT               m_hStmt = nullptr;
 
-    char         **m_papszColValues;
-    CPL_SQLLEN       *m_panColValueLengths;
+    SQLSMALLINT    m_nColCount = 0;
+    char         **m_papszColNames = nullptr;
+    SQLSMALLINT   *m_panColType = nullptr;
+    char         **m_papszColTypeNames = nullptr;
+    CPL_SQLULEN      *m_panColSize = nullptr;
+    SQLSMALLINT   *m_panColPrecision = nullptr;
+    SQLSMALLINT   *m_panColNullable = nullptr;
+    char         **m_papszColColumnDef = nullptr;
+
+    char         **m_papszColValues = nullptr;
+    CPL_SQLLEN       *m_panColValueLengths = nullptr;
 
     int            Failed( int );
 
-    char          *m_pszStatement;
-    size_t         m_nStatementMax;
-    size_t         m_nStatementLen;
+    char          *m_pszStatement = nullptr;
+    size_t         m_nStatementMax = 0;
+    size_t         m_nStatementLen = 0;
 
   public:
     explicit CPLODBCStatement( CPLODBCSession * );

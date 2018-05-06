@@ -48,7 +48,7 @@ CPL_CVSID("$Id$")
  * \brief Create an empty compound curve.
  */
 
-OGRCompoundCurve::OGRCompoundCurve() {}
+OGRCompoundCurve::OGRCompoundCurve() = default;
 
 /************************************************************************/
 /*             OGRCompoundCurve( const OGRCompoundCurve& )              */
@@ -705,13 +705,15 @@ int OGRCompoundCurve::getNumPoints() const
 
 class OGRCompoundCurvePointIterator final: public OGRPointIterator
 {
-        const OGRCompoundCurve *poCC;
-        int                     iCurCurve;
-        OGRPointIterator       *poCurveIter;
+        CPL_DISALLOW_COPY_ASSIGN(OGRCompoundCurvePointIterator)
+
+        const OGRCompoundCurve *poCC = nullptr;
+        int                     iCurCurve = 0;
+        OGRPointIterator       *poCurveIter = nullptr;
 
     public:
         explicit OGRCompoundCurvePointIterator( const OGRCompoundCurve* poCCIn ) :
-            poCC(poCCIn), iCurCurve(0), poCurveIter(nullptr) {}
+            poCC(poCCIn) {}
         virtual ~OGRCompoundCurvePointIterator() { delete poCurveIter; }
 
         virtual OGRBoolean getNextPoint( OGRPoint* p ) override;

@@ -458,8 +458,11 @@ void OGRPointIterator::destroy( OGRPointIterator* poIter )
 
 struct OGRSimpleCurve::Iterator::Private
 {
+    CPL_DISALLOW_COPY_ASSIGN(Private)
+    Private() = default;
+
     bool m_bUpdateChecked = true;
-    OGRPoint m_oPoint;
+    OGRPoint m_oPoint{};
     OGRSimpleCurve* m_poSelf = nullptr;
     int m_nPos = 0;
 };
@@ -527,7 +530,10 @@ OGRSimpleCurve::Iterator OGRSimpleCurve::end()
 
 struct OGRSimpleCurve::ConstIterator::Private
 {
-    mutable OGRPoint m_oPoint;
+    CPL_DISALLOW_COPY_ASSIGN(Private)
+    Private() = default;
+
+    mutable OGRPoint m_oPoint{};
     const OGRSimpleCurve* m_poSelf = nullptr;
     int m_nPos = 0;
 };
@@ -576,8 +582,11 @@ OGRSimpleCurve::ConstIterator OGRSimpleCurve::end() const
 
 struct OGRCurve::ConstIterator::Private
 {
-    OGRPoint m_oPoint;
-    std::unique_ptr<OGRPointIterator> m_poIterator;
+    CPL_DISALLOW_COPY_ASSIGN(Private)
+    Private() = default;
+
+    OGRPoint m_oPoint{};
+    std::unique_ptr<OGRPointIterator> m_poIterator{};
 };
 
 OGRCurve::ConstIterator::ConstIterator(const OGRCurve* poSelf, bool bStart):

@@ -112,15 +112,17 @@ private:
     void     MergePolygon( int nSrcId, int nDstId );
     int      NewPolygon( DataType nValue );
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALRasterPolygonEnumeratorT)
+
 public:  // these are intended to be readonly.
 
-    GInt32   *panPolyIdMap;
-    DataType   *panPolyValue;
+    GInt32   *panPolyIdMap = nullptr;
+    DataType   *panPolyValue = nullptr;
 
-    int      nNextPolygonId;
-    int      nPolyAlloc;
+    int      nNextPolygonId = 0;
+    int      nPolyAlloc = 0;
 
-    int      nConnectedness;
+    int      nConnectedness = 0;
 
 public:
     explicit GDALRasterPolygonEnumeratorT( int nConnectedness=4 );

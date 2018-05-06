@@ -56,14 +56,16 @@ CPL_CVSID("$Id$")
 
 class VSIBufferedReaderHandle final : public VSIVirtualHandle
 {
-    VSIVirtualHandle* m_poBaseHandle;
-    GByte*            pabyBuffer;
-    GUIntBig          nBufferOffset;
-    int               nBufferSize;
-    GUIntBig          nCurOffset;
-    bool              bNeedBaseHandleSeek;
-    bool              bEOF;
-    vsi_l_offset      nCheatFileSize;
+    CPL_DISALLOW_COPY_ASSIGN(VSIBufferedReaderHandle)
+
+    VSIVirtualHandle* m_poBaseHandle = nullptr;
+    GByte*            pabyBuffer = nullptr;
+    GUIntBig          nBufferOffset = 0;
+    int               nBufferSize = 0;
+    GUIntBig          nCurOffset = 0;
+    bool              bNeedBaseHandleSeek = false;
+    bool              bEOF =  false;
+    vsi_l_offset      nCheatFileSize = 0;
 
     int               SeekBaseTo( vsi_l_offset nTargetOffset );
 
@@ -117,13 +119,7 @@ VSIVirtualHandle* VSICreateBufferedReaderHandle(
 VSIBufferedReaderHandle::VSIBufferedReaderHandle(
     VSIVirtualHandle* poBaseHandle) :
     m_poBaseHandle(poBaseHandle),
-    pabyBuffer(static_cast<GByte*>(CPLMalloc(MAX_BUFFER_SIZE))),
-    nBufferOffset(0),
-    nBufferSize(0),
-    nCurOffset(0),
-    bNeedBaseHandleSeek(false),
-    bEOF(false),
-    nCheatFileSize(0)
+    pabyBuffer(static_cast<GByte*>(CPLMalloc(MAX_BUFFER_SIZE)))
 {}
 
 VSIBufferedReaderHandle::VSIBufferedReaderHandle(

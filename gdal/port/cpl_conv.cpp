@@ -2836,15 +2836,18 @@ class CPLThreadLocaleCPrivate
 {
         locale_t nNewLocale;
         locale_t nOldLocale;
+
+        CPL_DISALLOW_COPY_ASSIGN(CPLThreadLocaleCPrivate)
+
     public:
         CPLThreadLocaleCPrivate();
        ~CPLThreadLocaleCPrivate();
 };
 
-CPLThreadLocaleCPrivate::CPLThreadLocaleCPrivate()
+CPLThreadLocaleCPrivate::CPLThreadLocaleCPrivate():
+    nNewLocale(newlocale(LC_NUMERIC_MASK, "C", nullptr)),
+    nOldLocale(uselocale(nNewLocale))
 {
-    nNewLocale = newlocale(LC_NUMERIC_MASK, "C", nullptr);
-    nOldLocale = uselocale(nNewLocale);
 }
 
 CPLThreadLocaleCPrivate::~CPLThreadLocaleCPrivate()
@@ -2859,6 +2862,9 @@ class CPLThreadLocaleCPrivate
 {
         int   nOldValConfigThreadLocale;
         char *pszOldLocale;
+
+        CPL_DISALLOW_COPY_ASSIGN(CPLThreadLocaleCPrivate)
+
     public:
         CPLThreadLocaleCPrivate();
        ~CPLThreadLocaleCPrivate();
@@ -2887,14 +2893,17 @@ CPLThreadLocaleCPrivate::~CPLThreadLocaleCPrivate()
 class CPLThreadLocaleCPrivate
 {
         char *pszOldLocale;
+
+        CPL_DISALLOW_COPY_ASSIGN(CPLThreadLocaleCPrivate)
+
     public:
         CPLThreadLocaleCPrivate();
        ~CPLThreadLocaleCPrivate();
 };
 
-CPLThreadLocaleCPrivate::CPLThreadLocaleCPrivate()
+CPLThreadLocaleCPrivate::CPLThreadLocaleCPrivate():
+    pszOldLocale(CPLStrdup(CPLsetlocale(LC_NUMERIC, nullptr)))
 {
-    pszOldLocale = CPLStrdup(CPLsetlocale(LC_NUMERIC, nullptr));
     if( EQUAL(pszOldLocale, "C")
         || EQUAL(pszOldLocale, "POSIX")
         || CPLsetlocale(LC_NUMERIC, "C") == nullptr )
@@ -2920,10 +2929,9 @@ CPLThreadLocaleCPrivate::~CPLThreadLocaleCPrivate()
 /*                        CPLThreadLocaleC()                            */
 /************************************************************************/
 
-CPLThreadLocaleC::CPLThreadLocaleC()
-
+CPLThreadLocaleC::CPLThreadLocaleC():
+    m_private(new CPLThreadLocaleCPrivate)
 {
-    m_private = new CPLThreadLocaleCPrivate;
 }
 
 /************************************************************************/

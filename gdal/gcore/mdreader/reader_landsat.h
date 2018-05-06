@@ -59,7 +59,7 @@ public:
 protected:
     virtual void LoadMetadata() override;
 protected:
-    CPLString m_osIMDSourceFilename;
+    CPLString m_osIMDSourceFilename{};
 };
 
 #endif // READER_LANDSAT_H_INCLUDED

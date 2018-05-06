@@ -58,7 +58,6 @@ CPL_CVSID("$Id$")
 GDALPamRasterBand::GDALPamRasterBand()
 
 {
-    psPam = nullptr;
     SetMOFlags( GetMOFlags() | GMO_PAM_CLASS );
 }
 
@@ -70,7 +69,6 @@ GDALPamRasterBand::GDALPamRasterBand()
 GDALPamRasterBand::GDALPamRasterBand( int bForceCachedIOIn ) :
     GDALRasterBand(bForceCachedIOIn)
 {
-    psPam = nullptr;
     SetMOFlags( GetMOFlags() | GMO_PAM_CLASS );
 }
 //! @endcond

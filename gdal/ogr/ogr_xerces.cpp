@@ -187,6 +187,8 @@ CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet,
 /************************************************************************/
 class OGRXercesBinInputStream : public BinInputStream
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRXercesBinInputStream)
+
     VSILFILE* fp;
     XMLCh emptyString;
 #ifdef WORKAROUND_XERCESC_2094

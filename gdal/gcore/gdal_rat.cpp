@@ -1080,24 +1080,6 @@ GDALRATDumpReadable( GDALRasterAttributeTableH hRAT, FILE *fp )
  */
 
 /************************************************************************/
-/*                  GDALDefaultRasterAttributeTable()                   */
-/*                                                                      */
-/*      Simple initialization constructor.                              */
-/************************************************************************/
-
-//! Construct empty table.
-
-GDALDefaultRasterAttributeTable::GDALDefaultRasterAttributeTable() :
-    bLinearBinning(false),
-    dfRow0Min(-0.5),
-    dfBinSize(1.0),
-    bColumnsAnalysed(false),
-    nMinCol(-1),
-    nMaxCol(-1),
-    nRowCount(0)
-{}
-
-/************************************************************************/
 /*                   GDALCreateRasterAttributeTable()                   */
 /************************************************************************/
 
@@ -1111,20 +1093,6 @@ GDALRasterAttributeTableH CPL_STDCALL GDALCreateRasterAttributeTable()
 
 {
     return new GDALDefaultRasterAttributeTable();
-}
-
-/************************************************************************/
-/*                  GDALDefaultRasterAttributeTable()                   */
-/************************************************************************/
-
-//! Copy constructor.
-
-GDALDefaultRasterAttributeTable::GDALDefaultRasterAttributeTable(
-    const GDALDefaultRasterAttributeTable &oOther ) : GDALRasterAttributeTable()
-
-{
-    // We have tried to be careful to allow wholesale assignment
-    *this = oOther;
 }
 
 /************************************************************************/

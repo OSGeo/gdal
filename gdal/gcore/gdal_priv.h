@@ -134,8 +134,8 @@ class CPL_DLL GDALMajorObject
   protected:
 //! @cond Doxygen_Suppress
     int                 nFlags; // GMO_* flags.
-    CPLString           sDescription;
-    GDALMultiDomainMetadata oMDMD;
+    CPLString           sDescription{};
+    GDALMultiDomainMetadata oMDMD{};
 
 //! @endcond
 
@@ -187,7 +187,7 @@ class CPL_DLL GDALDefaultOverviews
     GDALDataset *poDS;
     GDALDataset *poODS;
 
-    CPLString   osOvrFilename;
+    CPLString   osOvrFilename{};
 
     bool        bOvrIsAux;
 
@@ -348,26 +348,24 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     void AddToDatasetOpenList();
 
-    void           Init( bool bForceCachedIO );
-
   protected:
 //! @cond Doxygen_Suppress
-    GDALDriver  *poDriver;
-    GDALAccess  eAccess;
+    GDALDriver  *poDriver = nullptr;
+    GDALAccess  eAccess = GA_ReadOnly;
 
     // Stored raster information.
-    int         nRasterXSize;
-    int         nRasterYSize;
-    int         nBands;
-    GDALRasterBand **papoBands;
+    int         nRasterXSize = 512;
+    int         nRasterYSize = 512;
+    int         nBands = 0;
+    GDALRasterBand **papoBands = nullptr;
 
-    int         nOpenFlags;
+    int         nOpenFlags = 0;
 
-    int         nRefCount;
-    bool        bForceCachedIO;
-    bool        bShared;
-    bool        bIsInternal;
-    bool        bSuppressOnClose;
+    int         nRefCount = 1;
+    bool        bForceCachedIO = false;
+    bool        bShared = false;
+    bool        bIsInternal = true;
+    bool        bSuppressOnClose = false;
 
                 GDALDataset(void);
     explicit    GDALDataset(int bForceCachedIO);
@@ -375,7 +373,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     void        RasterInitialize( int, int );
     void        SetBand( int, GDALRasterBand * );
 
-    GDALDefaultOverviews oOvManager;
+    GDALDefaultOverviews oOvManager{};
 
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
@@ -431,7 +429,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 //! @cond Doxygen_Suppress
     int                 ValidateLayerCreationOptions( const char* const* papszLCO );
 
-    char            **papszOpenOptions;
+    char            **papszOpenOptions = nullptr;
 
     friend class GDALRasterBand;
 
@@ -617,10 +615,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     struct FeatureLayerPair
     {
         /** Unique pointer to a OGRFeature. */
-        OGRFeatureUniquePtr feature;
+        OGRFeatureUniquePtr feature{};
 
         /** Layer to which the feature belongs to. */
-        OGRLayer* layer;
+        OGRLayer* layer = nullptr;
     };
 
 private:
@@ -631,7 +629,7 @@ private:
                                              OGRGeometry *poSpatialFilter,
                                              const char *pszDialect,
                                              swq_select_parse_options* poSelectParseOptions);
-    CPLStringList oDerivedMetadataList;
+    CPLStringList oDerivedMetadataList{};
 
   public:
 
@@ -791,7 +789,7 @@ private:
     OGRErr              ProcessSQLAlterTableAlterColumn( const char * );
     OGRErr              ProcessSQLAlterTableRenameColumn( const char * );
 
-    OGRStyleTable      *m_poStyleTable;
+    OGRStyleTable      *m_poStyleTable = nullptr;
 //! @endcond
 
   private:
@@ -940,7 +938,7 @@ class CPL_DLL GDALColorTable
 {
     GDALPaletteInterp eInterp;
 
-    std::vector<GDALColorEntry> aoEntries;
+    std::vector<GDALColorEntry> aoEntries{};
 
 public:
     explicit     GDALColorTable( GDALPaletteInterp = GPI_RGB );
@@ -985,13 +983,15 @@ public:
 class CPL_DLL GDALAbstractBandBlockCache
 {
         // List of blocks that can be freed or recycled, and its lock
-        CPLLock          *hSpinLock;
-        GDALRasterBlock  *psListBlocksToFree;
+        CPLLock          *hSpinLock = nullptr;
+        GDALRasterBlock  *psListBlocksToFree = nullptr;
 
         // Band keep alive counter, and its lock & condition
-        CPLCond          *hCond;
-        CPLMutex         *hCondMutex;
-        volatile int      nKeepAliveCounter;
+        CPLCond          *hCond = nullptr;
+        CPLMutex         *hCondMutex = nullptr;
+        volatile int      nKeepAliveCounter = 0;
+
+        CPL_DISALLOW_COPY_ASSIGN(GDALAbstractBandBlockCache)
 
     protected:
         GDALRasterBand   *poBand;
@@ -1036,37 +1036,35 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     friend class GDALHashSetBandBlockCache;
     friend class GDALRasterBlock;
 
-    CPLErr eFlushBlockErr;
-    GDALAbstractBandBlockCache* poBandBlockCache;
+    CPLErr eFlushBlockErr = CE_None;
+    GDALAbstractBandBlockCache* poBandBlockCache = nullptr;
 
     void           SetFlushBlockErr( CPLErr eErr );
     CPLErr         UnreferenceBlock( GDALRasterBlock* poBlock );
 
-    void           Init(int bForceCachedIO);
-
   protected:
 //! @cond Doxygen_Suppress
-    GDALDataset *poDS;
-    int         nBand; /* 1 based */
+    GDALDataset *poDS = nullptr;
+    int         nBand = 0; /* 1 based */
 
-    int         nRasterXSize;
-    int         nRasterYSize;
+    int         nRasterXSize = 0;
+    int         nRasterYSize = 0;
 
-    GDALDataType eDataType;
-    GDALAccess  eAccess;
+    GDALDataType eDataType = GDT_Byte;
+    GDALAccess  eAccess = GA_ReadOnly;
 
     /* stuff related to blocking, and raster cache */
-    int         nBlockXSize;
-    int         nBlockYSize;
-    int         nBlocksPerRow;
-    int         nBlocksPerColumn;
+    int         nBlockXSize = -1;
+    int         nBlockYSize = -1;
+    int         nBlocksPerRow = 0;
+    int         nBlocksPerColumn = 0;
 
-    int         nBlockReads;
-    int         bForceCachedIO;
+    int         nBlockReads = 0;
+    int         bForceCachedIO = 0;
 
-    GDALRasterBand *poMask;
-    bool        bOwnMask;
-    int         nMaskFlags;
+    GDALRasterBand *poMask = nullptr;
+    bool        bOwnMask = false;
+    int         nMaskFlags = 0;
 
     void        InvalidateMaskBand();
 
@@ -1267,6 +1265,8 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
   protected:
     CPLErr IReadBlock( int, int, void * ) override;
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALAllValidMaskBand)
+
   public:
     explicit     GDALAllValidMaskBand( GDALRasterBand * );
     ~GDALAllValidMaskBand() override;
@@ -1283,6 +1283,8 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
 {
     double          dfNoDataValue;
     GDALRasterBand *poParent;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALNoDataMaskBand)
 
   protected:
     CPLErr IReadBlock( int, int, void * ) override;
@@ -1303,6 +1305,8 @@ class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
 {
     double      *padfNodataValues;
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALNoDataValuesMaskBand)
+
   protected:
     CPLErr IReadBlock( int, int, void * ) override;
 
@@ -1319,6 +1323,8 @@ class GDALRescaledAlphaBand : public GDALRasterBand
 {
     GDALRasterBand *poParent;
     void           *pTemp;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALRescaledAlphaBand)
 
   protected:
     CPLErr IReadBlock( int, int, void * ) override;
@@ -1492,9 +1498,9 @@ private:
 
 class CPL_DLL GDALDriverManager : public GDALMajorObject
 {
-    int         nDrivers;
-    GDALDriver  **papoDrivers;
-    std::map<CPLString, GDALDriver*> oMapNameToDrivers;
+    int         nDrivers = 0;
+    GDALDriver  **papoDrivers = nullptr;
+    std::map<CPLString, GDALDriver*> oMapNameToDrivers{};
 
     GDALDriver  *GetDriver_unlocked( int iDriver )
             { return (iDriver >= 0 && iDriver < nDrivers) ?
@@ -1502,6 +1508,8 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
 
     GDALDriver  *GetDriverByName_unlocked( const char * pszName )
             { return oMapNameToDrivers[CPLString(pszName).toupper()]; }
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALDriverManager)
 
  public:
                 GDALDriverManager();
@@ -1534,6 +1542,9 @@ CPL_C_END
  */
 class CPL_DLL GDALAsyncReader
 {
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALAsyncReader)
+
   protected:
 //! @cond Doxygen_Suppress
     GDALDataset* poDS;
