@@ -40,7 +40,7 @@ OGRDXFBlocksLayer::OGRDXFBlocksLayer( OGRDXFDataSource *poDSIn ) :
     poFeatureDefn(new OGRFeatureDefn( "blocks" )),
     iNextFID(0)
 {
-    ResetReading();
+    OGRDXFBlocksLayer::ResetReading();
 
     poFeatureDefn->Reference();
 

@@ -113,7 +113,7 @@ ELASHeader::ELASHeader() :
 
 class ELASRasterBand;
 
-class ELASDataset : public GDALPamDataset
+class ELASDataset final: public GDALPamDataset
 {
     friend class ELASRasterBand;
 
@@ -151,7 +151,7 @@ class ELASDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ELASRasterBand : public GDALPamRasterBand
+class ELASRasterBand final: public GDALPamRasterBand
 {
     friend class ELASDataset;
 
@@ -274,7 +274,7 @@ ELASDataset::ELASDataset() :
 ELASDataset::~ELASDataset()
 
 {
-    FlushCache();
+    ELASDataset::FlushCache();
 
     if( fp != nullptr )
     {

@@ -114,7 +114,7 @@ static void c2tp( double x, GByte *r )
 /* ==================================================================== */
 /************************************************************************/
 
-class IDADataset : public RawDataset
+class IDADataset final: public RawDataset
 {
     friend class IDARasterBand;
 
@@ -387,7 +387,7 @@ IDADataset::IDADataset() :
 IDADataset::~IDADataset()
 
 {
-    FlushCache();
+    IDADataset::FlushCache();
 
     if( fpRaw != nullptr )
     {

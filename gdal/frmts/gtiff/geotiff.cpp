@@ -11417,8 +11417,10 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
 
     if( bSrcIsGeoTIFF )
     {
+        GTiffDataset* poSrcDSGTiff = cpl::down_cast<GTiffDataset *>(poSrcDS);
+        assert(poSrcDSGTiff);
         WriteMDMetadata(
-            &cpl::down_cast<GTiffDataset *>(poSrcDS)->oGTiffMDMD,
+            &poSrcDSGTiff->oGTiffMDMD,
             l_hTIFF, &psRoot, &psTail, 0, pszProfile );
     }
     else
@@ -11469,8 +11471,10 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
 
         if( bSrcIsGeoTIFF )
         {
+            GTiffRasterBand* poSrcBandGTiff = cpl::down_cast<GTiffRasterBand *>(poBand);
+            assert(poSrcBandGTiff);
             WriteMDMetadata(
-                &cpl::down_cast<GTiffRasterBand *>(poBand)->oGTiffMDMD,
+                &poSrcBandGTiff->oGTiffMDMD,
                 l_hTIFF, &psRoot, &psTail, nBand, pszProfile );
         }
         else

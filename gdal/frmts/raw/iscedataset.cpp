@@ -74,7 +74,7 @@ static const char * const apszSchemeNames[] = { "BIL", "BIP", "BSQ", nullptr };
 
 class ISCERasterBand;
 
-class ISCEDataset : public RawDataset
+class ISCEDataset final: public RawDataset
 {
     friend class ISCERasterBand;
 
@@ -104,7 +104,7 @@ class ISCEDataset : public RawDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ISCERasterBand : public RawRasterBand
+class ISCERasterBand final: public RawRasterBand
 {
     public:
                 ISCERasterBand( GDALDataset *poDS, int nBand, void *fpRaw,
@@ -172,7 +172,7 @@ ISCEDataset::ISCEDataset() :
 
 ISCEDataset::~ISCEDataset( void )
 {
-    FlushCache();
+    ISCEDataset::FlushCache();
     if ( fpImage != nullptr )
     {
         if( VSIFCloseL( fpImage ) != 0 )

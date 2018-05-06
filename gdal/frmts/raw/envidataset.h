@@ -60,7 +60,7 @@
 
 class ENVIRasterBand;
 
-class ENVIDataset : public RawDataset
+class ENVIDataset final: public RawDataset
 {
     friend class ENVIRasterBand;
 
@@ -135,7 +135,7 @@ class ENVIDataset : public RawDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ENVIRasterBand : public RawRasterBand
+class ENVIRasterBand final: public RawRasterBand
 {
   public:
     ENVIRasterBand( GDALDataset *poDSIn, int nBandIn, void *fpRawIn,
