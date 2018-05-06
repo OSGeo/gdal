@@ -1451,6 +1451,7 @@ class TABMAPFile
     int         Int2CoordsysDist(GInt32 nX, GInt32 nY, double &dX, double &dY);
     int         Coordsys2IntDist(double dX, double dY, GInt32 &nX, GInt32 &nY);
     void        SetCoordFilter(TABVertex sMin, TABVertex sMax);
+    // cppcheck-suppress functionStatic
     void        GetCoordFilter(TABVertex &sMin, TABVertex &sMax) const;
     void        ResetCoordFilter();
     int         SetCoordsysBounds(double dXMin, double dYMin,
