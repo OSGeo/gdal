@@ -35,12 +35,12 @@ import sys
 
 sys.path.append('../pymod')
 
+import shutil
 import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
-import shutil
 
 ###############################################################################
 # Test reading geometry and attribute from ionic wfs gml file.

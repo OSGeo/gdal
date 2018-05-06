@@ -31,6 +31,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 from osgeo import gdal
 from osgeo import ogr
 
