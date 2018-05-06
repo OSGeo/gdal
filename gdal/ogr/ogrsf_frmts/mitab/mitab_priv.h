@@ -176,8 +176,8 @@ typedef struct TABMAPIndexEntry_t
  *--------------------------------------------------------------------*/
 typedef struct TABVertex_t
 {
-    double x;
-    double y;
+    double x{};
+    double y{};
 } TABVertex;
 
 /*---------------------------------------------------------------------
@@ -276,7 +276,6 @@ typedef struct TABProjInfo_t
     double      dAffineParamD;
     double      dAffineParamE;
     double      dAffineParamF;
-
 } TABProjInfo;
 
 /*---------------------------------------------------------------------
@@ -897,7 +896,14 @@ class TABMAPHeaderBlock final : public TABRawBinBlock
     void        UpdatePrecision();
 
   protected:
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
     TABProjInfo m_sProj{};
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
   public:
     explicit TABMAPHeaderBlock(TABAccess eAccessMode = TABRead);
