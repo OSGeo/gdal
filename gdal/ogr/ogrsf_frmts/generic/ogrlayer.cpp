@@ -4269,7 +4269,7 @@ OGRErr OGR_L_Erase( OGRLayerH pLayerInput,
 
 struct OGRLayer::FeatureIterator::Private
 {
-    CPL_DISALLOW_COPY_ASSIGN(Private);
+    CPL_DISALLOW_COPY_ASSIGN(Private)
     Private() = default;
 
     OGRFeatureUniquePtr m_poFeature{};
