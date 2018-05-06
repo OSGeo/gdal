@@ -31,6 +31,7 @@
 import sys
 import shutil
 from osgeo import ogr
+from ogseo import gdal
 
 sys.path.append('../pymod')
 
