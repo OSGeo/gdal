@@ -2988,7 +2988,7 @@ void TABMAPFile::ResetCoordFilter()
  * @param sMin vertex into which the minimum x/y values put in coordsys space.
  * @param sMax vertex into which the maximum x/y values put in coordsys space.
  **********************************************************************/
-void TABMAPFile::GetCoordFilter(TABVertex &sMin, TABVertex &sMax)
+void TABMAPFile::GetCoordFilter(TABVertex &sMin, TABVertex &sMax) const
 {
     sMin = m_sMinFilter;
     sMax = m_sMaxFilter;
