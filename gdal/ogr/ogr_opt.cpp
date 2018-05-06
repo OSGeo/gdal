@@ -386,7 +386,7 @@ static const char * const papszProjectionDefinitions[] = {
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
-    "*"
+    "*",
     SRS_PT_STEREOGRAPHIC,
     "Stereographic",
     SRS_PP_LATITUDE_OF_ORIGIN,
@@ -395,7 +395,7 @@ static const char * const papszProjectionDefinitions[] = {
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
-    "*"
+    "*",
     SRS_PT_TWO_POINT_EQUIDISTANT,
     "Two Point Equidistant",
     SRS_PP_LATITUDE_OF_1ST_POINT,
@@ -412,7 +412,7 @@ static const char * const papszProjectionDefinitions[] = {
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
-    "*"
+    "*",
     SRS_PT_KROVAK,
     "Krovak",
     SRS_PP_LATITUDE_OF_CENTER,
