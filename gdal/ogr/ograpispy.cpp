@@ -295,7 +295,7 @@ static CPLString OGRAPISpyGetSRS( OGRSpatialReferenceH hSpatialRef )
     char* pszWKT = nullptr;
     OGRSpatialReference::FromHandle(hSpatialRef)->exportToWkt(&pszWKT);
     const char* pszRet =
-        CPLSPrintf("osr.SpatialReference(\"\"\"%s\"\"\")", pszWKT);
+        CPLSPrintf(R"(osr.SpatialReference("""%s"""))", pszWKT);
     CPLFree(pszWKT);
     return pszRet;
 }
@@ -607,13 +607,13 @@ void OGRAPISpyPostClose()
                 oArray.push_back(featureDefnDescription.hFDefn);
             }
         }
-        for( size_t i = 0; i < oArray.size(); i++ )
+        for( auto& hFDefn: oArray )
         {
             FeatureDefnDescription& featureDefnDescription =
-                oMapFDefn[oArray[i]];
+                oMapFDefn[hFDefn];
             OGRFeatureDefn::FromHandle(featureDefnDescription.hFDefn)->Release();
             featureDefnDescription.Free();
-            oMapFDefn.erase(oArray[i]);
+            oMapFDefn.erase(hFDefn);
         }
     }
 }

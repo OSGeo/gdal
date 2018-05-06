@@ -47,13 +47,13 @@ CPL_CVSID("$Id$")
  * \brief Create an empty multi surface collection.
  */
 
-OGRMultiSurface::OGRMultiSurface() {}
+OGRMultiSurface::OGRMultiSurface() = default;
 
 /************************************************************************/
 /*                         ~OGRMultiSurface()                           */
 /************************************************************************/
 
-OGRMultiSurface::~OGRMultiSurface() {}
+OGRMultiSurface::~OGRMultiSurface() = default;
 
 /************************************************************************/
 /*              OGRMultiSurface( const OGRMultiSurface& )               */
@@ -68,9 +68,7 @@ OGRMultiSurface::~OGRMultiSurface() {}
  * @since GDAL 2.1
  */
 
-OGRMultiSurface::OGRMultiSurface( const OGRMultiSurface& other ) :
-    OGRGeometryCollection(other)
-{}
+OGRMultiSurface::OGRMultiSurface( const OGRMultiSurface& ) = default;
 
 /************************************************************************/
 /*                  operator=( const OGRMultiCurve&)                    */

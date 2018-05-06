@@ -55,10 +55,7 @@ OGRPolyhedralSurface::OGRPolyhedralSurface() = default;
  *
  */
 
-OGRPolyhedralSurface::OGRPolyhedralSurface( const OGRPolyhedralSurface& other ) :
-    OGRSurface(other),
-    oMP(other.oMP)
-{ }
+OGRPolyhedralSurface::OGRPolyhedralSurface( const OGRPolyhedralSurface& ) = default;
 
 /************************************************************************/
 /*                        ~OGRPolyhedralSurface()                       */
@@ -69,9 +66,7 @@ OGRPolyhedralSurface::OGRPolyhedralSurface( const OGRPolyhedralSurface& other ) 
  *
  */
 
-OGRPolyhedralSurface::~OGRPolyhedralSurface()
-
-{ }
+OGRPolyhedralSurface::~OGRPolyhedralSurface() = default;
 
 /************************************************************************/
 /*                 operator=( const OGRPolyhedralSurface&)              */

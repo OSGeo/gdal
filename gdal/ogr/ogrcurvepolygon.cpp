@@ -64,16 +64,13 @@ OGRCurvePolygon::OGRCurvePolygon() = default;
  * @since GDAL 2.1
  */
 
-OGRCurvePolygon::OGRCurvePolygon( const OGRCurvePolygon& other ) :
-    OGRSurface(other),
-    oCC(other.oCC)
-{}
+OGRCurvePolygon::OGRCurvePolygon( const OGRCurvePolygon& ) = default;
 
 /************************************************************************/
 /*                           ~OGRCurvePolygon()                         */
 /************************************************************************/
 
-OGRCurvePolygon::~OGRCurvePolygon() {}
+OGRCurvePolygon::~OGRCurvePolygon() = default;
 
 /************************************************************************/
 /*                 operator=( const OGRCurvePolygon&)                  */

@@ -69,9 +69,7 @@ OGRGeometryCollection::OGRGeometryCollection() = default;
 
 OGRGeometryCollection::OGRGeometryCollection(
     const OGRGeometryCollection& other ) :
-    OGRGeometry(other),
-    nGeomCount(0),
-    papoGeoms(nullptr)
+    OGRGeometry(other)
 {
     // Do not use addGeometry() as it is virtual.
     papoGeoms = static_cast<OGRGeometry **>(

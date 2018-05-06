@@ -63,16 +63,16 @@ constexpr int SHPP_FIRSTRING = 4;
 constexpr int SHPP_RING      = 5;
 constexpr int SHPP_TRIANGLES = 6;  // Multipatch 9.0 specific.
 
-typedef enum
+enum CurveType
 {
     CURVE_ARC_INTERIOR_POINT,
     CURVE_ARC_CENTER_POINT,
     CURVE_BEZIER,
     CURVE_ELLIPSE_BY_CENTER
-} CurveType;
+};
 
 namespace {
-typedef struct
+struct CurveSegment
 {
     int       nStartPointIdx;
     CurveType eType;
@@ -113,7 +113,7 @@ typedef struct
             EMULATED_BOOL bIsComplete;
         } EllipseByCenter;
     } u;
-} CurveSegment;
+};
 } /* namespace */
 
 constexpr int EXT_SHAPE_SEGMENT_ARC = 1;

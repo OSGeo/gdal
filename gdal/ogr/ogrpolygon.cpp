@@ -52,7 +52,7 @@ CPL_CVSID("$Id$")
  * \brief Create an empty polygon.
  */
 
-OGRPolygon::OGRPolygon() {}
+OGRPolygon::OGRPolygon() = default;
 
 /************************************************************************/
 /*                     OGRPolygon( const OGRPolygon& )                  */
@@ -67,15 +67,13 @@ OGRPolygon::OGRPolygon() {}
  * @since GDAL 2.1
  */
 
-OGRPolygon::OGRPolygon( const OGRPolygon& other ) :
-    OGRCurvePolygon(other)
-{}
+OGRPolygon::OGRPolygon( const OGRPolygon& ) = default;
 
 /************************************************************************/
 /*                            ~OGRPolygon()                             */
 /************************************************************************/
 
-OGRPolygon::~OGRPolygon() {}
+OGRPolygon::~OGRPolygon() = default;
 
 /************************************************************************/
 /*                     operator=( const OGRPolygon&)                    */

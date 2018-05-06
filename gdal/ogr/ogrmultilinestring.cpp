@@ -46,7 +46,7 @@ CPL_CVSID("$Id$")
  * \brief Create an empty multi line string collection.
  */
 
-OGRMultiLineString::OGRMultiLineString() {}
+OGRMultiLineString::OGRMultiLineString() = default;
 
 /************************************************************************/
 /*           OGRMultiLineString( const OGRMultiLineString& )            */
@@ -61,15 +61,13 @@ OGRMultiLineString::OGRMultiLineString() {}
  * @since GDAL 2.1
  */
 
-OGRMultiLineString::OGRMultiLineString( const OGRMultiLineString& other ) :
-    OGRMultiCurve(other)
-{}
+OGRMultiLineString::OGRMultiLineString( const OGRMultiLineString& ) = default;
 
 /************************************************************************/
 /*                       ~OGRMultiLineString()                          */
 /************************************************************************/
 
-OGRMultiLineString::~OGRMultiLineString() {}
+OGRMultiLineString::~OGRMultiLineString() = default;
 
 /************************************************************************/
 /*                  operator=( const OGRMultiCurve&)                    */

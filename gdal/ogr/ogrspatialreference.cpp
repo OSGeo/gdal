@@ -7917,7 +7917,7 @@ int OGRSpatialReference::IsLinearParameter( const char *pszParameterName )
 /**
  * \brief Set the internal information for normalizing linear, and angular values.
  */
-void OGRSpatialReference::GetNormInfo(void) const
+void OGRSpatialReference::GetNormInfo() const
 
 {
     if( bNormInfoSet )
