@@ -1079,7 +1079,7 @@ static void SHPWriteTreeNode( SAFile fp, SHPTreeNode *node, SAHooks* psHooks)
 {
     int i,j;
     int offset;
-    unsigned char *pabyRec = SHPLIB_NULLPTR;
+    unsigned char *pabyRec;
     assert( SHPLIB_NULLPTR != node );
 
     offset = SHPGetSubNodeOffset(node);

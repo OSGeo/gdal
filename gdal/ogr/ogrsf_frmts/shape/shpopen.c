@@ -1247,8 +1247,9 @@ SHPHandle SHPAPI_CALL
 SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 
 {
-    char	*pszFullname = SHPLIB_NULLPTR;
-    SAFile	fpSHP = SHPLIB_NULLPTR,fpSHX = SHPLIB_NULLPTR;
+    char	*pszFullname;
+    SAFile	fpSHP;
+    SAFile      fpSHX = SHPLIB_NULLPTR;
     uchar     	abyHeader[100];
     int32	i32;
     double	dValue;

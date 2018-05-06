@@ -361,7 +361,7 @@ SBNSearchHandle SBNOpenDiskTree( const char* pszSBNFilename,
     }
 
     free(pabyData);
-    pabyData = SHPLIB_NULLPTR;
+    /* pabyData = SHPLIB_NULLPTR; */
 
     /* Locate first non-empty node */
     nCurNode = 0;
