@@ -36,7 +36,6 @@ import stat
 import sys
 from sys import version_info
 import time
-from sys import version_info
 
 from osgeo import gdal
 from osgeo import osr
