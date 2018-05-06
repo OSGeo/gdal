@@ -759,7 +759,7 @@ class VSICryptFileHandle final : public VSIVirtualHandle
         bool             FlushDirty();
 
   public:
-    VSICryptFileHandle( CPLString osBaseFilename,
+    VSICryptFileHandle( const CPLString& osBaseFilename,
                         VSIVirtualHandle* poBaseHandle,
                         VSICryptFileHeader* poHeader,
                         int nPerms );
@@ -782,7 +782,7 @@ class VSICryptFileHandle final : public VSIVirtualHandle
 /*                          VSICryptFileHandle()                        */
 /************************************************************************/
 
-VSICryptFileHandle::VSICryptFileHandle( CPLString osBaseFilenameIn,
+VSICryptFileHandle::VSICryptFileHandle( const CPLString& osBaseFilenameIn,
                                         VSIVirtualHandle* poBaseHandleIn,
                                         VSICryptFileHeader* poHeaderIn,
                                         int nPermsIn ) :
