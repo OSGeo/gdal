@@ -243,6 +243,8 @@ typedef struct
 
 class GTiffDataset final : public GDALPamDataset
 {
+    CPL_DISALLOW_COPY_ASSIGN(GTiffDataset);
+
     friend class GTiffBitmapBand;
     friend class GTiffJPEGOverviewDS;
     friend class GTiffJPEGOverviewBand;
@@ -265,7 +267,7 @@ class GTiffDataset final : public GDALPamDataset
     bool        bStreamingIn;
 
     bool        bStreamingOut;
-    CPLString   osTmpFilename;
+    CPLString   osTmpFilename{};
     VSILFILE*   fpToWrite;
     int         nLastWrittenBlockId;
 
@@ -302,7 +304,7 @@ class GTiffDataset final : public GDALPamDataset
     bool        bWriteErrorInFlushBlockBuf;
 
     char        *pszProjection;
-    CPLString   m_osVertUnit;
+    CPLString   m_osVertUnit{};
     bool        bLookedForProjection;
     bool        bLookedForMDAreaOrPoint;
 
@@ -361,9 +363,9 @@ class GTiffDataset final : public GDALPamDataset
     void        ApplyPamInfo();
     void        PushMetadataToPam();
 
-    GDALMultiDomainMetadata oGTiffMDMD;
+    GDALMultiDomainMetadata oGTiffMDMD{};
 
-    CPLString   osProfile;
+    CPLString   osProfile{};
     char      **papszCreationOptions;
 
     bool        bLoadingOtherBands;
@@ -384,7 +386,7 @@ class GTiffDataset final : public GDALPamDataset
     GTiffDataset* poMaskDS;
     GTiffDataset* poBaseDS;
 
-    CPLString    osFilename;
+    CPLString    osFilename{};
 
     bool         bWriteEmptyTiles;
     bool         bFillEmptyTilesAtClosing;
@@ -435,7 +437,7 @@ class GTiffDataset final : public GDALPamDataset
 
     bool          bIgnoreReadErrors;
 
-    CPLString     osGeorefFilename;
+    CPLString     osGeorefFilename{};
 
     bool          bDirectIO;
 
@@ -448,13 +450,13 @@ class GTiffDataset final : public GDALPamDataset
     int            nRefBaseMapping;
 
     bool           bHasDiscardedLsb;
-    std::vector<int> anMaskLsb;
-    std::vector<int> anOffsetLsb;
+    std::vector<int> anMaskLsb{};
+    std::vector<int> anOffsetLsb{};
     void           DiscardLsb(GByte* pabyBuffer, int nBytes, int iBand) const;
     void           GetDiscardLsbOption( char** papszOptions );
 
     CPLWorkerThreadPool *poCompressThreadPool;
-    std::vector<GTiffCompressionJob> asCompressionJobs;
+    std::vector<GTiffCompressionJob> asCompressionJobs{};
     CPLMutex      *hCompressThreadPoolMutex;
     void           InitCompressionThreads( char** papszOptions );
     void           InitCreationOrOpenOptions( char** papszOptions );
@@ -614,15 +616,17 @@ class GTiffDataset final : public GDALPamDataset
 
 class GTiffJPEGOverviewDS final : public GDALDataset
 {
+    CPL_DISALLOW_COPY_ASSIGN(GTiffJPEGOverviewDS);
+
     friend class GTiffJPEGOverviewBand;
     GTiffDataset* poParentDS;
     int nOverviewLevel;
 
     int        nJPEGTableSize;
     GByte     *pabyJPEGTable;
-    CPLString  osTmpFilenameJPEGTable;
+    CPLString  osTmpFilenameJPEGTable{};
 
-    CPLString    osTmpFilename;
+    CPLString    osTmpFilename{};
     GDALDataset* poJPEGDS;
     // Valid block id of the parent DS that match poJPEGDS.
     int          nBlockId;
@@ -1100,6 +1104,8 @@ void GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode )
 
 class GTiffRasterBand : public GDALPamRasterBand
 {
+    CPL_DISALLOW_COPY_ASSIGN(GTiffRasterBand);
+
     friend class GTiffDataset;
 
     GDALColorInterp    eBandInterp;
@@ -1107,8 +1113,8 @@ class GTiffRasterBand : public GDALPamRasterBand
     bool               bHaveOffsetScale;
     double             dfOffset;
     double             dfScale;
-    CPLString          osUnitType;
-    CPLString          osDescription;
+    CPLString          osUnitType{};
+    CPLString          osDescription{};
 
     int                DirectIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
@@ -1117,7 +1123,7 @@ class GTiffRasterBand : public GDALPamRasterBand
                                  GSpacing nPixelSpace, GSpacing nLineSpace,
                                  GDALRasterIOExtraArg* psExtraArg );
 
-    std::set<GTiffRasterBand **> aSetPSelf;
+    std::set<GTiffRasterBand **> aSetPSelf{};
     static void     DropReferenceVirtualMem( void* pUserData );
     CPLVirtualMem * GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
                                                int *pnPixelSpace,
@@ -1131,7 +1137,7 @@ class GTiffRasterBand : public GDALPamRasterBand
 
 protected:
     GTiffDataset       *poGDS;
-    GDALMultiDomainMetadata oGTiffMDMD;
+    GDALMultiDomainMetadata oGTiffMDMD{};
 
     bool               bNoDataSet;
     double             dfNoDataValue;
@@ -4895,7 +4901,7 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
                 return nullptr;
             }
             char* const pszHex =
-                CPLBinaryToHex( nJPEGTableSize, (const GByte*)pJPEGTable );
+                CPLBinaryToHex( nJPEGTableSize, static_cast<const GByte*>(pJPEGTable) );
             const char* pszReturn = CPLSPrintf("%s", pszHex);
             CPLFree(pszHex);
 
@@ -6971,7 +6977,7 @@ class GTiffBitmapBand : public GTiffOddBitsBand
 {
     friend class GTiffDataset;
 
-    GDALColorTable *poColorTable;
+    GDALColorTable *poColorTable = nullptr;
 
     CPL_DISALLOW_COPY_ASSIGN(GTiffBitmapBand)
 
@@ -7126,7 +7132,7 @@ class GTIFFErrorStruct final
   public:
     CPLErr type;
     CPLErrorNum no;
-    CPLString msg;
+    CPLString msg{};
 
     GTIFFErrorStruct() : type(CE_None), no(CPLE_None) {}
     GTIFFErrorStruct(CPLErr eErrIn, CPLErrorNum noIn, const char* msgIn) :
@@ -12131,7 +12137,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
             }
             const GUInt32 nCount = static_cast<GUInt32>(nTmp);
             const GUInt32 nTagSize =
-                TIFFDataWidth((TIFFDataType)nDataType) * nCount;
+                TIFFDataWidth(static_cast<TIFFDataType>(nDataType)) * nCount;
             if( nTagSize > 8 )
             {
                 memcpy(&nTmp, pabyBuffer + 24 + i * 20 + 12, 8);
@@ -12973,11 +12979,11 @@ static CPLString ConvertTransferFunctionToString( const uint16 *pTable,
     for( uint32 i = 0; i < nTableEntries; ++i )
     {
         if( i == 0 )
-            sValue = sValue.Printf("%d", (uint32)pTable[i]);
+            sValue = sValue.Printf("%d", static_cast<uint32>(pTable[i]));
         else
             sValue = sValue.Printf( "%s, %d",
-                                    (const char*)sValue,
-                                    (uint32)pTable[i]);
+                                    sValue.c_str(),
+                                    static_cast<uint32>(pTable[i]));
     }
 
     return sValue;
@@ -13005,7 +13011,7 @@ void GTiffDataset::LoadICCProfile()
     if( TIFFGetField(hTIFF, TIFFTAG_ICCPROFILE, &nEmbedLen, &pEmbedBuffer) )
     {
         char *pszBase64Profile =
-            CPLBase64Encode(nEmbedLen, (const GByte*)pEmbedBuffer);
+            CPLBase64Encode(nEmbedLen, reinterpret_cast<const GByte*>(pEmbedBuffer));
 
         oGTiffMDMD.SetMetadataItem( "SOURCE_ICC_PROFILE", pszBase64Profile,
                                     "COLOR_PROFILE" );
@@ -15947,10 +15953,10 @@ int GTiffDataset::GuessJPEGQuality( bool& bOutHasQuantizationTable,
     }
 
     bOutHasQuantizationTable =
-        GTIFFFindNextTable( (const GByte*)pJPEGTable, 0xDB,
+        GTIFFFindNextTable( static_cast<const GByte*>(pJPEGTable), 0xDB,
                             nJPEGTableSize, nullptr) != nullptr;
     bOutHasHuffmanTable =
-        GTIFFFindNextTable( (const GByte*)pJPEGTable, 0xC4,
+        GTIFFFindNextTable( static_cast<const GByte*>(pJPEGTable), 0xC4,
                             nJPEGTableSize, nullptr) != nullptr;
     if( !bOutHasQuantizationTable )
         return -1;
@@ -16184,7 +16190,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
     poDS->bCrystalized = false;
-    poDS->nSamplesPerPixel = (uint16) l_nBands;
+    poDS->nSamplesPerPixel = static_cast<uint16>(l_nBands);
     poDS->osFilename = pszFilename;
 
     // Don't try to load external metadata files (#6597).
@@ -17420,8 +17426,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
                 eErr =
                     GDALDatasetCopyWholeRaster(
-                        (GDALDatasetH) poSrcOvrDS,
-                        (GDALDatasetH) poDS->papoOverviewDS[iOvrLevel],
+                        GDALDataset::ToHandle(poSrcOvrDS),
+                        GDALDataset::ToHandle(poDS->papoOverviewDS[iOvrLevel]),
                         papszCopyWholeRasterOptions,
                         GDALScaledProgress, pScaledData );
 
@@ -18698,7 +18704,7 @@ int GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName)
 
 #if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION > 20031007  // 3.6.0
     if( nCompression != COMPRESSION_NONE &&
-        !TIFFIsCODECConfigured((uint16) nCompression) )
+        !TIFFIsCODECConfigured(static_cast<uint16>(nCompression)) )
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,

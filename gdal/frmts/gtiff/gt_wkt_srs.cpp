@@ -1209,7 +1209,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                                         szSearchKey, CC_Integer,
                                         "datum_code" );
                 if( pszValue != nullptr )
-                    verticalDatum = (short) atoi(pszValue);
+                    verticalDatum = static_cast<short>(atoi(pszValue));
             }
 
             if( EQUAL(citation,"unknown") )
@@ -1236,7 +1236,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                                             pszValue, CC_Integer,
                                             "uom_code" );
                     if( pszValue != nullptr )
-                        verticalUnits = (short) atoi(pszValue);
+                        verticalUnits = static_cast<short>(atoi(pszValue));
                 }
             }
         }
@@ -2995,7 +2995,7 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
 /* -------------------------------------------------------------------- */
     GByte bySmallImage = 0;
 
-    TIFFWriteEncodedStrip( hTIFF, 0, (char *) &bySmallImage, 1 );
+    TIFFWriteEncodedStrip( hTIFF, 0, reinterpret_cast<char *>(&bySmallImage), 1 );
     TIFFWriteCheck( hTIFF, TIFFIsTiled(hTIFF), "GTIFMemBufFromWkt");
     TIFFWriteDirectory( hTIFF );
 

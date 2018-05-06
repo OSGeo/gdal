@@ -34,6 +34,8 @@ endif
 
 CPPFLAGS	:=	 -I.. $(JPEG_FLAGS)  $(GEOTIFF_INCLUDE) $(TIFF_OPTS) $(CPPFLAGS)
 
+CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS) $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
+
 default:	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 
 clean:
