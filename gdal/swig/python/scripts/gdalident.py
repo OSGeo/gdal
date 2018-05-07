@@ -105,5 +105,5 @@ while i < len(argv):
 if not files:
     Usage()
 
-for file in files:
-    ProcessTarget(file, recursive, report_failure)
+for f in files:
+    ProcessTarget(f, recursive, report_failure)

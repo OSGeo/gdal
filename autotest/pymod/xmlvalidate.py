@@ -202,8 +202,8 @@ def validate(xml_filename_or_content, xsd_filename=None,
 
 
 def transform_abs_links_to_ref_links(path, level=0):
-    for file in os.listdir(path):
-        filename = path + '/' + file
+    for filename in os.listdir(path):
+        filename = os.path.join(path, filename)
         if os.path.isdir(filename) and filename.find('examples') < 0:
             transform_abs_links_to_ref_links(filename, level + 1)
         elif filename.endswith('.xsd'):
@@ -251,8 +251,8 @@ def transform_abs_links_to_ref_links(path, level=0):
 
 
 def transform_inspire_abs_links_to_ref_links(path, level=0):
-    for file in os.listdir(path):
-        filename = path + '/' + file
+    for filename in os.listdir(path):
+        filename = os.path.join(path, filename)
         if os.path.isdir(filename) and filename.find('examples') < 0:
             transform_inspire_abs_links_to_ref_links(filename, level + 1)
         elif filename.endswith('.xsd'):
