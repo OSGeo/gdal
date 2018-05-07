@@ -2544,7 +2544,7 @@ def ogr_gpkg_26():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if False:
+    if False:  # pylint: disable=using-constant-test
         ds.StartTransaction()
         lyr = ds.CreateLayer('test3', geom_type=ogr.wkbPoint)
         lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
