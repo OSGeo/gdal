@@ -372,7 +372,7 @@ def test_gdalsrsinfo_16():
 
     try:
         (_, err) = gdaltest.runexternal_out_and_err(cmd)
-    except:
+    except OSError:
         gdaltest.post_reason('gdalsrsinfo execution failed')
         return 'fail'
 

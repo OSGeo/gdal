@@ -357,12 +357,6 @@ def test_gdal_rasterize_6():
 
 def test_gdal_rasterize_7():
 
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-    except (ImportError, AttributeError):
-        return 'skip'
-
     if test_cli_utilities.get_gdal_rasterize_path() is None:
         return 'skip'
 
