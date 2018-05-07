@@ -280,11 +280,17 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
 /*      it is in the form <schema>.<tablename>                          */
 /* -------------------------------------------------------------------- */
     const char *pszDot = strstr(pszLayerNameIn,".");
-    if( pszDot != nullptr && pszSchema == nullptr )
+    if( pszDot != nullptr )
     {
         pszTableName = CPLStrdup(pszDot + 1);
-        pszSchemaName = CPLStrdup(pszLayerNameIn);
-        pszSchemaName[pszDot - pszLayerNameIn] = '\0';
+        if (pszSchema == nullptr)
+        {
+            pszSchemaName = CPLStrdup(pszLayerNameIn);
+            pszSchemaName[pszDot - pszLayerNameIn] = '\0';
+        }
+        else
+            pszSchemaName = CPLStrdup(pszSchema);
+
         this->pszLayerName = CPLStrdup(pszLayerNameIn);
     }
     else
