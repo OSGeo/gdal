@@ -76,6 +76,7 @@ nLastTick = -1
 
 
 def TermProgress(dfComplete, pszMessage, pProgressArg):
+    # pylint: disable=unused-argument
 
     global nLastTick
     nThisTick = int(dfComplete * 40.0)
@@ -1511,7 +1512,7 @@ def TranslateLayer(psInfo, poSrcDS, poSrcLayer, poDstDS,
                    nCountLayerFeatures,
                    poClipSrc, poClipDst, bExplodeCollections, nSrcFileSize,
                    pnReadFeatureCount, pfnProgress, pProgressArg):
-
+    # pylint: disable=unused-argument
     bForceToPolygon = False
     bForceToMultiPolygon = False
     bForceToMultiLineString = False
