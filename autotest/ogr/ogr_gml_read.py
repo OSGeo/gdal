@@ -577,8 +577,8 @@ def ogr_gml_14():
         return 'skip'
 
     files = ['xlink1.gml', 'xlink2.gml', 'expected1.gml', 'expected2.gml']
-    for file in files:
-        if not gdaltest.download_file('http://download.osgeo.org/gdal/data/gml/' + file, file):
+    for f in files:
+        if not gdaltest.download_file('http://download.osgeo.org/gdal/data/gml/' + f, f):
             return 'skip'
 
     gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', 'NONE')

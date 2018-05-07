@@ -248,14 +248,14 @@ def kmlsuperoverlay_5():
         'tmp/1/1/1.kml',
     ]
 
-    for file in files:
-        res = ElementTree.parse(file)
+    for f in files:
+        res = ElementTree.parse(f)
         for tag in res.findall('.//{http://earth.google.com/kml/2.1}LatLonAltBox'):
             east = tag.find('{http://earth.google.com/kml/2.1}east').text
             west = tag.find('{http://earth.google.com/kml/2.1}west').text
 
             if float(east) < float(west):
-                gdaltest.post_reason('East is less than west in LatLonAltBox %s, (%s < %s)' % (file, east, west))
+                gdaltest.post_reason('East is less than west in LatLonAltBox %s, (%s < %s)' % (f, east, west))
                 return 'fail'
 
     shutil.rmtree('tmp/0')
