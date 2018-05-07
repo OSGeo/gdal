@@ -83,7 +83,7 @@ infile = None
 outfile = None
 layer_name = None
 
-for arg in sys.argv:
+for arg in sys.argv[1:]:
     if infile is None:
         infile = arg
 
