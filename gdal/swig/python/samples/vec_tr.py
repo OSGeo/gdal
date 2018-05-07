@@ -83,10 +83,7 @@ infile = None
 outfile = None
 layer_name = None
 
-i = 1
-while i < len(sys.argv):
-    arg = sys.argv[i]
-
+for arg in sys.argv[1:]:
     if infile is None:
         infile = arg
 
@@ -98,8 +95,6 @@ while i < len(sys.argv):
 
     else:
         Usage()
-
-    i = i + 1
 
 if outfile is None:
     Usage()
