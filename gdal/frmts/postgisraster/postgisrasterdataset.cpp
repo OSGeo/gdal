@@ -1575,150 +1575,72 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
     adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = xmin;
 
     int nField = (GetPrimaryKeyRef() != nullptr) ? 1 : 0;
-    /**
-     * Optimization - Just one tile: The dataset's geotransform is the
-     * tile's geotransform. And we don't need to construct sources for
-     * the raster bands. We just read from the unique tile we have. So,
-     * we avoid all the VRT stuff.
-     *
-     * TODO: For some reason, the implementation of IRasterIO in
-     * PostGISRasterRasterBand class causes a segmentation fault when
-     * tries to call GDALRasterBand::IRasterIO. This call intends to
-     * delegate the I/O in the parent class, that will call
-     * PostGISRasterRasterBand::IReadBlock.
-     *
-     * If you avoid PostGISRasterRasterBand::IRasterIO method, the
-     * IReadBlock method is directly call and it works fine.
-     *
-     * Right now, we avoid this optimization by making the next boolean
-     * variable always true.
-     **/
-    //GBool bNeedToConstructSourcesHolders = (l_nTiles > 1);
-
-    // As the optimization is not working, we avoid it
-    GBool bNeedToConstructSourcesHolders = true;
-
-#ifdef notdef
-    // This won't be called if the optimization is disabled
-    if (!bNeedToConstructSourcesHolders)
-    {
-        // Get metadata record
-        char* pszRes = CPLStrdup(PQgetvalue(poResult, 0, nField));
-
-        // Skip first "("
-        char* pszFilteredRes = pszRes + 1;
-
-        // Skip last ")"
-        pszFilteredRes[strlen(pszFilteredRes)-1] = '\0';
-
-        // Tokenize
-        char** papszParams =
-            CSLTokenizeString2(pszFilteredRes, ",", CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS);
-        CPLAssert(CSLCount(papszParams) >= ELEMENTS_OF_METADATA_RECORD);
-
-        CPLFree(pszRes);
-
-        adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] =
-            CPLAtof(papszParams[POS_SKEWX]);
-
-        adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] =
-            CPLAtof(papszParams[POS_SKEWY]);
-
-        // Rotated rasters are not allowed, so far
-        // TODO: allow them
-        if (!CPLIsEqual(adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1], 0.0) ||
-            !CPLIsEqual(adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2], 0.0)) {
-
-            ReportError(CE_Failure, CPLE_AppDefined,
-                    "GDAL PostGIS Raster driver can not work with "
-                    "rotated rasters yet.");
-
-            VSIFree(poBandMetaData);
-            CSLDestroy(papszParams);
-
-            return false;
-        }
-
-        /**
-         * We override user resolution. It only makes sense in case we
-         * have several tiles with different resolutions
-         **/
-        adfGeoTransform[GEOTRSFRM_WE_RES] =
-            CPLAtof(papszParams[POS_SCALEX]);
-        adfGeoTransform[GEOTRSFRM_NS_RES] =
-            CPLAtof(papszParams[POS_SCALEY]);
-
-        CSLDestroy(papszParams);
-    }
 
     /**
-     * Several tiles: construct the dataset from metadata of all tiles,
+     * Construct the dataset from metadata of all tiles,
      * and create PostGISRasterTileDataset objects, to hold the
      * PostGISRasterTileRasterBands objects that will be used as sources
      **/
-    else
-#endif
-    {
-        int i;
+
+    int i;
 
 #ifdef DEBUG_VERBOSE
-        CPLDebug("PostGIS_Raster",
-            "PostGISRasterDataset::ConstructOneDatasetFromTiles: "
-            "Constructing one dataset from %d tiles", l_nTiles);
+    CPLDebug("PostGIS_Raster",
+        "PostGISRasterDataset::ConstructOneDatasetFromTiles: "
+        "Constructing one dataset from %d tiles", l_nTiles);
 #endif
 
-        papoSourcesHolders = static_cast<PostGISRasterTileDataset **>(VSI_CALLOC_VERBOSE(l_nTiles, sizeof(PostGISRasterTileDataset *)));
+    papoSourcesHolders = static_cast<PostGISRasterTileDataset **>(VSI_CALLOC_VERBOSE(l_nTiles, sizeof(PostGISRasterTileDataset *)));
 
-        if (papoSourcesHolders == nullptr) {
-            VSIFree(poBandMetaData);
+    if (papoSourcesHolders == nullptr) {
+        VSIFree(poBandMetaData);
 
-            return false;
-        }
+        return false;
+    }
 
-        int nValidTiles = 0;
-        for(i = 0; i < l_nTiles; i++)
+    int nValidTiles = 0;
+    for(i = 0; i < l_nTiles; i++)
+    {
+        PostGISRasterTileDataset* poRTDS =
+            BuildRasterTileDataset(PQgetvalue(poResult, i, nField),
+                                    (GetPrimaryKeyRef() != nullptr) ? PQgetvalue(poResult, i, 0) : nullptr,
+                                    nBandsFetched,
+                                    poBandMetaData);
+        if( poRTDS == nullptr )
+            continue;
+
+        if( nOverviewFactor == 1 && resolutionStrategy != USER_RESOLUTION )
         {
-            PostGISRasterTileDataset* poRTDS =
-                BuildRasterTileDataset(PQgetvalue(poResult, i, nField),
-                                       (GetPrimaryKeyRef() != nullptr) ? PQgetvalue(poResult, i, 0) : nullptr,
-                                       nBandsFetched,
-                                       poBandMetaData);
-            if( poRTDS == nullptr )
-                continue;
+            double tilePixelSizeX = poRTDS->adfGeoTransform[GEOTRSFRM_WE_RES];
+            double tilePixelSizeY = poRTDS->adfGeoTransform[GEOTRSFRM_NS_RES];
 
-            if( nOverviewFactor == 1 && resolutionStrategy != USER_RESOLUTION )
+            if( nValidTiles == 0 )
             {
-                double tilePixelSizeX = poRTDS->adfGeoTransform[GEOTRSFRM_WE_RES];
-                double tilePixelSizeY = poRTDS->adfGeoTransform[GEOTRSFRM_NS_RES];
-
-                if( nValidTiles == 0 )
-                {
-                    adfGeoTransform[GEOTRSFRM_WE_RES] = tilePixelSizeX;
-                    adfGeoTransform[GEOTRSFRM_NS_RES] = tilePixelSizeY;
-                }
-                else
-                {
-                    UpdateGlobalResolutionWithTileResolution(tilePixelSizeX,
-                                                            tilePixelSizeY);
-                }
+                adfGeoTransform[GEOTRSFRM_WE_RES] = tilePixelSizeX;
+                adfGeoTransform[GEOTRSFRM_NS_RES] = tilePixelSizeY;
             }
-
-            papoSourcesHolders[nValidTiles++] = poRTDS;
-        } // end for
-
-        l_nTiles = nValidTiles;
-
-        if( nOverviewFactor > 1 )
-        {
-            adfGeoTransform[GEOTRSFRM_WE_RES] = poParentDS->adfGeoTransform[GEOTRSFRM_WE_RES] * nOverviewFactor;
-            adfGeoTransform[GEOTRSFRM_NS_RES] = poParentDS->adfGeoTransform[GEOTRSFRM_NS_RES] * nOverviewFactor;
+            else
+            {
+                UpdateGlobalResolutionWithTileResolution(tilePixelSizeX,
+                                                        tilePixelSizeY);
+            }
         }
-        else if ((resolutionStrategy == AVERAGE_RESOLUTION ||
-             resolutionStrategy == AVERAGE_APPROX_RESOLUTION) && l_nTiles > 0) {
-            adfGeoTransform[GEOTRSFRM_WE_RES] /= l_nTiles;
-            adfGeoTransform[GEOTRSFRM_NS_RES] /= l_nTiles;
-        }
-    } // end else
+
+        papoSourcesHolders[nValidTiles++] = poRTDS;
+    } // end for
+
+    l_nTiles = nValidTiles;
+
+    if( nOverviewFactor > 1 )
+    {
+        adfGeoTransform[GEOTRSFRM_WE_RES] = poParentDS->adfGeoTransform[GEOTRSFRM_WE_RES] * nOverviewFactor;
+        adfGeoTransform[GEOTRSFRM_NS_RES] = poParentDS->adfGeoTransform[GEOTRSFRM_NS_RES] * nOverviewFactor;
+    }
+    else if ((resolutionStrategy == AVERAGE_RESOLUTION ||
+            resolutionStrategy == AVERAGE_APPROX_RESOLUTION) && l_nTiles > 0) {
+        adfGeoTransform[GEOTRSFRM_WE_RES] /= l_nTiles;
+        adfGeoTransform[GEOTRSFRM_NS_RES] /= l_nTiles;
+    }
 
     /**
      * Complete the rest of geotransform parameters
@@ -1773,29 +1695,26 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
     /*******************************************************************
      * Finally, add complex sources and create a quadtree index for them
      ******************************************************************/
-    // cppcheck-suppress knownConditionTrueFalse
-    if (bNeedToConstructSourcesHolders) {
 #ifdef DEBUG_VERBOSE
-        CPLDebug("PostGIS_Raster",
-            "PostGISRasterDataset::ConstructOneDatasetFromTiles: "
-            "Finally, adding sources for bands");
+    CPLDebug("PostGIS_Raster",
+        "PostGISRasterDataset::ConstructOneDatasetFromTiles: "
+        "Finally, adding sources for bands");
 #endif
-        for(int iSource = 0; iSource < l_nTiles; iSource++)
+    for(int iSource = 0; iSource < l_nTiles; iSource++)
+    {
+        PostGISRasterTileDataset* poRTDS =papoSourcesHolders[iSource];
+        if (!AddComplexSource(poRTDS))
         {
-            PostGISRasterTileDataset* poRTDS =papoSourcesHolders[iSource];
-            if (!AddComplexSource(poRTDS))
-            {
-                CPLDebug("PostGIS_Raster",
-                    "PostGISRasterDataset::ConstructOneDatasetFromTiles:"
-                    "Bounding box of tile %d does not intersect the "
-                    "bounding box of dataset ", iSource);
+            CPLDebug("PostGIS_Raster",
+                "PostGISRasterDataset::ConstructOneDatasetFromTiles:"
+                "Bounding box of tile %d does not intersect the "
+                "bounding box of dataset ", iSource);
 
-                continue;
-            }
-            if( poRTDS->pszPKID != nullptr )
-                oMapPKIDToRTDS[poRTDS->pszPKID] = poRTDS;
-            CPLQuadTreeInsert(hQuadTree, poRTDS);
+            continue;
         }
+        if( poRTDS->pszPKID != nullptr )
+            oMapPKIDToRTDS[poRTDS->pszPKID] = poRTDS;
+        CPLQuadTreeInsert(hQuadTree, poRTDS);
     }
 
     return true;
