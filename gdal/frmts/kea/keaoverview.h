@@ -36,7 +36,7 @@
 
 // overview class. Derives from our band class
 // and just overrides the read/write block functions
-class KEAOverview : public KEARasterBand
+class KEAOverview final: public KEARasterBand
 {
     int         m_nOverviewIndex; // the index of this overview
 public:

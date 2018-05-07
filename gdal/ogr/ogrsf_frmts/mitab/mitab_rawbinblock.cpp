@@ -106,7 +106,7 @@ int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
     m_fp = fpSrc;
 
     VSIFSeekL(fpSrc, 0, SEEK_END);
-    m_nFileSize = (int)VSIFTellL(m_fp);
+    m_nFileSize = static_cast<int>(VSIFTellL(m_fp));
 
     m_nFileOffset = nOffset;
     m_nCurPos = 0;
@@ -115,7 +115,7 @@ int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
     /*----------------------------------------------------------------
      * Alloc a buffer to contain the data
      *---------------------------------------------------------------*/
-    GByte *pabyBuf = (GByte*)CPLMalloc(nSize*sizeof(GByte));
+    GByte *pabyBuf = static_cast<GByte*>(CPLMalloc(nSize*sizeof(GByte)));
 
     /*----------------------------------------------------------------
      * Read from the file
@@ -181,11 +181,11 @@ int     TABRawBinBlock::CommitToFile()
          * Moving pointer failed... we may need to pad with zeros if
          * block destination is beyond current end of file.
          *-----------------------------------------------------------*/
-        int nCurPos = (int)VSIFTellL(m_fp);
+        int nCurPos = static_cast<int>(VSIFTellL(m_fp));
 
         if (nCurPos < m_nFileOffset &&
             VSIFSeekL(m_fp, 0L, SEEK_END) == 0 &&
-            (nCurPos = (int)VSIFTellL(m_fp)) < m_nFileOffset)
+            (nCurPos = static_cast<int>(VSIFTellL(m_fp))) < m_nFileOffset)
         {
             const GByte cZero = 0;
 
@@ -218,7 +218,7 @@ int     TABRawBinBlock::CommitToFile()
 
     if (nStatus != 0 ||
         VSIFWriteL(m_pabyBuf,sizeof(GByte),
-                    numBytesToWrite, m_fp) != (size_t)numBytesToWrite )
+                    numBytesToWrite, m_fp) != static_cast<size_t>(numBytesToWrite) )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Failed writing %d bytes at offset %d.",
@@ -326,7 +326,7 @@ int     TABRawBinBlock::InitBlockFromData(GByte *pabyBuf,
     }
     else if (m_pabyBuf == nullptr || nBlockSize != m_nBlockSize)
     {
-        m_pabyBuf = (GByte*)CPLRealloc(m_pabyBuf, nBlockSize*sizeof(GByte));
+        m_pabyBuf = static_cast<GByte*> (CPLRealloc(m_pabyBuf, nBlockSize*sizeof(GByte)));
         m_nBlockSize = nBlockSize;
         m_nSizeUsed = nSizeUsed;
         memcpy(m_pabyBuf, pabyBuf, m_nSizeUsed);
@@ -341,7 +341,7 @@ int     TABRawBinBlock::InitBlockFromData(GByte *pabyBuf,
     else
     {
         // Block type will be validated only if GetBlockType() is called
-        m_nBlockType = (int)m_pabyBuf[0];
+        m_nBlockType = static_cast<int>(m_pabyBuf[0]);
     }
 
     return 0;
@@ -376,15 +376,15 @@ int     TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
 
     if( m_fp != nullptr && m_nFileSize < 0 && m_eAccess == TABReadWrite )
     {
-        int nCurPos = (int)VSIFTellL(m_fp);
+        int nCurPos = static_cast<int>(VSIFTellL(m_fp));
         VSIFSeekL(fpSrc, 0, SEEK_END);
-        m_nFileSize = (int)VSIFTellL(m_fp);
+        m_nFileSize = static_cast<int>(VSIFTellL(m_fp));
         VSIFSeekL(fpSrc, nCurPos, SEEK_SET);
     }
 
     m_nBlockType = -1;
 
-    m_pabyBuf = (GByte*)CPLRealloc(m_pabyBuf, m_nBlockSize*sizeof(GByte));
+    m_pabyBuf = static_cast<GByte*>(CPLRealloc(m_pabyBuf, m_nBlockSize*sizeof(GByte)));
     if( m_nBlockSize )
         memset(m_pabyBuf, 0, m_nBlockSize);
 
@@ -721,10 +721,10 @@ GInt16  TABRawBinBlock::ReadInt16()
 {
     GInt16 n16Value = 0;
 
-    ReadBytes(2, (GByte*)(&n16Value));
+    ReadBytes(2, reinterpret_cast<GByte*>(&n16Value));
 
 #ifdef CPL_MSB
-    return (GInt16)CPL_SWAP16(n16Value);
+    return static_cast<GInt16>(CPL_SWAP16(n16Value));
 #else
     return n16Value;
 #endif
@@ -734,10 +734,10 @@ GInt32  TABRawBinBlock::ReadInt32()
 {
     GInt32 n32Value = 0;
 
-    ReadBytes(4, (GByte*)(&n32Value));
+    ReadBytes(4, reinterpret_cast<GByte*>(&n32Value));
 
 #ifdef CPL_MSB
-    return (GInt32)CPL_SWAP32(n32Value);
+    return static_cast<GInt32>(CPL_SWAP32(n32Value));
 #else
     return n32Value;
 #endif
@@ -747,7 +747,7 @@ float   TABRawBinBlock::ReadFloat()
 {
     float fValue = 0.0f;
 
-    ReadBytes(4, (GByte*)(&fValue));
+    ReadBytes(4, reinterpret_cast<GByte*>(&fValue));
 
 #ifdef CPL_MSB
     CPL_LSBPTR32(&fValue);
@@ -759,7 +759,7 @@ double  TABRawBinBlock::ReadDouble()
 {
     double dValue = 0.0;
 
-    ReadBytes(8, (GByte*)(&dValue));
+    ReadBytes(8, reinterpret_cast<GByte*>(&dValue));
 
 #ifdef CPL_MSB
     CPL_SWAPDOUBLE(&dValue);
@@ -840,25 +840,25 @@ int  TABRawBinBlock::WriteBytes(int nBytesToWrite, const GByte *pabySrcBuf)
  **********************************************************************/
 int  TABRawBinBlock::WriteByte(GByte byValue)
 {
-    return WriteBytes(1, (GByte*)&byValue);
+    return WriteBytes(1, &byValue);
 }
 
 int  TABRawBinBlock::WriteInt16(GInt16 n16Value)
 {
 #ifdef CPL_MSB
-    n16Value = (GInt16)CPL_SWAP16(n16Value);
+    n16Value = static_cast<GInt16>(CPL_SWAP16(n16Value));
 #endif
 
-    return WriteBytes(2, (GByte*)&n16Value);
+    return WriteBytes(2, reinterpret_cast<GByte*>(&n16Value));
 }
 
 int  TABRawBinBlock::WriteInt32(GInt32 n32Value)
 {
 #ifdef CPL_MSB
-    n32Value = (GInt32)CPL_SWAP32(n32Value);
+    n32Value = static_cast<GInt32>(CPL_SWAP32(n32Value));
 #endif
 
-    return WriteBytes(4, (GByte*)&n32Value);
+    return WriteBytes(4, reinterpret_cast<GByte*>(&n32Value));
 }
 
 int  TABRawBinBlock::WriteFloat(float fValue)
@@ -867,7 +867,7 @@ int  TABRawBinBlock::WriteFloat(float fValue)
     CPL_LSBPTR32(&fValue);
 #endif
 
-    return WriteBytes(4, (GByte*)&fValue);
+    return WriteBytes(4, reinterpret_cast<GByte*>(&fValue));
 }
 
 int  TABRawBinBlock::WriteDouble(double dValue)
@@ -876,7 +876,7 @@ int  TABRawBinBlock::WriteDouble(double dValue)
     CPL_SWAPDOUBLE(&dValue);
 #endif
 
-    return WriteBytes(8, (GByte*)&dValue);
+    return WriteBytes(8, reinterpret_cast<GByte*>(&dValue));
 }
 
 /**********************************************************************
@@ -891,13 +891,13 @@ int  TABRawBinBlock::WriteDouble(double dValue)
  **********************************************************************/
 int  TABRawBinBlock::WriteZeros(int nBytesToWrite)
 {
-    const char acZeros[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    const GByte acZeros[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     int nStatus = 0;
 
     // Write by 8 bytes chunks.  The last chunk may be less than 8 bytes.
     for( int i = 0; nStatus == 0 && i< nBytesToWrite; i += 8 )
     {
-        nStatus = WriteBytes(std::min(8, nBytesToWrite - i), (GByte*)acZeros);
+        nStatus = WriteBytes(std::min(8, nBytesToWrite - i), acZeros);
     }
 
     return nStatus;
@@ -924,13 +924,13 @@ int  TABRawBinBlock::WritePaddedString(int nFieldSize, const char *pszString)
     numSpaces = nFieldSize - nLen;
 
     if (nLen > 0)
-        nStatus = WriteBytes(nLen, (GByte*)pszString);
+        nStatus = WriteBytes(nLen, reinterpret_cast<const GByte*>(pszString));
 
     /* Write spaces by 8 bytes chunks.  The last chunk may be less than 8 bytes
      */
     for(i=0; nStatus == 0 && i< numSpaces; i+=8)
     {
-        nStatus = WriteBytes(std::min(8, numSpaces - i), (GByte*)acSpaces);
+        nStatus = WriteBytes(std::min(8, numSpaces - i), reinterpret_cast<GByte*>(acSpaces));
     }
 
     return nStatus;
@@ -988,7 +988,7 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
     float fValue = 0.0f;
     memcpy(&fValue, &nValue, 4);
 
-    char *pcValue = (char*)&nValue;
+    char *pcValue = reinterpret_cast<char*>(&nValue);
 
     GInt16 n16Val1 = 0;
     memcpy(&n16Val1, pcValue + 2, sizeof(GInt16));
@@ -1045,13 +1045,13 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
     /*----------------------------------------------------------------
      * Alloc a buffer to contain the data
      *---------------------------------------------------------------*/
-    GByte *pabyBuf = (GByte*)CPLMalloc(nSize*sizeof(GByte));
+    GByte *pabyBuf = static_cast<GByte*>(CPLMalloc(nSize*sizeof(GByte)));
 
     /*----------------------------------------------------------------
      * Read from the file
      *---------------------------------------------------------------*/
     if (VSIFSeekL(fpSrc, nOffset, SEEK_SET) != 0 ||
-        VSIFReadL(pabyBuf, sizeof(GByte), nSize, fpSrc)!=(unsigned int)nSize )
+        VSIFReadL(pabyBuf, sizeof(GByte), nSize, fpSrc)!=static_cast<unsigned int>(nSize) )
     {
         CPLError(CE_Failure, CPLE_FileIO,
          "TABCreateMAPBlockFromFile() failed reading %d bytes at offset %d.",
@@ -1212,7 +1212,7 @@ void TABBinBlockManager::Reset()
  **********************************************************************/
 void TABBinBlockManager::PushGarbageBlockAsFirst(GInt32 nBlockPtr)
 {
-    TABBlockRef *psNewBlockRef = (TABBlockRef *)CPLMalloc(sizeof(TABBlockRef));
+    TABBlockRef *psNewBlockRef = static_cast<TABBlockRef *>(CPLMalloc(sizeof(TABBlockRef)));
 
     psNewBlockRef->nBlockPtr = nBlockPtr;
     psNewBlockRef->psPrev = nullptr;
@@ -1232,7 +1232,7 @@ void TABBinBlockManager::PushGarbageBlockAsFirst(GInt32 nBlockPtr)
  **********************************************************************/
 void TABBinBlockManager::PushGarbageBlockAsLast(GInt32 nBlockPtr)
 {
-    TABBlockRef *psNewBlockRef = (TABBlockRef *)CPLMalloc(sizeof(TABBlockRef));
+    TABBlockRef *psNewBlockRef = static_cast<TABBlockRef *>(CPLMalloc(sizeof(TABBlockRef)));
 
     psNewBlockRef->nBlockPtr = nBlockPtr;
     psNewBlockRef->psPrev = m_psGarbageBlocksLast;

@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append('../pymod')
@@ -226,10 +225,7 @@ def virtualmem_4():
 
     tmpfile = 'tmp/virtualmem_4.tif'
     for option in ['INTERLEAVE=PIXEL', 'INTERLEAVE=BAND']:
-        try:
-            os.unlink(tmpfile)
-        except OSError:
-            pass
+        gdal.Unlink(tmpfile)
         ds = gdal.GetDriverByName('GTiff').Create(tmpfile, 400, 301, 2, options=[option])
         ar1 = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Write)
         if gdal.GetLastErrorMsg().find('mmap() failed') >= 0:

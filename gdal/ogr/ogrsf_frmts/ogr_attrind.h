@@ -72,6 +72,7 @@ protected:
     char        *pszIndexPath;
 
                 OGRLayerAttrIndex();
+    CPL_DISALLOW_COPY_ASSIGN(OGRLayerAttrIndex)
 
 public:
     virtual     ~OGRLayerAttrIndex();

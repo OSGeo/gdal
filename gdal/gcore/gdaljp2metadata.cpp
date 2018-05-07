@@ -1659,7 +1659,7 @@ static void GDALGMLJP2PatchFeatureCollectionSubstitutionGroup(CPLXMLNode* psRoot
                 strcmp(CPLGetXMLValue(psIter, "name", ""), "FeatureCollection") == 0 &&
                 strcmp(CPLGetXMLValue(psIter, "substitutionGroup", ""), "gml:AbstractGML") == 0 )
             {
-                CPLDebug("GMLJP2", "Patching substitutionGroup=\"gml:AbstractGML\" to \"gml:AbstractFeature\"");
+                CPLDebug("GMLJP2", R"(Patching substitutionGroup="gml:AbstractGML" to "gml:AbstractFeature")");
                 CPLSetXMLValue( psIter, "#substitutionGroup", "gml:AbstractFeature" );
                 break;
             }
@@ -1674,58 +1674,51 @@ static void GDALGMLJP2PatchFeatureCollectionSubstitutionGroup(CPLXMLNode* psRoot
 class GMLJP2V2GMLFileDesc
 {
     public:
-        CPLString osFile;
-        CPLString osRemoteResource;
-        CPLString osNamespace;
-        CPLString osNamespacePrefix;
-        CPLString osSchemaLocation;
-        int       bInline;
-        int       bParentCoverageCollection;
-
-            GMLJP2V2GMLFileDesc(): bInline(TRUE), bParentCoverageCollection(TRUE) {}
+        CPLString osFile{};
+        CPLString osRemoteResource{};
+        CPLString osNamespace{};
+        CPLString osNamespacePrefix{};
+        CPLString osSchemaLocation{};
+        int       bInline = true;
+        int       bParentCoverageCollection = true;
 };
 
 class GMLJP2V2AnnotationDesc
 {
     public:
-        CPLString osFile;
+        CPLString osFile{};
 };
 
 class GMLJP2V2MetadataDesc
 {
     public:
-        CPLString osFile;
-        CPLString osContent;
-        CPLString osTemplateFile;
-        CPLString osSourceFile;
-        int       bGDALMetadata;
-        int       bParentCoverageCollection;
-
-            GMLJP2V2MetadataDesc(): bGDALMetadata(FALSE), bParentCoverageCollection(TRUE) {}
+        CPLString osFile{};
+        CPLString osContent{};
+        CPLString osTemplateFile{};
+        CPLString osSourceFile{};
+        int       bGDALMetadata = false;
+        int       bParentCoverageCollection = true;
 };
 
 class GMLJP2V2StyleDesc
 {
     public:
-        CPLString osFile;
-        int       bParentCoverageCollection;
-
-            GMLJP2V2StyleDesc(): bParentCoverageCollection(TRUE) {}
+        CPLString osFile{};
+        int       bParentCoverageCollection = true;
 };
 
 class GMLJP2V2ExtensionDesc
 {
     public:
-        CPLString osFile;
-        int       bParentCoverageCollection;
-
-            GMLJP2V2ExtensionDesc(): bParentCoverageCollection(TRUE) {}
+        CPLString osFile{};
+        int       bParentCoverageCollection = true;
 };
+
 class GMLJP2V2BoxDesc
 {
     public:
-        CPLString osFile;
-        CPLString osLabel;
+        CPLString osFile{};
+        CPLString osLabel{};
 };
 
 GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
@@ -2318,13 +2311,13 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 
         // Check that if a GML file points to an internal schemaLocation,
         // the matching box really exists.
-        for( int i = 0; i < static_cast<int>(aoGMLFiles.size()); ++i )
+        for( const auto& oGMLFile: aoGMLFiles )
         {
-            if( !aoGMLFiles[i].osSchemaLocation.empty() &&
-                STARTS_WITH(aoGMLFiles[i].osSchemaLocation, "gmljp2://xml/") )
+            if( !oGMLFile.osSchemaLocation.empty() &&
+                STARTS_WITH(oGMLFile.osSchemaLocation, "gmljp2://xml/") )
             {
                 const char* pszLookedLabel =
-                    aoGMLFiles[i].osSchemaLocation.c_str() +
+                    oGMLFile.osSchemaLocation.c_str() +
                     strlen("gmljp2://xml/");
                 bool bFound = false;
                 for( int j = 0;
@@ -2337,8 +2330,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                         CE_Warning, CPLE_AppDefined,
                         "GML file %s has a schema_location=%s, "
                         "but no box with label %s is defined",
-                        aoGMLFiles[i].osFile.c_str(),
-                        aoGMLFiles[i].osSchemaLocation.c_str(),
+                        oGMLFile.osFile.c_str(),
+                        oGMLFile.osSchemaLocation.c_str(),
                         pszLookedLabel);
                 }
             }
@@ -2494,14 +2487,14 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         CPLXMLNode* psGMLJP2CoverageCollection = GDALGMLJP2GetXMLRoot(psRoot.get());
         CPLAssert(psGMLJP2CoverageCollection);
 
-        for( int i=0; i < static_cast<int>(aoMetadata.size()); ++i )
+        for( const auto& oMetadata: aoMetadata )
         {
             CPLXMLTreeCloser psMetadata(nullptr);
-            if( !aoMetadata[i].osFile.empty() )
-                psMetadata = CPLXMLTreeCloser(CPLParseXMLFile(aoMetadata[i].osFile));
-            else if( !aoMetadata[i].osContent.empty() )
-                psMetadata = CPLXMLTreeCloser(CPLParseXMLString(aoMetadata[i].osContent));
-            else if( aoMetadata[i].bGDALMetadata )
+            if( !oMetadata.osFile.empty() )
+                psMetadata = CPLXMLTreeCloser(CPLParseXMLFile(oMetadata.osFile));
+            else if( !oMetadata.osContent.empty() )
+                psMetadata = CPLXMLTreeCloser(CPLParseXMLString(oMetadata.osContent));
+            else if( oMetadata.bGDALMetadata )
             {
                 psMetadata = CPLXMLTreeCloser(CreateGDALMultiDomainMetadataXML(poSrcDS, TRUE));
                 if( psMetadata )
@@ -2515,8 +2508,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             }
             else
                 psMetadata = CPLXMLTreeCloser(
-                    GDALGMLJP2GenerateMetadata(aoMetadata[i].osTemplateFile,
-                                               aoMetadata[i].osSourceFile));
+                    GDALGMLJP2GenerateMetadata(oMetadata.osTemplateFile,
+                                               oMetadata.osSourceFile));
             if( psMetadata == nullptr )
                 continue;
             CPLXMLNode* psMetadataRoot = GDALGMLJP2GetXMLRoot(psMetadata.get());
@@ -2539,7 +2532,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                              "The metadata root node should be one of gmljp2:isoMetadata, "
                              "gmljp2:eopMetadata, gmljp2:dcMetadata or gmljp2:metadata");
                 }
-                else if( aoMetadata[i].bParentCoverageCollection )
+                else if( oMetadata.bParentCoverageCollection )
                 {
                     /* Insert the gmlcov:metadata link as the next sibling of */
                     /* GMLJP2CoverageCollection.rangeType */
@@ -2663,7 +2656,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                             psGMLFile = CPLXMLTreeCloser(CPLParseXMLFile(osTmpFile));
                             aoGMLFiles[i].osFile = osTmpFile;
                             VSIUnlink(osTmpFile);
-                            aosTmpFiles.push_back(CPLResetExtension(osTmpFile, "xsd"));
+                            aosTmpFiles.emplace_back(CPLResetExtension(osTmpFile, "xsd"));
                         }
                         else
                         {
@@ -2957,9 +2950,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         }
 
         // Add styles.
-        for( int i = 0; i < static_cast<int>(aoStyles.size()); ++i )
+        for( const auto& oStyle: aoStyles )
         {
-            CPLXMLTreeCloser psStyle(CPLParseXMLFile(aoStyles[i].osFile));
+            CPLXMLTreeCloser psStyle(CPLParseXMLFile(oStyle.osFile));
             if( psStyle == nullptr )
                 continue;
 
@@ -2967,7 +2960,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             if( psStyleRoot )
             {
                 CPLXMLNode *psGMLJP2Style = nullptr;
-                if( aoStyles[i].bParentCoverageCollection )
+                if( oStyle.bParentCoverageCollection )
                 {
                     psGMLJP2Style =
                         CPLCreateXMLNode( psGMLJP2CoverageCollection,
@@ -3000,9 +2993,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         }
 
         // Add extensions.
-        for( int i = 0; i < static_cast<int>(aoExtensions.size()); ++i )
+        for( const auto& oExt: aoExtensions )
         {
-            CPLXMLTreeCloser psExtension(CPLParseXMLFile(aoExtensions[i].osFile));
+            CPLXMLTreeCloser psExtension(CPLParseXMLFile(oExt.osFile));
             if( psExtension == nullptr )
                 continue;
 
@@ -3010,7 +3003,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             if( psExtensionRoot )
             {
                 CPLXMLNode *psGMLJP2Extension;
-                if( aoExtensions[i].bParentCoverageCollection )
+                if( oExt.bParentCoverageCollection )
                 {
                     psGMLJP2Extension =
                         CPLCreateXMLNode( psGMLJP2CoverageCollection,
@@ -3074,10 +3067,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Additional user specified boxes.                                */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < static_cast<int>(aoBoxes.size()); ++i )
+    for( auto& oBox: aoBoxes )
     {
         GByte* pabyContent = nullptr;
-        if( VSIIngestFile( nullptr, aoBoxes[i].osFile, &pabyContent, nullptr, -1 ) )
+        if( VSIIngestFile( nullptr, oBox.osFile, &pabyContent, nullptr, -1 ) )
         {
             CPLXMLTreeCloser psNode(CPLParseXMLString(
                                 reinterpret_cast<const char*>(pabyContent)));
@@ -3091,7 +3084,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     GDALGMLJP2PatchFeatureCollectionSubstitutionGroup(psRoot);
                     pabyContent = reinterpret_cast<GByte*>(CPLSerializeXMLTree(psRoot));
                     apoGMLBoxes.push_back(
-                        GDALJP2Box::CreateLabelledXMLAssoc( aoBoxes[i].osLabel,
+                        GDALJP2Box::CreateLabelledXMLAssoc( oBox.osLabel,
                                 reinterpret_cast<const char*>(pabyContent)) );
                 }
             }
@@ -3109,12 +3102,12 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Cleanup working boxes.                                          */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < static_cast<int>(apoGMLBoxes.size()); ++i )
-        delete apoGMLBoxes[i];
+    for( auto& poGMLBox: apoGMLBoxes )
+        delete poGMLBox;
 
-    for( int i = 0; i < static_cast<int>(aosTmpFiles.size()); ++i )
+    for( const auto& osTmpFile: aosTmpFiles )
     {
-        VSIUnlink(aosTmpFiles[i]);
+        VSIUnlink(osTmpFile);
     }
 
     return poGMLData;

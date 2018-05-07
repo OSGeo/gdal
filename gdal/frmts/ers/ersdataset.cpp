@@ -45,7 +45,7 @@ CPL_CVSID("$Id$")
 
 class ERSRasterBand;
 
-class ERSDataset : public RawDataset
+class ERSDataset final: public RawDataset
 {
     friend class ERSRasterBand;
 
@@ -145,14 +145,14 @@ ERSDataset::ERSDataset() :
 ERSDataset::~ERSDataset()
 
 {
-    FlushCache();
+    ERSDataset::FlushCache();
 
     if( fpImage != nullptr )
     {
         VSIFCloseL( fpImage );
     }
 
-    CloseDependentDatasets();
+    ERSDataset::CloseDependentDatasets();
 
     CPLFree( pszProjection );
 

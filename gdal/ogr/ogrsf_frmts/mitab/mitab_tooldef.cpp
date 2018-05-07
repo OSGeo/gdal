@@ -117,10 +117,10 @@ int TABToolDefTable::ReadAllToolDefs( TABMAPToolBlock *poBlock )
             {
                 // Realloc array by blocks of 20 items
                 m_numAllocatedPen += 20;
-                m_papsPen = (TABPenDef**)CPLRealloc(m_papsPen,
-                                        m_numAllocatedPen*sizeof(TABPenDef*));
+                m_papsPen = static_cast<TABPenDef**>(CPLRealloc(m_papsPen,
+                                        m_numAllocatedPen*sizeof(TABPenDef*)));
             }
-            m_papsPen[m_numPen] = (TABPenDef*)CPLCalloc(1, sizeof(TABPenDef));
+            m_papsPen[m_numPen] = static_cast<TABPenDef*>(CPLCalloc(1, sizeof(TABPenDef)));
 
             m_papsPen[m_numPen]->nRefCount  = poBlock->ReadInt32();
             m_papsPen[m_numPen]->nPixelWidth = poBlock->ReadByte();
@@ -148,11 +148,11 @@ int TABToolDefTable::ReadAllToolDefs( TABMAPToolBlock *poBlock )
             {
                 // Realloc array by blocks of 20 items
                 m_numAllocatedBrushes += 20;
-                m_papsBrush = (TABBrushDef**)CPLRealloc(m_papsBrush,
-                                 m_numAllocatedBrushes*sizeof(TABBrushDef*));
+                m_papsBrush = static_cast<TABBrushDef**>(CPLRealloc(m_papsBrush,
+                                 m_numAllocatedBrushes*sizeof(TABBrushDef*)));
             }
             m_papsBrush[m_numBrushes] =
-                               (TABBrushDef*)CPLCalloc(1,sizeof(TABBrushDef));
+                static_cast<TABBrushDef*>(CPLCalloc(1,sizeof(TABBrushDef)));
 
             m_papsBrush[m_numBrushes]->nRefCount    = poBlock->ReadInt32();
             m_papsBrush[m_numBrushes]->nFillPattern = poBlock->ReadByte();
@@ -172,14 +172,14 @@ int TABToolDefTable::ReadAllToolDefs( TABMAPToolBlock *poBlock )
             {
                 // Realloc array by blocks of 20 items
                 m_numAllocatedFonts += 20;
-                m_papsFont = (TABFontDef**)CPLRealloc(m_papsFont,
-                                 m_numAllocatedFonts*sizeof(TABFontDef*));
+                m_papsFont = static_cast<TABFontDef**>(CPLRealloc(m_papsFont,
+                                 m_numAllocatedFonts*sizeof(TABFontDef*)));
             }
             m_papsFont[m_numFonts] =
-                               (TABFontDef*)CPLCalloc(1,sizeof(TABFontDef));
+                static_cast<TABFontDef*>(CPLCalloc(1,sizeof(TABFontDef)));
 
             m_papsFont[m_numFonts]->nRefCount    = poBlock->ReadInt32();
-            poBlock->ReadBytes(32, (GByte*)m_papsFont[m_numFonts]->szFontName);
+            poBlock->ReadBytes(32, reinterpret_cast<GByte*>(m_papsFont[m_numFonts]->szFontName));
             m_papsFont[m_numFonts]->szFontName[32] = '\0';
 
             m_numFonts++;
@@ -190,11 +190,11 @@ int TABToolDefTable::ReadAllToolDefs( TABMAPToolBlock *poBlock )
             {
                 // Realloc array by blocks of 20 items
                 m_numAllocatedSymbols += 20;
-                m_papsSymbol = (TABSymbolDef**)CPLRealloc(m_papsSymbol,
-                                 m_numAllocatedSymbols*sizeof(TABSymbolDef*));
+                m_papsSymbol = static_cast<TABSymbolDef**>(CPLRealloc(m_papsSymbol,
+                                 m_numAllocatedSymbols*sizeof(TABSymbolDef*)));
             }
             m_papsSymbol[m_numSymbols] =
-                               (TABSymbolDef*)CPLCalloc(1,sizeof(TABSymbolDef));
+                static_cast<TABSymbolDef*>(CPLCalloc(1,sizeof(TABSymbolDef)));
 
             m_papsSymbol[m_numSymbols]->nRefCount    = poBlock->ReadInt32();
             m_papsSymbol[m_numSymbols]->nSymbolNo    = poBlock->ReadInt16();
@@ -249,9 +249,9 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
         GByte byPointWidth = 0;
         if (m_papsPen[i]->nPointWidth > 0)
         {
-            byPointWidth = (GByte)(m_papsPen[i]->nPointWidth & 0xff);
+            byPointWidth = static_cast<GByte>(m_papsPen[i]->nPointWidth & 0xff);
             if (m_papsPen[i]->nPointWidth > 255)
-                byPixelWidth = 8 + (GByte)(m_papsPen[i]->nPointWidth/0x100);
+                byPixelWidth = 8 + static_cast<GByte>(m_papsPen[i]->nPointWidth/0x100);
         }
         else
         {
@@ -269,9 +269,9 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
         poBlock->WriteByte(byPixelWidth);
         poBlock->WriteByte(m_papsPen[i]->nLinePattern);
         poBlock->WriteByte(byPointWidth);
-        poBlock->WriteByte((GByte)COLOR_R(m_papsPen[i]->rgbColor));
-        poBlock->WriteByte((GByte)COLOR_G(m_papsPen[i]->rgbColor));
-        poBlock->WriteByte((GByte)COLOR_B(m_papsPen[i]->rgbColor));
+        poBlock->WriteByte(static_cast<GByte>(COLOR_R(m_papsPen[i]->rgbColor)));
+        poBlock->WriteByte(static_cast<GByte>(COLOR_G(m_papsPen[i]->rgbColor)));
+        poBlock->WriteByte(static_cast<GByte>(COLOR_B(m_papsPen[i]->rgbColor)));
 
         if (CPLGetLastErrorNo() != 0)
         {
@@ -292,12 +292,12 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
 
         poBlock->WriteByte(m_papsBrush[i]->nFillPattern);
         poBlock->WriteByte(m_papsBrush[i]->bTransparentFill);
-        poBlock->WriteByte((GByte)COLOR_R(m_papsBrush[i]->rgbFGColor));
-        poBlock->WriteByte((GByte)COLOR_G(m_papsBrush[i]->rgbFGColor));
-        poBlock->WriteByte((GByte)COLOR_B(m_papsBrush[i]->rgbFGColor));
-        poBlock->WriteByte((GByte)COLOR_R(m_papsBrush[i]->rgbBGColor));
-        poBlock->WriteByte((GByte)COLOR_G(m_papsBrush[i]->rgbBGColor));
-        poBlock->WriteByte((GByte)COLOR_B(m_papsBrush[i]->rgbBGColor));
+        poBlock->WriteByte(static_cast<GByte>(COLOR_R(m_papsBrush[i]->rgbFGColor)));
+        poBlock->WriteByte(static_cast<GByte>(COLOR_G(m_papsBrush[i]->rgbFGColor)));
+        poBlock->WriteByte(static_cast<GByte>(COLOR_B(m_papsBrush[i]->rgbFGColor)));
+        poBlock->WriteByte(static_cast<GByte>(COLOR_R(m_papsBrush[i]->rgbBGColor)));
+        poBlock->WriteByte(static_cast<GByte>(COLOR_G(m_papsBrush[i]->rgbBGColor)));
+        poBlock->WriteByte(static_cast<GByte>(COLOR_B(m_papsBrush[i]->rgbBGColor)));
 
         if (CPLGetLastErrorNo() != 0)
         {
@@ -316,7 +316,7 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
         poBlock->WriteByte(TABMAP_TOOL_FONT);  // Def Type = Font name
         poBlock->WriteInt32(m_papsFont[i]->nRefCount);
 
-        poBlock->WriteBytes(32, (GByte*)m_papsFont[i]->szFontName);
+        poBlock->WriteBytes(32, reinterpret_cast<GByte*>(m_papsFont[i]->szFontName));
 
         if (CPLGetLastErrorNo() != 0)
         {
@@ -338,9 +338,9 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
         poBlock->WriteInt16(m_papsSymbol[i]->nSymbolNo);
         poBlock->WriteInt16(m_papsSymbol[i]->nPointSize);
         poBlock->WriteByte(m_papsSymbol[i]->_nUnknownValue_);
-        poBlock->WriteByte((GByte)COLOR_R(m_papsSymbol[i]->rgbColor));
-        poBlock->WriteByte((GByte)COLOR_G(m_papsSymbol[i]->rgbColor));
-        poBlock->WriteByte((GByte)COLOR_B(m_papsSymbol[i]->rgbColor));
+        poBlock->WriteByte(static_cast<GByte>(COLOR_R(m_papsSymbol[i]->rgbColor)));
+        poBlock->WriteByte(static_cast<GByte>(COLOR_G(m_papsSymbol[i]->rgbColor)));
+        poBlock->WriteByte(static_cast<GByte>(COLOR_B(m_papsSymbol[i]->rgbColor)));
 
         if (CPLGetLastErrorNo() != 0)
         {
@@ -430,10 +430,10 @@ int TABToolDefTable::AddPenDefRef(TABPenDef *poNewPenDef)
         {
             // Realloc array by blocks of 20 items
             m_numAllocatedPen += 20;
-            m_papsPen = (TABPenDef**)CPLRealloc(m_papsPen,
-                                       m_numAllocatedPen*sizeof(TABPenDef*));
+            m_papsPen = static_cast<TABPenDef**>(CPLRealloc(m_papsPen,
+                                       m_numAllocatedPen*sizeof(TABPenDef*)));
         }
-        m_papsPen[m_numPen] = (TABPenDef*)CPLCalloc(1, sizeof(TABPenDef));
+        m_papsPen[m_numPen] = static_cast<TABPenDef*>(CPLCalloc(1, sizeof(TABPenDef)));
 
         *m_papsPen[m_numPen] = *poNewPenDef;
         m_papsPen[m_numPen]->nRefCount = 1;
@@ -518,11 +518,11 @@ int TABToolDefTable::AddBrushDefRef(TABBrushDef *poNewBrushDef)
         {
             // Realloc array by blocks of 20 items
             m_numAllocatedBrushes += 20;
-            m_papsBrush = (TABBrushDef**)CPLRealloc(m_papsBrush,
-                                 m_numAllocatedBrushes*sizeof(TABBrushDef*));
+            m_papsBrush = static_cast<TABBrushDef**>(CPLRealloc(m_papsBrush,
+                                 m_numAllocatedBrushes*sizeof(TABBrushDef*)));
         }
-        m_papsBrush[m_numBrushes]=(TABBrushDef*)CPLCalloc(1,
-                                                          sizeof(TABBrushDef));
+        m_papsBrush[m_numBrushes]= static_cast<TABBrushDef*>(CPLCalloc(1,
+                                                          sizeof(TABBrushDef)));
 
         *m_papsBrush[m_numBrushes] = *poNewBrushDef;
         m_papsBrush[m_numBrushes]->nRefCount = 1;
@@ -598,11 +598,11 @@ int TABToolDefTable::AddFontDefRef(TABFontDef *poNewFontDef)
         {
             // Realloc array by blocks of 20 items
             m_numAllocatedFonts += 20;
-            m_papsFont = (TABFontDef**)CPLRealloc(m_papsFont,
-                                 m_numAllocatedFonts*sizeof(TABFontDef*));
+            m_papsFont =  static_cast<TABFontDef**>(CPLRealloc(m_papsFont,
+                                 m_numAllocatedFonts*sizeof(TABFontDef*)));
         }
-        m_papsFont[m_numFonts]=(TABFontDef*)CPLCalloc(1,
-                                                          sizeof(TABFontDef));
+        m_papsFont[m_numFonts]= static_cast<TABFontDef*>(CPLCalloc(1,
+                                                          sizeof(TABFontDef)));
 
         *m_papsFont[m_numFonts] = *poNewFontDef;
         m_papsFont[m_numFonts]->nRefCount = 1;
@@ -681,11 +681,11 @@ int TABToolDefTable::AddSymbolDefRef(TABSymbolDef *poNewSymbolDef)
         {
             // Realloc array by blocks of 20 items
             m_numAllocatedSymbols += 20;
-            m_papsSymbol = (TABSymbolDef**)CPLRealloc(m_papsSymbol,
-                                 m_numAllocatedSymbols*sizeof(TABSymbolDef*));
+            m_papsSymbol = static_cast<TABSymbolDef**>(CPLRealloc(m_papsSymbol,
+                                 m_numAllocatedSymbols*sizeof(TABSymbolDef*)));
         }
-        m_papsSymbol[m_numSymbols]=(TABSymbolDef*)CPLCalloc(1,
-                                                       sizeof(TABSymbolDef));
+        m_papsSymbol[m_numSymbols]= static_cast<TABSymbolDef*>(CPLCalloc(1,
+                                                       sizeof(TABSymbolDef)));
 
         *m_papsSymbol[m_numSymbols] = *poNewSymbolDef;
         m_papsSymbol[m_numSymbols]->nRefCount = 1;

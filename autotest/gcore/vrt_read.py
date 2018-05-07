@@ -268,12 +268,7 @@ def vrt_read_5():
 
 def vrt_read_6():
 
-    try:
-        os.unlink('data/byte.tif.aux.xml')
-        print('Removed data/byte.tif.aux.xml. Was not supposed to exist...')
-    except OSError:
-        pass
-
+    gdal.Unlink('data/byte.tif.aux.xml')
     src_ds = gdal.Open('data/byte.tif')
     mem_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrt_read_6.tif', src_ds)
     vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrt_read_6.vrt', mem_ds)
@@ -802,11 +797,8 @@ def vrt_read_20():
         print(ret)
         return 'fail'
 
-    os.unlink('tmp/byte.tif')
-    os.unlink('tmp/byte1_1.vrt')
-    os.unlink('tmp/byte1_2.vrt')
-    os.unlink('tmp/byte1_3.vrt')
-    os.unlink('tmp/byte2.vrt')
+    for f in ['tmp/byte.tif', 'tmp/byte1_1.vrt', 'tmp/byte1_2.vrt', 'tmp/byte1_3.vrt', 'tmp/byte2.vrt']:
+        os.unlink(f)
 
     return 'success'
 

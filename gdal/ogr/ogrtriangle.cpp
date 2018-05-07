@@ -43,8 +43,7 @@ CPL_CVSID("$Id$")
  *
  */
 
-OGRTriangle::OGRTriangle()
-{ }
+OGRTriangle::OGRTriangle() = default;
 
 /************************************************************************/
 /*                             OGRTriangle()                            */
@@ -55,9 +54,7 @@ OGRTriangle::OGRTriangle()
  *
  */
 
-OGRTriangle::OGRTriangle(const OGRTriangle& other) :
-    OGRPolygon(other)
-{ }
+OGRTriangle::OGRTriangle(const OGRTriangle&) = default;
 
 /************************************************************************/
 /*                             OGRTriangle()                            */
@@ -123,9 +120,7 @@ OGRTriangle::OGRTriangle(const OGRPoint &p, const OGRPoint &q,
  *
  */
 
-OGRTriangle::~OGRTriangle()
-{
-}
+OGRTriangle::~OGRTriangle() = default;
 
 /************************************************************************/
 /*                    operator=( const OGRGeometry&)                    */

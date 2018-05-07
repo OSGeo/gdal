@@ -45,7 +45,7 @@ extern "C" void RegisterOGRWFS3();
 /************************************************************************/
 class OGRWFS3Layer;
 
-class OGRWFS3Dataset : public GDALDataset
+class OGRWFS3Dataset final: public GDALDataset
 {
         friend class OGRWFS3Layer;
 
@@ -84,7 +84,7 @@ class OGRWFS3Dataset : public GDALDataset
 /*                            OGRWFS3Layer                              */
 /************************************************************************/
 
-class OGRWFS3Layer: public OGRLayer
+class OGRWFS3Layer final: public OGRLayer
 {
         OGRWFS3Dataset* m_poDS = nullptr;
         OGRFeatureDefn* m_poFeatureDefn = nullptr;
@@ -485,7 +485,7 @@ OGRWFS3Layer::OGRWFS3Layer(OGRWFS3Dataset* poDS,
     m_osURL = m_poDS->m_osRootURL + "/" + osName; // FIXME
     m_osPath = "/" + osName; // FIXME
 
-    ResetReading();
+    OGRWFS3Layer::ResetReading();
 }
 
 /************************************************************************/

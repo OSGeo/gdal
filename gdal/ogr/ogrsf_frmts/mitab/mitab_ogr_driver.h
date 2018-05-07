@@ -44,6 +44,8 @@
  *====================================================================*/
 class OGRTABDataSource : public OGRDataSource
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRTABDataSource)
+
   private:
     char                *m_pszName;
     char                *m_pszDirectory;

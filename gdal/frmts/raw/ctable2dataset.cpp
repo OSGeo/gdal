@@ -86,7 +86,7 @@ CTable2Dataset::CTable2Dataset() :
 CTable2Dataset::~CTable2Dataset()
 
 {
-    FlushCache();
+    CTable2Dataset::FlushCache();
 
     if( fpImage != nullptr )
     {

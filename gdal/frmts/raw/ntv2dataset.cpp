@@ -86,7 +86,7 @@ these both in the more conventional orientation.
 /* ==================================================================== */
 /************************************************************************/
 
-class NTv2Dataset : public RawDataset
+class NTv2Dataset final: public RawDataset
 {
   public:
     bool        m_bMustSwap;
@@ -148,7 +148,7 @@ NTv2Dataset::NTv2Dataset() :
 NTv2Dataset::~NTv2Dataset()
 
 {
-    FlushCache();
+    NTv2Dataset::FlushCache();
 
     if( fpImage != nullptr )
     {

@@ -43,17 +43,7 @@
 /*                       CPLJSonStreamingParser()                       */
 /************************************************************************/
 
-CPLJSonStreamingParser::CPLJSonStreamingParser() :
-    m_bExceptionOccurred(false),
-    m_bElementFound(false),
-    m_nLastChar(0),
-    m_nLineCounter(1),
-    m_nCharCounter(1),
-    m_bInStringEscape(false),
-    m_bInUnicode(false),
-    m_nMaxDepth(1024),
-    m_nMaxStringSize(10000000)
-
+CPLJSonStreamingParser::CPLJSonStreamingParser()
 {
     m_aState.push_back(INIT);
 }

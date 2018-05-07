@@ -191,6 +191,7 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                     pasFieldDesc[nFields].nByteCount <= nRecordSize)
                 {
                     OGRFieldType eFieldType = OFTString;
+                    OGRFieldSubType eSubType = OFSTNone;
                     pasFieldDesc[nFields].eFormat = CHARACTER;
                     pasFieldDesc[nFields].nItemBytes = atoi(osColumnItemBytes);
                     pasFieldDesc[nFields].nItems = atoi(osColumnItems);
@@ -245,8 +246,16 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                     }
                     else if (osColumnDataType.compare("IEEE_REAL") == 0)
                     {
-                        if (pasFieldDesc[nFields].nItemBytes != 4)
+                        if (pasFieldDesc[nFields].nItemBytes == 4)
+                        {
+                            eSubType = OFSTFloat32;
+                        }
+                        else if( pasFieldDesc[nFields].nItemBytes != 8)
+                        {
+                            // Not sure if this is correct, but default to
+                            // Float32
                             pasFieldDesc[nFields].nItemBytes = 4;
+                        }
                         if (pasFieldDesc[nFields].nItems > 1)
                             eFieldType = OFTRealList;
                         else
@@ -280,6 +289,7 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                         int nWidth = atoi(pszFormat + 1);
                         oFieldDefn.SetWidth(nWidth);
                     }
+                    oFieldDefn.SetSubType(eSubType);
                     poFeatureDefn->AddFieldDefn(&oFieldDefn);
 
                     if (oFieldDefn.GetType() == OFTReal &&
@@ -685,6 +695,32 @@ OGRFeature *OGRPDSLayer::GetNextRawFeature()
                     memcpy(&fVal, pabyRecord + pasFieldDesc[i].nStartByte, 4);
                     CPL_MSBPTR32(&fVal);
                     poFeature->SetField(i, (double)fVal);
+                }
+            }
+            else if (pasFieldDesc[i].eFormat == IEEE_REAL &&
+                     pasFieldDesc[i].nStartByte +
+                     pasFieldDesc[i].nItemBytes * pasFieldDesc[i].nItems <= nRecordSize &&
+                     pasFieldDesc[i].nItemBytes == 8)
+            {
+                if (pasFieldDesc[i].nItems > 1)
+                {
+                    double* padfValues = (double*)CPLMalloc(sizeof(double) * pasFieldDesc[i].nItems);
+                    for( int j = 0; j < pasFieldDesc[i].nItems; j++ )
+                    {
+                        double dfVal = 0.0;
+                        memcpy(&dfVal, pabyRecord + pasFieldDesc[i].nStartByte + 8 * j, 8);
+                        CPL_MSBPTR64(&dfVal);
+                        padfValues[j] = dfVal;
+                    }
+                    poFeature->SetField(i, pasFieldDesc[i].nItems, padfValues);
+                    CPLFree(padfValues);
+                }
+                else
+                {
+                    double dfVal = 0.0;
+                    memcpy(&dfVal, pabyRecord + pasFieldDesc[i].nStartByte, 8);
+                    CPL_MSBPTR64(&dfVal);
+                    poFeature->SetField(i, dfVal);
                 }
             }
         }

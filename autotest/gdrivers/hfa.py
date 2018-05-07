@@ -31,8 +31,8 @@
 
 import os
 import sys
-from osgeo import gdal
 import array
+from osgeo import gdal
 
 sys.path.append('../pymod')
 

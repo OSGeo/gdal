@@ -48,22 +48,7 @@ CPL_CVSID("$Id$")
 /*                             swq_select()                             */
 /************************************************************************/
 
-swq_select::swq_select() :
-    query_mode(0),
-    raw_select(nullptr),
-    result_columns(0),
-    column_defs(nullptr),
-    table_count(0),
-    table_defs(nullptr),
-    join_count(0),
-    join_defs(nullptr),
-    where_expr(nullptr),
-    order_specs(0),
-    order_defs(nullptr),
-    limit(-1),
-    offset(0),
-    poOtherSelect(nullptr)
-{}
+swq_select::swq_select() = default;
 
 /************************************************************************/
 /*                            ~swq_select()                             */

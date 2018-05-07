@@ -74,15 +74,17 @@ typedef enum
 /** Pool of worker threads */
 class CPL_DLL CPLWorkerThreadPool
 {
-        std::vector<CPLWorkerThread> aWT;
-        CPLCond* hCond;
-        CPLMutex* hMutex;
-        volatile CPLWorkerThreadState eState;
-        CPLList* psJobQueue;
-        volatile int nPendingJobs;
+        CPL_DISALLOW_COPY_ASSIGN(CPLWorkerThreadPool)
 
-        CPLList* psWaitingWorkerThreadsList;
-        int nWaitingWorkerThreads;
+        std::vector<CPLWorkerThread> aWT{};
+        CPLCond* hCond = nullptr;
+        CPLMutex* hMutex = nullptr;
+        volatile CPLWorkerThreadState eState = CPLWTS_OK;
+        CPLList* psJobQueue = nullptr;
+        volatile int nPendingJobs = 0;
+
+        CPLList* psWaitingWorkerThreadsList = nullptr;
+        int nWaitingWorkerThreads = 0;
 
         static void WorkerThreadFunction(void* user_data);
 

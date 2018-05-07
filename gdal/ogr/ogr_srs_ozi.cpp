@@ -359,7 +359,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     else
     {
         CPLDebug( "OSR_Ozi", "Unsupported projection: \"%s\"", papszProj[1] );
-        SetLocalCS( CPLString().Printf("\"Ozi\" projection \"%s\"",
+        SetLocalCS( CPLString().Printf(R"("Ozi" projection "%s")",
                                        papszProj[1]) );
     }
 

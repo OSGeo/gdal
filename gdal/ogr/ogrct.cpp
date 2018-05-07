@@ -150,6 +150,8 @@ void OCTCleanupProjMutex()
 
 class OGRProj4CT : public OGRCoordinateTransformation
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRProj4CT)
+
     OGRSpatialReference *poSRSSource = nullptr;
     bool        bSourceLatLong = false;
     double      dfSourceToRadians = 0.0;
@@ -201,17 +203,17 @@ public:
     int         Initialize( OGRSpatialReference *poSource,
                             OGRSpatialReference *poTarget );
 
-    virtual OGRSpatialReference *GetSourceCS() override;
-    virtual OGRSpatialReference *GetTargetCS() override;
-    virtual int Transform( int nCount,
+    OGRSpatialReference *GetSourceCS() override;
+    OGRSpatialReference *GetTargetCS() override;
+    int Transform( int nCount,
                            double *x, double *y, double *z = nullptr ) override;
-    virtual int TransformEx( int nCount,
+    int TransformEx( int nCount,
                              double *x, double *y, double *z = nullptr,
                              int *panSuccess = nullptr ) override;
 
     // TODO(schwehr): Make GetEmitErrors const.
-    virtual bool GetEmitErrors() override { return m_bEmitErrors; }
-    virtual void SetEmitErrors( bool bEmitErrors ) override
+    bool GetEmitErrors() override { return m_bEmitErrors; }
+    void SetEmitErrors( bool bEmitErrors ) override
         { m_bEmitErrors = bEmitErrors; }
 };
 

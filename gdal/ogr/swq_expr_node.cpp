@@ -51,116 +51,67 @@ CPL_CVSID("$Id$")
 /*                           swq_expr_node()                            */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node()
-
-{
-    Initialize();
-}
+swq_expr_node::swq_expr_node() = default;
 
 /************************************************************************/
 /*                          swq_expr_node(int)                          */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node( int nValueIn )
-
+swq_expr_node::swq_expr_node( int nValueIn ):
+    int_value(nValueIn)
 {
-    Initialize();
-
-    int_value = nValueIn;
 }
 
 /************************************************************************/
 /*                        swq_expr_node(GIntBig)                        */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node( GIntBig nValueIn )
-
+swq_expr_node::swq_expr_node( GIntBig nValueIn ):
+    field_type(SWQ_INTEGER64),
+    int_value(nValueIn)
 {
-    Initialize();
-
-    field_type = SWQ_INTEGER64;
-    int_value = nValueIn;
 }
 
 /************************************************************************/
 /*                        swq_expr_node(double)                         */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node( double dfValueIn )
-
+swq_expr_node::swq_expr_node( double dfValueIn ):
+    field_type(SWQ_FLOAT),
+    float_value(dfValueIn)
 {
-    Initialize();
-
-    field_type = SWQ_FLOAT;
-    float_value = dfValueIn;
 }
 
 /************************************************************************/
 /*                        swq_expr_node(const char*)                    */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node( const char *pszValueIn )
-
+swq_expr_node::swq_expr_node( const char *pszValueIn ):
+    field_type(SWQ_STRING),
+    is_null(pszValueIn == nullptr),
+    string_value(CPLStrdup( pszValueIn ? pszValueIn : "" ))
 {
-    Initialize();
-
-    field_type = SWQ_STRING;
-    string_value = CPLStrdup( pszValueIn ? pszValueIn : "" );
-    is_null = pszValueIn == nullptr;
 }
 
 /************************************************************************/
 /*                      swq_expr_node(OGRGeometry *)                    */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node( OGRGeometry *poGeomIn )
-
+swq_expr_node::swq_expr_node( OGRGeometry *poGeomIn ):
+    field_type(SWQ_GEOMETRY),
+    is_null(poGeomIn == nullptr),
+    geometry_value(poGeomIn ? poGeomIn->clone() : nullptr)
 {
-    Initialize();
-
-    field_type = SWQ_GEOMETRY;
-    geometry_value = poGeomIn ? poGeomIn->clone() : nullptr;
-    is_null = poGeomIn == nullptr;
 }
 
 /************************************************************************/
 /*                        swq_expr_node(swq_op)                         */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node( swq_op eOp )
-
+swq_expr_node::swq_expr_node( swq_op eOp ):
+    eNodeType(SNT_OPERATION),
+    nOperation(static_cast<int>(eOp))
 {
-    Initialize();
-
-    eNodeType = SNT_OPERATION;
-
-    nOperation = static_cast<int>(eOp);
-    nSubExprCount = 0;
-    papoSubExpr = nullptr;
-}
-
-/************************************************************************/
-/*                             Initialize()                             */
-/************************************************************************/
-
-void swq_expr_node::Initialize()
-
-{
-    nOperation = 0;
-    nSubExprCount = 0;
-    papoSubExpr = nullptr;
-
-    field_index = 0;
-    table_index = 0;
-    table_name = nullptr;
-    eNodeType = SNT_CONSTANT;
-    field_type = SWQ_INTEGER;
-
-    is_null = FALSE;
-    string_value = nullptr;
-    int_value = 0;
-    float_value = 0;
-    geometry_value = nullptr;
 }
 
 /************************************************************************/
@@ -251,7 +202,7 @@ swq_expr_node::Check( swq_field_list *poFieldList,
         {
             if( table_name )
                 CPLError( CE_Failure, CPLE_AppDefined,
-                      "\"%s\".\"%s\" not recognised as an available field.",
+                      R"("%s"."%s" not recognised as an available field.)",
                       table_name, string_value );
             else
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -536,7 +487,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
 /*      Operation - start by unparsing all the subexpressions.          */
 /* -------------------------------------------------------------------- */
     std::vector<char*> apszSubExpr;
-
+    apszSubExpr.reserve(nSubExprCount);
     for( int i = 0; i < nSubExprCount; i++ )
         apszSubExpr.push_back( papoSubExpr[i]->Unparse(field_list, chColumnQuote) );
 
@@ -771,7 +722,7 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
     std::vector<swq_expr_node*> apoValues;
     std::vector<int> anValueNeedsFree;
     bool bError = false;
-
+    apoValues.reserve(nSubExprCount);
     for( int i = 0; i < nSubExprCount && !bError; i++ )
     {
         if( papoSubExpr[i]->eNodeType == SNT_CONSTANT )

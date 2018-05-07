@@ -94,9 +94,7 @@ static const char * const apszRPCTXT20ValItems[] =
 /**
  * GDALMDReaderManager()
  */
-GDALMDReaderManager::GDALMDReaderManager() :
-    m_pReader(nullptr)
-{}
+GDALMDReaderManager::GDALMDReaderManager() = default;
 
 /**
  * ~GDALMDReaderManager()
@@ -190,12 +188,7 @@ GDALMDReaderBase* GDALMDReaderManager::GetReader(const char *pszPath,
  * GDALMDReaderBase()
  */
 GDALMDReaderBase::GDALMDReaderBase( const char * /* pszPath */,
-                                    char ** /* papszSiblingFiles */ ) :
-    m_papszIMDMD(nullptr),
-    m_papszRPCMD(nullptr),
-    m_papszIMAGERYMD(nullptr),
-    m_papszDEFAULTMD(nullptr),
-    m_bIsMetadataLoad(false)
+                                    char ** /* papszSiblingFiles */ )
 {}
 
 /**

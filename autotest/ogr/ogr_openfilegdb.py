@@ -258,10 +258,7 @@ def ogr_openfilegdb_make_test_data():
     ds.ExecuteSQL('CREATE INDEX idx_real ON big_layer(real)')
     ds = None
 
-    try:
-        os.unlink('data/testopenfilegdb.gdb.zip')
-    except OSError:
-        pass
+    gdal.Unlink('data/testopenfilegdb.gdb.zip')
     os.chdir('data')
     os.system('zip -r -9 testopenfilegdb.gdb.zip testopenfilegdb.gdb')
     os.chdir('..')
@@ -944,7 +941,6 @@ def fuzz(filename, offset):
     f.seek(offset, 0)
     v = ord(f.read(1))
     f.seek(offset, 0)
-    import sys
     if sys.version_info >= (3, 0, 0):
         f.write(('%c' % (255 - v)).encode('ISO-8859-1'))
     else:
@@ -957,7 +953,6 @@ def unfuzz(backup):
     (filename, offset, v) = backup
     f = open(filename, "rb+")
     f.seek(offset, 0)
-    import sys
     if sys.version_info >= (3, 0, 0):
         f.write(('%c' % (v)).encode('ISO-8859-1'))
     else:

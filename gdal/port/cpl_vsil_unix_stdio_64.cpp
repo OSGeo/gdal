@@ -141,13 +141,15 @@ CPL_CVSID("$Id$")
 
 class VSIUnixStdioFilesystemHandler final : public VSIFilesystemHandler
 {
+    CPL_DISALLOW_COPY_ASSIGN(VSIUnixStdioFilesystemHandler)
+
 #ifdef VSI_COUNT_BYTES_READ
-    vsi_l_offset  nTotalBytesRead;
-    CPLMutex     *hMutex;
+    vsi_l_offset  nTotalBytesRead  = 0;
+    CPLMutex     *hMutex = nullptr;
 #endif
 
 public:
-    VSIUnixStdioFilesystemHandler();
+    VSIUnixStdioFilesystemHandler() = default;
 #ifdef VSI_COUNT_BYTES_READ
     ~VSIUnixStdioFilesystemHandler() override;
 #endif
@@ -178,20 +180,22 @@ public:
 
 class VSIUnixStdioHandle final : public VSIVirtualHandle
 {
-    FILE          *fp;
-    vsi_l_offset  m_nOffset;
-    bool          bReadOnly;
-    bool          bLastOpWrite;
-    bool          bLastOpRead;
-    bool          bAtEOF;
+    CPL_DISALLOW_COPY_ASSIGN(VSIUnixStdioHandle)
+
+    FILE          *fp = nullptr;
+    vsi_l_offset  m_nOffset = 0;
+    bool          bReadOnly = true;
+    bool          bLastOpWrite = false;
+    bool          bLastOpRead = false;
+    bool          bAtEOF = false;
     // In a+ mode, disable any optimization since the behaviour of the file
     // pointer on Mac and other BSD system is to have a seek() to the end of
     // file and thus a call to our Seek(0, SEEK_SET) before a read will be a
     // no-op.
-    bool          bModeAppendReadWrite;
+    bool          bModeAppendReadWrite = false;
 #ifdef VSI_COUNT_BYTES_READ
-    vsi_l_offset  nTotalBytesRead;
-    VSIUnixStdioFilesystemHandler *poFS;
+    vsi_l_offset  nTotalBytesRead = 0;
+    VSIUnixStdioFilesystemHandler *poFS = nullptr;
 #endif
   public:
     VSIUnixStdioHandle( VSIUnixStdioFilesystemHandler *poFSIn,
@@ -224,15 +228,10 @@ CPL_UNUSED
                                        FILE* fpIn, bool bReadOnlyIn,
                                        bool bModeAppendReadWriteIn) :
     fp(fpIn),
-    m_nOffset(0),
     bReadOnly(bReadOnlyIn),
-    bLastOpWrite(false),
-    bLastOpRead(false),
-    bAtEOF(false),
     bModeAppendReadWrite(bModeAppendReadWriteIn)
 #ifdef VSI_COUNT_BYTES_READ
     ,
-    nTotalBytesRead(0),
     poFS(poFSIn)
 #endif
 {}
@@ -587,17 +586,6 @@ VSIRangeStatus VSIUnixStdioHandle::GetRangeStatus( vsi_l_offset
 /*                       VSIUnixStdioFilesystemHandler                  */
 /* ==================================================================== */
 /************************************************************************/
-
-/************************************************************************/
-/*                      VSIUnixStdioFilesystemHandler()                 */
-/************************************************************************/
-
-VSIUnixStdioFilesystemHandler::VSIUnixStdioFilesystemHandler()
-#ifdef VSI_COUNT_BYTES_READ
-     : nTotalBytesRead(0),
-       hMutex(nullptr)
-#endif
-{}
 
 #ifdef VSI_COUNT_BYTES_READ
 /************************************************************************/

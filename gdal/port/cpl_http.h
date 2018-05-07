@@ -193,22 +193,22 @@ class GOA2Manager
 
     private:
 
-        mutable CPLString       m_osCurrentBearer;
-        mutable time_t          m_nExpirationTime;
-        AuthMethod      m_eMethod;
+        mutable CPLString       m_osCurrentBearer{};
+        mutable time_t          m_nExpirationTime = 0;
+        AuthMethod      m_eMethod = NONE;
 
         // for ACCESS_TOKEN_FROM_REFRESH
-        CPLString       m_osClientId;
-        CPLString       m_osClientSecret;
-        CPLString       m_osRefreshToken;
+        CPLString       m_osClientId{};
+        CPLString       m_osClientSecret{};
+        CPLString       m_osRefreshToken{};
 
         // for SERVICE_ACCOUNT
-        CPLString       m_osPrivateKey;
-        CPLString       m_osClientEmail;
-        CPLString       m_osScope;
-        CPLStringList   m_aosAdditionalClaims;
+        CPLString       m_osPrivateKey{};
+        CPLString       m_osClientEmail{};
+        CPLString       m_osScope{};
+        CPLStringList   m_aosAdditionalClaims{};
 
-        CPLStringList   m_aosOptions;
+        CPLStringList   m_aosOptions{};
 };
 
 

@@ -140,9 +140,7 @@ CPL_CVSID("$Id$")
  */
 class GDALPamDataset;
 
-GDALPamDataset::GDALPamDataset() :
-    nPamFlags(0),
-    psPam(nullptr)
+GDALPamDataset::GDALPamDataset()
 {
     SetMOFlags( GetMOFlags() | GMO_PAM_CLASS );
 }
@@ -157,7 +155,7 @@ GDALPamDataset::~GDALPamDataset()
     if( nPamFlags & GPF_DIRTY )
     {
         CPLDebug( "GDALPamDataset", "In destructor with dirty metadata." );
-        FlushCache();
+        GDALPamDataset::TrySaveXML();
     }
 
     PamClear();
@@ -313,14 +311,6 @@ void GDALPamDataset::PamInitialize()
         nPamFlags |= GPF_AUXMODE;
 
     psPam = new GDALDatasetPamInfo;
-    psPam->pszPamFilename = nullptr;
-    psPam->pszProjection = nullptr;
-    psPam->bHaveGeoTransform = FALSE;
-    psPam->nGCPCount = 0;
-    psPam->pasGCPList = nullptr;
-    psPam->pszGCPProjection = nullptr;
-    psPam->bHasMetadata = FALSE;
-
     for( int iBand = 0; iBand < GetRasterCount(); iBand++ )
     {
         GDALRasterBand *poBand = GetRasterBand(iBand+1);

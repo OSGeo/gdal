@@ -42,7 +42,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class BTDataset : public GDALPamDataset
+class BTDataset final: public GDALPamDataset
 {
     friend class BTRasterBand;
 
@@ -83,7 +83,7 @@ class BTDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class BTRasterBand : public GDALPamRasterBand
+class BTRasterBand final: public GDALPamRasterBand
 {
     VSILFILE          *fpImage;
 
@@ -380,7 +380,7 @@ BTDataset::BTDataset() :
 BTDataset::~BTDataset()
 
 {
-    FlushCache();
+    BTDataset::FlushCache();
     if( fpImage != nullptr )
     {
         if( VSIFCloseL( fpImage ) != 0 )

@@ -268,7 +268,7 @@ ENVIDataset::ENVIDataset() :
 ENVIDataset::~ENVIDataset()
 
 {
-    FlushCache();
+    ENVIDataset::FlushCache();
     if( fpImage )
     {
         // Make sure the binary file has the expected size

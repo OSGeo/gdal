@@ -157,11 +157,7 @@ int CPLODBCDriverInstaller::RemoveDriver( const char* pszDriverName,
 /************************************************************************/
 
 /** Constructor */
-CPLODBCSession::CPLODBCSession() :
-    m_hEnv(nullptr),
-    m_hDBC(nullptr),
-    m_bInTransaction(FALSE),
-    m_bAutoCommit(TRUE)
+CPLODBCSession::CPLODBCSession()
 {
     m_szLastError[0] = '\0';
 }
@@ -468,21 +464,7 @@ const char *CPLODBCSession::GetLastError()
 
 /** Constructor */
 CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession ) :
-    m_poSession(poSession),
-    m_hStmt(nullptr),
-    m_nColCount(0),
-    m_papszColNames(nullptr),
-    m_panColType(nullptr),
-    m_papszColTypeNames(nullptr),
-    m_panColSize(nullptr),
-    m_panColPrecision(nullptr),
-    m_panColNullable(nullptr),
-    m_papszColColumnDef(nullptr),
-    m_papszColValues(nullptr),
-    m_panColValueLengths(nullptr),
-    m_pszStatement(nullptr),
-    m_nStatementMax(0),
-    m_nStatementLen(0)
+    m_poSession(poSession)
 {
 
     if( Failed(SQLAllocStmt(poSession->GetConnection(), &m_hStmt)) )

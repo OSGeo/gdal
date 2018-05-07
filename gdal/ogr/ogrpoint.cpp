@@ -130,20 +130,13 @@ OGRPoint::OGRPoint( double xIn, double yIn, double zIn, double mIn ) :
  * @since GDAL 2.1
  */
 
-OGRPoint::OGRPoint( const OGRPoint& other ) :
-    OGRGeometry( other ),
-    x( other.x ),
-    y( other.y ),
-    z( other.z ),
-    m( other.m )
-{
-}
+OGRPoint::OGRPoint( const OGRPoint& ) = default;
 
 /************************************************************************/
 /*                             ~OGRPoint()                              */
 /************************************************************************/
 
-OGRPoint::~OGRPoint() {}
+OGRPoint::~OGRPoint() = default;
 
 /************************************************************************/
 /*                       operator=( const OGRPoint& )                   */

@@ -149,8 +149,8 @@ protected:
 /*! @endcond */
 
 private:
-    JSONObjectH m_poJsonObject;
-    std::string m_osKey;
+    JSONObjectH m_poJsonObject = nullptr;
+    std::string m_osKey{};
 };
 
 /**

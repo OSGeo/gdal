@@ -125,50 +125,89 @@ VRTDataset::~VRTDataset()
 void VRTDataset::FlushCache()
 
 {
-    GDALDataset::FlushCache();
+    VRTFlushCacheStruct<VRTDataset>::FlushCache(*this);
+}
 
-    if( !m_bNeedsFlush || m_bWritable == FALSE)
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+void VRTWarpedDataset::FlushCache()
+
+{
+    VRTFlushCacheStruct<VRTWarpedDataset>::FlushCache(*this);
+}
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+void VRTPansharpenedDataset::FlushCache()
+
+{
+    VRTFlushCacheStruct<VRTPansharpenedDataset>::FlushCache(*this);
+}
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+template<class T> void VRTFlushCacheStruct<T>::FlushCache(T& obj)
+{
+    obj.GDALDataset::FlushCache();
+
+    if( !obj.m_bNeedsFlush || obj.m_bWritable == FALSE)
         return;
 
-    m_bNeedsFlush = FALSE;
+    obj.m_bNeedsFlush = FALSE;
 
     // We don't write to disk if there is no filename.  This is a
     // memory only dataset.
-    if( strlen(GetDescription()) == 0
-        || STARTS_WITH_CI(GetDescription(), "<VRTDataset") )
+    if( strlen(obj.GetDescription()) == 0
+        || STARTS_WITH_CI(obj.GetDescription(), "<VRTDataset") )
         return;
 
     /* -------------------------------------------------------------------- */
     /*      Create the output file.                                         */
     /* -------------------------------------------------------------------- */
-    VSILFILE *fpVRT = VSIFOpenL( GetDescription(), "w" );
+    VSILFILE *fpVRT = VSIFOpenL( obj.GetDescription(), "w" );
     if( fpVRT == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to write .vrt file in FlushCache()." );
+                "Failed to write .vrt file in FlushCache()." );
         return;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Convert tree to a single block of XML text.                     */
     /* -------------------------------------------------------------------- */
-    char** papszContent = GetMetadata("xml:VRT");
+    const char* pszDescription = obj.GetDescription();
+    char *l_pszVRTPath = CPLStrdup(
+        pszDescription[0] && !STARTS_WITH(pszDescription, "<VRTDataset") ?
+            CPLGetPath(pszDescription): "" );
+    CPLXMLNode *psDSTree = obj.T::SerializeToXML( l_pszVRTPath );
+    char *pszXML = CPLSerializeXMLTree( psDSTree );
+
+    CPLDestroyXMLNode( psDSTree );
+
+    CPLFree( l_pszVRTPath );
     bool bOK = true;
-    if( papszContent && papszContent[0] )
+    if( pszXML )
     {
         /* ------------------------------------------------------------------ */
         /*      Write to disk.                                                */
         /* ------------------------------------------------------------------ */
         bOK &=
-            VSIFWriteL( papszContent[0], 1, strlen(papszContent[0]), fpVRT )
-            == strlen(papszContent[0]);
+            VSIFWriteL( pszXML, 1, strlen(pszXML), fpVRT )
+            == strlen(pszXML);
+        CPLFree(pszXML);
     }
     if( VSIFCloseL( fpVRT ) != 0 )
         bOK = false;
     if( !bOK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to write .vrt file in FlushCache()." );
+                "Failed to write .vrt file in FlushCache()." );
         return;
     }
 }

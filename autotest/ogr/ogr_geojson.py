@@ -564,7 +564,6 @@ def ogr_geojson_12():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
-    import os
     if os.name == 'nt':
         return 'skip'
 

@@ -35,12 +35,12 @@ import sys
 
 sys.path.append('../pymod')
 
+import shutil
 import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
-import shutil
 
 ###############################################################################
 # Test reading geometry and attribute from ionic wfs gml file.
@@ -2012,10 +2012,7 @@ def ogr_gml_48():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    try:
-        os.unlink('data/schema_with_geom_in_complextype.gfs')
-    except OSError:
-        pass
+    gdal.Unlink('data/schema_with_geom_in_complextype.gfs')
 
     ds = ogr.Open('data/schema_with_geom_in_complextype.xml')
     lyr = ds.GetLayer(0)
@@ -2273,10 +2270,7 @@ def ogr_gml_54():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    try:
-        os.unlink('data/empty.gfs')
-    except OSError:
-        pass
+    gdal.Unlink('data/empty.gfs')
 
     ds = ogr.Open('data/empty.gml')
     if ds is None:
@@ -2291,10 +2285,7 @@ def ogr_gml_54():
         return 'fail'
     ds = None
 
-    try:
-        os.unlink('data/empty.gfs')
-    except OSError:
-        pass
+    gdal.Unlink('data/empty.gfs')
 
     return 'success'
 
@@ -2332,10 +2323,7 @@ def ogr_gml_56():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    try:
-        os.unlink('data/ogr_gml_56.gfs')
-    except OSError:
-        pass
+    gdal.Unlink('data/ogr_gml_56.gfs')
 
     gdal.SetConfigOption('GML_REGISTRY', 'data/ogr_gml_56_registry.xml')
     ds = ogr.Open('data/ogr_gml_56.gml')
@@ -2479,10 +2467,7 @@ def ogr_gml_58():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    try:
-        os.unlink('data/inspire_cadastralparcel.gfs')
-    except OSError:
-        pass
+    gdal.Unlink('data/inspire_cadastralparcel.gfs')
 
     ds = ogr.Open('data/inspire_cadastralparcel.xml')
     lyr = ds.GetLayer(0)
@@ -2825,10 +2810,7 @@ def ogr_gml_60():
         return 'skip'
 
     # Make sure the .gfs file is more recent that the .gml one
-    try:
-        os.unlink('data/wfs_200_multiplelayers.gfs')
-    except OSError:
-        pass
+    gdal.Unlink('data/wfs_200_multiplelayers.gfs')
 
     for _ in range(2):
         ds = ogr.Open('data/wfs_200_multiplelayers.gml')
@@ -2850,10 +2832,7 @@ def ogr_gml_60():
             return 'fail'
         ds = None
 
-    try:
-        os.unlink('data/wfs_200_multiplelayers.gfs')
-    except OSError:
-        pass
+    gdal.Unlink('data/wfs_200_multiplelayers.gfs')
 
     return 'success'
 
@@ -2921,10 +2900,7 @@ def ogr_gml_62():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    try:
-        os.unlink('tmp/gmlattributes.gfs')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/gmlattributes.gfs')
 
     shutil.copy('data/gmlattributes.gml', 'tmp/gmlattributes.gml')
 
@@ -2937,10 +2913,7 @@ def ogr_gml_62():
     ds = None
 
     # Test GML_ATTRIBUTES_TO_OGR_FIELDS=YES
-    try:
-        os.unlink('tmp/gmlattributes.gfs')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/gmlattributes.gfs')
 
     # Without and then with .gfs
     for i in range(2):
@@ -3777,10 +3750,7 @@ def ogr_gml_71():
         return 'skip'
 
     # With .xsd
-    try:
-        os.unlink('data/wfsjointlayer.gfs')
-    except OSError:
-        pass
+    gdal.Unlink('data/wfsjointlayer.gfs')
     ds = ogr.Open('data/wfsjointlayer.gml')
     if ogr_gml_71_helper(ds) != 'success':
         gdaltest.post_reason('fail')
@@ -3809,10 +3779,7 @@ def ogr_gml_71():
 
     # Without .xsd nor .gfs
     shutil.copy('data/wfsjointlayer.gml', 'tmp/wfsjointlayer.gml')
-    try:
-        os.unlink('tmp/wfsjointlayer.gfs')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/wfsjointlayer.gfs')
     ds = ogr.Open('tmp/wfsjointlayer.gml')
     if ogr_gml_71_helper(ds) != 'success':
         gdaltest.post_reason('fail')

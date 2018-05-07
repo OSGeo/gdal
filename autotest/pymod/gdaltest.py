@@ -94,7 +94,7 @@ def setup_run(name):
 
 def git_status():
 
-    out, err = runexternal_out_and_err('git status --porcelain .')
+    out, _ = runexternal_out_and_err('git status --porcelain .')
     return out
 
 ###############################################################################
@@ -1761,7 +1761,7 @@ def find_lib_linux(libname):
 def find_lib_sunos(libname):
 
     pid = os.getpid()
-    (lines, err) = runexternal_out_and_err('pmap %d' % pid)
+    lines, _ = runexternal_out_and_err('pmap %d' % pid)
 
     for line in lines.split('\n'):
         if line.rfind('/lib' + libname) == -1 or line.find('.so') == -1:

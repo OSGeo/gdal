@@ -134,10 +134,9 @@ static const OGRStyleParamId asStyleLabel[] =
  * @param poDataSetStyleTable (currently unused, reserved for future use),
  * pointer to OGRStyleTable. Pass NULL for now.
  */
-OGRStyleMgr::OGRStyleMgr( OGRStyleTable *poDataSetStyleTable )
+OGRStyleMgr::OGRStyleMgr( OGRStyleTable *poDataSetStyleTable ):
+    m_poDataSetStyleTable( poDataSetStyleTable )
 {
-    m_poDataSetStyleTable = poDataSetStyleTable;
-    m_pszStyleString = nullptr;
 }
 
 /************************************************************************/
@@ -1346,12 +1345,7 @@ const char *OGR_STBL_GetLastStyleName( OGRStyleTableH hStyleTable)
 
 /** Constructor */
 OGRStyleTool::OGRStyleTool( OGRSTClassId eClassId ) :
-    m_bModified(FALSE),
-    m_bParsed(FALSE),
-    m_dfScale(1.0),
-    m_eUnit(OGRSTUMM),
-    m_eClassId(eClassId),
-    m_pszStyleString(nullptr)
+    m_eClassId(eClassId)
 {
 }
 
@@ -2660,10 +2654,11 @@ int OGR_ST_GetRGBFromString( OGRStyleToolH hST, const char *pszColor,
 /*                      OGRStylePen::OGRStylePen()                          */
 /*                                                                          */
 /****************************************************************************/
-OGRStylePen::OGRStylePen() : OGRStyleTool(OGRSTCPen)
+OGRStylePen::OGRStylePen() :
+    OGRStyleTool(OGRSTCPen),
+    m_pasStyleValue( static_cast<OGRStyleValue *>(
+        CPLCalloc(OGRSTPenLast, sizeof(OGRStyleValue))))
 {
-    m_pasStyleValue = static_cast<OGRStyleValue *>(
-        CPLCalloc(OGRSTPenLast, sizeof(OGRStyleValue)));
 }
 
 /****************************************************************************/
@@ -2765,10 +2760,11 @@ const char *OGRStylePen::GetStyleString()
 /*                      OGRStyleBrush::OGRStyleBrush()                      */
 /*                                                                          */
 /****************************************************************************/
-OGRStyleBrush::OGRStyleBrush() : OGRStyleTool(OGRSTCBrush)
+OGRStyleBrush::OGRStyleBrush() :
+    OGRStyleTool(OGRSTCBrush),
+    m_pasStyleValue( static_cast<OGRStyleValue *>(
+        CPLCalloc(OGRSTBrushLast, sizeof(OGRStyleValue))))
 {
-    m_pasStyleValue = static_cast<OGRStyleValue *>(
-        CPLCalloc(OGRSTBrushLast, sizeof(OGRStyleValue)));
 }
 
 /****************************************************************************/
@@ -2867,10 +2863,11 @@ const char *OGRStyleBrush::GetStyleString()
 /****************************************************************************/
 /*                      OGRStyleSymbol::OGRStyleSymbol()                    */
 /****************************************************************************/
-OGRStyleSymbol::OGRStyleSymbol() : OGRStyleTool(OGRSTCSymbol)
+OGRStyleSymbol::OGRStyleSymbol() :
+    OGRStyleTool(OGRSTCSymbol),
+    m_pasStyleValue( static_cast<OGRStyleValue *>(
+        CPLCalloc(OGRSTSymbolLast, sizeof(OGRStyleValue))))
 {
-    m_pasStyleValue = static_cast<OGRStyleValue *>(
-        CPLCalloc(OGRSTSymbolLast, sizeof(OGRStyleValue)));
 }
 
 /****************************************************************************/
@@ -2968,10 +2965,11 @@ const char *OGRStyleSymbol::GetStyleString()
 /*                      OGRStyleLabel::OGRStyleLabel()                      */
 /*                                                                          */
 /****************************************************************************/
-OGRStyleLabel::OGRStyleLabel() : OGRStyleTool(OGRSTCLabel)
+OGRStyleLabel::OGRStyleLabel() :
+    OGRStyleTool(OGRSTCLabel),
+    m_pasStyleValue( static_cast<OGRStyleValue *>(
+        CPLCalloc(OGRSTLabelLast, sizeof(OGRStyleValue))))
 {
-    m_pasStyleValue = static_cast<OGRStyleValue *>(
-        CPLCalloc(OGRSTLabelLast, sizeof(OGRStyleValue)));
 }
 
 /****************************************************************************/

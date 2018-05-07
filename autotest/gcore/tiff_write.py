@@ -29,9 +29,9 @@
 
 import os
 import sys
-from osgeo import gdal
 import array
 import shutil
+from osgeo import gdal
 from osgeo import osr
 
 sys.path.append('../pymod')
@@ -4743,7 +4743,7 @@ def tiff_write_117():
 
     # Write first tile so that its byte count of that tile is 2048 (a multiple of 1024)
     adjust = 1254
-    data = '0' * (65536 - adjust) + ''.join([('%c' % random.randint(0, 255)) for i in range(adjust)])
+    data = '0' * (65536 - adjust) + ''.join([('%c' % random.randint(0, 255)) for _ in range(adjust)])
     ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
 
     # Second tile will be implicitly written at closing, or we could write

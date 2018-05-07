@@ -1185,11 +1185,12 @@ class DataSource(MajorObject):
         ds[0:4] would return a list of the first four layers."""
         if isinstance(value, slice):
             output = []
-            for i in xrange(value.start, value.stop, value.step):
-                try:
-                    output.append(self.GetLayer(i))
-                except OGRError: #we're done because we're off the end
+            step = value.step if value.step else 1
+            for i in xrange(value.start, value.stop, step):
+                lyr = self.GetLayer(i)
+                if lyr is None:
                     return output
+                output.append(lyr)
             return output
         if isinstance(value, int):
             if value > len(self) - 1:

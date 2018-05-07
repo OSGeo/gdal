@@ -33,12 +33,12 @@
 import copy
 import os
 import sys
-from osgeo import gdal
-from osgeo import osr
+from sys import version_info
 import array
 import struct
 import shutil
-from sys import version_info
+from osgeo import gdal
+from osgeo import osr
 
 sys.path.append('../pymod')
 
@@ -1650,8 +1650,6 @@ def nitf_50():
 
 
 def nitf_51():
-    import struct
-
     for xsize in range(1, 9):
         for nbpp in [1, 2, 3, 4, 5, 6, 7, 12]:
             ds = gdal.GetDriverByName('NITF').Create('tmp/nitf51.ntf', xsize, 1)

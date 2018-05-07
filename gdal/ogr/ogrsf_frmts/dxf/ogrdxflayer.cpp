@@ -3035,6 +3035,13 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( GUInt32 nInitialErrorCounter,
         }
     }
 
+    while( !apoInnerExtraFeatures.empty() )
+    {
+        auto poFeatureToDelete = apoInnerExtraFeatures.front();
+        apoInnerExtraFeatures.pop();
+        delete poFeatureToDelete;
+    }
+
     poDS->PopBlockInsertion();
 
 /* -------------------------------------------------------------------- */

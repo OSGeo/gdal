@@ -34,7 +34,6 @@ try:
 except ImportError:
     from http.server import BaseHTTPRequestHandler
 
-import os
 import sys
 
 sys.path.append('../pymod')
@@ -1310,10 +1309,7 @@ def ogr_sql_sqlite_16(service=None, template='http://127.0.0.1:%d/geocoding?q=%%
 
     for cache_filename in ['tmp/ogr_geocode_cache.sqlite', 'tmp/ogr_geocode_cache.csv']:
 
-        try:
-            os.unlink(cache_filename)
-        except OSError:
-            pass
+        gdal.Unlink(cache_filename)
 
         gdal.SetConfigOption('OGR_GEOCODE_CACHE_FILE', cache_filename)
 
@@ -1397,10 +1393,7 @@ def ogr_sql_sqlite_16(service=None, template='http://127.0.0.1:%d/geocoding?q=%%
             ret = 'fail'
         cache_ds = None
 
-        try:
-            os.unlink(cache_filename)
-        except OSError:
-            pass
+        gdal.Unlink(cache_filename)
 
         ds = None
 
@@ -1444,10 +1437,7 @@ def ogr_sql_sqlite_17(service=None, template='http://127.0.0.1:%d/reversegeocodi
 
     for cache_filename in ['tmp/ogr_geocode_cache.sqlite', 'tmp/ogr_geocode_cache.csv']:
 
-        try:
-            os.unlink(cache_filename)
-        except OSError:
-            pass
+        gdal.Unlink(cache_filename)
 
         gdal.SetConfigOption('OGR_GEOCODE_CACHE_FILE', cache_filename)
 
@@ -1522,10 +1512,7 @@ def ogr_sql_sqlite_17(service=None, template='http://127.0.0.1:%d/reversegeocodi
             ret = 'fail'
         cache_ds = None
 
-        try:
-            os.unlink(cache_filename)
-        except OSError:
-            pass
+        gdal.Unlink(cache_filename)
 
         ds = None
 

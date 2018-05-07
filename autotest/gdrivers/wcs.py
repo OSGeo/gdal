@@ -570,6 +570,13 @@ def wcs_6():
 
 ###############################################################################
 
+#todo tests:
+
+# test that nothing is put into cache if request fails
+# parsing Capabilities and DescribeCoverage: test data in metadata and service files?
+
+###############################################################################
+
 
 def wcs_cleanup():
 

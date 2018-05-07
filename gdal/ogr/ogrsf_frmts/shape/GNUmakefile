@@ -12,6 +12,8 @@ ifeq ($(RENAME_INTERNAL_SHAPELIB_SYMBOLS),yes)
 CPPFLAGS 	:=	$(CPPFLAGS) -DRENAME_INTERNAL_SHAPELIB_SYMBOLS -DSHPAPI_CALL=
 endif
 
+CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS) $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
+
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 $(OBJ) $(O_OBJ):	ogrshape.h shapefil.h shpopen.c dbfopen.c shptree.c sbnsearch.c

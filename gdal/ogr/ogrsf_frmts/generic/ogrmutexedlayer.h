@@ -44,6 +44,8 @@
  */
 class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRMutexedLayer)
+
   protected:
         CPLMutex          *m_hMutex;
 

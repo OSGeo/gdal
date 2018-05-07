@@ -422,15 +422,15 @@ int TABMAPHeaderBlock::Coordsys2Int( double dX, double dY,
 
     if (m_nCoordOriginQuadrant==2 || m_nCoordOriginQuadrant==3 ||
         m_nCoordOriginQuadrant==0 )
-        dTempX = (double)(-1.0*dX*m_XScale - m_XDispl);
+        dTempX = -1.0*dX*m_XScale - m_XDispl;
     else
-        dTempX = (double)(dX*m_XScale + m_XDispl);
+        dTempX = dX*m_XScale + m_XDispl;
 
     if (m_nCoordOriginQuadrant==3 || m_nCoordOriginQuadrant==4 ||
         m_nCoordOriginQuadrant==0 )
-        dTempY = (double)(-1.0*dY*m_YScale - m_YDispl);
+        dTempY = -1.0*dY*m_YScale - m_YDispl;
     else
-        dTempY = (double)(dY*m_YScale + m_YDispl);
+        dTempY = dY*m_YScale + m_YDispl;
 
     /*-----------------------------------------------------------------
      * Make sure we'll never output coordinates outside of the valid
@@ -459,14 +459,14 @@ int TABMAPHeaderBlock::Coordsys2Int( double dX, double dY,
         bIntBoundsOverflow = TRUE;
     }
 
-    nX = (GInt32) ROUND_INT(dTempX);
-    nY = (GInt32) ROUND_INT(dTempY);
+    nX = static_cast<GInt32>(ROUND_INT(dTempX));
+    nY = static_cast<GInt32>(ROUND_INT(dTempY));
 
     if (bIntBoundsOverflow && !bIgnoreOverflow)
     {
         m_bIntBoundsOverflow = TRUE;
 #ifdef DEBUG
-        CPLError(CE_Warning, (CPLErrorNum)TAB_WarningBoundsOverflow,
+        CPLError(CE_Warning, static_cast<CPLErrorNum>(TAB_WarningBoundsOverflow),
                  "Integer bounds overflow: (%f, %f) -> (%d, %d)\n",
                  dX, dY, nX, nY);
 #endif
@@ -547,8 +547,8 @@ int TABMAPHeaderBlock::Coordsys2IntDist( double dX, double dY,
     if (m_pabyBuf == nullptr)
         return -1;
 
-    nX = (GInt32)(dX*m_XScale);
-    nY = (GInt32)(dY*m_YScale);
+    nX = static_cast<GInt32>(dX*m_XScale);
+    nY = static_cast<GInt32>(dY*m_YScale);
 
     return 0;
 }
@@ -958,10 +958,10 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
 
         fprintf(fpOut,"\n");
         fprintf(fpOut,"  m_sProj.nDatumId      = %d\n", m_sProj.nDatumId);
-        fprintf(fpOut,"  m_sProj.nProjId       = %d\n", (int)m_sProj.nProjId);
+        fprintf(fpOut,"  m_sProj.nProjId       = %d\n", static_cast<int>(m_sProj.nProjId));
         fprintf(fpOut,"  m_sProj.nEllipsoidId  = %d\n",
-                                                    (int)m_sProj.nEllipsoidId);
-        fprintf(fpOut,"  m_sProj.nUnitsId      = %d\n", (int)m_sProj.nUnitsId);
+                                                    static_cast<int>(m_sProj.nEllipsoidId));
+        fprintf(fpOut,"  m_sProj.nUnitsId      = %d\n", static_cast<int>(m_sProj.nUnitsId));
         fprintf(fpOut,"  m_sProj.adProjParams  =");
         for( int i = 0; i < 6; i++)
             fprintf(fpOut, " %g",  m_sProj.adProjParams[i]);
@@ -981,7 +981,7 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
             fprintf(fpOut, "-- Header bytes 00-FF: Array of map object lengths --\n");
             for( int i = 0; i < 256; i++ )
             {
-                fprintf(fpOut, "0x%2.2x", (int)m_pabyBuf[i]);
+                fprintf(fpOut, "0x%2.2x", static_cast<int>(m_pabyBuf[i]));
                 if (i != 255)
                     fprintf(fpOut, ",");
                 if ((i+1)%16 == 0)

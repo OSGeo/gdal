@@ -171,7 +171,7 @@ static bool TABAdjustCaseSensitiveFilename(char *pszFname)
     // by scanning all the sub-directories.
     // If we get to a point where a path component does not exist then
     // we simply return the rest of the path as is.
-    while(bValidPath && (int)strlen(pszTmpPath) < nTotalLen)
+    while(bValidPath && static_cast<int>(strlen(pszTmpPath)) < nTotalLen)
     {
         int iLastPartStart = iTmpPtr;
         char **papszDir = VSIReadDir(pszTmpPath);

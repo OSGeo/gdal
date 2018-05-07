@@ -2305,10 +2305,10 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         oCodeStream.access_siz()->parse_string("Creversible=no");
 
     // Set some user-overridable parameters.
-    const char *apszParms[] =
+    const char * const apszParms[] =
         { "Corder", "PCRL",
-          "Cprecincts", "{512,512},{256,512},{128,512},{64,512},{32,512},"
-              "{16,512},{8,512},{4,512},{2,512}",
+          "Cprecincts",
+          "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}",
           "ORGgen_plt", "yes",
           "ORGgen_tlm", nullptr,
           "Qguard", nullptr,
