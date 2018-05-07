@@ -316,11 +316,6 @@ protected:
     const char* pszTable;
     const char* pszColumn;
 
-#ifdef notdef
-    GBool GetBandMetadata(GDALDataType *, GBool *, double *);
-    void NullBlock(void *);
-#endif
-
     void                      NullBuffer(void* pData,
                                          int nBufXSize,
                                          int nBufYSize,
@@ -340,9 +335,7 @@ public:
                              int, int, GDALDataType,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GDALRasterIOExtraArg* psExtraArg) override;
-#ifdef notdef
-    virtual CPLErr IReadBlock(int, int, void *);
-#endif
+
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand * GetOverview(int) override;
     virtual GDALColorInterp GetColorInterpretation() override;
