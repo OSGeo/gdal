@@ -92,7 +92,7 @@ def pdf_checksum_available():
         ret = gdaltest.pdf_is_checksum_available
         if ret is True or ret is False:
             return ret
-    except NameError:
+    except AttributeError:
         pass
 
     if pdf_is_poppler() or pdf_is_pdfium():
