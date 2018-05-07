@@ -36,16 +36,8 @@ import sys
 # -----------------------------------------------------------------------------
 
 
-def EscapeLine(line):
-
-    line_out = ''
-    for lchar in line:
-        if lchar == '"':
-            line_out += '\\"'
-        else:
-            line_out += lchar
-
-    return line_out
+def EscapeLine(ln):
+    return ln.replace('"', '\\"')
 
 # -----------------------------------------------------------------------------
 #
