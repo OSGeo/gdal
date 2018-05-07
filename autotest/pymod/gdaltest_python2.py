@@ -48,7 +48,7 @@ def run_func(func):
         traceback.print_exc()
 
         raise x
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         result = 'fail (blowup)'
         print(result)
 

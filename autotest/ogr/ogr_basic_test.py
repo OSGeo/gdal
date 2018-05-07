@@ -607,7 +607,7 @@ def ogr_basic_12():
         return 'fail'
     feat_def.AddFieldDefn(field_def)
 
-    if False:
+    if False:  # pylint: disable=using-constant-test
         f = ogr.Feature(feat_def)
         gdal.ErrorReset()
         f.SetField('fld', '1.23')

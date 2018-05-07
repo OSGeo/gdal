@@ -316,6 +316,7 @@ def test_ogr2ogr_lib_12():
 
 
 def mycallback_with_failure(pct, msg, user_data):
+    # pylint: disable=unused-argument
     if pct > 0.5:
         return 0
     return 1

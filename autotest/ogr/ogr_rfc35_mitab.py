@@ -400,7 +400,7 @@ def ogr_rfc35_mitab_4():
         gdaltest.post_reason(ret)
         return ret
 
-    if False:
+    if False:  # pylint: disable=using-constant-test
         fd.SetWidth(5)
         lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
 
@@ -418,7 +418,7 @@ def ogr_rfc35_mitab_4():
 
     ds = None
 
-    if False:
+    if False:  # pylint: disable=using-constant-test
         ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
