@@ -29,10 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
 import sys
 import os
 import shutil
+from osgeo import gdal
 
 sys.path.append('../pymod')
 
@@ -537,10 +537,7 @@ def misc_11():
     if not gdaltest.support_symlink():
         return 'skip'
 
-    try:
-        os.unlink('tmp/symlink.tif')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/symlink.tif')
     os.symlink('GTIFF_DIR:1:data/byte.tif', 'tmp/symlink.tif')
 
     ds = gdal.Open('tmp/symlink.tif')

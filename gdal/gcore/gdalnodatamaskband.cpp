@@ -64,7 +64,7 @@ GDALNoDataMaskBand::GDALNoDataMaskBand( GDALRasterBand *poParentIn ) :
 /*                       ~GDALNoDataMaskBand()                          */
 /************************************************************************/
 
-GDALNoDataMaskBand::~GDALNoDataMaskBand() {}
+GDALNoDataMaskBand::~GDALNoDataMaskBand() = default;
 
 /************************************************************************/
 /*                             IReadBlock()                             */

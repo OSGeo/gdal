@@ -930,7 +930,7 @@ void FGdbLayer::WorkAroundExtentProblem()
     m_bLayerJustCreated = FALSE;
 
     OGREnvelope sEnvelope;
-    if (GetExtent(&sEnvelope, TRUE) != OGRERR_NONE)
+    if (FGdbLayer::GetExtent(&sEnvelope, TRUE) != OGRERR_NONE)
         return;
 
     /* The characteristic of the bug is that the reported extent */

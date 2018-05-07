@@ -33,11 +33,11 @@
 
 import os
 import sys
+import shutil
 
 sys.path.append('../pymod')
 
 import gdaltest
-import shutil
 
 from osgeo import gdal
 from osgeo import gnm

@@ -41,8 +41,8 @@
 #include "cpl_virtualmem.h"
 
 // To be changed if we go to 64-bit RasterIO coordinates and spacing.
-typedef int coord_type;
-typedef int spacing_type;
+using coord_type = int;
+using spacing_type = int;
 
 /************************************************************************/
 /*                            GDALVirtualMem                            */

@@ -46,7 +46,7 @@ CPL_CVSID("$Id$")
  * \brief Create an empty multi curve collection.
  */
 
-OGRMultiCurve::OGRMultiCurve() {}
+OGRMultiCurve::OGRMultiCurve() = default;
 
 /************************************************************************/
 /*                OGRMultiCurve( const OGRMultiCurve& )                 */
@@ -61,15 +61,13 @@ OGRMultiCurve::OGRMultiCurve() {}
  * @since GDAL 2.1
  */
 
-OGRMultiCurve::OGRMultiCurve( const OGRMultiCurve& other ) :
-    OGRGeometryCollection(other)
-{}
+OGRMultiCurve::OGRMultiCurve( const OGRMultiCurve& ) = default;
 
 /************************************************************************/
 /*                           ~OGRMultiCurve()                           */
 /************************************************************************/
 
-OGRMultiCurve::~OGRMultiCurve() {}
+OGRMultiCurve::~OGRMultiCurve() = default;
 
 /************************************************************************/
 /*                  operator=( const OGRMultiCurve&)                    */

@@ -140,9 +140,7 @@ CPL_CVSID("$Id$")
  */
 class GDALPamDataset;
 
-GDALPamDataset::GDALPamDataset() :
-    nPamFlags(0),
-    psPam(nullptr)
+GDALPamDataset::GDALPamDataset()
 {
     SetMOFlags( GetMOFlags() | GMO_PAM_CLASS );
 }
@@ -157,7 +155,7 @@ GDALPamDataset::~GDALPamDataset()
     if( nPamFlags & GPF_DIRTY )
     {
         CPLDebug( "GDALPamDataset", "In destructor with dirty metadata." );
-        FlushCache();
+        GDALPamDataset::TrySaveXML();
     }
 
     PamClear();

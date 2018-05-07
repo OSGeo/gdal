@@ -50,11 +50,11 @@ CPL_CVSID("$Id$")
 // PCI uses a 16-character string for coordinate system and datum/ellipsoid.
 constexpr int knProjSize = 16;
 
-typedef struct
+struct PCIDatums
 {
     const char *pszPCIDatum;
     int        nEPSGCode;
-} PCIDatums;
+};
 
 static const PCIDatums asDatums[] =
 {

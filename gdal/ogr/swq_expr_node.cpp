@@ -51,10 +51,7 @@ CPL_CVSID("$Id$")
 /*                           swq_expr_node()                            */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node()
-
-{
-}
+swq_expr_node::swq_expr_node() = default;
 
 /************************************************************************/
 /*                          swq_expr_node(int)                          */
@@ -205,7 +202,7 @@ swq_expr_node::Check( swq_field_list *poFieldList,
         {
             if( table_name )
                 CPLError( CE_Failure, CPLE_AppDefined,
-                      "\"%s\".\"%s\" not recognised as an available field.",
+                      R"("%s"."%s" not recognised as an available field.)",
                       table_name, string_value );
             else
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -490,7 +487,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
 /*      Operation - start by unparsing all the subexpressions.          */
 /* -------------------------------------------------------------------- */
     std::vector<char*> apszSubExpr;
-
+    apszSubExpr.reserve(nSubExprCount);
     for( int i = 0; i < nSubExprCount; i++ )
         apszSubExpr.push_back( papoSubExpr[i]->Unparse(field_list, chColumnQuote) );
 
@@ -725,7 +722,7 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
     std::vector<swq_expr_node*> apoValues;
     std::vector<int> anValueNeedsFree;
     bool bError = false;
-
+    apoValues.reserve(nSubExprCount);
     for( int i = 0; i < nSubExprCount && !bError; i++ )
     {
         if( papoSubExpr[i]->eNodeType == SNT_CONSTANT )

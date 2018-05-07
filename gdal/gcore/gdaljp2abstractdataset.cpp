@@ -61,7 +61,7 @@ GDALJP2AbstractDataset::GDALJP2AbstractDataset() = default;
 GDALJP2AbstractDataset::~GDALJP2AbstractDataset()
 {
     CPLFree(pszWldFilename);
-    CloseDependentDatasets();
+    GDALJP2AbstractDataset::CloseDependentDatasets();
     CSLDestroy(papszMetadataFiles);
 }
 

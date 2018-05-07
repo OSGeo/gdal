@@ -188,12 +188,7 @@ GDALMDReaderBase* GDALMDReaderManager::GetReader(const char *pszPath,
  * GDALMDReaderBase()
  */
 GDALMDReaderBase::GDALMDReaderBase( const char * /* pszPath */,
-                                    char ** /* papszSiblingFiles */ ) :
-    m_papszIMDMD(nullptr),
-    m_papszRPCMD(nullptr),
-    m_papszIMAGERYMD(nullptr),
-    m_papszDEFAULTMD(nullptr),
-    m_bIsMetadataLoad(false)
+                                    char ** /* papszSiblingFiles */ )
 {}
 
 /**

@@ -192,7 +192,7 @@ int     TABMAPIndexBlock::CommitToFile()
     GotoByteInBlock(0x000);
 
     WriteInt16(TABMAP_INDEX_BLOCK);    // Block type code
-    WriteInt16((GInt16)m_numEntries);
+    WriteInt16(static_cast<GInt16>(m_numEntries));
 
     nStatus = CPLGetLastErrorNo();
 
@@ -601,7 +601,7 @@ GInt32  TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
                                     m_nBlockSize, TRUE, TABReadWrite);
     if (poBlock != nullptr && poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
     {
-        m_poCurChild = (TABMAPIndexBlock*)poBlock;
+        m_poCurChild = cpl::down_cast<TABMAPIndexBlock*>(poBlock);
         poBlock = nullptr;
         m_nCurChildIndex = nBestCandidate;
         m_poCurChild->SetParentRef(this);
@@ -802,7 +802,7 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
                                        m_nBlockSize, TRUE, TABReadWrite);
             if (poBlock != nullptr && poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
             {
-                m_poCurChild = (TABMAPIndexBlock*)poBlock;
+                m_poCurChild = cpl::down_cast<TABMAPIndexBlock*>(poBlock);
                 poBlock = nullptr;
                 m_nCurChildIndex = nBestCandidate;
                 m_poCurChild->SetParentRef(this);
@@ -1129,7 +1129,7 @@ int     TABMAPIndexBlock::SplitNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
      * Make a temporary copy of the entries in current node
      *----------------------------------------------------------------*/
     int nSrcEntries = m_numEntries;
-    TABMAPIndexEntry *pasSrcEntries = (TABMAPIndexEntry*)CPLMalloc(m_numEntries*sizeof(TABMAPIndexEntry));
+    TABMAPIndexEntry *pasSrcEntries = static_cast<TABMAPIndexEntry*>(CPLMalloc(m_numEntries*sizeof(TABMAPIndexEntry)));
     memcpy(pasSrcEntries, &m_asEntries, m_numEntries*sizeof(TABMAPIndexEntry));
 
     int nSrcCurChildIndex = m_nCurChildIndex;

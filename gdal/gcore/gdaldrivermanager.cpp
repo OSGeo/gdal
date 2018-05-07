@@ -656,7 +656,7 @@ void GDALDriverManager::AutoSkipDrivers()
         apapszList[1] = CSLTokenizeStringComplex(pszOGR_SKIP, ",", FALSE, FALSE);
     }
 
-    for( int j = 0; j < 2; ++j )
+    for( auto j: {0, 1} )
     {
         for( int i = 0; apapszList[j] != nullptr && apapszList[j][i] != nullptr; ++i )
         {

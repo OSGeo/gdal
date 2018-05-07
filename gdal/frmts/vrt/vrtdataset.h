@@ -142,9 +142,20 @@ VRTSource *VRTParseFilterSources( CPLXMLNode *psTree, const char *, void* pUniqu
 
 class VRTRasterBand;
 
+template<class T> struct VRTFlushCacheStruct
+{
+    static void FlushCache(T& obj);
+};
+
+class VRTWarpedDataset;
+class VRTPansharpenedDataset;
+
 class CPL_DLL VRTDataset : public GDALDataset
 {
     friend class VRTRasterBand;
+    friend struct VRTFlushCacheStruct<VRTDataset>;
+    friend struct VRTFlushCacheStruct<VRTWarpedDataset>;
+    friend struct VRTFlushCacheStruct<VRTPansharpenedDataset>;
 
     char           *m_pszProjection;
 
@@ -288,6 +299,8 @@ public:
                       VRTWarpedDataset( int nXSize, int nYSize );
     virtual ~VRTWarpedDataset();
 
+    virtual void  FlushCache() override;
+
     CPLErr            Initialize( /* GDALWarpOptions */ void * );
 
     virtual CPLErr IBuildOverviews( const char *, int, int *,
@@ -363,6 +376,8 @@ class VRTPansharpenedDataset : public VRTDataset
 public:
                       VRTPansharpenedDataset( int nXSize, int nYSize );
     virtual ~VRTPansharpenedDataset();
+
+    virtual void  FlushCache() override;
 
     virtual CPLErr    XMLInit( CPLXMLNode *, const char * ) override;
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath ) override;

@@ -138,18 +138,9 @@ def ograpispy_2():
 
 
 def ograpispy_cleanup():
-    try:
-        os.unlink('tmp/ograpispy_1.py')
-    except OSError:
-        pass
-    try:
-        os.unlink('tmp/ograpispy_2.py')
-    except OSError:
-        pass
-    try:
-        os.unlink('tmp/ograpispy_2.pyc')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/ograpispy_1.py')
+    gdal.Unlink('tmp/ograpispy_2.py')
+    gdal.Unlink('tmp/ograpispy_2.pyc')
     try:
         shutil.rmtree('tmp/snapshot_1')
     except OSError:

@@ -410,7 +410,7 @@ swq_select_summarize( swq_select *select_info,
                 if( select_info->order_specs == 0 )
                 {
                     // If not sorted, keep values in their original order
-                    summary.oVectorDistinctValues.push_back(value);
+                    summary.oVectorDistinctValues.emplace_back(value);
                 }
                 summary.count ++;
             }
@@ -820,11 +820,9 @@ static const char* const apszSQLReservedKeywords[] = {
 
 int swq_is_reserved_keyword(const char* pszStr)
 {
-    for( size_t i = 0;
-         i < CPL_ARRAYSIZE(apszSQLReservedKeywords);
-         i++ )
+    for( const auto& pszKeyword: apszSQLReservedKeywords )
     {
-        if( EQUAL(pszStr, apszSQLReservedKeywords[i]) )
+        if( EQUAL(pszStr, pszKeyword) )
             return TRUE;
     }
     return FALSE;

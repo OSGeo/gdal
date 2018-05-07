@@ -3160,7 +3160,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
 
             void *pData = poBlock->GetDataRef();
 
-            int nXCheck, nYCheck;
+            int nXCheck = 0, nYCheck = 0;
             GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
             // this is a special case for a common situation.
@@ -5026,7 +5026,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 
                 void* const pData = poBlock->GetDataRef();
 
-                int nXCheck, nYCheck;
+                int nXCheck = 0, nYCheck = 0;
                 GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
                 if( eDataType == GDT_Byte )
@@ -5140,7 +5140,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 
             void* const pData = poBlock->GetDataRef();
 
-            int nXCheck, nYCheck;
+            int nXCheck = 0, nYCheck = 0;
             GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
             // This isn't the fastest way to do this, but is easier for now.
@@ -5535,7 +5535,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
 
             void * const pData = poBlock->GetDataRef();
 
-            int nXCheck, nYCheck;
+            int nXCheck = 0, nYCheck = 0;
             GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
             // This isn't the fastest way to do this, but is easier for now.

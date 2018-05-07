@@ -42,7 +42,7 @@ class OGRNASDataSource;
 /*                            OGRNASLayer                               */
 /************************************************************************/
 
-class OGRNASLayer : public OGRLayer
+class OGRNASLayer final: public OGRLayer
 {
     OGRFeatureDefn      *poFeatureDefn;
 
@@ -75,7 +75,7 @@ class OGRNASLayer : public OGRLayer
 /*                         OGRNASRelationLayer                          */
 /************************************************************************/
 
-class OGRNASRelationLayer : public OGRLayer
+class OGRNASRelationLayer final: public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
     OGRNASDataSource    *poDS;
@@ -106,7 +106,7 @@ class OGRNASRelationLayer : public OGRLayer
 /*                           OGRNASDataSource                           */
 /************************************************************************/
 
-class OGRNASDataSource : public OGRDataSource
+class OGRNASDataSource final: public OGRDataSource
 {
     OGRLayer          **papoLayers;
     int                 nLayers;

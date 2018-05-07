@@ -45,6 +45,8 @@ class OGRMILayerAttrIndex;
 
 class OGRMIAttrIndex : public OGRAttrIndex
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRMIAttrIndex)
+
 public:
     int         iIndex;
     TABINDFile  *poINDFile;
@@ -78,6 +80,8 @@ public:
 
 class OGRMILayerAttrIndex final: public OGRLayerAttrIndex
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRMILayerAttrIndex)
+
 public:
     TABINDFile  *poINDFile;
 

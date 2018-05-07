@@ -36,6 +36,8 @@
 
 class CPL_DLL OGRLayerDecorator : public OGRLayer
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRLayerDecorator)
+
   protected:
     OGRLayer *m_poDecoratedLayer;
     int       m_bHasOwnership;

@@ -43,9 +43,7 @@ CPL_CVSID("$Id$")
  *
  */
 
-OGRTriangulatedSurface::OGRTriangulatedSurface()
-
-{ }
+OGRTriangulatedSurface::OGRTriangulatedSurface() = default;
 
 /************************************************************************/
 /*        OGRTriangulatedSurface( const OGRTriangulatedSurface& )       */
@@ -72,9 +70,7 @@ OGRTriangulatedSurface::OGRTriangulatedSurface(
  *
  */
 
-OGRTriangulatedSurface::~OGRTriangulatedSurface()
-
-{ }
+OGRTriangulatedSurface::~OGRTriangulatedSurface() = default;
 
 /************************************************************************/
 /*                 operator=( const OGRTriangulatedSurface&)            */

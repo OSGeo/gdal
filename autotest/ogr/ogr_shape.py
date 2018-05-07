@@ -1979,10 +1979,7 @@ def ogr_shape_47():
     if not gdaltest.support_symlink():
         return 'skip'
 
-    try:
-        os.unlink('tmp/poly.zip')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/poly.zip')
     os.symlink('/vsizip/data/poly.zip', 'tmp/poly.zip')
 
     ds = ogr.Open('tmp/poly.zip')

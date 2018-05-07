@@ -31,7 +31,6 @@
 ###############################################################################
 
 import array
-import os
 import struct
 import sys
 
@@ -258,10 +257,7 @@ def ehdr_12():
 
 def ehdr_13():
 
-    try:
-        os.unlink('data/byte.tif.aux.xml')
-    except OSError:
-        pass
+    gdal.Unlink('data/byte.tif.aux.xml')
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('EHDR').CreateCopy('/vsimem/byte.bil', src_ds)

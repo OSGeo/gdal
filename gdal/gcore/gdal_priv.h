@@ -472,7 +472,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
             public:
                 Iterator(GDALDataset* poDS, bool bStart);
                 Iterator(const Iterator& oOther); // declared but not defined. Needed for gcc 5.4 at least
-                Iterator(Iterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
+                Iterator(Iterator&& oOther) noexcept; // declared but not defined. Needed for gcc 5.4 at least
                 ~Iterator();
                 GDALRasterBand* operator*();
                 Iterator& operator++();
@@ -667,11 +667,11 @@ private:
                 Iterator(); /**< Default constructor */
                 Iterator(GDALDataset* poDS, bool bStart);  /**< Constructor */
                 Iterator(const Iterator& oOther);  /**< Copy constructor */
-                Iterator(Iterator&& oOther);  /**< Move constructor */
+                Iterator(Iterator&& oOther) noexcept;  /**< Move constructor */
                 ~Iterator(); /**< Destructor */
 
                 Iterator& operator=(const Iterator& oOther);  /**< Assignment operator */
-                Iterator& operator=(Iterator&& oOther); /**< Move assignment operator */
+                Iterator& operator=(Iterator&& oOther) noexcept; /**< Move assignment operator */
 
                 OGRLayer* operator*() const; /**< Dereference operator */
                 Iterator& operator++(); /**< Pre-increment operator */
@@ -717,7 +717,7 @@ private:
             public:
                 Iterator(GDALDataset* poDS, bool bStart);
                 Iterator(const Iterator& oOther); // declared but not defined. Needed for gcc 5.4 at least
-                Iterator(Iterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
+                Iterator(Iterator&& oOther) noexcept; // declared but not defined. Needed for gcc 5.4 at least
                 ~Iterator();
                 const FeatureLayerPair& operator*() const;
                 Iterator& operator++();

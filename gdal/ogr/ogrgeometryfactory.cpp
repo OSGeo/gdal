@@ -1303,12 +1303,10 @@ OGRGeometryH OGR_G_ForceToMultiLineString( OGRGeometryH hGeom )
 /*                          organizePolygons()                          */
 /************************************************************************/
 
-typedef struct _sPolyExtended sPolyExtended;
-
-struct _sPolyExtended
+struct sPolyExtended
 {
-    CPL_DISALLOW_COPY_ASSIGN(_sPolyExtended)
-    _sPolyExtended() = default;
+    CPL_DISALLOW_COPY_ASSIGN(sPolyExtended)
+    sPolyExtended() = default;
 
     OGRGeometry* poGeometry = nullptr;
     OGRCurvePolygon* poPolygon = nullptr;
@@ -1349,13 +1347,13 @@ static int OGRGeometryFactoryCompareByIndex(const void* p1, const void* p2)
 
 constexpr int N_CRITICAL_PART_NUMBER = 100;
 
-typedef enum
+enum OrganizePolygonMethod
 {
    METHOD_NORMAL,
    METHOD_SKIP,
    METHOD_ONLY_CCW,
    METHOD_CCW_INNER_JUST_AFTER_CW_OUTER
-} OrganizePolygonMethod;
+};
 
 /**
  * \brief Organize polygons based on geometries.
@@ -3501,10 +3499,10 @@ static OGRGeometry* TransformBeforeAntimeridianToWGS84(
         poRevCT->Transform(1, &x, &y);
         poLR1->addPoint( x, y );
     }
-    for( size_t i = 0; i < aoPoints.size(); ++i )
+    for( const auto& oPoint: aoPoints )
     {
         double x = 180.0 - EPS;
-        double y = aoPoints[i].y;
+        double y = oPoint.y;
         poRevCT->Transform(1, &x, &y);
         poLR1->addPoint( x, y );
     }
@@ -3530,10 +3528,10 @@ static OGRGeometry* TransformBeforeAntimeridianToWGS84(
         poRevCT->Transform(1, &x, &y);
         poLR2->addPoint( x, y );
     }
-    for( size_t i = 0; i < aoPoints.size(); ++i )
+    for( const auto& oPoint: aoPoints )
     {
         double x = -180.0 + EPS;
-        double y = aoPoints[i].y;
+        double y = oPoint.y;
         poRevCT->Transform(1, &x, &y);
         poLR2->addPoint( x, y );
     }

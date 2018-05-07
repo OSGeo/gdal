@@ -156,7 +156,7 @@ void KEARasterBand::UpdateMetadataList()
     }
 
     // STATISTICS_HISTONUMBINS
-    const GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
+    const GDALRasterAttributeTable *pTable = KEARasterBand::GetDefaultRAT();
     CPLString osWorkingResult;
     osWorkingResult.Printf( "%lu", (unsigned long)pTable->GetRowCount());
     m_papszMetadataList = CSLSetNameValue(m_papszMetadataList, "STATISTICS_HISTONUMBINS", osWorkingResult);

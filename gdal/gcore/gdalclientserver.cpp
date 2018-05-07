@@ -35,7 +35,7 @@
   #define _WIN32_WINNT 0x0501
   #include <winsock2.h>
   #include <ws2tcpip.h>
-  typedef SOCKET CPL_SOCKET;
+  using CPL_SOCKET = SOCKET;
   #ifndef HAVE_GETADDRINFO
     #define HAVE_GETADDRINFO 1
   #endif
@@ -47,7 +47,7 @@
   #include <netinet/in.h>
   #include <arpa/inet.h>
   #include <netdb.h>
-  typedef int CPL_SOCKET;
+  using CPL_SOCKET = int;
   #define INVALID_SOCKET -1
   #define SOCKET_ERROR -1
   #define SOCKADDR struct sockaddr
@@ -191,7 +191,7 @@ void CPL_DLL  GDALServerLoopInstanceDestroy(void* pInstance);
 CPL_C_END
 
 #define BUFFER_SIZE 1024
-typedef struct
+struct GDALPipe
 {
     CPL_FILE_HANDLE fin;
     CPL_FILE_HANDLE fout;
@@ -203,24 +203,24 @@ typedef struct
     GByte           abyRecvBuffer[BUFFER_SIZE];
     int             nRecvBufferSize;
 #endif
-} GDALPipe;
+};
 
-typedef struct
+struct GDALServerSpawnedProcess
 {
     CPLSpawnedProcess *sp;
     GDALPipe          *p;
-} GDALServerSpawnedProcess;
+};
 
-typedef struct
+struct GDALServerAsyncProgress
 {
     bool   bUpdated;
     double dfComplete;
     char  *pszProgressMsg;
     int    bRet;
     CPLMutex  *hMutex;
-} GDALServerAsyncProgress;
+};
 
-typedef enum
+enum InstrEnum
 {
     INSTR_INVALID = 0,
     INSTR_GetGDALVersion = 1, /* do not change this ! */
@@ -303,7 +303,7 @@ typedef enum
     INSTR_Band_DeleteNoDataValue,
     INSTR_Band_End,
     INSTR_END
-} InstrEnum;
+};
 
 #ifdef DEBUG_VERBOSE
 static const char* const apszInstr[] =
@@ -493,9 +493,9 @@ class GDALClientDataset final: public GDALPamDataset
     CPL_DISALLOW_COPY_ASSIGN(GDALClientDataset)
 
     protected:
-       virtual CPLErr IBuildOverviews( const char *, int, int *,
+       CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * ) override;
-       virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
+       CPLErr IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType,
@@ -3574,11 +3574,11 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
         if( poSrcDS == nullptr )
         {
             GDALPipeWrite(p, static_cast<int>(aoErrors.size()));
-            for(size_t i=0;i<aoErrors.size();i++)
+            for( const auto& oError: aoErrors )
             {
-                GDALPipeWrite(p, aoErrors[i].eErr);
-                GDALPipeWrite(p, aoErrors[i].nErrNo);
-                GDALPipeWrite(p, aoErrors[i].osErrorMsg);
+                GDALPipeWrite(p, oError.eErr);
+                GDALPipeWrite(p, oError.nErrNo);
+                GDALPipeWrite(p, oError.osErrorMsg);
             }
             aoErrors.resize(0);
         }
@@ -4433,21 +4433,17 @@ GDALClientRasterBand::~GDALClientRasterBand()
     delete poRAT;
     CPLFree(pabyCachedLines);
 
-    std::map<int, GDALRasterBand*>::iterator oIter = aMapOvrBands.begin();
-    for( ; oIter != aMapOvrBands.end(); ++oIter )
-        delete oIter->second;
+    for( auto oIter: aMapOvrBands )
+        delete oIter.second;
 
-    std::map< std::pair<CPLString,CPLString>, char*>::iterator oIterItem =
-        aoMapMetadataItem.begin();
-    for( ; oIterItem != aoMapMetadataItem.end(); ++oIterItem )
-        CPLFree(oIterItem->second);
+    for( auto oIter: aoMapMetadataItem )
+        CPLFree(oIter.second);
 
-    std::map<CPLString, char**>::iterator oIterMD = aoMapMetadata.begin();
-    for( ; oIterMD != aoMapMetadata.end(); ++oIterMD )
-        CSLDestroy(oIterMD->second);
+    for( auto oIter: aoMapMetadata )
+        CSLDestroy(oIter.second);
 
-    for(size_t i=0; i < apoOldMaskBands.size(); i++)
-        delete apoOldMaskBands[i];
+    for( auto& poOldMaskBand: apoOldMaskBands )
+        delete poOldMaskBand;
 }
 
 /************************************************************************/

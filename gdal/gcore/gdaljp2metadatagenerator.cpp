@@ -59,27 +59,27 @@ CPL_CVSID("$Id$")
 /*                            GDALGMLJP2Expr                            */
 /************************************************************************/
 
-typedef enum
+enum class GDALGMLJP2ExprType
 {
     GDALGMLJP2Expr_Unknown,
     GDALGMLJP2Expr_XPATH,
     GDALGMLJP2Expr_STRING_LITERAL,
-} GDALGMLJP2ExprType;
+};
 
 class GDALGMLJP2Expr
 {
     static void SkipSpaces( const char*& pszStr );
 
   public:
-    GDALGMLJP2ExprType           eType;
+    GDALGMLJP2ExprType           eType = GDALGMLJP2ExprType::GDALGMLJP2Expr_Unknown;
     CPLString                    osValue{};
 
-    GDALGMLJP2Expr() : eType(GDALGMLJP2Expr_Unknown) {}
+    GDALGMLJP2Expr() = default;
     GDALGMLJP2Expr( const char* pszVal ) :
-        eType(GDALGMLJP2Expr_STRING_LITERAL), osValue(pszVal) {}
-    GDALGMLJP2Expr( CPLString osVal ) :
-        eType(GDALGMLJP2Expr_STRING_LITERAL), osValue(osVal) {}
-    ~GDALGMLJP2Expr() {}
+        eType(GDALGMLJP2ExprType::GDALGMLJP2Expr_STRING_LITERAL), osValue(pszVal) {}
+    GDALGMLJP2Expr( const CPLString& osVal ) :
+        eType(GDALGMLJP2ExprType::GDALGMLJP2Expr_STRING_LITERAL), osValue(osVal) {}
+    ~GDALGMLJP2Expr() = default;
 
     GDALGMLJP2Expr          Evaluate( xmlXPathContextPtr pXPathCtx,
                                       xmlDocPtr pDoc );
@@ -207,7 +207,7 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build( const char* pszOriStr,
                 {
                     pszStr++;
                     GDALGMLJP2Expr* poExpr = new GDALGMLJP2Expr();
-                    poExpr->eType = GDALGMLJP2Expr_XPATH;
+                    poExpr->eType = GDALGMLJP2ExprType::GDALGMLJP2Expr_XPATH;
                     poExpr->osValue = l_osValue;
 #if DEBUG_VERBOSE
                     CPLDebug("GMLJP2", "XPath expression '%s'",
@@ -256,7 +256,7 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
 {
     switch( eType )
     {
-        case GDALGMLJP2Expr_XPATH:
+        case GDALGMLJP2ExprType::GDALGMLJP2Expr_XPATH:
         {
             xmlXPathObjectPtr pXPathObj = xmlXPathEvalExpression(
                     reinterpret_cast<const xmlChar*>(osValue.c_str()), pXPathCtx);

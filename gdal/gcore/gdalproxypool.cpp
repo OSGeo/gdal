@@ -508,11 +508,11 @@ void GDALDatasetPool::CloseDataset(const char* pszFileName, GDALAccess eAccess)
     singleton->_CloseDataset(pszFileName, eAccess);
 }
 
-typedef struct
+struct GetMetadataElt
 {
     char* pszDomain;
     char** papszMetadata;
-} GetMetadataElt;
+};
 
 static
 unsigned long hash_func_get_metadata(const void* _elt)
@@ -538,12 +538,12 @@ void free_func_get_metadata(void* _elt)
     CPLFree(elt);
 }
 
-typedef struct
+struct GetMetadataItemElt
 {
     char* pszName;
     char* pszDomain;
     char* pszMetadataItem;
-} GetMetadataItemElt;
+};
 
 static
 unsigned long hash_func_get_metadata_item(const void* _elt)

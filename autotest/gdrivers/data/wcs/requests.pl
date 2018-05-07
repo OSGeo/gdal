@@ -205,6 +205,17 @@ sub get_setup {
             Outsize => "-outsize $size 0",
             Coverage => [2, 2, 2, 2, 'Coverage2'],
             Versions => [100, 110, 111, 112, 201]
+        },
+        beta_karttakuva => {
+            URL => 'https://beta-karttakuva.maanmittauslaitos.fi/wcs/service/ows',
+            slice => 'time(1985-01-01T00:00:00.000Z)',
+            Versions => [201],
+            Coverage => 'ortokuva__ortokuva',
+            Outsize => "-outsize $size 0",
+            Projwin => "-projwin 377418 6683393.87938218 377717.879386966 6683094",
+            Options => [
+                "-oo INTERLEAVE=PIXEL",
+                ],
         }
     };
 }
@@ -304,7 +315,9 @@ sub test_non_scaled {
         @low = split(/\s/, $o->find('ows:LowerCorner')->get_node(1)->textContent);
         @high = split(/\s/, $o->find('ows:UpperCorner')->get_node(1)->textContent);
     } else {
-        $crs = $xc->find('//gml:Envelope/@srsName')->get_node(1)->textContent;
+        my $srs = $xc->find('//gml:Envelope/@srsName')->get_node(1) //
+            $xc->find('//gml:EnvelopeWithTimePeriod/@srsName')->get_node(1);
+        $crs = $srs->textContent;
         my $o = $doc->find('//gml:lowerCorner')->get_node(1);
         @low = split(/\s/, $o->textContent);
         $o = $dom->documentElement->find('//gml:upperCorner')->get_node(1);
@@ -386,7 +399,11 @@ sub test_scaled {
         $o .= " -oo CLEAR_CACHE";
         $first_call = 0;
     }
-    my $cmd = "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result 2>&1";
+    my $slice = '';
+    if ($setup->{$server}->{slice}) {
+        $slice = "-oo Subset=\"$setup->{$server}->{slice}\"";
+    }
+    my $cmd = "gdal_translate $o $slice \"WCS:$url?version=$version&coverage=$coverage\" $result 2>&1";
     say $cmd if $do{say};
     my $output = `$cmd`;
     my @full_output;

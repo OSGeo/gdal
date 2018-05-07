@@ -37,21 +37,19 @@ CPL_CVSID("$Id$")
 /*                                OGRCurve()                            */
 /************************************************************************/
 
-OGRCurve::OGRCurve() {}
+OGRCurve::OGRCurve() = default;
 
 /************************************************************************/
 /*                               ~OGRCurve()                            */
 /************************************************************************/
 
-OGRCurve::~OGRCurve() {}
+OGRCurve::~OGRCurve() = default;
 
 /************************************************************************/
 /*                       OGRCurve( const OGRCurve& )                    */
 /************************************************************************/
 
-OGRCurve::OGRCurve( const OGRCurve& other ) :
-    OGRGeometry( other )
-{}
+OGRCurve::OGRCurve( const OGRCurve& ) = default;
 
 /************************************************************************/
 /*                       operator=( const OGRCurve& )                   */
@@ -424,7 +422,7 @@ int OGRCurve::IntersectsPoint( CPL_UNUSED const OGRPoint* p ) const
 /*                          ~OGRPointIterator()                         */
 /************************************************************************/
 
-OGRPointIterator::~OGRPointIterator() {}
+OGRPointIterator::~OGRPointIterator() = default;
 
 /**
  * \fn OGRBoolean OGRPointIterator::getNextPoint(OGRPoint* p);
@@ -545,9 +543,7 @@ OGRSimpleCurve::ConstIterator::ConstIterator(const OGRSimpleCurve* poSelf, int n
     m_poPrivate->m_nPos = nPos;
 }
 
-OGRSimpleCurve::ConstIterator::~ConstIterator()
-{
-}
+OGRSimpleCurve::ConstIterator::~ConstIterator() = default;
 
 const OGRPoint& OGRSimpleCurve::ConstIterator::operator*() const
 {
@@ -600,9 +596,7 @@ OGRCurve::ConstIterator::ConstIterator(const OGRCurve* poSelf, bool bStart):
     }
 }
 
-OGRCurve::ConstIterator::~ConstIterator()
-{
-}
+OGRCurve::ConstIterator::~ConstIterator() = default;
 
 const OGRPoint& OGRCurve::ConstIterator::operator*() const
 {

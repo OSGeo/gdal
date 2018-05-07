@@ -2568,7 +2568,7 @@ VSICurlFilesystemHandler::VSICurlFilesystemHandler():
 
 VSICurlFilesystemHandler::~VSICurlFilesystemHandler()
 {
-    ClearCache();
+    VSICurlFilesystemHandler::ClearCache();
 
     if( hMutex != nullptr )
         CPLDestroyMutex( hMutex );
@@ -5810,6 +5810,7 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
 
 VSIS3FSHandler::~VSIS3FSHandler()
 {
+    VSIS3FSHandler::ClearCache();
     VSIS3HandleHelper::CleanMutex();
 }
 
@@ -6494,6 +6495,7 @@ class VSIGSHandle final : public IVSIS3LikeHandle
 
 VSIGSFSHandler::~VSIGSFSHandler()
 {
+    VSICurlFilesystemHandler::ClearCache();
     VSIGSHandleHelper::CleanMutex();
 }
 
@@ -6707,7 +6709,7 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
   public:
     VSIAzureFSHandler() = default;
-    ~VSIAzureFSHandler() override;
+    ~VSIAzureFSHandler() override = default;
 
     CPLString GetFSPrefix() override { return "/vsiaz/"; }
     const char* GetDebugKey() const override { return "AZURE"; }
@@ -6751,14 +6753,6 @@ class VSIAzureHandle final : public VSICurlHandle
                      VSIAzureBlobHandleHelper* poHandleHelper);
         virtual ~VSIAzureHandle();
 };
-
-/************************************************************************/
-/*                        ~VSIAzureFSHandler()                          */
-/************************************************************************/
-
-VSIAzureFSHandler::~VSIAzureFSHandler()
-{
-}
 
 /************************************************************************/
 /*                          CreateFileHandle()                          */
@@ -7672,6 +7666,7 @@ VSIVirtualHandle* VSIOSSFSHandler::Open( const char *pszFilename,
 
 VSIOSSFSHandler::~VSIOSSFSHandler()
 {
+    VSIOSSFSHandler::ClearCache();
 }
 
 /************************************************************************/
@@ -7979,6 +7974,7 @@ VSIVirtualHandle* VSISwiftFSHandler::Open( const char *pszFilename,
 
 VSISwiftFSHandler::~VSISwiftFSHandler()
 {
+    VSISwiftFSHandler::ClearCache();
     VSISwiftHandleHelper::CleanMutex();
 }
 

@@ -33,6 +33,8 @@
 ###############################################################################
 
 
+import sys
+
 from osgeo import gdal
 gdal.TermProgress = gdal.TermProgress_nocb
 
@@ -41,8 +43,6 @@ try:
 except ImportError:
     import Numeric as numpy
 
-
-import sys
 
 # =============================================================================
 

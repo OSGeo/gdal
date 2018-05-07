@@ -70,7 +70,7 @@ static char **MIDTokenize( const char *pszLine, const char *pszDelim )
     int iChar;
     int iTokenChar = 0;
     int bInQuotes = FALSE;
-    char *pszToken = (char *) CPLMalloc(strlen(pszLine)+1);
+    char *pszToken = static_cast<char *>(CPLMalloc(strlen(pszLine)+1));
     int nDelimLen = static_cast<int>(strlen(pszDelim));
 
     for( iChar = 0; pszLine[iChar] != '\0'; iChar++ )
@@ -264,7 +264,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
 
             int nStringLen = static_cast<int>( osString.length() );
             const char *pszString = osString.c_str();
-            char *pszWorkString = (char*)CPLMalloc((2*(nStringLen)+1)*sizeof(char));
+            char *pszWorkString = static_cast<char*>(CPLMalloc((2*(nStringLen)+1)*sizeof(char)));
             int j = 0;
             for (int i =0; i < nStringLen; ++i)
             {
@@ -302,7 +302,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
                   GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
                                      &nHour, &nMin, &fSec, &nTZFlag);
                   snprintf(szBuffer, sizeof(szBuffer), "%2.2d%2.2d%2.2d%3.3d", nHour, nMin,
-                          (int)fSec, OGR_GET_MS(fSec));
+                          static_cast<int>(fSec), OGR_GET_MS(fSec));
               }
               fp->WriteLine("%s",szBuffer);
               break;
@@ -334,7 +334,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
                                      &nHour, &nMin, &fSec, &nTZFlag);
                   snprintf(szBuffer, sizeof(szBuffer), "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d%3.3d",
                           nYear, nMonth, nDay, nHour, nMin,
-                          (int)fSec, OGR_GET_MS(fSec));
+                          static_cast<int>(fSec), OGR_GET_MS(fSec));
               }
               fp->WriteLine("%s",szBuffer);
               break;
@@ -429,9 +429,9 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                                               TRUE,FALSE);
     if (papszToken != nullptr && CSLCount(papszToken) == 4 && EQUAL(papszToken[0], "SYMBOL") )
     {
-        SetSymbolNo((GInt16)atoi(papszToken[1]));
-        SetSymbolColor((GInt32)atoi(papszToken[2]));
-        SetSymbolSize((GInt16)atoi(papszToken[3]));
+        SetSymbolNo(static_cast<GInt16>(atoi(papszToken[1])));
+        SetSymbolColor(atoi(papszToken[2]));
+        SetSymbolSize(static_cast<GInt16>(atoi(papszToken[3])));
     }
 
     CSLDestroy(papszToken);
@@ -508,9 +508,9 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         return -1;
     }
 
-    SetSymbolNo((GInt16)atoi(papszToken[1]));
-    SetSymbolColor((GInt32)atoi(papszToken[2]));
-    SetSymbolSize((GInt16)atoi(papszToken[3]));
+    SetSymbolNo(static_cast<GInt16>(atoi(papszToken[1])));
+    SetSymbolColor(atoi(papszToken[2]));
+    SetSymbolSize(static_cast<GInt16>(atoi(papszToken[3])));
     SetFontName(papszToken[4]);
     SetFontStyleMIFValue(atoi(papszToken[5]));
     SetSymbolAngle(CPLAtof(papszToken[6]));
@@ -589,9 +589,9 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     }
 
     SetFontName(papszToken[1]);
-    SetSymbolColor((GInt32)atoi(papszToken[2]));
-    SetSymbolSize((GInt16)atoi(papszToken[3]));
-    m_nCustomStyle = (GByte)atoi(papszToken[4]);
+    SetSymbolColor(atoi(papszToken[2]));
+    SetSymbolSize(static_cast<GInt16>(atoi(papszToken[3])));
+    m_nCustomStyle = static_cast<GByte>(atoi(papszToken[4]));
 
     CSLDestroy(papszToken);
 
@@ -881,8 +881,8 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 if (CSLCount(papszToken) == 4)
                 {
                     SetPenWidthMIF(atoi(papszToken[1]));
-                    SetPenPattern((GByte)atoi(papszToken[2]));
-                    SetPenColor((GInt32)atoi(papszToken[3]));
+                    SetPenPattern(static_cast<GByte>(atoi(papszToken[2])));
+                    SetPenColor(atoi(papszToken[3]));
                 }
             }
             else if (STARTS_WITH_CI(papszToken[0], "SMOOTH"))
@@ -1128,7 +1128,7 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         int isValidGeometry = FALSE;
         const char* papszOptions[] = { "METHOD=DEFAULT", nullptr };
         poGeometry = OGRGeometryFactory::organizePolygons(
-            (OGRGeometry**)tabPolygons, numLineSections, &isValidGeometry, papszOptions );
+            reinterpret_cast<OGRGeometry**>(tabPolygons), numLineSections, &isValidGeometry, papszOptions );
 
         if (!isValidGeometry)
         {
@@ -1162,16 +1162,16 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 if (CSLCount(papszToken) == 4)
                 {
                     SetPenWidthMIF(atoi(papszToken[1]));
-                    SetPenPattern((GByte)atoi(papszToken[2]));
-                    SetPenColor((GInt32)atoi(papszToken[3]));
+                    SetPenPattern(static_cast<GByte>(atoi(papszToken[2])));
+                    SetPenColor(atoi(papszToken[3]));
                 }
             }
             else if (STARTS_WITH_CI(papszToken[0], "BRUSH"))
             {
                 if (CSLCount(papszToken) >= 3)
                 {
-                    SetBrushFGColor((GInt32)atoi(papszToken[2]));
-                    SetBrushPattern((GByte)atoi(papszToken[1]));
+                    SetBrushFGColor(atoi(papszToken[2]));
+                    SetBrushPattern(static_cast<GByte>(atoi(papszToken[1])));
 
                     if (CSLCount(papszToken) == 4)
                        SetBrushBGColor(atoi(papszToken[3]));
@@ -1385,16 +1385,16 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                if (CSLCount(papszToken) == 4)
                {
                    SetPenWidthMIF(atoi(papszToken[1]));
-                   SetPenPattern((GByte)atoi(papszToken[2]));
-                   SetPenColor((GInt32)atoi(papszToken[3]));
+                   SetPenPattern(static_cast<GByte>(atoi(papszToken[2])));
+                   SetPenColor(atoi(papszToken[3]));
                }
            }
            else if (STARTS_WITH_CI(papszToken[0], "BRUSH"))
            {
                if (CSLCount(papszToken) >=3)
                {
-                   SetBrushFGColor((GInt32)atoi(papszToken[2]));
-                   SetBrushPattern((GByte)atoi(papszToken[1]));
+                   SetBrushFGColor(atoi(papszToken[2]));
+                   SetBrushPattern(static_cast<GByte>(atoi(papszToken[1])));
 
                    if (CSLCount(papszToken) == 4)
                        SetBrushBGColor(atoi(papszToken[3]));
@@ -1530,16 +1530,16 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 if (CSLCount(papszToken) == 4)
                 {
                     SetPenWidthMIF(atoi(papszToken[1]));
-                    SetPenPattern((GByte)atoi(papszToken[2]));
-                    SetPenColor((GInt32)atoi(papszToken[3]));
+                    SetPenPattern(static_cast<GByte>(atoi(papszToken[2])));
+                    SetPenColor(atoi(papszToken[3]));
                 }
             }
             else if (STARTS_WITH_CI(papszToken[0], "BRUSH"))
             {
                 if (CSLCount(papszToken) >= 3)
                 {
-                    SetBrushFGColor((GInt32)atoi(papszToken[2]));
-                    SetBrushPattern((GByte)atoi(papszToken[1]));
+                    SetBrushFGColor(atoi(papszToken[2]));
+                    SetBrushPattern(static_cast<GByte>(atoi(papszToken[1])));
 
                     if (CSLCount(papszToken) == 4)
                       SetBrushBGColor(atoi(papszToken[3]));
@@ -1680,8 +1680,8 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     int numPts =
          std::max(2,
              (m_dEndAngle < m_dStartAngle
-              ? (int) std::abs( ((m_dEndAngle+360.0)-m_dStartAngle)/2.0 ) + 1
-              : (int) std::abs( (m_dEndAngle-m_dStartAngle)/2.0 ) + 1));
+              ? static_cast<int>(std::abs( ((m_dEndAngle+360.0)-m_dStartAngle)/2.0 ) + 1)
+              : static_cast<int>(std::abs( (m_dEndAngle-m_dStartAngle)/2.0 ) + 1)));
 
     TABGenerateArc(poLine, numPts,
                    m_dCenterX, m_dCenterY,
@@ -1706,8 +1706,8 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 if (CSLCount(papszToken) == 4)
                 {
                     SetPenWidthMIF(atoi(papszToken[1]));
-                    SetPenPattern((GByte)atoi(papszToken[2]));
-                    SetPenColor((GInt32)atoi(papszToken[3]));
+                    SetPenPattern(static_cast<GByte>(atoi(papszToken[2])));
+                    SetPenColor(atoi(papszToken[3]));
                 }
             }
         }
@@ -2155,9 +2155,9 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                                               TRUE,FALSE);
         if (CSLCount(papszToken) == 4 && EQUAL(papszToken[0], "SYMBOL") )
         {
-            SetSymbolNo((GInt16)atoi(papszToken[1]));
-            SetSymbolColor((GInt32)atoi(papszToken[2]));
-            SetSymbolSize((GInt16)atoi(papszToken[3]));
+            SetSymbolNo(static_cast<GInt16>(atoi(papszToken[1])));
+            SetSymbolColor(atoi(papszToken[2]));
+            SetSymbolSize(static_cast<GInt16>(atoi(papszToken[3])));
         }
         CSLDestroy(papszToken);
     }

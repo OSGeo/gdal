@@ -2639,7 +2639,7 @@ class OGRSimpleCurvePointIterator final: public OGRPointIterator
         explicit OGRSimpleCurvePointIterator(const OGRSimpleCurve* poSCIn) :
             poSC(poSCIn) {}
 
-        virtual OGRBoolean getNextPoint( OGRPoint* p ) override;
+        OGRBoolean getNextPoint( OGRPoint* p ) override;
 };
 
 /************************************************************************/
@@ -2672,7 +2672,7 @@ OGRPointIterator* OGRSimpleCurve::getPointIterator() const
  * \brief Create an empty line string.
  */
 
-OGRLineString::OGRLineString() {}
+OGRLineString::OGRLineString() = default;
 
 /************************************************************************/
 /*                  OGRLineString( const OGRLineString& )               */
@@ -2687,15 +2687,13 @@ OGRLineString::OGRLineString() {}
  * @since GDAL 2.1
  */
 
-OGRLineString::OGRLineString( const OGRLineString& other ) :
-    OGRSimpleCurve( other )
-{}
+OGRLineString::OGRLineString( const OGRLineString& ) = default;
 
 /************************************************************************/
 /*                          ~OGRLineString()                            */
 /************************************************************************/
 
-OGRLineString::~OGRLineString() {}
+OGRLineString::~OGRLineString() = default;
 
 /************************************************************************/
 /*                    operator=( const OGRLineString& )                 */

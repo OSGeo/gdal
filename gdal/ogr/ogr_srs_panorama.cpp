@@ -818,7 +818,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         {
 #ifdef DEBUG
             CPLDebug( "OSR_Panorama",
-                      "Ellipsoid \"%s\" unsupported by \"Panorama\" GIS.",
+                      R"(Ellipsoid "%s" unsupported by "Panorama" GIS.)",
                       pszDatum );
 #endif
             *piDatum = PAN_DATUM_NONE;

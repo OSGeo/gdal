@@ -63,16 +63,13 @@ OGRCompoundCurve::OGRCompoundCurve() = default;
  * @since GDAL 2.1
  */
 
-OGRCompoundCurve::OGRCompoundCurve( const OGRCompoundCurve& other ) :
-    OGRCurve(other),
-    oCC(other.oCC)
-{}
+OGRCompoundCurve::OGRCompoundCurve( const OGRCompoundCurve& ) = default;
 
 /************************************************************************/
 /*                         ~OGRCompoundCurve()                          */
 /************************************************************************/
 
-OGRCompoundCurve::~OGRCompoundCurve() {}
+OGRCompoundCurve::~OGRCompoundCurve() = default;
 
 /************************************************************************/
 /*                 operator=( const OGRCompoundCurve&)                  */
@@ -714,9 +711,9 @@ class OGRCompoundCurvePointIterator final: public OGRPointIterator
     public:
         explicit OGRCompoundCurvePointIterator( const OGRCompoundCurve* poCCIn ) :
             poCC(poCCIn) {}
-        virtual ~OGRCompoundCurvePointIterator() { delete poCurveIter; }
+        ~OGRCompoundCurvePointIterator() override { delete poCurveIter; }
 
-        virtual OGRBoolean getNextPoint( OGRPoint* p ) override;
+        OGRBoolean getNextPoint( OGRPoint* p ) override;
 };
 
 /************************************************************************/
