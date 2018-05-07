@@ -241,7 +241,7 @@ const char CPL_DLL *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 /*      error codes 100 to 299 reserved for GDAL.                       */
 /* -------------------------------------------------------------------- */
 #ifndef DOXYGEN_SKIP
-#define CPLE_WrongFormat        (CPLErrorNum)200
+#define CPLE_WrongFormat        CPL_STATIC_CAST(CPLErrorNum, 200)
 #endif
 
 /* -------------------------------------------------------------------- */

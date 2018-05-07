@@ -48,7 +48,7 @@ char * ReplaceQuotes(const char * pszInput, int nLength) {
     if (nLength == -1)
         nLength = static_cast<int>(strlen(pszInput));
 
-    pszOutput = (char*) CPLCalloc(nLength + 1, sizeof (char));
+    pszOutput = static_cast<char*>(CPLCalloc(nLength + 1, sizeof (char)));
 
     for (i = 0; i < nLength; i++) {
         if (pszInput[i] == '"')
@@ -72,7 +72,7 @@ char * ReplaceSingleQuotes(const char * pszInput, int nLength) {
     if (nLength == -1)
         nLength = static_cast<int>(strlen(pszInput));
 
-    pszOutput = (char*) CPLCalloc(nLength + 1, sizeof (char));
+    pszOutput = static_cast<char*>(CPLCalloc(nLength + 1, sizeof (char)));
 
     for (i = 0; i < nLength; i++)
     {
@@ -100,8 +100,7 @@ char** ParseConnectionString(const char * pszConnectionString) {
         ReplaceSingleQuotes(pszConnectionString, -1);
 
     /* Avoid PG: part */
-    char* pszStartPos = (char*)
-        strstr(pszEscapedConnectionString, ":") + 1;
+    char* pszStartPos = strstr(pszEscapedConnectionString, ":") + 1;
 
     /* Tokenize */
     char** papszParams =

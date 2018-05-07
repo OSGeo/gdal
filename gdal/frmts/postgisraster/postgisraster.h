@@ -176,7 +176,9 @@ class PostGISRasterDriver final: public GDALDriver {
 
 private:
     CPLMutex* hMutex;
-    std::map<CPLString, PGconn*> oMapConnection;
+    std::map<CPLString, PGconn*> oMapConnection{};
+
+    CPL_DISALLOW_COPY_ASSIGN(PostGISRasterDriver)
 public:
     PostGISRasterDriver();
     virtual ~PostGISRasterDriver();
@@ -224,7 +226,7 @@ private:
     PostGISRasterDataset* poParentDS;
     PostGISRasterDataset** papoOverviewDS;
 
-    std::map<CPLString, PostGISRasterTileDataset*> oMapPKIDToRTDS;
+    std::map<CPLString, PostGISRasterTileDataset*> oMapPKIDToRTDS{};
 
     GBool bAssumeMultiBandReadPattern;
     int nNextExpectedBand;
@@ -263,6 +265,8 @@ private:
 
     PostGISRasterTileDataset * GetMatchingSourceRef(const char * pszPKID) { return oMapPKIDToRTDS[pszPKID]; }
     PostGISRasterTileDataset * GetMatchingSourceRef(double dfUpperLeftX, double dfUpperLeftY);
+
+    CPL_DISALLOW_COPY_ASSIGN(PostGISRasterDataset)
 
   protected:
     virtual int         CloseDependentDatasets() override;
@@ -304,6 +308,8 @@ class PostGISRasterTileRasterBand;
 
 class PostGISRasterRasterBand final: public VRTSourcedRasterBand {
     friend class PostGISRasterDataset;
+
+    CPL_DISALLOW_COPY_ASSIGN(PostGISRasterRasterBand)
 protected:
     GBool bIsOffline;
     const char* pszSchema;
@@ -360,6 +366,8 @@ private:
     char * pszPKID;
     double adfGeoTransform[6];
 
+    CPL_DISALLOW_COPY_ASSIGN(PostGISRasterTileDataset)
+
 public:
     PostGISRasterTileDataset(PostGISRasterDataset* poRDS,
                              int nXSize,
@@ -383,6 +391,8 @@ private:
     GBool IsCached();
 
     VRTSource* poSource;
+
+    CPL_DISALLOW_COPY_ASSIGN(PostGISRasterTileRasterBand)
 
 public:
     PostGISRasterTileRasterBand(
