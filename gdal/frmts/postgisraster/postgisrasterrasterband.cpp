@@ -247,7 +247,7 @@ void PostGISRasterRasterBand::NullBuffer(void* pData,
         if( m_bNoDataValueSet )
             dfVal = m_dfNoDataValue;
         GDALCopyWords(&dfVal, GDT_Float64, 0,
-                    (GByte*)pData + j * nLineSpace, eBufType, nPixelSpace,
+                    static_cast<GByte*>(pData) + j * nLineSpace, eBufType, nPixelSpace,
                     nBufXSize);
     }
 }
@@ -257,8 +257,8 @@ void PostGISRasterRasterBand::NullBuffer(void* pData,
  ********************************************************/
 static int SortTilesByPKID(const void* a, const void* b)
 {
-    PostGISRasterTileDataset* pa = *(PostGISRasterTileDataset** )a;
-    PostGISRasterTileDataset* pb = *(PostGISRasterTileDataset** )b;
+    const PostGISRasterTileDataset* pa = *static_cast<const PostGISRasterTileDataset* const*>(a);
+    const PostGISRasterTileDataset* pb = *static_cast<const PostGISRasterTileDataset* const*>(b);
     return strcmp(pa->GetPKID(), pb->GetPKID());
 }
 
@@ -346,7 +346,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
         return CE_None;
     }
 
-    PostGISRasterDataset * poRDS = (PostGISRasterDataset *)poDS;
+    PostGISRasterDataset * poRDS = cpl::down_cast<PostGISRasterDataset *>(poDS);
 
     int bSameWindowAsOtherBand =
         (nXOff == poRDS->nXOffPrev &&
@@ -461,8 +461,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
 
     // Matching sources, to avoid a dumb for loop over the sources
     PostGISRasterTileDataset ** papsMatchingTiles =
-        (PostGISRasterTileDataset **)
-            CPLQuadTreeSearch(poRDS->hQuadTree, &sAoi, &nFeatureCount);
+        reinterpret_cast<PostGISRasterTileDataset **>(CPLQuadTreeSearch(poRDS->hQuadTree, &sAoi, &nFeatureCount));
 
     // No blocks found. This is not an error (the raster may have holes)
     if (nFeatureCount == 0) {
@@ -491,7 +490,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
     for(i = 0; i < nFeatureCount; i++) {
         PostGISRasterTileDataset *poTile = papsMatchingTiles[i];
         PostGISRasterTileRasterBand* poTileBand =
-            (PostGISRasterTileRasterBand *)poTile->GetRasterBand(nBand);
+            cpl::down_cast<PostGISRasterTileRasterBand *>(poTile->GetRasterBand(nBand));
 
         nMemoryRequiredForTiles += poTileBand->GetXSize() * poTileBand->GetYSize() *
             nBandDataTypeSize;
@@ -558,7 +557,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
     int bAllBandCaching = FALSE;
     if (nTilesToFetch > 0)
     {
-        GIntBig nCacheMax = (GIntBig) GDALGetCacheMax64();
+        GIntBig nCacheMax = GDALGetCacheMax64();
         if( nMemoryRequiredForTiles > nCacheMax )
         {
             CPLDebug("PostGIS_Raster",
@@ -732,7 +731,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
     {
         PostGISRasterTileDataset *poTile = papsMatchingTiles[i];
         PostGISRasterTileRasterBand* poTileBand =
-            (PostGISRasterTileRasterBand *)poTile->GetRasterBand(nBand);
+            cpl::down_cast<PostGISRasterTileRasterBand *>(poTile->GetRasterBand(nBand));
         eErr =
             poTileBand->poSource->RasterIO( eDataType,
                                             nXOff, nYOff, nXSize, nYSize,
@@ -769,7 +768,7 @@ CPLErr PostGISRasterRasterBand::SetNoDataValue(double dfNewValue) {
  */
 double PostGISRasterRasterBand::GetNoDataValue(int *pbSuccess) {
     if (pbSuccess != nullptr)
-        *pbSuccess = (int) m_bNoDataValueSet;
+        *pbSuccess = m_bNoDataValueSet;
 
     return m_dfNoDataValue;
 }
@@ -779,7 +778,7 @@ double PostGISRasterRasterBand::GetNoDataValue(int *pbSuccess) {
  ***************************************************/
 int PostGISRasterRasterBand::GetOverviewCount()
 {
-    PostGISRasterDataset * poRDS = (PostGISRasterDataset *)poDS;
+    PostGISRasterDataset * poRDS = cpl::down_cast<PostGISRasterDataset *>(poDS);
     return poRDS->GetOverviewCount();
 }
 
@@ -791,7 +790,7 @@ GDALRasterBand * PostGISRasterRasterBand::GetOverview(int i)
     if (i < 0 || i >= GetOverviewCount())
         return nullptr;
 
-    PostGISRasterDataset* poRDS = (PostGISRasterDataset *)poDS;
+    PostGISRasterDataset * poRDS = cpl::down_cast<PostGISRasterDataset *>(poDS);
     PostGISRasterDataset* poOverviewDS = poRDS->GetOverviewDS(i);
     if( poOverviewDS->nBands == 0 )
     {
@@ -958,7 +957,7 @@ GDALColorInterp PostGISRasterRasterBand::GetColorInterpretation()
 
 double PostGISRasterRasterBand::GetMinimum( int *pbSuccess )
 {
-    PostGISRasterDataset * poRDS = (PostGISRasterDataset *)poDS;
+    PostGISRasterDataset * poRDS = cpl::down_cast<PostGISRasterDataset *>(poDS);
     if( poRDS->bBuildQuadTreeDynamically && poRDS->m_nTiles == 0 )
     {
         if( pbSuccess )
@@ -974,7 +973,7 @@ double PostGISRasterRasterBand::GetMinimum( int *pbSuccess )
 
 double PostGISRasterRasterBand::GetMaximum( int *pbSuccess )
 {
-    PostGISRasterDataset * poRDS = (PostGISRasterDataset *)poDS;
+    PostGISRasterDataset * poRDS = cpl::down_cast<PostGISRasterDataset *>(poDS);
     if( poRDS->bBuildQuadTreeDynamically && poRDS->m_nTiles == 0 )
     {
         if( pbSuccess )

@@ -99,7 +99,7 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     int nPixelSize = GDALGetDataTypeSize(eDataType)/8;
 
     PostGISRasterTileDataset * poRTDS =
-        (PostGISRasterTileDataset *)poDS;
+        cpl::down_cast<PostGISRasterTileDataset *>(poDS);
 
     // Get by PKID
     if (poRTDS->poRDS->pszPrimaryKeyName)
@@ -167,7 +167,7 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     else
     {
         GByte * pbyDataToRead =
-        (GByte*)GET_BAND_DATA(pbyData,1, nPixelSize,
+        GET_BAND_DATA(pbyData,1, nPixelSize,
             nExpectedDataSize);
 
         // Do byte-swapping if necessary */
