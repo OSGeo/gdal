@@ -259,23 +259,6 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
              nBand, nXOff, nYOff, nXSize,  nYSize, nBufXSize, nBufYSize);
 #endif
 
-#ifdef notdef
-    /*******************************************************************
-     * Optimization: We just have one tile. So, we can read it with
-     * IReadBlock
-     *
-     * TODO: Review it. It's not working (see comment in
-     * PostGISRasterDataset::ConstructOneDatasetFromTiles)
-     ******************************************************************/
-
-    if (poRDS->nTiles == 1) {
-
-        return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize,
-            nYSize, pData, nBufXSize, nBufYSize, eBufType, nPixelSpace,
-            nLineSpace, psExtraArg);
-    }
-#endif
-
     /*******************************************************************
      * Several tiles: we first look in all our sources caches. Missing
      * blocks are queried
