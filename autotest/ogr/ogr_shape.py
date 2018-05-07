@@ -4385,7 +4385,7 @@ def ogr_shape_94():
     for test in tests:
         try:
             (shpt, geom_type, wkt, expected_fail) = test
-        except:
+        except ValueError:
             (shpt, geom_type, wkt) = test
             expected_fail = False
 

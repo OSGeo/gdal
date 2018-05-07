@@ -546,7 +546,7 @@ for item in tiff_srs_list:
         epsg_code = item[0]
         epsg_broken = item[1]
         epsg_proj4_broken = item[2]
-    except:
+    except TypeError:
         epsg_code = item
         epsg_broken = False
         epsg_proj4_broken = False
