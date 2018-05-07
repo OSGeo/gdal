@@ -4692,7 +4692,7 @@ class Feature(_object):
             if isinstance(key, (str, type(u''))):
                 fld_index = self.GetGeomFieldIndex(key)
             if fld_index < 0:
-                raise ValueError("Illegal field requested in GetField()")
+                raise KeyError("Illegal field requested in GetField()")
             else:
                 return self.GetGeomFieldRef(fld_index)
         else:
@@ -4711,7 +4711,7 @@ class Feature(_object):
             if isinstance(key, (str, type(u''))):
                 fld_index = self.GetGeomFieldIndex(key)
             if fld_index < 0:
-                raise ValueError("Illegal field requested in SetField()")
+                raise KeyError("Illegal field requested in SetField()")
             else:
                 return self.SetGeomField(fld_index, value)
         else:
@@ -4721,7 +4721,7 @@ class Feature(_object):
         if isinstance(fld_index, (str, type(u''))):
             fld_index = self.GetFieldIndex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
-            raise ValueError("Illegal field requested in GetField()")
+            raise KeyError("Illegal field requested in GetField()")
         if not (self.IsFieldSet(fld_index)) or self.IsFieldNull(fld_index):
             return None
         fld_type = self.GetFieldType(fld_index)
@@ -4786,7 +4786,7 @@ class Feature(_object):
         if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
             fld_index = self.GetFieldIndex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
-            raise ValueError("Illegal field requested in SetField2()")
+            raise KeyError("Illegal field requested in SetField2()")
 
         if value is None:
             self.SetFieldNull(fld_index)
