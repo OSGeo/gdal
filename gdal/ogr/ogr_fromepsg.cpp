@@ -31,7 +31,7 @@
 #include "cpl_port.h"
 #include "ogr_srs_api.h"
 
-#include <ctype.h>
+#include <cctype>
 
 #include <cmath>
 #include <cstddef>
@@ -478,14 +478,15 @@ int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransform )
     if( iDXField < 0 || CSLCount(papszLine) < iDXField + 7 )
         return FALSE;
 
-    asTransform.resize(0);
+    asTransform.clear();
+    asTransform.reserve(7);
     for( int iField = 0; iField < 7; iField++ )
     {
         const char* pszValue = papszLine[iDXField+iField];
         if( pszValue[0] )
-            asTransform.push_back(pszValue);
+            asTransform.emplace_back(pszValue);
         else
-            asTransform.push_back("0");
+            asTransform.emplace_back("0");
     }
 
 /* -------------------------------------------------------------------- */
@@ -1221,7 +1222,7 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
         papszAxis1[iAxisAbbrevField],
         papszAxis2[iAxisAbbrevField] };
 
-    for( int iAO = 0; iAO < 2; iAO++ )
+    for( int iAO : {0, 1} )
     {
         if( EQUAL(apszAxisName[iAO], "N") )
             apszAxisName[iAO] = "Northing";
@@ -2906,15 +2907,15 @@ void CleanupFindMatchesCacheAndMutex()
     }
     if( papoSRSCache_GEOGCS )
     {
-        for( size_t i = 0; i < papoSRSCache_GEOGCS->size(); i++ )
-            delete (*papoSRSCache_GEOGCS)[i];
+        for( auto& poSRS: *papoSRSCache_GEOGCS )
+            delete poSRS;
         delete papoSRSCache_GEOGCS;
         papoSRSCache_GEOGCS = nullptr;
     }
     if( papoSRSCache_PROJCS )
     {
-        for( size_t i = 0; i < papoSRSCache_PROJCS->size(); i++ )
-            delete (*papoSRSCache_PROJCS)[i];
+        for( auto& poSRS: *papoSRSCache_PROJCS )
+            delete poSRS;
         delete papoSRSCache_PROJCS;
         papoSRSCache_PROJCS = nullptr;
     }

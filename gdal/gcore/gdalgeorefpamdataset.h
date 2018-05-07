@@ -59,6 +59,8 @@ class CPL_DLL GDALGeorefPamDataset : public GDALPamDataset
     bool        m_bPAMLoaded;
     char**      m_papszMainMD;
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALGeorefPamDataset)
+
   public:
     GDALGeorefPamDataset();
     ~GDALGeorefPamDataset() override;

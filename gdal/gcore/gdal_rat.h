@@ -296,15 +296,15 @@ public:
 class GDALRasterAttributeField
 {
  public:
-    CPLString         sName;
+    CPLString         sName{};
 
-    GDALRATFieldType  eType;
+    GDALRATFieldType  eType = GFT_Integer;
 
-    GDALRATFieldUsage eUsage;
+    GDALRATFieldUsage eUsage = GFU_Generic;
 
-    std::vector<GInt32> anValues;
-    std::vector<double> adfValues;
-    std::vector<CPLString> aosValues;
+    std::vector<GInt32> anValues{};
+    std::vector<double> adfValues{};
+    std::vector<CPLString> aosValues{};
 };
 //! @endcond
 
@@ -314,28 +314,25 @@ class GDALRasterAttributeField
 
 //! Raster Attribute Table container.
 
-// cppcheck-suppress copyCtorAndEqOperator
 class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
 {
  private:
-    std::vector<GDALRasterAttributeField> aoFields;
+    std::vector<GDALRasterAttributeField> aoFields{};
 
-    int bLinearBinning;  // TODO(schwehr): Can this be a bool?
-    double dfRow0Min;
-    double dfBinSize;
+    int bLinearBinning = false;  // TODO(schwehr): Can this be a bool?
+    double dfRow0Min = -0.5;
+    double dfBinSize = 1.0;
 
     void  AnalyseColumns();
-    int   bColumnsAnalysed;  // TODO(schwehr): Can this be a bool?
-    int   nMinCol;
-    int   nMaxCol;
+    int   bColumnsAnalysed = false;  // TODO(schwehr): Can this be a bool?
+    int   nMinCol = -1;
+    int   nMaxCol = -1;
 
-    int   nRowCount;
+    int   nRowCount = 0;
 
-    CPLString osWorkingResult;
+    CPLString osWorkingResult{};
 
  public:
-    GDALDefaultRasterAttributeTable();
-    GDALDefaultRasterAttributeTable( const GDALDefaultRasterAttributeTable& );
     ~GDALDefaultRasterAttributeTable() override;
 
     GDALDefaultRasterAttributeTable *Clone() const override;

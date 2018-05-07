@@ -55,8 +55,8 @@ public:
 protected:
     virtual void LoadMetadata() override;
 protected:
-    CPLString m_osIMDSourceFilename;
-    CPLString m_osRPBSourceFilename;
+    CPLString m_osIMDSourceFilename{};
+    CPLString m_osRPBSourceFilename{};
 };
 
 #endif // READER_ORB_VIEW_H_INCLUDED

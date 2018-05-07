@@ -554,6 +554,8 @@ class OGRTigerDataSource : public OGRDataSource
 
     TigerVersion        TigerCheckVersion( TigerVersion, const char * );
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRTigerDataSource)
+
   public:
                         OGRTigerDataSource();
                         virtual ~OGRTigerDataSource();

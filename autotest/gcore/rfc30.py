@@ -29,9 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
 import sys
 from sys import version_info
+from osgeo import gdal
 
 sys.path.append('../pymod')
 
@@ -134,9 +134,7 @@ def rfc30_2():
     return 'success'
 
 
-gdaltest_list = [rfc30_1,
-                 rfc30_2
-                 ]
+gdaltest_list = [rfc30_1, rfc30_2]
 
 if __name__ == '__main__':
 

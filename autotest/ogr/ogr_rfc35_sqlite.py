@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append('../pymod')
@@ -49,10 +48,7 @@ def ogr_rfc35_sqlite_1():
     if sqlite_dr is None:
         return 'skip'
 
-    try:
-        os.unlink('tmp/rfc35_test.sqlite')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/rfc35_test.sqlite')
 
     # This is to speed-up the runtime of tests on EXT4 filesystems
     # Do not use this for production environment if you care about data safety
@@ -111,10 +107,7 @@ def ogr_rfc35_sqlite_1():
 
 
 def Truncate(val, lyr_defn, fieldname):
-    # if val is None:
-    #    return val
-
-    # return val[0:lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex(fieldname)).GetWidth()]
+    # pylint: disable=unused-argument
     # Mem driver doesn't actually truncate
     return val
 
@@ -149,8 +142,8 @@ def CheckFeatures(lyr, field1='foo5', field2='bar10', field3='baz15', field4='ba
 def CheckColumnOrder(lyr, expected_order):
 
     lyr_defn = lyr.GetLayerDefn()
-    for i in range(len(expected_order)):
-        if lyr_defn.GetFieldDefn(i).GetName() != expected_order[i]:
+    for i, exp_order in enumerate(expected_order):
+        if lyr_defn.GetFieldDefn(i).GetName() != exp_order:
             return 'fail'
 
     return 'success'

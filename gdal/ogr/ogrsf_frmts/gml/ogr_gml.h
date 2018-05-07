@@ -49,7 +49,7 @@ typedef enum
 /*                            OGRGMLLayer                               */
 /************************************************************************/
 
-class OGRGMLLayer : public OGRLayer
+class OGRGMLLayer final: public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
 
@@ -101,7 +101,7 @@ class OGRGMLLayer : public OGRLayer
 /*                           OGRGMLDataSource                           */
 /************************************************************************/
 
-class OGRGMLDataSource : public OGRDataSource
+class OGRGMLDataSource final: public OGRDataSource
 {
     OGRGMLLayer     **papoLayers;
     int                 nLayers;

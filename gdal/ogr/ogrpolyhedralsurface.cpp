@@ -44,9 +44,7 @@ CPL_CVSID("$Id$")
  * \brief Create an empty PolyhedralSurface
  */
 
-OGRPolyhedralSurface::OGRPolyhedralSurface()
-
-{ }
+OGRPolyhedralSurface::OGRPolyhedralSurface() = default;
 
 /************************************************************************/
 /*         OGRPolyhedralSurface( const OGRPolyhedralSurface& )          */
@@ -57,10 +55,7 @@ OGRPolyhedralSurface::OGRPolyhedralSurface()
  *
  */
 
-OGRPolyhedralSurface::OGRPolyhedralSurface( const OGRPolyhedralSurface& other ) :
-    OGRSurface(other),
-    oMP(other.oMP)
-{ }
+OGRPolyhedralSurface::OGRPolyhedralSurface( const OGRPolyhedralSurface& ) = default;
 
 /************************************************************************/
 /*                        ~OGRPolyhedralSurface()                       */
@@ -71,9 +66,7 @@ OGRPolyhedralSurface::OGRPolyhedralSurface( const OGRPolyhedralSurface& other ) 
  *
  */
 
-OGRPolyhedralSurface::~OGRPolyhedralSurface()
-
-{ }
+OGRPolyhedralSurface::~OGRPolyhedralSurface() = default;
 
 /************************************************************************/
 /*                 operator=( const OGRPolyhedralSurface&)              */

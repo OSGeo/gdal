@@ -29,10 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
 import sys
 import os
 import shutil
+from osgeo import gdal
 
 sys.path.append('../pymod')
 
@@ -45,17 +45,13 @@ import gdaltest
 
 def misc_1():
 
-    tab_ds = [None for i in range(5000)]
+    tab_ds = [None] * 5000
     drv = gdal.GetDriverByName('MEM')
-    for i in range(len(tab_ds)):
+    for i, _ in enumerate(tab_ds):
         name = 'mem_%d' % i
         tab_ds[i] = drv.Create(name, 1, 1, 1)
         if tab_ds[i] is None:
             return 'fail'
-
-    for i in range(len(tab_ds)):
-        tab_ds[i] = None
-
     return 'success'
 
 ###############################################################################
@@ -67,13 +63,10 @@ def misc_1():
 def misc_2():
 
     tab_ds = [None for i in range(5000)]
-    for i in range(len(tab_ds)):
+    for i, _ in enumerate(tab_ds):
         tab_ds[i] = gdal.OpenShared('data/byte.tif')
         if tab_ds[i] is None:
             return 'fail'
-
-    for i in range(len(tab_ds)):
-        tab_ds[i] = None
 
     return 'success'
 
@@ -544,10 +537,7 @@ def misc_11():
     if not gdaltest.support_symlink():
         return 'skip'
 
-    try:
-        os.unlink('tmp/symlink.tif')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/symlink.tif')
     os.symlink('GTIFF_DIR:1:data/byte.tif', 'tmp/symlink.tif')
 
     ds = gdal.Open('tmp/symlink.tif')

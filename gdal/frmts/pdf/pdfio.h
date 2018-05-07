@@ -58,7 +58,7 @@
 #define makeSubStream_object_type Object*
 #endif
 
-class VSIPDFFileStream: public BaseStream
+class VSIPDFFileStream final: public BaseStream
 {
     public:
         VSIPDFFileStream(VSILFILE* f, const char* pszFilename,

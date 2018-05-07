@@ -112,6 +112,8 @@ class OGRGenSQLResultsLayer final: public OGRLayer
 
     int         MustEvaluateSpatialFilterOnGenSQL();
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRGenSQLResultsLayer)
+
   public:
                 OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
                                        void *pSelectInfo,

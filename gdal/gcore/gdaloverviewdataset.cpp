@@ -60,16 +60,16 @@ class GDALOverviewDataset final: public GDALDataset
   private:
     friend class GDALOverviewBand;
 
-    GDALDataset* poMainDS;
+    GDALDataset* poMainDS = nullptr;
 
-    GDALDataset* poOvrDS;  // Will be often NULL.
-    int          nOvrLevel;
-    int          bThisLevelOnly;
+    GDALDataset* poOvrDS = nullptr;  // Will be often NULL.
+    int          nOvrLevel = 0;
+    int          bThisLevelOnly = 0;
 
-    int          nGCPCount;
-    GDAL_GCP    *pasGCPList;
-    char       **papszMD_RPC;
-    char       **papszMD_GEOLOCATION;
+    int          nGCPCount = 0;
+    GDAL_GCP    *pasGCPList = nullptr;
+    char       **papszMD_RPC = nullptr;
+    char       **papszMD_GEOLOCATION = nullptr;
 
     static void  Rescale( char**& papszMD, const char* pszItem,
                           double dfRatio, double dfDefaultVal );
@@ -87,7 +87,7 @@ class GDALOverviewDataset final: public GDALDataset
                          int bThisLevelOnly );
     ~GDALOverviewDataset() override;
 
-    const char *GetProjectionRef( void ) override;
+    const char *GetProjectionRef() override;
     CPLErr GetGeoTransform( double * ) override;
 
     int GetGCPCount() override;
@@ -113,7 +113,7 @@ class GDALOverviewBand final: public GDALProxyRasterBand
   protected:
     friend class GDALOverviewDataset;
 
-    GDALRasterBand*         poUnderlyingBand;
+    GDALRasterBand*         poUnderlyingBand = nullptr;
     GDALRasterBand* RefUnderlyingRasterBand() override;
 
   public:
@@ -169,11 +169,7 @@ GDALOverviewDataset::GDALOverviewDataset( GDALDataset* poMainDSIn,
                                           int bThisLevelOnlyIn ) :
     poMainDS(poMainDSIn),
     nOvrLevel(nOvrLevelIn),
-    bThisLevelOnly(bThisLevelOnlyIn),
-    nGCPCount(0),
-    pasGCPList(nullptr),
-    papszMD_RPC(nullptr),
-    papszMD_GEOLOCATION(nullptr)
+    bThisLevelOnly(bThisLevelOnlyIn)
 {
     poMainDSIn->Reference();
     eAccess = poMainDS->GetAccess();

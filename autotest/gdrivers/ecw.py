@@ -33,11 +33,11 @@
 import os
 import os.path
 import sys
+from sys import version_info
 import array
 import shutil
 from osgeo import gdal
 from osgeo import osr
-from sys import version_info
 
 sys.path.append('../pymod')
 
@@ -179,10 +179,7 @@ def ecw_4():
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
-    try:
-        os.unlink('tmp/jrc_out.ecw.aux.xml')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/jrc_out.ecw.aux.xml')
 
     ds = gdal.Open('tmp/jrc_out.ecw')
     version = ds.GetMetadataItem('VERSION')

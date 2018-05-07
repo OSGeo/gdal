@@ -8,7 +8,7 @@
 # Author:   Martin Landa <landa.martin gmail.com>
 #
 ###############################################################################
-# Copyright (c) 2009, 2012 Martin Landa <landa.martin gmail.com>
+# Copyright (c) 2009-2018 Martin Landa <landa.martin gmail.com>
 # Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -271,15 +271,15 @@ def ogr_vfk_8():
         return 'skip'
 
     # open by SQLite driver first
-    gdaltest.vfk_ds = None
-    gdaltest.vfk_ds = ogr.Open('data/bylany.db')
-    count1 = gdaltest.vfk_ds.GetLayerCount()
+    vfk_ds_db = ogr.Open('data/bylany.db')
+    count1 = vfk_ds_db.GetLayerCount()
+    vfk_ds_db = None
 
     # then open by VFK driver
     os.environ['OGR_VFK_DB_READ'] = 'YES'
-    gdaltest.vfk_ds = None
-    gdaltest.vfk_ds = ogr.Open('data/bylany.db')
-    count2 = gdaltest.vfk_ds.GetLayerCount()
+    vfk_ds_db = ogr.Open('data/bylany.db')
+    count2 = vfk_ds_db.GetLayerCount()
+    vfk_ds_db = None
 
     if count1 != count2:
         gdaltest.post_reason('layer count differs when opening DB by SQLite and VFK drivers')
@@ -299,19 +299,52 @@ def ogr_vfk_9():
         return 'skip'
 
     # open with suppressing geometry
-    gdaltest.vfk_ds = None
-    gdaltest.vfk_ds = gdal.OpenEx('data/bylany.vfk', open_options=['SUPPRESS_GEOMETRY=YES'])
+    vfk_ds = None
+    vfk_ds = gdal.OpenEx('data/bylany.vfk', open_options=['SUPPRESS_GEOMETRY=YES'])
 
-    gdaltest.vfk_layer_par = gdaltest.vfk_ds.GetLayerByName('PAR')
+    vfk_layer_par = vfk_ds.GetLayerByName('PAR')
 
-    if not gdaltest.vfk_layer_par != 'PAR':
+    if not vfk_layer_par != 'PAR':
         gdaltest.post_reason('did not get expected layer name "PAR"')
         return 'fail'
 
-    geom_type = gdaltest.vfk_layer_par.GetGeomType()
+    geom_type = vfk_layer_par.GetGeomType()
+    vfk_layer_par = None
+    vfk_ds = None
 
     if geom_type != ogr.wkbNone:
         gdaltest.post_reason('did not get expected geometry type, got %d' % geom_type)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Open datasource with FILE_FIELD open option (new in GDAL 2.4)
+
+
+def ogr_vfk_10():
+
+    if gdaltest.vfk_drv is None:
+        return 'skip'
+
+    # open with suppressing geometry
+    vfk_ds = None
+    vfk_ds = gdal.OpenEx('data/bylany.vfk', open_options=['FILE_FIELD=YES'])
+
+    vfk_layer_par = vfk_ds.GetLayerByName('PAR')
+
+    if not vfk_layer_par != 'PAR':
+        gdaltest.post_reason('did not get expected layer name "PAR"')
+        return 'fail'
+
+    vfk_layer_par.ResetReading()
+    feat = vfk_layer_par.GetNextFeature()
+    file_field = feat.GetField('VFK_FILENAME')
+    vfk_layer_par = None
+    vfk_ds = None
+
+    if file_field != 'bylany.vfk':
+        gdaltest.post_reason('did not get expected file field value')
         return 'fail'
 
     return 'success'
@@ -351,6 +384,7 @@ gdaltest_list = [
     ogr_vfk_7,
     ogr_vfk_8,
     ogr_vfk_9,
+    ogr_vfk_10,    
     ogr_vfk_cleanup]
 
 if __name__ == '__main__':

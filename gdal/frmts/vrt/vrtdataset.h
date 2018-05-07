@@ -60,13 +60,24 @@ void* VRTDeserializeWarpedOverviewTransformer( CPLXMLNode *psTree );
 /************************************************************************/
 class VRTOverviewInfo
 {
-public:
-    CPLString       osFilename;
-    int             nBand;
-    GDALRasterBand *poBand;
-    int             bTriedToOpen;
+    CPL_DISALLOW_COPY_ASSIGN(VRTOverviewInfo)
 
-    VRTOverviewInfo() : nBand(0), poBand(nullptr), bTriedToOpen(FALSE) {}
+public:
+    CPLString       osFilename{};
+    int             nBand = 0;
+    GDALRasterBand *poBand = nullptr;
+    int             bTriedToOpen = FALSE;
+
+    VRTOverviewInfo() = default;
+    VRTOverviewInfo(VRTOverviewInfo&& oOther):
+        osFilename(std::move(oOther.osFilename)),
+        nBand(oOther.nBand),
+        poBand(oOther.poBand),
+        bTriedToOpen(oOther.bTriedToOpen)
+    {
+        oOther.poBand = nullptr;
+    }
+
     ~VRTOverviewInfo() {
         if( poBand == nullptr )
             /* do nothing */;
@@ -131,9 +142,20 @@ VRTSource *VRTParseFilterSources( CPLXMLNode *psTree, const char *, void* pUniqu
 
 class VRTRasterBand;
 
+template<class T> struct VRTFlushCacheStruct
+{
+    static void FlushCache(T& obj);
+};
+
+class VRTWarpedDataset;
+class VRTPansharpenedDataset;
+
 class CPL_DLL VRTDataset : public GDALDataset
 {
     friend class VRTRasterBand;
+    friend struct VRTFlushCacheStruct<VRTDataset>;
+    friend struct VRTFlushCacheStruct<VRTWarpedDataset>;
+    friend struct VRTFlushCacheStruct<VRTPansharpenedDataset>;
 
     char           *m_pszProjection;
 
@@ -159,6 +181,8 @@ class CPL_DLL VRTDataset : public GDALDataset
 
     VRTRasterBand*      InitBand(const char* pszSubclass, int nBand,
                                  bool bAllowPansharpened);
+
+    CPL_DISALLOW_COPY_ASSIGN(VRTDataset)
 
   protected:
     virtual int         CloseDependentDatasets() override;
@@ -266,12 +290,16 @@ class CPL_DLL VRTWarpedDataset : public VRTDataset
 
     friend class VRTWarpedRasterBand;
 
+    CPL_DISALLOW_COPY_ASSIGN(VRTWarpedDataset)
+
   protected:
     virtual int         CloseDependentDatasets() override;
 
 public:
                       VRTWarpedDataset( int nXSize, int nYSize );
     virtual ~VRTWarpedDataset();
+
+    virtual void  FlushCache() override;
 
     CPLErr            Initialize( /* GDALWarpOptions */ void * );
 
@@ -340,12 +368,16 @@ class VRTPansharpenedDataset : public VRTDataset
 
     std::vector<GDALDataset*> m_apoDatasetsToClose;
 
+    CPL_DISALLOW_COPY_ASSIGN(VRTPansharpenedDataset)
+
   protected:
     virtual int         CloseDependentDatasets() override;
 
 public:
                       VRTPansharpenedDataset( int nXSize, int nYSize );
     virtual ~VRTPansharpenedDataset();
+
+    virtual void  FlushCache() override;
 
     virtual CPLErr    XMLInit( CPLXMLNode *, const char * ) override;
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath ) override;
@@ -410,6 +442,8 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     VRTRasterBand *m_poMaskBand;
 
     std::unique_ptr<GDALRasterAttributeTable> m_poRAT;
+
+    CPL_DISALLOW_COPY_ASSIGN(VRTRasterBand)
 
   public:
 
@@ -502,6 +536,8 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
 
     bool           CanUseSourcesMinMaxImplementations();
     void           CheckSource( VRTSimpleSource *poSS );
+
+    CPL_DISALLOW_COPY_ASSIGN(VRTSourcedRasterBand)
 
   public:
     int            nSources;
@@ -668,6 +704,8 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
     VRTDerivedRasterBandPrivateData* m_poPrivate;
     bool InitializePython();
 
+    CPL_DISALLOW_COPY_ASSIGN(VRTDerivedRasterBand)
+
  public:
     char *pszFuncName;
     GDALDataType eSourceTransferType;
@@ -728,6 +766,8 @@ class CPL_DLL VRTRawRasterBand : public VRTRasterBand
     char           *m_pszSourceFilename;
     int            m_bRelativeToVRT;
 
+    CPL_DISALLOW_COPY_ASSIGN(VRTRawRasterBand)
+
   public:
                    VRTRawRasterBand( GDALDataset *poDS, int nBand,
                                      GDALDataType eType = GDT_Unknown );
@@ -763,6 +803,8 @@ class CPL_DLL VRTRawRasterBand : public VRTRasterBand
 
 class VRTDriver : public GDALDriver
 {
+    CPL_DISALLOW_COPY_ASSIGN(VRTDriver)
+
   public:
                  VRTDriver();
     virtual ~VRTDriver();
@@ -786,6 +828,8 @@ class VRTDriver : public GDALDriver
 
 class CPL_DLL VRTSimpleSource : public VRTSource
 {
+    CPL_DISALLOW_COPY_ASSIGN(VRTSimpleSource)
+
 protected:
     friend class VRTSourcedRasterBand;
 
@@ -899,6 +943,8 @@ public:
 
 class VRTAveragedSource : public VRTSimpleSource
 {
+    CPL_DISALLOW_COPY_ASSIGN(VRTAveragedSource)
+
 public:
                     VRTAveragedSource();
     virtual CPLErr  RasterIO( GDALDataType eBandDataType,
@@ -942,6 +988,8 @@ typedef enum
 
 class CPL_DLL VRTComplexSource : public VRTSimpleSource
 {
+    CPL_DISALLOW_COPY_ASSIGN(VRTComplexSource)
+
 protected:
     VRTComplexSourceScaling m_eScalingType;
     double         m_dfScaleOff;  // For linear scaling.
@@ -1024,6 +1072,8 @@ class VRTFilteredSource : public VRTComplexSource
 private:
     int          IsTypeSupported( GDALDataType eTestType ) const;
 
+    CPL_DISALLOW_COPY_ASSIGN(VRTFilteredSource)
+
 protected:
     int          m_nSupportedTypesCount;
     GDALDataType m_aeSupportedTypes[20];
@@ -1054,6 +1104,8 @@ public:
 
 class VRTKernelFilteredSource : public VRTFilteredSource
 {
+    CPL_DISALLOW_COPY_ASSIGN(VRTKernelFilteredSource)
+
 protected:
     int     m_nKernelSize;
 
@@ -1083,6 +1135,8 @@ public:
 
 class VRTAverageFilteredSource : public VRTKernelFilteredSource
 {
+    CPL_DISALLOW_COPY_ASSIGN(VRTAverageFilteredSource)
+
 public:
             explicit VRTAverageFilteredSource( int nKernelSize );
     virtual ~VRTAverageFilteredSource();
@@ -1096,6 +1150,8 @@ public:
 /************************************************************************/
 class VRTFuncSource : public VRTSource
 {
+    CPL_DISALLOW_COPY_ASSIGN(VRTFuncSource)
+
 public:
             VRTFuncSource();
     virtual ~VRTFuncSource();

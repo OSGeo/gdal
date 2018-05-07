@@ -767,10 +767,7 @@ def tiff_12bitjpeg():
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
-    try:
-        os.unlink('data/mandrilmini_12bitjpeg.tif.aux.xml')
-    except OSError:
-        pass
+    gdal.Unlink('data/mandrilmini_12bitjpeg.tif.aux.xml')
 
     try:
         ds = gdal.Open('data/mandrilmini_12bitjpeg.tif')

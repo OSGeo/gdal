@@ -31,15 +31,14 @@
 
 import os
 import sys
+import imp  # for netcdf_cf_setup()
+from netcdf import netcdf_setup, netcdf_test_copy
 from osgeo import gdal
 from osgeo import osr
 
 sys.path.append('../pymod')
 
 import gdaltest
-
-import imp  # for netcdf_cf_setup()
-from netcdf import netcdf_setup, netcdf_test_copy
 
 ###############################################################################
 # Netcdf CF compliance Functions
@@ -115,7 +114,7 @@ def netcdf_cf_setup():
     # http method with curl, should use python module but easier for now
     success = False
     try:
-        (ret, err) = gdaltest.runexternal_out_and_err('curl')
+        gdaltest.runexternal_out_and_err('curl')
     except OSError:
         print('no curl executable')
     else:

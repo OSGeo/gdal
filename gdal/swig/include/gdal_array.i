@@ -122,7 +122,7 @@ class NUMPYDataset : public GDALDataset
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                             const char *pszGCPProjection ) override;
 
-    static GDALDataset *Open( PyArrayObject *psArray );
+    static GDALDataset *Open( PyArrayObject *psArray, bool binterleave = true );
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
@@ -352,7 +352,7 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
+GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray, bool binterleave )
 {
     GDALDataType  eType;
     int     nBands;
@@ -456,24 +456,28 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
     npy_intp nPixelOffset;
     npy_intp nLineOffset;
 
+    int xdim = binterleave ? 2 : 1;
+    int ydim = binterleave ? 1 : 0;
+    int bdim = binterleave ? 0 : 2;
+
     if( PyArray_NDIM(psArray) == 3 )
     {
         if( PyArray_DIMS(psArray)[0] > INT_MAX ||
             PyArray_DIMS(psArray)[1] > INT_MAX ||
             PyArray_DIMS(psArray)[2] > INT_MAX ||
-            !GDALCheckBandCount(static_cast<int>(PyArray_DIMS(psArray)[0]), 0) )
+            !GDALCheckBandCount(static_cast<int>(PyArray_DIMS(psArray)[bdim]), 0) )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Too big array dimensions");
             delete poDS;
             return NULL;
         }
-        nBands = static_cast<int>(PyArray_DIMS(psArray)[0]);
-        nBandOffset = PyArray_STRIDES(psArray)[0];
-        poDS->nRasterXSize = static_cast<int>(PyArray_DIMS(psArray)[2]);
-        nPixelOffset = PyArray_STRIDES(psArray)[2];
-        poDS->nRasterYSize = static_cast<int>(PyArray_DIMS(psArray)[1]);
-        nLineOffset = PyArray_STRIDES(psArray)[1];
+        nBands = static_cast<int>(PyArray_DIMS(psArray)[bdim]);
+        nBandOffset = PyArray_STRIDES(psArray)[bdim];
+        poDS->nRasterXSize = static_cast<int>(PyArray_DIMS(psArray)[xdim]);
+        nPixelOffset = PyArray_STRIDES(psArray)[xdim];
+        poDS->nRasterYSize = static_cast<int>(PyArray_DIMS(psArray)[ydim]);
+        nLineOffset = PyArray_STRIDES(psArray)[ydim];
     }
     else
     {
@@ -554,9 +558,9 @@ int GDALTermProgress( double, const char *, void * );
 
 %newobject OpenNumPyArray;
 %inline %{
-GDALDatasetShadow* OpenNumPyArray(PyArrayObject *psArray)
+GDALDatasetShadow* OpenNumPyArray(PyArrayObject *psArray, bool binterleave)
 {
-    return NUMPYDataset::Open( psArray );
+    return NUMPYDataset::Open( psArray, binterleave );
 }
 %}
 
@@ -645,7 +649,8 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                          int buf_type,
                          GDALRIOResampleAlg resample_alg,
                          GDALProgressFunc callback = NULL,
-                         void* callback_data = NULL )
+                         void* callback_data = NULL,
+                         bool binterleave = true )
 {
     GDALDataType ntype  = (GDALDataType)buf_type;
     if( PyArray_NDIM(psArray) != 3 )
@@ -656,11 +661,12 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
         return CE_Failure;
     }
 
-    int xdim = 2;
-    int ydim = 1;
+    int xdim = binterleave ? 2 : 1;
+    int ydim = binterleave ? 1 : 0;
+    int bdim = binterleave ? 0 : 2;
     if( PyArray_DIMS(psArray)[xdim] > INT_MAX ||
         PyArray_DIMS(psArray)[ydim] > INT_MAX ||
-        PyArray_DIMS(psArray)[0] > INT_MAX )
+        PyArray_DIMS(psArray)[bdim] > INT_MAX )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                     "Too big array dimensions");
@@ -671,7 +677,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     GIntBig pixel_space, line_space, band_space;
     nxsize = static_cast<int>(PyArray_DIMS(psArray)[xdim]);
     nysize = static_cast<int>(PyArray_DIMS(psArray)[ydim]);
-    bandsize = static_cast<int>(PyArray_DIMS(psArray)[0]);
+    bandsize = static_cast<int>(PyArray_DIMS(psArray)[bdim]);
     if( bandsize != GDALGetRasterCount(ds) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -681,7 +687,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     }
     pixel_space = PyArray_STRIDES(psArray)[xdim];
     line_space = PyArray_STRIDES(psArray)[ydim];
-    band_space = PyArray_STRIDES(psArray)[0];
+    band_space = PyArray_STRIDES(psArray)[bdim];
 
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
@@ -1088,9 +1094,17 @@ codes = {gdalconst.GDT_Byte: numpy.uint8,
          gdalconst.GDT_CFloat64: numpy.complex128}
 
 
-def OpenArray(array, prototype_ds=None):
+def OpenArray(array, prototype_ds=None, interleave='band'):
 
-    ds = OpenNumPyArray(array)
+    interleave = interleave.lower()
+    if interleave == 'band':
+        interleave = True
+    elif interleave == 'pixel':
+        interleave = False
+    else:
+        raise ValueError('Interleave should be band or pixel')
+
+    ds = OpenNumPyArray(array, interleave)
 
     if ds is not None and prototype_ds is not None:
         if type(prototype_ds).__name__ == 'str':
@@ -1131,7 +1145,7 @@ def GDALTypeCodeToNumericTypeCode(gdal_code):
 def LoadFile(filename, xoff=0, yoff=0, xsize=None, ysize=None,
              buf_xsize=None, buf_ysize=None, buf_type=None,
              resample_alg=gdal.GRIORA_NearestNeighbour,
-             callback=None, callback_data=None):
+             callback=None, callback_data=None, interleave='band'):
     ds = gdal.Open(filename)
     if ds is None:
         raise ValueError("Can't open "+filename+"\n\n"+gdal.GetLastErrorMsg())
@@ -1139,20 +1153,20 @@ def LoadFile(filename, xoff=0, yoff=0, xsize=None, ysize=None,
     return DatasetReadAsArray(ds, xoff, yoff, xsize, ysize,
                               buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
                               resample_alg=resample_alg,
-                              callback=callback, callback_data=callback_data)
+                              callback=callback, callback_data=callback_data, interleave=interleave)
 
-def SaveArray(src_array, filename, format="GTiff", prototype=None):
+def SaveArray(src_array, filename, format="GTiff", prototype=None, interleave='band'):
     driver = gdal.GetDriverByName(format)
     if driver is None:
         raise ValueError("Can't find driver "+format)
 
-    return driver.CreateCopy(filename, OpenArray(src_array, prototype))
+    return driver.CreateCopy(filename, OpenArray(src_array, prototype, interleave))
 
 
 def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_obj=None,
                        buf_xsize=None, buf_ysize=None, buf_type=None,
                        resample_alg=gdal.GRIORA_NearestNeighbour,
-                       callback=None, callback_data=None):
+                       callback=None, callback_data=None, interleave='band'):
     """Pure python implementation of reading a chunk of a GDAL file
     into a numpy array.  Used by the gdal.Dataset.ReadAsArray method."""
 
@@ -1160,6 +1174,18 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
         win_xsize = ds.RasterXSize
     if win_ysize is None:
         win_ysize = ds.RasterYSize
+
+    interleave = interleave.lower()
+    if interleave == 'band':
+        interleave = True
+        xdim = 2
+        ydim = 1
+    elif interleave == 'pixel':
+        interleave = False
+        xdim = 1
+        ydim = 0
+    else:
+        raise ValueError('Interleave should be band or pixel')
 
     if ds.RasterCount == 0:
         return None
@@ -1189,14 +1215,15 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
             typecode = numpy.float32
         if buf_type == gdalconst.GDT_Byte and ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE':
             typecode = numpy.int8
-        buf_obj = numpy.empty([ds.RasterCount, buf_ysize, buf_xsize], dtype=typecode)
+        buf_shape = (ds.RasterCount, buf_ysize, buf_xsize) if interleave else (buf_ysize, buf_xsize, ds.RasterCount)
+        buf_obj = numpy.empty(buf_shape, dtype=typecode)
 
     else:
         if len(buf_obj.shape) != 3:
             raise ValueError('Array should have 3 dimensions')
 
-        shape_buf_xsize = buf_obj.shape[2]
-        shape_buf_ysize = buf_obj.shape[1]
+        shape_buf_xsize = buf_obj.shape[xdim]
+        shape_buf_ysize = buf_obj.shape[ydim]
         if buf_xsize is not None and buf_xsize != shape_buf_xsize:
             raise ValueError('Specified buf_xsize not consistent with array shape')
         if buf_ysize is not None and buf_ysize != shape_buf_ysize:
@@ -1212,7 +1239,7 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
         buf_type = datatype
 
     if DatasetIONumPy(ds, 0, xoff, yoff, win_xsize, win_ysize,
-                      buf_obj, buf_type, resample_alg, callback, callback_data) != 0:
+                      buf_obj, buf_type, resample_alg, callback, callback_data, interleave) != 0:
         return None
 
     return buf_obj
@@ -1274,7 +1301,7 @@ def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
     return buf_obj
 
 def BandWriteArray(band, array, xoff=0, yoff=0,
-                   resample_alg = gdal.GRIORA_NearestNeighbour,
+                   resample_alg=gdal.GRIORA_NearestNeighbour,
                    callback=None, callback_data=None):
     """Pure python implementation of writing a chunk of a GDAL file
     from a numpy array.  Used by the gdal.Band.WriteArray method."""

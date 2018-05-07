@@ -52,12 +52,7 @@ CPL_CVSID("$Id$")
  * \brief Create an empty geometry collection.
  */
 
-OGRGeometryCollection::OGRGeometryCollection()
-
-{
-    nGeomCount = 0;
-    papoGeoms = nullptr;
-}
+OGRGeometryCollection::OGRGeometryCollection() = default;
 
 /************************************************************************/
 /*         OGRGeometryCollection( const OGRGeometryCollection& )        */
@@ -74,9 +69,7 @@ OGRGeometryCollection::OGRGeometryCollection()
 
 OGRGeometryCollection::OGRGeometryCollection(
     const OGRGeometryCollection& other ) :
-    OGRGeometry(other),
-    nGeomCount(0),
-    papoGeoms(nullptr)
+    OGRGeometry(other)
 {
     // Do not use addGeometry() as it is virtual.
     papoGeoms = static_cast<OGRGeometry **>(

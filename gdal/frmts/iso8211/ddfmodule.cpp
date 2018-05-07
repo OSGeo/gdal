@@ -179,7 +179,9 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    fpDDF = VSIFOpenL( pszFilename, "rb" );
+    VSIStatBufL sStat;
+    if( VSIStatL(pszFilename, &sStat) == 0 && !VSI_ISDIR(sStat.st_mode) )
+        fpDDF = VSIFOpenL( pszFilename, "rb" );
 
     if( fpDDF == nullptr )
     {

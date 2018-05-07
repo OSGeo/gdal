@@ -28,9 +28,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import ogr
 import sys
 from sys import version_info
+from osgeo import ogr
 
 sys.path.append('../pymod')
 
@@ -88,9 +88,7 @@ def ogr_rfc30_1_bis():
     return ogr_rfc30_1_internal(filename, layer_name)
 
 
-gdaltest_list = [ogr_rfc30_1,
-                 ogr_rfc30_1_bis
-                 ]
+gdaltest_list = [ogr_rfc30_1, ogr_rfc30_1_bis]
 
 if __name__ == '__main__':
 

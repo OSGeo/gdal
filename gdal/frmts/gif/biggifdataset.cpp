@@ -44,7 +44,7 @@ CPL_CVSID("$Id$")
 
 class BIGGifRasterBand;
 
-class BIGGIFDataset : public GIFAbstractDataset
+class BIGGIFDataset final: public GIFAbstractDataset
 {
     friend class BIGGifRasterBand;
 
@@ -70,7 +70,7 @@ class BIGGIFDataset : public GIFAbstractDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class BIGGifRasterBand : public GIFAbstractRasterBand
+class BIGGifRasterBand final: public GIFAbstractRasterBand
 {
     friend class BIGGIFDataset;
 
@@ -175,9 +175,9 @@ BIGGIFDataset::BIGGIFDataset() :
 BIGGIFDataset::~BIGGIFDataset()
 
 {
-    FlushCache();
+    BIGGIFDataset::FlushCache();
 
-    CloseDependentDatasets();
+    BIGGIFDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/

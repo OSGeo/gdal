@@ -216,7 +216,7 @@ RawRasterBand::~RawRasterBand()
 
     CSLDestroy(papszCategoryNames);
 
-    FlushCache();
+    RawRasterBand::FlushCache();
 
     if (bOwnsFP)
     {

@@ -97,8 +97,8 @@ def ogr_xlsx_check(ds):
                   ogr.OFTReal,
                   ogr.OFTDateTime]
 
-    for i in range(len(type_array)):
-        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
+    for i, typ in enumerate(type_array):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != typ:
             gdaltest.post_reason('fail')
             print(i)
             return 'fail'
@@ -281,10 +281,7 @@ def ogr_xlsx_7():
     if drv is None:
         return 'skip'
 
-    try:
-        os.unlink('tmp/ogr_xlsx_7.xlsx')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/ogr_xlsx_7.xlsx')
     shutil.copy('data/test.xlsx', 'tmp/ogr_xlsx_7.xlsx')
 
     ds = ogr.Open('tmp/ogr_xlsx_7.xlsx', update=1)
@@ -525,8 +522,8 @@ def ogr_xlsx_13():
                   ogr.OFTString,
                   ogr.OFTString]
 
-    for i in range(len(type_array)):
-        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
+    for i, typ in enumerate(type_array):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != typ:
             gdaltest.post_reason('invalid type for field {}'.format(i + 1))
             return 'fail'
 
@@ -577,8 +574,8 @@ def ogr_xlsx_14():
                   ogr.OFTString,
                   ogr.OFTString]
 
-    for i in range(len(type_array)):
-        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
+    for i, typ in enumerate(type_array):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != typ:
             gdaltest.post_reason('invalid type for field {}'.format(i + 1))
             return 'fail'
 

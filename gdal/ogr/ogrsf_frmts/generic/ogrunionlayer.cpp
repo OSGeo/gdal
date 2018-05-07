@@ -41,9 +41,7 @@ CPL_CVSID("$Id$")
 OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
     const char* pszNameIn,
     OGRwkbGeometryType eType) :
-    OGRGeomFieldDefn(pszNameIn, eType),
-    bGeomTypeSet(FALSE),
-    bSRSSet(FALSE)
+    OGRGeomFieldDefn(pszNameIn, eType)
 {}
 
 /************************************************************************/
@@ -52,9 +50,7 @@ OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
 
 OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
     OGRGeomFieldDefn* poSrc) :
-    OGRGeomFieldDefn(poSrc->GetNameRef(), poSrc->GetType()),
-    bGeomTypeSet(FALSE),
-    bSRSSet(FALSE)
+    OGRGeomFieldDefn(poSrc->GetNameRef(), poSrc->GetType())
 {
     SetSpatialRef(poSrc->GetSpatialRef());
 }

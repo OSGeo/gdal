@@ -33,7 +33,7 @@ endif
 
 CPPFLAGS	:=	-Iogrsf_frmts -Iogrsf_frmts/mem -Iogrsf_frmts/geojson $(JSON_INCLUDE) -I.  $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS) $(ZLIB_XTRA_OPT)
 
-CXXFLAGS        :=      $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
+CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS) $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
 
 default:	lib
 

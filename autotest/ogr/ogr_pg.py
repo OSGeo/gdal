@@ -964,9 +964,9 @@ def ogr_pg_20():
     # XXX - mloskot - if 'public' is omitted, then OGRPGDataSource::DeleteLayer fails, line 438
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT AddGeometryColumn('public','testgeom','wkb_geometry',-1,'GEOMETRY',4)")
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
-    for i in range(len(geometries)):
+    for i, geom in enumerate(geometries):
         gdaltest.pg_ds.ExecuteSQL("INSERT INTO testgeom (ogc_fid,wkb_geometry) \
-                                    VALUES (%d,GeomFromEWKT('%s'))" % (i, geometries[i][0]))
+                                    VALUES (%d,GeomFromEWKT('%s'))" % (i, geom[0]))
 
     # We need to re-read layers
     gdaltest.pg_ds.Destroy()
@@ -990,18 +990,18 @@ def ogr_pg_20():
         layer.SetFeature(feat)
 
     # Test we get them back as expected
-    for i in range(len(geometries)):
+    for i, geoms in enumerate(geometries):
         feat = layer.GetFeature(i)
         geom = feat.GetGeometryRef()
         if geom is None:
-            gdaltest.post_reason('did not get geometry, expected %s' % geometries[i][1])
+            gdaltest.post_reason('did not get geometry, expected %s' % geoms[1])
             return 'fail'
         wkt = geom.ExportToIsoWkt()
         feat.Destroy()
         feat = None
 
-        if wkt != geometries[i][1]:
-            gdaltest.post_reason('WKT do not match: expected %s, got %s' % (geometries[i][1], wkt))
+        if wkt != geoms[1]:
+            gdaltest.post_reason('WKT do not match: expected %s, got %s' % (geoms[1], wkt))
             return 'fail'
 
     layer = None

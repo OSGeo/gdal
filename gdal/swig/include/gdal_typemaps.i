@@ -36,14 +36,6 @@
 %import typemaps_python.i
 #endif
 
-#ifdef SWIGPHP
-%import typemaps_php.i
-#endif
-
-#ifdef SWIGRUBY
-%import typemaps_ruby.i
-#endif
-
 #ifdef SWIGPERL
 %import typemaps_perl.i
 #endif

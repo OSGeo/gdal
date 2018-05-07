@@ -539,7 +539,6 @@ def wcs_6():
                              open_options=options)
             if not ds:
                 print("OpenEx failed: WCS:" + url + "/?" + query)
-                global wcs_6_ok
                 wcs_6_ok = False
                 break
             projwin = setup[server]['Projwin'].replace('-projwin ', '').split()
@@ -558,7 +557,6 @@ def wcs_6():
                                  open_options=options)
                 if not ds:
                     print("OpenEx failed: WCS:" + url + "/?" + query)
-                    global wcs_6_ok
                     wcs_6_ok = False
                     break
                 options = [cache]
@@ -569,6 +567,13 @@ def wcs_6():
     webserver.server_stop(process, port)
 
     return 'success' if  wcs_6_ok else 'fail'
+
+###############################################################################
+
+#todo tests:
+
+# test that nothing is put into cache if request fails
+# parsing Capabilities and DescribeCoverage: test data in metadata and service files?
 
 ###############################################################################
 

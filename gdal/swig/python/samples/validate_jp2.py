@@ -171,8 +171,7 @@ def gdalOpenWithOpenJPEGDriverPreferably(filename):
     # Re-register drivers
     if jp2openjpeg_drv:
         jp2openjpeg_drv.Deregister()
-        for i in range(len(drivers)):
-            drv = drivers[i]
+        for drv in drivers:
             if drv is not None:
                 drv.Register()
 
@@ -793,12 +792,12 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
 
             # Check that all bands have the same bit-depth, except the alpha band than can (should) be 1-bit
             if inspire_tg:
-                for i in range(len(bpc_vals)):
+                for i, bpc_val in enumerate(bpc_vals):
                     if i == transparent_index:
-                        if bpc_vals[i] != bpc_vals[0] and bpc_vals[i] != 0:
-                            error_report.EmitError('INSPIRE_TG', 'Band %d has bpc=%d, which is different from first band whose value is %d' % (i, bpc_vals[i], bpc_vals[0]), requirement=25)
-                    elif bpc_vals[i] != bpc_vals[0]:
-                        error_report.EmitError('INSPIRE_TG', 'Band %d has bpc=%d, which is different from first band whose value is %d' % (i, bpc_vals[i], bpc_vals[0]), requirement=25)
+                        if bpc_val != bpc_vals[0] and bpc_val != 0:
+                            error_report.EmitError('INSPIRE_TG', 'Band %d has bpc=%d, which is different from first band whose value is %d' % (i, bpc_val, bpc_vals[0]), requirement=25)
+                    elif bpc_val != bpc_vals[0]:
+                        error_report.EmitError('INSPIRE_TG', 'Band %d has bpc=%d, which is different from first band whose value is %d' % (i, bpc_val, bpc_vals[0]), requirement=25)
 
             # Check optional "res " subbox
             res = find_jp2box(jp2h, 'res ')

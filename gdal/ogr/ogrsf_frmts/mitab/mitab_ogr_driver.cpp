@@ -57,7 +57,7 @@ static int OGRTABDriverIdentify( GDALOpenInfo *poOpenInfo )
     {
         for( int i = 0; i < poOpenInfo->nHeaderBytes; i++)
         {
-            const char *pszLine = (const char *)poOpenInfo->pabyHeader + i;
+            const char *pszLine = reinterpret_cast<const char *>(poOpenInfo->pabyHeader) + i;
             if (STARTS_WITH_CI(pszLine, "Fields"))
                 return TRUE;
             else if (STARTS_WITH_CI(pszLine, "create view"))

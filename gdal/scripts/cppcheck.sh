@@ -21,6 +21,13 @@ cd "$GDAL_ROOT"
 
 LOG_FILE=/tmp/cppcheck_gdal.txt
 
+CPPCHECK_VERSION="`cppcheck --version | awk '{print $2}'`"
+if test `expr $CPPCHECK_VERSION \>\= 1.84` = 1; then
+    OVERRIDE=
+else
+    OVERRIDE="-Doverride="
+fi
+
 echo "" > ${LOG_FILE}
 for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
     printf "Running cppcheck on %s (can be long): " "$dirname"
@@ -45,12 +52,13 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DCPPCHECK \
         -DDEBUG_MUTEX \
         -DDEBUG_PROXY_POOL \
-        -Doverride= \
+        ${OVERRIDE} \
         -DOCAD_EXTERN= \
         -DTIFFLIB_VERSION=99999999 \
         --include=port/cpl_config.h \
         --include=port/cpl_port.h \
-        -I port -I gcore -I ogr -I ogr/ogrsf_frmts \
+        -I port -I gcore -I ogr -I ogr/ogrsf_frmts -I ogr/ogrsf_frmts/geojson \
+        -I ogr/ogrsf_frmts/geojson/libjson \
         -i cpl_mem_cache.h \
         -i ogrdissolve.cpp \
         -i gdalasyncread.cpp \

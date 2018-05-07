@@ -207,10 +207,10 @@ def gdal_pansharpen(argv):
 
     vrt_xml = """<VRTDataset subClass="VRTPansharpenedDataset">\n"""
     if bands != [j + 1 for j in range(len(spectral_bands))]:
-        for i in range(len(bands)):
-            band = spectral_bands[bands[i] - 1]
-            datatype = gdal.GetDataTypeName(band.DataType)
-            colorname = gdal.GetColorInterpretationName(band.GetColorInterpretation())
+        for i, band in enumerate(bands):
+            sband = spectral_bands[band - 1]
+            datatype = gdal.GetDataTypeName(sband.DataType)
+            colorname = gdal.GetColorInterpretationName(sband.GetColorInterpretation())
             vrt_xml += """  <VRTRasterBand dataType="%s" band="%d" subClass="VRTPansharpenedRasterBand">
       <ColorInterp>%s</ColorInterp>
   </VRTRasterBand>\n""" % (datatype, i + 1, colorname)
@@ -220,10 +220,10 @@ def gdal_pansharpen(argv):
     if weights:
         vrt_xml += """      <AlgorithmOptions>\n"""
         vrt_xml += """        <Weights>"""
-        for i in range(len(weights)):
+        for i, weight in enumerate(weights):
             if i > 0:
                 vrt_xml += ","
-            vrt_xml += "%.16g" % weights[i]
+            vrt_xml += "%.16g" % weight
         vrt_xml += "</Weights>\n"
         vrt_xml += """      </AlgorithmOptions>\n"""
 
@@ -253,10 +253,10 @@ def gdal_pansharpen(argv):
       <SourceBand>1</SourceBand>
     </PanchroBand>\n""" % (pan_relative, pan_name)
 
-    for i in range(len(spectral_bands)):
+    for i, sband in enumerate(spectral_bands):
         dstband = ''
-        for j in range(len(bands)):
-            if i + 1 == bands[j]:
+        for j, band in enumerate(bands):
+            if i + 1 == band:
                 dstband = ' dstBand="%d"' % (j + 1)
                 break
 
@@ -270,7 +270,7 @@ def gdal_pansharpen(argv):
         vrt_xml += """    <SpectralBand%s>
       <SourceFilename relativeToVRT="%s">%s</SourceFilename>
       <SourceBand>%d</SourceBand>
-    </SpectralBand>\n""" % (dstband, ms_relative, ms_name, spectral_bands[i].GetBand())
+    </SpectralBand>\n""" % (dstband, ms_relative, ms_name, sband.GetBand())
 
     vrt_xml += """  </PansharpeningOptions>\n"""
     vrt_xml += """</VRTDataset>\n"""

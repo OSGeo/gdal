@@ -1,4 +1,6 @@
 #!/bin/bash
+# WARNING: this script is used by https://github.com/google/oss-fuzz/blob/master/projects/gdal/build.sh
+# and should not be renamed or moved without updating the above
 
 set -e
 

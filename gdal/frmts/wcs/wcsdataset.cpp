@@ -327,6 +327,8 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
     return eErr;
 }
 
+static bool ProcessError( CPLHTTPResult *psResult );
+
 /************************************************************************/
 /*                            GetCoverage()                             */
 /*                                                                      */
@@ -474,7 +476,7 @@ int WCSDataset::DescribeCoverage()
 /*      or FALSE if the result seems ok.                                */
 /************************************************************************/
 
-int WCSDataset::ProcessError( CPLHTTPResult *psResult )
+static bool ProcessError( CPLHTTPResult *psResult )
 
 {
 /* -------------------------------------------------------------------- */
@@ -512,24 +514,25 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
 /*      check based on the Content-type, but this seems quite           */
 /*      undependable, even from MapServer!                              */
 /* -------------------------------------------------------------------- */
-    if( strstr((const char *)psResult->pabyData, "ServiceException")
-        || strstr((const char *)psResult->pabyData, "ExceptionReport") )
+    if( strstr((const char *)psResult->pabyData, "ExceptionReport") )
     {
-        CPLXMLNode *psTree = CPLParseXMLString( (const char *)
-                                                psResult->pabyData );
-
+        CPLXMLNode *psTree = CPLParseXMLString( (const char *)psResult->pabyData );
         CPLStripXMLNamespace( psTree, nullptr, TRUE );
-
-        const char *pszMsg = CPLGetXMLValue(psTree, this->ExceptionNodeName(), nullptr);
-
-        if( pszMsg )
+        CPLString msg = CPLGetXMLValue(psTree, "=ServiceExceptionReport.ServiceException", "");
+        if (msg == "") {
+            msg = CPLGetXMLValue(psTree, "=ExceptionReport.Exception.exceptionCode", "");
+            if (msg != "") {
+                msg += ": ";
+            }
+            msg += CPLGetXMLValue(psTree, "=ExceptionReport.Exception.ExceptionText", "");
+        }
+        if( msg != "" )
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s", pszMsg );
+                      "%s", msg.c_str() );
         else
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Corrupt Service Exception:\n%s",
                       (const char *) psResult->pabyData );
-
         CPLDestroyXMLNode( psTree );
         CPLHTTPDestroyResult( psResult );
         return TRUE;
@@ -895,8 +898,7 @@ static bool FetchCapabilities(GDALOpenInfo * poOpenInfo, CPLString url, CPLStrin
     }
     CPLHTTPResult *psResult = CPLHTTPFetch(url.c_str(), options);
     CSLDestroy(options);
-    if (psResult == nullptr || psResult->nDataLen == 0) {
-        CPLHTTPDestroyResult(psResult);
+    if (ProcessError(psResult)) {
         return false;
     }
     CPLXMLTreeCloser doc(CPLParseXMLString((const char*)psResult->pabyData));
@@ -1010,7 +1012,6 @@ static WCSDataset *BootstrapGlobal(GDALOpenInfo * poOpenInfo, const CPLString &c
 {
     // do we have the capabilities file
     CPLString filename;
-    // we should lock the cache for our use in case we need to add an entry
     bool cached;
     if (SearchCache(cache, url, filename, ".xml", cached) != CE_None) {
         return nullptr; // error in cache
@@ -1018,75 +1019,21 @@ static WCSDataset *BootstrapGlobal(GDALOpenInfo * poOpenInfo, const CPLString &c
     if (!cached) {
         filename = "XXXXX";
         if (AddEntryToCache(cache, url, filename, ".xml") != CE_None) {
-            // release the cache lock
             return nullptr; // error in cache
         }
         if (!FetchCapabilities(poOpenInfo, url, filename)) {
-            // release the cache lock
+            DeleteEntryFromCache(cache, "", url);
             return nullptr;
         }
-        // release the cache lock
         return WCSDataset::CreateFromCapabilities(cache, filename, url);
     }
-    // release the cache lock
-    filename = RemoveExt(filename) + ".aux.xml";
+    CPLString metadata = RemoveExt(filename) + ".aux.xml";
     bool recreate_meta = CPLFetchBool(poOpenInfo->papszOpenOptions, "RECREATE_META", false);
-    if (FileIsReadable(filename) && !recreate_meta) {
-        return WCSDataset::CreateFromMetadata(cache, filename);
+    if (FileIsReadable(metadata) && !recreate_meta) {
+        return WCSDataset::CreateFromMetadata(cache, metadata);
     }
-    // we capabilities but not meta
+    // we have capabilities but not meta
     return WCSDataset::CreateFromCapabilities(cache, filename, url);
-}
-
-/************************************************************************/
-/*                        CreateServiceMetadata()                       */
-/************************************************************************/
-
-// master filename is the name of the global metadata file
-// filename is the name of the metadata file of the service file
-static void CreateServiceMetadata(const CPLString &coverage,
-                                  const CPLString &master_filename,
-                                  const CPLString &meta_filename)
-{
-    CPLXMLTreeCloser doc(CPLParseXMLFile(master_filename));
-    CPLXMLNode *metadata = doc.getDocumentElement();
-    // remove other subdatasets than the current
-    int subdataset = 0;
-    CPLXMLNode *domain = SearchChildWithValue(metadata, "domain", "SUBDATASETS");
-    if (domain == nullptr) {
-        return;
-    }
-    for (CPLXMLNode *node = domain->psChild; node != nullptr; node = node->psNext) {
-        if (node->eType != CXT_Element) {
-            continue;
-        }
-        CPLString key = CPLGetXMLValue(node, "key", "");
-        if (!STARTS_WITH(key, "SUBDATASET_")) {
-            continue;
-        }
-        CPLString value = CPLGetXMLValue(node, nullptr, "");
-        if (value.find(coverage) != std::string::npos) {
-            key.erase(0, 11); // SUBDATASET_
-            key.erase(key.find("_"), std::string::npos);
-            subdataset = atoi(key);
-            break;
-        }
-    }
-    if (subdataset > 0) {
-        CPLXMLNode *next = nullptr;
-        for (CPLXMLNode *node = domain->psChild; node != nullptr; node = next) {
-            next = node->psNext;
-            if (node->eType != CXT_Element) {
-                continue;
-            }
-            CPLString key = CPLGetXMLValue(node, "key", "");
-            if (key.find(CPLString().Printf("SUBDATASET_%i_", subdataset)) == std::string::npos) {
-                CPLRemoveXMLChild(domain, node);
-                CPLDestroyXMLNode(node);
-            }
-        }
-    }
-    CPLSerializeXMLTreeToFile(metadata, meta_filename);
 }
 
 /************************************************************************/
@@ -1291,7 +1238,9 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*          Get capabilities.                                           */
 /* -------------------------------------------------------------------- */
             CPLString url2 = CPLURLAddKVP(url, "version", version);
-            url2 += "&" + parameters;
+            if (parameters != "") {
+                url2 += "&" + parameters;
+            }
             WCSDataset *global = BootstrapGlobal(poOpenInfo, cache, url2);
             if (!global) {
                 return nullptr;
@@ -1302,8 +1251,6 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             if (version == "") {
                 version = global->Version();
             }
-            CPLString global_meta = CPLString(global->GetDescription()) + ".aux.xml";
-            delete global;
             service = CreateService(url, version, coverage, parameters);
 /* -------------------------------------------------------------------- */
 /*          The filename for the new service file.                      */
@@ -1312,8 +1259,24 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             if (AddEntryToCache(cache, full_url, filename, ".xml") != CE_None) {
                 return nullptr; // error in cache
             }
-            CreateServiceMetadata(coverage, global_meta, filename + ".aux.xml");
-            CPLSetXMLValue(service, "Parameters", parameters);
+            // Create basic service metadata
+            // copy global metadata (not SUBDATASETS metadata)
+            CPLString global_base = CPLString(global->GetDescription());
+            CPLString global_meta = global_base + ".aux.xml";
+            CPLString capabilities = global_base + ".xml";
+            CPLXMLTreeCloser doc(CPLParseXMLFile(global_meta));
+            CPLXMLNode *metadata = doc.getDocumentElement();
+            CPLXMLNode *domain = SearchChildWithValue(metadata, "domain", "SUBDATASETS");
+            if (domain != nullptr) {
+                CPLRemoveXMLChild(metadata, domain);
+                CPLDestroyXMLNode(domain);
+            }
+            // get metadata for this coverage from the capabilities XML
+            CPLXMLTreeCloser doc2(CPLParseXMLFile(capabilities));
+            global->ParseCoverageCapabilities(doc2.getDocumentElement(), coverage, metadata->psChild);
+            delete global;
+            CPLString metadata_filename = filename + ".aux.xml";
+            CPLSerializeXMLTreeToFile(metadata, metadata_filename);
             updated = true;
         }
         CPLFree(poOpenInfo->pszFilename);
@@ -1521,7 +1484,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     for( iBand = 0; iBand < nBandCount; iBand++ ) {
         WCSRasterBand *band = new WCSRasterBand(poDS, iBand+1, -1);
         // copy band specific metadata to the band
-        char **md_from = poDS->GetMetadata("SUBDATASETS");
+        char **md_from = poDS->GetMetadata("");
         char **md_to = nullptr;
         CPLString our_key = CPLString().Printf("FIELD_%d_", iBand + 1);
         for (char **from = md_from; *from != nullptr; ++from) {

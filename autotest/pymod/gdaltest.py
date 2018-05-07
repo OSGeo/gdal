@@ -34,6 +34,7 @@ import os
 import os.path
 import stat
 import sys
+from sys import version_info
 import time
 
 from osgeo import gdal
@@ -67,7 +68,6 @@ jp2mrsid_drv_unregistered = False
 jp2openjpeg_drv_unregistered = False
 jp2lura_drv_unregistered = False
 
-from sys import version_info
 if version_info >= (3, 0, 0):
     import gdaltest_python3 as gdaltestaux
 else:
@@ -94,7 +94,7 @@ def setup_run(name):
 
 def git_status():
 
-    out, err = runexternal_out_and_err('git status --porcelain .')
+    out, _ = runexternal_out_and_err('git status --porcelain .')
     return out
 
 ###############################################################################
@@ -328,6 +328,8 @@ def run_all(dirlist, run_as_external=False):
                         print('Running tests from %s/%s' % (dir_name, file))
                         setup_run('%s/%s' % (dir_name, file))
                         exec("run_tests( " + module + ".gdaltest_list)")
+                    except KeyboardInterrupt:
+                        raise
                     except:
                         # import traceback
                         # traceback.print_exc(file=sys.stderr)
@@ -335,6 +337,8 @@ def run_all(dirlist, run_as_external=False):
 
                 os.chdir(wd)
 
+            except KeyboardInterrupt:
+                raise
             except:
                 os.chdir(wd)
                 print('... failed to load %s ... skipping.' % file)
@@ -1757,7 +1761,7 @@ def find_lib_linux(libname):
 def find_lib_sunos(libname):
 
     pid = os.getpid()
-    (lines, err) = runexternal_out_and_err('pmap %d' % pid)
+    lines, _ = runexternal_out_and_err('pmap %d' % pid)
 
     for line in lines.split('\n'):
         if line.rfind('/lib' + libname) == -1 or line.find('.so') == -1:

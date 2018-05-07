@@ -1,5 +1,5 @@
-from osgeo import gdal
 from unittest import mock, TestCase
+from osgeo import gdal
 
 import gdal2tiles
 

@@ -16,6 +16,8 @@ OBJ	=	mitab_rawbinblock.o mitab_mapheaderblock.o \
 CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS) -DOGR \
 			-DMITAB_USE_OFTDATETIME
 
+CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS) $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
+
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:

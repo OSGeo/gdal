@@ -431,12 +431,12 @@ def ogr_index_10():
 def ogr_index_11_check(lyr, expected_fids):
 
     lyr.ResetReading()
-    for i in range(len(expected_fids)):
+    for expected_fid in expected_fids:
         feat = lyr.GetNextFeature()
         if feat is None:
             gdaltest.post_reason('failed')
             return 'fail'
-        if feat.GetFID() != expected_fids[i]:
+        if feat.GetFID() != expected_fid:
             gdaltest.post_reason('failed')
             return 'fail'
 

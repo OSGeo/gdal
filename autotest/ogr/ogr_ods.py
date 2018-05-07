@@ -97,8 +97,8 @@ def ogr_ods_check(ds):
                   ogr.OFTReal,
                   ogr.OFTDateTime]
 
-    for i in range(len(type_array)):
-        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
+    for i, typ in enumerate(type_array):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != typ:
             gdaltest.post_reason('fail')
             print(i)
             print(lyr.GetLayerDefn().GetFieldDefn(i).GetType())
@@ -217,8 +217,8 @@ def ogr_ods_kspread_1():
                   ogr.OFTString,  # ogr.OFTDateTime
                   ]
 
-    for i in range(len(type_array)):
-        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
+    for i, typ in enumerate(type_array):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != typ:
             gdaltest.post_reason('fail')
             print(i)
             return 'fail'

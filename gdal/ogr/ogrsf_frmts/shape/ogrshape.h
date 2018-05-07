@@ -71,9 +71,11 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
 class OGRShapeGeomFieldDefn final: public OGRGeomFieldDefn
 {
-    char* pszFullName;
-    mutable bool  bSRSSet;
-    mutable CPLString osPrjFile;
+    CPL_DISALLOW_COPY_ASSIGN(OGRShapeGeomFieldDefn)
+
+    char* pszFullName = nullptr;
+    mutable bool  bSRSSet = false;
+    mutable CPLString osPrjFile{};
 
     public:
         OGRShapeGeomFieldDefn( const char* pszFullNameIn,
@@ -101,6 +103,8 @@ class OGRShapeDataSource;
 
 class OGRShapeLayer final: public OGRAbstractProxiedLayer
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRShapeLayer)
+
     OGRShapeDataSource  *poDS;
 
     OGRFeatureDefn     *poFeatureDefn;
@@ -141,7 +145,7 @@ class OGRShapeLayer final: public OGRAbstractProxiedLayer
     bool                bSbnSbxDeleted;
 
     CPLString           ConvertCodePage( const char * );
-    CPLString           osEncoding;
+    CPLString           osEncoding{};
 
     bool                bTruncationWarningEmitted;
 
@@ -265,10 +269,12 @@ class OGRShapeDataSource final: public OGRDataSource
 
     void                AddLayer( OGRShapeLayer* poLayer );
 
-    std::vector<CPLString> oVectorLayerName;
+    std::vector<CPLString> oVectorLayerName{};
 
     bool                b2GBLimit;
     char              **papszOpenOptions;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRShapeDataSource)
 
   public:
                         OGRShapeDataSource();

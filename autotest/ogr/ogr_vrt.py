@@ -1630,13 +1630,10 @@ def ogr_vrt_28():
 
 def ogr_vrt_29():
 
-    try:
-        os.unlink('tmp/ogr_vrt_29.shp')
-        os.unlink('tmp/ogr_vrt_29.shx')
-        os.unlink('tmp/ogr_vrt_29.dbf')
-        os.unlink('tmp/ogr_vrt_29.prj')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/ogr_vrt_29.shp')
+    gdal.Unlink('tmp/ogr_vrt_29.shx')
+    gdal.Unlink('tmp/ogr_vrt_29.dbf')
+    gdal.Unlink('tmp/ogr_vrt_29.prj')
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_vrt_29.shp')
     sr = osr.SpatialReference()
@@ -1986,13 +1983,10 @@ def ogr_vrt_29():
             print(ret)
             return 'fail'
 
-    try:
-        os.unlink('tmp/ogr_vrt_29.shp')
-        os.unlink('tmp/ogr_vrt_29.shx')
-        os.unlink('tmp/ogr_vrt_29.dbf')
-        os.unlink('tmp/ogr_vrt_29.prj')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/ogr_vrt_29.shp')
+    gdal.Unlink('tmp/ogr_vrt_29.shx')
+    gdal.Unlink('tmp/ogr_vrt_29.dbf')
+    gdal.Unlink('tmp/ogr_vrt_29.prj')
     os.unlink('tmp/ogr_vrt_29.vrt')
     os.unlink('tmp/ogr_vrt_29_2.vrt')
 
@@ -2014,10 +2008,7 @@ def ogr_vrt_30():
                      'tmp/ogr_vrt_30_2.dbf',
                      'tmp/ogr_vrt_30_2.prj',
                      'tmp/ogr_vrt_30_2.qix']:
-        try:
-            os.unlink(filename)
-        except OSError:
-            pass
+        gdal.Unlink(filename)
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_vrt_30_1.shp')
     sr = osr.SpatialReference()
@@ -2503,10 +2494,7 @@ def ogr_vrt_30():
                      'tmp/ogr_vrt_30_2.dbf',
                      'tmp/ogr_vrt_30_2.prj',
                      'tmp/ogr_vrt_30_2.qix']:
-        try:
-            os.unlink(filename)
-        except OSError:
-            pass
+        gdal.Unlink(filename)
     os.unlink('tmp/ogr_vrt_30.vrt')
 
     return 'success'
@@ -2961,14 +2949,14 @@ def ogr_vrt_33():
     if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
         gdaltest.post_reason('fail')
         return 'fail'
-    for i in range(len(geom_fields)):
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_fields[i][0]:
+    for i, geom_field in enumerate(geom_fields):
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_field[0]:
             gdaltest.post_reason('fail')
             return 'fail'
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_fields[i][1]:
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_field[1]:
             gdaltest.post_reason('fail')
             return 'fail'
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_fields[i][2]) < 0:
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_field[2]) < 0:
             gdaltest.post_reason('fail')
             return 'fail'
     feat = lyr.GetNextFeature()
@@ -3023,14 +3011,14 @@ def ogr_vrt_33():
     if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
         gdaltest.post_reason('fail')
         return 'fail'
-    for i in range(len(geom_fields)):
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_fields[i][0]:
+    for i, geom_field in enumerate(geom_fields):
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_field[0]:
             gdaltest.post_reason('fail')
             return 'fail'
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_fields[i][1]:
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_field[1]:
             gdaltest.post_reason('fail')
             return 'fail'
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_fields[i][2]) < 0:
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_field[2]) < 0:
             gdaltest.post_reason('fail')
             return 'fail'
     feat = lyr.GetNextFeature()
@@ -3082,14 +3070,14 @@ def ogr_vrt_33():
     if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
         gdaltest.post_reason('fail')
         return 'fail'
-    for i in range(len(geom_fields)):
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_fields[i][0]:
+    for i, geom_field in enumerate(geom_fields):
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_field[0]:
             gdaltest.post_reason('fail')
             return 'fail'
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_fields[i][1]:
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_field[1]:
             gdaltest.post_reason('fail')
             return 'fail'
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_fields[i][2]) < 0:
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_field[2]) < 0:
             gdaltest.post_reason('fail')
             return 'fail'
     feat = lyr.GetNextFeature()
@@ -3141,17 +3129,17 @@ def ogr_vrt_33():
     if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
         gdaltest.post_reason('fail')
         return 'fail'
-    for i in range(len(geom_fields)):
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_fields[i][0]:
+    for i, geom_field in enumerate(geom_fields):
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_field[0]:
             gdaltest.post_reason('fail')
             return 'fail'
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_fields[i][1]:
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_field[1]:
             print(i)
             print(lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType())
-            print(geom_fields[i][1])
+            print(geom_field[1])
             gdaltest.post_reason('fail')
             return 'fail'
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_fields[i][2]) < 0:
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_field[2]) < 0:
             gdaltest.post_reason('fail')
             return 'fail'
     feat = lyr.GetNextFeature()
@@ -3209,17 +3197,17 @@ def ogr_vrt_33():
         gdaltest.post_reason('fail')
         print(bb)
         return 'fail'
-    for i in range(len(geom_fields)):
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_fields[i][0]:
+    for i, geom_field in enumerate(geom_fields):
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_field[0]:
             gdaltest.post_reason('fail')
             return 'fail'
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_fields[i][1]:
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_field[1]:
             print(i)
             print(lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType())
-            print(geom_fields[i][1])
+            print(geom_field[1])
             gdaltest.post_reason('fail')
             return 'fail'
-        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_fields[i][2]) < 0:
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_field[2]) < 0:
             gdaltest.post_reason('fail')
             return 'fail'
     feat = lyr.GetNextFeature()
@@ -3294,14 +3282,14 @@ def ogr_vrt_33():
     if sql_lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
         gdaltest.post_reason('fail')
         return 'fail'
-    for i in range(len(geom_fields)):
-        if sql_lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_fields[i][0]:
+    for i, geom_field in enumerate(geom_fields):
+        if sql_lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_field[0]:
             gdaltest.post_reason('fail')
             return 'fail'
-        if sql_lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_fields[i][1]:
+        if sql_lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_field[1]:
             gdaltest.post_reason('fail')
             return 'fail'
-        if sql_lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_fields[i][2]) < 0:
+        if sql_lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_field[2]) < 0:
             gdaltest.post_reason('fail')
             return 'fail'
     feat = sql_lyr.GetNextFeature()

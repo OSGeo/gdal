@@ -90,7 +90,7 @@ OGRAVCBinLayer::OGRAVCBinLayer( OGRAVCBinDataSource *poDSIn,
 OGRAVCBinLayer::~OGRAVCBinLayer()
 
 {
-    ResetReading();
+    OGRAVCBinLayer::ResetReading();
 }
 
 /************************************************************************/

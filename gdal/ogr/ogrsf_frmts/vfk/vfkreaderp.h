@@ -55,28 +55,34 @@ private:
 
     void          AddInfo(const char *) override;
 
+    CPL_DISALLOW_COPY_ASSIGN(VFKReader)
+
 protected:
     char           *m_pszFilename;
     VSIStatBuf     *m_poFStat;
     bool            m_bAmendment;
+    bool            m_bFileField;
     int             m_nDataBlockCount;
     IVFKDataBlock **m_papoDataBlock;
 
     IVFKDataBlock  *CreateDataBlock(const char *) override;
     void            AddDataBlock(IVFKDataBlock *, const char *) override;
-    virtual OGRErr          AddFeature(IVFKDataBlock *, VFKFeature *) override;
+    virtual OGRErr  AddFeature(IVFKDataBlock *, VFKFeature *) override;
 
     // Metadata.
     std::map<CPLString, CPLString> poInfo;
 
 public:
-    explicit VFKReader( const char *pszFilename );
+    explicit VFKReader( const GDALOpenInfo* );
     virtual ~VFKReader();
+
+    const char    *GetFilename() const override { return m_pszFilename; }
 
     bool           IsLatin2() const override { return m_bLatin2; }
     bool           IsSpatial() const override { return false; }
     bool           IsPreProcessed() const override { return false; }
     bool           IsValid() const override { return true; }
+    bool           HasFileField() const override { return m_bFileField; }
     int            ReadDataBlocks(bool = false) override;
     int            ReadDataRecords(IVFKDataBlock * = nullptr) override;
     int            LoadGeometry() override;
@@ -112,7 +118,7 @@ private:
 
     friend class   VFKFeatureSQLite;
 public:
-    explicit VFKReaderSQLite(const char *);
+    explicit VFKReaderSQLite( const GDALOpenInfo * );
     virtual ~VFKReaderSQLite();
 
     bool          IsSpatial() const override { return m_bSpatial; }

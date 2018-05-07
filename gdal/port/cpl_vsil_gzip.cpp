@@ -148,39 +148,41 @@ typedef struct
 
 class VSIGZipHandle final : public VSIVirtualHandle
 {
-    VSIVirtualHandle* m_poBaseHandle;
+    VSIVirtualHandle* m_poBaseHandle = nullptr;
 #ifdef DEBUG
-    vsi_l_offset      m_offset;
+    vsi_l_offset      m_offset = 0;
 #endif
-    vsi_l_offset      m_compressed_size;
-    vsi_l_offset      m_uncompressed_size;
-    vsi_l_offset      offsetEndCompressedData;
-    uLong             m_expected_crc;
-    char             *m_pszBaseFileName; /* optional */
-    bool              m_bWriteProperties;
-    bool              m_bCanSaveInfo;
+    vsi_l_offset      m_compressed_size = 0;
+    vsi_l_offset      m_uncompressed_size = 0;
+    vsi_l_offset      offsetEndCompressedData = 0;
+    uLong             m_expected_crc = 0;
+    char             *m_pszBaseFileName = nullptr; /* optional */
+    bool              m_bWriteProperties = false;
+    bool              m_bCanSaveInfo = false;
 
     /* Fields from gz_stream structure */
     z_stream stream;
-    int      z_err;   /* error code for last stream operation */
-    int      z_eof;   /* set if end of input file (but not necessarily of the uncompressed stream ! "in" must be null too ) */
-    Byte     *inbuf;  /* input buffer */
-    Byte     *outbuf; /* output buffer */
-    uLong    crc;     /* crc32 of uncompressed data */
-    int      m_transparent; /* 1 if input file is not a .gz file */
-    vsi_l_offset  startOff;   /* startOff of compressed data in file (header skipped) */
-    vsi_l_offset  in;      /* bytes into deflate or inflate */
-    vsi_l_offset  out;     /* bytes out of deflate or inflate */
-    vsi_l_offset  m_nLastReadOffset;
+    int      z_err = Z_OK;   /* error code for last stream operation */
+    int      z_eof = 0;   /* set if end of input file (but not necessarily of the uncompressed stream ! "in" must be null too ) */
+    Byte     *inbuf = nullptr;  /* input buffer */
+    Byte     *outbuf = nullptr; /* output buffer */
+    uLong    crc = 0;     /* crc32 of uncompressed data */
+    int      m_transparent = 0; /* 1 if input file is not a .gz file */
+    vsi_l_offset  startOff = 0;   /* startOff of compressed data in file (header skipped) */
+    vsi_l_offset  in = 0;      /* bytes into deflate or inflate */
+    vsi_l_offset  out = 0;     /* bytes out of deflate or inflate */
+    vsi_l_offset  m_nLastReadOffset = 0;
 
-    GZipSnapshot* snapshots;
-    vsi_l_offset snapshot_byte_interval; /* number of compressed bytes at which we create a "snapshot" */
+    GZipSnapshot* snapshots = nullptr;
+    vsi_l_offset snapshot_byte_interval = 0; /* number of compressed bytes at which we create a "snapshot" */
 
     void check_header();
     int get_byte();
     int gzseek( vsi_l_offset nOffset, int nWhence );
     int gzrewind ();
     uLong getLong ();
+
+    CPL_DISALLOW_COPY_ASSIGN(VSIGZipHandle)
 
   public:
 
@@ -219,12 +221,14 @@ class VSIGZipHandle final : public VSIVirtualHandle
 
 class VSIGZipFilesystemHandler final : public VSIFilesystemHandler
 {
-    CPLMutex* hMutex;
-    VSIGZipHandle* poHandleLastGZipFile;
-    bool           m_bInSaveInfo;
+    CPL_DISALLOW_COPY_ASSIGN(VSIGZipFilesystemHandler)
+
+    CPLMutex* hMutex = nullptr;
+    VSIGZipHandle* poHandleLastGZipFile = nullptr;
+    bool           m_bInSaveInfo = false;
 
 public:
-    VSIGZipFilesystemHandler();
+    VSIGZipFilesystemHandler() = default;
     ~VSIGZipFilesystemHandler() override;
 
     VSIVirtualHandle *Open( const char *pszFilename,
@@ -324,23 +328,16 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
 #ifdef DEBUG
     m_offset(offset),
 #endif
+    m_uncompressed_size(uncompressed_size),
     m_expected_crc(expected_crc),
     m_pszBaseFileName(pszBaseFileName ? CPLStrdup(pszBaseFileName) : nullptr),
     m_bWriteProperties(CPLTestBool(
         CPLGetConfigOption("CPL_VSIL_GZIP_WRITE_PROPERTIES", "YES"))),
     m_bCanSaveInfo(CPLTestBool(
         CPLGetConfigOption("CPL_VSIL_GZIP_SAVE_INFO", "YES"))),
-    z_err(Z_OK),
-    z_eof(0),
-    outbuf(nullptr),
+    stream(),
     crc(crc32(0L, nullptr, 0)),
-    m_transparent(transparent),
-    startOff(0),
-    in(0),
-    out(0),
-    m_nLastReadOffset(0),
-    snapshots(nullptr),
-    snapshot_byte_interval(0)
+    m_transparent(transparent)
 {
     if( compressed_size || transparent )
     {
@@ -353,7 +350,6 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
         m_compressed_size = VSIFTellL(reinterpret_cast<VSILFILE*>(poBaseHandle)) - offset;
         compressed_size = m_compressed_size;
     }
-    m_uncompressed_size = uncompressed_size;
     offsetEndCompressedData = offset + compressed_size;
 
     if( VSIFSeekL(reinterpret_cast<VSILFILE*>(poBaseHandle), offset, SEEK_SET) != 0 )
@@ -1196,15 +1192,17 @@ int VSIGZipHandle::Close()
 
 class VSIGZipWriteHandle final : public VSIVirtualHandle
 {
-    VSIVirtualHandle*  m_poBaseHandle;
+    CPL_DISALLOW_COPY_ASSIGN(VSIGZipWriteHandle)
+
+    VSIVirtualHandle*  m_poBaseHandle = nullptr;
     z_stream           sStream;
-    Byte              *pabyInBuf;
-    Byte              *pabyOutBuf;
-    bool               bCompressActive;
-    vsi_l_offset       nCurOffset;
-    uLong              nCRC;
-    bool               bRegularZLib;
-    bool               bAutoCloseBaseHandle;
+    Byte              *pabyInBuf = nullptr;
+    Byte              *pabyOutBuf = nullptr;
+    bool               bCompressActive = false;
+    vsi_l_offset       nCurOffset = 0;
+    uLong              nCRC = 0;
+    bool               bRegularZLib = false;
+    bool               bAutoCloseBaseHandle = false;
 
   public:
     VSIGZipWriteHandle( VSIVirtualHandle* poBaseHandle, bool bRegularZLib,
@@ -1229,10 +1227,9 @@ VSIGZipWriteHandle::VSIGZipWriteHandle( VSIVirtualHandle *poBaseHandle,
                                         bool bRegularZLibIn,
                                         bool bAutoCloseBaseHandleIn ) :
     m_poBaseHandle(poBaseHandle),
+    sStream(),
     pabyInBuf(static_cast<Byte *>(CPLMalloc( Z_BUFSIZE ))),
     pabyOutBuf(static_cast<Byte *>(CPLMalloc( Z_BUFSIZE ))),
-    bCompressActive(false),
-    nCurOffset(0),
     nCRC(crc32(0L, nullptr, 0)),
     bRegularZLib(bRegularZLibIn),
     bAutoCloseBaseHandle(bAutoCloseBaseHandleIn)
@@ -1465,18 +1462,6 @@ vsi_l_offset VSIGZipWriteHandle::Tell()
 /*                       VSIGZipFilesystemHandler                       */
 /* ==================================================================== */
 /************************************************************************/
-
-/************************************************************************/
-/*                   VSIGZipFilesystemHandler()                         */
-/************************************************************************/
-
-VSIGZipFilesystemHandler::VSIGZipFilesystemHandler()
-{
-    hMutex = nullptr;
-
-    poHandleLastGZipFile = nullptr;
-    m_bInSaveInfo = false;
-}
 
 /************************************************************************/
 /*                  ~VSIGZipFilesystemHandler()                         */
@@ -1842,7 +1827,8 @@ class VSIZipEntryFileOffset final : public VSIArchiveEntryFileOffset
 public:
         unz_file_pos m_file_pos;
 
-        explicit VSIZipEntryFileOffset( unz_file_pos file_pos )
+        explicit VSIZipEntryFileOffset( unz_file_pos file_pos ):
+            m_file_pos()
         {
             m_file_pos.pos_in_zip_directory = file_pos.pos_in_zip_directory;
             m_file_pos.num_of_file = file_pos.num_of_file;
@@ -1857,12 +1843,14 @@ public:
 
 class VSIZipReader final : public VSIArchiveReader
 {
+    CPL_DISALLOW_COPY_ASSIGN(VSIZipReader)
+
   private:
-    unzFile unzF;
+    unzFile unzF = nullptr;
     unz_file_pos file_pos;
-    GUIntBig nNextFileSize;
-    CPLString osNextFileName;
-    GIntBig nModifiedTime;
+    GUIntBig nNextFileSize = 0;
+    CPLString osNextFileName{};
+    GIntBig nModifiedTime = 0;
 
     bool SetInfo();
 
@@ -1888,11 +1876,10 @@ class VSIZipReader final : public VSIArchiveReader
 /*                           VSIZipReader()                             */
 /************************************************************************/
 
-VSIZipReader::VSIZipReader( const char* pszZipFileName ) :
-    nNextFileSize(0),
-    nModifiedTime(0)
+VSIZipReader::VSIZipReader( const char* pszZipFileName ):
+    unzF(cpl_unzOpen(pszZipFileName)),
+    file_pos()
 {
-    unzF = cpl_unzOpen(pszZipFileName);
     file_pos.pos_in_zip_directory = 0;
     file_pos.num_of_file = 0;
 }
@@ -2001,11 +1988,14 @@ class VSIZipWriteHandle;
 
 class VSIZipFilesystemHandler final : public VSIArchiveFilesystemHandler
 {
-    std::map<CPLString, VSIZipWriteHandle*> oMapZipWriteHandles;
+    CPL_DISALLOW_COPY_ASSIGN(VSIZipFilesystemHandler)
+
+    std::map<CPLString, VSIZipWriteHandle*> oMapZipWriteHandles{};
     VSIVirtualHandle *OpenForWrite_unlocked( const char *pszFilename,
                                             const char *pszAccess );
 
   public:
+    VSIZipFilesystemHandler() = default;
     ~VSIZipFilesystemHandler() override;
 
     const char* GetPrefix() override { return "/vsizip"; }
@@ -2035,12 +2025,14 @@ class VSIZipFilesystemHandler final : public VSIArchiveFilesystemHandler
 
 class VSIZipWriteHandle final : public VSIVirtualHandle
 {
-   VSIZipFilesystemHandler *m_poFS;
-   void                    *m_hZIP;
-   VSIZipWriteHandle       *poChildInWriting;
-   VSIZipWriteHandle       *m_poParent;
-   bool                     bAutoDeleteParent;
-   vsi_l_offset             nCurOffset;
+   CPL_DISALLOW_COPY_ASSIGN(VSIZipWriteHandle)
+
+   VSIZipFilesystemHandler *m_poFS = nullptr;
+   void                    *m_hZIP = nullptr;
+   VSIZipWriteHandle       *poChildInWriting = nullptr;
+   VSIZipWriteHandle       *m_poParent = nullptr;
+   bool                     bAutoDeleteParent = false;
+   vsi_l_offset             nCurOffset = 0;
 
   public:
     VSIZipWriteHandle( VSIZipFilesystemHandler* poFS,
@@ -2462,10 +2454,7 @@ VSIZipWriteHandle::VSIZipWriteHandle( VSIZipFilesystemHandler* poFS,
                                       VSIZipWriteHandle* poParent ) :
     m_poFS(poFS),
     m_hZIP(hZIP),
-    poChildInWriting(nullptr),
-    m_poParent(poParent),
-    bAutoDeleteParent(false),
-    nCurOffset(0)
+    m_poParent(poParent)
 {}
 
 /************************************************************************/

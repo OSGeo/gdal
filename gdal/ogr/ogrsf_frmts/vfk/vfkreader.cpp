@@ -5,8 +5,8 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2009-2014, Martin Landa <landa.martin gmail.com>
- * Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2018, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2012-2018, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -56,28 +56,30 @@ IVFKReader::~IVFKReader()
 
   \return pointer to VFKReader instance
 */
-IVFKReader *CreateVFKReader(const char *pszFilename)
+IVFKReader *CreateVFKReader( const GDALOpenInfo *poOpenInfo )
 {
-    return new VFKReaderSQLite(pszFilename);
+    return new VFKReaderSQLite( poOpenInfo );
 }
 
 /*!
   \brief VFKReader constructor
 */
-VFKReader::VFKReader( const char *pszFilename ) :
+VFKReader::VFKReader( const GDALOpenInfo* poOpenInfo ) :
     m_bLatin2(true),  // Encoding ISO-8859-2 or WINDOWS-1250.
     m_poFD(nullptr),
-    m_pszFilename(CPLStrdup(pszFilename)),
+    m_pszFilename(CPLStrdup(poOpenInfo->pszFilename)),
     m_poFStat((VSIStatBuf*) CPLCalloc(1, sizeof(VSIStatBuf))),
-    // VFK are provided in two forms - stative and amendment data.
+    // VFK is provided in two forms - stative and amendment data.
     m_bAmendment(false),
+    m_bFileField( CPLFetchBool( poOpenInfo->papszOpenOptions,
+                                "FILE_FIELD", false ) ),
     m_nDataBlockCount(0),
     m_papoDataBlock(nullptr)
 {
     // Open VFK file for reading.
-    CPLAssert(nullptr != pszFilename);
+    CPLAssert(nullptr != m_pszFilename);
 
-    if (CPLStat(pszFilename, m_poFStat) != 0 ||
+    if (CPLStat(m_pszFilename, m_poFStat) != 0 ||
         !VSI_ISREG(m_poFStat->st_mode)) {
       CPLError(CE_Failure, CPLE_OpenFailed,
                "%s is not a regular file.", m_pszFilename);
@@ -193,6 +195,7 @@ int VFKReader::ReadDataBlocks(bool bSuppressGeometry)
                     (IVFKDataBlock *) CreateDataBlock(pszBlockName);
                 poNewDataBlock->SetGeometryType(bSuppressGeometry);
                 poNewDataBlock->SetProperties(pszLine); /* TODO: check consistency on property level */
+
                 AddDataBlock(poNewDataBlock, pszLine);
             }
             CPLFree(pszBlockName);

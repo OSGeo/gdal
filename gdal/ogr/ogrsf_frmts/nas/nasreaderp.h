@@ -54,7 +54,7 @@ CPL_C_END
 /************************************************************************/
 /*                              NASHandler                              */
 /************************************************************************/
-class NASHandler : public DefaultHandler
+class NASHandler final: public DefaultHandler
 {
     NASReader  *m_poReader;
 
@@ -154,7 +154,7 @@ public:
 /*                              NASReader                               */
 /************************************************************************/
 
-class NASReader : public IGMLReader
+class NASReader final: public IGMLReader
 {
 private:
     bool         m_bClassListLocked;

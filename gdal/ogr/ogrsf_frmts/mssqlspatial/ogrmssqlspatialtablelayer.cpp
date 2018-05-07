@@ -351,7 +351,7 @@ int OGRMSSQLSpatialTableLayer::FetchSRSId()
 {
     if ( poDS->UseGeometryColumns() )
     {
-        CPLODBCStatement oStatement = CPLODBCStatement( poDS->GetSession() );
+        CPLODBCStatement oStatement( poDS->GetSession() );
         oStatement.Appendf( "select srid from geometry_columns "
                         "where f_table_schema = '%s' and f_table_name = '%s'",
                         pszSchemaName, pszTableName );

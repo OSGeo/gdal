@@ -14,6 +14,9 @@ import os
 
 from glob import glob
 from distutils.sysconfig import get_config_vars
+from distutils.command.build_ext import build_ext
+from distutils.ccompiler import get_default_compiler
+from distutils.errors import CompileError
 
 # Strip -Wstrict-prototypes from compiler options, if present. This is
 # not required when compiling a C++ extension.
@@ -132,11 +135,6 @@ else:
 
 class gdal_config_error(Exception):
     pass
-
-
-from distutils.command.build_ext import build_ext
-from distutils.ccompiler import get_default_compiler
-from distutils.errors import CompileError
 
 
 def fetch_config(option, gdal_config='gdal-config'):

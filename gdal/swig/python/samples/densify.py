@@ -108,7 +108,7 @@ class Translator(object):
             raise Exception("No output layer was specified")
         if self.options.driver == 'ESRI Shapefile':
             path, filename = os.path.split(os.path.abspath(self.options.output))
-            name, ext = os.path.splitext(filename)
+            name, _ = os.path.splitext(filename)
             if self.options.overwrite:
                 # special case the Shapefile driver, which behaves specially.
                 if os.path.exists(os.path.join(path, name,) + '.shp'):

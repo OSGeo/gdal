@@ -362,6 +362,7 @@ def rasterio_8_progress_callback(pct, message, user_data):
 
 
 def rasterio_8_progress_interrupt_callback(pct, message, user_data):
+    # pylint: disable=unused-argument
     user_data[0] = pct
     if pct >= 0.5:
         return 0

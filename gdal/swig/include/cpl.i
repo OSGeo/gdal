@@ -149,37 +149,6 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %}
 #endif
 
-#ifdef SWIGRUBY
-%rename (push_error_handler) CPLPushErrorHandler;
-%rename (pop_error_handler) CPLPopErrorHandler;
-%rename (error_reset) CPLErrorReset;
-%rename (get_last_error_no) CPLGetLastErrorNo;
-%rename (get_last_error_type) CPLGetLastErrorType;
-%rename (get_last_error_msg) CPLGetLastErrorMsg;
-%rename (get_error_counter) CPLGetErrorCounter;
-%rename (push_finder_location) CPLPushFinderLocation;
-%rename (pop_finder_location) CPLPopFinderLocation;
-%rename (finder_clean) CPLFinderClean;
-%rename (find_file) CPLFindFile;
-%rename (read_dir) wrapper_VSIReadDirEx;
-%rename (read_dir_recursive) VSIReadDirRecursive;
-%rename (mkdir) VSIMkdir;
-%rename (mkdir_recursive) VSIMkdirRecursive;
-%rename (rmdir) VSIRmdir;
-%rename (rmdir_recursive) VSIRmdirRecursive;
-%rename (rename) VSIRename;
-%rename (get_actual_url) VSIGetActualURL;
-%rename (get_signed_url) wrapper_VSIGetSignedURL;
-%rename (get_filesystems_prefixes) VSIGetFileSystemsPrefixes;
-%rename (get_filesystem_options) VSIGetFileSystemOptions;
-%rename (set_config_option) CPLSetConfigOption;
-%rename (get_config_option) wrapper_CPLGetConfigOption;
-%rename (binary_to_hex) CPLBinaryToHex;
-%rename (hex_to_binary) CPLHexToBinary;
-%rename (file_from_mem_buffer) wrapper_VSIFileFromMemBuffer;
-%rename (unlink) VSIUnlink;
-%rename (has_thread_support) wrapper_HasThreadSupport;
-#else
 %rename (PushErrorHandler) CPLPushErrorHandler;
 %rename (PopErrorHandler) CPLPopErrorHandler;
 %rename (ErrorReset) CPLErrorReset;
@@ -209,7 +178,6 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (FileFromMemBuffer) wrapper_VSIFileFromMemBuffer;
 %rename (Unlink) VSIUnlink;
 %rename (HasThreadSupport) wrapper_HasThreadSupport;
-#endif
 
 retStringAndCPLFree*
 GOA2GetAuthorizationURL( const char *pszScope );
@@ -396,9 +364,6 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
 #ifdef SWIGJAVA
 %clear GByte*;
 #endif
-
-/* Inappropriate typemap for Ruby bindings */
-#ifndef SWIGRUBY
 
 %apply Pointer NONNULL {const char * pszFilename};
 /* Added in GDAL 1.7.0 */
@@ -644,5 +609,3 @@ void VSICurlClearCache();
 %rename (ParseCommandLine) CSLParseCommandLine;
 char **CSLParseCommandLine( const char * utf8_path );
 %clear char **;
-
-#endif /* #ifndef SWIGRUBY */

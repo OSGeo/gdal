@@ -55,16 +55,13 @@ CPL_CVSID("$Id$")
 
 class SFRegion {
 public:
-    SFRegion() : fp(nullptr), nDstOffset(0), nSrcOffset(0), nLength(0),
-                 byValue(0), bTriedOpen(false) {}
-
-    CPLString     osFilename;
-    VSILFILE     *fp;
-    GUIntBig      nDstOffset;
-    GUIntBig      nSrcOffset;
-    GUIntBig      nLength;
-    GByte         byValue;
-    bool          bTriedOpen;
+    CPLString     osFilename{};
+    VSILFILE     *fp = nullptr;
+    GUIntBig      nDstOffset = 0;
+    GUIntBig      nSrcOffset = 0;
+    GUIntBig      nLength = 0;
+    GByte         byValue = 0;
+    bool          bTriedOpen = false;
 };
 
 /************************************************************************/
@@ -77,17 +74,19 @@ class VSISparseFileFilesystemHandler;
 
 class VSISparseFileHandle : public VSIVirtualHandle
 {
-    VSISparseFileFilesystemHandler* m_poFS;
-    bool               bEOF;
+    CPL_DISALLOW_COPY_ASSIGN(VSISparseFileHandle)
+
+    VSISparseFileFilesystemHandler* m_poFS = nullptr;
+    bool               bEOF = false;
 
   public:
     explicit VSISparseFileHandle(VSISparseFileFilesystemHandler* poFS) :
-                m_poFS(poFS), bEOF(false), nOverallLength(0), nCurOffset(0) {}
+                m_poFS(poFS) {}
 
-    GUIntBig           nOverallLength;
-    GUIntBig           nCurOffset;
+    GUIntBig           nOverallLength = 0;
+    GUIntBig           nCurOffset = 0;
 
-    std::vector<SFRegion> aoRegions;
+    std::vector<SFRegion> aoRegions{};
 
     int Seek( vsi_l_offset nOffset, int nWhence ) override;
     vsi_l_offset Tell() override;
@@ -105,11 +104,12 @@ class VSISparseFileHandle : public VSIVirtualHandle
 
 class VSISparseFileFilesystemHandler : public VSIFilesystemHandler
 {
-    std::map<GIntBig, int> oRecOpenCount;
+    std::map<GIntBig, int> oRecOpenCount{};
+    CPL_DISALLOW_COPY_ASSIGN(VSISparseFileFilesystemHandler)
 
 public:
-    VSISparseFileFilesystemHandler();
-    ~VSISparseFileFilesystemHandler() override;
+    VSISparseFileFilesystemHandler() = default;
+    ~VSISparseFileFilesystemHandler() override = default;
 
     int              DecomposePath( const char *pszPath,
                                     CPLString &osFilename,
@@ -353,18 +353,6 @@ int VSISparseFileHandle::Eof()
 /*                       VSISparseFileFilesystemHandler                 */
 /* ==================================================================== */
 /************************************************************************/
-
-/************************************************************************/
-/*                      VSISparseFileFilesystemHandler()                */
-/************************************************************************/
-
-VSISparseFileFilesystemHandler::VSISparseFileFilesystemHandler() {}
-
-/************************************************************************/
-/*                      ~VSISparseFileFilesystemHandler()               */
-/************************************************************************/
-
-VSISparseFileFilesystemHandler::~VSISparseFileFilesystemHandler() {}
 
 /************************************************************************/
 /*                                Open()                                */

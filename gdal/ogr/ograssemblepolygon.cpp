@@ -172,7 +172,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 
     bool bSuccess = true;
     OGRGeometryCollection *poLines = poGeom->toGeometryCollection();
-    std::vector<OGRLinearRing*> aoRings;
+    std::vector<OGRLinearRing*> apoRings;
 
 /* -------------------------------------------------------------------- */
 /*      Setup array of line markers indicating if they have been        */
@@ -283,7 +283,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
             CPLDebug( "OGR",
                       "Failed to close ring %d.\n"
                       "End Points are: (%.8f,%.7f) and (%.7f,%.7f)",
-                      static_cast<int>(aoRings.size()),
+                      static_cast<int>(apoRings.size()),
                       poRing->getX(0), poRing->getY(0),
                       poRing->getX(poRing->getNumPoints() - 1),
                       poRing->getY(poRing->getNumPoints() - 1) );
@@ -302,7 +302,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
                              poRing->getZ(0));
         }
 
-        aoRings.push_back(poRing);
+        apoRings.push_back(poRing);
     }  // Next ring.
 
 /* -------------------------------------------------------------------- */
@@ -312,9 +312,9 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
     int maxring = -1;
     OGREnvelope tenv;
 
-    for( int rn = 0; rn < static_cast<int>(aoRings.size()); ++rn )
+    for( int rn = 0; rn < static_cast<int>(apoRings.size()); ++rn )
     {
-        aoRings[rn]->getEnvelope(&tenv);
+        apoRings[rn]->getEnvelope(&tenv);
         const double tarea = (tenv.MaxX - tenv.MinX) * (tenv.MaxY - tenv.MinY);
         if( tarea > maxarea )
         {
@@ -327,17 +327,17 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 
     if( maxring != -1 )
     {
-        poPolygon->addRingDirectly(aoRings[maxring]);
-        for( int rn = 0; rn < static_cast<int>(aoRings.size()); ++rn )
+        poPolygon->addRingDirectly(apoRings[maxring]);
+        for( int rn = 0; rn < static_cast<int>(apoRings.size()); ++rn )
         {
             if( rn == maxring ) continue;
-            poPolygon->addRingDirectly(aoRings[rn]);
+            poPolygon->addRingDirectly(apoRings[rn]);
         }
     }
     else
     {
-        for(size_t i = 0; i < aoRings.size(); ++i )
-            delete aoRings[i];
+        for( auto& poRing: apoRings )
+            delete poRing;
     }
 
     if( peErr != nullptr )

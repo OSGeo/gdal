@@ -43,6 +43,7 @@ def jpipkak_1():
 
     return 'skip'
 
+    # pylint: disable=unreachable
     gdaltest.jpipkak_drv = gdal.GetDriverByName('JPIPKAK')
     if gdaltest.jpipkak_drv is None:
         return 'skip'
@@ -71,6 +72,7 @@ def jpipkak_2():
 
     return 'skip'
 
+    # pylint: disable=unreachable
     if gdaltest.jpipkak_drv is None:
         return 'skip'
 
@@ -104,6 +106,7 @@ def jpipkak_3():
 
     return 'skip'
 
+    # pylint: disable=unreachable
     if gdaltest.jpipkak_drv is None:
         return 'skip'
 
@@ -131,6 +134,7 @@ def jpipkak_4():
 
     return 'skip'
 
+    # pylint: disable=unreachable
     if gdaltest.jpipkak_drv is None:
         return 'skip'
 
@@ -158,6 +162,7 @@ def jpipkak_5():
 
     return 'skip'
 
+    # pylint: disable=unreachable
     if gdaltest.jpipkak_drv is None:
         return 'skip'
 

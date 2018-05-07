@@ -1610,11 +1610,8 @@ def test_ogr2ogr_44():
     except (OSError, AttributeError):
         pass
 
-    try:
-        os.unlink('tmp/test_ogr2ogr_44.gml')
-        os.unlink('tmp/test_ogr2ogr_44.xsd')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/test_ogr2ogr_44.gml')
+    gdal.Unlink('tmp/test_ogr2ogr_44.xsd')
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_44_src.shp')
     lyr = ds.CreateLayer('test_ogr2ogr_44_src', geom_type=ogr.wkbPolygon)
@@ -1667,11 +1664,8 @@ def test_ogr2ogr_45():
     except (OSError, AttributeError):
         pass
 
-    try:
-        os.unlink('tmp/test_ogr2ogr_45.gml')
-        os.unlink('tmp/test_ogr2ogr_45.xsd')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/test_ogr2ogr_45.gml')
+    gdal.Unlink('tmp/test_ogr2ogr_45.xsd')
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_45_src.shp')
     lyr = ds.CreateLayer('test_ogr2ogr_45_src', geom_type=ogr.wkbLineString)
@@ -1724,11 +1718,8 @@ def test_ogr2ogr_46():
     except (OSError, AttributeError):
         pass
 
-    try:
-        os.unlink('tmp/test_ogr2ogr_46.gml')
-        os.unlink('tmp/test_ogr2ogr_46.xsd')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/test_ogr2ogr_46.gml')
+    gdal.Unlink('tmp/test_ogr2ogr_46.xsd')
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_46_src.shp')
     lyr = ds.CreateLayer('test_ogr2ogr_46_src', geom_type=ogr.wkbPoint)
@@ -1798,10 +1789,7 @@ def test_ogr2ogr_47():
 </foo>""")
     f.close()
 
-    try:
-        os.unlink('tmp/test_ogr2ogr_47_src.gfs')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/test_ogr2ogr_47_src.gfs')
 
     ds = ogr.Open('tmp/test_ogr2ogr_47_src.gml')
 
@@ -1926,8 +1914,8 @@ def test_ogr2ogr_49_bis():
     if len(lines) != len(expected_lines):
         print(lines)
         return 'fail'
-    for i in range(len(lines)):
-        if lines[i].strip() != expected_lines[i].strip():
+    for i, line in enumerate(lines):
+        if line.strip() != expected_lines[i].strip():
             print(lines)
             return 'fail'
 

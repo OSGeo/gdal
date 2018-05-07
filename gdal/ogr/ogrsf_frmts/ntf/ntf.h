@@ -521,6 +521,8 @@ class OGRNTFDataSource : public OGRDataSource
 
     void                EnsureTileNameUnique( NTFFileReader * );
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRNTFDataSource)
+
   public:
                         OGRNTFDataSource();
                         ~OGRNTFDataSource();

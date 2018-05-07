@@ -46,13 +46,15 @@
  */
 class CPL_DLL OGRMutexedDataSource : public OGRDataSource
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRMutexedDataSource)
+
   protected:
     OGRDataSource *m_poBaseDataSource;
     int            m_bHasOwnership;
     CPLMutex      *m_hGlobalMutex;
     int            m_bWrapLayersInMutexedLayer;
-    std::map<OGRLayer*, OGRMutexedLayer* > m_oMapLayers;
-    std::map<OGRMutexedLayer*, OGRLayer* > m_oReverseMapLayers;
+    std::map<OGRLayer*, OGRMutexedLayer* > m_oMapLayers{};
+    std::map<OGRMutexedLayer*, OGRLayer* > m_oReverseMapLayers{};
 
     OGRLayer*           WrapLayerIfNecessary(OGRLayer* poLayer);
 

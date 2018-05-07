@@ -89,6 +89,7 @@ def test_gdalbuildvrt_lib_1():
 
 
 def mycallback(pct, msg, user_data):
+    # pylint: disable=unused-argument
     user_data[0] = pct
     return 1
 

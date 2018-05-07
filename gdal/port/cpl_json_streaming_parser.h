@@ -39,6 +39,8 @@
 
 class CPL_DLL CPLJSonStreamingParser
 {
+        CPL_DISALLOW_COPY_ASSIGN(CPLJSonStreamingParser)
+
         enum State
         {
             INIT,
@@ -51,19 +53,19 @@ class CPL_DLL CPLJSonStreamingParser
             STATE_NULL
         };
 
-        bool m_bExceptionOccurred;
-        bool m_bElementFound;
-        int m_nLastChar;
-        int m_nLineCounter;
-        int m_nCharCounter;
-        std::vector<State> m_aState;
-        std::string m_osToken;
-        std::vector<bool> m_abFirstElement;
-        bool m_bInStringEscape;
-        bool m_bInUnicode;
-        std::string m_osUnicodeHex;
-        size_t m_nMaxDepth;
-        size_t m_nMaxStringSize;
+        bool m_bExceptionOccurred = false;
+        bool m_bElementFound = false;
+        int m_nLastChar = 0;
+        int m_nLineCounter = 1;
+        int m_nCharCounter = 1;
+        std::vector<State> m_aState{};
+        std::string m_osToken{};
+        std::vector<bool> m_abFirstElement{};
+        bool m_bInStringEscape = false;
+        bool m_bInUnicode = false;
+        std::string m_osUnicodeHex{};
+        size_t m_nMaxDepth = 1024;
+        size_t m_nMaxStringSize = 10000000;
 
         enum MemberState
         {
@@ -72,7 +74,7 @@ class CPL_DLL CPLJSonStreamingParser
             KEY_FINISHED,
             IN_VALUE
         };
-        std::vector<MemberState> m_aeObjectState;
+        std::vector<MemberState> m_aeObjectState{};
 
         enum State currentState() { return m_aState.back(); }
         void SkipSpace(const char*& pStr, size_t& nLength);

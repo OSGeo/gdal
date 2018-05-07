@@ -52,12 +52,7 @@
 /*                     GDALJP2AbstractDataset()                         */
 /************************************************************************/
 
-GDALJP2AbstractDataset::GDALJP2AbstractDataset() :
-    pszWldFilename(nullptr),
-    poMemDS(nullptr),
-    papszMetadataFiles(nullptr),
-    m_nWORLDFILEIndex(-1)
-{}
+GDALJP2AbstractDataset::GDALJP2AbstractDataset() = default;
 
 /************************************************************************/
 /*                     ~GDALJP2AbstractDataset()                        */
@@ -66,7 +61,7 @@ GDALJP2AbstractDataset::GDALJP2AbstractDataset() :
 GDALJP2AbstractDataset::~GDALJP2AbstractDataset()
 {
     CPLFree(pszWldFilename);
-    CloseDependentDatasets();
+    GDALJP2AbstractDataset::CloseDependentDatasets();
     CSLDestroy(papszMetadataFiles);
 }
 

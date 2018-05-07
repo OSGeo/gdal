@@ -342,6 +342,7 @@ VRTWarpedDataset::VRTWarpedDataset( int nXSize, int nYSize ) :
 VRTWarpedDataset::~VRTWarpedDataset()
 
 {
+    VRTWarpedDataset::FlushCache();
     VRTWarpedDataset::CloseDependentDatasets();
 }
 
@@ -351,8 +352,6 @@ VRTWarpedDataset::~VRTWarpedDataset()
 
 int VRTWarpedDataset::CloseDependentDatasets()
 {
-    VRTWarpedDataset::FlushCache();
-
     bool bHasDroppedRef = CPL_TO_BOOL( VRTDataset::CloseDependentDatasets() );
 
 /* -------------------------------------------------------------------- */

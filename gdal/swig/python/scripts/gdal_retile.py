@@ -95,7 +95,7 @@ class DataSetCache(object):
         return result
 
     def __del__(self):
-        for name, dataset in self.dict.items():
+        for dataset in self.dict.values():
             del dataset
         del self.queue
         del self.dict
@@ -404,9 +404,9 @@ def copyTileIndexToCSV(OGRDS, fileName):
         geom = feature.GetGeometryRef()
         coords = geom.GetEnvelope()
 
-        for i in range(len(coords)):
+        for coord in coords:
             csvfile.write(CsvDelimiter)
-            csvfile.write("%f" % coords[i])
+            csvfile.write("%f" % coord)
         csvfile.write("\n")
 
     csvfile.close()
@@ -585,7 +585,7 @@ def addFeature(OGRDataSource, location, xlist, ylist):
     wkt = 'POLYGON ((%f %f,%f %f,%f %f,%f %f,%f %f ))' % (xlist[0], ylist[0],
                                                           xlist[1], ylist[1], xlist[2], ylist[2], xlist[3], ylist[3], xlist[0], ylist[0])
     OGRGeometry = ogr.CreateGeometryFromWkt(wkt, OGRLayer.GetSpatialRef())
-    if (OGRGeometry is None):
+    if OGRGeometry is None:
         print('Could not create Geometry')
         sys.exit(1)
 
@@ -648,10 +648,10 @@ def getTileName(minfo, ti, xIndex, yIndex, level=-1):
     """
     global LastRowIndx
 
-    max = ti.countTilesX
-    if ti.countTilesY > max:
-        max = ti.countTilesY
-    countDigits = len(str(max))
+    maxim = ti.countTilesX
+    if ti.countTilesY > maxim:
+        maxim = ti.countTilesY
+    countDigits = len(str(maxim))
     parts = os.path.splitext(os.path.basename(minfo.filename))
     if parts[0][0] == "@":  # remove possible leading "@"
         parts = (parts[0][1:len(parts[0])], parts[1])
