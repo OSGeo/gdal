@@ -2792,10 +2792,16 @@ static double GDALGetOverviewRatio( GDALRasterBand* poSrcBand,
 static double GDALComputeOverviewRatioX( GDALRasterBand* poSrcBand,
                                          GDALRasterBand* poOvBand)
 {
-    const double dfRatio(GDALGetOverviewRatio(poSrcBand, poOvBand));
+    const bool bStrictOverviewFactor =
+        CPLTestBool(CPLGetConfigOption("GDAL_STRICT_OVERVIEW_FACTOR", "NO"));
 
-    if( dfRatio > 0.0 )
-        return dfRatio;
+    if( bStrictOverviewFactor )
+    {
+        const double dfRatio(GDALGetOverviewRatio(poSrcBand, poOvBand));
+
+        if( dfRatio > 0.0 )
+            return dfRatio;
+    }
 
     const int nWidth = poSrcBand->GetXSize();
     const int nDstWidth = poOvBand->GetXSize();
@@ -2806,10 +2812,16 @@ static double GDALComputeOverviewRatioX( GDALRasterBand* poSrcBand,
 static double GDALComputeOverviewRatioY( GDALRasterBand* poSrcBand,
                                          GDALRasterBand* poOvBand)
 {
-    const double dfRatio(GDALGetOverviewRatio(poSrcBand, poOvBand));
+    const bool bStrictOverviewFactor =
+        CPLTestBool(CPLGetConfigOption("GDAL_STRICT_OVERVIEW_FACTOR", "NO"));
 
-    if( dfRatio > 0.0 )
-        return dfRatio;
+    if( bStrictOverviewFactor )
+    {
+        const double dfRatio(GDALGetOverviewRatio(poSrcBand, poOvBand));
+
+        if( dfRatio > 0.0 )
+            return dfRatio;
+    }
 
     const int nHeight = poSrcBand->GetYSize();
     const int nDstHeight = poOvBand->GetYSize();

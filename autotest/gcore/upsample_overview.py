@@ -88,10 +88,6 @@ def checkupsampled(sx, sy):
         gdaltest.post_reason('Overviews not found')
         return 'fail'
 
-    #ov_ar = ds.GetRasterBand(1).GetOverview(lod-1).ReadAsArray()
-    #print ov_ar.shape
-    #print ov_ar
-
     # Upsample overview back to the original size
     tst = drv.Create(tst_name, sx, sy, 1, gdal.GDT_Byte )
 
@@ -101,7 +97,6 @@ def checkupsampled(sx, sy):
             ar = ds.GetRasterBand(1).ReadAsArray(0, 0, size, size,
                                                  buf_xsize = size/scale,
                                                  buf_ysize = size/scale)
-            #print ar
             for i in range(size):
                 for j in range(size):
                     buff[i,j] = ar[i/scale, j/scale]
@@ -124,11 +119,30 @@ def checkupsampled(sx, sy):
 
     return 'success'
 
+
 def upsample_overview_1():
     return checkupsampled(1024, 1024)
 
-def upsample_overview_2():
-    return checkupsampled(1011, 1011)
+
+def upsample_overview_2a():
+
+    gdal.SetConfigOption('GDAL_STRICT_OVERVIEW_FACTOR', 'NO')
+    res = checkupsampled(1011, 1011)
+    if res is 'fail':
+        res = 'expected_fail'
+    else:
+        res = 'fail'
+    return res;
+
+
+def upsample_overview_2b():
+
+    gdal.SetConfigOption('GDAL_STRICT_OVERVIEW_FACTOR', 'YES')
+    res = checkupsampled(1011, 1011)
+    gdal.SetConfigOption('GDAL_STRICT_OVERVIEW_FACTOR', 'NO')
+
+    return res;
+
 
 ###############################################################################
 # Compare warp and overview sampling pipelines
@@ -249,10 +263,11 @@ def upsample_overview_3c():
 
 gdaltest_list = [
     upsample_overview_1,
-    upsample_overview_2,
-    upsample_overview_3a,
-    upsample_overview_3b,
-    upsample_overview_3c,
+    upsample_overview_2a,
+    upsample_overview_2b,
+#    upsample_overview_3a,
+#    upsample_overview_3b,
+#    upsample_overview_3c,
 ]
 
 if __name__ == '__main__':
