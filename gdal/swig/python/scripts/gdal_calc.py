@@ -386,8 +386,8 @@ def Calc(calc, outfile, NoDataValue=None, type=None, frmt=None, creation_options
     opts.calc = calc
     opts.outF = outfile
     opts.NoDataValue = NoDataValue
-    opts.type = type
-    opts.format = format
+    opts.type = typ
+    opts.format = frmt
     opts.creation_options = [] if creation_options is None else creation_options
     opts.allBands = allBands
     opts.overwrite = overwrite

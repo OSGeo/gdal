@@ -670,9 +670,9 @@ def getTileName(minfo, ti, xIndex, yIndex, level=-1):
         frmt = getTargetDir(level) + parts[0] + "_" + yIndex_str + "_" + xIndex_str
     # Check for the extension that should be used.
     if Extension is None:
-        frmt = frmt + parts[1]
+        frmt += parts[1]
     else:
-        frmt = frmt + "." + Extension
+        frmt += "." + Extension
     return frmt
 
 
