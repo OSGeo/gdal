@@ -732,7 +732,6 @@ def ogr_rfc28_31():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-
     return 'success' if count != 6 + 7 else 'fail'
 
 ###############################################################################
