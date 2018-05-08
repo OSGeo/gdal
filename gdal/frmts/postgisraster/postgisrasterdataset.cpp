@@ -702,6 +702,7 @@ void PostGISRasterDataset::BuildOverviews()
             poOvrDS->poConn = poConn;
             poOvrDS->eAccess = eAccess;
             poOvrDS->eOutDBResolution = eOutDBResolution;
+            poOvrDS->bHasStBandFileSize = bHasStBandFileSize;
             poOvrDS->nMode = nMode;
             poOvrDS->pszSchema = poOV[iOV].pszSchema; // takes ownership
             poOvrDS->pszTable = poOV[iOV].pszTable; // takes ownership
@@ -1387,20 +1388,51 @@ bool PostGISRasterDataset::CanUseClientSideOutDB(bool bAllBandCaching,
     CPLString osCommand;
     if (bAllBandCaching)
     {
-        osCommand.Printf(
-            "SELECT DISTINCT ST_BandPath(%s,band) FROM "
-            "(SELECT %s, generate_series(1, ST_NumBands(%s)) band FROM %s.%s%s) foo",
-            pszColumn, pszColumn, pszColumn,
-            pszSchema, pszTable,
-            !osWHERE.empty() ? (" WHERE " + osWHERE).c_str(): "");
+        if( bHasStBandFileSize )
+        {
+            osCommand.Printf(
+                "SELECT DISTINCT ST_BandPath(%s,band), "
+                "ST_BandFileSize(%s,band), ST_BandFileTimeStamp(%s,band) FROM "
+                "(SELECT %s, generate_series(1, ST_NumBands(%s)) band FROM %s.%s%s) foo",
+                pszColumn,
+                pszColumn, pszColumn,
+                pszColumn, pszColumn,
+                pszSchema, pszTable,
+                !osWHERE.empty() ? (" WHERE " + osWHERE).c_str(): "");
+
+        }
+        else
+        {
+            osCommand.Printf(
+                "SELECT DISTINCT ST_BandPath(%s,band) FROM "
+                "(SELECT %s, generate_series(1, ST_NumBands(%s)) band FROM %s.%s%s) foo",
+                pszColumn, pszColumn, pszColumn,
+                pszSchema, pszTable,
+                !osWHERE.empty() ? (" WHERE " + osWHERE).c_str(): "");
+        }
     }
     else
     {
-        osCommand.Printf(
-            "SELECT DISTINCT ST_BandPath(%s,%d) FROM %s.%s%s",
-            pszColumn, nBand,
-            pszSchema, pszTable,
-            !osWHERE.empty() ? (" WHERE " + osWHERE).c_str(): "");
+        if( bHasStBandFileSize )
+        {
+            osCommand.Printf(
+                "SELECT DISTINCT ST_BandPath(%s,%d), "
+                "ST_BandFileSize(%s,%d), ST_BandFileTimeStamp(%s,%d) "
+                "FROM %s.%s%s",
+                pszColumn, nBand,
+                pszColumn, nBand,
+                pszColumn, nBand,
+                pszSchema, pszTable,
+                !osWHERE.empty() ? (" WHERE " + osWHERE).c_str(): "");
+        }
+        else
+        {
+            osCommand.Printf(
+                "SELECT DISTINCT ST_BandPath(%s,%d) FROM %s.%s%s",
+                pszColumn, nBand,
+                pszSchema, pszTable,
+                !osWHERE.empty() ? (" WHERE " + osWHERE).c_str(): "");
+        }
     }
     PGresult * poResult = PQexec(poConn, osCommand.c_str());
 #ifdef DEBUG_QUERY
@@ -1436,6 +1468,16 @@ bool PostGISRasterDataset::CanUseClientSideOutDB(bool bAllBandCaching,
             {
                 VSIStatBufL sStat;
                 bUsable = (VSIStatL(pszFilename, &sStat) == 0);
+                if( bUsable && bHasStBandFileSize )
+                {
+                    const char* pszSize = PQgetvalue(poResult, i, 1);
+                    const char* pszTimestamp = PQgetvalue(poResult, i, 2);
+                    if( pszSize && pszTimestamp )
+                    {
+                        bUsable &= (static_cast<GUInt64>(CPLAtoGIntBig(pszSize)) == static_cast<GUInt64>(sStat.st_size));
+                        bUsable &= (static_cast<GUInt64>(CPLAtoGIntBig(pszTimestamp)) == static_cast<GUInt64>(sStat.st_mtime));
+                    }
+                }
                 oOutDBFilenameUsable.insert(
                     std::string(pszFilename), bUsable);
             }
@@ -2987,7 +3029,6 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
     PGconn * poConn = nullptr;
     PostGISRasterDataset* poDS = nullptr;
     GBool bBrowseDatabase = false;
-    CPLString osCommand;
     OutDBResolution eOutDBResolution;
 
     /**************************
@@ -3008,6 +3049,38 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
         return nullptr;
     }
 
+    /* For CLIENT_SIDE_IF_POSSIBLE mode, check if PostGIS 2.5 / ST_BandFileSize */
+    /* is available */
+    bool bHasStBandFileSize = false;
+    if( eOutDBResolution == OutDBResolution::CLIENT_SIDE_IF_POSSIBLE )
+    {
+        const CPLString osCommand(
+            "SELECT 1 FROM pg_proc WHERE proname = 'st_bandfilesize'");
+#ifdef DEBUG_QUERY
+    CPLDebug("PostGIS_Raster",
+        "PostGISRasterDataset::Open(): Query: %s",
+        osCommand.c_str());
+#endif
+
+        PGresult* poResult = PQexec(poConn, osCommand);
+        if (poResult && PQresultStatus(poResult) == PGRES_TUPLES_OK && PQntuples(poResult) == 1 )
+        {
+#ifdef DEBUG_VERBOSE
+            CPLDebug("PostGIS_Raster", "ST_BandFileSize available");
+#endif
+            bHasStBandFileSize = true;
+        }
+        else if( poResult && PQresultStatus(poResult) != PGRES_TUPLES_OK  )
+        {
+            CPLDebug("PostGIS_Raster",
+                "PostGISRasterDataset::Open(): %s",
+                PQerrorMessage(poConn));
+        }
+
+        if( poResult )
+            PQclear(poResult);
+    }
+
     /*******************************************************************
      * No table will be read. Only shows information about the existent
      * raster tables
@@ -3022,6 +3095,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
         //poDS->poDriver = poDriver;
         poDS->nMode = (pszSchema) ? BROWSE_SCHEMA : BROWSE_DATABASE;
         poDS->eOutDBResolution = eOutDBResolution;
+        poDS->bHasStBandFileSize = bHasStBandFileSize;
 
         /**
          * Look for raster tables at database and
@@ -3062,6 +3136,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
         poDS->eAccess = poOpenInfo->eAccess;
         poDS->nMode = nMode;
         poDS->eOutDBResolution = eOutDBResolution;
+        poDS->bHasStBandFileSize = bHasStBandFileSize;
         //poDS->poDriver = poDriver;
 
         poDS->pszSchema = pszSchema;

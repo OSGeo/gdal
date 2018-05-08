@@ -223,6 +223,7 @@ private:
     ResolutionStrategy resolutionStrategy;
     WorkingMode nMode;
     OutDBResolution eOutDBResolution{OutDBResolution::SERVER_SIDE};
+    bool bHasStBandFileSize = false;
     int m_nTiles;
     double xmin;
     double ymin;
