@@ -11,7 +11,7 @@
  *
  ***********************************************************************
  * Copyright (c) 2009 - 2013, Jorge Arevalo, David Zwarg
- * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2013-2018, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -39,6 +39,7 @@
 #include <math.h>
 
 #include <algorithm>
+#include <memory>
 
 CPL_CVSID("$Id$")
 
@@ -140,7 +141,7 @@ PostGISRasterDataset::PostGISRasterDataset() :
     bBuildQuadTreeDynamically(false),
     bTilesSameDimension(false),
     nTileWidth(0),
-  nTileHeight(0)
+    nTileHeight(0)
 {
 
     adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = 0.0;
@@ -288,8 +289,23 @@ int PostGISRasterDataset::CloseDependentDatasets()
         nOverviewCount = 0;
         bHasDroppedRef = TRUE;
     }
+    if( !oOutDBDatasetCache.empty() )
+    {
+        oOutDBDatasetCache.clear();
+        bHasDroppedRef = TRUE;
+    }
 
     return bHasDroppedRef;
+}
+
+/************************************************************************/
+/*                            FlushCache()                              */
+/************************************************************************/
+
+void PostGISRasterDataset::FlushCache()
+{
+    VRTDataset::FlushCache();
+    oOutDBDatasetCache.clear();
 }
 
 /************************************************************************/
@@ -685,6 +701,7 @@ void PostGISRasterDataset::BuildOverviews()
             poOvrDS->nOverviewFactor = poOV[iOV].nFactor;
             poOvrDS->poConn = poConn;
             poOvrDS->eAccess = eAccess;
+            poOvrDS->eOutDBResolution = eOutDBResolution;
             poOvrDS->nMode = nMode;
             poOvrDS->pszSchema = poOV[iOV].pszSchema; // takes ownership
             poOvrDS->pszTable = poOV[iOV].pszTable; // takes ownership
@@ -846,12 +863,11 @@ PostGISRasterTileDataset *
 /************************************************************************/
 /*                           CacheTile()                                */
 /************************************************************************/
-
 void PostGISRasterDataset::CacheTile(const char* pszMetadata,
                                      const char* pszRaster,
                                      const char *pszPKID,
                                      int nBand,
-                                     int bAllBandCaching)
+                                     bool bAllBandCaching)
 {
     /**
     * Get metadata record and unpack it
@@ -872,10 +888,12 @@ void PostGISRasterDataset::CacheTile(const char* pszMetadata,
 
     CPLFree(pszRes);
 
-    double dfTilePixelSizeX = CPLAtof(papszParams[POS_UPPERLEFTX]);
-    double dfTilePixelSizeY = CPLAtof(papszParams[POS_UPPERLEFTY]);
-    int nTileXSize = atoi(papszParams[POS_WIDTH]);
-    int nTileYSize = atoi(papszParams[POS_HEIGHT]);
+    const double dfTileUpperLeftX = CPLAtof(papszParams[POS_UPPERLEFTX]);
+    const double dfTileUpperLeftY = CPLAtof(papszParams[POS_UPPERLEFTY]);
+    const double dfTileResX = CPLAtof(papszParams[POS_SCALEX]);
+    const double dfTileResY = CPLAtof(papszParams[POS_SCALEY]);
+    const int nTileXSize = atoi(papszParams[POS_WIDTH]);
+    const int nTileYSize = atoi(papszParams[POS_HEIGHT]);
 
     CSLDestroy(papszParams);
     papszParams = nullptr;
@@ -883,54 +901,47 @@ void PostGISRasterDataset::CacheTile(const char* pszMetadata,
     /**
         * Get actual raster band data
         **/
-    int nBandDataTypeSize = GDALGetDataTypeSize(GetRasterBand(nBand)->GetRasterDataType()) / 8;
-    int nExpectedBandDataSize =
+    const GDALDataType eDT = GetRasterBand(nBand)->GetRasterDataType();
+    const int nBandDataTypeSize = GDALGetDataTypeSizeBytes(eDT);
+    const int nExpectedBandDataSize =
         nTileXSize * nTileYSize * nBandDataTypeSize;
+    const int nExpectedBands = bAllBandCaching ? GetRasterCount() : 1;
 
     int nWKBLength = 0;
-    GByte* pbyData = CPLHexToBinary(pszRaster, &nWKBLength);
-
-    int nExpectedBands = bAllBandCaching ? GetRasterCount() : 1;
-    int nExpectedWKBLength = RASTER_HEADER_SIZE + BAND_SIZE(nBandDataTypeSize, nExpectedBandDataSize) * nExpectedBands;
-    if( nWKBLength != nExpectedWKBLength )
+    struct CPLFreer { void operator() (GByte* x) const { CPLFree(x); } };
+    std::unique_ptr<GByte, CPLFreer> pbyDataAutoFreed(CPLHexToBinary(pszRaster, &nWKBLength));
+    GByte* pbyData = pbyDataAutoFreed.get();
+    const int nMinimumWKBLength = RASTER_HEADER_SIZE +
+        BAND_SIZE(1, nBandDataTypeSize) * nExpectedBands;
+    if( nWKBLength < nMinimumWKBLength )
     {
-        CPLDebug("PostGIS_Raster", "nWKBLength=%d, nExpectedWKBLength=%d", nWKBLength, nExpectedWKBLength );
-        CPLFree(pbyData);
+        CPLDebug("PostGIS_Raster", "nWKBLength=%d. too short. Expected at least %d",
+                 nWKBLength, nMinimumWKBLength );
         return;
     }
 
     // Do byte-swapping if necessary */
-    int bIsLittleEndian = (pbyData[0] == 1);
+    const bool bIsLittleEndian = (pbyData[0] == 1);
 #ifdef CPL_LSB
-    int bSwap = !bIsLittleEndian;
+    const bool bSwap = !bIsLittleEndian;
 #else
-    int bSwap = bIsLittleEndian;
+    const bool bSwap = bIsLittleEndian;
 #endif
 
     PostGISRasterTileDataset* poRTDS = nullptr;
     if( GetPrimaryKeyRef() != nullptr )
         poRTDS = GetMatchingSourceRef(pszPKID);
     else
-        poRTDS = GetMatchingSourceRef(dfTilePixelSizeX,
-                                      dfTilePixelSizeY);
+        poRTDS = GetMatchingSourceRef(dfTileUpperLeftX,
+                                      dfTileUpperLeftY);
     if( poRTDS == nullptr )
     {
-        CPLFree(pbyData);
         return;
     }
 
+    int nCurOffset = RASTER_HEADER_SIZE;
     for(int k=1; k <= nExpectedBands; k++)
     {
-        GByte* pbyDataToRead = GET_BAND_DATA(pbyData, k,
-                nBandDataTypeSize, nExpectedBandDataSize);
-
-        if( bSwap && nBandDataTypeSize > 1 )
-        {
-            GDALSwapWords( pbyDataToRead, nBandDataTypeSize,
-                        nTileXSize * nTileYSize,
-                        nBandDataTypeSize );
-        }
-
         /**
         * Get the right PostGISRasterRasterBand
         **/
@@ -940,13 +951,44 @@ void PostGISRasterDataset::CacheTile(const char* pszMetadata,
         * Get the right tileband
         **/
         GDALRasterBand * poRTB = poRTDS->GetRasterBand(nCurBand);
+        if( poRTB == nullptr )
+            return;
 
-        /**
-        * Manually add each tile data to the cache of the
-        * matching PostGISRasterTileRasterBand.
-        **/
-        if (poRTB)
+        // For each band we have at least the flag byte, the nodata value
+        if( nWKBLength < nCurOffset + 1 + nBandDataTypeSize )
         {
+            CPLDebug("PostGIS_Raster",
+                "nWKBLength=%d, not enough data for band %d",
+                nWKBLength, k);
+            return;
+        }
+
+        // Is it indb-raster ?
+        if( (pbyData[nCurOffset] & 0x80) == 0 )
+        {
+            nCurOffset += 1 + nBandDataTypeSize;
+            if( nWKBLength < nCurOffset + nExpectedBandDataSize )
+            {
+                CPLDebug("PostGIS_Raster",
+                    "nWKBLength=%d, not enough data for band %d",
+                    nWKBLength, k);
+                return;
+            }
+
+            GByte* pbyDataToRead = pbyData + nCurOffset;
+            nCurOffset += nExpectedBandDataSize;
+
+            if( bSwap && nBandDataTypeSize > 1 )
+            {
+                GDALSwapWords( pbyDataToRead, nBandDataTypeSize,
+                            nTileXSize * nTileYSize,
+                            nBandDataTypeSize );
+            }
+
+            /**
+            * Manually add each tile data to the cache of the
+            * matching PostGISRasterTileRasterBand.
+            **/
             GDALRasterBlock* poBlock = poRTB->GetLockedBlockRef(0, 0, TRUE);
             if( poBlock != nullptr )
             {
@@ -957,9 +999,134 @@ void PostGISRasterDataset::CacheTile(const char* pszMetadata,
                 poBlock->DropLock();
             }
         }
+        else
+        {
+            /**
+            * Manually add each tile data to the cache of the
+            * matching PostGISRasterTileRasterBand.
+            **/
+            GDALRasterBlock* poBlock = poRTB->GetLockedBlockRef(0, 0, TRUE);
+            if( poBlock == nullptr )
+                return;
+            if( !LoadOutdbRaster(nCurOffset, eDT, k,
+                                  pbyData,
+                                  nWKBLength,
+                                  poBlock->GetDataRef(),
+                                  dfTileUpperLeftX,
+                                  dfTileUpperLeftY,
+                                  dfTileResX,
+                                  dfTileResY,
+                                  nTileXSize,
+                                  nTileYSize) )
+            {
+                poBlock->DropLock();
+                return;
+            }
+            poBlock->DropLock();
+        }
     }
 
-    CPLFree(pbyData);
+    if( nCurOffset != nWKBLength )
+    {
+        CPLDebug("PostGIS_Raster", "Trailing bytes at end of serialized raster");
+        return;
+    }
+}
+
+
+bool PostGISRasterDataset::LoadOutdbRaster(int& nCurOffset,
+                                            GDALDataType eDT,
+                                            int nBand,
+                                            const GByte* pbyData,
+                                            int nWKBLength,
+                                            void* pImage,
+                                            double dfTileUpperLeftX,
+                                            double dfTileUpperLeftY,
+                                            double dfTileResX,
+                                            double dfTileResY,
+                                            int nTileXSize,
+                                            int nTileYSize)
+{
+    const int nBandDataTypeSize = GDALGetDataTypeSizeBytes(eDT);
+
+    nCurOffset += 1 + nBandDataTypeSize;
+    if( nWKBLength < nCurOffset + 1 + 1 )
+    {
+        CPLDebug("PostGIS_Raster",
+            "nWKBLength=%d, not enough data for band %d",
+            nWKBLength, nBand);
+        return false;
+    }
+    // Postgis raster outdb band numbering starts at 0
+    GByte nOutdbBandNumber = 1 + pbyData[nCurOffset];
+    nCurOffset ++;
+    CPLString osPath;
+    for( int i = 0; nCurOffset + i < nWKBLength; i++ )
+    {
+        if( pbyData[nCurOffset + i] == '\0' )
+        {
+            osPath.assign( reinterpret_cast<const char*>(pbyData) + nCurOffset, i );
+            nCurOffset += i + 1;
+            break;
+        }
+    }
+    if( osPath.empty() )
+    {
+        CPLDebug("PostGIS_Raster",
+            "nWKBLength=%d, not enough data for outdb raster band %d",
+            nWKBLength, nBand);
+        return false;
+    }
+#ifdef DEBUG_VERBOSE
+    CPLDebug("PostGIS_Raster", "Band %d: GDAL outdb band=%d %s",
+                nBand, nOutdbBandNumber, osPath.c_str());
+#endif
+    std::shared_ptr<GDALDataset> poDS;
+    if( !oOutDBDatasetCache.tryGet(osPath, poDS) )
+    {
+        poDS.reset(
+            GDALDataset::Open(osPath, GDAL_OF_RASTER));
+        if( poDS == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot open %s", osPath.c_str());
+            return false;
+        }
+        oOutDBDatasetCache.insert(osPath, poDS);
+    }
+
+    if( nOutdbBandNumber > poDS->GetRasterCount() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Invalid band number %d for %s",
+                    nOutdbBandNumber, osPath.c_str());
+        return false;
+    }
+    double adfGT[6];
+    poDS->GetGeoTransform(adfGT);
+    int nXOff = static_cast<int>(std::round( (dfTileUpperLeftX - adfGT[0]) / adfGT[1] ));
+    int nYOff = static_cast<int>(std::round( (dfTileUpperLeftY - adfGT[3]) / adfGT[5] ));
+    int nXOff2 = static_cast<int>(std::round( (dfTileUpperLeftX + nTileXSize * dfTileResX - adfGT[0]) / adfGT[1] ));
+    int nYOff2 = static_cast<int>(std::round( (dfTileUpperLeftY + nTileYSize * dfTileResY - adfGT[3]) / adfGT[5] ));
+    int nSrcXSize = nXOff2 - nXOff;
+    int nSrcYSize = nYOff2 - nYOff;
+    if( nXOff < 0 || nYOff < 0 ||
+        nXOff2 > poDS->GetRasterXSize() ||
+        nYOff2 > poDS->GetRasterYSize() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Requesting (%d,%d,%d,%d) in %dx%d raster",
+                    nXOff, nYOff, nSrcXSize, nSrcYSize,
+                    poDS->GetRasterXSize(), poDS->GetRasterYSize());
+        return false;
+    }
+
+    // Point block data ref to fetched data
+    return
+        poDS->GetRasterBand(nOutdbBandNumber)->RasterIO(
+            GF_Read, nXOff, nYOff, nSrcXSize, nSrcYSize,
+            pImage, nTileXSize, nTileYSize,
+            eDT, 0, 0, nullptr) == CE_None;
 }
 
 /************************************************************************/
@@ -971,7 +1138,6 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
     if( !bBuildQuadTreeDynamically )
         return false;
 
-    CPLString osCommand;
     CPLString osSpatialFilter;
     CPLString osIDsToFetch;
 
@@ -1001,12 +1167,14 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
                         adfProjWin[0], adfProjWin[1]*/);
     }
 
-    int bLoadRasters = FALSE;
-    int bAllBandCaching = FALSE;
+    bool bLoadRasters =
+        CPLTestBool(CPLGetConfigOption("PR_FORCE_LOAD_RASTERS", "FALSE"));
+    bool bAllBandCaching = false;
 
     PGresult *poResult = nullptr;
     if( m_nTiles > 0 && !bFetchAll )
     {
+        CPLString osCommand;
         osCommand.Printf("SELECT %s FROM %s.%s",
                         pszPrimaryKeyName, pszSchema, pszTable);
         osCommand += " WHERE ";
@@ -1043,12 +1211,12 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
             GIntBig nCacheMax = GDALGetCacheMax64();
             if( nBands * nMemoryRequiredForTiles <= nCacheMax )
             {
-                bLoadRasters = TRUE;
-                bAllBandCaching = TRUE;
+                bLoadRasters = true;
+                bAllBandCaching = true;
             }
             else if( nMemoryRequiredForTiles <= nCacheMax )
             {
-                bLoadRasters = TRUE;
+                bLoadRasters = true;
             }
         }
 
@@ -1082,29 +1250,63 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
 
     if( bFetchAll || !osIDsToFetch.empty() || !osSpatialFilter.empty() )
     {
+        CPLString osWHERE;
+        if( !osIDsToFetch.empty() )
+        {
+            osWHERE += pszPrimaryKeyName;
+            osWHERE += " IN (";
+            osWHERE += osIDsToFetch;
+            osWHERE += ")";
+        }
+        else if ( !osSpatialFilter.empty() )
+        {
+            osWHERE = osSpatialFilter;
+        }
+        if( pszWhere != nullptr )
+        {
+            if( !osWHERE.empty() )
+                osWHERE += " AND ";
+            osWHERE += "(";
+            osWHERE += pszWhere;
+            osWHERE += ")";
+        }
+
+        bool bCanUseClientSide = true;
+        if( bLoadRasters &&
+            eOutDBResolution == OutDBResolution::CLIENT_SIDE_IF_POSSIBLE )
+        {
+            bCanUseClientSide = CanUseClientSideOutDB(bAllBandCaching,
+                                                      nBand,
+                                                      osWHERE);
+        }
+
+        CPLString osCommand;
         osCommand.Printf("SELECT %s, ST_Metadata(%s)",
                          pszPrimaryKeyName, pszColumn);
         if( bLoadRasters )
         {
+            CPLString orRasterToFetch;
             if( bAllBandCaching )
-                osCommand += CPLSPrintf(", %s", pszColumn);
+            {
+                orRasterToFetch = pszColumn;
+            }
             else
-                osCommand += CPLSPrintf(", ST_Band(%s, %d)", pszColumn, nBand);
+            {
+                orRasterToFetch.Printf("ST_Band(%s, %d)", pszColumn, nBand);
+            }
+            if( eOutDBResolution == OutDBResolution::SERVER_SIDE ||
+                !bCanUseClientSide )
+            {
+                orRasterToFetch = "encode(ST_AsBinary(" + orRasterToFetch + ",TRUE),'hex')";
+            }
+            osCommand += ", " + orRasterToFetch;
         }
         osCommand += CPLSPrintf(" FROM %s.%s",
                                 pszSchema, pszTable);
-        if( !osIDsToFetch.empty() )
+        if( !osWHERE.empty() )
         {
             osCommand += " WHERE ";
-            osCommand += pszPrimaryKeyName;
-            osCommand += " IN (";
-            osCommand += osIDsToFetch;
-            osCommand += ")";
-        }
-        else if ( !osSpatialFilter.empty() )
-        {
-            osCommand += " WHERE ";
-            osCommand += osSpatialFilter;
+            osCommand += osWHERE;
         }
 
         poResult = PQexec(poConn, osCommand.c_str());
@@ -1173,6 +1375,83 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
 
     return true;
 }
+
+/***********************************************************************
+ * \brief Determine if the tiles satisfying a request use outdb rasters
+ *        that can be resolved client-side.
+ **********************************************************************/
+bool PostGISRasterDataset::CanUseClientSideOutDB(bool bAllBandCaching,
+                                                 int nBand,
+                                                 const CPLString& osWHERE)
+{
+    CPLString osCommand;
+    if (bAllBandCaching)
+    {
+        osCommand.Printf(
+            "SELECT DISTINCT ST_BandPath(%s,band) FROM "
+            "(SELECT %s, generate_series(1, ST_NumBands(%s)) band FROM %s.%s%s) foo",
+            pszColumn, pszColumn, pszColumn,
+            pszSchema, pszTable,
+            !osWHERE.empty() ? (" WHERE " + osWHERE).c_str(): "");
+    }
+    else
+    {
+        osCommand.Printf(
+            "SELECT DISTINCT ST_BandPath(%s,%d) FROM %s.%s%s",
+            pszColumn, nBand,
+            pszSchema, pszTable,
+            !osWHERE.empty() ? (" WHERE " + osWHERE).c_str(): "");
+    }
+    PGresult * poResult = PQexec(poConn, osCommand.c_str());
+#ifdef DEBUG_QUERY
+    CPLDebug("PostGIS_Raster",
+             "PostGISRasterRasterBand::CanUseClientSideOutDB(): "
+             "Query = \"%s\" --> number of rows = %d",
+             osCommand.c_str(), poResult ? PQntuples(poResult) : 0 );
+#endif
+
+    if (poResult == nullptr ||
+        PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+        PQntuples(poResult) < 0) {
+
+        if (poResult)
+            PQclear(poResult);
+
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "PostGISRasterRasterBand::CanUseClientSideOutDB(): %s",
+            PQerrorMessage(poConn));
+
+        return false;
+    }
+    bool bCanUseClientSide = true;
+    const int nTuples = PQntuples(poResult);
+    for(int i = 0; i < nTuples; i++)
+    {
+        const char* pszFilename = PQgetvalue(poResult, i, 0);
+        if( pszFilename )
+        {
+            bool bUsable = false;
+            if( !oOutDBFilenameUsable.tryGet(
+                    std::string(pszFilename), bUsable) )
+            {
+                VSIStatBufL sStat;
+                bUsable = (VSIStatL(pszFilename, &sStat) == 0);
+                oOutDBFilenameUsable.insert(
+                    std::string(pszFilename), bUsable);
+            }
+            if( !bUsable )
+            {
+                CPLDebug("PostGIS_Raster",
+                            "File %s not usable from client side",
+                            pszFilename);
+                bCanUseClientSide = false;
+            }
+        }
+    }
+    PQclear(poResult);
+    return bCanUseClientSide;
+}
+
 
 /***********************************************************************
  * \brief Get some useful metadata for all bands
@@ -1270,7 +1549,6 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
                 CPLAtof(papszParams[POS_NODATAVALUE]);
         }
 
-        // TODO: Manage outdb and get path
         poBMD[iBand].bIsOffline = (papszParams[POS_ISOUTDB] != nullptr) ?
             EQUAL(papszParams[POS_ISOUTDB], "t") :
             false;
@@ -1414,15 +1692,15 @@ PostGISRasterTileDataset* PostGISRasterDataset::BuildRasterTileDataset(const cha
     poRTDS->adfGeoTransform[GEOTRSFRM_NS_RES]=
         CPLAtof(papszParams[POS_SCALEY]);
 
-    // TODO: outdb bands should be handled. Not a priority.
     for(int j = 0; j < nTileBands; j++) {
 
         // Create band
         poRTDS->SetBand(j + 1,
             new PostGISRasterTileRasterBand(
                 poRTDS,
-                j + 1, (poBandMetaData ) ? poBandMetaData[j].eDataType : GetRasterBand(j+1)->GetRasterDataType(),
-                (poBandMetaData ) ? poBandMetaData[j].bIsOffline : FALSE));
+                j + 1,
+                (poBandMetaData ) ? poBandMetaData[j].eDataType :
+                    GetRasterBand(j+1)->GetRasterDataType()));
     }
 
     CSLDestroy(papszParams);
@@ -1506,8 +1784,7 @@ void PostGISRasterDataset::BuildBands(BandMetadata * poBandMetaData,
         SetBand(iBand + 1, new PostGISRasterRasterBand(this, iBand + 1,
             poBandMetaData[iBand].eDataType,
             poBandMetaData[iBand].bHasNoDataValue,
-            poBandMetaData[iBand].dfNoDataValue,
-            poBandMetaData[iBand].bIsOffline));
+            poBandMetaData[iBand].dfNoDataValue));
 
         // Set some band metadata items
         GDALRasterBand * b = GetRasterBand(iBand + 1);
@@ -2353,7 +2630,7 @@ GetConnectionInfo(const char * pszFilename,
     char ** ppszConnectionString, char ** ppszDbname, char ** ppszSchema, char ** ppszTable,
     char ** ppszColumn, char ** ppszWhere, char ** ppszHost,
     char ** ppszPort, char ** ppszUser, char ** ppszPassword,
-    WorkingMode * nMode, GBool * bBrowseDatabase)
+    WorkingMode * nMode, GBool * bBrowseDatabase, OutDBResolution* peOutDBResolution )
 {
     int nPos = -1, i;
     char * pszTmp = nullptr;
@@ -2387,6 +2664,28 @@ GetConnectionInfo(const char * pszFilename,
         /* Default mode */
     else
         *nMode = ONE_RASTER_PER_ROW;
+
+
+    nPos = CSLFindName(papszParams, "outdb_resolution");
+    *peOutDBResolution = OutDBResolution::SERVER_SIDE;
+    if (nPos != -1) {
+        const char* pszValue = CPLParseNameValue(papszParams[nPos], nullptr);
+        if( EQUAL(pszValue, "server_side") )
+            *peOutDBResolution = OutDBResolution::SERVER_SIDE;
+        else if( EQUAL(pszValue, "client_side") )
+            *peOutDBResolution = OutDBResolution::CLIENT_SIDE;
+        else if( EQUAL(pszValue, "client_side_if_possible") )
+            *peOutDBResolution = OutDBResolution::CLIENT_SIDE_IF_POSSIBLE;
+        else
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unsupported value for outdb_resolution: %s",
+                     pszValue);
+        }
+
+        /* Remove the mode from connection string */
+        papszParams = CSLRemoveStrings(papszParams, nPos, 1, nullptr);
+    }
 
     /**
      * Case 1: There's no database name: Error, you need, at least,
@@ -2605,7 +2904,8 @@ GetConnectionInfo(const char * pszFilename,
 static PGconn *
 GetConnection(const char * pszFilename, char ** ppszConnectionString,
     char ** ppszSchema, char ** ppszTable, char ** ppszColumn,
-    char ** ppszWhere, WorkingMode * nMode, GBool * bBrowseDatabase)
+    char ** ppszWhere, WorkingMode * nMode, GBool * bBrowseDatabase,
+    OutDBResolution* peOutDBResolution)
 {
     PGconn * poConn = nullptr;
     char * pszDbname = nullptr;
@@ -2616,7 +2916,7 @@ GetConnection(const char * pszFilename, char ** ppszConnectionString,
 
     if (GetConnectionInfo(pszFilename, ppszConnectionString, &pszDbname, ppszSchema,
         ppszTable, ppszColumn, ppszWhere, &pszHost, &pszPort, &pszUser,
-        &pszPassword, nMode, bBrowseDatabase))
+        &pszPassword, nMode, bBrowseDatabase, peOutDBResolution))
     {
         /**************************************************************
          * Open a new database connection
@@ -2688,6 +2988,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
     PostGISRasterDataset* poDS = nullptr;
     GBool bBrowseDatabase = false;
     CPLString osCommand;
+    OutDBResolution eOutDBResolution;
 
     /**************************
      * Check input parameter
@@ -2697,7 +2998,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
 
     poConn = GetConnection(poOpenInfo->pszFilename,
         &pszConnectionString, &pszSchema, &pszTable, &pszColumn,
-        &pszWhere, &nMode, &bBrowseDatabase);
+        &pszWhere, &nMode, &bBrowseDatabase, &eOutDBResolution);
     if (poConn == nullptr) {
         CPLFree(pszConnectionString);
         CPLFree(pszSchema);
@@ -2720,6 +3021,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
         poDS->eAccess = GA_ReadOnly;
         //poDS->poDriver = poDriver;
         poDS->nMode = (pszSchema) ? BROWSE_SCHEMA : BROWSE_DATABASE;
+        poDS->eOutDBResolution = eOutDBResolution;
 
         /**
          * Look for raster tables at database and
@@ -2759,6 +3061,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
         poDS->poConn = poConn;
         poDS->eAccess = poOpenInfo->eAccess;
         poDS->nMode = nMode;
+        poDS->eOutDBResolution = eOutDBResolution;
         //poDS->poDriver = poDriver;
 
         poDS->pszSchema = pszSchema;
@@ -3000,6 +3303,7 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
     char* pszWhere = nullptr;
     GBool bBrowseDatabase = false;
     WorkingMode nMode;
+    OutDBResolution eOutDBResolution;
     char* pszConnectionString = nullptr;
     PGconn * poConn = nullptr;
     PGresult * poResult = nullptr;
@@ -3031,7 +3335,7 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
     }
 
     poConn = GetConnection(pszFilename, &pszConnectionString, &pszSchema,
-        &pszTable, &pszColumn, &pszWhere, &nMode, &bBrowseDatabase);
+        &pszTable, &pszColumn, &pszWhere, &nMode, &bBrowseDatabase, &eOutDBResolution);
     if (poConn == nullptr || bBrowseDatabase || pszTable == nullptr)
     {
         CPLFree(pszConnectionString);
@@ -3342,8 +3646,8 @@ PostGISRasterDataset::Delete(const char* pszFilename)
     GBool bBrowseDatabase;
     char* pszConnectionString = nullptr;
     WorkingMode nMode;
+    OutDBResolution eOutDBResolution;
     PGconn * poConn = nullptr;
-    PGresult * poResult = nullptr;
     CPLString osCommand;
     CPLErr nError = CE_Failure;
 
@@ -3362,7 +3666,7 @@ PostGISRasterDataset::Delete(const char* pszFilename)
 
     poConn = GetConnection(pszFilename, &pszConnectionString,
         &pszSchema, &pszTable, &pszColumn, &pszWhere,
-        &nMode, &bBrowseDatabase);
+        &nMode, &bBrowseDatabase, &eOutDBResolution);
     if (poConn == nullptr || pszSchema == nullptr || pszTable == nullptr) {
         CPLFree(pszConnectionString);
         CPLFree(pszSchema);
@@ -3374,18 +3678,20 @@ PostGISRasterDataset::Delete(const char* pszFilename)
     }
 
     // begin transaction
-    poResult = PQexec(poConn, "begin");
-    if (poResult == nullptr ||
-        PQresultStatus(poResult) != PGRES_COMMAND_OK) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-            "Error beginning database transaction: %s",
-            PQerrorMessage(poConn));
+    {
+        PGresult* poResult = PQexec(poConn, "begin");
+        if (poResult == nullptr ||
+            PQresultStatus(poResult) != PGRES_COMMAND_OK) {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Error beginning database transaction: %s",
+                PQerrorMessage(poConn));
 
-        // set nMode to NO_MODE to avoid any further processing
-        nMode = NO_MODE;
+            // set nMode to NO_MODE to avoid any further processing
+            nMode = NO_MODE;
+        }
+
+        PQclear(poResult);
     }
-
-    PQclear(poResult);
 
     if ( nMode == ONE_RASTER_PER_TABLE ||
         (nMode == ONE_RASTER_PER_ROW && pszWhere == nullptr)) {
@@ -3394,7 +3700,7 @@ PostGISRasterDataset::Delete(const char* pszFilename)
 
         // drop table <schema>.<table>;
         osCommand.Printf("drop table %s.%s", pszSchema, pszTable);
-        poResult = PQexec(poConn, osCommand.c_str());
+        PGresult* poResult = PQexec(poConn, osCommand.c_str());
         if (poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_COMMAND_OK) {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -3402,16 +3708,17 @@ PostGISRasterDataset::Delete(const char* pszFilename)
                     pszSchema, pszTable, PQerrorMessage(poConn));
         }
         else {
-            PQclear(poResult);
             nError = CE_None;
         }
+        if( poResult )
+            PQclear(poResult);
     }
     else if (nMode == ONE_RASTER_PER_ROW) {
 
         // delete from <schema>.<table> where <where>
         osCommand.Printf("delete from %s.%s where %s", pszSchema,
             pszTable, pszWhere);
-        poResult = PQexec(poConn, osCommand.c_str());
+        PGresult* poResult = PQexec(poConn, osCommand.c_str());
         if (poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_COMMAND_OK) {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -3419,15 +3726,16 @@ PostGISRasterDataset::Delete(const char* pszFilename)
                     pszSchema, pszTable, PQerrorMessage(poConn));
         }
         else {
-            PQclear(poResult);
             nError = CE_None;
         }
+        if( poResult )
+            PQclear(poResult);
     }
 
     // if mode == NO_MODE, the begin transaction above did not complete,
     // so no commit is necessary
     if (nMode != NO_MODE) {
-        poResult = PQexec(poConn, "commit");
+        PGresult* poResult = PQexec(poConn, "commit");
         if (poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_COMMAND_OK) {
 
@@ -3437,10 +3745,10 @@ PostGISRasterDataset::Delete(const char* pszFilename)
 
             nError = CE_Failure;
         }
+        if( poResult )
+            PQclear(poResult);
     }
 
-    if (poResult)
-        PQclear(poResult);
     if (pszSchema)
         CPLFree(pszSchema);
     if (pszTable)
