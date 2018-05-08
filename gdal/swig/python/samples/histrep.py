@@ -54,7 +54,7 @@ if __name__ == '__main__':
     approxok = 0
     ioor = 0
 
-    file = None
+    filename = None
 
     # Parse command line arguments.
     i = 1
@@ -74,19 +74,19 @@ if __name__ == '__main__':
         elif arg == '-force':
             force = 1
 
-        elif file is None:
-            file = arg
+        elif filename is None:
+            filename = arg
 
         else:
             Usage()
 
         i = i + 1
 
-    if file is None:
+    if filename is None:
         Usage()
 
     # -----------------------------------------------------------------------
-    ds = gdal.Open(file)
+    ds = gdal.Open(filename)
 
     if req is None:
         hist = ds.GetRasterBand(1).GetDefaultHistogram(force=force)
