@@ -123,7 +123,7 @@
 #endif
 
 /* Needed for std=c11 on Solaris to have strcasecmp() */
-#if defined(GDAL_COMPILATION) && defined(__sun__) && __STDC_VERSION__ >= 201112L && _XOPEN_SOURCE < 600
+#if defined(GDAL_COMPILATION) && defined(__sun__) && (__STDC_VERSION__ + 0) >= 201112L && (_XOPEN_SOURCE + 0) < 600
 #ifdef _XOPEN_SOURCE
 #undef _XOPEN_SOURCE
 #endif

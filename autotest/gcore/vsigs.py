@@ -1354,7 +1354,8 @@ def vsigs_extra_1():
         print(ret)
         return 'fail'
 
-    if False:  # we actually try to read at read() time and bSetError = false
+    if False:  # pylint: disable=using-constant-test
+        # we actually try to read at read() time and bSetError = false
         # Invalid bucket : "The specified bucket does not exist"
         gdal.ErrorReset()
         f = open_for_read('/vsigs/not_existing_bucket/foo')

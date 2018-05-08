@@ -232,7 +232,7 @@ def ogr_wfs_geoserver():
         feat.DumpReadable()
         return 'fail'
 
-    if False:
+    if False:  # pylint: disable=using-constant-test
         # This GeoServer version doesn't understand <GmlObjectId>
         lyr.SetAttributeFilter("gml_id = 'poi.1'")
         feat_count = lyr.GetFeatureCount()

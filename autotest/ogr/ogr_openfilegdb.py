@@ -150,7 +150,7 @@ def ogr_openfilegdb_make_test_data():
             feat = ogr.Feature(lyr.GetLayerDefn())
             lyr.CreateFeature(feat)
 
-    if False:
+    if False:  # pylint: disable=using-constant-test
         lyr = ds.CreateLayer('sparse_layer', geom_type=ogr.wkbPoint)
         for i in range(4096):
             feat = ogr.Feature(lyr.GetLayerDefn())
@@ -159,7 +159,7 @@ def ogr_openfilegdb_make_test_data():
         feat = ogr.Feature(lyr.GetLayerDefn())
         lyr.CreateFeature(feat)
 
-    if True:
+    if True:  # pylint: disable=using-constant-test
         lyr = ds.CreateLayer('big_layer', geom_type=ogr.wkbNone)
         lyr.CreateField(ogr.FieldDefn("real", ogr.OFTReal))
         gdal.SetConfigOption('FGDB_BULK_LOAD', 'YES')
@@ -170,7 +170,7 @@ def ogr_openfilegdb_make_test_data():
             lyr.CreateFeature(feat)
         gdal.SetConfigOption('FGDB_BULK_LOAD', None)
 
-    if True:
+    if True:  # pylint: disable=using-constant-test
         lyr = ds.CreateLayer('hole', geom_type=ogr.wkbPoint, srs=None)
         lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
         feat = ogr.Feature(lyr.GetLayerDefn())
@@ -211,14 +211,14 @@ def ogr_openfilegdb_make_test_data():
         lyr.CreateFeature(feat)
         feat = None
 
-    if True:
+    if True:  # pylint: disable=using-constant-test
         lyr = ds.CreateLayer('no_field', geom_type=ogr.wkbNone, srs=None)
         for i in range(5):
             feat = ogr.Feature(lyr.GetLayerDefn())
             lyr.CreateFeature(feat)
             feat = None
 
-    if True:
+    if True:  # pylint: disable=using-constant-test
         lyr = ds.CreateLayer('several_polygons', geom_type=ogr.wkbPolygon, srs=None)
         for i in range(3):
             for j in range(3):
@@ -232,7 +232,7 @@ def ogr_openfilegdb_make_test_data():
                 lyr.CreateFeature(feat)
                 feat = None
 
-    if True:
+    if True:  # pylint: disable=using-constant-test
         lyr = ds.CreateLayer('testnotnullable', geom_type=ogr.wkbPoint, srs=None, options=['GEOMETRY_NULLABLE=NO'])
         field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
         field_defn.SetNullable(0)
@@ -969,7 +969,7 @@ def ogr_openfilegdb_10():
 
     shutil.copytree('tmp/testopenfilegdb.gdb', 'tmp/testopenfilegdb_fuzzed.gdb')
 
-    if False:
+    if False:  # pylint: disable=using-constant-test
         for filename in ['tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtable',
                          'tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtablx']:
             errors = set()

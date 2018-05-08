@@ -834,7 +834,7 @@ def jp2lura_22():
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
 
-    if False:
+    if False:  # pylint: disable=using-constant-test
         # RGBA with 1BIT_ALPHA=YES
         src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
         out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_22.jp2', src_ds, options=['1BIT_ALPHA=YES'])
@@ -1036,7 +1036,7 @@ def jp2lura_24():
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
 
-    if False:
+    if False:  # pylint: disable=using-constant-test
         #  Grey+alpha with 1BIT_ALPHA=YES
         src_ds = gdal.Open('../gcore/data/stefan_full_greyalpha.tif')
         gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_24.jp2', src_ds, options=['1BIT_ALPHA=YES'])
