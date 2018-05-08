@@ -513,6 +513,7 @@ def rasterio_8():
 
 
 def rasterio_9_progress_callback(pct, message, user_data):
+    # pylint: disable=unused-argument
     if pct < user_data[0]:
         print('Got %f, last pct was %f' % (pct, user_data[0]))
         return 0
