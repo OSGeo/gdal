@@ -953,7 +953,7 @@ def ogr_fgdb_16():
 
     try:
         gdaltest.unzip('tmp/cache', 'data/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip')
-    except:
+    except OSError:
         pass
     try:
         os.stat('tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb')
