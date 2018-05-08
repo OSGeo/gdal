@@ -189,7 +189,7 @@ def ogr_tiger_4():
 
         data = open('tmp/cache/TGR01001/' + filename, 'r').read()
 
-        f = gdal.VSIFOpenL('/vsimem/tigertest/' + file, 'wb')
+        f = gdal.VSIFOpenL('/vsimem/tigertest/' + filename, 'wb')
         gdal.VSIFWriteL(data, 1, len(data), f)
         gdal.VSIFCloseL(f)
 
