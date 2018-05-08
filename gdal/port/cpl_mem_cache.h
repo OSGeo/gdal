@@ -201,9 +201,9 @@ class Cache {
   Cache(const Cache&) = delete;
   Cache& operator=(const Cache&) = delete;
 
-  mutable Lock lock_;
-  Map cache_;
-  list_type keys_;
+  mutable Lock lock_{};
+  Map cache_{};
+  list_type keys_{};
   size_t maxSize_;
   size_t elasticity_;
 };

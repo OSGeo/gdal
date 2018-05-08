@@ -44,6 +44,7 @@ import gdaltest
 # To initialize the required PostGISRaster DB instance, run data/load_postgisraster_test_data.sh
 #
 
+
 ###############################################################################
 #
 
@@ -61,7 +62,8 @@ def postgisraster_init():
         gdaltest.postgisrasterDriver = None
         return 'skip'
 
-    gdaltest.postgisraster_connection_string = "PG:host='localhost' dbname='autotest'"
+    gdaltest.postgisraster_connection_string_without_schema = "PG:host='localhost' dbname='autotest'"
+    gdaltest.postgisraster_connection_string = gdaltest.postgisraster_connection_string_without_schema
 
     # Make sure we have SRID=26711 in spatial_ref_sys
     with gdaltest.error_handler():
@@ -76,17 +78,22 @@ def postgisraster_init():
     proj4 = sr.ExportToProj4()
     ds.ExecuteSQL("DELETE FROM spatial_ref_sys WHERE auth_srid = 26711")
     ds.ExecuteSQL("INSERT INTO spatial_ref_sys (srid,auth_name,auth_srid,srtext,proj4text) VALUES (26711,'EPSG',26711,'%s','%s')" % (wkt, proj4))
+    ds.ExecuteSQL("ALTER DATABASE autotest SET postgis.gdal_enabled_drivers TO 'GTiff PNG JPEG'")
+    ds.ExecuteSQL("ALTER DATABASE autotest SET postgis.enable_outdb_rasters = true")
+    ds.ExecuteSQL("SELECT pg_reload_conf()")
     ds = None
-
-    gdaltest.runexternal('bash data/load_postgisraster_test_data.sh')
 
     gdaltest.postgisraster_connection_string += " schema='gis_schema' "
 
-    try:
+    with gdaltest.error_handler():
+        ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
+
+    # If we cannot open the table, try force loading the data
+    if ds is None:
+        gdaltest.runexternal('bash data/load_postgisraster_test_data.sh')
+
         with gdaltest.error_handler():
             ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
-    except:
-        gdaltest.postgisrasterDriver = None
 
     if ds is None:
         gdaltest.postgisrasterDriver = None
@@ -366,6 +373,14 @@ def postgisraster_test_create_copy_and_delete_phases():
             gdaltest.post_reason('Metadata differs between new and old rasters.')
             return 'fail'
 
+        ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_copy' mode=2")
+        cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+        if cs != [30111, 32302, 40026]:
+            gdaltest.post_reason('fail')
+            print(cs)
+            return 'fail'
+        ds = None
+
         # should delete all raster parts over 50
         deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy' where='rid>50'")
 
@@ -444,6 +459,14 @@ def postgisraster_test_norid():
                 print(src_md[k])
                 return 'fail'
 
+    with gdaltest.error_handler():
+        ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_noid' mode=2")
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if cs != [30111, 32302, 40026]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
     return 'success'
 
 
@@ -471,6 +494,14 @@ def postgisraster_test_serial():
                 print(k, ':', src_md[k])
                 return 'fail'
 
+    with gdaltest.error_handler():
+        ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_serial' mode=2")
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if cs != [30111, 32302, 40026]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
     return 'success'
 
 
@@ -497,6 +528,107 @@ def postgisraster_test_unique():
             if not re.search("where='uniq = \d+'", src_md[k]):
                 print(k, ':', src_md[k])
                 return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_unique' mode=2")
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if cs != [30111, 32302, 40026]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+
+def postgisraster_test_constraint():
+
+    if gdaltest.postgisrasterDriver is None:
+        return 'skip'
+    ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_constraint' mode=2")
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if cs != [30111, 32302, 40026]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+
+def postgisraster_test_constraint_with_spi():
+
+    if gdaltest.postgisrasterDriver is None:
+        return 'skip'
+    ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_constraint_with_spi' mode=2")
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if cs != [30111, 32302, 40026]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+
+def postgisraster_test_outdb():
+
+    if gdaltest.postgisrasterDriver is None:
+        return 'skip'
+
+    ds = ogr.Open(gdaltest.postgisraster_connection_string_without_schema)
+    sql_lyr = ds.ExecuteSQL('SHOW postgis.enable_outdb_rasters')
+    has_guc = sql_lyr is not None
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2")
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    expected_cs = [30111, 32302, 40026] if has_guc else [0, 0, 0]
+    if cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+
+def postgisraster_test_outdb_client_side():
+
+    if gdaltest.postgisrasterDriver is None:
+        return 'skip'
+    ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2 outdb_resolution=client_side")
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if cs != [30111, 32302, 40026]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+
+def postgisraster_test_outdb_client_side_force_ireadblock():
+
+    if gdaltest.postgisrasterDriver is None:
+        return 'skip'
+    ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2 outdb_resolution=client_side")
+    with gdaltest.SetCacheMax(0):
+        cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if cs != [30111, 32302, 40026]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+
+def postgisraster_test_outdb_client_side_if_possible():
+
+    if gdaltest.postgisrasterDriver is None:
+        return 'skip'
+    ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2 outdb_resolution=client_side_if_possible")
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if cs != [30111, 32302, 40026]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
 
     return 'success'
 
@@ -526,6 +658,12 @@ gdaltest_list = [
     postgisraster_test_norid,
     postgisraster_test_serial,
     postgisraster_test_unique,
+    postgisraster_test_constraint,
+    postgisraster_test_constraint_with_spi,
+    postgisraster_test_outdb,
+    postgisraster_test_outdb_client_side,
+    postgisraster_test_outdb_client_side_force_ireadblock,
+    postgisraster_test_outdb_client_side_if_possible,
     postgisraster_cleanup]
 
 if __name__ == '__main__':

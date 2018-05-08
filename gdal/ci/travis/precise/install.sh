@@ -13,29 +13,30 @@ scripts/detect_suspicious_char_digit_zero.sh
 CC="ccache gcc-4.8" CXX="ccache g++-4.8" ./configure --prefix=/usr --without-libtool --without-cpp11 --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-mongocxx=/usr/local
 #  --with-gta
 make docs >docs_log.txt 2>&1
-if cat docs_log.txt | grep -i warning | grep -v russian | grep -v brazilian; then echo "Doxygen warnings found" && cat docs_log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
+if grep -i warning docs_log.txt | grep -v -e russian -e brazilian; then echo "Doxygen warnings found" && cat docs_log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
 make man >man_log.txt 2>&1
-if cat man_log.txt | grep -i warning; then echo "Doxygen warnings found" && cat docs_log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
+if grep -i warning man_log.txt ; then echo "Doxygen warnings found" && cat docs_log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
 make USER_DEFS="-Wextra -Werror" -j3
 cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf
 cd ..
 
-cd swig/java
-cp java.opt java.opt.bak
-cat java.opt | sed "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-7-openjdk-amd64\//" > java.opt.tmp
-mv java.opt.tmp java.opt
-make
-mv java.opt.bak java.opt
-cd ../..
+(cd swig/java
+ sed -i.bak "s,JAVA_HOME =.*,JAVA_HOME = /usr/lib/jvm/java-7-openjdk-amd64/," java.opt
+ make
+ mv java.opt.bak java.opt
+)
 
-cd swig/perl
-make generate
-make
-cd ../..
+(cd swig/perl && make generate && make)
+
+# Load data before we remove the system libgdal
+(cd ../autotest/gdrivers/data && ./load_postgisraster_test_data.sh)
+
 sudo rm -f /usr/lib/libgdal.so*
 sudo make install
 sudo ldconfig
+# Somewhat risky... to please postgis raster server side
+sudo ln -s /usr/lib/libgdal.so /usr/lib/libgdal.so.1 
 cd ../autotest/cpp
 make -j3
 cd ../../gdal
