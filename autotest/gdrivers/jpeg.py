@@ -87,7 +87,7 @@ def jpeg_2():
             print(md)
             gdaltest.post_reason('Exif metadata wrong.')
             return 'fail'
-    except:
+    except KeyError:
         print(md)
         gdaltest.post_reason('Exit metadata apparently missing.')
         return 'fail'
