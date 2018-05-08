@@ -170,7 +170,7 @@ def ogr_ingres_5():
 
     return 'skip'
 
-    # pylint: disable=unused-argument
+    # pylint: disable=unreachable
     sql_lyr = gdaltest.ingres_ds.ExecuteSQL(
         "select * from tpoly where prfedea = '35043413'")
 

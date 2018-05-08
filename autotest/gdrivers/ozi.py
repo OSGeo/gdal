@@ -61,7 +61,7 @@ def ozi_online_1():
     if ds is None:
         return 'fail'
 
-    if False:
+    if False:  # pylint: disable=using-constant-test
         gt = ds.GetGeoTransform()
         wkt = ds.GetProjectionRef()
 

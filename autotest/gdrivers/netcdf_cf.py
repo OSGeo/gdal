@@ -162,9 +162,7 @@ def netcdf_cf_get_command(ifile, version='auto'):
 ###############################################################################
 # Check a file for CF compliance
 def netcdf_cf_check_file(ifile, version='auto', silent=True):
-
-    # if not silent:
-    #    print 'checking file ' + ifile
+    # pylint: disable=unused-argument
     gdaltest.netcdf_cf_check_error = ''
 
     if not os.path.exists(ifile):

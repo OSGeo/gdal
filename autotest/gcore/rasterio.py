@@ -354,6 +354,7 @@ def rasterio_7():
 
 
 def rasterio_8_progress_callback(pct, message, user_data):
+    # pylint: disable=unused-argument
     if abs(pct - (user_data[0] + 0.05)) > 1e-5:
         print('Expected %f, got %f' % (user_data[0] + 0.05, pct))
         user_data[1] = False

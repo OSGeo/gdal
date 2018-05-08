@@ -154,7 +154,7 @@ def kea_4():
 
     # Disabled for now since some of them cause memory leaks or
     # crash in the HDF5 library finalizer
-    if False:
+    if False:  # pylint: disable=using-constant-test
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ret = ds.SetMetadataItem('foo', 'bar')
         gdal.PopErrorHandler()
