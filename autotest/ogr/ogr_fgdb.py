@@ -183,7 +183,7 @@ def ogr_fgdb_1():
         if data[1] != ogr.wkbNone:
             try:
                 expected_wkt = data[3]
-            except:
+            except IndexError:
                 expected_wkt = data[2]
             if expected_wkt is None:
                 if feat.GetGeometryRef() is not None:
@@ -953,7 +953,7 @@ def ogr_fgdb_16():
 
     try:
         gdaltest.unzip('tmp/cache', 'data/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip')
-    except:
+    except OSError:
         pass
     try:
         os.stat('tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb')
@@ -1688,7 +1688,7 @@ def ogr_fgdb_19():
                     gdaltest.post_reason('fail')
                     print(case)
                     return 'fail'
-                except:
+                except OSError:
                     pass
             else:
                 shutil.rmtree('tmp/test.gdb.ogredited')
@@ -2437,7 +2437,7 @@ def ogr_fgdb_21():
         feat = lyr.GetNextFeature()
         try:
             expected_wkt = data[3]
-        except:
+        except IndexError:
             expected_wkt = data[2]
         if expected_wkt is None:
             if feat.GetGeometryRef() is not None:

@@ -319,7 +319,7 @@ def ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=True):
         if data[1] != ogr.wkbNone:
             try:
                 expected_wkt = data[3]
-            except:
+            except IndexError:
                 expected_wkt = data[2]
             geom = feat.GetGeometryRef()
             if geom:
@@ -403,7 +403,7 @@ def ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=True):
             feat = lyr.GetNextFeature()
             try:
                 expected_wkt = data[3]
-            except:
+            except IndexError:
                 expected_wkt = data[2]
             if expected_wkt is None:
                 if feat.GetGeometryRef() is not None:
@@ -723,7 +723,7 @@ def ogr_openfilegdb_5():
         pass
     try:
         gdaltest.unzip('tmp/', 'data/testopenfilegdb.gdb.zip')
-    except:
+    except OSError:
         return 'skip'
     try:
         os.stat('tmp/testopenfilegdb.gdb')
