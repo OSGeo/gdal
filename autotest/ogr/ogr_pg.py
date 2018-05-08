@@ -778,7 +778,6 @@ def ogr_pg_15():
     return 'success' if tr else 'fail'
 
 
-
 ###############################################################################
 # Test very large statement.
 

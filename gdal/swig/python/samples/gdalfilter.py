@@ -33,6 +33,7 @@ from osgeo import gdal
 
 gdal.TermProgress = gdal.TermProgress_nocb
 
+
 def Usage():
     print('Usage: gdalfilter.py [-n] [-size n] [-coefs ...] [-f format] [-co NAME=VALUE]\n'
           '                     in_file out_file')
