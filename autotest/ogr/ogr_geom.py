@@ -991,7 +991,7 @@ def ogr_geom_linestring_limits():
     if gdal.GetLastErrorType() == 0:
         return 'fail'
 
-    if False:
+    if False:  # pylint: disable=using-constant-test
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         geom.SetPoint(2147000000, 5, 6, 7)

@@ -175,7 +175,7 @@ def ogr_csv_3():
     gdaltest.csv_lyr1 = ogr_csv_copy_layer('pm1', None)
 
     # No longer valid since we have editing capabilities
-    if False:
+    if False:  # pylint: disable=using-constant-test
         # Check that we cannot add a new field now
         if gdaltest.csv_lyr1.TestCapability(ogr.OLCCreateField) != 0:
             gdaltest.post_reason('fail')

@@ -287,7 +287,7 @@ def ogr_fgdb_DeleteField():
         return 'fail'
 
     # Needed since FileGDB v1.4, otherwise crash/error ...
-    if True:
+    if True:  # pylint: disable=using-constant-test
         ds = ogr.Open("tmp/test.gdb", update=1)
         lyr = ds.GetLayerByIndex(0)
 

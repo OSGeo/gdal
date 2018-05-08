@@ -1712,6 +1712,7 @@ def ogr_gml_43():
     # The service times out
     return 'skip'
 
+    # pylint: disable=unreachable
     if not gdaltest.have_gml_reader:
         return 'skip'
 
@@ -2428,7 +2429,7 @@ def ogr_gml_57():
         feat = None
         ds = None
 
-        if False:
+        if False:  # pylint: disable=using-constant-test
             f = gdal.VSIFOpenL('/vsimem/ogr_gml_57.gml', 'rb')
             print(gdal.VSIFReadL(1, 1000, f))
             gdal.VSIFCloseL(f)
