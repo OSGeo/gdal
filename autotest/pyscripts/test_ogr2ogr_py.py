@@ -56,7 +56,7 @@ def test_ogr2ogr_py_1():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except OSError:
+    except:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp')
@@ -92,7 +92,7 @@ def test_ogr2ogr_py_2():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except OSError:
+    except:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp -sql "select * from poly"')
@@ -118,7 +118,7 @@ def test_ogr2ogr_py_3():
     try:
         os.stat('tmp/poly.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    except OSError:
+    except:
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp -spat 479609 4764629 479764 4764817')

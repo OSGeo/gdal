@@ -45,6 +45,12 @@ def virtualmem_1():
     if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
         return 'skip'
 
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+    except (ImportError, AttributeError):
+        return 'skip'
+
     ds = gdal.Open('../gdrivers/data/small_world.tif')
     bufxsize = 400
     bufysize = 128
@@ -125,6 +131,11 @@ def virtualmem_1():
 def virtualmem_2():
 
     if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
+        return 'skip'
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+    except (ImportError, AttributeError):
         return 'skip'
 
     if not sys.platform.startswith('linux'):
