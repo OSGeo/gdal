@@ -282,7 +282,7 @@ def pds4_9():
     filename = '/vsimem/out.xml'
     # Test copy of all specialConstants
     with hide_substitution_warnings_error_handler():
-        gdal.Translate(filename, 'data/byte_pds4.xml', frmt='PDS4')
+        gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4')
 
     ret = validate_xml(filename)
     if ret == 'fail':
@@ -308,7 +308,7 @@ def pds4_9():
     # Test copy of all specialConstants and overide noData
     for frmt in ['RAW', 'GEOTIFF']:
         with hide_substitution_warnings_error_handler():
-            gdal.Translate(filename, 'data/byte_pds4.xml', frmt='PDS4',
+            gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4',
                            noData=75,
                            creationOptions=['IMAGE_FORMAT=' + frmt])
 
@@ -341,7 +341,7 @@ def pds4_9():
     # Test just setting noData
     for frmt in ['RAW', 'GEOTIFF']:
         with hide_substitution_warnings_error_handler():
-            gdal.Translate(filename, 'data/byte_pds4.xml', frmt='PDS4',
+            gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4',
                            creationOptions=['USE_SRC_LABEL=NO',
                                             'IMAGE_FORMAT=' + frmt])
 
@@ -547,7 +547,7 @@ def pds4_10():
         ds.GetRasterBand(1).SetOffset(3)
         with hide_substitution_warnings_error_handler():
             ds = None
-            gdal.Translate(filename2, filename, frmt='PDS4')
+            gdal.Translate(filename2, filename, format='PDS4')
 
         ds = gdal.Open(filename2)
         scale = ds.GetRasterBand(1).GetScale()
@@ -1006,7 +1006,7 @@ def pds4_14():
     # Output file has same name as input file
     with gdaltest.error_handler():
         ds = gdal.Translate('/vsimem/test.xml', '/vsimem/test.tif',
-                            frmt='PDS4', creationOptions=['IMAGE_FORMAT=GEOTIFF'])
+                            format='PDS4', creationOptions=['IMAGE_FORMAT=GEOTIFF'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
