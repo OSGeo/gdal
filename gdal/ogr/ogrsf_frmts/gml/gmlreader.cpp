@@ -1418,6 +1418,11 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
         if (m_bCanUseGlobalSRSName)
             pszSRSName = m_pszGlobalSRSName;
 
+        if( pszSRSName != nullptr && !GML_IsLegitSRSName(pszSRSName) )
+        {
+            continue;
+        }
+
         OGRSpatialReference oSRS;
         if (m_bInvertAxisOrderIfLatLong && GML_IsSRSLatLongOrder(pszSRSName) &&
             oSRS.SetFromUserInput(pszSRSName) == OGRERR_NONE)
