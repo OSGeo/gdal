@@ -6,7 +6,7 @@
 #
 
 # Doxgen 1.7.1 has a bug related to man pages. See https://trac.osgeo.org/gdal/ticket/6048
-echo $(doxygen --version) | xargs python -c "import sys; v = sys.argv[1].split('.'); v=int(v[0])*10000+int(v[1])*100+int(v[2]); sys.exit(v < 10704)"
+doxygen --version | xargs python -c "import sys; v = sys.argv[1].split('.'); v=int(v[0])*10000+int(v[1])*100+int(v[2]); sys.exit(v < 10704)"
 rc=$?
 if test $rc != 0; then
     echo "Wrong Doxygen version. 1.7.4 or later required"
@@ -32,7 +32,7 @@ fi
 # Processing script input arguments
 #
 GDAL_VERSION=$1
-COMPRESSED_VERSION=`echo $GDAL_VERSION | tr -d .`
+COMPRESSED_VERSION=$(echo "$GDAL_VERSION" | tr -d .)
 
 if test "$2" = "-date" ; then
   forcedate=$3
@@ -117,12 +117,12 @@ echo "* Cleaning .gitignore under $PWD..."
 rm -f gdal/.gitignore
 
 echo "* Substituting \$Id\$..."
-for i in `find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.dox" \
+for i in $(find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.dox" \
               -o -name "*.py" -o -name "*.i" -o -name "*.sh" -o -name "*.cs" \
               -o -name "*.java" -o -name "*.m4" -o -name "*.xml" \
-              -o -name "*.xsd"`; do
-    ID="`basename $i` `git log -1 --format='%H %ai %aN' $i | sed 's/ +0000/Z/'`";
-    sed -i "s/\\\$Id\\\$/\\\$Id: ${ID} \\\$/" $i;
+              -o -name "*.xsd"); do
+    ID="$(basename $i) $(git log -1 --format='%H %ai %aN' $i | sed 's/ +0000/Z/')"
+    sed -i "s/\\\$Id\\\$/\\\$Id: ${ID} \\\$/" $i
 done
 
 #
@@ -144,7 +144,7 @@ fi
 rm -f doxygen_sqlite3.db
 rm -f man/man1/*_dist_wrk_gdal_gdal_apps_.1
 
-cd ${CWD}
+cd "$CWD"
 
 # They currently require SWIG 1.3.X, which is not convenient as we need
 # newer SWIG for newer Python versions
@@ -201,7 +201,7 @@ cd ../../..
 
 echo "* Generating MD5 sums ..."
 
-OSTYPE=`uname -s`
+OSTYPE=$(uname -s)
 if test "$OSTYPE" = "Darwin" ; then
 MD5=md5
 else
