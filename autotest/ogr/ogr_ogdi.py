@@ -66,7 +66,7 @@ def ogr_ogdi_1():
                 os.stat('tmp/cache/ogdits-3.1')
             except OSError:
                 return 'skip'
-        except:
+        except OSError:
             return 'skip'
 
     url_name = 'gltp:/vrf/' + os.getcwd() + '/tmp/cache/ogdits-3.1/data/vpf/vm2alv2/texash'

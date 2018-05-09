@@ -443,7 +443,7 @@ def test_gdalbuildvrt_12():
         return 'skip'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalbuildvrt_path() + ' -tap tmp/gdalbuildvrt12.vrt ../gcore/data/byte.tif',
-                                                  check_memleak=False)
+                                                check_memleak=False)
     if err.find('-tap option cannot be used without using -tr') == -1:
         gdaltest.post_reason('expected error')
         return 'fail'

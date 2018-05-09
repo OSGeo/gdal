@@ -59,7 +59,7 @@ def mg4lidar_1():
                 os.stat('tmp/cache/GDAL_MG4Lidar_Src')
             except OSError:
                 return 'skip'
-        except:
+        except OSError:
             return 'skip'
 
     ds = gdal.Open('tmp/cache/GDAL_MG4Lidar_Src/Tetons_200k.view')

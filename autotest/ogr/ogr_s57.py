@@ -468,7 +468,7 @@ def ogr_s57_online_4():
                 os.stat('tmp/cache/ENC_ROOT/JP34NC94.000')
             except OSError:
                 return 'skip'
-        except:
+        except OSError:
             return 'skip'
 
     gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON,RECODE_BY_DSSI=ON')

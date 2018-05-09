@@ -61,7 +61,7 @@ def rik_online_1():
             outfile.write(zfobj.read('sverige500_swe99.rik'))
             outfile.close()
             file_to_test = 'tmp/cache/sverige500_swe99.rik'
-        except:
+        except OSError:
             return 'skip'
 
     tst = gdaltest.GDALTest('RIK', file_to_test, 1, 17162, filename_absolute=1)
