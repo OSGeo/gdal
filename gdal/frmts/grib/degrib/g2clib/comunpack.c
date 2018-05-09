@@ -165,7 +165,7 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
               iofst=iofst+1;
               gbit(cpack,&minsd,iofst,nbitsd-1);
               iofst=iofst+nbitsd-1;
-              if (isign == 1) minsd=-minsd;
+              if (isign == 1 && minsd != INT_MIN) minsd=-minsd;
          }
          else {
               ival1=0;
