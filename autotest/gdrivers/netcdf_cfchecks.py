@@ -2300,9 +2300,9 @@ class CFChecker(object):
                 return 0
 
         if 'scale_factor' in var.attributes:
-            type = var.attributes['scale_factor'].dtype.char
+            typ = var.attributes['scale_factor'].dtype.char
         elif 'add_offset' in var.attributes:
-            type = var.attributes['add_offset'].dtype.char
+            typ = var.attributes['add_offset'].dtype.char
         else:
             # No packed Data attributes present
             return 1
@@ -2310,8 +2310,8 @@ class CFChecker(object):
         varType = self.getTypeCode(var)
 
         # One or other attributes present; run remaining checks
-        if varType != type:
-            if type != 'f' and type != 'd':
+        if varType != typ:
+            if typ != 'f' and typ != 'd':
                 print("ERROR (8.1): scale_factor and add_offset must be of type float or double")
                 self.err = self.err + 1
                 rc = 0
@@ -2321,7 +2321,7 @@ class CFChecker(object):
                 self.err = self.err + 1
                 rc = 0
 
-            if type == 'f' and varType == 'i':
+            if typ == 'f' and varType == 'i':
                 print("WARNING (8.1): scale_factor/add_offset are type float, therefore", var.id, "should not be of type int")
                 self.warn = self.warn + 1
 
@@ -2503,10 +2503,10 @@ class CFChecker(object):
                 i = i + 1
                 if val < lastVal:
                     # Decreasing sequence
-                    type = 'decr'
+                    typ = 'decr'
                 elif val > lastVal:
                     # Increasing sequence
-                    type = 'incr'
+                    typ = 'incr'
                 else:
                     # Same value - ERROR
                     print("ERROR (5): co-ordinate variable '" + var.id + "' not monotonic")
@@ -2516,12 +2516,12 @@ class CFChecker(object):
                 lastVal = val
             else:
                 i = i + 1
-                if val < lastVal and type != 'decr':
+                if val < lastVal and typ != 'decr':
                     # ERROR - should be increasing value
                     print("ERROR (5): co-ordinate variable '" + var.id + "' not monotonic")
                     self.err = self.err + 1
                     return 1
-                elif val > lastVal and type != 'incr':
+                elif val > lastVal and typ != 'incr':
                     # ERROR - should be decreasing value
                     print("ERROR (5): co-ordinate variable '" + var.id + "' not monotonic")
                     self.err = self.err + 1
