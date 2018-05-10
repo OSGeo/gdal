@@ -60,7 +60,7 @@ RawRasterBand::RawRasterBand( GDALDataset *poDSIn, int nBandIn,
                               VSILFILE *fpRawLIn, vsi_l_offset nImgOffsetIn,
                               int nPixelOffsetIn, int nLineOffsetIn,
                               GDALDataType eDataTypeIn, int bNativeOrderIn,
-                              enum RawRasterBand::OwnFP bOwnsFPIn ) :
+                              OwnFP bOwnsFPIn ) :
     fpRawL(fpRawLIn),
     nImgOffset(nImgOffsetIn),
     nPixelOffset(nPixelOffsetIn),
@@ -95,7 +95,7 @@ RawRasterBand::RawRasterBand( VSILFILE *fpRawLIn, vsi_l_offset nImgOffsetIn,
                               int nPixelOffsetIn, int nLineOffsetIn,
                               GDALDataType eDataTypeIn, int bNativeOrderIn,
                               int nXSize, int nYSize,
-                              enum RawRasterBand::OwnFP bOwnsFPIn ) :
+                              OwnFP bOwnsFPIn ) :
     fpRawL(fpRawLIn),
     nImgOffset(nImgOffsetIn),
     nPixelOffset(nPixelOffsetIn),
