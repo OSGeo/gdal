@@ -394,6 +394,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CSLDestroy( papszTokens );
     }
+    CPL_IGNORE_RET_VAL(nBits);
 
 /* -------------------------------------------------------------------- */
 /*      Did we get the required keywords?  If not we return with        */
@@ -514,7 +515,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 #else
                                 chByteOrder == 'M',
 #endif
-                                nBits);
+                                RawRasterBand::OwnFP::NO );
 
         poDS->SetBand( i+1, poBand );
     }

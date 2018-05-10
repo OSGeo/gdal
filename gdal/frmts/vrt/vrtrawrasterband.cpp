@@ -278,9 +278,11 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding RawRasterBand.                           */
 /* -------------------------------------------------------------------- */
-    m_poRawRaster = new RawRasterBand( fp, nImageOffset, nPixelOffset,
+    m_poRawRaster = new RawRasterBand( reinterpret_cast<VSILFILE*>(fp),
+                                       nImageOffset, nPixelOffset,
                                        nLineOffset, GetRasterDataType(),
-                                       bNative, GetXSize(), GetYSize(), TRUE );
+                                       bNative, GetXSize(), GetYSize(),
+                                       RawRasterBand::OwnFP::NO );
 
 /* -------------------------------------------------------------------- */
 /*      Reset block size to match the raw raster.                       */

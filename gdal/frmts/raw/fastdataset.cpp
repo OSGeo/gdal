@@ -159,7 +159,8 @@ FASTRasterBand::FASTRasterBand( FASTDataset *poDSIn, int nBandIn, VSILFILE * fpR
                                 int nLineOffsetIn,
                                 GDALDataType eDataTypeIn, int bNativeOrderIn ) :
     RawRasterBand( poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
-                   nLineOffsetIn, eDataTypeIn, bNativeOrderIn, TRUE )
+                   nLineOffsetIn, eDataTypeIn, bNativeOrderIn,
+                   RawRasterBand::OwnFP::NO )
 {}
 
 /************************************************************************/

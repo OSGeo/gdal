@@ -84,11 +84,10 @@ class ROIPACRasterBand final: public RawRasterBand
     CPL_DISALLOW_COPY_ASSIGN(ROIPACRasterBand)
 
     public:
-                ROIPACRasterBand( GDALDataset *poDS, int nBand, void *fpRaw,
+                ROIPACRasterBand( GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
                                   vsi_l_offset nImgOffset, int nPixelOffset,
                                   int nLineOffset,
-                                  GDALDataType eDataType, int bNativeOrder,
-                                  int bIsVSIL = FALSE, int bOwnsFP = FALSE );
+                                  GDALDataType eDataType, int bNativeOrder );
 };
 
 /************************************************************************/
@@ -402,8 +401,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
                        new ROIPACRasterBand( poDS, b + 1, poDS->fpImage,
                                              nBandOffset * b,
                                              nPixelOffset, nLineOffset,
-                                             eDataType, bNativeOrder,
-                                             TRUE, FALSE ) );
+                                             eDataType, bNativeOrder ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -913,14 +911,13 @@ char **ROIPACDataset::GetFileList()
 /*                         ROIPACRasterBand()                           */
 /************************************************************************/
 
-ROIPACRasterBand::ROIPACRasterBand( GDALDataset *poDSIn, int nBandIn, void *fpRawIn,
+ROIPACRasterBand::ROIPACRasterBand( GDALDataset *poDSIn, int nBandIn, VSILFILE *fpRawIn,
                                     vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
                                     int nLineOffsetIn,
-                                    GDALDataType eDataTypeIn, int bNativeOrderIn,
-                                    int bIsVSILIn, int bOwnsFPIn ) :
+                                    GDALDataType eDataTypeIn, int bNativeOrderIn ) :
     RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
-                  nLineOffsetIn, eDataTypeIn, bNativeOrderIn, bIsVSILIn,
-                  bOwnsFPIn)
+                  nLineOffsetIn, eDataTypeIn, bNativeOrderIn,
+                  RawRasterBand::OwnFP::NO)
 {}
 
 /************************************************************************/

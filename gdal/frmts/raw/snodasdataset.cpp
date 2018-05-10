@@ -97,7 +97,7 @@ SNODASRasterBand::SNODASRasterBand( VSILFILE* fpRawIn,
                                     int nXSize, int nYSize ) :
     RawRasterBand( fpRawIn, 0, 2,
                    nXSize * 2, GDT_Int16,
-                   !CPL_IS_LSB, nXSize, nYSize, TRUE, TRUE)
+                   !CPL_IS_LSB, nXSize, nYSize, RawRasterBand::OwnFP::YES)
 {}
 
 /************************************************************************/

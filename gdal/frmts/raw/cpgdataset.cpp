@@ -658,7 +658,8 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
             RawRasterBand *poBand
                 = new RawRasterBand( poDS, iBand+1, poDS->afpImage[iBand],
                                      0, 8, 8*nSamples,
-                                     GDT_CFloat32, !CPL_IS_LSB, TRUE );
+                                     GDT_CFloat32, !CPL_IS_LSB,
+                                     RawRasterBand::OwnFP::NO );
             poDS->SetBand( iBand+1, poBand );
 
             poBand->SetMetadataItem( "POLARIMETRIC_INTERP",

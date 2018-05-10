@@ -80,9 +80,7 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
 protected:
     friend class RawDataset;
 
-    FILE       *fpRaw{};
     VSILFILE   *fpRawL{};
-    int         bIsVSIL{};
 
     vsi_l_offset nImgOffset{};
     int         nPixelOffset{};
@@ -121,17 +119,24 @@ protected:
 
 public:
 
-                 RawRasterBand( GDALDataset *poDS, int nBand, void * fpRaw,
-                                vsi_l_offset nImgOffset, int nPixelOffset,
-                                int nLineOffset,
-                                GDALDataType eDataType, int bNativeOrder,
-                                int bIsVSIL = FALSE, int bOwnsFP = FALSE );
+    enum class OwnFP
+    {
+        NO,
+        YES
+    };
 
-                 RawRasterBand( void * fpRaw,
+                 RawRasterBand( GDALDataset *poDS, int nBand, VSILFILE* fpRaw,
                                 vsi_l_offset nImgOffset, int nPixelOffset,
                                 int nLineOffset,
                                 GDALDataType eDataType, int bNativeOrder,
-                                int nXSize, int nYSize, int bIsVSIL = FALSE, int bOwnsFP = FALSE );
+                                OwnFP bOwnsFP );
+
+                 RawRasterBand( VSILFILE* fpRaw,
+                                vsi_l_offset nImgOffset, int nPixelOffset,
+                                int nLineOffset,
+                                GDALDataType eDataType, int bNativeOrder,
+                                int nXSize, int nYSize,
+                                OwnFP bOwnsFP );
 
     virtual ~RawRasterBand() /* = 0 */ ;
 
@@ -165,9 +170,7 @@ public:
     int          GetPixelOffset() const { return nPixelOffset; }
     int          GetLineOffset() const { return nLineOffset; }
     int          GetNativeOrder() const { return bNativeOrder; }
-    int          GetIsVSIL() const { return bIsVSIL; }
-    FILE        *GetFP() const { return (bIsVSIL) ? reinterpret_cast<FILE *>( fpRawL ) : fpRaw; }
-    VSILFILE    *GetFPL() const { CPLAssert(bIsVSIL); return fpRawL; }
+    VSILFILE    *GetFPL() const { return fpRawL; }
     int          GetOwnsFP() const { return bOwnsFP; }
 
   private:

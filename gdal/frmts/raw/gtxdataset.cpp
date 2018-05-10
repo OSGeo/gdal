@@ -127,7 +127,7 @@ GTXRasterBand::GTXRasterBand( GDALDataset *poDSIn, int nBandIn,
                                 GDALDataType eDataTypeIn, int bNativeOrderIn ) :
     RawRasterBand( poDSIn, nBandIn, fpRawIn,
                    nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn,
-                   eDataTypeIn, bNativeOrderIn, TRUE )
+                   eDataTypeIn, bNativeOrderIn, RawRasterBand::OwnFP::NO )
 {
 }
 

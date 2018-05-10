@@ -77,7 +77,7 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
                                 GDALDataType eDataTypeIn, int bNativeOrderIn,
                                 int nBitsIn) :
   RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
-                nLineOffsetIn, eDataTypeIn, bNativeOrderIn, TRUE),
+                nLineOffsetIn, eDataTypeIn, bNativeOrderIn, RawRasterBand::OwnFP::NO),
   nBits(nBitsIn),
   nStartBit(0),
   nPixelOffsetBits(0),

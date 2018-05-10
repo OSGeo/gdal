@@ -220,7 +220,7 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
                            160 + 4 + static_cast<vsi_l_offset>(nRasterXSize) *
                                 (nRasterYSize-1) * 2 * 4,
                            8, -8 * nRasterXSize,
-                           GDT_Float32, CPL_IS_LSB, TRUE, FALSE );
+                           GDT_Float32, CPL_IS_LSB, RawRasterBand::OwnFP::NO );
     poBand->SetDescription( "Latitude Offset (radians)" );
     poDS->SetBand( 1, poBand );
 
@@ -229,7 +229,7 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
                            160 + static_cast<vsi_l_offset>(nRasterXSize) *
                                 (nRasterYSize-1) * 2 * 4,
                            8, -8 * nRasterXSize,
-                           GDT_Float32, CPL_IS_LSB, TRUE, FALSE );
+                           GDT_Float32, CPL_IS_LSB, RawRasterBand::OwnFP::NO );
     poBand->SetDescription( "Longitude Offset (radians)" );
     poDS->SetBand( 2, poBand );
 

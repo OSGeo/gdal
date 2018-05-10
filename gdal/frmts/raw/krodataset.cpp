@@ -203,7 +203,7 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
                                20 + nDataTypeSize * iBand,
                                nComp * nDataTypeSize,
                                poDS->nRasterXSize * nComp * nDataTypeSize,
-                               eDT, !CPL_IS_LSB, TRUE, FALSE );
+                               eDT, !CPL_IS_LSB, RawRasterBand::OwnFP::NO );
         if( nComp == 3 || nComp == 4 )
         {
             poBand->SetColorInterpretation( static_cast<GDALColorInterp>(GCI_RedBand + iBand) );

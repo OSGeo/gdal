@@ -217,7 +217,8 @@ GDALDataset *LOSLASDataset::Open( GDALOpenInfo * poOpenInfo )
                                     poDS->nRecordLength + 4,
                               4, -1 * poDS->nRecordLength,
                               GDT_Float32,
-                              CPL_IS_LSB, TRUE, FALSE ) );
+                              CPL_IS_LSB,
+                              RawRasterBand::OwnFP::NO ) );
 
 /* -------------------------------------------------------------------- */
 /*      Setup georeferencing.                                           */

@@ -191,7 +191,8 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
     RawRasterBand *poBand = new RawRasterBand( poDS, 1, poDS->fpImage,
                                                nRecordLen * 2 + 4,
                                                sizeof(float), nRecordLen,
-                                               GDT_Float32, bNative, TRUE );
+                                               GDT_Float32, bNative,
+                                               RawRasterBand::OwnFP::NO );
     poDS->SetBand( 1, poBand );
 
     poBand->SetNoDataValue( -1.0000000150474662199e+30 );

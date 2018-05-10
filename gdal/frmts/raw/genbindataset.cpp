@@ -840,7 +840,8 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
                 i+1,
                 new RawRasterBand( poDS, i+1, poDS->fpImage,
                                    nBandOffset * i, nPixelOffset, nLineOffset,
-                                   eDataType, bNative, TRUE ) );
+                                   eDataType, bNative,
+                                   RawRasterBand::OwnFP::NO ) );
         }
     }
 

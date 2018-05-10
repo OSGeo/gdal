@@ -128,7 +128,7 @@ class RRASTERRasterBand final: public RawRasterBand
       CPL_DISALLOW_COPY_ASSIGN(RRASTERRasterBand)
 
   public:
-      RRASTERRasterBand( GDALDataset *poDS, int nBand, void * fpRaw,
+      RRASTERRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
                     vsi_l_offset nImgOffset, int nPixelOffset,
                     int nLineOffset,
                     GDALDataType eDataType, int bNativeOrder );
@@ -161,14 +161,15 @@ class RRASTERRasterBand final: public RawRasterBand
 /************************************************************************/
 
 RRASTERRasterBand::RRASTERRasterBand( GDALDataset *poDSIn, int nBandIn,
-                                      void * fpRawIn,
+                                      VSILFILE * fpRawIn,
                                       vsi_l_offset nImgOffsetIn,
                                       int nPixelOffsetIn,
                                       int nLineOffsetIn,
                                       GDALDataType eDataTypeIn,
                                       int bNativeOrderIn ) :
     RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
-                  nLineOffsetIn, eDataTypeIn, bNativeOrderIn, TRUE)
+                  nLineOffsetIn, eDataTypeIn, bNativeOrderIn,
+                  RawRasterBand::OwnFP::NO)
 {
 }
 

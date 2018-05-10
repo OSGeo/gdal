@@ -240,7 +240,7 @@ HKVRasterBand::HKVRasterBand( HKVDataset *poDSIn, int nBandIn, VSILFILE * fpRawI
                               GDALDataType eDataTypeIn, int bNativeOrderIn ) :
     RawRasterBand( reinterpret_cast<GDALDataset *>( poDSIn ), nBandIn, fpRawIn,
                    nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn, eDataTypeIn,
-                   bNativeOrderIn, TRUE )
+                   bNativeOrderIn, RawRasterBand::OwnFP::NO )
 
 {
     poDS = poDSIn;

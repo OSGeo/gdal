@@ -314,7 +314,8 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
    {
         GDALRasterBand  *poBand = new RawRasterBand(
             poDS, iBand, poDS->fpImage, LCP_HEADER_SIZE + ((iBand-1)*2),
-            iPixelSize, iPixelSize * nWidth, GDT_Int16, bNativeOrder, TRUE );
+            iPixelSize, iPixelSize * nWidth, GDT_Int16, bNativeOrder,
+            RawRasterBand::OwnFP::NO );
 
         poDS->SetBand(iBand, poBand);
 

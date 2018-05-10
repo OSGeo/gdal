@@ -281,7 +281,8 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
                                           nBytesPerSample,
                                           nLineOffset * nBands,
                                           poDS->eRasterDataType,
-                                          CPL_IS_LSB, TRUE ) );
+                                          CPL_IS_LSB,
+                                          RawRasterBand::OwnFP::NO ) );
         if( CPLGetLastErrorType() != CE_None )
         {
             delete poDS;

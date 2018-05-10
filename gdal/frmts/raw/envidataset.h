@@ -142,11 +142,10 @@ class ENVIRasterBand final: public RawRasterBand
     CPL_DISALLOW_COPY_ASSIGN(ENVIRasterBand)
 
   public:
-    ENVIRasterBand( GDALDataset *poDSIn, int nBandIn, void *fpRawIn,
+    ENVIRasterBand( GDALDataset *poDSIn, int nBandIn, VSILFILE *fpRawIn,
                     vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
                     int nLineOffsetIn, GDALDataType eDataTypeIn,
-                    int bNativeOrderIn, int bIsVSILIn = FALSE,
-                    int bOwnsFPIn = FALSE );
+                    int bNativeOrderIn );
     ~ENVIRasterBand() override {}
 
     void SetDescription( const char * ) override;

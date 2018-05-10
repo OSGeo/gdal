@@ -497,7 +497,8 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
                                    * nPixelOffset * poDS->nRasterXSize,
                                    nPixelOffset,
                                    poDS->nRasterXSize*nPixelOffset*nBandCount,
-                                   eDataType, !bNeedSwap, TRUE ));
+                                   eDataType, !bNeedSwap,
+                                   RawRasterBand::OwnFP::NO ));
         if( CPLGetLastErrorType() != CE_None )
         {
             delete poDS;

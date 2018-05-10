@@ -975,7 +975,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
             poBand =
                 new RawRasterBand( poDS, nBand, fpRaw, 0, nPixelOffset,
                                    nPixelOffset * poDS->GetRasterXSize(),
-                                   eDataType, bNative, TRUE, TRUE );
+                                   eDataType, bNative, RawRasterBand::OwnFP::YES );
         }
 
         poDS->SetBand( nBand, poBand );
