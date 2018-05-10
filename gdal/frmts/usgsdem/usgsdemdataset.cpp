@@ -722,7 +722,6 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
             }
         }
     }
-
     else if (nCoordSystem == 2)  // state plane
     {
         if( nGUnit == 1 )
