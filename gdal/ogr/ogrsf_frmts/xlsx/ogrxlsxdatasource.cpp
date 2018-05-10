@@ -112,6 +112,20 @@ OGRFeature* OGRXLSXLayer::GetNextFeature()
     return poFeature;
 }
 
+OGRErr OGRXLSXLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
+{
+    Init();
+    // BuildColString() takes a 4 character string + nul byte
+    if( GetLayerDefn()->GetFieldCount() >= 2000 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Maximum number of fields supported is 2000");
+        return OGRERR_FAILURE;
+    }
+    SetUpdated();
+    return OGRMemLayer::CreateField(poField, bApproxOK);
+}
+
 /************************************************************************/
 /*                           GetFeature()                               */
 /************************************************************************/

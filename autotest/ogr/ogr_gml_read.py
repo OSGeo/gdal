@@ -822,7 +822,7 @@ def ogr_gml_20():
 # Test writing GML3
 
 
-def ogr_gml_21(format='GML3'):
+def ogr_gml_21(frmt='GML3'):
 
     if not gdaltest.have_gml_reader:
         return 'skip'
@@ -837,7 +837,7 @@ def ogr_gml_21(format='GML3'):
         except OSError:
             pass
 
-    ds = ogr.GetDriverByName('GML').CreateDataSource('tmp/gml_21.gml', options=['FORMAT=' + format])
+    ds = ogr.GetDriverByName('GML').CreateDataSource('tmp/gml_21.gml', options=['FORMAT=' + frmt])
     lyr = ds.CreateLayer('firstlayer', srs=sr)
     lyr.CreateField(ogr.FieldDefn('string_field', ogr.OFTString))
 
@@ -865,7 +865,7 @@ def ogr_gml_21(format='GML3'):
 
     # Test that .gml and .xsd are identical to what is expected
     f1 = open('tmp/gml_21.gml', 'rt')
-    if format == 'GML3.2':
+    if frmt == 'GML3.2':
         f2 = open('data/expected_gml_gml32.gml', 'rt')
     else:
         f2 = open('data/expected_gml_21.gml', 'rt')
@@ -884,9 +884,9 @@ def ogr_gml_21(format='GML3'):
     f2.close()
 
     f1 = open('tmp/gml_21.xsd', 'rt')
-    if format == 'GML3':
+    if frmt == 'GML3':
         f2 = open('data/expected_gml_21.xsd', 'rt')
-    elif format == 'GML3.2':
+    elif frmt == 'GML3.2':
         f2 = open('data/expected_gml_gml32.xsd', 'rt')
     else:
         f2 = open('data/expected_gml_21_deegree3.xsd', 'rt')
@@ -1877,9 +1877,9 @@ def ogr_gml_46():
     format_list = ['GML2', 'GML3', 'GML3Deegree', 'GML3.2']
 
     for wkt in wkt_list:
-        for format in format_list:
+        for frmt in format_list:
             drv = ogr.GetDriverByName('GML')
-            ds = drv.CreateDataSource('/vsimem/ogr_gml_46.gml', options=['FORMAT=%s' % format])
+            ds = drv.CreateDataSource('/vsimem/ogr_gml_46.gml', options=['FORMAT=%s' % frmt])
             if wkt != '':
                 geom = ogr.CreateGeometryFromWkt(wkt)
                 geom_type = geom.GetGeometryType()
@@ -1938,7 +1938,7 @@ def ogr_gml_46():
             ds = None
 
             if val == 0:
-                gdaltest.post_reason('validation failed for format=%s, wkt=%s' % (format, wkt))
+                gdaltest.post_reason('validation failed for format=%s, wkt=%s' % (frmt, wkt))
 
                 f = gdal.VSIFOpenL('/vsimem/ogr_gml_46.gml', 'rb')
                 content = gdal.VSIFReadL(1, 10000, f)
@@ -1957,7 +1957,7 @@ def ogr_gml_46():
                 return 'fail'
 
         # Only minor schema changes
-        if format == 'GML3Deegree':
+        if frmt == 'GML3Deegree':
             break
 
     return 'success'
@@ -2133,9 +2133,9 @@ def ogr_gml_51():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
 
-    for format in ['GML2', 'GML3']:
+    for frmt in ['GML2', 'GML3']:
 
-        gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML tmp/ogr_gml_51.gml data/poly.shp -dsco FORMAT=%s -dsco WRITE_FEATURE_BOUNDED_BY=no -dsco STRIP_PREFIX=YES' % format)
+        gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML tmp/ogr_gml_51.gml data/poly.shp -dsco FORMAT=%s -dsco WRITE_FEATURE_BOUNDED_BY=no -dsco STRIP_PREFIX=YES' % frmt)
 
         f = open('tmp/ogr_gml_51.gml', 'rt')
         content = f.read()
@@ -2144,7 +2144,7 @@ def ogr_gml_51():
             gdaltest.post_reason('fail')
             print(content)
             return 'fail'
-        if format == 'GML3':
+        if frmt == 'GML3':
             if content.find("<featureMember>") == -1:
                 gdaltest.post_reason('fail')
                 print(content)

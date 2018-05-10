@@ -167,8 +167,11 @@ namespace PCIDSK
         uint32               record_loaded_data_offset;
         bool                 record_loaded_data_dirty;
 
+        bool                 vh_dirty = false;
+
         void                 FlushDataBuffer( int section );
         void                 LoadHeader();
+        void                 FlushSegHeaderIfNeeded();
 
         std::string          ConsistencyCheck_Header();
         std::string          ConsistencyCheck_DataIndices();
