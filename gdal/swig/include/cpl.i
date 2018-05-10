@@ -456,7 +456,12 @@ const char* VSIGetFileSystemOptions(const char * utf8_path);
 #if !defined(SWIGJAVA)
 
 #if !defined(SWIGCSHARP)
-typedef void VSILFILE;
+class VSILFILE
+{
+    private:
+        VSILFILE();
+        ~VSILFILE();
+};
 #endif
 
 #if defined(SWIGPERL)
