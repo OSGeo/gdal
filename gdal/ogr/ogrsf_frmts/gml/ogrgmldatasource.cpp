@@ -1499,7 +1499,8 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
     else
     {
         pszSRSName = GetGlobalSRSName();
-        if (pszSRSName)
+
+        if (pszSRSName && GML_IsLegitSRSName(pszSRSName) )
         {
             poSRS = new OGRSpatialReference();
             if (poSRS->SetFromUserInput(pszSRSName) != OGRERR_NONE)

@@ -1166,7 +1166,7 @@ def hfa_camera_md():
     for check_item in check_list:
         try:
             value = md[check_item[0]]
-        except:
+        except IndexError:
             gdaltest.post_reason('metadata item %d missing' % check_item[0])
             return 'fail'
 

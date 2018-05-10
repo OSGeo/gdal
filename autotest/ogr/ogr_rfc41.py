@@ -552,21 +552,21 @@ def ogr_rfc41_5():
         f['nonexistent_field']
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except KeyError:
         pass
 
     try:
         f.nonexistent_field
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except AttributeError:
         pass
 
     try:
         f['nonexistent_field'] = 'foo'
         gdaltest.post_reason('fail')
         return 'fail'
-    except:
+    except KeyError:
         pass
 
     # This works.  Default Python behaviour. Stored in a dictionary

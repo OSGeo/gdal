@@ -41,10 +41,10 @@ if len(sys.argv) < 3:
     print("Usage: gdalcopyproj.py source_file dest_file")
     sys.exit(1)
 
-input = sys.argv[1]
-dataset = gdal.Open(input)
+inp = sys.argv[1]
+dataset = gdal.Open(inp)
 if dataset is None:
-    print('Unable to open', input, 'for reading')
+    print('Unable to open', inp, 'for reading')
     sys.exit(1)
 
 projection = dataset.GetProjection()

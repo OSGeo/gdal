@@ -359,3 +359,21 @@ char *GML_GetSRSName(const OGRSpatialReference *poSRS,
     }
     return CPLStrdup("");
 }
+
+/************************************************************************/
+/*                       GML_IsLegitSRSName()                           */
+/************************************************************************/
+
+bool GML_IsLegitSRSName(const char* pszSRSName)
+{
+
+    if( STARTS_WITH_CI(pszSRSName, "http") )
+    {
+        if( !(STARTS_WITH_CI(pszSRSName, "http://opengis.net/def/crs")
+        || STARTS_WITH_CI(pszSRSName, "http://www.opengis.net/def/crs")) )
+        {
+            return false;
+        }
+    }
+    return true;
+}

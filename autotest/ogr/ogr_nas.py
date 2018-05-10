@@ -65,7 +65,7 @@ def ogr_nas_1():
                 os.stat('tmp/cache/BKG_NAS_Peine.xml')
             except OSError:
                 return 'skip'
-        except:
+        except OSError:
             return 'skip'
 
     try:
@@ -125,7 +125,7 @@ def ogr_nas_2():
                 os.stat('tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml')
             except OSError:
                 return 'skip'
-        except:
+        except OSError:
             return 'skip'
 
     try:

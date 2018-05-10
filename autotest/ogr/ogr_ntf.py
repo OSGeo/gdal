@@ -101,7 +101,7 @@ def ogr_ntf_1():
                 os.stat('tmp/cache/SS.ntf')
             except OSError:
                 return 'skip'
-        except:
+        except OSError:
             return 'skip'
 
     ds = ogr.Open('tmp/cache/SS.ntf')
@@ -151,7 +151,7 @@ def ogr_ntf_2():
                 os.stat('tmp/cache/Port_Talbot_NTF/SS78.ntf')
             except OSError:
                 return 'skip'
-        except:
+        except OSError:
             return 'skip'
 
     ds = ogr.Open('tmp/cache/Port_Talbot_NTF/SS78.ntf')

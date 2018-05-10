@@ -384,7 +384,7 @@ gdaltest_list = [
     ogr_vfk_7,
     ogr_vfk_8,
     ogr_vfk_9,
-    ogr_vfk_10,    
+    ogr_vfk_10,
     ogr_vfk_cleanup]
 
 if __name__ == '__main__':
