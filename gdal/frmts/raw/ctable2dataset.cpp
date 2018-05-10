@@ -40,12 +40,13 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class CTable2Dataset : public RawDataset
+class CTable2Dataset final: public RawDataset
 {
-  public:
     VSILFILE    *fpImage;  // image data file.
 
     double      adfGeoTransform[6];
+
+    CPL_DISALLOW_COPY_ASSIGN(CTable2Dataset)
 
   public:
     CTable2Dataset();
@@ -412,7 +413,7 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write zeroed grid data.                                         */
 /* -------------------------------------------------------------------- */
-    float *pafLine = (float *) CPLCalloc(sizeof(float)*2,nXSize);
+    float *pafLine = static_cast<float *>(CPLCalloc(sizeof(float)*2,nXSize));
 
     for( int i = 0; i < nYSize; i++ )
     {
@@ -437,7 +438,7 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
         return nullptr;
     }
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    return static_cast<GDALDataset *>(GDALOpen( pszFilename, GA_Update ));
 }
 
 /************************************************************************/

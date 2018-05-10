@@ -71,14 +71,15 @@ even the header record is this length though it means some waste.
 /* ==================================================================== */
 /************************************************************************/
 
-class LOSLASDataset : public RawDataset
+class LOSLASDataset final: public RawDataset
 {
-  public:
     VSILFILE    *fpImage;  // image data file.
 
     int         nRecordLength;
 
     double      adfGeoTransform[6];
+
+    CPL_DISALLOW_COPY_ASSIGN(LOSLASDataset)
 
   public:
     LOSLASDataset();

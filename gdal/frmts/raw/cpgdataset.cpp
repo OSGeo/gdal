@@ -47,20 +47,20 @@ enum Interleave { BSQ, BIL, BIP };
 class SIRC_QSLCRasterBand;
 class CPG_STOKESRasterBand;
 
-class CPGDataset : public RawDataset
+class CPGDataset final: public RawDataset
 {
     friend class SIRC_QSLCRasterBand;
     friend class CPG_STOKESRasterBand;
 
     VSILFILE *afpImage[4];
-    std::vector<CPLString> aosImageFilenames;
+    std::vector<CPLString> aosImageFilenames{};
 
     int nGCPCount;
     GDAL_GCP *pasGCPList;
-    char *pszGCPProjection;
+    char *pszGCPProjection{};
 
     double adfGeoTransform[6];
-    char *pszProjection;
+    char *pszProjection{};
 
     int nLoadedStokesLine;
     float *padfStokesMatrix;
@@ -77,6 +77,8 @@ class CPGDataset : public RawDataset
     static GDALDataset *InitializeType3Dataset( const char *pszWorkname );
 #endif
   CPLErr LoadStokesLine( int iLine, int bNativeOrder );
+
+    CPL_DISALLOW_COPY_ASSIGN(CPGDataset)
 
   public:
     CPGDataset();
@@ -230,8 +232,8 @@ int CPGDataset::AdjustFilename( char **pszFilename,
     if ( EQUAL(pszPolarization,"stokes") )
     {
         const char *pszNewName =
-            CPLResetExtension((const char *) *pszFilename,
-                              (const char *) pszExtension);
+            CPLResetExtension(*pszFilename,
+                              pszExtension);
         CPLFree(*pszFilename);
         *pszFilename = CPLStrdup(pszNewName);
     }
@@ -249,16 +251,16 @@ int CPGDataset::AdjustFilename( char **pszFilename,
 
         strncpy( subptr, pszPolarization, 2);
         const char *pszNewName =
-            CPLResetExtension((const char *) *pszFilename,
-                              (const char *) pszExtension);
+            CPLResetExtension(*pszFilename,
+                              pszExtension);
         CPLFree(*pszFilename);
         *pszFilename = CPLStrdup(pszNewName);
     }
     else
     {
         const char *pszNewName =
-            CPLResetExtension((const char *) *pszFilename,
-                              (const char *) pszExtension);
+            CPLResetExtension(*pszFilename,
+                              pszExtension);
         CPLFree(*pszFilename);
         *pszFilename = CPLStrdup(pszNewName);
     }

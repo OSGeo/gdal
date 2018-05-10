@@ -152,7 +152,7 @@ CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
 /* ==================================================================== */
 /************************************************************************/
 
-class HKVDataset : public RawDataset
+class HKVDataset final: public RawDataset
 {
     friend class HKVRasterBand;
 
@@ -194,6 +194,8 @@ class HKVDataset : public RawDataset
     bool        bNoDataSet;
     bool        bNoDataChanged;
     double      dfNoDataValue;
+
+    CPL_DISALLOW_COPY_ASSIGN(HKVDataset)
 
   public:
     HKVDataset();

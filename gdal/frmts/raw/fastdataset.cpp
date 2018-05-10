@@ -100,7 +100,7 @@ enum FASTSatellite  // Satellites:
 /* ==================================================================== */
 /************************************************************************/
 
-class FASTDataset : public GDALPamDataset
+class FASTDataset final: public GDALPamDataset
 {
     friend class FASTRasterBand;
 
@@ -116,6 +116,8 @@ class FASTDataset : public GDALPamDataset
     FASTSatellite iSatellite;
 
     int         OpenChannel( const char *pszFilename, int iBand );
+
+    CPL_DISALLOW_COPY_ASSIGN(FASTDataset)
 
   public:
     FASTDataset();
@@ -140,6 +142,8 @@ class FASTDataset : public GDALPamDataset
 class FASTRasterBand : public RawRasterBand
 {
     friend class FASTDataset;
+
+    CPL_DISALLOW_COPY_ASSIGN(FASTRasterBand)
 
   public:
                 FASTRasterBand( FASTDataset *, int, VSILFILE *, vsi_l_offset,

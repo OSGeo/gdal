@@ -84,6 +84,8 @@ class ISCEDataset final: public RawDataset
 
     enum Scheme eScheme;
 
+    CPL_DISALLOW_COPY_ASSIGN(ISCEDataset)
+
   public:
     ISCEDataset();
     ~ISCEDataset() override;
@@ -106,6 +108,8 @@ class ISCEDataset final: public RawDataset
 
 class ISCERasterBand final: public RawRasterBand
 {
+        CPL_DISALLOW_COPY_ASSIGN(ISCERasterBand)
+
     public:
                 ISCERasterBand( GDALDataset *poDS, int nBand, void *fpRaw,
                                   vsi_l_offset nImgOffset, int nPixelOffset,

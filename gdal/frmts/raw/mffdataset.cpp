@@ -54,7 +54,7 @@ static int GetMFFProjectionType(const char * pszNewProjection);
 /* ==================================================================== */
 /************************************************************************/
 
-class MFFDataset : public RawDataset
+class MFFDataset final : public RawDataset
 {
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
@@ -66,6 +66,8 @@ class MFFDataset : public RawDataset
 
     void        ScanForGCPs();
     void        ScanForProjectionInfo();
+
+    CPL_DISALLOW_COPY_ASSIGN(MFFDataset)
 
   public:
     MFFDataset();
@@ -101,12 +103,14 @@ class MFFDataset : public RawDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class MFFTiledBand : public GDALRasterBand
+class MFFTiledBand final: public GDALRasterBand
 {
     friend class MFFDataset;
 
     VSILFILE      *fpRaw;
     bool           bNative;
+
+    CPL_DISALLOW_COPY_ASSIGN(MFFTiledBand)
 
   public:
     MFFTiledBand( MFFDataset *, int, VSILFILE *, int, int,

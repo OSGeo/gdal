@@ -40,12 +40,14 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class PNMDataset : public RawDataset
+class PNMDataset final: public RawDataset
 {
     VSILFILE   *fpImage;  // Image data file.
 
     bool        bGeoTransformValid;
     double      adfGeoTransform[6];
+
+    CPL_DISALLOW_COPY_ASSIGN(PNMDataset)
 
   public:
                 PNMDataset();

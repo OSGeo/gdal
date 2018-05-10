@@ -80,27 +80,27 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
 protected:
     friend class RawDataset;
 
-    FILE       *fpRaw;
-    VSILFILE   *fpRawL;
-    int         bIsVSIL;
+    FILE       *fpRaw{};
+    VSILFILE   *fpRawL{};
+    int         bIsVSIL{};
 
-    vsi_l_offset nImgOffset;
-    int         nPixelOffset;
-    int         nLineOffset;
-    int         nLineSize;
-    int         bNativeOrder;
+    vsi_l_offset nImgOffset{};
+    int         nPixelOffset{};
+    int         nLineOffset{};
+    int         nLineSize{};
+    int         bNativeOrder{};
 
-    int         nLoadedScanline;
-    void        *pLineBuffer;
-    void        *pLineStart;
-    int         bDirty;
+    int         nLoadedScanline{};
+    void        *pLineBuffer{};
+    void        *pLineStart{};
+    int         bDirty{};
 
-    GDALColorTable *poCT;
-    GDALColorInterp eInterp;
+    GDALColorTable *poCT{};
+    GDALColorInterp eInterp{};
 
-    char           **papszCategoryNames;
+    char           **papszCategoryNames{};
 
-    int         bOwnsFP;
+    int         bOwnsFP{};
 
     int         Seek( vsi_l_offset, int );
     size_t      Read( void *, size_t, size_t );

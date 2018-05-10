@@ -101,6 +101,8 @@ class NTv2Dataset final: public RawDataset
 
     int         OpenGrid( char *pachGridHeader, vsi_l_offset nDataStart );
 
+    CPL_DISALLOW_COPY_ASSIGN(NTv2Dataset)
+
   public:
     NTv2Dataset();
     ~NTv2Dataset() override;

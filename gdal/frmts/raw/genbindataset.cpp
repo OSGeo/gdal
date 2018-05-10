@@ -189,7 +189,7 @@ constexpr int anUsgsEsriZones[] =
 /* ==================================================================== */
 /************************************************************************/
 
-class GenBinDataset : public RawDataset
+class GenBinDataset final: public RawDataset
 {
     friend class GenBinBitRasterBand;
 
@@ -202,6 +202,8 @@ class GenBinDataset : public RawDataset
     char      **papszHDR;
 
     void        ParseCoordinateSystem( char ** );
+
+    CPL_DISALLOW_COPY_ASSIGN(GenBinDataset)
 
   public:
     GenBinDataset();
@@ -221,9 +223,11 @@ class GenBinDataset : public RawDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GenBinBitRasterBand : public GDALPamRasterBand
+class GenBinBitRasterBand final: public GDALPamRasterBand
 {
     int            nBits;
+
+    CPL_DISALLOW_COPY_ASSIGN(GenBinBitRasterBand)
 
   public:
     GenBinBitRasterBand( GenBinDataset *poDS, int nBits );

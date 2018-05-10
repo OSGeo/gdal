@@ -2274,7 +2274,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo )
         }
         nLineOffset = nDataSize * nSamples;
         nPixelOffset = nDataSize;
-        nBandOffset = (vsi_l_offset)nLineOffset * nLines;
+        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nLines;
     }
 
     const char* pszMajorFrameOffset = poDS->m_aosHeader["major_frame_offsets"];

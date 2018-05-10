@@ -40,7 +40,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class NDFDataset : public RawDataset
+class NDFDataset final: public RawDataset
 {
     double      adfGeoTransform[6];
 
@@ -49,6 +49,8 @@ class NDFDataset : public RawDataset
 
     char        **papszHeader;
     const char  *Get( const char *pszKey, const char *pszDefault);
+
+    CPL_DISALLOW_COPY_ASSIGN(NDFDataset)
 
   public:
     NDFDataset();

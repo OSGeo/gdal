@@ -40,7 +40,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class EIRDataset : public RawDataset
+class EIRDataset final: public RawDataset
 {
     friend class RawRasterBand;
 
@@ -55,6 +55,8 @@ class EIRDataset : public RawDataset
 #ifdef unused
     const char *GetKeyValue( const char *pszKey, const char *pszDefault = "" );
 #endif
+
+    CPL_DISALLOW_COPY_ASSIGN(EIRDataset)
 
   public:
     EIRDataset();
@@ -227,7 +229,7 @@ int EIRDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 100 )
         return FALSE;
 
-    if( strstr((const char *) poOpenInfo->pabyHeader,
+    if( strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
                "IMAGINE_RAW_FILE" ) == nullptr )
         return FALSE;
 

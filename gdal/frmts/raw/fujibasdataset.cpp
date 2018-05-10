@@ -42,9 +42,11 @@ CPL_CVSID("$Id$")
 class FujiBASDataset : public RawDataset
 {
     VSILFILE        *fpImage;  // image data file.
-    CPLString        osRawFilename;
+    CPLString        osRawFilename{};
 
     char        **papszHeader;
+
+    CPL_DISALLOW_COPY_ASSIGN(FujiBASDataset)
 
   public:
                 FujiBASDataset();

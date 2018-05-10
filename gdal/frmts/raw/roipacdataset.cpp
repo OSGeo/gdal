@@ -53,6 +53,8 @@ class ROIPACDataset final: public RawDataset
     bool        bValidGeoTransform;
     char        *pszProjection;
 
+    CPL_DISALLOW_COPY_ASSIGN(ROIPACDataset)
+
   public:
     ROIPACDataset();
     ~ROIPACDataset() override;
@@ -79,6 +81,8 @@ class ROIPACDataset final: public RawDataset
 
 class ROIPACRasterBand final: public RawRasterBand
 {
+    CPL_DISALLOW_COPY_ASSIGN(ROIPACRasterBand)
+
     public:
                 ROIPACRasterBand( GDALDataset *poDS, int nBand, void *fpRaw,
                                   vsi_l_offset nImgOffset, int nPixelOffset,

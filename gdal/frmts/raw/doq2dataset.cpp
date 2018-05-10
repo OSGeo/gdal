@@ -60,7 +60,7 @@ static const char NAD83_DATUM[] =
 /* ==================================================================== */
 /************************************************************************/
 
-class DOQ2Dataset : public RawDataset
+class DOQ2Dataset final: public RawDataset
 {
     VSILFILE    *fpImage;  // Image data file.
 
@@ -70,6 +70,8 @@ class DOQ2Dataset : public RawDataset
     double      dfYPixelSize;
 
     char        *pszProjection;
+
+    CPL_DISALLOW_COPY_ASSIGN(DOQ2Dataset)
 
   public:
                 DOQ2Dataset();

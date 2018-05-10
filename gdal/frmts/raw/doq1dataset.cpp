@@ -121,6 +121,8 @@ class DOQ1Dataset : public RawDataset
 
     char        *pszProjection;
 
+    CPL_DISALLOW_COPY_ASSIGN(DOQ1Dataset)
+
   public:
                 DOQ1Dataset();
                 ~DOQ1Dataset();

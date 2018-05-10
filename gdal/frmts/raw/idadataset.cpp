@@ -145,6 +145,8 @@ class IDADataset final: public RawDataset
 
     void        ReadColorTable();
 
+    CPL_DISALLOW_COPY_ASSIGN(IDADataset)
+
   public:
     IDADataset();
     ~IDADataset() override;
@@ -175,6 +177,8 @@ class IDARasterBand : public RawRasterBand
 
     GDALRasterAttributeTable *poRAT;
     GDALColorTable       *poColorTable;
+
+    CPL_DISALLOW_COPY_ASSIGN(IDARasterBand)
 
   public:
     IDARasterBand( IDADataset *poDSIn, VSILFILE *fpRaw, int nXSize );

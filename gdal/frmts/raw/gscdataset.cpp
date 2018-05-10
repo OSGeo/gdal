@@ -39,11 +39,13 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class GSCDataset : public RawDataset
+class GSCDataset final: public RawDataset
 {
     VSILFILE    *fpImage;  // image data file.
 
     double      adfGeoTransform[6];
+
+    CPL_DISALLOW_COPY_ASSIGN(GSCDataset)
 
   public:
                 GSCDataset();
