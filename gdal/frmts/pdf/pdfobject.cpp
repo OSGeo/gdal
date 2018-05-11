@@ -2051,7 +2051,7 @@ GDALPDFObjectType GDALPDFObjectPdfium::GetType()
 {
     switch(m_po->GetType())
     {
-        case PDFOBJ_nullptr:                     return PDFObjectType_Null;
+        case PDFOBJ_NULL:                     return PDFObjectType_Null;
         case PDFOBJ_BOOLEAN:                  return PDFObjectType_Bool;
         case PDFOBJ_NUMBER:
           return (reinterpret_cast<CPDF_Number*>(m_po))->IsInteger()
