@@ -21,7 +21,6 @@ DATABASE_NAME=gisdb
 DATABASE_SCHEMA=gis_schema
 HOST_NAME=localhost
 USER_NAME=gis
-SUPER_USER_NAME=postgres
 
 mkdir -p "$SQL_OUTPUT_FILES_PATH"
 raster2pgsql -l 2,4,8 -t 100x100 -s 26711 -I -M utm.tif $DATABASE_SCHEMA.utm > "$SQL_OUTPUT_FILES_PATH/utm_level2-8.sql"

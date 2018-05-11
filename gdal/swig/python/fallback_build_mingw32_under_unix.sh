@@ -13,7 +13,7 @@ fi
 PYTHONHOME=$HOME/.wine/drive_c/Python27
 PYTHONLIB=python27
 
-if test -d ${PYTHONHOME}/Lib/site-packages/numpy/core/include; then
+if test -d "${PYTHONHOME}/Lib/site-packages/numpy/core/include"; then
     echo "NumPy found !"
     HAS_NUMPY=yes
 else
@@ -25,7 +25,7 @@ LINKFLAGS="-L../../.libs -lgdal -L${PYTHONHOME}/libs -l${PYTHONLIB}"
 CFLAGS="-O2 -D__MSVCRT_VERSION__=0x0601"
 
 # Run native python
-wine ${PYTHONHOME}/python setup.py build
+wine "$PYTHONHOME/python" setup.py build
 
 # Determine OUTDIR
 if test -d build/lib.win32-2.7; then

@@ -18,8 +18,8 @@ if test "x$GDAL_SHA1SUM" != "x" -a "x$GDAL_RELEASE_DATE" != "x"; then
         rm -f gdal_version.h.bak
         rm -f gdal_version.h.new
 elif git log -1 >/dev/null 2>/dev/null && grep dev gdal_version.h.in >/dev/null; then
-        REV=`git log -1 --format="%h"`
-        DATE=`git log -1 --date=format:'%Y%m%d' --format="%ad" 2>/dev/null` || DATE=""
+        REV=$(git log -1 --format="%h")
+        DATE=$(git log -1 --date=format:'%Y%m%d' --format="%ad" 2>/dev/null) || DATE=""
         if git status --porcelain -uno | grep . >/dev/null; then REV="$REV-dirty"; fi
         if test -f gdal_version.h; then
                 cp gdal_version.h gdal_version.h.bak
