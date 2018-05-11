@@ -76,9 +76,9 @@ class ENVIDataset final: public RawDataset
 
     char       *pszProjection;
 
-    CPLStringList m_aosHeader;
+    CPLStringList m_aosHeader{};
 
-    CPLString   osStaFilename;
+    CPLString   osStaFilename{};
 
     bool        ReadHeader( VSILFILE * );
     bool        ProcessMapinfo( const char * );
@@ -101,6 +101,8 @@ class ENVIDataset final: public RawDataset
 
     enum Interleave { BSQ, BIL, BIP } interleave;
     static int GetEnviType(GDALDataType eType);
+
+    CPL_DISALLOW_COPY_ASSIGN(ENVIDataset)
 
   public:
     ENVIDataset();
@@ -137,12 +139,13 @@ class ENVIDataset final: public RawDataset
 
 class ENVIRasterBand final: public RawRasterBand
 {
+    CPL_DISALLOW_COPY_ASSIGN(ENVIRasterBand)
+
   public:
-    ENVIRasterBand( GDALDataset *poDSIn, int nBandIn, void *fpRawIn,
+    ENVIRasterBand( GDALDataset *poDSIn, int nBandIn, VSILFILE *fpRawIn,
                     vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
                     int nLineOffsetIn, GDALDataType eDataTypeIn,
-                    int bNativeOrderIn, int bIsVSILIn = FALSE,
-                    int bOwnsFPIn = FALSE );
+                    int bNativeOrderIn );
     ~ENVIRasterBand() override {}
 
     void SetDescription( const char * ) override;

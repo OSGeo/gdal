@@ -9,6 +9,8 @@ OBJ	=	rawdataset.o ehdrdataset.o pauxdataset.o doq1dataset.o \
 		ntv2dataset.o ace2dataset.o snodasdataset.o ctable2dataset.o \
 		krodataset.o roipacdataset.o iscedataset.o rrasterdataset.o
 
+CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS)  $(CXXFLAGS)
+
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:

@@ -39,50 +39,48 @@ using std::fill;
 
 CPL_CVSID("$Id$")
 
-typedef struct {
-    GInt32      NBIH;   /* bytes in header, normally 1024 */
-    GInt32      NBPR;   /* bytes per data record (all bands of scanline) */
-    GInt32      IL;     /* initial line - normally 1 */
-    GInt32      LL;     /* last line */
-    GInt32      IE;     /* initial element (pixel), normally 1 */
-    GInt32      LE;     /* last element (pixel) */
-    GInt32      NC;     /* number of channels (bands) */
-    GInt32      H4322;  /* header record identifier - always 4322. */
-    char        unused1[40];
-    GByte       IH19[4];/* data type, and size flags */
-    GInt32      IH20;   /* number of secondary headers */
-    GInt32      SRID;
-    char        unused2[12];
-    double      YOffset;
-    double      XOffset;
-    double      YPixSize;
-    double      XPixSize;
-    double      Matrix[4];
-    char        unused3[344];
-    GUInt16     ColorTable[256];  /* RGB packed with 4 bits each */
-    char        unused4[32];
-} DIPExHeader;
-
 /************************************************************************/
 /* ==================================================================== */
 /*                              DIPExDataset                            */
 /* ==================================================================== */
 /************************************************************************/
 
-class DIPExRasterBand;
-
-class DIPExDataset : public GDALPamDataset
+class DIPExDataset final: public GDALPamDataset
 {
-    friend class DIPExRasterBand;
+    struct DIPExHeader{
+        GInt32      NBIH{};   /* bytes in header, normally 1024 */
+        GInt32      NBPR{};   /* bytes per data record (all bands of scanline) */
+        GInt32      IL{};     /* initial line - normally 1 */
+        GInt32      LL{};     /* last line */
+        GInt32      IE{};     /* initial element (pixel), normally 1 */
+        GInt32      LE{};     /* last element (pixel) */
+        GInt32      NC{};     /* number of channels (bands) */
+        GInt32      H4322{};  /* header record identifier - always 4322. */
+        char        unused1[40];
+        GByte       IH19[4];/* data type, and size flags */
+        GInt32      IH20{};   /* number of secondary headers */
+        GInt32      SRID{};
+        char        unused2[12]{};
+        double      YOffset{};
+        double      XOffset{};
+        double      YPixSize{};
+        double      XPixSize{};
+        double      Matrix[4];
+        char        unused3[344];
+        GUInt16     ColorTable[256];  /* RGB packed with 4 bits each */
+        char        unused4[32];
+    };
 
     VSILFILE    *fp;
-    CPLString    osSRS;
+    CPLString    osSRS{};
 
-    DIPExHeader  sHeader;
+    DIPExHeader  sHeader{};
 
     GDALDataType eRasterDataType;
 
     double      adfGeoTransform[6];
+
+    CPL_DISALLOW_COPY_ASSIGN(DIPExDataset)
 
   public:
     DIPExDataset();
@@ -283,7 +281,8 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
                                           nBytesPerSample,
                                           nLineOffset * nBands,
                                           poDS->eRasterDataType,
-                                          CPL_IS_LSB, TRUE ) );
+                                          CPL_IS_LSB,
+                                          RawRasterBand::OwnFP::NO ) );
         if( CPLGetLastErrorType() != CE_None )
         {
             delete poDS;

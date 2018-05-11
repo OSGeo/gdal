@@ -1,3 +1,18 @@
+MIGRATION GUIDE FROM GDAL 2.3 to GDAL 2.4
+-----------------------------------------
+
+1) Out-of-tree drivers: RawRasterBand() constructor changes
+
+RawRasterBand now only accepts a VSILFILE* file. Consequently the void* fpRaw
+argument has become a VSILFILE* one. And the bIsVSIL = FALSE argument has
+been removed. The int bOwnsFP = FALSE has seen its default value suppressed,
+and has seen its type changed to the RawRasterBand::OwnFP::YES/NO enumeration,
+to detect places where your code must be changed.
+
+Caution: code like RawRasterBand(..., bNativeOrder, TRUE) must be changed to
+RawRasterBand(..., bNativeOrder, RawRasterBand::OwnFP::NO, the TRUE value
+being the bIsVSIL value, and the default argument being bOwnsFP == FALSE.
+
 MIGRATION GUIDE FROM GDAL 2.2 to GDAL 2.3
 -----------------------------------------
 

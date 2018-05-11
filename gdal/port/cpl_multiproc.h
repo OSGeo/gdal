@@ -149,14 +149,14 @@ class CPL_DLL CPLMutexHolder
   public:
 
     /** Instantiates the mutex if not already done. */
-    CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds = 1000.0,
+    explicit CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds = 1000.0,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__,
                     int nOptions = CPL_MUTEX_RECURSIVE);
 
     /** This variant assumes the mutex has already been created. If not, it will
      * be a no-op */
-    CPLMutexHolder( CPLMutex* hMutex, double dfWaitInSeconds = 1000.0,
+    explicit CPLMutexHolder( CPLMutex* hMutex, double dfWaitInSeconds = 1000.0,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__ );
 
@@ -189,7 +189,7 @@ class CPL_DLL CPLLockHolder
 
     /** This variant assumes the lock has already been created. If not, it will
      * be a no-op */
-    CPLLockHolder( CPLLock* hSpin,
+    explicit CPLLockHolder( CPLLock* hSpin,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__ );
 

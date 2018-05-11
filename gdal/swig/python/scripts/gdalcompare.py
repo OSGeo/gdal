@@ -38,7 +38,7 @@ from osgeo import osr
 #######################################################
 
 
-def compare_metadata(golden_md, new_md, id, options=None):
+def compare_metadata(golden_md, new_md, ident, options=None):
     # pylint: disable=unused-argument
 
     if golden_md is None and new_md is None:
@@ -47,14 +47,14 @@ def compare_metadata(golden_md, new_md, id, options=None):
     found_diff = 0
 
     if len(list(golden_md.keys())) != len(list(new_md.keys())):
-        print('Difference in %s metadata key count' % id)
+        print('Difference in %s metadata key count' % ident)
         print('  Golden Keys: ' + str(list(golden_md.keys())))
         print('  New Keys: ' + str(list(new_md.keys())))
         found_diff += 1
 
     for key in list(golden_md.keys()):
         if key not in new_md:
-            print('New %s metadata lacks key \"%s\"' % (id, key))
+            print('New %s metadata lacks key \"%s\"' % (ident, key))
             found_diff += 1
         elif new_md[key] != golden_md[key]:
             print('Metadata value difference for key "' + key + '"')
@@ -67,7 +67,7 @@ def compare_metadata(golden_md, new_md, id, options=None):
 
 #######################################################
 # Review and report on the actual image pixels that differ.
-def compare_image_pixels(golden_band, new_band, id, options=None):
+def compare_image_pixels(golden_band, new_band, ident, options=None):
     # pylint: disable=unused-argument
 
     diff_count = 0
@@ -86,39 +86,39 @@ def compare_image_pixels(golden_band, new_band, id, options=None):
 #######################################################
 
 
-def compare_band(golden_band, new_band, id, options=None):
+def compare_band(golden_band, new_band, ident, options=None):
     found_diff = 0
 
     options = [] if options is None else options
 
     if golden_band.DataType != new_band.DataType:
-        print('Band %s pixel types differ.' % id)
+        print('Band %s pixel types differ.' % ident)
         print('  Golden: ' + gdal.GetDataTypeName(golden_band.DataType))
         print('  New:    ' + gdal.GetDataTypeName(new_band.DataType))
         found_diff += 1
 
     if golden_band.GetNoDataValue() != new_band.GetNoDataValue():
-        print('Band %s nodata values differ.' % id)
+        print('Band %s nodata values differ.' % ident)
         print('  Golden: ' + str(golden_band.GetNoDataValue()))
         print('  New:    ' + str(new_band.GetNoDataValue()))
         found_diff += 1
 
     if golden_band.GetColorInterpretation() != new_band.GetColorInterpretation():
-        print('Band %s color interpretation values differ.' % id)
+        print('Band %s color interpretation values differ.' % ident)
         print('  Golden: ' + gdal.GetColorInterpretationName(golden_band.GetColorInterpretation()))
         print('  New:    ' + gdal.GetColorInterpretationName(new_band.GetColorInterpretation()))
         found_diff += 1
 
     if golden_band.Checksum() != new_band.Checksum():
-        print('Band %s checksum difference:' % id)
+        print('Band %s checksum difference:' % ident)
         print('  Golden: ' + str(golden_band.Checksum()))
         print('  New:    ' + str(new_band.Checksum()))
         found_diff += 1
-        compare_image_pixels(golden_band, new_band, id, options)
+        compare_image_pixels(golden_band, new_band, ident, options)
 
     # Check overviews
     if golden_band.GetOverviewCount() != new_band.GetOverviewCount():
-        print('Band %s overview count difference:' % id)
+        print('Band %s overview count difference:' % ident)
         print('  Golden: ' + str(golden_band.GetOverviewCount()))
         print('  New:    ' + str(new_band.GetOverviewCount()))
         found_diff += 1
@@ -126,14 +126,14 @@ def compare_band(golden_band, new_band, id, options=None):
         for i in range(golden_band.GetOverviewCount()):
             found_diff += compare_band(golden_band.GetOverview(i),
                                        new_band.GetOverview(i),
-                                       id + ' overview ' + str(i),
+                                       ident + ' overview ' + str(i),
                                        options)
 
     # Metadata
     if 'SKIP_METADATA' not in options:
         found_diff += compare_metadata(golden_band.GetMetadata(),
                                        new_band.GetMetadata(),
-                                       'Band ' + id, options)
+                                       'Band ' + ident, options)
 
     # TODO: Color Table, gain/bias, units, blocksize, mask, min/max
 

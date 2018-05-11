@@ -428,11 +428,14 @@ void GWKThreadsEnd( void* psThreadDataIn )
     if( psThreadData->poThreadPool )
     {
         const int nThreads = psThreadData->poThreadPool->GetThreadCount();
-        for( int i = 1; i < nThreads; i++ )
+        if( psThreadData->pasThreadJob )
         {
-            if( psThreadData->pasThreadJob[i].pTransformerArg )
-                GDALDestroyTransformer(psThreadData->
-                                       pasThreadJob[i].pTransformerArg);
+            for( int i = 1; i < nThreads; i++ )
+            {
+                if( psThreadData->pasThreadJob[i].pTransformerArg )
+                    GDALDestroyTransformer(psThreadData->
+                                        pasThreadJob[i].pTransformerArg);
+            }
         }
         delete psThreadData->poThreadPool;
     }

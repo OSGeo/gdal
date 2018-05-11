@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "gdal_priv.h"
 
+#include <cassert>
 #include <climits>
 #include <cstddef>
 #include <new>
@@ -384,6 +385,7 @@ CPLErr GDALArrayBandBlockCache::FlushBlock( int nXBlockOff, int nYBlockOff,
     {
         const int nBlockIndex = nXBlockOff + nYBlockOff * poBand->nBlocksPerRow;
 
+        assert(u.papoBlocks);
         poBlock = u.papoBlocks[nBlockIndex];
         u.papoBlocks[nBlockIndex] = nullptr;
     }
