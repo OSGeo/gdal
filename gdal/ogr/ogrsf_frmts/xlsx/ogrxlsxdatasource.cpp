@@ -882,7 +882,10 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                     }
                     OGRFieldDefn oFieldDefn(pszFieldName, eType);
                     oFieldDefn.SetSubType(eSubType);
-                    poCurLayer->CreateField(&oFieldDefn);
+                    if( poCurLayer->CreateField(&oFieldDefn) != OGRERR_NONE )
+                    {
+                        return;
+                    }
                 }
             }
             else
@@ -898,7 +901,10 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                                             eSubType);
                     OGRFieldDefn oFieldDefn(pszFieldName, eType);
                     oFieldDefn.SetSubType(eSubType);
-                    poCurLayer->CreateField(&oFieldDefn);
+                    if( poCurLayer->CreateField(&oFieldDefn) != OGRERR_NONE )
+                    {
+                        return;
+                    }
                 }
 
                 OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
@@ -942,7 +948,10 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                                                 eSubType);
                     OGRFieldDefn oFieldDefn(pszFieldName, eType);
                     oFieldDefn.SetSubType(eSubType);
-                    poCurLayer->CreateField(&oFieldDefn);
+                    if( poCurLayer->CreateField(&oFieldDefn) != OGRERR_NONE )
+                    {
+                        return;
+                    }
                 }
             }
 
