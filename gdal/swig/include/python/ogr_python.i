@@ -367,7 +367,7 @@
         if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
             fld_index = self.GetFieldIndex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
-            raise KeyErrror("Illegal field requested in SetField2()")
+            raise KeyError("Illegal field requested in SetField2()")
 
         if value is None:
             self.SetFieldNull(fld_index)

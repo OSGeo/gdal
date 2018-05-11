@@ -96,7 +96,7 @@ OGRTriangulatedSurface& OGRTriangulatedSurface::operator=(
         assignSpatialReference( other.getSpatialReference() );
         for(int i=0;i<other.oMP.nGeomCount;i++)
         {
-            addGeometry( other.oMP.getGeometryRef(i) );
+            OGRTriangulatedSurface::addGeometry( other.oMP.getGeometryRef(i) );
         }
     }
     return *this;

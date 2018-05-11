@@ -107,10 +107,12 @@ constexpr int ERD_HEADER_SIZE = 128;
 
 class LANDataset;
 
-class LAN4BitRasterBand : public GDALPamRasterBand
+class LAN4BitRasterBand final: public GDALPamRasterBand
 {
     GDALColorTable *poCT;
     GDALColorInterp eInterp;
+
+    CPL_DISALLOW_COPY_ASSIGN(LAN4BitRasterBand)
 
   public:
                    LAN4BitRasterBand( LANDataset *, int );
@@ -130,8 +132,10 @@ class LAN4BitRasterBand : public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class LANDataset : public RawDataset
+class LANDataset final: public RawDataset
 {
+    CPL_DISALLOW_COPY_ASSIGN(LANDataset)
+
   public:
     VSILFILE    *fpImage;  // Image data file.
 
@@ -141,7 +145,7 @@ class LANDataset : public RawDataset
 
     double      adfGeoTransform[6];
 
-    CPLString   osSTAFilename;
+    CPLString   osSTAFilename{};
     void        CheckForStatistics(void);
 
     char **GetFileList() override;
@@ -414,9 +418,9 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         float fTmp = 0.0;
         memcpy(&fTmp, poDS->pachHeader + 16, 4);
-        poDS->nRasterXSize = (int) fTmp;
+        poDS->nRasterXSize = static_cast<int>(fTmp);
         memcpy(&fTmp, poDS->pachHeader + 20, 4);
-        poDS->nRasterYSize = (int) fTmp;
+        poDS->nRasterYSize = static_cast<int>(fTmp);
     }
     else
     {
@@ -493,7 +497,8 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
                                    * nPixelOffset * poDS->nRasterXSize,
                                    nPixelOffset,
                                    poDS->nRasterXSize*nPixelOffset*nBandCount,
-                                   eDataType, !bNeedSwap, TRUE ));
+                                   eDataType, !bNeedSwap,
+                                   RawRasterBand::OwnFP::NO ));
         if( CPLGetLastErrorType() != CE_None )
         {
             delete poDS;
@@ -992,7 +997,7 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
         const vsi_l_offset nWriteThisTime
             = std::min( static_cast<size_t>( nImageBytes ), sizeof(abyHeader) );
 
-        if( VSIFWriteL( abyHeader, 1, (size_t)nWriteThisTime, fp )
+        if( VSIFWriteL( abyHeader, 1, static_cast<size_t>(nWriteThisTime), fp )
             != nWriteThisTime )
         {
             CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));

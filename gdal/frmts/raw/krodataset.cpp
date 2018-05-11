@@ -41,10 +41,11 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class KRODataset : public RawDataset
+class KRODataset final: public RawDataset
 {
-  public:
     VSILFILE    *fpImage;  // image data file.
+
+    CPL_DISALLOW_COPY_ASSIGN(KRODataset)
 
   public:
                     KRODataset() : fpImage(nullptr) {}
@@ -202,10 +203,10 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
                                20 + nDataTypeSize * iBand,
                                nComp * nDataTypeSize,
                                poDS->nRasterXSize * nComp * nDataTypeSize,
-                               eDT, !CPL_IS_LSB, TRUE, FALSE );
+                               eDT, !CPL_IS_LSB, RawRasterBand::OwnFP::NO );
         if( nComp == 3 || nComp == 4 )
         {
-            poBand->SetColorInterpretation( (GDALColorInterp) (GCI_RedBand + iBand) );
+            poBand->SetColorInterpretation( static_cast<GDALColorInterp>(GCI_RedBand + iBand) );
         }
         poDS->SetBand( iBand+1, poBand );
         if( CPLGetLastErrorType() != CE_None )

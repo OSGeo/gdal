@@ -44,7 +44,7 @@ CPL_CVSID("$Id$")
 
 class PAuxRasterBand;
 
-class PAuxDataset : public RawDataset
+class PAuxDataset final: public RawDataset
 {
     friend class PAuxRasterBand;
 
@@ -58,6 +58,8 @@ class PAuxDataset : public RawDataset
     char       *PCI2WKT( const char *pszGeosys, const char *pszProjParms );
 
     char       *pszProjection;
+
+    CPL_DISALLOW_COPY_ASSIGN(PAuxDataset)
 
   public:
     PAuxDataset();
@@ -92,6 +94,8 @@ class PAuxDataset : public RawDataset
 
 class PAuxRasterBand : public RawRasterBand
 {
+    CPL_DISALLOW_COPY_ASSIGN(PAuxRasterBand)
+
   public:
 
     PAuxRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
@@ -120,7 +124,7 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDSIn, int nBandIn,
                                 GDALDataType eDataTypeIn, int bNativeOrderIn ) :
     RawRasterBand( poDSIn, nBandIn, fpRawIn,
                    nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn,
-                   eDataTypeIn, bNativeOrderIn, TRUE )
+                   eDataTypeIn, bNativeOrderIn, RawRasterBand::OwnFP::NO )
 {
     PAuxDataset *poPDS = reinterpret_cast<PAuxDataset *>( poDS );
 

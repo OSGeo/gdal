@@ -170,7 +170,7 @@ def DontUseExceptions(*args):
     return _gdal.DontUseExceptions(*args)
 
 def VSIFReadL(*args):
-    """VSIFReadL(unsigned int nMembSize, unsigned int nMembCount, VSILFILE * fp) -> unsigned int"""
+    """VSIFReadL(unsigned int nMembSize, unsigned int nMembCount, VSILFILE fp) -> unsigned int"""
     return _gdal.VSIFReadL(*args)
 
 
@@ -1395,6 +1395,20 @@ def GetFileSystemsPrefixes(*args):
 def GetFileSystemOptions(*args):
     """GetFileSystemOptions(char const * utf8_path) -> char const *"""
     return _gdal.GetFileSystemOptions(*args)
+class VSILFILE(_object):
+    """Proxy of C++ VSILFILE class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, VSILFILE, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, VSILFILE, name)
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+VSILFILE_swigregister = _gdal.VSILFILE_swigregister
+VSILFILE_swigregister(VSILFILE)
+
 
 _gdal.VSI_STAT_EXISTS_FLAG_swigconstant(_gdal)
 VSI_STAT_EXISTS_FLAG = _gdal.VSI_STAT_EXISTS_FLAG
@@ -1445,31 +1459,31 @@ def VSIStatL(*args):
     return _gdal.VSIStatL(*args)
 
 def VSIFOpenL(*args):
-    """VSIFOpenL(char const * utf8_path, char const * pszMode) -> VSILFILE *"""
+    """VSIFOpenL(char const * utf8_path, char const * pszMode) -> VSILFILE"""
     return _gdal.VSIFOpenL(*args)
 
 def VSIFOpenExL(*args):
-    """VSIFOpenExL(char const * utf8_path, char const * pszMode, int bSetError) -> VSILFILE *"""
+    """VSIFOpenExL(char const * utf8_path, char const * pszMode, int bSetError) -> VSILFILE"""
     return _gdal.VSIFOpenExL(*args)
 
 def VSIFEofL(*args):
-    """VSIFEofL(VSILFILE * fp) -> int"""
+    """VSIFEofL(VSILFILE fp) -> int"""
     return _gdal.VSIFEofL(*args)
 
 def VSIFCloseL(*args):
-    """VSIFCloseL(VSILFILE * fp) -> VSI_RETVAL"""
+    """VSIFCloseL(VSILFILE fp) -> VSI_RETVAL"""
     return _gdal.VSIFCloseL(*args)
 
 def VSIFSeekL(*args):
-    """VSIFSeekL(VSILFILE * fp, GIntBig offset, int whence) -> int"""
+    """VSIFSeekL(VSILFILE fp, GIntBig offset, int whence) -> int"""
     return _gdal.VSIFSeekL(*args)
 
 def VSIFTellL(*args):
-    """VSIFTellL(VSILFILE * fp) -> GIntBig"""
+    """VSIFTellL(VSILFILE fp) -> GIntBig"""
     return _gdal.VSIFTellL(*args)
 
 def VSIFTruncateL(*args):
-    """VSIFTruncateL(VSILFILE * fp, GIntBig length) -> int"""
+    """VSIFTruncateL(VSILFILE fp, GIntBig length) -> int"""
     return _gdal.VSIFTruncateL(*args)
 
 def VSISupportsSparseFiles(*args):
@@ -1486,11 +1500,11 @@ _gdal.VSI_RANGE_STATUS_HOLE_swigconstant(_gdal)
 VSI_RANGE_STATUS_HOLE = _gdal.VSI_RANGE_STATUS_HOLE
 
 def VSIFGetRangeStatusL(*args):
-    """VSIFGetRangeStatusL(VSILFILE * fp, GIntBig offset, GIntBig length) -> int"""
+    """VSIFGetRangeStatusL(VSILFILE fp, GIntBig offset, GIntBig length) -> int"""
     return _gdal.VSIFGetRangeStatusL(*args)
 
 def VSIFWriteL(*args):
-    """VSIFWriteL(int nLen, int size, int memb, VSILFILE * fp) -> int"""
+    """VSIFWriteL(int nLen, int size, int memb, VSILFILE fp) -> int"""
     return _gdal.VSIFWriteL(*args)
 
 def VSICurlClearCache(*args):

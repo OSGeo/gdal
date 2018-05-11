@@ -1742,7 +1742,7 @@ OGRErr OGRSpatialReference::morphToESRI()
         if( (poProjCS = GetAttrNode( "PROJCS" )) != nullptr )
             poProjCSNodeChild = poProjCS->GetChild(0);
 
-        if( bHasEquivalentMerc2SP )
+        if( poProjCS && bHasEquivalentMerc2SP )
         {
             const int iScaleFactorChild =
                 FindProjParm( SRS_PP_SCALE_FACTOR, poProjCS );

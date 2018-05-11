@@ -40,7 +40,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class NDFDataset : public RawDataset
+class NDFDataset final: public RawDataset
 {
     double      adfGeoTransform[6];
 
@@ -49,6 +49,8 @@ class NDFDataset : public RawDataset
 
     char        **papszHeader;
     const char  *Get( const char *pszKey, const char *pszDefault);
+
+    CPL_DISALLOW_COPY_ASSIGN(NDFDataset)
 
   public:
     NDFDataset();
@@ -90,12 +92,6 @@ NDFDataset::~NDFDataset()
     CPLFree( pszProjection );
     CSLDestroy( papszHeader );
     CSLDestroy( papszExtraFiles );
-
-    for( int i = 0; i < GetRasterCount(); i++ )
-    {
-       CPL_IGNORE_RET_VAL(VSIFCloseL( reinterpret_cast<RawRasterBand *>(
-           GetRasterBand(i+1) )->GetFPL() ));
-    }
 }
 
 /************************************************************************/
@@ -317,7 +313,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
         RawRasterBand *poBand =
             new RawRasterBand( poDS, iBand+1, fpRaw, 0, 1, poDS->nRasterXSize,
-                               GDT_Byte, TRUE, TRUE );
+                               GDT_Byte, TRUE, RawRasterBand::OwnFP::YES );
 
         snprintf( szKey, sizeof(szKey), "BAND%d_NAME", iBand+1 );
         poBand->SetDescription( poDS->Get(szKey, "") );

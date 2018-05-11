@@ -3043,19 +3043,19 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_OGRStyleTableShadow swig_types[29]
 #define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[30]
 #define SWIGTYPE_p_StatBuf swig_types[31]
-#define SWIGTYPE_p_char swig_types[32]
-#define SWIGTYPE_p_double swig_types[33]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[34]
-#define SWIGTYPE_p_int swig_types[35]
-#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[36]
-#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[37]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[38]
-#define SWIGTYPE_p_p_GUIntBig swig_types[39]
-#define SWIGTYPE_p_p_OGRLayerShadow swig_types[40]
-#define SWIGTYPE_p_p_char swig_types[41]
-#define SWIGTYPE_p_p_void swig_types[42]
-#define SWIGTYPE_p_size_t swig_types[43]
-#define SWIGTYPE_p_void swig_types[44]
+#define SWIGTYPE_p_VSILFILE swig_types[32]
+#define SWIGTYPE_p_char swig_types[33]
+#define SWIGTYPE_p_double swig_types[34]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[35]
+#define SWIGTYPE_p_int swig_types[36]
+#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[37]
+#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[38]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[39]
+#define SWIGTYPE_p_p_GUIntBig swig_types[40]
+#define SWIGTYPE_p_p_OGRLayerShadow swig_types[41]
+#define SWIGTYPE_p_p_char swig_types[42]
+#define SWIGTYPE_p_p_void swig_types[43]
+#define SWIGTYPE_p_size_t swig_types[44]
 static swig_type_info *swig_types[46];
 static swig_module_info swig_module = {swig_types, 45, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
@@ -6721,7 +6721,8 @@ SWIGINTERN PyObject *_wrap_VSIFReadL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
   int ecode2 = 0 ;
   unsigned int val3 ;
   int ecode3 = 0 ;
-  int res4 ;
+  void *argp4 = 0 ;
+  int res4 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -6742,10 +6743,11 @@ SWIGINTERN PyObject *_wrap_VSIFReadL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "VSIFReadL" "', argument " "3"" of type '" "unsigned int""'");
   } 
   arg3 = static_cast< unsigned int >(val3);
-  res4 = SWIG_ConvertPtr(obj2,SWIG_as_voidptrptr(&arg4), 0, 0);
+  res4 = SWIG_ConvertPtr(obj2, &argp4,SWIGTYPE_p_VSILFILE, 0 |  0 );
   if (!SWIG_IsOK(res4)) {
     SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "VSIFReadL" "', argument " "4"" of type '" "VSILFILE *""'"); 
   }
+  arg4 = reinterpret_cast< VSILFILE * >(argp4);
   {
     if (!arg4) {
       SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -9051,6 +9053,13 @@ fail:
 }
 
 
+SWIGINTERN PyObject *VSILFILE_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_VSILFILE, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
 SWIGINTERN PyObject *VSI_STAT_EXISTS_FLAG_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *module;
   PyObject *d;
@@ -9441,7 +9450,7 @@ SWIGINTERN PyObject *_wrap_VSIFOpenL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
     }
 #endif
   }
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_void, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_VSILFILE, 0 |  0 );
   {
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr(arg1, bToFree1);
@@ -9518,7 +9527,7 @@ SWIGINTERN PyObject *_wrap_VSIFOpenExL(PyObject *SWIGUNUSEDPARM(self), PyObject 
     }
 #endif
   }
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_void, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_VSILFILE, 0 |  0 );
   {
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr(arg1, bToFree1);
@@ -9539,15 +9548,17 @@ fail:
 SWIGINTERN PyObject *_wrap_VSIFEofL(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   VSILFILE *arg1 = (VSILFILE *) 0 ;
-  int res1 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
   PyObject * obj0 = 0 ;
   int result;
   
   if (!PyArg_ParseTuple(args,(char *)"O:VSIFEofL",&obj0)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0,SWIG_as_voidptrptr(&arg1), 0, 0);
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_VSILFILE, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFEofL" "', argument " "1"" of type '" "VSILFILE *""'"); 
   }
+  arg1 = reinterpret_cast< VSILFILE * >(argp1);
   {
     if (!arg1) {
       SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -9582,15 +9593,17 @@ fail:
 SWIGINTERN PyObject *_wrap_VSIFCloseL(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   VSILFILE *arg1 = (VSILFILE *) 0 ;
-  int res1 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
   PyObject * obj0 = 0 ;
   VSI_RETVAL result;
   
   if (!PyArg_ParseTuple(args,(char *)"O:VSIFCloseL",&obj0)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0,SWIG_as_voidptrptr(&arg1), 0, 0);
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_VSILFILE, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFCloseL" "', argument " "1"" of type '" "VSILFILE *""'"); 
   }
+  arg1 = reinterpret_cast< VSILFILE * >(argp1);
   {
     if (!arg1) {
       SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -9641,7 +9654,8 @@ SWIGINTERN PyObject *_wrap_VSIFSeekL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
   VSILFILE *arg1 = (VSILFILE *) 0 ;
   GIntBig arg2 ;
   int arg3 ;
-  int res1 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
   int val3 ;
   int ecode3 = 0 ;
   PyObject * obj0 = 0 ;
@@ -9650,10 +9664,11 @@ SWIGINTERN PyObject *_wrap_VSIFSeekL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
   int result;
   
   if (!PyArg_ParseTuple(args,(char *)"OOO:VSIFSeekL",&obj0,&obj1,&obj2)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0,SWIG_as_voidptrptr(&arg1), 0, 0);
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_VSILFILE, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFSeekL" "', argument " "1"" of type '" "VSILFILE *""'"); 
   }
+  arg1 = reinterpret_cast< VSILFILE * >(argp1);
   {
     PY_LONG_LONG val;
     if ( !PyArg_Parse(obj1,"L",&val) ) {
@@ -9701,15 +9716,17 @@ fail:
 SWIGINTERN PyObject *_wrap_VSIFTellL(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   VSILFILE *arg1 = (VSILFILE *) 0 ;
-  int res1 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
   PyObject * obj0 = 0 ;
   GIntBig result;
   
   if (!PyArg_ParseTuple(args,(char *)"O:VSIFTellL",&obj0)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0,SWIG_as_voidptrptr(&arg1), 0, 0);
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_VSILFILE, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFTellL" "', argument " "1"" of type '" "VSILFILE *""'"); 
   }
+  arg1 = reinterpret_cast< VSILFILE * >(argp1);
   {
     if (!arg1) {
       SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -9753,16 +9770,18 @@ SWIGINTERN PyObject *_wrap_VSIFTruncateL(PyObject *SWIGUNUSEDPARM(self), PyObjec
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   VSILFILE *arg1 = (VSILFILE *) 0 ;
   GIntBig arg2 ;
-  int res1 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   int result;
   
   if (!PyArg_ParseTuple(args,(char *)"OO:VSIFTruncateL",&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0,SWIG_as_voidptrptr(&arg1), 0, 0);
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_VSILFILE, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFTruncateL" "', argument " "1"" of type '" "VSILFILE *""'"); 
   }
+  arg1 = reinterpret_cast< VSILFILE * >(argp1);
   {
     PY_LONG_LONG val;
     if ( !PyArg_Parse(obj1,"L",&val) ) {
@@ -9896,17 +9915,19 @@ SWIGINTERN PyObject *_wrap_VSIFGetRangeStatusL(PyObject *SWIGUNUSEDPARM(self), P
   VSILFILE *arg1 = (VSILFILE *) 0 ;
   GIntBig arg2 ;
   GIntBig arg3 ;
-  int res1 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
   int result;
   
   if (!PyArg_ParseTuple(args,(char *)"OOO:VSIFGetRangeStatusL",&obj0,&obj1,&obj2)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0,SWIG_as_voidptrptr(&arg1), 0, 0);
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_VSILFILE, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFGetRangeStatusL" "', argument " "1"" of type '" "VSILFILE *""'"); 
   }
+  arg1 = reinterpret_cast< VSILFILE * >(argp1);
   {
     PY_LONG_LONG val;
     if ( !PyArg_Parse(obj1,"L",&val) ) {
@@ -9966,7 +9987,8 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
   int ecode3 = 0 ;
   int val4 ;
   int ecode4 = 0 ;
-  int res5 ;
+  void *argp5 = 0 ;
+  int res5 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -10032,10 +10054,11 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
     SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "VSIFWriteL" "', argument " "4"" of type '" "int""'");
   } 
   arg4 = static_cast< int >(val4);
-  res5 = SWIG_ConvertPtr(obj3,SWIG_as_voidptrptr(&arg5), 0, 0);
+  res5 = SWIG_ConvertPtr(obj3, &argp5,SWIGTYPE_p_VSILFILE, 0 |  0 );
   if (!SWIG_IsOK(res5)) {
     SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "VSIFWriteL" "', argument " "5"" of type '" "VSILFILE *""'"); 
   }
+  arg5 = reinterpret_cast< VSILFILE * >(argp5);
   {
     if (!arg5) {
       SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -33489,7 +33512,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetUseExceptions", _wrap_GetUseExceptions, METH_VARARGS, (char *)"GetUseExceptions() -> int"},
 	 { (char *)"UseExceptions", _wrap_UseExceptions, METH_VARARGS, (char *)"UseExceptions()"},
 	 { (char *)"DontUseExceptions", _wrap_DontUseExceptions, METH_VARARGS, (char *)"DontUseExceptions()"},
-	 { (char *)"VSIFReadL", _wrap_VSIFReadL, METH_VARARGS, (char *)"VSIFReadL(unsigned int nMembSize, unsigned int nMembCount, VSILFILE * fp) -> unsigned int"},
+	 { (char *)"VSIFReadL", _wrap_VSIFReadL, METH_VARARGS, (char *)"VSIFReadL(unsigned int nMembSize, unsigned int nMembCount, VSILFILE fp) -> unsigned int"},
 	 { (char *)"Debug", _wrap_Debug, METH_VARARGS, (char *)"Debug(char const * msg_class, char const * message)"},
 	 { (char *)"SetErrorHandler", _wrap_SetErrorHandler, METH_VARARGS, (char *)"SetErrorHandler(char const * pszCallbackName=None) -> CPLErr"},
 	 { (char *)"PushErrorHandler", _wrap_PushErrorHandler, METH_VARARGS, (char *)"PushErrorHandler(CPLErrorHandler pfnErrorHandler=0) -> CPLErr"},
@@ -33528,6 +33551,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetSignedURL", _wrap_GetSignedURL, METH_VARARGS, (char *)"GetSignedURL(char const * utf8_path, char ** options=None) -> retStringAndCPLFree *"},
 	 { (char *)"GetFileSystemsPrefixes", _wrap_GetFileSystemsPrefixes, METH_VARARGS, (char *)"GetFileSystemsPrefixes() -> char **"},
 	 { (char *)"GetFileSystemOptions", _wrap_GetFileSystemOptions, METH_VARARGS, (char *)"GetFileSystemOptions(char const * utf8_path) -> char const *"},
+	 { (char *)"VSILFILE_swigregister", VSILFILE_swigregister, METH_VARARGS, NULL},
 	 { (char *)"VSI_STAT_EXISTS_FLAG_swigconstant", VSI_STAT_EXISTS_FLAG_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"VSI_STAT_NATURE_FLAG_swigconstant", VSI_STAT_NATURE_FLAG_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"VSI_STAT_SIZE_FLAG_swigconstant", VSI_STAT_SIZE_FLAG_swigconstant, METH_VARARGS, NULL},
@@ -33539,19 +33563,19 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"StatBuf_IsDirectory", _wrap_StatBuf_IsDirectory, METH_VARARGS, (char *)"StatBuf_IsDirectory(StatBuf self) -> int"},
 	 { (char *)"StatBuf_swigregister", StatBuf_swigregister, METH_VARARGS, NULL},
 	 { (char *)"VSIStatL", _wrap_VSIStatL, METH_VARARGS, (char *)"VSIStatL(char const * utf8_path, int nFlags=0) -> int"},
-	 { (char *)"VSIFOpenL", _wrap_VSIFOpenL, METH_VARARGS, (char *)"VSIFOpenL(char const * utf8_path, char const * pszMode) -> VSILFILE *"},
-	 { (char *)"VSIFOpenExL", _wrap_VSIFOpenExL, METH_VARARGS, (char *)"VSIFOpenExL(char const * utf8_path, char const * pszMode, int bSetError) -> VSILFILE *"},
-	 { (char *)"VSIFEofL", _wrap_VSIFEofL, METH_VARARGS, (char *)"VSIFEofL(VSILFILE * fp) -> int"},
-	 { (char *)"VSIFCloseL", _wrap_VSIFCloseL, METH_VARARGS, (char *)"VSIFCloseL(VSILFILE * fp) -> VSI_RETVAL"},
-	 { (char *)"VSIFSeekL", _wrap_VSIFSeekL, METH_VARARGS, (char *)"VSIFSeekL(VSILFILE * fp, GIntBig offset, int whence) -> int"},
-	 { (char *)"VSIFTellL", _wrap_VSIFTellL, METH_VARARGS, (char *)"VSIFTellL(VSILFILE * fp) -> GIntBig"},
-	 { (char *)"VSIFTruncateL", _wrap_VSIFTruncateL, METH_VARARGS, (char *)"VSIFTruncateL(VSILFILE * fp, GIntBig length) -> int"},
+	 { (char *)"VSIFOpenL", _wrap_VSIFOpenL, METH_VARARGS, (char *)"VSIFOpenL(char const * utf8_path, char const * pszMode) -> VSILFILE"},
+	 { (char *)"VSIFOpenExL", _wrap_VSIFOpenExL, METH_VARARGS, (char *)"VSIFOpenExL(char const * utf8_path, char const * pszMode, int bSetError) -> VSILFILE"},
+	 { (char *)"VSIFEofL", _wrap_VSIFEofL, METH_VARARGS, (char *)"VSIFEofL(VSILFILE fp) -> int"},
+	 { (char *)"VSIFCloseL", _wrap_VSIFCloseL, METH_VARARGS, (char *)"VSIFCloseL(VSILFILE fp) -> VSI_RETVAL"},
+	 { (char *)"VSIFSeekL", _wrap_VSIFSeekL, METH_VARARGS, (char *)"VSIFSeekL(VSILFILE fp, GIntBig offset, int whence) -> int"},
+	 { (char *)"VSIFTellL", _wrap_VSIFTellL, METH_VARARGS, (char *)"VSIFTellL(VSILFILE fp) -> GIntBig"},
+	 { (char *)"VSIFTruncateL", _wrap_VSIFTruncateL, METH_VARARGS, (char *)"VSIFTruncateL(VSILFILE fp, GIntBig length) -> int"},
 	 { (char *)"VSISupportsSparseFiles", _wrap_VSISupportsSparseFiles, METH_VARARGS, (char *)"VSISupportsSparseFiles(char const * utf8_path) -> int"},
 	 { (char *)"VSI_RANGE_STATUS_UNKNOWN_swigconstant", VSI_RANGE_STATUS_UNKNOWN_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"VSI_RANGE_STATUS_DATA_swigconstant", VSI_RANGE_STATUS_DATA_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"VSI_RANGE_STATUS_HOLE_swigconstant", VSI_RANGE_STATUS_HOLE_swigconstant, METH_VARARGS, NULL},
-	 { (char *)"VSIFGetRangeStatusL", _wrap_VSIFGetRangeStatusL, METH_VARARGS, (char *)"VSIFGetRangeStatusL(VSILFILE * fp, GIntBig offset, GIntBig length) -> int"},
-	 { (char *)"VSIFWriteL", _wrap_VSIFWriteL, METH_VARARGS, (char *)"VSIFWriteL(int nLen, int size, int memb, VSILFILE * fp) -> int"},
+	 { (char *)"VSIFGetRangeStatusL", _wrap_VSIFGetRangeStatusL, METH_VARARGS, (char *)"VSIFGetRangeStatusL(VSILFILE fp, GIntBig offset, GIntBig length) -> int"},
+	 { (char *)"VSIFWriteL", _wrap_VSIFWriteL, METH_VARARGS, (char *)"VSIFWriteL(int nLen, int size, int memb, VSILFILE fp) -> int"},
 	 { (char *)"VSICurlClearCache", _wrap_VSICurlClearCache, METH_VARARGS, (char *)"VSICurlClearCache()"},
 	 { (char *)"ParseCommandLine", _wrap_ParseCommandLine, METH_VARARGS, (char *)"ParseCommandLine(char const * utf8_path) -> char **"},
 	 { (char *)"MajorObject_GetDescription", _wrap_MajorObject_GetDescription, METH_VARARGS, (char *)"MajorObject_GetDescription(MajorObject self) -> char const *"},
@@ -33910,6 +33934,7 @@ static swig_type_info _swigt__p_OGRLayerShadow = {"_p_OGRLayerShadow", "OGRLayer
 static swig_type_info _swigt__p_OGRStyleTableShadow = {"_p_OGRStyleTableShadow", "OGRStyleTableShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OSRSpatialReferenceShadow = {"_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_StatBuf = {"_p_StatBuf", "StatBuf *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_VSILFILE = {"_p_VSILFILE", "VSILFILE *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_f_double_p_q_const__char_p_void__int = {"_p_f_double_p_q_const__char_p_void__int", "int (*)(double,char const *,void *)", 0, 0, (void*)0, 0};
@@ -33922,7 +33947,6 @@ static swig_type_info _swigt__p_p_OGRLayerShadow = {"_p_p_OGRLayerShadow", "OGRL
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_void = {"_p_p_void", "void **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_size_t = {"_p_size_t", "size_t *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_void = {"_p_void", "VSILFILE *|void *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
   &_swigt__p_CPLErrorHandler,
@@ -33957,6 +33981,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_OGRStyleTableShadow,
   &_swigt__p_OSRSpatialReferenceShadow,
   &_swigt__p_StatBuf,
+  &_swigt__p_VSILFILE,
   &_swigt__p_char,
   &_swigt__p_double,
   &_swigt__p_f_double_p_q_const__char_p_void__int,
@@ -33969,7 +33994,6 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_p_char,
   &_swigt__p_p_void,
   &_swigt__p_size_t,
-  &_swigt__p_void,
 };
 
 static swig_cast_info _swigc__p_CPLErrorHandler[] = {  {&_swigt__p_CPLErrorHandler, 0, 0, 0},{0, 0, 0, 0}};
@@ -34004,6 +34028,7 @@ static swig_cast_info _swigc__p_OGRLayerShadow[] = {  {&_swigt__p_OGRLayerShadow
 static swig_cast_info _swigc__p_OGRStyleTableShadow[] = {  {&_swigt__p_OGRStyleTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OSRSpatialReferenceShadow[] = {  {&_swigt__p_OSRSpatialReferenceShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_StatBuf[] = {  {&_swigt__p_StatBuf, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_VSILFILE[] = {  {&_swigt__p_VSILFILE, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_double[] = {  {&_swigt__p_double, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_f_double_p_q_const__char_p_void__int[] = {  {&_swigt__p_f_double_p_q_const__char_p_void__int, 0, 0, 0},{0, 0, 0, 0}};
@@ -34016,7 +34041,6 @@ static swig_cast_info _swigc__p_p_OGRLayerShadow[] = {  {&_swigt__p_p_OGRLayerSh
 static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_void[] = {  {&_swigt__p_p_void, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_size_t[] = {  {&_swigt__p_size_t, 0, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_void[] = {  {&_swigt__p_void, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_CPLErrorHandler,
@@ -34051,6 +34075,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_OGRStyleTableShadow,
   _swigc__p_OSRSpatialReferenceShadow,
   _swigc__p_StatBuf,
+  _swigc__p_VSILFILE,
   _swigc__p_char,
   _swigc__p_double,
   _swigc__p_f_double_p_q_const__char_p_void__int,
@@ -34063,7 +34088,6 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_p_char,
   _swigc__p_p_void,
   _swigc__p_size_t,
-  _swigc__p_void,
 };
 
 

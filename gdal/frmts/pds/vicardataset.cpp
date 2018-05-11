@@ -610,7 +610,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 #else
                                    chByteOrder == 'M',
 #endif
-                                   TRUE );
+                                   RawRasterBand::OwnFP::NO );
 
         poDS->SetBand( i+1, poBand );
         //only set NoData if instrument is supported
