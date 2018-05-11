@@ -63,6 +63,7 @@ OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() :
 #else
     bUseCopy = FALSE;
 #endif
+    CPLDebug( "MSSQLSpatial", "Use COPY/BCP: %d", bUseCopy );
 }
 
 /************************************************************************/
