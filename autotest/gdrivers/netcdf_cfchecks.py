@@ -311,22 +311,22 @@ class CFChecker(object):
         self.cf_roleCount = 0          # Number of occurrences of the cf_role attribute in the file
         self.raggedArrayFlag = 0       # Flag to indicate if file contains any ragged array representations
 
-    def checker(self, file):
+    def checker(self, filename):
 
         fileSuffix = re.compile('^\S+\.nc$')
 
         print("")
         if self.uploader:
-            realfile = file.split(".nc")[0] + ".nc"
+            realfile = filename.split(".nc")[0] + ".nc"
             print("CHECKING NetCDF FILE:", realfile)
         elif self.useFileName == "no":
             print("CHECKING NetCDF FILE")
         else:
-            print("CHECKING NetCDF FILE:", file)
+            print("CHECKING NetCDF FILE:", filename)
         print("=====================")
 
         # Check for valid filename
-        if not fileSuffix.match(file):
+        if not fileSuffix.match(filename):
             print("ERROR (2.1): Filename must have .nc suffix")
             exit(1)
 
@@ -353,7 +353,7 @@ class CFChecker(object):
 
         # Read in netCDF file
         try:
-            self.f = cdms.open(file, "r")
+            self.f = cdms.open(filename, "r")
 
         except AttributeError:
             print("NetCDF Attribute Error:")
@@ -403,7 +403,7 @@ class CFChecker(object):
 
         # Read in netCDF file
         try:
-            self.f = cdms.open(file, "r")
+            self.f = cdms.open(filename, "r")
 
         except AttributeError:
             print("NetCDF Attribute Error:")

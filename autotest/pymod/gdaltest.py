@@ -365,12 +365,12 @@ def run_all(dirlist, run_as_external=False):
 
 def clean_tmp():
     all_files = os.listdir('tmp')
-    for file in all_files:
-        if file == 'CVS' or file == 'do-not-remove':
+    for filename in all_files:
+        if filename in ['CVS', 'do-not-remove']:
             continue
 
         try:
-            os.remove('tmp/' + file)
+            os.remove('tmp/' + filename)
         except OSError:
             pass
     return 'success'
