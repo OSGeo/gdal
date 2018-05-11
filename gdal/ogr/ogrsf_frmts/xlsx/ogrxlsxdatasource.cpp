@@ -1433,7 +1433,10 @@ void OGRXLSXDataSource::startElementWBCbk(const char *pszNameIn,
                 return;
             if( oMapRelsIdToTarget[pszId][0] == '/' )
             {
-                if( oMapRelsIdToTarget[pszId][1] == '\0' )
+                int nIdx = 1;
+                while( oMapRelsIdToTarget[pszId][nIdx] == '/' )
+                    nIdx ++;
+                if( oMapRelsIdToTarget[pszId][nIdx] == '\0' )
                     return;
                 // Is it an "absolute" path ?
                 osFilename = osPrefixedFilename +
