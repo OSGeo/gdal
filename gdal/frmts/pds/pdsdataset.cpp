@@ -1065,7 +1065,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 #else
                                chByteOrder == 'M',
 #endif
-                               TRUE );
+                               RawRasterBand::OwnFP::NO );
 
         if( l_nBands == 1 )
         {

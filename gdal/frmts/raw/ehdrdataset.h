@@ -69,24 +69,24 @@
 
 class EHdrRasterBand;
 
-class EHdrDataset : public RawDataset
+class EHdrDataset final: public RawDataset
 {
     friend class EHdrRasterBand;
 
     VSILFILE   *fpImage;  // image data file.
 
-    CPLString   osHeaderExt;
+    CPLString   osHeaderExt{};
 
-    bool        bGotTransform;
-    double      adfGeoTransform[6];
-    char       *pszProjection;
+    bool        bGotTransform{};
+    double      adfGeoTransform[6]{0,1,0,0,0,1};
+    char       *pszProjection{};
 
-    bool        bHDRDirty;
-    char      **papszHDR;
+    bool        bHDRDirty{};
+    char      **papszHDR{};
 
-    bool        bCLRDirty;
-    std::shared_ptr<GDALColorTable> m_poColorTable;
-    std::shared_ptr<GDALRasterAttributeTable> m_poRAT;
+    bool        bCLRDirty{};
+    std::shared_ptr<GDALColorTable> m_poColorTable{};
+    std::shared_ptr<GDALRasterAttributeTable> m_poRAT{};
 
 
     CPLErr      ReadSTX() const;
@@ -95,6 +95,8 @@ class EHdrDataset : public RawDataset
     void        ResetKeyValue( const char *pszKey, const char *pszValue );
     const char *GetKeyValue( const char *pszKey, const char *pszDefault = "" );
     void        RewriteCLR(GDALRasterBand*) const;
+
+    CPL_DISALLOW_COPY_ASSIGN(EHdrDataset)
 
   public:
     EHdrDataset();
@@ -125,32 +127,34 @@ class EHdrDataset : public RawDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class EHdrRasterBand : public RawRasterBand
+class EHdrRasterBand final: public RawRasterBand
 {
    friend class EHdrDataset;
 
-    std::shared_ptr<GDALColorTable> m_poColorTable;
-    std::shared_ptr<GDALRasterAttributeTable> m_poRAT;
+    std::shared_ptr<GDALColorTable> m_poColorTable{};
+    std::shared_ptr<GDALRasterAttributeTable> m_poRAT{};
 
-    int            nBits;
-    vsi_l_offset   nStartBit;
-    int            nPixelOffsetBits;
-    vsi_l_offset   nLineOffsetBits;
+    int            nBits{};
+    vsi_l_offset   nStartBit{};
+    int            nPixelOffsetBits{};
+    vsi_l_offset   nLineOffsetBits{};
 
-    int            bNoDataSet;  // TODO(schwehr): Convert to bool.
-    double         dfNoData;
-    double         dfMin;
-    double         dfMax;
-    double         dfMean;
-    double         dfStdDev;
+    int            bNoDataSet{};  // TODO(schwehr): Convert to bool.
+    double         dfNoData{};
+    double         dfMin{};
+    double         dfMax{};
+    double         dfMean{};
+    double         dfStdDev{};
 
-    int            minmaxmeanstddev;
+    int            minmaxmeanstddev{};
 
     CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                       void *, int, int, GDALDataType,
                       GSpacing nPixelSpace,
                       GSpacing nLineSpace,
                       GDALRasterIOExtraArg *psExtraArg ) override;
+
+    CPL_DISALLOW_COPY_ASSIGN(EHdrRasterBand)
 
   public:
     EHdrRasterBand( GDALDataset *poDS, int nBand, VSILFILE *fpRaw,

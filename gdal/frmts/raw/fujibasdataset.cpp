@@ -42,9 +42,11 @@ CPL_CVSID("$Id$")
 class FujiBASDataset : public RawDataset
 {
     VSILFILE        *fpImage;  // image data file.
-    CPLString        osRawFilename;
+    CPLString        osRawFilename{};
 
     char        **papszHeader;
+
+    CPL_DISALLOW_COPY_ASSIGN(FujiBASDataset)
 
   public:
                 FujiBASDataset();
@@ -214,7 +216,8 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetBand(
         1,
         new RawRasterBand( poDS, 1, poDS->fpImage,
-                           0, 2, nXSize * 2, GDT_UInt16, bNativeOrder, TRUE ) );
+                           0, 2, nXSize * 2, GDT_UInt16, bNativeOrder,
+                           RawRasterBand::OwnFP::NO ) );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */

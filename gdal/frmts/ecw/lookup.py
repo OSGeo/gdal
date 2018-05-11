@@ -80,13 +80,13 @@ for line in pfile.readlines():
 
         tokens = [token.strip() for token in tokens]
 
-        id = tokens[0]
-        type = tokens[1]
+        ident = tokens[0]
+        typ = tokens[1]
 
         lsize = float(tokens[2])
         lsize_str = tokens[2]
 
-        dline = dict_dict[type][id]
+        dline = dict_dict[typ][ident]
 
         srs = osr.SpatialReference()
 
@@ -140,7 +140,7 @@ for line in pfile.readlines():
 
         # Handle Units from projects.dat file.
         if srs.IsProjected():
-            srs.SetAttrValue('PROJCS', id)
+            srs.SetAttrValue('PROJCS', ident)
             if lsize_str == '0.30480061':
                 srs.SetLinearUnits('US Foot', float(lsize_str))
             elif lsize_str != '1.0':
@@ -148,12 +148,12 @@ for line in pfile.readlines():
 
         wkt = srs.ExportToWkt()
         if wkt:
-            print('%s,%s' % (id, srs.ExportToWkt()))
+            print('%s,%s' % (ident, srs.ExportToWkt()))
         else:
-            print('%s,LOCAL_CS["%s - (unsupported)"]' % (id, id))
+            print('%s,LOCAL_CS["%s - (unsupported)"]' % (ident, ident))
 
     except KeyError:
-        print('%s,LOCAL_CS["%s - (unsupported)"]' % (id, id))
+        print('%s,LOCAL_CS["%s - (unsupported)"]' % (ident, ident))
 
     except:
         print('cant translate: ', line)
@@ -167,19 +167,19 @@ pfile.readline()
 for line in pfile.readlines():
     tokens = [token.strip() for token in line.strip().split(',')]
 
-    id = tokens[0]
+    ident = tokens[0]
 
     sp_name = tokens[2]
-    dline = dict_dict['datum_sp'][id]
+    dline = dict_dict['datum_sp'][ident]
     srs = osr.SpatialReference()
 
-    if id == 'WGS84':
+    if ident == 'WGS84':
         srs.SetWellKnownGeogCS('WGS84')
-    elif id == 'NAD27':
+    elif ident == 'NAD27':
         srs.SetWellKnownGeogCS('NAD27')
-    elif id == 'NAD83':
+    elif ident == 'NAD83':
         srs.SetWellKnownGeogCS('NAD83')
     else:
-        srs.SetGeogCS(tokens[1], id, sp_name, float(dline[2]), float(dline[4]))
+        srs.SetGeogCS(tokens[1], ident, sp_name, float(dline[2]), float(dline[4]))
 
-    print('%s,%s' % (id, srs.ExportToWkt()))
+    print('%s,%s' % (ident, srs.ExportToWkt()))

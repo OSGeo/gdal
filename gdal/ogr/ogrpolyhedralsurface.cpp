@@ -366,7 +366,6 @@ OGRErr OGRPolyhedralSurface::importFromWkt( const char ** ppszInput )
 
     char        szToken[OGR_WKT_TOKEN_MAX];
     const char  *pszInput = *ppszInput;
-    eErr = OGRERR_NONE;
 
     /* Skip first '(' */
     pszInput = OGRWktReadToken( pszInput, szToken );

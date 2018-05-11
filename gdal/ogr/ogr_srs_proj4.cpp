@@ -1535,7 +1535,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                     "+proj=geocent ");
     }
 
-    else if( pszProjection == nullptr && !IsGeographic() )
+    else if( pszProjection == nullptr /* && !IsGeographic()*/ )
     {
         // LOCAL_CS, or incompletely initialized coordinate systems.
         *ppszProj4 = CPLStrdup("");

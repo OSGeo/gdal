@@ -672,7 +672,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 #else
                                chByteOrder == 'M',
 #endif
-                               TRUE );
+                               RawRasterBand::OwnFP::NO );
 
         if( bNoDataSet )
             poBand->SetNoDataValue( dfNoData );

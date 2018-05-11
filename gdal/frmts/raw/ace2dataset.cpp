@@ -176,7 +176,7 @@ ACE2RasterBand::ACE2RasterBand( VSILFILE* fpRawIn,
                                 int nXSize, int nYSize) :
     RawRasterBand( fpRawIn, 0, GDALGetDataTypeSizeBytes(eDataTypeIn),
                    nXSize * GDALGetDataTypeSizeBytes(eDataTypeIn), eDataTypeIn,
-                   CPL_IS_LSB, nXSize, nYSize, TRUE, TRUE )
+                   CPL_IS_LSB, nXSize, nYSize, RawRasterBand::OwnFP::YES )
 {}
 
 /************************************************************************/

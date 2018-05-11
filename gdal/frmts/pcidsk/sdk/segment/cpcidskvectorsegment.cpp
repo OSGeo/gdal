@@ -111,6 +111,8 @@ void CPCIDSKVectorSegment::Synchronize()
 {
     if( base_initialized )
     {
+        FlushSegHeaderIfNeeded();
+
         FlushDataBuffer( sec_vert );
         FlushDataBuffer( sec_record );
 
@@ -1216,7 +1218,20 @@ void CPCIDSKVectorSegment::AddField( std::string name, ShapeFieldType type,
     vh.field_formats.push_back( format );
     vh.field_defaults.push_back( *default_value );
 
-    vh.WriteFieldDefinitions();
+    vh_dirty = true;
+}
+
+/************************************************************************/
+/*                        FlushSegHeaderIfNeeded()                      */
+/************************************************************************/
+
+void CPCIDSKVectorSegment::FlushSegHeaderIfNeeded()
+{
+    if( vh_dirty )
+    {
+        vh.WriteFieldDefinitions();
+        vh_dirty = false;
+    }
 }
 
 /************************************************************************/
@@ -1227,6 +1242,7 @@ ShapeId CPCIDSKVectorSegment::CreateShape( ShapeId id )
 
 {
     LoadHeader();
+    FlushSegHeaderIfNeeded();
 
 /* -------------------------------------------------------------------- */
 /*      Make sure we have the last shapeid index page loaded.           */
@@ -1280,6 +1296,7 @@ ShapeId CPCIDSKVectorSegment::CreateShape( ShapeId id )
 void CPCIDSKVectorSegment::DeleteShape( ShapeId id )
 
 {
+    FlushSegHeaderIfNeeded();
     int shape_index = IndexFromShapeId( id );
 
     if( shape_index == -1 )
@@ -1343,6 +1360,7 @@ void CPCIDSKVectorSegment::SetVertices( ShapeId id,
                                         const std::vector<ShapeVertex>& list )
 
 {
+    FlushSegHeaderIfNeeded();
     int shape_index = IndexFromShapeId( id );
 
     if( shape_index == -1 )
@@ -1425,6 +1443,7 @@ void CPCIDSKVectorSegment::SetFields( ShapeId id,
                                       const std::vector<ShapeField>& list_in )
 
 {
+    FlushSegHeaderIfNeeded();
     uint32 i;
     int shape_index = IndexFromShapeId( id );
     std::vector<ShapeField> full_list;

@@ -573,7 +573,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->nRasterXSize * poDS->nRasterYSize * 8 * iBand,
                 8, poDS->nRasterXSize * 8,
                 GDT_Float64, !CPL_IS_LSB,
-                TRUE, FALSE);
+                RawRasterBand::OwnFP::NO);
 
         poDS->SetBand(iBand + 1, poBand);
     }

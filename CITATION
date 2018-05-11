@@ -1,14 +1,14 @@
 To cite GDAL/OGR in publications use:
 
-  GDAL/OGR contributors (2018). The GDAL/OGR Geospatial Data Abstraction
-  software Library. The Open Source Geospatial Foundation. URL http://gdal.org
+  GDAL/OGR contributors (2018). GDAL/OGR Geospatial Data Abstraction
+  software Library. Open Source Geospatial Foundation. URL http://gdal.org
 
 A BibTeX entry for LaTeX users is
 
   @Manual{,
-    title = {The {GDAL/OGR} Geospatial Data Abstraction software Library},
+    title = {{GDAL/OGR} Geospatial Data Abstraction software Library},
     author = {{GDAL/OGR contributors}},
-    organization = {The Open Source Geospatial Foundation},
+    organization = {Open Source Geospatial Foundation},
     year = {2018},
     url = {http://gdal.org},
   }

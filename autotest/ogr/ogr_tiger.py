@@ -229,12 +229,12 @@ def ogr_tiger_4():
         return 'fail'
 
     # Try to recover memory from /vsimem.
-    for file in gdal.ReadDir('tmp/cache/TGR01001'):
+    for filename in gdal.ReadDir('tmp/cache/TGR01001'):
 
-        if file[0] == '.':
+        if filename.startswith('.'):
             continue
 
-        gdal.Unlink('/vsimem/tigertest/' + file)
+        gdal.Unlink('/vsimem/tigertest/' + filename)
 
     return 'success'
 

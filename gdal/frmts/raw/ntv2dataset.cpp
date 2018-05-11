@@ -101,6 +101,8 @@ class NTv2Dataset final: public RawDataset
 
     int         OpenGrid( char *pachGridHeader, vsi_l_offset nDataStart );
 
+    CPL_DISALLOW_COPY_ASSIGN(NTv2Dataset)
+
   public:
     NTv2Dataset();
     ~NTv2Dataset() override;
@@ -616,7 +618,8 @@ int NTv2Dataset::OpenGrid( char *pachHeader, vsi_l_offset nGridOffsetIn )
                                + (nRasterXSize-1) * 16
                                + static_cast<vsi_l_offset>(nRasterYSize-1) * 16 * nRasterXSize,
                                -16, -16 * nRasterXSize,
-                               GDT_Float32, !m_bMustSwap, TRUE, FALSE );
+                               GDT_Float32, !m_bMustSwap,
+                               RawRasterBand::OwnFP::NO );
         SetBand( iBand+1, poBand );
     }
 

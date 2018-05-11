@@ -7138,13 +7138,13 @@ OGRFeature::FieldValue& OGRFeature::FieldValue::operator=
                  eOtherType == OFTDateTime ||
                  eOtherType == OFTTime )
         {
-            int nYear;
-            int nMonth;
-            int nDay;
-            int nHour;
-            int nMinute;
-            float fSecond;
-            int nTZFlag;
+            int nYear = 0;
+            int nMonth = 0;
+            int nDay = 0;
+            int nHour = 0;
+            int nMinute = 0;
+            float fSecond = 0.0f;
+            int nTZFlag = 0;
             oOther.GetDateTime(&nYear, &nMonth, &nDay, &nHour, &nMinute,
                                &fSecond, &nTZFlag);
             m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos,

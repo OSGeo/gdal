@@ -283,14 +283,12 @@ class ISIS3RawRasterBand final: public RawRasterBand
 
     public:
                  ISIS3RawRasterBand( GDALDataset *l_poDS, int l_nBand,
-                                     void * l_fpRaw,
+                                     VSILFILE * l_fpRaw,
                                      vsi_l_offset l_nImgOffset,
                                      int l_nPixelOffset,
                                      int l_nLineOffset,
                                      GDALDataType l_eDataType,
-                                     int l_bNativeOrder,
-                                     int l_bIsVSIL = FALSE,
-                                     int l_bOwnsFP = FALSE );
+                                     int l_bNativeOrder );
         virtual ~ISIS3RawRasterBand() {}
 
         virtual CPLErr          IReadBlock( int, int, void * ) override;
@@ -731,16 +729,15 @@ CPLErr ISISTiledBand::SetNoDataValue( double dfNewNoData )
 /************************************************************************/
 
 ISIS3RawRasterBand::ISIS3RawRasterBand( GDALDataset *l_poDS, int l_nBand,
-                                        void * l_fpRaw,
+                                        VSILFILE * l_fpRaw,
                                         vsi_l_offset l_nImgOffset,
                                         int l_nPixelOffset,
                                         int l_nLineOffset,
                                         GDALDataType l_eDataType,
-                                        int l_bNativeOrder,
-                                        int l_bIsVSIL, int l_bOwnsFP )
+                                        int l_bNativeOrder )
     : RawRasterBand(l_poDS, l_nBand, l_fpRaw, l_nImgOffset, l_nPixelOffset,
                     l_nLineOffset,
-                    l_eDataType, l_bNativeOrder, l_bIsVSIL, l_bOwnsFP),
+                    l_eDataType, l_bNativeOrder, RawRasterBand::OwnFP::NO),
     m_bHasOffset(false),
     m_bHasScale(false),
     m_dfOffset(0.0),
@@ -2222,8 +2219,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
                 new ISIS3RawRasterBand( poDS, i+1, poDS->m_fpImage,
                                    nSkipBytes + nBandOffset * i,
                                    nPixelOffset, nLineOffset, eDataType,
-                                   bNativeOrder,
-                                   TRUE );
+                                   bNativeOrder );
 
             poBand = poISISBand;
             poDS->SetBand( i+1, poBand );
@@ -3896,8 +3892,7 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
                                    nBandOffset * i, // nImgOffset, to be
                                    //hacked afterwards for in-label imagery
                                    nPixelOffset, nLineOffset, eType,
-                                   CPL_IS_LSB,
-                                   TRUE );
+                                   CPL_IS_LSB );
 
             poBand = poISISBand;
         }

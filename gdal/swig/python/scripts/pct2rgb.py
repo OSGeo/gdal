@@ -102,7 +102,7 @@ def GetOutputDriverFor(filename):
 # =============================================================================
 
 
-format = None
+frmt = None
 src_filename = None
 dst_filename = None
 out_bands = 3
@@ -120,7 +120,7 @@ while i < len(argv):
 
     if arg == '-of' or arg == '-f':
         i = i + 1
-        format = argv[i]
+        frmt = argv[i]
 
     elif arg == '-b':
         i = i + 1
@@ -156,12 +156,12 @@ src_band = src_ds.GetRasterBand(band_number)
 # ----------------------------------------------------------------------------
 # Ensure we recognise the driver.
 
-if format is None:
-    format = GetOutputDriverFor(dst_filename)
+if frmt is None:
+    frmt = GetOutputDriverFor(dst_filename)
 
-dst_driver = gdal.GetDriverByName(format)
+dst_driver = gdal.GetDriverByName(frmt)
 if dst_driver is None:
-    print('"%s" driver not registered.' % format)
+    print('"%s" driver not registered.' % frmt)
     sys.exit(1)
 
 # ----------------------------------------------------------------------------
@@ -184,7 +184,7 @@ if ct is not None:
 # ----------------------------------------------------------------------------
 # Create the working file.
 
-if format == 'GTiff':
+if frmt == 'GTiff':
     tif_filename = dst_filename
 else:
     tif_filename = 'temp.tif'

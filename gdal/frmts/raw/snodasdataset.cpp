@@ -41,9 +41,9 @@ CPL_CVSID("$Id$")
 
 class SNODASRasterBand;
 
-class SNODASDataset : public RawDataset
+class SNODASDataset final: public RawDataset
 {
-    CPLString   osDataFilename;
+    CPLString   osDataFilename{};
     bool        bGotTransform;
     double      adfGeoTransform[6];
     bool        bHasNoData;
@@ -54,6 +54,8 @@ class SNODASDataset : public RawDataset
     double      dfMax;
 
     friend class SNODASRasterBand;
+
+    CPL_DISALLOW_COPY_ASSIGN(SNODASDataset)
 
   public:
     SNODASDataset();
@@ -74,8 +76,10 @@ class SNODASDataset : public RawDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class SNODASRasterBand : public RawRasterBand
+class SNODASRasterBand final: public RawRasterBand
 {
+    CPL_DISALLOW_COPY_ASSIGN(SNODASRasterBand)
+
   public:
     SNODASRasterBand( VSILFILE* fpRaw, int nXSize, int nYSize );
     ~SNODASRasterBand() override {}
@@ -93,7 +97,7 @@ SNODASRasterBand::SNODASRasterBand( VSILFILE* fpRawIn,
                                     int nXSize, int nYSize ) :
     RawRasterBand( fpRawIn, 0, 2,
                    nXSize * 2, GDT_Int16,
-                   !CPL_IS_LSB, nXSize, nYSize, TRUE, TRUE)
+                   !CPL_IS_LSB, nXSize, nYSize, RawRasterBand::OwnFP::YES)
 {}
 
 /************************************************************************/

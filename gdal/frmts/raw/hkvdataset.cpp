@@ -152,7 +152,7 @@ CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
 /* ==================================================================== */
 /************************************************************************/
 
-class HKVDataset : public RawDataset
+class HKVDataset final: public RawDataset
 {
     friend class HKVRasterBand;
 
@@ -194,6 +194,8 @@ class HKVDataset : public RawDataset
     bool        bNoDataSet;
     bool        bNoDataChanged;
     double      dfNoDataValue;
+
+    CPL_DISALLOW_COPY_ASSIGN(HKVDataset)
 
   public:
     HKVDataset();
@@ -238,7 +240,7 @@ HKVRasterBand::HKVRasterBand( HKVDataset *poDSIn, int nBandIn, VSILFILE * fpRawI
                               GDALDataType eDataTypeIn, int bNativeOrderIn ) :
     RawRasterBand( reinterpret_cast<GDALDataset *>( poDSIn ), nBandIn, fpRawIn,
                    nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn, eDataTypeIn,
-                   bNativeOrderIn, TRUE )
+                   bNativeOrderIn, RawRasterBand::OwnFP::NO )
 
 {
     poDS = poDSIn;
