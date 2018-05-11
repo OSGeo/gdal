@@ -1102,7 +1102,7 @@ class GPKGChecker(object):
         warn_gdal_not_available = False
         for (table_name, datatype) in rows:
             c.execute("SELECT id, tile_data FROM %s" % _esc_id(table_name))
-            for (id, blob) in c.fetchall():
+            for (ident, blob) in c.fetchall():
                 self._assert(blob is not None and len(blob) >= 12, 19,
                              'Invalid blob')
                 max_size_needed = 12
@@ -1125,14 +1125,14 @@ class GPKGChecker(object):
                         try:
                             self._assert(ds is not None, 'gpkg_2d_gridded_coverage#13',
                                          'Invalid tile %d in %s' %
-                                         (id, table_name))
+                                         (ident, table_name))
                             self._assert(ds.RasterCount == 1, 'gpkg_2d_gridded_coverage#13',
                                          'Invalid tile %d in %s' %
-                                         (id, table_name))
+                                         (ident, table_name))
                             self._assert(ds.GetRasterBand(1).DataType ==
                                          gdal.GDT_UInt16, 'gpkg_2d_gridded_coverage#13',
                                          'Invalid tile %d in %s' %
-                                         (id, table_name))
+                                         (ident, table_name))
                         finally:
                             gdal.Unlink(tmp_file)
                     else:
@@ -1154,30 +1154,30 @@ class GPKGChecker(object):
                         try:
                             self._assert(ds is not None, 'gpkg_2d_gridded_coverage#15',
                                          'Invalid tile %d in %s' %
-                                         (id, table_name))
+                                         (ident, table_name))
                             self._assert(ds.RasterCount == 1, 'gpkg_2d_gridded_coverage#16',
                                          'Invalid tile %d in %s' %
-                                         (id, table_name))
+                                         (ident, table_name))
                             self._assert(ds.GetRasterBand(1).DataType ==
                                          gdal.GDT_Float32, 'gpkg_2d_gridded_coverage#17',
                                          'Invalid tile %d in %s' %
-                                         (id, table_name))
+                                         (ident, table_name))
                             compression = ds.GetMetadataItem('COMPRESSION',
                                                              'IMAGE_STRUCTURE')
                             self._assert(compression is None or
                                          compression == 'LZW', 'gpkg_2d_gridded_coverage#18',
                                          'Invalid tile %d in %s' %
-                                         (id, table_name))
+                                         (ident, table_name))
                             ovr_count = ds.GetRasterBand(1).GetOverviewCount()
                             self._assert(not ds.GetSubDatasets() and
                                          ovr_count == 0, 'gpkg_2d_gridded_coverage#19',
                                          'Invalid tile %d in %s' %
-                                         (id, table_name))
+                                         (ident, table_name))
                             (blockxsize, _) = \
                                 ds.GetRasterBand(1).GetBlockSize()
                             self._assert(blockxsize == ds.RasterXSize, 'gpkg_2d_gridded_coverage#20',
                                          'Invalid tile %d in %s' %
-                                         (id, table_name))
+                                         (ident, table_name))
                         finally:
                             gdal.Unlink(tmp_file)
                     else:
