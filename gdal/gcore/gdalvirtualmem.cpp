@@ -73,7 +73,7 @@ class GDALVirtualMem
 
     void GetXYBand( size_t nOffset, coord_type& x, coord_type& y,
                     int& band ) const;
-    size_t GetOffset( coord_type x, coord_type y, int band ) const;
+    size_t GetOffset( const coord_type& x, const coord_type& y, int band ) const;
     bool GotoNextPixel( coord_type& x, coord_type& y, int& band ) const;
 
     void DoIOBandSequential( GDALRWFlag eRWFlag, size_t nOffset,
@@ -86,9 +86,12 @@ class GDALVirtualMem
 public:
              GDALVirtualMem( GDALDatasetH hDS,
                              GDALRasterBandH hBand,
-                             coord_type nXOff, coord_type nYOff,
-                             coord_type nXSize, coord_type nYSize,
-                             coord_type nBufXSize, coord_type nBufYSize,
+                             const coord_type& nXOff,
+                             const coord_type& nYOff,
+                             const coord_type& nXSize,
+                             const coord_type& nYSize,
+                             const coord_type& nBufXSize,
+                             const coord_type& nBufYSize,
                              GDALDataType eBufType,
                              int nBandCount, const int* panBandMapIn,
                              int nPixelSpace,
@@ -123,10 +126,12 @@ public:
 
 GDALVirtualMem::GDALVirtualMem( GDALDatasetH hDSIn,
                                 GDALRasterBandH hBandIn,
-                                coord_type nXOffIn, coord_type nYOffIn,
-                                coord_type /* nXSize */,
-                                coord_type /* nYSize */,
-                                coord_type nBufXSizeIn, coord_type nBufYSizeIn,
+                                const coord_type& nXOffIn,
+                                const coord_type& nYOffIn,
+                                const coord_type& /* nXSize */,
+                                const coord_type& /* nYSize */,
+                                const coord_type& nBufXSizeIn,
+                                const coord_type& nBufYSizeIn,
                                 GDALDataType eBufTypeIn,
                                 int nBandCountIn, const int* panBandMapIn,
                                 int nPixelSpaceIn,
@@ -228,11 +233,11 @@ bool GDALVirtualMem::GotoNextPixel( coord_type& x, coord_type& y,
 {
     if( IsBandSequential() )
     {
-        x++;
+        ++x;
         if( x == nBufXSize )
         {
             x = 0;
-            y ++;
+            ++y;
         }
         if( y == nBufYSize )
         {
@@ -248,12 +253,12 @@ bool GDALVirtualMem::GotoNextPixel( coord_type& x, coord_type& y,
         if( band == nBandCount )
         {
             band = 0;
-            x ++;
+            ++x;
         }
         if( x == nBufXSize )
         {
             x = 0;
-            y ++;
+            ++y;
             if( y == nBufYSize )
                 return false;
         }
@@ -265,7 +270,8 @@ bool GDALVirtualMem::GotoNextPixel( coord_type& x, coord_type& y,
 /*                              GetOffset()                             */
 /************************************************************************/
 
-size_t GDALVirtualMem::GetOffset(coord_type x, coord_type y, int band) const
+size_t GDALVirtualMem::GetOffset(const coord_type& x, 
+                                 const coord_type& y, int band) const
 {
     return static_cast<size_t>(
         x * nPixelSpace + y * nLineSpace + band * nBandSpace);

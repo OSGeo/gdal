@@ -81,12 +81,12 @@ for line in pfile.readlines():
         tokens = [token.strip() for token in tokens]
 
         ident = tokens[0]
-        type = tokens[1]
+        typ = tokens[1]
 
         lsize = float(tokens[2])
         lsize_str = tokens[2]
 
-        dline = dict_dict[type][ident]
+        dline = dict_dict[typ][ident]
 
         srs = osr.SpatialReference()
 

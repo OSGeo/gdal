@@ -226,6 +226,24 @@ def usgsdem_9():
                         check_gt=(18.99958333, 0.0008333, 0.0, 47.000416667, 0.0, -0.0008333))
 
 ###############################################################################
+# https://github.com/OSGeo/gdal/issues/583
+
+
+def usgsdem_with_extra_values_at_end_of_profile():
+
+    tst = gdaltest.GDALTest('USGSDEM', 'usgsdem_with_extra_values_at_end_of_profile.dem', 1, 56679)
+    return tst.testOpen()
+
+###############################################################################
+# Like Novato.dem of https://trac.osgeo.org/gdal/ticket/4901
+
+
+def usgsdem_with_spaces_after_byte_864():
+
+    tst = gdaltest.GDALTest('USGSDEM', 'usgsdem_with_spaces_after_byte_864.dem', 1, 61078)
+    return tst.testOpen()
+
+###############################################################################
 # Cleanup
 
 
@@ -258,6 +276,8 @@ gdaltest_list = [
     usgsdem_7,
     usgsdem_8,
     usgsdem_9,
+    usgsdem_with_extra_values_at_end_of_profile,
+    usgsdem_with_spaces_after_byte_864,
     usgsdem_cleanup]
 
 if __name__ == '__main__':

@@ -44,7 +44,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class ARGDataset : public RawDataset
+class ARGDataset final: public RawDataset
 {
     VSILFILE *fpImage;  // image data file.
     double adfGeoTransform[6];
@@ -526,7 +526,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
     RawRasterBand *poBand
         = new RawRasterBand( poDS, 1, poDS->fpImage,
                              0, nPixelOffset, nPixelOffset * nCols,
-                             eType, bNative, TRUE );
+                             eType, bNative, RawRasterBand::OwnFP::NO );
     poDS->SetBand( 1, poBand );
 
     poBand->SetNoDataValue( dfNoDataValue );
@@ -725,7 +725,8 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
     RawRasterBand *poDstBand = new RawRasterBand( fpImage, 0, nPixelOffset,
                                                   nPixelOffset * nXSize, eType,
                                                   bNative,
-                                                  nXSize, nYSize, TRUE, FALSE);
+                                                  nXSize, nYSize,
+                                                  RawRasterBand::OwnFP::NO);
 
     int nXBlockSize, nYBlockSize;
     poSrcBand->GetBlockSize(&nXBlockSize, &nYBlockSize);

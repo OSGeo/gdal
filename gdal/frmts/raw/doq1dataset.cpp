@@ -121,6 +121,8 @@ class DOQ1Dataset : public RawDataset
 
     char        *pszProjection;
 
+    CPL_DISALLOW_COPY_ASSIGN(DOQ1Dataset)
+
   public:
                 DOQ1Dataset();
                 ~DOQ1Dataset();
@@ -280,7 +282,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( i+1,
             new RawRasterBand( poDS, i+1, poDS->fpImage,
                                nSkipBytes + i, nBytesPerPixel, nBytesPerLine,
-                               GDT_Byte, TRUE, TRUE ) );
+                               GDT_Byte, TRUE, RawRasterBand::OwnFP::NO ) );
     }
 
 /* -------------------------------------------------------------------- */

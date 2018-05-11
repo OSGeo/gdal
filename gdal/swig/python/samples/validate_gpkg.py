@@ -52,10 +52,10 @@ def _esc_id(identifier):
     return '"' + identifier.replace('"', "\"\"") + '"'
 
 
-def _is_valid_data_type(type):
-    return type in ('BOOLEAN', 'TINYINT', 'SMALLINT', 'MEDIUMINT',
-                    'INT', 'INTEGER', 'FLOAT', 'DOUBLE', 'REAL',
-                    'TEXT', 'BLOB', 'DATE', 'DATETIME') or \
+def _is_valid_data_type(typ):
+    return typ in ('BOOLEAN', 'TINYINT', 'SMALLINT', 'MEDIUMINT',
+                   'INT', 'INTEGER', 'FLOAT', 'DOUBLE', 'REAL',
+                   'TEXT', 'BLOB', 'DATE', 'DATETIME') or \
         type.startswith('TEXT(') or type.startswith('BLOB(')
 
 
@@ -97,20 +97,20 @@ class GPKGChecker(object):
         for (_, expected_name, expected_type, expected_notnull,
              expected_default, expected_pk) in expected_columns:
             found = False
-            for (_, name, type, notnull, default, pk) in columns:
+            for (_, name, typ, notnull, default, pk) in columns:
                 if name != expected_name:
                     continue
 
                 if expected_type == 'INTEGER' and expected_pk:
                     expected_notnull = 1
-                if type == 'INTEGER' and pk:
+                if typ == 'INTEGER' and pk:
                     notnull = 1
                 if not self.extended_pragma_info and expected_pk > 1:
                     expected_pk = 1
 
-                self._assert(type == expected_type, req,
+                self._assert(typ == expected_type, req,
                              'Wrong type for %s of %s. Expected %s, got %s' %
-                             (name, table_name, expected_type, type))
+                             (name, table_name, expected_type, typ))
                 self._assert(notnull == expected_notnull, req,
                              ('Wrong notnull for %s of %s. ' +
                               'Expected %s, got %s') %
@@ -343,30 +343,30 @@ class GPKGChecker(object):
         cols = c.fetchall()
         found_geom = False
         count_pkid = 0
-        for (_, name, type, notnull, default, pk) in cols:
+        for (_, name, typ, notnull, default, pk) in cols:
             if name.lower() == geom_column_name.lower():
                 found_geom = True
                 self._assert(
-                    type in base_geom_types or
-                    type in GPKGChecker.EXT_GEOM_TYPES,
+                    typ in base_geom_types or
+                    typ in GPKGChecker.EXT_GEOM_TYPES,
                     25, ('invalid type (%s) for geometry ' +
-                         'column of table %s') % (type, table_name))
-                self._assert(type == geometry_type_name, 31,
+                         'column of table %s') % (typ, table_name))
+                self._assert(typ == geometry_type_name, 31,
                              ('table %s has geometry column of type %s in ' +
                               'SQL and %s in geometry_type_name of ' +
                               'gpkg_geometry_columns') %
-                             (table_name, type, geometry_type_name))
+                             (table_name, typ, geometry_type_name))
 
             elif pk == 1:
                 count_pkid += 1
-                self._assert(type == 'INTEGER', 29,
+                self._assert(typ == 'INTEGER', 29,
                              ('table %s has a PRIMARY KEY of type %s ' +
-                              'instead of INTEGER') % (table_name, type))
+                              'instead of INTEGER') % (table_name, typ))
 
             else:
-                self._assert(_is_valid_data_type(type), 5,
+                self._assert(_is_valid_data_type(typ), 5,
                              ('table %s has column %s of unexpected type %s'
-                              % (table_name, name, type)))
+                              % (table_name, name, typ)))
         self._assert(found_geom, 24,
                      'table %s has no %s column' %
                      (table_name, geom_column_name))
@@ -627,17 +627,17 @@ class GPKGChecker(object):
             c.execute('PRAGMA table_info(%s)' % _esc_id(table_name))
             cols = c.fetchall()
             count_pkid = 0
-            for (_, name, type, notnull, default, pk) in cols:
+            for (_, name, typ, _, _, pk) in cols:
                 if pk == 1:
                     count_pkid += 1
-                    self._assert(type == 'INTEGER', 119,
+                    self._assert(typ == 'INTEGER', 119,
                                  ('table %s has a PRIMARY KEY of type %s ' +
-                                  'instead of INTEGER') % (table_name, type))
+                                  'instead of INTEGER') % (table_name, typ))
 
                 else:
-                    self._assert(_is_valid_data_type(type), 5,
+                    self._assert(_is_valid_data_type(typ), 5,
                                  'table %s has column %s of unexpected type %s'
-                                 % (table_name, name, type))
+                                 % (table_name, name, typ))
 
             self._assert(count_pkid == 1, 119,
                          'table %s has no INTEGER PRIMARY KEY' % table_name)

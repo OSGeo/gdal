@@ -458,9 +458,8 @@ class CPL_DLL CPLStringList
 
   public:
     CPLStringList();
-    CPLStringList( char **papszList, int bTakeOwnership=TRUE );
-    // cppcheck-suppress noExplicitConstructor
-    CPLStringList( CSLConstList papszList );
+    explicit CPLStringList( char **papszList, int bTakeOwnership=TRUE );
+    explicit CPLStringList( CSLConstList papszList );
     CPLStringList( const CPLStringList& oOther );
     ~CPLStringList();
 

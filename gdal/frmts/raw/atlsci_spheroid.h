@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+
 /**********************************************************************/
 /* ================================================================== */
 /*          Spheroid definitions                                      */
@@ -35,6 +37,8 @@
 
 class SpheroidItem
 {
+    CPL_DISALLOW_COPY_ASSIGN(SpheroidItem)
+
  public:
    SpheroidItem();
    ~SpheroidItem();
@@ -53,6 +57,8 @@ class SpheroidItem
 
 class SpheroidList
 {
+    CPL_DISALLOW_COPY_ASSIGN(SpheroidList)
+
  public:
   int num_spheroids;
   // Acceptable errors for radii, inverse flattening.

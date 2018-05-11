@@ -38,8 +38,8 @@ from osgeo import ogr, gdal
 #############################################################################
 
 
-def GeomType2Name(type):
-    flat_type = ogr.GT_Flatten(type)
+def GeomType2Name(typ):
+    flat_type = ogr.GT_Flatten(typ)
     dic = {ogr.wkbUnknown: ('wkbUnknown', '25D'),
            ogr.wkbPoint: ('wkbPoint', '25D'),
            ogr.wkbLineString: ('wkbLineString', '25D'),
@@ -61,9 +61,9 @@ def GeomType2Name(type):
            ogr.wkbTIN: ('wkbTIN', 'Z'),
            ogr.wkbTriangle: ('wkbTriangle', 'Z')}
     ret = dic[flat_type][0]
-    if flat_type != type:
-        if ogr.GT_HasM(type):
-            if ogr.GT_HasZ(type):
+    if flat_type != typ:
+        if ogr.GT_HasM(typ):
+            if ogr.GT_HasZ(typ):
                 ret += "ZM"
             else:
                 ret += "M"
@@ -276,34 +276,34 @@ for name in layer_list:
     for fld_index in range(layerdef.GetFieldCount()):
         src_fd = layerdef.GetFieldDefn(fld_index)
         if src_fd.GetType() == ogr.OFTInteger:
-            type = 'Integer'
+            typ = 'Integer'
         elif src_fd.GetType() == ogr.OFTInteger64:
-            type = 'Integer64'
+            typ = 'Integer64'
         elif src_fd.GetType() == ogr.OFTString:
-            type = 'String'
+            typ = 'String'
         elif src_fd.GetType() == ogr.OFTReal:
-            type = 'Real'
+            typ = 'Real'
         elif src_fd.GetType() == ogr.OFTStringList:
-            type = 'StringList'
+            typ = 'StringList'
         elif src_fd.GetType() == ogr.OFTIntegerList:
-            type = 'IntegerList'
+            typ = 'IntegerList'
         elif src_fd.GetType() == ogr.OFTInteger64List:
-            type = 'Integer64List'
+            typ = 'Integer64List'
         elif src_fd.GetType() == ogr.OFTRealList:
-            type = 'RealList'
+            typ = 'RealList'
         elif src_fd.GetType() == ogr.OFTBinary:
-            type = 'Binary'
+            typ = 'Binary'
         elif src_fd.GetType() == ogr.OFTDate:
-            type = 'Date'
+            typ = 'Date'
         elif src_fd.GetType() == ogr.OFTTime:
-            type = 'Time'
+            typ = 'Time'
         elif src_fd.GetType() == ogr.OFTDateTime:
-            type = 'DateTime'
+            typ = 'DateTime'
         else:
-            type = 'String'
+            typ = 'String'
 
         vrt += '    <Field name="%s" type="%s"' \
-               % (Esc(src_fd.GetName()), type)
+               % (Esc(src_fd.GetName()), typ)
         if src_fd.GetSubType() != ogr.OFSTNone:
             vrt += ' subtype="%s"' % ogr.GetFieldSubTypeName(src_fd.GetSubType())
         if not schema:

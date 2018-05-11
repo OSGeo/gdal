@@ -184,8 +184,8 @@ would deadlock the server.
 CPL_C_START
 int CPL_DLL GDALServerLoop(CPL_FILE_HANDLE fin, CPL_FILE_HANDLE fout);
 const char* GDALClientDatasetGetFilename(const char* pszFilename);
-int CPL_DLL GDALServerLoopSocket(CPL_SOCKET nSocket);
-void CPL_DLL* GDALServerLoopInstanceCreateFromSocket(CPL_SOCKET nSocket);
+int CPL_DLL GDALServerLoopSocket(const CPL_SOCKET& nSocket);
+void CPL_DLL* GDALServerLoopInstanceCreateFromSocket(const CPL_SOCKET& nSocket);
 int  CPL_DLL  GDALServerLoopInstanceRunIteration(void* pInstance);
 void CPL_DLL  GDALServerLoopInstanceDestroy(void* pInstance);
 CPL_C_END
@@ -733,7 +733,7 @@ static GDALPipe* GDALPipeBuild(CPLSpawnedProcess* sp)
     return p;
 }
 
-static GDALPipe* GDALPipeBuild(CPL_SOCKET nSocket)
+static GDALPipe* GDALPipeBuild(const CPL_SOCKET& nSocket)
 {
     GDALPipe* p = static_cast<GDALPipe*>(CPLMalloc(sizeof(GDALPipe)));
     p->bOK = TRUE;
@@ -1978,7 +1978,7 @@ GDALServerInstance::~GDALServerInstance()
 /*                GDALServerLoopInstanceCreateFromSocket()              */
 /************************************************************************/
 
-void * GDALServerLoopInstanceCreateFromSocket(CPL_SOCKET nSocket)
+void * GDALServerLoopInstanceCreateFromSocket(const CPL_SOCKET& nSocket)
 {
 #ifndef WIN32
     unsetenv("CPL_SHOW_MEM_STATS");
@@ -3636,7 +3636,7 @@ int GDALServerLoop(CPL_FILE_HANDLE fin, CPL_FILE_HANDLE fout)
 /*                      GDALServerLoopSocket()                          */
 /************************************************************************/
 
-int GDALServerLoopSocket(CPL_SOCKET nSocket)
+int GDALServerLoopSocket(const CPL_SOCKET& nSocket)
 {
 #ifndef WIN32
     unsetenv("CPL_SHOW_MEM_STATS");
