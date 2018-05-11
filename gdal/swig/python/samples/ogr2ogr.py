@@ -47,9 +47,9 @@ from osgeo import osr
 
 
 class ScaledProgressObject(object):
-    def __init__(self, min, max, cbk, cbk_data=None):
-        self.min = min
-        self.max = max
+    def __init__(self, mini, maxi, cbk, cbk_data=None):
+        self.min = mini
+        self.max = maxi
         self.cbk = cbk
         self.cbk_data = cbk_data
 
