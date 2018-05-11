@@ -281,11 +281,11 @@ def run_all(dirlist, run_as_external=False):
         # imports our rasterio.py and not another famous external package.
         sys.path = ['.'] + sys.path
 
-        for file in files:
-            if not file[-3:] == '.py':
+        for filename in files:
+            if not filename.endswith('.py'):
                 continue
 
-            module = file[:-3]
+            module = filename.rstrip('.py')
             try:
                 wd = os.getcwd()
                 os.chdir(dir_name)
@@ -302,8 +302,7 @@ def run_all(dirlist, run_as_external=False):
                     if sys.platform == 'win32':
                         python_exe = python_exe.replace('\\', '/')
 
-                    print('Running %s/%s...' % (dir_name, file))
-                    # ret = runexternal(python_exe + ' ' + file, display_live_on_parent_stdout = True)
+                    print('Running %s/%s...' % (dir_name, filename))
                     if 'GDALTEST_ASAN_OPTIONS' in os.environ:
                         if 'ASAN_OPTIONS' in os.environ:
                             backup_asan_options = os.environ['ASAN_OPTIONS']
@@ -320,13 +319,13 @@ def run_all(dirlist, run_as_external=False):
                     global success_counter, failure_counter, failure_summary
                     if ret.find('Failed:    0') < 0:
                         failure_counter += 1
-                        failure_summary.append(dir_name + '/' + file)
+                        failure_summary.append(dir_name + '/' + filename)
                     else:
                         success_counter += 1
                 else:
                     try:
-                        print('Running tests from %s/%s' % (dir_name, file))
-                        setup_run('%s/%s' % (dir_name, file))
+                        print('Running tests from %s/%s' % (dir_name, filename))
+                        setup_run('%s/%s' % (dir_name, filename))
                         exec("run_tests( " + module + ".gdaltest_list)")
                     except KeyboardInterrupt:
                         raise
@@ -341,7 +340,7 @@ def run_all(dirlist, run_as_external=False):
                 raise
             except:
                 os.chdir(wd)
-                print('... failed to load %s ... skipping.' % file)
+                print('... failed to load %s ... skipping.' % filename)
 
                 import traceback
                 traceback.print_exc()
