@@ -311,5 +311,5 @@ gdal.pc:	gdal.pc.in GDALmake.opt ./GNUmakefile VERSION
 	echo 'CONFIG_INST_PREFIX=$(INST_PREFIX)' >> gdal.pc
 	echo 'CONFIG_INST_LIBS=$(CONFIG_LIBS_INS)' >> gdal.pc
 	echo 'CONFIG_INST_CFLAGS=-I$(INST_INCLUDE)' >> gdal.pc
-	echo 'CONFIG_INST_DATA=$(INST_DATA)/data' >> gdal.pc
+	echo 'CONFIG_INST_DATA=$(INST_DATA)' >> gdal.pc
 	cat gdal.pc.in >> gdal.pc
