@@ -167,19 +167,19 @@ pfile.readline()
 for line in pfile.readlines():
     tokens = [token.strip() for token in line.strip().split(',')]
 
-    id = tokens[0]
+    ident = tokens[0]
 
     sp_name = tokens[2]
-    dline = dict_dict['datum_sp'][id]
+    dline = dict_dict['datum_sp'][ident]
     srs = osr.SpatialReference()
 
-    if id == 'WGS84':
+    if ident == 'WGS84':
         srs.SetWellKnownGeogCS('WGS84')
-    elif id == 'NAD27':
+    elif ident == 'NAD27':
         srs.SetWellKnownGeogCS('NAD27')
-    elif id == 'NAD83':
+    elif ident == 'NAD83':
         srs.SetWellKnownGeogCS('NAD83')
     else:
-        srs.SetGeogCS(tokens[1], id, sp_name, float(dline[2]), float(dline[4]))
+        srs.SetGeogCS(tokens[1], ident, sp_name, float(dline[2]), float(dline[4]))
 
-    print('%s,%s' % (id, srs.ExportToWkt()))
+    print('%s,%s' % (ident, srs.ExportToWkt()))
