@@ -124,6 +124,26 @@ static vsi_l_offset USGSDEMGetCurrentFilePos( const Buffer* psBuffer )
 }
 
 /************************************************************************/
+/*                      USGSDEMSetCurrentFilePos()                      */
+/************************************************************************/
+
+static void USGSDEMSetCurrentFilePos( Buffer* psBuffer, vsi_l_offset nNewPos )
+{
+    vsi_l_offset nCurPosFP = VSIFTellL(psBuffer->fp);
+    if( nNewPos >= nCurPosFP - psBuffer->buffer_size && nNewPos < nCurPosFP )
+    {
+        psBuffer->cur_index =
+            static_cast<int>(nNewPos - (nCurPosFP - psBuffer->buffer_size));
+    }
+    else
+    {
+        CPL_IGNORE_RET_VAL( VSIFSeekL(psBuffer->fp, nNewPos, SEEK_SET) );
+        psBuffer->buffer_size = 0;
+        psBuffer->cur_index = 0;
+    }
+}
+
+/************************************************************************/
 /*               USGSDEMReadIntFromBuffer()                             */
 /************************************************************************/
 
@@ -481,9 +501,7 @@ CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             vsi_l_offset nNewPos = (nCurPos + 1023) / 1024 * 1024;
             if( nNewPos > nCurPos )
             {
-                CPL_IGNORE_RET_VAL(VSIFSeekL(poGDS->fp, nNewPos, 0));
-                sBuffer.buffer_size = 0;
-                sBuffer.cur_index = 0;
+                USGSDEMSetCurrentFilePos(&sBuffer, nNewPos);
             }
         }
     }
