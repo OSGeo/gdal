@@ -36,7 +36,7 @@ done
 
 rm libtiff.so
 
-cat <<EOF > $OUT_FILE
+cat <<EOF >> $OUT_FILE
 
 #define DISABLE_CHECK_TIFFSWABMACROS
 
