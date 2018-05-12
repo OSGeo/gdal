@@ -29,6 +29,7 @@
 
 #include "ogr_sosi.h"
 #include <map>
+#include <memory>
 
 CPL_CVSID("$Id$")
 
@@ -167,7 +168,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
         }
         case L_FLATE: {  /* Area */
             oGType = wkbPolygon;
-            OGRLinearRing *poOuter = new OGRLinearRing();  /* Initialize a new closed polygon */
+            std::unique_ptr<OGRLinearRing> poOuter(new OGRLinearRing());  /* Initialize a new closed polygon */
             long nRefNr;
             unsigned char nRefStatus;
             long nRefCount;
@@ -203,19 +204,19 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
             }
 
             if (correct) {
-              OGRPolygon *poLy = new OGRPolygon();
+              std::unique_ptr<OGRPolygon> poLy(new OGRPolygon());
               poOuter->closeRings();
-              poLy->addRingDirectly(poOuter);
+              poLy->addRingDirectly(poOuter.release());
 
-              OGRLinearRing *poInner = nullptr;
+              std::unique_ptr<OGRLinearRing> poInner;
               nRefCount = LC_GetRefFlate(&oGrfStat, GRF_INDRE, &nRefNr, &nRefStatus, 1);
               while (nRefCount > 0) {
                   if (nRefNr == -1) {
-                    if (poInner && (poInner->getNumPoints()>2)) {   /* If this is not the first polygon, terminate and add the last */
-                          poInner->closeRings();
-                          poLy->addRingDirectly(poInner);
+                    if (poInner && poInner->getNumPoints()>2) {   /* If this is not the first polygon, terminate and add the last */
+                      poInner->closeRings();
+                      poLy->addRingDirectly(poInner.release());
                     }
-                    poInner = new OGRLinearRing();  /* Initialize a new closed polygon */
+                    poInner.reset(new OGRLinearRing());  /* Initialize a new closed polygon */
                   } else {
                     if (poParent->papoBuiltGeometries[nRefNr] == nullptr) { /* this shouldn't happen under normal operation */
                         CPLError( CE_Fatal, CPLE_AppDefined, "Feature %li referenced by %li, but it was not initialized.", nRefNr, oNextSerial.lNr);
@@ -224,9 +225,9 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                     OGRGeometry *geom = poParent->papoBuiltGeometries[nRefNr];
                     if (geom->getGeometryType() == wkbLineString) {
                       OGRLineString *poCurve = geom->toLineString();
-                      if (nRefStatus == LC_MED_DIG) {         /* clockwise */
+                      if (poInner && nRefStatus == LC_MED_DIG) {         /* clockwise */
                         poInner->addSubLineString(poCurve);
-                      } else if (nRefStatus == LC_MOT_DIG) {  /* counter-clockwise */
+                      } else if (poInner && nRefStatus == LC_MOT_DIG) {  /* counter-clockwise */
                           poInner->addSubLineString(poCurve,poCurve->getNumPoints()-1,0);
                       } else {
                           CPLError( CE_Failure, CPLE_OpenFailed, "Internal error: GRF_*_OY encountered.");
@@ -238,7 +239,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                   }
                   nRefCount = LC_GetRefFlate(&oGrfStat, GRF_INDRE, &nRefNr, &nRefStatus, 1);
               }
-              poGeom = poLy;
+              poGeom = poLy.release();
             }
             break;
         }

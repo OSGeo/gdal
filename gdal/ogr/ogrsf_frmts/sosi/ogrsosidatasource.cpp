@@ -157,8 +157,6 @@ OGRSOSIDataSource::OGRSOSIDataSource() {
     pszEncoding = CPL_ENC_UTF8;
     nNumFeatures = 0;
 
-    SOSIInitTypes();
-
     nMode = MODE_READING;
 }
 

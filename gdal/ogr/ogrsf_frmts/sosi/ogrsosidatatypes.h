@@ -1,2741 +1,2741 @@
 
-      addSimpleType(&oTypes, "ADM_GRENSE", "administrativGrense", OFTString);
+      addSimpleType(poTypes, "ADM_GRENSE", "administrativGrense", OFTString);
 
-      addSimpleType(&oTypes, "ADRESSE", "adresse", OFTString);
+      addSimpleType(poTypes, "ADRESSE", "adresse", OFTString);
 
-      addSimpleType(&oTypes, "ADRESSEREFKODE", "adresseReferansekode", OFTString);
+      addSimpleType(poTypes, "ADRESSEREFKODE", "adresseReferansekode", OFTString);
 
-      addSimpleType(&oTypes, "AJOURFØRTAV", "ajourførtAv", OFTString);
+      addSimpleType(poTypes, "AJOURFØRTAV", "ajourførtAv", OFTString);
 
-      addSimpleType(&oTypes, "AJOURFØRTDATO", "ajourførtDato", OFTDate);
+      addSimpleType(poTypes, "AJOURFØRTDATO", "ajourførtDato", OFTDate);
 
-      addSimpleType(&oTypes, "AKGEOLTEMA", "annetKvTema", OFTInteger);
+      addSimpleType(poTypes, "AKGEOLTEMA", "annetKvTema", OFTInteger);
 
-      addSimpleType(&oTypes, "AKVA_ART", "akvaArt", OFTInteger);
+      addSimpleType(poTypes, "AKVA_ART", "akvaArt", OFTInteger);
 
-      addSimpleType(&oTypes, "AKVA_ENHET", "akvaEnhet", OFTInteger);
+      addSimpleType(poTypes, "AKVA_ENHET", "akvaEnhet", OFTInteger);
 
-      addSimpleType(&oTypes, "AKVA_KONSTR", "akvaKonstruksjon", OFTInteger);
+      addSimpleType(poTypes, "AKVA_KONSTR", "akvaKonstruksjon", OFTInteger);
 
-      addSimpleType(&oTypes, "AKVA_NR", "akvaKonsesjonsnummer", OFTInteger);
+      addSimpleType(poTypes, "AKVA_NR", "akvaKonsesjonsnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "AKVA_STATUS", "akvaKonsesjonsstatus", OFTString);
+      addSimpleType(poTypes, "AKVA_STATUS", "akvaKonsesjonsstatus", OFTString);
 
-      addSimpleType(&oTypes, "AKVA_TYPE", "akvaKonsesjonstype", OFTString);
+      addSimpleType(poTypes, "AKVA_TYPE", "akvaKonsesjonstype", OFTString);
 
-      addSimpleType(&oTypes, "AKVAKONSESJONSFORMÅL", "akvaKonsesjonsformål", OFTString);
+      addSimpleType(poTypes, "AKVAKONSESJONSFORMÅL", "akvaKonsesjonsformål", OFTString);
 
-      addSimpleType(&oTypes, "AKVATEMP", "akvaTemperatur", OFTInteger);
+      addSimpleType(poTypes, "AKVATEMP", "akvaTemperatur", OFTInteger);
 
-      addSimpleType(&oTypes, "AKVSYMBOL", "andreKvSymbol", OFTInteger);
+      addSimpleType(poTypes, "AKVSYMBOL", "andreKvSymbol", OFTInteger);
 
-      addSimpleType(&oTypes, "ALDERBESKRIVELSE", "alderBeskrivelse", OFTString);
+      addSimpleType(poTypes, "ALDERBESKRIVELSE", "alderBeskrivelse", OFTString);
 
-      addSimpleType(&oTypes, "ALGE_KONS", "algeKonsentrasjon", OFTInteger);
+      addSimpleType(poTypes, "ALGE_KONS", "algeKonsentrasjon", OFTInteger);
 
-      addSimpleType(&oTypes, "ALGE_TYP", "algeType", OFTString);
+      addSimpleType(poTypes, "ALGE_TYP", "algeType", OFTString);
 
-      addSimpleType(&oTypes, "ALM-TYP", "allmenningtype", OFTString);
+      addSimpleType(poTypes, "ALM-TYP", "allmenningtype", OFTString);
 
-      addSimpleType(&oTypes, "ALT_AREALBYGNING", "alternativtArealBygning", OFTReal);
+      addSimpleType(poTypes, "ALT_AREALBYGNING", "alternativtArealBygning", OFTReal);
 
-      addSimpleType(&oTypes, "ALTERN_FNR", "altForekomstNr", OFTString);
+      addSimpleType(poTypes, "ALTERN_FNR", "altForekomstNr", OFTString);
 
-      addSimpleType(&oTypes, "ALTERNATIVTNAVN", "alternativtNavn", OFTString);
+      addSimpleType(poTypes, "ALTERNATIVTNAVN", "alternativtNavn", OFTString);
 
-      addSimpleType(&oTypes, "ANBELINTYP", "annenBergartLinjetype", OFTInteger);
+      addSimpleType(poTypes, "ANBELINTYP", "annenBergartLinjetype", OFTInteger);
 
-      addSimpleType(&oTypes, "ANDREKILDERBELASTNING", "andrekilderBelastning", OFTInteger);
+      addSimpleType(poTypes, "ANDREKILDERBELASTNING", "andrekilderBelastning", OFTInteger);
 
-      addSimpleType(&oTypes, "ANKRINGSBRUK", "ankringsbruk", OFTInteger);
+      addSimpleType(poTypes, "ANKRINGSBRUK", "ankringsbruk", OFTInteger);
 
-      addSimpleType(&oTypes, "ANKRTYP", "ankringstype", OFTInteger);
+      addSimpleType(poTypes, "ANKRTYP", "ankringstype", OFTInteger);
 
-      addSimpleType(&oTypes, "ANLEGGNØDSTRØM", "anleggNødstrøm", OFTString);
+      addSimpleType(poTypes, "ANLEGGNØDSTRØM", "anleggNødstrøm", OFTString);
 
-      addSimpleType(&oTypes, "ANLEGGSNUMMER", "anleggsnummer", OFTString);
+      addSimpleType(poTypes, "ANLEGGSNUMMER", "anleggsnummer", OFTString);
 
-      addSimpleType(&oTypes, "ANNEN_VANNB_ELEK", "annenVannbehandlingAvhElektrisitet", OFTString);
+      addSimpleType(poTypes, "ANNEN_VANNB_ELEK", "annenVannbehandlingAvhElektrisitet", OFTString);
 
-      addSimpleType(&oTypes, "ANNENLUFTHAVN", "annenLufthavn", OFTInteger);
+      addSimpleType(poTypes, "ANNENLUFTHAVN", "annenLufthavn", OFTInteger);
 
-      addSimpleType(&oTypes, "ANNENMATRENHET", "annenMatrEnhet", OFTString);
+      addSimpleType(poTypes, "ANNENMATRENHET", "annenMatrEnhet", OFTString);
 
-      addSimpleType(&oTypes, "ANT_ANALYS", "antallAnalyser", OFTInteger);
+      addSimpleType(poTypes, "ANT_ANALYS", "antallAnalyser", OFTInteger);
 
-      addSimpleType(&oTypes, "ANT_ANS", "antallAnsatte", OFTInteger);
+      addSimpleType(poTypes, "ANT_ANS", "antallAnsatte", OFTInteger);
 
-      addSimpleType(&oTypes, "ANT_ÅRSV", "antallÅrsverk", OFTInteger);
+      addSimpleType(poTypes, "ANT_ÅRSV", "antallÅrsverk", OFTInteger);
 
-      addSimpleType(&oTypes, "ANTALL_BAD", "antallBad", OFTInteger);
+      addSimpleType(poTypes, "ANTALL_BAD", "antallBad", OFTInteger);
 
-      addSimpleType(&oTypes, "ANTALL_BOENHETER", "antallBoenheter", OFTInteger);
+      addSimpleType(poTypes, "ANTALL_BOENHETER", "antallBoenheter", OFTInteger);
 
-      addSimpleType(&oTypes, "ANTALL_ETASJER", "antall etasjer", OFTInteger);
+      addSimpleType(poTypes, "ANTALL_ETASJER", "antall etasjer", OFTInteger);
 
-      addSimpleType(&oTypes, "ANTALL_ROM", "antallRom", OFTInteger);
+      addSimpleType(poTypes, "ANTALL_ROM", "antallRom", OFTInteger);
 
-      addSimpleType(&oTypes, "ANTALL_RØKLØP", "antallRøkløp", OFTReal);
+      addSimpleType(poTypes, "ANTALL_RØKLØP", "antallRøkløp", OFTReal);
 
-      addSimpleType(&oTypes, "ANTALL_WC", "antallWC", OFTInteger);
+      addSimpleType(poTypes, "ANTALL_WC", "antallWC", OFTInteger);
 
-      addSimpleType(&oTypes, "ANTALLFASTBOENDE", "antallFastboende", OFTInteger);
+      addSimpleType(poTypes, "ANTALLFASTBOENDE", "antallFastboende", OFTInteger);
 
-      addSimpleType(&oTypes, "ANTALLFRITIDSBOLIGER", "antallFritidsboliger", OFTInteger);
+      addSimpleType(poTypes, "ANTALLFRITIDSBOLIGER", "antallFritidsboliger", OFTInteger);
 
-      addSimpleType(&oTypes, "ANTALLIDENTISKELYS", "antallIdentiskeLys", OFTInteger);
+      addSimpleType(poTypes, "ANTALLIDENTISKELYS", "antallIdentiskeLys", OFTInteger);
 
-      addSimpleType(&oTypes, "ANTALLSKISPOR", "antallSkispor", OFTInteger);
+      addSimpleType(poTypes, "ANTALLSKISPOR", "antallSkispor", OFTInteger);
 
-      addSimpleType(&oTypes, "ANTALLSKORSTEINER", "antallSkorsteiner", OFTInteger);
+      addSimpleType(poTypes, "ANTALLSKORSTEINER", "antallSkorsteiner", OFTInteger);
 
-      addSimpleType(&oTypes, "ANTDRIFT", "landbruksregAntBedrifter", OFTInteger);
+      addSimpleType(poTypes, "ANTDRIFT", "landbruksregAntBedrifter", OFTInteger);
 
-      addSimpleType(&oTypes, "ARAVGRTYPE", "arealressursAvgrensingType", OFTInteger);
+      addSimpleType(poTypes, "ARAVGRTYPE", "arealressursAvgrensingType", OFTInteger);
 
-      addSimpleType(&oTypes, "ARDYRKING", "arealressursDyrkbarjord", OFTInteger);
+      addSimpleType(poTypes, "ARDYRKING", "arealressursDyrkbarjord", OFTInteger);
 
-      addSimpleType(&oTypes, "AREAL", "areal", OFTReal);
+      addSimpleType(poTypes, "AREAL", "areal", OFTReal);
 
-      addSimpleType(&oTypes, "AREALBRUK_RESTR", "arealbrukRestriksjon", OFTInteger);
+      addSimpleType(poTypes, "AREALBRUK_RESTR", "arealbrukRestriksjon", OFTInteger);
 
-      addSimpleType(&oTypes, "AREALENHET", "arealenhet", OFTString);
+      addSimpleType(poTypes, "AREALENHET", "arealenhet", OFTString);
 
-      addSimpleType(&oTypes, "AREALINNSJØ", "arealInnsjø", OFTReal);
+      addSimpleType(poTypes, "AREALINNSJØ", "arealInnsjø", OFTReal);
 
-      addSimpleType(&oTypes, "AREALKILDE", "arealkilde", OFTInteger);
+      addSimpleType(poTypes, "AREALKILDE", "arealkilde", OFTInteger);
 
-      addSimpleType(&oTypes, "AREALMERKNAD", "arealmerknad", OFTString);
+      addSimpleType(poTypes, "AREALMERKNAD", "arealmerknad", OFTString);
 
-      addSimpleType(&oTypes, "AREALNEDBØRFELT", "arealNedbørfelt", OFTString);
+      addSimpleType(poTypes, "AREALNEDBØRFELT", "arealNedbørfelt", OFTString);
 
-      addSimpleType(&oTypes, "AREALREGINE", "arealRegine", OFTReal);
+      addSimpleType(poTypes, "AREALREGINE", "arealRegine", OFTReal);
 
-      addSimpleType(&oTypes, "AREALST", "arealbruksstatus", OFTInteger);
+      addSimpleType(poTypes, "AREALST", "arealbruksstatus", OFTInteger);
 
-      addSimpleType(&oTypes, "AREALVERDI_IND", "arealverdiindikator", OFTString);
+      addSimpleType(poTypes, "AREALVERDI_IND", "arealverdiindikator", OFTString);
 
-      addSimpleType(&oTypes, "ARENKEL", "arealressursGruppertEnkel", OFTInteger);
+      addSimpleType(poTypes, "ARENKEL", "arealressursGruppertEnkel", OFTInteger);
 
-      addSimpleType(&oTypes, "ARGRUNNF", "arealressursGrunnforhold", OFTInteger);
+      addSimpleType(poTypes, "ARGRUNNF", "arealressursGrunnforhold", OFTInteger);
 
-      addSimpleType(&oTypes, "ARKARTSTD", "arealressursKartstandard", OFTString);
+      addSimpleType(poTypes, "ARKARTSTD", "arealressursKartstandard", OFTString);
 
-      addSimpleType(&oTypes, "ARNFJBRUK", "arealressursNaturgrunnlagForJordbruk", OFTInteger);
+      addSimpleType(poTypes, "ARNFJBRUK", "arealressursNaturgrunnlagForJordbruk", OFTInteger);
 
-      addSimpleType(&oTypes, "ARSKOGBON", "arealressursSkogbonitet", OFTInteger);
+      addSimpleType(poTypes, "ARSKOGBON", "arealressursSkogbonitet", OFTInteger);
 
-      addSimpleType(&oTypes, "ART_ENGELSK", "engelskArtsnavn", OFTString);
+      addSimpleType(poTypes, "ART_ENGELSK", "engelskArtsnavn", OFTString);
 
-      addSimpleType(&oTypes, "ART_LATIN", "vitenskapeligArtsnavn", OFTString);
+      addSimpleType(poTypes, "ART_LATIN", "vitenskapeligArtsnavn", OFTString);
 
-      addSimpleType(&oTypes, "ART_NORSK", "norskArtsnavn", OFTString);
+      addSimpleType(poTypes, "ART_NORSK", "norskArtsnavn", OFTString);
 
-      addSimpleType(&oTypes, "ART_TAKSONOMI", "taksonomiskKode", OFTInteger);
+      addSimpleType(poTypes, "ART_TAKSONOMI", "taksonomiskKode", OFTInteger);
 
-      addSimpleType(&oTypes, "ARTRESLAG", "arealressursTreslag", OFTInteger);
+      addSimpleType(poTypes, "ARTRESLAG", "arealressursTreslag", OFTInteger);
 
-      addSimpleType(&oTypes, "ARTYPE", "arealressursArealtype", OFTInteger);
+      addSimpleType(poTypes, "ARTYPE", "arealressursArealtype", OFTInteger);
 
-      addSimpleType(&oTypes, "ARUTETYPE", "annenRutetype", OFTString);
+      addSimpleType(poTypes, "ARUTETYPE", "annenRutetype", OFTString);
 
-      addSimpleType(&oTypes, "ARVANLIG", "arealressursGruppertVanlig", OFTInteger);
+      addSimpleType(poTypes, "ARVANLIG", "arealressursGruppertVanlig", OFTInteger);
 
-      addSimpleType(&oTypes, "ARVEGET", "arealressursVegetasjonsdekke", OFTInteger);
+      addSimpleType(poTypes, "ARVEGET", "arealressursVegetasjonsdekke", OFTInteger);
 
-      addSimpleType(&oTypes, "ASKOG", "potensiellSkogbonitet", OFTInteger);
+      addSimpleType(poTypes, "ASKOG", "potensiellSkogbonitet", OFTInteger);
 
-      addSimpleType(&oTypes, "ATIL", "arealtilstand", OFTInteger);
+      addSimpleType(poTypes, "ATIL", "arealtilstand", OFTInteger);
 
-      addSimpleType(&oTypes, "AVFALLSDEP", "avfallDeponiEgnethet", OFTInteger);
+      addSimpleType(poTypes, "AVFALLSDEP", "avfallDeponiEgnethet", OFTInteger);
 
-      addSimpleType(&oTypes, "AVFALLTYPE", "avfallType", OFTInteger);
+      addSimpleType(poTypes, "AVFALLTYPE", "avfallType", OFTInteger);
 
-      addSimpleType(&oTypes, "AVGIFTSBELAGT", "avgiftsbelagt", OFTString);
+      addSimpleType(poTypes, "AVGIFTSBELAGT", "avgiftsbelagt", OFTString);
 
-      addSimpleType(&oTypes, "AVGJDATO", "avgjørelsesdato", OFTDate);
+      addSimpleType(poTypes, "AVGJDATO", "avgjørelsesdato", OFTDate);
 
-      addSimpleType(&oTypes, "AVGRENSNINGSTYPE", "avgrensningstype", OFTInteger);
+      addSimpleType(poTypes, "AVGRENSNINGSTYPE", "avgrensningstype", OFTInteger);
 
-      addSimpleType(&oTypes, "AVKJ", "avkjørselsbestemmelse", OFTInteger);
+      addSimpleType(poTypes, "AVKJ", "avkjørselsbestemmelse", OFTInteger);
 
-      addSimpleType(&oTypes, "AVKLARTEIERE", "avklartEiere", OFTString);
+      addSimpleType(poTypes, "AVKLARTEIERE", "avklartEiere", OFTString);
 
-      addSimpleType(&oTypes, "AVLØP", "avløp", OFTInteger);
+      addSimpleType(poTypes, "AVLØP", "avløp", OFTInteger);
 
-      addSimpleType(&oTypes, "AVLØP_TILKNYTNING", "tilknyttetKommunaltAvløp", OFTString);
+      addSimpleType(poTypes, "AVLØP_TILKNYTNING", "tilknyttetKommunaltAvløp", OFTString);
 
-      addSimpleType(&oTypes, "AVLØPINNSJØ", "avløpInnsjø", OFTReal);
+      addSimpleType(poTypes, "AVLØPINNSJØ", "avløpInnsjø", OFTReal);
 
-      addSimpleType(&oTypes, "AVLØPRENSEPRINSIPP", "avløpRenseprinsipp", OFTString);
+      addSimpleType(poTypes, "AVLØPRENSEPRINSIPP", "avløpRenseprinsipp", OFTString);
 
-      addSimpleType(&oTypes, "AVLØPSANLEGGEIERFORM", "avløpsanleggEierform", OFTInteger);
+      addSimpleType(poTypes, "AVLØPSANLEGGEIERFORM", "avløpsanleggEierform", OFTInteger);
 
-      addSimpleType(&oTypes, "AVLØPSANLEGGTYPE", "avløpsanleggtype", OFTInteger);
+      addSimpleType(poTypes, "AVLØPSANLEGGTYPE", "avløpsanleggtype", OFTInteger);
 
-      addSimpleType(&oTypes, "AVSETNING", "avsetningstype", OFTInteger);
+      addSimpleType(poTypes, "AVSETNING", "avsetningstype", OFTInteger);
 
-      addSimpleType(&oTypes, "AVSETNRATE", "avsetnRate", OFTString);
+      addSimpleType(poTypes, "AVSETNRATE", "avsetnRate", OFTString);
 
-      addSimpleType(&oTypes, "BAKKEOPPLØSNING", "bakkeoppløsning", OFTReal);
+      addSimpleType(poTypes, "BAKKEOPPLØSNING", "bakkeoppløsning", OFTReal);
 
-      addSimpleType(&oTypes, "BARMARKSLØYPETYPE", "barmarksløypeType", OFTString);
+      addSimpleType(poTypes, "BARMARKSLØYPETYPE", "barmarksløypeType", OFTString);
 
-      addSimpleType(&oTypes, "BEALDERBST", "bergartAlderBestemmelse", OFTString);
+      addSimpleType(poTypes, "BEALDERBST", "bergartAlderBestemmelse", OFTString);
 
-      addSimpleType(&oTypes, "BEBYGD_AREAL", "bebygdAreal", OFTReal);
+      addSimpleType(poTypes, "BEBYGD_AREAL", "bebygdAreal", OFTReal);
 
-      addSimpleType(&oTypes, "BEFARGEKO", "cmykFargekode", OFTString);
+      addSimpleType(poTypes, "BEFARGEKO", "cmykFargekode", OFTString);
 
-      addSimpleType(&oTypes, "BEHSTAT", "behandlingsstatus", OFTInteger);
+      addSimpleType(poTypes, "BEHSTAT", "behandlingsstatus", OFTInteger);
 
-      addSimpleType(&oTypes, "BEITEBRUKERID", "reinbeitebrukerID", OFTString);
+      addSimpleType(poTypes, "BEITEBRUKERID", "reinbeitebrukerID", OFTString);
 
-      addSimpleType(&oTypes, "BEITETID", "beitetid", OFTString);
+      addSimpleType(poTypes, "BEITETID", "beitetid", OFTString);
 
-      addSimpleType(&oTypes, "BEITETIDVEDTAK", "beitetidVedtak", OFTString);
+      addSimpleType(poTypes, "BEITETIDVEDTAK", "beitetidVedtak", OFTString);
 
-      addSimpleType(&oTypes, "BEKJSAMSET", "bergartKjemiskSammensetning", OFTString);
+      addSimpleType(poTypes, "BEKJSAMSET", "bergartKjemiskSammensetning", OFTString);
 
-      addSimpleType(&oTypes, "BEKORNSTR", "bergartKornstørrelse", OFTString);
+      addSimpleType(poTypes, "BEKORNSTR", "bergartKornstørrelse", OFTString);
 
-      addSimpleType(&oTypes, "BELIGG", "omgivelsetypeTraséseksjon", OFTInteger);
+      addSimpleType(poTypes, "BELIGG", "omgivelsetypeTraséseksjon", OFTInteger);
 
-      addSimpleType(&oTypes, "BELIGGENHET", "beliggenhet", OFTString);
+      addSimpleType(poTypes, "BELIGGENHET", "beliggenhet", OFTString);
 
-      addSimpleType(&oTypes, "BELYSNING", "belysning", OFTString);
+      addSimpleType(poTypes, "BELYSNING", "belysning", OFTString);
 
-      addSimpleType(&oTypes, "BEREGNET", "beregningsDato", OFTDate);
+      addSimpleType(poTypes, "BEREGNET", "beregningsDato", OFTDate);
 
-      addSimpleType(&oTypes, "BEREGNETÅR", "beregnetÅr", OFTString);
+      addSimpleType(poTypes, "BEREGNETÅR", "beregnetÅr", OFTString);
 
-      addSimpleType(&oTypes, "BERGFARGE", "bergartFarge", OFTString);
+      addSimpleType(poTypes, "BERGFARGE", "bergartFarge", OFTString);
 
-      addSimpleType(&oTypes, "BERGGRENSETYPE", "berggrunnGrensetype", OFTInteger);
+      addSimpleType(poTypes, "BERGGRENSETYPE", "berggrunnGrensetype", OFTInteger);
 
-      addSimpleType(&oTypes, "BESK_ELEMENT", "beskrivelseElement", OFTString);
+      addSimpleType(poTypes, "BESK_ELEMENT", "beskrivelseElement", OFTString);
 
-      addSimpleType(&oTypes, "BESKRIV", "tiltaksbeskrivelse", OFTString);
+      addSimpleType(poTypes, "BESKRIV", "tiltaksbeskrivelse", OFTString);
 
-      addSimpleType(&oTypes, "BESKRIVELSE", "beskrivelse", OFTString);
+      addSimpleType(poTypes, "BESKRIVELSE", "beskrivelse", OFTString);
 
-      addSimpleType(&oTypes, "BESTEMMELSEOMRNAVN", "bestemmelseOmrådeNavn", OFTString);
+      addSimpleType(poTypes, "BESTEMMELSEOMRNAVN", "bestemmelseOmrådeNavn", OFTString);
 
-      addSimpleType(&oTypes, "BESTRUKTUR", "bergartStruktur", OFTString);
+      addSimpleType(poTypes, "BESTRUKTUR", "bergartStruktur", OFTString);
 
-      addSimpleType(&oTypes, "BESYMBOLTY", "bergartSymbol", OFTInteger);
+      addSimpleType(poTypes, "BESYMBOLTY", "bergartSymbol", OFTInteger);
 
-      addSimpleType(&oTypes, "BETEKSTUR", "bergartTekstur", OFTString);
+      addSimpleType(poTypes, "BETEKSTUR", "bergartTekstur", OFTString);
 
-      addSimpleType(&oTypes, "BETJENINGSGRAD", "betjeningsgrad", OFTString);
+      addSimpleType(poTypes, "BETJENINGSGRAD", "betjeningsgrad", OFTString);
 
-      addSimpleType(&oTypes, "BILDE-BIT-PIXEL", "bitsPerPixel", OFTInteger);
+      addSimpleType(poTypes, "BILDE-BIT-PIXEL", "bitsPerPixel", OFTInteger);
 
-      addSimpleType(&oTypes, "BILDE-FIL", "bildeFil", OFTString);
+      addSimpleType(poTypes, "BILDE-FIL", "bildeFil", OFTString);
 
-      addSimpleType(&oTypes, "PLANPÅSKRIFTTYPE", "planpåskriftype", OFTInteger);
+      addSimpleType(poTypes, "PLANPÅSKRIFTTYPE", "planpåskriftype", OFTInteger);
 
-      addSimpleType(&oTypes, "BILDEKATEGORI", "bildekategori", OFTInteger);
+      addSimpleType(poTypes, "BILDEKATEGORI", "bildekategori", OFTInteger);
 
-      addSimpleType(&oTypes, "BILDEMÅLESTOKK", "bildemålestokk", OFTInteger);
+      addSimpleType(poTypes, "BILDEMÅLESTOKK", "bildemålestokk", OFTInteger);
 
-      addSimpleType(&oTypes, "BILDENUMMER", "bildenummer", OFTInteger);
+      addSimpleType(poTypes, "BILDENUMMER", "bildenummer", OFTInteger);
 
-      addSimpleType(&oTypes, "BILDE-SYS", "bildeSystem", OFTInteger);
+      addSimpleType(poTypes, "BILDE-SYS", "bildeSystem", OFTInteger);
 
-      addSimpleType(&oTypes, "BILDE-TYPE", "bildeType", OFTString);
+      addSimpleType(poTypes, "BILDE-TYPE", "bildeType", OFTString);
 
-      addSimpleType(&oTypes, "BILDE-UNDERTYPE", "bildeUndertype", OFTString);
+      addSimpleType(poTypes, "BILDE-UNDERTYPE", "bildeUndertype", OFTString);
 
-      addSimpleType(&oTypes, "BISPENUMMER", "bispenummer", OFTInteger);
+      addSimpleType(poTypes, "BISPENUMMER", "bispenummer", OFTInteger);
 
-      addSimpleType(&oTypes, "BKLASSIFIK", "berggrunnKlassifikasjon", OFTInteger);
+      addSimpleType(poTypes, "BKLASSIFIK", "berggrunnKlassifikasjon", OFTInteger);
 
-      addSimpleType(&oTypes, "BLOKK", "steinOgBlokk", OFTString);
+      addSimpleType(poTypes, "BLOKK", "steinOgBlokk", OFTString);
 
-      addSimpleType(&oTypes, "BLOKKAREAL", "blokkareal", OFTReal);
+      addSimpleType(poTypes, "BLOKKAREAL", "blokkareal", OFTReal);
 
-      addSimpleType(&oTypes, "BMANDEL", "bmAndel", OFTInteger);
+      addSimpleType(poTypes, "BMANDEL", "bmAndel", OFTInteger);
 
-      addSimpleType(&oTypes, "BMANTALL", "bmAntall", OFTInteger);
+      addSimpleType(poTypes, "BMANTALL", "bmAntall", OFTInteger);
 
-      addSimpleType(&oTypes, "BMARSTID", "bmÅrstid", OFTInteger);
+      addSimpleType(poTypes, "BMARSTID", "bmÅrstid", OFTInteger);
 
-      addSimpleType(&oTypes, "BMART", "bmArt", OFTString);
+      addSimpleType(poTypes, "BMART", "bmArt", OFTString);
 
-      addSimpleType(&oTypes, "BMENHET", "bmEnhet", OFTInteger);
+      addSimpleType(poTypes, "BMENHET", "bmEnhet", OFTInteger);
 
-      addSimpleType(&oTypes, "BMFUNK", "bmOmrådefunksjon", OFTInteger);
+      addSimpleType(poTypes, "BMFUNK", "bmOmrådefunksjon", OFTInteger);
 
-      addSimpleType(&oTypes, "BMFUNKVAL", "bmFunksjonskvalitet", OFTInteger);
+      addSimpleType(poTypes, "BMFUNKVAL", "bmFunksjonskvalitet", OFTInteger);
 
-      addSimpleType(&oTypes, "BMKILDTYP", "bmKildetype", OFTInteger);
+      addSimpleType(poTypes, "BMKILDTYP", "bmKildetype", OFTInteger);
 
-      addSimpleType(&oTypes, "BMKILDVURD", "bmKildevurdering", OFTInteger);
+      addSimpleType(poTypes, "BMKILDVURD", "bmKildevurdering", OFTInteger);
 
-      addSimpleType(&oTypes, "BMNATYP", "bmNaturtype", OFTString);
+      addSimpleType(poTypes, "BMNATYP", "bmNaturtype", OFTString);
 
-      addSimpleType(&oTypes, "BMNATYPMARIN", "bmNaturtypeMarin", OFTString);
+      addSimpleType(poTypes, "BMNATYPMARIN", "bmNaturtypeMarin", OFTString);
 
-      addSimpleType(&oTypes, "BMNATYPMARINUTF", "bmNaturtypeMarinUtforming", OFTString);
+      addSimpleType(poTypes, "BMNATYPMARINUTF", "bmNaturtypeMarinUtforming", OFTString);
 
-      addSimpleType(&oTypes, "BMNATYPUTF", "bmNaturtypeUtforming", OFTString);
+      addSimpleType(poTypes, "BMNATYPUTF", "bmNaturtypeUtforming", OFTString);
 
-      addSimpleType(&oTypes, "BMREGDATO", "bmRegistreringsdato", OFTDate);
+      addSimpleType(poTypes, "BMREGDATO", "bmRegistreringsdato", OFTDate);
 
-      addSimpleType(&oTypes, "BMTRUETKAT", "bmTruethetskategori", OFTString);
+      addSimpleType(poTypes, "BMTRUETKAT", "bmTruethetskategori", OFTString);
 
-      addSimpleType(&oTypes, "BMVERDI", "bmVerdi", OFTString);
+      addSimpleType(poTypes, "BMVERDI", "bmVerdi", OFTString);
 
-      addSimpleType(&oTypes, "BMVILTVEKT", "bmViltvekt", OFTInteger);
+      addSimpleType(poTypes, "BMVILTVEKT", "bmViltvekt", OFTInteger);
 
-      addSimpleType(&oTypes, "BNR", "bruksnummer", OFTInteger);
+      addSimpleType(poTypes, "BNR", "bruksnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "BOKST", "bokstav", OFTString);
+      addSimpleType(poTypes, "BOKST", "bokstav", OFTString);
 
-      addSimpleType(&oTypes, "BOLTTYPE", "boltType", OFTInteger);
+      addSimpleType(poTypes, "BOLTTYPE", "boltType", OFTInteger);
 
-      addSimpleType(&oTypes, "BOREDAGER", "antallBoredager", OFTInteger);
+      addSimpleType(poTypes, "BOREDAGER", "antallBoredager", OFTInteger);
 
-      addSimpleType(&oTypes, "BOREDATO", "boredato", OFTDate);
+      addSimpleType(poTypes, "BOREDATO", "boredato", OFTDate);
 
-      addSimpleType(&oTypes, "BOREDYP", "boredyp", OFTReal);
+      addSimpleType(poTypes, "BOREDYP", "boredyp", OFTReal);
 
-      addSimpleType(&oTypes, "BOREFIRMA", "borefirma", OFTString);
+      addSimpleType(poTypes, "BOREFIRMA", "borefirma", OFTString);
 
-      addSimpleType(&oTypes, "BOREINNRETN", "boreinnretningsnavn", OFTString);
+      addSimpleType(poTypes, "BOREINNRETN", "boreinnretningsnavn", OFTString);
 
-      addSimpleType(&oTypes, "BORESLUTT", "boreslutt", OFTDate);
+      addSimpleType(poTypes, "BORESLUTT", "boreslutt", OFTDate);
 
-      addSimpleType(&oTypes, "BORESTART", "borestart", OFTDate);
+      addSimpleType(poTypes, "BORESTART", "borestart", OFTDate);
 
-      addSimpleType(&oTypes, "BORETYPE", "boringType", OFTInteger);
+      addSimpleType(poTypes, "BORETYPE", "boringType", OFTInteger);
 
-      addSimpleType(&oTypes, "BORHELNING", "gfborehHelning", OFTInteger);
+      addSimpleType(poTypes, "BORHELNING", "gfborehHelning", OFTInteger);
 
-      addSimpleType(&oTypes, "BORHULLNR", "borhullNummer", OFTString);
+      addSimpleType(poTypes, "BORHULLNR", "borhullNummer", OFTString);
 
-      addSimpleType(&oTypes, "BORLENGDE", "gfborehLengde", OFTReal);
+      addSimpleType(poTypes, "BORLENGDE", "gfborehLengde", OFTReal);
 
-      addSimpleType(&oTypes, "BORRETNING", "gfborehRetning", OFTInteger);
+      addSimpleType(poTypes, "BORRETNING", "gfborehRetning", OFTInteger);
 
-      addSimpleType(&oTypes, "BOT_OK_INT", "botaniskØkologiskInteresse", OFTString);
+      addSimpleType(poTypes, "BOT_OK_INT", "botaniskØkologiskInteresse", OFTString);
 
-      addSimpleType(&oTypes, "BRANSJE", "bransje", OFTString);
+      addSimpleType(poTypes, "BRANSJE", "bransje", OFTString);
 
-      addSimpleType(&oTypes, "BREDDE", "trasébredde", OFTInteger);
+      addSimpleType(poTypes, "BREDDE", "trasébredde", OFTInteger);
 
-      addSimpleType(&oTypes, "BRENNVIDDE", "brennvidde", OFTReal);
+      addSimpleType(poTypes, "BRENNVIDDE", "brennvidde", OFTReal);
 
-      addSimpleType(&oTypes, "BRENSELTANKNEDGR", "brenseltankNedgravd", OFTInteger);
+      addSimpleType(poTypes, "BRENSELTANKNEDGR", "brenseltankNedgravd", OFTInteger);
 
-      addSimpleType(&oTypes, "BRETYPE", "bretype", OFTInteger);
+      addSimpleType(poTypes, "BRETYPE", "bretype", OFTInteger);
 
-      addSimpleType(&oTypes, "BRUDDLENGDE", "bruddlengde", OFTReal);
+      addSimpleType(poTypes, "BRUDDLENGDE", "bruddlengde", OFTReal);
 
-      addSimpleType(&oTypes, "BRUEIER", "brueier", OFTString);
+      addSimpleType(poTypes, "BRUEIER", "brueier", OFTString);
 
-      addSimpleType(&oTypes, "BRUK_GRAD", "kulturlandskapBrukGrad", OFTString);
+      addSimpleType(poTypes, "BRUK_GRAD", "kulturlandskapBrukGrad", OFTString);
 
-      addSimpleType(&oTypes, "BRUKONSTRTYPE", "brukonstruksjonstype", OFTString);
+      addSimpleType(poTypes, "BRUKONSTRTYPE", "brukonstruksjonstype", OFTString);
 
-      addSimpleType(&oTypes, "BRUKSAREAL", "bruksareal", OFTReal);
+      addSimpleType(poTypes, "BRUKSAREAL", "bruksareal", OFTReal);
 
-      addSimpleType(&oTypes, "BRUKSAREALANNET", "bruksarealTilAnnet", OFTReal);
+      addSimpleType(poTypes, "BRUKSAREALANNET", "bruksarealTilAnnet", OFTReal);
 
-      addSimpleType(&oTypes, "BRUKSAREALBOLIG", "bruksarealTilBolig", OFTReal);
+      addSimpleType(poTypes, "BRUKSAREALBOLIG", "bruksarealTilBolig", OFTReal);
 
-      addSimpleType(&oTypes, "BRUKSAREALTOTALT", "bruksarealTotalt", OFTReal);
+      addSimpleType(poTypes, "BRUKSAREALTOTALT", "bruksarealTotalt", OFTReal);
 
-      addSimpleType(&oTypes, "BRUKSENHETSTYPE", "bruksenhetstype", OFTString);
+      addSimpleType(poTypes, "BRUKSENHETSTYPE", "bruksenhetstype", OFTString);
 
-      addSimpleType(&oTypes, "BRUKSFREKVENS", "friluftsområdeBruksfrekvens", OFTInteger);
+      addSimpleType(poTypes, "BRUKSFREKVENS", "friluftsområdeBruksfrekvens", OFTInteger);
 
-      addSimpleType(&oTypes, "BRUKSNAVN", "bruksnavn", OFTString);
+      addSimpleType(poTypes, "BRUKSNAVN", "bruksnavn", OFTString);
 
-      addSimpleType(&oTypes, "BRUMATERIAL", "brumaterial", OFTString);
+      addSimpleType(poTypes, "BRUMATERIAL", "brumaterial", OFTString);
 
-      addSimpleType(&oTypes, "BRUOVERBRU", "bruOverBru", OFTString);
+      addSimpleType(poTypes, "BRUOVERBRU", "bruOverBru", OFTString);
 
-      addSimpleType(&oTypes, "BRUTRAFIKKTYPE", "brutrafikktype", OFTString);
+      addSimpleType(poTypes, "BRUTRAFIKKTYPE", "brutrafikktype", OFTString);
 
-      addSimpleType(&oTypes, "BRUÅPNING", "bruåpningsmåte", OFTString);
+      addSimpleType(poTypes, "BRUÅPNING", "bruåpningsmåte", OFTString);
 
-      addSimpleType(&oTypes, "BRØNN_REGNR", "brønnRegNr", OFTInteger);
+      addSimpleType(poTypes, "BRØNN_REGNR", "brønnRegNr", OFTInteger);
 
-      addSimpleType(&oTypes, "BRØNN_RESULTAT", "brønnresultat", OFTString);
+      addSimpleType(poTypes, "BRØNN_RESULTAT", "brønnresultat", OFTString);
 
-      addSimpleType(&oTypes, "BRØNNKLASSE", "petroleumsbrønnklasse", OFTString);
+      addSimpleType(poTypes, "BRØNNKLASSE", "petroleumsbrønnklasse", OFTString);
 
-      addSimpleType(&oTypes, "BRØNNTYPE", "petroleumsbrønntype", OFTString);
+      addSimpleType(poTypes, "BRØNNTYPE", "petroleumsbrønntype", OFTString);
 
-      addSimpleType(&oTypes, "BRØYTEAREALTILGANG", "brøytearealtilgang", OFTInteger);
+      addSimpleType(poTypes, "BRØYTEAREALTILGANG", "brøytearealtilgang", OFTInteger);
 
-      addSimpleType(&oTypes, "BRØYTEAREALTYPE", "brøytearealtype", OFTInteger);
+      addSimpleType(poTypes, "BRØYTEAREALTYPE", "brøytearealtype", OFTInteger);
 
-      addSimpleType(&oTypes, "BRØYTEBREDDE", "brøytebredde", OFTInteger);
+      addSimpleType(poTypes, "BRØYTEBREDDE", "brøytebredde", OFTInteger);
 
-      addSimpleType(&oTypes, "BRØYTEPRIORITET", "brøyteprioritet", OFTString);
+      addSimpleType(poTypes, "BRØYTEPRIORITET", "brøyteprioritet", OFTString);
 
-      addSimpleType(&oTypes, "BRØYTERESTRIKSJON", "brøyterestriksjon", OFTString);
+      addSimpleType(poTypes, "BRØYTERESTRIKSJON", "brøyterestriksjon", OFTString);
 
-      addSimpleType(&oTypes, "BRØYTESIDE", "brøyteside", OFTString);
+      addSimpleType(poTypes, "BRØYTESIDE", "brøyteside", OFTString);
 
-      addSimpleType(&oTypes, "BRØYTETYPE", "brøytetype", OFTString);
+      addSimpleType(poTypes, "BRØYTETYPE", "brøytetype", OFTString);
 
-      addSimpleType(&oTypes, "BUNNTYP", "bunntype", OFTString);
+      addSimpleType(poTypes, "BUNNTYP", "bunntype", OFTString);
 
-      addSimpleType(&oTypes, "BUNNTYPE", "bunntype", OFTInteger);
+      addSimpleType(poTypes, "BUNNTYPE", "bunntype", OFTInteger);
 
-      addSimpleType(&oTypes, "BYDELSNAVN", "bydelsnavn", OFTString);
+      addSimpleType(poTypes, "BYDELSNAVN", "bydelsnavn", OFTString);
 
-      addSimpleType(&oTypes, "BYDELSNUMMER", "bydelsnummer", OFTInteger);
+      addSimpleType(poTypes, "BYDELSNUMMER", "bydelsnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "BYGGHØYDEIMETER", "bygghøydeIMeter", OFTInteger);
+      addSimpleType(poTypes, "BYGGHØYDEIMETER", "bygghøydeIMeter", OFTInteger);
 
-      addSimpleType(&oTypes, "BYGGNR", "bygningsnummer", OFTInteger);
+      addSimpleType(poTypes, "BYGGNR", "bygningsnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "BYGGSTAT", "bygningsstatus", OFTString);
+      addSimpleType(poTypes, "BYGGSTAT", "bygningsstatus", OFTString);
 
-      addSimpleType(&oTypes, "BYGGTYP_NBR", "bygningstype", OFTInteger);
+      addSimpleType(poTypes, "BYGGTYP_NBR", "bygningstype", OFTInteger);
 
-      addSimpleType(&oTypes, "BYGGVERK", "byggverkbestemmelse", OFTInteger);
+      addSimpleType(poTypes, "BYGGVERK", "byggverkbestemmelse", OFTInteger);
 
-      addSimpleType(&oTypes, "BYGN_ENDR_KODE", "bygningsendringskode", OFTString);
+      addSimpleType(poTypes, "BYGN_ENDR_KODE", "bygningsendringskode", OFTString);
 
-      addSimpleType(&oTypes, "BYGN_ENDR_LØPENR", "endringsløpenummer", OFTInteger);
+      addSimpleType(poTypes, "BYGN_ENDR_LØPENR", "endringsløpenummer", OFTInteger);
 
-      addSimpleType(&oTypes, "BYGN_HIST_DATO", "bygningshistorikkDato", OFTDate);
+      addSimpleType(poTypes, "BYGN_HIST_DATO", "bygningshistorikkDato", OFTDate);
 
-      addSimpleType(&oTypes, "BYGN_REF_TYPE", "bygningReferansetype", OFTString);
+      addSimpleType(poTypes, "BYGN_REF_TYPE", "bygningReferansetype", OFTString);
 
-      addSimpleType(&oTypes, "BYGN_SAKSNR", "bygnSaksnr", OFTString);
+      addSimpleType(poTypes, "BYGN_SAKSNR", "bygnSaksnr", OFTString);
 
-      addSimpleType(&oTypes, "BYGNINGSFUNKSJON", "bygningsfunksjon", OFTInteger);
+      addSimpleType(poTypes, "BYGNINGSFUNKSJON", "bygningsfunksjon", OFTInteger);
 
-      addSimpleType(&oTypes, "BÆREEVNEBENEVNELSE", "bæreevnebenevnelse", OFTString);
+      addSimpleType(poTypes, "BÆREEVNEBENEVNELSE", "bæreevnebenevnelse", OFTString);
 
-      addSimpleType(&oTypes, "BØYE_FORM", "bøyeform", OFTInteger);
+      addSimpleType(poTypes, "BØYE_FORM", "bøyeform", OFTInteger);
 
-      addSimpleType(&oTypes, "BÅNDLAGTFREMTIL", "båndlagtFremTil", OFTDate);
+      addSimpleType(poTypes, "BÅNDLAGTFREMTIL", "båndlagtFremTil", OFTDate);
 
-      addSimpleType(&oTypes, "CLEIER", "CL_Eier", OFTString);
+      addSimpleType(poTypes, "CLEIER", "CL_Eier", OFTString);
 
-      addSimpleType(&oTypes, "D", "dybde", OFTInteger);
+      addSimpleType(poTypes, "D", "dybde", OFTInteger);
 
-      addSimpleType(&oTypes, "DA_ANNET", "landbruksregArealAnnet", OFTInteger);
+      addSimpleType(poTypes, "DA_ANNET", "landbruksregArealAnnet", OFTInteger);
 
-      addSimpleType(&oTypes, "DA_JORD_D", "landbruksregArealJordIDrift", OFTReal);
+      addSimpleType(poTypes, "DA_JORD_D", "landbruksregArealJordIDrift", OFTReal);
 
-      addSimpleType(&oTypes, "DA_JORD_E", "landbruksregArealJordbruk", OFTInteger);
+      addSimpleType(poTypes, "DA_JORD_E", "landbruksregArealJordbruk", OFTInteger);
 
-      addSimpleType(&oTypes, "DA_SKOG", "landbruksregArealSkog", OFTInteger);
+      addSimpleType(poTypes, "DA_SKOG", "landbruksregArealSkog", OFTInteger);
 
-      addSimpleType(&oTypes, "DAMFORMÅL", "damFormål", OFTString);
+      addSimpleType(poTypes, "DAMFORMÅL", "damFormål", OFTString);
 
-      addSimpleType(&oTypes, "DAMFUNKSJON", "damFunksjon", OFTInteger);
+      addSimpleType(poTypes, "DAMFUNKSJON", "damFunksjon", OFTInteger);
 
-      addSimpleType(&oTypes, "DAMLENGDE", "damLengde", OFTReal);
+      addSimpleType(poTypes, "DAMLENGDE", "damLengde", OFTReal);
 
-      addSimpleType(&oTypes, "DAMTYPE", "damType", OFTString);
+      addSimpleType(poTypes, "DAMTYPE", "damType", OFTString);
 
-      addSimpleType(&oTypes, "DATAFANGSTDATO", "datafangstdato", OFTDateTime);
+      addSimpleType(poTypes, "DATAFANGSTDATO", "datafangstdato", OFTDateTime);
 
-      addSimpleType(&oTypes, "DATAUTTAKSDATO", "datauttaksdato", OFTDateTime);
+      addSimpleType(poTypes, "DATAUTTAKSDATO", "datauttaksdato", OFTDateTime);
 
-      addSimpleType(&oTypes, "DATERMETOD", "dateringMetode", OFTInteger);
+      addSimpleType(poTypes, "DATERMETOD", "dateringMetode", OFTInteger);
 
-      addSimpleType(&oTypes, "DATUM", "datum", OFTString);
+      addSimpleType(poTypes, "DATUM", "datum", OFTString);
 
-      addSimpleType(&oTypes, "DEFORMASJONFASE", "deformasjonFase", OFTInteger);
+      addSimpleType(poTypes, "DEFORMASJONFASE", "deformasjonFase", OFTInteger);
 
-      addSimpleType(&oTypes, "DEKKENAVN", "dekkeEnhetNavn", OFTString);
+      addSimpleType(poTypes, "DEKKENAVN", "dekkeEnhetNavn", OFTString);
 
-      addSimpleType(&oTypes, "DEKKETYPE", "dekketype", OFTString);
+      addSimpleType(poTypes, "DEKKETYPE", "dekketype", OFTString);
 
-      addSimpleType(&oTypes, "DEKNINGSNUMMER", "dekningsnummer", OFTString);
+      addSimpleType(poTypes, "DEKNINGSNUMMER", "dekningsnummer", OFTString);
 
-      addSimpleType(&oTypes, "DEL_BRED", "posisjonBredde", OFTInteger);
+      addSimpleType(poTypes, "DEL_BRED", "posisjonBredde", OFTInteger);
 
-      addSimpleType(&oTypes, "DEL_DYBD", "posisjonDybde", OFTInteger);
+      addSimpleType(poTypes, "DEL_DYBD", "posisjonDybde", OFTInteger);
 
-      addSimpleType(&oTypes, "DELOMRÅDENAVN", "delområdenavn", OFTString);
+      addSimpleType(poTypes, "DELOMRÅDENAVN", "delområdenavn", OFTString);
 
-      addSimpleType(&oTypes, "DELOMRÅDENUMMER", "delområdenummer", OFTString);
+      addSimpleType(poTypes, "DELOMRÅDENUMMER", "delområdenummer", OFTString);
 
-      addSimpleType(&oTypes, "DELSTREKNINGSNUMMER", "delstrekningsnummer", OFTString);
+      addSimpleType(poTypes, "DELSTREKNINGSNUMMER", "delstrekningsnummer", OFTString);
 
-      addSimpleType(&oTypes, "DEPONISTATUS", "deponistatus", OFTInteger);
+      addSimpleType(poTypes, "DEPONISTATUS", "deponistatus", OFTInteger);
 
-      addSimpleType(&oTypes, "DEPONITYPE", "deponitype", OFTInteger);
+      addSimpleType(poTypes, "DEPONITYPE", "deponitype", OFTInteger);
 
-      addSimpleType(&oTypes, "DESINFANLAVHELEK", "desinfAnleggAvhElektrisitet", OFTString);
+      addSimpleType(poTypes, "DESINFANLAVHELEK", "desinfAnleggAvhElektrisitet", OFTString);
 
-      addSimpleType(&oTypes, "DIGITALISERINGSMÅLESTOKK", "digitaliseringsmålestokk", OFTInteger);
+      addSimpleType(poTypes, "DIGITALISERINGSMÅLESTOKK", "digitaliseringsmålestokk", OFTInteger);
 
-      addSimpleType(&oTypes, "DIM-BREDDE", "tekstTegnBredde", OFTReal);
+      addSimpleType(poTypes, "DIM-BREDDE", "tekstTegnBredde", OFTReal);
 
-      addSimpleType(&oTypes, "DIM-HØYDE", "tekstTegnHøyde", OFTReal);
+      addSimpleType(poTypes, "DIM-HØYDE", "tekstTegnHøyde", OFTReal);
 
-      addSimpleType(&oTypes, "DISTKODE", "reinbeitedistriktID", OFTString);
+      addSimpleType(poTypes, "DISTKODE", "reinbeitedistriktID", OFTString);
 
-      addSimpleType(&oTypes, "DK_MANDEL", "dyrkningspotensialMandel", OFTInteger);
+      addSimpleType(poTypes, "DK_MANDEL", "dyrkningspotensialMandel", OFTInteger);
 
-      addSimpleType(&oTypes, "DK_MANDEL_A", "nedklassifiseringMandel", OFTInteger);
+      addSimpleType(poTypes, "DK_MANDEL_A", "nedklassifiseringMandel", OFTInteger);
 
-      addSimpleType(&oTypes, "DK_NEDBOR", "nedbørsbasert", OFTInteger);
+      addSimpleType(poTypes, "DK_NEDBOR", "nedbørsbasert", OFTInteger);
 
-      addSimpleType(&oTypes, "DK_NEDBOR_A", "nedklassifiseringNedbør", OFTInteger);
+      addSimpleType(poTypes, "DK_NEDBOR_A", "nedklassifiseringNedbør", OFTInteger);
 
-      addSimpleType(&oTypes, "DK_VANN", "vanningsbasert", OFTInteger);
+      addSimpleType(poTypes, "DK_VANN", "vanningsbasert", OFTInteger);
 
-      addSimpleType(&oTypes, "DK_VANN_A", "nedklassifiseringVanning", OFTInteger);
+      addSimpleType(poTypes, "DK_VANN_A", "nedklassifiseringVanning", OFTInteger);
 
-      addSimpleType(&oTypes, "DOKUMENTASJONSTYPE", "dokumentasjonType", OFTInteger);
+      addSimpleType(poTypes, "DOKUMENTASJONSTYPE", "dokumentasjonType", OFTInteger);
 
-      addSimpleType(&oTypes, "D-REF-INT", "vertikalReferanseInternasjonalDybde", OFTInteger);
+      addSimpleType(poTypes, "D-REF-INT", "vertikalReferanseInternasjonalDybde", OFTInteger);
 
-      addSimpleType(&oTypes, "DRIFTFHOLD", "driftForhold", OFTInteger);
+      addSimpleType(poTypes, "DRIFTFHOLD", "driftForhold", OFTInteger);
 
-      addSimpleType(&oTypes, "DRIFTMETOD", "driftMetode", OFTInteger);
+      addSimpleType(poTypes, "DRIFTMETOD", "driftMetode", OFTInteger);
 
-      addSimpleType(&oTypes, "DRSENTER", "jordregisterDriftssenter", OFTInteger);
+      addSimpleType(poTypes, "DRSENTER", "jordregisterDriftssenter", OFTInteger);
 
-      addSimpleType(&oTypes, "DYBDE", "dybde", OFTReal);
+      addSimpleType(poTypes, "DYBDE", "dybde", OFTReal);
 
-      addSimpleType(&oTypes, "DYBDE_MAX", "maximumsdybde", OFTReal);
+      addSimpleType(poTypes, "DYBDE_MAX", "maximumsdybde", OFTReal);
 
-      addSimpleType(&oTypes, "DYBDE_MIN", "minimumsdybde", OFTReal);
+      addSimpleType(poTypes, "DYBDE_MIN", "minimumsdybde", OFTReal);
 
-      addSimpleType(&oTypes, "DYBDEFJELL", "dybdeTilFjell", OFTReal);
+      addSimpleType(poTypes, "DYBDEFJELL", "dybdeTilFjell", OFTReal);
 
-      addSimpleType(&oTypes, "DYBDEKVIKKLEIRE", "dybdeTilKvikkleire", OFTReal);
+      addSimpleType(poTypes, "DYBDEKVIKKLEIRE", "dybdeTilKvikkleire", OFTReal);
 
-      addSimpleType(&oTypes, "DYBDEMÅLEMETODE", "dybemålemetode", OFTInteger);
+      addSimpleType(poTypes, "DYBDEMÅLEMETODE", "dybemålemetode", OFTInteger);
 
-      addSimpleType(&oTypes, "DYBDE-REF", "dybdeReferanse", OFTString);
+      addSimpleType(poTypes, "DYBDE-REF", "dybdeReferanse", OFTString);
 
-      addSimpleType(&oTypes, "DYBDETYPE", "dybdetype", OFTInteger);
+      addSimpleType(poTypes, "DYBDETYPE", "dybdetype", OFTInteger);
 
-      addSimpleType(&oTypes, "DYPMIDDEL", "dypMiddel", OFTInteger);
+      addSimpleType(poTypes, "DYPMIDDEL", "dypMiddel", OFTInteger);
 
-      addSimpleType(&oTypes, "DYPSTØRSTMÅLT", "dypStørstMålt", OFTInteger);
+      addSimpleType(poTypes, "DYPSTØRSTMÅLT", "dypStørstMålt", OFTInteger);
 
-      addSimpleType(&oTypes, "SERIENUMMER", "serienummer", OFTString);
+      addSimpleType(poTypes, "SERIENUMMER", "serienummer", OFTString);
 
-      addSimpleType(&oTypes, "DYRKING", "jordregisterDyrkingsjord", OFTString);
+      addSimpleType(poTypes, "DYRKING", "jordregisterDyrkingsjord", OFTString);
 
-      addSimpleType(&oTypes, "EIER", "geodataeier", OFTString);
+      addSimpleType(poTypes, "EIER", "geodataeier", OFTString);
 
-      addSimpleType(&oTypes, "EIERFORHOLD", "eierforhold", OFTString);
+      addSimpleType(poTypes, "EIERFORHOLD", "eierforhold", OFTString);
 
-      addSimpleType(&oTypes, "EIERFORM", "eierformType", OFTInteger);
+      addSimpleType(poTypes, "EIERFORM", "eierformType", OFTInteger);
 
-      addSimpleType(&oTypes, "EKOORD-H", "jordregisterKoordinatHøyde", OFTInteger);
+      addSimpleType(poTypes, "EKOORD-H", "jordregisterKoordinatHøyde", OFTInteger);
 
-      addSimpleType(&oTypes, "EKOORD-N", "jordregisterKoordinatNord", OFTInteger);
+      addSimpleType(poTypes, "EKOORD-N", "jordregisterKoordinatNord", OFTInteger);
 
-      addSimpleType(&oTypes, "EKOORD-Ø", "jordregisterKoordinatØst", OFTInteger);
+      addSimpleType(poTypes, "EKOORD-Ø", "jordregisterKoordinatØst", OFTInteger);
 
-      addSimpleType(&oTypes, "ENDRET_TID", "tidspunktEndring", OFTDateTime);
+      addSimpleType(poTypes, "ENDRET_TID", "tidspunktEndring", OFTDateTime);
 
-      addSimpleType(&oTypes, "ENDRET_TYPE", "typeEndring", OFTString);
+      addSimpleType(poTypes, "ENDRET_TYPE", "typeEndring", OFTString);
 
-      addSimpleType(&oTypes, "ENDRINGSGRAD", "endringsgrad", OFTString);
+      addSimpleType(poTypes, "ENDRINGSGRAD", "endringsgrad", OFTString);
 
-      addSimpleType(&oTypes, "ENERGIKILDE", "energikilde", OFTString);
+      addSimpleType(poTypes, "ENERGIKILDE", "energikilde", OFTString);
 
-      addSimpleType(&oTypes, "ENHET", "enhet", OFTReal);
+      addSimpleType(poTypes, "ENHET", "enhet", OFTReal);
 
-      addSimpleType(&oTypes, "ENHET-D", "enhetDybde", OFTReal);
+      addSimpleType(poTypes, "ENHET-D", "enhetDybde", OFTReal);
 
-      addSimpleType(&oTypes, "ENHET-H", "enhetHøyde", OFTReal);
+      addSimpleType(poTypes, "ENHET-H", "enhetHøyde", OFTReal);
 
-      addSimpleType(&oTypes, "EROSJONGS", "erosjonsrisikoGrasdekke", OFTInteger);
+      addSimpleType(poTypes, "EROSJONGS", "erosjonsrisikoGrasdekke", OFTInteger);
 
-      addSimpleType(&oTypes, "EROSJONHP", "erosjonsrisikoHøstpløying", OFTInteger);
+      addSimpleType(poTypes, "EROSJONHP", "erosjonsrisikoHøstpløying", OFTInteger);
 
-      addSimpleType(&oTypes, "ETABLERINGSDATO", "etableringsdato", OFTDate);
+      addSimpleType(poTypes, "ETABLERINGSDATO", "etableringsdato", OFTDate);
 
-      addSimpleType(&oTypes, "ETABLERT", "fastmerkeEtableringsdato", OFTDate);
+      addSimpleType(poTypes, "ETABLERT", "fastmerkeEtableringsdato", OFTDate);
 
-      addSimpleType(&oTypes, "ETASJENUMMER", "etasjenummer", OFTInteger);
+      addSimpleType(poTypes, "ETASJENUMMER", "etasjenummer", OFTInteger);
 
-      addSimpleType(&oTypes, "ETASJEPLAN", "etasjeplan", OFTString);
+      addSimpleType(poTypes, "ETASJEPLAN", "etasjeplan", OFTString);
 
-      addSimpleType(&oTypes, "ETASJETALL", "etasjetall", OFTString);
+      addSimpleType(poTypes, "ETASJETALL", "etasjetall", OFTString);
 
-      addSimpleType(&oTypes, "ETAT", "etat", OFTString);
+      addSimpleType(poTypes, "ETAT", "etat", OFTString);
 
-      addSimpleType(&oTypes, "F_TYPE", "fiskeType", OFTInteger);
+      addSimpleType(poTypes, "F_TYPE", "fiskeType", OFTInteger);
 
-      addSimpleType(&oTypes, "FAGOMRÅD", "ledningsfagområde", OFTInteger);
+      addSimpleType(poTypes, "FAGOMRÅD", "ledningsfagområde", OFTInteger);
 
-      addSimpleType(&oTypes, "FALLHØYDE", "fallHøyde", OFTReal);
+      addSimpleType(poTypes, "FALLHØYDE", "fallHøyde", OFTReal);
 
-      addSimpleType(&oTypes, "FAO_KODE", "faoKode", OFTString);
+      addSimpleType(poTypes, "FAO_KODE", "faoKode", OFTString);
 
-      addSimpleType(&oTypes, "FARTØY_ID", "fartøyIdentifikasjon", OFTString);
+      addSimpleType(poTypes, "FARTØY_ID", "fartøyIdentifikasjon", OFTString);
 
-      addSimpleType(&oTypes, "FASADE", "fasade", OFTInteger);
+      addSimpleType(poTypes, "FASADE", "fasade", OFTInteger);
 
-      addSimpleType(&oTypes, "FBNAVN", "fiskebedriftsnavn", OFTString);
+      addSimpleType(poTypes, "FBNAVN", "fiskebedriftsnavn", OFTString);
 
-      addSimpleType(&oTypes, "FBNR", "fiskebruksnummer", OFTInteger);
+      addSimpleType(poTypes, "FBNR", "fiskebruksnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "FBNR_FYLK", "fiskebruksnummerFylke", OFTString);
+      addSimpleType(poTypes, "FBNR_FYLK", "fiskebruksnummerFylke", OFTString);
 
-      addSimpleType(&oTypes, "FELTNAVN", "feltbetegnelse", OFTString);
+      addSimpleType(poTypes, "FELTNAVN", "feltbetegnelse", OFTString);
 
-      addSimpleType(&oTypes, "FELTREGISTRERTAV", "feltegistrertAv", OFTString);
+      addSimpleType(poTypes, "FELTREGISTRERTAV", "feltegistrertAv", OFTString);
 
-      addSimpleType(&oTypes, "FIGF_ID", "figurFørSkifteIdent", OFTInteger);
+      addSimpleType(poTypes, "FIGF_ID", "figurFørSkifteIdent", OFTInteger);
 
-      addSimpleType(&oTypes, "FILM", "film", OFTString);
+      addSimpleType(poTypes, "FILM", "film", OFTString);
 
-      addSimpleType(&oTypes, "FIRMA", "firmanavn", OFTString);
+      addSimpleType(poTypes, "FIRMA", "firmanavn", OFTString);
 
-      addSimpleType(&oTypes, "FISK_KODE", "artskode", OFTInteger);
+      addSimpleType(poTypes, "FISK_KODE", "artskode", OFTInteger);
 
-      addSimpleType(&oTypes, "FISKE_BEDR_ANDEL", "fiskebedriftsandel", OFTInteger);
+      addSimpleType(poTypes, "FISKE_BEDR_ANDEL", "fiskebedriftsandel", OFTInteger);
 
-      addSimpleType(&oTypes, "FISKE_BEDR_EIER", "fiskebedriftseier", OFTString);
+      addSimpleType(poTypes, "FISKE_BEDR_EIER", "fiskebedriftseier", OFTString);
 
-      addSimpleType(&oTypes, "FISKE_BEDR_OMR", "fiskebedriftsområde", OFTInteger);
+      addSimpleType(poTypes, "FISKE_BEDR_OMR", "fiskebedriftsområde", OFTInteger);
 
-      addSimpleType(&oTypes, "FISKE_BEDR_PROD", "fiskebedriftsprodukt", OFTInteger);
+      addSimpleType(poTypes, "FISKE_BEDR_PROD", "fiskebedriftsprodukt", OFTInteger);
 
-      addSimpleType(&oTypes, "FISKE_BEDR_SERVICE", "fiskebedriftservice", OFTInteger);
+      addSimpleType(poTypes, "FISKE_BEDR_SERVICE", "fiskebedriftservice", OFTInteger);
 
-      addSimpleType(&oTypes, "FISKE_KAP_ENH", "fiskekapasitetEnhet", OFTInteger);
+      addSimpleType(poTypes, "FISKE_KAP_ENH", "fiskekapasitetEnhet", OFTInteger);
 
-      addSimpleType(&oTypes, "FISKE_KAPASITET", "fiskekapasitet", OFTInteger);
+      addSimpleType(poTypes, "FISKE_KAPASITET", "fiskekapasitet", OFTInteger);
 
-      addSimpleType(&oTypes, "FISKE_TYPE", "fisketype", OFTInteger);
+      addSimpleType(poTypes, "FISKE_TYPE", "fisketype", OFTInteger);
 
-      addSimpleType(&oTypes, "FISKERI_BRUK_TYPE", "fiskeribrukstype", OFTInteger);
+      addSimpleType(poTypes, "FISKERI_BRUK_TYPE", "fiskeribrukstype", OFTInteger);
 
-      addSimpleType(&oTypes, "FISKERI_RESS_TYPE", "fiskeriressursOmrådetype", OFTInteger);
+      addSimpleType(poTypes, "FISKERI_RESS_TYPE", "fiskeriressursOmrådetype", OFTInteger);
 
-      addSimpleType(&oTypes, "FISKERIREDSKAP_GEN_AKTIV", "fiskeriredskapGenAktiv", OFTInteger);
+      addSimpleType(poTypes, "FISKERIREDSKAP_GEN_AKTIV", "fiskeriredskapGenAktiv", OFTInteger);
 
-      addSimpleType(&oTypes, "FISKERIREDSKAP_GEN_PASSIV", "fiskeriredskapGenPassiv", OFTInteger);
+      addSimpleType(poTypes, "FISKERIREDSKAP_GEN_PASSIV", "fiskeriredskapGenPassiv", OFTInteger);
 
-      addSimpleType(&oTypes, "FISKERIREDSKAP_SPES_AKTIV", "fiskeriredskapSpesAktiv", OFTInteger);
+      addSimpleType(poTypes, "FISKERIREDSKAP_SPES_AKTIV", "fiskeriredskapSpesAktiv", OFTInteger);
 
-      addSimpleType(&oTypes, "FISKERIREDSKAP_SPES_PASSIV", "fiskeriredskapSpesPassiv", OFTInteger);
+      addSimpleType(poTypes, "FISKERIREDSKAP_SPES_PASSIV", "fiskeriredskapSpesPassiv", OFTInteger);
 
-      addSimpleType(&oTypes, "FJELL", "fjellblotninger", OFTInteger);
+      addSimpleType(poTypes, "FJELL", "fjellblotninger", OFTInteger);
 
-      addSimpleType(&oTypes, "FJORDID", "fjordidentifikasjon", OFTString);
+      addSimpleType(poTypes, "FJORDID", "fjordidentifikasjon", OFTString);
 
-      addSimpleType(&oTypes, "FLODBOLGEHOYDE", "flodbolgehoyde", OFTInteger);
+      addSimpleType(poTypes, "FLODBOLGEHOYDE", "flodbolgehoyde", OFTInteger);
 
-      addSimpleType(&oTypes, "FLOMLAVPUNKT", "flomLavPunkt", OFTReal);
+      addSimpleType(poTypes, "FLOMLAVPUNKT", "flomLavPunkt", OFTReal);
 
-      addSimpleType(&oTypes, "FLYFIRMA", "flyfirma", OFTString);
+      addSimpleType(poTypes, "FLYFIRMA", "flyfirma", OFTString);
 
-      addSimpleType(&oTypes, "FLYHØYDE", "flyhøyde", OFTInteger);
+      addSimpleType(poTypes, "FLYHØYDE", "flyhøyde", OFTInteger);
 
-      addSimpleType(&oTypes, "FLYRESTR", "flyRestriksjon", OFTInteger);
+      addSimpleType(poTypes, "FLYRESTR", "flyRestriksjon", OFTInteger);
 
-      addSimpleType(&oTypes, "FMADKOMST", "fastmerkeAdkomst", OFTString);
+      addSimpleType(poTypes, "FMADKOMST", "fastmerkeAdkomst", OFTString);
 
-      addSimpleType(&oTypes, "FMDIM", "fastmerkeDiameter", OFTInteger);
+      addSimpleType(poTypes, "FMDIM", "fastmerkeDiameter", OFTInteger);
 
-      addSimpleType(&oTypes, "FMHREF", "fastmerkeHøyderef", OFTString);
+      addSimpleType(poTypes, "FMHREF", "fastmerkeHøyderef", OFTString);
 
-      addSimpleType(&oTypes, "FMIDDATO", "fastmerkeIdDato", OFTDate);
+      addSimpleType(poTypes, "FMIDDATO", "fastmerkeIdDato", OFTDate);
 
-      addSimpleType(&oTypes, "FMIDGML", "fastmerkeIdGammel", OFTString);
+      addSimpleType(poTypes, "FMIDGML", "fastmerkeIdGammel", OFTString);
 
-      addSimpleType(&oTypes, "FMINST", "fastmerkeInstitusjon", OFTString);
+      addSimpleType(poTypes, "FMINST", "fastmerkeInstitusjon", OFTString);
 
-      addSimpleType(&oTypes, "FMKOMM", "fastmerkeKommune", OFTInteger);
+      addSimpleType(poTypes, "FMKOMM", "fastmerkeKommune", OFTInteger);
 
-      addSimpleType(&oTypes, "FMMERK", "fastmerkeMerknader", OFTString);
+      addSimpleType(poTypes, "FMMERK", "fastmerkeMerknader", OFTString);
 
-      addSimpleType(&oTypes, "FMNAVN", "fastmerkeNavn", OFTString);
+      addSimpleType(poTypes, "FMNAVN", "fastmerkeNavn", OFTString);
 
-      addSimpleType(&oTypes, "FMNUMMER", "fastmerkeNummer", OFTString);
+      addSimpleType(poTypes, "FMNUMMER", "fastmerkeNummer", OFTString);
 
-      addSimpleType(&oTypes, "FMREFBER", "fastmerkeRefGrunnrisBeregning", OFTString);
+      addSimpleType(poTypes, "FMREFBER", "fastmerkeRefGrunnrisBeregning", OFTString);
 
-      addSimpleType(&oTypes, "FMREFHBER", "fastmerkeRefHøydeBeregning", OFTString);
+      addSimpleType(poTypes, "FMREFHBER", "fastmerkeRefHøydeBeregning", OFTString);
 
-      addSimpleType(&oTypes, "FMRESTR", "fastmerkeRestriksjon", OFTString);
+      addSimpleType(poTypes, "FMRESTR", "fastmerkeRestriksjon", OFTString);
 
-      addSimpleType(&oTypes, "FMSREF", "fastmerkeSentrumRef", OFTString);
+      addSimpleType(poTypes, "FMSREF", "fastmerkeSentrumRef", OFTString);
 
-      addSimpleType(&oTypes, "FNR", "festenummer", OFTInteger);
+      addSimpleType(poTypes, "FNR", "festenummer", OFTInteger);
 
-      addSimpleType(&oTypes, "FONTENE_TYPE", "fontenetype", OFTInteger);
+      addSimpleType(poTypes, "FONTENE_TYPE", "fontenetype", OFTInteger);
 
-      addSimpleType(&oTypes, "FOREKNAVN", "navnRastoffobj", OFTString);
+      addSimpleType(poTypes, "FOREKNAVN", "navnRastoffobj", OFTString);
 
-      addSimpleType(&oTypes, "FOREKOM_ID", "identRastoffobj", OFTInteger);
+      addSimpleType(poTypes, "FOREKOM_ID", "identRastoffobj", OFTInteger);
 
-      addSimpleType(&oTypes, "FORHOLDANDREHUS", "forholdAndreHus", OFTString);
+      addSimpleType(poTypes, "FORHOLDANDREHUS", "forholdAndreHus", OFTString);
 
-      addSimpleType(&oTypes, "FORHÅNDSTALL", "forhåndstall", OFTInteger);
+      addSimpleType(poTypes, "FORHÅNDSTALL", "forhåndstall", OFTInteger);
 
-      addSimpleType(&oTypes, "FORLENGET_DATO", "forlengetDato", OFTDate);
+      addSimpleType(poTypes, "FORLENGET_DATO", "forlengetDato", OFTDate);
 
-      addSimpleType(&oTypes, "FORMASJON", "formasjonTotalDyp", OFTString);
+      addSimpleType(poTypes, "FORMASJON", "formasjonTotalDyp", OFTString);
 
-      addSimpleType(&oTypes, "FORMELFLATE", "kvFormFlatetype", OFTInteger);
+      addSimpleType(poTypes, "FORMELFLATE", "kvFormFlatetype", OFTInteger);
 
-      addSimpleType(&oTypes, "FORMELLIN", "kvFormLinjetype", OFTInteger);
+      addSimpleType(poTypes, "FORMELLIN", "kvFormLinjetype", OFTInteger);
 
-      addSimpleType(&oTypes, "FORMELPKT", "kvFormPunkttype", OFTInteger);
+      addSimpleType(poTypes, "FORMELPKT", "kvFormPunkttype", OFTInteger);
 
-      addSimpleType(&oTypes, "FORMÅLSEKSJON", "formålSeksjonKode", OFTString);
+      addSimpleType(poTypes, "FORMÅLSEKSJON", "formålSeksjonKode", OFTString);
 
-      addSimpleType(&oTypes, "FORUR_AREAL", "forurensetAreal", OFTInteger);
+      addSimpleType(poTypes, "FORUR_AREAL", "forurensetAreal", OFTInteger);
 
-      addSimpleType(&oTypes, "FORUR_GRUNNTYPE", "forurensetGrunnType", OFTInteger);
+      addSimpleType(poTypes, "FORUR_GRUNNTYPE", "forurensetGrunnType", OFTInteger);
 
-      addSimpleType(&oTypes, "FORUR_HOVEDGRUPPE", "forurensningHovedgruppe", OFTInteger);
+      addSimpleType(poTypes, "FORUR_HOVEDGRUPPE", "forurensningHovedgruppe", OFTInteger);
 
-      addSimpleType(&oTypes, "FORV_MYND", "forvaltningMyndighet", OFTString);
+      addSimpleType(poTypes, "FORV_MYND", "forvaltningMyndighet", OFTString);
 
-      addSimpleType(&oTypes, "FORV_PLAN", "forvaltningPlan", OFTInteger);
+      addSimpleType(poTypes, "FORV_PLAN", "forvaltningPlan", OFTInteger);
 
-      addSimpleType(&oTypes, "FOSSILTYPE", "fossilNavn", OFTString);
+      addSimpleType(poTypes, "FOSSILTYPE", "fossilNavn", OFTString);
 
-      addSimpleType(&oTypes, "FOTODATO", "fotodato", OFTDate);
+      addSimpleType(poTypes, "FOTODATO", "fotodato", OFTDate);
 
-      addSimpleType(&oTypes, "FOTOGRAF", "fotograf", OFTString);
+      addSimpleType(poTypes, "FOTOGRAF", "fotograf", OFTString);
 
-      addSimpleType(&oTypes, "FOTRUTETYPE", "fotrutetype", OFTInteger);
+      addSimpleType(poTypes, "FOTRUTETYPE", "fotrutetype", OFTInteger);
 
-      addSimpleType(&oTypes, "FRASPORNODEKILOMETER", "fraSpornodeKilometer", OFTReal);
+      addSimpleType(poTypes, "FRASPORNODEKILOMETER", "fraSpornodeKilometer", OFTReal);
 
-      addSimpleType(&oTypes, "FRASPORNODETEKST", "fraSpornodeTekst", OFTString);
+      addSimpleType(poTypes, "FRASPORNODETEKST", "fraSpornodeTekst", OFTString);
 
-      addSimpleType(&oTypes, "FRASPORNODETYPE", "fraSpornodeType", OFTString);
+      addSimpleType(poTypes, "FRASPORNODETYPE", "fraSpornodeType", OFTString);
 
-      addSimpleType(&oTypes, "F-REF-INT", "friseilingReferanseInternasjonal", OFTInteger);
+      addSimpleType(poTypes, "F-REF-INT", "friseilingReferanseInternasjonal", OFTInteger);
 
-      addSimpleType(&oTypes, "FREG", "jordregisterFreg", OFTInteger);
+      addSimpleType(poTypes, "FREG", "jordregisterFreg", OFTInteger);
 
-      addSimpleType(&oTypes, "FRIDRIFTSTILSYN", "friluftslivsområdeDriftstilsyn", OFTInteger);
+      addSimpleType(poTypes, "FRIDRIFTSTILSYN", "friluftslivsområdeDriftstilsyn", OFTInteger);
 
-      addSimpleType(&oTypes, "FRIEGNETHET", "friluftslivsområdeEgnethet", OFTInteger);
+      addSimpleType(poTypes, "FRIEGNETHET", "friluftslivsområdeEgnethet", OFTInteger);
 
-      addSimpleType(&oTypes, "FRIPLANST", "friluftslivsområdePlanStatus", OFTInteger);
+      addSimpleType(poTypes, "FRIPLANST", "friluftslivsområdePlanStatus", OFTInteger);
 
-      addSimpleType(&oTypes, "FRISEILHØYDE", "friseilingshøyde", OFTReal);
+      addSimpleType(poTypes, "FRISEILHØYDE", "friseilingshøyde", OFTReal);
 
-      addSimpleType(&oTypes, "FRISEIL-REF", "frilseilingReferanse", OFTString);
+      addSimpleType(poTypes, "FRISEIL-REF", "frilseilingReferanse", OFTString);
 
-      addSimpleType(&oTypes, "FRISIKRING", "friluftslivSikring", OFTInteger);
+      addSimpleType(poTypes, "FRISIKRING", "friluftslivSikring", OFTInteger);
 
-      addSimpleType(&oTypes, "FRISPERR", "frisperring", OFTInteger);
+      addSimpleType(poTypes, "FRISPERR", "frisperring", OFTInteger);
 
-      addSimpleType(&oTypes, "FRISTMATRIKKELFØRINGSKRAV", "fristMatrikkelføringskrav", OFTDate);
+      addSimpleType(poTypes, "FRISTMATRIKKELFØRINGSKRAV", "fristMatrikkelføringskrav", OFTDate);
 
-      addSimpleType(&oTypes, "FRISTOPPMÅLING", "fristOppmåling", OFTDate);
+      addSimpleType(poTypes, "FRISTOPPMÅLING", "fristOppmåling", OFTDate);
 
-      addSimpleType(&oTypes, "FRITILRETTELEGGING", "friluftslivsområdeTilrettelegging", OFTInteger);
+      addSimpleType(poTypes, "FRITILRETTELEGGING", "friluftslivsområdeTilrettelegging", OFTInteger);
 
-      addSimpleType(&oTypes, "FRITYPE", "friluftslivsområdeType", OFTString);
+      addSimpleType(poTypes, "FRITYPE", "friluftslivsområdeType", OFTString);
 
-      addSimpleType(&oTypes, "FRIVERDI", "friluftslivsområdeVerdi", OFTString);
+      addSimpleType(poTypes, "FRIVERDI", "friluftslivsområdeVerdi", OFTString);
 
-      addSimpleType(&oTypes, "F-STRENG", "formatertStreng", OFTString);
+      addSimpleType(poTypes, "F-STRENG", "formatertStreng", OFTString);
 
-      addSimpleType(&oTypes, "FUNDAMENTERING", "fundamentering", OFTInteger);
+      addSimpleType(poTypes, "FUNDAMENTERING", "fundamentering", OFTInteger);
 
-      addSimpleType(&oTypes, "FYDELTEMA", "fylkesdeltema", OFTInteger);
+      addSimpleType(poTypes, "FYDELTEMA", "fylkesdeltema", OFTInteger);
 
-      addSimpleType(&oTypes, "FYLKESNR", "fylkesnummer", OFTInteger);
+      addSimpleType(poTypes, "FYLKESNR", "fylkesnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "FYRLISTEKARAKTER", "fyrlisteKarakter", OFTString);
+      addSimpleType(poTypes, "FYRLISTEKARAKTER", "fyrlisteKarakter", OFTString);
 
-      addSimpleType(&oTypes, "FYRLISTENUMMER", "fyrlistenummer", OFTString);
+      addSimpleType(poTypes, "FYRLISTENUMMER", "fyrlistenummer", OFTString);
 
-      addSimpleType(&oTypes, "FYSENHET", "fysiskEnhet", OFTInteger);
+      addSimpleType(poTypes, "FYSENHET", "fysiskEnhet", OFTInteger);
 
-      addSimpleType(&oTypes, "FYSISKMILJØ", "fysiskMiljø", OFTInteger);
+      addSimpleType(poTypes, "FYSISKMILJØ", "fysiskMiljø", OFTInteger);
 
-      addSimpleType(&oTypes, "FYSPARAM", "fysiskParameter", OFTInteger);
+      addSimpleType(poTypes, "FYSPARAM", "fysiskParameter", OFTInteger);
 
-      addSimpleType(&oTypes, "FYSSTR", "fysiskStorrelse", OFTReal);
+      addSimpleType(poTypes, "FYSSTR", "fysiskStorrelse", OFTReal);
 
-      addSimpleType(&oTypes, "FØLGER_TERRENGDET", "følgerTerrengdetalj", OFTString);
+      addSimpleType(poTypes, "FØLGER_TERRENGDET", "følgerTerrengdetalj", OFTString);
 
-      addSimpleType(&oTypes, "FØRSTEDATAFANGSTDATO", "førsteDatafangstdato", OFTDateTime);
+      addSimpleType(poTypes, "FØRSTEDATAFANGSTDATO", "førsteDatafangstdato", OFTDateTime);
 
-      addSimpleType(&oTypes, "FØRSTEDIGITALISERINGSDATO", "førsteDigitaliseringsdato", OFTDateTime);
+      addSimpleType(poTypes, "FØRSTEDIGITALISERINGSDATO", "førsteDigitaliseringsdato", OFTDateTime);
 
-      addSimpleType(&oTypes, "GARDIDNR", "landbruksregProdusentId", OFTInteger);
+      addSimpleType(poTypes, "GARDIDNR", "landbruksregProdusentId", OFTInteger);
 
-      addSimpleType(&oTypes, "GATENAVN", "gatenavn", OFTString);
+      addSimpleType(poTypes, "GATENAVN", "gatenavn", OFTString);
 
-      addSimpleType(&oTypes, "GATENR", "gatenummer", OFTInteger);
+      addSimpleType(poTypes, "GATENR", "gatenummer", OFTInteger);
 
-      addSimpleType(&oTypes, "GENRESTR", "generellrestriksjon", OFTInteger);
+      addSimpleType(poTypes, "GENRESTR", "generellrestriksjon", OFTInteger);
 
-      addSimpleType(&oTypes, "GEOALDER", "geolAlder", OFTInteger);
+      addSimpleType(poTypes, "GEOALDER", "geolAlder", OFTInteger);
 
-      addSimpleType(&oTypes, "GEOALDER_FRA", "geolMaksAlder", OFTInteger);
+      addSimpleType(poTypes, "GEOALDER_FRA", "geolMaksAlder", OFTInteger);
 
-      addSimpleType(&oTypes, "GEOALDER_TIL", "geolMinAlder", OFTInteger);
+      addSimpleType(poTypes, "GEOALDER_TIL", "geolMinAlder", OFTInteger);
 
-      addSimpleType(&oTypes, "GEOBESK", "geolBeskrivelse", OFTString);
+      addSimpleType(poTypes, "GEOBESK", "geolBeskrivelse", OFTString);
 
-      addSimpleType(&oTypes, "GEO-DATUM", "geoDatumInternasjonal", OFTInteger);
+      addSimpleType(poTypes, "GEO-DATUM", "geoDatumInternasjonal", OFTInteger);
 
-      addSimpleType(&oTypes, "GEOFELTNR", "geologFeltnummer", OFTString);
+      addSimpleType(poTypes, "GEOFELTNR", "geologFeltnummer", OFTString);
 
-      addSimpleType(&oTypes, "GEOFORMASJ", "geolFormasjonNavn", OFTString);
+      addSimpleType(poTypes, "GEOFORMASJ", "geolFormasjonNavn", OFTString);
 
-      addSimpleType(&oTypes, "GEOGRUPPE", "geolGruppeNavn", OFTString);
+      addSimpleType(poTypes, "GEOGRUPPE", "geolGruppeNavn", OFTString);
 
-      addSimpleType(&oTypes, "GEOHOVERDI", "geolHorisontalverdi", OFTInteger);
+      addSimpleType(poTypes, "GEOHOVERDI", "geolHorisontalverdi", OFTInteger);
 
-      addSimpleType(&oTypes, "GEOKARTNR", "geolKartnummer", OFTInteger);
+      addSimpleType(poTypes, "GEOKARTNR", "geolKartnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "GEOKOORD", "geoKoordinatverdiEnhet", OFTInteger);
+      addSimpleType(poTypes, "GEOKOORD", "geoKoordinatverdiEnhet", OFTInteger);
 
-      addSimpleType(&oTypes, "GEOLOKNR", "geolLokalitetnummer", OFTReal);
+      addSimpleType(poTypes, "GEOLOKNR", "geolLokalitetnummer", OFTReal);
 
-      addSimpleType(&oTypes, "GEO-PROJ", "geoProjeksjon", OFTInteger);
+      addSimpleType(poTypes, "GEO-PROJ", "geoProjeksjon", OFTInteger);
 
-      addSimpleType(&oTypes, "GEOPÅVISNINGTYPE", "geolPavisningtype", OFTInteger);
+      addSimpleType(poTypes, "GEOPÅVISNINGTYPE", "geolPavisningtype", OFTInteger);
 
-      addSimpleType(&oTypes, "GEOSITENO", "geositeNummer", OFTInteger);
+      addSimpleType(poTypes, "GEOSITENO", "geositeNummer", OFTInteger);
 
-      addSimpleType(&oTypes, "GEO-SONE", "geoSoneProjeksjon", OFTInteger);
+      addSimpleType(poTypes, "GEO-SONE", "geoSoneProjeksjon", OFTInteger);
 
-      addSimpleType(&oTypes, "GEOVERDIVURD", "geolVerdivurdering", OFTInteger);
+      addSimpleType(poTypes, "GEOVERDIVURD", "geolVerdivurdering", OFTInteger);
 
-      addSimpleType(&oTypes, "GEOVEVERDI", "geolVertikalverdi", OFTInteger);
+      addSimpleType(poTypes, "GEOVEVERDI", "geolVertikalverdi", OFTInteger);
 
-      addSimpleType(&oTypes, "GFANOMALI", "geofAnomali", OFTInteger);
+      addSimpleType(poTypes, "GFANOMALI", "geofAnomali", OFTInteger);
 
-      addSimpleType(&oTypes, "GFDYPSTR", "geofDyp", OFTReal);
+      addSimpleType(poTypes, "GFDYPSTR", "geofDyp", OFTReal);
 
-      addSimpleType(&oTypes, "GFDYPTYPE", "geofDyptype", OFTInteger);
+      addSimpleType(poTypes, "GFDYPTYPE", "geofDyptype", OFTInteger);
 
-      addSimpleType(&oTypes, "GFFALLBREGMET", "geofFallBeregnMetode", OFTInteger);
+      addSimpleType(poTypes, "GFFALLBREGMET", "geofFallBeregnMetode", OFTInteger);
 
-      addSimpleType(&oTypes, "GFFALLSTR", "geofFallstorrelse", OFTInteger);
+      addSimpleType(poTypes, "GFFALLSTR", "geofFallstorrelse", OFTInteger);
 
-      addSimpleType(&oTypes, "GFFLATE", "geofFlate", OFTInteger);
+      addSimpleType(poTypes, "GFFLATE", "geofFlate", OFTInteger);
 
-      addSimpleType(&oTypes, "GFL_INFO", "geofLinjeInfo", OFTInteger);
+      addSimpleType(poTypes, "GFL_INFO", "geofLinjeInfo", OFTInteger);
 
-      addSimpleType(&oTypes, "GFLINJE", "geofTolkLinjetype", OFTInteger);
+      addSimpleType(poTypes, "GFLINJE", "geofTolkLinjetype", OFTInteger);
 
-      addSimpleType(&oTypes, "GFMETODE", "geofMetode", OFTInteger);
+      addSimpleType(poTypes, "GFMETODE", "geofMetode", OFTInteger);
 
-      addSimpleType(&oTypes, "GFP_INFO", "geofPunktInfo", OFTInteger);
+      addSimpleType(poTypes, "GFP_INFO", "geofPunktInfo", OFTInteger);
 
-      addSimpleType(&oTypes, "GFSTROK", "geofStrokretning", OFTInteger);
+      addSimpleType(poTypes, "GFSTROK", "geofStrokretning", OFTInteger);
 
-      addSimpleType(&oTypes, "GFTOLK", "geofTolkMetode", OFTInteger);
+      addSimpleType(poTypes, "GFTOLK", "geofTolkMetode", OFTInteger);
 
-      addSimpleType(&oTypes, "GFUTLLEN", "geofLengdeUtlegg", OFTInteger);
+      addSimpleType(poTypes, "GFUTLLEN", "geofLengdeUtlegg", OFTInteger);
 
-      addSimpleType(&oTypes, "GFUTLRETN", "geofRetningUtlegg", OFTInteger);
+      addSimpleType(poTypes, "GFUTLRETN", "geofRetningUtlegg", OFTInteger);
 
-      addSimpleType(&oTypes, "GFUTLTYPE", "geofTypeUtlegg", OFTInteger);
+      addSimpleType(poTypes, "GFUTLTYPE", "geofTypeUtlegg", OFTInteger);
 
-      addSimpleType(&oTypes, "GJENNOMFØRINGSFRIST", "gjennomføringsfrist", OFTDate);
+      addSimpleType(poTypes, "GJENNOMFØRINGSFRIST", "gjennomføringsfrist", OFTDate);
 
-      addSimpleType(&oTypes, "GJENTAKSINTERVAL", "gjentaksInterval", OFTInteger);
+      addSimpleType(poTypes, "GJENTAKSINTERVAL", "gjentaksInterval", OFTInteger);
 
-      addSimpleType(&oTypes, "GJERDETYPE", "sikringGjerdetype", OFTInteger);
+      addSimpleType(poTypes, "GJERDETYPE", "sikringGjerdetype", OFTInteger);
 
-      addSimpleType(&oTypes, "GKEKSTRAKT", "geokEkstrakt", OFTInteger);
+      addSimpleType(poTypes, "GKEKSTRAKT", "geokEkstrakt", OFTInteger);
 
-      addSimpleType(&oTypes, "GKENHET", "geokEnhet", OFTInteger);
+      addSimpleType(poTypes, "GKENHET", "geokEnhet", OFTInteger);
 
-      addSimpleType(&oTypes, "GKFRADYP", "geokFraDyp", OFTInteger);
+      addSimpleType(poTypes, "GKFRADYP", "geokFraDyp", OFTInteger);
 
-      addSimpleType(&oTypes, "GKFRAKSJON", "geokFraksjon", OFTInteger);
+      addSimpleType(poTypes, "GKFRAKSJON", "geokFraksjon", OFTInteger);
 
-      addSimpleType(&oTypes, "GKHORISONT", "geokHorisont", OFTInteger);
+      addSimpleType(poTypes, "GKHORISONT", "geokHorisont", OFTInteger);
 
-      addSimpleType(&oTypes, "GKHOVMEDIUM", "geokHovedmedium", OFTInteger);
+      addSimpleType(poTypes, "GKHOVMEDIUM", "geokHovedmedium", OFTInteger);
 
-      addSimpleType(&oTypes, "GKMEDIUM", "geokMedium", OFTInteger);
+      addSimpleType(poTypes, "GKMEDIUM", "geokMedium", OFTInteger);
 
-      addSimpleType(&oTypes, "GKRETSNAVN", "grunnkretsnavn", OFTString);
+      addSimpleType(poTypes, "GKRETSNAVN", "grunnkretsnavn", OFTString);
 
-      addSimpleType(&oTypes, "GKTILDYP", "geokTilDyp", OFTInteger);
+      addSimpleType(poTypes, "GKTILDYP", "geokTilDyp", OFTInteger);
 
-      addSimpleType(&oTypes, "GKVARIABEL", "geokVariabel", OFTString);
+      addSimpleType(poTypes, "GKVARIABEL", "geokVariabel", OFTString);
 
-      addSimpleType(&oTypes, "GNR", "gårdsnummer", OFTInteger);
+      addSimpleType(poTypes, "GNR", "gårdsnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "GR_TYPE", "grensetypeSjø", OFTInteger);
+      addSimpleType(poTypes, "GR_TYPE", "grensetypeSjø", OFTInteger);
 
-      addSimpleType(&oTypes, "GRAVERT", "gravertTekst", OFTString);
+      addSimpleType(poTypes, "GRAVERT", "gravertTekst", OFTString);
 
-      addSimpleType(&oTypes, "GRDANNELSE", "grotteDannelse", OFTInteger);
+      addSimpleType(poTypes, "GRDANNELSE", "grotteDannelse", OFTInteger);
 
-      addSimpleType(&oTypes, "GRDIMSJOND", "grotteDimDiameter", OFTInteger);
+      addSimpleType(poTypes, "GRDIMSJOND", "grotteDimDiameter", OFTInteger);
 
-      addSimpleType(&oTypes, "GRDIMSJONH", "grotteDimHoyre", OFTInteger);
+      addSimpleType(poTypes, "GRDIMSJONH", "grotteDimHoyre", OFTInteger);
 
-      addSimpleType(&oTypes, "GRDIMSJONO", "grotteDimOver", OFTInteger);
+      addSimpleType(poTypes, "GRDIMSJONO", "grotteDimOver", OFTInteger);
 
-      addSimpleType(&oTypes, "GRDIMSJONU", "grotteDimUnder", OFTInteger);
+      addSimpleType(poTypes, "GRDIMSJONU", "grotteDimUnder", OFTInteger);
 
-      addSimpleType(&oTypes, "GRDIMSJONV", "grotteDimVenstre", OFTInteger);
+      addSimpleType(poTypes, "GRDIMSJONV", "grotteDimVenstre", OFTInteger);
 
-      addSimpleType(&oTypes, "GRENSEMERKENEDSATTI", "grensemerkeNedsasttI", OFTString);
+      addSimpleType(poTypes, "GRENSEMERKENEDSATTI", "grensemerkeNedsasttI", OFTString);
 
-      addSimpleType(&oTypes, "GRENSEPUNKTNUMMER", "grensepunktnummer", OFTString);
+      addSimpleType(poTypes, "GRENSEPUNKTNUMMER", "grensepunktnummer", OFTString);
 
-      addSimpleType(&oTypes, "GRENSEPUNKTTYPE", "grensepunkttype", OFTInteger);
+      addSimpleType(poTypes, "GRENSEPUNKTTYPE", "grensepunkttype", OFTInteger);
 
-      addSimpleType(&oTypes, "GRENSEVEDTAK", "grenseVedtak", OFTString);
+      addSimpleType(poTypes, "GRENSEVEDTAK", "grenseVedtak", OFTString);
 
-      addSimpleType(&oTypes, "GRFORMELM", "grotteFormElement", OFTInteger);
+      addSimpleType(poTypes, "GRFORMELM", "grotteFormElement", OFTInteger);
 
-      addSimpleType(&oTypes, "GRGANGFORM", "grotteGaForm", OFTInteger);
+      addSimpleType(poTypes, "GRGANGFORM", "grotteGaForm", OFTInteger);
 
-      addSimpleType(&oTypes, "GRGANGTYPE", "grotteGaType", OFTString);
+      addSimpleType(poTypes, "GRGANGTYPE", "grotteGaType", OFTString);
 
-      addSimpleType(&oTypes, "GRHOYDE", "grotteHoyde", OFTInteger);
+      addSimpleType(poTypes, "GRHOYDE", "grotteHoyde", OFTInteger);
 
-      addSimpleType(&oTypes, "GRLINTYPE", "grotteLinjetype", OFTInteger);
+      addSimpleType(poTypes, "GRLINTYPE", "grotteLinjetype", OFTInteger);
 
-      addSimpleType(&oTypes, "GROTLEGEME", "grotteLegeme", OFTString);
+      addSimpleType(poTypes, "GROTLEGEME", "grotteLegeme", OFTString);
 
-      addSimpleType(&oTypes, "GROTNOYAKT", "grotteNoyaktighet", OFTString);
+      addSimpleType(poTypes, "GROTNOYAKT", "grotteNoyaktighet", OFTString);
 
-      addSimpleType(&oTypes, "GROTTELAST", "grotteLast", OFTInteger);
+      addSimpleType(poTypes, "GROTTELAST", "grotteLast", OFTInteger);
 
-      addSimpleType(&oTypes, "GROTTENAVN", "grotteNavn", OFTString);
+      addSimpleType(poTypes, "GROTTENAVN", "grotteNavn", OFTString);
 
-      addSimpleType(&oTypes, "GROTTEPLAN", "grottePlan", OFTString);
+      addSimpleType(poTypes, "GROTTEPLAN", "grottePlan", OFTString);
 
-      addSimpleType(&oTypes, "GROTTLENKE", "grotteLenke", OFTInteger);
+      addSimpleType(poTypes, "GROTTLENKE", "grotteLenke", OFTInteger);
 
-      addSimpleType(&oTypes, "GRPKTTYPE", "grottePktType", OFTInteger);
+      addSimpleType(poTypes, "GRPKTTYPE", "grottePktType", OFTInteger);
 
-      addSimpleType(&oTypes, "GRPUNKTNR", "grottePktNummer", OFTString);
+      addSimpleType(poTypes, "GRPUNKTNR", "grottePktNummer", OFTString);
 
-      addSimpleType(&oTypes, "GRUNNBORINGREF", "grunnBoringReferanse", OFTString);
+      addSimpleType(poTypes, "GRUNNBORINGREF", "grunnBoringReferanse", OFTString);
 
-      addSimpleType(&oTypes, "GRUNNFHOLD", "losmGrunnforhold", OFTInteger);
+      addSimpleType(poTypes, "GRUNNFHOLD", "losmGrunnforhold", OFTInteger);
 
-      addSimpleType(&oTypes, "GRUNNGASS", "grunnGass", OFTInteger);
+      addSimpleType(poTypes, "GRUNNGASS", "grunnGass", OFTInteger);
 
-      addSimpleType(&oTypes, "GRUNNKRETS", "grunnkretsnummer", OFTInteger);
+      addSimpleType(poTypes, "GRUNNKRETS", "grunnkretsnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "GRUNNLINJENAVN", "grunnlinjepunktnavn", OFTString);
+      addSimpleType(poTypes, "GRUNNLINJENAVN", "grunnlinjepunktnavn", OFTString);
 
-      addSimpleType(&oTypes, "GRUNNLINJENUMMER", "grunnlinjepunktnummer", OFTString);
+      addSimpleType(poTypes, "GRUNNLINJENUMMER", "grunnlinjepunktnummer", OFTString);
 
-      addSimpleType(&oTypes, "GRUNNRISSREFERANSESPOR", "grunnrissreferanseSpor", OFTString);
+      addSimpleType(poTypes, "GRUNNRISSREFERANSESPOR", "grunnrissreferanseSpor", OFTString);
 
-      addSimpleType(&oTypes, "GRUNNVANN", "grunnvannPotensiale", OFTInteger);
+      addSimpleType(poTypes, "GRUNNVANN", "grunnvannPotensiale", OFTInteger);
 
-      addSimpleType(&oTypes, "GRUNNVERDI", "grunnVerdi", OFTReal);
+      addSimpleType(poTypes, "GRUNNVERDI", "grunnVerdi", OFTReal);
 
-      addSimpleType(&oTypes, "GRVARSEL", "grotteVarsel", OFTInteger);
+      addSimpleType(poTypes, "GRVARSEL", "grotteVarsel", OFTInteger);
 
-      addSimpleType(&oTypes, "GVAKT_PROS", "geoVernAktivProsess", OFTString);
+      addSimpleType(poTypes, "GVAKT_PROS", "geoVernAktivProsess", OFTString);
 
-      addSimpleType(&oTypes, "GVAREAL", "geoVernAreal", OFTString);
+      addSimpleType(poTypes, "GVAREAL", "geoVernAreal", OFTString);
 
-      addSimpleType(&oTypes, "GVDLIKEHOLD", "geoVernVedlikehold", OFTString);
+      addSimpleType(poTypes, "GVDLIKEHOLD", "geoVernVedlikehold", OFTString);
 
-      addSimpleType(&oTypes, "GVERNE_ID", "geoVernObjektId", OFTInteger);
+      addSimpleType(poTypes, "GVERNE_ID", "geoVernObjektId", OFTInteger);
 
-      addSimpleType(&oTypes, "GVERNETYPE", "geoVernTematype", OFTInteger);
+      addSimpleType(poTypes, "GVERNETYPE", "geoVernTematype", OFTInteger);
 
-      addSimpleType(&oTypes, "GVERNHTYPE", "geoVernHovedtype", OFTString);
+      addSimpleType(poTypes, "GVERNHTYPE", "geoVernHovedtype", OFTString);
 
-      addSimpleType(&oTypes, "GVERNKRT_A", "geoVernAKriterie", OFTString);
+      addSimpleType(poTypes, "GVERNKRT_A", "geoVernAKriterie", OFTString);
 
-      addSimpleType(&oTypes, "GVERNKRT_B", "geoVernBKriterie", OFTString);
+      addSimpleType(poTypes, "GVERNKRT_B", "geoVernBKriterie", OFTString);
 
-      addSimpleType(&oTypes, "GVERNKRT_C", "geoVernCKriterie", OFTString);
+      addSimpleType(poTypes, "GVERNKRT_C", "geoVernCKriterie", OFTString);
 
-      addSimpleType(&oTypes, "GVERNVERDI", "geoVernVerdi", OFTInteger);
+      addSimpleType(poTypes, "GVERNVERDI", "geoVernVerdi", OFTInteger);
 
-      addSimpleType(&oTypes, "GVGRENSETY", "geoVernGrensetype", OFTInteger);
+      addSimpleType(poTypes, "GVGRENSETY", "geoVernGrensetype", OFTInteger);
 
-      addSimpleType(&oTypes, "GVHINNHLD", "geoVernHovInnhold", OFTString);
+      addSimpleType(poTypes, "GVHINNHLD", "geoVernHovInnhold", OFTString);
 
-      addSimpleType(&oTypes, "GVINNGREP", "geoVernInngrep", OFTString);
+      addSimpleType(poTypes, "GVINNGREP", "geoVernInngrep", OFTString);
 
-      addSimpleType(&oTypes, "GVLITTRTUR", "geoVernLitteratur", OFTString);
+      addSimpleType(poTypes, "GVLITTRTUR", "geoVernLitteratur", OFTString);
 
-      addSimpleType(&oTypes, "GVOFFNTLGJ", "geoVernOffentliggjoring", OFTString);
+      addSimpleType(poTypes, "GVOFFNTLGJ", "geoVernOffentliggjoring", OFTString);
 
-      addSimpleType(&oTypes, "GVOMR_NAVN", "geoVernOmrNavn", OFTString);
+      addSimpleType(poTypes, "GVOMR_NAVN", "geoVernOmrNavn", OFTString);
 
-      addSimpleType(&oTypes, "GVPROALDER", "geoVernProsessalder", OFTInteger);
+      addSimpleType(poTypes, "GVPROALDER", "geoVernProsessalder", OFTInteger);
 
-      addSimpleType(&oTypes, "GVSAKSTATUS", "geoVernSakStatus", OFTInteger);
+      addSimpleType(poTypes, "GVSAKSTATUS", "geoVernSakStatus", OFTInteger);
 
-      addSimpleType(&oTypes, "GVSTATUS", "geoVernType", OFTInteger);
+      addSimpleType(poTypes, "GVSTATUS", "geoVernType", OFTInteger);
 
-      addSimpleType(&oTypes, "GVSYSTEM", "geoVernSystem", OFTString);
+      addSimpleType(poTypes, "GVSYSTEM", "geoVernSystem", OFTString);
 
-      addSimpleType(&oTypes, "GVTINNHLD", "geoVernTilleggInnhold", OFTString);
+      addSimpleType(poTypes, "GVTINNHLD", "geoVernTilleggInnhold", OFTString);
 
-      addSimpleType(&oTypes, "GVVKT_PROS", "geoVernViktigProsess", OFTString);
+      addSimpleType(poTypes, "GVVKT_PROS", "geoVernViktigProsess", OFTString);
 
-      addSimpleType(&oTypes, "GYLDIGFRA", "gyldigFra", OFTDate);
+      addSimpleType(poTypes, "GYLDIGFRA", "gyldigFra", OFTDate);
 
-      addSimpleType(&oTypes, "GYLDIGTIL", "gyldigTil", OFTDate);
+      addSimpleType(poTypes, "GYLDIGTIL", "gyldigTil", OFTDate);
 
-      addSimpleType(&oTypes, "H", "høyde", OFTInteger);
+      addSimpleType(poTypes, "H", "høyde", OFTInteger);
 
-      addSimpleType(&oTypes, "H_EUREF89", "høydeOverEuref89", OFTReal);
+      addSimpleType(poTypes, "H_EUREF89", "høydeOverEuref89", OFTReal);
 
-      addSimpleType(&oTypes, "H_KAT_LANDSK", "hovedkategoriLandskap", OFTString);
+      addSimpleType(poTypes, "H_KAT_LANDSK", "hovedkategoriLandskap", OFTString);
 
-      addSimpleType(&oTypes, "HAR_HEIS", "harHeis", OFTString);
+      addSimpleType(poTypes, "HAR_HEIS", "harHeis", OFTString);
 
-      addSimpleType(&oTypes, "HASTIGHETSENHET", "hastighetsenhet", OFTString);
+      addSimpleType(poTypes, "HASTIGHETSENHET", "hastighetsenhet", OFTString);
 
-      addSimpleType(&oTypes, "HAVNE_D_ADM", "havnedistriktadministrasjon", OFTInteger);
+      addSimpleType(poTypes, "HAVNE_D_ADM", "havnedistriktadministrasjon", OFTInteger);
 
-      addSimpleType(&oTypes, "HAVNE_ID", "havneidentifikasjon", OFTInteger);
+      addSimpleType(poTypes, "HAVNE_ID", "havneidentifikasjon", OFTInteger);
 
-      addSimpleType(&oTypes, "HAVNEAVSNITTNUMMER", "havneavsnittnummer", OFTInteger);
+      addSimpleType(poTypes, "HAVNEAVSNITTNUMMER", "havneavsnittnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "HAVNEAVSNITTSTATUS", "havneavsnittstatus", OFTString);
+      addSimpleType(poTypes, "HAVNEAVSNITTSTATUS", "havneavsnittstatus", OFTString);
 
-      addSimpleType(&oTypes, "HAVNEAVSNITTTYPE", "havneavsnitttype", OFTString);
+      addSimpleType(poTypes, "HAVNEAVSNITTTYPE", "havneavsnitttype", OFTString);
 
-      addSimpleType(&oTypes, "HAVNETERMINALISPSNUMMER", "havneterminalISPSnummer", OFTInteger);
+      addSimpleType(poTypes, "HAVNETERMINALISPSNUMMER", "havneterminalISPSnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "HAVNETERMINALNUMMER", "havneterminalnummer", OFTInteger);
+      addSimpleType(poTypes, "HAVNETERMINALNUMMER", "havneterminalnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "HAVNETERMINALSTATUS", "havneterminalstatus", OFTString);
+      addSimpleType(poTypes, "HAVNETERMINALSTATUS", "havneterminalstatus", OFTString);
 
-      addSimpleType(&oTypes, "HAVNETERMINALTYPE", "havneterminaltype", OFTString);
+      addSimpleType(poTypes, "HAVNETERMINALTYPE", "havneterminaltype", OFTString);
 
-      addSimpleType(&oTypes, "HBERGKODE", "hovedBergKode", OFTInteger);
+      addSimpleType(poTypes, "HBERGKODE", "hovedBergKode", OFTInteger);
 
-      addSimpleType(&oTypes, "HELLING", "helling", OFTInteger);
+      addSimpleType(poTypes, "HELLING", "helling", OFTInteger);
 
-      addSimpleType(&oTypes, "HENDELSE", "trasénodeHendelsestype", OFTInteger);
+      addSimpleType(poTypes, "HENDELSE", "trasénodeHendelsestype", OFTInteger);
 
-      addSimpleType(&oTypes, "HENSYNSONENAVN", "hensynSonenavn", OFTString);
+      addSimpleType(poTypes, "HENSYNSONENAVN", "hensynSonenavn", OFTString);
 
-      addSimpleType(&oTypes, "HFLOM", "vannstandRegHøyestRegistrerte", OFTReal);
+      addSimpleType(poTypes, "HFLOM", "vannstandRegHøyestRegistrerte", OFTReal);
 
-      addSimpleType(&oTypes, "HINDERFLATE_TYPE", "hinderFlateType", OFTInteger);
+      addSimpleType(poTypes, "HINDERFLATE_TYPE", "hinderFlateType", OFTInteger);
 
-      addSimpleType(&oTypes, "HINDERFLATEPENETRERINGSTYPE", "hinderflatepenetreringstype", OFTInteger);
+      addSimpleType(poTypes, "HINDERFLATEPENETRERINGSTYPE", "hinderflatepenetreringstype", OFTInteger);
 
-      addSimpleType(&oTypes, "HJELPELINJETYPE", "hjelpelinjetype", OFTString);
+      addSimpleType(poTypes, "HJELPELINJETYPE", "hjelpelinjetype", OFTString);
 
-      addSimpleType(&oTypes, "HJEMMELSGRUNNLAG", "hjemmelsgrunnlag", OFTString);
+      addSimpleType(poTypes, "HJEMMELSGRUNNLAG", "hjemmelsgrunnlag", OFTString);
 
-      addSimpleType(&oTypes, "HJULTRYKK", "hjultrykk", OFTString);
+      addSimpleType(poTypes, "HJULTRYKK", "hjultrykk", OFTString);
 
-      addSimpleType(&oTypes, "H-MÅLEMETODE", "målemetodeHøyde", OFTInteger);
+      addSimpleType(poTypes, "H-MÅLEMETODE", "målemetodeHøyde", OFTInteger);
 
-      addSimpleType(&oTypes, "H-NØYAKTIGHET", "nøyaktighetHøyde", OFTInteger);
+      addSimpleType(poTypes, "H-NØYAKTIGHET", "nøyaktighetHøyde", OFTInteger);
 
-      addSimpleType(&oTypes, "HOB", "høydeOverBakken", OFTReal);
+      addSimpleType(poTypes, "HOB", "høydeOverBakken", OFTReal);
 
-      addSimpleType(&oTypes, "HOLDNINGSKLASSE", "holdningsklasse", OFTInteger);
+      addSimpleType(poTypes, "HOLDNINGSKLASSE", "holdningsklasse", OFTInteger);
 
-      addSimpleType(&oTypes, "HOR_BÆREKONSTR", "horisontalBærekonstr", OFTInteger);
+      addSimpleType(poTypes, "HOR_BÆREKONSTR", "horisontalBærekonstr", OFTInteger);
 
-      addSimpleType(&oTypes, "HOVEDPARSELL", "hovedParsell", OFTInteger);
+      addSimpleType(poTypes, "HOVEDPARSELL", "hovedParsell", OFTInteger);
 
-      addSimpleType(&oTypes, "HOVEDTEIG", "hovedteig", OFTString);
+      addSimpleType(poTypes, "HOVEDTEIG", "hovedteig", OFTString);
 
-      addSimpleType(&oTypes, "HREF", "høydereferanse", OFTString);
+      addSimpleType(poTypes, "HREF", "høydereferanse", OFTString);
 
-      addSimpleType(&oTypes, "H-REF-INT", "høydeReferanseInternasjonal", OFTInteger);
+      addSimpleType(poTypes, "H-REF-INT", "høydeReferanseInternasjonal", OFTInteger);
 
-      addSimpleType(&oTypes, "HRV", "vannstandHøyesteRegulert", OFTReal);
+      addSimpleType(poTypes, "HRV", "vannstandHøyesteRegulert", OFTReal);
 
-      addSimpleType(&oTypes, "HUSHOLDBELASTNING", "husholdBelastning", OFTInteger);
+      addSimpleType(poTypes, "HUSHOLDBELASTNING", "husholdBelastning", OFTInteger);
 
-      addSimpleType(&oTypes, "HUSLØPENR", "husLøpenr", OFTInteger);
+      addSimpleType(poTypes, "HUSLØPENR", "husLøpenr", OFTInteger);
 
-      addSimpleType(&oTypes, "HUSNR", "husNr", OFTInteger);
+      addSimpleType(poTypes, "HUSNR", "husNr", OFTInteger);
 
-      addSimpleType(&oTypes, "HVANN", "vannstandHøyestRegistrert", OFTReal);
+      addSimpleType(poTypes, "HVANN", "vannstandHøyestRegistrert", OFTReal);
 
-      addSimpleType(&oTypes, "HYTTE_ID", "hytteId", OFTInteger);
+      addSimpleType(poTypes, "HYTTE_ID", "hytteId", OFTInteger);
 
-      addSimpleType(&oTypes, "HYTTEEIER", "hytteeier", OFTInteger);
+      addSimpleType(poTypes, "HYTTEEIER", "hytteeier", OFTInteger);
 
-      addSimpleType(&oTypes, "HØYDE", "høyde", OFTReal);
+      addSimpleType(poTypes, "HØYDE", "høyde", OFTReal);
 
-      addSimpleType(&oTypes, "HØYDE_TIL_NAV", "høydeTilNavet", OFTInteger);
+      addSimpleType(poTypes, "HØYDE_TIL_NAV", "høydeTilNavet", OFTInteger);
 
-      addSimpleType(&oTypes, "HØYDE-REF", "høyde-Referanse", OFTString);
+      addSimpleType(poTypes, "HØYDE-REF", "høyde-Referanse", OFTString);
 
-      addSimpleType(&oTypes, "HØYDEREFERANSESPOR", "høydereferanseSpor", OFTString);
+      addSimpleType(poTypes, "HØYDEREFERANSESPOR", "høydereferanseSpor", OFTString);
 
-      addSimpleType(&oTypes, "HØYDE-TYPE", "høydeType", OFTString);
+      addSimpleType(poTypes, "HØYDE-TYPE", "høydeType", OFTString);
 
-      addSimpleType(&oTypes, "ID", "identifikasjon", OFTString);
+      addSimpleType(poTypes, "ID", "identifikasjon", OFTString);
 
-      addSimpleType(&oTypes, "IKRAFT", "ikrafttredelsesdato", OFTDate);
+      addSimpleType(poTypes, "IKRAFT", "ikrafttredelsesdato", OFTDate);
 
-      addSimpleType(&oTypes, "IMOTOPPMERKETYPE", "imoToppmerketype", OFTInteger);
+      addSimpleType(poTypes, "IMOTOPPMERKETYPE", "imoToppmerketype", OFTInteger);
 
-      addSimpleType(&oTypes, "IMP", "impedimentprosentSkog", OFTInteger);
+      addSimpleType(poTypes, "IMP", "impedimentprosentSkog", OFTInteger);
 
-      addSimpleType(&oTypes, "INDEKSMIN", "indeksMineral", OFTString);
+      addSimpleType(poTypes, "INDEKSMIN", "indeksMineral", OFTString);
 
-      addSimpleType(&oTypes, "INDIKATOR", "indikatorFastmerkenummer", OFTString);
+      addSimpleType(poTypes, "INDIKATOR", "indikatorFastmerkenummer", OFTString);
 
-      addSimpleType(&oTypes, "INDUSTRIBELASTNING", "industriBelastning", OFTInteger);
+      addSimpleType(poTypes, "INDUSTRIBELASTNING", "industriBelastning", OFTInteger);
 
-      addSimpleType(&oTypes, "INFILT", "infiltrasjonEvne", OFTInteger);
+      addSimpleType(poTypes, "INFILT", "infiltrasjonEvne", OFTInteger);
 
-      addSimpleType(&oTypes, "INFORMASJON", "informasjon", OFTString);
+      addSimpleType(poTypes, "INFORMASJON", "informasjon", OFTString);
 
-      addSimpleType(&oTypes, "FAGOMRÅDEGRUPPE", "fagområdegruppe", OFTString);
+      addSimpleType(poTypes, "FAGOMRÅDEGRUPPE", "fagområdegruppe", OFTString);
 
-      addSimpleType(&oTypes, "FAGOMRÅDE_FULLT_NAVN", "fagområdets fulle navn", OFTString);
+      addSimpleType(poTypes, "FAGOMRÅDE_FULLT_NAVN", "fagområdets fulle navn", OFTString);
 
-      addSimpleType(&oTypes, "INON_AVS", "inngrepsfriSoneAvstand", OFTReal);
+      addSimpleType(poTypes, "INON_AVS", "inngrepsfriSoneAvstand", OFTReal);
 
-      addSimpleType(&oTypes, "INONSONE", "inngrepsfrieNaturområderINorgeSone", OFTString);
+      addSimpleType(poTypes, "INONSONE", "inngrepsfrieNaturområderINorgeSone", OFTString);
 
-      addSimpleType(&oTypes, "INRT_FUNKSJON", "innretningsfunksjon", OFTString);
+      addSimpleType(poTypes, "INRT_FUNKSJON", "innretningsfunksjon", OFTString);
 
-      addSimpleType(&oTypes, "INRT_HOVEDTYPE", "innretningshovedtype", OFTString);
+      addSimpleType(poTypes, "INRT_HOVEDTYPE", "innretningshovedtype", OFTString);
 
-      addSimpleType(&oTypes, "INRT_MATR", "innretningsmaterialtype", OFTString);
+      addSimpleType(poTypes, "INRT_MATR", "innretningsmaterialtype", OFTString);
 
-      addSimpleType(&oTypes, "INRT_NAVN", "innretningsnavn", OFTString);
+      addSimpleType(poTypes, "INRT_NAVN", "innretningsnavn", OFTString);
 
-      addSimpleType(&oTypes, "INRT_TYPE", "innretningstype", OFTString);
+      addSimpleType(poTypes, "INRT_TYPE", "innretningstype", OFTString);
 
-      addSimpleType(&oTypes, "INST_EFFEKT", "installertEffekt", OFTInteger);
+      addSimpleType(poTypes, "INST_EFFEKT", "installertEffekt", OFTInteger);
 
-      addSimpleType(&oTypes, "INSTALLASJONSBØYEKATEGORI", "installasjonsbøyekategori", OFTInteger);
+      addSimpleType(poTypes, "INSTALLASJONSBØYEKATEGORI", "installasjonsbøyekategori", OFTInteger);
 
-      addSimpleType(&oTypes, "INSTALLERT_ÅR", "installertÅr", OFTDate);
+      addSimpleType(poTypes, "INSTALLERT_ÅR", "installertÅr", OFTDate);
 
-      addSimpleType(&oTypes, "INT_STAT", "internasjonalStatus", OFTInteger);
+      addSimpleType(poTypes, "INT_STAT", "internasjonalStatus", OFTInteger);
 
-      addSimpleType(&oTypes, "J_LREG", "jordregisterLreg", OFTString);
+      addSimpleType(poTypes, "J_LREG", "jordregisterLreg", OFTString);
 
-      addSimpleType(&oTypes, "JERNBANEEIER", "jernbaneeier", OFTString);
+      addSimpleType(poTypes, "JERNBANEEIER", "jernbaneeier", OFTString);
 
-      addSimpleType(&oTypes, "JERNBANETYPE", "jernbanetype", OFTString);
+      addSimpleType(poTypes, "JERNBANETYPE", "jernbanetype", OFTString);
 
-      addSimpleType(&oTypes, "JORD", "jordklassifikasjon", OFTInteger);
+      addSimpleType(poTypes, "JORD", "jordklassifikasjon", OFTInteger);
 
-      addSimpleType(&oTypes, "JORDARB", "anbefaltJordarbeiding", OFTInteger);
+      addSimpleType(poTypes, "JORDARB", "anbefaltJordarbeiding", OFTInteger);
 
-      addSimpleType(&oTypes, "JORDART", "losmassetype", OFTInteger);
+      addSimpleType(poTypes, "JORDART", "losmassetype", OFTInteger);
 
-      addSimpleType(&oTypes, "JREGAREAL", "jordregisterAreal", OFTReal);
+      addSimpleType(poTypes, "JREGAREAL", "jordregisterAreal", OFTReal);
 
-      addSimpleType(&oTypes, "JREGEKODE", "jordregisterStatusEiendom", OFTInteger);
+      addSimpleType(poTypes, "JREGEKODE", "jordregisterStatusEiendom", OFTInteger);
 
-      addSimpleType(&oTypes, "JRFIGNR", "jordregisterFigurnummer", OFTInteger);
+      addSimpleType(poTypes, "JRFIGNR", "jordregisterFigurnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "JSR_AREAL", "jordskifteArealtilstand", OFTInteger);
+      addSimpleType(poTypes, "JSR_AREAL", "jordskifteArealtilstand", OFTInteger);
 
-      addSimpleType(&oTypes, "JSVSAK", "jordskifterettenSaksnummer", OFTString);
+      addSimpleType(poTypes, "JSVSAK", "jordskifterettenSaksnummer", OFTString);
 
-      addSimpleType(&oTypes, "JXAREAL", "annetareal", OFTInteger);
+      addSimpleType(poTypes, "JXAREAL", "annetareal", OFTInteger);
 
-      addSimpleType(&oTypes, "KABELTYPE", "kabeltype", OFTInteger);
+      addSimpleType(poTypes, "KABELTYPE", "kabeltype", OFTInteger);
 
-      addSimpleType(&oTypes, "KAI_DYBDE", "kaiDybde", OFTReal);
+      addSimpleType(poTypes, "KAI_DYBDE", "kaiDybde", OFTReal);
 
-      addSimpleType(&oTypes, "KAI_TYPE", "kaiTypeInformasjon", OFTInteger);
+      addSimpleType(poTypes, "KAI_TYPE", "kaiTypeInformasjon", OFTInteger);
 
-      addSimpleType(&oTypes, "KALIBRERINGSRAPPORT", "kalibreringsrapport", OFTString);
+      addSimpleType(poTypes, "KALIBRERINGSRAPPORT", "kalibreringsrapport", OFTString);
 
-      addSimpleType(&oTypes, "KAMERATYPE", "kameratype", OFTString);
+      addSimpleType(poTypes, "KAMERATYPE", "kameratype", OFTString);
 
-      addSimpleType(&oTypes, "KAPASITETLANGEKJØRETØY", "kapasitetLangekjøretøy", OFTInteger);
+      addSimpleType(poTypes, "KAPASITETLANGEKJØRETØY", "kapasitetLangekjøretøy", OFTInteger);
 
-      addSimpleType(&oTypes, "KAPASITETPERSONBILER", "kapasitetPersonbiler", OFTInteger);
+      addSimpleType(poTypes, "KAPASITETPERSONBILER", "kapasitetPersonbiler", OFTInteger);
 
-      addSimpleType(&oTypes, "KAPASITETPERSONEKVIVALENTER", "kapasitetPersonekvivalenter", OFTInteger);
+      addSimpleType(poTypes, "KAPASITETPERSONEKVIVALENTER", "kapasitetPersonekvivalenter", OFTInteger);
 
-      addSimpleType(&oTypes, "KARDINALMERKETYPE", "kardinalmerketype", OFTInteger);
+      addSimpleType(poTypes, "KARDINALMERKETYPE", "kardinalmerketype", OFTInteger);
 
-      addSimpleType(&oTypes, "KARTID", "kartbladindeks", OFTString);
+      addSimpleType(poTypes, "KARTID", "kartbladindeks", OFTString);
 
-      addSimpleType(&oTypes, "KARTLEGGINGSETAPPE", "kartleggingsetappe", OFTString);
+      addSimpleType(poTypes, "KARTLEGGINGSETAPPE", "kartleggingsetappe", OFTString);
 
-      addSimpleType(&oTypes, "KARTREG", "kartregistrering", OFTInteger);
+      addSimpleType(poTypes, "KARTREG", "kartregistrering", OFTInteger);
 
-      addSimpleType(&oTypes, "KARTSIGNATUR", "kartsignatur", OFTString);
+      addSimpleType(poTypes, "KARTSIGNATUR", "kartsignatur", OFTString);
 
-      addSimpleType(&oTypes, "KARTTYPE", "karttype", OFTString);
+      addSimpleType(poTypes, "KARTTYPE", "karttype", OFTString);
 
-      addSimpleType(&oTypes, "KBISPENR", "bispedømmenummer", OFTInteger);
+      addSimpleType(poTypes, "KBISPENR", "bispedømmenummer", OFTInteger);
 
-      addSimpleType(&oTypes, "KILDEPRIVATVANNF", "kildePrivatVannforsyning", OFTInteger);
+      addSimpleType(poTypes, "KILDEPRIVATVANNF", "kildePrivatVannforsyning", OFTInteger);
 
-      addSimpleType(&oTypes, "KJELLER", "kjeller", OFTInteger);
+      addSimpleType(poTypes, "KJELLER", "kjeller", OFTInteger);
 
-      addSimpleType(&oTypes, "KJERNEOMRÅDESTATUS", "kjerneområdestatus", OFTString);
+      addSimpleType(poTypes, "KJERNEOMRÅDESTATUS", "kjerneområdestatus", OFTString);
 
-      addSimpleType(&oTypes, "KJØKKENTILGANG", "kjøkkentilgang", OFTInteger);
+      addSimpleType(poTypes, "KJØKKENTILGANG", "kjøkkentilgang", OFTInteger);
 
-      addSimpleType(&oTypes, "KLASSIFISERING", "kulturlandskapKlassifisering", OFTString);
+      addSimpleType(poTypes, "KLASSIFISERING", "kulturlandskapKlassifisering", OFTString);
 
-      addSimpleType(&oTypes, "KLOR_FØR_FORBRUK", "klorKontakttidFørForbruk", OFTInteger);
+      addSimpleType(poTypes, "KLOR_FØR_FORBRUK", "klorKontakttidFørForbruk", OFTInteger);
 
-      addSimpleType(&oTypes, "KLORO_MAKS", "klorofyllMaksimum", OFTInteger);
+      addSimpleType(poTypes, "KLORO_MAKS", "klorofyllMaksimum", OFTInteger);
 
-      addSimpleType(&oTypes, "KLOTPAR", "klotoideParameter", OFTReal);
+      addSimpleType(poTypes, "KLOTPAR", "klotoideParameter", OFTReal);
 
-      addSimpleType(&oTypes, "KLOTRAD1", "klotoideRadius 1", OFTReal);
+      addSimpleType(poTypes, "KLOTRAD1", "klotoideRadius 1", OFTReal);
 
-      addSimpleType(&oTypes, "KLOTRAD2", "klotoideRadius 2", OFTReal);
+      addSimpleType(poTypes, "KLOTRAD2", "klotoideRadius 2", OFTReal);
 
-      addSimpleType(&oTypes, "RUTEVANSKELIGHETSGRAD", "rutevanskelighetsgrad", OFTString);
+      addSimpleType(poTypes, "RUTEVANSKELIGHETSGRAD", "rutevanskelighetsgrad", OFTString);
 
-      addSimpleType(&oTypes, "RWY_BÆREEVNE_BEN", "bæreevnebenevnelse", OFTString);
+      addSimpleType(poTypes, "RWY_BÆREEVNE_BEN", "bæreevnebenevnelse", OFTString);
 
-      addSimpleType(&oTypes, "RWY_TYPE", "rullebaneType", OFTString);
+      addSimpleType(poTypes, "RWY_TYPE", "rullebaneType", OFTString);
 
-      addSimpleType(&oTypes, "RWYMERK", "rullebaneoppmerking", OFTInteger);
+      addSimpleType(poTypes, "RWYMERK", "rullebaneoppmerking", OFTInteger);
 
-      addSimpleType(&oTypes, "RYDDEBREDDE", "ryddebredde", OFTInteger);
+      addSimpleType(poTypes, "RYDDEBREDDE", "ryddebredde", OFTInteger);
 
-      addSimpleType(&oTypes, "RØR_ENDE_PKT", "ledningsendepunkt", OFTString);
+      addSimpleType(poTypes, "RØR_ENDE_PKT", "ledningsendepunkt", OFTString);
 
-      addSimpleType(&oTypes, "RØR_START_PKT", "ledningsstartpunkt", OFTString);
+      addSimpleType(poTypes, "RØR_START_PKT", "ledningsstartpunkt", OFTString);
 
-      addSimpleType(&oTypes, "RØRLEDNINGSTYPE", "rørledningstype", OFTInteger);
+      addSimpleType(poTypes, "RØRLEDNINGSTYPE", "rørledningstype", OFTInteger);
 
-      addSimpleType(&oTypes, "SAK_AVSLUTT", "sakAvsluttet", OFTString);
+      addSimpleType(poTypes, "SAK_AVSLUTT", "sakAvsluttet", OFTString);
 
-      addSimpleType(&oTypes, "SAKSNR", "saksnummer", OFTInteger);
+      addSimpleType(poTypes, "SAKSNR", "saksnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "SAKSOMF", "saksomfang", OFTInteger);
+      addSimpleType(poTypes, "SAKSOMF", "saksomfang", OFTInteger);
 
-      addSimpleType(&oTypes, "SAKSTYPE", "sakstype", OFTInteger);
+      addSimpleType(poTypes, "SAKSTYPE", "sakstype", OFTInteger);
 
-      addSimpleType(&oTypes, "SALINITET", "salinitet", OFTInteger);
+      addSimpleType(poTypes, "SALINITET", "salinitet", OFTInteger);
 
-      addSimpleType(&oTypes, "SAT_KOM_ID", "satellittkommunikasjonsId", OFTString);
+      addSimpleType(poTypes, "SAT_KOM_ID", "satellittkommunikasjonsId", OFTString);
 
-      addSimpleType(&oTypes, "SCANNEROPPLØSNING", "scanneroppløsning", OFTReal);
+      addSimpleType(poTypes, "SCANNEROPPLØSNING", "scanneroppløsning", OFTReal);
 
-      addSimpleType(&oTypes, "SEDDYBDEME", "sedDybdeMeter", OFTReal);
+      addSimpleType(poTypes, "SEDDYBDEME", "sedDybdeMeter", OFTReal);
 
-      addSimpleType(&oTypes, "SEDDYBDEMS", "sedDybdeMillisekund", OFTReal);
+      addSimpleType(poTypes, "SEDDYBDEMS", "sedDybdeMillisekund", OFTReal);
 
-      addSimpleType(&oTypes, "SEDKORNSTR", "sedKornstorrelse", OFTInteger);
+      addSimpleType(poTypes, "SEDKORNSTR", "sedKornstorrelse", OFTInteger);
 
-      addSimpleType(&oTypes, "SEDMEKTME", "sedMektighetMeter", OFTReal);
+      addSimpleType(poTypes, "SEDMEKTME", "sedMektighetMeter", OFTReal);
 
-      addSimpleType(&oTypes, "SEDMEKTMS", "sedMektighetMillisekund", OFTReal);
+      addSimpleType(poTypes, "SEDMEKTMS", "sedMektighetMillisekund", OFTReal);
 
-      addSimpleType(&oTypes, "SEFRAK_FUNK_KODE", "sefrakFunksjonsKode", OFTInteger);
+      addSimpleType(poTypes, "SEFRAK_FUNK_KODE", "sefrakFunksjonsKode", OFTInteger);
 
-      addSimpleType(&oTypes, "SEFRAK_FUNK_STAT", "sefrakFunksjonsstatus", OFTString);
+      addSimpleType(poTypes, "SEFRAK_FUNK_STAT", "sefrakFunksjonsstatus", OFTString);
 
-      addSimpleType(&oTypes, "KM_ANTALL", "kulturminneAntall", OFTInteger);
+      addSimpleType(poTypes, "KM_ANTALL", "kulturminneAntall", OFTInteger);
 
-      addSimpleType(&oTypes, "KM_BETEGN", "kulturminneBetegnelse", OFTString);
+      addSimpleType(poTypes, "KM_BETEGN", "kulturminneBetegnelse", OFTString);
 
-      addSimpleType(&oTypes, "KM_DAT", "kulturminneDatering", OFTString);
+      addSimpleType(poTypes, "KM_DAT", "kulturminneDatering", OFTString);
 
-      addSimpleType(&oTypes, "KM_DATKVAL", "kulturminneDateringKvalitet", OFTString);
+      addSimpleType(poTypes, "KM_DATKVAL", "kulturminneDateringKvalitet", OFTString);
 
-      addSimpleType(&oTypes, "KM_FUNK_NÅ", "kulturminneNåværendeFunksjon", OFTString);
+      addSimpleType(poTypes, "KM_FUNK_NÅ", "kulturminneNåværendeFunksjon", OFTString);
 
-      addSimpleType(&oTypes, "KM_FUNK_OP", "kulturminneOpprinneligFunksjon", OFTString);
+      addSimpleType(poTypes, "KM_FUNK_OP", "kulturminneOpprinneligFunksjon", OFTString);
 
-      addSimpleType(&oTypes, "KM_HOVEDGRUPPE", "kulturminneHovedgruppe", OFTString);
+      addSimpleType(poTypes, "KM_HOVEDGRUPPE", "kulturminneHovedgruppe", OFTString);
 
-      addSimpleType(&oTypes, "KM_KATEGORI", "kulturminneKategori", OFTString);
+      addSimpleType(poTypes, "KM_KATEGORI", "kulturminneKategori", OFTString);
 
-      addSimpleType(&oTypes, "KM_MAT", "kulturminneHovedMateriale", OFTString);
+      addSimpleType(poTypes, "KM_MAT", "kulturminneHovedMateriale", OFTString);
 
-      addSimpleType(&oTypes, "KM_SYNLIG", "kulturminneSynlig", OFTString);
+      addSimpleType(poTypes, "KM_SYNLIG", "kulturminneSynlig", OFTString);
 
-      addSimpleType(&oTypes, "KM_VERNEVERDI", "kulturminneVerneverdi", OFTString);
+      addSimpleType(poTypes, "KM_VERNEVERDI", "kulturminneVerneverdi", OFTString);
 
-      addSimpleType(&oTypes, "KODDRIFT", "landbruksregBedriftskode", OFTInteger);
+      addSimpleType(poTypes, "KODDRIFT", "landbruksregBedriftskode", OFTInteger);
 
-      addSimpleType(&oTypes, "KOM_KALLSIGNAL", "komKallSignal", OFTString);
+      addSimpleType(poTypes, "KOM_KALLSIGNAL", "komKallSignal", OFTString);
 
-      addSimpleType(&oTypes, "KOM_KANAL", "komKanal", OFTString);
+      addSimpleType(poTypes, "KOM_KANAL", "komKanal", OFTString);
 
-      addSimpleType(&oTypes, "KOMM", "kommunenummer", OFTInteger);
+      addSimpleType(poTypes, "KOMM", "kommunenummer", OFTInteger);
 
-      addSimpleType(&oTypes, "KOMM_ALT_AREAL", "kommAlternativtAreal", OFTReal);
+      addSimpleType(poTypes, "KOMM_ALT_AREAL", "kommAlternativtAreal", OFTReal);
 
-      addSimpleType(&oTypes, "KOMM_ALT_AREAL2", "kommAlternativtAreal2", OFTReal);
+      addSimpleType(poTypes, "KOMM_ALT_AREAL2", "kommAlternativtAreal2", OFTReal);
 
-      addSimpleType(&oTypes, "KOMMENTAR", "kommentar", OFTString);
+      addSimpleType(poTypes, "KOMMENTAR", "kommentar", OFTString);
 
-      addSimpleType(&oTypes, "KOMMENTAR_TYPE", "kommentarType", OFTString);
+      addSimpleType(poTypes, "KOMMENTAR_TYPE", "kommentarType", OFTString);
 
-      addSimpleType(&oTypes, "KOMMSEK", "kommuneSekundær", OFTInteger);
+      addSimpleType(poTypes, "KOMMSEK", "kommuneSekundær", OFTInteger);
 
-      addSimpleType(&oTypes, "KOMPONENT", "komponent", OFTString);
+      addSimpleType(poTypes, "KOMPONENT", "komponent", OFTString);
 
-      addSimpleType(&oTypes, "KONSTA1", "konstantA1", OFTReal);
+      addSimpleType(poTypes, "KONSTA1", "konstantA1", OFTReal);
 
-      addSimpleType(&oTypes, "KONSTA2", "konstantA2", OFTReal);
+      addSimpleType(poTypes, "KONSTA2", "konstantA2", OFTReal);
 
-      addSimpleType(&oTypes, "KONSTB1", "konstantB1", OFTReal);
+      addSimpleType(poTypes, "KONSTB1", "konstantB1", OFTReal);
 
-      addSimpleType(&oTypes, "KONSTB2", "konstantB2", OFTReal);
+      addSimpleType(poTypes, "KONSTB2", "konstantB2", OFTReal);
 
-      addSimpleType(&oTypes, "KONSTC1", "konstantC1", OFTReal);
+      addSimpleType(poTypes, "KONSTC1", "konstantC1", OFTReal);
 
-      addSimpleType(&oTypes, "KONSTC2", "konstantC2", OFTReal);
+      addSimpleType(poTypes, "KONSTC2", "konstantC2", OFTReal);
 
-      addSimpleType(&oTypes, "KONTAKTPERSON", "kontaktperson", OFTString);
+      addSimpleType(poTypes, "KONTAKTPERSON", "kontaktperson", OFTString);
 
-      addSimpleType(&oTypes, "KOORDKVALKODE", "koordinatkvalitetKode", OFTString);
+      addSimpleType(poTypes, "KOORDKVALKODE", "koordinatkvalitetKode", OFTString);
 
-      addSimpleType(&oTypes, "KOPIDATO", "kopidato", OFTDateTime);
+      addSimpleType(poTypes, "KOPIDATO", "kopidato", OFTDateTime);
 
-      addSimpleType(&oTypes, "KOPL_BRU", "koplingBruksområde", OFTString);
+      addSimpleType(poTypes, "KOPL_BRU", "koplingBruksområde", OFTString);
 
-      addSimpleType(&oTypes, "KOPL_KAT", "koplingskategori", OFTInteger);
+      addSimpleType(poTypes, "KOPL_KAT", "koplingskategori", OFTInteger);
 
-      addSimpleType(&oTypes, "KOPL_NAV", "koplingsnavn", OFTString);
+      addSimpleType(poTypes, "KOPL_NAV", "koplingsnavn", OFTString);
 
-      addSimpleType(&oTypes, "KOPL_TYP", "koplingstype", OFTString);
+      addSimpleType(poTypes, "KOPL_TYP", "koplingstype", OFTString);
 
-      addSimpleType(&oTypes, "KORTNAVN", "kortnavn", OFTString);
+      addSimpleType(poTypes, "KORTNAVN", "kortnavn", OFTString);
 
-      addSimpleType(&oTypes, "KOSTHOLDART", "kostholdArt", OFTString);
+      addSimpleType(poTypes, "KOSTHOLDART", "kostholdArt", OFTString);
 
-      addSimpleType(&oTypes, "KOSTHOLDSRÅDTYPE", "kostholdsrådType", OFTInteger);
+      addSimpleType(poTypes, "KOSTHOLDSRÅDTYPE", "kostholdsrådType", OFTInteger);
 
-      addSimpleType(&oTypes, "KP", "knutePunkt", OFTInteger);
+      addSimpleType(poTypes, "KP", "knutePunkt", OFTInteger);
 
-      addSimpleType(&oTypes, "KPANGITTHENSYN", "angittHensyn", OFTInteger);
+      addSimpleType(poTypes, "KPANGITTHENSYN", "angittHensyn", OFTInteger);
 
-      addSimpleType(&oTypes, "KPAREALFORMÅL", "arealformål", OFTInteger);
+      addSimpleType(poTypes, "KPAREALFORMÅL", "arealformål", OFTInteger);
 
-      addSimpleType(&oTypes, "KPBÅNDLEGGING", "båndlegging", OFTInteger);
+      addSimpleType(poTypes, "KPBÅNDLEGGING", "båndlegging", OFTInteger);
 
-      addSimpleType(&oTypes, "KPDETALJERING", "detaljering", OFTInteger);
+      addSimpleType(poTypes, "KPDETALJERING", "detaljering", OFTInteger);
 
-      addSimpleType(&oTypes, "KPFARE", "fare", OFTInteger);
+      addSimpleType(poTypes, "KPFARE", "fare", OFTInteger);
 
-      addSimpleType(&oTypes, "KPGJENNOMFØRING", "gjennomføring", OFTInteger);
+      addSimpleType(poTypes, "KPGJENNOMFØRING", "gjennomføring", OFTInteger);
 
-      addSimpleType(&oTypes, "KPINFRASTRUKTUR", "infrastruktur", OFTInteger);
+      addSimpleType(poTypes, "KPINFRASTRUKTUR", "infrastruktur", OFTInteger);
 
-      addSimpleType(&oTypes, "KPINFRASTRUKTURLINJE", "infrastrukturLinje", OFTInteger);
+      addSimpleType(poTypes, "KPINFRASTRUKTURLINJE", "infrastrukturLinje", OFTInteger);
 
-      addSimpleType(&oTypes, "KPJURLINJE", "juridisklinje", OFTInteger);
+      addSimpleType(poTypes, "KPJURLINJE", "juridisklinje", OFTInteger);
 
-      addSimpleType(&oTypes, "KPRESTENAVN", "prestegjeldnavn", OFTString);
+      addSimpleType(poTypes, "KPRESTENAVN", "prestegjeldnavn", OFTString);
 
-      addSimpleType(&oTypes, "KPRESTENR", "prestegjeldnummer", OFTInteger);
+      addSimpleType(poTypes, "KPRESTENR", "prestegjeldnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "KPROSTINAVN", "prostinavn", OFTString);
+      addSimpleType(poTypes, "KPROSTINAVN", "prostinavn", OFTString);
 
-      addSimpleType(&oTypes, "KPROSTINR", "prostinummer", OFTInteger);
+      addSimpleType(poTypes, "KPROSTINR", "prostinummer", OFTInteger);
 
-      addSimpleType(&oTypes, "KPSIKRING", "sikring", OFTInteger);
+      addSimpleType(poTypes, "KPSIKRING", "sikring", OFTInteger);
 
-      addSimpleType(&oTypes, "KPSTØY", "støy", OFTInteger);
+      addSimpleType(poTypes, "KPSTØY", "støy", OFTInteger);
 
-      addSimpleType(&oTypes, "KRAFTVERKTYP", "kraftverktype", OFTString);
+      addSimpleType(poTypes, "KRAFTVERKTYP", "kraftverktype", OFTString);
 
-      addSimpleType(&oTypes, "KRETSNAVN", "kretsnavn", OFTString);
+      addSimpleType(poTypes, "KRETSNAVN", "kretsnavn", OFTString);
 
-      addSimpleType(&oTypes, "KRETSNUMMER", "kretsnummer", OFTString);
+      addSimpleType(poTypes, "KRETSNUMMER", "kretsnummer", OFTString);
 
-      addSimpleType(&oTypes, "KRETSTYPEKODE", "kretstypekode", OFTString);
+      addSimpleType(poTypes, "KRETSTYPEKODE", "kretstypekode", OFTString);
 
-      addSimpleType(&oTypes, "KRETSTYPENAVN", "kretstypenavn", OFTString);
+      addSimpleType(poTypes, "KRETSTYPENAVN", "kretstypenavn", OFTString);
 
-      addSimpleType(&oTypes, "KULT_HIST_INT", "kulturhistoriskInteresse", OFTString);
+      addSimpleType(poTypes, "KULT_HIST_INT", "kulturhistoriskInteresse", OFTString);
 
-      addSimpleType(&oTypes, "KVIKKLEIRESVURD", "stabilitetVurderingKvikkleire", OFTInteger);
+      addSimpleType(poTypes, "KVIKKLEIRESVURD", "stabilitetVurderingKvikkleire", OFTInteger);
 
-      addSimpleType(&oTypes, "KYSTKONSTRUKSJONSTYPE", "kystkonstruksjonstype", OFTInteger);
+      addSimpleType(poTypes, "KYSTKONSTRUKSJONSTYPE", "kystkonstruksjonstype", OFTInteger);
 
-      addSimpleType(&oTypes, "KYSTREF", "kystreferanse", OFTString);
+      addSimpleType(poTypes, "KYSTREF", "kystreferanse", OFTString);
 
-      addSimpleType(&oTypes, "KYSTTYP", "kysttype", OFTInteger);
+      addSimpleType(poTypes, "KYSTTYP", "kysttype", OFTInteger);
 
-      addSimpleType(&oTypes, "KYSTVERKSDISTRIKT", "kystverksdistrikt", OFTInteger);
+      addSimpleType(poTypes, "KYSTVERKSDISTRIKT", "kystverksdistrikt", OFTInteger);
 
-      addSimpleType(&oTypes, "LAGRET_DATO", "lagretDato", OFTDate);
+      addSimpleType(poTypes, "LAGRET_DATO", "lagretDato", OFTDate);
 
-      addSimpleType(&oTypes, "LAND1", "førsteLand", OFTString);
+      addSimpleType(poTypes, "LAND1", "førsteLand", OFTString);
 
-      addSimpleType(&oTypes, "LAND2", "annetLand", OFTString);
+      addSimpleType(poTypes, "LAND2", "annetLand", OFTString);
 
-      addSimpleType(&oTypes, "LANDEMERKEKATEGORI", "landeberkekategori", OFTInteger);
+      addSimpleType(poTypes, "LANDEMERKEKATEGORI", "landeberkekategori", OFTInteger);
 
-      addSimpleType(&oTypes, "LANDKODE", "landkode", OFTString);
+      addSimpleType(poTypes, "LANDKODE", "landkode", OFTString);
 
-      addSimpleType(&oTypes, "LATERALMERKETYPE", "lateralmerketype", OFTInteger);
+      addSimpleType(poTypes, "LATERALMERKETYPE", "lateralmerketype", OFTInteger);
 
-      addSimpleType(&oTypes, "LDEL", "landsdelområde", OFTInteger);
+      addSimpleType(poTypes, "LDEL", "landsdelområde", OFTInteger);
 
-      addSimpleType(&oTypes, "LEDN_BRU", "ledningbruksområde", OFTString);
+      addSimpleType(poTypes, "LEDN_BRU", "ledningbruksområde", OFTString);
 
-      addSimpleType(&oTypes, "LEDN_NAV", "ledningsnavn", OFTString);
+      addSimpleType(poTypes, "LEDN_NAV", "ledningsnavn", OFTString);
 
-      addSimpleType(&oTypes, "LEDN_TYP", "ledningstype", OFTInteger);
+      addSimpleType(poTypes, "LEDN_TYP", "ledningstype", OFTInteger);
 
-      addSimpleType(&oTypes, "LEDNINGSEIER", "ledningseier", OFTString);
+      addSimpleType(poTypes, "LEDNINGSEIER", "ledningseier", OFTString);
 
-      addSimpleType(&oTypes, "LEKEREKRTYPE", "lekeRekreasjonstype", OFTString);
+      addSimpleType(poTypes, "LEKEREKRTYPE", "lekeRekreasjonstype", OFTString);
 
-      addSimpleType(&oTypes, "LENGDE", "lengde", OFTReal);
+      addSimpleType(poTypes, "LENGDE", "lengde", OFTReal);
 
-      addSimpleType(&oTypes, "LENGDEENHET", "lengdeenhet", OFTString);
+      addSimpleType(poTypes, "LENGDEENHET", "lengdeenhet", OFTString);
 
-      addSimpleType(&oTypes, "LENGDEOVERLAPP", "lengdeoverlapp", OFTInteger);
+      addSimpleType(poTypes, "LENGDEOVERLAPP", "lengdeoverlapp", OFTInteger);
 
-      addSimpleType(&oTypes, "LENGDESEKTORLINJE1", "lengdeSektorlinje1", OFTReal);
+      addSimpleType(poTypes, "LENGDESEKTORLINJE1", "lengdeSektorlinje1", OFTReal);
 
-      addSimpleType(&oTypes, "LENGDESEKTORLINJE2", "lengdeSektorlinje2", OFTReal);
+      addSimpleType(poTypes, "LENGDESEKTORLINJE2", "lengdeSektorlinje2", OFTReal);
 
-      addSimpleType(&oTypes, "LETE_AREAL", "leteareal", OFTReal);
+      addSimpleType(poTypes, "LETE_AREAL", "leteareal", OFTReal);
 
-      addSimpleType(&oTypes, "LH_BEREDSKAP", "lufthavnBeredskapskode", OFTInteger);
+      addSimpleType(poTypes, "LH_BEREDSKAP", "lufthavnBeredskapskode", OFTInteger);
 
-      addSimpleType(&oTypes, "LHAREAL", "lufthavnArealer", OFTInteger);
+      addSimpleType(poTypes, "LHAREAL", "lufthavnArealer", OFTInteger);
 
-      addSimpleType(&oTypes, "LHDISTTYPE", "lufthavndistansetype", OFTInteger);
+      addSimpleType(poTypes, "LHDISTTYPE", "lufthavndistansetype", OFTInteger);
 
-      addSimpleType(&oTypes, "LHELEV", "lufthavnelevasjon", OFTReal);
+      addSimpleType(poTypes, "LHELEV", "lufthavnelevasjon", OFTReal);
 
-      addSimpleType(&oTypes, "LHFDET", "lufthavnForsvarsObjektDetalj", OFTInteger);
+      addSimpleType(poTypes, "LHFDET", "lufthavnForsvarsObjektDetalj", OFTInteger);
 
-      addSimpleType(&oTypes, "LHFM_TYPE", "lufthavnFastmerketype", OFTInteger);
+      addSimpleType(poTypes, "LHFM_TYPE", "lufthavnFastmerketype", OFTInteger);
 
-      addSimpleType(&oTypes, "LHINST_TYPE", "lufthavnInstrumenteringType", OFTInteger);
+      addSimpleType(poTypes, "LHINST_TYPE", "lufthavnInstrumenteringType", OFTInteger);
 
-      addSimpleType(&oTypes, "LHLYS_OPPHØYD_NEDFELT", "lufthavnLysOpphøydNedfelt", OFTString);
+      addSimpleType(poTypes, "LHLYS_OPPHØYD_NEDFELT", "lufthavnLysOpphøydNedfelt", OFTString);
 
-      addSimpleType(&oTypes, "LHLYSFARGE", "lufthavnlysFarge", OFTInteger);
+      addSimpleType(poTypes, "LHLYSFARGE", "lufthavnlysFarge", OFTInteger);
 
-      addSimpleType(&oTypes, "LHLYSRETN", "lufhavnLysretning", OFTInteger);
+      addSimpleType(poTypes, "LHLYSRETN", "lufhavnLysretning", OFTInteger);
 
-      addSimpleType(&oTypes, "LHLYSTYPE", "lufthavnlystype", OFTInteger);
+      addSimpleType(poTypes, "LHLYSTYPE", "lufthavnlystype", OFTInteger);
 
-      addSimpleType(&oTypes, "LHSKILTKATEGORI", "lufthavnskiltkatagori", OFTInteger);
+      addSimpleType(poTypes, "LHSKILTKATEGORI", "lufthavnskiltkatagori", OFTInteger);
 
-      addSimpleType(&oTypes, "LHSKILTLYS", "lufthavnskiltlys", OFTString);
+      addSimpleType(poTypes, "LHSKILTLYS", "lufthavnskiltlys", OFTString);
 
-      addSimpleType(&oTypes, "LHSKILTTYPE", "lufthavnskilttype", OFTInteger);
+      addSimpleType(poTypes, "LHSKILTTYPE", "lufthavnskilttype", OFTInteger);
 
-      addSimpleType(&oTypes, "LINEAMENTTYPE", "lineamentType", OFTInteger);
+      addSimpleType(poTypes, "LINEAMENTTYPE", "lineamentType", OFTInteger);
 
-      addSimpleType(&oTypes, "LINK", "link", OFTString);
+      addSimpleType(poTypes, "LINK", "link", OFTString);
 
-      addSimpleType(&oTypes, "LJORDKL", "lokalJordressurs", OFTInteger);
+      addSimpleType(poTypes, "LJORDKL", "lokalJordressurs", OFTInteger);
 
-      addSimpleType(&oTypes, "LJORDKL_A", "nedklassifiseringLokalJordressurs", OFTInteger);
+      addSimpleType(poTypes, "LJORDKL_A", "nedklassifiseringLokalJordressurs", OFTInteger);
 
-      addSimpleType(&oTypes, "LOK_NAVN", "lokalitetsnavn", OFTString);
+      addSimpleType(poTypes, "LOK_NAVN", "lokalitetsnavn", OFTString);
 
-      addSimpleType(&oTypes, "LOK_NR", "lokalitetsnummer", OFTInteger);
+      addSimpleType(poTypes, "LOK_NR", "lokalitetsnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "LOSLIGHET", "loslighetGrad", OFTInteger);
+      addSimpleType(poTypes, "LOSLIGHET", "loslighetGrad", OFTInteger);
 
-      addSimpleType(&oTypes, "LOSMKORNSTR", "losmKornstorrelse", OFTInteger);
+      addSimpleType(poTypes, "LOSMKORNSTR", "losmKornstorrelse", OFTInteger);
 
-      addSimpleType(&oTypes, "LOSMOVERFLATETYPE", "losmOverflateType", OFTInteger);
+      addSimpleType(poTypes, "LOSMOVERFLATETYPE", "losmOverflateType", OFTInteger);
 
-      addSimpleType(&oTypes, "LOVDISP", "dispensasjonType", OFTInteger);
+      addSimpleType(poTypes, "LOVDISP", "dispensasjonType", OFTInteger);
 
-      addSimpleType(&oTypes, "LOVREFBESKRIVELSE", "lovreferanseBeskrivelse", OFTString);
+      addSimpleType(poTypes, "LOVREFBESKRIVELSE", "lovreferanseBeskrivelse", OFTString);
 
-      addSimpleType(&oTypes, "LOVREFERANSE", "lovreferanseType", OFTInteger);
+      addSimpleType(poTypes, "LOVREFERANSE", "lovreferanseType", OFTInteger);
 
-      addSimpleType(&oTypes, "LR_AKTIV", "landbruksregAktiv", OFTInteger);
+      addSimpleType(poTypes, "LR_AKTIV", "landbruksregAktiv", OFTInteger);
 
-      addSimpleType(&oTypes, "LR_TYPE", "landbruksregType", OFTInteger);
+      addSimpleType(poTypes, "LR_TYPE", "landbruksregType", OFTInteger);
 
-      addSimpleType(&oTypes, "LRV", "vannstandLavestRegulert", OFTReal);
+      addSimpleType(poTypes, "LRV", "vannstandLavestRegulert", OFTReal);
 
-      addSimpleType(&oTypes, "LUFTHAVNHINDERTREGRUPPE", "lufthavnhinderTregruppe", OFTString);
+      addSimpleType(poTypes, "LUFTHAVNHINDERTREGRUPPE", "lufthavnhinderTregruppe", OFTString);
 
-      addSimpleType(&oTypes, "LVANN", "vannstandLavestRegistrert", OFTReal);
+      addSimpleType(poTypes, "LVANN", "vannstandLavestRegistrert", OFTReal);
 
-      addSimpleType(&oTypes, "LYSHØYDE", "lyshøyde", OFTReal);
+      addSimpleType(poTypes, "LYSHØYDE", "lyshøyde", OFTReal);
 
-      addSimpleType(&oTypes, "LØPENR", "bruksenhetLøpenr", OFTInteger);
+      addSimpleType(poTypes, "LØPENR", "bruksenhetLøpenr", OFTInteger);
 
-      addSimpleType(&oTypes, "MAGASINNR", "magasinNr", OFTInteger);
+      addSimpleType(poTypes, "MAGASINNR", "magasinNr", OFTInteger);
 
-      addSimpleType(&oTypes, "MAKSHØYDE", "makshøyde", OFTReal);
+      addSimpleType(poTypes, "MAKSHØYDE", "makshøyde", OFTReal);
 
-      addSimpleType(&oTypes, "MAKSIMALREKKEVIDDE", "maksimalRekkevidde", OFTReal);
+      addSimpleType(poTypes, "MAKSIMALREKKEVIDDE", "maksimalRekkevidde", OFTReal);
 
-      addSimpleType(&oTypes, "MAKSSNØHØYDE", "maksSnøhøyde", OFTInteger);
+      addSimpleType(poTypes, "MAKSSNØHØYDE", "maksSnøhøyde", OFTInteger);
 
-      addSimpleType(&oTypes, "MANGELMATRIKKELFØRINGSKRAV", "mangelMatrikkelføringskrav", OFTString);
+      addSimpleType(poTypes, "MANGELMATRIKKELFØRINGSKRAV", "mangelMatrikkelføringskrav", OFTString);
 
-      addSimpleType(&oTypes, "MARKID", "jordregisterMarkslagKobling", OFTInteger);
+      addSimpleType(poTypes, "MARKID", "jordregisterMarkslagKobling", OFTInteger);
 
-      addSimpleType(&oTypes, "MARKSLAGAVGRTYPE", "markslagAvgrensingType", OFTInteger);
+      addSimpleType(poTypes, "MARKSLAGAVGRTYPE", "markslagAvgrensingType", OFTInteger);
 
-      addSimpleType(&oTypes, "MASSEENHET", "masseenhet", OFTString);
+      addSimpleType(poTypes, "MASSEENHET", "masseenhet", OFTString);
 
-      addSimpleType(&oTypes, "MATERIALE", "materialeBolt", OFTInteger);
+      addSimpleType(poTypes, "MATERIALE", "materialeBolt", OFTInteger);
 
-      addSimpleType(&oTypes, "MATERIALE_YTTERV", "materialeYttervegg", OFTInteger);
+      addSimpleType(poTypes, "MATERIALE_YTTERV", "materialeYttervegg", OFTInteger);
 
-      addSimpleType(&oTypes, "MATR_KODE", "materiellkode", OFTString);
+      addSimpleType(poTypes, "MATR_KODE", "materiellkode", OFTString);
 
-      addSimpleType(&oTypes, "MATRIKKELKOMMUNE", "matrikkelkommune", OFTInteger);
+      addSimpleType(poTypes, "MATRIKKELKOMMUNE", "matrikkelkommune", OFTInteger);
 
-      addSimpleType(&oTypes, "MATRTYPE", "materialType", OFTInteger);
+      addSimpleType(poTypes, "MATRTYPE", "materialType", OFTInteger);
 
-      addSimpleType(&oTypes, "MATRUNTYPE", "materialUndertype", OFTString);
+      addSimpleType(poTypes, "MATRUNTYPE", "materialUndertype", OFTString);
 
-      addSimpleType(&oTypes, "MAX_ELEMENT_PKT", "maksAntallPunktGeometritype1", OFTInteger);
+      addSimpleType(poTypes, "MAX_ELEMENT_PKT", "maksAntallPunktGeometritype1", OFTInteger);
 
-      addSimpleType(&oTypes, "MAX_OBJEKT_PKT", "maksAntallPunktGeometritype2", OFTInteger);
+      addSimpleType(poTypes, "MAX_OBJEKT_PKT", "maksAntallPunktGeometritype2", OFTInteger);
 
-      addSimpleType(&oTypes, "MAX_REF_OBJEKT", "maksAntallGeometriReferanse", OFTInteger);
+      addSimpleType(poTypes, "MAX_REF_OBJEKT", "maksAntallGeometriReferanse", OFTInteger);
 
-      addSimpleType(&oTypes, "MAX-AVVIK", "maksimaltAvvik", OFTInteger);
+      addSimpleType(poTypes, "MAX-AVVIK", "maksimaltAvvik", OFTInteger);
 
-      addSimpleType(&oTypes, "MAX-N", "maksimumNord", OFTInteger);
+      addSimpleType(poTypes, "MAX-N", "maksimumNord", OFTInteger);
 
-      addSimpleType(&oTypes, "MAX-Ø", "maksimumØst", OFTInteger);
+      addSimpleType(poTypes, "MAX-Ø", "maksimumØst", OFTInteger);
 
-      addSimpleType(&oTypes, "MEDIUM", "medium", OFTString);
+      addSimpleType(poTypes, "MEDIUM", "medium", OFTString);
 
-      addSimpleType(&oTypes, "MEKT50", "mektighetFemtiProsent", OFTReal);
+      addSimpleType(poTypes, "MEKT50", "mektighetFemtiProsent", OFTReal);
 
-      addSimpleType(&oTypes, "MERKEFORM", "merkeform", OFTInteger);
+      addSimpleType(poTypes, "MERKEFORM", "merkeform", OFTInteger);
 
-      addSimpleType(&oTypes, "MERKELISTENUMMER", "merkelistenummer", OFTInteger);
+      addSimpleType(poTypes, "MERKELISTENUMMER", "merkelistenummer", OFTInteger);
 
-      addSimpleType(&oTypes, "MERKEMØNSTER", "merkemønster", OFTInteger);
+      addSimpleType(poTypes, "MERKEMØNSTER", "merkemønster", OFTInteger);
 
-      addSimpleType(&oTypes, "METADATALINK", "metadatalink", OFTString);
+      addSimpleType(poTypes, "METADATALINK", "metadatalink", OFTString);
 
-      addSimpleType(&oTypes, "METALINTYP", "metamorfLinjetype", OFTString);
+      addSimpleType(poTypes, "METALINTYP", "metamorfLinjetype", OFTString);
 
-      addSimpleType(&oTypes, "METAMOGRAD", "metamorfGrad", OFTInteger);
+      addSimpleType(poTypes, "METAMOGRAD", "metamorfGrad", OFTInteger);
 
-      addSimpleType(&oTypes, "METER-FRA", "veglenkeMeterFra", OFTInteger);
+      addSimpleType(poTypes, "METER-FRA", "veglenkeMeterFra", OFTInteger);
 
-      addSimpleType(&oTypes, "METER-TIL", "veglenkeMeterTil", OFTInteger);
+      addSimpleType(poTypes, "METER-TIL", "veglenkeMeterTil", OFTInteger);
 
-      addSimpleType(&oTypes, "MGENHETBESKRIV", "mgEnhetBeskrivelse", OFTString);
+      addSimpleType(poTypes, "MGENHETBESKRIV", "mgEnhetBeskrivelse", OFTString);
 
-      addSimpleType(&oTypes, "MGENHETOPPLOSN", "mgEnhetOpplosning", OFTInteger);
+      addSimpleType(poTypes, "MGENHETOPPLOSN", "mgEnhetOpplosning", OFTInteger);
 
-      addSimpleType(&oTypes, "MGINSTRUMENT", "mgInstrument", OFTString);
+      addSimpleType(poTypes, "MGINSTRUMENT", "mgInstrument", OFTString);
 
-      addSimpleType(&oTypes, "MGLINJENR", "mgLinjenummer", OFTString);
+      addSimpleType(poTypes, "MGLINJENR", "mgLinjenummer", OFTString);
 
-      addSimpleType(&oTypes, "MGPOSNR", "mgPosisjonnummer", OFTInteger);
+      addSimpleType(poTypes, "MGPOSNR", "mgPosisjonnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "MGTOKTNR", "mgToktnummer", OFTString);
+      addSimpleType(poTypes, "MGTOKTNR", "mgToktnummer", OFTString);
 
-      addSimpleType(&oTypes, "MILITÆRØVELSETYPE", "militærøvelsetype", OFTInteger);
+      addSimpleType(poTypes, "MILITÆRØVELSETYPE", "militærøvelsetype", OFTInteger);
 
-      addSimpleType(&oTypes, "MILJOTIL", "miljøtiltak", OFTInteger);
+      addSimpleType(poTypes, "MILJOTIL", "miljøtiltak", OFTInteger);
 
-      addSimpleType(&oTypes, "MINHØYDE", "minhøyde", OFTReal);
+      addSimpleType(poTypes, "MINHØYDE", "minhøyde", OFTReal);
 
-      addSimpleType(&oTypes, "MIN-N", "minimumNord", OFTInteger);
+      addSimpleType(poTypes, "MIN-N", "minimumNord", OFTInteger);
 
-      addSimpleType(&oTypes, "MIN-Ø", "minimumØst", OFTInteger);
+      addSimpleType(poTypes, "MIN-Ø", "minimumØst", OFTInteger);
 
-      addSimpleType(&oTypes, "MYNDIGHET", "vedtaksmyndighet", OFTString);
+      addSimpleType(poTypes, "MYNDIGHET", "vedtaksmyndighet", OFTString);
 
-      addSimpleType(&oTypes, "MYR", "myrklassifikasjon", OFTInteger);
+      addSimpleType(poTypes, "MYR", "myrklassifikasjon", OFTInteger);
 
-      addSimpleType(&oTypes, "MÅLEMETODE", "målemetode", OFTInteger);
+      addSimpleType(poTypes, "MÅLEMETODE", "målemetode", OFTInteger);
 
-      addSimpleType(&oTypes, "MÅLESTOKK", "målestokk", OFTInteger);
+      addSimpleType(poTypes, "MÅLESTOKK", "målestokk", OFTInteger);
 
-      addSimpleType(&oTypes, "MÅLTALL", "måltall", OFTReal);
+      addSimpleType(poTypes, "MÅLTALL", "måltall", OFTReal);
 
-      addSimpleType(&oTypes, "NASJONALTOPPMERKETYPE", "nasjonalToppmerketype", OFTInteger);
+      addSimpleType(poTypes, "NASJONALTOPPMERKETYPE", "nasjonalToppmerketype", OFTInteger);
 
-      addSimpleType(&oTypes, "NASJVIKTIG", "rastoffViktighetOmfang", OFTString);
+      addSimpleType(poTypes, "NASJVIKTIG", "rastoffViktighetOmfang", OFTString);
 
-      addSimpleType(&oTypes, "NAVIGASJONSINSTALLASJONSEIER", "navigasjonsinstallasjonseier", OFTString);
+      addSimpleType(poTypes, "NAVIGASJONSINSTALLASJONSEIER", "navigasjonsinstallasjonseier", OFTString);
 
-      addSimpleType(&oTypes, "NAVLYS_KARAKTER", "navigasjonslyskarakter", OFTInteger);
+      addSimpleType(poTypes, "NAVLYS_KARAKTER", "navigasjonslyskarakter", OFTInteger);
 
-      addSimpleType(&oTypes, "NAVLYSTYPE", "navlysType", OFTInteger);
+      addSimpleType(poTypes, "NAVLYSTYPE", "navlysType", OFTInteger);
 
-      addSimpleType(&oTypes, "NAVN", "navn", OFTString);
+      addSimpleType(poTypes, "NAVN", "navn", OFTString);
 
-      addSimpleType(&oTypes, "NAVNTYPE", "navnetype", OFTInteger);
+      addSimpleType(poTypes, "NAVNTYPE", "navnetype", OFTInteger);
 
-      addSimpleType(&oTypes, "NEDSENKETKANTSTEIN", "nedsenketKantstein", OFTString);
+      addSimpleType(poTypes, "NEDSENKETKANTSTEIN", "nedsenketKantstein", OFTString);
 
-      addSimpleType(&oTypes, "NEDSTENGT_DATO", "nedstengtDato", OFTDate);
+      addSimpleType(poTypes, "NEDSTENGT_DATO", "nedstengtDato", OFTDate);
 
-      addSimpleType(&oTypes, "NETT_NIV", "ledningsnettNivå", OFTString);
+      addSimpleType(poTypes, "NETT_NIV", "ledningsnettNivå", OFTString);
 
-      addSimpleType(&oTypes, "NEVNER", "nevner", OFTReal);
+      addSimpleType(poTypes, "NEVNER", "nevner", OFTReal);
 
-      addSimpleType(&oTypes, "NOMINELLREKKEVIDDE", "nominellRekkevidde", OFTReal);
+      addSimpleType(poTypes, "NOMINELLREKKEVIDDE", "nominellRekkevidde", OFTReal);
 
-      addSimpleType(&oTypes, "NORD", "nord", OFTInteger);
+      addSimpleType(poTypes, "NORD", "nord", OFTInteger);
 
-      addSimpleType(&oTypes, "NYMATRIKULERT", "nymatrikulert", OFTString);
+      addSimpleType(poTypes, "NYMATRIKULERT", "nymatrikulert", OFTString);
 
-      addSimpleType(&oTypes, "NÆRINGSGRUPPE", "næringsgruppe", OFTString);
+      addSimpleType(poTypes, "NÆRINGSGRUPPE", "næringsgruppe", OFTString);
 
-      addSimpleType(&oTypes, "NØYAKTIGHET", "nøyaktighet", OFTInteger);
+      addSimpleType(poTypes, "NØYAKTIGHET", "nøyaktighet", OFTInteger);
 
-      addSimpleType(&oTypes, "NØYAKTIGHETSKLASSE", "nøyaktighetsklasse", OFTInteger);
+      addSimpleType(poTypes, "NØYAKTIGHETSKLASSE", "nøyaktighetsklasse", OFTInteger);
 
-      addSimpleType(&oTypes, "NÅVÆRENDE_AREAL", "nåværendeAreal", OFTReal);
+      addSimpleType(poTypes, "NÅVÆRENDE_AREAL", "nåværendeAreal", OFTReal);
 
-      addSimpleType(&oTypes, "OBJTYPE", "objekttypenavn", OFTString);
+      addSimpleType(poTypes, "OBJTYPE", "objekttypenavn", OFTString);
 
-      addSimpleType(&oTypes, "OBSERVERTFLOM", "observertFlom", OFTReal);
+      addSimpleType(poTypes, "OBSERVERTFLOM", "observertFlom", OFTReal);
 
-      addSimpleType(&oTypes, "OBSLINID", "obsLinId", OFTString);
+      addSimpleType(poTypes, "OBSLINID", "obsLinId", OFTString);
 
-      addSimpleType(&oTypes, "OMKRETSINNSJØ", "omkretsInnsjø", OFTInteger);
+      addSimpleType(poTypes, "OMKRETSINNSJØ", "omkretsInnsjø", OFTInteger);
 
-      addSimpleType(&oTypes, "OMRKODE", "reinbeiteområdeID", OFTString);
+      addSimpleType(poTypes, "OMRKODE", "reinbeiteområdeID", OFTString);
 
-      addSimpleType(&oTypes, "OMRNAVN", "områdenavn", OFTString);
+      addSimpleType(poTypes, "OMRNAVN", "områdenavn", OFTString);
 
-      addSimpleType(&oTypes, "OMRTYPE", "dumpefelttype", OFTInteger);
+      addSimpleType(poTypes, "OMRTYPE", "dumpefelttype", OFTInteger);
 
-      addSimpleType(&oTypes, "OMRÅDEID", "områdeid", OFTInteger);
+      addSimpleType(poTypes, "OMRÅDEID", "områdeid", OFTInteger);
 
-      addSimpleType(&oTypes, "OMTVISTET", "omtvistet", OFTString);
+      addSimpleType(poTypes, "OMTVISTET", "omtvistet", OFTString);
 
-      addSimpleType(&oTypes, "OPAREALAVGRTYPE", "operativArealavgrensningtype", OFTInteger);
+      addSimpleType(poTypes, "OPAREALAVGRTYPE", "operativArealavgrensningtype", OFTInteger);
 
-      addSimpleType(&oTypes, "OPERATØR", "petroleumsoperatør", OFTString);
+      addSimpleType(poTypes, "OPERATØR", "petroleumsoperatør", OFTString);
 
-      addSimpleType(&oTypes, "OPLAREAL", "arealbruk", OFTInteger);
+      addSimpleType(poTypes, "OPLAREAL", "arealbruk", OFTInteger);
 
-      addSimpleType(&oTypes, "OPLAREALUTDYP", "arealbruksutdyping", OFTString);
+      addSimpleType(poTypes, "OPLAREALUTDYP", "arealbruksutdyping", OFTString);
 
-      addSimpleType(&oTypes, "OPLRESTR", "arealbruksrestriksjoner", OFTInteger);
+      addSimpleType(poTypes, "OPLRESTR", "arealbruksrestriksjoner", OFTInteger);
 
-      addSimpleType(&oTypes, "OPLRETNL", "arealbruksretningslinjer", OFTInteger);
+      addSimpleType(poTypes, "OPLRETNL", "arealbruksretningslinjer", OFTInteger);
 
-      addSimpleType(&oTypes, "OPPARBEIDING", "opparbeiding", OFTInteger);
+      addSimpleType(poTypes, "OPPARBEIDING", "opparbeiding", OFTInteger);
 
-      addSimpleType(&oTypes, "OPPDATERINGSDATO", "oppdateringsdato", OFTDateTime);
+      addSimpleType(poTypes, "OPPDATERINGSDATO", "oppdateringsdato", OFTDateTime);
 
-      addSimpleType(&oTypes, "OPPDRAGSGIVER", "oppdragsgiver", OFTString);
+      addSimpleType(poTypes, "OPPDRAGSGIVER", "oppdragsgiver", OFTString);
 
-      addSimpleType(&oTypes, "OPPGITTAREAL", "oppgittAreal", OFTReal);
+      addSimpleType(poTypes, "OPPGITTAREAL", "oppgittAreal", OFTReal);
 
-      addSimpleType(&oTypes, "OPPHAV", "opphav", OFTString);
+      addSimpleType(poTypes, "OPPHAV", "opphav", OFTString);
 
-      addSimpleType(&oTypes, "OPPMÅLINGIKKEFULLFØRT", "oppmålingIkkeFullført", OFTString);
+      addSimpleType(poTypes, "OPPMÅLINGIKKEFULLFØRT", "oppmålingIkkeFullført", OFTString);
 
-      addSimpleType(&oTypes, "OPPMÅLTKOTE", "oppmåltKote", OFTReal);
+      addSimpleType(poTypes, "OPPMÅLTKOTE", "oppmåltKote", OFTReal);
 
-      addSimpleType(&oTypes, "OPPMÅLTÅR", "oppmåltÅr", OFTInteger);
+      addSimpleType(poTypes, "OPPMÅLTÅR", "oppmåltÅr", OFTInteger);
 
-      addSimpleType(&oTypes, "OPPRETTET_AAR", "opprettetÅr", OFTDate);
+      addSimpleType(poTypes, "OPPRETTET_AAR", "opprettetÅr", OFTDate);
 
-      addSimpleType(&oTypes, "OPPRINNELIGBILDEFORMAT", "bildeType", OFTString);
+      addSimpleType(poTypes, "OPPRINNELIGBILDEFORMAT", "bildeType", OFTString);
 
-      addSimpleType(&oTypes, "OPPRINNELIGBILDESYS", "BildeSystem", OFTInteger);
+      addSimpleType(poTypes, "OPPRINNELIGBILDESYS", "BildeSystem", OFTInteger);
 
-      addSimpleType(&oTypes, "OPPRINNELIGSOSIALTMILJØ", "opprinneligSosialtMiljø", OFTInteger);
+      addSimpleType(poTypes, "OPPRINNELIGSOSIALTMILJØ", "opprinneligSosialtMiljø", OFTInteger);
 
-      addSimpleType(&oTypes, "OPPRINNELSE", "opprinnelse", OFTString);
+      addSimpleType(poTypes, "OPPRINNELSE", "opprinnelse", OFTString);
 
-      addSimpleType(&oTypes, "OPPSTARTSÅR", "oppstartsår", OFTDate);
+      addSimpleType(poTypes, "OPPSTARTSÅR", "oppstartsår", OFTDate);
 
-      addSimpleType(&oTypes, "OPPTAKSMETODE", "opptaksmetode", OFTInteger);
+      addSimpleType(poTypes, "OPPTAKSMETODE", "opptaksmetode", OFTInteger);
 
-      addSimpleType(&oTypes, "OPPVARMING", "oppvarming", OFTString);
+      addSimpleType(poTypes, "OPPVARMING", "oppvarming", OFTString);
 
-      addSimpleType(&oTypes, "ORGANISK", "organiskAndel", OFTInteger);
+      addSimpleType(poTypes, "ORGANISK", "organiskAndel", OFTInteger);
 
-      addSimpleType(&oTypes, "ORGNR", "organsisasjonsnummer", OFTInteger);
+      addSimpleType(poTypes, "ORGNR", "organsisasjonsnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "ORIENTERINGSDATA", "orienteringsdata", OFTString);
+      addSimpleType(poTypes, "ORIENTERINGSDATA", "orienteringsdata", OFTString);
 
-      addSimpleType(&oTypes, "ORIENTERINGSMETODE", "orienteringsmetode", OFTInteger);
+      addSimpleType(poTypes, "ORIENTERINGSMETODE", "orienteringsmetode", OFTInteger);
 
-      addSimpleType(&oTypes, "ORIGINALDATAVERT", "originalDatavert", OFTString);
+      addSimpleType(poTypes, "ORIGINALDATAVERT", "originalDatavert", OFTString);
 
-      addSimpleType(&oTypes, "ORIGO-N", "origoNord", OFTInteger);
+      addSimpleType(poTypes, "ORIGO-N", "origoNord", OFTInteger);
 
-      addSimpleType(&oTypes, "ORIGO-Ø", "origoØst", OFTInteger);
+      addSimpleType(poTypes, "ORIGO-Ø", "origoØst", OFTInteger);
 
-      addSimpleType(&oTypes, "OVERGRUPPE", "overgruppeNavn", OFTString);
+      addSimpleType(poTypes, "OVERGRUPPE", "overgruppeNavn", OFTString);
 
-      addSimpleType(&oTypes, "PBTILTAK", "tiltakstype", OFTInteger);
+      addSimpleType(poTypes, "PBTILTAK", "tiltakstype", OFTInteger);
 
-      addSimpleType(&oTypes, "PETLITOKODE", "petrofLitologi", OFTString);
+      addSimpleType(poTypes, "PETLITOKODE", "petrofLitologi", OFTString);
 
-      addSimpleType(&oTypes, "PETMETAKODE", "petrofMetamorfose", OFTString);
+      addSimpleType(poTypes, "PETMETAKODE", "petrofMetamorfose", OFTString);
 
-      addSimpleType(&oTypes, "PETROLEUM_KOORD_STATUS", "petroleumKoordinatstatus", OFTString);
+      addSimpleType(poTypes, "PETROLEUM_KOORD_STATUS", "petroleumKoordinatstatus", OFTString);
 
-      addSimpleType(&oTypes, "PETROLEUMLEDNINGFUNKSJON", "petroleumsledningsfunksjon", OFTString);
+      addSimpleType(poTypes, "PETROLEUMLEDNINGFUNKSJON", "petroleumsledningsfunksjon", OFTString);
 
-      addSimpleType(&oTypes, "PETROLEUMLEDNINGTYPE", "petroleumsledningstype", OFTString);
+      addSimpleType(poTypes, "PETROLEUMLEDNINGTYPE", "petroleumsledningstype", OFTString);
 
-      addSimpleType(&oTypes, "PETROLEUMSANDEL", "petroleumsandel", OFTReal);
+      addSimpleType(poTypes, "PETROLEUMSANDEL", "petroleumsandel", OFTReal);
 
-      addSimpleType(&oTypes, "PETROLEUMSDATAKILDE", "petroleumsdatakilde", OFTString);
+      addSimpleType(poTypes, "PETROLEUMSDATAKILDE", "petroleumsdatakilde", OFTString);
 
-      addSimpleType(&oTypes, "PETROLEUMSFELTNAVN", "petroleumsfeltnavn", OFTString);
+      addSimpleType(poTypes, "PETROLEUMSFELTNAVN", "petroleumsfeltnavn", OFTString);
 
-      addSimpleType(&oTypes, "PETROLEUMSFELTTYPE", "petroleumsfelttype", OFTString);
+      addSimpleType(poTypes, "PETROLEUMSFELTTYPE", "petroleumsfelttype", OFTString);
 
-      addSimpleType(&oTypes, "PETROLEUMSPARTNERE", "petroleumspartnere", OFTString);
+      addSimpleType(poTypes, "PETROLEUMSPARTNERE", "petroleumspartnere", OFTString);
 
-      addSimpleType(&oTypes, "PETSTRATKODE", "petrofStratigrafi", OFTString);
+      addSimpleType(poTypes, "PETSTRATKODE", "petrofStratigrafi", OFTString);
 
-      addSimpleType(&oTypes, "PILARKATEGORI", "pilarkategori", OFTInteger);
+      addSimpleType(poTypes, "PILARKATEGORI", "pilarkategori", OFTInteger);
 
-      addSimpleType(&oTypes, "PIXEL-STØRR", "pixelstørrelse", OFTReal);
+      addSimpleType(poTypes, "PIXEL-STØRR", "pixelstørrelse", OFTReal);
 
-      addSimpleType(&oTypes, "PLANBEST", "planbestemmelse", OFTInteger);
+      addSimpleType(poTypes, "PLANBEST", "planbestemmelse", OFTInteger);
 
-      addSimpleType(&oTypes, "PLANERING", "planeringsgrad", OFTInteger);
+      addSimpleType(poTypes, "PLANERING", "planeringsgrad", OFTInteger);
 
-      addSimpleType(&oTypes, "PLANID", "planidentifikasjon", OFTString);
+      addSimpleType(poTypes, "PLANID", "planidentifikasjon", OFTString);
 
-      addSimpleType(&oTypes, "PLANNAVN", "plannavn", OFTString);
+      addSimpleType(poTypes, "PLANNAVN", "plannavn", OFTString);
 
-      addSimpleType(&oTypes, "FORSLAGSSTILLERTYPE", "forslagsstillerType", OFTInteger);
+      addSimpleType(poTypes, "FORSLAGSSTILLERTYPE", "forslagsstillerType", OFTInteger);
 
-      addSimpleType(&oTypes, "PLANSTAT", "planstatus", OFTInteger);
+      addSimpleType(poTypes, "PLANSTAT", "planstatus", OFTInteger);
 
-      addSimpleType(&oTypes, "PLANTYPE", "plantype", OFTInteger);
+      addSimpleType(poTypes, "PLANTYPE", "plantype", OFTInteger);
 
-      addSimpleType(&oTypes, "PLASS", "plasseringskode", OFTInteger);
+      addSimpleType(poTypes, "PLASS", "plasseringskode", OFTInteger);
 
-      addSimpleType(&oTypes, "PLFMERK", "oppstillingplattformmerking", OFTInteger);
+      addSimpleType(poTypes, "PLFMERK", "oppstillingplattformmerking", OFTInteger);
 
-      addSimpleType(&oTypes, "PLOGSJIKTTEKSTUR", "plogsjiktTekstur", OFTInteger);
+      addSimpleType(poTypes, "PLOGSJIKTTEKSTUR", "plogsjiktTekstur", OFTInteger);
 
-      addSimpleType(&oTypes, "POBS", "observasjonstype", OFTInteger);
+      addSimpleType(poTypes, "POBS", "observasjonstype", OFTInteger);
 
-      addSimpleType(&oTypes, "POLITIDISTRIKTID", "politidistriktId", OFTInteger);
+      addSimpleType(poTypes, "POLITIDISTRIKTID", "politidistriktId", OFTInteger);
 
-      addSimpleType(&oTypes, "POS_KVAL", "posisjonKvalitet", OFTInteger);
+      addSimpleType(poTypes, "POS_KVAL", "posisjonKvalitet", OFTInteger);
 
-      addSimpleType(&oTypes, "POS_TYPE", "posisjonType", OFTInteger);
+      addSimpleType(poTypes, "POS_TYPE", "posisjonType", OFTInteger);
 
-      addSimpleType(&oTypes, "BITS_PR_PIXEL", "bitsPrPixel", OFTInteger);
+      addSimpleType(poTypes, "BITS_PR_PIXEL", "bitsPrPixel", OFTInteger);
 
-      addSimpleType(&oTypes, "POSTNAVN", "poststedsnavn", OFTString);
+      addSimpleType(poTypes, "POSTNAVN", "poststedsnavn", OFTString);
 
-      addSimpleType(&oTypes, "POSTNR", "postnummer", OFTInteger);
+      addSimpleType(poTypes, "POSTNR", "postnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "PREPARERING", "løypepreparering", OFTString);
+      addSimpleType(poTypes, "PREPARERING", "løypepreparering", OFTString);
 
-      addSimpleType(&oTypes, "PRIMÆRSTREKNINGSNUMMER", "primærstrekningsnummer", OFTInteger);
+      addSimpleType(poTypes, "PRIMÆRSTREKNINGSNUMMER", "primærstrekningsnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "PRIOMR", "prioritetområde", OFTString);
+      addSimpleType(poTypes, "PRIOMR", "prioritetområde", OFTString);
 
-      addSimpleType(&oTypes, "PRIORITET", "kulturlandskapPrioritet", OFTString);
+      addSimpleType(poTypes, "PRIORITET", "kulturlandskapPrioritet", OFTString);
 
-      addSimpleType(&oTypes, "PRIVAT_KLOAKKR", "privatKloakkRensing", OFTInteger);
+      addSimpleType(poTypes, "PRIVAT_KLOAKKR", "privatKloakkRensing", OFTInteger);
 
-      addSimpleType(&oTypes, "PRODUKT", "produkt", OFTString);
+      addSimpleType(poTypes, "PRODUKT", "produkt", OFTString);
 
-      addSimpleType(&oTypes, "PRODUKT_FULLT_NAVN", "produktFullstendigNavn", OFTString);
+      addSimpleType(poTypes, "PRODUKT_FULLT_NAVN", "produktFullstendigNavn", OFTString);
 
-      addSimpleType(&oTypes, "PRODUKTGRUPPE", "produktgruppe", OFTString);
+      addSimpleType(poTypes, "PRODUKTGRUPPE", "produktgruppe", OFTString);
 
-      addSimpleType(&oTypes, "PRODUSENT", "geodataprodusent", OFTString);
+      addSimpleType(poTypes, "PRODUSENT", "geodataprodusent", OFTString);
 
-      addSimpleType(&oTypes, "PROJEK", "projeksjon", OFTString);
+      addSimpleType(poTypes, "PROJEK", "projeksjon", OFTString);
 
-      addSimpleType(&oTypes, "PROSELV", "prosentElv", OFTReal);
+      addSimpleType(poTypes, "PROSELV", "prosentElv", OFTReal);
 
-      addSimpleType(&oTypes, "PROSESS_HISTORIE", "prosesshistorie", OFTString);
+      addSimpleType(poTypes, "PROSESS_HISTORIE", "prosesshistorie", OFTString);
 
-      addSimpleType(&oTypes, "PROSHAV", "prosentHav", OFTReal);
+      addSimpleType(poTypes, "PROSHAV", "prosentHav", OFTReal);
 
-      addSimpleType(&oTypes, "PROSINNSJØ", "prosentInnsjø", OFTReal);
+      addSimpleType(poTypes, "PROSINNSJØ", "prosentInnsjø", OFTReal);
 
-      addSimpleType(&oTypes, "PROSJEKTNAVN", "prosjektnavn", OFTString);
+      addSimpleType(poTypes, "PROSJEKTNAVN", "prosjektnavn", OFTString);
 
-      addSimpleType(&oTypes, "PROSJEKTSTART", "prosjektstartår", OFTInteger);
+      addSimpleType(poTypes, "PROSJEKTSTART", "prosjektstartår", OFTInteger);
 
-      addSimpleType(&oTypes, "PROSLAND", "prosentLand", OFTReal);
+      addSimpleType(poTypes, "PROSLAND", "prosentLand", OFTReal);
 
-      addSimpleType(&oTypes, "PROSTINUMMER", "prostinummer", OFTInteger);
+      addSimpleType(poTypes, "PROSTINUMMER", "prostinummer", OFTInteger);
 
-      addSimpleType(&oTypes, "PROVEMATR", "proveMaterial", OFTString);
+      addSimpleType(poTypes, "PROVEMATR", "proveMaterial", OFTString);
 
-      addSimpleType(&oTypes, "PTYPE", "punktType", OFTString);
+      addSimpleType(poTypes, "PTYPE", "punktType", OFTString);
 
-      addSimpleType(&oTypes, "PUKKVERKTYPE", "pukkverktype", OFTInteger);
+      addSimpleType(poTypes, "PUKKVERKTYPE", "pukkverktype", OFTInteger);
 
-      addSimpleType(&oTypes, "PUMPER_NØDSTR", "pumperNødstrøm", OFTString);
+      addSimpleType(poTypes, "PUMPER_NØDSTR", "pumperNødstrøm", OFTString);
 
-      addSimpleType(&oTypes, "PUMPES_VANNET", "pumperVannet", OFTString);
+      addSimpleType(poTypes, "PUMPES_VANNET", "pumperVannet", OFTString);
 
-      addSimpleType(&oTypes, "PUNKTBESKR", "punktBeskrivelse", OFTString);
+      addSimpleType(poTypes, "PUNKTBESKR", "punktBeskrivelse", OFTString);
 
-      addSimpleType(&oTypes, "PUNKTFESTE", "punktfeste", OFTString);
+      addSimpleType(poTypes, "PUNKTFESTE", "punktfeste", OFTString);
 
-      addSimpleType(&oTypes, "PÅVIRKNINGSGRAD", "påvirkningsgrad", OFTInteger);
+      addSimpleType(poTypes, "PÅVIRKNINGSGRAD", "påvirkningsgrad", OFTInteger);
 
-      addSimpleType(&oTypes, "R_FNR", "forekomstNummer", OFTInteger);
+      addSimpleType(poTypes, "R_FNR", "forekomstNummer", OFTInteger);
 
-      addSimpleType(&oTypes, "R_LNR", "lokalNummer", OFTInteger);
+      addSimpleType(poTypes, "R_LNR", "lokalNummer", OFTInteger);
 
-      addSimpleType(&oTypes, "R_ONR", "omrNummer", OFTInteger);
+      addSimpleType(poTypes, "R_ONR", "omrNummer", OFTInteger);
 
-      addSimpleType(&oTypes, "R_PNR", "proveNummer", OFTInteger);
+      addSimpleType(poTypes, "R_PNR", "proveNummer", OFTInteger);
 
-      addSimpleType(&oTypes, "R_RESERVER", "rastoffReserver", OFTInteger);
+      addSimpleType(poTypes, "R_RESERVER", "rastoffReserver", OFTInteger);
 
-      addSimpleType(&oTypes, "RACONFREKVENSBÅND", "raconFrekvensbånd", OFTString);
+      addSimpleType(poTypes, "RACONFREKVENSBÅND", "raconFrekvensbånd", OFTString);
 
-      addSimpleType(&oTypes, "RACONKARAKTER", "raconkarakter", OFTString);
+      addSimpleType(poTypes, "RACONKARAKTER", "raconkarakter", OFTString);
 
-      addSimpleType(&oTypes, "RACONMORSETEGN", "raconmorsetegn", OFTString);
+      addSimpleType(poTypes, "RACONMORSETEGN", "raconmorsetegn", OFTString);
 
-      addSimpleType(&oTypes, "RACONRESPONSINTERVALL", "raconresponsintervall", OFTString);
+      addSimpleType(poTypes, "RACONRESPONSINTERVALL", "raconresponsintervall", OFTString);
 
-      addSimpleType(&oTypes, "RACONTYPE", "racontype", OFTInteger);
+      addSimpleType(poTypes, "RACONTYPE", "racontype", OFTInteger);
 
-      addSimpleType(&oTypes, "RADAR_FYR_TYPE", "radarfyrtype", OFTInteger);
+      addSimpleType(poTypes, "RADAR_FYR_TYPE", "radarfyrtype", OFTInteger);
 
-      addSimpleType(&oTypes, "RADARREFLEKTOR", "radarReflektor", OFTString);
+      addSimpleType(poTypes, "RADARREFLEKTOR", "radarReflektor", OFTString);
 
-      addSimpleType(&oTypes, "RADARSTASJONSTYPE", "radarstasjonstype", OFTInteger);
+      addSimpleType(poTypes, "RADARSTASJONSTYPE", "radarstasjonstype", OFTInteger);
 
-      addSimpleType(&oTypes, "RADIO_FYR_TYPE", "radiofyrtype", OFTInteger);
+      addSimpleType(poTypes, "RADIO_FYR_TYPE", "radiofyrtype", OFTInteger);
 
-      addSimpleType(&oTypes, "RADIOAKTIV", "radioaktivitetNiva", OFTInteger);
+      addSimpleType(poTypes, "RADIOAKTIV", "radioaktivitetNiva", OFTInteger);
 
-      addSimpleType(&oTypes, "RADIOFYRMODULASJON", "radiofyrmodulasjon", OFTString);
+      addSimpleType(poTypes, "RADIOFYRMODULASJON", "radiofyrmodulasjon", OFTString);
 
-      addSimpleType(&oTypes, "RADIUS", "radius", OFTReal);
+      addSimpleType(poTypes, "RADIUS", "radius", OFTReal);
 
-      addSimpleType(&oTypes, "RADRISKOMR", "naturlRadioaktivStraling", OFTInteger);
+      addSimpleType(poTypes, "RADRISKOMR", "naturlRadioaktivStraling", OFTInteger);
 
-      addSimpleType(&oTypes, "RAPPORTERINGSÅR", "rapporteringsår", OFTDate);
+      addSimpleType(poTypes, "RAPPORTERINGSÅR", "rapporteringsår", OFTDate);
 
-      addSimpleType(&oTypes, "REFERANSE", "referanse", OFTString);
+      addSimpleType(poTypes, "REFERANSE", "referanse", OFTString);
 
-      addSimpleType(&oTypes, "REFERANSENUMMER", "referansenummer", OFTString);
+      addSimpleType(poTypes, "REFERANSENUMMER", "referansenummer", OFTString);
 
-      addSimpleType(&oTypes, "REGFORM", "reguleringsformål", OFTInteger);
+      addSimpleType(poTypes, "REGFORM", "reguleringsformål", OFTInteger);
 
-      addSimpleType(&oTypes, "REGFORMUTDYP", "reguleringsformålsutdyping", OFTString);
+      addSimpleType(poTypes, "REGFORMUTDYP", "reguleringsformålsutdyping", OFTString);
 
-      addSimpleType(&oTypes, "REGISTRERINGKRETSNR", "registreringKretsnr", OFTInteger);
+      addSimpleType(poTypes, "REGISTRERINGKRETSNR", "registreringKretsnr", OFTInteger);
 
-      addSimpleType(&oTypes, "REGISTRERT_DATO", "registrertDato", OFTDate);
+      addSimpleType(poTypes, "REGISTRERT_DATO", "registrertDato", OFTDate);
 
-      addSimpleType(&oTypes, "REGMETOD", "registreringsmetode", OFTInteger);
+      addSimpleType(poTypes, "REGMETOD", "registreringsmetode", OFTInteger);
 
-      addSimpleType(&oTypes, "REGULERTHØYDE", "regulertHøyde", OFTReal);
+      addSimpleType(poTypes, "REGULERTHØYDE", "regulertHøyde", OFTReal);
 
-      addSimpleType(&oTypes, "REINDRIFTANLTYP", "reindriftsanleggstype", OFTInteger);
+      addSimpleType(poTypes, "REINDRIFTANLTYP", "reindriftsanleggstype", OFTInteger);
 
-      addSimpleType(&oTypes, "REINDRIFTKONNAVN", "reindriftKonvensjonsområdenavn", OFTString);
+      addSimpleType(poTypes, "REINDRIFTKONNAVN", "reindriftKonvensjonsområdenavn", OFTString);
 
-      addSimpleType(&oTypes, "REKKEVIDDEGRØNN", "rekkeviddeGrønn", OFTReal);
+      addSimpleType(poTypes, "REKKEVIDDEGRØNN", "rekkeviddeGrønn", OFTReal);
 
-      addSimpleType(&oTypes, "REKKEVIDDEGUL", "rekkeviddeGul", OFTReal);
+      addSimpleType(poTypes, "REKKEVIDDEGUL", "rekkeviddeGul", OFTReal);
 
-      addSimpleType(&oTypes, "REKKEVIDDEHVIT", "rekkeviddeHvit", OFTReal);
+      addSimpleType(poTypes, "REKKEVIDDEHVIT", "rekkeviddeHvit", OFTReal);
 
-      addSimpleType(&oTypes, "REKKEVIDDERØD", "rekkeviddeRød", OFTReal);
+      addSimpleType(poTypes, "REKKEVIDDERØD", "rekkeviddeRød", OFTReal);
 
-      addSimpleType(&oTypes, "RENHET", "retningsenhet", OFTInteger);
+      addSimpleType(poTypes, "RENHET", "retningsenhet", OFTInteger);
 
-      addSimpleType(&oTypes, "RENOVASJON", "renovasjon", OFTInteger);
+      addSimpleType(poTypes, "RENOVASJON", "renovasjon", OFTInteger);
 
-      addSimpleType(&oTypes, "RESIPIENTTYPE", "resipienttype", OFTString);
+      addSimpleType(poTypes, "RESIPIENTTYPE", "resipienttype", OFTString);
 
-      addSimpleType(&oTypes, "RESTR_OMR", "restriksjonsområde", OFTString);
+      addSimpleType(poTypes, "RESTR_OMR", "restriksjonsområde", OFTString);
 
-      addSimpleType(&oTypes, "RESTRIKSJONSTYPE", "restriksjonstype", OFTInteger);
+      addSimpleType(poTypes, "RESTRIKSJONSTYPE", "restriksjonstype", OFTInteger);
 
-      addSimpleType(&oTypes, "RET_SYS", "retningsreferanse", OFTInteger);
+      addSimpleType(poTypes, "RET_SYS", "retningsreferanse", OFTInteger);
 
-      addSimpleType(&oTypes, "RETN", "retningsverdi", OFTReal);
+      addSimpleType(poTypes, "RETN", "retningsverdi", OFTReal);
 
-      addSimpleType(&oTypes, "RETNINGSEKTORLINJE1", "retningSektorlinje1", OFTReal);
+      addSimpleType(poTypes, "RETNINGSEKTORLINJE1", "retningSektorlinje1", OFTReal);
 
-      addSimpleType(&oTypes, "RETNINGSEKTORLINJE2", "retningSektorlinje2", OFTReal);
+      addSimpleType(poTypes, "RETNINGSEKTORLINJE2", "retningSektorlinje2", OFTReal);
 
-      addSimpleType(&oTypes, "RISIKOVURDERING", "risikovurdering", OFTString);
+      addSimpleType(poTypes, "RISIKOVURDERING", "risikovurdering", OFTString);
 
-      addSimpleType(&oTypes, "RKB", "rkb", OFTReal);
+      addSimpleType(poTypes, "RKB", "rkb", OFTReal);
 
-      addSimpleType(&oTypes, "RKB_TD", "rkbTotaltDyp", OFTReal);
+      addSimpleType(poTypes, "RKB_TD", "rkbTotaltDyp", OFTReal);
 
-      addSimpleType(&oTypes, "ROTASJON", "rotasjon", OFTInteger);
+      addSimpleType(poTypes, "ROTASJON", "rotasjon", OFTInteger);
 
-      addSimpleType(&oTypes, "RPANGITTHENSYN", "angitthensyn", OFTInteger);
+      addSimpleType(poTypes, "RPANGITTHENSYN", "angitthensyn", OFTInteger);
 
-      addSimpleType(&oTypes, "RPAREALFORMÅL", "arealformål", OFTInteger);
+      addSimpleType(poTypes, "RPAREALFORMÅL", "arealformål", OFTInteger);
 
-      addSimpleType(&oTypes, "RPBÅNDLEGGING", "båndlegging", OFTInteger);
+      addSimpleType(poTypes, "RPBÅNDLEGGING", "båndlegging", OFTInteger);
 
-      addSimpleType(&oTypes, "RPDETALJERING", "detaljering", OFTInteger);
+      addSimpleType(poTypes, "RPDETALJERING", "detaljering", OFTInteger);
 
-      addSimpleType(&oTypes, "RPFARE", "fare", OFTInteger);
+      addSimpleType(poTypes, "RPFARE", "fare", OFTInteger);
 
-      addSimpleType(&oTypes, "RPGJENNOMFØRING", "gjennomføring", OFTInteger);
+      addSimpleType(poTypes, "RPGJENNOMFØRING", "gjennomføring", OFTInteger);
 
-      addSimpleType(&oTypes, "RPINFRASTRUKTUR", "infrastruktur", OFTInteger);
+      addSimpleType(poTypes, "RPINFRASTRUKTUR", "infrastruktur", OFTInteger);
 
-      addSimpleType(&oTypes, "RPJURLINJE", "juridisklinje", OFTInteger);
+      addSimpleType(poTypes, "RPJURLINJE", "juridisklinje", OFTInteger);
 
-      addSimpleType(&oTypes, "RPJURPUNKT", "juridiskpunkt", OFTInteger);
+      addSimpleType(poTypes, "RPJURPUNKT", "juridiskpunkt", OFTInteger);
 
-      addSimpleType(&oTypes, "RPPÅSKRIFTTYPE", "påskriftType", OFTInteger);
+      addSimpleType(poTypes, "RPPÅSKRIFTTYPE", "påskriftType", OFTInteger);
 
-      addSimpleType(&oTypes, "RPSIKRING", "sikring", OFTInteger);
+      addSimpleType(poTypes, "RPSIKRING", "sikring", OFTInteger);
 
-      addSimpleType(&oTypes, "RPSTØY", "støy", OFTInteger);
+      addSimpleType(poTypes, "RPSTØY", "støy", OFTInteger);
 
-      addSimpleType(&oTypes, "RSL_JREG", "referansesystemForLandskapJordbruksregioner", OFTString);
+      addSimpleType(poTypes, "RSL_JREG", "referansesystemForLandskapJordbruksregioner", OFTString);
 
-      addSimpleType(&oTypes, "RSL_REG", "referansesystemForLandskapRegioner", OFTString);
+      addSimpleType(poTypes, "RSL_REG", "referansesystemForLandskapRegioner", OFTString);
 
-      addSimpleType(&oTypes, "RSL_UREG", "referansesystemForLandskapUReg", OFTString);
+      addSimpleType(poTypes, "RSL_UREG", "referansesystemForLandskapUReg", OFTString);
 
-      addSimpleType(&oTypes, "RTALLHØY", "reintallHøyeste", OFTInteger);
+      addSimpleType(poTypes, "RTALLHØY", "reintallHøyeste", OFTInteger);
 
-      addSimpleType(&oTypes, "RTALLVEDTAK", "reintallVedtak", OFTString);
+      addSimpleType(poTypes, "RTALLVEDTAK", "reintallVedtak", OFTString);
 
-      addSimpleType(&oTypes, "RULLEBANEDISTANSETYPE", "rullebanedistansetype", OFTInteger);
+      addSimpleType(poTypes, "RULLEBANEDISTANSETYPE", "rullebanedistansetype", OFTInteger);
 
-      addSimpleType(&oTypes, "RULLEBANERETNING", "rullebaneretning", OFTInteger);
+      addSimpleType(poTypes, "RULLEBANERETNING", "rullebaneretning", OFTInteger);
 
-      addSimpleType(&oTypes, "RUTEBREDDE", "rutebredde", OFTInteger);
+      addSimpleType(poTypes, "RUTEBREDDE", "rutebredde", OFTInteger);
 
-      addSimpleType(&oTypes, "RUTEFØLGER", "ruteFølger", OFTString);
+      addSimpleType(poTypes, "RUTEFØLGER", "ruteFølger", OFTString);
 
-      addSimpleType(&oTypes, "RUTEMERKING", "ruteMerking", OFTString);
+      addSimpleType(poTypes, "RUTEMERKING", "ruteMerking", OFTString);
 
-      addSimpleType(&oTypes, "RUTENETTYPE", "rutenettype", OFTString);
+      addSimpleType(poTypes, "RUTENETTYPE", "rutenettype", OFTString);
 
-      addSimpleType(&oTypes, "RUTENR", "rutenummer", OFTString);
+      addSimpleType(poTypes, "RUTENR", "rutenummer", OFTString);
 
-      addSimpleType(&oTypes, "SEFRAK_TILTAK", "sefrakTiltak", OFTInteger);
+      addSimpleType(poTypes, "SEFRAK_TILTAK", "sefrakTiltak", OFTInteger);
 
-      addSimpleType(&oTypes, "SEFRAKBREDDE", "sefrakbredde", OFTInteger);
+      addSimpleType(poTypes, "SEFRAKBREDDE", "sefrakbredde", OFTInteger);
 
-      addSimpleType(&oTypes, "SEFRAKKOMMUNE", "sefrakKommune", OFTInteger);
+      addSimpleType(poTypes, "SEFRAKKOMMUNE", "sefrakKommune", OFTInteger);
 
-      addSimpleType(&oTypes, "SEFRAKLENGDE", "sefraklengde", OFTInteger);
+      addSimpleType(poTypes, "SEFRAKLENGDE", "sefraklengde", OFTInteger);
 
-      addSimpleType(&oTypes, "SEIL_BREDDE", "seilingsbredde", OFTReal);
+      addSimpleType(poTypes, "SEIL_BREDDE", "seilingsbredde", OFTReal);
 
-      addSimpleType(&oTypes, "SEIL_DYBDE", "seilingsdybde", OFTReal);
+      addSimpleType(poTypes, "SEIL_DYBDE", "seilingsdybde", OFTReal);
 
-      addSimpleType(&oTypes, "SEKSJONERT", "seksjonert", OFTString);
+      addSimpleType(poTypes, "SEKSJONERT", "seksjonert", OFTString);
 
-      addSimpleType(&oTypes, "SEKTORTEKST", "sektortekst", OFTString);
+      addSimpleType(poTypes, "SEKTORTEKST", "sektortekst", OFTString);
 
-      addSimpleType(&oTypes, "SEKUNDÆRSTREKNINGSNUMMER", "sekundærstrekningsnummer", OFTInteger);
+      addSimpleType(poTypes, "SEKUNDÆRSTREKNINGSNUMMER", "sekundærstrekningsnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "SENTRUMSSONENAVN", "sentrumssonenavn", OFTString);
+      addSimpleType(poTypes, "SENTRUMSSONENAVN", "sentrumssonenavn", OFTString);
 
-      addSimpleType(&oTypes, "SENTRUMSSONENUMMER", "sentrumssonenummer", OFTInteger);
+      addSimpleType(poTypes, "SENTRUMSSONENUMMER", "sentrumssonenummer", OFTInteger);
 
-      addSimpleType(&oTypes, "SEPTIKTANK", "septiktank", OFTString);
+      addSimpleType(poTypes, "SEPTIKTANK", "septiktank", OFTString);
 
-      addSimpleType(&oTypes, "SERIEKODE1", "serie1", OFTString);
+      addSimpleType(poTypes, "SERIEKODE1", "serie1", OFTString);
 
-      addSimpleType(&oTypes, "SERIEKODE2", "serie2", OFTString);
+      addSimpleType(poTypes, "SERIEKODE2", "serie2", OFTString);
 
-      addSimpleType(&oTypes, "SERIEKODE3", "serie3", OFTString);
+      addSimpleType(poTypes, "SERIEKODE3", "serie3", OFTString);
 
-      addSimpleType(&oTypes, "SERVMERK", "servituttMerknad", OFTString);
+      addSimpleType(poTypes, "SERVMERK", "servituttMerknad", OFTString);
 
-      addSimpleType(&oTypes, "SERVTYPE", "servituttType", OFTString);
+      addSimpleType(poTypes, "SERVTYPE", "servituttType", OFTString);
 
-      addSimpleType(&oTypes, "SESOMR", "reindriftSesongområde", OFTInteger);
+      addSimpleType(poTypes, "SESOMR", "reindriftSesongområde", OFTInteger);
 
-      addSimpleType(&oTypes, "SFOTRUTETYPE", "spesialFotrutetype", OFTString);
+      addSimpleType(poTypes, "SFOTRUTETYPE", "spesialFotrutetype", OFTString);
 
-      addSimpleType(&oTypes, "SIDEOVERLAPP", "sideoverlapp", OFTInteger);
+      addSimpleType(poTypes, "SIDEOVERLAPP", "sideoverlapp", OFTInteger);
 
-      addSimpleType(&oTypes, "SIGNALGRUPPE", "signalgruppe", OFTString);
+      addSimpleType(poTypes, "SIGNALGRUPPE", "signalgruppe", OFTString);
 
-      addSimpleType(&oTypes, "SIGNALNR", "signalnummer", OFTString);
+      addSimpleType(poTypes, "SIGNALNR", "signalnummer", OFTString);
 
-      addSimpleType(&oTypes, "SIGNALPERIODE", "signalperiode", OFTString);
+      addSimpleType(poTypes, "SIGNALPERIODE", "signalperiode", OFTString);
 
-      addSimpleType(&oTypes, "SIGNALSEKVENS", "signalsekvens", OFTString);
+      addSimpleType(poTypes, "SIGNALSEKVENS", "signalsekvens", OFTString);
 
-      addSimpleType(&oTypes, "SIGNH", "signalHøyde", OFTReal);
+      addSimpleType(poTypes, "SIGNH", "signalHøyde", OFTReal);
 
-      addSimpleType(&oTypes, "SIGNHREF", "signalHøydeRef", OFTString);
+      addSimpleType(poTypes, "SIGNHREF", "signalHøydeRef", OFTString);
 
-      addSimpleType(&oTypes, "SIGNTYPE", "signalType", OFTString);
+      addSimpleType(poTypes, "SIGNTYPE", "signalType", OFTString);
 
-      addSimpleType(&oTypes, "SIKKERÅR", "ledningsalderReferanse", OFTInteger);
+      addSimpleType(poTypes, "SIKKERÅR", "ledningsalderReferanse", OFTInteger);
 
-      addSimpleType(&oTypes, "SIKTEDYP", "sikteDyp", OFTInteger);
+      addSimpleType(poTypes, "SIKTEDYP", "sikteDyp", OFTInteger);
 
-      addSimpleType(&oTypes, "SIST_VURDERT_AAR", "sistVurdertÅr", OFTDate);
+      addSimpleType(poTypes, "SIST_VURDERT_AAR", "sistVurdertÅr", OFTDate);
 
-      addSimpleType(&oTypes, "SISTBEFART", "sisteBefaringsdato", OFTInteger);
+      addSimpleType(poTypes, "SISTBEFART", "sisteBefaringsdato", OFTInteger);
 
-      addSimpleType(&oTypes, "SJØ_RESTRIKSJON", "sjørestriksjon", OFTInteger);
+      addSimpleType(poTypes, "SJØ_RESTRIKSJON", "sjørestriksjon", OFTInteger);
 
-      addSimpleType(&oTypes, "SJØ_SIGFRQ", "sjøsignalfrekvens", OFTInteger);
+      addSimpleType(poTypes, "SJØ_SIGFRQ", "sjøsignalfrekvens", OFTInteger);
 
-      addSimpleType(&oTypes, "SJØ_STATUS", "sjøstatus", OFTInteger);
+      addSimpleType(poTypes, "SJØ_STATUS", "sjøstatus", OFTInteger);
 
-      addSimpleType(&oTypes, "SJØ_TRAFIKK", "sjøtrafikk", OFTInteger);
+      addSimpleType(poTypes, "SJØ_TRAFIKK", "sjøtrafikk", OFTInteger);
 
-      addSimpleType(&oTypes, "SJØMERKEFARGE", "sjømerkefarge", OFTInteger);
+      addSimpleType(poTypes, "SJØMERKEFARGE", "sjømerkefarge", OFTInteger);
 
-      addSimpleType(&oTypes, "SJØMERKESYSTEM", "sjømerkesystem", OFTInteger);
+      addSimpleType(poTypes, "SJØMERKESYSTEM", "sjømerkesystem", OFTInteger);
 
-      addSimpleType(&oTypes, "SKAL_AVGR_BYGN", "skalAvgrenseBygning", OFTString);
+      addSimpleType(poTypes, "SKAL_AVGR_BYGN", "skalAvgrenseBygning", OFTString);
 
-      addSimpleType(&oTypes, "SKALAENHET", "skalaenhet", OFTString);
+      addSimpleType(poTypes, "SKALAENHET", "skalaenhet", OFTString);
 
-      addSimpleType(&oTypes, "SKILTGRUPPE", "skiltgruppe", OFTString);
+      addSimpleType(poTypes, "SKILTGRUPPE", "skiltgruppe", OFTString);
 
-      addSimpleType(&oTypes, "SKILØYPETYPE", "skiløypetype", OFTInteger);
+      addSimpleType(poTypes, "SKILØYPETYPE", "skiløypetype", OFTInteger);
 
-      addSimpleType(&oTypes, "SKJERMINGFUNK", "skjermingsfunksjon", OFTString);
+      addSimpleType(poTypes, "SKJERMINGFUNK", "skjermingsfunksjon", OFTString);
 
-      addSimpleType(&oTypes, "SKOG", "jordregisterSkogtype", OFTInteger);
+      addSimpleType(poTypes, "SKOG", "jordregisterSkogtype", OFTInteger);
 
-      addSimpleType(&oTypes, "SKOGREIS", "jordregisterSkogreisningsmark", OFTInteger);
+      addSimpleType(poTypes, "SKOGREIS", "jordregisterSkogreisningsmark", OFTInteger);
 
-      addSimpleType(&oTypes, "SKOLEKRETSTYPE", "skolekretsnavn", OFTString);
+      addSimpleType(poTypes, "SKOLEKRETSTYPE", "skolekretsnavn", OFTString);
 
-      addSimpleType(&oTypes, "SKREDALDERBEST", "skredAlderBestemmelse", OFTString);
+      addSimpleType(poTypes, "SKREDALDERBEST", "skredAlderBestemmelse", OFTString);
 
-      addSimpleType(&oTypes, "SKREDBESKRIVELSE", "skredBeskrivelse", OFTString);
+      addSimpleType(poTypes, "SKREDBESKRIVELSE", "skredBeskrivelse", OFTString);
 
-      addSimpleType(&oTypes, "SKREDBREDDE", "skredBredde", OFTInteger);
+      addSimpleType(poTypes, "SKREDBREDDE", "skredBredde", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDEVAKUERING", "skredEvakuering", OFTInteger);
+      addSimpleType(poTypes, "SKREDEVAKUERING", "skredEvakuering", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDFALLHØYDE", "skredFallhoyde", OFTInteger);
+      addSimpleType(poTypes, "SKREDFALLHØYDE", "skredFallhoyde", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDFAREGR_KL", "skredFaregradKlasse", OFTString);
+      addSimpleType(poTypes, "SKREDFAREGR_KL", "skredFaregradKlasse", OFTString);
 
-      addSimpleType(&oTypes, "SKREDFAREGRADSCORE", "skredFaregradScore", OFTInteger);
+      addSimpleType(poTypes, "SKREDFAREGRADSCORE", "skredFaregradScore", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDFAREVURD", "snoSteinSkredfareVurdering", OFTInteger);
+      addSimpleType(poTypes, "SKREDFAREVURD", "snoSteinSkredfareVurdering", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDKONSSCORE", "skredSkadKonsekvensScore", OFTInteger);
+      addSimpleType(poTypes, "SKREDKONSSCORE", "skredSkadKonsekvensScore", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDKVALKARTLEGGING", "skredKvalKartlegging", OFTInteger);
+      addSimpleType(poTypes, "SKREDKVALKARTLEGGING", "skredKvalKartlegging", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDLENGDE", "skredLengde", OFTInteger);
+      addSimpleType(poTypes, "SKREDLENGDE", "skredLengde", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDMALEMETODE", "skredMalemetode", OFTInteger);
+      addSimpleType(poTypes, "SKREDMALEMETODE", "skredMalemetode", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDOBSGUID", "skredObservasjonGUID", OFTInteger);
+      addSimpleType(poTypes, "SKREDOBSGUID", "skredObservasjonGUID", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDOMKOMNE", "skredAntallOmkomne", OFTInteger);
+      addSimpleType(poTypes, "SKREDOMKOMNE", "skredAntallOmkomne", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDOMRID", "skredOmrID", OFTInteger);
+      addSimpleType(poTypes, "SKREDOMRID", "skredOmrID", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDOMRNAVN", "skredOmrNavn", OFTString);
+      addSimpleType(poTypes, "SKREDOMRNAVN", "skredOmrNavn", OFTString);
 
-      addSimpleType(&oTypes, "SKREDREDNING", "skredRedning", OFTInteger);
+      addSimpleType(poTypes, "SKREDREDNING", "skredRedning", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDRISIKO_KL", "skredRisikoKvikkleireKlasse", OFTInteger);
+      addSimpleType(poTypes, "SKREDRISIKO_KL", "skredRisikoKvikkleireKlasse", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDSKADEANNEN", "skredSkadeAnnen", OFTInteger);
+      addSimpleType(poTypes, "SKREDSKADEANNEN", "skredSkadeAnnen", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDSKADEOBJEKTER", "skredSkadeObjekter", OFTInteger);
+      addSimpleType(poTypes, "SKREDSKADEOBJEKTER", "skredSkadeObjekter", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDSKADESAMFERDSEL", "skredSkadeSamferdsel", OFTInteger);
+      addSimpleType(poTypes, "SKREDSKADESAMFERDSEL", "skredSkadeSamferdsel", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDSKADETYPE", "skredSkadType", OFTInteger);
+      addSimpleType(poTypes, "SKREDSKADETYPE", "skredSkadType", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDSKADKONS_KL", "skredSkadeKonsekvensKlasse", OFTInteger);
+      addSimpleType(poTypes, "SKREDSKADKONS_KL", "skredSkadeKonsekvensKlasse", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDSTATSANN", "skredStatistikkSannsynlighet", OFTString);
+      addSimpleType(poTypes, "SKREDSTATSANN", "skredStatistikkSannsynlighet", OFTString);
 
-      addSimpleType(&oTypes, "SKREDTIDHENDELSE", "skredTidspunktHendelse", OFTString);
+      addSimpleType(poTypes, "SKREDTIDHENDELSE", "skredTidspunktHendelse", OFTString);
 
-      addSimpleType(&oTypes, "SKREDTIDUSIKKERH", "skredTidUsikkerhet", OFTString);
+      addSimpleType(poTypes, "SKREDTIDUSIKKERH", "skredTidUsikkerhet", OFTString);
 
-      addSimpleType(&oTypes, "SKREDTYPE", "skredtype", OFTInteger);
+      addSimpleType(poTypes, "SKREDTYPE", "skredtype", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDUTLOMRHELNING", "skredUtlosningOmrHelning", OFTInteger);
+      addSimpleType(poTypes, "SKREDUTLOMRHELNING", "skredUtlosningOmrHelning", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDUTLOPOMRTYPE", "skredUtlopOmrType", OFTInteger);
+      addSimpleType(poTypes, "SKREDUTLOPOMRTYPE", "skredUtlopOmrType", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDUTLOSNINGOMRTYPE", "skredUtlosningOmrType", OFTInteger);
+      addSimpleType(poTypes, "SKREDUTLOSNINGOMRTYPE", "skredUtlosningOmrType", OFTInteger);
 
-      addSimpleType(&oTypes, "SKREDVOLUM", "skredVolum", OFTString);
+      addSimpleType(poTypes, "SKREDVOLUM", "skredVolum", OFTString);
 
-      addSimpleType(&oTypes, "SKRETSNAVN", "skolekretsnavn", OFTString);
+      addSimpleType(poTypes, "SKRETSNAVN", "skolekretsnavn", OFTString);
 
-      addSimpleType(&oTypes, "SKRETSNR", "skolekretsnummer", OFTInteger);
+      addSimpleType(poTypes, "SKRETSNR", "skolekretsnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "SKRIFTKODE", "presentasjonskode", OFTInteger);
+      addSimpleType(poTypes, "SKRIFTKODE", "presentasjonskode", OFTInteger);
 
-      addSimpleType(&oTypes, "SKYLD", "skyld", OFTReal);
+      addSimpleType(poTypes, "SKYLD", "skyld", OFTReal);
 
-      addSimpleType(&oTypes, "SKYVGRINDL", "skyvegrenseInndeling", OFTInteger);
+      addSimpleType(poTypes, "SKYVGRINDL", "skyvegrenseInndeling", OFTInteger);
 
-      addSimpleType(&oTypes, "SLUSETYP", "sluseType", OFTInteger);
+      addSimpleType(poTypes, "SLUSETYP", "sluseType", OFTInteger);
 
-      addSimpleType(&oTypes, "SMÅBÅTHAVNFASILITET", "småbåthavnfasilitet", OFTInteger);
+      addSimpleType(poTypes, "SMÅBÅTHAVNFASILITET", "småbåthavnfasilitet", OFTInteger);
 
-      addSimpleType(&oTypes, "SNAVN", "stedsnavn", OFTString);
+      addSimpleType(poTypes, "SNAVN", "stedsnavn", OFTString);
 
-      addSimpleType(&oTypes, "SNDATO", "statusdato", OFTDate);
+      addSimpleType(poTypes, "SNDATO", "statusdato", OFTDate);
 
-      addSimpleType(&oTypes, "SNITT_HØ", "snitthøyde", OFTInteger);
+      addSimpleType(poTypes, "SNITT_HØ", "snitthøyde", OFTInteger);
 
-      addSimpleType(&oTypes, "SNKILDE", "stedsnavnkilde", OFTString);
+      addSimpleType(poTypes, "SNKILDE", "stedsnavnkilde", OFTString);
 
-      addSimpleType(&oTypes, "SNLØPENR", "arkivløpenummer", OFTInteger);
+      addSimpleType(poTypes, "SNLØPENR", "arkivløpenummer", OFTInteger);
 
-      addSimpleType(&oTypes, "SNMERK", "stedsnavnmerknad", OFTString);
+      addSimpleType(poTypes, "SNMERK", "stedsnavnmerknad", OFTString);
 
-      addSimpleType(&oTypes, "SNMYND", "stedsnavnVedtaksmyndighet", OFTString);
+      addSimpleType(poTypes, "SNMYND", "stedsnavnVedtaksmyndighet", OFTString);
 
-      addSimpleType(&oTypes, "SNR", "seksjonsnummer", OFTInteger);
+      addSimpleType(poTypes, "SNR", "seksjonsnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "SNREGDATO", "stedsnavnRegistreringsdato", OFTDate);
+      addSimpleType(poTypes, "SNREGDATO", "stedsnavnRegistreringsdato", OFTDate);
 
-      addSimpleType(&oTypes, "SNSAKSNR", "arkivsaksnummer", OFTInteger);
+      addSimpleType(poTypes, "SNSAKSNR", "arkivsaksnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "SNSKRSTAT", "stedsnavnSkrivemåtestatus", OFTString);
+      addSimpleType(poTypes, "SNSKRSTAT", "stedsnavnSkrivemåtestatus", OFTString);
 
-      addSimpleType(&oTypes, "SNSPRÅK", "språk", OFTString);
+      addSimpleType(poTypes, "SNSPRÅK", "språk", OFTString);
 
-      addSimpleType(&oTypes, "SNTYSTAT", "stedsnavnTypestatus", OFTString);
+      addSimpleType(poTypes, "SNTYSTAT", "stedsnavnTypestatus", OFTString);
 
-      addSimpleType(&oTypes, "SNØSCOOTERLØYPETYPE", "snøscooterløypeType", OFTString);
+      addSimpleType(poTypes, "SNØSCOOTERLØYPETYPE", "snøscooterløypeType", OFTString);
 
-      addSimpleType(&oTypes, "SOGNNUMMER", "sognnummer", OFTInteger);
+      addSimpleType(poTypes, "SOGNNUMMER", "sognnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "SONENAUT", "soneNautisk", OFTInteger);
+      addSimpleType(poTypes, "SONENAUT", "soneNautisk", OFTInteger);
 
-      addSimpleType(&oTypes, "SONETYPE", "sonetype", OFTString);
+      addSimpleType(poTypes, "SONETYPE", "sonetype", OFTString);
 
-      addSimpleType(&oTypes, "SOSIELEMENT", "sosiElementnavn", OFTString);
+      addSimpleType(poTypes, "SOSIELEMENT", "sosiElementnavn", OFTString);
 
-      addSimpleType(&oTypes, "SOSI-NIVÅ", "sosiKompleksitetNivå", OFTInteger);
+      addSimpleType(poTypes, "SOSI-NIVÅ", "sosiKompleksitetNivå", OFTInteger);
 
-      addSimpleType(&oTypes, "SOSI-VERSJON", "sosiVersjon", OFTString);
+      addSimpleType(poTypes, "SOSI-VERSJON", "sosiVersjon", OFTString);
 
-      addSimpleType(&oTypes, "SP_ABONTRE", "skogbrplanKlassAktueltTreslag", OFTInteger);
+      addSimpleType(poTypes, "SP_ABONTRE", "skogbrplanKlassAktueltTreslag", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_AGJBON", "skogbrplanKlassAktSnittBon", OFTInteger);
+      addSimpleType(poTypes, "SP_AGJBON", "skogbrplanKlassAktSnittBon", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_ALDER", "skogbrplanBeskrivBestandAlder", OFTInteger);
+      addSimpleType(poTypes, "SP_ALDER", "skogbrplanBeskrivBestandAlder", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_ANDEREG", "skogbrplanTreslagAntTreDaaEReg", OFTInteger);
+      addSimpleType(poTypes, "SP_ANDEREG", "skogbrplanTreslagAntTreDaaEReg", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_ANDFREG", "skogbrplanTreslagAntTreDaaFReg", OFTInteger);
+      addSimpleType(poTypes, "SP_ANDFREG", "skogbrplanTreslagAntTreDaaFReg", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_AVOLPRDA", "skogbrplanGrunnlagVolumDaaFelt", OFTReal);
+      addSimpleType(poTypes, "SP_AVOLPRDA", "skogbrplanGrunnlagVolumDaaFelt", OFTReal);
 
-      addSimpleType(&oTypes, "SP_AVOLTOT", "skogbrplanGrunnlagVolumBestFelt", OFTInteger);
+      addSimpleType(poTypes, "SP_AVOLTOT", "skogbrplanGrunnlagVolumBestFelt", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_BAREAL", "skogbrplanBeskrivBestandDaa", OFTReal);
+      addSimpleType(poTypes, "SP_BAREAL", "skogbrplanBeskrivBestandDaa", OFTReal);
 
-      addSimpleType(&oTypes, "SP_BERTYPE", "skogbrplanGrunnlagBerType", OFTInteger);
+      addSimpleType(poTypes, "SP_BERTYPE", "skogbrplanGrunnlagBerType", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_BESTDELNR", "skogbrplanBestandDelNr", OFTInteger);
+      addSimpleType(poTypes, "SP_BESTDELNR", "skogbrplanBestandDelNr", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_BESTNR", "skogbrplanBestandNr", OFTInteger);
+      addSimpleType(poTypes, "SP_BESTNR", "skogbrplanBestandNr", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_BEVNE", "skogbrplanTerrengBæreevneBestand", OFTInteger);
+      addSimpleType(poTypes, "SP_BEVNE", "skogbrplanTerrengBæreevneBestand", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_BMIDDIAM", "skogbrplanBeskrivBestSnittDiam", OFTInteger);
+      addSimpleType(poTypes, "SP_BMIDDIAM", "skogbrplanBeskrivBestSnittDiam", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_BMIDGRFL", "skogbrplanBeskrivBestandSnittM2", OFTInteger);
+      addSimpleType(poTypes, "SP_BMIDGRFL", "skogbrplanBeskrivBestandSnittM2", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_BMIDHO", "skogbrplanBeskrivBestandSnittH", OFTReal);
+      addSimpleType(poTypes, "SP_BMIDHO", "skogbrplanBeskrivBestandSnittH", OFTReal);
 
-      addSimpleType(&oTypes, "SP_BRATT", "skogbrplanTerrengBestandBratthet", OFTInteger);
+      addSimpleType(poTypes, "SP_BRATT", "skogbrplanTerrengBestandBratthet", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_BTILVPRDA", "skogbrplanTilvekstBeregnDaa", OFTReal);
+      addSimpleType(poTypes, "SP_BTILVPRDA", "skogbrplanTilvekstBeregnDaa", OFTReal);
 
-      addSimpleType(&oTypes, "SP_BTILVPROS", "skogbrplanTilvekstBeregnProsent", OFTReal);
+      addSimpleType(poTypes, "SP_BTILVPROS", "skogbrplanTilvekstBeregnProsent", OFTReal);
 
-      addSimpleType(&oTypes, "SP_BVOLPRDA", "skogbrplanTilvekstBeregnM3", OFTReal);
+      addSimpleType(poTypes, "SP_BVOLPRDA", "skogbrplanTilvekstBeregnM3", OFTReal);
 
-      addSimpleType(&oTypes, "SP_DENDR", "skogbrplanAdmDatoEndring", OFTDate);
+      addSimpleType(poTypes, "SP_DENDR", "skogbrplanAdmDatoEndring", OFTDate);
 
-      addSimpleType(&oTypes, "SP_DREG", "skogbrplanAdmDatoEtablering", OFTDate);
+      addSimpleType(poTypes, "SP_DREG", "skogbrplanAdmDatoEtablering", OFTDate);
 
-      addSimpleType(&oTypes, "SP_ELEMTYPE", "skogbrplanFlerKoderElementtype", OFTInteger);
+      addSimpleType(poTypes, "SP_ELEMTYPE", "skogbrplanFlerKoderElementtype", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_FARAND", "skogbrplanFlerKoderArealProsent", OFTInteger);
+      addSimpleType(poTypes, "SP_FARAND", "skogbrplanFlerKoderArealProsent", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_FAREAL", "skogbrplanFlerKoderArealDaa", OFTInteger);
+      addSimpleType(poTypes, "SP_FAREAL", "skogbrplanFlerKoderArealDaa", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_FRAND", "skogbrplanFlerKoderSpesBehPros", OFTInteger);
+      addSimpleType(poTypes, "SP_FRAND", "skogbrplanFlerKoderSpesBehPros", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_FRAREAL", "skogbrplanFlerKoderSpesBehDaa", OFTInteger);
+      addSimpleType(poTypes, "SP_FRAREAL", "skogbrplanFlerKoderSpesBehDaa", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_GREND", "skogbrplanTeigGrend", OFTInteger);
+      addSimpleType(poTypes, "SP_GREND", "skogbrplanTeigGrend", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_GRFL", "skogbrplanTetthetGrunnflatesum", OFTInteger);
+      addSimpleType(poTypes, "SP_GRFL", "skogbrplanTetthetGrunnflatesum", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_HBAR", "skogbrplanBeskrivBarHøydehkl2", OFTInteger);
+      addSimpleType(poTypes, "SP_HBAR", "skogbrplanBeskrivBarHøydehkl2", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_HKL", "skogbrplanBeskrivHogstklasse", OFTInteger);
+      addSimpleType(poTypes, "SP_HKL", "skogbrplanBeskrivHogstklasse", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_HLAUV", "skogbrplanBeskrivLauvHøydehkl2", OFTInteger);
+      addSimpleType(poTypes, "SP_HLAUV", "skogbrplanBeskrivLauvHøydehkl2", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_HOVEDGR", "skogbrplanGrunnlagHovedgruppe", OFTInteger);
+      addSimpleType(poTypes, "SP_HOVEDGR", "skogbrplanGrunnlagHovedgruppe", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_HOYDE", "skogbrplanTetthetMHøyde", OFTInteger);
+      addSimpleType(poTypes, "SP_HOYDE", "skogbrplanTetthetMHøyde", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_IMPANDEL", "skogbrplanKlassImpProsent", OFTInteger);
+      addSimpleType(poTypes, "SP_IMPANDEL", "skogbrplanKlassImpProsent", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_IMPTYPE", "skogbrplanKlassImpType", OFTInteger);
+      addSimpleType(poTypes, "SP_IMPTYPE", "skogbrplanKlassImpType", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_LILEN", "skogbrplanTerrengLiLengde", OFTInteger);
+      addSimpleType(poTypes, "SP_LILEN", "skogbrplanTerrengLiLengde", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_MINTRSP", "skogbrplanTerrengMinTranspUtst", OFTInteger);
+      addSimpleType(poTypes, "SP_MINTRSP", "skogbrplanTerrengMinTranspUtst", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_PBONTRE", "skogbrplanKlassPotTreslag", OFTInteger);
+      addSimpleType(poTypes, "SP_PBONTRE", "skogbrplanKlassPotTreslag", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_PGJBON", "skogbrplanKlassPotSnittBon", OFTInteger);
+      addSimpleType(poTypes, "SP_PGJBON", "skogbrplanKlassPotSnittBon", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_PRIO", "skogbrplanTiltakProritet", OFTInteger);
+      addSimpleType(poTypes, "SP_PRIO", "skogbrplanTiltakProritet", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_REG", "skogbrplanGrunnlagRegion", OFTInteger);
+      addSimpleType(poTypes, "SP_REG", "skogbrplanGrunnlagRegion", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_SJIKT", "skogbrplanBeskrivSjiktning", OFTInteger);
+      addSimpleType(poTypes, "SP_SJIKT", "skogbrplanBeskrivSjiktning", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_SKOGTYP", "skogbrplanBeskrivSkogtype", OFTInteger);
+      addSimpleType(poTypes, "SP_SKOGTYP", "skogbrplanBeskrivSkogtype", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_SUNNH", "skogbrplanBeskrivSunnhet", OFTInteger);
+      addSimpleType(poTypes, "SP_SUNNH", "skogbrplanBeskrivSunnhet", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_SVPROS", "skogbrplanGrunnlagSvinnProsent", OFTInteger);
+      addSimpleType(poTypes, "SP_SVPROS", "skogbrplanGrunnlagSvinnProsent", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_TAKSTTYPE", "skogbrplanGrunnlagTaksttype", OFTInteger);
+      addSimpleType(poTypes, "SP_TAKSTTYPE", "skogbrplanGrunnlagTaksttype", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_TARAND", "skogbrplanTiltakProsent", OFTInteger);
+      addSimpleType(poTypes, "SP_TARAND", "skogbrplanTiltakProsent", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_TAREAL", "skogbrplanTiltakAreal", OFTReal);
+      addSimpleType(poTypes, "SP_TAREAL", "skogbrplanTiltakAreal", OFTReal);
 
-      addSimpleType(&oTypes, "SP_TEIGNR", "skogbrplanTeigNr", OFTInteger);
+      addSimpleType(poTypes, "SP_TEIGNR", "skogbrplanTeigNr", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_TERJEVN", "skogbrplanTerrengJevnhet", OFTInteger);
+      addSimpleType(poTypes, "SP_TERJEVN", "skogbrplanTerrengJevnhet", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_TILT", "skogbrplanTiltakBestand", OFTInteger);
+      addSimpleType(poTypes, "SP_TILT", "skogbrplanTiltakBestand", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_TILVKOR", "skogbrplanGrunnlagTilvekstkorr", OFTInteger);
+      addSimpleType(poTypes, "SP_TILVKOR", "skogbrplanGrunnlagTilvekstkorr", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_TNAVN", "skogbrplanTeigNavn", OFTString);
+      addSimpleType(poTypes, "SP_TNAVN", "skogbrplanTeigNavn", OFTString);
 
-      addSimpleType(&oTypes, "SP_TOTVOL", "skogbrplanTilvekstVolumBestand", OFTInteger);
+      addSimpleType(poTypes, "SP_TOTVOL", "skogbrplanTilvekstVolumBestand", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_TREEREG", "skogbrplanBeskrivTreERegulering", OFTInteger);
+      addSimpleType(poTypes, "SP_TREEREG", "skogbrplanBeskrivTreERegulering", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_TREFREG", "skogbrplanBeskrivTreFRegulering", OFTInteger);
+      addSimpleType(poTypes, "SP_TREFREG", "skogbrplanBeskrivTreFRegulering", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_TRESLAG", "skogbrplanTreslag", OFTInteger);
+      addSimpleType(poTypes, "SP_TRESLAG", "skogbrplanTreslag", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_TRESLHO", "skogbrplanTreslagHøyde", OFTInteger);
+      addSimpleType(poTypes, "SP_TRESLHO", "skogbrplanTreslagHøyde", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_VOLAND", "skogbrplanTreslagProsent", OFTInteger);
+      addSimpleType(poTypes, "SP_VOLAND", "skogbrplanTreslagProsent", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_VOLKORR", "skogbrplanTreslagKorrVolumUBark", OFTInteger);
+      addSimpleType(poTypes, "SP_VOLKORR", "skogbrplanTreslagKorrVolumUBark", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_VOLSALG", "skogbrplanTreslagSalgsvolumUBark", OFTInteger);
+      addSimpleType(poTypes, "SP_VOLSALG", "skogbrplanTreslagSalgsvolumUBark", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_VOLUKORR", "skogbrplanTreslagUkorrVolumUBark", OFTInteger);
+      addSimpleType(poTypes, "SP_VOLUKORR", "skogbrplanTreslagUkorrVolumUBark", OFTInteger);
 
-      addSimpleType(&oTypes, "SP_AAR", "skogbrplanTiltakÅr", OFTInteger);
+      addSimpleType(poTypes, "SP_AAR", "skogbrplanTiltakÅr", OFTInteger);
 
-      addSimpleType(&oTypes, "SPERRING", "sperring", OFTString);
+      addSimpleType(poTypes, "SPERRING", "sperring", OFTString);
 
-      addSimpleType(&oTypes, "SPES_SKILØYPETYPE", "spesialSkiløypetype", OFTString);
+      addSimpleType(poTypes, "SPES_SKILØYPETYPE", "spesialSkiløypetype", OFTString);
 
-      addSimpleType(&oTypes, "SPESIALMERKETYPE", "spesialmerketype", OFTInteger);
+      addSimpleType(poTypes, "SPESIALMERKETYPE", "spesialmerketype", OFTInteger);
 
-      addSimpleType(&oTypes, "SPESIALSYKKELRUTETYPE", "spesialsykkelrutetype", OFTString);
+      addSimpleType(poTypes, "SPESIALSYKKELRUTETYPE", "spesialsykkelrutetype", OFTString);
 
-      addSimpleType(&oTypes, "SPOR_HASTIGHET", "sporhastighet", OFTInteger);
+      addSimpleType(poTypes, "SPOR_HASTIGHET", "sporhastighet", OFTInteger);
 
-      addSimpleType(&oTypes, "SPORANTALL", "sporantall", OFTString);
+      addSimpleType(poTypes, "SPORANTALL", "sporantall", OFTString);
 
-      addSimpleType(&oTypes, "SPORAVGRENINGSNR", "sporavgreningsnummer", OFTString);
+      addSimpleType(poTypes, "SPORAVGRENINGSNR", "sporavgreningsnummer", OFTString);
 
-      addSimpleType(&oTypes, "SPORAVGRENINGSPUNKTNR", "sporavgreningspunktnummer", OFTString);
+      addSimpleType(poTypes, "SPORAVGRENINGSPUNKTNR", "sporavgreningspunktnummer", OFTString);
 
-      addSimpleType(&oTypes, "SPORAVGRENINGSPUNKTTYPE", "sporavgreningspunkttype", OFTString);
+      addSimpleType(poTypes, "SPORAVGRENINGSPUNKTTYPE", "sporavgreningspunkttype", OFTString);
 
-      addSimpleType(&oTypes, "SPORAVGRENINGSTYPE", "sporavgreningstype", OFTString);
+      addSimpleType(poTypes, "SPORAVGRENINGSTYPE", "sporavgreningstype", OFTString);
 
-      addSimpleType(&oTypes, "SPORKM", "sporKilometer", OFTReal);
+      addSimpleType(poTypes, "SPORKM", "sporKilometer", OFTReal);
 
-      addSimpleType(&oTypes, "SPORNUMMER", "spornummer", OFTString);
+      addSimpleType(poTypes, "SPORNUMMER", "spornummer", OFTString);
 
-      addSimpleType(&oTypes, "SPORPUNKTNUMMER", "sporpunktnummer", OFTString);
+      addSimpleType(poTypes, "SPORPUNKTNUMMER", "sporpunktnummer", OFTString);
 
-      addSimpleType(&oTypes, "SPORPUNKTTYPE", "sporpunkttype", OFTString);
+      addSimpleType(poTypes, "SPORPUNKTTYPE", "sporpunkttype", OFTString);
 
-      addSimpleType(&oTypes, "SPORTYPE", "sportype", OFTString);
+      addSimpleType(poTypes, "SPORTYPE", "sportype", OFTString);
 
-      addSimpleType(&oTypes, "SSR-ID", "ssrId", OFTInteger);
+      addSimpleType(poTypes, "SSR-ID", "ssrId", OFTInteger);
 
-      addSimpleType(&oTypes, "SSR-OBJID", "objId", OFTInteger);
+      addSimpleType(poTypes, "SSR-OBJID", "objId", OFTInteger);
 
-      addSimpleType(&oTypes, "STANDARDENHET", "standardenhet", OFTString);
+      addSimpleType(poTypes, "STANDARDENHET", "standardenhet", OFTString);
 
-      addSimpleType(&oTypes, "STASJONSFORMÅL", "stasjonsformål", OFTString);
+      addSimpleType(poTypes, "STASJONSFORMÅL", "stasjonsformål", OFTString);
 
-      addSimpleType(&oTypes, "STASJONSNR", "stasjonsnummer", OFTInteger);
+      addSimpleType(poTypes, "STASJONSNR", "stasjonsnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "STASJONSPARAMETER", "stasjonsparameter", OFTInteger);
+      addSimpleType(poTypes, "STASJONSPARAMETER", "stasjonsparameter", OFTInteger);
 
-      addSimpleType(&oTypes, "STASJONSTYPE", "stasjonstype", OFTString);
+      addSimpleType(poTypes, "STASJONSTYPE", "stasjonstype", OFTString);
 
-      addSimpleType(&oTypes, "STASJONTYP", "stasjonstype", OFTString);
+      addSimpleType(poTypes, "STASJONTYP", "stasjonstype", OFTString);
 
-      addSimpleType(&oTypes, "STAT", "typeStatus", OFTInteger);
+      addSimpleType(poTypes, "STAT", "typeStatus", OFTInteger);
 
-      addSimpleType(&oTypes, "STATUS", "status", OFTString);
+      addSimpleType(poTypes, "STATUS", "status", OFTString);
 
-      addSimpleType(&oTypes, "STED", "sted", OFTString);
+      addSimpleType(poTypes, "STED", "sted", OFTString);
 
-      addSimpleType(&oTypes, "STED_VERIF", "stedfestingVerifisert", OFTString);
+      addSimpleType(poTypes, "STED_VERIF", "stedfestingVerifisert", OFTString);
 
-      addSimpleType(&oTypes, "STENGESDATO", "stengesDato", OFTDate);
+      addSimpleType(poTypes, "STENGESDATO", "stengesDato", OFTDate);
 
-      addSimpleType(&oTypes, "STORBUE", "storbue", OFTInteger);
+      addSimpleType(poTypes, "STORBUE", "storbue", OFTInteger);
 
-      addSimpleType(&oTypes, "STREKNINGSNUMMER", "strekningsnummer", OFTInteger);
+      addSimpleType(poTypes, "STREKNINGSNUMMER", "strekningsnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "STRENG", "generellTekststreng", OFTString);
+      addSimpleType(poTypes, "STRENG", "generellTekststreng", OFTString);
 
-      addSimpleType(&oTypes, "STRIPENUMMER", "stripenummer", OFTString);
+      addSimpleType(poTypes, "STRIPENUMMER", "stripenummer", OFTString);
 
-      addSimpleType(&oTypes, "STRUKTUROVERBIKKET", "strukturOverbikket", OFTString);
+      addSimpleType(poTypes, "STRUKTUROVERBIKKET", "strukturOverbikket", OFTString);
 
-      addSimpleType(&oTypes, "STRUKTURPUNKTTYPE", "strukturPunkttype", OFTInteger);
+      addSimpleType(poTypes, "STRUKTURPUNKTTYPE", "strukturPunkttype", OFTInteger);
 
-      addSimpleType(&oTypes, "STRØMHAST", "strømhastighet", OFTReal);
+      addSimpleType(poTypes, "STRØMHAST", "strømhastighet", OFTReal);
 
-      addSimpleType(&oTypes, "STRØMRETN", "strømretning", OFTInteger);
+      addSimpleType(poTypes, "STRØMRETN", "strømretning", OFTInteger);
 
-      addSimpleType(&oTypes, "STØYENHET", "støyenhet", OFTString);
+      addSimpleType(poTypes, "STØYENHET", "støyenhet", OFTString);
 
-      addSimpleType(&oTypes, "STØYINTERVALL", "støyintervall", OFTInteger);
+      addSimpleType(poTypes, "STØYINTERVALL", "støyintervall", OFTInteger);
 
-      addSimpleType(&oTypes, "STØYKILDE", "støykilde", OFTString);
+      addSimpleType(poTypes, "STØYKILDE", "støykilde", OFTString);
 
-      addSimpleType(&oTypes, "STØYKILDEIDENTIFIKASJON", "Støykildeidentifikasjon", OFTString);
+      addSimpleType(poTypes, "STØYKILDEIDENTIFIKASJON", "Støykildeidentifikasjon", OFTString);
 
-      addSimpleType(&oTypes, "STØYKILDENAVN", "støykildenavn", OFTString);
+      addSimpleType(poTypes, "STØYKILDENAVN", "støykildenavn", OFTString);
 
-      addSimpleType(&oTypes, "STØYMETODE", "støymetode", OFTString);
+      addSimpleType(poTypes, "STØYMETODE", "støymetode", OFTString);
 
-      addSimpleType(&oTypes, "STØYNIVÅ", "støynivå", OFTInteger);
+      addSimpleType(poTypes, "STØYNIVÅ", "støynivå", OFTInteger);
 
-      addSimpleType(&oTypes, "STØYSONEKATEGORI", "støysonekategori", OFTString);
+      addSimpleType(poTypes, "STØYSONEKATEGORI", "støysonekategori", OFTString);
 
-      addSimpleType(&oTypes, "SUM_ALT_AREAL", "sumAlternativtAreal", OFTReal);
+      addSimpleType(poTypes, "SUM_ALT_AREAL", "sumAlternativtAreal", OFTReal);
 
-      addSimpleType(&oTypes, "SUM_ALT_AREAL2", "sumAlternativtAreal2", OFTReal);
+      addSimpleType(poTypes, "SUM_ALT_AREAL2", "sumAlternativtAreal2", OFTReal);
 
-      addSimpleType(&oTypes, "SUM_ANTALLBOENH", "sumAntallBoenheter", OFTInteger);
+      addSimpleType(poTypes, "SUM_ANTALLBOENH", "sumAntallBoenheter", OFTInteger);
 
-      addSimpleType(&oTypes, "SUM_BRUKSARTOT", "sumBruksarealTotalt", OFTReal);
+      addSimpleType(poTypes, "SUM_BRUKSARTOT", "sumBruksarealTotalt", OFTReal);
 
-      addSimpleType(&oTypes, "SUM_BRUKSTILANN", "sumBruksarealTilAnnet", OFTReal);
+      addSimpleType(poTypes, "SUM_BRUKSTILANN", "sumBruksarealTilAnnet", OFTReal);
 
-      addSimpleType(&oTypes, "SUM_BRUKSTILBOL", "sumBruksarealTilBolig", OFTReal);
+      addSimpleType(poTypes, "SUM_BRUKSTILBOL", "sumBruksarealTilBolig", OFTReal);
 
-      addSimpleType(&oTypes, "SYKKELRUTETYPE", "sykkelrutetype", OFTInteger);
+      addSimpleType(poTypes, "SYKKELRUTETYPE", "sykkelrutetype", OFTInteger);
 
-      addSimpleType(&oTypes, "SYNBARHET", "synbarhet", OFTInteger);
+      addSimpleType(poTypes, "SYNBARHET", "synbarhet", OFTInteger);
 
-      addSimpleType(&oTypes, "SYSKODE", "referansesystemKode", OFTInteger);
+      addSimpleType(poTypes, "SYSKODE", "referansesystemKode", OFTInteger);
 
-      addSimpleType(&oTypes, "TAKFORM", "takform", OFTInteger);
+      addSimpleType(poTypes, "TAKFORM", "takform", OFTInteger);
 
-      addSimpleType(&oTypes, "TAKSKJEGG", "takskjegg", OFTInteger);
+      addSimpleType(poTypes, "TAKSKJEGG", "takskjegg", OFTInteger);
 
-      addSimpleType(&oTypes, "TAKTEKKING", "taktekking", OFTInteger);
+      addSimpleType(poTypes, "TAKTEKKING", "taktekking", OFTInteger);
 
-      addSimpleType(&oTypes, "TDIM-BREDDE", "tekstTegnbredde", OFTReal);
+      addSimpleType(poTypes, "TDIM-BREDDE", "tekstTegnbredde", OFTReal);
 
-      addSimpleType(&oTypes, "TDIM-HØYDE", "tekstTegnhøyde", OFTReal);
+      addSimpleType(poTypes, "TDIM-HØYDE", "tekstTegnhøyde", OFTReal);
 
-      addSimpleType(&oTypes, "TEGNFORKL", "tegnforklaring", OFTString);
+      addSimpleType(poTypes, "TEGNFORKL", "tegnforklaring", OFTString);
 
-      addSimpleType(&oTypes, "TEGNSETT", "tegnsett", OFTString);
+      addSimpleType(poTypes, "TEGNSETT", "tegnsett", OFTString);
 
-      addSimpleType(&oTypes, "TEIGE_ID", "teigEtterSkifteIdent", OFTInteger);
+      addSimpleType(poTypes, "TEIGE_ID", "teigEtterSkifteIdent", OFTInteger);
 
-      addSimpleType(&oTypes, "TEIGF_ID", "teigFørSkitfeIdent", OFTInteger);
+      addSimpleType(poTypes, "TEIGF_ID", "teigFørSkitfeIdent", OFTInteger);
 
-      addSimpleType(&oTypes, "TEIGFLEREMATRSAMMEEIER", "teigFlereMatrSammeEier", OFTString);
+      addSimpleType(poTypes, "TEIGFLEREMATRSAMMEEIER", "teigFlereMatrSammeEier", OFTString);
 
-      addSimpleType(&oTypes, "TEIGMEDFLEREMATRENHETER", "teigMedFlereMatrikkelenheter", OFTString);
+      addSimpleType(poTypes, "TEIGMEDFLEREMATRENHETER", "teigMedFlereMatrikkelenheter", OFTString);
 
-      addSimpleType(&oTypes, "TEIGNR", "jordregisterEiendomTeigNummer", OFTInteger);
+      addSimpleType(poTypes, "TEIGNR", "jordregisterEiendomTeigNummer", OFTInteger);
 
-      addSimpleType(&oTypes, "TEKSTURKODE1", "teksturkode", OFTString);
+      addSimpleType(poTypes, "TEKSTURKODE1", "teksturkode", OFTString);
 
-      addSimpleType(&oTypes, "TEKSTURKODE2", "teksturkode2", OFTString);
+      addSimpleType(poTypes, "TEKSTURKODE2", "teksturkode2", OFTString);
 
-      addSimpleType(&oTypes, "TEKSTURKODE3", "teksturkode3", OFTString);
+      addSimpleType(poTypes, "TEKSTURKODE3", "teksturkode3", OFTString);
 
-      addSimpleType(&oTypes, "TELEFAXNR", "telefaxnummer", OFTInteger);
+      addSimpleType(poTypes, "TELEFAXNR", "telefaxnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "TELEFONNR", "telefonnummer", OFTInteger);
+      addSimpleType(poTypes, "TELEFONNR", "telefonnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "TELLER", "teller", OFTReal);
+      addSimpleType(poTypes, "TELLER", "teller", OFTReal);
 
-      addSimpleType(&oTypes, "TEMAJUST", "geolTemajustering", OFTInteger);
+      addSimpleType(poTypes, "TEMAJUST", "geolTemajustering", OFTInteger);
 
-      addSimpleType(&oTypes, "TEMAKVAL", "temaKvalitet", OFTString);
+      addSimpleType(poTypes, "TEMAKVAL", "temaKvalitet", OFTString);
 
-      addSimpleType(&oTypes, "TERSKELFUNKSJON", "terskelFunksjon", OFTString);
+      addSimpleType(poTypes, "TERSKELFUNKSJON", "terskelFunksjon", OFTString);
 
-      addSimpleType(&oTypes, "TERSKELTYP", "terskelType", OFTString);
+      addSimpleType(poTypes, "TERSKELTYP", "terskelType", OFTString);
 
-      addSimpleType(&oTypes, "TETTSTEDNAVN", "tettstednavn", OFTString);
+      addSimpleType(poTypes, "TETTSTEDNAVN", "tettstednavn", OFTString);
 
-      addSimpleType(&oTypes, "TIDOPPHOLDVANN", "tidOppholdVann", OFTInteger);
+      addSimpleType(poTypes, "TIDOPPHOLDVANN", "tidOppholdVann", OFTInteger);
 
-      addSimpleType(&oTypes, "TIDREF", "tidreferanse", OFTString);
+      addSimpleType(poTypes, "TIDREF", "tidreferanse", OFTString);
 
-      addSimpleType(&oTypes, "TIDSANGIVELSE", "tidsangivelse", OFTInteger);
+      addSimpleType(poTypes, "TIDSANGIVELSE", "tidsangivelse", OFTInteger);
 
-      addSimpleType(&oTypes, "TIDSENHET", "tidsenhet", OFTString);
+      addSimpleType(poTypes, "TIDSENHET", "tidsenhet", OFTString);
 
-      addSimpleType(&oTypes, "TIDSLUTT", "periodeSlutt", OFTDateTime);
+      addSimpleType(poTypes, "TIDSLUTT", "periodeSlutt", OFTDateTime);
 
-      addSimpleType(&oTypes, "TIDSPUNKT", "tidspunkt", OFTDateTime);
+      addSimpleType(poTypes, "TIDSPUNKT", "tidspunkt", OFTDateTime);
 
-      addSimpleType(&oTypes, "TIDSTART", "periodeStart", OFTDateTime);
+      addSimpleType(poTypes, "TIDSTART", "periodeStart", OFTDateTime);
 
-      addSimpleType(&oTypes, "TILDELT_AREAL", "tildeltAreal", OFTReal);
+      addSimpleType(poTypes, "TILDELT_AREAL", "tildeltAreal", OFTReal);
 
-      addSimpleType(&oTypes, "TILDELT_DATO", "tilldeltDato", OFTDate);
+      addSimpleType(poTypes, "TILDELT_DATO", "tilldeltDato", OFTDate);
 
-      addSimpleType(&oTypes, "TILGJENGELIGHETSVURDERING", "tilgjengelighetsvurdering", OFTString);
+      addSimpleType(poTypes, "TILGJENGELIGHETSVURDERING", "tilgjengelighetsvurdering", OFTString);
 
-      addSimpleType(&oTypes, "TILLEGG", "flatetillegg", OFTInteger);
+      addSimpleType(poTypes, "TILLEGG", "flatetillegg", OFTInteger);
 
-      addSimpleType(&oTypes, "TILLEGGSAREAL", "tilleggsareal", OFTInteger);
+      addSimpleType(poTypes, "TILLEGGSAREAL", "tilleggsareal", OFTInteger);
 
-      addSimpleType(&oTypes, "TILSPORNODEKILOMETER", "tilSpornodeKilometer", OFTReal);
+      addSimpleType(poTypes, "TILSPORNODEKILOMETER", "tilSpornodeKilometer", OFTReal);
 
-      addSimpleType(&oTypes, "TILSPORNODETEKST", "tilSpornodeTekst", OFTString);
+      addSimpleType(poTypes, "TILSPORNODETEKST", "tilSpornodeTekst", OFTString);
 
-      addSimpleType(&oTypes, "TILSPORNODETYPE", "tilSpornodeType", OFTString);
+      addSimpleType(poTypes, "TILSPORNODETYPE", "tilSpornodeType", OFTString);
 
-      addSimpleType(&oTypes, "TILSYS", "tilKoordinatsystem", OFTInteger);
+      addSimpleType(poTypes, "TILSYS", "tilKoordinatsystem", OFTInteger);
 
-      addSimpleType(&oTypes, "TILTAKNR", "tiltaksnummer", OFTInteger);
+      addSimpleType(poTypes, "TILTAKNR", "tiltaksnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "TINGLYST", "tinglyst", OFTString);
+      addSimpleType(poTypes, "TINGLYST", "tinglyst", OFTString);
 
-      addSimpleType(&oTypes, "TIPPVOLUM", "deponitippVolum", OFTInteger);
+      addSimpleType(poTypes, "TIPPVOLUM", "deponitippVolum", OFTInteger);
 
-      addSimpleType(&oTypes, "TOKTID", "toktId", OFTString);
+      addSimpleType(poTypes, "TOKTID", "toktId", OFTString);
 
-      addSimpleType(&oTypes, "TOT_PROD", "totalProduksjon", OFTInteger);
+      addSimpleType(poTypes, "TOT_PROD", "totalProduksjon", OFTInteger);
 
-      addSimpleType(&oTypes, "TOTALAREALKM2", "totalarealKm2", OFTReal);
+      addSimpleType(poTypes, "TOTALAREALKM2", "totalarealKm2", OFTReal);
 
-      addSimpleType(&oTypes, "TOTALBELASTNING", "totalBelastning", OFTInteger);
+      addSimpleType(poTypes, "TOTALBELASTNING", "totalBelastning", OFTInteger);
 
-      addSimpleType(&oTypes, "TRAFIKKBELASTNING", "trafikkbelastning", OFTInteger);
+      addSimpleType(poTypes, "TRAFIKKBELASTNING", "trafikkbelastning", OFTInteger);
 
-      addSimpleType(&oTypes, "TRAFIKKFARE", "trafikkfare", OFTString);
+      addSimpleType(poTypes, "TRAFIKKFARE", "trafikkfare", OFTString);
 
-      addSimpleType(&oTypes, "TRE_D_NIVÅ", "treDNivå", OFTInteger);
+      addSimpleType(poTypes, "TRE_D_NIVÅ", "treDNivå", OFTInteger);
 
-      addSimpleType(&oTypes, "TRE_TYP", "treType", OFTInteger);
+      addSimpleType(poTypes, "TRE_TYP", "treType", OFTInteger);
 
-      addSimpleType(&oTypes, "TRNORD", "tekstReferansePunktNord", OFTInteger);
+      addSimpleType(poTypes, "TRNORD", "tekstReferansePunktNord", OFTInteger);
 
-      addSimpleType(&oTypes, "TRØST", "tekstReferansePunktØst", OFTInteger);
+      addSimpleType(poTypes, "TRØST", "tekstReferansePunktØst", OFTInteger);
 
-      addSimpleType(&oTypes, "TSKOG", "tilleggsopplysningerSkog", OFTInteger);
+      addSimpleType(poTypes, "TSKOG", "tilleggsopplysningerSkog", OFTInteger);
 
-      addSimpleType(&oTypes, "TSKYV", "tekstForskyvning", OFTReal);
+      addSimpleType(poTypes, "TSKYV", "tekstForskyvning", OFTReal);
 
-      addSimpleType(&oTypes, "TSTED", "tettstednummer", OFTInteger);
+      addSimpleType(poTypes, "TSTED", "tettstednummer", OFTInteger);
 
-      addSimpleType(&oTypes, "TVIST", "tvist", OFTString);
+      addSimpleType(poTypes, "TVIST", "tvist", OFTString);
 
-      addSimpleType(&oTypes, "TWYMERK", "taksebaneoppmerking", OFTInteger);
+      addSimpleType(poTypes, "TWYMERK", "taksebaneoppmerking", OFTInteger);
 
-      addSimpleType(&oTypes, "TYPE_BR", "trasebreddetype", OFTInteger);
+      addSimpleType(poTypes, "TYPE_BR", "trasebreddetype", OFTInteger);
 
-      addSimpleType(&oTypes, "TYPE_VANNFOR_ANL", "typeVannforsyningsanlegg", OFTInteger);
+      addSimpleType(poTypes, "TYPE_VANNFOR_ANL", "typeVannforsyningsanlegg", OFTInteger);
 
-      addSimpleType(&oTypes, "TYPEDUMPEOMRÅDE", "typeDumpeområde", OFTInteger);
+      addSimpleType(poTypes, "TYPEDUMPEOMRÅDE", "typeDumpeområde", OFTInteger);
 
-      addSimpleType(&oTypes, "TYPEINNSJØ", "typeInnsjø", OFTInteger);
+      addSimpleType(poTypes, "TYPEINNSJØ", "typeInnsjø", OFTInteger);
 
-      addSimpleType(&oTypes, "TYPESAMFLINJE", "samferdselslinjeType", OFTInteger);
+      addSimpleType(poTypes, "TYPESAMFLINJE", "samferdselslinjeType", OFTInteger);
 
-      addSimpleType(&oTypes, "TYPESAMFPUNKT", "samferdselspunkt", OFTInteger);
+      addSimpleType(poTypes, "TYPESAMFPUNKT", "samferdselspunkt", OFTInteger);
 
-      addSimpleType(&oTypes, "UB_ANL_TYP", "utmarkbeiteAnleggstype", OFTInteger);
+      addSimpleType(poTypes, "UB_ANL_TYP", "utmarkbeiteAnleggstype", OFTInteger);
 
-      addSimpleType(&oTypes, "UB_DYRESL", "utmarkbeiteDyreslag", OFTString);
+      addSimpleType(poTypes, "UB_DYRESL", "utmarkbeiteDyreslag", OFTString);
 
-      addSimpleType(&oTypes, "UFULLSTENDIGAREAL", "ufullstendigAreal", OFTString);
+      addSimpleType(poTypes, "UFULLSTENDIGAREAL", "ufullstendigAreal", OFTString);
 
-      addSimpleType(&oTypes, "UNDERBYGNINGKONSTR", "underbygningKonstr", OFTInteger);
+      addSimpleType(poTypes, "UNDERBYGNINGKONSTR", "underbygningKonstr", OFTInteger);
 
-      addSimpleType(&oTypes, "UNDERGRUNN", "undergrunn", OFTString);
+      addSimpleType(poTypes, "UNDERGRUNN", "undergrunn", OFTString);
 
-      addSimpleType(&oTypes, "UNDERLAG", "fastmerkeUnderlag", OFTInteger);
+      addSimpleType(poTypes, "UNDERLAG", "fastmerkeUnderlag", OFTInteger);
 
-      addSimpleType(&oTypes, "UNDERLAGSTYPE", "underlagstype", OFTInteger);
+      addSimpleType(poTypes, "UNDERLAGSTYPE", "underlagstype", OFTInteger);
 
-      addSimpleType(&oTypes, "UNDERSAMMENFØYNINGSKALBESTÅ", "underSammenføyningSkalBestå", OFTString);
+      addSimpleType(poTypes, "UNDERSAMMENFØYNINGSKALBESTÅ", "underSammenføyningSkalBestå", OFTString);
 
-      addSimpleType(&oTypes, "UNDERSAMMENFØYNINGSKALUTGÅ", "underSammenføyningSkalUtgå", OFTString);
+      addSimpleType(poTypes, "UNDERSAMMENFØYNINGSKALUTGÅ", "underSammenføyningSkalUtgå", OFTString);
 
-      addSimpleType(&oTypes, "UNDERSOKELSENR", "undersokelseNummer", OFTInteger);
+      addSimpleType(poTypes, "UNDERSOKELSENR", "undersokelseNummer", OFTInteger);
 
-      addSimpleType(&oTypes, "UNDERTYPE", "undertypeVersjon", OFTString);
+      addSimpleType(poTypes, "UNDERTYPE", "undertypeVersjon", OFTString);
 
-      addSimpleType(&oTypes, "UNR", "underNr", OFTInteger);
+      addSimpleType(poTypes, "UNR", "underNr", OFTInteger);
 
-      addSimpleType(&oTypes, "UREGJORDSAMEIE", "uregistrertJordsameie", OFTString);
+      addSimpleType(poTypes, "UREGJORDSAMEIE", "uregistrertJordsameie", OFTString);
 
-      addSimpleType(&oTypes, "UTEAREAL", "uteoppholdsareal", OFTInteger);
+      addSimpleType(poTypes, "UTEAREAL", "uteoppholdsareal", OFTInteger);
 
-      addSimpleType(&oTypes, "UTGÅR_DATO", "utgårDato", OFTDate);
+      addSimpleType(poTypes, "UTGÅR_DATO", "utgårDato", OFTDate);
 
-      addSimpleType(&oTypes, "UTGÅTT", "utgått", OFTString);
+      addSimpleType(poTypes, "UTGÅTT", "utgått", OFTString);
 
-      addSimpleType(&oTypes, "UTNTALL", "utnyttingstall", OFTReal);
+      addSimpleType(poTypes, "UTNTALL", "utnyttingstall", OFTReal);
 
-      addSimpleType(&oTypes, "UTNTYP", "utnyttingstype", OFTInteger);
+      addSimpleType(poTypes, "UTNTYP", "utnyttingstype", OFTInteger);
 
-      addSimpleType(&oTypes, "UTNYTTBAR_KAP", "utnyttbarMagasinkapasitet", OFTReal);
+      addSimpleType(poTypes, "UTNYTTBAR_KAP", "utnyttbarMagasinkapasitet", OFTReal);
 
-      addSimpleType(&oTypes, "UTSLIPPTYPE", "utslipptype", OFTString);
+      addSimpleType(poTypes, "UTSLIPPTYPE", "utslipptype", OFTString);
 
-      addSimpleType(&oTypes, "UTV_TILL_NR", "tillatelsesnummer", OFTString);
+      addSimpleType(poTypes, "UTV_TILL_NR", "tillatelsesnummer", OFTString);
 
-      addSimpleType(&oTypes, "UTV_TILL_TYPE", "utvinningstillatelsestype", OFTString);
+      addSimpleType(poTypes, "UTV_TILL_TYPE", "utvinningstillatelsestype", OFTString);
 
-      addSimpleType(&oTypes, "UTVALGSAK", "utvalgssaksnummer", OFTInteger);
+      addSimpleType(poTypes, "UTVALGSAK", "utvalgssaksnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "UTVALGSMET", "utvalgMetode", OFTString);
+      addSimpleType(poTypes, "UTVALGSMET", "utvalgMetode", OFTString);
 
-      addSimpleType(&oTypes, "UUFASILITET", "universellutformingFasilitet", OFTString);
+      addSimpleType(poTypes, "UUFASILITET", "universellutformingFasilitet", OFTString);
 
-      addSimpleType(&oTypes, "VALUTAENHET", "valutaenhet", OFTString);
+      addSimpleType(poTypes, "VALUTAENHET", "valutaenhet", OFTString);
 
-      addSimpleType(&oTypes, "VANNBR", "vannbredde", OFTInteger);
+      addSimpleType(poTypes, "VANNBR", "vannbredde", OFTInteger);
 
-      addSimpleType(&oTypes, "VANNFORSYNING", "vannforsyning", OFTInteger);
+      addSimpleType(poTypes, "VANNFORSYNING", "vannforsyning", OFTInteger);
 
-      addSimpleType(&oTypes, "VANNFØRINGMIDLERE", "vannføringMidlere", OFTInteger);
+      addSimpleType(poTypes, "VANNFØRINGMIDLERE", "vannføringMidlere", OFTInteger);
 
-      addSimpleType(&oTypes, "VANNFØRINGMINSTE", "vannføringMinste", OFTInteger);
+      addSimpleType(poTypes, "VANNFØRINGMINSTE", "vannføringMinste", OFTInteger);
 
-      addSimpleType(&oTypes, "VANNFØRINGSTØRST", "vannføringStørst", OFTInteger);
+      addSimpleType(poTypes, "VANNFØRINGSTØRST", "vannføringStørst", OFTInteger);
 
-      addSimpleType(&oTypes, "VANNLAGR", "vannlagringsevne", OFTInteger);
+      addSimpleType(poTypes, "VANNLAGR", "vannlagringsevne", OFTInteger);
 
-      addSimpleType(&oTypes, "VASSDRAGNAVN", "vassdragsnavn", OFTString);
+      addSimpleType(poTypes, "VASSDRAGNAVN", "vassdragsnavn", OFTString);
 
-      addSimpleType(&oTypes, "VASSDRAGSNR", "vassdragsnummer", OFTString);
+      addSimpleType(poTypes, "VASSDRAGSNR", "vassdragsnummer", OFTString);
 
-      addSimpleType(&oTypes, "VATNLNR", "vatnLøpenummer", OFTInteger);
+      addSimpleType(poTypes, "VATNLNR", "vatnLøpenummer", OFTInteger);
 
-      addSimpleType(&oTypes, "V-DELTA-MAX", "vertikaltDeltaMaksimum", OFTInteger);
+      addSimpleType(poTypes, "V-DELTA-MAX", "vertikaltDeltaMaksimum", OFTInteger);
 
-      addSimpleType(&oTypes, "V-DELTA-MIN", "vertikaltDeltaMinimum", OFTInteger);
+      addSimpleType(poTypes, "V-DELTA-MIN", "vertikaltDeltaMinimum", OFTInteger);
 
-      addSimpleType(&oTypes, "VEDLIKEH", "vedlikeholdsansvarlig", OFTString);
+      addSimpleType(poTypes, "VEDLIKEH", "vedlikeholdsansvarlig", OFTString);
 
-      addSimpleType(&oTypes, "VEDTAK", "vedtakstype", OFTInteger);
+      addSimpleType(poTypes, "VEDTAK", "vedtakstype", OFTInteger);
 
-      addSimpleType(&oTypes, "VEDTAKSDATO", "vedtaksdato", OFTDate);
+      addSimpleType(poTypes, "VEDTAKSDATO", "vedtaksdato", OFTDate);
 
-      addSimpleType(&oTypes, "VEGKATEGORI", "vegkategori", OFTString);
+      addSimpleType(poTypes, "VEGKATEGORI", "vegkategori", OFTString);
 
-      addSimpleType(&oTypes, "VEGNUMMER", "vegnummer", OFTInteger);
+      addSimpleType(poTypes, "VEGNUMMER", "vegnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "VEGOVERVEG", "vegOverVeg", OFTString);
+      addSimpleType(poTypes, "VEGOVERVEG", "vegOverVeg", OFTString);
 
-      addSimpleType(&oTypes, "VEGREKKVERKTYPE", "vegrekkverkType", OFTString);
+      addSimpleType(poTypes, "VEGREKKVERKTYPE", "vegrekkverkType", OFTString);
 
-      addSimpleType(&oTypes, "VEGSPERRINGTYPE", "vegsperringtype", OFTString);
+      addSimpleType(poTypes, "VEGSPERRINGTYPE", "vegsperringtype", OFTString);
 
-      addSimpleType(&oTypes, "VEGSTATUS", "vegstatus", OFTString);
+      addSimpleType(poTypes, "VEGSTATUS", "vegstatus", OFTString);
 
-      addSimpleType(&oTypes, "VERDI", "verdi", OFTInteger);
+      addSimpleType(poTypes, "VERDI", "verdi", OFTInteger);
 
-      addSimpleType(&oTypes, "VERDI1", "verdi", OFTString);
+      addSimpleType(poTypes, "VERDI1", "verdi", OFTString);
 
-      addSimpleType(&oTypes, "VERDI2", "tilVerdi", OFTString);
+      addSimpleType(poTypes, "VERDI2", "tilVerdi", OFTString);
 
-      addSimpleType(&oTypes, "VERDIANNA", "verdiAnnenUtnyttelseGrunn", OFTReal);
+      addSimpleType(poTypes, "VERDIANNA", "verdiAnnenUtnyttelseGrunn", OFTReal);
 
-      addSimpleType(&oTypes, "VERDIBEITE", "verdiBeiterett", OFTReal);
+      addSimpleType(poTypes, "VERDIBEITE", "verdiBeiterett", OFTReal);
 
-      addSimpleType(&oTypes, "VERDIGRUNN", "verdiGrunn", OFTReal);
+      addSimpleType(poTypes, "VERDIGRUNN", "verdiGrunn", OFTReal);
 
-      addSimpleType(&oTypes, "VERDIJAKT", "verdiJaktrett", OFTReal);
+      addSimpleType(poTypes, "VERDIJAKT", "verdiJaktrett", OFTReal);
 
-      addSimpleType(&oTypes, "VERDISKOG", "verdiSkogProduksjon", OFTReal);
+      addSimpleType(poTypes, "VERDISKOG", "verdiSkogProduksjon", OFTReal);
 
-      addSimpleType(&oTypes, "VERIFISERINGSDATO", "verifiseringsdato", OFTDateTime);
+      addSimpleType(poTypes, "VERIFISERINGSDATO", "verifiseringsdato", OFTDateTime);
 
-      addSimpleType(&oTypes, "VERN_FORMAL", "verneFormål", OFTString);
+      addSimpleType(poTypes, "VERN_FORMAL", "verneFormål", OFTString);
 
-      addSimpleType(&oTypes, "VERN_LOV", "vernelov", OFTString);
+      addSimpleType(poTypes, "VERN_LOV", "vernelov", OFTString);
 
-      addSimpleType(&oTypes, "VERN_MOT", "vernskogType", OFTInteger);
+      addSimpleType(poTypes, "VERN_MOT", "vernskogType", OFTInteger);
 
-      addSimpleType(&oTypes, "VERN_PARA", "verneparagraf", OFTString);
+      addSimpleType(poTypes, "VERN_PARA", "verneparagraf", OFTString);
 
-      addSimpleType(&oTypes, "VERNEDATO", "vernedato", OFTDate);
+      addSimpleType(poTypes, "VERNEDATO", "vernedato", OFTDate);
 
-      addSimpleType(&oTypes, "VERNEFORM", "verneform", OFTString);
+      addSimpleType(poTypes, "VERNEFORM", "verneform", OFTString);
 
-      addSimpleType(&oTypes, "VERNEPLAN", "verneplan", OFTInteger);
+      addSimpleType(poTypes, "VERNEPLAN", "verneplan", OFTInteger);
 
-      addSimpleType(&oTypes, "VERNTEMA", "verneTema", OFTInteger);
+      addSimpleType(poTypes, "VERNTEMA", "verneTema", OFTInteger);
 
-      addSimpleType(&oTypes, "VERNTYPE", "vernetype", OFTString);
+      addSimpleType(poTypes, "VERNTYPE", "vernetype", OFTString);
 
-      addSimpleType(&oTypes, "VERSJON", "versjon", OFTString);
+      addSimpleType(poTypes, "VERSJON", "versjon", OFTString);
 
-      addSimpleType(&oTypes, "VERT_BÆREKONSTR", "vertikalBærekonstruksjon", OFTInteger);
+      addSimpleType(poTypes, "VERT_BÆREKONSTR", "vertikalBærekonstruksjon", OFTInteger);
 
-      addSimpleType(&oTypes, "VERTNIV", "vertikalnivå", OFTInteger);
+      addSimpleType(poTypes, "VERTNIV", "vertikalnivå", OFTInteger);
 
-      addSimpleType(&oTypes, "VFLATE", "delteigKlassifisering", OFTInteger);
+      addSimpleType(poTypes, "VFLATE", "delteigKlassifisering", OFTInteger);
 
-      addSimpleType(&oTypes, "VFRADATO", "veglenkeFraDato", OFTDate);
+      addSimpleType(poTypes, "VFRADATO", "veglenkeFraDato", OFTDate);
 
-      addSimpleType(&oTypes, "VIKTIG", "viktighet", OFTInteger);
+      addSimpleType(poTypes, "VIKTIG", "viktighet", OFTInteger);
 
-      addSimpleType(&oTypes, "VINDRETN", "vindretning", OFTInteger);
+      addSimpleType(poTypes, "VINDRETN", "vindretning", OFTInteger);
 
-      addSimpleType(&oTypes, "VINKELENHET", "vinkelenhet", OFTString);
+      addSimpleType(poTypes, "VINKELENHET", "vinkelenhet", OFTString);
 
-      addSimpleType(&oTypes, "VIRKSOMHET", "typeRastoffVirksomhet", OFTInteger);
+      addSimpleType(poTypes, "VIRKSOMHET", "typeRastoffVirksomhet", OFTInteger);
 
-      addSimpleType(&oTypes, "VISUELLTYDELIGHET", "visuellTydelighet", OFTInteger);
+      addSimpleType(poTypes, "VISUELLTYDELIGHET", "visuellTydelighet", OFTInteger);
 
-      addSimpleType(&oTypes, "VKJORFLT", "feltoversikt", OFTString);
+      addSimpleType(poTypes, "VKJORFLT", "feltoversikt", OFTString);
 
-      addSimpleType(&oTypes, "VKRETSNAVN", "valgkretsnavn", OFTString);
+      addSimpleType(poTypes, "VKRETSNAVN", "valgkretsnavn", OFTString);
 
-      addSimpleType(&oTypes, "VKRETSNR", "valgkretsnummer", OFTInteger);
+      addSimpleType(poTypes, "VKRETSNR", "valgkretsnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "VLENKEID", "veglenkeIdentifikasjon", OFTInteger);
+      addSimpleType(poTypes, "VLENKEID", "veglenkeIdentifikasjon", OFTInteger);
 
-      addSimpleType(&oTypes, "VOLUM_M3", "rastoffVolum", OFTInteger);
+      addSimpleType(poTypes, "VOLUM_M3", "rastoffVolum", OFTInteger);
 
-      addSimpleType(&oTypes, "VOLUMENHET", "volumenhet", OFTString);
+      addSimpleType(poTypes, "VOLUMENHET", "volumenhet", OFTString);
 
-      addSimpleType(&oTypes, "VOLUMINNSJØ", "volumInnsjø", OFTInteger);
+      addSimpleType(poTypes, "VOLUMINNSJØ", "volumInnsjø", OFTInteger);
 
-      addSimpleType(&oTypes, "VRAKTYP", "vraktype", OFTInteger);
+      addSimpleType(poTypes, "VRAKTYP", "vraktype", OFTInteger);
 
-      addSimpleType(&oTypes, "VTILDATO", "veglenkeTilDato", OFTDate);
+      addSimpleType(poTypes, "VTILDATO", "veglenkeTilDato", OFTDate);
 
-      addSimpleType(&oTypes, "VURDERING", "vurdering", OFTString);
+      addSimpleType(poTypes, "VURDERING", "vurdering", OFTString);
 
-      addSimpleType(&oTypes, "VURDERTDATO", "vurdertDato", OFTDate);
+      addSimpleType(poTypes, "VURDERTDATO", "vurdertDato", OFTDate);
 
-      addSimpleType(&oTypes, "VÆSKETYPE", "petroleumsvæsketype", OFTInteger);
+      addSimpleType(poTypes, "VÆSKETYPE", "petroleumsvæsketype", OFTInteger);
 
-      addSimpleType(&oTypes, "WRBKODE", "WRBgruppe", OFTString);
+      addSimpleType(poTypes, "WRBKODE", "WRBgruppe", OFTString);
 
-      addSimpleType(&oTypes, "YTTERVEGG", "yttervegg", OFTInteger);
+      addSimpleType(poTypes, "YTTERVEGG", "yttervegg", OFTInteger);
 
-      addSimpleType(&oTypes, "ØST", "øst", OFTInteger);
+      addSimpleType(poTypes, "ØST", "øst", OFTInteger);
 
-      addSimpleType(&oTypes, "ÅPNESDATO", "åpnesDato", OFTDate);
+      addSimpleType(poTypes, "ÅPNESDATO", "åpnesDato", OFTDate);
 
-      addSimpleType(&oTypes, "ÅR", "årstall", OFTInteger);
+      addSimpleType(poTypes, "ÅR", "årstall", OFTInteger);
 
-      addSimpleType(&oTypes, "ÅRSTIDBRUK", "årstidbruk", OFTString);
+      addSimpleType(poTypes, "ÅRSTIDBRUK", "årstidbruk", OFTString);
 
-      addSimpleType(&oTypes, "VEDTAKENDELIGPLANDATO", "vedtakEndeligPlanDato", OFTDate);
+      addSimpleType(poTypes, "VEDTAKENDELIGPLANDATO", "vedtakEndeligPlanDato", OFTDate);
 
-      addSimpleType(&oTypes, "KUNNGJØRINGSDATO", "kunngjøringsdato", OFTDate);
+      addSimpleType(poTypes, "KUNNGJØRINGSDATO", "kunngjøringsdato", OFTDate);
 
-      addSimpleType(&oTypes, "KPBESTEMMELSEHJEMMEL", "kpBestemmelseHjemmel", OFTInteger);
+      addSimpleType(poTypes, "KPBESTEMMELSEHJEMMEL", "kpBestemmelseHjemmel", OFTInteger);
 
-      addSimpleType(&oTypes, "RPBESTEMMELSEHJEMMEL", "rpBestemmelseHjemmel", OFTInteger);
+      addSimpleType(poTypes, "RPBESTEMMELSEHJEMMEL", "rpBestemmelseHjemmel", OFTInteger);
 
-      addSimpleType(&oTypes, "CCDBRIKKELENGDE", "ccdBrikkelengde", OFTInteger);
+      addSimpleType(poTypes, "CCDBRIKKELENGDE", "ccdBrikkelengde", OFTInteger);
 
-      addSimpleType(&oTypes, "CCDBRIKKESIDE", "ccdBrikkeside", OFTInteger);
+      addSimpleType(poTypes, "CCDBRIKKESIDE", "ccdBrikkeside", OFTInteger);
 
-      addSimpleType(&oTypes, "BILDEOPPLØSNING", "bildeoppløsning", OFTReal);
+      addSimpleType(poTypes, "BILDEOPPLØSNING", "bildeoppløsning", OFTReal);
 
-      addSimpleType(&oTypes, "BILDEFILFORMAT", "bildefilformat", OFTInteger);
+      addSimpleType(poTypes, "BILDEFILFORMAT", "bildefilformat", OFTInteger);
 
-      addSimpleType(&oTypes, "STATLIGNR", "statlignummer", OFTInteger);
+      addSimpleType(poTypes, "STATLIGNR", "statlignummer", OFTInteger);
 
-      addSimpleType(&oTypes, "AEROTRIANGULERING", "aerotriangulering", OFTInteger);
+      addSimpleType(poTypes, "AEROTRIANGULERING", "aerotriangulering", OFTInteger);
 
-      addSimpleType(&oTypes, "PROSJEKTRAPPORTLINK", "prosjektrapportlink", OFTString);
+      addSimpleType(poTypes, "PROSJEKTRAPPORTLINK", "prosjektrapportlink", OFTString);
 
-      addSimpleType(&oTypes, "BILDEFILIR", "bildefilIr", OFTString);
+      addSimpleType(poTypes, "BILDEFILIR", "bildefilIr", OFTString);
 
-      addSimpleType(&oTypes, "BILDEFILPAN", "bildefilPan", OFTString);
+      addSimpleType(poTypes, "BILDEFILPAN", "bildefilPan", OFTString);
 
-      addSimpleType(&oTypes, "BILDEFILRGB", "bildefilRGB", OFTString);
+      addSimpleType(poTypes, "BILDEFILRGB", "bildefilRGB", OFTString);
 
-      addSimpleType(&oTypes, "BILDEFILMULTI", "bildefilMulti", OFTString);
+      addSimpleType(poTypes, "BILDEFILMULTI", "bildefilMulti", OFTString);
 
-      addSimpleType(&oTypes, "ORTOFOTOTYPE", "ortofototype", OFTInteger);
+      addSimpleType(poTypes, "ORTOFOTOTYPE", "ortofototype", OFTInteger);
 
-      addSimpleType(&oTypes, "KAMERALØPENUMMER", "løpenummer", OFTInteger);
+      addSimpleType(poTypes, "KAMERALØPENUMMER", "løpenummer", OFTInteger);
 
-      addSimpleType(&oTypes, "PRODUKSJONSRAPPORTLINK", "produksjonsrapportlink", OFTString);
+      addSimpleType(poTypes, "PRODUKSJONSRAPPORTLINK", "produksjonsrapportlink", OFTString);
 
-      addSimpleType(&oTypes, "PRODUKTSPESIFIKASJONSLINK", "produktspesifikasjonslink", OFTString);
+      addSimpleType(poTypes, "PRODUKTSPESIFIKASJONSLINK", "produktspesifikasjonslink", OFTString);
 
-      addSimpleType(&oTypes, "SAKSÅR", "saksår", OFTInteger);
+      addSimpleType(poTypes, "SAKSÅR", "saksår", OFTInteger);
 
-      addSimpleType(&oTypes, "SEKVENSNUMMER", "sekvensnummer", OFTInteger);
+      addSimpleType(poTypes, "SEKVENSNUMMER", "sekvensnummer", OFTInteger);
 
-      addSimpleType(&oTypes, "UTNTALL_MIN", "utnyttingstall_minimum", OFTReal);
+      addSimpleType(poTypes, "UTNTALL_MIN", "utnyttingstall_minimum", OFTReal);
 
-      addSimpleType(&oTypes, "GYLDIGTILDATO", "gyldigTilDato", OFTDate);
+      addSimpleType(poTypes, "GYLDIGTILDATO", "gyldigTilDato", OFTDate);
 
-      addSimpleType(&oTypes, "PIXELSTØRRELSE", "pixelstørrelse", OFTReal);
+      addSimpleType(poTypes, "PIXELSTØRRELSE", "pixelstørrelse", OFTReal);
 
-      addSimpleType(&oTypes, "HENDELSESDATO", "Hendelsesdato", OFTDate);
+      addSimpleType(poTypes, "HENDELSESDATO", "Hendelsesdato", OFTDate);
 
-      addSimpleType(&oTypes, "NPPLANBESTEMMELSETYPE", "planbestemmelsetype", OFTInteger);
+      addSimpleType(poTypes, "NPPLANBESTEMMELSETYPE", "planbestemmelsetype", OFTInteger);
 
-      addSimpleType(&oTypes, "NPPLANTEMA", "planTema", OFTInteger);
+      addSimpleType(poTypes, "NPPLANTEMA", "planTema", OFTInteger);
 
-      addSimpleType(&oTypes, "FAGOMRÅDE_LINK", "link til fagområde", OFTString);
+      addSimpleType(poTypes, "FAGOMRÅDE_LINK", "link til fagområde", OFTString);
 
-      addSimpleType(&oTypes, "PRODUKT_LINK", "produktLink", OFTString);
+      addSimpleType(poTypes, "PRODUKT_LINK", "produktLink", OFTString);
 
 OGRSOSIDataType ADRESSEBRUKSENHETType = OGRSOSIDataType(3);
 
@@ -3349,210 +3349,210 @@ OGRSOSIDataType VPAType = OGRSOSIDataType(3);
    VPAType.setElement(1, "veglenkeMeterFra", OFTInteger);
    VPAType.setElement(2, "veglenkeMeterTil", OFTInteger);
 
-addType(&oTypes, "ADRESSEBRUKSENHET", &ADRESSEBRUKSENHETType);
+addType(poTypes, "ADRESSEBRUKSENHET", &ADRESSEBRUKSENHETType);
 
-addType(&oTypes, "ADRESSEKOMMENTAR", &ADRESSEKOMMENTARType);
+addType(poTypes, "ADRESSEKOMMENTAR", &ADRESSEKOMMENTARType);
 
-addType(&oTypes, "ADRESSEREFERANSE", &ADRESSEREFERANSEType);
+addType(poTypes, "ADRESSEREFERANSE", &ADRESSEREFERANSEType);
 
-addType(&oTypes, "ADRESSETILLEGG", &ADRESSETILLEGGType);
+addType(poTypes, "ADRESSETILLEGG", &ADRESSETILLEGGType);
 
-addType(&oTypes, "AID", &AIDType);
+addType(poTypes, "AID", &AIDType);
 
-addType(&oTypes, "AJOURFØRING", &AJOURFOeRINGType);
+addType(poTypes, "AJOURFØRING", &AJOURFOeRINGType);
 
-addType(&oTypes, "AKVA_KONS_INFO", &AKVA_KONS_INFOType);
+addType(poTypes, "AKVA_KONS_INFO", &AKVA_KONS_INFOType);
 
-addType(&oTypes, "AKVA_PRØVE_INFO", &AKVA_PROeVE_INFOType);
+addType(poTypes, "AKVA_PRØVE_INFO", &AKVA_PROeVE_INFOType);
 
-addType(&oTypes, "ANDEL", &ANDELType);
+addType(poTypes, "ANDEL", &ANDELType);
 
-addType(&oTypes, "AREALFORDELING", &AREALFORDELINGType);
+addType(poTypes, "AREALFORDELING", &AREALFORDELINGType);
 
-addType(&oTypes, "BELASTNINGBOF5", &BELASTNINGBOF5Type);
+addType(poTypes, "BELASTNINGBOF5", &BELASTNINGBOF5Type);
 
-addType(&oTypes, "BELASTNINGFOSFOR", &BELASTNINGFOSFORType);
+addType(poTypes, "BELASTNINGFOSFOR", &BELASTNINGFOSFORType);
 
-addType(&oTypes, "BEREGNETAREAL", &BEREGNETAREALType);
+addType(poTypes, "BEREGNETAREAL", &BEREGNETAREALType);
 
-addType(&oTypes, "BILDEINFORMASJON", &BILDEINFORMASJONType);
+addType(poTypes, "BILDEINFORMASJON", &BILDEINFORMASJONType);
 
-addType(&oTypes, "BMARTOBS", &BMARTOBSType);
+addType(poTypes, "BMARTOBS", &BMARTOBSType);
 
-addType(&oTypes, "BMARTREG", &BMARTREGType);
+addType(poTypes, "BMARTREG", &BMARTREGType);
 
-addType(&oTypes, "BMKILDE", &BMKILDEType);
+addType(poTypes, "BMKILDE", &BMKILDEType);
 
-addType(&oTypes, "BMNATYPTILLEGG", &BMNATYPTILLEGGType);
+addType(poTypes, "BMNATYPTILLEGG", &BMNATYPTILLEGGType);
 
-addType(&oTypes, "BRUKSENHET", &BRUKSENHETType);
+addType(poTypes, "BRUKSENHET", &BRUKSENHETType);
 
-addType(&oTypes, "BYDELID", &BYDELIDType);
+addType(poTypes, "BYDELID", &BYDELIDType);
 
-addType(&oTypes, "BYGG_KOMMENTARER", &BYGG_KOMMENTARERType);
+addType(poTypes, "BYGG_KOMMENTARER", &BYGG_KOMMENTARERType);
 
-addType(&oTypes, "BYGN_STAT_HIST", &BYGN_STAT_HISTType);
+addType(poTypes, "BYGN_STAT_HIST", &BYGN_STAT_HISTType);
 
-addType(&oTypes, "BYGNING_TILLEGG", &BYGNING_TILLEGGType);
+addType(poTypes, "BYGNING_TILLEGG", &BYGNING_TILLEGGType);
 
-addType(&oTypes, "BYGNINGSREF", &BYGNINGSREFType);
+addType(poTypes, "BYGNINGSREF", &BYGNINGSREFType);
 
-addType(&oTypes, "DELOMRÅDEID", &DELOMRAaDEIDType);
+addType(poTypes, "DELOMRÅDEID", &DELOMRAaDEIDType);
 
-addType(&oTypes, "DPOT_GRAS", &DPOT_GRASType);
+addType(poTypes, "DPOT_GRAS", &DPOT_GRASType);
 
-addType(&oTypes, "DPOT_KORN", &DPOT_KORNType);
+addType(poTypes, "DPOT_KORN", &DPOT_KORNType);
 
-addType(&oTypes, "DPOT_POTET", &DPOT_POTETType);
+addType(poTypes, "DPOT_POTET", &DPOT_POTETType);
 
-addType(&oTypes, "EKOORD", &EKOORDType);
+addType(poTypes, "EKOORD", &EKOORDType);
 
-addType(&oTypes, "ENDRINGSFLAGG", &ENDRINGSFLAGGType);
+addType(poTypes, "ENDRINGSFLAGG", &ENDRINGSFLAGGType);
 
-addType(&oTypes, "ENDRINGSVURDERING", &ENDRINGSVURDERINGType);
+addType(poTypes, "ENDRINGSVURDERING", &ENDRINGSVURDERINGType);
 
-addType(&oTypes, "ETASJE", &ETASJEType);
+addType(poTypes, "ETASJE", &ETASJEType);
 
-addType(&oTypes, "ETASJEDATA", &ETASJEDATAType);
+addType(poTypes, "ETASJEDATA", &ETASJEDATAType);
 
-addType(&oTypes, "FELTREGISTRERT", &FELTREGISTRERTType);
+addType(poTypes, "FELTREGISTRERT", &FELTREGISTRERTType);
 
-addType(&oTypes, "FIRMA_EIER", &FIRMA_EIERType);
+addType(poTypes, "FIRMA_EIER", &FIRMA_EIERType);
 
-addType(&oTypes, "FISKE_BEDR_ID", &FISKE_BEDR_IDType);
+addType(poTypes, "FISKE_BEDR_ID", &FISKE_BEDR_IDType);
 
-addType(&oTypes, "FISKE_BEDR_INFO", &FISKE_BEDR_INFOType);
+addType(poTypes, "FISKE_BEDR_INFO", &FISKE_BEDR_INFOType);
 
-addType(&oTypes, "FISKE_BEDR_MARKED", &FISKE_BEDR_MARKEDType);
+addType(poTypes, "FISKE_BEDR_MARKED", &FISKE_BEDR_MARKEDType);
 
-addType(&oTypes, "FISKE_BEDR_TJENESTE", &FISKE_BEDR_TJENESTEType);
+addType(poTypes, "FISKE_BEDR_TJENESTE", &FISKE_BEDR_TJENESTEType);
 
-addType(&oTypes, "FISKERI_REDSKAP", &FISKERI_REDSKAPType);
+addType(poTypes, "FISKERI_REDSKAP", &FISKERI_REDSKAPType);
 
-addType(&oTypes, "FISKERI_RESS_ART", &FISKERI_RESS_ARTType);
+addType(poTypes, "FISKERI_RESS_ART", &FISKERI_RESS_ARTType);
 
-addType(&oTypes, "FISKERI_RESSURS", &FISKERI_RESSURSType);
+addType(poTypes, "FISKERI_RESSURS", &FISKERI_RESSURSType);
 
-addType(&oTypes, "FMDATO", &FMDATOType);
+addType(poTypes, "FMDATO", &FMDATOType);
 
-addType(&oTypes, "FMIDNY", &FMIDNYType);
+addType(poTypes, "FMIDNY", &FMIDNYType);
 
-addType(&oTypes, "FMSIGN", &FMSIGNType);
+addType(poTypes, "FMSIGN", &FMSIGNType);
 
-addType(&oTypes, "FMSTATUS", &FMSTATUSType);
+addType(poTypes, "FMSTATUS", &FMSTATUSType);
 
-addType(&oTypes, "FMTYPE", &FMTYPEType);
+addType(poTypes, "FMTYPE", &FMTYPEType);
 
-addType(&oTypes, "FORUR_GRUNN_EIENDOM", &FORUR_GRUNN_EIENDOMType);
+addType(poTypes, "FORUR_GRUNN_EIENDOM", &FORUR_GRUNN_EIENDOMType);
 
-addType(&oTypes, "GRENSE_MELLOM", &GRENSE_MELLOMType);
+addType(poTypes, "GRENSE_MELLOM", &GRENSE_MELLOMType);
 
-addType(&oTypes, "GRUNNKRETSID", &GRUNNKRETSIDType);
+addType(poTypes, "GRUNNKRETSID", &GRUNNKRETSIDType);
 
-addType(&oTypes, "HAVNE_D_INFO", &HAVNE_D_INFOType);
+addType(poTypes, "HAVNE_D_INFO", &HAVNE_D_INFOType);
 
-addType(&oTypes, "HOVEDMÅLRUBRIKK", &HOVEDMAaLRUBRIKKType);
+addType(poTypes, "HOVEDMÅLRUBRIKK", &HOVEDMAaLRUBRIKKType);
 
-addType(&oTypes, "HOVEDNR", &HOVEDNRType);
+addType(poTypes, "HOVEDNR", &HOVEDNRType);
 
-addType(&oTypes, "HYTTEINFORMASJON", &HYTTEINFORMASJONType);
+addType(poTypes, "HYTTEINFORMASJON", &HYTTEINFORMASJONType);
 
-addType(&oTypes, "JORDTYPE", &JORDTYPEType);
+addType(poTypes, "JORDTYPE", &JORDTYPEType);
 
-addType(&oTypes, "JREGMARK", &JREGMARKType);
+addType(poTypes, "JREGMARK", &JREGMARKType);
 
-addType(&oTypes, "JREGTEIG", &JREGTEIGType);
+addType(poTypes, "JREGTEIG", &JREGTEIGType);
 
-addType(&oTypes, "KAI_INFO", &KAI_INFOType);
+addType(poTypes, "KAI_INFO", &KAI_INFOType);
 
-addType(&oTypes, "KAMERAINFORMASJON", &KAMERAINFORMASJONType);
+addType(poTypes, "KAMERAINFORMASJON", &KAMERAINFORMASJONType);
 
-addType(&oTypes, "KM_DAT_INFO", &KM_DAT_INFOType);
+addType(poTypes, "KM_DAT_INFO", &KM_DAT_INFOType);
 
-addType(&oTypes, "KM_DATERING", &KM_DATERINGType);
+addType(poTypes, "KM_DATERING", &KM_DATERINGType);
 
-addType(&oTypes, "KOMMUNALKRETS", &KOMMUNALKRETSType);
+addType(poTypes, "KOMMUNALKRETS", &KOMMUNALKRETSType);
 
-addType(&oTypes, "KOPIDATA", &KOPIDATAType);
+addType(poTypes, "KOPIDATA", &KOPIDATAType);
 
-addType(&oTypes, "KOPLING", &KOPLINGType);
+addType(poTypes, "KOPLING", &KOPLINGType);
 
-addType(&oTypes, "KURSLINJE_INFO", &KURSLINJE_INFOType);
+addType(poTypes, "KURSLINJE_INFO", &KURSLINJE_INFOType);
 
-addType(&oTypes, "KVALITET", &KVALITETType);
+addType(poTypes, "KVALITET", &KVALITETType);
 
-addType(&oTypes, "LEDNING", &LEDNINGType);
+addType(poTypes, "LEDNING", &LEDNINGType);
 
-addType(&oTypes, "LEGGEÅR", &LEGGEAaRType);
+addType(poTypes, "LEGGEÅR", &LEGGEAaRType);
 
-addType(&oTypes, "LGID", &LGIDType);
+addType(poTypes, "LGID", &LGIDType);
 
-addType(&oTypes, "MATRIKKELADRESSEID", &MATRIKKELADRESSEIDType);
+addType(poTypes, "MATRIKKELADRESSEID", &MATRIKKELADRESSEIDType);
 
-addType(&oTypes, "MATRIKKELNUMMER", &MATRIKKELNUMMERType);
+addType(poTypes, "MATRIKKELNUMMER", &MATRIKKELNUMMERType);
 
-addType(&oTypes, "OVERLAPP", &OVERLAPPType);
+addType(poTypes, "OVERLAPP", &OVERLAPPType);
 
-addType(&oTypes, "POST", &POSTType);
+addType(poTypes, "POST", &POSTType);
 
-addType(&oTypes, "REGISTRERINGSVERSJON", &REGISTRERINGSVERSJONType);
+addType(poTypes, "REGISTRERINGSVERSJON", &REGISTRERINGSVERSJONType);
 
-addType(&oTypes, "RESIPIENT", &RESIPIENTType);
+addType(poTypes, "RESIPIENT", &RESIPIENTType);
 
-addType(&oTypes, "RETNING", &RETNINGType);
+addType(poTypes, "RETNING", &RETNINGType);
 
-addType(&oTypes, "RØR_DIMENSJON", &ROeR_DIMENSJONType);
+addType(poTypes, "RØR_DIMENSJON", &ROeR_DIMENSJONType);
 
-addType(&oTypes, "SAK", &SAKType);
+addType(poTypes, "SAK", &SAKType);
 
-addType(&oTypes, "SEFRAK_ID", &SEFRAK_IDType);
+addType(poTypes, "SEFRAK_ID", &SEFRAK_IDType);
 
-addType(&oTypes, "SEFRAKFUNKSJON", &SEFRAKFUNKSJONType);
+addType(poTypes, "SEFRAKFUNKSJON", &SEFRAKFUNKSJONType);
 
-addType(&oTypes, "SENTRUMSSONEID", &SENTRUMSSONEIDType);
+addType(poTypes, "SENTRUMSSONEID", &SENTRUMSSONEIDType);
 
-addType(&oTypes, "SERV", &SERVType);
+addType(poTypes, "SERV", &SERVType);
 
-addType(&oTypes, "SKRETSID", &SKRETSIDType);
+addType(poTypes, "SKRETSID", &SKRETSIDType);
 
-addType(&oTypes, "SP_ADM", &SP_ADMType);
+addType(poTypes, "SP_ADM", &SP_ADMType);
 
-addType(&oTypes, "SP_AKLASS", &SP_AKLASSType);
+addType(poTypes, "SP_AKLASS", &SP_AKLASSType);
 
-addType(&oTypes, "SP_BESTAND", &SP_BESTANDType);
+addType(poTypes, "SP_BESTAND", &SP_BESTANDType);
 
-addType(&oTypes, "SP_BSKRIV", &SP_BSKRIVType);
+addType(poTypes, "SP_BSKRIV", &SP_BSKRIVType);
 
-addType(&oTypes, "SP_FLBRELEM", &SP_FLBRELEMType);
+addType(poTypes, "SP_FLBRELEM", &SP_FLBRELEMType);
 
-addType(&oTypes, "SP_GRLVOL", &SP_GRLVOLType);
+addType(poTypes, "SP_GRLVOL", &SP_GRLVOLType);
 
-addType(&oTypes, "SP_TEIG", &SP_TEIGType);
+addType(poTypes, "SP_TEIG", &SP_TEIGType);
 
-addType(&oTypes, "SP_TERKLASS", &SP_TERKLASSType);
+addType(poTypes, "SP_TERKLASS", &SP_TERKLASSType);
 
-addType(&oTypes, "SP_TETTHOYD", &SP_TETTHOYDType);
+addType(poTypes, "SP_TETTHOYD", &SP_TETTHOYDType);
 
-addType(&oTypes, "SP_TILTAK", &SP_TILTAKType);
+addType(poTypes, "SP_TILTAK", &SP_TILTAKType);
 
-addType(&oTypes, "SP_TILVVOL", &SP_TILVVOLType);
+addType(poTypes, "SP_TILVVOL", &SP_TILVVOLType);
 
-addType(&oTypes, "SP_TRESL", &SP_TRESLType);
+addType(poTypes, "SP_TRESL", &SP_TRESLType);
 
-addType(&oTypes, "TETTSTEDID", &TETTSTEDIDType);
+addType(poTypes, "TETTSTEDID", &TETTSTEDIDType);
 
-addType(&oTypes, "UNIVERSELLUTFORMING", &UNIVERSELLUTFORMINGType);
+addType(poTypes, "UNIVERSELLUTFORMING", &UNIVERSELLUTFORMINGType);
 
-addType(&oTypes, "UTNYTT", &UTNYTTType);
+addType(poTypes, "UTNYTT", &UTNYTTType);
 
-addType(&oTypes, "UTSLIPP", &UTSLIPPType);
+addType(poTypes, "UTSLIPP", &UTSLIPPType);
 
-addType(&oTypes, "UTV_TILL_PART", &UTV_TILL_PARTType);
+addType(poTypes, "UTV_TILL_PART", &UTV_TILL_PARTType);
 
-addType(&oTypes, "VERN", &VERNType);
+addType(poTypes, "VERN", &VERNType);
 
-addType(&oTypes, "VKRETS", &VKRETSType);
+addType(poTypes, "VKRETS", &VKRETSType);
 
-addType(&oTypes, "VNR", &VNRType);
+addType(poTypes, "VNR", &VNRType);
 
-addType(&oTypes, "VPA", &VPAType);
+addType(poTypes, "VPA", &VPAType);
