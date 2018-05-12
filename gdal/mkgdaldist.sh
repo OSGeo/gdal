@@ -88,7 +88,7 @@ else
    git clone -b ${BRANCH} --single-branch ${GITURL} gdal
 fi
 
-if [ \! -d gdal ] ; then
+if [ ! -d gdal ] ; then
 	echo "git clone reported an error ... abandoning mkgdaldist"
 	cd ..
 	rm -rf dist_wrk
@@ -196,7 +196,7 @@ cd gdal-${GDAL_VERSION}
 echo "GDAL_VER=${GDAL_VERSION}" > GDALmake.opt
 cd frmts/grass
 make dist
-mv *.tar.gz ../../../../..
+mv ./*.tar.gz ../../../../..
 cd ../../..
 
 echo "* Generating MD5 sums ..."

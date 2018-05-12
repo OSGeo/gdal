@@ -88,23 +88,27 @@ zip -r $OUT/hfa_fuzzer_seed_corpus.zip ./*.img >/dev/null
 cd $OLDPWD
 
 echo "Building adrg_fuzzer_seed_corpus.zip"
-printf "FUZZER_FRIENDLY_ARCHIVE\n" > adrg.tar
-printf "***NEWFILE***:ABCDEF01.GEN\n" >> adrg.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/SMALL_ADRG/ABCDEF01.GEN >> adrg.tar
-printf "***NEWFILE***:ABCDEF01.IMG\n" >> adrg.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/SMALL_ADRG/ABCDEF01.IMG >> adrg.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:ABCDEF01.GEN\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/SMALL_ADRG/ABCDEF01.GEN
+    printf "***NEWFILE***:ABCDEF01.IMG\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/SMALL_ADRG/ABCDEF01.IMG
+} > adrg.tar
 rm -f $OUT/adrg_fuzzer_seed_corpus.zip
 zip -r $OUT/adrg_fuzzer_seed_corpus.zip adrg.tar >/dev/null
 rm adrg.tar
 
 echo "Building srp_fuzzer_seed_corpus.zip"
-printf "FUZZER_FRIENDLY_ARCHIVE\n" > srp.tar
-printf "***NEWFILE***:FKUSRP01.GEN\n" >> srp.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/USRP_PCB0/FKUSRP01.GEN >> srp.tar
-printf "***NEWFILE***:FKUSRP01.IMG\n" >> srp.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/USRP_PCB0/FKUSRP01.IMG >> srp.tar
-printf "***NEWFILE***:FKUSRP01.QAL\n" >> srp.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/USRP_PCB0/FKUSRP01.QAL >> srp.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:FKUSRP01.GEN\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/USRP_PCB0/FKUSRP01.GEN
+    printf "***NEWFILE***:FKUSRP01.IMG\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/USRP_PCB0/FKUSRP01.IMG
+    printf "***NEWFILE***:FKUSRP01.QAL\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/USRP_PCB0/FKUSRP01.QAL
+} > srp.tar
 rm -f $OUT/srp_fuzzer_seed_corpus.zip
 zip -r $OUT/srp_fuzzer_seed_corpus.zip srp.tar >/dev/null
 rm srp.tar
@@ -115,13 +119,13 @@ rm -f $OUT/mrf_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
 cd  $(dirname $0)/../../autotest/gdrivers/data/mrf
 for subdir in *; do
-    cd $subdir
-    printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/mrf_$subdir.tar
-    for file in *; do
-        printf "***NEWFILE***:$file\n" >> $CUR_DIR/mrf_$subdir.tar
-        cat $file >> $CUR_DIR/mrf_$subdir.tar
-    done
-    cd ..
+    (cd $subdir
+     printf "FUZZER_FRIENDLY_ARCHIVE\\n" > $CUR_DIR/mrf_$subdir.tar
+     for file in *; do
+         printf "***NEWFILE***:%s\\n" "$file" >> $CUR_DIR/mrf_$subdir.tar
+         cat $file >> $CUR_DIR/mrf_$subdir.tar
+     done
+    )
 done
 cd $CUR_DIR
 zip -r $OUT/mrf_fuzzer_seed_corpus.zip mrf_*.tar >/dev/null
@@ -130,101 +134,119 @@ rm mrf_*.tar
 echo "Building envi_fuzzer_seed_corpus.zip"
 rm -f $OUT/envi_fuzzer_seed_corpus.zip
 
-printf "FUZZER_FRIENDLY_ARCHIVE\n" > aea.tar
-printf "***NEWFILE***:my.hdr\n" >> aea.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/aea.hdr >> aea.tar
-printf "***NEWFILE***:my.dat\n" >> aea.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/aea.dat >> aea.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:my.hdr\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/aea.hdr
+    printf "***NEWFILE***:my.dat\\n" >> aea.tar
+    cat $(dirname $0)/../../autotest/gdrivers/data/aea.dat
+} > aea.tar
 zip -r $OUT/envi_fuzzer_seed_corpus.zip aea.tar >/dev/null
 rm aea.tar
 
-printf "FUZZER_FRIENDLY_ARCHIVE\n" > aea_compressed.tar
-printf "***NEWFILE***:my.hdr\n" >> aea_compressed.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/aea_compressed.hdr >> aea_compressed.tar
-printf "***NEWFILE***:my.dat\n" >> aea_compressed.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/aea_compressed.dat >> aea_compressed.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:my.hdr\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/aea_compressed.hdr
+    printf "***NEWFILE***:my.dat\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/aea_compressed.dat
+} > aea_compressed.tar
 zip -r $OUT/envi_fuzzer_seed_corpus.zip aea_compressed.tar >/dev/null
 rm aea_compressed.tar
 
 echo "Building ehdr_fuzzer_seed_corpus.zip"
 rm -f $OUT/ehdr_fuzzer_seed_corpus.zip
 
-printf "FUZZER_FRIENDLY_ARCHIVE\n" > ehdr11.tar
-printf "***NEWFILE***:my.hdr\n" >> ehdr11.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/ehdr11.hdr >> ehdr11.tar
-printf "***NEWFILE***:my.dat\n" >> ehdr11.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/ehdr11.flt >> ehdr11.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:my.hdr\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/ehdr11.hdr
+    printf "***NEWFILE***:my.dat\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/ehdr11.flt
+} > ehdr11.tar
 zip -r $OUT/ehdr_fuzzer_seed_corpus.zip ehdr11.tar >/dev/null
 rm ehdr11.tar
 
 echo "Building genbin_fuzzer_seed_corpus.zip"
 rm -f $OUT/genbin_fuzzer_seed_corpus.zip
 
-printf "FUZZER_FRIENDLY_ARCHIVE\n" > genbin.tar
-printf "***NEWFILE***:my.hdr\n" >> genbin.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/tm4628_96.hdr >> genbin.tar
-printf "***NEWFILE***:my.bil\n" >> genbin.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/tm4628_96.bil >> genbin.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:my.hdr\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/tm4628_96.hdr
+    printf "***NEWFILE***:my.bil\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/tm4628_96.bil
+} > genbin.tar
 zip -r $OUT/genbin_fuzzer_seed_corpus.zip genbin.tar >/dev/null
 rm genbin.tar
 
 echo "Building isce_fuzzer_seed_corpus.zip"
 rm -f $OUT/isce_fuzzer_seed_corpus.zip
 
-printf "FUZZER_FRIENDLY_ARCHIVE\n" > isce.tar
-printf "***NEWFILE***:isce.slc\n" >> isce.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/isce.slc >> isce.tar
-printf "***NEWFILE***:isce.slc.xml\n" >> isce.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/isce.slc.xml >> isce.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:isce.slc\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/isce.slc
+    printf "***NEWFILE***:isce.slc.xml\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/isce.slc.xml
+} > isce.tar
 zip -r $OUT/isce_fuzzer_seed_corpus.zip isce.tar >/dev/null
 rm isce.tar
 
 echo "Building roipac_fuzzer_seed_corpus.zip"
 rm -f $OUT/roipac_fuzzer_seed_corpus.zip
 
-printf "FUZZER_FRIENDLY_ARCHIVE\n" > roipac.tar
-printf "***NEWFILE***:srtm.dem\n" >> roipac.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/srtm.dem >> roipac.tar
-printf "***NEWFILE***:srtm.dem.rsc\n" >> roipac.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/srtm.dem.rsc >> roipac.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\n"
+    printf "***NEWFILE***:srtm.dem\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/srtm.dem
+    printf "***NEWFILE***:srtm.dem.rsc\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/srtm.dem.rsc
+} > roipac.tar
 zip -r $OUT/roipac_fuzzer_seed_corpus.zip roipac.tar >/dev/null
 rm roipac.tar
 
 echo "Building rraster_fuzzer_seed_corpus.zip"
 rm -f $OUT/rraster_fuzzer_seed_corpus.zip
 
-printf "FUZZER_FRIENDLY_ARCHIVE\n" > rraster.tar
-printf "***NEWFILE***:my.grd\n" >> rraster.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/byte_rraster.grd >> rraster.tar
-printf "***NEWFILE***:my.gri\n" >> rraster.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/byte_rraster.gri >> rraster.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:my.grd\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/byte_rraster.grd
+    printf "***NEWFILE***:my.gri\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/byte_rraster.gri
+} > rraster.tar
 zip -r $OUT/rraster_fuzzer_seed_corpus.zip rraster.tar >/dev/null
 rm rraster.tar
 
 echo "Building gdal_vrt_fuzzer_seed_corpus.zip"
 rm -f $OUT/gdal_vrt_fuzzer_seed_corpus.zip
 
-printf "FUZZER_FRIENDLY_ARCHIVE\n" > gdal_vrt.tar
-printf "***NEWFILE***:byte.tif\n" >> gdal_vrt.tar
-cat $(dirname $0)/../../autotest/gcore/data/byte.tif >> gdal_vrt.tar
-printf "***NEWFILE***:test.vrt\n" >> gdal_vrt.tar
-cat $(dirname $0)/../../autotest/gcore/data/byte.vrt >> gdal_vrt.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:byte.tif\\n"
+    cat $(dirname $0)/../../autotest/gcore/data/byte.tif
+    printf "***NEWFILE***:test.vrt\\n"
+    cat $(dirname $0)/../../autotest/gcore/data/byte.vrt
+} > gdal_vrt.tar
 zip -r $OUT/gdal_vrt_fuzzer_seed_corpus.zip gdal_vrt.tar >/dev/null
 rm gdal_vrt.tar
 
-printf "FUZZER_FRIENDLY_ARCHIVE\n" > gdal_vrt_rawlink.tar
-printf "***NEWFILE***:small.raw\n" >> gdal_vrt_rawlink.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/small.raw >> gdal_vrt_rawlink.tar
-printf "***NEWFILE***:test.vrt\n" >> gdal_vrt_rawlink.tar
-cat $(dirname $0)/../../autotest/gdrivers/data/small.vrt >> gdal_vrt_rawlink.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:small.raw\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/small.raw
+    printf "***NEWFILE***:test.vrt\\n"
+    cat $(dirname $0)/../../autotest/gdrivers/data/small.vrt
+} > gdal_vrt_rawlink.tar
 zip -r $OUT/gdal_vrt_fuzzer_seed_corpus.zip gdal_vrt_rawlink.tar >/dev/null
 rm gdal_vrt_rawlink.tar
 
 
 echo "Building aig_fuzzer_seed_corpus.zip"
-printf "FUZZER_FRIENDLY_ARCHIVE\n" > aig.tar
+printf "FUZZER_FRIENDLY_ARCHIVE\\n" > aig.tar
 for x in hdr.adf sta.adf dblbnd.adf vat.adf w001001.adf abc3x1.clr prj.adf w001001x.adf; do
-    printf "***NEWFILE***:$x\n" >> aig.tar
+    printf "***NEWFILE***:%s\\n" "$x" >> aig.tar
     cat $(dirname $0)/../../autotest/gdrivers/data/abc3x1/$x >> aig.tar
 done
 rm -f $OUT/aig_fuzzer_seed_corpus.zip
