@@ -13,10 +13,10 @@ if grep -r --include="*.c*" "!='0'" alg gnm port ogr gcore frmts apps | grep -v 
 fi
 
 # Detect comparisons where we'd likely want to check against nul terminating byte with a if (*pszPtr == '\0'), after interrupting a loop due to a != '\0' check
-if grep -r --include="*.c*" "== '0'" alg gnm port ogr gcore frmts apps | grep "*" ; then
+if grep -r --include="*.c*" "== '0'" alg gnm port ogr gcore frmts apps | grep '\*' ; then
     ret_code=1
 fi
-if grep -r --include="*.c*" "=='0'" alg gnm port ogr gcore frmts apps | grep "*" ; then
+if grep -r --include="*.c*" "=='0'" alg gnm port ogr gcore frmts apps | grep '\*' ; then
     ret_code=1
 fi
 
