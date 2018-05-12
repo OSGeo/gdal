@@ -30,7 +30,7 @@ Trac tickets. GitHub tickets are explicitly indicated with github #XXXX
  * Command line utilities: use Unicode main on Windows to avoid issues with non-ASCII characters (#7065)
  * Update to EPSG v9.2 (#7125)
  * Update data/esri_extra.wkt and add data/esri_epsg.wkt, taken from https://github.com/Esri/projection-engine-db-doc (Apache v2 license) (#2163)
- * Add support for PROJ.5 new API (requires proj 5.0.1 or later)
+ * Add support for PROJ.5 new API (requires proj 5.0.1 or later). PROJ 4.X is still supported.
  * More than 1000 fixes for issues/vulnerabilities found by OSS-Fuzz
  * Remove raster OGDI driver (vector OGDI driver still there) (#7087)
 
