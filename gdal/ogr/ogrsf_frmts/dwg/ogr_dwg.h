@@ -63,7 +63,7 @@ public:
 /*                         OGRDWGBlocksLayer()                          */
 /************************************************************************/
 
-class OGRDWGBlocksLayer : public OGRLayer
+class OGRDWGBlocksLayer final: public OGRLayer
 {
     OGRDWGDataSource   *poDS;
 
@@ -91,7 +91,7 @@ class OGRDWGBlocksLayer : public OGRLayer
 /************************************************************************/
 /*                             OGRDWGLayer                              */
 /************************************************************************/
-class OGRDWGLayer : public OGRLayer
+class OGRDWGLayer final: public OGRLayer
 {
     OGRDWGDataSource   *poDS;
 
@@ -154,7 +154,7 @@ class OGRDWGLayer : public OGRLayer
 /*                           OGRDWGDataSource                           */
 /************************************************************************/
 
-class OGRDWGDataSource : public OGRDataSource
+class OGRDWGDataSource final: public OGRDataSource
 {
     VSILFILE           *fp;
 
@@ -237,7 +237,7 @@ protected:
 /*                             OGRDWGDriver                             */
 /************************************************************************/
 
-class OGRDWGDriver : public OGRSFDriver
+class OGRDWGDriver final: public OGRSFDriver
 {
     OGRDWGServices *poServices;
 
