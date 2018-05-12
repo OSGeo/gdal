@@ -14,7 +14,7 @@ if [[ $called == "$0" ]]; then
     exit 1
 fi
 
-GDAL_ROOT=$(readlink -e $(dirname ${BASH_SOURCE[0]})/..)
+GDAL_ROOT=$(cd $(dirname ${BASH_SOURCE[0]})/..; pwd)
 
 if [[ ! ${PATH,,} =~ $GDAL_ROOT/apps ]]; then
     export PATH="$GDAL_ROOT/apps:$GDAL_ROOT/apps/.libs:$PATH"
