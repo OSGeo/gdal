@@ -378,6 +378,7 @@
 #define TIFFGetFieldDefaulted gdal_TIFFGetFieldDefaulted
 #define _TIFFGetFields gdal__TIFFGetFields
 #define TIFFGetMapFileProc gdal_TIFFGetMapFileProc
+#define _TIFFGetMaxColorChannels gdal__TIFFGetMaxColorChannels
 #define _TIFFgetMode gdal__TIFFgetMode
 #define TIFFGetMode gdal_TIFFGetMode
 #define TIFFGetReadProc gdal_TIFFGetReadProc
