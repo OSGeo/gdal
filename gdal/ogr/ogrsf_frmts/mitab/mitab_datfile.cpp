@@ -1301,6 +1301,9 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn *poNewFieldDefn,
     int nRecordSizeBefore = 0;
     int nRecordSizeAfter = 0;
     TABDATFieldDef sFieldDef;
+    sFieldDef.eTABType = TABFUnknown;
+    sFieldDef.byLength = 0;
+    sFieldDef.byDecimals = 0;
     TABDATFileSetFieldDefinition(&sFieldDef,
                                  m_pasFieldDef[iField].szName,
                                  eTABType,
