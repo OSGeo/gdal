@@ -201,8 +201,8 @@ echo "Building roipac_fuzzer_seed_corpus.zip"
 rm -f $OUT/roipac_fuzzer_seed_corpus.zip
 
 {
-    printf "FUZZER_FRIENDLY_ARCHIVE\n"
-    printf "***NEWFILE***:srtm.dem\n"
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:srtm.dem\\n"
     cat $(dirname $0)/../../autotest/gdrivers/data/srtm.dem
     printf "***NEWFILE***:srtm.dem.rsc\\n"
     cat $(dirname $0)/../../autotest/gdrivers/data/srtm.dem.rsc

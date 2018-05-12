@@ -14,7 +14,7 @@ do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
 
-rodata_symbol_list=$(objdump -t shapelib.so  | grep "\.rodata" |  awk '{print $6}' | grep -v "\.")
+rodata_symbol_list=$(objdump -t shapelib.so  | grep "\\.rodata" |  awk '{print $6}' | grep -v "\\.")
 for symbol in $data_symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
