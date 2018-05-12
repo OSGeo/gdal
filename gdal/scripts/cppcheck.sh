@@ -21,8 +21,8 @@ cd "$GDAL_ROOT"
 
 LOG_FILE=/tmp/cppcheck_gdal.txt
 
-CPPCHECK_VERSION="`cppcheck --version | awk '{print $2}'`"
-if test `expr $CPPCHECK_VERSION \>\= 1.84` = 1; then
+CPPCHECK_VERSION="$(cppcheck --version | awk '{print $2}')"
+if test $(expr $CPPCHECK_VERSION \>= 1.84) = 1; then
     OVERRIDE=
 else
     OVERRIDE="-Doverride="
