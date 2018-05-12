@@ -2062,6 +2062,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
     pasDef = psTableDef->pasFieldDef;
 
     pszBuf = psInfo->pszBuf;
+    CPLAssert(pszBuf);
 
     for(i=0; i<psTableDef->numFields; i++)
     {

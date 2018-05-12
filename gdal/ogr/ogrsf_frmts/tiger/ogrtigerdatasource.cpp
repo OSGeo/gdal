@@ -393,7 +393,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
     papszModules = nullptr;
 
-    for( int i = 0; papszFileList[i] != nullptr; i++ )
+    for( int i = 0; papszFileList && papszFileList[i] != nullptr; i++ )
     {
         if( bTestOpen || i == 0 )
         {

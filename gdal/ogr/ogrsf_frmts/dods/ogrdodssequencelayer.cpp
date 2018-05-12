@@ -303,7 +303,8 @@ BaseType *OGRDODSSequenceLayer::GetFieldValue( OGRDODSFieldDefn *poFDefn,
     {
         return seq->var_value( nFeatureId, poFDefn->iFieldIndex );
     }
-    else if( poFDefn->iFieldIndex >= 0 && poFDefn->bRelativeToSuperSequence )
+    else if( poSuperSeq != nullptr &&
+             poFDefn->iFieldIndex >= 0 && poFDefn->bRelativeToSuperSequence )
     {
         return poSuperSeq->var_value( iLastSuperSeq, poFDefn->iFieldIndex );
     }
