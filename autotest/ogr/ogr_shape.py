@@ -2105,7 +2105,7 @@ def ogr_shape_50():
 
     reconv_possible = lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
 
-    if gdal.GetLastErrorMsg().find('Recode from CP936 to UTF-8 not supported, treated as ISO8859-1 to UTF-8.') != -1:
+    if gdal.GetLastErrorMsg().find('Recode from CP936 to UTF-8 not supported, treated as ISO-8859-1 to UTF-8.') != -1:
         if reconv_possible:
             gdaltest.post_reason('Recode failed, but TestCapability(OLCStringsAsUTF8) returns TRUE')
             return 'fail'
