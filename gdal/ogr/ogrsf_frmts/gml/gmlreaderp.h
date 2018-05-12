@@ -213,7 +213,7 @@ public:
 /************************************************************************/
 /*                         GMLXercesHandler                             */
 /************************************************************************/
-class GMLXercesHandler : public DefaultHandler, public GMLHandler
+class GMLXercesHandler final: public DefaultHandler, public GMLHandler
 {
     int        m_nEntityCounter;
     CPLString  m_osElement;
@@ -257,7 +257,7 @@ class GMLXercesHandler : public DefaultHandler, public GMLHandler
 /************************************************************************/
 /*                           GMLExpatHandler                            */
 /************************************************************************/
-class GMLExpatHandler : public GMLHandler
+class GMLExpatHandler final: public GMLHandler
 {
     XML_Parser m_oParser;
     bool       m_bStopParsing;
@@ -321,7 +321,7 @@ public:
 /*                              GMLReader                               */
 /************************************************************************/
 
-class GMLReader : public IGMLReader
+class GMLReader final: public IGMLReader
 {
   private:
     bool          m_bClassListLocked;

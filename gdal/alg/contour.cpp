@@ -42,6 +42,7 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_priv.h"
+#include "gdal_priv_templates.hpp"
 #include "ogr_api.h"
 #include "ogr_core.h"
 
@@ -62,6 +63,8 @@ constexpr double JOIN_DIST = 0.0001;
 /************************************************************************/
 class GDALContourItem
 {
+    CPL_DISALLOW_COPY_ASSIGN(GDALContourItem)
+
 public:
     bool bRecentlyAccessed;
     double dfLevel;
@@ -93,6 +96,8 @@ public:
 /************************************************************************/
 class GDALContourLevel
 {
+    CPL_DISALLOW_COPY_ASSIGN(GDALContourLevel)
+
     double dfLevel;
 
     int nEntryMax;
@@ -117,6 +122,8 @@ public:
 /************************************************************************/
 class GDALContourGenerator
 {
+    CPL_DISALLOW_COPY_ASSIGN(GDALContourGenerator)
+
     int    nWidth;
     int    nHeight;
     int    iLine;
@@ -547,10 +554,20 @@ CPLErr GDALContourGenerator::ProcessRect(
     // Otherwise figure out the start and end using the base and offset.
     else
     {
-        iStartLevel = static_cast<int>(
-            ceil((dfMin - dfContourOffset) / dfContourInterval));
-        iEndLevel = static_cast<int>(
-            floor((dfMax - dfContourOffset) / dfContourInterval));
+        const double dfStartLevel =
+            ceil((dfMin - dfContourOffset) / dfContourInterval);
+        const double dfEndLevel =
+            floor((dfMax - dfContourOffset) / dfContourInterval);
+        if( !GDALIsValueInRange<int>(dfStartLevel) ||
+            !GDALIsValueInRange<int>(dfEndLevel) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Range of levels [%g,%g] not supported",
+                     dfStartLevel, dfEndLevel);
+            return CE_Failure;
+        }
+        iStartLevel = static_cast<int>(dfStartLevel);
+        iEndLevel = static_cast<int>(dfStartLevel);
     }
 
     if( iStartLevel > iEndLevel )

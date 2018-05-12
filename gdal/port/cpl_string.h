@@ -446,22 +446,20 @@ CPLString CPL_DLL CPLURLAddKVP(const char* pszURL, const char* pszKey,
 //! String list class designed around our use of C "char**" string lists.
 class CPL_DLL CPLStringList
 {
-    char **papszList;
-    mutable int nCount;
-    mutable int nAllocation;
-    bool   bOwnList;
-    bool   bIsSorted;
+    char **papszList = nullptr;
+    mutable int nCount = 0;
+    mutable int nAllocation = 0;
+    bool   bOwnList = false;
+    bool   bIsSorted = false;
 
-    void   Initialize();
     void   MakeOurOwnCopy();
     void   EnsureAllocation( int nMaxLength );
     int    FindSortedInsertionPoint( const char *pszLine );
 
   public:
     CPLStringList();
-    CPLStringList( char **papszList, int bTakeOwnership=TRUE );
-    // cppcheck-suppress noExplicitConstructor
-    CPLStringList( CSLConstList papszList );
+    explicit CPLStringList( char **papszList, int bTakeOwnership=TRUE );
+    explicit CPLStringList( CSLConstList papszList );
     CPLStringList( const CPLStringList& oOther );
     ~CPLStringList();
 

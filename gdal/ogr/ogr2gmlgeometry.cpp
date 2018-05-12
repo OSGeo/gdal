@@ -62,12 +62,12 @@ CPL_CVSID("$Id$")
 constexpr int SRSDIM_LOC_GEOMETRY = 1 << 0;
 constexpr int SRSDIM_LOC_POSLIST = 1 << 1;
 
-typedef enum
+enum GMLSRSNameFormat
 {
     SRSNAME_SHORT,
     SRSNAME_OGC_URN,
     SRSNAME_OGC_URL
-} GMLSRSNameFormat;
+};
 
 /************************************************************************/
 /*                        MakeGMLCoordinate()                           */

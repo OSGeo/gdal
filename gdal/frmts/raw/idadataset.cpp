@@ -114,7 +114,7 @@ static void c2tp( double x, GByte *r )
 /* ==================================================================== */
 /************************************************************************/
 
-class IDADataset : public RawDataset
+class IDADataset final: public RawDataset
 {
     friend class IDARasterBand;
 
@@ -144,6 +144,8 @@ class IDADataset : public RawDataset
     bool        bHeaderDirty;
 
     void        ReadColorTable();
+
+    CPL_DISALLOW_COPY_ASSIGN(IDADataset)
 
   public:
     IDADataset();
@@ -176,6 +178,8 @@ class IDARasterBand : public RawRasterBand
     GDALRasterAttributeTable *poRAT;
     GDALColorTable       *poColorTable;
 
+    CPL_DISALLOW_COPY_ASSIGN(IDARasterBand)
+
   public:
     IDARasterBand( IDADataset *poDSIn, VSILFILE *fpRaw, int nXSize );
     ~IDARasterBand() override;
@@ -197,7 +201,7 @@ class IDARasterBand : public RawRasterBand
 IDARasterBand::IDARasterBand( IDADataset *poDSIn,
                               VSILFILE *fpRawIn, int nXSize ) :
     RawRasterBand( poDSIn, 1, fpRawIn, 512, 1, nXSize,
-                   GDT_Byte, FALSE, TRUE ),
+                   GDT_Byte, FALSE, RawRasterBand::OwnFP::NO ),
     poRAT(nullptr),
     poColorTable(nullptr)
 {}
@@ -387,7 +391,7 @@ IDADataset::IDADataset() :
 IDADataset::~IDADataset()
 
 {
-    FlushCache();
+    IDADataset::FlushCache();
 
     if( fpRaw != nullptr )
     {

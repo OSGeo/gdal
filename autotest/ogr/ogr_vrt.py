@@ -1630,13 +1630,10 @@ def ogr_vrt_28():
 
 def ogr_vrt_29():
 
-    try:
-        os.unlink('tmp/ogr_vrt_29.shp')
-        os.unlink('tmp/ogr_vrt_29.shx')
-        os.unlink('tmp/ogr_vrt_29.dbf')
-        os.unlink('tmp/ogr_vrt_29.prj')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/ogr_vrt_29.shp')
+    gdal.Unlink('tmp/ogr_vrt_29.shx')
+    gdal.Unlink('tmp/ogr_vrt_29.dbf')
+    gdal.Unlink('tmp/ogr_vrt_29.prj')
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_vrt_29.shp')
     sr = osr.SpatialReference()
@@ -1986,13 +1983,10 @@ def ogr_vrt_29():
             print(ret)
             return 'fail'
 
-    try:
-        os.unlink('tmp/ogr_vrt_29.shp')
-        os.unlink('tmp/ogr_vrt_29.shx')
-        os.unlink('tmp/ogr_vrt_29.dbf')
-        os.unlink('tmp/ogr_vrt_29.prj')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/ogr_vrt_29.shp')
+    gdal.Unlink('tmp/ogr_vrt_29.shx')
+    gdal.Unlink('tmp/ogr_vrt_29.dbf')
+    gdal.Unlink('tmp/ogr_vrt_29.prj')
     os.unlink('tmp/ogr_vrt_29.vrt')
     os.unlink('tmp/ogr_vrt_29_2.vrt')
 
@@ -2014,10 +2008,7 @@ def ogr_vrt_30():
                      'tmp/ogr_vrt_30_2.dbf',
                      'tmp/ogr_vrt_30_2.prj',
                      'tmp/ogr_vrt_30_2.qix']:
-        try:
-            os.unlink(filename)
-        except OSError:
-            pass
+        gdal.Unlink(filename)
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_vrt_30_1.shp')
     sr = osr.SpatialReference()
@@ -2503,10 +2494,7 @@ def ogr_vrt_30():
                      'tmp/ogr_vrt_30_2.dbf',
                      'tmp/ogr_vrt_30_2.prj',
                      'tmp/ogr_vrt_30_2.qix']:
-        try:
-            os.unlink(filename)
-        except OSError:
-            pass
+        gdal.Unlink(filename)
     os.unlink('tmp/ogr_vrt_30.vrt')
 
     return 'success'

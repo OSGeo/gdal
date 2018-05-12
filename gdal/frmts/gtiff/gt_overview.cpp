@@ -841,8 +841,8 @@ GTIFFBuildOverviews( const char * pszFilename,
 /*      Open the overview dataset so that we can get at the overview    */
 /*      bands.                                                          */
 /* -------------------------------------------------------------------- */
-    GDALDataset *hODS =
-        static_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
+    GDALDataset *hODS = GDALDataset::Open( pszFilename,
+                                           GDAL_OF_RASTER | GDAL_OF_UPDATE );
     if( hODS == nullptr )
         return CE_Failure;
 
@@ -858,7 +858,7 @@ GTIFFBuildOverviews( const char * pszFilename,
             atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
         TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY,
                       nJpegQuality );
-        GTIFFSetJpegQuality((GDALDatasetH)hODS, nJpegQuality);
+        GTIFFSetJpegQuality(GDALDataset::ToHandle(hODS), nJpegQuality);
     }
 
     if( nCompression == COMPRESSION_JPEG
@@ -869,7 +869,7 @@ GTIFFBuildOverviews( const char * pszFilename,
                             CPLSPrintf("%d", knGTIFFJpegTablesModeDefault)));
         TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE,
                       nJpegTablesMode );
-        GTIFFSetJpegTablesMode((GDALDatasetH)hODS, nJpegTablesMode);
+        GTIFFSetJpegTablesMode(GDALDataset::ToHandle(hODS), nJpegTablesMode);
     }
 
 /* -------------------------------------------------------------------- */

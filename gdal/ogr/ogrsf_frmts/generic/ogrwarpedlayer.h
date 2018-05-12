@@ -40,6 +40,8 @@
 
 class OGRWarpedLayer : public OGRLayerDecorator
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRWarpedLayer)
+
   protected:
       OGRFeatureDefn              *m_poFeatureDefn;
       int                          m_iGeomField;
@@ -48,7 +50,7 @@ class OGRWarpedLayer : public OGRLayerDecorator
       OGRCoordinateTransformation *m_poReversedCT; /* may be NULL */
       OGRSpatialReference         *m_poSRS;
 
-      OGREnvelope                  sStaticEnvelope;
+      OGREnvelope                  sStaticEnvelope{};
 
       static int ReprojectEnvelope( OGREnvelope* psEnvelope,
                                     OGRCoordinateTransformation* poCT );

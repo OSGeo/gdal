@@ -82,8 +82,8 @@
 
 CPL_C_START
 int CPL_DLL GDALServerLoop(CPL_FILE_HANDLE fin, CPL_FILE_HANDLE fout);
-int CPL_DLL GDALServerLoopSocket(CPL_SOCKET nSocket);
-void CPL_DLL* GDALServerLoopInstanceCreateFromSocket(CPL_SOCKET nSocket);
+int CPL_DLL GDALServerLoopSocket(const CPL_SOCKET& nSocket);
+void CPL_DLL* GDALServerLoopInstanceCreateFromSocket(const CPL_SOCKET& nSocket);
 int  CPL_DLL  GDALServerLoopInstanceRunIteration(void* pInstance);
 void CPL_DLL  GDALServerLoopInstanceDestroy(void* pInstance);
 CPL_C_END

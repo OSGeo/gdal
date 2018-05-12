@@ -56,7 +56,7 @@ public:
 protected:
     virtual void LoadMetadata() override;
 protected:
-    CPLString m_osXMLSourceFilename;
+    CPLString m_osXMLSourceFilename{};
 };
 
 #endif // READER_RAPID_EYE_H_INCLUDED

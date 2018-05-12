@@ -313,7 +313,7 @@ for filename in *.xlsx; do
     cd tmpxlsx
     unzip ../$filename >/dev/null
     printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/xlsx_$filename.tar
-    for i in `find -type f`; do
+    for i in $(find -type f); do
         printf "***NEWFILE***:$i\n" >> $CUR_DIR/xlsx_$filename.tar
         cat $i >> $CUR_DIR/xlsx_$filename.tar
     done
@@ -432,7 +432,7 @@ rm -f $OUT/avcbin_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
 cd  $(dirname $0)/../../autotest/ogr/data/testavc
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/avcbin.tar
-for f in `find . -type f`; do
+for f in $(find . -type f); do
     printf "***NEWFILE***:$f\n" >> $CUR_DIR/avcbin.tar
     cat $f >> $CUR_DIR/avcbin.tar
 done

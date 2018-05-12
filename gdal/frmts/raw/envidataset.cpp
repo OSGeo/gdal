@@ -268,7 +268,7 @@ ENVIDataset::ENVIDataset() :
 ENVIDataset::~ENVIDataset()
 
 {
-    FlushCache();
+    ENVIDataset::FlushCache();
     if( fpImage )
     {
         // Make sure the binary file has the expected size
@@ -2274,7 +2274,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo )
         }
         nLineOffset = nDataSize * nSamples;
         nPixelOffset = nDataSize;
-        nBandOffset = (vsi_l_offset)nLineOffset * nLines;
+        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nLines;
     }
 
     const char* pszMajorFrameOffset = poDS->m_aosHeader["major_frame_offsets"];
@@ -2324,7 +2324,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo )
                       new ENVIRasterBand(poDS, i + 1, poDS->fpImage,
                                          nHeaderSize + nBandOffset * i,
                                          nPixelOffset, nLineOffset, eType,
-                                         bNativeOrder, TRUE));
+                                         bNativeOrder));
         if( CPLGetLastErrorType() != CE_None )
         {
             delete poDS;
@@ -2655,14 +2655,12 @@ GDALDataset *ENVIDataset::Create( const char *pszFilename,
 /************************************************************************/
 
 ENVIRasterBand::ENVIRasterBand( GDALDataset *poDSIn, int nBandIn,
-                                void *fpRawIn,
+                                VSILFILE *fpRawIn,
                                 vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
                                 int nLineOffsetIn,
-                                GDALDataType eDataTypeIn, int bNativeOrderIn,
-                                int bIsVSILIn, int bOwnsFPIn ) :
+                                GDALDataType eDataTypeIn, int bNativeOrderIn) :
     RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
-                  nLineOffsetIn, eDataTypeIn, bNativeOrderIn, bIsVSILIn,
-                  bOwnsFPIn)
+                  nLineOffsetIn, eDataTypeIn, bNativeOrderIn, RawRasterBand::OwnFP::NO)
 {}
 
 /************************************************************************/

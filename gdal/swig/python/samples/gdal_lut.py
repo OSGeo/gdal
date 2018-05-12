@@ -90,7 +90,7 @@ supported as well as luts of more than 256 input values.
 # =============================================================================
 
 
-format = 'GTiff'
+frmt = 'GTiff'
 src_filename = None
 dst_filename = None
 src_band_n = 1
@@ -110,7 +110,7 @@ while i < len(argv):
 
     if arg == '-of':
         i = i + 1
-        format = argv[i]
+        frmt = argv[i]
 
     elif arg == '-co':
         i = i + 1
@@ -192,9 +192,9 @@ src_band = src_ds.GetRasterBand(src_band_n)
 # ----------------------------------------------------------------------------
 # Open or create output file.
 
-dst_driver = gdal.GetDriverByName(format)
+dst_driver = gdal.GetDriverByName(frmt)
 if dst_driver is None:
-    print('"%s" driver not registered.' % format)
+    print('"%s" driver not registered.' % frmt)
     sys.exit(1)
 
 if dst_ds is None:

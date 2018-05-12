@@ -40,7 +40,7 @@ CPL_CVSID("$Id$")
 
 class ROIPACRasterBand;
 
-class ROIPACDataset : public RawDataset
+class ROIPACDataset final: public RawDataset
 {
     friend class ROIPACRasterBand;
 
@@ -52,6 +52,8 @@ class ROIPACDataset : public RawDataset
     double      adfGeoTransform[6];
     bool        bValidGeoTransform;
     char        *pszProjection;
+
+    CPL_DISALLOW_COPY_ASSIGN(ROIPACDataset)
 
   public:
     ROIPACDataset();
@@ -77,14 +79,15 @@ class ROIPACDataset : public RawDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ROIPACRasterBand : public RawRasterBand
+class ROIPACRasterBand final: public RawRasterBand
 {
+    CPL_DISALLOW_COPY_ASSIGN(ROIPACRasterBand)
+
     public:
-                ROIPACRasterBand( GDALDataset *poDS, int nBand, void *fpRaw,
+                ROIPACRasterBand( GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
                                   vsi_l_offset nImgOffset, int nPixelOffset,
                                   int nLineOffset,
-                                  GDALDataType eDataType, int bNativeOrder,
-                                  int bIsVSIL = FALSE, int bOwnsFP = FALSE );
+                                  GDALDataType eDataType, int bNativeOrder );
 };
 
 /************************************************************************/
@@ -151,7 +154,7 @@ ROIPACDataset::ROIPACDataset() :
 
 ROIPACDataset::~ROIPACDataset()
 {
-    FlushCache();
+    ROIPACDataset::FlushCache();
     if ( fpRsc != nullptr && VSIFCloseL( fpRsc ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
@@ -398,8 +401,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
                        new ROIPACRasterBand( poDS, b + 1, poDS->fpImage,
                                              nBandOffset * b,
                                              nPixelOffset, nLineOffset,
-                                             eDataType, bNativeOrder,
-                                             TRUE, FALSE ) );
+                                             eDataType, bNativeOrder ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -483,7 +485,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Set all the other header metadata into the ROI_PAC domain       */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < CSLCount( papszRsc ); i++ )
+    for( int i = 0; papszRsc != nullptr && papszRsc[i] != nullptr; i++ )
     {
         char **papszTokens = CSLTokenizeString2( papszRsc[i],
                                                  "=",
@@ -909,14 +911,13 @@ char **ROIPACDataset::GetFileList()
 /*                         ROIPACRasterBand()                           */
 /************************************************************************/
 
-ROIPACRasterBand::ROIPACRasterBand( GDALDataset *poDSIn, int nBandIn, void *fpRawIn,
+ROIPACRasterBand::ROIPACRasterBand( GDALDataset *poDSIn, int nBandIn, VSILFILE *fpRawIn,
                                     vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
                                     int nLineOffsetIn,
-                                    GDALDataType eDataTypeIn, int bNativeOrderIn,
-                                    int bIsVSILIn, int bOwnsFPIn ) :
+                                    GDALDataType eDataTypeIn, int bNativeOrderIn ) :
     RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
-                  nLineOffsetIn, eDataTypeIn, bNativeOrderIn, bIsVSILIn,
-                  bOwnsFPIn)
+                  nLineOffsetIn, eDataTypeIn, bNativeOrderIn,
+                  RawRasterBand::OwnFP::NO)
 {}
 
 /************************************************************************/

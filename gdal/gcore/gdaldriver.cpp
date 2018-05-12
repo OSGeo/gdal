@@ -32,9 +32,9 @@
 #include "gdal_priv.h"
 #include "gdal_rat.h"
 
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
 #include <sys/stat.h>
 
 #include "cpl_conv.h"

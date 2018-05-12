@@ -179,7 +179,6 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
           case TYPE_ASCII:
             break;
           default:
-            va_end(ap);
             return 0;
         }
         gtif->gt_nshorts += sizeof(KeyEntry)/sizeof(pinfo_t);

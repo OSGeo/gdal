@@ -113,6 +113,7 @@ class WCSDataset : public GDALPamDataset
     int         EstablishRasterDetails();
 
     virtual CPLErr      ParseCapabilities( CPLXMLNode *, CPLString ) = 0;
+    virtual void        ParseCoverageCapabilities(CPLXMLNode *, const CPLString&, CPLXMLNode *) = 0;
 
     GDALDataset *GDALOpenResult( CPLHTTPResult *psResult );
 
@@ -158,6 +159,7 @@ class WCSDataset100 : public WCSDataset
     CPLXMLNode *CoverageOffering(CPLXMLNode *psDC) override;
     bool        ExtractGridInfo() override;
     CPLErr      ParseCapabilities( CPLXMLNode *, CPLString ) override;
+    void        ParseCoverageCapabilities(CPLXMLNode *, const CPLString&, CPLXMLNode *) override;
 
   public:
 
@@ -177,6 +179,7 @@ class WCSDataset110 : public WCSDataset
     CPLXMLNode *CoverageOffering(CPLXMLNode *psDC) override;
     bool        ExtractGridInfo() override;
     CPLErr      ParseCapabilities( CPLXMLNode *, CPLString ) override;
+    void        ParseCoverageCapabilities(CPLXMLNode *, const CPLString&, CPLXMLNode *) override;
 
   public:
 

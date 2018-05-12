@@ -122,7 +122,7 @@ def ogr_shape_sbn_1():
                 os.stat('tmp/cache/CochitiDamShapeFiles/CochitiBoundary.shp')
             except OSError:
                 return 'skip'
-        except:
+        except OSError:
             return 'skip'
 
     ds = ogr.Open('tmp/cache/CochitiDamShapeFiles')

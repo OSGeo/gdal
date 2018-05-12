@@ -36,9 +36,11 @@ done
 
 rm libtiff.so
 
-echo "" >> $OUT_FILE
-echo "#define DISABLE_CHECK_TIFFSWABMACROS" >> $OUT_FILE
-echo "" >> $OUT_FILE
+cat <<EOF >> $OUT_FILE
+
+#define DISABLE_CHECK_TIFFSWABMACROS
+
+EOF
 
 # Was excluded by grep -v TIFFInit
 echo "#define TIFFInitDumpMode gdal_TIFFInitDumpMode" >> $OUT_FILE

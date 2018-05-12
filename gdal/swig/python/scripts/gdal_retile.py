@@ -660,20 +660,20 @@ def getTileName(minfo, ti, xIndex, yIndex, level=-1):
     xIndex_str = ("%0" + str(countDigits) + "i") % (xIndex,)
 
     if UseDirForEachRow:
-        format = getTargetDir(level) + str(yIndex) + os.sep + parts[0] + "_" + yIndex_str + "_" + xIndex_str
+        frmt = getTargetDir(level) + str(yIndex) + os.sep + parts[0] + "_" + yIndex_str + "_" + xIndex_str
         # See if there was a switch in the row, if so then create new dir for row.
         if LastRowIndx < yIndex:
             LastRowIndx = yIndex
             if not os.path.exists(getTargetDir(level) + str(yIndex)):
                 os.mkdir(getTargetDir(level) + str(yIndex))
     else:
-        format = getTargetDir(level) + parts[0] + "_" + yIndex_str + "_" + xIndex_str
+        frmt = getTargetDir(level) + parts[0] + "_" + yIndex_str + "_" + xIndex_str
     # Check for the extension that should be used.
     if Extension is None:
-        format = format + parts[1]
+        frmt += parts[1]
     else:
-        format = format + "." + Extension
-    return format
+        frmt += "." + Extension
+    return frmt
 
 
 def UsageFormat():

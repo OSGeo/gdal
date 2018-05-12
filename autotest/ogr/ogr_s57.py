@@ -256,10 +256,7 @@ def ogr_s57_8():
 
 def ogr_s57_9():
 
-    try:
-        os.unlink('tmp/ogr_s57_9.000')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/ogr_s57_9.000')
 
     gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON')
     ds = ogr.GetDriverByName('S57').CreateDataSource('tmp/ogr_s57_9.000')
@@ -292,10 +289,7 @@ def ogr_s57_9():
 
     gdaltest.s57_ds = None
 
-    try:
-        os.unlink('tmp/ogr_s57_9.000')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/ogr_s57_9.000')
 
     gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON')
     gdal.VectorTranslate('tmp/ogr_s57_9.000', 'data/1B5X02NE.000', options="-f S57 IsolatedNode ConnectedNode Edge Face M_QUAL")
@@ -316,10 +310,7 @@ def ogr_s57_9():
 
     gdaltest.s57_ds = None
 
-    try:
-        os.unlink('tmp/ogr_s57_9.000')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/ogr_s57_9.000')
 
     return 'success'
 
@@ -477,7 +468,7 @@ def ogr_s57_online_4():
                 os.stat('tmp/cache/ENC_ROOT/JP34NC94.000')
             except OSError:
                 return 'skip'
-        except:
+        except OSError:
             return 'skip'
 
     gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON,RECODE_BY_DSSI=ON')

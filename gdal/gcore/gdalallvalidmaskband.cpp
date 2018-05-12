@@ -59,7 +59,7 @@ GDALAllValidMaskBand::GDALAllValidMaskBand( GDALRasterBand *poParent ) :
 /*                       ~GDALAllValidMaskBand()                        */
 /************************************************************************/
 
-GDALAllValidMaskBand::~GDALAllValidMaskBand() {}
+GDALAllValidMaskBand::~GDALAllValidMaskBand() = default;
 
 /************************************************************************/
 /*                             IReadBlock()                             */

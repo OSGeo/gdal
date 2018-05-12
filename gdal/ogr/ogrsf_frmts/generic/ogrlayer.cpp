@@ -50,6 +50,7 @@ OGRLayer::OGRLayer() :
     m_bFilterIsEnvelope(FALSE),
     m_poFilterGeom(nullptr),
     m_pPreparedFilterGeom(nullptr),
+    m_sFilterEnvelope{},
     m_iGeomFieldFilter(0),
     m_poStyleTable(nullptr),
     m_poAttrQuery(nullptr),
@@ -1889,8 +1890,8 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
                          OGRFeatureDefn *poDefnMethod,
                          int *mapInput,
                          int *mapMethod,
-                         int combined,
-                         char** papszOptions)
+                         bool combined,
+                         const char* const* papszOptions)
 {
     OGRErr ret = OGRERR_NONE;
     OGRFeatureDefn *poDefnResult = pLayerResult->GetLayerDefn();
@@ -1899,11 +1900,14 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
     int bSkipFailures = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
     if (poDefnResult->GetFieldCount() > 0) {
         // the user has defined the schema of the output layer
-        for( int iField = 0; iField < poDefnInput->GetFieldCount(); iField++ ) {
-            CPLString osName(poDefnInput->GetFieldDefn(iField)->GetNameRef());
-            if( pszInputPrefix != nullptr )
-                osName = pszInputPrefix + osName;
-            mapInput[iField] = poDefnResult->GetFieldIndex(osName);
+        if( mapInput )
+        {
+            for( int iField = 0; iField < poDefnInput->GetFieldCount(); iField++ ) {
+                CPLString osName(poDefnInput->GetFieldDefn(iField)->GetNameRef());
+                if( pszInputPrefix != nullptr )
+                    osName = pszInputPrefix + osName;
+                mapInput[iField] = poDefnResult->GetFieldIndex(osName);
+            }
         }
         if (!mapMethod) return ret;
         // cppcheck-suppress nullPointer
@@ -1930,7 +1934,8 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
                     ret = OGRERR_NONE;
                 }
             }
-            mapInput[iField] = iField;
+            if( mapInput )
+                mapInput[iField] = iField;
         }
         if (!combined) return ret;
         if (!mapMethod) return ret;
@@ -2091,7 +2096,7 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = create_field_map(poDefnMethod, &mapMethod);
     if (ret != OGRERR_NONE) goto done;
-    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1, papszOptions);
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, true, papszOptions);
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
     bEnvelopeSet = pLayerMethod->GetExtent(&sEnvelopeMethod, 1) == OGRERR_NONE;
@@ -2437,7 +2442,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = create_field_map(poDefnMethod, &mapMethod);
     if (ret != OGRERR_NONE) goto done;
-    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1, papszOptions);
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, true, papszOptions);
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
     if (bKeepLowerDimGeom) {
@@ -2864,7 +2869,7 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = create_field_map(poDefnMethod, &mapMethod);
     if (ret != OGRERR_NONE) goto done;
-    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1, papszOptions);
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, true, papszOptions);
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
 
@@ -3216,7 +3221,7 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = create_field_map(poDefnMethod, &mapMethod);
     if (ret != OGRERR_NONE) goto done;
-    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1, papszOptions);
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, true, papszOptions);
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
 
@@ -3551,7 +3556,7 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = create_field_map(poDefnMethod, &mapMethod);
     if (ret != OGRERR_NONE) goto done;
-    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 0, papszOptions);
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, false, papszOptions);
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
 
@@ -3838,7 +3843,7 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = create_field_map(poDefnInput, &mapInput);
     if (ret != OGRERR_NONE) goto done;
-    ret = set_result_schema(pLayerResult, poDefnInput, nullptr, mapInput, nullptr, 0, papszOptions);
+    ret = set_result_schema(pLayerResult, poDefnInput, nullptr, mapInput, nullptr, false, papszOptions);
     if (ret != OGRERR_NONE) goto done;
 
     poDefnResult = pLayerResult->GetLayerDefn();
@@ -4098,7 +4103,7 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = create_field_map(poDefnInput, &mapInput);
     if (ret != OGRERR_NONE) goto done;
-    ret = set_result_schema(pLayerResult, poDefnInput, nullptr, mapInput, nullptr, 0, papszOptions);
+    ret = set_result_schema(pLayerResult, poDefnInput, nullptr, mapInput, nullptr, false, papszOptions);
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
 
@@ -4268,7 +4273,10 @@ OGRErr OGR_L_Erase( OGRLayerH pLayerInput,
 
 struct OGRLayer::FeatureIterator::Private
 {
-    OGRFeatureUniquePtr m_poFeature;
+    CPL_DISALLOW_COPY_ASSIGN(Private)
+    Private() = default;
+
+    OGRFeatureUniquePtr m_poFeature{};
     OGRLayer* m_poLayer = nullptr;
     bool m_bError = false;
     bool m_bEOF = true;

@@ -2004,7 +2004,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                     new RawRasterBand(
                         poDS, poDS->nBands+1, fp,
                         nStartData, nPixelOffset, nLineOffset,
-                        eType, bNative, TRUE ) );
+                        eType, bNative, RawRasterBand::OwnFP::NO ) );
         }
     }
 

@@ -1050,10 +1050,7 @@ def ogr_sqlite_20():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    try:
-        os.unlink('tmp/non_spatialite_test_with_epsg.db')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/non_spatialite_test_with_epsg.db')
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/non_spatialite_test_with_epsg.db', options=['INIT_WITH_EPSG=YES'])
 

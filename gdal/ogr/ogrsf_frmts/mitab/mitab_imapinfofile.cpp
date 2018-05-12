@@ -33,6 +33,7 @@
 #include "cpl_port.h"
 #include "mitab.h"
 
+#include <cassert>
 #include <cctype>
 #include <cstring>
 #include <algorithm>
@@ -152,7 +153,7 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
         const char *pszLine = nullptr;
         while(fp && (pszLine = CPLReadLineL(fp)) != nullptr)
         {
-            while (isspace((unsigned char)*pszLine))  pszLine++;
+            while (isspace(static_cast<unsigned char>(*pszLine)))  pszLine++;
             if (STARTS_WITH_CI(pszLine, "Fields"))
                 bFoundFields = TRUE;
             else if (STARTS_WITH_CI(pszLine, "create view"))
@@ -259,7 +260,7 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
         poTABFeature = new TABPoint(poFeature->GetDefnRef());
         if(poFeature->GetStyleString())
         {
-            poTABPointFeature = (TABPoint*)poTABFeature;
+            poTABPointFeature = cpl::down_cast<TABPoint*>(poTABFeature);
             poTABPointFeature->SetSymbolFromStyleString(
                 poFeature->GetStyleString());
         }
@@ -272,7 +273,7 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
         poTABFeature = new TABRegion(poFeature->GetDefnRef());
         if(poFeature->GetStyleString())
         {
-            poTABRegionFeature = (TABRegion*)poTABFeature;
+            poTABRegionFeature = cpl::down_cast<TABRegion*>(poTABFeature);
             poTABRegionFeature->SetPenFromStyleString(
                 poFeature->GetStyleString());
 
@@ -288,7 +289,7 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
         poTABFeature = new TABPolyline(poFeature->GetDefnRef());
         if(poFeature->GetStyleString())
         {
-            poTABPolylineFeature = (TABPolyline*)poTABFeature;
+            poTABPolylineFeature = cpl::down_cast<TABPolyline*>(poTABFeature);
             poTABPolylineFeature->SetPenFromStyleString(
                 poFeature->GetStyleString());
         }
@@ -301,6 +302,7 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
       case wkbMultiPoint:
       {
           OGRErr eStatus = OGRERR_NONE;
+          assert(poGeom); // for clang static analyzer
           OGRGeometryCollection *poColl = poGeom->toGeometryCollection();
           OGRFeature *poTmpFeature = poFeature->Clone();
 

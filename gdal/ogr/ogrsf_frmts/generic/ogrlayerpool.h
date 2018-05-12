@@ -45,6 +45,8 @@ class OGRLayerPool;
 
 class OGRAbstractProxiedLayer : public OGRLayer
 {
+        CPL_DISALLOW_COPY_ASSIGN(OGRAbstractProxiedLayer)
+
         friend class OGRLayerPool;
 
         OGRAbstractProxiedLayer   *poPrevLayer; /* Chain to a layer that was used more recently */
@@ -66,6 +68,8 @@ class OGRAbstractProxiedLayer : public OGRLayer
 
 class OGRLayerPool
 {
+        CPL_DISALLOW_COPY_ASSIGN(OGRLayerPool)
+
     protected:
         OGRAbstractProxiedLayer *poMRULayer; /* the most recently used layer */
         OGRAbstractProxiedLayer *poLRULayer; /* the least recently used layer (still opened) */
@@ -89,6 +93,8 @@ class OGRLayerPool
 
 class OGRProxiedLayer : public OGRAbstractProxiedLayer
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRProxiedLayer)
+
     OpenLayerFunc       pfnOpenLayer;
     FreeUserDataFunc    pfnFreeUserData;
     void               *pUserData;

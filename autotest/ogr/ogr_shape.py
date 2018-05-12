@@ -729,9 +729,8 @@ def ogr_shape_21():
              'data/buggymultiline.shp',
              'data/buggymultipoly.shp',
              'data/buggymultipoly2.shp']
-    for file in files:
-
-        ds = ogr.Open(file)
+    for f in files:
+        ds = ogr.Open(f)
         lyr = ds.GetLayer(0)
         lyr.ResetReading()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -1164,25 +1163,25 @@ def ogr_shape_28():
     os.remove('tmp/hugedbf.shp')
     os.remove('tmp/hugedbf.shx')
 
-    file = open("tmp/hugedbf.dbf", "rb+")
+    f = open("tmp/hugedbf.dbf", "rb+")
 
     # Set record count to 24,000,000
-    file.seek(4, 0)
-    file.write("\x00".encode('latin1'))
-    file.write("\x36".encode('latin1'))
-    file.write("\x6e".encode('latin1'))
-    file.write("\x01".encode('latin1'))
+    f.seek(4, 0)
+    f.write("\x00".encode('latin1'))
+    f.write("\x36".encode('latin1'))
+    f.write("\x6e".encode('latin1'))
+    f.write("\x01".encode('latin1'))
 
     # Set value for record 23,900,000 at
     # offset 2,390,000,066 = (23,900,000 * (99 + 1) + 65) + 1
-    file.seek(2390000066, 0)
-    file.write("value_over_2GB".encode('latin1'))
+    f.seek(2390000066, 0)
+    f.write("value_over_2GB".encode('latin1'))
 
     # Extend to 3 GB file
-    file.seek(3000000000, 0)
-    file.write("0".encode('latin1'))
+    f.seek(3000000000, 0)
+    f.write("0".encode('latin1'))
 
-    file.close()
+    f.close()
 
     ds = ogr.Open('tmp/hugedbf.dbf', update=1)
     if ds is None:
@@ -1401,8 +1400,9 @@ def ogr_shape_32():
     # 4.5 GB space available or give a new directory that does and delete the
     # directory afterwards.
 
-    return 'skip'
+    return 'skip'  # pylint: disable=unreachable
 
+    # pylint: disable=unreachable
     from decimal import Decimal
 
     BigFilePath = '/tmp'
@@ -1978,10 +1978,7 @@ def ogr_shape_47():
     if not gdaltest.support_symlink():
         return 'skip'
 
-    try:
-        os.unlink('tmp/poly.zip')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/poly.zip')
     os.symlink('/vsizip/data/poly.zip', 'tmp/poly.zip')
 
     ds = ogr.Open('tmp/poly.zip')
@@ -2108,7 +2105,7 @@ def ogr_shape_50():
 
     reconv_possible = lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
 
-    if gdal.GetLastErrorMsg().find('Recode from CP936 to UTF-8 not supported, treated as ISO8859-1 to UTF-8.') != -1:
+    if gdal.GetLastErrorMsg().find('Recode from CP936 to UTF-8 not supported, treated as ISO-8859-1 to UTF-8.') != -1:
         if reconv_possible:
             gdaltest.post_reason('Recode failed, but TestCapability(OLCStringsAsUTF8) returns TRUE')
             return 'fail'
@@ -4387,7 +4384,7 @@ def ogr_shape_94():
     for test in tests:
         try:
             (shpt, geom_type, wkt, expected_fail) = test
-        except:
+        except ValueError:
             (shpt, geom_type, wkt) = test
             expected_fail = False
 

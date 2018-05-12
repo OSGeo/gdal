@@ -81,9 +81,7 @@ GDALAsyncReader::GDALAsyncReader() :
 /************************************************************************/
 /*                         ~GDALAsyncReader()                           */
 /************************************************************************/
-GDALAsyncReader::~GDALAsyncReader()
-{
-}
+GDALAsyncReader::~GDALAsyncReader() = default;
 
 /************************************************************************/
 /*                        GetNextUpdatedRegion()                        */
@@ -282,7 +280,9 @@ void CPL_STDCALL GDALARUnlockBuffer(GDALAsyncReaderH hARIO)
 class GDALDefaultAsyncReader : public GDALAsyncReader
 {
   private:
-    char **papszOptions;
+    char **papszOptions = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALDefaultAsyncReader)
 
   public:
     GDALDefaultAsyncReader(GDALDataset* poDS,

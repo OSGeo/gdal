@@ -40,12 +40,13 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class CTable2Dataset : public RawDataset
+class CTable2Dataset final: public RawDataset
 {
-  public:
     VSILFILE    *fpImage;  // image data file.
 
     double      adfGeoTransform[6];
+
+    CPL_DISALLOW_COPY_ASSIGN(CTable2Dataset)
 
   public:
     CTable2Dataset();
@@ -86,7 +87,7 @@ CTable2Dataset::CTable2Dataset() :
 CTable2Dataset::~CTable2Dataset()
 
 {
-    FlushCache();
+    CTable2Dataset::FlushCache();
 
     if( fpImage != nullptr )
     {
@@ -219,7 +220,7 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
                            160 + 4 + static_cast<vsi_l_offset>(nRasterXSize) *
                                 (nRasterYSize-1) * 2 * 4,
                            8, -8 * nRasterXSize,
-                           GDT_Float32, CPL_IS_LSB, TRUE, FALSE );
+                           GDT_Float32, CPL_IS_LSB, RawRasterBand::OwnFP::NO );
     poBand->SetDescription( "Latitude Offset (radians)" );
     poDS->SetBand( 1, poBand );
 
@@ -228,7 +229,7 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
                            160 + static_cast<vsi_l_offset>(nRasterXSize) *
                                 (nRasterYSize-1) * 2 * 4,
                            8, -8 * nRasterXSize,
-                           GDT_Float32, CPL_IS_LSB, TRUE, FALSE );
+                           GDT_Float32, CPL_IS_LSB, RawRasterBand::OwnFP::NO );
     poBand->SetDescription( "Longitude Offset (radians)" );
     poDS->SetBand( 2, poBand );
 
@@ -412,7 +413,7 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write zeroed grid data.                                         */
 /* -------------------------------------------------------------------- */
-    float *pafLine = (float *) CPLCalloc(sizeof(float)*2,nXSize);
+    float *pafLine = static_cast<float *>(CPLCalloc(sizeof(float)*2,nXSize));
 
     for( int i = 0; i < nYSize; i++ )
     {
@@ -437,7 +438,7 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
         return nullptr;
     }
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    return static_cast<GDALDataset *>(GDALOpen( pszFilename, GA_Update ));
 }
 
 /************************************************************************/

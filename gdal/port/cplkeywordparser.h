@@ -45,15 +45,17 @@
 
 class CPLKeywordParser
 {
-    char     **papszKeywordList;
+    char     **papszKeywordList = nullptr;
 
-    CPLString osHeaderText;
-    const char *pszHeaderNext;
+    CPLString osHeaderText{};
+    const char *pszHeaderNext = nullptr;
 
     void    SkipWhite();
     bool    ReadWord( CPLString &osWord );
     bool    ReadPair( CPLString &osName, CPLString &osValue );
     bool    ReadGroup( const char *pszPathPrefix, int nRecLevel );
+
+    CPL_DISALLOW_COPY_ASSIGN(CPLKeywordParser)
 
 public:
     CPLKeywordParser();

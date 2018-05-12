@@ -382,33 +382,28 @@ static VSICryptMode GetMode( const char* pszName )
 
 class VSICryptFileHeader
 {
+        CPL_DISALLOW_COPY_ASSIGN(VSICryptFileHeader)
+
         std::string CryptKeyCheck( CryptoPP::BlockCipher* poEncCipher );
 
     public:
-        VSICryptFileHeader() : nHeaderSize(0),
-                               nMajorVersion(0),
-                               nMinorVersion(0),
-                               nSectorSize(512),
-                               eAlg(ALG_AES),
-                               eMode(MODE_CBC),
-                               bAddKeyCheck(false),
-                               nPayloadFileSize(0) {}
+        VSICryptFileHeader() = default;
 
         int ReadFromFile( VSIVirtualHandle* fp, const CPLString& osKey );
         int WriteToFile( VSIVirtualHandle* fp,
                          CryptoPP::BlockCipher* poEncCipher );
 
-        GUInt16 nHeaderSize;
-        GByte nMajorVersion;
-        GByte nMinorVersion;
-        GUInt16 nSectorSize;
-        VSICryptAlg eAlg;
-        VSICryptMode eMode;
-        CPLString osIV;
-        bool bAddKeyCheck;
-        GUIntBig nPayloadFileSize;
-        CPLString osFreeText;
-        CPLString osExtraContent;
+        GUInt16 nHeaderSize = 0;
+        GByte nMajorVersion = 0;
+        GByte nMinorVersion = 0;
+        GUInt16 nSectorSize = 512;
+        VSICryptAlg eAlg = ALG_AES;
+        VSICryptMode eMode = MODE_CBC;
+        CPLString osIV{};
+        bool bAddKeyCheck = false;
+        GUIntBig nPayloadFileSize = 0;
+        CPLString osFreeText{};
+        CPLString osExtraContent{};
 };
 
 /************************************************************************/
@@ -737,32 +732,34 @@ int VSICryptFileHeader::WriteToFile( VSIVirtualHandle* fp,
 
 class VSICryptFileHandle final : public VSIVirtualHandle
 {
+        CPL_DISALLOW_COPY_ASSIGN(VSICryptFileHandle)
+
   private:
-        CPLString           osBaseFilename;
-        int                 nPerms;
-        VSIVirtualHandle   *poBaseHandle;
-        VSICryptFileHeader *poHeader;
-        bool                bUpdateHeader;
-        vsi_l_offset        nCurPos;
-        bool                bEOF;
+        CPLString           osBaseFilename{};
+        int                 nPerms = 0;
+        VSIVirtualHandle   *poBaseHandle = nullptr;
+        VSICryptFileHeader *poHeader = nullptr;
+        bool                bUpdateHeader = false;
+        vsi_l_offset        nCurPos = 0;
+        bool                bEOF = false;
 
-        CryptoPP::BlockCipher* poEncCipher;
-        CryptoPP::BlockCipher* poDecCipher;
-        int                 nBlockSize;
+        CryptoPP::BlockCipher* poEncCipher = nullptr;
+        CryptoPP::BlockCipher* poDecCipher = nullptr;
+        int                 nBlockSize = 0;
 
-        vsi_l_offset        nWBOffset;
-        GByte*              pabyWB;
-        int                 nWBSize;
-        bool                bWBDirty;
+        vsi_l_offset        nWBOffset = 0;
+        GByte*              pabyWB = nullptr;
+        int                 nWBSize = 0;
+        bool                bWBDirty = false;
 
-        bool                bLastSectorWasModified;
+        bool                bLastSectorWasModified = false;
 
         void             EncryptBlock( GByte* pabyData, vsi_l_offset nOffset );
         bool             DecryptBlock( GByte* pabyData, vsi_l_offset nOffset );
         bool             FlushDirty();
 
   public:
-    VSICryptFileHandle( CPLString osBaseFilename,
+    VSICryptFileHandle( const CPLString& osBaseFilename,
                         VSIVirtualHandle* poBaseHandle,
                         VSICryptFileHeader* poHeader,
                         int nPerms );
@@ -785,25 +782,14 @@ class VSICryptFileHandle final : public VSIVirtualHandle
 /*                          VSICryptFileHandle()                        */
 /************************************************************************/
 
-VSICryptFileHandle::VSICryptFileHandle( CPLString osBaseFilenameIn,
+VSICryptFileHandle::VSICryptFileHandle( const CPLString& osBaseFilenameIn,
                                         VSIVirtualHandle* poBaseHandleIn,
                                         VSICryptFileHeader* poHeaderIn,
                                         int nPermsIn ) :
     osBaseFilename(osBaseFilenameIn),
     nPerms(nPermsIn),
     poBaseHandle(poBaseHandleIn),
-    poHeader(poHeaderIn),
-    bUpdateHeader(false),
-    nCurPos(0),
-    bEOF(false),
-    poEncCipher(nullptr),
-    poDecCipher(nullptr),
-    nBlockSize(0),
-    nWBOffset(0),
-    pabyWB(nullptr),
-    nWBSize(0),
-    bWBDirty(false),
-    bLastSectorWasModified(false)
+    poHeader(poHeaderIn)
 {}
 
 /************************************************************************/

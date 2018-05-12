@@ -33,12 +33,12 @@
 import copy
 import os
 import sys
-from osgeo import gdal
-from osgeo import osr
+from sys import version_info
 import array
 import struct
 import shutil
-from sys import version_info
+from osgeo import gdal
+from osgeo import osr
 
 sys.path.append('../pymod')
 
@@ -3112,12 +3112,11 @@ def nitf_online_6():
 
 def nitf_online_7():
 
-    files = ['ns3228b.nsf', 'i_3228c.ntf', 'ns3228d.nsf', 'i_3228e.ntf']
-    for file in files:
-        if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/' + file, file):
+    for filename in ['ns3228b.nsf', 'i_3228c.ntf', 'ns3228d.nsf', 'i_3228e.ntf']:
+        if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/' + filename, filename):
             return 'skip'
 
-        ds = gdal.Open('tmp/cache/' + file)
+        ds = gdal.Open('tmp/cache/' + filename)
         if ds.RasterCount != 6:
             return 'fail'
 
@@ -3128,30 +3127,14 @@ def nitf_online_7():
             cs = ds.GetRasterBand(i + 1).Checksum()
             if cs != checksums[i]:
                 gdaltest.post_reason('got checksum %d for image %s'
-                                     % (cs, file))
+                                     % (cs, filename))
                 return 'fail'
 
             if ds.GetRasterBand(i + 1).GetRasterColorInterpretation() != colorInterpretations[i]:
                 gdaltest.post_reason('got wrong color interp for image %s'
-                                     % file)
+                                     % filename)
                 return 'fail'
         ds = None
-
-        # shutil.copyfile('tmp/cache/' + file, 'tmp/' + file)
-        # ds = gdal.Open('tmp/' + file, gdal.GA_Update)
-        # data = ds.GetRasterBand(1).ReadRaster(0, 0, 1024, 1024)
-        # ds.GetRasterBand(1).Fill(0)
-        # ds = None
-
-        # ds = gdal.Open('tmp/' + file, gdal.GA_Update)
-        # ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
-        # ds = None
-
-        # ds = gdal.Open('tmp/' + file)
-        # print(ds.GetRasterBand(1).Checksum())
-        # ds = None
-
-        # os.remove('tmp/' + file)
 
     return 'success'
 

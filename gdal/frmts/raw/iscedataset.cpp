@@ -74,7 +74,7 @@ static const char * const apszSchemeNames[] = { "BIL", "BIP", "BSQ", nullptr };
 
 class ISCERasterBand;
 
-class ISCEDataset : public RawDataset
+class ISCEDataset final: public RawDataset
 {
     friend class ISCERasterBand;
 
@@ -83,6 +83,8 @@ class ISCEDataset : public RawDataset
     char        *pszXMLFilename;
 
     enum Scheme eScheme;
+
+    CPL_DISALLOW_COPY_ASSIGN(ISCEDataset)
 
   public:
     ISCEDataset();
@@ -104,14 +106,15 @@ class ISCEDataset : public RawDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ISCERasterBand : public RawRasterBand
+class ISCERasterBand final: public RawRasterBand
 {
+        CPL_DISALLOW_COPY_ASSIGN(ISCERasterBand)
+
     public:
-                ISCERasterBand( GDALDataset *poDS, int nBand, void *fpRaw,
+                ISCERasterBand( GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
                                   vsi_l_offset nImgOffset, int nPixelOffset,
                                   int nLineOffset,
-                                  GDALDataType eDataType, int bNativeOrder,
-                                  int bIsVSIL = FALSE, int bOwnsFP = FALSE );
+                                  GDALDataType eDataType, int bNativeOrder );
 };
 
 /************************************************************************/
@@ -172,7 +175,7 @@ ISCEDataset::ISCEDataset() :
 
 ISCEDataset::~ISCEDataset( void )
 {
-    FlushCache();
+    ISCEDataset::FlushCache();
     if ( fpImage != nullptr )
     {
         if( VSIFCloseL( fpImage ) != 0 )
@@ -730,8 +733,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
                        new ISCERasterBand( poDS, b + 1, poDS->fpImage,
                                            nBandOffset * b,
                                            nPixelOffset, nLineOffset,
-                                           eDataType, bNativeOrder,
-                                           TRUE, FALSE ) );
+                                           eDataType, bNativeOrder ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -901,14 +903,13 @@ GDALDataset *ISCEDataset::Create( const char *pszFilename,
 /*                          ISCERasterBand()                            */
 /************************************************************************/
 
-ISCERasterBand::ISCERasterBand( GDALDataset *poDSIn, int nBandIn, void *fpRawIn,
+ISCERasterBand::ISCERasterBand( GDALDataset *poDSIn, int nBandIn, VSILFILE *fpRawIn,
                                 vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
                                 int nLineOffsetIn,
-                                GDALDataType eDataTypeIn, int bNativeOrderIn,
-                                int bIsVSILIn, int bOwnsFPIn ) :
+                                GDALDataType eDataTypeIn, int bNativeOrderIn ) :
     RawRasterBand( poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
-                   nLineOffsetIn, eDataTypeIn, bNativeOrderIn, bIsVSILIn,
-                   bOwnsFPIn )
+                   nLineOffsetIn, eDataTypeIn, bNativeOrderIn,
+                   RawRasterBand::OwnFP::NO )
 {}
 
 /************************************************************************/

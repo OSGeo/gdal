@@ -15,7 +15,7 @@ do
 done
 
 rodata_symbol_list=$(objdump -t shapelib.so  | grep "\.rodata" |  awk '{print $6}' | grep -v "\.")
-for symbol in $data_symbol_list
+for symbol in $rodata_symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
@@ -32,7 +32,7 @@ do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
 
-cat $OUT_FILE | sort -u > $OUT_FILE.tmp
+sort -u < $OUT_FILE > $OUT_FILE.tmp
 
 echo "/* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */" > $OUT_FILE
 cat $OUT_FILE.tmp >> $OUT_FILE

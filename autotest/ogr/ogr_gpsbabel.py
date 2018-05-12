@@ -48,7 +48,7 @@ def ogr_gpsbabel_init():
     ogrtest.have_read_gpsbabel = False
     try:
         ret = gdaltest.runexternal('gpsbabel -V')
-    except:
+    except OSError:
         ret = ''
     if ret.find('GPSBabel') == -1:
         print('Cannot access GPSBabel utility')

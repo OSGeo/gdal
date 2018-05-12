@@ -317,6 +317,8 @@ CPL_C_END
  */
 class CPL_DLL GDALWarpKernel
 {
+    CPL_DISALLOW_COPY_ASSIGN(GDALWarpKernel)
+
 public:
     /** Warp options */
     char              **papszWarpOptions;
@@ -436,6 +438,9 @@ typedef struct _GDALWarpChunk GDALWarpChunk;
 /*! @endcond */
 
 class CPL_DLL GDALWarpOperation {
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALWarpOperation)
+
 private:
     GDALWarpOptions *psOptions;
 

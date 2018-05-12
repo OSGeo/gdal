@@ -139,22 +139,24 @@ CPL_C_END
 class CPL_DLL CPLMutexHolder
 {
   private:
-    CPLMutex   *hMutex;
+    CPLMutex   *hMutex = nullptr;
     // Only used for debugging.
-    const char *pszFile;
-    int         nLine;
+    const char *pszFile = nullptr;
+    int         nLine = 0;
+
+    CPL_DISALLOW_COPY_ASSIGN(CPLMutexHolder)
 
   public:
 
     /** Instantiates the mutex if not already done. */
-    CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds = 1000.0,
+    explicit CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds = 1000.0,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__,
                     int nOptions = CPL_MUTEX_RECURSIVE);
 
     /** This variant assumes the mutex has already been created. If not, it will
      * be a no-op */
-    CPLMutexHolder( CPLMutex* hMutex, double dfWaitInSeconds = 1000.0,
+    explicit CPLMutexHolder( CPLMutex* hMutex, double dfWaitInSeconds = 1000.0,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__ );
 
@@ -172,9 +174,11 @@ class CPL_DLL CPLMutexHolder
 class CPL_DLL CPLLockHolder
 {
   private:
-    CPLLock    *hLock;
-    const char *pszFile;
-    int         nLine;
+    CPLLock    *hLock = nullptr;
+    const char *pszFile = nullptr;
+    int         nLine = 0;
+
+    CPL_DISALLOW_COPY_ASSIGN(CPLLockHolder)
 
   public:
 
@@ -185,7 +189,7 @@ class CPL_DLL CPLLockHolder
 
     /** This variant assumes the lock has already been created. If not, it will
      * be a no-op */
-    CPLLockHolder( CPLLock* hSpin,
+    explicit CPLLockHolder( CPLLock* hSpin,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__ );
 

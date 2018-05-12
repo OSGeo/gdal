@@ -44,9 +44,11 @@ def ogr_basic_1():
 
     gdaltest.ds = ogr.Open('data/poly.shp')
 
-    if gdaltest.ds is not None:
-        return 'success'
-    return 'fail'
+    if gdaltest.ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Test Feature counting.
@@ -605,7 +607,7 @@ def ogr_basic_12():
         return 'fail'
     feat_def.AddFieldDefn(field_def)
 
-    if False:
+    if False:  # pylint: disable=using-constant-test
         f = ogr.Feature(feat_def)
         gdal.ErrorReset()
         f.SetField('fld', '1.23')
@@ -772,6 +774,35 @@ def ogr_basic_invalid_unicode():
 
     return 'success'
 
+
+def ogr_basic_dataset_slice():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    ds.CreateLayer('lyr1')
+    ds.CreateLayer('lyr2')
+    ds.CreateLayer('lyr3')
+
+    lyrs = [lyr.GetName() for lyr in ds[1:3]]
+    if lyrs != ['lyr2', 'lyr3']:
+        gdaltest.post_reason('fail')
+        print(lyrs)
+        return 'fail'
+
+    lyrs = [lyr.GetName() for lyr in ds[0:4]]
+    if lyrs != ['lyr1', 'lyr2', 'lyr3']:
+        gdaltest.post_reason('fail')
+        print(lyrs)
+        return 'fail'
+
+    lyrs = [lyr.GetName() for lyr in ds[0:3:2]]
+    if lyrs != ['lyr1', 'lyr3']:
+        gdaltest.post_reason('fail')
+        print(lyrs)
+        return 'fail'
+
+    return 'success'
+
+
 ###############################################################################
 # cleanup
 
@@ -801,6 +832,7 @@ gdaltest_list = [
     ogr_basic_15,
     ogr_basic_16,
     ogr_basic_invalid_unicode,
+    ogr_basic_dataset_slice,
     ogr_basic_cleanup]
 
 # gdaltest_list = [ ogr_basic_13 ]

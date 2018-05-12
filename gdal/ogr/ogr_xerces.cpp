@@ -51,7 +51,7 @@ static int nCounter = 0;
 /*                        OGRInitializeXerces()                         */
 /************************************************************************/
 
-bool OGRInitializeXerces(void)
+bool OGRInitializeXerces()
 {
     CPLMutexHolderD(&hMutex);
     if( nCounter > 0 )
@@ -80,7 +80,7 @@ bool OGRInitializeXerces(void)
 /*                       OGRDeinitializeXerces()                        */
 /************************************************************************/
 
-void OGRDeinitializeXerces(void)
+void OGRDeinitializeXerces()
 {
     CPLMutexHolderD(&hMutex);
     if( nCounter == 0 )
@@ -104,7 +104,7 @@ void OGRDeinitializeXerces(void)
 /*                       OGRCleanupXercesMutex()                        */
 /************************************************************************/
 
-void OGRCleanupXercesMutex(void)
+void OGRCleanupXercesMutex()
 {
     if( hMutex != nullptr )
         CPLDestroyMutex(hMutex);
@@ -187,6 +187,8 @@ CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet,
 /************************************************************************/
 class OGRXercesBinInputStream : public BinInputStream
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRXercesBinInputStream)
+
     VSILFILE* fp;
     XMLCh emptyString;
 #ifdef WORKAROUND_XERCESC_2094
@@ -197,10 +199,10 @@ class OGRXercesBinInputStream : public BinInputStream
     explicit OGRXercesBinInputStream( VSILFILE* fp );
     ~OGRXercesBinInputStream() override;
 
-    virtual XMLFilePos curPos() const override;
-    virtual XMLSize_t readBytes(XMLByte* const toFill,
+    XMLFilePos curPos() const override;
+    XMLSize_t readBytes(XMLByte* const toFill,
                                 const XMLSize_t maxToRead) override;
-    virtual const XMLCh* getContentType() const override
+    const XMLCh* getContentType() const override
         { return &emptyString; }
 };
 
@@ -220,7 +222,7 @@ class OGRXercesInputSource : public InputSource
                          XMLPlatformUtils::fgMemoryManager);
     ~OGRXercesInputSource() override;
 
-    virtual BinInputStream* makeStream() const override
+    BinInputStream* makeStream() const override
         { return pBinInputStream; }
 };
 
@@ -240,7 +242,7 @@ OGRXercesBinInputStream::OGRXercesBinInputStream(VSILFILE *fpIn) :
 /*                     ~OGRXercesBinInputStream()                       */
 /************************************************************************/
 
-OGRXercesBinInputStream::~OGRXercesBinInputStream() {}
+OGRXercesBinInputStream::~OGRXercesBinInputStream() = default;
 
 /************************************************************************/
 /*                              curPos()                                */
@@ -301,7 +303,7 @@ OGRXercesInputSource::OGRXercesInputSource(VSILFILE *fp,
 /*                      ~OGRXercesInputSource()                         */
 /************************************************************************/
 
-OGRXercesInputSource::~OGRXercesInputSource() {}
+OGRXercesInputSource::~OGRXercesInputSource() = default;
 
 /************************************************************************/
 /*                     OGRCreateXercesInputSource()                     */

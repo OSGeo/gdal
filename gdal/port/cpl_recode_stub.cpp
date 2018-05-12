@@ -236,7 +236,7 @@ char *CPLRecodeStub( const char *pszSource,
             bHaveWarned1 = true;
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Recode from %s to UTF-8 not supported, "
-                      "treated as ISO8859-1 to UTF-8.",
+                      "treated as ISO-8859-1 to UTF-8.",
                       pszSrcEncoding );
         }
 
@@ -260,7 +260,7 @@ char *CPLRecodeStub( const char *pszSource,
             bHaveWarned2 = true;
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Recode from UTF-8 to %s not supported, "
-                      "treated as UTF-8 to ISO8859-1.",
+                      "treated as UTF-8 to ISO-8859-1.",
                       pszDstEncoding );
         }
 

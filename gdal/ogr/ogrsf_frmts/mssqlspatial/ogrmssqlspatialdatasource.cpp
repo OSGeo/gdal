@@ -63,6 +63,7 @@ OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() :
 #else
     bUseCopy = FALSE;
 #endif
+    CPLDebug( "MSSQLSpatial", "Use COPY/BCP: %d", bUseCopy );
 }
 
 /************************************************************************/
@@ -945,6 +946,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
         else
             eType = wkbUnknown;
 
+        CPLAssert(papszGeomColumnNames && papszGeomColumnNames[iTable]);
         if( strlen(papszGeomColumnNames[iTable]) > 0 )
             OpenTable( papszSchemaNames[iTable], papszTableNames[iTable], papszGeomColumnNames[iTable],
                     nCoordDimension, nSRId, papszSRTexts? papszSRTexts[iTable] : nullptr, eType, bUpdate );

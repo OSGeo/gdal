@@ -57,15 +57,10 @@ CPL_CVSID("$Id$")
 
 class VSICacheChunk
 {
+    CPL_DISALLOW_COPY_ASSIGN(VSICacheChunk)
+
 public:
-  VSICacheChunk() :
-      bDirty(false),
-      iBlock(0),
-      poLRUPrev(nullptr),
-      poLRUNext(nullptr),
-      nDataFilled(0),
-      pabyData(nullptr)
-    {}
+    VSICacheChunk() = default;
 
     virtual ~VSICacheChunk()
     {
@@ -79,14 +74,13 @@ public:
         return (pabyData != nullptr);
     }
 
-    bool           bDirty;  // TODO(schwehr): Not used?  Added in r22564.
-    vsi_l_offset   iBlock;
+    vsi_l_offset   iBlock = 0;
 
-    VSICacheChunk *poLRUPrev;
-    VSICacheChunk *poLRUNext;
+    VSICacheChunk *poLRUPrev = nullptr;
+    VSICacheChunk *poLRUNext = nullptr;
 
-    vsi_l_offset   nDataFilled;
-    GByte          *pabyData;
+    vsi_l_offset   nDataFilled = 0;
+    GByte          *pabyData = nullptr;
 };
 
 /************************************************************************/
@@ -97,6 +91,8 @@ public:
 
 class VSICachedFile final : public VSIVirtualHandle
 {
+    CPL_DISALLOW_COPY_ASSIGN(VSICachedFile)
+
   public:
     VSICachedFile( VSIVirtualHandle *poBaseHandle,
                    size_t nChunkSize,
@@ -108,22 +104,22 @@ class VSICachedFile final : public VSIVirtualHandle
                               void *pBuffer, size_t nBufferSize );
     void          Demote( VSICacheChunk * );
 
-    VSIVirtualHandle *poBase;
+    VSIVirtualHandle *poBase = nullptr;
 
-    vsi_l_offset  nOffset;
-    vsi_l_offset  nFileSize;
+    vsi_l_offset  nOffset = 0;
+    vsi_l_offset  nFileSize = 0;
 
-    GUIntBig      nCacheUsed;
-    GUIntBig      nCacheMax;
+    GUIntBig      nCacheUsed = 0;
+    GUIntBig      nCacheMax = 0;
 
-    size_t        m_nChunkSize;
+    size_t        m_nChunkSize = 0;
 
-    VSICacheChunk *poLRUStart;
-    VSICacheChunk *poLRUEnd;
+    VSICacheChunk *poLRUStart = nullptr;
+    VSICacheChunk *poLRUEnd = nullptr;
 
-    std::map<vsi_l_offset, VSICacheChunk*> oMapOffsetToCache;
+    std::map<vsi_l_offset, VSICacheChunk*> oMapOffsetToCache{};
 
-    bool           bEOF;
+    bool           bEOF = false;
 
     int Seek( vsi_l_offset nOffset, int nWhence ) override;
     vsi_l_offset Tell() override;
@@ -149,16 +145,9 @@ class VSICachedFile final : public VSIVirtualHandle
 VSICachedFile::VSICachedFile( VSIVirtualHandle *poBaseHandle, size_t nChunkSize,
                               size_t nCacheSize ) :
     poBase(poBaseHandle),
-    nOffset(0),
-    nFileSize(0),  // Set below.
-    nCacheUsed(0),
     nCacheMax(nCacheSize),
-    poLRUStart(nullptr),
-    poLRUEnd(nullptr),
-    bEOF(false)
+    m_nChunkSize(nChunkSize)
 {
-    m_nChunkSize = nChunkSize;
-
     if( nCacheSize == 0 )
         nCacheMax = CPLScanUIntBig(
              CPLGetConfigOption( "VSI_CACHE_SIZE", "25000000" ), 40 );
@@ -256,8 +245,6 @@ void VSICachedFile::FlushLRU()
 
     if( poBlock->poLRUNext != nullptr )
         poBlock->poLRUNext->poLRUPrev = nullptr;
-
-    CPLAssert( !poBlock->bDirty );
 
     oMapOffsetToCache[poBlock->iBlock] = nullptr;
 

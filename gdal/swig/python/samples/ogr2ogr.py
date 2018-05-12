@@ -47,9 +47,9 @@ from osgeo import osr
 
 
 class ScaledProgressObject(object):
-    def __init__(self, min, max, cbk, cbk_data=None):
-        self.min = min
-        self.max = max
+    def __init__(self, mini, maxi, cbk, cbk_data=None):
+        self.min = mini
+        self.max = maxi
         self.cbk = cbk
         self.cbk_data = cbk_data
 
@@ -76,6 +76,7 @@ nLastTick = -1
 
 
 def TermProgress(dfComplete, pszMessage, pProgressArg):
+    # pylint: disable=unused-argument
 
     global nLastTick
     nThisTick = int(dfComplete * 40.0)
@@ -1205,7 +1206,7 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName,
                      bAppend, eGType, bPromoteToMulti, nCoordDim, bOverwrite,
                      papszFieldTypesToString, bWrapDateline,
                      bExplodeCollections, pszZField, pszWHERE):
-
+    # pylint: disable=unused-argument
     if pszNewLayerName is None:
         pszNewLayerName = poSrcLayer.GetLayerDefn().GetName()
 
@@ -1511,7 +1512,7 @@ def TranslateLayer(psInfo, poSrcDS, poSrcLayer, poDstDS,
                    nCountLayerFeatures,
                    poClipSrc, poClipDst, bExplodeCollections, nSrcFileSize,
                    pnReadFeatureCount, pfnProgress, pProgressArg):
-
+    # pylint: disable=unused-argument
     bForceToPolygon = False
     bForceToMultiPolygon = False
     bForceToMultiLineString = False

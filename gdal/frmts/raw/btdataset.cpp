@@ -42,7 +42,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class BTDataset : public GDALPamDataset
+class BTDataset final: public GDALPamDataset
 {
     friend class BTRasterBand;
 
@@ -59,6 +59,8 @@ class BTDataset : public GDALPamDataset
     unsigned char abyHeader[256];
 
     float        m_fVscale;
+
+    CPL_DISALLOW_COPY_ASSIGN(BTDataset)
 
   public:
     BTDataset();
@@ -83,9 +85,11 @@ class BTDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class BTRasterBand : public GDALPamRasterBand
+class BTRasterBand final: public GDALPamRasterBand
 {
     VSILFILE          *fpImage;
+
+    CPL_DISALLOW_COPY_ASSIGN(BTRasterBand)
 
   public:
                    BTRasterBand( GDALDataset * poDS, VSILFILE * fp,
@@ -301,7 +305,7 @@ static bool approx_equals( float a, float b )
 
 const char* BTRasterBand::GetUnitType(void)
 {
-    const BTDataset& ds = *(BTDataset*)poDS;
+    const BTDataset& ds = * cpl::down_cast<const BTDataset*>(poDS);
     float f = ds.m_fVscale;
     if(f == 1.0f)
         return "m";
@@ -325,7 +329,7 @@ const char* BTRasterBand::GetUnitType(void)
 
 CPLErr BTRasterBand::SetUnitType(const char* psz)
 {
-    BTDataset& ds = *(BTDataset*)poDS;
+    BTDataset& ds = * cpl::down_cast<BTDataset*>(poDS);
     if(EQUAL(psz, "m"))
         ds.m_fVscale = 1.0f;
     else if(EQUAL(psz, "ft"))
@@ -380,7 +384,7 @@ BTDataset::BTDataset() :
 BTDataset::~BTDataset()
 
 {
-    FlushCache();
+    BTDataset::FlushCache();
     if( fpImage != nullptr )
     {
         if( VSIFCloseL( fpImage ) != 0 )
@@ -528,7 +532,7 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
 /* -------------------------------------------------------------------- */
     int bNorth = FALSE;
 
-    nShortTemp = (GInt16) oSRS.GetUTMZone( &bNorth );
+    nShortTemp = static_cast<GInt16>(oSRS.GetUTMZone( &bNorth ));
     if( bNorth )
         nShortTemp = -nShortTemp;
 
@@ -596,7 +600,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char szVersion[4] = {};
 
-    strncpy( szVersion, (char *) (poDS->abyHeader + 7), 3 );
+    strncpy( szVersion, reinterpret_cast<char *>(poDS->abyHeader + 7), 3 );
     szVersion[3] = '\0';
     poDS->nVersionCode = static_cast<int>(CPLAtof(szVersion) * 10);
 
@@ -925,8 +929,8 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write to disk.                                                  */
 /* -------------------------------------------------------------------- */
-    if( VSIFWriteL( (void *) abyHeader, 256, 1, fp ) != 1 ||
-        VSIFSeekL( fp, (GDALGetDataTypeSize(eType)/8) * nXSize * (vsi_l_offset)nYSize - 1,
+    if( VSIFWriteL( abyHeader, 256, 1, fp ) != 1 ||
+        VSIFSeekL( fp, (GDALGetDataTypeSize(eType)/8) * nXSize * static_cast<vsi_l_offset>(nYSize) - 1,
                    SEEK_CUR ) != 0
         || VSIFWriteL( abyHeader+255, 1, 1, fp ) != 1 )
     {
@@ -948,7 +952,7 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
         return nullptr;
     }
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    return GDALDataset::Open( pszFilename, GDAL_OF_RASTER | GDAL_OF_UPDATE );
 }
 
 /************************************************************************/

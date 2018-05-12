@@ -95,8 +95,7 @@ class OGRXLSXLayer final: public OGRMemLayer
     { Init(); return OGRMemLayer::GetFeatureCount(bForce); }
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE ) override
-    { Init(); SetUpdated(); return OGRMemLayer::CreateField(poField, bApproxOK); }
+                                     int bApproxOK = TRUE ) override;
 
     virtual OGRErr      DeleteField( int iField ) override
     { Init(); SetUpdated(); return OGRMemLayer::DeleteField(iField); }

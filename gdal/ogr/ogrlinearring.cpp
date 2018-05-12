@@ -46,7 +46,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 /** Constructor */
-OGRLinearRing::OGRLinearRing() {}
+OGRLinearRing::OGRLinearRing() = default;
 
 /************************************************************************/
 /*                  OGRLinearRing( const OGRLinearRing& )               */
@@ -61,15 +61,13 @@ OGRLinearRing::OGRLinearRing() {}
  * @since GDAL 2.1
  */
 
-OGRLinearRing::OGRLinearRing( const OGRLinearRing& other ) :
-    OGRLineString( other )
-{}
+OGRLinearRing::OGRLinearRing( const OGRLinearRing& ) = default;
 
 /************************************************************************/
 /*                          ~OGRLinearRing()                            */
 /************************************************************************/
 
-OGRLinearRing::~OGRLinearRing() {}
+OGRLinearRing::~OGRLinearRing() = default;
 
 /************************************************************************/
 /*                           OGRLinearRing()                            */

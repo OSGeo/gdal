@@ -3,8 +3,7 @@
 
 CPL_CVSID("$Id$")
 
-C2F oTypes;
-C2F::iterator iTypes;
+C2F* poTypes = nullptr;
 
 /*** class definitions ***/
 
@@ -13,14 +12,14 @@ OGRSOSIDataType::OGRSOSIDataType(int nSize) {
     nElementCount = nSize;
 }
 OGRSOSIDataType::~OGRSOSIDataType() {
-    //delete[] poElements;
+    delete[] poElements;
 }
 void OGRSOSIDataType::setElement(int nIndex, const char *name, OGRFieldType type) {
     poElements[nIndex].setType(name, type);
 }
 
 OGRSOSISimpleDataType::OGRSOSISimpleDataType ():
-    pszName(""),
+    osName(),
     nType(OFTString)
 {}
 
@@ -28,7 +27,7 @@ OGRSOSISimpleDataType::OGRSOSISimpleDataType (const char *name, OGRFieldType typ
     setType(name, type);
 }
 void OGRSOSISimpleDataType::setType (const char *name, OGRFieldType type) {
-    pszName = name;
+    osName  = name;
     nType   = type;
 }
 OGRSOSISimpleDataType::~OGRSOSISimpleDataType () {}
@@ -42,18 +41,27 @@ static void addSimpleType(C2F* map, const char *key, const char *gmlKey, OGRFiel
   OGRSOSIDataType *poType = new OGRSOSIDataType(1);
   poType->setElement(0, gmlKey, type);
   addType(map, key, poType);
+  delete poType;
 }
 
 void SOSIInitTypes() {
+  CPLAssert(poTypes == nullptr);
+  poTypes = new C2F();
 #include "ogrsosidatatypes.h"
 
   /* Actually not headers */
-  addSimpleType(&oTypes, "PUNKT", "", OFTInteger); //ignore
-  addSimpleType(&oTypes, "KURVE", "", OFTInteger); //ignore
-  addSimpleType(&oTypes, "FLATE", "", OFTInteger); //ignore
-  addSimpleType(&oTypes, "BUEP", "", OFTInteger);  //ignore
-  addSimpleType(&oTypes, "TEKST", "", OFTInteger); //ignore
-  addSimpleType(&oTypes, "REF", "", OFTString); //ignore this
+  addSimpleType(poTypes, "PUNKT", "", OFTInteger); //ignore
+  addSimpleType(poTypes, "KURVE", "", OFTInteger); //ignore
+  addSimpleType(poTypes, "FLATE", "", OFTInteger); //ignore
+  addSimpleType(poTypes, "BUEP", "", OFTInteger);  //ignore
+  addSimpleType(poTypes, "TEKST", "", OFTInteger); //ignore
+  addSimpleType(poTypes, "REF", "", OFTString); //ignore this
+}
+
+void SOSICleanupTypes()
+{
+    delete poTypes;
+    poTypes = nullptr;
 }
 
 int SOSITypeToInt(const char* value) {
@@ -93,16 +101,14 @@ void SOSITypeToDateTime(const char* value, int* date) {
   date[0] = atoi(dato);
 }
 
-// Leaks memory
-static OGRSOSIDataType* SOSIGetTypeFallback(CPLString name) {
-  CPLString* copy = new CPLString(name.c_str());
-  addSimpleType(&oTypes, copy->c_str(), copy->c_str(), OFTString);
+static OGRSOSIDataType* SOSIGetTypeFallback(const CPLString& name) {
+  addSimpleType(poTypes, name.c_str(), name.c_str(), OFTString);
   return SOSIGetType(name);
 }
 
-OGRSOSIDataType* SOSIGetType(CPLString name) {
-  iTypes = oTypes.find(name);
-  if (iTypes != oTypes.end()) {
+OGRSOSIDataType* SOSIGetType(const CPLString& name) {
+  auto iTypes = poTypes->find(name);
+  if (iTypes != poTypes->end()) {
     return &(iTypes->second);
   } else {
     return SOSIGetTypeFallback(name);

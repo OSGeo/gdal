@@ -1878,7 +1878,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
 
         if( CSLCount(papszFields) >= 5 )
         {
-            sTABProj.nEllipsoidId = (GByte)atoi(papszFields[1]);
+            sTABProj.nEllipsoidId = static_cast<GByte>(atoi(papszFields[1]));
             sTABProj.dDatumShiftX = CPLAtof(papszFields[2]);
             sTABProj.dDatumShiftY = CPLAtof(papszFields[3]);
             sTABProj.dDatumShiftZ = CPLAtof(papszFields[4]);
@@ -1930,8 +1930,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
 
     if( psDatumInfo != nullptr )
     {
-        sTABProj.nEllipsoidId = (GByte)psDatumInfo->nEllipsoid;
-        sTABProj.nDatumId = (GInt16)psDatumInfo->nMapInfoDatumID;
+        sTABProj.nEllipsoidId = static_cast<GByte>(psDatumInfo->nEllipsoid);
+        sTABProj.nDatumId = static_cast<GInt16>(psDatumInfo->nMapInfoDatumID);
         sTABProj.dDatumShiftX = psDatumInfo->dfShiftX;
         sTABProj.dDatumShiftY = psDatumInfo->dfShiftY;
         sTABProj.dDatumShiftZ = psDatumInfo->dfShiftZ;

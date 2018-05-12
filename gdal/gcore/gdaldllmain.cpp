@@ -96,15 +96,15 @@ void GDALDestroy(void)
 /************************************************************************/
 #ifdef __GNUC__
 
-static void GDALInitialize(void) __attribute__ ((constructor)) ;
-static void GDALDestructor(void) __attribute__ ((destructor)) ;
+static void GDALInitialize() __attribute__ ((constructor)) ;
+static void GDALDestructor() __attribute__ ((destructor)) ;
 
 /************************************************************************/
 /* Called when GDAL is loaded by loader or by dlopen(),                 */
 /* and before dlopen() returns.                                         */
 /************************************************************************/
 
-static void GDALInitialize(void)
+static void GDALInitialize()
 {
     // nothing to do
     //CPLDebug("GDAL", "Library loaded");
@@ -120,7 +120,7 @@ static void GDALInitialize(void)
 /* and before dlclose() returns.                                        */
 /************************************************************************/
 
-static void GDALDestructor(void)
+static void GDALDestructor()
 {
     if( bGDALDestroyAlreadyCalled )
         return;

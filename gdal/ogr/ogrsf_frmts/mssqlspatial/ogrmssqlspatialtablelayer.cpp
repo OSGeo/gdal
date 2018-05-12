@@ -280,11 +280,17 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
 /*      it is in the form <schema>.<tablename>                          */
 /* -------------------------------------------------------------------- */
     const char *pszDot = strstr(pszLayerNameIn,".");
-    if( pszDot != nullptr && pszSchema == nullptr )
+    if( pszDot != nullptr )
     {
         pszTableName = CPLStrdup(pszDot + 1);
-        pszSchemaName = CPLStrdup(pszLayerNameIn);
-        pszSchemaName[pszDot - pszLayerNameIn] = '\0';
+        if (pszSchema == nullptr)
+        {
+            pszSchemaName = CPLStrdup(pszLayerNameIn);
+            pszSchemaName[pszDot - pszLayerNameIn] = '\0';
+        }
+        else
+            pszSchemaName = CPLStrdup(pszSchema);
+
         this->pszLayerName = CPLStrdup(pszLayerNameIn);
     }
     else
@@ -351,7 +357,7 @@ int OGRMSSQLSpatialTableLayer::FetchSRSId()
 {
     if ( poDS->UseGeometryColumns() )
     {
-        CPLODBCStatement oStatement = CPLODBCStatement( poDS->GetSession() );
+        CPLODBCStatement oStatement( poDS->GetSession() );
         oStatement.Appendf( "select srid from geometry_columns "
                         "where f_table_schema = '%s' and f_table_name = '%s'",
                         pszSchemaName, pszTableName );

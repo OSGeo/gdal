@@ -778,7 +778,6 @@ def ogr_pg_15():
     return 'success' if tr else 'fail'
 
 
-
 ###############################################################################
 # Test very large statement.
 
@@ -5757,7 +5756,7 @@ def ogr_pg_with_and_without_postgis():
         return 'skip'
     # gdaltest.run_tests( [ ogr_pg_71 ] )
     # gdaltest.run_tests( [ ogr_pg_cleanup ] )
-    if True:
+    if True:  # pylint: disable=using-constant-test
         gdaltest.run_tests(gdaltest_list_internal)
 
         if gdaltest.pg_has_postgis:

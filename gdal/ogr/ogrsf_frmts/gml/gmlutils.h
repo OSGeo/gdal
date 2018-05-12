@@ -55,6 +55,7 @@ const char* GML_ExtractSrsNameFromGeometry(const CPLXMLNode* const * papsGeometr
                                      bool bConsiderEPSGAsURN);
 
 bool GML_IsSRSLatLongOrder(const char* pszSRSName);
+bool GML_IsLegitSRSName(const char* pszSRSName);
 
 void* GML_BuildOGRGeometryFromList_CreateCache();
 void GML_BuildOGRGeometryFromList_DestroyCache(void* hCacheSRS);

@@ -566,7 +566,14 @@ def wcs_6():
                 print(server + ' ' + version + ' non_scaled skipped (no response file)')
     webserver.server_stop(process, port)
 
-    return 'success' if  wcs_6_ok else 'fail'
+    return 'success' if wcs_6_ok else 'fail'
+
+###############################################################################
+
+# todo tests:
+
+# test that nothing is put into cache if request fails
+# parsing Capabilities and DescribeCoverage: test data in metadata and service files?
 
 ###############################################################################
 

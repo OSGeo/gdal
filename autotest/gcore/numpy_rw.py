@@ -886,6 +886,7 @@ def numpy_rw_18():
 
     return 'success'
 
+
 def numpy_rw_cleanup():
     gdaltest.numpy_drv = None
 

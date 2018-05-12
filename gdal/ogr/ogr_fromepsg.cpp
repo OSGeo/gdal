@@ -31,7 +31,7 @@
 #include "cpl_port.h"
 #include "ogr_srs_api.h"
 
-#include <ctype.h>
+#include <cctype>
 
 #include <cmath>
 #include <cstddef>
@@ -478,14 +478,15 @@ int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransform )
     if( iDXField < 0 || CSLCount(papszLine) < iDXField + 7 )
         return FALSE;
 
-    asTransform.resize(0);
+    asTransform.clear();
+    asTransform.reserve(7);
     for( int iField = 0; iField < 7; iField++ )
     {
         const char* pszValue = papszLine[iDXField+iField];
         if( pszValue[0] )
-            asTransform.push_back(pszValue);
+            asTransform.emplace_back(pszValue);
         else
-            asTransform.push_back("0");
+            asTransform.emplace_back("0");
     }
 
 /* -------------------------------------------------------------------- */
@@ -589,20 +590,23 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
     char szSearchKey[24] = { '\0' };
     snprintf( szSearchKey, sizeof(szSearchKey), "%d", nGCSCode );
 
-    int nDatum = atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE",
-                                         szSearchKey, CC_Integer,
-                                         "DATUM_CODE" ) );
+    char **papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
+                                            szSearchKey, CC_Integer );
 
-    if( nDatum < 1 )
+    if( papszRecord == nullptr )
     {
-        pszFilename = CSVFilename("gcs.csv");
+        pszFilename = CSVFilename( "gcs.csv" );
         snprintf( szSearchKey, sizeof(szSearchKey), "%d", nGCSCode );
-
-        nDatum = atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE",
-                                   szSearchKey, CC_Integer,
-                                   "DATUM_CODE" ) );
+        papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
+                                         szSearchKey, CC_Integer );
     }
 
+    if( papszRecord == nullptr )
+        return false;
+
+    int nDatum = atoi(CSLGetField( papszRecord,
+                         CSVGetFileFieldId(pszFilename,
+                                           "DATUM_CODE")));
     if( nDatum < 1 )
         return false;
 
@@ -612,9 +616,9 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
 /*      Get the PM.                                                     */
 /* -------------------------------------------------------------------- */
-    const int nPM = atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE",
-                                      szSearchKey, CC_Integer,
-                                      "PRIME_MERIDIAN_CODE" ) );
+    const int nPM = atoi(CSLGetField( papszRecord,
+                            CSVGetFileFieldId(pszFilename,
+                                           "PRIME_MERIDIAN_CODE" ) ));
 
     if( nPM < 1 )
         return false;
@@ -625,9 +629,9 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
 /*      Get the Ellipsoid.                                              */
 /* -------------------------------------------------------------------- */
-    const int nEllipsoid = atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE",
-                                             szSearchKey, CC_Integer,
-                                             "ELLIPSOID_CODE" ) );
+    const int nEllipsoid = atoi(CSLGetField( papszRecord,
+                                    CSVGetFileFieldId(pszFilename,
+                                           "ELLIPSOID_CODE" ) ));
 
     if( nEllipsoid < 1 )
         return false;
@@ -638,9 +642,9 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
 /*      Get the angular units.                                          */
 /* -------------------------------------------------------------------- */
-    const int nUOMAngle = atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE",
-                                            szSearchKey, CC_Integer,
-                                            "UOM_CODE" ) );
+    const int nUOMAngle = atoi(CSLGetField( papszRecord,
+                                    CSVGetFileFieldId(pszFilename,
+                                            "UOM_CODE" ) ));
 
     if( nUOMAngle < 1 )
         return false;
@@ -652,26 +656,38 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
 /*      Get the name, if requested.                                     */
 /* -------------------------------------------------------------------- */
     if( ppszName != nullptr )
-        *ppszName =
-            CPLStrdup(CSVGetField( pszFilename, "COORD_REF_SYS_CODE",
-                                   szSearchKey, CC_Integer,
-                                   "COORD_REF_SYS_NAME" ));
+    {
+        CPLString osGCSName =
+            CSLGetField( papszRecord,
+                         CSVGetFileFieldId(pszFilename,
+                                           "COORD_REF_SYS_NAME" ));
+
+        const char *pszDeprecated =
+            CSLGetField( papszRecord,
+                         CSVGetFileFieldId(pszFilename,
+                                           "DEPRECATED") );
+
+        if( pszDeprecated != nullptr && *pszDeprecated == '1' )
+            osGCSName += " (deprecated)";
+
+        *ppszName = CPLStrdup(osGCSName);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get the datum name, if requested.                               */
 /* -------------------------------------------------------------------- */
     if( ppszDatumName != nullptr )
         *ppszDatumName =
-            CPLStrdup(CSVGetField( pszFilename, "COORD_REF_SYS_CODE",
-                                   szSearchKey, CC_Integer,
-                                   "DATUM_NAME" ));
+            CPLStrdup(CSLGetField( papszRecord,
+                         CSVGetFileFieldId(pszFilename,
+                                           "DATUM_NAME" )));
 
 /* -------------------------------------------------------------------- */
 /*      Get the CoordSysCode                                            */
 /* -------------------------------------------------------------------- */
-    const int nCSC = atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE",
-                                       szSearchKey, CC_Integer,
-                                       "COORD_SYS_CODE" ) );
+    const int nCSC = atoi(CSLGetField( papszRecord,
+                         CSVGetFileFieldId(pszFilename,
+                                           "COORD_SYS_CODE" ) ));
 
     if( pnCoordSysCode != nullptr )
         *pnCoordSysCode = nCSC;
@@ -1221,7 +1237,7 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
         papszAxis1[iAxisAbbrevField],
         papszAxis2[iAxisAbbrevField] };
 
-    for( int iAO = 0; iAO < 2; iAO++ )
+    for( int iAO : {0, 1} )
     {
         if( EQUAL(apszAxisName[iAO], "N") )
             apszAxisName[iAO] = "Northing";
@@ -2906,15 +2922,15 @@ void CleanupFindMatchesCacheAndMutex()
     }
     if( papoSRSCache_GEOGCS )
     {
-        for( size_t i = 0; i < papoSRSCache_GEOGCS->size(); i++ )
-            delete (*papoSRSCache_GEOGCS)[i];
+        for( auto& poSRS: *papoSRSCache_GEOGCS )
+            delete poSRS;
         delete papoSRSCache_GEOGCS;
         papoSRSCache_GEOGCS = nullptr;
     }
     if( papoSRSCache_PROJCS )
     {
-        for( size_t i = 0; i < papoSRSCache_PROJCS->size(); i++ )
-            delete (*papoSRSCache_PROJCS)[i];
+        for( auto& poSRS: *papoSRSCache_PROJCS )
+            delete poSRS;
         delete papoSRSCache_PROJCS;
         papoSRSCache_PROJCS = nullptr;
     }

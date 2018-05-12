@@ -4941,17 +4941,18 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 				err=TIFFReadDirEntryByteArray(tif,dp,&data);
 				if (err==TIFFReadDirEntryErrOk)
 				{
-					uint8* ma;
-					uint32 mb;
+					uint32 mb = 0;
 					int n;
-					ma=data;
-					mb=0;
-					while (mb<(uint32)dp->tdir_count)
+					if (data != NULL)
 					{
-						if (*ma==0)
-							break;
-						ma++;
-						mb++;
+					    uint8* ma = data;
+					    while (mb<(uint32)dp->tdir_count)
+					    {
+					            if (*ma==0)
+					                    break;
+					            ma++;
+					            mb++;
+					    }
 					}
 					if (mb+1<(uint32)dp->tdir_count)
 						TIFFWarningExt(tif->tif_clientdata,module,"ASCII value for tag \"%s\" contains null byte in value; value incorrectly truncated during reading due to implementation limitations",fip->field_name);
@@ -5201,11 +5202,11 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 					if (err==TIFFReadDirEntryErrOk)
 					{
 						int m;
-                        if( dp->tdir_count > 0 && data[dp->tdir_count-1] != '\0' )
-                        {
-                            TIFFWarningExt(tif->tif_clientdata,module,"ASCII value for tag \"%s\" does not end in null byte. Forcing it to be null",fip->field_name);
-                            data[dp->tdir_count-1] = '\0';
-                        }
+						if( data != 0 && dp->tdir_count > 0 && data[dp->tdir_count-1] != '\0' )
+						{
+						    TIFFWarningExt(tif->tif_clientdata,module,"ASCII value for tag \"%s\" does not end in null byte. Forcing it to be null",fip->field_name);
+						    data[dp->tdir_count-1] = '\0';
+						}
 						m=TIFFSetField(tif,dp->tdir_tag,(uint16)(dp->tdir_count),data);
 						if (data!=0)
 							_TIFFfree(data);
@@ -5378,11 +5379,11 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 				if (err==TIFFReadDirEntryErrOk)
 				{
 					int m;
-                    if( dp->tdir_count > 0 && data[dp->tdir_count-1] != '\0' )
-                    {
-                        TIFFWarningExt(tif->tif_clientdata,module,"ASCII value for tag \"%s\" does not end in null byte. Forcing it to be null",fip->field_name);
-                        data[dp->tdir_count-1] = '\0';
-                    }
+					if( data != 0 && dp->tdir_count > 0 && data[dp->tdir_count-1] != '\0' )
+					{
+					    TIFFWarningExt(tif->tif_clientdata,module,"ASCII value for tag \"%s\" does not end in null byte. Forcing it to be null",fip->field_name);
+                                            data[dp->tdir_count-1] = '\0';
+					}
 					m=TIFFSetField(tif,dp->tdir_tag,(uint32)(dp->tdir_count),data);
 					if (data!=0)
 						_TIFFfree(data);

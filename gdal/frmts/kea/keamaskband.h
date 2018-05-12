@@ -35,7 +35,7 @@
 
 #include "libkea_headers.h"
 
-class KEAMaskBand : public GDALRasterBand
+class KEAMaskBand final: public GDALRasterBand
 {
     int m_nSrcBand;
     kealib::KEAImageIO  *m_pImageIO; // our image access pointer - refcounted

@@ -61,6 +61,11 @@ static const char * const papszParameterDefinitions[] = {
     SRS_PP_PEG_POINT_LONGITUDE, "Peg Point Longitude",  "Long",  "0.0",
     SRS_PP_PEG_POINT_HEADING,   "Peg Point Heading",    "Angle", "0.0",
     SRS_PP_PEG_POINT_HEIGHT,    "Peg Point Height",     "m",     "0.0",
+    SRS_PP_PSEUDO_STD_PARALLEL_1, "Pseudo standard parallel 1", "Lat", "0.0",
+    SRS_PP_LATITUDE_OF_1ST_POINT, "Latitude of 1st point", "Lat", "0.0",
+    SRS_PP_LATITUDE_OF_2ND_POINT, "Latitude of 2nd point", "Lat", "0.0",
+    SRS_PP_LONGITUDE_OF_1ST_POINT, "Longitude of 1st point", "Lat", "0.0",
+    SRS_PP_LONGITUDE_OF_2ND_POINT, "Longitude of 2nd point", "Long", "0.0",
     nullptr
 };
 
@@ -386,7 +391,7 @@ static const char * const papszProjectionDefinitions[] = {
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
-    "*"
+    "*",
     SRS_PT_STEREOGRAPHIC,
     "Stereographic",
     SRS_PP_LATITUDE_OF_ORIGIN,
@@ -395,7 +400,7 @@ static const char * const papszProjectionDefinitions[] = {
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
-    "*"
+    "*",
     SRS_PT_TWO_POINT_EQUIDISTANT,
     "Two Point Equidistant",
     SRS_PP_LATITUDE_OF_1ST_POINT,
@@ -412,7 +417,7 @@ static const char * const papszProjectionDefinitions[] = {
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
-    "*"
+    "*",
     SRS_PT_KROVAK,
     "Krovak",
     SRS_PP_LATITUDE_OF_CENTER,

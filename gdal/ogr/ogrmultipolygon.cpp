@@ -44,7 +44,7 @@ CPL_CVSID("$Id$")
  * \brief Create an empty multi polygon collection.
  */
 
-OGRMultiPolygon::OGRMultiPolygon() {}
+OGRMultiPolygon::OGRMultiPolygon() = default;
 
 /************************************************************************/
 /*              OGRMultiPolygon( const OGRMultiPolygon& )               */
@@ -59,15 +59,13 @@ OGRMultiPolygon::OGRMultiPolygon() {}
  * @since GDAL 2.1
  */
 
-OGRMultiPolygon::OGRMultiPolygon( const OGRMultiPolygon& other ) :
-    OGRMultiSurface(other)
-{}
+OGRMultiPolygon::OGRMultiPolygon( const OGRMultiPolygon& ) = default;
 
 /************************************************************************/
 /*                         ~OGRMultiPolygon()                           */
 /************************************************************************/
 
-OGRMultiPolygon::~OGRMultiPolygon() {}
+OGRMultiPolygon::~OGRMultiPolygon() = default;
 
 /************************************************************************/
 /*                  operator=( const OGRMultiPolygon&)                    */

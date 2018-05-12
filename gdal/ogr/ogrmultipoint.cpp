@@ -50,7 +50,7 @@ CPL_CVSID("$Id$")
  * \brief Create an empty multi point collection.
  */
 
-OGRMultiPoint::OGRMultiPoint() {}
+OGRMultiPoint::OGRMultiPoint() = default;
 
 /************************************************************************/
 /*                OGRMultiPoint( const OGRMultiPoint& )                 */
@@ -65,15 +65,13 @@ OGRMultiPoint::OGRMultiPoint() {}
  * @since GDAL 2.1
  */
 
-OGRMultiPoint::OGRMultiPoint( const OGRMultiPoint& other ) :
-    OGRGeometryCollection(other)
-{}
+OGRMultiPoint::OGRMultiPoint( const OGRMultiPoint& ) = default;
 
 /************************************************************************/
 /*                          ~OGRMultiPoint()                            */
 /************************************************************************/
 
-OGRMultiPoint::~OGRMultiPoint() {}
+OGRMultiPoint::~OGRMultiPoint() = default;
 
 /************************************************************************/
 /*                  operator=( const OGRMultiPoint&)                    */

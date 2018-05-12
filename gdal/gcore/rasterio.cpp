@@ -777,13 +777,13 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*                         GDALRasterIOTransformer()                    */
 /************************************************************************/
 
-typedef struct
+struct GDALRasterIOTransformerStruct
 {
     double dfXOff;
     double dfYOff;
     double dfXRatioDstToSrc;
     double dfYRatioDstToSrc;
-} GDALRasterIOTransformerStruct;
+};
 
 static int GDALRasterIOTransformer( void *pTransformerArg,
                                     CPL_UNUSED int bDstToSrc,

@@ -243,8 +243,8 @@ def ogr_interlis1_5():
 
     dst_ds = None
 
-    with open(outfile) as file:
-        itf = file.read()
+    with open(outfile) as f:
+        itf = f.read()
         expected = """MTID INTERLIS1
 MODL OGR
 ETOP
@@ -289,8 +289,8 @@ def ogr_interlis1_6():
 
     dst_ds = None
 
-    with open(outfile) as file:
-        itf = file.read()
+    with open(outfile) as f:
+        itf = f.read()
         expected = """MTID INTERLIS1
 MODL FormatDefault
 TOPI FormatTests
@@ -369,10 +369,10 @@ def ogr_interlis1_7():
 
     try:
         # Python 3
-        file = open(outfile, encoding='iso-8859-1')
-    except:
-        file = open(outfile)
-    itf = file.read()
+        f = open(outfile, encoding='iso-8859-1')
+    except TypeError:
+        f = open(outfile)
+    itf = f.read()
     expected = """MTID INTERLIS1
 MODL FormatDefault
 TABL FormatTable
@@ -1037,8 +1037,8 @@ def ogr_interlis1_14():
 
     dst_ds = None
 
-    with open(outfile) as file:
-        itf = file.read()
+    with open(outfile) as f:
+        itf = f.read()
         expected = """////
 MTID INTERLIS1
 MODL Beispiel
@@ -1236,8 +1236,8 @@ def ogr_interlis2_3():
 
     dst_ds = None
 
-    with open(outfile) as file:
-        xtf = file.read()
+    with open(outfile) as f:
+        xtf = f.read()
         expected = """<?xml version="1.0" encoding="utf-8" ?>
 <TRANSFER xmlns="http://www.interlis.ch/INTERLIS2.3">
 <HEADERSECTION SENDER="OGR/GDAL"""

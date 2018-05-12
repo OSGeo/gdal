@@ -1,5 +1,4 @@
 /* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */
-#define call_gmon_start gdal_call_gmon_start
 #define DefaultPrint gdal_DefaultPrint
 #define DefaultRead gdal_DefaultRead
 #define EPSGProjMethodToCTProjMethod gdal_EPSGProjMethodToCTProjMethod
@@ -13,6 +12,7 @@
 #define GTIFDeaccessCSV gdal_GTIFDeaccessCSV
 #define GTIFDecToDMS gdal_GTIFDecToDMS
 #define GTIFDirectoryInfo gdal_GTIFDirectoryInfo
+#define GTIFErrorFunction gdal_GTIFErrorFunction
 #define GTIFFetchProjParms gdal_GTIFFetchProjParms
 #define GTIFFree gdal_GTIFFree
 #define _GTIFFree gdal__GTIFFree
@@ -30,10 +30,14 @@
 #define GTIFGetProjTRFInfo gdal_GTIFGetProjTRFInfo
 #define GTIFGetUOMAngleInfo gdal_GTIFGetUOMAngleInfo
 #define GTIFGetUOMLengthInfo gdal_GTIFGetUOMLengthInfo
+#define GTIFGetUserData gdal_GTIFGetUserData
 #define GTIFImageToPCS gdal_GTIFImageToPCS
 #define GTIFImport gdal_GTIFImport
 #define GTIFKeyCode gdal_GTIFKeyCode
 #define GTIFKeyGet gdal_GTIFKeyGet
+#define GTIFKeyGetDOUBLE gdal_GTIFKeyGetDOUBLE
+#define GTIFKeyGetInternal gdal_GTIFKeyGetInternal
+#define GTIFKeyGetSHORT gdal_GTIFKeyGetSHORT
 #define GTIFKeyInfo gdal_GTIFKeyInfo
 #define GTIFKeyName gdal_GTIFKeyName
 #define GTIFKeySet gdal_GTIFKeySet
@@ -41,8 +45,10 @@
 #define GTIFMapSysToProj gdal_GTIFMapSysToProj
 #define _GTIFmemcpy gdal__GTIFmemcpy
 #define GTIFNew gdal_GTIFNew
+#define GTIFNewEx gdal_GTIFNewEx
 #define GTIFNewSimpleTags gdal_GTIFNewSimpleTags
 #define GTIFNewWithMethods gdal_GTIFNewWithMethods
+#define GTIFNewWithMethodsEx gdal_GTIFNewWithMethodsEx
 #define GTIFPCSToImage gdal_GTIFPCSToImage
 #define GTIFPCSToMapSys gdal_GTIFPCSToMapSys
 #define GTIFPrint gdal_GTIFPrint

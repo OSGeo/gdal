@@ -48,12 +48,7 @@ CPL_CVSID("$Id$")
 /*                         OGRCurveCollection()                         */
 /************************************************************************/
 
-OGRCurveCollection::OGRCurveCollection()
-
-{
-    nCurveCount = 0;
-    papoCurves = nullptr;
-}
+OGRCurveCollection::OGRCurveCollection() = default;
 
 /************************************************************************/
 /*             OGRCurveCollection( const OGRCurveCollection& )          */
@@ -68,9 +63,7 @@ OGRCurveCollection::OGRCurveCollection()
  * @since GDAL 2.1
  */
 
-OGRCurveCollection::OGRCurveCollection( const OGRCurveCollection& other ) :
-    nCurveCount(0),
-    papoCurves(nullptr)
+OGRCurveCollection::OGRCurveCollection( const OGRCurveCollection& other )
 {
     if( other.nCurveCount > 0 )
     {

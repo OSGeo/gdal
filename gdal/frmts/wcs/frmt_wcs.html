@@ -333,7 +333,35 @@ Note that time based subdatasets are not supported when the service description
 is the filename.  Currently time support is not available for versions other
 than WCS 1.0.0.  <p>
 
-See Also:<p>
+<h3>Examples</h3>
+
+A gdalinfo call to a coverage served by MapServer:
+
+<pre>
+gdalinfo \
+-oo INTERLEAVE=PIXEL \
+-oo OffsetsPositive \
+-oo NrOffsets=2 \
+-oo NoGridAxisSwap \
+-oo BandIdentifier=none \
+"WCS:http://194.66.252.155/cgi-bin/BGS_EMODnet_bathymetry/ows?VERSION=1.1.0&coverage=BGS_EMODNET_CentralMed-MCol"
+</pre>
+
+A gdal_translate call to a scaled clip of a coverage served by GeoServer:
+
+<pre>
+gdal_translate \
+-oo CACHE=wcs_cache \
+-oo CLEAR_CACHE \
+-oo INTERLEAVE=PIXEL \
+-projwin 377418 6683393.87938218 377717.879386966 6683094 \
+-oo Subset="time(1985-01-01T00:00:00.000Z)" \
+-outsize 60 0 \
+"WCS:https://beta-karttakuva.maanmittauslaitos.fi/wcs/service/ows?version=2.0.1&coverage=ortokuva__ortokuva" \
+scaled.tiff
+</pre>
+
+<h3>See Also:</h3>
 
 <ul>
 <li> <a href="http://www.opengeospatial.org/standards/wcs">OGC WCS Standards</a>

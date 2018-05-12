@@ -286,13 +286,13 @@ class CPL_DLL OGRDefaultConstGeometryVisitor: public IOGRConstGeometryVisitor
 class CPL_DLL OGRGeometry
 {
   private:
-    OGRSpatialReference * poSRS;                // may be NULL
+    OGRSpatialReference * poSRS = nullptr;                // may be NULL
 
   protected:
 //! @cond Doxygen_Suppress
     friend class OGRCurveCollection;
 
-    unsigned int flags;
+    unsigned int flags = 0;
 
     OGRErr       importPreambleFromWkt( const char ** ppszInput,
                                          int* pbHasZ, int* pbHasM,
@@ -947,7 +947,7 @@ class CPL_DLL OGRCurve : public OGRGeometry
                 std::unique_ptr<Private> m_poPrivate;
             public:
                 ConstIterator(const OGRCurve* poSelf, bool bStart);
-                ConstIterator(ConstIterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
+                ConstIterator(ConstIterator&& oOther) noexcept; // declared but not defined. Needed for gcc 5.4 at least
                 ~ConstIterator();
                 const OGRPoint& operator*() const;
                 ConstIterator& operator++();
@@ -1067,7 +1067,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                 void update();
             public:
                 Iterator(OGRSimpleCurve* poSelf, int nPos);
-                Iterator(Iterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
+                Iterator(Iterator&& oOther) noexcept; // declared but not defined. Needed for gcc 5.4 at least
                 ~Iterator();
                 OGRPoint& operator*();
                 Iterator& operator++();
@@ -1083,7 +1083,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                 std::unique_ptr<Private> m_poPrivate;
             public:
                 ConstIterator(const OGRSimpleCurve* poSelf, int nPos);
-                ConstIterator(ConstIterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
+                ConstIterator(ConstIterator&& oOther) noexcept; // declared but not defined. Needed for gcc 5.4 at least
                 ~ConstIterator();
                 const OGRPoint& operator*() const;
                 ConstIterator& operator++();
@@ -1486,8 +1486,8 @@ class CPL_DLL OGRCurveCollection
     friend class OGRPolygon;
     friend class OGRTriangle;
 
-    int         nCurveCount;
-    OGRCurve  **papoCurves;
+    int         nCurveCount = 0;
+    OGRCurve  **papoCurves = nullptr;
 
   public:
                 OGRCurveCollection();
@@ -1580,7 +1580,7 @@ class CPL_DLL OGRCurveCollection
 class CPL_DLL OGRCompoundCurve : public OGRCurve
 {
   private:
-    OGRCurveCollection oCC;
+    OGRCurveCollection oCC{};
 
     OGRErr      addCurveDirectlyInternal( OGRCurve* poCurve,
                                           double dfToleranceEps,
@@ -1778,7 +1778,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
 //! @cond Doxygen_Suppress
     friend class OGRPolygon;
     friend class OGRTriangle;
-    OGRCurveCollection oCC;
+    OGRCurveCollection oCC{};
 
     virtual OGRSurfaceCasterToPolygon      GetCasterToPolygon()
         const override;
@@ -2102,8 +2102,8 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
 
   protected:
 //! @cond Doxygen_Suppress
-    int         nGeomCount;
-    OGRGeometry **papoGeoms;
+    int         nGeomCount = 0;
+    OGRGeometry **papoGeoms = nullptr;
 
     OGRErr              exportToWktInternal( char ** ppszDstText,
                                              OGRwkbVariant eWkbVariant,
@@ -2398,7 +2398,7 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
   protected:
 //! @cond Doxygen_Suppress
     friend class OGRTriangulatedSurface;
-    OGRMultiPolygon oMP;
+    OGRMultiPolygon oMP{};
     virtual OGRSurfaceCasterToPolygon      GetCasterToPolygon()
         const override;
     virtual OGRSurfaceCasterToCurvePolygon GetCasterToCurvePolygon()

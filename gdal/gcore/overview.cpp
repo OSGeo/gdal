@@ -2383,7 +2383,7 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                         static_cast<float>(dfTotalI/nCount);
 
                     const double dfM =
-                        sqrt( pafDstScanline[iDstPixel*2]
+                        std::sqrt( pafDstScanline[iDstPixel*2]
                                   * pafDstScanline[iDstPixel*2]
                               + pafDstScanline[iDstPixel*2+1]
                                   * pafDstScanline[iDstPixel*2+1] );
@@ -3701,9 +3701,9 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
             if( bComplex )
             {
                 // Compute the magnitude of the complex value.
-                fValue = static_cast<float>(
-                    sqrt(pafData[iPixel*2  ] * pafData[iPixel*2  ]
-                         + pafData[iPixel*2+1] * pafData[iPixel*2+1]) );
+                fValue =
+                    std::sqrt(pafData[iPixel*2  ] * pafData[iPixel*2  ]
+                         + pafData[iPixel*2+1] * pafData[iPixel*2+1]);
             }
             else
             {

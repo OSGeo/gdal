@@ -43,9 +43,7 @@ CPL_CVSID("$Id$")
  *
  */
 
-OGRTriangulatedSurface::OGRTriangulatedSurface()
-
-{ }
+OGRTriangulatedSurface::OGRTriangulatedSurface() = default;
 
 /************************************************************************/
 /*        OGRTriangulatedSurface( const OGRTriangulatedSurface& )       */
@@ -72,9 +70,7 @@ OGRTriangulatedSurface::OGRTriangulatedSurface(
  *
  */
 
-OGRTriangulatedSurface::~OGRTriangulatedSurface()
-
-{ }
+OGRTriangulatedSurface::~OGRTriangulatedSurface() = default;
 
 /************************************************************************/
 /*                 operator=( const OGRTriangulatedSurface&)            */
@@ -100,7 +96,7 @@ OGRTriangulatedSurface& OGRTriangulatedSurface::operator=(
         assignSpatialReference( other.getSpatialReference() );
         for(int i=0;i<other.oMP.nGeomCount;i++)
         {
-            addGeometry( other.oMP.getGeometryRef(i) );
+            OGRTriangulatedSurface::addGeometry( other.oMP.getGeometryRef(i) );
         }
     }
     return *this;

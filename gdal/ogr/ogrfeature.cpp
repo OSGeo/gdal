@@ -4222,7 +4222,7 @@ void OGRFeature::SetField( int iField, int nCount, const int *panValues )
     else if( eType == OFTInteger64List )
     {
         std::vector<GIntBig> anValues;
-
+        anValues.reserve(nCount);
         for( int i = 0; i < nCount; i++ )
             anValues.push_back( panValues[i] );
         if( nCount > 0 )
@@ -4231,7 +4231,7 @@ void OGRFeature::SetField( int iField, int nCount, const int *panValues )
     else if( eType == OFTRealList )
     {
         std::vector<double> adfValues;
-
+        adfValues.reserve(nCount);
         for( int i = 0; i < nCount; i++ )
             adfValues.push_back( static_cast<double>(panValues[i]) );
         if( nCount > 0 )
@@ -4376,7 +4376,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
     else if( eType == OFTRealList )
     {
         std::vector<double> adfValues;
-
+        adfValues.reserve(nCount);
         for( int i = 0; i < nCount; i++ )
             adfValues.push_back( static_cast<double>(panValues[i]) );
         if( nCount > 0 )
@@ -4499,7 +4499,7 @@ void OGRFeature::SetField( int iField, int nCount, const double * padfValues )
     else if( eType == OFTIntegerList )
     {
         std::vector<int> anValues;
-
+        anValues.reserve(nCount);
         for( int i = 0; i < nCount; i++ )
             anValues.push_back( static_cast<int>(padfValues[i]) );
 
@@ -4509,7 +4509,7 @@ void OGRFeature::SetField( int iField, int nCount, const double * padfValues )
     else if( eType == OFTInteger64List )
     {
         std::vector<GIntBig> anValues;
-
+        anValues.reserve(nCount);
         for( int i = 0; i < nCount; i++ )
             anValues.push_back( static_cast<GIntBig>(padfValues[i]) );
         if( nCount > 0 )
@@ -7028,12 +7028,14 @@ void OGRFeatureUniquePtrDeleter::operator()(OGRFeature* poFeature) const
 
 struct OGRFeature::FieldValue::Private
 {
-    OGRFeature* m_poSelf;
-    int m_nPos;
-    mutable std::vector<int> m_anList;
-    mutable std::vector<GIntBig> m_anList64;
-    mutable std::vector<double> m_adfList;
-    mutable std::vector<std::string> m_aosList;
+    CPL_DISALLOW_COPY_ASSIGN(Private)
+
+    OGRFeature* m_poSelf = nullptr;
+    int m_nPos = 0;
+    mutable std::vector<int> m_anList{};
+    mutable std::vector<GIntBig> m_anList64{};
+    mutable std::vector<double> m_adfList{};
+    mutable std::vector<std::string> m_aosList{};
 
     Private(const OGRFeature* poSelf, int iFieldIndex):
         m_poSelf(const_cast<OGRFeature*>(poSelf)), m_nPos(iFieldIndex)
@@ -7045,6 +7047,8 @@ struct OGRFeature::FieldValue::Private
 
 struct OGRFeature::ConstFieldIterator::Private
 {
+    CPL_DISALLOW_COPY_ASSIGN(Private)
+
     OGRFeature::FieldValue m_oValue;
     int m_nPos = 0;
 
@@ -7060,9 +7064,7 @@ OGRFeature::ConstFieldIterator::ConstFieldIterator(const OGRFeature* poSelf, int
     m_poPrivate->m_nPos = nPos;
 }
 
-OGRFeature::ConstFieldIterator::~ConstFieldIterator()
-{
-}
+OGRFeature::ConstFieldIterator::~ConstFieldIterator() = default;
 
 const OGRFeature::FieldValue& OGRFeature::ConstFieldIterator::operator*() const
 {
@@ -7136,13 +7138,13 @@ OGRFeature::FieldValue& OGRFeature::FieldValue::operator=
                  eOtherType == OFTDateTime ||
                  eOtherType == OFTTime )
         {
-            int nYear;
-            int nMonth;
-            int nDay;
-            int nHour;
-            int nMinute;
-            float fSecond;
-            int nTZFlag;
+            int nYear = 0;
+            int nMonth = 0;
+            int nDay = 0;
+            int nHour = 0;
+            int nMinute = 0;
+            float fSecond = 0.0f;
+            int nTZFlag = 0;
             oOther.GetDateTime(&nYear, &nMonth, &nDay, &nHour, &nMinute,
                                &fSecond, &nTZFlag);
             m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos,
@@ -7267,9 +7269,7 @@ void OGRFeature::FieldValue::clear()
 }
 
 //! @cond Doxygen_Suppress
-OGRFeature::FieldValue::~FieldValue()
-{
-}
+OGRFeature::FieldValue::~FieldValue() = default;
 
 //! @endcond
 
@@ -7369,7 +7369,7 @@ const std::vector<std::string>& OGRFeature::FieldValue::GetAsStringList() const
     {
         for( char** papszIter = papszList; *papszIter; ++papszIter )
         {
-            m_poPrivate->m_aosList.push_back(std::string(*papszIter));
+            m_poPrivate->m_aosList.emplace_back(*papszIter);
         }
     }
     return m_poPrivate->m_aosList;

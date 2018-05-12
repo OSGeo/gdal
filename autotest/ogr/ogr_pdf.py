@@ -104,8 +104,8 @@ def ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
         '(super tex !) Tj\n' + \
         'ET'
 
-    with open(name, 'rb') as file:
-        data = file.read(8192)
+    with open(name, 'rb') as f:
+        data = f.read(8192)
         if wantedstream.encode('utf-8') not in data:
             gdaltest.post_reason('Wrong text data in written PDF stream')
             return 'fail'

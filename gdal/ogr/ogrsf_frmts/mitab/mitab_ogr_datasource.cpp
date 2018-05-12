@@ -333,7 +333,7 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
 
         m_bSingleLayerAlreadyCreated = TRUE;
 
-        poFile = (IMapInfoFile *) m_papoLayers[0];
+        poFile = m_papoLayers[0];
         if( pszEncoding )
             poFile->SetCharset( pszCharset );
     }
@@ -471,7 +471,7 @@ char **OGRTABDataSource::GetFileList()
              papszDirEntries != nullptr && papszDirEntries[iFile] != nullptr;
              iFile++ )
         {
-            if( CSLFindString((char **)apszExtensions,
+            if( CSLFindString(apszExtensions,
                               CPLGetExtension(papszDirEntries[iFile])) != -1)
             {
                 osList.AddString(

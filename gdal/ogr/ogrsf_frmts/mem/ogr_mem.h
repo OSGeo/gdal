@@ -44,6 +44,8 @@ class IOGRMemLayerFeatureIterator;
 
 class OGRMemLayer : public OGRLayer
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRMemLayer)
+
     typedef std::map<GIntBig, OGRFeature*>           FeatureMap;
     typedef std::map<GIntBig, OGRFeature*>::iterator FeatureIterator;
 
@@ -119,6 +121,8 @@ class OGRMemLayer : public OGRLayer
 
 class OGRMemDataSource : public OGRDataSource
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRMemDataSource)
+
     OGRMemLayer       **papoLayers;
     int                 nLayers;
 

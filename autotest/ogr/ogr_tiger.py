@@ -182,14 +182,14 @@ def ogr_tiger_4():
         return 'skip'
 
     # load all the files into memory.
-    for file in gdal.ReadDir('tmp/cache/TGR01001'):
+    for filename in gdal.ReadDir('tmp/cache/TGR01001'):
 
-        if file[0] == '.':
+        if filename.startswith('.'):
             continue
 
-        data = open('tmp/cache/TGR01001/' + file, 'r').read()
+        data = open('tmp/cache/TGR01001/' + filename, 'r').read()
 
-        f = gdal.VSIFOpenL('/vsimem/tigertest/' + file, 'wb')
+        f = gdal.VSIFOpenL('/vsimem/tigertest/' + filename, 'wb')
         gdal.VSIFWriteL(data, 1, len(data), f)
         gdal.VSIFCloseL(f)
 
@@ -229,12 +229,12 @@ def ogr_tiger_4():
         return 'fail'
 
     # Try to recover memory from /vsimem.
-    for file in gdal.ReadDir('tmp/cache/TGR01001'):
+    for filename in gdal.ReadDir('tmp/cache/TGR01001'):
 
-        if file[0] == '.':
+        if filename.startswith('.'):
             continue
 
-        gdal.Unlink('/vsimem/tigertest/' + file)
+        gdal.Unlink('/vsimem/tigertest/' + filename)
 
     return 'success'
 

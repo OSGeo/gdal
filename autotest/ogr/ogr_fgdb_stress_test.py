@@ -33,7 +33,6 @@
 import random
 import sys
 import shutil
-import os
 
 sys.path.append('../pymod')
 
@@ -69,10 +68,7 @@ def ogr_fgdb_stress_test_init():
     except OSError:
         pass
 
-    try:
-        os.unlink("tmp/test." + ogrtest.reference_ext)
-    except OSError:
-        pass
+    gdal.Unlink("tmp/test." + ogrtest.reference_ext)
 
     return 'success'
 
@@ -233,10 +229,7 @@ def ogr_fgdb_stress_test_cleanup():
     except OSError:
         pass
 
-    try:
-        os.unlink("tmp/test." + ogrtest.reference_ext)
-    except OSError:
-        pass
+    gdal.Unlink("tmp/test." + ogrtest.reference_ext)
 
     return 'success'
 

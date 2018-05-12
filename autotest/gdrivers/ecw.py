@@ -33,11 +33,11 @@
 import os
 import os.path
 import sys
+from sys import version_info
 import array
 import shutil
 from osgeo import gdal
 from osgeo import osr
-from sys import version_info
 
 sys.path.append('../pymod')
 
@@ -179,10 +179,7 @@ def ecw_4():
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
-    try:
-        os.unlink('tmp/jrc_out.ecw.aux.xml')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/jrc_out.ecw.aux.xml')
 
     ds = gdal.Open('tmp/jrc_out.ecw')
     version = ds.GetMetadataItem('VERSION')
@@ -359,11 +356,8 @@ def ecw_9():
         return 'skip'
 
     # This always crashes on Frank's machine - some bug in old sdk.
-    try:
-        if os.environ['USER'] == 'warmerda' and gdaltest.ecw_drv.major_version == 3:
-            return 'skip'
-    except:
-        pass
+    if os.getenv('USER') == 'warmerda' and gdaltest.ecw_drv.major_version == 3:
+        return 'skip'
 
     ds = gdaltest.jp2ecw_drv.Create('tmp/ecw9.jp2', 200, 100, 1,
                                     gdal.GDT_Int16, options=['TARGET=75'])
@@ -389,11 +383,8 @@ def ecw_10():
         return 'skip'
 
     # This always crashes on Frank's machine - some bug in old sdk.
-    try:
-        if os.environ['USER'] == 'warmerda' and gdaltest.ecw_drv.major_version == 3:
-            return 'skip'
-    except:
-        pass
+    if os.getenv('USER') == 'warmerda' and gdaltest.ecw_drv.major_version == 3:
+        return 'skip'
 
     ds = gdal.Open('tmp/ecw9.jp2')
 

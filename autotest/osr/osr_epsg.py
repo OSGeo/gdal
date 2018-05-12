@@ -405,6 +405,18 @@ def osr_epsg_13():
 ###############################################################################
 
 
+def osr_epsg_gcs_deprecated():
+
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4268)
+    if sr.ExportToWkt().find('NAD27 Michigan (deprecated)') < 0:
+        print(sr.ExportToWkt())
+        return 'fail'
+    return 'success'
+
+###############################################################################
+
+
 gdaltest_list = [
     osr_epsg_1,
     osr_epsg_2,
@@ -419,6 +431,7 @@ gdaltest_list = [
     osr_epsg_11,
     osr_epsg_12,
     osr_epsg_13,
+    osr_epsg_gcs_deprecated,
     None]
 
 if __name__ == '__main__':

@@ -157,7 +157,7 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
     if( n == 0 )
         return OGRERR_FAILURE;
 
-    double *xintersect = (double *)calloc(n, sizeof(double));
+    double *xintersect = static_cast<double *>(calloc(n, sizeof(double)));
     if( xintersect == nullptr )
         return OGRERR_FAILURE;
 

@@ -27,11 +27,30 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+// Must be included before FYBA headers that mess with min() / max()
+#include <mutex>
+
 #include "ogr_sosi.h"
 
 CPL_CVSID("$Id$")
 
 static int bFYBAInit = FALSE;
+static std::mutex oMutex;
+
+/************************************************************************/
+/*                          OGRSOSIInit()                               */
+/************************************************************************/
+
+static void OGRSOSIInit()
+{
+    std::lock_guard<std::mutex> oLock(oMutex);
+    if ( !bFYBAInit )
+    {
+        LC_Init();  /* Init FYBA */
+        SOSIInitTypes();
+        bFYBAInit = TRUE;
+    }
+}
 
 /************************************************************************/
 /*                        OGRSOSIDriverUnload()                         */
@@ -42,6 +61,7 @@ static void OGRSOSIDriverUnload(CPL_UNUSED GDALDriver* poDriver) {
     if ( bFYBAInit )
     {
         LC_Close(); /* Close FYBA */
+        SOSICleanupTypes();
         bFYBAInit = FALSE;
     }
 }
@@ -56,11 +76,7 @@ static GDALDataset *OGRSOSIDriverOpen( GDALOpenInfo* poOpenInfo )
         strstr((const char*)poOpenInfo->pabyHeader, ".HODE") == nullptr )
         return nullptr;
 
-    if ( !bFYBAInit )
-    {
-        LC_Init();  /* Init FYBA */
-        bFYBAInit = TRUE;
-    }
+    OGRSOSIInit();
 
     OGRSOSIDataSource   *poDS = new OGRSOSIDataSource();
     if ( !poDS->Open( poOpenInfo->pszFilename, 0 ) ) {
@@ -81,11 +97,7 @@ static GDALDataset *OGRSOSIDriverCreate( const char * pszName,
                                          CPL_UNUSED int nYSize, CPL_UNUSED GDALDataType eDT,
                                          CPL_UNUSED char **papszOptions )
 {
-    if ( !bFYBAInit )
-    {
-        LC_Init();  /* Init FYBA */
-        bFYBAInit = TRUE;
-    }
+    OGRSOSIInit();
     OGRSOSIDataSource   *poDS = new OGRSOSIDataSource();
     if ( !poDS->Create( pszName ) ) {
         delete poDS;

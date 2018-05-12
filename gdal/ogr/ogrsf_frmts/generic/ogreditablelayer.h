@@ -53,11 +53,11 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
     bool                           m_bTakeOwnershipSynchronizer;
     OGRFeatureDefn                *m_poEditableFeatureDefn;
     GIntBig                        m_nNextFID;
-    std::set<GIntBig>              m_oSetCreated;
-    std::set<GIntBig>              m_oSetEdited;
-    std::set<GIntBig>              m_oSetDeleted;
-    std::set<GIntBig>::iterator    m_oIter;
-    std::set<CPLString>            m_oSetDeletedFields;
+    std::set<GIntBig>              m_oSetCreated{};
+    std::set<GIntBig>              m_oSetEdited{};
+    std::set<GIntBig>              m_oSetDeleted{};
+    std::set<GIntBig>::iterator    m_oIter{};
+    std::set<CPLString>            m_oSetDeletedFields{};
     OGRLayer                      *m_poMemLayer;
     bool                           m_bStructureModified;
     bool                           m_bSupportsCreateGeomField;

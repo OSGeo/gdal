@@ -816,7 +816,7 @@ def ogr_mysql_25():
     f = None
 
     # Error case: missing non-nullable field
-    if False:
+    if False:  # pylint: disable=using-constant-test
         # hum mysql seems OK with unset non-nullable fields ??
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))

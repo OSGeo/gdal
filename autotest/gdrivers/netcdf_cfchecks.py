@@ -48,26 +48,26 @@ Options:
 
 '''
 
-import cdms2 as cdms
 import re
-import numpy
 import sys
+import ctypes
+from xml.sax import ContentHandler
+from xml.sax import make_parser
+from xml.sax.handler import feature_namespaces
+import numpy
+import cdms2 as cdms
 
 from cdms2.axis import FileAxis
 from cdms2.auxcoord import FileAuxAxis1D
 
 # Use ctypes to interface to the UDUNITS-2 shared library
 # The udunits2 library needs to be in a standard path o/w export LD_LIBRARY_PATH
-import ctypes
 udunits = ctypes.CDLL("libudunits2.so")
 
 STANDARDNAME = 'http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml'
 AREATYPES = 'http://cfconventions.org/Data/area-type-table/current/src/area-type-table.xml'
 
 # -----------------------------------------------------------
-from xml.sax import ContentHandler
-from xml.sax import make_parser
-from xml.sax.handler import feature_namespaces
 
 
 def normalize_whitespace(text):
@@ -311,22 +311,22 @@ class CFChecker(object):
         self.cf_roleCount = 0          # Number of occurrences of the cf_role attribute in the file
         self.raggedArrayFlag = 0       # Flag to indicate if file contains any ragged array representations
 
-    def checker(self, file):
+    def checker(self, filename):
 
         fileSuffix = re.compile('^\S+\.nc$')
 
         print("")
         if self.uploader:
-            realfile = file.split(".nc")[0] + ".nc"
+            realfile = filename.split(".nc")[0] + ".nc"
             print("CHECKING NetCDF FILE:", realfile)
         elif self.useFileName == "no":
             print("CHECKING NetCDF FILE")
         else:
-            print("CHECKING NetCDF FILE:", file)
+            print("CHECKING NetCDF FILE:", filename)
         print("=====================")
 
         # Check for valid filename
-        if not fileSuffix.match(file):
+        if not fileSuffix.match(filename):
             print("ERROR (2.1): Filename must have .nc suffix")
             exit(1)
 
@@ -353,7 +353,7 @@ class CFChecker(object):
 
         # Read in netCDF file
         try:
-            self.f = cdms.open(file, "r")
+            self.f = cdms.open(filename, "r")
 
         except AttributeError:
             print("NetCDF Attribute Error:")
@@ -403,7 +403,7 @@ class CFChecker(object):
 
         # Read in netCDF file
         try:
-            self.f = cdms.open(file, "r")
+            self.f = cdms.open(filename, "r")
 
         except AttributeError:
             print("NetCDF Attribute Error:")
@@ -2300,9 +2300,9 @@ class CFChecker(object):
                 return 0
 
         if 'scale_factor' in var.attributes:
-            type = var.attributes['scale_factor'].dtype.char
+            typ = var.attributes['scale_factor'].dtype.char
         elif 'add_offset' in var.attributes:
-            type = var.attributes['add_offset'].dtype.char
+            typ = var.attributes['add_offset'].dtype.char
         else:
             # No packed Data attributes present
             return 1
@@ -2310,8 +2310,8 @@ class CFChecker(object):
         varType = self.getTypeCode(var)
 
         # One or other attributes present; run remaining checks
-        if varType != type:
-            if type != 'f' and type != 'd':
+        if varType != typ:
+            if typ != 'f' and typ != 'd':
                 print("ERROR (8.1): scale_factor and add_offset must be of type float or double")
                 self.err = self.err + 1
                 rc = 0
@@ -2321,7 +2321,7 @@ class CFChecker(object):
                 self.err = self.err + 1
                 rc = 0
 
-            if type == 'f' and varType == 'i':
+            if typ == 'f' and varType == 'i':
                 print("WARNING (8.1): scale_factor/add_offset are type float, therefore", var.id, "should not be of type int")
                 self.warn = self.warn + 1
 
@@ -2503,10 +2503,10 @@ class CFChecker(object):
                 i = i + 1
                 if val < lastVal:
                     # Decreasing sequence
-                    type = 'decr'
+                    typ = 'decr'
                 elif val > lastVal:
                     # Increasing sequence
-                    type = 'incr'
+                    typ = 'incr'
                 else:
                     # Same value - ERROR
                     print("ERROR (5): co-ordinate variable '" + var.id + "' not monotonic")
@@ -2516,12 +2516,12 @@ class CFChecker(object):
                 lastVal = val
             else:
                 i = i + 1
-                if val < lastVal and type != 'decr':
+                if val < lastVal and typ != 'decr':
                     # ERROR - should be increasing value
                     print("ERROR (5): co-ordinate variable '" + var.id + "' not monotonic")
                     self.err = self.err + 1
                     return 1
-                elif val > lastVal and type != 'incr':
+                elif val > lastVal and typ != 'incr':
                     # ERROR - should be decreasing value
                     print("ERROR (5): co-ordinate variable '" + var.id + "' not monotonic")
                     self.err = self.err + 1
@@ -2620,6 +2620,6 @@ if __name__ == '__main__':
     (badc, coards, uploader, useFileName, standardName, areaTypes, udunitsDat, version, files) = getargs(sys.argv)
 
     inst = CFChecker(uploader=uploader, useFileName=useFileName, badc=badc, coards=coards, cfStandardNamesXML=standardName, cfAreaTypesXML=areaTypes, udunitsDat=udunitsDat, version=version)
-    for file in files:
-        rc = inst.checker(file)
+    for f in files:
+        rc = inst.checker(f)
         sys.exit(rc)

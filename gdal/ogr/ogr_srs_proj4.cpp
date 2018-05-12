@@ -101,13 +101,13 @@ static const char * const ogr_pj_ellps[] = {
 nullptr, nullptr, nullptr, nullptr,
 };
 
-typedef struct
+struct OGRProj4Datum
 {
     const char* pszPJ;
     const char* pszOGR;
     int         nEPSG;
     int         nGCS;
-} OGRProj4Datum;
+};
 
 // Derived from proj/src/pj_datum.c.
 // WGS84, NAD27 and NAD83 are directly hard-coded in the code.
@@ -121,13 +121,13 @@ static const OGRProj4Datum ogr_pj_datums[] = {
     { "OSGB36", "OSGB_1936", 4277, 6277}
 };
 
-typedef struct
+struct OGRProj4PM
 {
     const char* pszProj4PMName;
     const char* pszWKTPMName;
     const char* pszFromGreenwich;
     int         nPMCode;
-} OGRProj4PM;
+};
 
 // Derived from pj_datums.c.
 static const OGRProj4PM ogr_pj_pms [] = {
@@ -149,12 +149,12 @@ static const OGRProj4PM ogr_pj_pms [] = {
 static const char* OGRGetProj4Datum( const char* pszDatum,
                                      int nEPSGDatum )
 {
-    for( size_t i = 0; i < CPL_ARRAYSIZE(ogr_pj_datums); i++ )
+    for( const auto& datum: ogr_pj_datums )
     {
-        if( nEPSGDatum == ogr_pj_datums[i].nGCS ||
-            EQUAL(pszDatum, ogr_pj_datums[i].pszOGR) )
+        if( nEPSGDatum == datum.nGCS ||
+            EQUAL(pszDatum, datum.pszOGR) )
         {
-            return ogr_pj_datums[i].pszPJ;
+            return datum.pszPJ;
         }
     }
     return nullptr;
@@ -163,11 +163,11 @@ static const char* OGRGetProj4Datum( const char* pszDatum,
 static
 const OGRProj4PM* OGRGetProj4PMFromProj4Name( const char* pszProj4PMName )
 {
-    for( size_t i = 0; i < CPL_ARRAYSIZE(ogr_pj_pms); i++ )
+    for( const auto& pm: ogr_pj_pms )
     {
-        if( EQUAL(pszProj4PMName, ogr_pj_pms[i].pszProj4PMName) )
+        if( EQUAL(pszProj4PMName, pm.pszProj4PMName) )
         {
-            return &ogr_pj_pms[i];
+            return &pm;
         }
     }
     return nullptr;
@@ -175,11 +175,11 @@ const OGRProj4PM* OGRGetProj4PMFromProj4Name( const char* pszProj4PMName )
 
 static const OGRProj4PM* OGRGetProj4PMFromCode( int nPMCode )
 {
-    for( size_t i = 0; i < CPL_ARRAYSIZE(ogr_pj_pms); i++ )
+    for( const auto& pm: ogr_pj_pms )
     {
-        if( nPMCode == ogr_pj_pms[i].nPMCode )
+        if( nPMCode == pm.nPMCode )
         {
-            return &ogr_pj_pms[i];
+            return &pm;
         }
     }
     return nullptr;
@@ -187,23 +187,23 @@ static const OGRProj4PM* OGRGetProj4PMFromCode( int nPMCode )
 
 static const OGRProj4PM* OGRGetProj4PMFromVal( double dfVal )
 {
-    for( unsigned int i = 0; i < CPL_ARRAYSIZE(ogr_pj_pms); i++ )
+    for( const auto& pm: ogr_pj_pms )
     {
         // TODO(schwehr): Use an almost equal call.
-        if( fabs(dfVal - CPLDMSToDec(ogr_pj_pms[i].pszFromGreenwich)) < 1e-10 )
+        if( fabs(dfVal - CPLDMSToDec(pm.pszFromGreenwich)) < 1e-10 )
         {
-            return &ogr_pj_pms[i];
+            return &pm;
         }
     }
     return nullptr;
 }
 
-typedef struct
+struct LinearUnitsStruct
 {
     const char* pszWKTName;
     const char* pszValueInMeter;
     const char* pszProjName;
-} LinearUnitsStruct;
+};
 
 static const LinearUnitsStruct asLinearUnits [] =
 {
@@ -262,14 +262,14 @@ static const LinearUnitsStruct *GetLinearFromLinearConvOrName(
     const char *pszLinearUnits )
 
 {
-    for( size_t i = 0; i < CPL_ARRAYSIZE(asLinearUnits); i++ )
+    for( const auto& linearUnit: asLinearUnits )
     {
         if( (pszLinearUnits != nullptr &&
-             EQUAL(pszLinearUnits, asLinearUnits[i].pszWKTName)) ||
+             EQUAL(pszLinearUnits, linearUnit.pszWKTName)) ||
             fabs(dfLinearConv -
-                 CPLAtof(asLinearUnits[i].pszValueInMeter)) < 0.00000001 )
+                 CPLAtof(linearUnit.pszValueInMeter)) < 0.00000001 )
         {
-            return &(asLinearUnits[i]);
+            return &linearUnit;
         }
     }
     return nullptr;
@@ -282,11 +282,11 @@ static const LinearUnitsStruct *GetLinearFromLinearConvOrName(
 static const LinearUnitsStruct* GetLinearFromProjName( const char* pszProjName )
 
 {
-    for( size_t i = 0; i < CPL_ARRAYSIZE(asLinearUnits); i++ )
+    for( const auto& linearUnit: asLinearUnits )
     {
-        if( EQUAL(pszProjName, asLinearUnits[i].pszProjName) )
+        if( EQUAL(pszProjName, linearUnit.pszProjName) )
         {
-            return &(asLinearUnits[i]);
+            return &linearUnit;
         }
     }
     return nullptr;
@@ -1078,12 +1078,12 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     }
     else
     {
-        for( size_t i = 0; i < CPL_ARRAYSIZE(ogr_pj_datums); i++ )
+        for( const auto& datum: ogr_pj_datums )
         {
-            if( EQUAL(pszValue, ogr_pj_datums[i].pszPJ) )
+            if( EQUAL(pszValue, datum.pszPJ) )
             {
                 OGRSpatialReference oGCS;
-                if( oGCS.importFromEPSG( ogr_pj_datums[i].nEPSG )
+                if( oGCS.importFromEPSG( datum.nEPSG )
                                                     == OGRERR_NONE &&
                     CopyGeogCSFrom( &oGCS ) == OGRERR_NONE )
                 {
@@ -1535,7 +1535,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                     "+proj=geocent ");
     }
 
-    else if( pszProjection == nullptr && !IsGeographic() )
+    else if( pszProjection == nullptr /* && !IsGeographic()*/ )
     {
         // LOCAL_CS, or incompletely initialized coordinate systems.
         *ppszProj4 = CPLStrdup("");

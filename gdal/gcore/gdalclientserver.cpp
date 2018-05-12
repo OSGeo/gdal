@@ -35,7 +35,7 @@
   #define _WIN32_WINNT 0x0501
   #include <winsock2.h>
   #include <ws2tcpip.h>
-  typedef SOCKET CPL_SOCKET;
+  using CPL_SOCKET = SOCKET;
   #ifndef HAVE_GETADDRINFO
     #define HAVE_GETADDRINFO 1
   #endif
@@ -47,7 +47,7 @@
   #include <netinet/in.h>
   #include <arpa/inet.h>
   #include <netdb.h>
-  typedef int CPL_SOCKET;
+  using CPL_SOCKET = int;
   #define INVALID_SOCKET -1
   #define SOCKET_ERROR -1
   #define SOCKADDR struct sockaddr
@@ -184,14 +184,14 @@ would deadlock the server.
 CPL_C_START
 int CPL_DLL GDALServerLoop(CPL_FILE_HANDLE fin, CPL_FILE_HANDLE fout);
 const char* GDALClientDatasetGetFilename(const char* pszFilename);
-int CPL_DLL GDALServerLoopSocket(CPL_SOCKET nSocket);
-void CPL_DLL* GDALServerLoopInstanceCreateFromSocket(CPL_SOCKET nSocket);
+int CPL_DLL GDALServerLoopSocket(const CPL_SOCKET& nSocket);
+void CPL_DLL* GDALServerLoopInstanceCreateFromSocket(const CPL_SOCKET& nSocket);
 int  CPL_DLL  GDALServerLoopInstanceRunIteration(void* pInstance);
 void CPL_DLL  GDALServerLoopInstanceDestroy(void* pInstance);
 CPL_C_END
 
 #define BUFFER_SIZE 1024
-typedef struct
+struct GDALPipe
 {
     CPL_FILE_HANDLE fin;
     CPL_FILE_HANDLE fout;
@@ -203,24 +203,24 @@ typedef struct
     GByte           abyRecvBuffer[BUFFER_SIZE];
     int             nRecvBufferSize;
 #endif
-} GDALPipe;
+};
 
-typedef struct
+struct GDALServerSpawnedProcess
 {
     CPLSpawnedProcess *sp;
     GDALPipe          *p;
-} GDALServerSpawnedProcess;
+};
 
-typedef struct
+struct GDALServerAsyncProgress
 {
     bool   bUpdated;
     double dfComplete;
     char  *pszProgressMsg;
     int    bRet;
     CPLMutex  *hMutex;
-} GDALServerAsyncProgress;
+};
 
-typedef enum
+enum InstrEnum
 {
     INSTR_INVALID = 0,
     INSTR_GetGDALVersion = 1, /* do not change this ! */
@@ -303,7 +303,7 @@ typedef enum
     INSTR_Band_DeleteNoDataValue,
     INSTR_Band_End,
     INSTR_END
-} InstrEnum;
+};
 
 #ifdef DEBUG_VERBOSE
 static const char* const apszInstr[] =
@@ -464,17 +464,17 @@ static void MyChdirRootDirectory()
 
 class GDALClientDataset final: public GDALPamDataset
 {
-    GDALServerSpawnedProcess                         *ssp;
-    GDALPipe                                         *p;
-    CPLString                                         osProjection;
-    CPLString                                         osGCPProjection;
-    bool                                              bFreeDriver;
-    int                                               nGCPCount;
-    GDAL_GCP                                         *pasGCPs;
-    std::map<CPLString, char**>                       aoMapMetadata;
-    std::map< std::pair<CPLString,CPLString>, char*>  aoMapMetadataItem;
-    GDALServerAsyncProgress                          *async;
-    GByte                                             abyCaps[16]; /* 16 * 8 = 128 > INSTR_END */
+    GDALServerSpawnedProcess                         *ssp = nullptr;
+    GDALPipe                                         *p = nullptr;
+    CPLString                                         osProjection{};
+    CPLString                                         osGCPProjection{};
+    bool                                              bFreeDriver = false;
+    int                                               nGCPCount = 0;
+    GDAL_GCP                                         *pasGCPs = nullptr;
+    std::map<CPLString, char**>                       aoMapMetadata{};
+    std::map< std::pair<CPLString,CPLString>, char*>  aoMapMetadataItem{};
+    GDALServerAsyncProgress                          *async = nullptr;
+    GByte                                             abyCaps[16]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; /* 16 * 8 = 128 > INSTR_END */
 
         int                      mCreateCopy(const char* pszFilename,
                                              GDALDataset* poSrcDS,
@@ -490,10 +490,12 @@ class GDALClientDataset final: public GDALPamDataset
 
         static GDALClientDataset* CreateAndConnect();
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALClientDataset)
+
     protected:
-       virtual CPLErr IBuildOverviews( const char *, int, int *,
+       CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * ) override;
-       virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
+       CPLErr IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType,
@@ -569,19 +571,19 @@ class GDALClientRasterBand final: public GDALPamRasterBand
 {
     friend class GDALClientDataset;
 
-    GDALPipe                                        *p;
-    int                                              iSrvBand;
-    std::map<int, GDALRasterBand*>                   aMapOvrBands;
-    std::map<int, GDALRasterBand*>                   aMapOvrBandsCurrent;
-    GDALRasterBand                                  *poMaskBand;
-    std::map<CPLString, char**>                      aoMapMetadata;
-    std::map< std::pair<CPLString,CPLString>, char*> aoMapMetadataItem;
-    char                                           **papszCategoryNames;
-    GDALColorTable                                  *poColorTable;
-    char                                            *pszUnitType;
-    GDALRasterAttributeTable                        *poRAT;
-    std::vector<GDALRasterBand*>                     apoOldMaskBands;
-    GByte                                            abyCaps[16]; /* 16 * 8 = 128 > INSTR_END */
+    GDALPipe                                        *p = nullptr;
+    int                                              iSrvBand = 0;
+    std::map<int, GDALRasterBand*>                   aMapOvrBands{};
+    std::map<int, GDALRasterBand*>                   aMapOvrBandsCurrent{};
+    GDALRasterBand                                  *poMaskBand = nullptr;
+    std::map<CPLString, char**>                      aoMapMetadata{};
+    std::map< std::pair<CPLString,CPLString>, char*> aoMapMetadataItem{};
+    char                                           **papszCategoryNames = nullptr;
+    GDALColorTable                                  *poColorTable = nullptr;
+    char                                            *pszUnitType =nullptr;
+    GDALRasterAttributeTable                        *poRAT = nullptr;
+    std::vector<GDALRasterBand*>                     apoOldMaskBands{};
+    GByte                                            abyCaps[16]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; /* 16 * 8 = 128 > INSTR_END */
 
     int                WriteInstr(InstrEnum instr);
 
@@ -590,14 +592,14 @@ class GDALClientRasterBand final: public GDALPamRasterBand
 
     GDALRasterBand    *CreateFakeMaskBand();
 
-    bool                                             bEnableLineCaching;
-    int                                              nSuccessiveLinesRead;
-    GDALDataType                                     eLastBufType;
-    int                                              nLastYOff;
-    GByte                                           *pabyCachedLines;
-    GDALDataType                                     eCachedBufType;
-    int                                              nCachedYStart;
-    int                                              nCachedLines;
+    bool                                             bEnableLineCaching = false;
+    int                                              nSuccessiveLinesRead = 0;
+    GDALDataType                                     eLastBufType = GDT_Unknown;
+    int                                              nLastYOff = -1;
+    GByte                                           *pabyCachedLines = nullptr;
+    GDALDataType                                     eCachedBufType = GDT_Unknown;
+    int                                              nCachedYStart = -1;
+    int                                              nCachedLines = 0;
 
     void    InvalidateCachedLines();
     CPLErr  IRasterIO_read_internal(
@@ -605,6 +607,9 @@ class GDALClientRasterBand final: public GDALPamRasterBand
                                 void * pData, int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType,
                                 GSpacing nPixelSpace, GSpacing nLineSpace );
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALClientRasterBand)
+
   protected:
 
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void* pImage) override;
@@ -728,7 +733,7 @@ static GDALPipe* GDALPipeBuild(CPLSpawnedProcess* sp)
     return p;
 }
 
-static GDALPipe* GDALPipeBuild(CPL_SOCKET nSocket)
+static GDALPipe* GDALPipeBuild(const CPL_SOCKET& nSocket)
 {
     GDALPipe* p = static_cast<GDALPipe*>(CPLMalloc(sizeof(GDALPipe)));
     p->bOK = TRUE;
@@ -1940,19 +1945,21 @@ static int CPL_STDCALL RunSyncProgress(double dfComplete,
 
 class GDALServerInstance
 {
+    CPL_DISALLOW_COPY_ASSIGN(GDALServerInstance)
+
 public:
-    GDALPipe* p;
-    GDALDataset* poDS;
-    std::vector<GDALRasterBand*> aBands;
-    void* pBuffer;
-    int nBufferSize;
+    GDALPipe* p = nullptr;
+    GDALDataset* poDS = nullptr;
+    std::vector<GDALRasterBand*> aBands{};
+    void* pBuffer = nullptr;
+    int nBufferSize = 0;
 
         explicit GDALServerInstance(GDALPipe* p);
        ~GDALServerInstance();
 };
 
 GDALServerInstance::GDALServerInstance(GDALPipe* pIn) :
-        p(pIn), poDS(nullptr), pBuffer(nullptr), nBufferSize(0)
+        p(pIn)
 {
 }
 
@@ -1971,7 +1978,7 @@ GDALServerInstance::~GDALServerInstance()
 /*                GDALServerLoopInstanceCreateFromSocket()              */
 /************************************************************************/
 
-void * GDALServerLoopInstanceCreateFromSocket(CPL_SOCKET nSocket)
+void * GDALServerLoopInstanceCreateFromSocket(const CPL_SOCKET& nSocket)
 {
 #ifndef WIN32
     unsetenv("CPL_SHOW_MEM_STATS");
@@ -3567,11 +3574,11 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
         if( poSrcDS == nullptr )
         {
             GDALPipeWrite(p, static_cast<int>(aoErrors.size()));
-            for(size_t i=0;i<aoErrors.size();i++)
+            for( const auto& oError: aoErrors )
             {
-                GDALPipeWrite(p, aoErrors[i].eErr);
-                GDALPipeWrite(p, aoErrors[i].nErrNo);
-                GDALPipeWrite(p, aoErrors[i].osErrorMsg);
+                GDALPipeWrite(p, oError.eErr);
+                GDALPipeWrite(p, oError.nErrNo);
+                GDALPipeWrite(p, oError.osErrorMsg);
             }
             aoErrors.resize(0);
         }
@@ -3629,7 +3636,7 @@ int GDALServerLoop(CPL_FILE_HANDLE fin, CPL_FILE_HANDLE fout)
 /*                      GDALServerLoopSocket()                          */
 /************************************************************************/
 
-int GDALServerLoopSocket(CPL_SOCKET nSocket)
+int GDALServerLoopSocket(const CPL_SOCKET& nSocket)
 {
 #ifndef WIN32
     unsetenv("CPL_SHOW_MEM_STATS");
@@ -3653,11 +3660,6 @@ GDALClientDataset::GDALClientDataset(GDALServerSpawnedProcess* sspIn)
 {
     ssp = sspIn;
     p = ssp->p;
-    bFreeDriver = false;
-    nGCPCount = 0;
-    pasGCPs = nullptr;
-    async = nullptr;
-    memset(abyCaps, 0, sizeof(abyCaps));
 }
 
 /************************************************************************/
@@ -3668,11 +3670,6 @@ GDALClientDataset::GDALClientDataset(GDALPipe* pIn)
 {
     ssp = nullptr;
     p = pIn;
-    bFreeDriver = false;
-    nGCPCount = 0;
-    pasGCPs = nullptr;
-    async = nullptr;
-    memset(abyCaps, 0, sizeof(abyCaps));
 }
 /************************************************************************/
 /*                       ~GDALClientDataset()                           */
@@ -4406,10 +4403,10 @@ GDALClientRasterBand::GDALClientRasterBand(GDALPipe* pIn, int iSrvBandIn,
                                            int nRasterXSizeIn, int nRasterYSizeIn,
                                            GDALDataType eDataTypeIn,
                                            int nBlockXSizeIn, int nBlockYSizeIn,
-                                           GByte abyCapsIn[16])
+                                           GByte abyCapsIn[16]):
+    p(pIn),
+    iSrvBand(iSrvBandIn)
 {
-    p = pIn;
-    iSrvBand = iSrvBandIn;
     poDS = poDSIn;
     nBand = nBandIn;
     eAccess = eAccessIn;
@@ -4418,21 +4415,9 @@ GDALClientRasterBand::GDALClientRasterBand(GDALPipe* pIn, int iSrvBandIn,
     eDataType = eDataTypeIn;
     nBlockXSize = nBlockXSizeIn;
     nBlockYSize = nBlockYSizeIn;
-    papszCategoryNames = nullptr;
-    poColorTable = nullptr;
-    pszUnitType = nullptr;
-    poMaskBand = nullptr;
-    poRAT = nullptr;
     memcpy(abyCaps, abyCapsIn, sizeof(abyCaps));
     bEnableLineCaching = CPLTestBool(CPLGetConfigOption(
         "GDAL_API_PROXY_LINE_CACHING", "YES"));
-    nSuccessiveLinesRead = 0;
-    eLastBufType = GDT_Unknown;
-    nLastYOff = -1;
-    pabyCachedLines = nullptr;
-    eCachedBufType = GDT_Unknown;
-    nCachedYStart = -1;
-    nCachedLines = 0;
 }
 
 /************************************************************************/
@@ -4448,21 +4433,17 @@ GDALClientRasterBand::~GDALClientRasterBand()
     delete poRAT;
     CPLFree(pabyCachedLines);
 
-    std::map<int, GDALRasterBand*>::iterator oIter = aMapOvrBands.begin();
-    for( ; oIter != aMapOvrBands.end(); ++oIter )
-        delete oIter->second;
+    for( auto oIter: aMapOvrBands )
+        delete oIter.second;
 
-    std::map< std::pair<CPLString,CPLString>, char*>::iterator oIterItem =
-        aoMapMetadataItem.begin();
-    for( ; oIterItem != aoMapMetadataItem.end(); ++oIterItem )
-        CPLFree(oIterItem->second);
+    for( auto oIter: aoMapMetadataItem )
+        CPLFree(oIter.second);
 
-    std::map<CPLString, char**>::iterator oIterMD = aoMapMetadata.begin();
-    for( ; oIterMD != aoMapMetadata.end(); ++oIterMD )
-        CSLDestroy(oIterMD->second);
+    for( auto oIter: aoMapMetadata )
+        CSLDestroy(oIter.second);
 
-    for(size_t i=0; i < apoOldMaskBands.size(); i++)
-        delete apoOldMaskBands[i];
+    for( auto& poOldMaskBand: apoOldMaskBands )
+        delete poOldMaskBand;
 }
 
 /************************************************************************/
