@@ -13,7 +13,7 @@ scripts/detect_suspicious_char_digit_zero.sh
 CC="ccache gcc-4.8" CXX="ccache g++-4.8" ./configure --prefix=/usr --without-libtool --without-cpp11 --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-mongocxx=/usr/local
 #  --with-gta
 make docs >docs_log.txt 2>&1
-if grep -i warning docs_log.txt | grep -v russian | grep -v brazilian; then echo "Doxygen warnings found" && cat docs_log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
+if grep -i warning docs_log.txt | grep -v -e russian -e brazilian; then echo "Doxygen warnings found" && cat docs_log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
 make man >man_log.txt 2>&1
 if grep -i warning man_log.txt ; then echo "Doxygen warnings found" && cat docs_log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
 make USER_DEFS="-Wextra -Werror" -j3

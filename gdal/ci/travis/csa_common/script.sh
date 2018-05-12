@@ -2,4 +2,8 @@
 
 set -e
 
-(cd gdal && if grep -r "\.c" scanbuildoutput | grep "<string>" | grep -v "<key>" | grep -v degrib | grep -v libjpeg | grep -v libpng | grep -v EHapi | grep -v GDapi | grep -v SWapi | grep -v osr_cs_wkt_parser | grep -v ods_formula_parser | grep -v swq_parser; then echo "error" && /bin/false; else echo "ok"; fi)
+if grep -r "\\.c" gdal/scanbuildoutput | grep "<string>" | grep -v -e "<key>" -e degrib -e libjpeg -e libpng -e EHapi -e GDapi -e SWapi -e osr_cs_wkt_parser -e ods_formula_parser -e swq_parser; then
+    echo error && /bin/false
+else
+    echo ok
+fi

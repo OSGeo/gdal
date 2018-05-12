@@ -10,7 +10,7 @@ rm $OUT_FILE 2>/dev/null
 
 echo "/* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */" >> $OUT_FILE
 
-symbol_list=$(objdump -t libgeotiff.so  | grep .text | awk '{print $6}' | grep -v .text | grep -v __do_global | grep -v __bss_start | grep -v _edata | grep -v _end | grep -v _fini | grep -v _init | sort)
+symbol_list=$(objdump -t libgeotiff.so  | grep .text | awk '{print $6}' | grep -v -e .text -e __do_global -e __bss_start -e _edata -e _end -e _fini -e _init | sort)
 for symbol in $symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
