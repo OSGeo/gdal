@@ -665,6 +665,8 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature( GIntBig nFeatureId )
     if( pszFIDColumn == nullptr )
         return OGRMSSQLSpatialLayer::GetFeature( nFeatureId );
 
+    poDS->EndCopy();
+
     ClearStatement();
 
     iNextShapeId = nFeatureId;
@@ -750,6 +752,8 @@ int OGRMSSQLSpatialTableLayer::TestCapability( const char * pszCap )
 GIntBig OGRMSSQLSpatialTableLayer::GetFeatureCount( int bForce )
 
 {
+    poDS->EndCopy();
+
     GetLayerDefn();
 
     if( TestCapability(OLCFastFeatureCount) == FALSE )
@@ -771,6 +775,29 @@ GIntBig OGRMSSQLSpatialTableLayer::GetFeatureCount( int bForce )
 }
 
 /************************************************************************/
+/*                             StartCopy()                              */
+/************************************************************************/
+
+OGRErr OGRMSSQLSpatialTableLayer::StartCopy()
+
+{
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              EndCopy()                               */
+/************************************************************************/
+
+OGRErr OGRMSSQLSpatialTableLayer::EndCopy()
+
+{
+#ifdef MSSQL_BCP_SUPPORTED
+    CloseBCP();
+#endif
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
 
@@ -780,6 +807,8 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 {
     char                szFieldType[256];
     OGRFieldDefn        oField( poFieldIn );
+
+    poDS->EndCopy();
 
     GetLayerDefn();
 
@@ -915,6 +944,8 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
 
 {
     OGRErr              eErr = OGRERR_FAILURE;
+
+    poDS->EndCopy();
 
     GetLayerDefn();
 
@@ -1137,6 +1168,8 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
 OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature( GIntBig nFID )
 
 {
+    poDS->EndCopy();
+
     GetLayerDefn();
 
     if( pszFIDColumn == nullptr )
@@ -1299,23 +1332,11 @@ void OGRMSSQLSpatialTableLayer::CloseBCP()
         for( iCol = 0; iCol < nRawColumns; iCol++ )
             CPLFree(papstBindBuffer[iCol]);
         CPLFree(papstBindBuffer);
+        papstBindBuffer = NULL;
 
         if( bIdentityInsert )
         {
             bIdentityInsert = FALSE;
-
-            /* restore identity insert if needed */
-            CPLODBCStatement oStatement( poDS->GetSession() );
-
-            oStatement.Appendf( "SET IDENTITY_INSERT [%s].[%s] OFF;",
-                                pszSchemaName, pszTableName );
-
-            if( !oStatement.ExecuteSQL() )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                                "Failed to set identity insert on layer, %s.",
-                                poDS->GetSession()->GetLastError());
-            }
         }
     }
 
@@ -1348,6 +1369,9 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
     {
         nBCPCount = 0;
 
+        /* Tell the datasource we are now planning to copy data */
+        poDS->StartCopy(this);
+
         CPLODBCSession* poSession = poDS->GetSession();
 
         if (poSession->IsInTransaction())
@@ -1366,19 +1390,6 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
 
         if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL && bIsIdentityFid )
         {
-            CPLODBCStatement oStatement( poSession );
-
-            oStatement.Appendf( "SET IDENTITY_INSERT [%s].[%s] ON;",
-                                pszSchemaName, pszTableName );
-
-            if( !oStatement.ExecuteSQL() )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                                "Failed to set identity insert on layer, %s.",
-                                poDS->GetSession()->GetLastError());
-                return OGRERR_FAILURE;
-            }
-
             bIdentityInsert = TRUE;
         }
 
