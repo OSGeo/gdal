@@ -286,7 +286,7 @@ VSIOSSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
     }
 
     CPLString osCanonicalizedResource( m_osBucket.empty() ? CPLString("/") :
-        "/" + m_osBucket +  "/" + CPLAWSURLEncode(m_osObjectKey, false));
+        "/" + m_osBucket +  "/" + m_osObjectKey );
     osCanonicalizedResource += osCanonicalQueryString;
 
     return CPLGetOSSHeaders(
@@ -425,7 +425,7 @@ CPLString VSIOSSHandleHelper::GetSignedURL(CSLConstList papszOptions)
     CPLString osVerb(CSLFetchNameValueDef(papszOptions, "VERB", "GET"));
 
     CPLString osCanonicalizedResource( m_osBucket.empty() ? CPLString("/") :
-        "/" + m_osBucket +  "/" + CPLAWSURLEncode(m_osObjectKey, false));
+        "/" + m_osBucket +  "/" + m_osObjectKey );
 
     CPLString osStringToSign;
     osStringToSign += osVerb + "\n";
