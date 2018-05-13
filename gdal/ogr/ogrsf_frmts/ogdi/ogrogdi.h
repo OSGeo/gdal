@@ -47,7 +47,7 @@ extern "C" {
 /************************************************************************/
 class OGROGDIDataSource;
 
-class OGROGDILayer : public OGRLayer
+class OGROGDILayer final: public OGRLayer
 {
     OGROGDIDataSource  *m_poODS;
     int                 m_nClientID;
@@ -93,7 +93,7 @@ class OGROGDILayer : public OGRLayer
 /*                          OGROGDIDataSource                           */
 /************************************************************************/
 
-class OGROGDIDataSource : public OGRDataSource
+class OGROGDIDataSource final: public OGRDataSource
 {
     OGROGDILayer      **m_papoLayers;
     int                 m_nLayers;
@@ -138,7 +138,7 @@ class OGROGDIDataSource : public OGRDataSource
 /*                            OGROGDIDriver                             */
 /************************************************************************/
 
-class OGROGDIDriver : public OGRSFDriver
+class OGROGDIDriver final: public OGRSFDriver
 {
   public:
                 ~OGROGDIDriver();

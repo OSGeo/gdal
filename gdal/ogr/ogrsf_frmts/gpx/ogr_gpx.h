@@ -52,7 +52,7 @@ typedef enum
 /*                             OGRGPXLayer                              */
 /************************************************************************/
 
-class OGRGPXLayer : public OGRLayer
+class OGRGPXLayer final: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
@@ -172,7 +172,7 @@ typedef enum
     GPX_VALIDITY_VALID
 } OGRGPXValidity;
 
-class OGRGPXDataSource : public OGRDataSource
+class OGRGPXDataSource final: public OGRDataSource
 {
     char*               pszName;
 

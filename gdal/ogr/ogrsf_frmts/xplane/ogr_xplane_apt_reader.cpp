@@ -237,7 +237,8 @@ void OGRXPlaneAptReader::Read()
         {
             bResumeLine = false;
 
-            if( nTokens == 1 && strcmp(papszTokens[0], "99") == 0 )
+            if( nTokens == 1 && papszTokens && papszTokens[0] &&
+                strcmp(papszTokens[0], "99") == 0 )
             {
                 CSLDestroy(papszTokens);
                 papszTokens = nullptr;

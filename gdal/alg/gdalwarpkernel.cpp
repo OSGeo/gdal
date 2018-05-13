@@ -4347,7 +4347,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
         return CE_Warning;
     }
 
-    struct oclWarper *warper = NULL;
+    struct oclWarper *warper = nullptr;
     cl_int err;
     CPLErr eErr = CE_None;
 
@@ -4364,15 +4364,15 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
                                        nDstXSize, nDstYSize,
                                        imageFormat, poWK->nBands, 4,
                                        bUseImag,
-                                       poWK->papanBandSrcValid != NULL,
+                                       poWK->papanBandSrcValid != nullptr,
                                        poWK->pafDstDensity,
                                        poWK->padfDstNoDataReal,
                                        resampAlg, &err);
 
-    if( err != CL_SUCCESS || warper == NULL )
+    if( err != CL_SUCCESS || warper == nullptr )
     {
         eErr = CE_Warning;
-        if( warper != NULL )
+        if( warper != nullptr )
             throw eErr;
         return eErr;
     }
@@ -4394,11 +4394,11 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
     /* ==================================================================== */
     for( int iBand = 0; iBand < poWK->nBands; iBand++ )
     {
-        if( poWK->papanBandSrcValid != NULL &&
-            poWK->papanBandSrcValid[iBand] != NULL)
+        if( poWK->papanBandSrcValid != nullptr &&
+            poWK->papanBandSrcValid[iBand] != nullptr)
         {
             GDALWarpKernelOpenCL_setSrcValid(
-                warper, (int *)poWK->papanBandSrcValid[iBand], iBand);
+                warper, reinterpret_cast<int *>(poWK->papanBandSrcValid[iBand]), iBand);
             if( err != CL_SUCCESS )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -4513,8 +4513,8 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
             if( !pabSuccess[iDstX] || dfX < nSrcXOff || dfY < nSrcYOff )
                 continue;
 
-            int iSrcX = ((int) dfX) - nSrcXOff;
-            int iSrcY = ((int) dfY) - nSrcYOff;
+            int iSrcX = static_cast<int>(dfX) - nSrcXOff;
+            int iSrcY = static_cast<int>(dfY) - nSrcYOff;
 
             if( iSrcX < 0 || iSrcX >= nSrcXSize ||
                 iSrcY < 0 || iSrcY >= nSrcYSize )
@@ -4523,7 +4523,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
             int iSrcOffset = iSrcX + iSrcY * nSrcXSize;
             double dfDensity = 1.0;
 
-            if( poWK->pafUnifiedSrcDensity != NULL
+            if( poWK->pafUnifiedSrcDensity != nullptr
                 && iSrcX >= 0 && iSrcY >= 0
                 && iSrcX < nSrcXSize && iSrcY < nSrcYSize )
                 dfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
@@ -4532,7 +4532,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
 
             // Because this is on the bit-wise level, it can't be done well in
             // OpenCL.
-            if( poWK->panDstValid != NULL )
+            if( poWK->panDstValid != nullptr )
                 poWK->panDstValid[iDstOffset>>5] |= 0x01 << (iDstOffset & 0x1f);
         }
     }
@@ -4571,8 +4571,8 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
     {
         for( int iBand = 0; iBand < poWK->nBands; iBand++ )
         {
-            void *rowReal = NULL;
-            void *rowImag = NULL;
+            void *rowReal = nullptr;
+            void *rowImag = nullptr;
             GByte *pabyDst = poWK->papabyDstImage[iBand];
 
             err = GDALWarpKernelOpenCL_getRow(warper, &rowReal, &rowImag,
@@ -4589,40 +4589,39 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
             // Copy the data from the warper to GDAL's memory.
             switch( poWK->eWorkingDataType )
             {
-              // TODO(schwehr): Fix casting.
               case GDT_Byte:
-                memcpy((void **)&(((GByte *)pabyDst)[iDstY*nDstXSize]),
+                memcpy(&(pabyDst[iDstY*nDstXSize]),
                        rowReal, sizeof(GByte)*nDstXSize);
                 break;
               case GDT_Int16:
-                memcpy((void **)&(((GInt16 *)pabyDst)[iDstY*nDstXSize]),
+                memcpy(&(reinterpret_cast<GInt16 *>(pabyDst)[iDstY*nDstXSize]),
                        rowReal, sizeof(GInt16)*nDstXSize);
                 break;
               case GDT_UInt16:
-                memcpy((void **)&(((GUInt16 *)pabyDst)[iDstY*nDstXSize]),
+                memcpy(&(reinterpret_cast<GUInt16 *>(pabyDst)[iDstY*nDstXSize]),
                        rowReal, sizeof(GUInt16)*nDstXSize);
                 break;
               case GDT_Float32:
-                memcpy((void **)&(((float *)pabyDst)[iDstY*nDstXSize]),
+                memcpy(&(reinterpret_cast<float *>(pabyDst)[iDstY*nDstXSize]),
                        rowReal, sizeof(float)*nDstXSize);
                 break;
               case GDT_CInt16:
               {
-                  GInt16 *pabyDstI16 = &(((GInt16 *)pabyDst)[iDstY*nDstXSize]);
+                  GInt16 *pabyDstI16 = &(reinterpret_cast<GInt16 *>(pabyDst)[iDstY*nDstXSize]);
                   for( int iDstX = 0; iDstX < nDstXSize; iDstX++ )
                   {
-                      pabyDstI16[iDstX*2  ] = ((GInt16 *)rowReal)[iDstX];
-                      pabyDstI16[iDstX*2+1] = ((GInt16 *)rowImag)[iDstX];
+                      pabyDstI16[iDstX*2  ] = static_cast<GInt16 *>(rowReal)[iDstX];
+                      pabyDstI16[iDstX*2+1] = static_cast<GInt16 *>(rowImag)[iDstX];
                   }
               }
               break;
               case GDT_CFloat32:
               {
-                  float *pabyDstF32 = &(((float *)pabyDst)[iDstY*nDstXSize]);
+                  float *pabyDstF32 = &(reinterpret_cast<float *>(pabyDst)[iDstY*nDstXSize]);
                   for( int iDstX = 0; iDstX < nDstXSize; iDstX++ )
                   {
-                      pabyDstF32[iDstX*2  ] = ((float *)rowReal)[iDstX];
-                      pabyDstF32[iDstX*2+1] = ((float *)rowImag)[iDstX];
+                      pabyDstF32[iDstX*2  ] = static_cast<float *>(rowReal)[iDstX];
+                      pabyDstF32[iDstX*2+1] = static_cast<float *>(rowImag)[iDstX];
                   }
               }
               break;

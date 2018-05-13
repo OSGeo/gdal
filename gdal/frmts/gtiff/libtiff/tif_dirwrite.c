@@ -695,8 +695,11 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 								}
 								break;
 							default:
-								assert(0);   /* we should never get here */
-								break;
+								TIFFErrorExt(tif->tif_clientdata,module,
+								            "Cannot write tag %d (%s)",
+								            TIFFFieldTag(o),
+                                                                            o->field_name ? o->field_name : "unknown");
+								goto bad;
 						}
 					}
 				}
