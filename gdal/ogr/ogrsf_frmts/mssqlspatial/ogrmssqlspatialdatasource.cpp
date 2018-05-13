@@ -47,6 +47,8 @@ OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() :
     panSRID = nullptr;
     papoSRS = nullptr;
 
+    poLayerInCopyMode = nullptr;
+
     nGeometryFormat = MSSQLGEOMETRY_NATIVE;
     pszConnection = nullptr;
 
