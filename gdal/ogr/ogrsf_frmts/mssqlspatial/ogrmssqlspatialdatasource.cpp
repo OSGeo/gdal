@@ -178,6 +178,8 @@ OGRErr OGRMSSQLSpatialDataSource::DeleteLayer( int iLayer )
     if( iLayer < 0 || iLayer >= nLayers )
         return OGRERR_FAILURE;
 
+    EndCopy();
+
 /* -------------------------------------------------------------------- */
 /*      Blow away our OGR structures related to the layer.  This is     */
 /*      pretty dangerous if anything has a reference to this layer!     */
@@ -244,6 +246,8 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     const char          *pszGeomColumn = nullptr;
     int                 nCoordDimension = 3;
     char                *pszFIDColumnName = nullptr;
+
+    EndCopy();
 
     /* determine the dimension */
     if( eType == wkbFlatten(eType) )
@@ -1191,6 +1195,8 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS( int nId )
             return papoSRS[i];
     }
 
+    EndCopy();
+
     OGRSpatialReference *poSRS = nullptr;
 
 /* -------------------------------------------------------------------- */
@@ -1521,4 +1527,34 @@ OGRErr OGRMSSQLSpatialDataSource::RollbackTransaction()
     }
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             StartCopy()                              */
+/************************************************************************/
+
+void OGRMSSQLSpatialDataSource::StartCopy(OGRMSSQLSpatialTableLayer *poMSSQLSpatialLayer)
+{
+    if (poLayerInCopyMode == poMSSQLSpatialLayer)
+        return;
+    EndCopy();
+    poLayerInCopyMode = poMSSQLSpatialLayer;
+    poLayerInCopyMode->StartCopy();
+}
+
+/************************************************************************/
+/*                              EndCopy()                               */
+/************************************************************************/
+
+OGRErr OGRMSSQLSpatialDataSource::EndCopy()
+{
+    if (poLayerInCopyMode != nullptr)
+    {
+        OGRErr result = poLayerInCopyMode->EndCopy();
+        poLayerInCopyMode = nullptr;
+
+        return result;
+    }
+    else
+        return OGRERR_NONE;
 }
