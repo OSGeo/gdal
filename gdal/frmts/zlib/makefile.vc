@@ -20,7 +20,7 @@ GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS = $(SOFTWARNFLAGS) /wd4131
+EXTRAFLAGS = $(SOFTWARNFLAGS) -Dverbose=-1 /wd4131
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o

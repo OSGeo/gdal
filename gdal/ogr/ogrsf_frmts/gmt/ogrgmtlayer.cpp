@@ -199,18 +199,20 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
                                                    TRUE, TRUE );
         char **papszFT = CSLTokenizeStringComplex( osFieldTypes, "|",
                                                    TRUE, TRUE );
-        const int nFieldCount = std::max(CSLCount(papszFN), CSLCount(papszFT));
+        const int nFNCount = CSLCount(papszFN);
+        const int nFTCount = CSLCount(papszFT);
+        const int nFieldCount = std::max(nFNCount, nFTCount);
 
         for( int iField = 0; iField < nFieldCount; iField++ )
         {
             OGRFieldDefn oField("", OFTString );
 
-            if( iField < CSLCount(papszFN) )
+            if( iField < nFNCount )
                 oField.SetName( papszFN[iField] );
             else
                 oField.SetName( CPLString().Printf( "Field_%d", iField+1 ));
 
-            if( iField < CSLCount(papszFT) )
+            if( iField < nFTCount )
             {
                 if( EQUAL(papszFT[iField],"integer") )
                     oField.SetType( OFTInteger );

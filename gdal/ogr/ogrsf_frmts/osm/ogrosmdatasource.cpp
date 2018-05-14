@@ -29,6 +29,7 @@
 #include "gpb.h"
 #include "ogr_osm.h"
 
+#include <cassert>
 #include <cerrno>
 #include <climits>
 #include <cmath>
@@ -1322,14 +1323,20 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
         /* If we stay in the same bucket, we can reuse the previously */
         /* computed offset, instead of starting from bucket start */
         for( ; k < nBitmapIndex; k++ )
+        {
+            assert(psBucket->u.pabyBitmap);
             // psBucket->u.pabyBitmap cannot be NULL
             // coverity[var_deref_op]
             nSectorBase += abyBitsCount[psBucket->u.pabyBitmap[k]];
+        }
         int nSector = nSectorBase;
         if( nBitmapRemainer )
+        {
+            assert(psBucket->u.pabyBitmap);
             nSector +=
                 abyBitsCount[psBucket->u.pabyBitmap[nBitmapIndex] &
                              ((1 << nBitmapRemainer) - 1)];
+        }
 
         const GIntBig nNewOffset = psBucket->nOff + nSector * SECTOR_SIZE;
         if( nNewOffset - nOldOffset >= knDISK_SECTOR_SIZE )

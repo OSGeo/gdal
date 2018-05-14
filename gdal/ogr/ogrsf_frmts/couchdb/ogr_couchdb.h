@@ -161,6 +161,8 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     virtual void              LoadMetadata();
     virtual bool              RunSpatialFilterQueryIfNecessary();
 
+    void                      BuildLayerDefn();
+
     public:
             OGRCouchDBTableLayer(OGRCouchDBDataSource* poDS,
                                  const char* pszName);

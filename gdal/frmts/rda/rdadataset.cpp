@@ -703,31 +703,30 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
     {
         json_object *poParams = CPL_json_object_object_get(poObj, "params");
 
-        if(poParams != nullptr) {
-            array_list *res = json_object_get_array(poParams);
-            if(res != nullptr) {
-                for (decltype(res->length) i = 0; i < res->length; i++) {
-                    json_object *ds = (json_object *) array_list_get_idx(res, i);
-                    if (ds != nullptr) {
-                        json_object_iter it;
-                        it.key = nullptr;
-                        it.val = nullptr;
-                        it.entry = nullptr;
-                        json_object_object_foreachC( ds, it )
+        if(poParams != nullptr &&
+            json_object_get_type(poParams) == json_type_array ) {
+            const int nSize = json_object_array_length(poParams);
+            for (int i = 0; i < nSize; ++i) {
+                json_object *ds = json_object_array_get_idx(poParams, i);
+                if (ds != nullptr) {
+                    json_object_iter it;
+                    it.key = nullptr;
+                    it.val = nullptr;
+                    it.entry = nullptr;
+                    json_object_object_foreachC( ds, it )
+                    {
+                        if(it.key != nullptr && it.val != nullptr)
                         {
-                            if(it.key != nullptr && it.val != nullptr)
+                            CPLString tkey = it.key;
+                            const char* tval =
+                                json_object_get_string(it.val);
+                            if(tval != nullptr)
                             {
-                                CPLString tkey = it.key;
-                                const char* tval =
-                                    json_object_get_string(it.val);
-                                if(tval != nullptr)
-                                {
-                                    m_osParams.push_back(std::make_tuple(tkey,
-                                                            CPLString(tval)));
-                                }
+                                m_osParams.push_back(std::make_tuple(tkey,
+                                                        CPLString(tval)));
                             }
-
                         }
+
                     }
                 }
             }

@@ -58,7 +58,7 @@ typedef enum
 /*                             OGRGeoRSSLayer                              */
 /************************************************************************/
 
-class OGRGeoRSSLayer : public OGRLayer
+class OGRGeoRSSLayer final: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
@@ -169,7 +169,7 @@ typedef enum
     GEORSS_VALIDITY_VALID
 } OGRGeoRSSValidity;
 
-class OGRGeoRSSDataSource : public OGRDataSource
+class OGRGeoRSSDataSource final: public OGRDataSource
 {
     char*               pszName;
 

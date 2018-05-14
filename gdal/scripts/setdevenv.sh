@@ -16,24 +16,24 @@ fi
 
 GDAL_ROOT=$(cd $(dirname ${BASH_SOURCE[0]})/..; pwd)
 
-if [[ ! ${PATH,,} =~ "$GDAL_ROOT/apps" ]]; then
+if [[ ! ${PATH,,} =~ $GDAL_ROOT/apps ]]; then
     export PATH="$GDAL_ROOT/apps:$GDAL_ROOT/apps/.libs:$PATH"
     echo "Setting PATH=$PATH"
 fi
 
 if [[ "$(uname -s)" == "Darwin" ]]; then
-    if [[ ! ${DYLD_LIBRARY_PATH,,} =~ "$GDAL_ROOT" ]]; then
+    if [[ ! ${DYLD_LIBRARY_PATH,,} =~ $GDAL_ROOT ]]; then
         export DYLD_LIBRARY_PATH="$GDAL_ROOT:$GDAL_ROOT/.libs:$DYLD_LIBRARY_PATH"
         echo "Setting DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH"
     fi
 else
-    if [[ ! ${LD_LIBRARY_PATH,,} =~ "$GDAL_ROOT" ]]; then
+    if [[ ! ${LD_LIBRARY_PATH,,} =~ $GDAL_ROOT ]]; then
         export LD_LIBRARY_PATH="$GDAL_ROOT:$GDAL_ROOT/.libs:$LD_LIBRARY_PATH"
         echo "Setting LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
     fi
 fi
 
-if [[ ! ${GDAL_DATA,,} =~ "$GDAL_ROOT/data" ]]; then
+if [[ ! ${GDAL_DATA,,} =~ $GDAL_ROOT/data ]]; then
     export GDAL_DATA="$GDAL_ROOT/data"
     echo "Setting GDAL_DATA=$GDAL_DATA"
 fi
@@ -45,7 +45,7 @@ elif which python3 >/dev/null; then
 fi
 if test "$GDAL_PYTHONPATH" != ""; then
     GDAL_PYTHONPATH="$GDAL_ROOT/swig/python/$GDAL_PYTHONPATH"
-    if [[ ! ${PYTHONPATH,,} =~ "$GDAL_PYTHONPATH" ]]; then
+    if [[ ! ${PYTHONPATH,,} =~ $GDAL_PYTHONPATH ]]; then
         export PYTHONPATH="$GDAL_PYTHONPATH:$PYTHONPATH"
         echo "Setting PYTHONPATH=$PYTHONPATH"
     fi

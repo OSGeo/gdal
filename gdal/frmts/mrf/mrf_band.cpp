@@ -1033,6 +1033,33 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     return ret;
 }
 
+//
+// Tests if a given block exists without reading it
+// returns false only when it is definitely not existing
+//
+bool GDALMRFRasterBand::TestBlock(int xblk, int yblk)
+{
+    // When bypassing the cache, assume all blocks are valid
+    if (poDS->bypass_cache && !poDS->source.empty())
+        return true;
+
+    ILIdx tinfo;
+    GInt32 cstride = img.pagesize.c;
+    ILSize req(xblk, yblk, 0, (nBand - 1) / cstride, m_l);
+
+    
+    if (CE_None != poDS->ReadTileIdx(tinfo, req, img))
+        // Got an error reading the tile index
+        return !poDS->no_errors;
+
+    // Got an index, if the size is readable, the block does exist
+    if (0 < tinfo.size && tinfo.size < poDS->pbsize *2)
+        return true;
+
+    // We are caching, but the tile has not been checked, so it could exist
+    return (!poDS->source.empty() && 0 == tinfo.offset);
+}
+
 int GDALMRFRasterBand::GetOverviewCount()
 {
     // First try internal overviews

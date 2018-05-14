@@ -557,6 +557,18 @@ def hdf5_17():
     return 'success'
 
 
+def hdf5_single_char_varname():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('HDF5:"data/single_char_varname.h5"://e')
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+
 class TestHDF5(object):
     def __init__(self, downloadURL, fileName, subdatasetname, checksum, download_size):
         self.downloadURL = downloadURL
@@ -598,7 +610,8 @@ gdaltest_list = [
     hdf5_14,
     hdf5_15,
     hdf5_16,
-    hdf5_17
+    hdf5_17,
+    hdf5_single_char_varname,
 ]
 
 hdf5_list = [('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',

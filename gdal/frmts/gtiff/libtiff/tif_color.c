@@ -166,7 +166,7 @@ TIFFCIELabToRGBInit(TIFFCIELabToRGB* cielab,
 }
 
 /* 
- * Convert color value from the YCbCr space to CIE XYZ.
+ * Convert color value from the YCbCr space to RGB.
  * The colorspace conversion algorithm comes from the IJG v5a code;
  * see below for more information on how it works.
  */

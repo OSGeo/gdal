@@ -504,26 +504,23 @@ static void CreatePath( HDF5GroupObjects *poH5Object )
     CPLString osUnderscoreSpaceInName;
     if( poH5Object->pszPath == nullptr )
     {
+        // This is completely useless but needed if we want to keep
+        // subdataset names as they have "always" been formatted,
+        // with double slash at the beginning
+        if( osPath.empty() )
+            osPath = "/";
 
-        if( strlen(poH5Object->pszName) == 1 )
-        {
-            osPath.append(poH5Object->pszName);
-            osUnderscoreSpaceInName = poH5Object->pszName;
-        }
-        else
-        {
-            // Change space for underscore.
-            char **papszPath =
-                CSLTokenizeString2(osPath.c_str(), " ", CSLT_HONOURSTRINGS);
+        // Change space for underscore.
+        char **papszPath =
+            CSLTokenizeString2(osPath.c_str(), " ", CSLT_HONOURSTRINGS);
 
-            for( int i = 0; papszPath[i] != nullptr ; i++ )
-            {
-                if( i > 0 )
-                    osUnderscoreSpaceInName.append("_");
-                osUnderscoreSpaceInName.append(papszPath[i]);
-            }
-            CSLDestroy(papszPath);
+        for( int i = 0; papszPath[i] != nullptr ; i++ )
+        {
+            if( i > 0 )
+                osUnderscoreSpaceInName.append("_");
+            osUnderscoreSpaceInName.append(papszPath[i]);
         }
+        CSLDestroy(papszPath);
 
         // -1 to give room for NUL in C strings.
         constexpr size_t MAX_PATH = 8192 - 1;

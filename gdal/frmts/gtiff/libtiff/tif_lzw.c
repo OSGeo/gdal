@@ -602,6 +602,7 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 	char *tp;
 	unsigned char *bp;
 	int code, nbits;
+	int len;
 	long nextbits, nextdata, nbitsmask;
 	code_t *codep, *free_entp, *maxcodep, *oldcodep;
 
@@ -753,13 +754,18 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 				}  while (--occ);
 				break;
 			}
-			assert(occ >= codep->length);
-			op += codep->length;
-			occ -= codep->length;
-			tp = op;
+			len = codep->length;
+			tp = op + len;
 			do {
-				*--tp = codep->value;
-			} while( (codep = codep->next) != NULL );
+				int t;
+				--tp;
+				t = codep->value;
+				codep = codep->next;
+				*tp = (char)t;
+			} while (codep && tp > op);
+			assert(occ >= len);
+			op += len;
+			occ -= len;
 		} else {
 			*op++ = (char)code;
 			occ--;
