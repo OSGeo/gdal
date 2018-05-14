@@ -29,11 +29,11 @@ wget http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip
 unzip PGeoTest.zip
 cd ../../..
 # Run ogr_fgdb.py in isolation from the rest
-cd ogr
-python ogr_fgdb.py
-mkdir disabled
-mv ogr_fgdb.* disabled
-cd ..
+(cd ogr
+ python ogr_fgdb.py
+ mkdir disabled
+ mv ogr_fgdb.* disabled
+)
 # Run ogr_pgeo.py in isolation from the rest
 (cd ogr && python ogr_pgeo.py && mv ogr_pgeo.* disabled)
 

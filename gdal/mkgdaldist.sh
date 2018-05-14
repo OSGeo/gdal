@@ -3,7 +3,8 @@
 # $Id$
 #
 # mkgdaldist.sh - prepares GDAL source distribution package
-#
+
+set -eu
 
 # Doxgen 1.7.1 has a bug related to man pages. See https://trac.osgeo.org/gdal/ticket/6048
 doxygen --version | xargs python -c "import sys; v = sys.argv[1].split('.'); v=int(v[0])*10000+int(v[1])*100+int(v[2]); sys.exit(v < 10704)"
@@ -88,7 +89,7 @@ else
    git clone -b ${BRANCH} --single-branch ${GITURL} gdal
 fi
 
-if [ \! -d gdal ] ; then
+if [ ! -d gdal ] ; then
 	echo "git clone reported an error ... abandoning mkgdaldist"
 	cd ..
 	rm -rf dist_wrk
@@ -117,10 +118,10 @@ echo "* Cleaning .gitignore under $PWD..."
 rm -f gdal/.gitignore
 
 echo "* Substituting \$Id\$..."
-for i in $(find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.dox" \
-              -o -name "*.py" -o -name "*.i" -o -name "*.sh" -o -name "*.cs" \
-              -o -name "*.java" -o -name "*.m4" -o -name "*.xml" \
-              -o -name "*.xsd"); do
+find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.dox" \
+     -o -name "*.py" -o -name "*.i" -o -name "*.sh" -o -name "*.cs" \
+     -o -name "*.java" -o -name "*.m4" -o -name "*.xml" \
+     -o -name "*.xsd" | while read -r i ; do
     ID="$(basename $i) $(git log -1 --format='%H %ai %aN' $i | sed 's/ +0000/Z/')"
     sed -i "s/\\\$Id\\\$/\\\$Id: ${ID} \\\$/" $i
 done
@@ -196,7 +197,7 @@ cd gdal-${GDAL_VERSION}
 echo "GDAL_VER=${GDAL_VERSION}" > GDALmake.opt
 cd frmts/grass
 make dist
-mv *.tar.gz ../../../../..
+mv ./*.tar.gz ../../../../..
 cd ../../..
 
 echo "* Generating MD5 sums ..."

@@ -28,18 +28,18 @@ wget http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip
 unzip PGeoTest.zip
 cd ../../..
 # Run ogr_fgdb.py in isolation from the rest
-cd ogr
-python3 ogr_fgdb.py
-mkdir disabled
-mv ogr_fgdb.* disabled
-cd ..
+(cd ogr
+ python3 ogr_fgdb.py
+ mkdir disabled
+ mv ogr_fgdb.* disabled
+)
 # Run ogr_pgeo.py in isolation from the rest
-cd ogr
-python3 ogr_pgeo.py
-mv ogr_pgeo.* disabled
-# mongdb tests stall
-mv ogr_mongodb.* disabled
-cd ..
+(cd ogr
+ python3 ogr_pgeo.py
+ mv ogr_pgeo.* disabled
+ # mongdb tests stall
+ mv ogr_mongodb.* disabled
+)
 # Run all the Python autotests
 GDAL_SKIP="JP2ECW ECW" python3 run_all.py
 # A bit messy, but force testing with libspatialite 4.0dev (that has been patched a bit to remove any hard-coded SRS definition so it is very small)

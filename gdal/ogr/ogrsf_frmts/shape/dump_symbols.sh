@@ -14,19 +14,19 @@ do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
 
-rodata_symbol_list=$(objdump -t shapelib.so  | grep "\.rodata" |  awk '{print $6}' | grep -v "\.")
+rodata_symbol_list=$(objdump -t shapelib.so  | grep "\\.rodata" |  awk '{print $6}' | grep -v "\\.")
 for symbol in $rodata_symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
 
-data_symbol_list=$(objdump -t shapelib.so  | grep "\.data" | grep -v __dso_handle | grep -v "__TMC_END__" | awk '{print $6}' | grep -v "\.")
+data_symbol_list=$(objdump -t shapelib.so  | grep "\\.data" | grep -v __dso_handle | grep -v "__TMC_END__" | awk '{print $6}' | grep -v "\\.")
 for symbol in $data_symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
 
-bss_symbol_list=$(objdump -t shapelib.so  | grep "\.bss" | grep -v bBigEndian |  awk '{print $6}' | grep -v "\.")
+bss_symbol_list=$(objdump -t shapelib.so  | grep "\\.bss" | grep -v bBigEndian |  awk '{print $6}' | grep -v "\\.")
 for symbol in $bss_symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
