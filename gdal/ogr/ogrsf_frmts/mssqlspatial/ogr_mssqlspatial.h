@@ -379,7 +379,9 @@ class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
 
     void                SetUseCopy(int bcpSize) { bUseCopy = TRUE; nBCPSize = bcpSize; }
 
+    // cppcheck-suppress functionStatic
     OGRErr              StartCopy();
+    // cppcheck-suppress functionStatic
     OGRErr              EndCopy();
 
     int                 Failed( int nRetCode );
