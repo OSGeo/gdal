@@ -32,6 +32,7 @@
 #include "hfadataset.h"
 #include "hfa_p.h"
 
+#include <cassert>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -2042,12 +2043,18 @@ void HFARasterBand::ReadAuxMetadata()
     const char *const *pszAuxMetaData = GetHFAAuxMetaDataList();
     for( int i = 0; pszAuxMetaData[i] != nullptr; i += 4 )
     {
-        HFAEntry *poEntry = (strlen(pszAuxMetaData[i]) > 0)
-            ? poBand->poNode->GetNamedChild(pszAuxMetaData[i])
-            : poBand->poNode;
-
-        if( poEntry == nullptr )
-            continue;
+        HFAEntry *poEntry;
+        if (strlen(pszAuxMetaData[i]) > 0)
+        {
+            poEntry = poBand->poNode->GetNamedChild(pszAuxMetaData[i]);
+            if( poEntry == nullptr )
+                continue;
+        }
+        else
+        {
+            poEntry = poBand->poNode;
+            assert(poEntry);
+        }
 
         const char *pszFieldName = pszAuxMetaData[i + 1] + 1;
 
@@ -4372,9 +4379,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         pszDatumName = psDatum->datumname;
 
         // Imagine to WKT translation.
-        for( int i = 0;
-             pszDatumName != nullptr && apszDatumMap[i] != nullptr;
-             i += 2 )
+        for( int i = 0; apszDatumMap[i] != nullptr; i += 2 )
         {
             if( EQUAL(pszDatumName, apszDatumMap[i]) )
             {
