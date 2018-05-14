@@ -21,7 +21,7 @@ sudo apt-get install doxygen texlive-latex-base
 pyflakes autotest
 pyflakes gdal/swig/python/scripts
 pyflakes gdal/swig/python/samples
-if pyflakes gdal/swig/python/osgeo/*.py | grep -v redefinition | grep -v 'unable to detect' | grep -v 'imported but unused'; then echo 'fail'; /bin/false; fi
+if pyflakes gdal/swig/python/osgeo/*.py | grep -v -e redefinition -e 'unable to detect' -e 'imported but unused'; then echo fail; /bin/false; fi
 psql -c "drop database if exists autotest" -U postgres
 psql -c "create database autotest" -U postgres
 psql -c "create extension postgis" -d autotest -U postgres
