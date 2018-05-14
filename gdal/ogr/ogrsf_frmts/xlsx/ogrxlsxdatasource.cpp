@@ -714,7 +714,10 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
                                                      eSubType);
                 OGRFieldDefn oFieldDefn(pszFieldName, eType);
                 oFieldDefn.SetSubType(eSubType);
-                poCurLayer->CreateField(&oFieldDefn);
+                if( poCurLayer->CreateField(&oFieldDefn) != OGRERR_NONE )
+                {
+                    return;
+                }
             }
 
             OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
