@@ -1285,7 +1285,25 @@ static int unzlocal_CheckCurrentFileCoherencyHeader (unz_s* s, uInt* piSizeVar,
 
     if ((err==UNZ_OK) && (s->cur_file_info.compression_method!=0) &&
                          (s->cur_file_info.compression_method!=Z_DEFLATED))
+    {
+        if( s->cur_file_info.compression_method == 9 )
+        {
+            // Could potentially be handled by using the (unsupported)
+            // code at https://github.com/madler/zlib/tree/master/contrib/infback9
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "A file in the ZIP archive uses the Deflate64 unsupported "
+                     "compression method. You can uncompress priorly with the "
+                     "unzip utility.");
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "A file in the ZIP archive uses a unsupported "
+                     "compression method (%lu)",
+                     s->cur_file_info.compression_method);
+        }
         err=UNZ_BADZIPFILE;
+    }
 
     if (unzlocal_getLong(&s->z_filefunc, s->filestream,&uData) != UNZ_OK) /* date/time */
         err=UNZ_ERRNO;
