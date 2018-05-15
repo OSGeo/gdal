@@ -1198,7 +1198,8 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     if (! output)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "FITRasterBand couldn't allocate %lu bytes", pageBytes);
+                 "FITRasterBand couldn't allocate %lu bytes",
+                 static_cast<unsigned long>(pageBytes));
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
         return nullptr;
     }
