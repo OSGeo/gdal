@@ -1290,6 +1290,8 @@ static int unzlocal_CheckCurrentFileCoherencyHeader (unz_s* s, uInt* piSizeVar,
         {
             // Could potentially be handled by using the (unsupported)
             // code at https://github.com/madler/zlib/tree/master/contrib/infback9
+            // Actually the infack9 API doesn't look very suitable as it
+            // processes the whole stream with in() and out() callbacks...
             CPLError(CE_Failure, CPLE_NotSupported,
                      "A file in the ZIP archive uses the Deflate64 unsupported "
                      "compression method. You can uncompress priorly with the "
