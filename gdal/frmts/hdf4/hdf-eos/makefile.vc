@@ -18,3 +18,4 @@ default:	$(OBJ)
 clean:
 	-del *.obj
 
+plugin:	$(OBJ)
