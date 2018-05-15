@@ -10483,11 +10483,9 @@ CPLErr GTiffDataset::IBuildOverviews(
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
     GTIFFGetOverviewBlockSize(&nOvrBlockXSize, &nOvrBlockYSize);
-    std::vector<bool> abRequireNewOverview;
-    abRequireNewOverview.resize(nOverviews);
+    std::vector<bool> abRequireNewOverview(nOverviews, true);
     for( int i = 0; i < nOverviews && eErr == CE_None; ++i )
     {
-        abRequireNewOverview[i] = true;
         for( int j = 0; j < nOverviewCount && eErr == CE_None; ++j )
         {
             GTiffDataset *poODS = papoOverviewDS[j];
@@ -10646,8 +10644,8 @@ CPLErr GTiffDataset::IBuildOverviews(
                     sizeof(void*), poBand->GetOverviewCount()) );
 
             int iCurOverview = 0;
-            std::vector<bool> abAlreadyUsedOverviewBand;
-            abAlreadyUsedOverviewBand.resize(poBand->GetOverviewCount());
+            std::vector<bool> abAlreadyUsedOverviewBand(
+                poBand->GetOverviewCount(), false);
 
             for( int i = 0; i < nOverviews; ++i )
             {
@@ -10722,8 +10720,8 @@ CPLErr GTiffDataset::IBuildOverviews(
                 break;
             }
 
-            std::vector<bool> abAlreadyUsedOverviewBand;
-            abAlreadyUsedOverviewBand.resize(poBand->GetOverviewCount());
+            std::vector<bool> abAlreadyUsedOverviewBand(
+                poBand->GetOverviewCount(), false);
 
             int nNewOverviews = 0;
             for( int i = 0; i < nOverviews; ++i )
