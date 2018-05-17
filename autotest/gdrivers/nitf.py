@@ -33,7 +33,6 @@
 import copy
 import os
 import sys
-from sys import version_info
 import array
 import struct
 import shutil

@@ -2647,8 +2647,6 @@ def tiff_write_71():
     f = open('tmp/tiff_write_71.tif', 'wb')
     f.write(header)
 
-    from sys import version_info
-
     # Write StripByteCounts tag
     # 100,000 in little endian
     f.write(b'\xa0\x86\x01\x00\x00\x00\x00\x00')
