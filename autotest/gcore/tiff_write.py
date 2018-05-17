@@ -2651,12 +2651,7 @@ def tiff_write_71():
 
     # Write StripByteCounts tag
     # 100,000 in little endian
-    if version_info >= (3, 0, 0):
-        for _ in range(100000):
-            exec("f.write(b'\\xa0\\x86\\x01\\x00\\x00\\x00\\x00\\x00')")
-    else:
-        for _ in range(100000):
-            f.write('\xa0\x86\x01\x00\x00\x00\x00\x00')
+    f.write(b'\xa0\x86\x01\x00\x00\x00\x00\x00')
 
     # Write StripOffsets tag
     offset = 1600252
@@ -2666,10 +2661,7 @@ def tiff_write_71():
 
     # Write 0x78 as value of pixel (99999, 99999)
     f.seek(10001600252 - 1, 0)
-    if version_info >= (3, 0, 0):
-        exec("f.write(b'\\x78')")
-    else:
-        f.write('\x78')
+    f.write(b'\\x78')
     f.close()
 
     ds = gdal.Open('tmp/tiff_write_71.tif')
