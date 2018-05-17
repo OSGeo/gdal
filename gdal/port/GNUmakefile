@@ -97,6 +97,7 @@ INST_H_FILES = \
 	cpl_time.h \
 	cpl_virtualmem.h \
 	cpl_vsi.h \
+	cpl_vsi_error.h \
 	cpl_vsi_virtual.h \
 	gdal_csv.h
 
