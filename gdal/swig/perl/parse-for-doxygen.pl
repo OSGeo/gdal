@@ -186,7 +186,7 @@ for my $package (sort keys %package) {
     for my $sub (sort keys %{$package{$package}{dox}}) {
         next if $sub =~ /^\$/;
         if ($package{$package}{dox}{$sub} and not $package{$package}{subs}{$sub}) {
-            print STDERR "Warning: non-existing $package::$sub documented.\n";
+            print STDERR "Warning: non-existing $package","::","$sub documented.\n";
         }
     }
     print "#** \@class $package\n";
