@@ -1738,13 +1738,13 @@ def test_ogr2ogr_46():
         data = f.read()
         f.close()
 
-        if data.find('2,49') == -1 and data.find('222638.') == -1:
+        if data.find('2,49') == -1 and data.find('2.0,49.0') == -1 and data.find('222638.') == -1:
             gdaltest.post_reason('failure')
             print(option)
             print(data)
             return 'fail'
 
-        if data.find('3,50') == -1 and data.find('333958.') == -1:
+        if data.find('3,50') == -1 and data.find('3.0,50.0') == -1 and data.find('333958.') == -1:
             gdaltest.post_reason('failure')
             print(option)
             print(data)
