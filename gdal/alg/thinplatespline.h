@@ -76,7 +76,9 @@ class VizGeorefSpline2D
         y(nullptr),
         u(nullptr),
         unused(nullptr),
-        index(nullptr)
+        index(nullptr),
+        x_mean(0),
+        y_mean(0)
     {
         for( int i = 0; i < VIZGEOREF_MAX_VARS; i++ )
         {
@@ -187,6 +189,8 @@ class VizGeorefSpline2D
     int *unused; // [VIZ_GEOREF_SPLINE_MAX_POINTS];
     int *index; // [VIZ_GEOREF_SPLINE_MAX_POINTS];
 
+    double x_mean;
+    double y_mean;
   private:
     CPL_DISALLOW_COPY_ASSIGN(VizGeorefSpline2D)
 };

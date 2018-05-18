@@ -572,8 +572,20 @@ int VizGeorefSpline2D::solve()
         for( int c = 0; c < 3; c++ )
             A(r, c) = 0.0;
 
+    x_mean = 0;
+    y_mean = 0;
     for( int c = 0; c < _nof_points; c++ )
     {
+        x_mean += x[c];
+        y_mean += y[c];
+    }
+    x_mean /= _nof_points;
+    y_mean /= _nof_points;
+
+    for( int c = 0; c < _nof_points; c++ )
+    {
+        x[c] -= x_mean;
+        y[c] -= y_mean;
         A(0, c+3) = 1.0;
         A(1, c+3) = x[c];
         A(2, c+3) = y[c];
@@ -686,9 +698,9 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py,
     }
     case VIZ_GEOREF_SPLINE_FULL:
     {
-        const double Pxy[2] = { Px, Py };
+        const double Pxy[2] = { Px - x_mean, Py -y_mean };
         for( int v = 0; v < _nof_vars; v++ )
-            vars[v] = coef[v][0] + coef[v][1] * Px + coef[v][2] * Py;
+            vars[v] = coef[v][0] + coef[v][1] * Pxy[0] + coef[v][2] * Pxy[1];
 
         int r = 0;  // Used after for.
         for( ; r < (_nof_points & (~3)); r+=4 )
@@ -703,7 +715,7 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py,
         }
         for( ; r < _nof_points; r++ )
         {
-            const double tmp = VizGeorefSpline2DBase_func( Px, Py, x[r], y[r] );
+            const double tmp = VizGeorefSpline2DBase_func( Pxy[0], Pxy[1], x[r], y[r] );
             for( int v= 0; v < _nof_vars; v++ )
                 vars[v] += coef[v][r+3] * tmp;
         }
