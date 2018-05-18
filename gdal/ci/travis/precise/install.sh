@@ -29,9 +29,14 @@ cd ..
 
 (cd swig/perl && make generate && make)
 
+# Load data before we remove the system libgdal
+(cd ../autotest/gdrivers/data && ./load_postgisraster_test_data.sh)
+
 sudo rm -f /usr/lib/libgdal.so*
 sudo make install
 sudo ldconfig
+# Somewhat risky... to please postgis raster server side
+sudo ln -s /usr/lib/libgdal.so /usr/lib/libgdal.so.1 
 cd ../autotest/cpp
 make -j3
 cd ../../gdal

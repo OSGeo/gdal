@@ -40,6 +40,7 @@
 #include "gdal_priv.h"
 #include "libpq-fe.h"
 #include "vrtdataset.h"
+#include "cpl_mem_cache.h"
 #include "cpl_quad_tree.h"
 #include <float.h>
 #include <map>
@@ -63,7 +64,7 @@
 /**
  * To move over the data return by queries
  **/
-#define POSTGIS_RASTER_VERSION         (GUInt16)0
+#define POSTGIS_RASTER_VERSION          static_cast<GUInt16>(0)
 #define RASTER_HEADER_SIZE              61
 #define RASTER_BAND_HEADER_FIXED_SIZE   1
 
@@ -139,6 +140,14 @@ typedef enum
     BROWSE_DATABASE
 } WorkingMode;
 
+
+enum class OutDBResolution
+{
+    SERVER_SIDE,
+    CLIENT_SIDE,
+    CLIENT_SIDE_IF_POSSIBLE
+};
+
 /**
  * Important metadata of a PostGIS Raster band
  **/
@@ -176,7 +185,9 @@ class PostGISRasterDriver final: public GDALDriver {
 
 private:
     CPLMutex* hMutex;
-    std::map<CPLString, PGconn*> oMapConnection;
+    std::map<CPLString, PGconn*> oMapConnection{};
+
+    CPL_DISALLOW_COPY_ASSIGN(PostGISRasterDriver)
 public:
     PostGISRasterDriver();
     virtual ~PostGISRasterDriver();
@@ -211,6 +222,8 @@ private:
     char* pszProjection;
     ResolutionStrategy resolutionStrategy;
     WorkingMode nMode;
+    OutDBResolution eOutDBResolution{OutDBResolution::SERVER_SIDE};
+    bool bHasStBandFileSize = false;
     int m_nTiles;
     double xmin;
     double ymin;
@@ -224,7 +237,7 @@ private:
     PostGISRasterDataset* poParentDS;
     PostGISRasterDataset** papoOverviewDS;
 
-    std::map<CPLString, PostGISRasterTileDataset*> oMapPKIDToRTDS;
+    std::map<CPLString, PostGISRasterTileDataset*> oMapPKIDToRTDS{};
 
     GBool bAssumeMultiBandReadPattern;
     int nNextExpectedBand;
@@ -241,6 +254,15 @@ private:
     GBool bTilesSameDimension;
     int nTileWidth;
     int nTileHeight;
+
+    int m_nLastLoadSourcesXOff = 0;
+    int m_nLastLoadSourcesYOff = 0;
+    int m_nLastLoadSourcesXSize = 0;
+    int m_nLastLoadSourcesYSize = 0;
+    int m_nLastLoadSourcesBand = 0;
+
+    lru11::Cache<std::string, std::shared_ptr<GDALDataset>> oOutDBDatasetCache{8,0};
+    lru11::Cache<std::string, bool> oOutDBFilenameUsable{100,0};
 
     GBool ConstructOneDatasetFromTiles(PGresult *);
     GBool YieldSubdatasets(PGresult *, const char *);
@@ -264,8 +286,28 @@ private:
     PostGISRasterTileDataset * GetMatchingSourceRef(const char * pszPKID) { return oMapPKIDToRTDS[pszPKID]; }
     PostGISRasterTileDataset * GetMatchingSourceRef(double dfUpperLeftX, double dfUpperLeftY);
 
+    bool CanUseClientSideOutDB(bool bAllBandCaching,
+                               int nBand,
+                               const CPLString& osWHERE);
+
+    bool LoadOutdbRaster(int& nCurOffset,
+                          GDALDataType eDT,
+                          int nBand,
+                          const GByte* pbyData,
+                          int nWKBLength,
+                          void* pImage,
+                          double dfTileUpperLeftX,
+                          double dfTileUpperLeftY,
+                          double dfTileResX,
+                          double dfTileResY,
+                          int nTileXSize,
+                          int nTileYSize);
+
+    CPL_DISALLOW_COPY_ASSIGN(PostGISRasterDataset)
+
   protected:
     virtual int         CloseDependentDatasets() override;
+    virtual void        FlushCache() override;
 
 public:
     PostGISRasterDataset();
@@ -293,7 +335,7 @@ public:
     GBool LoadSources(int nXOff, int nYOff, int nXSize, int nYSize, int nBand);
     GBool PolygonFromCoords(int nXOff, int nYOff, int nXEndOff,
         int nYEndOff,double adfProjWin[8]);
-    void CacheTile(const char* pszMetadata, const char* pszRaster, const char *pszPKID, int nBand, int bAllBandCaching);
+    void CacheTile(const char* pszMetadata, const char* pszRaster, const char *pszPKID, int nBand, bool bAllBandCaching);
 };
 
 /***********************************************************************
@@ -304,16 +346,12 @@ class PostGISRasterTileRasterBand;
 
 class PostGISRasterRasterBand final: public VRTSourcedRasterBand {
     friend class PostGISRasterDataset;
+
+    CPL_DISALLOW_COPY_ASSIGN(PostGISRasterRasterBand)
 protected:
-    GBool bIsOffline;
     const char* pszSchema;
     const char* pszTable;
     const char* pszColumn;
-
-#ifdef notdef
-    GBool GetBandMetadata(GDALDataType *, GBool *, double *);
-    void NullBlock(void *);
-#endif
 
     void                      NullBuffer(void* pData,
                                          int nBufXSize,
@@ -323,8 +361,9 @@ protected:
                                          int nLineSpace);
 public:
 
-    PostGISRasterRasterBand( PostGISRasterDataset *, int ,
-                             GDALDataType, GBool, double, GBool );
+    PostGISRasterRasterBand( PostGISRasterDataset * poDSIn, int nBandIn,
+                             GDALDataType eDataTypeIn, GBool bNoDataValueSetIn,
+                             double dfNodata );
 
     virtual ~PostGISRasterRasterBand();
 
@@ -334,9 +373,7 @@ public:
                              int, int, GDALDataType,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GDALRasterIOExtraArg* psExtraArg) override;
-#ifdef notdef
-    virtual CPLErr IReadBlock(int, int, void *);
-#endif
+
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand * GetOverview(int) override;
     virtual GDALColorInterp GetColorInterpretation() override;
@@ -360,6 +397,8 @@ private:
     char * pszPKID;
     double adfGeoTransform[6];
 
+    CPL_DISALLOW_COPY_ASSIGN(PostGISRasterTileDataset)
+
 public:
     PostGISRasterTileDataset(PostGISRasterDataset* poRDS,
                              int nXSize,
@@ -378,17 +417,16 @@ class PostGISRasterTileRasterBand final: public GDALRasterBand {
     friend class PostGISRasterRasterBand;
     friend class PostGISRasterDataset;
 private:
-    GBool bIsOffline;
-
     GBool IsCached();
 
     VRTSource* poSource;
 
+    CPL_DISALLOW_COPY_ASSIGN(PostGISRasterTileRasterBand)
+
 public:
     PostGISRasterTileRasterBand(
         PostGISRasterTileDataset * poRTDS, int nBand,
-        GDALDataType eDataType,
-        GBool bIsOffline = false);
+        GDALDataType eDataType);
     virtual ~PostGISRasterTileRasterBand();
     virtual CPLErr IReadBlock(int, int, void *) override;
 };
