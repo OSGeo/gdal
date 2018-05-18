@@ -255,6 +255,12 @@ private:
     int nTileWidth;
     int nTileHeight;
 
+    int m_nLastLoadSourcesXOff = 0;
+    int m_nLastLoadSourcesYOff = 0;
+    int m_nLastLoadSourcesXSize = 0;
+    int m_nLastLoadSourcesYSize = 0;
+    int m_nLastLoadSourcesBand = 0;
+
     lru11::Cache<std::string, std::shared_ptr<GDALDataset>> oOutDBDatasetCache{8,0};
     lru11::Cache<std::string, bool> oOutDBFilenameUsable{100,0};
 

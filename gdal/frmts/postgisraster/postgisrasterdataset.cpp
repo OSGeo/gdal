@@ -1141,16 +1141,41 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
 
     CPLString osSpatialFilter;
     CPLString osIDsToFetch;
+    int nYSizeToQuery = nYSize;
 
-    int bFetchAll = FALSE;
+    bool bFetchAll = false;
     if( nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize && nYSize == nRasterYSize )
     {
-        bFetchAll = TRUE;
+        bFetchAll = true;
     }
     else
     {
+        if( nXOff >= m_nLastLoadSourcesXOff &&
+            nYOff >= m_nLastLoadSourcesYOff &&
+            nXOff + nXSize <= m_nLastLoadSourcesXOff + m_nLastLoadSourcesXSize &&
+            nYOff + nYSize <= m_nLastLoadSourcesYOff + m_nLastLoadSourcesYSize &&
+            nBand == m_nLastLoadSourcesBand )
+        {
+            return true;
+        }
+
+        // To avoid doing too many small requests, try to query for at
+        // least 10 megapixels.
+        if( nXSize * nYSize < 10 * 1024 * 1024 )
+        {
+            nYSizeToQuery = 10 * 1024 * 1024 / nXSize;
+            nYSizeToQuery = std::min(nYSizeToQuery, nRasterYSize - nYOff);
+            if( nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize && nYSize == nRasterYSize )
+            {
+                bFetchAll = true;
+            }
+        }
+    }
+
+    if( !bFetchAll )
+    {
         double adfProjWin[8];
-        PolygonFromCoords(nXOff, nYOff, nXOff + nXSize, nYOff + nYSize, adfProjWin);
+        PolygonFromCoords(nXOff, nYOff, nXOff + nXSize, nYOff + nYSizeToQuery, adfProjWin);
         osSpatialFilter.Printf("%s && "
                         "ST_GeomFromText('POLYGON((%.18f %.18f,%.18f %.18f,%.18f %.18f,%.18f %.18f,%.18f %.18f))') ",
                         //"AND ST_Intersects(%s, ST_GeomFromEWKT('SRID=%d;POLYGON((%.18f %.18f,%.18f %.18f,%.18f %.18f,%.18f %.18f,%.18f %.18f))'))",
@@ -1373,6 +1398,12 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
     // been built, and we don't need to do a spatial query on following IRasterIO() calls
     if( bFetchAll )
         bBuildQuadTreeDynamically = false;
+
+    m_nLastLoadSourcesXOff = nXOff;
+    m_nLastLoadSourcesYOff = nYOff;
+    m_nLastLoadSourcesXSize = nXSize;
+    m_nLastLoadSourcesYSize = nYSizeToQuery;
+    m_nLastLoadSourcesBand = nBand;
 
     return true;
 }
