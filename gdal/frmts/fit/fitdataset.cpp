@@ -1250,8 +1250,13 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
                                       bytesPerPixel, // nPixelSpace
                                       bytesPerPixel * blockX, nullptr); // nLineSpace
                 if (eErr != CE_None)
+                {
                     CPLError(CE_Failure, CPLE_FileIO,
                              "FIT write - CreateCopy got read error %i", eErr);
+                    CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
+                    VSIUnlink( pszFilename );
+                    return nullptr;
+                }
             } // for iBand
 
 #ifdef swapping
