@@ -305,6 +305,8 @@ protected:
                                bool* pbGotFileList);
     virtual CPLString GetURLFromDirname( const CPLString& osDirname );
 
+    void RegisterEmptyDir( const CPLString& osDirname );
+
     void AnalyseS3FileList( const CPLString& osBaseURL,
                             const char* pszXML,
                             CPLStringList& osFileList,
@@ -4202,6 +4204,23 @@ VSICurlFilesystemHandler::GetURLFromDirname( const CPLString& osDirname )
 }
 
 /************************************************************************/
+/*                         RegisterEmptyDir()                           */
+/************************************************************************/
+
+void VSICurlFilesystemHandler::RegisterEmptyDir( const CPLString& osDirname )
+{
+    CPLMutexHolder oHolder( &hMutex );
+    CachedDirList* psCachedDirList = cacheDirList[osDirname];
+    if( psCachedDirList == nullptr )
+    {
+        psCachedDirList =
+            static_cast<CachedDirList *>(CPLMalloc(sizeof(CachedDirList)));
+        psCachedDirList->papszFileList = CSLAddString(nullptr, ".");
+        cacheDirList[osDirname] = psCachedDirList;
+    }
+}
+
+/************************************************************************/
 /*                          GetFileList()                               */
 /************************************************************************/
 
@@ -5922,7 +5941,22 @@ int IVSIS3LikeFSHandler::Mkdir( const char * pszDirname, long /* nMode */ )
     {
         CPLErrorReset();
         VSIFCloseL(fp);
-        return CPLGetLastErrorType() == CPLE_None ? 0 : -1;
+        int ret = CPLGetLastErrorType() == CPLE_None ? 0 : -1;
+        if( ret == 0 )
+        {
+            CPLString osDirnameWithoutEndSlash(osDirname);
+            osDirnameWithoutEndSlash.resize( osDirnameWithoutEndSlash.size() - 1 );
+
+            CachedFileProp* cachedFileProp =
+                GetCachedFileProp(GetURLFromDirname(osDirname));
+            cachedFileProp->eExists = EXIST_YES;
+            cachedFileProp->bIsDirectory = true;
+            cachedFileProp->bHasComputedFileSize = true;
+
+            RegisterEmptyDir(osDirnameWithoutEndSlash);
+            RegisterEmptyDir(osDirname);
+        }
+        return ret;
     }
     else
     {
@@ -5958,7 +5992,8 @@ int IVSIS3LikeFSHandler::Rmdir( const char * pszDirname )
     }
 
     char** papszFileList = ReadDirEx(osDirname, 1);
-    bool bEmptyDir = (papszFileList != nullptr && EQUAL(papszFileList[0], ".") &&
+    bool bEmptyDir = papszFileList == nullptr ||
+                     (EQUAL(papszFileList[0], ".") &&
                       papszFileList[1] == nullptr);
     CSLDestroy(papszFileList);
     if( !bEmptyDir )
@@ -5995,7 +6030,26 @@ int IVSIS3LikeFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
     CPLString osFilename(pszFilename);
     if( osFilename.find('/', GetFSPrefix().size()) == std::string::npos )
         osFilename += "/";
-    return VSICurlFilesystemHandler::Stat(osFilename, pStatBuf, nFlags);
+    if( VSICurlFilesystemHandler::Stat(osFilename, pStatBuf, nFlags) == 0 )
+    {
+        return 0;
+    }
+
+    char** papszRet = ReadDirInternal( osFilename, 1, nullptr );
+    int nRet = papszRet ? 0 : -1;
+    if( nRet == 0 )
+    {
+        pStatBuf->st_mtime = 0;
+        pStatBuf->st_size = 0;
+        pStatBuf->st_mode = S_IFDIR;
+        CachedFileProp* cachedFileProp =
+            GetCachedFileProp(GetURLFromDirname(osFilename));
+        cachedFileProp->eExists = EXIST_YES;
+        cachedFileProp->bIsDirectory = true;
+        cachedFileProp->bHasComputedFileSize = true;
+    }
+    CSLDestroy(papszRet);
+    return nRet;
 }
 
 /************************************************************************/
@@ -6721,6 +6775,8 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     int Unlink( const char *pszFilename ) override;
     int Mkdir( const char *, long  ) override;
     int Rmdir( const char * ) override;
+    int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+              int nFlags ) override;
 
     const char* GetOptions() override;
 
@@ -6766,6 +6822,22 @@ VSICurlHandle* VSIAzureFSHandler::CreateFileHandle(const char* pszFilename)
     if( poHandleHelper == nullptr )
         return nullptr;
     return new VSIAzureHandle(this, pszFilename, poHandleHelper);
+}
+
+/************************************************************************/
+/*                                Stat()                                */
+/************************************************************************/
+
+int VSIAzureFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+                          int nFlags )
+{
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+        return -1;
+
+    CPLString osFilename(pszFilename);
+    if( osFilename.find('/', GetFSPrefix().size()) == std::string::npos )
+        osFilename += "/";
+    return VSICurlFilesystemHandler::Stat(osFilename, pStatBuf, nFlags);
 }
 
 /************************************************************************/
