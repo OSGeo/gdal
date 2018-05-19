@@ -22,14 +22,8 @@ The syntax to open a WFS datasource is : <i>WFS3:http://path/to/WFS/endpoint</i>
 <h2>Layer schema</h2>
 
 OGR needs a fixed schema per layer, but WFS 3.0 Core doesn't impose fixed schema.
-So the driver will first try to examine in the /api endpoint if the
-/{layername}/{id} path points to a schema describing properties. If not,
-it will retrieve the first page of features (10 features) and establish
+So the driver will retrieve the first page of features (10 features) and establish
 a schema from this.<p>
-
-Note: as a hack it is possible to point to an alternate /api endpoint with the
-OGR_WFS3_API_URL configuration option/environment variable.<p>
-<pre>OGR_WFS3_API_URL=https://raw.githubusercontent.com/opengeospatial/wfs3hackathon/master/openapi.json ogrinfo WFS3:https://www.ldproxy.nrw.de/kataster flurstueck -al -q</pre>
 
 <h2>Filtering</h2>
 
@@ -55,29 +49,28 @@ Defaults to 10. Minimum is 1, maximum 10000.</li>
 <li>
 Listing the types of a WFS server :
 <pre>
-$ ogrinfo WFS3:http://wfs3hackathon.ldproxy.net/rest/services/de_gn
+$ ogrinfo WFS3:https://www.ldproxy.nrw.de/rest/services/kataster
 
 INFO: Open of `WFS3:http://wfs3hackathon.ldproxy.net/rest/services/de_gn'
       using driver `WFS3' successful.
-1: namedplace (Point)
+1: flurstueck (Multi Polygon)
+2: gebaeudebauwerk (Multi Polygon)
+3: verwaltungseinheit (Multi Polygon)
+e
 </pre>
 <p>
 
 <li>
-Listing the summary information of a WFS server :
+Listing the summary information of a WFS layer :
 <pre>
-$ ogrinfo -al -so WFS3:http://wfs3hackathon.ldproxy.net/rest/services/de_gn
+$ ogrinfo -al -so WFS3:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck
 
-INFO: Open of `WFS3:http://wfs3hackathon.ldproxy.net/rest/services/de_gn'
-      using driver `WFS3' successful.
-
-Layer name: namedplace
+Layer name: flurstueck
 Metadata:
-  DESCRIPTION=Harmonized INSPIRE Geographical Names (Annex I)
-  TITLE=Named Place
-Geometry: Point
-Feature Count: 147629
-Extent: (5.866666, 47.270270) - (15.030484, 55.053446)
+  TITLE=Flurstück
+Geometry: Multi Polygon
+Feature Count: 9308456
+Extent: (5.612726, 50.237351) - (9.589634, 52.528630)
 Layer SRS WKT:
 GEOGCS["WGS 84",
     DATUM["WGS_1984",
@@ -90,60 +83,76 @@ GEOGCS["WGS 84",
         AUTHORITY["EPSG","9122"]],
     AUTHORITY["EPSG","4326"]]
 id: String (0.0)
-beginLifespanVersion: DateTime (0.0)
-inspireId.localId: String (0.0)
-inspireId.namespace: String (0.0)
-localType: String (0.0)
-name.language: String (0.0)
-name.sourceOfName: String (0.0)
-name.spelling.text: String (0.0)
-name.spelling.script: String (0.0)
+aktualit: Date (0.0)
+flaeche: Real (0.0)
+flstkennz: String (0.0)
+land: String (0.0)
+gemarkung: String (0.0)
+flur: String (0.0)
+flurstnr: String (0.0)
+gmdschl: String (0.0)
+regbezirk: String (0.0)
+kreis: String (0.0)
+gemeinde: String (0.0)
+lagebeztxt: String (0.0)
+tntxt: String (0.0)
 </pre>
 <p>
 
 <li>
 Filtering on a property
 <pre>
-$ ogrinfo WFS3:http://wfs3hackathon.ldproxy.net/rest/services/de_gn namedplace -al -q -where "\"name.spelling.text\" = 'Sandharlanden'"
 
-Layer name: namedplace
+$ ogrinfo WFS3:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck -al -q -where "gemarkung = 'Wünnenberg'"
+Layer name: flurstueck
 Metadata:
-  DESCRIPTION=Harmonized INSPIRE Geographical Names (Annex I)
-  TITLE=Named Place
-OGRFeature(namedplace):1
-  id (String) = NAMEDPLACE_DEBKGGND00000K72
-  beginLifespanVersion (DateTime) = 2015/03/26 00:00:00
-  inspireId.localId (String) = DEBKGGND00000K72
-  inspireId.namespace (String) = https://registry.gdi-de.org/id/de.bund.bkg.inspire.gn250
-  localType (String) = AX_Ortslage
-  name.language (String) = german
-  name.sourceOfName (String) = Geographische Namen 1:250.000
-  name.spelling.text (String) = Sandharlanden
-  name.spelling.script (String) = Latn
-  POINT (11.819395 48.839015)
+  TITLE=Flurstück
+OGRFeature(flurstueck):1
+  id (String) = DENW19AL0000geMFFL
+  aktualit (Date) = 2017/04/26
+  flaeche (Real) = 1739
+  flstkennz (String) = 05297001600193______
+  land (String) = Nordrhein-Westfalen
+  gemarkung (String) = Wünnenberg
+  flur (String) = 016
+  flurstnr (String) = 193
+  gmdschl (String) = 05774040
+  regbezirk (String) = Detmold
+  kreis (String) = Paderborn
+  gemeinde (String) = Bad Wünnenberg
+  lagebeztxt (String) = Bleiwäscher Straße
+  tntxt (String) = Platz / Parkplatz;1739
+  MULTIPOLYGON (((8.71191 51.491084,8.7123 51.491067,8.712385 51.491645,8.712014 51.491666,8.711993 51.491603,8.71196 51.491396,8.711953 51.491352,8.71191 51.491084)))
+
+[...]
 </pre>
 <p>
 
 <li>
 Spatial filtering
 <pre>
-$ ogrinfo WFS3:http://wfs3hackathon.ldproxy.net/rest/services/de_gn namedplace -al -q -spat 11.85 48.82 11.86 48.83
+$ ogrinfo WFS3:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck -al -q -spat 8.7 51.4 8.8 51.5
 
-Layer name: namedplace
+Layer name: flurstueck
 Metadata:
-  DESCRIPTION=Harmonized INSPIRE Geographical Names (Annex I)
-  TITLE=Named Place
-OGRFeature(namedplace):1
-  id (String) = NAMEDPLACE_DEBKGGND00001F1Q
-  beginLifespanVersion (DateTime) = 2015/03/26 00:00:00
-  inspireId.localId (String) = DEBKGGND00001F1Q
-  inspireId.namespace (String) = https://registry.gdi-de.org/id/de.bund.bkg.inspire.gn250
-  localType (String) = AX_Gemeinde
-  name.language (String) = german
-  name.sourceOfName (String) = Geographische Namen 1:250.000
-  name.spelling.text (String) = Abensberg
-  name.spelling.script (String) = Latn
-  POINT (11.85305 48.828552)
+  TITLE=Flurstück
+OGRFeature(flurstueck):1
+  id (String) = DENW19AL0000ht7LFL
+  aktualit (Date) = 2013/02/19
+  flaeche (Real) = 18
+  flstkennz (String) = 05292602900206______
+  land (String) = Nordrhein-Westfalen
+  gemarkung (String) = Fürstenberg
+  flur (String) = 029
+  flurstnr (String) = 206
+  gmdschl (String) = 05774040
+  regbezirk (String) = Detmold
+  kreis (String) = Paderborn
+  gemeinde (String) = Bad Wünnenberg
+  lagebeztxt (String) = Karpke
+  tntxt (String) = Fließgewässer / Bach;18
+  MULTIPOLYGON (((8.768521 51.494915,8.768535 51.494882,8.768569 51.494908,8.768563 51.494925,8.768521 51.494915)))
+[...]
 </pre>
 <p>
 
