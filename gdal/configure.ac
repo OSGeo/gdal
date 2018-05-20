@@ -1835,6 +1835,15 @@ if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
         LIBS="-lCharLS $LIBS"
         CHARLS_INC="-DCHARLS_INTERFACE_H"
     fi
+  else
+    AC_CHECK_HEADERS([CharLS/charls.h])
+    if test "$ac_cv_header_CharLS_charls_h" = "yes"; then
+        AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
+        if test "$HAVE_CHARLS" = "yes"; then
+            LIBS="-lCharLS $LIBS"
+            CHARLS_INC="-DCHARLS_2"
+        fi
+    fi
   fi
 fi
 

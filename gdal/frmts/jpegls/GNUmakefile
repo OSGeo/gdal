@@ -3,7 +3,7 @@ OBJ	=	jpeglsdataset.o
 
 include ../../GDALmake.opt
 
-CPPFLAGS	:=	 $(CPPFLAGS) $(CHARLS_INC)
+CPPFLAGS	:=	 $(CHARLS_INC) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
