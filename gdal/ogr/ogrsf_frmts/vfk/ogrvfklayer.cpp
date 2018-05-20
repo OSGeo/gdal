@@ -152,19 +152,19 @@ OGRFeature *OGRVFKLayer::GetNextFeature()
        requirements
     */
     if ( m_iNextFeature < 1 &&
-	 m_poFilterGeom == nullptr &&
-	 m_poAttrQuery == nullptr ) {
-	/* sequential feature properties access only supported when no
-	   filter enabled */
-	poDataBlock->LoadProperties();
+        m_poFilterGeom == nullptr &&
+        m_poAttrQuery == nullptr ) {
+        /* sequential feature properties access only supported when no
+        filter enabled */
+        poDataBlock->LoadProperties();
     }
     while( true ) {
         IVFKFeature* poVFKFeature = poDataBlock->GetNextFeature();
         if (!poVFKFeature) {
-	    /* clean loaded feature properties for a next run */
-	    poDataBlock->CleanProperties();
+            /* clean loaded feature properties for a next run */
+            poDataBlock->CleanProperties();
             return nullptr;
-	}
+        }
 
         /* skip feature with unknown geometry type */
         if (poVFKFeature->GetGeometryType() == wkbUnknown)

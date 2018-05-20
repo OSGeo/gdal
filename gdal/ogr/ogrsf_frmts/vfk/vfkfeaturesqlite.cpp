@@ -221,21 +221,21 @@ OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
 {
     sqlite3_stmt *hStmt = ((VFKDataBlockSQLite *) m_poDataBlock)->m_hStmt;
     if ( hStmt == nullptr ) {
-	/* random access */
-	CPLString   osSQL;
+        /* random access */
+        CPLString   osSQL;
 
-	osSQL.Printf("SELECT * FROM %s WHERE rowid = %d",
-		     m_poDataBlock->GetName(), m_iRowId);
-	if (ExecuteSQL(osSQL.c_str()) != OGRERR_NONE)
-	    return OGRERR_FAILURE;
+        osSQL.Printf("SELECT * FROM %s WHERE rowid = %d",
+                    m_poDataBlock->GetName(), m_iRowId);
+        if (ExecuteSQL(osSQL.c_str()) != OGRERR_NONE)
+            return OGRERR_FAILURE;
 
-	hStmt = m_hStmt;
+        hStmt = m_hStmt;
     }
     else {
-	/* sequential access */
-	VFKReaderSQLite *poReader = (VFKReaderSQLite *) m_poDataBlock->GetReader();
-	if ( poReader->ExecuteSQL(hStmt) != OGRERR_NONE )
-	    return OGRERR_FAILURE;
+        /* sequential access */
+        VFKReaderSQLite *poReader = (VFKReaderSQLite *) m_poDataBlock->GetReader();
+        if ( poReader->ExecuteSQL(hStmt) != OGRERR_NONE )
+            return OGRERR_FAILURE;
     }
 
     int nPropertyCount = m_poDataBlock->GetPropertyCount();

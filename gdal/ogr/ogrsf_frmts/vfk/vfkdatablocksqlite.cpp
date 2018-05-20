@@ -1176,14 +1176,14 @@ OGRErr VFKDataBlockSQLite::LoadProperties()
         sqlite3_finalize(m_hStmt);
     }
     osSQL.Printf("SELECT * FROM %s", // TODO: where
-		 m_pszName);
+                m_pszName);
     if ( EQUAL(m_pszName, "SBP") )
-	osSQL += " WHERE PORADOVE_CISLO_BODU = 1";
+        osSQL += " WHERE PORADOVE_CISLO_BODU = 1";
 
     m_hStmt = ((VFKReaderSQLite*) m_poReader)->PrepareStatement(osSQL.c_str());
 
     if ( m_hStmt == nullptr )
-	return OGRERR_FAILURE;
+        return OGRERR_FAILURE;
 
     return OGRERR_NONE;
 }
@@ -1196,8 +1196,8 @@ OGRErr VFKDataBlockSQLite::LoadProperties()
 OGRErr VFKDataBlockSQLite::CleanProperties()
 {
     if ( sqlite3_finalize(m_hStmt) == SQLITE_OK ) {
-	m_hStmt = nullptr;
-	return OGRERR_NONE;
+        m_hStmt = nullptr;
+        return OGRERR_NONE;
     }
 
     return OGRERR_FAILURE;
