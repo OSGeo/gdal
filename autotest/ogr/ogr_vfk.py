@@ -373,6 +373,7 @@ def ogr_vfk_11():
         if count != count_features():
             feat = gdaltest.vfk_layer_par.GetFeature(i)
             gdaltest.post_reason('did not get expected number of features')
+            feat.DumpReadable()
             return 'fail'
 
     return 'success'
