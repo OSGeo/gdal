@@ -285,6 +285,9 @@ public:
 
     int                LoadGeometry();
 
+    virtual OGRErr     LoadProperties() = 0;
+    virtual OGRErr     CleanProperties() = 0;
+
     IVFKReader        *GetReader() const { return m_poReader; }
     int                GetRecordCount(RecordType = RecordValid)  const;
     void               SetIncRecordCount(RecordType);
@@ -309,6 +312,9 @@ public:
     VFKFeatureList     GetFeatures(int, int, GUIntBig);
 
     GIntBig            GetFeatureCount(const char *, const char *);
+
+    OGRErr             LoadProperties() override { return OGRERR_UNSUPPORTED_OPERATION; }
+    OGRErr             CleanProperties() override { return OGRERR_UNSUPPORTED_OPERATION; }
 };
 
 /************************************************************************/
@@ -317,6 +323,8 @@ public:
 class VFKDataBlockSQLite : public IVFKDataBlock
 {
 private:
+    sqlite3_stmt        *m_hStmt;
+
     bool                 SetGeometryLineString(VFKFeatureSQLite *, OGRLineString *,
                                                bool&, const char *,
                                                std::vector<int>&, int&);
@@ -329,12 +337,16 @@ private:
     bool                 LoadGeometryFromDB();
     OGRErr               SaveGeometryToDB(const OGRGeometry *, int);
 
-    static bool                 IsRingClosed(const OGRLinearRing *);
+    OGRErr               LoadProperties() override;
+    OGRErr               CleanProperties() override;
+
+    static bool          IsRingClosed(const OGRLinearRing *);
     void                 UpdateVfkBlocks(int);
     void                 UpdateFID(GIntBig, std::vector<int>);
 
+    friend class         VFKFeatureSQLite;
 public:
-    VFKDataBlockSQLite(const char *pszName, const IVFKReader *poReader) : IVFKDataBlock(pszName, poReader) {}
+    VFKDataBlockSQLite(const char *, const IVFKReader *);
 
     const char          *GetKey() const;
     IVFKFeature         *GetFeature(GIntBig);
