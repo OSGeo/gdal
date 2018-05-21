@@ -1838,7 +1838,9 @@ if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
   else
     AC_CHECK_HEADERS([CharLS/charls.h])
     if test "$ac_cv_header_CharLS_charls_h" = "yes"; then
+        AC_LANG_PUSH([C++])
         AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
+        AC_LANG_POP([C++])
         if test "$HAVE_CHARLS" = "yes"; then
             LIBS="-lCharLS $LIBS"
             CHARLS_INC="-DCHARLS_2"
