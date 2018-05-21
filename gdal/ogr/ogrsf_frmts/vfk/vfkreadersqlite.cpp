@@ -258,7 +258,11 @@ VFKReaderSQLite::VFKReaderSQLite( const GDALOpenInfo* poOpenInfo ) :
 */
 VFKReaderSQLite::~VFKReaderSQLite()
 {
-    // Close tmp SQLite DB.
+    /* clean loaded properties */
+    for (int i = 0; i < m_nDataBlockCount; i++)
+        m_papoDataBlock[i]->CleanProperties();
+
+    /* close backend SQLite DB */
     if( SQLITE_OK != sqlite3_close(m_poDB) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -267,7 +271,7 @@ VFKReaderSQLite::~VFKReaderSQLite()
     }
     CPLDebug("OGR-VFK", "Internal DB (%s) closed", m_pszDBname);
 
-    /* delete tmp SQLite DB if requested */
+    /* delete backend SQLite DB if requested */
     if( CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_DELETE", "NO")) )
     {
         CPLDebug("OGR-VFK", "Internal DB (%s) deleted", m_pszDBname);

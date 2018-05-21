@@ -1172,9 +1172,9 @@ OGRErr VFKDataBlockSQLite::LoadProperties()
 {
     CPLString osSQL;
 
-    if (m_hStmt ) {
+    if ( m_hStmt )
         sqlite3_finalize(m_hStmt);
-    }
+
     osSQL.Printf("SELECT * FROM %s", // TODO: where
                 m_pszName);
     if ( EQUAL(m_pszName, "SBP") )
@@ -1195,10 +1195,13 @@ OGRErr VFKDataBlockSQLite::LoadProperties()
 */
 OGRErr VFKDataBlockSQLite::CleanProperties()
 {
-    if ( sqlite3_finalize(m_hStmt) == SQLITE_OK ) {
+    if ( m_hStmt ) {
+        if ( sqlite3_finalize(m_hStmt) != SQLITE_OK ) {
+            m_hStmt = nullptr;
+            return OGRERR_FAILURE;
+        }
         m_hStmt = nullptr;
-        return OGRERR_NONE;
     }
 
-    return OGRERR_FAILURE;
+    return OGRERR_NONE;
 }

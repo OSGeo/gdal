@@ -190,6 +190,13 @@ OGRFeature *OGRVFKLayer::GetFeature(GIntBig nFID)
     if (!poVFKFeature)
         return nullptr;
 
+    /* clean loaded feature properties (sequential access not
+       finished) */
+    if ( m_iNextFeature > 0 ) {
+        ResetReading();
+        poDataBlock->CleanProperties();
+    }
+
     CPLAssert(nFID == poVFKFeature->GetFID());
     CPLDebug("OGR-VFK", "OGRVFKLayer::GetFeature(): name=%s fid=" CPL_FRMT_GIB, GetName(), nFID);
 
