@@ -45,7 +45,16 @@ import gdaltest
 def ers_1():
 
     tst = gdaltest.GDALTest('ERS', 'srtm.ers', 1, 64074)
-    return tst.testOpen()
+    if tst.testOpen() != 'success':
+        return 'fail'
+    ds = gdal.Open('data/srtm.ers')
+    md = ds.GetRasterBand(1).GetMetadata()
+    expected_md = {'STATISTICS_MEAN': '-4020.25', 'STATISTICS_MINIMUM': '-4315', 'STATISTICS_MAXIMUM': '-3744', 'STATISTICS_MEDIAN': '-4000'}
+    if md != expected_md:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+    return 'success'
 
 ###############################################################################
 # Create simple copy and check.
