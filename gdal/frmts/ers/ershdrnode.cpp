@@ -97,10 +97,12 @@ void ERSHdrNode::MakeSpace()
 int ERSHdrNode::ReadLine( VSILFILE * fp, CPLString &osLine )
 
 {
-    int  nBracketLevel;
+    int  nBracketLevel = 0;
+    bool bInQuote = false;
+    size_t i = 0;
+    bool bLastCharWasSlashInQuote = false;
 
     osLine = "";
-
     do
     {
         const char *pszNewLine = CPLReadLineL( fp );
@@ -110,24 +112,24 @@ int ERSHdrNode::ReadLine( VSILFILE * fp, CPLString &osLine )
 
         osLine += pszNewLine;
 
-        bool bInQuote = false;
-
-        nBracketLevel = 0;
-
-        for( size_t i = 0; i < osLine.length(); i++ )
+        for( ; i < osLine.length(); i++ )
         {
-            if( osLine[i] == '"' )
+            const char ch = osLine[i];
+            if( bLastCharWasSlashInQuote )
+            {
+                bLastCharWasSlashInQuote = false;
+            }
+            else if( ch == '"' )
                 bInQuote = !bInQuote;
-            else if( osLine[i] == '{' && !bInQuote )
+            else if( ch == '{' && !bInQuote )
                 nBracketLevel++;
-            else if( osLine[i] == '}' && !bInQuote )
+            else if( ch == '}' && !bInQuote )
                 nBracketLevel--;
-
             // We have to ignore escaped quotes and backslashes in strings.
-            else if( osLine[i] == '\\' && osLine[i+1] == '"' && bInQuote )
-                i++;
-            else if( osLine[i] == '\\' && osLine[i+1] == '\\' && bInQuote )
-                i++;
+            else if( ch == '\\' && bInQuote )
+            {
+                bLastCharWasSlashInQuote = true;
+            }
         }
     } while( nBracketLevel > 0 );
 

@@ -3,6 +3,8 @@ DatasetHeader Begin
   DataSetType = ERStorage
   DataType = Raster
   ByteOrder = MSBFirst
+  Foo = { "x\\\"
+y" }
 
   CoordinateSpace Begin
     Datum = "WGS84"
