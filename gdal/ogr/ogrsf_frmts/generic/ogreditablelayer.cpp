@@ -29,6 +29,8 @@
 #include "ogreditablelayer.h"
 #include "../mem/ogr_mem.h"
 
+#include <map>
+
 CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
@@ -174,6 +176,13 @@ OGRFeature* OGREditableLayer::Translate(OGRFeatureDefn* poTargetDefn,
         return nullptr;
     OGRFeature* poRet = new OGRFeature(poTargetDefn);
 
+    std::map<CPLString, int> oMapTargetFieldNameToIdx;
+    for( int iField = 0; iField < poTargetDefn->GetFieldCount(); iField++ )
+    {
+        oMapTargetFieldNameToIdx[
+            poTargetDefn->GetFieldDefn(iField)->GetNameRef()] = iField;
+    }
+
     int* panMap = static_cast<int *>(CPLMalloc( sizeof(int) * poSrcFeature->GetFieldCount() ));
     for( int iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
     {
@@ -184,7 +193,11 @@ OGRFeature* OGREditableLayer::Translate(OGRFeatureDefn* poTargetDefn,
             panMap[iField] = -1;
         }
         else
-            panMap[iField] = poRet->GetFieldIndex(pszFieldName);
+        {
+            auto oIter = oMapTargetFieldNameToIdx.find(pszFieldName);
+            panMap[iField] =
+                (oIter == oMapTargetFieldNameToIdx.end()) ? -1 : oIter->second;
+        }
     }
     poRet->SetFieldsFrom( poSrcFeature, panMap, TRUE );
     CPLFree(panMap);

@@ -33,6 +33,8 @@
 
 #include "ogrsf_frmts.h"
 
+#include <set>
+
 #if defined(_MSC_VER) && _MSC_VER <= 1600 // MSVC <= 2010
 # define GDAL_OVERRIDE
 #else
@@ -83,6 +85,7 @@ class OGRCSVLayer : public OGRLayer
 
   private:
     OGRFeatureDefn     *poFeatureDefn;
+    std::set<CPLString> m_oSetFields;
 
     VSILFILE           *fpCSV;
 
@@ -180,6 +183,7 @@ class OGRCSVLayer : public OGRLayer
 
     static
     OGRCSVCreateFieldAction PreCreateField( OGRFeatureDefn *poFeatureDefn,
+                                            const std::set<CPLString>& oSetFields,
                                             OGRFieldDefn *poNewField,
                                             int bApproxOK );
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomField,
