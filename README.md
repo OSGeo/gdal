@@ -57,6 +57,9 @@ This library exports the following GDAL functions:
 - GDALWarpAppOptionsSetProgress
 - GDALWarpAppOptionsFree
 - GDALWarp
+- GDALBuildVRTOptionsNew
+- GDALBuildVRTOptionsFree
+- GDALBuildVRT
 - GDALReprojectImage
 - CPLError
 - CPLSetErrorHandler

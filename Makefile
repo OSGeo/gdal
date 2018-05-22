@@ -46,6 +46,9 @@ EXPORTED_FUNCTIONS = "[\
   '_GDALWarpAppOptionsSetProgress',\
   '_GDALWarpAppOptionsFree',\
   '_GDALWarp',\
+  '_GDALBuildVRTOptionsNew',\
+  '_GDALBuildVRTOptionsFree',\
+  '_GDALBuildVRT',\
   '_GDALReprojectImage',\
   '_CPLError',\
   '_CPLSetErrorHandler',\
