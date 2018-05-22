@@ -4119,6 +4119,7 @@ def ogr_gpkg_47():
     gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', None)
     if gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
         return 'fail'
 
     gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options=['VERSION=1.2'])
@@ -4755,7 +4756,7 @@ gdaltest_list = [
     ogr_gpkg_cleanup,
 ]
 
-# gdaltest_list = [ ogr_gpkg_1, ogr_gpkg_46, ogr_gpkg_cleanup ]
+# gdaltest_list = [ ogr_gpkg_1, ogr_gpkg_47, ogr_gpkg_cleanup ]
 
 if __name__ == '__main__':
 

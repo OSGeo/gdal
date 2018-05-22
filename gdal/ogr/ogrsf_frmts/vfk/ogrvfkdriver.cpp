@@ -48,6 +48,10 @@ static int OGRVFKDriverIdentify(GDALOpenInfo* poOpenInfo)
     if ( poOpenInfo->nHeaderBytes >= 100 &&
          STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
     {
+        // The driver is not ready for virtual file systems
+        if( STARTS_WITH(poOpenInfo->pszFilename, "/vsi") )
+            return FALSE;
+
         VSIStatBufL sStat;
         if (VSIStatL(poOpenInfo->pszFilename, &sStat) == 0 &&
             VSI_ISREG(sStat.st_mode))
