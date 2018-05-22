@@ -59,7 +59,7 @@ private:
 
 protected:
     char           *m_pszFilename;
-    VSIStatBuf     *m_poFStat;
+    VSIStatBufL    *m_poFStat;
     bool            m_bAmendment;
     bool            m_bFileField;
     int             m_nDataBlockCount;
