@@ -1436,6 +1436,8 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
                            GTIFFKeysFlavorEnum eFlavor )
 {
+    std::map<geokey_t, std::string> oMapAsciiKeys;
+
     GTIFKeySet(psGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1, RasterPixelIsArea);
 
 /* -------------------------------------------------------------------- */
@@ -2346,7 +2348,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
                 CPLMalloc( peStrLen + strlen("ESRI PE String = ") + 1 ) );
             strcpy(outPeStr, "ESRI PE String = ");
             strcat(outPeStr, pszPEString);
-            GTIFKeySet( psGTIF, PCSCitationGeoKey, TYPE_ASCII, 0, outPeStr );
+            oMapAsciiKeys[PCSCitationGeoKey] = outPeStr;
             peStrStored = true;
             CPLFree( outPeStr );
         }
@@ -2358,8 +2360,8 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         // but that cannot hurt.
         if( nPCS == 3857 )
         {
-            GTIFKeySet( psGTIF, GTCitationGeoKey, TYPE_ASCII, 0,
-                        "PCS Name = WGS_1984_Web_Mercator_Auxiliary_Sphere" );
+            oMapAsciiKeys[GTCitationGeoKey] =
+                "PCS Name = WGS_1984_Web_Mercator_Auxiliary_Sphere";
             GTIFKeySet( psGTIF, GeographicTypeGeoKey, TYPE_SHORT,
                         1, GCS_WGS_84 );
             GTIFKeySet( psGTIF, GeogSemiMajorAxisGeoKey, TYPE_DOUBLE, 1,
@@ -2419,7 +2421,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
             && CPLTestBool( CPLGetConfigOption("GTIFF_ESRI_CITATION",
                                                "YES") ) )
         {
-            SetLinearUnitCitation(psGTIF, pszLinearUOMName);
+            SetLinearUnitCitation(oMapAsciiKeys, pszLinearUOMName);
         }
     }
 
@@ -2453,8 +2455,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
     else
     {
         // GeogCitationGeoKey may be rewritten if the gcs is user defined.
-        GTIFKeySet(psGTIF, GeogCitationGeoKey, TYPE_ASCII, 0,
-                   angUnitName );
+        oMapAsciiKeys[GeogCitationGeoKey] = angUnitName;
         GTIFKeySet(psGTIF, GeogAngularUnitSizeGeoKey, TYPE_DOUBLE, 1,
                    angUnitValue );
     }
@@ -2469,8 +2470,8 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
     {
         if( !(bWritePEString && nPCS == 3857) )
         {
-            GTIFKeySet( psGTIF, GTCitationGeoKey, TYPE_ASCII, 0,
-                        poSRS->GetRoot()->GetChild(0)->GetValue() );
+            oMapAsciiKeys[GTCitationGeoKey] =
+                        poSRS->GetRoot()->GetChild(0)->GetValue();
         }
     }
 
@@ -2481,8 +2482,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 
     if( poGCS != nullptr && poGCS->GetChild(0) != nullptr )
     {
-        GTIFKeySet( psGTIF, GeogCitationGeoKey, TYPE_ASCII, 0,
-                    poGCS->GetChild(0)->GetValue() );
+        oMapAsciiKeys[GeogCitationGeoKey] = poGCS->GetChild(0)->GetValue();
     }
 
 /* -------------------------------------------------------------------- */
@@ -2562,7 +2562,10 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         if( nGCS == KvUserDefined
             && CPLTestBool( CPLGetConfigOption("GTIFF_ESRI_CITATION",
                                                "YES") ) )
-            SetGeogCSCitation(psGTIF, poSRS, angUnitName, nDatum, nSpheroid);
+        {
+            SetGeogCSCitation(psGTIF, oMapAsciiKeys,
+                              poSRS, angUnitName, nDatum, nSpheroid);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -2597,8 +2600,8 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 /* -------------------------------------------------------------------- */
     if( poSRS->GetAttrValue( "COMPD_CS|VERT_CS" ) != nullptr )
     {
-        GTIFKeySet( psGTIF, VerticalCitationGeoKey, TYPE_ASCII, 0,
-                    poSRS->GetAttrValue( "COMPD_CS|VERT_CS" ) );
+        oMapAsciiKeys[VerticalCitationGeoKey] =
+                    poSRS->GetAttrValue( "COMPD_CS|VERT_CS" );
 
         const char *pszValue = poSRS->GetAuthorityCode( "COMPD_CS|VERT_CS" );
         if( pszValue && atoi(pszValue) )
@@ -2614,6 +2617,14 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         if( pszValue && atoi(pszValue) )
             GTIFKeySet( psGTIF, VerticalUnitsGeoKey, TYPE_SHORT, 1,
                         atoi(pszValue) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write all ascii keys                                            */
+/* -------------------------------------------------------------------- */
+    for( const auto& oIter: oMapAsciiKeys )
+    {
+        GTIFKeySet( psGTIF, oIter.first, TYPE_ASCII, 0, oIter.second.c_str() );
     }
 
 /* -------------------------------------------------------------------- */
