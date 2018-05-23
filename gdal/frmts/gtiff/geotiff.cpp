@@ -14878,12 +14878,12 @@ void GTiffDataset::ScanDirectories()
     // hasn't done its job, so SetDirectory() would be confused and think it
     // has nothing to do. To avoid that reset to a fake offset before calling
     // SetDirectory()
-    if( TIFFCurrentDirOffset(hTIFF) == nDirOffset )
-    {
-        TIFFSetSubDirectory( hTIFF, 0 );
-        *ppoActiveDSRef = nullptr;
-        CPL_IGNORE_RET_VAL( SetDirectory() );
-    }
+    // This can also occur if the last directory cycles to the IFD of the
+    // mask dataset and we activate this mask dataset.
+    // So always completely reset
+    TIFFSetSubDirectory( hTIFF, 0 );
+    *ppoActiveDSRef = nullptr;
+    CPL_IGNORE_RET_VAL( SetDirectory() );
 
     // If we have a mask for the main image, loop over the overviews, and if
     // they have a mask, let's set this mask as an overview of the main mask.
