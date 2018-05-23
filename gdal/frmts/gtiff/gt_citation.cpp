@@ -328,19 +328,18 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
 /*                                                                      */
 /*      Set linear unit Citation string                                 */
 /************************************************************************/
-void SetLinearUnitCitation( GTIF* psGTIF, const char* pszLinearUOMName )
+void SetLinearUnitCitation( std::map<geokey_t, std::string>& oMapAsciiKeys,
+                            const char* pszLinearUOMName )
 {
-    char szName[512] = { '\0' };
-    int n = 0;
-    if( GDALGTIFKeyGetASCII( psGTIF, PCSCitationGeoKey, szName,
-                             0, sizeof(szName) ) )
-    {
-        n = static_cast<int>(strlen(szName));
-    }
     CPLString osCitation;
-    if( n > 0 )
+    auto oIter = oMapAsciiKeys.find(PCSCitationGeoKey);
+    if( oIter != oMapAsciiKeys.end() )
     {
-        osCitation = szName;
+        osCitation = oIter->second;
+    }
+    if( !osCitation.empty() )
+    {
+        size_t n = osCitation.size();
         if( osCitation[n-1] != '|' )
             osCitation += "|";
         osCitation += "LUnits = ";
@@ -352,8 +351,7 @@ void SetLinearUnitCitation( GTIF* psGTIF, const char* pszLinearUOMName )
         osCitation = "LUnits = ";
         osCitation += pszLinearUOMName;
     }
-    GTIFKeySet( psGTIF, PCSCitationGeoKey, TYPE_ASCII, 0, osCitation.c_str() );
-    return;
+    oMapAsciiKeys[PCSCitationGeoKey] = osCitation;
 }
 
 /************************************************************************/
@@ -361,29 +359,30 @@ void SetLinearUnitCitation( GTIF* psGTIF, const char* pszLinearUOMName )
 /*                                                                      */
 /*      Set geogcs Citation string                                      */
 /************************************************************************/
-void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
+void SetGeogCSCitation( GTIF * psGTIF,
+                        std::map<geokey_t, std::string>& oMapAsciiKeys,
+                        OGRSpatialReference *poSRS,
                         const char* angUnitName, int nDatum, short nSpheroid )
 {
     bool bRewriteGeogCitation = false;
-    char szName[256] = { '\0' };
-    size_t n = 0;
-    if( GDALGTIFKeyGetASCII( psGTIF, GeogCitationGeoKey, szName,
-                             0, sizeof(szName) ) )
+    CPLString osOriginalGeogCitation;
+    auto oIter = oMapAsciiKeys.find(GeogCitationGeoKey);
+    if( oIter != oMapAsciiKeys.end() )
     {
-        n = strlen(szName);
+        osOriginalGeogCitation = oIter->second;
     }
-    if( n == 0 )
+    if( osOriginalGeogCitation.empty() )
         return;
 
     CPLString osCitation;
-    if( !STARTS_WITH_CI(szName, "GCS Name = ") )
+    if( !STARTS_WITH_CI(osOriginalGeogCitation, "GCS Name = ") )
     {
         osCitation = "GCS Name = ";
-        osCitation += szName;
+        osCitation += osOriginalGeogCitation;
     }
     else
     {
-        osCitation = szName;
+        osCitation = osOriginalGeogCitation;
     }
 
     if( nDatum == KvUserDefined )
@@ -435,10 +434,9 @@ void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
         osCitation += "|";
 
     if( bRewriteGeogCitation )
-        GTIFKeySet( psGTIF, GeogCitationGeoKey, TYPE_ASCII,
-                    0, osCitation.c_str() );
-
-    return;
+    {
+        oMapAsciiKeys[GeogCitationGeoKey] = osCitation;
+    }
 }
 
 /************************************************************************/

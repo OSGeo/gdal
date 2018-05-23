@@ -36,6 +36,9 @@
 #include "geo_normalize.h"
 #include "ogr_spatialref.h"
 
+#include <string>
+#include <map>
+
 char* ImagineCitationTranslation( char* psCitation, geokey_t keyID );
 char** CitationStringParse( char* psCitation, geokey_t keyID );
 
@@ -57,10 +60,12 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF,
                                              GTIFDefn* psDefn,
                                              OGRSpatialReference* poSRS,
                                              OGRBoolean* pLinearUnitIsSet );
-// char* ImagineCitationTranslation( char* psCitation, geokey_t keyID );
-// char** CitationStringParse( char* psCitation, geokey_t keyID );
-void SetLinearUnitCitation( GTIF* psGTIF, const char* pszLinearUOMName );
-void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
+
+void SetLinearUnitCitation( std::map<geokey_t, std::string>& oMapAsciiKeys,
+                            const char* pszLinearUOMName );
+void SetGeogCSCitation( GTIF * psGTIF,
+                        std::map<geokey_t, std::string>& oMapAsciiKeys,
+                        OGRSpatialReference *poSRS,
                         const char* angUnitName, int nDatum, short nSpheroid );
 OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
                             geokey_t geoKey, OGRSpatialReference* poSRS,
