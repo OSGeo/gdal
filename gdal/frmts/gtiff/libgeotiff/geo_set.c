@@ -69,7 +69,6 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
 {
     va_list ap;
     int nIndex = gtif->gt_keyindex[ keyID ];
-    int newvalues = 0;
     GeoKey *key;
     char *data = NULL;
     char *val = NULL;
@@ -144,7 +143,12 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
             key->gk_type = type;
             key->gk_count = count;
             key->gk_size = _gtiff_size[ type ];
-            newvalues = 1;
+
+            if( type == TYPE_DOUBLE )
+            {
+                key->gk_data = (char *)(gtif->gt_double + gtif->gt_ndoubles);
+                gtif->gt_ndoubles += count;
+            }
         }
     }
     else
@@ -160,66 +164,35 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
         key->gk_size = _gtiff_size[ type ];
         if ((geokey_t)gtif->gt_keymin > keyID)  gtif->gt_keymin=keyID;
         if ((geokey_t)gtif->gt_keymax < keyID)  gtif->gt_keymax=keyID;
-        newvalues = 1;
-    }
-
-    if (newvalues)
-    {
-        switch (type)
-        {
-          case TYPE_SHORT:
-            if (count > 1) return 0;
-            data = (char *)&key->gk_data; /* store value *in* data */
-            break;
-          case TYPE_DOUBLE:
-            key->gk_data = (char *)(gtif->gt_double + gtif->gt_ndoubles);
-            data = key->gk_data;
-            gtif->gt_ndoubles += count;
-            break;
-          case TYPE_ASCII:
-            break;
-          default:
-            return 0;
-        }
         gtif->gt_nshorts += sizeof(KeyEntry)/sizeof(pinfo_t);
-    }
-
-    /* this fixes a bug where if a request is made to write a duplicate
-       key, we must initialize the data to a valid value.
-       Bryan Wells (bryan@athena.bangor.autometric.com) */
-
-    else /* no new values, but still have something to write */
-    {
-        switch (type)
+        if( type == TYPE_DOUBLE )
         {
-          case TYPE_SHORT:
-            if (count > 1) return 0;
-            data = (char *)&key->gk_data; /* store value *in* data */
-            break;
-          case TYPE_DOUBLE:
-            data = key->gk_data;
-            break;
-          case TYPE_ASCII:
-            break;
-          default:
-            return 0;
+            key->gk_data = (char *)(gtif->gt_double + gtif->gt_ndoubles);
+            gtif->gt_ndoubles += count;
         }
     }
 
     switch (type)
     {
-      case TYPE_ASCII:
-        /* throw away existing data and allocate room for new data */
-        if (key->gk_data != 0)
-        {
-            _GTIFFree(key->gk_data);
-        }
-        key->gk_data = (char *)_GTIFcalloc(count);
-        key->gk_count = count;
-        data = key->gk_data;
-        break;
-      default:
-        break;
+        case TYPE_SHORT:
+            if (count > 1) return 0;
+            data = (char *)&key->gk_data; /* store value *in* data */
+            break;
+        case TYPE_DOUBLE:
+            data = key->gk_data;
+            break;
+        case TYPE_ASCII:
+            /* throw away existing data and allocate room for new data */
+            if (key->gk_data != 0)
+            {
+                _GTIFFree(key->gk_data);
+            }
+            key->gk_data = (char *)_GTIFcalloc(count);
+            key->gk_count = count;
+            data = key->gk_data;
+            break;
+        default:
+            return 0;
     }
 
     _GTIFmemcpy(data, val, count*key->gk_size);
