@@ -1371,7 +1371,8 @@ GIntBig CPLGetPhysicalRAM( void )
     if( f )
     {
         char szBuffer[32];
-        const size_t nRead = fread(szBuffer, 1, sizeof(szBuffer)-1, f);
+        const int nRead = static_cast<int>(
+            fread(szBuffer, 1, sizeof(szBuffer)-1, f));
         szBuffer[nRead] = 0;
         fclose(f);
         const GUIntBig nLimit = CPLScanUIntBig(szBuffer, nRead);
