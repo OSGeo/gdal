@@ -350,6 +350,7 @@ AC_CHECK_FUNCS(mmap)
 AC_CHECK_FUNCS(sigaction)
 AC_CHECK_FUNCS(statvfs)
 AC_CHECK_FUNCS(statvfs64)
+AC_CHECK_FUNCS(getrlimit)
 
 dnl Make sure at least these are checked under C++.  Prototypes missing on
 dnl some platforms.

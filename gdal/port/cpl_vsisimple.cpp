@@ -47,6 +47,10 @@
 #if HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+#if HAVE_GETRLIMIT
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
 
 #include "cpl_config.h"
 #include "cpl_error.h"
@@ -1354,6 +1358,11 @@ char *VSIStrerror( int nErrno )
 
 /** Return the total physical RAM in bytes.
  *
+ * In the context of a container using cgroups (typically Docker), this
+ * will take into account that limitation (starting with GDAL 2.4.0)
+ *
+ * You should generally use CPLGetUsablePhysicalRAM() instead.
+ *
  * @return the total physical RAM in bytes (or 0 in case of failure).
  * @since GDAL 2.0
  */
@@ -1439,6 +1448,9 @@ GIntBig CPLGetPhysicalRAM( void )
  * This is the same as CPLGetPhysicalRAM() except it will limit to 2 GB
  * for 32 bit processes.
  *
+ * Starting with GDAL 2.4.0, it will also take account resource limits on
+ * Posix systems.
+ *
  * Note: This memory may already be partly used by other processes.
  *
  * @return the total physical RAM, usable by a process, in bytes (or 0
@@ -1451,6 +1463,15 @@ GIntBig CPLGetUsablePhysicalRAM( void )
 #if SIZEOF_VOIDP == 4
     if( nRAM > INT_MAX )
         nRAM = INT_MAX;
+#endif
+#if HAVE_GETRLIMIT
+    struct rlimit sLimit;
+    if( getrlimit( RLIMIT_AS, &sLimit) == 0 &&
+        sLimit.rlim_cur != RLIM_INFINITY &&
+        static_cast<GIntBig>(sLimit.rlim_cur) < nRAM )
+    {
+        nRAM = static_cast<GIntBig>(sLimit.rlim_cur);
+    }
 #endif
     return nRAM;
 }
