@@ -973,6 +973,8 @@ GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
 /* -------------------------------------------------------------------- */
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
     return static_cast<GUIntBig>(_atoi64(osValue.c_str()));
+#elif HAVE_STRTOULL
+    return strtoull(osValue.c_str(), nullptr, 10);
 #elif HAVE_ATOLL
     return atoll(osValue.c_str());
 #else

@@ -1363,7 +1363,23 @@ GIntBig CPLGetPhysicalRAM( void )
     const long nPageSize = sysconf(_SC_PAGESIZE);
     if( nPhysPages < 0 || nPageSize < 0 )
         return 0;
-    return static_cast<GIntBig>(nPhysPages) * nPageSize;
+    GIntBig nVal = static_cast<GIntBig>(nPhysPages) * nPageSize;
+
+    // In a Docker container the memory might be limited
+    // If no limitation, on 64 bit, 9223372036854771712 is returned.
+    FILE* f = fopen("/sys/fs/cgroup/memory/memory.limit_in_bytes", "rb");
+    if( f )
+    {
+        char szBuffer[32];
+        const size_t nRead = fread(szBuffer, 1, sizeof(szBuffer)-1, f);
+        szBuffer[nRead] = 0;
+        fclose(f);
+        const GUIntBig nLimit = CPLScanUIntBig(szBuffer, nRead);
+        nVal = static_cast<GIntBig>(
+            std::min(static_cast<GUIntBig>(nVal), nLimit));
+    }
+
+    return nVal;
 }
 
 #elif defined(__MACH__) && defined(__APPLE__)

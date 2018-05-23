@@ -21031,6 +21031,17 @@ _ACEOF
 fi
 done
 
+for ac_func in strtoull
+do :
+  ac_fn_c_check_func "$LINENO" "strtoull" "ac_cv_func_strtoull"
+if test "x$ac_cv_func_strtoull" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STRTOULL 1
+_ACEOF
+
+fi
+done
+
 for ac_func in strtof
 do :
   ac_fn_c_check_func "$LINENO" "strtof" "ac_cv_func_strtof"
