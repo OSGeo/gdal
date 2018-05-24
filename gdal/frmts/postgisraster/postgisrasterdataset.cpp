@@ -3484,7 +3484,7 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
 
     // TODO: is 'rid' necessary?
     osCommand.Printf("create table if not exists %s.%s (rid serial, %s "
-        "public.raster, constraint %s_pkey primary key (rid));",
+        "raster, constraint %s_pkey primary key (rid));",
         pszSchema, pszTable, pszColumn, pszTable);
     poResult = PQexec(poConn, osCommand.c_str());
     if (
@@ -3525,7 +3525,7 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
     PQclear(poResult);
 
     osCommand.Printf("create index %s_%s_gist ON %s.%s USING gist "
-        "(public.st_convexhull(%s));", pszTable, pszColumn,
+        "(st_convexhull(%s));", pszTable, pszColumn,
         pszSchema, pszTable, pszColumn);
     poResult = PQexec(poConn, osCommand.c_str());
     if (
