@@ -260,7 +260,7 @@ unsigned int BitStuffer2::ComputeNumBytesNeededLut(const vector<pair<unsigned in
 // -------------------------------------------------------------------------- ;
 
 bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesRemaining, 
-    vector<unsigned int>& dataVec, unsigned int numElements, int numBits) const
+    vector<unsigned int>& dataVec, unsigned int numElements, int numBits)
 {
   dataVec.resize(numElements, 0);    // init with 0
 
@@ -301,6 +301,7 @@ bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesR
       unsigned int n = val << bitPos;
       *dstPtr++ = n >> (32 - numBits);
       bitPos += numBits;
+      // cppcheck-suppress shiftTooManyBits
       if (bitPos == 32)    // shift >= 32 is undefined
       {
         bitPos = 0;

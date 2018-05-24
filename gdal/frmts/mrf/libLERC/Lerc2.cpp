@@ -364,7 +364,7 @@ bool Lerc2::DoChecksOnEncode(Byte* pBlobBegin, Byte* pBlobEnd) const
 // from  https://en.wikipedia.org/wiki/Fletcher's_checksum
 // modified from ushorts to bytes (by Lucian Plesea)
 
-unsigned int Lerc2::ComputeChecksumFletcher32(const Byte* pByte, int len) const
+unsigned int Lerc2::ComputeChecksumFletcher32(const Byte* pByte, int len)
 {
   unsigned int sum1 = 0xffff, sum2 = 0xffff;
   unsigned int words = len / 2;

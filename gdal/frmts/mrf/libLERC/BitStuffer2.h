@@ -52,8 +52,10 @@ public:
 private:
   mutable std::vector<unsigned int>  m_tmpLutVec, m_tmpIndexVec, m_tmpBitStuffVec;
 
-  bool BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesRemaining, std::vector<unsigned int>& dataVec, unsigned int numElements, int numBits) const;
+  static bool BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesRemaining, std::vector<unsigned int>& dataVec, unsigned int numElements, int numBits);
+  // cppcheck-suppress functionStatic
   void BitStuff(Byte** ppByte, const std::vector<unsigned int>& dataVec, int numBits) const;
+  // cppcheck-suppress functionStatic
   bool BitUnStuff(const Byte** ppByte, size_t& nBytesRemaining, std::vector<unsigned int>& dataVec, unsigned int numElements, int numBits) const;
 
   static bool EncodeUInt(Byte** ppByte, unsigned int k, int numBytes);     // numBytes = 1, 2, or 4

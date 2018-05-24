@@ -148,7 +148,7 @@ private:
   bool ReadMask(const Byte** ppByte, size_t& nBytesRemaining);
 
   bool DoChecksOnEncode(Byte* pBlobBegin, Byte* pBlobEnd) const;
-  unsigned int ComputeChecksumFletcher32(const Byte* pByte, int len) const;
+  static unsigned int ComputeChecksumFletcher32(const Byte* pByte, int len);
 
   static void AddUIntToCounts(int* pCounts, unsigned int val, int nBits);
   static void AddIntToCounts(int* pCounts, int val, int nBits);
@@ -203,8 +203,7 @@ private:
   static double ReadVariableDataType(const Byte** ppByte, DataType dtUsed);
 
   // cppcheck-suppress functionStatic
-  template<class T>
-  DataType GetDataType(T z) const;
+  template<class T> DataType GetDataType(T z) const;
 
   static unsigned int GetMaxValToQuantize(DataType dt);
 
