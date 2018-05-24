@@ -990,6 +990,20 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
                 return nullptr;
             }
 
+            if( !RAWDatasetCheckMemoryUsage(poDS->nRasterXSize,
+                                            poDS->nRasterYSize,
+                                            nBands,
+                                            iWordSize,
+                                            iWordSize,
+                                            iWordSize * nBands * poDS->nRasterXSize,
+                                            nHeaderOffset,
+                                            iWordSize * poDS->nRasterXSize,
+                                            poDS->fpImage) )
+            {
+                delete poDS;
+                return nullptr;
+            }
+
             for( int iBand = 0; iBand < nBands; iBand++ )
             {
                 // Assume pixel interleaved.
