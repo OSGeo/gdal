@@ -29,7 +29,7 @@ build: gdal_wrap.cc Makefile_Geo__GDAL
 
 gdal_wrap.cc: generate
 
-Makefile_Geo__GDAL:
+Makefile_Geo__GDAL: gdal_wrap.cc
 	perl Makefile.PL INSTALL_BASE=$(INST_PREFIX)
 
 test: build
