@@ -1,70 +1,76 @@
 /*
 Copyright 2015 Esri
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
 http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 A local copy of the license and additional notices are located with the
 source distribution at:
+
 http://github.com/Esri/lerc/
+
 Contributors:  Thomas Maurer
-               Lucian Plesea
 */
 
 #ifndef BITMASK_H
 #define BITMASK_H
-#include "Defines.h"
 
-NAMESPACE_LERC_START
-
-/** BitMask - Convenient and fast access to binary mask bits
-* includes RLE compression and decompression, in BitMask.cpp
-*
-*/
-
-class BitMask
+namespace LercNS
 {
-public:
-  BitMask(int nCols, int nRows) : m_pBits(nullptr), m_nRows(nRows), m_nCols(nCols)
+  typedef unsigned char Byte;
+
+  /** BitMask - Convenient and fast access to binary mask bits
+  *
+  */
+
+  class BitMask
   {
-      m_pBits = new Byte[Size()];
-      if (!m_pBits)
-          m_nRows = m_nCols = 0;
-      else
-           m_pBits[Size() - 1] = 0; // Set potential pad bytes to zero
-  }
-  ~BitMask()                                  { if (m_pBits) delete[] m_pBits; }
+  public:
+    BitMask() : m_pBits(nullptr), m_nCols(0), m_nRows(0)  {}
+    BitMask(int nCols, int nRows) : m_pBits(nullptr)      { SetSize(nCols, nRows); }
+    BitMask(const BitMask& src);
+    virtual ~BitMask()                        { Clear(); }
 
-  Byte  IsValid(int k) const                  { return (m_pBits[k >> 3] & Bit(k)) != 0; }
-  void  SetValid(int k) const                 { m_pBits[k >> 3] |= Bit(k); }
-  void  SetInvalid(int k) const               { m_pBits[k >> 3] &= ~Bit(k); }
-  int   Size() const                          { return (m_nCols * m_nRows - 1) / 8 + 1; }
+    BitMask& operator= (const BitMask& src);
 
-  // max RLE compressed size is n + 4 + 2 * (n - 1) / 32767
-  // Returns encoded size
-  int RLEcompress(Byte *aRLE) const;
-  // current encoded size
-  int RLEsize() const;
-  // Decompress a RLE bitmask, bitmask size should be already set
-  // Returns false if input seems wrong
-  bool RLEdecompress(const Byte* src, size_t nRemainingBytes) const;
+    // 1: valid, 0: not valid
+    Byte IsValid(int k) const                 { return (m_pBits[k >> 3] & Bit(k)) > 0; }
+    Byte IsValid(int row, int col) const      { return IsValid(row * m_nCols + col); }
 
-private:
-  Byte*  m_pBits;
-  int   m_nRows, m_nCols;
+    void SetValid(int k) const                { m_pBits[k >> 3] |= Bit(k); }
+    void SetValid(int row, int col) const     { SetValid(row * m_nCols + col); }
 
-  static Byte  Bit(int k)                      { return (1 << 7) >> (k & 7); }
+    void SetInvalid(int k) const              { m_pBits[k >> 3] &= ~Bit(k); }
+    void SetInvalid(int row, int col) const   { SetInvalid(row * m_nCols + col); }
 
-  // Disable assignment op, default and copy constructor
-  BitMask();
-  BitMask(const BitMask& copy);
-  BitMask& operator=(const BitMask& m);
-};
+    void SetAllValid() const;
+    void SetAllInvalid() const;
 
-NAMESPACE_LERC_END
+    bool SetSize(int nCols, int nRows);
+
+    int GetWidth() const                      { return m_nCols; }
+    int GetHeight() const                     { return m_nRows; }
+    int Size() const                          { return (m_nCols * m_nRows + 7) >> 3; }
+    const Byte* Bits() const                  { return m_pBits; }
+    Byte* Bits()                              { return m_pBits; }
+    static Byte Bit(int k)                    { return (1 << 7) >> (k & 7); }
+
+    int CountValidBits() const;
+    void Clear();
+
+  private:
+    Byte*  m_pBits;
+    int    m_nCols, m_nRows;
+  };
+}    // namespace LercNS
+
 #endif

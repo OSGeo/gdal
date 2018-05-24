@@ -28,6 +28,13 @@ CPL_CVSID("$Id$")
 
 USING_NAMESPACE_LERC
 
+#ifdef DEBUG
+#include "Defines.h"
+void LERC_BRKPNT()
+{
+}
+#endif
+
 NAMESPACE_MRF_START
 
 //
@@ -181,38 +188,6 @@ template <typename T> static bool CntZImgUFill(CntZImage &zImg, T *dst, size_t d
     return true;
 }
 
-//  LERC 1 compression
-static CPLErr CompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img, double precision)
-{
-    CntZImage zImg;
-    // Fill data into zImg
-#define FILL(T) CntZImgFill(zImg, reinterpret_cast<T *>(src.buffer), img)
-    switch (img.dt) {
-    case GDT_Byte:      FILL(GByte);    break;
-    case GDT_UInt16:    FILL(GUInt16);  break;
-    case GDT_Int16:     FILL(GInt16);   break;
-    case GDT_Int32:     FILL(GInt32);   break;
-    case GDT_UInt32:    FILL(GUInt32);  break;
-    case GDT_Float32:   FILL(float);    break;
-    case GDT_Float64:   FILL(double);   break;
-    default: break;
-    }
-#undef FILL
-
-    Byte *ptr = (Byte *)dst.buffer;
-
-    // if it can't compress in output buffer it will crash
-    if (!zImg.write(&ptr, precision)) {
-        CPLError(CE_Failure,CPLE_AppDefined,"MRF: Error during LERC compression");
-        return CE_Failure;
-    }
-
-    // write changes the value of the pointer, we can find the size by testing how far it moved
-    dst.size = ptr - (Byte *)dst.buffer;
-    CPLDebug("MRF_LERC","LERC Compressed to %d\n", (int)dst.size);
-    return CE_None;
-}
-
 static CPLErr DecompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 {
     CntZImage zImg;
@@ -262,7 +237,7 @@ static CPLErr DecompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 
 // Populate a bitmask based on comparison with the image no data value
 // Returns the number of NoData values found
-template <typename T> static int MaskFill(BitMask2 &bitMask, T *src, const ILImage &img)
+template <typename T> static int MaskFill(BitMask &bitMask, T *src, const ILImage &img)
 {
     int w = img.pagesize.x;
     int h = img.pagesize.y;
@@ -290,7 +265,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     int w = img.pagesize.x;
     int h = img.pagesize.y;
     // So we build a bitmask to pass a pointer to bytes, which gets converted to a bitmask?
-    BitMask2 bitMask;
+    BitMask bitMask;
     int ndv_count = 0;
     if (img.hasNoData) { // Only build a bitmask if no data value is defined
         switch (img.dt) {
@@ -310,7 +285,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
         }
     }
     // Set bitmask if it has some ndvs
-    Lerc2 lerc2(w, h, (ndv_count == 0) ? nullptr : bitMask.Bits());
+    Lerc2 lerc2(1, w, h, (ndv_count == 0) ? nullptr : bitMask.Bits());
     bool success = false;
     Byte *ptr = (Byte *)dst.buffer;
 
@@ -345,7 +320,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
 }
 
 // Populate a bitmask based on comparison with the image no data value
-template <typename T> static void UnMask(BitMask2 &bitMask, T *arr, const ILImage &img)
+template <typename T> static void UnMask(BitMask &bitMask, T *arr, const ILImage &img)
 {
     int w = img.pagesize.x;
     int h = img.pagesize.y;
@@ -366,7 +341,7 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     const Byte *ptr = reinterpret_cast<Byte *>(src.buffer);
     Lerc2::HeaderInfo hdInfo;
     Lerc2 lerc2;
-    if (src.size < Lerc2::ComputeNumBytesHeader()) {
+    if (src.size < Lerc2::ComputeNumBytesHeaderToWrite()) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Invalid LERC");
         return CE_Failure;
     }
@@ -393,7 +368,7 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     // we need to add the padding bytes so that out-of-buffer-access checksum
     // don't false-positively trigger.
     size_t nRemainingBytes = src.size + PADDING_BYTES;
-    BitMask2 bitMask(img.pagesize.x, img.pagesize.y);
+    BitMask bitMask(img.pagesize.x, img.pagesize.y);
     switch (img.dt) {
 #define DECODE(T) success = lerc2.Decode(&ptr, nRemainingBytes, reinterpret_cast<T *>(dst.buffer), bitMask.Bits())
     case GDT_Byte:      DECODE(GByte);      break;
@@ -434,14 +409,18 @@ CPLErr LERC_Band::Compress(buf_mgr &dst, buf_mgr &src)
     if (version == 2)
         return CompressLERC2(dst, src, img, precision);
     else
-        return CompressLERC(dst, src, img, precision);
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "LERC V1 no longer supported in writing");
+        return CE_Failure;
+    }
 }
 
 CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
 {
     // Should have enough data pre-read
     if(poOpenInfo->nHeaderBytes <
-        static_cast<int>(CntZImage::computeNumBytesNeededToWriteVoidImage()))
+        static_cast<int>(CntZImage::computeNumBytesNeededToReadHeader()))
     {
         return nullptr;
     }
@@ -470,7 +449,7 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     ILSize size(-1, -1, 1, 1, 1);
 
     // Try lerc2
-    if (sHeader.size() >= Lerc2::ComputeNumBytesHeader()) {
+    if (sHeader.size() >= Lerc2::ComputeNumBytesHeaderToWrite()) {
         Lerc2 l2;
         Lerc2::HeaderInfo hinfo;
         hinfo.RawInit();
@@ -482,7 +461,7 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    if (size.x <= 0 && sHeader.size() >= CntZImage::computeNumBytesNeededToWriteVoidImage()) {
+    if (size.x <= 0 && sHeader.size() >= CntZImage::computeNumBytesNeededToReadHeader()) {
         CntZImage zImg;
         size_t nRemainingBytes = poOpenInfo->nHeaderBytes;
         Byte *pb = reinterpret_cast<Byte *>(psz);
