@@ -43,26 +43,19 @@ init_list = [
     ('byte.tif', 1, 4672, ['COMPRESS=NONE']),
     ('byte.tif', 1, 4672, ['COMPRESS=LERC']),
     ('byte.tif', 1, [4672, 5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
-    ('byte.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('int16.tif', 1, 4672, None),
     ('int16.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('int16.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/uint16.tif', 1, 4672, None),
     ('../../gcore/data/uint16.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/uint16.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=TIF']),
     ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=TIF']),
+   ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=TIF']),
     ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=TIF']),
     ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=TIF']),
     ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC']),
     ('../../gcore/data/float64.tif', 1, [4672, 5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
-    ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/utmsmall.tif', 1, 50054, None),
     ('small_world_pct.tif', 1, 14890, ['COMPRESS=PPNG']),
     ('byte.tif', 1, [4672, [4603, 4652]], ['COMPRESS=JPEG', 'QUALITY=99']),
@@ -695,6 +688,28 @@ def mrf_versioned():
     return 'success'
 
 
+def mrf_read_lerc_v1():
+
+    tst = gdaltest.GDALTest('MRF', 'mrf/lerc_v1/byte.mrf', 1, 4672)
+    return tst.testOpen()
+
+
+def mrf_error_compress_lerc_v1():
+
+    with gdaltest.error_handler():
+        ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', creationOptions=['COMPRESS=LERC', 'OPTIONS=V1:YES'])
+    if ds is not None:
+        return 'fail'
+
+    gdal.Unlink('/vsimem/out.mrf')
+    gdal.Unlink('/vsimem/out.mrf.aux.xml')
+    gdal.Unlink('/vsimem/out.idx')
+    gdal.Unlink('/vsimem/out.lrc')
+    gdal.Unlink('/vsimem/out.til')
+
+    return 'success'
+
+
 def mrf_cleanup():
 
     files = [
@@ -791,6 +806,8 @@ gdaltest_list += [mrf_lerc_with_huffman]
 gdaltest_list += [mrf_cached_source]
 gdaltest_list += [mrf_versioned]
 gdaltest_list += [mrf_zen_test]
+gdaltest_list += [mrf_read_lerc_v1]
+gdaltest_list += [mrf_error_compress_lerc_v1]
 gdaltest_list += [mrf_cleanup]
 
 if __name__ == '__main__':

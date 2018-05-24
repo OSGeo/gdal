@@ -6,7 +6,6 @@ include ../../../GDALmake.opt
 
 OBJ = \
 	BitMask.o\
-	BitMask2.o\
 	BitStuffer.o\
 	BitStuffer2.o\
 	CntZImage.o\

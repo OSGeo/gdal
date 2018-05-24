@@ -21,19 +21,17 @@ http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
 
-#include "BitStuffer2.h"
 #include <algorithm>
-#include <cstring>
+#include "BitStuffer2.h"
 
 using namespace std;
-
-NAMESPACE_LERC_START
+using namespace LercNS;
 
 // -------------------------------------------------------------------------- ;
 
 // if you change Encode(...) / Decode(...), don't forget to update ComputeNumBytesNeeded(...)
 
-bool BitStuffer2::EncodeSimple(Byte** ppByte, const vector<unsigned int>& dataVec)
+bool BitStuffer2::EncodeSimple(Byte** ppByte, const vector<unsigned int>& dataVec) const
 {
   if (!ppByte || dataVec.empty())
     return false;
@@ -71,8 +69,7 @@ bool BitStuffer2::EncodeSimple(Byte** ppByte, const vector<unsigned int>& dataVe
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStuffer2::EncodeLut(Byte** ppByte,
-                            const vector<Quant>& sortedDataVec) const
+bool BitStuffer2::EncodeLut(Byte** ppByte, const vector<pair<unsigned int, unsigned int> >& sortedDataVec) const
 {
   if (!ppByte || sortedDataVec.empty())
     return false;
@@ -134,7 +131,7 @@ bool BitStuffer2::EncodeLut(Byte** ppByte,
   BitStuff(ppByte, m_tmpLutVec, numBits);    // lut
 
   int nBitsLut = 0;
-  while (nLut >> nBitsLut)
+  while (nLut >> nBitsLut)    // indexes are in [0 .. nLut]
     nBitsLut++;
 
   BitStuff(ppByte, m_tmpIndexVec, nBitsLut);    // indexes
@@ -146,107 +143,85 @@ bool BitStuffer2::EncodeLut(Byte** ppByte,
 
 // if you change Encode(...) / Decode(...), don't forget to update ComputeNumBytesNeeded(...)
 
-bool BitStuffer2::Decode(const Byte** ppByte, size_t& nRemainingBytes, vector<unsigned int>& dataVec, size_t nMaxBufferVecElts) const
+bool BitStuffer2::Decode(const Byte** ppByte, size_t& nBytesRemaining, vector<unsigned int>& dataVec, int lerc2Version) const
 {
-  if (!ppByte)
+  if (!ppByte || nBytesRemaining < 1)
     return false;
 
-  if( nRemainingBytes < 1 )
-  {
-     LERC_BRKPNT();
-     return false;
-  }
   Byte numBitsByte = **ppByte;
   (*ppByte)++;
-  nRemainingBytes -= 1;
+  nBytesRemaining--;
 
   int bits67 = numBitsByte >> 6;
-  int n = (bits67 == 0) ? 4 : 3 - bits67;
+  int nb = (bits67 == 0) ? 4 : 3 - bits67;
 
   bool doLut = (numBitsByte & (1 << 5)) ? true : false;    // bit 5
   numBitsByte &= 31;    // bits 0-4;
+  int numBits = numBitsByte;
 
   unsigned int numElements = 0;
-  if (!DecodeUInt(ppByte, nRemainingBytes, numElements, n))
-  {
-    LERC_BRKPNT();
+  if (!DecodeUInt(ppByte, nBytesRemaining, numElements, nb))
     return false;
-  }
-  // To avoid excessive memory allocation attempts
-  if( numElements > nMaxBufferVecElts )
-  {
-    LERC_BRKPNT();
-    return false;
-  }
-
-  int numBits = numBitsByte;
-  dataVec.resize(numElements, 0);    // init with 0
 
   if (!doLut)
   {
     if (numBits > 0)    // numBits can be 0
-      if( !BitUnStuff(ppByte, nRemainingBytes, dataVec, numElements, numBits) )
+    {
+      if (lerc2Version >= 3)
       {
-        LERC_BRKPNT();
-        return false;
+        if (!BitUnStuff(ppByte, nBytesRemaining, dataVec, numElements, numBits))
+          return false;
       }
+      else
+      {
+        if (!BitUnStuff_Before_Lerc2v3(ppByte, nBytesRemaining, dataVec, numElements, numBits))
+          return false;
+      }
+    }
   }
   else
   {
-    if( numBits == 0 )
-    {
-      LERC_BRKPNT();
+    if (nBytesRemaining < 1)
       return false;
-    }
-    if( nRemainingBytes < 1 )
-    {
-      LERC_BRKPNT();
-      return false;
-    }
+
     Byte nLutByte = **ppByte;
     (*ppByte)++;
-    nRemainingBytes -= 1;
+    nBytesRemaining--;
 
-    if( nLutByte == 0 )
-    {
-      LERC_BRKPNT();
-      return false;
-    }
     int nLut = nLutByte - 1;
+
     // unstuff lut w/o the 0
-    if( !BitUnStuff(ppByte, nRemainingBytes, m_tmpLutVec, nLut, numBits) )
+    if (lerc2Version >= 3)
     {
-        LERC_BRKPNT();
+      if (!BitUnStuff(ppByte, nBytesRemaining, m_tmpLutVec, nLut, numBits))
+        return false;
+    }
+    else
+    {
+      if (!BitUnStuff_Before_Lerc2v3(ppByte, nBytesRemaining, m_tmpLutVec, nLut, numBits))
         return false;
     }
 
     int nBitsLut = 0;
     while (nLut >> nBitsLut)
       nBitsLut++;
-    if( nBitsLut == 0 )
-    {
-      LERC_BRKPNT();
-      return false;
-    }
 
     // unstuff indexes
-    if( !BitUnStuff(ppByte, nRemainingBytes, dataVec, numElements, nBitsLut) )
+    if (lerc2Version >= 3)
     {
-      LERC_BRKPNT();
-      return false;
+      if (!BitUnStuff(ppByte, nBytesRemaining, dataVec, numElements, nBitsLut))
+        return false;
+    }
+    else
+    {
+      if (!BitUnStuff_Before_Lerc2v3(ppByte, nBytesRemaining, dataVec, numElements, nBitsLut))
+        return false;
     }
 
     // replace indexes by values
     m_tmpLutVec.insert(m_tmpLutVec.begin(), 0);    // put back in the 0
     for (unsigned int i = 0; i < numElements; i++)
-    {
-      if( dataVec[i] >= m_tmpLutVec.size() )
-      {
-        LERC_BRKPNT();
-        return false;
-      }
       dataVec[i] = m_tmpLutVec[dataVec[i]];
-    }
   }
 
   return true;
@@ -254,10 +229,9 @@ bool BitStuffer2::Decode(const Byte** ppByte, size_t& nRemainingBytes, vector<un
 
 // -------------------------------------------------------------------------- ;
 
-unsigned int BitStuffer2::ComputeNumBytesNeededLut(const vector<Quant >& sortedDataVec,
-                                                    bool& doLut)
+unsigned int BitStuffer2::ComputeNumBytesNeededLut(const vector<pair<unsigned int, unsigned int> >& sortedDataVec, bool& doLut)
 {
-  unsigned int maxElem = static_cast<unsigned int>(sortedDataVec.back().first);
+  unsigned int maxElem = sortedDataVec.back().first;
   unsigned int numElem = (unsigned int)sortedDataVec.size();
 
   int numBits = 0;
@@ -285,104 +259,32 @@ unsigned int BitStuffer2::ComputeNumBytesNeededLut(const vector<Quant >& sortedD
 // -------------------------------------------------------------------------- ;
 // -------------------------------------------------------------------------- ;
 
-void BitStuffer2::BitStuff(Byte** ppByte, const vector<unsigned int>& dataVec, int numBits)
+bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesRemaining, 
+    vector<unsigned int>& dataVec, unsigned int numElements, int numBits)
 {
-  unsigned int numElements = (unsigned int)dataVec.size();
-  unsigned int numUInts = (numElements * numBits + 31) / 32;
-  unsigned int numBytes = numUInts * sizeof(unsigned int);
-  unsigned int* arr = (unsigned int*)(*ppByte);
-
-  memset(arr, 0, numBytes);
-
-  // do the stuffing
-  const unsigned int* srcPtr = &dataVec[0];
-  unsigned int* dstPtr = arr;
-  int bitPos = 0;
-
-  for (unsigned int i = 0; i < numElements; i++)
-  {
-    if (32 - bitPos >= numBits)
-    {
-      unsigned int dstValue;
-      memcpy(&dstValue, dstPtr, sizeof(unsigned int));
-      dstValue |= (*srcPtr++) << (32 - bitPos - numBits);
-      memcpy(dstPtr, &dstValue, sizeof(unsigned int));
-      bitPos += numBits;
-      if (bitPos == 32)    // shift >= 32 is undefined
-      {
-        bitPos = 0;
-        dstPtr++;
-      }
-    }
-    else
-    {
-      unsigned int dstValue;
-      int n = numBits - (32 - bitPos);
-      memcpy(&dstValue, dstPtr, sizeof(unsigned int));
-      dstValue |= (*srcPtr  ) >> n;
-      memcpy(dstPtr, &dstValue, sizeof(unsigned int));
-      dstPtr ++;
-      memcpy(&dstValue, dstPtr, sizeof(unsigned int));
-      dstValue |= (*srcPtr++) << (32 - n);
-      memcpy(dstPtr, &dstValue, sizeof(unsigned int));
-      bitPos = n;
-    }
-  }
-
-  // save the 0-3 bytes not used in the last UInt
-  unsigned int numBytesNotNeeded = NumTailBytesNotNeeded(numElements, numBits);
-  unsigned int n = numBytesNotNeeded;
-  for (;n;--n)
-  {
-    unsigned int dstValue;
-    memcpy(&dstValue, dstPtr, sizeof(unsigned int));
-    dstValue >>= 8;
-    memcpy(dstPtr, &dstValue, sizeof(unsigned int));
-  }
-
-  *ppByte += numBytes - numBytesNotNeeded;
-}
-
-// -------------------------------------------------------------------------- ;
-
-bool BitStuffer2::BitUnStuff(const Byte** ppByte, 
-                             size_t& nRemainingBytes,
-                             vector<unsigned int>& dataVec,
-                             unsigned int numElements, int numBits) const
-{
-  try
-  {
-    dataVec.resize(numElements, 0);    // init with 0
-  }
-  catch( const std::bad_alloc& )
-  {
-    return false;
-  }
+  dataVec.resize(numElements, 0);    // init with 0
 
   unsigned int numUInts = (numElements * numBits + 31) / 32;
   unsigned int numBytes = numUInts * sizeof(unsigned int);
   unsigned int* arr = (unsigned int*)(*ppByte);
 
-  if( nRemainingBytes < numBytes )
-  {
-    LERC_BRKPNT();
+  if (nBytesRemaining < numBytes)
     return false;
-  }
+
   unsigned int* srcPtr = arr;
   srcPtr += numUInts;
 
   // needed to save the 0-3 bytes not used in the last UInt
   srcPtr--;
-  unsigned int lastUInt;
-  memcpy(&lastUInt, srcPtr, sizeof(unsigned int));
+  unsigned int lastUInt = *srcPtr;
   unsigned int numBytesNotNeeded = NumTailBytesNotNeeded(numElements, numBits);
-  unsigned int n = numBytesNotNeeded;
-  for(;n;--n)
+
+  for (unsigned int n = numBytesNotNeeded; n; n--)
   {
-    unsigned int srcValue;
-    memcpy(&srcValue, srcPtr, sizeof(unsigned int));
-    srcValue <<= 8;
-    memcpy(srcPtr, &srcValue, sizeof(unsigned int));
+    unsigned int val;
+    memcpy(&val, srcPtr, sizeof(unsigned int));
+    val <<= 8;
+    memcpy(srcPtr, &val, sizeof(unsigned int));
   }
 
   // do the un-stuffing
@@ -394,10 +296,10 @@ bool BitStuffer2::BitUnStuff(const Byte** ppByte,
   {
     if (32 - bitPos >= numBits)
     {
-      unsigned int srcValue;
-      memcpy(&srcValue, srcPtr, sizeof(unsigned int));
-      unsigned int n2 = srcValue << bitPos;
-      *dstPtr++ = n2 >> (32 - numBits);
+      unsigned int val;
+      memcpy(&val, srcPtr, sizeof(unsigned int));
+      unsigned int n = val << bitPos;
+      *dstPtr++ = n >> (32 - numBits);
       bitPos += numBits;
       // cppcheck-suppress shiftTooManyBits
       if (bitPos == 32)    // shift >= 32 is undefined
@@ -408,27 +310,120 @@ bool BitStuffer2::BitUnStuff(const Byte** ppByte,
     }
     else
     {
-      unsigned int srcValue;
-      memcpy(&srcValue, srcPtr, sizeof(unsigned int));
-      srcPtr ++;
-      unsigned int n2 = srcValue << bitPos;
-      *dstPtr = n2 >> (32 - numBits);
+      unsigned int val;
+      memcpy(&val, srcPtr, sizeof(unsigned int));
+      srcPtr++;
+      unsigned int n = val << bitPos;
+      *dstPtr = n >> (32 - numBits);
       bitPos -= (32 - numBits);
-      memcpy(&srcValue, srcPtr, sizeof(unsigned int));
-      *dstPtr++ |= srcValue >> (32 - bitPos);
+      memcpy(&val, srcPtr, sizeof(unsigned int));
+      *dstPtr++ |= val >> (32 - bitPos);
     }
   }
 
   if (numBytesNotNeeded > 0)
-  {
     memcpy(srcPtr, &lastUInt, sizeof(unsigned int));  // restore the last UInt
-  }
 
   *ppByte += numBytes - numBytesNotNeeded;
-  nRemainingBytes -= (numBytes - numBytesNotNeeded);
+  nBytesRemaining -= numBytes - numBytesNotNeeded;
   return true;
 }
 
 // -------------------------------------------------------------------------- ;
 
-NAMESPACE_LERC_END
+// starting with version Lerc2v3: integer >> into local uint buffer, plus final memcpy
+
+void BitStuffer2::BitStuff(Byte** ppByte, const vector<unsigned int>& dataVec, int numBits) const
+{
+  unsigned int numElements = (unsigned int)dataVec.size();
+  unsigned int numUInts = (numElements * numBits + 31) / 32;
+  unsigned int numBytes = numUInts * sizeof(unsigned int);
+
+  m_tmpBitStuffVec.resize(numUInts);
+  unsigned int* dstPtr = &m_tmpBitStuffVec[0];
+
+  memset(dstPtr, 0, numBytes);
+
+  // do the stuffing
+  const unsigned int* srcPtr = &dataVec[0];
+  int bitPos = 0;
+
+  for (unsigned int i = 0; i < numElements; i++)
+  {
+    if (32 - bitPos >= numBits)
+    {
+      *dstPtr |= (*srcPtr++) << bitPos;
+      bitPos += numBits;
+      if (bitPos == 32)    // shift >= 32 is undefined
+      {
+        dstPtr++;
+        bitPos = 0;
+      }
+    }
+    else
+    {
+      *dstPtr++ |= (*srcPtr) << bitPos;
+      *dstPtr |= (*srcPtr++) >> (32 - bitPos);
+      bitPos += numBits - 32;
+    }
+  }
+
+  // copy the bytes to the outgoing byte stream
+  int numBytesUsed = numBytes - NumTailBytesNotNeeded(numElements, numBits);
+  memcpy(*ppByte, &m_tmpBitStuffVec[0], numBytesUsed);
+
+  *ppByte += numBytesUsed;
+}
+
+// -------------------------------------------------------------------------- ;
+
+bool BitStuffer2::BitUnStuff(const Byte** ppByte, size_t& nBytesRemaining, vector<unsigned int>& dataVec,
+  unsigned int numElements, int numBits) const
+{
+  dataVec.resize(numElements);
+
+  unsigned int numUInts = (numElements * numBits + 31) / 32;
+  unsigned int numBytes = numUInts * sizeof(unsigned int);
+
+  m_tmpBitStuffVec.resize(numUInts);
+  m_tmpBitStuffVec[numUInts - 1] = 0;    // set last uint to 0
+
+  // copy the bytes from the incoming byte stream
+  int numBytesUsed = numBytes - NumTailBytesNotNeeded(numElements, numBits);
+
+  if (nBytesRemaining < (size_t)numBytesUsed || !memcpy(&m_tmpBitStuffVec[0], *ppByte, numBytesUsed))
+    return false;
+
+  // do the un-stuffing
+  unsigned int* srcPtr = &m_tmpBitStuffVec[0];
+  unsigned int* dstPtr = &dataVec[0];
+  int bitPos = 0;
+  int nb = 32 - numBits;
+
+  for (unsigned int i = 0; i < numElements; i++)
+  {
+    if (nb - bitPos >= 0)
+    {
+      *dstPtr++ = ((*srcPtr) << (nb - bitPos)) >> nb;
+      bitPos += numBits;
+      if (bitPos == 32)    // shift >= 32 is undefined
+      {
+        srcPtr++;
+        bitPos = 0;
+      }
+    }
+    else
+    {
+      *dstPtr = (*srcPtr++) >> bitPos;
+      *dstPtr++ |= ((*srcPtr) << (64 - numBits - bitPos)) >> nb;
+      bitPos -= nb;
+    }
+  }
+
+  *ppByte += numBytesUsed;
+  nBytesRemaining -= numBytesUsed;
+  return true;
+}
+
+// -------------------------------------------------------------------------- ;
+

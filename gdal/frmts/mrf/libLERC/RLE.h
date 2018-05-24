@@ -24,6 +24,7 @@ Contributors:  Thomas Maurer
 #ifndef RLE_H
 #define RLE_H
 
+#include <cstddef>
 #include "Defines.h"
 
 NAMESPACE_LERC_START
@@ -32,10 +33,10 @@ NAMESPACE_LERC_START
  *  run length encode a byte array
  *
  *  best case resize factor (all bytes are the same):
- *    (n + 1) * 3 / 32767 + 2  ~= 0.00009
+ *    (((n + 1) * 3 / 32767 + 2) / n) ~= (3 / 32767)  ~= 0.00009
  *
  *  worst case resize factor (no stretch of same bytes):
- *    n + 4 + 2 * (n - 1) / 32767 ~= 1.00006
+ *    ((n + (n + 1) * 2 / 32767 + 2) / n) ~= (1 + 2 / 32767) ~= 1.00006
  */
 
 class RLE
@@ -64,9 +65,8 @@ protected:
 
   static void writeCount(short cnt, Byte** ppCnt, Byte** ppDst);
   static short readCount(const Byte** ppCnt);
-};
 
-// -------------------------------------------------------------------------- ;
+};
 
 NAMESPACE_LERC_END
 #endif

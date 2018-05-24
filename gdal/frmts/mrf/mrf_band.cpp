@@ -890,7 +890,8 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 
         // Compress functions need to return the compressed size in
         // the bytes in buffer field
-        Compress(dst, src);
+        if( Compress(dst, src) != CE_None )
+            return CE_Failure;
         void *usebuff = dst.buffer;
         if (deflatep) {
             usebuff = DeflateBlock(dst, poDS->pbsize - dst.size, deflate_flags);
