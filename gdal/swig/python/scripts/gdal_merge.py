@@ -151,7 +151,11 @@ def raster_copy_with_nodata(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                                   t_xsize, t_ysize)
     data_dst = t_band.ReadAsArray(t_xoff, t_yoff, t_xsize, t_ysize)
 
-    nodata_test = Numeric.equal(data_src, nodata)
+    if not Numeric.isnan(nodata):
+        nodata_test = Numeric.equal(data_src, nodata)
+    else:
+        nodata_test = Numeric.isnan(data_src)
+
     to_write = Numeric.choose(nodata_test, (data_src, data_dst))
 
     t_band.WriteArray(to_write, t_xoff, t_yoff)
