@@ -50,7 +50,7 @@
 #if defined(__x86_64) || defined(_M_X64)
 #define USE_SSE2
 
-#include <gdalsse_priv.h>
+#include "gdalsse_priv.h"
 #endif
 
 CPL_CVSID("$Id$")
