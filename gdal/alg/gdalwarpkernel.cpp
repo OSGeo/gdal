@@ -59,7 +59,7 @@
 // We restrict to 64bit processors because they are guaranteed to have SSE2.
 // Could possibly be used too on 32bit, but we would need to check at runtime.
 #if defined(__x86_64) || defined(_M_X64)
-#include <gdalsse_priv.h>
+#include "gdalsse_priv.h"
 
 #if __SSE4_1__
 #include <smmintrin.h>

@@ -549,7 +549,7 @@ void GDALPansharpenOperation::WeightedBrovey3(
 /* Could possibly be used too on 32bit, but we would need to check at runtime */
 #if defined(__x86_64) || defined(_M_X64)
 
-#include <gdalsse_priv.h>
+#include "gdalsse_priv.h"
 
 template<class T, int NINPUT, int NOUTPUT>
 int GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
