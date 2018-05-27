@@ -908,7 +908,7 @@ int TABFile::ParseTABFileFields()
                 m_poDefn->AddFieldDefn(poFieldDefn);
                 m_oSetFields.insert(CPLString(poFieldDefn->GetNameRef()).toupper());
                 // AddFieldDenf() takes a copy, so we delete the original
-                if (poFieldDefn) delete poFieldDefn;
+                delete poFieldDefn;
                 poFieldDefn = nullptr;
             }
 
