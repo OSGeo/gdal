@@ -4010,8 +4010,8 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                 while( true )
                 {
                     ++nTry;
-                    CPLString osTmpName;
-                    osTmpName.Printf("%s%d", oFieldDefn.GetNameRef(), nTry);
+                    CPLString osTmpName(oFieldDefn.GetNameRef());
+                    osTmpName += CPLSPrintf("%d", nTry);
                     /* Check that the proposed name doesn't exist either in the already */
                     /* created fields or in the source fields */
                     if( oSetDstFieldNames.find(
