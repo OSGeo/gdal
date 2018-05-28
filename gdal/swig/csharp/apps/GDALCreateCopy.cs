@@ -89,7 +89,7 @@ class GDALWrite {
 
             if (ds == null)
             {
-                Console.WriteLine("Can't open source dataset " + args[1]);
+                Console.WriteLine("Can't open source dataset " + args[0]);
                 System.Environment.Exit(-1);
             }
 
