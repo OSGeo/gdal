@@ -191,112 +191,6 @@ def ogr_wfs3_empty_layer():
 ###############################################################################
 
 
-def ogr_wfs3_fc_no_links_next_legacy_behaviour():
-    if gdaltest.wfs3_drv is None:
-        return 'skip'
-
-    if gdaltest.webserver_port == 0:
-        return 'skip'
-
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/wfs3/collections', 200, {'Content-Type': 'application/json'},
-                '{ "collections" : [ { "name": "foo" }] }')
-    with webserver.install_http_handler(handler):
-        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
-    lyr = ds.GetLayer(0)
-
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/wfs3/collections/foo/items?limit=10', 200,
-                {'Content-Type': 'application/geo+json'},
-                """{ "type": "FeatureCollection", "features": [
-                    {
-                        "type": "Feature",
-                        "properties": {
-                            "foo": "bar"
-                        }
-                    }
-                ] }""")
-    with webserver.install_http_handler(handler):
-        if lyr.GetLayerDefn().GetFieldCount() != 1:
-            gdaltest.post_reason('fail')
-            return 'fail'
-
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/wfs3/collections/foo/items?limit=10', 200,
-                {'Content-Type': 'application/geo+json'},
-                '{}')
-    with webserver.install_http_handler(handler):
-        f = lyr.GetNextFeature()
-    if f is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    f = lyr.GetNextFeature()
-    if f is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    lyr.ResetReading()
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/wfs3/collections/foo/items?limit=10', 200,
-                {'Content-Type': 'application/geo+json'},
-                """{ "type": "FeatureCollection", "features": [
-                    {
-                        "type": "Feature",
-                        "properties": {
-                            "foo": "bar"
-                        }
-                    },
-                    {
-                        "type": "Feature",
-                        "properties": {
-                            "foo": "baz"
-                        }
-                    }
-                ] }""")
-    with webserver.install_http_handler(handler):
-        f = lyr.GetNextFeature()
-    if f['foo'] != 'bar':
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
-    f = lyr.GetNextFeature()
-    if f['foo'] != 'baz':
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/wfs3/collections/foo/items?limit=10&startIndex=2', 200,
-                {'Content-Type': 'application/geo+json'},
-                """{ "type": "FeatureCollection", "features": [
-                    {
-                        "type": "Feature",
-                        "properties": {
-                            "foo": "baw"
-                        }
-                    }
-                ] }""")
-    with webserver.install_http_handler(handler):
-        f = lyr.GetNextFeature()
-    if f['foo'] != 'baw':
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/wfs3/collections/foo/items?limit=10&startIndex=3', 200,
-                {'Content-Type': 'application/geo+json'},
-                """{ "type": "FeatureCollection", "features": [] }""")
-    with webserver.install_http_handler(handler):
-        f = lyr.GetNextFeature()
-    if f is not None:
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
-
-    return 'success'
-
-###############################################################################
-
-
 def ogr_wfs3_fc_links_next_geojson():
     if gdaltest.wfs3_drv is None:
         return 'skip'
@@ -742,7 +636,6 @@ gdaltest_list = [
     ogr_wfs3_init,
     ogr_wfs3_errors,
     ogr_wfs3_empty_layer,
-    ogr_wfs3_fc_no_links_next_legacy_behaviour,
     ogr_wfs3_fc_links_next_geojson,
     ogr_wfs3_fc_links_next_headers,
     ogr_wfs3_spatial_filter,
