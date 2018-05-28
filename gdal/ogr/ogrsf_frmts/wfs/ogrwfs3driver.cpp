@@ -719,22 +719,6 @@ OGRFeature* OGRWFS3Layer::GetNextRawFeature()
                         }
                     }
                 }
-
-#ifndef REMOVE_HACK
-                if( m_osGetURL.empty() )
-                {
-                    m_osGetURL = m_osURL;
-                    if( m_poDS->m_nPageSize > 0 )
-                    {
-                        m_osGetURL = CPLURLAddKVP(m_osGetURL, "limit",
-                                            CPLSPrintf("%d", m_poDS->m_nPageSize));
-                    }
-                    m_osGetURL = CPLURLAddKVP(m_osGetURL, "startIndex",
-                        CPLSPrintf(CPL_FRMT_GIB,
-                            m_nFID + m_poUnderlyingLayer->GetFeatureCount() - 1));
-                    m_osGetURL = AddFilters(m_osGetURL);
-                }
-#endif
             }
         }
 
