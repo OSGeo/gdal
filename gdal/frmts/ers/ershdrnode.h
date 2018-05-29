@@ -17,7 +17,7 @@ public:
     ERSHdrNode();
     ~ERSHdrNode();
 
-    int    ParseChildren( VSILFILE *fp );
+    int    ParseChildren( VSILFILE *fp, int nRecLevel = 0 );
     int    WriteSelf( VSILFILE *fp, int nIndent );
 
     const char *Find( const char *pszPath, const char *pszDefault = nullptr );
