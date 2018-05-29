@@ -516,7 +516,7 @@ def postgisraster_test_unique():
 
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_unique' mode=2")
-    cs = [ds.GetRasterBand(i +1).Checksum() for i in range(3)]
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [30111, 32302, 40026]:
         gdaltest.post_reason('fail')
         print(cs)
