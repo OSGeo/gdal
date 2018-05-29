@@ -14,6 +14,8 @@ if [[ $called == "$0" ]]; then
     exit 1
 fi
 
+# SC2164 is "Use cd ... || exit in case cd fails"
+# shellcheck disable=SC2164
 GDAL_ROOT=$(cd $(dirname ${BASH_SOURCE[0]})/..; pwd)
 
 if [[ ! ${PATH,,} =~ $GDAL_ROOT/apps ]]; then

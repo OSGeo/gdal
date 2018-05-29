@@ -294,17 +294,21 @@ echo "Building ers_fuzzer_seed_corpus.zip"
 rm -f $OUT/ers_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
 cd  $(dirname $0)/../../autotest/gdrivers/data
-printf "FUZZER_FRIENDLY_ARCHIVE\\n" > $CUR_DIR/srtm.tar
-printf "***NEWFILE***:%s\\n" "test.ers" >> $CUR_DIR/srtm.tar
-cat srtm.ers >> $CUR_DIR/srtm.tar
-printf "***NEWFILE***:%s\\n" "test" >> $CUR_DIR/srtm.tar
-cat srtm >> $CUR_DIR/srtm.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:%s\\n" "test.ers"
+    cat srtm.ers
+    printf "***NEWFILE***:%s\\n" "test"
+    cat srtm
+} > $CUR_DIR/srtm.tar
 
-printf "FUZZER_FRIENDLY_ARCHIVE\\n" > $CUR_DIR/ers_dem.tar
-printf "***NEWFILE***:%s\\n" "test.ers" >> $CUR_DIR/ers_dem.tar
-cat ers_dem.ers >> $CUR_DIR/ers_dem.tar
-printf "***NEWFILE***:%s\\n" "test" >> $CUR_DIR/ers_dem.tar
-cat ers_dem >> $CUR_DIR/ers_dem.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:%s\\n" "test.ers"
+    cat ers_dem.ers
+    printf "***NEWFILE***:%s\\n" "test"
+    cat ers_dem
+} > $CUR_DIR/ers_dem.tar
 
 cd $CUR_DIR
 zip -r $OUT/ers_fuzzer_seed_corpus.zip srtm.tar ers_dem.tar >/dev/null
