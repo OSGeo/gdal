@@ -417,6 +417,18 @@ def osr_epsg_gcs_deprecated():
 ###############################################################################
 
 
+def osr_epsg_geoccs_deprecated():
+
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4346)
+    if sr.ExportToWkt().find('ETRS89 (geocentric) (deprecated)') < 0:
+        print(sr.ExportToWkt())
+        return 'fail'
+    return 'success'
+
+###############################################################################
+
+
 gdaltest_list = [
     osr_epsg_1,
     osr_epsg_2,
@@ -432,6 +444,7 @@ gdaltest_list = [
     osr_epsg_12,
     osr_epsg_13,
     osr_epsg_gcs_deprecated,
+    osr_epsg_geoccs_deprecated,
     None]
 
 if __name__ == '__main__':
