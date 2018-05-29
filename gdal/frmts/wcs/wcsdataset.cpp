@@ -1519,14 +1519,16 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         // copy band specific metadata to the band
         char **md_from = poDS->GetMetadata("SUBDATASETS");
         char **md_to = nullptr;
-        CPLString our_key = CPLString().Printf("FIELD_%d_", iBand + 1);
-        for (char **from = md_from; *from != nullptr; ++from) {
-            std::vector<CPLString> kv = Split(*from, "=");
-            if (kv.size() > 1 && STARTS_WITH(kv[0], our_key)) {
-                CPLString key = kv[0];
-                CPLString value = kv[1];
-                key.erase(0, our_key.length());
-                md_to = CSLSetNameValue(md_to, key, value);
+        if (md_from) {
+            CPLString our_key = CPLString().Printf("FIELD_%d_", iBand + 1);
+            for (char **from = md_from; *from != nullptr; ++from) {
+                std::vector<CPLString> kv = Split(*from, "=");
+                if (kv.size() > 1 && STARTS_WITH(kv[0], our_key)) {
+                    CPLString key = kv[0];
+                    CPLString value = kv[1];
+                    key.erase(0, our_key.length());
+                    md_to = CSLSetNameValue(md_to, key, value);
+                }
             }
         }
         band->SetMetadata(md_to, "");
