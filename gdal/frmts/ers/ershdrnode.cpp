@@ -146,9 +146,16 @@ int ERSHdrNode::ReadLine( VSILFILE * fp, CPLString &osLine )
 /*      This function is used recursively to read sub-objects.          */
 /************************************************************************/
 
-int ERSHdrNode::ParseChildren( VSILFILE * fp )
+int ERSHdrNode::ParseChildren( VSILFILE * fp, int nRecLevel )
 
 {
+    if( nRecLevel == 100 ) // arbitrary limit
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too many recursion level while parsing .ers header");
+        return false;
+    }
+
     while( true )
     {
 /* -------------------------------------------------------------------- */
@@ -195,7 +202,7 @@ int ERSHdrNode::ParseChildren( VSILFILE * fp )
 
             nItemCount++;
 
-            if( !papoItemChild[nItemCount-1]->ParseChildren( fp ) )
+            if( !papoItemChild[nItemCount-1]->ParseChildren( fp, nRecLevel + 1 ) )
                 return FALSE;
         }
 
