@@ -359,7 +359,7 @@ def postgisraster_test_create_copy_and_delete_phases():
             return 'fail'
 
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_copy' mode=2")
-        cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+        cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
         if cs != [30111, 32302, 40026]:
             gdaltest.post_reason('fail')
             print(cs)
@@ -446,7 +446,7 @@ def postgisraster_test_norid():
 
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_noid' mode=2")
-    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [30111, 32302, 40026]:
         gdaltest.post_reason('fail')
         print(cs)
@@ -481,7 +481,7 @@ def postgisraster_test_serial():
 
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_serial' mode=2")
-    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [30111, 32302, 40026]:
         gdaltest.post_reason('fail')
         print(cs)
@@ -516,7 +516,7 @@ def postgisraster_test_unique():
 
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_unique' mode=2")
-    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    cs = [ds.GetRasterBand(i +1).Checksum() for i in range(3)]
     if cs != [30111, 32302, 40026]:
         gdaltest.post_reason('fail')
         print(cs)
@@ -530,7 +530,7 @@ def postgisraster_test_constraint():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_constraint' mode=2")
-    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [30111, 32302, 40026]:
         gdaltest.post_reason('fail')
         print(cs)
@@ -544,7 +544,7 @@ def postgisraster_test_constraint_with_spi():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_constraint_with_spi' mode=2")
-    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [30111, 32302, 40026]:
         gdaltest.post_reason('fail')
         print(cs)
@@ -565,7 +565,7 @@ def postgisraster_test_outdb():
     ds = None
 
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2")
-    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     expected_cs = [30111, 32302, 40026] if has_guc else [0, 0, 0]
     if cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -580,7 +580,7 @@ def postgisraster_test_outdb_client_side():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2 outdb_resolution=client_side")
-    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [30111, 32302, 40026]:
         gdaltest.post_reason('fail')
         print(cs)
@@ -595,7 +595,7 @@ def postgisraster_test_outdb_client_side_force_ireadblock():
         return 'skip'
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2 outdb_resolution=client_side")
     with gdaltest.SetCacheMax(0):
-        cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+        cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [30111, 32302, 40026]:
         gdaltest.post_reason('fail')
         print(cs)
@@ -609,7 +609,7 @@ def postgisraster_test_outdb_client_side_if_possible():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2 outdb_resolution=client_side_if_possible")
-    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [30111, 32302, 40026]:
         gdaltest.post_reason('fail')
         print(cs)
@@ -624,6 +624,7 @@ def postgisraster_cleanup():
     gdal.Unlink('data/utm.tif.aux.xml')
 
     return 'success'
+
 
 gdaltest_list = [
     postgisraster_init,

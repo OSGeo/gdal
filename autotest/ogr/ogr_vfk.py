@@ -369,7 +369,7 @@ def ogr_vfk_11():
         return 'skip'
 
     count = gdaltest.vfk_layer_par.GetFeatureCount()
-    for i in range(2): # perform check twice, mix with random access
+    for i in range(2):  # perform check twice, mix with random access
         if count != count_features():
             feat = gdaltest.vfk_layer_par.GetFeature(i)
             gdaltest.post_reason('did not get expected number of features')
