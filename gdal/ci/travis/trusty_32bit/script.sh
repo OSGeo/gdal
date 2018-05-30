@@ -19,3 +19,6 @@ mv autotest/gcore/vsigs.py autotest/gcore/vsigs.py.disabled
 
 # Run all the Python autotests
 sudo i386 chroot "$chroot" sh -c "cd $PWD/autotest && python run_all.py"
+
+# Run Shellcheck
+shellcheck -e SC2086,SC2046 $(find $PWD/gdal -name '*.sh' -a -not -name ltmain.sh -a -not -name gdal-bash-completion.sh)
