@@ -194,9 +194,24 @@ _gdalenhance()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="--help-general -of -co -ot -equalize -config --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]}
+  case "$prev" in
+    -ot)
+      key_list="Byte Int16 UInt16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+    -of)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+    --format)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       ;;
   esac
   return 0
@@ -224,9 +239,24 @@ _gdal_grid()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="--help-general -ot -of -co -zfield -z_increase -z_multiply -a_srs -spat -clipsrc -clipsrcsql -clipsrclayer -clipsrcwhere -l -where -sql -txe -tye -outsize -a -q --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]}
+  case "$prev" in
+    -ot)
+      key_list="Byte Int16 UInt16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+    -of)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+    --format)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       ;;
   esac
   return 0
@@ -403,9 +433,20 @@ _gdal_rasterize()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="-b -i -at -burn -a -3d -add -l -where -sql -dialect -of -a_srs -to -co -a_nodata -init -te -tr -tap -ts -ot -optim -q "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]}
+  case "$prev" in
+    -ot)
+      key_list="Byte Int16 UInt16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+    -of)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       ;;
   esac
   return 0
@@ -533,9 +574,24 @@ _gdal_translate()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="--help-general --long-usage -ot -strict -of -b -mask -expand -outsize -tr -r -unscale -scale -exponent -srcwin -epo -eco -projwin -projwin_srs -a_srs -a_ullr -a_nodata -a_scale -a_offset -gcp -colorinterp{_bn} -colorinterp -mo -q -sds -co -stats -norat -oo --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]}
+  case "$prev" in
+    -ot)
+      key_list="Byte Int16 UInt16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+    -of)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+    --format)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       ;;
   esac
   return 0
@@ -578,9 +634,20 @@ _ogr2ogr()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="--help-general -skipfailures -append -update -select -where -progress -sql -dialect -preserve_fid -fid -limit -spat -spat_srs -geomfield -a_srs -t_srs -s_srs -f -overwrite -dsco -lco -nln -nlt -dim --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]/ogrtindex/ogr2ogr}
+  case "$prev" in
+    -f)
+      key_list="$( $tool --formats | tail -n +2 | grep -o -E '"[^"]+"' | sed 's/\ /__/')"
+      for iter in $key_list; do
+        if [[ $iter =~ ^$cur ]]; then
+          COMPREPLY+=( "${iter//__/ }" )
+        fi
+      done
       ;;
   esac
   return 0
@@ -593,7 +660,7 @@ _ogrinfo()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="--help-general -ro -q -where -spat -geomfield -fid -sql -dialect -al -rl -so -fields=YES -fields=NO -geom=YES -geom=NO -geom=SUMMARY -oo -nomd -listmdd -mdd -nocount -noextent --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -608,9 +675,28 @@ _ogrlineref()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="--help-general -progress -quiet -f -dsco -lco -create -l -ln -lf -p -pn -pm -pf -r -rn -o -on -of -s -get_pos -x -y -get_coord -m -get_subline -mb -me --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]/ogrtindex/ogr2ogr}
+  case "$prev" in
+    -f)
+      key_list="$( $tool --formats | tail -n +2 | grep -o -E '"[^"]+"' | sed 's/\ /__/')"
+      for iter in $key_list; do
+        if [[ $iter =~ ^$cur ]]; then
+          COMPREPLY+=( "${iter//__/ }" )
+        fi
+      done
+      ;;
+    -of)
+      key_list="$( $tool --formats | tail -n +2 | grep -o -E '"[^"]+"' | sed 's/\ /__/')"
+      for iter in $key_list; do
+        if [[ $iter =~ ^$cur ]]; then
+          COMPREPLY+=( "${iter//__/ }" )
+        fi
+      done
       ;;
   esac
   return 0
@@ -623,9 +709,20 @@ _ogrtindex()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="-lnum -lname -f -write_absolute_path -skip_different_projection -t_srs -src_srs_name -src_srs_format -accept_different_schemas "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]/ogrtindex/ogr2ogr}
+  case "$prev" in
+    -f)
+      key_list="$( $tool --formats | tail -n +2 | grep -o -E '"[^"]+"' | sed 's/\ /__/')"
+      for iter in $key_list; do
+        if [[ $iter =~ ^$cur ]]; then
+          COMPREPLY+=( "${iter//__/ }" )
+        fi
+      done
       ;;
   esac
   return 0
