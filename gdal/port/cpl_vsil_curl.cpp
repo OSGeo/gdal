@@ -1288,10 +1288,11 @@ retry:
         }
         else if( response_code != 200 )
         {
-            // If HTTP 429, 502, 503 or 504 gateway timeout error retry after a
+            // If HTTP 429, 500, 502, 503, 504 error retry after a
             // pause.
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                static_cast<int>(response_code), dfRetryDelay);
+                static_cast<int>(response_code), dfRetryDelay,
+                sWriteFuncHeaderData.pBuffer);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < m_nMaxRetry )
             {
@@ -1345,6 +1346,16 @@ retry:
                     VSIError(VSIE_HttpError, "HTTP response code: %d",
                              static_cast<int>(response_code));
                 }
+            }
+            else
+            {
+                if( response_code != 400 && response_code != 404 )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "HTTP response code on %s: %d",
+                             osURL.c_str(), static_cast<int>(response_code));
+                }
+                // else a CPLDebug() is emitted below
             }
 
             eExists = EXIST_NO;
@@ -1636,10 +1647,11 @@ retry:
             return DownloadRegion(startOffset, nBlocks);
         }
 
-        // If HTTP 429, 502, 503 or 504 gateway timeout error retry after a
+        // If HTTP 429, 500, 502, 503, 504 error retry after a
         // pause.
         const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-            static_cast<int>(response_code), dfRetryDelay);
+            static_cast<int>(response_code), dfRetryDelay,
+            sWriteFuncHeaderData.pBuffer);
         if( dfNewRetryDelay > 0 &&
             nRetryCount < m_nMaxRetry )
         {
