@@ -2076,10 +2076,12 @@ OGRErr OGRCSVLayer::WriteHeader()
         if( bHiddenWKTColumn )
         {
             if( fpCSV )
+            {
+                const char* pszColName =
+                    bCreateCSVT ? poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef() : "WKT";
                 bOK &=
-                    VSIFPrintfL(
-                        fpCSV, "%s",
-                        poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()) >= 0;
+                    VSIFPrintfL(fpCSV, "%s", pszColName) >= 0;
+            }
             if( fpCSVT )
                 bOK &= VSIFPrintfL(fpCSVT, "%s", "WKT") > 0;
         }
