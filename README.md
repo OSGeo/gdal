@@ -2,8 +2,8 @@ GDAL - Geospatial Data Abstraction Library
 ====
 
 [![Build Status](https://travis-ci.com/OSGeo/gdal.svg?branch=master)](https://travis-ci.com/OSGeo/gdal)
-[![Build status](https://ci.appveyor.com/api/projects/status/jtwx0pcr0y01i17p/branch/master?svg=true)
-[![Build Status](https://scan.coverity.com/projects/749/badge.svg?flat=1)](https://scan.coverity.com/projects/gdal) |
+[![Build status](https://ci.appveyor.com/api/projects/status/jtwx0pcr0y01i17p/branch/master?svg=true)(https://ci.appveyor.com/project/OSGeo/gdal)
+[![Build Status](https://scan.coverity.com/projects/749/badge.svg?flat=1)](https://scan.coverity.com/projects/gdal)
 
 | Environment              |
 | ------------------------ |
