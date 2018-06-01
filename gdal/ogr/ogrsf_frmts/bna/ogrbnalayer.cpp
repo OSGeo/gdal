@@ -313,7 +313,8 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
         eol[1] = 0;
     }
 
-    if ( ! bWriter )
+    VSILFILE* fp = poDS->GetOutputFP();
+    if ( ! bWriter || fp == nullptr )
     {
         return OGRERR_FAILURE;
     }
@@ -321,7 +322,6 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( nFeatures++ );
 
-    VSILFILE* fp = poDS->GetOutputFP();
     int nbPairPerLine = poDS->GetNbPairPerLine();
 
     switch( poGeom->getGeometryType() )

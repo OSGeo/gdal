@@ -42,7 +42,6 @@ OGRBNADataSource::OGRBNADataSource() :
     pszName(nullptr),
     papoLayers(nullptr),
     nLayers(0),
-    bUpdate(false),
     fpOutput(nullptr),
     bUseCRLF(false),
     bMultiLine(FALSE),
@@ -150,13 +149,12 @@ OGRLayer * OGRBNADataSource::ICreateLayer( const char * pszLayerName,
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
+int OGRBNADataSource::Open( const char * pszFilename )
 
 {
     int ok = FALSE;
 
     pszName = CPLStrdup( pszFilename );
-    bUpdate = CPL_TO_BOOL(bUpdateIn);
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp)
