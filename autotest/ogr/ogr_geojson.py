@@ -4096,6 +4096,42 @@ def ogr_geojson_starting_with_crs():
     return 'success'
 
 ###############################################################################
+# Test we properly flush the file in SyncToDisk() in append situations
+
+
+def ogr_geojson_append_flush():
+
+    tmpfilename = 'tmp/ogr_geojson_append_flush.json'
+    f = gdal.VSIFOpenL(tmpfilename, 'wb')
+    content = """{
+"type": "FeatureCollection",
+"features": [
+{ "type": "Feature", "properties": { "x": 1, "y": 2, "z": 3, "w": 4 }, "geometry": { "type": "Point", "coordinates": [ 0, 0 ] } } ] }"""
+    gdal.VSIFWriteL(content, 1, len(content), f)
+    gdal.VSIFCloseL(f)
+
+    ds = ogr.Open(tmpfilename, update=1)
+    lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['x'] = 10
+    lyr.CreateFeature(f)
+    lyr.SyncToDisk()
+
+    ds2 = ogr.Open(tmpfilename, update=1)
+    lyr = ds2.GetLayer(0)
+    lyr.GetNextFeature()
+    f = lyr.GetNextFeature()
+    if f is None or f['x'] != 10:
+        return 'fail'
+
+    ds = None
+    ds2 = None
+    gdal.Unlink(tmpfilename)
+
+    return 'success'
+
+
+###############################################################################
 
 
 def ogr_geojson_cleanup():
@@ -4205,6 +4241,7 @@ gdaltest_list = [
     ogr_geojson_id_field_and_id_type,
     ogr_geojson_geom_export_failure,
     ogr_geojson_starting_with_crs,
+    ogr_geojson_append_flush,
     ogr_geojson_cleanup]
 
 if __name__ == '__main__':
