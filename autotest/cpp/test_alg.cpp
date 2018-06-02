@@ -33,6 +33,7 @@
 
 #include "gdal_alg.h"
 #include "gdalwarper.h"
+#include "gdal_priv.h"
 
 namespace tut
 {
@@ -264,6 +265,29 @@ namespace tut
         ensure_equals( psOptions->eWorkingDataType, GDT_CFloat64 );
 
         GDALDestroyWarpOptions(psOptions);
+    }
+
+    // Test GDALAutoCreateWarpedVRT() with creatino of an alpha band
+    template<> template<> void object::test<8>()
+    {
+        GDALDatasetUniquePtr poDS(
+            GDALDriver::FromHandle(
+                GDALGetDriverByName("MEM"))->Create("", 1, 1, 1, GDT_Byte, nullptr));
+        poDS->SetProjection( SRS_WKT_WGS84);
+        double adfGeoTransform[6] = { 10, 1, 0, 20, 0, -1 };
+        poDS->SetGeoTransform(adfGeoTransform);
+        GDALWarpOptions* psOptions = GDALCreateWarpOptions();
+        psOptions->nDstAlphaBand = 2;
+        GDALDatasetH hWarpedVRT =
+            GDALAutoCreateWarpedVRT(GDALDataset::ToHandle(poDS.get()), nullptr, nullptr,
+                                GRA_NearestNeighbour, 0.0,
+                                psOptions);
+        ensure( hWarpedVRT != nullptr );
+        ensure_equals( GDALGetRasterCount(hWarpedVRT), 2 );
+        ensure_equals( GDALGetRasterColorInterpretation(
+            GDALGetRasterBand(hWarpedVRT, 2)), GCI_AlphaBand );
+        GDALDestroyWarpOptions(psOptions);
+        GDALClose(hWarpedVRT);
     }
 
 

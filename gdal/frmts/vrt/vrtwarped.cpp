@@ -295,7 +295,12 @@ GDALCreateWarpedVRT( GDALDatasetH hSrcDS,
     {
         poDS->AddBand( psOptions->eWorkingDataType, nullptr );
     }
-    
+    if( psOptions->nDstAlphaBand )
+    {
+        poDS->GetRasterBand(psOptions->nDstAlphaBand)->
+                                SetColorInterpretation(GCI_AlphaBand);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Initialize the warp on the VRTWarpedDataset.                    */
 /* -------------------------------------------------------------------- */
