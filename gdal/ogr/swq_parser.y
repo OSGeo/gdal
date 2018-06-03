@@ -412,6 +412,13 @@ value_expr_non_logical:
                     $$->int_value = std::numeric_limits<GIntBig>::min();
                     $$->float_value = static_cast<double>(std::numeric_limits<GIntBig>::min());
                 }
+                // - (-9223372036854775808) cannot be represented on int64
+                // the classic overflow is that its negation is itself.
+                else if( $2->field_type == SWQ_INTEGER64 &&
+                         $2->int_value == std::numeric_limits<GIntBig>::min() )
+                {
+                    $$ = $2;
+                }
                 else
                 {
                     $$ = $2;
