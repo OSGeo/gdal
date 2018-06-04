@@ -567,6 +567,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr              FeatureBindUpdateParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt );
     OGRErr              FeatureBindInsertParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, bool bAddFID, bool bBindUnsetFields );
     OGRErr              FeatureBindParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, int *pnColCount, bool bAddFID, bool bBindUnsetFields );
+    void                UpdateContentsToNullExtent();
 
     void                CheckUnknownExtensions();
     bool                CreateGeometryExtensionIfNecessary(const OGRGeometry* poGeom);
