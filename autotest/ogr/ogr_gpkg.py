@@ -3404,14 +3404,14 @@ def ogr_gpkg_37():
 # Test GetExtent() and RECOMPUTE EXTENT ON
 
 
-def ogr_gpkg_38():
+def ogr_gpkg_38(options=['SPATIAL_INDEX=YES']):
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
 
     dbname = '/vsimem/ogr_gpkg_38.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
-    lyr = ds.CreateLayer('test', geom_type=ogr.wkbLineString)
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbLineString, options=options)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING (1 2,3 4)'))
     lyr.CreateFeature(f)
@@ -3503,6 +3503,11 @@ def ogr_gpkg_38():
     gdaltest.gpkg_dr.DeleteDataSource(dbname)
 
     return 'success'
+
+
+def ogr_gpkg_38_nospi():
+    return ogr_gpkg_38(options=['SPATIAL_INDEX=NO'])
+
 
 ###############################################################################
 # Test checking of IDENTIFIER unicity
@@ -4731,6 +4736,7 @@ gdaltest_list = [
     ogr_gpkg_36,
     ogr_gpkg_37,
     ogr_gpkg_38,
+    ogr_gpkg_38_nospi,
     ogr_gpkg_39,
     ogr_gpkg_40,
     ogr_gpkg_41,
