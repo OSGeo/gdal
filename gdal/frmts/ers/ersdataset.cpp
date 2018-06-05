@@ -605,6 +605,9 @@ static double ERSDMS2Dec( const char *pszDMS )
 char **ERSDataset::GetFileList()
 
 {
+    static thread_local int nRecLevel = 0;
+    if( nRecLevel > 0 )
+        return nullptr;
 
     // Main data file, etc.
     char **papszFileList = GDALPamDataset::GetFileList();
@@ -616,7 +619,9 @@ char **ERSDataset::GetFileList()
     // If we have a dependent file, merge its list of files in.
     if( poDepFile )
     {
+        nRecLevel ++;
         char **papszDepFiles = poDepFile->GetFileList();
+        nRecLevel --;
         papszFileList =
             CSLInsertStrings( papszFileList, -1, papszDepFiles );
         CSLDestroy( papszDepFiles );
@@ -949,17 +954,23 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( EQUAL(poHeader->Find("DataSetType",""),"Translated") )
     {
-        poDS->poDepFile = (GDALDataset *)
-            GDALOpenShared( osDataFilePath, poOpenInfo->eAccess );
-
-        if( poDS->poDepFile != nullptr
-            && poDS->poDepFile->GetRasterCount() >= nBands )
+        static thread_local int nRecLevel = 0;
+        if( nRecLevel == 0 )
         {
-            for( int iBand = 0; iBand < nBands; iBand++ )
+            nRecLevel ++;
+            poDS->poDepFile = (GDALDataset *)
+                GDALOpen( osDataFilePath, poOpenInfo->eAccess );
+            nRecLevel --;
+
+            if( poDS->poDepFile != nullptr
+                && poDS->poDepFile->GetRasterCount() >= nBands )
             {
-                // Assume pixel interleaved.
-                poDS->SetBand( iBand+1,
-                               poDS->poDepFile->GetRasterBand( iBand+1 ) );
+                for( int iBand = 0; iBand < nBands; iBand++ )
+                {
+                    // Assume pixel interleaved.
+                    poDS->SetBand( iBand+1,
+                                poDS->poDepFile->GetRasterBand( iBand+1 ) );
+                }
             }
         }
     }
