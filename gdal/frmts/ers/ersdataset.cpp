@@ -30,6 +30,7 @@
 #include "cpl_string.h"
 #include "ershdrnode.h"
 #include "gdal_frmts.h"
+#include "gdal_proxy.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
@@ -180,7 +181,10 @@ int ERSDataset::CloseDependentDatasets()
         bHasDroppedRef = TRUE;
 
         for( int iBand = 0; iBand < nBands; iBand++ )
+        {
+            delete papoBands[iBand];
             papoBands[iBand] = nullptr;
+        }
         nBands = 0;
 
         GDALClose( (GDALDatasetH) poDepFile );
@@ -758,7 +762,7 @@ ERSRasterBand::ERSRasterBand( GDALDataset *poDSIn, int nBandIn, VSILFILE * fpRaw
 
 double ERSRasterBand::GetNoDataValue( int *pbSuccess )
 {
-    ERSDataset* poGDS = (ERSDataset*) poDS;
+    ERSDataset* poGDS = cpl::down_cast<ERSDataset*>(poDS);
     if (poGDS->bHasNoDataValue)
     {
         if (pbSuccess)
@@ -775,7 +779,7 @@ double ERSRasterBand::GetNoDataValue( int *pbSuccess )
 
 CPLErr ERSRasterBand::SetNoDataValue( double dfNoDataValue )
 {
-    ERSDataset* poGDS = (ERSDataset*) poDS;
+    ERSDataset* poGDS = cpl::down_cast<ERSDataset*>(poDS);
     if (!poGDS->bHasNoDataValue || poGDS->dfNoDataValue != dfNoDataValue)
     {
         poGDS->bHasNoDataValue = TRUE;
@@ -816,6 +820,30 @@ int ERSDataset::Identify( GDALOpenInfo * poOpenInfo )
 
     return TRUE;
 }
+
+/************************************************************************/
+/*                         ERSProxyRasterBand                           */
+/************************************************************************/
+
+namespace {
+class ERSProxyRasterBand final : public GDALProxyRasterBand
+{
+public:
+    ERSProxyRasterBand(GDALRasterBand* poUnderlyingBand):
+        m_poUnderlyingBand(poUnderlyingBand)
+    {
+        poUnderlyingBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+        eDataType = poUnderlyingBand->GetRasterDataType();
+    }
+
+protected:
+    GDALRasterBand* RefUnderlyingRasterBand() override { return m_poUnderlyingBand; }
+
+private:
+    GDALRasterBand* m_poUnderlyingBand;
+};
+
+} // namespace
 
 /************************************************************************/
 /*                                Open()                                */
@@ -963,13 +991,16 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
             nRecLevel --;
 
             if( poDS->poDepFile != nullptr
+                && poDS->poDepFile->GetRasterXSize() == poDS->GetRasterXSize()
+                && poDS->poDepFile->GetRasterYSize() == poDS->GetRasterYSize()
                 && poDS->poDepFile->GetRasterCount() >= nBands )
             {
                 for( int iBand = 0; iBand < nBands; iBand++ )
                 {
                     // Assume pixel interleaved.
                     poDS->SetBand( iBand+1,
-                                poDS->poDepFile->GetRasterBand( iBand+1 ) );
+                        new ERSProxyRasterBand(
+                                poDS->poDepFile->GetRasterBand( iBand+1 )) );
                 }
             }
         }
