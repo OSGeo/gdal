@@ -361,6 +361,15 @@ def ers_10():
     return 'success'
 
 ###############################################################################
+# Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=8744
+
+
+def ers_recursive_opening():
+    ds = gdal.Open('/vsitar/data/test_ers_recursive.tar/test.ers')
+    ds.GetFileList()
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 
@@ -380,6 +389,7 @@ gdaltest_list = [
     ers_8,
     ers_9,
     ers_10,
+    ers_recursive_opening,
     ers_cleanup
 ]
 
