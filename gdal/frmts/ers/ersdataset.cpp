@@ -831,7 +831,7 @@ namespace {
 class ERSProxyRasterBand final : public GDALProxyRasterBand
 {
 public:
-    ERSProxyRasterBand(GDALRasterBand* poUnderlyingBand):
+    explicit ERSProxyRasterBand(GDALRasterBand* poUnderlyingBand):
         m_poUnderlyingBand(poUnderlyingBand)
     {
         poUnderlyingBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
