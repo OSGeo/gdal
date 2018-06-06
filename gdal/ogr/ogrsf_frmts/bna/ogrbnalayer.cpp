@@ -649,8 +649,20 @@ OGRFeature *OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long fid)
                 OGRPolygon* polygon = new OGRPolygon ();
                 polygon->addRingDirectly(ring);
                 ring = nullptr;
-                tabPolygons[nbPolygons] = polygon;
-                nbPolygons++;
+                for( int j = 0; j < nbPolygons; j++ )
+                {
+                    if( polygon->Equals(tabPolygons[j]) )
+                    {
+                        delete polygon;
+                        polygon = nullptr;
+                        break;
+                    }
+                }
+                if( polygon )
+                {
+                    tabPolygons[nbPolygons] = polygon;
+                    nbPolygons++;
+                }
 
                 if (i < record->nCoords - 1)
                 {
