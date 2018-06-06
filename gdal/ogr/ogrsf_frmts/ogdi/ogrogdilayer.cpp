@@ -558,9 +558,8 @@ void OGROGDILayer::BuildFeatureDefn()
           case Smallint:
           case Integer:
             oField.SetType( OFTInteger );
-            // TODO: Fix spelling - lenght -> length
-            if( oaf->oa.oa_val[i].lenght > 0 )
-                oField.SetWidth( oaf->oa.oa_val[i].lenght );
+            if( oaf->oa.oa_val[i].length > 0 )
+                oField.SetWidth( oaf->oa.oa_val[i].length );
             else
                 oField.SetWidth( 11 );
             break;
@@ -570,9 +569,9 @@ void OGROGDILayer::BuildFeatureDefn()
           case Float:
           case Double:
             oField.SetType( OFTReal );
-            if( oaf->oa.oa_val[i].lenght > 0 )
+            if( oaf->oa.oa_val[i].length > 0 )
             {
-                oField.SetWidth( oaf->oa.oa_val[i].lenght );
+                oField.SetWidth( oaf->oa.oa_val[i].length );
                 oField.SetPrecision( oaf->oa.oa_val[i].precision );
             }
             else
@@ -587,8 +586,8 @@ void OGROGDILayer::BuildFeatureDefn()
           case Longvarchar:
           default:
             oField.SetType( OFTString );
-            if( oaf->oa.oa_val[i].lenght > 0 )
-                oField.SetWidth( oaf->oa.oa_val[i].lenght );
+            if( oaf->oa.oa_val[i].length > 0 )
+                oField.SetWidth( oaf->oa.oa_val[i].length );
             else
                 oField.SetWidth( 64 );
             break;

@@ -25,7 +25,7 @@
             <IncludeGeometryXML>false</IncludeGeometryXML>
             <InstantiateGMLFeaturesOnly>true</InstantiateGMLFeaturesOnly>
         </GML>
-        <!-- 60 for PostgreSQL compatiblity. The maximum is 64 but reserve
+        <!-- 60 for PostgreSQL compatibility. The maximum is 64 but reserve
              some space so that the spatial index name can be formed -->
         <IdentifierMaxLength>60</IdentifierMaxLength>
         <!-- Whether layer and field names should be consider equal in a

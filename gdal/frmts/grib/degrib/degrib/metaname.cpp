@@ -559,7 +559,7 @@ typedef struct {
 
 typedef struct {
     const char *GRIB2name, *NDFDname;
-} NDFD_AbrevOverideTable;
+} NDFD_AbrevOverrideTable;
 
 /* *INDENT-OFF* */
 /* Updated based on:
@@ -1672,7 +1672,7 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
 }
 
 /* *INDENT-OFF* */
-static const NDFD_AbrevOverideTable NDFD_Overide[] = {
+static const NDFD_AbrevOverrideTable NDFD_Override[] = {
    /*  0 */ {"TMP", "T"},
    /*  1 */ {"TMAX", "MaxT"},
    /*  2 */ {"TMIN", "MinT"},
@@ -2769,11 +2769,11 @@ static void ElemNamePerc (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
          /* Check for NDFD over-rides. */
          if (IsData_NDFD (center, subcenter) ||
              IsData_MOS (center, subcenter)) {
-            for (i = 0; i < (sizeof (NDFD_Overide) /
-                             sizeof (NDFD_AbrevOverideTable)); i++) {
-               if (strcmp (NDFD_Overide[i].GRIB2name, table[subcat].name) ==
+            for (i = 0; i < (sizeof (NDFD_Override) /
+                             sizeof (NDFD_AbrevOverrideTable)); i++) {
+               if (strcmp (NDFD_Override[i].GRIB2name, table[subcat].name) ==
                    0) {
-                  mallocSprintf (name, "%s%02d", NDFD_Overide[i].NDFDname,
+                  mallocSprintf (name, "%s%02d", NDFD_Override[i].NDFDname,
                                  percentile);
                   if (lenTime > 0) {
                      if (timeRangeUnit == 3) {
@@ -3039,12 +3039,12 @@ static void ElemNameNorm (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
                *convert = table[subcat].convert;
                return;
             }   
-            for (i = 0; i < (sizeof (NDFD_Overide) /
-                             sizeof (NDFD_AbrevOverideTable)); i++) {
-               if (strcmp (NDFD_Overide[i].GRIB2name, table[subcat].name) ==
+            for (i = 0; i < (sizeof (NDFD_Override) /
+                             sizeof (NDFD_AbrevOverrideTable)); i++) {
+               if (strcmp (NDFD_Override[i].GRIB2name, table[subcat].name) ==
                    0) {
-                  *name = (char *) malloc (strlen (NDFD_Overide[i].NDFDname) + 1);
-                  strcpy (*name, NDFD_Overide[i].NDFDname);
+                  *name = (char *) malloc (strlen (NDFD_Override[i].NDFDname) + 1);
+                  strcpy (*name, NDFD_Override[i].NDFDname);
                   *comment = (char *) malloc (strlen (table[subcat].comment) + 1);
                   strcpy (*comment, table[subcat].comment);
                   mallocSprintf (unit, "[%s]", table[subcat].unit);

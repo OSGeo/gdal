@@ -7894,7 +7894,7 @@ L1B driver:
  * Added support for NOAA-18(N) and METOP-2 datasets; tiny code refactoring.
  * L1B : add auto guess of data format when it is 2 spaces or empty string
  * The GAC GCPs are not tied to the center of pixel.
- * Serious code rewriting in order to read datasets withour archive header
+ * Serious code rewriting in order to read datasets without archive header
 
 MEM driver:
  * Avoid failure when doing mem_driver->Create('MEM:::')

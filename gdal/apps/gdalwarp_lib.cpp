@@ -2876,9 +2876,9 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
                             reinterpret_cast<OGRGeometry*>(hMultiPolygon) );
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    const bool bWasValidInitialy = LooseValidateCutline(hMultiPolygon);
+    const bool bWasValidInitially = LooseValidateCutline(hMultiPolygon);
     CPLPopErrorHandler();
-    if( !bWasValidInitialy )
+    if( !bWasValidInitially )
     {
         CPLDebug("WARP", "Cutline is not valid after initial reprojection");
         char *pszWKT = nullptr;
@@ -2893,7 +2893,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
         const char* pszDensifyCutline = CPLGetConfigOption("GDALWARP_DENSIFY_CUTLINE", "YES");
         if( EQUAL(pszDensifyCutline, "ONLY_IF_INVALID") )
         {
-            bDensify = ( OGRGeometryFactory::haveGEOS() && !bWasValidInitialy );
+            bDensify = ( OGRGeometryFactory::haveGEOS() && !bWasValidInitially );
         }
         else if( CSLFetchNameValue( *ppapszWarpOptions, "CUTLINE_BLEND_DIST" ) != nullptr &&
                  CPLGetConfigOption("GDALWARP_DENSIFY_CUTLINE", nullptr) == nullptr )
@@ -2935,7 +2935,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
             {
                 const double dfMaxLengthInPixels = GetMaximumSegmentLength(
                                     reinterpret_cast<OGRGeometry*>(hMultiPolygon) );
-                if( bWasValidInitialy )
+                if( bWasValidInitially )
                 {
                     // In some cases, the densification itself results in a reprojected
                     // invalid polygon due to the non-linearity of RPC DEM transformation,
