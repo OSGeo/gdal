@@ -545,11 +545,18 @@ bool VFKFeature::SetProperty( int iIndex, const char *pszValue )
         m_poDataBlock->GetProperty(iIndex)->GetType();
 
     switch (fType) {
-    case OFTInteger:
-        m_propertyList[iIndex] = VFKProperty(atoi(pszValue));
+    case OFTInteger: {
+        errno = 0;
+        char *pszLast = nullptr;
+        m_propertyList[iIndex] = VFKProperty(static_cast<int>(strtol(pszValue, &pszLast, 10)));
+        if( errno == ERANGE || !pszLast || *pszLast )
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Value '%s' parsed incompletely to integer %d.",
+                      pszValue, m_propertyList[iIndex].GetValueI() );
         break;
+    }
     case OFTInteger64:
-        m_propertyList[iIndex] = VFKProperty(CPLAtoGIntBig(pszValue));
+        m_propertyList[iIndex] = VFKProperty(CPLAtoGIntBigEx(pszValue, true, nullptr));
         break;
     case OFTReal:
         m_propertyList[iIndex] = VFKProperty(CPLAtof(pszValue));
