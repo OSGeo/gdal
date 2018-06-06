@@ -149,11 +149,12 @@ class OGRGeoJSONReader
     // bFlatten... is a tri-state boolean with -1 being unset.
     int bFlattenGeocouchSpatiallistFormat;
 
-    bool bFoundId;
+    bool bFoundGeocouchId;
     bool bFoundRev;
     bool bFoundTypeFeature;
     bool bIsGeocouchSpatiallistFormat;
-    bool bFoundFeatureId_;
+    bool bFeatureLevelIdAsFID_;
+    bool bFeatureLevelIdAsAttribute_;
 
     //
     // Copy operations not supported.
