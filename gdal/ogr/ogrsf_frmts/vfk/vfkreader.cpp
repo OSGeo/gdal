@@ -410,7 +410,7 @@ IVFKDataBlock *VFKReader::CreateDataBlock(const char *pszBlockName)
   \brief Add new data block
 
   \param poNewDataBlock pointer to VFKDataBlock instance
-  \param pszDefn unused (FIXME ?)
+  \param pszDefn unused (see VFKReaderSQLite::AddDataBlock)
 */
 void VFKReader::AddDataBlock(IVFKDataBlock *poNewDataBlock,
                              CPL_UNUSED const char *pszDefn)
