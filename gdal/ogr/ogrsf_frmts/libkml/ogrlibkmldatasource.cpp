@@ -1236,7 +1236,7 @@ int OGRLIBKMLDataSource::OpenKmz( const char *pszFilename, int bUpdateIn )
                 if( !poKmlLyrRoot )
                 {
                     CPLError( CE_Failure, CPLE_OpenFailed,
-                              "ERROR parseing kml layer %s from %s :%s",
+                              "ERROR parsing kml layer %s from %s :%s",
                               poKmlHref->get_path().c_str(),
                               pszFilename, oKmlErrors.c_str() );
                     delete poKmlHref;

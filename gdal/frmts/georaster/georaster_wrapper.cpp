@@ -1741,7 +1741,7 @@ bool GeoRasterWrapper::InitializeIO( void )
         if( nXSize <= nXBlock && nYSize <= nYBlock )
         {
             // ------------------------------------------------------------
-            // Calculate the size of the singe small blocks
+            // Calculate the size of the single small blocks
             // ------------------------------------------------------------
 
             nCBS = nXSize;

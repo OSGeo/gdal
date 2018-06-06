@@ -173,7 +173,7 @@ typedef struct ILImage {
     GDALColorInterp ci;
 } ILImage;
 
-// Delarations of utility functions
+// Declarations of utility functions
 
 /**
  *

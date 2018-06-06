@@ -393,7 +393,7 @@ int _AVCBinReadHeader(AVCRawBinFile *psFile, AVCBinHeader *psHeader,
     int nStatus = 0;
 
     /*-----------------------------------------------------------------
-     * For AVCCoverPC coverages (files without hte .adf extension),
+     * For AVCCoverPC coverages (files without the .adf extension),
      * there is a first 256 bytes header that we just skip and that
      * precedes the 100 bytes header block.
      *

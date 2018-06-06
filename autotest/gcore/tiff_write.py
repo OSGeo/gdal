@@ -921,7 +921,7 @@ def tiff_write_20():
     md = new_ds.GetMetadata()
     for item in values:
         if item[0] not in md:
-            gdaltest.post_reason('Couldnt find tag %s' % (item[0]))
+            gdaltest.post_reason('Could not find tag %s' % (item[0]))
             return 'fail'
 
         if md[item[0]] != item[1]:
@@ -5614,7 +5614,7 @@ def tiff_write_128():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_128.tif')
 
-    # Try with explicit CMYK photometric interpreation
+    # Try with explicit CMYK photometric interpretation
     old_val = gdal.GetConfigOption('GDAL_PAM_ENABLED')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
     ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_128.tif', src_ds, options=['COMPRESS=JPEG', 'PHOTOMETRIC=CMYK'])

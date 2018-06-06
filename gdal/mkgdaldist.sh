@@ -6,7 +6,7 @@
 
 set -eu
 
-# Doxgen 1.7.1 has a bug related to man pages. See https://trac.osgeo.org/gdal/ticket/6048
+# Doxygen 1.7.1 has a bug related to man pages. See https://trac.osgeo.org/gdal/ticket/6048
 doxygen --version | xargs python -c "import sys; v = sys.argv[1].split('.'); v=int(v[0])*10000+int(v[1])*100+int(v[2]); sys.exit(v < 10704)"
 rc=$?
 if test $rc != 0; then

@@ -189,7 +189,7 @@ def rmf_11():
             return 'fail'
 
         if ovr_band.Checksum() != ovr_checksum[i]:
-            msg = 'overview wrong checkum: overview %d, checksum = %d,' % \
+            msg = 'overview wrong checksum: overview %d, checksum = %d,' % \
                   (i, ovr_band.Checksum())
             gdaltest.post_reason(msg)
             return 'fail'
@@ -293,7 +293,7 @@ def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_coun
                     return 'fail'
 
                 if ovr_band.Checksum() != crs[iOverview][iBand]:
-                    msg = 'overview wrong checkum: band %d, overview %d, checksum = %d,' % \
+                    msg = 'overview wrong checksum: band %d, overview %d, checksum = %d,' % \
                           (iBand, iOverview, ovr_band.Checksum())
                     gdaltest.post_reason(msg)
                     return 'fail'

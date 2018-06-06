@@ -55,7 +55,7 @@ beginfig(1);
 	draw thelabel.lft(btex $radius_2$ etex, .5[z0,z2] rotated a);
 	draw thelabel.rt(btex $angle$ etex, 0.2[z0,z1 rotated .5a]);
 
-	% draw axises
+	% draw axes
 	xr := 40;
 	yr := 40;
 	z11 = (-xr*u,0);

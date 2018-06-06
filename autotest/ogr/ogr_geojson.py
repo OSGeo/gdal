@@ -3732,7 +3732,7 @@ def ogr_geojson_62():
         gdaltest.post_reason('failure')
         return 'fail'
 
-    # crs type=EPSG (not even documented in GJ2008 spec!) tests. Just for coverage completness
+    # crs type=EPSG (not even documented in GJ2008 spec!) tests. Just for coverage completeness
     gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"EPSG" }, "features":[] }""")
 
     gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"EPSG", "properties":null }, "features":[] }""")
@@ -3769,7 +3769,7 @@ def ogr_geojson_62():
     with gdaltest.error_handler():
         gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"link", "properties":{"href": "1"} }, "features":[] }""")
 
-    # crs type=OGC (not even documented in GJ2008 spec!) tests. Just for coverage completness
+    # crs type=OGC (not even documented in GJ2008 spec!) tests. Just for coverage completeness
     gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"OGC" }, "features":[] }""")
 
     gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"OGC", "properties":null }, "features":[] }""")

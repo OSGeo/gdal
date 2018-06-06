@@ -725,8 +725,8 @@ unsigned int CADBuffer::ReadMSHORT()
     unsigned int  result = 0;
     unsigned char aMShortBytes[8]; // 8 bytes is maximum.
 
-    // TODO: this function doesnot support MSHORTS longer than 4 bytes. ODA says
-    //       its impossible, but not sure.
+    // TODO: this function does not support MSHORTS longer than 4 bytes. ODA says
+    //       it's impossible, but not sure.
     size_t MShortBytesCount = 2;
     aMShortBytes[0] = ReadCHAR();
     aMShortBytes[1] = ReadCHAR();

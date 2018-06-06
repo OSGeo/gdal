@@ -2104,7 +2104,7 @@ def ogr_libkml_read_placemark_with_kml_prefix():
     return 'success'
 
 ###############################################################################
-# Test reading KML with dumplicated folder name
+# Test reading KML with duplicated folder name
 
 
 def ogr_libkml_read_duplicate_folder_name():

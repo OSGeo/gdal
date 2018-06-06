@@ -45,7 +45,7 @@ CPL_CVSID("$Id$")
 static char *GetDataBlockName(const char *);
 
 /*!
-  \brief IVFKReader desctructor
+  \brief IVFKReader destructor
 */
 IVFKReader::~IVFKReader()
 {

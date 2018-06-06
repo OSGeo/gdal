@@ -273,7 +273,7 @@ void OGRSpatialReference::Clear()
 /************************************************************************/
 
 /** Assignment operator.
- * @param oSource SRS to assing to *this
+ * @param oSource SRS to assign to *this
  * @return *this
  */
 OGRSpatialReference &

@@ -305,7 +305,7 @@ def pds4_9():
     ds = None
 
     filename = '/vsimem/out.xml'
-    # Test copy of all specialConstants and overide noData
+    # Test copy of all specialConstants and override noData
     for frmt in ['RAW', 'GEOTIFF']:
         with hide_substitution_warnings_error_handler():
             gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4',

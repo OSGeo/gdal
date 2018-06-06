@@ -122,7 +122,7 @@ void OGROCILoaderLayer::WriteLoaderHeader()
         pszGeometryName = "ORA_GEOMETRY";
 
 /* -------------------------------------------------------------------- */
-/*      Dermine our operation mode.                                     */
+/*      Determine our operation mode.                                   */
 /* -------------------------------------------------------------------- */
     const char *pszLDRMode = CSLFetchNameValue( papszOptions, "LOADER_MODE" );
 

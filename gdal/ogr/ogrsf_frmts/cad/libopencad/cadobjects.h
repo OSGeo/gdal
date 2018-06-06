@@ -397,25 +397,25 @@ public:
 /**
  * @brief The CAD End block Object class
  */
-//TODO: do we need this class? Maybe CADEntityObject enouth?
+//TODO: do we need this class? Maybe CADEntityObject is enough?
 class CADEndblkObject : public CADEntityObject
 {
 public:
     CADEndblkObject();
     virtual ~CADEndblkObject(){}
-    // it actually has nothing more thatn CED and CEHD.
+    // it actually has nothing more than CED and CEHD.
 };
 
 /**
  * @brief The CADSeqendObject class
  */
-//TODO: do we need this class? Maybe CADEntityObject enouth?
+//TODO: do we need this class? Maybe CADEntityObject is enough?
 class CADSeqendObject : public CADEntityObject
 {
 public:
     CADSeqendObject();
     virtual ~CADSeqendObject(){}
-    // it actually has nothing more thatn CED and CEHD.
+    // it actually has nothing more than CED and CEHD.
 };
 
 /**

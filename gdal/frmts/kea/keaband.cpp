@@ -101,7 +101,7 @@ KEARasterBand::~KEARasterBand()
     CSLDestroy(this->m_papszMetadataList);
     if( this->m_pszHistoBinValues != nullptr )
     {
-        // histgram bin values as a string
+        // histogram bin values as a string
         CPLFree(this->m_pszHistoBinValues);
     }
     // delete any overview bands

@@ -1,5 +1,5 @@
 #!/bin/bash
-# If you are working in a Linux/Mac enviroment, execute this script with "sh load_postgisraster_test_data"
+# If you are working in a Linux/Mac environment, execute this script with "sh load_postgisraster_test_data"
 # 
 # TODO: a Python version of this script, to have a system-independent script
 # 
@@ -15,7 +15,7 @@
 # configuration file (pg_hba.conf) to allow the user "trust" authentication
 # method. See http://www.postgresql.org/docs/8.4/interactive/auth-pg-hba-conf.html
 
-# CHANGE THIS TO MATCH YOUR ENVIROMENT
+# CHANGE THIS TO MATCH YOUR ENVIRONMENT
 
 SQL_OUTPUT_FILES_PATH=/tmp/gdal-autotest-pgraster
 

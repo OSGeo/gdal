@@ -376,7 +376,7 @@ int CTGDataset::Identify( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Chech that it looks roughly as a CTG dataset                    */
+/*      Check that it looks roughly as a CTG dataset                    */
 /* -------------------------------------------------------------------- */
     const char* pszData = (const char*)poOpenInfo->pabyHeader;
     for(int i=0;i<4 * 80;i++)

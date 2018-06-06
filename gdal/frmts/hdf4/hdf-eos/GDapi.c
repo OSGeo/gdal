@@ -519,7 +519,7 @@ GDcreate(int32 fid, const char *gridname, int32 xdimsize, int32 ydimsize,
 	    /* --------------------- */
 	    status = -1;
 	    strcpy(errbuf,
-		   "No more than %d grids may be open simutaneously");
+		   "No more than %d grids may be open simultaneously");
 	    strcat(errbuf, " (%s)");
 	    HEpush(DFE_DENIED, "GDcreate", __FILE__, __LINE__);
 	    HEreport(errbuf, NGRID, gridname);
@@ -806,7 +806,7 @@ GDattach(int32 fid, const char *gridname)
 	    /* --------------------- */
 	    gridID = -1;
 	    strcpy(errbuf,
-		   "No more than %d grids may be open simutaneously");
+		   "No more than %d grids may be open simultaneously");
 	    strcat(errbuf, " (%s)");
 	    HEpush(DFE_DENIED, "GDattach", __FILE__, __LINE__);
 	    HEreport(errbuf, NGRID, gridname);
@@ -9983,7 +9983,7 @@ GDinterpolate(int32 gridID, int32 nValues, float64 lonVal[], float64 latVal[],
 		    {
 
 			/*
-			 * Algorithm taken for Numerical Recipies in C, 2nd
+			 * Algorithm taken for Numerical Recipes in C, 2nd
 			 * edition, Section 3.6
 			 */
 

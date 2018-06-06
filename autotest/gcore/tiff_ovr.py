@@ -59,7 +59,7 @@ def tiff_ovr_check(src_ds):
             return 'fail'
 
         if ovr_band.Checksum() != 1087:
-            msg = 'overview wrong checkum: band %d, overview 0, checksum = %d,' % (i, ovr_band.Checksum())
+            msg = 'overview wrong checksum: band %d, overview 0, checksum = %d,' % (i, ovr_band.Checksum())
             gdaltest.post_reason(msg)
             return 'fail'
 
@@ -70,7 +70,7 @@ def tiff_ovr_check(src_ds):
             return 'fail'
 
         if ovr_band.Checksum() != 328:
-            msg = 'overview wrong checkum: band %d, overview 1, checksum = %d,' % (i, ovr_band.Checksum())
+            msg = 'overview wrong checksum: band %d, overview 1, checksum = %d,' % (i, ovr_band.Checksum())
             gdaltest.post_reason(msg)
             return 'fail'
     return 'success'
