@@ -1905,6 +1905,22 @@ def ogr_geojson_39():
         feat.DumpReadable()
         return 'fail'
 
+    # Same with 2 features
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "id" : "foo", "properties": { "id" : 6 }, "geometry": null },
+{ "type": "Feature", "id" : "bar", "properties": { "id" : 7 }, "geometry": null }
+] }""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldDefn(0).GetName() != 'id' or feat_defn.GetFieldDefn(0).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('id') != 6:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
     # Crazy case: properties.id has the precedence because we arbitrarily decided that...
     ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : "foo", "properties": { "id" : "baz" }, "geometry": null },
