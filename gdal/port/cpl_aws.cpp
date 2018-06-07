@@ -645,37 +645,51 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
         return true;
     }
 
-    const CPLString osEC2CredentialsURL(
-        CPLGetConfigOption("CPL_AWS_EC2_CREDENTIALS_URL",
-            "http://169.254.169.254/latest/meta-data/iam/security-credentials/"));
-    if( osIAMRole.empty() && !osEC2CredentialsURL.empty() )
+    CPLString osURLRefreshCredentials;
+    CPLString osCPL_AWS_EC2_CREDENTIALS_URL(
+        CPLGetConfigOption("CPL_AWS_EC2_CREDENTIALS_URL", ""));
+    const CPLString osECSRelativeURI(
+        CPLGetConfigOption("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", ""));
+    if( osCPL_AWS_EC2_CREDENTIALS_URL.empty() && !osECSRelativeURI.empty() )
     {
-        // If we don't know yet the IAM role, fetch it
-        if( IsMachinePotentiallyEC2Instance() )
+        // See https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
+        osURLRefreshCredentials = "http://169.254.170.2" + osECSRelativeURI;
+    }
+    else
+    {
+        const CPLString osDefaultURL(
+            "http://169.254.169.254/latest/meta-data/iam/security-credentials/");
+        const CPLString osEC2CredentialsURL =
+            osCPL_AWS_EC2_CREDENTIALS_URL.empty() ? osDefaultURL : osCPL_AWS_EC2_CREDENTIALS_URL;
+        if( osIAMRole.empty() && !osEC2CredentialsURL.empty() )
         {
-            char** papszOptions = CSLSetNameValue(nullptr, "TIMEOUT", "1");
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            CPLHTTPResult* psResult =
-                        CPLHTTPFetch( osEC2CredentialsURL, papszOptions );
-            CPLPopErrorHandler();
-            CSLDestroy(papszOptions);
-            if( psResult )
+            // If we don't know yet the IAM role, fetch it
+            if( IsMachinePotentiallyEC2Instance() )
             {
-                if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
+                char** papszOptions = CSLSetNameValue(nullptr, "TIMEOUT", "1");
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                CPLHTTPResult* psResult =
+                            CPLHTTPFetch( osEC2CredentialsURL, papszOptions );
+                CPLPopErrorHandler();
+                CSLDestroy(papszOptions);
+                if( psResult )
                 {
-                    osIAMRole = reinterpret_cast<char*>(psResult->pabyData);
+                    if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
+                    {
+                        osIAMRole = reinterpret_cast<char*>(psResult->pabyData);
+                    }
+                    CPLHTTPDestroyResult(psResult);
                 }
-                CPLHTTPDestroyResult(psResult);
             }
         }
+        if( osIAMRole.empty() )
+            return false;
+        osURLRefreshCredentials = osEC2CredentialsURL + osIAMRole;
     }
-    if( osIAMRole.empty() )
-        return false;
 
     // Now fetch the refreshed credentials
     CPLStringList oResponse;
-    CPLHTTPResult* psResult = CPLHTTPFetch(
-        (osEC2CredentialsURL + osIAMRole).c_str(), nullptr );
+    CPLHTTPResult* psResult = CPLHTTPFetch(osURLRefreshCredentials.c_str(), nullptr );
     if( psResult )
     {
         if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
