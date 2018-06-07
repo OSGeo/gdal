@@ -171,6 +171,13 @@ void IVFKDataBlock::SetProperties(const char *poLine)
 */
 int IVFKDataBlock::AddProperty(const char *pszName, const char *pszType)
 {
+    /* Force text attributes to avoid int64 overflow
+       see https://github.com/OSGeo/gdal/issues/672 */
+    if( EQUAL( m_pszName, "VLA" ) &&
+        ( EQUAL( pszName, "PODIL_CITATEL" ) ||
+          EQUAL( pszName, "PODIL_JMENOVATEL" ) ) )
+        pszType = "T30";
+
     VFKPropertyDefn *poNewProperty = new VFKPropertyDefn(pszName, pszType,
                                                          m_poReader->IsLatin2());
 
