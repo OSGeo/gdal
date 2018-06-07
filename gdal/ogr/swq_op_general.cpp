@@ -332,8 +332,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                         poRet->is_null = 1;
                         return poRet;
                     }
-                    else if( SWQ_IS_INTEGER(poRet->field_type) ||
-                             node->nOperation == SWQ_MODULUS )
+                    else if( SWQ_IS_INTEGER(poRet->field_type) )
                     {
                         poRet->field_type = SWQ_INTEGER;
                         poRet->int_value = 0;
@@ -427,13 +426,11 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
 
           case SWQ_MODULUS:
           {
-            GIntBig nRight = static_cast<GIntBig>(sub_node_values[1]->float_value);
-            poRet->field_type = SWQ_INTEGER;
-            if( nRight == 0 )
-                poRet->int_value = INT_MAX;
+            if( sub_node_values[1]->float_value == 0 )
+                poRet->float_value = INT_MAX;
             else
-                poRet->int_value = static_cast<GIntBig>(sub_node_values[0]->float_value)
-                    % nRight;
+                poRet->float_value = fmod(sub_node_values[0]->float_value,
+                                        sub_node_values[1]->float_value);
             break;
           }
 
@@ -1156,13 +1153,6 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
         eArgType = SWQ_STRING;
         break;
 
-      case SWQ_MODULUS:
-        if( !SWQCheckSubExprAreNotGeometries(poNode) )
-            return SWQ_ERROR;
-        eRetType = SWQ_INTEGER;
-        eArgType = SWQ_INTEGER;
-        break;
-
       case SWQ_ADD:
         if( !SWQCheckSubExprAreNotGeometries(poNode) )
             return SWQ_ERROR;
@@ -1192,6 +1182,7 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
       case SWQ_SUBTRACT:
       case SWQ_MULTIPLY:
       case SWQ_DIVIDE:
+      case SWQ_MODULUS:
         if( !SWQCheckSubExprAreNotGeometries(poNode) )
             return SWQ_ERROR;
         SWQAutoPromoteIntegerToInteger64OrFloat( poNode );

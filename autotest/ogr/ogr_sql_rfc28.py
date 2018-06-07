@@ -617,9 +617,9 @@ def ogr_rfc28_28():
     formulas = []
     for operator in operators:
         formulas.append('6' + operator + '3')
-        formulas.append('5.' + operator + '3.')
-        formulas.append('5' + operator + '3.')
-        formulas.append('5.' + operator + '3')
+        formulas.append('5.1' + operator + '3.2')
+        formulas.append('5' + operator + '3.2')
+        formulas.append('5.1' + operator + '3')
         formulas.append('3000000000000' + operator + '3')
         if operator != '/':
             formulas.append('3' + operator + '3000000000000')
