@@ -489,7 +489,7 @@
               <xs:element name="ProxyAuth" minOccurs="0" type="xs:string">
                 <xs:annotation>
                   <xs:documentation>
-                    Proxy authentification method: one of Basic, NTLM, Digest
+                    Proxy authentication method: one of Basic, NTLM, Digest
                     or Any.
                     Default: none or value of GDAL_PROXY_AUTH
                     configuration option.
@@ -867,7 +867,7 @@
                 <xs:annotation>
                   <xs:documentation>
                     Number of spaces used to indent each level of nesting in
-                    XML ouput.
+                    XML output.
                     Default is 2.
                   </xs:documentation>
                 </xs:annotation>

@@ -552,7 +552,7 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
     TextFillR( achARec + 786, 24, "0.0" );
 
 /* -------------------------------------------------------------------- */
-/*      Accurancy code for elevations. 0 means there will be no C       */
+/*      Accuracy code for elevations. 0 means there will be no C        */
 /*      record.                                                         */
 /* -------------------------------------------------------------------- */
     TextFillR( achARec + 810, 6, "0" );
@@ -649,7 +649,7 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
         TextFillR( achARec + 888, 2, "1" );
 
 /* -------------------------------------------------------------------- */
-/*      Horizonal Datum                                                 */
+/*      Horizontal Datum                                                */
 /*      1 = NAD27                                                       */
 /*      2 = WGS72                                                       */
 /*      3 = WGS84                                                       */

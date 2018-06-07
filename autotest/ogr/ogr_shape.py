@@ -2131,7 +2131,7 @@ def ogr_shape_50():
     return 'success'
 
 ###############################################################################
-# Test that we can add a field when there's no dbf file initialy
+# Test that we can add a field when there's no dbf file initially
 
 
 def ogr_shape_51():

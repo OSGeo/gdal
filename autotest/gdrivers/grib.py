@@ -1484,7 +1484,7 @@ def grib_grib2_write_data_encodings_warnings_and_errors():
     return 'success'
 
 ###############################################################################
-# Test writing temperatures with automatic Celcius -> Kelvin conversion
+# Test writing temperatures with automatic Celsius -> Kelvin conversion
 
 
 def grib_grib2_write_temperatures():

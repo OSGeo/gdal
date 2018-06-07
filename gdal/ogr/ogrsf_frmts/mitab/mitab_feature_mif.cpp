@@ -109,8 +109,8 @@ static char **MIDTokenize( const char *pszLine, const char *pszDelim )
 /**********************************************************************
  *                   TABFeature::ReadRecordFromMIDFile()
  *
- *  This method is used to read the Record (Attributs) for all type of
- *  feature included in a mid/mif file.
+ *  This method is used to read the Record (Attributes) for all type of
+ *  features included in a mid/mif file.
  *
  * Returns 0 on success, -1 on error, in which case CPLError() will have
  * been called.
@@ -1929,7 +1929,7 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                                            fp->GetYTrans(CPLAtof(papszToken[4])));
                     }
                 }
-                // What I do with the XY coordonate
+                // What I do with the XY coordinate
             }
         }
         CSLDestroy(papszToken);

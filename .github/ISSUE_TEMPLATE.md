@@ -8,7 +8,7 @@ for new features.
 ## Expected behavior and actual behavior.
 
 For example: I expected to be able to open this raster file (with a link to
-the raster file, or it as an attachement) and it returns an error message
+the raster file, or it as an attachment) and it returns an error message
 instead.
 
 ## Steps to reproduce the problem.

@@ -343,8 +343,8 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
-/*      We can't open the containing file with "w" access, so if tht    */
-/*      is requested use "r+" instead to update in place.               */
+/*      We can't open the containing file with "w" access, so if        */
+/*      that is requested use "r+" instead to update in place.          */
 /* -------------------------------------------------------------------- */
     if( pszAccess[0] == 'w' )
         pszAccess = "r+";

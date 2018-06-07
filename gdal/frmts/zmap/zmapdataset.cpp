@@ -222,7 +222,7 @@ int ZMapDataset::Identify( GDALOpenInfo * poOpenInfo )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      Chech that it looks roughly as a ZMap dataset                   */
+/*      Check that it looks roughly as a ZMap dataset                   */
 /* -------------------------------------------------------------------- */
     const char* pszData
         = reinterpret_cast<const char *>( poOpenInfo->pabyHeader );

@@ -400,8 +400,8 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         if( poGDS->nDataLineNum != static_cast<GIntBig>(nBlockYOff + 1) * nBlockXSize )
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
-                     "The file has not the same number of values per "
-                     "line as initialy thought. It must be somehow corrupted");
+                     "The file does not have the same number of values per "
+                     "line as initially thought. It must be somehow corrupted");
             return CE_Failure;
         }
     }
@@ -548,7 +548,7 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Chech that it looks roughly as a XYZ dataset                    */
+/*      Check that it looks roughly as an XYZ dataset                   */
 /* -------------------------------------------------------------------- */
     const char* pszData
         = reinterpret_cast<const char *>( poOpenInfo->pabyHeader );

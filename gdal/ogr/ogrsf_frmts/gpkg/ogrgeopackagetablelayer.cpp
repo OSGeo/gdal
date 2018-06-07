@@ -2753,7 +2753,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
     }
     sqlite3_free(pszSQL);
 
-    // Insert entries in RTree by chuncks of 100000
+    // Insert entries in RTree by chunks of 100000
     std::vector<GPKGRTreeEntry> aoEntries;
     GUIntBig nEntryCount = 0;
     const size_t nChunkSize = 100000;

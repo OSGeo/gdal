@@ -156,7 +156,7 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
         eType = wkbPolygon;
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Unsupport geometry type : %d",
+        CPLError( CE_Failure, CPLE_AppDefined, "Unsupported geometry type : %d",
                   static_cast<int>(chType) );
         VSIFCloseL(fpVCT);
         CSLDestroy( papszVDC );

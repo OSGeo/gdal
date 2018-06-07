@@ -1271,7 +1271,7 @@ int OGRMSSQLSpatialTableLayer::Failed2( int nRetCode )
 int OGRMSSQLSpatialTableLayer::InitBCP(const char* pszDSN)
 
 {
-    /* Create a different connection fro BCP upload */
+    /* Create a different connection for BCP upload */
     if( Failed( SQLAllocHandle( SQL_HANDLE_ENV, NULL, &hEnvBCP ) ) )
     return FALSE;
 

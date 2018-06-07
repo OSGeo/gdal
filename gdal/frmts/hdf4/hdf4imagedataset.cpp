@@ -2481,7 +2481,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         else if( eProduct == PROD_ASTER_L1B
                  || eProduct == PROD_ASTER_L2 )
         {
-            // Constuct the metadata keys.
+            // Construct the metadata keys.
             // A band number is taken from the field name.
             const char *pszBand = strpbrk( pszFieldName, "0123456789" );
 

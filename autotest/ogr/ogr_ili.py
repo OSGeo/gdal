@@ -337,7 +337,7 @@ def ogr_interlis1_7():
     feat = lyr.GetNextFeature()
 
     # Interlis 1 Encoding is ISO 8859-1 (Latin1)
-    # Pyton source code is UTF-8 encoded
+    # Python source code is UTF-8 encoded
     field_values = [0, 'äöü', 'ÄÖÜ', '', 1]
 
     if feat.GetFieldCount() != len(field_values):

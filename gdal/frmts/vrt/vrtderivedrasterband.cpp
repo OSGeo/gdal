@@ -1397,7 +1397,7 @@ bool VRTDerivedRasterBand::InitializePython()
 
     // As we don't want to depend on numpy C API/ABI, we use a trick to build
     // a numpy array object. We define a Python function to which we pass a
-    // Python buffer oject.
+    // Python buffer object.
 
     // We need to build a unique module name, otherwise this will crash in
     // multithreaded use cases.

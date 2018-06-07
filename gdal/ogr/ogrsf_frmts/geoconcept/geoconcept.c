@@ -2302,7 +2302,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     if( CPLListCount(GetMetaTypes_GCIO(Meta))==0 )
     {
       CPLError( CE_Failure, CPLE_AppDefined,
-                "Line %ld, %s%s pragma expected fro type definition before objects dump.",
+                "Line %ld, %s%s pragma expected from type definition before objects dump.",
                 GetGCCurrentLinenum_GCIO(H), kPragma_GCIO, kMetadataFIELDS_GCIO );
     }
     else

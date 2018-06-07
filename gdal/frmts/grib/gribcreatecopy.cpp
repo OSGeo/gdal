@@ -786,7 +786,7 @@ float* GRIB2Section567Writer::GetFloatData()
         m_fMin = m_fMax = static_cast<float>(m_dfNoData);
     }
 
-    // We chech that the actual range of values got from the above RasterIO
+    // We check that the actual range of values got from the above RasterIO
     // request does not go over the expected range of the datatype, as we
     // later assume that for computing nMaxBitsPerElt. 
     // This shouldn't happen for well-behaved drivers, but this can still
@@ -2101,7 +2101,7 @@ static float ComputeValOffset(int nTokens, char** papszTokens,
                 fValOffset = 273.15f;
                 CPLDebug("GRIB",
                          "Applying a %f offset to convert from "
-                         "Celcius to Kelvin",
+                         "Celsius to Kelvin",
                          fValOffset);
             }
             else if( !EQUAL(pszInputUnit, "K") )

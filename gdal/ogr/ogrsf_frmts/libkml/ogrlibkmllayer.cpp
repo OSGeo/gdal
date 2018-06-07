@@ -370,7 +370,7 @@ OGRLIBKMLLayer::~OGRLIBKMLLayer()
 
  Returns:       The next feature, or NULL if there is no more
 
- This function copyed from the sqlite driver.
+ This function copied from the sqlite driver.
 ******************************************************************************/
 
 OGRFeature *OGRLIBKMLLayer::GetNextFeature()

@@ -73,7 +73,7 @@ This paragraph lists the configuration options that can be set to alter the defa
 <ul>
 <li>GRIB_NORMALIZE_UNITS=YES/NO : (GDAL >= 1.9.0) Default to YES.
 Can be set to NO to avoid gdal to normalize units to metric.
-By default (GRIB_NORMALIZE_UNITS=YES), temperatures are reported in degree Celcius (&#x00B0;C).
+By default (GRIB_NORMALIZE_UNITS=YES), temperatures are reported in degree Celsius (&#x00B0;C).
 With GRIB_NORMALIZE_UNITS=NO, they are reported in degree Kelvin (&#x00B0;K).</li>
 </ul>
 </p>
@@ -286,13 +286,13 @@ searched in the order given in the enumeration.</li>
 <p>Internally GRIB stores values in the units of the international system
 (ie Metric system). So temperatures must be stored as Kelvin degrees.
 But on the reading side of the driver, fields with temperatures are exposed in
-Celcius degrees (unless the GRIB_NORMALIZE_UNITS configuration option is set to
+Celsius degrees (unless the GRIB_NORMALIZE_UNITS configuration option is set to
 NO). For consistency, the writing side of the driver also assumed
 that temperature (detected if the first value of a product definition template,
 ie the <i>Parameter category</i> is 0=Temperature) values in the input dataset
-will be in Celcius degrees, and will automatically offset them to Kelvin degrees.
+will be in Celsius degrees, and will automatically offset them to Kelvin degrees.
 It is possible to control that behaviour by setting the <b>INPUT_UNIT</b> creation
-option to C (for Celcius) or K (for Kelvin). The default is C.</p>
+option to C (for Celsius) or K (for Kelvin). The default is C.</p>
 
 <h3>GRIB2 to GRIB2 conversions</h3>
 

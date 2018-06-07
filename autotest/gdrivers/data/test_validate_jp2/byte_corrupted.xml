@@ -124,9 +124,9 @@
                         <gml:axisName>y</gml:axisName>
                         <gml:origin>
                           <!--<gml:Point gml:id="P0001" srsName="urn:ogc:def:crs:EPSG::26711">-->
-                          <gml:Point gml:id="P0001" srsName="urn:ogc:def:crs:EPSG::32631"> <!-- ERROR[GENERAL]: Inconsistant SRS between  ... -->
+                          <gml:Point gml:id="P0001" srsName="urn:ogc:def:crs:EPSG::32631"> <!-- ERROR[GENERAL]: Inconsistent SRS between  ... -->
                             <!--<gml:pos>440750 3751290</gml:pos>-->
-                            <gml:pos>-440750 -3751290</gml:pos> <!-- ERROR[GENERAL]: Inconsistant geotransform between GeoJP2 ((440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)) and GMLJP2 ((-440780.0, 60.0, 0.0, -3751260.0, 0.0, -60.0)) -->
+                            <gml:pos>-440750 -3751290</gml:pos> <!-- ERROR[GENERAL]: Inconsistent geotransform between GeoJP2 ((440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)) and GMLJP2 ((-440780.0, 60.0, 0.0, -3751260.0, 0.0, -60.0)) -->
                           </gml:Point>
                         </gml:origin>
                         <gml:offsetVector srsName="urn:ogc:def:crs:EPSG::32631">60 0</gml:offsetVector>

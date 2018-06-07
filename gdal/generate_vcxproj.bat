@@ -435,7 +435,7 @@ goto :end
         )
     )
     ::  *********************
-    ::  Check if a folde is empty
+    ::  Check if a folder is empty
     ::  *********************
 
     set _find_=1

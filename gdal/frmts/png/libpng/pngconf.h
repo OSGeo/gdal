@@ -43,7 +43,7 @@
 /*
  * Added at libpng-1.2.8
  *
- * If you create a private DLL you need to define in "pngusr.h" the followings:
+ * If you create a private DLL you need to define "pngusr.h" as follows:
  * #define PNG_USER_PRIVATEBUILD <Describes by whom and why this version of
  *        the DLL was built>
  *  e.g. #define PNG_USER_PRIVATEBUILD "Build by MyCompany for xyz reasons."

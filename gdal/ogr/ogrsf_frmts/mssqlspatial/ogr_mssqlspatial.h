@@ -160,7 +160,7 @@ protected:
     OGRGeometry *poGeom2;
     unsigned char* pszData;
     int nLen;
-    /* serialization propeties */
+    /* serialization properties */
     char chProps;
     /* point array */
     int nPointSize;

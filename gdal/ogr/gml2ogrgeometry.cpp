@@ -632,7 +632,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
 /************************************************************************/
 /*                         GML2FaceExtRing()                            */
 /*                                                                      */
-/*      Identifies the "good" Polygon whithin the collection returned   */
+/*      Identifies the "good" Polygon within the collection returned    */
 /*      by GEOSPolygonize()                                             */
 /*      short rationale: GEOSPolygonize() will possibly return a        */
 /*      collection of many Polygons; only one is the "good" one,        */

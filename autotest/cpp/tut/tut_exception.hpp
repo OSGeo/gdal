@@ -93,7 +93,7 @@ struct failure : public tut_error
 };
 
 /**
- * Exception to be throwed when test desctructor throwed an exception.
+ * Exception to be thrown when test destructor threw an exception.
  */
 struct warning : public tut_error
 {

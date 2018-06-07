@@ -696,7 +696,7 @@ eval 'func_dirname ()
 #             to NONDIR_REPLACEMENT.
 #             value returned in "$func_dirname_result"
 #   basename: Compute filename of FILE.
-#             value retuned in "$func_basename_result"
+#             value returned in "$func_basename_result"
 # For efficiency, we do not delegate to the functions above but instead
 # duplicate the functionality here.
 eval 'func_dirname_and_basename ()
@@ -1532,7 +1532,7 @@ func_run_hooks ()
 
     case " $hookable_fns " in
       *" $1 "*) ;;
-      *) func_fatal_error "'$1' does not support hook funcions.n" ;;
+      *) func_fatal_error "'$1' does not support hook functions.n" ;;
     esac
 
     eval _G_hook_fns=\$$1_hooks; shift
@@ -1616,7 +1616,7 @@ func_run_hooks ()
 #    }
 #    func_add_hook func_validate_options my_option_validation
 #
-# You'll alse need to manually amend $usage_message to reflect the extra
+# You'll also need to manually amend $usage_message to reflect the extra
 # options you parse.  It's preferable to append if you can, so that
 # multiple option parsing hooks can be added safely.
 
@@ -1649,7 +1649,7 @@ func_options ()
 # All initialisations required before starting the option parse loop.
 # Note that when calling hook functions, we pass through the list of
 # positional parameters.  If a hook function modifies that list, and
-# needs to propogate that back to rest of this script, then the complete
+# needs to propagate that back to rest of this script, then the complete
 # modified list must be put in 'func_run_hooks_result' before
 # returning.
 func_hookable func_options_prep
@@ -5772,7 +5772,7 @@ EOF
         {
           /* however, if there is an option in the LTWRAPPER_OPTION_PREFIX
              namespace, but it is not one of the ones we know about and
-             have already dealt with, above (inluding dump-script), then
+             have already dealt with, above (including dump-script), then
              report an error. Otherwise, targets might begin to believe
              they are allowed to use options in the LTWRAPPER_OPTION_PREFIX
              namespace. The first time any user complains about this, we'll

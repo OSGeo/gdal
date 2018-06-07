@@ -592,7 +592,7 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 
 /* -------------------------------------------------------------------- */
 /*      Now write out zero data for all the imagery.  This is           */
-/*      inefficient, but simplies the IReadBlock() / IWriteBlock() logic.*/
+/*      inefficient, but simplifies IReadBlock() / IWriteBlock() logic. */
 /* -------------------------------------------------------------------- */
     GByte *pabyLine = (GByte *) CPLCalloc(nBandOffset,nBands);
     for( int iLine = 0; iLine < nYSize; iLine++ )

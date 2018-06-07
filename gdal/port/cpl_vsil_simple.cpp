@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  VSI Virtual File System
- * Purpose:  Alternatve simplified implementation VSI*L File API that just
+ * Purpose:  Alternative simplified implementation VSI*L File API that just
  *           uses plain VSI API and/or posix calls.  This module isn't
  *           normally built into GDAL.  It is for simple packages like
  *           dgnlib.
