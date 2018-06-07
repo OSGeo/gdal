@@ -4527,6 +4527,17 @@ def ogr_geom_cannot_add_triangle_to_multisurface():
     return 'success'
 
 ###############################################################################
+
+
+def ogr_geom_force_polygonzm_to_linestring():
+    g = ogr.CreateGeometryFromWkt('POLYGON ZM ((0 0 10 20,0 1 30 40,1 1 50 60,0 0 10 70))')
+    wkt = ogr.ForceToLineString(g).ExportToIsoWkt()
+    if wkt != 'LINESTRING ZM (0 0 10 20,0 1 30 40,1 1 50 60,0 0 10 70)':
+        print(wkt)
+        return 'fail'
+    return 'success'
+
+###############################################################################
 # cleanup
 
 
@@ -4602,6 +4613,7 @@ gdaltest_list = [
     ogr_geom_remove_geometry,
     ogr_geom_sfcgal,
     ogr_geom_cannot_add_triangle_to_multisurface,
+    ogr_geom_force_polygonzm_to_linestring,
     ogr_geom_cleanup]
 
 # gdaltest_list = [ ogr_geom_triangle_ps_tin_conversion ]
