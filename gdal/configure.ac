@@ -144,8 +144,7 @@ if test "$WARN_EFFCPLUSPLUS" != ""; then
     [AC_MSG_RESULT([yes])],
     [WARN_EFFCPLUSPLUS=""]
     [AC_MSG_RESULT([no])])
-    CXXFLAGS="$SAVED_CXXFLAGS"
-    CXX_WFLAGS="$CXX_WFLAGS $WARN_EFFCPLUSPLUS"
+    CXXFLAGS=$SAVED_CXXFLAGS
 fi
 
 dnl Clang enables -Woverloaded-virtual if -Wall is defined, but not GCC

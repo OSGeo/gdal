@@ -5473,8 +5473,7 @@ else
 $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-    CXXFLAGS="$SAVED_CXXFLAGS"
-    CXX_WFLAGS="$CXX_WFLAGS $WARN_EFFCPLUSPLUS"
+    CXXFLAGS=$SAVED_CXXFLAGS
 fi
 
 as_CACHEVAR=`$as_echo "ax_cv_check_cxxflags_$ERROR_ON_UNKNOWN_OPTIONS_-Woverloaded-virtual" | $as_tr_sh`
