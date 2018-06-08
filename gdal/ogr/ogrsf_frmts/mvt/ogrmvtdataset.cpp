@@ -1140,7 +1140,7 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
 
 void OGRMVTLayer::SanitizeClippedGeometry(OGRGeometry*& poGeom)
 {
-    OGRwkbGeometryType eInGeomType = poGeom->getGeometryType();
+    OGRwkbGeometryType eInGeomType = wkbFlatten(poGeom->getGeometryType());
     const OGRwkbGeometryType eLayerGeomType = GetGeomType();
     if( eLayerGeomType == wkbUnknown )
     {
@@ -1170,7 +1170,7 @@ void OGRMVTLayer::SanitizeClippedGeometry(OGRGeometry*& poGeom)
         }
         for( auto&& poSubGeom: poGC )
         {
-            if( poSubGeom->getGeometryType() == ePartGeom )
+            if( wkbFlatten(poSubGeom->getGeometryType()) == ePartGeom )
             {
                 if( poTargetSingleGeom != nullptr )
                 {
@@ -1195,7 +1195,7 @@ void OGRMVTLayer::SanitizeClippedGeometry(OGRGeometry*& poGeom)
         {
             delete poGC;
         }
-        eInGeomType = poGeom->getGeometryType();
+        eInGeomType = wkbFlatten(poGeom->getGeometryType());
     }
 
     // Wrap single into multi if requested by the layer geometry type
@@ -3626,12 +3626,12 @@ bool OGRMVTWriterDataset::EncodeRepairedOuterRing(
     }
 
     OGRPolygon* poPoly = nullptr;
-    if( poFixedGeom->getGeometryType() == wkbMultiPolygon )
+    if( wkbFlatten(poFixedGeom->getGeometryType()) == wkbMultiPolygon )
     {
         OGRMultiPolygon* poMP = poFixedGeom.get()->toMultiPolygon();
         poPoly = poMP->getGeometryRef(0)->toPolygon();
     }
-    else if( poFixedGeom->getGeometryType() == wkbPolygon )
+    else if( wkbFlatten(poFixedGeom->getGeometryType()) == wkbPolygon )
     {
         poPoly = poFixedGeom.get()->toPolygon();
     }
@@ -3863,7 +3863,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                     if( !poSimplified.get() || poSimplified->IsEmpty() )
                         return false;
 
-                    if( poSimplified->getGeometryType() == wkbPolygon )
+                    if( wkbFlatten(poSimplified->getGeometryType()) == wkbPolygon )
                     {
                         OGRPolygon* poSimplifiedPoly =
                             poSimplified.get()->toPolygon();
@@ -3874,7 +3874,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                                             nLastX, nLastY, dfArea);
                     }
 #ifdef likely_not_possible
-                    else if( poSimplified->getGeometryType() == wkbMultiPolygon )
+                    else if( wkbFlatten(poSimplified->getGeometryType()) == wkbMultiPolygon )
                     {
                         OGRMultiPolygon* poMP = poSimplified.get()->toMultiPolygon();
                         bool bRet = true;
@@ -3977,7 +3977,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
         return OGRERR_NONE;
     }
 
-    OGRwkbGeometryType eGeomToEncodeType = poIntersection->getGeometryType();
+    OGRwkbGeometryType eGeomToEncodeType = wkbFlatten(poIntersection->getGeometryType());
 
     // Simplify contour if requested by user
     OGRGeometry* poGeomToEncode = poIntersection;
@@ -3994,7 +3994,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
         if( poGeomSimplified.get() )
         {
             poGeomToEncode = poGeomSimplified.get();
-            eGeomToEncodeType = poGeomSimplified->getGeometryType();
+            eGeomToEncodeType = wkbFlatten(poGeomSimplified->getGeometryType());
         }
     }
 
@@ -4026,7 +4026,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             int nLastY = 0;
             for( auto&& poSubGeom: poGC )
             {
-                if( poSubGeom->getGeometryType() == wkbPoint )
+                if( wkbFlatten(poSubGeom->getGeometryType()) == wkbPoint )
                 {
                     OGRPoint* poPoint = poSubGeom->toPoint();
                     int nX, nY;
@@ -4081,7 +4081,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             int nLastY = 0;
             for( auto&& poSubGeom: poGC )
             {
-                if( poSubGeom->getGeometryType() == wkbLineString )
+                if( wkbFlatten(poSubGeom->getGeometryType()) == wkbLineString )
                 {
                     OGRLineString* poLS = poSubGeom->toLineString();
                     OGRLineString oOutLS;
@@ -4118,7 +4118,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             int nLastY = 0;
             for( auto&& poSubGeom: poGC )
             {
-                if( poSubGeom->getGeometryType() == wkbPolygon )
+                if( wkbFlatten(poSubGeom->getGeometryType()) == wkbPolygon )
                 {
                     OGRPolygon* poPoly = poSubGeom->toPolygon();
                     double dfPartArea = 0.0;
