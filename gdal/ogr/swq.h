@@ -107,6 +107,10 @@ typedef swq_field_type (*swq_op_checker)( swq_expr_node *op,
 class swq_custom_func_registrar;
 
 class swq_expr_node {
+
+    CPL_DISALLOW_COPY_ASSIGN(swq_expr_node)
+    swq_expr_node* Evaluate( swq_field_fetcher pfnFetcher,
+                             void *record, int nRecLevel );
 public:
     swq_expr_node();
 
