@@ -109,7 +109,7 @@ install:
       $env:NMAKE_LOCAL+="POPPLER_0_20_OR_LATER = YES`n"
       $env:NMAKE_LOCAL+="POPPLER_0_23_OR_LATER = YES`n"
       $env:NMAKE_LOCAL+="POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES`n"
-      $env:NMAKE_LOCAL+="POPPLER_LIBS = `$(SDK_LIB)\poppler.lib `$(SDK_LIB)\freetype.lib $(SDK_LIB)\harfbuzz.lib advapi32.lib gdi32.lib`n"
+      $env:NMAKE_LOCAL+="POPPLER_LIBS = `$(SDK_LIB)\poppler.lib `$(SDK_LIB)\freetype.lib `$(SDK_LIB)\harfbuzz.lib advapi32.lib gdi32.lib`n"
       $env:NMAKE_LOCAL+="OPENJPEG_ENABLED = YES`n"
       $env:NMAKE_LOCAL+="OPENJPEG_CFLAGS = -I`$(SDK_INC)\openjpeg-2.1`n"
       $env:NMAKE_LOCAL+="OPENJPEG_LIB = `$(SDK_LIB)\openjp2.lib`n"
