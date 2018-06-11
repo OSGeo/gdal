@@ -2,7 +2,7 @@ GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-!IFDEF DLLBUILD
+!IF "$(DLLBUILD)" == "1"
 GDALLIB	=    $(GDAL_ROOT)\gdal_i.lib
 !ELSE
 GDALLIB	=    $(GDAL_ROOT)\gdal.lib $(EXTERNAL_LIBS)
