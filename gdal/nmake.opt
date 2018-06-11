@@ -206,8 +206,7 @@ VERSION =	203
 PAM_SETTING=-DPAM_ENABLED
 !ENDIF
 
-# Uncomment the following to link OGR utilities against main GDAL DLL
-# instead of statically linking against OGR libraries.
+# Set DLLBUILD=0 to create a static lib instead of a shared lib (.DLL)
 !IFNDEF DLLBUILD
 DLLBUILD=1
 !ENDIF
@@ -814,7 +813,7 @@ INSTALL	=	xcopy /y /r /d /f /I
 
 CPLLIB	=    $(GDAL_ROOT)/port/cpl.lib
 
-!IFDEF DLLBUILD
+!IF "$(DLLBUILD)" == "1"
 GDALLIB	=    $(GDAL_ROOT)/gdal_i.lib
 !ELSE
 GDALLIB	=    $(GDAL_ROOT)/gdal.lib

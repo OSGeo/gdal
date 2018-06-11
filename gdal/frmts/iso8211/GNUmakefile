@@ -64,7 +64,7 @@ dist:	docs
 	cp ../../port/cpl_{vsil.cpp,vsi_mem.cpp,vsil_win32.cpp} $(DISTDIR)
 	cp ../../port/cpl_{vsil_unix_stdio_64.cpp,dir.cpp} $(DISTDIR)
 	cp ../../port/cpl_{multiproc.{cpp,h},vsi_private.h} $(DISTDIR)
-	cp ../../port/cpl_config.h.vc $(DISTDIR)
+	cp ../../port/cpl_config.h.vc.{begin,common,no_dll,end} $(DISTDIR)
 	tar czf $(DISTDIR).tar.gz $(DISTDIR)
 	zip -r $(DISTDIR).zip $(DISTDIR)
 
