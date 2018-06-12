@@ -851,8 +851,8 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
 #else
             // We may leak objects, but the cleanup of openjpeg can cause
             // double frees sometimes...
-#endif
             return CE_Failure;
+#endif
         }
     }
 
