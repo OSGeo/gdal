@@ -43,6 +43,7 @@ OGRCARTODataSource::OGRCARTODataSource() :
     nLayers(0),
     bReadWrite(false),
     bBatchInsert(true),
+    bCopyMode(true),
     bUseHTTPS(false),
     bMustCleanPersistent(false),
     bHasOGRMetadataFunction(-1),
@@ -145,6 +146,8 @@ int OGRCARTODataSource::Open( const char * pszFilename,
     bReadWrite = CPL_TO_BOOL(bUpdateIn);
     bBatchInsert = CPLTestBool(
         CSLFetchNameValueDef(papszOpenOptionsIn, "BATCH_INSERT", "YES"));
+    bCopyMode = CPLTestBool(
+        CSLFetchNameValueDef(papszOpenOptionsIn, "COPY_MODE", "YES"));
 
     pszName = CPLStrdup( pszFilename );
     if( CSLFetchNameValue(papszOpenOptionsIn, "ACCOUNT") )
@@ -698,7 +701,7 @@ OGRLayer * OGRCARTODataSource::ExecuteSQLInternal( const char *pszSQLCommand,
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
             papoLayers[iLayer]->RunDeferredCreationIfNecessary();
-            CPL_IGNORE_RET_VAL(papoLayers[iLayer]->FlushDeferredInsert());
+            CPL_IGNORE_RET_VAL(papoLayers[iLayer]->FlushDeferredBuffer());
             papoLayers[iLayer]->RunDeferredCartofy();
         }
     }
