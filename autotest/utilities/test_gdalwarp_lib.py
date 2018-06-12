@@ -1809,6 +1809,120 @@ def test_gdalwarp_lib_override_default_output_nodata():
     return 'success'
 
 ###############################################################################
+# Test automatting setting (or not) of SKIP_NOSOURCE=YES
+
+
+def test_gdalwarp_lib_auto_skip_nosource():
+
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1000, 500)
+    src_ds.GetRasterBand(1).Fill(255)
+    src_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
+    src_ds.SetProjection(sr.ExportToWkt())
+
+    tmpfilename = '/vsimem/test_gdalwarp_lib_auto_skip_nosource.tif'
+
+    for options in ['-wo SKIP_NOSOURCE=NO',
+                    '',
+                    '-wo INIT_DEST=0',
+                    '-wo INIT_DEST=NO_DATA',
+                    '-dstnodata 0']:
+        gdal.Unlink(tmpfilename)
+        out_ds = gdal.Warp(tmpfilename, src_ds,
+                           options='-te 1.5 48 3.5 49.5 -wm 100000 ' +
+                           '-of GTiff ' + options)
+        cs = out_ds.GetRasterBand(1).Checksum()
+        if cs != 41500:
+            gdaltest.post_reason('fail')
+            print(options, cs)
+            return 'fail'
+
+    # Same with MEM
+    for options in ['',
+                    '-wo INIT_DEST=0',
+                    '-dstnodata 0']:
+        gdal.Unlink(tmpfilename)
+        out_ds = gdal.Warp(tmpfilename, src_ds,
+                           options='-te 1.5 48 3.5 49.5 -wm 100000 ' +
+                           '-of MEM ' + options)
+        cs = out_ds.GetRasterBand(1).Checksum()
+        if cs != 41500:
+            gdaltest.post_reason('fail')
+            print(options, cs)
+            return 'fail'
+
+    # Use fill/nodata at 1
+    for options in [  # '-wo SKIP_NOSOURCE=NO -dstnodata 1',
+                    '-dstnodata 1',
+                    '-dstnodata 1 -wo INIT_DEST=NO_DATA',
+                    '-dstnodata 1 -wo INIT_DEST=1']:
+        gdal.Unlink(tmpfilename)
+        out_ds = gdal.Warp(tmpfilename, src_ds,
+                           options='-te 1.5 48 3.5 49.5 -wm 100000 ' +
+                           '-of GTiff ' + options)
+        cs = out_ds.GetRasterBand(1).Checksum()
+        if cs != 51132:
+            gdaltest.post_reason('fail')
+            print(options, cs)
+            return 'fail'
+
+    # Same with MEM
+    for options in [  # '-wo SKIP_NOSOURCE=NO -dstnodata 1',
+                    '-dstnodata 1',
+                    '-dstnodata 1 -wo INIT_DEST=NO_DATA',
+                    '-dstnodata 1 -wo INIT_DEST=1']:
+        gdal.Unlink(tmpfilename)
+        out_ds = gdal.Warp(tmpfilename, src_ds,
+                           options='-te 1.5 48 3.5 49.5 -wm 100000 ' +
+                           '-of MEM ' + options)
+        cs = out_ds.GetRasterBand(1).Checksum()
+        if cs != 51132:
+            gdaltest.post_reason('fail')
+            print(options, cs)
+            return 'fail'
+
+    # Rather dummy: use a INIT_DEST different of the target dstnodata
+    for options in [  # '-wo SKIP_NOSOURCE=NO -dstnodata 1 -wo INIT_DEST=0',
+                    '-dstnodata 127 -wo INIT_DEST=0']:
+        gdal.Unlink(tmpfilename)
+        out_ds = gdal.Warp(tmpfilename, src_ds,
+                           options='-te 1.5 48 3.5 49.5 -wm 100000 ' +
+                           '-of GTiff ' + options)
+        cs = out_ds.GetRasterBand(1).Checksum()
+        if cs != 41500:
+            gdaltest.post_reason('fail')
+            print(options, cs)
+            return 'fail'
+
+    # Test with 2 input datasets
+    src_ds1 = gdal.GetDriverByName('MEM').Create('', 500, 500)
+    src_ds1.GetRasterBand(1).Fill(255)
+    src_ds1.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
+    src_ds1.SetProjection(sr.ExportToWkt())
+
+    src_ds2 = gdal.GetDriverByName('MEM').Create('', 500, 500)
+    src_ds2.GetRasterBand(1).Fill(255)
+    src_ds2.SetGeoTransform([2.5, 0.001, 0, 49, 0, -0.001])
+    src_ds2.SetProjection(sr.ExportToWkt())
+
+    for options in ['']:
+        gdal.Unlink(tmpfilename)
+        out_ds = gdal.Warp(tmpfilename, [src_ds1, src_ds2],
+                           options='-te 1.5 48 3.5 49.5 -wm 100000 ' +
+                           '-of GTiff ' + options)
+        cs = out_ds.GetRasterBand(1).Checksum()
+        if cs != 41500:
+            gdaltest.post_reason('fail')
+            print(options, cs)
+            return 'fail'
+
+    gdal.Unlink(tmpfilename)
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 
@@ -1897,6 +2011,7 @@ gdaltest_list = [
     test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs,
     test_gdalwarp_lib_touching_dateline,
     test_gdalwarp_lib_override_default_output_nodata,
+    test_gdalwarp_lib_auto_skip_nosource,
     test_gdalwarp_lib_cleanup,
 ]
 

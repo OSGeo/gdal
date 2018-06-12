@@ -1011,6 +1011,15 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         CSLDestroy( psOptions->papszCreateOptions );
         psOptions->papszCreateOptions = nullptr;
     }
+    else
+    {
+        if( CSLFetchNameValue(psOptions->papszWarpOptions, "SKIP_NOSOURCE") == nullptr )
+        {
+            CPLDebug("GDALWARP", "Defining SKIP_NOSOURCE=YES");
+            psOptions->papszWarpOptions = CSLSetNameValue(
+                psOptions->papszWarpOptions, "SKIP_NOSOURCE", "YES");
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Detect if output has alpha channel.                             */
@@ -1418,6 +1427,19 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                                                 "INIT_DEST", nullptr );
 
 /* -------------------------------------------------------------------- */
+/*      Define SKIP_NOSOURCE after the first image (since initialization*/
+/*      has already be done).                                           */
+/* -------------------------------------------------------------------- */
+        if( iSrc == 1 &&
+            CSLFetchNameValue(psOptions->papszWarpOptions,
+                              "SKIP_NOSOURCE") == nullptr )
+        {
+            CPLDebug("GDALWARP", "Defining SKIP_NOSOURCE=YES");
+            psOptions->papszWarpOptions = CSLSetNameValue(
+                psOptions->papszWarpOptions, "SKIP_NOSOURCE", "YES");
+        }
+
+/* -------------------------------------------------------------------- */
 /*      Setup warp options.                                             */
 /* -------------------------------------------------------------------- */
         GDALWarpOptions *psWO = GDALCreateWarpOptions();
@@ -1773,6 +1795,90 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                                                    "INIT_DEST", "NO_DATA" );
             }
         }
+
+/* -------------------------------------------------------------------- */
+/*      For the first source image of a newly created dataset, decide   */
+/*      if we can safely enable SKIP_NOSOURCE optimization.             */
+/* -------------------------------------------------------------------- */
+        if( psOptions->bCreateOutput && iSrc == 0 &&
+            CSLFetchNameValue(psWO->papszWarpOptions,
+                              "SKIP_NOSOURCE") == nullptr &&
+            CSLFetchNameValue(psWO->papszWarpOptions,
+                              "STREAMABLE_OUTPUT") == nullptr &&
+            psOptions->pszFormat != nullptr &&
+            // This white list of drivers could potentially be extended.
+            (EQUAL(psOptions->pszFormat, "MEM") ||
+             EQUAL(psOptions->pszFormat, "GTiff") ||
+             EQUAL(psOptions->pszFormat, "GPKG")) )
+        {
+            // We can enable the optimization only if the user didn't specify
+            // a INIT_DEST value that would contradict the destination nodata.
+
+            bool bOKRegardingInitDest = false;
+            const char* pszInitDest = CSLFetchNameValue(psWO->papszWarpOptions,
+                                                        "INIT_DEST");
+            if( pszInitDest == nullptr ||
+                EQUAL(pszInitDest, "NO_DATA") )
+            {
+                bOKRegardingInitDest = true;
+
+                // The MEM driver will return non-initialized blocks at 0
+                // so make sure that the nodata value is 0.
+                if( EQUAL(psOptions->pszFormat, "MEM") )
+                {
+                    for( int i = 0; i < GDALGetRasterCount(hDstDS); i++ )
+                    {
+                        int bHasNoData = false;
+                        double dfDstNoDataVal = GDALGetRasterNoDataValue(
+                            GDALGetRasterBand(hDstDS, i+1), &bHasNoData);
+                        if( bHasNoData && dfDstNoDataVal != 0.0 )
+                        {
+                            bOKRegardingInitDest = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                char **papszTokensInitDest = CSLTokenizeString( pszInitDest );
+                const int nTokenCountInitDest = CSLCount(papszTokensInitDest);
+                if( nTokenCountInitDest == 1 ||
+                    nTokenCountInitDest == GDALGetRasterCount(hDstDS) )
+                {
+                    bOKRegardingInitDest = true;
+                    for( int i = 0; i < GDALGetRasterCount(hDstDS); i++ )
+                    {
+                        double dfInitVal = CPLAtofM(papszTokensInitDest[
+                            std::min(i, nTokenCountInitDest-1)]);
+                        int bHasNoData = false;
+                        double dfDstNoDataVal = GDALGetRasterNoDataValue(
+                            GDALGetRasterBand(hDstDS, i+1), &bHasNoData);
+                        if( !((bHasNoData && dfInitVal == dfDstNoDataVal) ||
+                             (!bHasNoData && dfInitVal == 0.0)) )
+                        {
+                            bOKRegardingInitDest = false;
+                            break;
+                        }
+                        if( EQUAL(psOptions->pszFormat, "MEM") &&
+                            bHasNoData && dfDstNoDataVal != 0.0 )
+                        {
+                            bOKRegardingInitDest = false;
+                            break;
+                        }
+                    }
+                }
+                CSLDestroy(papszTokensInitDest);
+            }
+
+            if( bOKRegardingInitDest )
+            {
+                CPLDebug("GDALWARP", "Defining SKIP_NOSOURCE=YES");
+                psWO->papszWarpOptions = CSLSetNameValue(
+                    psWO->papszWarpOptions, "SKIP_NOSOURCE", "YES");
+            }
+        }
+
 
 /* -------------------------------------------------------------------- */
 /*      If we have a cutline, transform it into the source              */
