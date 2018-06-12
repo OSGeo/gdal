@@ -220,6 +220,7 @@ install: default
 libinstall: $(GDALLIB)
 	-mkdir $(LIBDIR)
 	copy %|feF $(LIBDIR)
+	if exist $(GDAL_PDB) copy $(GDAL_PDB) $(LIBDIR)
 
 devinstall: install libinstall
 	-mkdir $(INCDIR)
