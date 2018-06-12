@@ -128,7 +128,7 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
 
     bool                bInDeferredInsert;
     InsertState         eDeferredInsertState;
-    CPLString           osDeferredInsertSQL;
+    CPLString           osDeferredBuffer;
     GIntBig             m_nNextFIDWrite;
 
     bool                bDeferredCreation;
@@ -182,8 +182,12 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
     void                CancelDeferredCreation()
         { bDeferredCreation = false; bCartodbfy = false; }
 
-    OGRErr              FlushDeferredInsert(bool bReset = true);
+    OGRErr              FlushDeferredBuffer(bool bReset = true);
     void                RunDeferredCartofy();
+
+  private:
+    OGRErr              FlushDeferredInsert(bool bReset = true);
+    OGRErr              FlushDeferredCopy(bool bReset = true);
 };
 
 /************************************************************************/
@@ -221,6 +225,7 @@ class OGRCARTODataSource : public OGRDataSource
 
     bool                bReadWrite;
     bool                bBatchInsert;
+    bool                bCopyMode;
 
     bool                bUseHTTPS;
 
@@ -265,6 +270,7 @@ class OGRCARTODataSource : public OGRDataSource
     const char*                 GetAPIURL() const;
     bool                        IsReadWrite() const { return bReadWrite; }
     bool                        DoBatchInsert() const { return bBatchInsert; }
+    bool                        DoCopyMode() const { return bCopyMode; }
     char**                      AddHTTPOptions();
     json_object*                RunSQL(const char* pszUnescapedSQL);
     const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
