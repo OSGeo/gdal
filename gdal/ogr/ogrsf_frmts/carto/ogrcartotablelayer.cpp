@@ -1483,7 +1483,7 @@ OGRErr OGRCARTOTableLayer::RunDeferredCreationIfNecessary()
     bDeferredCreation = false;
 
     CPLString osSQL;
-    osSQL.Printf("CREATE TABLE %s ( %s SERIAL,",
+    osSQL.Printf("CREATE TABLE %s ( %s INTEGER,",
                  OGRCARTOEscapeIdentifier(osName).c_str(),
                  osFIDColName.c_str());
 
