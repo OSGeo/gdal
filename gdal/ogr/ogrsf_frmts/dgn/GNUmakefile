@@ -25,7 +25,11 @@ DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h dgnfloat.cpp \
 		$(CPL_DIR)/cpl_conv.h $(CPL_DIR)/cpl_conv.cpp \
 		$(CPL_DIR)/cpl_error.h $(CPL_DIR)/cpl_error.cpp \
 		$(CPL_DIR)/cpl_string.h $(CPL_DIR)/cpl_string.cpp \
-		$(CPL_DIR)/cpl_config.h.vc $(CPL_DIR)/cpl_vsil_simple.cpp \
+		$(CPL_DIR)/cpl_config.h.vc.begin \
+		$(CPL_DIR)/cpl_config.h.vc.common \
+		$(CPL_DIR)/cpl_config.h.vc.no_dll \
+		$(CPL_DIR)/cpl_config.h.vc.end \
+		$(CPL_DIR)/cpl_vsil_simple.cpp \
 		$(CPL_DIR)/cpl_path.cpp $(CPL_DIR)/cpl_dir.cpp \
 		$(CPL_DIR)/cpl_multiproc.h $(CPL_DIR)/cpl_multiproc.cpp
 

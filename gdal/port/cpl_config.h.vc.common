@@ -1,6 +1,3 @@
-#ifndef CPL_CONFIG_H
-#define CPL_CONFIG_H
-
 /* We define this here in general so that a VC++ build will publicly
    declare STDCALL interfaces even if an application is built against it
    using MinGW */
@@ -111,9 +108,5 @@
 
 #pragma warning(disable: 4786)
 
-/* #define CPL_DISABLE_DLL */
-
 /* Define to 1, if your compiler supports long long data type */
 #define HAVE_LONG_LONG 1
-
-#endif /* CPL_CONFIG_H */

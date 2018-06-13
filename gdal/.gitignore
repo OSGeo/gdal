@@ -7,6 +7,7 @@ config.log
 config.status
 libtool
 cpl_config.h
+clean_main_build_output.bat
 *.o
 *.res
 *.obj
@@ -75,6 +76,8 @@ apps/test_ogrsf
 apps/dumpoverviews
 apps/gdalwarpsimple
 apps/multireadtest
+port/dllbuild.prev
+port/prev_dllbuild.bat
 swig/java/build
 swig/java/gdal.jar
 swig/java/gdal_wrap.cpp
