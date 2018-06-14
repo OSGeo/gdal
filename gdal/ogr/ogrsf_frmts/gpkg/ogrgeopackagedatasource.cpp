@@ -5224,19 +5224,23 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 
     if( pszDialect == nullptr || !EQUAL(pszDialect, "DEBUG") )
     {
+        // Some SQL commands will influence the feature count behind our
+        // back, so disable it in that case.
 #ifdef ENABLE_GPKG_OGR_CONTENTS
         const bool bInsertOrDelete =
             osSQLCommand.ifind("insert into ") != std::string::npos ||
             osSQLCommand.ifind("delete from ") != std::string::npos;
+        const bool bRollback = osSQLCommand.ifind("rollback ") != std::string::npos;
 #endif
 
         for( int i = 0; i < m_nLayers; i++ )
         {
 #ifdef ENABLE_GPKG_OGR_CONTENTS
-            if( bInsertOrDelete &&
-                osSQLCommand.ifind(m_papoLayers[i]->GetName()) != std::string::npos )
+            if( bRollback ||
+                (bInsertOrDelete &&
+                 osSQLCommand.ifind(m_papoLayers[i]->GetName()) != std::string::npos) )
             {
-                m_papoLayers[i]->DisableFeatureCount(true);
+                m_papoLayers[i]->DisableFeatureCount();
             }
 #endif
             m_papoLayers[i]->SyncToDisk();

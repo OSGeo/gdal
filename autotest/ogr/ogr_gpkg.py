@@ -4670,6 +4670,47 @@ def ogr_gpkg_59():
     return 'success'
 
 ###############################################################################
+# Test savepoints
+
+
+def ogr_gpkg_savepoint():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    filename = '/vsimem/ogr_gpkg_savepoint.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer('foo')
+    lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['str'] = 'foo'
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    ds.StartTransaction()
+    ds.ExecuteSQL('SAVEPOINT pt')
+    lyr.DeleteFeature(1)
+    ds.ExecuteSQL('ROLLBACK TO SAVEPOINT pt')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['str'] = 'bar'
+    lyr.CreateFeature(f)
+    ds.CommitTransaction()
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 2:
+        print(lyr.GetFeatureCount())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(filename)
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 
@@ -4754,6 +4795,7 @@ gdaltest_list = [
     ogr_gpkg_57,
     ogr_gpkg_58,
     ogr_gpkg_59,
+    ogr_gpkg_savepoint,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
