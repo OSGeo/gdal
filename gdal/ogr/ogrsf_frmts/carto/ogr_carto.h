@@ -187,7 +187,6 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
     OGRErr              FlushDeferredBuffer(bool bReset = true);
     void                RunDeferredCartofy();
 
-<<<<<<< HEAD
     OGRErr              FlushDeferredInsert( bool bReset = true );
     OGRErr              FlushDeferredCopy( bool bReset = true );
     OGRErr              ICreateFeatureInsert( OGRFeature *poFeature, 
@@ -197,11 +196,6 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
                                             bool bHasUserFieldMatchingFID, 
                                             bool bHasJustGotNextFID );
     char *              OGRCARTOGetHexGeometry( OGRGeometry* poGeom, int i );
-=======
-  private:
-    OGRErr              FlushDeferredInsert(bool bReset = true);
-    OGRErr              FlushDeferredCopy(bool bReset = true);
->>>>>>> Add insert/copy distinction to API
 };
 
 /************************************************************************/
