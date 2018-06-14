@@ -45,7 +45,7 @@ static GDALDataset *OGRILI2DriverOpen( GDALOpenInfo* poOpenInfo )
         (!poOpenInfo->bStatOK && strchr(poOpenInfo->pszFilename, ',') == nullptr) )
         return nullptr;
 
-    if( poOpenInfo->fpL != nullptr )
+    if( poOpenInfo->pabyHeader != nullptr )
     {
         if( poOpenInfo->pabyHeader[0] != '<'
             || strstr((const char*)poOpenInfo->pabyHeader,"interlis.ch/INTERLIS2") == nullptr )

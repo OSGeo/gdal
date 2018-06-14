@@ -3592,6 +3592,7 @@ def gpkg_40():
         f.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
+    ds = None
 
     # Should default to 1.2 if we didn't override it.
     gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format='GPKG',
@@ -3611,6 +3612,7 @@ def gpkg_40():
         f.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
+    ds = None
 
     gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format='GPKG',
                    creationOptions=['VERSION=1.1'])
@@ -3629,6 +3631,7 @@ def gpkg_40():
         f.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
+    ds = None
 
     gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format='GPKG',
                    creationOptions=['VERSION=1.2'])
@@ -3647,6 +3650,7 @@ def gpkg_40():
         f.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
+    ds = None
 
     gdal.Unlink('/vsimem/gpkg_40.gpkg')
 

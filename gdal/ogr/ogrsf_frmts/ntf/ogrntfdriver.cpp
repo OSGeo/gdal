@@ -46,7 +46,8 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     if( !poOpenInfo->bStatOK )
         return nullptr;
-    if( poOpenInfo->fpL != nullptr )
+
+    if( poOpenInfo->nHeaderBytes != 0 )
     {
         if( poOpenInfo->nHeaderBytes < 80 )
             return nullptr;

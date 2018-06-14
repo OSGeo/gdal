@@ -41,10 +41,6 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GPKG:") )
         return TRUE;
 
-    /* Check that the filename exists and is a file */
-    if( poOpenInfo->fpL == nullptr)
-        return FALSE;
-
 #ifdef ENABLE_SQL_GPKG_FORMAT
     if( poOpenInfo->pabyHeader &&
         STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL GPKG") )

@@ -89,6 +89,14 @@
 static int bSpatialiteGlobalLoaded = FALSE;
 #endif
 
+// Keep in sync prototype of those 2 functions between gdalopeninfo.cpp,
+// ogrsqlitedatasource.cpp and ogrgeopackagedatasource.cpp
+void GDALOpenInfoDeclareFileNotToOpen(const char* pszFilename,
+                                       const GByte* pabyHeader,
+                                       int nHeaderBytes);
+void GDALOpenInfoUnDeclareFileNotToOpen(const char* pszFilename);
+
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -345,6 +353,12 @@ OGRSQLiteBaseDataSource::~OGRSQLiteBaseDataSource()
     FinishRasterLite2();
 #endif
     CloseDB();
+
+    if( m_bCallUndeclareFileNotToOpen )
+    {
+        GDALOpenInfoUnDeclareFileNotToOpen(m_pszFilename);
+    }
+
     CPLFree(m_pszFilename);
 }
 
@@ -383,6 +397,12 @@ void OGRSQLiteBaseDataSource::CloseDB()
 
                 sqlite3_close( hDB );
                 hDB = nullptr;
+#ifdef DEBUG_VERBOSE
+                if( VSIStatL( CPLSPrintf("%s-wal", m_pszFilename), &sStat) != 0 )
+                {
+                    CPLDebug("SQLite", "%s-wal file has been removed", m_pszFilename);
+                }
+#endif
             }
         }
 
@@ -1323,6 +1343,14 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
         else
         {
             m_pszFilename = CPLStrdup( pszNewName );
+            if( poOpenInfo->pabyHeader &&
+                STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
+            {
+                m_bCallUndeclareFileNotToOpen = true;
+                GDALOpenInfoDeclareFileNotToOpen(m_pszFilename,
+                                            poOpenInfo->pabyHeader,
+                                            poOpenInfo->nHeaderBytes);
+            }
         }
     }
     SetPhysicalFilename(m_pszFilename);
@@ -1364,13 +1392,20 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
 #endif
 
 #ifdef ENABLE_SQL_SQLITE_FORMAT
-        GDALOpenInfo oOpenInfo(m_pszFilename, GA_ReadOnly);
-        if( oOpenInfo.pabyHeader &&
+        // SQLite -wal locking appears to be extremely fragile. In particular
+        // if we have a file descriptor opened on the file while sqlite3_open
+        // is called, then it will mis-behave (a process opening in update mode
+        // the file and closing it will remove the -wal file !)
+        // So make sure that the GDALOpenInfo object goes out of scope before
+        // going on.
+        {
+          GDALOpenInfo oOpenInfo(m_pszFilename, GA_ReadOnly);
+          if( oOpenInfo.pabyHeader &&
             (STARTS_WITH((const char*)oOpenInfo.pabyHeader, "-- SQL SQLITE") ||
              STARTS_WITH((const char*)oOpenInfo.pabyHeader, "-- SQL RASTERLITE") ||
              STARTS_WITH((const char*)oOpenInfo.pabyHeader, "-- SQL MBTILES")) &&
             oOpenInfo.fpL != nullptr )
-        {
+          {
             if( sqlite3_open_v2( ":memory:", &hDB, SQLITE_OPEN_READWRITE, nullptr )
                     != SQLITE_OK )
             {
@@ -1467,11 +1502,25 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
                 }
                 sqlite3_free(pszErrMsg);
             }
+          }
         }
-        else
+        if( hDB == nullptr )
 #endif
-        if (!OpenOrCreateDB((bUpdate) ? SQLITE_OPEN_READWRITE : SQLITE_OPEN_READONLY, TRUE) )
-            return FALSE;
+        {
+            if (poOpenInfo->fpL )
+            {
+                // See above comment about -wal locking for the importance of
+                // closing that file, prior to calling sqlite3_open()
+                VSIFCloseL(poOpenInfo->fpL);
+                poOpenInfo->fpL = nullptr;
+            }
+            if (!OpenOrCreateDB((bUpdate) ? SQLITE_OPEN_READWRITE : SQLITE_OPEN_READONLY, TRUE) )
+            {
+                poOpenInfo->fpL = VSIFOpenL(poOpenInfo->pszFilename,
+                            poOpenInfo->eAccess == GA_Update ? "rb+" : "rb");
+                return FALSE;
+            }
+        }
 
 #ifdef SPATIALITE_412_OR_LATER
         InitNewSpatialite();
