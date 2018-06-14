@@ -41,6 +41,7 @@
 json_object* OGRCARTOGetSingleRow(json_object* poObj);
 CPLString OGRCARTOEscapeIdentifier(const char* pszStr);
 CPLString OGRCARTOEscapeLiteral(const char* pszStr);
+CPLString OGRCARTOEscapeLiteralCopy(const char* pszStr);
 
 /************************************************************************/
 /*                      OGRCartoGeomFieldDefn                         */
@@ -129,6 +130,7 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
     bool                bInDeferredInsert;
     InsertState         eDeferredInsertState;
     CPLString           osDeferredBuffer;
+    CPLString           osCopySQL;
     GIntBig             m_nNextFIDWrite;
 
     bool                bDeferredCreation;
@@ -185,13 +187,19 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
     OGRErr              FlushDeferredBuffer(bool bReset = true);
     void                RunDeferredCartofy();
 
-  private:
-    OGRErr              FlushDeferredInsert(bool bReset = true);
-    OGRErr              FlushDeferredCopy(bool bReset = true);
+    OGRErr              FlushDeferredInsert( bool bReset = true );
+    OGRErr              FlushDeferredCopy( bool bReset = true );
+    OGRErr              ICreateFeatureInsert( OGRFeature *poFeature, 
+                                              bool bHasUserFieldMatchingFID, 
+                                              bool bHasJustGotNextFID );
+    OGRErr              ICreateFeatureCopy( OGRFeature *poFeature, 
+                                            bool bHasUserFieldMatchingFID, 
+                                            bool bHasJustGotNextFID );
+    char *              OGRCARTOGetHexGeometry( OGRGeometry* poGeom, int i );
 };
 
 /************************************************************************/
-/*                       OGRCARTOResultLayer                          */
+/*                       OGRCARTOResultLayer                            */
 /************************************************************************/
 
 class OGRCARTOResultLayer : public OGRCARTOLayer
@@ -212,7 +220,7 @@ class OGRCARTOResultLayer : public OGRCARTOLayer
 };
 
 /************************************************************************/
-/*                           OGRCARTODataSource                       */
+/*                           OGRCARTODataSource                         */
 /************************************************************************/
 
 class OGRCARTODataSource : public OGRDataSource
@@ -273,6 +281,7 @@ class OGRCARTODataSource : public OGRDataSource
     bool                        DoCopyMode() const { return bCopyMode; }
     char**                      AddHTTPOptions();
     json_object*                RunSQL(const char* pszUnescapedSQL);
+    json_object*                RunCopyFrom(const char* pszSQL, const char* pszCopyFile);
     const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
     static int                         FetchSRSId( OGRSpatialReference * poSRS );
 
