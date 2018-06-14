@@ -4733,7 +4733,7 @@ def ogr_gpkg_wal():
 
     with gdaltest.config_option('OGR_SQLITE_JOURNAL', 'WAL'):
         ds = gdaltest.gpkg_dr.CreateDataSource(filename)
-    lyr = ds.CreateLayer('foo')
+    ds.CreateLayer('foo')
     ds = None
 
     ds = ogr.Open(filename, update=1)
@@ -4741,6 +4741,7 @@ def ogr_gpkg_wal():
 
     # Re-open in read-only mode
     ds_ro = ogr.Open(filename)
+    ds_ro.GetName()
     os.stat(filename + '-wal')
 
     # Test external process to read the file
