@@ -49,7 +49,7 @@ LIB_DEPENDS = port_dir core_dir ogr_dir gnm_dir frmts_dir appslib-target
 
 DISTDIR	=	gdal_$(VERSION)
 
-!IFDEF DLLBUILD
+!IF "$(DLLBUILD)" == "1"
 TARGET_LIB = dll
 PLUGIN_TARGET = plugin_dir
 !ELSE
@@ -220,6 +220,7 @@ install: default
 libinstall: $(GDALLIB)
 	-mkdir $(LIBDIR)
 	copy %|feF $(LIBDIR)
+	if exist $(GDAL_PDB) copy $(GDAL_PDB) $(LIBDIR)
 
 devinstall: install libinstall
 	-mkdir $(INCDIR)

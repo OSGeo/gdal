@@ -114,8 +114,12 @@ CXX_ANALYZE_FLAGS=
 WITH_PDB=1
 !ENDIF
 
+!IFNDEF GDAL_PDB
+GDAL_PDB = $(GDAL_ROOT)\gdal$(VERSION).pdb
+!ENDIF
+
 !IFDEF WITH_PDB
-CXX_PDB_FLAGS=/Zi /Fd$(GDAL_ROOT)\gdal$(VERSION).pdb
+CXX_PDB_FLAGS=/Zi /Fd$(GDAL_PDB)
 !ELSE
 CXX_PDB_FLAGS=
 !ENDIF
@@ -202,8 +206,7 @@ VERSION =	203
 PAM_SETTING=-DPAM_ENABLED
 !ENDIF
 
-# Uncomment the following to link OGR utilities against main GDAL DLL
-# instead of statically linking against OGR libraries.
+# Set DLLBUILD=0 to create a static lib instead of a shared lib (.DLL)
 !IFNDEF DLLBUILD
 DLLBUILD=1
 !ENDIF
@@ -799,6 +802,10 @@ LINKER_FLAGS = $(EXTRA_LINKER_FLAGS) $(MSVC_VLD_LIB) $(LDEBUG)
 
 
 CFLAGS	=	$(OPTFLAGS) $(WARNFLAGS) $(USER_DEFS) $(SSEFLAGS) $(SSSE3FLAGS) $(INC) $(AVXFLAGS) $(EXTRAFLAGS) $(OGR_FLAG) $(GNM_FLAG) $(MSVC_VLD_FLAGS) -DGDAL_COMPILATION
+!IF "$(DLLBUILD)" != "1"
+CFLAGS	=	$(CFLAGS) -DCPL_DISABLE_DLL
+!ENDIF
+
 CPPFLAGS = $(CFLAGS) -DNOMINMAX
 MAKE	=	nmake /nologo
 
@@ -810,7 +817,7 @@ INSTALL	=	xcopy /y /r /d /f /I
 
 CPLLIB	=    $(GDAL_ROOT)/port/cpl.lib
 
-!IFDEF DLLBUILD
+!IF "$(DLLBUILD)" == "1"
 GDALLIB	=    $(GDAL_ROOT)/gdal_i.lib
 !ELSE
 GDALLIB	=    $(GDAL_ROOT)/gdal.lib
