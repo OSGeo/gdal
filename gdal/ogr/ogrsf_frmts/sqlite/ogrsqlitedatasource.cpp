@@ -1343,10 +1343,14 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
         else
         {
             m_pszFilename = CPLStrdup( pszNewName );
-            m_bCallUndeclareFileNotToOpen = true;
-            GDALOpenInfoDeclareFileNotToOpen(m_pszFilename,
-                                        poOpenInfo->pabyHeader,
-                                        poOpenInfo->nHeaderBytes);
+            if( poOpenInfo->pabyHeader &&
+                STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
+            {
+                m_bCallUndeclareFileNotToOpen = true;
+                GDALOpenInfoDeclareFileNotToOpen(m_pszFilename,
+                                            poOpenInfo->pabyHeader,
+                                            poOpenInfo->nHeaderBytes);
+            }
         }
     }
     SetPhysicalFilename(m_pszFilename);

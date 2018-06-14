@@ -821,7 +821,8 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         }
         pabyHeader = abyHeaderLetMeHerePlease;
     }
-    else
+    else if( poOpenInfo->pabyHeader &&
+            STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
     {
         m_bCallUndeclareFileNotToOpen = true;
         GDALOpenInfoDeclareFileNotToOpen(osFilename,
