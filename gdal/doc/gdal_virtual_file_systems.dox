@@ -231,11 +231,14 @@ Currently supported options are :
 </ul>
 
 Partial downloads (requires the HTTP server to support random reading) are
-done with a 16 KB granularity by default (starting with GDAL 2.3, the chunk
+done with a 16 KB granularity by default. Starting with GDAL 2.3, the chunk
 size can be configured with the CPL_VSIL_CURL_CHUNK_SIZE configuration option,
-with a value in bytes.) If the driver detects sequential
+with a value in bytes. If the driver detects sequential
 reading it will progressively increase the chunk size up to 2 MB to improve
-download performance.
+download performance. Starting with GDAL 2.3, the GDAL_INGESTED_BYTES_AT_OPEN
+configuration option can be set to impose the number of bytes read in one
+GET call at file opening (can help performance to read Cloud optimized geotiff
+with a large header).
 
 The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
 options can be used to define a proxy server. The syntax to use is the one of
