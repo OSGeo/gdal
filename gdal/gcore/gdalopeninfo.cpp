@@ -37,6 +37,8 @@
 #endif
 
 #include <algorithm>
+#include <map>
+#include <mutex>
 #include <vector>
 
 #include "cpl_config.h"
@@ -47,6 +49,108 @@
 #include "gdal.h"
 
 CPL_CVSID("$Id$")
+
+// Keep in sync prototype of those 2 functions between gdalopeninfo.cpp,
+// ogrsqlitedatasource.cpp and ogrgeopackagedatasource.cpp
+void GDALOpenInfoDeclareFileNotToOpen(const char* pszFilename,
+                                       const GByte* pabyHeader,
+                                       int nHeaderBytes);
+void GDALOpenInfoUnDeclareFileNotToOpen(const char* pszFilename);
+
+/************************************************************************/
+
+/* This whole section helps for SQLite/GPKG, especially with write-ahead
+ * log enabled. The issue is that sqlite3 relies on POSIX advisory locks to
+ * properly work and decide when to create/delete the wal related files.
+ * One issue with POSIX advisory locks is that if within the same process
+ * you do
+ * f1 = open('somefile')
+ * set locks on f1
+ * f2 = open('somefile')
+ * close(f2)
+ * The close(f2) will cancel the locks set on f1. The work on f1 is done by
+ * libsqlite3 whereas the work on f2 is done by GDALOpenInfo.
+ * So as soon as sqlite3 has opened a file we should make sure not to re-open
+ * it (actually close it) ourselves.
+ */
+
+namespace {
+struct FileNotToOpen
+{
+    CPLString osFilename{};
+    int       nRefCount{};
+    GByte    *pabyHeader{nullptr};
+    int       nHeaderBytes{0};
+};
+}
+
+static std::mutex sFNTOMutex;
+static std::map<CPLString, FileNotToOpen>* pMapFNTO = nullptr;
+
+void GDALOpenInfoDeclareFileNotToOpen(const char* pszFilename,
+                                       const GByte* pabyHeader,
+                                       int nHeaderBytes)
+{
+    std::lock_guard<std::mutex> oLock(sFNTOMutex);
+    if( pMapFNTO == nullptr )
+        pMapFNTO = new std::map<CPLString, FileNotToOpen>();
+    auto oIter = pMapFNTO->find(pszFilename);
+    if( oIter != pMapFNTO->end() )
+    {
+        oIter->second.nRefCount ++;
+    }
+    else
+    {
+        FileNotToOpen fnto;
+        fnto.osFilename = pszFilename;
+        fnto.nRefCount = 1;
+        fnto.pabyHeader = static_cast<GByte*>(CPLMalloc(nHeaderBytes + 1));
+        memcpy(fnto.pabyHeader, pabyHeader, nHeaderBytes);
+        fnto.pabyHeader[nHeaderBytes] = 0;
+        fnto.nHeaderBytes = nHeaderBytes;
+        (*pMapFNTO)[pszFilename] = fnto;
+    }
+}
+
+void GDALOpenInfoUnDeclareFileNotToOpen(const char* pszFilename)
+{
+    std::lock_guard<std::mutex> oLock(sFNTOMutex);
+    CPLAssert(pMapFNTO);
+    auto oIter = pMapFNTO->find(pszFilename);
+    CPLAssert( oIter != pMapFNTO->end() );
+    oIter->second.nRefCount --;
+    if( oIter->second.nRefCount == 0 )
+    {
+        CPLFree(oIter->second.pabyHeader);
+        pMapFNTO->erase(oIter);
+    }
+    if( pMapFNTO->empty() )
+    {
+        delete pMapFNTO;
+        pMapFNTO = nullptr;
+    }
+}
+
+static GByte* GDALOpenInfoGetFileNotToOpen(const char* pszFilename,
+                                           int* pnHeaderBytes)
+{
+    std::lock_guard<std::mutex> oLock(sFNTOMutex);
+    *pnHeaderBytes = 0;
+    if( pMapFNTO == nullptr )
+    {
+        return nullptr;
+    }
+    auto oIter = pMapFNTO->find(pszFilename);
+    if( oIter == pMapFNTO->end() )
+    {
+        return nullptr;
+    }
+    *pnHeaderBytes = oIter->second.nHeaderBytes;
+    GByte* pabyHeader = static_cast<GByte*>(CPLMalloc(*pnHeaderBytes + 1));
+    memcpy(pabyHeader, oIter->second.pabyHeader, *pnHeaderBytes);
+    pabyHeader[*pnHeaderBytes] = 0;
+    return pabyHeader;
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -155,10 +259,17 @@ retry:  // TODO(schwehr): Stop using goto.
         }
     }
 
-    if( !bIsDirectory ) {
+    pabyHeader = GDALOpenInfoGetFileNotToOpen(pszFilename, &nHeaderBytes);
+
+    if( !bIsDirectory && pabyHeader == nullptr ) {
         fpL = VSIFOpenExL( pszFilename, (eAccess == GA_Update) ? "r+b" : "rb", (nOpenFlagsIn & GDAL_OF_VERBOSE_ERROR) > 0);
     }
-    if( fpL != nullptr )
+    if( pabyHeader )
+    {
+        bStatOK = TRUE;
+        nHeaderBytesTried = nHeaderBytes;
+    }
+    else if( fpL != nullptr )
     {
         bStatOK = TRUE;
         int nBufSize =

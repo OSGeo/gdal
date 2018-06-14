@@ -40,6 +40,13 @@
 
 CPL_CVSID("$Id$")
 
+// Keep in sync prototype of those 2 functions between gdalopeninfo.cpp,
+// ogrsqlitedatasource.cpp and ogrgeopackagedatasource.cpp
+void GDALOpenInfoDeclareFileNotToOpen(const char* pszFilename,
+                                       const GByte* pabyHeader,
+                                       int nHeaderBytes);
+void GDALOpenInfoUnDeclareFileNotToOpen(const char* pszFilename);
+
 /************************************************************************/
 /*                             Tiling schemes                           */
 /************************************************************************/
@@ -814,6 +821,13 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         }
         pabyHeader = abyHeaderLetMeHerePlease;
     }
+    else
+    {
+        m_bCallUndeclareFileNotToOpen = true;
+        GDALOpenInfoDeclareFileNotToOpen(osFilename,
+                                    poOpenInfo->pabyHeader,
+                                    poOpenInfo->nHeaderBytes);
+    }
 
     bUpdate = poOpenInfo->eAccess == GA_Update;
     eAccess = poOpenInfo->eAccess; /* hum annoying duplication */
@@ -913,6 +927,14 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     else if( pabyHeader != nullptr )
 #endif
     {
+        if (poOpenInfo->fpL )
+        {
+            // See above comment about -wal locking for the importance of
+            // closing that file, prior to calling sqlite3_open()
+            VSIFCloseL(poOpenInfo->fpL);
+            poOpenInfo->fpL = nullptr;
+        }
+
         /* See if we can open the SQLite database */
         if( !OpenOrCreateDB(bUpdate
                         ? SQLITE_OPEN_READWRITE
