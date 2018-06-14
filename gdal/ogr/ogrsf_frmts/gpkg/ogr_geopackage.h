@@ -549,7 +549,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     void                SetOGRFeatureCountTriggersEnabled(bool b)
                                     { m_bOGRFeatureCountTriggersEnabled = b; }
 
-    void                DisableFeatureCount( bool bInMemoryOnly = false );
+    void                DisableFeatureCount();
 #endif
 
     /************************************************************************/
