@@ -1047,26 +1047,15 @@ static int worst_outlier(struct Control_Points *cp, double E[], double N[], doub
     double dfSampleRes = 0.0;
     double dfLineRes = 0.0;
     double dfCurrentDifference = 0.0;
-    double dfE1 = 0.0;
-    double dfN1 = 0.0;
-    double dfE2 = 0.0;
-    double dfN2 = 0.0;
-    double dfEn = 0.0;
     double dfSampleResidual = 0.0;
     double dfLineResidual = 0.0;
     double *padfResiduals = (double *) CPLCalloc(sizeof(double),cp->count);
 
     for(nI = 0; nI < cp->count; nI++)
     {
-        dfE1 = cp->e1[nI];
-        dfN1 = cp->n1[nI];
-        dfE2 = dfE1 * dfE1;
-        dfN2 = dfN1 * dfN1;
-        dfEn = dfE1 * dfN1;
-
-        dfSampleRes = E[0] + E[1] * dfE1 + E[2] * dfN1 + E[3] * dfE2 + E[4] * dfEn + E[5] * dfN2 - cp->e2[nI];
-        dfLineRes = N[0] + N[1] * dfE1 + N[2] * dfN1 + N[3] * dfE2 + N[4] * dfEn + N[5] * dfN2 - cp->n2[nI];
-
+        CRS_georef( cp->e1[nI], cp->n1[nI], &dfSampleRes, &dfLineRes,E,N,nOrder );
+        dfSampleRes -= cp->e2[nI];
+        dfLineRes -= cp->n2[nI];
         dfSampleResidual += dfSampleRes*dfSampleRes;
         dfLineResidual += dfLineRes*dfLineRes;
 
@@ -1158,7 +1147,7 @@ static int remove_outliers( GCPTransformInfo *psInfo )
     while(sPoints.count > nMinimumGcps)
     {
         int nIndex =
-            worst_outlier(&sPoints, psInfo->adfFromGeoX, psInfo->adfFromGeoY,
+            worst_outlier(&sPoints, psInfo->adfToGeoX, psInfo->adfToGeoY,
                           dfTolerance);
 
         //If no outliers were detected, stop the GCP elimination
