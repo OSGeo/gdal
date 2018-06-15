@@ -565,6 +565,28 @@ def rmf_26():
     return 'success'
 
 ###############################################################################
+# Test read JPEG compressed RMF dataset
+
+
+def rmf_27():
+
+    tst = gdaltest.GDALTest('rmf', 'jpeg-in-rmf.rsw', 1, 50741)
+    ret = tst.testOpen()
+
+    if ret != 'success':
+        return 'fail'
+
+    tst = gdaltest.GDALTest('rmf', 'jpeg-in-rmf.rsw', 2, 27453)
+    ret = tst.testOpen()
+
+    if ret != 'success':
+        return 'fail'
+
+    tst = gdaltest.GDALTest('rmf', 'jpeg-in-rmf.rsw', 3, 35939)
+    return tst.testOpen()
+
+
+###############################################################################
 
 
 gdaltest_list = [
@@ -596,7 +618,8 @@ gdaltest_list = [
     rmf_23,
     rmf_24,
     rmf_25,
-    rmf_26
+    rmf_26,
+    rmf_27
 ]
 
 if __name__ == '__main__':
