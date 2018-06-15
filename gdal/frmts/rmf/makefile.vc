@@ -1,5 +1,5 @@
 
-OBJ	=	rmfdataset.obj rmfdem.obj rmflzw.obj
+OBJ	=	rmfdataset.obj rmfdem.obj rmfjpeg.obj rmflzw.obj
 
 GDAL_ROOT	=	..\..
 

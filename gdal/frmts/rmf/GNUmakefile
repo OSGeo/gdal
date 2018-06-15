@@ -1,8 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	rmfdataset.o rmflzw.o rmfdem.o
-
+OBJ	=	rmfdataset.o rmflzw.o rmfdem.o rmfjpeg.o
 
 
 default:	$(OBJ:.o=.$(OBJ_EXT))

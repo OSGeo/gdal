@@ -35,6 +35,7 @@
 
 #define RMF_COMPRESSION_NONE    0
 #define RMF_COMPRESSION_LZW     1
+#define RMF_COMPRESSION_JPEG    2
 #define RMF_COMPRESSION_DEM     32
 
 enum RMFType
@@ -103,6 +104,7 @@ typedef struct
     GByte       iUnknown;
     GByte       iGeorefFlag;
     GByte       iInverse;
+    GByte       iJpegQuality;
 #define RMF_INVISIBLE_COLORS_SIZE 32
     GByte       abyInvisibleColors[RMF_INVISIBLE_COLORS_SIZE];
     double      adfElevMinMax[2];
@@ -154,13 +156,15 @@ class RMFDataset final: public GDALDataset
     VSILFILE        *fp;
 
     CPLErr          WriteHeader();
-    static int      LZWDecompress( const GByte*, GUInt32, GByte*, GUInt32 );
-    static int      DEMDecompress( const GByte*, GUInt32, GByte*, GUInt32 );
-    int             (*Decompress)( const GByte*, GUInt32, GByte*, GUInt32 );
+    static int      LZWDecompress( const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32 );
+    static int      JPEGDecompress( const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32 );
+    static int      DEMDecompress( const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32 );
+    int             (*Decompress)( const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32 );
 
     std::vector<RMFDataset*>    poOvrDatasets;
     vsi_l_offset                nHeaderOffset;
     RMFDataset*                 poParentDS;
+    bool                        bReverseBandLayout;
 
   public:
                 RMFDataset();
