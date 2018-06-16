@@ -570,20 +570,29 @@ def rmf_26():
 
 def rmf_27():
 
-    tst = gdaltest.GDALTest('rmf', 'jpeg-in-rmf.rsw', 1, 50741)
-    ret = tst.testOpen()
+    if gdal.GetDriverByName('JPEG') is None:
+        return 'skip'
 
-    if ret != 'success':
+    cs1 = [50182, 27153, 38826] # External libjpeg
+    cs2 = [50741, 27453, 35939] # Internal libjpeg
+    cs3 = [51194, 27940, 38071] # osx, clang
+
+    ds = gdal.Open('data/jpeg-in-rmf.rsw', gdal.GA_ReadOnly)
+    if ds is None:
+        gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    tst = gdaltest.GDALTest('rmf', 'jpeg-in-rmf.rsw', 2, 27453)
-    ret = tst.testOpen()
+    cs = [0, 0, 0]
+    for iBand in range(ds.RasterCount):
+        band = ds.GetRasterBand(iBand + 1)
+        cs[iBand] = band.Checksum()
 
-    if ret != 'success':
+    if cs != cs1 and cs != cs2 and cs != cs3:
+        gdaltest.post_reason('Invalid checksum %s expected %s, %s or %s .' %
+                             (str(cs), str(cs1), str(cs2), str(cs3)))
         return 'fail'
 
-    tst = gdaltest.GDALTest('rmf', 'jpeg-in-rmf.rsw', 3, 35939)
-    return tst.testOpen()
+    return 'success'
 
 
 ###############################################################################
