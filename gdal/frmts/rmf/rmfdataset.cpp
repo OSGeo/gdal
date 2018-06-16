@@ -52,6 +52,17 @@ static const char RMF_UnitsMM[] = "mm";
 constexpr double RMF_DEFAULT_SCALE = 10000.0;
 constexpr double RMF_DEFAULT_RESOLUTION = 100.0;
 
+/* -------------------------------------------------------------------- */
+/*  Note: Due to the fact that in the early versions of RMF             */
+/*  format the field of the iEPSGCode was marked as a 'reserved',       */
+/*  in the header on its place in many cases garbage values were writen.*/
+/*  Most of them can be weeded out by the minimum EPSG code value.      */
+/*                                                                      */
+/*  see: Surveying and Positioning Guidance Note Number 7, part 1       */
+/*       Using the EPSG Geodetic Parameter Dataset p. 22                */
+/*       http://www.epsg.org/Portals/0/373-07-1.pdf                     */
+/* -------------------------------------------------------------------- */
+constexpr GInt32 RMF_EPSG_MIN_CODE = 1024;
 
 static char* RMFUnitTypeToStr( GUInt32 iElevationUnit )
 {
@@ -1035,6 +1046,12 @@ CPLErr RMFDataset::WriteHeader()
             sHeader.dfStdP2 = adfPrjParams[1];
             sHeader.dfCenterLat = adfPrjParams[2];
             sHeader.dfCenterLong = adfPrjParams[3];
+            if( oSRS.GetAuthorityName(nullptr) != nullptr &&
+                oSRS.GetAuthorityCode(nullptr) != nullptr &&
+                EQUAL(oSRS.GetAuthorityName(nullptr), "EPSG") )
+            {
+                sHeader.iEPSGCode = atoi(oSRS.GetAuthorityCode(nullptr));
+            }
 
             sExtHeader.nEllipsoid = static_cast<int>(iEllips);
             sExtHeader.nDatum = static_cast<int>(iDatum);
@@ -1093,6 +1110,7 @@ do {                                                    \
         RMF_WRITE_ULONG( abyHeader, sHeader.nTileTblSize, 108 );
         RMF_WRITE_LONG( abyHeader, sHeader.iMapType, 124 );
         RMF_WRITE_LONG( abyHeader, sHeader.iProjection, 128 );
+        RMF_WRITE_LONG( abyHeader, sHeader.iEPSGCode, 132 );
         RMF_WRITE_DOUBLE( abyHeader, sHeader.dfScale, 136 );
         RMF_WRITE_DOUBLE( abyHeader, sHeader.dfResolution, 144 );
         RMF_WRITE_DOUBLE( abyHeader, sHeader.dfPixelSize, 152 );
@@ -1390,6 +1408,7 @@ do {                                                                    \
         RMF_READ_ULONG( abyHeader, poDS->sHeader.nTileTblSize, 108 );
         RMF_READ_LONG( abyHeader, poDS->sHeader.iMapType, 124 );
         RMF_READ_LONG( abyHeader, poDS->sHeader.iProjection, 128 );
+        RMF_READ_LONG( abyHeader, poDS->sHeader.iEPSGCode, 132 );
         RMF_READ_DOUBLE( abyHeader, poDS->sHeader.dfScale, 136 );
         RMF_READ_DOUBLE( abyHeader, poDS->sHeader.dfResolution, 144 );
         RMF_READ_DOUBLE( abyHeader, poDS->sHeader.dfPixelSize, 152 );
@@ -1494,6 +1513,7 @@ do {                                                                    \
     CPLDebug( "RMF", "Map type %d, projection %d, scale %f, resolution %f, ",
               poDS->sHeader.iMapType, poDS->sHeader.iProjection,
               poDS->sHeader.dfScale, poDS->sHeader.dfResolution );
+    CPLDebug( "RMF", "EPSG %d ", (int)poDS->sHeader.iEPSGCode );
     CPLDebug( "RMF", "Georeferencing: pixel size %f, LLX %f, LLY %f",
               poDS->sHeader.dfPixelSize,
               poDS->sHeader.dfLLX, poDS->sHeader.dfLLY );
@@ -1788,10 +1808,23 @@ do {                                                                    \
 /*  XXX: If projection value is not specified, but image still have     */
 /*  georeferencing information, assume Gauss-Kruger projection.         */
 /* -------------------------------------------------------------------- */
-    if( poDS->sHeader.iProjection > 0 ||
+    bool bEPSGCodeOk = false;
+    if(poDS->sHeader.iEPSGCode > RMF_EPSG_MIN_CODE)
+    {
+        OGRSpatialReference oSRS;
+        if(OGRERR_NONE == oSRS.importFromEPSG(poDS->sHeader.iEPSGCode))
+        {
+            if(poDS->pszProjection)
+                CPLFree(poDS->pszProjection);
+            oSRS.exportToWkt(&poDS->pszProjection);
+            bEPSGCodeOk = true;
+        }
+    }
+    if((!bEPSGCodeOk) &&
+       (poDS->sHeader.iProjection > 0 ||
         (poDS->sHeader.dfPixelSize != 0.0 &&
          poDS->sHeader.dfLLX != 0.0 &&
-         poDS->sHeader.dfLLY != 0.0) )
+         poDS->sHeader.dfLLY != 0.0)))
     {
         OGRSpatialReference oSRS;
         GInt32 nProj =
@@ -2138,6 +2171,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
 
     poDS->sHeader.iMapType = -1;
     poDS->sHeader.iProjection = -1;
+    poDS->sHeader.iEPSGCode = -1;
     poDS->sHeader.dfScale = dfScale;
     poDS->sHeader.dfResolution = dfResolution;
     poDS->sHeader.dfPixelSize = dfPixelSize;
