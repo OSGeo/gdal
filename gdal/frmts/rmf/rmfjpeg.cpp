@@ -27,11 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifdef HAVE_LIBJPEG
+#include <algorithm>
 #include "cpl_conv.h"
 
 #include "rmfdataset.h"
-#include "jpeglib.h"
-#include "setjmp.h"
+#include <setjmp.h>
+CPL_C_START
+#include <jpeglib.h>
+CPL_C_END
 
 
 static void RMFJPEGMessage(j_common_ptr poInfo, int iMsgLevel)
@@ -175,3 +179,5 @@ int RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
 
     return oJpegInfo.output_scanline*nRawScanLineSize;
 }
+
+#endif //HAVE_LIBJPEG

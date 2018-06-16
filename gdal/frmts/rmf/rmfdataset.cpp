@@ -1741,11 +1741,18 @@ do {                                                                    \
     else if( poDS->sHeader.iCompression == RMF_COMPRESSION_JPEG
              && eType == GDT_Byte && poDS->nBands == 3)
     {
+#ifdef HAVE_LIBJPEG
         CPLString   oBuf;
         oBuf.Printf("%d", (int)poDS->sHeader.iJpegQuality);
         poDS->Decompress = &JPEGDecompress;
         poDS->bReverseBandLayout = true;
         poDS->SetMetadataItem("JPEG_QUALITY", oBuf.c_str(), "IMAGE_STRUCTURE");
+#else //HAVE_LIBJPEG
+         CPLError(CE_Failure, CPLE_AppDefined,
+             "JPEG codec is needed to open <%s>.\n"
+             "Please rebuild GDAL with libjpeg support.",
+             poOpenInfo->pszFilename);
+#endif //HAVE_LIBJPEG
     }
     else if( poDS->sHeader.iCompression == RMF_COMPRESSION_DEM
              && eType == GDT_Int32 )

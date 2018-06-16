@@ -5,6 +5,14 @@ GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
+!IFDEF JPEG_SUPPORTED
+!IFDEF JPEG_EXTERNAL_LIB
+EXTRAFLAGS =	-I..\jpeg -I$(JPEGDIR) -DHAVE_LIBJPEG
+!ELSE
+EXTRAFLAGS =	-I..\jpeg -I..\jpeg\libjpeg -DHAVE_LIBJPEG
+!ENDIF
+!ENDIF
+
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o
 

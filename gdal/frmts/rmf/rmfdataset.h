@@ -157,7 +157,9 @@ class RMFDataset final: public GDALDataset
 
     CPLErr          WriteHeader();
     static int      LZWDecompress( const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32 );
+#ifdef HAVE_LIBJPEG
     static int      JPEGDecompress( const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32 );
+#endif //HAVE_LIBJPEG
     static int      DEMDecompress( const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32 );
     int             (*Decompress)( const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32 );
 
