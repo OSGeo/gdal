@@ -76,7 +76,6 @@ if exist gdal.lib del gdal.lib^
 if exist $(GDAL_DLL) del $(GDAL_DLL)^
 if exist $(GDAL_DLL).manifest del $(GDAL_DLL).manifest^
 if exist gdal_i.lib del gdal_i.*^
-if exist $(GDAL_PDB) del $(GDAL_PDB)^
 if exist *.ilk del *.ilk
 
 staticlib:	$(LIB_DEPENDS)
@@ -94,6 +93,7 @@ clean:
 	call <<clean_main_build_output.bat
 $(CLEAN_MAIN_BUILD_OUTPUT_CMDS)
 <<
+	if exist $(GDAL_PDB) del $(GDAL_PDB)^
 	cd port
 	$(MAKE) /f makefile.vc clean
 	cd ..
