@@ -127,6 +127,14 @@ static int CRS_compute_georef_equations(GCPTransformInfo *psInfo, struct Control
     double [], double [], double [], double [], int);
 static int remove_outliers(GCPTransformInfo *);
 
+
+#define MSUCCESS     1 /* SUCCESS */
+#define MNPTERR      0 /* NOT ENOUGH POINTS */
+#define MUNSOLVABLE -1 /* NOT SOLVABLE */
+#define MMEMERR     -2 /* NOT ENOUGH MEMORY */
+#define MPARMERR    -3 /* PARAMETER ERROR */
+#define MINTERR     -4 /* INTERNAL ERROR */
+
 static const char * const CRS_error_message[] = {
     "Failed to compute GCP transform: Not enough points available",
     "Failed to compute GCP transform: Transform is not solvable",
@@ -231,7 +239,11 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
 /*      Compute the forward and reverse polynomials.                    */
 /* -------------------------------------------------------------------- */
 
-    if(bRefine)
+    if( nGCPCount == 0 )
+    {
+        nCRSresult = MNPTERR;
+    }
+    else if(bRefine)
     {
         nCRSresult = remove_outliers(psInfo);
     }
@@ -575,14 +587,6 @@ struct MATRIX
 /* CALCULATE OFFSET INTO ARRAY BASED ON R/C */
 
 #define M(row,col) m->v[(((row)-1)*(m->n))+(col)-1]
-
-
-#define MSUCCESS     1 /* SUCCESS */
-#define MNPTERR      0 /* NOT ENOUGH POINTS */
-#define MUNSOLVABLE -1 /* NOT SOLVABLE */
-#define MMEMERR     -2 /* NOT ENOUGH MEMORY */
-#define MPARMERR    -3 /* PARAMETER ERROR */
-#define MINTERR     -4 /* INTERNAL ERROR */
 
 /***************************************************************************/
 /*
