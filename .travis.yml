@@ -6,18 +6,6 @@ matrix:
   include:
 
     - os: linux
-      compiler: gcc
-      language: cpp
-      sudo: required
-      dist: precise
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
-        - BUILD_NAME=precise
-        - DETAILS="debug build, no libtool"
-    - os: linux
       compiler: clang
       language: cpp
       sudo: required
@@ -45,7 +33,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: precise
+      dist: trusty
       cache:
         apt: true
         directories:
