@@ -1737,6 +1737,7 @@ do {                                                                    \
     if( poDS->sHeader.iCompression == RMF_COMPRESSION_LZW )
     {
         poDS->Decompress = &LZWDecompress;
+        poDS->SetMetadataItem("COMPRESSION", "LZW", "IMAGE_STRUCTURE");
     }
     else if( poDS->sHeader.iCompression == RMF_COMPRESSION_JPEG
              && eType == GDT_Byte && poDS->nBands == 3)
@@ -1747,6 +1748,7 @@ do {                                                                    \
         poDS->Decompress = &JPEGDecompress;
         poDS->bReverseBandLayout = true;
         poDS->SetMetadataItem("JPEG_QUALITY", oBuf.c_str(), "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "JPEG", "IMAGE_STRUCTURE");
 #else //HAVE_LIBJPEG
          CPLError(CE_Failure, CPLE_AppDefined,
              "JPEG codec is needed to open <%s>.\n"
@@ -1758,6 +1760,7 @@ do {                                                                    \
              && eType == GDT_Int32 )
     {
         poDS->Decompress = &DEMDecompress;
+        poDS->SetMetadataItem("COMPRESSION", "RMF_DEM", "IMAGE_STRUCTURE");
     }
     else    // No compression
     {
