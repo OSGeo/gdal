@@ -1734,7 +1734,11 @@ do {                                                                    \
 /*  XXX: The DEM compression method seems to be only applicable         */
 /*  to Int32 data.                                                      */
 /* -------------------------------------------------------------------- */
-    if( poDS->sHeader.iCompression == RMF_COMPRESSION_LZW )
+    if( poDS->sHeader.iCompression == RMF_COMPRESSION_NONE )
+    {
+        poDS->Decompress = nullptr;
+    }
+    else if( poDS->sHeader.iCompression == RMF_COMPRESSION_LZW )
     {
         poDS->Decompress = &LZWDecompress;
         poDS->SetMetadataItem("COMPRESSION", "LZW", "IMAGE_STRUCTURE");
@@ -1754,6 +1758,8 @@ do {                                                                    \
              "JPEG codec is needed to open <%s>.\n"
              "Please rebuild GDAL with libjpeg support.",
              poOpenInfo->pszFilename);
+        delete poDS;
+        return nullptr;
 #endif //HAVE_LIBJPEG
     }
     else if( poDS->sHeader.iCompression == RMF_COMPRESSION_DEM
@@ -1764,7 +1770,11 @@ do {                                                                    \
     }
     else    // No compression
     {
-        poDS->Decompress = nullptr;
+         CPLError(CE_Failure, CPLE_AppDefined,
+             "Unknown compression #%d at file <%s>.",
+             (int)poDS->sHeader.iCompression, poOpenInfo->pszFilename);
+        delete poDS;
+        return nullptr;
     }
 /* -------------------------------------------------------------------- */
 /*  Create band information objects.                                    */
