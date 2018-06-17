@@ -712,6 +712,17 @@
 #define ZSTDSetupEncode gdal_ZSTDSetupEncode
 #define ZSTDVGetField gdal_ZSTDVGetField
 #define ZSTDVSetField gdal_ZSTDVSetField
+#define WebPCleanup gdal_WebPCleanup
+#define TWebPDecode gdal_WebPDecode
+#define TWebPEncode gdal_WebPEncode
+#define WebPFixupTags gdal_WebPFixupTags
+#define WebPPostEncode gdal_WebPPostEncode
+#define WebPPreDecode gdal_WebPPreDecode
+#define WebPPreEncode gdal_WebPPreEncode
+#define WebPSetupDecode gdal_WebPSetupDecode
+#define WebPSetupEncode gdal_WebPSetupEncode
+#define WebPVGetField gdal_WebPVGetField
+#define WebPVSetField gdal_WebPVSetField
 #define _msbmask gdal__msbmask
 #define zeroruns gdal_zeroruns
 #define oneruns gdal_oneruns
@@ -747,6 +758,7 @@
 #define orientNames gdal_orientNames
 #define zipFields gdal_zipFields
 #define ZSTDFields gdal_ZSTDFields
+#define WebPFields gdal_WebPFields
 #define _TIFFBuiltinCODECS gdal__TIFFBuiltinCODECS
 #define _TIFFerrorHandler gdal__TIFFerrorHandler
 #define _TIFFwarningHandler gdal__TIFFwarningHandler

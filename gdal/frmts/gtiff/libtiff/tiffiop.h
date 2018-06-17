@@ -429,6 +429,9 @@ extern int TIFFInitLZMA(TIFF*, int);
 #ifdef ZSTD_SUPPORT
 extern int TIFFInitZSTD(TIFF*, int);
 #endif
+#ifdef WEBP_SUPPORT
+extern int TIFFInitWebP(TIFF*, int);
+#endif
 #ifdef VMS
 extern const TIFFCodec _TIFFBuiltinCODECS[];
 #else

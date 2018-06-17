@@ -96,6 +96,9 @@
 #ifdef INTERNAL_LIBTIFF
 #  include "tiffiop.h"
 #  include "tif_lerc.h"
+#    ifdef WEBP_SUPPORT
+#      include "webp/encode.h"
+#    endif
 #endif
 #include "tiffvers.h"
 #include "tifvsi.h"
@@ -423,6 +426,8 @@ class GTiffDataset final : public GDALPamDataset
     int           nZLevel;
     int           nLZMAPreset;
     int           nZSTDLevel;
+    int           nWebPLevel;
+    bool          bWebPLossless;
     int           nJpegQuality;
     int           nJpegTablesMode;
 #if HAVE_LERC
@@ -7382,6 +7387,8 @@ GTiffDataset::GTiffDataset() :
     nZLevel(-1),
     nLZMAPreset(-1),
     nZSTDLevel(-1),
+    nWebPLevel(-1),
+    bWebPLossless(false),
     nJpegQuality(-1),
     nJpegTablesMode(-1),
     bPromoteTo8Bits(false),
@@ -8635,6 +8642,10 @@ void GTiffDataset::ThreadCompressionFunc( void* pData )
                      poDS->anLercAddCompressionAndVersion);
     }
 #endif
+    if( poDS->nWebPLevel > 0 && poDS->nCompression == COMPRESSION_WEBP)
+        TIFFSetField(hTIFFTmp, TIFFTAG_WEBP_LEVEL, poDS->nWebPLevel);
+    if( poDS->bWebPLossless && poDS->nCompression == COMPRESSION_WEBP)
+        TIFFSetField(hTIFFTmp, TIFFTAG_WEBP_LOSSLESS, 1);
     TIFFSetField(hTIFFTmp, TIFFTAG_PHOTOMETRIC, poDS->nPhotometric);
     TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLEFORMAT, poDS->nSampleFormat);
     TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLESPERPIXEL, poDS->nSamplesPerPixel);
@@ -8784,7 +8795,8 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
             nCompression == COMPRESSION_PACKBITS ||
             nCompression == COMPRESSION_LZMA ||
             nCompression == COMPRESSION_ZSTD ||
-            nCompression == COMPRESSION_LERC) ) )
+            nCompression == COMPRESSION_LERC ||
+            nCompression == COMPRESSION_WEBP) ) )
         return false;
 
     int nNextCompressionJobAvail = -1;
@@ -10042,6 +10054,8 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
     poODS->nZLevel = nZLevel;
     poODS->nLZMAPreset = nLZMAPreset;
     poODS->nZSTDLevel = nZSTDLevel;
+    poODS->nWebPLevel = nWebPLevel;
+    poODS->bWebPLossless = bWebPLossless;
     poODS->nJpegTablesMode = nJpegTablesMode;
 #if HAVE_LERC
     poODS->dfMaxZError = dfMaxZError;
@@ -12051,6 +12065,10 @@ bool GTiffDataset::SetDirectory( toff_t nNewOffset )
             TIFFSetField(hTIFF, TIFFTAG_LERC_MAXZERROR, dfMaxZError);
         }
 #endif
+        if( nWebPLevel > 0 && nCompression == COMPRESSION_WEBP)
+            TIFFSetField(hTIFF, TIFFTAG_WEBP_LEVEL, nWebPLevel);
+        if( bWebPLossless && nCompression == COMPRESSION_WEBP)
+            TIFFSetField(hTIFF, TIFFTAG_WEBP_LOSSLESS, 1);
     }
 
     return true;
@@ -14238,6 +14256,10 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         }
 #endif
     }
+    else if( nCompression == COMPRESSION_WEBP )
+    {
+        oGTiffMDMD.SetMetadataItem( "COMPRESSION", "WEBP", "IMAGE_STRUCTURE" );
+    }
     else
     {
         CPLString oComp;
@@ -15121,6 +15143,29 @@ static double GTiffGetLERCMaxZError(char** papszOptions)
 }
 #endif
 
+static int GTiffGetWebPLevel(char** papszOptions)
+{
+    int nWebPLevel = -1;
+    const char* pszValue = CSLFetchNameValue( papszOptions, "WEBP_LEVEL" );
+    if( pszValue != nullptr )
+    {
+        nWebPLevel = atoi( pszValue );
+        if( !(nWebPLevel >= 1 && nWebPLevel <= 100) )
+        {
+            CPLError( CE_Warning, CPLE_IllegalArg,
+                      "WEBP_LEVEL=%s value not recognised, ignoring.",
+                      pszValue );
+            nWebPLevel = -1;
+        }
+    }
+    return nWebPLevel;
+}
+
+static bool GTiffGetWebPLossless(char** papszOptions)
+{
+    return CPLFetchBool( papszOptions, "WEBP_LOSSLESS", false);
+}
+
 static int GTiffGetZLevel(char** papszOptions)
 {
     int nZLevel = -1;
@@ -15325,6 +15370,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     const int l_nZLevel = GTiffGetZLevel(papszParmList);
     const int l_nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
     const int l_nZSTDLevel = GTiffGetZSTDPreset(papszParmList);
+    const int l_nWebPLevel = GTiffGetWebPLevel(papszParmList);
+    const bool l_bWebPLossless = GTiffGetWebPLossless(papszParmList);
     const int l_nJpegQuality = GTiffGetJpegQuality(papszParmList);
     const int l_nJpegTablesMode = GTiffGetJpegTablesMode(papszParmList);
 #if HAVE_LERC
@@ -15896,6 +15943,10 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         TIFFSetField( l_hTIFF, TIFFTAG_LERC_MAXZERROR, l_dfMaxZError );
     }
 #endif
+    if( l_nCompression == COMPRESSION_WEBP && l_nWebPLevel != -1)
+        TIFFSetField( l_hTIFF, TIFFTAG_WEBP_LEVEL, l_nWebPLevel);
+    if( l_nCompression == COMPRESSION_WEBP && l_bWebPLossless)
+        TIFFSetField( l_hTIFF, TIFFTAG_WEBP_LOSSLESS, 1);
 
     if( l_nCompression == COMPRESSION_JPEG )
         TIFFSetField( l_hTIFF, TIFFTAG_JPEGTABLESMODE, l_nJpegTablesMode );
@@ -16515,6 +16566,8 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nZLevel = GTiffGetZLevel(papszParmList);
     poDS->nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
     poDS->nZSTDLevel = GTiffGetZSTDPreset(papszParmList);
+    poDS->nWebPLevel = GTiffGetWebPLevel(papszParmList);
+    poDS->bWebPLossless = GTiffGetWebPLossless(papszParmList);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszParmList);
     poDS->nJpegTablesMode = GTiffGetJpegTablesMode(papszParmList);
 #if HAVE_LERC
@@ -17521,6 +17574,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS->nZLevel = GTiffGetZLevel(papszOptions);
     poDS->nLZMAPreset = GTiffGetLZMAPreset(papszOptions);
     poDS->nZSTDLevel = GTiffGetZSTDPreset(papszOptions);
+    poDS->nWebPLevel = GTiffGetWebPLevel(papszOptions);
+    poDS->bWebPLossless = GTiffGetWebPLossless(papszOptions);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszOptions);
     poDS->nJpegTablesMode = GTiffGetJpegTablesMode(papszOptions);
     poDS->GetDiscardLsbOption(papszOptions);
@@ -17566,6 +17621,18 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         TIFFSetField( l_hTIFF, TIFFTAG_LERC_MAXZERROR, poDS->dfMaxZError );
     }
 #endif
+    if( l_nCompression == COMPRESSION_WEBP )
+    {
+        if( poDS->nWebPLevel != -1 )
+        {
+            TIFFSetField( l_hTIFF, TIFFTAG_WEBP_LEVEL, poDS->nWebPLevel );
+        }
+
+        if( poDS->bWebPLossless)
+        {
+          TIFFSetField( l_hTIFF, TIFFTAG_WEBP_LOSSLESS, poDS->bWebPLossless );
+        }
+    }
 
     // Precreate (internal) mask, so that the IBuildOverviews() below
     // has a chance to create also the overviews of the mask.
@@ -18971,6 +19038,8 @@ int GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName)
         nCompression = COMPRESSION_LERC;
     }
 #endif
+    else if( EQUAL( pszValue, "WEBP" ) )
+        nCompression = COMPRESSION_WEBP;
     else
         CPLError( CE_Warning, CPLE_IllegalArg,
                   "%s=%s value not recognised, ignoring.",
@@ -19005,6 +19074,7 @@ void GDALRegister_GTiff()
     bool bHasJPEG = false;
     bool bHasLZMA = false;
     bool bHasZSTD = false;
+    bool bHasWebP = false;
 
     GDALDriver *poDriver = new GDALDriver();
 
@@ -19080,6 +19150,12 @@ void GDALRegister_GTiff()
             osCompressValues +=
                     "       <Value>ZSTD</Value>";
         }
+        else if( c->scheme == COMPRESSION_WEBP )
+        {
+            bHasWebP = true;
+            osCompressValues +=
+                    "       <Value>WEBP</Value>";
+        }
     }
 #ifdef HAVE_LERC
     osCompressValues +=
@@ -19130,6 +19206,14 @@ void GDALRegister_GTiff()
     osOptions += ""
 "   <Option name='MAX_Z_ERROR' type='float' description='Maximum error for LERC compression' default='0'/>";
 #endif
+    if ( bHasWebP )
+    {
+      osOptions += ""
+#if WEBP_ENCODER_ABI_VERSION >= 0x0100
+"   <Option name='WEBP_LOSSLESS' type='boolean' description='Whether lossless compression should be used' default='FALSE'/>"
+#endif
+"   <Option name='WEBP_LEVEL' type='int' description='WEBP quality level. Low values result in higher compression ratios' default='75'/>";
+    }
     osOptions += ""
 "   <Option name='NUM_THREADS' type='string' description='Number of worker threads for compression. Can be set to ALL_CPUS' default='1'/>"
 "   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31), or float32 (16)'/>"

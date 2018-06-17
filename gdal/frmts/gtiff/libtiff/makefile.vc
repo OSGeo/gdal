@@ -38,7 +38,8 @@ OBJ	= \
 	tif_write.obj \
 	tif_zip.obj \
 	tif_lzma.obj \
-	tif_zstd.obj
+	tif_zstd.obj \
+	tif_webp.obj
 
 GDAL_ROOT	=	..\..\..
 
@@ -46,7 +47,7 @@ GDAL_ROOT	=	..\..\..
 # in tif_jpeg.c:147 and tif_ojpeg.c:248
 
 EXTRAFLAGS = 	$(ZLIB_FLAGS) -DZIP_SUPPORT -DPIXARLOG_SUPPORT \
-		$(JPEG_FLAGS) $(JPEG12_FLAGS) $(LZMA_FLAGS) $(ZSTD_FLAGS)  /wd4324
+		$(JPEG_FLAGS) $(JPEG12_FLAGS) $(LZMA_FLAGS) $(ZSTD_FLAGS) $(WEBP_FLAGS) /wd4324
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -77,6 +78,10 @@ LZMA_FLAGS =	$(LZMA_CFLAGS) -DLZMA_SUPPORT
 ZSTD_FLAGS =	$(ZSTD_CFLAGS) -DZSTD_SUPPORT
 !ENDIF
 
+!IFDEF WEBP_CFLAGS
+WEBP_FLAGS =	$(WEBP_CFLAGS) -DWEBP_SUPPORT
+!ENDIF
+
 
 
 
@@ -90,4 +95,3 @@ libjpeg12src:
 	cd ../../jpeg/libjpeg12
 	$(MAKE) /f makefile.vc jcapimin12.c
 	cd ../../gtiff/libtiff
-	

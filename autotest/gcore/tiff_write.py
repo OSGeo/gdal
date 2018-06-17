@@ -8007,6 +8007,38 @@ def tiff_write_171_zstd_predictor():
     return ut.testCreateCopy()
 
 ###############################################################################
+# Test WEBP compression
+
+
+def tiff_write_webp():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest('GTiff', 'md_ge_rgb_0010000.tif', 0, None,
+                           options=['COMPRESS=WEBP',
+                                    'WEBP_LOSSLESS=true'])
+    return ut.testCreateCopy()
+
+###############################################################################
+# Test WEBP compression with internal tiling
+
+
+def tiff_write_tiled_webp():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest('GTiff', 'md_ge_rgb_0010000.tif', 0, None,
+                           options=['COMPRESS=WEBP',
+                                    'WEBP_LOSSLESS=true',
+                                    'TILED=true'])
+    return ut.testCreateCopy()
+
+
+###############################################################################
 # GeoTIFF DGIWG tags
 
 
@@ -8554,6 +8586,8 @@ gdaltest_list = [
     tiff_write_181_xmp,
     tiff_write_182_xmp_delete,
     # tiff_write_api_proxy,
+    tiff_write_webp,
+    tiff_write_tiled_webp,
     tiff_write_cleanup]
 
 # gdaltest_list = [ tiff_write_1, tiff_write_176_lerc_max_z_error ]
