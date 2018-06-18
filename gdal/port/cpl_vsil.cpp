@@ -1563,7 +1563,7 @@ int VSIIngestFile( VSILFILE* fp,
                 if( pabyNew == nullptr )
                 {
                     CPLError( CE_Failure, CPLE_OutOfMemory,
-                              "Cannot allocated " CPL_FRMT_GIB " bytes",
+                              "Cannot allocate " CPL_FRMT_GIB " bytes",
                               nDataAlloc );
                     VSIFree( *ppabyRet );
                     *ppabyRet = nullptr;
@@ -1634,7 +1634,7 @@ int VSIIngestFile( VSILFILE* fp,
         if( nullptr == *ppabyRet )
         {
             CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "Cannot allocated " CPL_FRMT_GIB " bytes",
+                      "Cannot allocate " CPL_FRMT_GIB " bytes",
                       nDataLen + 1 );
             if( bFreeFP )
                 CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
