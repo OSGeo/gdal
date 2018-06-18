@@ -118,6 +118,15 @@ int RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
     oJpegInfo.src = &oSrc;
     jpeg_read_header(&oJpegInfo, TRUE);
 
+    if(oJpegInfo.num_components != RMF_JPEG_BAND_COUNT)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "RMF JPEG: Invalid num_components %d in tile, must be %d",
+                 (int)oJpegInfo.num_components, (int)RMF_JPEG_BAND_COUNT);
+        jpeg_destroy_decompress(&oJpegInfo);
+        return 0;
+    }
+
     oJpegInfo.dct_method = JDCT_FLOAT;
     oJpegInfo.out_color_space = JCS_RGB;
 

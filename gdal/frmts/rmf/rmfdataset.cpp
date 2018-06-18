@@ -248,7 +248,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     GUInt32 nRawXSize = nBlockXSize;
     GUInt32 nRawYSize = nBlockYSize;
-    bool    bCompresedTile = false;
+    bool    bCompressedTile = false;
 
     if( nLastTileWidth && (GUInt32)nBlockXOff == poGDS->nXTiles - 1 )
         nRawXSize = nLastTileWidth;
@@ -300,7 +300,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                       nRawBytes, nRawXSize, nRawYSize );
                 CPLFree( pabyTile );
                 // nTileBytes = nRawBytes;
-                bCompresedTile = true;
+                bCompressedTile = true;
             }
             else
             {
@@ -384,7 +384,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 CPLFree( pabyTile );
                 pabyTile = pabyRawBuf;
                 nTileBytes = nRawBytes;
-                bCompresedTile = true;
+                bCompressedTile = true;
             }
         }
 
@@ -398,7 +398,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if( nTileSize > nBlockSize )
                 nTileSize = nBlockSize;
 
-            if(poGDS->bReverseBandLayout && bCompresedTile)
+            if(poGDS->bReverseBandLayout && bCompressedTile)
             {
                 for( GUInt32 i = 0; i < nTileSize; i++ )
                 {
@@ -1744,7 +1744,7 @@ do {                                                                    \
         poDS->SetMetadataItem("COMPRESSION", "LZW", "IMAGE_STRUCTURE");
     }
     else if( poDS->sHeader.iCompression == RMF_COMPRESSION_JPEG
-             && eType == GDT_Byte && poDS->nBands == 3)
+             && eType == GDT_Byte && poDS->nBands == RMF_JPEG_BAND_COUNT)
     {
 #ifdef HAVE_LIBJPEG
         CPLString   oBuf;

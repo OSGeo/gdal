@@ -3,8 +3,6 @@ include ../../GDALmake.opt
 
 OBJ	=	rmfdataset.o rmflzw.o rmfdem.o rmfjpeg.o
 
-JPEG_FLAGS =
-
 ifneq ($(JPEG_SETTING),no)
 CPPFLAGS 	:=	$(CPPFLAGS) -I../jpeg -DHAVE_LIBJPEG
 endif
