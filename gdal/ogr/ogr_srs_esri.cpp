@@ -1886,7 +1886,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 
         // pszProjection might be deleted in DeleteParamBasedOnPrjName,
         // so make and use a copy.
-        const string osProjection(pszProjection);
+        const std::string osProjection(pszProjection);
         DeleteParamBasedOnPrjName(
             this, osProjection.c_str(),
             apszDeleteParametersBasedOnProjection);
