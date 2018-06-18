@@ -2050,9 +2050,19 @@ OGRGeometry::IsValid() const
     if( IsSFCGALCompatible() )
     {
 #ifndef HAVE_SFCGAL
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "SFCGAL support not enabled." );
-        return FALSE;
+
+#ifdef HAVE_GEOS
+        if( wkbFlatten(getGeometryType()) == wkbTriangle )
+        {
+            // go on
+        }
+        else
+#endif
+        {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                    "SFCGAL support not enabled." );
+            return FALSE;
+        }
 #else
         sfcgal_init();
         sfcgal_geometry_t *poThis =
@@ -2070,7 +2080,6 @@ OGRGeometry::IsValid() const
 #endif
     }
 
-    else
     {
 #ifndef HAVE_GEOS
         CPLError( CE_Failure, CPLE_NotSupported,
