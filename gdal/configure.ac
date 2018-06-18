@@ -506,12 +506,12 @@ if test "$with_sse" = "yes" -o "$with_sse" = ""; then
     echo '#else' >> detectsse.cpp
     echo 'some_error' >> detectsse.cpp
     echo '#endif' >> detectsse.cpp
-    if test -z "`${CXX} ${CXXFLAGS} -o detectsse detectsse.cpp 2>&1`" ; then
+    if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} -o detectsse detectsse.cpp 2>&1`" ; then
         AC_MSG_RESULT([yes])
         SSEFLAGS=""
         HAVE_SSE_AT_COMPILE_TIME=yes
     else
-        if test -z "`${CXX} ${CXXFLAGS} -msse -o detectsse detectsse.cpp 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} -msse -o detectsse detectsse.cpp 2>&1`" ; then
             AC_MSG_RESULT([yes])
             SSEFLAGS="-msse"
             HAVE_SSE_AT_COMPILE_TIME=yes
@@ -577,12 +577,12 @@ if test "$with_ssse3" = "yes" -o "$with_ssse3" = ""; then
     echo '#else' >> detectssse3.cpp
     echo 'some_error' >> detectssse3.cpp
     echo '#endif' >> detectssse3.cpp
-    if test -z "`${CXX} ${CXXFLAGS} -o detectssse3 detectssse3.cpp 2>&1`" ; then
+    if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} -o detectssse3 detectssse3.cpp 2>&1`" ; then
         AC_MSG_RESULT([yes])
         SSSE3FLAGS=""
         HAVE_SSSE3_AT_COMPILE_TIME=yes
     else
-        if test -z "`${CXX} ${CXXFLAGS} -mssse3 -o detectssse3 detectssse3.cpp 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} -mssse3 -o detectssse3 detectssse3.cpp 2>&1`" ; then
             AC_MSG_RESULT([yes])
             SSSE3FLAGS="-mssse3"
             HAVE_SSSE3_AT_COMPILE_TIME=yes
@@ -653,12 +653,12 @@ if test "$with_avx" = "yes" -o "$with_avx" = ""; then
     echo '#else' >> detectavx.cpp
     echo 'some_error' >> detectavx.cpp
     echo '#endif' >> detectavx.cpp
-    if test -z "`${CXX} ${CXXFLAGS} -o detectavx detectavx.cpp 2>&1`" ; then
+    if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} -o detectavx detectavx.cpp 2>&1`" ; then
         AC_MSG_RESULT([yes])
         AVXFLAGS=""
         HAVE_AVX_AT_COMPILE_TIME=yes
     else
-        if test -z "`${CXX} ${CXXFLAGS} -mavx -o detectavx detectavx.cpp 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} -mavx -o detectavx detectavx.cpp 2>&1`" ; then
             AC_MSG_RESULT([yes])
             AVXFLAGS="-mavx"
             HAVE_AVX_AT_COMPILE_TIME=yes
@@ -1131,7 +1131,7 @@ if test "$am_func_iconv" = "yes"; then
     rm -f testiconv.*
     echo '#include <iconv.h>' > testiconv.cpp
     echo 'int main(int argc, char** argv) { iconv_t cd = 0; return iconv (cd, (const char **) 0, 0, 0, 0); } ' >> testiconv.cpp
-    if test -z "`${CXX} ${CPPFLAGS} testiconv.cpp -c 2>&1`" ; then
+    if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testiconv.cpp -c 2>&1`" ; then
         AC_MSG_RESULT([using ICONV_CPP_CONST="const"])
         ICONV_CPP_CONST="const"
     else
@@ -2069,7 +2069,7 @@ elif test "$with_sosi" = "yes" ; then
     rm -f testfyba
     echo "#include <fyba.h>" > testfyba.cpp
     echo "int main() { LC_Init(); return 0; }" >> testfyba.cpp
-    if test  -r /usr/include/fyba -a -z "`${CXX} ${CPPFLAGS} -I/usr/include/fyba -DLINUX testfyba.cpp -lfyba -lfygm -lfyut -o testfyba 2>&1`" ; then
+    if test  -r /usr/include/fyba -a -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} -I/usr/include/fyba -DLINUX testfyba.cpp -lfyba -lfygm -lfyut -o testfyba 2>&1`" ; then
         AC_MSG_RESULT([found])
         SOSI_ENABLED=yes
         SOSI_LIB="-lfyba -lfygm -lfyut"
@@ -2144,7 +2144,7 @@ elif test "$with_mongocxx" = "yes" -o "$with_mongocxx" = "" ; then
     echo "#include <mongo/client/dbclient.h>" > testmongocxx.cpp
     echo "using namespace mongo;" >> testmongocxx.cpp
     echo "int main() { client::initialize(client::Options()); return 0; }" >> testmongocxx.cpp
-    if test -z "`${CXX} ${CPPFLAGS} testmongocxx.cpp -lmongoclient -lboost_system -lboost_thread -lboost_regex -o testmongocxx 2>&1`" ; then
+    if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testmongocxx.cpp -lmongoclient -lboost_system -lboost_thread -lboost_regex -o testmongocxx 2>&1`" ; then
         AC_MSG_RESULT([MongoCXX found])
         MONGODB_ENABLED="yes"
         MONGODB_LIB=" -lmongoclient -lboost_system -lboost_thread -lboost_regex"
@@ -2731,7 +2731,7 @@ elif test "$with_fgdb" = "yes" -o "$with_fgdb" = "" ; then
     echo "#include <FileGDBAPI.h>" > testfgdb.cpp
     echo "using namespace FileGDBAPI;" >> testfgdb.cpp
     echo "int main() { Geodatabase oDB; std::wstring osStr; ::OpenGeodatabase(osStr, oDB); return 0; }" >> testfgdb.cpp
-    if test -z "`${CXX} ${CPPFLAGS} testfgdb.cpp -lFileGDBAPI -lfgdbunixrtl -o testfgdb 2>&1`" ; then
+    if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testfgdb.cpp -lFileGDBAPI -lfgdbunixrtl -o testfgdb 2>&1`" ; then
         AC_MSG_RESULT([FileGDBAPI found])
         FGDB_ENABLED="yes"
         FGDB_LIB="-lFileGDBAPI -lfgdbunixrtl"
@@ -2852,7 +2852,7 @@ else
         echo "#include <string>" > testnewabi.cpp
         echo "namespace NCS { class CString { public: static std::wstring Utf8Decode (const std::string &sUtf8); }; }" >> testnewabi.cpp
         echo "int main() { return static_cast<int>(NCS::CString::Utf8Decode(std::string()).size()); }" >> testnewabi.cpp
-        if test -z "`${CXX} ${CPPFLAGS} testnewabi.cpp -L$with_ecw/lib/newabi/$ECW_ARCH/$ECW_CONF -lNCSEcw -o testnewabi 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testnewabi.cpp -L$with_ecw/lib/newabi/$ECW_ARCH/$ECW_CONF -lNCSEcw -o testnewabi 2>&1`" ; then
             ECW_LIBDIR=$with_ecw/lib/newabi/$ECW_ARCH/$ECW_CONF
             ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw $ECW_FRAMEWORK_COCOA"
             with_ecw=$with_ecw/$ecw_license_type
@@ -2879,7 +2879,7 @@ else
             echo "#include <string>" > testnewabi.cpp
             echo "namespace NCS { class CString { public: static std::wstring Utf8Decode (const std::string &sUtf8); }; }" >> testnewabi.cpp
             echo "int main() { return static_cast<int>(NCS::CString::Utf8Decode(std::string()).size()); }" >> testnewabi.cpp
-            if test -z "`${CXX} ${CPPFLAGS} testnewabi.cpp -L$with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF -lNCSEcw -o testnewabi 2>&1`" ; then
+            if test -z "`$${CXX} ${CXXFLAGS} ${CPPFLAGS} testnewabi.cpp -L$with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF -lNCSEcw -o testnewabi 2>&1`" ; then
                 ECW_LIBDIR=$with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF
                 ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw $ECW_FRAMEWORK_COCOA"
                 with_ecw=$with_ecw/$ecw_license_type
@@ -3537,7 +3537,7 @@ else
         rm -f islibdappost310.*
         echo '#include "Connect.h"' > islibdappost310.cpp
         echo 'int main(int argc, char** argv) { return 0; } ' >> islibdappost310.cpp
-        if test -z "`${CXX} ${CXXFLAGS} islibdappost310.cpp -c ${DODS_INC} ${CPPFLAGS} 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} islibdappost310.cpp -c ${DODS_INC} ${CPPFLAGS} 2>&1`" ; then
         dnl yes, libdap >= 3.10
             DODS_INC="$DODS_INC -DLIBDAP_310 -DLIBDAP_39"
             AC_MSG_RESULT([libdap >= 3.10])
@@ -3552,7 +3552,7 @@ else
             echo '#include "AttrTable.h"' >> islibdappre39.cpp
             echo 'using namespace libdap;' >> islibdappre39.cpp
             echo 'int main(int argc, char** argv) { DAS oDAS; AttrTable& oAttrTable = oDAS; } ' >> islibdappre39.cpp
-            if test -z "`${CXX} ${CXXFLAGS} islibdappre39.cpp -c ${DODS_INC} 2>&1`" ; then
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} islibdappre39.cpp -c ${DODS_INC} 2>&1`" ; then
             dnl yes, libdap < 3.9
                 AC_MSG_RESULT([libdap < 3.9])
             else
@@ -4466,12 +4466,12 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
     echo '#include <poppler/splash/SplashBitmap.h>' >> testpoppler.cpp
     echo 'int main(int argc, char** argv) { return &(((Page*)0x8000)->pageObj) == 0; } ' >> testpoppler.cpp
 
-    if test -z "`${CXX} testpoppler.cpp -o testpoppler ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
+    if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -o testpoppler ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
         HAVE_POPPLER=yes
     else
         # poppler 0.23.0 needs to be linked against pthread
         TEST_POPPLER_LIB="${TEST_POPPLER_LIB} -lpthread"
-        if test -z "`${CXX} testpoppler.cpp -o testpoppler ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -o testpoppler ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
             HAVE_POPPLER=yes
         fi
     fi
@@ -4491,7 +4491,7 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
         rm -f testpoppler.*
         echo '#include <poppler/Object.h>' > testpoppler.cpp
         echo 'int main(int argc, char** argv) { Object o(objNull); return 0; }' >> testpoppler.cpp
-        if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
             POPPLER_0_58_OR_LATER=yes
             POPPLER_0_23_OR_LATER=yes
             POPPLER_0_20_OR_LATER=yes
@@ -4513,7 +4513,7 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
             echo '#include <poppler/Object.h>' >> testpoppler.cpp
             echo '#include <poppler/Catalog.h>' >> testpoppler.cpp
             echo 'int main(int argc, char** argv) { return &(((Catalog*)0x8000)->optContent) == 0; }' >> testpoppler.cpp
-            if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
                 POPPLER_HAS_OPTCONTENT=yes
                 AC_MSG_RESULT([yes])
             else
@@ -4530,7 +4530,7 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
             echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
             echo '};' >> testpoppler.cpp
             echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
-            if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
                 POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
                 AC_MSG_RESULT([yes])
 
@@ -4539,7 +4539,7 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
                 rm -f testpoppler.*
                 echo '#include <poppler/Error.h>' > testpoppler.cpp
                 echo 'int main(int argc, char** argv) { setErrorCallback(0,0); return 0; }' >> testpoppler.cpp
-                if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
                     POPPLER_0_20_OR_LATER=yes
                     AC_MSG_RESULT([yes])
 
@@ -4555,7 +4555,7 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
                     echo '  virtual BaseStream *copy() { return BaseStream::copy(); }' >> testpoppler.cpp
                     echo '};' >> testpoppler.cpp
                     echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
-                    if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                    if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
                         POPPLER_0_23_OR_LATER=yes
                         AC_MSG_RESULT([yes])
                     else
@@ -4615,7 +4615,7 @@ if test "$with_podofo" != "no" -a "$with_podofo" != ""; then
         rm -f testpodofo.*
         echo '#include <podofo.h>' > testpodofo.cpp
         echo 'int main(int argc, char** argv) { PoDoFo::PdfError::EnableDebug( 0 ); return 0; } ' >> testpodofo.cpp
-        ${CXX} ${CXXFLAGS} ${LDFLAGS} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${PODOFO_LIB} 2>/dev/null
+        ${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${PODOFO_LIB} 2>/dev/null
         RETVAL=$?
         if test $RETVAL -eq 0; then
             HAVE_PODOFO=yes
@@ -4650,7 +4650,7 @@ if test "$with_podofo" != "no" -a "$with_podofo" != ""; then
         rm -f testpodofo.*
         echo '#include <podofo.h>' > testpodofo.cpp
         echo 'int main(int argc, char** argv) { PoDoFo::PdfError::EnableDebug( 0 ); return 0; } ' >> testpodofo.cpp
-        ${CXX} ${CXXFLAGS} ${LDFLAGS} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${TEST_PODOFO_LIB} 2>/dev/null
+        ${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${TEST_PODOFO_LIB} 2>/dev/null
         RETVAL=$?
         if test $RETVAL -eq 0; then
             HAVE_PODOFO=yes
@@ -4717,7 +4717,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
         if test ! -z "`uname | grep Darwin`" ; then
           TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
         fi
-        if ${CXX} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${PDFIUM_LIB} >/dev/null 2>/dev/null; then
+        if ${CXX} ${CXXFLAGS} ${CPPFLAGS} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${PDFIUM_LIB} >/dev/null 2>/dev/null; then
             HAVE_PDFIUM=yes
             CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
             if test "$PDF_PLUGIN" = "no"; then
@@ -4761,7 +4761,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
         if test ! -z "`uname | grep Darwin`" ; then
           TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
         fi
-        if ${CXX} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${TEST_PDFIUM_LIB} >/dev/null 2>/dev/null; then
+        if ${CXX} ${CXXFLAGS} ${CPPFLAGS} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${TEST_PDFIUM_LIB} >/dev/null 2>/dev/null; then
             HAVE_PDFIUM=yes
             CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
             if test "$PDF_PLUGIN" = "no"; then
@@ -5447,19 +5447,19 @@ if test "$with_armadillo" = "yes" ; then
     rm -f testarmadillo
     echo '#include <armadillo>' > testarmadillo.cpp
     echo 'int main(int argc, char** argv) { arma::mat matInput(2,2); const arma::mat& matInv = arma::inv(matInput); return 0; } ' >> testarmadillo.cpp
-    if test -z "`${CXX} ${CPPFLAGS} testarmadillo.cpp -o testarmadillo -larmadillo 2>&1`" ; then
+    if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testarmadillo.cpp -o testarmadillo -larmadillo 2>&1`" ; then
         HAVE_ARMADILLO=yes
         LIBS="-larmadillo ${LIBS}"
         AC_MSG_RESULT([yes])
     else
         dnl Try adding -llapack (#4923)
-        if test -z "`${CXX} ${CPPFLAGS} testarmadillo.cpp -o testarmadillo -larmadillo -llapack 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testarmadillo.cpp -o testarmadillo -larmadillo -llapack 2>&1`" ; then
             HAVE_ARMADILLO=yes
             LIBS="-larmadillo -llapack ${LIBS}"
             AC_MSG_RESULT([yes])
         else
             # clang 3.4 needs linking against libstdc++ (ubuntu 14.04)
-            if test -z "`${CXX} ${CPPFLAGS} testarmadillo.cpp -o testarmadillo -larmadillo -lstdc++ 2>&1`" ; then
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testarmadillo.cpp -o testarmadillo -larmadillo -lstdc++ 2>&1`" ; then
                 HAVE_ARMADILLO=yes
                 LIBS="-larmadillo -lstdc++ ${LIBS}"
                 AC_MSG_RESULT([yes])
@@ -5477,14 +5477,14 @@ elif test -n "$with_armadillo" -a "$with_armadillo" != "no" ; then
     rm -f testarmadillo
     echo '#include <armadillo>' > testarmadillo.cpp
     echo 'int main(int argc, char** argv) { arma::mat matInput(2,2); const arma::mat& matInv = arma::inv(matInput); return 0; } ' >> testarmadillo.cpp
-    if test -z "`${CXX} ${CPPFLAGS} -I$with_armadillo/include testarmadillo.cpp -o testarmadillo -L$with_armadillo/lib -larmadillo 2>&1`" ; then
+    if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} -I$with_armadillo/include testarmadillo.cpp -o testarmadillo -L$with_armadillo/lib -larmadillo 2>&1`" ; then
         HAVE_ARMADILLO=yes
         LIBS="-L$with_armadillo/lib -larmadillo ${LIBS}"
         EXTRA_INCLUDES="-I$with_armadillo/include $EXTRA_INCLUDES"
         AC_MSG_RESULT([yes])
     else
         dnl Try adding -llapack (#4923)
-        if test -z "`${CXX} ${CPPFLAGS} -I$with_armadillo/include testarmadillo.cpp -o testarmadillo -L$with_armadillo/lib -larmadillo -llapack 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} -I$with_armadillo/include testarmadillo.cpp -o testarmadillo -L$with_armadillo/lib -larmadillo -llapack 2>&1`" ; then
             HAVE_ARMADILLO=yes
             LIBS="-L$with_armadillo/lib -larmadillo -llapack ${LIBS}"
             EXTRA_INCLUDES="-I$with_armadillo/include $EXTRA_INCLUDES"
@@ -5524,7 +5524,7 @@ elif test "$with_cryptopp" = "yes" -o "$with_cryptopp" = "" ; then
     # Catch issue with clang++ (https://groups.google.com/forum/#!topic/cryptopp-users/DfWHy3bT0KI)
     echo '#include <cryptopp/osrng.h>' >> testcryptopp.cpp
     echo 'int main(int argc, char** argv) { CryptoPP::AES::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
-    ${CXX} ${CXXFLAGS} ${LDFLAGS} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
+    ${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
     RETVAL=$?
     if test $RETVAL -eq 0; then
         HAVE_CRYPTOPP=yes
@@ -5545,7 +5545,7 @@ elif test "$with_cryptopp" = "yes" -o "$with_cryptopp" = "" ; then
         rm -f testcryptopp.*
         echo '#include <cryptopp/blowfish.h>' > testcryptopp.cpp
         echo 'int main(int argc, char** argv) { CryptoPP::Blowfish::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
-        ${CXX} ${CXXFLAGS} ${LDFLAGS} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
+        ${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
         RETVAL=$?
         if test $RETVAL -eq 0; then
             USE_ONLY_CRYPTODLL_ALG=no
@@ -5565,7 +5565,7 @@ else
     # Catch issue with clang++ (https://groups.google.com/forum/#!topic/cryptopp-users/DfWHy3bT0KI)
     echo '#include <cryptopp/osrng.h>' >> testcryptopp.cpp
     echo 'int main(int argc, char** argv) { CryptoPP::AES::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
-    ${CXX} ${CXXFLAGS} ${LDFLAGS} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
+    ${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
     RETVAL=$?
     if test $RETVAL -eq 0; then
         HAVE_CRYPTOPP=yes
@@ -5584,7 +5584,7 @@ else
         rm -f testcryptopp.*
         echo '#include <cryptopp/blowfish.h>' > testcryptopp.cpp
         echo 'int main(int argc, char** argv) { CryptoPP::Blowfish::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
-        ${CXX} ${CXXFLAGS} ${LDFLAGS} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
+        ${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
         RETVAL=$?
         if test $RETVAL -eq 0; then
             USE_ONLY_CRYPTODLL_ALG=no
@@ -5679,7 +5679,7 @@ echo 'extern "C"' >> testdeprecated.cpp
 echo '{' >> testdeprecated.cpp
 echo 'int sprintf(char *str, const char* fmt, ...);' >> testdeprecated.cpp
 echo '}' >> testdeprecated.cpp
-${CXX} ${CXXFLAGS} testdeprecated.cpp -c 2>/dev/null
+${CXX} ${CXXFLAGS} ${CPPFLAGS} testdeprecated.cpp -c 2>/dev/null
 RETVAL=$?
 if test $RETVAL -eq 0; then
     AC_MSG_RESULT([yes])
@@ -5699,7 +5699,7 @@ case "${host_os}" in
         echo '#include <stdlib.h>' >> testwmain.cpp
         echo 'extern "C" int wmain( int argc, wchar_t ** argv_w );' >> testwmain.cpp
         echo 'extern "C" int wmain( int , wchar_t **  ) { return 0; } ' >> testwmain.cpp
-        ${CXX} ${CXXFLAGS} ${LDFLAGS} testwmain.cpp -o testwmain.exe -municode 2>/dev/null
+        ${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS} testwmain.cpp -o testwmain.exe -municode 2>/dev/null
         RETVAL=$?
         rm -f testwmain*
         if test $RETVAL -eq 0; then
