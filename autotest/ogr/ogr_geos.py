@@ -582,6 +582,57 @@ def ogr_geos_isvalid_true():
 ###############################################################################
 
 
+def ogr_geos_isvalid_true_linestringM():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt('LINESTRING M(0 0 10, 1 1 20)')
+
+    isring = g1.IsValid()
+
+    if isring != 1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+
+def ogr_geos_isvalid_true_circularStringM():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt('CIRCULARSTRING M(0 0 10, 1 1 20,2 0 30)')
+
+    isring = g1.IsValid()
+
+    if isring != 1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+
+def ogr_geos_isvalid_true_triangle():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt('TRIANGLE ((0 0,0 1,1 1,0 0))')
+
+    isring = g1.IsValid()
+
+    if isring != 1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+
 def ogr_geos_isvalid_false():
 
     if not ogrtest.have_geos():
@@ -692,6 +743,9 @@ gdaltest_list = [
     ogr_geos_issimple_true,
     ogr_geos_issimple_false,
     ogr_geos_isvalid_true,
+    ogr_geos_isvalid_true_linestringM,
+    ogr_geos_isvalid_true_circularStringM,
+    ogr_geos_isvalid_true_triangle,
     ogr_geos_isvalid_false,
     ogr_geos_pointonsurface,
     ogr_geos_DelaunayTriangulation,
