@@ -2922,6 +2922,27 @@ void OGRGeometry::freeGEOSContext(
 #endif
 }
 
+#ifdef HAVE_GEOS
+
+/************************************************************************/
+/*                          convertToGEOSGeom()                         */
+/************************************************************************/
+
+
+static GEOSGeom convertToGEOSGeom(GEOSContextHandle_t hGEOSCtxt,
+                                  OGRGeometry* poGeom)
+{
+    GEOSGeom hGeom = nullptr;
+    const size_t nDataSize = poGeom->WkbSize();
+    unsigned char *pabyData =
+        static_cast<unsigned char *>(CPLMalloc(nDataSize));
+    if( poGeom->exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
+        hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
+    CPLFree( pabyData );
+    return hGeom;
+}
+#endif
+
 /************************************************************************/
 /*                            exportToGEOS()                            */
 /************************************************************************/
@@ -2972,22 +2993,16 @@ GEOSGeom OGRGeometry::exportToGEOS(
             poLinearGeom->setMeasured(FALSE);
         }
     }
-    const size_t nDataSize = poLinearGeom->WkbSize();
-    unsigned char *pabyData =
-        static_cast<unsigned char *>(CPLMalloc(nDataSize));
     if (eType == wkbTriangle)
     {
-        OGRPolygon poPolygon(*(poLinearGeom->toPolygon()));
-        if( poPolygon.exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
-            hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
+        OGRPolygon oPolygon(*(poLinearGeom->toPolygon()));
+        hGeom = convertToGEOSGeom(hGEOSCtxt, &oPolygon);
     }
     else if ( eType == wkbPolyhedralSurface || eType == wkbTIN )
     {
         OGRGeometry *poGC = OGRGeometryFactory::forceTo(
                         poLinearGeom->clone(), wkbGeometryCollection, nullptr );
-        OGRErr eErr = poGC->exportToWkb( wkbNDR, pabyData );
-        if( eErr == OGRERR_NONE )
-            hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
+        hGeom = convertToGEOSGeom(hGEOSCtxt, poGC);
         delete poGC;
     }
     else if ( eType == wkbGeometryCollection )
@@ -3016,21 +3031,18 @@ GEOSGeom OGRGeometry::exportToGEOS(
                                 poLinearGeom->clone(), wkbMultiPolygon, nullptr );
             OGRGeometry* poGCDest = OGRGeometryFactory::forceTo(
                                 poMultiPolygon, wkbGeometryCollection, nullptr );
-            OGRErr eErr = poGCDest->exportToWkb( wkbNDR, pabyData );
-            if( eErr == OGRERR_NONE )
-                hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
+            hGeom = convertToGEOSGeom(hGEOSCtxt, poGCDest);
             delete poGCDest;
         }
         else
         {
-            if( poLinearGeom->exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
-                hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
+            hGeom = convertToGEOSGeom(hGEOSCtxt, poLinearGeom);
         }
     }
-    else if( poLinearGeom->exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
-        hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
-
-    CPLFree( pabyData );
+    else
+    {
+        hGeom = convertToGEOSGeom(hGEOSCtxt, poLinearGeom);
+    }
 
     if( poLinearGeom != this )
         delete poLinearGeom;
