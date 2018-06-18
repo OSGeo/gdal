@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import math
 import os
 import sys
 
@@ -204,8 +203,8 @@ class mosaic_info(object):
 
         # merge tiles
 
-        resultSizeX = int(math.ceil(((maxx - minx) / self.scaleX)))
-        resultSizeY = int(math.ceil(((miny - maxy) / self.scaleY)))
+        resultSizeX = int((maxx - minx) / self.scaleX + 0.5)
+        resultSizeY = int((miny - maxy) / self.scaleY + 0.5)
 
         resultDS = self.TempDriver.Create("TEMP", resultSizeX, resultSizeY, self.bands, self.band_type, [])
         resultDS.SetGeoTransform([minx, self.scaleX, 0, maxy, 0, self.scaleY])
@@ -229,18 +228,20 @@ class mosaic_info(object):
                 tgw_lry = min(dec.lry, miny)
 
             # Compute source window in pixel coordinates.
-            sw_xoff = int((tgw_ulx - dec.ulx) / dec.scaleX)
-            sw_yoff = int((tgw_uly - dec.uly) / dec.scaleY)
-            sw_xsize = int((tgw_lrx - dec.ulx) / dec.scaleX + 0.5) - sw_xoff
-            sw_ysize = int((tgw_lry - dec.uly) / dec.scaleY + 0.5) - sw_yoff
+            sw_xoff = int((tgw_ulx - dec.ulx) / dec.scaleX + 0.5)
+            sw_yoff = int((tgw_uly - dec.uly) / dec.scaleY + 0.5)
+            sw_xsize = min(sourceDS.RasterXSize, int((tgw_lrx - dec.ulx) / dec.scaleX + 0.5)) - sw_xoff
+            sw_ysize = min(sourceDS.RasterYSize, int((tgw_lry - dec.uly) / dec.scaleY + 0.5)) - sw_yoff
             if sw_xsize <= 0 or sw_ysize <= 0:
                 continue
 
             # Compute target window in pixel coordinates
-            tw_xoff = int((tgw_ulx - minx) / self.scaleX)
-            tw_yoff = int((tgw_uly - maxy) / self.scaleY)
-            tw_xsize = int((tgw_lrx - minx) / self.scaleX + 0.5) - tw_xoff
-            tw_ysize = int((tgw_lry - maxy) / self.scaleY + 0.5) - tw_yoff
+            tw_xoff = int((tgw_ulx - minx) / self.scaleX + 0.5)
+            tw_yoff = int((tgw_uly - maxy) / self.scaleY + 0.5)
+            tw_xsize = min(resultDS.RasterXSize, int((tgw_lrx - minx) / self.scaleX + 0.5)) - tw_xoff
+            tw_ysize = min(resultDS.RasterYSize, int((tgw_lry - maxy) / self.scaleY + 0.5)) - tw_yoff
+            # print(sw_xoff, sw_yoff, sw_xsize, sw_ysize, sourceDS.RasterXSize, sourceDS.RasterYSize)
+            # print(tw_xoff, tw_yoff, tw_xsize, tw_ysize, resultDS.RasterXSize, resultDS.RasterYSize)
             if tw_xsize <= 0 or tw_ysize <= 0:
                 continue
 
