@@ -2300,6 +2300,33 @@ def tiff_ovr_too_many_levels_external():
 
     return 'success'
 
+###############################################################################
+
+
+def tiff_ovr_average_multiband_vs_singleband():
+
+    gdal.Translate('/vsimem/tiff_ovr_average_multiband_band.tif', 'data/reproduce_average_issue.tif', creationOptions=['INTERLEAVE=BAND'])
+    gdal.Translate('/vsimem/tiff_ovr_average_multiband_pixel.tif', 'data/reproduce_average_issue.tif', creationOptions=['INTERLEAVE=PIXEL'])
+
+    ds = gdal.Open('/vsimem/tiff_ovr_average_multiband_band.tif', gdal.GA_Update)
+    ds.BuildOverviews('AVERAGE', [2])
+    cs_band = [ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(3)]
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_ovr_average_multiband_pixel.tif', gdal.GA_Update)
+    ds.BuildOverviews('AVERAGE', [2])
+    cs_pixel = [ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(3)]
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_average_multiband_band.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_average_multiband_pixel.tif')
+
+    if cs_band != cs_pixel:
+        gdaltest.post_reason('fail')
+        print(cs_band, cs_pixel)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -2427,7 +2454,8 @@ gdaltest_list += [tiff_ovr_51,
                   tiff_ovr_54,
                   tiff_ovr_too_many_levels_contig,
                   tiff_ovr_too_many_levels_separate,
-                  tiff_ovr_too_many_levels_external]
+                  tiff_ovr_too_many_levels_external,
+                  tiff_ovr_average_multiband_vs_singleband ]
 
 if __name__ == '__main__':
 
