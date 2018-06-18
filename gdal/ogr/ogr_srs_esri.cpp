@@ -1884,17 +1884,20 @@ OGRErr OGRSpatialReference::morphToESRI()
           }
         }
 
+        // pszProjection might be deleted in DeleteParamBasedOnPrjName,
+        // so make and use a copy.
+        const string osProjection(pszProjection);
         DeleteParamBasedOnPrjName(
-            this, pszProjection,
+            this, osProjection.c_str(),
             apszDeleteParametersBasedOnProjection);
         AddParamBasedOnPrjName(
-            this, pszProjection,
+            this, osProjection.c_str(),
             apszAddParametersBasedOnProjection);
         RemapPValuesBasedOnProjCSAndPName(
-            this, pszProjection,
+            this, osProjection.c_str(),
             apszParamValueMapping);
         RemapPNamesBasedOnProjCSAndPName(
-            this, pszProjection,
+            this, osProjection.c_str(),
             apszParamNameMapping,
             true /* to ESRI */ );
       }
