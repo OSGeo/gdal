@@ -7,7 +7,6 @@ GDAL - Geospatial Data Abstraction Library
 
 | Environment              |
 | ------------------------ |
-| Ubuntu 12.04 64 bit      |
 | Ubuntu 14.04 32 bit      |
 | Ubuntu 14.04 64 bit      |
 | Ubuntu 16.04 64 / CL 3.9 |

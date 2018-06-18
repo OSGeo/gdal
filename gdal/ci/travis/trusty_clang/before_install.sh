@@ -12,7 +12,7 @@ sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 #sudo add-apt-repository -y ppa:marlam/gta
 sudo apt-get update
 # postgis postgresql-9.5 postgresql-client-9.5 postgresql-9.5-postgis-2.2 libpq-dev
-sudo apt-get install -y ccache python-numpy libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev  libepsilon-dev  liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev
+sudo apt-get install -y --allow-unauthenticated ccache python-numpy libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev  libepsilon-dev  liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev
 # libgta-dev
 sudo apt-get install -y python-lxml
 sudo apt-get install -y python-pip
@@ -21,6 +21,7 @@ sudo apt-get install -y libogdi3.2-dev
 # Boost for Mongo
 #sudo apt-get install -y libboost-regex-dev libboost-system-dev libboost-thread-dev
 sudo pip install pyflakes
+sudo apt-get install doxygen texlive-latex-base
 pyflakes autotest
 pyflakes gdal/swig/python/scripts
 pyflakes gdal/swig/python/samples

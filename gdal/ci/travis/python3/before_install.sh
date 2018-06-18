@@ -2,31 +2,36 @@
 
 set -e
 
+sudo dpkg -l | grep geos
+sudo apt-get purge -y libgeos* libspatialite*
+find  /etc/apt/sources.list.d
 sudo mv /etc/apt/sources.list.d/pgdg* /tmp
-sudo apt-get remove postgis libpq5 libpq-dev postgresql-9.1-postgis postgresql-9.1-postgis-2.2-scripts postgresql-9.2-postgis postgresql-9.3-postgis postgresql-9.1 postgresql-9.2 postgresql-9.3 libgdal1
+#sudo apt-get remove postgis libpq5 libpq-dev postgresql-9.1-postgis postgresql-9.2-postgis postgresql-9.3-postgis postgresql-9.1 postgresql-9.2 postgresql-9.3 libgdal1
+#sudo apt-get remove -y postgresql-9.1
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
-sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 #sudo add-apt-repository -y ppa:marlam/gta
-sudo apt-get update -qq
-sudo apt-get install ccache python3 python3-dev python3-numpy postgis postgresql-9.1 postgresql-client-9.1 postgresql-9.1-postgis-2.1 postgresql-9.1-postgis-2.1-scripts libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-7-jdk libepsilon-dev liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev
+sudo apt-get update
+# postgis postgresql-9.5 postgresql-client-9.5 postgresql-9.5-postgis-2.2 libpq-dev
+sudo apt-get install -y --allow-unauthenticated ccache python3-dev python3-numpy libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev  libepsilon-dev  liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev
 # libgta-dev
-sudo apt-get install python3-lxml
-sudo apt-get install libogdi3.2-dev
+sudo apt-get install -y python3-lxml
+sudo apt-get install -y libqhull-dev
+sudo apt-get install -y libogdi3.2-dev
 # Boost for Mongo
-sudo apt-get install libboost-regex-dev libboost-system-dev libboost-thread-dev
-sudo apt-get install gcc-4.8 g++-4.8
-psql -c "drop database if exists autotest" -U postgres
-psql -c "create database autotest" -U postgres
-psql -c "create extension postgis" -d autotest -U postgres
-mysql -e "create database autotest;"
-mysql -e "GRANT ALL ON autotest.* TO 'root'@'localhost';" -u root
-mysql -e "GRANT ALL ON autotest.* TO 'travis'@'localhost';" -u root
+#sudo apt-get install -y libboost-regex-dev libboost-system-dev libboost-thread-dev
+
+#psql -c "drop database if exists autotest" -U postgres
+#psql -c "create database autotest" -U postgres
+#psql -c "create extension postgis" -d autotest -U postgres
+#mysql -e "create database autotest;"
+#mysql -e "GRANT ALL ON autotest.* TO 'root'@'localhost';" -u root
+#mysql -e "GRANT ALL ON autotest.* TO 'travis'@'localhost';" -u root
 wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/FileGDB_API_1_2-64.tar.gz
 wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44.tar.gz
 wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libecwj2-ubuntu12.04-64bit.tar.gz
 wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libkml-r864-64bit.tar.gz
 wget https://github.com/uclouvain/openjpeg/releases/download/v2.3.0/openjpeg-v2.3.0-linux-x86_64.tar.gz
-wget http://even.rouault.free.fr/mongo-cxx-1.0.2-install-ubuntu12.04-64bit.tar.gz
+#wget http://even.rouault.free.fr/mongo-cxx-1.0.2-install-ubuntu12.04-64bit.tar.gz
 tar xzf MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44.tar.gz
 sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44/Raster_DSDK/include/* /usr/local/include
 sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44/Raster_DSDK/lib/* /usr/local/lib
@@ -44,9 +49,9 @@ sudo cp -r install-libkml/lib/* /usr/local/lib
 tar xzf openjpeg-v2.3.0-linux-x86_64.tar.gz
 sudo cp -r openjpeg-v2.3.0-linux-x86_64/include/* /usr/local/include
 sudo cp -r openjpeg-v2.3.0-linux-x86_64/lib/* /usr/local/lib
-tar xzf mongo-cxx-1.0.2-install-ubuntu12.04-64bit.tar.gz
-sudo cp -r mongo-cxx-1.0.2-install/include/* /usr/local/include
-sudo cp -r mongo-cxx-1.0.2-install/lib/* /usr/local/lib
+#tar xzf mongo-cxx-1.0.2-install-ubuntu12.04-64bit.tar.gz
+#sudo cp -r mongo-cxx-1.0.2-install/include/* /usr/local/include
+#sudo cp -r mongo-cxx-1.0.2-install/lib/* /usr/local/lib
 wget https://bitbucket.org/chchrsc/kealib/get/c6d36f3db5e4.zip
 unzip c6d36f3db5e4.zip
 cd chchrsc-kealib-c6d36f3db5e4/trunk
@@ -54,4 +59,14 @@ cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX
 make -j4
 sudo make install
 cd ../..
+
+# Build zstd
+wget https://github.com/facebook/zstd/archive/v1.3.3.tar.gz
+tar xvzf v1.3.3.tar.gz
+cd zstd-1.3.3/lib
+# Faster build
+make -j3 PREFIX=/usr ZSTD_LEGACY_SUPPORT=0 CFLAGS=-O1
+sudo make install PREFIX=/usr ZSTD_LEGACY_SUPPORT=0 CFLAGS=-O1
+cd ../..
+
 sudo ldconfig
