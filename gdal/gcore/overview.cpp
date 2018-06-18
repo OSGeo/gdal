@@ -3111,8 +3111,11 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             if( nChunkYOff + nFullResYChunk == nHeight )
                 nDstYOff2 = nDstHeight;
 #if DEBUG_VERBOSE
-            CPLDebug( "GDAL",
-                      "nDstYOff=%d, nDstYOff2=%d", nDstYOff, nDstYOff2 );
+            CPLDebug(
+                "GDAL",
+                "Reading (%dx%d -> %dx%d) for output (%dx%d -> %dx%d)",
+                0, nChunkYOffQueried, nWidth, nChunkYSizeQueried,
+                0, nDstYOff, nDstWidth, nDstYOff2 - nDstYOff );
 #endif
 
             if( eType == GDT_Byte ||
@@ -3394,9 +3397,9 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         // Compute the maximum chunk size of the source such as it will match
         // the size of a block of the overview.
         const int nFullResXChunk =
-            1 + static_cast<int>(nDstBlockXSize * dfXRatioDstToSrc);
+            2 + static_cast<int>(nDstBlockXSize * dfXRatioDstToSrc);
         const int nFullResYChunk =
-            1 + static_cast<int>(nDstBlockYSize * dfYRatioDstToSrc);
+            2 + static_cast<int>(nDstBlockYSize * dfYRatioDstToSrc);
 
         int nOvrFactor = std::max( static_cast<int>(0.5 + dfXRatioDstToSrc),
                                    static_cast<int>(0.5 + dfYRatioDstToSrc) );
@@ -3462,10 +3465,10 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                 nDstYCount = nDstHeight - nDstYOff;
 
             int nChunkYOff =
-                static_cast<int>(0.5 + nDstYOff * dfYRatioDstToSrc);
+                static_cast<int>(nDstYOff * dfYRatioDstToSrc);
             int nChunkYOff2 =
                 static_cast<int>(
-                    0.5 + (nDstYOff + nDstYCount) * dfYRatioDstToSrc );
+                    ceil((nDstYOff + nDstYCount) * dfYRatioDstToSrc) );
             if( nChunkYOff2 > nSrcHeight || nDstYOff + nDstYCount == nDstHeight)
                 nChunkYOff2 = nSrcHeight;
             int nYCount = nChunkYOff2 - nChunkYOff;
@@ -3502,10 +3505,10 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                     nDstXCount = nDstWidth - nDstXOff;
 
                 int nChunkXOff =
-                    static_cast<int>(0.5 + nDstXOff * dfXRatioDstToSrc);
+                    static_cast<int>(nDstXOff * dfXRatioDstToSrc);
                 int nChunkXOff2 =
                     static_cast<int>(
-                        0.5 + (nDstXOff + nDstXCount) * dfXRatioDstToSrc );
+                        ceil((nDstXOff + nDstXCount) * dfXRatioDstToSrc) );
                 if( nChunkXOff2 > nSrcWidth ||
                     nDstXOff + nDstXCount == nDstWidth )
                     nChunkXOff2 = nSrcWidth;
@@ -3527,7 +3530,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                 CPLDebug(
                     "GDAL",
                     "Reading (%dx%d -> %dx%d) for output (%dx%d -> %dx%d)",
-                    nChunkXOff, nChunkYOff, nXCount, nYCount,
+                    nChunkXOffQueried, nChunkYOffQueried, nChunkXSizeQueried, nChunkYSizeQueried,
                     nDstXOff, nDstYOff, nDstXCount, nDstYCount );
 #endif
 
