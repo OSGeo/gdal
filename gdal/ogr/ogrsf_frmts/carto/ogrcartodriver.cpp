@@ -117,6 +117,7 @@ void RegisterOGRCarto()
     "  <Option name='API_KEY' type='string' description='Account API key'/>"
     "  <Option name='ACCOUNT' type='string' description='Account name' required='true'/>"
     "  <Option name='BATCH_INSERT' type='boolean' description='Whether to group features to be inserted in a batch' default='YES'/>"
+    "  <Option name='COPY_MODE' type='boolean' description='Whether to use the COPY API for faster uploads' default='YES'/>"
     "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");

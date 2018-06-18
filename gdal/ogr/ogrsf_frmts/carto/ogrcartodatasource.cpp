@@ -594,7 +594,7 @@ json_object* OGRCARTODataSource::RunCopyFrom(const char* pszSQL, const char* psz
 /* -------------------------------------------------------------------- */
     char** papszOptions = CSLAddString(
         !STARTS_WITH(pszAPIURL, "/vsimem/") ? AddHTTPOptions(): nullptr, osSQL);
-    CPLHTTPResult * psResult = CPLHTTPFetch( pszAPIURL, papszOptions);
+    CPLHTTPResult * psResult = CPLHTTPFetch( osURL, papszOptions);
     CSLDestroy(papszOptions);
     if( psResult == nullptr )
     {

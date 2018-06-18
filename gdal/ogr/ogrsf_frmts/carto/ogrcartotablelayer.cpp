@@ -147,6 +147,7 @@ OGRCARTOTableLayer::OGRCARTOTableLayer(OGRCARTODataSource* poDSIn,
     SetDescription( osName );
     bLaunderColumnNames = true;
     bInDeferredInsert = poDS->DoBatchInsert();
+    bCopyMode = poDS->DoCopyMode();
     eDeferredInsertState = INSERT_UNINIT;
     m_nNextFIDWrite = -1;
     bDeferredCreation = false;
@@ -485,10 +486,10 @@ void OGRCARTOTableLayer::RunDeferredCartofy()
 
 OGRErr OGRCARTOTableLayer::FlushDeferredBuffer(bool bReset)
 {
-    if (poDS->DoCopyMode())
+    if (bCopyMode)
         return FlushDeferredCopy(bReset);
     else
-        return FlushDeferredBuffer(bReset);
+        return FlushDeferredInsert(bReset);
 }
 
 /************************************************************************/
@@ -539,7 +540,7 @@ OGRErr OGRCARTOTableLayer::FlushDeferredCopy(bool bReset)
     if( !osDeferredBuffer.empty() )
     {
         /* And end-of-file marker to data buffer */
-        osDeferredBuffer += "\\.";
+        osDeferredBuffer += "\\.\n";
         
         json_object* poObj = poDS->RunCopyFrom(osCopySQL, osDeferredBuffer);
         if( poObj != nullptr )
@@ -736,7 +737,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
     }
     
-    if (poDS->DoCopyMode())
+    if (bCopyMode)
         return ICreateFeatureCopy(poFeature, bHasUserFieldMatchingFID, bHasJustGotNextFID);
     else
         return ICreateFeatureInsert(poFeature, bHasUserFieldMatchingFID, bHasJustGotNextFID);
@@ -803,7 +804,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
         else
             osCopySQL += ")";
     
-        osCopySQL += " WITH (FORMAT text, ENCODING UTF8)";
+        osCopySQL += " FROM STDIN WITH (FORMAT text, ENCODING UTF8)";
         CPLDebug( "CARTO", "ICreateFeatureCopy(%s)", osCopySQL.c_str() );
         
         eDeferredInsertState = INSERT_MULTIPLE_FEATURE;
@@ -898,6 +899,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
         OGRErr eRet = OGRERR_NONE;
         /* Add current record to buffer */
         osDeferredBuffer += osCopyFile;
+        osDeferredBuffer += "\n";
         if( (int)osDeferredBuffer.size() > nMaxChunkSize )
         {
             eRet = FlushDeferredBuffer(false);

@@ -128,6 +128,7 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
     bool                bLaunderColumnNames;
 
     bool                bInDeferredInsert;
+    bool                bCopyMode;
     InsertState         eDeferredInsertState;
     CPLString           osDeferredBuffer;
     CPLString           osCopySQL;
