@@ -34,9 +34,9 @@ Contributors:
 #define LERC_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 #endif
 
-#define NAMESPACE_LERC_START namespace LercNS {
+#define NAMESPACE_LERC_START namespace MRF_LercNS {
 #define NAMESPACE_LERC_END }
-#define USING_NAMESPACE_LERC using namespace LercNS;
+#define USING_NAMESPACE_LERC using namespace MRF_LercNS;
 
 NAMESPACE_LERC_START
 
