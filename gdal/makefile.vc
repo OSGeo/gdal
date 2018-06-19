@@ -43,9 +43,9 @@ BASE_INCLUDE =	/INCLUDE:$(SYM_PREFIX)GDALSimpleImageWarp \
 APPS_OBJ = apps\commonutils.obj apps\gdalinfo_lib.obj apps\gdal_translate_lib.obj apps\gdalwarp_lib.obj apps\ogr2ogr_lib.obj \
 	 apps\gdaldem_lib.obj apps\nearblack_lib.obj apps\gdal_grid_lib.obj apps\gdal_rasterize_lib.obj apps\gdalbuildvrt_lib.obj
 
-LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) gnm\*.obj gnm\gnm_frmts\o\*.obj $(APPS_OBJ)
+LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) gnm\*.obj gnm\gnm_frmts\o\*.obj third_party\o\*.obj $(APPS_OBJ)
 
-LIB_DEPENDS = port_dir core_dir ogr_dir gnm_dir frmts_dir appslib-target
+LIB_DEPENDS = port_dir core_dir ogr_dir gnm_dir third_party_dir frmts_dir appslib-target
 
 DISTDIR	=	gdal_$(VERSION)
 
@@ -108,6 +108,9 @@ $(CLEAN_MAIN_BUILD_OUTPUT_CMDS)
 	cd ..
 	cd ogr
 	$(MAKE) /f makefile.vc allclean
+	cd ..
+	cd third_party
+	$(MAKE) /f makefile.vc clean
 	cd ..
 	cd gnm
 	$(MAKE) /f makefile.vc allclean
@@ -173,6 +176,11 @@ ogr_dir:      port_dir generate_gdal_version_h
 gnm_dir:      ogr_dir
 	cd gnm
 	$(MAKE) /f makefile.vc gnm.lib frmts
+	cd ..
+
+third_party_dir:      port_dir
+	cd third_party
+	$(MAKE) /f makefile.vc
 	cd ..
 
 lib_dist:	default

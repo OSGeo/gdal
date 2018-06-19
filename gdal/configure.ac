@@ -5655,6 +5655,25 @@ else
     AC_MSG_RESULT([disabled by user])
 fi
 
+dnl ---------------------------------------------------------------------------
+dnl Whether to include LERC in the build
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([lerc],
+            AS_HELP_STRING([--without-lerc],
+               [Disable LERC library]),,)
+
+AC_MSG_CHECKING([for MRF])
+if test "$with_lerc" = yes -o x"$with_lerc" = x ; then
+    HAVE_LERC=yes
+    AC_MSG_RESULT([enabled])
+else
+    HAVE_LERC=no
+    AC_MSG_RESULT([disabled by user])
+fi
+
+AC_SUBST(HAVE_LERC,$HAVE_LERC)
+
 
 dnl ---------------------------------------------------------------------------
 dnl Whether to include NULL driver in the build
@@ -5782,6 +5801,7 @@ LOC_MSG([  WebP support:              ${WEBP_SETTING}])
 LOC_MSG([  cURL support (wms/wcs/...):${CURL_SETTING}])
 LOC_MSG([  PostgreSQL support:        ${HAVE_PG}])
 LOC_MSG([  MRF support:               ${HAVE_MRF}])
+LOC_MSG([  LERC support:              ${HAVE_LERC}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
 LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
 LOC_MSG([  Xerces-C support:          ${HAVE_XERCES}])
