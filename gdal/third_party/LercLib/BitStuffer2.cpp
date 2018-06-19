@@ -22,10 +22,11 @@ Contributors:  Thomas Maurer
 */
 
 #include <algorithm>
+#include "Defines.h"
 #include "BitStuffer2.h"
 
 using namespace std;
-using namespace LercNS;
+USING_NAMESPACE_LERC
 
 // -------------------------------------------------------------------------- ;
 

@@ -23,11 +23,12 @@ Contributors:  Thomas Maurer
 
 #include <algorithm>
 #include <queue>
+#include "Defines.h"
 #include "Huffman.h"
 #include "BitStuffer2.h"
 
 using namespace std;
-using namespace LercNS;
+USING_NAMESPACE_LERC
 
 // -------------------------------------------------------------------------- ;
 

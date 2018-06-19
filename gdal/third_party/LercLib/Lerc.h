@@ -25,12 +25,13 @@ Contributors:  Thomas Maurer
 
 #include <cstring>
 #include <vector>
+
 #include "Lerc_types.h"
 #include "BitMask.h"
 #include "Lerc2.h"
 
-namespace LercNS
-{
+NAMESPACE_LERC_START
+
 #ifdef HAVE_LERC1_DECODE
   class CntZImage;
 #endif
@@ -185,4 +186,4 @@ namespace LercNS
 #endif
     template<class T> static ErrCode ConvertToDoubleTempl(const T* pDataIn, size_t nDataValues, double* pDataOut);
   };
-}    // namespace LercNS
+NAMESPACE_LERC_END

@@ -21,11 +21,12 @@ http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
 
+#include "Defines.h"
 #include "Lerc_c_api.h"
 #include "Lerc_types.h"
 #include "Lerc.h"
 
-using namespace LercNS;
+USING_NAMESPACE_LERC
 
 // -------------------------------------------------------------------------- ;
 

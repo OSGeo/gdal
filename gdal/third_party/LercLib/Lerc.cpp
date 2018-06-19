@@ -21,6 +21,7 @@ http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
 
+#include "Defines.h"
 #include "Lerc.h"
 #include "Lerc2.h"
 
@@ -29,7 +30,7 @@ Contributors:  Thomas Maurer
 #endif
 
 using namespace std;
-using namespace LercNS;
+USING_NAMESPACE_LERC
 
 // -------------------------------------------------------------------------- ;
 

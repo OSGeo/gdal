@@ -22,9 +22,10 @@ Contributors:   Thomas Maurer
                 Lucian Plesea (provided checksum code)
 */
 
+#include "Defines.h"
 #include "Lerc2.h"
 
-using namespace LercNS;
+USING_NAMESPACE_LERC
 using namespace std;
 
 // -------------------------------------------------------------------------- ;

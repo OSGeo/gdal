@@ -24,8 +24,10 @@ Contributors:  Thomas Maurer
 #ifndef BITMASK_H
 #define BITMASK_H
 
-namespace LercNS
-{
+#include "Defines.h"
+
+NAMESPACE_LERC_START
+
   typedef unsigned char Byte;
 
   /** BitMask - Convenient and fast access to binary mask bits
@@ -71,6 +73,6 @@ namespace LercNS
     Byte*  m_pBits;
     int    m_nCols, m_nRows;
   };
-}    // namespace LercNS
+NAMESPACE_LERC_END
 
 #endif

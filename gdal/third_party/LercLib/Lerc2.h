@@ -29,6 +29,7 @@ Contributors:  Thomas Maurer
 #include <cmath>
 #include <string>
 #include <typeinfo>
+#include "Defines.h"
 #include "BitMask.h"
 #include "BitStuffer2.h"
 #include "Huffman.h"

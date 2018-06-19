@@ -21,10 +21,11 @@ http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
 
+#include "Defines.h"
 #include "BitMask.h"
 #include <cstring>
 
-using namespace LercNS;
+USING_NAMESPACE_LERC
 
 // -------------------------------------------------------------------------- ;
 
