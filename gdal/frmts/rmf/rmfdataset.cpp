@@ -246,6 +246,16 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
+    GUInt32 nRawXSize = nBlockXSize;
+    GUInt32 nRawYSize = nBlockYSize;
+    bool    bCompressedTile = false;
+
+    if( nLastTileWidth && (GUInt32)nBlockXOff == poGDS->nXTiles - 1 )
+        nRawXSize = nLastTileWidth;
+
+    if( nLastTileHeight && (GUInt32)nBlockYOff == poGDS->nYTiles - 1 )
+        nRawYSize = nLastTileHeight;
+
     if( poGDS->nBands == 1 &&
         ( poGDS->sHeader.nBitDepth == 8
           || poGDS->sHeader.nBitDepth == 16
@@ -260,17 +270,9 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
         if( poGDS->Decompress )
         {
-            GUInt32 nRawBytes = 0;
+            GUInt32 nRawBytes;
 
-            if( nLastTileWidth && (GUInt32)nBlockXOff == poGDS->nXTiles - 1 )
-                nRawBytes = poGDS->nBands * nLastTileWidth * nDataSize;
-            else
-                nRawBytes = poGDS->nBands * nBlockXSize * nDataSize;
-
-            if( nLastTileHeight && (GUInt32)nBlockYOff == poGDS->nYTiles - 1 )
-                nRawBytes *= nLastTileHeight;
-            else
-                nRawBytes *= nBlockYSize;
+            nRawBytes = poGDS->nBands * nRawXSize * nRawYSize * nDataSize;
 
             if( nRawBytes > nTileBytes )
             {
@@ -295,9 +297,10 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                 (*poGDS->Decompress)( pabyTile, nTileBytes,
                                       reinterpret_cast<GByte*>( pImage ),
-                                      nRawBytes );
+                                      nRawBytes, nRawXSize, nRawYSize );
                 CPLFree( pabyTile );
                 // nTileBytes = nRawBytes;
+                bCompressedTile = true;
             }
             else
             {
@@ -356,18 +359,9 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
         if( poGDS->Decompress )
         {
-            GUInt32 nRawBytes = 0;
+            GUInt32 nRawBytes;
 
-            if( nLastTileWidth && (GUInt32)nBlockXOff == poGDS->nXTiles - 1 )
-                nRawBytes = poGDS->nBands * nLastTileWidth * nDataSize;
-            else
-                nRawBytes = poGDS->nBands * nBlockXSize * nDataSize;
-
-            if( nLastTileHeight && (GUInt32)nBlockYOff == poGDS->nYTiles - 1 )
-                nRawBytes *= nLastTileHeight;
-            else
-                nRawBytes *= nBlockYSize;
-
+            nRawBytes = poGDS->nBands * nRawXSize * nRawYSize * nDataSize;
             if( nRawBytes > nTileBytes )
             {
                 GByte *pabyRawBuf = reinterpret_cast<GByte *>(
@@ -385,10 +379,12 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 }
 
                 (*poGDS->Decompress)( pabyTile, nTileBytes,
-                                      pabyRawBuf, nRawBytes );
+                                      pabyRawBuf, nRawBytes,
+                                      nRawXSize, nRawYSize );
                 CPLFree( pabyTile );
                 pabyTile = pabyRawBuf;
                 nTileBytes = nRawBytes;
+                bCompressedTile = true;
             }
         }
 
@@ -402,15 +398,27 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if( nTileSize > nBlockSize )
                 nTileSize = nBlockSize;
 
-            for( GUInt32 i = 0; i < nTileSize; i++ )
+            if(poGDS->bReverseBandLayout && bCompressedTile)
             {
-                // Colour triplets in RMF file organized in reverse order:
-                // blue, green, red. When we have 32-bit RMF the forth byte
-                // in quadruplet should be discarded as it has no meaning.
-                // That is why we always use 3 byte count in the following
-                // pabyTemp index.
-                reinterpret_cast<GByte *>( pImage )[i] =
-                    pabyTile[i * nBytesPerPixel + 3 - nBand];
+                for( GUInt32 i = 0; i < nTileSize; i++ )
+                {
+                    reinterpret_cast<GByte *>( pImage )[i] =
+                        pabyTile[i * nBytesPerPixel + nBand - 1];
+
+                }
+            }
+            else
+            {
+                for( GUInt32 i = 0; i < nTileSize; i++ )
+                {
+                    // Colour triplets in RMF file organized in reverse order:
+                    // blue, green, red. When we have 32-bit RMF the forth byte
+                    // in quadruplet should be discarded as it has no meaning.
+                    // That is why we always use 3 byte count in the following
+                    // pabyTemp index.
+                    reinterpret_cast<GByte *>( pImage )[i] =
+                        pabyTile[i * nBytesPerPixel + 3 - nBand];
+                }
             }
         }
 
@@ -900,7 +908,8 @@ RMFDataset::RMFDataset() :
     fp(nullptr),
     Decompress(nullptr),
     nHeaderOffset(0),
-    poParentDS(nullptr)
+    poParentDS(nullptr),
+    bReverseBandLayout(false)
 {
     nBands = 0;
     adfGeoTransform[0] = 0.0;
@@ -1104,6 +1113,7 @@ do {                                                    \
         *(abyHeader + 228) = sHeader.iUnknown;
         *(abyHeader + 244) = sHeader.iGeorefFlag;
         *(abyHeader + 245) = sHeader.iInverse;
+        *(abyHeader + 246) = sHeader.iJpegQuality;
         memcpy( abyHeader + 248, sHeader.abyInvisibleColors,
                 sizeof(sHeader.abyInvisibleColors) );
         RMF_WRITE_DOUBLE( abyHeader, sHeader.adfElevMinMax[0], 280 );
@@ -1400,6 +1410,7 @@ do {                                                                    \
         poDS->sHeader.iUnknown = *(abyHeader + 228);
         poDS->sHeader.iGeorefFlag = *(abyHeader + 244);
         poDS->sHeader.iInverse = *(abyHeader + 245);
+        poDS->sHeader.iJpegQuality = *(abyHeader + 246);
         memcpy( poDS->sHeader.abyInvisibleColors,
                 abyHeader + 248, sizeof(poDS->sHeader.abyInvisibleColors) );
         RMF_READ_DOUBLE( abyHeader, poDS->sHeader.adfElevMinMax[0], 280 );
@@ -1723,14 +1734,48 @@ do {                                                                    \
 /*  XXX: The DEM compression method seems to be only applicable         */
 /*  to Int32 data.                                                      */
 /* -------------------------------------------------------------------- */
-    if( poDS->sHeader.iCompression == RMF_COMPRESSION_LZW )
+    if( poDS->sHeader.iCompression == RMF_COMPRESSION_NONE )
+    {
+        poDS->Decompress = nullptr;
+    }
+    else if( poDS->sHeader.iCompression == RMF_COMPRESSION_LZW )
+    {
         poDS->Decompress = &LZWDecompress;
+        poDS->SetMetadataItem("COMPRESSION", "LZW", "IMAGE_STRUCTURE");
+    }
+    else if( poDS->sHeader.iCompression == RMF_COMPRESSION_JPEG
+             && eType == GDT_Byte && poDS->nBands == RMF_JPEG_BAND_COUNT)
+    {
+#ifdef HAVE_LIBJPEG
+        CPLString   oBuf;
+        oBuf.Printf("%d", (int)poDS->sHeader.iJpegQuality);
+        poDS->Decompress = &JPEGDecompress;
+        poDS->bReverseBandLayout = true;
+        poDS->SetMetadataItem("JPEG_QUALITY", oBuf.c_str(), "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "JPEG", "IMAGE_STRUCTURE");
+#else //HAVE_LIBJPEG
+         CPLError(CE_Failure, CPLE_AppDefined,
+             "JPEG codec is needed to open <%s>.\n"
+             "Please rebuild GDAL with libjpeg support.",
+             poOpenInfo->pszFilename);
+        delete poDS;
+        return nullptr;
+#endif //HAVE_LIBJPEG
+    }
     else if( poDS->sHeader.iCompression == RMF_COMPRESSION_DEM
              && eType == GDT_Int32 )
+    {
         poDS->Decompress = &DEMDecompress;
+        poDS->SetMetadataItem("COMPRESSION", "RMF_DEM", "IMAGE_STRUCTURE");
+    }
     else    // No compression
-        poDS->Decompress = nullptr;
-
+    {
+         CPLError(CE_Failure, CPLE_AppDefined,
+             "Unknown compression #%d at file <%s>.",
+             (int)poDS->sHeader.iCompression, poOpenInfo->pszFilename);
+        delete poDS;
+        return nullptr;
+    }
 /* -------------------------------------------------------------------- */
 /*  Create band information objects.                                    */
 /* -------------------------------------------------------------------- */
@@ -2107,6 +2152,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     poDS->sHeader.iUnknown = 0;
     poDS->sHeader.iGeorefFlag = 0;
     poDS->sHeader.iInverse = 0;
+    poDS->sHeader.iJpegQuality = 0;
     memset( poDS->sHeader.abyInvisibleColors, 0,
             sizeof(poDS->sHeader.abyInvisibleColors) );
     poDS->sHeader.adfElevMinMax[0] = 0.0;

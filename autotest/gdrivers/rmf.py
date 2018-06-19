@@ -565,6 +565,79 @@ def rmf_26():
     return 'success'
 
 ###############################################################################
+# Test read JPEG compressed RMF dataset
+
+
+def rmf_27():
+
+    if gdal.GetDriverByName('JPEG') is None:
+        return 'skip'
+
+    cs1 = [50182, 27153, 38826] # External libjpeg
+    cs2 = [50741, 27453, 35939] # Internal libjpeg
+    cs3 = [51194, 27940, 38071] # osx, clang
+
+    ds = gdal.Open('data/jpeg-in-rmf.rsw', gdal.GA_ReadOnly)
+    if ds is None:
+        gdaltest.post_reason('Failed to open test dataset.')
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
+    if md['COMPRESSION'] != 'JPEG':
+        gdaltest.post_reason('"COMPRESSION" value is "%s" but expected "JPEG"' %
+                              md['COMPRESSION'])
+        return 'fail'
+
+    cs = [0, 0, 0]
+    for iBand in range(ds.RasterCount):
+        band = ds.GetRasterBand(iBand + 1)
+        cs[iBand] = band.Checksum()
+
+    if cs != cs1 and cs != cs2 and cs != cs3:
+        gdaltest.post_reason('Invalid checksum %s expected %s, %s or %s .' %
+                             (str(cs), str(cs1), str(cs2), str(cs3)))
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Check compression metadata
+
+
+def rmf_28a():
+
+    ds = gdal.Open('data/byte-lzw.rsw', gdal.GA_ReadOnly)
+    if ds is None:
+        gdaltest.post_reason('Failed to open test dataset.')
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
+    if md['COMPRESSION'] != 'LZW':
+        gdaltest.post_reason('"COMPRESSION" value is "%s" but expected "LZW"' %
+                              md['COMPRESSION'])
+        return 'fail'
+
+    return 'success'
+
+
+def rmf_28b():
+
+    ds = gdal.Open('data/t100.mtw', gdal.GA_ReadOnly)
+    if ds is None:
+        gdaltest.post_reason('Failed to open test dataset.')
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
+    if md['COMPRESSION'] != 'RMF_DEM':
+        gdaltest.post_reason('"COMPRESSION" value is "%s" but expected "RMF_DEM"' %
+                              md['COMPRESSION'])
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 
 
 gdaltest_list = [
@@ -596,7 +669,10 @@ gdaltest_list = [
     rmf_23,
     rmf_24,
     rmf_25,
-    rmf_26
+    rmf_26,
+    rmf_27,
+    rmf_28a,
+    rmf_28b,
 ]
 
 if __name__ == '__main__':

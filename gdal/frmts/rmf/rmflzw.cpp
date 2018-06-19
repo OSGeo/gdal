@@ -117,7 +117,8 @@ static void LZWUpdateTab(LZWStringTab *poCodeTab, GUInt32 iPred, char bFoll)
 /************************************************************************/
 
 int RMFDataset::LZWDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
-                               GByte* pabyOut, GUInt32 nSizeOut )
+                               GByte* pabyOut, GUInt32 nSizeOut,
+                               GUInt32, GUInt32 )
 {
     if( pabyIn == nullptr ||
         pabyOut == nullptr ||

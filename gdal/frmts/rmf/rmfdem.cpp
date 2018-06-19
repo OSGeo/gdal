@@ -106,8 +106,9 @@ static GInt32 AddInt32( GInt32& nTarget, GInt32 nVal )
 /*                           DEMDecompress()                            */
 /************************************************************************/
 
-int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
-                               GByte* pabyOut, GUInt32 nSizeOut )
+int RMFDataset::DEMDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
+                               GByte* pabyOut, GUInt32 nSizeOut ,
+                               GUInt32, GUInt32)
 {
     if( pabyIn == nullptr ||
         pabyOut == nullptr ||
