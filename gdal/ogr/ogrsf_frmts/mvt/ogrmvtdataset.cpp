@@ -5855,7 +5855,7 @@ OGRLayer* OGRMVTWriterDataset::ICreateLayer( const char* pszLayerName,
         m_oMapLayerNameToDesc[poLayer->m_osTargetName] = osDescription;
 
     m_apoLayers.push_back( std::unique_ptr<OGRMVTWriterLayer>(poLayer) );
-    return poLayer;
+    return m_apoLayers.back().get();
 }
 
 /************************************************************************/
