@@ -39,8 +39,8 @@ NAMESPACE_LERC_START
   class Lerc
   {
   public:
-    Lerc() {};
-    ~Lerc() {};
+    Lerc() {}
+    ~Lerc() {}
 
     // data types supported by Lerc
     enum DataType { DT_Char, DT_Byte, DT_Short, DT_UShort, DT_Int, DT_UInt, DT_Float, DT_Double, DT_Undefined };
