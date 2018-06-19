@@ -46,7 +46,7 @@ lerc_status lerc_computeCompressedSize(const void* pData, unsigned int dataType,
         if (!pValidBytes[k])
           bitMask.SetInvalid(k);
   }
-  const BitMask* pBitMask = pValidBytes ? &bitMask : 0;
+  const BitMask* pBitMask = pValidBytes ? &bitMask : nullptr;
 
   Lerc::DataType dt = (Lerc::DataType)dataType;
   return (lerc_status)Lerc::ComputeCompressedSize(pData, dt, nDim, nCols, nRows, nBands, pBitMask, maxZErr, *numBytes);
@@ -72,7 +72,7 @@ lerc_status lerc_encode(const void* pData, unsigned int dataType, int nDim, int 
         if (!pValidBytes[k])
           bitMask.SetInvalid(k);
   }
-  const BitMask* pBitMask = pValidBytes ? &bitMask : 0;
+  const BitMask* pBitMask = pValidBytes ? &bitMask : nullptr;
 
   Lerc::DataType dt = (Lerc::DataType)dataType;
   return (lerc_status)Lerc::Encode(pData, dt, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pOutBuffer, outBufferSize, *nBytesWritten);
@@ -148,7 +148,7 @@ lerc_status lerc_decode(const unsigned char* pLercBlob, unsigned int blobSize,
     bitMask.SetSize(nCols, nRows);
     bitMask.SetAllInvalid();
   }
-  BitMask* pBitMask = pValidBytes ? &bitMask : 0;
+  BitMask* pBitMask = pValidBytes ? &bitMask : nullptr;
 
   Lerc::DataType dt = (Lerc::DataType)dataType;
 
@@ -189,7 +189,7 @@ lerc_status lerc_decodeToDouble(const unsigned char* pLercBlob, unsigned int blo
     bitMask.SetSize(nCols, nRows);
     bitMask.SetAllInvalid();
   }
-  BitMask* pBitMask = pValidBytes ? &bitMask : 0;
+  BitMask* pBitMask = pValidBytes ? &bitMask : nullptr;
 
   if (dt == Lerc::DT_Double)
   {

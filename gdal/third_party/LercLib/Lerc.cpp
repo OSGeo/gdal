@@ -23,7 +23,10 @@ Contributors:  Thomas Maurer
 
 #include "Lerc.h"
 #include "Lerc2.h"
+
+#ifdef HAVE_LERC1_DECODE
 #include "Lerc1Decode/CntZImage.h"
+#endif
 
 using namespace std;
 using namespace LercNS;
@@ -132,6 +135,8 @@ ErrCode Lerc::GetLercInfo(const Byte* pLercBlob, unsigned int numBytesBlob, stru
     return ErrCode::Ok;
   }
 
+
+#ifdef HAVE_LERC1_DECODE
   // only if not Lerc2, try legacy Lerc1
   unsigned int numBytesHeader = CntZImage::computeNumBytesNeededToReadHeader();
   Byte* pByte = const_cast<Byte*>(pLercBlob);
@@ -201,6 +206,7 @@ ErrCode Lerc::GetLercInfo(const Byte* pLercBlob, unsigned int numBytesBlob, stru
 
     return ErrCode::Ok;
   }
+#endif
 
   return ErrCode::Failed;
 }
@@ -337,7 +343,9 @@ ErrCode Lerc::DecodeTempl(T* pData, const Byte* pLercBlob, unsigned int numBytes
     return ErrCode::WrongParam;
 
   const Byte* pByte = pLercBlob;
+#ifdef HAVE_LERC1_DECODE
   Byte* pByte1 = const_cast<Byte*>(pLercBlob);
+#endif
   Lerc2::HeaderInfo hdInfo;
 
   if (Lerc2::GetHeaderInfo(pByte, numBytesBlob, hdInfo) && hdInfo.version >= 1)    // is Lerc2
@@ -357,7 +365,7 @@ ErrCode Lerc::DecodeTempl(T* pData, const Byte* pLercBlob, unsigned int numBytes
 
         T* arr = pData + nDim * nCols * nRows * iBand;
 
-        if (!lerc2.Decode(&pByte, nBytesRemaining, arr, (pBitMask && iBand == 0) ? pBitMask->Bits() : 0))
+        if (!lerc2.Decode(&pByte, nBytesRemaining, arr, (pBitMask && iBand == 0) ? pBitMask->Bits() : nullptr))
           return ErrCode::Failed;
       }
     }
@@ -365,6 +373,7 @@ ErrCode Lerc::DecodeTempl(T* pData, const Byte* pLercBlob, unsigned int numBytes
 
   else    // might be old Lerc1
   {
+#ifdef HAVE_LERC1_DECODE
     unsigned int numBytesHeader = CntZImage::computeNumBytesNeededToReadHeader();
     CntZImage zImg;
 
@@ -385,6 +394,9 @@ ErrCode Lerc::DecodeTempl(T* pData, const Byte* pLercBlob, unsigned int numBytes
       if (!Convert(zImg, arr, pBitMask))
         return ErrCode::Failed;
     }
+#else
+    return ErrCode::Failed;
+#endif
   }
 
   return ErrCode::Ok;
@@ -393,6 +405,7 @@ ErrCode Lerc::DecodeTempl(T* pData, const Byte* pLercBlob, unsigned int numBytes
 // -------------------------------------------------------------------------- ;
 // -------------------------------------------------------------------------- ;
 
+#ifdef HAVE_LERC1_DECODE
 template<class T>
 bool Lerc::Convert(const CntZImage& zImg, T* arr, BitMask* pBitMask)
 {
@@ -426,6 +439,7 @@ bool Lerc::Convert(const CntZImage& zImg, T* arr, BitMask* pBitMask)
 
   return true;
 }
+#endif
 
 // -------------------------------------------------------------------------- ;
 

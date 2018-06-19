@@ -2016,7 +2016,7 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, size_t& nBytesRemainingInOut, T* 
 // -------------------------------------------------------------------------- ;
 
 template<class T>
-bool Lerc2::WriteMinMaxRanges(const T* data, Byte** ppByte) const
+bool Lerc2::WriteMinMaxRanges(const T* /*data*/, Byte** ppByte) const
 {
   if (!ppByte || !(*ppByte))
     return false;
@@ -2048,7 +2048,7 @@ bool Lerc2::WriteMinMaxRanges(const T* data, Byte** ppByte) const
 // -------------------------------------------------------------------------- ;
 
 template<class T>
-bool Lerc2::ReadMinMaxRanges(const Byte** ppByte, size_t& nBytesRemaining, const T* data)
+bool Lerc2::ReadMinMaxRanges(const Byte** ppByte, size_t& nBytesRemaining, const T* /*data*/)
 {
   if (!ppByte || !(*ppByte))
     return false;

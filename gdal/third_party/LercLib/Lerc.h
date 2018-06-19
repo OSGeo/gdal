@@ -31,7 +31,9 @@ Contributors:  Thomas Maurer
 
 namespace LercNS
 {
+#ifdef HAVE_LERC1_DECODE
   class CntZImage;
+#endif
 
   class Lerc
   {
@@ -178,7 +180,9 @@ namespace LercNS
       BitMask* pBitMask);              // gets filled if not 0, even if all valid
 
   private:
+#ifdef HAVE_LERC1_DECODE
     template<class T> static bool Convert(const CntZImage& zImg, T* arr, BitMask* pBitMask);
+#endif
     template<class T> static ErrCode ConvertToDoubleTempl(const T* pDataIn, size_t nDataValues, double* pDataOut);
   };
 }    // namespace LercNS
