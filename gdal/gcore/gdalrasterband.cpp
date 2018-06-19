@@ -3927,7 +3927,8 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                                        GUInt32& nMax,
                                        GUIntBig& nSum,
                                        GUIntBig& nSumSquare,
-                                       GUIntBig& nSampleCount )
+                                       GUIntBig& nSampleCount,
+                                       GUIntBig& nValidCount )
 {
     if( bHasNoData )
     {
@@ -3938,9 +3939,10 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
             {
                 const int iOffset = iX + iY * nBlockXSize;
                 const GUInt32 nValue = pData[iOffset];
+                nSampleCount ++;
                 if( nValue == nNoDataValue )
                     continue;
-                nSampleCount ++;
+                nValidCount ++;
                 if( nValue < nMin )
                     nMin = nValue;
                 if( nValue > nMax )
@@ -3983,6 +3985,7 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
             }
         }
         nSampleCount += nXCheck * nYCheck;
+        nValidCount += nXCheck * nYCheck;
     }
     else
     {
@@ -4026,6 +4029,7 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
             }
         }
         nSampleCount += nXCheck * nYCheck;
+        nValidCount += nXCheck * nYCheck;
     }
 }
 
@@ -4043,7 +4047,8 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
                                        GUInt32& nMax,
                                        GUIntBig& nSum,
                                        GUIntBig& nSumSquare,
-                                       GUIntBig& nSampleCount )
+                                       GUIntBig& nSampleCount,
+                                       GUIntBig& nValidCount )
 {
     int nOuterLoops = nXCheck / 65536;
     if( nXCheck % 65536 )
@@ -4062,14 +4067,17 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
                     iMax = nXCheck;
                 GUInt32 nSum32bit = 0;
                 GUInt32 nSumSquare32bit = 0;
+                GUInt32 nValidCount32bit = 0;
                 GUInt32 nSampleCount32bit = 0;
                 for( ; iX < iMax; iX++)
                 {
                     const int iOffset = iX + iY * nBlockXSize;
                     const GUInt32 nValue = pData[iOffset];
+
+                    nSampleCount32bit ++;
                     if( nValue == nNoDataValue )
                         continue;
-                    nSampleCount32bit ++;
+                    nValidCount32bit ++;
                     if( nValue < nMin )
                         nMin = nValue;
                     if( nValue > nMax )
@@ -4078,6 +4086,7 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
                     nSumSquare32bit += nValue * nValue;
                 }
                 nSampleCount += nSampleCount32bit;
+                nValidCount += nValidCount32bit;
                 nSum += nSum32bit;
                 nSumSquare += nSumSquare32bit;
             }
@@ -4126,6 +4135,7 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
             }
         }
         nSampleCount += nXCheck * nYCheck;
+        nValidCount += nXCheck * nYCheck;
     }
     else
     {
@@ -4179,6 +4189,7 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
             }
         }
         nSampleCount += nXCheck * nYCheck;
+        nValidCount += nXCheck * nYCheck;
     }
 }
 
@@ -4193,13 +4204,14 @@ static void ComputeStatisticsInternal( int nXCheck,
                                        GUInt32& nMax,
                                        GUIntBig& nSum,
                                        GUIntBig& nSumSquare,
-                                       GUIntBig& nSampleCount )
+                                       GUIntBig& nSampleCount,
+                                       GUIntBig& nValidCount )
 {
     ComputeStatisticsInternalGeneric( nXCheck, nBlockXSize, nYCheck,
                                       pData,
                                       bHasNoData, nNoDataValue,
                                       nMin, nMax, nSum, nSumSquare,
-                                      nSampleCount );
+                                      nSampleCount, nValidCount );
 }
 
 #if (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) || defined(_MSC_VER))
@@ -4245,7 +4257,8 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
                                        GUInt32& nMax,
                                        GUIntBig& nSum,
                                        GUIntBig& nSumSquare,
-                                       GUIntBig& nSampleCount )
+                                       GUIntBig& nSampleCount,
+                                       GUIntBig& nValidCount )
 {
     if( bHasNoData && nXCheck == nBlockXSize && nXCheck * nYCheck >= 32 &&
         nMin <= nMax )
@@ -4348,7 +4361,10 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
             GUInt32* panCoutNoDataMul255 = panSum;
             GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panCoutNoDataMul255),
                                ymm_count_nodata_mul_255);
-            nSampleCount += (i - iInit) -
+
+            nSampleCount += (i - iInit);
+
+            nValidCount += (i - iInit) -
                         (panCoutNoDataMul255[0] + panCoutNoDataMul255[2] +
                          panCoutNoDataMul255[4] + panCoutNoDataMul255[6]) / 255;
 
@@ -4375,9 +4391,10 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
         for( ; i<nXCheck * nYCheck; i++)
         {
             const GUInt32 nValue = pData[i];
+            nSampleCount ++;
             if( nValue == nNoDataValue )
                 continue;
-            nSampleCount ++;
+            nValidCount ++;
             if( nValue < nMin )
                 nMin = nValue;
             if( nValue > nMax )
@@ -4484,6 +4501,7 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
         }
 
         nSampleCount += nXCheck * nYCheck;
+        nValidCount += nXCheck * nYCheck;
     }
     else
     {
@@ -4491,7 +4509,7 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
                                           pData,
                                           bHasNoData, nNoDataValue,
                                           nMin, nMax, nSum, nSumSquare,
-                                          nSampleCount );
+                                          nSampleCount, nValidCount );
     }
 }
 
@@ -4516,7 +4534,8 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
                                        GUInt32& nMax,
                                        GUIntBig& nSum,
                                        GUIntBig& nSumSquare,
-                                       GUIntBig& nSampleCount )
+                                       GUIntBig& nSampleCount,
+                                       GUIntBig& nValidCount )
 {
     if( !bHasNoData && nXCheck == nBlockXSize && nXCheck * nYCheck >= 16 )
     {
@@ -4652,6 +4671,7 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
         }
 
         nSampleCount += nXCheck * nYCheck;
+        nValidCount += nXCheck * nYCheck;
     }
     else
     {
@@ -4659,7 +4679,7 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
                                           pData,
                                           bHasNoData, nNoDataValue,
                                           nMin, nMax, nSum, nSumSquare,
-                                          nSampleCount );
+                                          nSampleCount, nValidCount );
     }
 }
 
@@ -4831,6 +4851,12 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     SetMetadataItem( "STATISTICS_APPROXIMATE", "YES" );
                     SetStatistics( *pdfMin,*pdfMax, *pdfMean, *pdfStdDev );
                 }
+
+		/* transfer metadata from overview band to this */
+		const char *pszPercentValid = poBand->GetMetadataItem("STATISTICS_VALID_PERCENT");
+		
+		if ( pszPercentValid != nullptr )
+                    SetMetadataItem( "STATISTICS_VALID_PERCENT", pszPercentValid );
             }
             return eErr;
         }
@@ -4879,6 +4905,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
         pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
 
     GUIntBig nSampleCount = 0;
+    GUIntBig nValidCount = 0;
 
     if ( bApproxOK && HasArbitraryOverviews() )
     {
@@ -4933,6 +4960,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                                                 bGotFloatNoDataValue,
                                                 fNoDataValue,
                                                 bValid );
+                nSampleCount++;
                 if( !bValid )
                     continue;
 
@@ -4948,9 +4976,9 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     dfMax = std::max(dfMax, dfValue);
                 }
 
-                nSampleCount++;
+                nValidCount++;
                 const double dfDelta = dfValue - dfMean;
-                dfMean += dfDelta / nSampleCount;
+                dfMean += dfDelta / nValidCount;
                 dfM2 += dfDelta * (dfValue - dfMean);
             }
         }
@@ -5039,7 +5067,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                                                nNoDataValue,
                                                nMin, nMax, nSum,
                                                nSumSquare,
-                                               nSampleCount );
+                                               nSampleCount,
+                                               nValidCount );
                 }
                 else
                 {
@@ -5051,7 +5080,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                                                nNoDataValue,
                                                nMin, nMax, nSum,
                                                nSumSquare,
-                                               nSampleCount );
+                                               nSampleCount,
+                                               nValidCount );
                 }
 
                 poBlock->DropLock();
@@ -5076,21 +5106,21 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 /* -------------------------------------------------------------------- */
 /*      Save computed information.                                      */
 /* -------------------------------------------------------------------- */
-            if( nSampleCount )
-                dfMean = static_cast<double>(nSum) / nSampleCount;
+            if( nValidCount )
+                dfMean = static_cast<double>(nSum) / nValidCount;
 
             // To avoid potential precision issues when doing the difference,
             // we need to do that computation on 128 bit rather than casting
             // to double
             const GDALUInt128 nTmpForStdDev(
-                    GDALUInt128::Mul(nSumSquare,nSampleCount) -
+                    GDALUInt128::Mul(nSumSquare,nValidCount) -
                     GDALUInt128::Mul(nSum,nSum));
             const double dfStdDev =
-                nSampleCount > 0 ?
-                    sqrt(static_cast<double>(nTmpForStdDev)) / nSampleCount :
+                nValidCount > 0 ?
+                    sqrt(static_cast<double>(nTmpForStdDev)) / nValidCount :
                     0.0;
 
-            if( nSampleCount > 0 )
+            if( nValidCount > 0 )
             {
                 if( bApproxOK )
                 {
@@ -5103,13 +5133,41 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 SetStatistics( nMin, nMax, dfMean, dfStdDev );
             }
 
+            if( nValidCount == 0 )
+            {
+		SetMetadataItem( "STATISTICS_VALID_PERCENT", "0" );
+	    }
+            else if( nValidCount == nSampleCount )
+            {
+		SetMetadataItem( "STATISTICS_VALID_PERCENT", "100" );
+	    }
+	    else /* nValidCount < nSampleCount */
+	    {
+		char szValue[128] = { 0 };
+
+		/* percentage is only an indicator: limit precision */
+		CPLsnprintf( szValue, sizeof(szValue), "%.4g",
+		             100. * static_cast<double>(nValidCount) / nSampleCount );
+
+		if (EQUAL(szValue, "100"))
+		{
+		    /* don't set 100 percent valid 
+		     * because some of the sampled pixels were nodata */
+		    SetMetadataItem( "STATISTICS_VALID_PERCENT", "99.999" );
+		}
+		else
+		{
+		    SetMetadataItem( "STATISTICS_VALID_PERCENT", szValue );
+		}
+	    }
+
 /* -------------------------------------------------------------------- */
 /*      Record results.                                                 */
 /* -------------------------------------------------------------------- */
             if( pdfMin != nullptr )
-                *pdfMin = nSampleCount ? nMin : 0;
+                *pdfMin = nValidCount ? nMin : 0;
             if( pdfMax != nullptr )
-                *pdfMax = nSampleCount ? nMax : 0;
+                *pdfMax = nValidCount ? nMax : 0;
 
             if( pdfMean != nullptr )
                 *pdfMean = dfMean;
@@ -5117,7 +5175,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
             if( pdfStdDev != nullptr )
                 *pdfStdDev = dfStdDev;
 
-            if( nSampleCount > 0 )
+            if( nValidCount > 0 )
                 return CE_None;
 
             ReportError(
@@ -5159,6 +5217,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                                                     bGotFloatNoDataValue,
                                                     fNoDataValue,
                                                     bValid );
+
+                    nSampleCount++;
                     if( !bValid )
                         continue;
 
@@ -5174,9 +5234,9 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                         dfMax = std::max(dfMax, dfValue);
                     }
 
-                    nSampleCount++;
+                    nValidCount++;
                     const double dfDelta = dfValue - dfMean;
-                    dfMean += dfDelta / nSampleCount;
+                    dfMean += dfDelta / nValidCount;
                     dfM2 += dfDelta * (dfValue - dfMean);
                 }
             }
@@ -5204,9 +5264,9 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 /*      Save computed information.                                      */
 /* -------------------------------------------------------------------- */
     const double dfStdDev =
-        nSampleCount > 0 ? sqrt(dfM2 / nSampleCount) : 0.0;
+        nValidCount > 0 ? sqrt(dfM2 / nValidCount) : 0.0;
 
-    if( nSampleCount > 0 )
+    if( nValidCount > 0 )
     {
         if( bApproxOK )
         {
@@ -5217,6 +5277,34 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
             SetMetadataItem( "STATISTICS_APPROXIMATE",  nullptr );
         }
         SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
+    }
+
+    if( nValidCount == 0 )
+    {
+	SetMetadataItem( "STATISTICS_VALID_PERCENT", "0" );
+    }
+    else if( nValidCount == nSampleCount )
+    {
+	SetMetadataItem( "STATISTICS_VALID_PERCENT", "100" );
+    }
+    else /* nValidCount < nSampleCount */
+    {
+	char szValue[128] = { 0 };
+
+	/* percentage is only an indicator: limit precision */
+	CPLsnprintf( szValue, sizeof(szValue), "%.4g",
+		     100. * static_cast<double>(nValidCount) / nSampleCount );
+
+	if (EQUAL(szValue, "100"))
+	{
+	    /* don't set 100 percent valid 
+	     * because some of the sampled pixels were nodata */
+	    SetMetadataItem( "STATISTICS_VALID_PERCENT", "99.999" );
+	}
+	else
+	{
+	    SetMetadataItem( "STATISTICS_VALID_PERCENT", szValue );
+	}
     }
 
 /* -------------------------------------------------------------------- */
@@ -5233,7 +5321,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     if( pdfStdDev != nullptr )
         *pdfStdDev = dfStdDev;
 
-    if( nSampleCount > 0 )
+    if( nValidCount > 0 )
         return CE_None;
 
     ReportError(
