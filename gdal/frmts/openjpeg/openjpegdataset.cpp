@@ -3032,6 +3032,69 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     parameters.tcp_mct = static_cast<char>(bYCC);
     parameters.cblockw_init = nCblockW;
     parameters.cblockh_init = nCblockH;
+    parameters.mode = 0;
+
+#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+    // Was buggy before for some of the options
+    const char* pszCodeBlockStyle = CSLFetchNameValue(papszOptions, "CODEBLOCK_STYLE");
+    if( pszCodeBlockStyle )
+    {
+        if( CPLGetValueType(pszCodeBlockStyle) == CPL_VALUE_INTEGER )
+        {
+            int nVal = atoi(pszCodeBlockStyle);
+            if( nVal >= 0 && nVal <= 63 )
+            {
+                parameters.mode = nVal;
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Invalid value for CODEBLOCK_STYLE: %s. "
+                         "Should be >= 0 and <= 63",
+                         pszCodeBlockStyle);
+            }
+        }
+        else
+        {
+            char** papszTokens = CSLTokenizeString2(pszCodeBlockStyle, ", ", 0);
+            for( char** papszIter = papszTokens;
+                        papszIter && *papszIter; ++papszIter )
+            {
+                if( EQUAL(*papszIter, "BYPASS") )
+                {
+                    parameters.mode |= (1 << 0);
+                }
+                else if( EQUAL(*papszIter, "RESET") )
+                {
+                    parameters.mode |= (1 << 1);
+                }
+                else if( EQUAL(*papszIter, "TERMALL") )
+                {
+                    parameters.mode |= (1 << 2);
+                }
+                else if( EQUAL(*papszIter, "VSC") )
+                {
+                    parameters.mode |= (1 << 3);
+                }
+                else if( EQUAL(*papszIter, "PREDICTABLE") )
+                {
+                    parameters.mode |= (1 << 4);
+                }
+                else if( EQUAL(*papszIter, "SEGSYM") )
+                {
+                    parameters.mode |= (1 << 5);
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "Unrecognized option for CODEBLOCK_STYLE: %s",
+                             *papszIter);
+                }
+            }
+            CSLDestroy(papszTokens);
+        }
+    }
+#endif
 
     /* Add precincts */
     const char* pszPrecincts = CSLFetchNameValueDef(papszOptions, "PRECINCTS",
@@ -4064,6 +4127,9 @@ void GDALRegister_JP2OpenJPEG()
 "   <Option name='WRITE_METADATA' type='boolean' description='Whether metadata should be written, in a dedicated JP2 XML box' default='NO'/>"
 "   <Option name='MAIN_MD_DOMAIN_ONLY' type='boolean' description='(Only if WRITE_METADATA=YES) Whether only metadata from the main domain should be written' default='NO'/>"
 "   <Option name='USE_SRC_CODESTREAM' type='boolean' description='When source dataset is JPEG2000, whether to reuse the codestream of the source dataset unmodified' default='NO'/>"
+#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+"   <Option name='CODEBLOCK_STYLE' type='string' description='Comma-separated combination of BYPASS, RESET, TERMALL, VSC, PREDICTABLE, SEGSYM or value between 0 and 63'/>"
+#endif
 "</CreationOptionList>"  );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
