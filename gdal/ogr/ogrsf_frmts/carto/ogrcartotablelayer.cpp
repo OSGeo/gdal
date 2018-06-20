@@ -1841,25 +1841,6 @@ OGRErr OGRCARTOTableLayer::RunDeferredCreationIfNecessary()
                  osFIDColName.c_str());
 
     int nSRID = 0;
-    
-    // OGRwkbGeometryType eGType = GetGeomType();
-    // if( eGType != wkbNone )
-    // {
-    //     CPLString osGeomType = OGRToOGCGeomType(eGType);
-    //     if( wkbHasZ(eGType) )
-    //         osGeomType += "Z";
-    //
-    //     OGRCartoGeomFieldDefn *poFieldDefn =
-    //         (OGRCartoGeomFieldDefn *)poFeatureDefn->GetGeomFieldDefn(0);
-    //     nSRID = poFieldDefn->nSRID;
-    //
-    //     osSQL += CPLSPrintf("%s GEOMETRY(%s, %d)%s,",
-    //              "the_geom",
-    //              osGeomType.c_str(),
-    //              nSRID,
-    //              (!poFieldDefn->IsNullable()) ? " NOT NULL" : "");
-    // }
-    
     for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
     {
         OGRCartoGeomFieldDefn *poFieldDefn = (OGRCartoGeomFieldDefn*)(poFeatureDefn->GetGeomFieldDefn(i));
