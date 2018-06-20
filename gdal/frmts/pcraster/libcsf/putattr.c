@@ -187,7 +187,7 @@ CSF_FADDR32 CsfSeekAttrSpace(
 						endBlock = b.next;
 					else
 					*/
-					assert(i < NR_ATTR_IN_BLOCK);
+					assert(i+1 < NR_ATTR_IN_BLOCK);
 					endBlock = b.attrs[i+1].attrOffset;
 					if ( (size_t)( endBlock - b.attrs[i].attrOffset) >= size)
 						/* this position can
