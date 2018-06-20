@@ -100,7 +100,7 @@ class NITFDataset final: public GDALPamDataset
     GByte       *pabyJPEGBlock;
     int          nQLevel;
 
-    int          ScanJPEGQLevel( GUIntBig *pnDataStart );
+    int          ScanJPEGQLevel( GUIntBig *pnDataStart, bool *pbError );
     CPLErr       ScanJPEGBlocks();
     CPLErr       ReadJPEGBlock( int, int );
     void         CheckGeoSDEInfo();
