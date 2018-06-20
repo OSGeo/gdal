@@ -447,7 +447,7 @@ CPLErr RRASTERRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
         bool bByteSigned = (eDataType == GDT_Byte && pszPixelType &&
                             EQUAL(pszPixelType, "SIGNEDBYTE"));
-        const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+        const int nDTSize = std::max(1, GDALGetDataTypeSizeBytes(eDataType));
         int bGotNoDataValue = false;
         double dfNoDataValue = GetNoDataValue(&bGotNoDataValue);
         if( !bGotNoDataValue )
