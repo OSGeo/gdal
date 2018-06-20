@@ -155,6 +155,9 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
 
     virtual int                 TestCapability( const char * ) override;
 
+    virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
+                                         int bApproxOK = TRUE ) override;
+
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE ) override;
 
@@ -180,6 +183,7 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
                                              bool bGeomNullable,
                                              bool bCartodbfy);
     OGRErr              RunDeferredCreationIfNecessary();
+    CPLString           OGRCARTOGeometryType(OGRCartoGeomFieldDefn *poGeomField);
     bool                GetDeferredCreation() const
         { return bDeferredCreation; }
     void                CancelDeferredCreation()
