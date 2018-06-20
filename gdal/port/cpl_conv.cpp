@@ -53,6 +53,7 @@
 
 #include "cpl_conv.h"
 
+#include <algorithm>
 #include <cctype>
 #include <cerrno>
 #include <climits>
@@ -1502,28 +1503,50 @@ int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
     char *pszTemp =
         static_cast<char *>(CPLMalloc((nMaxLen + 1) * sizeof(char)));
 
-#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
-    char *pszCurLocale = NULL;
-
-    if( pszLocale || EQUAL(pszLocale, "") )
+    if( pszLocale && EQUAL(pszLocale, "C") &&
+        strcmp(pszFormat, "%a, %d %b %Y %H:%M:%S GMT") == 0 )
     {
-        // Save the current locale.
-        pszCurLocale = CPLsetlocale(LC_ALL, NULL);
-        // Set locale to the specified value.
-        CPLsetlocale(LC_ALL, pszLocale);
+        // Particular case when formatting RFC822 datetime, to avoid locale change
+        static const char* const aszMonthStr[] = {
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+        static const char* const aszDayOfWeek[] =
+            { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+        snprintf(pszTemp, nMaxLen + 1,
+                 "%s, %02d %s %04d %02d:%02d:%02d GMT",
+                 aszDayOfWeek[std::max(0, std::min(6, poBrokenTime->tm_wday))],
+                 poBrokenTime->tm_mday,
+                 aszMonthStr[std::max(0, std::min(11, poBrokenTime->tm_mon))],
+                 poBrokenTime->tm_year + 1900,
+                 poBrokenTime->tm_hour,
+                 poBrokenTime->tm_min,
+                 poBrokenTime->tm_sec);
     }
+    else
+    {
+#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
+        char *pszCurLocale = NULL;
+
+        if( pszLocale || EQUAL(pszLocale, "") )
+        {
+            // Save the current locale.
+            pszCurLocale = CPLsetlocale(LC_ALL, NULL);
+            // Set locale to the specified value.
+            CPLsetlocale(LC_ALL, pszLocale);
+        }
 #else
-    (void)pszLocale;
+        (void)pszLocale;
 #endif
 
-    if( !strftime(pszTemp, nMaxLen + 1, pszFormat, poBrokenTime) )
-        memset(pszTemp, 0, nMaxLen + 1);
+        if( !strftime(pszTemp, nMaxLen + 1, pszFormat, poBrokenTime) )
+            memset(pszTemp, 0, nMaxLen + 1);
 
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
-    // Restore stored locale back.
-    if( pszCurLocale )
-        CPLsetlocale( LC_ALL, pszCurLocale );
+        // Restore stored locale back.
+        if( pszCurLocale )
+            CPLsetlocale( LC_ALL, pszCurLocale );
 #endif
+    }
 
     const int nChars = CPLPrintString(pszBuffer, pszTemp, nMaxLen);
 
