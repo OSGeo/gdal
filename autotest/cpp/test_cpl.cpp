@@ -2443,4 +2443,26 @@ namespace tut
         ensure_equals(cpl::down_cast<Derived*>(static_cast<Base*>(nullptr)), static_cast<Derived*>(nullptr));
     }
 
+    // Test CPLPrintTime() in particular case of RFC822 formatting in C locale
+    template<>
+    template<>
+    void object::test<35>()
+    {
+        char szDate[64];
+        struct tm tm;
+        tm.tm_sec = 56;
+        tm.tm_min = 34;
+        tm.tm_hour = 12;
+        tm.tm_mday = 20;
+        tm.tm_mon = 6-1;
+        tm.tm_year = 2018 - 1900;
+        tm.tm_wday = 3; // Wednesday
+        tm.tm_yday = 0; // unused
+        tm.tm_isdst = 0; // unused
+        int nRet = CPLPrintTime(szDate, sizeof(szDate)-1,
+                     "%a, %d %b %Y %H:%M:%S GMT", &tm, "C");
+        szDate[nRet] = 0;
+        ensure_equals( std::string(szDate), std::string("Wed, 20 Jun 2018 12:34:56 GMT") );
+    }
+
 } // namespace tut

@@ -86,12 +86,7 @@ struct curl_slist* GetAzureBlobHeaders( const CPLString& osVerb,
     CPLString osDate = CPLGetConfigOption("CPL_AZURE_TIMESTAMP", "");
     if( osDate.empty() )
     {
-        char szDate[64];
-        time_t nNow = time(nullptr);
-        struct tm tm;
-        CPLUnixTimeToYMDHMS(nNow, &tm);
-        strftime(szDate, sizeof(szDate), "%a, %d %b %Y %H:%M:%S GMT", &tm);
-        osDate = szDate;
+        osDate = IVSIS3LikeHandleHelper::GetRFC822DateTime();
     }
 
     CPLString osMsVersion("2015-02-21");
