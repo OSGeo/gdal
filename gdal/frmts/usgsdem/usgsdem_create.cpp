@@ -1205,10 +1205,9 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
     OGRSpatialReference DstoSRS;
     OGRSpatialReference SrcoSRS;
     int                 bNorth = TRUE;
-        /* XXX here we are assume (!) northern hemisphere UTM datasets  */
-    int                 numdatums = 4;
+    const int           numdatums = 4;
     const char          DatumCodes[4][2] = { "1", "2", "3", "4" };
-    char                Datums[4][6] = { "NAD27", "WGS72", "WGS84",
+    const char          Datums[4][6] = { "NAD27", "WGS72", "WGS84",
                                             "NAD83" };
 
     /* get the source dataset's projection */
@@ -1241,6 +1240,10 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
         {
             break;
         }
+    }
+    if( i == numdatums )
+    {
+        i = numdatums - 1;
     }
     CPLStrlcpy( psWInfo->horizdatum, DatumCodes[i], 2 );
 
