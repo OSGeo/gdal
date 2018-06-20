@@ -1853,10 +1853,27 @@ do {                                                                    \
                                  poDS->sExtHeader.nEllipsoid, padfPrjParams );
         }
 
-        if(poDS->sHeader.iEPSGCode > RMF_EPSG_MIN_CODE &&
-           (OGRERR_NONE != res || oSRS.IsLocal()))
+        if(poDS->sHeader.iEPSGCode > RMF_EPSG_MIN_CODE)
         {
-            oSRS.importFromEPSG(poDS->sHeader.iEPSGCode);
+            if(OGRERR_NONE != res || oSRS.IsLocal())
+            {
+                oSRS.importFromEPSG(poDS->sHeader.iEPSGCode);
+            }
+            else
+            {
+                OGRSpatialReference oEPSG;
+                if(OGRERR_NONE != oEPSG.importFromEPSG(poDS->sHeader.iEPSGCode) &&
+                   oSRS.IsProjected() && oEPSG.IsProjected())
+                {
+                    const char* pszProjSrs = oSRS.GetAttrValue("PROJECTION");
+                    const char* pszProjEPSG = oEPSG.GetAttrValue("PROJECTION");
+                    if(pszProjSrs != nullptr && pszProjEPSG != nullptr &&
+                       EQUAL(pszProjSrs, pszProjEPSG))
+                    {
+                        oSRS.SetAuthority(nullptr, "EPSG", poDS->sHeader.iEPSGCode);
+                    }
+                }
+            }
         }
 
         if( poDS->pszProjection )
