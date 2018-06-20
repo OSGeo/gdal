@@ -346,7 +346,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
         else
         {
             nLineOffset = nPixelOffset * nWidth * nBands;
-            nBandOffset = nDTSize * nWidth;
+            nBandOffset = static_cast<vsi_l_offset>(nDTSize) * nWidth;
         }
     }
     else { /* PIXEL */

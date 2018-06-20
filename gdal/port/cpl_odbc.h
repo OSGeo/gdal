@@ -162,7 +162,7 @@ class CPL_DLL CPLODBCSession {
 
     CPL_DISALLOW_COPY_ASSIGN(CPLODBCSession)
 
-    char      m_szLastError[SQL_MAX_MESSAGE_LENGTH + 1] = { '\0' };
+    CPLString m_osLastError{};
     HENV      m_hEnv = nullptr;
     HDBC      m_hDBC = nullptr;
     int       m_bInTransaction = false;

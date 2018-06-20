@@ -119,6 +119,8 @@ public:
                             std::map<CPLString, CPLString>& oSortedMapHeaders,
                             const struct curl_slist* psExistingHeaders,
                             const char* pszHeaderPrefix);
+
+        static CPLString GetRFC822DateTime();
 };
 
 class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper

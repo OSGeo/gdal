@@ -1339,7 +1339,7 @@ int OGRGetDayOfWeek( int day, int month, int year )
 char* OGRGetRFC822DateTime( const OGRField* psField )
 {
     char* pszTZ = nullptr;
-    const char* aszDayOfWeek[] =
+    const char* const aszDayOfWeek[] =
         { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 
     int dayofweek = OGRGetDayOfWeek(psField->Date.Day, psField->Date.Month,

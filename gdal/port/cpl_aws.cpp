@@ -509,6 +509,22 @@ CPLString IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(
 }
 
 /************************************************************************/
+/*                         GetRFC822DateTime()                          */
+/************************************************************************/
+
+CPLString IVSIS3LikeHandleHelper::GetRFC822DateTime()
+{
+    char szDate[64];
+    time_t nNow = time(nullptr);
+    struct tm tm;
+    CPLUnixTimeToYMDHMS(nNow, &tm);
+    int nRet = CPLPrintTime(szDate, sizeof(szDate)-1,
+                    "%a, %d %b %Y %H:%M:%S GMT", &tm, "C");
+    szDate[nRet] = 0;
+    return szDate;
+}
+
+/************************************************************************/
 /*                          ParseSimpleJson()                           */
 /*                                                                      */
 /*      Return a string list of name/value pairs extracted from a       */

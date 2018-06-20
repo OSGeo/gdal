@@ -3788,8 +3788,8 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
 
         if( m_bHasDefinition12_063 )
         {
-            CreateExtensionsTableIfNecessary();
-            if( OGRERR_NONE != SQLCommand(hDB,
+            if( OGRERR_NONE != CreateExtensionsTableIfNecessary() ||
+                OGRERR_NONE != SQLCommand(hDB,
                 "INSERT INTO gpkg_extensions "
                 "(table_name, column_name, extension_name, definition, scope) "
                 "VALUES "

@@ -634,7 +634,7 @@ OGRFeature* OGRWFS3Layer::GetNextRawFeature()
     OGRFeature* poSrcFeature = nullptr;
     while( true )
     {
-        if( m_poUnderlyingDS.get() == nullptr )
+        if( m_poUnderlyingLayer == nullptr )
         {
             if( m_osGetURL.empty() )
                 return nullptr;

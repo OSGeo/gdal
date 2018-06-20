@@ -1825,8 +1825,6 @@ OGRGeometryH OGR_G_Value( OGRGeometryH hGeom, double dfDistance )
  *              FALSE to ask for non-linear geometries to be approximated as
  *              linear geometries.
  *
- * @return a point or NULL.
- *
  * @since GDAL 2.0
  */
 
