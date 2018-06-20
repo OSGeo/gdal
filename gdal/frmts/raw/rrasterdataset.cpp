@@ -1268,7 +1268,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLStringList aosRatNames(CSLTokenizeString2(osRatNames, ":", 0));
         CPLStringList aosRatTypes(CSLTokenizeString2(osRatTypes, ":", 0));
         CPLStringList aosRatValues(CSLTokenizeString2(osRatValues, ":", 0));
-        if( !aosRatNames.empty() &&
+        if( aosRatNames.size() >= 1 &&
             aosRatNames.size() == aosRatTypes.size() &&
             (aosRatValues.size() % aosRatNames.size()) == 0 )
         {
