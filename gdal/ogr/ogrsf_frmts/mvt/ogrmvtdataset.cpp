@@ -1324,9 +1324,6 @@ OGRFeature* OGRMVTLayer::GetNextRawFeature()
                         ParseGeometry(nGeomType, pabyDataGeometryEnd);
                     if( poGeom )
                     {
-                        poGeom->assignSpatialReference(GetSpatialRef());
-                        poFeature->SetGeometryDirectly(poGeom);
-
                         // Clip geometry to tile extent if requested
                         if( m_poDS->m_bClip && OGRGeometryFactory::haveGEOS() )
                         {
@@ -1359,6 +1356,8 @@ OGRFeature* OGRMVTLayer::GetNextRawFeature()
                                         poClipped->assignSpatialReference(
                                             GetSpatialRef());
                                         poFeature->SetGeometryDirectly(poClipped);
+                                        delete poGeom;
+                                        poGeom = nullptr;
                                     }
                                 }
                             }
@@ -1366,6 +1365,12 @@ OGRFeature* OGRMVTLayer::GetNextRawFeature()
                             {
                                 bOK = false;
                             }
+                        }
+
+                        if( poGeom )
+                        {
+                            poGeom->assignSpatialReference(GetSpatialRef());
+                            poFeature->SetGeometryDirectly(poGeom);
                         }
                     }
 
