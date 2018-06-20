@@ -1808,23 +1808,11 @@ do {                                                                    \
 /*  XXX: If projection value is not specified, but image still have     */
 /*  georeferencing information, assume Gauss-Kruger projection.         */
 /* -------------------------------------------------------------------- */
-    bool bEPSGCodeOk = false;
-    if(poDS->sHeader.iEPSGCode > RMF_EPSG_MIN_CODE)
-    {
-        OGRSpatialReference oSRS;
-        if(OGRERR_NONE == oSRS.importFromEPSG(poDS->sHeader.iEPSGCode))
-        {
-            if(poDS->pszProjection)
-                CPLFree(poDS->pszProjection);
-            oSRS.exportToWkt(&poDS->pszProjection);
-            bEPSGCodeOk = true;
-        }
-    }
-    if((!bEPSGCodeOk) &&
-       (poDS->sHeader.iProjection > 0 ||
-        (poDS->sHeader.dfPixelSize != 0.0 &&
-         poDS->sHeader.dfLLX != 0.0 &&
-         poDS->sHeader.dfLLY != 0.0)))
+    if(poDS->sHeader.iEPSGCode > RMF_EPSG_MIN_CODE ||
+       poDS->sHeader.iProjection > 0 ||
+       (poDS->sHeader.dfPixelSize != 0.0 &&
+        poDS->sHeader.dfLLX != 0.0 &&
+        poDS->sHeader.dfLLY != 0.0))
     {
         OGRSpatialReference oSRS;
         GInt32 nProj =
@@ -1857,8 +1845,20 @@ do {                                                                    \
             }
         }
 
-        oSRS.importFromPanorama( nProj, poDS->sExtHeader.nDatum,
+        OGRErr  res = OGRERR_FAILURE;
+        if(nProj >= 0 &&
+           (poDS->sExtHeader.nDatum >= 0 || poDS->sExtHeader.nEllipsoid >= 0))
+        {
+            res = oSRS.importFromPanorama( nProj, poDS->sExtHeader.nDatum,
                                  poDS->sExtHeader.nEllipsoid, padfPrjParams );
+        }
+
+        if(poDS->sHeader.iEPSGCode > RMF_EPSG_MIN_CODE &&
+           (OGRERR_NONE != res || oSRS.IsLocal()))
+        {
+            oSRS.importFromEPSG(poDS->sHeader.iEPSGCode);
+        }
+
         if( poDS->pszProjection )
             CPLFree( poDS->pszProjection );
         oSRS.exportToWkt( &poDS->pszProjection );
