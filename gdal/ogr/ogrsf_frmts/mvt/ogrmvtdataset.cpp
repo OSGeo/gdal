@@ -5933,11 +5933,11 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
         VSIUnlink(osTempDB);
 
     sqlite3* hDB = nullptr;
-    sqlite3_open_v2(osTempDB, &hDB,
+    CPL_IGNORE_RET_VAL(sqlite3_open_v2(osTempDB, &hDB,
                     SQLITE_OPEN_READWRITE |
                     (bReuseTempFile ? 0 : SQLITE_OPEN_CREATE) |
                     SQLITE_OPEN_NOMUTEX,
-                    poDS->m_pMyVFS->zName);
+                    poDS->m_pMyVFS->zName));
     if( hDB == nullptr )
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s",
@@ -6071,10 +6071,10 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
 
     if( bMBTILES )
     {
-        sqlite3_open_v2(pszFilename, &poDS->m_hDBMBTILES,
+        CPL_IGNORE_RET_VAL(sqlite3_open_v2(pszFilename, &poDS->m_hDBMBTILES,
                         SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
                         SQLITE_OPEN_NOMUTEX,
-                        poDS->m_pMyVFS->zName);
+                        poDS->m_pMyVFS->zName));
         if( poDS->m_hDBMBTILES == nullptr )
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s",
