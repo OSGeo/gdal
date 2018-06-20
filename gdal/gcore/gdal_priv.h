@@ -1041,6 +1041,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     void           SetFlushBlockErr( CPLErr eErr );
     CPLErr         UnreferenceBlock( GDALRasterBlock* poBlock );
+    void           SetValidPercent( GUIntBig nSampleCount, GUIntBig nValidCount );
 
   protected:
 //! @cond Doxygen_Suppress
@@ -1181,7 +1182,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr SetStatistics( double dfMin, double dfMax,
                                   double dfMean, double dfStdDev );
     virtual CPLErr ComputeRasterMinMax( int, double* );
-    virtual void SetValidPercent( GUIntBig nSampleCount, GUIntBig nValidCount );
 
 // Only defined when Doxygen enabled
 #ifdef DOXYGEN_SKIP

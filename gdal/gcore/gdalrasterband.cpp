@@ -4898,11 +4898,13 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     SetStatistics( *pdfMin,*pdfMax, *pdfMean, *pdfStdDev );
                 }
 
-		/* transfer metadata from overview band to this */
-		const char *pszPercentValid = poBand->GetMetadataItem("STATISTICS_VALID_PERCENT");
-		
-		if ( pszPercentValid != nullptr )
+                /* transfer metadata from overview band to this */
+                const char *pszPercentValid = poBand->GetMetadataItem("STATISTICS_VALID_PERCENT");
+
+                if ( pszPercentValid != nullptr )
+                {
                     SetMetadataItem( "STATISTICS_VALID_PERCENT", pszPercentValid );
+                }
             }
             return eErr;
         }
@@ -5179,7 +5181,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 SetStatistics( nMin, nMax, dfMean, dfStdDev );
             }
 
-	    SetValidPercent( nSampleCount, nValidCount );
+        SetValidPercent( nSampleCount, nValidCount );
 
 /* -------------------------------------------------------------------- */
 /*      Record results.                                                 */
