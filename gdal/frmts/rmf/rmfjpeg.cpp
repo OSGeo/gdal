@@ -35,6 +35,7 @@
 #include <setjmp.h>
 CPL_C_START
 #include <jpeglib.h>
+#include <jerror.h>
 CPL_C_END
 
 
@@ -72,6 +73,21 @@ static void RMFJPEGNoop(j_decompress_ptr)
 {
 }
 
+
+/**
+*\brief: This function is supposed to do refilling of the input buffer,
+* but as we provided everything at the beginning, if it is called, then
+* we have an error.
+*/
+static boolean RMFJPEG_fill_input_buffer_dec(j_decompress_ptr cinfo)
+{
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid JPEG stream");
+    cinfo->err->msg_code = JERR_INPUT_EMPTY;
+    cinfo->err->error_exit((j_common_ptr)(cinfo));
+    return FALSE;
+}
+
+
 /************************************************************************/
 /*                          JPEGDecompress()                            */
 /************************************************************************/
@@ -102,6 +118,7 @@ int RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
     oSrc.bytes_in_buffer = (size_t)nSizeIn;
     oSrc.term_source = RMFJPEGNoop;
     oSrc.init_source = RMFJPEGNoop;
+    oSrc.fill_input_buffer = RMFJPEG_fill_input_buffer_dec;
 
     jpeg_create_decompress(&oJpegInfo);
 
