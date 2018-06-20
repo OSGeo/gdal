@@ -4181,10 +4181,10 @@ int GDALDataset::GetSummaryRefCount() const
  @since GDAL 2.0
 */
 
-OGRLayer *GDALDataset::ICreateLayer( const char * /* pszName */,
-                                     OGRSpatialReference * /* poSpatialRef */,
-                                     OGRwkbGeometryType /* eGType */,
-                                     char ** /* papszOptions */ )
+OGRLayer *GDALDataset::ICreateLayer( CPL_UNUSED const char * pszName,
+                                     CPL_UNUSED OGRSpatialReference * poSpatialRef,
+                                     CPL_UNUSED OGRwkbGeometryType eGType,
+                                     CPL_UNUSED char ** papszOptions )
 
 {
     CPLError(CE_Failure, CPLE_NotSupported,
