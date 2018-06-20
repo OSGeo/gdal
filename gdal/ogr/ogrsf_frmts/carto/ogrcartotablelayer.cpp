@@ -481,6 +481,41 @@ void OGRCARTOTableLayer::RunDeferredCartofy()
 }
 
 /************************************************************************/
+/*                        CARTOGeometryType()                           */
+/************************************************************************/
+
+CPLString OGRCARTOTableLayer::OGRCARTOGeometryType(OGRCartoGeomFieldDefn *poGeomField)
+{
+    OGRwkbGeometryType eType = poGeomField->GetType();
+    const char *pszGeometryType = OGRToOGCGeomType(eType);
+    const char *suffix = "";
+    
+    if( (eType & OGRGeometry::OGR_G_3D) &&
+        (eType & OGRGeometry::OGR_G_MEASURED) )
+    {
+        suffix = "ZM";
+    }
+    else if( eType & OGRGeometry::OGR_G_MEASURED )
+    {
+        suffix = "M";
+    }
+    else if( eType & OGRGeometry::OGR_G_3D )
+    {
+        suffix = "Z";
+    }
+
+    CPLString osSQL;
+    osSQL.Printf("Geometry(%s%s,%d)",
+        pszGeometryType,
+        suffix,
+        poGeomField->nSRID
+        );
+        
+    return osSQL;
+}
+    
+    
+/************************************************************************/
 /*                         FlushDeferredBuffer()                        */
 /************************************************************************/
 
@@ -561,6 +596,93 @@ OGRErr OGRCARTOTableLayer::FlushDeferredCopy(bool bReset)
         m_nNextFIDWrite = -1;
     }
     return eErr;
+}
+
+/************************************************************************/
+/*                          CreateGeomField()                           */
+/************************************************************************/
+
+OGRErr OGRCARTOTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
+                                          CPL_UNUSED int bApproxOK )
+{
+    if (!poDS->IsReadWrite())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Operation not available in read-only mode");
+        return OGRERR_FAILURE;
+    }
+    
+    OGRwkbGeometryType eType = poGeomFieldIn->GetType();
+    if( eType == wkbNone )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot create geometry field of type wkbNone");
+        return OGRERR_FAILURE;
+    }
+    
+    const char *pszNameIn = poGeomFieldIn->GetNameRef();
+    CPLString osGeomFieldName = CPLString(pszNameIn);
+    if( pszNameIn == nullptr || EQUAL(pszNameIn, "") )
+    {        
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot add un-named geometry field");
+        return OGRERR_FAILURE;
+    }
+
+    /* Flush the write buffer before trying this. */
+    if( eDeferredInsertState == INSERT_MULTIPLE_FEATURE )
+    {
+        if( FlushDeferredBuffer() != OGRERR_NONE )
+            return OGRERR_FAILURE;
+    }
+
+    OGRCartoGeomFieldDefn *poGeomField = (OGRCartoGeomFieldDefn*)(new OGRGeomFieldDefn(pszNameIn, eType));
+    if( EQUAL(poGeomField->GetNameRef(), "") )
+    {
+        if( poFeatureDefn->GetGeomFieldCount() == 0 )
+            poGeomField->SetName( "the_geom" );
+    }
+    poGeomField->SetSpatialRef(poGeomFieldIn->GetSpatialRef());
+    
+    if( bLaunderColumnNames )
+    {
+        char *pszSafeName = OGRPGCommonLaunderName( poGeomField->GetNameRef(), "PG" );
+        poGeomField->SetName( pszSafeName );
+        CPLFree( pszSafeName );
+    }
+    
+    OGRSpatialReference* poSRS = poGeomField->GetSpatialRef();
+    int nSRID = 0;
+    if( poSRS != nullptr )
+        nSRID = poDS->FetchSRSId( poSRS );
+    
+    poGeomField->SetType(eType);
+    poGeomField->SetNullable(poGeomFieldIn->IsNullable());
+    poGeomField->nSRID = nSRID;
+    
+/* -------------------------------------------------------------------- */
+/*      Create the new field.                                           */
+/* -------------------------------------------------------------------- */
+    
+    if( !bDeferredCreation )
+    {
+        CPLString osSQL;
+        osSQL.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
+                    OGRCARTOEscapeIdentifier(osName).c_str(),
+                    OGRCARTOEscapeIdentifier(poGeomField->GetNameRef()).c_str(),
+                    OGRCARTOGeometryType(poGeomField).c_str()
+                    );
+        if( !poGeomField->IsNullable() )
+            osSQL += " NOT NULL";
+
+        json_object *poObj = poDS->RunSQL(osSQL);
+        if( poObj == nullptr )
+            return OGRERR_FAILURE;
+        json_object_put(poObj);
+    }
+
+    poFeatureDefn->AddGeomFieldDefn( poGeomField, FALSE );
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -1719,24 +1841,48 @@ OGRErr OGRCARTOTableLayer::RunDeferredCreationIfNecessary()
                  osFIDColName.c_str());
 
     int nSRID = 0;
-    OGRwkbGeometryType eGType = GetGeomType();
-    if( eGType != wkbNone )
+    
+    // OGRwkbGeometryType eGType = GetGeomType();
+    // if( eGType != wkbNone )
+    // {
+    //     CPLString osGeomType = OGRToOGCGeomType(eGType);
+    //     if( wkbHasZ(eGType) )
+    //         osGeomType += "Z";
+    //
+    //     OGRCartoGeomFieldDefn *poFieldDefn =
+    //         (OGRCartoGeomFieldDefn *)poFeatureDefn->GetGeomFieldDefn(0);
+    //     nSRID = poFieldDefn->nSRID;
+    //
+    //     osSQL += CPLSPrintf("%s GEOMETRY(%s, %d)%s,",
+    //              "the_geom",
+    //              osGeomType.c_str(),
+    //              nSRID,
+    //              (!poFieldDefn->IsNullable()) ? " NOT NULL" : "");
+    // }
+    
+    for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
     {
-        CPLString osGeomType = OGRToOGCGeomType(eGType);
-        if( wkbHasZ(eGType) )
-            osGeomType += "Z";
+        OGRCartoGeomFieldDefn *poFieldDefn = (OGRCartoGeomFieldDefn*)(poFeatureDefn->GetGeomFieldDefn(i));
+        OGRwkbGeometryType eGType = poFieldDefn->GetType();
+        if( eGType == wkbNone )
+            continue;
 
-        OGRCartoGeomFieldDefn *poFieldDefn =
-            (OGRCartoGeomFieldDefn *)poFeatureDefn->GetGeomFieldDefn(0);
         nSRID = poFieldDefn->nSRID;
+        const char *pszFieldName = "the_geom";
 
-        osSQL += CPLSPrintf("%s GEOMETRY(%s, %d)%s,",
-                 "the_geom",
-                 osGeomType.c_str(),
-                 nSRID,
-                 (!poFieldDefn->IsNullable()) ? " NOT NULL" : "");
+        if( i>0 )
+            pszFieldName = poFieldDefn->GetNameRef();
+
+        if( pszFieldName == nullptr || strlen(pszFieldName) == 0 )
+            return OGRERR_FAILURE;            
+
+        osSQL += CPLSPrintf("%s %s%s,",
+                    pszFieldName,
+                    OGRCARTOGeometryType(poFieldDefn).c_str(),
+                    (!poFieldDefn->IsNullable()) ? " NOT NULL" : ""
+                    );
     }
-
+    
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
