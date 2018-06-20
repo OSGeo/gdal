@@ -981,7 +981,7 @@ bool RRASTERDataset::ComputeSpacings(const CPLString& osBandOrder,
             return false;
         }
         nLineOffset = nPixelSize * nCols * l_nBands;
-        nBandOffset = nPixelSize * nCols;
+        nBandOffset = static_cast<vsi_l_offset>(nPixelSize) * nCols;
     }
     else if( EQUAL( osBandOrder, "BIP" ) )
     {
