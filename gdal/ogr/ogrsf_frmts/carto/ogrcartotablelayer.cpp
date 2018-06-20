@@ -1778,7 +1778,8 @@ int OGRCARTOTableLayer::TestCapability( const char * pszCap )
      || EQUAL(pszCap,OLCRandomWrite)
      || EQUAL(pszCap,OLCDeleteFeature)
      || EQUAL(pszCap,OLCCreateField)
-     || EQUAL(pszCap,OLCDeleteField) )
+     || EQUAL(pszCap,OLCDeleteField)
+     || EQUAL(pszCap,OLCCreateGeomField) )
     {
         return poDS->IsReadWrite();
     }
