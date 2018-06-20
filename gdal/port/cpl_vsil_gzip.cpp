@@ -2203,6 +2203,7 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "cpl_unzOpenCurrentFile() failed");
         delete poReader;
+        delete poVirtualHandle;
         return nullptr;
     }
 
@@ -2216,6 +2217,7 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
                  "cpl_unzGetCurrentFileInfo() failed");
         cpl_unzCloseCurrentFile(unzF);
         delete poReader;
+        delete poVirtualHandle;
         return nullptr;
     }
 
