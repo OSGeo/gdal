@@ -1181,6 +1181,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr SetStatistics( double dfMin, double dfMax,
                                   double dfMean, double dfStdDev );
     virtual CPLErr ComputeRasterMinMax( int, double* );
+    virtual void SetValidPercent( GUIntBig nSampleCount, GUIntBig nValidCount );
 
 // Only defined when Doxygen enabled
 #ifdef DOXYGEN_SKIP

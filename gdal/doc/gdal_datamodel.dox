@@ -315,6 +315,18 @@ thematic image).
 
 <li> An optional minimum and maximum value.
 
+<li> Optional statistics stored in metadata:
+
+  <ul>
+  <li> STATISTICS_MEAN: mean
+  <li> STATISTICS_MINIMUM: minimum
+  <li> STATISTICS_MAXIMUM: maximum
+  <li> STATISTICS_STDDEV: standard deviation
+  <li> STATISTICS_APPROXIMATE: only present if GDAL has computed 
+  approximate statistics
+  <li> STATISTICS_VALID_PERCENT: percentage of valid (not nodata) pixel
+  </ul>
+
 <li> An optional offset and scale for transforming raster values into meaning
 full values (i.e. translate height to meters).
 

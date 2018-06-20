@@ -3939,7 +3939,6 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
             {
                 const int iOffset = iX + iY * nBlockXSize;
                 const GUInt32 nValue = pData[iOffset];
-                nSampleCount ++;
                 if( nValue == nNoDataValue )
                     continue;
                 nValidCount ++;
@@ -3951,6 +3950,7 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
+        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
     }
     else if( nMin == std::numeric_limits<T>::min() &&
              nMax == std::numeric_limits<T>::max() )
@@ -3984,8 +3984,8 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
-        nSampleCount += nXCheck * nYCheck;
-        nValidCount += nXCheck * nYCheck;
+        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
     }
     else
     {
@@ -4028,8 +4028,8 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
-        nSampleCount += nXCheck * nYCheck;
-        nValidCount += nXCheck * nYCheck;
+        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
     }
 }
 
@@ -4134,8 +4134,8 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
-        nSampleCount += nXCheck * nYCheck;
-        nValidCount += nXCheck * nYCheck;
+        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
     }
     else
     {
@@ -4188,8 +4188,8 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
-        nSampleCount += nXCheck * nYCheck;
-        nValidCount += nXCheck * nYCheck;
+        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
     }
 }
 
@@ -4500,8 +4500,8 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
             nSumSquare += nValue * nValue;
         }
 
-        nSampleCount += nXCheck * nYCheck;
-        nValidCount += nXCheck * nYCheck;
+        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
     }
     else
     {
@@ -4670,8 +4670,8 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
             nSumSquare += nValue * nValue;
         }
 
-        nSampleCount += nXCheck * nYCheck;
-        nValidCount += nXCheck * nYCheck;
+        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
     }
     else
     {
@@ -4780,6 +4780,52 @@ inline double GetPixelValue( GDALDataType eDataType,
         return 0.0;
     }
     return dfValue;
+}
+
+/************************************************************************/
+/*                         SetValidPercent()                            */
+/************************************************************************/
+
+/**
+ * \brief Set percentage of valid (not nodata) pixels.
+ *
+ * Stores the percentage of valid pixels in the metadata item
+ * STATISTICS_VALID_PERCENT
+ *
+ * @param nSampleCount Number of sampled pixels.
+ *
+ * @param nValidCount Number of valid pixels.
+ */
+
+void GDALRasterBand::SetValidPercent(GUIntBig nSampleCount, GUIntBig nValidCount)
+{
+    if( nValidCount == 0 )
+    {
+        SetMetadataItem( "STATISTICS_VALID_PERCENT", "0" );
+    }
+    else if( nValidCount == nSampleCount )
+    {
+        SetMetadataItem( "STATISTICS_VALID_PERCENT", "100" );
+    }
+    else /* nValidCount < nSampleCount */
+    {
+        char szValue[128] = { 0 };
+
+        /* percentage is only an indicator: limit precision */
+        CPLsnprintf( szValue, sizeof(szValue), "%.4g",
+                 100. * static_cast<double>(nValidCount) / nSampleCount );
+
+        if (EQUAL(szValue, "100"))
+        {
+            /* don't set 100 percent valid 
+             * because some of the sampled pixels were nodata */
+            SetMetadataItem( "STATISTICS_VALID_PERCENT", "99.999" );
+        }
+        else
+        {
+            SetMetadataItem( "STATISTICS_VALID_PERCENT", szValue );
+        }
+    }
 }
 
 /************************************************************************/
@@ -5133,33 +5179,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 SetStatistics( nMin, nMax, dfMean, dfStdDev );
             }
 
-            if( nValidCount == 0 )
-            {
-		SetMetadataItem( "STATISTICS_VALID_PERCENT", "0" );
-	    }
-            else if( nValidCount == nSampleCount )
-            {
-		SetMetadataItem( "STATISTICS_VALID_PERCENT", "100" );
-	    }
-	    else /* nValidCount < nSampleCount */
-	    {
-		char szValue[128] = { 0 };
-
-		/* percentage is only an indicator: limit precision */
-		CPLsnprintf( szValue, sizeof(szValue), "%.4g",
-		             100. * static_cast<double>(nValidCount) / nSampleCount );
-
-		if (EQUAL(szValue, "100"))
-		{
-		    /* don't set 100 percent valid 
-		     * because some of the sampled pixels were nodata */
-		    SetMetadataItem( "STATISTICS_VALID_PERCENT", "99.999" );
-		}
-		else
-		{
-		    SetMetadataItem( "STATISTICS_VALID_PERCENT", szValue );
-		}
-	    }
+	    SetValidPercent( nSampleCount, nValidCount );
 
 /* -------------------------------------------------------------------- */
 /*      Record results.                                                 */
@@ -5279,33 +5299,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
         SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
     }
 
-    if( nValidCount == 0 )
-    {
-	SetMetadataItem( "STATISTICS_VALID_PERCENT", "0" );
-    }
-    else if( nValidCount == nSampleCount )
-    {
-	SetMetadataItem( "STATISTICS_VALID_PERCENT", "100" );
-    }
-    else /* nValidCount < nSampleCount */
-    {
-	char szValue[128] = { 0 };
-
-	/* percentage is only an indicator: limit precision */
-	CPLsnprintf( szValue, sizeof(szValue), "%.4g",
-		     100. * static_cast<double>(nValidCount) / nSampleCount );
-
-	if (EQUAL(szValue, "100"))
-	{
-	    /* don't set 100 percent valid 
-	     * because some of the sampled pixels were nodata */
-	    SetMetadataItem( "STATISTICS_VALID_PERCENT", "99.999" );
-	}
-	else
-	{
-	    SetMetadataItem( "STATISTICS_VALID_PERCENT", szValue );
-	}
-    }
+    SetValidPercent( nSampleCount, nValidCount );
 
 /* -------------------------------------------------------------------- */
 /*      Record results.                                                 */
