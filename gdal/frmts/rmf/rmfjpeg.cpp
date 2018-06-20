@@ -158,7 +158,7 @@ int RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
     {
         JSAMPROW    pabyBuffer[1];
 
-        if((JDIMENSION)nRawXSize < oJpegInfo.image_width)
+        if(pabyScanline)
         {
             pabyBuffer[0] = (JSAMPROW)pabyScanline;
         }
@@ -175,7 +175,7 @@ int RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
             return 0;
         }
 
-        if((JDIMENSION)nRawXSize < oJpegInfo.image_width)
+        if(pabyScanline)
         {
             memcpy(pabyOut + nRawScanLineSize*(oJpegInfo.output_scanline - 1),
                    pabyScanline, nRawScanLineSize);
