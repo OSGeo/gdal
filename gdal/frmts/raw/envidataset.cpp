@@ -1921,6 +1921,11 @@ bool ENVIDataset::ReadHeader( VSILFILE *fpHdr )
 /************************************************************************/
 
 GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo )
+{
+    return Open(poOpenInfo, true);
+}
+
+GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
 
 {
     // Assume the caller is pointing to the binary (i.e. .bil) file.
@@ -2306,7 +2311,8 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo )
     // small files.
     // But ultimately we should fix RawRasterBand to have a shared buffer
     // among bands.
-    if( !RAWDatasetCheckMemoryUsage(
+    if( bFileSizeCheck &&
+        !RAWDatasetCheckMemoryUsage(
                         poDS->nRasterXSize, poDS->nRasterYSize, nBands,
                         nDataSize,
                         nPixelOffset, nLineOffset, nHeaderSize, nBandOffset,
@@ -2642,7 +2648,7 @@ GDALDataset *ENVIDataset::Create( const char *pszFilename,
         return nullptr;
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
-    ENVIDataset *poDS = reinterpret_cast<ENVIDataset *>(Open(&oOpenInfo));
+    ENVIDataset *poDS = reinterpret_cast<ENVIDataset *>(Open(&oOpenInfo, false));
     if( poDS )
     {
         poDS->SetFillFile();
