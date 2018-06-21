@@ -37,7 +37,7 @@ CSC = csc
 !ENDIF
 !ENDIF
 
-!IFDEF DEBUG
+!IF "$(DEBUG)" == "1"
 CSDEBUG = /debug:full
 !ELSE
 CSDEBUG =
