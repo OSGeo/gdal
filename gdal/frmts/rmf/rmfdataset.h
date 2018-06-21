@@ -86,6 +86,7 @@ typedef struct
     GUInt32     nTileTblSize;                   // tile offsets/sizes table
     GInt32      iMapType;
     GInt32      iProjection;
+    GInt32      iEPSGCode;
     double      dfScale;
     double      dfResolution;
     double      dfPixelSize;

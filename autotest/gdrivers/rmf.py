@@ -35,6 +35,7 @@ sys.path.append('../pymod')
 
 import gdaltest
 import gdal
+from osgeo import osr
 
 ###############################################################################
 # Perform simple read tests.
@@ -638,6 +639,49 @@ def rmf_28b():
 
 
 ###############################################################################
+# Check EPSG code
+
+def rmf_29():
+
+    rmf_drv = gdal.GetDriverByName('RMF')
+    if rmf_drv is None:
+        gdaltest.post_reason('RMF driver not found.')
+        return 'fail'
+
+    ds = gdal.Open('data/byte.rsw', gdal.GA_ReadOnly)
+    if ds is None:
+        gdaltest.post_reason('Failed to open test dataset.')
+        return 'fail'
+
+    test_ds_name = 'tmp/epsg.rsw'
+    test_ds = rmf_drv.CreateCopy(test_ds_name, ds)
+    if test_ds is None:
+        gdaltest.post_reason('Failed to create test dataset copy.')
+        return 'fail'
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('EPSG:3388')
+    test_ds.SetProjection(sr.ExportToWkt())
+    test_ds = None;
+    ds = None
+
+    test_ds = gdal.Open(test_ds_name, gdal.GA_ReadOnly)
+    if test_ds is None:
+        gdaltest.post_reason('Failed to open test dataset.')
+        return 'fail'
+
+    wkt = test_ds.GetProjectionRef()
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput(wkt)
+    if str(sr.GetAuthorityCode(None)) != '3388':
+        gdaltest.post_reason('EPSG code is %s expected 3388.' %
+                             str(sr.GetAuthorityCode(None)))
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 
 
 gdaltest_list = [
@@ -673,6 +717,7 @@ gdaltest_list = [
     rmf_27,
     rmf_28a,
     rmf_28b,
+    rmf_29,
 ]
 
 if __name__ == '__main__':
