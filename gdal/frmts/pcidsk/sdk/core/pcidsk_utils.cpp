@@ -405,6 +405,13 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
             next++;
     }
 
+    // Workaround a bug with oss-fuzz that has a false-positive container-overflow
+    // with -fsanitize=address
+    while( dparms.size() < 18 )
+    {
+        dparms.push_back(0.0);
+    }
+
     dparms.resize(18);
 
     // This is rather iffy!
