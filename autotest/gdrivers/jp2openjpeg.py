@@ -3723,6 +3723,64 @@ def jp2openjpeg_codeblock_style():
     return 'success'
 
 ###############################################################################
+# Test external overviews
+
+
+def jp2openjpeg_external_overviews_single_band():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    filename = '/vsimem/jp2openjpeg_external_overviews_single_band.jp2'
+    gdaltest.jp2openjpeg_drv.CreateCopy(filename,
+                                        gdal.Open('../gcore/data/utmsmall.tif'),
+                                        options=['REVERSIBLE=YES', 'QUALITY=100'])
+    ds = gdal.Open(filename)
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+
+    ds = gdal.Open(filename)
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    gdaltest.jp2openjpeg_drv.Delete(filename)
+
+    if cs != 28926:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test external overviews
+
+
+def jp2openjpeg_external_overviews_multiple_band():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    filename = '/vsimem/jp2openjpeg_external_overviews_multiple_band.jp2'
+    gdaltest.jp2openjpeg_drv.CreateCopy(filename,
+                                        gdal.Open('data/small_world.tif'),
+                                        options=['REVERSIBLE=YES', 'QUALITY=100'])
+    ds = gdal.Open(filename)
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+
+    ds = gdal.Open(filename)
+    cs = [ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(3)]
+    ds = None
+
+    gdaltest.jp2openjpeg_drv.Delete(filename)
+
+    if cs != [6233, 7706, 26085]:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 
 def jp2openjpeg_cleanup():
@@ -3785,6 +3843,8 @@ gdaltest_list = [
     jp2openjpeg_49,
     jp2openjpeg_50,
     jp2openjpeg_codeblock_style,
+    jp2openjpeg_external_overviews_single_band,
+    jp2openjpeg_external_overviews_multiple_band,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
