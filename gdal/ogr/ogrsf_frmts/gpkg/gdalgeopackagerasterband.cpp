@@ -31,6 +31,7 @@
 #include "gdal_alg_priv.h"
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 
 CPL_CVSID("$Id$")
@@ -147,7 +148,7 @@ GDALGPKGMBTilesLikeRasterBand::GDALGPKGMBTilesLikeRasterBand(
     m_bHasNoData(false),
     m_dfNoDataValue(0.0)
 {
-    CPLAssert( m_poTPD != nullptr ); // make GCC 7 -Wnull-dereference happy in -O2
+    assert( m_poTPD != nullptr ); // make GCC 7 -Wnull-dereference happy in -O2
     eDataType = m_poTPD->m_eDT;
     m_nDTSize = m_poTPD->m_nDTSize;
     nBlockXSize = nTileWidth;
