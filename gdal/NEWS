@@ -1,3 +1,178 @@
+= GDAL/OGR 2.3.1 Release Notes =
+
+The 2.3.1 release is a bug fix release.
+
+== Build ==
+
+All:
+ * Fix build with recent Poppler (0.64) (#573)
+ * PDF driver: fix build against PDFium (#612)
+ * Do not use json-c private API in RDA and AmigoCloud drvers (#618)
+ * fix build against MySQL 8.0
+ * Include gdalsse_priv.h from user defined paths
+
+Unix:
+ * update GRASS drivers to support GRASS 7.4.0 (#633)
+ * configure: use CXXFLAGS when CXX is used (#693)
+
+Windows:
+ * MBTILES: remove extra parenthesis around $(ZLIB_FLAGS)
+ * NMAKE: copy gdal pdb to $(LIBDIR) in libinstall target
+ * NMAKE: Enable friendlier static library builds: DLL_BUILD can be set to 0
+
+== Port ==
+
+ * cpl_port.h: avoid compilation error when compiling GMT's gmtdigitize.c that defines _XOPEN_SOURCE to empty (#590)
+ * gdal_pc: fix CONFIG_INST_DATA (#609)
+ * /vsioss/: fix support of filenames with spaces
+ * /vsis3/: fix VSIStatL() on a directory (#603)
+ * /vsitar/: support headers with fields using star base-256 coding (#675)
+ * /vsizip/: fix memory leaks in error code paths on file opening (#699)
+ * /vsigs/, /vsiaz/, /vsioss/: fix signature issues related to Date HTTP header, when non-C locale is enabled
+ * Installed headers: re-install cpl_vsi_error.h
+
+== GDAL core ==
+
+ * GDALProxyPoolDataset constructor: fix inverted logic related to projection
+ * GDALGetJPEG2000Structure(): avoid excessive memory allocation. (oss-fuzz#8268)
+ * Overview: fix wrong computation of source pixel indices for AVERAGE and pixel-interleave bands
+
+== GDAL utilities ==
+
+ * gdal_contour: avoid out-of-memory situation (#594)
+ * gdal_merge.py: apply NaN check for raster copy
+ * gdal_retile.py: fix rounding issues when computing source and target regions (#670)
+
+== GDAL algorithms ==
+
+ * OpenCL wrapper: fix memory leak
+
+== GDAL drivers ==
+
+EHdr driver:
+ * fix creation of large enough drivers (#705)
+
+ENVI driver:
+ * fix creation of large enough drivers (#705)
+
+ERS driver:
+ * avoid potential stack overflow (oss-fuzz#8614)
+ * avoid infinite recursion (oss-fuzz#8744)
+ * avoid potential bad cast (oss-fuzz#8745)
+
+FIT driver:
+ * avoid excessive block size on creation (oss-fuzz#8292)
+
+GPKG driver:
+ * fix memory leak if errors on writing metadata
+
+GRIB driver:
+ * g2clib: avoid potential out of bound access (CID 1393528)
+
+GTiff driver:
+ * Internal libgeotiff: when rewriting a ASCII key with a string value longer than the original value, do not add a dummy "0 0 0 0" entry in the GeoKeyDirectory (#641)
+ * work-around above mentionned libgeotiff bug (#641)
+ * avoid various memory corruptions when reading some corrupted file (oss-fuzz#8488)
+
+HDF5 driver:
+ * fix reading variable names with single character (#622)
+
+IRIS driver:
+ * avoid infinite loop (oss-fuzz#8256, oss-fuzz#8439)
+
+ISCE driver:
+ * fix creation of large enough drivers (#705)
+
+PCRaster driver:
+ * libcsf: avoid potential out of bound access (CID 1074445)
+
+PostgisRaster driver:
+ * add support for out-db rasters (Trac #3234)
+ * improve performance of line by line reading
+
+RS2 driver:
+ * fix avoid potential memleak (CID 1393537, CID 1393534, CID 1074387)
+
+SGI driver:
+ * avoid out-of-bound buffer access (oss-fuzz#8889)
+
+USGSDEM driver:
+ * fix reading of Benicia.dem and Novato.dem (fixes trac #4901, github #583)
+ * avoid potential out-of-bounds access (CID 1393532)
+
+WCS driver:
+ * avoid null pointer dereference (#648)
+
+== OGR core ==
+
+ * OGRLineString::TransferMembersAndDestroy(): fix crashing issue with M component. (oss-fuzz#8773)
+ * OGRSQL evaluation: avoid too deep recursion. (oss-fuzz#8836)
+ * OGRGeometry::exportToGEOS(): fix potential out-of-bounds write on some GeometryCollection with TIN/PolyhedralSurface (#688)
+
+== OGRSpatialReference ==
+
+ * Validation: fix wrong values in papszProjectionDefinitions array, affecting Stereographic, Krovak, and Two_Point_Equidistant
+ * Validation: add missing parameter names in papszParameterDefinitions array
+ * MorphToESRI(): avoid potential heap use-after-free (#696)
+
+== OGR drivers ==
+
+AVCE00 driver:
+ * avoid perforance issues on huge lines (oss-fuzz#8284)
+
+BNA driver:
+ * refuse to open existing file in update mode, since it causes later crashes when attempting to add new features (fixes https://issues.qgis.org/issues/18563)
+
+CSV driver:
+ * in writing, use WKT instead of actual geometry column name if GEOMETRY=AS_WKT mode is used without CREATE_CSVT=YES (#660)
+
+DXF driver:
+ * avoid null pointer dereference when DXF_MAX_BSPLINE_CONTROL_POINTS is hit (oss-fuzz#8254)
+
+GeoJSON driver:
+ * properly flush the file in SyncToDisk() in append situations (relates to https://issues.qgis.org/issues/18596)
+ * fix type deduction when there is a Feature.id of type string and Feature.properties.id of type int (#669)
+
+GMT:
+ * avoid performance issue when opening layer with big number of fields. (oss-fuzz#8259)
+
+GPKG driver:
+ * take into ROLLBACK TO SAVEPOINT to invalidate cached feature count
+ * GPKG/SQLite: make sure to not invalidate POSIX advisory locks
+
+MSSQLSpatial driver:
+ * Fix layer-schema separation problem (#586)
+ * Fix bulk copy for multiple layers (#619)
+
+MVT driver:
+ * writer: do not skip Z/M/ZM geometries, just keep their XY coordinates
+
+VFK driver:
+ * create index on ID column only for selected (geometry-related) layers (#498)
+ * create db indices after inserting data and befor resolving geometrys (#498)
+ * avoid bigint overflow, force text attributes (PODIL_CITATEL/PODIL_JMENOVATEL) (#672)
+
+WFS3 driver:
+ * update to current version of the API draft (#626)
+ * remove legacy hack for feature paging that can cause endless loops
+
+XLSX driver:
+ * avoid stack buffer overflow is creating too many fields (oss-fuzz#8198)
+ * avoid timeout (oss-fuzz#8225)
+ * fix null pointer dereference (oss-fuzz#8286)
+
+== SWIG bindings ==
+
+Java bindings:
+ * Javadoc updates
+ * update to Java 1.6 requirement to please 'ant maven' target
+
+Perl bindings:
+ * require wrappers to be made before proceeding make (fixes #643).
+
+Python bindings:
+ * fixed NULL check on VSIFReadL (#572)
+
 = GDAL/OGR 2.3.0 Release Notes =
 
 Note: due to the change of SCM during the development, #XXXX still refers to
