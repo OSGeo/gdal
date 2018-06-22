@@ -667,7 +667,7 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
             }
 
             // skip optional metadataLink, description, and keywords
-            // skip requred lonLatEnvelope
+            // skip required lonLatEnvelope
 
         }
     }
