@@ -334,6 +334,7 @@ void VSIInstallSwiftStreamingFileHandler(void);
 void VSIInstallGZipFileHandler(void); /* No reason to export that */
 void VSIInstallZipFileHandler(void); /* No reason to export that */
 void VSIInstallStdinHandler(void); /* No reason to export that */
+void VSIInstallHdfsHandler(void);
 void VSIInstallStdoutHandler(void); /* No reason to export that */
 void CPL_DLL VSIInstallSparseFileHandler(void);
 void VSIInstallTarFileHandler(void); /* No reason to export that */
