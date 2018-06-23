@@ -14,6 +14,7 @@ All:
 Unix:
  * update GRASS drivers to support GRASS 7.4.0 (#633)
  * configure: use CXXFLAGS when CXX is used (#693)
+ * GNUmakefile: fix dependency of install target (fixes #707)
 
 Windows:
  * MBTILES: remove extra parenthesis around $(ZLIB_FLAGS)
