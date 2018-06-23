@@ -79,7 +79,7 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
     sBaseName[nLastUnderline] = 0;
 
     // Check if last 4 characters are fit in mask RjCj
-    int iRow, iCol;
+    unsigned int iRow, iCol;
     bool bHasRowColPart = nBaseNameLen > nLastUnderline + 5U;
     if(!bHasRowColPart || sscanf (pszBaseName + nLastUnderline + 5U, "R%uC%u",
         &iRow, &iCol) != 2)

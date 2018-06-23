@@ -65,6 +65,7 @@ def jp2metadata_1():
 
 def jp2metadata_2():
 
+    # Pleiades product description http://www.cscrs.itu.edu.tr/assets/downloads/PleiadesUserGuide.pdf
     try:
         os.remove('data/IMG_md_ple_R1C1.jp2.aux.xml')
     except OSError:
