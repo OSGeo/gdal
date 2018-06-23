@@ -171,6 +171,15 @@ int RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
         }
     }
 
+    if(setjmp(oJmpBuf))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "RMF JPEG: Error decompress JPEG tile");
+        jpeg_destroy_decompress(&oJpegInfo);
+        VSIFree(pabyScanline);
+        return 0;
+    }
+
     while(oJpegInfo.output_scanline < nImageHeight)
     {
         JSAMPROW    pabyBuffer[1];
@@ -198,10 +207,10 @@ int RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
                    pabyScanline, nRawScanLineSize);
         }
     }
-
-    VSIFree(pabyScanline);
     jpeg_finish_decompress(&oJpegInfo);
     jpeg_destroy_decompress(&oJpegInfo);
+
+    VSIFree(pabyScanline);
 
     return oJpegInfo.output_scanline*nRawScanLineSize;
 }
