@@ -42,6 +42,7 @@
 #  include <sys/stat.h>
 #endif
 
+#include <algorithm>
 #include <map>
 #include <string>
 #include <utility>
@@ -178,7 +179,7 @@ class VSIMemFilesystemHandler final : public VSIFilesystemHandler
                 const char *newpath ) override;
     GIntBig  GetDiskFreeSpace( const char* pszDirname ) override;
 
-    static  void     NormalizePath( CPLString & );
+    static std::string NormalizePath( const std::string &in );
 
     int              Unlink_unlocked( const char *pszFilename );
 };
@@ -495,8 +496,7 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
 
 {
     CPLMutexHolder oHolder( &hMutex );
-    CPLString osFilename = pszFilename;
-    NormalizePath( osFilename );
+    const CPLString osFilename = NormalizePath(pszFilename);
     if( osFilename.empty() )
         return nullptr;
 
@@ -582,8 +582,7 @@ int VSIMemFilesystemHandler::Stat( const char * pszFilename,
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    CPLString osFilename = pszFilename;
-    NormalizePath( osFilename );
+    const CPLString osFilename = NormalizePath(pszFilename);
 
     memset( pStatBuf, 0, sizeof(VSIStatBufL) );
 
@@ -637,8 +636,7 @@ int VSIMemFilesystemHandler::Unlink( const char * pszFilename )
 int VSIMemFilesystemHandler::Unlink_unlocked( const char * pszFilename )
 
 {
-    CPLString osFilename = pszFilename;
-    NormalizePath( osFilename );
+    const CPLString osFilename = NormalizePath(pszFilename);
 
     if( oFileList.find(osFilename) == oFileList.end() )
     {
@@ -666,9 +664,7 @@ int VSIMemFilesystemHandler::Mkdir( const char * pszPathname,
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    CPLString osPathname = pszPathname;
-
-    NormalizePath( osPathname );
+    const CPLString osPathname = NormalizePath(pszPathname);
 
     if( oFileList.find(osPathname) != oFileList.end() )
     {
@@ -706,9 +702,7 @@ char **VSIMemFilesystemHandler::ReadDirEx( const char *pszPath,
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    CPLString osPath = pszPath;
-
-    NormalizePath( osPath );
+    const CPLString osPath = NormalizePath(pszPath);
 
     char **papszDir = nullptr;
     size_t nPathLen = osPath.size();
@@ -762,11 +756,8 @@ int VSIMemFilesystemHandler::Rename( const char *pszOldPath,
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    CPLString osOldPath = pszOldPath;
-    CPLString osNewPath = pszNewPath;
-
-    NormalizePath( osOldPath );
-    NormalizePath( osNewPath );
+    const CPLString osOldPath = NormalizePath(pszOldPath);
+    const CPLString osNewPath = NormalizePath(pszNewPath);
 
     if( osOldPath.compare(osNewPath) == 0 )
         return 0;
@@ -802,15 +793,11 @@ int VSIMemFilesystemHandler::Rename( const char *pszOldPath,
 /*                           NormalizePath()                            */
 /************************************************************************/
 
-void VSIMemFilesystemHandler::NormalizePath( CPLString &oPath )
-
+std::string VSIMemFilesystemHandler::NormalizePath( const std::string &in )
 {
-    size_t nPos = 0;
-    while( (nPos = oPath.find('\\', nPos)) != std::string::npos )
-    {
-        oPath[nPos] = '/';
-        nPos ++;
-    }
+    std::string s(in);
+    std::replace(s.begin(), s.end(), '\\', '/');
+    return s;
 }
 
 /************************************************************************/
@@ -925,8 +912,8 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
     if( pszFilename == nullptr )
         return nullptr;
 
-    CPLString osFilename = pszFilename;
-    VSIMemFilesystemHandler::NormalizePath( osFilename );
+    const CPLString osFilename =
+        VSIMemFilesystemHandler::NormalizePath(pszFilename);
     if( osFilename.empty() )
         return nullptr;
 
@@ -981,8 +968,8 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
     if( pszFilename == nullptr )
         return nullptr;
 
-    CPLString osFilename = pszFilename;
-    VSIMemFilesystemHandler::NormalizePath( osFilename );
+    const CPLString osFilename =
+        VSIMemFilesystemHandler::NormalizePath(pszFilename);
 
     CPLMutexHolder oHolder( &poHandler->hMutex );
 
