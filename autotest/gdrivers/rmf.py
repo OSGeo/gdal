@@ -574,9 +574,8 @@ def rmf_27():
     if gdal.GetDriverByName('JPEG') is None:
         return 'skip'
 
-    cs1 = [50182, 27153, 38826] # External libjpeg
-    cs2 = [50741, 27453, 35939] # Internal libjpeg
-    cs3 = [51194, 27940, 38071] # osx, clang
+    cs1 = [50553, 27604, 36652] #
+    cs2 = [51009, 27640, 37765] # osx, clang
 
     ds = gdal.Open('data/jpeg-in-rmf.rsw', gdal.GA_ReadOnly)
     if ds is None:
@@ -594,9 +593,9 @@ def rmf_27():
         band = ds.GetRasterBand(iBand + 1)
         cs[iBand] = band.Checksum()
 
-    if cs != cs1 and cs != cs2 and cs != cs3:
-        gdaltest.post_reason('Invalid checksum %s expected %s, %s or %s .' %
-                             (str(cs), str(cs1), str(cs2), str(cs3)))
+    if cs != cs1 and cs != cs2:
+        gdaltest.post_reason('Invalid checksum %s expected %s or %s.' %
+                             (str(cs), str(cs1), str(cs2)))
         return 'fail'
 
     return 'success'
