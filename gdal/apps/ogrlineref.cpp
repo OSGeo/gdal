@@ -57,7 +57,8 @@ CPL_CVSID("$Id$")
 #define FIELD_SCALE_FACTOR "scale"
 constexpr double DELTA = 0.00000001; // - delta
 #ifdef HAVE_GEOS_PROJECT
-constexpr double TOLERANCE = 0.00008983153;
+constexpr double TOLERANCE_DEGREE = 0.00008983153;
+constexpr double TOLERANCE_METER = 10.0;
 #endif
 
 enum operation
@@ -600,14 +601,24 @@ static OGRErr CreatePartsFromLineString(
     bool bQuiet, const char* pszOutputSepFieldName = nullptr,
     const char* pszOutputSepFieldValue = nullptr )
 {
-    // TODO: What is a reper?
-    // Check repers type
+    // Check repers/milestones/reference points type
     OGRwkbGeometryType eGeomType = poPkLayer->GetGeomType();
     if( wkbFlatten(eGeomType) != wkbPoint )
     {
         fprintf(stderr, "Unsupported geometry type %s for path\n",
                 OGRGeometryTypeToName(eGeomType));
         return OGRERR_FAILURE;
+    }
+
+    double dfTolerance = 1.0;
+    OGRSpatialReference* pSpaRef = pPathGeom->getSpatialReference();
+    if( pSpaRef->IsGeographic() )
+    {
+        dfTolerance = TOLERANCE_DEGREE;
+    }
+    else
+    {
+        dfTolerance = TOLERANCE_METER;
     }
 
     // Create sorted list of repers.
@@ -646,7 +657,7 @@ static OGRErr CreatePartsFromLineString(
             else
             {
                 const double dfDist = pPathGeom->Distance(pPt);
-                if( dfDist < TOLERANCE )
+                if( dfDist < dfTolerance )
                     moRepers[dfReperPos] = pPt;
                 else
                     delete pPt;
@@ -717,7 +728,6 @@ static OGRErr CreatePartsFromLineString(
         pPart = pPathGeom->getSubLine(0, dfDistance1, FALSE);
         if( nullptr != pPart )
         {
-            OGRSpatialReference* pSpaRef = pPathGeom->getSpatialReference();
             double dfLen = pPart->get_Length();
             if( pSpaRef->IsGeographic() )
             {
@@ -845,7 +855,6 @@ static OGRErr CreatePartsFromLineString(
             pPathGeom->getSubLine(dfDistance1, pPathGeom->get_Length(), FALSE);
         if( nullptr != pPart )
         {
-            OGRSpatialReference* pSpaRef = pPathGeom->getSpatialReference();
             double dfLen = pPart->get_Length();
             if( pSpaRef->IsGeographic() )
             {
