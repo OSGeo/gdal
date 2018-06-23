@@ -102,6 +102,53 @@ static void RMFJPEG_skip_input_data_dec(j_decompress_ptr cinfo, long l) {
 /*                          JPEGDecompress()                            */
 /************************************************************************/
 
+static int _Decompress(jmp_buf* poJmpBuf,
+                       jpeg_decompress_struct* poJpegInfo,
+                       GByte*      pabyOut,
+                       int         nRawScanLineSize,
+                       JDIMENSION  nImageHeight,
+                       GByte*      pabyScanline)
+{
+    if(setjmp(*poJmpBuf))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "RMF JPEG: Error decompress JPEG tile");
+        return 0;
+    }
+
+    while(poJpegInfo->output_scanline < nImageHeight)
+    {
+        JSAMPROW    pabyBuffer[1];
+
+        if(pabyScanline)
+        {
+            pabyBuffer[0] = (JSAMPROW)pabyScanline;
+        }
+        else
+        {
+            pabyBuffer[0] = (JSAMPROW)pabyOut +
+                            nRawScanLineSize*poJpegInfo->output_scanline;
+        }
+
+        if(jpeg_read_scanlines(poJpegInfo, pabyBuffer, 1) == 0)
+        {
+            return 0;
+        }
+
+        if(pabyScanline)
+        {
+            memcpy(pabyOut + nRawScanLineSize*(poJpegInfo->output_scanline - 1),
+                   pabyScanline, nRawScanLineSize);
+        }
+    }
+    jpeg_finish_decompress(poJpegInfo);
+    return poJpegInfo->output_scanline*nRawScanLineSize;
+}
+
+/************************************************************************/
+/*                          JPEGDecompress()                            */
+/************************************************************************/
+
 int RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
                                GByte* pabyOut, GUInt32 nSizeOut,
                                GUInt32 nRawXSize, GUInt32 nRawYSize)
@@ -182,48 +229,15 @@ int RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
         }
     }
 
-    if(setjmp(oJmpBuf))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "RMF JPEG: Error decompress JPEG tile");
-        jpeg_destroy_decompress(&oJpegInfo);
-        VSIFree(pabyScanline);
-        return 0;
-    }
+    int nRet = _Decompress(&oJmpBuf, &oJpegInfo,
+                          pabyOut,
+                          nRawScanLineSize, nImageHeight,
+                          pabyScanline);
 
-    while(oJpegInfo.output_scanline < nImageHeight)
-    {
-        JSAMPROW    pabyBuffer[1];
-
-        if(pabyScanline)
-        {
-            pabyBuffer[0] = (JSAMPROW)pabyScanline;
-        }
-        else
-        {
-            pabyBuffer[0] = (JSAMPROW)pabyOut +
-                            nRawScanLineSize*oJpegInfo.output_scanline;
-        }
-
-        if(jpeg_read_scanlines(&oJpegInfo, pabyBuffer, 1) == 0)
-        {
-            jpeg_destroy_decompress(&oJpegInfo);
-            VSIFree(pabyScanline);
-            return 0;
-        }
-
-        if(pabyScanline)
-        {
-            memcpy(pabyOut + nRawScanLineSize*(oJpegInfo.output_scanline - 1),
-                   pabyScanline, nRawScanLineSize);
-        }
-    }
-    jpeg_finish_decompress(&oJpegInfo);
     jpeg_destroy_decompress(&oJpegInfo);
-
     VSIFree(pabyScanline);
 
-    return oJpegInfo.output_scanline*nRawScanLineSize;
+    return nRet;
 }
 
 #endif //HAVE_LIBJPEG
