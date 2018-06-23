@@ -100,6 +100,7 @@ void GMLFeatureClass::StealProperties()
     CPLFree(m_papoProperty);
     m_papoProperty = nullptr;
     m_oMapPropertyNameToIndex.clear();
+    m_oMapPropertySrcElementToIndex.clear();
 }
 
 /************************************************************************/
@@ -158,10 +159,9 @@ int GMLFeatureClass::GetPropertyIndexBySrcElement( const char *pszElement,
                                                    int nLen ) const
 
 {
-    for( int i = 0; i < m_nPropertyCount; i++ )
-        if( nLen == static_cast<int>(m_papoProperty[i]->GetSrcElementLen()) &&
-            memcmp(pszElement, m_papoProperty[i]->GetSrcElement(), nLen) == 0)
-            return i;
+    auto oIter = m_oMapPropertySrcElementToIndex.find(CPLString(pszElement, nLen));
+    if( oIter != m_oMapPropertySrcElementToIndex.end() )
+        return oIter->second;
 
     return -1;
 }
@@ -189,6 +189,12 @@ int GMLFeatureClass::AddProperty( GMLPropertyDefn *poDefn )
     m_papoProperty[m_nPropertyCount - 1] = poDefn;
     m_oMapPropertyNameToIndex[ CPLString(poDefn->GetName()).toupper() ] =
         m_nPropertyCount - 1;
+    if( m_oMapPropertySrcElementToIndex.find(poDefn->GetSrcElement()) ==
+            m_oMapPropertySrcElementToIndex.end() )
+    {
+        m_oMapPropertySrcElementToIndex[ poDefn->GetSrcElement() ] =
+            m_nPropertyCount - 1;
+    }
 
     return m_nPropertyCount - 1;
 }
@@ -878,6 +884,12 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             CPLCreateXMLElementAndValue(psDSI, "ExtraInfo", m_pszExtraInfo);
     }
 
+    CPLXMLNode* psLastChild = psRoot->psChild;
+    while( psLastChild->psNext )
+    {
+        psLastChild = psLastChild->psNext;
+    }
+
     // Emit property information.
     for( int iProperty = 0; iProperty < GetPropertyCount(); iProperty++ )
     {
@@ -885,7 +897,9 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
         const char *pszTypeName = "Unknown";
 
         CPLXMLNode *psPDefnNode =
-            CPLCreateXMLNode(psRoot, CXT_Element, "PropertyDefn");
+            CPLCreateXMLNode(nullptr, CXT_Element, "PropertyDefn");
+        psLastChild->psNext = psPDefnNode;
+        psLastChild = psPDefnNode;
         CPLCreateXMLElementAndValue(psPDefnNode, "Name", poPDefn->GetName());
         CPLCreateXMLElementAndValue(psPDefnNode, "ElementPath",
                                     poPDefn->GetSrcElement());

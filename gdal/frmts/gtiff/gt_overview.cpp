@@ -452,6 +452,33 @@ GTIFFBuildOverviews( const char * pszFilename,
     else
         nPlanarConfig = PLANARCONFIG_SEPARATE;
 
+    bool bSourceIsPixelInterleaved = false;
+    bool bSourceIsJPEG2000 = false;
+    if( nBands > 1 )
+    {
+        GDALDataset* poSrcDS = papoBandList[0]->GetDataset();
+        if( poSrcDS )
+        {
+            const char* pszSrcInterleave = poSrcDS->GetMetadataItem("INTERLEAVE",
+                                                                "IMAGE_STRUCTURE");
+            if( pszSrcInterleave && EQUAL(pszSrcInterleave, "PIXEL") )
+            {
+                bSourceIsPixelInterleaved = true;
+            }
+        }
+
+        const char* pszSrcCompression = papoBandList[0]->GetMetadataItem("COMPRESSION",
+                                                                "IMAGE_STRUCTURE");
+        if( pszSrcCompression )
+        {
+            bSourceIsJPEG2000 = EQUAL(pszSrcCompression, "JPEG2000");
+        }
+        if( bSourceIsPixelInterleaved && bSourceIsJPEG2000 )
+        {
+            nPlanarConfig = PLANARCONFIG_CONTIG;
+        }
+    }
+
     const char* pszInterleave =
         CPLGetConfigOption( "INTERLEAVE_OVERVIEW", nullptr );
     if( pszInterleave != nullptr && pszInterleave[0] != '\0' )
@@ -885,17 +912,18 @@ GTIFFBuildOverviews( const char * pszFilename,
 
     CPLErr eErr = CE_None;
 
-    if( nCompression != COMPRESSION_NONE &&
-        nPlanarConfig == PLANARCONFIG_CONTIG &&
-        !GDALDataTypeIsComplex(papoBandList[0]->GetRasterDataType()) &&
-        papoBandList[0]->GetColorTable() == nullptr &&
-        (STARTS_WITH_CI(pszResampling, "NEAR") ||
-         EQUAL(pszResampling, "AVERAGE") ||
-         EQUAL(pszResampling, "GAUSS") ||
-         EQUAL(pszResampling, "CUBIC") ||
-         EQUAL(pszResampling, "CUBICSPLINE") ||
-         EQUAL(pszResampling, "LANCZOS") ||
-         EQUAL(pszResampling, "BILINEAR")))
+    if(  ((bSourceIsPixelInterleaved && bSourceIsJPEG2000) ||
+          (nCompression != COMPRESSION_NONE)) &&
+         nPlanarConfig == PLANARCONFIG_CONTIG &&
+         !GDALDataTypeIsComplex(papoBandList[0]->GetRasterDataType()) &&
+         papoBandList[0]->GetColorTable() == nullptr &&
+         (STARTS_WITH_CI(pszResampling, "NEAR") ||
+          EQUAL(pszResampling, "AVERAGE") ||
+          EQUAL(pszResampling, "GAUSS") ||
+          EQUAL(pszResampling, "CUBIC") ||
+          EQUAL(pszResampling, "CUBICSPLINE") ||
+          EQUAL(pszResampling, "LANCZOS") ||
+          EQUAL(pszResampling, "BILINEAR")) )
     {
         // In the case of pixel interleaved compressed overviews, we want to
         // generate the overviews for all the bands block by block, and not

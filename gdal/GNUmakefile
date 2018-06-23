@@ -203,7 +203,7 @@ web-update:	docs
 	$(INSTALL_DIR) $(INST_HTML)
 	cp html/*.* $(INST_HTML)
 
-install:	default install-actions
+install:	install-actions
 
 install-static-lib: static-lib gdal.pc
 	$(INSTALL_LIB) $(GDAL_LIB) $(DESTDIR)$(INST_LIB)
@@ -255,7 +255,7 @@ endif
 
 ifeq ($(HAVE_LIBTOOL),yes)
 
-install-lib:
+install-lib: default
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)
 	for f in $(LIBGDAL-yes) ; do $(INSTALL_LIB) $$f $(DESTDIR)$(INST_LIB) ; done
 ifeq ($(MACOSX_FRAMEWORK),yes)
@@ -278,7 +278,7 @@ ifeq ($(HAVE_LD_SHARED),yes)
 
 GDAL_SLIB_B	=	$(notdir $(GDAL_SLIB))
 
-install-lib:
+install-lib: default
 
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)
 ifeq ($(MACOSX_FRAMEWORK),yes)
@@ -297,7 +297,7 @@ endif
 
 else
 
-install-lib:
+install-lib: default
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)
 	$(INSTALL_LIB) $(GDAL_LIB) $(DESTDIR)$(INST_LIB)
 

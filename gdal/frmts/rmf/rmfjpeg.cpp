@@ -87,6 +87,63 @@ static boolean RMFJPEG_fill_input_buffer_dec(j_decompress_ptr cinfo)
     return FALSE;
 }
 
+// Might be called if there is a marker in the codestream
+static void RMFJPEG_skip_input_data_dec(j_decompress_ptr cinfo, long l) {
+    struct jpeg_source_mgr *src = cinfo->src;
+    if (l > 0) {
+        if (static_cast<size_t>(l) > src->bytes_in_buffer)
+            l = static_cast<long>(src->bytes_in_buffer);
+        src->bytes_in_buffer -= l;
+        src->next_input_byte += l;
+    }
+}
+
+/************************************************************************/
+/*                          JPEGDecompress()                            */
+/************************************************************************/
+
+static int _Decompress(jmp_buf* poJmpBuf,
+                       jpeg_decompress_struct* poJpegInfo,
+                       GByte*      pabyOut,
+                       int         nRawScanLineSize,
+                       JDIMENSION  nImageHeight,
+                       GByte*      pabyScanline)
+{
+    if(setjmp(*poJmpBuf))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "RMF JPEG: Error decompress JPEG tile");
+        return 0;
+    }
+
+    while(poJpegInfo->output_scanline < nImageHeight)
+    {
+        JSAMPROW    pabyBuffer[1];
+
+        if(pabyScanline)
+        {
+            pabyBuffer[0] = (JSAMPROW)pabyScanline;
+        }
+        else
+        {
+            pabyBuffer[0] = (JSAMPROW)pabyOut +
+                            nRawScanLineSize*poJpegInfo->output_scanline;
+        }
+
+        if(jpeg_read_scanlines(poJpegInfo, pabyBuffer, 1) == 0)
+        {
+            return 0;
+        }
+
+        if(pabyScanline)
+        {
+            memcpy(pabyOut + nRawScanLineSize*(poJpegInfo->output_scanline - 1),
+                   pabyScanline, nRawScanLineSize);
+        }
+    }
+    jpeg_finish_decompress(poJpegInfo);
+    return poJpegInfo->output_scanline*nRawScanLineSize;
+}
 
 /************************************************************************/
 /*                          JPEGDecompress()                            */
@@ -119,6 +176,7 @@ int RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
     oSrc.term_source = RMFJPEGNoop;
     oSrc.init_source = RMFJPEGNoop;
     oSrc.fill_input_buffer = RMFJPEG_fill_input_buffer_dec;
+    oSrc.skip_input_data = RMFJPEG_skip_input_data_dec;
 
     jpeg_create_decompress(&oJpegInfo);
 
@@ -171,39 +229,15 @@ int RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
         }
     }
 
-    while(oJpegInfo.output_scanline < nImageHeight)
-    {
-        JSAMPROW    pabyBuffer[1];
+    int nRet = _Decompress(&oJmpBuf, &oJpegInfo,
+                          pabyOut,
+                          nRawScanLineSize, nImageHeight,
+                          pabyScanline);
 
-        if(pabyScanline)
-        {
-            pabyBuffer[0] = (JSAMPROW)pabyScanline;
-        }
-        else
-        {
-            pabyBuffer[0] = (JSAMPROW)pabyOut +
-                            nRawScanLineSize*oJpegInfo.output_scanline;
-        }
-
-        if(jpeg_read_scanlines(&oJpegInfo, pabyBuffer, 1) == 0)
-        {
-            jpeg_destroy_decompress(&oJpegInfo);
-            VSIFree(pabyScanline);
-            return 0;
-        }
-
-        if(pabyScanline)
-        {
-            memcpy(pabyOut + nRawScanLineSize*(oJpegInfo.output_scanline - 1),
-                   pabyScanline, nRawScanLineSize);
-        }
-    }
-
-    VSIFree(pabyScanline);
-    jpeg_finish_decompress(&oJpegInfo);
     jpeg_destroy_decompress(&oJpegInfo);
+    VSIFree(pabyScanline);
 
-    return oJpegInfo.output_scanline*nRawScanLineSize;
+    return nRet;
 }
 
 #endif //HAVE_LIBJPEG
