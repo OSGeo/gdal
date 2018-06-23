@@ -87,6 +87,16 @@ static boolean RMFJPEG_fill_input_buffer_dec(j_decompress_ptr cinfo)
     return FALSE;
 }
 
+// Might be called if there is a marker in the codestream
+static void RMFJPEG_skip_input_data_dec(j_decompress_ptr cinfo, long l) {
+    struct jpeg_source_mgr *src = cinfo->src;
+    if (l > 0) {
+        if (static_cast<size_t>(l) > src->bytes_in_buffer)
+            l = static_cast<long>(src->bytes_in_buffer);
+        src->bytes_in_buffer -= l;
+        src->next_input_byte += l;
+    }
+}
 
 /************************************************************************/
 /*                          JPEGDecompress()                            */
@@ -119,6 +129,7 @@ int RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
     oSrc.term_source = RMFJPEGNoop;
     oSrc.init_source = RMFJPEGNoop;
     oSrc.fill_input_buffer = RMFJPEG_fill_input_buffer_dec;
+    oSrc.skip_input_data = RMFJPEG_skip_input_data_dec;
 
     jpeg_create_decompress(&oJpegInfo);
 
