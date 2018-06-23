@@ -80,9 +80,11 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
 
     // Check if last 4 characters are fit in mask RjCj
     int iRow, iCol;
-    if(sscanf (pszBaseName + nLastUnderline + 5U, "R%uC%u", &iRow, &iCol) != 2)
+    bool bHasRowColPart = nBaseNameLen > nLastUnderline + 5U;
+    if(!bHasRowColPart || sscanf (pszBaseName + nLastUnderline + 5U, "R%uC%u",
+        &iRow, &iCol) != 2)
     {
-        CPLDebug( "MDReaderPleiades", "Not a Pleiades product [%d, %d]", iRow, iCol );
+        CPLDebug( "MDReaderPleiades", "Not a Pleiades product" );
         return;
     }
 
