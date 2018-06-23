@@ -64,6 +64,10 @@ ifeq ($(HAVE_OPENSSL_CRYPTO),yes)
 CPPFLAGS	:=	$(CPPFLAGS) -DHAVE_OPENSSL_CRYPTO
 endif
 
+ifeq ($(HDFS_ENABLED),yes)
+CPPFLAGS	:=	$(CPPFLAGS) $(HDFS_INC) -DHDFS_ENABLED
+endif
+
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 $(OBJ): cpl_vsi_virtual.h
