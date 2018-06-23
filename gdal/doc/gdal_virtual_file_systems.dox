@@ -25,6 +25,7 @@
 <li> \ref gdal_virtual_file_systems_vsioss_streaming
 <li> \ref gdal_virtual_file_systems_vsiswift
 <li> \ref gdal_virtual_file_systems_vsiswift_streaming
+<li> \ref gdal_virtual_file_systems_vsihdfs
 </ol>
 <li> \ref gdal_virtual_file_systems_vsistdin
 <li> \ref gdal_virtual_file_systems_vsistdout
@@ -81,7 +82,7 @@ Notable exceptions are the netCDF, HDF4 and HDF5 drivers.
 /vsizip/ is a file handler that allows reading ZIP archives on-the-fly
 without decompressing them beforehand.
 
-To point to a file instide a zip file, the filename must be of the form
+To point to a file inside a zip file, the filename must be of the form
 /vsizip/path/to/the/file.zip/path/inside/the/zip/file, where
 path/to/the/file.zip is relative or absolute and path/inside/the/zip/file is
 the relative path to the file inside the archive.
@@ -152,7 +153,7 @@ option to NO).
 in regular uncompressed .tar or compressed .tgz or .tar.gz archives,
 without decompressing them priorly.
 
-To point to a file instide a .tar, .tgz .tar.gz file, the filename must be of the form
+To point to a file inside a .tar, .tgz .tar.gz file, the filename must be of the form
 /vsitar/path/to/the/file.tar/path/inside/the/tar/file, where
 path/to/the/file.tar is relative or absolute and path/inside/the/tar/file is
 the relative path to the file inside the archive.
@@ -300,7 +301,7 @@ entire file. It requires GDAL to be built against libcurl.
 
 Although this file handler is able seek to random offsets in the file, this
 will not be efficient. If you need efficient random access and that the
-server supports range dowloading, you should use the /vsicurl/ file system
+server supports range downloading, you should use the /vsicurl/ file system
 handler instead.
 
 Recognized filenames are of the form /vsicurl_streaming/http[s]://path/to/remote/resource
@@ -667,6 +668,24 @@ Authentication options, and read-only features, are identical to
 \ref gdal_virtual_file_systems_vsiswift "/vsiswift/"
 
 @since GDAL 2.3
+
+\subsection gdal_virtual_file_systems_vsihdfs /vsihdfs/ (Hadoop File System)
+
+/vsihdfs/ is a file system handler that provides read access to HDFS.
+This handler requires GDAL to have been built with Java support
+(--with-java) and HDFS support (--with-hdfs).  Support for this
+handler is currently only available on Unix-like systems.
+
+Recognized filenames are of the form /vsihdfs/hdfsUri where hdfsUri is
+a valid HDFS URI.
+
+Examples:
+<pre>
+/vsihdfs/file:/tmp/my.tif  (a local file accessed through HDFS)
+/vsihdfs/hdfs:/hadoop/my.tif  (a file stored in HDFS)
+</pre>
+
+@since GDAL 2.4
 
 \section gdal_virtual_file_systems_vsistdin /vsistdin/ (standard input streaming)
 
