@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <memory>
 #include <string>
 
 #include "gdal_frmts.h"
@@ -779,7 +780,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nBands = iBandCount;
     for( int iBand = 0; iBand < poDS->nBands; iBand++ )
     {
-        poDS->SetBand( iBand+1, new ILWISRasterBand( poDS, iBand+1 ) );
+        poDS->SetBand( iBand+1, new ILWISRasterBand( poDS, iBand+1, std::string() ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -906,6 +907,7 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
     snprintf(strsize, sizeof(strsize), "%d %d", nYSize, nXSize);
 
     //Form map/maplist name.
+    std::unique_ptr<IniFile> globalFile;
     if ( nBands == 1 )
     {
         pszODFName = std::string(CPLFormFilename(pszPath.c_str(),pszBaseName.c_str(),"mpr"));
@@ -915,10 +917,11 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
     else
     {
         pszFileName = CPLFormFilename(pszPath.c_str(),pszBaseName.c_str(),"mpl");
-        WriteElement("Ilwis", "Type", std::string(pszFileName), "MapList");
-        WriteElement("MapList", "GeoRef", std::string(pszFileName), "none.grf");
-        WriteElement("MapList", "Size", std::string(pszFileName), std::string(strsize));
-        WriteElement("MapList", "Maps", std::string(pszFileName), nBands);
+        globalFile.reset(new IniFile(std::string(pszFileName)));
+        globalFile->SetKeyValue("Ilwis", "Type", "MapList");
+        globalFile->SetKeyValue("MapList", "GeoRef", "none.grf");
+        globalFile->SetKeyValue("MapList", "Size", std::string(strsize));
+        globalFile->SetKeyValue("MapList", "Maps", CPLSPrintf("%d", nBands));
     }
 
     for( int iBand = 0; iBand < nBands; iBand++ )
@@ -930,23 +933,25 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
             pszODFName = std::string(szBandName) + ".mpr";
             pszDataBaseName = std::string(szBandName);
             snprintf(szBandName, sizeof(szBandName), "Map%d", iBand);
-            WriteElement("MapList", std::string(szBandName), std::string(pszFileName), pszODFName);
+            globalFile->SetKeyValue("MapList", std::string(szBandName), pszODFName);
             pszODFName = CPLFormFilename(pszPath.c_str(),pszDataBaseName.c_str(),"mpr");
         }
 /* -------------------------------------------------------------------- */
 /*      Write data definition per band (.mpr)                           */
 /* -------------------------------------------------------------------- */
 
-        WriteElement("Ilwis", "Type", pszODFName, "BaseMap");
-        WriteElement("BaseMap", "Type", pszODFName, "Map");
-        WriteElement("Map", "Type", pszODFName, "MapStore");
+        IniFile ODFFile (pszODFName);
 
-        WriteElement("BaseMap", "Domain", pszODFName, sDomain);
+        ODFFile.SetKeyValue("Ilwis", "Type", "BaseMap");
+        ODFFile.SetKeyValue("BaseMap", "Type", "Map");
+        ODFFile.SetKeyValue("Map", "Type", "MapStore");
+
+        ODFFile.SetKeyValue("BaseMap", "Domain", sDomain);
         std::string pszDataName = pszDataBaseName + ".mp#";
-        WriteElement("MapStore", "Data", pszODFName, pszDataName);
-        WriteElement("MapStore", "Structure", pszODFName, "Line");
+        ODFFile.SetKeyValue("MapStore", "Data", pszDataName);
+        ODFFile.SetKeyValue("MapStore", "Structure", "Line");
         // sStoreType is used by ILWISRasterBand constructor to determine eDataType
-        WriteElement("MapStore", "Type", pszODFName, sStoreType);
+        ODFFile.SetKeyValue("MapStore", "Type", sStoreType);
 
         // For now write-out a "Range" that is as broad as possible.
         // If later a better range is found (by inspecting metadata in the source dataset),
@@ -955,10 +960,10 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
         char strdouble[45];
         CPLsnprintf(strdouble, sizeof(strdouble), "%.3f:%.3f:%3f:offset=0", adfMinMax[0], adfMinMax[1],stepsize);
         std::string range(strdouble);
-        WriteElement("BaseMap", "Range", pszODFName, range);
+        ODFFile.SetKeyValue("BaseMap", "Range", range);
 
-        WriteElement("Map", "GeoRef", pszODFName, "none.grf");
-        WriteElement("Map", "Size", pszODFName, std::string(strsize));
+        ODFFile.SetKeyValue("Map", "GeoRef", "none.grf");
+        ODFFile.SetKeyValue("Map", "Size", std::string(strsize));
 
 /* -------------------------------------------------------------------- */
 /*      Try to create the data file.                                    */
@@ -975,6 +980,9 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
         }
         VSIFCloseL( fp );
     }
+
+    globalFile.reset();
+
     ILWISDataset *poDS = new ILWISDataset();
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
@@ -995,11 +1003,15 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
 
     for( int iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
-        poDS->SetBand( iBand, new ILWISRasterBand( poDS, iBand ) );
+        std::string sBandName;
+        if( poDS->nBands > 1 )
+        {
+            sBandName = CPLSPrintf("%s_band_%d.mpr", pszBaseName.c_str(), iBand);
+        }
+        poDS->SetBand( iBand, new ILWISRasterBand( poDS, iBand, sBandName ) );
     }
 
     return poDS;
-    // return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }
 
 /************************************************************************/
@@ -1226,7 +1238,8 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*                       ILWISRasterBand()                              */
 /************************************************************************/
 
-ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDSIn, int nBandIn ) :
+ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDSIn, int nBandIn,
+                                  const std::string& sBandNameIn) :
     fpRaw(nullptr),
     nSizePerPixel(0)
 {
@@ -1243,7 +1256,14 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDSIn, int nBandIn ) :
         // Form the band name.
         char cBandName[45];
         snprintf( cBandName, sizeof(cBandName), "Map%d", nBand-1);
-        sBandName = ReadElement("MapList", std::string(cBandName), std::string(poDSIn->osFileName));
+        if( sBandNameIn.empty() )
+        {
+            sBandName = ReadElement("MapList", std::string(cBandName), std::string(poDSIn->osFileName));
+        }
+        else
+        {
+            sBandName = sBandNameIn;
+        }
         std::string sInputPath = std::string(CPLGetPath( poDSIn->osFileName));
         std::string sBandPath = std::string(CPLGetPath( sBandName.c_str()));
         std::string sBandBaseName = std::string(CPLGetBasename( sBandName.c_str()));
