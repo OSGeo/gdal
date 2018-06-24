@@ -63,7 +63,7 @@ def ogr_dxf_1():
         return 'fail'
 
     defn = gdaltest.dxf_layer.GetLayerDefn()
-    if defn.GetFieldCount() != 5:
+    if defn.GetFieldCount() != 6:
         gdaltest.post_reason('did not get expected number of fields.')
         return 'fail'
 
@@ -100,6 +100,10 @@ def ogr_dxf_2():
 
     if feat.Layer != '0':
         gdaltest.post_reason('did not get expected layer for feature 0')
+        return 'fail'
+
+    if feat.PaperSpace != None:
+        gdaltest.post_reason( 'did not get expected PaperSpace for feature 0' )
         return 'fail'
 
     if feat.GetFID() != 0:
@@ -247,13 +251,17 @@ def ogr_dxf_7():
     return 'success'
 
 ###############################################################################
-# Dimension
+# PaperSpace and dimension
 
 
 def ogr_dxf_8():
 
-    # Skip boring line.
+    # Check that this line is in PaperSpace
     feat = gdaltest.dxf_layer.GetNextFeature()
+
+    if feat.GetField('PaperSpace') != 1:
+        gdaltest.post_reason( 'did not get expected PaperSpace' )
+        return 'fail'
 
     # Dimension lines
     feat = gdaltest.dxf_layer.GetNextFeature()
@@ -1922,7 +1930,7 @@ def ogr_dxf_32():
 #   LINESTRING (1 1,2 1,1 2,1 1)
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (1 1,2 1,1 2,1 1)') \
-            or feat.GetField('RawCodeValues') != ['43 0.0']:
+            or feat.GetField('RawCodeValues') != ['330 1F','43 0.0']:
         feat.DumpReadable()
         return 'fail'
 
@@ -1931,7 +1939,7 @@ def ogr_dxf_32():
 #   LINESTRING Z (1 1 0,1 2 0,2 2 0,1 1 0)
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'LINESTRING Z (1 1 0,1 2 0,2 2 0,1 1 0)') \
-            or feat.GetField('RawCodeValues') != ['66      1', '10 0.0', '20 0.0', '30 0.0']:
+            or feat.GetField('RawCodeValues') != ['330 1F','66      1','10 0.0','20 0.0','30 0.0']:
         feat.DumpReadable()
         return 'fail'
 
