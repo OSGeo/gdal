@@ -635,7 +635,7 @@ OGRErr OGRCARTOTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
             return OGRERR_FAILURE;
     }
 
-    OGRCartoGeomFieldDefn *poGeomField = (OGRCartoGeomFieldDefn*)(new OGRGeomFieldDefn(pszNameIn, eType));
+    OGRCartoGeomFieldDefn *poGeomField = new OGRCartoGeomFieldDefn(pszNameIn, eType);
     if( EQUAL(poGeomField->GetNameRef(), "") )
     {
         if( poFeatureDefn->GetGeomFieldCount() == 0 )
@@ -1840,9 +1840,10 @@ OGRErr OGRCARTOTableLayer::RunDeferredCreationIfNecessary()
                  OGRCARTOEscapeIdentifier(osName).c_str(),
                  osFIDColName.c_str());
 
+    int nSRID = 0;
     for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
     {
-        OGRCartoGeomFieldDefn *poFieldDefn = (OGRCartoGeomFieldDefn*)(poFeatureDefn->GetGeomFieldDefn(i));
+        OGRCartoGeomFieldDefn *poFieldDefn = dynamic_cast<OGRCartoGeomFieldDefn*>(poFeatureDefn->GetGeomFieldDefn(i));
         OGRwkbGeometryType eGType = poFieldDefn->GetType();
         if( eGType == wkbNone )
             continue;
