@@ -707,8 +707,8 @@ skip_read_next_line:
                 {
                     /*CPLDebug("EDIGEO", "FEA[%s] -> PFE[%s]",
                              osLnkStartName.c_str(), osLnkEndName.c_str());*/
-                    listFEA_PFE.push_back(strstrType
-                                               (osLnkStartName, osLnkEndName));
+                    listFEA_PFE.push_back(std::pair<CPLString, strListType >
+                                                (osLnkStartName, osLnkEndNameList));
                 }
                 else if (osLnkStartType == "FEA" && osLnkEndType == "PAR")
                 {
@@ -1153,141 +1153,143 @@ int OGREDIGEODataSource::BuildLineStrings()
 /************************************************************************/
 
 int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
-                                      const CPLString& osPFE)
+                                      const strListType& aosPFE)
 {
-    const std::map< CPLString, strListType >::iterator itPFE_PAR =
-                                                    mapPFE_PAR.find(osPFE);
-    if (itPFE_PAR == mapPFE_PAR.end())
+    for(int k=0;k<(int)aosPFE.size();k++)
     {
-        CPLDebug("EDIGEO", "ERROR: Cannot find PFE %s", osPFE.c_str());
-        return FALSE;
-    }
-
-    const strListType & aosPARList = itPFE_PAR->second;
-
-/* -------------------------------------------------------------------- */
-/*      Resolve arc ids to arc coordinate lists.                        */
-/* -------------------------------------------------------------------- */
-    std::vector< const xyPairListType *> aoPARPtrList;
-    for( int i = 0; i < (int)aosPARList.size(); i++ )
-    {
-        const std::map< CPLString, xyPairListType >::iterator itPAR =
-                                            mapPAR.find(aosPARList[i]);
-        if( itPAR != mapPAR.end() )
-            aoPARPtrList.push_back(&(itPAR->second));
-        else
-            CPLDebug("EDIGEO",
-                     "ERROR: Cannot find ARC %s", aosPARList[i].c_str());
-    }
-
-    if (aoPARPtrList.empty())
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Now try to chain all arcs together.                             */
-/* -------------------------------------------------------------------- */
-    std::vector<xyPairListType> aoXYList;
-
-    for( int j = 0; j < (int)aoPARPtrList.size(); j++ )
-    {
-        if (aoPARPtrList[j] == nullptr)
-            continue;
-        const xyPairListType& sFirstRing = *(aoPARPtrList[j]);
-        const xyPairType* psNext = &(sFirstRing.back());
-
-        xyPairListType aoXY;
-        for( int i = 0; i < (int)sFirstRing.size(); i++ )
-            aoXY.push_back(sFirstRing[i]);
-        aoPARPtrList[j] = nullptr;
-
-        int nIter = 1;
-        while(aoXY.back() != aoXY[0] && nIter < (int)aoPARPtrList.size())
+        const std::map< CPLString, strListType >::iterator itPFE_PAR =
+                                                    mapPFE_PAR.find(aosPFE[k]);
+        if (itPFE_PAR == mapPFE_PAR.end())
         {
-            bool bFound = false;
-            bool bReverseSecond = false;
-            int i = 0;  // Used after for.
-            for( ; i < (int)aoPARPtrList.size(); i++ )
+            CPLDebug("EDIGEO", "ERROR: Cannot find PFE %s", aosPFE[k].c_str());
+            return FALSE;
+        }
+
+        const strListType & aosPARList = itPFE_PAR->second;
+
+    /* -------------------------------------------------------------------- */
+    /*      Resolve arc ids to arc coordinate lists.                        */
+    /* -------------------------------------------------------------------- */
+        std::vector< const xyPairListType *> aoPARPtrList;
+        for( int i = 0; i < (int)aosPARList.size(); i++ )
+        {
+            const std::map< CPLString, xyPairListType >::iterator itPAR =
+                                                mapPAR.find(aosPARList[i]);
+            if( itPAR != mapPAR.end() )
+                aoPARPtrList.push_back(&(itPAR->second));
+            else
+                CPLDebug("EDIGEO",
+                        "ERROR: Cannot find ARC %s", aosPARList[i].c_str());
+        }
+
+        if (aoPARPtrList.empty())
+            return FALSE;
+
+    /* -------------------------------------------------------------------- */
+    /*      Now try to chain all arcs together.                             */
+    /* -------------------------------------------------------------------- */
+        std::vector<xyPairListType> aoXYList;
+
+        for( int j = 0; j < (int)aoPARPtrList.size(); j++ )
+        {
+            if (aoPARPtrList[j] == nullptr)
+                continue;
+            const xyPairListType& sFirstRing = *(aoPARPtrList[j]);
+            const xyPairType* psNext = &(sFirstRing.back());
+
+            xyPairListType aoXY;
+            for( int i = 0; i < (int)sFirstRing.size(); i++ )
+                aoXY.push_back(sFirstRing[i]);
+            aoPARPtrList[j] = nullptr;
+
+            int nIter = 1;
+            while(aoXY.back() != aoXY[0] && nIter < (int)aoPARPtrList.size())
             {
-                if (aoPARPtrList[i] != nullptr)
+                bool bFound = false;
+                bool bReverseSecond = false;
+                int i = 0;  // Used after for.
+                for( ; i < (int)aoPARPtrList.size(); i++ )
                 {
-                    const xyPairListType& sSecondRing = *(aoPARPtrList[i]);
-                    if (*psNext == sSecondRing[0])
+                    if (aoPARPtrList[i] != nullptr)
                     {
-                        bFound = true;
-                        bReverseSecond = false;
-                        break;
-                    }
-                    else if (*psNext == sSecondRing.back())
-                    {
-                        bFound = true;
-                        bReverseSecond = true;
-                        break;
+                        const xyPairListType& sSecondRing = *(aoPARPtrList[i]);
+                        if (*psNext == sSecondRing[0])
+                        {
+                            bFound = true;
+                            bReverseSecond = false;
+                            break;
+                        }
+                        else if (*psNext == sSecondRing.back())
+                        {
+                            bFound = true;
+                            bReverseSecond = true;
+                            break;
+                        }
                     }
                 }
-            }
 
-            if( !bFound )
-            {
-                CPLDebug("EDIGEO", "Cannot find ring for FEA %s / PFE %s",
-                        osFEA.c_str(), osPFE.c_str());
-                break;
-            }
-            else
-            {
-                const xyPairListType& secondRing = *(aoPARPtrList[i]);
-                aoPARPtrList[i] = nullptr;
-                if( !bReverseSecond )
+                if( !bFound )
                 {
-                    for(i=1;i<(int)secondRing.size();i++)
-                        aoXY.push_back(secondRing[i]);
-                    psNext = &secondRing.back();
+                    CPLDebug("EDIGEO", "Cannot find ring for FEA %s / PFE %s",
+                                osFEA.c_str(), aosPFE[k].c_str());
+                    break;
                 }
                 else
                 {
-                    for(i=1;i<(int)secondRing.size();i++)
-                        aoXY.push_back(secondRing[secondRing.size()-1-i]);
-                    psNext = &secondRing[0];
+                    const xyPairListType& secondRing = *(aoPARPtrList[i]);
+                    aoPARPtrList[i] = nullptr;
+                    if( !bReverseSecond )
+                    {
+                        for(i=1;i<(int)secondRing.size();i++)
+                            aoXY.push_back(secondRing[i]);
+                        psNext = &secondRing.back();
+                    }
+                    else
+                    {
+                        for(i=1;i<(int)secondRing.size();i++)
+                            aoXY.push_back(secondRing[secondRing.size()-1-i]);
+                        psNext = &secondRing[0];
+                    }
                 }
+
+                nIter ++;
             }
 
-            nIter ++;
+            aoXYList.push_back(aoXY);
         }
 
-        aoXYList.push_back(aoXY);
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create feature.                                                 */
-/* -------------------------------------------------------------------- */
-    OGRFeature* poFeature = CreateFeature(osFEA);
-    if( poFeature )
-    {
-        std::vector<OGRGeometry*> aosPolygons;
-        for( int j = 0; j < (int)aoXYList.size(); j++ )
+    /* -------------------------------------------------------------------- */
+    /*      Create feature.                                                 */
+    /* -------------------------------------------------------------------- */
+        OGRFeature* poFeature = CreateFeature(osFEA);
+        if( poFeature )
         {
-            const xyPairListType& aoXY = aoXYList[j];
-            OGRLinearRing* poLS = new OGRLinearRing();
-            poLS->setNumPoints((int)aoXY.size());
-            for( int i = 0; i < (int)aoXY.size(); i++ )
-                poLS->setPoint(i, aoXY[i].first, aoXY[i].second);
-            poLS->closeRings();
-            OGRPolygon* poPolygon = new OGRPolygon();
-            poPolygon->addRingDirectly(poLS);
-            aosPolygons.push_back(poPolygon);
-        }
+            std::vector<OGRGeometry*> aosPolygons;
+            for( int j = 0; j < (int)aoXYList.size(); j++ )
+            {
+                const xyPairListType& aoXY = aoXYList[j];
+                OGRLinearRing* poLS = new OGRLinearRing();
+                poLS->setNumPoints((int)aoXY.size());
+                for( int i = 0; i < (int)aoXY.size(); i++ )
+                    poLS->setPoint(i, aoXY[i].first, aoXY[i].second);
+                poLS->closeRings();
+                OGRPolygon* poPolygon = new OGRPolygon();
+                poPolygon->addRingDirectly(poLS);
+                aosPolygons.push_back(poPolygon);
+            }
 
-        int bIsValidGeometry = FALSE;
-        OGRGeometry* poGeom = OGRGeometryFactory::organizePolygons(
-            &aosPolygons[0], (int)aosPolygons.size(),
-            &bIsValidGeometry, nullptr);
-        if (poGeom)
-        {
-            if (poSRS)
-                poGeom->assignSpatialReference(poSRS);
-            poFeature->SetGeometryDirectly(poGeom);
+            int bIsValidGeometry = FALSE;
+            OGRGeometry* poGeom = OGRGeometryFactory::organizePolygons(
+                &aosPolygons[0], (int)aosPolygons.size(),
+                &bIsValidGeometry, nullptr);
+            if (poGeom)
+            {
+                if (poSRS)
+                    poGeom->assignSpatialReference(poSRS);
+                poFeature->SetGeometryDirectly(poGeom);
+            }
         }
     }
-
     return TRUE;
 }
 
@@ -1300,8 +1302,8 @@ int OGREDIGEODataSource::BuildPolygons()
     for( int iter = 0; iter < (int)listFEA_PFE.size(); iter++ )
     {
         const CPLString& osFEA = listFEA_PFE[iter].first;
-        const CPLString& osPFE = listFEA_PFE[iter].second;
-        BuildPolygon(osFEA, osPFE);
+        const strListType & aosPFE = listFEA_PFE[iter].second;
+        BuildPolygon(osFEA, aosPFE);
     }
 
     return TRUE;
