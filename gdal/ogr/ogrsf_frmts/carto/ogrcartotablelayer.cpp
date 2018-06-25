@@ -1840,7 +1840,6 @@ OGRErr OGRCARTOTableLayer::RunDeferredCreationIfNecessary()
                  OGRCARTOEscapeIdentifier(osName).c_str(),
                  osFIDColName.c_str());
 
-    int nSRID = 0;
     for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
     {
         OGRCartoGeomFieldDefn *poFieldDefn = (OGRCartoGeomFieldDefn*)(poFeatureDefn->GetGeomFieldDefn(i));
