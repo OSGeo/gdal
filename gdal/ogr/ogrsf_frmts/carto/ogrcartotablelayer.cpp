@@ -490,16 +490,15 @@ CPLString OGRCARTOTableLayer::OGRCARTOGeometryType(OGRCartoGeomFieldDefn *poGeom
     const char *pszGeometryType = OGRToOGCGeomType(eType);
     const char *suffix = "";
     
-    if( (eType & OGRGeometry::OGR_G_3D) &&
-        (eType & OGRGeometry::OGR_G_MEASURED) )
+    if( OGR_GT_HasM(eType) && OGR_GT_HasZ(eType) )
     {
         suffix = "ZM";
     }
-    else if( eType & OGRGeometry::OGR_G_MEASURED )
+    else if( OGR_GT_HasM(eType) )
     {
         suffix = "M";
     }
-    else if( eType & OGRGeometry::OGR_G_3D )
+    else if( OGR_GT_HasZ(eType) )
     {
         suffix = "Z";
     }
@@ -887,7 +886,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
         for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
         {
             if( bMustComma )
-                osCopySQL += ", ";
+                osCopySQL += ",";
             else
             {
                 osCopySQL += "(";
@@ -900,7 +899,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
         for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
         {
             if( bMustComma )
-                osCopySQL += ", ";
+                osCopySQL += ",";
             else
                 bMustComma = true;
 
@@ -911,7 +910,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
             !osFIDColName.empty() && (poFeature->GetFID() != OGRNullFID || (m_nNextFIDWrite >= 0 && bHasJustGotNextFID)) )
         {
             if( bMustComma )
-                osCopySQL += ", ";
+                osCopySQL += ",";
             else
             {
                 osCopySQL += "(";
