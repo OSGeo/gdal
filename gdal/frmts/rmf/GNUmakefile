@@ -4,7 +4,7 @@ include ../../GDALmake.opt
 OBJ	=	rmfdataset.o rmflzw.o rmfdem.o rmfjpeg.o
 
 ifneq ($(JPEG_SETTING),no)
-CPPFLAGS 	:=	-DHAVE_LIBJPEG
+CPPFLAGS 	:=	$(CPPFLAGS) -DHAVE_LIBJPEG
 endif
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
