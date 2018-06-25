@@ -1155,6 +1155,8 @@ int OGREDIGEODataSource::BuildLineStrings()
 int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
                                       const strListType& aosPFE)
 {
+    std::vector<xyPairListType> aoXYList;
+
     for(int k=0;k<(int)aosPFE.size();k++)
     {
         const std::map< CPLString, strListType >::iterator itPFE_PAR =
@@ -1167,9 +1169,9 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
 
         const strListType & aosPARList = itPFE_PAR->second;
 
-    /* -------------------------------------------------------------------- */
-    /*      Resolve arc ids to arc coordinate lists.                        */
-    /* -------------------------------------------------------------------- */
+/* -------------------------------------------------------------------- */
+/*      Resolve arc ids to arc coordinate lists.                        */
+/* -------------------------------------------------------------------- */
         std::vector< const xyPairListType *> aoPARPtrList;
         for( int i = 0; i < (int)aosPARList.size(); i++ )
         {
@@ -1185,10 +1187,9 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
         if (aoPARPtrList.empty())
             return FALSE;
 
-    /* -------------------------------------------------------------------- */
-    /*      Now try to chain all arcs together.                             */
-    /* -------------------------------------------------------------------- */
-        std::vector<xyPairListType> aoXYList;
+/* -------------------------------------------------------------------- */
+/*      Now try to chain all arcs together.                             */
+/* -------------------------------------------------------------------- */
 
         for( int j = 0; j < (int)aoPARPtrList.size(); j++ )
         {
@@ -1257,37 +1258,37 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
 
             aoXYList.push_back(aoXY);
         }
+    }
 
-    /* -------------------------------------------------------------------- */
-    /*      Create feature.                                                 */
-    /* -------------------------------------------------------------------- */
-        OGRFeature* poFeature = CreateFeature(osFEA);
-        if( poFeature )
+/* -------------------------------------------------------------------- */
+/*      Create feature.                                                 */
+/* -------------------------------------------------------------------- */
+    OGRFeature* poFeature = CreateFeature(osFEA);
+    if( poFeature )
+    {
+        std::vector<OGRGeometry*> aosPolygons;
+        for( int j = 0; j < (int)aoXYList.size(); j++ )
         {
-            std::vector<OGRGeometry*> aosPolygons;
-            for( int j = 0; j < (int)aoXYList.size(); j++ )
-            {
-                const xyPairListType& aoXY = aoXYList[j];
-                OGRLinearRing* poLS = new OGRLinearRing();
-                poLS->setNumPoints((int)aoXY.size());
-                for( int i = 0; i < (int)aoXY.size(); i++ )
-                    poLS->setPoint(i, aoXY[i].first, aoXY[i].second);
-                poLS->closeRings();
-                OGRPolygon* poPolygon = new OGRPolygon();
-                poPolygon->addRingDirectly(poLS);
-                aosPolygons.push_back(poPolygon);
-            }
+            const xyPairListType& aoXY = aoXYList[j];
+            OGRLinearRing* poLS = new OGRLinearRing();
+            poLS->setNumPoints((int)aoXY.size());
+            for( int i = 0; i < (int)aoXY.size(); i++ )
+                poLS->setPoint(i, aoXY[i].first, aoXY[i].second);
+            poLS->closeRings();
+            OGRPolygon* poPolygon = new OGRPolygon();
+            poPolygon->addRingDirectly(poLS);
+            aosPolygons.push_back(poPolygon);
+        }
 
-            int bIsValidGeometry = FALSE;
-            OGRGeometry* poGeom = OGRGeometryFactory::organizePolygons(
-                &aosPolygons[0], (int)aosPolygons.size(),
-                &bIsValidGeometry, nullptr);
-            if (poGeom)
-            {
-                if (poSRS)
-                    poGeom->assignSpatialReference(poSRS);
-                poFeature->SetGeometryDirectly(poGeom);
-            }
+        int bIsValidGeometry = FALSE;
+        OGRGeometry* poGeom = OGRGeometryFactory::organizePolygons(
+            &aosPolygons[0], (int)aosPolygons.size(),
+            &bIsValidGeometry, nullptr);
+        if (poGeom)
+        {
+            if (poSRS)
+                poGeom->assignSpatialReference(poSRS);
+            poFeature->SetGeometryDirectly(poGeom);
         }
     }
     return TRUE;
