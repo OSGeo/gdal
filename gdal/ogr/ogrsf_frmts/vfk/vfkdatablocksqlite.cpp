@@ -748,7 +748,7 @@ IVFKFeature *VFKDataBlockSQLite::GetFeature(GIntBig nFID)
     CPLString osSQL;
     osSQL.Printf("SELECT rowid FROM %s WHERE %s = " CPL_FRMT_GIB,
                  m_pszName, FID_COLUMN, nFID);
-    if (EQUAL(m_pszName, "SBP")) {
+    if ( EQUAL(m_pszName, "SBP") || EQUAL(m_pszName, "SBPG") ) {
         osSQL += " AND PORADOVE_CISLO_BODU = 1";
     }
     sqlite3_stmt *hStmt = poReader->PrepareStatement(osSQL.c_str());
@@ -972,7 +972,7 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
     /* load geometry from DB */
     osSQL.Printf("SELECT %s,rowid,%s FROM %s ",
                  GEOM_COLUMN, FID_COLUMN, m_pszName);
-    if (EQUAL(m_pszName, "SBP"))
+    if ( EQUAL(m_pszName, "SBP") || EQUAL(m_pszName, "SBPG") )
         osSQL += "WHERE PORADOVE_CISLO_BODU = 1 ";
     osSQL += "ORDER BY ";
     osSQL += FID_COLUMN;
@@ -1177,7 +1177,7 @@ OGRErr VFKDataBlockSQLite::LoadProperties()
 
     osSQL.Printf("SELECT * FROM %s", // TODO: where
                 m_pszName);
-    if ( EQUAL(m_pszName, "SBP") )
+    if ( EQUAL(m_pszName, "SBP") || EQUAL(m_pszName, "SBPG") )
         osSQL += " WHERE PORADOVE_CISLO_BODU = 1";
 
     m_hStmt = ((VFKReaderSQLite*) m_poReader)->PrepareStatement(osSQL.c_str());
