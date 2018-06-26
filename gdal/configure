@@ -25197,7 +25197,18 @@ fi
 TIFF_JPEG12_ENABLED=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for jpeg12" >&5
 $as_echo_n "checking for jpeg12... " >&6; }
-if test "$with_jpeg12" = yes ; then
+if test "$with_jpeg12" =  no ; then
+    JPEG12_ENABLED=no
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
+$as_echo "disabled by user" >&6; }
+
+elif test "$JPEG_SETTING" = "internal" -a "$TIFF_SETTING" = "internal" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
+$as_echo "enabled" >&6; }
+    JPEG12_ENABLED=yes
+    TIFF_JPEG12_ENABLED=yes
+
+elif test "$with_jpeg12" = yes ; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
 $as_echo "enabled" >&6; }
     JPEG12_ENABLED=yes
@@ -25219,21 +25230,10 @@ $as_echo "$as_me: WARNING: Internal libjpeg12 has not the same ABI as libjpeg 8 
     fi
     rm -f check_jpeg_abi.*
 
-elif test x"$with_jpeg12" = x ; then
-    if test "$JPEG_SETTING" = "internal" -a "$TIFF_SETTING" = "internal" ; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
-$as_echo "enabled" >&6; }
-      JPEG12_ENABLED=yes
-      TIFF_JPEG12_ENABLED=yes
-    else
-      JPEG12_ENABLED=no
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled, libjpeg or libtiff not internal" >&5
-$as_echo "disabled, libjpeg or libtiff not internal" >&6; }
-    fi
 else
     JPEG12_ENABLED=no
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
-$as_echo "disabled by user" >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled, libjpeg or libtiff not internal" >&5
+$as_echo "disabled, libjpeg or libtiff not internal" >&6; }
 fi
 
 JPEG12_ENABLED=$JPEG12_ENABLED
