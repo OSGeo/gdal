@@ -45,12 +45,13 @@
 #include "cpl_error.h"
 #include "cpl_vsi_virtual.h"
 
-#include "hdfs.h"
-
 CPL_CVSID("$Id$")
 
-const char * VSIHDFS = "/vsihdfs/";
+#ifdef HDFS_ENABLED
 
+#include "hdfs.h"
+
+const char * VSIHDFS = "/vsihdfs/";
 
 /************************************************************************/
 /* ==================================================================== */
@@ -318,3 +319,12 @@ void VSIInstallHdfsHandler()
 {
     VSIFileManager::InstallHandler(VSIHDFS, new VSIHdfsFilesystemHandler);
 }
+
+#else
+
+void VSIInstallHdfsHandler( void )
+{
+    // Not supported.
+}
+
+#endif
