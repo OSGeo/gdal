@@ -640,6 +640,10 @@ RASDAMAN_INC
 RASDAMAN_ENABLED
 JVM_LIB
 MDB_ENABLED
+JNI_LIB
+HDFS_INC
+HDFS_LIB
+HDFS_ENABLED
 JAVA_INC
 JAVA_HOME
 BINDINGS
@@ -794,11 +798,6 @@ HAVE_HDF4
 MONGODB_INC
 MONGODB_LIB
 MONGODB_ENABLED
-HDFS_INC
-HDFS_LIB
-HDFS_ENABLED
-JNI_LIB
-JNI_ENABLED
 SOSI_INC
 SOSI_LIB
 SOSI_ENABLED
@@ -996,8 +995,6 @@ with_gif
 with_ogdi
 with_fme
 with_sosi
-with_jni
-with_hdfs
 with_mongocxx
 with_boost_lib_path
 with_hdf4
@@ -1072,6 +1069,7 @@ with_macosx_framework
 with_perl
 with_python
 with_java
+with_hdfs
 with_mdb
 with_jvm_lib
 with_jvm_lib_add_rpath
@@ -1775,8 +1773,6 @@ Optional Packages:
   --with-ogdi=ARG       Include OGDI support (ARG=path)
   --with-fme=ARG        Include FMEObjects support (ARG=FME_HOME path)
   --with-sosi=ARG        Include SOSI support (ARG=SOSI lib Path, yes or no)
-  --with-jni=ARG        Include JVM JNI support (ARG=Path or no)
-  --with-hdfs=ARG        Include HDFS support (ARG=Path or no)
   --with-mongocxx=ARG        Include MongoCXX support (ARG=Path, yes or no)
   --with-boost-lib-path=ARG   Path to boost libraries for mongocxx client
   --with-hdf4=ARG       Include HDF4 support (ARG=path)
@@ -1859,6 +1855,7 @@ Optional Packages:
   --with-perl           Enable perl bindings
   --with-python=ARG   Enable python bindings (ARG=yes, no, or path to python binary)
   --with-java       Include Java support (ARG=yes, no or JDK home path)  [default=no]
+  --with-hdfs=ARG        Include HDFS support (ARG=Path or no)
   --with-mdb       Include MDB driver
   --with-jvm-lib=ARG        ARG is dlopen or points to Java libjvm path
   --with-jvm-lib-add-rpath    Add the libjvm path to the RPATH (no by default)
@@ -25750,184 +25747,6 @@ SOSI_INC=$SOSI_INC
 
 
 
-# Check whether --with-jni was given.
-if test "${with_jni+set}" = set; then :
-  withval=$with_jni;
-fi
-
-
-JNI_ENABLED=no
-
-if test -z "$with_jni" -o "$with_jni" = "no"; then
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: JNI inclusion not requested." >&5
-$as_echo "JNI inclusion not requested." >&6; }
-else
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libjvm.so in $with_jni" >&5
-$as_echo_n "checking for libjvm.so in $with_jni... " >&6; }
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_GetCreatedJavaVMs in -ljvm" >&5
-$as_echo_n "checking for JNI_GetCreatedJavaVMs in -ljvm... " >&6; }
-if ${ac_cv_lib_jvm_JNI_GetCreatedJavaVMs+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-ljvm -L$with_jni $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char JNI_GetCreatedJavaVMs ();
-int
-main ()
-{
-return JNI_GetCreatedJavaVMs ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_jvm_JNI_GetCreatedJavaVMs=yes
-else
-  ac_cv_lib_jvm_JNI_GetCreatedJavaVMs=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_jvm_JNI_GetCreatedJavaVMs" >&5
-$as_echo "$ac_cv_lib_jvm_JNI_GetCreatedJavaVMs" >&6; }
-if test "x$ac_cv_lib_jvm_JNI_GetCreatedJavaVMs" = xyes; then :
-  HAVE_JNI=yes
-else
-  HAVE_JNI=no
-fi
-
-     if test "$HAVE_JNI" = "yes"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: JNI included." >&5
-$as_echo "JNI included." >&6; }
-        JNI_ENABLED=yes
-        JNI_LIB="-L$with_jni -ljvm"
-     else
-        as_fn_error $? "Unable to include JNI." "$LINENO" 5
-     fi
-fi
-
-JNI_ENABLED=$JNI_ENABLED
-
-JNI_LIB=$JNI_LIB
-
-
-
-
-
-# Check whether --with-hdfs was given.
-if test "${with_hdfs+set}" = set; then :
-  withval=$with_hdfs;
-fi
-
-
-HDFS_ENABLED=no
-
-if test -z "$with_hdfs" -o "$with_hdfs" = "no" ; then
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: HDFS support not requested." >&5
-$as_echo "HDFS support not requested." >&6; }
-else
-     if test JNI_ENABLED="yes"; then
-          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for HDFS in $with_hdfs" >&5
-$as_echo_n "checking for HDFS in $with_hdfs... " >&6; }
-          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for hdfsConnect in -lhdfs" >&5
-$as_echo_n "checking for hdfsConnect in -lhdfs... " >&6; }
-if ${ac_cv_lib_hdfs_hdfsConnect+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lhdfs $JNI_LIB -L$with_hdfs/lib/native $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char hdfsConnect ();
-int
-main ()
-{
-return hdfsConnect ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_hdfs_hdfsConnect=yes
-else
-  ac_cv_lib_hdfs_hdfsConnect=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_hdfs_hdfsConnect" >&5
-$as_echo "$ac_cv_lib_hdfs_hdfsConnect" >&6; }
-if test "x$ac_cv_lib_hdfs_hdfsConnect" = xyes; then :
-  HAVE_HDFS_LIB=yes
-else
-  HAVE_HDFS_LIB=no
-fi
-
-          as_ac_File=`$as_echo "ac_cv_file_$with_hdfs/include/hdfs.h" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $with_hdfs/include/hdfs.h" >&5
-$as_echo_n "checking for $with_hdfs/include/hdfs.h... " >&6; }
-if eval \${$as_ac_File+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
-if test -r "$with_hdfs/include/hdfs.h"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-eval ac_res=\$$as_ac_File
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
-  HAVE_HDFS_HEADER=yes
-else
-  HAVE_HDFS_HEADER=no
-fi
-
-          if test "$HAVE_HDFS_LIB" = "yes" -a "$HAVE_HDFS_HEADER" = "yes"; then
-               { $as_echo "$as_me:${as_lineno-$LINENO}: result: HDFS support enabled." >&5
-$as_echo "HDFS support enabled." >&6; }
-               HDFS_ENABLED=yes
-               HDFS_LIB="-L$with_hdfs/lib/native -lhdfs"
-               HDFS_INC="-I$with_hdfs/include"
-          else
-               as_fn_error $? "HDFS support disabled." "$LINENO" 5
-          fi
-     else
-          as_fn_error $? "HDFS support requires JNI inclusion." "$LINENO" 5
-     fi
-fi
-
-HDFS_ENABLED=$HDFS_ENABLED
-
-HDFS_LIB=$HDFS_LIB
-
-HDFS_INC=$HDFS_INC
-
-
-
-
-
 # Check whether --with-mongocxx was given.
 if test "${with_mongocxx+set}" = set; then :
   withval=$with_mongocxx;
@@ -35981,6 +35800,116 @@ fi
 JAVA_HOME=$JAVA_HOME
 
 JAVA_INC=$JAVA_INC
+
+
+
+
+# Check whether --with-hdfs was given.
+if test "${with_hdfs+set}" = set; then :
+  withval=$with_hdfs;
+fi
+
+
+HDFS_ENABLED=no
+
+if test -z "$with_hdfs" -o "$with_hdfs" = "no" ; then
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: HDFS support not requested." >&5
+$as_echo "HDFS support not requested." >&6; }
+else
+     if test "$JAVA_HOME"; then
+          JNI_LIB="-L$(find $JAVA_HOME | grep libjvm.so | head -1 | sed 's/libjvm.so$//') -ljvm"
+     else
+          as_fn_error $? "HDFS support requires java support (--with-java). $JAVA_HOME" "$LINENO" 5
+     fi
+     if echo $JNI_LIB | grep $JAVA_HOME; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for HDFS in $with_hdfs" >&5
+$as_echo_n "checking for HDFS in $with_hdfs... " >&6; }
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for hdfsConnect in -lhdfs" >&5
+$as_echo_n "checking for hdfsConnect in -lhdfs... " >&6; }
+if ${ac_cv_lib_hdfs_hdfsConnect+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lhdfs $JNI_LIB -L$with_hdfs/lib/native $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char hdfsConnect ();
+int
+main ()
+{
+return hdfsConnect ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_hdfs_hdfsConnect=yes
+else
+  ac_cv_lib_hdfs_hdfsConnect=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_hdfs_hdfsConnect" >&5
+$as_echo "$ac_cv_lib_hdfs_hdfsConnect" >&6; }
+if test "x$ac_cv_lib_hdfs_hdfsConnect" = xyes; then :
+  HAVE_HDFS_LIB=yes
+else
+  HAVE_HDFS_LIB=no
+fi
+
+          as_ac_File=`$as_echo "ac_cv_file_$with_hdfs/include/hdfs.h" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $with_hdfs/include/hdfs.h" >&5
+$as_echo_n "checking for $with_hdfs/include/hdfs.h... " >&6; }
+if eval \${$as_ac_File+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r "$with_hdfs/include/hdfs.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+eval ac_res=\$$as_ac_File
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
+  HAVE_HDFS_HEADER=yes
+else
+  HAVE_HDFS_HEADER=no
+fi
+
+          if test "$HAVE_HDFS_LIB" = "yes" -a "$HAVE_HDFS_HEADER" = "yes"; then
+               { $as_echo "$as_me:${as_lineno-$LINENO}: result: HDFS support enabled." >&5
+$as_echo "HDFS support enabled." >&6; }
+               HDFS_ENABLED=yes
+               HDFS_LIB="-L$with_hdfs/lib/native -lhdfs"
+               HDFS_INC="-I$with_hdfs/include"
+          else
+               as_fn_error $? "HDFS support not enabled." "$LINENO" 5
+          fi
+     else
+          as_fn_error $? "Unable to find libjvm.so." "$LINENO" 5
+     fi
+fi
+
+HDFS_ENABLED=$HDFS_ENABLED
+
+HDFS_LIB=$HDFS_LIB
+
+HDFS_INC=$HDFS_INC
+
+JNI_LIB=$JNI_LIB
 
 
 
