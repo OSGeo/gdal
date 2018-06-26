@@ -196,7 +196,7 @@ class JPGDatasetCommon : public GDALPamDataset
     bool   bHasDoneJpegCreateDecompress;
     bool   bHasDoneJpegStartDecompress;
 
-    virtual CPLErr LoadScanline(int) = 0;
+    virtual CPLErr LoadScanline(int, GByte* outBuffer = nullptr) = 0;
     virtual CPLErr Restart() = 0;
 
     virtual int GetDataPrecision() = 0;
@@ -282,7 +282,7 @@ class JPGDataset final: public JPGDatasetCommon
     struct jpeg_error_mgr sJErr;
     struct jpeg_progress_mgr sJProgress;
 
-    virtual CPLErr LoadScanline(int) override;
+    virtual CPLErr LoadScanline(int, GByte* outBuffer) override;
     virtual CPLErr Restart() override;
     virtual int GetDataPrecision() override { return sDInfo.data_precision; }
     virtual int GetOutColorSpace() override { return sDInfo.out_color_space; }
