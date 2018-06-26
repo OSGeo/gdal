@@ -87,7 +87,7 @@ class VSIHdfsHandle final : public VSIVirtualHandle
     vsi_l_offset Length()
     {
       hdfsFileInfo * poInfo = hdfsGetPathInfo(poFilesystem, oFilename.c_str());
-      if (poInfo != NULL) {
+      if (poInfo != nullptr) {
         tOffset nSize = poInfo->mSize;
         hdfsFreeFileInfo(poInfo, 1);
         return static_cast<vsi_l_offset>(nSize);
@@ -221,7 +221,7 @@ VSIHdfsFilesystemHandler::Open( const char *pszFilename,
   else {
     const char * pszPath = pszFilename + strlen(VSIHdfsHandle::VSIHDFS);
     hdfsFile poFile = hdfsOpenFile(poFilesystem, pszPath, O_RDONLY, 0, 0, 0);
-    if (poFile != NULL) {
+    if (poFile != nullptr) {
       VSIHdfsHandle * poHandle = new VSIHdfsHandle(poFile, poFilesystem, pszPath, true);
       return poHandle;
     }
@@ -235,7 +235,7 @@ VSIHdfsFilesystemHandler::Stat( const char *pszeFilename, VSIStatBufL *pStatBuf,
   memset(pStatBuf, 0, sizeof(*pStatBuf)); // XXX
   hdfsFileInfo * poInfo = hdfsGetPathInfo(poFilesystem, pszeFilename);
 
-  if (poInfo != NULL) {
+  if (poInfo != nullptr) {
     pStatBuf->st_dev = static_cast<dev_t>(0);                               /* ID of device containing file */
     pStatBuf->st_ino = static_cast<ino_t>(0);                               /* inode number */
     switch(poInfo->mKind) {                                                 /* protection */
@@ -292,7 +292,7 @@ VSIHdfsFilesystemHandler::ReadDir(const char *pszDirname)
   char ** retval = nullptr;
 
   hdfsFileInfo * paoInfo = hdfsListDirectory(poFilesystem, pszDirname, &mEntries);
-  if (paoInfo != NULL) {
+  if (paoInfo != nullptr) {
     papszNames = new char*[mEntries+1];
     for (int i = 0; i < mEntries; ++i) papszNames[i] = paoInfo[i].mName;
     papszNames[mEntries] = nullptr;
