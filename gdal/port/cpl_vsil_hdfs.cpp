@@ -51,7 +51,6 @@ CPL_CVSID("$Id$")
 
 #include "hdfs.h"
 
-const char * VSIHDFS = "/vsihdfs/";
 
 /************************************************************************/
 /* ==================================================================== */
@@ -70,6 +69,11 @@ class VSIHdfsHandle final : public VSIVirtualHandle
     bool bReadOnly;
 
   public:
+#if __cplusplus >= 201103L
+     static constexpr const char * VSIHDFS = "/vsihdfs/";
+#else
+     static const char * VSIHDFS = "/vsihdfs/";
+#endif
      VSIHdfsHandle(hdfsFile poFile,
                    hdfsFS poFilesystem,
                    const char * pszFilename,
@@ -210,11 +214,11 @@ VSIHdfsFilesystemHandler::Open( const char *pszFilename,
     return nullptr;
   }
 
-  if (strncmp(pszFilename, VSIHDFS, strlen(VSIHDFS)) != 0) {
+  if (strncmp(pszFilename, VSIHdfsHandle::VSIHDFS, strlen(VSIHdfsHandle::VSIHDFS)) != 0) {
     return nullptr;
   }
   else {
-    const char * pszPath = pszFilename + strlen(VSIHDFS);
+    const char * pszPath = pszFilename + strlen(VSIHdfsHandle::VSIHDFS);
     hdfsFile poFile = hdfsOpenFile(poFilesystem, pszPath, O_RDONLY, 0, 0, 0);
     if (poFile != NULL) {
       VSIHdfsHandle * poHandle = new VSIHdfsHandle(poFile, this->poFilesystem, pszPath, true);
@@ -317,7 +321,7 @@ VSIHdfsFilesystemHandler::Rename(const char *oldpath, const char *newpath)
  */
 void VSIInstallHdfsHandler()
 {
-    VSIFileManager::InstallHandler(VSIHDFS, new VSIHdfsFilesystemHandler);
+    VSIFileManager::InstallHandler(VSIHdfsHandle::VSIHDFS, new VSIHdfsFilesystemHandler);
 }
 
 #else
