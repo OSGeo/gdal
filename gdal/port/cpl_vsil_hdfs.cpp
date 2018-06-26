@@ -307,16 +307,15 @@ char **
 VSIHdfsFilesystemHandler::ReadDir(const char *pszDirname)
 {
   int mEntries = 0;
-  char ** papszNames = nullptr;
+  hdfsFileInfo * paoInfo = hdfsListDirectory(poFilesystem, pszDirname, &mEntries);
   char ** retval = nullptr;
 
-  hdfsFileInfo * paoInfo = hdfsListDirectory(poFilesystem, pszDirname, &mEntries);
   if (paoInfo != nullptr) {
-    papszNames = new char*[mEntries+1];
-    for (int i = 0; i < mEntries; ++i) papszNames[i] = paoInfo[i].mName;
-    papszNames[mEntries] = nullptr;
-    retval = CSLDuplicate(papszNames);
-    delete[] papszNames;
+    CPLStringList aosNames;
+    for (int i = 0; i < mEntries; ++i)
+      aosNames.AddString(paoInfo[i].mName);
+    retval = aosNames.StealList();
+    hdfsFreeFileInfo(paoInfo, mEntries);
     return retval;
   }
   return nullptr;
