@@ -86,7 +86,7 @@ class VSIHdfsHandle final : public VSIVirtualHandle
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     vsi_l_offset Length()
     {
-      hdfsFileInfo * poInfo = hdfsGetPathInfo(this->poFilesystem, this->oFilename.c_str());
+      hdfsFileInfo * poInfo = hdfsGetPathInfo(poFilesystem, oFilename.c_str());
       if (poInfo != NULL) {
         tOffset nSize = poInfo->mSize;
         hdfsFreeFileInfo(poInfo, 1);
@@ -108,22 +108,22 @@ VSIHdfsHandle::VSIHdfsHandle(hdfsFile _poFile,
 
 VSIHdfsHandle::~VSIHdfsHandle()
 {
-  this->Close();
+  Close();
 }
 
 int VSIHdfsHandle::Seek(vsi_l_offset nOffset, int nWhence)
 {
   switch(nWhence) {
   case SEEK_SET:
-    return hdfsSeek(this->poFilesystem, this->poFile, nOffset);
+    return hdfsSeek(poFilesystem, poFile, nOffset);
   case SEEK_CUR:
-    return hdfsSeek(this->poFilesystem,
-                    this->poFile,
-                    nOffset + this->Tell());
+    return hdfsSeek(poFilesystem,
+                    poFile,
+                    nOffset + Tell());
   case SEEK_END:
-    return hdfsSeek(this->poFilesystem,
-                    this->poFile,
-                    static_cast<tOffset>(this->Length()) - nOffset);
+    return hdfsSeek(poFilesystem,
+                    poFile,
+                    static_cast<tOffset>(Length()) - nOffset);
   default:
     return -1;
   }
@@ -131,12 +131,12 @@ int VSIHdfsHandle::Seek(vsi_l_offset nOffset, int nWhence)
 
 vsi_l_offset VSIHdfsHandle::Tell()
 {
-  return hdfsTell(this->poFilesystem, this->poFile);
+  return hdfsTell(poFilesystem, poFile);
 }
 
 size_t VSIHdfsHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
 {
-  return hdfsRead(this->poFilesystem, this->poFile, pBuffer, nSize * nMemb);
+  return hdfsRead(poFilesystem, poFile, pBuffer, nSize * nMemb);
 }
 
 size_t VSIHdfsHandle::Write(const void *pBuffer, size_t nSize, size_t nMemb)
@@ -147,22 +147,22 @@ size_t VSIHdfsHandle::Write(const void *pBuffer, size_t nSize, size_t nMemb)
 
 int VSIHdfsHandle::Eof()
 {
-  return (this->Tell() == this->Length());
+  return (Tell() == Length());
 }
 
 int VSIHdfsHandle::Flush()
 {
-  return hdfsFlush(this->poFilesystem, this->poFile);
+  return hdfsFlush(poFilesystem, poFile);
 }
 
 int VSIHdfsHandle::Close()
 {
   int retval = 0;
 
-  if (this->poFilesystem != nullptr && this->poFile != nullptr)
-    retval = hdfsCloseFile(this->poFilesystem, this->poFile);
-  this->poFile = nullptr;
-  this->poFilesystem = nullptr;
+  if (poFilesystem != nullptr && poFile != nullptr)
+    retval = hdfsCloseFile(poFilesystem, poFile);
+  poFile = nullptr;
+  poFilesystem = nullptr;
 
   return retval;
 }
@@ -194,14 +194,14 @@ class VSIHdfsFilesystemHandler final : public VSIFilesystemHandler
 
 VSIHdfsFilesystemHandler::VSIHdfsFilesystemHandler()
 {
-  this->poFilesystem = hdfsConnect("default", 0);
+  poFilesystem = hdfsConnect("default", 0);
 }
 
 VSIHdfsFilesystemHandler::~VSIHdfsFilesystemHandler()
 {
-  if (this->poFilesystem != nullptr)
-    hdfsDisconnect(this->poFilesystem);
-  this->poFilesystem = nullptr;
+  if (poFilesystem != nullptr)
+    hdfsDisconnect(poFilesystem);
+  poFilesystem = nullptr;
 }
 
 VSIVirtualHandle *
@@ -221,7 +221,7 @@ VSIHdfsFilesystemHandler::Open( const char *pszFilename,
     const char * pszPath = pszFilename + strlen(VSIHdfsHandle::VSIHDFS);
     hdfsFile poFile = hdfsOpenFile(poFilesystem, pszPath, O_RDONLY, 0, 0, 0);
     if (poFile != NULL) {
-      VSIHdfsHandle * poHandle = new VSIHdfsHandle(poFile, this->poFilesystem, pszPath, true);
+      VSIHdfsHandle * poHandle = new VSIHdfsHandle(poFile, poFilesystem, pszPath, true);
       return poHandle;
     }
   }
@@ -232,7 +232,7 @@ int
 VSIHdfsFilesystemHandler::Stat( const char *pszeFilename, VSIStatBufL *pStatBuf, int)
 {
   memset(pStatBuf, 0, sizeof(*pStatBuf)); // XXX
-  hdfsFileInfo * poInfo = hdfsGetPathInfo(this->poFilesystem, pszeFilename);
+  hdfsFileInfo * poInfo = hdfsGetPathInfo(poFilesystem, pszeFilename);
 
   if (poInfo != NULL) {
     pStatBuf->st_dev = static_cast<dev_t>(0);                               /* ID of device containing file */
@@ -267,7 +267,7 @@ VSIHdfsFilesystemHandler::Stat( const char *pszeFilename, VSIStatBufL *pStatBuf,
 int
 VSIHdfsFilesystemHandler::Unlink(const char *pszFilename)
 {
-  return hdfsDelete(this->poFilesystem, pszFilename, 0);
+  return hdfsDelete(poFilesystem, pszFilename, 0);
 }
 
 int
@@ -280,7 +280,7 @@ VSIHdfsFilesystemHandler::Mkdir(const char *pszDirname, long nMode)
 int
 VSIHdfsFilesystemHandler::Rmdir(const char *pszDirname)
 {
-  return hdfsDelete(this->poFilesystem, pszDirname, 1);
+  return hdfsDelete(poFilesystem, pszDirname, 1);
 }
 
 char **
@@ -290,7 +290,7 @@ VSIHdfsFilesystemHandler::ReadDir(const char *pszDirname)
   char ** papszNames = nullptr;
   char ** retval = nullptr;
 
-  hdfsFileInfo * paoInfo = hdfsListDirectory(this->poFilesystem, pszDirname, &mEntries);
+  hdfsFileInfo * paoInfo = hdfsListDirectory(poFilesystem, pszDirname, &mEntries);
   if (paoInfo != NULL) {
     papszNames = new char*[mEntries+1];
     for (int i = 0; i < mEntries; ++i) papszNames[i] = paoInfo[i].mName;
@@ -305,7 +305,7 @@ VSIHdfsFilesystemHandler::ReadDir(const char *pszDirname)
 int
 VSIHdfsFilesystemHandler::Rename(const char *oldpath, const char *newpath)
 {
-  return hdfsRename(this->poFilesystem, oldpath, newpath);
+  return hdfsRename(poFilesystem, oldpath, newpath);
 }
 
 //! @endcond
