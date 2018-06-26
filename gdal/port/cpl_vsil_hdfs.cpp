@@ -172,7 +172,7 @@ class VSIHdfsFilesystemHandler final : public VSIFilesystemHandler
   private:
     CPL_DISALLOW_COPY_ASSIGN(VSIHdfsFilesystemHandler)
 
-    hdfsFS poFilesystem;
+    hdfsFS poFilesystem = nullptr;
 
   public:
     VSIHdfsFilesystemHandler();
@@ -193,9 +193,7 @@ class VSIHdfsFilesystemHandler final : public VSIFilesystemHandler
 };
 
 VSIHdfsFilesystemHandler::VSIHdfsFilesystemHandler()
-{
-  poFilesystem = hdfsConnect("default", 0);
-}
+{}
 
 VSIHdfsFilesystemHandler::~VSIHdfsFilesystemHandler()
 {
@@ -209,6 +207,9 @@ VSIHdfsFilesystemHandler::Open( const char *pszFilename,
                                 const char *pszAccess,
                                 bool)
 {
+  if (poFilesystem == nullptr)
+    poFilesystem = hdfsConnect("default", 0);
+  
   if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr) {
     CPLError(CE_Failure, CPLE_AppDefined, "HDFS driver is read-only");
     return nullptr;
