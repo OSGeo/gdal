@@ -67,6 +67,7 @@ class VSIHdfsHandle final : public VSIVirtualHandle
     hdfsFS poFilesystem = nullptr;
     std::string oFilename;
     bool bReadOnly;
+    bool bEOF = false;
 
   public:
 #if __cplusplus >= 201103L
@@ -104,6 +105,7 @@ VSIHdfsHandle::~VSIHdfsHandle()
 
 int VSIHdfsHandle::Seek(vsi_l_offset nOffset, int nWhence)
 {
+  bEOF = false;
   switch(nWhence) {
   case SEEK_SET:
     return hdfsSeek(poFilesystem, poFile, nOffset);
@@ -120,17 +122,28 @@ int VSIHdfsHandle::Seek(vsi_l_offset nOffset, int nWhence)
   }
 }
 
-vsi_l_offset VSIHdfsHandle::Tell()
+vsi_l_offset
+VSIHdfsHandle::Tell()
 {
   return hdfsTell(poFilesystem, poFile);
 }
 
-size_t VSIHdfsHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
+size_t
+VSIHdfsHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
 {
-  return hdfsRead(poFilesystem, poFile, pBuffer, nSize * nMemb);
+  int bytes = hdfsRead(poFilesystem, poFile, pBuffer, nSize * nMemb);
+  if (bytes == 0) {
+    bEOF = true;
+    return 0;
+  }
+  else if (bytes < 0)
+    return -1;
+  else
+    return bytes/nSize;
 }
 
-size_t VSIHdfsHandle::Write(const void *pBuffer, size_t nSize, size_t nMemb)
+size_t
+VSIHdfsHandle::Write(const void *pBuffer, size_t nSize, size_t nMemb)
 {
   CPLError(CE_Failure, CPLE_AppDefined, "HDFS driver is read-only");
   return -1;
@@ -148,17 +161,20 @@ VSIHdfsHandle::Length()
   return -1;
 }
 
-int VSIHdfsHandle::Eof()
+int
+VSIHdfsHandle::Eof()
 {
-  return (Tell() == Length());
+  return bEOF;
 }
 
-int VSIHdfsHandle::Flush()
+int
+VSIHdfsHandle::Flush()
 {
   return hdfsFlush(poFilesystem, poFile);
 }
 
-int VSIHdfsHandle::Close()
+int
+VSIHdfsHandle::Close()
 {
   int retval = 0;
 
