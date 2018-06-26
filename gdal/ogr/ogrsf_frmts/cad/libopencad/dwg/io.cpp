@@ -294,6 +294,13 @@ double CADBuffer::ReadBITDOUBLE()
 void CADBuffer::SkipBITDOUBLE()
 {
     unsigned char BITCODE = Read2B();
+    size_t nByteOffset      = m_nBitOffsetFromStart / 8;
+    const char * pDoubleFirstByte = m_pBuffer + nByteOffset;
+    if(pDoubleFirstByte + 9 > m_guard)
+    {
+        m_bEOB = true;
+        return;
+    }
 
     switch( BITCODE )
     {
@@ -845,6 +852,13 @@ void CADBuffer::SkipTV()
 void CADBuffer::SkipBITLONG()
 {
     unsigned char BITCODE = Read2B();
+    size_t nByteOffset      = m_nBitOffsetFromStart / 8;
+    const char * pLongFirstByte = m_pBuffer + nByteOffset;
+    if(pLongFirstByte + 5 > m_guard)
+    {
+        m_bEOB = true;
+        return;
+    } 
     switch( BITCODE )
     {
         case BITLONG_NORMAL:
@@ -864,6 +878,13 @@ void CADBuffer::SkipBITLONG()
 void CADBuffer::SkipBITSHORT()
 {
     unsigned char BITCODE = Read2B();
+    size_t nByteOffset      = m_nBitOffsetFromStart / 8;
+    const char * pShortFirstByte = m_pBuffer + nByteOffset;
+    if(pShortFirstByte + 4 > m_guard)
+    {
+        m_bEOB = true;
+        return;
+    }
     switch( BITCODE )
     {
         case BITSHORT_NORMAL:
@@ -882,6 +903,13 @@ void CADBuffer::SkipBITSHORT()
 
 void CADBuffer::SkipBIT()
 {
+    size_t nByteOffset      = m_nBitOffsetFromStart / 8;
+    const char * pBoolByte = m_pBuffer + nByteOffset;
+    if(pBoolByte >= m_guard)
+    {
+        m_bEOB = true;
+        return;
+    } 
     ++m_nBitOffsetFromStart;
 }
 
