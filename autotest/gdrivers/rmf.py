@@ -681,6 +681,30 @@ def rmf_29():
 
 
 ###############################################################################
+# Check interleaved access
+
+def rmf_30():
+
+    ds_name = 'tmp/interleaved.tif'
+    gdal.Translate(ds_name, 'data/rgbsmall-lzw.rsw',
+                   format='GTiff')
+
+    ds = gdal.Open(ds_name)
+    if ds is None:
+        gdaltest.post_reason('Can\'t open ' + ds_name)
+        return 'fail'
+    expected_cs = [21212, 21053, 21349]
+    cs = [ds.GetRasterBand(1).Checksum(),
+          ds.GetRasterBand(2).Checksum(),
+          ds.GetRasterBand(3).Checksum()]
+    if cs != expected_cs:
+        gdaltest.post_reason('Invalid checksum %s expected %s.' %
+                             (str(cs), str(expected_cs)))
+        return 'fail'
+    return 'success'
+
+
+###############################################################################
 
 
 gdaltest_list = [
@@ -717,6 +741,7 @@ gdaltest_list = [
     rmf_28a,
     rmf_28b,
     rmf_29,
+    rmf_30,
 ]
 
 if __name__ == '__main__':
