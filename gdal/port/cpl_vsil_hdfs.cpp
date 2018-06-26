@@ -84,16 +84,7 @@ class VSIHdfsHandle final : public VSIVirtualHandle
     vsi_l_offset Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
-    vsi_l_offset Length()
-    {
-      hdfsFileInfo * poInfo = hdfsGetPathInfo(poFilesystem, oFilename.c_str());
-      if (poInfo != nullptr) {
-        tOffset nSize = poInfo->mSize;
-        hdfsFreeFileInfo(poInfo, 1);
-        return static_cast<vsi_l_offset>(nSize);
-      }
-      return -1;
-    }
+    vsi_l_offset Length();
     int Eof() override;
     int Flush() override;
     int Close() override;
@@ -142,6 +133,18 @@ size_t VSIHdfsHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
 size_t VSIHdfsHandle::Write(const void *pBuffer, size_t nSize, size_t nMemb)
 {
   CPLError(CE_Failure, CPLE_AppDefined, "HDFS driver is read-only");
+  return -1;
+}
+
+vsi_l_offset
+VSIHdfsHandle::Length()
+{
+  hdfsFileInfo * poInfo = hdfsGetPathInfo(poFilesystem, oFilename.c_str());
+  if (poInfo != nullptr) {
+    tOffset nSize = poInfo->mSize;
+    hdfsFreeFileInfo(poInfo, 1);
+    return static_cast<vsi_l_offset>(nSize);
+  }
   return -1;
 }
 
