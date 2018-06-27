@@ -103,8 +103,8 @@ def GetOutputDriversFor(filename):
 
 def GetOutputDriverFor(filename):
     drv_list = GetOutputDriversFor(filename)
+    ext = GetExtension(filename)
     if len(drv_list) == 0:
-        ext = GetExtension(filename)
         if len(ext) == 0:
             return 'ESRI Shapefile'
         else:
