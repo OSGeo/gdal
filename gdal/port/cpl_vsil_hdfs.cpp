@@ -201,6 +201,7 @@ class VSIHdfsFilesystemHandler final : public VSIFilesystemHandler
     CPL_DISALLOW_COPY_ASSIGN(VSIHdfsFilesystemHandler)
 
     hdfsFS poFilesystem = nullptr;
+    CPLMutex *hMutex = nullptr;
 
   public:
     VSIHdfsFilesystemHandler();
@@ -225,6 +226,10 @@ VSIHdfsFilesystemHandler::VSIHdfsFilesystemHandler()
 
 VSIHdfsFilesystemHandler::~VSIHdfsFilesystemHandler()
 {
+  if(hMutex != nullptr)
+    CPLDestroyMutex(hMutex);
+  hMutex = nullptr;
+
   if (poFilesystem != nullptr)
     hdfsDisconnect(poFilesystem);
   poFilesystem = nullptr;
@@ -235,6 +240,8 @@ VSIHdfsFilesystemHandler::Open( const char *pszFilename,
                                 const char *pszAccess,
                                 bool)
 {
+  CPLMutexHolder oHolder( &hMutex );
+
   if (poFilesystem == nullptr)
     poFilesystem = hdfsConnect("default", 0);
   
@@ -260,8 +267,10 @@ VSIHdfsFilesystemHandler::Open( const char *pszFilename,
 int
 VSIHdfsFilesystemHandler::Stat( const char *pszeFilename, VSIStatBufL *pStatBuf, int)
 {
-  memset(pStatBuf, 0, sizeof(*pStatBuf)); // XXX
+  CPLMutexHolder oHolder( &hMutex );
+
   hdfsFileInfo * poInfo = hdfsGetPathInfo(poFilesystem, pszeFilename);
+  memset(pStatBuf, 0, sizeof(*pStatBuf));
 
   if (poInfo != nullptr) {
     pStatBuf->st_dev = static_cast<dev_t>(0);                               /* ID of device containing file */
