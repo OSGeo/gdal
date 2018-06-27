@@ -61,6 +61,16 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
+#define SILENCE(expr) {\
+    int hOldStderr = dup(2);\
+    int hNewStderr = open("/dev/null", O_WRONLY);\
+    dup2(hNewStderr, 2);\
+    close(hNewStderr);\
+    expr;\
+    dup2(hOldStderr, 2);\
+    close(hOldStderr);\
+}
+
 class VSIHdfsHandle final : public VSIVirtualHandle
 {
   private:
@@ -255,7 +265,11 @@ VSIHdfsFilesystemHandler::Open( const char *pszFilename,
   }
   else {
     const char * pszPath = pszFilename + strlen(VSIHdfsHandle::VSIHDFS);
-    hdfsFile poFile = hdfsOpenFile(poFilesystem, pszPath, O_RDONLY, 0, 0, 0);
+
+    // Open HDFS file, sending Java stack traces to /dev/null.
+    hdfsFile poFile = nullptr;
+    SILENCE(poFile = hdfsOpenFile(poFilesystem, pszPath, O_RDONLY, 0, 0, 0))
+
     if (poFile != nullptr) {
       VSIHdfsHandle * poHandle = new VSIHdfsHandle(poFile, poFilesystem, pszPath, true);
       return poHandle;
