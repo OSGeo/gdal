@@ -143,7 +143,10 @@ class RMFDataset final: public GDALDataset
     GUInt32         nXTiles;
     GUInt32         nYTiles;
     GUInt32         *paiTiles;
-
+    GByte           *pabyCurrentTile;
+    int             nCurrentTileXOff;
+    int             nCurrentTileYOff;
+    GUInt32         nCurrentTileBytes;
     GUInt32         nColorTableSize;
     GByte           *pabyColorTable;
     GDALColorTable  *poColorTable;
