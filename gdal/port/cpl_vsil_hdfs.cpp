@@ -134,15 +134,21 @@ VSIHdfsHandle::Tell()
 size_t
 VSIHdfsHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
 {
+  if (nSize == 0 || nMemb == 0)
+    return 0;
+
   int bytes = hdfsRead(poFilesystem, poFile, pBuffer, nSize * nMemb);
-  if (bytes == 0) {
+
+  if (bytes > 0)
+    return bytes/nSize;
+  else if (bytes == 0) {
     bEOF = true;
     return 0;
   }
-  else if (bytes < 0)
-    return -1;
-  else
-    return bytes/nSize;
+  else {
+    bEOF = false;
+    return 0;
+  }
 }
 
 size_t
