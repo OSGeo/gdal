@@ -217,6 +217,11 @@ class VSIHdfsFilesystemHandler final : public VSIFilesystemHandler
     VSIHdfsFilesystemHandler();
     ~VSIHdfsFilesystemHandler() override;
 
+    void EnsureFilesystem() {
+      if (poFilesystem == nullptr)
+	poFilesystem = hdfsConnect("default", 0);
+    }
+
     VSIVirtualHandle *Open(const char *pszFilename,
                            const char *pszAccess,
                            bool bSetError ) override;
@@ -250,10 +255,9 @@ VSIHdfsFilesystemHandler::Open( const char *pszFilename,
                                 const char *pszAccess,
                                 bool)
 {
-  CPLMutexHolder oHolder( &hMutex );
+  CPLMutexHolder oHolder(&hMutex);
 
-  if (poFilesystem == nullptr)
-    poFilesystem = hdfsConnect("default", 0);
+  EnsureFilesystem();
   
   if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr) {
     CPLError(CE_Failure, CPLE_AppDefined, "HDFS driver is read-only");
@@ -281,7 +285,9 @@ VSIHdfsFilesystemHandler::Open( const char *pszFilename,
 int
 VSIHdfsFilesystemHandler::Stat( const char *pszeFilename, VSIStatBufL *pStatBuf, int)
 {
-  CPLMutexHolder oHolder( &hMutex );
+  CPLMutexHolder oHolder(&hMutex);
+
+  EnsureFilesystem();
 
   hdfsFileInfo * poInfo = hdfsGetPathInfo(poFilesystem, pszeFilename);
   memset(pStatBuf, 0, sizeof(*pStatBuf));
@@ -319,6 +325,11 @@ VSIHdfsFilesystemHandler::Stat( const char *pszeFilename, VSIStatBufL *pStatBuf,
 int
 VSIHdfsFilesystemHandler::Unlink(const char *pszFilename)
 {
+  {
+    CPLMutexHolder oHolder(&hMutex);
+    EnsureFilesystem();
+  }
+
   return hdfsDelete(poFilesystem, pszFilename, 0);
 }
 
@@ -332,12 +343,22 @@ VSIHdfsFilesystemHandler::Mkdir(const char *pszDirname, long nMode)
 int
 VSIHdfsFilesystemHandler::Rmdir(const char *pszDirname)
 {
+  {
+    CPLMutexHolder oHolder(&hMutex);
+    EnsureFilesystem();
+  }
+
   return hdfsDelete(poFilesystem, pszDirname, 1);
 }
 
 char **
 VSIHdfsFilesystemHandler::ReadDir(const char *pszDirname)
 {
+  {
+    CPLMutexHolder oHolder(&hMutex);
+    EnsureFilesystem();
+  }
+
   int mEntries = 0;
   hdfsFileInfo * paoInfo = hdfsListDirectory(poFilesystem, pszDirname, &mEntries);
   char ** retval = nullptr;
@@ -356,6 +377,11 @@ VSIHdfsFilesystemHandler::ReadDir(const char *pszDirname)
 int
 VSIHdfsFilesystemHandler::Rename(const char *oldpath, const char *newpath)
 {
+  {
+    CPLMutexHolder oHolder(&hMutex);
+    EnsureFilesystem();
+  }
+
   return hdfsRename(poFilesystem, oldpath, newpath);
 }
 
