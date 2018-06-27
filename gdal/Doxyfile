@@ -943,6 +943,7 @@ PREDEFINED             = HAVE_DLFCN_H \
                          __cplusplus \
                          DOXYGEN_SKIP \
                          HAVE_CURL \
+                         HDFS_ENABLED \
                          CPL_UNUSED= \
                          UNUSED_IF_NO_GEOS= \
                          UNUSED_IF_NO_SFCGAL= \

@@ -34,7 +34,10 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#if !defined(_MSC_VER)
 #include <unistd.h>
+#endif
 
 #include <cstring>
 
@@ -327,14 +330,17 @@ VSIHdfsFilesystemHandler::Rename(const char *oldpath, const char *newpath)
   return hdfsRename(poFilesystem, oldpath, newpath);
 }
 
+#endif
 //! @endcond
+
+#ifdef HDFS_ENABLED
 
 /************************************************************************/
 /*                       VSIInstallHdfsHandler()                        */
 /************************************************************************/
 
 /**
- * \brief Install /vsihdfs/ file system handler
+ * \brief Install /vsihdfs/ file system handler (requires JVM and HDFS support)
  *
  * @since GDAL 2.4.0
  */
@@ -345,6 +351,15 @@ void VSIInstallHdfsHandler()
 
 #else
 
+/************************************************************************/
+/*                       VSIInstallHdfsHandler()                        */
+/************************************************************************/
+
+/**
+ * \brief Install /vsihdfs/ file system handler (non-functional stub)
+ *
+ * @since GDAL 2.4.0
+ */
 void VSIInstallHdfsHandler( void )
 {
     // Not supported.
