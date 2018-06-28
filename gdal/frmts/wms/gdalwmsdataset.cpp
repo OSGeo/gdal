@@ -560,7 +560,6 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     // If they are set as null strings, they clear the server declared values
     if (ret == CE_None) {
         // Data values are attributes, they include NoData Min and Max
-        // TODO: document those options
         if (nullptr!=CPLGetXMLNode(config,"DataValues")) {
             const char *nodata=CPLGetXMLValue(config,"DataValues.NoData",nullptr);
             if (nodata!=nullptr) WMSSetNoDataValue(nodata);
