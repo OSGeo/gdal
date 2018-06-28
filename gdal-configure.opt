@@ -19,7 +19,7 @@ A += --without-dds
 A += --without-gta
 A += --with-libtiff=internal
 A += --with-geotiff=internal
-A += --without-jpeg
+A += --with-jpeg=internal
 A += --without-jpeg12
 A += --without-gif
 A += --without-ogdi
