@@ -351,7 +351,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             }
 
             GByte *pabyNewTile = reinterpret_cast<GByte *>(
-                        VSIRealloc(poGDS->pabyCurrentTile, nTileBytes));
+                    VSIRealloc(poGDS->pabyCurrentTile, std::max(1U, nTileBytes)));
             if( !pabyNewTile )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
