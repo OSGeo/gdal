@@ -430,10 +430,26 @@ def main():
     parser.add_option("--overwrite", dest="overwrite", action="store_true", help="overwrite output file if it already exists")
     parser.add_option("--debug", dest="debug", action="store_true", help="print debugging information")
     parser.add_option("--quiet", dest="quiet", action="store_true", help="suppress progress messages")
+    parser.add_option("--optfile", dest="optfile", metavar="optfile", help="Read the named file and substitute the contents into the command line options list.")
 
     (opts, args) = parser.parse_args()
+
     if not hasattr(opts, "input_files"):
         opts.input_files = {}
+
+    if opts.optfile:
+        with open(opts.optfile, 'r') as f:
+            ofargv = [x for line in f for x in line.strip().split(' ') if line[0] != '#']
+        # Avoid potential recursion.
+        parser.remove_option('--optfile')
+        ofopts, ofargs = parser.parse_args(ofargv)
+        # Let options given directly override the optfile.
+        input_files = getattr(ofopts, 'input_files', {})
+        input_files.update(opts.input_files)
+        ofopts.__dict__.update({k: v for k, v in vars(opts).items() if v})
+        opts = ofopts
+        opts.input_files = input_files
+        args = args + ofargs
 
     if len(sys.argv) == 1:
         parser.print_help()
