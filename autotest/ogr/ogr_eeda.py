@@ -333,7 +333,7 @@ def eeda_cleanup():
     return 'success'
 
 
-ogrtest_list = [
+gdaltest_list = [
     eeda_1,
     eeda_2,
     eeda_3,
@@ -343,6 +343,6 @@ if __name__ == '__main__':
 
     gdaltest.setup_run('ogr_eeda')
 
-    gdaltest.run_tests(ogrtest_list)
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
