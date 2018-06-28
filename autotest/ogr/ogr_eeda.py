@@ -276,6 +276,52 @@ def eeda_2():
 
     lyr.SetSpatialFilter(None)
 
+    # Test time equality with second granularity
+    lyr.SetAttributeFilter("time = '1980-01-01T00:00:00Z'")
+
+    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/assets:listImages?parentPath=collection&startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=1980%2D01%2D01T00%3A00%3A01Z'
+    gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
+        'assets': [
+            {
+                'path': 'filtered_feature',
+                'time': '1980-01-01T00:00:00Z',
+            },
+            {
+                'path': 'second_feature'
+            }
+        ]
+    }))
+
+    f = lyr.GetNextFeature()
+    gdal.Unlink(ogrtest.eeda_drv_tmpfile)
+
+    if f.GetField('path') != 'filtered_feature':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test time equality with day granularity
+    lyr.SetAttributeFilter("time = '1980-01-01'")
+
+    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/assets:listImages?parentPath=collection&startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=1980%2D01%2D01T23%3A59%3A59Z'
+    gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
+        'assets': [
+            {
+                'path': 'filtered_feature',
+                'time': '1980-01-01T12:00:00Z',
+            },
+            {
+                'path': 'second_feature'
+            }
+        ]
+    }))
+
+    f = lyr.GetNextFeature()
+    gdal.Unlink(ogrtest.eeda_drv_tmpfile)
+
+    if f.GetField('path') != 'filtered_feature':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     ds = None
 
     gdal.SetConfigOption('EEDA_BEARER', None)
