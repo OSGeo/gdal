@@ -586,7 +586,8 @@ long CADBuffer::ReadUMCHAR()
     int nOffset = 0;
     for(unsigned char i = 0; i < nMCharBytesCount; ++i)
     {
-        result += aMCharBytes[i] << nOffset;
+        unsigned long nVal = aMCharBytes[i];
+        result += nVal << nOffset;
         nOffset += 7;
     }
     return result;
@@ -630,7 +631,8 @@ long CADBuffer::ReadMCHAR()
     int nOffset = 0;
     for(unsigned char i = 0; i < nMCharBytesCount; ++i)
     {
-        result += aMCharBytes[i] << nOffset;
+        unsigned long nVal = aMCharBytes[i];
+        result += nVal << nOffset;
         nOffset += 7;
     }
 
@@ -638,7 +640,7 @@ long CADBuffer::ReadMCHAR()
     {
         result *= -1;
     }
-    
+
     return result;
 }
 
@@ -858,7 +860,7 @@ void CADBuffer::SkipBITLONG()
     {
         m_bEOB = true;
         return;
-    } 
+    }
     switch( BITCODE )
     {
         case BITLONG_NORMAL:
@@ -909,7 +911,7 @@ void CADBuffer::SkipBIT()
     {
         m_bEOB = true;
         return;
-    } 
+    }
     ++m_nBitOffsetFromStart;
 }
 
