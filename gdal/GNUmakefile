@@ -170,7 +170,7 @@ docs:
 	cp data/gdalicon.png html
 	cp doc/images/*.* html
 	cp doc/grid/*.png html
-	cp frmts/*.html frmts/*/frmt_*.html html
+	cp frmts/*.html frmts/*/frmt_*.html frmts/*/drv_*.html html
 	cp frmts/openjpeg/*.xml html
 	cp frmts/wms/frmt_*.xml html
 	cp ogr/ogrsf_frmts/*/frmt_*.html html
