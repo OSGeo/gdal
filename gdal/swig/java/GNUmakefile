@@ -56,13 +56,13 @@ generate: makedir ${WRAPPERS}
 build: generate ${JAVA_OBJECTS} ${JAVA_MODULES}
 ifeq ($(HAVE_LIBTOOL),yes)
 
-	if [ -f ".libs/libgdaljni.so" ] ; then \
+	if [ -f ".libs/libgdalalljni.so" ] ; then \
 		cp .libs/*.so . ; \
 	fi
 
 	echo "$(wildcard .libs/*.dylib)"
 
-	if [ -f ".libs/libgdaljni.dylib" ] ; then \
+	if [ -f ".libs/libgdalalljni.dylib" ] ; then \
 		cp .libs/*.dylib . ; \
 	fi
 

@@ -145,10 +145,7 @@ AVCE00ParseInfo  *AVCE00ParseInfoAlloc(void)
 {
     AVCE00ParseInfo       *psInfo;
 
-    psInfo = (AVCE00ParseInfo*)CPLCalloc(1,sizeof(AVCE00ParseInfo));
-
-    psInfo->eFileType = AVCFileUnknown;
-    psInfo->eSuperSectionType = AVCFileUnknown;
+    psInfo = new AVCE00ParseInfo();
 
     /* Allocate output buffer.
      * 2k should be enough... the biggest thing we'll need to store
@@ -208,8 +205,7 @@ void    _AVCE00ParseDestroyCurObject(AVCE00ParseInfo  *psInfo)
     }
     else if (psInfo->eFileType == AVCFilePRJ)
     {
-        CSLDestroy(psInfo->cur.papszPrj);
-        psInfo->cur.papszPrj = nullptr;
+        psInfo->aosPrj.Clear();
     }
     else if (psInfo->eFileType == AVCFileTXT ||
              psInfo->eFileType == AVCFileTX6)
@@ -256,7 +252,7 @@ void    AVCE00ParseInfoFree(AVCE00ParseInfo  *psInfo)
         _AVCE00ParseDestroyCurObject(psInfo);
     }
 
-    CPLFree(psInfo);
+    delete psInfo;
 }
 
 /**********************************************************************
@@ -507,7 +503,7 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
     }
     else if (eNewType == AVCFilePRJ)
     {
-        psInfo->cur.papszPrj = nullptr;
+        psInfo->aosPrj.Clear();
     }
     else if (eNewType == AVCFileTXT ||
              eNewType == AVCFileTX6)
@@ -1276,7 +1272,7 @@ char  **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine)
          * We reached end of section... return the PRJ.
          *------------------------------------------------------------*/
         psInfo->bForceEndOfSection = TRUE;
-        return psInfo->cur.papszPrj;
+        return psInfo->aosPrj.List();
     }
 
     if ( pszLine[0] != '~' )
@@ -1284,7 +1280,7 @@ char  **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         /*-------------------------------------------------------------
          * This is a new line... add it to the papszPrj stringlist.
          *------------------------------------------------------------*/
-        psInfo->cur.papszPrj = CSLAddString(psInfo->cur.papszPrj, pszLine);
+        psInfo->aosPrj.AddString(pszLine);
     }
     else if ( strlen(pszLine) > 1 )
     {
@@ -1292,17 +1288,16 @@ char  **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine)
          * '~' is a line continuation char.  Append what follows the '~'
          * to the end of the previous line.
          *------------------------------------------------------------*/
-        int  iLastLine, nNewLen;
-
-        iLastLine = CSLCount(psInfo->cur.papszPrj) - 1;
-        if (iLastLine >= 0)
+        if (!psInfo->aosPrj.empty())
         {
-            nNewLen = (int)strlen(psInfo->cur.papszPrj[iLastLine])+(int)strlen(pszLine)-1+1;
-            psInfo->cur.papszPrj[iLastLine] =
-                  (char*)CPLRealloc(psInfo->cur.papszPrj[iLastLine],
-                                    nNewLen * sizeof(char));
-
-            strcat(psInfo->cur.papszPrj[iLastLine], pszLine+1);
+            size_t nOldLen = strlen(psInfo->aosPrj.List()[psInfo->aosPrj.size()-1]);
+            size_t nAddLen = strlen(pszLine + 1);
+            psInfo->aosPrj.List()[psInfo->aosPrj.size()-1] =
+                static_cast<char*>(CPLRealloc(
+                    psInfo->aosPrj.List()[psInfo->aosPrj.size()-1],
+                    nOldLen + nAddLen + 1));
+            memcpy(psInfo->aosPrj.List()[psInfo->aosPrj.size()-1] + nOldLen,
+                   pszLine + 1, nAddLen + 1);
         }
     }
 

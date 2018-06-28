@@ -263,6 +263,12 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg) override;
 
+    CPLErr IBuildOverviews( const char *pszResampling,
+                                       int nOverviews, int *panOverviewList,
+                                       int nListBands, int *panBandList,
+                                       GDALProgressFunc pfnProgress,
+                                       void *pProgressData ) override;
+
     static void         WriteBox(VSILFILE* fp, GDALJP2Box* poBox);
     static void         WriteGDALMetadataBox( VSILFILE* fp, GDALDataset* poSrcDS,
                                        char** papszOptions );
@@ -638,8 +644,10 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
                 if( pahThreads[i] == nullptr )
                     oJob.bSuccess = false;
             }
+            TemporarilyDropReadWriteLock();
             for(i=0;i<l_nThreads;i++)
                 CPLJoinThread( pahThreads[i] );
+            ReacquireReadWriteLock();
             CPLFree(pahThreads);
             if( !oJob.bSuccess )
             {
@@ -709,6 +717,36 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
     bEnoughMemoryToLoadOtherBands = TRUE;
     return eErr;
 }
+
+
+/************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+CPLErr JP2OpenJPEGDataset::IBuildOverviews( const char *pszResampling,
+                                       int nOverviews, int *panOverviewList,
+                                       int nListBands, int *panBandList,
+                                       GDALProgressFunc pfnProgress,
+                                       void *pProgressData )
+
+{
+    // In order for building external overviews to work properly, we
+    // discard any concept of internal overviews when the user
+    // first requests to build external overviews.
+    for( int i = 0; i < nOverviewCount; i++ )
+    {
+        delete papoOverviewDS[i];
+    }
+    CPLFree(papoOverviewDS);
+    papoOverviewDS = nullptr;
+    nOverviewCount = 0;
+
+    return GDALPamDataset::IBuildOverviews(pszResampling,
+                                           nOverviews, panOverviewList,
+                                           nListBands, panBandList,
+                                           pfnProgress, pProgressData);
+}
+
 
 /************************************************************************/
 /*                    JP2OpenJPEGCreateReadStream()                     */
@@ -1089,6 +1127,9 @@ end:
 
 int JP2OpenJPEGRasterBand::GetOverviewCount()
 {
+    if( GDALPamRasterBand::GetOverviewCount() > 0 )
+        return GDALPamRasterBand::GetOverviewCount();
+
     JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
     return poGDS->nOverviewCount;
 }
@@ -1099,6 +1140,9 @@ int JP2OpenJPEGRasterBand::GetOverviewCount()
 
 GDALRasterBand* JP2OpenJPEGRasterBand::GetOverview(int iOvrLevel)
 {
+    if( GDALPamRasterBand::GetOverviewCount() > 0 )
+        return GDALPamRasterBand::GetOverview(iOvrLevel);
+
     JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
     if (iOvrLevel < 0 || iOvrLevel >= poGDS->nOverviewCount)
         return nullptr;
@@ -2266,7 +2310,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
-    //poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return poDS;
 }

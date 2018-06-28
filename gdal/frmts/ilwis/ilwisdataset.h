@@ -111,7 +111,7 @@ public:
     ILWISInfo psInfo;
     int nSizePerPixel;
 
-    ILWISRasterBand( ILWISDataset *, int );
+    ILWISRasterBand( ILWISDataset *, int, const std::string& sBandNameIn );
     virtual ~ILWISRasterBand();
     CPLErr GetILWISInfo(const std::string& pszFileName);
     void ILWISOpen( const std::string& pszFilename);

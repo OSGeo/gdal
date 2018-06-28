@@ -373,6 +373,7 @@ OGRwkbGeometryType IVFKDataBlock::SetGeometryType(bool bSuppressGeometry)
         m_nGeometryType = wkbPoint;
 
     else if (EQUAL (m_pszName, "SBP") ||
+             EQUAL (m_pszName, "SBPG") ||
              EQUAL (m_pszName, "HP") ||
              EQUAL (m_pszName, "DPM") ||
              EQUAL (m_pszName, "ZVB"))
@@ -467,7 +468,8 @@ int IVFKDataBlock::LoadGeometry()
         /* -> wkbPoint */
         nInvalid = LoadGeometryPoint();
     }
-    else if (EQUAL (m_pszName, "SBP")) {
+    else if (EQUAL (m_pszName, "SBP") ||
+             EQUAL (m_pszName, "SBPG")) {
         /* -> wkbLineString */
         nInvalid = LoadGeometryLineStringSBP();
     }
@@ -785,7 +787,7 @@ int VFKDataBlock::LoadGeometryPoint()
 }
 
 /*!
-  \brief Load geometry (linestring SBP layer)
+  \brief Load geometry (linestring SBP/SBPG layer)
 
   \return number of invalid features
 */

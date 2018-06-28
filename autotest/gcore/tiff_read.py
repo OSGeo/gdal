@@ -2442,6 +2442,17 @@ def tiff_read_md12():
     except OSError:
         pass
 
+    # Test not valid DIMAP product [https://github.com/OSGeo/gdal/issues/431]
+    shutil.copy('../gdrivers/data/dimap2/IMG_foo_R2C1.TIF', 'tmp/IMG_foo_temp.TIF')
+    shutil.copy('../gdrivers/data/dimap2/DIM_foo.XML', 'tmp/DIM_foo.XML')
+    shutil.copy('../gdrivers/data/dimap2/RPC_foo.XML', 'tmp/RPC_foo.XML')
+    ds = gdal.Open('tmp/IMG_foo_temp.TIF', gdal.GA_ReadOnly)
+    filelist = ds.GetFileList()
+
+    if len(filelist) > 1:
+        gdaltest.post_reason('did not get expected file list.')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

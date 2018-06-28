@@ -1414,7 +1414,8 @@ GDALGridDataMetricAverageDistancePts( const void *poOptionsIn, GUInt32 nPoints,
  * of a Delaunay triangulation the point is, and by doing interpolation from
  * its barycentric coordinates within the triangle.
  * If the point is not in any triangle, depending on the radius, the
- * algorithm will use the value of the nearest point or the nodata value.
+ * algorithm will use the value of the nearest point (radius != 0),
+ * or the nodata value (radius == 0)
  *
  * @param poOptionsIn Algorithm parameters. This should point to
  * GDALGridLinearOptions object.
@@ -1477,6 +1478,13 @@ GDALGridLinear( const void *poOptionsIn, GUInt32 nPoints,
     }
     else
     {
+        if( nOutputFacetIdx >= 0 )
+        {
+            // Also reuse this failed output facet, when valid, as seed for
+            // next search.
+            psExtraParams->nInitialFacetIdx = nOutputFacetIdx;
+        }
+
         const GDALGridLinearOptions *const poOptions =
             static_cast<const GDALGridLinearOptions *>(poOptionsIn);
         const double dfRadius = poOptions->dfRadius;

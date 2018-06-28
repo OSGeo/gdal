@@ -523,12 +523,83 @@ def test_gdalwarp_lib_45():
 def test_gdalwarp_lib_46():
 
     ds = gdal.Warp('', ['../gcore/data/utmsmall.tif'], format='MEM', cutlineDSName='data/cutline.vrt', cropToCutline=True)
-    if ds.GetRasterBand(1).Checksum() != 19582:
+    if ds.GetRasterBand(1).Checksum() != 18837:
         print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
     ds = None
+
+    # Precisely test output raster bounds in no raster reprojection ccase
+
+    src_ds = gdal.Translate('', '../gcore/data/byte.tif', format='MEM',
+                            outputBounds=[2, 49, 3, 48], outputSRS='EPSG:4326')
+
+    cutlineDSName = '/vsimem/test_gdalwarp_lib_46.json'
+    cutline_ds = ogr.GetDriverByName('GeoJSON').CreateDataSource(cutlineDSName)
+    cutline_lyr = cutline_ds.CreateLayer('cutline')
+    f = ogr.Feature(cutline_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((2.13 48.13,2.83 48.13,2.83 48.83,2.13 48.83,2.13 48.13))'))
+    cutline_lyr.CreateFeature(f)
+    f = None
+    cutline_lyr = None
+    cutline_ds = None
+
+    # No CUTLINE_ALL_TOUCHED: the extent should be smaller than the cutline
+    ds = gdal.Warp('', src_ds, format='MEM', cutlineDSName=cutlineDSName,
+                   cropToCutline=True)
+    got_gt = ds.GetGeoTransform()
+    expected_gt = (2.15, 0.05, 0.0, 48.8, 0.0, -0.05)
+    if max([abs(got_gt[i]-expected_gt[i]) for i in range(6)]) > 1e-8:
+        gdaltest.post_reason('fail')
+        print(got_gt)
+        return 'fail'
+    if ds.RasterXSize != 13 or ds.RasterYSize != 13:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize, ds.RasterYSize)
+        return 'fail'
+
+    # Same but with CUTLINE_ALL_TOUCHED=YES: the extent should be larger
+    # than the cutline
+    ds = gdal.Warp('', src_ds, format='MEM', cutlineDSName=cutlineDSName,
+                   cropToCutline=True,
+                   warpOptions=['CUTLINE_ALL_TOUCHED=YES'])
+    got_gt = ds.GetGeoTransform()
+    expected_gt = (2.1, 0.05, 0.0, 48.85, 0.0, -0.05)
+    if max([abs(got_gt[i]-expected_gt[i]) for i in range(6)]) > 1e-8:
+        gdaltest.post_reason('fail')
+        print(got_gt)
+        return 'fail'
+    if ds.RasterXSize != 15 or ds.RasterYSize != 15:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize, ds.RasterYSize)
+        return 'fail'
+
+    # Test numeric stability when the cutline is exactly on pixel boundaries
+    cutline_ds = ogr.GetDriverByName('GeoJSON').CreateDataSource(cutlineDSName)
+    cutline_lyr = cutline_ds.CreateLayer('cutline')
+    f = ogr.Feature(cutline_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((2.15 48.15,2.85 48.15,2.85 48.85,2.15 48.85,2.15 48.15))'))
+    cutline_lyr.CreateFeature(f)
+    f = None
+    cutline_lyr = None
+    cutline_ds = None
+
+    for warpOptions in [[], ['CUTLINE_ALL_TOUCHED=YES']]:
+        ds = gdal.Warp('', src_ds, format='MEM', cutlineDSName=cutlineDSName,
+                       cropToCutline=True, warpOptions=warpOptions)
+        got_gt = ds.GetGeoTransform()
+        expected_gt = (2.15, 0.05, 0.0, 48.85, 0.0, -0.05)
+        if max([abs(got_gt[i]-expected_gt[i]) for i in range(6)]) > 1e-8:
+            gdaltest.post_reason('fail')
+            print(got_gt)
+            return 'fail'
+        if ds.RasterXSize != 14 or ds.RasterYSize != 14:
+            gdaltest.post_reason('fail')
+            print(ds.RasterXSize, ds.RasterYSize)
+            return 'fail'
+
+    gdal.Unlink(cutlineDSName)
 
     return 'success'
 

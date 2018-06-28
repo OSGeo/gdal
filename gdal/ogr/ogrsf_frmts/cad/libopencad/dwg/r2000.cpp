@@ -271,7 +271,7 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
 
     oHeader.addValue( CADHeader::CECOLOR, buffer.ReadBITSHORT() );
 
-    oHeader.addValue( CADHeader::HANDSEED, buffer.ReadHANDLE8BLENGTH() ); // TODO: Check this case.
+    oHeader.addValue( CADHeader::HANDSEED, buffer.ReadHANDLE() ); 
 
     oHeader.addValue( CADHeader::CLAYER, buffer.ReadHANDLE() );
     oHeader.addValue( CADHeader::TEXTSTYLE, buffer.ReadHANDLE() );

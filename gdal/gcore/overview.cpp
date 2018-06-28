@@ -3371,10 +3371,10 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
     {
         int iSrcOverview = -1;  // -1 means the source bands.
 
-        int nDstBlockXSize = 0;
-        int nDstBlockYSize = 0;
-        papapoOverviewBands[0][iOverview]->GetBlockSize( &nDstBlockXSize,
-                                                         &nDstBlockYSize );
+        int nDstChunkXSize = 0;
+        int nDstChunkYSize = 0;
+        papapoOverviewBands[0][iOverview]->GetBlockSize( &nDstChunkXSize,
+                                                         &nDstChunkYSize );
 
         const int nDstWidth = papapoOverviewBands[0][iOverview]->GetXSize();
         const int nDstHeight = papapoOverviewBands[0][iOverview]->GetYSize();
@@ -3394,20 +3394,40 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         const double dfYRatioDstToSrc =
             static_cast<double>(nSrcHeight) / nDstHeight;
 
-        // Compute the maximum chunk size of the source such as it will match
-        // the size of a block of the overview.
-        const int nFullResXChunk =
-            2 + static_cast<int>(nDstBlockXSize * dfXRatioDstToSrc);
-        const int nFullResYChunk =
-            2 + static_cast<int>(nDstBlockYSize * dfYRatioDstToSrc);
-
         int nOvrFactor = std::max( static_cast<int>(0.5 + dfXRatioDstToSrc),
                                    static_cast<int>(0.5 + dfYRatioDstToSrc) );
         if( nOvrFactor == 0 ) nOvrFactor = 1;
-        const int nFullResXChunkQueried =
-            nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
+
+        // Try to extend the chunk size so that the memory needed to acquire
+        // source pixels goes up to 10 MB.
+        // This can help for drivers that support multi-threaded reading
+        const int nFullResYChunk =
+            2 + static_cast<int>(nDstChunkYSize * dfYRatioDstToSrc);
         const int nFullResYChunkQueried =
             nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
+        while( nDstChunkXSize < nDstWidth )
+        {
+            const int nFullResXChunk =
+                2 + static_cast<int>(2 * nDstChunkXSize * dfXRatioDstToSrc);
+
+            const int nFullResXChunkQueried =
+                nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
+
+            if( static_cast<GIntBig>(nFullResXChunkQueried) *
+                  nFullResYChunkQueried * nBands *
+                    GDALGetDataTypeSizeBytes(eWrkDataType) > 10 * 1024 * 1024 )
+            {
+                break;
+            }
+
+            nDstChunkXSize *= 2;
+        }
+        nDstChunkXSize = std::min(nDstChunkXSize, nDstWidth);
+
+        const int nFullResXChunk =
+            2 + static_cast<int>(nDstChunkXSize * dfXRatioDstToSrc);
+        const int nFullResXChunkQueried =
+            nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
 
         void** papaChunk = static_cast<void **>(
             VSI_MALLOC_VERBOSE(nBands * sizeof(void*)) );
@@ -3456,11 +3476,11 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         // Iterate on destination overview, block by block.
         for( nDstYOff = 0;
              nDstYOff < nDstHeight && eErr == CE_None;
-             nDstYOff += nDstBlockYSize )
+             nDstYOff += nDstChunkYSize )
         {
             int nDstYCount;
-            if( nDstYOff + nDstBlockYSize <= nDstHeight )
-                nDstYCount = nDstBlockYSize;
+            if( nDstYOff + nDstChunkYSize <= nDstHeight )
+                nDstYCount = nDstChunkYSize;
             else
                 nDstYCount = nDstHeight - nDstYOff;
 
@@ -3496,11 +3516,11 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
             // Iterate on destination overview, block by block.
             for( nDstXOff = 0;
                  nDstXOff < nDstWidth && eErr == CE_None;
-                 nDstXOff += nDstBlockXSize )
+                 nDstXOff += nDstChunkXSize )
             {
                 int nDstXCount = 0;
-                if( nDstXOff + nDstBlockXSize <= nDstWidth )
-                    nDstXCount = nDstBlockXSize;
+                if( nDstXOff + nDstChunkXSize <= nDstWidth )
+                    nDstXCount = nDstChunkXSize;
                 else
                     nDstXCount = nDstWidth - nDstXOff;
 

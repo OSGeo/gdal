@@ -86,6 +86,7 @@ typedef struct
     GUInt32     nTileTblSize;                   // tile offsets/sizes table
     GInt32      iMapType;
     GInt32      iProjection;
+    GInt32      iEPSGCode;
     double      dfScale;
     double      dfResolution;
     double      dfPixelSize;
@@ -142,7 +143,10 @@ class RMFDataset final: public GDALDataset
     GUInt32         nXTiles;
     GUInt32         nYTiles;
     GUInt32         *paiTiles;
-
+    GByte           *pabyCurrentTile;
+    int             nCurrentTileXOff;
+    int             nCurrentTileYOff;
+    GUInt32         nCurrentTileBytes;
     GUInt32         nColorTableSize;
     GByte           *pabyColorTable;
     GDALColorTable  *poColorTable;

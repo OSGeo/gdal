@@ -326,6 +326,7 @@ static const char* GetSrcDSProjection( GDALDatasetH hDS,
 /************************************************************************/
 
 static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO,
+                             char** papszWarpOptions,
                              int nSrcCount, GDALDatasetH *pahSrcDS,
                              double& dfMinX, double& dfMinY,
                              double& dfMaxX, double &dfMaxY )
@@ -461,6 +462,32 @@ static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO,
     dfMinY = sEnvelope.MinY;
     dfMaxX = sEnvelope.MaxX;
     dfMaxY = sEnvelope.MaxY;
+    if( hCTSrcToDst == nullptr && nSrcCount > 0 && pahSrcDS[0] != nullptr)
+    {
+        // No raster reprojection: stick on exact pixel boundaries of the source
+        // to preserve resolution and avoid resampling
+        double adfGT[6];
+        if( GDALGetGeoTransform(pahSrcDS[0], adfGT) == CE_None )
+        {
+            if( CPLFetchBool(papszWarpOptions, "CUTLINE_ALL_TOUCHED", false) )
+            {
+                // All touched ? Then make the extent a bit larger than the
+                // cutline envelope
+                dfMinX = adfGT[0] + floor((dfMinX - adfGT[0]) / adfGT[1] + 1e-8) * adfGT[1];
+                dfMinY = adfGT[3] + ceil((dfMinY - adfGT[3]) / adfGT[5] - 1e-8) * adfGT[5];
+                dfMaxX = adfGT[0] + ceil((dfMaxX - adfGT[0]) / adfGT[1] - 1e-8) * adfGT[1];
+                dfMaxY = adfGT[3] + floor((dfMaxY - adfGT[3]) / adfGT[5] + 1e-8) * adfGT[5];
+            }
+            else
+            {
+                // Otherwise, make it a bit smaller
+                dfMinX = adfGT[0] + ceil((dfMinX - adfGT[0]) / adfGT[1] - 1e-8) * adfGT[1];
+                dfMinY = adfGT[3] + floor((dfMinY - adfGT[3]) / adfGT[5] + 1e-8) * adfGT[5];
+                dfMaxX = adfGT[0] + floor((dfMaxX - adfGT[0]) / adfGT[1] + 1e-8) * adfGT[1];
+                dfMaxY = adfGT[3] + ceil((dfMaxY - adfGT[3]) / adfGT[5] - 1e-8) * adfGT[5];
+            }
+        }
+    }
 
     OGR_G_DestroyGeometry(hCutlineGeom);
 
@@ -924,8 +951,11 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     if ( psOptions->bCropToCutline && hCutline != nullptr )
     {
         CPLErr eError;
-        eError = CropToCutline( hCutline, psOptions->papszTO, nSrcCount, pahSrcDS,
-                       psOptions->dfMinX, psOptions->dfMinY, psOptions->dfMaxX, psOptions->dfMaxY );
+        eError = CropToCutline( hCutline, psOptions->papszTO,
+                                psOptions->papszWarpOptions,
+                                nSrcCount, pahSrcDS,
+                                psOptions->dfMinX, psOptions->dfMinY,
+                                psOptions->dfMaxX, psOptions->dfMaxY );
         if(eError == CE_Failure)
         {
             GDALWarpAppOptionsFree(psOptions);

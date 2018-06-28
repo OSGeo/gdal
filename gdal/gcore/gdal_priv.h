@@ -1041,6 +1041,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     void           SetFlushBlockErr( CPLErr eErr );
     CPLErr         UnreferenceBlock( GDALRasterBlock* poBlock );
+    void           SetValidPercent( GUIntBig nSampleCount, GUIntBig nValidCount );
 
   protected:
 //! @cond Doxygen_Suppress

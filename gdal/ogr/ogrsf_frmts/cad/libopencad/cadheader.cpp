@@ -189,6 +189,7 @@ void CADHandle::addOffset( unsigned char val )
 
 long CADHandle::getAsLong( const CADHandle& ref_handle ) const
 {
+    // FIXME: Remove GDAL specific code. The library cannot compile as separate project.
     try
     {
         switch( code )

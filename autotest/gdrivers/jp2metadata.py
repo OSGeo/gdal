@@ -65,12 +65,13 @@ def jp2metadata_1():
 
 def jp2metadata_2():
 
+    # Pleiades product description http://www.cscrs.itu.edu.tr/assets/downloads/PleiadesUserGuide.pdf
     try:
-        os.remove('data/IMG_md_ple.jp2.aux.xml')
+        os.remove('data/IMG_md_ple_R1C1.jp2.aux.xml')
     except OSError:
         pass
 
-    ds = gdal.Open('data/IMG_md_ple.jp2', gdal.GA_ReadOnly)
+    ds = gdal.Open('data/IMG_md_ple_R1C1.jp2', gdal.GA_ReadOnly)
     if ds is None:
         return 'skip'
 
@@ -100,8 +101,8 @@ def jp2metadata_2():
     ds = None
 
     try:
-        os.stat('data/IMG_md_ple.jp2.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/IMG_md_ple.jp2.aux.xml')
+        os.stat('data/IMG_md_ple_R1C1.jp2.aux.xml')
+        gdaltest.post_reason('Expected not generation of data/IMG_md_ple_R1C1.jp2.aux.xml')
         return 'fail'
     except OSError:
         pass

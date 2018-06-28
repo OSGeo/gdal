@@ -177,6 +177,11 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
         poFeature->oStyleProperties["Hidden"] = pszValue;
         break;
 
+      case 67:
+        if( atoi(pszValue) )
+            poFeature->SetField( "PaperSpace", 1 );
+        break;
+
       case 62:
         poFeature->oStyleProperties["Color"] = pszValue;
         break;
@@ -209,10 +214,6 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
 
       case 230:
         poFeature->oOCS.dfZ = CPLAtof( pszValue );
-        break;
-
-      case 330:
-        // No-one cares about this, so exclude from RawCodeValues
         break;
 
       default:

@@ -154,6 +154,7 @@ class CPL_DLL GMLFeatureClass
     int         m_nPropertyCount;
     GMLPropertyDefn **m_papoProperty;
     std::map<CPLString, int> m_oMapPropertyNameToIndex;
+    std::map<CPLString, int> m_oMapPropertySrcElementToIndex;
 
     int         m_nGeometryPropertyCount;
     GMLGeometryPropertyDefn **m_papoGeometryProperty;

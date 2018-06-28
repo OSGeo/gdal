@@ -1864,7 +1864,16 @@ AC_ARG_WITH([jpeg12],
 
 TIFF_JPEG12_ENABLED=no
 AC_MSG_CHECKING([for jpeg12])
-if test "$with_jpeg12" = yes ; then
+if test "$with_jpeg12" =  no ; then
+    JPEG12_ENABLED=no
+    AC_MSG_RESULT([disabled by user])
+
+elif test "$JPEG_SETTING" = "internal" -a "$TIFF_SETTING" = "internal" ; then
+    AC_MSG_RESULT([enabled])
+    JPEG12_ENABLED=yes
+    TIFF_JPEG12_ENABLED=yes
+
+elif test "$with_jpeg12" = yes ; then
     AC_MSG_RESULT([enabled])
     JPEG12_ENABLED=yes
 
@@ -1884,18 +1893,9 @@ if test "$with_jpeg12" = yes ; then
     fi
     rm -f check_jpeg_abi.*
 
-elif test x"$with_jpeg12" = x ; then
-    if test "$JPEG_SETTING" = "internal" -a "$TIFF_SETTING" = "internal" ; then
-      AC_MSG_RESULT([enabled])
-      JPEG12_ENABLED=yes
-      TIFF_JPEG12_ENABLED=yes
-    else
-      JPEG12_ENABLED=no
-      AC_MSG_RESULT([disabled, libjpeg or libtiff not internal])
-    fi
 else
     JPEG12_ENABLED=no
-    AC_MSG_RESULT([disabled by user])
+    AC_MSG_RESULT([disabled, libjpeg or libtiff not internal])
 fi
 
 AC_SUBST(JPEG12_ENABLED,$JPEG12_ENABLED)
@@ -3670,7 +3670,7 @@ if test "$CURL_SETTING" = "yes" ; then
 
   CURL_INC=`$LIBCURL_CONFIG --cflags`
   CURL_LIB=`$LIBCURL_CONFIG --libs`
-  OPT_GDAL_FORMATS="wcs wms plmosaic wmts rda $OPT_GDAL_FORMATS"
+  OPT_GDAL_FORMATS="wcs wms plmosaic wmts rda eeda $OPT_GDAL_FORMATS"
 
 fi
 
