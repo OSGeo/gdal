@@ -281,7 +281,7 @@ VSIHdfsFilesystemHandler::Open( const char *pszFilename,
 
     // Open HDFS file, sending Java stack traces to /dev/null.
     hdfsFile poFile = nullptr;
-    SILENCE(poFile = hdfsOpenFile(poFilesystem, pszPath, O_RDONLY, 0, 0, 0))
+    SILENCE(poFile = hdfsOpenFile(poFilesystem, pszPath, O_RDONLY, 0, 0, 0));
 
     if (poFile != nullptr) {
       VSIHdfsHandle * poHandle = new VSIHdfsHandle(poFile, poFilesystem, pszPath, true);
@@ -296,8 +296,7 @@ VSIHdfsFilesystemHandler::Stat( const char *pszeFilename, VSIStatBufL *pStatBuf,
 {
   EnsureFilesystem();
 
-  hdfsFileInfo * poInfo = hdfsGetPathInfo(poFilesystem, pszeFilename);
-  memset(pStatBuf, 0, sizeof(*pStatBuf));
+  hdfsFileInfo * poInfo = hdfsGetPathInfo(poFilesystem, pszeFilename + strlen(VSIHdfsHandle::VSIHDFS));
 
   if (poInfo != nullptr) {
     pStatBuf->st_dev = static_cast<dev_t>(0);                               /* ID of device containing file */
@@ -332,8 +331,8 @@ VSIHdfsFilesystemHandler::Stat( const char *pszeFilename, VSIStatBufL *pStatBuf,
 int
 VSIHdfsFilesystemHandler::Unlink(const char *pszFilename)
 {
-  EnsureFilesystem();
-  return hdfsDelete(poFilesystem, pszFilename, 0);
+  CPLError(CE_Failure, CPLE_AppDefined, "HDFS driver is read-only");
+  return -1;
 }
 
 int
@@ -346,8 +345,8 @@ VSIHdfsFilesystemHandler::Mkdir(const char *pszDirname, long nMode)
 int
 VSIHdfsFilesystemHandler::Rmdir(const char *pszDirname)
 {
-  EnsureFilesystem();
-  return hdfsDelete(poFilesystem, pszDirname, 1);
+  CPLError(CE_Failure, CPLE_AppDefined, "HDFS driver is read-only");
+  return -1;
 }
 
 char **
@@ -356,7 +355,7 @@ VSIHdfsFilesystemHandler::ReadDir(const char *pszDirname)
   EnsureFilesystem();
 
   int mEntries = 0;
-  hdfsFileInfo * paoInfo = hdfsListDirectory(poFilesystem, pszDirname, &mEntries);
+  hdfsFileInfo * paoInfo = hdfsListDirectory(poFilesystem, pszDirname + strlen(VSIHdfsHandle::VSIHDFS), &mEntries);
   char ** retval = nullptr;
 
   if (paoInfo != nullptr) {
@@ -373,11 +372,12 @@ VSIHdfsFilesystemHandler::ReadDir(const char *pszDirname)
 int
 VSIHdfsFilesystemHandler::Rename(const char *oldpath, const char *newpath)
 {
-  EnsureFilesystem();
-  return hdfsRename(poFilesystem, oldpath, newpath);
+  CPLError(CE_Failure, CPLE_AppDefined, "HDFS driver is read-only");
+  return -1;
 }
 
 #endif
+
 //! @endcond
 
 #ifdef HDFS_ENABLED
