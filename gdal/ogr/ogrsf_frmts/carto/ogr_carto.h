@@ -201,6 +201,7 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
                                             bool bHasUserFieldMatchingFID, 
                                             bool bHasJustGotNextFID );
     char *              OGRCARTOGetHexGeometry( OGRGeometry* poGeom, int i );
+    int                 FieldSetBitMap( OGRFeature *poFeature );
 };
 
 /************************************************************************/

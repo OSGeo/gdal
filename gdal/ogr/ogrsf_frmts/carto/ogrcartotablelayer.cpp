@@ -865,6 +865,26 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                           FieldSetBitMap()                           */
+/************************************************************************/
+
+int OGRCARTOTableLayer::FieldSetBitMap( OGRFeature *poFeature )
+{
+    int bitmap = 0;
+    if (poFeatureDefn->GetFieldCount() > 31)
+        return -1;
+    for (int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
+    {
+        if (poFeature->IsFieldSet(i))
+        {
+            bitmap |= (1 << i);
+        }
+    }
+    return bitmap;
+}
+
+
+/************************************************************************/
 /*                           ICreateFeatureCopy()                       */
 /************************************************************************/
 
@@ -885,6 +905,9 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
         /* Non-spatial column names */
         for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
         {
+            if( !poFeature->IsFieldSet(i) )
+                continue;
+
             if( bMustComma )
                 osCopySQL += ",";
             else
@@ -941,15 +964,13 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
         else
             bMustTab = true;
 
-        /* Unset fields get a NULL */
+        /* Unset fields get skipped (assuming same field set 
+           pattern as first input feature) */
         if( !poFeature->IsFieldSet(i) )
-        {
-            osCopyFile += "\\N";
             continue;
-        }
 
         OGRFieldType eType = poFeatureDefn->GetFieldDefn(i)->GetType();
-        /* Null fields get a NULL */
+        /* Null fields get a NULL marker */
         if( poFeature->IsFieldNull(i) )
         {
             osCopyFile += "\\N";
