@@ -662,7 +662,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
         {
             nArrayLevel ++;
         }
-        else if (!bInString && nArrayLevel && nTokenSize == 0 && ch == ']')
+        else if (!bInString && nArrayLevel && ch == ']')
         {
             nArrayLevel --;
         }
@@ -726,7 +726,12 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
         }
         else
         {
-            ADD_CHAR(szToken, ch);
+            // Do not create too long tokens in arrays, that we will ignore
+            // anyway
+            if( nArrayLevel == 0 || nTokenSize == 0 )
+            {
+                ADD_CHAR(szToken, ch);
+            }
         }
 
         pszContent ++;
