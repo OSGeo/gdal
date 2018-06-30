@@ -55,7 +55,8 @@ from osgeo import gdalnumeric
 
 
 # create alphabetic list for storing input layers
-AlphaList = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+AlphaList =  ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+              "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 
 # set up some default nodatavalues for each datatype
 DefaultNDVLookup = {'Byte': 255, 'UInt16': 65535, 'Int16': -32767, 'UInt32': 4294967293, 'Int32': -2147483647, 'Float32': 3.402823466E+38, 'Float64': 1.7976931348623158E+308}
