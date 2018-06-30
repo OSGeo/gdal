@@ -411,6 +411,12 @@ def test_gdal_calc_py_cleanup():
            'tmp/test_gdal_calc_py_5_2.tif',
            'tmp/test_gdal_calc_py_5_3.tif',
            'tmp/test_gdal_calc_py_6.tif',
+           'tmp/test_gdal_calc_py_7_1.tif',
+           'tmp/test_gdal_calc_py_7_2.tif',
+           'tmp/test_gdal_calc_py_7_3.tif',
+           'tmp/opt1',
+           'tmp/opt2',
+           'tmp/opt3',
           ]
     for filename in lst:
         try:
@@ -428,6 +434,7 @@ gdaltest_list = [
     test_gdal_calc_py_4,
     test_gdal_calc_py_5,
     test_gdal_calc_py_6,
+    test_gdal_calc_py_7,
     test_gdal_calc_py_cleanup
 ]
 
