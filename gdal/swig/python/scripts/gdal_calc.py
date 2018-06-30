@@ -43,7 +43,7 @@
 # gdal_calc.py -A input.tif --outfile=result.tif --calc="A*(A>0)" --NoDataValue=0
 ################################################################
 
-from optparse import OptionParser, Values
+from optparse import OptionParser, OptionConflictError, Values
 import os
 import os.path
 import sys
@@ -55,8 +55,7 @@ from osgeo import gdalnumeric
 
 
 # create alphabetic list for storing input layers
-AlphaList = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-             "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+AlphaList = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 # set up some default nodatavalues for each datatype
 DefaultNDVLookup = {'Byte': 255, 'UInt16': 65535, 'Int16': -32767, 'UInt32': 4294967293, 'Int32': -2147483647, 'Float32': 3.402823466E+38, 'Float64': 1.7976931348623158E+308}
@@ -404,6 +403,17 @@ def store_input_file(option, opt_str, value, parser):
     parser.values.input_files[opt_str.lstrip('-')] = value
 
 
+def add_alpha_args(parser, argv):
+    # limit the input file options to the ones in the argument list
+    given_args = set([a[1] for a in argv if a[1:2] in AlphaList] + ['A'])
+    for myAlpha in given_args:
+        try:
+            parser.add_option("-%s" % myAlpha, action="callback", callback=store_input_file, type=str, help="input gdal raster file, you can use any letter (A-Z)", metavar='filename')
+            parser.add_option("--%s_band" % myAlpha, action="callback", callback=store_input_file, type=int, help="number of raster band for file %s (default 1)" % myAlpha, metavar='n')
+        except OptionConflictError:
+            pass
+
+
 def main():
     usage = """usage: %prog --calc=expression --outfile=out_filename [-A filename]
                     [--A_band=n] [-B...-Z filename] [other_options]"""
@@ -411,11 +421,7 @@ def main():
 
     # define options
     parser.add_option("--calc", dest="calc", help="calculation in gdalnumeric syntax using +-/* or any numpy array functions (i.e. log10())", metavar="expression")
-    # limit the input file options to the ones in the argument list
-    given_args = set([a[1] for a in sys.argv if a[1:2] in AlphaList] + ['A'])
-    for myAlpha in given_args:
-        parser.add_option("-%s" % myAlpha, action="callback", callback=store_input_file, type=str, help="input gdal raster file, you can use any letter (A-Z)", metavar='filename')
-        parser.add_option("--%s_band" % myAlpha, action="callback", callback=store_input_file, type=int, help="number of raster band for file %s (default 1)" % myAlpha, metavar='n')
+    add_alpha_args(parser, sys.argv)
 
     parser.add_option("--outfile", dest="outF", help="output file to generate or fill", metavar="filename")
     parser.add_option("--NoDataValue", dest="NoDataValue", type=float, help="output nodata value (default datatype specific value)", metavar="value")
@@ -442,6 +448,7 @@ def main():
             ofargv = [x for line in f for x in line.strip().split(' ') if line[0] != '#']
         # Avoid potential recursion.
         parser.remove_option('--optfile')
+        add_alpha_args(parser, ofargv)
         ofopts, ofargs = parser.parse_args(ofargv)
         # Let options given directly override the optfile.
         input_files = getattr(ofopts, 'input_files', {})
