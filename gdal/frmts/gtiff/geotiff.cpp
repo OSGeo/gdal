@@ -15539,8 +15539,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             {
                 CPLError(
                     CE_Failure, CPLE_NotSupported,
-                    "PHOTOMETRIC=YCBCR requires a source raster with "
-                    "only 3 bands (RGB)" );
+                    "PHOTOMETRIC=YCBCR not supported on a %d-band raster: "
+                    "only compatible of a 3-band (RGB) raster", l_nBands );
                 XTIFFClose(l_hTIFF);
                 CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
                 return nullptr;
