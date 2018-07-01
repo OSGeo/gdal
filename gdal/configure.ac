@@ -5264,6 +5264,44 @@ AC_SUBST(JAVA_HOME,$JAVA_HOME)
 AC_SUBST(JAVA_INC,$JAVA_INC)
 
 dnl ---------------------------------------------------------------------------
+dnl HDFS support
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(hdfs,[  --with-hdfs[=ARG]        Include HDFS support (ARG=Path or no)],,)
+
+HDFS_ENABLED=no
+
+if test -z "$with_hdfs" -o "$with_hdfs" = "no" ; then
+     AC_MSG_RESULT([HDFS support not requested.])
+else
+     if test "$JAVA_HOME"; then
+          JNI_LIB="-L$(find $JAVA_HOME | grep libjvm.so | head -1 | sed 's/libjvm.so$//') -ljvm"
+     else
+          AC_MSG_ERROR([HDFS support requires java support (--with-java). $JAVA_HOME])
+     fi
+     if echo $JNI_LIB | grep $JAVA_HOME; then
+          AC_MSG_CHECKING([for HDFS in $with_hdfs])
+          AC_CHECK_LIB(hdfs,hdfsConnect,HAVE_HDFS_LIB=yes,HAVE_HDFS_LIB=no,$JNI_LIB -L$with_hdfs/lib/native)
+          AC_CHECK_FILE($with_hdfs/include/hdfs.h,HAVE_HDFS_HEADER=yes,HAVE_HDFS_HEADER=no)
+          if test "$HAVE_HDFS_LIB" = "yes" -a "$HAVE_HDFS_HEADER" = "yes"; then
+               AC_MSG_RESULT([HDFS support enabled.])
+               HDFS_ENABLED=yes
+               HDFS_LIB="-L$with_hdfs/lib/native -lhdfs"
+               HDFS_INC="-I$with_hdfs/include"
+          else
+               AC_MSG_ERROR([HDFS support not enabled.])
+          fi
+     else
+          AC_MSG_ERROR([Unable to find libjvm.so.])
+     fi
+fi
+
+AC_SUBST(HDFS_ENABLED,$HDFS_ENABLED)
+AC_SUBST(HDFS_LIB,$HDFS_LIB)
+AC_SUBST(HDFS_INC,$HDFS_INC)
+AC_SUBST(JNI_LIB,$JNI_LIB)
+
+dnl ---------------------------------------------------------------------------
 dnl MDB driver
 dnl ---------------------------------------------------------------------------
 
@@ -5819,6 +5857,8 @@ LOC_MSG([  Armadillo support:         ${HAVE_ARMADILLO}])
 LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
 LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
+LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
+
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then
   LOC_MSG([  Mac OS X Framework :       ${MACOSX_FRAMEWORK}])

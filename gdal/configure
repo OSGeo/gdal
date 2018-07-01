@@ -640,6 +640,10 @@ RASDAMAN_INC
 RASDAMAN_ENABLED
 JVM_LIB
 MDB_ENABLED
+JNI_LIB
+HDFS_INC
+HDFS_LIB
+HDFS_ENABLED
 JAVA_INC
 JAVA_HOME
 BINDINGS
@@ -923,7 +927,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -1066,6 +1069,7 @@ with_macosx_framework
 with_perl
 with_python
 with_java
+with_hdfs
 with_mdb
 with_jvm_lib
 with_jvm_lib_add_rpath
@@ -1135,7 +1139,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE}'
@@ -1388,15 +1391,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1534,7 +1528,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1687,7 +1681,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1862,6 +1855,7 @@ Optional Packages:
   --with-perl           Enable perl bindings
   --with-python=ARG   Enable python bindings (ARG=yes, no, or path to python binary)
   --with-java       Include Java support (ARG=yes, no or JDK home path)  [default=no]
+  --with-hdfs=ARG        Include HDFS support (ARG=Path or no)
   --with-mdb       Include MDB driver
   --with-jvm-lib=ARG        ARG is dlopen or points to Java libjvm path
   --with-jvm-lib-add-rpath    Add the libjvm path to the RPATH (no by default)
@@ -35810,6 +35804,116 @@ JAVA_INC=$JAVA_INC
 
 
 
+# Check whether --with-hdfs was given.
+if test "${with_hdfs+set}" = set; then :
+  withval=$with_hdfs;
+fi
+
+
+HDFS_ENABLED=no
+
+if test -z "$with_hdfs" -o "$with_hdfs" = "no" ; then
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: HDFS support not requested." >&5
+$as_echo "HDFS support not requested." >&6; }
+else
+     if test "$JAVA_HOME"; then
+          JNI_LIB="-L$(find $JAVA_HOME | grep libjvm.so | head -1 | sed 's/libjvm.so$//') -ljvm"
+     else
+          as_fn_error $? "HDFS support requires java support (--with-java). $JAVA_HOME" "$LINENO" 5
+     fi
+     if echo $JNI_LIB | grep $JAVA_HOME; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for HDFS in $with_hdfs" >&5
+$as_echo_n "checking for HDFS in $with_hdfs... " >&6; }
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for hdfsConnect in -lhdfs" >&5
+$as_echo_n "checking for hdfsConnect in -lhdfs... " >&6; }
+if ${ac_cv_lib_hdfs_hdfsConnect+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lhdfs $JNI_LIB -L$with_hdfs/lib/native $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char hdfsConnect ();
+int
+main ()
+{
+return hdfsConnect ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_hdfs_hdfsConnect=yes
+else
+  ac_cv_lib_hdfs_hdfsConnect=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_hdfs_hdfsConnect" >&5
+$as_echo "$ac_cv_lib_hdfs_hdfsConnect" >&6; }
+if test "x$ac_cv_lib_hdfs_hdfsConnect" = xyes; then :
+  HAVE_HDFS_LIB=yes
+else
+  HAVE_HDFS_LIB=no
+fi
+
+          as_ac_File=`$as_echo "ac_cv_file_$with_hdfs/include/hdfs.h" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $with_hdfs/include/hdfs.h" >&5
+$as_echo_n "checking for $with_hdfs/include/hdfs.h... " >&6; }
+if eval \${$as_ac_File+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r "$with_hdfs/include/hdfs.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+eval ac_res=\$$as_ac_File
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
+  HAVE_HDFS_HEADER=yes
+else
+  HAVE_HDFS_HEADER=no
+fi
+
+          if test "$HAVE_HDFS_LIB" = "yes" -a "$HAVE_HDFS_HEADER" = "yes"; then
+               { $as_echo "$as_me:${as_lineno-$LINENO}: result: HDFS support enabled." >&5
+$as_echo "HDFS support enabled." >&6; }
+               HDFS_ENABLED=yes
+               HDFS_LIB="-L$with_hdfs/lib/native -lhdfs"
+               HDFS_INC="-I$with_hdfs/include"
+          else
+               as_fn_error $? "HDFS support not enabled." "$LINENO" 5
+          fi
+     else
+          as_fn_error $? "Unable to find libjvm.so." "$LINENO" 5
+     fi
+fi
+
+HDFS_ENABLED=$HDFS_ENABLED
+
+HDFS_LIB=$HDFS_LIB
+
+HDFS_INC=$HDFS_INC
+
+JNI_LIB=$JNI_LIB
+
+
+
+
 # Check whether --with-mdb was given.
 if test "${with_mdb+set}" = set; then :
   withval=$with_mdb;
@@ -39188,6 +39292,10 @@ echo "  SOSI support:              ${SOSI_ENABLED}"
 
 
 echo "  MongoDB support:           ${MONGODB_ENABLED}"
+
+
+echo "  HDFS support:              ${HDFS_ENABLED}"
+
 
 
 echo ""
