@@ -116,6 +116,33 @@ Write capabilities are also available. They allow creating
 a new zip file and adding new files to an already existing (or just created)
 zip file.
 
+Creation of a new zip file:
+<pre>
+fmain = VSIFOpenL("/vsizip/my.zip", "wb");
+subfile = VSIFOpenL("/vsizip/my.zip/subfile", "wb");
+VSIFWriteL("Hello World", 1, strlen("Hello world"), subfile);
+VSIFCloseL(subfile);
+VSIFCloseL(fmain);
+</pre>
+
+Addition of a new file to an existing zip:
+<pre>
+newfile = VSIFOpenL("/vsizip/my.zip/newfile", "wb");
+VSIFWriteL("Hello World", 1, strlen("Hello world"), newfile);
+VSIFCloseL(newfile);
+</pre>
+
+Starting with GDAL 2.4, the GDAL_NUM_THREADS configuration option
+can be set to an integer or ALL_CPUS to enable multi-threaded compression of
+a single file. This is similar to the <i>pigz</i> utility in independent mode.
+By default the input stream is splitted by 1 MB chunks (can be tuned with
+the CPL_VSIL_DEFLATE_CHUNK_SIZE configuration option, with values like "x K"
+or "x M"), and each chunk is independently compressed (and terminated by a
+nine byte marker 0x00 0x00 0xFF 0xFF 0x00 0x00 0x00 0xFF 0xFF, signaling a
+full flush of the stream and dictionary, enabling potential independent decoding
+of each chunks). This slightly reduces the compression rate, so too small
+chunks should be avoided.
+
 Read and write operations cannot be interleaved. The new zip must be
 closed before being re-opened for read.
 
@@ -146,6 +173,21 @@ When the file is located in a writable location, a file with extension .gz.prope
 is created with an indication of the uncompressed file size (the creation of that
 file can be disabled by setting the CPL_VSIL_GZIP_WRITE_PROPERTIES configuration
 option to NO).
+
+Write capabilities are also available, but read and write operations cannot be
+interleaved.
+
+Starting with GDAL 2.4, the GDAL_NUM_THREADS configuration option
+can be set to an integer or ALL_CPUS to enable multi-threaded compression of
+a single file. This is similar to the <i>pigz</i> utility in independent mode.
+By default the input stream is splitted by 1 MB chunks (can be tuned with
+the CPL_VSIL_DEFLATE_CHUNK_SIZE configuration option, with values like "x K"
+or "x M"), and each chunk is independently compressed (and terminated by a
+nine byte marker 0x00 0x00 0xFF 0xFF 0x00 0x00 0x00 0xFF 0xFF, signaling a
+full flush of the stream and dictionary, enabling potential independent decoding
+of each chunks). This slightly reduces the compression rate, so too small
+chunks should be avoided.
+
 
 \section gdal_virtual_file_systems_vsitar /vsitar/ (.tar, .tgz archives)
 

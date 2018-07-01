@@ -660,6 +660,38 @@ def vsizip_14():
 
     return 'success'
 
+###############################################################################
+# Test multithreaded compression
+
+
+def vsizip_multi_thread():
+
+    with gdaltest.config_options({'GDAL_NUM_THREADS': 'ALL_CPUS',
+                                  'CPL_VSIL_DEFLATE_CHUNK_SIZE': '32K'}):
+        fmain = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_multi_thread.zip', 'wb')
+        f = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_multi_thread.zip/test', 'wb')
+        for i in range(100000):
+            gdal.VSIFWriteL('hello', 1, 5, f)
+        gdal.VSIFCloseL(f)
+        gdal.VSIFCloseL(fmain)
+
+    f = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_multi_thread.zip/test', 'rb')
+    data = gdal.VSIFReadL(100000, 5, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/vsizip_multi_thread.zip')
+
+    if data != 'hello' * 100000:
+        gdaltest.post_reason('fail')
+
+        for i in range(10000):
+            if data[i*5:i*5+5] != 'hello':
+                print(i*5, data[i*5:i*5+5], data[i*5-5:i*5+5-5])
+                break
+
+        return 'fail'
+
+    return 'success'
 
 gdaltest_list = [vsizip_1,
                  vsizip_2,
@@ -674,8 +706,9 @@ gdaltest_list = [vsizip_1,
                  vsizip_11,
                  vsizip_12,
                  vsizip_13,
-                 vsizip_14
-                ]
+                 vsizip_14,
+                 vsizip_multi_thread,
+                 ]
 
 
 if __name__ == '__main__':

@@ -40,6 +40,7 @@
 #include "cpl_error.h"
 #include "cpl_minizip_unzip.h"
 #include "cpl_string.h"
+#include "cpl_vsi_virtual.h"
 
 #ifdef NO_ERRNO_H
     extern int errno;
@@ -161,6 +162,9 @@ typedef struct
 #ifndef NO_ADDFILEINEXISTINGZIP
     char *globalcomment;
 #endif
+    int use_cpl_io;
+    vsi_l_offset vsi_raw_length_before;
+    VSIVirtualHandle* vsi_deflate_handle;
 } zip_internal;
 
 #ifndef NOCRYPT
@@ -471,6 +475,7 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
     ziinit.ci.stream_initialised = 0;
     ziinit.number_entry = 0;
     ziinit.add_position_when_writing_offset = 0;
+    ziinit.use_cpl_io = (pzlib_filefunc_def == nullptr) ? 1 : 0;
     init_linkedlist(&(ziinit.central_dir));
 
     zip_internal* zi = static_cast<zip_internal*>(ALLOC(sizeof(zip_internal)));
@@ -813,8 +818,20 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
         if (windowBits>0)
             windowBits = -windowBits;
 
-        err = deflateInit2(&zi->ci.stream, level,
-               Z_DEFLATED, windowBits, memLevel, strategy);
+        if( zi->use_cpl_io )
+        {
+            auto fpRaw = reinterpret_cast<VSIVirtualHandle*>(zi->filestream);
+            zi->vsi_raw_length_before = fpRaw->Tell();
+            zi->vsi_deflate_handle =
+                VSICreateGZipWritable( fpRaw,
+                                       CPL_DEFLATE_TYPE_RAW_DEFLATE, false);
+            err = Z_OK;
+        }
+        else
+        {
+            err = deflateInit2(&zi->ci.stream, level,
+                Z_DEFLATED, windowBits, memLevel, strategy);
+        }
 
         if (err==Z_OK)
             zi->ci.stream_initialised = 1;
@@ -935,9 +952,19 @@ extern int ZEXPORT cpl_zipWriteInFileInZip (
 
         if ((zi->ci.method == Z_DEFLATED) && (!zi->ci.raw))
         {
-            uLong uTotalOutBefore = zi->ci.stream.total_out;
-            err=deflate(&zi->ci.stream,  Z_NO_FLUSH);
-            zi->ci.pos_in_buffered_data += static_cast<uInt>(zi->ci.stream.total_out - uTotalOutBefore) ;
+            if( zi->vsi_deflate_handle )
+            {
+                zi->ci.stream.total_in+= len;
+                if( zi->vsi_deflate_handle->Write(buf, 1, len) < len )
+                    err = ZIP_INTERNALERROR;
+                zi->ci.stream.avail_in = 0;
+            }
+            else
+            {
+                uLong uTotalOutBefore = zi->ci.stream.total_out;
+                err=deflate(&zi->ci.stream,  Z_NO_FLUSH);
+                zi->ci.pos_in_buffered_data += static_cast<uInt>(zi->ci.stream.total_out - uTotalOutBefore) ;
+            }
         }
         else
         {
@@ -981,21 +1008,32 @@ extern int ZEXPORT cpl_zipCloseFileInZipRaw (
     int err=ZIP_OK;
     if ((zi->ci.method == Z_DEFLATED) && (!zi->ci.raw))
     {
-        while (err==ZIP_OK)
+        if( zi->vsi_deflate_handle )
         {
-            if (zi->ci.stream.avail_out == 0)
+            auto fpRaw = reinterpret_cast<VSIVirtualHandle*>(zi->filestream);
+            delete zi->vsi_deflate_handle;
+            zi->vsi_deflate_handle = nullptr;
+            zi->ci.stream.total_out = static_cast<uInt>(
+                fpRaw->Tell() - zi->vsi_raw_length_before);
+        }
+        else
+        {
+            while (err==ZIP_OK)
             {
-                if (zipFlushWriteBuffer(zi) == ZIP_ERRNO)
+                if (zi->ci.stream.avail_out == 0)
                 {
-                    err = ZIP_ERRNO;
-                    break;
+                    if (zipFlushWriteBuffer(zi) == ZIP_ERRNO)
+                    {
+                        err = ZIP_ERRNO;
+                        break;
+                    }
+                    zi->ci.stream.avail_out = Z_BUFSIZE;
+                    zi->ci.stream.next_out = zi->ci.buffered_data;
                 }
-                zi->ci.stream.avail_out = Z_BUFSIZE;
-                zi->ci.stream.next_out = zi->ci.buffered_data;
+                uLong uTotalOutBefore = zi->ci.stream.total_out;
+                err=deflate(&zi->ci.stream,  Z_FINISH);
+                zi->ci.pos_in_buffered_data += static_cast<uInt>(zi->ci.stream.total_out - uTotalOutBefore) ;
             }
-            uLong uTotalOutBefore = zi->ci.stream.total_out;
-            err=deflate(&zi->ci.stream,  Z_FINISH);
-            zi->ci.pos_in_buffered_data += static_cast<uInt>(zi->ci.stream.total_out - uTotalOutBefore) ;
         }
     }
 
@@ -1006,7 +1044,7 @@ extern int ZEXPORT cpl_zipCloseFileInZipRaw (
         if (zipFlushWriteBuffer(zi)==ZIP_ERRNO)
             err = ZIP_ERRNO;
 
-    if ((zi->ci.method == Z_DEFLATED) && (!zi->ci.raw))
+    if ( !zi->use_cpl_io && (zi->ci.method == Z_DEFLATED) && (!zi->ci.raw))
     {
         err=deflateEnd(&zi->ci.stream);
         zi->ci.stream_initialised = 0;

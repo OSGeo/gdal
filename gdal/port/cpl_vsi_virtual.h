@@ -234,6 +234,10 @@ VSIVirtualHandle* VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
                                                 const GByte* pabyBeginningContent,
                                                 vsi_l_offset nCheatFileSize);
 VSIVirtualHandle CPL_DLL *VSICreateCachedFile( VSIVirtualHandle* poBaseHandle, size_t nChunkSize = 32768, size_t nCacheSize = 0 );
-VSIVirtualHandle CPL_DLL *VSICreateGZipWritable( VSIVirtualHandle* poBaseHandle, int bRegularZLibIn, int bAutoCloseBaseHandle );
+
+const int CPL_DEFLATE_TYPE_GZIP = 0;
+const int CPL_DEFLATE_TYPE_ZLIB = 1;
+const int CPL_DEFLATE_TYPE_RAW_DEFLATE = 2;
+VSIVirtualHandle CPL_DLL *VSICreateGZipWritable( VSIVirtualHandle* poBaseHandle, int nDeflateType, int bAutoCloseBaseHandle );
 
 #endif /* ndef CPL_VSI_VIRTUAL_H_INCLUDED */
