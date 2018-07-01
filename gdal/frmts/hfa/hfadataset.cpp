@@ -3379,7 +3379,8 @@ CPLErr HFADataset::WriteProjection()
         const double a2 = sPro.proSpheroid.a * sPro.proSpheroid.a;
         const double b2 = sPro.proSpheroid.b * sPro.proSpheroid.b;
 
-        sPro.proSpheroid.eSquared = (a2 - b2) / a2;
+        // a2 == 0 is non sensical of course. Just to please fuzzers
+        sPro.proSpheroid.eSquared = (a2 == 0.0) ? 0.0 : (a2 - b2) / a2;
     }
 
     if( sDatum.datumname == nullptr )
