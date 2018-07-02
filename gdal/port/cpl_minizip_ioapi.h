@@ -80,6 +80,13 @@ void cpl_fill_fopen_filefunc (zlib_filefunc_def* pzlib_filefunc_def);
 #define ZCLOSE(filefunc,filestream) ((*((filefunc).zclose_file))((filefunc).opaque,filestream))
 #define ZERROR(filefunc,filestream) ((*((filefunc).zerror_file))((filefunc).opaque,filestream))
 
+#define ZREAD64 ZREAD
+#define ZWRITE64 ZWRITE
+#define ZTELL64 ZTELL
+#define ZSEEK64 ZSEEK
+#define ZCLOSE64 ZCLOSE
+#define ZERROR64 ZERROR
+
 #ifdef __cplusplus
 }
 #endif
