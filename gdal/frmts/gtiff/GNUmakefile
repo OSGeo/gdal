@@ -7,10 +7,15 @@ OBJ	=	geotiff.o gt_wkt_srs.o gt_citation.o  gt_overview.o \
 SUBLIBS 	=
 
 ifeq ($(TIFF_SETTING),internal)
+
 SUBLIBS	:= lib-tiff $(SUBLIBS)
 TIFF_OPTS	:=	-DINTERNAL_LIBTIFF -Ilibtiff $(TIFF_OPTS)
 ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
 TIFF_OPTS	:=	-DRENAME_INTERNAL_LIBTIFF_SYMBOLS $(TIFF_OPTS)
+endif
+ifeq ($(HAVE_LERC),yes)
+OBJ := $(OBJ) tif_lerc.o
+TIFF_OPTS	:=	-DHAVE_LERC -I../../third_party/LercLib $(TIFF_OPTS)
 endif
 endif
 
@@ -20,6 +25,10 @@ TIFF_OPTS	:=	-DINTERNAL_LIBGEOTIFF -Ilibgeotiff $(TIFF_OPTS)
 ifeq ($(RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS),yes)
 TIFF_OPTS	:=	-DRENAME_INTERNAL_LIBGEOTIFF_SYMBOLS $(TIFF_OPTS)
 endif
+ifeq ($(LIBZ_SETTING),internal)
+TIFF_OPTS :=      -I../zlib  $(TIFF_OPTS)
+endif
+
 endif
 
 JPEG_FLAGS =
@@ -32,7 +41,12 @@ ifeq ($(JPEG_SETTING),internal)
 JPEG_FLAGS 	:=	$(JPEG_FLAGS) -I../jpeg/libjpeg
 endif
 
-CPPFLAGS	:=	 -I.. $(JPEG_FLAGS)  $(GEOTIFF_INCLUDE) $(TIFF_OPTS) $(CPPFLAGS)
+ZSTD_FLAGS =
+ifeq ($(ZSTD_SETTING),yes)
+ZSTD_FLAGS 	:=	-DZSTD_SUPPORT
+endif
+
+CPPFLAGS	:=	 -I.. $(JPEG_FLAGS) $(ZSTD_FLAGS) $(GEOTIFF_INCLUDE) $(TIFF_OPTS) $(CPPFLAGS)
 
 CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS)  $(CXXFLAGS)
 # issue with $(WARN_OLD_STYLE_CAST) with x86_64-w64-mingw32-g++. See https://travis-ci.org/OSGeo/gdal/jobs/375654138
