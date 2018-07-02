@@ -101,7 +101,7 @@ uint16 GTiffGetAlphaValue(const char* pszValue, uint16 nDefault);
 #endif
 
 #if !defined(TIFFTAG_ZSTD_LEVEL)
-#define TIFFTAG_ZSTD_LEVEL      65534    /* ZSTD compression level */
+#define TIFFTAG_ZSTD_LEVEL      65564    /* ZSTD compression level */
 #endif
 
 #endif // GTIFF_H_INCLUDED
