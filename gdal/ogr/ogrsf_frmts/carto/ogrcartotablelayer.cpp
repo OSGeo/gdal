@@ -868,7 +868,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
 /*                           FieldSetBitMap()                           */
 /************************************************************************/
 
-static int FieldSetBitMap( OGRFeature *poFeature )
+int OGRCARTOTableLayer::FieldSetBitMap( OGRFeature *poFeature )
 {
     int bitmap = 0;
     if (poFeatureDefn->GetFieldCount() > 31)
