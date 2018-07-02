@@ -602,7 +602,7 @@ typedef enum {
 #define TIFFTAG_PERSAMPLE       65563	/* interface for per sample tags */
 #define     PERSAMPLE_MERGED        0	/* present as a single value */
 #define     PERSAMPLE_MULTI         1	/* present as multiple values */
-#define TIFFTAG_ZSTD_LEVEL      65534    /* ZSTD compression level */
+#define TIFFTAG_ZSTD_LEVEL      65564    /* ZSTD compression level */
 
 /*
  * EXIF tags
