@@ -183,7 +183,6 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
                                              bool bGeomNullable,
                                              bool bCartodbfy);
     OGRErr              RunDeferredCreationIfNecessary();
-//  CPLString           OGRCARTOGeometryType(OGRCartoGeomFieldDefn *poGeomField);
     bool                GetDeferredCreation() const
         { return bDeferredCreation; }
     void                CancelDeferredCreation()
@@ -201,7 +200,6 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
                                             bool bHasUserFieldMatchingFID, 
                                             bool bHasJustGotNextFID );
     char *              OGRCARTOGetHexGeometry( OGRGeometry* poGeom, int i );
-    int                 FieldSetBitMap( OGRFeature *poFeature );
 };
 
 /************************************************************************/
