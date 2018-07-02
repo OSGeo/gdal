@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import random
 import sys
 
 sys.path.append('../pymod')
@@ -224,21 +225,23 @@ def vsizip_1():
 
 def vsizip_2():
 
-    fmain = gdal.VSIFOpenL("/vsizip/vsimem/test2.zip/foo.bar", "wb")
+    zip_name = '/vsimem/test2.zip'
+
+    fmain = gdal.VSIFOpenL("/vsizip/" + zip_name + "/foo.bar", "wb")
     if fmain is None:
         gdaltest.post_reason('fail 1')
         return 'fail'
     gdal.VSIFWriteL("12345", 1, 5, fmain)
     gdal.VSIFCloseL(fmain)
 
-    content = gdal.ReadDir("/vsizip/vsimem/test2.zip")
+    content = gdal.ReadDir("/vsizip/" + zip_name)
     if content != ['foo.bar']:
         gdaltest.post_reason('bad content 1')
         print(content)
         return 'fail'
 
     # Now append a second file
-    fmain = gdal.VSIFOpenL("/vsizip/vsimem/test2.zip/bar.baz", "wb")
+    fmain = gdal.VSIFOpenL("/vsizip/" + zip_name + "/bar.baz", "wb")
     if fmain is None:
         gdaltest.post_reason('fail 2')
         return 'fail'
@@ -246,7 +249,7 @@ def vsizip_2():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    content = gdal.ReadDir("/vsizip/vsimem/test2.zip")
+    content = gdal.ReadDir("/vsizip/" + zip_name)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() != 'Cannot read a zip file being written':
         gdaltest.post_reason('expected error')
@@ -259,13 +262,13 @@ def vsizip_2():
 
     gdal.VSIFCloseL(fmain)
 
-    content = gdal.ReadDir("/vsizip/vsimem/test2.zip")
+    content = gdal.ReadDir("/vsizip/" + zip_name)
     if content != ['foo.bar', 'bar.baz']:
         gdaltest.post_reason('bad content 3')
         print(content)
         return 'fail'
 
-    fmain = gdal.VSIFOpenL("/vsizip/vsimem/test2.zip/foo.bar", "rb")
+    fmain = gdal.VSIFOpenL("/vsizip/" + zip_name + "/foo.bar", "rb")
     if fmain is None:
         gdaltest.post_reason('fail 3')
         return 'fail'
@@ -276,7 +279,7 @@ def vsizip_2():
         print(data)
         return 'fail'
 
-    fmain = gdal.VSIFOpenL("/vsizip/vsimem/test2.zip/bar.baz", "rb")
+    fmain = gdal.VSIFOpenL("/vsizip/" + zip_name + "/bar.baz", "rb")
     if fmain is None:
         gdaltest.post_reason('fail 4')
         return 'fail'
@@ -287,7 +290,7 @@ def vsizip_2():
         print(data)
         return 'fail'
 
-    gdal.Unlink("/vsimem/test2.zip")
+    gdal.Unlink(zip_name)
 
     return 'success'
 
@@ -693,6 +696,94 @@ def vsizip_multi_thread():
 
     return 'success'
 
+###############################################################################
+# Test creating ZIP64 file: uncompressed larger than 4GB, but compressed
+# data stream < 4 GB
+
+
+def vsizip_create_zip64():
+
+    if not gdaltest.run_slow_tests():
+        return 'skip'
+
+    niters = 1000
+    s = 'hello' * 1000 * 1000
+    zip_name = '/vsimem/vsizip_create_zip64.zip'
+    with gdaltest.config_options({'GDAL_NUM_THREADS': 'ALL_CPUS'}):
+        fmain = gdal.VSIFOpenL('/vsizip/' + zip_name, 'wb')
+        f = gdal.VSIFOpenL('/vsizip/' + zip_name + '/test', 'wb')
+        for i in range(niters):
+            gdal.VSIFWriteL(s, 1, len(s), f)
+        gdal.VSIFCloseL(f)
+        gdal.VSIFCloseL(fmain)
+
+    size = gdal.VSIStatL(zip_name).size
+    if size > 0xFFFFFFFF:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    size = gdal.VSIStatL('/vsizip/' + zip_name + '/test').size
+    if size != len(s) * niters:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    f = gdal.VSIFOpenL('/vsizip/' + zip_name + '/test', 'rb')
+    data = gdal.VSIFReadL(1, len(s), f).decode('ascii')
+    gdal.VSIFCloseL(f)
+    if data != s:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink(zip_name)
+
+    return 'success'
+
+###############################################################################
+# Test creating ZIP64 file: compressed data stream > 4 GB
+
+
+def vsizip_create_zip64_stream_larger_than_4G():
+
+    if not gdaltest.run_slow_tests():
+        return 'skip'
+
+    zip_name = 'tmp/vsizip_create_zip64_stream_larger_than_4G.zip'
+
+    gdal.Unlink(zip_name)
+
+    niters = 999
+    s = ''.join([chr(random.randint(0, 127)) for i in range(5 * 1000 * 1000)])
+    with gdaltest.config_options({'GDAL_NUM_THREADS': 'ALL_CPUS'}):
+        f = gdal.VSIFOpenL('/vsizip/' + zip_name + '/test2', 'wb')
+        for i in range(niters):
+            gdal.VSIFWriteL(s, 1, len(s), f)
+        gdal.VSIFCloseL(f)
+
+    size = gdal.VSIStatL(zip_name).size
+    if size <= 0xFFFFFFFF:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    size = gdal.VSIStatL('/vsizip/' + zip_name + '/test2').size
+    if size != len(s) * niters:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    f = gdal.VSIFOpenL('/vsizip/' + zip_name + '/test2', 'rb')
+    data = gdal.VSIFReadL(1, len(s), f).decode('ascii')
+    gdal.VSIFCloseL(f)
+    if data != s:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink(zip_name)
+
+    return 'success'
+
 gdaltest_list = [vsizip_1,
                  vsizip_2,
                  vsizip_3,
@@ -708,6 +799,8 @@ gdaltest_list = [vsizip_1,
                  vsizip_13,
                  vsizip_14,
                  vsizip_multi_thread,
+                 vsizip_create_zip64,
+                 vsizip_create_zip64_stream_larger_than_4G,
                  ]
 
 

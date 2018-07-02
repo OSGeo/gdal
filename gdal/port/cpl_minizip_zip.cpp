@@ -42,6 +42,7 @@
 #include "cpl_port.h"
 #include "cpl_minizip_zip.h"
 
+#include <cassert>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -144,6 +145,10 @@ typedef struct
 
     ZPOS64_T pos_local_header;     /* offset of the local header of the file
                                      currently writing */
+    char* local_header;
+    uInt size_local_header;
+    uInt size_local_header_extrafield;
+
     char* central_header;       /* central header data for the current file */
     uLong size_centralExtra;
     uLong size_centralheader;   /* size of the central header for cur file */
@@ -158,7 +163,6 @@ typedef struct
     uLong dosDate;
     uLong crc32;
     int  encrypt;
-    int  zip64;               /* Add ZIP64 extened information in the extra field */
     ZPOS64_T pos_zip64extrainfo;
     ZPOS64_T totalCompressedData;
     ZPOS64_T totalUncompressedData;
@@ -907,75 +911,73 @@ extern zipFile ZEXPORT cpl_zipOpen (const char *pathname, int append)
     return cpl_zipOpen2(pathname,append,nullptr,nullptr);
 }
 
-static int Write_LocalFileHeader(zip64_internal* zi, const char* filename, uInt size_extrafield_local, const void* extrafield_local)
+
+static void zip64local_putValue_inmemory_update(char **dest, ZPOS64_T x, int nbByte)
+{
+    zip64local_putValue_inmemory(*dest, x, nbByte);
+    *dest += nbByte;
+}
+
+static int Write_LocalFileHeader(zip64_internal* zi, const char* filename, uInt size_extrafield_local, const void* extrafield_local, int zip64)
 {
   /* write the local header */
-  int err;
+  int err = ZIP_OK;
   uInt size_filename = static_cast<uInt>(strlen(filename));
   uInt size_extrafield = size_extrafield_local;
 
-  err = zip64local_putValue(&zi->z_filefunc,zi->filestream,LOCALHEADERMAGIC, 4);
-
-  if (err==ZIP_OK)
-  {
-    if(zi->ci.zip64)
-      err = zip64local_putValue(&zi->z_filefunc,zi->filestream,45,2);/* version needed to extract */
-    else
-      err = zip64local_putValue(&zi->z_filefunc,zi->filestream,20,2);/* version needed to extract */
-  }
-
-  if (err==ZIP_OK)
-    err = zip64local_putValue(&zi->z_filefunc,zi->filestream,zi->ci.flag,2);
-
-  if (err==ZIP_OK)
-    err = zip64local_putValue(&zi->z_filefunc,zi->filestream,zi->ci.method,2);
-
-  if (err==ZIP_OK)
-    err = zip64local_putValue(&zi->z_filefunc,zi->filestream,zi->ci.dosDate,4);
-
-  // CRC / Compressed size / Uncompressed size will be filled in later and rewritten later
-  if (err==ZIP_OK)
-    err = zip64local_putValue(&zi->z_filefunc,zi->filestream,0,4); /* crc 32, unknown */
-  if (err==ZIP_OK)
-  {
-    if(zi->ci.zip64)
-      err = zip64local_putValue(&zi->z_filefunc,zi->filestream,0xFFFFFFFFU,4); /* compressed size, unknown */
-    else
-      err = zip64local_putValue(&zi->z_filefunc,zi->filestream,0,4); /* compressed size, unknown */
-  }
-  if (err==ZIP_OK)
-  {
-    if(zi->ci.zip64)
-      err = zip64local_putValue(&zi->z_filefunc,zi->filestream,0xFFFFFFFFU,4); /* uncompressed size, unknown */
-    else
-      err = zip64local_putValue(&zi->z_filefunc,zi->filestream,0,4); /* uncompressed size, unknown */
-  }
-
-  if (err==ZIP_OK)
-    err = zip64local_putValue(&zi->z_filefunc,zi->filestream,size_filename,2);
-
-  if(zi->ci.zip64)
+  if(zip64)
   {
     size_extrafield += 20;
   }
 
-  if (err==ZIP_OK)
-    err = zip64local_putValue(&zi->z_filefunc,zi->filestream,size_extrafield,2);
+  uInt size_local_header = 30 + size_filename + size_extrafield;
+  char* local_header = static_cast<char*>(ALLOC(size_local_header));
+  char* p = local_header;
 
-  if ((err==ZIP_OK) && (size_filename > 0))
+  zip64local_putValue_inmemory_update(&p,LOCALHEADERMAGIC, 4);
+  if(zip64)
+      zip64local_putValue_inmemory_update(&p,45,2);/* version needed to extract */
+  else
+      zip64local_putValue_inmemory_update(&p,20,2);/* version needed to extract */
+
+  zip64local_putValue_inmemory_update(&p,zi->ci.flag,2);
+
+  zip64local_putValue_inmemory_update(&p,zi->ci.method,2);
+
+  zip64local_putValue_inmemory_update(&p,zi->ci.dosDate,4);
+
+  // CRC / Compressed size / Uncompressed size will be filled in later and rewritten later
+  zip64local_putValue_inmemory_update(&p,0,4); /* crc 32, unknown */
+
+  if(zip64)
+      zip64local_putValue_inmemory_update(&p,0xFFFFFFFFU,4); /* compressed size, unknown */
+  else
+      zip64local_putValue_inmemory_update(&p,0,4); /* compressed size, unknown */
+
+  if(zip64)
+      zip64local_putValue_inmemory_update(&p,0xFFFFFFFFU,4); /* uncompressed size, unknown */
+  else
+      zip64local_putValue_inmemory_update(&p,0,4); /* uncompressed size, unknown */
+
+  zip64local_putValue_inmemory_update(&p,size_filename,2);
+
+  zi->ci.size_local_header_extrafield = size_extrafield;
+
+  zip64local_putValue_inmemory_update(&p,size_extrafield,2);
+
+  if (size_filename > 0)
   {
-    if (ZWRITE64(zi->z_filefunc,zi->filestream,filename,size_filename)!=size_filename)
-      err = ZIP_ERRNO;
+    memcpy(p, filename,size_filename);
+    p += size_filename;
   }
 
-  if ((err==ZIP_OK) && (size_extrafield_local > 0))
+  if (size_extrafield_local > 0)
   {
-    if (ZWRITE64(zi->z_filefunc, zi->filestream, extrafield_local, size_extrafield_local) != size_extrafield_local)
-      err = ZIP_ERRNO;
+    memcpy(p, extrafield_local,size_extrafield_local);
+    p += size_extrafield_local;
   }
 
-
-  if ((err==ZIP_OK) && (zi->ci.zip64))
+  if (zip64)
   {
       // write the Zip64 extended info
       short HeaderID = 1;
@@ -984,18 +986,22 @@ static int Write_LocalFileHeader(zip64_internal* zi, const char* filename, uInt 
       ZPOS64_T UncompressedSize = 0;
 
       // Remember position of Zip64 extended info for the local file header. (needed when we update size after done with file)
-      zi->ci.pos_zip64extrainfo = ZTELL64(zi->z_filefunc,zi->filestream);
+      zi->ci.pos_zip64extrainfo = ZTELL64(zi->z_filefunc,zi->filestream) + p - local_header;
 
-      if (err==ZIP_OK)
-        err = zip64local_putValue(&zi->z_filefunc, zi->filestream, HeaderID,2);
-      if (err==ZIP_OK)
-        err = zip64local_putValue(&zi->z_filefunc, zi->filestream, DataSize,2);
+      zip64local_putValue_inmemory_update(&p,HeaderID,2);
+      zip64local_putValue_inmemory_update(&p,DataSize,2);
 
-      if (err==ZIP_OK)
-        err = zip64local_putValue(&zi->z_filefunc, zi->filestream, UncompressedSize,8);
-      if (err==ZIP_OK)
-        err = zip64local_putValue(&zi->z_filefunc, zi->filestream, CompressedSize,8);
+      zip64local_putValue_inmemory_update(&p,UncompressedSize,8);
+      zip64local_putValue_inmemory_update(&p,CompressedSize,8);
   }
+  assert(p == local_header + size_local_header);
+
+  if( ZWRITE64(zi->z_filefunc, zi->filestream,
+               local_header, size_local_header) != size_local_header)
+      err = ZIP_ERRNO;
+
+  zi->ci.local_header = local_header;
+  zi->ci.size_local_header = size_local_header;
 
   return err;
 }
@@ -1028,7 +1034,6 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     uInt size_comment;
     uInt i;
     int err = ZIP_OK;
-    int zip64 = 0; // FIXME
     uLong flagBase = 0;
 
 #    ifdef NOCRYPT
@@ -1140,12 +1145,12 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     if (zi->ci.central_header == nullptr)
         return ZIP_INTERNALERROR;
 
-    zi->ci.zip64 = zip64;
     zi->ci.totalCompressedData = 0;
     zi->ci.totalUncompressedData = 0;
     zi->ci.pos_zip64extrainfo = 0;
 
-    err = Write_LocalFileHeader(zi, filename, size_extrafield_local, extrafield_local);
+    // For now always generate zip64 extra fields
+    err = Write_LocalFileHeader(zi, filename, size_extrafield_local, extrafield_local, /* zip64 */ 1);
 
     zi->ci.stream.avail_in = 0;
     zi->ci.stream.avail_out = Z_BUFSIZE;
@@ -1408,6 +1413,63 @@ extern int ZEXPORT cpl_zipCloseFileInZipRaw (
     compressed_size += zi->ci.crypt_header_size;
 #endif
 
+#ifdef disabled
+    // Code finally disabled since it causes compatibility issues with
+    // libreoffice for .xlsx or .ods files
+    if( zi->ci.pos_zip64extrainfo &&
+        uncompressed_size < 0xffffffff && compressed_size < 0xffffffff )
+    {
+        // Update the LocalFileHeader to be a regular one and not a ZIP64 one
+        // by removing its trailing 20 bytes, and moving it in the file
+        // 20 bytes further of its original position.
+
+        ZPOS64_T cur_pos_inzip = ZTELL64(zi->z_filefunc,zi->filestream);
+
+        if (ZSEEK64(zi->z_filefunc,zi->filestream,
+                zi->ci.pos_local_header,ZLIB_FILEFUNC_SEEK_SET)!=0)
+            err = ZIP_ERRNO;
+
+        // Insert leading padding
+        constexpr uInt nZIP64ExtraBytes = 20;
+        char padding[nZIP64ExtraBytes];
+        memset(padding, 0, sizeof(padding));
+        if( ZWRITE64(zi->z_filefunc,zi->filestream,
+            padding,nZIP64ExtraBytes) != nZIP64ExtraBytes )
+            err = ZIP_ERRNO;
+
+        // Correct version needed to extract
+        zip64local_putValue_inmemory(
+            zi->ci.local_header + 4, 20, 2);
+
+        // Correct extra field length
+        zi->ci.size_local_header_extrafield -= nZIP64ExtraBytes;
+        zip64local_putValue_inmemory(
+            zi->ci.local_header + 28,
+            zi->ci.size_local_header_extrafield, 2 );
+
+        zi->ci.size_local_header -= nZIP64ExtraBytes;
+
+        // Rewrite local header
+        if( ZWRITE64(zi->z_filefunc,zi->filestream,
+                zi->ci.local_header,
+                zi->ci.size_local_header ) != zi->ci.size_local_header )
+            err = ZIP_ERRNO;
+
+        if (ZSEEK64(zi->z_filefunc,zi->filestream,
+                  cur_pos_inzip,ZLIB_FILEFUNC_SEEK_SET)!=0)
+            err = ZIP_ERRNO;
+
+        zi->ci.pos_zip64extrainfo = 0;
+
+        // Correct central header offset to local header
+        zi->ci.pos_local_header += nZIP64ExtraBytes;
+        if(zi->ci.pos_local_header >= 0xffffffff)
+            zip64local_putValue_inmemory(zi->ci.central_header+42,static_cast<uLong>(0xffffffff),4);
+        else
+            zip64local_putValue_inmemory(zi->ci.central_header+42,static_cast<uLong>(zi->ci.pos_local_header)- zi->add_position_when_writing_offset,4);
+    }
+#endif
+
     // update Current Item crc and sizes,
     if(compressed_size >= 0xffffffff || uncompressed_size >= 0xffffffff || zi->ci.pos_local_header >= 0xffffffff)
     {
@@ -1499,6 +1561,9 @@ extern int ZEXPORT cpl_zipCloseFileInZipRaw (
         err = add_data_in_datablock(&zi->central_dir,zi->ci.central_header,
                                        static_cast<uLong>(zi->ci.size_centralheader));
     free(zi->ci.central_header);
+    zi->ci.central_header = nullptr;
+    free(zi->ci.local_header);
+    zi->ci.local_header = nullptr;
 
     if (err==ZIP_OK)
     {
