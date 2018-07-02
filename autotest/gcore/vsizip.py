@@ -784,6 +784,18 @@ def vsizip_create_zip64_stream_larger_than_4G():
 
     return 'success'
 
+
+###############################################################################
+def vsizip_byte_zip64_local_header_zeroed():
+
+    size = gdal.VSIStatL('/vsizip/data/byte_zip64_local_header_zeroed.zip/byte.tif').size
+    if size != 736:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [vsizip_1,
                  vsizip_2,
                  vsizip_3,
@@ -801,6 +813,7 @@ gdaltest_list = [vsizip_1,
                  vsizip_multi_thread,
                  vsizip_create_zip64,
                  vsizip_create_zip64_stream_larger_than_4G,
+                 vsizip_byte_zip64_local_header_zeroed,
                  ]
 
 
