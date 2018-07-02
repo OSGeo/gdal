@@ -1955,7 +1955,7 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
     const int nErr =
         cpl_zipOpenNewFileInZip(
             psZip->hZip, pszCPFilename, nullptr,
-            nullptr, 0, pabyExtra, nExtraLength, "",
+            pabyExtra, nExtraLength, pabyExtra, nExtraLength, "",
             bCompressed ? Z_DEFLATED : 0,
             bCompressed ? Z_DEFAULT_COMPRESSION : 0 );
 
