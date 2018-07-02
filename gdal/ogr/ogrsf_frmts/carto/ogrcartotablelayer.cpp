@@ -484,7 +484,7 @@ void OGRCARTOTableLayer::RunDeferredCartofy()
 /*                        CARTOGeometryType()                           */
 /************************************************************************/
 
-CPLString OGRCARTOTableLayer::OGRCARTOGeometryType(OGRCartoGeomFieldDefn *poGeomField)
+static CPLString OGRCARTOGeometryType(OGRCartoGeomFieldDefn *poGeomField)
 {
     OGRwkbGeometryType eType = poGeomField->GetType();
     const char *pszGeometryType = OGRToOGCGeomType(eType);
@@ -868,7 +868,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
 /*                           FieldSetBitMap()                           */
 /************************************************************************/
 
-int OGRCARTOTableLayer::FieldSetBitMap( OGRFeature *poFeature )
+static int FieldSetBitMap( OGRFeature *poFeature )
 {
     int bitmap = 0;
     if (poFeatureDefn->GetFieldCount() > 31)
@@ -905,6 +905,12 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
         /* Non-spatial column names */
         for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
         {
+            /* We base the columns we attempt to COPY based on */
+            /* the set pattern of the first feature we see. Good */
+            /* idea? Maybe. Optimally we should save the pattern */
+            /* of the first feature and re-set the copy each time */
+            /* that pattern changes. See FieldSetBitMap() for the */
+            /* start of that kind of idea. */
             if( !poFeature->IsFieldSet(i) )
                 continue;
 

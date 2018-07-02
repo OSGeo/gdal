@@ -183,7 +183,7 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
                                              bool bGeomNullable,
                                              bool bCartodbfy);
     OGRErr              RunDeferredCreationIfNecessary();
-    CPLString           OGRCARTOGeometryType(OGRCartoGeomFieldDefn *poGeomField);
+//  CPLString           OGRCARTOGeometryType(OGRCartoGeomFieldDefn *poGeomField);
     bool                GetDeferredCreation() const
         { return bDeferredCreation; }
     void                CancelDeferredCreation()
