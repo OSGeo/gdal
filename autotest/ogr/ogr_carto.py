@@ -987,6 +987,24 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # gdal.ErrorReset()
+    # ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=YES'])
+    # if ds is None:
+    #     gdaltest.post_reason('fail')
+    #     return 'fail'
+    # lyr = ds.GetLayerByName('table1')
+    # if lyr is None:
+    #     gdaltest.post_reason('fail')
+    #     return 'fail'
+    # f = ogr.Feature(lyr.GetLayerDefn())
+    # f.SetField('strfield', 'copytest')
+    # f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(100 100)'))
+    # with gdaltest.tempfile("""/vsimem/carto/copyfrom?q=COPY%20"table1"%20("strfield","my_geom","cartodb_id")%20FROM%20STDIN%20WITH%20(FORMAT%20text,%20ENCODING%20UTF8)&api_key=foo&POSTFIELDS=copytest\t\t\t0101000020E610000000000000000059400000000000005940\t11\n\.""","""{}"""):
+    #     if lyr.CreateFeature(f) != 0:
+    #         gdaltest.post_reason('fail')
+    #         return 'fail'
+    #     ds = None # force flush
+
     ds = ogr.Open('CARTO:foo', update=1)
 
     gdal.ErrorReset()
@@ -1007,6 +1025,9 @@ Error""")
     if ds.GetLayerByName('a_layer') is None:
         gdaltest.post_reason('fail')
         return 'fail'
+
+        
+
 
     return 'success'
 
