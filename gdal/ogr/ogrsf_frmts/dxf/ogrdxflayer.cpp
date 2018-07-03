@@ -729,13 +729,11 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT( const bool bIsAttribOrAttdef )
           case 2:
             if( bIsAttribOrAttdef )
             {
-                if( strchr( szLineBuf, ' ' ) )
-                {
-                    CPLDebug( "DXF", "Attribute tags may not contain spaces" );
-                    DXF_LAYER_READER_ERROR();
-                    delete poFeature;
-                    return nullptr;
-                }
+                // Attribute tags are not supposed to contain spaces (but
+                // sometimes they do)
+                while( char* pchSpace = strchr( szLineBuf, ' ' ) )
+                    *pchSpace = '_';
+
                 poFeature->osAttributeTag = szLineBuf;
             }
             break;

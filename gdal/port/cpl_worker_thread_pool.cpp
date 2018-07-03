@@ -317,16 +317,41 @@ void CPLWorkerThreadPool::WaitCompletion(int nMaxRemainingJobs)
 {
     if( nMaxRemainingJobs < 0 )
         nMaxRemainingJobs = 0;
+    CPLAcquireMutex(hMutex, 1000.0);
     while( true )
     {
-        CPLAcquireMutex(hMutex, 1000.0);
         int nPendingJobsLocal = nPendingJobs;
         if( nPendingJobsLocal > nMaxRemainingJobs )
             CPLCondWait(hCond, hMutex);
-        CPLReleaseMutex(hMutex);
         if( nPendingJobsLocal <= nMaxRemainingJobs )
             break;
     }
+    CPLReleaseMutex(hMutex);
+}
+
+/************************************************************************/
+/*                            WaitEvent()                               */
+/************************************************************************/
+
+/** Wait for completion of at least one job, if there are any remaining
+ */
+void CPLWorkerThreadPool::WaitEvent()
+{
+    CPLAcquireMutex(hMutex, 1000.0);
+    while( true )
+    {
+        int nPendingJobsLocal = nPendingJobs;
+        if( nPendingJobsLocal == 0 )
+        {
+            break;
+        }
+        CPLCondWait(hCond, hMutex);
+        if( nPendingJobs < nPendingJobsLocal )
+        {
+            break;
+        }
+    }
+    CPLReleaseMutex(hMutex);
 }
 
 /************************************************************************/
@@ -344,6 +369,23 @@ void CPLWorkerThreadPool::WaitCompletion(int nMaxRemainingJobs)
 bool CPLWorkerThreadPool::Setup(int nThreads,
                             CPLThreadFunc pfnInitFunc,
                             void** pasInitData)
+{
+    return Setup(nThreads, pfnInitFunc, pasInitData, true);
+}
+
+/** Setup the pool.
+ *
+ * @param nThreads Number of threads to launch
+ * @param pfnInitFunc Initialization function to run in each thread. May be NULL
+ * @param pasInitData Array of initialization data. Its length must be nThreads,
+ *                    or it should be NULL.
+ * @param bWaitallStarted Whether to wait for all threads to be fully started.
+ * @return true if initialization was successful.
+ */
+bool CPLWorkerThreadPool::Setup(int nThreads,
+                            CPLThreadFunc pfnInitFunc,
+                            void** pasInitData,
+                            bool bWaitallStarted)
 {
     CPLAssert( nThreads > 0 );
 
@@ -392,16 +434,19 @@ bool CPLWorkerThreadPool::Setup(int nThreads,
         }
     }
 
-    // Wait all threads to be started
-    while( true )
+    if( bWaitallStarted )
     {
-        CPLAcquireMutex(hMutex, 1000.0);
-        int nWaitingWorkerThreadsLocal = nWaitingWorkerThreads;
-        if( nWaitingWorkerThreadsLocal < nThreads )
-            CPLCondWait(hCond, hMutex);
-        CPLReleaseMutex(hMutex);
-        if( nWaitingWorkerThreadsLocal == nThreads )
-            break;
+        // Wait all threads to be started
+        while( true )
+        {
+            CPLAcquireMutex(hMutex, 1000.0);
+            int nWaitingWorkerThreadsLocal = nWaitingWorkerThreads;
+            if( nWaitingWorkerThreadsLocal < nThreads )
+                CPLCondWait(hCond, hMutex);
+            CPLReleaseMutex(hMutex);
+            if( nWaitingWorkerThreadsLocal == nThreads )
+                break;
+        }
     }
 
     if( eState == CPLWTS_ERROR )

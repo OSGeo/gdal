@@ -332,6 +332,67 @@ def test_gdal_calc_py_6():
 
     return 'success'
 
+###############################################################################
+# test --optfile
+
+def test_gdal_calc_py_7():
+    if gdalnumeric_not_available:
+        gdaltest.post_reason('gdalnumeric is not available, skipping all tests')
+        return 'skip'
+
+    script_path = test_py_scripts.get_py_script('gdal_calc')
+    if script_path is None:
+        return 'skip'
+
+    shutil.copy('../gcore/data/stefan_full_rgba.tif', 'tmp/test_gdal_calc_py.tif')
+
+    with open('tmp/opt1', 'w') as f:
+        f.write('-A tmp/test_gdal_calc_py.tif --calc=A --overwrite --outfile tmp/test_gdal_calc_py_7_1.tif')
+
+    # Lines in optfiles beginning with '#' should be ignored
+    with open('tmp/opt2', 'w') as f:
+        f.write('-A tmp/test_gdal_calc_py.tif --A_band=2 --calc=A --overwrite --outfile tmp/test_gdal_calc_py_7_2.tif')
+        f.write('\n# -A_band=1')
+
+    # options on separate lines should work, too
+    opts = '-Z tmp/test_gdal_calc_py.tif', '--Z_band=2', '--calc=Z', '--overwrite', '--outfile tmp/test_gdal_calc_py_7_3.tif'
+    with open('tmp/opt3', 'w') as f:
+        for i in opts:
+            f.write(i + '\n')
+
+    test_py_scripts.run_py_script(script_path, 'gdal_calc', '--optfile tmp/opt1')
+    test_py_scripts.run_py_script(script_path, 'gdal_calc', '--optfile tmp/opt2')
+    test_py_scripts.run_py_script(script_path, 'gdal_calc', '--optfile tmp/opt3')
+
+    ds1 = gdal.Open('tmp/test_gdal_calc_py_7_1.tif')
+    ds2 = gdal.Open('tmp/test_gdal_calc_py_7_2.tif')
+    ds3 = gdal.Open('tmp/test_gdal_calc_py_7_3.tif')
+
+    if ds1 is None:
+        gdaltest.post_reason('ds1 not found')
+        return 'fail'
+    if ds2 is None:
+        gdaltest.post_reason('ds2 not found')
+        return 'fail'
+    if ds3 is None:
+        gdaltest.post_reason('ds3 not found')
+        return 'fail'
+
+    if ds1.GetRasterBand(1).Checksum() != 12603:
+        gdaltest.post_reason('ds1 wrong checksum')
+        return 'fail'
+    if ds2.GetRasterBand(1).Checksum() != 58561:
+        gdaltest.post_reason('ds2 wrong checksum')
+        return 'fail'
+    if ds3.GetRasterBand(1).Checksum() != 58561:
+        gdaltest.post_reason('ds3 wrong checksum')
+        return 'fail'
+
+    ds1 = None
+    ds2 = None
+    ds3 = None
+
+    return 'success'
 
 def test_gdal_calc_py_cleanup():
 
@@ -350,6 +411,12 @@ def test_gdal_calc_py_cleanup():
            'tmp/test_gdal_calc_py_5_2.tif',
            'tmp/test_gdal_calc_py_5_3.tif',
            'tmp/test_gdal_calc_py_6.tif',
+           'tmp/test_gdal_calc_py_7_1.tif',
+           'tmp/test_gdal_calc_py_7_2.tif',
+           'tmp/test_gdal_calc_py_7_3.tif',
+           'tmp/opt1',
+           'tmp/opt2',
+           'tmp/opt3',
           ]
     for filename in lst:
         try:
@@ -367,6 +434,7 @@ gdaltest_list = [
     test_gdal_calc_py_4,
     test_gdal_calc_py_5,
     test_gdal_calc_py_6,
+    test_gdal_calc_py_7,
     test_gdal_calc_py_cleanup
 ]
 

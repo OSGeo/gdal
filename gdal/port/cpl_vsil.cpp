@@ -1876,6 +1876,7 @@ VSIFileManager *VSIFileManager::Get()
         VSIInstallSwiftStreamingFileHandler();
 #endif
         VSIInstallStdinHandler();
+        VSIInstallHdfsHandler();
         VSIInstallStdoutHandler();
         VSIInstallSparseFileHandler();
         VSIInstallTarFileHandler();

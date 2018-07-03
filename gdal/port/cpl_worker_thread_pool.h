@@ -98,9 +98,14 @@ class CPL_DLL CPLWorkerThreadPool
         bool Setup(int nThreads,
                    CPLThreadFunc pfnInitFunc,
                    void** pasInitData);
+        bool Setup(int nThreads,
+                   CPLThreadFunc pfnInitFunc,
+                   void** pasInitData,
+                   bool bWaitallStarted);
         bool SubmitJob(CPLThreadFunc pfnFunc, void* pData);
         bool SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void*>& apData);
         void WaitCompletion(int nMaxRemainingJobs = 0);
+        void WaitEvent();
 
         /** Return the number of threads setup */
         int GetThreadCount() const { return static_cast<int>(aWT.size()); }

@@ -130,7 +130,8 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
     }
 
     if( nCompressFlag == COMPRESSION_LZW ||
-        nCompressFlag == COMPRESSION_ADOBE_DEFLATE )
+        nCompressFlag == COMPRESSION_ADOBE_DEFLATE ||
+        nCompressFlag == COMPRESSION_ZSTD )
         TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
 
 /* -------------------------------------------------------------------- */
