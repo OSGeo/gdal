@@ -4148,6 +4148,17 @@ def ogr_geojson_append_flush():
 ###############################################################################
 
 
+def ogr_geojson_empty_geometrycollection():
+
+    g = ogr.CreateGeometryFromJson('{"type": "GeometryCollection", "geometries": []}')
+    if g.ExportToWkt() != 'GEOMETRYCOLLECTION EMPTY':
+        print(g.ExportToWkt())
+        return 'fail'
+    return 'success'
+
+###############################################################################
+
+
 def ogr_geojson_cleanup():
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
@@ -4256,6 +4267,7 @@ gdaltest_list = [
     ogr_geojson_geom_export_failure,
     ogr_geojson_starting_with_crs,
     ogr_geojson_append_flush,
+    ogr_geojson_empty_geometrycollection,
     ogr_geojson_cleanup]
 
 if __name__ == '__main__':

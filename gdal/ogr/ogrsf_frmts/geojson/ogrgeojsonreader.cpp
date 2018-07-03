@@ -3122,13 +3122,10 @@ OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj,
 
     if( json_type_array == json_object_get_type( poObjGeoms ) )
     {
-        const int nGeoms = json_object_array_length( poObjGeoms );
-        if( nGeoms > 0 )
-        {
-            poCollection = new OGRGeometryCollection();
-            poCollection->assignSpatialReference(poSRS);
-        }
+        poCollection = new OGRGeometryCollection();
+        poCollection->assignSpatialReference(poSRS);
 
+        const int nGeoms = json_object_array_length( poObjGeoms );
         for( int i = 0; i < nGeoms; ++i )
         {
             json_object* poObjGeom = json_object_array_get_idx( poObjGeoms, i );
