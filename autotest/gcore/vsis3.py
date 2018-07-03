@@ -771,11 +771,60 @@ def vsis3_3():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Same as above: cached
+    dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
+    if dir_contents != ['resource3.bin', 'resource4.bin', 'subdir']:
+        gdaltest.post_reason('fail')
+        print(dir_contents)
+        return 'fail'
+
     # ReadDir on something known to be a file shouldn't cause network access
     dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir/resource3.bin')
     if dir_contents is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    # Test unrelated partial clear of the cache
+    gdal.VSICurlPartialClearCache('/vsis3/s3_fake_bucket_unrelated')
+
+    if gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir/resource3.bin').size != 123456:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
+    if dir_contents != ['resource3.bin', 'resource4.bin', 'subdir']:
+        gdaltest.post_reason('fail')
+        print(dir_contents)
+        return 'fail'
+
+    # Test partial clear of the cache
+    gdal.VSICurlPartialClearCache('/vsis3/s3_fake_bucket2/a_dir')
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/s3_fake_bucket2/a_dir/resource3.bin', 400)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&max-keys=1&prefix=a_dir%2Fresource3.bin%2F', 400)
+    with webserver.install_http_handler(handler):
+        gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir/resource3.bin')
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>a_dir/</Prefix>
+                <Contents>
+                    <Key>a_dir/test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>40</Size>
+                </Contents>
+            </ListBucketResult>
+        """)
+    with webserver.install_http_handler(handler):
+        dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
+    if dir_contents != ['test.txt']:
+        gdaltest.post_reason('fail')
+        print(dir_contents)
+        return 'fail'
+
 
     # Test CPL_VSIL_CURL_NON_CACHED
     for config_option_value in ['/vsis3/s3_non_cached/test.txt',
