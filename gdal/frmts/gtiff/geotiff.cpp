@@ -8772,7 +8772,8 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
     psJob->nStripOrTile = nStripOrTile;
     psJob->nPredictor = PREDICTOR_NONE;
     if( nCompression == COMPRESSION_LZW ||
-        nCompression == COMPRESSION_ADOBE_DEFLATE )
+        nCompression == COMPRESSION_ADOBE_DEFLATE ||
+        nCompression == COMPRESSION_ZSTD )
     {
         TIFFGetField( hTIFF, TIFFTAG_PREDICTOR, &psJob->nPredictor );
     }
@@ -10108,7 +10109,8 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
 /* -------------------------------------------------------------------- */
     uint16 nPredictor = PREDICTOR_NONE;
     if( nCompression == COMPRESSION_LZW ||
-        nCompression == COMPRESSION_ADOBE_DEFLATE )
+        nCompression == COMPRESSION_ADOBE_DEFLATE ||
+        nCompression == COMPRESSION_ZSTD )
         TIFFGetField( hTIFF, TIFFTAG_PREDICTOR, &nPredictor );
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
@@ -10472,7 +10474,8 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
     uint16 nPredictor = PREDICTOR_NONE;
     if( nCompression == COMPRESSION_LZW ||
-        nCompression == COMPRESSION_ADOBE_DEFLATE )
+        nCompression == COMPRESSION_ADOBE_DEFLATE ||
+        nCompression == COMPRESSION_ZSTD )
         TIFFGetField( hTIFF, TIFFTAG_PREDICTOR, &nPredictor );
 
 /* -------------------------------------------------------------------- */
@@ -15680,7 +15683,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /*      Set compression related tags.                                   */
 /* -------------------------------------------------------------------- */
     if( l_nCompression == COMPRESSION_LZW ||
-         l_nCompression == COMPRESSION_ADOBE_DEFLATE )
+         l_nCompression == COMPRESSION_ADOBE_DEFLATE ||
+         l_nCompression == COMPRESSION_ZSTD )
         TIFFSetField( l_hTIFF, TIFFTAG_PREDICTOR, nPredictor );
     if( l_nCompression == COMPRESSION_ADOBE_DEFLATE && l_nZLevel != -1 )
         TIFFSetField( l_hTIFF, TIFFTAG_ZIPQUALITY, l_nZLevel );
@@ -18815,7 +18819,7 @@ void GDALRegister_GTiff()
               "   <Option name='COMPRESS' type='string-select'>";
     osOptions += osCompressValues;
     osOptions += "   </Option>";
-    if( bHasLZW || bHasDEFLATE )
+    if( bHasLZW || bHasDEFLATE || bHasZSTD )
         osOptions += ""
 "   <Option name='PREDICTOR' type='int' description='Predictor Type (1=default, 2=horizontal differencing, 3=floating point prediction)'/>";
     osOptions += ""

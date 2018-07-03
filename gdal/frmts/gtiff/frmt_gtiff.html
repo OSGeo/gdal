@@ -308,7 +308,7 @@ But starting with GDAL 1.7.0 and provided that GDAL is built with internal libti
 it is possible to read and write TIFF files with 12bit JPEG compressed TIFF files (seen as UInt16 bands with NBITS=12).
 See the <a href="http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG">"8 and 12 bit JPEG in TIFF"</a> wiki page for more details.
 The CCITT compression should only be used with 1bit (NBITS=1) data.
-LZW and DEFLATE compressions can be used with the PREDICTOR creation option.
+LZW, DEFLATE and ZSTD compressions can be used with the PREDICTOR creation option.
 ZSTD is available since GDAL 2.3 when using internal libtiff and if GDAL built
 against libzstd &gt;=1.0, or if built against external libtiff with zstd support.
 None is the default.</p></li>
@@ -318,11 +318,11 @@ Enable multi-threaded compression by specifying the number of worker threads.
 Worth for slow compressions such as DEFLATE or LZMA. Will be ignored for JPEG.
 Default is compression in the main thread.</p></li>
 
-<li><p><b>PREDICTOR=[1/2/3]</b>: Set the predictor for LZW or DEFLATE compression. The default is 1 (no predictor), 2 is horizontal differencing and 3 is floating point prediction.</p></li>
+<li><p><b>PREDICTOR=[1/2/3]</b>: Set the predictor for LZW, DEFLATE and ZSTD compression. The default is 1 (no predictor), 2 is horizontal differencing and 3 is floating point prediction.</p></li>
 
 <li><p><b>DISCARD_LSB=nbits or nbits_band1,nbits_band2,...nbits_bandN</b>: (GDAL &gt;= 2.0)
 Set the number of least-significant bits to clear, possibly different per band.
-Lossy compression scheme to be best used with PREDICTOR=2 and LZW/DEFLATE compression.</p></li>
+Lossy compression scheme to be best used with PREDICTOR=2 and LZW/DEFLATE/ZSTD compression.</p></li>
 
 <li><p><b>SPARSE_OK=TRUE/FALSE</b> (From GDAL 1.6.0): Should newly created files (through Create() interface) be allowed to be sparse?
 Sparse files have 0 tile/strip offsets for blocks never written and save space;
