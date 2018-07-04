@@ -195,6 +195,7 @@ size_t RMFDataset::JPEGCompress(const GByte* pabyIn, GUInt32 nSizeIn,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RMF JPEG: Error compress JPEG tile");
+        VSIUnlink(osTmpFilename);
         return 0;
     }
 
