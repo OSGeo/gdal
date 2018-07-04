@@ -63,6 +63,7 @@ NAMESPACE_LERC_START
 
     static ErrCode ComputeCompressedSize(
       const void* pData,               // raw image data, row by row, band by band
+      int version,                     // 2 = v2.2, 3 = v2.3, 4 = v2.4
       DataType dt,                     // data type, char to double
       int nDim,                        // number of values per pixel
       int nCols,                       // number of cols
@@ -76,6 +77,7 @@ NAMESPACE_LERC_START
 
     static ErrCode Encode(
       const void* pData,               // raw image data, row by row, band by band
+      int version,                     // 2 = v2.2, 3 = v2.3, 4 = v2.4
       DataType dt,                     // data type, char to double
       int nDim,                        // number of values per pixel
       int nCols,                       // number of cols
@@ -149,7 +151,8 @@ NAMESPACE_LERC_START
     // same as functions above, but data templated instead of using void pointers
 
     template<class T> static ErrCode ComputeCompressedSizeTempl(
-      const T* pData,                  // raw image data, row by row, band by band
+      const T* pData,                  // raw image data, row by row, band by 
+      int version,                     // 2 = v2.2, 3 = v2.3, 4 = v2.4
       int nDim,                        // number of values per pixel
       int nCols,                       // number of cols
       int nRows,                       // number of rows
@@ -160,6 +163,7 @@ NAMESPACE_LERC_START
 
     template<class T> static ErrCode EncodeTempl(
       const T* pData,                  // raw image data, row by row, band by band
+      int version,                     // 2 = v2.2, 3 = v2.3, 4 = v2.4
       int nDim,                        // number of values per pixel
       int nCols,                       // number of cols
       int nRows,                       // number of rows

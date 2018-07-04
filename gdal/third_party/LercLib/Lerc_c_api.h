@@ -43,6 +43,8 @@ extern "C" {
   
   typedef unsigned int lerc_status;
 
+  #define LERC_CURRENT_VERSION -1
+
   //! Compute the buffer size in bytes required to hold the compressed input tile. Optional. 
   //! You can call lerc_encode(...) directly as long as the output buffer is big enough. 
 
@@ -57,6 +59,7 @@ extern "C" {
   LERCDLL_API
   lerc_status lerc_computeCompressedSize(
     const void* pData,                 // raw image data, row by row, band by band
+    int version,                       // 2 = v2.2, 3 = v2.3, 4 = v2.4 (or use LERC_CURRENT_VERSION for the latest)
     unsigned int dataType,             // char = 0, uchar = 1, short = 2, ushort = 3, int = 4, uint = 5, float = 6, double = 7
     int nDim,                          // number of values per pixel (e.g., 3 for RGB, data is stored as [RGB, RGB, ...])
     int nCols,                         // number of columns
@@ -72,6 +75,7 @@ extern "C" {
   LERCDLL_API
   lerc_status lerc_encode(
     const void* pData,                 // raw image data, row by row, band by band
+    int version,                       // 2 = v2.2, 3 = v2.3, 4 = v2.4 (or use LERC_CURRENT_VERSION for the latest)
     unsigned int dataType,             // char = 0, uchar = 1, short = 2, ushort = 3, int = 4, uint = 5, float = 6, double = 7
     int nDim,                          // number of values per pixel (e.g., 3 for RGB, data is stored as [RGB, RGB, ...])
     int nCols,                         // number of columns

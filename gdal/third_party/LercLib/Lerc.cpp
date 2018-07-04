@@ -34,19 +34,19 @@ USING_NAMESPACE_LERC
 
 // -------------------------------------------------------------------------- ;
 
-ErrCode Lerc::ComputeCompressedSize(const void* pData, DataType dt, int nDim, int nCols, int nRows, int nBands,
+ErrCode Lerc::ComputeCompressedSize(const void* pData, int version, DataType dt, int nDim, int nCols, int nRows, int nBands,
   const BitMask* pBitMask, double maxZErr, unsigned int& numBytesNeeded)
 {
   switch (dt)
   {
-  case DT_Char:    return ComputeCompressedSizeTempl((const char*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
-  case DT_Byte:    return ComputeCompressedSizeTempl((const Byte*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
-  case DT_Short:   return ComputeCompressedSizeTempl((const short*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
-  case DT_UShort:  return ComputeCompressedSizeTempl((const unsigned short*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
-  case DT_Int:     return ComputeCompressedSizeTempl((const int*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
-  case DT_UInt:    return ComputeCompressedSizeTempl((const unsigned int*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
-  case DT_Float:   return ComputeCompressedSizeTempl((const float*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
-  case DT_Double:  return ComputeCompressedSizeTempl((const double*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
+  case DT_Char:    return ComputeCompressedSizeTempl((const char*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
+  case DT_Byte:    return ComputeCompressedSizeTempl((const Byte*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
+  case DT_Short:   return ComputeCompressedSizeTempl((const short*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
+  case DT_UShort:  return ComputeCompressedSizeTempl((const unsigned short*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
+  case DT_Int:     return ComputeCompressedSizeTempl((const int*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
+  case DT_UInt:    return ComputeCompressedSizeTempl((const unsigned int*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
+  case DT_Float:   return ComputeCompressedSizeTempl((const float*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
+  case DT_Double:  return ComputeCompressedSizeTempl((const double*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
 
   default:
     return ErrCode::WrongParam;
@@ -55,19 +55,19 @@ ErrCode Lerc::ComputeCompressedSize(const void* pData, DataType dt, int nDim, in
 
 // -------------------------------------------------------------------------- ;
 
-ErrCode Lerc::Encode(const void* pData, DataType dt, int nDim, int nCols, int nRows, int nBands,
+ErrCode Lerc::Encode(const void* pData, int version, DataType dt, int nDim, int nCols, int nRows, int nBands,
   const BitMask* pBitMask, double maxZErr, Byte* pBuffer, unsigned int numBytesBuffer, unsigned int& numBytesWritten)
 {
   switch (dt)
   {
-  case DT_Char:    return EncodeTempl((const char*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
-  case DT_Byte:    return EncodeTempl((const Byte*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
-  case DT_Short:   return EncodeTempl((const short*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
-  case DT_UShort:  return EncodeTempl((const unsigned short*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
-  case DT_Int:     return EncodeTempl((const int*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
-  case DT_UInt:    return EncodeTempl((const unsigned int*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
-  case DT_Float:   return EncodeTempl((const float*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
-  case DT_Double:  return EncodeTempl((const double*)pData, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
+  case DT_Char:    return EncodeTempl((const char*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
+  case DT_Byte:    return EncodeTempl((const Byte*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
+  case DT_Short:   return EncodeTempl((const short*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
+  case DT_UShort:  return EncodeTempl((const unsigned short*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
+  case DT_Int:     return EncodeTempl((const int*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
+  case DT_UInt:    return EncodeTempl((const unsigned int*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
+  case DT_Float:   return EncodeTempl((const float*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
+  case DT_Double:  return EncodeTempl((const double*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
 
   default:
     return ErrCode::WrongParam;
@@ -257,18 +257,20 @@ ErrCode Lerc::ConvertToDouble(const void* pDataIn, DataType dt, size_t nDataValu
 // -------------------------------------------------------------------------- ;
 
 template<class T>
-ErrCode Lerc::ComputeCompressedSizeTempl(const T* pData, int nDim, int nCols, int nRows, int nBands,
+ErrCode Lerc::ComputeCompressedSizeTempl(const T* pData, int version, int nDim, int nCols, int nRows, int nBands,
   const BitMask* pBitMask, double maxZErr, unsigned int& numBytesNeeded)
 {
   numBytesNeeded = 0;
 
-  if (!pData || nDim <= 0 || nCols <= 0 || nRows <= 0 || nBands <= 0 || maxZErr < 0)
+  if (!pData || (version >= 0 && version < 2) || version > 4 || nDim <= 0 || nCols <= 0 || nRows <= 0 || nBands <= 0 || maxZErr < 0)
     return ErrCode::WrongParam;
 
   if (pBitMask && (pBitMask->GetHeight() != nRows || pBitMask->GetWidth() != nCols))
     return ErrCode::WrongParam;
 
   Lerc2 lerc2;
+  if( version > 0 && !lerc2.SetEncoderToOldVersion(version) )
+    return ErrCode::WrongParam;
   bool rv = pBitMask ? lerc2.Set(nDim, nCols, nRows, pBitMask->Bits()) : lerc2.Set(nDim, nCols, nRows);
   if (!rv)
     return ErrCode::Failed;
@@ -290,18 +292,20 @@ ErrCode Lerc::ComputeCompressedSizeTempl(const T* pData, int nDim, int nCols, in
 // -------------------------------------------------------------------------- ;
 
 template<class T>
-ErrCode Lerc::EncodeTempl(const T* pData, int nDim, int nCols, int nRows, int nBands,
+ErrCode Lerc::EncodeTempl(const T* pData, int version, int nDim, int nCols, int nRows, int nBands,
   const BitMask* pBitMask, double maxZErr, Byte* pBuffer, unsigned int numBytesBuffer, unsigned int& numBytesWritten)
 {
   numBytesWritten = 0;
 
-  if (!pData || nDim <= 0 || nCols <= 0 || nRows <= 0 || nBands <= 0 || maxZErr < 0 || !pBuffer || !numBytesBuffer)
+  if (!pData || (version >= 0 && version < 2) || version > 4 || nDim <= 0 || nCols <= 0 || nRows <= 0 || nBands <= 0 || maxZErr < 0 || !pBuffer || !numBytesBuffer)
     return ErrCode::WrongParam;
 
   if (pBitMask && (pBitMask->GetHeight() != nRows || pBitMask->GetWidth() != nCols))
     return ErrCode::WrongParam;
 
   Lerc2 lerc2;
+  if( version > 0 && !lerc2.SetEncoderToOldVersion(version) )
+    return ErrCode::WrongParam;
   bool rv = pBitMask ? lerc2.Set(nDim, nCols, nRows, pBitMask->Bits()) : lerc2.Set(nDim, nCols, nRows);
   if (!rv)
     return ErrCode::Failed;
