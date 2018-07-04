@@ -292,9 +292,8 @@ class GlobalMercator(object):
 
         for i in range(MAXZOOMLEVEL):
             if pixelSize > self.Resolution(i):
-                if i != -1:
-                    return i - 1
-                return 0    # We don't want to scale up
+                return max(0, i - 1)    # We don't want to scale up
+        return MAXZOOMLEVEL - 1
 
     def GoogleTile(self, tx, ty, zoom):
         "Converts TMS tile coordinates to Google Tile coordinates"
@@ -397,9 +396,8 @@ class GlobalGeodetic(object):
 
         for i in range(MAXZOOMLEVEL):
             if pixelSize > self.Resolution(i):
-                if i != 0:
-                    return i - 1
-                return 0    # We don't want to scale up
+                return max(0, i - 1)    # We don't want to scale up
+        return MAXZOOMLEVEL - 1
 
     def TileBounds(self, tx, ty, zoom):
         "Returns bounds of the given tile"
