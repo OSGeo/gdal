@@ -185,8 +185,7 @@ size_t RMFDataset::LZWDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
     // Allocate space for the new table and pre-fill it
     LZWStringTab *poCodeTab =
         (LZWStringTab *)CPLMalloc( TABSIZE * sizeof(LZWStringTab) );
-    if( !poCodeTab )
-        return 0;
+
     memset( poCodeTab, 0, TABSIZE * sizeof(LZWStringTab) );
     GUInt32 iCode = 0;
     for( ; iCode < 256; iCode++ )
@@ -374,8 +373,6 @@ size_t RMFDataset::LZWCompress(const GByte* pabyIn, GUInt32 nSizeIn,
     // Allocate space for the new table and pre-fill it
     LZWStringTab *poCodeTab =
         (LZWStringTab *)CPLMalloc(TABSIZE * sizeof(LZWStringTab));
-    if( !poCodeTab )
-        return 0;
 
     memset(poCodeTab, 0, TABSIZE * sizeof(LZWStringTab));
 
