@@ -199,7 +199,8 @@ def hdf4_read_online_6():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf', 'MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf'):
         return 'skip'
 
-    tst = gdaltest.GDALTest('HDF4Image', 'HDF4_EOS:EOS_GRID:tmp/cache/MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf:MODIS_NACP_EVI:MODIS_EVI', 1, 12197, filename_absolute=1)
+    # Test with quoting of components
+    tst = gdaltest.GDALTest('HDF4Image', 'HDF4_EOS:EOS_GRID:"tmp/cache/MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf":"MODIS_NACP_EVI":"MODIS_EVI"', 1, 12197, filename_absolute=1)
 
     ret = tst.testOpen()
     if ret != 'success':
