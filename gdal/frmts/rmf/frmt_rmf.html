@@ -40,7 +40,14 @@ georeferencing can be provided for both image types.<p>
 
 	<li> <b>BLOCKYSIZE=n</b>: Set tile height.  Tile height defaults to 256.<p>
 
-        <li> <b>RMFHUGE=NO/YES/IF_SAFER</b>: Creation of huge RMF file (Supported by GIS Panorama since v11). Defaults to NO.<p>
+	<li> <b>RMFHUGE=NO/YES/IF_SAFER</b>: Creation of huge RMF file (Supported by GIS Panorama since v11). Defaults to NO.<p>
+
+	<li> <b>COMPRESS=NONE/LZW/JPEG/RMF_DEM</b>: Compression type. Defaults to NONE.
+		Note: JPEG compression supported only with RGB (3-band) Byte datasets.
+		RMF_DEM compresion supported only with Int32 one channel MTW datasets.<p>
+
+	<li> <b>JPEG_QUALITY</b>: JPEG quality 1-100. Defaults to 75.<p>
+
 
 </ul>
 
