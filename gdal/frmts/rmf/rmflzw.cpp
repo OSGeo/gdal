@@ -115,6 +115,24 @@ static void LZWUpdateTab(LZWStringTab *poCodeTab, GUInt32 iPred, char bFoll)
 }
 
 /************************************************************************/
+/*                           LZWCreateTab()                             */
+/************************************************************************/
+
+static LZWStringTab* LZWCreateTab()
+{
+    // Allocate space for the new table and pre-fill it
+    LZWStringTab *poCodeTab =
+        (LZWStringTab *)CPLMalloc(TABSIZE * sizeof(LZWStringTab));
+
+    memset(poCodeTab, 0, TABSIZE * sizeof(LZWStringTab));
+
+    for(GUInt32 iCode = 0; iCode < 256; ++iCode )
+        LZWUpdateTab(poCodeTab, NO_PRED, static_cast<char>(iCode));
+
+    return poCodeTab;
+}
+
+/************************************************************************/
 /*                            LZWFindIndex()                            */
 /************************************************************************/
 
@@ -170,29 +188,17 @@ static bool LZWPutCode(GUInt32 iCode, GUInt32& iTmp, bool& bBitsleft,
 }
 
 /************************************************************************/
-/*                           LZWDecompress()                            */
+/*                           LZWReadStream()                            */
 /************************************************************************/
 
-size_t RMFDataset::LZWDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
-                                 GByte* pabyOut, GUInt32 nSizeOut,
-                                 GUInt32, GUInt32 )
+static size_t LZWReadStream(const GByte* pabyIn, GUInt32 nSizeIn,
+                            GByte* pabyOut, GUInt32 nSizeOut,
+                            LZWStringTab *poCodeTab)
 {
-    if( pabyIn == nullptr ||
-        pabyOut == nullptr ||
-        nSizeIn < 2 )
-        return 0;
     GByte* const pabyOutBegin = pabyOut;
-    // Allocate space for the new table and pre-fill it
-    LZWStringTab *poCodeTab =
-        (LZWStringTab *)CPLMalloc( TABSIZE * sizeof(LZWStringTab) );
-
-    memset( poCodeTab, 0, TABSIZE * sizeof(LZWStringTab) );
-    GUInt32 iCode = 0;
-    for( ; iCode < 256; iCode++ )
-        LZWUpdateTab( poCodeTab, NO_PRED, (char)iCode );
 
     // The first code is always known
-    iCode = (*pabyIn++ << 4) & 0xFF0; nSizeIn--;
+    GUInt32 iCode = (*pabyIn++ << 4) & 0xFF0; nSizeIn--;
     iCode += (*pabyIn >> 4) & 0x00F;
     GUInt32 iOldCode = iCode;
     bool bBitsleft = true;
@@ -243,21 +249,21 @@ size_t RMFDataset::LZWDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
         {
             // Stack overrun
             if( nStackCount >= STACKSIZE )
-                goto bad;
+                return 0;
             // Put the decoded character into stack
             *(--pabyTail) = poCodeTab[iCode].iFollower; nStackCount++;
             iCode = poCodeTab[iCode].iPredecessor;
         }
 
         if( !nSizeOut )
-            goto bad;
+            return 0;
         // The first character
         iFinChar = poCodeTab[iCode].iFollower; nSizeOut--;
         *pabyOut++ = iFinChar;
 
         // Output buffer overrun
         if( nStackCount > nSizeOut )
-            goto bad;
+            return 0;
 
         // Now copy the stack contents into output buffer. Our stack was
         // filled in reverse order, so no need in character reordering
@@ -270,7 +276,7 @@ size_t RMFDataset::LZWDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
         {
             // Output buffer overrun
             if( !nSizeOut )
-                goto bad;
+                return 0;
             iFinChar = bLastChar;  // the follower char of last
             *pabyOut++ = iFinChar;
             nSizeOut--;
@@ -286,13 +292,28 @@ size_t RMFDataset::LZWDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
         iOldCode = iInCode;
     }
 
-    CPLFree( poCodeTab );
     return static_cast<size_t>(pabyOut - pabyOutBegin);
+}
 
-bad:
+/************************************************************************/
+/*                           LZWDecompress()                            */
+/************************************************************************/
 
-    CPLFree( poCodeTab );
-    return 0;
+size_t RMFDataset::LZWDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
+                                 GByte* pabyOut, GUInt32 nSizeOut,
+                                 GUInt32, GUInt32 )
+{
+    if( pabyIn == nullptr ||
+        pabyOut == nullptr ||
+        nSizeIn < 2 )
+        return 0;
+    LZWStringTab *poCodeTab = LZWCreateTab();
+
+    size_t nRet = LZWReadStream(pabyIn, nSizeIn, pabyOut, nSizeOut, poCodeTab);
+
+    CPLFree(poCodeTab);
+
+    return nRet;
 }
 
 /************************************************************************/
@@ -371,13 +392,7 @@ size_t RMFDataset::LZWCompress(const GByte* pabyIn, GUInt32 nSizeIn,
         return 0;
 
     // Allocate space for the new table and pre-fill it
-    LZWStringTab *poCodeTab =
-        (LZWStringTab *)CPLMalloc(TABSIZE * sizeof(LZWStringTab));
-
-    memset(poCodeTab, 0, TABSIZE * sizeof(LZWStringTab));
-
-    for(GUInt32 iCode = 0; iCode < 256; ++iCode )
-        LZWUpdateTab(poCodeTab, NO_PRED, static_cast<char>(iCode));
+    LZWStringTab *poCodeTab = LZWCreateTab();
 
     size_t nWritten = LZWWriteStream(pabyIn, nSizeIn, pabyOut,
                                      nSizeOut, poCodeTab);
