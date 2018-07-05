@@ -15,25 +15,25 @@ http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
 
-#ifndef BITSTUFFER_H
-#define BITSTUFFER_H
+#ifndef BITSTUFFERV1_H
+#define BITSTUFFERV1_H
 
 // ---- includes ------------------------------------------------------------ ;
 
 #include <vector>
 #include <algorithm>
-#include "Defines.h"
+#include "DefinesV1.h"
 
 NAMESPACE_LERC_START
 /** Bit stuffer, for writing unsigned int arrays compressed lossless
  *
  */
 
-class BitStuffer
+class BitStufferV1
 {
 public:
-  BitStuffer()           {}
-  virtual ~BitStuffer()  {}
+  BitStufferV1()           {}
+  virtual ~BitStufferV1()  {}
 
   // these 2 do not allocate memory. Byte ptr is moved like a file pointer.
   static bool write(Byte** ppByte, const std::vector<unsigned int>& dataVec);

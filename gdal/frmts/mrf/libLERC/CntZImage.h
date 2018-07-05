@@ -25,7 +25,7 @@ Contributors:  Thomas Maurer
 // ---- includes ------------------------------------------------------------ ;
 
 #include "TImage.hpp"
-#include "BitStuffer.h"
+#include "BitStufferV1.h"
 
 NAMESPACE_LERC_START
 
@@ -60,7 +60,7 @@ public:
   unsigned int computeNumBytesNeededToWrite(double maxZError, bool onlyZPart = false)
     { return computeNumBytesNeededToWrite(maxZError, onlyZPart, m_infoFromComputeNumBytes); }
 
-  static unsigned int numExtraBytesToAllocate()    { return BitStuffer::numExtraBytesToAllocate(); }
+  static unsigned int numExtraBytesToAllocate()    { return BitStufferV1::numExtraBytesToAllocate(); }
   static unsigned int computeNumBytesNeededToWriteVoidImage();
 
   /// these 2 do not allocate memory. Byte ptr is moved like a file pointer.

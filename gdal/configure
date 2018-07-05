@@ -631,6 +631,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+HAVE_LERC
 HAVE_OPENSSL_CRYPTO
 USE_ONLY_CRYPTODLL_ALG
 HAVE_CRYPTOPP
@@ -1078,6 +1079,7 @@ with_armadillo
 with_cryptopp
 with_crypto
 with_mrf
+with_lerc
 with_null
 '
       ac_precious_vars='build_alias
@@ -1864,6 +1866,7 @@ Optional Packages:
   --with-cryptopp=ARG       Include cryptopp support (ARG=yes, no or path)
   --with-crypto=ARG       Include crypto (from openssl) support (ARG=yes, no or path)
   --without-mrf           Disable MRF driver
+  --without-lerc          Disable LERC library
   --with-null             Enable NULL driver (only useful for development
                           purposes
 
@@ -36662,6 +36665,29 @@ fi
 
 
 
+# Check whether --with-lerc was given.
+if test "${with_lerc+set}" = set; then :
+  withval=$with_lerc;
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for MRF" >&5
+$as_echo_n "checking for MRF... " >&6; }
+if test "$with_lerc" = yes -o x"$with_lerc" = x ; then
+    HAVE_LERC=yes
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
+$as_echo "enabled" >&6; }
+else
+    HAVE_LERC=no
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
+$as_echo "disabled by user" >&6; }
+fi
+
+HAVE_LERC=$HAVE_LERC
+
+
+
+
 
 # Check whether --with-null was given.
 if test "${with_null+set}" = set; then :
@@ -39185,6 +39211,9 @@ echo "  PostgreSQL support:        ${HAVE_PG}"
 
 
 echo "  MRF support:               ${HAVE_MRF}"
+
+
+echo "  LERC support:              ${HAVE_LERC}"
 
 
 echo "  MySQL support:             ${HAVE_MYSQL}"

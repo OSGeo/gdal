@@ -778,6 +778,11 @@ ADD_LIBS	=
 # bindings. 
 #HAVE_NUMPY=1
 
+# Set HAVE_LERC=0 to disable LERC support
+!IFNDEF HAVE_LERC
+HAVE_LERC=1
+!ENDIF
+
 ########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
 
 

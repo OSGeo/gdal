@@ -187,6 +187,8 @@ typedef enum {
 #define     COMPRESSION_SGILOG		34676	/* SGI Log Luminance RLE */
 #define     COMPRESSION_SGILOG24	34677	/* SGI Log 24-bit packed */
 #define     COMPRESSION_JP2000          34712   /* Leadtools JPEG2000 */
+#define     COMPRESSION_LERC            34887   /* ESRI Lerc codec: https://github.com/Esri/lerc */
+/* compression codes 34887-34889 are reserved for ESRI */
 #define	    COMPRESSION_LZMA		34925	/* LZMA2 */
 #define	    COMPRESSION_ZSTD		34926	/* ZSTD: WARNING not registered in Adobe-maintained registry */
 #define	TIFFTAG_PHOTOMETRIC		262	/* photometric interpretation */
@@ -449,6 +451,8 @@ typedef enum {
 /* tag 34929 is a private tag registered to FedEx */
 #define	TIFFTAG_FEDEX_EDR		34929	/* unknown use */
 #define TIFFTAG_INTEROPERABILITYIFD	40965	/* Pointer to Interoperability private directory */
+/* tags 50674 to 50677 are reserved for ESRI */
+#define TIFFTAG_LERC_PARAMETERS         50674   /* Stores LERC version and additional compression method */
 /* Adobe Digital Negative (DNG) format tags */
 #define TIFFTAG_DNGVERSION		50706	/* &DNG version number */
 #define TIFFTAG_DNGBACKWARDVERSION	50707	/* &DNG compatibility version */
@@ -603,6 +607,13 @@ typedef enum {
 #define     PERSAMPLE_MERGED        0	/* present as a single value */
 #define     PERSAMPLE_MULTI         1	/* present as multiple values */
 #define TIFFTAG_ZSTD_LEVEL      65564    /* ZSTD compression level */
+#define TIFFTAG_LERC_VERSION            65565 /* LERC version */
+#define     LERC_VERSION_2_4            4
+#define TIFFTAG_LERC_ADD_COMPRESSION    65566 /* LERC additional compression */
+#define     LERC_ADD_COMPRESSION_NONE    0
+#define     LERC_ADD_COMPRESSION_DEFLATE 1
+#define     LERC_ADD_COMPRESSION_ZSTD    2
+#define TIFFTAG_LERC_MAXZERROR          65567    /* LERC maximum error */
 
 /*
  * EXIF tags
