@@ -32,9 +32,9 @@ Contributors:  Thomas Maurer, Lucian Plesea
 #include "cpl_port.h"
 #endif
 
-#define NAMESPACE_LERC_START namespace LercNS {
+#define NAMESPACE_LERC_START namespace GDAL_LercNS {
 #define NAMESPACE_LERC_END }
-#define USING_NAMESPACE_LERC using namespace LercNS;
+#define USING_NAMESPACE_LERC using namespace GDAL_LercNS;
 
 NAMESPACE_LERC_START
 

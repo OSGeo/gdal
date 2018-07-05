@@ -21,8 +21,8 @@ Contributors:  Lucian Plesea
 
 #include "marfa.h"
 #include <algorithm>
-#include <CntZImage.h>
-#include <Lerc2.h>
+#include "CntZImage.h"
+#include "Lerc2.h"
 
 CPL_CVSID("$Id$")
 
@@ -262,7 +262,7 @@ static CPLErr DecompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 
 // Populate a bitmask based on comparison with the image no data value
 // Returns the number of NoData values found
-template <typename T> static int MaskFill(BitMask2 &bitMask, T *src, const ILImage &img)
+template <typename T> static int MaskFill(BitMask &bitMask, T *src, const ILImage &img)
 {
     int w = img.pagesize.x;
     int h = img.pagesize.y;
@@ -290,7 +290,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     int w = img.pagesize.x;
     int h = img.pagesize.y;
     // So we build a bitmask to pass a pointer to bytes, which gets converted to a bitmask?
-    BitMask2 bitMask;
+    BitMask bitMask;
     int ndv_count = 0;
     if (img.hasNoData) { // Only build a bitmask if no data value is defined
         switch (img.dt) {
@@ -310,7 +310,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
         }
     }
     // Set bitmask if it has some ndvs
-    Lerc2 lerc2(w, h, (ndv_count == 0) ? nullptr : bitMask.Bits());
+    Lerc2 lerc2(1, w, h, (ndv_count == 0) ? nullptr : bitMask.Bits());
     bool success = false;
     Byte *ptr = (Byte *)dst.buffer;
 
@@ -345,7 +345,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
 }
 
 // Populate a bitmask based on comparison with the image no data value
-template <typename T> static void UnMask(BitMask2 &bitMask, T *arr, const ILImage &img)
+template <typename T> static void UnMask(BitMask &bitMask, T *arr, const ILImage &img)
 {
     int w = img.pagesize.x;
     int h = img.pagesize.y;
@@ -366,10 +366,6 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     const Byte *ptr = reinterpret_cast<Byte *>(src.buffer);
     Lerc2::HeaderInfo hdInfo;
     Lerc2 lerc2;
-    if (src.size < Lerc2::ComputeNumBytesHeader()) {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Invalid LERC");
-        return CE_Failure;
-    }
 
     // If not Lerc2 switch to Lerc
     if (!lerc2.GetHeaderInfo(ptr, src.size, hdInfo))
@@ -393,7 +389,7 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     // we need to add the padding bytes so that out-of-buffer-access checksum
     // don't false-positively trigger.
     size_t nRemainingBytes = src.size + PADDING_BYTES;
-    BitMask2 bitMask(img.pagesize.x, img.pagesize.y);
+    BitMask bitMask(img.pagesize.x, img.pagesize.y);
     switch (img.dt) {
 #define DECODE(T) success = lerc2.Decode(&ptr, nRemainingBytes, reinterpret_cast<T *>(dst.buffer), bitMask.Bits())
     case GDT_Byte:      DECODE(GByte);      break;
@@ -470,7 +466,7 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     ILSize size(-1, -1, 1, 1, 1);
 
     // Try lerc2
-    if (sHeader.size() >= Lerc2::ComputeNumBytesHeader()) {
+    {
         Lerc2 l2;
         Lerc2::HeaderInfo hinfo;
         hinfo.RawInit();

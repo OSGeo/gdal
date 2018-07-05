@@ -26,7 +26,7 @@ In the encoded stream there are two types of sequences and an end marker
 0 to 4 byte repeats are not encoded as repeated byte sequence
 */
 
-#include "BitMask.h"
+#include "BitMaskV1.h"
 #include <cassert>
 
 NAMESPACE_LERC_START
@@ -40,7 +40,7 @@ NAMESPACE_LERC_START
 // Returns false if input seems wrong
 // Not safe if fed garbage !!!
 // Zero size mask is fine, only checks the end marker
-bool BitMask::RLEdecompress(const Byte* src, size_t nRemainingBytes) const {
+bool BitMaskV1::RLEdecompress(const Byte* src, size_t nRemainingBytes) const {
     Byte *dst = m_pBits;
     int sz = Size();
     short int count;
@@ -106,7 +106,7 @@ inline static int run_length(const Byte *s, int max_count)
 //
 // RLE compressed size is bound by n + 4 + 2 * (n - 1) / 32767
 //
-int BitMask::RLEcompress(Byte *dst) const {
+int BitMaskV1::RLEcompress(Byte *dst) const {
     assert(dst);
     // Next input byte
     Byte *src = m_pBits;
@@ -149,7 +149,7 @@ int BitMask::RLEcompress(Byte *dst) const {
 }
 
 // calculate encoded size
-int BitMask::RLEsize() const {
+int BitMaskV1::RLEsize() const {
     // Next input byte
     Byte *src = m_pBits;
     // left to process

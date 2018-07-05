@@ -17,8 +17,8 @@ Contributors:
     Lucian Plesea
 */
 
-#ifndef LERC_DEFINES_H
-#define LERC_DEFINES_H
+#ifndef LERC_DEFINESV1_H
+#define LERC_DEFINESV1_H
 
 // For std::pair
 #include <utility>
@@ -34,9 +34,11 @@ Contributors:
 #define LERC_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 #endif
 
-#define NAMESPACE_LERC_START namespace MRF_LercNS {
+#ifndef NAMESPACE_LERC_START
+#define NAMESPACE_LERC_START namespace GDAL_LercNS {
 #define NAMESPACE_LERC_END }
-#define USING_NAMESPACE_LERC using namespace MRF_LercNS;
+#define USING_NAMESPACE_LERC using namespace GDAL_LercNS;
+#endif
 
 NAMESPACE_LERC_START
 
