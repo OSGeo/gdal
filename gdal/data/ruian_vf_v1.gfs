@@ -1919,10 +1919,72 @@
       <Type>IntegerList</Type>
       <SubType>Integer64</SubType>
     </PropertyDefn>
-    <!-- Detailní tecnicko-ekonomické atributy (TEA) -->
+    <!-- Detailní technicko-ekonomické atributy (TEA) -->
     <PropertyDefn>
       <Name>DetailniTEAKod</Name>
-      <ElementPath>DetailniTEA|Kod</ElementPath>
+      <ElementPath>DetailniTEA|DetailniTEA|Kod</ElementPath>
+      <Type>IntegerList</Type>
+    </PropertyDefn>
+    <!-- TEA - Začátek platnosti -->
+    <PropertyDefn>
+      <Name>DetailniTEAPlatiOd</Name>
+      <ElementPath>DetailniTEA|DetailniTEA|PlatiOd</ElementPath>
+      <Type>StringList</Type>
+      <Width>19</Width>
+    </PropertyDefn>
+    <!-- TEA - ID návrhu změny v ISUI -->
+    <PropertyDefn>
+      <Name>DetailniTEAGlobalniIdNavrhuZmeny</Name>
+      <ElementPath>DetailniTEA|DetailniTEA|GlobalniIdNavrhuZmeny</ElementPath>
+      <Type>IntegerList</Type>
+      <SubType>Integer64</SubType>
+    </PropertyDefn>
+    <!-- TEA - Druh svislé nosné konstrukce -->
+    <PropertyDefn>
+      <Name>DetailniTEADruhKonstrukceKod</Name>
+      <ElementPath>DetailniTEA|DetailniTEA|DruhKonstrukceKod</ElementPath>
+      <Type>IntegerList</Type>
+    </PropertyDefn>
+    <!-- TEA - Počet bytů u stavebního objektu s byty -->
+    <PropertyDefn>
+      <Name>DetailniTEAPocetBytu</Name>
+      <ElementPath>DetailniTEA|DetailniTEA|PocetBytu</ElementPath>
+      <Type>IntegerList</Type>
+    </PropertyDefn>
+    <!-- TEA - Počet nadzemních a podzemních podlaží -->
+    <PropertyDefn>
+      <Name>DetailniTEAPocetPodlazi</Name>
+      <ElementPath>DetailniTEA|DetailniTEA|PocetPodlazi</ElementPath>
+      <Type>IntegerList</Type>
+    </PropertyDefn>
+    <!-- TEA - Připojení na kanalizační síť -->
+    <PropertyDefn>
+      <Name>DetailniTEAPripojeniKanalizaceKod</Name>
+      <ElementPath>DetailniTEA|DetailniTEA|PripojeniKanalizaceKod</ElementPath>
+      <Type>IntegerList</Type>
+    </PropertyDefn>
+    <!-- TEA - Připojení na rozvod plynu -->
+    <PropertyDefn>
+      <Name>DetailniTEAPripojeniPlynKod</Name>
+      <ElementPath>DetailniTEA|DetailniTEA|PripojeniPlynKod</ElementPath>
+      <Type>IntegerList</Type>
+    </PropertyDefn>
+    <!-- TEA - Připojení na vodovod -->
+    <PropertyDefn>
+      <Name>DetailniTEAPripojeniVodovodKod</Name>
+      <ElementPath>DetailniTEA|DetailniTEA|PripojeniVodovodKod</ElementPath>
+      <Type>IntegerList</Type>
+    </PropertyDefn>
+    <!-- TEA - Vybavení výtahem -->
+    <PropertyDefn>
+      <Name>DetailniTEAZpusobVytapeniKod</Name>
+      <ElementPath>DetailniTEA|DetailniTEA|ZpusobVytapeniKod</ElementPath>
+      <Type>IntegerList</Type>
+    </PropertyDefn>
+    <!-- TEA - Kód adresního místa -->
+    <PropertyDefn>
+      <Name>DetailniTEAAdresniMistoKod</Name>
+      <ElementPath>DetailniTEA|DetailniTEA|AdresniMistoKod|Kod</ElementPath>
       <Type>IntegerList</Type>
     </PropertyDefn>
   </GMLFeatureClass>
