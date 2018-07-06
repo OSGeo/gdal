@@ -33,7 +33,7 @@ USING_NAMESPACE_LERC
 lerc_status lerc_computeCompressedSize(const void* pData, int version, unsigned int dataType, int nDim, int nCols, int nRows, int nBands, 
   const unsigned char* pValidBytes, double maxZErr, unsigned int* numBytes)
 {
-  if (!pData || (version >= 0 && version < 2) || version > 4 || dataType >= Lerc::DT_Undefined || nDim <= 0 || nCols <= 0 || nRows <= 0 || nBands <= 0 || maxZErr < 0 || !numBytes)
+  if (!pData || dataType >= Lerc::DT_Undefined || nDim <= 0 || nCols <= 0 || nRows <= 0 || nBands <= 0 || maxZErr < 0 || !numBytes)
     return (lerc_status)ErrCode::WrongParam;
 
   BitMask bitMask;
@@ -59,7 +59,7 @@ lerc_status lerc_encode(const void* pData, int version, unsigned int dataType, i
   const unsigned char* pValidBytes, double maxZErr, unsigned char* pOutBuffer, unsigned int outBufferSize,
   unsigned int* nBytesWritten)
 {
-  if (!pData || (version >= 0 && version < 2) || version > 4 || dataType >= Lerc::DT_Undefined || nDim <= 0 || nCols <= 0 || nRows <= 0 || nBands <= 0 || maxZErr < 0 || !pOutBuffer || !outBufferSize || !nBytesWritten)
+  if (!pData || dataType >= Lerc::DT_Undefined || nDim <= 0 || nCols <= 0 || nRows <= 0 || nBands <= 0 || maxZErr < 0 || !pOutBuffer || !outBufferSize || !nBytesWritten)
     return (lerc_status)ErrCode::WrongParam;
 
   BitMask bitMask;

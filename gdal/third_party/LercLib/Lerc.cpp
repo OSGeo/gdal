@@ -262,14 +262,14 @@ ErrCode Lerc::ComputeCompressedSizeTempl(const T* pData, int version, int nDim, 
 {
   numBytesNeeded = 0;
 
-  if (!pData || (version >= 0 && version < 2) || version > 4 || nDim <= 0 || nCols <= 0 || nRows <= 0 || nBands <= 0 || maxZErr < 0)
+  if (!pData || nDim <= 0 || nCols <= 0 || nRows <= 0 || nBands <= 0 || maxZErr < 0)
     return ErrCode::WrongParam;
 
   if (pBitMask && (pBitMask->GetHeight() != nRows || pBitMask->GetWidth() != nCols))
     return ErrCode::WrongParam;
 
   Lerc2 lerc2;
-  if( version > 0 && !lerc2.SetEncoderToOldVersion(version) )
+  if( version >= 0 && !lerc2.SetEncoderToOldVersion(version) )
     return ErrCode::WrongParam;
   bool rv = pBitMask ? lerc2.Set(nDim, nCols, nRows, pBitMask->Bits()) : lerc2.Set(nDim, nCols, nRows);
   if (!rv)
@@ -297,14 +297,14 @@ ErrCode Lerc::EncodeTempl(const T* pData, int version, int nDim, int nCols, int 
 {
   numBytesWritten = 0;
 
-  if (!pData || (version >= 0 && version < 2) || version > 4 || nDim <= 0 || nCols <= 0 || nRows <= 0 || nBands <= 0 || maxZErr < 0 || !pBuffer || !numBytesBuffer)
+  if (!pData || nDim <= 0 || nCols <= 0 || nRows <= 0 || nBands <= 0 || maxZErr < 0 || !pBuffer || !numBytesBuffer)
     return ErrCode::WrongParam;
 
   if (pBitMask && (pBitMask->GetHeight() != nRows || pBitMask->GetWidth() != nCols))
     return ErrCode::WrongParam;
 
   Lerc2 lerc2;
-  if( version > 0 && !lerc2.SetEncoderToOldVersion(version) )
+  if( version >= 0 && !lerc2.SetEncoderToOldVersion(version) )
     return ErrCode::WrongParam;
   bool rv = pBitMask ? lerc2.Set(nDim, nCols, nRows, pBitMask->Bits()) : lerc2.Set(nDim, nCols, nRows);
   if (!rv)
