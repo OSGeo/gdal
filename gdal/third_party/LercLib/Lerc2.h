@@ -482,9 +482,13 @@ bool Lerc2::Decode(const Byte** ppByte, size_t& nBytesRemaining, T* arr, Byte* p
   {
     int nBytes = (int)(FileKey().length() + sizeof(int) + sizeof(unsigned int));    // start right after the checksum entry
     unsigned int checksum = ComputeChecksumFletcher32(ptrBlob + nBytes, m_headerInfo.blobSize - nBytes);
-
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    // For fuzzing, ignore checksum verification
+    (void)checksum;
+#else
     if (checksum != m_headerInfo.checksum)
       return false;
+#endif
   }
 
   if (!ReadMask(ppByte, nBytesRemaining))
