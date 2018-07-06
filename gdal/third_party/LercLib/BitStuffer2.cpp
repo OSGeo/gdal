@@ -193,6 +193,8 @@ bool BitStuffer2::Decode(const Byte** ppByte, size_t& nBytesRemaining, vector<un
   }
   else
   {
+    if (numBits == 0)
+      return false;
     if (nBytesRemaining < 1)
       return false;
 
