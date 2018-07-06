@@ -2876,6 +2876,41 @@ GDALDatasetH CPL_STDCALL GDALGetBandDataset( GDALRasterBandH hBand )
 }
 
 /************************************************************************/
+/*                        ComputeFloatNoDataValue()                     */
+/************************************************************************/
+
+static inline void ComputeFloatNoDataValue( GDALDataType eDataType,
+                                            double dfNoDataValue,
+                                            int& bGotNoDataValue,
+                                            float& fNoDataValue,
+                                            bool& bGotFloatNoDataValue )
+{
+    if( eDataType == GDT_Float32 && bGotNoDataValue )
+    {
+        if (GDALIsValueInRange<float>(dfNoDataValue) )
+        {
+            fNoDataValue = static_cast<float>(dfNoDataValue);
+            bGotFloatNoDataValue = true;
+            bGotNoDataValue = false;
+        }
+        else if( fabs(dfNoDataValue - std::numeric_limits<float>::max()) <
+                         1e-10 * std::numeric_limits<float>::max() )
+        {
+            fNoDataValue = std::numeric_limits<float>::max();
+            bGotFloatNoDataValue = true;
+            bGotNoDataValue = false;
+        }
+        else if( fabs(dfNoDataValue - (-std::numeric_limits<float>::max())) <
+                         1e-10 * std::numeric_limits<float>::max() )
+        {
+            fNoDataValue = -std::numeric_limits<float>::max();
+            bGotFloatNoDataValue = true;
+            bGotNoDataValue = false;
+        }
+    }
+}
+
+/************************************************************************/
 /*                            GetHistogram()                            */
 /************************************************************************/
 
@@ -2973,13 +3008,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
         !CPLTestBool(CPLGetConfigOption("GDAL_NODATA_IN_HISTOGRAM", "NO"));
     bool bGotFloatNoDataValue = false;
     float fNoDataValue = 0.0f;
-    if( eDataType == GDT_Float32 && bGotNoDataValue &&
-        GDALIsValueInRange<float>(dfNoDataValue) )
-    {
-        fNoDataValue = static_cast<float>(dfNoDataValue);
-        bGotFloatNoDataValue = true;
-        bGotNoDataValue = false;
-    }
+    ComputeFloatNoDataValue( eDataType, dfNoDataValue, bGotNoDataValue,
+                            fNoDataValue, bGotFloatNoDataValue );
 
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     const bool bSignedByte =
@@ -4802,13 +4832,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     bGotNoDataValue = bGotNoDataValue && !CPLIsNan(dfNoDataValue);
     bool bGotFloatNoDataValue = false;
     float fNoDataValue = 0.0f;
-    if( eDataType == GDT_Float32 && bGotNoDataValue &&
-        GDALIsValueInRange<float>(dfNoDataValue) )
-    {
-        fNoDataValue = static_cast<float>(dfNoDataValue);
-        bGotFloatNoDataValue = true;
-        bGotNoDataValue = false;
-    }
+    ComputeFloatNoDataValue( eDataType, dfNoDataValue, bGotNoDataValue,
+                            fNoDataValue, bGotFloatNoDataValue );
 
     const char* pszPixelType =
         GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
@@ -5456,14 +5481,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
     bGotNoDataValue = bGotNoDataValue && !CPLIsNan(dfNoDataValue);
     bool bGotFloatNoDataValue = false;
     float fNoDataValue = 0.0f;
-    if( eDataType == GDT_Float32 && bGotNoDataValue &&
-        (fabs(dfNoDataValue) <= std::numeric_limits<float>::max() ||
-         CPLIsInf(dfNoDataValue)) )
-    {
-        fNoDataValue = static_cast<float>(dfNoDataValue);
-        bGotFloatNoDataValue = true;
-        bGotNoDataValue = false;
-    }
+    ComputeFloatNoDataValue( eDataType, dfNoDataValue, bGotNoDataValue,
+                            fNoDataValue, bGotFloatNoDataValue );
 
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     const bool bSignedByte =
