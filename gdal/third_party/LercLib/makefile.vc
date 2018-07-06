@@ -7,5 +7,4 @@ default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o
 
 clean:
-	-del *.obj
-
+	-del ..\o\*.obj
