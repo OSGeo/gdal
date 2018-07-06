@@ -2019,7 +2019,6 @@ CPLErr CPLCloseFileInZip( void *hZip )
 
 /** Close ZIP file */
 CPLErr CPLCloseZip( void *hZip )
-
 {
     if( hZip == nullptr )
         return CE_Failure;
