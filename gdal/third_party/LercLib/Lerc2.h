@@ -915,6 +915,12 @@ bool Lerc2::ReadTiles(const Byte** ppByte, size_t& nBytesRemaining, T* data) con
   int mbSize = hd.microBlockSize;
   int nDim = hd.nDim;
 
+  if( mbSize <= 0 || hd.nRows < 0 || hd.nCols < 0 ||
+      hd.nRows > std::numeric_limits<int>::max() - (mbSize - 1) ||
+      hd.nCols > std::numeric_limits<int>::max() - (mbSize - 1) )
+  {
+    return false;
+  }
   int numTilesVert = (hd.nRows + mbSize - 1) / mbSize;
   int numTilesHori = (hd.nCols + mbSize - 1) / mbSize;
 
