@@ -1157,6 +1157,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     zi->ci.stream.next_out = zi->ci.buffered_data;
     zi->ci.stream.total_in = 0;
     zi->ci.stream.total_out = 0;
+    zi->ci.stream.data_type = Z_UNKNOWN;
 
     if ((err==ZIP_OK) && (zi->ci.method == Z_DEFLATED) && (!zi->ci.raw))
     {
