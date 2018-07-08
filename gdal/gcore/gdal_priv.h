@@ -1274,6 +1274,12 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 
     GDALRasterBand *GetMaskBand() override;
     int             GetMaskFlags() override;
+
+    CPLErr ComputeStatistics( int bApproxOK,
+                            double *pdfMin, double *pdfMax,
+                            double *pdfMean, double *pdfStdDev,
+                            GDALProgressFunc, void *pProgressData ) override;
+
 };
 
 /* ******************************************************************** */
