@@ -460,6 +460,9 @@ void BitStuffer2::BitStuff(Byte** ppByte, const vector<unsigned int>& dataVec, i
 bool BitStuffer2::BitUnStuff(const Byte** ppByte, size_t& nBytesRemaining, vector<unsigned int>& dataVec,
   unsigned int numElements, int numBits) const
 {
+  if( numElements == 0 )
+    return false;
+
   dataVec.resize(numElements);
 
   unsigned int numUInts = (numElements * numBits + 31) / 32;
