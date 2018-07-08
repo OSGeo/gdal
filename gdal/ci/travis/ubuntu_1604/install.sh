@@ -5,6 +5,9 @@ set -e
 export chroot="$PWD"/xenial
 export LC_ALL=en_US.utf8
 
+chroot "$chroot" ccache -M 1G
+chroot "$chroot" ccache -s
+
 chroot "$chroot" sh -c "cd $PWD && fossil clone https://www.gaia-gis.it/fossil/librasterlite2 librasterlite2.fossil && mkdir rl2 && cd rl2 && fossil open ../librasterlite2.fossil && CCACHE_CPP2=yes CC='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' CXX='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' ./configure --prefix=/usr && CCACHE_CPP2=yes make -j3"
 sudo chroot "$chroot" sh -c "cd $PWD && cd rl2 && make -j3 install"
 
@@ -22,3 +25,5 @@ sudo chroot "$chroot" sh -c "rm -f /usr/lib/libgdal.so*"
 sudo chroot "$chroot" sh -c "cd $PWD/gdal && make install"
 sudo chroot "$chroot" sh -c "sudo ldconfig"
 chroot "$chroot" sh -c "cd $PWD/autotest/cpp && CCACHE_CPP2=yes make -j3"
+
+chroot "$chroot" ccache -s

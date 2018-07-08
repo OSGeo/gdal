@@ -11,6 +11,9 @@ export ASAN_OPTIONS=allocator_may_return_null=1
 cd gdal
 export CCACHE_CPP2=yes
 
+ccache -M 1G
+ccache -s
+
 # build proj
 curl http://download.osgeo.org/proj/proj-4.9.3.tar.gz > proj-4.9.3.tar.gz
 tar xvzf proj-4.9.3.tar.gz
@@ -63,3 +66,5 @@ cd ../../gdal
 #wget https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/mdb-sqlite/mdb-sqlite-1.0.2.tar.bz2
 #tar xjvf mdb-sqlite-1.0.2.tar.bz2
 #sudo cp mdb-sqlite-1.0.2/lib/*.jar /usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext
+
+ccache -s
