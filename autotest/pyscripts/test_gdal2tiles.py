@@ -77,7 +77,7 @@ def test_gdal2tiles_py_zoom_option():
         return 'skip'
 
     # Issue with multiprocessing in the chroot
-    if os.environ.get('BUILD_NAME', '') == 'trusty_32bit':
+    if os.environ.get('BUILD_NAME', '') in ('trusty_32bit', 'ubuntu_1804'):
         return 'skip'
 
     shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
