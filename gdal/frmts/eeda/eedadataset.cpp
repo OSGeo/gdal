@@ -31,7 +31,6 @@
 #include "cpl_conv.h"
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonwriter.h"
-#include "json_object_private.h"
 #include "swq.h"
 #include "eeda.h"
 
