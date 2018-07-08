@@ -28,11 +28,29 @@
 
 // Use GDAL_TEST_ROOT_DIR for the root directory of test project's source
 #ifdef GDAL_TEST_ROOT_DIR
-#define GCORE_DATA_DIR GDAL_TEST_ROOT_DIR "/gcore/data/"
-#define GDRIVERS_DIR GDAL_TEST_ROOT_DIR "/gdrivers/"
+
+#ifndef SEP
+#if defined(WIN32)
+#define SEP "\\"
 #else
+#define SEP "/"
+#endif
+#endif
+
+#define GCORE_DATA_DIR GDAL_TEST_ROOT_DIR SEP "gcore" SEP "data" SEP
+#define GDRIVERS_DIR GDAL_TEST_ROOT_DIR SEP "gdrivers" SEP
+
+#define TUT_ROOT_DATA_DIR GDAL_TEST_ROOT_DIR SEP "cpp" SEP "data"
+#define TUT_ROOT_TMP_DIR GDAL_TEST_ROOT_DIR  SEP "cpp" SEP "tmp"
+
+#else
+
 #define GCORE_DATA_DIR "../gcore/data/"
 #define GDRIVERS_DIR "../gdrivers/"
+
+#define TUT_ROOT_DATA_DIR "data"
+#define TUT_ROOT_TMP_DIR "tmp"
+
 #endif
 
 #endif //GDAL_TEST_DATA_H
