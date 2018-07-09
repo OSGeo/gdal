@@ -41,6 +41,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <unordered_set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -3923,7 +3924,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         /* This helps when converting a source layer that has duplicated field names */
         /* which is a bad idea */
         std::map<CPLString, int> oMapPreExistingFields;
-        std::set<CPLString> oSetDstFieldNames;
+        std::unordered_set<std::string> oSetDstFieldNames;
         for( int iField = 0; iField < nDstFieldCount; iField++ )
         {
             const char* pszFieldName = poDstFDefn->GetFieldDefn(iField)->GetNameRef();
@@ -3961,7 +3962,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             }
         }
 
-        std::set<CPLString> oSetSrcFieldNames;
+        std::unordered_set<std::string> oSetSrcFieldNames;
         for( int i = 0; i < poSrcFDefn->GetFieldCount(); i++ )
         {
             oSetSrcFieldNames.insert(
@@ -4007,22 +4008,26 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                                                     oSetDstFieldNames.end() )
             {
                 int nTry = 1;
+                CPLString osTmpNameRaddixUC(oFieldDefn.GetNameRef());
+                osTmpNameRaddixUC.toupper();
+                CPLString osTmpNameUC = osTmpNameRaddixUC;
+                osTmpNameUC.reserve(osTmpNameUC.size() + 10);
                 while( true )
                 {
                     ++nTry;
-                    CPLString osTmpName;
-                    osTmpName.Printf("%s%d", oFieldDefn.GetNameRef(), nTry);
+                    char szTry[32];
+                    snprintf(szTry, sizeof(szTry), "%d", nTry);
+                    osTmpNameUC.replace(osTmpNameRaddixUC.size(), std::string::npos, szTry);
+
                     /* Check that the proposed name doesn't exist either in the already */
                     /* created fields or in the source fields */
-                    if( oSetDstFieldNames.find(
-                            CPLString(osTmpName).toupper()) ==
+                    if( oSetDstFieldNames.find(osTmpNameUC) ==
                                                     oSetDstFieldNames.end() &&
-                        oSetSrcFieldNames.find(
-                            CPLString(osTmpName).toupper()) ==
+                        oSetSrcFieldNames.find(osTmpNameUC) ==
                                                     oSetSrcFieldNames.end() )
                     {
                         bHasRenamed = true;
-                        oFieldDefn.SetName(osTmpName);
+                        oFieldDefn.SetName((CPLString(oFieldDefn.GetNameRef()) + szTry).c_str());
                         break;
                     }
                 }

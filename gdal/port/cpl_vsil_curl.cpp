@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <set>
 #include <map>
+#include <memory>
 
 #include "cpl_aws.h"
 #include "cpl_google_cloud.h"
@@ -47,6 +48,7 @@
 #include "cpl_vsi.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_http.h"
+#include "cpl_mem_cache.h"
 
 CPL_CVSID("$Id$")
 
@@ -83,6 +85,11 @@ void VSIInstallSwiftFileHandler( void )
 }
 
 void VSICurlClearCache( void )
+{
+    // Not supported.
+}
+
+void VSICurlPartialClearCache(const char* )
 {
     // Not supported.
 }
@@ -161,14 +168,6 @@ typedef struct
 
 typedef struct
 {
-    unsigned long   pszURLHash;
-    vsi_l_offset    nFileOffsetStart;
-    size_t          nSize;
-    char           *pData;
-} CachedRegion;
-
-typedef struct
-{
     char*           pBuffer;
     size_t          nSize;
     bool            bIsHTTP;
@@ -189,11 +188,6 @@ typedef struct
     void               *pReadCbkUserData;
     bool                bInterrupted;
 } WriteFuncStruct;
-
-static const char* VSICurlGetCacheFileName()
-{
-    return "gdal_vsicurl_cache.bin";
-}
 
 /************************************************************************/
 /*          VSICurlFindStringSensitiveExceptEscapeSequences()           */
@@ -280,13 +274,40 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSICurlFilesystemHandler)
 
-    CachedRegion  **papsRegions = nullptr;
-    int             nRegions = 0;
+    struct FilenameOffsetPair
+    {
+        std::string filename_;
+        vsi_l_offset offset_;
+
+        FilenameOffsetPair(const std::string& filename,
+                           vsi_l_offset offset) :
+            filename_(filename), offset_(offset) {}
+
+        bool operator==(const FilenameOffsetPair& other) const
+        {
+            return filename_ == other.filename_ &&
+                   offset_ == other.offset_;
+        }
+    };
+    struct FilenameOffsetPairHasher
+    {
+        std::size_t operator()(const FilenameOffsetPair& k) const
+        {
+            return std::hash<std::string>()(k.filename_) ^
+                   std::hash<vsi_l_offset>()(k.offset_);
+        }
+    };
+    lru11::Cache<FilenameOffsetPair, std::shared_ptr<std::string>,
+        lru11::NullLock,
+        std::unordered_map<
+            FilenameOffsetPair,
+            typename std::list<lru11::KeyValuePair<FilenameOffsetPair,
+                std::shared_ptr<std::string>>>::iterator,
+                FilenameOffsetPairHasher>>
+                    oRegionCache{static_cast<size_t>(N_MAX_REGIONS)};
 
     std::map<CPLString, CachedFileProp*>   cacheFileSize{};
     std::map<CPLString, CachedDirList*>        cacheDirList{};
-
-    bool            bUseCacheDisk = false;
 
     // Per-thread Curl connection cache.
     std::map<GIntBig, CachedConnection*> mapConnections{};
@@ -304,6 +325,8 @@ protected:
                                int nMaxFiles,
                                bool* pbGotFileList);
     virtual CPLString GetURLFromDirname( const CPLString& osDirname );
+
+    void RegisterEmptyDir( const CPLString& osDirname );
 
     void AnalyseS3FileList( const CPLString& osBaseURL,
                             const char* pszXML,
@@ -361,7 +384,7 @@ public:
     virtual CPLString GetFSPrefix() { return "/vsicurl/"; }
     virtual bool      AllowCachedDataFor(const char* pszFilename);
 
-    const CachedRegion* GetRegion( const char* pszURL,
+    std::shared_ptr<std::string> GetRegion( const char* pszURL,
                                    vsi_l_offset nFileOffsetStart );
 
     void                AddRegion( const char* pszURL,
@@ -372,13 +395,10 @@ public:
     CachedFileProp*     GetCachedFileProp( const char* pszURL );
     void                InvalidateCachedData( const char* pszURL );
 
-    void                AddRegionToCacheDisk( CachedRegion* psRegion );
-    const CachedRegion* GetRegionFromCacheDisk( const char* pszURL,
-                                                vsi_l_offset nFileOffsetStart );
-
     CURLM              *GetCurlMultiHandleFor( const CPLString& osURL );
 
     virtual void        ClearCache();
+    virtual void        PartialClearCache(const char* pszFilename);
 
     bool ExistsInCacheDirList( const CPLString& osDirname, bool *pbIsDir )
     {
@@ -1286,10 +1306,11 @@ retry:
         }
         else if( response_code != 200 )
         {
-            // If HTTP 429, 502, 503 or 504 gateway timeout error retry after a
+            // If HTTP 429, 500, 502, 503, 504 error retry after a
             // pause.
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                static_cast<int>(response_code), dfRetryDelay);
+                static_cast<int>(response_code), dfRetryDelay,
+                sWriteFuncHeaderData.pBuffer);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < m_nMaxRetry )
             {
@@ -1343,6 +1364,16 @@ retry:
                     VSIError(VSIE_HttpError, "HTTP response code: %d",
                              static_cast<int>(response_code));
                 }
+            }
+            else
+            {
+                if( response_code != 400 && response_code != 404 )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "HTTP response code on %s: %d",
+                             osURL.c_str(), static_cast<int>(response_code));
+                }
+                // else a CPLDebug() is emitted below
             }
 
             eExists = EXIST_NO;
@@ -1634,10 +1665,11 @@ retry:
             return DownloadRegion(startOffset, nBlocks);
         }
 
-        // If HTTP 429, 502, 503 or 504 gateway timeout error retry after a
+        // If HTTP 429, 500, 502, 503, 504 error retry after a
         // pause.
         const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-            static_cast<int>(response_code), dfRetryDelay);
+            static_cast<int>(response_code), dfRetryDelay,
+            sWriteFuncHeaderData.pBuffer);
         if( dfNewRetryDelay > 0 &&
             nRetryCount < m_nMaxRetry )
         {
@@ -1818,12 +1850,11 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
             break;
         }
 
-        const CachedRegion* psRegion = poFS->GetRegion(m_pszURL, iterOffset);
+        const vsi_l_offset nOffsetToDownload =
+                (iterOffset / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
+        std::shared_ptr<std::string> psRegion = poFS->GetRegion(m_pszURL, nOffsetToDownload);
         if( psRegion == nullptr )
         {
-            const vsi_l_offset nOffsetToDownload =
-                (iterOffset / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
-
             if( nOffsetToDownload == lastDownloadedOffset )
             {
                 // In case of consecutive reads (of small size), we use a
@@ -1875,22 +1906,22 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
             }
             psRegion = poFS->GetRegion(m_pszURL, iterOffset);
         }
-        if( psRegion == nullptr || psRegion->pData == nullptr )
+        if( psRegion == nullptr )
         {
             bEOF = true;
             return 0;
         }
         const int nToCopy = static_cast<int>(
             std::min(static_cast<vsi_l_offset>(nBufferRequestSize),
-                     psRegion->nSize -
-                     (iterOffset - psRegion->nFileOffsetStart)));
+                     psRegion->size() -
+                     (iterOffset - nOffsetToDownload)));
         memcpy(pBuffer,
-               psRegion->pData + iterOffset - psRegion->nFileOffsetStart,
+               psRegion->data() + iterOffset - nOffsetToDownload,
                nToCopy);
         pBuffer = static_cast<char *>(pBuffer) + nToCopy;
         iterOffset += nToCopy;
         nBufferRequestSize -= nToCopy;
-        if( psRegion->nSize != static_cast<size_t>(DOWNLOAD_CHUNK_SIZE) &&
+        if( psRegion->size() != static_cast<size_t>(DOWNLOAD_CHUNK_SIZE) &&
             nBufferRequestSize != 0 )
         {
             break;
@@ -2556,9 +2587,7 @@ int       VSICurlHandle::Close()
 /*                   VSICurlFilesystemHandler()                         */
 /************************************************************************/
 
-VSICurlFilesystemHandler::VSICurlFilesystemHandler():
-    bUseCacheDisk(
-        CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_CACHE", "NO")))
+VSICurlFilesystemHandler::VSICurlFilesystemHandler()
 {
 }
 
@@ -2619,155 +2648,25 @@ CURLM* VSICurlFilesystemHandler::GetCurlMultiHandleFor(const CPLString& /*osURL*
 }
 
 /************************************************************************/
-/*                   GetRegionFromCacheDisk()                           */
-/************************************************************************/
-
-const CachedRegion*
-VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
-                                                 vsi_l_offset nFileOffsetStart)
-{
-    nFileOffsetStart =
-        (nFileOffsetStart / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
-    VSILFILE* fp = VSIFOpenL(VSICurlGetCacheFileName(), "rb");
-    if( fp )
-    {
-        const unsigned long pszURLHash = CPLHashSetHashStr(pszURL);
-        while( true )
-        {
-            unsigned long pszURLHashCached = 0;
-            if( VSIFReadL(&pszURLHashCached, sizeof(unsigned long),
-                          1, fp) == 0 )
-                break;
-            vsi_l_offset nFileOffsetStartCached = 0;
-            if( VSIFReadL(&nFileOffsetStartCached, sizeof(vsi_l_offset),
-                          1, fp) == 0)
-                break;
-            size_t nSizeCached = 0;
-            if( VSIFReadL(&nSizeCached, sizeof(size_t), 1, fp) == 0)
-                break;
-            if( pszURLHash == pszURLHashCached &&
-                nFileOffsetStart == nFileOffsetStartCached )
-            {
-                if( ENABLE_DEBUG )
-                    CPLDebug("VSICURL", "Got data at offset "
-                             CPL_FRMT_GUIB " from disk", nFileOffsetStart);
-                if( nSizeCached )
-                {
-                    char* pBuffer = static_cast<char *>(CPLMalloc(nSizeCached));
-                    if( VSIFReadL(pBuffer, 1, nSizeCached, fp) != nSizeCached )
-                    {
-                        CPLFree(pBuffer);
-                        break;
-                    }
-                    AddRegion(pszURL, nFileOffsetStart, nSizeCached, pBuffer);
-                    CPLFree(pBuffer);
-                }
-                else
-                {
-                    AddRegion(pszURL, nFileOffsetStart, 0, nullptr);
-                }
-                CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-                return GetRegion(pszURL, nFileOffsetStart);
-            }
-            else
-            {
-                if( VSIFSeekL(fp, nSizeCached, SEEK_CUR) != 0 )
-                    break;
-            }
-        }
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-    }
-    return nullptr;
-}
-
-/************************************************************************/
-/*                  AddRegionToCacheDisk()                                */
-/************************************************************************/
-
-void VSICurlFilesystemHandler::AddRegionToCacheDisk(CachedRegion* psRegion)
-{
-    VSILFILE* fp = VSIFOpenL(VSICurlGetCacheFileName(), "r+b");
-    if( fp )
-    {
-        while( true )
-        {
-            unsigned long pszURLHashCached = 0;
-            if( VSIFReadL(&pszURLHashCached, 1, sizeof(unsigned long),
-                          fp) == 0 )
-                break;
-            vsi_l_offset nFileOffsetStartCached = 0;
-            if( VSIFReadL(&nFileOffsetStartCached, sizeof(vsi_l_offset), 1, fp)
-                == 0 )
-                break;
-            size_t nSizeCached = 0;
-            if( VSIFReadL(&nSizeCached, sizeof(size_t), 1, fp) == 0 )
-                break;
-            if( psRegion->pszURLHash == pszURLHashCached &&
-                psRegion->nFileOffsetStart == nFileOffsetStartCached )
-            {
-                CPLAssert(psRegion->nSize == nSizeCached);
-                CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-                return;
-            }
-            else
-            {
-                if( VSIFSeekL(fp, nSizeCached, SEEK_CUR) != 0 )
-                    break;
-            }
-        }
-    }
-    else
-    {
-        fp = VSIFOpenL(VSICurlGetCacheFileName(), "wb");
-    }
-    if( fp )
-    {
-        if( ENABLE_DEBUG )
-            CPLDebug("VSICURL",
-                     "Write data at offset " CPL_FRMT_GUIB " to disk",
-                     psRegion->nFileOffsetStart);
-        CPL_IGNORE_RET_VAL(VSIFWriteL(&psRegion->pszURLHash, 1,
-                                      sizeof(unsigned long), fp));
-        CPL_IGNORE_RET_VAL(VSIFWriteL(&psRegion->nFileOffsetStart, 1,
-                                      sizeof(vsi_l_offset), fp));
-        CPL_IGNORE_RET_VAL(VSIFWriteL(&psRegion->nSize, 1, sizeof(size_t), fp));
-        if( psRegion->nSize )
-            CPL_IGNORE_RET_VAL(
-                VSIFWriteL(psRegion->pData, 1, psRegion->nSize, fp));
-
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-    }
-    return;
-}
-
-/************************************************************************/
 /*                          GetRegion()                                 */
 /************************************************************************/
 
-const CachedRegion*
+std::shared_ptr<std::string>
 VSICurlFilesystemHandler::GetRegion( const char* pszURL,
                                      vsi_l_offset nFileOffsetStart )
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    const unsigned long pszURLHash = CPLHashSetHashStr(pszURL);
-
     nFileOffsetStart =
         (nFileOffsetStart / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
 
-    for( int i = 0; i < nRegions; i++ )
+    std::shared_ptr<std::string> out;
+    if( oRegionCache.tryGet(
+        FilenameOffsetPair(std::string(pszURL), nFileOffsetStart), out) )
     {
-        CachedRegion* psRegion = papsRegions[i];
-        if( psRegion->pszURLHash == pszURLHash &&
-            nFileOffsetStart == psRegion->nFileOffsetStart )
-        {
-            memmove(papsRegions + 1, papsRegions, i * sizeof(CachedRegion*));
-            papsRegions[0] = psRegion;
-            return psRegion;
-        }
+        return out;
     }
-    if( bUseCacheDisk )
-        return GetRegionFromCacheDisk(pszURL, nFileOffsetStart);
+
     return nullptr;
 }
 
@@ -2782,40 +2681,11 @@ void VSICurlFilesystemHandler::AddRegion( const char* pszURL,
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    const unsigned long pszURLHash = CPLHashSetHashStr(pszURL);
-
-    CachedRegion* psRegion = nullptr;
-    if( nRegions == N_MAX_REGIONS )
-    {
-        psRegion = papsRegions[N_MAX_REGIONS-1];
-        memmove(papsRegions + 1,
-                papsRegions,
-                (N_MAX_REGIONS-1) * sizeof(CachedRegion*));
-        papsRegions[0] = psRegion;
-        CPLFree(psRegion->pData);
-    }
-    else
-    {
-        papsRegions = static_cast<CachedRegion **>(
-            CPLRealloc(papsRegions, (nRegions + 1) * sizeof(CachedRegion*)));
-        if( nRegions )
-            memmove(papsRegions + 1,
-                    papsRegions,
-                    nRegions * sizeof(CachedRegion*));
-        nRegions++;
-        psRegion = static_cast<CachedRegion *>(CPLMalloc(sizeof(CachedRegion)));
-        papsRegions[0] = psRegion;
-    }
-
-    psRegion->pszURLHash = pszURLHash;
-    psRegion->nFileOffsetStart = nFileOffsetStart;
-    psRegion->nSize = nSize;
-    psRegion->pData = nSize ? static_cast<char *>(CPLMalloc(nSize)) : nullptr;
-    if( nSize )
-        memcpy(psRegion->pData, pData, nSize);
-
-    if( bUseCacheDisk )
-        AddRegionToCacheDisk(psRegion);
+    std::shared_ptr<std::string> value(new std::string());
+    value->assign(pData, nSize);
+    oRegionCache.insert(
+        FilenameOffsetPair(std::string(pszURL), nFileOffsetStart),
+        value);
 }
 
 /************************************************************************/
@@ -2854,26 +2724,18 @@ void VSICurlFilesystemHandler::InvalidateCachedData( const char* pszURL )
     }
 
     // Invalidate all cached regions for this URL
-    const unsigned long pszURLHash = CPLHashSetHashStr(pszURL);
-    for( int i = 0; i < nRegions; )
+    std::list<FilenameOffsetPair> keysToRemove;
+    std::string osURL(pszURL);
+    auto lambda = [&keysToRemove, &osURL](
+        const lru11::KeyValuePair<FilenameOffsetPair,
+                                  std::shared_ptr<std::string>>& kv)
     {
-        CachedRegion* psRegion = papsRegions[i];
-        if( psRegion->pszURLHash == pszURLHash )
-        {
-            CPLFree(psRegion->pData);
-            CPLFree(psRegion);
-            if( i < nRegions - 1 )
-            {
-                memmove(papsRegions + i, papsRegions + i + 1,
-                        (nRegions - 1 - i) * sizeof(CachedRegion*));
-            }
-            nRegions --;
-        }
-        else
-        {
-            i ++;
-        }
-    }
+        if( kv.key.filename_ == osURL )
+            keysToRemove.push_back(kv.key);
+    };
+    oRegionCache.cwalk(lambda);
+    for( auto& key: keysToRemove )
+        oRegionCache.remove(key);
 }
 
 /************************************************************************/
@@ -2884,14 +2746,7 @@ void VSICurlFilesystemHandler::ClearCache()
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    for( int i=0; i < nRegions; i++ )
-    {
-        CPLFree(papsRegions[i]->pData);
-        CPLFree(papsRegions[i]);
-    }
-    CPLFree(papsRegions);
-    nRegions = 0;
-    papsRegions = nullptr;
+    oRegionCache.clear();
 
     std::map<CPLString, CachedFileProp*>::const_iterator iterCacheFileSize;
     for( iterCacheFileSize = cacheFileSize.begin();
@@ -2921,6 +2776,56 @@ void VSICurlFilesystemHandler::ClearCache()
         delete iterConnections->second;
     }
     mapConnections.clear();
+}
+
+/************************************************************************/
+/*                          PartialClearCache()                         */
+/************************************************************************/
+
+void VSICurlFilesystemHandler::PartialClearCache(const char* pszFilenamePrefix)
+{
+    CPLMutexHolder oHolder( &hMutex );
+
+    CPLString osURL = GetURLFromDirname(pszFilenamePrefix);
+    std::list<FilenameOffsetPair> keysToRemove;
+    auto lambda = [&keysToRemove, &osURL](
+        const lru11::KeyValuePair<FilenameOffsetPair,
+                                            std::shared_ptr<std::string>>& kv)
+    {
+        if( strncmp(kv.key.filename_.c_str(), osURL, osURL.size()) == 0 )
+            keysToRemove.push_back(kv.key);
+    };
+    oRegionCache.cwalk(lambda);
+    for( auto& key: keysToRemove )
+        oRegionCache.remove(key);
+
+    auto iterCacheFileSize = cacheFileSize.begin();
+    while( iterCacheFileSize != cacheFileSize.end() )
+    {
+        auto iter = iterCacheFileSize;
+        auto nextiter = ++iterCacheFileSize;
+        if( strncmp(iter->first.c_str(), osURL, osURL.size()) == 0 )
+        {
+            delete iter->second;
+            cacheFileSize.erase(iter);
+        }
+        iterCacheFileSize = nextiter;
+    }
+
+    auto iterCacheDirList = cacheDirList.begin();
+    const size_t nLen = strlen(pszFilenamePrefix);
+    while( iterCacheDirList != cacheDirList.end() )
+    {
+        auto iter = iterCacheDirList;
+        auto nextiter = ++iterCacheDirList;
+        if( strncmp(iter->first.c_str(), pszFilenamePrefix, nLen) == 0 )
+        {
+            CSLDestroy(iter->second->papszFileList);
+            CPLFree(iter->second);
+            cacheDirList.erase(iter);
+        }
+        iterCacheDirList = nextiter;
+    }
 }
 
 /************************************************************************/
@@ -4199,6 +4104,23 @@ CPLString
 VSICurlFilesystemHandler::GetURLFromDirname( const CPLString& osDirname )
 {
     return VSICurlGetURLFromFilename(osDirname, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+}
+
+/************************************************************************/
+/*                         RegisterEmptyDir()                           */
+/************************************************************************/
+
+void VSICurlFilesystemHandler::RegisterEmptyDir( const CPLString& osDirname )
+{
+    CPLMutexHolder oHolder( &hMutex );
+    CachedDirList* psCachedDirList = cacheDirList[osDirname];
+    if( psCachedDirList == nullptr )
+    {
+        psCachedDirList =
+            static_cast<CachedDirList *>(CPLMalloc(sizeof(CachedDirList)));
+        psCachedDirList->papszFileList = CSLAddString(nullptr, ".");
+        cacheDirList[osDirname] = psCachedDirList;
+    }
 }
 
 /************************************************************************/
@@ -5922,7 +5844,22 @@ int IVSIS3LikeFSHandler::Mkdir( const char * pszDirname, long /* nMode */ )
     {
         CPLErrorReset();
         VSIFCloseL(fp);
-        return CPLGetLastErrorType() == CPLE_None ? 0 : -1;
+        int ret = CPLGetLastErrorType() == CPLE_None ? 0 : -1;
+        if( ret == 0 )
+        {
+            CPLString osDirnameWithoutEndSlash(osDirname);
+            osDirnameWithoutEndSlash.resize( osDirnameWithoutEndSlash.size() - 1 );
+
+            CachedFileProp* cachedFileProp =
+                GetCachedFileProp(GetURLFromDirname(osDirname));
+            cachedFileProp->eExists = EXIST_YES;
+            cachedFileProp->bIsDirectory = true;
+            cachedFileProp->bHasComputedFileSize = true;
+
+            RegisterEmptyDir(osDirnameWithoutEndSlash);
+            RegisterEmptyDir(osDirname);
+        }
+        return ret;
     }
     else
     {
@@ -5958,7 +5895,8 @@ int IVSIS3LikeFSHandler::Rmdir( const char * pszDirname )
     }
 
     char** papszFileList = ReadDirEx(osDirname, 1);
-    bool bEmptyDir = (papszFileList != nullptr && EQUAL(papszFileList[0], ".") &&
+    bool bEmptyDir = papszFileList == nullptr ||
+                     (EQUAL(papszFileList[0], ".") &&
                       papszFileList[1] == nullptr);
     CSLDestroy(papszFileList);
     if( !bEmptyDir )
@@ -5995,7 +5933,26 @@ int IVSIS3LikeFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
     CPLString osFilename(pszFilename);
     if( osFilename.find('/', GetFSPrefix().size()) == std::string::npos )
         osFilename += "/";
-    return VSICurlFilesystemHandler::Stat(osFilename, pStatBuf, nFlags);
+    if( VSICurlFilesystemHandler::Stat(osFilename, pStatBuf, nFlags) == 0 )
+    {
+        return 0;
+    }
+
+    char** papszRet = ReadDirInternal( osFilename, 1, nullptr );
+    int nRet = papszRet ? 0 : -1;
+    if( nRet == 0 )
+    {
+        pStatBuf->st_mtime = 0;
+        pStatBuf->st_size = 0;
+        pStatBuf->st_mode = S_IFDIR;
+        CachedFileProp* cachedFileProp =
+            GetCachedFileProp(GetURLFromDirname(osFilename));
+        cachedFileProp->eExists = EXIST_YES;
+        cachedFileProp->bIsDirectory = true;
+        cachedFileProp->bHasComputedFileSize = true;
+    }
+    CSLDestroy(papszRet);
+    return nRet;
 }
 
 /************************************************************************/
@@ -6721,6 +6678,8 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     int Unlink( const char *pszFilename ) override;
     int Mkdir( const char *, long  ) override;
     int Rmdir( const char * ) override;
+    int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+              int nFlags ) override;
 
     const char* GetOptions() override;
 
@@ -6766,6 +6725,22 @@ VSICurlHandle* VSIAzureFSHandler::CreateFileHandle(const char* pszFilename)
     if( poHandleHelper == nullptr )
         return nullptr;
     return new VSIAzureHandle(this, pszFilename, poHandleHelper);
+}
+
+/************************************************************************/
+/*                                Stat()                                */
+/************************************************************************/
+
+int VSIAzureFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+                          int nFlags )
+{
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+        return -1;
+
+    CPLString osFilename(pszFilename);
+    if( osFilename.find('/', GetFSPrefix().size()) == std::string::npos )
+        osFilename += "/";
+    return VSICurlFilesystemHandler::Stat(osFilename, pStatBuf, nFlags);
 }
 
 /************************************************************************/
@@ -8531,6 +8506,35 @@ void VSICurlClearCache( void )
     }
 
     VSICurlStreamingClearCache();
+}
+
+/************************************************************************/
+/*                      VSICurlPartialClearCache()                      */
+/************************************************************************/
+
+/**
+ * \brief Clean local cache associated with /vsicurl/ (and related file systems)
+ * for a given filename (and its subfiles and subdirectories if it is a
+ * directory)
+ *
+ * /vsicurl (and related file systems like /vsis3/, /vsigs/, /vsiaz/, /vsioss/,
+ * /vsiswift/) cache a number of
+ * metadata and data for faster execution in read-only scenarios. But when the
+ * content on the server-side may change during the same process, those
+ * mechanisms can prevent opening new files, or give an outdated version of them.
+ *
+ * @param pszFilenamePrefix Filename prefix
+ * @since GDAL 2.4.0
+ */
+
+void VSICurlPartialClearCache(const char* pszFilenamePrefix)
+{
+     VSICurlFilesystemHandler *poFSHandler =
+            dynamic_cast<VSICurlFilesystemHandler*>(
+                VSIFileManager::GetHandler( pszFilenamePrefix ));
+
+    if( poFSHandler )
+        poFSHandler->PartialClearCache(pszFilenamePrefix);
 }
 
 #endif /* HAVE_CURL */

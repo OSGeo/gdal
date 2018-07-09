@@ -6,7 +6,7 @@
  * Author:   Dmitry Baryshnikov, polimax@mail.ru
  *
  ******************************************************************************
- * Copyright (c) 2014-2015 NextGIS <info@nextgis.ru>
+ * Copyright (c) 2014-2018 NextGIS <info@nextgis.ru>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,7 @@
 #include "reader_pleiades.h"
 
 #include <cstddef>
+#include <cstdio>
 #include <cstring>
 #include <ctime>
 
@@ -76,6 +77,16 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
     }
 
     sBaseName[nLastUnderline] = 0;
+
+    // Check if last 4 characters are fit in mask RjCj
+    unsigned int iRow, iCol;
+    bool bHasRowColPart = nBaseNameLen > nLastUnderline + 5U;
+    if(!bHasRowColPart || sscanf (pszBaseName + nLastUnderline + 5U, "R%uC%u",
+        &iRow, &iCol) != 2)
+    {
+        CPLDebug( "MDReaderPleiades", "Not a Pleiades product" );
+        return;
+    }
 
     if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {

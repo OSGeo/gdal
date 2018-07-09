@@ -35,6 +35,7 @@
 
 #define RMF_COMPRESSION_NONE    0
 #define RMF_COMPRESSION_LZW     1
+#define RMF_COMPRESSION_JPEG    2
 #define RMF_COMPRESSION_DEM     32
 
 enum RMFType
@@ -50,6 +51,9 @@ enum RMFVersion
 };
 
 #define RMF_HUGE_OFFSET_FACTOR  256
+
+#define RMF_JPEG_BAND_COUNT  3
+#define RMF_DEM_BAND_COUNT  1
 
 /************************************************************************/
 /*                            RMFHeader                                 */
@@ -83,6 +87,7 @@ typedef struct
     GUInt32     nTileTblSize;                   // tile offsets/sizes table
     GInt32      iMapType;
     GInt32      iProjection;
+    GInt32      iEPSGCode;
     double      dfScale;
     double      dfResolution;
     double      dfPixelSize;
@@ -103,6 +108,7 @@ typedef struct
     GByte       iUnknown;
     GByte       iGeorefFlag;
     GByte       iInverse;
+    GByte       iJpegQuality;
 #define RMF_INVISIBLE_COLORS_SIZE 32
     GByte       abyInvisibleColors[RMF_INVISIBLE_COLORS_SIZE];
     double      adfElevMinMax[2];
@@ -131,14 +137,17 @@ typedef struct
 class RMFDataset final: public GDALDataset
 {
     friend class RMFRasterBand;
-
+private:
     RMFHeader       sHeader;
     RMFExtHeader    sExtHeader;
     RMFType         eRMFType;
     GUInt32         nXTiles;
     GUInt32         nYTiles;
     GUInt32         *paiTiles;
-
+    GByte           *pabyCurrentTile;
+    int             nCurrentTileXOff;
+    int             nCurrentTileYOff;
+    GUInt32         nCurrentTileBytes;
     GUInt32         nColorTableSize;
     GByte           *pabyColorTable;
     GDALColorTable  *poColorTable;
@@ -150,17 +159,56 @@ class RMFDataset final: public GDALDataset
     bool            bBigEndian;
     bool            bHeaderDirty;
 
-    const char      *pszFilename;
     VSILFILE        *fp;
 
     CPLErr          WriteHeader();
-    static int      LZWDecompress( const GByte*, GUInt32, GByte*, GUInt32 );
-    static int      DEMDecompress( const GByte*, GUInt32, GByte*, GUInt32 );
-    int             (*Decompress)( const GByte*, GUInt32, GByte*, GUInt32 );
+    static size_t   LZWDecompress( const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32 );
+    static size_t   LZWCompress(const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32 , const RMFDataset*);
+#ifdef HAVE_LIBJPEG
+    static size_t   JPEGDecompress( const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32 );
+    static size_t   JPEGCompress( const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32, const RMFDataset* );
+#endif //HAVE_LIBJPEG
+    static size_t   DEMDecompress( const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32 );
+    static size_t   DEMCompress( const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32, const RMFDataset* );
+
+    /*!
+        Tile decompress callback
+        pabyIn - input compressed data
+        nSizeIn - input compressed data size (in bytes)
+        pabyOut - pointer to uncompressed data
+        nSizeOut - maximum uncompressed data size
+        nTileSx - width of uncompressed tile (in pixels)
+        nTileSy - height of uncompressed tile (in pixels)
+
+        Returns: actual uncompressed data size or 0 on error (if nSizeOut is
+                 small returns 0 too).
+    */
+    size_t          (*Decompress)(const GByte* pabyIn, GUInt32 nSizeIn,
+                                  GByte* pabyOut, GUInt32 nSizeOut,
+                                  GUInt32 nTileSx, GUInt32 nTileSy);
+
+    /*!
+        Tile compress callback
+        pabyIn - input uncompressed data
+        nSizeIn - input uncompressed data size (in bytes)
+        pabyOut - pointer to compressed data
+        nSizeOut - maximum compressed data size
+        nTileSx - width of uncompressed tile (in pixels)
+        nTileSy - height of uncompressed tile (in pixels)
+        poDS - pointer to parent dataset
+
+        Returns: actual compressed data size or 0 on error (if nSizeOut is
+                 small returns 0 too).
+    */
+    size_t          (*Compress)(const GByte* pabyIn, GUInt32 nSizeIn,
+                                GByte* pabyOut, GUInt32 nSizeOut ,
+                                GUInt32 nTileSx, GUInt32 nTileSy,
+                                const RMFDataset* poDS);
 
     std::vector<RMFDataset*>    poOvrDatasets;
     vsi_l_offset                nHeaderOffset;
     RMFDataset*                 poParentDS;
+    bool                        bReverseBandLayout;
 
   public:
                 RMFDataset();
@@ -185,12 +233,24 @@ class RMFDataset final: public GDALDataset
                                          int nBandsIn, int * panBandList,
                                          GDALProgressFunc pfnProgress,
                                          void * pProgressData ) override;
-
+    virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void * pData, int nBufXSize, int nBufYSize,
+                              GDALDataType eBufType,
+                              int nBandCount, int *panBandMap,
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GSpacing nBandSpace,
+                              GDALRasterIOExtraArg* psExtraArg ) override;
     vsi_l_offset        GetFileOffset( GUInt32 iRMFOffset ) const;
     GUInt32             GetRMFOffset( vsi_l_offset iFileOffset, vsi_l_offset* piNewFileOffset ) const;
     RMFDataset*         OpenOverview( RMFDataset* poParentDS, GDALOpenInfo* );
     vsi_l_offset        GetLastOffset() const;
     CPLErr              CleanOverviews();
+    static GByte        GetCompressionType(const char* pszCompressName);
+    int                 SetupCompression(GDALDataType eType,
+                                         const char* pszFilename);
+    CPLErr              WriteTile(int nBlockXOff, int nBlockYOff, GByte* pabyData,
+                                  size_t nBytes, GUInt32 nXSize, GUInt32 nYSize);
 };
 
 /************************************************************************/

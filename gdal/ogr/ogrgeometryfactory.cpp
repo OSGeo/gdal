@@ -4155,7 +4155,7 @@ OGRGeometryH OGR_G_ForceToLineString( OGRGeometryH hGeom )
  * (see OGR_GT_GetCollection()) or the reverse. non-linear geometry type to
  * their corresponding linear geometry type (see OGR_GT_GetLinear()), by
  * possibly approximating circular arcs they may contain.  Regarding conversion
- * from linear geometry types to curve geometry types, only "wraping" will be
+ * from linear geometry types to curve geometry types, only "wrapping" will be
  * done. No attempt to retrieve potential circular arcs by de-approximating
  * stroking will be done. For that, OGRGeometry::getCurveGeometry() can be used.
  *

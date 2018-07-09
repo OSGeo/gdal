@@ -98,7 +98,10 @@ typedef struct
 
     double adfFromGeoX[20];
     double adfFromGeoY[20];
-
+    double x1_mean;
+    double y1_mean;
+    double x2_mean;
+    double y2_mean;
     int    nOrder;
     int    bReversed;
 
@@ -120,9 +123,17 @@ CPL_C_END
 /* crs.c */
 static int CRS_georef(double, double, double *, double *,
                               double [], double [], int);
-static int CRS_compute_georef_equations(struct Control_Points *,
+static int CRS_compute_georef_equations(GCPTransformInfo *psInfo, struct Control_Points *,
     double [], double [], double [], double [], int);
 static int remove_outliers(GCPTransformInfo *);
+
+
+#define MSUCCESS     1 /* SUCCESS */
+#define MNPTERR      0 /* NOT ENOUGH POINTS */
+#define MUNSOLVABLE -1 /* NOT SOLVABLE */
+#define MMEMERR     -2 /* NOT ENOUGH MEMORY */
+#define MPARMERR    -3 /* PARAMETER ERROR */
+#define MINTERR     -4 /* INTERNAL ERROR */
 
 static const char * const CRS_error_message[] = {
     "Failed to compute GCP transform: Not enough points available",
@@ -188,6 +199,11 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
     int nCRSresult = 0;
     struct Control_Points sPoints;
 
+    double x1_sum = 0;
+    double y1_sum = 0;
+    double x2_sum = 0;
+    double y2_sum = 0;
+
     memset( &sPoints, 0, sizeof(sPoints) );
 
     if( nReqOrder == 0 )
@@ -223,7 +239,11 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
 /*      Compute the forward and reverse polynomials.                    */
 /* -------------------------------------------------------------------- */
 
-    if(bRefine)
+    if( nGCPCount == 0 )
+    {
+        nCRSresult = MNPTERR;
+    }
+    else if(bRefine)
     {
         nCRSresult = remove_outliers(psInfo);
     }
@@ -237,7 +257,6 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
         padfRasterX = (double *) CPLCalloc(sizeof(double),nGCPCount);
         padfRasterY = (double *) CPLCalloc(sizeof(double),nGCPCount);
         panStatus = (int *) CPLCalloc(sizeof(int),nGCPCount);
-
         for( iGCP = 0; iGCP < nGCPCount; iGCP++ )
         {
             panStatus[iGCP] = 1;
@@ -245,7 +264,15 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
             padfGeoY[iGCP] = pasGCPList[iGCP].dfGCPY;
             padfRasterX[iGCP] = pasGCPList[iGCP].dfGCPPixel;
             padfRasterY[iGCP] = pasGCPList[iGCP].dfGCPLine;
+            x1_sum += pasGCPList[iGCP].dfGCPPixel;
+            y1_sum += pasGCPList[iGCP].dfGCPLine;
+            x2_sum += pasGCPList[iGCP].dfGCPX;
+            y2_sum += pasGCPList[iGCP].dfGCPY;
         }
+        psInfo->x1_mean = x1_sum / nGCPCount;
+        psInfo->y1_mean = y1_sum / nGCPCount;
+        psInfo->x2_mean = x2_sum / nGCPCount;
+        psInfo->y2_mean = y2_sum / nGCPCount;
 
         sPoints.count = nGCPCount;
         sPoints.e1 = padfRasterX;
@@ -253,7 +280,7 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
         sPoints.e2 = padfGeoX;
         sPoints.n2 = padfGeoY;
         sPoints.status = panStatus;
-        nCRSresult = CRS_compute_georef_equations( &sPoints,
+        nCRSresult = CRS_compute_georef_equations( psInfo, &sPoints,
                                                 psInfo->adfToGeoX, psInfo->adfToGeoY,
                                                 psInfo->adfFromGeoX, psInfo->adfFromGeoY,
                                                 nReqOrder );
@@ -405,13 +432,13 @@ int GDALGCPTransform( void *pTransformArg, int bDstToSrc,
 
         if( bDstToSrc )
         {
-            CRS_georef( x[i], y[i], x + i, y + i,
+            CRS_georef( x[i] - psInfo->x2_mean, y[i] - psInfo->y2_mean, x + i, y + i,
                         psInfo->adfFromGeoX, psInfo->adfFromGeoY,
                         psInfo->nOrder );
         }
         else
         {
-            CRS_georef( x[i], y[i], x + i, y + i,
+            CRS_georef( x[i] - psInfo->x1_mean, y[i] - psInfo->y1_mean, x + i, y + i,
                         psInfo->adfToGeoX, psInfo->adfToGeoY,
                         psInfo->nOrder );
         }
@@ -561,24 +588,16 @@ struct MATRIX
 
 #define M(row,col) m->v[(((row)-1)*(m->n))+(col)-1]
 
-
-#define MSUCCESS     1 /* SUCCESS */
-#define MNPTERR      0 /* NOT ENOUGH POINTS */
-#define MUNSOLVABLE -1 /* NOT SOLVABLE */
-#define MMEMERR     -2 /* NOT ENOUGH MEMORY */
-#define MPARMERR    -3 /* PARAMETER ERROR */
-#define MINTERR     -4 /* INTERNAL ERROR */
-
 /***************************************************************************/
 /*
     FUNCTION PROTOTYPES FOR STATIC (INTERNAL) FUNCTIONS
 */
 /***************************************************************************/
 
-static int calccoef(struct Control_Points *,double *,double *,int);
-static int calcls(struct Control_Points *,struct MATRIX *,
+static int calccoef(struct Control_Points *,double,double,double *,double *,int);
+static int calcls(struct Control_Points *,struct MATRIX *,double,double,
                   double *,double *,double *,double *);
-static int exactdet(struct Control_Points *,struct MATRIX *,
+static int exactdet(struct Control_Points *,struct MATRIX *,double,double,
                     double *,double *,double *,double *);
 static int solvemat(struct MATRIX *,double *,double *,double *,double *);
 static double term(int,double,double);
@@ -664,7 +683,7 @@ CRS_georef (
 /***************************************************************************/
 
 static int
-CRS_compute_georef_equations (struct Control_Points *cp,
+CRS_compute_georef_equations (GCPTransformInfo *psInfo, struct Control_Points *cp,
                                       double E12[], double N12[],
                                       double E21[], double N21[],
                                       int order)
@@ -677,7 +696,7 @@ CRS_compute_georef_equations (struct Control_Points *cp,
 
     /* CALCULATE THE FORWARD TRANSFORMATION COEFFICIENTS */
 
-    status = calccoef(cp,E12,N12,order);
+    status = calccoef(cp,psInfo->x1_mean,psInfo->y1_mean,E12,N12,order);
     if(status != MSUCCESS)
         return(status);
 
@@ -692,7 +711,7 @@ CRS_compute_georef_equations (struct Control_Points *cp,
 
     /* CALCULATE THE BACKWARD TRANSFORMATION COEFFICIENTS */
 
-    status = calccoef(cp,E21,N21,order);
+    status = calccoef(cp,psInfo->x2_mean,psInfo->y2_mean,E21,N21,order);
 
     /* SWITCH THE 1 AND 2 EASTING AND NORTHING ARRAYS BACK */
 
@@ -713,7 +732,7 @@ CRS_compute_georef_equations (struct Control_Points *cp,
 /***************************************************************************/
 
 static int
-calccoef (struct Control_Points *cp, double E[], double N[], int order)
+calccoef (struct Control_Points *cp, double x_mean, double y_mean, double E[], double N[], int order)
 {
     struct MATRIX m;
     double *a = NULL;
@@ -762,9 +781,9 @@ calccoef (struct Control_Points *cp, double E[], double N[], int order)
     }
 
     if(numactive == m.n)
-        status = exactdet(cp,&m,a,b,E,N);
+        status = exactdet(cp,&m, x_mean, y_mean, a,b,E,N);
     else
-        status = calcls(cp,&m,a,b,E,N);
+        status = calcls(cp,&m, x_mean, y_mean,a,b,E,N);
 
     CPLFree((char *)m.v);
     CPLFree((char *)a);
@@ -783,6 +802,8 @@ calccoef (struct Control_Points *cp, double E[], double N[], int order)
 static int exactdet (
     struct Control_Points *cp,
     struct MATRIX *m,
+    double x_mean,
+    double y_mean,
     double a[],
     double b[],
     double E[],     /* EASTING COEFFICIENTS */
@@ -801,7 +822,7 @@ static int exactdet (
 
       for(j = 1 ; j <= m->n ; j++)
         {
-        M(currow,j) = term(j,cp->e1[pntnow],cp->n1[pntnow]);
+        M(currow,j) = term(j,cp->e1[pntnow] - x_mean, cp->n1[pntnow] - y_mean);
         }
 
       /* POPULATE MATRIX A AND B */
@@ -830,6 +851,8 @@ static int exactdet (
 static int calcls (
     struct Control_Points *cp,
     struct MATRIX *m,
+    double x_mean,
+    double y_mean,
     double a[],
     double b[],
     double E[],     /* EASTING COEFFICIENTS */
@@ -858,10 +881,10 @@ static int calcls (
             for(i = 1 ; i <= m->n ; i++)
             {
                 for(j = i ; j <= m->n ; j++)
-                    M(i,j) += term(i,cp->e1[n],cp->n1[n]) * term(j,cp->e1[n],cp->n1[n]);
+                    M(i,j) += term(i,cp->e1[n] - x_mean, cp->n1[n] - y_mean) * term(j,cp->e1[n] - x_mean, cp->n1[n] - y_mean);
 
-                a[i-1] += cp->e2[n] * term(i,cp->e1[n],cp->n1[n]);
-                b[i-1] += cp->n2[n] * term(i,cp->e1[n],cp->n1[n]);
+                a[i-1] += cp->e2[n] * term(i,cp->e1[n] - x_mean, cp->n1[n] - y_mean);
+                b[i-1] += cp->n2[n] * term(i,cp->e1[n] - x_mean, cp->n1[n] - y_mean);
             }
         }
     }
@@ -1040,33 +1063,22 @@ static int solvemat (struct MATRIX *m,
   IF NO OUTLIER CAN BE FOUND, -1 WILL BE RETURNED.
 */
 /***************************************************************************/
-static int worst_outlier(struct Control_Points *cp, double E[], double N[], double dfTolerance)
+static int worst_outlier(struct Control_Points *cp, double x_mean, double y_mean, int nOrder, double E[], double N[], double dfTolerance)
 {
     int nI = 0, nIndex = 0;
     double dfDifference = 0.0;
     double dfSampleRes = 0.0;
     double dfLineRes = 0.0;
     double dfCurrentDifference = 0.0;
-    double dfE1 = 0.0;
-    double dfN1 = 0.0;
-    double dfE2 = 0.0;
-    double dfN2 = 0.0;
-    double dfEn = 0.0;
     double dfSampleResidual = 0.0;
     double dfLineResidual = 0.0;
     double *padfResiduals = (double *) CPLCalloc(sizeof(double),cp->count);
 
     for(nI = 0; nI < cp->count; nI++)
     {
-        dfE1 = cp->e1[nI];
-        dfN1 = cp->n1[nI];
-        dfE2 = dfE1 * dfE1;
-        dfN2 = dfN1 * dfN1;
-        dfEn = dfE1 * dfN1;
-
-        dfSampleRes = E[0] + E[1] * dfE1 + E[2] * dfN1 + E[3] * dfE2 + E[4] * dfEn + E[5] * dfN2 - cp->e2[nI];
-        dfLineRes = N[0] + N[1] * dfE1 + N[2] * dfN1 + N[3] * dfE2 + N[4] * dfEn + N[5] * dfN2 - cp->n2[nI];
-
+        CRS_georef( cp->e1[nI] - x_mean, cp->n1[nI] - y_mean, &dfSampleRes, &dfLineRes,E,N,nOrder );
+        dfSampleRes -= cp->e2[nI];
+        dfLineRes -= cp->n2[nI];
         dfSampleResidual += dfSampleRes*dfSampleRes;
         dfLineResidual += dfLineRes*dfLineRes;
 
@@ -1121,6 +1133,10 @@ static int remove_outliers( GCPTransformInfo *psInfo )
     double dfTolerance = 0;
     struct Control_Points sPoints;
 
+    double x1_sum = 0;
+    double y1_sum = 0;
+    double x2_sum = 0;
+    double y2_sum = 0;
     memset( &sPoints, 0, sizeof(sPoints) );
 
     nGCPCount = psInfo->nGCPCount;
@@ -1141,7 +1157,15 @@ static int remove_outliers( GCPTransformInfo *psInfo )
         padfGeoY[nI] = psInfo->pasGCPList[nI].dfGCPY;
         padfRasterX[nI] = psInfo->pasGCPList[nI].dfGCPPixel;
         padfRasterY[nI] = psInfo->pasGCPList[nI].dfGCPLine;
+        x1_sum += psInfo->pasGCPList[nI].dfGCPPixel;
+        y1_sum += psInfo->pasGCPList[nI].dfGCPLine;
+        x2_sum += psInfo->pasGCPList[nI].dfGCPX;
+        y2_sum += psInfo->pasGCPList[nI].dfGCPY;
     }
+    psInfo->x1_mean = x1_sum / nGCPCount;
+    psInfo->y1_mean = y1_sum / nGCPCount;
+    psInfo->x2_mean = x2_sum / nGCPCount;
+    psInfo->y2_mean = y2_sum / nGCPCount;
 
     sPoints.count = nGCPCount;
     sPoints.e1 = padfRasterX;
@@ -1150,7 +1174,7 @@ static int remove_outliers( GCPTransformInfo *psInfo )
     sPoints.n2 = padfGeoY;
     sPoints.status = panStatus;
 
-    nCRSresult = CRS_compute_georef_equations( &sPoints,
+    nCRSresult = CRS_compute_georef_equations( psInfo, &sPoints,
                                       psInfo->adfToGeoX, psInfo->adfToGeoY,
                                       psInfo->adfFromGeoX, psInfo->adfFromGeoY,
                                       nReqOrder );
@@ -1158,7 +1182,8 @@ static int remove_outliers( GCPTransformInfo *psInfo )
     while(sPoints.count > nMinimumGcps)
     {
         int nIndex =
-            worst_outlier(&sPoints, psInfo->adfFromGeoX, psInfo->adfFromGeoY,
+            worst_outlier(&sPoints, psInfo->x1_mean, psInfo->y1_mean, psInfo->nOrder, 
+                          psInfo->adfToGeoX, psInfo->adfToGeoY,
                           dfTolerance);
 
         //If no outliers were detected, stop the GCP elimination
@@ -1182,7 +1207,7 @@ static int remove_outliers( GCPTransformInfo *psInfo )
 
         sPoints.count = sPoints.count - 1;
 
-        nCRSresult = CRS_compute_georef_equations( &sPoints,
+        nCRSresult = CRS_compute_georef_equations( psInfo, &sPoints,
                                       psInfo->adfToGeoX, psInfo->adfToGeoY,
                                       psInfo->adfFromGeoX, psInfo->adfFromGeoY,
                                       nReqOrder );

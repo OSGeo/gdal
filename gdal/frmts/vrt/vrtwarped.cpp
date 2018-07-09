@@ -67,6 +67,9 @@ CPL_CVSID("$Id$")
  * resolution of the output virtual file which should be large enough to
  * include all the input image
  *
+ * If you want to create an alpha band if the source dataset has none, set
+ * psOptionsIn->nDstAlphaBand = GDALGetRasterCount(hSrcDS) + 1.
+ *
  * Note that the constructed GDALDatasetH will acquire one or more references
  * to the passed in hSrcDS.  Reference counting semantics on the source
  * dataset should be honoured.  That is, don't just GDALClose() it unless it
@@ -236,6 +239,9 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
  * input image warped based on a provided transformation.  Output bounds
  * and resolution are provided explicitly.
  *
+ * If you want to create an alpha band if the source dataset has none, set
+ * psOptions->nDstAlphaBand = GDALGetRasterCount(hSrcDS) + 1.
+ *
  * Note that the constructed GDALDatasetH will acquire one or more references
  * to the passed in hSrcDS.  Reference counting semantics on the source
  * dataset should be honoured.  That is, don't just GDALClose() it unless it
@@ -295,7 +301,12 @@ GDALCreateWarpedVRT( GDALDatasetH hSrcDS,
     {
         poDS->AddBand( psOptions->eWorkingDataType, nullptr );
     }
-    
+    if( psOptions->nDstAlphaBand )
+    {
+        poDS->GetRasterBand(psOptions->nDstAlphaBand)->
+                                SetColorInterpretation(GCI_AlphaBand);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Initialize the warp on the VRTWarpedDataset.                    */
 /* -------------------------------------------------------------------- */

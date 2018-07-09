@@ -3,6 +3,8 @@ DatasetHeader Begin
   DataSetType = ERStorage
   DataType = Raster
   ByteOrder = MSBFirst
+  Foo = { "x\\\"
+y" }
 
   CoordinateSpace Begin
     Datum = "WGS84"
@@ -32,6 +34,15 @@ DatasetHeader Begin
       Longitude = -180:00:00
     RegistrationCoord End
     NrOfBands = 1
+    RegionInfo Begin
+      RegionName = "All"
+      Stats Begin
+        MinimumValue = { -4315 }
+        MaximumValue = { -3744 }
+        MeanValue = { -4020.25 }
+        MedianValue = { -4000 }
+      Stats End
+    RegionInfo End
   RasterInfo End
 DatasetHeader End
 

@@ -1041,6 +1041,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     void           SetFlushBlockErr( CPLErr eErr );
     CPLErr         UnreferenceBlock( GDALRasterBlock* poBlock );
+    void           SetValidPercent( GUIntBig nSampleCount, GUIntBig nValidCount );
 
   protected:
 //! @cond Doxygen_Suppress
@@ -1273,6 +1274,12 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 
     GDALRasterBand *GetMaskBand() override;
     int             GetMaskFlags() override;
+
+    CPLErr ComputeStatistics( int bApproxOK,
+                            double *pdfMin, double *pdfMax,
+                            double *pdfMean, double *pdfStdDev,
+                            GDALProgressFunc, void *pProgressData ) override;
+
 };
 
 /* ******************************************************************** */

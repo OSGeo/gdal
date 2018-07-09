@@ -1737,7 +1737,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   }
 
 /***************************************************
- * Typemaps for Gemetry.GetPoints()
+ * Typemaps for Geometry.GetPoints()
  ***************************************************/
 
 %typemap(in,numinputs=0) (int* pnCount, double** ppadfXY, double** ppadfZ) ( int nPoints = 0, double* padfXY = NULL, double* padfZ = NULL)

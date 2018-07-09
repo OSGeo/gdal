@@ -145,7 +145,7 @@
                         <gml:origin>
                           <gml:Point gml:id="P0001" srsName="urn:ogc:def:crs:EPSG::26711">
                             <!--<gml:pos>440750 3751290</gml:pos>-->
-                            <gml:pos>40750 3751290</gml:pos> <!-- 'ERROR[INSPIRE_TG, Conformance class A.8.8]: Inconsistant geotransform between OrthoImagery ((440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)) and GMLJP2/GeoJP2 ((40720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0))', -->
+                            <gml:pos>40750 3751290</gml:pos> <!-- 'ERROR[INSPIRE_TG, Conformance class A.8.8]: Inconsistent geotransform between OrthoImagery ((440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)) and GMLJP2/GeoJP2 ((40720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0))', -->
                           </gml:Point>
                         </gml:origin>
                         <gml:offsetVector srsName="urn:ogc:def:crs:EPSG::26711">60 0</gml:offsetVector>

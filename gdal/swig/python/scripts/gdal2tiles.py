@@ -292,9 +292,8 @@ class GlobalMercator(object):
 
         for i in range(MAXZOOMLEVEL):
             if pixelSize > self.Resolution(i):
-                if i != -1:
-                    return i - 1
-                return 0    # We don't want to scale up
+                return max(0, i - 1)    # We don't want to scale up
+        return MAXZOOMLEVEL - 1
 
     def GoogleTile(self, tx, ty, zoom):
         "Converts TMS tile coordinates to Google Tile coordinates"
@@ -397,9 +396,8 @@ class GlobalGeodetic(object):
 
         for i in range(MAXZOOMLEVEL):
             if pixelSize > self.Resolution(i):
-                if i != 0:
-                    return i - 1
-                return 0    # We don't want to scale up
+                return max(0, i - 1)    # We don't want to scale up
+        return MAXZOOMLEVEL - 1
 
     def TileBounds(self, tx, ty, zoom):
         "Returns bounds of the given tile"
@@ -965,9 +963,16 @@ def create_base_tile(tile_job_info, tile_detail, queue=None):
     # We scale down the query to the tilesize by supplied algorithm.
 
     if rxsize != 0 and rysize != 0 and wxsize != 0 and wysize != 0:
+        alpha = alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
+
+        # Detect totally transparent tile and skip its creation
+        if tile_job_info.exclude_transparent and len(alpha) == alpha.count('\x00'.encode('ascii')):
+            del ds
+            del dstile
+            return
+
         data = ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize,
                              band_list=list(range(1, dataBandsCount + 1)))
-        alpha = alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
 
     # The tile in memory is a transparent file by default. Write pixel values into it if
     # any
@@ -1165,6 +1170,9 @@ def optparse_init():
     p.add_option("-v", "--verbose",
                  action="store_true", dest="verbose",
                  help="Print status messages to stdout")
+    p.add_option("-x", "--exclude",
+                 action="store_true", dest="exclude_transparent",
+                 help="Exclude transparent tiles from result tileset")
     p.add_option("-q", "--quiet",
                  action="store_true", dest="quiet",
                  help="Disable messages and status to stdout")
@@ -1335,6 +1343,7 @@ class TileJobInfo(object):
     ominy = 0
     is_epsg_4326 = False
     options = None
+    exclude_transparent = False
 
     def __init__(self, **kwargs):
         for key in kwargs:
@@ -1914,6 +1923,7 @@ class GDAL2Tiles(object):
             ominy=self.ominy,
             is_epsg_4326=self.isepsg4326,
             options=self.options,
+            exclude_transparent=self.options.exclude_transparent,
         )
 
         return conf, tile_details

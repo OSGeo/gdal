@@ -18,10 +18,12 @@ lib-hdfeos:
 
 install-obj:	$(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))
 
+EOS_SO          = ../o/EHapi.o ../o/GDapi.o ../o/SWapi.o ../o/gctp_wrap.o
+
 PLUGIN_SO       = gdal_HDF4.$(SO_EXT)
 
 plugin: $(PLUGIN_SO)
 
 $(PLUGIN_SO):   $(OBJ)
-	$(LD_SHARED) $(LNK_FLAGS) $(OBJ) $(CONFIG_LIBS_INS) $(LIBS) \
+	$(LD_SHARED) $(LNK_FLAGS) $(OBJ) $(EOS_SO) $(CONFIG_LIBS_INS) $(LIBS) \
 		-o $(PLUGIN_SO)

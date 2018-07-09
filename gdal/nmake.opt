@@ -109,19 +109,30 @@ CXX_ANALYZE_FLAGS=/analyze
 CXX_ANALYZE_FLAGS=
 !ENDIF
 
+# Set DEBUG=1 to create a debug build
+!IFNDEF DEBUG
+DEBUG=0
+!ENDIF
+
 # Force PDB output for DEBUG mode
-!IFDEF DEBUG
+!IF "$(DEBUG)" == "1"
 WITH_PDB=1
+!ELSE IF "$(DEBUG)" != "0"
+!ERROR DEBUG should be set to 0 or 1
+!ENDIF
+
+!IFNDEF GDAL_PDB
+GDAL_PDB = $(GDAL_ROOT)\gdal$(VERSION).pdb
 !ENDIF
 
 !IFDEF WITH_PDB
-CXX_PDB_FLAGS=/Zi /Fd$(GDAL_ROOT)\gdal$(VERSION).pdb
+CXX_PDB_FLAGS=/Zi /Fd$(GDAL_PDB)
 !ELSE
 CXX_PDB_FLAGS=
 !ENDIF
 
 !IFNDEF OPTFLAGS
-!IFNDEF DEBUG
+!IF "$(DEBUG)" == "0"
 OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP /MD /EHsc /Ox /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
 !ELSE
 OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP /MDd /EHsc /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG
@@ -167,7 +178,7 @@ SOFTWARNFLAGS= /wd4244 /wd4702 /wd4701 /wd4013 /wd4706 /wd4057 /wd4210 /wd4305
 !ENDIF
 
 # Linker debug options
-!IFDEF DEBUG
+!IF "$(DEBUG)" == "1"
 LDEBUG= /debug
 !ELSEIFDEF WITH_PDB
 # Ensures that PDB is included in release DLL if so requested
@@ -202,8 +213,7 @@ VERSION =	203
 PAM_SETTING=-DPAM_ENABLED
 !ENDIF
 
-# Uncomment the following to link OGR utilities against main GDAL DLL
-# instead of statically linking against OGR libraries.
+# Set DLLBUILD=0 to create a static lib instead of a shared lib (.DLL)
 !IFNDEF DLLBUILD
 DLLBUILD=1
 !ENDIF
@@ -768,6 +778,11 @@ ADD_LIBS	=
 # bindings. 
 #HAVE_NUMPY=1
 
+# Set HAVE_LERC=0 to disable LERC support
+!IFNDEF HAVE_LERC
+HAVE_LERC=1
+!ENDIF
+
 ########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
 
 
@@ -810,7 +825,7 @@ INSTALL	=	xcopy /y /r /d /f /I
 
 CPLLIB	=    $(GDAL_ROOT)/port/cpl.lib
 
-!IFDEF DLLBUILD
+!IF "$(DLLBUILD)" == "1"
 GDALLIB	=    $(GDAL_ROOT)/gdal_i.lib
 !ELSE
 GDALLIB	=    $(GDAL_ROOT)/gdal.lib

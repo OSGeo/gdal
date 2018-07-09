@@ -225,7 +225,7 @@ const char CPL_DLL *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 
 /* "well known" metadata items. */
 
-/** Metadata item for dataset that indicates the spatial interpreation of a
+/** Metadata item for dataset that indicates the spatial interpretation of a
  *  pixel */
 #define GDALMD_AREA_OR_POINT   "AREA_OR_POINT"
 /** Value for GDALMD_AREA_OR_POINT that indicates that a pixel represents an
@@ -241,7 +241,7 @@ const char CPL_DLL *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 /*      error codes 100 to 299 reserved for GDAL.                       */
 /* -------------------------------------------------------------------- */
 #ifndef DOXYGEN_SKIP
-#define CPLE_WrongFormat        (CPLErrorNum)200
+#define CPLE_WrongFormat        CPL_STATIC_CAST(CPLErrorNum, 200)
 #endif
 
 /* -------------------------------------------------------------------- */

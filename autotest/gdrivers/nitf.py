@@ -33,7 +33,6 @@
 import copy
 import os
 import sys
-from sys import version_info
 import array
 import struct
 import shutil
@@ -1729,18 +1728,11 @@ def nitf_53():
 
     # Patch ICORDS and IGEOLO
     f.seek(775)
-    if version_info >= (3, 0, 0):
-        exec("f.write(b'U')")
-        exec("f.write(b'31UBQ1000040000')")
-        exec("f.write(b'31UBQ2000040000')")
-        exec("f.write(b'31UBQ2000030000')")
-        exec("f.write(b'31UBQ1000030000')")
-    else:
-        f.write('U')
-        f.write('31UBQ1000040000')
-        f.write('31UBQ2000040000')
-        f.write('31UBQ2000030000')
-        f.write('31UBQ1000030000')
+    f.write(b'U')
+    f.write(b'31UBQ1000040000')
+    f.write(b'31UBQ2000040000')
+    f.write(b'31UBQ2000030000')
+    f.write(b'31UBQ1000030000')
 
     f.close()
 

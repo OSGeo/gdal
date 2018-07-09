@@ -49,7 +49,7 @@ Offset Length Name                    Notes
 
   786    24   Rotation Angle          Hardcoded to "0".
 
-  810     6   Accurancy Code          Hardcoded to "0"
+  810     6   Accuracy Code           Hardcoded to "0"
 
   816    36   Spatial Resolution      X/Y generated, Z hardcoded to 1.0.
 

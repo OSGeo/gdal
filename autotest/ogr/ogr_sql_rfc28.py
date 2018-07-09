@@ -617,9 +617,9 @@ def ogr_rfc28_28():
     formulas = []
     for operator in operators:
         formulas.append('6' + operator + '3')
-        formulas.append('5.' + operator + '3.')
-        formulas.append('5' + operator + '3.')
-        formulas.append('5.' + operator + '3')
+        formulas.append('5.1' + operator + '3.2')
+        formulas.append('5' + operator + '3.2')
+        formulas.append('5.1' + operator + '3')
         formulas.append('3000000000000' + operator + '3')
         if operator != '/':
             formulas.append('3' + operator + '3000000000000')
@@ -1544,6 +1544,7 @@ def ogr_rfc28_int_overflows():
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
     tests = [('SELECT -9223372036854775808 FROM lyr', -9223372036854775808),
+             ('SELECT -(-9223372036854775808) FROM lyr', -9223372036854775808), # we could argue about the expected result...
              ('SELECT -9223372036854775808/1 FROM lyr', -9223372036854775808),
              ('SELECT 9223372036854775807 FROM lyr', 9223372036854775807),
              ('SELECT 9223372036854775807*1 FROM lyr', 9223372036854775807),

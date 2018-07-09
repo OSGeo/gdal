@@ -28,6 +28,9 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  *******************************************************************************/
+
+#include "cpl_port.h"
+#include "cpl_safemaths.hpp"
 #include "cadheader.h"
 #include "opencad_api.h"
 #include "dwg/io.h"
@@ -186,24 +189,37 @@ void CADHandle::addOffset( unsigned char val )
 
 long CADHandle::getAsLong( const CADHandle& ref_handle ) const
 {
-    switch( code )
+    // FIXME: Remove GDAL specific code. The library cannot compile as separate project.
+    try
     {
-        case 0x06:
+        switch( code )
         {
-            return getAsLong(ref_handle.handleOrOffset) + 1;
+            case 0x06:
+            {
+                return static_cast<long>((CPLSM(static_cast<GInt64>(getAsLong(ref_handle.handleOrOffset))) +
+                        CPLSM(static_cast<GInt64>(1))).v());
+            }
+            case 0x08:
+            {
+                return static_cast<long>((CPLSM(static_cast<GInt64>(getAsLong(ref_handle.handleOrOffset))) -
+                        CPLSM(static_cast<GInt64>(1))).v());
+            }
+            case 0x0A:
+            {
+                return static_cast<long>((CPLSM(static_cast<GInt64>(getAsLong(ref_handle.handleOrOffset))) +
+                        CPLSM(static_cast<GInt64>(getAsLong(handleOrOffset)))).v());
+            }
+            case 0x0C:
+            {
+                return static_cast<long>((CPLSM(static_cast<GInt64>(getAsLong(ref_handle.handleOrOffset))) -
+                        CPLSM(static_cast<GInt64>(getAsLong(handleOrOffset)))).v());
+            }
         }
-        case 0x08:
-        {
-            return getAsLong(ref_handle.handleOrOffset) - 1;
-        }
-        case 0x0A:
-        {
-            return getAsLong(ref_handle.handleOrOffset) + getAsLong(handleOrOffset);
-        }
-        case 0x0C:
-        {
-            return getAsLong(ref_handle.handleOrOffset) - getAsLong(handleOrOffset);
-        }
+    }
+    catch( const CPLSafeIntOverflow& )
+    {
+        // TODO: handle this differently ?
+        return 0;
     }
 
     return getAsLong(handleOrOffset);

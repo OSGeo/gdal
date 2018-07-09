@@ -1000,7 +1000,7 @@ void GMLASReader::PopContext()
 #ifdef DEBUG_VERBOSE
     if( !m_aoStackContext.empty() )
     {
-        CPLDebug("GMLAS", "Poping up context:");
+        CPLDebug("GMLAS", "Popping up context:");
         m_aoStackContext.back().Dump();
     }
 #endif

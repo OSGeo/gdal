@@ -43,13 +43,13 @@ BASE_INCLUDE =	/INCLUDE:$(SYM_PREFIX)GDALSimpleImageWarp \
 APPS_OBJ = apps\commonutils.obj apps\gdalinfo_lib.obj apps\gdal_translate_lib.obj apps\gdalwarp_lib.obj apps\ogr2ogr_lib.obj \
 	 apps\gdaldem_lib.obj apps\nearblack_lib.obj apps\gdal_grid_lib.obj apps\gdal_rasterize_lib.obj apps\gdalbuildvrt_lib.obj
 
-LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) gnm\*.obj gnm\gnm_frmts\o\*.obj $(APPS_OBJ)
+LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) gnm\*.obj gnm\gnm_frmts\o\*.obj third_party\o\*.obj $(APPS_OBJ)
 
-LIB_DEPENDS = port_dir core_dir ogr_dir gnm_dir frmts_dir appslib-target
+LIB_DEPENDS = port_dir core_dir ogr_dir gnm_dir third_party_dir frmts_dir appslib-target
 
 DISTDIR	=	gdal_$(VERSION)
 
-!IFDEF DLLBUILD
+!IF "$(DLLBUILD)" == "1"
 TARGET_LIB = dll
 PLUGIN_TARGET = plugin_dir
 !ELSE
@@ -60,8 +60,28 @@ DEFAULT_TARGETS =
 
 default:	$(TARGET_LIB) $(PLUGIN_TARGET) apps_dir
 
-staticlib:      $(LIB_DEPENDS)
-	if exist gdal.lib del gdal.lib
+# Batch commands to clean main build output are stored in a macro so they can be reused by different
+# targets in an inline temporary batch file.
+#
+# We want them to run before creating a DLL or static LIB file, but if they were in a target then
+# that target would have to be a dependency of dll or staticlib and would always have to run, making
+# the dependant targets "out-of-date".
+#
+# We don't want to re-link the whole DLL just because we tried to delete a static LIB that didn't
+# exist. We also don't want to install a stale DLL in a static build, so we'll remove main build
+# output before creating main build output, but not as a target dependency.
+CLEAN_MAIN_BUILD_OUTPUT_CMDS = \
+@SETLOCAL EnableExtensions^
+if exist gdal.lib del gdal.lib^
+if exist $(GDAL_DLL) del $(GDAL_DLL)^
+if exist $(GDAL_DLL).manifest del $(GDAL_DLL).manifest^
+if exist gdal_i.lib del gdal_i.*^
+if exist *.ilk del *.ilk
+
+staticlib:	$(LIB_DEPENDS)
+	call <<clean_main_build_output.bat
+$(CLEAN_MAIN_BUILD_OUTPUT_CMDS)
+<<
 	lib /nologo /out:gdal.lib $(LIBOBJ) $(EXTERNAL_LIBS)
 
 appslib-target:
@@ -69,7 +89,11 @@ appslib-target:
 	$(MAKE) /f makefile.vc appslib
 	cd ..
 
-clean:	
+clean:
+	call <<clean_main_build_output.bat
+$(CLEAN_MAIN_BUILD_OUTPUT_CMDS)
+<<
+	if exist $(GDAL_PDB) del $(GDAL_PDB)
 	cd port
 	$(MAKE) /f makefile.vc clean
 	cd ..
@@ -85,6 +109,9 @@ clean:
 	cd ogr
 	$(MAKE) /f makefile.vc allclean
 	cd ..
+	cd third_party
+	$(MAKE) /f makefile.vc clean
+	cd ..
 	cd gnm
 	$(MAKE) /f makefile.vc allclean
 	cd ..
@@ -94,13 +121,6 @@ clean:
 	cd swig
 	$(MAKE) /f makefile.vc clean
 	cd ..
-	if exist gdal.lib del gdal.lib
-	if exist $(GDAL_DLL) del $(GDAL_DLL)
-	if exist $(GDAL_DLL).manifest del $(GDAL_DLL).manifest
-	if exist gdal_i.lib del gdal_i.*
-	-del *.ilk
-	-del *.pdb
-
 
 generate_gdal_version_h:
 	cd gcore
@@ -158,6 +178,11 @@ gnm_dir:      ogr_dir
 	$(MAKE) /f makefile.vc gnm.lib frmts
 	cd ..
 
+third_party_dir:      port_dir
+	cd third_party
+	$(MAKE) /f makefile.vc
+	cd ..
+
 lib_dist:	default
 	rm -rf $(DISTDIR)
 	mkdir $(DISTDIR)
@@ -165,6 +190,9 @@ lib_dist:	default
 	zip -r $(DISTDIR).zip $(DISTDIR)
 
 $(GDAL_DLL): $(LIB_DEPENDS)
+	call <<clean_main_build_output.bat
+$(CLEAN_MAIN_BUILD_OUTPUT_CMDS)
+<<
 	link /nologo /dll $(OGR_INCLUDE) $(BASE_INCLUDE) $(LIBOBJ) \
 		$(EXTERNAL_LIBS) gcore\Version.res \
 		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
@@ -220,6 +248,7 @@ install: default
 libinstall: $(GDALLIB)
 	-mkdir $(LIBDIR)
 	copy %|feF $(LIBDIR)
+	if exist $(GDAL_PDB) copy $(GDAL_PDB) $(LIBDIR)
 
 devinstall: install libinstall
 	-mkdir $(INCDIR)

@@ -136,6 +136,9 @@
 
 #include <ctype.h>      /* toupper() */
 
+// Should be 80 but let's be laxer
+constexpr int knMAX_CHARS_PER_LINE = 1024;
+
 static void _AVCE00ReadScanE00(AVCE00ReadE00Ptr psRead);
 static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
                                      char **papszCoverDir);
@@ -1366,7 +1369,7 @@ static void _AVCE00ReadScanE00(AVCE00ReadE00Ptr psRead)
     GBool      bFirstLine = TRUE;
 
     while (CPLGetLastErrorNo() == 0 &&
-            (pszLine = CPLReadLineL(psRead->hFile) ) != nullptr )
+            (pszLine = CPLReadLine2L(psRead->hFile, knMAX_CHARS_PER_LINE, nullptr) ) != nullptr )
     {
         if (bFirstLine)
         {
@@ -1874,7 +1877,7 @@ const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo)
             /*---------------------------------------------------------
              * Finished returning the last lines of the section...
              * proceed to the next section...
-             * OK, I don't really like recursivion, but it was
+             * OK, I don't really like recursion, but it was
              * the simplest way to do this, and anyways we should never
              * have more than one level of recursion.
              *--------------------------------------------------------*/
@@ -2060,7 +2063,7 @@ static int _AVCE00ReadSeekE00(AVCE00ReadE00Ptr psRead, int nOffset,
 
     while (nOffset-- &&
             CPLGetLastErrorNo() == 0 &&
-            (pszLine = CPLReadLineL(psRead->hFile) ) != nullptr )
+            (pszLine = CPLReadLine2L(psRead->hFile, knMAX_CHARS_PER_LINE, nullptr) ) != nullptr )
     {
         /* obj = */
         /* coverity[tainted_data] */
@@ -2090,7 +2093,7 @@ void *AVCE00ReadNextObjectE00(AVCE00ReadE00Ptr psRead)
 
     do
     {
-        pszLine = CPLReadLineL(psRead->hFile);
+        pszLine = CPLReadLine2L(psRead->hFile, knMAX_CHARS_PER_LINE, nullptr);
         if (pszLine == nullptr)
             break;
         /* coverity[tainted_data] */

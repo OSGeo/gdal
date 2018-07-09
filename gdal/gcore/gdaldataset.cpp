@@ -2591,7 +2591,8 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * through logical or operator.
  * <ul>
  * <li>Driver kind: GDAL_OF_RASTER for raster drivers, GDAL_OF_VECTOR for vector
- *     drivers.  If none of the value is specified, both kinds are implied.</li>
+ *     drivers, GDAL_OF_GNM for Geographic Network Model drivers.
+ *     If none of the value is specified, all kinds are implied.</li>
  * <li>Access mode: GDAL_OF_READONLY (exclusive)or GDAL_OF_UPDATE.</li>
  * <li>Shared mode: GDAL_OF_SHARED. If set, it allows the sharing of GDALDataset
  * handles for a dataset with other callers that have set GDAL_OF_SHARED.
@@ -4180,10 +4181,10 @@ int GDALDataset::GetSummaryRefCount() const
  @since GDAL 2.0
 */
 
-OGRLayer *GDALDataset::ICreateLayer( const char * /* pszName */,
-                                     OGRSpatialReference * /* poSpatialRef */,
-                                     OGRwkbGeometryType /* eGType */,
-                                     char ** /* papszOptions */ )
+OGRLayer *GDALDataset::ICreateLayer( CPL_UNUSED const char * pszName,
+                                     CPL_UNUSED OGRSpatialReference * poSpatialRef,
+                                     CPL_UNUSED OGRwkbGeometryType eGType,
+                                     CPL_UNUSED char ** papszOptions )
 
 {
     CPLError(CE_Failure, CPLE_NotSupported,

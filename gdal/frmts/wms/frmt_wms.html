@@ -151,6 +151,12 @@
             <td class="xml">    &lt;DataType&gt;<span class="value">Byte</span>&lt;/DataType&gt;</td>
             <td class="desc">Band data type, amont Byte, Int16, UInt16, Int32, UInt32, Float32, Float64, etc.. (optional, defaults to Byte)</td>
         </tr>
+        <tr>
+            <td class="xml">    &lt;DataValues NoData="0 0 0" min="1 1 1" max="255 255 255" /&gt;</td>
+            <td class="desc">Define NoData and/or minimum and/or maximum value for bands. nodata_values,
+            min_values, max_values can be one single value, or a value per band, with a space separator between value</td>
+        </tr>
+
 		<tr>
 			<td class="xml">    &lt;BlockSizeX&gt;<span class="value">1024</span>&lt;/BlockSizeX&gt;</td>
 			<td class="desc">Block size in pixels. (optional, defaults to 1024, except for VirtualEarth)</td>

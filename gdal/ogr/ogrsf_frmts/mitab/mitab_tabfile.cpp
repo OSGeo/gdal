@@ -906,8 +906,9 @@ int TABFile::ParseTABFileFields()
                  * the next one.
                  *----------------------------------------------------*/
                 m_poDefn->AddFieldDefn(poFieldDefn);
+                m_oSetFields.insert(CPLString(poFieldDefn->GetNameRef()).toupper());
                 // AddFieldDenf() takes a copy, so we delete the original
-                if (poFieldDefn) delete poFieldDefn;
+                delete poFieldDefn;
                 poFieldDefn = nullptr;
             }
 
@@ -1962,13 +1963,15 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
 
     int nRenameNum = 1;
 
-    while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 10)
+    while (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end() &&
+           nRenameNum < 10)
       CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s_%.1d", pszName, nRenameNum++ );
 
-    while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 100)
+    while (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end() &&
+           nRenameNum < 100)
       CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s%.2d", pszName, nRenameNum++ );
 
-    if (m_poDefn->GetFieldIndex(szNewFieldName) >= 0)
+    if (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end())
     {
       CPLError( CE_Failure, CPLE_NotSupported,
                 "Too many field names like '%s' when truncated to 31 letters "
@@ -2083,6 +2086,7 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
      * Add the FieldDefn to the FeatureDefn
      *----------------------------------------------------*/
     m_poDefn->AddFieldDefn(poFieldDefn);
+    m_oSetFields.insert(CPLString(poFieldDefn->GetNameRef()).toupper());
     delete poFieldDefn;
 
     /*-----------------------------------------------------
@@ -2606,6 +2610,7 @@ OGRErr TABFile::DeleteField( int iField )
     if ( m_poDATFile->DeleteField( iField ) == 0 )
     {
         m_bNeedTABRewrite = TRUE;
+        m_oSetFields.erase(CPLString(m_poDefn->GetFieldDefn(iField)->GetNameRef()).toupper());
 
         /* Delete from the array of indexed fields */
         if( iField < m_poDefn->GetFieldCount() - 1 )
@@ -2702,7 +2707,11 @@ OGRErr TABFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
                 poFieldDefn->SetWidth(254);
         }
         if (nFlagsIn & ALTER_NAME_FLAG)
+        {
+            m_oSetFields.erase(CPLString(poFieldDefn->GetNameRef()).toupper());
             poFieldDefn->SetName(poNewFieldDefn->GetNameRef());
+            m_oSetFields.insert(CPLString(poNewFieldDefn->GetNameRef()).toupper());
+        }
         if ((nFlagsIn & ALTER_WIDTH_PRECISION_FLAG) &&
             poFieldDefn->GetType() == OFTString)
         {

@@ -45,6 +45,8 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
+constexpr int knbMaxJPEG2000Components = 16384; // per the JPEG2000 standard
+
 static CPLXMLNode* GetLastChild(CPLXMLNode* psParent)
 {
     CPLXMLNode* psChild = psParent->psChild;
@@ -361,8 +363,7 @@ static void DumpBPCCBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         GByte* pabyIter = pabyBoxData;
         int nBPCIndex = 0;
         CPLXMLNode* psLastChild = nullptr;
-        const int nbMaxJPEG2000Components = 16384; // per the JPEG2000 standard
-        while( nRemainingLength >= 1 && nBPCIndex < nbMaxJPEG2000Components )
+        while( nRemainingLength >= 1 && nBPCIndex < knbMaxJPEG2000Components )
         {
             AddField(psDecodedContent,
                      psLastChild,
@@ -518,7 +519,7 @@ static void DumpCMAPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         GByte* pabyIter = pabyBoxData;
         int nIndex = 0;
         CPLXMLNode* psLastChild = nullptr;
-        while( nRemainingLength >= 2 + 1 + 1 )
+        while( nRemainingLength >= 2 + 1 + 1 && nIndex < knbMaxJPEG2000Components )
         {
             GUInt16 nVal;
             memcpy(&nVal, pabyIter, 2);

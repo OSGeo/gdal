@@ -10,25 +10,25 @@ rm $OUT_FILE 2>/dev/null
 
 echo "/* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */" >> $OUT_FILE
 
-symbol_list=$(objdump -t libtiff.so  | grep .text | awk '{print $6}' | grep -v .text | grep -v TIFFInit | grep -v __do_global | grep -v __bss_start | grep -v _edata | grep -v _end | grep -v _fini | grep -v _init | grep -v call_gmon_start | grep -v CPL_IGNORE_RET_VAL_INT | grep -v register_tm_clones | sort)
+symbol_list=$(objdump -t libtiff.so  | grep .text | awk '{print $6}' | grep -v -e .text -e TIFFInit -e __do_global -e __bss_start -e _edata -e _end -e _fini -e _init -e call_gmon_start -e CPL_IGNORE_RET_VAL_INT -e register_tm_clones | sort)
 for symbol in $symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
 
-rodata_symbol_list=$(objdump -t libtiff.so  | grep "\.rodata" |  awk '{print $6}' | grep -v "\.")
+rodata_symbol_list=$(objdump -t libtiff.so  | grep "\\.rodata" |  awk '{print $6}' | grep -v "\\.")
 for symbol in $rodata_symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
 
-data_symbol_list=$(objdump -t libtiff.so  | grep "\.data"  | grep -v __dso_handle | grep -v __TMC_END__ |  awk '{print $6}' | grep -v "\.")
+data_symbol_list=$(objdump -t libtiff.so  | grep "\\.data"  | grep -v -e __dso_handle -e __TMC_END__ | awk '{print $6}' | grep -v "\\.")
 for symbol in $data_symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
 
-bss_symbol_list=$(objdump -t libtiff.so  | grep "\.bss" |  awk '{print $6}' | grep -v "\.")
+bss_symbol_list=$(objdump -t libtiff.so  | grep "\\.bss" |  awk '{print $6}' | grep -v "\\.")
 for symbol in $bss_symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
@@ -42,50 +42,52 @@ cat <<EOF >> $OUT_FILE
 
 EOF
 
-# Was excluded by grep -v TIFFInit
-echo "#define TIFFInitDumpMode gdal_TIFFInitDumpMode" >> $OUT_FILE
+{
+    # Was excluded by grep -v TIFFInit
+    echo "#define TIFFInitDumpMode gdal_TIFFInitDumpMode"
 
-# Pasted and adapted from tif_codec.c
-echo "#define TIFFReInitJPEG_12 gdal_TIFFReInitJPEG_12" >> $OUT_FILE
-echo "#define TIFFJPEGIsFullStripRequired_12 gdal_TIFFJPEGIsFullStripRequired_12" >> $OUT_FILE
-echo "#ifdef LZW_SUPPORT" >> $OUT_FILE
-echo "#define TIFFInitLZW gdal_TIFFInitLZW" >> $OUT_FILE
-echo "#endif" >> $OUT_FILE
-echo "#ifdef PACKBITS_SUPPORT" >> $OUT_FILE
-echo "#define TIFFInitPackBits gdal_TIFFInitPackBits" >> $OUT_FILE
-echo "#endif" >> $OUT_FILE
-echo "#ifdef THUNDER_SUPPORT" >> $OUT_FILE
-echo "#define TIFFInitThunderScan gdal_TIFFInitThunderScan" >> $OUT_FILE
-echo "#endif" >> $OUT_FILE
-echo "#ifdef NEXT_SUPPORT" >> $OUT_FILE
-echo "#define TIFFInitNeXT gdal_TIFFInitNeXT" >> $OUT_FILE
-echo "#endif" >> $OUT_FILE
-echo "#ifdef JPEG_SUPPORT" >> $OUT_FILE
-echo "#define TIFFInitJPEG gdal_TIFFInitJPEG" >> $OUT_FILE
-# Manually added
-echo "#define TIFFInitJPEG_12 gdal_TIFFInitJPEG_12" >> $OUT_FILE
-echo "#endif" >> $OUT_FILE
-echo "#ifdef OJPEG_SUPPORT" >> $OUT_FILE
-echo "#define TIFFInitOJPEG gdal_TIFFInitOJPEG" >> $OUT_FILE
-echo "#endif" >> $OUT_FILE
-echo "#ifdef CCITT_SUPPORT" >> $OUT_FILE
-echo "#define TIFFInitCCITTRLE gdal_TIFFInitCCITTRLE" >> $OUT_FILE
-echo "#define TIFFInitCCITTRLEW gdal_TIFFInitCCITTRLEW" >> $OUT_FILE
-echo "#define TIFFInitCCITTFax3 gdal_TIFFInitCCITTFax3" >> $OUT_FILE
-echo "#define TIFFInitCCITTFax4 gdal_TIFFInitCCITTFax4" >> $OUT_FILE
-echo "#endif" >> $OUT_FILE
-echo "#ifdef JBIG_SUPPORT" >> $OUT_FILE
-echo "#define TIFFInitJBIG gdal_TIFFInitJBIG" >> $OUT_FILE
-echo "#endif" >> $OUT_FILE
-echo "#ifdef ZIP_SUPPORT" >> $OUT_FILE
-echo "#define TIFFInitZIP gdal_TIFFInitZIP" >> $OUT_FILE
-echo "#endif" >> $OUT_FILE
-echo "#ifdef PIXARLOG_SUPPORT" >> $OUT_FILE
-echo "#define TIFFInitPixarLog gdal_TIFFInitPixarLog" >> $OUT_FILE
-echo "#endif" >> $OUT_FILE
-echo "#ifdef LOGLUV_SUPPORT" >> $OUT_FILE
-echo "#define TIFFInitSGILog gdal_TIFFInitSGILog" >> $OUT_FILE
-echo "#endif" >> $OUT_FILE
-echo "#ifdef LZMA_SUPPORT" >> $OUT_FILE
-echo "#define TIFFInitLZMA gdal_TIFFInitLZMA" >> $OUT_FILE
-echo "#endif" >> $OUT_FILE
+    # Pasted and adapted from tif_codec.c
+    echo "#define TIFFReInitJPEG_12 gdal_TIFFReInitJPEG_12"
+    echo "#define TIFFJPEGIsFullStripRequired_12 gdal_TIFFJPEGIsFullStripRequired_12"
+    echo "#ifdef LZW_SUPPORT"
+    echo "#define TIFFInitLZW gdal_TIFFInitLZW"
+    echo "#endif"
+    echo "#ifdef PACKBITS_SUPPORT"
+    echo "#define TIFFInitPackBits gdal_TIFFInitPackBits"
+    echo "#endif"
+    echo "#ifdef THUNDER_SUPPORT"
+    echo "#define TIFFInitThunderScan gdal_TIFFInitThunderScan"
+    echo "#endif"
+    echo "#ifdef NEXT_SUPPORT"
+    echo "#define TIFFInitNeXT gdal_TIFFInitNeXT"
+    echo "#endif"
+    echo "#ifdef JPEG_SUPPORT"
+    echo "#define TIFFInitJPEG gdal_TIFFInitJPEG"
+    # Manually added
+    echo "#define TIFFInitJPEG_12 gdal_TIFFInitJPEG_12"
+    echo "#endif"
+    echo "#ifdef OJPEG_SUPPORT"
+    echo "#define TIFFInitOJPEG gdal_TIFFInitOJPEG"
+    echo "#endif"
+    echo "#ifdef CCITT_SUPPORT"
+    echo "#define TIFFInitCCITTRLE gdal_TIFFInitCCITTRLE"
+    echo "#define TIFFInitCCITTRLEW gdal_TIFFInitCCITTRLEW"
+    echo "#define TIFFInitCCITTFax3 gdal_TIFFInitCCITTFax3"
+    echo "#define TIFFInitCCITTFax4 gdal_TIFFInitCCITTFax4"
+    echo "#endif"
+    echo "#ifdef JBIG_SUPPORT"
+    echo "#define TIFFInitJBIG gdal_TIFFInitJBIG"
+    echo "#endif"
+    echo "#ifdef ZIP_SUPPORT"
+    echo "#define TIFFInitZIP gdal_TIFFInitZIP"
+    echo "#endif"
+    echo "#ifdef PIXARLOG_SUPPORT"
+    echo "#define TIFFInitPixarLog gdal_TIFFInitPixarLog"
+    echo "#endif"
+    echo "#ifdef LOGLUV_SUPPORT"
+    echo "#define TIFFInitSGILog gdal_TIFFInitSGILog"
+    echo "#endif"
+    echo "#ifdef LZMA_SUPPORT"
+    echo "#define TIFFInitLZMA gdal_TIFFInitLZMA"
+    echo "#endif"
+} >> $OUT_FILE

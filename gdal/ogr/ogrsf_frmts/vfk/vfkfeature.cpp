@@ -332,7 +332,8 @@ bool IVFKFeature::LoadGeometry()
 
         return LoadGeometryPoint();
     }
-    else if (EQUAL (pszName, "SBP")) {
+    else if (EQUAL (pszName, "SBP") ||
+             EQUAL (pszName, "SBPG")) {
         /* -> wkbLineString */
         return LoadGeometryLineStringSBP();
     }
@@ -548,11 +549,24 @@ bool VFKFeature::SetProperty( int iIndex, const char *pszValue )
 
     switch (fType) {
     case OFTInteger:
-        m_propertyList[iIndex] = VFKProperty(atoi(pszValue));
+    case OFTInteger64: {
+        errno = 0;
+        int pbOverflow = 0;
+        char *pszLast = nullptr;
+        if( fType == OFTInteger )
+            m_propertyList[iIndex] = VFKProperty(static_cast<int>(strtol(pszValue, &pszLast, 10)));
+        else /* OFTInteger64 */
+            m_propertyList[iIndex] = VFKProperty(CPLAtoGIntBigEx(pszValue, true, &pbOverflow));
+
+        if( ( fType == OFTInteger && ( errno == ERANGE || !pszLast || *pszLast ) ) ||
+            CPLGetValueType(pszValue) != CPL_VALUE_INTEGER || pbOverflow )
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Value '%s' parsed incompletely to integer " CPL_FRMT_GIB ".",
+                      pszValue,
+                      (fType == OFTInteger) ? m_propertyList[iIndex].GetValueI() :
+                      m_propertyList[iIndex].GetValueI64() );
         break;
-    case OFTInteger64:
-        m_propertyList[iIndex] = VFKProperty(CPLAtoGIntBig(pszValue));
-        break;
+    }
     case OFTReal:
         m_propertyList[iIndex] = VFKProperty(CPLAtof(pszValue));
         break;
@@ -630,7 +644,7 @@ bool VFKFeature::LoadGeometryPoint()
 }
 
 /*!
-  \brief Load geometry (linestring SBP layer)
+  \brief Load geometry (linestring SBP/SBPG layer)
 
   \todo Really needed?
 

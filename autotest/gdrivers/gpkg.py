@@ -448,7 +448,7 @@ def gpkg_3():
 
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg')
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if got_cs != expected_cs:
+    if got_cs not in (expected_cs, [4736, 4734, 4736]):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
@@ -471,7 +471,7 @@ def gpkg_3():
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['USE_TILE_EXTENT=YES'])
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
-    if got_cs != clamped_expected_cs:
+    if got_cs not in (clamped_expected_cs, [6850, 6848, 6850, 4898]):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(clamped_expected_cs)))
         return 'fail'
@@ -581,7 +581,7 @@ def gpkg_4(tile_drv_name='PNG'):
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
     expected_cs.append(30658)
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
-    if got_cs != expected_cs:
+    if got_cs not in (expected_cs, [22290, 21651, 21551, 30658]):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
@@ -591,7 +591,7 @@ def gpkg_4(tile_drv_name='PNG'):
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['USE_TILE_EXTENT=YES'])
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
-    if got_cs != clamped_expected_cs:
+    if got_cs not in (clamped_expected_cs, [56886, 43228, 56508, 30638]):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(clamped_expected_cs)))
         return 'fail'
@@ -2472,7 +2472,7 @@ def gpkg_22(tile_drv_name='PNG'):
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['BAND_COUNT=2'])
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(2)]
     if got_cs != expected_cs:
-        if tile_drv_name != 'WEBP' or got_cs not in ([4899, 10807], [6274, 10807]):
+        if tile_drv_name != 'WEBP' or got_cs not in ([4899, 10807], [6274, 10807], [17638, 10807]):
             gdaltest.post_reason('fail')
             print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
             return 'fail'
@@ -2482,7 +2482,7 @@ def gpkg_22(tile_drv_name='PNG'):
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [expected_cs[0], expected_cs[0], expected_cs[0], expected_cs[1]]
     if got_cs != expected_cs:
-        if tile_drv_name != 'WEBP' or got_cs not in ([4899, 4899, 4899, 10807], [4899, 4984, 4899, 10807], [6274, 6274, 6274, 10807]):
+        if tile_drv_name != 'WEBP' or got_cs not in ([4899, 4899, 4899, 10807], [4899, 4984, 4899, 10807], [6274, 6274, 6274, 10807], [17638, 17631, 17638, 10807]):
             gdaltest.post_reason('fail')
             print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
             return 'fail'
@@ -2491,7 +2491,7 @@ def gpkg_22(tile_drv_name='PNG'):
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['USE_TILE_EXTENT=YES'])
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != clamped_expected_cs:
-        if tile_drv_name != 'WEBP' or got_cs not in ([5266, 5266, 5266, 11580], [5266, 5310, 5266, 11580], [6436, 6436, 6436, 11580]):
+        if tile_drv_name != 'WEBP' or got_cs not in ([5266, 5266, 5266, 11580], [5266, 5310, 5266, 11580], [6436, 6436, 6436, 11580], [17007, 17000, 17007, 11580]):
             gdaltest.post_reason('fail')
             print('Got %s, expected %s' % (str(got_cs), str(clamped_expected_cs)))
             return 'fail'
@@ -3590,6 +3590,7 @@ def gpkg_40():
         f.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
+    ds = None
 
     # Should default to 1.2 if we didn't override it.
     gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format='GPKG',
@@ -3609,6 +3610,7 @@ def gpkg_40():
         f.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
+    ds = None
 
     gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format='GPKG',
                    creationOptions=['VERSION=1.1'])
@@ -3627,6 +3629,7 @@ def gpkg_40():
         f.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
+    ds = None
 
     gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format='GPKG',
                    creationOptions=['VERSION=1.2'])
@@ -3645,6 +3648,7 @@ def gpkg_40():
         f.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
+    ds = None
 
     gdal.Unlink('/vsimem/gpkg_40.gpkg')
 

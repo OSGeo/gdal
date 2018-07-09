@@ -1199,8 +1199,11 @@ bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands,
     // small files.
     // But ultimately we should fix RawRasterBand to have a shared buffer
     // among bands.
-    if( nBands > 10 ||
-        static_cast<vsi_l_offset>(nPixelOffset) * nXSize > 20000 )
+    const char* pszCheck = CPLGetConfigOption("RAW_CHECK_FILE_SIZE", nullptr);
+    if( (nBands > 10 ||
+         static_cast<vsi_l_offset>(nPixelOffset) * nXSize > 20000 ||
+         (pszCheck && CPLTestBool(pszCheck))) &&
+        !(pszCheck && !CPLTestBool(pszCheck)) )
     {
         vsi_l_offset nExpectedFileSize =
             nHeaderSize + nBandOffset * (nBands - 1) +

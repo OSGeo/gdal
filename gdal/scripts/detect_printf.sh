@@ -21,7 +21,7 @@ ret_code=0
 
 echo "Checking for printf() statements..."
 # apps is voluntarily missing in the list of directories, due to lots of legitimate uses of such statements in programs
-if grep -r --include="*.c*" " printf" alg gnm port ogr gcore frmts | grep -v "/*ok" | grep -v "printf()" | grep -v "printf-like" | grep -v "printf style" | grep -v "with printf"  | grep -v "/\\* printf" |  grep -v "//" | grep -v degrib | grep -v aitest | grep -v dted_test | grep -v giflib | grep -v 8211view | grep -v 8211dump | grep -v timetest | grep -v 8211createfromxml | grep -v hfatest | grep -v zlib | grep -v libtiff | grep -v envisat_dump | grep -v dumpgeo | grep -v nitfdump | grep -v ceostest| grep -v libpng | grep -v generate_encoding | grep -v capi_test | grep -v ntfdump | grep -v test_load_virtual_ogr | grep -v ocitest | grep -v fastload | grep -v s57dump | grep -v dgndump | grep -v test_geo_utils | grep -v testparser | grep -v internal_libqhull ; then
+if grep -r --include="*.c*" " printf" alg gnm port ogr gcore frmts | grep -v -e "/*ok" -e "printf()" -e "printf-like" -e "printf style" -e "with printf"  -e "/\\* printf" -e "//" -e degrib -e aitest -e dted_test -e giflib -e 8211view -e 8211dump -e timetest -e 8211createfromxml -e hfatest -e zlib -e libtiff -e envisat_dump -e dumpgeo -e nitfdump -e ceostest -e libpng -e generate_encoding -e capi_test -e ntfdump -e test_load_virtual_ogr -e ocitest -e fastload -e s57dump -e dgndump -e test_geo_utils -e testparser -e internal_libqhull ; then
     echo "FAIL: suspicious printf found. Remove or tag it with /*ok*/"
     ret_code=1
 else
@@ -31,7 +31,7 @@ fi
 
 echo "Checking for fprintf(stderr,) statements..."
 # apps is voluntarily missing in the list of directories, due to lots of legitimate uses of such statements in programs
-if grep fprintf -r  alg gnm port ogr gcore frmts --include="*.cpp" | grep stderr | grep -v -G "/[/|*][ ]*fprintf" | grep -v "/*ok" | grep -v sdts2shp | grep -v degrib  | grep -v 8211view | grep -v 8211createfromxml | grep -v 8211dump | grep -v pcidskexception | grep -v vsipreload | grep -v fprintfstderr | grep -v cpl_multiproc | grep -v "truncation occurred" | grep -v xmlreformat | grep -v cpl_error ; then
+if grep fprintf -r alg gnm port ogr gcore frmts --include="*.cpp" | grep stderr | grep -v -G -e "/[/|*][ ]*fprintf" -e "/*ok" -e sdts2shp -e degrib  -e 8211view -e 8211createfromxml -e 8211dump -e pcidskexception -e vsipreload -e fprintfstderr -e cpl_multiproc -e "truncation occurred" -e xmlreformat -e cpl_error ; then
     echo "FAIL: suspicious fprintf(stder,...) found. Remove or tag it with /*ok*/"
     ret_code=1
 else

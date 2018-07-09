@@ -1104,7 +1104,8 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * is no corresponding input data.  This will disable initializing the
  * destination (INIT_DEST) and all other processing, and so should be used
  * carefully.  Mostly useful to short circuit a lot of extra work in mosaicing
- * situations.</li>
+ * situations. Starting with GDAL 2.4, gdalwarp will automatically enable this
+ * option when it is assumed to be safe to do so.</li>
  *
  * <li>UNIFIED_SRC_NODATA=YES/NO: By default nodata masking values considered
  * independently for each band.  However, sometimes it is desired to treat all

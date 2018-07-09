@@ -8,25 +8,25 @@ OUT_FILE=gdal_shapelib_symbol_rename.h
 
 rm $OUT_FILE 2>/dev/null
 
-symbol_list=$(objdump -t shapelib.so  | grep .text | awk '{print $6}' | grep -v .text | grep -v __do_global | grep -v __bss_start | grep -v _edata | grep -v _end | grep -v _fini | grep -v _init | grep -v call_gmon_start | grep -v register_tm_clones | sort)
+symbol_list=$(objdump -t shapelib.so  | grep .text | awk '{print $6}' | grep -v -e .text -e __do_global -e __bss_start -e _edata -e _end -e _fini -e _init -e call_gmon_start -e register_tm_clones | sort)
 for symbol in $symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
 
-rodata_symbol_list=$(objdump -t shapelib.so  | grep "\.rodata" |  awk '{print $6}' | grep -v "\.")
+rodata_symbol_list=$(objdump -t shapelib.so  | grep "\\.rodata" |  awk '{print $6}' | grep -v "\\.")
 for symbol in $rodata_symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
 
-data_symbol_list=$(objdump -t shapelib.so  | grep "\.data" | grep -v __dso_handle | grep -v "__TMC_END__" | awk '{print $6}' | grep -v "\.")
+data_symbol_list=$(objdump -t shapelib.so  | grep "\\.data" | grep -v -e __dso_handle -e "__TMC_END__" | awk '{print $6}' | grep -v "\\.")
 for symbol in $data_symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
 
-bss_symbol_list=$(objdump -t shapelib.so  | grep "\.bss" | grep -v bBigEndian |  awk '{print $6}' | grep -v "\.")
+bss_symbol_list=$(objdump -t shapelib.so  | grep "\\.bss" | grep -v bBigEndian |  awk '{print $6}' | grep -v "\\.")
 for symbol in $bss_symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE

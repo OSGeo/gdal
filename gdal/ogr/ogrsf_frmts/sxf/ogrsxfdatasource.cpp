@@ -907,7 +907,7 @@ void OGRSXFDataSource::FillLayers()
         bool bHasSemantic = CHECK_BIT(buff[5], 9);
         if (bHasSemantic) //check has attributes
         {
-            //we have already 24 byte readed
+            //we have already 24 byte read
             vsi_l_offset nOffsetSemantic = 8 + buff[2];
             VSIFSeekL(fpSXF, nOffsetSemantic, SEEK_CUR);
         }

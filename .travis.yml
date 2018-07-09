@@ -9,14 +9,15 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: precise
+      dist: trusty
       cache:
         apt: true
         directories:
           - $HOME/.ccache
       env:
-        - BUILD_NAME=precise
-        - DETAILS="debug build, no libtool"
+        - BUILD_NAME=ubuntu_1804
+        - DETAILS=""
+
     - os: linux
       compiler: clang
       language: cpp
@@ -45,7 +46,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: precise
+      dist: trusty
       cache:
         apt: true
         directories:

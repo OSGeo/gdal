@@ -419,7 +419,7 @@ SWcreate(int32 fid, const char *swathname)
 	    /* --------------------- */
 	    status = -1;
 	    strcpy(errbuf,
-		   "No more than %d swaths may be open simutaneously");
+		   "No more than %d swaths may be open simultaneously");
 	    strcat(errbuf, " (%s)");
 	    HEpush(DFE_DENIED, "SWcreate", __FILE__, __LINE__);
 	    HEreport(errbuf, NSWATH, swathname);
@@ -776,7 +776,7 @@ SWattach(int32 fid, const char *swathname)
 	    /* --------------------- */
 	    swathID = -1;
 	    strcpy(errbuf,
-		   "No more than %d swaths may be open simutaneously");
+		   "No more than %d swaths may be open simultaneously");
 	    strcat(errbuf, " (%s)");
 	    HEpush(DFE_DENIED, "SWattach", __FILE__, __LINE__);
 	    HEreport(errbuf, NSWATH, swathname);
@@ -5794,7 +5794,7 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 		/* --------------------------------------------- */
 
 		/*
-		 * Transisition points will have flag value (+1) start or
+		 * Transition points will have flag value (+1) start or
 		 * (255 = (uint8) -1) stop of region
 		 */
 		for (i = edge[0]; i > 0; i--)
@@ -6421,7 +6421,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 		/* --------------------------------------------- */
 
 		/*
-		 * Transisition points will have flag value (+1) start or
+		 * Transition points will have flag value (+1) start or
 		 * (255 = (uint8) -1) stop of region
 		 */
 		for (i = edge[0]; i > 0; i--)

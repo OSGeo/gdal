@@ -21,8 +21,8 @@ cd "$GDAL_ROOT"
 
 LOG_FILE=/tmp/cppcheck_gdal.txt
 
-CPPCHECK_VERSION="`cppcheck --version | awk '{print $2}'`"
-if test `expr $CPPCHECK_VERSION \>\= 1.84` = 1; then
+CPPCHECK_VERSION="$(cppcheck --version | awk '{print $2}')"
+if test $(expr $CPPCHECK_VERSION \>= 1.84) = 1; then
     OVERRIDE=
 else
     OVERRIDE="-Doverride="
@@ -80,7 +80,7 @@ done
 
 ret_code=0
 
-grep -v "unmatchedSuppression" ${LOG_FILE} | grep -v " yacc.c" | grep -v PublicDecompWT | grep -v "kdu_cache_wrapper.h"  > ${LOG_FILE}.tmp
+grep -v "unmatchedSuppression" ${LOG_FILE} | grep -v -e " yacc.c" -e PublicDecompWT -e "kdu_cache_wrapper.h" > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 if grep "null pointer" ${LOG_FILE} ; then
@@ -126,7 +126,7 @@ fi
 grep "memleakOnRealloc" ${LOG_FILE} | grep frmts/hdf4/hdf-eos > /dev/null && echo "memleakOnRealloc issues in frmts/hdf4/hdf-eos ignored"
 grep "memleakOnRealloc" ${LOG_FILE} | grep frmts/grib/degrib > /dev/null && echo "memleakOnRealloc issues in frmts/grib/degrib ignored"
 
-if grep "memleakOnRealloc" ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos | grep -v frmts/grib/degrib ; then
+if grep "memleakOnRealloc" ${LOG_FILE} | grep -v -e frmts/hdf4/hdf-eos -e frmts/grib/degrib ; then
     echo "memleakOnRealloc check failed"
     ret_code=1
 fi
@@ -151,7 +151,7 @@ fi
 
 grep "memleak," ${LOG_FILE} | grep frmts/hdf4/hdf-eos > /dev/null && echo "memleak issues in frmts/hdf4/hdf-eos ignored"
 grep "memleak," ${LOG_FILE} | grep frmts/grib/degrib > /dev/null && echo "memleak issues in frmts/grib/degrib ignored"
-if grep "memleak," ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos | grep -v frmts/grib/degrib ; then
+if grep "memleak," ${LOG_FILE} | grep -v -e frmts/hdf4/hdf-eos -e frmts/grib/degrib ; then
     echo "memleak check failed"
     ret_code=1
 fi
@@ -177,16 +177,11 @@ grep "uninitvar," ${LOG_FILE} | grep frmts/png/libpng > /dev/null && echo "(pote
 grep "uninitvar," ${LOG_FILE} | grep frmts/zlib > /dev/null && echo "(potential) uninitvar issues in frmts/zlib ignored"
 grep "uninitvar," ${LOG_FILE} | grep ogr/ogrsf_frmts/geojson/libjson > /dev/null && echo "(potential) uninitvar issues in ogr/ogrsf_frmts/geojson/libjson ignored"
 
-if grep "uninitvar," ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos | \
-                                grep -v frmts/grib/degrib | \
-                                grep -v frmts/gtiff/libtiff | \
-                                grep -v frmts/gtiff/libgeotiff | \
-                                grep -v frmts/jpeg/libjpeg | \
-                                grep -v frmts/gif/giflib | \
-                                grep -v frmts/png/libpng | \
-                                grep -v frmts/zlib | \
-                                grep -v ogr/ogrsf_frmts/geojson/libjson | \
-                                grep -v osr_cs_wkt_parser.c ; then
+if grep "uninitvar," ${LOG_FILE} | grep -v -e frmts/hdf4/hdf-eos \
+        -e frmts/grib/degrib -e frmts/gtiff/libtiff -e frmts/gtiff/libgeotiff \
+        -e frmts/jpeg/libjpeg -e frmts/gif/giflib -e frmts/png/libpng \
+        -e frmts/zlib -e ogr/ogrsf_frmts/geojson/libjson \
+        -e osr_cs_wkt_parser.c ; then
     echo "uninitvar check failed"
     ret_code=1
 fi
@@ -218,7 +213,7 @@ if grep "operatorEqVarError" ${LOG_FILE} ; then
     ret_code=1
 fi
 
-if grep "uselessAssignmentPtrArg" ${LOG_FILE} | grep -v swq_parser.cpp | grep -v osr_cs_wkt_parser.c | grep -v ods_formula_parser.cpp ; then
+if grep "uselessAssignmentPtrArg" ${LOG_FILE} | grep -v -e swq_parser.cpp -e osr_cs_wkt_parser.c -e ods_formula_parser.cpp ; then
     echo "uselessAssignmentPtrArg check failed"
     ret_code=1
 fi
@@ -308,7 +303,9 @@ if grep "stlIfStrFind" ${LOG_FILE} ; then
     ret_code=1
 fi
 
-if grep "functionStatic" ${LOG_FILE} | grep -v "OGRSQLiteDataSource::OpenRaster" | grep -v "OGRSQLiteDataSource::OpenRasterSubDataset" | grep -v cpl_mem_cache ; then
+if grep "functionStatic" ${LOG_FILE} | grep -v -e OGRSQLiteDataSource::OpenRaster \
+                                            -e OGRSQLiteDataSource::OpenRasterSubDataset \
+                                            -e cpl_mem_cache ; then
     echo "functionStatic check failed"
     ret_code=1
 fi
@@ -333,7 +330,7 @@ if grep "redundantCondition" ${LOG_FILE} ; then
     ret_code=1
 fi
 
-if grep "unusedStructMember" ${LOG_FILE} | grep -v frmts/jpeg/libjpeg | grep -v frmts/gtiff/libtiff | grep -v frmts/zlib ; then
+if grep "unusedStructMember" ${LOG_FILE} | grep -v -e frmts/jpeg/libjpeg -e frmts/gtiff/libtiff -e frmts/zlib ; then
     echo "unusedStructMember check failed"
     ret_code=1
 fi
@@ -403,7 +400,7 @@ if grep "unassignedVariable" ${LOG_FILE} | grep -v frmts/png/libpng ; then
     ret_code=1
 fi
 
-if grep "redundantAssignment" ${LOG_FILE} | grep -v frmts/grib/degrib/g2clib | grep -v frmts/hdf4/hdf-eos | grep -v frmts/png/libpng ; then
+if grep "redundantAssignment" ${LOG_FILE} | grep -v -e frmts/grib/degrib/g2clib -e frmts/hdf4/hdf-eos -e frmts/png/libpng ; then
     echo "redundantAssignment check failed"
     ret_code=1
 fi

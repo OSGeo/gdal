@@ -2814,15 +2814,19 @@ OGRLineString* OGRLineString::TransferMembersAndDestroy(
     OGRLineString* poSrc,
     OGRLineString* poDst )
 {
-    poDst->set3D(poSrc->Is3D());
-    poDst->setMeasured(poSrc->IsMeasured());
+    if( poSrc->Is3D())
+        poDst->flags |= OGR_G_3D;
+    if( poSrc->IsMeasured())
+        poDst->flags |= OGR_G_MEASURED;
     poDst->assignSpatialReference(poSrc->getSpatialReference());
     poDst->nPointCount = poSrc->nPointCount;
     poDst->paoPoints = poSrc->paoPoints;
     poDst->padfZ = poSrc->padfZ;
+    poDst->padfM = poSrc->padfM;
     poSrc->nPointCount = 0;
     poSrc->paoPoints = nullptr;
     poSrc->padfZ = nullptr;
+    poSrc->padfM = nullptr;
     delete poSrc;
     return poDst;
 }

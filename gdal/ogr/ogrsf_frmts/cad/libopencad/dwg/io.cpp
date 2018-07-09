@@ -294,6 +294,13 @@ double CADBuffer::ReadBITDOUBLE()
 void CADBuffer::SkipBITDOUBLE()
 {
     unsigned char BITCODE = Read2B();
+    size_t nByteOffset      = m_nBitOffsetFromStart / 8;
+    const char * pDoubleFirstByte = m_pBuffer + nByteOffset;
+    if(pDoubleFirstByte + 9 > m_guard)
+    {
+        m_bEOB = true;
+        return;
+    }
 
     switch( BITCODE )
     {
@@ -551,7 +558,6 @@ std::string CADBuffer::ReadTV()
 long CADBuffer::ReadUMCHAR()
 {
     long result = 0;
-    /*bool   negative = false;*/
     size_t nByteOffset = m_nBitOffsetFromStart / 8;
     // TODO: bit offset is calculated, but function has nothing to do with it.
     /*size_t nBitOffsetInByte = m_nBitOffsetFromStart % 8;*/
@@ -565,67 +571,25 @@ long CADBuffer::ReadUMCHAR()
     unsigned char aMCharBytes[8]; // 8 bytes is maximum.
     //memcpy( aMCharBytes, pMCharFirstByte, 8 );
 
-    size_t MCharBytesCount = 0;
-    for( size_t i = 0; i < 8; ++i )
+    unsigned char nMCharBytesCount = 0;
+    for( unsigned char i = 0; i < 8; ++i )
     {
         aMCharBytes[i] = ReadCHAR();
-        ++MCharBytesCount;
+        ++nMCharBytesCount;
         if ( !( aMCharBytes[i] & binary( 10000000 ) ) )
         {
             break;
         }
-    }
-
-    SwapEndianness( aMCharBytes, MCharBytesCount ); // LSB to MSB
-
-    for( size_t i = 0; i < MCharBytesCount; ++i )
-    {
         aMCharBytes[i] &= binary( 01111111 );
     }
 
-    // TODO: this code doesn't cover case when char.bytescount > 3, but its
-    //       possible on large files.
-    // I just can't write an algorithm that does this.
-    switch( MCharBytesCount )
+    int nOffset = 0;
+    for(unsigned char i = 0; i < nMCharBytesCount; ++i)
     {
-        case 1:
-            break;
-        case 2:
-        {
-            char tmp = aMCharBytes[0] & binary( 00000001 );
-            aMCharBytes[0] = aMCharBytes[0] >> 1;
-            aMCharBytes[1] |= ( tmp << 7 );
-            break;
-        }
-        case 3:
-        {
-            unsigned char tmp1 = aMCharBytes[0] & binary( 00000011 );
-            unsigned char tmp2 = aMCharBytes[1] & binary( 00000001 );
-            aMCharBytes[0] = aMCharBytes[0] >> 2;
-            aMCharBytes[1] = aMCharBytes[1] >> 1;
-            aMCharBytes[1] |= ( tmp1 << 6 );
-            aMCharBytes[2] |= ( tmp2 << 7 );
-            break;
-        }
-        case 4:
-        {
-            unsigned char tmp1 = aMCharBytes[0] & binary( 00000111 );
-            unsigned char tmp2 = aMCharBytes[1] & binary( 00000011 );
-            unsigned char tmp3 = aMCharBytes[2] & binary( 00000001 );
-            aMCharBytes[0] = aMCharBytes[0] >> 3;
-            aMCharBytes[1] = aMCharBytes[1] >> 2;
-            aMCharBytes[2] = aMCharBytes[2] >> 1;
-            aMCharBytes[1] |= ( tmp1 << 5 );
-            aMCharBytes[2] |= ( tmp2 << 6 );
-            aMCharBytes[3] |= ( tmp3 << 7 );
-            break;
-        }
+        unsigned long nVal = aMCharBytes[i];
+        result += nVal << nOffset;
+        nOffset += 7;
     }
-
-    SwapEndianness( aMCharBytes, MCharBytesCount ); // MSB to LSB
-
-    memcpy( &result, aMCharBytes, MCharBytesCount );
-
     return result;
 }
 
@@ -645,77 +609,37 @@ long CADBuffer::ReadMCHAR()
         return 0;
     }
     unsigned char aMCharBytes[8]; // 8 bytes is maximum.
-    //memcpy( aMCharBytes, pMCharFirstByte, 8 );
 
-    size_t MCharBytesCount = 0;
-    for( size_t i = 0; i < 8; ++i )
+    unsigned char nMCharBytesCount = 0;
+    for( unsigned char i = 0; i < 8; ++i )
     {
         aMCharBytes[i] = ReadCHAR();
-        ++MCharBytesCount;
+        ++nMCharBytesCount;
         if ( !( aMCharBytes[i] & binary( 10000000 ) ) )
         {
             break;
         }
-    }
-
-    SwapEndianness( aMCharBytes, MCharBytesCount ); // LSB to MSB
-
-    if ( ( aMCharBytes[0] & binary( 01000000 ) ) == binary( 01000000 ) )
-    {
-        aMCharBytes[0] &= binary( 10111111 );
-        negative = true;
-    }
-
-    for( size_t i = 0; i < MCharBytesCount; ++i )
-    {
         aMCharBytes[i] &= binary( 01111111 );
     }
 
-    // TODO: this code doesn't cover case when char.bytescount > 3, but its
-    //       possible on large files.
-    // I just can't write an algorithm that does this.
-    switch( MCharBytesCount )
+    if ( ( aMCharBytes[nMCharBytesCount - 1] & binary( 01000000 ) ) == binary( 01000000 ) )
     {
-        case 1:
-            break;
-        case 2:
-        {
-            char tmp = aMCharBytes[0] & binary( 00000001 );
-            aMCharBytes[0] = aMCharBytes[0] >> 1;
-            aMCharBytes[1] |= ( tmp << 7 );
-            break;
-        }
-        case 3:
-        {
-            unsigned char tmp1 = aMCharBytes[0] & binary( 00000011 );
-            unsigned char tmp2 = aMCharBytes[1] & binary( 00000001 );
-            aMCharBytes[0] = aMCharBytes[0] >> 2;
-            aMCharBytes[1] = aMCharBytes[1] >> 1;
-            aMCharBytes[1] |= ( tmp1 << 6 );
-            aMCharBytes[2] |= ( tmp2 << 7 );
-            break;
-        }
-        case 4:
-        {
-            unsigned char tmp1 = aMCharBytes[0] & binary( 00000111 );
-            unsigned char tmp2 = aMCharBytes[1] & binary( 00000011 );
-            unsigned char tmp3 = aMCharBytes[2] & binary( 00000001 );
-            aMCharBytes[0] = aMCharBytes[0] >> 3;
-            aMCharBytes[1] = aMCharBytes[1] >> 2;
-            aMCharBytes[2] = aMCharBytes[2] >> 1;
-            aMCharBytes[1] |= ( tmp1 << 5 );
-            aMCharBytes[2] |= ( tmp2 << 6 );
-            aMCharBytes[3] |= ( tmp3 << 7 );
-            break;
-        }
+        aMCharBytes[nMCharBytesCount - 1] &= binary( 10111111 );
+        negative = true;
     }
 
-    SwapEndianness( aMCharBytes, MCharBytesCount ); // MSB to LSB
-
-    memcpy( &result, aMCharBytes, MCharBytesCount );
+    int nOffset = 0;
+    for(unsigned char i = 0; i < nMCharBytesCount; ++i)
+    {
+        unsigned long nVal = aMCharBytes[i];
+        result += nVal << nOffset;
+        nOffset += 7;
+    }
 
     if( negative )
+    {
         result *= -1;
+    }
 
     return result;
 }
@@ -725,8 +649,8 @@ unsigned int CADBuffer::ReadMSHORT()
     unsigned int  result = 0;
     unsigned char aMShortBytes[8]; // 8 bytes is maximum.
 
-    // TODO: this function doesnot support MSHORTS longer than 4 bytes. ODA says
-    //       its impossible, but not sure.
+    // TODO: this function does not support MSHORTS longer than 4 bytes. ODA says
+    //       it's impossible, but not sure.
     size_t MShortBytesCount = 2;
     aMShortBytes[0] = ReadCHAR();
     aMShortBytes[1] = ReadCHAR();
@@ -930,6 +854,13 @@ void CADBuffer::SkipTV()
 void CADBuffer::SkipBITLONG()
 {
     unsigned char BITCODE = Read2B();
+    size_t nByteOffset      = m_nBitOffsetFromStart / 8;
+    const char * pLongFirstByte = m_pBuffer + nByteOffset;
+    if(pLongFirstByte + 5 > m_guard)
+    {
+        m_bEOB = true;
+        return;
+    }
     switch( BITCODE )
     {
         case BITLONG_NORMAL:
@@ -949,6 +880,13 @@ void CADBuffer::SkipBITLONG()
 void CADBuffer::SkipBITSHORT()
 {
     unsigned char BITCODE = Read2B();
+    size_t nByteOffset      = m_nBitOffsetFromStart / 8;
+    const char * pShortFirstByte = m_pBuffer + nByteOffset;
+    if(pShortFirstByte + 4 > m_guard)
+    {
+        m_bEOB = true;
+        return;
+    }
     switch( BITCODE )
     {
         case BITSHORT_NORMAL:
@@ -967,6 +905,13 @@ void CADBuffer::SkipBITSHORT()
 
 void CADBuffer::SkipBIT()
 {
+    size_t nByteOffset      = m_nBitOffsetFromStart / 8;
+    const char * pBoolByte = m_pBuffer + nByteOffset;
+    if(pBoolByte >= m_guard)
+    {
+        m_bEOB = true;
+        return;
+    }
     ++m_nBitOffsetFromStart;
 }
 

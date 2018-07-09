@@ -47,6 +47,10 @@
 #if HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+#if HAVE_GETRLIMIT
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
 
 #include "cpl_config.h"
 #include "cpl_error.h"
@@ -1354,6 +1358,11 @@ char *VSIStrerror( int nErrno )
 
 /** Return the total physical RAM in bytes.
  *
+ * In the context of a container using cgroups (typically Docker), this
+ * will take into account that limitation (starting with GDAL 2.4.0)
+ *
+ * You should generally use CPLGetUsablePhysicalRAM() instead.
+ *
  * @return the total physical RAM in bytes (or 0 in case of failure).
  * @since GDAL 2.0
  */
@@ -1363,7 +1372,24 @@ GIntBig CPLGetPhysicalRAM( void )
     const long nPageSize = sysconf(_SC_PAGESIZE);
     if( nPhysPages < 0 || nPageSize < 0 )
         return 0;
-    return static_cast<GIntBig>(nPhysPages) * nPageSize;
+    GIntBig nVal = static_cast<GIntBig>(nPhysPages) * nPageSize;
+
+    // In a Docker container the memory might be limited
+    // If no limitation, on 64 bit, 9223372036854771712 is returned.
+    FILE* f = fopen("/sys/fs/cgroup/memory/memory.limit_in_bytes", "rb");
+    if( f )
+    {
+        char szBuffer[32];
+        const int nRead = static_cast<int>(
+            fread(szBuffer, 1, sizeof(szBuffer)-1, f));
+        szBuffer[nRead] = 0;
+        fclose(f);
+        const GUIntBig nLimit = CPLScanUIntBig(szBuffer, nRead);
+        nVal = static_cast<GIntBig>(
+            std::min(static_cast<GUIntBig>(nVal), nLimit));
+    }
+
+    return nVal;
 }
 
 #elif defined(__MACH__) && defined(__APPLE__)
@@ -1422,6 +1448,9 @@ GIntBig CPLGetPhysicalRAM( void )
  * This is the same as CPLGetPhysicalRAM() except it will limit to 2 GB
  * for 32 bit processes.
  *
+ * Starting with GDAL 2.4.0, it will also take account resource limits on
+ * Posix systems.
+ *
  * Note: This memory may already be partly used by other processes.
  *
  * @return the total physical RAM, usable by a process, in bytes (or 0
@@ -1434,6 +1463,15 @@ GIntBig CPLGetUsablePhysicalRAM( void )
 #if SIZEOF_VOIDP == 4
     if( nRAM > INT_MAX )
         nRAM = INT_MAX;
+#endif
+#if HAVE_GETRLIMIT
+    struct rlimit sLimit;
+    if( getrlimit( RLIMIT_AS, &sLimit) == 0 &&
+        sLimit.rlim_cur != RLIM_INFINITY &&
+        static_cast<GIntBig>(sLimit.rlim_cur) < nRAM )
+    {
+        nRAM = static_cast<GIntBig>(sLimit.rlim_cur);
+    }
 #endif
     return nRAM;
 }

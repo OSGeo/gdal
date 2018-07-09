@@ -43,7 +43,7 @@ static GDALDataset *OGRILI1DriverOpen( GDALOpenInfo* poOpenInfo )
         (!poOpenInfo->bStatOK && strchr(poOpenInfo->pszFilename, ',') == nullptr) )
         return nullptr;
 
-    if( poOpenInfo->fpL != nullptr )
+    if( poOpenInfo->pabyHeader != nullptr )
     {
         if( strstr((const char*)poOpenInfo->pabyHeader,"SCNT") == nullptr )
         {

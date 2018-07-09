@@ -349,7 +349,7 @@ CPLErr SGIRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
 
         if( nRepeatCount > 2
             || iX + nRepeatCount == image->xsize
-            || (iX + nRepeatCount < image->xsize - 2
+            || (iX + nRepeatCount < image->xsize - 3
                 && pabyRawBuf[iX + nRepeatCount + 1]
                 == pabyRawBuf[iX + nRepeatCount + 2]
                 && pabyRawBuf[iX + nRepeatCount + 1]

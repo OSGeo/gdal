@@ -3404,14 +3404,14 @@ def ogr_gpkg_37():
 # Test GetExtent() and RECOMPUTE EXTENT ON
 
 
-def ogr_gpkg_38():
+def ogr_gpkg_38(options=['SPATIAL_INDEX=YES']):
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
 
     dbname = '/vsimem/ogr_gpkg_38.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
-    lyr = ds.CreateLayer('test', geom_type=ogr.wkbLineString)
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbLineString, options=options)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING (1 2,3 4)'))
     lyr.CreateFeature(f)
@@ -3503,6 +3503,11 @@ def ogr_gpkg_38():
     gdaltest.gpkg_dr.DeleteDataSource(dbname)
 
     return 'success'
+
+
+def ogr_gpkg_38_nospi():
+    return ogr_gpkg_38(options=['SPATIAL_INDEX=NO'])
+
 
 ###############################################################################
 # Test checking of IDENTIFIER unicity
@@ -4119,6 +4124,7 @@ def ogr_gpkg_47():
     gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', None)
     if gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
         return 'fail'
 
     gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options=['VERSION=1.2'])
@@ -4136,6 +4142,7 @@ def ogr_gpkg_47():
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
+    ds = None
 
     gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', 'NO')
     ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
@@ -4159,6 +4166,7 @@ def ogr_gpkg_47():
     if gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail')
         return 'fail'
+    ds = None
 
     gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', 'NO')
     ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
@@ -4667,6 +4675,91 @@ def ogr_gpkg_59():
     return 'success'
 
 ###############################################################################
+# Test savepoints
+
+
+def ogr_gpkg_savepoint():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    filename = '/vsimem/ogr_gpkg_savepoint.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer('foo')
+    lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['str'] = 'foo'
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    ds.StartTransaction()
+    ds.ExecuteSQL('SAVEPOINT pt')
+    lyr.DeleteFeature(1)
+    ds.ExecuteSQL('ROLLBACK TO SAVEPOINT pt')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['str'] = 'bar'
+    lyr.CreateFeature(f)
+    ds.CommitTransaction()
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 2:
+        print(lyr.GetFeatureCount())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(filename)
+
+    return 'success'
+
+###############################################################################
+# Test that we don't open file handles behind the back of sqlite3
+
+
+def ogr_gpkg_wal():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    # needs to be a real file
+    filename = 'tmp/ogr_gpkg_wal.gpkg'
+
+    with gdaltest.config_option('OGR_SQLITE_JOURNAL', 'WAL'):
+        ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    ds.CreateLayer('foo')
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    os.stat(filename + '-wal')
+
+    # Re-open in read-only mode
+    ds_ro = ogr.Open(filename)
+    ds_ro.GetName()
+    os.stat(filename + '-wal')
+
+    # Test external process to read the file
+    gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ' + filename)
+
+    # The file must still exist
+    os.stat(filename + '-wal')
+
+    ds = None
+    ds_ro = None
+
+    gdal.Unlink(filename)
+    gdal.Unlink(filename + '-wal')
+    gdal.Unlink(filename + '-shm')
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 
@@ -4730,6 +4823,7 @@ gdaltest_list = [
     ogr_gpkg_36,
     ogr_gpkg_37,
     ogr_gpkg_38,
+    ogr_gpkg_38_nospi,
     ogr_gpkg_39,
     ogr_gpkg_40,
     ogr_gpkg_41,
@@ -4751,11 +4845,13 @@ gdaltest_list = [
     ogr_gpkg_57,
     ogr_gpkg_58,
     ogr_gpkg_59,
+    ogr_gpkg_savepoint,
+    ogr_gpkg_wal,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
 
-# gdaltest_list = [ ogr_gpkg_1, ogr_gpkg_46, ogr_gpkg_cleanup ]
+# gdaltest_list = [ ogr_gpkg_1, ogr_gpkg_47, ogr_gpkg_cleanup ]
 
 if __name__ == '__main__':
 

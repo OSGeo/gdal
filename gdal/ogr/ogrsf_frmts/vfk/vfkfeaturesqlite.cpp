@@ -219,34 +219,46 @@ bool VFKFeatureSQLite::LoadGeometryPolygon()
 */
 OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
 {
-    CPLString   osSQL;
+    sqlite3_stmt *hStmt = ((VFKDataBlockSQLite *) m_poDataBlock)->m_hStmt;
+    if ( hStmt == nullptr ) {
+        /* random access */
+        CPLString   osSQL;
 
-    osSQL.Printf("SELECT * FROM %s WHERE rowid = %d",
-                 m_poDataBlock->GetName(), m_iRowId);
-    if (ExecuteSQL(osSQL.c_str()) != OGRERR_NONE)
-        return OGRERR_FAILURE;
+        osSQL.Printf("SELECT * FROM %s WHERE rowid = %d",
+                    m_poDataBlock->GetName(), m_iRowId);
+        if (ExecuteSQL(osSQL.c_str()) != OGRERR_NONE)
+            return OGRERR_FAILURE;
+
+        hStmt = m_hStmt;
+    }
+    else {
+        /* sequential access */
+        VFKReaderSQLite *poReader = (VFKReaderSQLite *) m_poDataBlock->GetReader();
+        if ( poReader->ExecuteSQL(hStmt) != OGRERR_NONE )
+            return OGRERR_FAILURE;
+    }
 
     int nPropertyCount = m_poDataBlock->GetPropertyCount();
     for( int iField = 0; iField < nPropertyCount; iField++ ) {
-        if (sqlite3_column_type(m_hStmt, iField) == SQLITE_NULL) /* skip null values */
+        if (sqlite3_column_type(hStmt, iField) == SQLITE_NULL) /* skip null values */
             continue;
         OGRFieldType fType = poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
         switch (fType) {
         case OFTInteger:
             poFeature->SetField(iField,
-                                sqlite3_column_int(m_hStmt, iField));
+                                sqlite3_column_int(hStmt, iField));
             break;
         case OFTInteger64:
             poFeature->SetField(iField,
-                                sqlite3_column_int64(m_hStmt, iField));
+                                sqlite3_column_int64(hStmt, iField));
             break;
         case OFTReal:
             poFeature->SetField(iField,
-                                sqlite3_column_double(m_hStmt, iField));
+                                sqlite3_column_double(hStmt, iField));
             break;
         default:
             poFeature->SetField(iField,
-                                (const char *) sqlite3_column_text(m_hStmt, iField));
+                                (const char *) sqlite3_column_text(hStmt, iField));
             break;
         }
     }

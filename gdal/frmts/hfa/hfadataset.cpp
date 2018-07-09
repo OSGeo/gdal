@@ -32,6 +32,7 @@
 #include "hfadataset.h"
 #include "hfa_p.h"
 
+#include <cassert>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -2042,12 +2043,18 @@ void HFARasterBand::ReadAuxMetadata()
     const char *const *pszAuxMetaData = GetHFAAuxMetaDataList();
     for( int i = 0; pszAuxMetaData[i] != nullptr; i += 4 )
     {
-        HFAEntry *poEntry = (strlen(pszAuxMetaData[i]) > 0)
-            ? poBand->poNode->GetNamedChild(pszAuxMetaData[i])
-            : poBand->poNode;
-
-        if( poEntry == nullptr )
-            continue;
+        HFAEntry *poEntry;
+        if (strlen(pszAuxMetaData[i]) > 0)
+        {
+            poEntry = poBand->poNode->GetNamedChild(pszAuxMetaData[i]);
+            if( poEntry == nullptr )
+                continue;
+        }
+        else
+        {
+            poEntry = poBand->poNode;
+            assert(poEntry);
+        }
 
         const char *pszFieldName = pszAuxMetaData[i + 1] + 1;
 
@@ -3372,7 +3379,8 @@ CPLErr HFADataset::WriteProjection()
         const double a2 = sPro.proSpheroid.a * sPro.proSpheroid.a;
         const double b2 = sPro.proSpheroid.b * sPro.proSpheroid.b;
 
-        sPro.proSpheroid.eSquared = (a2 - b2) / a2;
+        // a2 == 0 is non sensical of course. Just to please fuzzers
+        sPro.proSpheroid.eSquared = (a2 == 0.0) ? 0.0 : (a2 - b2) / a2;
     }
 
     if( sDatum.datumname == nullptr )
@@ -4372,9 +4380,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         pszDatumName = psDatum->datumname;
 
         // Imagine to WKT translation.
-        for( int i = 0;
-             pszDatumName != nullptr && apszDatumMap[i] != nullptr;
-             i += 2 )
+        for( int i = 0; apszDatumMap[i] != nullptr; i += 2 )
         {
             if( EQUAL(pszDatumName, apszDatumMap[i]) )
             {

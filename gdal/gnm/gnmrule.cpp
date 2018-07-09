@@ -150,7 +150,7 @@ bool GNMRule::ParseRuleString()
     }
 
     // now just test if the value == connects
-    // in future shoult set rule type
+    // in future should set rule type
 
     if(!EQUAL(aTokens[1], GNM_RULEKW_CONNECTS))
     {

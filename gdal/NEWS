@@ -10,7 +10,7 @@ Trac tickets. GitHub tickets are explicitly indicated with github #XXXX
    - RDA: DigitalGlobe Raster Data Access (read-only)
  * New OGR drivers:
    - MVT: add read/write driver for Mapbox Vector Tile standalone files or tilesets
-   - ESRIJson and TopoJSON: read-only, splitted from existing code of the GeoJSON driver
+   - ESRIJson and TopoJSON: read-only, split from existing code of the GeoJSON driver
    - WFS3: *experimental* read-only driver
  * RFC 68: Make C++11 a build requirement
     https://trac.osgeo.org/gdal/wiki/rfc68_cplusplus11
@@ -1611,7 +1611,7 @@ Shapefile driver:
  * auto-repack by default at dataset closing and FlushCache()/SyncToDisk() time. Controlled by AUTO_REPACK open and layer creation options (that default to YES)
  * generate .dbf end-of-file 0x1A character by default. Add DBF_EOF_CHAR layer creation options / open options to control that behaviour
  * writing: use strerrno() for better error messages (QGIS #13468)
- * change REPACK implementation on Windows to be robust to remaining file descriptors openend on the .shp/.shx/.dbf (#6672, QGIS #15570)
+ * change REPACK implementation on Windows to be robust to remaining file descriptors opened on the .shp/.shx/.dbf (#6672, QGIS #15570)
  * Fix issue in DBFCloneEmpty() one a one field DBF not yet written to disk
  * add call to AutoIdentifyEPSG() when reading a .prj
  * support reading .dbf with substantial padding after last field definition.
@@ -3582,7 +3582,7 @@ GRASS driver:
  * fix compilation issues for GRASS 7
 
 GRIB driver:
- * display temperature unit as deg Celcius in metadata (#3606)
+ * display temperature unit as deg Celsius in metadata (#3606)
 
 GTiff driver:
  * when compiling against internal libtiff, in read-only mode, optimization to
@@ -3592,7 +3592,7 @@ GTiff driver:
  * fix potential issues in gt_citation.cpp / CheckUTM()
  * upgrade internal libtiff to latest CVS
  * implement reading and writing of ICC profiles (#5246)
- * make SetColorInterpretation() round-trip with GetColorInterpreation();
+ * make SetColorInterpretation() round-trip with GetColorInterpretation();
    read color interpretation from PAM if it exists (overrides internal tiff color interpretation);
    set TIFFTAG_PHOTOMETRIC=PHOTOMETRIC_RGB if calling SetColorInterpretation() with R,G,B and no explicit PHOTOMETRIC creation option defined
  * gt_wkt_srs.cpp: fix compilation with external libgeotiff. The file is dependent of quite a few CPL stuff, don't try to pretend otherwise
@@ -3996,7 +3996,7 @@ OSM driver:
  * support relations with more than 2000 members in a OSM XML file (#5055)
  * make the driver work with PBF files produced by osmconvert.
  * osmconf.ini: report the waterway attribute for the lines layer (#5056)
- * add an option in osmconf.ini to enable creating a 'all_tags' field, combining both fields specificaly identified, and other tags
+ * add an option in osmconf.ini to enable creating a 'all_tags' field, combining both fields specifically identified, and other tags
  * always use quoting of key/values in other_tags field (#5096)
  * use alternative implementation of FindNode() that is a bit more efficient when process is CPU-bound
  * fix issue with attribute filtering
@@ -6922,7 +6922,7 @@ Utilities :
     - Add -separate, -allow_projection_difference, -te, -tr, -q, -addalpha options
     - Add -srcnodata and -vrtnodata options (#3254)
     - Add -hidenodata option (#3327)
-    - Avoid accidental overwriting of a non VRT dataset due to revered filename order
+    - Avoid accidental overwriting of a non VRT dataset due to reversed filename order
     - Fix -resolution lowest/highest (#3198)
  * gdaladdo: add -clean option (#2915)
  * gdaladdo: add -q option
@@ -7139,7 +7139,7 @@ JP2KAK (Kakadu) Driver :
    Fixed _WriteTile() lossless 16bit case to avoid improper 32K offset.
    Added support for NBITS image structure metadata, and creation option.
  * Added logic to limit tiles to 64K due to jpeg2000 limitation. (ESRI Merge)
- * Fix offseting of 16U buf32 data (#3027)
+ * Fix offsetting of 16U buf32 data (#3027)
  * Support 16u/16s imagery through DirectRasterIO interface (#3049)
  * Support external overviews as an override to internal overviews
  * Rework jp2kak support to use natural kakadu builds (Windows build)
@@ -7894,7 +7894,7 @@ L1B driver:
  * Added support for NOAA-18(N) and METOP-2 datasets; tiny code refactoring.
  * L1B : add auto guess of data format when it is 2 spaces or empty string
  * The GAC GCPs are not tied to the center of pixel.
- * Serious code rewriting in order to read datasets withour archive header
+ * Serious code rewriting in order to read datasets without archive header
 
 MEM driver:
  * Avoid failure when doing mem_driver->Create('MEM:::')
@@ -8016,7 +8016,7 @@ VRT driver:
  * Use VSIF Large API in VRTDataset::Open to fix #1070
  * recover from failure to create transformer (#2240)
  * Added LUT based transformation support to the VRTComplexSource
- * Extend the output of <SimpleSource> in a forward and backword compatibly way, and make use of GDALProxyPoolDataset when possible
+ * Extend the output of <SimpleSource> in a forward and backward compatible way, and make use of GDALProxyPoolDataset when possible
  * Add the <ColorTableComponent> element to <ComplexSource> to do color table expansion in the VRT
  * Fix failure when attempting to read a warped VRT made from a 3-band dataset with -dstalpha option (#2502)
  * In VRTDerivedRasterBand::IRasterIO() don't call RasterIO() on sources with 0,0 for nPixelSpace and nLineSpace as most sources, except VRTSimpleSource, don't translate them.

@@ -171,6 +171,13 @@ void IVFKDataBlock::SetProperties(const char *poLine)
 */
 int IVFKDataBlock::AddProperty(const char *pszName, const char *pszType)
 {
+    /* Force text attributes to avoid int64 overflow
+       see https://github.com/OSGeo/gdal/issues/672 */
+    if( EQUAL( m_pszName, "VLA" ) &&
+        ( EQUAL( pszName, "PODIL_CITATEL" ) ||
+          EQUAL( pszName, "PODIL_JMENOVATEL" ) ) )
+        pszType = "T30";
+
     VFKPropertyDefn *poNewProperty = new VFKPropertyDefn(pszName, pszType,
                                                          m_poReader->IsLatin2());
 
@@ -366,6 +373,7 @@ OGRwkbGeometryType IVFKDataBlock::SetGeometryType(bool bSuppressGeometry)
         m_nGeometryType = wkbPoint;
 
     else if (EQUAL (m_pszName, "SBP") ||
+             EQUAL (m_pszName, "SBPG") ||
              EQUAL (m_pszName, "HP") ||
              EQUAL (m_pszName, "DPM") ||
              EQUAL (m_pszName, "ZVB"))
@@ -460,7 +468,8 @@ int IVFKDataBlock::LoadGeometry()
         /* -> wkbPoint */
         nInvalid = LoadGeometryPoint();
     }
-    else if (EQUAL (m_pszName, "SBP")) {
+    else if (EQUAL (m_pszName, "SBP") ||
+             EQUAL (m_pszName, "SBPG")) {
         /* -> wkbLineString */
         nInvalid = LoadGeometryLineStringSBP();
     }
@@ -778,7 +787,7 @@ int VFKDataBlock::LoadGeometryPoint()
 }
 
 /*!
-  \brief Load geometry (linestring SBP layer)
+  \brief Load geometry (linestring SBP/SBPG layer)
 
   \return number of invalid features
 */

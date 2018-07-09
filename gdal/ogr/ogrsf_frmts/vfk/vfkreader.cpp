@@ -45,7 +45,7 @@ CPL_CVSID("$Id$")
 static char *GetDataBlockName(const char *);
 
 /*!
-  \brief IVFKReader desctructor
+  \brief IVFKReader destructor
 */
 IVFKReader::~IVFKReader()
 {
@@ -68,7 +68,7 @@ VFKReader::VFKReader( const GDALOpenInfo* poOpenInfo ) :
     m_bLatin2(true),  // Encoding ISO-8859-2 or WINDOWS-1250.
     m_poFD(nullptr),
     m_pszFilename(CPLStrdup(poOpenInfo->pszFilename)),
-    m_poFStat((VSIStatBuf*) CPLCalloc(1, sizeof(VSIStatBuf))),
+    m_poFStat((VSIStatBufL*) CPLCalloc(1, sizeof(VSIStatBufL))),
     // VFK is provided in two forms - stative and amendment data.
     m_bAmendment(false),
     m_bFileField( CPLFetchBool( poOpenInfo->papszOpenOptions,
@@ -79,7 +79,7 @@ VFKReader::VFKReader( const GDALOpenInfo* poOpenInfo ) :
     // Open VFK file for reading.
     CPLAssert(nullptr != m_pszFilename);
 
-    if (CPLStat(m_pszFilename, m_poFStat) != 0 ||
+    if (VSIStatL(m_pszFilename, m_poFStat) != 0 ||
         !VSI_ISREG(m_poFStat->st_mode)) {
       CPLError(CE_Failure, CPLE_OpenFailed,
                "%s is not a regular file.", m_pszFilename);
@@ -410,7 +410,7 @@ IVFKDataBlock *VFKReader::CreateDataBlock(const char *pszBlockName)
   \brief Add new data block
 
   \param poNewDataBlock pointer to VFKDataBlock instance
-  \param pszDefn unused (FIXME ?)
+  \param pszDefn unused (see VFKReaderSQLite::AddDataBlock)
 */
 void VFKReader::AddDataBlock(IVFKDataBlock *poNewDataBlock,
                              CPL_UNUSED const char *pszDefn)

@@ -187,8 +187,10 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                 pasFieldDesc[nFields].nByteCount = atoi(osColumnBytes);
                 if (pasFieldDesc[nFields].nStartByte >= 0 &&
                     pasFieldDesc[nFields].nByteCount > 0 &&
+                    pasFieldDesc[nFields].nStartByte < INT_MAX -
+                                    pasFieldDesc[nFields].nByteCount &&
                     pasFieldDesc[nFields].nStartByte +
-                    pasFieldDesc[nFields].nByteCount <= nRecordSize)
+                        pasFieldDesc[nFields].nByteCount <= nRecordSize)
                 {
                     OGRFieldType eFieldType = OFTString;
                     OGRFieldSubType eSubType = OFSTNone;

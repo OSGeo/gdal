@@ -42,6 +42,8 @@
 #include "pcidsk_pct.h"
 #include "pcidsk_vectorsegment.h"
 
+#include <map>
+
 using namespace PCIDSK;
 
 class OGRPCIDSKLayer;
@@ -177,6 +179,8 @@ class OGRPCIDSKLayer final: public OGRLayer
     bool                bUpdateAccess;
 
     OGRSpatialReference *poSRS;
+
+    std::map<std::string, int> m_oMapFieldNameToIdx{};
 
   public:
     OGRPCIDSKLayer( PCIDSK::PCIDSKSegment*, PCIDSK::PCIDSKVectorSegment *, bool bUpdate );

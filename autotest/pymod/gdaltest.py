@@ -285,7 +285,8 @@ def run_all(dirlist, run_as_external=False):
             if not filename.endswith('.py'):
                 continue
 
-            module = filename.rstrip('.py')
+            # Do not use rstrip here since 'test_ogr2ogr_py.py'.rstrip('.py') returns 'test_ogr2ogr_'
+            module = filename[0:-len('.py')]
             try:
                 wd = os.getcwd()
                 os.chdir(dir_name)

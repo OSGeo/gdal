@@ -906,6 +906,10 @@ void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn,
     OGRFieldDefn  oLayerField( "Layer", OFTString );
     poFeatureDefn->AddFieldDefn( &oLayerField );
 
+    OGRFieldDefn  oPaperSpaceField( "PaperSpace", OFTInteger );
+    oPaperSpaceField.SetSubType( OFSTBoolean );
+    poFeatureDefn->AddFieldDefn( &oPaperSpaceField );
+
     OGRFieldDefn  oClassField( "SubClasses", OFTString );
     poFeatureDefn->AddFieldDefn( &oClassField );
 

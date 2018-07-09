@@ -105,7 +105,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
       ifld=calloc(ndpts,sizeof(g2int));
       if( ifld == NULL )
       {
-          fprintf(stderr, "cannot allocated ifld in simpack()\n");
+          fprintf(stderr, "Cannot allocate ifld in simpack()\n");
           *lcpack = -1;
           return;
       }

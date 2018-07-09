@@ -207,7 +207,7 @@ typedef enum {
 } INGR_ColorTableType;
 
 //  ----------------------------------------------------------------------------
-//    Environ-V Color Tables Entrie
+//    Environ-V Color Tables Entry
 //  ----------------------------------------------------------------------------
 
 struct vlt_slot
@@ -219,7 +219,7 @@ struct vlt_slot
 };
 
 //  ----------------------------------------------------------------------------
-//    IGDS Color Tables Entrie
+//    IGDS Color Tables Entry
 //  ----------------------------------------------------------------------------
 
 struct igds_slot

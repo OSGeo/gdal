@@ -45,7 +45,16 @@ import gdaltest
 def ers_1():
 
     tst = gdaltest.GDALTest('ERS', 'srtm.ers', 1, 64074)
-    return tst.testOpen()
+    if tst.testOpen() != 'success':
+        return 'fail'
+    ds = gdal.Open('data/srtm.ers')
+    md = ds.GetRasterBand(1).GetMetadata()
+    expected_md = {'STATISTICS_MEAN': '-4020.25', 'STATISTICS_MINIMUM': '-4315', 'STATISTICS_MAXIMUM': '-3744', 'STATISTICS_MEDIAN': '-4000'}
+    if md != expected_md:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+    return 'success'
 
 ###############################################################################
 # Create simple copy and check.
@@ -361,6 +370,15 @@ def ers_10():
     return 'success'
 
 ###############################################################################
+# Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=8744
+
+
+def ers_recursive_opening():
+    ds = gdal.Open('/vsitar/data/test_ers_recursive.tar/test.ers')
+    ds.GetFileList()
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 
@@ -380,6 +398,7 @@ gdaltest_list = [
     ers_8,
     ers_9,
     ers_10,
+    ers_recursive_opening,
     ers_cleanup
 ]
 

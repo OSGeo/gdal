@@ -1905,6 +1905,22 @@ def ogr_geojson_39():
         feat.DumpReadable()
         return 'fail'
 
+    # Same with 2 features
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "id" : "foo", "properties": { "id" : 6 }, "geometry": null },
+{ "type": "Feature", "id" : "bar", "properties": { "id" : 7 }, "geometry": null }
+] }""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldDefn(0).GetName() != 'id' or feat_defn.GetFieldDefn(0).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('id') != 6:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
     # Crazy case: properties.id has the precedence because we arbitrarily decided that...
     ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : "foo", "properties": { "id" : "baz" }, "geometry": null },
@@ -3716,7 +3732,7 @@ def ogr_geojson_62():
         gdaltest.post_reason('failure')
         return 'fail'
 
-    # crs type=EPSG (not even documented in GJ2008 spec!) tests. Just for coverage completness
+    # crs type=EPSG (not even documented in GJ2008 spec!) tests. Just for coverage completeness
     gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"EPSG" }, "features":[] }""")
 
     gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"EPSG", "properties":null }, "features":[] }""")
@@ -3753,7 +3769,7 @@ def ogr_geojson_62():
     with gdaltest.error_handler():
         gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"link", "properties":{"href": "1"} }, "features":[] }""")
 
-    # crs type=OGC (not even documented in GJ2008 spec!) tests. Just for coverage completness
+    # crs type=OGC (not even documented in GJ2008 spec!) tests. Just for coverage completeness
     gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"OGC" }, "features":[] }""")
 
     gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"OGC", "properties":null }, "features":[] }""")
@@ -4094,6 +4110,53 @@ def ogr_geojson_starting_with_crs():
     return 'success'
 
 ###############################################################################
+# Test we properly flush the file in SyncToDisk() in append situations
+
+
+def ogr_geojson_append_flush():
+
+    tmpfilename = 'tmp/ogr_geojson_append_flush.json'
+    f = gdal.VSIFOpenL(tmpfilename, 'wb')
+    content = """{
+"type": "FeatureCollection",
+"features": [
+{ "type": "Feature", "properties": { "x": 1, "y": 2, "z": 3, "w": 4 }, "geometry": { "type": "Point", "coordinates": [ 0, 0 ] } } ] }"""
+    gdal.VSIFWriteL(content, 1, len(content), f)
+    gdal.VSIFCloseL(f)
+
+    ds = ogr.Open(tmpfilename, update=1)
+    lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['x'] = 10
+    lyr.CreateFeature(f)
+    lyr.SyncToDisk()
+
+    ds2 = ogr.Open(tmpfilename, update=1)
+    lyr = ds2.GetLayer(0)
+    lyr.GetNextFeature()
+    f = lyr.GetNextFeature()
+    if f is None or f['x'] != 10:
+        return 'fail'
+
+    ds = None
+    ds2 = None
+    gdal.Unlink(tmpfilename)
+
+    return 'success'
+
+
+###############################################################################
+
+
+def ogr_geojson_empty_geometrycollection():
+
+    g = ogr.CreateGeometryFromJson('{"type": "GeometryCollection", "geometries": []}')
+    if g.ExportToWkt() != 'GEOMETRYCOLLECTION EMPTY':
+        print(g.ExportToWkt())
+        return 'fail'
+    return 'success'
+
+###############################################################################
 
 
 def ogr_geojson_cleanup():
@@ -4203,6 +4266,8 @@ gdaltest_list = [
     ogr_geojson_id_field_and_id_type,
     ogr_geojson_geom_export_failure,
     ogr_geojson_starting_with_crs,
+    ogr_geojson_append_flush,
+    ogr_geojson_empty_geometrycollection,
     ogr_geojson_cleanup]
 
 if __name__ == '__main__':

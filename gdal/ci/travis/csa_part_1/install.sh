@@ -2,6 +2,7 @@
 
 set -e
 
+# shellcheck source=gdal/ci/travis/csa_common/install.sh
 . $(dirname $0)/../csa_common/install.sh
 
 for dirname in gdal/port gdal/gcore gdal/frmts gdal/alg gdal/gnm ; do

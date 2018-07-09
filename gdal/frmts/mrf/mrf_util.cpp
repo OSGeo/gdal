@@ -239,12 +239,12 @@ CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, con
         return getFname(in, def);
     size_t slashPos = fn.find_first_of("\\/");
 
-    // Does it look like an absolute path or we wont't find the basename of in
+    // Does it look like an absolute path or we won't find the basename of 'in'
     if (slashPos == 0                               // Starts with slash
         || (slashPos == 2 && fn[1] == ':')          // Starts with disk letter column
         || !(slashPos == fn.find_first_not_of('.')) // Does not start with dots and then slash
         || EQUALN(in,"<MRF_META>",10)               // XML string input
-        || in.find_first_of("\\/") == in.npos)      // We can't get a basename from in
+        || in.find_first_of("\\/") == in.npos)      // We can't get a basename from 'in'
         return fn;
 
     // Relative path, prepand the path from the in file name

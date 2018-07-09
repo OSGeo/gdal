@@ -965,6 +965,12 @@ char **EHdrDataset::GetFileList()
 GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
+    return Open(poOpenInfo, true);
+}
+
+GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo, bool bFileSizeCheck )
+
+{
     // Assume the caller is pointing to the binary (i.e. .bil) file.
     if( poOpenInfo->nHeaderBytes < 2 || poOpenInfo->fpL == nullptr )
         return nullptr;
@@ -1314,7 +1320,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         nBandOffset = static_cast<vsi_l_offset>(nItemSize) * nCols;
     }
 
-    if( nBits >= 8 && !RAWDatasetCheckMemoryUsage(
+    if( nBits >= 8 && bFileSizeCheck &&
+        !RAWDatasetCheckMemoryUsage(
                         poDS->nRasterXSize, poDS->nRasterYSize, nBands,
                         nItemSize,
                         nPixelOffset, nLineOffset, nSkipBytes, nBandOffset,
@@ -1793,8 +1800,8 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
     if( !bOK )
         return nullptr;
 
-    return
-        reinterpret_cast<GDALDataset *>(GDALOpen(pszFilename, GA_Update));
+    GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
+    return Open(&oOpenInfo, false);
 }
 
 /************************************************************************/

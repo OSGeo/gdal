@@ -1140,7 +1140,7 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
 
 void OGRMVTLayer::SanitizeClippedGeometry(OGRGeometry*& poGeom)
 {
-    OGRwkbGeometryType eInGeomType = poGeom->getGeometryType();
+    OGRwkbGeometryType eInGeomType = wkbFlatten(poGeom->getGeometryType());
     const OGRwkbGeometryType eLayerGeomType = GetGeomType();
     if( eLayerGeomType == wkbUnknown )
     {
@@ -1170,7 +1170,7 @@ void OGRMVTLayer::SanitizeClippedGeometry(OGRGeometry*& poGeom)
         }
         for( auto&& poSubGeom: poGC )
         {
-            if( poSubGeom->getGeometryType() == ePartGeom )
+            if( wkbFlatten(poSubGeom->getGeometryType()) == ePartGeom )
             {
                 if( poTargetSingleGeom != nullptr )
                 {
@@ -1195,7 +1195,7 @@ void OGRMVTLayer::SanitizeClippedGeometry(OGRGeometry*& poGeom)
         {
             delete poGC;
         }
-        eInGeomType = poGeom->getGeometryType();
+        eInGeomType = wkbFlatten(poGeom->getGeometryType());
     }
 
     // Wrap single into multi if requested by the layer geometry type
@@ -1324,9 +1324,6 @@ OGRFeature* OGRMVTLayer::GetNextRawFeature()
                         ParseGeometry(nGeomType, pabyDataGeometryEnd);
                     if( poGeom )
                     {
-                        poGeom->assignSpatialReference(GetSpatialRef());
-                        poFeature->SetGeometryDirectly(poGeom);
-
                         // Clip geometry to tile extent if requested
                         if( m_poDS->m_bClip && OGRGeometryFactory::haveGEOS() )
                         {
@@ -1359,6 +1356,8 @@ OGRFeature* OGRMVTLayer::GetNextRawFeature()
                                         poClipped->assignSpatialReference(
                                             GetSpatialRef());
                                         poFeature->SetGeometryDirectly(poClipped);
+                                        delete poGeom;
+                                        poGeom = nullptr;
                                     }
                                 }
                             }
@@ -1366,6 +1365,12 @@ OGRFeature* OGRMVTLayer::GetNextRawFeature()
                             {
                                 bOK = false;
                             }
+                        }
+
+                        if( poGeom )
+                        {
+                            poGeom->assignSpatialReference(GetSpatialRef());
+                            poFeature->SetGeometryDirectly(poGeom);
                         }
                     }
 
@@ -3626,12 +3631,12 @@ bool OGRMVTWriterDataset::EncodeRepairedOuterRing(
     }
 
     OGRPolygon* poPoly = nullptr;
-    if( poFixedGeom->getGeometryType() == wkbMultiPolygon )
+    if( wkbFlatten(poFixedGeom->getGeometryType()) == wkbMultiPolygon )
     {
         OGRMultiPolygon* poMP = poFixedGeom.get()->toMultiPolygon();
         poPoly = poMP->getGeometryRef(0)->toPolygon();
     }
-    else if( poFixedGeom->getGeometryType() == wkbPolygon )
+    else if( wkbFlatten(poFixedGeom->getGeometryType()) == wkbPolygon )
     {
         poPoly = poFixedGeom.get()->toPolygon();
     }
@@ -3863,7 +3868,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                     if( !poSimplified.get() || poSimplified->IsEmpty() )
                         return false;
 
-                    if( poSimplified->getGeometryType() == wkbPolygon )
+                    if( wkbFlatten(poSimplified->getGeometryType()) == wkbPolygon )
                     {
                         OGRPolygon* poSimplifiedPoly =
                             poSimplified.get()->toPolygon();
@@ -3874,7 +3879,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                                             nLastX, nLastY, dfArea);
                     }
 #ifdef likely_not_possible
-                    else if( poSimplified->getGeometryType() == wkbMultiPolygon )
+                    else if( wkbFlatten(poSimplified->getGeometryType()) == wkbMultiPolygon )
                     {
                         OGRMultiPolygon* poMP = poSimplified.get()->toMultiPolygon();
                         bool bRet = true;
@@ -3977,7 +3982,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
         return OGRERR_NONE;
     }
 
-    OGRwkbGeometryType eGeomToEncodeType = poIntersection->getGeometryType();
+    OGRwkbGeometryType eGeomToEncodeType = wkbFlatten(poIntersection->getGeometryType());
 
     // Simplify contour if requested by user
     OGRGeometry* poGeomToEncode = poIntersection;
@@ -3994,7 +3999,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
         if( poGeomSimplified.get() )
         {
             poGeomToEncode = poGeomSimplified.get();
-            eGeomToEncodeType = poGeomSimplified->getGeometryType();
+            eGeomToEncodeType = wkbFlatten(poGeomSimplified->getGeometryType());
         }
     }
 
@@ -4026,7 +4031,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             int nLastY = 0;
             for( auto&& poSubGeom: poGC )
             {
-                if( poSubGeom->getGeometryType() == wkbPoint )
+                if( wkbFlatten(poSubGeom->getGeometryType()) == wkbPoint )
                 {
                     OGRPoint* poPoint = poSubGeom->toPoint();
                     int nX, nY;
@@ -4081,7 +4086,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             int nLastY = 0;
             for( auto&& poSubGeom: poGC )
             {
-                if( poSubGeom->getGeometryType() == wkbLineString )
+                if( wkbFlatten(poSubGeom->getGeometryType()) == wkbLineString )
                 {
                     OGRLineString* poLS = poSubGeom->toLineString();
                     OGRLineString oOutLS;
@@ -4118,7 +4123,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             int nLastY = 0;
             for( auto&& poSubGeom: poGC )
             {
-                if( poSubGeom->getGeometryType() == wkbPolygon )
+                if( wkbFlatten(poSubGeom->getGeometryType()) == wkbPolygon )
                 {
                     OGRPolygon* poPoly = poSubGeom->toPolygon();
                     double dfPartArea = 0.0;
@@ -5855,7 +5860,7 @@ OGRLayer* OGRMVTWriterDataset::ICreateLayer( const char* pszLayerName,
         m_oMapLayerNameToDesc[poLayer->m_osTargetName] = osDescription;
 
     m_apoLayers.push_back( std::unique_ptr<OGRMVTWriterLayer>(poLayer) );
-    return poLayer;
+    return m_apoLayers.back().get();
 }
 
 /************************************************************************/
@@ -5928,11 +5933,11 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
         VSIUnlink(osTempDB);
 
     sqlite3* hDB = nullptr;
-    sqlite3_open_v2(osTempDB, &hDB,
+    CPL_IGNORE_RET_VAL(sqlite3_open_v2(osTempDB, &hDB,
                     SQLITE_OPEN_READWRITE |
                     (bReuseTempFile ? 0 : SQLITE_OPEN_CREATE) |
                     SQLITE_OPEN_NOMUTEX,
-                    poDS->m_pMyVFS->zName);
+                    poDS->m_pMyVFS->zName));
     if( hDB == nullptr )
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s",
@@ -6066,10 +6071,10 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
 
     if( bMBTILES )
     {
-        sqlite3_open_v2(pszFilename, &poDS->m_hDBMBTILES,
+        CPL_IGNORE_RET_VAL(sqlite3_open_v2(pszFilename, &poDS->m_hDBMBTILES,
                         SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
                         SQLITE_OPEN_NOMUTEX,
-                        poDS->m_pMyVFS->zName);
+                        poDS->m_pMyVFS->zName));
         if( poDS->m_hDBMBTILES == nullptr )
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s",

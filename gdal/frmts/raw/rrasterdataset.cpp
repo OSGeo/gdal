@@ -447,7 +447,7 @@ CPLErr RRASTERRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
         bool bByteSigned = (eDataType == GDT_Byte && pszPixelType &&
                             EQUAL(pszPixelType, "SIGNEDBYTE"));
-        const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+        const int nDTSize = std::max(1, GDALGetDataTypeSizeBytes(eDataType));
         int bGotNoDataValue = false;
         double dfNoDataValue = GetNoDataValue(&bGotNoDataValue);
         if( !bGotNoDataValue )
@@ -981,7 +981,7 @@ bool RRASTERDataset::ComputeSpacings(const CPLString& osBandOrder,
             return false;
         }
         nLineOffset = nPixelSize * nCols * l_nBands;
-        nBandOffset = nPixelSize * nCols;
+        nBandOffset = static_cast<vsi_l_offset>(nPixelSize) * nCols;
     }
     else if( EQUAL( osBandOrder, "BIP" ) )
     {
@@ -1268,7 +1268,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLStringList aosRatNames(CSLTokenizeString2(osRatNames, ":", 0));
         CPLStringList aosRatTypes(CSLTokenizeString2(osRatTypes, ":", 0));
         CPLStringList aosRatValues(CSLTokenizeString2(osRatValues, ":", 0));
-        if( !aosRatNames.empty() &&
+        if( aosRatNames.size() >= 1 &&
             aosRatNames.size() == aosRatTypes.size() &&
             (aosRatValues.size() % aosRatNames.size()) == 0 )
         {

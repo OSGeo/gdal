@@ -561,14 +561,14 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
              STARTS_WITH_CI(pszProj.c_str(), "Plate Rectangle"))
     {
         // set 0.0 for CenterLat for Plate Carree projection
-        // skipp Latitude_Of_True_Scale for Plate Rectangle projection definition
+        // skip Latitude_Of_True_Scale for Plate Rectangle projection definition
         oSRS.SetProjCS(pszProj.c_str());
         oSRS.SetEquirectangular( padfPrjParams[5], padfPrjParams[6],
                                  padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "PolyConic") )
     {
-        // skipp scale factor
+        // skip scale factor
         oSRS.SetProjCS("PolyConic");
         oSRS.SetPolyconic( padfPrjParams[5], padfPrjParams[6],
                            padfPrjParams[3], padfPrjParams[4] );

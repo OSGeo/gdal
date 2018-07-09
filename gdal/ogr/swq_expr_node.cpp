@@ -697,7 +697,20 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
                                         void *pRecord )
 
 {
+    return Evaluate(pfnFetcher, pRecord, 0);
+}
+
+swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
+                                        void *pRecord, int nRecLevel )
+
+{
     swq_expr_node *poRetNode = nullptr;
+    if( nRecLevel == 32 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too many recursion levels in expression to evaluate");
+        return nullptr;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Duplicate ourselves if we are already a constant.               */
@@ -734,7 +747,7 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
         else
         {
             swq_expr_node* poSubExprVal =
-                papoSubExpr[i]->Evaluate(pfnFetcher, pRecord);
+                papoSubExpr[i]->Evaluate(pfnFetcher, pRecord, nRecLevel + 1);
             if( poSubExprVal == nullptr )
                 bError = true;
             else

@@ -61,6 +61,12 @@ def mask_1():
         print(cs)
         return 'fail'
 
+    my_min, my_max, mean, stddev = band.GetMaskBand().ComputeStatistics(0)
+    if (my_min, my_max, mean, stddev) != (255, 255, 255, 0):
+        gdaltest.post_reason('Got wrong mask stats')
+        print(my_min, my_max, mean, stddev)
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

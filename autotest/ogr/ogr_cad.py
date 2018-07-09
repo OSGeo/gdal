@@ -316,7 +316,7 @@ def ogr_cad_4():
     feat = gdaltest.cad_layer.GetNextFeature()
 
     if ogrtest.check_feature_geometry(feat, 'POINT (50 50 0)'):
-        gdaltest.post_reason('got feature which doesnot fit expectations.')
+        gdaltest.post_reason('got feature which does not fit expectations.')
         return 'fail'
 
     gdaltest.cad_ds = None
@@ -345,7 +345,7 @@ def ogr_cad_5():
     feat = gdaltest.cad_layer.GetNextFeature()
 
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (50 50 0,100 100 0)'):
-        gdaltest.post_reason('got feature which doesnot fit expectations.')
+        gdaltest.post_reason('got feature which does not fit expectations.')
         return 'fail'
 
     gdaltest.cad_ds = None

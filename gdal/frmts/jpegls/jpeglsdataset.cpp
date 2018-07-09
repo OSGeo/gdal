@@ -111,6 +111,24 @@ JPEGLSRasterBand::~JPEGLSRasterBand() {}
 /*                    JPEGLSGetErrorAsString()                          */
 /************************************************************************/
 
+#ifdef CHARLS_2
+static const char* JPEGLSGetErrorAsString(CharlsApiResultType eCode)
+{
+    switch(eCode)
+    {
+        case CharlsApiResultType::OK: return "OK";
+        case CharlsApiResultType::InvalidJlsParameters: return "InvalidJlsParameters";
+        case CharlsApiResultType::ParameterValueNotSupported: return "ParameterValueNotSupported";
+        case CharlsApiResultType::UncompressedBufferTooSmall: return "UncompressedBufferTooSmall";
+        case CharlsApiResultType::CompressedBufferTooSmall: return "CompressedBufferTooSmall";
+        case CharlsApiResultType::InvalidCompressedData: return "InvalidCompressedData";
+        case CharlsApiResultType::ImageTypeNotSupported: return "ImageTypeNotSupported";
+        case CharlsApiResultType::UnsupportedBitDepthForTransform: return "UnsupportedBitDepthForTransform";
+        case CharlsApiResultType::UnsupportedColorTransform: return "UnsupportedColorTransform";
+        default: return "unknown";
+    };
+}
+#else
 static const char* JPEGLSGetErrorAsString(JLS_ERROR eCode)
 {
     switch(eCode)
@@ -127,6 +145,7 @@ static const char* JPEGLSGetErrorAsString(JLS_ERROR eCode)
         default: return "unknown";
     };
 }
+#endif
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -295,9 +314,15 @@ CPLErr JPEGLSDataset::Uncompress()
         return CE_Failure;
     }
 
-    JLS_ERROR eError = JpegLsDecode( pabyUncompressedData, nUncompressedSize,
+#ifdef CHARLS_2
+    auto eError = JpegLsDecode( pabyUncompressedData, nUncompressedSize,
+                            pabyCompressedData, nFileSize, nullptr, nullptr);
+    if (eError != CharlsApiResultType::OK)
+#else
+    auto eError = JpegLsDecode( pabyUncompressedData, nUncompressedSize,
                                      pabyCompressedData, nFileSize, nullptr);
     if (eError != OK)
+#endif
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Decompression of data failed : %s",
@@ -398,13 +423,22 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     JlsParameters sParams;
 
+#ifdef CHARLS_2
+    CharlsApiResultType eError;
+#else
     JLS_ERROR eError;
+#endif
     int nOffset = 0;
 
     if (!bIsDCOM)
     {
+#ifdef CHARLS_2
+        eError = JpegLsReadHeader(poOpenInfo->pabyHeader,
+                                poOpenInfo->nHeaderBytes, &sParams, nullptr);
+#else
         eError = JpegLsReadHeader(poOpenInfo->pabyHeader,
                                 poOpenInfo->nHeaderBytes, &sParams);
+#endif
     }
     else
     {
@@ -437,13 +471,22 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFSeekL(fp, nOffset, SEEK_SET);
         VSIFReadL(abyBuffer, 1, 1024, fp);
         VSIFSeekL(fp, 0, SEEK_SET);
+#ifdef CHARLS_2
+        eError = JpegLsReadHeader(abyBuffer, 1024, &sParams, nullptr);
+        if (eError == CharlsApiResultType::OK )
+#else
         eError = JpegLsReadHeader(abyBuffer, 1024, &sParams);
         if (eError == OK)
+#endif
         {
             CPLDebug("JPEGLS", "JPEGLS image found at offset %d", nOffset);
         }
     }
+#ifdef CHARLS_2
+    if (eError != CharlsApiResultType::OK)
+#else
     if (eError != OK)
+#endif
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot read header : %s",
@@ -451,11 +494,17 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-    if (sParams.bitspersample > 16)
+#ifdef CHARLS_2
+    int nBitsPerSample = sParams.bitsPerSample;
+#else
+    int nBitsPerSample = sParams.bitspersample;
+#endif
+
+    if (nBitsPerSample > 16)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unsupport bitspersample : %d",
-                 sParams.bitspersample);
+                 nBitsPerSample);
         return nullptr;
     }
 
@@ -467,7 +516,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = sParams.width;
     poDS->nRasterYSize = sParams.height;
     poDS->nBands = sParams.components;
-    poDS->nBitsPerSample = sParams.bitspersample;
+    poDS->nBitsPerSample = nBitsPerSample;
     poDS->nOffset = nOffset;
     poDS->fpL = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
@@ -593,18 +642,32 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     memset(&sParams, 0, sizeof(sParams));
     sParams.width = nXSize;
     sParams.height = nYSize;
+#ifdef CHARLS_2
+    sParams.bitsPerSample = (eDT == GDT_Byte) ? 8 : 16;
+    sParams.interleaveMode = CharlsInterleaveModeType::None;
+#else
     sParams.bitspersample = (eDT == GDT_Byte) ? 8 : 16;
     sParams.ilv = ILV_NONE;
+#endif
 
     const char* pszINTERLEAVE = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
     if (pszINTERLEAVE)
     {
+#ifdef CHARLS_2
+        if (EQUAL(pszINTERLEAVE, "PIXEL"))
+            sParams.interleaveMode = CharlsInterleaveModeType::Sample;
+        else if (EQUAL(pszINTERLEAVE, "LINE"))
+            sParams.interleaveMode = CharlsInterleaveModeType::Line;
+        else if (EQUAL(pszINTERLEAVE, "BAND"))
+            sParams.interleaveMode = CharlsInterleaveModeType::None;
+#else
         if (EQUAL(pszINTERLEAVE, "PIXEL"))
             sParams.ilv = ILV_SAMPLE;
         else if (EQUAL(pszINTERLEAVE, "LINE"))
             sParams.ilv = ILV_LINE;
         else if (EQUAL(pszINTERLEAVE, "BAND"))
             sParams.ilv = ILV_NONE;
+#endif
         else
         {
             CPLError(CE_Warning, CPLE_NotSupported,
@@ -618,7 +681,13 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         int nLOSSFACTOR = atoi(pszLOSSFACTOR);
         if (nLOSSFACTOR >= 0)
+        {
+#ifdef CHARLS_2
+            sParams.allowedLossyError = nLOSSFACTOR;
+#else
             sParams.allowedlossyerror = nLOSSFACTOR;
+#endif
+        }
     }
 
     const char* pszNBITS = poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" );
@@ -626,19 +695,33 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         int nBits = atoi(pszNBITS);
         if (nBits != 8 && nBits != 16)
+        {
+#ifdef CHARLS_2
+            sParams.bitsPerSample = nBits;
+#else
             sParams.bitspersample = nBits;
+#endif
+        }
     }
 
     sParams.components = nBands;
-    JLS_ERROR eError = JpegLsEncode(pabyDataCompressed, nCompressedSize,
+    auto eError = JpegLsEncode(pabyDataCompressed, nCompressedSize,
                                     &nWritten,
                                     pabyDataUncompressed, nUncompressedSize,
-                                    &sParams);
+                                    &sParams
+#ifdef CHARLS_2
+                                    , nullptr
+#endif
+                              );
 
     VSIFree(pabyDataUncompressed);
     pabyDataUncompressed = nullptr;
 
+#ifdef CHARLS_2
+    if (eError != CharlsApiResultType::OK)
+#else
     if (eError != OK)
+#endif
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Compression of data failed : %s",

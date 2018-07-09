@@ -921,7 +921,7 @@ def tiff_write_20():
     md = new_ds.GetMetadata()
     for item in values:
         if item[0] not in md:
-            gdaltest.post_reason('Couldnt find tag %s' % (item[0]))
+            gdaltest.post_reason('Could not find tag %s' % (item[0]))
             return 'fail'
 
         if md[item[0]] != item[1]:
@@ -2647,16 +2647,10 @@ def tiff_write_71():
     f = open('tmp/tiff_write_71.tif', 'wb')
     f.write(header)
 
-    from sys import version_info
-
     # Write StripByteCounts tag
     # 100,000 in little endian
-    if version_info >= (3, 0, 0):
-        for _ in range(100000):
-            exec("f.write(b'\\xa0\\x86\\x01\\x00\\x00\\x00\\x00\\x00')")
-    else:
-        for _ in range(100000):
-            f.write('\xa0\x86\x01\x00\x00\x00\x00\x00')
+    for _ in range(100000):
+        f.write(b'\xa0\x86\x01\x00\x00\x00\x00\x00')
 
     # Write StripOffsets tag
     offset = 1600252
@@ -2666,10 +2660,7 @@ def tiff_write_71():
 
     # Write 0x78 as value of pixel (99999, 99999)
     f.seek(10001600252 - 1, 0)
-    if version_info >= (3, 0, 0):
-        exec("f.write(b'\\x78')")
-    else:
-        f.write('\x78')
+    f.write(b'\x78')
     f.close()
 
     ds = gdal.Open('tmp/tiff_write_71.tif')
@@ -5623,7 +5614,7 @@ def tiff_write_128():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_128.tif')
 
-    # Try with explicit CMYK photometric interpreation
+    # Try with explicit CMYK photometric interpretation
     old_val = gdal.GetConfigOption('GDAL_PAM_ENABLED')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
     ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_128.tif', src_ds, options=['COMPRESS=JPEG', 'PHOTOMETRIC=CMYK'])
@@ -7987,6 +7978,20 @@ def tiff_write_171_zstd():
     return ut.testCreateCopy()
 
 ###############################################################################
+# Test ZSTD compression with PREDICTOR = 2
+
+
+def tiff_write_171_zstd_predictor():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4672,
+                           options=['COMPRESS=ZSTD', 'ZSTD_LEVEL=1', 'PREDICTOR=2'])
+    return ut.testCreateCopy()
+
+###############################################################################
 # GeoTIFF DGIWG tags
 
 
@@ -8022,6 +8027,234 @@ def tiff_write_172_geometadata_tiff_rsid():
     ds = None
 
     gdal.Unlink(tmpfilename)
+    return 'success'
+
+###############################################################################
+# Test LERC compression
+
+
+def tiff_write_173_lerc():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4672,
+                           options=['COMPRESS=LERC'])
+    return ut.testCreateCopy()
+
+###############################################################################
+# Test LERC_DEFLATE compression
+
+
+def tiff_write_174_lerc_deflate():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC_DEFLATE') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4672,
+                           options=['COMPRESS=LERC_DEFLATE'])
+    return ut.testCreateCopy()
+
+###############################################################################
+# Test LERC_DEFLATE compression
+
+
+def tiff_write_174_lerc_deflate_with_level():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC_DEFLATE') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4672,
+                           options=['COMPRESS=LERC_DEFLATE', 'ZLEVEL=1'])
+    return ut.testCreateCopy()
+
+###############################################################################
+# Test LERC_ZSTD compression
+
+
+def tiff_write_175_lerc_zstd():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC_ZSTD') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4672,
+                           options=['COMPRESS=LERC_ZSTD'])
+    return ut.testCreateCopy()
+
+###############################################################################
+# Test LERC_ZSTD compression
+
+
+def tiff_write_175_lerc_zstd_with_level():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC_ZSTD') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4672,
+                           options=['COMPRESS=LERC_ZSTD', 'ZSTD_LEVEL=1'])
+    return ut.testCreateCopy()
+
+###############################################################################
+# Test LERC compression with MAX_Z_ERROR
+
+
+def tiff_write_176_lerc_max_z_error():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4529,
+                           options=['COMPRESS=LERC', 'MAX_Z_ERROR=1'])
+    return ut.testCreateCopy(skip_preclose_test=1)
+
+###############################################################################
+# Test LERC compression with several bands and tiling
+
+
+def tiff_write_177_lerc_several_bands_tiling():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
+        return 'skip'
+
+    filename = '/vsimem/tiff_write_177_lerc_several_bands_tiling.tif'
+    gdal.Translate(filename, '../gdrivers/data/small_world.tif',
+                   creationOptions=['COMPRESS=LERC', 'TILED=YES'])
+    ds = gdal.Open(filename)
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    ds = None
+    gdal.Unlink(filename)
+    if cs != [30111, 32302, 40026]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test LERC compression with alpha band
+
+
+def tiff_write_178_lerc_with_alpha():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
+        return 'skip'
+
+    filename = '/vsimem/tiff_write_178_lerc_with_alpha.tif'
+    gdal.Translate(filename, 'data/stefan_full_rgba.tif',
+                   creationOptions=['COMPRESS=LERC'])
+    ds = gdal.Open(filename)
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    ds = None
+    gdal.Unlink(filename)
+    if cs != [12603, 58561, 36064, 10807]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test LERC compression with alpha band with only 0 and 255
+
+
+def tiff_write_178_lerc_with_alpha_0_and_255():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
+        return 'skip'
+
+    filename = '/vsimem/tiff_write_178_lerc_with_alpha_0_and_255.tif'
+    gdal.Translate(filename, 'data/rgba_with_alpha_0_and_255.tif',
+                   creationOptions=['COMPRESS=LERC'])
+    ds = gdal.Open(filename)
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    ds = None
+    gdal.Unlink(filename)
+    if cs != [13, 13, 13, 13]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test LERC compression with different data types
+
+
+def tiff_write_179_lerc_data_types():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
+        return 'skip'
+
+    filename = '/vsimem/tiff_write_179_lerc_data_types.tif'
+    for src_filename in ['uint16.tif', 'int16.tif', 'uint32.tif', 'int32.tif',
+                         'float32.tif', 'float64.tif']:
+        gdal.Translate(filename, 'data/' + src_filename,
+                       creationOptions=['COMPRESS=LERC'])
+        ds = gdal.Open(filename)
+        cs = ds.GetRasterBand(1).Checksum()
+        ds = None
+        gdal.Unlink(filename)
+        if cs != 4672:
+            gdaltest.post_reason('fail')
+            print(cs)
+            return 'fail'
+
+    filename_tmp = filename + ".tmp.tif"
+    gdal.Translate(filename_tmp, 'data/byte.tif',
+                   creationOptions=['PIXELTYPE=SIGNEDBYTE'])
+    gdal.Translate(filename, filename_tmp, creationOptions=['COMPRESS=LERC'])
+    gdal.Unlink(filename_tmp)
+    ds = gdal.Open(filename)
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    gdal.Unlink(filename)
+    if cs != 4672:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.Translate(filename, 'data/cfloat32.tif', creationOptions=['COMPRESS=LERC'])
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink(filename)
+
+    return 'success'
+
+###############################################################################
+# Test LERC compression with several bands and separate
+
+
+def tiff_write_180_lerc_separate():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
+        return 'skip'
+
+    filename = '/vsimem/tiff_write_180_lerc_separate.tif'
+    gdal.Translate(filename, '../gdrivers/data/small_world.tif',
+                   creationOptions=['COMPRESS=LERC', 'INTERLEAVE=BAND'])
+    ds = gdal.Open(filename)
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    ds = None
+    gdal.Unlink(filename)
+    if cs != [30111, 32302, 40026]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -8229,11 +8462,23 @@ gdaltest_list = [
     tiff_write_169_ccitrle,
     tiff_write_170_invalid_compresion,
     tiff_write_171_zstd,
+    tiff_write_171_zstd_predictor,
     tiff_write_172_geometadata_tiff_rsid,
+    tiff_write_173_lerc,
+    tiff_write_174_lerc_deflate,
+    tiff_write_174_lerc_deflate_with_level,
+    tiff_write_175_lerc_zstd,
+    tiff_write_175_lerc_zstd_with_level,
+    tiff_write_176_lerc_max_z_error,
+    tiff_write_177_lerc_several_bands_tiling,
+    tiff_write_178_lerc_with_alpha,
+    tiff_write_178_lerc_with_alpha_0_and_255,
+    tiff_write_179_lerc_data_types,
+    tiff_write_180_lerc_separate,
     # tiff_write_api_proxy,
     tiff_write_cleanup]
 
-# gdaltest_list = [ tiff_write_1, tiff_write_170_invalid_compresion ]
+# gdaltest_list = [ tiff_write_1, tiff_write_176_lerc_max_z_error ]
 
 if __name__ == '__main__':
 

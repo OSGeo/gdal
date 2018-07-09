@@ -28,7 +28,7 @@ Git workflows with GDAL
 =======================
 
 This is not a git tutorial or reference manual by any means. This just collects
-a few best practice for git usage for GDAL developement.
+a few best practice for git usage for GDAL development.
 
 Commit message
 --------------
@@ -49,7 +49,7 @@ Fork OSGeo/gdal from github UI, and then
 ```
 git clone https://github.com/OSGeo/gdal
 cd gdal
-git remote add my_user_name git@github.com/my_user_name/gdal.git
+git remote add my_user_name https://github.com/my_user_name/gdal.git
 ```
 
 Updating your local master against upstream master
@@ -82,7 +82,7 @@ git fetch origin
 git rebase origin/master
 
 # At end of your work, make sure history is reasonable by folding non
-# significant commits into a consistant set
+# significant commits into a consistent set
 git rebase -i master (use fixup for example to merge several commits together)
 
 # push your branch
@@ -92,7 +92,7 @@ From GitHub UI, issue a pull request
 
 If the pull request discussion or Travis-CI/AppVeyor checks require changes,
 commit locally and push. To get a reasonable history, you may need to
-```git rebase -i master```, in whish case you will have to force-push your
+```git rebase -i master```, in which case you will have to force-push your
 branch with ```git push -f my_user_name my_new_feature_branch```
 
 

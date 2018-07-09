@@ -607,6 +607,7 @@ void VSIStdoutUnsetRedirection()
 #endif
 
 void VSICurlClearCache();
+void VSICurlPartialClearCache( const char* utf8_path );
 
 #endif /* !defined(SWIGJAVA) */
 

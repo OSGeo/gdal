@@ -2481,7 +2481,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         else if( eProduct == PROD_ASTER_L1B
                  || eProduct == PROD_ASTER_L2 )
         {
-            // Constuct the metadata keys.
+            // Construct the metadata keys.
             // A band number is taken from the field name.
             const char *pszBand = strpbrk( pszFieldName, "0123456789" );
 
@@ -2771,7 +2771,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
     char **papszSubdatasetName
         = CSLTokenizeString2( poOpenInfo->pszFilename,
-                              ":", CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES);
+        ":", CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES | CSLT_PRESERVEESCAPES);
     if( CSLCount( papszSubdatasetName ) != 4
         && CSLCount( papszSubdatasetName ) != 5
         && CSLCount( papszSubdatasetName ) != 6 )
@@ -2784,8 +2784,20 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
+    {
+        // Un-quote filename
+        size_t nLenPart2 = strlen(papszSubdatasetName[2]);
+        if( papszSubdatasetName[2][0] == '"' &&
+                papszSubdatasetName[2][nLenPart2-1] == '"' )
+        {
+            papszSubdatasetName[2][nLenPart2-1] = 0;
+            memmove(papszSubdatasetName[2], papszSubdatasetName[2] + 1,
+                    nLenPart2-1);
+        }
+    }
+
     /* -------------------------------------------------------------------- */
-    /*    Check for drive name in windows HDF4:"D:\...                      */
+    /*    Check for drive name in windows HDF4_xx:TYPE:D:\...               */
     /* -------------------------------------------------------------------- */
     if( strlen(papszSubdatasetName[2]) == 1 )
     {
@@ -2803,6 +2815,25 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             papszSubdatasetName[4] = papszSubdatasetName[5];
             papszSubdatasetName[5] = nullptr;
+        }
+    }
+
+    for( int i = 3; papszSubdatasetName[i] != nullptr; i++ )
+    {
+        // Un-quote and unescape components after filename
+        size_t nLenPart = strlen(papszSubdatasetName[i]);
+        if( papszSubdatasetName[i][0] == '"' &&
+                papszSubdatasetName[i][nLenPart-1] == '"' )
+        {
+            CPLString osStr(papszSubdatasetName[i]);
+            osStr.replaceAll("\\\\", '\\');
+            osStr.replaceAll("\\\"", '"');
+            if( osStr[0] == '"' && osStr.back() == '"' )
+            {
+                osStr = osStr.substr(1, osStr.size()-2);
+                CPLFree(papszSubdatasetName[i]);
+                papszSubdatasetName[i] = CPLStrdup(osStr);
+            }
         }
     }
 

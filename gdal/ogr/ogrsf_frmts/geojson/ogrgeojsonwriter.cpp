@@ -942,7 +942,7 @@ json_object* OGRGeoJSONWriteGeometry( const OGRGeometry* poGeometry,
 
     OGRwkbGeometryType eFType = wkbFlatten(poGeometry->getGeometryType());
     // For point empty, return a null geometry. For other empty geometry types,
-    // we will generate an empty coordinate array, which is propably also
+    // we will generate an empty coordinate array, which is probably also
     // borderline.
     if( eFType == wkbPoint && poGeometry->IsEmpty() )
     {

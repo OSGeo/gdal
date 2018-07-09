@@ -432,7 +432,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
             /*
              * Excessive check, like in DXF driver.
-             * I tried to make a single-point polyline, but couldnt make it.
+             * I tried to make a single-point polyline, but couldn't make it.
              * Probably this check should be removed.
              */
             if( poCADLWPolyline->getVertexCount() == 1 )
@@ -587,7 +587,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                         dfOgrArcRotation = dfLineDir * 180.0;
 
                     /*
-                     * Tesselate the arc segment and append to the linestring.
+                     * Tessellate the arc segment and append to the linestring.
                      */
                     OGRLineString * poArcpoLS =
                         ( OGRLineString * ) OGRGeometryFactory::approximateArcAngles(

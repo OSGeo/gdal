@@ -325,23 +325,23 @@ int VSITarReader::GotoNextFile()
         }
     }
 #endif
-    char abyHeader[512] = {};
+    GByte abyHeader[512] = {};
     if (VSIFReadL(abyHeader, 512, 1, fp) != 1)
         return FALSE;
 
-    if (abyHeader[99] != '\0' ||
-        abyHeader[107] != '\0' ||
-        abyHeader[115] != '\0' ||
-        abyHeader[123] != '\0' ||
-        (abyHeader[135] != '\0' && abyHeader[135] != ' ') ||
-        (abyHeader[147] != '\0' && abyHeader[147] != ' '))
+    if (abyHeader[99] != '\0' || /* end of filename */
+        !(abyHeader[100] == 0x80 || abyHeader[107] == '\0') || /* start/end of filemode */
+        !(abyHeader[108] == 0x80 || abyHeader[115] == '\0') || /* start/end of owner ID */
+        !(abyHeader[116] == 0x80 || abyHeader[123] == '\0') || /* start/end of group ID */
+        (abyHeader[135] != '\0' && abyHeader[135] != ' ') || /* end of file size */
+        (abyHeader[147] != '\0' && abyHeader[147] != ' ')) /* end of mtime */
     {
         return FALSE;
     }
     if( abyHeader[124] < '0' || abyHeader[124] > '7' )
         return FALSE;
 
-    osNextFileName = abyHeader;
+    osNextFileName = reinterpret_cast<const char*>(abyHeader);
     nNextFileSize = 0;
     for(int i=0;i<11;i++)
         nNextFileSize = nNextFileSize * 8 + (abyHeader[124+i] - '0');

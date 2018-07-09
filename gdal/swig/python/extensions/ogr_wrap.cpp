@@ -5429,8 +5429,16 @@ OGRDriverShadow* GetDriver(int driver_number) {
     if( papszArgv == NULL )
         return NULL;
 
+    bool bReloadDrivers = ( CSLFindString(papszArgv, "GDAL_SKIP") >= 0 ||
+                            CSLFindString(papszArgv, "OGR_SKIP") >= 0 );
+
     nResArgCount =
       GDALGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, GDAL_OF_VECTOR | nOptions );
+
+    if( bReloadDrivers )
+    {
+        GDALAllRegister();
+    }
 
     if( nResArgCount <= 0 )
         return NULL;

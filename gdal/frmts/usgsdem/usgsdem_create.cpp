@@ -552,7 +552,7 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
     TextFillR( achARec + 786, 24, "0.0" );
 
 /* -------------------------------------------------------------------- */
-/*      Accurancy code for elevations. 0 means there will be no C       */
+/*      Accuracy code for elevations. 0 means there will be no C        */
 /*      record.                                                         */
 /* -------------------------------------------------------------------- */
     TextFillR( achARec + 810, 6, "0" );
@@ -649,7 +649,7 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
         TextFillR( achARec + 888, 2, "1" );
 
 /* -------------------------------------------------------------------- */
-/*      Horizonal Datum                                                 */
+/*      Horizontal Datum                                                */
 /*      1 = NAD27                                                       */
 /*      2 = WGS72                                                       */
 /*      3 = WGS84                                                       */
@@ -1205,10 +1205,9 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
     OGRSpatialReference DstoSRS;
     OGRSpatialReference SrcoSRS;
     int                 bNorth = TRUE;
-        /* XXX here we are assume (!) northern hemisphere UTM datasets  */
-    int                 numdatums = 4;
+    const int           numdatums = 4;
     const char          DatumCodes[4][2] = { "1", "2", "3", "4" };
-    char                Datums[4][6] = { "NAD27", "WGS72", "WGS84",
+    const char          Datums[4][6] = { "NAD27", "WGS72", "WGS84",
                                             "NAD83" };
 
     /* get the source dataset's projection */
@@ -1241,6 +1240,10 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
         {
             break;
         }
+    }
+    if( i == numdatums )
+    {
+        i = numdatums - 1;
     }
     CPLStrlcpy( psWInfo->horizdatum, DatumCodes[i], 2 );
 

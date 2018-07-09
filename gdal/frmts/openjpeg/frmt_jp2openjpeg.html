@@ -221,6 +221,27 @@ Note that CODEBLOCK_WIDTH * CODEBLOCK_HEIGHT must not be greater than 4096.
 For PROFILE_1 compatibility, CODEBLOCK_HEIGHT must not be greater than 64.
 </p></li>
 
+<li><p><b>CODEBLOCK_STYLE=string</b>: (GDAL &gt;= 2.4 and OpenJPEG &gt;= 2.3.0)
+Style of the code-block coding passes. The following 6 independent settings can
+be combined together (values should be comma separated):
+<ul>
+<li><i>BYPASS</i> (1): enable selective arithmetic coding bypass (can
+substantially improve coding/decoding speed, at the expense of larger file size)</li>
+<li><i>RESET</i> (2): reset context probabilities on coding pass boundaries</li>
+<li><i>TERMALL</i> (4): enable termination on each coding pass</li>
+<li><i>VSC</i> (8): enable vertically causal context</li>
+<li><i>PREDICTABLE</i> (16): enable predictable termination (helps for error detection)</li>
+<li><i>SEGSYM</i> (32): enable segmentation symbols (helps for error detection)</li>
+</ul>
+<p>
+Instead of specifying them by text, it is also possible to give the corresponding
+numeric value of the global codeblock style, by adding the selected options
+(for example "BYPASS,TERMALL" is equivalent to "5"=1+4)
+<p>
+By default, none of them are enabled. Enabling them will generally increase codestream
+size, but improve either coding/decoding speed or resilience/error detection.
+</p></li>
+
 <li><p><b>WRITE_METADATA=YES/NO</b>: (GDAL &gt;= 2.0) Whether metadata should be
 written, in a dedicated JP2 'xml ' box. Defaults to NO.
 The content of the 'xml ' box will be like:

@@ -108,8 +108,6 @@ class OGRBNADataSource : public OGRDataSource
     OGRBNALayer**       papoLayers;
     int                 nLayers;
 
-    int                 bUpdate;
-
     /*  Export related */
     VSILFILE                *fpOutput; /* Virtual file API */
     bool                bUseCRLF;
@@ -133,8 +131,7 @@ class OGRBNADataSource : public OGRDataSource
     int                 GetCoordinatePrecision() { return coordinatePrecision; }
     const char*         GetCoordinateSeparator() { return pszCoordinateSeparator; }
 
-    int                 Open( const char * pszFilename,
-                              int bUpdate );
+    int                 Open( const char * pszFilename );
 
     int                 Create( const char *pszFilename,
                               char **papszOptions );

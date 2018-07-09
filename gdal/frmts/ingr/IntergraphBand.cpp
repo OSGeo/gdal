@@ -109,7 +109,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     nDataOffset = nBandOffset + 2 + ( 2 * ( hHeaderOne.WordsToFollow + 1 ) );
 
     // --------------------------------------------------------------------
-    // Get Color Tabel from Color Table Type (CTV)
+    // Get Color Table from Color Table Type (CTV)
     // --------------------------------------------------------------------
     uint32 nEntries = hHeaderTwo.NumberOfCTEntries;
 

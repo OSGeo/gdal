@@ -39,6 +39,20 @@ from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 
+
+def has_read_support():
+
+    if ogr.GetDriverByName('PDF') is None:
+        return False
+
+    # Check read support
+    gdal_pdf_drv = gdal.GetDriverByName('PDF')
+    md = gdal_pdf_drv.GetMetadata()
+    if 'HAVE_POPPLER' not in md and 'HAVE_PODOFO' not in md and 'HAVE_PDFIUM' not in md:
+        return False
+
+    return True
+
 ###############################################################################
 # Test write support
 
@@ -118,13 +132,7 @@ def ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
 
 def ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
 
-    if ogr.GetDriverByName('PDF') is None:
-        return 'skip'
-
-    # Check read support
-    gdal_pdf_drv = gdal.GetDriverByName('PDF')
-    md = gdal_pdf_drv.GetMetadata()
-    if 'HAVE_POPPLER' not in md and 'HAVE_PODOFO' not in md and 'HAVE_PDFIUM' not in md:
+    if not has_read_support():
         return 'skip'
 
     ds = ogr.Open(name)
@@ -249,13 +257,7 @@ def ogr_pdf_4_podofo():
 
 def ogr_pdf_5():
 
-    if ogr.GetDriverByName('PDF') is None:
-        return 'skip'
-
-    # Check read support
-    gdal_pdf_drv = gdal.GetDriverByName('PDF')
-    md = gdal_pdf_drv.GetMetadata()
-    if 'HAVE_POPPLER' not in md and 'HAVE_PODOFO' not in md and 'HAVE_PDFIUM' not in md:
+    if not has_read_support():
         return 'skip'
 
     with gdaltest.config_option('OGR_PDF_READ_NON_STRUCTURED', 'YES'):
@@ -278,13 +280,7 @@ def ogr_pdf_5():
 
 def ogr_pdf_online_1():
 
-    if ogr.GetDriverByName('PDF') is None:
-        return 'skip'
-
-    # Check read support
-    gdal_pdf_drv = gdal.GetDriverByName('PDF')
-    md = gdal_pdf_drv.GetMetadata()
-    if 'HAVE_POPPLER' not in md and 'HAVE_PODOFO' not in md and 'HAVE_PDFIUM' not in md:
+    if not has_read_support():
         return 'skip'
 
     if not gdaltest.download_file('http://www.terragotech.com/images/pdf/webmap_urbansample.pdf', 'webmap_urbansample.pdf'):
@@ -337,6 +333,80 @@ def ogr_pdf_online_1():
     return 'success'
 
 ###############################################################################
+# Test read support of non-structured content
+
+
+def ogr_pdf_online_2():
+
+    if not has_read_support():
+        return 'skip'
+
+    if not gdaltest.download_file('https://download.osgeo.org/gdal/data/pdf/340711752_Azusa_FSTopo.pdf', '340711752_Azusa_FSTopo.pdf'):
+        return 'skip'
+
+    expected_layers = [
+        ['Other_5', 0],
+        ['Quadrangle_Extent_Other_4', 0],
+        ['Quadrangle_Extent_State_Outline', 0],
+        ['Adjacent_Quadrangle_Diagram_Other_3', 0],
+        ['Adjacent_Quadrangle_Diagram_Quadrangle_Extent', 0],
+        ['Adjacent_Quadrangle_Diagram_Quad_Outlines', 0],
+        ['Quadrangle_Other', 0],
+        ['Quadrangle_Labels_Unplaced_Labels_Road_Shields_-_Vertical', 0],
+        ['Quadrangle_Labels_Road_Shields_-_Horizontal', 0],
+        ['Quadrangle_Labels_Road_Shields_-_Vertical', 0],
+        ['Quadrangle_Neatline/Mask_Neatline', 0],
+        ['Quadrangle_Neatline/Mask_Mask', 0],
+        ['Quadrangle_Culture_Features', 0],
+        ['Quadrangle_Large_Tanks', 0],
+        ['Quadrangle_Linear_Transportation_Features', 0],
+        ['Quadrangle_Railroads_', 0],
+        ['Quadrangle_Linear_Culture_Features', 0],
+        ['Quadrangle_Linear_Landform_Features', 0],
+        ['Quadrangle_Boundaries', 0],
+        ['Quadrangle_PLSS', 0],
+        ['Quadrangle_Survey_Lines', 0],
+        ['Quadrangle_Linear_Drainage_Features', 0],
+        ['Quadrangle_Contour_Labels', 0],
+        ['Quadrangle_Contours', 0],
+        ['Quadrangle_2_5`_Tics_Interior_Grid_Intersections', 0],
+        ['Quadrangle_2_5`_Tics_Grid_Tics_along_Neatline', 0],
+        ['Quadrangle_UTM_Grid_Interior_Grid_Intersections', 0],
+        ['Quadrangle_UTM_Grid_Grid_Tics_along_Neatline', 0],
+        ['Quadrangle_UTM_Grid_UTM_Grid_Lines', 0],
+        ['Quadrangle_Large_Buildings', 0],
+        ['Quadrangle_Drainage_Polygons', 0],
+        ['Quadrangle_Ownership', 0],
+        ['Quadrangle_Builtup_Areas', 0],
+        ['Quadrangle_WoodlandUSGS_P', 0],
+    ]
+
+    ds = ogr.Open('tmp/cache/340711752_Azusa_FSTopo.pdf')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ds.GetLayerCount() != len(expected_layers):
+        gdaltest.post_reason('fail')
+        print(ds.GetLayerCount())
+        for lyr in ds:
+            print(lyr.GetName(), lyr.GetGeomType())
+        return 'fail'
+
+    for i in range(ds.GetLayerCount()):
+        if ds.GetLayer(i).GetName() != expected_layers[i][0]:
+            gdaltest.post_reason('fail')
+            print('%d : %s' % (i, ds.GetLayer(i).GetName()))
+            return 'fail'
+
+        if ds.GetLayer(i).GetGeomType() != expected_layers[i][1]:
+            gdaltest.post_reason('fail')
+            print('%d : %d' % (i, ds.GetLayer(i).GetGeomType()))
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 
@@ -359,6 +429,7 @@ gdaltest_list = [
     ogr_pdf_4_podofo,
     ogr_pdf_5,
     ogr_pdf_online_1,
+    ogr_pdf_online_2,
     ogr_pdf_cleanup
 ]
 

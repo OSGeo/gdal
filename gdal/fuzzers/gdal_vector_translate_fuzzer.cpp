@@ -43,7 +43,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
 {
     const char* exe_path = (*argv)[0];
-    CPLSetConfigOption("GDAL_DATA", CPLGetPath(exe_path));
+    if( CPLGetConfigOption("GDAL_DATA", nullptr) == nullptr )
+    {
+        CPLSetConfigOption("GDAL_DATA", CPLGetPath(exe_path));
+    }
     CPLSetConfigOption("CPL_TMPDIR", "/tmp");
     CPLSetConfigOption("DISABLE_OPEN_REAL_NETCDF_FILES", "YES");
     CPLSetConfigOption("GDAL_HTTP_TIMEOUT", "1");

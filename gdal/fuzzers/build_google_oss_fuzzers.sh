@@ -30,11 +30,11 @@ build_fuzzer()
     echo "Building fuzzer $fuzzerName"
     if test -d $SRC/install/lib; then
         $CXX $CXXFLAGS -std=c++11 -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/apps -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts -I$SRC_DIR/ogr/ogrsf_frmts/sqlite \
-            $sourceFilename $* -o $OUT/$fuzzerName \
+            $sourceFilename "$@" -o $OUT/$fuzzerName \
             -lFuzzingEngine $SRC_DIR/libgdal.a $EXTRA_LIBS $SRC/install/lib/*.a
     else
         $CXX $CXXFLAGS -std=c++11 -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/apps -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts -I$SRC_DIR/ogr/ogrsf_frmts/sqlite \
-            $sourceFilename $* -o $OUT/$fuzzerName \
+            $sourceFilename "$@" -o $OUT/$fuzzerName \
             -lFuzzingEngine $SRC_DIR/libgdal.a $EXTRA_LIBS
     fi
 }
@@ -61,7 +61,7 @@ build_gdal_specialized_fuzzer()
 
 build_fuzzer gtiff_mmap $(dirname $0)/gdal_fuzzer.cpp -DREGISTER_FUNC=GDALRegister_GTiff -DGTIFF_USE_MMAP
 
-fuzzerFiles=$(dirname $0)/*.cpp
+fuzzerFiles="$(dirname $0)/*.cpp"
 for F in $fuzzerFiles; do
     if test $F != "$(dirname $0)/fuzzingengine.cpp"; then
         fuzzerName=$(basename $F .cpp)
@@ -104,6 +104,7 @@ build_gdal_specialized_fuzzer aig GDALRegister_AIGrid "/vsimem/test.tar" "/vsita
 build_gdal_specialized_fuzzer mrf "GDALRegister_mrf();GDALRegister_GTiff" "/vsimem/test.tar" "/vsitar//vsimem/test.tar/byte.mrf"
 build_gdal_specialized_fuzzer gdal_sdts GDALRegister_SDTS "/vsimem/test.tar" "/vsitar//vsimem/test.tar/1107CATD.DDF"
 build_gdal_specialized_fuzzer gdal_vrt GDALAllRegister "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.vrt"
+build_gdal_specialized_fuzzer ers GDALRegister_ERS "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.ers"
 
 build_fuzzer gdal_filesystem_fuzzer $(dirname $0)/gdal_fuzzer.cpp -DUSE_FILESYSTEM
 build_fuzzer ogr_filesystem_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DUSE_FILESYSTEM

@@ -1357,7 +1357,7 @@ bool JPGDataset::ErrorOutOnNonFatalError()
 /*                            LoadScanline()                            */
 /************************************************************************/
 
-CPLErr JPGDataset::LoadScanline( int iLine )
+CPLErr JPGDataset::LoadScanline( int iLine, GByte* outBuffer )
 
 {
     if( nLoadedScanline == iLine )
@@ -1416,7 +1416,7 @@ CPLErr JPGDataset::LoadScanline( int iLine )
         bHasDoneJpegStartDecompress = true;
     }
 
-    if( pabyScanline == nullptr )
+    if( outBuffer == nullptr && pabyScanline == nullptr )
     {
         int nJPEGBands = 0;
         switch(sDInfo.out_color_space)
@@ -1449,7 +1449,8 @@ CPLErr JPGDataset::LoadScanline( int iLine )
 
     while( nLoadedScanline < iLine )
     {
-        JSAMPLE *ppSamples = reinterpret_cast<JSAMPLE *>(pabyScanline);
+        JSAMPLE *ppSamples = reinterpret_cast<JSAMPLE *>(
+            outBuffer ? outBuffer : pabyScanline);
         jpeg_read_scanlines(&sDInfo, &ppSamples, 1);
         if( ErrorOutOnNonFatalError() )
             return CE_Failure;
@@ -1826,6 +1827,7 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
       return CE_Failure;
     }
 
+#ifndef JPEG_LIB_MK1
     if((eRWFlag == GF_Read) &&
        (nBandCount == 3) &&
        (nBands == 3) &&
@@ -1846,17 +1848,19 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
         {
             for(int y = 0; y < nYSize; ++y)
             {
-                CPLErr tmpError = LoadScanline(y);
-                if(tmpError != CE_None)
-                    return tmpError;
-
                 if( nPixelSpace == 3 )
                 {
-                    memcpy(&(((GByte *)pData)[(y * nLineSpace)]), pabyScanline,
-                           3 * nXSize);
+                    CPLErr tmpError = LoadScanline(y,
+                                        &(((GByte *)pData)[(y * nLineSpace)]));
+                    if(tmpError != CE_None)
+                        return tmpError;
                 }
                 else
                 {
+                    CPLErr tmpError = LoadScanline(y);
+                    if(tmpError != CE_None)
+                        return tmpError;
+
                     for(int x = 0; x < nXSize; ++x)
                     {
                         memcpy(&(((GByte *)pData)[(y * nLineSpace) +
@@ -1865,6 +1869,7 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
                     }
                 }
             }
+            nLoadedScanline = -1;
         }
         else
         {
@@ -1888,6 +1893,7 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
 
         return CE_None;
     }
+#endif
 
     return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,

@@ -271,7 +271,7 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
 
     oHeader.addValue( CADHeader::CECOLOR, buffer.ReadBITSHORT() );
 
-    oHeader.addValue( CADHeader::HANDSEED, buffer.ReadHANDLE8BLENGTH() ); // TODO: Check this case.
+    oHeader.addValue( CADHeader::HANDSEED, buffer.ReadHANDLE() ); 
 
     oHeader.addValue( CADHeader::CLAYER, buffer.ReadHANDLE() );
     oHeader.addValue( CADHeader::TEXTSTYLE, buffer.ReadHANDLE() );
@@ -2560,7 +2560,7 @@ CADSplineObject * DWGFileR2000::getSpline(unsigned int dObjectSize,
 #ifdef _DEBUG
     else
     {
-        DebugMsg( "Spline scenario != {1,2} readed: error." );
+        DebugMsg( "Spline scenario != {1,2} read: error." );
     }
 #endif
     for( long i = 0; i < spline->nNumKnots; ++i )
@@ -2784,7 +2784,7 @@ CADLayerObject * DWGFileR2000::getLayerObject(unsigned int dObjectSize,
 
     /*
      * FIXME: ODA says that this handle should be null hard pointer. It is not.
-     * Also, after reading it dObjectSize is != actual readed structure's size.
+     * Also, after reading it dObjectSize is != actual read structure's size.
      * Not used anyway, so no point to read it for now.
      * It also means that CRC cannot be computed correctly.
      */
@@ -3795,7 +3795,7 @@ int DWGFileR2000::ReadSectionLocators()
     // TODO: code can be much simplified if CADHandle will be used.
     pFileIO->Read( & dImageSeeker, 4 );
     // to do so, == and ++ operators should be implemented.
-    DebugMsg( "Image seeker readed: %d\n", dImageSeeker );
+    DebugMsg( "Image seeker read: %d\n", dImageSeeker );
     imageSeeker = dImageSeeker;
 
     pFileIO->Seek( 2, CADFileIO::SeekOrigin::CUR ); // 19

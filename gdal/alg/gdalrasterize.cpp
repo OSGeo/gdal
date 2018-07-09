@@ -721,7 +721,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
     if( eOptim == GRO_Auto )
     {
         eOptim = GRO_Raster;
-        // TODO make more tests with various inputs/outputs to ajust the parameters
+        // TODO make more tests with various inputs/outputs to adjust the parameters
         if( nYBlockSize > 1 && nGeomCount > 10000 && (poBand->GetXSize() * static_cast<long long>(poBand->GetYSize()) / nGeomCount > 50) )
         {
             eOptim = GRO_Vector;

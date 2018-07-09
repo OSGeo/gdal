@@ -9,7 +9,7 @@ OBJ = $(CPLLIB_OBJ) $(DGNLIB_OBJ)
 
 CPPFLAGS =	/EHsc
 
-default:	wininclude dgndump.exe dgnwritetest.exe dgnlib.dll
+default:	dgndump.exe dgnwritetest.exe dgnlib.dll
 
 dgndump.exe:	dgndump.c $(OBJ)
 	$(CXX) dgndump.c $(OBJ)
@@ -19,9 +19,6 @@ dgnwritetest.exe:	dgnwritetest.c $(OBJ)
 
 dgnlib.dll:	$(OBJ)
 	link /dll /debug $(OBJ) /out:dgnlib.dll /implib:dgnlib_i.lib
-
-wininclude:
-	copy cpl_config.h.vc cpl_config.h
 
 clean:
 	del *.lib *.dll *.exe *.obj

@@ -55,10 +55,14 @@ static GDALDataset *OGRBNADriverOpen( GDALOpenInfo* poOpenInfo )
     {
         return nullptr;
     }
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        return nullptr;
+    }
 
     OGRBNADataSource   *poDS = new OGRBNADataSource();
 
-    if( !poDS->Open( pszFilename, poOpenInfo->eAccess == GA_Update ) )
+    if( !poDS->Open( pszFilename ) )
     {
         delete poDS;
         poDS = nullptr;

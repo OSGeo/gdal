@@ -1519,18 +1519,9 @@ OGRErr OGRGeoPackageTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn
 /*                      DisableFeatureCount()                           */
 /************************************************************************/
 
-void OGRGeoPackageTableLayer::DisableFeatureCount(bool bInMemoryOnly)
+void OGRGeoPackageTableLayer::DisableFeatureCount()
 {
     m_nTotalFeatureCount = -1;
-    if( !bInMemoryOnly && m_poDS->m_bHasGPKGOGRContents )
-    {
-        char* pszSQL = sqlite3_mprintf(
-            "UPDATE gpkg_ogr_contents SET feature_count = NULL WHERE "
-            "lower(table_name )= lower('%q')",
-            m_pszTableName);
-        SQLCommand(m_poDS->GetDB(), pszSQL);
-        sqlite3_free(pszSQL);
-    }
 }
 
 /************************************************************************/
@@ -1862,7 +1853,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
             CPLString osCommand = FeatureGenerateInsertSQL(poFeature, true, true);
 
             /* Prepare the SQL into a statement */
-            int err = sqlite3_prepare_v2(m_poDS->GetDB(), osCommand, -1, &m_poUpdateStatement, NULL);
+            int err = sqlite3_prepare_v2(m_poDS->GetDB(), osCommand, -1, &m_poUpdateStatement, nullptr);
             if ( err != SQLITE_OK )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -2392,6 +2383,54 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
 }
 
 /************************************************************************/
+/*                        findMinOrMax()                                */
+/************************************************************************/
+
+static bool findMinOrMax( GDALGeoPackageDataset* poDS,
+                          const CPLString& osRTreeName,
+                          const char *pszVarName, bool isMin, double &val )
+{
+    // We proceed by dichotomic search since unfortunately SELECT MIN(minx)
+    // in a RTree is a slow operation
+    double minval = -1e10;
+    double maxval = 1e10;
+    val = 0.0;
+    double oldval = 0.0;
+    for ( int i = 0; i < 100 && maxval - minval > 1e-18; i++ )
+    {
+        val = ( minval + maxval ) / 2;
+        if ( i > 0 && val == oldval )
+        {
+            break;
+        }
+        oldval = val;
+        CPLString osSQL = "SELECT 1 FROM ";
+        osSQL += "\"" + SQLEscapeName(osRTreeName) + "\"";
+        osSQL += " WHERE ";
+        osSQL += pszVarName;
+        osSQL += isMin ? " < " : " > ";
+        osSQL += CPLSPrintf( "%.18g", val );
+        osSQL += " LIMIT 1";
+        SQLResult oResult;
+        if ( SQLQuery(poDS->GetDB(), osSQL, &oResult) != OGRERR_NONE )
+        {
+            return false;
+        }
+        const bool bHasValue = oResult.nRowCount != 0;
+        SQLResultFree(&oResult);
+        if ( ( isMin && !bHasValue ) || ( !isMin && bHasValue ) )
+        {
+            minval = val;
+        }
+        else
+        {
+            maxval = val;
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                        GetExtent()                                   */
 /************************************************************************/
 
@@ -2412,11 +2451,40 @@ OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
-    /* User is OK with expensive calculation, fall back to */
-    /* default implementation (scan all features) and save */
-    /* the result for later */
+    /* User is OK with expensive calculation */
     if ( bForce && m_poFeatureDefn->GetGeomFieldCount() )
     {
+        if( HasSpatialIndex() && CPLTestBool(
+                CPLGetConfigOption("OGR_GPKG_USE_RTREE_FOR_GET_EXTENT", "TRUE")) )
+        {
+            CPLString osSQL = "SELECT 1 FROM ";
+            osSQL += "\"" + SQLEscapeName(m_osRTreeName) + "\"";
+            osSQL += " LIMIT 1";
+            if( SQLGetInteger(m_poDS->GetDB(), osSQL, nullptr) == 0 )
+            {
+                UpdateContentsToNullExtent();
+                return OGRERR_FAILURE;
+            }
+
+            double minx, miny, maxx, maxy;
+            if ( findMinOrMax( m_poDS, m_osRTreeName, "MINX", true, minx ) &&
+                 findMinOrMax( m_poDS, m_osRTreeName, "MINY", true, miny ) &&
+                 findMinOrMax( m_poDS, m_osRTreeName, "MAXX", false, maxx ) &&
+                 findMinOrMax( m_poDS, m_osRTreeName, "MAXY", false, maxy ) )
+            {
+                psExtent->MinX = minx;
+                psExtent->MinY = miny;
+                psExtent->MaxX = maxx;
+                psExtent->MaxY = maxy;
+                m_poExtent = new OGREnvelope( *psExtent );
+                m_bExtentChanged = true;
+                SaveExtent();
+                return OGRERR_NONE;
+            }
+        }
+
+        /* fall back to default implementation (scan all features) and save */
+        /* the result for later */
         const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
         char* pszSQL = sqlite3_mprintf(
             "SELECT MIN(ST_MinX(\"%w\")), MIN(ST_MinY(\"%w\")), "
@@ -2441,19 +2509,7 @@ OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
         }
         else
         {
-            if( m_poDS->GetUpdate() )
-            {
-                pszSQL = sqlite3_mprintf(
-                    "UPDATE gpkg_contents SET "
-                    "min_x = NULL, min_y = NULL, "
-                    "max_x = NULL, max_y = NULL "
-                    "WHERE lower(table_name) = lower('%q') AND "
-                    "Lower(data_type) = 'features'",
-                    m_pszTableName);
-                SQLCommand( m_poDS->GetDB(), pszSQL);
-                sqlite3_free(pszSQL);
-            }
-            m_bExtentChanged = false;
+            UpdateContentsToNullExtent();
             err = OGRERR_FAILURE; // we didn't get an extent
         }
         SQLResultFree(&oResult);
@@ -2461,6 +2517,26 @@ OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     }
 
     return OGRERR_FAILURE;
+}
+/************************************************************************/
+/*                     UpdateContentsToNullExtent()                     */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::UpdateContentsToNullExtent()
+{
+    if( m_poDS->GetUpdate() )
+    {
+        char* pszSQL = sqlite3_mprintf(
+            "UPDATE gpkg_contents SET "
+            "min_x = NULL, min_y = NULL, "
+            "max_x = NULL, max_y = NULL "
+            "WHERE lower(table_name) = lower('%q') AND "
+            "Lower(data_type) = 'features'",
+            m_pszTableName);
+        SQLCommand( m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+    }
+    m_bExtentChanged = false;
 }
 
 /************************************************************************/
@@ -2668,7 +2744,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
     }
     sqlite3_free(pszSQL);
 
-    // Insert entries in RTree by chuncks of 100000
+    // Insert entries in RTree by chunks of 100000
     std::vector<GPKGRTreeEntry> aoEntries;
     GUIntBig nEntryCount = 0;
     const size_t nChunkSize = 100000;

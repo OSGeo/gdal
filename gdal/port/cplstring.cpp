@@ -51,19 +51,11 @@ CPL_CVSID("$Id$")
  * we add.
  */
 
-// wk 2017-04-20: see comments in cpl_string.h above definition of CPLStringT / CPLString
-#ifdef _MSC_VER
-#  define CPL_STRING_TEMPLATE template<>
-#else
-#  define CPL_STRING_TEMPLATE
-#endif
-
 /************************************************************************/
 /*                               Printf()                               */
 /************************************************************************/
 
 /** Assign the content of the string using sprintf() */
-CPL_STRING_TEMPLATE
 CPLString &CPLString::Printf( CPL_FORMAT_STRING(const char *pszFormat), ... )
 
 {
@@ -81,7 +73,6 @@ CPLString &CPLString::Printf( CPL_FORMAT_STRING(const char *pszFormat), ... )
 /************************************************************************/
 
 /** Assign the content of the string using vsprintf() */
-CPL_STRING_TEMPLATE
 CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat),
                                va_list args )
 
@@ -179,7 +170,6 @@ CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat),
  * @return a reference to the CPLString.
  */
 
-CPL_STRING_TEMPLATE
 CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
 
 {
@@ -210,7 +200,6 @@ CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
  * @return a reference to the CPLString.
  */
 
-CPL_STRING_TEMPLATE
 CPLString &CPLString::Trim()
 
 {
@@ -235,7 +224,6 @@ CPLString &CPLString::Trim()
 /************************************************************************/
 
 /** Recode the string */
-CPL_STRING_TEMPLATE
 CPLString &CPLString::Recode( const char *pszSrcEncoding,
                               const char *pszDstEncoding )
 
@@ -274,7 +262,6 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
  * @since GDAL 1.9.0
  */
 
-CPL_STRING_TEMPLATE
 size_t CPLString::ifind( const std::string & str, size_t pos ) const
 
 {
@@ -291,7 +278,6 @@ size_t CPLString::ifind( const std::string & str, size_t pos ) const
  * @since GDAL 1.9.0
  */
 
-CPL_STRING_TEMPLATE
 size_t CPLString::ifind( const char *s, size_t nPos ) const
 
 {
@@ -327,7 +313,6 @@ size_t CPLString::ifind( const char *s, size_t nPos ) const
  * Convert to upper case in place.
  */
 
-CPL_STRING_TEMPLATE
 CPLString &CPLString::toupper()
 
 {
@@ -345,7 +330,6 @@ CPLString &CPLString::toupper()
  * Convert to lower case in place.
  */
 
-CPL_STRING_TEMPLATE
 CPLString &CPLString::tolower()
 
 {
@@ -362,7 +346,6 @@ CPLString &CPLString::tolower()
 /**
  * Replace all occurrences of osBefore with osAfter.
  */
-CPL_STRING_TEMPLATE
 CPLString &CPLString::replaceAll( const std::string &osBefore,
                                   const std::string &osAfter )
 {
@@ -383,7 +366,6 @@ CPLString &CPLString::replaceAll( const std::string &osBefore,
 /**
  * Replace all occurrences of chBefore with osAfter.
  */
-CPL_STRING_TEMPLATE
 CPLString &CPLString::replaceAll( char chBefore,
                                   const std::string &osAfter )
 {
@@ -393,7 +375,6 @@ CPLString &CPLString::replaceAll( char chBefore,
 /**
  * Replace all occurrences of osBefore with chAfter.
  */
-CPL_STRING_TEMPLATE
 CPLString &CPLString::replaceAll( const std::string &osBefore,
                                   char chAfter )
 {
@@ -403,7 +384,6 @@ CPLString &CPLString::replaceAll( const std::string &osBefore,
 /**
  * Replace all occurrences of chBefore with chAfter.
  */
-CPL_STRING_TEMPLATE
 CPLString &CPLString::replaceAll( char chBefore,
                                   char chAfter )
 {
@@ -420,7 +400,6 @@ CPLString &CPLString::replaceAll( char chBefore,
  * @param osStr other string.
  * @return true if the string ends wit osStr.
  */
-CPL_STRING_TEMPLATE
 bool CPLString::endsWith( const std::string& osStr ) const
 {
     if( size() < osStr.size() )

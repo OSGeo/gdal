@@ -1511,6 +1511,10 @@ def VSICurlClearCache(*args):
     """VSICurlClearCache()"""
     return _gdal.VSICurlClearCache(*args)
 
+def VSICurlPartialClearCache(*args):
+    """VSICurlPartialClearCache(char const * utf8_path)"""
+    return _gdal.VSICurlPartialClearCache(*args)
+
 def ParseCommandLine(*args):
     """ParseCommandLine(char const * utf8_path) -> char **"""
     return _gdal.ParseCommandLine(*args)

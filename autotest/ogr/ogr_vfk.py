@@ -350,6 +350,35 @@ def ogr_vfk_10():
     return 'success'
 
 ###############################################################################
+# Read PAR layer, check sequential feature access consistency
+
+
+def ogr_vfk_11():
+    def count_features():
+        gdaltest.vfk_layer_par.ResetReading()
+        count = 0
+        while True:
+            feat = gdaltest.vfk_layer_par.GetNextFeature()
+            if not feat:
+                break
+            count += 1
+
+        return count
+
+    if gdaltest.vfk_drv is None:
+        return 'skip'
+
+    count = gdaltest.vfk_layer_par.GetFeatureCount()
+    for i in range(2):  # perform check twice, mix with random access
+        if count != count_features():
+            feat = gdaltest.vfk_layer_par.GetFeature(i)
+            gdaltest.post_reason('did not get expected number of features')
+            feat.DumpReadable()
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 
@@ -385,6 +414,7 @@ gdaltest_list = [
     ogr_vfk_8,
     ogr_vfk_9,
     ogr_vfk_10,
+    ogr_vfk_11,
     ogr_vfk_cleanup]
 
 if __name__ == '__main__':

@@ -320,6 +320,7 @@ void CPL_DLL VSIInstallLargeFileHandler(void);
 void CPL_DLL VSIInstallSubFileHandler(void);
 void VSIInstallCurlFileHandler(void);
 void CPL_DLL VSICurlClearCache(void);
+void CPL_DLL VSICurlPartialClearCache(const char* pszFilenamePrefix);
 void VSIInstallCurlStreamingFileHandler(void);
 void VSIInstallS3FileHandler(void);
 void VSIInstallS3StreamingFileHandler(void);
@@ -334,6 +335,7 @@ void VSIInstallSwiftStreamingFileHandler(void);
 void VSIInstallGZipFileHandler(void); /* No reason to export that */
 void VSIInstallZipFileHandler(void); /* No reason to export that */
 void VSIInstallStdinHandler(void); /* No reason to export that */
+void VSIInstallHdfsHandler(void); /* No reason to export that */
 void VSIInstallStdoutHandler(void); /* No reason to export that */
 void CPL_DLL VSIInstallSparseFileHandler(void);
 void VSIInstallTarFileHandler(void); /* No reason to export that */

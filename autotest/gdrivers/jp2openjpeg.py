@@ -3676,6 +3676,111 @@ def jp2openjpeg_50():
     return 'success'
 
 ###############################################################################
+# Test CODEBLOCK_STYLE
+
+
+def jp2openjpeg_codeblock_style():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    if gdaltest.jp2openjpeg_drv.GetMetadataItem('DMD_CREATIONOPTIONLIST').find('CODEBLOCK_STYLE') < 0:
+        return 'skip'
+
+    filename = '/vsimem/jp2openjpeg_codeblock_style.jp2'
+    for options in [['CODEBLOCK_STYLE=63', 'REVERSIBLE=YES', 'QUALITY=100'],
+                    ['CODEBLOCK_STYLE=BYPASS,RESET,TERMALL,VSC,PREDICTABLE,SEGSYM', 'REVERSIBLE=YES', 'QUALITY=100']]:
+        gdal.ErrorReset()
+        gdaltest.jp2openjpeg_drv.CreateCopy(filename, gdal.Open('data/byte.tif'),
+                                            options=options)
+        if gdal.GetLastErrorMsg() != '':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = gdal.Open(filename)
+        cs = ds.GetRasterBand(1).Checksum()
+        ds = None
+        if cs != 4672:
+            gdaltest.post_reason('fail')
+            print(cs)
+            return 'fail'
+
+    with gdaltest.error_handler():
+        gdaltest.jp2openjpeg_drv.CreateCopy(filename, gdal.Open('data/byte.tif'),
+                                            options=['CODEBLOCK_STYLE=64'])
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        gdaltest.jp2openjpeg_drv.CreateCopy(filename, gdal.Open('data/byte.tif'),
+                                            options=['CODEBLOCK_STYLE=UNSUPPORTED'])
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdaltest.jp2openjpeg_drv.Delete(filename)
+
+    return 'success'
+
+###############################################################################
+# Test external overviews
+
+
+def jp2openjpeg_external_overviews_single_band():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    filename = '/vsimem/jp2openjpeg_external_overviews_single_band.jp2'
+    gdaltest.jp2openjpeg_drv.CreateCopy(filename,
+                                        gdal.Open('../gcore/data/utmsmall.tif'),
+                                        options=['REVERSIBLE=YES', 'QUALITY=100'])
+    ds = gdal.Open(filename)
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+
+    ds = gdal.Open(filename)
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    gdaltest.jp2openjpeg_drv.Delete(filename)
+
+    if cs != 28926:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test external overviews
+
+
+def jp2openjpeg_external_overviews_multiple_band():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    filename = '/vsimem/jp2openjpeg_external_overviews_multiple_band.jp2'
+    gdaltest.jp2openjpeg_drv.CreateCopy(filename,
+                                        gdal.Open('data/small_world.tif'),
+                                        options=['REVERSIBLE=YES', 'QUALITY=100'])
+    ds = gdal.Open(filename)
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+
+    ds = gdal.Open(filename)
+    cs = [ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(3)]
+    ds = None
+
+    gdaltest.jp2openjpeg_drv.Delete(filename)
+
+    if cs != [6233, 7706, 26085]:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 
 def jp2openjpeg_cleanup():
@@ -3737,6 +3842,9 @@ gdaltest_list = [
     jp2openjpeg_48,
     jp2openjpeg_49,
     jp2openjpeg_50,
+    jp2openjpeg_codeblock_style,
+    jp2openjpeg_external_overviews_single_band,
+    jp2openjpeg_external_overviews_multiple_band,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,

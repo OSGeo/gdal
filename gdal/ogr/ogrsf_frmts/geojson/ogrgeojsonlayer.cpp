@@ -108,6 +108,7 @@ void OGRGeoJSONLayer::TerminateAppendSession()
     {
         VSILFILE* fp = poReader_->GetFP();
         VSIFPrintfL(fp, "\n]\n}\n");
+        VSIFFlushL(fp);
         bHasAppendedFeatures_ = false;
     }
 }

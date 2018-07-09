@@ -113,7 +113,11 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
                 && iField == poVecSeg->GetFieldCount()-1 )
                 iRingStartField = iField;
             else
+            {
                 poFeatureDefn->AddFieldDefn( &oField );
+                m_oMapFieldNameToIdx[oField.GetNameRef()] =
+                    poFeatureDefn->GetFieldCount() - 1;
+            }
         }
 
 /* -------------------------------------------------------------------- */
@@ -641,8 +645,13 @@ OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
 
         for( int iPCI = 0; iPCI < poVecSeg->GetFieldCount(); iPCI++ )
         {
-            int iOGR = poFeatureDefn->GetFieldIndex(
-                poVecSeg->GetFieldName(iPCI).c_str() );
+            int iOGR = -1;
+            const auto osFieldName(poVecSeg->GetFieldName(iPCI));
+            auto oIter = m_oMapFieldNameToIdx.find(osFieldName);
+            if( oIter != m_oMapFieldNameToIdx.end() )
+            {
+                iOGR = oIter->second;
+            }
 
             if( iOGR == -1 )
                 continue;
@@ -825,6 +834,9 @@ OGRErr OGRPCIDSKLayer::CreateField( OGRFieldDefn *poFieldDefn,
                   "Non-PCIDSK exception trapped." );
         return OGRERR_FAILURE;
     }
+
+    m_oMapFieldNameToIdx[ poFieldDefn->GetNameRef() ] =
+        poFeatureDefn->GetFieldCount() - 1;
 
     return OGRERR_NONE;
 }

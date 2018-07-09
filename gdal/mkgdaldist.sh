@@ -3,9 +3,10 @@
 # $Id$
 #
 # mkgdaldist.sh - prepares GDAL source distribution package
-#
 
-# Doxgen 1.7.1 has a bug related to man pages. See https://trac.osgeo.org/gdal/ticket/6048
+set -eu
+
+# Doxygen 1.7.1 has a bug related to man pages. See https://trac.osgeo.org/gdal/ticket/6048
 doxygen --version | xargs python -c "import sys; v = sys.argv[1].split('.'); v=int(v[0])*10000+int(v[1])*100+int(v[2]); sys.exit(v < 10704)"
 rc=$?
 if test $rc != 0; then
@@ -34,42 +35,48 @@ fi
 GDAL_VERSION=$1
 COMPRESSED_VERSION=$(echo "$GDAL_VERSION" | tr -d .)
 
-if test "$2" = "-date" ; then
-  forcedate=$3
-  shift
-  shift
-else
-  forcedate=no
+forcedate=no
+if test "$#" -ge 3; then
+  if test "$2" = "-date" ; then
+    forcedate=$3
+    shift
+    shift
+  fi
 fi
 
-if test "$2" = "-branch"; then
-  BRANCH=$3
-  shift
-  shift
-else
-  BRANCH="master"
+BRANCH="master"
+if test "$#" -ge 3; then
+  if test "$2" = "-branch"; then
+    BRANCH=$3
+    shift
+    shift
+  fi
 fi
 
-if test "$2" = "-tag"; then
-  TAG=$3
-  shift
-  shift
-else
-  TAG=""
+TAG=""
+if test "$#" -ge 3; then
+  if test "$2" = "-tag"; then
+    TAG=$3
+    shift
+    shift
+ fi
 fi
 
-if test "$2" = "-rc"; then
-  RC=$3
-  shift
-  shift
-else
-  RC=""
+RC=""
+if test "$#" -ge 3; then
+  if test "$2" = "-rc"; then
+    RC=$3
+    shift
+    shift
+  fi
 fi
 
-if test "$2" = "-url"; then
-  GITURL=$3
-  shift
-  shift
+if test "$#" -ge 3; then
+  if test "$2" = "-url"; then
+    GITURL=$3
+    shift
+    shift
+  fi
 fi
 
 #
@@ -82,13 +89,13 @@ cd dist_wrk
 
 if test "$TAG" != ""; then
    echo "Generating package '${GDAL_VERSION}' from '${TAG}' tag"
-   git clone ${GITURL} gdal
+   git clone "${GITURL}" gdal
 else
    echo "Generating package '${GDAL_VERSION}' from '${BRANCH}' branch"
-   git clone -b ${BRANCH} --single-branch ${GITURL} gdal
+   git clone -b "${BRANCH}" --single-branch "${GITURL}" gdal
 fi
 
-if [ \! -d gdal ] ; then
+if [ ! -d gdal ] ; then
 	echo "git clone reported an error ... abandoning mkgdaldist"
 	cd ..
 	rm -rf dist_wrk
@@ -99,7 +106,7 @@ cd gdal
 
 if test "$TAG" != ""; then
    echo "Checkout tag $TAG"
-   git checkout $TAG || exit 1
+   git checkout "$TAG" || exit 1
 fi
 
 #
@@ -117,12 +124,13 @@ echo "* Cleaning .gitignore under $PWD..."
 rm -f gdal/.gitignore
 
 echo "* Substituting \$Id\$..."
-for i in $(find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.dox" \
-              -o -name "*.py" -o -name "*.i" -o -name "*.sh" -o -name "*.cs" \
-              -o -name "*.java" -o -name "*.m4" -o -name "*.xml" \
-              -o -name "*.xsd"); do
-    ID="$(basename $i) $(git log -1 --format='%H %ai %aN' $i | sed 's/ +0000/Z/')"
-    sed -i "s/\\\$Id\\\$/\\\$Id: ${ID} \\\$/" $i
+find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.dox" \
+     -o -name "*.py" -o -name "*.i" -o -name "*.sh" -o -name "*.cs" \
+     -o -name "*.java" -o -name "*.m4" -o -name "*.xml" \
+     -o -name "*.xsd" | while read -r i ; do
+    ID=$(basename "$i")
+    ID="$ID $(git log -1 --format='%H %ai %aN' "$i" | sed 's/ +0000/Z/')"
+    sed -i "s/\\\$Id\\\$/\\\$Id: ${ID} \\\$/" "$i"
 done
 
 #
@@ -165,7 +173,7 @@ echo "SWIG C# interfaces *NOT* generated !"
 echo "* Generating SWIG Perl interfaces..."
 CWD=${PWD}
 
-rm gdal/swig/perl/*wrap*
+rm -f gdal/swig/perl/*wrap*
 touch gdal/GDALmake.opt
 (cd gdal/swig/perl && make generate)
 rm gdal/GDALmake.opt
@@ -175,43 +183,43 @@ rm gdal/GDALmake.opt
 #
 echo "* Making distribution packages..."
 rm -f gdal/VERSION
-echo $GDAL_VERSION > gdal/VERSION
+echo "$GDAL_VERSION" > gdal/VERSION
 
-mv gdal gdal-${GDAL_VERSION}
+mv gdal "gdal-${GDAL_VERSION}"
 
-rm -f ../../gdal-${GDAL_VERSION}${RC}.tar.gz ../../gdal${COMPRESSED_VERSION}${RC}.zip
+rm -f "../../gdal-${GDAL_VERSION}${RC}.tar.gz" "../../gdal${COMPRESSED_VERSION}${RC}.zip"
 
-tar cf ../../gdal-${GDAL_VERSION}${RC}.tar gdal-${GDAL_VERSION}
-xz -k9e ../../gdal-${GDAL_VERSION}${RC}.tar
-gzip -9 ../../gdal-${GDAL_VERSION}${RC}.tar
-zip -qr ../../gdal${COMPRESSED_VERSION}${RC}.zip gdal-${GDAL_VERSION}
+tar cf "../../gdal-${GDAL_VERSION}${RC}.tar" "gdal-${GDAL_VERSION}"
+xz -k9e "../../gdal-${GDAL_VERSION}${RC}.tar"
+gzip -9 "../../gdal-${GDAL_VERSION}${RC}.tar"
+zip -qr "../../gdal${COMPRESSED_VERSION}${RC}.zip" "gdal-${GDAL_VERSION}"
 
-mv autotest gdalautotest-${GDAL_VERSION}
-rm ../../gdalautotest-${GDAL_VERSION}${RC}.tar.gz
-rm ../../gdalautotest-${GDAL_VERSION}${RC}.zip
-tar cf ../../gdalautotest-${GDAL_VERSION}${RC}.tar.gz gdalautotest-${GDAL_VERSION}
-zip -qr ../../gdalautotest-${GDAL_VERSION}${RC}.zip gdalautotest-${GDAL_VERSION}
+mv autotest "gdalautotest-${GDAL_VERSION}"
+rm -f "../../gdalautotest-${GDAL_VERSION}${RC}.tar.gz"
+rm -f "../../gdalautotest-${GDAL_VERSION}${RC}.zip"
+tar cf "../../gdalautotest-${GDAL_VERSION}${RC}.tar.gz" "gdalautotest-${GDAL_VERSION}"
+zip -qr "../../gdalautotest-${GDAL_VERSION}${RC}.zip" "gdalautotest-${GDAL_VERSION}"
 
-cd gdal-${GDAL_VERSION}
+cd "gdal-${GDAL_VERSION}"
 echo "GDAL_VER=${GDAL_VERSION}" > GDALmake.opt
 cd frmts/grass
 make dist
-mv *.tar.gz ../../../../..
+mv ./*.tar.gz ../../../../..
 cd ../../..
 
 echo "* Generating MD5 sums ..."
 
-OSTYPE=$(uname -s)
-if test "$OSTYPE" = "Darwin" ; then
+MY_OSTYPE=$(uname -s)
+if test "$MY_OSTYPE" = "Darwin" ; then
 MD5=md5
 else
 MD5=md5sum
 fi
 
 cd ../..
-$MD5 gdal-${GDAL_VERSION}${RC}.tar.xz > gdal-${GDAL_VERSION}${RC}.tar.xz.md5
-$MD5 gdal-${GDAL_VERSION}${RC}.tar.gz > gdal-${GDAL_VERSION}${RC}.tar.gz.md5
-$MD5 gdal${COMPRESSED_VERSION}${RC}.zip > gdal${COMPRESSED_VERSION}${RC}.zip.md5
+$MD5 "gdal-${GDAL_VERSION}${RC}.tar.xz" > "gdal-${GDAL_VERSION}${RC}.tar.xz.md5"
+$MD5 "gdal-${GDAL_VERSION}${RC}.tar.gz" > "gdal-${GDAL_VERSION}${RC}.tar.gz.md5"
+$MD5 "gdal${COMPRESSED_VERSION}${RC}.zip" > "gdal${COMPRESSED_VERSION}${RC}.zip.md5"
 
 echo "* Cleaning..."
 rm -rf dist_wrk

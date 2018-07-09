@@ -130,6 +130,7 @@ def stats_approx_nodata():
 
     ds = gdal.Open('tmp/minfloat.tif')
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    md = ds.GetRasterBand(1).GetMetadata()
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
 
@@ -149,6 +150,11 @@ def stats_approx_nodata():
     if stats != [-3.0, 5.0, 1.0, 4.0]:
         gdaltest.post_reason('did not get expected stats')
         print(stats)
+        return 'fail'
+
+    if md != {'STATISTICS_MEAN': '1', 'STATISTICS_MAXIMUM': '5', 'STATISTICS_MINIMUM': '-3', 'STATISTICS_STDDEV': '4', 'STATISTICS_VALID_PERCENT': '50'}:
+        gdaltest.post_reason('did not get expected metadata')
+        print(md)
         return 'fail'
 
     if minmax != (-3.0, 5.0):
@@ -816,7 +822,7 @@ def stats_approx_stats_flag(dt=gdal.GDT_Byte, struct_frmt='B'):
         print(stats)
         return 'fail'
     md = ds.GetRasterBand(1).GetMetadata()
-    if md != {'STATISTICS_MEAN': '0', 'STATISTICS_MAXIMUM': '0', 'STATISTICS_MINIMUM': '0', 'STATISTICS_APPROXIMATE': 'YES', 'STATISTICS_STDDEV': '0'}:
+    if md != {'STATISTICS_MEAN': '0', 'STATISTICS_MAXIMUM': '0', 'STATISTICS_MINIMUM': '0', 'STATISTICS_APPROXIMATE': 'YES', 'STATISTICS_STDDEV': '0', 'STATISTICS_VALID_PERCENT': '100'}:
         gdaltest.post_reason('did not get expected metadata')
         print(md)
         return 'fail'
@@ -876,6 +882,19 @@ def stats_all_nodata():
 
     return 'success'
 
+
+def stats_float32_with_nodata_slightly_above_float_max():
+
+    ds = gdal.Open('data/float32_with_nodata_slightly_above_float_max.tif')
+    my_min, my_max = ds.GetRasterBand(1).ComputeRasterMinMax()
+    if (my_min, my_max) != (-1.0989999771118164, 0.703338623046875):
+        gdaltest.post_reason('did not get expected stats')
+        print(my_min, my_max)
+        return 'fail'
+
+    return 'success'
+
+
 ###############################################################################
 # Run tests
 
@@ -907,6 +926,7 @@ gdaltest_list = [
     stats_approx_stats_flag,
     stats_approx_stats_flag_float,
     stats_all_nodata,
+    stats_float32_with_nodata_slightly_above_float_max,
 ]
 
 if __name__ == '__main__':

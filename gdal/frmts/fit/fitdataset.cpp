@@ -1128,6 +1128,8 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 
     int blockX, blockY;
     firstBand->GetBlockSize(&blockX, &blockY);
+    blockX = std::min(blockX, poSrcDS->GetRasterXSize());
+    blockY = std::min(blockY, poSrcDS->GetRasterYSize());
     int nDTSize = GDALGetDataTypeSizeBytes(firstBand->GetRasterDataType());
     try
     {
@@ -1137,8 +1139,8 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     }
     catch( ... )
     {
-        blockX = 256;
-        blockY = 256;
+        blockX = std::min(256, poSrcDS->GetRasterXSize());
+        blockY = std::min(256, poSrcDS->GetRasterYSize());
     }
 
     if( CSLFetchNameValue(papszOptions,"PAGESIZE") != nullptr )
@@ -1191,12 +1193,13 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 /* -------------------------------------------------------------------- */
     unsigned long bytesPerPixel = nBands * nDTSize;
 
-    unsigned long pageBytes = blockX * blockY * bytesPerPixel;
+    size_t pageBytes = blockX * blockY * bytesPerPixel;
     char *output = (char *) malloc(pageBytes);
     if (! output)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "FITRasterBand couldn't allocate %lu bytes", pageBytes);
+                 "FITRasterBand couldn't allocate %lu bytes",
+                 static_cast<unsigned long>(pageBytes));
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
         return nullptr;
     }
@@ -1247,8 +1250,13 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
                                       bytesPerPixel, // nPixelSpace
                                       bytesPerPixel * blockX, nullptr); // nLineSpace
                 if (eErr != CE_None)
+                {
                     CPLError(CE_Failure, CPLE_FileIO,
                              "FIT write - CreateCopy got read error %i", eErr);
+                    CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
+                    VSIUnlink( pszFilename );
+                    return nullptr;
+                }
             } // for iBand
 
 #ifdef swapping
@@ -1277,7 +1285,13 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
             } // switch
 #endif // swapping
 
-            CPL_IGNORE_RET_VAL(VSIFWriteL(output, pageBytes, 1, fpImage));
+            if( VSIFWriteL(output, 1, pageBytes, fpImage) != pageBytes )
+            {
+                CPLError( CE_Failure, CPLE_FileIO, "Write failed" );
+                CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
+                VSIUnlink( pszFilename );
+                return nullptr;
+            }
 
             double perc = ((double) (y * maxx + x)) / (maxx * maxy);
             if( !pfnProgress( perc, nullptr, pProgressData ) )

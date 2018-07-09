@@ -1948,9 +1948,20 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
 /*      Set the GEOCCS node with a name.                                */
 /* -------------------------------------------------------------------- */
     poSRS->Clear();
-    poSRS->SetGeocCS( CSLGetField( papszRecord,
-                                   CSVGetFileFieldId(pszFilename,
-                                                     "COORD_REF_SYS_NAME")) );
+    CPLString osGCCSName =
+        CSLGetField( papszRecord,
+                     CSVGetFileFieldId( pszFilename,
+                                        "COORD_REF_SYS_NAME" ));
+
+    const char *pszDeprecated =
+        CSLGetField( papszRecord,
+                     CSVGetFileFieldId( pszFilename,
+                                        "DEPRECATED") );
+
+    if ( pszDeprecated != nullptr && *pszDeprecated == '1' )
+         osGCCSName += " (deprecated)";
+
+    poSRS->SetGeocCS( osGCCSName );
 
 /* -------------------------------------------------------------------- */
 /*      Get datum related information.                                  */

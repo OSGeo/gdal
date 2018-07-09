@@ -749,7 +749,8 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
     {
         GUIntBig nJPEGStart = psFile->pasSegmentInfo[iSegment].nSegmentStart;
 
-        poDS->nQLevel = poDS->ScanJPEGQLevel( &nJPEGStart );
+        bool bError = false;
+        poDS->nQLevel = poDS->ScanJPEGQLevel( &nJPEGStart, &bError );
 
         CPLString osDSName;
 
@@ -3383,7 +3384,7 @@ CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
 /*      they are inline).                                               */
 /************************************************************************/
 
-int NITFDataset::ScanJPEGQLevel( GUIntBig *pnDataStart )
+int NITFDataset::ScanJPEGQLevel( GUIntBig *pnDataStart, bool *pbError )
 
 {
     if( VSIFSeekL( psFile->fp, *pnDataStart,
@@ -3391,6 +3392,7 @@ int NITFDataset::ScanJPEGQLevel( GUIntBig *pnDataStart )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Seek error to jpeg data stream." );
+        *pbError = true;
         return 0;
     }
 
@@ -3400,6 +3402,7 @@ int NITFDataset::ScanJPEGQLevel( GUIntBig *pnDataStart )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Read error to jpeg data stream." );
+        *pbError = true;
         return 0;
     }
 
@@ -3415,8 +3418,12 @@ int NITFDataset::ScanJPEGQLevel( GUIntBig *pnDataStart )
         nOffset++;
 
     if( nOffset >= sizeof(abyHeader) - 23 )
+    {
+        *pbError = true;
         return 0;
+    }
 
+    *pbError = false;
     *pnDataStart += nOffset;
 
     if( nOffset > 0 )
@@ -3443,7 +3450,12 @@ CPLErr NITFDataset::ScanJPEGBlocks()
 {
     GUIntBig nJPEGStart =
         psFile->pasSegmentInfo[psImage->iSegment].nSegmentStart;
-    nQLevel = ScanJPEGQLevel( &nJPEGStart );
+    bool bError = false;
+    nQLevel = ScanJPEGQLevel( &nJPEGStart, &bError );
+    if( bError )
+    {
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate offset array                                           */
@@ -3581,10 +3593,11 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
                 if (panJPEGBlockOffset[i] != -1 && panJPEGBlockOffset[i] != UINT_MAX)
                 {
                     GUIntBig nOffset = panJPEGBlockOffset[i];
-                    nQLevel = ScanJPEGQLevel(&nOffset);
+                    bool bError = false;
+                    nQLevel = ScanJPEGQLevel(&nOffset, &bError);
                     /* The beginning of the JPEG stream should be the offset */
                     /* from the panBlockStart table */
-                    if (nOffset != (GUIntBig)panJPEGBlockOffset[i])
+                    if (bError || nOffset != (GUIntBig)panJPEGBlockOffset[i])
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "JPEG block doesn't start at expected offset");

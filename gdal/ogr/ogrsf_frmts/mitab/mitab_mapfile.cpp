@@ -2590,7 +2590,7 @@ TABRawBinBlock *TABMAPFile::GetIndexObjectBlock( int nFileOffset )
  *
  * In Write mode, this function will init an empty the tool def table.
  *
- * Reutrns 0 on success, -1 on error.
+ * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABMAPFile::InitDrawingTools()
 {

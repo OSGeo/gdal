@@ -697,6 +697,32 @@ int HDF4Dataset::Identify( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                            QuoteIfNeeded()                           */
+/************************************************************************/
+
+static CPLString QuoteIfNeeded( const CPLString& osStr )
+{
+    if( osStr.find(' ') != std::string::npos ||
+        osStr.find(':') != std::string::npos ||
+        osStr.find('"') != std::string::npos ||
+        osStr.find('\\') != std::string::npos )
+    {
+        CPLString osRet;
+        for( size_t i = 0; i < osStr.size(); i++ )
+        {
+            if( osStr[i] == '"' )
+                osRet += "\\\"";
+            else if( osStr[i] == '\\' )
+                osRet += "\\\\";
+            else
+                osRet += osStr[i];
+        }
+        return '"' + osRet + '"';
+    }
+    return osStr;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -951,7 +977,8 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                         CSLSetNameValue( poDS->papszSubDatasets, szTemp,
                                 CPLSPrintf("HDF4_EOS:EOS_SWATH:\"%s\":%s:%s",
                                            poOpenInfo->pszFilename,
-                                           papszSwaths[i], papszFields[j]) );
+                                           QuoteIfNeeded(papszSwaths[i]).c_str(),
+                                           QuoteIfNeeded(papszFields[j]).c_str()) );
 
                     snprintf( szTemp, sizeof(szTemp),
                               "SUBDATASET_%d_DESC", nCount + 1 );
@@ -1067,7 +1094,8 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                         CSLSetNameValue(poDS->papszSubDatasets, szTemp,
                                 CPLSPrintf( "HDF4_EOS:EOS_GRID:\"%s\":%s:%s",
                                             poOpenInfo->pszFilename,
-                                            papszGrids[i], papszFields[j]));
+                                            QuoteIfNeeded(papszGrids[i]).c_str(),
+                                            QuoteIfNeeded(papszFields[j]).c_str()));
 
                     snprintf( szTemp, sizeof(szTemp),
                               "SUBDATASET_%d_DESC", nCount + 1 );

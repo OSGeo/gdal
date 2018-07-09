@@ -194,7 +194,7 @@ int CPLQuadTreeGetAdvisedMaxDepth(int nExpectedFeatures)
     int nMaxDepth = 0;
     int nMaxNodeCount = 1;
 
-    while( nMaxNodeCount*4 < nExpectedFeatures )
+    while( nMaxNodeCount < nExpectedFeatures / 4 )
     {
         nMaxDepth += 1;
         nMaxNodeCount = nMaxNodeCount * 2;

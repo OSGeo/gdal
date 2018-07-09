@@ -160,7 +160,7 @@ protected:
     OGRGeometry *poGeom2;
     unsigned char* pszData;
     int nLen;
-    /* serialization propeties */
+    /* serialization properties */
     char chProps;
     /* point array */
     int nPointSize;
@@ -378,6 +378,12 @@ class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
     int                 FetchSRSId();
 
     void                SetUseCopy(int bcpSize) { bUseCopy = TRUE; nBCPSize = bcpSize; }
+
+    // cppcheck-suppress functionStatic
+    OGRErr              StartCopy();
+    // cppcheck-suppress functionStatic
+    OGRErr              EndCopy();
+
     int                 Failed( int nRetCode );
 #ifdef MSSQL_BCP_SUPPORTED
     OGRErr              CreateFeatureBCP( OGRFeature *poFeature );
@@ -448,6 +454,8 @@ class OGRMSSQLSpatialDataSource final: public OGRDataSource
     int                *panSRID;
     OGRSpatialReference **papoSRS;
 
+    OGRMSSQLSpatialTableLayer *poLayerInCopyMode;
+
     char                *pszConnection;
 
   public:
@@ -499,6 +507,9 @@ class OGRMSSQLSpatialDataSource final: public OGRDataSource
     // Internal use
     CPLODBCSession     *GetSession() { return &oSession; }
     const char         *GetConnectionString() { return pszConnection; }
+
+    void                StartCopy(OGRMSSQLSpatialTableLayer *poMSSQLSpatialLayer);
+    OGRErr              EndCopy();
 };
 
 /************************************************************************/

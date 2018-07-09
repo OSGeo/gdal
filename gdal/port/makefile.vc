@@ -39,6 +39,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_vsil_abstract_archive.obj \
 		cpl_vsil_tar.obj \
 		cpl_vsil_curl.obj \
+		cpl_vsil_hdfs.obj \
 		cpl_vsil_curl_streaming.obj \
 		cpl_vsil_stdin.obj \
 		cpl_vsil_buffered_reader.obj \
@@ -107,13 +108,37 @@ EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_OPENSSL_CRYPTO $(OPENSSL_INC)
 ODBC_OBJ =	cpl_odbc.obj
 !ENDIF
 
-default:	cpl_config.h $(LIB)
+default:	prev_dllbuild cpl_config.h $(LIB)
 
 $(LIB):	$(OBJ)
 	lib /out:cpl.lib *.obj
 
 clean:
-	-del *.obj *.lib cpl_config.h
+	-del *.obj *.lib cpl_config.h dllbuild.prev
 
-cpl_config.h:	cpl_config.h.vc
-	copy cpl_config.h.vc cpl_config.h
+# This "mechanism" updates a temporary dllbuild.prev file with the $(DLLBUILD) setting, but only
+# when dllbuild.prev doesn't exist or doesn't match the current $(DLLBUILD) setting.
+#
+# The upside to this is that repeated builds with the same setting won't cause cpl_config.h to be
+# regenerated, which should prevent unnecessary recompilation.
+#
+# It has to be done in a temporary/inline batch script because normal NMAKE commands apparently
+# don't have extensions enabled which apparently prevents setting a variable from file contents.
+prev_dllbuild:
+	call <<prev_dllbuild.bat
+@SETLOCAL ENABLEEXTENSIONS
+IF NOT EXIST dllbuild.prev (ECHO $(DLLBUILD))> dllbuild.prev
+SET /P PREV_DLLBUILD=<dllbuild.prev
+IF NOT "%PREV_DLLBUILD%"=="$(DLLBUILD)" (ECHO $(DLLBUILD))> dllbuild.prev
+<<
+
+cpl_config.h:	dllbuild.prev \
+				cpl_config.h.vc.begin \
+				cpl_config.h.vc.common \
+				cpl_config.h.vc.no_dll \
+				cpl_config.h.vc.end
+	type cpl_config.h.vc.begin > cpl_config.h
+	type cpl_config.h.vc.common >> cpl_config.h
+	IF NOT "$(DLLBUILD)"=="1" \
+		type cpl_config.h.vc.no_dll >> cpl_config.h
+	type cpl_config.h.vc.end >> cpl_config.h

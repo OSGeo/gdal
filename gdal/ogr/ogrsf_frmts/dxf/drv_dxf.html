@@ -23,6 +23,8 @@ layer named "entities". Features will all have the following generic fields:
 
 <ul>
 <li> Layer: The name of the DXF layer.  The default layer is "0".
+<li> PaperSpace: 1 if the entity is located on a layout (paper space), NULL
+otherwise.
 <li> SubClasses: Where available, a list of classes to which an entity belongs.
 <li> ExtendedEntity (GDAL <= 2.2.x): The values of extended entity attributes
 all appended to form a single text field, where available.

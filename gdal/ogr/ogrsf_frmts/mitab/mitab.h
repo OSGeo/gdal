@@ -216,6 +216,7 @@ class TABFile final : public IMapInfoFile
     TABINDFile  *m_poINDFile;   // Attributes index file
 
     OGRFeatureDefn *m_poDefn;
+    std::set<CPLString> m_oSetFields{};
     OGRSpatialReference *m_poSpatialRef;
     int         bUseSpatialTraversal;
 

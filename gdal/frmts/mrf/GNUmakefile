@@ -39,11 +39,13 @@ ifeq ($(LIBZ_SETTING),internal)
 XTRA_OPT        :=      $(XTRA_OPT) -I../zlib
 endif
 
+ifeq ($(HAVE_LERC),yes)
 ifneq ("$(wildcard libLERC)","")
 LIBLERC	= libLERC
 OBJ	:=	$(OBJ) LERC_band.o
-XTRA_OPT	:=	$(XTRA_OPT) -DLERC -I $(LIBLERC)
+XTRA_OPT	:=	$(XTRA_OPT) -DLERC -I$(LIBLERC) -I../../third_party/LercLib
 SUBLIBS := libLERC
+endif
 endif
 
 CPPFLAGS        :=  $(XTRA_OPT)  $(CPPFLAGS)

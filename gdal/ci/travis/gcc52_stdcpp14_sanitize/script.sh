@@ -34,16 +34,17 @@ cd ../autotest
 #unzip PGeoTest.zip
 #cd ../../..
 # Run ogr_fgdb.py in isolation from the rest
-cd ogr
-#python ogr_fgdb.py
-mkdir disabled
-mv ogr_fgdb.* disabled
-cd ..
+(cd ogr
+ mkdir disabled
+ mv ogr_fgdb.* disabled
+)
 # Run ogr_pgeo.py in isolation from the rest
-cd ogr
-#python ogr_pgeo.py
-mv ogr_pgeo.* disabled
-cd ..
+(cd ogr && mv ogr_pgeo.* disabled)
+
+# Too old spatialite version
+(cd ogr && mv ogr_sqlite.* disabled)
+(cd gdrivers && mkdir disabled && mv rasterlite.* disabled)
+
 # Run all the Python autotests
 SKIP_MEM_INTENSIVE_TEST=YES SKIP_VIRTUALMEM=YES LD_PRELOAD=$PRELOAD ASAN_OPTIONS=detect_leaks=0 GDALTEST_ASAN_OPTIONS=detect_leaks=1,print_suppressions=0,suppressions=$PWD/asan_suppressions.txt python run_all.py -run_as_external
 # A bit messy, but force testing with libspatialite 4.0dev (that has been patched a bit to remove any hard-coded SRS definition so it is very small)

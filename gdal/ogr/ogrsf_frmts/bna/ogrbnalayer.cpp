@@ -313,7 +313,8 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
         eol[1] = 0;
     }
 
-    if ( ! bWriter )
+    VSILFILE* fp = poDS->GetOutputFP();
+    if ( ! bWriter || fp == nullptr )
     {
         return OGRERR_FAILURE;
     }
@@ -321,7 +322,6 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( nFeatures++ );
 
-    VSILFILE* fp = poDS->GetOutputFP();
     int nbPairPerLine = poDS->GetNbPairPerLine();
 
     switch( poGeom->getGeometryType() )
@@ -649,8 +649,20 @@ OGRFeature *OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long fid)
                 OGRPolygon* polygon = new OGRPolygon ();
                 polygon->addRingDirectly(ring);
                 ring = nullptr;
-                tabPolygons[nbPolygons] = polygon;
-                nbPolygons++;
+                for( int j = 0; j < nbPolygons; j++ )
+                {
+                    if( polygon->Equals(tabPolygons[j]) )
+                    {
+                        delete polygon;
+                        polygon = nullptr;
+                        break;
+                    }
+                }
+                if( polygon )
+                {
+                    tabPolygons[nbPolygons] = polygon;
+                    nbPolygons++;
+                }
 
                 if (i < record->nCoords - 1)
                 {

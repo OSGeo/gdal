@@ -2442,6 +2442,17 @@ def tiff_read_md12():
     except OSError:
         pass
 
+    # Test not valid DIMAP product [https://github.com/OSGeo/gdal/issues/431]
+    shutil.copy('../gdrivers/data/dimap2/IMG_foo_R2C1.TIF', 'tmp/IMG_foo_temp.TIF')
+    shutil.copy('../gdrivers/data/dimap2/DIM_foo.XML', 'tmp/DIM_foo.XML')
+    shutil.copy('../gdrivers/data/dimap2/RPC_foo.XML', 'tmp/RPC_foo.XML')
+    ds = gdal.Open('tmp/IMG_foo_temp.TIF', gdal.GA_ReadOnly)
+    filelist = ds.GetFileList()
+
+    if len(filelist) > 1:
+        gdaltest.post_reason('did not get expected file list.')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -3757,6 +3768,19 @@ def tiff_read_1bit_2bands():
     return 'success'
 
 ###############################################################################
+# Test LERC compression
+
+
+def tiff_read_lerc():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest('GTiff', 'byte_lerc.tif', 1, 4672)
+    return ut.testOpen()
+
+###############################################################################
 
 
 for item in init_list:
@@ -3885,6 +3909,7 @@ gdaltest_list.append((tiff_read_zstd))
 gdaltest_list.append((tiff_read_zstd_corrupted))
 gdaltest_list.append((tiff_read_zstd_corrupted2))
 gdaltest_list.append((tiff_read_1bit_2bands))
+gdaltest_list.append((tiff_read_lerc))
 
 gdaltest_list.append((tiff_read_online_1))
 gdaltest_list.append((tiff_read_online_2))
