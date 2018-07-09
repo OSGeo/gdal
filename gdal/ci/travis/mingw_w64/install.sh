@@ -4,6 +4,9 @@ set -e
 
 export CCACHE_CPP2=yes
 
+ccache -M 1G
+ccache -s
+
 wine64 cmd /c dir
 ln -s /usr/lib/gcc/x86_64-w64-mingw32/4.8/libstdc++-6.dll  $HOME/.wine/drive_c/windows
 ln -s /usr/lib/gcc/x86_64-w64-mingw32/4.8/libgcc_s_sjlj-1.dll  $HOME/.wine/drive_c/windows
@@ -35,3 +38,5 @@ gendef $HOME/.wine/drive_c/Python27/python27.dll
 x86_64-w64-mingw32-dlltool --dllname $HOME/.wine/drive_c/Python27/python27.dll --input-def python27.def --output-lib $HOME/.wine/drive_c/Python27/libs/libpython27.a
 CXX=x86_64-w64-mingw32-g++ bash fallback_build_mingw32_under_unix.sh 
 cd ../..
+
+ccache -s
