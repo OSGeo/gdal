@@ -654,7 +654,7 @@ Error""")
     ds = None
     gdal.Unlink("""/vsimem/carto&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo""")
 
-    ds = ogr.Open('CARTO:foo', update=1)
+    ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=NO'])
     gdal.SetConfigOption('CARTO_MAX_CHUNK_SIZE', '0')
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
@@ -824,7 +824,7 @@ Error""")
     ds = None
 
     gdal.SetConfigOption('CARTO_MAX_CHUNK_SIZE', None)
-    ds = ogr.Open('CARTO:foo', update=1)
+    ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=NO'])
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT pg_catalog.pg_get_serial_sequence('table1', 'cartodb_id') AS seq_name&api_key=foo""",
@@ -852,7 +852,7 @@ Error""")
         f.DumpReadable()
         return 'fail'
 
-    ds = ogr.Open('CARTO:foo', update=1)
+    ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=NO'])
     lyr = ds.GetLayer(0)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFieldNull('strfield')
@@ -893,7 +893,7 @@ Error""")
                   "geomtyp":{"type":"string"},
                   "srtext":{"type":"string"}}}""")
 
-    ds = ogr.Open('CARTO:foo', update=1)
+    ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=NO'])
     lyr = ds.GetLayer(0)
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -927,7 +927,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = ogr.Open('CARTO:foo', update=1)
+    ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=NO'])
 
     gdal.PushErrorHandler()
     lyr = ds.CreateLayer('table1')
@@ -942,7 +942,7 @@ Error""")
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 0,0 0))'))
-    with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=CREATE TABLE "table1" ( cartodb_id SERIAL,the_geom GEOMETRY(MULTIPOLYGON, 0),PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "table1_cartodb_id_seq" CASCADE;CREATE SEQUENCE "table1_cartodb_id_seq" START 1;ALTER SEQUENCE "table1_cartodb_id_seq" OWNED BY "table1".cartodb_id;ALTER TABLE "table1" ALTER COLUMN cartodb_id SET DEFAULT nextval('"table1_cartodb_id_seq"')&api_key=foo""",
+    with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=CREATE TABLE "table1" ( cartodb_id SERIAL,the_geom Geometry(MULTIPOLYGON,0),PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "table1_cartodb_id_seq" CASCADE;CREATE SEQUENCE "table1_cartodb_id_seq" START 1;ALTER SEQUENCE "table1_cartodb_id_seq" OWNED BY "table1".cartodb_id;ALTER TABLE "table1" ALTER COLUMN cartodb_id SET DEFAULT nextval('"table1_cartodb_id_seq"')&api_key=foo""",
                            """{"rows":[], "fields":{}}"""):
         if lyr.CreateFeature(f) != 0:
             gdaltest.post_reason('fail')
@@ -957,7 +957,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = ogr.Open('CARTO:foo', update=1)
+    ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=NO'])
 
     with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=DROP TABLE "table1"&api_key=foo""",
                            """{"rows":[], "fields":{}}"""):
@@ -966,7 +966,7 @@ Error""")
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFID(100)
 
-    with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=CREATE TABLE "table1" ( cartodb_id SERIAL,the_geom GEOMETRY(MULTIPOLYGON, 0),PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "table1_cartodb_id_seq" CASCADE;CREATE SEQUENCE "table1_cartodb_id_seq" START 1;ALTER SEQUENCE "table1_cartodb_id_seq" OWNED BY "table1".cartodb_id;ALTER TABLE "table1" ALTER COLUMN cartodb_id SET DEFAULT nextval('"table1_cartodb_id_seq"')&api_key=foo""",
+    with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=CREATE TABLE "table1" ( cartodb_id SERIAL,the_geom Geometry(MULTIPOLYGON,0),PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "table1_cartodb_id_seq" CASCADE;CREATE SEQUENCE "table1_cartodb_id_seq" START 1;ALTER SEQUENCE "table1_cartodb_id_seq" OWNED BY "table1".cartodb_id;ALTER TABLE "table1" ALTER COLUMN cartodb_id SET DEFAULT nextval('"table1_cartodb_id_seq"')&api_key=foo""",
                            """{"rows":[], "fields":{}}"""):
         with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=BEGIN;INSERT INTO "table1" ("cartodb_id") VALUES (100);COMMIT;&api_key=foo""",
                                """{"rows":[], "fields":{}}"""):
@@ -986,6 +986,24 @@ Error""")
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    gdal.ErrorReset()
+    ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=YES'])
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayerByName('table1')
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('strfield', 'copytest')
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(100 100)'))
+    with gdaltest.tempfile("""/vsimem/carto/copyfrom?q=COPY%20"table1"%20("strfield","my_geom","cartodb_id")%20FROM%20STDIN%20WITH%20(FORMAT%20text,%20ENCODING%20UTF8)&api_key=foo&POSTFIELDS=copytest\t\t\t0101000020E610000000000000000059400000000000005940\t11\n\.""","""{}"""):
+        if lyr.CreateFeature(f) != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = None # force flush
 
     ds = ogr.Open('CARTO:foo', update=1)
 
@@ -1007,6 +1025,9 @@ Error""")
     if ds.GetLayerByName('a_layer') is None:
         gdaltest.post_reason('fail')
         return 'fail'
+
+        
+
 
     return 'success'
 
