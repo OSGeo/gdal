@@ -149,7 +149,7 @@ int OGRCARTODataSource::Open( const char * pszFilename,
     bBatchInsert = CPLTestBool(
         CSLFetchNameValueDef(papszOpenOptionsIn, "BATCH_INSERT", "YES"));
     bCopyMode = CPLTestBool(
-        CSLFetchNameValueDef(papszOpenOptionsIn, "COPY_MODE", "NO"));
+        CSLFetchNameValueDef(papszOpenOptionsIn, "COPY_MODE", "YES"));
     if( bCopyMode )
         bBatchInsert = TRUE;
 

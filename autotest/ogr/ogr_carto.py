@@ -654,7 +654,7 @@ Error""")
     ds = None
     gdal.Unlink("""/vsimem/carto&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo""")
 
-    ds = ogr.Open('CARTO:foo', update=1)
+    ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=NO'])
     gdal.SetConfigOption('CARTO_MAX_CHUNK_SIZE', '0')
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
@@ -824,7 +824,7 @@ Error""")
     ds = None
 
     gdal.SetConfigOption('CARTO_MAX_CHUNK_SIZE', None)
-    ds = ogr.Open('CARTO:foo', update=1)
+    ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=NO'])
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT pg_catalog.pg_get_serial_sequence('table1', 'cartodb_id') AS seq_name&api_key=foo""",
@@ -852,7 +852,7 @@ Error""")
         f.DumpReadable()
         return 'fail'
 
-    ds = ogr.Open('CARTO:foo', update=1)
+    ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=NO'])
     lyr = ds.GetLayer(0)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFieldNull('strfield')
@@ -893,7 +893,7 @@ Error""")
                   "geomtyp":{"type":"string"},
                   "srtext":{"type":"string"}}}""")
 
-    ds = ogr.Open('CARTO:foo', update=1)
+    ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=NO'])
     lyr = ds.GetLayer(0)
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -927,7 +927,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = ogr.Open('CARTO:foo', update=1)
+    ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=NO'])
 
     gdal.PushErrorHandler()
     lyr = ds.CreateLayer('table1')
@@ -957,7 +957,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = ogr.Open('CARTO:foo', update=1)
+    ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=NO'])
 
     with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=DROP TABLE "table1"&api_key=foo""",
                            """{"rows":[], "fields":{}}"""):
@@ -986,7 +986,7 @@ Error""")
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
-#xxxx
+
     gdal.ErrorReset()
     ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=YES'])
     if ds is None:
