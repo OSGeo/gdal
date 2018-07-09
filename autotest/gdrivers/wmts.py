@@ -1752,6 +1752,10 @@ def wmts_23_rgba():
 
 
 def wmts_invalid_global_to_tm_reprojection():
+
+    if gdaltest.wmts_drv is None:
+        return 'skip'
+
     inputXml = '/vsimem/wmts_invalid_global_to_tm_reprojection.xml'
     gdal.FileFromMemBuffer(inputXml, """<?xml version="1.0"?>
 <Capabilities xmlns="http://www.opengis.net/wmts/1.0"
