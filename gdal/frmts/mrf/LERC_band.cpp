@@ -311,6 +311,8 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     }
     // Set bitmask if it has some ndvs
     Lerc2 lerc2(1, w, h, (ndv_count == 0) ? nullptr : bitMask.Bits());
+    // Defaults to Lerc2V2
+    lerc2.SetEncoderToOldVersion(2);
     bool success = false;
     Byte *ptr = (Byte *)dst.buffer;
 
