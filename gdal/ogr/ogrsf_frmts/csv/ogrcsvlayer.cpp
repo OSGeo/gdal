@@ -371,9 +371,9 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
         if( pszLine != nullptr )
         {
             // Detect and remove UTF-8 BOM marker if found (#4623).
-          if( reinterpret_cast<const unsigned char *>(pszLine)[0] == 0xEF &&
-              reinterpret_cast<const unsigned char *>(pszLine)[1] == 0xBB &&
-              reinterpret_cast<const unsigned char *>(pszLine)[2] == 0xBF )
+            if( reinterpret_cast<const unsigned char *>(pszLine)[0] == 0xEF &&
+                reinterpret_cast<const unsigned char *>(pszLine)[1] == 0xBB &&
+                reinterpret_cast<const unsigned char *>(pszLine)[2] == 0xBF )
             {
                 pszLine += 3;
             }
@@ -1902,6 +1902,13 @@ OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to create new fields after first feature written.");
+        return OGRERR_FAILURE;
+    }
+
+    if( nCSVFieldCount >= 10000 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Limiting to 10000 fields");
         return OGRERR_FAILURE;
     }
 
