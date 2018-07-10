@@ -2756,7 +2756,7 @@ OSMContext* OSM_Open( const char* pszFilename,
                 CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
     int nNumCPUs = CPLGetNumCPUs();
     if( pszNumThreads && !EQUAL(pszNumThreads, "ALL_CPUS") )
-        nNumCPUs = std::min(2 * nNumCPUs, atoi(pszNumThreads));
+        nNumCPUs = std::max(0, std::min(2 * nNumCPUs, atoi(pszNumThreads)));
     if( nNumCPUs > 1 )
     {
         psCtxt->poWTP = new CPLWorkerThreadPool();
