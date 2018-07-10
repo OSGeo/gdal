@@ -224,6 +224,7 @@ class HFARasterAttributeTable final : public GDALRasterAttributeTable
     bool bLinearBinning;
     double dfRow0Min;
     double dfBinSize;
+    GDALRATTableType eTableType;
 
     CPLString osWorkingResult;
 
@@ -258,7 +259,7 @@ class HFARasterAttributeTable final : public GDALRasterAttributeTable
     HFARasterAttributeTable( HFARasterBand *poBand, const char *pszName );
     virtual ~HFARasterAttributeTable();
 
-    GDALDefaultRasterAttributeTable *Clone() const override;
+    GDALRasterAttributeTable *Clone() const override;
 
     virtual int           GetColumnCount() const override;
 
@@ -303,6 +304,10 @@ class HFARasterAttributeTable final : public GDALRasterAttributeTable
                                             double *pdfBinSize ) const override;
 
     virtual CPLXMLNode   *Serialize() const override;
+
+    virtual CPLErr        SetTableType(const GDALRATTableType eInTableType) override;
+    virtual GDALRATTableType GetTableType() const override;
+    virtual void          RemoveStatistics() override;
 
 protected:
     CPLErr                ColorsIO( GDALRWFlag eRWFlag, int iField,

@@ -5875,9 +5875,12 @@ CPLErr GDALRasterBand::SetDefaultRAT(
     const GDALRasterAttributeTable * /* poRAT */ )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
         ReportError( CE_Failure, CPLE_NotSupported,
                      "SetDefaultRAT() not implemented for this format." );
-
+        CPLPopErrorHandler();
+    }
     return CE_Failure;
 }
 

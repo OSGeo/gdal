@@ -74,6 +74,7 @@ def CreateAndWriteRAT(fname):
     band.SetMetadataItem("LAYER_TYPE", "thematic")
 
     rat = band.GetDefaultRAT()
+    rat.SetTableType(gdal.GRTT_THEMATIC)
 
     # create some columns
     if rat.CreateColumn("Ints", gdal.GFT_Integer, gdal.GFU_Generic) != gdal.CE_None:
@@ -168,6 +169,9 @@ def ReadAndCheckValues(fname, numrows):
     ds = gdal.Open(fname)
     band = ds.GetRasterBand(1)
     rat = band.GetDefaultRAT()
+
+    if rat.GetTableType() != gdal.GRTT_THEMATIC:
+        raise HFATestError("Wrong table type")
 
     if rat.GetRowCount() != numrows:
         raise HFATestError("Wrong number of rows")
@@ -382,12 +386,14 @@ def CheckClone(fname):
 
     cloned = rat.Clone()
 
+    if cloned.GetTableType() != gdal.GRTT_THEMATIC:
+        raise HFATestError("Cloned into wrong table type")
     if cloned.GetValueAsInt(0, 0) != 197:
-        raise HFATestError("Cloned info wrong int")
+        raise HFATestError("Cloned into wrong int")
     if cloned.GetValueAsDouble(5, 1) != 0.92:
-        raise HFATestError("Cloned info wrong double")
+        raise HFATestError("Cloned into wrong double")
     if cloned.GetValueAsString(1, 2) != "wess":
-        raise HFATestError("Cloned info wrong string")
+        raise HFATestError("Cloned into wrong string")
 
     # print("cloned ok")
     ds = None

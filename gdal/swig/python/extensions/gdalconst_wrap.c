@@ -4530,6 +4530,28 @@ SWIGINTERN PyObject *GFU_MaxCount_swigconstant(PyObject *SWIGUNUSEDPARM(self), P
 }
 
 
+SWIGINTERN PyObject *GRTT_THEMATIC_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "GRTT_THEMATIC",SWIG_From_int((int)(GRTT_THEMATIC)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *GRTT_ATHEMATIC_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "GRTT_ATHEMATIC",SWIG_From_int((int)(GRTT_ATHEMATIC)));
+  return SWIG_Py_Void();
+}
+
+
 SWIGINTERN PyObject *GMF_ALL_VALID_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *module;
   PyObject *d;
@@ -4818,6 +4840,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GFU_BlueMax_swigconstant", GFU_BlueMax_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"GFU_AlphaMax_swigconstant", GFU_AlphaMax_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"GFU_MaxCount_swigconstant", GFU_MaxCount_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"GRTT_THEMATIC_swigconstant", GRTT_THEMATIC_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"GRTT_ATHEMATIC_swigconstant", GRTT_ATHEMATIC_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"GMF_ALL_VALID_swigconstant", GMF_ALL_VALID_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"GMF_PER_DATASET_swigconstant", GMF_PER_DATASET_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"GMF_ALPHA_swigconstant", GMF_ALPHA_swigconstant, METH_VARARGS, NULL},

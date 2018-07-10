@@ -2889,6 +2889,16 @@ class RasterAttributeTable(_object):
         return _gdal.RasterAttributeTable_DumpReadable(self, *args)
 
 
+    def SetTableType(self, *args):
+        """SetTableType(RasterAttributeTable self, GDALRATTableType eTableType)"""
+        return _gdal.RasterAttributeTable_SetTableType(self, *args)
+
+
+    def GetTableType(self, *args):
+        """GetTableType(RasterAttributeTable self) -> GDALRATTableType"""
+        return _gdal.RasterAttributeTable_GetTableType(self, *args)
+
+
     def WriteArray(self, array, field, start=0):
         import gdalnumeric
 
