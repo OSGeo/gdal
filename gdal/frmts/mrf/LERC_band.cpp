@@ -450,12 +450,7 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     if (!IsLerc(sHeader))
         return nullptr;
 
-    // Get the desired type
-    const char *pszDataType = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DATATYPE");
     GDALDataType dt = GDT_Unknown; // Use this as a validity flag
-    if (pszDataType)
-        dt = GDALGetDataTypeByName(pszDataType);
-
 
     // Use this structure to fetch width and height
     ILSize size(-1, -1, 1, 1, 1);
@@ -482,9 +477,11 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
         {
             size.x = zImg.getWidth();
             size.y = zImg.getHeight();
+
             // Read as byte by default, otherwise LERC can be read as anything
-            if (dt == GDT_Unknown)
-                dt = GDT_Byte;
+            // Get the desired type
+            const char *pszDataType = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DATATYPE");
+            dt = pszDataType ? GDALGetDataTypeByName(pszDataType) : GDT_Byte;
         }
     }
 
