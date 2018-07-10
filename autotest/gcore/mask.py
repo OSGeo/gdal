@@ -1151,7 +1151,7 @@ def mask_26():
     if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_ALPHA + gdal.GMF_PER_DATASET:
         gdaltest.post_reason('Did not get expected mask.')
         return 'fail'
-        mask = ds.GetRasterBand(1).GetMaskBand()
+    mask = ds.GetRasterBand(1).GetMaskBand()
 
     # IRasterIO() optimized case
     import struct
