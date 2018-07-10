@@ -219,6 +219,8 @@ bool BitStuffer2::Decode(const Byte** ppByte, size_t& nBytesRemaining, vector<un
     int nBitsLut = 0;
     while (nLut >> nBitsLut)
       nBitsLut++;
+    if (nBitsLut == 0)
+      return false;
 
     // unstuff indexes
     if (lerc2Version >= 3)
