@@ -28,6 +28,8 @@ Contributors:   Thomas Maurer
 USING_NAMESPACE_LERC
 using namespace std;
 
+static void ignore_ret_val(bool) {}
+
 // -------------------------------------------------------------------------- ;
 
 Lerc2::Lerc2()
@@ -40,7 +42,7 @@ Lerc2::Lerc2()
 Lerc2::Lerc2(int nDim, int nCols, int nRows, const Byte* pMaskBits)
 {
   Init();
-  Set(nDim, nCols, nRows, pMaskBits);
+  ignore_ret_val(Set(nDim, nCols, nRows, pMaskBits));
 }
 
 // -------------------------------------------------------------------------- ;
