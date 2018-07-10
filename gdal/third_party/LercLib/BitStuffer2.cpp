@@ -22,6 +22,7 @@ Contributors:  Thomas Maurer
 */
 
 #include <algorithm>
+#include <cassert>
 #include "Defines.h"
 #include "BitStuffer2.h"
 
@@ -429,6 +430,7 @@ void BitStuffer2::BitStuff(Byte** ppByte, const vector<unsigned int>& dataVec, i
   // do the stuffing
   const unsigned int* srcPtr = &dataVec[0];
   int bitPos = 0;
+  assert(numBits <= 32); // to avoid coverity warning about large shift a bit later, when doing (*srcPtr++) >> (32 - bitPos)
 
   for (unsigned int i = 0; i < numElements; i++)
   {
