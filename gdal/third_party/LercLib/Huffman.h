@@ -199,6 +199,8 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, size_t& nBytesRe
     }
 
     node = bit ? node->child1 : node->child0;
+    if (!node)
+      return false;
 
     if (node->value >= 0)    // reached a leaf node
       value = node->value;
@@ -264,6 +266,8 @@ inline bool Huffman::DecodeOneValue_NoOverrunCheck(const unsigned int** ppSrc, s
     }
 
     node = bit ? node->child1 : node->child0;
+    if (!node)
+      return false;
 
     if (node->value >= 0)    // reached a leaf node
       value = node->value;
