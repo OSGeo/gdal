@@ -283,7 +283,7 @@ Advanced options :
                [-fieldmap identity | index1[,index2]*]
                [-splitlistfields] [-maxsubfields val]
                [-explodecollections] [-zfield field_name]
-               [-gcp pixel line easting northing [elevation]]* [-order n | -tps]
+               [-gcp ungeoref_x ungeoref_y georef_x georef_y [elevation]]* [-order n | -tps]
                [-nomd] [-mo "META-TAG=VALUE"]* [-noNativeData]
 
 \endverbatim

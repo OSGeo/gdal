@@ -97,7 +97,7 @@ static void Usage( const char* pszAdditionalMsg = nullptr, bool bShort = true )
         "               [-fieldmap identity | index1[,index2]*]\n"
         "               [-splitlistfields] [-maxsubfields val]\n"
         "               [-explodecollections] [-zfield field_name]\n"
-        "               [-gcp pixel line easting northing [elevation]]* [-order n | -tps]\n"
+        "               [-gcp ungeoref_x ungeoref_y georef_x georef_y [elevation]]* [-order n | -tps]\n"
         "               [-nomd] [-mo \"META-TAG=VALUE\"]* [-noNativeData]\n");
 
     if( bShort )
