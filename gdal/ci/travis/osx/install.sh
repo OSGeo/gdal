@@ -2,6 +2,9 @@
 
 set -e
 
+ccache -M 1G
+ccache -s
+
 # build proj
 brew list --versions
 curl http://download.osgeo.org/proj/proj-5.0.1.tar.gz > proj-5.0.1.tar.gz
@@ -44,3 +47,5 @@ gdal-config --cflags
 gdal-config --libs
 make -j3
 cd ../../gdal
+
+ccache -s

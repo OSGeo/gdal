@@ -882,6 +882,19 @@ def stats_all_nodata():
 
     return 'success'
 
+
+def stats_float32_with_nodata_slightly_above_float_max():
+
+    ds = gdal.Open('data/float32_with_nodata_slightly_above_float_max.tif')
+    my_min, my_max = ds.GetRasterBand(1).ComputeRasterMinMax()
+    if (my_min, my_max) != (-1.0989999771118164, 0.703338623046875):
+        gdaltest.post_reason('did not get expected stats')
+        print(my_min, my_max)
+        return 'fail'
+
+    return 'success'
+
+
 ###############################################################################
 # Run tests
 
@@ -913,6 +926,7 @@ gdaltest_list = [
     stats_approx_stats_flag,
     stats_approx_stats_flag_float,
     stats_all_nodata,
+    stats_float32_with_nodata_slightly_above_float_max,
 ]
 
 if __name__ == '__main__':

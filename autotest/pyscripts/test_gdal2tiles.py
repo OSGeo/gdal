@@ -77,7 +77,7 @@ def test_gdal2tiles_py_zoom_option():
         return 'skip'
 
     # Issue with multiprocessing in the chroot
-    if os.environ.get('BUILD_NAME', '') == 'trusty_32bit':
+    if os.environ.get('BUILD_NAME', '') in ('trusty_32bit', 'ubuntu_1804'):
         return 'skip'
 
     shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
@@ -287,6 +287,47 @@ def test_gdal2tiles_py_cleanup():
     return 'success'
 
 
+def test_exclude_transparent_tiles():
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        return 'skip'
+
+    output_folder = 'tmp/test_exclude_transparent_tiles'
+    os.makedirs(output_folder)
+
+    try:
+        test_py_scripts.run_py_script_as_external_script(
+            script_path,
+            'gdal2tiles',
+            '-x -z 15 data/test_gdal2tiles_exclude_transparent.tif %s' % output_folder)
+
+        # First row totally transparent - no tiles
+        tiles_folder = os.path.join(output_folder, '15', '21898')
+        dir_files = os.listdir(tiles_folder)
+        if dir_files:
+            gdaltest.post_reason('Generated empty tiles for row 21898: %s' % dir_files)
+            return 'fail'
+
+        # Second row - only 2 non-transparent tiles
+        tiles_folder = os.path.join(output_folder, '15', '21899')
+        dir_files = sorted(os.listdir(tiles_folder))
+        if ['22704.png', '22705.png'] != dir_files:
+            gdaltest.post_reason('Generated empty tiles for row 21899: %s' % dir_files)
+            return 'fail'
+
+        # Third row - only 1 non-transparent tile
+        tiles_folder = os.path.join(output_folder, '15', '21900')
+        dir_files = os.listdir(tiles_folder)
+        if ['22705.png'] != dir_files:
+            gdaltest.post_reason('Generated empty tiles for row 21900: %s' % dir_files)
+            return 'fail'
+
+        return 'success'
+
+    finally:
+        shutil.rmtree(output_folder)
+
+
 gdaltest_list = [
     test_gdal2tiles_py_simple,
     test_gdal2tiles_py_zoom_option,
@@ -298,6 +339,7 @@ gdaltest_list = [
     test_python2_does_not_give_warning_if_bad_lc_ctype_and_all_ascii_chars,
     test_python2_does_not_give_warning_if_bad_lc_ctype_and_non_ascii_chars_in_folder,
     test_gdal2tiles_py_cleanup,
+    test_exclude_transparent_tiles,
 ]
 
 

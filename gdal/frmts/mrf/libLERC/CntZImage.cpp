@@ -21,14 +21,18 @@ Contributors:  Thomas Maurer
 */
 
 #include "CntZImage.h"
-#include "BitStuffer.h"
-#include "BitMask.h"
-#include "Defines.h"
+#include "BitStufferV1.h"
+#include "BitMaskV1.h"
+#include "DefinesV1.h"
 #include <cmath>
 #include <cfloat>
 #include <cstring>
 
 using namespace std;
+
+#ifdef DEBUG
+void LERC_BRKPNT() {}
+#endif
 
 NAMESPACE_LERC_START
 
@@ -151,7 +155,7 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
       if (!bCntsNoInt && cntMin == 0 && cntMax == 1)    // cnt part is binary mask, use fast RLE class
       {
         // convert to bit mask
-        BitMask bitMask(width_, height_);
+        BitMaskV1 bitMask(width_, height_);
         // in case bitMask allocation fails
         if (!bitMask.Size()) return 0;
         const CntZ* srcPtr = getData();
@@ -305,7 +309,7 @@ bool CntZImage::write(Byte** ppByte,
       if (numBytesOpt > 0)    // cnt part is binary mask, use fast RLE class
       {
         // convert to bit mask
-        BitMask bitMask(width_, height_);
+        BitMaskV1 bitMask(width_, height_);
         const CntZ* srcPtr = getData();
         for (int k = 0; k < width_ * height_ ; k++, srcPtr++)
         {
@@ -458,7 +462,7 @@ bool CntZImage::read(Byte** ppByte,
       if (numBytes > 0)    // cnt part is binary mask, RLE compressed
       {
         // Read bit mask
-        BitMask bitMask(width_, height_);
+        BitMaskV1 bitMask(width_, height_);
         if (!bitMask.RLEdecompress(bArr, nRemainingBytes))
         {
             LERC_BRKPNT();
@@ -759,7 +763,7 @@ int CntZImage::numBytesCntTile(int numPixel, float cntMin, float cntMax, bool cn
   else
   {
     unsigned int maxElem = (unsigned int)(cntMax - cntMin + 0.5f);
-    return 1 + numBytesFlt(floorf(cntMin + 0.5f)) + BitStuffer::computeNumBytesNeeded(numPixel, maxElem);
+    return 1 + numBytesFlt(floorf(cntMin + 0.5f)) + BitStufferV1::computeNumBytesNeeded(numPixel, maxElem);
   }
 }
 
@@ -780,7 +784,7 @@ int CntZImage::numBytesZTile(int numValidPixel, float zMin, float zMax, double m
     if (maxElem == 0)
       return 1 + numBytesFlt(zMin);
     else
-      return 1 + numBytesFlt(zMin) + BitStuffer::computeNumBytesNeeded(numValidPixel, maxElem);
+      return 1 + numBytesFlt(zMin) + BitStufferV1::computeNumBytesNeeded(numValidPixel, maxElem);
   }
 }
 
@@ -854,7 +858,7 @@ bool CntZImage::writeCntTile(Byte** ppByte, int& numBytes,
       }
     }
 
-    BitStuffer bitStuffer;
+    BitStufferV1 bitStuffer;
     if (!bitStuffer.write(&ptr, dataVec))
       return false;
   }
@@ -952,7 +956,7 @@ bool CntZImage::writeZTile(Byte** ppByte, int& numBytes,
       if (cntPixel != numValidPixel)
         return false;
 
-      BitStuffer bitStuffer;
+      BitStufferV1 bitStuffer;
       if (!bitStuffer.write(&ptr, dataVec))
         return false;
     }
@@ -1045,7 +1049,7 @@ bool CntZImage::readCntTile(Byte** ppByte, size_t& nRemainingBytesInOut, int i0,
     }
 
     vector<unsigned int>& dataVec = m_tmpDataVec;
-    BitStuffer bitStuffer;
+    BitStufferV1 bitStuffer;
     size_t nMaxElts =
             static_cast<size_t>(i1-i0) * static_cast<size_t>(j1-j0);
     if (!bitStuffer.read(&ptr, nRemainingBytes, dataVec, nMaxElts))
@@ -1174,7 +1178,7 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
     else
     {
       vector<unsigned int>& dataVec = m_tmpDataVec;
-      BitStuffer bitStuffer;
+      BitStufferV1 bitStuffer;
       size_t nMaxElts =
             static_cast<size_t>(i1-i0) * static_cast<size_t>(j1-j0);
       if (!bitStuffer.read(&ptr, nRemainingBytes, dataVec, nMaxElts))

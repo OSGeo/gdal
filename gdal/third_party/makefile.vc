@@ -1,0 +1,27 @@
+GDAL_ROOT	=	..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IF "$(HAVE_LERC)" == "1"
+LERCLIB_DIR	=	LercLib
+!ENDIF
+
+DIRLIST		=	$(LERCLIB_DIR)
+
+default:
+	for %d in ( $(DIRLIST) ) do \
+		cd %d \
+		&& $(MAKE) /f makefile.vc \
+		&& cd .. \
+		|| exit 1
+
+	lib /out:third_party.lib o\*.obj
+
+clean:
+	-del third_party.lib
+	-del o\*.obj
+	for %d in ( $(DIRLIST) ) do \
+		cd %d \
+		&& $(MAKE) /f makefile.vc clean \
+		&& cd .. \
+		|| exit 1

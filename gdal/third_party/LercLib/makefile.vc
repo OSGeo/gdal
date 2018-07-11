@@ -1,0 +1,10 @@
+OBJ	=	BitMask.obj BitStuffer2.obj Huffman.obj Lerc2.obj Lerc_c_api_impl.obj Lerc.obj RLE.obj
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj

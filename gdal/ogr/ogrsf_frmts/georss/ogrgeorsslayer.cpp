@@ -533,43 +533,54 @@ void OGRGeoRSSLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         while(CPLHashSetLookup(setOfFoundFields, pszSubElementName) != nullptr)
         {
             count ++;
+            if( count == 100 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Too many repeated fields");
+                CPLFree(pszSubElementName);
+                pszSubElementName = nullptr;
+                break;
+            }
             CPLFree(pszSubElementName);
             pszSubElementName = CPLStrdup(CPLSPrintf("%s%d", pszName, count));
         }
-        CPLHashSetInsert(setOfFoundFields, CPLStrdup(pszSubElementName));
-
-        char* pszCompatibleName =
-            OGRGeoRSS_GetOGRCompatibleTagName(pszSubElementName);
-        iCurrentField = poFeatureDefn->GetFieldIndex(pszCompatibleName);
-        CPLFree(pszSubElementName);
-
-        for( int i = 0; ppszAttr[i] != nullptr && ppszAttr[i+1] != nullptr;
-             i += 2 )
+        if( pszSubElementName )
         {
-            char* pszAttrCompatibleName =
-                    OGRGeoRSS_GetOGRCompatibleTagName(
-                        CPLSPrintf("%s_%s", pszCompatibleName, ppszAttr[i]));
-            const int iAttrField =
-                poFeatureDefn->GetFieldIndex(pszAttrCompatibleName);
-            if (iAttrField >= 0)
+            CPLHashSetInsert(setOfFoundFields, CPLStrdup(pszSubElementName));
+
+            char* pszCompatibleName =
+                OGRGeoRSS_GetOGRCompatibleTagName(pszSubElementName);
+            iCurrentField = poFeatureDefn->GetFieldIndex(pszCompatibleName);
+            CPLFree(pszSubElementName);
+
+            for( int i = 0; ppszAttr[i] != nullptr && ppszAttr[i+1] != nullptr;
+                i += 2 )
             {
-                if( poFeatureDefn->GetFieldDefn(iAttrField)->GetType() ==
-                        OFTReal)
-                    poFeature->SetField(iAttrField, CPLAtof(ppszAttr[i+1]));
-                else
-                    poFeature->SetField(iAttrField, ppszAttr[i+1]);
-            }            CPLFree(pszAttrCompatibleName);
-        }
+                char* pszAttrCompatibleName =
+                        OGRGeoRSS_GetOGRCompatibleTagName(
+                            CPLSPrintf("%s_%s", pszCompatibleName, ppszAttr[i]));
+                const int iAttrField =
+                    poFeatureDefn->GetFieldIndex(pszAttrCompatibleName);
+                if (iAttrField >= 0)
+                {
+                    if( poFeatureDefn->GetFieldDefn(iAttrField)->GetType() ==
+                            OFTReal)
+                        poFeature->SetField(iAttrField, CPLAtof(ppszAttr[i+1]));
+                    else
+                        poFeature->SetField(iAttrField, ppszAttr[i+1]);
+                }            CPLFree(pszAttrCompatibleName);
+            }
 
-        if (iCurrentField < 0)
-        {
-            pszSubElementName = nullptr;
+            if (iCurrentField < 0)
+            {
+                pszSubElementName = nullptr;
+            }
+            else
+            {
+                pszSubElementName = CPLStrdup(pszCompatibleName);
+            }
+            CPLFree(pszCompatibleName);
         }
-        else
-        {
-            pszSubElementName = CPLStrdup(pszCompatibleName);
-        }
-        CPLFree(pszCompatibleName);
     }
     else if( bInFeature &&
              currentDepth > featureDepth + 1 &&

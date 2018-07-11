@@ -31,7 +31,6 @@
 #include "cpl_conv.h"
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonwriter.h"
-#include "json_object_private.h"
 #include "swq.h"
 #include "eeda.h"
 
@@ -428,15 +427,15 @@ OGRFeature* GDALEEDALayer::GetNextRawFeature()
 
         m_poCurPageAssets = CPL_json_object_object_get(
                                                 m_poCurPageObj, "assets");
-        if( m_poCurPageAssets == nullptr ||
-            json_object_get_type(m_poCurPageAssets) != json_type_array )
-        {
-            json_object_put(m_poCurPageObj);
-            m_poCurPageObj = nullptr;
-            return nullptr;
-        }
     }
 
+    if( m_poCurPageAssets == nullptr ||
+        json_object_get_type(m_poCurPageAssets) != json_type_array )
+    {
+        json_object_put(m_poCurPageObj);
+        m_poCurPageObj = nullptr;
+        return nullptr;
+    }
     json_object* poAsset = json_object_array_get_idx(m_poCurPageAssets,
                                                      m_nIndexInPage);
     if( poAsset == nullptr || json_object_get_type(poAsset) != json_type_object )

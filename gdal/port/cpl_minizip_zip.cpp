@@ -865,6 +865,8 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
     ziinit.number_entry = 0;
     ziinit.add_position_when_writing_offset = 0;
     ziinit.use_cpl_io = (pzlib_filefunc_def == nullptr) ? 1 : 0;
+    ziinit.vsi_raw_length_before = 0;
+    ziinit.vsi_deflate_handle = nullptr;
     init_linkedlist(&(ziinit.central_dir));
 
     zip64_internal* zi = static_cast<zip64_internal*>(ALLOC(sizeof(zip64_internal)));
@@ -1157,6 +1159,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     zi->ci.stream.next_out = zi->ci.buffered_data;
     zi->ci.stream.total_in = 0;
     zi->ci.stream.total_out = 0;
+    zi->ci.stream.data_type = Z_UNKNOWN;
 
     if ((err==ZIP_OK) && (zi->ci.method == Z_DEFLATED) && (!zi->ci.raw))
     {
@@ -2018,7 +2021,6 @@ CPLErr CPLCloseFileInZip( void *hZip )
 
 /** Close ZIP file */
 CPLErr CPLCloseZip( void *hZip )
-
 {
     if( hZip == nullptr )
         return CE_Failure;

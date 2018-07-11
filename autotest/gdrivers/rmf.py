@@ -49,9 +49,9 @@ def rmf_1():
 
 def rmf_2():
 
-    tst = gdaltest.GDALTest('rmf', 'byte-lzw.rsw', 1, 4672)
+    tst = gdaltest.GDALTest('rmf', 'byte-lzw.rsw', 1, 40503)
     with gdaltest.error_handler():
-        return tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
+        return tst.testOpen()
 
 
 def rmf_3():
@@ -82,24 +82,23 @@ def rmf_4():
 
 def rmf_5():
 
-    tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 1, 21212)
+    tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 1, 40503)
     with gdaltest.error_handler():
-        ret = tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
-                                     -22.932584, 0, -0.003432))
+        ret = tst.testOpen()
+
     if ret != 'success':
         return 'fail'
 
-    tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 2, 21053)
+    tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 2, 41429)
     with gdaltest.error_handler():
-        ret = tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
-                                     -22.932584, 0, -0.003432))
+        ret = tst.testOpen()
+
     if ret != 'success':
         return 'fail'
 
-    tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 3, 21349)
+    tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 3, 40238)
     with gdaltest.error_handler():
-        return tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
-                                      -22.932584, 0, -0.003432))
+        return tst.testOpen()
 
 
 def rmf_6():
@@ -693,7 +692,7 @@ def rmf_30():
     if ds is None:
         gdaltest.post_reason('Can\'t open ' + ds_name)
         return 'fail'
-    expected_cs = [21212, 21053, 21349]
+    expected_cs = [40503, 41429, 40238]
     cs = [ds.GetRasterBand(1).Checksum(),
           ds.GetRasterBand(2).Checksum(),
           ds.GetRasterBand(3).Checksum()]
@@ -702,6 +701,119 @@ def rmf_30():
                              (str(cs), str(expected_cs)))
         return 'fail'
     return 'success'
+
+
+###############################################################################
+# Check compressed write
+
+
+def rmf_31a():
+
+    tst = gdaltest.GDALTest('rmf', 'small_world.tif', 1,
+                            30111, options=['COMPRESS=NONE'])
+
+    return tst.testCreateCopy(check_minmax=0, check_srs=1, check_gt=1)
+
+
+def rmf_31b():
+
+    tst = gdaltest.GDALTest('rmf', 'small_world.tif', 1,
+                            30111, options=['COMPRESS=LZW'])
+
+    return tst.testCreateCopy(check_minmax=0, check_srs=1, check_gt=1)
+
+
+def rmf_31c():
+
+    ds_name = 'tmp/rmf_31c.rsw'
+    gdal.Translate(ds_name, 'data/small_world.tif',
+                   format='RMF', options='-co COMPRESS=JPEG')
+
+    ds = gdal.Open(ds_name)
+    if ds is None:
+        gdaltest.post_reason('Can\'t open ' + ds_name)
+        return 'fail'
+    expected_cs1 = [25789, 27405, 31974]
+    expected_cs2 = [23764, 25264, 33585] # osx
+    cs = [ds.GetRasterBand(1).Checksum(),
+          ds.GetRasterBand(2).Checksum(),
+          ds.GetRasterBand(3).Checksum()]
+
+    if cs != expected_cs1 and cs != expected_cs2:
+        gdaltest.post_reason('Invalid checksum %s expected %s or %s.' %
+                             (str(cs), str(expected_cs1), str(expected_cs2)))
+        return 'fail'
+    return 'success'
+
+
+def rmf_31d():
+
+    tst = gdaltest.GDALTest('rmf', 't100.mtw', 1,
+                            6388, options=['MTW=YES', 'COMPRESS=RMF_DEM'])
+
+    return tst.testCreateCopy(check_minmax=0, check_srs=1, check_gt=1)
+
+
+def rmf_31e():
+    try:
+        import numpy
+    except ImportError:
+        return 'skip'
+
+    drv = gdal.GetDriverByName('Gtiff')
+    if drv is None:
+        return 'skip'
+    # Create test data
+    stripeSize = 32;
+    sx = 256
+    sy = 8*stripeSize
+    tst_name = 'tmp/rmf_31e.tif'
+    tst_ds = drv.Create(tst_name, sx, sy, 1, gdal.GDT_Int32 )
+    if tst_ds is None:
+        gdaltest.post_reason('Can\'t create ' + tst_name)
+        return 'fail'
+
+    # No deltas
+    buff = numpy.zeros((sx, stripeSize), dtype = numpy.int32)
+    tst_ds.GetRasterBand(1).WriteArray(buff, 0, 0)
+
+    # 4-bit deltas
+    buff = numpy.random.randint(0, 16, [stripeSize, sx])
+    tst_ds.GetRasterBand(1).WriteArray(buff, 0, stripeSize)
+
+    # 8-bit deltas
+    buff = numpy.random.randint(0, 256, [stripeSize, sx])
+    tst_ds.GetRasterBand(1).WriteArray(buff, 0, stripeSize*2)
+
+    # 12-bit deltas
+    buff = numpy.random.randint(0, 256*16, [stripeSize, sx])
+    tst_ds.GetRasterBand(1).WriteArray(buff, 0, stripeSize*3)
+
+    # 16-bit deltas
+    buff = numpy.random.randint(0, 256*256, [stripeSize, sx])
+    tst_ds.GetRasterBand(1).WriteArray(buff, 0, stripeSize*4)
+
+    # 24-bit deltas
+    buff = numpy.random.randint(0, 256*256*256, [stripeSize, sx])
+    tst_ds.GetRasterBand(1).WriteArray(buff, 0, stripeSize*5)
+
+    # 32-bit deltas
+    buff = numpy.random.randint(0, 256*256*256*128 - 1, [stripeSize, sx])
+    tst_ds.GetRasterBand(1).WriteArray(buff, 0, stripeSize*6)
+
+    tst_ds = None
+    tst_ds = gdal.Open(tst_name)
+    if tst_ds is None:
+        gdaltest.post_reason('Can\'t open ' + tst_name)
+        return 'fail'
+
+    cs = tst_ds.GetRasterBand(1).Checksum()
+    tst_ds = None
+
+    tst = gdaltest.GDALTest('rmf', '../' + tst_name, 1,
+                            cs, options=['MTW=YES', 'COMPRESS=RMF_DEM'])
+
+    return tst.testCreateCopy(check_minmax=0, check_srs=1, check_gt=1)
 
 
 ###############################################################################
@@ -742,6 +854,11 @@ gdaltest_list = [
     rmf_28b,
     rmf_29,
     rmf_30,
+    rmf_31a,
+    rmf_31b,
+    rmf_31c,
+    rmf_31d,
+    rmf_31e,
 ]
 
 if __name__ == '__main__':

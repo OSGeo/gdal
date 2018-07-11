@@ -977,6 +977,8 @@ _TIFFCheckFieldIsValidForCodec(TIFF *tif, ttag_t tag)
 	    case TIFFTAG_CONSECUTIVEBADFAXLINES:
 	    case TIFFTAG_GROUP3OPTIONS:
 	    case TIFFTAG_GROUP4OPTIONS:
+	    /* LERC */
+	    case TIFFTAG_LERC_PARAMETERS:
 		break;
 	    default:
 		return 1;
@@ -1056,7 +1058,10 @@ _TIFFCheckFieldIsValidForCodec(TIFF *tif, ttag_t tag)
 		if (tag == TIFFTAG_PREDICTOR)
 		    return 1;
 		break;
-
+	    case COMPRESSION_LERC:
+		if (tag == TIFFTAG_LERC_PARAMETERS)
+		    return 1;
+		break;
 	}
 	return 0;
 }

@@ -41,6 +41,7 @@
 json_object* OGRCARTOGetSingleRow(json_object* poObj);
 CPLString OGRCARTOEscapeIdentifier(const char* pszStr);
 CPLString OGRCARTOEscapeLiteral(const char* pszStr);
+CPLString OGRCARTOEscapeLiteralCopy(const char* pszStr);
 
 /************************************************************************/
 /*                      OGRCartoGeomFieldDefn                         */
@@ -127,8 +128,10 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
     bool                bLaunderColumnNames;
 
     bool                bInDeferredInsert;
+    bool                bCopyMode;
     InsertState         eDeferredInsertState;
-    CPLString           osDeferredInsertSQL;
+    CPLString           osDeferredBuffer;
+    CPLString           osCopySQL;
     GIntBig             m_nNextFIDWrite;
 
     bool                bDeferredCreation;
@@ -151,6 +154,9 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
     virtual OGRFeature         *GetFeature( GIntBig nFeatureId ) override;
 
     virtual int                 TestCapability( const char * ) override;
+
+    virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
+                                         int bApproxOK = TRUE ) override;
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE ) override;
@@ -182,12 +188,23 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
     void                CancelDeferredCreation()
         { bDeferredCreation = false; bCartodbfy = false; }
 
-    OGRErr              FlushDeferredInsert(bool bReset = true);
+    OGRErr              FlushDeferredBuffer(bool bReset = true);
     void                RunDeferredCartofy();
+
+    OGRErr              FlushDeferredInsert( bool bReset = true );
+    OGRErr              FlushDeferredCopy( bool bReset = true );
+    OGRErr              ICreateFeatureInsert( OGRFeature *poFeature, 
+                                              bool bHasUserFieldMatchingFID, 
+                                              bool bHasJustGotNextFID );
+    OGRErr              ICreateFeatureCopy( OGRFeature *poFeature, 
+                                            bool bHasUserFieldMatchingFID, 
+                                            bool bHasJustGotNextFID );
+    char *              OGRCARTOGetHexGeometry( OGRGeometry* poGeom, int i );
+    int                 FieldSetBitMap( OGRFeature *poFeature );
 };
 
 /************************************************************************/
-/*                       OGRCARTOResultLayer                          */
+/*                       OGRCARTOResultLayer                            */
 /************************************************************************/
 
 class OGRCARTOResultLayer : public OGRCARTOLayer
@@ -208,7 +225,7 @@ class OGRCARTOResultLayer : public OGRCARTOLayer
 };
 
 /************************************************************************/
-/*                           OGRCARTODataSource                       */
+/*                           OGRCARTODataSource                         */
 /************************************************************************/
 
 class OGRCARTODataSource : public OGRDataSource
@@ -221,6 +238,7 @@ class OGRCARTODataSource : public OGRDataSource
 
     bool                bReadWrite;
     bool                bBatchInsert;
+    bool                bCopyMode;
 
     bool                bUseHTTPS;
 
@@ -265,8 +283,10 @@ class OGRCARTODataSource : public OGRDataSource
     const char*                 GetAPIURL() const;
     bool                        IsReadWrite() const { return bReadWrite; }
     bool                        DoBatchInsert() const { return bBatchInsert; }
+    bool                        DoCopyMode() const { return bCopyMode; }
     char**                      AddHTTPOptions();
     json_object*                RunSQL(const char* pszUnescapedSQL);
+    json_object*                RunCopyFrom(const char* pszSQL, const char* pszCopyFile);
     const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
     static int                         FetchSRSId( OGRSpatialReference * poSRS );
 

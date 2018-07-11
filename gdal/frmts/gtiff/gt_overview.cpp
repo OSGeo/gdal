@@ -80,7 +80,9 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             const char *pszMetadata,
                             const char* pszJPEGQuality,
                             const char* pszJPEGTablesMode,
-                            const char* pszNoData )
+                            const char* pszNoData,
+                            CPL_UNUSED const uint32* panLercAddCompressionAndVersion
+                           )
 
 {
     const toff_t nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
@@ -130,7 +132,8 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
     }
 
     if( nCompressFlag == COMPRESSION_LZW ||
-        nCompressFlag == COMPRESSION_ADOBE_DEFLATE )
+        nCompressFlag == COMPRESSION_ADOBE_DEFLATE ||
+        nCompressFlag == COMPRESSION_ZSTD )
         TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
 
 /* -------------------------------------------------------------------- */
@@ -167,6 +170,14 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
             TIFFSetField( hTIFF, TIFFTAG_YCBCRSUBSAMPLING, 2, 2 );
         }
     }
+
+#ifdef HAVE_LERC
+    if( nCompressFlag == COMPRESSION_LERC && panLercAddCompressionAndVersion )
+    {
+        TIFFSetField(hTIFF, TIFFTAG_LERC_PARAMETERS, 2,
+                     panLercAddCompressionAndVersion);
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Write no data value if we have one.                             */
@@ -845,7 +856,8 @@ GTIFFBuildOverviews( const char * pszFilename,
                              osMetadata,
                              CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", nullptr ),
                              CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", nullptr ),
-                             pszNoData
+                             pszNoData,
+                             nullptr
                            );
     }
 

@@ -1749,6 +1749,64 @@ def wmts_23_rgb():
 def wmts_23_rgba():
     return wmts_23('rgba', [65530, 51449, 1361, 59291])
 
+
+def wmts_invalid_global_to_tm_reprojection():
+
+    if gdaltest.wmts_drv is None:
+        return 'skip'
+
+    inputXml = '/vsimem/wmts_invalid_global_to_tm_reprojection.xml'
+    gdal.FileFromMemBuffer(inputXml, """<?xml version="1.0"?>
+<Capabilities xmlns="http://www.opengis.net/wmts/1.0"
+xmlns:ows="http://www.opengis.net/ows/1.1"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
+  <Contents>
+    <Layer>
+      <ows:Title>foo</ows:Title>
+      <ows:Abstract></ows:Abstract>
+      <ows:WGS84BoundingBox>
+        <ows:LowerCorner>-180.0 -85.0511287798</ows:LowerCorner>
+        <ows:UpperCorner>180.0 85.0511287798</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+      <ows:Identifier>foo</ows:Identifier>
+      <Style>
+        <ows:Identifier>default</ows:Identifier>
+      </Style>
+      <Format>image/png</Format>
+      <TileMatrixSetLink>
+        <TileMatrixSet>NZTM</TileMatrixSet>
+      </TileMatrixSetLink>
+      <ResourceURL
+          format="image/png"
+          resourceType="tile"
+          template="https://example.com/{TileMatrixSet}/{TileMatrix}/{TileCol}/{TileRow}.png"
+      />
+    </Layer>
+    <TileMatrixSet>
+      <ows:Identifier>NZTM</ows:Identifier>
+      <ows:SupportedCRS>urn:ogc:def:crs:EPSG::2193</ows:SupportedCRS>
+      <TileMatrix>
+        <ows:Identifier>0</ows:Identifier>
+        <ScaleDenominator>32000000.0</ScaleDenominator>
+        <TopLeftCorner>10000000.0 -1000000.0</TopLeftCorner>
+        <TileWidth>256</TileWidth>
+        <TileHeight>256</TileHeight>
+        <MatrixWidth>2</MatrixWidth>
+        <MatrixHeight>4</MatrixHeight>
+      </TileMatrix>
+    </TileMatrixSet>
+  </Contents>
+</Capabilities>""")
+
+    ds = gdal.Open('WMTS:' + inputXml)
+    if ds.RasterXSize != 512 or ds.RasterYSize != 1024:
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(inputXml)
+
+    return 'success'
+
 ###############################################################################
 #
 
@@ -1818,6 +1876,7 @@ gdaltest_list = [
     wmts_23_pal,
     wmts_23_rgb,
     wmts_23_rgba,
+    wmts_invalid_global_to_tm_reprojection,
     wmts_cleanup]
 
 if __name__ == '__main__':

@@ -4,6 +4,7 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/gcore/*.o \
 			$(GDAL_ROOT)/port/*.o \
 			$(GDAL_ROOT)/alg/*.o \
+			$(GDAL_ROOT)/third_party/o/*.o \
 			$(GDAL_ROOT)/apps/commonutils.o \
 			$(GDAL_ROOT)/apps/gdalinfo_lib.o \
 			$(GDAL_ROOT)/apps/gdal_translate_lib.o \
@@ -67,7 +68,7 @@ ifeq ($(MACOSX_FRAMEWORK),yes)
 	install_name_tool -id ${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL .libs/libgdal.dylib
 endif
 
-lib-dependencies:	port-target core-target frmts-target ogr-target gnm-target appslib-target
+lib-dependencies:	port-target core-target frmts-target third-party-target ogr-target gnm-target appslib-target
 
 check-lib:	lib-dependencies
 	$(MAKE) $(LIBGDAL-yes)
@@ -98,6 +99,9 @@ core-target: generate_gdal_version_h
 frmts-target: generate_gdal_version_h
 	(cd frmts; $(MAKE))
 
+third-party-target: generate_gdal_version_h
+	(cd third_party; $(MAKE))
+
 ogr-all: generate_gdal_version_h
 	(cd ogr; $(MAKE) all)
 
@@ -120,6 +124,7 @@ clean:	lclean
 	(cd gnm; $(MAKE) clean)
 	(cd gcore; $(MAKE) clean)
 	(cd frmts; $(MAKE) clean)
+	(cd third_party; $(MAKE) clean)
 	(cd alg; $(MAKE) clean)
 	(cd apps; $(MAKE) clean)
 ifneq ($(BINDINGS),)

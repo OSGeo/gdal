@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "gdalpansharpen.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -373,7 +374,7 @@ GDALPansharpenOperation::Initialize( const GDALPansharpenOptions* psOptionsIn )
             if( EQUAL(pszNumThreads, "ALL_CPUS") )
                 nThreads = CPLGetNumCPUs();
             else
-                nThreads = atoi(pszNumThreads);
+                nThreads = std::max(0, std::min(128, atoi(pszNumThreads)));
         }
     }
     if( nThreads > 1 )

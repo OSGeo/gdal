@@ -334,6 +334,12 @@ OGRErr OGRCSVEditableLayer::CreateField( OGRFieldDefn *poNewField,
                                          int bApproxOK )
 
 {
+    if( m_poEditableFeatureDefn->GetFieldCount() >= 10000 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Limiting to 10000 fields");
+        return OGRERR_FAILURE;
+    }
 
     if( m_oSetFields.empty() )
     {

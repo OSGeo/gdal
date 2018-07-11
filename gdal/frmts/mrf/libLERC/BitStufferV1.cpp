@@ -21,7 +21,7 @@ http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
 */
 
-#include "BitStuffer.h"
+#include "BitStufferV1.h"
 #include <cstring>
 
 // -------------------------------------------------------------------------- ;
@@ -35,7 +35,7 @@ NAMESPACE_LERC_START
 // see the old stream IO functions below on how to call.
 // if you change write(...) / read(...), don't forget to update computeNumBytesNeeded(...).
 
-bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec)
+bool BitStufferV1::write(Byte** ppByte, const vector<unsigned int>& dataVec)
 {
   if (!ppByte || dataVec.empty())
     return false;
@@ -129,7 +129,7 @@ bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec)
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStuffer::read(Byte** ppByte, size_t& nRemainingBytes, vector<unsigned int>& dataVec, size_t nMaxBufferVecElts)
+bool BitStufferV1::read(Byte** ppByte, size_t& nRemainingBytes, vector<unsigned int>& dataVec, size_t nMaxBufferVecElts)
 {
   if (!ppByte)
     return false;
@@ -265,7 +265,7 @@ bool BitStuffer::read(Byte** ppByte, size_t& nRemainingBytes, vector<unsigned in
   return true;
 }
 
-unsigned int BitStuffer::computeNumBytesNeeded(unsigned int numElem, unsigned int maxElem)
+unsigned int BitStufferV1::computeNumBytesNeeded(unsigned int numElem, unsigned int maxElem)
 {
   int numBits = 0;
   while (maxElem >> numBits)
@@ -279,7 +279,7 @@ unsigned int BitStuffer::computeNumBytesNeeded(unsigned int numElem, unsigned in
 
 // -------------------------------------------------------------------------- ;
 // -------------------------------------------------------------------------- ;
-unsigned int BitStuffer::findMax(const vector<unsigned int>& dataVec)
+unsigned int BitStufferV1::findMax(const vector<unsigned int>& dataVec)
 {
   unsigned int maxElem = 0;
   for (size_t i = 0; i < dataVec.size(); i++)
@@ -289,7 +289,7 @@ unsigned int BitStuffer::findMax(const vector<unsigned int>& dataVec)
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStuffer::writeUInt(Byte** ppByte, unsigned int k, int numBytes)
+bool BitStufferV1::writeUInt(Byte** ppByte, unsigned int k, int numBytes)
 {
   Byte* ptr = *ppByte;
 
@@ -317,7 +317,7 @@ bool BitStuffer::writeUInt(Byte** ppByte, unsigned int k, int numBytes)
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStuffer::readUInt(Byte** ppByte, size_t& nRemainingBytes, unsigned int& k, int numBytes)
+bool BitStufferV1::readUInt(Byte** ppByte, size_t& nRemainingBytes, unsigned int& k, int numBytes)
 {
   Byte* ptr = *ppByte;
 
@@ -362,7 +362,7 @@ bool BitStuffer::readUInt(Byte** ppByte, size_t& nRemainingBytes, unsigned int& 
 
 // -------------------------------------------------------------------------- ;
 
-unsigned int BitStuffer::numTailBytesNotNeeded(unsigned int numElem, int numBits)
+unsigned int BitStufferV1::numTailBytesNotNeeded(unsigned int numElem, int numBits)
 {
   int numBitsTail = (numElem * numBits) & 31;
   int numBytesTail = (numBitsTail + 7) >> 3;
