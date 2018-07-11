@@ -935,6 +935,10 @@ RMFDataset::RMFDataset() :
 RMFDataset::~RMFDataset()
 {
     RMFDataset::FlushCache();
+    for( size_t n = 0; n != poOvrDatasets.size(); ++n )
+    {
+        poOvrDatasets[n]->RMFDataset::FlushCache();
+    }
 
     CPLFree( paiTiles );
     CPLFree( pabyCurrentTile );
