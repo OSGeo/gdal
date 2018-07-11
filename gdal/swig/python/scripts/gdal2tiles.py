@@ -1093,9 +1093,13 @@ def create_overview_tiles(tile_job_info, output_folder, options):
                     for x in range(2 * tx, 2 * tx + 2):
                         minx, miny, maxx, maxy = tile_job_info.tminmax[tz + 1]
                         if x >= minx and x <= maxx and y >= miny and y <= maxy:
+                            base_tile_path = os.path.join(output_folder, str(tz + 1), str(x),
+                                                          "%s.%s" % (y, tile_job_info.tile_extension))
+                            if not os.path.isfile(base_tile_path):
+                                continue
+
                             dsquerytile = gdal.Open(
-                                os.path.join(output_folder, str(tz + 1), str(x),
-                                             "%s.%s" % (y, tile_job_info.tile_extension)),
+                                base_tile_path,
                                 gdal.GA_ReadOnly)
                             if (ty == 0 and y == 1) or (ty != 0 and (y % (2 * ty)) != 0):
                                 tileposy = 0
@@ -1115,6 +1119,9 @@ def create_overview_tiles(tile_job_info, output_folder, options):
                                                        tile_job_info.tile_size),
                                 band_list=list(range(1, tilebands + 1)))
                             children.append([x, y, tz + 1])
+
+                if not children:
+                    continue
 
                 scale_query_to_tile(dsquery, dstile, tile_driver, options,
                                     tilefilename=tilefilename)

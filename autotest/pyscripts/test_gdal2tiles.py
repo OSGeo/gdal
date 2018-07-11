@@ -299,7 +299,7 @@ def test_exclude_transparent_tiles():
         test_py_scripts.run_py_script_as_external_script(
             script_path,
             'gdal2tiles',
-            '-x -z 15 data/test_gdal2tiles_exclude_transparent.tif %s' % output_folder)
+            '-x -z 14-16 data/test_gdal2tiles_exclude_transparent.tif %s' % output_folder)
 
         # First row totally transparent - no tiles
         tiles_folder = os.path.join(output_folder, '15', '21898')
