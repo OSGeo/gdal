@@ -1120,31 +1120,29 @@ def create_overview_tiles(tile_job_info, output_folder, options):
                                 band_list=list(range(1, tilebands + 1)))
                             children.append([x, y, tz + 1])
 
-                if not children:
-                    continue
-
-                scale_query_to_tile(dsquery, dstile, tile_driver, options,
-                                    tilefilename=tilefilename)
-                # Write a copy of tile to png/jpg
-                if options.resampling != 'antialias':
+                if children:
+                    scale_query_to_tile(dsquery, dstile, tile_driver, options,
+                                        tilefilename=tilefilename)
                     # Write a copy of tile to png/jpg
-                    out_driver.CreateCopy(tilefilename, dstile, strict=0)
+                    if options.resampling != 'antialias':
+                        # Write a copy of tile to png/jpg
+                        out_driver.CreateCopy(tilefilename, dstile, strict=0)
 
-                if options.verbose:
-                    print("\tbuild from zoom", tz + 1,
-                          " tiles:", (2 * tx, 2 * ty), (2 * tx + 1, 2 * ty),
-                          (2 * tx, 2 * ty + 1), (2 * tx + 1, 2 * ty + 1))
+                    if options.verbose:
+                        print("\tbuild from zoom", tz + 1,
+                              " tiles:", (2 * tx, 2 * ty), (2 * tx + 1, 2 * ty),
+                              (2 * tx, 2 * ty + 1), (2 * tx + 1, 2 * ty + 1))
 
-                # Create a KML file for this tile.
-                if tile_job_info.kml:
-                    with open(os.path.join(
-                        output_folder,
-                        '%d/%d/%d.kml' % (tz, tx, ty)
-                    ), 'wb') as f:
-                        f.write(generate_kml(
-                            tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
-                            get_tile_swne(tile_job_info, options), options, children
-                        ).encode('utf-8'))
+                    # Create a KML file for this tile.
+                    if tile_job_info.kml:
+                        with open(os.path.join(
+                            output_folder,
+                            '%d/%d/%d.kml' % (tz, tx, ty)
+                        ), 'wb') as f:
+                            f.write(generate_kml(
+                                tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
+                                get_tile_swne(tile_job_info, options), options, children
+                            ).encode('utf-8'))
 
                 if not options.verbose and not options.quiet:
                     progress_bar.log_progress()
