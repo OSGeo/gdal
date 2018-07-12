@@ -247,14 +247,13 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
 
     for( int iBand = 0; iBand < GetRasterCount(); iBand++ )
     {
-        GDALPamRasterBand * const poBand =
-            cpl::down_cast<GDALPamRasterBand *>(
-                GetRasterBand(iBand+1) );
+        GDALRasterBand * const poBand = GetRasterBand(iBand+1);
 
         if( poBand == nullptr || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
             continue;
 
-        CPLXMLNode * const psBandTree = poBand->SerializeToXML( pszUnused );
+        CPLXMLNode * const psBandTree =
+            cpl::down_cast<GDALPamRasterBand *>(poBand)->SerializeToXML( pszUnused );
 
         if( psBandTree != nullptr )
         {
@@ -489,13 +488,15 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
         if( nBand < 1 || nBand > GetRasterCount() )
             continue;
 
-        GDALPamRasterBand *poBand = cpl::down_cast<GDALPamRasterBand *>(
-            GetRasterBand(nBand) );
+        GDALRasterBand *poBand = GetRasterBand(nBand);
 
         if( poBand == nullptr || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
             continue;
 
-        poBand->XMLInit( psBandTree, pszUnused );
+        GDALPamRasterBand *poPamBand = cpl::down_cast<GDALPamRasterBand *>(
+            GetRasterBand(nBand) );
+
+        poPamBand->XMLInit( psBandTree, pszUnused );
     }
 
 /* -------------------------------------------------------------------- */
@@ -981,15 +982,16 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
     {
         for( int iBand = 0; iBand < GetRasterCount(); iBand++ )
         {
-            GDALPamRasterBand *poBand = cpl::down_cast<GDALPamRasterBand *>(
-                GetRasterBand(iBand+1) );
+            GDALRasterBand *poBand = GetRasterBand(iBand+1);
 
             if( poBand == nullptr || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
                 continue;
 
             if( poSrcDS->GetRasterCount() >= iBand+1 )
-                poBand->CloneInfo( poSrcDS->GetRasterBand(iBand+1),
-                                   nCloneFlags );
+            {
+                cpl::down_cast<GDALPamRasterBand *>(poBand)->
+                    CloneInfo( poSrcDS->GetRasterBand(iBand+1), nCloneFlags );
+            }
             else
                 CPLDebug(
                     "GDALPamDataset",
