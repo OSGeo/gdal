@@ -313,16 +313,28 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
             CADVector stCircleCenter = poCADCircle->getPosition();
             OGRPoint  oCirclePoint1;
-            oCirclePoint1.setX( stCircleCenter.getX() + poCADCircle->getRadius() );
-            oCirclePoint1.setY( stCircleCenter.getY() + poCADCircle->getRadius() );
+            oCirclePoint1.setX( stCircleCenter.getX() - poCADCircle->getRadius() );
+            oCirclePoint1.setY( stCircleCenter.getY() );
             oCirclePoint1.setZ( stCircleCenter.getZ() );
             poCircle->addPoint( &oCirclePoint1 );
 
             OGRPoint  oCirclePoint2;
-            oCirclePoint2.setX( stCircleCenter.getX() - poCADCircle->getRadius() );
-            oCirclePoint2.setY( stCircleCenter.getY() - poCADCircle->getRadius() );
+            oCirclePoint2.setX( stCircleCenter.getX() );
+            oCirclePoint2.setY( stCircleCenter.getY() + poCADCircle->getRadius() );
             oCirclePoint2.setZ( stCircleCenter.getZ() );
             poCircle->addPoint( &oCirclePoint2 );
+
+            OGRPoint  oCirclePoint3;
+            oCirclePoint3.setX( stCircleCenter.getX() + poCADCircle->getRadius() );
+            oCirclePoint3.setY( stCircleCenter.getY() );
+            oCirclePoint3.setZ( stCircleCenter.getZ() );
+            poCircle->addPoint( &oCirclePoint3 );
+
+            OGRPoint  oCirclePoint4;
+            oCirclePoint4.setX( stCircleCenter.getX() );
+            oCirclePoint4.setY( stCircleCenter.getY() - poCADCircle->getRadius() );
+            oCirclePoint4.setZ( stCircleCenter.getZ() );
+            poCircle->addPoint( &oCirclePoint4 );
 
             // Close the circle
             poCircle->addPoint( &oCirclePoint1 );
