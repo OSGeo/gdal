@@ -204,6 +204,68 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
 %clear VSILFILE* fp;
 
 /* -------------------------------------------------------------------- */
+/*      VSIGetMemFileBuffer_unsafe()                                    */
+/* -------------------------------------------------------------------- */
+
+%rename (VSIGetMemFileBuffer_unsafe) wrapper_VSIGetMemFileBuffer;
+
+%typemap(in, numinputs=0) (GByte **out, vsi_l_offset *length) (GByte *out = NULL, vsi_l_offset length) {
+    $1 = &out;
+    $2 = &length;
+}
+
+%typemap(argout) (GByte **out, vsi_l_offset *length) {
+    if (*$1 == NULL) {
+        if( bUseExceptions ) {
+            PyErr_SetString(PyExc_RuntimeError, "Could not find path");
+            $result = NULL;
+        } else {
+            CPLError(CE_Failure, CPLE_AppDefined, "Could not find path");
+            $result = Py_None;
+            Py_INCREF($result);
+        }
+    } else {
+      do {
+%#if PY_VERSION_HEX >= 0x03030000
+        $result = PyMemoryView_FromMemory(reinterpret_cast<char *>(*$1), *$2, PyBUF_READ);
+%#elif PY_VERSION_HEX >= 0x03000000
+        if( bUseExceptions ) {
+            PyErr_SetString(PyExc_RuntimeError, "Command works only in Python 3.3+");
+            $result = NULL;
+        } else {
+            CPLError(CE_Failure, CPLE_AppDefined, "Command works only in Python 3.3+");
+            $result = Py_None;
+            Py_INCREF($result);
+        }
+        break;
+%#else
+        $result = PyBuffer_FromMemory(*$1, *$2);
+%#endif
+        if ($result == NULL) {
+            if( bUseExceptions ) {
+                PyErr_SetString(PyExc_RuntimeError, "Could not allocate result buffer");
+                $result = NULL;
+            } else {
+                CPLError(CE_Failure, CPLE_AppDefined, "Could not allocate result buffer");
+                $result = Py_None;
+                Py_INCREF($result);
+            }
+        }
+      } while(0);
+    }
+}
+
+%inline %{
+void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offset *length)
+{
+    *out = VSIGetMemFileBuffer(utf8_path, length, 0);
+}
+%}
+%clear (GByte **out, vsi_l_offset *length);
+
+
+
+/* -------------------------------------------------------------------- */
 /*      GDAL_GCP                                                        */
 /* -------------------------------------------------------------------- */
 
