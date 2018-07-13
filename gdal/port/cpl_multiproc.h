@@ -207,7 +207,7 @@ class CPL_DLL CPLLockHolder
 #define CTLS_CSVTABLEPTR                 3         /* cpl_csv.cpp */
 #define CTLS_CSVDEFAULTFILENAME          4         /* cpl_csv.cpp */
 #define CTLS_ERRORCONTEXT                5         /* cpl_error.cpp */
-#define CTLS_GDALDATASET_REC_PROTECT_MAP 6        /* gdaldataset.cpp */
+/* 6: unused */
 #define CTLS_PATHBUF                     7         /* cpl_path.cpp */
 #define CTLS_ABSTRACTARCHIVE_SPLIT       8         /* cpl_vsil_abstract_archive.cpp */
 #define CTLS_UNUSED4                     9
