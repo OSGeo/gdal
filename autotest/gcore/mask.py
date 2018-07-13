@@ -1160,21 +1160,6 @@ def mask_26():
         print(struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0])
         return 'fail'
 
-    # IReadBlock() code path
-    (blockx, blocky) = mask.GetBlockSize()
-    if struct.unpack('B' * blockx * blocky, mask.ReadBlock(0, 0))[0] != 255:
-        gdaltest.post_reason('fail')
-        print(struct.unpack('B' * blockx * blocky, mask.ReadBlock(0, 0))[0])
-        return 'fail'
-    mask.FlushCache()
-
-    # Test special case where dynamics is only 0-255
-    ds.GetRasterBand(2).Fill(255)
-    if struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0] != 1:
-        gdaltest.post_reason('fail')
-        print(struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0])
-        return 'fail'
-
     ds = None
 
     gdal.Unlink('/vsimem/mask_26.tif')
