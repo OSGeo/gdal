@@ -23170,6 +23170,21 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:CreateGeometryFromWkb",kwnames,&obj0,&obj1)) SWIG_fail;
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+    {
+      Py_ssize_t safeLen = 0;
+      const void *safeBuf = 0;
+      int res = PyObject_AsReadBuffer(obj0, &safeBuf, &safeLen);
+      if (res == 0) {
+        if( safeLen > INT_MAX ) {
+          SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+        }
+        arg1 = (int) safeLen;
+        arg2 = (char *) safeBuf;
+        goto ok;
+      } else {
+        PyErr_Clear();
+      }
+    }
 #if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj0))
     {
@@ -23215,6 +23230,7 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
       SWIG_fail;
     }
 #endif
+    ok: ;
   }
   if (obj1) {
     res3 = SWIG_ConvertPtr(obj1, &argp3,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
@@ -23991,6 +24007,21 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
   if (obj2) {
     {
       /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+      {
+        Py_ssize_t safeLen = 0;
+        const void *safeBuf = 0;
+        int res = PyObject_AsReadBuffer(obj2, &safeBuf, &safeLen);
+        if (res == 0) {
+          if( safeLen > INT_MAX ) {
+            SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+          }
+          arg3 = (int) safeLen;
+          arg4 = (char *) safeBuf;
+          goto ok;
+        } else {
+          PyErr_Clear();
+        }
+      }
 #if PY_VERSION_HEX>=0x03000000
       if (PyUnicode_Check(obj2))
       {
@@ -24036,6 +24067,7 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
         SWIG_fail;
       }
 #endif
+      ok: ;
     }
   }
   if (obj3) {

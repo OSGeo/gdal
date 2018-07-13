@@ -487,6 +487,21 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(in,numinputs=1) (int nLen, char *pBuf ) (int alloc = 0)
 {
   /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+  {
+    Py_ssize_t safeLen = 0;
+    const void *safeBuf = 0;
+    int res = PyObject_AsReadBuffer($input, &safeBuf, &safeLen);
+    if (res == 0) {
+      if( safeLen > INT_MAX ) {
+        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      }
+      $1 = (int) safeLen;
+      $2 = ($2_ltype) safeBuf;
+      goto ok;
+    } else {
+      PyErr_Clear();
+    }
+  }
 %#if PY_VERSION_HEX>=0x03000000
   if (PyUnicode_Check($input))
   {
@@ -532,6 +547,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     SWIG_fail;
   }
 %#endif
+  ok: ;
 }
 
 %typemap(freearg) (int nLen, char *pBuf )
