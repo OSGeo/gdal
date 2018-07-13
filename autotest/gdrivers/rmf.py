@@ -252,7 +252,7 @@ def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_coun
         gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
-    test_ds_name = 'tmp/ov-' + testid + '-' + source
+    test_ds_name = 'tmp/ov-' + testid + '.tst'
     src_ds = rmf_drv.CreateCopy(test_ds_name, src_ds, options=options)
     if src_ds is None:
         gdaltest.post_reason('Failed to create test dataset copy.')
@@ -817,6 +817,54 @@ def rmf_31e():
 
 
 ###############################################################################
+# Check parallel compression
+
+def rmf_32a():
+
+    ds_name = 'tmp/rmf_32a.rsw'
+    gdal.Translate(ds_name, 'data/small_world.tif', format='RMF',
+                   options='-outsize 400% 400% -co COMPRESS=LZW -co NUM_THREADS=0')
+
+    tst = gdaltest.GDALTest('rmf', '../' + ds_name, 1, 5540)
+    res = tst.testOpen(check_gt=None)
+    os.remove(ds_name)
+
+    return res
+
+
+def rmf_32b():
+
+    ds_name = 'tmp/rmf_32b.rsw'
+    gdal.Translate(ds_name, 'data/small_world.tif', format='RMF',
+                   options='-outsize 400% 400% -co COMPRESS=LZW -co NUM_THREADS=4')
+
+    tst = gdaltest.GDALTest('rmf', '../' + ds_name, 1, 5540)
+    res = tst.testOpen(check_gt=None)
+    os.remove(ds_name)
+
+    return res
+
+
+###############################################################################
+# Parallel build overviews on newly created RSW file
+
+
+def rmf_32c():
+    ds_name = 'tmp/rmf_32c.rsw'
+    gdal.Translate(ds_name, 'data/small_world.tif', format='RMF',
+                   options='-outsize 400% 400% -co COMPRESS=LZW -co NUM_THREADS=4')
+
+    res = rmf_build_ov(source='../' + ds_name,
+                       testid='32c',
+                       options=['RMFHUGE=NO', 'COMPRESS=LZW', 'NUM_THREADS=4'],
+                       ov_sizes=[[800, 400], [400, 200]],
+                       crs=[[50261, 64846, 28175], [30111, 32302, 40026]],
+                       reopen=False)
+    os.remove(ds_name)
+
+    return res
+
+###############################################################################
 
 
 gdaltest_list = [
@@ -859,6 +907,9 @@ gdaltest_list = [
     rmf_31c,
     rmf_31d,
     rmf_31e,
+    rmf_32a,
+    rmf_32b,
+    rmf_32c,
 ]
 
 if __name__ == '__main__':
