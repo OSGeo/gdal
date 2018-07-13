@@ -21,8 +21,8 @@ Contributors:  Lucian Plesea
 
 #include "marfa.h"
 #include <algorithm>
-#include "CntZImage.h"
-#include "Lerc2.h"
+#include "libLERC/CntZImage.h"
+#include <Lerc2.h>
 
 CPL_CVSID("$Id$")
 
@@ -311,6 +311,8 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     }
     // Set bitmask if it has some ndvs
     Lerc2 lerc2(1, w, h, (ndv_count == 0) ? nullptr : bitMask.Bits());
+    // Default to LERC2 V2
+    lerc2.SetEncoderToOldVersion(2);
     bool success = false;
     Byte *ptr = (Byte *)dst.buffer;
 
@@ -382,7 +384,7 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
         || img.dt != GetL2DataType(hdInfo.dt)
         || hdInfo.nDim != 1
         || dst.size < static_cast<size_t>(hdInfo.nCols * hdInfo.nRows * GDALGetDataTypeSizeBytes(img.dt))) {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Lerc2 format");
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Lerc2 format error");
         return CE_Failure;
     }
 
@@ -436,13 +438,6 @@ CPLErr LERC_Band::Compress(buf_mgr &dst, buf_mgr &src)
 
 CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
 {
-    // Should have enough data pre-read
-    if(poOpenInfo->nHeaderBytes <
-        static_cast<int>(CntZImage::computeNumBytesNeededToWriteVoidImage()))
-    {
-        return nullptr;
-    }
-
     if (poOpenInfo->eAccess != GA_ReadOnly
         || poOpenInfo->pszFilename == nullptr
         || poOpenInfo->pabyHeader == nullptr
@@ -456,12 +451,7 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     if (!IsLerc(sHeader))
         return nullptr;
 
-    // Get the desired type
-    const char *pszDataType = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DATATYPE");
     GDALDataType dt = GDT_Unknown; // Use this as a validity flag
-    if (pszDataType)
-        dt = GDALGetDataTypeByName(pszDataType);
-
 
     // Use this structure to fetch width and height
     ILSize size(-1, -1, 1, 1, 1);
@@ -489,8 +479,8 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
             size.x = zImg.getWidth();
             size.y = zImg.getHeight();
             // Read as byte by default, otherwise LERC can be read as anything
-            if (dt == GDT_Unknown)
-                dt = GDT_Byte;
+            const char *pszDataType = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DATATYPE");
+            dt = pszDataType ? GDALGetDataTypeByName(pszDataType) : GDT_Byte;
         }
     }
 
