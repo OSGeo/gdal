@@ -197,6 +197,7 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
                 const char* pszName = json_object_get_string(poName);
                 const char* pszType = json_object_get_string(poType);
                 OGRFieldType eType(OFTString);
+                OGRFieldSubType eSubType(OFSTNone);
                 if( EQUAL(pszType, "datetime") )
                     eType = OFTDateTime;
                 else if( EQUAL(pszType, "double") )
@@ -205,6 +206,11 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
                     eType = OFTInteger;
                 else if( EQUAL(pszType, "string") )
                     eType = OFTString;
+                else if( EQUAL(pszType, "boolean") )
+                {
+                    eType = OFTInteger;
+                    eSubType = OFSTBoolean;
+                }
                 else
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
@@ -212,6 +218,7 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
                              pszType, pszName);
                 }
                 OGRFieldDefn oFieldDefn(pszName, eType);
+                oFieldDefn.SetSubType(eSubType);
                 RegisterField(&oFieldDefn, pszName,
                               (CPLString("properties.") + pszName).c_str());
             }
@@ -1162,6 +1169,10 @@ bool OGRPLScenesDataV1Layer::SetFieldFromPrefixedJSonFieldName(
         else if( eJSonType == json_type_string )
         {
             poFeature->SetField(iField, json_object_get_string(poVal));
+        }
+        else if( eJSonType == json_type_boolean )
+        {
+            poFeature->SetField(iField, json_object_get_boolean(poVal));
         }
         else
         {
