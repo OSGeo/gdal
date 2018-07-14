@@ -3748,6 +3748,40 @@ def tiff_read_zstd_corrupted2():
     with gdaltest.error_handler():
         return ut.testOpen()
 
+
+###############################################################################
+
+
+def tiff_read_overview_of_external_mask():
+
+    filename = '/vsimem/tiff_read_overview_of_external_mask.tif'
+    gdal.Translate(filename, 'data/byte.tif', options='-b 1 -mask 1')
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ds.BuildOverviews('CUBIC', overviewlist=[2])
+    ds = None
+    ds = gdal.Open(filename + '.msk', gdal.GA_Update)
+    ds.BuildOverviews('NEAREST', overviewlist=[2])
+    ds = None
+    ds = gdal.Open(filename)
+    cs1 = ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
+    cs2 = ds.GetRasterBand(1).GetMaskBand().GetOverview(0).Checksum()
+    flags1 = ds.GetRasterBand(1).GetOverview(0).GetMaskFlags()
+    ds = None
+
+    gdal.Unlink(filename)
+    gdal.Unlink(filename + '.msk')
+
+    if cs1 != cs2:
+        gdaltest.post_reason('fail')
+        print(cs1, cs2)
+        return 'fail'
+    if flags1 != gdal.GMF_PER_DATASET:
+        gdaltest.post_reason('fail')
+        print(flags1)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 
 
@@ -3876,6 +3910,7 @@ gdaltest_list.append((tiff_read_negative_scaley))
 gdaltest_list.append((tiff_read_zstd))
 gdaltest_list.append((tiff_read_zstd_corrupted))
 gdaltest_list.append((tiff_read_zstd_corrupted2))
+gdaltest_list.append((tiff_read_overview_of_external_mask))
 
 gdaltest_list.append((tiff_read_online_1))
 gdaltest_list.append((tiff_read_online_2))

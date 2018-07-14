@@ -382,6 +382,7 @@ class GTiffDataset final : public GDALPamDataset
 
     GTiffDataset* poMaskDS;
     GTiffDataset* poBaseDS;
+    bool          bIsOverview_ = false;
 
     CPLString    osFilename;
 
@@ -5594,6 +5595,11 @@ int GTiffRasterBand::GetMaskFlags()
         return 0;
     }
 
+    if( poGDS->bIsOverview_ )
+    {
+        return poGDS->poBaseDS->GetRasterBand(nBand)->GetMaskFlags();
+    }
+
     return GDALPamRasterBand::GetMaskFlags();
 }
 
@@ -5611,6 +5617,26 @@ GDALRasterBand *GTiffRasterBand::GetMaskBand()
             return poGDS->poMaskDS->GetRasterBand(1);
 
         return poGDS->poMaskDS->GetRasterBand(nBand);
+    }
+
+    if( poGDS->bIsOverview_ )
+    {
+        GDALRasterBand* poBaseMask =
+            poGDS->poBaseDS->GetRasterBand(nBand)->GetMaskBand();
+        if( poBaseMask )
+        {
+            const int nOverviews = poBaseMask->GetOverviewCount();
+            for( int i = 0; i < nOverviews; i++ )
+            {
+                GDALRasterBand* poOvr = poBaseMask->GetOverview(i);
+                if( poOvr &&
+                    poOvr->GetXSize() == GetXSize() &&
+                    poOvr->GetYSize() == GetYSize() )
+                {
+                    return poOvr;
+                }
+            }
+        }
     }
 
     return GDALPamRasterBand::GetMaskBand();
@@ -9954,6 +9980,7 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
                     nOverviewCount * (sizeof(void*))) );
     papoOverviewDS[nOverviewCount-1] = poODS;
     poODS->poBaseDS = this;
+    poODS->bIsOverview_ = true;
     return CE_None;
 }
 
@@ -14718,6 +14745,7 @@ void GTiffDataset::ScanDirectories()
                                nOverviewCount * (sizeof(void*))) );
                 papoOverviewDS[nOverviewCount-1] = poODS;
                 poODS->poBaseDS = this;
+                poODS->bIsOverview_ = true;
             }
         }
         // Embedded mask of the main image.
