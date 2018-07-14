@@ -6109,9 +6109,10 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
 /*      Check for nodata case.                                          */
 /* -------------------------------------------------------------------- */
     int bHaveNoData = FALSE;
-    GetNoDataValue( &bHaveNoData );
+    const double dfNoDataValue = GetNoDataValue( &bHaveNoData );
 
-    if( bHaveNoData )
+    if( bHaveNoData &&
+        GDALNoDataMaskBand::IsNoDataInRange(dfNoDataValue, eDataType) )
     {
         nMaskFlags = GMF_NODATA;
         try
