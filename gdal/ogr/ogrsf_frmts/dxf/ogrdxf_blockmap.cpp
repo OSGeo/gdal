@@ -51,7 +51,8 @@ bool OGRDXFDataSource::ReadBlocksSection()
     OGRDXFLayer *poReaderLayer = static_cast<OGRDXFLayer *>(
         GetLayerByName( "Entities" ));
 
-    iEntitiesSectionOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
+    iEntitiesOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
+    iEntitiesLineNumber = oReader.nLineNumber;
 
     char szLineBuf[257];
     int nCode = 0;

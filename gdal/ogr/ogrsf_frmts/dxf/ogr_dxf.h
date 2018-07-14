@@ -518,7 +518,7 @@ public:
                                    int nValueBufferSize = 81 );
     void                UnreadValue();
     void                LoadDiskChunk();
-    void                ResetReadPointer( int iNewOffset );
+    void                ResetReadPointer( int iNewOffset, int nNewLineNumber = 0 );
 };
 
 /************************************************************************/
@@ -546,7 +546,8 @@ class OGRDXFDataSource final: public OGRDataSource
     CPLString           osName;
     std::vector<OGRLayer*> apoLayers;
 
-    int                 iEntitiesSectionOffset;
+    int                 iEntitiesOffset;
+    int                 iEntitiesLineNumber;
 
     std::map<CPLString,DXFBlockDefinition> oBlockMap;
     std::map<CPLString,CPLString> oBlockRecordHandles;
@@ -649,7 +650,7 @@ class OGRDXFDataSource final: public OGRDataSource
     int  ReadValue( char *pszValueBuffer, int nValueBufferSize = 81 )
         { return oReader.ReadValue( pszValueBuffer, nValueBufferSize ); }
     void RestartEntities()
-        { oReader.ResetReadPointer(iEntitiesSectionOffset); }
+        { oReader.ResetReadPointer( iEntitiesOffset, iEntitiesLineNumber ); }
     void UnreadValue()
         { oReader.UnreadValue(); }
     void ResetReadPointer( int iNewOffset )
