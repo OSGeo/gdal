@@ -880,7 +880,13 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
 
          if ((is3[16] != GRIB2MISSING_s4) && (is3[15] != GRIB2MISSING_s1)) {
             /* Assumes data is given in m (not km). */
-            meta->gds.majEarth = is3[16] / (pow (10.0, is3[15]) * 1000.);
+            double denom = pow (10.0, is3[15]) * 1000.;
+            if( denom == 0 )
+            {
+                errSprintf ("Invalid radius.\n");
+                return -2;
+            }
+            meta->gds.majEarth = is3[16] / denom;
             meta->gds.minEarth = meta->gds.majEarth;
          } else {
             errSprintf ("Missing info on radius of Earth.\n");
