@@ -864,6 +864,29 @@ def rmf_32c():
 
     return res
 
+
+###############################################################################
+# Read 1-bit & 4-bit files
+
+
+def rmf_33a():
+
+    tst = gdaltest.GDALTest('rmf', '1bit.rsw', 1, 34325)
+    return tst.testOpen()
+
+
+def rmf_33b():
+
+    tst = gdaltest.GDALTest('rmf', '4bit.rsw', 1, 55221)
+    return tst.testOpen()
+
+
+def rmf_33c():
+
+    tst = gdaltest.GDALTest('rmf', '4bit-lzw.rsw', 1, 55221)
+    return tst.testOpen()
+
+
 ###############################################################################
 
 
@@ -910,6 +933,9 @@ gdaltest_list = [
     rmf_32a,
     rmf_32b,
     rmf_32c,
+    rmf_33a,
+    rmf_33b,
+    rmf_33c,
 ]
 
 if __name__ == '__main__':
