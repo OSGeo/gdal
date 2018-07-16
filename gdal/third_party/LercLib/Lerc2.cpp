@@ -376,6 +376,8 @@ bool Lerc2::DoChecksOnEncode(Byte* pBlobBegin, Byte* pBlobEnd) const
   {
     int blobSize = (int)(pBlobEnd - pBlobBegin);
     int nBytes = (int)(FileKey().length() + sizeof(int) + sizeof(unsigned int));    // start right after the checksum entry
+    if( blobSize < nBytes )
+      return false;
     unsigned int checksum = ComputeChecksumFletcher32(pBlobBegin + nBytes, blobSize - nBytes);
 
     nBytes -= sizeof(unsigned int);
