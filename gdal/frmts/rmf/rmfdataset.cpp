@@ -395,7 +395,8 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 GUInt32 nRawBytes;
 
-                nRawBytes = poGDS->nBands * nRawXSize * nRawYSize * nDataSize;
+                nRawBytes = nRawXSize * nRawYSize *
+                            poGDS->sHeader.nBitDepth / 8;
                 if( nRawBytes > poGDS->nCurrentTileBytes )
                 {
                     GByte *pabyRawBuf = reinterpret_cast<GByte *>(
@@ -516,12 +517,11 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
             for( GUInt32 i = 0; i < nBlockSize; i++ )
             {
-                // Most significant part of the byte represents leftmost pixel
                 if( i & 0x01 )
-                    reinterpret_cast<GByte *>( pImage )[i] = *pabyTemp++ & 0x0F;
-                else
                     reinterpret_cast<GByte *>( pImage )[i]
-                        = (*pabyTemp & 0xF0) >> 4;
+                        = (*pabyTemp++ & 0xF0) >> 4;
+                else
+                    reinterpret_cast<GByte *>( pImage )[i] = *pabyTemp & 0x0F;
             }
         }
         else if( poGDS->sHeader.nBitDepth == 1 )
