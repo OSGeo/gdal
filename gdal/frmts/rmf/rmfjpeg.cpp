@@ -100,11 +100,11 @@ size_t RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
                                 static_cast<int>(nRawYSize));
     CPLErr  eErr;
     size_t  nRet;
-
+    int     aBandMap[RMF_JPEG_BAND_COUNT] = {3, 2, 1};
     eErr = GDALDatasetRasterIO(hTile, GF_Read, 0, 0,
                                nImageWidth, nImageHeight, pabyOut,
                                nImageWidth, nImageHeight, GDT_Byte,
-                               nBandCount, nullptr,
+                               nBandCount, aBandMap,
                                nBandCount, nRawXSize * nBandCount, 1);
     if(CE_None != eErr)
     {
@@ -154,7 +154,8 @@ size_t RMFDataset::JPEGCompress(const GByte* pabyIn, GUInt32 nSizeIn,
     for(int iBand = 0; iBand < RMF_JPEG_BAND_COUNT; ++iBand)
     {
         char szBuffer[32] = {};
-        int nRet = CPLPrintPointer(szBuffer, (void*)(pabyIn + iBand),
+        const GByte* pabyBand = pabyIn + (RMF_JPEG_BAND_COUNT - iBand - 1);
+        int nRet = CPLPrintPointer(szBuffer, (void*)(pabyBand),
                                    sizeof(szBuffer));
         szBuffer[nRet] = 0;
 

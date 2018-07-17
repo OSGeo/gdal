@@ -196,6 +196,7 @@ private:
     GUInt32         nXTiles;
     GUInt32         nYTiles;
     GUInt32         *paiTiles;
+    GByte           *pabyDecompressBuffer;
     GByte           *pabyCurrentTile;
     int             nCurrentTileXOff;
     int             nCurrentTileYOff;
@@ -263,7 +264,6 @@ private:
     std::vector<RMFDataset*>    poOvrDatasets;
     vsi_l_offset                nHeaderOffset;
     RMFDataset*                 poParentDS;
-    bool                        bReverseBandLayout;
 
   public:
                 RMFDataset();
@@ -311,6 +311,10 @@ private:
                                   GUInt32 nRawXSize, GUInt32 nRawYSize);
     CPLErr              WriteRawTile(int nBlockXOff, int nBlockYOff,
                                      GByte* pabyData, size_t nBytes);
+    CPLErr              ReadTile(int nBlockXOff, int nBlockYOff,
+                                 GByte* pabyData, size_t nBytes,
+                                 GUInt32 nRawXSize, GUInt32 nRawYSize);
+
 };
 
 /************************************************************************/
@@ -329,8 +333,6 @@ class RMFRasterBand final: public GDALRasterBand
     GUInt32     nLastTileWidth;
     GUInt32     nLastTileHeight;
     GUInt32     nDataSize;
-
-    CPLErr   ReadBuffer( GByte *, GUInt32 ) const;
 
   public:
 
