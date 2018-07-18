@@ -3048,16 +3048,18 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_double swig_types[34]
 #define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[35]
 #define SWIGTYPE_p_int swig_types[36]
-#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[37]
-#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[38]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[39]
-#define SWIGTYPE_p_p_GUIntBig swig_types[40]
-#define SWIGTYPE_p_p_OGRLayerShadow swig_types[41]
-#define SWIGTYPE_p_p_char swig_types[42]
-#define SWIGTYPE_p_p_void swig_types[43]
-#define SWIGTYPE_p_size_t swig_types[44]
-static swig_type_info *swig_types[46];
-static swig_module_info swig_module = {swig_types, 45, 0, 0, 0, 0};
+#define SWIGTYPE_p_p_GByte swig_types[37]
+#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[38]
+#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[39]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[40]
+#define SWIGTYPE_p_p_GUIntBig swig_types[41]
+#define SWIGTYPE_p_p_OGRLayerShadow swig_types[42]
+#define SWIGTYPE_p_p_char swig_types[43]
+#define SWIGTYPE_p_p_void swig_types[44]
+#define SWIGTYPE_p_size_t swig_types[45]
+#define SWIGTYPE_p_vsi_l_offset swig_types[46]
+static swig_type_info *swig_types[48];
+static swig_module_info swig_module = {swig_types, 47, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3674,111 +3676,10 @@ SWIGINTERNINLINE PyObject*
 }
 
 
-
-typedef struct {
-    PyObject *psPyCallback;
-    PyObject *psPyCallbackData;
-    int nLastReported;
-} PyProgressData;
-
-/************************************************************************/
-/*                          PyProgressProxy()                           */
-/************************************************************************/
-
-
-static int CPL_STDCALL
-PyProgressProxy( double dfComplete, const char *pszMessage, void *pData ) CPL_UNUSED;
-
-static int CPL_STDCALL
-PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
-
+void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offset *length)
 {
-    PyProgressData *psInfo = (PyProgressData *) pData;
-    PyObject *psArgs, *psResult;
-    int      bContinue = TRUE;
-
-    if( psInfo->nLastReported == (int) (100.0 * dfComplete) )
-        return TRUE;
-
-    if( psInfo->psPyCallback == NULL || psInfo->psPyCallback == Py_None )
-        return TRUE;
-
-    psInfo->nLastReported = (int) (100.0 * dfComplete);
-
-    if( pszMessage == NULL )
-        pszMessage = "";
-
-    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-
-    if( psInfo->psPyCallbackData == NULL )
-        psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, Py_None );
-    else
-        psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage,
-	                       psInfo->psPyCallbackData );
-
-    psResult = PyEval_CallObject( psInfo->psPyCallback, psArgs);
-    Py_XDECREF(psArgs);
-
-    if( PyErr_Occurred() != NULL )
-    {
-        PyErr_Print();
-        PyErr_Clear();
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        return FALSE;
-    }
-
-    if( psResult == NULL )
-    {
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        return TRUE;
-    }
-
-    if( psResult == Py_None )
-    {
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        return TRUE;
-    }
-
-    if( !PyArg_Parse( psResult, "i", &bContinue ) )
-    {
-        PyErr_Clear();
-        CPLError(CE_Failure, CPLE_AppDefined, "bad progress return value");
-        Py_XDECREF(psResult);
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        return FALSE;
-    }
-
-    Py_XDECREF(psResult);
-    SWIG_PYTHON_THREAD_END_BLOCK;
-
-    return bContinue;
+    *out = VSIGetMemFileBuffer(utf8_path, length, 0);
 }
-
-
-typedef char retStringAndCPLFree;
-
-
-  void Debug( const char *msg_class, const char *message ) {
-    CPLDebug( msg_class, "%s", message );
-  }
-
-  CPLErr SetErrorHandler( char const * pszCallbackName = NULL )
-  {
-    CPLErrorHandler pfnHandler = NULL;
-    if( pszCallbackName == NULL || EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
-      pfnHandler = CPLQuietErrorHandler;
-    else if( EQUAL(pszCallbackName,"CPLDefaultErrorHandler") )
-      pfnHandler = CPLDefaultErrorHandler;
-    else if( EQUAL(pszCallbackName,"CPLLoggingErrorHandler") )
-      pfnHandler = CPLLoggingErrorHandler;
-
-    if ( pfnHandler == NULL )
-      return CE_Fatal;
-
-    CPLSetErrorHandler( pfnHandler );
-
-    return CE_None;
-  }
 
 
 SWIGINTERN swig_type_info*
@@ -3894,6 +3795,113 @@ SWIG_AsCharPtrAndSize(PyObject *obj, char** cptr, size_t* psize, int *alloc)
 
 
 
+
+
+
+typedef struct {
+    PyObject *psPyCallback;
+    PyObject *psPyCallbackData;
+    int nLastReported;
+} PyProgressData;
+
+/************************************************************************/
+/*                          PyProgressProxy()                           */
+/************************************************************************/
+
+
+static int CPL_STDCALL
+PyProgressProxy( double dfComplete, const char *pszMessage, void *pData ) CPL_UNUSED;
+
+static int CPL_STDCALL
+PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
+
+{
+    PyProgressData *psInfo = (PyProgressData *) pData;
+    PyObject *psArgs, *psResult;
+    int      bContinue = TRUE;
+
+    if( psInfo->nLastReported == (int) (100.0 * dfComplete) )
+        return TRUE;
+
+    if( psInfo->psPyCallback == NULL || psInfo->psPyCallback == Py_None )
+        return TRUE;
+
+    psInfo->nLastReported = (int) (100.0 * dfComplete);
+
+    if( pszMessage == NULL )
+        pszMessage = "";
+
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
+    if( psInfo->psPyCallbackData == NULL )
+        psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, Py_None );
+    else
+        psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage,
+	                       psInfo->psPyCallbackData );
+
+    psResult = PyEval_CallObject( psInfo->psPyCallback, psArgs);
+    Py_XDECREF(psArgs);
+
+    if( PyErr_Occurred() != NULL )
+    {
+        PyErr_Print();
+        PyErr_Clear();
+        SWIG_PYTHON_THREAD_END_BLOCK;
+        return FALSE;
+    }
+
+    if( psResult == NULL )
+    {
+        SWIG_PYTHON_THREAD_END_BLOCK;
+        return TRUE;
+    }
+
+    if( psResult == Py_None )
+    {
+        SWIG_PYTHON_THREAD_END_BLOCK;
+        return TRUE;
+    }
+
+    if( !PyArg_Parse( psResult, "i", &bContinue ) )
+    {
+        PyErr_Clear();
+        CPLError(CE_Failure, CPLE_AppDefined, "bad progress return value");
+        Py_XDECREF(psResult);
+        SWIG_PYTHON_THREAD_END_BLOCK;
+        return FALSE;
+    }
+
+    Py_XDECREF(psResult);
+    SWIG_PYTHON_THREAD_END_BLOCK;
+
+    return bContinue;
+}
+
+
+typedef char retStringAndCPLFree;
+
+
+  void Debug( const char *msg_class, const char *message ) {
+    CPLDebug( msg_class, "%s", message );
+  }
+
+  CPLErr SetErrorHandler( char const * pszCallbackName = NULL )
+  {
+    CPLErrorHandler pfnHandler = NULL;
+    if( pszCallbackName == NULL || EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
+      pfnHandler = CPLQuietErrorHandler;
+    else if( EQUAL(pszCallbackName,"CPLDefaultErrorHandler") )
+      pfnHandler = CPLDefaultErrorHandler;
+    else if( EQUAL(pszCallbackName,"CPLLoggingErrorHandler") )
+      pfnHandler = CPLLoggingErrorHandler;
+
+    if ( pfnHandler == NULL )
+      return CE_Fatal;
+
+    CPLSetErrorHandler( pfnHandler );
+
+    return CE_None;
+  }
 
 
 void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* pszErrorMsg)
@@ -6800,6 +6808,104 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_VSIGetMemFileBuffer_unsafe(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  GByte **arg2 = (GByte **) 0 ;
+  vsi_l_offset *arg3 = (vsi_l_offset *) 0 ;
+  int bToFree1 = 0 ;
+  GByte *out2 = NULL ;
+  vsi_l_offset length2 ;
+  PyObject * obj0 = 0 ;
+  
+  {
+    arg2 = &out2;
+    arg3 = &length2;
+  }
+  if (!PyArg_ParseTuple(args,(char *)"O:VSIGetMemFileBuffer_unsafe",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      wrapper_VSIGetMemFileBuffer((char const *)arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    if (*arg2 == NULL) {
+      if( bUseExceptions ) {
+        PyErr_SetString(PyExc_RuntimeError, "Could not find path");
+        resultobj = NULL;
+      } else {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not find path");
+        resultobj = Py_None;
+        Py_INCREF(resultobj);
+      }
+    } else {
+      do {
+#if PY_VERSION_HEX >= 0x03030000
+        resultobj = PyMemoryView_FromMemory(reinterpret_cast<char *>(*arg2), *arg3, PyBUF_READ);
+#elif PY_VERSION_HEX >= 0x03000000
+        if( bUseExceptions ) {
+          PyErr_SetString(PyExc_RuntimeError, "Command works only in Python 3.3+");
+          resultobj = NULL;
+        } else {
+          CPLError(CE_Failure, CPLE_AppDefined, "Command works only in Python 3.3+");
+          resultobj = Py_None;
+          Py_INCREF(resultobj);
+        }
+        break;
+#else
+        resultobj = PyBuffer_FromMemory(*arg2, *arg3);
+#endif
+        if (resultobj == NULL) {
+          if( bUseExceptions ) {
+            PyErr_SetString(PyExc_RuntimeError, "Could not allocate result buffer");
+            resultobj = NULL;
+          } else {
+            CPLError(CE_Failure, CPLE_AppDefined, "Could not allocate result buffer");
+            resultobj = Py_None;
+            Py_INCREF(resultobj);
+          }
+        }
+      } while(0);
+    }
+  }
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Debug(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   char *arg1 = (char *) 0 ;
@@ -7298,6 +7404,21 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:EscapeString",kwnames,&obj0,&obj1)) SWIG_fail;
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+    {
+      Py_ssize_t safeLen = 0;
+      const void *safeBuf = 0;
+      int res = PyObject_AsReadBuffer(obj0, &safeBuf, &safeLen);
+      if (res == 0) {
+        if( safeLen > INT_MAX ) {
+          SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+        }
+        arg1 = (int) safeLen;
+        arg2 = (char *) safeBuf;
+        goto ok;
+      } else {
+        PyErr_Clear();
+      }
+    }
 #if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj0))
     {
@@ -7343,6 +7464,7 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
       SWIG_fail;
     }
 #endif
+    ok: ;
   }
   if (obj1) {
     ecode3 = SWIG_AsVal_int(obj1, &val3);
@@ -8014,6 +8136,21 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
   if (!PyArg_ParseTuple(args,(char *)"O:CPLBinaryToHex",&obj0)) SWIG_fail;
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+    {
+      Py_ssize_t safeLen = 0;
+      const void *safeBuf = 0;
+      int res = PyObject_AsReadBuffer(obj0, &safeBuf, &safeLen);
+      if (res == 0) {
+        if( safeLen > INT_MAX ) {
+          SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+        }
+        arg1 = (int) safeLen;
+        arg2 = (GByte *) safeBuf;
+        goto ok;
+      } else {
+        PyErr_Clear();
+      }
+    }
 #if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj0))
     {
@@ -8059,6 +8196,7 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
       SWIG_fail;
     }
 #endif
+    ok: ;
   }
   {
     if ( bUseExceptions ) {
@@ -10006,6 +10144,21 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
   if (!PyArg_ParseTuple(args,(char *)"OOOO:VSIFWriteL",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+    {
+      Py_ssize_t safeLen = 0;
+      const void *safeBuf = 0;
+      int res = PyObject_AsReadBuffer(obj0, &safeBuf, &safeLen);
+      if (res == 0) {
+        if( safeLen > INT_MAX ) {
+          SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+        }
+        arg1 = (int) safeLen;
+        arg2 = (char *) safeBuf;
+        goto ok;
+      } else {
+        PyErr_Clear();
+      }
+    }
 #if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj0))
     {
@@ -10051,6 +10204,7 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
       SWIG_fail;
     }
 #endif
+    ok: ;
   }
   ecode3 = SWIG_AsVal_int(obj1, &val3);
   if (!SWIG_IsOK(ecode3)) {
@@ -33576,6 +33730,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"UseExceptions", _wrap_UseExceptions, METH_VARARGS, (char *)"UseExceptions()"},
 	 { (char *)"DontUseExceptions", _wrap_DontUseExceptions, METH_VARARGS, (char *)"DontUseExceptions()"},
 	 { (char *)"VSIFReadL", _wrap_VSIFReadL, METH_VARARGS, (char *)"VSIFReadL(unsigned int nMembSize, unsigned int nMembCount, VSILFILE fp) -> unsigned int"},
+	 { (char *)"VSIGetMemFileBuffer_unsafe", _wrap_VSIGetMemFileBuffer_unsafe, METH_VARARGS, (char *)"VSIGetMemFileBuffer_unsafe(char const * utf8_path)"},
 	 { (char *)"Debug", _wrap_Debug, METH_VARARGS, (char *)"Debug(char const * msg_class, char const * message)"},
 	 { (char *)"SetErrorHandler", _wrap_SetErrorHandler, METH_VARARGS, (char *)"SetErrorHandler(char const * pszCallbackName=None) -> CPLErr"},
 	 { (char *)"PushErrorHandler", _wrap_PushErrorHandler, METH_VARARGS, (char *)"PushErrorHandler(CPLErrorHandler pfnErrorHandler=0) -> CPLErr"},
@@ -34003,6 +34158,7 @@ static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_f_double_p_q_const__char_p_void__int = {"_p_f_double_p_q_const__char_p_void__int", "int (*)(double,char const *,void *)", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldSubType *|GDALRATFieldType *|OGRFieldType *|RETURN_NONE *|int *|GDALAccess *|OGRwkbByteOrder *|CPLErr *|GDALRWFlag *|OGRJustification *|GDALRATFieldUsage *|GDALTileOrganization *|OGRAxisOrientation *|GDALPaletteInterp *|GDALColorInterp *|GDALResampleAlg *|GDALRIOResampleAlg *|OGRErr *|OGRwkbGeometryType *|GDALDataType *|GDALAsyncStatusType *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_p_GByte = {"_p_p_GByte", "GByte **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GDALDatasetShadow = {"_p_p_GDALDatasetShadow", "GDALDatasetShadow **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GDALRasterBandShadow = {"_p_p_GDALRasterBandShadow", "GDALRasterBandShadow **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GDAL_GCP = {"_p_p_GDAL_GCP", "GDAL_GCP **", 0, 0, (void*)0, 0};
@@ -34011,6 +34167,7 @@ static swig_type_info _swigt__p_p_OGRLayerShadow = {"_p_p_OGRLayerShadow", "OGRL
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_void = {"_p_p_void", "void **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_size_t = {"_p_size_t", "size_t *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_vsi_l_offset = {"_p_vsi_l_offset", "vsi_l_offset *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
   &_swigt__p_CPLErrorHandler,
@@ -34050,6 +34207,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_double,
   &_swigt__p_f_double_p_q_const__char_p_void__int,
   &_swigt__p_int,
+  &_swigt__p_p_GByte,
   &_swigt__p_p_GDALDatasetShadow,
   &_swigt__p_p_GDALRasterBandShadow,
   &_swigt__p_p_GDAL_GCP,
@@ -34058,6 +34216,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_p_char,
   &_swigt__p_p_void,
   &_swigt__p_size_t,
+  &_swigt__p_vsi_l_offset,
 };
 
 static swig_cast_info _swigc__p_CPLErrorHandler[] = {  {&_swigt__p_CPLErrorHandler, 0, 0, 0},{0, 0, 0, 0}};
@@ -34097,6 +34256,7 @@ static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0,
 static swig_cast_info _swigc__p_double[] = {  {&_swigt__p_double, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_f_double_p_q_const__char_p_void__int[] = {  {&_swigt__p_f_double_p_q_const__char_p_void__int, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_p_GByte[] = {  {&_swigt__p_p_GByte, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_GDALDatasetShadow[] = {  {&_swigt__p_p_GDALDatasetShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_GDALRasterBandShadow[] = {  {&_swigt__p_p_GDALRasterBandShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_GDAL_GCP[] = {  {&_swigt__p_p_GDAL_GCP, 0, 0, 0},{0, 0, 0, 0}};
@@ -34105,6 +34265,7 @@ static swig_cast_info _swigc__p_p_OGRLayerShadow[] = {  {&_swigt__p_p_OGRLayerSh
 static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_void[] = {  {&_swigt__p_p_void, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_size_t[] = {  {&_swigt__p_size_t, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_vsi_l_offset[] = {  {&_swigt__p_vsi_l_offset, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_CPLErrorHandler,
@@ -34144,6 +34305,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_double,
   _swigc__p_f_double_p_q_const__char_p_void__int,
   _swigc__p_int,
+  _swigc__p_p_GByte,
   _swigc__p_p_GDALDatasetShadow,
   _swigc__p_p_GDALRasterBandShadow,
   _swigc__p_p_GDAL_GCP,
@@ -34152,6 +34314,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_p_char,
   _swigc__p_p_void,
   _swigc__p_size_t,
+  _swigc__p_vsi_l_offset,
 };
 
 

@@ -4847,7 +4847,7 @@ void GDALRasterBand::SetValidPercent(GUIntBig nSampleCount, GUIntBig nValidCount
 
         if (EQUAL(szValue, "100"))
         {
-            /* don't set 100 percent valid 
+            /* don't set 100 percent valid
              * because some of the sampled pixels were nodata */
             SetMetadataItem( "STATISTICS_VALID_PERCENT", "99.999" );
         }
@@ -6042,9 +6042,10 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
 /*      Check for nodata case.                                          */
 /* -------------------------------------------------------------------- */
     int bHaveNoData = FALSE;
-    GetNoDataValue( &bHaveNoData );
+    const double dfNoDataValue = GetNoDataValue( &bHaveNoData );
 
-    if( bHaveNoData )
+    if( bHaveNoData &&
+        GDALNoDataMaskBand::IsNoDataInRange(dfNoDataValue, eDataType) )
     {
         nMaskFlags = GMF_NODATA;
         try
@@ -6066,12 +6067,29 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
     if( poDS != nullptr
         && poDS->GetRasterCount() == 2
         && this == poDS->GetRasterBand(1)
-        && poDS->GetRasterBand(2)->GetColorInterpretation() == GCI_AlphaBand
-        && poDS->GetRasterBand(2)->GetRasterDataType() == GDT_Byte )
+        && poDS->GetRasterBand(2)->GetColorInterpretation() == GCI_AlphaBand )
     {
-        nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
-        poMask = poDS->GetRasterBand(2);
-        return poMask;
+        if( poDS->GetRasterBand(2)->GetRasterDataType() == GDT_Byte )
+        {
+            nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
+            poMask = poDS->GetRasterBand(2);
+            return poMask;
+        }
+        else if( poDS->GetRasterBand(2)->GetRasterDataType() == GDT_UInt16 )
+        {
+            nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
+            try
+            {
+                poMask = new GDALRescaledAlphaBand( poDS->GetRasterBand(2) );
+            }
+            catch( const std::bad_alloc& )
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+                poMask = nullptr;
+            }
+            bOwnMask = true;
+            return poMask;
+        }
     }
 
     if( poDS != nullptr

@@ -185,7 +185,7 @@ def ogr_plscenes_data_v1_nominal():
         return 'fail'
 
     field_count = lyr.GetLayerDefn().GetFieldCount()
-    if field_count != 67:
+    if field_count != 68:
         gdaltest.post_reason('fail')
         print(field_count)
         return 'fail'
@@ -209,7 +209,8 @@ def ogr_plscenes_data_v1_nominal():
                 "acquired": "2016/02/11 12:34:56.789+00",
                 "anomalous_pixels": 1.23,
                 "columns": 1,
-                "item_type": "foo"
+                "item_type": "foo",
+                "ground_control": true
             },
             "geometry":
             {
@@ -244,6 +245,7 @@ def ogr_plscenes_data_v1_nominal():
        f['assets_link'] != '/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets' or \
        f['acquired'] != '2016/02/11 12:34:56.789+00' or \
        f['anomalous_pixels'] != 1.23 or f['item_type'] != 'foo' or f['columns'] != 1 or \
+       not f['ground_control'] or \
        f['asset_analytic_self_link'] != 'analytic_links_self' or \
        f['asset_analytic_activate_link'] != '/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets/analytic/activate' or \
        f['asset_analytic_permissions'] != ['download'] or \

@@ -772,6 +772,43 @@ def vsifile_20():
     return 'fail'
 
 ###############################################################################
+# Test gdal.VSIGetMemFileBuffer_unsafe() and gdal.VSIFWriteL() reading buffers
+
+
+def vsifile_21():
+
+    filename = '/vsimem/read.tif'
+    filename_write = '/vsimem/write.tif'
+    data = 'This is some data'
+
+    vsifile = gdal.VSIFOpenL(filename, 'wb')
+    if gdal.VSIFWriteL(data, 1, len(data), vsifile) != len(data):
+        return 'fail'
+    gdal.VSIFCloseL(vsifile)
+
+    vsifile = gdal.VSIFOpenL(filename, 'rb')
+    gdal.VSIFSeekL(vsifile, 0, 2)
+    vsilen = gdal.VSIFTellL(vsifile)
+    gdal.VSIFSeekL(vsifile, 0, 0)
+    data_read = gdal.VSIFReadL(1, vsilen, vsifile)
+    data_mem = gdal.VSIGetMemFileBuffer_unsafe(filename)
+    if data_read != data_mem[:]:
+        return 'fail'
+    gdal.VSIFCloseL(vsifile)
+    vsifile_write = gdal.VSIFOpenL(filename_write, 'wb')
+    if gdal.VSIFWriteL(data_mem, 1, len(data_mem), vsifile_write) != len(data_mem):
+        return 'fail'
+    gdal.VSIFCloseL(vsifile_write)
+    gdal.Unlink(filename)
+    gdal.Unlink(filename_write)
+    with gdaltest.error_handler():
+        data3 = gdal.VSIGetMemFileBuffer_unsafe(filename)
+        if data3 != None:
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test bugfix for https://github.com/OSGeo/gdal/issues/675
 
 
@@ -834,6 +871,7 @@ gdaltest_list = [vsifile_1,
                  vsifile_18,
                  vsifile_19,
                  vsifile_20,
+                 vsifile_21,
                  vsitar_bug_675,
                  vsigzip_multi_thread]
 

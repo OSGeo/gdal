@@ -28,7 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <list>
 #include "gdal_priv.h"
+#include "cpl_worker_thread_pool.h"
 
 #define RMF_HEADER_SIZE         320
 #define RMF_EXT_HEADER_SIZE     320
@@ -49,6 +51,8 @@ enum RMFVersion
     RMF_VERSION = 0x0200,        // Version for "small" files less than 4 Gb
     RMF_VERSION_HUGE = 0x0201    // Version for "huge" files less than 4 Tb. Since GIS Panorama v11
 };
+
+class RMFDataset;
 
 #define RMF_HUGE_OFFSET_FACTOR  256
 
@@ -131,6 +135,54 @@ typedef struct
 } RMFExtHeader;
 
 /************************************************************************/
+/*                            RMFCompressionJob                         */
+/************************************************************************/
+
+typedef struct
+{
+    RMFDataset* poDS = nullptr;
+    CPLErr eResult = CE_None;
+    int nBlockXOff = -1;
+    int nBlockYOff = -1;
+    GByte* pabyUncompressedData = nullptr;
+    size_t nUncompressedBytes = 0;
+    GByte* pabyCompressedData = nullptr;
+    size_t nCompressedBytes = 0;
+    GUInt32 nXSize = 0;
+    GUInt32 nYSize = 0;
+} RMFCompressionJob;
+
+/************************************************************************/
+/*                            RMFCompressData                           */
+/************************************************************************/
+
+struct RMFCompressData
+{
+    CPLWorkerThreadPool                  oThreadPool;
+    std::vector<RMFCompressionJob>       asJobs;
+    std::list<RMFCompressionJob*>        asReadyJobs;
+    GByte                               *pabyBuffers = nullptr;
+    CPLMutex                            *hReadyJobMutex = nullptr;
+    CPLMutex                            *hWriteTileMutex = nullptr;
+
+    RMFCompressData(const RMFCompressData&) = delete;
+    RMFCompressData& operator=(const RMFCompressData&) = delete;
+
+    RMFCompressData();
+    ~RMFCompressData();
+};
+
+/************************************************************************/
+/*                            RMFTileData                               */
+/************************************************************************/
+
+typedef struct
+{
+    std::vector<GByte>  oData;
+    int                 nBandsWritten = 0;
+} RMFTileData;
+
+/************************************************************************/
 /*                              RMFDataset                              */
 /************************************************************************/
 
@@ -160,6 +212,9 @@ private:
     bool            bHeaderDirty;
 
     VSILFILE        *fp;
+
+    std::shared_ptr<RMFCompressData> poCompressData;
+    std::map<GUInt32, RMFTileData>   oUnfinishedTiles;
 
     CPLErr          WriteHeader();
     static size_t   LZWDecompress( const GByte*, GUInt32, GByte*, GUInt32, GUInt32, GUInt32 );
@@ -249,8 +304,13 @@ private:
     static GByte        GetCompressionType(const char* pszCompressName);
     int                 SetupCompression(GDALDataType eType,
                                          const char* pszFilename);
-    CPLErr              WriteTile(int nBlockXOff, int nBlockYOff, GByte* pabyData,
-                                  size_t nBytes, GUInt32 nXSize, GUInt32 nYSize);
+    static void         WriteTileJobFunc(void* pData);
+    CPLErr              InitCompressorData(char **papszParmList);
+    CPLErr              WriteTile(int nBlockXOff, int nBlockYOff,
+                                  GByte* pabyData, size_t nBytes,
+                                  GUInt32 nRawXSize, GUInt32 nRawYSize);
+    CPLErr              WriteRawTile(int nBlockXOff, int nBlockYOff,
+                                     GByte* pabyData, size_t nBytes);
 };
 
 /************************************************************************/
@@ -288,4 +348,10 @@ class RMFRasterBand final: public GDALRasterBand
     virtual CPLErr          SetColorTable( GDALColorTable * ) override;
     virtual int             GetOverviewCount() override;
     virtual GDALRasterBand* GetOverview( int i ) override;
+    virtual CPLErr          IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                      int nXSize, int nYSize, void * pData,
+                                      int nBufXSize, int nBufYSize,
+                                      GDALDataType eBufType,
+                                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                                      GDALRasterIOExtraArg* psExtraArg ) override;
 };

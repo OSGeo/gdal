@@ -90,7 +90,7 @@ MAIN_START(argc, argv)
     GDALDatasetH        hDataset, hOutDS;
     int                 i;
     const char          *pszSource=nullptr, *pszDest=nullptr, *pszFormat = nullptr;
-    GDALDriverH         hDriver;
+    GDALDriverH         hDriver = nullptr;
     GDALDataType        eOutputType = GDT_Unknown;
     char                **papszCreateOptions = nullptr;
     GDALProgressFunc    pfnProgress = GDALTermProgress;
@@ -239,7 +239,7 @@ MAIN_START(argc, argv)
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
     CPLString osFormat;
-    if( pszFormat == nullptr )
+    if( pszFormat == nullptr && pszDest != nullptr )
     {
         osFormat = GetOutputDriverForRaster(pszDest);
         if( osFormat.empty() )
@@ -248,33 +248,36 @@ MAIN_START(argc, argv)
             exit( 1 );
         }
     }
-    else
+    else if( pszFormat != nullptr )
     {
         osFormat = pszFormat;
     }
 
-    hDriver = GDALGetDriverByName( osFormat );
-    if( hDriver == nullptr )
+    if( !osFormat.empty() )
     {
-        int iDr;
-
-        printf( "Output driver `%s' not recognised.\n", osFormat.c_str() );
-        printf( "The following format drivers are configured and support output:\n" );
-        for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
+        hDriver = GDALGetDriverByName( osFormat );
+        if( hDriver == nullptr )
         {
-            hDriver = GDALGetDriver(iDr);
+            int iDr;
 
-            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, nullptr) != nullptr &&
-                (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, nullptr ) != nullptr
-                || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, nullptr ) != nullptr) )
+            printf( "Output driver `%s' not recognised.\n", osFormat.c_str() );
+            printf( "The following format drivers are configured and support output:\n" );
+            for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
             {
-                printf( "  %s: %s\n",
-                        GDALGetDriverShortName( hDriver  ),
-                        GDALGetDriverLongName( hDriver ) );
+                hDriver = GDALGetDriver(iDr);
+
+                if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, nullptr) != nullptr &&
+                    (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, nullptr ) != nullptr
+                    || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, nullptr ) != nullptr) )
+                {
+                    printf( "  %s: %s\n",
+                            GDALGetDriverShortName( hDriver  ),
+                            GDALGetDriverLongName( hDriver ) );
+                }
             }
+            printf( "\n" );
+            Usage();
         }
-        printf( "\n" );
-        Usage();
     }
 
 /* -------------------------------------------------------------------- */

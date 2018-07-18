@@ -329,9 +329,11 @@ def vrt_read_7():
     gdal.Unlink(filename)
 
     if ds is not None:
+        gdaltest.post_reason('fail')
         return 'fail'
 
-    if error_msg != 'GDALOpen() called with too many recursion levels':
+    if error_msg == '':
+        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

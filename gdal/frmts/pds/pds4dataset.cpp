@@ -1408,12 +1408,14 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
             double dfYRes = GetResolutionValue(psCR, "pixel_resolution_y");
             double dfULX = GetLinearValue(psGT, "upperleft_corner_x");
             double dfULY = GetLinearValue(psGT, "upperleft_corner_y");
-            // Correcting from pixel center convention to pixel corner
-            // convention
-            m_adfGeoTransform[0] = dfULX - 0.5 * dfXRes;
+
+            // The PDS4 specification is not really clear about the
+            // origin convention, but it appears from https://github.com/OSGeo/gdal/issues/735
+            // that it matches GDAL top-left corner of top-left pixel
+            m_adfGeoTransform[0] = dfULX;
             m_adfGeoTransform[1] = dfXRes;
             m_adfGeoTransform[2] = 0.0;
-            m_adfGeoTransform[3] = dfULY + 0.5 * dfYRes;
+            m_adfGeoTransform[3] = dfULY;
             m_adfGeoTransform[4] = 0.0;
             m_adfGeoTransform[5] = -dfYRes;
             m_bGotTransform = true;
@@ -2004,20 +2006,20 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart)
         osPrefix.assign(psCart->pszValue, pszColon - psCart->pszValue + 1);
 
     // upper left
-    adfX[0] = m_adfGeoTransform[0] + m_adfGeoTransform[1] / 2;
-    adfY[0] = m_adfGeoTransform[3] - m_adfGeoTransform[5] / 2;
+    adfX[0] = m_adfGeoTransform[0];
+    adfY[0] = m_adfGeoTransform[3];
 
     // upper right
-    adfX[1] = m_adfGeoTransform[0] + m_adfGeoTransform[1] * nRasterXSize - m_adfGeoTransform[1] / 2;
-    adfY[1] = m_adfGeoTransform[3] - m_adfGeoTransform[5] / 2;
+    adfX[1] = m_adfGeoTransform[0] + m_adfGeoTransform[1] * nRasterXSize ;
+    adfY[1] = m_adfGeoTransform[3];
 
     // lower left
-    adfX[2] = m_adfGeoTransform[0] + m_adfGeoTransform[1] / 2;
-    adfY[2] = m_adfGeoTransform[3] + m_adfGeoTransform[5] * nRasterYSize + m_adfGeoTransform[5] / 2;
+    adfX[2] = m_adfGeoTransform[0];
+    adfY[2] = m_adfGeoTransform[3] + m_adfGeoTransform[5] * nRasterYSize;
 
     // lower right
-    adfX[3] = m_adfGeoTransform[0] + m_adfGeoTransform[1] * nRasterXSize - m_adfGeoTransform[1] / 2;
-    adfY[3] = m_adfGeoTransform[3] + m_adfGeoTransform[5] * nRasterYSize + m_adfGeoTransform[5] / 2;
+    adfX[3] = m_adfGeoTransform[0] + m_adfGeoTransform[1] * nRasterXSize;
+    adfY[3] = m_adfGeoTransform[3] + m_adfGeoTransform[5] * nRasterYSize;
 
     if( !oSRS.IsGeographic() )
     {
@@ -2382,9 +2384,9 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart)
     const double dfFalseNorthing =
         oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     const double dfULX = -dfFalseEasting +
-            m_adfGeoTransform[0] + 0.5 * m_adfGeoTransform[1];
+            m_adfGeoTransform[0];
     const double dfULY = -dfFalseNorthing + 
-            m_adfGeoTransform[3] + 0.5 * m_adfGeoTransform[5];
+            m_adfGeoTransform[3];
     if( oSRS.IsGeographic() )
     {
         CPLAddXMLAttributeAndValue(

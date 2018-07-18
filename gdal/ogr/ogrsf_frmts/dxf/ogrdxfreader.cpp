@@ -71,14 +71,15 @@ void OGRDXFReader::Initialize( VSILFILE *fpIn )
 /*                          ResetReadPointer()                          */
 /************************************************************************/
 
-void OGRDXFReader::ResetReadPointer( int iNewOffset )
+void OGRDXFReader::ResetReadPointer( int iNewOffset,
+    int nNewLineNumber /* = 0 */ )
 
 {
     nSrcBufferBytes = 0;
     iSrcBufferOffset = 0;
     iSrcBufferFileOffset = iNewOffset;
     nLastValueSize = 0;
-    nLineNumber = 0;
+    nLineNumber = nNewLineNumber;
 
     VSIFSeekL( fp, iNewOffset, SEEK_SET );
 }
@@ -237,6 +238,6 @@ void OGRDXFReader::UnreadValue()
     CPLAssert( nLastValueSize > 0 );
 
     iSrcBufferOffset -= nLastValueSize;
-
+    nLineNumber -= 2;
     nLastValueSize = 0;
 }

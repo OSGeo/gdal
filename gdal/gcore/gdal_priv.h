@@ -1302,6 +1302,9 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
   public:
     explicit GDALNoDataMaskBand( GDALRasterBand * );
     ~GDALNoDataMaskBand() override;
+
+    static bool IsNoDataInRange(double dfNoDataValue,
+                                GDALDataType eDataType);
 };
 
 /* ******************************************************************** */

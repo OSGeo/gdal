@@ -28,6 +28,8 @@ Contributors:   Thomas Maurer
 USING_NAMESPACE_LERC
 using namespace std;
 
+static void ignore_ret_val(bool) {}
+
 // -------------------------------------------------------------------------- ;
 
 Lerc2::Lerc2()
@@ -40,7 +42,7 @@ Lerc2::Lerc2()
 Lerc2::Lerc2(int nDim, int nCols, int nRows, const Byte* pMaskBits)
 {
   Init();
-  Set(nDim, nCols, nRows, pMaskBits);
+  ignore_ret_val(Set(nDim, nCols, nRows, pMaskBits));
 }
 
 // -------------------------------------------------------------------------- ;
@@ -374,6 +376,8 @@ bool Lerc2::DoChecksOnEncode(Byte* pBlobBegin, Byte* pBlobEnd) const
   {
     int blobSize = (int)(pBlobEnd - pBlobBegin);
     int nBytes = (int)(FileKey().length() + sizeof(int) + sizeof(unsigned int));    // start right after the checksum entry
+    if( blobSize < nBytes )
+      return false;
     unsigned int checksum = ComputeChecksumFletcher32(pBlobBegin + nBytes, blobSize - nBytes);
 
     nBytes -= sizeof(unsigned int);
