@@ -1463,18 +1463,23 @@ static inline bool has_path(const CPLString &name)
     return name.find_first_of("/\\") != string::npos;
 }
 
+// Does name look like an absolute gdal file name?
 static inline bool is_absolute(const CPLString &name)
 {
-    return (name.find_first_of("/\\") == 0) ||
-        (name[1] == ':' && isalpha(name[0])) ||
-        name.find("<MRF_META>") != string::npos;
+    return (name.find_first_of("/\\") == 0) // Starts with root
+        || (name.size() > 1 && name[1] == ':' && isalpha(name[0])) // Starts with drive letter
+        || (name[0] == '<'); // Maybe it is XML
 }
 
-// Add the folder part of path to the beginning of the source, if it is relative
-static inline void make_absolute(CPLString &name, const CPLString &path)
+// Add the dirname of path to the beginning of name, if it is relative
+// returns true if name was modified
+static inline bool make_absolute(CPLString &name, const CPLString &path)
 {
-    if (!is_absolute(path) && (path.find_first_of("/\\") != string::npos))
+    if (!is_absolute(path) && (path.find_first_of("/\\") != string::npos)) {
         name = path.substr(0, path.find_last_of("/\\") + 1) + name;
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -1483,11 +1488,16 @@ static inline void make_absolute(CPLString &name, const CPLString &path)
 GDALDataset *GDALMRFDataset::GetSrcDS() {
     if (poSrcDS) return poSrcDS;
     if (source.empty()) return nullptr;
-    // Make the source absolute path
-    if (has_path(fname)) make_absolute(source, fname);
-    poSrcDS = (GDALDataset *)GDALOpenShared(source.c_str(), GA_ReadOnly);
+
+    // Try open the source dataset as is
+    poSrcDS = reinterpret_cast<GDALDataset *>(GDALOpenShared(source.c_str(), GA_ReadOnly));
+
+    // It the open failes, try again with the current dataset path prepended
+    if (!poSrcDS && make_absolute(source, fname))
+        poSrcDS = reinterpret_cast<GDALDataset *>(GDALOpenShared(source.c_str(), GA_ReadOnly));
+
     if (0 == source.find("<MRF_META>") && has_path(fname))
-    {// XML MRF source, might need to patch the file names with the current one
+    {   // MRF XML source, might need to patch the file names with the current one
         GDALMRFDataset *psDS = reinterpret_cast<GDALMRFDataset *>(poSrcDS);
         make_absolute(psDS->current.datfname, fname);
         make_absolute(psDS->current.idxfname, fname);
