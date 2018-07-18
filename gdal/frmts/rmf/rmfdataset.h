@@ -314,7 +314,7 @@ private:
     CPLErr              ReadTile(int nBlockXOff, int nBlockYOff,
                                  GByte* pabyData, size_t nBytes,
                                  GUInt32 nRawXSize, GUInt32 nRawYSize);
-
+    void                SetupNBits();
 };
 
 /************************************************************************/
