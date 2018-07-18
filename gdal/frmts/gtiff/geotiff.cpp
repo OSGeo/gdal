@@ -18244,6 +18244,12 @@ CPLErr GTiffDataset::SetMetadata( char ** papszMD, const char *pszDomain )
         }
     }
 
+    if( EQUAL(pszDomain, "xml:XMP") && papszMD && *papszMD )
+    {
+        int nTagSize = strlen(*papszMD) + 1;
+        TIFFSetField( hTIFF, TIFFTAG_XMLPACKET, nTagSize, *papszMD );
+    }
+
     return oGTiffMDMD.SetMetadata( papszMD, pszDomain );
 }
 
