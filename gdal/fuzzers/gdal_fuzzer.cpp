@@ -195,7 +195,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     GDALGetDatasetDriver(hDS) == GDALGetDriverByName("GTiff") )
                 {
                     if( EQUAL(pszCompress, "PIXARLOG") &&
-                        GDALGetRasterYSize(hDS) > INT_MAX /
+                        GDALGetRasterYSize(hDS) > (INT_MAX / 2) /
                             static_cast<int>(sizeof(GUInt16)) /
                                 nSimultaneousBands / GDALGetRasterXSize(hDS) )
                     {
@@ -203,7 +203,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     }
                     // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2874
                     else if( EQUAL(pszCompress, "SGILOG24") &&
-                        GDALGetRasterYSize(hDS) > INT_MAX /
+                        GDALGetRasterYSize(hDS) > (INT_MAX / 2) /
                             static_cast<int>(sizeof(GUInt32)) /
                                 nSimultaneousBands / GDALGetRasterXSize(hDS) )
                     {
