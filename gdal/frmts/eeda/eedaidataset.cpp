@@ -1179,7 +1179,7 @@ bool GDALEEDAIDataset::ComputeQueryStrategy()
             {
                 if( GetRasterBand(i)->GetRasterDataType() != GDT_Byte )
                 {
-                    m_osPixelEncoding = "GEOTIFF";
+                    m_osPixelEncoding = "GEO_TIFF";
                 }
             }
         }
@@ -1651,7 +1651,7 @@ void GDALRegister_EEDAI()
 "       <Value>AUTO</Value>"
 "       <Value>PNG</Value>"
 "       <Value>JPEG</Value>"
-"       <Value>GEOTIFF</Value>"
+"       <Value>GEO_TIFF</Value>"
 "       <Value>AUTO_PNG_JPEG</Value>"
 "       <Value>NPY</Value>"
 "   </Option>"

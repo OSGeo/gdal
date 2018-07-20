@@ -610,7 +610,7 @@ def eedai_geotiff():
     gdal.Unlink('/vsimem/out.tif')
 
     gdal.FileFromMemBuffer(
-        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "encoding": "GEOTIFF", "bandIds": [ "B1" ], "grid": { "origin": { "x": 499980.0, "y": 4200000.0 }, "pixelSize": { "x": 60.0, "y": -60.0 }, "dimensions": { "width": 256, "height": 256 } } }', data)
+        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "encoding": "GEO_TIFF", "bandIds": [ "B1" ], "grid": { "origin": { "x": 499980.0, "y": 4200000.0 }, "pixelSize": { "x": 60.0, "y": -60.0 }, "dimensions": { "width": 256, "height": 256 } } }', data)
     got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     got_data = struct.unpack('H', got_data)[0]
     if got_data != 12345:
