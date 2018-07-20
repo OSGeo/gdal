@@ -136,6 +136,7 @@ static void GDALDestructor(void)
 /*  point specific for Windows.                                         */
 /************************************************************************/
 #ifdef _MSC_VER
+#ifndef GDAL_STATIC_LIB
 
 #include <windows.h>
 
@@ -163,4 +164,5 @@ extern "C" int WINAPI DllMain( HINSTANCE /* hInstance */,
     return 1; // ignored for all reasons but DLL_PROCESS_ATTACH
 }
 
+#endif // GDAL_STATIC_LIB
 #endif // _MSC_VER
