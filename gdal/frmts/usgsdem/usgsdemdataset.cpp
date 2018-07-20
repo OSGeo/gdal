@@ -452,6 +452,11 @@ CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             continue;
         if( lygap > INT_MAX - nCPoints )
             lygap = INT_MAX - nCPoints;
+        if( lygap < 0 && GetYSize() > INT_MAX + lygap )
+        {
+            CPLFree(sBuffer.buffer);
+            return CE_Failure;
+        }
 
         for (int j=lygap; j < (nCPoints + lygap); j++)
         {
