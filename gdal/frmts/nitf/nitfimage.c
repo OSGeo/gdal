@@ -1394,6 +1394,12 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
                       "File lacks VQ LUTs, unable to decode imagery." );
             return BLKREAD_FAIL;
         }
+        if( psImage->nBlockWidth != 256 || psImage->nBlockHeight != 256 )
+        {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                      "Invalid block dimension for VQ compressed data." );
+            return BLKREAD_FAIL;
+        }
 
         /* Read the codewords */
         if( VSIFSeekL(psImage->psFile->fp, psImage->panBlockStart[iFullBlock],
