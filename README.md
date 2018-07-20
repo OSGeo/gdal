@@ -5,11 +5,12 @@ GDAL - Geospatial Data Abstraction Library
 [![Build status](https://ci.appveyor.com/api/projects/status/jtwx0pcr0y01i17p/branch/master?svg=true)](https://ci.appveyor.com/project/OSGeo/gdal)
 [![Build Status](https://scan.coverity.com/projects/749/badge.svg?flat=1)](https://scan.coverity.com/projects/gdal)
 
-| Environment              |
+| Tested configurations    |
 | ------------------------ |
 | Ubuntu 14.04 32 bit      |
 | Ubuntu 14.04 64 bit      |
 | Ubuntu 16.04 64 / CL 3.9 |
+| Ubuntu 18.04 64 bit      |
 | Python 3                 |
 | MacOS X                  |
 | MSVC 2015-64b & 2017-32b |
