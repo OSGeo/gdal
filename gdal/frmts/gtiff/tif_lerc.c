@@ -199,6 +199,9 @@ static int SetupUncompressedBuffer(TIFF* tif, LERCState* sp,
     {
         TIFFErrorExt(tif->tif_clientdata, module,
                         "Too large uncompressed strip/tile");
+        _TIFFfree(sp->uncompressed_buffer);
+        sp->uncompressed_buffer = 0;
+        sp->uncompressed_alloc = 0;
         return 0;
     }
 
@@ -210,6 +213,8 @@ static int SetupUncompressedBuffer(TIFF* tif, LERCState* sp,
         {
             TIFFErrorExt(tif->tif_clientdata, module,
                             "Cannot allocate buffer");
+            _TIFFfree(sp->uncompressed_buffer);
+            sp->uncompressed_buffer = 0;
             sp->uncompressed_alloc = 0;
             return 0;
         }
@@ -231,6 +236,9 @@ static int SetupUncompressedBuffer(TIFF* tif, LERCState* sp,
                 TIFFErrorExt(tif->tif_clientdata, module,
                                 "Cannot allocate buffer");
                 sp->mask_size = 0;
+                _TIFFfree(sp->uncompressed_buffer);
+                sp->uncompressed_buffer = 0;
+                sp->uncompressed_alloc = 0;
                 return 0;
             }
             sp->mask_size = mask_size;
@@ -493,6 +501,13 @@ LERCDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
         (void) s;
         assert(sp != NULL);
         assert(sp->state == LSTATE_INIT_DECODE);
+
+        if( sp->uncompressed_buffer == 0 )
+        {
+            TIFFErrorExt(tif->tif_clientdata, module,
+                         "Uncompressed buffer not allocated");
+            return 0;
+        }
 
         if( (uint64)sp->uncompressed_offset +
                                         (uint64)occ > sp->uncompressed_size )
