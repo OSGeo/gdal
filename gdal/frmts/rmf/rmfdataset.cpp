@@ -1264,6 +1264,21 @@ do {                                                                    \
         return nullptr;
     }
 
+    GUInt64 nMaxTileBits = 2ULL *
+                           static_cast<GUInt64>(poDS->sHeader.nTileWidth) *
+                           static_cast<GUInt64>(poDS->sHeader.nTileHeight) *
+                           static_cast<GUInt64>(poDS->sHeader.nBitDepth);
+    if(nMaxTileBits > static_cast<GUInt64>(std::numeric_limits<GUInt32>::max()))
+    {
+        CPLError(CE_Warning, CPLE_IllegalArg,
+                 "Invalid tile size. Width %lu, height %lu, bit depth %lu.",
+                 static_cast<unsigned long>(poDS->sHeader.nTileWidth),
+                 static_cast<unsigned long>(poDS->sHeader.nTileHeight),
+                 static_cast<unsigned long>(poDS->sHeader.nBitDepth));
+        delete poDS;
+        return nullptr;
+    }
+
     if( poParentDS != nullptr )
     {
         if( 0 != memcmp( poDS->sHeader.bySignature,
