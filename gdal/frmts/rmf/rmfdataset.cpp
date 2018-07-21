@@ -1539,7 +1539,11 @@ do {                                                                    \
                 poDS->nBands = 1;
                 break;
             default:
-                break;
+                CPLError(CE_Warning, CPLE_IllegalArg,
+                         "Invalid RSW bit depth %lu.",
+                         static_cast<unsigned long>(poDS->sHeader.nBitDepth));
+                delete poDS;
+                return nullptr;
         }
         eType = GDT_Byte;
     }
@@ -1547,13 +1551,29 @@ do {                                                                    \
     {
         poDS->nBands = 1;
         if( poDS->sHeader.nBitDepth == 8 )
+        {
             eType = GDT_Byte;
+        }
         else if( poDS->sHeader.nBitDepth == 16 )
+        {
             eType = GDT_Int16;
+        }
         else if( poDS->sHeader.nBitDepth == 32 )
+        {
             eType = GDT_Int32;
+        }
         else if( poDS->sHeader.nBitDepth == 64 )
+        {
             eType = GDT_Float64;
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_IllegalArg,
+                     "Invalid MTW bit depth %lu.",
+                     static_cast<unsigned long>(poDS->sHeader.nBitDepth));
+            delete poDS;
+            return nullptr;
+        }
     }
 
     if( poDS->sHeader.nTileWidth == 0 || poDS->sHeader.nTileWidth > INT_MAX ||
