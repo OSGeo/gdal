@@ -30,11 +30,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     #config.git_proxy.http  = ""
   end
 
-  config.vm.synced_folder "../autotest/", "/home/vagrant/autotest/"
-
   config.vm.provider :virtualbox do |vb,ovrd|
      ovrd.vm.network :forwarded_port, guest: 80, host: 8080
-     ovrd.vm.box = "precise64"
+     ovrd.vm.box = "trusty64"
      ovrd.vm.box_url = "http://files.vagrantup.com/precise64.box"
      vb.customize ["modifyvm", :id, "--memory", vm_ram]
      vb.customize ["modifyvm", :id, "--cpus", vm_cpu]
@@ -43,35 +41,46 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   config.vm.provider :lxc do |lxc,ovrd|
-    ovrd.vm.box = "fgrehm/precise64-lxc"
+    ovrd.vm.box = "cultuurnet/ubuntu-14.04-64-puppet"
     lxc.backingstore = 'dir'
     lxc.customize 'cgroup.memory.limit_in_bytes', vm_ram_bytes
     lxc.customize 'aa_allow_incomplete', 1
     lxc.container_name = "gdal-vagrant"
+    # allow android adb connection from guest
+    #config.vm.synced_folder('/dev/bus', '/dev/bus')
+    # allow runnng wine inside lxc
+    config.vm.synced_folder('/tmp/.X11-unix/', '/tmp/.X11-unix/')
   end
- 
+
   config.vm.provider :hyperv do |hyperv,ovrd|
-    ovrd.vm.box = "hashicorp/precise64"
+    ovrd.vm.box = "withinboredom/Trusty64"
     ovrd.ssh.username = "vagrant"
     hyperv.cpus = vm_cpu
     hyperv.memory = vm_ram
+    # If you want to avoid copying an entire image with
+    # differencing disk feature, uncomment a following line.
+    # hyperv.differencing_disk = true
     hyperv.vmname = "gdal-vagrant"
   end
 
   ppaRepos = [
-    "ppa:ubuntugis/ubuntugis-unstable", "ppa:marlam/gta"
+    "ppa:openjdk-r/ppa",
+    "ppa:ubuntugis/ubuntugis-unstable",
+    "ppa:miurahr/gdal-depends"
   ]
 
   packageList = [
+    "autoconf",
+    "automake",
+    "libtool",
     "subversion",
     "python-numpy",
     "python-dev",
     "postgis",
-    "postgresql-server-dev-9.1",
-    "postgresql-9.1-postgis",
-    "postgresql-9.1-postgis-scripts",
+    "postgresql-server-dev-9.3",
+    "postgresql-9.3-postgis-2.2",
+    "postgresql-9.3-postgis-scripts",
     "libmysqlclient-dev",
-    #"mysql-server",
     "libpq-dev",
     "libpng12-dev",
     "libjpeg-dev",
@@ -86,36 +95,73 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "libnetcdf-dev",
     "netcdf-bin",
     "libpoppler-dev",
-    "libspatialite-dev",
+    "libpoppler-private-dev",
     "gpsbabel",
     "libboost-all-dev",
     "libgmp-dev",
     "libmpfr-dev",
+    "libkml-dev",
     "swig",
-    "libhdf4-alt-dev",
-    "libhdf5-serial-dev",
-    "libpodofo-dev",
+    "libhdf4-dev",
+    "libhdf5-dev",
     "poppler-utils",
     "libfreexl-dev",
     "unixodbc-dev",
     "libwebp-dev",
-    "openjdk-7-jdk",
+    "openjdk-8-jdk",
     "libepsilon-dev",
     "libgta-dev",
     "liblcms2-2",
-    "libpcre3-dev",
     "libjasper-dev",
     "libarmadillo-dev",
+    "libcrypto++-dev",
+    "libdap-dev",
+    "libogdi3.2-dev",
+    "libcfitsio3-dev",
+    "libfyba-dev",
+    "libsfcgal-dev",
+    "couchdb",
+    "libmongo-client-dev",
+    "libqhull-dev",
     "make",
     "g++",
-    "autoconf", # for libkml
-    "cmake", # for openjpeg
     "bison",
     "flex",
     "doxygen",
+    "texlive-latex-base",
     "vim",
     "ant",
-    "mono-mcs"
+    "unzip",
+    "mono-mcs",
+    "libjson-c-dev",
+    "libtiff5-dev",
+    "libopenjp2-7-dev",
+    "clang-3.9",
+    "cmake3",
+    "git",
+    "wine",
+    "ccache",
+    "curl",
+    "mingw32",
+    "mingw-w64",
+    "mingw-w64-i686-dev",
+    "mingw-w64-x86-64-dev",
+    "mingw-w64-tools",
+    "cmake3-curses-gui",
+    "gdb",
+    "gdbserver",
+    "gdb-mingw-w64-target",
+    "ninja-build",
+    "openjdk-8-jdk",
+    "ghostscript",
+#    "grass-dev",
+    "libcharls-dev",
+    "libgeotiff-dev",
+    "sqlite3-pcre",
+    "libpcre3-dev",
+    "libspatialite-dev",
+    "librasterlite2-dev",
+    "libkea-dev"
   ];
 
   if Vagrant.has_plugin?("vagrant-cachier")
@@ -123,9 +169,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   if Dir.glob("#{File.dirname(__FILE__)}/.vagrant/machines/default/*/id").empty?
-	  pkg_cmd = "sed -i 's#deb http://us.archive.ubuntu.com/ubuntu/#deb mirror://mirrors.ubuntu.com/mirrors.txt#' /etc/apt/sources.list; "
-
+	  pkg_cmd = "sed -i 's#deb http[s]?://.*archive.ubuntu.com/ubuntu/#deb mirror://mirrors.ubuntu.com/mirrors.txt#' /etc/apt/sources.list; "
+      pkg_cmd << 'echo "deb mirror://mirrors.ubuntu.com/mirrors.txt trusty universe" > /etc/apt/sources.list.d/official-ubuntu-trusty-universe.list; '
+      pkg_cmd << 'echo "deb [ arch=amd64 ] http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.4 multiverse" > /etc/apt/sources.list.d/mongodb-org-3.4.list; '
+      pkg_cmd << 'curl -Ls https://www.mongodb.org/static/pgp/server-3.4.asc | apt-key add -; '
 	  pkg_cmd << "apt-get update -qq; apt-get install -q -y python-software-properties; "
+      pkg_cmd << "dpkg --add-architecture i386; "
 
 	  if ppaRepos.length > 0
 		  ppaRepos.each { |repo| pkg_cmd << "add-apt-repository -y " << repo << " ; " }
@@ -133,7 +182,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	  end
 
 	  # install packages we need we need
-	  pkg_cmd << "apt-get install -q -y " + packageList.join(" ") << " ; "
+	  pkg_cmd << "apt-get --no-install-recommends install -q -y " + packageList.join(" ") << " ; "
 	  config.vm.provision :shell, :inline => pkg_cmd
     scripts = [
       "sfcgal.sh",
@@ -143,6 +192,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       "gdal.sh",
       "postgis.sh"
     ];
-    scripts.each { |script| config.vm.provision :shell, :privileged => false, :path => "scripts/vagrant/" << script }
+    scripts.each { |script| config.vm.provision :shell, :privileged => false, :path => "gdal/scripts/vagrant/" << script }
   end
 end

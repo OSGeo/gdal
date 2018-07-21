@@ -12,7 +12,11 @@ fi
 #NUMTHREADS=1 # disable MP
 export NUMTHREADS
 
-cd /vagrant
+rsync -a /vagrant/gdal/ /home/vagrant/gnumake-build-gcc4.8
+echo rsync -a /vagrant/gdal/ /home/vagrant/gnumake-build-gcc4.8/ > /home/vagrant/gnumake-build-gcc4.8/resync.sh
+chmod +x /home/vagrant/gnumake-build-gcc4.8/resync.sh
+cd gnumake-build-gcc4.8
+
 #  --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local
 ./configure  --prefix=/usr --without-libtool --enable-debug --with-jpeg12 \
             --with-python --with-poppler \
