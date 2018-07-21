@@ -1256,6 +1256,14 @@ do {                                                                    \
         RMF_READ_ULONG( abyHeader, poDS->sHeader.nExtHdrSize, 316 );
     }
 
+    if(poDS->sHeader.nTileTblSize % (sizeof(GUInt32)*2))
+    {
+        CPLError( CE_Warning, CPLE_IllegalArg,
+                  "Invalid tile table size." );
+        delete poDS;
+        return nullptr;
+    }
+
     if( poParentDS != nullptr )
     {
         if( 0 != memcmp( poDS->sHeader.bySignature,
