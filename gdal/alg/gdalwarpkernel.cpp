@@ -5919,18 +5919,6 @@ static void GWKAverageOrModeThread( void* pData)
                 int nCount2 = 0;
 
                 // Compute corners in source crs.
-                int iSrcXMin =
-                    std::max(static_cast<int>(floor(padfX[iDstX] + 1e-10)) -
-                             poWK->nSrcXOff, 0);
-                int iSrcXMax =
-                    std::min(static_cast<int>(ceil(padfX2[iDstX] - 1e-10)) -
-                             poWK->nSrcXOff, nSrcXSize);
-                int iSrcYMin =
-                    std::max(static_cast<int>(floor(padfY[iDstX] + 1e-10)) -
-                             poWK->nSrcYOff, 0);
-                int iSrcYMax =
-                    std::min(static_cast<int>(ceil(padfY2[iDstX] - 1e-10)) -
-                             poWK->nSrcYOff, nSrcYSize);
 
                 // The transformation might not have preserved ordering of
                 // coordinates so do the necessary swapping (#5433).
@@ -5940,28 +5928,19 @@ static void GWKAverageOrModeThread( void* pData)
                 // [iDstX,iDstY]x[iDstX+1,iDstY+1] square back to source
                 // coordinates, and take the bounding box of the got source
                 // coordinates.
-                if( iSrcXMax < iSrcXMin )
-                {
-                    iSrcXMin = std::max(
-                         static_cast<int>(floor((padfX2[iDstX] + 1.0e-10))) -
-                         poWK->nSrcXOff,
-                         0);
-                    iSrcXMax = std::min(
-                         static_cast<int>(ceil((padfX[iDstX] - 1.0e-10))) -
-                         poWK->nSrcXOff,
-                         nSrcXSize);
-                }
-                if( iSrcYMax < iSrcYMin )
-                {
-                    iSrcYMin = std::max(
-                        static_cast<int>(floor((padfY2[iDstX] + 1e-10))) -
-                        poWK->nSrcYOff,
-                        0);
-                    iSrcYMax = std::min(
-                        static_cast<int>(ceil((padfY[iDstX] - 1e-10))) -
-                        poWK->nSrcYOff,
-                        nSrcYSize);
-                }
+                int iSrcXMin =
+                    std::max(static_cast<int>(floor(std::min(padfX[iDstX],padfX2[iDstX]) + 1e-10)) -
+                             poWK->nSrcXOff, 0);
+                int iSrcXMax =
+                    std::min(static_cast<int>(ceil(std::max(padfX[iDstX],padfX2[iDstX]) - 1e-10)) -
+                             poWK->nSrcXOff, nSrcXSize);
+                int iSrcYMin =
+                    std::max(static_cast<int>(floor(std::min(padfY[iDstX],padfY2[iDstX]) + 1e-10)) -
+                             poWK->nSrcYOff, 0);
+                int iSrcYMax =
+                    std::min(static_cast<int>(ceil(std::max(padfY[iDstX],padfY2[iDstX]) - 1e-10)) -
+                             poWK->nSrcYOff, nSrcYSize);
+
                 if( iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize )
                     iSrcXMax++;
                 if( iSrcYMin == iSrcYMax && iSrcYMax < nSrcYSize )
