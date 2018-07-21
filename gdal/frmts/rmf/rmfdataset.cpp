@@ -1279,6 +1279,20 @@ do {                                                                    \
         return nullptr;
     }
 
+    if(poDS->sHeader.nLastTileWidth > poDS->sHeader.nTileWidth ||
+       poDS->sHeader.nLastTileHeight > poDS->sHeader.nTileHeight)
+    {
+        CPLError(CE_Warning, CPLE_IllegalArg,
+                 "Invalid last tile size %lu x %lu. "
+                 "It can't be greater than %lu x %lu.",
+                 static_cast<unsigned long>(poDS->sHeader.nLastTileWidth),
+                 static_cast<unsigned long>(poDS->sHeader.nLastTileHeight),
+                 static_cast<unsigned long>(poDS->sHeader.nTileWidth),
+                 static_cast<unsigned long>(poDS->sHeader.nTileHeight));
+        delete poDS;
+        return nullptr;
+    }
+
     if( poParentDS != nullptr )
     {
         if( 0 != memcmp( poDS->sHeader.bySignature,
