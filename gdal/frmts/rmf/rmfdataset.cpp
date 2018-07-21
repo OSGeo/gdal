@@ -2810,9 +2810,23 @@ CPLErr RMFDataset::ReadTile(int nBlockXOff, int nBlockYOff,
     {
         return CE_Failure;
     }
-
-    GUInt32 nTileBytes = paiTiles[2 * nTile + 1];
     vsi_l_offset nTileOffset = GetFileOffset(paiTiles[2 * nTile]);
+    GUInt32 nTileBytes = paiTiles[2 * nTile + 1];
+    // RMF doesn't store compresed tiles with size greater than 80% of
+    // uncompressed size. But just in case, select twice as many.
+    GUInt32 nMaxTileBytes = 2 * sHeader.nTileWidth * sHeader.nTileHeight *
+                            sHeader.nBitDepth / 8;
+
+    if(nTileBytes >= nMaxTileBytes)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid tile size %lu at offset %ld. Must be less than %lu",
+                 static_cast<unsigned long>(nTileBytes),
+                 static_cast<long>(nTileOffset),
+                 static_cast<unsigned long>(nMaxTileBytes));
+        return CE_Failure;
+    }
+
 
     if(nTileOffset == 0)
     {
@@ -2886,8 +2900,6 @@ CPLErr RMFDataset::ReadTile(int nBlockXOff, int nBlockYOff,
 
     if(pabyDecompressBuffer == nullptr)
     {
-        GUInt32 nMaxTileBytes = sHeader.nTileWidth * sHeader.nTileHeight *
-                                sHeader.nBitDepth / 8;
         pabyDecompressBuffer =
            reinterpret_cast<GByte*>(VSIMalloc(std::max(1U, nMaxTileBytes)));
         if(!pabyDecompressBuffer)
