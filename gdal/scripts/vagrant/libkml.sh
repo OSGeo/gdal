@@ -12,9 +12,11 @@ fi
 #NUMTHREADS=1 # disable MP
 export NUMTHREADS
 
-#svn checkout http://libkml.googlecode.com/svn/trunk/ libkml-read-only
-#cd libkml-read-only
-#git clone https://github.com/google/libkml.git
-svn co https://github.com/google/libkml/trunk libkml
+git clone https://github.com/libkml/libkml.git libkml
+mkdir libkml/build
+cd libkml/build
+cmake -G Ninja -DCMAKE_INSTALL_PREFIX=/usr/local ..
+cmake --build .
+sudo cmake --build . --target install
 
-(cd libkml && ./autogen.sh && ./configure && make -j $NUMTHREADS; sudo make install)
+cd ../..
