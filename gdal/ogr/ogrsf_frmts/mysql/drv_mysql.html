@@ -66,6 +66,8 @@ method, as name of the SQL dialect.</p>
         <i>spatial_ref_sys</i> table is <b>not</b> pre-populated with SRS and
         EPSG values like PostGIS.  If no EPSG code is found for a given table,
         the MAX(SRID) value will be used.
+        With MySQL 8.0 or later, the <i>ST_SPATIAL_REFERENCE_SYSTEMS</i> table
+        provided by the database is used instead of <i>spatial_ref_sys</i>.
     </li>
 
 	<li>
