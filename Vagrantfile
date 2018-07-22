@@ -32,8 +32,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provider :virtualbox do |vb,ovrd|
      ovrd.vm.network :forwarded_port, guest: 80, host: 8080
-     ovrd.vm.box = "trusty64"
-     ovrd.vm.box_url = "http://files.vagrantup.com/precise64.box"
+     ovrd.vm.box = "ubuntu/trusty64"
      vb.customize ["modifyvm", :id, "--memory", vm_ram]
      vb.customize ["modifyvm", :id, "--cpus", vm_cpu]
      vb.customize ["modifyvm", :id, "--ioapic", "on"]
