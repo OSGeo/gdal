@@ -129,16 +129,25 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
     for( int i = 0; i < psWO->nBandCount; i++ )
     {
         GDALRasterBandH rasterBand = GDALGetRasterBand(psWO->hSrcDS, psWO->panSrcBands[i]);
-        
+
         int hasNoDataValue;
         double noDataValue = GDALGetRasterNoDataValue(rasterBand, &hasNoDataValue);
 
         if( hasNoDataValue )
         {
-            GDALWarpInitNoDataReal(psWO, -1e10);
-            
-            psWO->padfSrcNoDataReal[i] = noDataValue;
-            psWO->padfDstNoDataReal[i] = noDataValue;
+            // Check if the nodata value is out of range
+            int bClamped = FALSE;
+            int bRounded = FALSE;
+            CPL_IGNORE_RET_VAL(
+                GDALAdjustValueToDataType(GDALGetRasterDataType(rasterBand),
+                                      noDataValue, &bClamped, &bRounded ));
+            if( !bClamped )
+            {
+                GDALWarpInitNoDataReal(psWO, -1e10);
+
+                psWO->padfSrcNoDataReal[i] = noDataValue;
+                psWO->padfDstNoDataReal[i] = noDataValue;
+            }
         }
     }
 
