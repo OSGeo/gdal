@@ -1256,6 +1256,43 @@ do {                                                                    \
         RMF_READ_ULONG( abyHeader, poDS->sHeader.nExtHdrSize, 316 );
     }
 
+    if(poDS->sHeader.nTileTblSize % (sizeof(GUInt32)*2))
+    {
+        CPLError( CE_Warning, CPLE_IllegalArg,
+                  "Invalid tile table size." );
+        delete poDS;
+        return nullptr;
+    }
+
+    GUInt64 nMaxTileBits = 2ULL *
+                           static_cast<GUInt64>(poDS->sHeader.nTileWidth) *
+                           static_cast<GUInt64>(poDS->sHeader.nTileHeight) *
+                           static_cast<GUInt64>(poDS->sHeader.nBitDepth);
+    if(nMaxTileBits > static_cast<GUInt64>(std::numeric_limits<GUInt32>::max()))
+    {
+        CPLError(CE_Warning, CPLE_IllegalArg,
+                 "Invalid tile size. Width %lu, height %lu, bit depth %lu.",
+                 static_cast<unsigned long>(poDS->sHeader.nTileWidth),
+                 static_cast<unsigned long>(poDS->sHeader.nTileHeight),
+                 static_cast<unsigned long>(poDS->sHeader.nBitDepth));
+        delete poDS;
+        return nullptr;
+    }
+
+    if(poDS->sHeader.nLastTileWidth > poDS->sHeader.nTileWidth ||
+       poDS->sHeader.nLastTileHeight > poDS->sHeader.nTileHeight)
+    {
+        CPLError(CE_Warning, CPLE_IllegalArg,
+                 "Invalid last tile size %lu x %lu. "
+                 "It can't be greater than %lu x %lu.",
+                 static_cast<unsigned long>(poDS->sHeader.nLastTileWidth),
+                 static_cast<unsigned long>(poDS->sHeader.nLastTileHeight),
+                 static_cast<unsigned long>(poDS->sHeader.nTileWidth),
+                 static_cast<unsigned long>(poDS->sHeader.nTileHeight));
+        delete poDS;
+        return nullptr;
+    }
+
     if( poParentDS != nullptr )
     {
         if( 0 != memcmp( poDS->sHeader.bySignature,
@@ -1516,7 +1553,11 @@ do {                                                                    \
                 poDS->nBands = 1;
                 break;
             default:
-                break;
+                CPLError(CE_Warning, CPLE_IllegalArg,
+                         "Invalid RSW bit depth %lu.",
+                         static_cast<unsigned long>(poDS->sHeader.nBitDepth));
+                delete poDS;
+                return nullptr;
         }
         eType = GDT_Byte;
     }
@@ -1524,13 +1565,29 @@ do {                                                                    \
     {
         poDS->nBands = 1;
         if( poDS->sHeader.nBitDepth == 8 )
+        {
             eType = GDT_Byte;
+        }
         else if( poDS->sHeader.nBitDepth == 16 )
+        {
             eType = GDT_Int16;
+        }
         else if( poDS->sHeader.nBitDepth == 32 )
+        {
             eType = GDT_Int32;
+        }
         else if( poDS->sHeader.nBitDepth == 64 )
+        {
             eType = GDT_Float64;
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_IllegalArg,
+                     "Invalid MTW bit depth %lu.",
+                     static_cast<unsigned long>(poDS->sHeader.nBitDepth));
+            delete poDS;
+            return nullptr;
+        }
     }
 
     if( poDS->sHeader.nTileWidth == 0 || poDS->sHeader.nTileWidth > INT_MAX ||
@@ -2810,9 +2867,23 @@ CPLErr RMFDataset::ReadTile(int nBlockXOff, int nBlockYOff,
     {
         return CE_Failure;
     }
-
-    GUInt32 nTileBytes = paiTiles[2 * nTile + 1];
     vsi_l_offset nTileOffset = GetFileOffset(paiTiles[2 * nTile]);
+    GUInt32 nTileBytes = paiTiles[2 * nTile + 1];
+    // RMF doesn't store compresed tiles with size greater than 80% of
+    // uncompressed size. But just in case, select twice as many.
+    GUInt32 nMaxTileBytes = 2 * sHeader.nTileWidth * sHeader.nTileHeight *
+                            sHeader.nBitDepth / 8;
+
+    if(nTileBytes >= nMaxTileBytes)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid tile size %lu at offset %ld. Must be less than %lu",
+                 static_cast<unsigned long>(nTileBytes),
+                 static_cast<long>(nTileOffset),
+                 static_cast<unsigned long>(nMaxTileBytes));
+        return CE_Failure;
+    }
+
 
     if(nTileOffset == 0)
     {
@@ -2886,8 +2957,6 @@ CPLErr RMFDataset::ReadTile(int nBlockXOff, int nBlockYOff,
 
     if(pabyDecompressBuffer == nullptr)
     {
-        GUInt32 nMaxTileBytes = sHeader.nTileWidth * sHeader.nTileHeight *
-                                sHeader.nBitDepth / 8;
         pabyDecompressBuffer =
            reinterpret_cast<GByte*>(VSIMalloc(std::max(1U, nMaxTileBytes)));
         if(!pabyDecompressBuffer)
