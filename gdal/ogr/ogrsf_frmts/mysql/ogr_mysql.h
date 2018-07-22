@@ -225,6 +225,9 @@ class OGRMySQLDataSource final: public OGRDataSource
 
     OGRMySQLLayer      *poLongResultLayer;
 
+    int                 m_nMajor = 0;
+    int                 m_nMinor = 0;
+
   public:
                         OGRMySQLDataSource();
                         virtual ~OGRMySQLDataSource();
@@ -264,6 +267,9 @@ class OGRMySQLDataSource final: public OGRDataSource
 
     void                RequestLongResult( OGRMySQLLayer * );
     void                InterruptLongResult();
+
+    int                 GetMajorVersion() const { return m_nMajor; }
+    int                 GetUnknownSRID() const;
 };
 
 #endif /* ndef OGR_MYSQL_H_INCLUDED */

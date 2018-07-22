@@ -468,7 +468,8 @@ void OGRMySQLTableLayer::BuildWhere()
                 sEnvelope.MinX, sEnvelope.MinY);
 
         snprintf( pszWHERE, nWHERELen,
-                 "WHERE MBRIntersects(GeomFromText('%s', '%d'), `%s`)",
+                 "WHERE MBRIntersects(%s('%s', '%d'), `%s`)",
+                 poDS->GetMajorVersion() >= 8 ? "ST_GeomFromText" : "GeomFromText",
                  szEnvelope,
                  nSRSId,
                  pszGeomColumn);
@@ -779,7 +780,9 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
 
             osCommand +=
                 CPLString().Printf(
-                    "GeometryFromText('%s',%d) ", pszWKT, nSRSId );
+                    "%s('%s',%d) ",
+                    poDS->GetMajorVersion() >= 8 ? "ST_GeomFromText" : "GeometryFromText",
+                    pszWKT, nSRSId );
 
             CPLFree( pszWKT );
         }
