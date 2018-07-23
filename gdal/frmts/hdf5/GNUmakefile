@@ -9,6 +9,10 @@ SUBLIBS 	=
 
 CPPFLAGS	:=	 $(HDF5_INCLUDE) $(CPPFLAGS)
 
+ifeq ($(ENABLE_UFFD),yes)
+CPPFLAGS	:=	$(CPPFLAGS) -DENABLE_UFFD
+endif
+
 default:	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 
 clean:

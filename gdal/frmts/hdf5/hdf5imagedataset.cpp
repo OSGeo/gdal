@@ -36,6 +36,7 @@
 #endif
 
 #include "hdf5.h"
+#include "hdf5uffd.h"
 
 #ifdef _MSC_VER
 #pragma warning(pop)
@@ -504,7 +505,11 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
     poDS->SetPhysicalFilename(osFilename);
 
     // Try opening the dataset.
+#ifdef ENABLED_UFFD
+    HDF5_UFFD_MAP(poOpenInfo->pszFilename, poDS->hHDF5, poDS->pCtx);
+#else
     poDS->hHDF5 = H5Fopen(osFilename, H5F_ACC_RDONLY, H5P_DEFAULT);
+#endif
 
     if( poDS->hHDF5 < 0 )
     {

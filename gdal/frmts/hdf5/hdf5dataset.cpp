@@ -41,6 +41,7 @@
 
 #include "hdf5.h"
 #include "hdf5dataset.h"
+#include "hdf5uffd.h"
 
 #ifdef _MSC_VER
 #pragma warning(pop)
@@ -102,6 +103,7 @@ void GDALRegister_HDF5()
 /************************************************************************/
 HDF5Dataset::HDF5Dataset() :
     hHDF5(-1),
+    pCtx(nullptr),
     hGroupID(-1),
     papszSubDatasets(nullptr),
     bIsHDFEOS(FALSE),
@@ -117,6 +119,10 @@ HDF5Dataset::HDF5Dataset() :
 /************************************************************************/
 HDF5Dataset::~HDF5Dataset()
 {
+#ifdef ENABLE_UFFD
+    HDF5_UFFD_UNMAP(pCtx);
+#endif
+
     CSLDestroy(papszMetadata);
     if( hGroupID > 0 )
         H5Gclose(hGroupID);
@@ -389,7 +395,11 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
     poDS->SetDescription(poOpenInfo->pszFilename);
 
     // Try opening the dataset.
+#ifdef ENABLE_UFFD
+    HDF5_UFFD_MAP(poOpenInfo->pszFilename, poDS->hHDF5, poDS->pCtx);
+#else
     poDS->hHDF5 = H5Fopen(poOpenInfo->pszFilename, H5F_ACC_RDONLY, H5P_DEFAULT);
+#endif
     if( poDS->hHDF5 < 0 )
     {
         delete poDS;
