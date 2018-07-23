@@ -132,6 +132,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "ant",
     "unzip",
     "mono-mcs",
+    "libmono-system-drawing4.0-cil",
     "libjson-c-dev",
     "libtiff5-dev",
     "libopenjp2-7-dev",
