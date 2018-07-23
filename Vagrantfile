@@ -187,7 +187,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     scripts = [
       "sfcgal.sh",
       "swig-1.3.40.sh",
-      "libkml.sh",
       "openjpeg.sh",
       "gdal.sh",
       "postgis.sh"
