@@ -1021,13 +1021,13 @@ do {                                                    \
 void RMFDataset::FlushCache()
 
 {
+    GDALDataset::FlushCache();
+
     if(poCompressData != nullptr &&
        poCompressData->oThreadPool.GetThreadCount() > 0)
     {
         poCompressData->oThreadPool.WaitCompletion();
     }
-
-    GDALDataset::FlushCache();
 
     if( !bHeaderDirty )
         return;
