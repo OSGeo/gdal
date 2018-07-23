@@ -13,7 +13,10 @@ fi
 export NUMTHREADS
 
 rsync -a /vagrant/gdal/ /home/vagrant/gnumake-build-gcc4.8
+rsync -a /vagrant/autotest/ /home/vagrant/gnumake-build-gcc4.8/autotest
 echo rsync -a /vagrant/gdal/ /home/vagrant/gnumake-build-gcc4.8/ > /home/vagrant/gnumake-build-gcc4.8/resync.sh
+echo rsync -a /vagrant/autotest/ /home/vagrant/gnumake-build-gcc4.8/autotest >> /home/vagrant/gnumake-build-gcc4.8/resync.sh
+
 chmod +x /home/vagrant/gnumake-build-gcc4.8/resync.sh
 cd gnumake-build-gcc4.8
 
@@ -53,6 +56,6 @@ cd swig/csharp
 # There's an issue with swig 2.0.4 from ubuntu 12.04
 PATH=$HOME/install-swig-1.3.40/bin:$PATH make generate
 make
-# For some reason, this fails on Vagrant ubuntu 12.04
+# For some reason, this fails on Vagrant ubuntu trusty(14.04)
 # make test
 cd ../..
