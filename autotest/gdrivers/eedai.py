@@ -38,6 +38,8 @@ sys.path.append('../pymod')
 from osgeo import gdal
 
 import gdaltest
+import webserver
+
 
 ###############################################################################
 # Find EEDAI driver
@@ -56,6 +58,8 @@ def eedai_1():
     gdaltest.EEDA_URL = gdal.GetConfigOption('EEDA_URL')
     gdaltest.EEDA_PRIVATE_KEY = gdal.GetConfigOption('EEDA_PRIVATE_KEY')
     gdaltest.EEDA_CLIENT_EMAIL = gdal.GetConfigOption('EEDA_CLIENT_EMAIL')
+    gdaltest.GOOGLE_APPLICATION_CREDENTIALS = gdal.GetConfigOption('GOOGLE_APPLICATION_CREDENTIALS')
+    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '')
 
     return 'success'
 
@@ -410,6 +414,127 @@ gwE6fxOLyJDxuWRf
     return 'success'
 
 ###############################################################################
+# Test OAuth2 with GOOGLE_APPLICATION_CREDENTIALS
+
+
+def eedai_GOOGLE_APPLICATION_CREDENTIALS():
+
+    if gdaltest.eedai_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/my.json', """{
+"private_key":"-----BEGIN PRIVATE KEY-----
+MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAOlwJQLLDG1HeLrk\n
+VNcFR5Qptto/rJE5emRuy0YmkVINT4uHb1be7OOo44C2Ev8QPVtNHHS2XwCY5gTm\n
+i2RfIBLv+VDMoVQPqqE0LHb0WeqGmM5V1tHbmVnIkCcKMn3HpK30grccuBc472LQ\n
+DVkkGqIiGu0qLAQ89JP/r0LWWySRAgMBAAECgYAWjsS00WRBByAOh1P/dz4kfidy\n
+TabiXbiLDf3MqJtwX2Lpa8wBjAc+NKrPXEjXpv0W3ou6Z4kkqKHJpXGg4GRb4N5I\n
+2FA+7T1lA0FCXa7dT2jvgJLgpBepJu5b//tqFqORb4A4gMZw0CiPN3sUsWsSw5Hd\n
+DrRXwp6sarzG77kvZQJBAPgysAmmXIIp9j1hrFSkctk4GPkOzZ3bxKt2Nl4GFrb+\n
+bpKSon6OIhP1edrxTz1SMD1k5FiAAVUrMDKSarbh5osCQQDwxq4Tvf/HiYz79JBg\n
+Wz5D51ySkbg01dOVgFW3eaYAdB6ta/o4vpHhnbrfl6VO9oUb3QR4hcrruwnDHsw3\n
+4mDTAkEA9FPZjbZSTOSH/cbgAXbdhE4/7zWOXj7Q7UVyob52r+/p46osAk9i5qj5\n
+Kvnv2lrFGDrwutpP9YqNaMtP9/aLnwJBALLWf9n+GAv3qRZD0zEe1KLPKD1dqvrj\n
+j+LNjd1Xp+tSVK7vMs4PDoAMDg+hrZF3HetSQM3cYpqxNFEPgRRJOy0CQQDQlZHI\n
+yzpSgEiyx8O3EK1iTidvnLXbtWabvjZFfIE/0OhfBmN225MtKG3YLV2HoUvpajLq\n
+gwE6fxOLyJDxuWRf\n
+-----END PRIVATE KEY-----",
+"client_email":"my@email.com"
+}""")
+
+    gdal.SetConfigOption('EEDA_URL', '/vsimem/ee/')
+    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '/vsimem/my.json')
+    gdal.SetConfigOption('EEDA_PRIVATE_KEY', None)
+    gdal.SetConfigOption('EEDA_CLIENT_EMAIL', None)
+    gdal.SetConfigOption('GO2A_AUD', '/vsimem/oauth2/v4/token')
+    gdal.SetConfigOption('GOA2_NOW', '123456')
+    gdal.FileFromMemBuffer('/vsimem/oauth2/v4/token&POSTFIELDS=grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiAibXlAZW1haWwuY29tIiwgInNjb3BlIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZWFydGhlbmdpbmUucmVhZG9ubHkiLCAiYXVkIjogIi92c2ltZW0vb2F1dGgyL3Y0L3Rva2VuIiwgImlhdCI6IDEyMzQ1NiwgImV4cCI6IDEyNzA1Nn0%3D.1W564xcQESVsqZmBEIMzj4rr0RuGa4RiUPZp5H%2FNENN9V9oPSTdacw%2BMiu3pcFf9AJv8wj0ajUeRsgTmvSicAftER49xeCQYUrs6uV122FGVsxml26kMFacNsCgRad%2Fy7xCAhMPfRJsqxS2%2BB392ssBeEzTGCSI6W3AsJg64OfA%3D',
+                           '{ "access_token": "my_token", "token_type": "Bearer", "expires_in": 3600 }')
+
+    ds = gdal.Open('EEDAI:image')
+
+    gdal.Unlink('/vsimem/my.json')
+
+    gdal.SetConfigOption('EEDA_URL', None)
+    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', None)
+    gdal.SetConfigOption('EEDA_PRIVATE_KEY', None)
+    gdal.SetConfigOption('EEDA_CLIENT_EMAIL', None)
+
+    if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
+        return 'skip'
+
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Read credentials from simulated GCE instance
+
+
+def eedai_gce_credentials():
+
+    if gdaltest.eedai_drv is None:
+        return 'skip'
+
+    gdaltest.webserver_process = None
+    gdaltest.webserver_port = 0
+
+    if not gdaltest.built_against_curl():
+        return 'skip'
+
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL',
+                         'http://localhost:%d/computeMetadata/v1/instance/service-accounts/default/token' % gdaltest.webserver_port)
+    # Disable hypervisor related check to test if we are really on EC2
+    gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', 'NO')
+
+    gdal.VSICurlClearCache()
+
+    def method(request):
+        if 'Authorization' not in request.headers:
+            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+            request.send_response(403)
+            return
+        expected_authorization = 'Bearer ACCESS_TOKEN'
+        if request.headers['Authorization'] != expected_authorization:
+            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        request.send_header('Content-Length', 3)
+        request.end_headers()
+        request.wfile.write("""foo""".encode('ascii'))
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/computeMetadata/v1/instance/service-accounts/default/token', 200, {},
+                """{
+                "access_token" : "ACCESS_TOKEN",
+                "token_type" : "Bearer",
+                "expires_in" : 3600,
+                }""")
+
+    with webserver.install_http_handler(handler):
+        gdal.SetConfigOption('EEDA_URL', '/vsimem/ee/')
+        ds = gdal.Open('EEDAI:image')
+        gdal.SetConfigOption('EEDA_URL', None)
+
+    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL', None)
+    gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', None)
+
+    webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
+
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Request in PNG mode
 
 
@@ -633,13 +758,15 @@ def eedai_real_service():
     if gdaltest.eedai_drv is None:
         return 'skip'
 
-    if gdal.GetConfigOption('EEDA_PRIVATE_KEY_FILE') is None and gdal.GetConfigOption('EEDA_PRIVATE_KEY') is None:
-        print('Missing EEDA_PRIVATE_KEY_FILE/EEDA_PRIVATE_KEY')
-        return 'skip'
+    if gdal.GetConfigOption('GOOGLE_APPLICATION_CREDENTIALS') is None:
 
-    if gdal.GetConfigOption('EEDA_CLIENT_EMAIL') is None:
-        print('Missing EEDA_CLIENT_EMAIL')
-        return 'skip'
+        if gdal.GetConfigOption('EEDA_PRIVATE_KEY_FILE') is None and gdal.GetConfigOption('EEDA_PRIVATE_KEY') is None:
+            print('Missing EEDA_PRIVATE_KEY_FILE/EEDA_PRIVATE_KEY or GOOGLE_APPLICATION_CREDENTIALS')
+            return 'skip'
+
+        if gdal.GetConfigOption('EEDA_CLIENT_EMAIL') is None:
+            print('Missing EEDA_CLIENT_EMAIL')
+            return 'skip'
 
     ds = gdal.Open('EEDAI:USDA/NAIP/DOQQ/n_4010064_se_14_2_20070725')
     if ds is None:
@@ -687,6 +814,7 @@ def eedai_cleanup():
     gdal.SetConfigOption('EEDA_CLIENT_EMAIL', gdaltest.EEDA_CLIENT_EMAIL)
     gdal.SetConfigOption('GO2A_AUD', None)
     gdal.SetConfigOption('GOA2_NOW', None)
+    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', gdaltest.GOOGLE_APPLICATION_CREDENTIALS)
 
     gdal.Unlink('/vsimem/ee/assets/image')
     gdal.RmdirRecursive('/vsimem/ee/')
@@ -698,6 +826,8 @@ gdaltest_list = [
     eedai_1,
     eedai_2,
     eedai_3,
+    eedai_GOOGLE_APPLICATION_CREDENTIALS,
+    eedai_gce_credentials,
     eedai_4,
     eedai_geotiff,
     eedai_cleanup,

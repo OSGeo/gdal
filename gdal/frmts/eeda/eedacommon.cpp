@@ -291,6 +291,9 @@ char** GDALEEDABaseDataset::GetBaseHTTPOptions()
     // Strategy to get the Bearer Authorization value:
     // - if it is specified in the EEDA_BEARER config option, use it
     // - otherwise if EEDA_BEARER_FILE is specified, read it and use its content
+    // - otherwise if GOOGLE_APPLICATION_CREDENTIALS is specified, read the
+    //   corresponding file to get the private key and client_email, to get a
+    //   bearer using OAuth2ServiceAccount method
     // - otherwise if EEDA_PRIVATE_KEY and EEDA_CLIENT_EMAIL are set, use them
     //   to get a bearer using OAuth2ServiceAccount method
     // - otherwise if EEDA_PRIVATE_KEY_FILE and EEDA_CLIENT_EMAIL are set, use
@@ -320,6 +323,8 @@ char** GDALEEDABaseDataset::GetBaseHTTPOptions()
         else
         {
             CPLString osPrivateKey(CPLGetConfigOption("EEDA_PRIVATE_KEY", ""));
+            CPLString osClientEmail(CPLGetConfigOption("EEDA_CLIENT_EMAIL", ""));
+
             if( osPrivateKey.empty() )
             {
                 CPLString osPrivateKeyFile(
@@ -342,13 +347,30 @@ char** GDALEEDABaseDataset::GetBaseHTTPOptions()
                     }
                 }
             }
-            CPLString osClientEmail(CPLGetConfigOption("EEDA_CLIENT_EMAIL", ""));
+
+            CPLString osServiceAccountJson(
+                CPLGetConfigOption("GOOGLE_APPLICATION_CREDENTIALS", ""));
+            if( !osServiceAccountJson.empty() )
+            {
+                CPLJSONDocument oDoc;
+                if( !oDoc.Load(osServiceAccountJson) )
+                {
+                    CSLDestroy(papszOptions);
+                    return nullptr;
+                }
+
+                osPrivateKey = oDoc.GetRoot().GetString("private_key");
+                osPrivateKey.replaceAll("\\n", "\n");
+                osClientEmail = oDoc.GetRoot().GetString("client_email");
+            }
+
+            char** papszMD = nullptr;
             if( !osPrivateKey.empty() && !osClientEmail.empty() )
             {
                 CPLDebug("EEDA", "Requesting Bearer token");
                 osPrivateKey.replaceAll("\\n", "\n");
                 //CPLDebug("EEDA", "Private key: %s", osPrivateKey.c_str());
-                char** papszMD =
+                papszMD =
                     GOA2GetAccessTokenFromServiceAccount(
                         osPrivateKey,
                         osClientEmail,
@@ -359,7 +381,18 @@ char** GDALEEDABaseDataset::GetBaseHTTPOptions()
                     CSLDestroy(papszOptions);
                     return nullptr;
                 }
+            }
+            // Some Travis-CI workers are GCE machines, and for some tests, we don't
+            // want this code path to be taken. And on AppVeyor/Window, we would also
+            // attempt a network access
+            else if( !CPLTestBool(CPLGetConfigOption("CPL_GCE_SKIP", "NO")) &&
+                    CPLIsMachinePotentiallyGCEInstance() )
+            {
+                papszMD = GOA2GetAccessTokenFromCloudEngineVM(nullptr);
+            }
 
+            if( papszMD )
+            {
                 osBearer = CSLFetchNameValueDef(papszMD, "access_token", "");
                 m_osBearer = osBearer;
                 m_nExpirationTime = CPLAtoGIntBig(
@@ -372,6 +405,7 @@ char** GDALEEDABaseDataset::GetBaseHTTPOptions()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                     "Missing EEDA_BEARER, EEDA_BEARER_FILE or "
+                    "GOOGLE_APPLICATION_CREDENTIALS or "
                     "EEDA_PRIVATE_KEY/EEDA_PRIVATE_KEY_FILE + "
                     "EEDA_CLIENT_EMAIL config option");
                 CSLDestroy(papszOptions);
