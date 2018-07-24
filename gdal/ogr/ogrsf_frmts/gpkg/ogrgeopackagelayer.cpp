@@ -305,7 +305,7 @@ int OGRGeoPackageLayer::TestCapability ( const char * pszCap )
     if( EQUAL(pszCap,OLCIgnoreFields) )
         return TRUE;
     else if ( EQUAL(pszCap, OLCStringsAsUTF8) )
-        return m_poDS->GetUTF8();
+        return TRUE;
     else
         return FALSE;
 }
