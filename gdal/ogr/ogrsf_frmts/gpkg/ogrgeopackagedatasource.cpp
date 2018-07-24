@@ -501,7 +501,6 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_nUserVersion(GPKG_1_2_VERSION),
     m_papoLayers(nullptr),
     m_nLayers(0),
-    m_bUtf8(false),
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     m_bHasGPKGOGRContents(false),
 #endif
@@ -989,9 +988,6 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                   m_pszFilename);
         return FALSE;
     }
-
-    /* OGR UTF-8 capability, we'll advertise UTF-8 support if we have it */
-    m_bUtf8 = ( OGRERR_NONE == PragmaCheck("encoding", "UTF-8", 1) );
 
     /* Check for requirement metadata tables */
     /* Requirement 10: gpkg_spatial_ref_sys must exist */
