@@ -923,7 +923,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         && bSpatialArrangementPreserved
         && psOptions->nGCPCount == 0 && !bGotBounds
         && psOptions->pszOutputSRS == nullptr && !psOptions->bSetNoData && !psOptions->bUnsetNoData
-        && psOptions->nRGBExpand == 0 && !psOptions->bStats && !psOptions->bNoRAT
+        && psOptions->nRGBExpand == 0 && !psOptions->bNoRAT
         && psOptions->panColorInterp == nullptr )
     {
 
@@ -950,6 +950,21 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             }
         }
 
+/* -------------------------------------------------------------------- */
+/*      Compute stats if required.                                      */
+/* -------------------------------------------------------------------- */
+        if (psOptions->bStats)
+        {
+            GDALDataset* poSrcDS = GDALDataset::FromHandle(hSrcDataset);
+            for( int i = 0; i < poSrcDS->GetRasterCount(); i++ )
+            {
+                double dfMin, dfMax, dfMean, dfStdDev;
+                poSrcDS->GetRasterBand(i+1)->ComputeStatistics(
+                    psOptions->bApproxStats,
+                    &dfMin, &dfMax, &dfMean, &dfStdDev,
+                    GDALDummyProgress, nullptr );
+            }
+        }
 
         hOutDS = GDALCreateCopy( hDriver, pszDest, hSrcDataset,
                                  psOptions->bStrict, psOptions->papszCreateOptions,
@@ -958,6 +973,13 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
         GDALTranslateOptionsFree(psOptions);
         return hOutDS;
+    }
+
+    if( CSLFetchNameValue(psOptions->papszCreateOptions, "COPY_SRC_OVERVIEWS") )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "General options of gdal_translate make the "
+                 "COPY_SRC_OVERVIEWS creation option ineffective");
     }
 
 /* -------------------------------------------------------------------- */
@@ -1223,7 +1245,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      Transfer generally applicable metadata.                         */
 /* -------------------------------------------------------------------- */
-    GDALDataset* poSrcDS = reinterpret_cast<GDALDataset*>(hSrcDataset);
+    GDALDataset* poSrcDS = GDALDataset::FromHandle(hSrcDataset);
     char** papszMetadata = CSLDuplicate(poSrcDS->GetMetadata());
     if ( psOptions->nScaleRepeat > 0 || psOptions->bUnscale || psOptions->eOutputType != GDT_Unknown )
     {
