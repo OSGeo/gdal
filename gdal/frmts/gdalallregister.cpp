@@ -572,6 +572,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_ISCE();
 #endif
 
+#ifdef FRMT_sigdem
+    GDALRegister_SIGDEM();
+#endif
+
 #ifdef FRMT_wcs
     GDALRegister_HTTP();
 #endif

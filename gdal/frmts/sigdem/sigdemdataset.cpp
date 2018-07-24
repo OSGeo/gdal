@@ -1,0 +1,627 @@
+/******************************************************************************
+ *
+ * Project:    Scaled Integer Gridded DEM .sigdem Driver
+ * Purpose:    Implementation of Scaled Integer Gridded DEM
+ * Author:     Paul Austin, paul.austin@revolsys.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2018, Paul Austin <paul.austin@revolsys.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
+#include "sigdemdataset.h"
+
+#include <iostream>
+
+#include "cpl_conv.h"
+#include "cpl_port.h"
+#include "ogr_spatialref.h"
+
+#include <cctype>
+#include <cerrno>
+#include <climits>
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#    include <fcntl.h>
+#endif
+
+#include <limits>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "ogr_core.h"
+#include "ogr_spatialref.h"
+
+CPL_CVSID("$Id$")
+
+#ifdef CPL_IS_LSB
+#define SWAP_SIGDEM_HEADER(sHeader) { \
+CPL_SWAP16PTR(&sHeader.version); \
+CPL_SWAP32PTR(&sHeader.nCoordinateSystemId); \
+CPL_SWAP64PTR(&sHeader.dfOffsetX); \
+CPL_SWAP64PTR(&sHeader.dfScaleFactorX); \
+CPL_SWAP64PTR(&sHeader.dfOffsetY); \
+CPL_SWAP64PTR(&sHeader.dfScaleFactorY); \
+CPL_SWAP64PTR(&sHeader.dfOffsetZ); \
+CPL_SWAP64PTR(&sHeader.dfScaleFactorZ); \
+CPL_SWAP64PTR(&sHeader.dfMinX); \
+CPL_SWAP64PTR(&sHeader.dfMinY); \
+CPL_SWAP64PTR(&sHeader.dfMinZ); \
+CPL_SWAP64PTR(&sHeader.dfMaxX); \
+CPL_SWAP64PTR(&sHeader.dfMaxY); \
+CPL_SWAP64PTR(&sHeader.dfMaxZ); \
+CPL_SWAP32PTR(&sHeader.nCols); \
+CPL_SWAP32PTR(&sHeader.nRows); \
+CPL_SWAP64PTR(&sHeader.dfXDim); \
+CPL_SWAP64PTR(&sHeader.dfYDim); \
+}
+#else
+#define SWAP_SIGDEM_HEADER(sHeader)
+#endif
+
+constexpr int CELL_SIZE_FILE = 4;
+
+constexpr int CELL_SIZE_MEM = 8;
+
+constexpr vsi_l_offset HEADER_LENGTH = 132;
+
+constexpr int32_t NO_DATA = 0x80000000;
+
+constexpr char SIGDEM_FILE_TYPE[6] = { 'S', 'I', 'G', 'D', 'E', 'M' };
+
+static OGRSpatialReference* BuildSRS(const char* pszWKT) {
+    OGRSpatialReference* poSRS = new OGRSpatialReference(pszWKT);
+    if (poSRS->morphFromESRI() != OGRERR_NONE) {
+        delete poSRS;
+        return nullptr;
+    } else {
+        if (poSRS->AutoIdentifyEPSG() != OGRERR_NONE) {
+            int nEntries = 0;
+            int* panConfidence = nullptr;
+            OGRSpatialReferenceH* pahSRS = poSRS->FindMatches(nullptr,
+                    &nEntries, &panConfidence);
+            if (nEntries == 1 && panConfidence[0] == 100) {
+                poSRS->Release();
+                poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
+                CPLFree(pahSRS);
+            } else {
+                OSRFreeSRSArray(pahSRS);
+            }
+            CPLFree(panConfidence);
+        }
+        return poSRS;
+    }
+}
+
+void GDALRegister_SIGDEM() {
+    if (GDALGetDriverByName("SIGDEM") == nullptr) {
+        GDALDriver *poDriver = new GDALDriver();
+
+        poDriver->SetDescription("SIGDEM");
+        poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+        poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                "Scaled Integer Gridded DEM .sigdem");
+        poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
+                "frmt_various.html#SIGDEM");
+        poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "sigdem");
+
+        poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+        poDriver->pfnOpen = SIGDEMDataset::Open;
+        poDriver->pfnCreateCopy = SIGDEMDataset::CreateCopy;
+
+        GetGDALDriverManager()->RegisterDriver(poDriver);
+    }
+}
+
+static int32_t GetCoordinateSystemId(const char* pszProjection) {
+    int32_t coordinateSystemId = 0;
+    OGRSpatialReference* poSRS = BuildSRS(pszProjection);
+    if (poSRS != nullptr) {
+        std::string pszRoot;
+        if (poSRS->IsProjected()) {
+            pszRoot = "PROJCS";
+        } else {
+            pszRoot = "GEOCS";
+        }
+        const char *pszAuthName = poSRS->GetAuthorityName(pszRoot.c_str());
+        const char *pszAuthCode = poSRS->GetAuthorityCode(pszRoot.c_str());
+        if (pszAuthName != nullptr && EQUAL(pszAuthName, "EPSG")
+                && pszAuthCode != nullptr) {
+            coordinateSystemId = atoi(pszAuthCode);
+        }
+    }
+    delete poSRS;
+    return coordinateSystemId;
+}
+
+SIGDEMDataset::SIGDEMDataset(SIGDEMHeader& sHeaderIn) :
+        fpImage(nullptr),
+        bGotTransform(false),
+        pszProjection(CPLStrdup("")),
+        sHeader(sHeaderIn) {
+    this->nRasterXSize = sHeader.nCols;
+    this->nRasterYSize = sHeader.nRows;
+
+    this->bGotTransform = true;
+    this->adfGeoTransform[0] = sHeader.dfMinX;
+    this->adfGeoTransform[1] = sHeader.dfXDim;
+    this->adfGeoTransform[2] = 0.0;
+    this->adfGeoTransform[3] = sHeader.dfMaxY;
+    this->adfGeoTransform[4] = 0.0;
+    this->adfGeoTransform[5] = -sHeader.dfYDim;
+}
+
+SIGDEMDataset::~SIGDEMDataset() {
+    FlushCache();
+
+    if (fpImage != nullptr) {
+        if (VSIFCloseL(fpImage) != 0) {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
+
+    CPLFree(pszProjection);
+}
+
+CPLErr SIGDEMDataset::GetGeoTransform(double * padfTransform) {
+    if (bGotTransform) {
+        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        return CE_None;
+    }
+
+    return GDALPamDataset::GetGeoTransform(padfTransform);
+}
+const char* SIGDEMDataset::GetProjectionRef() {
+    return pszProjection;
+}
+
+CPLErr SIGDEMDataset::SetGeoTransform(double *padfGeoTransform) {
+// We only support non-rotated images.
+    if (padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0) {
+        return GDALPamDataset::SetGeoTransform(padfGeoTransform);
+    }
+
+    bGotTransform = true;
+    memcpy(adfGeoTransform, padfGeoTransform, sizeof(double) * 6);
+
+    return CE_None;
+}
+
+CPLErr SIGDEMDataset::SetProjection(const char* pszProjectionIn) {
+    if (!((this->pszProjection == nullptr && pszProjectionIn == nullptr)
+            || (this->pszProjection != nullptr && pszProjectionIn != nullptr
+                    && strcmp(this->pszProjection, pszProjectionIn) == 0))) {
+        CPLFree(this->pszProjection);
+        if (pszProjectionIn) {
+            this->pszProjection =
+                    pszProjectionIn ? CPLStrdup(pszProjectionIn) : nullptr;
+        }
+        this->sHeader.nCoordinateSystemId = GetCoordinateSystemId(
+                this->pszProjection);
+        this->bHdrDirty = true;
+    }
+    return CE_None;
+}
+
+int SIGDEMDataset::Identify(GDALOpenInfo* poOpenInfo) {
+    if (poOpenInfo->nHeaderBytes < static_cast<int>(HEADER_LENGTH)) {
+        return FALSE;
+    } else {
+        for (int i = 0; i < 6; i++) {
+            if (poOpenInfo->pabyHeader[i] != SIGDEM_FILE_TYPE[i]) {
+                return FALSE;
+            }
+        }
+        return TRUE;
+    }
+}
+
+GDALDataset *SIGDEMDataset::Open(GDALOpenInfo * poOpenInfo) {
+    VSILFILE* fp = poOpenInfo->fpL;
+
+    SIGDEMHeader sHeader;
+    if (!SIGDEMDataset::Identify(poOpenInfo) || fp == nullptr) {
+        return nullptr;
+    } else if (VSIFReadL(&sHeader, 1, HEADER_LENGTH, fp) != HEADER_LENGTH) {
+        return nullptr;
+    } else {
+        SWAP_SIGDEM_HEADER(sHeader)
+        if (!GDALCheckDatasetDimensions(sHeader.nCols, sHeader.nRows)) {
+            return nullptr;
+        } else {
+
+            OGRSpatialReference oSRS;
+
+            if (sHeader.nCoordinateSystemId > 0) {
+                if (oSRS.importFromEPSG(
+                        sHeader.nCoordinateSystemId) != OGRERR_NONE) {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                            "SIGDEM unable to find coordinateSystemId=%d.",
+                            sHeader.nCoordinateSystemId);
+                    return nullptr;
+                }
+                oSRS.morphFromESRI();
+            } else {
+                const char* pszFilename = poOpenInfo->pszFilename;
+                char * const pszDirname = CPLStrdup(CPLGetPath(pszFilename));
+                char * const pszBasename = CPLStrdup(
+                        CPLGetBasename(pszFilename));
+
+                CPLString osPrjFilename = CPLFormFilename(pszDirname,
+                        pszBasename, "prj");
+                int nRet = 0;
+                {
+                    VSIStatBufL sStatBuf;
+                    nRet = VSIStatL(osPrjFilename, &sStatBuf);
+                }
+                if (nRet != 0 && VSIIsCaseSensitiveFS(osPrjFilename)) {
+                    osPrjFilename = CPLFormFilename(pszDirname, pszBasename,
+                            "PRJ");
+
+                    VSIStatBufL sStatBuf;
+                    nRet = VSIStatL(osPrjFilename, &sStatBuf);
+                }
+
+                CPLFree(pszDirname);
+                CPLFree(pszBasename);
+
+                if (nRet == 0) {
+                    char** papszPrj = CSLLoad(osPrjFilename);
+                    if (oSRS.importFromESRI(papszPrj) != OGRERR_NONE) {
+                        CPLError(CE_Failure, CPLE_NotSupported,
+                                "SIGDEM unable to read projection from %s.",
+                                osPrjFilename.c_str());
+                        CSLDestroy(papszPrj);
+                        return nullptr;
+                    }
+                    CSLDestroy(papszPrj);
+                } else {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                            "SIGDEM unable to find projection.");
+                    return nullptr;
+                }
+            }
+
+            if (sHeader.nCols
+                    > std::numeric_limits<int>::max() / (CELL_SIZE_MEM)) {
+                CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
+                return nullptr;
+            }
+
+            SIGDEMDataset *poDS = new SIGDEMDataset(sHeader);
+
+            CPLFree(poDS->pszProjection);
+            oSRS.exportToWkt(&(poDS->pszProjection));
+
+            poDS->fpImage = poOpenInfo->fpL;
+            poOpenInfo->fpL = nullptr;
+            poDS->eAccess = poOpenInfo->eAccess;
+
+            poDS->SetDescription(poOpenInfo->pszFilename);
+            poDS->PamInitialize();
+
+            poDS->nBands = 1;
+            CPLErrorReset();
+            SIGDEMRasterBand *poBand = new SIGDEMRasterBand(poDS, poDS->fpImage,
+                    sHeader.dfMinZ, sHeader.dfMaxZ);
+
+            poDS->SetBand(1, poBand);
+            if (CPLGetLastErrorType() != CE_None) {
+                poDS->nBands = 1;
+                delete poDS;
+                return nullptr;
+            }
+
+// Initialize any PAM information.
+            poDS->TryLoadXML();
+
+// Check for overviews.
+            poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+
+            return poDS;
+        }
+    }
+}
+
+GDALDataset *SIGDEMDataset::CreateCopy(
+    const char * pszFilename,
+    GDALDataset * poSrcDS,
+    CPL_UNUSED int bStrict,
+    CPL_UNUSED char ** papszOptions,
+    GDALProgressFunc pfnProgress,
+    void * pProgressData) {
+    const int nBands = poSrcDS->GetRasterCount();
+    double adfGeoTransform[6] = { };
+    if (poSrcDS->GetGeoTransform(adfGeoTransform) != CE_None) {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                "SIGDEM driver requires a valid GeoTransform.");
+        return nullptr;
+    } else if (nBands != 1) {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                "SIGDEM driver doesn't support %d bands.  Must be 1 band.",
+                nBands);
+        return nullptr;
+    } else {
+        VSILFILE *fp = VSIFOpenL(pszFilename, "wb");
+        if (fp == nullptr) {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                    "Attempt to create file `%s' failed.", pszFilename);
+            return nullptr;
+        } else {
+
+            GDALRasterBand* band = poSrcDS->GetBands()[0];
+            const char* pszProjection = poSrcDS->GetProjectionRef();
+
+            int32_t nCols = poSrcDS->GetRasterXSize();
+            int32_t nRows = poSrcDS->GetRasterYSize();
+            int32_t nCoordinateSystemId = GetCoordinateSystemId(pszProjection);
+
+            SIGDEMHeader sHeader;
+
+            memcpy(sHeader.acFileType, SIGDEM_FILE_TYPE, 6);
+            sHeader.version = 2;
+            sHeader.nCoordinateSystemId = nCoordinateSystemId;
+            sHeader.dfScaleFactorX = 1000;
+            sHeader.dfScaleFactorY = 1000;
+            sHeader.dfOffsetZ = 0;
+            sHeader.dfScaleFactorZ = 1000;
+
+            sHeader.dfMinX = adfGeoTransform[0];
+            const char* pszMin = band->GetMetadataItem("STATISTICS_MINIMUM");
+            if (pszMin == nullptr) {
+                sHeader.dfMinZ = -10000;
+            } else {
+                sHeader.dfMinZ = atof(pszMin);
+            }
+            sHeader.dfMaxY = adfGeoTransform[3];
+            const char* pszMax = band->GetMetadataItem("STATISTICS_MAXIMUM");
+            if (pszMax == nullptr) {
+                sHeader.dfMaxZ = 10000;
+            } else {
+                sHeader.dfMaxZ = atof(pszMax);
+            }
+            sHeader.nCols = poSrcDS->GetRasterXSize();
+            sHeader.nRows = poSrcDS->GetRasterYSize();
+            sHeader.dfXDim = adfGeoTransform[1];
+            sHeader.dfYDim = -adfGeoTransform[5];
+
+            sHeader.dfMaxX = sHeader.dfMinX + sHeader.nCols * sHeader.dfXDim;
+            sHeader.dfMinY = sHeader.dfMaxY - sHeader.nRows * sHeader.dfYDim;
+            sHeader.dfOffsetX = sHeader.dfMinX;
+            sHeader.dfOffsetY = sHeader.dfMinY;
+
+            SWAP_SIGDEM_HEADER(sHeader);
+            VSIFWriteL(&sHeader, HEADER_LENGTH, 1, fp);
+
+            // Write fill with all NO_DATA values
+            int32_t* row = new int32_t[nCols];
+            std::fill(row, row + nCols, CPL_MSBWORD32(NO_DATA));
+            for (int i = 0; i < nRows; i++) {
+                VSIFWriteL(row, CELL_SIZE_FILE, nCols, fp);
+            }
+            delete row;
+
+            if (VSIFCloseL(fp) != 0) {
+                return nullptr;
+            } else {
+                if (nCoordinateSystemId <= 0) {
+                    if (!EQUAL(pszProjection, "")) {
+                        char *pszDirname = CPLStrdup(CPLGetPath(pszFilename));
+                        char *pszBasename = CPLStrdup(
+                                CPLGetBasename(pszFilename));
+                        char *pszPrjFilename = CPLStrdup(
+                                CPLFormFilename(pszDirname, pszBasename,
+                                        "prj"));
+                        VSILFILE *fpProj = VSIFOpenL(pszPrjFilename, "wt");
+                        if (fpProj != nullptr) {
+                            OGRSpatialReference oSRS;
+                            oSRS.importFromWkt(pszProjection);
+                            oSRS.morphToESRI();
+                            char *pszESRIProjection = nullptr;
+                            oSRS.exportToWkt(&pszESRIProjection);
+                            CPL_IGNORE_RET_VAL(
+                                    VSIFWriteL(pszESRIProjection, 1,
+                                            strlen(pszESRIProjection), fpProj));
+
+                            CPL_IGNORE_RET_VAL(VSIFCloseL(fpProj));
+                            CPLFree(pszESRIProjection);
+                        } else {
+                            CPLError(CE_Failure, CPLE_FileIO,
+                                    "Unable to create file %s.",
+                                    pszPrjFilename);
+                        }
+                        CPLFree(pszDirname);
+                        CPLFree(pszBasename);
+                        CPLFree(pszPrjFilename);
+                    }
+                }
+                GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
+                GDALDataset * poDstDS = Open(&oOpenInfo);
+                if (GDALDatasetCopyWholeRaster(poSrcDS, poDstDS, nullptr,
+                        pfnProgress, pProgressData) == OGRERR_NONE) {
+                    return poDstDS;
+                } else {
+                    return nullptr;
+                }
+            }
+        }
+    }
+}
+
+SIGDEMRasterBand::SIGDEMRasterBand(
+    SIGDEMDataset *poDSIn,
+    VSILFILE *fpRawIn,
+    double dfMinZ,
+    double dfMaxZ) :
+        bOwnsFP(0),
+        dfOffsetZ(poDSIn->sHeader.dfOffsetZ),
+        dfScaleFactorZ(poDSIn->sHeader.dfScaleFactorZ),
+        fpRawL(fpRawIn) {
+    this->poDS = poDSIn;
+    this->nBand = 1;
+    this->nRasterXSize = poDSIn->GetRasterXSize();
+    this->nRasterYSize = poDSIn->GetRasterYSize();
+    this->nBlockXSize = this->nRasterXSize;
+    this->nBlockYSize = 1;
+    this->eDataType = GDT_Float64;
+
+    this->nBlockSizeBytes = nRasterXSize * CELL_SIZE_FILE;
+
+    this->pBlockBuffer = new int32_t[this->nRasterXSize];
+    SetNoDataValue(-9999);
+    CPLString osValue;
+    SetMetadataItem("STATISTICS_MINIMUM", osValue.Printf("%.15g", dfMinZ));
+    SetMetadataItem("STATISTICS_MAXIMUM", osValue.Printf("%.15g", dfMaxZ));
+}
+
+CPLErr SIGDEMRasterBand::IReadBlock(
+CPL_UNUSED int nBlockXOff, int nBlockYOff, void *pImage) {
+    CPLAssert(nBlockXOff == 0);
+    int nBlockIndex = nRasterYSize - nBlockYOff - 1;
+
+    if (pBlockBuffer == nullptr) {
+        return CE_Failure;
+    } else if (nLoadedBlockIndex == nBlockIndex) {
+        return CE_None;
+    } else {
+        const vsi_l_offset nReadStart = static_cast<vsi_l_offset>(HEADER_LENGTH
+                + static_cast<GUIntBig>(nBlockSizeBytes) * nBlockIndex);
+
+        // Seek to the correct line.
+        if (VSIFSeekL(fpRawL, nReadStart, SEEK_SET) == -1) {
+            if (poDS != nullptr && poDS->GetAccess() == GA_ReadOnly) {
+                CPLError(CE_Failure, CPLE_FileIO,
+                        "Failed to seek to block %d @ " CPL_FRMT_GUIB ".",
+                        nBlockIndex, nReadStart);
+                return CE_Failure;
+            } else {
+                std::fill(pBlockBuffer, pBlockBuffer + nRasterXSize, 0);
+                nLoadedBlockIndex = nBlockIndex;
+                return CE_None;
+            }
+        } else {
+            const size_t nCellReadCount = VSIFReadL(pBlockBuffer,
+                    CELL_SIZE_FILE, nRasterXSize, fpRawL);
+            if (nCellReadCount < static_cast<size_t>(nRasterXSize)) {
+                if (poDS != nullptr && poDS->GetAccess() == GA_ReadOnly) {
+                    CPLError(CE_Failure, CPLE_FileIO,
+                            "Failed to read block %d.", nBlockIndex);
+                    return CE_Failure;
+                } else {
+                    std::fill(pBlockBuffer + nCellReadCount,
+                            pBlockBuffer + nRasterXSize, NO_DATA);
+                }
+            }
+
+            nLoadedBlockIndex = nBlockIndex;
+
+            int32_t* pnSourceValues = pBlockBuffer;
+            double* pnDestValues = static_cast<double*>(pImage);
+            double dfOffset = this->dfOffsetZ;
+            double dfScaleFactor = this->dfScaleFactorZ;
+            int nCellCount = this->nRasterXSize;
+            for (int i = 0; i < nCellCount; i++) {
+                int32_t nValue = CPL_MSBWORD32(*pnSourceValues);
+                if (nValue == NO_DATA) {
+                    *pnDestValues = -9999;
+                } else {
+                    *pnDestValues = dfOffset + nValue / dfScaleFactor;
+                }
+
+                pnSourceValues++;
+                pnDestValues++;
+            }
+
+            return CE_None;
+        }
+    }
+}
+
+CPLErr SIGDEMRasterBand::IWriteBlock(
+CPL_UNUSED int nBlockXOff, int nBlockYOff, void *pImage) {
+    CPLAssert(nBlockXOff == 0);
+    int nBlockIndex = nRasterYSize - nBlockYOff - 1;
+
+    if (pBlockBuffer == nullptr) {
+        return CE_Failure;
+    } else {
+        double* pnSourceValues = static_cast<double*>(pImage);
+        int32_t* pnDestValues = pBlockBuffer;
+        double dfOffset = this->dfOffsetZ;
+        double dfScaleFactor = this->dfScaleFactorZ;
+        int nCellCount = this->nRasterXSize;
+        for (int i = 0; i < nCellCount; i++) {
+            double dfValue = *pnSourceValues;
+            int32_t nValue;
+            if (dfValue == -9999) {
+                nValue = NO_DATA;
+            } else {
+                nValue = (int32_t) round((dfValue - dfOffset) * dfScaleFactor);
+            }
+            *pnDestValues = CPL_MSBWORD32(nValue);
+            pnSourceValues++;
+            pnDestValues++;
+        }
+
+        const vsi_l_offset nWriteStart = static_cast<vsi_l_offset>(HEADER_LENGTH
+                + static_cast<GUIntBig>(nBlockSizeBytes) * nBlockIndex);
+
+        bDirty = TRUE;
+        if (VSIFSeekL(fpRawL, nWriteStart, SEEK_SET) == -1) {
+            CPLError(CE_Failure, CPLE_FileIO,
+                    "Failed to seek to block %d @ " CPL_FRMT_GUIB
+                    " to write to file.", nBlockIndex,
+                    HEADER_LENGTH + nBlockIndex * nBlockSizeBytes);
+
+            return CE_Failure;
+        } else if (VSIFWriteL(pBlockBuffer, CELL_SIZE_FILE, nRasterXSize,
+                fpRawL) < static_cast<size_t>(nRasterXSize)) {
+            CPLError(CE_Failure, CPLE_FileIO,
+                    "Failed to write block %d to file.", nBlockIndex);
+
+            return CE_Failure;
+        } else {
+            return CE_None;
+        }
+    }
+}
+
+SIGDEMRasterBand::~SIGDEMRasterBand() {
+    SIGDEMRasterBand::FlushCache();
+
+    if (bOwnsFP) {
+        if (VSIFCloseL(fpRawL) != 0) {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
+
+    CPLFree(pBlockBuffer);
+}
