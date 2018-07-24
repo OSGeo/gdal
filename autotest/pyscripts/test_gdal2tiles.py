@@ -45,10 +45,16 @@ def test_gdal2tiles_py_simple():
     if script_path is None:
         return 'skip'
 
+    shutil.copy('../gdrivers/data/small_world.tif', 'tmp/out_gdal2tiles_smallworld.tif')
+
+    os.chdir('tmp')
     test_py_scripts.run_py_script(
         script_path,
         'gdal2tiles',
-        '-q ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+        '-q out_gdal2tiles_smallworld.tif')
+    os.chdir('..')
+
+    os.unlink('tmp/out_gdal2tiles_smallworld.tif')
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/0/0/0.png')
 

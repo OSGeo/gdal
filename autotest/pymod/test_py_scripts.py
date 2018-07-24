@@ -129,9 +129,14 @@ def run_py_script_as_py_module(script_path, script_name, concatenated_argv):
 
     ret = None
 
+    if os.path.exists('tmp'):
+        tmp_stdout = 'tmp/stdout.txt'
+    else:
+        tmp_stdout = 'stdout.txt'
+
     try:
         # Redirect stdout to file
-        fout = open('tmp/stdout.txt', 'wt')
+        fout = open(tmp_stdout, 'wt')
         ori_stdout = sys.stdout
         sys.stdout = fout
 
@@ -149,11 +154,11 @@ def run_py_script_as_py_module(script_path, script_name, concatenated_argv):
         fout.close()
         sys.stdout = ori_stdout
 
-    fout = open('tmp/stdout.txt', 'rt')
+    fout = open(tmp_stdout, 'rt')
     ret = fout.read()
     fout.close()
 
-    os.remove('tmp/stdout.txt')
+    os.remove(tmp_stdout)
 
     # Restore original sys variables
     sys.path = saved_syspath

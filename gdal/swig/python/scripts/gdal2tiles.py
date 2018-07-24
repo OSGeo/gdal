@@ -1214,7 +1214,8 @@ def process_args(argv):
     if len(args) == 2:
         output_folder = args[1]
     else:
-        output_folder = os.path.basename(input_file)
+        # Directory with input filename without extension in actual directory
+        output_folder = os.path.splitext(os.path.basename(input_file))[0]
 
     options = options_post_processing(options, input_file, output_folder)
 
