@@ -427,7 +427,7 @@ GDALDataset *SIGDEMDataset::CreateCopy(
             for (int i = 0; i < nRows; i++) {
                 VSIFWriteL(row, CELL_SIZE_FILE, nCols, fp);
             }
-            delete row;
+            delete[] row;
 
             if (VSIFCloseL(fp) != 0) {
                 return nullptr;

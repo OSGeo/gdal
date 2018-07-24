@@ -83,7 +83,7 @@ struct SIGDEMHeader {
     double dfXDim;
     double dfYDim;
 };
-#pragma pack(push, 1)
+#pragma pack(pop)
 
 class SIGDEMDataset final: public GDALPamDataset {
     friend class SIGDEMRasterBand;
