@@ -29,8 +29,6 @@
 #ifndef GDAL_FRMTS_SIGDEMDATASET_H_INCLUDED
 #define GDAL_FRMTS_SIGDEMDATASET_H_INCLUDED
 
-#include "cpl_port.h"
-
 #include <cctype>
 #include <cerrno>
 #include <climits>
@@ -39,51 +37,41 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#if HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
-
 #include <limits>
 #include <memory>
 
-#include "cpl_conv.h"
-#include "cpl_error.h"
-#include "cpl_progress.h"
-#include "cpl_string.h"
-#include "cpl_vsi.h"
-#include "gdal.h"
-#include "gdal_frmts.h"
 #include "gdal_pam.h"
-#include "gdal_priv.h"
-#include "gdal_rat.h"
-#include "ogr_core.h"
-#include "ogr_spatialref.h"
 
 class SIGDEMRasterBand;
 
-#pragma pack(push, 1)
-struct SIGDEMHeader {
+class SIGDEMHeader {
+public:
     char acFileType[6];
-    int16_t version;
-    int32_t nCoordinateSystemId;
-    double dfOffsetX;
-    double dfScaleFactorX;
-    double dfOffsetY;
-    double dfScaleFactorY;
-    double dfOffsetZ;
-    double dfScaleFactorZ;
-    double dfMinX;
-    double dfMinY;
-    double dfMinZ;
-    double dfMaxX;
-    double dfMaxY;
-    double dfMaxZ;
-    int32_t nCols;
-    int32_t nRows;
-    double dfXDim;
-    double dfYDim;
+    int16_t version = 1;
+    int32_t nCoordinateSystemId = 0;
+    double dfOffsetX = 0;
+    double dfScaleFactorX = 1000;
+    double dfOffsetY = 0;
+    double dfScaleFactorY = 1000;
+    double dfOffsetZ = 0;
+    double dfScaleFactorZ = 1000;
+    double dfMinX = -std::numeric_limits<double>::max();
+    double dfMinY = -std::numeric_limits<double>::max();
+    double dfMinZ = -std::numeric_limits<double>::max();
+    double dfMaxX = std::numeric_limits<double>::max();
+    double dfMaxY = std::numeric_limits<double>::max();
+    double dfMaxZ = std::numeric_limits<double>::max();
+    int32_t nCols = 0;
+    int32_t nRows = 0;
+    double dfXDim = 1;
+    double dfYDim = 1;
+
+    SIGDEMHeader();
+
+    bool Read(VSILFILE *fp);
+
+    void Write(VSILFILE *fp);
 };
-#pragma pack(pop)
 
 class SIGDEMDataset final: public GDALPamDataset {
     friend class SIGDEMRasterBand;
@@ -128,7 +116,6 @@ class SIGDEMRasterBand final: public GDALPamRasterBand {
 
 private:
     int bDirty { };
-    int bOwnsFP { };
     double dfOffsetZ { };
     double dfScaleFactorZ { };
     VSILFILE* fpRawL { };
