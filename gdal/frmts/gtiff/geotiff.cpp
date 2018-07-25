@@ -1207,6 +1207,7 @@ public:
                                                GIntBig *pnLineSpace,
                                                char **papszOptions )  override final;
 
+    GDALRasterAttributeTable* GetDefaultRAT() override final;
     virtual CPLErr  GetHistogram(
         double dfMin, double dfMax,
         int nBuckets, GUIntBig * panHistogram,
@@ -1773,6 +1774,18 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
     CPLDebug("GTiff", "GetVirtualMemAuto(): Defaulting to base implementation");
     return GDALRasterBand::GetVirtualMemAuto( eRWFlag, pnPixelSpace,
                                               pnLineSpace, papszOptions );
+}
+
+
+/************************************************************************/
+/*                           GetDefaultRAT()                            */
+/************************************************************************/
+
+GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
+
+{
+    poGDS->LoadGeoreferencingAndPamIfNeeded();
+    return GDALPamRasterBand::GetDefaultRAT();
 }
 
 /************************************************************************/
