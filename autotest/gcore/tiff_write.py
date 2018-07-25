@@ -8258,6 +8258,67 @@ def tiff_write_180_lerc_separate():
     return 'success'
 
 ###############################################################################
+# Test set XMP metadata
+
+
+def tiff_write_181_xmp():
+
+    src_ds = gdal.Open('data/utmsmall.tif')
+
+    new_ds = gdaltest.tiff_drv.CreateCopy('tmp/test_181.tif', src_ds)
+    src_ds = None
+
+    xmp_ds = gdal.Open('../gdrivers/data/byte_with_xmp.tif')
+    xmp = xmp_ds.GetMetadata('xml:XMP')
+    xmp_ds = None
+    if 'W5M0MpCehiHzreSzNTczkc9d' not in xmp[0]:
+        gdaltest.post_reason('Wrong input file without XMP')
+        return 'fail'
+
+    new_ds.SetMetadata(xmp, 'xml:XMP')
+    new_ds = None
+
+    # hopefully it's closed now!
+
+    new_ds = gdal.Open('tmp/test_181.tif')
+    read_xmp = new_ds.GetMetadata('xml:XMP')
+    if not read_xmp or 'W5M0MpCehiHzreSzNTczkc9d' not in read_xmp[0]:
+        gdaltest.post_reason('No XMP data written in output file')
+        return 'fail'
+    new_ds = None
+
+    gdaltest.tiff_drv.Delete('tmp/test_181.tif')
+
+    return 'success'
+
+###############################################################################
+# Test delete XMP from a dataset
+
+
+def tiff_write_182_xmp_delete():
+
+    shutil.copyfile('../gdrivers/data/byte_with_xmp.tif', 'tmp/test_182.tif')
+
+    chg_ds = gdal.Open('tmp/test_182.tif', gdal.GA_Update)
+    read_xmp = chg_ds.GetMetadata('xml:XMP')
+    if not read_xmp or 'W5M0MpCehiHzreSzNTczkc9d' not in read_xmp[0]:
+        gdaltest.post_reason('No XMP data written in output file')
+        return 'fail'
+    chg_ds.SetMetadata(None, 'xml:XMP')
+    chg_ds = None
+
+    again_ds = gdal.Open('tmp/test_182.tif')
+    read_xmp = again_ds.GetMetadata('xml:XMP')
+    if read_xmp:
+        gdaltest.post_reason('XMP data not removed')
+        return 'fail'
+    again_ds = None
+
+    gdaltest.tiff_drv.Delete('tmp/test_182.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 
@@ -8475,6 +8536,8 @@ gdaltest_list = [
     tiff_write_178_lerc_with_alpha_0_and_255,
     tiff_write_179_lerc_data_types,
     tiff_write_180_lerc_separate,
+    tiff_write_181_xmp,
+    tiff_write_182_xmp_delete,
     # tiff_write_api_proxy,
     tiff_write_cleanup]
 
