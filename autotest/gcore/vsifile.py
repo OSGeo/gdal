@@ -687,9 +687,35 @@ def vsifile_15():
     fp = gdal.VSIFOpenL('/vsigzip/data/corrupted_z_buf_error.gz', 'rb')
     if fp is None:
         return 'fail'
+    file_len = 0
     while not gdal.VSIFEofL(fp):
         with gdaltest.error_handler():
-            gdal.VSIFReadL(1, 4, fp)
+            file_len += len(gdal.VSIFReadL(1, 4, fp))
+    if file_len != 6469:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        file_len += len(gdal.VSIFReadL(1, 4, fp))
+    if file_len != 6469:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        if gdal.VSIFSeekL(fp, 0, 2) == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    if gdal.VSIFSeekL(fp, 0, 0) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    len_read = len(gdal.VSIFReadL(1, file_len, fp))
+    if len_read != file_len:
+        gdaltest.post_reason('fail')
+        print(len_read)
+        return 'fail'
+
     gdal.VSIFCloseL(fp)
 
     return 'success'
