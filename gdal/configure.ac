@@ -293,6 +293,10 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(assert.h fcntl.h unistd.h dbmalloc.h dlfcn.h stdint.h limits.h locale.h values.h float.h errno.h direct.h)
 
+dnl Check for userfaultfd support
+AC_CHECK_HEADERS([linux/userfaultfd.h], [ENABLE_UFFD="yes"], [ENABLE_UFFD="no"], [])
+AC_SUBST(ENABLE_UFFD,$ENABLE_UFFD)
+
 AC_C_BIGENDIAN
 
 dnl Check for 64 bit file API
@@ -5878,6 +5882,7 @@ LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
 LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
 LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
+LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
 
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then
