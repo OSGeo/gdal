@@ -74,11 +74,7 @@ static int OGRNASDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( strstr(szPtr,"opengis.net/gml") == nullptr )
         return FALSE;
 
-    char **papszIndicators = CSLTokenizeStringComplex(
-        CPLGetConfigOption(
-            "NAS_INDICATOR",
-            "NAS-Operationen;AAA-Fachschema;aaa.xsd;aaa-suite" ),
-        ";", 0, 0 );
+    char **papszIndicators = CSLTokenizeStringComplex(CPLGetConfigOption("NAS_INDICATOR", ""), ";", 0, 0 );
 
     bool bFound = false;
     for( int i = 0; papszIndicators[i] && !bFound; i++ )
