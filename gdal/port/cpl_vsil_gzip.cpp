@@ -1100,7 +1100,7 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
     }
     crc = crc32(crc, pStart, static_cast<uInt>(stream.next_out - pStart));
 
-    int ret = static_cast<int>(len - stream.avail_out) / nSize;
+    size_t ret = (len - stream.avail_out) / nSize;
     if( z_err != Z_OK && z_err != Z_STREAM_END )
     {
         z_eof = 1;
@@ -1108,12 +1108,12 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "In file %s, at line %d, decompression failed with "
                  "z_err = %d, return = %d",
-                 __FILE__, __LINE__, z_err, ret);
+                 __FILE__, __LINE__, z_err, static_cast<int>(ret));
     }
 
 #ifdef ENABLE_DEBUG
     CPLDebug("GZIP", "Read return %d (z_err=%d, z_eof=%d)",
-             ret, z_err, z_eof);
+             static_cast<int>(ret), z_err, z_eof);
 #endif
     return ret;
 }
