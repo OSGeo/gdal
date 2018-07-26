@@ -11208,6 +11208,8 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
         if( EQUAL(papszDomainList[iDomain], "xml:ESRI")
             && CPLTestBool(CPLGetConfigOption( "ESRI_XML_PAM", "NO" )) )
             continue;  // Handled elsewhere.
+        if( EQUAL(papszDomainList[iDomain], "xml:XMP") )
+            continue;  // Handled in SetMetadata.
 
         if( STARTS_WITH_CI(papszDomainList[iDomain], "xml:") )
             bIsXML = true;
@@ -18254,6 +18256,25 @@ CPLErr GTiffDataset::SetMetadata( char ** papszMD, const char *pszDomain )
         {
             LookForProjection();
             bGeoTIFFInfoChanged = true;
+        }
+    }
+
+    if( pszDomain != nullptr && EQUAL(pszDomain, "xml:XMP") )
+    {
+        if( papszMD != nullptr && *papszMD != nullptr )
+        {
+            int nTagSize = static_cast<int>(strlen(*papszMD));
+            TIFFSetField( hTIFF, TIFFTAG_XMLPACKET, nTagSize, *papszMD );
+        }
+        else
+        {
+#ifdef HAVE_UNSETFIELD
+            TIFFUnsetField( hTIFF, TIFFTAG_XMLPACKET );
+#else
+            CPLDebug(
+                "GTiff",
+                "TIFFUnsetField() not supported, xml:XMP may not be cleared." );
+#endif
         }
     }
 
