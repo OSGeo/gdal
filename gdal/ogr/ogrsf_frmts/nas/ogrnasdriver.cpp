@@ -74,6 +74,9 @@ static int OGRNASDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( strstr(szPtr,"opengis.net/gml") == nullptr )
         return FALSE;
 
+    if( strstr(szPtr,"<wfs:FeatureCollection") != nullptr )
+        return FALSE;
+
     char **papszIndicators = CSLTokenizeStringComplex(
         CPLGetConfigOption(
             "NAS_INDICATOR",
