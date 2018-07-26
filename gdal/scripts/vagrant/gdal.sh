@@ -18,15 +18,29 @@ echo rsync -a /vagrant/gdal/ /home/vagrant/gnumake-build-gcc4.8/ > /home/vagrant
 echo rsync -a /vagrant/autotest/ /home/vagrant/gnumake-build-gcc4.8/autotest >> /home/vagrant/gnumake-build-gcc4.8/resync.sh
 
 chmod +x /home/vagrant/gnumake-build-gcc4.8/resync.sh
-cd gnumake-build-gcc4.8
+cd /home/vagrant/gnumake-build-gcc4.8
 
-#  --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local
+export CCACHE_CPP2=yes
+
+ARCH_FLAGS=""
+AVX2_AVAIL=1
+grep avx2 /proc/cpuinfo >/dev/null || AVX2_AVAIL=0
+if [[ "${AVX2_AVAIL}" == "1" ]]; then
+        ARCH_FLAGS="-mavx2"
+        echo "AVX2 available on CPU"
+else
+        echo "AVX2 not available on CPU."
+        grep flags /proc/cpuinfo | head -n 1
+fi
+
+CFLAGS=$ARCH_FLAGS CXXFLAGS=$ARCH_FLAGS CC="ccache gcc" CXX="ccache g++" LDFLAGS="-lstdc++" \
 ./configure  --prefix=/usr --without-libtool --enable-debug --with-jpeg12 \
             --with-python --with-poppler \
             --with-podofo --with-spatialite --with-java --with-mdb \
             --with-jvm-lib-add-rpath --with-epsilon --with-gta \
             --with-mysql --with-liblzma --with-webp --with-libkml \
             --with-openjpeg=/usr/local --with-armadillo
+#  --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local
 
 make clean >/dev/null
 make -j $NUMTHREADS
