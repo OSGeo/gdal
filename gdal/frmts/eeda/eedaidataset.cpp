@@ -608,21 +608,22 @@ CPLErr GDALEEDAIRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
 
     json_object* poPixelGrid = json_object_new_object();
 
-    json_object* poOrigin = json_object_new_object();
-    json_object_object_add(poOrigin, "x",
+    json_object* poAffineTransform = json_object_new_object();
+    json_object_object_add(poAffineTransform, "translateX",
         json_object_new_double_with_significant_figures(dfX0, 18));
-    json_object_object_add(poOrigin, "y",
+    json_object_object_add(poAffineTransform, "translateY",
         json_object_new_double_with_significant_figures(dfY0, 18));
-    json_object_object_add(poPixelGrid, "origin", poOrigin);
-
-    json_object* poPixelSize = json_object_new_object();
-    json_object_object_add(poPixelSize, "x",
+    json_object_object_add(poAffineTransform, "scaleX",
         json_object_new_double_with_significant_figures(
             poGDS->m_adfGeoTransform[1], 18));
-    json_object_object_add(poPixelSize, "y",
+    json_object_object_add(poAffineTransform, "scaleY",
         json_object_new_double_with_significant_figures(
             poGDS->m_adfGeoTransform[5], 18));
-    json_object_object_add(poPixelGrid, "pixelSize", poPixelSize);
+    json_object_object_add(poAffineTransform, "shearX",
+        json_object_new_double_with_significant_figures(0.0, 18));
+    json_object_object_add(poAffineTransform, "shearY",
+        json_object_new_double_with_significant_figures(0.0, 18));
+    json_object_object_add(poPixelGrid, "affineTransform", poAffineTransform);
 
     json_object* poDimensions = json_object_new_object();
     json_object_object_add(poDimensions, "width",
