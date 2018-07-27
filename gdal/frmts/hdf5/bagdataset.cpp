@@ -500,7 +500,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
         if( hBagRoot >= 0 )
             H5Gclose(hBagRoot);
 #ifdef ENABLE_UFFD
-	HDF5_UFFD_UNMAP(pCtx);
+        HDF5_UFFD_UNMAP(pCtx);
 #endif
         H5Fclose(hHDF5);
         return nullptr;

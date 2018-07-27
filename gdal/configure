@@ -782,6 +782,7 @@ HAVE_JASPER
 NETCDF_HAS_HDF4
 NETCDF_HAS_NC4
 NETCDF_ROOT
+NETCDF_MEM
 NETCDF_SETTING
 NETCDF_NCCONFIG
 KEA_LIB
@@ -26765,6 +26766,7 @@ fi
 
 
 NETCDF_SETTING=
+NETCDF_MEM=
 NETCDF_ROOT=
 NETCDF_HAS_NC4=
 NETCDF_HAS_HDF4=
@@ -26780,6 +26782,7 @@ fi
 if test "$with_netcdf" = "no" ; then
 
   NETCDF_SETTING=no
+  NETCDF_MEM=no
 
   echo "netCDF support disabled."
 
@@ -27008,6 +27011,7 @@ fi
       echo -n "libnetcdf is installed but its location cannot be found, "
       echo "use --with-netcdf=/path_to_netcdf for proper support"
     fi
+    NETCDF_INCLUDEDIR="$NETCDF_ROOT/include/"
 
     LIBS="-lnetcdf $LIBS"
     if test "$NETCDF_ROOT" != "" ; then
@@ -27075,6 +27079,7 @@ fi
       LIBS="-L$with_netcdf -lnetcdf $LIBS"
       EXTRA_INCLUDES="-I$with_netcdf $EXTRA_INCLUDES"
     fi
+    NETCDF_INCLUDEDIR="$with_netcdf/include/"
 
     echo "using libnetcdf from $with_netcdf"
 
@@ -27125,6 +27130,24 @@ NETCDF_SETTING=$NETCDF_SETTING
 
 
 if test "$NETCDF_SETTING" != "no" ; then
+
+   for ac_header in $NETCDF_INCLUDEDIR/netcdf_mem.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ NETCDF_MEM=yes
+else
+  NETCDF_MEM=no
+fi
+
+done
+
+
+   NETCDF_MEM=$NETCDF_MEM
 
    NETCDF_ROOT=$NETCDF_ROOT
 
@@ -39194,6 +39217,11 @@ echo "  Kea support:               ${HAVE_KEA}"
 
 echo "  NetCDF support:            ${NETCDF_SETTING}"
 
+if test "$NETCDF_SETTING" = "yes" ; then
+
+echo "  NetCDF has nc_open_mem:    ${NETCDF_MEM}"
+
+fi
 
 echo "  Kakadu support:            ${HAVE_KAKADU}"
 

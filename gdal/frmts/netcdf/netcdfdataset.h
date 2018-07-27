@@ -770,6 +770,7 @@ class netCDFDataset final: public GDALPamDataset
     bool          bFileToDestroyAtClosing;
 #endif
     int           cdfid;
+    void          *pCtx;
     char          **papszSubDatasets;
     char          **papszMetadata;
     CPLStringList papszDimName;
