@@ -332,7 +332,8 @@ bool IVFKFeature::LoadGeometry()
 
         return LoadGeometryPoint();
     }
-    else if (EQUAL (pszName, "SBP")) {
+    else if (EQUAL (pszName, "SBP") ||
+             EQUAL (pszName, "SBPG")) {
         /* -> wkbLineString */
         return LoadGeometryLineStringSBP();
     }
@@ -641,7 +642,7 @@ bool VFKFeature::LoadGeometryPoint()
 }
 
 /*!
-  \brief Load geometry (linestring SBP layer)
+  \brief Load geometry (linestring SBP/SBPG layer)
 
   \todo Really needed?
 

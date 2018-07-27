@@ -403,8 +403,8 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
 
             osSQL.Printf("SELECT %s,_rowid_ FROM %s ",
                          FID_COLUMN, pszName);
-            if (EQUAL(pszName, "SBP"))
-              osSQL += "WHERE PORADOVE_CISLO_BODU = 1 ";
+            if (EQUAL(pszName, "SBP") || EQUAL(pszName, "SBPG"))
+                osSQL += "WHERE PORADOVE_CISLO_BODU = 1 ";
             osSQL += "ORDER BY ";
             osSQL += FID_COLUMN;
             hStmt = PrepareStatement(osSQL.c_str());
@@ -526,7 +526,7 @@ void VFKReaderSQLite::CreateIndices()
 
         /* create index on ogr_fid */
         CreateIndex(osIndexName.c_str(), pszBlockName, FID_COLUMN,
-                    !EQUAL(pszBlockName, "SBP"));
+                    !(EQUAL(pszBlockName, "SBP") || EQUAL(pszBlockName, "SBPG")));
 
         if ( poDataBlock->GetGeometryType() == wkbNone ) {
             /* skip geometry-related indices */
@@ -540,6 +540,7 @@ void VFKReaderSQLite::CreateIndices()
             EQUAL (pszBlockName, "OP") ||
             EQUAL (pszBlockName, "OBPEJ") ||
             EQUAL (pszBlockName, "SBP") ||
+            EQUAL (pszBlockName, "SBPG") ||
             EQUAL (pszBlockName, "HP") ||
             EQUAL (pszBlockName, "DPM") ||
             EQUAL (pszBlockName, "ZVB") ||
@@ -831,7 +832,7 @@ OGRErr VFKReaderSQLite::AddFeature( IVFKDataBlock *poDataBlock,
     if( ExecuteSQL(osCommand.c_str(), CE_Warning) != OGRERR_NONE )
         return OGRERR_FAILURE;
 
-    if (EQUAL(pszBlockName, "SBP")) {
+    if ( EQUAL(pszBlockName, "SBP") || EQUAL(pszBlockName, "SBPG") ) {
         poProperty = poFeature->GetProperty("PORADOVE_CISLO_BODU");
         if( poProperty == nullptr )
         {
