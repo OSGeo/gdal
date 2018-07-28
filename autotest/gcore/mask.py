@@ -1170,6 +1170,40 @@ def mask_26():
 # Cleanup.
 
 
+###############################################################################
+# Extensive test of nodata mask for all complex types using real part only
+
+
+def mask_27():
+
+    types = [gdal.GDT_CFloat32, gdal.GDT_CFloat64]
+
+    nodatavalue = [0.5, 0.5]
+
+    drv = gdal.GetDriverByName('GTiff')
+    for i, typ in enumerate(types):
+        ds = drv.Create('tmp/mask27.tif', 1, 1, 1, typ)
+        ds.GetRasterBand(1).Fill(nodatavalue[i], 10)
+        ds.GetRasterBand(1).SetNoDataValue(nodatavalue[i])
+
+        if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_NODATA:
+            gdaltest.post_reason('did not get expected mask flags for type %s' % gdal.GetDataTypeName(typ))
+            return 'fail'
+
+        msk = ds.GetRasterBand(1).GetMaskBand()
+        if msk.Checksum() != 0:
+            gdaltest.post_reason('did not get expected mask checksum for type %s : %d' % gdal.GetDataTypeName(typ, msk.Checksum()))
+            return 'fail'
+
+        msk = None
+        ds = None
+        drv.Delete('tmp/mask27.tif')
+
+    return 'success'
+
+###############################################################################
+# Extensive test of real NODATA_VALUES mask for all complex types
+
 gdaltest_list = [
     mask_1,
     mask_2,
@@ -1200,7 +1234,8 @@ gdaltest_list = [
     mask_23,
     mask_24,
     mask_25,
-    mask_26]
+    mask_26,
+    mask_27]
 
 if __name__ == '__main__':
 

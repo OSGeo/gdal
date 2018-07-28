@@ -286,6 +286,21 @@ int GDALWarpOperation::ValidateOptions()
         return FALSE;
     }
 
+    if ( GDALDataTypeIsComplex(psOptions->eWorkingDataType)!=0 &&
+         (psOptions->eResampleAlg == GRA_Mode ||
+          psOptions->eResampleAlg == GRA_Max  ||
+          psOptions->eResampleAlg == GRA_Min  ||
+          psOptions->eResampleAlg == GRA_Med  ||
+          psOptions->eResampleAlg == GRA_Q1   ||
+          psOptions->eResampleAlg == GRA_Q3))
+    {
+
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "GDALWarpOptions.Validate(): "
+                  "min/max/qnt not supported for complex valued data.");
+        return FALSE;
+    }
+
     if( psOptions->hSrcDS == nullptr )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,

@@ -462,7 +462,6 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
           const int nWordSize = GDALGetDataTypeSizeBytes(eType);
 
           const bool bIsNoDataRealNan = CPL_TO_BOOL(CPLIsNan(padfNoData[0]));
-          const bool bIsNoDataImagNan = CPL_TO_BOOL(CPLIsNan(padfNoData[1]));
 
           double *padfWrk = static_cast<double *>(
               CPLMalloc(nXSize * sizeof(double) * 2));
@@ -477,11 +476,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
               {
                   if( ((bIsNoDataRealNan && CPLIsNan(padfWrk[iPixel*2])) ||
                        (!bIsNoDataRealNan &&
-                         ARE_REAL_EQUAL(padfWrk[iPixel*2], padfNoData[0])))
-                      && ((bIsNoDataImagNan && CPLIsNan(padfWrk[iPixel*2+1])) ||
-                          (!bIsNoDataImagNan &&
-                           ARE_REAL_EQUAL(padfWrk[iPixel*2+1],
-                                          padfNoData[1]))) )
+                         ARE_REAL_EQUAL(padfWrk[iPixel*2], padfNoData[0]))))
                   {
                       size_t iOffset =
                           iPixel + static_cast<size_t>(iLine) * nXSize;

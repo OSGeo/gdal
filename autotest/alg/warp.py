@@ -757,7 +757,7 @@ def warp_19():
                  gdal.GDT_Float64,
                  gdal.GDT_CFloat64]
 
-    methods = ['near', 'bilinear', 'cubic', 'cubicspline', 'lanczos']
+    methods = ['near', 'bilinear', 'cubic', 'cubicspline', 'lanczos', 'average']
 
     sizes = [1, 2, 3, 7]
 
