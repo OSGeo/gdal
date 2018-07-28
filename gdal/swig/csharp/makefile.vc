@@ -99,16 +99,16 @@ osr_dir:
 	
 interface:
 	cd const
-    $(SWIG) -csharp -namespace OSGeo.GDAL -dllimport gdalconst_wrap -o gdalconst_wrap.c ../../include/gdalconst.i
+    $(SWIG) -csharp -namespace OSGeo.GDAL -dllimport gdalconst_wrap -DSWIG2_CSHARP -o gdalconst_wrap.c ../../include/gdalconst.i
 	cd ..
 	cd gdal
-	$(SWIG) -c++ -csharp -namespace OSGeo.GDAL  -dllimport gdal_wrap -I../../include/csharp -o gdal_wrap.cpp ../../include/gdal.i
+	$(SWIG) -c++ -csharp -namespace OSGeo.GDAL  -dllimport gdal_wrap -I../../include/csharp -DSWIG2_CSHARP -o gdal_wrap.cpp ../../include/gdal.i
 	cd ..
 	cd osr
-	$(SWIG) -c++ -csharp -namespace OSGeo.OSR  -dllimport osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
+	$(SWIG) -c++ -csharp -namespace OSGeo.OSR  -dllimport osr_wrap -I../../include/csharp -DSWIG2_CSHARP -o osr_wrap.cpp ../../include/osr.i
 	cd ..
 	cd ogr
-	$(SWIG) -c++ -csharp -namespace OSGeo.OGR -dllimport ogr_wrap -I../../include/csharp -o ogr_wrap.cpp ../../include/ogr.i	
+	$(SWIG) -c++ -csharp -namespace OSGeo.OGR -dllimport ogr_wrap -I../../include/csharp -DSWIG2_CSHARP -o ogr_wrap.cpp ../../include/ogr.i
 	cd ..
 
 samples:
