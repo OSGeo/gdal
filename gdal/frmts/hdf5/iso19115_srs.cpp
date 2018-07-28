@@ -135,9 +135,12 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "projection = %s not recognised by ISO 19115 parser.",
-                 pszProjection);
+        if( !EQUAL(pszProjection, "") )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "projection = %s not recognised by ISO 19115 parser.",
+                    pszProjection);
+        }
         CPLDestroyXMLNode(psRoot);
         return OGRERR_FAILURE;
     }
