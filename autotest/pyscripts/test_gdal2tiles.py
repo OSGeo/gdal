@@ -94,7 +94,7 @@ def test_gdal2tiles_py_zoom_option():
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         'gdal2tiles',
-        '-q --processes=2 -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+        '-q --force-kml --processes=2 -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/1/0/0.png')
 
@@ -107,6 +107,11 @@ def test_gdal2tiles_py_zoom_option():
             return 'fail'
 
     ds = None
+
+    ds = gdal.Open('tmp/out_gdal2tiles_smallworld/doc.kml')
+    if ds is None:
+        gdaltest.post_reason('did not get kml')
+        return 'fail'
 
     return 'success'
 
@@ -279,6 +284,11 @@ def _test_utf8(should_raise_unicode=False,
             gdaltest.post_reason(
                 'Should not display a warning message about LC_CTYPE variable')
             return 'fail'
+
+    try:
+        shutil.rmtree(out_folder)
+    except OSError:
+        pass
 
     return 'success'
 

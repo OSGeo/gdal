@@ -988,7 +988,7 @@ def create_base_tile(tile_job_info, tile_detail, queue=None):
             with open(kmlfilename, 'wb') as f:
                 f.write(generate_kml(
                     tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
-                    tile_job_info.tile_swne, tile_job_info.options
+                    get_tile_swne(tile_job_info, options), tile_job_info.options
                 ).encode('utf-8'))
 
     if queue:
