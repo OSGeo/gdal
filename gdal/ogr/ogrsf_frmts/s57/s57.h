@@ -360,6 +360,17 @@ class CPL_DLL S57Reader
 class CPL_DLL S57Writer
 {
 public:
+    static const int nDEFAULT_EXPP = 1;
+    static const int nDEFAULT_INTU = 4;
+    static const int nDEFAULT_AGEN = 540;
+
+    static const int nDEFAULT_HDAT = 2;
+    static const int nDEFAULT_VDAT = 7;
+    static const int nDEFAULT_SDAT = 23;
+    static const int nDEFAULT_CSCL = 52000;
+    static const int nDEFAULT_COMF = 10000000;
+    static const int nDEFAULT_SOMF = 10;
+
                         S57Writer();
                         ~S57Writer();
 
@@ -372,23 +383,27 @@ public:
     bool                WriteATTF( DDFRecord *, OGRFeature * );
     bool                WritePrimitive( OGRFeature *poFeature );
     bool                WriteCompleteFeature( OGRFeature *poFeature );
-    bool                WriteDSID( int nEXPP = 1,
-                                   int nINTU = 4,
+    bool                WriteDSID( int nEXPP = nDEFAULT_EXPP,
+                                   int nINTU = nDEFAULT_INTU,
                                    const char *pszDSNM = nullptr,
                                    const char *pszEDTN = nullptr,
                                    const char *pszUPDN = nullptr,
                                    const char *pszUADT = nullptr,
                                    const char *pszISDT = nullptr,
                                    const char *pszSTED = nullptr,
-                                   int nAGEN = 0,
+                                   int nAGEN = nDEFAULT_AGEN,
                                    const char *pszCOMT = nullptr,
+                                   int nAALL = 0,
+                                   int nNALL = 0,
                                    int nNOMR = 0, int nNOGR = 0,
                                    int nNOLR = 0, int nNOIN = 0,
                                    int nNOCN = 0, int nNOED = 0 );
-    bool                WriteDSPM( int nHDAT = 0,
-                                   int nVDAT = 0,
-                                   int nSDAT = 0,
-                                   int nCSCL = 0 );
+    bool                WriteDSPM( int nHDAT = nDEFAULT_HDAT,
+                                   int nVDAT = nDEFAULT_VDAT,
+                                   int nSDAT = nDEFAULT_SDAT,
+                                   int nCSCL = nDEFAULT_CSCL,
+                                   int nCOMF = nDEFAULT_COMF,
+                                   int nSOMF = nDEFAULT_SOMF);
 
 // semi-private - for sophisticated writers.
     DDFRecord           *MakeRecord();
@@ -399,8 +414,8 @@ private:
     S57ClassRegistrar   *poRegistrar;
     S57ClassContentExplorer* poClassContentExplorer;
 
-    int                 nCOMF;  /* Coordinate multiplier */
-    int                 nSOMF;  /* Vertical (sounding) multiplier */
+    int                 m_nCOMF;  /* Coordinate multiplier */
+    int                 m_nSOMF;  /* Vertical (sounding) multiplier */
 };
 
 /* -------------------------------------------------------------------- */

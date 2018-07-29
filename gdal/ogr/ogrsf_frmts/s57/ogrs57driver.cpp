@@ -201,6 +201,8 @@ void RegisterOGRS57()
         "   <Option name='S57_STED' type='string' description='Edition number of S-57' default='03.1'/>"
         "   <Option name='S57_AGEN' type='int' description='Producing agency' default='540'/>"
         "   <Option name='S57_COMT' type='string' description='Comment' default=''/>"
+        "   <Option name='S57_AALL' type='int' description='Lexical level used for the ATTF fields' default='0'/>"
+        "   <Option name='S57_NALL' type='int' description='Lexical level used for the NATF fields' default='0'/>"
         "   <Option name='S57_NOMR' type='int' description='Number of meta records (objects with acronym starting with \"M_\")' default='0'/>"
         "   <Option name='S57_NOGR' type='int' description='Number of geo records' default='0'/>"
         "   <Option name='S57_NOLR' type='int' description='Number of collection records' default='0'/>"
@@ -211,6 +213,8 @@ void RegisterOGRS57()
         "   <Option name='S57_VDAT' type='int' description='Vertical datum' default='17'/>"
         "   <Option name='S57_SDAT' type='int' description='Sounding datum' default='23'/>"
         "   <Option name='S57_CSCL' type='int' description='Compilation scale of data (1:X)' default='52000'/>"
+        "   <Option name='S57_COMF' type='int' description='Floating-point to integer multiplication factor for coordinate values' default='10000000'/>"
+        "   <Option name='S57_SOMF' type='int' description='Floating point to integer multiplication factor for 3-D (sounding) values' default='10'/>"
         "</CreationOptionList>" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

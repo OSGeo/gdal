@@ -29,11 +29,11 @@ $(ISOLIB):	$(OBJ:.o=.$(OBJ_EXT))
 8211createfromxml$(EXE):	8211createfromxml.$(OBJ_EXT)
 	$(LD) $(LDFLAGS) 8211createfromxml.$(OBJ_EXT) $(CONFIG_LIBS) -o 8211createfromxml$(EXE)
 
-8211dump$(EXE):	8211dump.$(OBJ_EXT)
-	$(LD) $(LDFLAGS) 8211dump.$(OBJ_EXT) $(CONFIG_LIBS) -o 8211dump$(EXE)
+8211dump$(EXE):	8211dump.$(OBJ_EXT) $(ISOLIB)
+	$(LD) $(LDFLAGS) 8211dump.$(OBJ_EXT) $(ISOLIB) $(CONFIG_LIBS) -o 8211dump$(EXE)
 
-8211view$(EXE):	8211view.$(OBJ_EXT)
-	$(LD) $(LDFLAGS) 8211view.$(OBJ_EXT) $(CONFIG_LIBS) -o 8211view$(EXE)
+8211view$(EXE):	8211view.$(OBJ_EXT) $(ISOLIB)
+	$(LD) $(LDFLAGS) 8211view.$(OBJ_EXT) $(ISOLIB) $(CONFIG_LIBS) -o 8211view$(EXE)
 
 timetest$(EXE):	timetest.$(OBJ_EXT)
 	$(LD) $(LDFLAGS) timetest.$(OBJ_EXT) $(CONFIG_LIBS) -o timetest$(EXE)

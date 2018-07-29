@@ -533,60 +533,37 @@ int OGRS57DataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write out "header" records.                                     */
 /* -------------------------------------------------------------------- */
-    int nEXPP = 1;
-    int nINTU = 4;
-    int nAGEN = 540;
-    int nNOMR = 0;
-    int nNOGR = 0;
-    int nNOLR = 0;
-    int nNOIN = 0;
-    int nNOCN = 0;
-    int nNOED = 0;
-    const char *pszEXPP = CSLFetchNameValue( papszOptionsIn, "S57_EXPP" );
-    const char *pszINTU = CSLFetchNameValue( papszOptionsIn, "S57_INTU" );
+    int nEXPP = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_EXPP", CPLSPrintf("%d", S57Writer::nDEFAULT_EXPP) ));
+    int nINTU = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_INTU", CPLSPrintf("%d", S57Writer::nDEFAULT_INTU) ));
     const char *pszEDTN = CSLFetchNameValue( papszOptionsIn, "S57_EDTN" );
     const char *pszUPDN = CSLFetchNameValue( papszOptionsIn, "S57_UPDN" );
     const char *pszUADT = CSLFetchNameValue( papszOptionsIn, "S57_UADT" );
     const char *pszISDT = CSLFetchNameValue( papszOptionsIn, "S57_ISDT" );
     const char *pszSTED = CSLFetchNameValue( papszOptionsIn, "S57_STED" );
-    const char *pszAGEN = CSLFetchNameValue( papszOptionsIn, "S57_AGEN" );
+    int nAGEN = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_AGEN", CPLSPrintf("%d", S57Writer::nDEFAULT_AGEN) ));
     const char *pszCOMT = CSLFetchNameValue( papszOptionsIn, "S57_COMT" );
-    const char *pszNOMR = CSLFetchNameValue( papszOptionsIn, "S57_NOMR" );
-    const char *pszNOGR = CSLFetchNameValue( papszOptionsIn, "S57_NOGR" );
-    const char *pszNOLR = CSLFetchNameValue( papszOptionsIn, "S57_NOLR" );
-    const char *pszNOIN = CSLFetchNameValue( papszOptionsIn, "S57_NOIN" );
-    const char *pszNOCN = CSLFetchNameValue( papszOptionsIn, "S57_NOCN" );
-    const char *pszNOED = CSLFetchNameValue( papszOptionsIn, "S57_NOED" );
-    if (pszEXPP) nEXPP = atoi(pszEXPP);
-    if (pszINTU) nINTU = atoi(pszINTU);
-    if (pszAGEN) nAGEN = atoi(pszAGEN);
-    if (pszNOMR) nNOMR = atoi(pszNOMR);
-    if (pszNOGR) nNOGR = atoi(pszNOGR);
-    if (pszNOLR) nNOLR = atoi(pszNOLR);
-    if (pszNOIN) nNOIN = atoi(pszNOIN);
-    if (pszNOCN) nNOCN = atoi(pszNOCN);
-    if (pszNOED) nNOED = atoi(pszNOED);
+    int nAALL = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_AALL", "0" ));
+    int nNALL = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_NALL", "0" ));
+    int nNOMR = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_NOMR", "0" ));
+    int nNOGR = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_NOGR", "0" ));
+    int nNOLR = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_NOLR", "0" ));
+    int nNOIN = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_NOIN", "0" ));
+    int nNOCN = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_NOCN", "0" ));
+    int nNOED = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_NOED", "0" ));
     poWriter->WriteDSID( nEXPP, nINTU, CPLGetFilename( pszFilename ),
                          pszEDTN, pszUPDN, pszUADT, pszISDT, pszSTED, nAGEN,
-                         pszCOMT, nNOMR, nNOGR, nNOLR, nNOIN, nNOCN, nNOED );
+                         pszCOMT,
+                         nAALL,
+                         nNALL,
+                         nNOMR, nNOGR, nNOLR, nNOIN, nNOCN, nNOED );
 
-    int nHDAT = 2;
-    int nVDAT = 17;
-    int nSDAT = 23;
-    int nCSCL = 52000;
-    const char *pszHDAT = CSLFetchNameValue( papszOptionsIn, "S57_HDAT" );
-    const char *pszVDAT = CSLFetchNameValue( papszOptionsIn, "S57_VDAT" );
-    const char *pszSDAT = CSLFetchNameValue( papszOptionsIn, "S57_SDAT" );
-    const char *pszCSCL = CSLFetchNameValue( papszOptionsIn, "S57_CSCL" );
-    if (pszHDAT)
-        nHDAT = atoi(pszHDAT);
-    if (pszVDAT)
-        nVDAT = atoi(pszVDAT);
-    if (pszSDAT)
-        nSDAT = atoi(pszSDAT);
-    if (pszCSCL)
-        nCSCL = atoi(pszCSCL);
-    poWriter->WriteDSPM(nHDAT, nVDAT, nSDAT, nCSCL);
+    int nHDAT = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_HDAT", CPLSPrintf("%d", S57Writer::nDEFAULT_HDAT) ));
+    int nVDAT = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_VDAT", CPLSPrintf("%d", S57Writer::nDEFAULT_VDAT) ));
+    int nSDAT = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_SDAT", CPLSPrintf("%d", S57Writer::nDEFAULT_SDAT) ));
+    int nCSCL = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_CSCL", CPLSPrintf("%d", S57Writer::nDEFAULT_CSCL) ));
+    int nCOMF = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_COMF", CPLSPrintf("%d", S57Writer::nDEFAULT_COMF) ));
+    int nSOMF = atoi(CSLFetchNameValueDef( papszOptionsIn, "S57_SOMF", CPLSPrintf("%d", S57Writer::nDEFAULT_SOMF) ));
+    poWriter->WriteDSPM(nHDAT, nVDAT, nSDAT, nCSCL, nCOMF, nSOMF);
 
     return TRUE;
 }
