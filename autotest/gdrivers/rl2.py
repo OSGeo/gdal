@@ -407,7 +407,7 @@ def rl2_16():
     if gdaltest.rl2_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 400, options=['NBITS=1', 'COMPRESS=CCITTFAX4'])
+    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 4873, options=['NBITS=1', 'COMPRESS=CCITTFAX4'])
     return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 ###############################################################################
@@ -443,7 +443,7 @@ def rl2_19():
     if gdaltest.rl2_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 400, options=['PIXEL_TYPE=MONOCHROME'])
+    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 4873, options=['PIXEL_TYPE=MONOCHROME'])
     return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 ###############################################################################
