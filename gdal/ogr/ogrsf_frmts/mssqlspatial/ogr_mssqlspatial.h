@@ -310,11 +310,13 @@ class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
     char                *pszQuery = nullptr;
 
     SQLHANDLE           hEnvBCP = nullptr;
+#ifdef MSSQL_BCP_SUPPORTED
     SQLHANDLE           hDBCBCP = nullptr;
     int                 nBCPCount = 0;
     BCPData             **papstBindBuffer = nullptr;
 
     int                 bIdentityInsert = FALSE;
+#endif
 
     void                ClearStatement();
     CPLODBCStatement* BuildStatement(const char* pszColumns);
