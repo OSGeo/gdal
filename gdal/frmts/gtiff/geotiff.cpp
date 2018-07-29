@@ -17660,7 +17660,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                                  1.0,
                                                  pfnProgress, pProgressData);
 
-    int bTryCopy = TRUE;  // TODO(schwehr): Make this a bool.
+#if defined(HAVE_LIBJPEG) || defined(JPEG_DIRECT_COPY)
+    bool bTryCopy = true;
+#endif
 
 #ifdef HAVE_LIBJPEG
     if( bCopyFromJPEG )
@@ -17688,7 +17690,11 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 #endif
 
-    if( bTryCopy && (poDS->bTreatAsSplit || poDS->bTreatAsSplitBitmap) )
+    if( 
+#if defined(HAVE_LIBJPEG) || defined(JPEG_DIRECT_COPY)
+        bTryCopy &&
+#endif
+        (poDS->bTreatAsSplit || poDS->bTreatAsSplitBitmap) )
     {
         // For split bands, we use TIFFWriteScanline() interface.
         CPLAssert(poDS->nBitsPerSample == 8 || poDS->nBitsPerSample == 1);

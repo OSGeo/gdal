@@ -35,25 +35,11 @@ CPL_CVSID("$Id$")
 /*                         OGRIngresStatement()                         */
 /************************************************************************/
 
-OGRIngresStatement::OGRIngresStatement( II_PTR hConn )
+OGRIngresStatement::OGRIngresStatement( II_PTR hConnIn ): hConn(hConnIn)
 
 {
-    this->hConn = hConn;
-
-    pabyWrkBuffer = NULL;
-    papszFields = NULL;
-    pasDataBuffer = NULL;
-    hStmt = NULL;
-    hTransaction = NULL;
-
     memset( &getDescrParm, 0, sizeof(getDescrParm) );
     memset( &queryInfo, 0, sizeof(queryInfo) );
-    bDebug = TRUE;
-
-    bHaveParm = FALSE;
-    nParmLen = 0;
-    pabyParmData = NULL;
-
 //    CPLDebug( "INGRES", "Create Statement %p", this );
 }
 

@@ -652,15 +652,9 @@ bool OWConnection::Commit()
 /*                           OWStatement                                     */
 /*****************************************************************************/
 
-OWStatement::OWStatement( OWConnection* pConnect, const char* pszStatement )
+OWStatement::OWStatement( OWConnection* pConnect, const char* pszStatement ):
+    poConnection(pConnect), hError(poConnection->hError)
 {
-    poConnection    = pConnect;
-    nStmtMode       = OCI_DEFAULT;
-    nNextCol        = 0;
-    nNextBnd        = 0;
-    hError          = poConnection->hError;
-    nFetchCount     = 0;
-
     //  -----------------------------------------------------------
     //  Create Statement handler
     //  -----------------------------------------------------------

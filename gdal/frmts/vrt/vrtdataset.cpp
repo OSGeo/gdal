@@ -1787,9 +1787,12 @@ void VRTDataset::BuildVirtualOverviews()
             {
                 CPLAssert(false);
             }
-            if( poNewSource->GetBand()->GetDataset() )
-                poNewSource->GetBand()->GetDataset()->Reference();
-            poOvrVRTBand->AddSource(poNewSource);
+            if( poNewSource )
+            {
+                if( poNewSource->GetBand()->GetDataset() )
+                    poNewSource->GetBand()->GetDataset()->Reference();
+                poOvrVRTBand->AddSource(poNewSource);
+            }
         }
     }
 }

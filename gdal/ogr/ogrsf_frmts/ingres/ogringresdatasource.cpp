@@ -79,17 +79,6 @@ SetConnParam(II_PTR *connHandle,
 OGRIngresDataSource::OGRIngresDataSource()
 
 {
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-    hConn = 0;
-
-    nKnownSRID = 0;
-    panSRID = NULL;
-    papoSRS = NULL;
-    poActiveLayer = NULL;
-    bDSUpdate = FALSE;
-    bNewIngres = FALSE;
 }
 
 /************************************************************************/

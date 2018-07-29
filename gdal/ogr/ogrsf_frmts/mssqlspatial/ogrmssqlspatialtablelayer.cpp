@@ -80,41 +80,9 @@ void OGRMSSQLAppendEscaped( CPLODBCStatement* poStatement, const char* pszStrVal
 /*                          OGRMSSQLSpatialTableLayer()                 */
 /************************************************************************/
 
-OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource *poDSIn ) :
-    bLaunderColumnNames(FALSE),
-    bPreservePrecision(FALSE),
-    eGeomType(wkbNone)
+OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource *poDSIn )
 {
     poDS = poDSIn;
-
-    pszQuery = nullptr;
-
-    bUpdateAccess = TRUE;
-
-    iNextShapeId = 0;
-
-    nSRSId = -1;
-
-    poFeatureDefn = nullptr;
-
-    pszTableName = nullptr;
-    pszLayerName = nullptr;
-    pszSchemaName = nullptr;
-
-    bNeedSpatialIndex = FALSE;
-#ifdef SQL_SS_UDT
-    nUploadGeometryFormat = MSSQLGEOMETRY_NATIVE;
-#else
-    nUploadGeometryFormat = MSSQLGEOMETRY_WKB;
-#endif
-
-    bUseCopy = FALSE;
-    nBCPSize = 1000;
-    papstBindBuffer = nullptr;
-    hEnvBCP = nullptr;
-    hDBCBCP = nullptr;
-    nBCPCount = 0;
-    bIdentityInsert = FALSE;
 }
 
 /************************************************************************/

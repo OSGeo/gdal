@@ -196,9 +196,9 @@ int GTIFF_CanDirectCopyFromJPEG( GDALDataset* poSrcDS,
 CPLErr GTIFF_DirectCopyFromJPEG( GDALDataset* poDS, GDALDataset* poSrcDS,
                                  GDALProgressFunc pfnProgress,
                                  void * pProgressData,
-                                 int& bShouldFallbackToNormalCopyIfFail )
+                                 bool& bShouldFallbackToNormalCopyIfFail )
 {
-    bShouldFallbackToNormalCopyIfFail = TRUE;
+    bShouldFallbackToNormalCopyIfFail = true;
 
     poSrcDS = GetUnderlyingDataset(poSrcDS);
     if( poSrcDS == NULL )
@@ -225,7 +225,7 @@ CPLErr GTIFF_DirectCopyFromJPEG( GDALDataset* poDS, GDALDataset* poSrcDS,
         static_cast<tmsize_t>( VSIFReadL(pabyJPEGData, 1, nSize, fpJPEG) ) ==
         nSize )
     {
-        bShouldFallbackToNormalCopyIfFail = FALSE;
+        bShouldFallbackToNormalCopyIfFail = false;
 
         TIFF* hTIFF = (TIFF*) poDS->GetInternalHandle(NULL);
         if( TIFFWriteRawStrip(hTIFF, 0, pabyJPEGData, nSize) != nSize )
@@ -794,9 +794,9 @@ static CPLErr GTIFF_CopyBlockFromJPEG( GTIFF_CopyBlockFromJPEGArgs* psArgs )
 
 CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
                           GDALProgressFunc pfnProgress, void * pProgressData,
-                          int& bShouldFallbackToNormalCopyIfFail)
+                          bool& bShouldFallbackToNormalCopyIfFail)
 {
-    bShouldFallbackToNormalCopyIfFail = TRUE;
+    bShouldFallbackToNormalCopyIfFail = true;
 
     poSrcDS = GetUnderlyingDataset(poSrcDS);
     if( poSrcDS == nullptr )
@@ -902,7 +902,7 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
 /*      Copy blocks.                                                    */
 /* -------------------------------------------------------------------- */
 
-    bShouldFallbackToNormalCopyIfFail = FALSE;
+    bShouldFallbackToNormalCopyIfFail = false;
 
     for( int iY = 0; iY < nYBlocks && eErr == CE_None; iY++ )
     {

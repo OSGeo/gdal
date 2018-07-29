@@ -69,10 +69,6 @@ OGRDB2Session::OGRDB2Session()
 {
     DB2_DEBUG_ENTER("OGRDB2Session::OGRDB2Session");
     m_szLastError[0] = '\0';
-    m_hEnv = nullptr;
-    m_hDBC = nullptr;
-    m_bInTransaction = FALSE;
-    m_bAutoCommit = TRUE;
 }
 
 /************************************************************************/

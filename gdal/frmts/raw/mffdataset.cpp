@@ -407,7 +407,7 @@ void MFFDataset::ScanForGCPs()
             dfRasterY = GetRasterYSize()-0.5;
             pszBase = "BOTTOM_LEFT_CORNER";
         }
-        else if( nCorner == 4 )
+        else /* if( nCorner == 4 ) */
         {
             dfRasterX = GetRasterXSize()/2.0;
             dfRasterY = GetRasterYSize()/2.0;

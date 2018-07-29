@@ -43,7 +43,7 @@
 
 class OGRMDBJavaEnv
 {
-    GIntBig nLastPID;
+    GIntBig nLastPID = 0;
 
         int Init();
 
@@ -54,70 +54,70 @@ class OGRMDBJavaEnv
     int InitIfNeeded();
     static void CleanupMutex();
 
-    JavaVM *jvm;
-    JNIEnv *env;
-    int bCalledFromJava;
+    JavaVM *jvm = nullptr;
+    JNIEnv *env = nullptr;
+    bool bCalledFromJava = false;
 
     int ExceptionOccurred();
 
-    jclass byteArray_class;
+    jclass byteArray_class = nullptr;
 
-    jclass file_class;
-    jmethodID file_constructor;
-    jclass database_class;
-    jmethodID database_open;
-    jmethodID database_close;
-    jmethodID database_getTableNames;
-    jmethodID database_getTable;
+    jclass file_class = nullptr;
+    jmethodID file_constructor = nullptr;
+    jclass database_class = nullptr;
+    jmethodID database_open = nullptr;
+    jmethodID database_close = nullptr;
+    jmethodID database_getTableNames = nullptr;
+    jmethodID database_getTable = nullptr;
 
-    jclass table_class;
-    jmethodID table_getColumns;
-    jmethodID table_iterator;
-    jmethodID table_getRowCount;
+    jclass table_class = nullptr;
+    jmethodID table_getColumns = nullptr;
+    jmethodID table_iterator = nullptr;
+    jmethodID table_getRowCount = nullptr;
 
-    jclass column_class;
-    jmethodID column_getName;
-    jmethodID column_getType;
-    jmethodID column_getLength;
-    jmethodID column_isVariableLength;
+    jclass column_class = nullptr;
+    jmethodID column_getName = nullptr;
+    jmethodID column_getType = nullptr;
+    jmethodID column_getLength = nullptr;
+    jmethodID column_isVariableLength = nullptr;
 
-    jclass datatype_class;
-    jmethodID datatype_getValue;
+    jclass datatype_class = nullptr;
+    jmethodID datatype_getValue = nullptr;
 
-    jclass list_class;
-    jmethodID list_iterator;
+    jclass list_class = nullptr;
+    jmethodID list_iterator = nullptr;
 
-    jclass set_class;
-    jmethodID set_iterator;
+    jclass set_class = nullptr;
+    jmethodID set_iterator = nullptr;
 
-    jclass map_class;
-    jmethodID map_get;
+    jclass map_class = nullptr;
+    jmethodID map_get = nullptr;
 
-    jclass iterator_class;
-    jmethodID iterator_hasNext;
-    jmethodID iterator_next;
+    jclass iterator_class = nullptr;
+    jmethodID iterator_hasNext = nullptr;
+    jmethodID iterator_next = nullptr;
 
-    jclass object_class;
-    jmethodID object_toString;
-    jmethodID object_getClass;
+    jclass object_class = nullptr;
+    jmethodID object_toString = nullptr;
+    jmethodID object_getClass = nullptr;
 
-    jclass boolean_class;
-    jmethodID boolean_booleanValue;
+    jclass boolean_class = nullptr;
+    jmethodID boolean_booleanValue = nullptr;
 
-    jclass byte_class;
-    jmethodID byte_byteValue;
+    jclass byte_class = nullptr;
+    jmethodID byte_byteValue = nullptr;
 
-    jclass short_class;
-    jmethodID short_shortValue;
+    jclass short_class = nullptr;
+    jmethodID short_shortValue = nullptr;
 
-    jclass integer_class;
-    jmethodID integer_intValue;
+    jclass integer_class = nullptr;
+    jmethodID integer_intValue = nullptr;
 
-    jclass float_class;
-    jmethodID float_floatValue;
+    jclass float_class = nullptr;
+    jmethodID float_floatValue = nullptr;
 
-    jclass double_class;
-    jmethodID double_doubleValue;
+    jclass double_class = nullptr;
+    jmethodID double_doubleValue = nullptr;
 };
 
 /************************************************************************/
@@ -128,8 +128,8 @@ class OGRMDBTable;
 
 class OGRMDBDatabase
 {
-    OGRMDBJavaEnv* env;
-    jobject database;
+    OGRMDBJavaEnv* env = nullptr;
+    jobject database = nullptr;
 
     OGRMDBDatabase();
 public:
@@ -147,12 +147,12 @@ public:
 
 class OGRMDBTable
 {
-    OGRMDBJavaEnv* env;
-    OGRMDBDatabase* poDB;
-    jobject table;
+    OGRMDBJavaEnv* env = nullptr;
+    OGRMDBDatabase* poDB = nullptr;
+    jobject table = nullptr;
 
-    jobject table_iterator_obj;
-    jobject row;
+    jobject table_iterator_obj = nullptr;
+    jobject row = nullptr;
 
     jobject GetColumnVal(int iCol);
 

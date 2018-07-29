@@ -42,11 +42,11 @@
 CPL_CVSID("$Id$")
 
 // constructor
-KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAccessIn, kealib::KEAImageIO *pImageIO, int *pRefCount )
+KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAccessIn, kealib::KEAImageIO *pImageIO, int *pRefCount ):
+    m_eKEADataType(pImageIO->getImageBandDataType(nSrcBand)) // get the data type as KEA enum
 {
     this->poDS = pDataset; // our pointer onto the dataset
     this->nBand = nSrcBand; // this is the band we are
-    this->m_eKEADataType = pImageIO->getImageBandDataType(nSrcBand); // get the data type as KEA enum
     this->eDataType = KEA_to_GDAL_Type( m_eKEADataType );       // convert to GDAL enum
     this->nBlockXSize = pImageIO->getImageBlockSize(nSrcBand);  // get the native blocksize
     this->nBlockYSize = pImageIO->getImageBlockSize(nSrcBand);

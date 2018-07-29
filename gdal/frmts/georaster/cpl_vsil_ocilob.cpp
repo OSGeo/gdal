@@ -255,13 +255,12 @@ int WSIOCILobFSHandle::Stat( const char* pszFilename,
 VSIOCILobHandle::VSIOCILobHandle( OWConnection* poConnectionIn,
                                   OWStatement* poStatementIn,
                                   OCILobLocator* phLocatorIn,
-                                  boolean bUpdateIn )
+                                  boolean bUpdateIn ):
+    poConnection(poConnectionIn),
+    poStatement(poStatementIn),
+    phLocator(phLocatorIn),
+    bUpdate(bUpdateIn)
 {
-    this->poConnection = poConnectionIn;
-    this->poStatement  = poStatementIn;
-    this->phLocator    = phLocatorIn;
-    this->bUpdate      = bUpdateIn;
-
     nCurOff     = 0;
 
     nFileSize   = poStatement->GetBlobLength( phLocator );

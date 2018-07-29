@@ -41,19 +41,19 @@ class KEAMaskBand;
 class KEARasterBand: public GDALPamRasterBand
 {
 private:
-    int                 *m_pnRefCount; // reference count of m_pImageIO
+    int                 *m_pnRefCount = nullptr; // reference count of m_pImageIO
 
-    int                  m_nOverviews; // number of overviews
-    KEAOverview        **m_panOverviewBands; // array of overview objects
-    GDALRasterBand      *m_pMaskBand;   // pointer to mask band if one exists (and been requested)
-    bool                 m_bMaskBandOwned; // do we delete it or not?
+    int                  m_nOverviews = 0; // number of overviews
+    KEAOverview        **m_panOverviewBands = nullptr; // array of overview objects
+    GDALRasterBand      *m_pMaskBand = nullptr;   // pointer to mask band if one exists (and been requested)
+    bool                 m_bMaskBandOwned = false; // do we delete it or not?
 
-    GDALRasterAttributeTable  *m_pAttributeTable; // pointer to the attribute table
+    GDALRasterAttributeTable  *m_pAttributeTable = nullptr; // pointer to the attribute table
                                                  // created on first call to GetDefaultRAT()
-    GDALColorTable      *m_pColorTable;     // pointer to the color table
+    GDALColorTable      *m_pColorTable = nullptr;     // pointer to the color table
                                             // created on first call to GetColorTable()
 
-    int                  m_nAttributeChunkSize; // for reporting via the metadata
+    int                  m_nAttributeChunkSize = 0; // for reporting via the metadata
 public:
     // constructor/destructor
     KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAccess, kealib::KEAImageIO *pImageIO, int *pRefCount );
@@ -120,10 +120,10 @@ protected:
     CPLErr SetHistogramFromString(const char *pszString);
     char *GetHistogramAsString();
     // So we can return the histogram as a string from GetMetadataItem
-    char *m_pszHistoBinValues;
+    char *m_pszHistoBinValues = nullptr;
 
-    kealib::KEAImageIO  *m_pImageIO; // our image access pointer - refcounted
-    char               **m_papszMetadataList; // CPLStringList of metadata
+    kealib::KEAImageIO  *m_pImageIO = nullptr; // our image access pointer - refcounted
+    char               **m_papszMetadataList = nullptr; // CPLStringList of metadata
     kealib::KEADataType  m_eKEADataType; // data type as KEA enum
 };
 

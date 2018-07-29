@@ -36,26 +36,6 @@ CPL_CVSID("$Id$")
 OGRMSSQLSpatialLayer::OGRMSSQLSpatialLayer()
 
 {
-    poDS = nullptr;
-
-    poFeatureDefn = nullptr;
-    nGeomColumnType = -1;
-    pszGeomColumn = nullptr;
-    pszFIDColumn = nullptr;
-    bIsIdentityFid = FALSE;
-    panFieldOrdinals = nullptr;
-
-    poStmt = nullptr;
-
-    iNextShapeId = 0;
-
-    poSRS = nullptr;
-    nSRSId = -1; // we haven't even queried the database for it yet.
-    nLayerStatus = MSSQLLAYERSTATUS_ORIGINAL;
-
-    nGeomColumnIndex = -1;
-    nFIDColumnIndex = -1;
-    nRawColumns = 0;
 }
 
 /************************************************************************/
