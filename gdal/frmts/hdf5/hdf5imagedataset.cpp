@@ -480,7 +480,8 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
 
     CPLString osFilename(papszName[1]);
 
-    if( strlen(papszName[1]) == 1 && papszName[3] != nullptr )
+    if( (strlen(papszName[1]) == 1 && papszName[3] != nullptr) ||
+        (STARTS_WITH(papszName[1], "/vsicurl/http") && papszName[3] != nullptr) )
     {
         osFilename += ":";
         osFilename += papszName[2];
@@ -496,18 +497,19 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
     CSLDestroy(papszName);
     papszName = nullptr;
 
+    poDS->SetPhysicalFilename(osFilename);
+
+    // Try opening the dataset.
+#ifdef ENABLE_UFFD
+    HDF5_UFFD_MAP(osFilename, poDS->hHDF5, poDS->pCtx);
+#else
+
     if( !H5Fis_hdf5(osFilename) )
     {
         delete poDS;
         return nullptr;
     }
 
-    poDS->SetPhysicalFilename(osFilename);
-
-    // Try opening the dataset.
-#ifdef ENABLED_UFFD
-    HDF5_UFFD_MAP(poOpenInfo->pszFilename, poDS->hHDF5, poDS->pCtx);
-#else
     poDS->hHDF5 = H5Fopen(osFilename, H5F_ACC_RDONLY, H5P_DEFAULT);
 #endif
 
@@ -624,6 +626,9 @@ void GDALRegister_HDF5Image()
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "HDF5 Dataset");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_hdf5.html");
+#ifdef ENABLE_UFFD
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+#endif
 
     poDriver->pfnOpen = HDF5ImageDataset::Open;
     poDriver->pfnIdentify = HDF5ImageDataset::Identify;

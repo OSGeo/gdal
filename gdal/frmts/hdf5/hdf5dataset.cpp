@@ -87,6 +87,9 @@ void GDALRegister_HDF5()
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_hdf5.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "h5 hdf5");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+#ifdef ENABLE_UFFD
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+#endif
 
     poDriver->pfnOpen = HDF5Dataset::Open;
     poDriver->pfnIdentify = HDF5Dataset::Identify;
@@ -119,15 +122,12 @@ HDF5Dataset::HDF5Dataset() :
 /************************************************************************/
 HDF5Dataset::~HDF5Dataset()
 {
-#ifdef ENABLE_UFFD
-    HDF5_UFFD_UNMAP(pCtx);
-#endif
-
     CSLDestroy(papszMetadata);
     if( hGroupID > 0 )
         H5Gclose(hGroupID);
     if( hHDF5 > 0 )
         H5Fclose(hHDF5);
+
     CSLDestroy(papszSubDatasets);
     if( poH5RootGroup != nullptr )
     {
@@ -138,6 +138,10 @@ HDF5Dataset::~HDF5Dataset()
         CPLFree(poH5RootGroup->poHchild);
         CPLFree(poH5RootGroup);
     }
+
+#ifdef ENABLE_UFFD
+    HDF5_UFFD_UNMAP(pCtx);
+#endif
 }
 
 /************************************************************************/

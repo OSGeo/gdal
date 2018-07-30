@@ -873,6 +873,10 @@ void GDALRegister_BAG()
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Bathymetry Attributed Grid");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_bag.html");
+#ifdef ENABLE_UFFD
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+#endif
+
     poDriver->pfnOpen = BAGDataset::Open;
     poDriver->pfnIdentify = BAGDataset::Identify;
 
