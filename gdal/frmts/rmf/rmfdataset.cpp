@@ -2545,9 +2545,15 @@ int RMFDataset::SetupCompression(GDALDataType eType, const char* pszFilename)
         Compress = &LZWCompress;
         SetMetadataItem("COMPRESSION", "LZW", "IMAGE_STRUCTURE");
     }
-    else if( sHeader.iCompression == RMF_COMPRESSION_JPEG
-             && eType == GDT_Byte && nBands == RMF_JPEG_BAND_COUNT)
+    else if(sHeader.iCompression == RMF_COMPRESSION_JPEG)
     {
+        if(eType != GDT_Byte || nBands != RMF_JPEG_BAND_COUNT ||
+           sHeader.nBitDepth != 24)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "RMF support only 24 bpp JPEG compressed files.");
+            return CE_Failure;
+        }
 #ifdef HAVE_LIBJPEG
         CPLString   oBuf;
         oBuf.Printf("%d", (int)sHeader.iJpegQuality);
