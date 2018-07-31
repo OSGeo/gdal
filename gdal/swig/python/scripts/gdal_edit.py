@@ -41,6 +41,7 @@ def Usage():
     print('                 [-offset value] [-scale value]')
     print('                 [-colorinterp_X red|green|blue|alpha|gray|undefined]*')
     print('                 [-unsetstats] [-stats] [-approx_stats]')
+    print('                 [-setstats min max mean stddev]')
     print('                 [-gcp pixel line easting northing [elevation]]*')
     print('                 [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname')
     print('')
@@ -78,6 +79,7 @@ def gdal_edit(argv):
     unsetgt = False
     unsetstats = False
     stats = False
+    setstats = False
     approx_stats = False
     unsetmd = False
     ro = False
@@ -147,6 +149,17 @@ def gdal_edit(argv):
             approx_stats = True
         elif argv[i] == '-stats':
             stats = True
+        elif argv[i] == '-setstats' and i < len(argv)-4:
+            stats = True
+            setstats = True
+            statsmin = float(argv[i + 1])
+            i = i + 1
+            statsmax = float(argv[i + 1])
+            i = i + 1
+            statsmean = float(argv[i + 1])
+            i = i + 1
+            statsdev = float(argv[i + 1])
+            i = i + 1
         elif argv[i] == '-unsetmd':
             unsetmd = True
         elif argv[i] == '-unsetnodata':
@@ -190,7 +203,7 @@ def gdal_edit(argv):
         return Usage()
 
     if (srs is None and lry is None and yres is None and not unsetgt and
-            not unsetstats and not stats and nodata is None and
+            not unsetstats and not stats and not setstats and nodata is None and
             not molist and not unsetmd and not gcp_list and
             not unsetnodata and not colorinterp and
             scale is None and offset is None):
@@ -298,6 +311,14 @@ def gdal_edit(argv):
     if stats:
         for i in range(ds.RasterCount):
             ds.GetRasterBand(i + 1).ComputeStatistics(approx_stats)
+
+    if setstats:
+        for i in range(ds.RasterCount):
+            #TODO, if one parameter is set to -1, get the value from the file:
+            #if statsmin == -1 or statsmax == -1 or statsmean == -1 or statsdev == -1:
+            #   ds.GetRasterBand(i+1).ComputeStatistics(approx_stats)
+            #   min,max,mean,stdev = ds.GetRasterBand(i+1).GetStatistics(approx_stats,True)
+            ds.GetRasterBand(i+1).SetStatistics(statsmin, statsmax, statsmean, statsdev)
 
     if molist:
         if unsetmd:
