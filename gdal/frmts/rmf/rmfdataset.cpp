@@ -174,7 +174,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( nLastTileHeight && (GUInt32)nBlockYOff == poGDS->nYTiles - 1 )
         nRawYSize = nLastTileHeight;
 
-    GUInt32 nRawBytes = nRawXSize * nRawYSize * poGDS->sHeader.nBitDepth / 8;
+    GUInt32 nRawBytes = nRawXSize * nRawYSize * poGDS->nBands * poGDS->sHeader.nBitDepth / 8;
 
     //Direct read optimization
     if(poGDS->nBands == 1 && poGDS->sHeader.nBitDepth >= 8 &&
@@ -205,6 +205,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             GUInt32 nMaxTileBytes = poGDS->sHeader.nTileWidth *
                                     poGDS->sHeader.nTileHeight *
+                                    poGDS->nBands *
                                     poGDS->sHeader.nBitDepth / 8;
             poGDS->pabyCurrentTile =
                reinterpret_cast<GByte*>(VSIMalloc(std::max(1U, nMaxTileBytes)));
