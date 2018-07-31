@@ -94,10 +94,22 @@ size_t RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
     }
 
     int nBandCount = GDALGetRasterCount(hTile);
+
     int nImageWidth = std::min(GDALGetRasterXSize(hTile),
                                static_cast<int>(nRawXSize));
     int nImageHeight = std::min(GDALGetRasterYSize(hTile),
                                 static_cast<int>(nRawYSize));
+
+    if( nRawXSize * nBandCount * nImageHeight > nSizeOut )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "RMF JPEG: Too small output buffer");
+        GDALClose(hTile);
+        VSIFCloseL(fp);
+        VSIUnlink(osTmpFilename);
+        return 0;
+    }
+
     CPLErr  eErr;
     size_t  nRet;
     int     aBandMap[RMF_JPEG_BAND_COUNT] = {3, 2, 1};
