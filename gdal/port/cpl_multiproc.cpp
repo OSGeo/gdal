@@ -54,6 +54,7 @@
 #include "cpl_atomic_ops.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
 #include "cpl_vsi.h"
 
 CPL_CVSID("$Id$")
@@ -1342,11 +1343,54 @@ void CPLCleanupTLS()
 
 int CPLGetNumCPUs()
 {
+    int nCPUs;
 #ifdef _SC_NPROCESSORS_ONLN
-    return static_cast<int>(sysconf(_SC_NPROCESSORS_ONLN));
+    nCPUs = static_cast<int>(sysconf(_SC_NPROCESSORS_ONLN));
 #else
-    return 1;
+    nCPUs = 1;
 #endif
+
+    // In a Docker/LXC containers the number of CPUs might be limited
+    FILE* f = fopen("/sys/fs/cgroup/cpuset/cpuset.cpus", "rb");
+    if(f)
+    {
+        constexpr size_t nMaxCPUs = 8*64; // 8 Sockets * 64 threads = 512
+        constexpr size_t nBuffSize(nMaxCPUs*4); // 3 digits + delimiter per CPU
+        char*            pszBuffer =
+                            reinterpret_cast<char*>(CPLMalloc(nBuffSize));
+        const size_t     nRead = fread(pszBuffer, 1, nBuffSize - 1, f);
+        pszBuffer[nRead] = 0;
+        fclose(f);
+        char **papszCPUsList =
+            CSLTokenizeStringComplex(pszBuffer, ",", FALSE, FALSE);
+
+        CPLFree(pszBuffer);
+
+        int nCpusetCpus = 0;
+        for(int i = 0; papszCPUsList[i] != nullptr; ++i)
+        {
+            if(strchr(papszCPUsList[i], '-'))
+            {
+                char **papszCPUsRange =
+                  CSLTokenizeStringComplex(papszCPUsList[i], "-", FALSE, FALSE);
+                if(CSLCount(papszCPUsRange) == 2)
+                {
+                    int iBegin(atoi(papszCPUsRange[0]));
+                    int iEnd(atoi(papszCPUsRange[1]));
+                    nCpusetCpus += (iEnd - iBegin + 1);
+                }
+                CSLDestroy(papszCPUsRange);
+            }
+            else
+            {
+                ++nCpusetCpus;
+            }
+        }
+        CSLDestroy(papszCPUsList);
+        nCPUs = std::min(nCPUs, std::max(1, nCpusetCpus));
+    }
+
+    return nCPUs;
 }
 
 /************************************************************************/
