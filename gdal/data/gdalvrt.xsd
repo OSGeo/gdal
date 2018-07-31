@@ -149,6 +149,7 @@
                 <xs:element name="Scale" type="xs:double"/>
                 <xs:element name="CategoryNames" type="CategoryNamesType"/>
                 <xs:element name="ColorTable" type="ColorTableType"/>
+                <xs:element name="GDALRasterAttributeTable" type="GDALRasterAttributeTableType"/>
                 <xs:element name="NoDataValue" type="DoubleOrNanType"/>
                 <xs:element name="NodataValue" type="xs:double"/> <!-- typo: deprecated -->
                 <xs:element name="HideNoDataValue" type="ZeroOrOne"/>
@@ -243,6 +244,29 @@
         <xs:sequence minOccurs="0" maxOccurs="unbounded">
             <xs:element name="Entry" type="ColorTableEntryType"/>
         </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="GDALRasterAttributeTableType">
+        <xs:sequence>
+            <xs:element name="FieldDefn" type="FieldDefnType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="Row" type="RowType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="FieldDefnType">
+        <xs:sequence>
+            <xs:element name="Name" type="xs:string"/>
+            <xs:element name="Type" type="xs:unsignedInt"/>
+            <xs:element name="Usage" type="xs:unsignedInt"/>
+        </xs:sequence>
+        <xs:attribute name="index" type="xs:unsignedInt" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="RowType">
+        <xs:sequence>
+            <xs:element name="F" type="xs:anyType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="index" type="xs:unsignedInt" use="required"/>
     </xs:complexType>
 
     <xs:complexType name="OverviewType">
