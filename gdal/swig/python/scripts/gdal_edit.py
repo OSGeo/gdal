@@ -154,19 +154,23 @@ def gdal_edit(argv):
             setstats = True
             if statsmin != 'None':
                 statsmin = float(argv[i + 1])
-            else statsmin = None
+            else:
+                statsmin = None
             i = i + 1
             if statsmax != 'None':
                 statsmax = float(argv[i + 1])
-            else statsmax = None
+            else:
+                statsmax = None
             i = i + 1
             if statsmean != 'None':
                 statsmean = float(argv[i + 1])
-            else statsmean = None
+            else:
+                statsmean = None
             i = i + 1
             if statsdev != 'None':
                 statsdev = float(argv[i + 1])
-            else statsdev = None
+            else:
+                statsdev = None
             i = i + 1
         elif argv[i] == '-unsetmd':
             unsetmd = True
@@ -322,16 +326,16 @@ def gdal_edit(argv):
 
     if setstats:
         for i in range(ds.RasterCount):
-            if statsmin == None or statsmax == None or statsmean == None or statsdev == None:
+            if statsmin is None or statsmax is None or statsmean is None or statsdev is None:
                 ds.GetRasterBand(i+1).ComputeStatistics(approx_stats)
                 min,max,mean,stdev = ds.GetRasterBand(i+1).GetStatistics(approx_stats,True)
-                if statsmin == None:
+                if statsmin is None:
                     statsmin = min
-                if statsmax == None:
+                if statsmax is None:
                     statsmax = max
-                if statsmean == None:
+                if statsmean is None:
                     statsmean = mean
-                if statsdev == None:
+                if statsdev is None:
                     statsdev = stdev
             ds.GetRasterBand(i+1).SetStatistics(statsmin, statsmax, statsmean, statsdev)
 
