@@ -343,7 +343,7 @@ GDALPaletteInterp GDALColorTable::GetPaletteInterpretation() const
 }
 
 /************************************************************************/
-/*                    GDALGetPaltteInterpretation()                     */
+/*                    GDALGetPaletteInterpretation()                    */
 /************************************************************************/
 
 /**
