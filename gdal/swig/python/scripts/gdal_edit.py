@@ -152,22 +152,22 @@ def gdal_edit(argv):
         elif argv[i] == '-setstats' and i < len(argv)-4:
             stats = True
             setstats = True
-            if statsmin != 'None':
+            if argv[i + 1] != 'None':
                 statsmin = float(argv[i + 1])
             else:
                 statsmin = None
             i = i + 1
-            if statsmax != 'None':
+            if argv[i + 1] != 'None':
                 statsmax = float(argv[i + 1])
             else:
                 statsmax = None
             i = i + 1
-            if statsmean != 'None':
+            if argv[i + 1] != 'None':
                 statsmean = float(argv[i + 1])
             else:
                 statsmean = None
             i = i + 1
-            if statsdev != 'None':
+            if argv[i + 1] != 'None':
                 statsdev = float(argv[i + 1])
             else:
                 statsdev = None
