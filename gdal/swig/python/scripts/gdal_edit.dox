@@ -71,8 +71,8 @@ Calculate and store band statistics.</dd>
 
 <dt> <b>-setstats</b>min max mean stddev:</dt><dd> (GDAL >= 2.4)
 Store user-defined values for band statistics (minimum, maximum, mean and standard deviation).
-If any of the values is set to -1, the real statistics are calclulated from the file
-and the ones set to -1 are used from the real statistics.</dd>
+If any of the values is set to None, the real statistics are calclulated from the file
+and the ones set to None are used from the real statistics.</dd>
 
 <dt> <b>-approx_stats</b></dt>:<dd> (GDAL >= 2.0)
 Calculate and store approximate band statistics.</dd>
