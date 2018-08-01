@@ -314,10 +314,17 @@ def gdal_edit(argv):
 
     if setstats:
         for i in range(ds.RasterCount):
-            #TODO, if one parameter is set to -1, get the value from the file:
-            #if statsmin == -1 or statsmax == -1 or statsmean == -1 or statsdev == -1:
-            #   ds.GetRasterBand(i+1).ComputeStatistics(approx_stats)
-            #   min,max,mean,stdev = ds.GetRasterBand(i+1).GetStatistics(approx_stats,True)
+            if statsmin == -1 or statsmax == -1 or statsmean == -1 or statsdev == -1:
+                ds.GetRasterBand(i+1).ComputeStatistics(approx_stats)
+                min,max,mean,stdev = ds.GetRasterBand(i+1).GetStatistics(approx_stats,True)
+                if statsmin == -1:
+                    statsmin = min
+                if statsmax == -1:
+                    statsmax = max
+                if statsmean == -1:
+                    statsmean = mean
+                if statsdev == -1:
+                    statsdev = stdev
             ds.GetRasterBand(i+1).SetStatistics(statsmin, statsmax, statsmean, statsdev)
 
     if molist:
