@@ -40,6 +40,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <utility>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -699,6 +700,16 @@ int TABFeature::UpdateMBR(TABMAPFile *poMapFile /*=NULL*/)
         {
             poMapFile->Coordsys2Int(oEnv.MinX, oEnv.MinY, m_nXMin, m_nYMin);
             poMapFile->Coordsys2Int(oEnv.MaxX, oEnv.MaxY, m_nXMax, m_nYMax);
+            // Coordsy2Int can transform a min value to a max one and vice
+            // versa.
+            if( m_nXMin > m_nXMax )
+            {
+                std::swap(m_nXMin, m_nXMax);
+            }
+            if( m_nYMin > m_nYMax )
+            {
+                std::swap(m_nYMin, m_nYMax);
+            }
         }
 
         return 0;
