@@ -213,6 +213,7 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
 
 void GTIFFBuildOverviewMetadata( const char *pszResampling,
                                  GDALDataset *poBaseDS,
+                                 int iOverviewFactor,
                                  CPLString &osMetadata )
 
 {
@@ -247,6 +248,15 @@ void GTIFFBuildOverviewMetadata( const char *pszResampling,
         CPLString osItem;
         osItem.Printf( "<Item name=\"NODATA_VALUES\">%s</Item>",
                        pszNoDataValues );
+        osMetadata += osItem;
+    }
+
+    if( iOverviewFactor > 1 )
+    {
+        CPLString osItem;
+        osItem.Printf( "<Item name=\"OVERVIEW_FACTOR\" "
+                         "domain=\"GDAL_INTERNAL\">%d</Item>",
+                       iOverviewFactor );
         osMetadata += osItem;
     }
 
@@ -799,14 +809,6 @@ GTIFFBuildOverviews( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Do we need some metadata for the overviews?                     */
-/* -------------------------------------------------------------------- */
-    CPLString osMetadata;
-    GDALDataset *poBaseDS = papoBandList[0]->GetDataset();
-
-    GTIFFBuildOverviewMetadata( pszResampling, poBaseDS, osMetadata );
-
-/* -------------------------------------------------------------------- */
 /*      Loop, creating overviews.                                       */
 /* -------------------------------------------------------------------- */
     int nOvrBlockXSize = 0;
@@ -844,6 +846,15 @@ GTIFFBuildOverviews( const char * pszFilename,
             / panOverviewList[iOverview];
         const int nOYSize = (nYSize + panOverviewList[iOverview] - 1)
             / panOverviewList[iOverview];
+
+/* -------------------------------------------------------------------- */
+/*      Do we need some metadata for the overviews?                     */
+/* -------------------------------------------------------------------- */
+        CPLString osMetadata;
+        GDALDataset *poBaseDS = papoBandList[0]->GetDataset();
+
+        GTIFFBuildOverviewMetadata( pszResampling, poBaseDS,
+                                    panOverviewList[iOverview], osMetadata );
 
         GTIFFWriteDirectory( hOTIFF, FILETYPE_REDUCEDIMAGE,
                              nOXSize, nOYSize, nBitsPerPixel,
@@ -1016,6 +1027,7 @@ GTIFFBuildOverviews( const char * pszFilename,
             GDALRasterBand *hSrcBand = papoBandList[iBand];
             GDALRasterBand *hDstBand = hODS->GetRasterBand( iBand + 1 );
 
+            hSrcBand->GetDataset()->SetMetadataItem("OVERVIEW_FACTOR", "1", "GDAL_INTERNAL");
             int bHasNoData = FALSE;
             const double noDataValue = hSrcBand->GetNoDataValue(&bHasNoData);
             if( bHasNoData )

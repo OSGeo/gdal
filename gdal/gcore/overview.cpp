@@ -2762,6 +2762,73 @@ GDALDataType GDALGetOvrWorkDataType( const char* pszResampling,
     return GDT_Float32;
 }
 
+static double GDALGetOverviewRatio( GDALRasterBand* poSrcBand,
+                                    GDALRasterBand* poOvBand)
+{
+    GDALDataset* poSrcDS(poSrcBand->GetDataset());
+    GDALDataset* poDstDS(poOvBand->GetDataset());
+
+    if( poSrcDS == NULL ||
+        poDstDS == NULL )
+        return 0.0;
+
+    const char* pszSrcOverviewFactor =
+          poSrcDS->GetMetadataItem("OVERVIEW_FACTOR", "GDAL_INTERNAL");
+    const char* pszDstOverviewFactor =
+          poDstDS->GetMetadataItem("OVERVIEW_FACTOR", "GDAL_INTERNAL");
+
+    if( pszSrcOverviewFactor != NULL &&
+        pszDstOverviewFactor != NULL)
+    {
+        const double dfSrcOverviewFactor = CPLAtof(pszSrcOverviewFactor);
+        const double dfDstOverviewFactor = CPLAtof(pszDstOverviewFactor);
+
+        return dfDstOverviewFactor / dfSrcOverviewFactor;
+    }
+
+    return 0.0;
+}
+
+static double GDALComputeOverviewRatioX( GDALRasterBand* poSrcBand,
+                                         GDALRasterBand* poOvBand)
+{
+    const bool bStrictOverviewFactor =
+        CPLTestBool(CPLGetConfigOption("GDAL_STRICT_OVERVIEW_FACTOR", "NO"));
+
+    if( bStrictOverviewFactor )
+    {
+        const double dfRatio(GDALGetOverviewRatio(poSrcBand, poOvBand));
+
+        if( dfRatio > 0.0 )
+            return dfRatio;
+    }
+
+    const int nWidth = poSrcBand->GetXSize();
+    const int nDstWidth = poOvBand->GetXSize();
+
+    return static_cast<double>(nWidth) / nDstWidth;
+}
+
+static double GDALComputeOverviewRatioY( GDALRasterBand* poSrcBand,
+                                         GDALRasterBand* poOvBand)
+{
+    const bool bStrictOverviewFactor =
+        CPLTestBool(CPLGetConfigOption("GDAL_STRICT_OVERVIEW_FACTOR", "NO"));
+
+    if( bStrictOverviewFactor )
+    {
+        const double dfRatio(GDALGetOverviewRatio(poSrcBand, poOvBand));
+
+        if( dfRatio > 0.0 )
+            return dfRatio;
+    }
+
+    const int nHeight = poSrcBand->GetYSize();
+    const int nDstHeight = poOvBand->GetYSize();
+
+    return static_cast<double>(nHeight) / nDstHeight;
+}
+
 /************************************************************************/
 /*                      GDALRegenerateOverviews()                       */
 /************************************************************************/
@@ -3094,9 +3161,9 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             const int nDstHeight = papoOvrBands[iOverview]->GetYSize();
 
             const double dfXRatioDstToSrc =
-                static_cast<double>(nWidth) / nDstWidth;
+                GDALComputeOverviewRatioX(poSrcBand, papoOvrBands[iOverview]);
             const double dfYRatioDstToSrc =
-                static_cast<double>(nHeight) / nDstHeight;
+                GDALComputeOverviewRatioY(poSrcBand, papoOvrBands[iOverview]);
 
 /* -------------------------------------------------------------------- */
 /*      Figure out the line to start writing to, and the first line     */

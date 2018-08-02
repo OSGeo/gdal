@@ -53,8 +53,9 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             const char* pszNoData,
                             const uint32* panLercAddCompressionAndVersion );
 
-void GTIFFBuildOverviewMetadata( const char *pszResampling,
+void GTIFFBuildOverviewMetadata(const char *pszResampling,
                                  GDALDataset *poBaseDS,
+                                 int iOverviewFactor,
                                  CPLString &osMetadata );
 
 #endif
