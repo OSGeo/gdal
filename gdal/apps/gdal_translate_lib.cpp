@@ -1238,6 +1238,10 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     double adfDstWin[4] =
         {0.0, 0.0, static_cast<double>(nOXSize), static_cast<double>(nOYSize)};
 
+    double adfSrcWinOri[4];
+    static_assert(sizeof(adfSrcWinOri) == sizeof(psOptions->adfSrcWin),
+                  "inconsistent adfSrcWin size");
+    memcpy(adfSrcWinOri, psOptions->adfSrcWin, sizeof(psOptions->adfSrcWin));
     FixSrcDstWindow( psOptions->adfSrcWin, adfDstWin,
                      GDALGetRasterXSize(hSrcDataset),
                      GDALGetRasterYSize(hSrcDataset) );
@@ -1332,11 +1336,11 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             double dfSAMP_SCALE = CPLAtof(CSLFetchNameValueDef(papszMD, "SAMP_SCALE", "1"));
             double dfLINE_SCALE = CPLAtof(CSLFetchNameValueDef(papszMD, "LINE_SCALE", "1"));
 
-            dfSAMP_OFF -= psOptions->adfSrcWin[0];
-            dfLINE_OFF -= psOptions->adfSrcWin[1];
+            dfSAMP_OFF -= adfSrcWinOri[0];
+            dfLINE_OFF -= adfSrcWinOri[1];
 
-            const double df2 = static_cast<double>(psOptions->adfSrcWin[2]);
-            const double df3 = static_cast<double>(psOptions->adfSrcWin[3]);
+            const double df2 = adfSrcWinOri[2];
+            const double df3 = adfSrcWinOri[3];
             dfSAMP_OFF *= nOXSize / df2;
             dfLINE_OFF *= nOYSize / df3;
             dfSAMP_SCALE *= nOXSize / df2;
