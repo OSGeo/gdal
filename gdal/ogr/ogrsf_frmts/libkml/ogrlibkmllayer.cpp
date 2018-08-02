@@ -230,8 +230,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
                 for(size_t i = 0; i < poKmlDocument->get_schema_array_size(); i++ )
                 {
                     auto schema = poKmlDocument->get_schema_array_at( i );
-                    if( bCanSetKmlSchema &&
-                        m_poKmlSchema == nullptr )
+                    if( bCanSetKmlSchema && !m_poKmlSchema )
                     {
                         m_poKmlSchema = schema;
                         bCanSetKmlSchema = false;
@@ -319,8 +318,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
                                             oKmlSchemaUrl.c_str() );
                                     if( schema )
                                     {
-                                        if( bCanSetKmlSchema &&
-                                            m_poKmlSchema == nullptr )
+                                        if( bCanSetKmlSchema && !m_poKmlSchema )
                                         {
                                             m_poKmlSchema = schema;
                                             bCanSetKmlSchema = false;
