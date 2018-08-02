@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+    <Schema id="schemaA">
+        <SimpleField type="string" name="fieldA"></SimpleField>
+        <SimpleField type="string" name="common"></SimpleField>
+    </Schema>
+    <Schema id="schemaB">
+        <SimpleField type="string" name="fieldB"></SimpleField>
+        <SimpleField type="string" name="common"></SimpleField>
+    </Schema>
+    <Placemark>
+        <name>An instance of A</name>
+        <ExtendedData>
+            <SchemaData schemaUrl="#schemaA">
+                <SimpleData name="fieldA">fieldAValue</SimpleData>
+                <SimpleData name="common">commonAValue</SimpleData>
+            </SchemaData>
+        </ExtendedData>
+    </Placemark>
+    <Placemark>
+        <name>An instance of B</name>
+        <ExtendedData>
+            <SchemaData schemaUrl="#schemaB">
+                <SimpleData name="fieldB">fieldBValue</SimpleData>
+                <SimpleData name="common">commonBValue</SimpleData>
+            </SchemaData>
+        </ExtendedData>
+    </Placemark>
+</Document>
+</kml>
