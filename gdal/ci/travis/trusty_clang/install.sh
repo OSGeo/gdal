@@ -49,6 +49,10 @@ cd swig/perl
 make generate
 make
 cd ../..
+cd swig/csharp
+make generate
+make
+cd ../..
 sudo rm -f /usr/lib/libgdal.so*
 sudo rm -f /usr/include/gdal*.h /usr/include/ogr*.h /usr/include/gnm*.h /usr/include/cpl*.h 
 sudo make install

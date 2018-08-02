@@ -18,6 +18,8 @@ sudo apt-get install -y python-lxml
 sudo apt-get install -y python-pip
 sudo apt-get install -y libqhull-dev
 sudo apt-get install -y libogdi3.2-dev
+# MONO
+sudo apt-get install -y mono-mcs libmono-system-drawing4.0-cil
 # Boost for Mongo
 #sudo apt-get install -y libboost-regex-dev libboost-system-dev libboost-thread-dev
 sudo pip install pyflakes
