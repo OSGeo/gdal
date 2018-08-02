@@ -90,7 +90,7 @@ class SIGDEMDataset final: public GDALPamDataset {
     CPL_DISALLOW_COPY_ASSIGN(SIGDEMDataset)
 
 public:
-    SIGDEMDataset(SIGDEMHeader& sHeaderIn);
+    explicit SIGDEMDataset(const SIGDEMHeader& sHeaderIn);
     ~SIGDEMDataset() override;
 
     CPLErr GetGeoTransform(double *padfTransform) override;

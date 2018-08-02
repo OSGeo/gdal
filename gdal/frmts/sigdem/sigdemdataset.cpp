@@ -130,7 +130,7 @@ static int32_t GetCoordinateSystemId(const char* pszProjection) {
     return coordinateSystemId;
 }
 
-SIGDEMDataset::SIGDEMDataset(SIGDEMHeader& sHeaderIn) :
+SIGDEMDataset::SIGDEMDataset(const SIGDEMHeader& sHeaderIn) :
         fpImage(nullptr),
         bGotTransform(false),
         pszProjection(CPLStrdup("")),
@@ -622,5 +622,5 @@ CPLErr SIGDEMRasterBand::IWriteBlock(
 
 SIGDEMRasterBand::~SIGDEMRasterBand() {
     SIGDEMRasterBand::FlushCache();
-    CPLFree(pBlockBuffer);
+    delete[] pBlockBuffer;
 }
