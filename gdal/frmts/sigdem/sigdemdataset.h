@@ -46,7 +46,6 @@ class SIGDEMRasterBand;
 
 class SIGDEMHeader {
 public:
-    char acFileType[6];
     int16_t version = 1;
     int32_t nCoordinateSystemId = 0;
     double dfOffsetX = 0;

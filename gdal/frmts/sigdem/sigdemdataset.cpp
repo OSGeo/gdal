@@ -102,8 +102,9 @@ void GDALRegister_SIGDEM() {
         poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "sigdem");
 
         poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-        poDriver->pfnOpen = SIGDEMDataset::Open;
         poDriver->pfnCreateCopy = SIGDEMDataset::CreateCopy;
+        poDriver->pfnIdentify = SIGDEMDataset::Identify;
+        poDriver->pfnOpen = SIGDEMDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver(poDriver);
     }
@@ -328,7 +329,7 @@ GDALDataset *SIGDEMDataset::Open(GDALOpenInfo * poOpenInfo) {
     VSILFILE* fp = poOpenInfo->fpL;
 
     SIGDEMHeader sHeader;
-    if (!SIGDEMDataset::Identify(poOpenInfo) || fp == nullptr) {
+    if (SIGDEMDataset::Identify(poOpenInfo) != TRUE || fp == nullptr) {
         return nullptr;
     }
 
@@ -422,14 +423,12 @@ GDALDataset *SIGDEMDataset::Open(GDALOpenInfo * poOpenInfo) {
 }
 
 SIGDEMHeader::SIGDEMHeader() {
-    memcpy(this->acFileType, SIGDEM_FILE_TYPE, 6);
 }
 
 bool SIGDEMHeader::Read(VSILFILE *fp) {
     GByte abyHeader[HEADER_LENGTH];
     if (VSIFReadL(&abyHeader, 1, HEADER_LENGTH, fp) == HEADER_LENGTH) {
         SWAP_SIGDEM_HEADER(abyHeader);
-        memcpy(&(this->acFileType), abyHeader, 6);
         memcpy(&(this->version), abyHeader + 6, 2);
         memcpy(&(this->nCoordinateSystemId), abyHeader + 8, 4);
         memcpy(&(this->dfOffsetX), abyHeader + 12, 8);
@@ -458,7 +457,7 @@ bool SIGDEMHeader::Read(VSILFILE *fp) {
 void SIGDEMHeader::Write(VSILFILE *fp) {
     GByte abyHeader[HEADER_LENGTH];
 
-    memcpy(abyHeader, &(this->acFileType), 6);
+    memcpy(abyHeader, &(SIGDEM_FILE_TYPE), 6);
     memcpy(abyHeader + 6, &(this->version), 2);
     memcpy(abyHeader + 8, &(this->nCoordinateSystemId), 4);
     memcpy(abyHeader + 12, &(this->dfOffsetX), 8);
