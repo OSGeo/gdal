@@ -927,6 +927,17 @@ def test_gdal_translate_32():
         print(md)
         return 'fail'
 
+    gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte_rpc.tif tmp/test_gdal_translate_32.tif -srcwin -10 -5 20 20')
+    ds = gdal.Open('tmp/test_gdal_translate_32.tif')
+    md = ds.GetMetadata('RPC')
+    if abs(float(md['LINE_OFF']) - (15834 - -5)) > 1e-5 or \
+       abs(float(md['LINE_SCALE']) - 15834) > 1e-5 or \
+       abs(float(md['SAMP_OFF']) - (13464 - -10)) > 1e-5 or \
+       abs(float(md['SAMP_SCALE']) - 13464) > 1e-5:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
