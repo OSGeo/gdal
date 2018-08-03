@@ -10,7 +10,7 @@ include ../SWIGmake.base
 SWIGARGS = -Wall -I../include -I../include/$(BINDING) -DSWIG2_CSHARP
 
 LINK = $(LD_SHARED)
-LINK_EXTRAFLAGS = 
+LINK_EXTRAFLAGS =  $(GDAL_SLIB_LINK)
 OBJ_EXT = o
 ifeq ($(HAVE_LIBTOOL),yes)
 LINK = $(LD)
