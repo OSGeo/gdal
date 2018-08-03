@@ -47,10 +47,7 @@ CSDEBUG =
 CSC = $(CSC) /define:CLR4
 !ENDIF
 
-SWIG = $(SWIG) -DSWIG2_CSHARP
-
 OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
-
 
 all: ogr_dir gdal_dir osr_dir const_dir gdal_csharp samples
 
@@ -101,16 +98,16 @@ osr_dir:
 
 interface:
 	cd const
-    $(SWIG) -csharp -namespace OSGeo.GDAL -dllimport gdalconst_wrap -o gdalconst_wrap.c ../../include/gdalconst.i
+    $(SWIG) -DSWIG2_CSHARP -csharp -namespace OSGeo.GDAL -dllimport gdalconst_wrap -o gdalconst_wrap.c ../../include/gdalconst.i
 	cd ..
 	cd gdal
-	$(SWIG) -c++ -csharp -namespace OSGeo.GDAL  -dllimport gdal_wrap -I../../include/csharp -o gdal_wrap.cpp ../../include/gdal.i
+	$(SWIG) -DSWIG2_CSHARP -c++ -csharp -namespace OSGeo.GDAL  -dllimport gdal_wrap -I../../include/csharp -o gdal_wrap.cpp ../../include/gdal.i
 	cd ..
 	cd osr
-	$(SWIG) -c++ -csharp -namespace OSGeo.OSR  -dllimport osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
+	$(SWIG) -DSWIG2_CSHARP -c++ -csharp -namespace OSGeo.OSR  -dllimport osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
 	cd ..
 	cd ogr
-	$(SWIG) -c++ -csharp -namespace OSGeo.OGR -dllimport ogr_wrap -I../../include/csharp -o ogr_wrap.cpp ../../include/ogr.i
+	$(SWIG) -DSWIG2_CSHARP -c++ -csharp -namespace OSGeo.OGR -dllimport ogr_wrap -I../../include/csharp -o ogr_wrap.cpp ../../include/ogr.i
 	cd ..
 
 samples:
