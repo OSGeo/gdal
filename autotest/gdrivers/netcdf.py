@@ -45,6 +45,8 @@ import gdaltest
 
 import test_cli_utilities
 
+from uffd import uffd_compare
+
 ###############################################################################
 # Netcdf Functions
 ###############################################################################
@@ -3280,6 +3282,31 @@ def netcdf_82():
 
     return 'success'
 
+
+###############################################################################
+def netcdf_uffd():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if uffd_compare('orog_CRCM1.nc') is None:
+        return 'skip'
+
+    netcdf_files = [
+        'orog_CRCM1.nc',
+        'orog_CRCM2.nc',
+        'cf-bug636.nc',
+        'bug636.nc',
+        'rotated_pole.nc',
+        'reduce-cgcms.nc'
+    ]
+    for netcdf_file in netcdf_files:
+        if uffd_compare(netcdf_file) is not True:
+            return 'fail'
+
+    return 'success'
+
+
 ###############################################################################
 
 ###############################################################################
@@ -3373,7 +3400,8 @@ gdaltest_list = [
     netcdf_79,
     netcdf_80,
     netcdf_81,
-    netcdf_82
+    netcdf_82,
+    netcdf_uffd,
 ]
 
 ###############################################################################
