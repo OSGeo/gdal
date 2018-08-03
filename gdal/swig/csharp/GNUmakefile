@@ -7,7 +7,8 @@ all: build
 BINDING = csharp
 include ../SWIGmake.base
 
-SWIGARGS = -Wall -I../include -I../include/$(BINDING) -DSWIG2_CSHARP
+SWIG = $(SWIG) -DSWIG2_CSHARP
+SWIGARGS = -Wall -I../include -I../include/$(BINDING)
 
 LINK = $(LD_SHARED)
 LINK_EXTRAFLAGS =
