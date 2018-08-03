@@ -69,7 +69,7 @@ public:
 
     bool Read(VSILFILE *fp);
 
-    void Write(VSILFILE *fp);
+    bool Write(VSILFILE *fp);
 };
 
 class SIGDEMDataset final: public GDALPamDataset {

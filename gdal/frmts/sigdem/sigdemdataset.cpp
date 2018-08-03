@@ -203,14 +203,14 @@ GDALDataset* SIGDEMDataset::CreateCopy(
     if (pszMin == nullptr) {
         sHeader.dfMinZ = -10000;
     } else {
-        sHeader.dfMinZ = atof(pszMin);
+        sHeader.dfMinZ = CPLAtof(pszMin);
     }
     sHeader.dfMaxY = adfGeoTransform[3];
     const char* pszMax = band->GetMetadataItem("STATISTICS_MAXIMUM");
     if (pszMax == nullptr) {
         sHeader.dfMaxZ = 10000;
     } else {
-        sHeader.dfMaxZ = atof(pszMax);
+        sHeader.dfMaxZ = CPLAtof(pszMax);
     }
     sHeader.nCols = poSrcDS->GetRasterXSize();
     sHeader.nRows = poSrcDS->GetRasterYSize();
@@ -221,13 +221,25 @@ GDALDataset* SIGDEMDataset::CreateCopy(
     sHeader.dfOffsetX = sHeader.dfMinX;
     sHeader.dfOffsetY = sHeader.dfMinY;
 
-    sHeader.Write(fp);
+    if( !sHeader.Write(fp) )
+    {
+        VSIUnlink(pszFilename);
+        VSIFCloseL(fp);
+        return nullptr;
+    }
 
     // Write fill with all NO_DATA values
     int32_t* row = new int32_t[nCols];
     std::fill(row, row + nCols, CPL_MSBWORD32(NO_DATA));
     for (int i = 0; i < nRows; i++) {
-        VSIFWriteL(row, CELL_SIZE_FILE, nCols, fp);
+        if( VSIFWriteL(row, CELL_SIZE_FILE, nCols, fp) !=
+                                            static_cast<size_t>(nCols) )
+        {
+            delete[] row;
+            VSIUnlink(pszFilename);
+            VSIFCloseL(fp);
+            return nullptr;
+        }
     }
     delete[] row;
 
@@ -265,10 +277,12 @@ GDALDataset* SIGDEMDataset::CreateCopy(
     }
     GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
     GDALDataset * poDstDS = Open(&oOpenInfo);
-    if (GDALDatasetCopyWholeRaster(poSrcDS, poDstDS, nullptr, pfnProgress,
+    if (poDstDS != nullptr &&
+        GDALDatasetCopyWholeRaster(poSrcDS, poDstDS, nullptr, pfnProgress,
             pProgressData) == OGRERR_NONE) {
         return poDstDS;
     } else {
+        VSIUnlink(pszFilename);
         return nullptr;
     }
 }
@@ -454,7 +468,7 @@ bool SIGDEMHeader::Read(VSILFILE *fp) {
     }
 }
 
-void SIGDEMHeader::Write(VSILFILE *fp) {
+bool SIGDEMHeader::Write(VSILFILE *fp) {
     GByte abyHeader[HEADER_LENGTH];
 
     memcpy(abyHeader, &(SIGDEM_FILE_TYPE), 6);
@@ -477,7 +491,7 @@ void SIGDEMHeader::Write(VSILFILE *fp) {
     memcpy(abyHeader + 116, &(this->dfXDim), 8);
     memcpy(abyHeader + 124, &(this->dfYDim), 8);
     SWAP_SIGDEM_HEADER(abyHeader);
-    VSIFWriteL(&abyHeader, HEADER_LENGTH, 1, fp);
+    return VSIFWriteL(&abyHeader, HEADER_LENGTH, 1, fp) == 1;
 }
 
 SIGDEMRasterBand::SIGDEMRasterBand(
