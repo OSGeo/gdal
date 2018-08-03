@@ -10,7 +10,6 @@
 */
 
 #if (SWIG_VERSION < 0x020000)
-// On SWIG 1.3.x
 // Ensure the class is not marked BeforeFieldInit causing memory corruption with CLR4
 %pragma(csharp) imclasscode=%{
   static $imclassname() {
