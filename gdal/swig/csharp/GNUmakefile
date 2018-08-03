@@ -10,7 +10,7 @@ include ../SWIGmake.base
 SWIGARGS = -Wall -I../include -I../include/$(BINDING) -DSWIG2_CSHARP
 
 LINK = $(LD_SHARED)
-LINK_EXTRAFLAGS =  $(GDAL_SLIB_LINK)
+LINK_EXTRAFLAGS =
 OBJ_EXT = o
 ifeq ($(HAVE_LIBTOOL),yes)
 LINK = $(LD)
@@ -46,7 +46,7 @@ install:
 	@echo "No installation to be done"
 
 $(CSHARP_MODULES): lib%csharp.$(SO_EXT): %_wrap.$(OBJ_EXT)
-	$(LINK) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@ $(LINK_EXTRAFLAGS)
+	$(LINK) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@ $(GDAL_SLIB_LINK) $(LINK_EXTRAFLAGS)
 	rm -rf $*_csharp.dll.config
 	echo "<configuration>" >> $*_csharp.dll.config
 	echo "<dllmap dll=\""$*"_wrap\" target=\""$*csharp"\" />" >> $*_csharp.dll.config
