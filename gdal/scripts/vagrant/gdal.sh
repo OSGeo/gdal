@@ -67,9 +67,7 @@ make test
 cd ../..
 
 cd swig/csharp
-# There's an issue with swig 2.0.4 from ubuntu 12.04
-PATH=$HOME/install-swig-1.3.40/bin:$PATH make generate
+make generate
 make
-# For some reason, this fails on Vagrant ubuntu trusty(14.04)
-# make test
+make test
 cd ../..

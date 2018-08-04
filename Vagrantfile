@@ -186,7 +186,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	  config.vm.provision :shell, :inline => pkg_cmd
     scripts = [
       "sfcgal.sh",
-      "swig-1.3.40.sh",
       "openjpeg.sh",
       "gdal.sh",
       "postgis.sh"
