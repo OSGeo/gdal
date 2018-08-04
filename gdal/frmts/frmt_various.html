@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang=en>
-<head>
+<head>f
 <title>Various Supported GDAL Raster Formats</title>
 </head>
 
@@ -1282,6 +1282,20 @@ created files are always RLE compressed..</p>
 </ul>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/sgi/sgidataset.cpp</tt>.</p>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+<h2><a name="SIGDEM">SIGDEM -- Scaled Integer Gridded DEM</a></h2>
+
+<p>The SIGDEM driver supports reading and writing
+<a href="https://github.com/revolsys/sigdem">Scaled Integer Gridded DEM</a> files.</p>
+
+<p>SIGDEM files contain exactly 1 band. The in-memory band data is stored using GDT_Float64.</p>
+
+<p>SIGDEM prefers use of an EPSG ID inside the file for coordinate systems.
+Only if the spatial reference doesn't have an EPSG ID will a .prj file be written or read.</p>
+
+<p>NOTE: Implemented as <tt>gdal/frmts/raw/sigdemdataset.cpp</tt>.</p>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 

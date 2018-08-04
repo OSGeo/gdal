@@ -3,3 +3,9 @@
 *.obj
 *.so
 *~
+
+# eclipse ignore
+.project
+.settings
+.pydevproject
+.cproject
