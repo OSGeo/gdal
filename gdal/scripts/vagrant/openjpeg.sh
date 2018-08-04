@@ -4,22 +4,8 @@
 set -o errexit
 set -o xtrace
 
-NUMTHREADS=2
-if [[ -f /sys/devices/system/cpu/online ]]; then
-	# Calculates 1.5 times physical threads
-	NUMTHREADS=$(( ( $(cut -f 2 -d '-' /sys/devices/system/cpu/online) + 1 ) * 15 / 10  ))
-fi
-#NUMTHREADS=1 # disable MP
-export NUMTHREADS
+wget https://github.com/uclouvain/openjpeg/releases/download/v2.3.0/openjpeg-v2.3.0-linux-x86_64.tar.gz
+tar xzf openjpeg-v2.3.0-linux-x86_64.tar.gz
+sudo cp -r openjpeg-v2.3.0-linux-x86_64/include/* /usr/local/include
+sudo cp -r openjpeg-v2.3.0-linux-x86_64/lib/* /usr/local/lib
 
-wget --no-check-certificate https://sourceforge.net/projects/openjpeg.mirror/files/openjpeg-2.0.0.tar.gz/download -O openjpeg-2.0.0.tar.gz
-tar xvzf openjpeg-2.0.0.tar.gz
-cd openjpeg-2.0.0
-mkdir build
-cd build
-cmake ..
-
-make -j $NUMTHREADS
-sudo make install
-
-cd ../..
