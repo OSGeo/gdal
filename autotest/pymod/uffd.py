@@ -51,8 +51,8 @@ def uffd_compare(filename):
          be identical after various comparisons.  `False` otherwise.
 
     """
-    ext = os.path.splitext(filename)
-    vsimem = '/vsimem/file.{}'.format(ext)
+    ext = os.path.splitext(filename)[1]
+    vsimem = '/vsimem/file{}'.format(ext)
     filename2 = './data/{}'.format(filename)
     gdal.FileFromMemBuffer(vsimem, open(filename2, 'rb').read())
 

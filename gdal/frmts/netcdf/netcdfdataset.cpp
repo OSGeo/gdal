@@ -6709,7 +6709,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     void * pVma = nullptr;
     uint64_t nVmaSize = 0;
 
-    if (bVsiFile && bReadOnly)
+    if ( bVsiFile && bReadOnly && CPLIsUserFaultMappingSupported() )
       pCtx = CPLCreateUserFaultMapping(osFilenameForNCOpen, &pVma, &nVmaSize);
     if (pCtx != nullptr && pVma != nullptr && nVmaSize > 0)
       status2 = nc_open_mem(osFilenameForNCOpen, nMode, nVmaSize, pVma, &cdfid);
@@ -8901,6 +8901,13 @@ void GDALRegister_netCDF()
 
 #ifdef ENABLE_NCDUMP
     poDriver->SetMetadataItem("ENABLE_NCDUMP", "YES");
+#endif
+
+#ifdef ENABLE_UFFD
+    if( CPLIsUserFaultMappingSupported() )
+    {
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    }
 #endif
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,

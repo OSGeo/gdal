@@ -88,7 +88,10 @@ void GDALRegister_HDF5()
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "h5 hdf5");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
 #ifdef ENABLE_UFFD
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    if( CPLIsUserFaultMappingSupported() )
+    {
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    }
 #endif
 
     poDriver->pfnOpen = HDF5Dataset::Open;

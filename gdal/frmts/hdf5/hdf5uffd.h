@@ -36,7 +36,7 @@
     void * pVma = nullptr; \
     uint64_t nVmaSize = 0; \
     context = nullptr; \
-    if (!strncmp(filename, "/vsi", strlen("/vsi"))) \
+    if ( !strncmp(filename, "/vsi", strlen("/vsi")) && CPLIsUserFaultMappingSupported() ) \
       context = CPLCreateUserFaultMapping(filename, &pVma, &nVmaSize); \
     if (context != nullptr && pVma != nullptr && nVmaSize > 0) \
       handle = H5LTopen_file_image(pVma, nVmaSize, H5LT_FILE_IMAGE_DONT_COPY|H5LT_FILE_IMAGE_DONT_RELEASE); \

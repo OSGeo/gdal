@@ -627,7 +627,10 @@ void GDALRegister_HDF5Image()
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "HDF5 Dataset");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_hdf5.html");
 #ifdef ENABLE_UFFD
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    if( CPLIsUserFaultMappingSupported() )
+    {
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    }
 #endif
 
     poDriver->pfnOpen = HDF5ImageDataset::Open;

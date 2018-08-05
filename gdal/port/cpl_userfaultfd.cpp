@@ -48,6 +48,7 @@
 #include <linux/userfaultfd.h>
 
 #include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_userfaultfd.h"
 #include "cpl_vsi.h"
 
@@ -179,6 +180,20 @@ static void * fault_handler(void * ptr)
   return nullptr;
 }
 
+bool CPLIsUserFaultMappingSupported()
+{
+    // Check the Linux kernel version.  Linux 4.3 or newer is needed for
+    // userfaultfd.
+    int major = 0, minor = 0;
+    struct utsname utsname;
+
+    if (uname(&utsname)) return false;
+    sscanf(utsname.release, "%d.%d", &major, &minor);
+    if (major < 4) return false;
+    if (major == 4 && minor < 3) return false;
+    return true;
+}
+
 /*
  * Returns nullptr on failure, a valid pointer on success.
  */
@@ -189,16 +204,11 @@ void * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64
   struct cpl_uffd_context * ctx = nullptr;
   struct uffdio_api uffdio_api;
 
-  // Check the Linux kernel version.  Linux 4.3 or newer is needed for
-  // userfaultfd.
+  if( !CPLIsUserFaultMappingSupported() )
   {
-    int major, minor;
-    struct utsname utsname;
-
-    if (uname(&utsname)) return nullptr;
-    sscanf(utsname.release, "%d.%d", &major, &minor);
-    if (major < 4) return nullptr;
-    if (major == 4 && minor < 3) return nullptr;
+      CPLError(CE_Failure, CPLE_NotSupported,
+               "CPLCreateUserFaultMapping(): Linux kernel 4.3 or newer needed");
+      return nullptr;
   }
 
   // Get the size of the asset
@@ -212,6 +222,8 @@ void * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64
   ctx->vma_size = static_cast<size_t>(((statbuf.st_size/ctx->page_size)+1) * ctx->page_size);
   if (ctx->vma_size < static_cast<size_t>(statbuf.st_size)) { // Check for overflow
     uffd_cleanup(ctx);
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "CPLCreateUserFaultMapping(): File too large for architecture");
     return nullptr;
   }
 
@@ -220,6 +232,8 @@ void * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64
   if (ctx->vma_ptr == BAD_MMAP) {
     ctx->vma_ptr = nullptr;
     uffd_cleanup(ctx);
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "CPLCreateUserFaultMapping(): mmap() failed");
     return nullptr;
   }
 
@@ -228,6 +242,8 @@ void * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64
   if (ctx->page_ptr == BAD_MMAP) {
     ctx->page_ptr = nullptr;
     uffd_cleanup(ctx);
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "CPLCreateUserFaultMapping(): mmap() failed");
     return nullptr;
   }
 
@@ -235,6 +251,8 @@ void * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64
   if ((ctx->uffd = static_cast<int>(syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK))) == -1) {
     ctx->uffd = -1;
     uffd_cleanup(ctx);
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "CPLCreateUserFaultMapping(): syscall(__NR_userfaultfd) failed");
     return nullptr;
   }
 
@@ -243,6 +261,8 @@ void * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64
   uffdio_api.features = 0;
   if (ioctl(ctx->uffd, UFFDIO_API, &uffdio_api) == -1) {
     uffd_cleanup(ctx);
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "CPLCreateUserFaultMapping(): ioctl(UFFDIO_API) failed");
     return nullptr;
   }
 
@@ -252,12 +272,16 @@ void * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64
   ctx->uffdio_register.mode = UFFDIO_REGISTER_MODE_MISSING;
   if (ioctl(ctx->uffd, UFFDIO_REGISTER, &ctx->uffdio_register) == -1) {
     uffd_cleanup(ctx);
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "CPLCreateUserFaultMapping(): ioctl(UFFDIO_REGISTER) failed");
     return nullptr;
   }
 
   // Start handler
   if (pthread_create(&thread, nullptr, fault_handler, ctx) || pthread_detach(thread)) {
     uffd_cleanup(ctx);
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "CPLCreateUserFaultMapping(): pthread_create() failed");
     return nullptr;
   }
 
@@ -272,4 +296,4 @@ void CPLDeleteUserFaultMapping(void * p)
   if (ctx) ctx->keep_going = false;
 }
 
-#endif
+#endif // ENABLE_UFFD
