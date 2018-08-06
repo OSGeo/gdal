@@ -310,7 +310,7 @@ def test_gdal_contour_4():
 
     ds = ogr.Open('tmp/contour_orientation1.shp')
 
-    expected_contours = ['LINESTRING (1.621875 49.493749999999999,' +
+    expected_contours = ['LINESTRING (' +
                          '1.628125 49.493749999999999,' +
                          '1.63125 49.496875000000003,' +
                          '1.63125 49.503124999999997,' +
@@ -318,16 +318,18 @@ def test_gdal_contour_4():
                          '1.621875 49.50625,' +
                          '1.61875 49.503124999999997,' +
                          '1.61875 49.496875000000003,' +
-                         '1.621875 49.493749999999999)',
-                         'LINESTRING (1.371875 49.493749999999999,' +
+                         '1.621875 49.493749999999999,' +
+                         '1.628125 49.493749999999999)',
+                         'LINESTRING (' +
+                         '1.38125 49.496875000000003,' +
+                         '1.378125 49.493749999999999,' +
+                         '1.371875 49.493749999999999,' +
                          '1.36875 49.496875000000003,' +
                          '1.36875 49.503124999999997,' +
                          '1.371875 49.50625,' +
                          '1.378125 49.50625,' +
                          '1.38125 49.503124999999997,' +
-                         '1.38125 49.496875000000003,' +
-                         '1.378125 49.493749999999999,' +
-                         '1.371875 49.493749999999999)']
+                         '1.38125 49.496875000000003)']
     expected_elev = [10, 20]
 
     lyr = ds.ExecuteSQL("select * from contour_orientation1 order by elev asc")
@@ -344,7 +346,7 @@ def test_gdal_contour_4():
         if feat.GetField('elev') != expected_elev[i]:
             print('Got %f. Expected %f' % (feat.GetField('elev'), expected_elev[i]))
             return 'fail'
-        if ogrtest.check_feature_geometry(feat, expected_geom) != 0:
+        if ogrtest.check_feature_geometry(feat, expected_geom, 0.01) != 0:
             print('Got      %s.\nExpected %s' % (feat.GetGeometryRef().ExportToWkt(), expected_contours[i]))
             test_failed = True
         i = i + 1
@@ -369,14 +371,14 @@ def test_gdal_contour_5():
 
     ds = ogr.Open('tmp/contour_orientation2.shp')
 
-    expected_contours = ['LINESTRING (0 2,' +
-                         '0.5 2.0,' +
-                         '1.5 2.0,' +
-                         '1.954542932445554 2.5,' +
-                         '2.124997615823304 3.5,' +
-                         '1.5 3.954546085074803,' +
-                         '0.5 4.066665649414062,' +
-                         '0.0 4.066665649414062)']
+    expected_contours =     ['LINESTRING (0.0 1.999999,' +
+                             '0.5 1.999999,' +
+                             '1.5 1.999999,' +
+                             '1.95454293244555 2.5,' +
+                             '2.1249976158233 3.5,' +
+                             '1.5 3.9545460850748,' +
+                             '0.5 4.06666564941406,' +
+                             '0.0 4.06666564941406)']
     expected_elev = [140]
 
     lyr = ds.ExecuteSQL("select * from contour_orientation2 order by elev asc")

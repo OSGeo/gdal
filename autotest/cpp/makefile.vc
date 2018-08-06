@@ -59,6 +59,10 @@ OBJ = \
     test_osr_ct.obj \
     test_osr_pci.obj \
     test_osr_proj4.obj \
+    test_marching_squares_square.obj \
+    test_marching_squares_tile.obj \
+    test_marching_squares_contour.obj \
+    test_marching_squares_polygon.obj \
     tut/tut_gdal.obj
 
 # Commands
