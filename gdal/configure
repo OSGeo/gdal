@@ -39219,7 +39219,7 @@ echo "  NetCDF support:            ${NETCDF_SETTING}"
 
 if test "$NETCDF_SETTING" = "yes" ; then
 
-echo "  NetCDF has nc_open_mem:    ${NETCDF_MEM}"
+echo "  NetCDF has netcdf_mem.h:   ${NETCDF_MEM}"
 
 fi
 

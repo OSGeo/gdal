@@ -45,6 +45,6 @@
 
 bool CPLIsUserFaultMappingSupported();
 void * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64_t * pnVmaSize);
-void CPLDeleteUserFaultMapping(void * p);
+void CPLDeleteUserFaultMapping(void * ptr);
 
 #endif
