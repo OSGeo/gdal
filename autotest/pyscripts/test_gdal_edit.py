@@ -282,10 +282,67 @@ def test_gdal_edit_py_5():
     return 'success'
 
 ###############################################################################
-# Test -scale and -offset
+# Test -setstats
 
 
 def test_gdal_edit_py_6():
+
+    script_path = test_py_scripts.get_py_script('gdal_edit')
+    if script_path is None:
+        return 'skip'
+
+    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
+
+    # original values should be min=74, max=255, mean=126.765 StdDev=22.928470838676
+    test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -setstats None None None None")
+
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif')
+    stat_min = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM')
+    if stat_min is None or float(stat_min) != 74:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    stat_max = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MAXIMUM')
+    if stat_max is None or float(stat_max) != 255:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    stat_mean = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MEAN')
+    if stat_mean is None or abs(float(stat_mean) - 126.765)>0.001:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    stat_stddev = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_STDDEV')
+    if stat_stddev is None or abs(float(stat_stddev) - 22.928)>0.001:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    ds = None
+
+    test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -setstats 22 217 100 30")
+
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif')
+    stat_min = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM')
+    if stat_min is None or float(stat_min) != 22:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    stat_max = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MAXIMUM')
+    if stat_max is None or float(stat_max) != 217:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    stat_mean = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MEAN')
+    if stat_mean is None or float(stat_mean) != 100:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    stat_stddev = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_STDDEV')
+    if stat_stddev is None or float(stat_stddev) != 30:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    return 'success'
+
+###############################################################################
+# Test -scale and -offset
+
+def test_gdal_edit_py_7():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
@@ -309,7 +366,7 @@ def test_gdal_edit_py_6():
 # Test -colorinterp_X
 
 
-def test_gdal_edit_py_7():
+def test_gdal_edit_py_8():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
@@ -354,6 +411,7 @@ gdaltest_list = [
     test_gdal_edit_py_5,
     test_gdal_edit_py_6,
     test_gdal_edit_py_7,
+    test_gdal_edit_py_8,
     test_gdal_edit_py_cleanup,
 ]
 

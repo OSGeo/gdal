@@ -41,6 +41,7 @@ def Usage():
     print('                 [-offset value] [-scale value]')
     print('                 [-colorinterp_X red|green|blue|alpha|gray|undefined]*')
     print('                 [-unsetstats] [-stats] [-approx_stats]')
+    print('                 [-setstats min max mean stddev]')
     print('                 [-gcp pixel line easting northing [elevation]]*')
     print('                 [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname')
     print('')
@@ -78,6 +79,7 @@ def gdal_edit(argv):
     unsetgt = False
     unsetstats = False
     stats = False
+    setstats = False
     approx_stats = False
     unsetmd = False
     ro = False
@@ -147,6 +149,29 @@ def gdal_edit(argv):
             approx_stats = True
         elif argv[i] == '-stats':
             stats = True
+        elif argv[i] == '-setstats' and i < len(argv)-4:
+            stats = True
+            setstats = True
+            if argv[i + 1] != 'None':
+                statsmin = float(argv[i + 1])
+            else:
+                statsmin = None
+            i = i + 1
+            if argv[i + 1] != 'None':
+                statsmax = float(argv[i + 1])
+            else:
+                statsmax = None
+            i = i + 1
+            if argv[i + 1] != 'None':
+                statsmean = float(argv[i + 1])
+            else:
+                statsmean = None
+            i = i + 1
+            if argv[i + 1] != 'None':
+                statsdev = float(argv[i + 1])
+            else:
+                statsdev = None
+            i = i + 1
         elif argv[i] == '-unsetmd':
             unsetmd = True
         elif argv[i] == '-unsetnodata':
@@ -190,7 +215,7 @@ def gdal_edit(argv):
         return Usage()
 
     if (srs is None and lry is None and yres is None and not unsetgt and
-            not unsetstats and not stats and nodata is None and
+            not unsetstats and not stats and not setstats and nodata is None and
             not molist and not unsetmd and not gcp_list and
             not unsetnodata and not colorinterp and
             scale is None and offset is None):
@@ -298,6 +323,21 @@ def gdal_edit(argv):
     if stats:
         for i in range(ds.RasterCount):
             ds.GetRasterBand(i + 1).ComputeStatistics(approx_stats)
+
+    if setstats:
+        for i in range(ds.RasterCount):
+            if statsmin is None or statsmax is None or statsmean is None or statsdev is None:
+                ds.GetRasterBand(i+1).ComputeStatistics(approx_stats)
+                min,max,mean,stdev = ds.GetRasterBand(i+1).GetStatistics(approx_stats,True)
+                if statsmin is None:
+                    statsmin = min
+                if statsmax is None:
+                    statsmax = max
+                if statsmean is None:
+                    statsmean = mean
+                if statsdev is None:
+                    statsdev = stdev
+            ds.GetRasterBand(i+1).SetStatistics(statsmin, statsmax, statsmean, statsdev)
 
     if molist:
         if unsetmd:
