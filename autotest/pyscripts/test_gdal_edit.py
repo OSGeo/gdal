@@ -337,7 +337,6 @@ def test_gdal_edit_py_6():
         return 'fail'
     ds = None
     
-    print(stat_min,stat_max,stat_mean,stat_stddev)
     return 'success'
 
 ###############################################################################
