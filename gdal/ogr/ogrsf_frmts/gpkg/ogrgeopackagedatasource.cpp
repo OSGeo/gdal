@@ -33,6 +33,7 @@
 #include "gdalwarper.h"
 #include "ogrgeopackageutility.h"
 #include "ogrsqliteutility.h"
+#include "vrt/vrtdataset.h"
 
 #include <cstdlib>
 
@@ -4273,6 +4274,24 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
 }
 
 /************************************************************************/
+/*                      GetUnderlyingDataset()                          */
+/************************************************************************/
+
+static GDALDataset* GetUnderlyingDataset( GDALDataset* poSrcDS )
+{
+    if( EQUAL(poSrcDS->GetDescription(), "") &&
+        poSrcDS->GetDriver() != nullptr &&
+        poSrcDS->GetDriver() == GDALGetDriverByName("VRT") )
+    {
+        VRTDataset* poVRTDS = cpl::down_cast<VRTDataset*>(poSrcDS);
+        auto poTmpDS = poVRTDS->GetSingleSimpleSource();
+        if( poTmpDS )
+            return poTmpDS;
+    }
+
+    return poSrcDS;
+}
+/************************************************************************/
 /*                            CreateCopy()                              */
 /************************************************************************/
 
@@ -4307,7 +4326,7 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
     if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) &&
         CSLFetchNameValue(papszOptions, "RASTER_TABLE") == nullptr )
     {
-        CPLString osBasename(CPLGetBasename(poSrcDS->GetDescription()));
+        CPLString osBasename(CPLGetBasename(GetUnderlyingDataset(poSrcDS)->GetDescription()));
         apszUpdatedOptions.SetNameValue("RASTER_TABLE", osBasename);
     }
 
