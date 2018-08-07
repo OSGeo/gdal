@@ -730,11 +730,20 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
                                          void *pProgressData )
 
 {
-    if( nSources != 1 || m_bNoDataValueSet )
+    int bHasNoData = FALSE;
+    if( nSources != 1 ||
+        (m_bNoDataValueSet && !(
+            papoSources[0]->IsSimpleSource() &
+            EQUAL(cpl::down_cast<VRTSimpleSource*>(papoSources[0])->GetType(),
+                  "SimpleSource") &&
+            m_dfNoDataValue == cpl::down_cast<VRTSimpleSource*>(papoSources[0])->GetBand()->GetNoDataValue(&bHasNoData) &&
+            bHasNoData)) )
+    {
         return GDALRasterBand::ComputeStatistics(  bApproxOK,
                                               pdfMin, pdfMax,
                                               pdfMean, pdfStdDev,
                                               pfnProgress, pProgressData );
+    }
 
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
