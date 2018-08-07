@@ -1041,6 +1041,9 @@ def ogr_carto_test_ogrsf():
     if ogrtest.carto_drv is None or gdal.GetConfigOption('SKIP_SLOW') is not None:
         return 'skip'
 
+    if gdaltest.skip_on_travis():
+        return 'skip'
+
     ogrtest.carto_test_server = 'https://gdalautotest2.carto.com'
 
     if gdaltest.gdalurlopen(ogrtest.carto_test_server) is None:
