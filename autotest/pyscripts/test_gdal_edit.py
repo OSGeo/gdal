@@ -412,6 +412,7 @@ gdaltest_list = [
     test_gdal_edit_py_5,
     test_gdal_edit_py_6,
     test_gdal_edit_py_7,
+    test_gdal_edit_py_8,
     test_gdal_edit_py_cleanup,
 ]
 
