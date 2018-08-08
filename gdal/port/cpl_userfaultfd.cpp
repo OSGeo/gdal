@@ -216,7 +216,7 @@ static void cpl_uffd_fault_handler(void * ptr)
             // there can only be a problems with other threads because the
             // faulting thread is blocked here.
             //
-            // This implies that one should not create `/vsimem` handles
+            // This implies that one should not use cpl_virtualmem.h API
             // while other threads are actively generating faults that use
             // this mechanism.
             //
