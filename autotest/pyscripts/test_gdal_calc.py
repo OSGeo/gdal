@@ -360,13 +360,21 @@ def test_gdal_calc_py_7():
         for i in opts:
             f.write(i + '\n')
 
+    # double-quoted options should be read as single arguments. Mixed numbers of arguments per line should work.
+    opts = '-Z tmp/test_gdal_calc_py.tif --Z_band=2', '--calc "Z + 0"', '--overwrite --outfile tmp/test_gdal_calc_py_7_4.tif'
+    with open('tmp/opt4', 'w') as f:
+        for i in opts:
+            f.write(i + '\n')
+
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '--optfile tmp/opt1')
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '--optfile tmp/opt2')
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '--optfile tmp/opt3')
+    test_py_scripts.run_py_script(script_path, 'gdal_calc', '--optfile tmp/opt4')
 
     ds1 = gdal.Open('tmp/test_gdal_calc_py_7_1.tif')
     ds2 = gdal.Open('tmp/test_gdal_calc_py_7_2.tif')
     ds3 = gdal.Open('tmp/test_gdal_calc_py_7_3.tif')
+    ds4 = gdal.Open('tmp/test_gdal_calc_py_7_4.tif')
 
     if ds1 is None:
         gdaltest.post_reason('ds1 not found')
@@ -376,6 +384,9 @@ def test_gdal_calc_py_7():
         return 'fail'
     if ds3 is None:
         gdaltest.post_reason('ds3 not found')
+        return 'fail'
+    if ds4 is None:
+        gdaltest.post_reason('ds4 not found')
         return 'fail'
 
     if ds1.GetRasterBand(1).Checksum() != 12603:
@@ -387,10 +398,14 @@ def test_gdal_calc_py_7():
     if ds3.GetRasterBand(1).Checksum() != 58561:
         gdaltest.post_reason('ds3 wrong checksum')
         return 'fail'
+    if ds4.GetRasterBand(1).Checksum() != 58561:
+        gdaltest.post_reason('ds4 wrong checksum')
+        return 'fail'
 
     ds1 = None
     ds2 = None
     ds3 = None
+    ds4 = None
 
     return 'success'
 
@@ -414,6 +429,7 @@ def test_gdal_calc_py_cleanup():
            'tmp/test_gdal_calc_py_7_1.tif',
            'tmp/test_gdal_calc_py_7_2.tif',
            'tmp/test_gdal_calc_py_7_3.tif',
+           'tmp/test_gdal_calc_py_7_4.tif',
            'tmp/opt1',
            'tmp/opt2',
            'tmp/opt3',
