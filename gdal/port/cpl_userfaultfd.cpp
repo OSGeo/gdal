@@ -397,7 +397,7 @@ void * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64
 
   // Query API
   {
-    struct uffdio_api uffdio_api;
+    struct uffdio_api uffdio_api = {};
 
     uffdio_api.api = UFFD_API;
     uffdio_api.features = 0;
