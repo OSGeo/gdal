@@ -625,7 +625,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
 /* -------------------------------------------------------------------- */
 /*      Report corners.                                                 */
 /* -------------------------------------------------------------------- */
-    if( bJson )
+    if( bJson && GDALGetRasterXSize(hDataset) )
     {
         json_object *poLinearRing = json_object_new_array();
         json_object *poCornerCoordinates = json_object_new_object();
@@ -672,7 +672,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
         json_object_object_add( poJsonObject,
                 bTransformToWGS84 ? "wgs84Extent": "extent", poLongLatExtent );
     }
-    else
+    else if( GDALGetRasterXSize(hDataset) )
     {
         Concat(osStr, psOptions->bStdoutOutput, "Corner Coordinates:\n" );
         GDALInfoReportCorner( psOptions, hDataset, hTransform,
