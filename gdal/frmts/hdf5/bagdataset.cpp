@@ -53,7 +53,9 @@ class BAGDataset : public GDALPamDataset
     friend class BAGRasterBand;
 
     hid_t        hHDF5;
-    void        *pCtx;
+#ifdef ENABLE_UFFD
+    cpl_uffd_context *pCtx = nullptr;
+#endif
 
     char        *pszProjection;
     double       adfGeoTransform[6];
@@ -404,7 +406,6 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 BAGDataset::BAGDataset() :
     hHDF5(-1),
-    pCtx(nullptr),
     pszProjection(nullptr),
     pszXMLMetadata(nullptr)
 {
@@ -478,9 +479,9 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     // Open the file as an HDF5 file.
-    void * pCtx = nullptr;
     hid_t hHDF5;
 #ifdef ENABLE_UFFD
+    cpl_uffd_context * pCtx = nullptr;
     HDF5_UFFD_MAP(poOpenInfo->pszFilename, hHDF5, pCtx);
 #else
     hHDF5 = H5Fopen(poOpenInfo->pszFilename, H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -510,7 +511,9 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
     BAGDataset *const poDS = new BAGDataset();
 
     poDS->hHDF5 = hHDF5;
+#ifdef ENABLE_UFFD
     poDS->pCtx = pCtx;
+#endif
 
     // Extract version as metadata.
     CPLString osVersion;

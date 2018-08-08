@@ -41,6 +41,7 @@
 #include "netcdf.h"
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
+#include "netcdfuffd.h"
 
 #if defined(DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION) || defined(ALLOW_FORMAT_DUMPS)
 // Whether to support opening a ncdump file as a file dataset
@@ -770,7 +771,9 @@ class netCDFDataset final: public GDALPamDataset
     bool          bFileToDestroyAtClosing;
 #endif
     int           cdfid;
-    void          *pCtx;
+#ifdef ENABLE_UFFD
+    cpl_uffd_context *pCtx = nullptr;
+#endif
     char          **papszSubDatasets;
     char          **papszMetadata;
     CPLStringList papszDimName;

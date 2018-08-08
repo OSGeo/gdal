@@ -35,7 +35,7 @@
 
 #include "cpl_list.h"
 #include "gdal_pam.h"
-
+#include "hdf5uffd.h"
 
 typedef struct HDF5GroupObjects
 {
@@ -67,7 +67,9 @@ class HDF5Dataset : public GDALPamDataset
 {
 protected:
     hid_t            hHDF5;
-    void             *pCtx;
+#ifdef ENABLE_UFFD
+    cpl_uffd_context *pCtx = nullptr;
+#endif
     hid_t            hGroupID; // H handler interface.
     char             **papszSubDatasets;
     int              bIsHDFEOS;

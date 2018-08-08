@@ -43,8 +43,10 @@
 
 #define GDAL_UFFD_LIMIT "GDAL_UFFD_LIMIT"
 
+typedef struct cpl_uffd_context cpl_uffd_context;
+
 bool CPLIsUserFaultMappingSupported();
-void * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64_t * pnVmaSize);
-void CPLDeleteUserFaultMapping(void * ptr);
+cpl_uffd_context * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64_t * pnVmaSize);
+void CPLDeleteUserFaultMapping(cpl_uffd_context * ctx);
 
 #endif

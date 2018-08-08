@@ -1876,7 +1876,6 @@ netCDFDataset::netCDFDataset() :
     bFileToDestroyAtClosing(false),
 #endif
     cdfid(-1),
-    pCtx(nullptr),
     papszSubDatasets(nullptr),
     papszMetadata(nullptr),
     bBottomUp(true),
@@ -6689,8 +6688,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
 #elseif defined(NCDF_DEBUG) && !defined(ENABLE_UFFD)
     CPLDebug("GDAL_netCDF", "calling nc_open(%s)", poDS->osFilename.c_str());
 #endif
-    int cdfid;
-    void * pCtx = nullptr;
+    int cdfid = -1;
     const int nMode = ((poOpenInfo->nOpenFlags & (GDAL_OF_UPDATE | GDAL_OF_VECTOR)) ==
                 (GDAL_OF_UPDATE | GDAL_OF_VECTOR)) ? NC_WRITE : NC_NOWRITE;
     CPLString osFilenameForNCOpen(poDS->osFilename);
@@ -6709,6 +6707,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     bool bReadOnly = (poOpenInfo->eAccess == GA_ReadOnly);
     void * pVma = nullptr;
     uint64_t nVmaSize = 0;
+    cpl_uffd_context * pCtx = nullptr;
 
     if ( bVsiFile && bReadOnly && CPLIsUserFaultMappingSupported() )
       pCtx = CPLCreateUserFaultMapping(osFilenameForNCOpen, &pVma, &nVmaSize);
@@ -6872,7 +6871,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     // Create a corresponding GDALDataset.
     // Create Netcdf Subdataset if filename as NETCDF tag.
     poDS->cdfid = cdfid;
+#ifdef ENABLE_UFFD
     poDS->pCtx = pCtx;
+#endif
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->bDefineMode = false;
 

@@ -335,7 +335,7 @@ bool CPLIsUserFaultMappingSupported()
 /*
  * Returns nullptr on failure, a valid pointer on success.
  */
-void * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64_t * pnVmaSize)
+cpl_uffd_context* CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64_t * pnVmaSize)
 {
   VSIStatBufL statbuf;
   struct cpl_uffd_context * ctx = nullptr;
@@ -437,9 +437,8 @@ void * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64
   return ctx;
 }
 
-void CPLDeleteUserFaultMapping(void * ptr)
+void CPLDeleteUserFaultMapping(cpl_uffd_context * ctx)
 {
-  struct cpl_uffd_context * ctx = static_cast<struct cpl_uffd_context *>(ptr);
   if (ctx)
   {
       uffd_cleanup(ctx);
