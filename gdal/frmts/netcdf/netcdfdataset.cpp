@@ -50,6 +50,7 @@
 // Must be included after standard includes, otherwise VS2015 fails when
 // including <ctime>
 #include "netcdfdataset.h"
+#include "netcdfuffd.h"
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -61,6 +62,7 @@
 #include "gdal_frmts.h"
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
+
 
 CPL_CVSID("$Id$")
 
@@ -1874,6 +1876,7 @@ netCDFDataset::netCDFDataset() :
     bFileToDestroyAtClosing(false),
 #endif
     cdfid(-1),
+    pCtx(nullptr),
     papszSubDatasets(nullptr),
     papszMetadata(nullptr),
     bBottomUp(true),
@@ -1973,6 +1976,9 @@ netCDFDataset::~netCDFDataset()
         CPLDebug("GDAL_netCDF", "calling nc_close( %d)", cdfid);
 #endif
         int status = nc_close(cdfid);
+#ifdef ENABLE_UFFD
+        NETCDF_UFFD_UNMAP(pCtx);
+#endif
         NCDF_ERR(status);
     }
 #ifdef ENABLE_NCDUMP
@@ -6677,10 +6683,13 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     // Try opening the dataset.
-#ifdef NCDF_DEBUG
+#if defined(NCDF_DEBUG) && defined(ENABLE_UFFD)
+    CPLDebug("GDAL_netCDF", "calling nc_open_mem(%s)", poDS->osFilename.c_str());
+#elseif defined(NCDF_DEBUG) && !defined(ENABLE_UFFD)
     CPLDebug("GDAL_netCDF", "calling nc_open(%s)", poDS->osFilename.c_str());
 #endif
     int cdfid;
+    void * pCtx = nullptr;
     const int nMode = ((poOpenInfo->nOpenFlags & (GDAL_OF_UPDATE | GDAL_OF_VECTOR)) ==
                 (GDAL_OF_UPDATE | GDAL_OF_VECTOR)) ? NC_WRITE : NC_NOWRITE;
     CPLString osFilenameForNCOpen(poDS->osFilename);
@@ -6692,7 +6701,24 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLFree(pszTemp);
     }
 #endif
-    if( nc_open(osFilenameForNCOpen, nMode, &cdfid) != NC_NOERR )
+    int status2;
+
+#ifdef ENABLE_UFFD
+    bool bVsiFile = !strncmp(osFilenameForNCOpen, "/vsi", strlen("/vsi"));
+    bool bReadOnly = (poOpenInfo->eAccess == GA_ReadOnly);
+    void * pVma = nullptr;
+    uint64_t nVmaSize = 0;
+
+    if ( bVsiFile && bReadOnly && CPLIsUserFaultMappingSupported() )
+      pCtx = CPLCreateUserFaultMapping(osFilenameForNCOpen, &pVma, &nVmaSize);
+    if (pCtx != nullptr && pVma != nullptr && nVmaSize > 0)
+      status2 = nc_open_mem(osFilenameForNCOpen, nMode, nVmaSize, pVma, &cdfid);
+    else
+      status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
+#else
+    status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
+#endif
+    if( status2 != NC_NOERR )
     {
 #ifdef NCDF_DEBUG
         CPLDebug("GDAL_netCDF", "error opening");
@@ -6769,6 +6795,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                  "The NETCDF driver does not support update access to existing"
                  " datasets.");
         nc_close(cdfid);
+#ifdef ENABLE_UFFD
+        NETCDF_UFFD_UNMAP(pCtx);
+#endif
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
                                     // with GDALDataset own mutex.
         delete poDS;
@@ -6788,6 +6817,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                      poOpenInfo->pszFilename, osSubdatasetName.c_str());
 
             nc_close(cdfid);
+#ifdef ENABLE_UFFD
+            NETCDF_UFFD_UNMAP(pCtx);
+#endif
             CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
                                         // deadlock with GDALDataset own mutex.
             delete poDS;
@@ -6803,6 +6835,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                  poOpenInfo->pszFilename);
 
         nc_close(cdfid);
+#ifdef ENABLE_UFFD
+        NETCDF_UFFD_UNMAP(pCtx);
+#endif
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
                                     // with GDALDataset own mutex.
         delete poDS;
@@ -6836,6 +6871,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     // Create a corresponding GDALDataset.
     // Create Netcdf Subdataset if filename as NETCDF tag.
     poDS->cdfid = cdfid;
+    poDS->pCtx = pCtx;
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->bDefineMode = false;
 
@@ -8865,6 +8901,13 @@ void GDALRegister_netCDF()
 
 #ifdef ENABLE_NCDUMP
     poDriver->SetMetadataItem("ENABLE_NCDUMP", "YES");
+#endif
+
+#ifdef ENABLE_UFFD
+    if( CPLIsUserFaultMappingSupported() )
+    {
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    }
 #endif
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,

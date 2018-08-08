@@ -38,6 +38,8 @@ sys.path.append('../pymod')
 
 import gdaltest
 
+from uffd import uffd_compare
+
 ###############################################################################
 # Test if HDF5 driver is present
 
@@ -569,6 +571,31 @@ def hdf5_single_char_varname():
     return 'success'
 
 
+def hdf5_uffd():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    if uffd_compare('CSK_GEC.h5') is None:
+        return 'skip'
+
+    hdf5_files = [
+        'CSK_GEC.h5',
+        'vlstr_metadata.h5',
+        'groups.h5',
+        'complex.h5',
+        'single_char_varname.h5',
+        'CSK_DGM.h5',
+        'u8be.h5',
+        'metadata.h5'
+    ]
+    for hdf5_file in hdf5_files:
+        if uffd_compare(hdf5_file) is not True:
+            return 'fail'
+
+    return 'success'
+
+
 class TestHDF5(object):
     def __init__(self, downloadURL, fileName, subdatasetname, checksum, download_size):
         self.downloadURL = downloadURL
@@ -612,6 +639,7 @@ gdaltest_list = [
     hdf5_16,
     hdf5_17,
     hdf5_single_char_varname,
+    hdf5_uffd,
 ]
 
 hdf5_list = [('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',

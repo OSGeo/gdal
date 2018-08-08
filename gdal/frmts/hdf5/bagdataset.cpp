@@ -29,6 +29,7 @@
 
 #include "cpl_port.h"
 #include "gh5_convenience.h"
+#include "hdf5uffd.h"
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"
@@ -52,6 +53,7 @@ class BAGDataset : public GDALPamDataset
     friend class BAGRasterBand;
 
     hid_t        hHDF5;
+    void        *pCtx;
 
     char        *pszProjection;
     double       adfGeoTransform[6];
@@ -60,6 +62,7 @@ class BAGDataset : public GDALPamDataset
 
     char        *pszXMLMetadata;
     char        *apszMDList[2];
+
 
 public:
     BAGDataset();
@@ -401,6 +404,7 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 BAGDataset::BAGDataset() :
     hHDF5(-1),
+    pCtx(nullptr),
     pszProjection(nullptr),
     pszXMLMetadata(nullptr)
 {
@@ -421,6 +425,10 @@ BAGDataset::BAGDataset() :
 BAGDataset::~BAGDataset()
 {
     FlushCache();
+
+#ifdef ENABLE_UFFD
+    HDF5_UFFD_UNMAP(pCtx);
+#endif
 
     if( hHDF5 >= 0 )
         H5Fclose(hHDF5);
@@ -470,8 +478,13 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     // Open the file as an HDF5 file.
-    hid_t hHDF5 = H5Fopen(poOpenInfo->pszFilename, H5F_ACC_RDONLY, H5P_DEFAULT);
-
+    void * pCtx = nullptr;
+    hid_t hHDF5;
+#ifdef ENABLE_UFFD
+    HDF5_UFFD_MAP(poOpenInfo->pszFilename, hHDF5, pCtx);
+#else
+    hHDF5 = H5Fopen(poOpenInfo->pszFilename, H5F_ACC_RDONLY, H5P_DEFAULT);
+#endif
     if( hHDF5 < 0 )
         return nullptr;
 
@@ -485,6 +498,9 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
     {
         if( hBagRoot >= 0 )
             H5Gclose(hBagRoot);
+#ifdef ENABLE_UFFD
+        HDF5_UFFD_UNMAP(pCtx);
+#endif
         H5Fclose(hHDF5);
         return nullptr;
     }
@@ -494,6 +510,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
     BAGDataset *const poDS = new BAGDataset();
 
     poDS->hHDF5 = hHDF5;
+    poDS->pCtx = pCtx;
 
     // Extract version as metadata.
     CPLString osVersion;
@@ -860,6 +877,13 @@ void GDALRegister_BAG()
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Bathymetry Attributed Grid");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_bag.html");
+#ifdef ENABLE_UFFD
+    if( CPLIsUserFaultMappingSupported() )
+    {
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    }
+#endif
+
     poDriver->pfnOpen = BAGDataset::Open;
     poDriver->pfnIdentify = BAGDataset::Identify;
 

@@ -1,12 +1,11 @@
 /******************************************************************************
- * $Id$
  *
- * Project:  Hierarchical Data Format Release 5 (HDF5)
- * Purpose:  HDF5 convenience functions.
- * Author:   Frank Warmerdam <warmerdam@pobox.com>
+ * Project:  netCDF read/write Driver
+ * Purpose:  Header file for userfaultfd support.
+ * Author:   James McClain <james.mcclain@gmail.com>
  *
  ******************************************************************************
- * Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
+ * Copyright (c) 2018, Dr. James McClain <james.mcclain@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,39 +26,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef GH5_CONVENIENCE_H_INCLUDED_
-#define GH5_CONVENIENCE_H_INCLUDED_
+#ifdef ENABLE_UFFD
 
-#define H5_USE_16_API
+#include "netcdf_mem.h"
+#include "cpl_userfaultfd.h"
 
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4005) // warning C4005: '_HDF5USEDLL_' : macro redefinition
+#ifndef NETCDF_UFFD_UNMAP
+
+#define NETCDF_UFFD_UNMAP(context) { \
+  CPLDeleteUserFaultMapping(context); \
+  context = nullptr; \
+}
+
+#endif // NETCDF_UFFD_UNMAP
+
 #endif
-
-#include "hdf5.h"
-#include "H5LTpublic.h"
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-#include "cpl_string.h"
-#include "gdal.h"
-
-/* release 1.6.3 or 1.6.4 changed the type of count in some api functions */
-
-#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 6 && \
-       (H5_VERS_MINOR < 6 || H5_VERS_RELEASE < 3)
-#  define H5OFFSET_TYPE hssize_t
-#else
-#  define H5OFFSET_TYPE  hsize_t
-#endif
-
-bool GH5_FetchAttribute( hid_t loc_id, const char *pszName,
-                         CPLString &osResult, bool bReportError = false );
-bool GH5_FetchAttribute( hid_t loc_id, const char *pszName,
-                         double &dfResult, bool bReportError = false );
-GDALDataType GH5_GetDataType(hid_t TypeID);
-
-#endif /* ndef GH5_CONVENIENCE_H_INCLUDED_ */

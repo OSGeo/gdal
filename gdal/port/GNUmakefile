@@ -32,7 +32,7 @@ OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o cplstringlist.o \
 	cpl_vsil_crypt.o cpl_sha1.o cpl_sha256.o cpl_aws.o cpl_vsi_error.o cpl_cpu_features.o \
 	cpl_google_cloud.o cpl_azure.o cpl_alibaba_oss.o cpl_json_streaming_parser.o \
 	cpl_json.o cpl_md5.o cpl_swift.o \
-	cpl_vsil_hdfs.o
+	cpl_vsil_hdfs.o cpl_userfaultfd.o
 
 ifeq ($(ODBC_SETTING),yes)
 OBJ	:= 	$(OBJ) cpl_odbc.o
@@ -67,6 +67,10 @@ endif
 
 ifeq ($(HDFS_ENABLED),yes)
 CPPFLAGS	:=	$(CPPFLAGS) $(HDFS_INC) -DHDFS_ENABLED
+endif
+
+ifeq ($(ENABLE_UFFD),yes)
+CPPFLAGS	:=	$(CPPFLAGS) -DENABLE_UFFD
 endif
 
 default:	$(OBJ:.o=.$(OBJ_EXT))

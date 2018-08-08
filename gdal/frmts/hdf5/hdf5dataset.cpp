@@ -41,6 +41,7 @@
 
 #include "hdf5.h"
 #include "hdf5dataset.h"
+#include "hdf5uffd.h"
 
 #ifdef _MSC_VER
 #pragma warning(pop)
@@ -86,6 +87,12 @@ void GDALRegister_HDF5()
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_hdf5.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "h5 hdf5");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+#ifdef ENABLE_UFFD
+    if( CPLIsUserFaultMappingSupported() )
+    {
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    }
+#endif
 
     poDriver->pfnOpen = HDF5Dataset::Open;
     poDriver->pfnIdentify = HDF5Dataset::Identify;
@@ -102,6 +109,7 @@ void GDALRegister_HDF5()
 /************************************************************************/
 HDF5Dataset::HDF5Dataset() :
     hHDF5(-1),
+    pCtx(nullptr),
     hGroupID(-1),
     papszSubDatasets(nullptr),
     bIsHDFEOS(FALSE),
@@ -122,6 +130,7 @@ HDF5Dataset::~HDF5Dataset()
         H5Gclose(hGroupID);
     if( hHDF5 > 0 )
         H5Fclose(hHDF5);
+
     CSLDestroy(papszSubDatasets);
     if( poH5RootGroup != nullptr )
     {
@@ -132,6 +141,10 @@ HDF5Dataset::~HDF5Dataset()
         CPLFree(poH5RootGroup->poHchild);
         CPLFree(poH5RootGroup);
     }
+
+#ifdef ENABLE_UFFD
+    HDF5_UFFD_UNMAP(pCtx);
+#endif
 }
 
 /************************************************************************/
@@ -389,7 +402,11 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
     poDS->SetDescription(poOpenInfo->pszFilename);
 
     // Try opening the dataset.
+#ifdef ENABLE_UFFD
+    HDF5_UFFD_MAP(poOpenInfo->pszFilename, poDS->hHDF5, poDS->pCtx);
+#else
     poDS->hHDF5 = H5Fopen(poOpenInfo->pszFilename, H5F_ACC_RDONLY, H5P_DEFAULT);
+#endif
     if( poDS->hHDF5 < 0 )
     {
         delete poDS;

@@ -31,8 +31,11 @@
 #ifndef HDF5DATASET_H_INCLUDED_
 #define HDF5DATASET_H_INCLUDED_
 
+#include "H5LTpublic.h"
+
 #include "cpl_list.h"
 #include "gdal_pam.h"
+
 
 typedef struct HDF5GroupObjects
 {
@@ -64,6 +67,7 @@ class HDF5Dataset : public GDALPamDataset
 {
 protected:
     hid_t            hHDF5;
+    void             *pCtx;
     hid_t            hGroupID; // H handler interface.
     char             **papszSubDatasets;
     int              bIsHDFEOS;
