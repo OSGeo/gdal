@@ -53,13 +53,14 @@
 #include "cpl_error.h"
 #include "cpl_userfaultfd.h"
 #include "cpl_vsi.h"
+#include "cpl_multiproc.h"
 
 
 #define BAD_MMAP (reinterpret_cast<void *>(-1))
 #define MAX_MESSAGES (0x100)
 
 static int64_t get_page_limit();
-static void * fault_handler(void * ptr);
+static void cpl_uffd_fault_handler(void * ptr);
 static void signal_handler(int signal);
 static void uffd_cleanup(void * ptr);
 
@@ -80,6 +81,7 @@ struct cpl_uffd_context {
   void * page_ptr = nullptr;
   size_t vma_size = 0;
   void * vma_ptr = nullptr;
+  CPLJoinableThread* thread = nullptr;
 };
 
 
@@ -91,6 +93,11 @@ static void uffd_cleanup(void * ptr)
 
   // Signal shutdown
   ctx->keep_going = false;
+  if( ctx->thread )
+  {
+      CPLJoinThread(ctx->thread);
+      ctx->thread = nullptr;
+  }
 
   if (ctx->uffd != -1) {
     ioctl(ctx->uffd, UFFDIO_UNREGISTER, &ctx->uffdio_register);
@@ -126,14 +133,11 @@ static int64_t get_page_limit()
     return -1;
 }
 
-static void * fault_handler(void * ptr)
+static void cpl_uffd_fault_handler(void * ptr)
 {
   struct cpl_uffd_context * ctx = static_cast<struct cpl_uffd_context *>(ptr);
   struct uffdio_copy uffdio_copy;
   struct pollfd pollfd;
-
-  // Register cleanup handler
-  pthread_cleanup_push(uffd_cleanup, ctx);
 
   // Setup pollfd structure
   pollfd.fd = ctx->uffd;
@@ -142,7 +146,7 @@ static void * fault_handler(void * ptr)
   // Open asset for reading
   VSILFILE * file = VSIFOpenL(ctx->filename.c_str(), "rb");
 
-  if (!file) return nullptr;
+  if (!file) return;
 
   // Loop until told to stop
   while(ctx->keep_going) {
@@ -178,105 +182,108 @@ static void * fault_handler(void * ptr)
     // restoring the previous signal-handling behavior.
     //
     // [1] https://lists.debian.org/debian-bsd/2011/05/msg00032.html
-    pthread_mutex_lock(&mutex);
-    if ((ctx->page_limit > 0) && (ctx->pages_used > ctx->page_limit)) {
-      struct sigaction segv;
-      struct sigaction old_segv;
-      struct sigaction bus;
-      struct sigaction old_bus;
+    if (ctx->page_limit > 0) {
+        pthread_mutex_lock(&mutex);
+        if (ctx->pages_used > ctx->page_limit) {
+            struct sigaction segv;
+            struct sigaction old_segv;
+            struct sigaction bus;
+            struct sigaction old_bus;
 
-      // Step 1 from the block comment above
-      segv.sa_handler = signal_handler;
-      bus.sa_handler = signal_handler;
-      if (sigaction(SIGSEGV, &segv, &old_segv) == -1) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "fault_handler: sigaction(SIGSEGV) failed");
-        pthread_mutex_unlock(&mutex);
-        break;
-      }
-      if (sigaction(SIGBUS, &bus, &old_bus) == -1) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "fault_handler: sigaction(SIGBUS) failed");
-        pthread_mutex_unlock(&mutex);
-        break;
-      }
+            // Step 1 from the block comment above
+            segv.sa_handler = signal_handler;
+            bus.sa_handler = signal_handler;
+            if (sigaction(SIGSEGV, &segv, &old_segv) == -1) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "cpl_uffd_fault_handler: sigaction(SIGSEGV) failed");
+                pthread_mutex_unlock(&mutex);
+                break;
+            }
+            if (sigaction(SIGBUS, &bus, &old_bus) == -1) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "cpl_uffd_fault_handler: sigaction(SIGBUS) failed");
+                pthread_mutex_unlock(&mutex);
+                break;
+            }
 
-      // WARNING: LACK OF THREAD-SAFETY.
-      //
-      // For example, if a user program (or another part of the
-      // library) installs a SIGSEGV or SIGBUS handler from another
-      // thread after this one has installed its handlers but before
-      // this one uninstalls its handlers, the intervening handler
-      // will be eliminated.  There are other examples, as well, but
-      // there can only be a problems with other threads because the
-      // faulting thread is blocked here.
-      //
-      // This implies that one should not create `/vsimem` handles
-      // while other threads are actively generating faults that use
-      // this mechanism.
-      //
-      // Having multiple active threads that use this mechanism but
-      // with no changes to signal-handling in other threads is NOT a
-      // problem.
+            // WARNING: LACK OF THREAD-SAFETY.
+            //
+            // For example, if a user program (or another part of the
+            // library) installs a SIGSEGV or SIGBUS handler from another
+            // thread after this one has installed its handlers but before
+            // this one uninstalls its handlers, the intervening handler
+            // will be eliminated.  There are other examples, as well, but
+            // there can only be a problems with other threads because the
+            // faulting thread is blocked here.
+            //
+            // This implies that one should not create `/vsimem` handles
+            // while other threads are actively generating faults that use
+            // this mechanism.
+            //
+            // Having multiple active threads that use this mechanism but
+            // with no changes to signal-handling in other threads is NOT a
+            // problem.
 
-      // Step 2
-      if (mprotect(ctx->vma_ptr, ctx->vma_size, PROT_NONE) == -1) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "fault_handler: mprotect() failed");
-        pthread_mutex_unlock(&mutex);
-        break;
-      }
+            // Step 2
+            if (mprotect(ctx->vma_ptr, ctx->vma_size, PROT_NONE) == -1) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "cpl_uffd_fault_handler: mprotect() failed");
+                pthread_mutex_unlock(&mutex);
+                break;
+            }
 
-      // Step 3
-      if (ioctl(ctx->uffd, UFFDIO_UNREGISTER, &ctx->uffdio_register)) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "fault_handler: ioctl(UFFDIO_UNREGISTER) failed");
-        pthread_mutex_unlock(&mutex);
-        break;
-      }
-      ctx->vma_ptr = mmap(ctx->vma_ptr, ctx->vma_size, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED, -1, 0);
-      if (ctx->vma_ptr == BAD_MMAP) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "fault_handler: mmap() failed");
-        ctx->vma_ptr = nullptr;
-        pthread_mutex_unlock(&mutex);
-        break;
-      }
-      ctx->pages_used = 0;
-      if (ioctl(ctx->uffd, UFFDIO_REGISTER, &ctx->uffdio_register)) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "fault_handler: ioctl(UFFDIO_REGISTER) failed");
-        pthread_mutex_unlock(&mutex);
-        break;
-      }
+            // Step 3
+            if (ioctl(ctx->uffd, UFFDIO_UNREGISTER, &ctx->uffdio_register)) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "cpl_uffd_fault_handler: ioctl(UFFDIO_UNREGISTER) failed");
+                pthread_mutex_unlock(&mutex);
+                break;
+            }
+            ctx->vma_ptr = mmap(ctx->vma_ptr, ctx->vma_size, PROT_NONE,
+                                MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED, -1, 0);
+            if (ctx->vma_ptr == BAD_MMAP) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "cpl_uffd_fault_handler: mmap() failed");
+                ctx->vma_ptr = nullptr;
+                pthread_mutex_unlock(&mutex);
+                break;
+            }
+            ctx->pages_used = 0;
+            if (ioctl(ctx->uffd, UFFDIO_REGISTER, &ctx->uffdio_register)) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "cpl_uffd_fault_handler: ioctl(UFFDIO_REGISTER) failed");
+                pthread_mutex_unlock(&mutex);
+                break;
+            }
 
-      // Step 4.  Problem: A thread might attempt to read here (before
-      // the mprotect) and recieve a SIGSEGV or SIGBUS.
-      if (mprotect(ctx->vma_ptr, ctx->vma_size, PROT_READ) == -1) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "fault_handler: mprotect() failed");
-        pthread_mutex_unlock(&mutex);
-        break;
-      }
+            // Step 4.  Problem: A thread might attempt to read here (before
+            // the mprotect) and recieve a SIGSEGV or SIGBUS.
+            if (mprotect(ctx->vma_ptr, ctx->vma_size, PROT_READ) == -1) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "cpl_uffd_fault_handler: mprotect() failed");
+                pthread_mutex_unlock(&mutex);
+                break;
+            }
 
-      // Step 5.  Solution: Cannot unregister special handlers before
-      // any such threads have been handled by them, so sleep for
-      // 1/100th of a second.
-      usleep(10000);
-      if (sigaction(SIGSEGV, &old_segv, nullptr) == -1) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "fault_handler: sigaction(SIGSEGV) failed");
+            // Step 5.  Solution: Cannot unregister special handlers before
+            // any such threads have been handled by them, so sleep for
+            // 1/100th of a second.
+            usleep(10000);
+            if (sigaction(SIGSEGV, &old_segv, nullptr) == -1) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "cpl_uffd_fault_handler: sigaction(SIGSEGV) failed");
+                pthread_mutex_unlock(&mutex);
+                break;
+            }
+            if (sigaction(SIGBUS, &old_bus, nullptr) == -1) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "cpl_uffd_fault_handler: sigaction(SIGBUS) failed");
+                pthread_mutex_unlock(&mutex);
+                break;
+            }
+        }
         pthread_mutex_unlock(&mutex);
-        break;
-      }
-      if (sigaction(SIGBUS, &old_bus, nullptr) == -1) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "fault_handler: sigaction(SIGBUS) failed");
-        pthread_mutex_unlock(&mutex);
-        break;
-      }
     }
-    pthread_mutex_unlock(&mutex);
 
     // Handle page fault events
     for (int i = 0; i < static_cast<int>(bytes_read/sizeof(uffd_msg)); ++i) {
@@ -302,10 +309,6 @@ static void * fault_handler(void * ptr)
 
   // Return resources
   VSIFCloseL(file);
-
-  pthread_cleanup_pop(1);
-
-  return nullptr;
 }
 
 static void signal_handler(int signal)
@@ -420,15 +423,13 @@ void * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64
   }
 
   // Start handler thread
+  ctx->thread = CPLCreateJoinableThread(cpl_uffd_fault_handler, ctx);
+  if( ctx->thread == nullptr )
   {
-    pthread_t thread;
-
-    if (pthread_create(&thread, nullptr, fault_handler, ctx) || pthread_detach(thread)) {
-      uffd_cleanup(ctx);
       CPLError(CE_Failure, CPLE_AppDefined,
-               "CPLCreateUserFaultMapping(): pthread_create() failed");
+               "CPLCreateUserFaultMapping(): CPLCreateJoinableThread() failed");
+      uffd_cleanup(ctx);
       return nullptr;
-    }
   }
 
   *ppVma = ctx->vma_ptr;
@@ -439,7 +440,10 @@ void * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64
 void CPLDeleteUserFaultMapping(void * ptr)
 {
   struct cpl_uffd_context * ctx = static_cast<struct cpl_uffd_context *>(ptr);
-  if (ctx) ctx->keep_going = false;
+  if (ctx)
+  {
+      uffd_cleanup(ctx);
+  }
 }
 
 #endif // ENABLE_UFFD
