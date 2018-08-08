@@ -109,7 +109,6 @@ void GDALRegister_HDF5()
 /************************************************************************/
 HDF5Dataset::HDF5Dataset() :
     hHDF5(-1),
-    pCtx(nullptr),
     hGroupID(-1),
     papszSubDatasets(nullptr),
     bIsHDFEOS(FALSE),
