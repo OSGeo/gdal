@@ -6625,8 +6625,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
 
         // Check for drive name in windows NETCDF:"D:\...
         if( CSLCount(papszName) == 4 &&
-            strlen(papszName[1]) == 1 &&
-            (papszName[2][0] == '/' || papszName[2][0] == '\\') )
+            ((strlen(papszName[1]) == 1 &&
+            (papszName[2][0] == '/' || papszName[2][0] == '\\')) ||
+            (STARTS_WITH(papszName[1], "/vsicurl/http"))) )
         {
             poDS->osFilename = papszName[1];
             poDS->osFilename += ':';
