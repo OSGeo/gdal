@@ -47,6 +47,7 @@ from optparse import OptionParser, OptionConflictError, Values
 import os
 import os.path
 import sys
+import shlex
 
 import numpy
 
@@ -446,7 +447,7 @@ def main():
 
     if opts.optfile:
         with open(opts.optfile, 'r') as f:
-            ofargv = [x for line in f for x in line.strip().split(' ') if line[0] != '#']
+            ofargv = [x for line in f for x in shlex.split(line, comments=True)]
         # Avoid potential recursion.
         parser.remove_option('--optfile')
         add_alpha_args(parser, ofargv)
