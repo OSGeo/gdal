@@ -1620,7 +1620,7 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
     else
         *pszPrefix = 0;
 
-    OGRWFSLayer* poRefLayer = (OGRWFSLayer*)GetLayerByName(pszLayerName);
+    OGRWFSLayer* poRefLayer = dynamic_cast<OGRWFSLayer*>(GetLayerByName(pszLayerName));
     if (poRefLayer == nullptr)
         return;
 
