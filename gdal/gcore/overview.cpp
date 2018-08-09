@@ -774,10 +774,10 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         }
 
         int nYShiftGaussMatrix = 0;
-        if(nSrcYOff < 0)
+        if(nSrcYOff < nChunkYOff)
         {
-            nYShiftGaussMatrix = -nSrcYOff;
-            nSrcYOff = 0;
+            nYShiftGaussMatrix = -(nSrcYOff - nChunkYOff);
+            nSrcYOff = nChunkYOff;
         }
 
         const float * const pafSrcScanline =
@@ -796,6 +796,12 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             int nSrcXOff2 =
                 static_cast<int>(0.5 + (iDstPixel+1) * dfXRatioDstToSrc) + 1;
 
+            if( nSrcXOff < nChunkXOff )
+            {
+                nSrcXOff = nChunkXOff;
+                nSrcXOff2++;
+            }
+
             const int iSizeX = nSrcXOff2 - nSrcXOff;
             nSrcXOff = nSrcXOff + iSizeX/2 - nGaussMatrixDim/2;
             nSrcXOff2 = nSrcXOff + nGaussMatrixDim;
@@ -808,10 +814,10 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             }
 
             int nXShiftGaussMatrix = 0;
-            if(nSrcXOff < 0)
+            if(nSrcXOff < nChunkXOff)
             {
-                nXShiftGaussMatrix = -nSrcXOff;
-                nSrcXOff = 0;
+                nXShiftGaussMatrix = -(nSrcXOff - nChunkXOff);
+                nSrcXOff = nChunkXOff;
             }
 
             if( poColorTable == nullptr )
