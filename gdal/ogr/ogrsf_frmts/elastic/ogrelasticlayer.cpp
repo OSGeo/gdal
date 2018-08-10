@@ -1529,7 +1529,8 @@ CPLString OGRElasticLayer::BuildMap() {
 
     if( m_osMappingName == "FeatureCollection" )
     {
-        json_object_object_add(poMappingProperties, "type", AddPropertyMap("string"));
+        json_object_object_add(poMappingProperties, "type", AddPropertyMap(
+            m_poDS->m_nMajorVersion >= 5 ? "text" : "string"));
 
         std::vector<CPLString> aosPath;
         aosPath.push_back("properties");

@@ -424,7 +424,7 @@ bool OGRElasticDataSource::CheckVersion()
         CPLError(CE_Failure, CPLE_AppDefined, "Server version not found");
         return false;
     }
-    if( m_nMajorVersion != 1 && m_nMajorVersion != 2 && m_nMajorVersion != 5 )
+    if( m_nMajorVersion < 1 || m_nMajorVersion > 6 )
     {
         CPLDebug("ES", "Server version untested with current driver");
     }
@@ -580,7 +580,7 @@ bool OGRElasticDataSource::UploadFile( const CPLString &url,
     else
         papszOptions = CSLAddNameValue(papszOptions, "POSTFIELDS", data.c_str());
     papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
-            "Content-Type: application/x-javascript; charset=UTF-8");
+            "Content-Type: application/json; charset=UTF-8");
 
     CPLHTTPResult* psResult = CPLHTTPFetch(url, papszOptions);
     CSLDestroy(papszOptions);
