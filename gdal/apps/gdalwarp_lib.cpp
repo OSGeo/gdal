@@ -2592,12 +2592,12 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
             (psOptions->dfMaxX - psOptions->dfMinX + (psOptions->dfXRes/2.0)) /
             psOptions->dfXRes);
         nLines = static_cast<int>(
-            (psOptions->dfMaxY - psOptions->dfMinY + (psOptions->dfYRes/2.0)) /
+            (std::fabs(psOptions->dfMaxY - psOptions->dfMinY) + (psOptions->dfYRes/2.0)) /
             psOptions->dfYRes);
         adfDstGeoTransform[0] = psOptions->dfMinX;
         adfDstGeoTransform[3] = psOptions->dfMaxY;
         adfDstGeoTransform[1] = psOptions->dfXRes;
-        adfDstGeoTransform[5] = -psOptions->dfYRes;
+        adfDstGeoTransform[5] = (psOptions->dfMaxY > psOptions->dfMinY) ? -psOptions->dfYRes : psOptions->dfYRes;
     }
 
     else if( psOptions->nForcePixels != 0 && psOptions->nForceLines != 0 )
@@ -2638,11 +2638,11 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         adfDstGeoTransform[0] = psOptions->dfMinX;
         adfDstGeoTransform[3] = psOptions->dfMaxY;
         adfDstGeoTransform[1] = psOptions->dfXRes;
-        adfDstGeoTransform[5] = -psOptions->dfYRes;
+        adfDstGeoTransform[5] = -(psOptions->dfMaxY > psOptions->dfMinY) ? -psOptions->dfYRes : psOptions->dfYRes;
 
         nPixels = psOptions->nForcePixels;
         nLines = static_cast<int>(
-            (psOptions->dfMaxY - psOptions->dfMinY + (psOptions->dfYRes/2.0)) /
+            (std::fabs(psOptions->dfMaxY - psOptions->dfMinY) + (psOptions->dfYRes/2.0)) /
             psOptions->dfYRes);
     }
 
@@ -2657,7 +2657,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         }
 
         psOptions->dfYRes = (psOptions->dfMaxY - psOptions->dfMinY) / psOptions->nForceLines;
-        psOptions->dfXRes = psOptions->dfYRes;
+        psOptions->dfXRes = std::fabs(psOptions->dfYRes);
 
         adfDstGeoTransform[0] = psOptions->dfMinX;
         adfDstGeoTransform[3] = psOptions->dfMaxY;
@@ -2679,7 +2679,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
             (psOptions->dfMaxX - psOptions->dfMinX + (psOptions->dfXRes/2.0)) /
             psOptions->dfXRes);
         nLines = static_cast<int>(
-            (psOptions->dfMaxY - psOptions->dfMinY + (psOptions->dfYRes/2.0)) /
+            (std::fabs(psOptions->dfMaxY - psOptions->dfMinY) + (psOptions->dfYRes/2.0)) /
             psOptions->dfYRes);
 
         psOptions->dfXRes = (psOptions->dfMaxX - psOptions->dfMinX) / nPixels;
