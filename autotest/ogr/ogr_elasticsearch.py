@@ -2550,6 +2550,9 @@ def ogr_elasticsearch_authentication():
 
     ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch',
                      open_options=['USERPWD=user:pwd'])
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     return 'success'
 
