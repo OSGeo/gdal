@@ -242,6 +242,10 @@ def ogr_elasticsearch_1():
     gdal.FileFromMemBuffer(
         """/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } } } }""", "")
 
+
+    gdal.FileFromMemBuffer(
+        """/vsimem/fakeelasticsearch/_cat/indices?h=i""", '')
+
     ds.DeleteLayer(-1)
     ds.DeleteLayer(10)
     ret = ds.DeleteLayer(0)
@@ -519,36 +523,11 @@ def ogr_elasticsearch_4():
 
     with gdaltest.error_handler():
         ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    # Test case where there's no index and _stats is not responding
-    gdal.FileFromMemBuffer(
-        """/vsimem/fakeelasticsearch/_cat/indices?h=i""", '')
-    gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/_stats", "")
-    with gdaltest.error_handler():
-        ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
-    if ds is not None:
+    if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Test case where there's no index
-    gdal.FileFromMemBuffer(
-        """/vsimem/fakeelasticsearch/_cat/indices?h=i""", '')
-    gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/_stats",
-                           """{"_shards":{"total":0,"successful":0,"failed":0},"indices":{}}""")
-    ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetLayerCount() != 0:
-        gdaltest.post_reason('fail')
-        print(ds.GetLayerCount())
-        return 'fail'
-    ds = None
-    gdal.Unlink("""/vsimem/fakeelasticsearch/_stats""")
-
     gdal.FileFromMemBuffer(
         """/vsimem/fakeelasticsearch/_cat/indices?h=i""", '\n')
     ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
@@ -560,8 +539,7 @@ def ogr_elasticsearch_4():
         print(ds.GetLayerCount())
         return 'fail'
 
-    gdal.FileFromMemBuffer(
-        """/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'a_layer  \n')
+    # Test opening a layer by name
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/_mapping?pretty""", """
 {
     "a_layer":
@@ -626,6 +604,57 @@ def ogr_elasticsearch_4():
     }
 }
 """)
+
+    ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayerByName('a_layer')
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayerByName('a_layer')
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        lyr = ds.GetLayerByName('not_a_layer')
+    if lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Test LAYER open option
+    ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch',
+                     open_options=['LAYER=a_layer'])
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        print(ds.GetLayerCount())
+        return 'fail'
+    ds = None
+
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch',
+                        open_options=['LAYER=not_a_layer'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Test GetLayerByName() and GetLayerCount()
+    ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
+    lyr = ds.GetLayerByName('a_layer')
+    lyr = ds.GetLayerByName('a_layer')
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        print(ds.GetLayerCount())
+        return 'fail'
+    ds = None
+
+    # Test GetLayerCount()
+    gdal.FileFromMemBuffer(
+        """/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'a_layer  \n')
+
     ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
     if ds is None:
         gdaltest.post_reason('fail')

@@ -37,6 +37,8 @@
 #include "ogr_p.h"
 #include "cpl_http.h"
 
+#include <memory>
+#include <set>
 #include <vector>
 
 typedef enum
@@ -220,12 +222,14 @@ class OGRElasticDataSource final: public GDALDataset {
     CPLString           m_osUserPwd;
     CPLString           m_osFID;
 
-    OGRElasticLayer   **m_papoLayers;
-    int                 m_nLayers;
+    std::set<CPLString> m_oSetLayers;
+    std::vector<std::unique_ptr<OGRElasticLayer>> m_apoLayers;
+    bool                m_bAllLayersListed = false;
     std::map<OGRLayer*, OGRLayer*> m_oMapResultSet;
 
     bool                CheckVersion();
     int                 GetLayerIndex( const char* pszName );
+    void                FetchMapping(const char* pszIndexName);
 
 public:
                             OGRElasticDataSource();
@@ -252,8 +256,9 @@ public:
 
     virtual const char *GetName() { return m_pszName; }
 
-    virtual int         GetLayerCount() override { return m_nLayers; }
+    virtual int         GetLayerCount() override;
     virtual OGRLayer   *GetLayer(int) override;
+    virtual OGRLayer   *GetLayerByName(const char* pszName) override;
 
     virtual OGRLayer   *ICreateLayer(const char * pszLayerName,
                                     OGRSpatialReference *poSRS,
@@ -271,7 +276,9 @@ public:
     bool                UploadFile(const CPLString &url, const CPLString &data);
     void                Delete(const CPLString &url);
 
-    json_object*        RunRequest(const char* pszURL, const char* pszPostContent = nullptr);
+    json_object*        RunRequest(const char* pszURL,
+                                   const char* pszPostContent = nullptr,
+                                   const std::vector<int>& anSilentedHTTPErrors = std::vector<int>());
     const CPLString&    GetFID() const { return m_osFID; }
 };
 
