@@ -2445,14 +2445,6 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn,
         return OGRERR_FAILURE;
     }
 
-    if( m_eGeomTypeMapping == ES_GEOMTYPE_GEO_POINT &&
-        m_poFeatureDefn->GetGeomFieldCount() > 0 )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "ES_GEOM_TYPE=GEO_POINT only supported for single geometry field");
-        return OGRERR_FAILURE;
-    }
-
     OGRGeomFieldDefn oFieldDefn(poFieldIn);
     if( EQUAL(oFieldDefn.GetNameRef(), "") )
         oFieldDefn.SetName("geometry");
@@ -2470,8 +2462,7 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn,
 
     if( m_eGeomTypeMapping == ES_GEOMTYPE_GEO_SHAPE ||
         (m_eGeomTypeMapping == ES_GEOMTYPE_AUTO &&
-         poFieldIn->GetType() != wkbPoint) ||
-        m_poFeatureDefn->GetGeomFieldCount() > 0 )
+         poFieldIn->GetType() != wkbPoint))
     {
         m_abIsGeoPoint.push_back(FALSE);
     }

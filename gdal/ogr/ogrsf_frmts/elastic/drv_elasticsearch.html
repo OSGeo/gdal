@@ -251,7 +251,7 @@ mapping type. If used, the "centroid" of the geometry is used.
 This is the behaviour of GDAL &lt; 2.1.
 GEO_SHAPE uses the <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html">geo_shape</a>
 mapping type, compatible of all geometry types.
-When using AUTO, if there is a single geometry field of type Point, a geo_point is used.
+When using AUTO, for geometry fields of type Point, a geo_point is used.
 In other cases, geo_shape is used.</li>
 <li><b>GEOM_PRECISION</b>={value}{unit}'. Desired geometry precision. Number followed by unit. For example 1m.
 For a geo_point geometry field, this causes a compressed geometry format to be used.
