@@ -526,7 +526,7 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
 
             papszSubdatasets = CSLSetNameValue(papszSubdatasets,
                 CPLSPrintf("SUBDATASET_%d_NAME", (i + 1)),
-                CPLSPrintf("PG:%s schema=%s table=%s column=%s",
+                CPLSPrintf("PG:%s schema='%s' table='%s' column='%s'",
                 pszValidConnectionString, l_pszSchema, l_pszTable,
                 l_pszColumn));
 
@@ -575,7 +575,7 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
 
             papszSubdatasets = CSLSetNameValue(papszSubdatasets,
                 CPLSPrintf("SUBDATASET_%d_NAME", (i + 1)),
-                CPLSPrintf("PG:%s schema=%s table=%s column=%s",
+                CPLSPrintf("PG:%s schema='%s' table='%s' column='%s'",
                 pszValidConnectionString, pszCurrentSchema, l_pszTable,
                 l_pszColumn));
 
@@ -2118,7 +2118,7 @@ const char * pszValidConnectionString)
             const char* pszId = PQgetvalue(poResult, i, 0);
 
             papszSubdatasets[2 * i] =
-                CPLStrdup(CPLSPrintf("SUBDATASET_%d_NAME=PG:%s schema=%s table=%s column=%s "
+                CPLStrdup(CPLSPrintf("SUBDATASET_%d_NAME=PG:%s schema='%s' table='%s' column='%s' "
                     "where='%s = %s'", i+ 1, pszValidConnectionString,
                     pszSchema, pszTable, pszColumn, osPrimaryKeyNameI.c_str(),
                     pszId));
@@ -3551,8 +3551,12 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
 
     PQclear(poResult);
 
-    osCommand.Printf("create index %s_%s_gist ON %s.%s USING gist "
-        "(st_convexhull(%s));", pszTable, pszColumn,
+    CPLString osIdxNameI;
+    osIdxNameI.Printf("%s_%s_gist", pszTable, pszColumn);
+    osIdxNameI = CPLQuotedSQLIdentifier(osIdxNameI);
+
+    osCommand.Printf("create index %s ON %s.%s USING gist "
+        "(st_convexhull(%s));", osIdxNameI.c_str(),
         osSchemaI.c_str(), osTableI.c_str(), osColumnI.c_str());
     poResult = PQexec(poConn, osCommand.c_str());
     if (
@@ -3736,7 +3740,7 @@ PostGISRasterDataset::InsertRaster(PGconn * poConn,
     CPLString osColumnI(CPLQuotedSQLIdentifier(pszColumn));
     CPLString osSrcColumnI(CPLQuotedSQLIdentifier(poSrcDS->pszSchema));
     CPLString osSrcSchemaI(CPLQuotedSQLIdentifier(poSrcDS->pszTable));
-    CPLString osSrcTableI;(CPLQuotedSQLIdentifier(poSrcDS->pszColumn));
+    CPLString osSrcTableI(CPLQuotedSQLIdentifier(poSrcDS->pszColumn));
 
     if (poSrcDS->pszWhere == nullptr) {
         osCommand.Printf("insert into %s.%s (%s) (select %s from %s.%s)",
