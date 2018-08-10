@@ -420,14 +420,38 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     // Create the index
     if( !bIndexExists )
     {
-        if( !UploadFile(CPLSPrintf("%s/%s", GetURL(), osLaunderedName.c_str()), "") )
+        CPLString osIndexURL(CPLSPrintf("%s/%s", GetURL(), osLaunderedName.c_str()));
+
+        // If we have a user specified index definition, use it
+        const char* pszDef = CSLFetchNameValue(papszOptions, "INDEX_DEFINITION");
+        CPLString osDef;
+        if (pszDef != nullptr)
+        {
+            osDef = pszDef;
+            if( strchr(pszDef, '{') == nullptr )
+            {
+                VSILFILE* fp = VSIFOpenL(pszDef, "rb");
+                if( fp )
+                {
+                    GByte* pabyRet = nullptr;
+                    CPL_IGNORE_RET_VAL(VSIIngestFile( fp, pszDef, &pabyRet, nullptr, -1));
+                    if( pabyRet )
+                    {
+                        osDef = reinterpret_cast<char*>(pabyRet);
+                        VSIFree(pabyRet);
+                    }
+                    VSIFCloseL(fp);
+                }
+            }
+        }
+        if( !UploadFile(osIndexURL, osDef.c_str(), "PUT") )
             return nullptr;
     }
 
     // If we have a user specified mapping, then go ahead and update it now
     const char* pszLayerMapping = CSLFetchNameValueDef(papszOptions, "MAPPING", m_pszMapping);
     if (pszLayerMapping != nullptr) {
-        CPLString osLayerMapping;
+        CPLString osLayerMapping(pszLayerMapping);
         if( strchr(pszLayerMapping, '{') == nullptr )
         {
             VSILFILE* fp = VSIFOpenL(pszLayerMapping, "rb");
@@ -437,17 +461,16 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
                 CPL_IGNORE_RET_VAL(VSIIngestFile( fp, pszLayerMapping, &pabyRet, nullptr, -1));
                 if( pabyRet )
                 {
-                    osLayerMapping = (char*)pabyRet;
-                    pszLayerMapping = osLayerMapping.c_str();
+                    osLayerMapping = reinterpret_cast<char*>(pabyRet);
                     VSIFree(pabyRet);
                 }
                 VSIFCloseL(fp);
             }
         }
 
-        if( !UploadFile(CPLSPrintf("%s/%s/%s/_mapping",
-                            GetURL(), osLaunderedName.c_str(), pszMappingName),
-                        pszLayerMapping) )
+        CPLString osMappingURL(CPLSPrintf("%s/%s/%s/_mapping",
+                            GetURL(), osLaunderedName.c_str(), pszMappingName));
+        if( !UploadFile(osMappingURL, osLayerMapping.c_str()) )
         {
             return nullptr;
         }
@@ -675,14 +698,28 @@ void OGRElasticDataSource::Delete(const CPLString &url) {
 /************************************************************************/
 
 bool OGRElasticDataSource::UploadFile( const CPLString &url,
-                                       const CPLString &data )
+                                       const CPLString &data,
+                                       const CPLString &osVerb )
 {
     bool bRet = true;
     char** papszOptions = nullptr;
+    if( !osVerb.empty() )
+    {
+        papszOptions = CSLAddNameValue(papszOptions, "CUSTOMREQUEST",
+                                       osVerb.c_str());
+    }
     if( data.empty() )
-        papszOptions = CSLAddNameValue(papszOptions, "CUSTOMREQUEST", "PUT");
+    {
+        if( osVerb.empty() )
+        {
+            papszOptions = CSLAddNameValue(papszOptions, "CUSTOMREQUEST", "PUT");
+        }
+    }
     else
+    {
+
         papszOptions = CSLAddNameValue(papszOptions, "POSTFIELDS", data.c_str());
+    }
     papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
             "Content-Type: application/json; charset=UTF-8");
 

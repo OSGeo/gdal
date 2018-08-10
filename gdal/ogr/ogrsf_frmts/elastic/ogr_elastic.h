@@ -273,7 +273,9 @@ public:
 
     virtual int         TestCapability(const char *) override;
 
-    bool                UploadFile(const CPLString &url, const CPLString &data);
+    bool                UploadFile(const CPLString &url,
+                                   const CPLString &data,
+                                   const CPLString &osVerb = CPLString());
     void                Delete(const CPLString &url);
 
     json_object*        RunRequest(const char* pszURL,

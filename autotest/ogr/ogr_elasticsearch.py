@@ -242,7 +242,6 @@ def ogr_elasticsearch_1():
     gdal.FileFromMemBuffer(
         """/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } } } }""", "")
 
-
     gdal.FileFromMemBuffer(
         """/vsimem/fakeelasticsearch/_cat/indices?h=i""", '')
 
@@ -401,6 +400,28 @@ def ogr_elasticsearch_1():
         '/vsimem/fakeelasticsearch/foo4/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "foo": { "type": "string" } } }}', '{}')
     lyr = ds.CreateLayer('foo4', srs=ogrtest.srs_wgs84,
                          options=['MAPPING=/vsimem/map.txt'])
+    gdal.Unlink('/vsimem/map.txt')
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test successful explicit INDEX_DEFINITION with inline JSon mapping
+    gdal.FileFromMemBuffer(
+        '/vsimem/fakeelasticsearch/foo4&CUSTOMREQUEST=PUT&POSTFIELDS={}', '{}')
+    gdal.FileFromMemBuffer(
+        '/vsimem/fakeelasticsearch/foo4/FeatureCollection/_mapping&POSTFIELDS={}', '{}')
+    lyr = ds.CreateLayer('foo4', srs=ogrtest.srs_wgs84, options=[
+                         'INDEX_DEFINITION={}', 'MAPPING={}'])
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test successful explicit INDEX_DEFINITION with reference to file
+    gdal.FileFromMemBuffer('/vsimem/map.txt', '{"foo":"bar"}')
+    gdal.FileFromMemBuffer(
+        '/vsimem/fakeelasticsearch/foo4&CUSTOMREQUEST=PUT&POSTFIELDS={"foo":"bar"}', '{}')
+    lyr = ds.CreateLayer('foo4', srs=ogrtest.srs_wgs84,
+                         options=['INDEX_DEFINITION=/vsimem/map.txt', 'MAPPING={}'])
     gdal.Unlink('/vsimem/map.txt')
     if lyr is None:
         gdaltest.post_reason('fail')
@@ -635,7 +656,7 @@ def ogr_elasticsearch_4():
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch',
-                        open_options=['LAYER=not_a_layer'])
+                         open_options=['LAYER=not_a_layer'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'

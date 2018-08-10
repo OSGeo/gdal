@@ -225,6 +225,8 @@ is set and that is not already EPSG:4326.<p>
 Starting with GDAL 2.1, the driver supports the following layer creation options:
 <ul>
 <li><b>INDEX_NAME</b>=name. Name of the index to create (or reuse). By default the index name is the layer name.</li>
+<li><b>INDEX_DEFINITION</b>=filename or JSon. (GDAL &gt;= 2.4) Filename from which to read a user-defined
+index definition, or inlined index definition as serialized JSon.</li>
 <li><b>MAPPING_NAME=</b>=name. Name of the mapping type within the index.
 By default, the mapping name is "FeatureCollection" and the documents will be
 written as GeoJSON Feature objects. If another mapping name is chosen, a more "flat" structure will be used.</li>
