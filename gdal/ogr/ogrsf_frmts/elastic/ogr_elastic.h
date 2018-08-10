@@ -35,6 +35,7 @@
 #include "cpl_json_header.h"
 #include "cpl_hash_set.h"
 #include "ogr_p.h"
+#include "cpl_http.h"
 
 #include <vector>
 
@@ -216,6 +217,7 @@ public:
 class OGRElasticDataSource final: public GDALDataset {
     char               *m_pszName;
     CPLString           m_osURL;
+    CPLString           m_osUserPwd;
     CPLString           m_osFID;
 
     OGRElasticLayer   **m_papoLayers;
@@ -244,6 +246,8 @@ public:
     int Create(const char *pszFilename,
                char **papszOptions);
 
+    CPLHTTPResult*      HTTPFetch(const char* pszURL, char** papszOptions);
+
     const char         *GetURL() { return m_osURL.c_str(); }
 
     virtual const char *GetName() { return m_pszName; }
@@ -264,8 +268,8 @@ public:
 
     virtual int         TestCapability(const char *) override;
 
-    static bool         UploadFile(const CPLString &url, const CPLString &data);
-    static void         Delete(const CPLString &url);
+    bool                UploadFile(const CPLString &url, const CPLString &data);
+    void                Delete(const CPLString &url);
 
     json_object*        RunRequest(const char* pszURL, const char* pszPostContent = nullptr);
     const CPLString&    GetFID() const { return m_osFID; }

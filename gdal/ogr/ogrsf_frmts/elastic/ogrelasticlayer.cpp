@@ -880,7 +880,7 @@ void OGRElasticLayer::ResetReading()
     if( !m_osScrollID.empty() )
     {
         char** papszOptions = CSLAddNameValue(nullptr, "CUSTOMREQUEST", "DELETE");
-        CPLHTTPResult* psResult = CPLHTTPFetch((m_poDS->GetURL() + CPLString("/_search/scroll?scroll_id=") + m_osScrollID).c_str(), papszOptions);
+        CPLHTTPResult* psResult = m_poDS->HTTPFetch((m_poDS->GetURL() + CPLString("/_search/scroll?scroll_id=") + m_osScrollID).c_str(), papszOptions);
         CSLDestroy(papszOptions);
         CPLHTTPDestroyResult(psResult);
 

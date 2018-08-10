@@ -653,6 +653,12 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
             osURL += "&CUSTOMREQUEST=";
             osURL += pszCustomRequest;
         }
+        const char* pszUserPwd = CSLFetchNameValue( papszOptions, "USERPWD" );
+        if( pszUserPwd != nullptr )
+        {
+            osURL += "&USERPWD=";
+            osURL += pszUserPwd;
+        }
         const char* pszPost = CSLFetchNameValue( papszOptions, "POSTFIELDS" );
         if( pszPost != nullptr ) // Hack: We append post content to filename.
         {

@@ -2458,9 +2458,54 @@ def ogr_elasticsearch_11():
 
     return 'success'
 
+###############################################################################
+# Test authentication
+
+
+def ogr_elasticsearch_authentication():
+    if ogrtest.elasticsearch_drv is None:
+        return 'skip'
+
+    ogr_elasticsearch_delete_files()
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/fakeelasticsearch&USERPWD=user:pwd", """{"version":{"number":"5.0.0"}}""")
+
+    gdal.FileFromMemBuffer(
+        """/vsimem/fakeelasticsearch/_cat/indices?h=i&USERPWD=user:pwd""", 'a_layer  \n')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/_mapping?pretty&USERPWD=user:pwd""", """
+{
+    "a_layer":
+    {
+        "mappings":
+        {
+            "FeatureCollection":
+            {
+                "properties":
+                {
+                    "type": { "type": "text" },
+                    "properties" :
+                    {
+                        "properties":
+                        {
+                            "str_field": { "type": "text"}
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+
+    ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch',
+                     open_options=['USERPWD=user:pwd'])
+
+    return 'success'
 
 ###############################################################################
 # Cleanup
+
 
 def ogr_elasticsearch_delete_files():
 
@@ -2483,6 +2528,7 @@ def ogr_elasticsearch_delete_files():
             gdal.Unlink('/vsimem/fakeelasticsearch/' + f)
 
     gdal.Unlink('/vsimem/fakeelasticsearch')
+    gdal.Unlink('/vsimem/fakeelasticsearch&USERPWD=user:pwd')
 
 
 def ogr_elasticsearch_cleanup():
@@ -2510,6 +2556,7 @@ gdaltest_list = [
     ogr_elasticsearch_9,
     ogr_elasticsearch_10,
     ogr_elasticsearch_11,
+    ogr_elasticsearch_authentication,
     ogr_elasticsearch_cleanup,
 ]
 

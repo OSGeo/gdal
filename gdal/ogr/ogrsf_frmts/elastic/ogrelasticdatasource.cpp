@@ -334,6 +334,19 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
 }
 
 /************************************************************************/
+/*                               HTTPFetch()                            */
+/************************************************************************/
+
+CPLHTTPResult* OGRElasticDataSource::HTTPFetch(const char* pszURL,
+                                               char** papszOptions)
+{
+    CPLStringList aosOptions(papszOptions, false);
+    if( !m_osUserPwd.empty() )
+        aosOptions.SetNameValue("USERPWD", m_osUserPwd.c_str());
+    return CPLHTTPFetch(pszURL, aosOptions);
+}
+
+/************************************************************************/
 /*                               RunRequest()                           */
 /************************************************************************/
 
@@ -347,7 +360,7 @@ json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* ps
                                        pszPostContent);
     }
 
-    CPLHTTPResult * psResult = CPLHTTPFetch( pszURL, papszOptions );
+    CPLHTTPResult * psResult = HTTPFetch( pszURL, papszOptions );
     CSLDestroy(papszOptions);
 
     if( psResult->pszErrBuf != nullptr )
@@ -449,6 +462,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
         const char* pszPort = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "PORT", "9200");
         m_osURL += pszPort;
     }
+    m_osUserPwd = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "USERPWD", "");
     m_nBatchSize = atoi(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "BATCH_SIZE", "100"));
     m_nFeatureCountToEstablishFeatureDefn = atoi(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN", "100"));
@@ -461,7 +475,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
     if( !CheckVersion() )
         return FALSE;
 
-    CPLHTTPResult* psResult = CPLHTTPFetch((m_osURL + "/_cat/indices?h=i").c_str(), nullptr);
+    CPLHTTPResult* psResult = HTTPFetch((m_osURL + "/_cat/indices?h=i").c_str(), nullptr);
     if( psResult == nullptr || psResult->pszErrBuf != nullptr )
     {
         CPLHTTPDestroyResult(psResult);
@@ -559,7 +573,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
 void OGRElasticDataSource::Delete(const CPLString &url) {
     char** papszOptions = nullptr;
     papszOptions = CSLAddNameValue(papszOptions, "CUSTOMREQUEST", "DELETE");
-    CPLHTTPResult* psResult = CPLHTTPFetch(url, papszOptions);
+    CPLHTTPResult* psResult = HTTPFetch(url, papszOptions);
     CSLDestroy(papszOptions);
     if (psResult) {
         CPLHTTPDestroyResult(psResult);
@@ -582,7 +596,7 @@ bool OGRElasticDataSource::UploadFile( const CPLString &url,
     papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
             "Content-Type: application/json; charset=UTF-8");
 
-    CPLHTTPResult* psResult = CPLHTTPFetch(url, papszOptions);
+    CPLHTTPResult* psResult = HTTPFetch(url, papszOptions);
     CSLDestroy(papszOptions);
     if( psResult )
     {
