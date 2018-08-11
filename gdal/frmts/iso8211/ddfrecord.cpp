@@ -272,6 +272,13 @@ int DDFRecord::ReadHeader()
         nFieldOffset = -1;
         return FALSE;
     }
+    // The ASRP and USRP specifications mentions that 0x5E / ^ character can be
+    // used as a padding byte so that the file size is a multiple of 8192.
+    else if( achLeader[0] == '^' )
+    {
+        nFieldOffset = -1;
+        return FALSE;
+    }
     else if( nReadBytes != (int) nLeaderSize )
     {
         CPLError( CE_Failure, CPLE_FileIO,
