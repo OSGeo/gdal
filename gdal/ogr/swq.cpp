@@ -22,6 +22,7 @@
 #include "cpl_port.h"
 #include "swq.h"
 
+#include <cassert>
 #include <cctype>
 #include <cmath>
 #include <cstddef>
@@ -390,6 +391,7 @@ swq_select_summarize( swq_select *select_info,
             select_info->column_summary[i].osMin = "9999/99/99 99:99:99";
             select_info->column_summary[i].osMax = "0000/00/00 00:00:00";
         }
+        assert( !select_info->column_summary.empty() );
     }
 
 /* -------------------------------------------------------------------- */

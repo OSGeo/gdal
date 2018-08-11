@@ -41,6 +41,7 @@
 #pragma clang diagnostic pop
 #endif
 
+#include <cassert>
 #include <vector>
 
 #include "cpl_atomic_ops.h"
@@ -2544,6 +2545,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     if( adfRates.empty() )
     {
         adfRates.push_back(100. / dfDefaultQuality);
+        assert(!adfRates.empty());
     }
 
     if( poCT != nullptr && (bIsIrreversible || adfRates.back() != 100.0 / 100.0) )

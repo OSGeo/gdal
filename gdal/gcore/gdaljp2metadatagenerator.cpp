@@ -75,9 +75,9 @@ class GDALGMLJP2Expr
     CPLString                    osValue{};
 
     GDALGMLJP2Expr() = default;
-    GDALGMLJP2Expr( const char* pszVal ) :
+    explicit GDALGMLJP2Expr( const char* pszVal ) :
         eType(GDALGMLJP2ExprType::GDALGMLJP2Expr_STRING_LITERAL), osValue(pszVal) {}
-    GDALGMLJP2Expr( const CPLString& osVal ) :
+    explicit GDALGMLJP2Expr( const CPLString& osVal ) :
         eType(GDALGMLJP2ExprType::GDALGMLJP2Expr_STRING_LITERAL), osValue(osVal) {}
     ~GDALGMLJP2Expr() = default;
 

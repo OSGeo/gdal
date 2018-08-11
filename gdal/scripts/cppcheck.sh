@@ -55,6 +55,8 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         ${OVERRIDE} \
         -DOCAD_EXTERN= \
         -DTIFFLIB_VERSION=99999999 \
+        -DHAVE_SSE_AT_COMPILE_TIME \
+        -DHAVE_LIBXML2 \
         --include=port/cpl_config.h \
         --include=port/cpl_port.h \
         -I port -I gcore -I ogr -I ogr/ogrsf_frmts -I ogr/ogrsf_frmts/geojson \

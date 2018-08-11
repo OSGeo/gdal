@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "ogr_vrt.h"
 
+#include <cassert>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -267,6 +268,7 @@ bool OGRVRTLayer::FastInitialize( CPLXMLNode *psLTreeIn,
         if( apoGeomFieldProps.empty() )
         {
             apoGeomFieldProps.push_back(new OGRVRTGeomFieldProps());
+            assert( !apoGeomFieldProps.empty() );
         }
         apoGeomFieldProps[0]->sStaticEnvelope.MinX = CPLAtof(pszExtentXMin);
         apoGeomFieldProps[0]->sStaticEnvelope.MinY = CPLAtof(pszExtentYMin);

@@ -885,6 +885,7 @@ DGNElemCore **OGRDGNLayer::LineStringToElementGroup( OGRLineString *poLS,
         int nThisCount = 0;
 
         // we need to repeat end points of elements.
+        // cppcheck-suppress duplicateExpression
         if( iNextPoint != 0 )
             iNextPoint--;
 

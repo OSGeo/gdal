@@ -3610,8 +3610,6 @@ OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
  **********************************************************************/
 GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
 {
-    OGRLinearRing   *poRing = nullptr;
-
     OGRGeometry *poGeom = GetGeometryRef();
 
     if (poGeom && (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ||
@@ -3638,7 +3636,7 @@ GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
          * Loop through polygons until we find the requested ring.
          *------------------------------------------------------------*/
         iCurRing = 0;
-        for(int iPoly=0; poRing == nullptr && iPoly < numOGRPolygons; iPoly++)
+        for(int iPoly=0; iPoly < numOGRPolygons; iPoly++)
         {
             OGRPolygon* poPolygon = nullptr;
             if (poMultiPolygon)

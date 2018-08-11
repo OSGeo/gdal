@@ -327,10 +327,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
                                         {
                                             m_poKmlSchema = nullptr;
                                         }
-                                        if( schema )
-                                        {
-                                            kml2FeatureDef( schema, m_poOgrFeatureDefn );
-                                        }
+                                        kml2FeatureDef( schema, m_poOgrFeatureDefn );
                                     }
                                 }
                             }
