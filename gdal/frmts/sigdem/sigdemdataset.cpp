@@ -299,34 +299,6 @@ const char* SIGDEMDataset::GetProjectionRef() {
     return pszProjection;
 }
 
-CPLErr SIGDEMDataset::SetGeoTransform(double *padfGeoTransform) {
-// We only support non-rotated images.
-    if (padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0) {
-        return GDALPamDataset::SetGeoTransform(padfGeoTransform);
-    }
-
-    bGotTransform = true;
-    memcpy(adfGeoTransform, padfGeoTransform, sizeof(double) * 6);
-
-    return CE_None;
-}
-
-CPLErr SIGDEMDataset::SetProjection(const char* pszProjectionIn) {
-    if (!((this->pszProjection == nullptr && pszProjectionIn == nullptr)
-            || (this->pszProjection != nullptr && pszProjectionIn != nullptr
-                    && strcmp(this->pszProjection, pszProjectionIn) == 0))) {
-        CPLFree(this->pszProjection);
-        if (pszProjectionIn) {
-            this->pszProjection =
-                    pszProjectionIn ? CPLStrdup(pszProjectionIn) : nullptr;
-        }
-        this->sHeader.nCoordinateSystemId = GetCoordinateSystemId(
-                this->pszProjection);
-        this->bHdrDirty = true;
-    }
-    return CE_None;
-}
-
 int SIGDEMDataset::Identify(GDALOpenInfo* poOpenInfo) {
     if (poOpenInfo->nHeaderBytes < static_cast<int>(HEADER_LENGTH)) {
         return FALSE;
@@ -614,7 +586,6 @@ CPLErr SIGDEMRasterBand::IWriteBlock(
     const vsi_l_offset nWriteStart = static_cast<vsi_l_offset>(HEADER_LENGTH
             + static_cast<GUIntBig>(nBlockSizeBytes) * nBlockIndex);
 
-    bDirty = TRUE;
     if (VSIFSeekL(fpRawL, nWriteStart, SEEK_SET) == -1) {
         CPLError(CE_Failure, CPLE_FileIO,
                 "Failed to seek to block %d @ " CPL_FRMT_GUIB

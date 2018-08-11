@@ -82,7 +82,6 @@ class SIGDEMDataset final: public GDALPamDataset {
     char *pszProjection { };
 
     SIGDEMHeader sHeader;
-    bool bHdrDirty = false;
 
     CPLErr RewritSIGDEM();
 
@@ -94,8 +93,6 @@ public:
 
     CPLErr GetGeoTransform(double *padfTransform) override;
     const char* GetProjectionRef(void) override;
-    CPLErr SetGeoTransform(double *padfTransform) override;
-    CPLErr SetProjection(const char* pszProjectionIn) override;
 
     static GDALDataset *CreateCopy(
         const char *pszFilename,
@@ -114,7 +111,6 @@ class SIGDEMRasterBand final: public GDALPamRasterBand {
     CPL_DISALLOW_COPY_ASSIGN(SIGDEMRasterBand)
 
 private:
-    int bDirty { };
     double dfOffsetZ { };
     double dfScaleFactorZ { };
     VSILFILE* fpRawL { };
