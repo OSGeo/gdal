@@ -163,6 +163,8 @@ namespace tut
                     ensure_equals(face, new_face);
 
                     double l1, l2, l3;
+                    if( face < 0 )
+                        face = 0;
                     GDALTriangulationComputeBarycentricCoordinates(psDT, face, x, y, &l1, &l2, &l3);
                     ensure("outside", !((l1 >= 0 && l1 <= 1) && (l2 >= 0 && l2 <= 1) && (l3 >= 0 && l3 <= 1)));
                     ensure_equals("",l3, 1.0 -l1 - l2,1e-10);
