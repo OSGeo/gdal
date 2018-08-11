@@ -356,7 +356,7 @@ CPLString CPLGetAWS_SIGN4_Timestamp()
     struct tm brokenDown;
     CPLUnixTimeToYMDHMS(time(nullptr), &brokenDown);
 
-    char szTimeStamp[4+2+2+1+2+2+2+1+1] = {};
+    char szTimeStamp[80] = {};
     snprintf(szTimeStamp, sizeof(szTimeStamp), "%04d%02d%02dT%02d%02d%02dZ",
             brokenDown.tm_year + 1900,
             brokenDown.tm_mon + 1,
