@@ -2,7 +2,7 @@ include ../../GDALmake.opt
 
 OBJ	=	sigdemdataset.o
 
-CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS)  $(CXXFLAGS)
+CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS)  $(CXXFLAGS) -I../raw
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

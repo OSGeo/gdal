@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "sigdemdataset.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$")
 
@@ -375,6 +376,11 @@ GDALDataset *SIGDEMDataset::Open(GDALOpenInfo * poOpenInfo) {
         return nullptr;
     }
 
+    if( !RAWDatasetCheckMemoryUsage(sHeader.nCols, sHeader.nRows, 1,
+                    4, 4, 4 * sHeader.nCols, 0, 0, poOpenInfo->fpL) )
+    {
+        return nullptr;
+    }
     SIGDEMDataset *poDS = new SIGDEMDataset(sHeader);
 
     CPLFree(poDS->pszProjection);
@@ -484,7 +490,8 @@ SIGDEMRasterBand::SIGDEMRasterBand(
 
     this->nBlockSizeBytes = nRasterXSize * CELL_SIZE_FILE;
 
-    this->pBlockBuffer = new int32_t[this->nRasterXSize];
+    this->pBlockBuffer = static_cast<int32_t*>(
+        VSI_MALLOC2_VERBOSE(nRasterXSize, sizeof(int32_t)));
     SetNoDataValue(-9999);
     CPLString osValue;
     SetMetadataItem("STATISTICS_MINIMUM", osValue.Printf("%.15g", dfMinZ));
@@ -498,9 +505,6 @@ CPLErr SIGDEMRasterBand::IReadBlock(
     CPLAssert(nBlockXOff == 0);
     int nBlockIndex = nRasterYSize - nBlockYOff - 1;
 
-    if (pBlockBuffer == nullptr) {
-        return CE_Failure;
-    }
     if (nLoadedBlockIndex == nBlockIndex) {
         return CE_None;
     }
@@ -534,21 +538,21 @@ CPLErr SIGDEMRasterBand::IReadBlock(
 
     nLoadedBlockIndex = nBlockIndex;
 
-    int32_t* pnSourceValues = pBlockBuffer;
-    double* pnDestValues = static_cast<double*>(pImage);
+    const int32_t* pnSourceValues = pBlockBuffer;
+    double* padfDestValues = static_cast<double*>(pImage);
     double dfOffset = this->dfOffsetZ;
     double dfScaleFactor = this->dfScaleFactorZ;
     int nCellCount = this->nRasterXSize;
     for (int i = 0; i < nCellCount; i++) {
         int32_t nValue = CPL_MSBWORD32(*pnSourceValues);
         if (nValue == NO_DATA) {
-            *pnDestValues = -9999;
+            *padfDestValues = -9999;
         } else {
-            *pnDestValues = dfOffset + nValue / dfScaleFactor;
+            *padfDestValues = dfOffset + nValue / dfScaleFactor;
         }
 
         pnSourceValues++;
-        pnDestValues++;
+        padfDestValues++;
     }
 
     return CE_None;
@@ -561,17 +565,13 @@ CPLErr SIGDEMRasterBand::IWriteBlock(
     CPLAssert(nBlockXOff == 0);
     int nBlockIndex = nRasterYSize - nBlockYOff - 1;
 
-    if (pBlockBuffer == nullptr) {
-        return CE_Failure;
-    }
-
-    double* pnSourceValues = static_cast<double*>(pImage);
+    const double* padfSourceValues = static_cast<double*>(pImage);
     int32_t* pnDestValues = pBlockBuffer;
     double dfOffset = this->dfOffsetZ;
     double dfScaleFactor = this->dfScaleFactorZ;
     int nCellCount = this->nRasterXSize;
     for (int i = 0; i < nCellCount; i++) {
-        double dfValue = *pnSourceValues;
+        double dfValue = *padfSourceValues;
         int32_t nValue;
         if (dfValue == -9999) {
             nValue = NO_DATA;
@@ -579,7 +579,7 @@ CPLErr SIGDEMRasterBand::IWriteBlock(
             nValue = (int32_t) round((dfValue - dfOffset) * dfScaleFactor);
         }
         *pnDestValues = CPL_MSBWORD32(nValue);
-        pnSourceValues++;
+        padfSourceValues++;
         pnDestValues++;
     }
 
@@ -606,5 +606,5 @@ CPLErr SIGDEMRasterBand::IWriteBlock(
 
 SIGDEMRasterBand::~SIGDEMRasterBand() {
     SIGDEMRasterBand::FlushCache();
-    delete[] pBlockBuffer;
+    VSIFree(pBlockBuffer);
 }
