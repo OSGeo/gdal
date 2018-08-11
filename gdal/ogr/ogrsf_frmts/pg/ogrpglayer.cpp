@@ -794,8 +794,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                     poGeometry = OGRGeometryFromEWKB(pabyData, nLength, NULL,
                                                      poDS->sPostGISVersion.nMajor < 2 );
                 }
-#endif
                 if (poGeometry == nullptr)
+#endif
                 {
                     poGeometry = BYTEAToGeometry( (const char*)pabyData,
                                                   (poDS->sPostGISVersion.nMajor < 2) );
