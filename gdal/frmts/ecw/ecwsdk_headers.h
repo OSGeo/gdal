@@ -31,12 +31,6 @@
 
 #include "cpl_port.h"
 
-#ifdef HAVE_CPL_SAFER_SNPRINTF
-/* ECW headers #define snprintf _snprintf */
-#undef snprintf
-#undef vsnprintf
-#endif
-
 #ifdef HAVE_GCC_SYSTEM_HEADER
 #pragma GCC system_header
 #endif
@@ -108,16 +102,5 @@ static inline CNCSError GetCNCSError(NCSError nCode) { return CNCSError(nCode); 
 /* For NCSStrDup */
 #include "NCSUtil.h"
 #endif
-
-#ifdef HAVE_CPL_SAFER_SNPRINTF
-#ifdef snprintf
-#undef snprintf
-#endif
-#define snprintf CPL_safer_snprintf
-#ifdef vsnprintf
-#undef vsnprintf
-#endif
-#define vsnprintf CPL_safer_vsnprintf
-#endif /* HAVE_CPL_SAFER_SNPRINTF */
 
 #endif

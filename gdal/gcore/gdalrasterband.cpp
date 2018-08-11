@@ -3980,7 +3980,7 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
-        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
     else if( nMin == std::numeric_limits<T>::min() &&
              nMax == std::numeric_limits<T>::max() )
@@ -4014,8 +4014,8 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
-        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
     else
     {
@@ -4058,8 +4058,8 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
-        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
 }
 
@@ -4164,8 +4164,8 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
-        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
     else
     {
@@ -4218,8 +4218,8 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
-        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
 }
 
@@ -4530,8 +4530,8 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
             nSumSquare += nValue * nValue;
         }
 
-        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
     else
     {
@@ -4700,8 +4700,8 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
             nSumSquare += nValue * nValue;
         }
 
-        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
     else
     {
