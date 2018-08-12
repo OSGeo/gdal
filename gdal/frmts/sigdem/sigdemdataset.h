@@ -67,7 +67,7 @@ public:
 
     SIGDEMHeader();
 
-    bool Read(VSILFILE *fp);
+    bool Read(const GByte* pabyHeader);
 
     bool Write(VSILFILE *fp);
 };
@@ -77,7 +77,6 @@ class SIGDEMDataset final: public GDALPamDataset {
 
     VSILFILE *fpImage;  // image data file.
 
-    bool bGotTransform { };
     double adfGeoTransform[6] { 0, 1, 0, 0, 0, 1 };
     char *pszProjection { };
 
