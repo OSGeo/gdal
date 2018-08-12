@@ -128,6 +128,8 @@ int main(int argc, char* argv[])
             std::cerr << "GDAL C/C++ API tests error: " << ex.what() << std::endl;
             nRetCode = EXIT_FAILURE;
         }
+        if( !visi.all_ok() )
+            nRetCode = EXIT_FAILURE;
     }
 
     CSLDestroy(argv);
