@@ -29,6 +29,7 @@
 
 #include "cpl_conv.h"
 #include "ogr_mssqlspatial.h"
+#include "ogr_p.h"
 #ifdef SQLNCLI_VERSION
 #include <sqlncli.h>
 #endif
@@ -2298,6 +2299,33 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
         char* pszBytes = GByteArrayToHexString( pabyData, nLen);
         poStatement->Append( pszBytes );
         CPLFree(pszBytes);
+        return;
+    }
+
+    // Datetime values need special handling as SQL Server's datetime type
+    // accepts values only in ISO 8601 format and only without time zone
+    // information
+    else if( nOGRFieldType == OFTDateTime )
+    {
+        char *pszStrValue = OGRGetXMLDateTime( (*poFeature)[i].GetRawValue() );
+
+        int nRetCode = SQLBindParameter( poStatement->GetStatement(),
+            (SQLUSMALLINT)((*bind_num) + 1), SQL_PARAM_INPUT, SQL_C_CHAR,
+            SQL_VARCHAR, strlen(pszStrValue) + 1, 0, (SQLPOINTER)pszStrValue,
+            0, nullptr );
+        if( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+        {
+            bind_buffer[*bind_num] = pszStrValue;
+            ++(*bind_num);
+            poStatement->Append(
+                "CAST(CAST(? AS datetimeoffset) AS datetime)" );
+        }
+        else {
+            poStatement->Append(
+                CPLSPrintf( "CAST(CAST('%s' AS datetimeoffset) AS datetime)",
+                    pszStrValue ) );
+            CPLFree( pszStrValue );
+        }
         return;
     }
 
