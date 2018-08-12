@@ -2372,6 +2372,13 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
                           "String data truncation applied on field: %s. Use a more recent ODBC driver that supports handling large string values.", poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
 #endif
             }
+#if WCHAR_MAX > 0xFFFFu
+            // Shorten each character to a two-byte value, as expected by
+            // the ODBC driver
+            GUInt16 *panBuffer = reinterpret_cast<GUInt16 *>(buffer);
+            for( unsigned int nIndex = 1; nIndex < nLen; nIndex += 1 )
+                panBuffer[nIndex] = static_cast<GUInt16>(buffer[nIndex]);
+#endif
             int nRetCode = SQLBindParameter(poStatement->GetStatement(), (SQLUSMALLINT)((*bind_num) + 1),
                 SQL_PARAM_INPUT, SQL_C_WCHAR, SQL_WVARCHAR, nLen, 0, (SQLPOINTER)buffer, 0, nullptr);
             if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
