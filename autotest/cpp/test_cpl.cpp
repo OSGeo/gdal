@@ -1967,14 +1967,22 @@ namespace tut
 
             if( CPLHTTPEnabled() )
             {
+                CPLSetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES");
+                VSILFILE* fpTmp = VSIFOpenL("/vsimem/test.json", "wb");
+                const char* pszContent = "{ \"foo\": \"bar\" }";
+                VSIFWriteL(pszContent, 1, strlen(pszContent), fpTmp);
+                VSIFCloseL(fpTmp);
                 ensure( oDocument.LoadUrl(
-                    "https://raw.githubusercontent.com/OSGeo/gdal/master/gdal/data/eedaconf.json",
+                    "/vsimem/test.json",
                     const_cast<char**>(options) ) );
+                CPLSetConfigOption("CPL_CURL_ENABLE_VSIMEM", nullptr);
+                VSIUnlink("/vsimem/test.json");
+
                 CPLJSONObject oJsonRoot = oDocument.GetRoot();
                 ensure( oJsonRoot.IsValid() );
 
-                CPLString soVersion = oJsonRoot.GetString("##example_collection/example_subcollection/fields/name", "");
-                ensure_not( EQUAL(soVersion, "a_int_field") );
+                CPLString value = oJsonRoot.GetString("foo", "");
+                ensure_not( EQUAL(value, "bar") );
             }
         }
         {
