@@ -14,4 +14,7 @@ chroot "$chroot" sh -c "cd $PWD/autotest/cpp && make vsipreload.so"
 chroot "$chroot" sh -c "cd $PWD/autotest/ogr && python ogr_fgdb.py && cd ../../.."
 rm autotest/ogr/ogr_fgdb.py
 
+# for some reason connection to the DB requires sudo chroot
+sudo chroot "$chroot" sh -c "cd $PWD/autotest/ogr && python ogr_mssqlspatial.py && cd ../../.."
+
 chroot "$chroot" sh -c "cd $PWD/autotest && python run_all.py"

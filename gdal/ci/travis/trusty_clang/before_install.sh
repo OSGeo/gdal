@@ -10,6 +10,13 @@ sudo mv /etc/apt/sources.list.d/pgdg* /tmp
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 #sudo add-apt-repository -y ppa:marlam/gta
 sudo apt-get update
+
+# MSSQL: server side
+docker pull microsoft/mssql-server-linux:2017-latest
+sudo docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=DummyPassw0rd'  -p 1433:1433 --name sql1 -d microsoft/mssql-server-linux:2017-latest
+sleep 10
+docker exec -it sql1 /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U SA -P DummyPassw0rd -Q "CREATE DATABASE TestDB;"
+
 sudo apt-get install -y --allow-unauthenticated ccache python-numpy libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev  libepsilon-dev  liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev postgresql-9.3-postgis-2.2 postgresql-9.3-postgis-scripts libpq-dev
 # libgta-dev
 sudo apt-get install -y python-lxml
@@ -73,5 +80,20 @@ cd zstd-1.3.3/lib
 make -j3 PREFIX=/usr ZSTD_LEGACY_SUPPORT=0 CFLAGS=-O1
 sudo make install PREFIX=/usr ZSTD_LEGACY_SUPPORT=0 CFLAGS=-O1
 cd ../..
+
+# MSSQL: client side
+sudo bash -c "curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -"
+sudo bash -c "curl https://packages.microsoft.com/config/ubuntu/14.04/prod.list | tee /etc/apt/sources.list.d/msprod.list"
+sudo apt-get update
+sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17
+
+# Nasty: force reinstallation of unixodbc-dev since the previous line installed unixodbc 2.3.1 from microsoft repo, which lacks the -dev package
+# DONT DO THAT ON YOUR PRODUCTION SERVER.
+wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/libodbc1_2.3.1-4.1_amd64.deb
+wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/odbcinst1debian2_2.3.1-4.1_amd64.deb
+wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/odbcinst_2.3.1-4.1_amd64.deb
+wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/unixodbc-dev_2.3.1-4.1_amd64.deb
+wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/unixodbc_2.3.1-4.1_amd64.deb
+sudo dpkg -i --force-all libodbc1_2.3.1-4.1_amd64.deb odbcinst1debian2_2.3.1-4.1_amd64.deb odbcinst_2.3.1-4.1_amd64.deb unixodbc-dev_2.3.1-4.1_amd64.deb unixodbc_2.3.1-4.1_amd64.deb
 
 sudo ldconfig

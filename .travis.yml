@@ -100,7 +100,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: precise
+      dist: trusty
       cache:
         apt: true
         directories:
