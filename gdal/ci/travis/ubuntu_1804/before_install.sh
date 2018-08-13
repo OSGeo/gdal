@@ -16,6 +16,8 @@ docker exec -it sql1 /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U SA -P Dum
 export LC_ALL=en_US.utf8
 sudo debootstrap bionic "$chroot"
 sudo mount --rbind /dev "$chroot/dev"
+sudo mkdir -p "$chroot/run/shm"
+sudo mount --rbind /run/shm "$chroot/run/shm"
 sudo mount --rbind /proc "$chroot/proc"
 sudo mount --rbind /home "$chroot/home"
 sudo su -c 'echo "deb http://archive.ubuntu.com/ubuntu bionic universe" >> bionic/etc/apt/sources.list'
