@@ -5712,7 +5712,7 @@ AC_ARG_WITH([lerc],
             AS_HELP_STRING([--without-lerc],
                [Disable LERC library]),,)
 
-AC_MSG_CHECKING([for MRF])
+AC_MSG_CHECKING([for LERC])
 if test "$with_lerc" = yes -o x"$with_lerc" = x ; then
     HAVE_LERC=yes
     AC_MSG_RESULT([enabled])

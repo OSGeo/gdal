@@ -36724,8 +36724,8 @@ if test "${with_lerc+set}" = set; then :
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for MRF" >&5
-$as_echo_n "checking for MRF... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LERC" >&5
+$as_echo_n "checking for LERC... " >&6; }
 if test "$with_lerc" = yes -o x"$with_lerc" = x ; then
     HAVE_LERC=yes
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
