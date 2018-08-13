@@ -1567,6 +1567,12 @@ def filesystem_supports_sparse_files(path):
         post_reason('File system does not support sparse files')
         return False
 
+    if ret.find('wslfs') != -1 or \
+       ret.find('0x53464846') != -1: # wslfs for older stat versions
+        post_reason('Windows Subsystem for Linux FS is at the time of ' +
+                    'writing not known to support sparse files')
+        return False
+
     # Add here any missing filesystem supporting sparse files
     # See http://en.wikipedia.org/wiki/Comparison_of_file_systems
     if ret.find('ext3') == -1 and \

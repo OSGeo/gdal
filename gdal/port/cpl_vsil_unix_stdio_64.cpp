@@ -820,7 +820,21 @@ int VSIUnixStdioFilesystemHandler::SupportsSparseFiles( const char*
             case 0x4d44U: // msdos
                 return FALSE;
 
+            case 0x53464846U:  // Windows Subsystem for Linux fs
+            {
+                static bool bUnknownFSEmitted = false;
+                if( !bUnknownFSEmitted )
+                {
+                    CPLDebug("VSI", "Windows Subsystem for Linux FS is at "
+                             "the time of writing not known to support sparse "
+                             "files");
+                    bUnknownFSEmitted = true;
+                }
+                return FALSE;
+            }
+
             default:
+            {
                 static bool bUnknownFSEmitted = false;
                 if( !bUnknownFSEmitted )
                 {
@@ -830,6 +844,7 @@ int VSIUnixStdioFilesystemHandler::SupportsSparseFiles( const char*
                     bUnknownFSEmitted = true;
                 }
                 return FALSE;
+            }
         }
     }
     return FALSE;
