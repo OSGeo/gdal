@@ -865,26 +865,6 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                           FieldSetBitMap()                           */
-/************************************************************************/
-
-int OGRCARTOTableLayer::FieldSetBitMap( OGRFeature *poFeature )
-{
-    int bitmap = 0;
-    if (poFeatureDefn->GetFieldCount() > 31)
-        return -1;
-    for (int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
-    {
-        if (poFeature->IsFieldSet(i))
-        {
-            bitmap |= (1 << i);
-        }
-    }
-    return bitmap;
-}
-
-
-/************************************************************************/
 /*                           ICreateFeatureCopy()                       */
 /************************************************************************/
 
@@ -893,7 +873,37 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
 {
     CPLString osCopyFile;
     GetLayerDefn();
-    
+
+    if( eDeferredInsertState == INSERT_MULTIPLE_FEATURE )
+    {
+        bool bReset = false;
+        if( m_abFieldSetForInsert.size() !=
+                        static_cast<size_t>(poFeatureDefn->GetFieldCount()) )
+        {
+            bReset = true;
+        }
+        else
+        {
+            for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+            {
+                if( m_abFieldSetForInsert[i] !=
+                                CPL_TO_BOOL(poFeature->IsFieldSet(i)) )
+                {
+                    bReset = true;
+                    break;
+                }
+            }
+        }
+        if( bReset )
+        {
+            if( FlushDeferredBuffer(false) != OGRERR_NONE )
+            {
+                return OGRERR_FAILURE;
+            }
+            eDeferredInsertState = INSERT_UNINIT;
+        }
+    }
+
     /* We are doing a new COPY for each full buffer, so we will */
     /* construct a new COPY statement here, even though we could */
     /* reuse the same one over and over if we cached it (hmm) */
@@ -903,14 +913,12 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
         osCopySQL.Printf("COPY %s ", OGRCARTOEscapeIdentifier(osName).c_str());
         bool bMustComma = false;
         /* Non-spatial column names */
+        m_abFieldSetForInsert.resize(poFeatureDefn->GetFieldCount());
         for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
         {
             /* We base the columns we attempt to COPY based on */
-            /* the set pattern of the first feature we see. Good */
-            /* idea? Maybe. Optimally we should save the pattern */
-            /* of the first feature and re-set the copy each time */
-            /* that pattern changes. See FieldSetBitMap() for the */
-            /* start of that kind of idea. */
+            /* the set pattern of the first feature we see. */
+            m_abFieldSetForInsert[i] = CPL_TO_BOOL(poFeature->IsFieldSet(i));
             if( !poFeature->IsFieldSet(i) )
                 continue;
 
@@ -964,16 +972,16 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
     bool bMustTab = false;
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
     {
+        /* Unset fields get skipped (assuming same field set
+           pattern as first input feature) */
+        if( !poFeature->IsFieldSet(i) )
+            continue;
+
         /* Tab separator for 'text' format as necessary */
         if( bMustTab )
             osCopyFile += "\t";
         else
             bMustTab = true;
-
-        /* Unset fields get skipped (assuming same field set 
-           pattern as first input feature) */
-        if( !poFeature->IsFieldSet(i) )
-            continue;
 
         OGRFieldType eType = poFeatureDefn->GetFieldDefn(i)->GetType();
         /* Null fields get a NULL marker */
@@ -1041,23 +1049,18 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
         poFeature->SetFID(m_nNextFIDWrite);
         m_nNextFIDWrite++;
     }
-    
-    if( bInDeferredInsert )
-    {
-        OGRErr eRet = OGRERR_NONE;
-        /* Add current record to buffer */
-        osDeferredBuffer += osCopyFile;
-        osDeferredBuffer += "\n";
-        if( (int)osDeferredBuffer.size() > nMaxChunkSize )
-        {
-            eRet = FlushDeferredBuffer(false);
-            eDeferredInsertState = INSERT_UNINIT;
-        }            
 
-        return eRet;
+    OGRErr eRet = OGRERR_NONE;
+    /* Add current record to buffer */
+    osDeferredBuffer += osCopyFile;
+    osDeferredBuffer += "\n";
+    if( (int)osDeferredBuffer.size() > nMaxChunkSize )
+    {
+        eRet = FlushDeferredBuffer(false);
+        eDeferredInsertState = INSERT_UNINIT;
     }
 
-    return OGRERR_NONE;
+    return eRet;
 }
 
 /************************************************************************/
