@@ -697,7 +697,7 @@ LERCPostEncode(TIFF* tif)
             sp->compressed_size = numBytes;
         }
 
-        lerc_ret = lerc_encode(
+        lerc_ret = lerc_encodeForVersion(
             sp->uncompressed_buffer,
             sp->lerc_version,
             GetLercDataType(tif),

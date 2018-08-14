@@ -36,6 +36,11 @@ Contributors:  Thomas Maurer, Lucian Plesea
 #define NAMESPACE_LERC_END }
 #define USING_NAMESPACE_LERC using namespace GDAL_LercNS;
 
+//#define HAVE_LERC1_DECODE
+#ifdef GDAL_COMPILATION
+#define CHECK_FOR_NAN
+#endif
+
 NAMESPACE_LERC_START
 
 typedef unsigned char Byte;

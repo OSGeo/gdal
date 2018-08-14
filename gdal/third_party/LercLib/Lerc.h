@@ -25,7 +25,6 @@ Contributors:  Thomas Maurer
 
 #include <cstring>
 #include <vector>
-
 #include "Lerc_types.h"
 #include "BitMask.h"
 #include "Lerc2.h"
@@ -189,5 +188,7 @@ NAMESPACE_LERC_START
     template<class T> static bool Convert(const CntZImage& zImg, T* arr, BitMask* pBitMask);
 #endif
     template<class T> static ErrCode ConvertToDoubleTempl(const T* pDataIn, size_t nDataValues, double* pDataOut);
+
+    template<class T> static ErrCode CheckForNaN(const T* arr, int nDim, int nCols, int nRows, const BitMask* pBitMask);
   };
 NAMESPACE_LERC_END

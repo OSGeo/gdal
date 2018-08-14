@@ -269,8 +269,9 @@ ErrCode Lerc::ComputeCompressedSizeTempl(const T* pData, int version, int nDim, 
     return ErrCode::WrongParam;
 
   Lerc2 lerc2;
-  if( version >= 0 && !lerc2.SetEncoderToOldVersion(version) )
+  if (version >= 0 && !lerc2.SetEncoderToOldVersion(version))
     return ErrCode::WrongParam;
+
   bool rv = pBitMask ? lerc2.Set(nDim, nCols, nRows, pBitMask->Bits()) : lerc2.Set(nDim, nCols, nRows);
   if (!rv)
     return ErrCode::Failed;
@@ -279,7 +280,13 @@ ErrCode Lerc::ComputeCompressedSizeTempl(const T* pData, int version, int nDim, 
   for (int iBand = 0; iBand < nBands; iBand++)
   {
     bool encMsk = (iBand == 0);    // store bit mask with first band only
-    unsigned int nBytes = lerc2.ComputeNumBytesNeededToWrite(pData + nDim * nCols * nRows * iBand, maxZErr, encMsk);
+    const T* arr = pData + nDim * nCols * nRows * iBand;
+
+    ErrCode errCode = CheckForNaN(arr, nDim, nCols, nRows, pBitMask);
+    if (errCode != ErrCode::Ok)
+      return errCode;
+
+    unsigned int nBytes = lerc2.ComputeNumBytesNeededToWrite(arr, maxZErr, encMsk);
     if (nBytes <= 0)
       return ErrCode::Failed;
 
@@ -304,8 +311,9 @@ ErrCode Lerc::EncodeTempl(const T* pData, int version, int nDim, int nCols, int 
     return ErrCode::WrongParam;
 
   Lerc2 lerc2;
-  if( version >= 0 && !lerc2.SetEncoderToOldVersion(version) )
+  if (version >= 0 && !lerc2.SetEncoderToOldVersion(version))
     return ErrCode::WrongParam;
+
   bool rv = pBitMask ? lerc2.Set(nDim, nCols, nRows, pBitMask->Bits()) : lerc2.Set(nDim, nCols, nRows);
   if (!rv)
     return ErrCode::Failed;
@@ -317,6 +325,10 @@ ErrCode Lerc::EncodeTempl(const T* pData, int version, int nDim, int nCols, int 
   {
     bool encMsk = (iBand == 0);    // store bit mask with first band only
     const T* arr = pData + nDim * nCols * nRows * iBand;
+
+    ErrCode errCode = CheckForNaN(arr, nDim, nCols, nRows, pBitMask);
+    if (errCode != ErrCode::Ok)
+      return errCode;
 
     unsigned int nBytes = lerc2.ComputeNumBytesNeededToWrite(arr, maxZErr, encMsk);
     if (nBytes == 0)
@@ -456,6 +468,51 @@ ErrCode Lerc::ConvertToDoubleTempl(const T* pDataIn, size_t nDataValues, double*
 
   for (size_t k = 0; k < nDataValues; k++)
     pDataOut[k] = pDataIn[k];
+ 
+  return ErrCode::Ok;
+}
+
+// -------------------------------------------------------------------------- ;
+
+template<class T> ErrCode Lerc::CheckForNaN(const T* arr, int nDim, int nCols, int nRows, const BitMask* pBitMask)
+{
+ if (!arr || nDim <= 0 || nCols <= 0 || nRows <= 0)
+    return ErrCode::WrongParam;
+ 
+#ifdef CHECK_FOR_NAN
+
+  if (typeid(T) == typeid(double) || typeid(T) == typeid(float))
+  {
+    bool foundNaN = false;
+
+    for (int k = 0, i = 0; i < nRows; i++)
+    {
+      const T* rowArr = &(arr[i * nCols * nDim]);
+
+      if (!pBitMask)    // all valid
+      {
+        for (int n = 0, j = 0; j < nCols; j++, n += nDim)
+          for (int m = 0; m < nDim; m++)
+            if (std::isnan((double)rowArr[n + m]))
+              foundNaN = true;
+      }
+      else    // not all valid
+      {
+        for (int n = 0, j = 0; j < nCols; j++, k++, n += nDim)
+          if (pBitMask->IsValid(k))
+          {
+            for (int m = 0; m < nDim; m++)
+              if (std::isnan((double)rowArr[n + m]))
+                foundNaN = true;
+          }
+      }
+
+      if (foundNaN)
+        return ErrCode::NaN;
+    }
+  }
+
+#endif
 
   return ErrCode::Ok;
 }

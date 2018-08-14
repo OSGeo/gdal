@@ -14,7 +14,8 @@ NAMESPACE_LERC_START
     Ok = 0,
     Failed,
     WrongParam,
-    BufferTooSmall
+    BufferTooSmall,
+    NaN
   };
 
   enum class DataType : int

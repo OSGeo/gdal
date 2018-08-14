@@ -30,7 +30,15 @@ USING_NAMESPACE_LERC
 
 // -------------------------------------------------------------------------- ;
 
-lerc_status lerc_computeCompressedSize(const void* pData, int version, unsigned int dataType, int nDim, int nCols, int nRows, int nBands, 
+lerc_status lerc_computeCompressedSize(const void* pData, unsigned int dataType, int nDim, int nCols, int nRows, int nBands, 
+  const unsigned char* pValidBytes, double maxZErr, unsigned int* numBytes)
+{
+  return lerc_computeCompressedSizeForVersion(pData, -1, dataType, nDim, nCols, nRows, nBands, pValidBytes, maxZErr, numBytes);
+}
+
+// -------------------------------------------------------------------------- ;
+
+lerc_status lerc_computeCompressedSizeForVersion(const void* pData, int version, unsigned int dataType, int nDim, int nCols, int nRows, int nBands,
   const unsigned char* pValidBytes, double maxZErr, unsigned int* numBytes)
 {
   if (!pData || dataType >= Lerc::DT_Undefined || nDim <= 0 || nCols <= 0 || nRows <= 0 || nBands <= 0 || maxZErr < 0 || !numBytes)
@@ -55,7 +63,16 @@ lerc_status lerc_computeCompressedSize(const void* pData, int version, unsigned 
 
 // -------------------------------------------------------------------------- ;
 
-lerc_status lerc_encode(const void* pData, int version, unsigned int dataType, int nDim, int nCols, int nRows, int nBands, 
+lerc_status lerc_encode(const void* pData, unsigned int dataType, int nDim, int nCols, int nRows, int nBands,
+  const unsigned char* pValidBytes, double maxZErr, unsigned char* pOutBuffer, unsigned int outBufferSize,
+  unsigned int* nBytesWritten)
+{
+  return lerc_encodeForVersion(pData, -1, dataType, nDim, nCols, nRows, nBands, pValidBytes, maxZErr, pOutBuffer, outBufferSize, nBytesWritten);
+}
+
+// -------------------------------------------------------------------------- ;
+
+lerc_status lerc_encodeForVersion(const void* pData, int version, unsigned int dataType, int nDim, int nCols, int nRows, int nBands, 
   const unsigned char* pValidBytes, double maxZErr, unsigned char* pOutBuffer, unsigned int outBufferSize,
   unsigned int* nBytesWritten)
 {
