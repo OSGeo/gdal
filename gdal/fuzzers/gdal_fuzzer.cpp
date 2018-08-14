@@ -163,10 +163,10 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     break;
                 }
 
-                // Limit to 10000 blocks read for each band.
+                // Limit to 1000 blocks read for each band.
                 while( (nXSizeToRead > 1 || nYSizeToRead > 1) &&
                        (DIV_ROUND_UP(nXSizeToRead, nBXSize) *
-                        DIV_ROUND_UP(nYSizeToRead, nBYSize) > 10000) )
+                        DIV_ROUND_UP(nYSizeToRead, nBYSize) > 1000) )
                 {
                     if( nXSizeToRead > 1 &&
                         DIV_ROUND_UP(nXSizeToRead, nBXSize) >
