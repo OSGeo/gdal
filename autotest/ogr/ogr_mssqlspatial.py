@@ -54,10 +54,28 @@ def ogr_mssqlspatial_1():
         # localhost doesn't work under chroot
         'MSSQL:server=127.0.0.1;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd')
     gdaltest.mssqlspatial_ds = ogr.Open(gdaltest.mssqlspatial_dsname, update=1)
-    if gdaltest.mssqlspatial_ds is not None:
-        return 'success'
+    if gdaltest.mssqlspatial_ds is None:
+        return 'skip'
 
-    return 'skip'
+    # Fetch and store the major-version number of the SQL Server engine in use
+    sql_lyr = gdaltest.mssqlspatial_ds.ExecuteSQL(
+        'SELECT SERVERPROPERTY(\'ProductVersion\')')
+    feat = sql_lyr.GetNextFeature()
+    gdaltest.mssqlspatial_version = feat.GetFieldAsString(0)
+    gdaltest.mssqlspatial_ds.ReleaseResultSet(sql_lyr)
+
+    gdaltest.mssqlspatial_version_major = -1
+    if '.' in gdaltest.mssqlspatial_version:
+        version_major_str = gdaltest.mssqlspatial_version[
+            0:gdaltest.mssqlspatial_version.find('.')]
+        if version_major_str.isdigit():
+            gdaltest.mssqlspatial_version_major = int(version_major_str)
+
+    # Check whether the database server provides support for Z and M values,
+    # available since SQL Server 2012
+    gdaltest.mssqlspatial_has_z_m = (gdaltest.mssqlspatial_version_major >= 11)
+
+    return 'success'
 
 ###############################################################################
 # Create table from data/poly.shp
