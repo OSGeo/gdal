@@ -191,6 +191,60 @@ def ogr_mssqlspatial_3():
     return 'success' if tr else 'fail'
 
 ###############################################################################
+# Write more features with a bunch of different geometries, and verify the
+# geometries are still OK.
+
+
+def ogr_mssqlspatial_4():
+    if gdaltest.mssqlspatial_ds is None:
+        return 'skip'
+
+    dst_feat = ogr.Feature(
+        feature_def=gdaltest.mssqlspatial_lyr.GetLayerDefn())
+    wkt_list = ['10', '2', '1', '4', '5', '6']
+
+    # If the database engine supports 3D features, include one in the tests
+    if gdaltest.mssqlspatial_has_z_m:
+        wkt_list.append('3d_1')
+
+    for item in wkt_list:
+        wkt_filename = 'data/wkb_wkt/' + item + '.wkt'
+        wkt = open(wkt_filename).read()
+        geom = ogr.CreateGeometryFromWkt(wkt)
+
+        ######################################################################
+        # Write geometry as a new feature.
+
+        dst_feat.SetGeometryDirectly(geom)
+        dst_feat.SetField('PRFEDEA', item)
+        dst_feat.SetFID(-1)
+        if gdaltest.mssqlspatial_lyr.CreateFeature(dst_feat) \
+           != ogr.OGRERR_NONE:
+            gdaltest.post_reason('CreateFeature failed creating feature ' +
+                                 'from file "' + wkt_filename + '"')
+            return 'fail'
+
+        ######################################################################
+        # Read back the feature and get the geometry.
+
+        gdaltest.mssqlspatial_lyr.SetAttributeFilter("PRFEDEA = '%s'" % item)
+        feat_read = gdaltest.mssqlspatial_lyr.GetNextFeature()
+        geom_read = feat_read.GetGeometryRef()
+
+        if ogrtest.check_feature_geometry(feat_read, geom) != 0:
+            print(item)
+            print(wkt)
+            print(geom_read)
+            return 'fail'
+
+        feat_read.Destroy()
+
+    dst_feat.Destroy()
+    gdaltest.mssqlspatial_lyr.ResetReading()  # to close implicit transaction
+
+    return 'success'
+
+###############################################################################
 #
 
 
@@ -214,6 +268,7 @@ gdaltest_list = [
     #    ogr_mssqlspatial_cleanup,
     ogr_mssqlspatial_2,
     ogr_mssqlspatial_3,
+    ogr_mssqlspatial_4,
     ogr_mssqlspatial_cleanup
 ]
 
