@@ -353,7 +353,8 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
                 achSQLState, &nNativeError,
                 reinterpret_cast<SQLCHAR *>(achCurErrMsg),
                 sizeof(achCurErrMsg) - 1, &nTextLength );
-        if (nDiagRetCode == SQL_SUCCESS)
+        if (nDiagRetCode == SQL_SUCCESS ||
+            nDiagRetCode == SQL_SUCCESS_WITH_INFO)
         {
             achCurErrMsg[nTextLength] = '\0';
             m_osLastError += CPLString().Printf("%s[%5s]%s(" CPL_FRMT_GIB ")",
