@@ -73,7 +73,8 @@
 
 constexpr int LIMIT_IDS_PER_REQUEST = 200;
 
-constexpr int MAX_NODES_PER_WAY = 2000;
+// 2000 is normally the maximum allowed: https://wiki.openstreetmap.org/wiki/Elements
+constexpr int MAX_NODES_PER_WAY = 10000;
 
 constexpr int IDX_LYR_POINTS = 0;
 constexpr int IDX_LYR_LINES = 1;
