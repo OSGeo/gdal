@@ -119,7 +119,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "libogdi3.2-dev",
     "libcfitsio3-dev",
     "libfyba-dev",
-    "libsfcgal-dev",
+#   "libsfcgal-dev", # 1.2.2
     "couchdb",
     "libmongo-client-dev",
     "libqhull-dev",
