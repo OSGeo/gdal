@@ -75,6 +75,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "subversion",
     "python-numpy",
     "python-dev",
+    "python-lxml",
     "postgis",
     "postgresql-server-dev-9.3",
     "postgresql-9.3-postgis-2.2",
