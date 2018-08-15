@@ -529,7 +529,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 int OGRMSSQLSpatialDataSource::OpenTable( const char *pszSchemaName, const char *pszTableName,
                                           const char *pszGeomCol, int nCoordDimension,
                                           int nSRID, const char *pszSRText, OGRwkbGeometryType eType,
-                                          CPL_UNUSED int bUpdate )
+                                          int bUpdate )
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -541,6 +541,7 @@ int OGRMSSQLSpatialDataSource::OpenTable( const char *pszSchemaName, const char 
         delete poLayer;
         return FALSE;
     }
+    poLayer->SetUpdate(bUpdate);
 
     if (bUseCopy)
         poLayer->SetUseCopy(nBCPSize);

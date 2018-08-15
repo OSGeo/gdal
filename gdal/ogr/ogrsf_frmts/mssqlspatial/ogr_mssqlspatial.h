@@ -384,6 +384,7 @@ class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
     int                 FetchSRSId();
 
     void                SetUseCopy(int bcpSize) { bUseCopy = TRUE; nBCPSize = bcpSize; }
+    void                SetUpdate(int bFlag) { bUpdateAccess = bFlag; }
 
     // cppcheck-suppress functionStatic
     OGRErr              StartCopy();
@@ -442,7 +443,7 @@ class OGRMSSQLSpatialDataSource final: public OGRDataSource
 
     char               *pszCatalog;
 
-    int                 bDSUpdate;
+    bool                bDSUpdate;
     CPLODBCSession      oSession;
 
     int                 nGeometryFormat;

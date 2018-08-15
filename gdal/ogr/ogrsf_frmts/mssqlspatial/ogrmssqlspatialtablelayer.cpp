@@ -36,6 +36,8 @@
 
 CPL_CVSID("$Id$")
 
+#define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
+
 /************************************************************************/
 /*                         OGRMSSQLAppendEscaped( )                     */
 /************************************************************************/
@@ -918,6 +920,14 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
 
 {
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "SetFeature");
+        return OGRERR_FAILURE;
+    }
+
     OGRErr              eErr = OGRERR_FAILURE;
 
     poDS->EndCopy();
@@ -1143,6 +1153,14 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
 OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature( GIntBig nFID )
 
 {
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "DeleteFeature");
+        return OGRERR_FAILURE;
+    }
+
     poDS->EndCopy();
 
     GetLayerDefn();
@@ -1928,6 +1946,14 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
 OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "CreateFeature");
+        return OGRERR_FAILURE;
+    }
+
     GetLayerDefn();
 
     if( nullptr == poFeature )
