@@ -294,7 +294,7 @@ typedef union {
 
 class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
 {
-    int                 bUpdateAccess = TRUE;
+    bool                bUpdateAccess = true;
     int                 bLaunderColumnNames = FALSE;
     int                 bPreservePrecision = FALSE;
     int                 bNeedSpatialIndex = FALSE;
@@ -384,7 +384,7 @@ class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
     int                 FetchSRSId();
 
     void                SetUseCopy(int bcpSize) { bUseCopy = TRUE; nBCPSize = bcpSize; }
-    void                SetUpdate(int bFlag) { bUpdateAccess = bFlag; }
+    void                SetUpdate(bool bFlag) { bUpdateAccess = bFlag; }
 
     // cppcheck-suppress functionStatic
     OGRErr              StartCopy();
@@ -474,11 +474,11 @@ class OGRMSSQLSpatialDataSource final: public OGRDataSource
     static int                 ParseValue(char** pszValue, char* pszSource, const char* pszKey,
                                   int nStart, int nNext, int nTerm, int bRemove);
 
-    int                 Open( const char *, int bUpdate, int bTestOpen );
+    int                 Open( const char *, bool bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszSchemaName, const char *pszTableName,
                                    const char *pszGeomCol,int nCoordDimension,
                                    int nSRID, const char *pszSRText,
-                                   OGRwkbGeometryType eType, int bUpdate );
+                                   OGRwkbGeometryType eType, bool bUpdate );
 
     const char          *GetName() override { return pszName; }
     int                 GetLayerCount() override;

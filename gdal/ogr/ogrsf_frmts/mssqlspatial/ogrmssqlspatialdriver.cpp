@@ -64,7 +64,7 @@ OGRDataSource *OGRMSSQLSpatialDriver::Open( const char * pszFilename, int bUpdat
 
     poDS = new OGRMSSQLSpatialDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
+    if( !poDS->Open( pszFilename, CPL_TO_BOOL(bUpdate), TRUE ) )
     {
         delete poDS;
         return nullptr;

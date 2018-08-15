@@ -36,7 +36,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() :
-    bDSUpdate(FALSE)
+    bDSUpdate(false)
 {
     pszName = nullptr;
     pszCatalog = nullptr;
@@ -529,7 +529,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 int OGRMSSQLSpatialDataSource::OpenTable( const char *pszSchemaName, const char *pszTableName,
                                           const char *pszGeomCol, int nCoordDimension,
                                           int nSRID, const char *pszSRText, OGRwkbGeometryType eType,
-                                          int bUpdate )
+                                          bool bUpdate )
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -596,7 +596,7 @@ int OGRMSSQLSpatialDataSource::ParseValue(char** pszValue, char* pszSource, cons
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
+int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
                              int bTestOpen )
 
 {
