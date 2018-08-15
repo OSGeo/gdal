@@ -325,6 +325,22 @@ def ogr_mssqlspatial_create_feature_in_unregistered_table():
         gdaltest.post_reason('CreateFeature failed')
         return 'fail'
 
+    # Verify the created feature received the spatial-reference system of the
+    # original, as none was associated with the table
+    unregistered_layer.ResetReading()
+    created_feature = unregistered_layer.GetNextFeature()
+    if created_feature is None:
+        gdaltest.post_reason('did not get feature')
+        return 'fail'
+
+    created_feature_geometry = created_feature.GetGeometryRef()
+    created_spatial_reference = created_feature_geometry.GetSpatialReference()
+    if not ((created_spatial_reference == spatial_reference)
+            or ((created_spatial_reference is not None)
+                and created_spatial_reference.IsSame(spatial_reference))):
+        gdaltest.post_reason('created-feature SRS does not match original')
+        return 'fail'
+
     # Clean up
     test_ds.Destroy()
     feature.Destroy()
