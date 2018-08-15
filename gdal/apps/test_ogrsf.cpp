@@ -2315,7 +2315,18 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS,
         poTargetFeature->GetFieldDefnRef(i)->GetNameRef();
     CPLString osValue = poTargetFeature->GetFieldAsString(i);
     if( eType == OFTReal )
-        osValue.Printf("%.18g", poTargetFeature->GetFieldAsDouble(i));
+    {
+        int nWidth = poTargetFeature->GetFieldDefnRef(i)->GetWidth();
+        int nPrecision = poTargetFeature->GetFieldDefnRef(i)->GetPrecision();
+        if( nWidth > 0 )
+        {
+            char szFormat[32];
+            snprintf(szFormat, sizeof(szFormat), "%%%d.%df", nWidth, nPrecision);
+            osValue.Printf(szFormat, poTargetFeature->GetFieldAsDouble(i));
+        }
+        else
+            osValue.Printf("%.18g", poTargetFeature->GetFieldAsDouble(i));
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Construct inclusive filter.                                     */
