@@ -568,30 +568,36 @@ CPLODBCStatement* OGRMSSQLSpatialTableLayer::BuildStatement(const char* pszColum
         if (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY
             || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
         {
-            if( pszQuery == nullptr )
-                poStatement->Append( " where" );
-            else
-                poStatement->Append( " and" );
+            if( !CPLIsInf(m_sFilterEnvelope.MinX) &&
+                !CPLIsInf(m_sFilterEnvelope.MinY) &&
+                !CPLIsInf(m_sFilterEnvelope.MaxX) &&
+                !CPLIsInf(m_sFilterEnvelope.MaxY) )
+            {
+                if( pszQuery == nullptr )
+                    poStatement->Append( " where" );
+                else
+                    poStatement->Append( " and" );
 
-            poStatement->Appendf(" [%s].STIntersects(", pszGeomColumn );
+                poStatement->Appendf(" [%s].STIntersects(", pszGeomColumn );
 
-            if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
-                poStatement->Append( "geography::" );
-            else
-                poStatement->Append( "geometry::" );
+                if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
+                    poStatement->Append( "geography::" );
+                else
+                    poStatement->Append( "geometry::" );
 
-            if ( m_sFilterEnvelope.MinX == m_sFilterEnvelope.MaxX ||
-                 m_sFilterEnvelope.MinY == m_sFilterEnvelope.MaxY)
-                poStatement->Appendf("STGeomFromText('POINT(%.15g %.15g)',%d)) = 1",
-                            m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY, nSRSId >= 0? nSRSId : 0);
-            else
-                poStatement->Appendf( "STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%d)) = 1",
-                                            m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY,
-                                            m_sFilterEnvelope.MaxX, m_sFilterEnvelope.MinY,
-                                            m_sFilterEnvelope.MaxX, m_sFilterEnvelope.MaxY,
-                                            m_sFilterEnvelope.MinX, m_sFilterEnvelope.MaxY,
-                                            m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY,
-                                            nSRSId >= 0? nSRSId : 0 );
+                if ( m_sFilterEnvelope.MinX == m_sFilterEnvelope.MaxX ||
+                    m_sFilterEnvelope.MinY == m_sFilterEnvelope.MaxY)
+                    poStatement->Appendf("STGeomFromText('POINT(%.15g %.15g)',%d)) = 1",
+                                m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY, nSRSId >= 0? nSRSId : 0);
+                else
+                    poStatement->Appendf( "STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%d)) = 1",
+                                                m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY,
+                                                m_sFilterEnvelope.MaxX, m_sFilterEnvelope.MinY,
+                                                m_sFilterEnvelope.MaxX, m_sFilterEnvelope.MaxY,
+                                                m_sFilterEnvelope.MinX, m_sFilterEnvelope.MaxY,
+                                                m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY,
+                                                nSRSId >= 0? nSRSId : 0 );
+            }
         }
         else
         {
