@@ -245,6 +245,27 @@ def ogr_mssqlspatial_4():
     return 'success'
 
 ###############################################################################
+# Run test_ogrsf
+
+
+def ogr_mssqlspatial_test_ogrsf():
+
+    if gdaltest.mssqlspatial_ds is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + " -ro '" + gdaltest.mssqlspatial_dsname + "' tpoly")
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 
@@ -265,10 +286,10 @@ def ogr_mssqlspatial_cleanup():
 
 gdaltest_list = [
     ogr_mssqlspatial_1,
-    #    ogr_mssqlspatial_cleanup,
     ogr_mssqlspatial_2,
     ogr_mssqlspatial_3,
     ogr_mssqlspatial_4,
+    ogr_mssqlspatial_test_ogrsf,
     ogr_mssqlspatial_cleanup
 ]
 
