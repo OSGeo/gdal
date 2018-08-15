@@ -54,7 +54,7 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
     poDS = poDSIn;
 
     iNextShapeId = 0;
-    nSRSId = -1;
+    nSRSId = 0;
     poFeatureDefn = nullptr;
 
     poStmt = poStmtIn;

@@ -311,11 +311,14 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
 
     if (!poSRS)
     {
-        if (nSRSId < 0)
+        if (nSRSId <= 0)
             nSRSId = FetchSRSId();
 
         GetSpatialRef();
     }
+
+    if (nSRSId < 0)
+        nSRSId = 0;
 
     return CE_None;
 }
@@ -337,6 +340,8 @@ int OGRMSSQLSpatialTableLayer::FetchSRSId()
         {
             if ( oStatement.GetColData( 0 ) )
                 nSRSId = atoi( oStatement.GetColData( 0 ) );
+            if( nSRSId < 0 )
+                nSRSId = 0;
         }
     }
 
@@ -590,7 +595,7 @@ CPLODBCStatement* OGRMSSQLSpatialTableLayer::BuildStatement(const char* pszColum
                 if ( m_sFilterEnvelope.MinX == m_sFilterEnvelope.MaxX ||
                     m_sFilterEnvelope.MinY == m_sFilterEnvelope.MaxY)
                     poStatement->Appendf("STGeomFromText('POINT(%.15g %.15g)',%d)) = 1",
-                                m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY, nSRSId >= 0? nSRSId : 0);
+                                m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY, nSRSId);
                 else
                     poStatement->Appendf( "STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%d)) = 1",
                                                 m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY,
@@ -598,7 +603,7 @@ CPLODBCStatement* OGRMSSQLSpatialTableLayer::BuildStatement(const char* pszColum
                                                 m_sFilterEnvelope.MaxX, m_sFilterEnvelope.MaxY,
                                                 m_sFilterEnvelope.MinX, m_sFilterEnvelope.MaxY,
                                                 m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY,
-                                                nSRSId >= 0? nSRSId : 0 );
+                                                nSRSId );
             }
         }
         else
