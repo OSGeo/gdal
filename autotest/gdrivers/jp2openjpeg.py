@@ -2350,11 +2350,13 @@ def jp2openjpeg_45():
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
 
-    import ogr_gml_read
-    ogr_gml_read.ogr_gml_1()
-    if not gdaltest.have_gml_reader:
-        return 'skip'
+    with gdaltest.error_handler():
+        if ogr.Open('../ogr/data/ionic_wfs.gml') is None:
+            print('GML read support missing')
+            return 'skip'
+
     if gdal.GetDriverByName('KML') is None and gdal.GetDriverByName('LIBKML') is None:
+        print('KML support missing')
         return 'skip'
 
     # Test GMLJP2V2_DEF=YES
@@ -3127,6 +3129,8 @@ def jp2openjpeg_45():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
+
+    gdal.Unlink('/vsimem/jp2openjpeg_45.jp2.aux.xml')
 
     return 'success'
 
