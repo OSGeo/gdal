@@ -5363,6 +5363,8 @@ def ogr_shape_109():
 
 
 ###############################################################################
+
+
 def ogr_shape_110_write_invalid_multipatch():
 
     layer_name = 'ogr_shape_110'
@@ -5377,6 +5379,36 @@ def ogr_shape_110_write_invalid_multipatch():
     lyr.CreateFeature(f)
 
     ds = None
+    shape_drv.DeleteDataSource(filename)
+
+    return 'success'
+
+
+###############################################################################
+
+
+def ogr_shape_111_delete_field_no_record():
+
+    layer_name = 'ogr_shape_111_delete_field_no_record'
+    filename = '/vsimem/' + layer_name + '.shp'
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds = shape_drv.CreateDataSource(filename)
+    lyr = ds.CreateLayer(layer_name)
+    lyr.CreateField(ogr.FieldDefn('field_1'))
+    lyr.CreateField(ogr.FieldDefn('field_2'))
+    ds = None
+
+    ds = ogr.Open(filename, update = 1)
+    lyr = ds.GetLayer(0)
+    lyr.DeleteField(1)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'field_1':
+        return 'fail'
+    ds = None
+
     shape_drv.DeleteDataSource(filename)
 
     return 'success'
@@ -5538,6 +5570,7 @@ gdaltest_list = [
     ogr_shape_108,
     ogr_shape_109,
     ogr_shape_110_write_invalid_multipatch,
+    ogr_shape_111_delete_field_no_record,
     ogr_shape_cleanup]
 
 # gdaltest_list = [ ogr_shape_107 ]

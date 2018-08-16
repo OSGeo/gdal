@@ -2038,6 +2038,10 @@ DBFDeleteField(DBFHandle psDBF, int iField)
     if( psDBF->bWriteEndOfFileChar )
     {
         char ch = END_OF_FILE_CHARACTER;
+        SAOffset nEOFOffset =
+            psDBF->nRecordLength * STATIC_CAST(SAOffset,psDBF->nRecords) + psDBF->nHeaderLength;
+
+        psDBF->sHooks.FSeek( psDBF->fp, nEOFOffset, 0 );
         psDBF->sHooks.FWrite( &ch, 1, 1, psDBF->fp );
     }
 
