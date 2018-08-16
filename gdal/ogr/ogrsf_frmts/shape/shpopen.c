@@ -985,11 +985,13 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
 /*  Establish the byte order on this machine.                           */
 /* -------------------------------------------------------------------- */
 #if !defined(bBigEndian)
-    i = 1;
-    if( *((uchar *) &i) == 1 )
-        bBigEndian = FALSE;
-    else
-        bBigEndian = TRUE;
+    {
+        int i = 1;
+        if( *((uchar *) &i) == 1 )
+            bBigEndian = FALSE;
+        else
+            bBigEndian = TRUE;
+    }
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -1260,11 +1262,13 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 /*      Establish the byte order on this system.                        */
 /* -------------------------------------------------------------------- */
 #if !defined(bBigEndian)
-    i = 1;
-    if( *((uchar *) &i) == 1 )
-        bBigEndian = FALSE;
-    else
-        bBigEndian = TRUE;
+    {
+        int i = 1;
+        if( *((uchar *) &i) == 1 )
+            bBigEndian = FALSE;
+        else
+            bBigEndian = TRUE;
+    }
 #endif
 
 /* -------------------------------------------------------------------- */
