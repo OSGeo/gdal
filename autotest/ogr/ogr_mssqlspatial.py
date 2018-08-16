@@ -37,6 +37,7 @@ import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
+from osgeo import osr
 
 ###############################################################################
 # Open Database.
@@ -266,6 +267,87 @@ def ogr_mssqlspatial_test_ogrsf():
     return 'success'
 
 ###############################################################################
+# Verify features can be created in an existing table that includes a geometry
+# column but is not registered in the "geometry_columns" table.
+
+
+def ogr_mssqlspatial_create_feature_in_unregistered_table():
+    if gdaltest.mssqlspatial_ds is None:
+        return 'skip'
+
+    # Create a feature that specifies a spatial-reference system
+    spatial_reference = osr.SpatialReference()
+    spatial_reference.ImportFromEPSG(4326)
+
+    feature = ogr.Feature(ogr.FeatureDefn('Unregistered'))
+    feature.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (10 20)',
+                                                          spatial_reference))
+
+    # Create a table that includes a geometry column but is not registered in
+    # the "geometry_columns" table
+    gdaltest.mssqlspatial_ds.ExecuteSQL(
+        'CREATE TABLE Unregistered'
+        + '('
+        +   'ObjectID int IDENTITY(1,1) NOT NULL PRIMARY KEY,'
+        +   'Shape geometry NOT NULL'
+        + ');')
+
+    # Create a new MSSQLSpatial data source, one that will find the table just
+    # created and make it available via GetLayerByName()
+    use_geometry_columns = gdal.GetConfigOption(
+        'MSSQLSPATIAL_USE_GEOMETRY_COLUMNS')
+    gdal.SetConfigOption('MSSQLSPATIAL_USE_GEOMETRY_COLUMNS', 'NO')
+
+    test_ds = ogr.Open(gdaltest.mssqlspatial_dsname, update=1)
+
+    gdal.SetConfigOption('MSSQLSPATIAL_USE_GEOMETRY_COLUMNS',
+                         use_geometry_columns)
+
+    if test_ds is None:
+        gdaltest.post_reason('cannot open data source')
+        return 'fail'
+
+    # Get a layer backed by the newly created table and verify that (as it is
+    # unregistered) it has no associated spatial-reference system
+    unregistered_layer = test_ds.GetLayerByName('Unregistered');
+    if unregistered_layer is None:
+        gdaltest.post_reason('did not get Unregistered layer')
+        return 'fail'
+
+    unregistered_spatial_reference = unregistered_layer.GetSpatialRef()
+    if unregistered_spatial_reference is not None:
+        gdaltest.post_reason('layer Unregistered unexpectedly has an SRS')
+        return 'fail'
+
+    # Verify creating the feature in the layer succeeds despite the lack of an
+    # associated spatial-reference system
+    if unregistered_layer.CreateFeature(feature) != ogr.OGRERR_NONE:
+        gdaltest.post_reason('CreateFeature failed')
+        return 'fail'
+
+    # Verify the created feature received the spatial-reference system of the
+    # original, as none was associated with the table
+    unregistered_layer.ResetReading()
+    created_feature = unregistered_layer.GetNextFeature()
+    if created_feature is None:
+        gdaltest.post_reason('did not get feature')
+        return 'fail'
+
+    created_feature_geometry = created_feature.GetGeometryRef()
+    created_spatial_reference = created_feature_geometry.GetSpatialReference()
+    if not ((created_spatial_reference == spatial_reference)
+            or ((created_spatial_reference is not None)
+                and created_spatial_reference.IsSame(spatial_reference))):
+        gdaltest.post_reason('created-feature SRS does not match original')
+        return 'fail'
+
+    # Clean up
+    test_ds.Destroy()
+    feature.Destroy()
+
+    return 'success'
+
+###############################################################################
 #
 
 
@@ -277,6 +359,7 @@ def ogr_mssqlspatial_cleanup():
     gdaltest.mssqlspatial_ds = None
 
     gdaltest.mssqlspatial_ds = ogr.Open(gdaltest.mssqlspatial_dsname, update=1)
+    gdaltest.mssqlspatial_ds.ExecuteSQL('DROP TABLE Unregistered')
     gdaltest.mssqlspatial_ds.ExecuteSQL('DROP TABLE tpoly')
 
     gdaltest.mssqlspatial_ds = None
@@ -290,6 +373,7 @@ gdaltest_list = [
     ogr_mssqlspatial_3,
     ogr_mssqlspatial_4,
     ogr_mssqlspatial_test_ogrsf,
+    ogr_mssqlspatial_create_feature_in_unregistered_table,
     ogr_mssqlspatial_cleanup
 ]
 

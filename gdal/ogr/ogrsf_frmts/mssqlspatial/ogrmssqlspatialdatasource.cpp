@@ -941,7 +941,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
         if (papszSRIds != nullptr)
             nSRId = atoi(papszSRIds[iTable]);
         else
-            nSRId = -1;
+            nSRId = 0;
 
         if (papszCoordDimensions != nullptr)
             nCoordDimension = atoi(papszCoordDimensions[iTable]);

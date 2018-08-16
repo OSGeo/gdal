@@ -209,7 +209,7 @@ class OGRMSSQLSpatialLayer : public OGRLayer
 
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS = nullptr;
-    int                 nSRSId = -1;
+    int                 nSRSId = 0;
 
     GIntBig             iNextShapeId = 0;
 
