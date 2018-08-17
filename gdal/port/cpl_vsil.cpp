@@ -1874,6 +1874,7 @@ VSIFileManager *VSIFileManager::Get()
         VSIInstallOSSStreamingFileHandler();
         VSIInstallSwiftFileHandler();
         VSIInstallSwiftStreamingFileHandler();
+        VSIInstallWebHdfsHandler();
 #endif
         VSIInstallStdinHandler();
         VSIInstallHdfsHandler();

@@ -336,6 +336,7 @@ void VSIInstallGZipFileHandler(void); /* No reason to export that */
 void VSIInstallZipFileHandler(void); /* No reason to export that */
 void VSIInstallStdinHandler(void); /* No reason to export that */
 void VSIInstallHdfsHandler(void); /* No reason to export that */
+void VSIInstallWebHdfsHandler(void); /* No reason to export that */
 void VSIInstallStdoutHandler(void); /* No reason to export that */
 void CPL_DLL VSIInstallSparseFileHandler(void);
 void VSIInstallTarFileHandler(void); /* No reason to export that */
