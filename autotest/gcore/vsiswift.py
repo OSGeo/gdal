@@ -49,11 +49,11 @@ def open_for_read(uri):
 
 def vsiswift_init():
 
-    gdaltest.az_vars = {}
+    gdaltest.swift_vars = {}
     for var in ('SWIFT_STORAGE_URL', 'SWIFT_AUTH_TOKEN',
                 'SWIFT_AUTH_V1_URL', 'SWIFT_USER', 'SWIFT_KEY'):
-        gdaltest.az_vars[var] = gdal.GetConfigOption(var)
-        if gdaltest.az_vars[var] is not None:
+        gdaltest.swift_vars[var] = gdal.GetConfigOption(var)
+        if gdaltest.swift_vars[var] is not None:
             gdal.SetConfigOption(var, "")
 
     return 'success'
@@ -856,8 +856,8 @@ def vsiswift_extra_1():
 
 def vsiswift_cleanup():
 
-    for var in gdaltest.az_vars:
-        gdal.SetConfigOption(var, gdaltest.az_vars[var])
+    for var in gdaltest.swift_vars:
+        gdal.SetConfigOption(var, gdaltest.swift_vars[var])
 
     return 'success'
 

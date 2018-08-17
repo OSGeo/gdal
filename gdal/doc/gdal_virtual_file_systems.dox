@@ -26,6 +26,7 @@
 <li> \ref gdal_virtual_file_systems_vsiswift
 <li> \ref gdal_virtual_file_systems_vsiswift_streaming
 <li> \ref gdal_virtual_file_systems_vsihdfs
+<li> \ref gdal_virtual_file_systems_vsiwebhdfs
 </ol>
 <li> \ref gdal_virtual_file_systems_vsistdin
 <li> \ref gdal_virtual_file_systems_vsistdout
@@ -666,7 +667,7 @@ It requires GDAL to be built against libcurl.
 It also allows sequential writing of files (no seeks or read operations are
 then allowed). Deletion of files with VSIUnlink() is also supported.
 Creation of directories with VSIMkdir() and deletion
-of (empty) directories with VSIRmdir() are also pswiftible.
+of (empty) directories with VSIRmdir() are also possible.
 
 Recognized filenames are of the form /vsiswift/bucket/key where
 bucket is the name of the swift bucket and key the swift object "key", i.e.
@@ -717,6 +718,8 @@ Authentication options, and read-only features, are identical to
 This handler requires GDAL to have been built with Java support
 (--with-java) and HDFS support (--with-hdfs).  Support for this
 handler is currently only available on Unix-like systems.
+Note: support for the HTTP REST API (webHdfs) is also available with
+\ref gdal_virtual_file_systems_vsiwebhdfs
 
 Recognized filenames are of the form /vsihdfs/hdfsUri where hdfsUri is
 a valid HDFS URI.
@@ -726,6 +729,49 @@ Examples:
 /vsihdfs/file:/tmp/my.tif  (a local file accessed through HDFS)
 /vsihdfs/hdfs:/hadoop/my.tif  (a file stored in HDFS)
 </pre>
+
+@since GDAL 2.4
+
+\subsection gdal_virtual_file_systems_vsiwebhdfs /vsiwebhdfs/ (Web Hadoop File System REST API)
+
+/vsiwebhdfs/ is a file system handler that provides read and write access to HDFS
+through its
+<a href="https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/WebHDFS.html">HTTP REST API</a>
+
+Recognized filenames are of the form
+/vsiwebhdfs/http://hostname:port/webhdfs/v1/path/to/filename.
+
+Examples:
+<pre>
+/vsiwebhdfs/http://localhost:50070/webhdfs/v1/mydir/byte.tif
+</pre>
+
+It also allows sequential writing of files (no seeks or read operations are
+then allowed). Deletion of files with VSIUnlink() is also supported.
+Creation of directories with VSIMkdir() and deletion
+of (empty) directories with VSIRmdir() are also possible.
+
+The generalities of \ref gdal_virtual_file_systems_vsicurl "/vsicurl/" apply.
+
+The following configuration options are available
+<ul>
+ <li>WEBHDFS_USERNAME=value: User name (when security is off).
+ </li>
+ <li>WEBHDFS_DELEGATION=value: Hadoop delegation token (when security is on).
+ </li>
+ <li>WEBHDFS_DATANODE_HOST=value: For APIs using redirect, substitute the redirection
+     hostname with the one provided by this option (normally resolvable
+     hostname should be rewritten by a proxy)
+ </li>
+ <li>WEBHDFS_REPLICATION=int_value: Replication value used when creating a file
+ </li>
+ <li>WEBHDFS_PERMISSION=int_value: Permission mask (to provide as decimal number)
+ when creating a file or directory
+ </li>
+</ul>
+
+This file system handler also allows sequential writing of files (no seeks
+or read operations are then allowed)
 
 @since GDAL 2.4
 
