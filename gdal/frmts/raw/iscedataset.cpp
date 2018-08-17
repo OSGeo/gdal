@@ -126,6 +126,9 @@ static CPLString getXMLFilename( GDALOpenInfo *poOpenInfo )
 {
     CPLString osXMLFilename;
 
+    if( poOpenInfo->fpL == nullptr )
+        return CPLString();
+
     char **papszSiblingFiles = poOpenInfo->GetSiblingFiles();
     if ( papszSiblingFiles == nullptr )
     {

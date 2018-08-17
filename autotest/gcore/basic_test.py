@@ -58,6 +58,33 @@ def basic_test_1():
     return 'fail'
 
 
+def basic_test_strace_non_existing_file():
+
+    if not sys.platform.startswith('linux'):
+        return 'skip'
+
+    python_exe = sys.executable
+    cmd = "strace -f %s -c \"from osgeo import gdal; " % python_exe + (
+        "gdal.OpenEx('non_existing_ds', gdal.OF_RASTER)"
+        " \" ")
+    try:
+        (_, err) = gdaltest.runexternal_out_and_err(cmd)
+    except:
+        # strace not available
+        return 'skip'
+
+    interesting_lines = []
+    for line in err.split('\n'):
+        if line.find('non_existing_ds') >= 0:
+            interesting_lines += [ line ]
+    # Only 3 calls on the file are legit: open(), stat() and readlink()
+    if len(interesting_lines) > 3:
+        gdaltest.post_reason('too many system calls accessing file')
+        print(interesting_lines)
+        return 'fail'
+
+    return 'success'
+
 def basic_test_2():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('non_existing_ds', gdal.GA_Update)
@@ -698,6 +725,7 @@ def basic_test_17():
 
 
 gdaltest_list = [basic_test_1,
+                 basic_test_strace_non_existing_file,
                  basic_test_2,
                  basic_test_3,
                  basic_test_4,
