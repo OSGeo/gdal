@@ -27,6 +27,8 @@ OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o cplstringlist.o \
 	cpl_vsil_stdout.o cpl_vsil_sparsefile.o cpl_vsil_abstract_archive.o \
 	cpl_vsil_tar.o cpl_vsil_stdin.o cpl_vsil_buffered_reader.o \
 	cpl_base64.o cpl_vsil_curl.o cpl_vsil_curl_streaming.o \
+	cpl_vsil_s3.o cpl_vsil_gs.o cpl_vsil_az.o cpl_vsil_oss.o \
+	cpl_vsil_swift.o cpl_vsil_webhdfs.o \
 	cpl_vsil_cache.o cpl_xml_validate.o cpl_spawn.o \
 	cpl_google_oauth2.o cpl_progress.o cpl_virtualmem.o cpl_worker_thread_pool.o \
 	cpl_vsil_crypt.o cpl_sha1.o cpl_sha256.o cpl_aws.o cpl_vsi_error.o cpl_cpu_features.o \
