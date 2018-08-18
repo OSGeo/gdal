@@ -106,16 +106,18 @@ def vsiwebhdfs_open():
             return 'fail'
         gdal.VSIFCloseL(f)
 
-    # Download without redirect (not nominal)
+    # Download with redirect (nominal) and permissions
 
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/webhdfs/v1/foo/bar?op=OPEN&offset=0&length=16384', 307,
+    handler.add('GET', '/webhdfs/v1/foo/bar?op=OPEN&offset=0&length=16384&user.name=root&delegation=token', 307,
                 {'Location': gdaltest.webhdfs_redirected_url + '/webhdfs/v1/foo/bar?op=OPEN&offset=0&length=16384'})
     handler.add('GET', '/redirected/webhdfs/v1/foo/bar?op=OPEN&offset=0&length=16384', 200,
                 {}, 'yeah')
-    with gdaltest.config_option('WEBHDFS_DATANODE_HOST', 'localhost'):
+    with gdaltest.config_options({'WEBHDFS_USERNAME': 'root',
+                                  'WEBHDFS_DELEGATION': 'token',
+                                  'WEBHDFS_DATANODE_HOST': 'localhost'}):
         with webserver.install_http_handler(handler):
             f = open_for_read(gdaltest.webhdfs_base_connection + '/foo/bar')
             if f is None:
@@ -130,17 +132,24 @@ def vsiwebhdfs_open():
 
     gdal.VSICurlClearCache()
 
+    f = open_for_read(gdaltest.webhdfs_base_connection + '/foo/bar')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     handler = webserver.SequentialHandler()
     handler.add('GET', '/webhdfs/v1/foo/bar?op=OPEN&offset=0&length=16384', 404)
     with webserver.install_http_handler(handler):
-        f = open_for_read(gdaltest.webhdfs_base_connection + '/foo/bar')
-        if f is None:
-            gdaltest.post_reason('fail')
-            return 'fail'
         if len(gdal.VSIFReadL(1, 4, f)) != 0:
             gdaltest.post_reason('fail')
             return 'fail'
-        gdal.VSIFCloseL(f)
+
+    # Retry: shouldn't not cause network access
+    if len(gdal.VSIFReadL(1, 4, f)) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.VSIFCloseL(f)
 
     return 'success'
 
@@ -410,6 +419,22 @@ def vsiwebhdfs_unlink():
 
     gdal.VSICurlClearCache()
 
+
+    # With permissions
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('DELETE', '/webhdfs/v1/foo/bar?op=DELETE&user.name=root&delegation=token', 200,
+                {}, '{"boolean":true}')
+    with gdaltest.config_options({'WEBHDFS_USERNAME': 'root',
+                                  'WEBHDFS_DELEGATION': 'token'}):
+        with webserver.install_http_handler(handler):
+            ret = gdal.Unlink(gdaltest.webhdfs_base_connection + '/foo/bar')
+        if ret != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
     # Failure
     handler = webserver.SequentialHandler()
     handler.add('DELETE', '/webhdfs/v1/foo/bar?op=DELETE', 200,
@@ -463,12 +488,30 @@ def vsiwebhdfs_mkdir_rmdir():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Valid with all options
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/webhdfs/v1/foo/dir?op=MKDIRS&user.name=root&delegation=token&permission=755', 200,
+                {}, '{"boolean":true}')
+    with gdaltest.config_options({'WEBHDFS_USERNAME': 'root', 'WEBHDFS_DELEGATION': 'token'}):
+        with webserver.install_http_handler(handler):
+            ret = gdal.Mkdir(gdaltest.webhdfs_base_connection +
+                             '/foo/dir/', 493)  # 0755
+        if ret != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
     # Error
     handler = webserver.SequentialHandler()
     handler.add('PUT', '/webhdfs/v1/foo/dir_error?op=MKDIRS', 404)
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir(gdaltest.webhdfs_base_connection +
                          '/foo/dir_error', 0)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Root name is invalid
+    ret = gdal.Mkdir(gdaltest.webhdfs_base_connection + '/', 0)
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'

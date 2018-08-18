@@ -761,8 +761,7 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
                         curl_easy_cleanup(m_hCurl);
                         m_hCurl = nullptr;
 
-                        if( headers )
-                            curl_slist_free_all(headers);
+                        curl_slist_free_all(headers);
                         return 0;
                     }
                 }
@@ -772,8 +771,7 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
         CPLMultiPerformWait(m_hCurlMulti, repeats);
     }
 
-    if( headers )
-        curl_slist_free_all(headers);
+    curl_slist_free_all(headers);
 
     m_pBuffer = nullptr;
 
@@ -1720,8 +1718,7 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
 
         VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
-        if( headers != nullptr )
-            curl_slist_free_all(headers);
+        curl_slist_free_all(headers);
 
         if( sWriteFuncData.pBuffer == nullptr)
         {

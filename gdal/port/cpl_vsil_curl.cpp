@@ -797,8 +797,7 @@ retry:
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
-    if( headers != nullptr )
-        curl_slist_free_all(headers);
+    curl_slist_free_all(headers);
 
     eExists = EXIST_UNKNOWN;
 
@@ -1230,8 +1229,7 @@ retry:
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
-    if( headers != nullptr )
-        curl_slist_free_all(headers);
+    curl_slist_free_all(headers);
 
     if( sWriteFuncData.bInterrupted )
     {
@@ -1944,8 +1942,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
-    if( headers != nullptr )
-        curl_slist_free_all(headers);
+    curl_slist_free_all(headers);
 
     if( sWriteFuncData.bInterrupted )
     {
@@ -3357,8 +3354,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
 
             MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-            if( headers != nullptr )
-                curl_slist_free_all(headers);
+            curl_slist_free_all(headers);
 
             if( sWriteFuncData.pBuffer == nullptr )
             {
@@ -3515,8 +3511,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
 
         MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-        if( headers != nullptr )
-            curl_slist_free_all(headers);
+        curl_slist_free_all(headers);
 
         if( sWriteFuncData.pBuffer == nullptr )
         {

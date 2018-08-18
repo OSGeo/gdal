@@ -622,8 +622,7 @@ char** VSIWebHDFSFSHandler::GetFileList( const char *pszDirname,
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
-    if( headers != nullptr )
-        curl_slist_free_all(headers);
+    curl_slist_free_all(headers);
 
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
@@ -718,8 +717,7 @@ int VSIWebHDFSFSHandler::Unlink( const char *pszFilename )
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
-    if( headers != nullptr )
-        curl_slist_free_all(headers);
+    curl_slist_free_all(headers);
 
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
@@ -808,7 +806,7 @@ int VSIWebHDFSFSHandler::Mkdir( const char *pszDirname, long nMode )
     CPLString osURL = osBaseURL + "?op=MKDIRS" + osUsernameParam + osDelegationParam;
     if( nMode )
     {
-        osURL += "permission=";
+        osURL += "&permission=";
         osURL += CPLSPrintf("%o", static_cast<int>(nMode));
     }
 
@@ -831,8 +829,7 @@ int VSIWebHDFSFSHandler::Mkdir( const char *pszDirname, long nMode )
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
-    if( headers != nullptr )
-        curl_slist_free_all(headers);
+    curl_slist_free_all(headers);
 
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
@@ -939,8 +936,7 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize( bool bSetError )
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
-    if( headers != nullptr )
-        curl_slist_free_all(headers);
+    curl_slist_free_all(headers);
 
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
@@ -962,7 +958,7 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize( bool bSetError )
 
     // If there was no VSI error thrown in the process,
     // fail by reporting the HTTP response code.
-    if( bSetError && VSIGetLastErrorNo() == 0 )
+    if( response_code != 200 && bSetError && VSIGetLastErrorNo() == 0 )
     {
         if( strlen(szCurlErrBuf) > 0 )
         {
@@ -1078,8 +1074,7 @@ retry:
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
-    if( headers != nullptr )
-        curl_slist_free_all(headers);
+    curl_slist_free_all(headers);
 
     if( sWriteFuncData.bInterrupted )
     {
