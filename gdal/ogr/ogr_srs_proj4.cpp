@@ -973,7 +973,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                    OSR_GDV( papszNV, "x_0", 0.0 ),
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
-    else if( EQUAL(pszProj, "iwm_p") )
+    else if( EQUAL(pszProj, "imw_p") )
     {
         SetIWMPolyconic( OSR_GDV( papszNV, "lat_1", 0.0 ),
                          OSR_GDV( papszNV, "lat_2", 0.0 ),
@@ -2187,7 +2187,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         CPLsnprintf(
              szProj4 + strlen(szProj4), sizeof(szProj4) - strlen(szProj4),
-             "+proj=iwm_p +lat_1=%.16g +lat_2=%.16g +lon_0=%.16g "
+             "+proj=imw_p +lat_1=%.16g +lat_2=%.16g +lon_0=%.16g "
              "+x_0=%.16g +y_0=%.16g ",
              GetNormProjParm(SRS_PP_LATITUDE_OF_1ST_POINT, 0.0),
              GetNormProjParm(SRS_PP_LATITUDE_OF_2ND_POINT, 0.0),
