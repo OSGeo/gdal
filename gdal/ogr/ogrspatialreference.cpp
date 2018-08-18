@@ -5101,6 +5101,11 @@ OGRErr OSRSetIWMPolyconic( OGRSpatialReferenceH hSRS,
 /*                             SetKrovak()                              */
 /************************************************************************/
 
+/** Krovak east-north projection.
+ *
+ * Note that dfAzimuth and dfPseudoStdParallel1 are ignored when exporting
+ * to PROJ and should be respectively set to 30.28813972222222 and 78.5
+ */
 OGRErr OGRSpatialReference::SetKrovak( double dfCenterLat, double dfCenterLong,
                                        double dfAzimuth,
                                        double dfPseudoStdParallel1,
