@@ -2815,64 +2815,46 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
         nDstXOff, nDstYOff, nDstXSize, nDstYSize,
         dfMinXOut, dfMinYOut, dfMaxXOut, dfMaxYOut);
 #endif
-    const int knIntMax = std::numeric_limits<int>::max();
-    const int nMinXOutClamped =
-        dfMinXOut > knIntMax ? knIntMax :
-        dfMinXOut >= 0.0 ? static_cast<int>(dfMinXOut) : 0;
-    *pnSrcXOff = nMinXOutClamped;
-    const int nMinYOutClamped =
-        dfMinYOut > knIntMax ? knIntMax :
-        dfMinYOut >= 0.0 ? static_cast<int>(dfMinYOut) : 0;
-    *pnSrcYOff = nMinYOutClamped;
-    *pnSrcXOff = std::min(*pnSrcXOff, nRasterXSize);
-    *pnSrcYOff = std::min(*pnSrcYOff, nRasterYSize);
+    const int nMinXOutClamped = static_cast<int>(std::max(0.0, dfMinXOut));
+    const int nMinYOutClamped = static_cast<int>(std::max(0.0, dfMinYOut));
+    const int nMaxXOutClamped = static_cast<int>(
+        std::min(ceil(dfMaxXOut), static_cast<double>(nRasterXSize)));
+    const int nMaxYOutClamped = static_cast<int>(
+        std::min(ceil(dfMaxYOut), static_cast<double>(nRasterYSize)));
 
-    double dfCeilMaxXOut = ceil(dfMaxXOut);
-    if( dfCeilMaxXOut > knIntMax )
-        dfCeilMaxXOut = knIntMax;
-    double dfCeilMaxYOut = ceil(dfMaxYOut);
-    if( dfCeilMaxYOut > knIntMax )
-        dfCeilMaxYOut = knIntMax;
-
-    double dfSrcXSizeRaw = dfMaxXOut - dfMinXOut;
-    double dfSrcYSizeRaw = dfMaxYOut - dfMinYOut;
-    dfSrcXSizeRaw = std::min(static_cast<double>(nRasterXSize - *pnSrcXOff),
-                             dfSrcXSizeRaw);
-    dfSrcYSizeRaw = std::min(static_cast<double>(nRasterYSize - *pnSrcYOff),
-                             dfSrcYSizeRaw);
-    dfSrcXSizeRaw = std::max(0.0, dfSrcXSizeRaw);
-    dfSrcYSizeRaw = std::max(0.0, dfSrcYSizeRaw);
+    const double dfSrcXSizeRaw = std::max(0.0,
+        std::min(static_cast<double>(nRasterXSize - nMinXOutClamped),
+                 dfMaxXOut - dfMinXOut));
+    const double dfSrcYSizeRaw = std::max(0.0,
+        std::min(static_cast<double>(nRasterYSize - nMinYOutClamped),
+                 dfMaxYOut - dfMinYOut));
 
     // If we cover more than 90% of the width, then use it fully (helps for
     // anti-meridian discontinuities)
-    if( (dfCeilMaxXOut - nMinXOutClamped) > 0.9 * nRasterXSize )
+    if( nMaxXOutClamped - nMinXOutClamped > 0.9 * nRasterXSize )
     {
         *pnSrcXOff = 0;
         *pnSrcXSize = nRasterXSize;
     }
     else
     {
-        *pnSrcXOff = std::max(0, nMinXOutClamped - nResWinSize);
-        *pnSrcXOff = std::min(*pnSrcXOff, nRasterXSize);
-        *pnSrcXSize =
-            std::min(nRasterXSize - *pnSrcXOff,
-                    static_cast<int>(dfCeilMaxXOut) - *pnSrcXOff + nResWinSize);
-        *pnSrcXSize = std::max(0, *pnSrcXSize);
+        *pnSrcXOff = std::max(0,
+                        std::min(nMinXOutClamped - nResWinSize, nRasterXSize));
+        *pnSrcXSize = std::max(0, std::min(nRasterXSize - *pnSrcXOff,
+                                nMaxXOutClamped - *pnSrcXOff + nResWinSize));
     }
 
-    if( (dfCeilMaxYOut - nMinYOutClamped) > 0.9 * nRasterYSize )
+    if( nMaxYOutClamped - nMinYOutClamped > 0.9 * nRasterYSize )
     {
         *pnSrcYOff = 0;
         *pnSrcYSize = nRasterYSize;
     }
     else
     {
-        *pnSrcYOff = std::max(0, nMinYOutClamped - nResWinSize);
-        *pnSrcYOff = std::min(*pnSrcYOff, nRasterYSize);
-        *pnSrcYSize =
-            std::min(nRasterYSize - *pnSrcYOff,
-                    static_cast<int>(dfCeilMaxYOut) - *pnSrcYOff + nResWinSize);
-        *pnSrcYSize = std::max(0, *pnSrcYSize);
+        *pnSrcYOff = std::max(0,
+                        std::min(nMinYOutClamped - nResWinSize, nRasterYSize));
+        *pnSrcYSize = std::max(0, std::min(nRasterYSize - *pnSrcYOff,
+                                nMaxYOutClamped - *pnSrcYOff + nResWinSize));
     }
 
     if( pdfSrcXExtraSize )
