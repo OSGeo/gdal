@@ -1994,6 +1994,33 @@ def test_gdalwarp_lib_auto_skip_nosource():
     return 'success'
 
 ###############################################################################
+# Test warping a full EPSG:4326 extent to +proj=ortho
+# (https://github.com/OSGeo/gdal/issues/862)
+
+
+def test_gdalwarp_lib_to_ortho():
+
+    out_ds = gdal.Warp("/tmp/out.tif", "../gdrivers/data/small_world.tif",
+                       options='-of MEM -t_srs "+proj=ortho +datum=WGS84" -ts 1024 1024')
+
+    line = out_ds.GetRasterBand(1).ReadRaster(0, 0, out_ds.RasterXSize, 1)
+    line = struct.unpack('B' * out_ds.RasterXSize, line)
+    # Fail if the first line is completely black
+    if line.count(0) == out_ds.RasterXSize:
+        gdaltest.post_reason('first line is completely black')
+        return 'fail'
+
+    line = out_ds.GetRasterBand(1).ReadRaster(0, out_ds.RasterYSize - 1,
+                                              out_ds.RasterXSize, 1)
+    line = struct.unpack('B' * out_ds.RasterXSize, line)
+    # Fail if the last line is completely black
+    if line.count(0) == out_ds.RasterXSize:
+        gdaltest.post_reason('last line is completely black')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 
@@ -2083,6 +2110,7 @@ gdaltest_list = [
     test_gdalwarp_lib_touching_dateline,
     test_gdalwarp_lib_override_default_output_nodata,
     test_gdalwarp_lib_auto_skip_nosource,
+    test_gdalwarp_lib_to_ortho,
     test_gdalwarp_lib_cleanup,
 ]
 
