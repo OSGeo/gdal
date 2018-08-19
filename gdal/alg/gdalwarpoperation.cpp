@@ -2866,7 +2866,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     // the unclamped source raster window size.
     if( pdfSrcFillRatio )
         *pdfSrcFillRatio =
-            *pnSrcXSize * *pnSrcYSize /
+            static_cast<double>(*pnSrcXSize) * (*pnSrcYSize) /
             std::max(1.0,
                      (dfMaxXOut - dfMinXOut + 2 * nResWinSize) *
                      (dfMaxYOut - dfMinYOut + 2 * nResWinSize));
