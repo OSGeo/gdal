@@ -41,11 +41,15 @@ namespace tut
         int drv_count_;
         std::string drv_shape_;
         bool has_geos_support_;
+        std::string data_;
+        std::string data_tmp_;
 
         test_ogr_data()
             : drv_reg_(nullptr),
             drv_count_(0),
-            drv_shape_("ESRI Shapefile")
+            drv_shape_("ESRI Shapefile"),
+            data_(tut::common::data_basedir),
+            data_tmp_(tut::common::tmp_basedir)
         {
             drv_reg_ = GetGDALDriverManager();
 
@@ -966,8 +970,9 @@ namespace tut
     template<>
     void object::test<13>()
     {
+        std::string file(data_ + SEP + "poly.shp");
         GDALDatasetUniquePtr poDS(
-            GDALDataset::Open("data/poly.shp", GDAL_OF_VECTOR));
+            GDALDataset::Open(file.c_str(), GDAL_OF_VECTOR));
         ensure( poDS != nullptr );
 
         {
