@@ -454,6 +454,12 @@ private:
                                          double *pdfSrcXExtraSize, double *pdfSrcYExtraSize,
                                          double* pdfSrcFillRatio );
 
+    void            ComputeSourceWindowStartingFromSource(
+                                    int nDstXOff, int nDstYOff,
+                                    int nDstXSize, int nDstYSize,
+                                    double* padfSrcMinX, double* padfSrcMinY,
+                                    double* padfSrcMaxX, double* padfSrcMaxY);
+
     static CPLErr          CreateKernelMask( GDALWarpKernel *, int iBand,
                                       const char *pszType );
 

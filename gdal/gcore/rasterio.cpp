@@ -786,19 +786,30 @@ struct GDALRasterIOTransformerStruct
 };
 
 static int GDALRasterIOTransformer( void *pTransformerArg,
-                                    CPL_UNUSED int bDstToSrc,
+                                    int bDstToSrc,
                                     int nPointCount,
                                     double *x, double *y, double * /* z */,
                                     int *panSuccess )
 {
-    CPLAssert(bDstToSrc);
     GDALRasterIOTransformerStruct* psParams =
         static_cast<GDALRasterIOTransformerStruct *>( pTransformerArg );
-    for(int i = 0; i < nPointCount; i++)
+    if( bDstToSrc )
     {
-        x[i] = x[i] * psParams->dfXRatioDstToSrc + psParams->dfXOff;
-        y[i] = y[i] * psParams->dfYRatioDstToSrc + psParams->dfYOff;
-        panSuccess[i] = TRUE;
+        for(int i = 0; i < nPointCount; i++)
+        {
+            x[i] = x[i] * psParams->dfXRatioDstToSrc + psParams->dfXOff;
+            y[i] = y[i] * psParams->dfYRatioDstToSrc + psParams->dfYOff;
+            panSuccess[i] = TRUE;
+        }
+    }
+    else
+    {
+        for(int i = 0; i < nPointCount; i++)
+        {
+            x[i] = (x[i] - psParams->dfXOff) / psParams->dfXRatioDstToSrc;
+            y[i] = (y[i] - psParams->dfYOff) / psParams->dfYRatioDstToSrc;
+            panSuccess[i] = TRUE;
+        }
     }
     return TRUE;
 }

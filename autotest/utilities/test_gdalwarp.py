@@ -744,11 +744,13 @@ def test_gdalwarp_28():
     if ds is None:
         return 'fail'
 
-    # First is GCC; Second is MSVC 6.0. Third is jpeg8. Fourth is with proj 4.9.2 and internal libjpeg (the correct result actually!)
-    # Fifth is proj 4.9.3 and internal libjpeg
-    # Seventh is with proj 4.9.3 and MacOSX 10.11
+    # Check that there is no hole at the south pole location
+    # First is gcc unoptimized with proj 5.1
+    # Second is clang with proj 4.8
+    # Third is mingw_w64 with proj 4.9.2
+    # Fourth is macosx with proj 5.0.1
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 47506 and cs != 46728 and cs != 43789 and cs != 26295 and cs != 37441 and cs != 32554:
+    if cs not in (37509, 46728, 26309, 32622):
         print(cs)
         gdaltest.post_reason('Bad checksum')
         return 'fail'
