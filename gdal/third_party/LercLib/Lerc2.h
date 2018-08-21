@@ -1295,14 +1295,15 @@ bool Lerc2::ReadTile(const Byte** ppByte, size_t& nBytesRemainingInOut, T* data,
     }
     else
     {
-      if (!m_bitStuffer2.Decode(&ptr, nBytesRemaining, bufferVec, hd.version))
+      size_t maxElementCount = (i1 - i0) * (j1 - j0);
+      if (!m_bitStuffer2.Decode(&ptr, nBytesRemaining, bufferVec, maxElementCount, hd.version))
         return false;
 
       double invScale = 2 * hd.maxZError;    // for int types this is int
       double zMax = (hd.version >= 4 && nDim > 1) ? m_zMaxVec[iDim] : hd.zMax;
       unsigned int* srcPtr = &bufferVec[0];
 
-      if ((int)bufferVec.size() == (i1 - i0) * (j1 - j0))    // all valid
+      if (bufferVec.size() == maxElementCount)    // all valid
       {
         for (int i = i0; i < i1; i++)
         {

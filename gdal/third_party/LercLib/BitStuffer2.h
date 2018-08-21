@@ -44,7 +44,7 @@ public:
   // dst buffer is already allocated. byte ptr is moved like a file pointer.
   bool EncodeSimple(Byte** ppByte, const std::vector<unsigned int>& dataVec, int lerc2Version) const;
   bool EncodeLut(Byte** ppByte, const std::vector<std::pair<unsigned int, unsigned int> >& sortedDataVec, int lerc2Version) const;
-  bool Decode(const Byte** ppByte, size_t& nBytesRemaining, std::vector<unsigned int>& dataVec, int lerc2Version) const;
+  bool Decode(const Byte** ppByte, size_t& nBytesRemaining, std::vector<unsigned int>& dataVec, size_t maxElementCount, int lerc2Version) const;
 
   static unsigned int ComputeNumBytesNeededSimple(unsigned int numElem, unsigned int maxElem);
   static unsigned int ComputeNumBytesNeededLut(const std::vector<std::pair<unsigned int, unsigned int> >& sortedDataVec, bool& doLut);

@@ -201,7 +201,7 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nBytesRemainingInOut, i
   {
     vector<unsigned int> dataVec(i1 - i0, 0);
     BitStuffer2 bitStuffer2;
-    if (!bitStuffer2.Decode(&ptr, nBytesRemaining, dataVec, lerc2Version))    // unstuff the code lengths
+    if (!bitStuffer2.Decode(&ptr, nBytesRemaining, dataVec, dataVec.size(), lerc2Version))    // unstuff the code lengths
       return false;
 
     if (dataVec.size() != static_cast<size_t>(i1 - i0))
