@@ -27,7 +27,7 @@ build: Makefile_Geo__GDAL
 	if [ -f Makefile_Geo__OGR ]; then $(MAKE) -f Makefile_Geo__OGR; fi
 	if [ -f Makefile_Geo__GNM ]; then $(MAKE) -f Makefile_Geo__GNM; fi
 
-Makefile_Geo__GDAL: ${WRAPPERS}
+Makefile_Geo__GDAL: ${WRAPPERS} Makefile.PL
 	perl Makefile.PL INSTALL_BASE=$(INST_PREFIX)
 
 test: build
