@@ -53,7 +53,7 @@ veryclean: clean
 
 generate: makedir ${WRAPPERS}
 
-build: generate ${JAVA_OBJECTS} ${JAVA_MODULES}
+build: generate ${JAVA_OBJECTS} ${JAVA_MODULES} pom.xml
 ifeq ($(HAVE_LIBTOOL),yes)
 
 	if [ -f ".libs/libgdalalljni.so" ] ; then \
@@ -68,6 +68,10 @@ ifeq ($(HAVE_LIBTOOL),yes)
 
 endif # HAVE_LIBTOOL=yes
 	ant
+
+pom.xml: pom.xml.in ../../GDALmake.opt
+	sed 's|@VERSION@|$(GDAL_VER)|' < $< > $@.tmp
+	mv $@.tmp $@
 
 install: build
 	if [ -f "libgdalalljni.so" ] ; then \
