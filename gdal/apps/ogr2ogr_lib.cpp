@@ -1994,6 +1994,16 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         return nullptr;
     }
 
+    if (psOptions->papszSelFields && bAppend && !psOptions->bAddMissingFields)
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, "if -append is specified, -select cannot be used "
+                  "(use -fieldmap or -sql instead)." );
+        if(pbUsageError)
+            *pbUsageError = TRUE;
+        GDALVectorTranslateOptionsFree(psOptions);
+        return nullptr;
+    }
+
     if( psOptions->papszFieldTypesToString && psOptions->papszMapFieldType )
     {
         CPLError( CE_Failure, CPLE_IllegalArg, "-fieldTypeToString and -mapFieldType are exclusive.");
