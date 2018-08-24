@@ -190,11 +190,14 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nBytesRemainingInOut, i
   if (version < 2)    // allow forward compatibility; for updates that break old decoders increase Lerc2 version number;
     return false;
 
-  int size = intVec[1];
-  int i0 = intVec[2];
-  int i1 = intVec[3];
+  const int size = intVec[1];
+  const int i0 = intVec[2];
+  const int i1 = intVec[3];
 
   if (i0 >= i1 || i0 < 0 || size < 0 || size > (int)m_maxHistoSize)
+    return false;
+
+  if (GetIndexWrapAround(i0, size) >= size || GetIndexWrapAround(i1 - 1, size) >= size)
     return false;
 
   try
@@ -210,9 +213,6 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nBytesRemainingInOut, i
     m_codeTable.resize(size);
     std::fill(m_codeTable.begin(), m_codeTable.end(),
       std::pair<unsigned short, unsigned int>((short)0, 0));
-
-    if (GetIndexWrapAround(i0, size) >= size || GetIndexWrapAround(i1 - 1, size) >= size)
-      return false;
 
     for (int i = i0; i < i1; i++)
     {
