@@ -350,7 +350,8 @@ def tileImage(minfo, ti):
             if offsetY + height > ti.height:
                 height = ti.height - offsetY
 
-            createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS)
+            if not os.path.exists(tilename) or Overwrite:
+                createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS)
 
             if not Quiet and not Verbose:
                 processed += 1
@@ -699,6 +700,7 @@ def Usage():
     print('        [-s_srs srs_def]  [-pyramidOnly] -levels numberoflevels')
     print('        [-r {near/bilinear/cubic/cubicspline/lanczos}]')
     print('        [-useDirForEachRow]')
+    print('        [-overwrite overwrite existing tiles in targetDir]')
     print('        -targetDir TileDirectory input_files')
 
 # =============================================================================
@@ -735,6 +737,7 @@ def main(args=None):
     global Levels
     global PyramidOnly
     global UseDirForEachRow
+    global Overwrite
 
     gdal.AllRegister()
 
@@ -839,6 +842,8 @@ def main(args=None):
             CsvDelimiter = argv[i]
         elif arg == '-useDirForEachRow':
             UseDirForEachRow = True
+        elif arg == '-overwrite':
+            Overwrite = True
         elif arg[:1] == '-':
             print('Unrecognized command option: %s' % arg)
             Usage()
@@ -951,6 +956,7 @@ def initGlobals():
     global PyramidOnly
     global LastRowIndx
     global UseDirForEachRow
+    global Overwrite
 
     Verbose = False
     CreateOptions = []
@@ -976,6 +982,7 @@ def initGlobals():
     PyramidOnly = False
     LastRowIndx = -1
     UseDirForEachRow = False
+    Overwrite = False
 
 
 # global vars
@@ -1003,6 +1010,7 @@ Levels = 0
 PyramidOnly = False
 LastRowIndx = -1
 UseDirForEachRow = False
+Overwrite = False
 
 
 if __name__ == '__main__':
