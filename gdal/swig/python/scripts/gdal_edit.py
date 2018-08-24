@@ -37,7 +37,7 @@ from osgeo import osr
 
 def Usage():
     print('Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
-    print('                 [-tr xres yres] [-unsetgt] [-a_nodata value] [-unsetnodata]')
+    print('                 [-tr xres yres] [-unsetgt] [-unsetrpc] [-a_nodata value] [-unsetnodata]')
     print('                 [-offset value] [-scale value]')
     print('                 [-colorinterp_X red|green|blue|alpha|gray|undefined]*')
     print('                 [-unsetstats] [-stats] [-approx_stats]')
@@ -89,6 +89,7 @@ def gdal_edit(argv):
     offset = None
     scale = None
     colorinterp = {}
+    unsetrpc = False
 
     i = 1
     argc = len(argv)
@@ -142,6 +143,8 @@ def gdal_edit(argv):
             gcp_list.append(gcp)
         elif argv[i] == '-unsetgt':
             unsetgt = True
+        elif argv[i] == '-unsetrpc':
+            unsetrpc = True
         elif argv[i] == '-unsetstats':
             unsetstats = True
         elif argv[i] == '-approx_stats':
@@ -218,7 +221,7 @@ def gdal_edit(argv):
             not unsetstats and not stats and not setstats and nodata is None and
             not molist and not unsetmd and not gcp_list and
             not unsetnodata and not colorinterp and
-            scale is None and offset is None):
+            scale is None and offset is None and not unsetrpc):
         print('No option specified')
         print('')
         return Usage()
@@ -354,6 +357,9 @@ def gdal_edit(argv):
 
     for band in colorinterp:
         ds.GetRasterBand(band).SetColorInterpretation(colorinterp[band])
+
+    if unsetrpc:
+        ds.SetMetadata(None, 'RPC')
 
     ds = band = None
 

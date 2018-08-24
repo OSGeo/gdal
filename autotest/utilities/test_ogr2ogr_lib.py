@@ -449,11 +449,13 @@ def test_ogr2ogr_lib_19():
     gdal.VectorTranslate(ds, src_ds, accessMode='append', addFields=True, selectFields=['bar'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
+    f.DumpReadable()
     if f['foo'] != 'bar' or f.IsFieldSet('bar'):
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
+    f.DumpReadable()
     if f['bar'] != 'foo' or f.IsFieldSet('foo'):
         gdaltest.post_reason('fail')
         f.DumpReadable()

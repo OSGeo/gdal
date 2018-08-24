@@ -12,7 +12,7 @@ Edit in place various information of an existing GDAL dataset.
 
 \verbatim
 gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
-          [-tr xres yres] [-unsetgt] [-a_nodata value] [-unsetnodata]
+          [-tr xres yres] [-unsetgt] [-unsetrpc] [-a_nodata value] [-unsetnodata]
           [-unsetstats] [-stats] [-approx_stats]
           [-setstats min max mean stddev]
           [-scale value] [-offset value]
@@ -62,6 +62,9 @@ Both must be positive values.</dd>
 
 <dt> <b>-unsetgt</b></dt>:<dd>
 Remove the georeference information.</dd>
+
+<dt> <b>-unsetrpc</b></dt>:<dd> (GDAL >= 2.4)
+Remove RPC information.</dd>
 
 <dt> <b>-unsetstats</b></dt>:<dd> (GDAL >= 2.0)
 Remove band statistics information.</dd>

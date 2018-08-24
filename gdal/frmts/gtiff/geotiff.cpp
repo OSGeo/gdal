@@ -358,6 +358,7 @@ class GTiffDataset final : public GDALPamDataset
 
     bool        bMetadataChanged;
     bool        bColorProfileMetadataChanged;
+    bool        m_bForceUnsetRPC = false;
 
     bool        bNeedsRewrite;
 
@@ -9855,6 +9856,23 @@ void GTiffDataset::FlushDirectory()
                     WriteMetadata( this, hTIFF, true, osProfile, osFilename,
                                    papszCreationOptions );
             bMetadataChanged = false;
+
+            if( m_bForceUnsetRPC )
+            {
+#ifdef HAVE_UNSETFIELD
+                double *padfRPCTag = nullptr;
+                uint16 nCount;
+                if( TIFFGetField( hTIFF, TIFFTAG_RPCCOEFFICIENT, &nCount, &padfRPCTag ) )
+                {
+                    std::vector<double> zeroes(92);
+                    TIFFSetField( hTIFF, TIFFTAG_RPCCOEFFICIENT, 92, zeroes );
+                    TIFFUnsetField( hTIFF, TIFFTAG_RPCCOEFFICIENT );
+                    bNeedsRewrite = true;
+                }
+#endif
+                GDALWriteRPCTXTFile( osFilename, nullptr );
+                GDALWriteRPBFile( osFilename, nullptr );
+            }
         }
 
         if( bGeoTIFFInfoChanged )
@@ -11370,7 +11388,8 @@ void GTiffDataset::WriteRPC( GDALDataset *poSrcDS, TIFF *l_hTIFF,
                              bool bWriteOnlyInPAMIfNeeded )
 {
 /* -------------------------------------------------------------------- */
-/*      Handle RPC data written to an RPB file.                         */
+/*      Handle RPC data written to TIFF RPCCoefficient tag, RPB file,   */
+/*      RPCTEXT file or PAM.                                            */
 /* -------------------------------------------------------------------- */
     char **papszRPCMD = poSrcDS->GetMetadata(MD_DOMAIN_RPC);
     if( papszRPCMD != nullptr )
@@ -18233,6 +18252,13 @@ CPLErr GTiffDataset::SetMetadata( char ** papszMD, const char *pszDomain )
             CE_Failure, CPLE_NotSupported,
             "Cannot modify metadata at that point in a streamed output file" );
         return CE_Failure;
+    }
+
+    if( pszDomain != nullptr && EQUAL(pszDomain, MD_DOMAIN_RPC) )
+    {
+        // So that a subsequent GetMetadata() wouldn't override our new values
+        LoadMetadata();
+        m_bForceUnsetRPC = (CSLCount(papszMD) == 0);
     }
 
     if( (papszMD != nullptr) &&

@@ -27,6 +27,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import copy
 import os
 import sys
 import array
@@ -597,41 +598,58 @@ def tiff_write_17():
     ds_in = gdal.Open('data/rpc.vrt')
     rpc_md = ds_in.GetMetadata('RPC')
 
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/tw_17.tif', ds_in)
+    tmpfilename = '/vsimem/tiff_write_17.tif'
+    ds = gdaltest.tiff_drv.CreateCopy(tmpfilename, ds_in)
 
     ds_in = None
     ds = None
 
     # Ensure there is no .aux.xml file which might hold the RPC.
-    try:
-        os.remove('tmp/tm_17.tif.aux.xml')
-    except OSError:
-        pass
+    if gdal.VSIStatL(tmpfilename + '.aux.xml'):
+        gdaltest.post_reason('unexpectedly found.aux.xml file')
+        return 'fail'
 
     # confirm there is no .rpb file created by default.
-    try:
-        open('tmp/tm_17.RPB').read()
+    if gdal.VSIStatL(tmpfilename + '.RPB'):
         gdaltest.post_reason('unexpectedly found .RPB file')
         return 'fail'
-    except IOError:
-        pass
 
     # confirm there is no _rpc.txt file created by default.
-    try:
-        open('tmp/tm_17_RPC.TXT').read()
+    if gdal.VSIStatL(tmpfilename + '_RPC.TXT'):
         gdaltest.post_reason('unexpectedly found _RPC.TXT file')
         return 'fail'
-    except IOError:
-        pass
 
     # Open the dataset, and confirm the RPC data is still intact.
-    ds = gdal.Open('tmp/tw_17.tif')
+    ds = gdal.Open(tmpfilename)
     if not gdaltest.rpcs_equal(ds.GetMetadata('RPC'), rpc_md):
         return 'fail'
-
     ds = None
 
-    gdaltest.tiff_drv.Delete('tmp/tw_17.tif')
+    # Modify the RPC
+    modified_rpc = copy.copy(rpc_md)
+    modified_rpc['LINE_OFF'] = '123456'
+
+    ds = gdal.Open(tmpfilename, gdal.GA_Update)
+    ds.SetMetadata(modified_rpc, 'RPC')
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    if not gdaltest.rpcs_equal(ds.GetMetadata('RPC'), modified_rpc):
+        return 'fail'
+    ds = None
+
+    # Unset the RPC
+    ds = gdal.Open(tmpfilename, gdal.GA_Update)
+    ds.SetMetadata(None, 'RPC')
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    if ds.GetMetadata('RPC'):
+        gdaltest.post_reason('got RPC, but was not expected')
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete(tmpfilename)
 
     return 'success'
 
@@ -658,33 +676,26 @@ def tiff_write_18():
     ds_in = gdal.Open('data/rpc.vrt')
     rpc_md = ds_in.GetMetadata('RPC')
 
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/tw_18.tif', ds_in,
+    gdaltest.tiff_drv.CreateCopy('tmp/tw_18.tif', ds_in,
                                       options=['PROFILE=BASELINE'])
 
-    ds_in = None
-    ds = None
-
     # Ensure there is no .aux.xml file which might hold the RPC.
-    try:
-        os.remove('tmp/tm_18.tif.aux.xml')
-    except OSError:
-        pass
+    if gdal.VSIStatL('tmp/tm_18.tif.aux.xml'):
+        gdaltest.post_reason('unexpectedly found tm_18.tif.aux.xml file')
+        return 'fail'
 
     # confirm there is an .rpb and .imd file.
-    try:
-        open('tmp/tw_18.RPB').read()
-        open('tmp/tw_18.IMD').read()
-    except IOError:
-        gdaltest.post_reason('missing .RPB or .IMD file.')
+    if gdal.VSIStatL('tmp/tw_18.RPB') is None:
+        gdaltest.post_reason('missing .RPB file.')
+        return 'fail'
+    if gdal.VSIStatL('tmp/tw_18.IMD') is None:
+        gdaltest.post_reason('missing .IMD file.')
         return 'fail'
 
     # confirm there is no _rpc.txt file created by default.
-    try:
-        open('tmp/tw_18_RPC.TXT').read()
+    if gdal.VSIStatL('tmp/tw_18_RPC.TXT'):
         gdaltest.post_reason('unexpectedly found _RPC.TXT file')
         return 'fail'
-    except IOError:
-        pass
 
     # Open the dataset, and confirm the RPC/IMD data is still intact.
     ds = gdal.Open('tmp/tw_18.tif')
@@ -716,19 +727,23 @@ def tiff_write_18():
 
     # Confirm IMD and RPC files are cleaned up.  If not likely the
     # file list functionality is not working properly.
-    try:
-        open('tmp/tw_18.RPB').read()
+    if gdal.VSIStatL('tmp/tw_18.RPB'):
         gdaltest.post_reason('RPB did not get cleaned up.')
         return 'fail'
-    except IOError:
-        pass
 
-    try:
-        open('tmp/tw_18.IMD').read()
+    if gdal.VSIStatL('tmp/tw_18.IMD'):
         gdaltest.post_reason('IMD did not get cleaned up.')
         return 'fail'
-    except IOError:
-        pass
+
+    # Remove the RPC
+    gdaltest.tiff_drv.CreateCopy('tmp/tw_18.tif', ds_in,
+                                      options=['PROFILE=BASELINE'])
+    ds = gdal.Open('tmp/tw_18.tif', gdal.GA_Update)
+    ds.SetMetadata(None, 'RPC')
+    ds = None
+    if os.path.exists('tmp/tw_18.RPB'):
+        gdaltest.post_reason('RPB did not get removed')
+        return 'fail'
 
     return 'success'
 

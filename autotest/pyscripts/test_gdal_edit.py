@@ -393,6 +393,27 @@ def test_gdal_edit_py_8():
     return 'success'
 
 ###############################################################################
+
+
+def test_gdal_edit_py_unsetrpc():
+
+    script_path = test_py_scripts.get_py_script('gdal_edit')
+    if script_path is None:
+        return 'skip'
+
+    gdal.Translate('tmp/test_gdal_edit_py.tif', '../gcore/data/byte_rpc.tif')
+
+    test_py_scripts.run_py_script(script_path, 'gdal_edit',
+                                  "tmp/test_gdal_edit_py.tif -unsetrpc")
+
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif')
+    if ds.GetMetadata('RPC'):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 
@@ -412,6 +433,7 @@ gdaltest_list = [
     test_gdal_edit_py_6,
     test_gdal_edit_py_7,
     test_gdal_edit_py_8,
+    test_gdal_edit_py_unsetrpc,
     test_gdal_edit_py_cleanup,
 ]
 
