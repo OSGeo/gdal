@@ -9865,7 +9865,7 @@ void GTiffDataset::FlushDirectory()
                 if( TIFFGetField( hTIFF, TIFFTAG_RPCCOEFFICIENT, &nCount, &padfRPCTag ) )
                 {
                     std::vector<double> zeroes(92);
-                    TIFFSetField( hTIFF, TIFFTAG_RPCCOEFFICIENT, 92, zeroes );
+                    TIFFSetField( hTIFF, TIFFTAG_RPCCOEFFICIENT, 92, zeroes.data() );
                     TIFFUnsetField( hTIFF, TIFFTAG_RPCCOEFFICIENT );
                     bNeedsRewrite = true;
                 }
