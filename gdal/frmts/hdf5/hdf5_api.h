@@ -1,11 +1,12 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  Hierarchical Data Format Release 5 (HDF5)
- * Purpose:  Header file for userfaultfd support.
- * Author:   James McClain <james.mcclain@gmail.com>
+ * Purpose:  Import HDF5 public API
+ * Author:   Even Rouault <even.rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2018, Dr. James McClain <james.mcclain@gmail.com>
+ * Copyright (c) 2018, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,34 +27,23 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifdef ENABLE_UFFD
+#ifndef HDF5_API_H
+#define HDF5_API_H
 
-#include "cpl_userfaultfd.h"
+#ifndef H5_USE_16_API
+#define H5_USE_16_API
+#endif
 
-#ifndef HDF5_UFFD_MAP
+#ifdef _MSC_VER
+#pragma warning(push)
+// Warning C4005: '_HDF5USEDLL_' : macro redefinition.
+#pragma warning(disable : 4005)
+#endif
 
-#define HDF5_UFFD_MAP(filename, handle, context) { \
-    void * pVma = nullptr; \
-    uint64_t nVmaSize = 0; \
-    context = nullptr; \
-    if ( !strncmp(filename, "/vsi", strlen("/vsi")) && CPLIsUserFaultMappingSupported() ) \
-      context = CPLCreateUserFaultMapping(filename, &pVma, &nVmaSize); \
-    if (context != nullptr && pVma != nullptr && nVmaSize > 0) \
-      handle = H5LTopen_file_image(pVma, nVmaSize, H5LT_FILE_IMAGE_DONT_COPY|H5LT_FILE_IMAGE_DONT_RELEASE); \
-    else \
-      handle = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT); \
-}
+#include "hdf5.h"
 
-#endif // HDF5_UUFD_MAP
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
-#ifndef HDF5_UFFD_UNMAP
-
-#define HDF5_UFFD_UNMAP(context) { \
-  CPLDeleteUserFaultMapping(context); \
-  context = nullptr; \
-}
-
-#endif // HDF5_UFFD_UNMAP
-
-
-#endif // ENABLE_UFFD
+#endif // HDF5_API_H

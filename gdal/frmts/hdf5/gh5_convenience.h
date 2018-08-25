@@ -30,19 +30,7 @@
 #ifndef GH5_CONVENIENCE_H_INCLUDED_
 #define GH5_CONVENIENCE_H_INCLUDED_
 
-#define H5_USE_16_API
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4005) // warning C4005: '_HDF5USEDLL_' : macro redefinition
-#endif
-
-#include "hdf5.h"
-#include "H5LTpublic.h"
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
+#include "hdf5_api.h"
 
 #include "cpl_string.h"
 #include "gdal.h"
