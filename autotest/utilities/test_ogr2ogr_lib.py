@@ -33,7 +33,7 @@ import sys
 
 sys.path.append('../pymod')
 
-from osgeo import gdal, ogr
+from osgeo import gdal, gdalconst, ogr
 import gdaltest
 import ogrtest
 
@@ -503,6 +503,37 @@ def test_ogr2ogr_lib_20():
     return 'success'
 
 
+###############################################################################
+# Verify -append and -select options are an invalid combination
+
+def test_ogr2ogr_lib_21():
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    lyr = src_ds.CreateLayer('layer')
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    lyr.CreateField(ogr.FieldDefn('bar'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['foo'] = 'bar'
+    f['bar'] = 'foo'
+    lyr.CreateFeature(f)
+
+    ds = gdal.VectorTranslate('', src_ds, format='Memory')
+    with gdaltest.error_handler():
+        gdal.VectorTranslate(ds, src_ds, accessMode='append',
+                             selectFields=['foo'])
+
+    ds = None
+    f.Destroy()
+    src_ds = None
+
+    if gdal.GetLastErrorNo() != gdalconst.CPLE_IllegalArg:
+        gdaltest.post_reason(
+            'expected use of -select and -append together to be invalid')
+        return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = [
     test_ogr2ogr_lib_1,
     test_ogr2ogr_lib_2,
@@ -524,6 +555,7 @@ gdaltest_list = [
     test_ogr2ogr_lib_18,
     test_ogr2ogr_lib_19,
     test_ogr2ogr_lib_20,
+    test_ogr2ogr_lib_21,
 ]
 
 if __name__ == '__main__':
