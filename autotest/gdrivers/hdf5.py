@@ -571,12 +571,9 @@ def hdf5_single_char_varname():
     return 'success'
 
 
-def hdf5_uffd():
+def hdf5_virtual_file():
 
     if gdaltest.hdf5_drv is None:
-        return 'skip'
-
-    if uffd_compare('CSK_GEC.h5') is None:
         return 'skip'
 
     hdf5_files = [
@@ -639,7 +636,7 @@ gdaltest_list = [
     hdf5_16,
     hdf5_17,
     hdf5_single_char_varname,
-    hdf5_uffd,
+    hdf5_virtual_file,
 ]
 
 hdf5_list = [('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
