@@ -1390,8 +1390,8 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo* poOpenInfo)
     size_t iIdxFirstBand = 0;
     for( size_t i = 0; i < aoBandDesc.size(); i++ )
     {
-        // Instanciate bands if they are compatible between them, and
-        // if they are requested by the user (when user explictly requested
+        // Instantiate bands if they are compatible between them, and
+        // if they are requested by the user (when user explicitly requested
         // them)
         if( (oSetUserBandNames.empty() ||
              oSetUserBandNames.find(aoBandDesc[i].osName) !=

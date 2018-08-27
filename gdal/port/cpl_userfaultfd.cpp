@@ -257,7 +257,7 @@ static void cpl_uffd_fault_handler(void * ptr)
             }
 
             // Step 4.  Problem: A thread might attempt to read here (before
-            // the mprotect) and recieve a SIGSEGV or SIGBUS.
+            // the mprotect) and receive a SIGSEGV or SIGBUS.
             if (mprotect(ctx->vma_ptr, ctx->vma_size, PROT_READ) == -1) {
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "cpl_uffd_fault_handler: mprotect() failed");

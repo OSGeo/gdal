@@ -2195,7 +2195,7 @@ def ogr_libkml_read_kml_with_space_content_in_coordinates():
     return 'success'
 
 ###############################################################################
-# Test reading a layer refering several schema (github #826)
+# Test reading a layer referring several schema (github #826)
 
 
 def ogr_libkml_read_several_schema():

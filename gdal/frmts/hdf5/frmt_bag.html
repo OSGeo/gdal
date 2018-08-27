@@ -37,7 +37,7 @@ which is the one presented by default by the driver, and for each of those
 low-resolution cells, a higher resolution grid can be present in the file.
 Such higher resolution grids are dubbed "supergrids" in GDAL.<p>
 
-The driver has different modes of working wich can be controlled by the
+The driver has different modes of working which can be controlled by the
 MODE open option:
 <ul>
 <li>MODE=LOW_RES_GRID: this is the default mode. The driver will expose the
@@ -181,7 +181,7 @@ The first band is assumed to be the depth band, and the second band the
 uncertainty band. If the second band is missing, the uncertainty will be set to
 nodata.
 <p>
-The driver will instanciate the BAG XML metadata by using a template file,
+The driver will instantiate the BAG XML metadata by using a template file,
 which is by default,
 <a href="https://raw.githubusercontent.com/OSGeo/gdal/master/gdal/data/bag_template.xml">
 bag_template.xml</a>, found in the GDAL data definition files. This template
@@ -237,7 +237,7 @@ The other following creation options are available:
 <ul>
 <li>TEMPLATE=filename: Path to a XML file that can serve as a template. This
 will typically be a customized version of the base bag_template.xml file. The
-file can contain other substituable variables than the ones mentionned above
+file can contain other substituable variables than the ones mentioned above
 by using a similar syntax.</li>
 <p>
 <li>VAR_xxxx=value: Substitute variable ${xxxx} in the template XML value by

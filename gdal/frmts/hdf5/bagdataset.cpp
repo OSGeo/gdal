@@ -322,7 +322,7 @@ class BAGResampledBand final: public BAGBaseBand
 public:
     BAGResampledBand( BAGDataset *, int nBandIn,
                       bool bHasNoData, float fNoDataValue,
-                      bool bInitalizeMinMax);
+                      bool bInitializeMinMax);
     virtual ~BAGResampledBand();
 
     void            InitializeMinMax();
@@ -740,7 +740,7 @@ CPLErr BAGSuperGridBand::IReadBlock( int, int nBlockYOff,
 
 BAGResampledBand::BAGResampledBand( BAGDataset *poDSIn, int nBandIn,
                                     bool bHasNoData, float fNoDataValue,
-                                    bool bInitalizeMinMax )
+                                    bool bInitializeMinMax )
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -763,7 +763,7 @@ BAGResampledBand::BAGResampledBand( BAGDataset *poDSIn, int nBandIn,
         eDataType = GDT_Float32;
         GDALRasterBand::SetDescription( nBand == 1 ? "elevation" : "uncertainty" );
     }
-    if( bInitalizeMinMax )
+    if( bInitializeMinMax )
     {
         InitializeMinMax();
     }
@@ -1490,13 +1490,13 @@ CPLErr BAGInterpolatedBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     // would need to fetch more neighbour blocks.
     const int nSearchDist = 64;
 
-    // Instanciate a temporary buffer that contains the target block, and
+    // Instantiate a temporary buffer that contains the target block, and
     // its neighbour blocks.
     int nBufferXSize = nBlockXSize;
-    int nBufferXInterstOff = 0;
+    int nBufferXInterestOff = 0;
     if( nBlockXOff > 0 )
     {
-        nBufferXInterstOff = nBlockXSize;
+        nBufferXInterestOff = nBlockXSize;
         nBufferXSize += nBlockXSize;
     }
     if( nBlockXOff + 1 < nXBlocks )
@@ -1505,10 +1505,10 @@ CPLErr BAGInterpolatedBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     int nBufferYSize = nBlockYSize;
-    int nBufferYInterstOff = 0;
+    int nBufferYInterestOff = 0;
     if( nBlockYOff > 0 )
     {
-        nBufferYInterstOff = nBlockYSize;
+        nBufferYInterestOff = nBlockYSize;
         nBufferYSize += nBlockYSize;
     }
     if( nBlockYOff + 1 < nYBlocks )
@@ -1742,7 +1742,7 @@ CPLErr BAGInterpolatedBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         memcpy(pafValues + iY * nBlockXSize,
                afBuffer.data() +
-                (iY + nBufferYInterstOff) * nBufferXSize + nBufferXInterstOff,
+                (iY + nBufferYInterestOff) * nBufferXSize + nBufferXInterestOff,
                nBlockXSize * sizeof(float));
     }
 
@@ -2340,7 +2340,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
 
         // Use min/max BAG refinement metadata items only if the
         // GDAL dataset bounding box is equal or larger to the BAG dataset
-        const bool bInitalizeMinMax = ( !poDS->m_bMask &&
+        const bool bInitializeMinMax = ( !poDS->m_bMask &&
                                         dfMinX <= poDS->m_dfLowResMinX &&
                                         dfMinY <= poDS->m_dfLowResMinY &&
                                         dfMaxX >= poDS->m_dfLowResMaxX &&
@@ -2367,10 +2367,10 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
             poDS->m_poUninterpolatedDS.reset(new BAGDataset(poDS, 1));
             poDS->m_poUninterpolatedDS->SetBand(1, new BAGResampledBand(
                 poDS->m_poUninterpolatedDS.get(), 1, bHasNoData, fNoDataValue,
-                bInitalizeMinMax));
+                bInitializeMinMax));
             poDS->m_poUninterpolatedDS->SetBand(2, new BAGResampledBand(
                 poDS->m_poUninterpolatedDS.get(), 2, bHasNoData, fNoDataValue,
-                bInitalizeMinMax));
+                bInitializeMinMax));
 
             poDS->SetBand(1, new BAGInterpolatedBand(poDS, 1));
             poDS->SetBand(2, new BAGInterpolatedBand(poDS, 2));
@@ -2386,11 +2386,11 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
             {
                 poDS->SetBand(1, new BAGResampledBand(poDS, 1, bHasNoData,
                                                   fNoDataValue,
-                                                  bInitalizeMinMax));
+                                                  bInitializeMinMax));
 
                 poDS->SetBand(2, new BAGResampledBand(poDS, 2, bHasNoData,
                                                       fNoDataValue,
-                                                      bInitalizeMinMax));
+                                                      bInitializeMinMax));
             }
         }
 
@@ -2415,10 +2415,10 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
                 poOvrDS->m_poUninterpolatedDS.reset(new BAGDataset(poOvrDS, 1));
                 poOvrDS->m_poUninterpolatedDS->SetBand(1, new BAGResampledBand(
                     poOvrDS->m_poUninterpolatedDS.get(), 1, bHasNoData,
-                    fNoDataValue, bInitalizeMinMax));
+                    fNoDataValue, bInitializeMinMax));
                 poOvrDS->m_poUninterpolatedDS->SetBand(2, new BAGResampledBand(
                     poOvrDS->m_poUninterpolatedDS.get(), 2, bHasNoData,
-                    fNoDataValue, bInitalizeMinMax));
+                    fNoDataValue, bInitializeMinMax));
             }
 
             for( int i = 1; i <= poDS->GetRasterCount(); i++ )
