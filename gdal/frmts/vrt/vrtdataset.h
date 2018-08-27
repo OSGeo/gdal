@@ -989,6 +989,7 @@ typedef enum
 class CPL_DLL VRTComplexSource : public VRTSimpleSource
 {
     CPL_DISALLOW_COPY_ASSIGN(VRTComplexSource)
+    bool           AreValuesUnchanged() const;
 
 protected:
     VRTComplexSourceScaling m_eScalingType;
