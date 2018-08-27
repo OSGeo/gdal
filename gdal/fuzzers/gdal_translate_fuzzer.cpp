@@ -92,6 +92,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     int nBlockXSize = 0;
     int nBlockYSize = 0;
     bool bStatsEnabled = false;
+    bool bHFA = false;
     if( papszArgv != nullptr )
     {
         int nCount = CSLCount(papszArgv);
@@ -134,6 +135,18 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             {
                 bStatsEnabled = true;
             }
+            else if( EQUAL(papszArgv[i], "-of") && i + 1 < nCount )
+            {
+                bHFA = EQUAL( papszArgv[i+1], "HFA" );
+            }
+        }
+        if( bHFA )
+        {
+            // Disable statistics computation for HFA, as it can be time
+            // consuming.
+            // See https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=10067
+            papszArgv = CSLInsertString(papszArgv, 0, "-co");
+            papszArgv = CSLInsertString(papszArgv, 1, "STATISTICS=NO");
         }
     }
 
