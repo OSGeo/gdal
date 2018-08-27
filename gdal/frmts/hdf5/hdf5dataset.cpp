@@ -411,11 +411,17 @@ GDALDataType HDF5Dataset::GetDataType(hid_t TypeID)
             return GDT_Unknown;
 
         //For complex the native types of both elements should be the same
-        if ( H5Tequal( H5Tget_member_type(TypeID,0), H5Tget_member_type(TypeID,1)) <= 0 )
+        hid_t ElemTypeID = H5Tget_member_type(TypeID, 0);
+        hid_t Elem2TypeID = H5Tget_member_type(TypeID, 1);
+        const bool bTypeEqual = H5Tequal( ElemTypeID, Elem2TypeID) > 0;
+        H5Tclose(Elem2TypeID);
+        if ( !bTypeEqual )
+        {
+            H5Tclose(ElemTypeID);
             return GDT_Unknown;
+        }
 
         //Check the native types to determine CInt16, CFloat32 or CFloat64
-        hid_t ElemTypeID = H5Tget_member_type(TypeID, 0);
         GDALDataType eDataType = GDT_Unknown;
 
         if ( H5Tequal(H5T_NATIVE_SHORT, ElemTypeID) )
@@ -490,12 +496,17 @@ const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
             return "Unknown";
 
         //For complex the native types of both elements should be the same
-        if ( H5Tequal( H5Tget_member_type(TypeID,0), H5Tget_member_type(TypeID,1)) <= 0 )
+        hid_t ElemTypeID = H5Tget_member_type(TypeID, 0);
+        hid_t Elem2TypeID = H5Tget_member_type(TypeID, 1);
+        const bool bTypeEqual = H5Tequal( ElemTypeID, Elem2TypeID) > 0;
+        H5Tclose(Elem2TypeID);
+        if ( !bTypeEqual )
+        {
+            H5Tclose(ElemTypeID);
             return "Unknown";
+        }
 
         //Check the native types to determine CInt16, CFloat32 or CFloat64
-        hid_t ElemTypeID = H5Tget_member_type(TypeID, 0);
-        
         if ( H5Tequal(H5T_NATIVE_SHORT, ElemTypeID) )
         {
             H5Tclose(ElemTypeID);

@@ -49,5 +49,13 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszName,
 bool GH5_FetchAttribute( hid_t loc_id, const char *pszName,
                          double &dfResult, bool bReportError = false );
 GDALDataType GH5_GetDataType(hid_t TypeID);
+bool GH5_CreateAttribute (hid_t loc_id, const char *pszAttrName,
+                          hid_t TypeID, unsigned nMaxLen = 0);
+bool GH5_WriteAttribute (hid_t loc_id, const char *pszAttrName,
+                          const char* pszValue);
+bool GH5_WriteAttribute (hid_t loc_id, const char *pszAttrName,
+                          double dfValue);
+bool GH5_WriteAttribute (hid_t loc_id, const char *pszAttrName,
+                         unsigned nValue);
 
 #endif /* ndef GH5_CONVENIENCE_H_INCLUDED_ */

@@ -106,7 +106,11 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
                                "");
             if( strlen(pszFalseNorthing) > 0 )
             {
-                if( EQUAL(pszFalseNorthing, "10000000"))
+                if( CPLAtof(pszFalseNorthing) == 0.0 )
+                {
+                    bNorth = TRUE;
+                }
+                else if( CPLAtof(pszFalseNorthing) == 10000000.0 )
                 {
                     bNorth = FALSE;
                 }
