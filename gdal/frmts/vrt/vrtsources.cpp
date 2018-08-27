@@ -2736,13 +2736,23 @@ CPLErr VRTComplexSource::RasterIOInternal<float>( int nReqXOff, int nReqYOff,
                                     GDALDataType eWrkDataType );
 
 /************************************************************************/
+/*                        AreValuesUnchanged()                          */
+/************************************************************************/
+
+bool VRTComplexSource::AreValuesUnchanged() const
+{
+    return m_dfScaleOff == 0.0 && m_dfScaleRatio == 1.0 &&
+            m_nLUTItemCount == 0 && m_nColorTableComponent == 0 &&
+            m_eScalingType != VRT_SCALING_EXPONENTIAL;
+}
+
+/************************************************************************/
 /*                             GetMinimum()                             */
 /************************************************************************/
 
 double VRTComplexSource::GetMinimum( int nXSize, int nYSize, int *pbSuccess )
 {
-    if( m_dfScaleOff == 0.0 && m_dfScaleRatio == 1.0 &&
-        m_nLUTItemCount == 0 && m_nColorTableComponent == 0 )
+    if( AreValuesUnchanged() )
     {
         return VRTSimpleSource::GetMinimum(nXSize, nYSize, pbSuccess);
     }
@@ -2757,8 +2767,7 @@ double VRTComplexSource::GetMinimum( int nXSize, int nYSize, int *pbSuccess )
 
 double VRTComplexSource::GetMaximum( int nXSize, int nYSize, int *pbSuccess )
 {
-    if( m_dfScaleOff == 0.0 && m_dfScaleRatio == 1.0 &&
-        m_nLUTItemCount == 0 && m_nColorTableComponent == 0 )
+    if( AreValuesUnchanged() )
     {
         return VRTSimpleSource::GetMaximum(nXSize, nYSize, pbSuccess);
     }
@@ -2773,8 +2782,7 @@ double VRTComplexSource::GetMaximum( int nXSize, int nYSize, int *pbSuccess )
 
 CPLErr VRTComplexSource::ComputeRasterMinMax( int nXSize, int nYSize, int bApproxOK, double* adfMinMax )
 {
-    if( m_dfScaleOff == 0.0 && m_dfScaleRatio == 1.0 &&
-        m_nLUTItemCount == 0 && m_nColorTableComponent == 0 )
+    if( AreValuesUnchanged() )
     {
         return VRTSimpleSource::ComputeRasterMinMax( nXSize, nYSize, bApproxOK,
                                                      adfMinMax);
@@ -2794,8 +2802,7 @@ CPLErr VRTComplexSource::GetHistogram( int nXSize, int nYSize,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData )
 {
-    if( m_dfScaleOff == 0.0 && m_dfScaleRatio == 1.0 &&
-        m_nLUTItemCount == 0 && m_nColorTableComponent == 0 )
+    if( AreValuesUnchanged() )
     {
         return VRTSimpleSource::GetHistogram( nXSize, nYSize,
                                               dfMin, dfMax, nBuckets,
@@ -2818,8 +2825,7 @@ CPLErr VRTComplexSource::ComputeStatistics( int nXSize, int nYSize,
                                             GDALProgressFunc pfnProgress,
                                             void *pProgressData )
 {
-    if( m_dfScaleOff == 0.0 && m_dfScaleRatio == 1.0 &&
-        m_nLUTItemCount == 0 && m_nColorTableComponent == 0 )
+    if( AreValuesUnchanged() )
     {
         return VRTSimpleSource::ComputeStatistics( nXSize, nYSize, bApproxOK,
                                                    pdfMin, pdfMax,

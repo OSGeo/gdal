@@ -942,6 +942,8 @@ typedef enum
 
 class CPL_DLL VRTComplexSource : public VRTSimpleSource
 {
+    bool           AreValuesUnchanged() const;
+
 protected:
     VRTComplexSourceScaling m_eScalingType;
     double         m_dfScaleOff;  // For linear scaling.
