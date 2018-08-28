@@ -1517,7 +1517,7 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
 /* -------------------------------------------------------------------- */
     bool bUseGenericHandling = false;
 
-    if( CPLTestBool(CPLGetConfigOption( "USE_RRD", "NO" ) )
+    if( CPLTestBool(CPLGetConfigOption( "USE_RRD", "NO" ) ) )
     {
         bUseGenericHandling = true;
     }
