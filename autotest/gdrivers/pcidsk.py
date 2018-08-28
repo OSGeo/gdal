@@ -486,6 +486,50 @@ def pcidsk_15():
     return 'success'
 
 ###############################################################################
+
+
+def pcidsk_external_ovr():
+
+    gdal.Translate('/vsimem/test.pix', 'data/byte.tif', format='PCIDSK')
+    ds = gdal.Open('/vsimem/test.pix')
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+    if gdal.VSIStatL('/vsimem/test.pix.ovr') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open('/vsimem/test.pix')
+    if ds.GetRasterBand(1).GetOverviewCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('PCIDSK').Delete('/vsimem/test.pix')
+
+    return 'success'
+
+###############################################################################
+
+
+def pcidsk_external_ovr_rrd():
+
+    gdal.Translate('/vsimem/test.pix', 'data/byte.tif', format='PCIDSK')
+    ds = gdal.Open('/vsimem/test.pix', gdal.GA_Update)
+    with gdaltest.config_option('USE_RRD', 'YES'):
+        ds.BuildOverviews('NEAR', [2])
+    ds = None
+    if gdal.VSIStatL('/vsimem/test.aux') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open('/vsimem/test.pix')
+    if ds.GetRasterBand(1).GetOverviewCount() != 1:
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('PCIDSK').Delete('/vsimem/test.pix')
+
+    return 'success'
+
+###############################################################################
 # Check various items from a modern irvine.pix
 
 
@@ -554,6 +598,8 @@ gdaltest_list = [
     pcidsk_13,
     pcidsk_14,
     pcidsk_15,
+    pcidsk_external_ovr,
+    pcidsk_external_ovr_rrd,
     pcidsk_online_1,
     pcidsk_cleanup]
 
