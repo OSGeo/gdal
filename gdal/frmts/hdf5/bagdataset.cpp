@@ -2335,7 +2335,11 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
             poDS->adfGeoTransform[3] += dfMinY - (dfMaxY - poDS->nRasterYSize * dfResY);
         }
 
-        poDS->m_dfResFilterMin = dfResFilterMin;
+        const double dfMinRes = std::min(dfMinResX, dfMinResY);
+        if( dfResFilterMin > dfMinRes )
+        {
+            poDS->m_dfResFilterMin = dfResFilterMin;
+        }
         poDS->m_dfResFilterMax = dfResFilterMax;
 
         // Use min/max BAG refinement metadata items only if the

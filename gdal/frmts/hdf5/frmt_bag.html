@@ -88,7 +88,7 @@ index (starting from 0, from the west of the grid) of the supergrid to open.
 <li>MODE=RESAMPLED_GRID: in this mode, the user specify the extent and
 resolution of a target grid, and for each cell of this target grid, the driver
 will find the nodes of the supergrids that fall into that cell. By default, it
-will select the node with the maximum depth value to populate the cell value.
+will select the node with the maximum elevation value to populate the cell value.
 Or if no node of any supergrid are found, the cell value will be set to the
 nodata value. Interpolation of cells at nodata value can also be done using
 a inverse distance weighting interpolation. Overviews are reported: note that,
@@ -131,7 +131,8 @@ RESX and RESY if defined will override the resolution determined by
 RES_STRATEGY.</li>
 <p>
 <li>RES_FILTER_MIN=value: Minimum resolution of supergrids to take into
-account (excluded bound). By default, the minimum resolution of supergrids
+account (excluded bound, except if it is the minimum resolution of supergrids).
+By default, the minimum resolution of supergrids
 available. If this value is specified and none of RES_STRATEGY, RESX or RESY
 is specified, this will also be used as the resolution for the resampled grid.</li>
 <p>
@@ -140,22 +141,22 @@ account (included bound). By default, the maximum resolution of supergrids
 available.</li>
 <p>
 <li>VALUE_POPULATION=MIN/MAX/MEAN: Which value population strategy to apply to
-compute the resampled cell values. This default to MAX: the depth value of a
-target cell is the maximum depth of all supergrid nodes (potentially filtered
+compute the resampled cell values. This default to MAX: the elevation value of a
+target cell is the maximum elevation of all supergrid nodes (potentially filtered
 with RES_FILTER_MIN and/or RES_FILTER_MAX) that fall into this cell; the
 corresponding uncertainty will be the uncertainty of the source node where this
-maximum depth si reached. If no supergrid node fall into the target cell, the
+maximum elevation si reached. If no supergrid node fall into the target cell, the
 nodata value is set.
 The MIN strategy is similar, except that this is the
-minimum depth value among intersecting nodes that is selected.
-The MEAN strategy use the mean value of the depth of intersecting nodes, and
+minimum elevation value among intersecting nodes that is selected.
+The MEAN strategy use the mean value of the elevation of intersecting nodes, and
 the maximum uncertainty of those nodes.</li>
 <p><li>SUPERGRIDS_MASK=YES/NO. Default to NO. If set to YES, instead of the
-depth and uncertainty band, the dataset contains a single Byte band which is
+elevation and uncertainty band, the dataset contains a single Byte band which is
 boolean valued. For a target cell, if at least one supergrids nodes (potentially
 filtered with RES_FILTER_MIN and/or RES_FILTER_MAX) falls into the cell, the
 cell value is set at 255. Otherwise it is set at 0. This can be used to
-distinguish if depth values at nodata are due to no source supergrid node
+distinguish if elevation values at nodata are due to no source supergrid node
 falling into them, or if that/those supergrid nodes were themselves at the
 nodata value.
 </li>
@@ -175,9 +176,9 @@ Interpolation cannot be used together with SUPERGRIDS_MASK=YES.
 <h2>Creation support</h2>
 
 Starting with GDAL 2.4, the driver can create a BAG dataset (without variable
-resolution extension) with the depth and uncertainty bands from a source
+resolution extension) with the elevation and uncertainty bands from a source
 dataset. The source dataset must be georeferenced, and have one or two bands.
-The first band is assumed to be the depth band, and the second band the
+The first band is assumed to be the elevation band, and the second band the
 uncertainty band. If the second band is missing, the uncertainty will be set to
 nodata.
 <p>
@@ -246,7 +247,7 @@ the provided value.</li>
 <li>BAG_VERSION=string: Value to write in the /BAG_root/BAG Version attribute.
 Default to 1.6.2.</li>
 <p>
-<li>COMPRESS=NONE/DEFLATE: Compression for depth and uncertainty grids. Default
+<li>COMPRESS=NONE/DEFLATE: Compression for elevation and uncertainty grids. Default
 to DEFLATE.</li>
 <p>
 <li>ZLEVEL=[1-9]: Deflate compression level. Defaults to 6.</li>
@@ -334,6 +335,14 @@ $ gdal_translate data/test_vr.bag -oo MODE=RESAMPLED_GRID -oo RES_FILTER_MIN=4 -
 <li>Converting a GeoTIFF file to a BAG dataset, and provide a custom value for the ABSTRACT substituable variable.
 <pre>
 $ gdal_translate in.tif out.bag -co "VAR_ABSTRACT=My abstract"
+</pre>
+</li>
+
+<li>Converting a (VR) BAG in resampling mode with a particular grid
+resolution (5m) to a BAG dataset (without variable resolution extension),
+and provide a custom value for the ABSTRACT metadata:
+<pre>
+$ gdal_translate data/test_vr.bag -oo MODE=RESAMPLED_GRID -oo RESX=5 -oo RESY=5 out.bag -co "VAR_ABSTRACT=My abstract"
 </pre>
 </li>
 
