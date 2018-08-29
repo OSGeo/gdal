@@ -37,6 +37,7 @@ sys.path.append('../pymod')
 from osgeo import gdal
 from osgeo import ogr
 import gdaltest
+import ogrtest
 
 ###############################################################################
 # Test with -a and -i options
@@ -198,6 +199,33 @@ def contour_2():
     return 'success'
 
 ###############################################################################
+#
+
+
+def contour_real_world_case():
+
+    ogr_ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    ogr_lyr = ogr_ds.CreateLayer('contour', geom_type=ogr.wkbLineString)
+    field_defn = ogr.FieldDefn('ID', ogr.OFTInteger)
+    ogr_lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn('elev', ogr.OFTReal)
+    ogr_lyr.CreateField(field_defn)
+
+    ds = gdal.Open('data/contour_in.tif')
+    gdal.ContourGenerate(ds.GetRasterBand(1), 10, 0, [], 0, 0, ogr_lyr, 0, 1)
+    ds = None
+
+    ogr_lyr.SetAttributeFilter('elev = 330')
+    if ogr_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'LINESTRING (4.50497512437811 11.5,4.5 11.501996007984,3.5 11.8333333333333,2.5 11.5049751243781,2.490099009901 11.5,2.0 10.5,2.5 10.1666666666667,3.0 9.5,3.5 9.21428571428571,4.49800399201597 8.5,4.5 8.49857346647646,5.5 8.16666666666667,6.5 8.0,7.5 8.0,8.0 7.5,8.5 7.0,9.490099009901 6.5,9.5 6.49667774086379,10.5 6.16666666666667,11.4950248756219 5.5,11.5 5.49833610648919,12.5 5.49667774086379,13.5 5.49800399201597,13.501996007984 5.5,13.5 5.50199600798403,12.501996007984 6.5,12.5 6.50142653352354,11.5 6.509900990099,10.509900990099 7.5,10.5 7.50142653352354,9.5 7.9,8.50332225913621 8.5,8.5 8.50249376558603,7.83333333333333 9.5,7.5 10.0,7.0 10.5,6.5 10.7857142857143,5.5 11.1666666666667,4.50497512437811 11.5)') != 0:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 
@@ -215,6 +243,7 @@ def contour_cleanup():
 gdaltest_list = [
     contour_1,
     contour_2,
+    contour_real_world_case,
     contour_cleanup
 ]
 
