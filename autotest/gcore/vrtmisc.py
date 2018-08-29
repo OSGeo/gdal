@@ -585,7 +585,7 @@ def vrtmisc_rat():
         return 'fail'
     vrt_ds = None
 
-    if xml_vrt.find('<GDALRasterAttributeTable>') < 0:
+    if xml_vrt.find('<GDALRasterAttributeTable tableType="thematic">') < 0:
         gdaltest.post_reason('fail')
         print(xml_vrt)
         return 'fail'
@@ -598,7 +598,7 @@ def vrtmisc_rat():
         return 'fail'
     vrt_ds = None
 
-    if xml_vrt.find('<GDALRasterAttributeTable>') < 0:
+    if xml_vrt.find('<GDALRasterAttributeTable tableType="thematic">') < 0:
         gdaltest.post_reason('fail')
         print(xml_vrt)
         return 'fail'

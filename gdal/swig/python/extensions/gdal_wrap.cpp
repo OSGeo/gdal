@@ -5622,6 +5622,12 @@ SWIGINTERN int GDALRasterAttributeTableShadow_ChangesAreWrittenToFile(GDALRaster
 SWIGINTERN void GDALRasterAttributeTableShadow_DumpReadable(GDALRasterAttributeTableShadow *self){
         GDALRATDumpReadable( self, NULL );
     }
+SWIGINTERN void GDALRasterAttributeTableShadow_SetTableType(GDALRasterAttributeTableShadow *self,GDALRATTableType eTableType){
+        GDALRATSetTableType( self, eTableType );
+    }
+SWIGINTERN GDALRATTableType GDALRasterAttributeTableShadow_GetTableType(GDALRasterAttributeTableShadow *self){
+        return GDALRATGetTableType( self );
+    }
 
 #include "gdalgrid.h"
 
@@ -24833,6 +24839,94 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_RasterAttributeTable_SetTableType(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+  GDALRATTableType arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:RasterAttributeTable_SetTableType",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_SetTableType" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RasterAttributeTable_SetTableType" "', argument " "2"" of type '" "GDALRATTableType""'");
+  } 
+  arg2 = static_cast< GDALRATTableType >(val2);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      GDALRasterAttributeTableShadow_SetTableType(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_RasterAttributeTable_GetTableType(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  GDALRATTableType result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:RasterAttributeTable_GetTableType",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_GetTableType" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (GDALRATTableType)GDALRasterAttributeTableShadow_GetTableType(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *RasterAttributeTable_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
@@ -34239,6 +34333,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"RasterAttributeTable_GetRowOfValue", _wrap_RasterAttributeTable_GetRowOfValue, METH_VARARGS, (char *)"RasterAttributeTable_GetRowOfValue(RasterAttributeTable self, double dfValue) -> int"},
 	 { (char *)"RasterAttributeTable_ChangesAreWrittenToFile", _wrap_RasterAttributeTable_ChangesAreWrittenToFile, METH_VARARGS, (char *)"RasterAttributeTable_ChangesAreWrittenToFile(RasterAttributeTable self) -> int"},
 	 { (char *)"RasterAttributeTable_DumpReadable", _wrap_RasterAttributeTable_DumpReadable, METH_VARARGS, (char *)"RasterAttributeTable_DumpReadable(RasterAttributeTable self)"},
+	 { (char *)"RasterAttributeTable_SetTableType", _wrap_RasterAttributeTable_SetTableType, METH_VARARGS, (char *)"RasterAttributeTable_SetTableType(RasterAttributeTable self, GDALRATTableType eTableType)"},
+	 { (char *)"RasterAttributeTable_GetTableType", _wrap_RasterAttributeTable_GetTableType, METH_VARARGS, (char *)"RasterAttributeTable_GetTableType(RasterAttributeTable self) -> GDALRATTableType"},
 	 { (char *)"RasterAttributeTable_swigregister", RasterAttributeTable_swigregister, METH_VARARGS, NULL},
 	 { (char *)"TermProgress_nocb", (PyCFunction) _wrap_TermProgress_nocb, METH_VARARGS | METH_KEYWORDS, (char *)"TermProgress_nocb(double dfProgress, char const * pszMessage=None, void * pData=None) -> int"},
 	 { (char *)"TermProgress_swigconstant", TermProgress_swigconstant, METH_VARARGS, NULL},
@@ -34391,7 +34487,7 @@ static swig_type_info _swigt__p_VSILFILE = {"_p_VSILFILE", "VSILFILE *", 0, 0, (
 static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_f_double_p_q_const__char_p_void__int = {"_p_f_double_p_q_const__char_p_void__int", "int (*)(double,char const *,void *)", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldSubType *|GDALRATFieldType *|OGRFieldType *|RETURN_NONE *|int *|GDALAccess *|OGRwkbByteOrder *|CPLErr *|GDALRWFlag *|OGRJustification *|GDALRATFieldUsage *|GDALTileOrganization *|OGRAxisOrientation *|GDALPaletteInterp *|GDALColorInterp *|GDALResampleAlg *|GDALRIOResampleAlg *|OGRErr *|OGRwkbGeometryType *|GDALDataType *|GDALAsyncStatusType *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldSubType *|GDALRATFieldType *|OGRFieldType *|RETURN_NONE *|int *|GDALAccess *|OGRwkbByteOrder *|CPLErr *|GDALRWFlag *|OGRJustification *|GDALRATFieldUsage *|GDALTileOrganization *|OGRAxisOrientation *|GDALPaletteInterp *|GDALColorInterp *|GDALResampleAlg *|GDALRIOResampleAlg *|OGRErr *|OGRwkbGeometryType *|GDALDataType *|GDALAsyncStatusType *|GDALRATTableType *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GByte = {"_p_p_GByte", "GByte **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GDALDatasetShadow = {"_p_p_GDALDatasetShadow", "GDALDatasetShadow **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GDALRasterBandShadow = {"_p_p_GDALRasterBandShadow", "GDALRasterBandShadow **", 0, 0, (void*)0, 0};

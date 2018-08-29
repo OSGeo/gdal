@@ -241,6 +241,10 @@
 %constant GFU_AlphaMax            = GFU_AlphaMax;
 %constant GFU_MaxCount            = GFU_MaxCount;
 
+// GDALRATTableType
+%constant GRTT_THEMATIC           = GRTT_THEMATIC;
+%constant GRTT_ATHEMATIC          = GRTT_ATHEMATIC;
+
 %constant GMF_ALL_VALID           = 0x01;
 %constant GMF_PER_DATASET         = 0x02;
 %constant GMF_ALPHA               = 0x04;

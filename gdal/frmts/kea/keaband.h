@@ -108,6 +108,9 @@ public:
     void CreateOverviews(int nOverviews, int *panOverviewList);
     KEAOverview** GetOverviewList() { return m_panOverviewBands; }
 
+    kealib::KEALayerType getLayerType() const;
+    void setLayerType(kealib::KEALayerType eLayerType);
+
 protected:
     // methods for accessing data as blocks
     virtual CPLErr IReadBlock( int, int, void * ) override;

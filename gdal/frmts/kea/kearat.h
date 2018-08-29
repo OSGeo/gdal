@@ -36,7 +36,7 @@
 
 #include "keaband.h"
 
-class KEARasterAttributeTable : public GDALRasterAttributeTable
+class KEARasterAttributeTable : public GDALDefaultRasterAttributeTable
 {
 private:
     kealib::KEAAttributeTable *m_poKEATable;
@@ -84,6 +84,9 @@ public:
                                             double *pdfBinSize ) const override;
 
     virtual CPLXMLNode   *Serialize() const override;
+
+    virtual GDALRATTableType GetTableType() const override;
+    virtual CPLErr        SetTableType(const GDALRATTableType eInTableType) override;
 };
 
 #endif //KEARAT_H

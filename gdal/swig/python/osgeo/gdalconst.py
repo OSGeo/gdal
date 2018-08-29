@@ -487,6 +487,12 @@ GFU_AlphaMax = _gdalconst.GFU_AlphaMax
 _gdalconst.GFU_MaxCount_swigconstant(_gdalconst)
 GFU_MaxCount = _gdalconst.GFU_MaxCount
 
+_gdalconst.GRTT_THEMATIC_swigconstant(_gdalconst)
+GRTT_THEMATIC = _gdalconst.GRTT_THEMATIC
+
+_gdalconst.GRTT_ATHEMATIC_swigconstant(_gdalconst)
+GRTT_ATHEMATIC = _gdalconst.GRTT_ATHEMATIC
+
 _gdalconst.GMF_ALL_VALID_swigconstant(_gdalconst)
 GMF_ALL_VALID = _gdalconst.GMF_ALL_VALID
 

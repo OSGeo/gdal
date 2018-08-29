@@ -1102,8 +1102,17 @@ typedef enum {
     /*! Maximum GFU value (equals to GFU_AlphaMax+1 currently) */ GFU_MaxCount
 } GDALRATFieldUsage;
 
+/** RAT table type (thematic or athematic)
+  * @since GDAL 2.4
+  */
+typedef enum {
+    /*! Thematic table type */            GRTT_THEMATIC,
+    /*! Athematic table type */           GRTT_ATHEMATIC
+} GDALRATTableType;
+
 GDALRasterAttributeTableH CPL_DLL CPL_STDCALL
                                            GDALCreateRasterAttributeTable(void) CPL_WARN_UNUSED_RESULT;
+
 void CPL_DLL CPL_STDCALL GDALDestroyRasterAttributeTable(
     GDALRasterAttributeTableH );
 
@@ -1153,19 +1162,23 @@ CPLErr CPL_DLL CPL_STDCALL GDALRATSetLinearBinning( GDALRasterAttributeTableH,
                                                     double, double );
 int CPL_DLL CPL_STDCALL GDALRATGetLinearBinning( GDALRasterAttributeTableH,
                                                  double *, double * );
+CPLErr CPL_DLL CPL_STDCALL GDALRATSetTableType( GDALRasterAttributeTableH hRAT, 
+                         const GDALRATTableType eInTableType );
+GDALRATTableType CPL_DLL CPL_STDCALL GDALRATGetTableType( GDALRasterAttributeTableH hRAT);
 CPLErr CPL_DLL CPL_STDCALL GDALRATInitializeFromColorTable(
     GDALRasterAttributeTableH, GDALColorTableH );
 GDALColorTableH CPL_DLL CPL_STDCALL GDALRATTranslateToColorTable(
     GDALRasterAttributeTableH, int nEntryCount );
 void CPL_DLL CPL_STDCALL GDALRATDumpReadable( GDALRasterAttributeTableH,
                                               FILE * );
-GDALRasterAttributeTableH CPL_DLL CPL_STDCALL
-    GDALRATClone( GDALRasterAttributeTableH );
+GDALRasterAttributeTableH CPL_DLL CPL_STDCALL 
+    GDALRATClone( const GDALRasterAttributeTableH );
 
 void CPL_DLL* CPL_STDCALL
     GDALRATSerializeJSON( GDALRasterAttributeTableH ) CPL_WARN_UNUSED_RESULT;
 
 int CPL_DLL CPL_STDCALL GDALRATGetRowOfValue( GDALRasterAttributeTableH, double );
+void CPL_DLL CPL_STDCALL GDALRATRemoveStatistics( GDALRasterAttributeTableH );
 
 /* ==================================================================== */
 /*      GDAL Cache Management                                           */

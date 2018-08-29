@@ -38,6 +38,7 @@
 #include "gdal_priv.h"
 #include "gdal_rat.h"
 #include "gdal_vrt.h"
+#include "gdal_rat.h"
 
 #include <map>
 #include <memory>
