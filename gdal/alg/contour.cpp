@@ -561,7 +561,7 @@ CPLErr GDALContourGenerator::ProcessRect(
             return CE_Failure;
         }
         iStartLevel = static_cast<int>(dfStartLevel);
-        iEndLevel = static_cast<int>(dfStartLevel);
+        iEndLevel = static_cast<int>(dfEndLevel);
     }
 
     if( iStartLevel > iEndLevel )
