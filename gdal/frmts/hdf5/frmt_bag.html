@@ -119,26 +119,30 @@ to AUTO, this will be the minimum resolution among all the supergrids.</li>
 RES_STRATEGY is set to AUTO, this will be the minimum resolution among all the
 supergrids.</li>
 <p>
-<li>RES_STRATEGY=AUTO/MIN/MAX/MEAN: Which strategy to apply to select the
-resampled grid resolution. By default, if none of RESX, RESY or RES_FILTER_MIN
-is specifie, the AUTO strategy will correspond to
+<li>RES_STRATEGY=AUTO/MIN/MAX/MEAN: Which strategy to apply to set the
+resampled grid resolution. By default, if none of RESX, RESY, RES_FILTER_MIN and
+RES_FILTER_MAX is specified, the AUTO strategy will correspond to
 the MIN strategy: that is the minimum resolution among all the supergrids is
-selected.
+used.
 If MAX is specified, the maximum resolution among all the supergrids
-is selected.
-If MEAN is specified, the mean resolution among all the supergrids is selected. 
-RESX and RESY if defined will override the resolution determined by
+is used.
+If MEAN is specified, the mean resolution among all the supergrids is used. 
+RESX and RESY, if defined, will override the resolution determined by
 RES_STRATEGY.</li>
 <p>
 <li>RES_FILTER_MIN=value: Minimum resolution of supergrids to take into
 account (excluded bound, except if it is the minimum resolution of supergrids).
-By default, the minimum resolution of supergrids
-available. If this value is specified and none of RES_STRATEGY, RESX or RESY
-is specified, this will also be used as the resolution for the resampled grid.</li>
+By default, the minimum resolution of supergrids available.
+If this value is specified and none of RES_STRATEGY, RES_FILTER_MAX, RESX or RESY
+is specified, the maximum resolution among all the supergrids will be used
+as the resolution for the resampled grid.
+</li>
 <p>
 <li>RES_FILTER_MAX=value: Maximum resolution of supergrids to take into
 account (included bound). By default, the maximum resolution of supergrids
-available.</li>
+available. If this value is specified and none of RES_STRATEGY, RESX or RESY
+is specified, this will also be used as the resolution for the resampled grid.
+</li>
 <p>
 <li>VALUE_POPULATION=MIN/MAX/MEAN: Which value population strategy to apply to
 compute the resampled cell values. This default to MAX: the elevation value of a

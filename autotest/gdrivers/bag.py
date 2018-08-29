@@ -590,8 +590,14 @@ def bag_vr_resampled():
                      open_options=['MODE=RESAMPLED_GRID',
                                    'RES_FILTER_MIN=0',
                                    'RES_FILTER_MAX=8'])
+    gt = ds.GetGeoTransform()
+    got = (gt[1], gt[5])
+    if got != (8.0, -8.0):
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
-    if got != (5009, 6438):
+    if got != (2099, 2747):
         gdaltest.post_reason('fail')
         print(got)
         return 'fail'
@@ -599,8 +605,14 @@ def bag_vr_resampled():
     ds = gdal.OpenEx('data/test_vr.bag',
                      open_options=['MODE=RESAMPLED_GRID',
                                    'RES_FILTER_MAX=8'])
+    gt = ds.GetGeoTransform()
+    got = (gt[1], gt[5])
+    if got != (8.0, -8.0):
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
-    if got != (5009, 6438):
+    if got != (2099, 2747):
         gdaltest.post_reason('fail')
         print(got)
         return 'fail'
@@ -609,8 +621,14 @@ def bag_vr_resampled():
                      open_options=['MODE=RESAMPLED_GRID',
                                    'RES_FILTER_MIN=8',
                                    'RES_FILTER_MAX=16'])
+    gt = ds.GetGeoTransform()
+    got = (gt[1], gt[5])
+    if got != (16.0, -16.0):
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
-    if got != (2779, 3057):
+    if got != (796, 864):
         gdaltest.post_reason('fail')
         print(got)
         return 'fail'
@@ -619,8 +637,14 @@ def bag_vr_resampled():
                      open_options=['MODE=RESAMPLED_GRID',
                                    'RES_FILTER_MIN=16',
                                    'RES_FILTER_MAX=32'])
+    gt = ds.GetGeoTransform()
+    got = (gt[1], gt[5])
+    if got != (32.0, -32.0):
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
-    if got != (720, 800):
+    if got != (207, 207):
         gdaltest.post_reason('fail')
         print(got)
         return 'fail'
@@ -628,8 +652,14 @@ def bag_vr_resampled():
     ds = gdal.OpenEx('data/test_vr.bag',
                      open_options=['MODE=RESAMPLED_GRID',
                                    'RES_FILTER_MIN=16'])
+    gt = ds.GetGeoTransform()
+    got = (gt[1], gt[5])
+    if got != (29.899999618530273, -31.899999618530273):
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
-    if got != (720, 800):
+    if got != (165, 205):
         gdaltest.post_reason('fail')
         print(got)
         return 'fail'

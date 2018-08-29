@@ -2256,15 +2256,15 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
 
         if( EQUAL(pszResStrategy, "AUTO") && (pszResFilterMin || pszResFilterMax) )
         {
-            if( pszResFilterMin && dfResFilterMin > 0 )
+            if( pszResFilterMax )
             {
-                dfDefaultResX = dfResFilterMin;
-                dfDefaultResY = dfResFilterMin;
+                dfDefaultResX = dfResFilterMax;
+                dfDefaultResY = dfResFilterMax;
             }
             else
             {
-                dfDefaultResX = dfMinResX;
-                dfDefaultResY = dfMinResY;
+                dfDefaultResX = dfMaxResX;
+                dfDefaultResY = dfMaxResY;
             }
         }
         else if( EQUAL(pszResStrategy, "AUTO") || EQUAL(pszResStrategy, "MIN") )
