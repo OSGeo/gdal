@@ -143,7 +143,8 @@ class netCDFRasterBand final: public GDALPamRasterBand
     int         *panBandZLev;
     bool        bNoDataSet;
     double      dfNoDataValue;
-    double      adfValidRange[2];
+    bool        bValidRangeValid = false;
+    double      adfValidRange[2]{0,0};
     bool        bHaveScale;
     bool        bHaveOffset;
     double      dfScale;
@@ -335,11 +336,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 
     // Look for valid_range or valid_min/valid_max.
 
-    // Set valid_range to nodata, then check for actual values.
-    adfValidRange[0] = dfNoData;
-    adfValidRange[1] = dfNoData;
     // First look for valid_range.
-    bool bGotValidRange = false;
     status = nc_inq_att(cdfid, nZId, "valid_range", &atttype, &attlen);
     if( (status == NC_NOERR) && (attlen == 2) &&
         CPLFetchBool(poNCDFDS->GetOpenOptions(), "HONOUR_VALID_RANGE", true) )
@@ -348,7 +345,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         status = nc_get_att_int(cdfid, nZId, "valid_range", vrange);
         if( status == NC_NOERR )
         {
-            bGotValidRange = true;
+            bValidRangeValid = true;
             adfValidRange[0] = vrange[0];
             adfValidRange[1] = vrange[1];
         }
@@ -365,7 +362,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                 if( status == NC_NOERR )
                 {
                     adfValidRange[1] = vmax;
-                    bGotValidRange = true;
+                    bValidRangeValid = true;
                 }
             }
         }
@@ -397,7 +394,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 
         // If we got valid_range, test for signed/unsigned range.
         // http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Attribute-Conventions.html
-        if( bGotValidRange )
+        if( bValidRangeValid )
         {
             // If we got valid_range={0,255}, treat as unsigned.
             if( adfValidRange[0] == 0 && adfValidRange[1] == 255 )
@@ -410,16 +407,14 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                 }
 
                 // Reset valid_range.
-                adfValidRange[0] = dfNoData;
-                adfValidRange[1] = dfNoData;
+                bValidRangeValid = false;
             }
             // If we got valid_range={-128,127}, treat as signed.
             else if( adfValidRange[0] == -128 && adfValidRange[1] == 127 )
             {
                 bSignedData = true;
                 // Reset valid_range.
-                adfValidRange[0] = dfNoData;
-                adfValidRange[1] = dfNoData;
+                bValidRangeValid = false;
             }
         }
         // Else test for _Unsigned.
@@ -440,11 +435,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             if( !bSignedData && dfNoData < 0 )
             {
                 dfNoData += 256;
-                if( !bGotValidRange )
-                {
-                    adfValidRange[0] = dfNoData;
-                    adfValidRange[1] = dfNoData;
-                }
             }
         }
 
@@ -1437,8 +1427,7 @@ void netCDFRasterBand::CheckData( void *pImage, void *pImageNC,
     }
 
     // Is valid data checking needed or requested?
-    if( adfValidRange[0] != dfNoDataValue ||
-        adfValidRange[1] != dfNoDataValue ||
+    if( bValidRangeValid ||
         bCheckIsNan )
     {
         for( size_t j = 0; j < nTmpBlockYSize; j++ )
@@ -1457,13 +1446,16 @@ void netCDFRasterBand::CheckData( void *pImage, void *pImageNC,
                     continue;
                 }
                 // Check for valid_range.
-                if( ((adfValidRange[0] != dfNoDataValue) &&
-                     (((T *)pImage)[k] < (T)adfValidRange[0]))
-                    ||
-                    ((adfValidRange[1] != dfNoDataValue) &&
-                     (((T *)pImage)[k] > (T)adfValidRange[1])) )
+                if( bValidRangeValid )
                 {
-                    ((T *)pImage)[k] = (T)dfNoDataValue;
+                    if( ((adfValidRange[0] != dfNoDataValue) &&
+                        (((T *)pImage)[k] < (T)adfValidRange[0]))
+                        ||
+                        ((adfValidRange[1] != dfNoDataValue) &&
+                        (((T *)pImage)[k] > (T)adfValidRange[1])) )
+                    {
+                        ((T *)pImage)[k] = (T)dfNoDataValue;
+                    }
                 }
             }
         }
