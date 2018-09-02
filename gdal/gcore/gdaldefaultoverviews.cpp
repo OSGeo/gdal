@@ -197,6 +197,12 @@ void GDALDefaultOverviews::OverviewScan()
 
     bCheckedForOverviews = true;
 
+    static thread_local int nAntiRecursionCounter = 0;
+    // arbitrary number. 32 should be enough to handle a .ovr.ovr.ovr...
+    if( nAntiRecursionCounter == 64 )
+        return;
+    ++nAntiRecursionCounter;
+
     CPLDebug( "GDAL", "GDALDefaultOverviews::OverviewScan()" );
 
 /* -------------------------------------------------------------------- */
@@ -352,6 +358,8 @@ void GDALDefaultOverviews::OverviewScan()
             }
         }
     }
+
+    --nAntiRecursionCounter;
 }
 
 /************************************************************************/
