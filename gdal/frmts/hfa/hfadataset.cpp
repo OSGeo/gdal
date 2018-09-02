@@ -302,7 +302,7 @@ HFARasterAttributeTable::HFARasterAttributeTable(
                 const double dfMin = poDTChild->GetDoubleField("minLimit");
                 const int nBinCount = poDTChild->GetIntField("numBins");
 
-                if( nBinCount == nRows && dfMax != dfMin && nBinCount != 0 )
+                if( nBinCount == nRows && dfMax != dfMin && nBinCount > 1 )
                 {
                     // Can't call SetLinearBinning since it will re-write
                     // which we might not have permission to do.
