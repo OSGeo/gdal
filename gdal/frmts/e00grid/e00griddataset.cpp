@@ -850,7 +850,10 @@ void E00GRIDDataset::ReadMetadata()
                 {
                     break;
                 }
-                papszPrj = CSLAddString(papszPrj, pszLine);
+                if (!EQUAL(pszLine, "~") )
+                {
+                    papszPrj = CSLAddString(papszPrj, pszLine);
+                }
             }
 
             OGRSpatialReference oSRS;
