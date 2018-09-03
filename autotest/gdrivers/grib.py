@@ -1213,8 +1213,8 @@ def grib_grib2_write_data_encodings():
         tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000'], 4672, GS5_JPEG2000]]
         tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'COMPRESSION_RATIO=2'], 4672, GS5_JPEG2000]]  # COMPRESSION_RATIO ignored in that case
         tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'NBITS=8'], 4672, GS5_JPEG2000]]
-        tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'DECIMAL_SCALE_FACTOR=-1'], 4820, GS5_JPEG2000]]
-        tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'NBITS=8', 'DECIMAL_SCALE_FACTOR=-1'], 4855, GS5_JPEG2000]]
+        tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'DECIMAL_SCALE_FACTOR=-1'], (4820, 4722), GS5_JPEG2000]]
+        tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'NBITS=8', 'DECIMAL_SCALE_FACTOR=-1'], (4855, 4795), GS5_JPEG2000]]
         tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'NBITS=9'], 4672, GS5_JPEG2000]]
         # 4899 for JP2ECW, 4440 for JP2OPENJPEG
         tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'NBITS=7'], (4484, 4899, 4440), GS5_JPEG2000]]
