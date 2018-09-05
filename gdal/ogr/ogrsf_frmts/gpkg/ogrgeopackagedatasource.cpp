@@ -4597,6 +4597,8 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
         return nullptr;
     }
 
+    poDS->SetMetadata( poSrcDS->GetMetadata() );
+
 /* -------------------------------------------------------------------- */
 /*      Warp the transformer with a linear approximator                 */
 /* -------------------------------------------------------------------- */

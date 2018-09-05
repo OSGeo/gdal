@@ -2556,6 +2556,9 @@ def gpkg_26():
         ds = None
 
         ds = gdal.Open('/vsimem/tmp.gpkg')
+        if ds.GetMetadataItem('AREA_OR_POINT') != 'Area':
+            gdaltest.post_reason('fail')
+            return 'fail'
         got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
         # VC12 returns [3561, 3561, 3561, 3691] for GoogleCRS84Quad
         # and For GoogleCRS84Quad RESAMPLING=CUBIC, got [3415, 3415, 3415, 3691]

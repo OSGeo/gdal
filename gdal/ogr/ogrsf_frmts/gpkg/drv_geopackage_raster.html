@@ -204,15 +204,6 @@ match the pixel width and height of the raster.
 of GeoPackage with tile servicing software, it is possible to select a predefined
 tiling scheme that has world coverage. The available tiling schemes are :</p>
 <ul>
-<li><i>GoogleCRS84Quad</i>, as described in
-<a href="http://portal.opengeospatial.org/files/?artifact_id=35326">OGC 07-057r7
-WMTS 1.0</a> specification, Annex E.3. That tiling schemes consists of a single
-256x256 tile at its zoom level 0, in EPSG:4326 CRS, with extent in longitude and
-latitude in the range [-180,180]. Consequently, at zoom level 0, 64 lines are
-unused at the top and bottom of that tile. This may cause issues with some
-implementations of the specification, and there are some ambiguities about the
-exact definition of this tiling scheme. Using InspireCRS84Quad/PseudoTMS_GlobalGeodetic
-instead is therefore recommended.</li>
 <li><i>GoogleMapsCompatible</i>, as described in WMTS 1.0 specification, Annex E.4.
 That tiling schemes consists of a single 256x256 tile at its zoom level 0,
 in EPSG:3857 CRS, with extent in easting and northing in the range
@@ -238,6 +229,24 @@ That tiling schemes consists of four 256x256 tiles at its zoom level 0,
 in EPSG:3857 CRS, with extent extent in easting and northing in the range
 [-20037508.34,20037508.34]. The same remark as with PseudoTMS_GlobalGeodetic applies
 regarding interoperability with TMS.</li>
+<li><i>GoogleCRS84Quad</i>, as described in
+<a href="http://portal.opengeospatial.org/files/?artifact_id=35326">OGC 07-057r7
+WMTS 1.0</a> specification, Annex E.3. That tiling schemes consists of a single
+256x256 tile at its zoom level 0, in EPSG:4326 CRS, with extent in longitude and
+latitude in the range [-180,180]. Consequently, at zoom level 0, 64 lines are
+unused at the top and bottom of that tile. This may cause issues with some
+implementations of the specification, and there are some ambiguities about the
+exact definition of this tiling scheme. Using InspireCRS84Quad/PseudoTMS_GlobalGeodetic
+instead is therefore recommended.
+<br>
+NOTE: <a href="http://docs.opengeospatial.org/is/13-082r2/13-082r2.html#30">OGC WMTS Simple Profile 13-082r2</a>
+changed the definition of GoogleCRS84Quad (so not implemented by the driver).
+The new definition includes a -1 level (that cannot be modeled in GeoPackage given
+constraints on zoom_level being positive or 0), with a single tile at origin -180,90
+and whose bottom 128 lines are empty. Levels 0 or greater are identical to the
+InspireCRS84Quad tiling scheme. So for practical purposes, InspireCRS84Quad in
+GeoPackage is conformant to the new GoogleCRS84Quad definition.
+</li>
 </ul>
 
 <p>In all the above tiling schemes, consecutive zoom levels defer by a resolution
