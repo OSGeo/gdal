@@ -1766,6 +1766,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                                    FilterFuncType pfnFilterFunc,
                                    FilterFunc4ValuesType pfnFilterFunc4Values,
                                    int nKernelRadius,
+                                   bool bKernelWithNegativeWeights,
                                    float fMaxVal )
 
 {
@@ -1964,9 +1965,37 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
         {
             for( int iSrcLineOff = 0; iSrcLineOff < nHeight; ++iSrcLineOff )
             {
-                double dfVal = 0.0;
                 const int j =
                     iSrcLineOff * nChunkXSize + (nSrcPixelStart - nChunkXOff);
+
+                if( bKernelWithNegativeWeights )
+                {
+                    int nConsecutiveValid = 0;
+                    int nMaxConsecutiveValid = 0;
+                    for( int k = 0; k < nSrcPixelCount; k++ )
+                    {
+                        if( pabyChunkNodataMask[j + k] )
+                            nConsecutiveValid ++;
+                        else if( nConsecutiveValid )
+                        {
+                            nMaxConsecutiveValid = std::max(nMaxConsecutiveValid,
+                                                            nConsecutiveValid);
+                            nConsecutiveValid = 0;
+                        }
+                    }
+                    nMaxConsecutiveValid = std::max(nMaxConsecutiveValid,
+                                                    nConsecutiveValid);
+                    if( nMaxConsecutiveValid < nSrcPixelCount / 2 )
+                    {
+                        const size_t nTempOffset =
+                            static_cast<size_t>(iSrcLineOff) * nDstXSize + iDstPixel - nDstXOff;
+                        padfHorizontalFiltered[nTempOffset] = 0.0;
+                        pabyChunkNodataMaskHorizontalFiltered[nTempOffset] = 0;
+                        continue;
+                    }
+                }
+
+                double dfVal = 0.0;
                 GDALResampleConvolutionHorizontalWithMask(
                     pChunk + j, pabyChunkNodataMask + j,
                     padfWeights, nSrcPixelCount,
@@ -2121,16 +2150,48 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             {
                 double dfVal = 0.0;
                 dfWeightSum = 0.0;
-                int i = 0;
                 size_t j = (nSrcLineStart - nChunkYOff) * static_cast<size_t>(nDstXSize)
                              + iFilteredPixelOff;
-                for(; i < nSrcLineCount; ++i, j += nDstXSize)
+                if( bKernelWithNegativeWeights )
                 {
-                    const double dfWeight =
-                        padfWeights[i]
-                        * pabyChunkNodataMaskHorizontalFiltered[j];
-                    dfVal += padfHorizontalFilteredBand[j] * dfWeight;
-                    dfWeightSum += dfWeight;
+                    int nConsecutiveValid = 0;
+                    int nMaxConsecutiveValid = 0;
+                    for(int i = 0; i < nSrcLineCount; ++i, j += nDstXSize)
+                    {
+                        const double dfWeight =
+                            padfWeights[i]
+                            * pabyChunkNodataMaskHorizontalFiltered[j];
+                        if( pabyChunkNodataMaskHorizontalFiltered[j] )
+                        {
+                            nConsecutiveValid ++;
+                        }
+                        else if( nConsecutiveValid )
+                        {
+                            nMaxConsecutiveValid = std::max(
+                                nMaxConsecutiveValid, nConsecutiveValid);
+                            nConsecutiveValid = 0;
+                        }
+                        dfVal += padfHorizontalFilteredBand[j] * dfWeight;
+                        dfWeightSum += dfWeight;
+                    }
+                    nMaxConsecutiveValid = std::max(nMaxConsecutiveValid,
+                                                    nConsecutiveValid);
+                    if( nMaxConsecutiveValid < nSrcLineCount / 2 )
+                    {
+                        pafDstScanline[iFilteredPixelOff] = fNoDataValue;
+                        continue;
+                    }
+                }
+                else
+                {
+                    for(int i = 0; i < nSrcLineCount; ++i, j += nDstXSize)
+                    {
+                        const double dfWeight =
+                            padfWeights[i]
+                            * pabyChunkNodataMaskHorizontalFiltered[j];
+                        dfVal += padfHorizontalFilteredBand[j] * dfWeight;
+                        dfWeightSum += dfWeight;
+                    }
                 }
                 if( dfWeightSum > 0.0 )
                 {
@@ -2187,6 +2248,7 @@ static CPLErr GDALResampleChunk32R_Convolution(
     bool /* bPropagateNoData */ )
 {
     GDALResampleAlg eResample;
+    bool bKernelWithNegativeWeights = false;
     if( EQUAL(pszResampling, "BILINEAR") )
         eResample = GRA_Bilinear;
     else if( EQUAL(pszResampling, "CUBIC") )
@@ -2194,7 +2256,10 @@ static CPLErr GDALResampleChunk32R_Convolution(
     else if( EQUAL(pszResampling, "CUBICSPLINE") )
         eResample = GRA_CubicSpline;
     else if( EQUAL(pszResampling, "LANCZOS") )
+    {
         eResample = GRA_Lanczos;
+        bKernelWithNegativeWeights = true;
+    }
     else
     {
         CPLAssert(false);
@@ -2238,6 +2303,7 @@ static CPLErr GDALResampleChunk32R_Convolution(
             pfnFilterFunc,
             pfnFilterFunc4Values,
             nKernelRadius,
+            bKernelWithNegativeWeights,
             fMaxVal );
     else if( eWrkDataType == GDT_UInt16 )
         return GDALResampleChunk32R_ConvolutionT<GUInt16, false>(
@@ -2255,6 +2321,7 @@ static CPLErr GDALResampleChunk32R_Convolution(
             pfnFilterFunc,
             pfnFilterFunc4Values,
             nKernelRadius,
+            bKernelWithNegativeWeights,
             fMaxVal );
     else if( eWrkDataType == GDT_Float32 )
         return GDALResampleChunk32R_ConvolutionT<float, false>(
@@ -2272,6 +2339,7 @@ static CPLErr GDALResampleChunk32R_Convolution(
             pfnFilterFunc,
             pfnFilterFunc4Values,
             nKernelRadius,
+            bKernelWithNegativeWeights,
             fMaxVal );
 
     CPLAssert(false);

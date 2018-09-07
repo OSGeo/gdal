@@ -1100,6 +1100,32 @@ cellsize     0
 
     return 'success'
 
+###############################################################################
+
+
+def rasterio_lanczos_nodata():
+
+    ds = gdal.Open('data/rasterio_lanczos_nodata.tif')
+
+    data = ds.GetRasterBand(1).ReadAsArray(buf_xsize=9,
+                                           buf_ysize=9,
+                                           resample_alg=gdal.GRIORA_Lanczos)
+    data_ar = struct.unpack('H' * 9 * 9, data)
+    expected_ar = (0, 0, 0, 22380, 22417, 22509, 22525, 22505, 22518,
+                   0, 0, 0, 22415, 22432, 22433, 22541, 22541, 22568,
+                   0, 0, 0, 22355, 22378, 22429, 22468, 22562, 22591,
+                   0, 0, 0, 22271, 22343, 22384, 22526, 22565, 22699,
+                   0, 0, 0, 22404, 22345, 22537, 22590, 22582, 22645,
+                   0, 0, 0, 22461, 22484, 22464, 22495, 22633, 22638,
+                   0, 0, 0, 22481, 22466, 22500, 22534, 22536, 22571,
+                   0, 0, 0, 22460, 22460, 22547, 22538, 22456, 22572,
+                   0, 0, 0, 0, 22504, 22496, 22564, 22563, 22610)
+    if data_ar != expected_ar:
+        gdaltest.post_reason('fail')
+        print(data_ar)
+        return 'fail'
+
+    return 'success'
 
 gdaltest_list = [
     rasterio_1,
@@ -1117,7 +1143,8 @@ gdaltest_list = [
     rasterio_13,
     rasterio_14,
     rasterio_15,
-    rasterio_16
+    rasterio_16,
+    rasterio_lanczos_nodata,
 ]
 
 # gdaltest_list = [ rasterio_16 ]
