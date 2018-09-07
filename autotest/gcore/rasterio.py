@@ -1107,9 +1107,9 @@ def rasterio_lanczos_nodata():
 
     ds = gdal.Open('data/rasterio_lanczos_nodata.tif')
 
-    data = ds.GetRasterBand(1).ReadAsArray(buf_xsize=9,
-                                           buf_ysize=9,
-                                           resample_alg=gdal.GRIORA_Lanczos)
+    data = ds.GetRasterBand(1).ReadRaster(buf_xsize=9,
+                                          buf_ysize=9,
+                                          resample_alg=gdal.GRIORA_Lanczos)
     data_ar = struct.unpack('H' * 9 * 9, data)
     expected_ar = (0, 0, 0, 22380, 22417, 22509, 22525, 22505, 22518,
                    0, 0, 0, 22415, 22432, 22433, 22541, 22541, 22568,
