@@ -30,6 +30,23 @@
 #include "tendian.h"
 #include "myutil.h"
 
+#include "cpl_string.h"
+
+static void debug_printf(const char* fmt, ... ) CPL_PRINT_FUNC_FORMAT (1, 2);
+
+static void debug_printf(const char* fmt, ... )
+{
+    va_list args;
+
+    va_start( args, fmt );
+    CPLDebug("GRIB", "%s", CPLString().vPrintf(fmt, args ).c_str() );
+    va_end( args );
+}
+
+#undef printf
+#define printf debug_printf
+
+
 /*****************************************************************************
  * MetaInit() --
  *
