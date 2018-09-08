@@ -225,6 +225,7 @@ class OGRMySQLDataSource final: public OGRDataSource
 
     OGRMySQLLayer      *poLongResultLayer;
 
+    bool                m_bIsMariaDB = false;
     int                 m_nMajor = 0;
     int                 m_nMinor = 0;
 
@@ -268,6 +269,7 @@ class OGRMySQLDataSource final: public OGRDataSource
     void                RequestLongResult( OGRMySQLLayer * );
     void                InterruptLongResult();
 
+    bool                IsMariaDB() const { return m_bIsMariaDB; }
     int                 GetMajorVersion() const { return m_nMajor; }
     int                 GetUnknownSRID() const;
 };

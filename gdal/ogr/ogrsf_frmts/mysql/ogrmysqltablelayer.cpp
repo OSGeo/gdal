@@ -348,7 +348,10 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             }
             else
             {
-                oField.SetDefault(pszDefault);
+                if( EQUAL(pszDefault, "CURRENT_TIMESTAMP()") )
+                    oField.SetDefault("CURRENT_TIMESTAMP");
+                else
+                    oField.SetDefault(pszDefault);
             }
         }
 
@@ -469,7 +472,8 @@ void OGRMySQLTableLayer::BuildWhere()
 
         const char* pszAxisOrder = "";
         OGRSpatialReference* l_poSRS = GetSpatialRef();
-        if( poDS->GetMajorVersion() >= 8 && l_poSRS && l_poSRS->IsGeographic() )
+        if( poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB() &&
+            l_poSRS && l_poSRS->IsGeographic() )
         {
             pszAxisOrder = ", 'axis-order=long-lat'";
         }
@@ -787,7 +791,8 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
         {
             const char* pszAxisOrder = "";
             OGRSpatialReference* l_poSRS = GetSpatialRef();
-            if( poDS->GetMajorVersion() >= 8 && l_poSRS && l_poSRS->IsGeographic() )
+            if( poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB() &&
+                l_poSRS && l_poSRS->IsGeographic() )
             {
                 pszAxisOrder = ", 'axis-order=long-lat'";
             }
@@ -1010,7 +1015,7 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
     else if( oField.GetType() == OFTDateTime )
     {
-        if( oField.GetDefault() != nullptr && EQUAL(oField.GetDefault(), "CURRENT_TIMESTAMP") )
+        if( oField.GetDefault() != nullptr && STARTS_WITH_CI(oField.GetDefault(), "CURRENT_TIMESTAMP") )
             snprintf( szFieldType, sizeof(szFieldType), "TIMESTAMP" );
         else
             snprintf( szFieldType, sizeof(szFieldType), "DATETIME" );

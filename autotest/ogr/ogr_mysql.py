@@ -72,7 +72,7 @@ def ogr_mysql_1():
 
     sql_lyr = gdaltest.mysql_ds.ExecuteSQL("SELECT VERSION()")
     f = sql_lyr.GetNextFeature()
-    gdaltest.mysql_version_major = int(f.GetField(0).split('.')[0])
+    gdaltest.is_mysql_8_or_later = int(f.GetField(0).split('.')[0]) >= 8 and f.GetField(0).find('MariaDB') < 0
     gdaltest.mysql_ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -693,7 +693,7 @@ def ogr_mysql_23():
     ######################################################
     # Create a layer with a single feature through SQL
 
-    if gdaltest.mysql_version_major >= 8:
+    if gdaltest.is_mysql_8_or_later:
         gdaltest.mysql_lyr = gdaltest.mysql_ds.ExecuteSQL("SELECT ROUND(1.1,0) AS zero, ROUND(2.0, 0) AS widthonly, ROUND(1.1,1) AS onedecimal, ROUND(0.12345678901234567890123456789,29) AS twentynine, ST_GeomFromText(CONVERT('POINT(1.0 2.0)',CHAR)) as the_geom;")
     else:
         gdaltest.mysql_lyr = gdaltest.mysql_ds.ExecuteSQL("SELECT ROUND(1.1,0) AS zero, ROUND(2.0, 0) AS widthonly, ROUND(1.1,1) AS onedecimal, ROUND(0.12345678901234567890123456789,29) AS twentynine, GeomFromText(CONVERT('POINT(1.0 2.0)',CHAR)) as the_geom;")
@@ -929,6 +929,7 @@ def ogr_mysql_26():
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime')).GetDefault() != 'CURRENT_TIMESTAMP':
         gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime')).GetDefault())
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault() != "'2015/06/30 12:34:56'":
         gdaltest.post_reason('fail')
@@ -996,7 +997,7 @@ def ogr_mysql_cleanup():
     with gdaltest.error_handler():
         gdaltest.mysql_ds.ExecuteSQL('DROP TABLE tablewithoutspatialindex')
     gdaltest.mysql_ds.ExecuteSQL('DROP TABLE geometry_columns')
-    if gdaltest.mysql_version_major < 8:
+    if not gdaltest.is_mysql_8_or_later:
         gdaltest.mysql_ds.ExecuteSQL('DROP TABLE spatial_ref_sys')
     gdaltest.mysql_ds.ExecuteSQL('DROP TABLE ogr_mysql_72')
     gdaltest.mysql_ds.ExecuteSQL('DROP TABLE ogr_mysql_25')
