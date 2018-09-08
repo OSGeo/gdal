@@ -1183,7 +1183,7 @@ def ogr_fgdb_19():
     # fails with ERROR 1: Failed to open Geodatabase (The system cannot find the file specified.)
     # File "ogr_fgdb.py", line 1664, in ogr_fgdb_19
     # if ds.StartTransaction(force=True) != 0:
-    if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3'):
+    if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3') or gdaltest.is_travis_branch('trunk_with_coverage'):
         return 'skip'
 
     try:
@@ -1852,7 +1852,7 @@ def ogr_fgdb_19bis():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
-    if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3'):
+    if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3') or gdaltest.is_travis_branch('trunk_with_coverage'):
         return 'skip'
 
     (bPerLayerCopyingForTransaction, ds) = ogr_fgdb_19_open_update('tmp/test.gdb')
@@ -1877,7 +1877,7 @@ def ogr_fgdb_20():
     if ogrtest.openfilegdb_drv is None:
         return 'skip'
 
-    if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3'):
+    if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3') or gdaltest.is_travis_branch('trunk_with_coverage'):
         return 'skip'
 
     if not os.path.exists('tmp/test.gdb'):
