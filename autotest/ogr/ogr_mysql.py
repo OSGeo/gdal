@@ -72,6 +72,7 @@ def ogr_mysql_1():
 
     sql_lyr = gdaltest.mysql_ds.ExecuteSQL("SELECT VERSION()")
     f = sql_lyr.GetNextFeature()
+    print('Version: ' + f.GetField(0))
     gdaltest.is_mysql_8_or_later = int(f.GetField(0).split('.')[0]) >= 8 and f.GetField(0).find('MariaDB') < 0
     gdaltest.mysql_ds.ReleaseResultSet(sql_lyr)
 
