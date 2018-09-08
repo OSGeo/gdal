@@ -354,7 +354,7 @@ OGRSpatialReference *OGRMySQLLayer::GetSpatialRef()
         if( poSRS != nullptr )
             poSRS->Reference();
         else
-            nSRSId = -1;
+            nSRSId = poDS->GetUnknownSRID();
     }
 
     return poSRS;

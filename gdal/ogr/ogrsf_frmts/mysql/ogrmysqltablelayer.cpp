@@ -467,11 +467,19 @@ void OGRMySQLTableLayer::BuildWhere()
                 sEnvelope.MinX, sEnvelope.MaxY,
                 sEnvelope.MinX, sEnvelope.MinY);
 
+        const char* pszAxisOrder = "";
+        OGRSpatialReference* l_poSRS = GetSpatialRef();
+        if( poDS->GetMajorVersion() >= 8 && l_poSRS && l_poSRS->IsGeographic() )
+        {
+            pszAxisOrder = ", 'axis-order=long-lat'";
+        }
+
         snprintf( pszWHERE, nWHERELen,
-                 "WHERE MBRIntersects(%s('%s', '%d'), `%s`)",
+                 "WHERE MBRIntersects(%s('%s', %d%s), `%s`)",
                  poDS->GetMajorVersion() >= 8 ? "ST_GeomFromText" : "GeomFromText",
                  szEnvelope,
                  nSRSId,
+                 pszAxisOrder,
                  pszGeomColumn);
     }
 
@@ -777,12 +785,18 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
 
         if( pszWKT != nullptr )
         {
+            const char* pszAxisOrder = "";
+            OGRSpatialReference* l_poSRS = GetSpatialRef();
+            if( poDS->GetMajorVersion() >= 8 && l_poSRS && l_poSRS->IsGeographic() )
+            {
+                pszAxisOrder = ", 'axis-order=long-lat'";
+            }
 
             osCommand +=
                 CPLString().Printf(
-                    "%s('%s',%d) ",
+                    "%s('%s',%d%s) ",
                     poDS->GetMajorVersion() >= 8 ? "ST_GeomFromText" : "GeometryFromText",
-                    pszWKT, nSRSId );
+                    pszWKT, nSRSId, pszAxisOrder );
 
             CPLFree( pszWKT );
         }
