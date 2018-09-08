@@ -1240,14 +1240,21 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForc
         return OGRERR_FAILURE;
     }
 
+    ResetReading();
+
     OGREnvelope oEnv;
     CPLString   osCommand;
     GBool       bExtentSet = FALSE;
 
     if( poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB() )
-        osCommand.Printf( "SELECT ST_Envelope(`%s`) FROM `%s`;", pszGeomColumn, pszGeomColumnTable);
+    {
+        // ST_Envelope() does not work on geographic SRS, so force to 0
+        osCommand.Printf( "SELECT ST_Envelope(ST_SRID(`%s`,0)) FROM `%s`;", pszGeomColumn, pszGeomColumnTable);
+    }
     else
+    {
         osCommand.Printf( "SELECT Envelope(`%s`) FROM `%s`;", pszGeomColumn, pszGeomColumnTable);
+    }
 
     if (mysql_query(poDS->GetConn(), osCommand) == 0)
     {
@@ -1303,6 +1310,10 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForc
         }
 
         mysql_free_result(result);
+    }
+    else
+    {
+        poDS->ReportError(  osCommand.c_str() );
     }
 
     return bExtentSet ? OGRERR_NONE : OGRERR_FAILURE;

@@ -977,10 +977,25 @@ def ogr_mysql_longlat():
     geom = ogr.CreateGeometryFromWkt('POINT(150 2)')
     f.SetGeometry(geom)
     lyr.CreateFeature(f)
+
     lyr.SetSpatialFilterRect(149.5, 1.5, 150.5, 2.5)
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, geom) != 0:
         return 'fail'
+
+    extent = lyr.GetExtent()
+    expect = (150.0, 150.0, 2.0, 2.0)
+
+    minx = abs(extent[0] - expect[0])
+    maxx = abs(extent[1] - expect[1])
+    miny = abs(extent[2] - expect[2])
+    maxy = abs(extent[3] - expect[3])
+
+    if max(minx, maxx, miny, maxy) > 0.0001:
+        gdaltest.post_reason('Extents do not match')
+        print(extent)
+        return 'fail'
+
 
     return 'success'
 
