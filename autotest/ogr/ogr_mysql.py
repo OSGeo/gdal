@@ -35,6 +35,7 @@ import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import gdal
+from osgeo import osr
 
 # E. Rouault : this is almost a copy & paste from ogr_pg.py
 
@@ -59,15 +60,22 @@ def ogr_mysql_1():
     except:
         return 'skip'
 
-    try:
-        gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update=1)
-    except:
-        gdaltest.mysql_ds = None
-
-    if gdaltest.mysql_ds is not None:
-        return 'success'
+    val = gdal.GetConfigOption('OGR_MYSQL_CONNECTION_STRING', None)
+    if val is not None:
+        gdaltest.mysql_connection_string = val
     else:
+        gdaltest.mysql_connection_string = 'MYSQL:autotest'
+
+    gdaltest.mysql_ds = ogr.Open(gdaltest.mysql_connection_string, update=1)
+    if gdaltest.mysql_ds is None:
         return 'skip'
+
+    sql_lyr = gdaltest.mysql_ds.ExecuteSQL("SELECT VERSION()")
+    f = sql_lyr.GetNextFeature()
+    gdaltest.mysql_version_major = int(f.GetField(0).split('.')[0])
+    gdaltest.mysql_ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -707,7 +715,11 @@ def ogr_mysql_23():
 
     ######################################################
     # Create a layer with a single feature through SQL
-    gdaltest.mysql_lyr = gdaltest.mysql_ds.ExecuteSQL("SELECT ROUND(1.1,0) AS zero, ROUND(2.0, 0) AS widthonly, ROUND(1.1,1) AS onedecimal, ROUND(0.12345678901234567890123456789,29) AS twentynine, GeomFromText(CONVERT('POINT(1.0 2.0)',CHAR)) as the_geom;")
+
+    if gdaltest.mysql_version_major >= 8:
+        gdaltest.mysql_lyr = gdaltest.mysql_ds.ExecuteSQL("SELECT ROUND(1.1,0) AS zero, ROUND(2.0, 0) AS widthonly, ROUND(1.1,1) AS onedecimal, ROUND(0.12345678901234567890123456789,29) AS twentynine, ST_GeomFromText(CONVERT('POINT(1.0 2.0)',CHAR)) as the_geom;")
+    else:
+        gdaltest.mysql_lyr = gdaltest.mysql_ds.ExecuteSQL("SELECT ROUND(1.1,0) AS zero, ROUND(2.0, 0) AS widthonly, ROUND(1.1,1) AS onedecimal, ROUND(0.12345678901234567890123456789,29) AS twentynine, GeomFromText(CONVERT('POINT(1.0 2.0)',CHAR)) as the_geom;")
 
     feat = gdaltest.mysql_lyr.GetNextFeature()
     if feat is None:
@@ -746,7 +758,7 @@ def ogr_mysql_24():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + " 'MYSQL:autotest' tpoly")
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + " '" + gdaltest.mysql_connection_string + "' tpoly")
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         print(ret)
@@ -797,7 +809,7 @@ def ogr_mysql_72():
 
     gdaltest.mysql_ds = None
     # Test with normal protocol
-    gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update=1)
+    gdaltest.mysql_ds = ogr.Open(gdaltest.mysql_connection_string, update=1)
     lyr = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_72')
     if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
         gdaltest.post_reason('fail')
@@ -857,7 +869,7 @@ def ogr_mysql_25():
         f = None
 
     gdaltest.mysql_ds = None
-    gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update=1)
+    gdaltest.mysql_ds = ogr.Open(gdaltest.mysql_connection_string, update=1)
     lyr = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_25')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
         gdaltest.post_reason('fail')
@@ -924,7 +936,7 @@ def ogr_mysql_26():
     f = None
 
     gdaltest.mysql_ds = None
-    gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update=1)
+    gdaltest.mysql_ds = ogr.Open(gdaltest.mysql_connection_string, update=1)
     lyr = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_26')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() != "'a''b'":
         gdaltest.post_reason('fail')
@@ -970,6 +982,32 @@ def ogr_mysql_26():
 #
 
 
+def ogr_mysql_longlat():
+
+    if gdaltest.mysql_ds is None:
+        return 'skip'
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('WGS84')
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_longlat',
+                                        geom_type=ogr.wkbPoint,
+                                        srs=srs,
+                                        options=['ENGINE=MyISAM'])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POINT(150 2)')
+    f.SetGeometry(geom)
+    lyr.CreateFeature(f)
+    lyr.SetSpatialFilterRect(149.5, 1.5, 150.5, 2.5)
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, geom) != 0:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
+
+
 def ogr_mysql_cleanup():
 
     if gdaltest.mysql_ds is None:
@@ -981,10 +1019,12 @@ def ogr_mysql_cleanup():
     with gdaltest.error_handler():
         gdaltest.mysql_ds.ExecuteSQL('DROP TABLE tablewithoutspatialindex')
     gdaltest.mysql_ds.ExecuteSQL('DROP TABLE geometry_columns')
-    gdaltest.mysql_ds.ExecuteSQL('DROP TABLE spatial_ref_sys')
+    if gdaltest.mysql_version_major < 8:
+        gdaltest.mysql_ds.ExecuteSQL('DROP TABLE spatial_ref_sys')
     gdaltest.mysql_ds.ExecuteSQL('DROP TABLE ogr_mysql_72')
     gdaltest.mysql_ds.ExecuteSQL('DROP TABLE ogr_mysql_25')
     gdaltest.mysql_ds.ExecuteSQL('DROP TABLE ogr_mysql_26')
+    gdaltest.mysql_ds.ExecuteSQL('DROP TABLE ogr_mysql_longlat')
 
     gdaltest.mysql_ds.Destroy()
     gdaltest.mysql_ds = None
@@ -1019,6 +1059,7 @@ gdaltest_list = [
     ogr_mysql_72,
     ogr_mysql_25,
     ogr_mysql_26,
+    ogr_mysql_longlat,
     ogr_mysql_cleanup
 ]
 
