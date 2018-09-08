@@ -1453,4 +1453,4 @@ if __name__ == '__main__':
     else:
         gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [visoss_cleanup])
 
-    gdaltest.summarize()
+    sys.exit(gdaltest.summarize())

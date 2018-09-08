@@ -1244,7 +1244,10 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForc
     CPLString   osCommand;
     GBool       bExtentSet = FALSE;
 
-    osCommand.Printf( "SELECT Envelope(`%s`) FROM `%s`;", pszGeomColumn, pszGeomColumnTable);
+    if( poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB() )
+        osCommand.Printf( "SELECT ST_Envelope(`%s`) FROM `%s`;", pszGeomColumn, pszGeomColumnTable);
+    else
+        osCommand.Printf( "SELECT Envelope(`%s`) FROM `%s`;", pszGeomColumn, pszGeomColumnTable);
 
     if (mysql_query(poDS->GetConn(), osCommand) == 0)
     {

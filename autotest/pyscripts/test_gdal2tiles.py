@@ -359,4 +359,4 @@ if __name__ == '__main__':
 
     gdaltest.setup_run('test_gdal2tiles_py')
     gdaltest.run_tests(gdaltest_list)
-    gdaltest.summarize()
+    sys.exit(gdaltest.summarize())

@@ -1626,4 +1626,4 @@ if __name__ == '__main__':
     gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', 'NO')
     gdaltest.run_tests(gdaltest_list)
 
-    gdaltest.summarize()
+    sys.exit(gdaltest.summarize())

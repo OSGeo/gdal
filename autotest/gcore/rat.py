@@ -186,4 +186,4 @@ if __name__ == '__main__':
     gdaltest.setup_run('rat')
     gdaltest.run_tests(gdaltest_list)
 
-    gdaltest.summarize()
+    sys.exit(gdaltest.summarize())

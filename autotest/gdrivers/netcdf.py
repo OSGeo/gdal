@@ -3451,4 +3451,4 @@ if __name__ == '__main__':
     # make sure we cleanup
     gdaltest.clean_tmp()
 
-    gdaltest.summarize()
+    sys.exit(gdaltest.summarize())

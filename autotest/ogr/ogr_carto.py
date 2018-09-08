@@ -1321,4 +1321,4 @@ if __name__ == '__main__':
     else:
         gdaltest.run_tests(gdaltest_rw_list)
 
-    gdaltest.summarize()
+    sys.exit(gdaltest.summarize())

@@ -591,6 +591,7 @@ def ogr_mysql_19():
 
     if max(minx, maxx, miny, maxy) > 0.0001:
         gdaltest.post_reason('Extents do not match')
+        print(extent)
         return 'fail'
 
     return 'success'
@@ -1048,4 +1049,4 @@ if __name__ == '__main__':
 
     gdaltest.run_tests(gdaltest_list)
 
-    gdaltest.summarize()
+    sys.exit(gdaltest.summarize())
