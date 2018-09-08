@@ -85,7 +85,7 @@ OGRMySQLDataSource::~OGRMySQLDataSource()
 
 int OGRMySQLDataSource::GetUnknownSRID() const
 {
-    return m_nMajor >= 8 ? 0 : -1;
+    return m_nMajor >= 8 && !m_bIsMariaDB ? 0 : -1;
 }
 
 /************************************************************************/
@@ -270,6 +270,7 @@ int OGRMySQLDataSource::Open( const char * pszNewName, char** papszOpenOptionsIn
             const char* pszDot = strchr(pszVersion, '.');
             if( pszDot )
                 m_nMinor = atoi(pszDot+1);
+            m_bIsMariaDB = strstr(pszVersion, "MariaDB") != nullptr;
         }
         delete versionFeat;
         ReleaseResultSet(versionLyr);
@@ -430,7 +431,7 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
         hResult = nullptr;
     }
 
-    if( GetMajorVersion() < 8 )
+    if( GetMajorVersion() < 8 || IsMariaDB() )
     {
         pszCommand = "DESCRIBE spatial_ref_sys";
         if( mysql_query(GetConn(), pszCommand ) )
@@ -493,7 +494,7 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
     hResult = nullptr;
 
     char szCommand[128] = {};
-    if( GetMajorVersion() < 8 )
+    if( GetMajorVersion() < 8 || IsMariaDB() )
     {
         snprintf( szCommand, sizeof(szCommand),
                 "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
@@ -611,7 +612,7 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         nAuthorityCode = atoi( oSRS.GetAuthorityCode(nullptr) );
         if( nAuthorityCode > 0 )
         {
-            if( GetMajorVersion() < 8 )
+            if( GetMajorVersion() < 8 || IsMariaDB() )
             {
                 osCommand.Printf(
                         "SELECT srid FROM spatial_ref_sys WHERE "
@@ -668,7 +669,7 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      Try to find in the existing record.                             */
 /* -------------------------------------------------------------------- */
-    if( GetMajorVersion() < 8 )
+    if( GetMajorVersion() < 8 || IsMariaDB() )
     {
         osCommand.Printf(
                 "SELECT srid FROM spatial_ref_sys WHERE srtext = '%s'",
@@ -712,7 +713,7 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     hResult = nullptr;
 
     // TODO: try to insert in INFORMATION_SCHEMA.ST_SPATIAL_REFERENCE_SYSTEMS
-    if( GetMajorVersion() >= 8 )
+    if( GetMajorVersion() >= 8 && !IsMariaDB() )
     {
         CPLFree(pszWKT);
         return GetUnknownSRID();
