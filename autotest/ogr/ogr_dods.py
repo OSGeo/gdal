@@ -251,4 +251,4 @@ if __name__ == '__main__':
 
     gdaltest.run_tests(manual_gdaltest_list)
 
-    gdaltest.summarize()
+    sys.exit(gdaltest.summarize())

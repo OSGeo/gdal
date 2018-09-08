@@ -342,4 +342,4 @@ if __name__ == '__main__':
         gdaltest.run_tests(gdaltest_list)
     else:
         print("These tests only run on Windows")
-    gdaltest.summarize()
+    sys.exit(gdaltest.summarize())

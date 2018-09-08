@@ -964,4 +964,4 @@ gdaltest_list = [
 if __name__ == '__main__':
     gdaltest.setup_run('pixfun')
     gdaltest.run_tests(gdaltest_list)
-    gdaltest.summarize()
+    sys.exit(gdaltest.summarize())
