@@ -2000,6 +2000,11 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->pabyHeader[0] == 0x1F &&
         poOpenInfo->pabyHeader[1] == 0x8B )
     {
+        // Prevent recursion
+        if( STARTS_WITH(poOpenInfo->pszFilename, "/vsigzip/") )
+        {
+            return FALSE;
+        }
         CPLConfigOptionSetter oSetter(
             "CPL_VSIL_GZIP_WRITE_PROPERTIES", "NO", false);
         GDALOpenInfo oOpenInfo( (CPLString("/vsigzip/") +
