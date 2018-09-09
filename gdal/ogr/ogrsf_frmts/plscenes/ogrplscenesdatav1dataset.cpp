@@ -552,7 +552,7 @@ retry:
         CPLString osActivate = json_object_get_string(poActivate);
         poLocation = nullptr;
         json_object_put(poObj);
-        poObj = RunRequest( osActivate, FALSE, "POST", false );
+        poObj = RunRequest( osActivate, FALSE, "GET", false );
         if( poObj != nullptr )
             json_object_put(poObj);
         poObj = nullptr;
