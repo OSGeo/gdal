@@ -156,7 +156,8 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     papszOverrideColumnTypes(nullptr),
     nForcedSRSId(UNDETERMINED_SRID),
     nForcedGeometryTypeFlags(-1),
-    bCreateSpatialIndexFlag(TRUE),
+    bCreateSpatialIndexFlag(true),
+    osSpatialIndexType("GIST"),
     bInResetReading(FALSE),
     bAutoFIDOnCreateViaCopy(FALSE),
     bUseCopyByDefault(FALSE),
@@ -2266,10 +2267,11 @@ OGRErr OGRPGTableLayer::RunCreateSpatialIndex( OGRPGGeomFieldDefn *poGeomField )
     PGconn *hPGConn = poDS->GetPGConn();
     CPLString osCommand;
 
-    osCommand.Printf("CREATE INDEX %s ON %s USING GIST (%s)",
+    osCommand.Printf("CREATE INDEX %s ON %s USING %s (%s)",
                     OGRPGEscapeColumnName(
                         CPLSPrintf("%s_%s_geom_idx", pszTableName, poGeomField->GetNameRef())).c_str(),
                     pszSqlTableName,
+                    osSpatialIndexType.c_str(),
                     OGRPGEscapeColumnName(poGeomField->GetNameRef()).c_str());
 
     PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());

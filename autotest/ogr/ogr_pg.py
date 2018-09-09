@@ -103,7 +103,10 @@ def ogr_pg_1():
 
     gdaltest.pg_retrieve_fid = False
     if version_str[0:11] == "PostgreSQL ":
-        if float(version_str[11:14]) >= 8.2:
+        v = version_str[11:14]
+        if v.endswith('b'):
+            v = v[0:-1]
+        if float(v) >= 8.2:
             gdaltest.pg_retrieve_fid = True
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')

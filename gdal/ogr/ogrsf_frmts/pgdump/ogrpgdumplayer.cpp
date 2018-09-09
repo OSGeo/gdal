@@ -1750,10 +1750,11 @@ OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
 
         if( bCreateSpatialIndexFlag )
         {
-            osCommand.Printf("CREATE INDEX %s ON %s USING GIST (%s)",
+            osCommand.Printf("CREATE INDEX %s ON %s USING %s (%s)",
                             OGRPGDumpEscapeColumnName(
                                 CPLSPrintf("%s_%s_geom_idx", GetName(), poGeomField->GetNameRef())).c_str(),
                             pszSqlTableName,
+                            osSpatialIndexType.c_str(),
                             OGRPGDumpEscapeColumnName(poGeomField->GetNameRef()).c_str());
 
             poDS->Log(osCommand);

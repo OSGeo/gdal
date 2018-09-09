@@ -292,7 +292,8 @@ class OGRPGTableLayer final: public OGRPGLayer
     char              **papszOverrideColumnTypes;
     int                 nForcedSRSId;
     int                 nForcedGeometryTypeFlags;
-    int                 bCreateSpatialIndexFlag;
+    bool                bCreateSpatialIndexFlag;
+    CPLString           osSpatialIndexType;
     int                 bInResetReading;
 
     int                 bAutoFIDOnCreateViaCopy;
@@ -387,8 +388,9 @@ public:
                                 { nForcedSRSId = nForcedSRSIdIn; }
     void                SetForcedGeometryTypeFlags( int GeometryTypeFlagsIn )
                                 { nForcedGeometryTypeFlags = GeometryTypeFlagsIn; }
-    void                SetCreateSpatialIndexFlag( int bFlag )
-                                { bCreateSpatialIndexFlag = bFlag; }
+    void                SetCreateSpatialIndex( bool bFlag, const char* pszSpatialIndexType )
+                                { bCreateSpatialIndexFlag = bFlag;
+                                  osSpatialIndexType = pszSpatialIndexType; }
     void                SetForcedDescription( const char* pszDescriptionIn );
     void                AllowAutoFIDOnCreateViaCopy() { bAutoFIDOnCreateViaCopy = TRUE; }
     void                SetUseCopy() { bUseCopy = TRUE; bUseCopyByDefault = TRUE; }
