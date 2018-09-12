@@ -2373,7 +2373,7 @@ elif test "$with_hdf5" = "yes" -o "$with_hdf5" = "" ; then
 
   HDF5_CFLAGS=""
   HDF5_LIBS=""
-  PKG_PROG_PKG_CONFIG([0.25]) # check and set $PKG_CONFIG
+  PKG_PROG_PKG_CONFIG([0.21]) # check and set $PKG_CONFIG
   PKG_CHECK_MODULES([HDF5], [hdf5], [HAVE_HDF5=yes], [HAVE_HDF5=no])
 
   if test "$HAVE_HDF5" = "yes"; then
@@ -2731,7 +2731,7 @@ if test "$with_openjpeg" = "no" ; then
 
 else
 
-  PKG_PROG_PKG_CONFIG([0.25])
+  PKG_PROG_PKG_CONFIG([0.21])
   PKG_CHECK_MODULES([OPENJPEG], [libopenjp2 >= 2.1.0],
         [OPENJPEG_VERSION=`$PKG_CONFIG --modversion libopenjp2`],
         [OPENJPEG_VERSION=;])

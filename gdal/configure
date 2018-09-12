@@ -26575,7 +26575,7 @@ fi
 
 fi
 if test -n "$PKG_CONFIG"; then
-	_pkg_min_version=0.25
+	_pkg_min_version=0.21
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
 $as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
 	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
@@ -27686,7 +27686,7 @@ fi
 
 fi
 if test -n "$PKG_CONFIG"; then
-	_pkg_min_version=0.25
+	_pkg_min_version=0.21
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
 $as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
 	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
@@ -29970,7 +29970,7 @@ fi
 
 fi
 if test -n "$PKG_CONFIG"; then
-	_pkg_min_version=0.25
+	_pkg_min_version=0.21
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
 $as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
 	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
