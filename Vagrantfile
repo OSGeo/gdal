@@ -160,6 +160,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 #    "grass-dev",
     "libcharls-dev",
     "libgeotiff-dev",
+    "libgeotiff-epsg",
     "sqlite3-pcre",
     "libpcre3-dev",
     "libspatialite-dev",
