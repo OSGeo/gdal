@@ -354,7 +354,7 @@ def envi_15():
 
     gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/envi_15.dat', src_ds)
 
-    ds = gdal.Open('data/rotation.img')
+    ds = gdal.Open('/vsimem/envi_15.dat')
     got_gt = ds.GetGeoTransform()
     if max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6)]) > 1e-5:
         gdaltest.post_reason('did not get expected geotransform')
@@ -362,6 +362,31 @@ def envi_15():
         return 'fail'
     ds = None
     gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_15.dat')
+
+    return 'success'
+
+###############################################################################
+# Test reading a truncated ENVI dataset (see #915)
+
+
+def envi_truncated():
+
+    gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/envi_truncated.dat',
+                                            gdal.Open('data/byte.tif'))
+
+    f = gdal.VSIFOpenL('/vsimem/envi_truncated.dat', 'wb+')
+    gdal.VSIFTruncateL(f, 20 * 20 / 2)
+    gdal.VSIFCloseL(f)
+
+    with gdaltest.config_option('RAW_CHECK_FILE_SIZE', 'YES'):
+        ds = gdal.Open('/vsimem/envi_truncated.dat')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_truncated.dat')
+
+    if cs != 2315:
+        print(cs)
+        return 'fail'
 
     return 'success'
 
@@ -382,6 +407,7 @@ gdaltest_list = [
     envi_13,
     envi_14,
     envi_15,
+    envi_truncated,
 ]
 
 
