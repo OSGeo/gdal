@@ -358,8 +358,6 @@ OGRErr      OGREditableLayer::ISetFeature( OGRFeature *poFeature )
     }
     delete poMemFeature;
 
-    ResetReading();
-
     return eErr;
 }
 
