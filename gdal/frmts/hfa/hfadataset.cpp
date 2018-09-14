@@ -3043,6 +3043,7 @@ CPLErr HFARasterBand::SetDefaultRAT( const GDALRasterAttributeTable * poRAT )
     if( poRAT == nullptr )
         return CE_Failure;
 
+    delete poDefaultRAT;
     poDefaultRAT = nullptr;
 
     CPLErr r = WriteNamedRAT("Descriptor_Table", poRAT);
