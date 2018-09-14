@@ -375,7 +375,7 @@ def envi_truncated():
                                             gdal.Open('data/byte.tif'))
 
     f = gdal.VSIFOpenL('/vsimem/envi_truncated.dat', 'wb+')
-    gdal.VSIFTruncateL(f, 20 * 20 / 2)
+    gdal.VSIFTruncateL(f, int(20 * 20 / 2))
     gdal.VSIFCloseL(f)
 
     with gdaltest.config_option('RAW_CHECK_FILE_SIZE', 'YES'):
