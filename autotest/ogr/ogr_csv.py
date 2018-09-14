@@ -2685,6 +2685,33 @@ def ogr_csv_string_quoting_if_needed():
     return 'success'
 
 ###############################################################################
+
+
+def ogr_csv_iter_and_set_feature():
+    gdal.FileFromMemBuffer('/vsimem/ogr_csv_iter_and_set_feature.csv',
+                           """id,str
+1,
+2,
+""")
+
+    ds = gdal.OpenEx('/vsimem/ogr_csv_iter_and_set_feature.csv',
+                     gdal.OF_UPDATE)
+    lyr = ds.GetLayer(0)
+    count = 0
+    for f in lyr:
+        lyr.SetFeature(f)
+        count += 1
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_csv_iter_and_set_feature.csv')
+
+    if count != 2:
+        print(count)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 
@@ -2774,6 +2801,7 @@ gdaltest_list = [
     ogr_csv_string_quoting_always,
     ogr_csv_string_quoting_if_ambiguous,
     ogr_csv_string_quoting_if_needed,
+    ogr_csv_iter_and_set_feature,
     ogr_csv_cleanup]
 
 if __name__ == '__main__':
