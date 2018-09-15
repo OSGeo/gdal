@@ -58,7 +58,13 @@ def postgisraster_init():
         gdaltest.postgisrasterDriver = None
         return 'skip'
 
-    gdaltest.postgisraster_connection_string_without_schema = "PG:host='localhost' dbname='autotest'"
+    val = gdal.GetConfigOption('GDAL_PG_CONNECTION_STRING', None)
+    if val is not None:
+        gdaltest.pg_connection_string = val
+    else:
+        gdaltest.pg_connection_string = "host='localhost' dbname='autotest'"
+
+    gdaltest.postgisraster_connection_string_without_schema = "PG:" + gdaltest.pg_connection_string
     gdaltest.postgisraster_connection_string = gdaltest.postgisraster_connection_string_without_schema
 
     # Make sure we have SRID=26711 in spatial_ref_sys
@@ -556,6 +562,12 @@ def postgisraster_test_constraint_with_spi():
 def postgisraster_test_outdb():
 
     if gdaltest.postgisrasterDriver is None:
+        return 'skip'
+
+    # For some reason fails with
+    # ERROR 1: PostGISRasterRasterBand::IRasterIO(): ERROR:  rt_band_load_offline_data: Cannot open offline raster: /home/travis/build/rouault/gdal/autotest/gdrivers/data/small_world.tif
+    # See https://api.travis-ci.org/v3/job/428972866/log.txt
+    if gdaltest.is_travis_branch('ubuntu_1804'):
         return 'skip'
 
     ds = ogr.Open(gdaltest.postgisraster_connection_string_without_schema)

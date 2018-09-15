@@ -26,6 +26,7 @@ chroot "$chroot" sh -c "cd $PWD/gdal/apps && make USER_DEFS=-Werror -j3 test_ogr
 sudo chroot "$chroot" sh -c "rm -f /usr/lib/libgdal.so*"
 sudo chroot "$chroot" sh -c "cd $PWD/gdal && make install"
 sudo chroot "$chroot" sh -c "sudo ldconfig"
+sudo chroot "$chroot" sh -c "ln -s libgdal.so /usr/lib/libgdal.so.20"
 chroot "$chroot" sh -c "cd $PWD/autotest/cpp && CCACHE_CPP2=yes make -j3"
 
 chroot "$chroot" ccache -s
