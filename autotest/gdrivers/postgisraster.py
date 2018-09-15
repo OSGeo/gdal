@@ -475,7 +475,7 @@ def postgisraster_test_serial():
         if k[-4:] == 'NAME':
             # Ensure the subdataset has upperleftx and upperlefty coords,
             # as there is no unique key on the table
-            if not re.search("where='serialid = \d+'", src_md[k]):
+            if not re.search("where='\"serialid\" = \d+'", src_md[k]):
                 print(k, ':', src_md[k])
                 return 'fail'
 
@@ -510,7 +510,7 @@ def postgisraster_test_unique():
         if k[-4:] == 'NAME':
             # Ensure the subdataset has upperleftx and upperlefty coords,
             # as there is no unique key on the table
-            if not re.search("where='uniq = \d+'", src_md[k]):
+            if not re.search("where='\"uniq\" = \d+'", src_md[k]):
                 print(k, ':', src_md[k])
                 return 'fail'
 

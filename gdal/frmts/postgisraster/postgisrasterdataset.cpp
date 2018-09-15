@@ -3439,9 +3439,6 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
     GBool bInsertSuccess;
 
     CPLString osCommand;
-    CPLString osSchemaI(CPLQuotedSQLIdentifier(pszSchema));
-    CPLString osTableI(CPLQuotedSQLIdentifier(pszTable));
-    CPLString osColumnI(CPLQuotedSQLIdentifier(pszColumn));
 
     if( poGSrcDS->GetDriver() != GDALGetDriverByName("PostGISRaster") )
     {
@@ -3480,6 +3477,10 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
         // if connection info fails, browsing mode, or no table set
         return nullptr;
     }
+
+    CPLString osSchemaI(CPLQuotedSQLIdentifier(pszSchema));
+    CPLString osTableI(CPLQuotedSQLIdentifier(pszTable));
+    CPLString osColumnI(CPLQuotedSQLIdentifier(pszColumn));
 
     // begin transaction
     poResult = PQexec(poConn, "begin");
@@ -3738,9 +3739,9 @@ PostGISRasterDataset::InsertRaster(PGconn * poConn,
     CPLString osSchemaI(CPLQuotedSQLIdentifier(pszSchema));
     CPLString osTableI(CPLQuotedSQLIdentifier(pszTable));
     CPLString osColumnI(CPLQuotedSQLIdentifier(pszColumn));
-    CPLString osSrcColumnI(CPLQuotedSQLIdentifier(poSrcDS->pszSchema));
-    CPLString osSrcSchemaI(CPLQuotedSQLIdentifier(poSrcDS->pszTable));
-    CPLString osSrcTableI(CPLQuotedSQLIdentifier(poSrcDS->pszColumn));
+    CPLString osSrcSchemaI(CPLQuotedSQLIdentifier(poSrcDS->pszSchema));
+    CPLString osSrcTableI(CPLQuotedSQLIdentifier(poSrcDS->pszTable));
+    CPLString osSrcColumnI(CPLQuotedSQLIdentifier(poSrcDS->pszColumn));
 
     if (poSrcDS->pszWhere == nullptr) {
         osCommand.Printf("insert into %s.%s (%s) (select %s from %s.%s)",
