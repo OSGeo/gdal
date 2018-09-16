@@ -121,8 +121,14 @@ void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS,
         pszName = CPLGetBasename(pszName);
     }
 
+    auto eGeomType = OGRESRIJSONGetGeometryType(poGJObject_);
+    if( eGeomType == wkbNone && poSRS != nullptr )
+    {
+        eGeomType = wkbUnknown;
+    }
+
     poLayer_ = new OGRGeoJSONLayer( pszName, poSRS,
-                                    OGRESRIJSONGetGeometryType(poGJObject_),
+                                    eGeomType,
                                     poDS, nullptr );
     if( poSRS != nullptr )
         poSRS->Release();
@@ -164,17 +170,17 @@ bool OGRESRIJSONReader::GenerateLayerDefn()
 /* -------------------------------------------------------------------- */
 /*      Scan all features and generate layer definition.                */
 /* -------------------------------------------------------------------- */
-    json_object* poObjFeatures =
+    json_object* poFields =
         OGRGeoJSONFindMemberByName( poGJObject_, "fields" );
-    if( nullptr != poObjFeatures &&
-        json_type_array == json_object_get_type( poObjFeatures ) )
+    if( nullptr != poFields &&
+        json_type_array == json_object_get_type( poFields ) )
     {
-        const int nFeatures = json_object_array_length( poObjFeatures );
+        const int nFeatures = json_object_array_length( poFields );
         for( int i = 0; i < nFeatures; ++i )
         {
-            json_object* poObjFeature =
-                json_object_array_get_idx( poObjFeatures, i );
-            if( !GenerateFeatureDefn( poObjFeature ) )
+            json_object* poField =
+                json_object_array_get_idx( poFields, i );
+            if( !ParseField( poField ) )
             {
                 CPLDebug( "GeoJSON", "Create feature schema failure." );
                 bSuccess = false;
@@ -183,17 +189,17 @@ bool OGRESRIJSONReader::GenerateLayerDefn()
     }
     else
     {
-        poObjFeatures = OGRGeoJSONFindMemberByName(
+        poFields = OGRGeoJSONFindMemberByName(
             poGJObject_, "fieldAliases" );
-        if( nullptr != poObjFeatures &&
-            json_object_get_type(poObjFeatures) == json_type_object )
+        if( nullptr != poFields &&
+            json_object_get_type(poFields) == json_type_object )
         {
             OGRFeatureDefn* poDefn = poLayer_->GetLayerDefn();
             json_object_iter it;
             it.key = nullptr;
             it.val = nullptr;
             it.entry = nullptr;
-            json_object_object_foreachC( poObjFeatures, it )
+            json_object_object_foreachC( poFields, it )
             {
                 OGRFieldDefn fldDefn( it.key, OFTString );
                 poDefn->AddFieldDefn( &fldDefn );
@@ -212,10 +218,10 @@ bool OGRESRIJSONReader::GenerateLayerDefn()
 }
 
 /************************************************************************/
-/*                        GenerateFeatureDefn()                         */
+/*                             ParseField()                             */
 /************************************************************************/
 
-bool OGRESRIJSONReader::GenerateFeatureDefn( json_object* poObj )
+bool OGRESRIJSONReader::ParseField( json_object* poObj )
 {
     OGRFeatureDefn* poDefn = poLayer_->GetLayerDefn();
     CPLAssert( nullptr != poDefn );
@@ -293,14 +299,13 @@ OGRGeometry* OGRESRIJSONReader::ReadGeometry( json_object* poObj )
 {
     OGRGeometry* poGeometry = nullptr;
 
-    const OGRwkbGeometryType eType = poLayer_->GetGeomType();
-    if( eType == wkbPoint )
+    if( OGRGeoJSONFindMemberByName(poObj, "x") )
         poGeometry = OGRESRIJSONReadPoint( poObj );
-    else if( eType == wkbLineString )
+    else if( OGRGeoJSONFindMemberByName(poObj, "paths") )
         poGeometry = OGRESRIJSONReadLineString( poObj );
-    else if( eType == wkbPolygon )
+    else if( OGRGeoJSONFindMemberByName(poObj, "rings") )
         poGeometry = OGRESRIJSONReadPolygon( poObj );
-    else if( eType == wkbMultiPoint )
+    else if( OGRGeoJSONFindMemberByName(poObj, "points") )
         poGeometry = OGRESRIJSONReadMultiPoint( poObj );
 
     return poGeometry;

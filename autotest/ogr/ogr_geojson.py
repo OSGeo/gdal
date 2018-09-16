@@ -4146,6 +4146,35 @@ def ogr_geojson_append_flush():
 
     return 'success'
 
+###############################################################################
+
+
+def ogr_esrijson_without_geometryType():
+
+    ds = ogr.Open("""{
+  "spatialReference" : {
+    "wkid" : 4326
+  },
+  "fields": [],
+  "fieldAliases": {},
+  "features" : [
+    {
+      "geometry" : {
+        "x" : 2,
+        "y" : 49
+      },
+      "attributes" : {
+      }
+    }
+  ]
+}
+""")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef() is None:
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 
@@ -4258,6 +4287,7 @@ gdaltest_list = [
     ogr_geojson_geom_export_failure,
     ogr_geojson_starting_with_crs,
     ogr_geojson_append_flush,
+    ogr_esrijson_without_geometryType,
     ogr_geojson_cleanup]
 
 if __name__ == '__main__':

@@ -259,7 +259,7 @@ private:
     // Translation utilities.
     //
     bool GenerateLayerDefn();
-    bool GenerateFeatureDefn( json_object* poObj );
+    bool ParseField( json_object* poObj );
     bool AddFeature( OGRFeature* poFeature );
 
     OGRGeometry* ReadGeometry( json_object* poObj );
