@@ -60,6 +60,27 @@ void OGRGeoJSONWriteOptions::SetRFC7946Settings()
     bCanPatchCoordinatesWithNativeData = false;
     bHonourReservedRFC7946Members = true;
 }
+
+void OGRGeoJSONWriteOptions::SetIDOptions(CSLConstList papszOptions)
+{
+
+    osIDField = CSLFetchNameValueDef(papszOptions, "ID_FIELD", "");
+    const char* pszIDFieldType = CSLFetchNameValue(papszOptions, "ID_TYPE");
+    if( pszIDFieldType )
+    {
+        if( EQUAL(pszIDFieldType, "String") )
+        {
+            bForceIDFieldType = true;
+            eForcedIDFieldType = OFTString;
+        }
+        else if( EQUAL(pszIDFieldType, "Integer") )
+        {
+            bForceIDFieldType = true;
+            eForcedIDFieldType = OFTInteger64;
+        }
+    }
+}
+
 /*! @endcond */
 
 /************************************************************************/

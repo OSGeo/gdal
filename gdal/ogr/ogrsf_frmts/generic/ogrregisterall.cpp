@@ -95,6 +95,7 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef GEOJSON_ENABLED
     RegisterOGRGeoJSON();
+    RegisterOGRGeoJSONSeq();
     RegisterOGRESRIJSON();
     RegisterOGRTopoJSON();
 #endif
