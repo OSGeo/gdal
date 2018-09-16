@@ -30,7 +30,7 @@
 
 %feature("autodoc");
 
-%module gdal_array
+%module (package="osgeo") gdal_array
 
 %{
 // Define this unconditionally of whether DEBUG_BOOL is defined or not,

@@ -546,7 +546,7 @@ def UseExceptions(*args):
 def DontUseExceptions(*args):
     """DontUseExceptions()"""
     return _ogr.DontUseExceptions(*args)
-import osr
+import osgeo.osr
 class MajorObject(_object):
     """Proxy of C++ GDALMajorObjectShadow class."""
 

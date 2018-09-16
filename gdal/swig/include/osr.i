@@ -37,6 +37,8 @@
 %module "Geo::OSR"
 #elif defined(SWIGCSHARP)
 %module Osr
+#elif defined(SWIGPYTHON)
+%module (package="osgeo") osr
 #else
 %module osr
 #endif
