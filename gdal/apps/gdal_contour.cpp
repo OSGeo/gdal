@@ -7,6 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2003, Applied Coherent Technology (www.actgate.com).
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2018, Oslandia <infos at oslandia dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -59,8 +60,8 @@ static void Usage(const char* pszErrorMsg = nullptr)
         "Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]\n"
         "                    [-snodata n] [-f <formatname>] [-i <interval>]\n"
         "                    [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]\n"
-        "                    [-off <offset>] [-fl <level> <level>...]\n"
-        "                    [-nln <outlayername>] [-q]\n"
+        "                    [-off <offset>] [-fl <level> <level>...] [-e <exp_base>]\n"
+        "                    [-nln <outlayername>] [-q] [-p]\n"
         "                    <src_filename> <dst_filename>\n" );
 
     if( pszErrorMsg != nullptr )
@@ -88,6 +89,7 @@ MAIN_START(argc, argv)
     double dfInterval = 0.0;
     double dfNoData = 0.0;
     double dfOffset = 0.0;
+    double dfExpBase = 0.0;
     const char *pszSrcFilename = nullptr;
     const char *pszDstFilename = nullptr;
     const char *pszElevAttrib = nullptr;
@@ -99,6 +101,7 @@ MAIN_START(argc, argv)
     const char *pszNewLayerName = "contour";
     bool bQuiet = false;
     GDALProgressFunc pfnProgress = nullptr;
+    bool bPolygonize = false;
 
     // Check that we are running against at least GDAL 1.4.
     // Note to developers: if we use newer API, please change the requirement.
@@ -145,6 +148,15 @@ MAIN_START(argc, argv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             dfInterval = CPLAtof(argv[++i]);
+        }
+        else if( EQUAL(argv[i],"-e") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            dfExpBase = CPLAtof(argv[++i]);
+        }
+        else if( EQUAL(argv[i],"-p") )
+        {
+            bPolygonize = true;
         }
         else if( EQUAL(argv[i],"-fl") )
         {
@@ -212,9 +224,9 @@ MAIN_START(argc, argv)
             Usage("Too many command options.");
     }
 
-    if( dfInterval == 0.0 && nFixedLevelCount == 0 )
+    if( dfInterval == 0.0 && nFixedLevelCount == 0 && dfExpBase == 0.0 )
     {
-        Usage("Neither -i nor -fl are specified.");
+        Usage("Neither -i nor -fl nor -e are specified.");
     }
 
     if (pszSrcFilename == nullptr)
@@ -305,7 +317,8 @@ MAIN_START(argc, argv)
 
     OGRLayerH hLayer =
         OGR_DS_CreateLayer(hDS, pszNewLayerName, hSRS,
-                           b3D ? wkbLineString25D : wkbLineString,
+                           bPolygonize ? (b3D ? wkbMultiPolygon25D : wkbMultiPolygon )
+                           : (b3D ? wkbLineString25D : wkbLineString),
                            papszLCO);
     if( hLayer == nullptr )
         exit( 1 );
@@ -331,16 +344,54 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 /*      Invoke.                                                         */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr = GDALContourGenerate( hBand, dfInterval, dfOffset,
-                         nFixedLevelCount, adfFixedLevels,
-                         bNoDataSet, dfNoData, hLayer,
-                         OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ),
-                                               "ID" ),
-                         (pszElevAttrib == nullptr) ? -1 :
-                         OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ),
-                                               pszElevAttrib ),
-                         pfnProgress, nullptr );
+    int iIDField = OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ), "ID" );
+    int iElevField = (pszElevAttrib == nullptr) ? -1 :
+        OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ),
+                              pszElevAttrib );
+    char** options = nullptr;
+    if ( nFixedLevelCount > 0 ) {
+        std::string values = "FIXED_LEVELS=";
+        for ( int i = 0; i < nFixedLevelCount; i++ ) {
+            const int sz = 32;
+            char* newValue = new char[sz+1];
+            if ( i == nFixedLevelCount - 1 ) {
+                CPLsnprintf( newValue, sz+1, "%f", adfFixedLevels[i] );
+            }
+            else {
+                CPLsnprintf( newValue, sz+1, "%f,", adfFixedLevels[i] );
+            }
+            values = values + std::string( newValue );
+            delete[] newValue;
+        }
+        options = CSLAddString( options, values.c_str() );
+    }
+    else if ( dfExpBase != 0.0 ) {
+        options = CSLAppendPrintf( options, "LEVEL_EXP_BASE=%f", dfExpBase );
+    }
+    else if ( dfInterval != 0.0 ) {
+        options = CSLAppendPrintf( options, "LEVEL_INTERVAL=%f", dfInterval );
+    }
 
+    if ( dfOffset != 0.0 ) {
+        options = CSLAppendPrintf( options, "LEVEL_BASE=%f", dfOffset );
+    }
+
+    if ( bNoDataSet ) {
+        options = CSLAppendPrintf( options, "NODATA=%.19g", dfNoData );
+    }
+    if ( iIDField != -1 ) {
+        options = CSLAppendPrintf( options, "ID_FIELD=%d", iIDField );
+    }
+    if ( iElevField != -1 ) {
+        options = CSLAppendPrintf( options, "ELEV_FIELD=%d", iElevField );
+    }
+    if ( bPolygonize ) {
+        options = CSLAppendPrintf( options, "POLYGONIZE=YES" );
+    }
+
+    CPLErr eErr = GDALContourGenerateEx( hBand, hLayer, options, pfnProgress, nullptr );
+    
+    CSLDestroy( options );
     OGR_DS_Destroy( hDS );
     GDALClose( hSrcDS );
 

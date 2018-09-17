@@ -165,7 +165,7 @@ def contour_2():
     expected_envelopes = [[1.25, 1.75, 49.25, 49.75],
                           [1.25 + 0.125, 1.75 - 0.125, 49.25 + 0.125, 49.75 - 0.125],
                           [1.25 + 0.125 + 0.0625, 1.75 - 0.125 - 0.0625, 49.25 + 0.125 + 0.0625, 49.75 - 0.125 - 0.0625]]
-    expected_height = [10, 20, 25]
+    expected_height = [10, 20, 25, 10000]
 
     lyr = ogr_ds.ExecuteSQL("select * from contour order by elev asc")
 
@@ -220,8 +220,76 @@ def contour_real_world_case():
         gdaltest.post_reason('fail')
         return 'fail'
     f = ogr_lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(f, 'LINESTRING (4.50497512437811 11.5,4.5 11.501996007984,3.5 11.8333333333333,2.5 11.5049751243781,2.490099009901 11.5,2.0 10.5,2.5 10.1666666666667,3.0 9.5,3.5 9.21428571428571,4.49800399201597 8.5,4.5 8.49857346647646,5.5 8.16666666666667,6.5 8.0,7.5 8.0,8.0 7.5,8.5 7.0,9.490099009901 6.5,9.5 6.49667774086379,10.5 6.16666666666667,11.4950248756219 5.5,11.5 5.49833610648919,12.5 5.49667774086379,13.5 5.49800399201597,13.501996007984 5.5,13.5 5.50199600798403,12.501996007984 6.5,12.5 6.50142653352354,11.5 6.509900990099,10.509900990099 7.5,10.5 7.50142653352354,9.5 7.9,8.50332225913621 8.5,8.5 8.50249376558603,7.83333333333333 9.5,7.5 10.0,7.0 10.5,6.5 10.7857142857143,5.5 11.1666666666667,4.50497512437811 11.5)') != 0:
+    if ogrtest.check_feature_geometry(f, 'LINESTRING (4.50497512437811 11.5,4.5 11.501996007984,3.5 11.8333333333333,2.5 11.5049751243781,2.490099009901 11.5,2.0 10.5,2.5 10.1666666666667,3.0 9.5,3.5 9.21428571428571,4.49800399201597 8.5,4.5 8.49857346647646,5.5 8.16666666666667,6.5 8.0,7.5 8.0,8.0 7.5,8.5 7.0,9.490099009901 6.5,9.5 6.49667774086379,10.5 6.16666666666667,11.4950248756219 5.5,11.5 5.49833610648919,12.5 5.49667774086379,13.5 5.49800399201597,13.501996007984 5.5,13.5 5.50199600798403,12.501996007984 6.5,12.5 6.50142653352354,11.5 6.509900990099,10.509900990099 7.5,10.5 7.50142653352354,9.5 7.9,8.50332225913621 8.5,8.5 8.50249376558603,7.83333333333333 9.5,7.5 10.0,7.0 10.5,6.5 10.7857142857143,5.5 11.1666666666667,4.50497512437811 11.5)', 0.01) != 0:
         return 'fail'
+    return 'success'
+
+# Test with -p option (polygonize)
+
+def contour_3():
+
+    try:
+        os.remove('tmp/contour.shp')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/contour.dbf')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/contour.shx')
+    except OSError:
+        pass
+
+    ogr_ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/contour.shp')
+    ogr_lyr = ogr_ds.CreateLayer('contour', geom_type=ogr.wkbMultiPolygon)
+    field_defn = ogr.FieldDefn('ID', ogr.OFTInteger)
+    ogr_lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn('elev', ogr.OFTReal)
+    ogr_lyr.CreateField(field_defn)
+
+    ds = gdal.Open('tmp/gdal_contour.tif')
+    #gdal.ContourGenerateEx(ds.GetRasterBand(1), 0, 0, 0, [10, 20, 25], 0, 0, ogr_lyr, 0, 1, 1)
+    gdal.ContourGenerateEx(ds.GetRasterBand(1), ogr_lyr, options = [ "FIXED_LEVELS=10,20,25",
+                                                                     "ID_FIELD=0",
+                                                                     "ELEV_FIELD=1",
+                                                                     "POLYGONIZE=TRUE" ] )
+    ds = None
+
+    size = 160
+    precision = 1. / size
+
+    expected_envelopes = [[1.0, 2.0, 49.0, 50.0],
+                          [1.25, 1.75, 49.25, 49.75],
+                          [1.25 + 0.125, 1.75 - 0.125, 49.25 + 0.125, 49.75 - 0.125],
+                          [1.25 + 0.125 + 0.0625, 1.75 - 0.125 - 0.0625, 49.25 + 0.125 + 0.0625, 49.75 - 0.125 - 0.0625]]
+    expected_height = [10, 20, 25, 10000]
+
+    lyr = ogr_ds.ExecuteSQL("select * from contour order by elev asc")
+
+    if lyr.GetFeatureCount() != len(expected_envelopes):
+        print('Got %d features. Expected %d' % (lyr.GetFeatureCount(), len(expected_envelopes)))
+        return 'fail'
+
+    i = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        if i < 3 and feat.GetField('elev') != expected_height[i]:
+            print('Got %f as z. Expected %f' % (feat.GetField('elev'), expected_height[i]))
+            return 'fail'
+        envelope = feat.GetGeometryRef().GetEnvelope()
+        for j in range(4):
+            if abs(expected_envelopes[i][j] - envelope[j]) > precision / 2 * 1.001:
+                print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
+                print(feat.GetGeometryRef().GetEnvelope())
+                print(expected_envelopes[i])
+                print('%f, %f' % (expected_envelopes[i][j] - envelope[j], precision / 2))
+                return 'fail'
+        i = i + 1
+        feat = lyr.GetNextFeature()
+
+    ogr_ds.ReleaseResultSet(lyr)
+    ogr_ds.Destroy()
 
     return 'success'
 
@@ -230,7 +298,6 @@ def contour_real_world_case():
 
 
 def contour_cleanup():
-
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/contour.shp')
     try:
         os.remove('tmp/gdal_contour.tif')
@@ -244,6 +311,7 @@ gdaltest_list = [
     contour_1,
     contour_2,
     contour_real_world_case,
+    contour_3,
     contour_cleanup
 ]
 

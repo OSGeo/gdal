@@ -972,8 +972,8 @@ Builds vector contour lines from a raster elevation model.
 Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]
                     [-snodata n] [-i <interval>]
                     [-f <formatname>] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]
-                    [-off <offset>] [-fl <level> <level>...]
-                    [-nln <outlayername>]
+                    [-off <offset>] [-fl <level> <level>...] [-e <exp_base>]
+                    [-nln <outlayername>] [-p]
                     <src_filename> <dst_filename>
 \endverbatim
 
@@ -1016,8 +1016,16 @@ was ESRI Shapefile). </dd>
 
 <dt> <b>-fl</b> <em>level</em>:</dt>
 <dd> Name one or more "fixed levels" to extract.</dd>
+
+<dt> <b>-e</b> <em>base</em>:</dt><dd>
+ (Since GDAL 2.4) will generate levels on an exponential scale: base ^ k, for k an integer.</dd>
+
 <dt> <b>-nln</b> <em>outlayername</em>:</dt>
 <dd> Provide a name for the output vector layer.  Defaults to "contour".</dd>
+
+<dt> <b>-p</b>:</dt>
+<dd> (Since GDAL 2.4) Generate contour polygons rather than contour lines.</dd>
+
 </dl>
 
 \section gdal_contour_api C API
