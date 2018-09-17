@@ -43,10 +43,6 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-#if defined(_WIN32) && !defined(unix)
-#  include <mbctype.h>  // Multibyte chars stuff.
-#endif
-
 CPL_CVSID("$Id$")
 
 /**********************************************************************
@@ -480,13 +476,6 @@ char *TABCleanFieldName(const char *pszSrcName)
             "Field name '%s' is longer than the max of 31 characters. "
             "'%s' will be used instead.", pszSrcName, pszNewName);
     }
-
-#if defined(_WIN32) && !defined(unix)
-    // On Windows, check if we're using a double-byte codepage, and
-    // if so then just keep the field name as is.
-    if (_getmbcp() != 0)
-        return pszNewName;
-#endif
 
     // According to the MapInfo User's Guide (p. 240, v5.5).
     // New Table Command:
