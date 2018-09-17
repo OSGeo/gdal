@@ -7,8 +7,7 @@ OBJ	=	rawdataset.o ehdrdataset.o pauxdataset.o doq1dataset.o \
 		idadataset.o ndfdataset.o dipxdataset.o genbindataset.o \
 		lcpdataset.o eirdataset.o gtxdataset.o loslasdataset.o \
 		ntv2dataset.o ace2dataset.o snodasdataset.o ctable2dataset.o \
-		krodataset.o roipacdataset.o iscedataset.o rrasterdataset.o \
-		byndataset.o
+		krodataset.o roipacdataset.o iscedataset.o rrasterdataset.o
 
 CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS)  $(CXXFLAGS)
 

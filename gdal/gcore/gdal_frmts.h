@@ -195,7 +195,6 @@ void CPL_DLL GDALRegister_RDA(void);
 void CPL_DLL GDALRegister_EEDAI(void);
 void CPL_DLL GDALRegister_EEDA(void);
 void CPL_DLL GDALRegister_SIGDEM(void);
-void CPL_DLL GDALRegister_BYN(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
