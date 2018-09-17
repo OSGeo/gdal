@@ -3114,7 +3114,7 @@ bool GDALGeoPackageDataset::CreateMetadataTables()
         "violates constraint: column name must be NULL when reference_scope "
         "is \"geopackage\", \"table\" or \"row\"') "
         "WHERE (NEW.reference_scope IN ('geopackage','table','row') "
-        "AND NEW.column_nameIS NOT NULL); "
+        "AND NEW.column_name IS NOT NULL); "
         "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
         "violates constraint: column name must be defined for the specified "
         "table when reference_scope is \"column\" or \"row/col\"') "
