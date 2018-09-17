@@ -883,7 +883,7 @@ int     TABMAPHeaderBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
         WriteBytes(HDR_OBJ_LEN_ARRAY_SIZE, gabyObjLenArray);
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;

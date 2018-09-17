@@ -2709,6 +2709,32 @@ def ogr_mitab_style():
 
     return 'success'
 
+###############################################################################
+
+
+def ogr_mitab_tab_write_field_name_with_dot():
+
+    tmpfile = '/vsimem/ogr_mitab_tab_write_field_name_with_dot.tab'
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(tmpfile)
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('with.dot', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['with.dot'] = 1
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(2 3)'))
+    lyr.CreateFeature(f)
+    with gdaltest.error_handler():
+        ds = None
+
+    ds = ogr.Open(tmpfile)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['with_dot'] != 1:
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(tmpfile)
+
+    return 'success'
 
 ###############################################################################
 #
@@ -2782,6 +2808,7 @@ gdaltest_list = [
     ogr_mitab_tab_field_index_creation,
     ogr_mitab_tab_view,
     ogr_mitab_style,
+    ogr_mitab_tab_write_field_name_with_dot,
     ogr_mitab_cleanup
 ]
 

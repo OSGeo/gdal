@@ -247,8 +247,6 @@ int     TABRawBinBlock::CommitToFile()
  **********************************************************************/
 int     TABRawBinBlock::CommitAsDeleted(GInt32 nNextBlockPtr)
 {
-    int nStatus = 0;
-
     CPLErrorReset();
 
     if ( m_pabyBuf == nullptr )
@@ -265,8 +263,7 @@ int     TABRawBinBlock::CommitAsDeleted(GInt32 nNextBlockPtr)
     WriteInt16(TABMAP_GARB_BLOCK);    // Block type code
     WriteInt32(nNextBlockPtr);
 
-    if( CPLGetLastErrorType() == CE_Failure )
-        nStatus = CPLGetLastErrorNo();
+    int nStatus = CPLGetLastErrorType() == CE_Failure ? -1 : 0;
 
     /*-----------------------------------------------------------------
      * OK, call the base class to write the block to disk.
