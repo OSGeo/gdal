@@ -408,7 +408,7 @@ int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
     /*-----------------------------------------------------------------
      * Make sure all previous calls succeeded.
      *----------------------------------------------------------------*/
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
     {
         // Open Failed... an error has already been reported
         Close();
@@ -1369,7 +1369,7 @@ int TABMAPFile::PrepareNewObj( TABMAPObjHdr *poObjHdr )
      *----------------------------------------------------------------*/
     PrepareCoordBlock(m_nCurObjType, m_poCurObjBlock, &m_poCurCoordBlock);
 
-    if (CPLGetLastErrorNo() != 0 && CPLGetLastErrorType() == CE_Failure)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     m_bUpdated = TRUE;
@@ -2390,7 +2390,7 @@ int TABMAPFile::PrepareCoordBlock(int nObjType,
         // Make sure read/write pointer is at the end of the block
         (*ppoCoordBlock)->SeekEnd();
 
-        if (CPLGetLastErrorNo() != 0 && CPLGetLastErrorType() == CE_Failure)
+        if (CPLGetLastErrorType() == CE_Failure)
             return -1;
     }
 

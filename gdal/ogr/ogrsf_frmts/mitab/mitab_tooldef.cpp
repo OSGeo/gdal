@@ -214,7 +214,7 @@ int TABToolDefTable::ReadAllToolDefs( TABMAPToolBlock *poBlock )
             nStatus = -1;
         }
 
-        if (CPLGetLastErrorNo() != 0)
+        if (CPLGetLastErrorType() == CE_Failure)
         {
             // An error happened reading this tool definition... stop now.
             nStatus = -1;
@@ -273,7 +273,7 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
         poBlock->WriteByte(static_cast<GByte>(COLOR_G(m_papsPen[i]->rgbColor)));
         poBlock->WriteByte(static_cast<GByte>(COLOR_B(m_papsPen[i]->rgbColor)));
 
-        if (CPLGetLastErrorNo() != 0)
+        if (CPLGetLastErrorType() == CE_Failure)
         {
             // An error happened reading this tool definition... stop now.
             nStatus = -1;
@@ -299,7 +299,7 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
         poBlock->WriteByte(static_cast<GByte>(COLOR_G(m_papsBrush[i]->rgbBGColor)));
         poBlock->WriteByte(static_cast<GByte>(COLOR_B(m_papsBrush[i]->rgbBGColor)));
 
-        if (CPLGetLastErrorNo() != 0)
+        if (CPLGetLastErrorType() == CE_Failure)
         {
             // An error happened reading this tool definition... stop now.
             nStatus = -1;
@@ -318,7 +318,7 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
 
         poBlock->WriteBytes(32, reinterpret_cast<GByte*>(m_papsFont[i]->szFontName));
 
-        if (CPLGetLastErrorNo() != 0)
+        if (CPLGetLastErrorType() == CE_Failure)
         {
             // An error happened reading this tool definition... stop now.
             nStatus = -1;
@@ -342,7 +342,7 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
         poBlock->WriteByte(static_cast<GByte>(COLOR_G(m_papsSymbol[i]->rgbColor)));
         poBlock->WriteByte(static_cast<GByte>(COLOR_B(m_papsSymbol[i]->rgbColor)));
 
-        if (CPLGetLastErrorNo() != 0)
+        if (CPLGetLastErrorType() == CE_Failure)
         {
             // An error happened reading this tool definition... stop now.
             nStatus = -1;
