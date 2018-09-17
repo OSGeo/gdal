@@ -90,7 +90,7 @@ except AttributeError:
     _newclass = 0
 
 
-import gdal
+import osgeo.gdal
 class VirtualMem(_object):
     """Proxy of C++ CPLVirtualMemShadow class."""
 
