@@ -123,7 +123,8 @@ CPLErr BYNRasterBand::SetScale( double dfNewValue )
 /************************************************************************/
 
 BYNDataset::BYNDataset() : 
-        fpImage(nullptr)
+        fpImage(nullptr),
+        hHeader{0,0,0,0,0,0,0,0,0.0,0,0,0,0,0,0,0,0,0.0,0.0,0,0,0.0,0}
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -131,8 +132,6 @@ BYNDataset::BYNDataset() :
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-
-    memset( &hHeader, 0, sizeof(BYNHeader) );
 }
 
 /************************************************************************/
@@ -752,7 +751,7 @@ void GDALRegister_BYN()
 
     poDriver->SetDescription( "BYN" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "NRCan's Vertical Datum .BYN" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Natural Resources Canada (.byn/.err)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "byn" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
