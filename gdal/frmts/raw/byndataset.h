@@ -213,18 +213,8 @@ class BYNDataset final: public RawDataset
     CPL_DISALLOW_COPY_ASSIGN(BYNDataset)
 
   public:
-    BYNDataset() : 
-        fpImage(nullptr)
-    {
-        adfGeoTransform[0] = 0.0;
-        adfGeoTransform[1] = 1.0;
-        adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = 0.0;
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = 1.0;
-        memset( &hHeader, 0, sizeof(BYNHeader) );
-    }
-    ~BYNDataset() override;
+    BYNDataset();
+    ~BYNDataset();
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
     CPLErr SetGeoTransform( double * padfTransform ) override;
