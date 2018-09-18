@@ -256,10 +256,10 @@ GDALDataset *BYNDataset::Open( GDALOpenInfo * poOpenInfo )
     /* Build GeoTransform matrix */
     /*****************************/
 
-    poDS->adfGeoTransform[0] = ( dfWest - ( dfDLon / 2 ) ) / 3600.0;
+    poDS->adfGeoTransform[0] = ( dfWest - ( dfDLon / 2.0 ) ) / 3600.0;
     poDS->adfGeoTransform[1] = dfDLon / 3600.0;
     poDS->adfGeoTransform[2] = 0.0;
-    poDS->adfGeoTransform[3] = ( dfNorth + ( dfDLat / 2 ) ) / 3600.0;
+    poDS->adfGeoTransform[3] = ( dfNorth + ( dfDLat / 2.0 ) ) / 3600.0;
     poDS->adfGeoTransform[4] = 0.0;
     poDS->adfGeoTransform[5] = -1 * dfDLat / 3600.0;
 
@@ -623,9 +623,9 @@ GDALDataset *BYNDataset::Create( const char * pszFilename,
 
     /* Match the requested nXSize, nYSize, and type */
 
-    hHeader.nDLat   = ( ( hHeader.nNorth - hHeader.nSouth ) / nYSize ) + 1;;
-    hHeader.nDLon   = ( ( hHeader.nEast  - hHeader.nWest  ) / nXSize ) + 1;; 
-    hHeader.nSizeOf = GDALGetDataTypeSizeBytes( eType ); /* {2,4} */
+    hHeader.nDLat   = (GInt16) ( ( hHeader.nNorth - hHeader.nSouth ) / nYSize ) + 1;
+    hHeader.nDLon   = (GInt16) ( ( hHeader.nEast  - hHeader.nWest  ) / nXSize ) + 1; 
+    hHeader.nSizeOf = (GInt16) GDALGetDataTypeSizeBytes( eType ); /* {2,4} */
 
     /* Set up undefined Datum, VDatum and Ellipsoid */
 
@@ -672,8 +672,8 @@ void BYNDataset::UpdateHeader()
     hHeader.nNorth = (GInt32) dfNorth;
     hHeader.nWest  = (GInt32) dfWest;
     hHeader.nEast  = (GInt32) dfEast;
-    hHeader.nDLat  = (GInt32) dfDLat;
-    hHeader.nDLon  = (GInt32) dfDLon;
+    hHeader.nDLat  = (GInt16) dfDLat;
+    hHeader.nDLon  = (GInt16) dfDLon;
 
     GByte abyBuf[BYN_HDR_SZ];
 
@@ -683,19 +683,19 @@ void BYNDataset::UpdateHeader()
 
     pszValue = GetMetadataItem("GLOBAL");
     if(pszValue != nullptr) 
-        hHeader.nGlobal  = atoi( pszValue );
+        hHeader.nGlobal  = (GInt16) atoi( pszValue );
 
     pszValue = GetMetadataItem("TYPE");
     if(pszValue != nullptr) 
-        hHeader.nType    = atoi( pszValue );
+        hHeader.nType    = (GInt16) atoi( pszValue );
 
     pszValue = GetMetadataItem("DESCRIPTION");
     if(pszValue != nullptr) 
-        hHeader.nDescrip = atoi( pszValue );
+        hHeader.nDescrip = (GInt16) atoi( pszValue );
 
     pszValue = GetMetadataItem("SUBTYPE");
     if(pszValue != nullptr) 
-        hHeader.nSubType = atoi( pszValue );
+        hHeader.nSubType = (GInt16) atoi( pszValue );
 
     pszValue = GetMetadataItem("WO");
     if(pszValue != nullptr) 
@@ -707,19 +707,19 @@ void BYNDataset::UpdateHeader()
 
     pszValue = GetMetadataItem("TIDESYSTEM");
     if(pszValue != nullptr) 
-        hHeader.nTideSys = atoi( pszValue );
+        hHeader.nTideSys = (GInt16) atoi( pszValue );
 
     pszValue = GetMetadataItem("REALIZATION");
     if(pszValue != nullptr) 
-        hHeader.nRealiz  = atoi( pszValue );
+        hHeader.nRealiz  = (GInt16) atoi( pszValue );
 
     pszValue = GetMetadataItem("EPOCH");
     if(pszValue != nullptr) 
-        hHeader.dEpoch   = static_cast<float> ( CPLAtof( pszValue ) );
+        hHeader.dEpoch   = (float) CPLAtof( pszValue );
 
     pszValue = GetMetadataItem("PTTYPE");
     if(pszValue != nullptr) 
-        hHeader.nPtType  = atoi( pszValue );
+        hHeader.nPtType  = (GInt16) atoi( pszValue );
 
     CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));
     CPL_IGNORE_RET_VAL(VSIFWriteL( abyBuf, BYN_HDR_SZ, 1, fpImage ));
