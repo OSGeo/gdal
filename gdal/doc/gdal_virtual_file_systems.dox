@@ -59,20 +59,20 @@ gdalinfo /vsizip/my.zip/my.tif
 
 It is possible to chain multiple file system handlers.
 
-ogrinfo a shapefile in a zip file on the internet: 
+ogrinfo a shapefile in a zip file on the internet:
 <pre>
 ogrinfo -ro -al -so /vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip
 </pre>
 
 ogrinfo a shapefile in a zip file on an ftp:
 <pre>
-ogrinfo -ro -al -so /vsizip//vsicurl/ftp://user:password@example.com/foldername/file.zip/example.shp 
+ogrinfo -ro -al -so /vsizip//vsicurl/ftp://user:password@example.com/foldername/file.zip/example.shp
 </pre>
 
 \section gdal_virtual_file_systems_drivers Drivers supporting virtual file systems
 
 Virtual file systems can only be used with GDAL or OGR drivers supporting the
-"large file API", which is now the vast majority of file based drivers. The 
+"large file API", which is now the vast majority of file based drivers. The
 full list of these formats can be obtained by looking at the driver marked with
 'v' when running either gdalinfo --formats or ogrinfo --formats.
 
@@ -418,7 +418,14 @@ facilitate use with
 <a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/RequesterPaysBuckets.html">Requester
 Pays buckets</a>.
 
-The AWS_S3_ENDPOINT configuration option defaults to s3.amazonaws.com. 
+The AWS_S3_ENDPOINT configuration option defaults to s3.amazonaws.com.
+
+The AWS_VIRTUAL_HOSTING configuration option defaults to TRUE.
+This allows you to configure the two ways to access the buckets, see <a href="http://docs.ceph.com/docs/luminous/radosgw/s3/commons/#bucket-and-host-name">Bucket and Host Name</a> for more details.
+<ul>
+<li>TRUE value, identifies the bucket via a virtual bucket host name, e.g.: mybucket.cname.domain.com</li>
+<li>FALSE value, identifies the bucket as the top-level directory in the URI, e.g.: cname.domain.com/mybucket</li>
+</ul>
 
 On writing, the file is uploaded using the S3
 <a href="http://docs.aws.amazon.com/AmazonS3/latest/API/mpUploadInitiate.html">multipart upload API</a>.
