@@ -15,7 +15,8 @@ GEOJSON_OBJ = \
 	ogresrijsondriver.obj \
 	ogresrijsonreader.obj \
 	ogrtopojsondriver.obj \
-	ogrtopojsonreader.obj
+	ogrtopojsonreader.obj \
+	ogrgeojsonseqdriver.obj
 
 EXTRAFLAGS = -I. -I.. -I..\.. -Ilibjson
 

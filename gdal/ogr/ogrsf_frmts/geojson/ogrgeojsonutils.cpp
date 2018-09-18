@@ -33,6 +33,9 @@
 #include <ogr_geometry.h>
 #include <json.h> // JSON-C
 
+#include <algorithm>
+#include <memory>
+
 CPL_CVSID("$Id$")
 
 const char szESRIJSonPotentialStart1[] =
@@ -151,10 +154,10 @@ static CPLString GetCompactJSon( const char* pszText, size_t nMaxSize )
 }
 
 /************************************************************************/
-/*                           GeoJSONIsObject()                          */
+/*                          IsGeoJSONLikeObject()                       */
 /************************************************************************/
 
-bool GeoJSONIsObject( const char* pszText )
+static bool IsGeoJSONLikeObject( const char* pszText, bool* pbMightBeSequence )
 {
     if( !IsJSONObject(pszText) )
         return false;
@@ -162,16 +165,10 @@ bool GeoJSONIsObject( const char* pszText )
     if( IsTypeSomething(pszText, "Topology") )
         return false;
 
-    if( IsTypeSomething(pszText, "Feature") ||
-           IsTypeSomething(pszText, "FeatureCollection") ||
-           IsTypeSomething(pszText, "Point") ||
-           IsTypeSomething(pszText, "LineString") ||
-           IsTypeSomething(pszText, "Polygon") ||
-           IsTypeSomething(pszText, "MultiPoint") ||
-           IsTypeSomething(pszText, "MultiLineString") ||
-           IsTypeSomething(pszText, "MultiPolygon") ||
-           IsTypeSomething(pszText, "GeometryCollection") )
+    if( IsTypeSomething(pszText, "FeatureCollection") )
     {
+        if( pbMightBeSequence )
+            *pbMightBeSequence = false;
         return true;
     }
 
@@ -180,12 +177,32 @@ bool GeoJSONIsObject( const char* pszText )
     if( osWithoutSpace.find("{\"features\":[") == 0 &&
         osWithoutSpace.find(szESRIJSonPotentialStart1) != 0 )
     {
+        if( pbMightBeSequence )
+            *pbMightBeSequence = false;
+        return true;
+    }
+
+    if( IsTypeSomething(pszText, "Feature") ||
+           IsTypeSomething(pszText, "Point") ||
+           IsTypeSomething(pszText, "LineString") ||
+           IsTypeSomething(pszText, "Polygon") ||
+           IsTypeSomething(pszText, "MultiPoint") ||
+           IsTypeSomething(pszText, "MultiLineString") ||
+           IsTypeSomething(pszText, "MultiPolygon") ||
+           IsTypeSomething(pszText, "GeometryCollection") )
+    {
+        if( pbMightBeSequence )
+            *pbMightBeSequence = true;
         return true;
     }
 
     return false;
 }
 
+static bool IsGeoJSONLikeObject( const char* pszText )
+{
+    return IsGeoJSONLikeObject(pszText, nullptr);
+}
 
 /************************************************************************/
 /*                       ESRIJSONIsObject()                             */
@@ -234,6 +251,103 @@ bool TopoJSONIsObject(const char *pszText)
 }
 
 /************************************************************************/
+/*                      IsLikelyNewlineSequenceGeoJSON()                */
+/************************************************************************/
+
+static bool IsLikelyNewlineSequenceGeoJSON( VSILFILE* fpL,
+                                            const GByte* pabyHeader,
+                                            const char* pszFileContent )
+{
+    const size_t nBufferSize = 4096 * 10;
+    std::vector<GByte> abyBuffer;
+    abyBuffer.resize(nBufferSize+1);
+
+    int nCurlLevel = 0;
+    bool bInString = false;
+    bool bLastIsEscape = false;
+    bool bCompatibleOfSequence = true;
+    bool bFirstIter = true;
+    bool bEOLFound = false;
+    int nCountObject = 0;
+    while( true )
+    {
+        size_t nRead;
+        bool bEnd = false;
+        if( bFirstIter )
+        {
+            const char* pszText = pszFileContent ? pszFileContent:
+                reinterpret_cast<const char*>(pabyHeader);
+            nRead = std::min(strlen(pszText), nBufferSize);
+            memcpy(abyBuffer.data(), pszText, nRead);
+            bFirstIter = false;
+            if( fpL )
+            {
+                VSIFSeekL(fpL, nRead, SEEK_SET);
+            }
+        }
+        else
+        {
+            nRead = VSIFReadL(abyBuffer.data() , 1, nBufferSize, fpL);
+            bEnd = nRead < nBufferSize;
+        }
+        for( size_t i = 0; i < nRead; i++ )
+        {
+            if( nCurlLevel == 0 )
+            {
+                if( abyBuffer[i] == '{' )
+                {
+                    nCountObject ++;
+                    if( nCountObject == 2 )
+                    {
+                        break;
+                    }
+                    nCurlLevel ++;
+                }
+                else if( nCountObject == 1 && abyBuffer[i] == '\n' )
+                {
+                    bEOLFound = true;
+                }
+                else if( !isspace( static_cast<int>(abyBuffer[i]) ) )
+                {
+                    bCompatibleOfSequence = false;
+                    break;
+                }
+            }
+            else if( bInString )
+            {
+                if( bLastIsEscape )
+                {
+                    bLastIsEscape = false;
+                }
+                else if( abyBuffer[i] == '\\' )
+                {
+                    bLastIsEscape = true;
+                }
+                else if( abyBuffer[i] == '"' )
+                {
+                    bInString = false;
+                }
+            }
+            else if( abyBuffer[i] == '"' )
+            {
+                bInString = true;
+            }
+            else if( abyBuffer[i] == '{' )
+            {
+                nCurlLevel ++;
+            }
+            else if( abyBuffer[i] == '}' )
+            {
+                nCurlLevel --;
+            }
+        }
+        if( !fpL || bEnd || !bCompatibleOfSequence || nCountObject == 2 )
+            break;
+    }
+    return bCompatibleOfSequence && bEOLFound && nCountObject == 2;
+}
+
+/************************************************************************/
 /*                           GeoJSONFileIsObject()                      */
 /************************************************************************/
 
@@ -250,12 +364,77 @@ bool GeoJSONFileIsObject( GDALOpenInfo* poOpenInfo )
         return false;
     }
 
-    if( !GeoJSONIsObject((const char*)poOpenInfo->pabyHeader) )
+    bool bMightBeSequence = false;
+    if( !IsGeoJSONLikeObject(reinterpret_cast<const char*>(poOpenInfo->pabyHeader),
+        &bMightBeSequence) )
     {
         return false;
     }
 
-    return true;
+    return !(bMightBeSequence && IsLikelyNewlineSequenceGeoJSON(
+        poOpenInfo->fpL, poOpenInfo->pabyHeader, nullptr));
+}
+
+/************************************************************************/
+/*                           GeoJSONIsObject()                          */
+/************************************************************************/
+
+bool GeoJSONIsObject( const char* pszText )
+{
+    bool bMightBeSequence = false;
+    if( !IsGeoJSONLikeObject(pszText, &bMightBeSequence) )
+    {
+        return false;
+    }
+
+    return !(bMightBeSequence &&
+             IsLikelyNewlineSequenceGeoJSON(nullptr, nullptr, pszText));
+}
+
+/************************************************************************/
+/*                        GeoJSONSeqFileIsObject()                      */
+/************************************************************************/
+
+static
+bool GeoJSONSeqFileIsObject( GDALOpenInfo* poOpenInfo )
+{
+    // By default read first 6000 bytes.
+    // 6000 was chosen as enough bytes to
+    // enable all current tests to pass.
+
+    if( poOpenInfo->fpL == nullptr ||
+        !poOpenInfo->TryToIngest(6000) )
+    {
+        return false;
+    }
+
+    const char* pszText = reinterpret_cast<const char*>(poOpenInfo->pabyHeader);
+    if( pszText[0] == '\x1e' )
+        return IsGeoJSONLikeObject(pszText+1);
+
+    bool bMightBeSequence = false;
+    if( !IsGeoJSONLikeObject(pszText, &bMightBeSequence) )
+    {
+        return false;
+    }
+
+    return bMightBeSequence && IsLikelyNewlineSequenceGeoJSON(
+        poOpenInfo->fpL, poOpenInfo->pabyHeader, nullptr);
+}
+
+bool GeoJSONSeqIsObject( const char* pszText )
+{
+    if( pszText[0] == '\x1e' )
+        return IsGeoJSONLikeObject(pszText+1);
+
+    bool bMightBeSequence = false;
+    if( !IsGeoJSONLikeObject(pszText, &bMightBeSequence) )
+    {
+        return false;
+    }
+
+    return bMightBeSequence && IsLikelyNewlineSequenceGeoJSON(
+        nullptr, nullptr, pszText);
 }
 
 /************************************************************************/
@@ -429,6 +608,53 @@ GeoJSONSourceType TopoJSONDriverGetSourceType( GDALOpenInfo* poOpenInfo )
     }
     return eGeoJSONSourceUnknown;
 }
+
+/************************************************************************/
+/*                          GeoJSONSeqGetSourceType()                   */
+/************************************************************************/
+
+GeoJSONSourceType GeoJSONSeqGetSourceType( GDALOpenInfo* poOpenInfo )
+{
+    GeoJSONSourceType srcType = eGeoJSONSourceUnknown;
+
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOJSONSeq:http://") ||
+        STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOJSONSeq:https://") ||
+        STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOJSONSeq:ftp://") )
+    {
+        srcType = eGeoJSONSourceService;
+    }
+    else if( STARTS_WITH_CI(poOpenInfo->pszFilename, "http://") ||
+             STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") ||
+             STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp://") )
+    {
+        if( strstr(poOpenInfo->pszFilename, "f=json") != nullptr )
+            return eGeoJSONSourceUnknown;
+        srcType = eGeoJSONSourceService;
+    }
+    else if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOJSONSeq:") )
+    {
+        VSIStatBufL sStat;
+        if( VSIStatL(poOpenInfo->pszFilename + strlen("GEOJSONSeq:"), &sStat) == 0 )
+        {
+            return eGeoJSONSourceFile;
+        }
+        const char* pszText = poOpenInfo->pszFilename + strlen("GEOJSONSeq:");
+        if( GeoJSONSeqIsObject(pszText) )
+            return eGeoJSONSourceText;
+        return eGeoJSONSourceUnknown;
+    }
+    else if( GeoJSONSeqIsObject( poOpenInfo->pszFilename ) )
+    {
+        srcType = eGeoJSONSourceText;
+    }
+    else if( GeoJSONSeqFileIsObject( poOpenInfo ) )
+    {
+        srcType = eGeoJSONSourceFile;
+    }
+
+    return srcType;
+}
+
 /************************************************************************/
 /*                           GeoJSONPropertyToFieldType()               */
 /************************************************************************/

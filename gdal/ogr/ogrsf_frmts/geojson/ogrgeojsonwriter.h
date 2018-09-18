@@ -83,6 +83,7 @@ class OGRGeoJSONWriteOptions
         OGRFieldType eForcedIDFieldType = OFTString;
 
         void SetRFC7946Settings();
+        void SetIDOptions(CSLConstList papszOptions);
 };
 /*! @endcond */
 

@@ -34,11 +34,6 @@
 
 CPL_CVSID("$Id$")
 
-// Remove annoying warnings Microsoft Visual C++.
-#if defined(_MSC_VER)
-#  pragma warning(disable:4512)
-#endif
-
 /************************************************************************/
 /*                         OGRGeoJSONWriteLayer()                       */
 /************************************************************************/
@@ -76,21 +71,7 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer( const char* pszName,
     {
         oWriteOptions_.SetRFC7946Settings();
     }
-    oWriteOptions_.osIDField = CSLFetchNameValueDef(papszOptions, "ID_FIELD", "");
-    const char* pszIDFieldType = CSLFetchNameValue(papszOptions, "ID_TYPE");
-    if( pszIDFieldType )
-    {
-        if( EQUAL(pszIDFieldType, "String") )
-        {
-            oWriteOptions_.bForceIDFieldType = true;
-            oWriteOptions_.eForcedIDFieldType = OFTString;
-        }
-        else if( EQUAL(pszIDFieldType, "Integer") )
-        {
-            oWriteOptions_.bForceIDFieldType = true;
-            oWriteOptions_.eForcedIDFieldType = OFTInteger64;
-        }
-    }
+    oWriteOptions_.SetIDOptions(papszOptions);
 }
 
 /************************************************************************/
@@ -309,19 +290,13 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
 OGRErr OGRGeoJSONWriteLayer::CreateField( OGRFieldDefn* poField,
                                           int /* bApproxOK */  )
 {
-    for( int i = 0; i < poFeatureDefn_->GetFieldCount(); ++i )
+    if( poFeatureDefn_->GetFieldIndex(poField->GetNameRef()) >= 0 )
     {
-        OGRFieldDefn* poDefn = poFeatureDefn_->GetFieldDefn(i);
-        CPLAssert( nullptr != poDefn );
+        CPLDebug( "GeoJSON", "Field '%s' already present in schema",
+                    poField->GetNameRef() );
 
-        if( EQUAL( poDefn->GetNameRef(), poField->GetNameRef() ) )
-        {
-            CPLDebug( "GeoJSON", "Field '%s' already present in schema",
-                      poField->GetNameRef() );
-
-            // TODO - mloskot: Is this return code correct?
-            return OGRERR_NONE;
-        }
+        // TODO - mloskot: Is this return code correct?
+        return OGRERR_NONE;
     }
 
     poFeatureDefn_->AddFieldDefn( poField );

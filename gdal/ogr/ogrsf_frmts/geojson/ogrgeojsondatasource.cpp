@@ -705,7 +705,9 @@ int OGRGeoJSONDataSource::ReadFromService( GDALOpenInfo* poOpenInfo,
     {
         if( !GeoJSONIsObject(pszGeoData_) )
         {
-            if( ESRIJSONIsObject(pszGeoData_) || TopoJSONIsObject(pszGeoData_) )
+            if( ESRIJSONIsObject(pszGeoData_) ||
+                TopoJSONIsObject(pszGeoData_) ||
+                GeoJSONSeqIsObject(pszGeoData_) )
             {
                 OGRGeoJSONDriverStoreContent( pszSource, pszGeoData_ );
                 pszGeoData_ = nullptr;
