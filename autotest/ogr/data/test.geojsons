@@ -1,0 +1,2 @@
+{ "type": "Feature",
+    "properties": { "foo": "bar" }, "geometry": { "type": "Point", "coordinates": [ 1.0, 2.0 ] } }{ "type": "Feature", "properties": { "foo": "baz" }, "geometry": { "type": "Point", "coordinates": [ 3.0, 4.0 ] } }

@@ -163,7 +163,8 @@ def ogr_geojsonseq_reprojection():
     lyr = ds.CreateLayer('test', srs=sr)
 
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(222638.981586547 6242595.9999532)'))
+    f.SetGeometry(ogr.CreateGeometryFromWkt(
+        'POINT(222638.981586547 6242595.9999532)'))
     lyr.CreateFeature(f)
     ds = None
 
@@ -178,6 +179,27 @@ def ogr_geojsonseq_reprojection():
 
     ogr.GetDriverByName('GeoJSONSeq').DeleteDataSource(filename)
 
+    return 'success'
+
+
+def ogr_geojsonseq_read_rs_json_pretty():
+
+    ds = ogr.Open('data/test.geojsons')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['foo'] != 'bar' or \
+       f.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f['foo'] != 'baz' or f.GetGeometryRef().ExportToWkt() != 'POINT (3 4)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if lyr.GetNextFeature() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     return 'success'
 
 
@@ -205,6 +227,7 @@ gdaltest_list = [
     ogr_geojsonseq_prefix,
     ogr_geojsonseq_seq_geometries,
     ogr_geojsonseq_reprojection,
+    ogr_geojsonseq_read_rs_json_pretty,
     ogr_geojsonseq_test_ogrsf,
 ]
 
