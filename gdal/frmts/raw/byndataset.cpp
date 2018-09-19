@@ -260,8 +260,8 @@ GDALDataset *BYNDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( dfDLat != 0.0 && dfDLon != 0.0 )
     {
-    	dfXSize = ( ( dfEast  - dfWest  + 1.0 ) / dfDLon ) + 1.0;
-    	dfYSize = ( ( dfNorth - dfSouth + 1.0 ) / dfDLat ) + 1.0;
+        dfXSize = ( ( dfEast  - dfWest  + 1.0 ) / dfDLon ) + 1.0;
+        dfYSize = ( ( dfNorth - dfSouth + 1.0 ) / dfDLat ) + 1.0;
     }
 
     if( dfXSize > 0.0 && dfXSize < std::numeric_limits<double>::max() &&
