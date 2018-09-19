@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  National Resources Canada - Vertical Datum Transformation
- * Purpose:  Implementation of NRCan's BYN vertical datum shift file format.
+ * Purpose:  Implementation of BYN format
  * Author:   Ivan Lucena, ivan.lucena@outlook.com
  *
  ******************************************************************************
@@ -79,7 +79,7 @@ Table 1: Header description (80 bytes)
 23 Epoch       Epoch              float  4    76  Decimal year (e.g., 2007.5)
 24 PtType      Node               short  2    78  0: Point
                                                   1: Mean
-25 Spares                                2    80  Always zero
+25 Spare                                 2    80  Always zero
 --:-----------:------------------:------:----:---:---------------------------
 
 Items #18 to 22 must be defined if the grid is a geoid model.
@@ -149,7 +149,9 @@ Undefined values
 /*           BYNHeader                                                  */
 /************************************************************************/
 
-#define BYN_HDR_SZ 80
+constexpr int BYN_HDR_SZ = 80; /* != sizeof(BYNHeader) */
+
+/* "Spare" fields are not represented here, no direct read/write */
 
 struct BYNHeader {
     GInt32 nSouth;
@@ -177,7 +179,8 @@ struct BYNHeader {
     GInt16 nPtType;
 };
 
-void CPL_STDCALL header2buffer( const BYNHeader* poHeader, GByte* pabyBuf );
+void header2buffer( const BYNHeader* pohHeader, GByte* pabyBuf );
+void buffer2header( const GByte* pabyBuf, BYNHeader* pohHeader );
 
 struct BYNEllipsoids {
     const char* pszName;
@@ -187,12 +190,17 @@ struct BYNEllipsoids {
 
 /* Recognizeble EPSG codes */
 
-#define BYN_DATAM_1_VDATUM_2    6649      /** Compounded NAD83(CSRS) + CGVD2013 **/
-#define BYN_DATUM_0             4140      /** ITRF2008 (GRS80 based WGS84) **/
-#define BYN_DATUM_1             4617      /** NAD83(CSRS) **/
-#define BYN_VDATUM_1            5713      /** CGVD28 **/
-#define BYN_VDATUM_2            6647      /** CGVD2013 **/
-#define BYN_VDATUM_3            6357      /** NAVD88 **/
+constexpr int BYN_DATUM_1_VDATUM_2 = 6649;  /* Compounded NAD83(CSRS) + CGVD2013 */
+constexpr int BYN_DATUM_0          = 4140;  /* ITRF2008 (GRS80 based WGS84) */
+constexpr int BYN_DATUM_1          = 4617;  /* NAD83(CSRS) */
+constexpr int BYN_VDATUM_1         = 5713;  /* CGVD28 */
+constexpr int BYN_VDATUM_2         = 6647;  /* CGVD2013 */
+constexpr int BYN_VDATUM_3         = 6357;  /* NAVD88 */
+
+/* Maximum ordinates values for Identify() */
+
+constexpr GInt32 BYN_MAX_LAT       =  90 * 3600;
+constexpr GInt32 BYN_MAX_LON       = 180 * 3600;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -206,6 +214,7 @@ class BYNDataset final: public RawDataset
 
     VSILFILE    *fpImage;
     double      adfGeoTransform[6];
+    char*       pszProjection;
     BYNHeader   hHeader;
 
     void        UpdateHeader();
@@ -246,6 +255,7 @@ class BYNRasterBand final: public RawRasterBand
                    int nLineOffset,
                    GDALDataType eDataType, int bNativeOrder );
     ~BYNRasterBand() override;
+
     double GetNoDataValue( int *pbSuccess = nullptr ) override;
     double GetScale( int *pbSuccess = nullptr ) override;
     CPLErr SetScale( double dfNewValue ) override;

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  National Resources Canada - Vertical Datum Transformation
- * Purpose:  Implementation of NRCan's BYN vertical datum shift file format.
+ * Purpose:  Implementation of BYN format
  * Author:   Ivan Lucena, ivan.lucena@outlook.com
  *
  ******************************************************************************
@@ -38,7 +38,7 @@
 
 CPL_CVSID("$Id$")
 
-const BYNEllipsoids EllipsoidTable[8] = {
+const static BYNEllipsoids EllipsoidTable[] = {
     { "GRS80",       6378137.0,  298.257222101 },
     { "WGS84",       6378137.0,  298.257223564 },
     { "ALT1",        6378136.3,  298.256415099 },
@@ -96,7 +96,7 @@ double BYNRasterBand::GetScale( int *pbSuccess )
 {
     if( pbSuccess != nullptr )
         *pbSuccess = TRUE;
-    return 1.0 / reinterpret_cast<BYNDataset *>( poDS )->hHeader.dfFactor;
+    return 1.0 / reinterpret_cast<BYNDataset*>(poDS)->hHeader.dfFactor;
 }
 
 /************************************************************************/
@@ -105,14 +105,8 @@ double BYNRasterBand::GetScale( int *pbSuccess )
 
 CPLErr BYNRasterBand::SetScale( double dfNewValue )
 {
-    BYNDataset *poIDS = reinterpret_cast<BYNDataset *>( poDS );
-
-    dfNewValue = 1.0 / dfNewValue;
-
-    if( dfNewValue == poIDS->hHeader.dfFactor )
-        return CE_None;
-
-    poIDS->hHeader.dfFactor = dfNewValue;
+    BYNDataset *poIDS = reinterpret_cast<BYNDataset*>(poDS);
+    poIDS->hHeader.dfFactor = 1.0 / dfNewValue;
     return CE_None;
 }
 
@@ -124,6 +118,7 @@ CPLErr BYNRasterBand::SetScale( double dfNewValue )
 
 BYNDataset::BYNDataset() : 
         fpImage(nullptr),
+        pszProjection(nullptr),
         hHeader{0,0,0,0,0,0,0,0,0.0,0,0,0,0,0,0,0,0,0.0,0.0,0,0,0.0,0}
 {
     adfGeoTransform[0] = 0.0;
@@ -146,17 +141,6 @@ BYNDataset::~BYNDataset()
     if( GetAccess() == GA_Update)
         UpdateHeader();
 
-    SetMetadataItem("GLOBAL",     CPLSPrintf("%d",hHeader.nGlobal), "BYN");
-    SetMetadataItem("TYPE",       CPLSPrintf("%d",hHeader.nType),   "BYN");
-    SetMetadataItem("DESCRIPTION",CPLSPrintf("%d",hHeader.nDescrip),"BYN");
-    SetMetadataItem("SUBTYPE",    CPLSPrintf("%d",hHeader.nSubType),"BYN");
-    SetMetadataItem("WO",         CPLSPrintf("%g",hHeader.dfWo),    "BYN");
-    SetMetadataItem("GM",         CPLSPrintf("%g",hHeader.dfGM),    "BYN");
-    SetMetadataItem("TIDESYSTEM", CPLSPrintf("%d",hHeader.nTideSys),"BYN");
-    SetMetadataItem("REALIZATION",CPLSPrintf("%d",hHeader.nRealiz), "BYN");
-    SetMetadataItem("EPOCH",      CPLSPrintf("%g",hHeader.dEpoch),  "BYN");
-    SetMetadataItem("PTTYPE",     CPLSPrintf("%d",hHeader.nPtType), "BYN");
-
     if( fpImage != nullptr )
     {
         if( VSIFCloseL( fpImage ) != 0 )
@@ -164,6 +148,8 @@ BYNDataset::~BYNDataset()
             CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
         }
     }
+
+    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -176,8 +162,40 @@ int BYNDataset::Identify( GDALOpenInfo *poOpenInfo )
     if( poOpenInfo->nHeaderBytes < BYN_HDR_SZ )
         return FALSE;
 
-    if( ! ( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "byn") ||
-            EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "err") ))
+/* -------------------------------------------------------------------- */
+/*      Check file extension (.byn/.err)                                */
+/* -------------------------------------------------------------------- */
+
+    char* pszFileExtension = CPLStrdup( 
+                             CPLGetExtension( poOpenInfo->pszFilename ) );
+
+    if( ! EQUAL( pszFileExtension, "byn" ) &&
+        ! EQUAL( pszFileExtension, "err" ) )
+    {
+        CPLFree( pszFileExtension );
+        return FALSE;
+    }
+
+    CPLFree( pszFileExtension );
+
+/* -------------------------------------------------------------------- */
+/*      Check some value's ranges on header                             */
+/* -------------------------------------------------------------------- */
+
+    BYNHeader hHeader = {0,0,0,0,0,0,0,0,0.0,0,0,0,0,0,0,0,0,0.0,0.0,0,0,0.0,0};
+
+    buffer2header( poOpenInfo->pabyHeader, &hHeader );
+
+    if( hHeader.nGlobal    < -1 || hHeader.nGlobal    > 2 ||
+        hHeader.nSizeOf    <  2 || hHeader.nSizeOf    > 4 ||
+        hHeader.nVDatum    < -1 || hHeader.nVDatum    > 3 ||
+        hHeader.nDatum     < -1 || hHeader.nDatum     > 1 ||
+        hHeader.nDescrip   < -1 || hHeader.nDescrip   > 3 ||
+        hHeader.nByteOrder < -1 || hHeader.nByteOrder > 1 ||
+        abs( hHeader.nSouth - ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ||
+        abs( hHeader.nNorth - ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ||
+        abs( hHeader.nWest  - ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON ||
+        abs( hHeader.nEast  - ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON )
         return FALSE;
 
     return TRUE;
@@ -196,6 +214,7 @@ GDALDataset *BYNDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
+
     BYNDataset *poDS = new BYNDataset();
 
     poDS->eAccess = poOpenInfo->eAccess;
@@ -206,57 +225,51 @@ GDALDataset *BYNDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
 
-    memcpy( &poDS->hHeader.nSouth,     poOpenInfo->pabyHeader,      4 );
-    memcpy( &poDS->hHeader.nNorth,     poOpenInfo->pabyHeader + 4,  4 );
-    memcpy( &poDS->hHeader.nWest,      poOpenInfo->pabyHeader + 8,  4 );
-    memcpy( &poDS->hHeader.nEast,      poOpenInfo->pabyHeader + 12, 4 );
-    memcpy( &poDS->hHeader.nDLat,      poOpenInfo->pabyHeader + 16, 2 );
-    memcpy( &poDS->hHeader.nDLon,      poOpenInfo->pabyHeader + 18, 2 );
-    memcpy( &poDS->hHeader.nGlobal,    poOpenInfo->pabyHeader + 20, 2 );
-    memcpy( &poDS->hHeader.nType,      poOpenInfo->pabyHeader + 22, 2 );
-    memcpy( &poDS->hHeader.dfFactor,   poOpenInfo->pabyHeader + 24, 8 );
-    memcpy( &poDS->hHeader.nSizeOf,    poOpenInfo->pabyHeader + 32, 2 );
-    memcpy( &poDS->hHeader.nVDatum,    poOpenInfo->pabyHeader + 34, 2 );
-    memcpy( &poDS->hHeader.nDescrip,   poOpenInfo->pabyHeader + 40, 2 );
-    memcpy( &poDS->hHeader.nSubType,   poOpenInfo->pabyHeader + 42, 2 );
-    memcpy( &poDS->hHeader.nDatum,     poOpenInfo->pabyHeader + 44, 2 );
-    memcpy( &poDS->hHeader.nEllipsoid, poOpenInfo->pabyHeader + 46, 2 );
-    memcpy( &poDS->hHeader.nByteOrder, poOpenInfo->pabyHeader + 48, 2 );
-    memcpy( &poDS->hHeader.nScale,     poOpenInfo->pabyHeader + 50, 2 );
-    memcpy( &poDS->hHeader.dfWo,       poOpenInfo->pabyHeader + 52, 8 );
-    memcpy( &poDS->hHeader.dfGM,       poOpenInfo->pabyHeader + 60, 8 );
-    memcpy( &poDS->hHeader.nTideSys,   poOpenInfo->pabyHeader + 68, 2 );
-    memcpy( &poDS->hHeader.nRealiz,    poOpenInfo->pabyHeader + 70, 2 );
-    memcpy( &poDS->hHeader.dEpoch,     poOpenInfo->pabyHeader + 72, 4 );
-    memcpy( &poDS->hHeader.nPtType,    poOpenInfo->pabyHeader + 76, 2 );
+    buffer2header( poOpenInfo->pabyHeader, &poDS->hHeader );
 
     /********************************/
     /* Scale boundaries and spacing */
     /********************************/
 
-    double dfSouth = (double) poDS->hHeader.nSouth;
-    double dfNorth = (double) poDS->hHeader.nNorth;
-    double dfWest  = (double) poDS->hHeader.nWest;
-    double dfEast  = (double) poDS->hHeader.nEast;
-    double dfDLat  = (double) poDS->hHeader.nDLat;
-    double dfDLon  = (double) poDS->hHeader.nDLon;
+    double dfSouth = poDS->hHeader.nSouth;
+    double dfNorth = poDS->hHeader.nNorth;
+    double dfWest  = poDS->hHeader.nWest;
+    double dfEast  = poDS->hHeader.nEast;
+    double dfDLat  = poDS->hHeader.nDLat;
+    double dfDLon  = poDS->hHeader.nDLon;
 
     if( poDS->hHeader.nScale == 1 ) 
     {
-        dfSouth /= 1000;
-        dfNorth /= 1000;
-        dfWest  /= 1000;
-        dfEast  /= 1000;
-        dfDLat  /= 1000;
-        dfDLon  /= 1000;
+        dfSouth /= 1000.0;
+        dfNorth /= 1000.0;
+        dfWest  /= 1000.0;
+        dfEast  /= 1000.0;
+        dfDLat  /= 1000.0;
+        dfDLon  /= 1000.0;
     }
 
     /******************************/
     /* Calculate rows and columns */
     /******************************/
 
-    poDS->nRasterYSize = (GInt32) ( ( ( dfNorth - dfSouth ) / dfDLat ) + 1.0 );
-    poDS->nRasterXSize = (GInt32) ( ( ( dfEast  - dfWest  ) / dfDLon ) + 1.0 );
+    double dfXSize = -1;
+    double dfYSize = -1;
+
+    poDS->nRasterXSize = -1;
+    poDS->nRasterYSize = -1;
+
+    if( dfDLat != 0.0 && dfDLon != 0.0 )
+    {
+    	dfXSize = ( ( dfEast  - dfWest  + 1.0 ) / dfDLon ) + 1.0;
+    	dfYSize = ( ( dfNorth - dfSouth + 1.0 ) / dfDLat ) + 1.0;
+    }
+
+    if( dfXSize > 0.0 && dfXSize < std::numeric_limits<double>::max() &&
+        dfYSize > 0.0 && dfYSize < std::numeric_limits<double>::max() )
+    {
+        poDS->nRasterXSize = static_cast<GInt32>(dfXSize);
+        poDS->nRasterYSize = static_cast<GInt32>(dfYSize);
+    }
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
@@ -275,54 +288,21 @@ GDALDataset *BYNDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->adfGeoTransform[4] = 0.0;
     poDS->adfGeoTransform[5] = -1 * dfDLat / 3600.0;
 
-    CPLDebug("BYN","South           = %d",poDS->hHeader.nSouth);
-    CPLDebug("BYN","North           = %d",poDS->hHeader.nNorth);
-    CPLDebug("BYN","West            = %d",poDS->hHeader.nWest);
-    CPLDebug("BYN","East            = %d",poDS->hHeader.nEast);
-    CPLDebug("BYN","DLat            = %d",poDS->hHeader.nDLat);
-    CPLDebug("BYN","DLon            = %d",poDS->hHeader.nDLon);
-    CPLDebug("BYN","DGlobal         = %d",poDS->hHeader.nGlobal);
-    CPLDebug("BYN","DType           = %d",poDS->hHeader.nType);
-    CPLDebug("BYN","Factor          = %f",poDS->hHeader.dfFactor);
-    CPLDebug("BYN","SizeOf          = %d",poDS->hHeader.nSizeOf);
-    CPLDebug("BYN","VDatum          = %d",poDS->hHeader.nVDatum);
-    CPLDebug("BYN","Decription      = %d",poDS->hHeader.nDescrip);
-    CPLDebug("BYN","SubType         = %d",poDS->hHeader.nSubType);
-    CPLDebug("BYN","Datum           = %d",poDS->hHeader.nDatum);
-    CPLDebug("BYN","Ellipsoid       = %d",poDS->hHeader.nEllipsoid);
-    CPLDebug("BYN","ByteOrder       = %d",poDS->hHeader.nByteOrder);
-    CPLDebug("BYN","Scale           = %d",poDS->hHeader.nScale);
-    CPLDebug("BYN","Wo              = %f",poDS->hHeader.dfWo);
-    CPLDebug("BYN","GM              = %f",poDS->hHeader.dfGM);
-    CPLDebug("BYN","TideSystem      = %d",poDS->hHeader.nTideSys);
-    CPLDebug("BYN","RefRealzation   = %d",poDS->hHeader.nRealiz);
-    CPLDebug("BYN","Epoch           = %f",poDS->hHeader.dEpoch);
-    CPLDebug("BYN","PtType          = %d",poDS->hHeader.nPtType);
-    CPLDebug("BYN","RasterXSize     = %d ", poDS->nRasterXSize );
-    CPLDebug("BYN","RasterYSize     = %d ", poDS->nRasterYSize );
-    CPLDebug("BYN","GeoTransform[0] = %f ", poDS->adfGeoTransform[0] );
-    CPLDebug("BYN","GeoTransform[1] = %f ", poDS->adfGeoTransform[1] );
-    CPLDebug("BYN","GeoTransform[2] = %f ", poDS->adfGeoTransform[2] );
-    CPLDebug("BYN","GeoTransform[3] = %f ", poDS->adfGeoTransform[3] );
-    CPLDebug("BYN","GeoTransform[4] = %f ", poDS->adfGeoTransform[4] );
-    CPLDebug("BYN","GeoTransform[5] = %f ", poDS->adfGeoTransform[5] );
-
-    /*****************/
-    /* Data type     */
-    /*****************/
+    /*********************/
+    /* Set data type     */
+    /*********************/
  
     GDALDataType eDT = GDT_Unknown;
 
     if ( poDS->hHeader.nSizeOf == 2 )
        eDT = GDT_Int16;
+    else if ( poDS->hHeader.nSizeOf == 4 )
+       eDT = GDT_Int32;
     else
-        if ( poDS->hHeader.nSizeOf == 4 )
-            eDT = GDT_Int32;
-        else
-        {
-            delete poDS;
-            return nullptr;
-        };
+    {
+        delete poDS;
+        return nullptr;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
@@ -392,15 +372,13 @@ const char *BYNDataset::GetProjectionRef()
 {
     OGRSpatialReference oSRS;
 
-    char* pszRefSystem = nullptr;
-
     /* Try to use a prefefined EPSG compound CS */
 
     if( hHeader.nDatum == 1 && hHeader.nVDatum == 2 ) 
     {
-        oSRS.importFromEPSG( BYN_DATAM_1_VDATUM_2 );
-        oSRS.exportToWkt( &pszRefSystem );
-        return pszRefSystem;
+        oSRS.importFromEPSG( BYN_DATUM_1_VDATUM_2 );
+        oSRS.exportToWkt( &pszProjection );
+        return pszProjection;
     }
 
     /* Build the GEOGCS based on Datum ( or Ellipsoid )*/
@@ -416,7 +394,8 @@ const char *BYNDataset::GetProjectionRef()
         /* Build GEOGCS based on Ellipsoid (Table 3) */
 
         if( hHeader.nEllipsoid > -1 && 
-            hHeader.nEllipsoid < 9 )
+            hHeader.nEllipsoid < static_cast<GInt16> 
+                                 (CPL_ARRAYSIZE(EllipsoidTable)))
             oSRS.SetGeogCS( 
                 CPLSPrintf("BYN Ellipsoid(%d)", hHeader.nEllipsoid),
                 "Unspecified",
@@ -447,8 +426,8 @@ const char *BYNDataset::GetProjectionRef()
         if( bNoGeogCS )
             return nullptr;
 
-        oSRS.exportToWkt( &pszRefSystem );
-        return pszRefSystem;
+        oSRS.exportToWkt( &pszProjection );
+        return pszProjection;
     }
 
     oSRSVert.importFromEPSG( nVertCS );
@@ -463,11 +442,11 @@ const char *BYNDataset::GetProjectionRef()
     {
         /* Return COMPD_CS with GEOGCS and VERT_CS */
 
-        oSRSComp.exportToWkt( &pszRefSystem );
-        return pszRefSystem;
+        oSRSComp.exportToWkt( &pszProjection );
+        return pszProjection;
     }
 
-    return nullptr;
+    return "";
 }
 
 /************************************************************************/
@@ -496,7 +475,7 @@ CPLErr BYNDataset::SetProjection( const char* pszProjString )
         if( pszAuthName != nullptr &&
             pszAuthCode != nullptr &&
             EQUAL( pszAuthName, "EPSG" ) &&
-            atoi( pszAuthCode ) == BYN_DATAM_1_VDATUM_2 )
+            atoi( pszAuthCode ) == BYN_DATUM_1_VDATUM_2 )
         {
             hHeader.nVDatum    = 2;
             hHeader.nDatum     = 1;
@@ -546,35 +525,145 @@ CPLErr BYNDataset::SetProjection( const char* pszProjString )
 }
 
 /*----------------------------------------------------------------------*/
+/*                           buffer2header()                            */
+/*----------------------------------------------------------------------*/
+
+void buffer2header( const GByte* pabyBuf, BYNHeader* pohHeader )
+
+{
+    memcpy( &pohHeader->nSouth,     pabyBuf,      4 );
+    memcpy( &pohHeader->nNorth,     pabyBuf + 4,  4 );
+    memcpy( &pohHeader->nWest,      pabyBuf + 8,  4 );
+    memcpy( &pohHeader->nEast,      pabyBuf + 12, 4 );
+    memcpy( &pohHeader->nDLat,      pabyBuf + 16, 2 );
+    memcpy( &pohHeader->nDLon,      pabyBuf + 18, 2 );
+    memcpy( &pohHeader->nGlobal,    pabyBuf + 20, 2 );
+    memcpy( &pohHeader->nType,      pabyBuf + 22, 2 );
+    memcpy( &pohHeader->dfFactor,   pabyBuf + 24, 8 );
+    memcpy( &pohHeader->nSizeOf,    pabyBuf + 32, 2 );
+    memcpy( &pohHeader->nVDatum,    pabyBuf + 34, 2 );
+    memcpy( &pohHeader->nDescrip,   pabyBuf + 40, 2 );
+    memcpy( &pohHeader->nSubType,   pabyBuf + 42, 2 );
+    memcpy( &pohHeader->nDatum,     pabyBuf + 44, 2 );
+    memcpy( &pohHeader->nEllipsoid, pabyBuf + 46, 2 );
+    memcpy( &pohHeader->nByteOrder, pabyBuf + 48, 2 );
+    memcpy( &pohHeader->nScale,     pabyBuf + 50, 2 );
+    memcpy( &pohHeader->dfWo,       pabyBuf + 52, 8 );
+    memcpy( &pohHeader->dfGM,       pabyBuf + 60, 8 );
+    memcpy( &pohHeader->nTideSys,   pabyBuf + 68, 2 );
+    memcpy( &pohHeader->nRealiz,    pabyBuf + 70, 2 );
+    memcpy( &pohHeader->dEpoch,     pabyBuf + 72, 4 );
+    memcpy( &pohHeader->nPtType,    pabyBuf + 76, 2 );
+
+#if defined(CPL_MSB)
+    CPL_LSBPTR32( &pohHeader->nSouth );
+    CPL_LSBPTR32( &pohHeader->nNorth );
+    CPL_LSBPTR32( &pohHeader->nWest );
+    CPL_LSBPTR32( &pohHeader->nEast );
+    CPL_LSBPTR16( &pohHeader->nDLat );
+    CPL_LSBPTR16( &pohHeader->nDLon );
+    CPL_LSBPTR16( &pohHeader->nGlobal );
+    CPL_LSBPTR16( &pohHeader->nType );
+    CPL_LSBPTR64( &pohHeader->dfFactor );
+    CPL_LSBPTR16( &pohHeader->nSizeOf );
+    CPL_LSBPTR16( &pohHeader->nVDatum );
+    CPL_LSBPTR16( &pohHeader->nDescrip );
+    CPL_LSBPTR16( &pohHeader->nSubType );
+    CPL_LSBPTR16( &pohHeader->nDatum );
+    CPL_LSBPTR16( &pohHeader->nEllipsoid );
+    CPL_LSBPTR16( &pohHeader->nByteOrder );
+    CPL_LSBPTR16( &pohHeader->nScale );
+    CPL_LSBPTR64( &pohHeader->dfWo );
+    CPL_LSBPTR64( &pohHeader->dfGM );
+    CPL_LSBPTR16( &pohHeader->nTideSys );
+    CPL_LSBPTR16( &pohHeader->nRealiz );
+    CPL_LSBPTR32( &pohHeader->dEpoch );
+    CPL_LSBPTR16( &pohHeader->nPtType );
+#endif
+
+#if DEBUG
+    CPLDebug("BYN","South         = %d",pohHeader->nSouth);
+    CPLDebug("BYN","North         = %d",pohHeader->nNorth);
+    CPLDebug("BYN","West          = %d",pohHeader->nWest);
+    CPLDebug("BYN","East          = %d",pohHeader->nEast);
+    CPLDebug("BYN","DLat          = %d",pohHeader->nDLat);
+    CPLDebug("BYN","DLon          = %d",pohHeader->nDLon);
+    CPLDebug("BYN","DGlobal       = %d",pohHeader->nGlobal);
+    CPLDebug("BYN","DType         = %d",pohHeader->nType);
+    CPLDebug("BYN","Factor        = %f",pohHeader->dfFactor);
+    CPLDebug("BYN","SizeOf        = %d",pohHeader->nSizeOf);
+    CPLDebug("BYN","VDatum        = %d",pohHeader->nVDatum);
+    CPLDebug("BYN","Data          = %d",pohHeader->nDescrip);
+    CPLDebug("BYN","SubType       = %d",pohHeader->nSubType);
+    CPLDebug("BYN","Datum         = %d",pohHeader->nDatum);
+    CPLDebug("BYN","Ellipsoid     = %d",pohHeader->nEllipsoid);
+    CPLDebug("BYN","ByteOrder     = %d",pohHeader->nByteOrder);
+    CPLDebug("BYN","Scale         = %d",pohHeader->nScale);
+    CPLDebug("BYN","Wo            = %f",pohHeader->dfWo);
+    CPLDebug("BYN","GM            = %f",pohHeader->dfGM);
+    CPLDebug("BYN","TideSystem    = %d",pohHeader->nTideSys);
+    CPLDebug("BYN","RefRealzation = %d",pohHeader->nRealiz);
+    CPLDebug("BYN","Epoch         = %f",pohHeader->dEpoch);
+    CPLDebug("BYN","PtType        = %d",pohHeader->nPtType);
+#endif
+}
+
+/*----------------------------------------------------------------------*/
 /*                           header2buffer()                            */
 /*----------------------------------------------------------------------*/
 
-void CPL_STDCALL header2buffer( const BYNHeader* poHeader, GByte* pabyBuf )
+void header2buffer( const BYNHeader* pohHeader, GByte* pabyBuf )
 
 {
-    memcpy( pabyBuf,      &poHeader->nSouth,     4 );
-    memcpy( pabyBuf + 4,  &poHeader->nNorth,     4 );
-    memcpy( pabyBuf + 8,  &poHeader->nWest,      4 );
-    memcpy( pabyBuf + 12, &poHeader->nEast,      4 );
-    memcpy( pabyBuf + 16, &poHeader->nDLat,      2 );
-    memcpy( pabyBuf + 18, &poHeader->nDLon,      2 );
-    memcpy( pabyBuf + 20, &poHeader->nGlobal,    2 );
-    memcpy( pabyBuf + 22, &poHeader->nType,      2 );
-    memcpy( pabyBuf + 24, &poHeader->dfFactor,   8 );
-    memcpy( pabyBuf + 32, &poHeader->nSizeOf,    2 );
-    memcpy( pabyBuf + 34, &poHeader->nVDatum,    2 );
-    memcpy( pabyBuf + 40, &poHeader->nDescrip,   2 );
-    memcpy( pabyBuf + 42, &poHeader->nSubType,   2 );
-    memcpy( pabyBuf + 44, &poHeader->nDatum,     2 );
-    memcpy( pabyBuf + 46, &poHeader->nEllipsoid, 2 );
-    memcpy( pabyBuf + 48, &poHeader->nByteOrder, 2 );
-    memcpy( pabyBuf + 50, &poHeader->nScale,     2 );
-    memcpy( pabyBuf + 52, &poHeader->dfWo,       8 );
-    memcpy( pabyBuf + 60, &poHeader->dfGM,       8 );
-    memcpy( pabyBuf + 68, &poHeader->nTideSys,   2 );
-    memcpy( pabyBuf + 70, &poHeader->nRealiz,    2 );
-    memcpy( pabyBuf + 72, &poHeader->dEpoch,     4 );
-    memcpy( pabyBuf + 76, &poHeader->nPtType,    2 );
+    memcpy( pabyBuf,      &pohHeader->nSouth,     4 );
+    memcpy( pabyBuf + 4,  &pohHeader->nNorth,     4 );
+    memcpy( pabyBuf + 8,  &pohHeader->nWest,      4 );
+    memcpy( pabyBuf + 12, &pohHeader->nEast,      4 );
+    memcpy( pabyBuf + 16, &pohHeader->nDLat,      2 );
+    memcpy( pabyBuf + 18, &pohHeader->nDLon,      2 );
+    memcpy( pabyBuf + 20, &pohHeader->nGlobal,    2 );
+    memcpy( pabyBuf + 22, &pohHeader->nType,      2 );
+    memcpy( pabyBuf + 24, &pohHeader->dfFactor,   8 );
+    memcpy( pabyBuf + 32, &pohHeader->nSizeOf,    2 );
+    memcpy( pabyBuf + 34, &pohHeader->nVDatum,    2 );
+    memcpy( pabyBuf + 40, &pohHeader->nDescrip,   2 );
+    memcpy( pabyBuf + 42, &pohHeader->nSubType,   2 );
+    memcpy( pabyBuf + 44, &pohHeader->nDatum,     2 );
+    memcpy( pabyBuf + 46, &pohHeader->nEllipsoid, 2 );
+    memcpy( pabyBuf + 48, &pohHeader->nByteOrder, 2 );
+    memcpy( pabyBuf + 50, &pohHeader->nScale,     2 );
+    memcpy( pabyBuf + 52, &pohHeader->dfWo,       8 );
+    memcpy( pabyBuf + 60, &pohHeader->dfGM,       8 );
+    memcpy( pabyBuf + 68, &pohHeader->nTideSys,   2 );
+    memcpy( pabyBuf + 70, &pohHeader->nRealiz,    2 );
+    memcpy( pabyBuf + 72, &pohHeader->dEpoch,     4 );
+    memcpy( pabyBuf + 76, &pohHeader->nPtType,    2 );
+
+#if defined(CPL_MSB)
+    CPL_MSBPTR32( pabyBuf );
+    CPL_MSBPTR32( pabyBuf + 4 );
+    CPL_MSBPTR32( pabyBuf + 8 );
+    CPL_MSBPTR32( pabyBuf + 12 );
+    CPL_MSBPTR16( pabyBuf + 16 );
+    CPL_MSBPTR16( pabyBuf + 18 );
+    CPL_MSBPTR16( pabyBuf + 20 );
+    CPL_MSBPTR16( pabyBuf + 22 );
+    CPL_MSBPTR64( pabyBuf + 24 );
+    CPL_MSBPTR16( pabyBuf + 32 );
+    CPL_MSBPTR16( pabyBuf + 34 );
+    CPL_MSBPTR16( pabyBuf + 40 );
+    CPL_MSBPTR16( pabyBuf + 42 );
+    CPL_MSBPTR16( pabyBuf + 44 );
+    CPL_MSBPTR16( pabyBuf + 46 );
+    CPL_MSBPTR16( pabyBuf + 48 );
+    CPL_MSBPTR16( pabyBuf + 50 );
+    CPL_MSBPTR64( pabyBuf + 52 );
+    CPL_MSBPTR64( pabyBuf + 60 );
+    CPL_MSBPTR16( pabyBuf + 68 );
+    CPL_MSBPTR16( pabyBuf + 70 );
+    CPL_MSBPTR32( pabyBuf + 72 );
+    CPL_MSBPTR16( pabyBuf + 76 );
+#endif
 }
 
 /************************************************************************/
@@ -597,13 +686,22 @@ GDALDataset *BYNDataset::Create( const char * pszFilename,
         return nullptr;
     }
 
-    if( !EQUAL(CPLGetExtension(pszFilename),"byn") &&
-        !EQUAL(CPLGetExtension(pszFilename),"err") )
+/* -------------------------------------------------------------------- */
+/*      Check file extension (.byn/.err)                                */
+/* -------------------------------------------------------------------- */
+
+    char* pszFileExtension = CPLStrdup( CPLGetExtension( pszFilename ) );
+
+    if( ! EQUAL( pszFileExtension, "byn" ) &&
+        ! EQUAL( pszFileExtension, "err" ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
             "Attempt to create byn file with extension other than byn/err." );
+        CPLFree( pszFileExtension );
         return nullptr;
     }
+
+    CPLFree( pszFileExtension );
 
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
@@ -626,29 +724,23 @@ GDALDataset *BYNDataset::Create( const char * pszFilename,
 
     /* Load header with some commum values */
 
-    BYNHeader hHeader = { 36060,   /* South  10.0 */
-                          323940,  /* North  90.0 */
-                          -611940, /* West -170.0 */
-                          -36060,  /* East  -10.0 */
-                          0, 0, 0, 1, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,
-                          0.0, 1, 0, 0.0, 0 }; /* LSB */
+    BYNHeader hHeader = {0,0,0,0,0,0,0,0,0.0,0,0,0,0,0,0,0,0,0.0,0.0,0,0,0.0,0};
 
-    /* Match the requested nXSize, nYSize, and type */
+    /* Set temporary values on header */
 
-    hHeader.nDLat   = (GInt16) ( ( hHeader.nNorth - hHeader.nSouth ) / nYSize ) + 1;
-    hHeader.nDLon   = (GInt16) ( ( hHeader.nEast  - hHeader.nWest  ) / nXSize ) + 1; 
-    hHeader.nSizeOf = (GInt16) GDALGetDataTypeSizeBytes( eType ); /* {2,4} */
+    hHeader.nSouth  = 0;
+    hHeader.nNorth  = nYSize - 2;
+    hHeader.nWest   = 0;
+    hHeader.nEast   = nXSize - 2;
+    hHeader.nDLat   = 1;
+    hHeader.nDLon   = 1;
+    hHeader.nSizeOf = static_cast<GInt16>(GDALGetDataTypeSizeBytes( eType ));
 
-    /* Set up undefined Datum, VDatum and Ellipsoid */
-
-    hHeader.nVDatum    = 0;
-    hHeader.nDatum     = 9;
-    hHeader.nEllipsoid = 9;
-
-    /* Avoid platform misaligment when writing directly from struct 
-       by writing from a buffer */
+    /* Prepare buffer for writing */
 
     header2buffer( &hHeader, abyBuf );
+
+    /* Write initial header */
 
     VSIFWriteL( abyBuf, BYN_HDR_SZ, 1, fp );
     VSIFCloseL( fp );
@@ -680,12 +772,12 @@ void BYNDataset::UpdateHeader()
         dfDLon  *= 1000;
     }
 
-    hHeader.nSouth = (GInt32) dfSouth;
-    hHeader.nNorth = (GInt32) dfNorth;
-    hHeader.nWest  = (GInt32) dfWest;
-    hHeader.nEast  = (GInt32) dfEast;
-    hHeader.nDLat  = (GInt16) dfDLat;
-    hHeader.nDLon  = (GInt16) dfDLon;
+    hHeader.nSouth = static_cast<GInt32>(dfSouth);
+    hHeader.nNorth = static_cast<GInt32>(dfNorth);
+    hHeader.nWest  = static_cast<GInt32>(dfWest);
+    hHeader.nEast  = static_cast<GInt32>(dfEast);
+    hHeader.nDLat  = static_cast<GInt16>(dfDLat);
+    hHeader.nDLon  = static_cast<GInt16>(dfDLon);
 
     GByte abyBuf[BYN_HDR_SZ];
 
@@ -695,19 +787,19 @@ void BYNDataset::UpdateHeader()
 
     pszValue = GetMetadataItem("GLOBAL");
     if(pszValue != nullptr) 
-        hHeader.nGlobal  = (GInt16) atoi( pszValue );
+        hHeader.nGlobal  = static_cast<GInt16>( atoi( pszValue ) );
 
     pszValue = GetMetadataItem("TYPE");
     if(pszValue != nullptr) 
-        hHeader.nType    = (GInt16) atoi( pszValue );
+        hHeader.nType    = static_cast<GInt16>( atoi( pszValue ) );
 
     pszValue = GetMetadataItem("DESCRIPTION");
     if(pszValue != nullptr) 
-        hHeader.nDescrip = (GInt16) atoi( pszValue );
+        hHeader.nDescrip = static_cast<GInt16>( atoi( pszValue ) );
 
     pszValue = GetMetadataItem("SUBTYPE");
     if(pszValue != nullptr) 
-        hHeader.nSubType = (GInt16) atoi( pszValue );
+        hHeader.nSubType = static_cast<GInt16>( atoi( pszValue ) );
 
     pszValue = GetMetadataItem("WO");
     if(pszValue != nullptr) 
@@ -719,22 +811,35 @@ void BYNDataset::UpdateHeader()
 
     pszValue = GetMetadataItem("TIDESYSTEM");
     if(pszValue != nullptr) 
-        hHeader.nTideSys = (GInt16) atoi( pszValue );
+        hHeader.nTideSys = static_cast<GInt16>( atoi( pszValue ) );
 
     pszValue = GetMetadataItem("REALIZATION");
     if(pszValue != nullptr) 
-        hHeader.nRealiz  = (GInt16) atoi( pszValue );
+        hHeader.nRealiz  = static_cast<GInt16>( atoi( pszValue ) );
 
     pszValue = GetMetadataItem("EPOCH");
     if(pszValue != nullptr) 
-        hHeader.dEpoch   = (float) CPLAtof( pszValue );
+        hHeader.dEpoch   = static_cast<float>( CPLAtof( pszValue ) );
 
     pszValue = GetMetadataItem("PTTYPE");
     if(pszValue != nullptr) 
-        hHeader.nPtType  = (GInt16) atoi( pszValue );
+        hHeader.nPtType  = static_cast<GInt16>( atoi( pszValue ) );
 
     CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));
     CPL_IGNORE_RET_VAL(VSIFWriteL( abyBuf, BYN_HDR_SZ, 1, fpImage ));
+
+    /* GDALPam metadata update */
+
+    SetMetadataItem("GLOBAL",     CPLSPrintf("%d",hHeader.nGlobal), "BYN");
+    SetMetadataItem("TYPE",       CPLSPrintf("%d",hHeader.nType),   "BYN");
+    SetMetadataItem("DESCRIPTION",CPLSPrintf("%d",hHeader.nDescrip),"BYN");
+    SetMetadataItem("SUBTYPE",    CPLSPrintf("%d",hHeader.nSubType),"BYN");
+    SetMetadataItem("WO",         CPLSPrintf("%g",hHeader.dfWo),    "BYN");
+    SetMetadataItem("GM",         CPLSPrintf("%g",hHeader.dfGM),    "BYN");
+    SetMetadataItem("TIDESYSTEM", CPLSPrintf("%d",hHeader.nTideSys),"BYN");
+    SetMetadataItem("REALIZATION",CPLSPrintf("%d",hHeader.nRealiz), "BYN");
+    SetMetadataItem("EPOCH",      CPLSPrintf("%g",hHeader.dEpoch),  "BYN");
+    SetMetadataItem("PTTYPE",     CPLSPrintf("%d",hHeader.nPtType), "BYN");
 }
 
 /************************************************************************/
@@ -754,9 +859,8 @@ void GDALRegister_BYN()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Natural Resources Canada (.byn/.err)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "byn" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Int16, Int32" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_byn.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Int16, Int32" );
 
     poDriver->pfnOpen = BYNDataset::Open;
     poDriver->pfnIdentify = BYNDataset::Identify;
