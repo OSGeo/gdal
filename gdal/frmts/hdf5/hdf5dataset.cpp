@@ -1009,7 +1009,13 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
     const hid_t hAttrSpace = H5Aget_space(hAttrID);
 
     if( H5Tget_class(hAttrNativeType) == H5T_VLEN )
+    {
+        H5Sclose(hAttrSpace);
+        H5Tclose(hAttrNativeType);
+        H5Tclose(hAttrTypeID);
+        H5Aclose(hAttrID);
         return 0;
+    }
 
     hsize_t nSize[64] = {};
     const unsigned int nAttrDims =

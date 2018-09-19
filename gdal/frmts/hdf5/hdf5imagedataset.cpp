@@ -79,10 +79,8 @@ class HDF5ImageDataset : public HDF5Dataset
     hid_t        dataset_id;
     hid_t        dataspace_id;
     hsize_t      size;
-    haddr_t      address;
     hid_t        datatype;
     hid_t        native;
-    H5T_class_t  class_;
     Hdf5ProductType    iSubdatasetType;
     HDF5CSKProductEnum iCSKProductType;
     double       adfGeoTransform[6];
@@ -171,10 +169,8 @@ HDF5ImageDataset::HDF5ImageDataset() :
     dataset_id(-1),
     dataspace_id(-1),
     size(0),
-    address(0),
     datatype(-1),
     native(-1),
-    class_(H5T_NO_CLASS),
     iSubdatasetType(UNKNOWN_PRODUCT),
     iCSKProductType(PROD_UNKNOWN),
     bHasGeoTransform(false)
@@ -537,9 +533,7 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
     poDS->dimensions = H5Sget_simple_extent_dims(poDS->dataspace_id, poDS->dims,
                                                  poDS->maxdims);
     poDS->datatype = H5Dget_type(poDS->dataset_id);
-    poDS->class_ = H5Tget_class(poDS->datatype);
     poDS->size = H5Tget_size(poDS->datatype);
-    poDS->address = H5Dget_offset(poDS->dataset_id);
     poDS->native = H5Tget_native_type(poDS->datatype, H5T_DIR_ASCEND);
 
     // CSK code in IdentifyProductType() and CreateProjections()
