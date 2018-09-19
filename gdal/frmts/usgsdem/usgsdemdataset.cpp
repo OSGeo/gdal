@@ -362,13 +362,10 @@ CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
 /*      Initialize image buffer to nodata value.                        */
 /* -------------------------------------------------------------------- */
-    for( int k = GetXSize() * GetYSize() - 1; k >= 0; k-- )
-    {
-        if( GetRasterDataType() == GDT_Int16 )
-            reinterpret_cast<GInt16 *>( pImage )[k] = USGSDEM_NODATA;
-        else
-            reinterpret_cast<float *>( pImage )[k] = USGSDEM_NODATA;
-    }
+    GDALCopyWords(&USGSDEM_NODATA, GDT_Int32, 0,
+                  pImage, GetRasterDataType(),
+                  GDALGetDataTypeSizeBytes(GetRasterDataType()),
+                  GetXSize() * GetYSize());
 
 /* -------------------------------------------------------------------- */
 /*      Seek to data.                                                   */
