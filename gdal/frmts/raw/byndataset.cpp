@@ -370,6 +370,9 @@ CPLErr BYNDataset::SetGeoTransform( double * padfTransform )
 const char *BYNDataset::GetProjectionRef()
 
 {
+    if( pszProjection )
+        return pszProjection;
+
     OGRSpatialReference oSRS;
 
     /* Try to use a prefefined EPSG compound CS */
@@ -640,29 +643,29 @@ void header2buffer( const BYNHeader* pohHeader, GByte* pabyBuf )
     memcpy( pabyBuf + 76, &pohHeader->nPtType,    2 );
 
 #if defined(CPL_MSB)
-    CPL_MSBPTR32( pabyBuf );
-    CPL_MSBPTR32( pabyBuf + 4 );
-    CPL_MSBPTR32( pabyBuf + 8 );
-    CPL_MSBPTR32( pabyBuf + 12 );
-    CPL_MSBPTR16( pabyBuf + 16 );
-    CPL_MSBPTR16( pabyBuf + 18 );
-    CPL_MSBPTR16( pabyBuf + 20 );
-    CPL_MSBPTR16( pabyBuf + 22 );
-    CPL_MSBPTR64( pabyBuf + 24 );
-    CPL_MSBPTR16( pabyBuf + 32 );
-    CPL_MSBPTR16( pabyBuf + 34 );
-    CPL_MSBPTR16( pabyBuf + 40 );
-    CPL_MSBPTR16( pabyBuf + 42 );
-    CPL_MSBPTR16( pabyBuf + 44 );
-    CPL_MSBPTR16( pabyBuf + 46 );
-    CPL_MSBPTR16( pabyBuf + 48 );
-    CPL_MSBPTR16( pabyBuf + 50 );
-    CPL_MSBPTR64( pabyBuf + 52 );
-    CPL_MSBPTR64( pabyBuf + 60 );
-    CPL_MSBPTR16( pabyBuf + 68 );
-    CPL_MSBPTR16( pabyBuf + 70 );
-    CPL_MSBPTR32( pabyBuf + 72 );
-    CPL_MSBPTR16( pabyBuf + 76 );
+    CPL_LSBPTR32( pabyBuf );
+    CPL_LSBPTR32( pabyBuf + 4 );
+    CPL_LSBPTR32( pabyBuf + 8 );
+    CPL_LSBPTR32( pabyBuf + 12 );
+    CPL_LSBPTR16( pabyBuf + 16 );
+    CPL_LSBPTR16( pabyBuf + 18 );
+    CPL_LSBPTR16( pabyBuf + 20 );
+    CPL_LSBPTR16( pabyBuf + 22 );
+    CPL_LSBPTR64( pabyBuf + 24 );
+    CPL_LSBPTR16( pabyBuf + 32 );
+    CPL_LSBPTR16( pabyBuf + 34 );
+    CPL_LSBPTR16( pabyBuf + 40 );
+    CPL_LSBPTR16( pabyBuf + 42 );
+    CPL_LSBPTR16( pabyBuf + 44 );
+    CPL_LSBPTR16( pabyBuf + 46 );
+    CPL_LSBPTR16( pabyBuf + 48 );
+    CPL_LSBPTR16( pabyBuf + 50 );
+    CPL_LSBPTR64( pabyBuf + 52 );
+    CPL_LSBPTR64( pabyBuf + 60 );
+    CPL_LSBPTR16( pabyBuf + 68 );
+    CPL_LSBPTR16( pabyBuf + 70 );
+    CPL_LSBPTR32( pabyBuf + 72 );
+    CPL_LSBPTR16( pabyBuf + 76 );
 #endif
 }
 
