@@ -3311,7 +3311,7 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
         return nullptr;
     }
 
-    if( psOptionsIn->bCombined && eUtilityMode != HILL_SHADE )
+    if( psOptionsIn && psOptionsIn->bCombined && eUtilityMode != HILL_SHADE )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                     "-combined can only be used with hillshade");
@@ -3321,7 +3321,7 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
         return nullptr;
     }
 
-    if( psOptionsIn->bMultiDirectional && eUtilityMode != HILL_SHADE )
+    if( psOptionsIn && psOptionsIn->bMultiDirectional && eUtilityMode != HILL_SHADE )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                     "-multidirectional can only be used with hillshade");
