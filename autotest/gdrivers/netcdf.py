@@ -98,6 +98,8 @@ def netcdf_setup():
           '  has_nc2: ' + str(gdaltest.netcdf_drv_has_nc2) + '  has_nc4: ' +
           str(gdaltest.netcdf_drv_has_nc4))
 
+    gdaltest.count_opened_files = len(gdaltest.get_opened_files())
+
     return 'success'
 
 ###############################################################################
@@ -3307,6 +3309,19 @@ def netcdf_uffd():
     return 'success'
 
 
+def netcdf_postcheck():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    diff = len(gdaltest.get_opened_files()) - gdaltest.count_opened_files
+    if diff != 0:
+        gdaltest.post_reason('Leak of file handles: %d leaked' % diff)
+        return 'fail'
+
+    return 'success'
+
+
 ###############################################################################
 
 ###############################################################################
@@ -3438,6 +3453,7 @@ for item in init_list:
     gdaltest_list.append((ut.testCreate, item[0]))
     gdaltest_list.append((ut.testSetNoDataValue, item[0]))
 
+gdaltest_list.append(netcdf_postcheck)
 
 ###############################################################################
 #  other tests

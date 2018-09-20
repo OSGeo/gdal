@@ -50,6 +50,8 @@ def hdf5_1():
     if gdaltest.hdf5_drv is None:
         return 'skip'
 
+    gdaltest.count_opened_files = len(gdaltest.get_opened_files())
+
     return 'success'
 
 ###############################################################################
@@ -617,6 +619,19 @@ class TestHDF5(object):
         return 'success'
 
 
+
+def hdf5_postcheck():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    diff = len(gdaltest.get_opened_files()) - gdaltest.count_opened_files
+    if diff != 0:
+        gdaltest.post_reason('Leak of file handles: %d leaked' % diff)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     hdf5_1,
     hdf5_2,
@@ -637,6 +652,7 @@ gdaltest_list = [
     hdf5_17,
     hdf5_single_char_varname,
     hdf5_virtual_file,
+    hdf5_postcheck,
 ]
 
 hdf5_list = [('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',

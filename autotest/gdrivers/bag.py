@@ -47,6 +47,8 @@ def bag_1():
     if gdaltest.bag_drv is None:
         return 'skip'
 
+    gdaltest.count_opened_files = len(gdaltest.get_opened_files())
+
     return 'success'
 
 ###############################################################################
@@ -895,6 +897,18 @@ def bag_write_south_up():
     return 'success'
 
 
+def bag_postcheck():
+
+    if gdaltest.bag_drv is None:
+        return 'skip'
+
+    diff = len(gdaltest.get_opened_files()) - gdaltest.count_opened_files
+    if diff != 0:
+        gdaltest.post_reason('Leak of file handles: %d leaked' % diff)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [bag_1,
                  bag_2,
                  bag_3,
@@ -907,6 +921,7 @@ gdaltest_list = [bag_1,
                  bag_write_single_band,
                  bag_write_two_bands,
                  bag_write_south_up,
+                 bag_postcheck,
                  ]
 
 if __name__ == '__main__':
