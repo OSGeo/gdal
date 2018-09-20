@@ -16636,9 +16636,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
 
-    if( !pfnProgress( 0.0, nullptr, pProgressData ) )
-        return nullptr;
-
 /* -------------------------------------------------------------------- */
 /*      Capture the profile.                                            */
 /* -------------------------------------------------------------------- */
