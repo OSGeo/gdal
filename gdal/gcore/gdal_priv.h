@@ -1469,6 +1469,12 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     static CPLErr        DefaultCopyMasks( GDALDataset *poSrcDS,
                                            GDALDataset *poDstDS,
                                            int bStrict );
+    static CPLErr        DefaultCopyMasks( GDALDataset *poSrcDS,
+                                           GDALDataset *poDstDS,
+                                           int bStrict,
+                                           CSLConstList papszOptions,
+                                           GDALProgressFunc pfnProgress,
+                                           void * pProgressData );
 //! @endcond
     static CPLErr       QuietDelete( const char * pszName );
 

@@ -17569,9 +17569,11 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     CPLErr eErr = CE_None;
 
     const int nMaskFlags = poSrcDS->GetRasterBand(1)->GetMaskFlags();
+    bool bMask = false;
     if( !(nMaskFlags & (GMF_ALL_VALID|GMF_ALPHA|GMF_NODATA) )
-        && (nMaskFlags & GMF_PER_DATASET) )
+        && (nMaskFlags & GMF_PER_DATASET) && !bStreaming )
     {
+        bMask = true;
         eErr = poDS->CreateMaskBand( nMaskFlags );
     }
 
@@ -17584,7 +17586,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 
     // For scaled progress due to overview copying.
-    double dfTotalPixels = static_cast<double>(nXSize) * nYSize;
+    const int nBandsWidthMask = l_nBands +  (bMask ? 1 : 0);
+    double dfTotalPixels =
+        static_cast<double>(nXSize) * nYSize * nBandsWidthMask;
     double dfCurPixels = 0;
 
     if( eErr == CE_None &&
@@ -17609,7 +17613,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 GDALRasterBand* poOvrBand =
                     poSrcDS->GetRasterBand(1)->GetOverview(i);
                 dfTotalPixels += static_cast<double>(poOvrBand->GetXSize()) *
-                                poOvrBand->GetYSize();
+                                poOvrBand->GetYSize() * nBandsWidthMask;
             }
 
             char* papszCopyWholeRasterOptions[2] = { nullptr, nullptr };
@@ -17632,7 +17636,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 double dfNextCurPixels =
                     dfCurPixels +
                     static_cast<double>(poOvrBand->GetXSize()) *
-                    poOvrBand->GetYSize();
+                    poOvrBand->GetYSize() * l_nBands;
 
                 void* pScaledData =
                     GDALCreateScaledProgress( dfCurPixels / dfTotalPixels,
@@ -17656,13 +17660,22 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 // Copy mask of the overview.
                 if( eErr == CE_None && poDS->poMaskDS != nullptr )
                 {
+                    dfNextCurPixels +=
+                        static_cast<double>(poOvrBand->GetXSize()) *
+                                            poOvrBand->GetYSize();
+                    pScaledData =
+                        GDALCreateScaledProgress( dfCurPixels / dfTotalPixels,
+                                            dfNextCurPixels / dfTotalPixels,
+                                            pfnProgress, pProgressData );
                     eErr =
                         GDALRasterBandCopyWholeRaster(
                             poOvrBand->GetMaskBand(),
                             poDS->papoOverviewDS[iOvrLevel]->
                             poMaskDS->GetRasterBand(1),
                             papszCopyWholeRasterOptions,
-                            GDALDummyProgress, nullptr);
+                            GDALScaledProgress, pScaledData );
+                    dfCurPixels = dfNextCurPixels;
+                    GDALDestroyScaledProgress(pScaledData);
                     poDS->papoOverviewDS[iOvrLevel]->poMaskDS->FlushCache();
                 }
             }
@@ -17672,9 +17685,12 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Copy actual imagery.                                            */
 /* -------------------------------------------------------------------- */
-    void* pScaledData = GDALCreateScaledProgress(dfCurPixels / dfTotalPixels,
-                                                 1.0,
-                                                 pfnProgress, pProgressData);
+    double dfNextCurPixels =
+        dfCurPixels + static_cast<double>(nXSize) * nYSize * l_nBands;
+    void* pScaledData = GDALCreateScaledProgress(
+        dfCurPixels / dfTotalPixels,
+        dfNextCurPixels / dfTotalPixels,
+        pfnProgress, pProgressData);
 
 #if defined(HAVE_LIBJPEG) || defined(JPEG_DIRECT_COPY)
     bool bTryCopy = true;
@@ -17865,6 +17881,10 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( eErr == CE_None && !bStreaming )
     {
+        pScaledData = GDALCreateScaledProgress(
+            dfNextCurPixels / dfTotalPixels,
+            1.0,
+            pfnProgress, pProgressData);
         if( poDS->poMaskDS )
         {
             const char* l_papszOptions[2] = { "COMPRESSED=YES", nullptr };
@@ -17872,12 +17892,15 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                     poSrcDS->GetRasterBand(1)->GetMaskBand(),
                                     poDS->GetRasterBand(1)->GetMaskBand(),
                                     const_cast<char **>(l_papszOptions),
-                                    GDALDummyProgress, nullptr);
+                                    GDALScaledProgress, pScaledData );
         }
         else
         {
-            eErr = GDALDriver::DefaultCopyMasks( poSrcDS, poDS, bStrict );
+            eErr = GDALDriver::DefaultCopyMasks( poSrcDS, poDS, bStrict,
+                                                 nullptr,
+                                                 GDALScaledProgress, pScaledData );
         }
+        GDALDestroyScaledProgress(pScaledData);
     }
 
     if( eErr == CE_Failure )
