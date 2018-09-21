@@ -165,18 +165,16 @@ int BYNDataset::Identify( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check file extension (.byn/.err)                                */
 /* -------------------------------------------------------------------- */
-
-    char* pszFileExtension = CPLStrdup( 
-                             CPLGetExtension( poOpenInfo->pszFilename ) );
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    const char* pszFileExtension =
+                             CPLGetExtension( poOpenInfo->pszFilename );
 
     if( ! EQUAL( pszFileExtension, "byn" ) &&
         ! EQUAL( pszFileExtension, "err" ) )
     {
-        CPLFree( pszFileExtension );
         return FALSE;
     }
-
-    CPLFree( pszFileExtension );
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Check some value's ranges on header                             */
@@ -860,7 +858,7 @@ void GDALRegister_BYN()
     poDriver->SetDescription( "BYN" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Natural Resources Canada (.byn/.err)" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "byn" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "byn err" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_byn.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Int16, Int32" );
