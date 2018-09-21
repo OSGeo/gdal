@@ -105,7 +105,7 @@ With git log, identify the sha1sum of the commit you want to backport
 git checkout 2.2 (if you want to backport to 2.2)
 git cherry-pick the_sha1_sum
 ```
-If changes are needed, do them and git commit -a --amend
+If changes are needed, do them and ```git commit -a --amend```
 
 
 Things you should NOT do
