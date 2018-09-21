@@ -4,13 +4,9 @@ The 2.3.2 release is a bug fix release.
 
 == Build ==
 
-All:
-
 Unix:
  * Remove additionnal '$' in front of '${CXX}' in configure to fix ECW5 detection
  * Set minimum pkg-config version to 0.21
-
-Windows:
 
 == Port ==
 
@@ -91,10 +87,6 @@ VRT driver:
 WMTS driver:
  * avoid issue with reprojection of layer extent into TileMatrixSet SRS
 
-== OGR core ==
-
- *
-
 == OGRSpatialReference ==
 
  * importFromProj4/exportToProj4: fix typo in the PROJ method name of InternalMapOfTheWorldPolyconic which is imw_p (instead of the misspelled iwm_p)
@@ -157,12 +149,6 @@ WFS driver:
 
 Java bindings:
  * Unix: fix JNI library bundling
- 
-Perl bindings:
- * 
-
-Python bindings:
- *
 
 = GDAL/OGR 2.3.1 Release Notes =
 
