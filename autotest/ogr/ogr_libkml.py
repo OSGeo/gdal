@@ -2207,6 +2207,43 @@ def ogr_libkml_read_kml_with_space_content_in_coordinates():
     return 'success'
 
 ###############################################################################
+
+
+def ogr_libkml_update_existing_kml():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    filename = '/vsimem/ogr_libkml_update_existing_kml.kml'
+    gdal.FileFromMemBuffer(filename, """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+    <Placemark>
+        <name>An instance of A</name>
+    </Placemark>
+    <Placemark>
+        <name>An instance of B</name>
+    </Placemark>
+</Document>
+</kml>
+""")
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    fc_before = lyr.GetFeatureCount()
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    fc_after = lyr.GetFeatureCount()
+    if fc_after != fc_before + 1:
+        return 'fail'
+
+    gdal.Unlink(filename)
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 
@@ -2313,6 +2350,7 @@ gdaltest_list = [
     ogr_libkml_read_placemark_in_root_and_subfolder,
     ogr_libkml_read_tab_separated_coord_triplet,
     ogr_libkml_read_kml_with_space_content_in_coordinates,
+    ogr_libkml_update_existing_kml,
     ogr_libkml_cleanup]
 
 if __name__ == '__main__':
