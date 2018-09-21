@@ -1,3 +1,169 @@
+= GDAL/OGR 2.3.2 Release Notes =
+
+The 2.3.2 release is a bug fix release.
+
+== Build ==
+
+All:
+
+Unix:
+ * Remove additionnal '$' in front of '${CXX}' in configure to fix ECW5 detection
+ * Set minimum pkg-config version to 0.21
+
+Windows:
+
+== Port ==
+
+ * ODBC: Fetch wide-char strings on UNIX (#839)
+ * /vsigzip/: allow seeking to beginning of file, despite decompression error
+ * CPLIsMachineForSureGCEInstance(): use a more reliable method of identifying a Google Compute Engine instance
+
+== GDAL core ==
+
+ * Statistics/minmax computation: on a float32 raster, be more tolerant when the nodata is slightly larger than +/- FLOAT_MAX
+ * PAMDataset: avoid illegal down_cast to GDALPamRasterBand. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=9358. Credit to OSS Fuzz
+ * GetMaskBand(): do not use a GDALNoDataMaskBand when nodata value is out of range (#754)
+ * Windows builds: No DllMain() in static library builds
+
+== GDAL utilities ==
+
+ * gdal_translate: make -stats option work with -co COPY_SRC_OVERVIEWS=YES (#792)
+ * gdal_translate: fix RPC correction when using -srcwin with negative offsets (#827)
+ * gdal_contour: fix GDAL 2.3 regression with fixed interval contouring that resulted in discontinuities in contour lines (#889)
+ * gdal2tiles: fix wrong computation of min zoom level in some cases (#730)
+ * gdal2tiles: fix performance issue by caching source dataset; GDALAutoCreateWarpedVRT(): fix issue with out-of-range nodata values (#770)
+ * gdal2tiles: restore GDAL < 2.3 behaviour when output directory is not explicitly specified (#795)
+ * gdal2tiles: fix --force-kml (#809)
+
+== GDAL algorithms ==
+
+ * gdal_grid linear: speed-up search of triangle for points outside of the triangulation
+ * gdal_grid linear: avoid artifacts with degenerate triangles (#638)
+ * Gauss resampling: fix potential read heap buffer overflow in corner cases. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=9783. Credit to OSS Fuzz
+ * GDALDEMProcessing(): fix null pointer dereference if psOptionsIn == nullptr (#931)
+
+== GDAL drivers ==
+
+E00GRID driver:
+ * correctly parse projection sections that have lines with tildes (#894)
+
+ENVI driver:
+ * support reading truncated datasets (#915)
+
+GPKG driver:
+ * retrieve original raster file when using gdal_translate -co APPEND_SUBDATASET=YES with other gdal_translate switches
+ * copy source metadata when using TILING_SCHEME
+
+GRIB driver:
+ * turn printf() warning as CPLDebug() messages
+
+GTiff driver:
+ * fix retrieving mask band of overview band when the mask is external. Fixes -co COPY_SRC_OVERVIEWS=YES of such datasets (#754)
+ * Resync with libtiff to fix TIFFTAG_ZSTD_LEVEL pseudo tag value
+ * Internal libtiff: Fix libtiff 4.0.8 regression when reading LZW-compressed strips with scanline API
+ * Internal libtiff: fix flush issue that can cause endless loop in ZSTDEncode() (#833)
+
+HTTP driver:
+ * do not immediately delete a file used by the JP2OpenJPEG driver
+
+netCDF driver:
+ * avoid use of uninitialized variable when reading blocks in creation mode (#891)
+ 
+NITF driver:
+ * avoid heap-buffer-overflow for VQ compression. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=9467. Credit to OSS Fuzz
+
+PCIDSK driver:
+ * add back support for creating external overviews, removed years ago when switching to the new PCIDSK SDK (#887)
+
+PDS4 driver:
+ * fix georeferencing reading/writing to use pixel corner convention (#735)
+
+PLScenes driver:
+ * fix /vsicurl/ raster download
+ * fix scene activation
+
+SRP driver:
+ * ASRP/USRP: allow opening files padded with 0x5E / ^ character without emitting error (#838)
+
+VRT driver:
+ * VRTComplexSource: make sure that min and max values in case of exponential resampling are properly computed
+
+WMTS driver:
+ * avoid issue with reprojection of layer extent into TileMatrixSet SRS
+
+== OGR core ==
+
+ *
+
+== OGRSpatialReference ==
+
+ * importFromProj4/exportToProj4: fix typo in the PROJ method name of InternalMapOfTheWorldPolyconic which is imw_p (instead of the misspelled iwm_p)
+ * Krovak: explicit that alpha and Pseudo_standard_parallel_1 are hardcoded in PROJ
+
+== OGR utilities ==
+
+ * ogrmerge.py: avoid exception in error code path of GetOutputDriverFor()
+ 
+== OGR drivers ==
+
+CSV driver:
+ * avoid endless loop when iterating and updating features (#919)
+
+EDIGEO driver:
+ * fix reading multipolygons (https://trac.osgeo.org/gdal/ticket/6955, github #711)
+
+ESRIJson driver:
+ * parse documents that lack 'geometryType' member (#914)
+
+GeoJSON driver:
+ * increase max memory allowed to parse a single feature (#807)
+ * remore topojson from extensions recognized by the driver
+
+GPKG driver:
+ * remove useless check that encoding is UTF-8 (#793)
+ * fix typo in gpkg_metadata_reference_column_name_update trigger definition that causes failure when renaming a table with latest sqlite master
+
+MITAB driver:
+ * fix geometry corruption when editing some datasets (#817)
+ * fix writing .tab when field name has invalid characters in it (#924)
+ * TABCleanFieldName: remove Windows specific logic related to double-byte codepage since we assume UTF-8 in our interfaces (#924)
+
+MySQL driver:
+ * add runtime support for MySQL 8.0 for spatial functionalities (#782)
+
+MSSQLSpatial driver:
+ * Accept datetime values (#841)
+ * Don't truncate string values (#843)
+ * Create 3D features (#852)
+
+OSM driver:
+ * allow parsing files with up to 10 000 nodes per way (#849)
+ * avoid array overflow with ways with many tags. Relates to https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=9618. Credit to OSS Fuzz
+
+PDF driver:
+ * fix the parser of drawing instructions that had issues with array objects
+
+Shapefile driver:
+ * fix corruption when deleting a field from a .dbf without records (#863)
+ 
+VFK driver:
+ * fix missing fields in update mode gfs (#734)
+ * fix missing geometry for SBPG layer (#710)
+
+WFS driver:
+ * avoid potential bad cast. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=9800. Credit to OSS Fuzz
+
+== SWIG bindings ==
+
+Java bindings:
+ * Unix: fix JNI library bundling
+ 
+Perl bindings:
+ * 
+
+Python bindings:
+ *
+
 = GDAL/OGR 2.3.1 Release Notes =
 
 The 2.3.1 release is a bug fix release.
