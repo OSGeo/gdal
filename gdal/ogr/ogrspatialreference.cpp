@@ -3997,7 +3997,8 @@ OGRErr OGRSpatialReference::SetNormProjParm( const char * pszName,
 {
     GetNormInfo();
 
-    if( (dfToDegrees != 1.0 || dfFromGreenwich != 0.0)
+    if( dfToDegrees != 0.0 &&
+        (dfToDegrees != 1.0 || dfFromGreenwich != 0.0)
         && IsAngularParameter(pszName) )
     {
 #ifdef WKT_LONGITUDE_RELATIVE_TO_PM
@@ -4007,7 +4008,8 @@ OGRErr OGRSpatialReference::SetNormProjParm( const char * pszName,
 
         dfValue /= dfToDegrees;
     }
-    else if( dfToMeter != 1.0 && IsLinearParameter( pszName ) )
+    else if( dfToMeter != 1.0 && dfToMeter != 0.0 &&
+             IsLinearParameter( pszName ) )
         dfValue /= dfToMeter;
 
     return SetProjParm( pszName, dfValue );
