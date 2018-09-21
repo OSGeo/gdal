@@ -47,7 +47,7 @@ CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName);
 class OGRLIBKMLLayer:public OGRLayer
 {
     int                       bUpdate;
-    bool                      bUpdated;
+
     int                       nFeatures;
     int                       iFeature;
     long                      nFID;
