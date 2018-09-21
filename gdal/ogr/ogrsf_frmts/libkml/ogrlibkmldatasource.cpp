@@ -1045,9 +1045,9 @@ int OGRLIBKMLDataSource::OpenKml( const char *pszFilename, int bUpdateIn )
     /***** parse the kml into the DOM *****/
     std::string oKmlErrors;
 
-    ElementPtr poKmlRoot = OGRLIBKMLParse( oKmlKml, &oKmlErrors );
+    m_poKmlDSKml = AsKml(OGRLIBKMLParse( oKmlKml, &oKmlErrors ));
 
-    if( !poKmlRoot )
+    if( !m_poKmlDSKml )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "ERROR parsing kml %s :%s",
@@ -1059,7 +1059,7 @@ int OGRLIBKMLDataSource::OpenKml( const char *pszFilename, int bUpdateIn )
 
     /***** get the container from root  *****/
     if( !( m_poKmlDSContainer = GetContainerFromRoot( m_poKmlFactory,
-                                                      poKmlRoot ) ) )
+                                                      m_poKmlDSKml ) ) )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "ERROR parsing kml %s :%s %s",
@@ -1090,7 +1090,7 @@ int OGRLIBKMLDataSource::OpenKml( const char *pszFilename, int bUpdateIn )
 
       AddLayer( layername_default.c_str(),
                 wkbUnknown,
-                this, poKmlRoot, m_poKmlDSContainer, pszFilename, FALSE,
+                this, m_poKmlDSKml, m_poKmlDSContainer, pszFilename, FALSE,
                 bUpdateIn, 1 );
     }
 
