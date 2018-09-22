@@ -119,7 +119,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "libogdi3.2-dev",
     "libcfitsio3-dev",
     "libfyba-dev",
-#   "libsfcgal-dev", # 1.2.2
+    "libsfcgal-dev",
     "couchdb",
     "libmongo-client-dev",
     "libqhull-dev",
@@ -137,6 +137,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "libjson-c-dev",
     "libtiff5-dev",
     "libopenjp2-7-dev",
+    "libopenjpip7",
+    "libopenjp3d7",
     "clang-3.9",
     "cmake3",
     "git",
@@ -162,7 +164,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "libpcre3-dev",
     "libspatialite-dev",
     "librasterlite2-dev",
-    "libkea-dev"
+    "libkea-dev",
+    "libzstd-dev"
   ];
 
   if Vagrant.has_plugin?("vagrant-cachier")
@@ -189,8 +192,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	  pkg_cmd << "apt-get --no-install-recommends install -q -y " + packageList.join(" ") << " ; "
 	  config.vm.provision :shell, :inline => pkg_cmd
     scripts = [
-      "sfcgal.sh",
-      "openjpeg.sh",
       "gdal.sh",
       "postgis.sh"
     ];
