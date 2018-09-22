@@ -1807,6 +1807,18 @@ def test_gdalwarp_lib_override_default_output_nodata():
 
     return 'success'
 
+
+###############################################################################
+def test_gdalwarp_lib_insufficient_dst_band_count():
+
+    src_ds = gdal.Translate('', '../gcore/data/byte.tif', options='-of MEM -b 1 -b 1')
+    dst_ds = gdal.Translate('', '../gcore/data/byte.tif', options='-of MEM')
+    with gdaltest.error_handler():
+        if gdal.Warp(dst_ds, src_ds) != 0:
+            return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -1896,6 +1908,7 @@ gdaltest_list = [
     test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs,
     test_gdalwarp_lib_touching_dateline,
     test_gdalwarp_lib_override_default_output_nodata,
+    test_gdalwarp_lib_insufficient_dst_band_count,
     test_gdalwarp_lib_cleanup,
 ]
 
