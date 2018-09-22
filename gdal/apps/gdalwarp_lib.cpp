@@ -1501,6 +1501,24 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         else
             psWO->nBandCount = GDALGetRasterCount(hWrkSrcDS);
 
+        const int nNeededDstBands =
+            psWO->nBandCount + ( bEnableDstAlpha ? 1 : 0 );
+        if( nNeededDstBands > GDALGetRasterCount(hDstDS) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Destination dataset has %d bands, but at least %d "
+                     "are needed",
+                     GDALGetRasterCount(hDstDS),
+                     nNeededDstBands);
+            GDALDestroyTransformer( hTransformArg );
+            GDALDestroyWarpOptions( psWO );
+            GDALWarpAppOptionsFree(psOptions);
+            OGR_G_DestroyGeometry( hCutline );
+            GDALReleaseDataset(hWrkSrcDS);
+            GDALReleaseDataset(hDstDS);
+            return nullptr;
+        }
+
         psWO->panSrcBands =
             static_cast<int *>(CPLMalloc(psWO->nBandCount*sizeof(int)));
         psWO->panDstBands =
