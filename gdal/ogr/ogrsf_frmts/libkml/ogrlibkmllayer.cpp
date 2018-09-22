@@ -891,7 +891,7 @@ int OGRLIBKMLLayer::TestCapability( const char *pszCap )
     else if( EQUAL( pszCap, OLCCreateField ) )
         result = bUpdate;
     else if( EQUAL( pszCap, OLCDeleteFeature ) )
-        result = bUpdate && m_poKmlUpdate != nullptr;
+        result = bUpdate && m_poKmlUpdate;
     else if( EQUAL( pszCap, OLCStringsAsUTF8 ) )
         result = TRUE;
 
