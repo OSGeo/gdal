@@ -650,6 +650,20 @@ def rl2_24():
         return 'fail'
     return 'success'
 
+###############################################################################
+# Test Create()
+
+
+def rl2_error_create():
+
+    if gdaltest.rl2_drv is None:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        if gdaltest.rl2_drv.Create('/vsimem/out.db', 1, 1) is not None:
+            return 'fail'
+    return 'success'
+
 
 gdaltest_list = [
     rl2_1,
@@ -675,7 +689,8 @@ gdaltest_list = [
     rl2_21,
     rl2_22,
     rl2_23,
-    rl2_24
+    rl2_24,
+    rl2_error_create,
 ]
 
 if __name__ == '__main__':
