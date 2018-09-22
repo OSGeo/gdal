@@ -23,7 +23,7 @@ EXTRAFLAGS      :=      $(EXTRAFLAGS) -DUSE_PNG
 OBJ     :=      $(OBJ) pngunpack.o dec_png.o
 endif
 
-CPPFLAGS	:=	 $(CPPFLAGS) $(EXTRAFLAGS)
+CPPFLAGS	:=	 $(EXTRAFLAGS) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
