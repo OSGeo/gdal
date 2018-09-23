@@ -96,7 +96,9 @@ double BYNRasterBand::GetScale( int *pbSuccess )
 {
     if( pbSuccess != nullptr )
         *pbSuccess = TRUE;
-    return 1.0 / reinterpret_cast<BYNDataset*>(poDS)->hHeader.dfFactor;
+    const double dfFactor =
+        reinterpret_cast<BYNDataset*>(poDS)->hHeader.dfFactor;
+    return (dfFactor != 0.0) ? 1.0 / dfFactor : 0.0;
 }
 
 /************************************************************************/
