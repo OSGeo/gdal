@@ -36,6 +36,8 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 
+#include <cstdlib>
+
 CPL_CVSID("$Id$")
 
 const static BYNEllipsoids EllipsoidTable[] = {
