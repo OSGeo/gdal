@@ -192,10 +192,10 @@ int BYNDataset::Identify( GDALOpenInfo *poOpenInfo )
         hHeader.nDatum     < -1 || hHeader.nDatum     > 1 ||
         hHeader.nDescrip   < -1 || hHeader.nDescrip   > 3 ||
         hHeader.nByteOrder < -1 || hHeader.nByteOrder > 1 ||
-        abs( hHeader.nSouth - ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ||
-        abs( hHeader.nNorth - ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ||
-        abs( hHeader.nWest  - ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON ||
-        abs( hHeader.nEast  - ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON )
+        std::abs( static_cast<GIntBig>(hHeader.nSouth) - ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ||
+        std::abs( static_cast<GIntBig>(hHeader.nNorth) - ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ||
+        std::abs( static_cast<GIntBig>(hHeader.nWest)  - ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON ||
+        std::abs( static_cast<GIntBig>(hHeader.nEast)  - ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON )
         return FALSE;
 
     return TRUE;
