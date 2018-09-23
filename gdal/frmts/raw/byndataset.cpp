@@ -531,7 +531,7 @@ CPLErr BYNDataset::SetProjection( const char* pszProjString )
 /*                           buffer2header()                            */
 /*----------------------------------------------------------------------*/
 
-void buffer2header( const GByte* pabyBuf, BYNHeader* pohHeader )
+void BYNDataset::buffer2header( const GByte* pabyBuf, BYNHeader* pohHeader )
 
 {
     memcpy( &pohHeader->nSouth,     pabyBuf,      4 );
@@ -615,7 +615,7 @@ void buffer2header( const GByte* pabyBuf, BYNHeader* pohHeader )
 /*                           header2buffer()                            */
 /*----------------------------------------------------------------------*/
 
-void header2buffer( const BYNHeader* pohHeader, GByte* pabyBuf )
+void BYNDataset::header2buffer( const BYNHeader* pohHeader, GByte* pabyBuf )
 
 {
     memcpy( pabyBuf,      &pohHeader->nSouth,     4 );

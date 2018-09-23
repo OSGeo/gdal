@@ -179,9 +179,6 @@ struct BYNHeader {
     GInt16 nPtType;
 };
 
-void header2buffer( const BYNHeader* pohHeader, GByte* pabyBuf );
-void buffer2header( const GByte* pabyBuf, BYNHeader* pohHeader );
-
 struct BYNEllipsoids {
     const char* pszName;
     double dfSemiMajor;
@@ -220,6 +217,9 @@ class BYNDataset final: public RawDataset
     void        UpdateHeader();
 
     CPL_DISALLOW_COPY_ASSIGN(BYNDataset)
+
+    static void header2buffer( const BYNHeader* pohHeader, GByte* pabyBuf );
+    static void buffer2header( const GByte* pabyBuf, BYNHeader* pohHeader );
 
   public:
     BYNDataset();
