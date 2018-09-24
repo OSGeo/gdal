@@ -1474,6 +1474,10 @@ def VSIFEofL(*args):
     """VSIFEofL(VSILFILE fp) -> int"""
     return _gdal.VSIFEofL(*args)
 
+def VSIFFlushL(*args):
+    """VSIFFlushL(VSILFILE fp) -> int"""
+    return _gdal.VSIFFlushL(*args)
+
 def VSIFCloseL(*args):
     """VSIFCloseL(VSILFILE fp) -> VSI_RETVAL"""
     return _gdal.VSIFCloseL(*args)
