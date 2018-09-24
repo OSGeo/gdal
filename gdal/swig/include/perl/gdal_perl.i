@@ -2063,6 +2063,11 @@ sub Tell {
     Geo::GDAL::VSIFTellL($self);
 }
 
+sub Flush {
+    my ($self) = @_;
+    Geo::GDAL::VSIFFlushL($self);
+}
+
 sub Truncate {
     my ($self, $new_size) = @_;
     Geo::GDAL::VSIFTruncateL($self, $new_size);
