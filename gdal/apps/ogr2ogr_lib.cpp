@@ -4482,7 +4482,8 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             /* target feature : we steal it from the source feature for now... */
             OGRGeometry* poStolenGeometry = nullptr;
             if( !bExplodeCollections && nSrcGeomFieldCount == 1 &&
-                nDstGeomFieldCount == 1 )
+                (nDstGeomFieldCount == 1 ||
+                 (nDstGeomFieldCount == 0 && m_poClipSrc)) )
             {
                 poStolenGeometry = poFeature->StealGeometry();
             }
@@ -4491,6 +4492,19 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             {
                 poStolenGeometry = poFeature->StealGeometry(
                     psInfo->iRequestedSrcGeomField);
+            }
+
+            if( nDstGeomFieldCount == 0 && poStolenGeometry && m_poClipSrc )
+            {
+                OGRGeometry* poClipped = poStolenGeometry->Intersection(m_poClipSrc);
+                delete poStolenGeometry;
+                poStolenGeometry = nullptr;
+                if (poClipped == nullptr || poClipped->IsEmpty())
+                {
+                    delete poClipped;
+                    goto end_loop;
+                }
+                delete poClipped;
             }
 
             if( poDstFeature->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )

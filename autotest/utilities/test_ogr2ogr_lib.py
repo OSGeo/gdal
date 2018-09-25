@@ -532,6 +532,30 @@ def test_ogr2ogr_lib_21():
     return 'success'
 
 
+###############################################################################
+
+
+def test_ogr2ogr_clipsrc_no_dst_geom():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    tmpfilename = '/vsimem/out.csv'
+    wkt = 'POLYGON ((479461 4764494,479461 4764196,480012 4764196,480012 4764494,479461 4764494))'
+    ds = gdal.VectorTranslate(tmpfilename, '../ogr/data/poly.shp',
+                              options='-f CSV -clipsrc "%s"' % wkt)
+    lyr = ds.GetLayer(0)
+    fc = lyr.GetFeatureCount()
+    if fc != 1:
+        gdaltest.post_reason('fail')
+        print(fc)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_lib_1,
     test_ogr2ogr_lib_2,
@@ -554,6 +578,7 @@ gdaltest_list = [
     test_ogr2ogr_lib_19,
     test_ogr2ogr_lib_20,
     test_ogr2ogr_lib_21,
+    test_ogr2ogr_clipsrc_no_dst_geom,
 ]
 
 if __name__ == '__main__':
