@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  National Resources Canada - Vertical Datum Transformation
+ * Project:  Natural Resources Canada's Geoid BYN file format
  * Purpose:  Implementation of BYN format
  * Author:   Ivan Lucena, ivan.lucena@outlook.com
  *
@@ -35,6 +35,7 @@
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
+#include "cpl_safemaths.hpp"
 
 #include <cstdlib>
 
@@ -193,12 +194,39 @@ int BYNDataset::Identify( GDALOpenInfo *poOpenInfo )
         hHeader.nVDatum    < -1 || hHeader.nVDatum    > 3 ||
         hHeader.nDatum     < -1 || hHeader.nDatum     > 1 ||
         hHeader.nDescrip   < -1 || hHeader.nDescrip   > 3 ||
-        hHeader.nByteOrder < -1 || hHeader.nByteOrder > 1 ||
-        std::abs( static_cast<GIntBig>(hHeader.nSouth) - ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ||
-        std::abs( static_cast<GIntBig>(hHeader.nNorth) - ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ||
-        std::abs( static_cast<GIntBig>(hHeader.nWest)  - ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON ||
-        std::abs( static_cast<GIntBig>(hHeader.nEast)  - ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON )
+        hHeader.nByteOrder < -1 || hHeader.nByteOrder > 1 )
         return FALSE;
+
+    /* Move from cell center to upper left, lower right */
+
+    try
+    {
+        hHeader.nSouth = std::abs( hHeader.nSouth - ( hHeader.nDLat / 2 ) );
+        hHeader.nNorth = std::abs( hHeader.nNorth + ( hHeader.nDLat / 2 ) );
+        hHeader.nWest  = std::abs( hHeader.nWest  - ( hHeader.nDLon / 2 ) );
+        hHeader.nEast  = std::abs( hHeader.nEast  + ( hHeader.nDLon / 2 ) );
+    }
+    catch( const CPLSafeIntOverflow& )
+    {
+        return FALSE;
+    }
+
+    if( hHeader.nScale == 0 )
+    {
+        if( ( hHeader.nSouth > BYN_MAX_LAT ) ||
+            ( hHeader.nNorth > BYN_MAX_LAT ) ||
+            ( hHeader.nWest  > BYN_MAX_LON ) ||
+            ( hHeader.nEast  > BYN_MAX_LON ) )
+            return FALSE;
+    }
+    else
+    {
+        if( ( hHeader.nSouth > BYN_MAX_LAT_SCL ) ||
+            ( hHeader.nNorth > BYN_MAX_LAT_SCL ) ||
+            ( hHeader.nWest  > BYN_MAX_LON_SCL ) ||
+            ( hHeader.nEast  > BYN_MAX_LON_SCL ) )
+            return FALSE;
+    }
 
     return TRUE;
 }
@@ -242,12 +270,12 @@ GDALDataset *BYNDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poDS->hHeader.nScale == 1 ) 
     {
-        dfSouth /= 1000.0;
-        dfNorth /= 1000.0;
-        dfWest  /= 1000.0;
-        dfEast  /= 1000.0;
-        dfDLat  /= 1000.0;
-        dfDLon  /= 1000.0;
+        dfSouth *= BYN_SCALE;
+        dfNorth *= BYN_SCALE;
+        dfWest  *= BYN_SCALE;
+        dfEast  *= BYN_SCALE;
+        dfDLat  *= BYN_SCALE;
+        dfDLon  *= BYN_SCALE;
     }
 
     /******************************/
@@ -769,12 +797,12 @@ void BYNDataset::UpdateHeader()
 
     if( hHeader.nScale == 1 ) 
     {
-        dfSouth *= 1000;
-        dfNorth *= 1000;
-        dfWest  *= 1000;
-        dfEast  *= 1000;
-        dfDLat  *= 1000;
-        dfDLon  *= 1000;
+        dfSouth /= BYN_SCALE;
+        dfNorth /= BYN_SCALE;
+        dfWest  /= BYN_SCALE;
+        dfEast  /= BYN_SCALE;
+        dfDLat  /= BYN_SCALE;
+        dfDLon  /= BYN_SCALE;
     }
 
     hHeader.nSouth = static_cast<GInt32>(dfSouth);
@@ -861,7 +889,7 @@ void GDALRegister_BYN()
 
     poDriver->SetDescription( "BYN" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Natural Resources Canada (.byn/.err)" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Natural Resources Canada's Geoid" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "byn err" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_byn.html" );

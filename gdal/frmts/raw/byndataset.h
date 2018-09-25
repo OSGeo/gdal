@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  National Resources Canada - Vertical Datum Transformation
+ * Project:  Natural Resources Canada's Geoid BYN file format
  * Purpose:  Implementation of BYN format
  * Author:   Ivan Lucena, ivan.lucena@outlook.com
  *
@@ -196,8 +196,11 @@ constexpr int BYN_VDATUM_3         = 6357;  /* NAVD88 */
 
 /* Maximum ordinates values for Identify() */
 
-constexpr GInt32 BYN_MAX_LAT       =  90 * 3600;
-constexpr GInt32 BYN_MAX_LON       = 180 * 3600;
+constexpr GInt32 BYN_SCALE         = 1000;
+constexpr GInt32 BYN_MAX_LAT       =   90 * 3600 * 2;
+constexpr GInt32 BYN_MAX_LON       =  180 * 3600 * 2;
+constexpr GInt32 BYN_MAX_LAT_SCL   =  BYN_MAX_LAT / BYN_SCALE;
+constexpr GInt32 BYN_MAX_LON_SCL   =  BYN_MAX_LON / BYN_SCALE;
 
 /************************************************************************/
 /* ==================================================================== */
