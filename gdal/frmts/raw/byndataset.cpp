@@ -35,7 +35,6 @@
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
-#include "cpl_safemaths.hpp"
 
 #include <cstdlib>
 
@@ -199,17 +198,17 @@ int BYNDataset::Identify( GDALOpenInfo *poOpenInfo )
 
     /* Move from cell center to upper left, lower right */
 
-    try
-    {
-        hHeader.nSouth = std::abs( hHeader.nSouth - ( hHeader.nDLat / 2 ) );
-        hHeader.nNorth = std::abs( hHeader.nNorth + ( hHeader.nDLat / 2 ) );
-        hHeader.nWest  = std::abs( hHeader.nWest  - ( hHeader.nDLon / 2 ) );
-        hHeader.nEast  = std::abs( hHeader.nEast  + ( hHeader.nDLon / 2 ) );
-    }
-    catch( const CPLSafeIntOverflow& )
-    {
-        return FALSE;
-    }
+    hHeader.nSouth = static_cast<GInt32>( std::abs( 
+            static_cast<GIntBig>( hHeader.nSouth ) - ( hHeader.nDLat / 2 ) ) );
+
+    hHeader.nNorth = static_cast<GInt32>( std::abs( 
+            static_cast<GIntBig>( hHeader.nNorth ) + ( hHeader.nDLat / 2 ) ) );
+
+    hHeader.nWest  = static_cast<GInt32>( std::abs( 
+            static_cast<GIntBig>( hHeader.nWest )  - ( hHeader.nDLon / 2 ) ) );
+
+    hHeader.nEast  = static_cast<GInt32>( std::abs( 
+            static_cast<GIntBig>( hHeader.nEast )  + ( hHeader.nDLon / 2 ) ) );
 
     if( hHeader.nScale == 0 )
     {
