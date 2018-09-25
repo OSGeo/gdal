@@ -17826,9 +17826,11 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
 #endif
     }
-
+    else if( 
 #if defined(HAVE_LIBJPEG) || defined(JPEG_DIRECT_COPY)
-    else if( bTryCopy && eErr == CE_None )
+        bTryCopy &&
+#endif
+        eErr == CE_None )
     {
         char* papszCopyWholeRasterOptions[3] = { nullptr, nullptr, nullptr };
         int iNextOption = 0;
@@ -17878,7 +17880,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             papszCopyWholeRasterOptions,
             GDALScaledProgress, pScaledData );
     }
-#endif
 
     GDALDestroyScaledProgress(pScaledData);
 
