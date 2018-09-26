@@ -188,42 +188,42 @@ int BYNDataset::Identify( GDALOpenInfo *poOpenInfo )
 
     buffer2header( poOpenInfo->pabyHeader, &hHeader );
 
-    if( hHeader.nGlobal    < -1 || hHeader.nGlobal    > 2 ||
-        hHeader.nSizeOf    <  2 || hHeader.nSizeOf    > 4 ||
-        hHeader.nVDatum    < -1 || hHeader.nVDatum    > 3 ||
-        hHeader.nDatum     < -1 || hHeader.nDatum     > 1 ||
-        hHeader.nDescrip   < -1 || hHeader.nDescrip   > 3 ||
-        hHeader.nByteOrder < -1 || hHeader.nByteOrder > 1 )
+    if( hHeader.nGlobal    < 0 || hHeader.nGlobal    > 1 ||
+        hHeader.nType      < 0 || hHeader.nType      > 9 ||
+      ( hHeader.nSizeOf   != 2 && hHeader.nSizeOf   != 4 ) ||
+        hHeader.nVDatum    < 0 || hHeader.nVDatum    > 3 ||
+        hHeader.nDescrip   < 0 || hHeader.nDescrip   > 3 ||
+        hHeader.nSubType   < 0 || hHeader.nSubType   > 9 ||
+        hHeader.nDatum     < 0 || hHeader.nDatum     > 1 ||
+        hHeader.nEllipsoid < 0 || hHeader.nEllipsoid > 7 ||
+        hHeader.nByteOrder < 0 || hHeader.nByteOrder > 1 ||
+        hHeader.nScale     < 0 || hHeader.nScale     > 1 ||
+        hHeader.nTideSys   < 0 || hHeader.nTideSys   > 2 ||
+        hHeader.nPtType    < 0 || hHeader.nPtType    > 1 )
         return FALSE;
-
-    /* Move from cell center to upper left, lower right */
-
-    hHeader.nSouth = static_cast<GInt32>( std::abs( 
-            static_cast<GIntBig>( hHeader.nSouth ) - ( hHeader.nDLat / 2 ) ) );
-
-    hHeader.nNorth = static_cast<GInt32>( std::abs( 
-            static_cast<GIntBig>( hHeader.nNorth ) + ( hHeader.nDLat / 2 ) ) );
-
-    hHeader.nWest  = static_cast<GInt32>( std::abs( 
-            static_cast<GIntBig>( hHeader.nWest )  - ( hHeader.nDLon / 2 ) ) );
-
-    hHeader.nEast  = static_cast<GInt32>( std::abs( 
-            static_cast<GIntBig>( hHeader.nEast )  + ( hHeader.nDLon / 2 ) ) );
 
     if( hHeader.nScale == 0 )
     {
-        if( ( hHeader.nSouth > BYN_MAX_LAT ) ||
-            ( hHeader.nNorth > BYN_MAX_LAT ) ||
-            ( hHeader.nWest  > BYN_MAX_LON ) ||
-            ( hHeader.nEast  > BYN_MAX_LON ) )
+        if( ( std::abs( static_cast<GIntBig>( hHeader.nSouth ) - 
+                        ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ) ||
+            ( std::abs( static_cast<GIntBig>( hHeader.nNorth ) + 
+                        ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ) ||
+            ( std::abs( static_cast<GIntBig>( hHeader.nWest ) - 
+                        ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON ) ||
+            ( std::abs( static_cast<GIntBig>( hHeader.nEast ) + 
+                        ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON ) )
             return FALSE;
     }
     else
     {
-        if( ( hHeader.nSouth > BYN_MAX_LAT_SCL ) ||
-            ( hHeader.nNorth > BYN_MAX_LAT_SCL ) ||
-            ( hHeader.nWest  > BYN_MAX_LON_SCL ) ||
-            ( hHeader.nEast  > BYN_MAX_LON_SCL ) )
+        if( ( std::abs( static_cast<GIntBig>( hHeader.nSouth ) - 
+                        ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT_SCL ) ||
+            ( std::abs( static_cast<GIntBig>( hHeader.nNorth ) + 
+                        ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT_SCL ) ||
+            ( std::abs( static_cast<GIntBig>( hHeader.nWest ) - 
+                        ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON_SCL ) ||
+            ( std::abs( static_cast<GIntBig>( hHeader.nEast ) + 
+                        ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON_SCL ) )
             return FALSE;
     }
 
