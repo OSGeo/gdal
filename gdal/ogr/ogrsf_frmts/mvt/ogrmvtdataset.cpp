@@ -2052,8 +2052,14 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
         while( pabyData < pabyLayerEnd )
         {
             READ_VARUINT32(pabyData, pabyLayerEnd, nKey);
-            if( nKey == MAKE_KEY(knLAYER_NAME, WT_DATA) )
+            auto nFieldNumber = GET_FIELDNUMBER(nKey);
+            auto nWireType = GET_WIRETYPE(nKey);
+            if( nFieldNumber == knLAYER_NAME )
             {
+                if( nWireType != WT_DATA )
+                {
+                    CPLDebug("MVT", "Invalid wire type for layer_name field");
+                }
                 char* pszLayerName = nullptr;
                 unsigned int nTextSize = 0;
                 READ_TEXT_WITH_SIZE(pabyData, pabyLayerEnd, pszLayerName,
@@ -2068,8 +2074,12 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
                 CPLFree(pszLayerName);
                 bLayerNameFound = true;
             }
-            else if( nKey == MAKE_KEY(knLAYER_FEATURES, WT_DATA) )
+            else if( nFieldNumber == knLAYER_FEATURES )
             {
+                if( nWireType != WT_DATA )
+                {
+                    CPLDebug("MVT", "Invalid wire type for layer_features field");
+                }
                 unsigned int nFeatureLength = 0;
                 unsigned int nGeomType = 0;
                 READ_VARUINT32(pabyData, pabyLayerEnd, nFeatureLength);
@@ -2087,8 +2097,15 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
                 while( pabyData < pabyDataFeatureEnd )
                 {
                     READ_VARUINT32(pabyData, pabyDataFeatureEnd, nKey);
-                    if( nKey == MAKE_KEY(knFEATURE_TYPE, WT_VARINT) )
+                    nFieldNumber = GET_FIELDNUMBER(nKey);
+                    nWireType = GET_WIRETYPE(nKey);
+                    if( nFieldNumber == knFEATURE_TYPE)
                     {
+                        if( nWireType != WT_VARINT )
+                        {
+                            CPLDebug("MVT", "Invalid wire type for feature_type field");
+                            return FALSE;
+                        }
                         READ_VARUINT32(pabyData, pabyDataFeatureEnd, nGeomType);
                         if( nGeomType > knGEOM_TYPE_POLYGON )
                         {
@@ -2096,8 +2113,13 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
                             return FALSE;
                         }
                     }
-                    else if( nKey == MAKE_KEY(knFEATURE_TAGS, WT_DATA) )
+                    else if( nFieldNumber == knFEATURE_TAGS )
                     {
+                        if( nWireType != WT_DATA )
+                        {
+                            CPLDebug("MVT", "Invalid wire type for feature_tags field");
+                            return FALSE;
+                        }
                         unsigned int nTagsSize = 0;
                         READ_VARUINT32(pabyData, pabyDataFeatureEnd, nTagsSize);
                         if( nTagsSize == 0 || nTagsSize >
@@ -2123,6 +2145,11 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
                                 return FALSE;
                             }
                         }
+                    }
+                    else if( nFieldNumber == knFEATURE_GEOMETRY && nWireType != WT_DATA )
+                    {
+                        CPLDebug("MVT", "Invalid wire type for feature_geometry field");
+                        return FALSE;
                     }
                     else if( nKey == MAKE_KEY(knFEATURE_GEOMETRY, WT_DATA) &&
                             nGeomType >= 1 && nGeomType <= 3 )
@@ -2247,8 +2274,13 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
 
                 pabyData = pabyDataFeatureEnd;
             }
-            else if( nKey == MAKE_KEY(knLAYER_KEYS, WT_DATA) )
+            else if( nFieldNumber == knLAYER_KEYS )
             {
+                if( nWireType != WT_DATA )
+                {
+                    CPLDebug("MVT", "Invalid wire type for keys field");
+                    return FALSE;
+                }
                 char* pszKey = nullptr;
                 unsigned int nTextSize = 0;
                 READ_TEXT_WITH_SIZE(pabyData, pabyLayerEnd, pszKey, nTextSize);
@@ -2261,8 +2293,13 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
                 CPLFree(pszKey);
                 bKeyFound = true;
             }
-            else if( nKey == MAKE_KEY(knLAYER_VALUES, WT_DATA) )
+            else if( nFieldNumber == knLAYER_VALUES )
             {
+                if( nWireType != WT_DATA )
+                {
+                    CPLDebug("MVT", "Invalid wire type for values field");
+                    return FALSE;
+                }
                 unsigned int nValueLength = 0;
                 READ_VARUINT32(pabyData, pabyLayerEnd, nValueLength);
                 if( nValueLength == 0 ||
@@ -2292,8 +2329,13 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
                 }
             }
 #endif
-            else if( nKey == MAKE_KEY(knLAYER_VERSION, WT_VARINT) )
+            else if( nFieldNumber == knLAYER_VERSION )
             {
+                if( nWireType != WT_VARINT )
+                {
+                    CPLDebug("MVT", "Invalid wire type for version field");
+                    return FALSE;
+                }
                 unsigned int nVersion = 0;
                 READ_VARUINT32(pabyData, pabyLayerEnd, nVersion);
                 if( nVersion != 1 && nVersion != 2 )
