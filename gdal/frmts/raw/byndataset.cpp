@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  National Resources Canada - Vertical Datum Transformation
+ * Project:  Natural Resources Canada's Geoid BYN file format
  * Purpose:  Implementation of BYN format
  * Author:   Ivan Lucena, ivan.lucena@outlook.com
  *
@@ -188,17 +188,44 @@ int BYNDataset::Identify( GDALOpenInfo *poOpenInfo )
 
     buffer2header( poOpenInfo->pabyHeader, &hHeader );
 
-    if( hHeader.nGlobal    < -1 || hHeader.nGlobal    > 2 ||
-        hHeader.nSizeOf    <  2 || hHeader.nSizeOf    > 4 ||
-        hHeader.nVDatum    < -1 || hHeader.nVDatum    > 3 ||
-        hHeader.nDatum     < -1 || hHeader.nDatum     > 1 ||
-        hHeader.nDescrip   < -1 || hHeader.nDescrip   > 3 ||
-        hHeader.nByteOrder < -1 || hHeader.nByteOrder > 1 ||
-        std::abs( static_cast<GIntBig>(hHeader.nSouth) - ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ||
-        std::abs( static_cast<GIntBig>(hHeader.nNorth) - ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ||
-        std::abs( static_cast<GIntBig>(hHeader.nWest)  - ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON ||
-        std::abs( static_cast<GIntBig>(hHeader.nEast)  - ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON )
+    if( hHeader.nGlobal    < 0 || hHeader.nGlobal    > 1 ||
+        hHeader.nType      < 0 || hHeader.nType      > 9 ||
+      ( hHeader.nSizeOf   != 2 && hHeader.nSizeOf   != 4 ) ||
+        hHeader.nVDatum    < 0 || hHeader.nVDatum    > 3 ||
+        hHeader.nDescrip   < 0 || hHeader.nDescrip   > 3 ||
+        hHeader.nSubType   < 0 || hHeader.nSubType   > 9 ||
+        hHeader.nDatum     < 0 || hHeader.nDatum     > 1 ||
+        hHeader.nEllipsoid < 0 || hHeader.nEllipsoid > 7 ||
+        hHeader.nByteOrder < 0 || hHeader.nByteOrder > 1 ||
+        hHeader.nScale     < 0 || hHeader.nScale     > 1 ||
+        hHeader.nTideSys   < 0 || hHeader.nTideSys   > 2 ||
+        hHeader.nPtType    < 0 || hHeader.nPtType    > 1 )
         return FALSE;
+
+    if( hHeader.nScale == 0 )
+    {
+        if( ( std::abs( static_cast<GIntBig>( hHeader.nSouth ) - 
+                        ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ) ||
+            ( std::abs( static_cast<GIntBig>( hHeader.nNorth ) + 
+                        ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ) ||
+            ( std::abs( static_cast<GIntBig>( hHeader.nWest ) - 
+                        ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON ) ||
+            ( std::abs( static_cast<GIntBig>( hHeader.nEast ) + 
+                        ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON ) )
+            return FALSE;
+    }
+    else
+    {
+        if( ( std::abs( static_cast<GIntBig>( hHeader.nSouth ) - 
+                        ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT_SCL ) ||
+            ( std::abs( static_cast<GIntBig>( hHeader.nNorth ) + 
+                        ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT_SCL ) ||
+            ( std::abs( static_cast<GIntBig>( hHeader.nWest ) - 
+                        ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON_SCL ) ||
+            ( std::abs( static_cast<GIntBig>( hHeader.nEast ) + 
+                        ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON_SCL ) )
+            return FALSE;
+    }
 
     return TRUE;
 }
@@ -242,12 +269,12 @@ GDALDataset *BYNDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poDS->hHeader.nScale == 1 ) 
     {
-        dfSouth /= 1000.0;
-        dfNorth /= 1000.0;
-        dfWest  /= 1000.0;
-        dfEast  /= 1000.0;
-        dfDLat  /= 1000.0;
-        dfDLon  /= 1000.0;
+        dfSouth *= BYN_SCALE;
+        dfNorth *= BYN_SCALE;
+        dfWest  *= BYN_SCALE;
+        dfEast  *= BYN_SCALE;
+        dfDLat  *= BYN_SCALE;
+        dfDLon  *= BYN_SCALE;
     }
 
     /******************************/
@@ -769,12 +796,12 @@ void BYNDataset::UpdateHeader()
 
     if( hHeader.nScale == 1 ) 
     {
-        dfSouth *= 1000;
-        dfNorth *= 1000;
-        dfWest  *= 1000;
-        dfEast  *= 1000;
-        dfDLat  *= 1000;
-        dfDLon  *= 1000;
+        dfSouth /= BYN_SCALE;
+        dfNorth /= BYN_SCALE;
+        dfWest  /= BYN_SCALE;
+        dfEast  /= BYN_SCALE;
+        dfDLat  /= BYN_SCALE;
+        dfDLon  /= BYN_SCALE;
     }
 
     hHeader.nSouth = static_cast<GInt32>(dfSouth);
@@ -861,7 +888,7 @@ void GDALRegister_BYN()
 
     poDriver->SetDescription( "BYN" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Natural Resources Canada (.byn/.err)" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Natural Resources Canada's Geoid" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "byn err" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_byn.html" );
