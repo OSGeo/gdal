@@ -2273,16 +2273,25 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
                 }
                 pabyData += nValueLength;
             }
+            else if( GET_FIELDNUMBER(nKey) == knLAYER_EXTENT &&
+                     GET_WIRETYPE(nKey) != WT_VARINT )
+            {
+                CPLDebug("MVT", "Invalid wire type for extent field");
+                return FALSE;
+            }
+#if 0
+            // The check on extent is too fragile. Values of 65536 can be found
             else if( nKey == MAKE_KEY(knLAYER_EXTENT, WT_VARINT) )
             {
                 unsigned int nExtent = 0;
                 READ_VARUINT32(pabyData, pabyLayerEnd, nExtent);
-                if( nExtent < 128 || nExtent > 16384 )
+                if( nExtent < 128 || nExtent > 16834 )
                 {
                     CPLDebug("MVT", "Invalid extent: %u", nExtent);
                     return FALSE;
                 }
             }
+#endif
             else if( nKey == MAKE_KEY(knLAYER_VERSION, WT_VARINT) )
             {
                 unsigned int nVersion = 0;
