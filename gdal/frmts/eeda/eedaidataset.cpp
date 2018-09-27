@@ -575,7 +575,7 @@ CPLErr GDALEEDAIRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     json_object* poReq = json_object_new_object();
     json_object_object_add(poReq, "path",
                            json_object_new_string(poGDS->m_osAsset));
-    json_object_object_add(poReq, "encoding",
+    json_object_object_add(poReq, "fileFormat",
                            json_object_new_string(poGDS->m_osPixelEncoding));
     json_object* poBands = json_object_new_array();
     for( int i = 1; i <= poGDS->GetRasterCount(); i++ )
