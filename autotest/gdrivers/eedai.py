@@ -320,7 +320,7 @@ def eedai_2():
     npy_serialized += ''.encode('ascii').join(val for i in range(38 * 39))
 
     gdal.FileFromMemBuffer(
-        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "encoding": "NPY", "bandIds": [ "B1", "B9" ], "grid": { "affineTransform": { "translateX": 607500.0, "translateY": 4092480.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 38, "height": 39 } } }', npy_serialized)
+        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "fileFormat": "NPY", "bandIds": [ "B1", "B9" ], "grid": { "affineTransform": { "translateX": 607500.0, "translateY": 4092480.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 38, "height": 39 } } }', npy_serialized)
     got_data = ds.GetRasterBand(1).ReadRaster(1800, 1810, 1, 1)
     got_data = struct.unpack('h', got_data)[0]
     if got_data != 12345:
@@ -641,7 +641,7 @@ def eedai_4():
     gdal.Unlink('/vsimem/out.png')
 
     gdal.FileFromMemBuffer(
-        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "encoding": "PNG", "bandIds": [ "B1", "B2", "B3" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', png_data)
+        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "fileFormat": "PNG", "bandIds": [ "B1", "B2", "B3" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', png_data)
     got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     got_data = struct.unpack('B', got_data)[0]
     if got_data != 127:
@@ -668,7 +668,7 @@ def eedai_4():
 
     # Sub-sampled query
     gdal.FileFromMemBuffer(
-        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "encoding": "PNG", "bandIds": [ "B1", "B2", "B3" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 120.0, "scaleY": -120.06557377049181, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', png_data)
+        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "fileFormat": "PNG", "bandIds": [ "B1", "B2", "B3" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 120.0, "scaleY": -120.06557377049181, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', png_data)
     got_data = ds.GetRasterBand(1).ReadRaster(
         0, 0, 2, 2, buf_xsize=1, buf_ysize=1)
     got_data = struct.unpack('B', got_data)[0]
@@ -744,7 +744,7 @@ def eedai_geotiff():
     gdal.Unlink('/vsimem/out.tif')
 
     gdal.FileFromMemBuffer(
-        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "encoding": "GEO_TIFF", "bandIds": [ "B1" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', data)
+        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "fileFormat": "GEO_TIFF", "bandIds": [ "B1" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', data)
     got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     got_data = struct.unpack('H', got_data)[0]
     if got_data != 12345:
