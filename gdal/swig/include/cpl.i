@@ -308,6 +308,7 @@ unsigned int CPLGetErrorCounter();
 
 int VSIGetLastErrorNo();
 const char *VSIGetLastErrorMsg();
+void VSIErrorReset();
 
 void CPLPushFinderLocation( const char * utf8_path );
 

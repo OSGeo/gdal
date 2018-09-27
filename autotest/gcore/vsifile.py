@@ -838,6 +838,41 @@ def vsifile_21():
 
     return 'success'
 
+
+def vsifile_22():
+    # VSIOpenL doesn't set errorno
+    gdal.VSIErrorReset()
+    if gdal.VSIGetLastErrorNo() != 0:
+        gdaltest.post_reason("Expected Err=0 after VSIErrorReset(), got %d" % gdal.VSIGetLastErrorNo())
+        return 'fail'
+
+    fp = gdal.VSIFOpenL('tmp/not-existing', 'r')
+    if fp is not None:
+        gdaltest.post_reason("Expected None from VSIFOpenL")
+        return 'fail'
+    if gdal.VSIGetLastErrorNo() != 0:
+        gdaltest.post_reason("Expected Err=0 from VSIFOpenL, got %d" % gdal.VSIGetLastErrorNo())
+        return 'fail'
+
+    # VSIOpenExL does
+    fp = gdal.VSIFOpenExL('tmp/not-existing', 'r', 1)
+    if fp is not None:
+        gdaltest.post_reason("Expected None from VSIFOpenExL")
+        return 'fail'
+    if gdal.VSIGetLastErrorNo() != 1:
+        gdaltest.post_reason("Expected Err=1 from VSIFOpenExL, got %d" % gdal.VSIGetLastErrorNo())
+        return 'fail'
+    if len(gdal.VSIGetLastErrorMsg()) == 0:
+        gdaltest.post_reason("Expected a VSI error message")
+        return 'fail'
+    gdal.VSIErrorReset()
+    if gdal.VSIGetLastErrorNo() != 0:
+        gdaltest.post_reason("Expected Err=0 after VSIErrorReset(), got %d" % gdal.VSIGetLastErrorNo())
+        return 'fail'
+
+    return 'success'
+
+
 ###############################################################################
 # Test bugfix for https://github.com/OSGeo/gdal/issues/675
 
@@ -902,6 +937,7 @@ gdaltest_list = [vsifile_1,
                  vsifile_19,
                  vsifile_20,
                  vsifile_21,
+                 vsifile_22,
                  vsitar_bug_675,
                  vsigzip_multi_thread]
 

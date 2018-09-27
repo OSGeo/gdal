@@ -1312,6 +1312,10 @@ def VSIGetLastErrorMsg(*args):
     """VSIGetLastErrorMsg() -> char const *"""
     return _gdal.VSIGetLastErrorMsg(*args)
 
+def VSIErrorReset(*args):
+    """VSIErrorReset()"""
+    return _gdal.VSIErrorReset(*args)
+
 def PushFinderLocation(*args):
     """PushFinderLocation(char const * utf8_path)"""
     return _gdal.PushFinderLocation(*args)
