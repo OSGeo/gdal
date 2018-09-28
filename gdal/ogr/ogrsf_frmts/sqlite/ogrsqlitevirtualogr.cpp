@@ -1038,7 +1038,17 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
         }
         else
         {
-            osAttributeFilter += "FID";
+            const char* pszSrcFIDColumn = pMyCursor->poLayer->GetFIDColumn();
+            if( pszSrcFIDColumn && *pszSrcFIDColumn != '\0' )
+            {
+                osAttributeFilter += '"';
+                osAttributeFilter += SQLEscapeName(pszSrcFIDColumn);
+                osAttributeFilter += '"';
+            }
+            else
+            {
+                osAttributeFilter += "FID";
+            }
         }
 
         bool bExpectRightOperator = true;
