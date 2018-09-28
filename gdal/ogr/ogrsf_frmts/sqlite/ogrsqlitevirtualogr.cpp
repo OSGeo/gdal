@@ -1042,7 +1042,7 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
             if( pszSrcFIDColumn && *pszSrcFIDColumn != '\0' )
             {
                 osAttributeFilter += '"';
-                osAttributeFilter += pszSrcFIDColumn;
+                osAttributeFilter += SQLEscapeName(pszSrcFIDColumn);
                 osAttributeFilter += '"';
             }
             else
