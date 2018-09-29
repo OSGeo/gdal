@@ -4,10 +4,10 @@
  * Name:     cpl_auto_close.h
  * Project:  CPL - Common Portability Library
  * Purpose:  CPL Auto Close handling
- * Author:   liuyimin, ymwh@foxmail.com
+ * Author:   Liu Yimin, ymwh@foxmail.com
  *
  **********************************************************************
- * Copyright (c) 1998, Daniel Morissette
+ * Copyright (c) 2018, Liu Yimin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,12 +57,11 @@ class CPLAutoClose {
 		{
 			if(m_ResourcePtr && m_CloseFunc)
 			  m_CloseFunc(m_ResourcePtr);
-			m_ResourcePtr = nullptr;
 		}
 };
 
-#define CPL_AUTO_CLOSE_WARP(ptr,closefn) \
-	CPLAutoClose<decltype(ptr),decltype(closefn)*> tAutoClose##ptr##closefn(ptr,closefn)
+#define CPL_AUTO_CLOSE_WARP(hObject,closeFunc) \
+	CPLAutoClose<decltype(hObject),decltype(closeFunc)*> tAutoClose##hObject(hObject,closeFunc)
 
 #endif /* __cplusplus */
 
