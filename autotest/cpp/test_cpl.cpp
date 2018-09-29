@@ -2457,35 +2457,35 @@ namespace tut
     template<>
     void object::test<36>()
     {
-		static int counter = 0;
+        static int counter = 0;
 #if __cplusplus >= 201103L
         class AutoCloseTest{
-		public:
-			AutoCloseTest() {
-				counter += 222;
-			}
+        public:
+            AutoCloseTest() {
+                counter += 222;
+            }
             virtual ~AutoCloseTest() { 
-				counter -= 22;
-			}
-			static AutoCloseTest* Create() {
-				return new AutoCloseTest;
-			}
-			static void Destory(AutoCloseTest* p) {
-				delete p;
-			}
+                counter -= 22;
+            }
+            static AutoCloseTest* Create() {
+                return new AutoCloseTest;
+            }
+            static void Destory(AutoCloseTest* p) {
+                delete p;
+            }
         };
-		{
-			AutoCloseTest* p1 = AutoCloseTest::Create();
-			CPL_AUTO_CLOSE_WARP(p1,AutoCloseTest::Destory);
+        {
+            AutoCloseTest* p1 = AutoCloseTest::Create();
+            CPL_AUTO_CLOSE_WARP(p1,AutoCloseTest::Destory);
 
-			AutoCloseTest* p2 = AutoCloseTest::Create();
-			CPL_AUTO_CLOSE_WARP(p2,AutoCloseTest::Destory);
+            AutoCloseTest* p2 = AutoCloseTest::Create();
+            CPL_AUTO_CLOSE_WARP(p2,AutoCloseTest::Destory);
 
-		}
+        }
 #else
-		counter = 400;
+        counter = 400;
 #endif
-		ensure_equals(counter,400);
-	}
+        ensure_equals(counter,400);
+    }
 
 } // namespace tut

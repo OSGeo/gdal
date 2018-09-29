@@ -40,28 +40,28 @@
 
 template<typename _Ty,typename _Dx>
 class CPLAutoClose {
-	static_assert( !std::is_const<_Ty>::value && std::is_pointer<_Ty>::value,
-					"_Ty must is pointer type,_Dx must is function type");
-	private:
-	_Ty& m_ResourcePtr;
-	_Dx  m_CloseFunc;
-	private:
-	CPLAutoClose(const CPLAutoClose&) = delete;
-	void operator=(const CPLAutoClose&) = delete;
-	public:
-		explicit CPLAutoClose(_Ty& ptr,_Dx dt) :
-			m_ResourcePtr(ptr),
-			m_CloseFunc(dt)
-		{}
-		~CPLAutoClose()
-		{
-			if(m_ResourcePtr && m_CloseFunc)
-			  m_CloseFunc(m_ResourcePtr);
-		}
+    static_assert( !std::is_const<_Ty>::value && std::is_pointer<_Ty>::value,
+                    "_Ty must is pointer type,_Dx must is function type");
+    private:
+    _Ty& m_ResourcePtr;
+    _Dx  m_CloseFunc;
+    private:
+    CPLAutoClose(const CPLAutoClose&) = delete;
+    void operator=(const CPLAutoClose&) = delete;
+    public:
+        explicit CPLAutoClose(_Ty& ptr,_Dx dt) :
+            m_ResourcePtr(ptr),
+            m_CloseFunc(dt)
+        {}
+        ~CPLAutoClose()
+        {
+            if(m_ResourcePtr && m_CloseFunc)
+              m_CloseFunc(m_ResourcePtr);
+        }
 };
 
 #define CPL_AUTO_CLOSE_WARP(hObject,closeFunc) \
-	CPLAutoClose<decltype(hObject),decltype(closeFunc)*> tAutoClose##hObject(hObject,closeFunc)
+    CPLAutoClose<decltype(hObject),decltype(closeFunc)*> tAutoClose##hObject(hObject,closeFunc)
 
 #endif /* __cplusplus */
 
