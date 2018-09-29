@@ -36,8 +36,8 @@
 #include <cstdlib>
 #include <algorithm>
 
-// Uncomment to recognize also .gen files in addition to .img files
-// #define OPEN_GEN
+// Enable option to recognize .gen files in addition to .img files
+#define OPEN_GEN
 
 CPL_CVSID("$Id$")
 
@@ -1368,6 +1368,14 @@ char** SRPDataset::GetIMGListFromGEN(const char* pszFileName,
 
             if ( strcmp(RTY, "GIN") != 0 )
                 continue;
+
+            /* make sure that the GEN file is part of a SRP dataset, not an ADRG dataset, by checking that the GEN field does not contain a NWO subfield */
+            const char* NWO = record->GetStringSubfield("GEN", 0, "NWO", 0);
+            if( NWO )
+            {
+                CSLDestroy(papszFileNames);
+                return nullptr;
+            }
 
             field = record->GetField(3);
             if( field == nullptr )
