@@ -159,14 +159,16 @@ struct curl_slist* GetAzureBlobHeaders( const CPLString& osVerb,
 /************************************************************************/
 VSIAzureBlobHandleHelper::VSIAzureBlobHandleHelper(
                                             const CPLString& osEndpoint,
+                                            const CPLString& osBlobEndpoint,
                                             const CPLString& osBucket,
                                             const CPLString& osObjectKey,
                                             const CPLString& osStorageAccount,
                                             const CPLString& osStorageKey,
                                             bool bUseHTTPS ) :
-    m_osURL(BuildURL(osEndpoint, osStorageAccount,
+    m_osURL(BuildURL(osEndpoint, osBlobEndpoint, osStorageAccount,
             osBucket, osObjectKey, bUseHTTPS)),
     m_osEndpoint(osEndpoint),
+    m_osBlobEndpoint(osBlobEndpoint),
     m_osBucket(osBucket),
     m_osObjectKey(osObjectKey),
     m_osStorageAccount(osStorageAccount),
@@ -218,6 +220,7 @@ CPLString AzureCSGetParameter(const CPLString& osStr, const char* pszKey,
 bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
                                                 bool& bUseHTTPS,
                                                 CPLString& osEndpoint,
+                                                CPLString& osBlobEndpoint,
                                                 CPLString& osStorageAccount,
                                                 CPLString& osStorageKey)
 {
@@ -242,12 +245,17 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
             osStorageConnectionString, "DefaultEndpointsProtocol", false));
         bUseHTTPS = (osProtocol != "http");
 
-        CPLString osEndpointSuffix(AzureCSGetParameter(
-            osStorageConnectionString, "EndpointSuffix", false));
-        if( STARTS_WITH(osEndpointSuffix, "127.0.0.1") )
-            osEndpoint = osEndpointSuffix;
-        else if( !osEndpointSuffix.empty() )
-            osEndpoint = "blob." + osEndpointSuffix;
+        osBlobEndpoint = AzureCSGetParameter(
+            osStorageConnectionString, "BlobEndpoint", false);
+        if( osBlobEndpoint.empty() )
+        {
+            CPLString osEndpointSuffix(AzureCSGetParameter(
+                osStorageConnectionString, "EndpointSuffix", false));
+            if( STARTS_WITH(osEndpointSuffix, "127.0.0.1") )
+                osEndpoint = osEndpointSuffix;
+            else if( !osEndpointSuffix.empty() )
+                osEndpoint = "blob." + osEndpointSuffix;
+        }
 
         return true;
     }
@@ -295,9 +303,11 @@ VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* ps
     CPLString osStorageAccount;
     CPLString osStorageKey;
     CPLString osEndpoint;
+    CPLString osBlobEndpoint;
 
     if( !GetConfiguration(papszOptions,
-                    bUseHTTPS, osEndpoint, osStorageAccount, osStorageKey) )
+                    bUseHTTPS, osEndpoint, osBlobEndpoint,
+                    osStorageAccount, osStorageKey) )
     {
         return nullptr;
     }
@@ -314,6 +324,7 @@ VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* ps
     }
 
     return new VSIAzureBlobHandleHelper( osEndpoint,
+                                 osBlobEndpoint,
                                   osBucket,
                                   osObjectKey,
                                   osStorageAccount,
@@ -326,13 +337,18 @@ VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* ps
 /************************************************************************/
 
 CPLString VSIAzureBlobHandleHelper::BuildURL(const CPLString& osEndpoint,
+                                             const CPLString& osBlobEndpoint,
                                              const CPLString& osStorageAccount,
                                              const CPLString& osBucket,
                                              const CPLString& osObjectKey,
                                              bool bUseHTTPS)
 {
     CPLString osURL = (bUseHTTPS) ? "https://" : "http://";
-    if( STARTS_WITH(osEndpoint, "127.0.0.1") )
+    if( !osBlobEndpoint.empty() )
+    {
+        osURL = osBlobEndpoint;
+    }
+    else if( STARTS_WITH(osEndpoint, "127.0.0.1") )
     {
         osURL += osEndpoint + "/azure/blob/" + osStorageAccount;
     }
@@ -354,8 +370,8 @@ CPLString VSIAzureBlobHandleHelper::BuildURL(const CPLString& osEndpoint,
 
 void VSIAzureBlobHandleHelper::RebuildURL()
 {
-    m_osURL = BuildURL(m_osEndpoint, m_osStorageAccount, m_osBucket,
-                       m_osObjectKey, m_bUseHTTPS);
+    m_osURL = BuildURL(m_osEndpoint, m_osBlobEndpoint, m_osStorageAccount,
+                       m_osBucket, m_osObjectKey, m_bUseHTTPS);
     m_osURL += GetQueryString(false);
 }
 
