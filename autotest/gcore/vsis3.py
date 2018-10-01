@@ -2124,7 +2124,7 @@ def vsis3_read_credentials_ec2():
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
                          'http://localhost:%d/latest/meta-data/iam/security-credentials/' % gdaltest.webserver_port)
     # Disable hypervisor related check to test if we are really on EC2
-    gdal.SetConfigOption('CPL_AWS_CHECK_HYPERVISOR_UUID', 'NO')
+    gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', 'NO')
 
     gdal.VSICurlClearCache()
 
@@ -2169,7 +2169,7 @@ def vsis3_read_credentials_ec2():
         return 'fail'
 
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
-    gdal.SetConfigOption('CPL_AWS_CHECK_HYPERVISOR_UUID', None)
+    gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', None)
 
     return 'success'
 
@@ -2194,7 +2194,7 @@ def vsis3_read_credentials_ec2_expiration():
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
                          'http://localhost:%d/latest/meta-data/iam/security-credentials/expire_in_past/' % gdaltest.webserver_port)
     # Disable hypervisor related check to test if we are really on EC2
-    gdal.SetConfigOption('CPL_AWS_CHECK_HYPERVISOR_UUID', 'NO')
+    gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', 'NO')
 
     gdal.VSICurlClearCache()
 
@@ -2230,7 +2230,7 @@ def vsis3_read_credentials_ec2_expiration():
         return 'fail'
 
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
-    gdal.SetConfigOption('CPL_AWS_CHECK_HYPERVISOR_UUID', None)
+    gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', None)
 
     return 'success'
 
