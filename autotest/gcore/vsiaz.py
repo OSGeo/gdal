@@ -859,6 +859,26 @@ def vsiaz_fake_mkdir_rmdir():
 ###############################################################################
 
 
+def vsiaz_fake_test_BlobEndpointInConnectionString():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    gdal.SetConfigOption('AZURE_STORAGE_CONNECTION_STRING',
+                         'DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;BlobEndpoint=http://127.0.0.1:%d/myaccount' % gdaltest.webserver_port)
+
+    signed_url = gdal.GetSignedURL('/vsiaz/az_fake_bucket/resource')
+    if signed_url.find('http://127.0.0.1:%d/myaccount/az_fake_bucket/resource' % gdaltest.webserver_port) < 0:
+        gdaltest.post_reason('fail')
+        print(signed_url)
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+
+
 def vsiaz_stop_webserver():
 
     if gdaltest.webserver_port == 0:
@@ -1072,6 +1092,7 @@ gdaltest_list = [vsiaz_init,
                  vsiaz_fake_write,
                  vsiaz_fake_unlink,
                  vsiaz_fake_mkdir_rmdir,
+                 vsiaz_fake_test_BlobEndpointInConnectionString,
                  vsiaz_stop_webserver,
                  vsiaz_cleanup]
 
