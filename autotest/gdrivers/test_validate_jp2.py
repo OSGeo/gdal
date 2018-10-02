@@ -33,7 +33,6 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 sys.path.append('../../gdal/swig/python/samples')
 
 import gdaltest

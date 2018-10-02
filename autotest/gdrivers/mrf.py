@@ -33,7 +33,6 @@ import glob
 
 import pytest
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 

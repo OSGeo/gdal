@@ -34,7 +34,6 @@ import random
 import sys
 import shutil
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest

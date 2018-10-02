@@ -33,7 +33,6 @@ import sys
 from sys import version_info
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 try:
     import ctypes

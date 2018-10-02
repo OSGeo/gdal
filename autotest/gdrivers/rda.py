@@ -34,7 +34,6 @@ import struct
 import sys
 import json
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 

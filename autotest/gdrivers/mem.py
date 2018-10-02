@@ -33,7 +33,6 @@ import sys
 import array
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 

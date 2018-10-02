@@ -43,7 +43,6 @@ except ImportError:
 
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import webserver
 import gdaltest

@@ -32,7 +32,6 @@
 import sys
 import uuid
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -1038,7 +1037,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-        
+
 
 
     return 'success'

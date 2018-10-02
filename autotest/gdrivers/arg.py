@@ -34,7 +34,6 @@ import struct
 from copy import copy
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 

@@ -34,7 +34,6 @@ import os
 import sys
 import csv
 
-sys.path.append('../pymod')
 
 import gdaltest
 

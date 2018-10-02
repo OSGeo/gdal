@@ -32,7 +32,6 @@
 import json
 import sys
 
-sys.path.append('../pymod')
 
 from osgeo import gdal, ogr
 

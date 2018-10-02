@@ -32,7 +32,6 @@
 import os
 import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest

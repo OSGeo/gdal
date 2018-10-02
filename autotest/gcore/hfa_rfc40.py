@@ -34,7 +34,6 @@ import sys
 import numpy
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 

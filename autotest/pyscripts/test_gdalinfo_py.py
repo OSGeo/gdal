@@ -31,7 +31,6 @@
 import sys
 import os
 
-sys.path.append('../pymod')
 
 import gdaltest
 import test_py_scripts

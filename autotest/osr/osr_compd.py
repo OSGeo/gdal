@@ -33,7 +33,6 @@
 import sys
 import osr_proj4
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import osr

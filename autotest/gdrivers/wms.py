@@ -37,7 +37,6 @@ from time import sleep
 import hashlib
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 

@@ -35,7 +35,6 @@ import pytest
 from osgeo import gdal
 from osgeo import osr
 
-sys.path.append('../pymod')
 
 
 ###############################################################################

@@ -33,7 +33,6 @@ import sys
 import os
 import shutil
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -313,7 +312,7 @@ def test_gdal_edit_py_6():
     if stat_stddev is None or abs(float(stat_stddev) - 22.928)>0.001:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     ds = None
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -setstats 22 217 100 30")
@@ -336,7 +335,7 @@ def test_gdal_edit_py_6():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
+
     return 'success'
 
 ###############################################################################

@@ -36,7 +36,6 @@ from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 
-sys.path.append('../pymod')
 sys.path.append('../ogr')
 sys.path.append('../../gdal/swig/python/samples')
 

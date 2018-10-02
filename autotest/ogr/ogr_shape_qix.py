@@ -32,7 +32,6 @@
 import sys
 import random
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr

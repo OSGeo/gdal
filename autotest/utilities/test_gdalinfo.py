@@ -33,7 +33,6 @@ import sys
 import os
 import json
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest

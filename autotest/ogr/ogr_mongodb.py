@@ -33,7 +33,6 @@ import os
 import sys
 import uuid
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest

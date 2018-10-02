@@ -34,7 +34,6 @@ import sys
 import shutil
 from difflib import unified_diff
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest

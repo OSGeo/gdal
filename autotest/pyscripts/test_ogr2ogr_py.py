@@ -33,7 +33,6 @@ import sys
 import os
 import shutil
 
-sys.path.append('../pymod')
 sys.path.append('../ogr')
 
 from osgeo import gdal

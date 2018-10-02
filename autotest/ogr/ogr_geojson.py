@@ -33,7 +33,6 @@ import math
 import os
 import sys
 
-sys.path.append('../pymod')
 
 from osgeo import osr
 from osgeo import ogr

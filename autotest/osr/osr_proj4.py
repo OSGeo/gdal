@@ -34,7 +34,6 @@
 import os
 import sys
 
-sys.path.append('../pymod')
 
 from osgeo import gdal, osr
 import gdaltest

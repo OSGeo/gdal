@@ -36,7 +36,6 @@ except ImportError:
 
 import sys
 
-sys.path.append('../pymod')
 
 from osgeo import ogr
 from osgeo import osr

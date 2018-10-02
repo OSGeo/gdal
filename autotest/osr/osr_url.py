@@ -32,7 +32,6 @@
 import sys
 import socket
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import osr

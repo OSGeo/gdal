@@ -33,7 +33,6 @@ import os
 import sys
 import shutil
 
-sys.path.append('../pymod')
 
 from osgeo import gdal      # noqa
 import gdaltest             # noqa  # pylint: disable=E0401

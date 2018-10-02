@@ -30,7 +30,6 @@
 
 import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 import test_cli_utilities

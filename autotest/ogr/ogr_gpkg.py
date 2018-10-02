@@ -39,7 +39,6 @@ if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
     if os.path.dirname(sys.argv[0]) != '':
         os.chdir(os.path.dirname(sys.argv[0]))
 
-sys.path.append('../pymod')
 sys.path.append('../../gdal/swig/python/samples')
 
 from osgeo import gdal

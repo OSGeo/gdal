@@ -33,7 +33,6 @@ import sys
 import os
 import struct
 
-sys.path.append('../pymod')
 sys.path.append('../gcore')
 
 from osgeo import gdal

@@ -32,7 +32,6 @@
 import sys
 import threading
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal

@@ -33,7 +33,6 @@ import sys
 import shutil
 import time
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
