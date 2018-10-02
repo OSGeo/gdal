@@ -28,48 +28,13 @@
 
 import sys
 
-sys.path.append('../pymod')
+import pytest
 
 import gdaltest
 from osgeo import ogr
 
 
-class TestWktEmpty(object):
-    def __init__(self, inString, expectedOutString):
-        self.inString = inString
-        self.expectedOutString = expectedOutString
-
-    def isEmpty(self, geom):
-        try:
-            ogr.Geometry.IsEmpty
-        except AttributeError:
-            return 'skip'
-
-        if not geom.IsEmpty():
-            geom.Destroy()
-            gdaltest.post_reason("IsEmpty returning false for an empty geometry")
-            return 'fail'
-
-        return 'success'
-
-    def CheckIsEmpty(self):
-        geom = ogr.CreateGeometryFromWkt(self.inString)
-        wkt = geom.ExportToWkt()
-
-        if self.expectedOutString != 'POINT EMPTY':
-            if ogr.CreateGeometryFromWkb(geom.ExportToWkb()).ExportToWkt() != wkt:
-                return 'fail'
-
-        if wkt == self.expectedOutString:
-            if self.isEmpty(geom) == 'fail':
-                return 'fail'
-            return 'success'
-        else:
-            gdaltest.post_reason('WKT is wrong: ' + wkt + '. Expected value is: ' + self.expectedOutString)
-            return 'fail'
-
-
-empty_wkt_list = [
+@pytest.mark.parametrize("test_input,expected", [
     ('GEOMETRYCOLLECTION(EMPTY)', 'GEOMETRYCOLLECTION EMPTY'),
     ('MULTIPOLYGON( EMPTY )', 'MULTIPOLYGON EMPTY'),
     ('MULTILINESTRING(EMPTY)', 'MULTILINESTRING EMPTY'),
@@ -85,7 +50,25 @@ empty_wkt_list = [
     ('POINT EMPTY', 'POINT EMPTY'),
     ('LINESTRING EMPTY', 'LINESTRING EMPTY'),
     ('POLYGON EMPTY', 'POLYGON EMPTY')
-]
+])
+def test_empty_wkt(test_input, expected):
+    geom = ogr.CreateGeometryFromWkt(test_input)
+    wkt = geom.ExportToWkt()
+
+    if expected != 'POINT EMPTY':
+        assert ogr.CreateGeometryFromWkb(geom.ExportToWkb()).ExportToWkt() == wkt
+
+    assert wkt == expected
+
+    try:
+        ogr.Geometry.IsEmpty
+    except AttributeError:
+        pytest.skip()
+
+    try:
+        assert geom.IsEmpty(), "IsEmpty returning false for an empty geometry"
+    finally:
+        geom.Destroy()
 
 
 def ogr_wktempty_test_partial_empty_geoms():
@@ -169,9 +152,6 @@ def ogr_wktempty_test_partial_empty_geoms():
 
 gdaltest_list = []
 
-for item in empty_wkt_list:
-    ut = TestWktEmpty(item[0], item[1])
-    gdaltest_list.append((ut.CheckIsEmpty, item[0]))
 gdaltest_list.append(ogr_wktempty_test_partial_empty_geoms)
 
 if __name__ == '__main__':
