@@ -679,7 +679,7 @@ def ogr_wkt_multipolygon_corrupted():
 
 gdaltest_list = []
 
-files = os.listdir('data/wkb_wkt')
+files = os.listdir(os.path.join(os.path.dirname(__file__), 'data/wkb_wkt'))
 for filename in files:
     if filename[-4:] == '.wkb':
         ut = wkb_wkt_unit(filename[:-4])

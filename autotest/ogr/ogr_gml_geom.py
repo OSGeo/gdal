@@ -2441,7 +2441,7 @@ def gml_write_gml_ns():
 
 gdaltest_list = []
 
-files = os.listdir('data/wkb_wkt')
+files = os.listdir(os.path.join(os.path.dirname(__file__), 'data/wkb_wkt'))
 for filename in files:
     if filename[-4:] == '.wkt':
         ut = gml_geom_unit(filename[:-4])

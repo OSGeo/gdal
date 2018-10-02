@@ -46,8 +46,10 @@ from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 import gdaltest
-sys.path.append('../osr')
+
+sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), '../osr')))
 import osr_proj4
+sys.path.pop()
 
 ###############################################################################
 # Validate a geopackage

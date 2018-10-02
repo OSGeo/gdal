@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 import csv
 
@@ -169,7 +170,7 @@ class MetaCRSTest(object):
 
 gdaltest_list = []
 
-csv_reader = csv.DictReader(open('data/Test_Data_File.csv', 'rt'))
+csv_reader = csv.DictReader(open(os.path.join(os.path.dirname(__file__), 'data/Test_Data_File.csv'), 'rt'))
 
 for test in csv_reader:
     ut = MetaCRSTest(test)

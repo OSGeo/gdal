@@ -31,48 +31,69 @@
 import sys
 import glob
 
+import pytest
+
 sys.path.append('../pymod')
 
 from osgeo import gdal
 
 import gdaltest
 
-init_list = [
-    ('byte.tif', 1, 4672, None),
-    ('byte.tif', 1, 4672, ['COMPRESS=DEFLATE']),
-    ('byte.tif', 1, 4672, ['COMPRESS=NONE']),
-    ('byte.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('byte.tif', 1, [4672, 5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
-    ('byte.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('int16.tif', 1, 4672, None),
-    ('int16.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('int16.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/uint16.tif', 1, 4672, None),
-    ('../../gcore/data/uint16.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/uint16.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=TIF']),
-    ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=TIF']),
-    ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=TIF']),
-    ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=TIF']),
-    ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/float64.tif', 1, [4672, 5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
-    ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/utmsmall.tif', 1, 50054, None),
-    ('small_world_pct.tif', 1, 14890, ['COMPRESS=PPNG']),
-    ('byte.tif', 1, [4672, [4603, 4652]], ['COMPRESS=JPEG', 'QUALITY=99']),
+
+@pytest.mark.parametrize('src_filename,chksum,chksum_after_reopening,options', [
+    ('byte.tif', 4672, [4672], []),
+    ('byte.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
+    ('byte.tif', 4672, [4672], ['COMPRESS=NONE']),
+    ('byte.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('byte.tif', 4672, [5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
+    ('byte.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('int16.tif', 4672, [4672], []),
+    ('int16.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('int16.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('../../gcore/data/uint16.tif', 4672, [4672], []),
+    ('../../gcore/data/uint16.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('../../gcore/data/uint16.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('../../gcore/data/int32.tif', 4672, [4672], ['COMPRESS=TIF']),
+    ('../../gcore/data/int32.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('../../gcore/data/int32.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=TIF']),
+    ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('../../gcore/data/float32.tif', 4672, [4672], ['COMPRESS=TIF']),
+    ('../../gcore/data/float32.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('../../gcore/data/float32.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('../../gcore/data/float64.tif', 4672, [4672], ['COMPRESS=TIF']),
+    ('../../gcore/data/float64.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('../../gcore/data/float64.tif', 4672, [5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
+    ('../../gcore/data/float64.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('../../gcore/data/utmsmall.tif', 50054, [50054], []),
+    ('small_world_pct.tif', 14890, [14890], ['COMPRESS=PPNG']),
+    ('byte.tif', 4672, [4603, 4652], ['COMPRESS=JPEG', 'QUALITY=99']),
     # following expected checksums are for: gcc 4.4 debug, mingw/vc9 32-bit, mingw-w64/vc12 64bit, MacOSX
-    ('rgbsmall.tif', 1, [21212, [21162, 21110, 21155, 21116]], ['COMPRESS=JPEG', 'QUALITY=99']),
-    ('rgbsmall.tif', 1, [21212, [21266, 21369, 21256, 21495]], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99']),
-    ('rgbsmall.tif', 1, [21212, [21261, 21209, 21254, 21215]], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=RGB']),
-    ('rgbsmall.tif', 1, [21212, [21283, 21127, 21278, 21124]], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=YCC']),
-    ('12bit_rose_extract.jpg', 1, [30075, [29650, 29680, 29680, 29650]], ['COMPRESS=JPEG']),
-]
+    ('rgbsmall.tif', 21212, [21162, 21110, 21155, 21116], ['COMPRESS=JPEG', 'QUALITY=99']),
+    ('rgbsmall.tif', 21212, [21266, 21369, 21256, 21495], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99']),
+    ('rgbsmall.tif', 21212, [21261, 21209, 21254, 21215], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=RGB']),
+    ('rgbsmall.tif', 21212, [21283, 21127, 21278, 21124], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=YCC']),
+    ('12bit_rose_extract.jpg', 30075, [29650, 29680, 29680, 29650], ['COMPRESS=JPEG']),
+])
+def test_mrf(src_filename, chksum, chksum_after_reopening, options):
+    if src_filename == '12bit_rose_extract.jpg':
+        import jpeg
+        jpeg.jpeg_1()
+        pytest.skipif(gdaltest.jpeg_version == '9b')
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/' + src_filename)
+    pytest.skipif(ds is None)
+
+    ds = None
+    ut = gdaltest.GDALTest('MRF', src_filename, 1, chksum, options=options, chksum_after_reopening=chksum_after_reopening)
+
+    check_minmax = 'COMPRESS=JPEG' not in ut.options
+    for x in ut.options:
+        if x.find('OPTIONS:LERC_PREC=') >= 0:
+            check_minmax = False
+    return ut.testCreateCopy(check_minmax=check_minmax)
 
 
 def mrf_zen_test():
@@ -729,52 +750,6 @@ def mrf_cleanup():
 
 gdaltest_list = []
 
-
-class myTestCreateCopyWrapper(object):
-
-    def __init__(self, ut):
-        self.ut = ut
-
-    def myTestCreateCopy(self):
-        check_minmax = 'COMPRESS=JPEG' not in self.ut.options
-        for x in self.ut.options:
-            if x.find('OPTIONS:LERC_PREC=') >= 0:
-                check_minmax = False
-        return self.ut.testCreateCopy(check_minmax=check_minmax)
-
-
-for item in init_list:
-    src_filename = item[0]
-
-    if src_filename == '12bit_rose_extract.jpg':
-        import jpeg
-        jpeg.jpeg_1()
-        if gdaltest.jpeg_version == '9b':
-            continue
-
-    with gdaltest.error_handler():
-        ds = gdal.Open('data/' + src_filename)
-    if ds is None:
-        continue
-    ds = None
-    options = []
-    if item[3]:
-        options = item[3]
-    chksum_param = item[2]
-    if isinstance(chksum_param, list):
-        chksum = chksum_param[0]
-        chksum_after_reopening = chksum_param[1]
-    else:
-        chksum = chksum_param
-        chksum_after_reopening = chksum_param
-
-    ut = gdaltest.GDALTest('MRF', src_filename, item[1], chksum, options=options, chksum_after_reopening=chksum_after_reopening)
-    if ut is None:
-        print('MRF tests skipped')
-
-    ut = myTestCreateCopyWrapper(ut)
-
-    gdaltest_list.append((ut.myTestCreateCopy, item[0] + ' ' + str(options)))
 
 gdaltest_list += [mrf_overview_near_fact_2]
 gdaltest_list += [mrf_overview_near_with_nodata_fact_2]

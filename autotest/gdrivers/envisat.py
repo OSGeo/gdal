@@ -31,7 +31,6 @@
 ###############################################################################
 
 import os
-import sys
 import gzip
 from osgeo import gdal
 
@@ -75,14 +74,8 @@ def _get_mds_num(filename):
 #
 
 
-class TestEnvisat(object):
+class EnvisatTestBase(object):
     # Just a base class
-
-    def __init__(self, downloadURL, fileName, size, checksum):
-        self.downloadURL = downloadURL
-        self.fileName = fileName
-        self.size = size
-        self.checksum = checksum
 
     def download_file(self):
         # download and decompress
@@ -193,7 +186,12 @@ class TestEnvisat(object):
 #
 
 
-class TestEnvisatASAR(TestEnvisat):
+class TestEnvisatASAR(EnvisatTestBase):
+    downloadURL = 'http://earth.esa.int/services/sample_products/asar/DS1/WS/ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1.gz'
+    fileName = 'ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1'
+    size = (524, 945)
+    checksum = 44998
+
     def test_envisat_asar_1(self):
         # test sensor ID
 
@@ -261,7 +259,12 @@ class TestEnvisatASAR(TestEnvisat):
 #
 
 
-class TestEnvisatMERIS(TestEnvisat):
+class TestEnvisatMERIS(EnvisatTestBase):
+    downloadURL = 'http://earth.esa.int/services/sample_products/meris/RRC/L2/MER_RRC_2PTGMV20000620_104318_00000104X000_00000_00000_0001.N1.gz'
+    fileName = 'MER_RRC_2PTGMV20000620_104318_00000104X000_00000_00000_0001.N1'
+    size = (1121, 593)
+    checksum = 55146
+
     def test_envisat_meris_1(self):
         # test sensor ID
 
@@ -406,41 +409,3 @@ class TestEnvisatMERIS(TestEnvisat):
                     return 'fail'
 
         return 'success'
-
-
-ut1 = TestEnvisatASAR(
-    'http://earth.esa.int/services/sample_products/asar/DS1/WS/ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1.gz',
-    'ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1',
-    (524, 945),
-    44998)
-ut2 = TestEnvisatMERIS(
-    'http://earth.esa.int/services/sample_products/meris/RRC/L2/MER_RRC_2PTGMV20000620_104318_00000104X000_00000_00000_0001.N1.gz',
-    'MER_RRC_2PTGMV20000620_104318_00000104X000_00000_00000_0001.N1',
-    (1121, 593),
-    55146)
-
-gdaltest_list = [
-    ut1.test_envisat_1,
-    ut1.test_envisat_2,
-    ut1.test_envisat_3,
-    ut1.test_envisat_4,
-    ut1.test_envisat_asar_1,
-    ut1.test_envisat_asar_2,
-    ut2.test_envisat_1,
-    ut2.test_envisat_2,
-    ut2.test_envisat_3,
-    ut2.test_envisat_4,
-    ut2.test_envisat_meris_1,
-    ut2.test_envisat_meris_2,
-    ut2.test_envisat_meris_3,
-    ut2.test_envisat_meris_4,
-]
-
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('envisat')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())
