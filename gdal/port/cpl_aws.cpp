@@ -632,26 +632,27 @@ static bool IsMachinePotentiallyEC2Instance()
         }
     }
 
-    // Nitro Hypervisor instances
-    VSILFILE* fp = VSIFOpenL("/sys/devices/virtual/dmi/id/sys_vendor", "rb");
-    if( fp != nullptr )
-    {
-        char buf[10+1] = { 0 };
-        VSIFReadL( buf, 1, sizeof(buf)-1, fp );
-        bool bMatch = EQUALN( buf, "Amazon EC2", 10 );
-        VSIFCloseL(fp);
-        return bMatch;
-    }
-
-    // Xen Hypervisor instances
-    fp = VSIFOpenL("/sys/hypervisor/uuid", "rb");
+    // Check for Xen Hypervisor instances
+    // This file doesn't exist on Nitro instances
+    VSILFILE* fp = VSIFOpenL("/sys/hypervisor/uuid", "rb");
     if( fp != nullptr )
     {
         char uuid[36+1] = { 0 };
         VSIFReadL( uuid, 1, sizeof(uuid)-1, fp );
-        bool bMatch = EQUALN( uuid, "ec2", 3 );
         VSIFCloseL(fp);
-        return bMatch;
+        return EQUALN( uuid, "ec2", 3 );
+    }
+
+    // Check for Nitro Hypervisor instances
+    // This file may exist on Xen instances with a value of 'Xen'
+    // (but that doesn't mean we're on EC2)
+    fp = VSIFOpenL("/sys/devices/virtual/dmi/id/sys_vendor", "rb");
+    if( fp != nullptr )
+    {
+        char buf[10+1] = { 0 };
+        VSIFReadL( buf, 1, sizeof(buf)-1, fp );
+        VSIFCloseL(fp);
+        return EQUALN( buf, "Amazon EC2", 10 );
     }
 
     // Fallback: Check via the network
