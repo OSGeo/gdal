@@ -40,6 +40,8 @@ from osgeo import ogr
 from osgeo import osr
 
 
+import pytest
+
 import gdaltest
 
 import test_cli_utilities
@@ -52,6 +54,16 @@ from uffd import uffd_compare
 
 ###############################################################################
 # Get netcdf version and test for supported files
+
+
+@pytest.fixture(autouse=True)
+def check_no_file_leaks():
+    num_files = len(gdaltest.get_opened_files())
+
+    yield
+
+    diff = len(gdaltest.get_opened_files()) - num_files
+    assert diff == 0, 'Leak of file handles: %d leaked' % diff
 
 
 def netcdf_setup():
@@ -96,8 +108,6 @@ def netcdf_setup():
     print('NOTICE: using netcdf version ' + gdaltest.netcdf_drv_version +
           '  has_nc2: ' + str(gdaltest.netcdf_drv_has_nc2) + '  has_nc4: ' +
           str(gdaltest.netcdf_drv_has_nc4))
-
-    gdaltest.count_opened_files = len(gdaltest.get_opened_files())
 
     return 'success'
 
@@ -3337,19 +3347,6 @@ def netcdf_uffd():
     return 'success'
 
 
-def netcdf_postcheck():
-
-    if gdaltest.netcdf_drv is None:
-        return 'skip'
-
-    diff = len(gdaltest.get_opened_files()) - gdaltest.count_opened_files
-    if diff != 0:
-        gdaltest.post_reason('Leak of file handles: %d leaked' % diff)
-        return 'fail'
-
-    return 'success'
-
-
 ###############################################################################
 
 ###############################################################################
@@ -3482,8 +3479,6 @@ for item in init_list:
     gdaltest_list.append((ut.testCreate, item[0]))
     gdaltest_list.append((ut.testSetNoDataValue, item[0]))
 
-gdaltest_list.append(netcdf_postcheck)
-
 ###############################################################################
 #  other tests
 
@@ -3492,8 +3487,5 @@ if __name__ == '__main__':
     gdaltest.setup_run('netcdf')
 
     gdaltest.run_tests(gdaltest_list)
-
-    # make sure we cleanup
-    gdaltest.clean_tmp()
 
     sys.exit(gdaltest.summarize())
