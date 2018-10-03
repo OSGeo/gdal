@@ -45,12 +45,7 @@ from uffd import uffd_compare
 # Test if HDF5 driver is present
 
 
-@pytest.fixture
-def driver(autouse=True, scope='module'):
-    driver = gdal.GetDriverByName('HDF5')
-    if driver is None:
-        pytest.skip('No HDF5 driver')
-    return driver
+pytestmark = pytest.mark.require_driver('HDF5')
 
 
 @pytest.fixture(autouse=True)
@@ -564,7 +559,7 @@ hdf5_list = [
     hdf5_list,
     ids=['HDF5:"' + item[1] + '"://' + item[2] for item in hdf5_list],
 )
-def test_hdf5(driver, downloadURL, fileName, subdatasetname, checksum, download_size):
+def test_hdf5(downloadURL, fileName, subdatasetname, checksum, download_size):
     if not gdaltest.download_file(downloadURL + '/' + fileName, fileName, download_size):
         pytest.skip('no download')
 

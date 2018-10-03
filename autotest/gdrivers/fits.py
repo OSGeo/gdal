@@ -33,19 +33,16 @@ import pytest
 from osgeo import gdal
 
 
-@pytest.fixture
-def driver():
-    driver = gdal.GetDriverByName('FITS')
-    if driver is None:
-        pytest.skip()
-    return driver
+pytestmark = pytest.mark.require_driver('FITS')
 
 
 @pytest.mark.parametrize(
     'filename',
     ['byte', 'int16', 'int32', 'float32', 'float64']
 )
-def test_fits(driver, filename):
+def test_fits(filename):
+    driver = gdal.GetDriverByName('FITS')
+
     ds = gdal.Open('../gcore/data/' + filename + '.tif')
     driver.CreateCopy('tmp/' + filename + '.fits', ds, options=['PAGESIZE=2,2'])
 
@@ -58,7 +55,9 @@ def test_fits(driver, filename):
     driver.Delete('tmp/' + filename + '.fits')
 
 
-def fits_metadata(driver):
+def fits_metadata():
+    driver = gdal.GetDriverByName('FITS')
+
     ds = gdal.Open('../gcore/data/byte.tif')
     ds2 = driver.CreateCopy('tmp/byte.fits', ds)
     md = {'TEST': 'test_value'}

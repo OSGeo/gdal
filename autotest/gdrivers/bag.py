@@ -39,6 +39,9 @@ from osgeo import gdal
 import gdaltest
 
 
+pytestmark = pytest.mark.require_driver('BAG')
+
+
 @pytest.fixture(autouse=True)
 def check_no_file_leaks():
     num_files = len(gdaltest.get_opened_files())
@@ -50,22 +53,10 @@ def check_no_file_leaks():
 
 
 ###############################################################################
-# Test if BAG driver is present
-
-
-def bag_1():
-
-    gdaltest.bag_drv = gdal.GetDriverByName('BAG')
-    if gdaltest.bag_drv is None:
-        return 'skip'
-
-    return 'success'
-
-###############################################################################
 # Confirm various info on true_n_nominal 1.1 sample file.
 
 
-def bag_2():
+def test_bag_2():
 
     if gdaltest.bag_drv is None:
         return 'skip'
@@ -907,8 +898,7 @@ def bag_write_south_up():
     return 'success'
 
 
-gdaltest_list = [bag_1,
-                 bag_2,
+gdaltest_list = [test_bag_2,
                  bag_3,
                  bag_vr_normal,
                  bag_vr_list_supergrids,

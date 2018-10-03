@@ -6,6 +6,8 @@ import sys
 
 import pytest
 
+import gdal
+
 # Put the pymod dir on the path, so modules can `import gdaltest`
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "pymod"))
 
@@ -34,3 +36,22 @@ def chdir_to_test_file(request):
     if sys.path and sys.path[0] == ".":
         sys.path.pop(0)
     os.chdir(old)
+
+
+def pytest_collection_modifyitems(config, items):
+    # skip tests with @pytest.mark.require_driver(name) when the driver isn't available
+    skip = pytest.mark.skip("Driver not present")
+    import gdaltest
+
+    drivers_checked = {}
+    for item in items:
+        for mark in item.iter_markers('require_driver'):
+            driver_name = mark.args[0]
+            if driver_name not in drivers_checked:
+                driver = gdal.GetDriverByName(driver_name)
+                drivers_checked[driver_name] = bool(driver)
+                if driver:
+                    # Store the driver on gdaltest module so test functions can assume it's there.
+                    setattr(gdaltest, '%s_drv' % driver_name.lower(), driver)
+            if not drivers_checked[driver_name]:
+                item.add_marker(skip)
