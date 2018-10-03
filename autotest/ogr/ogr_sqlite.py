@@ -3516,9 +3516,6 @@ def ogr_sqlite_45():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    if gdaltest.sl_ds is None:
-        return 'skip'
-
     # Only available since sqlite 3.7.0
     version = ogrtest.sqlite_version.split('.')
     if not (len(version) >= 3 and int(version[0]) * 10000 + int(version[1]) * 100 + int(version[2]) >= 30700):
@@ -3600,6 +3597,37 @@ def ogr_spatialite_12():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    return 'success'
+
+
+###############################################################################
+
+def ogr_sqlite_iterate_and_update():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    filename = "/vsimem/ogr_sqlite_iterate_and_update.db"
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource(filename)
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('strfield'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['strfield'] = 'foo'
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['strfield'] = 'bar'
+    lyr.CreateFeature(f)
+    lyr.ResetReading()
+    for f in lyr:
+        f['strfield'] += "_updated"
+        lyr.SetFeature(f)
+    lyr.ResetReading()
+    for f in lyr:
+        if not f['strfield'].endswith('_updated'):
+            return 'fail'
+    ds = None
+
+    gdal.Unlink(filename)
     return 'success'
 
 ###############################################################################
@@ -3791,6 +3819,7 @@ gdaltest_list = [
     ogr_sqlite_43,
     ogr_sqlite_44,
     ogr_sqlite_45,
+    ogr_sqlite_iterate_and_update,
     ogr_spatialite_11,
     ogr_spatialite_12,
     ogr_sqlite_cleanup,
