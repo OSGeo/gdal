@@ -30,61 +30,14 @@
 
 import sys
 
+import pytest
+
 from osgeo import gdal
 from osgeo import osr
 
 
 import gdaltest
 
-
-###############################################################################
-# Write a geotiff and read it back to check its SRS
-
-class TestTiffSRS(object):
-    def __init__(self, epsg_code, use_epsg_code, expected_fail):
-        self.epsg_code = epsg_code
-        self.use_epsg_code = use_epsg_code
-        self.expected_fail = expected_fail
-
-    def test(self):
-        sr = osr.SpatialReference()
-        if isinstance(self.epsg_code, str):
-            sr.SetFromUserInput(self.epsg_code)
-        else:
-            sr.ImportFromEPSG(self.epsg_code)
-            if self.use_epsg_code == 0:
-                proj4str = sr.ExportToProj4()
-                # print(proj4str)
-                sr.SetFromUserInput(proj4str)
-
-        ds = gdal.GetDriverByName('GTiff').Create('/vsimem/TestTiffSRS.tif', 1, 1)
-        ds.SetProjection(sr.ExportToWkt())
-        ds = None
-
-        ds = gdal.Open('/vsimem/TestTiffSRS.tif')
-        wkt = ds.GetProjectionRef()
-        sr2 = osr.SpatialReference()
-        sr2.SetFromUserInput(wkt)
-        ds = None
-
-        gdal.Unlink('/vsimem/TestTiffSRS.tif')
-
-        if sr.IsSame(sr2) != 1:
-            if self.expected_fail:
-                print('did not get expected SRS. known to be broken currently. FIXME!')
-                # print(sr)
-                # print(sr2)
-                return 'expected_fail'
-
-            gdaltest.post_reason('did not get expected SRS')
-            print(sr)
-            print(sr2)
-            return 'fail'
-        else:
-            if self.expected_fail:
-                print('Succeeded but expected fail...')
-
-        return 'success'
 
 ###############################################################################
 # Test fix for #4677:
@@ -501,82 +454,125 @@ def tiff_srs_pcscitation():
     return 'success'
 
 
-gdaltest_list = []
+def _test_tiff_srs(sr, expect_fail):
+    """
+    This is not a test by itself; it gets called by the tests below.
+    """
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/TestTiffSRS.tif', 1, 1)
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
 
-tiff_srs_list = [2758,  # tmerc
-                 2036,  # sterea
-                 2046,  # tmerc
-                 3031,  # polar stere (ticket #3220)
-                 3032,  # polar stere (ticket #3220)
-                 32661,  # stere
-                 3035,  # laea
-                 2062,  # lcc 1SP
-                 [2065, False, True],  # krovak
-                 2066,  # cass
-                 2964,  # aea
-                 3410,  # cea
-                 3786,  # eqc spherical, method=9823
-                 32663,  # eqc elliptical, method=9842
-                 4087,  # eqc WGS 84 / World Equidistant Cylindrical method=1028
-                 4088,  # eqc World Equidistant Cylindrical (Sphere) method=1029
-                 2934,  # merc
-                 27200,  # nzmg
-                 2057,  # omerc Hotine_Oblique_Mercator_Azimuth_Center
-                 3591,  # omerc Hotine_Oblique_Mercator
-                 29100,  # poly
-                 2056,  # somerc
-                 2027,  # utm
-                 4326,  # longlat
-                 26943,  # lcc 2SP,
-                 4328,  # geocentric
-                 3994,  # mercator 2SP
-                 26920,  # UTM NAD83 special case
-                 26720,  # UTM NAD27 special case
-                 32630,  # UTM WGS84 north special case
-                 32730,  # UTM WGS84 south special case
-                 22700,  # unknown datum 'Deir_ez_Zor'
-                 31491,  # Germany Zone projection
-                 [3857, False, True],  # Web Mercator
-                 [102113, False, True],  # ESRI WGS_1984_Web_Mercator
-                ]
+    ds = gdal.Open('/vsimem/TestTiffSRS.tif')
+    wkt = ds.GetProjectionRef()
+    sr2 = osr.SpatialReference()
+    sr2.SetFromUserInput(wkt)
+    ds = None
 
-for item in tiff_srs_list:
-    try:
-        epsg_code = item[0]
-        epsg_broken = item[1]
-        epsg_proj4_broken = item[2]
-    except TypeError:
-        epsg_code = item
-        epsg_broken = False
-        epsg_proj4_broken = False
+    gdal.Unlink('/vsimem/TestTiffSRS.tif')
 
-    ut = TestTiffSRS(epsg_code, 1, epsg_broken)
-    gdaltest_list.append((ut.test, "tiff_srs_epsg_%d" % epsg_code))
-    ut = TestTiffSRS(epsg_code, 0, epsg_proj4_broken)
-    gdaltest_list.append((ut.test, "tiff_srs_proj4_of_epsg_%d" % epsg_code))
+    if sr.IsSame(sr2) != 1:
+        if expect_fail:
+            pytest.xfail('did not get expected SRS. known to be broken currently. FIXME!')
 
-tiff_srs_list_proj4 = [['eqdc', '+proj=eqdc +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g +lat_2=%.16g" +x_0=%.16g +y_0=%.16g' % (1, 2, 3, 4, 5, 6)],
-                       ['mill', '+proj=mill +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A' % (1, 2, 3, 4)],
-                       ['gnom', '+proj=gnom +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3, 4)],
-                       ['robin', '+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3)],
-                       ['sinu', '+proj=sinu +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3)],
-                      ]
-for (title, proj4) in tiff_srs_list_proj4:
-    ut = TestTiffSRS(proj4, 0, False)
-    gdaltest_list.append((ut.test, "tiff_srs_proj4_%s" % title))
+        print(sr)
+        print(sr2)
+        assert False, 'did not get expected SRS'
+    else:
+        if expect_fail:
+            print('Succeeded but expected fail...')
 
-gdaltest_list.append(tiff_srs_without_linear_units)
-gdaltest_list.append(tiff_srs_compd_cs)
-gdaltest_list.append(tiff_srs_weird_mercator_2sp)
-gdaltest_list.append(tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere)
-gdaltest_list.append(tiff_srs_angular_units)
-gdaltest_list.append(tiff_custom_datum_known_ellipsoid)
-gdaltest_list.append(tiff_srs_epsg_2853_with_us_feet)
-gdaltest_list.append(tiff_srs_PCSCitationGeoKey_LUnits)
-gdaltest_list.append(tiff_srs_projection_3856)
-gdaltest_list.append(tiff_srs_imagine_localcs_citation)
-gdaltest_list.append(tiff_srs_towgs84_override)
-gdaltest_list.append(tiff_srs_pcscitation)
+
+###############################################################################
+# Write a geotiff and read it back to check its SRS
+
+@pytest.mark.parametrize('use_epsg_code', [0, 1])
+@pytest.mark.parametrize('epsg_code,epsg_proj4_broken', [
+    [2758, False],  # tmerc
+    [2036, False],  # sterea
+    [2046, False],  # tmerc
+    [3031, False],  # polar stere (ticket #3220)
+    [3032, False],  # polar stere (ticket #3220)
+    [32661, False],  # stere
+    [3035, False],  # laea
+    [2062, False],  # lcc 1SP
+    [2065, True],  # krovak
+    [2066, False],  # cass
+    [2964, False],  # aea
+    [3410, False],  # cea
+    [3786, False],  # eqc spherical, method=9823
+    [32663, False],  # eqc elliptical, method=9842
+    [4087, False],  # eqc WGS 84 / World Equidistant Cylindrical method=1028
+    [4088, False],  # eqc World Equidistant Cylindrical (Sphere) method=1029
+    [2934, False],  # merc
+    [27200, False],  # nzmg
+    [2057, False],  # omerc Hotine_Oblique_Mercator_Azimuth_Center
+    [3591, False],  # omerc Hotine_Oblique_Mercator
+    [29100, False],  # poly
+    [2056, False],  # somerc
+    [2027, False],  # utm
+    [4326, False],  # longlat
+    [26943, False],  # lcc 2SP,
+    [4328, False],  # geocentric
+    [3994, False],  # mercator 2SP
+    [26920, False],  # UTM NAD83 special case
+    [26720, False],  # UTM NAD27 special case
+    [32630, False],  # UTM WGS84 north special case
+    [32730, False],  # UTM WGS84 south special case
+    [22700, False],  # unknown datum 'Deir_ez_Zor'
+    [31491, False],  # Germany Zone projection
+    [3857, True],  # Web Mercator
+    [102113, True],  # ESRI WGS_1984_Web_Mercator
+])
+def test_tiff_srs(use_epsg_code, epsg_code, epsg_proj4_broken):
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(epsg_code)
+    expect_fail = False
+    if use_epsg_code == 0:
+        proj4str = sr.ExportToProj4()
+        # print(proj4str)
+        sr.SetFromUserInput(proj4str)
+        expect_fail = epsg_proj4_broken
+
+    _test_tiff_srs(sr, expect_fail)
+
+
+@pytest.mark.parametrize(
+    'proj4',
+    [
+        ['+proj=eqdc +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g +lat_2=%.16g" +x_0=%.16g +y_0=%.16g' % (1, 2, 3, 4, 5, 6)],
+        ['+proj=mill +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A' % (1, 2, 3, 4)],
+        ['+proj=gnom +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3, 4)],
+        ['+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3)],
+        ['+proj=sinu +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3)],
+    ],
+    ids=[
+        'eqdc',
+        'mill',
+        'gnom',
+        'robin',
+        'sinu',
+    ]
+)
+def test_tiff_srs_proj4(proj4):
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput(proj4)
+    _test_tiff_srs(sr, False)
+
+
+gdaltest_list = [
+    tiff_srs_without_linear_units,
+    tiff_srs_compd_cs,
+    tiff_srs_weird_mercator_2sp,
+    tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere,
+    tiff_srs_angular_units,
+    tiff_custom_datum_known_ellipsoid,
+    tiff_srs_epsg_2853_with_us_feet,
+    tiff_srs_PCSCitationGeoKey_LUnits,
+    tiff_srs_projection_3856,
+    tiff_srs_imagine_localcs_citation,
+    tiff_srs_towgs84_override,
+    tiff_srs_pcscitation,
+]
 
 if __name__ == '__main__':
 

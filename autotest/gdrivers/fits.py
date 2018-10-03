@@ -28,59 +28,39 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
+import pytest
+
 from osgeo import gdal
 
 
-import gdaltest
-
-###############################################################################
-#
-
-
-def fits_init():
-    gdaltest.fitsDriver = gdal.GetDriverByName('FITS')
-    if gdaltest.fitsDriver is None:
-        return 'skip'
-
-    return 'success'
-
-###############################################################################
-#
+@pytest.fixture
+def driver():
+    driver = gdal.GetDriverByName('FITS')
+    if driver is None:
+        pytest.skip()
+    return driver
 
 
-class TestFITS(object):
-    def __init__(self, fileName):
-        self.fileName = fileName
+@pytest.mark.parametrize(
+    'filename',
+    ['byte', 'int16', 'int32', 'float32', 'float64']
+)
+def test_fits(driver, filename):
+    ds = gdal.Open('../gcore/data/' + filename + '.tif')
+    driver.CreateCopy('tmp/' + filename + '.fits', ds, options=['PAGESIZE=2,2'])
 
-    def test(self):
-        if gdaltest.fitsDriver is None:
-            return 'skip'
+    ds2 = gdal.Open('tmp/' + filename + '.fits')
+    assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
-        ds = gdal.Open('../gcore/data/' + self.fileName + '.tif')
-        gdaltest.fitsDriver.CreateCopy('tmp/' + self.fileName + '.fits', ds, options=['PAGESIZE=2,2'])
+    assert ds2.GetRasterBand(1).DataType == ds.GetRasterBand(1).DataType
 
-        ds2 = gdal.Open('tmp/' + self.fileName + '.fits')
-        if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():
-            return 'fail'
-
-        if ds2.GetRasterBand(1).DataType != ds.GetRasterBand(1).DataType:
-            return 'fail'
-
-        ds2 = None
-        gdaltest.fitsDriver.Delete('tmp/' + self.fileName + '.fits')
-        return 'success'
-
-###############################################################################
-#
+    ds2 = None
+    driver.Delete('tmp/' + filename + '.fits')
 
 
-def fits_metadata():
-    if gdaltest.fitsDriver is None:
-        return 'skip'
-
+def fits_metadata(driver):
     ds = gdal.Open('../gcore/data/byte.tif')
-    ds2 = gdaltest.fitsDriver.CreateCopy('tmp/byte.fits', ds)
+    ds2 = driver.CreateCopy('tmp/byte.fits', ds)
     md = {'TEST': 'test_value'}
     ds2.SetMetadata(md)
     ds2 = None
@@ -90,8 +70,7 @@ def fits_metadata():
     md = ds2.GetMetadata()
     ds2 = None
 
-    if md['TEST'] != 'test_value':
-        return 'fail'
+    assert md['TEST'] == 'test_value'
 
     ds2 = gdal.Open('tmp/byte.fits', gdal.GA_Update)
     md = {'TEST2': 'test_value2'}
@@ -103,30 +82,4 @@ def fits_metadata():
     md = ds2.GetMetadata()
     ds2 = None
 
-    if md['TEST2'] != 'test_value2':
-        return 'fail'
-
-    gdaltest.fitsDriver.Delete('tmp/byte.fits')
-
-    return 'success'
-
-
-###############################################################################
-#
-gdaltest_list = [fits_init]
-
-fits_list = ['byte', 'int16', 'int32', 'float32', 'float64']
-
-for item in fits_list:
-    ut = TestFITS(item)
-    gdaltest_list.append((ut.test, item))
-
-gdaltest_list.append(fits_metadata)
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('fits')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())
+    assert md['TEST2'] == 'test_value2'

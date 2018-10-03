@@ -31,40 +31,49 @@
 
 import os
 import sys
-from osgeo import gdal
 
+import pytest
+
+from osgeo import gdal
 
 import gdaltest
 
 
 ###############################################################################
 #
-class TestL1B(object):
-    def __init__(self, downloadURL, fileName, checksum, download_size, gcpNumber):
-        self.downloadURL = downloadURL
-        self.fileName = fileName
-        self.checksum = checksum
-        self.download_size = download_size
-        self.gcpNumber = gcpNumber
 
-    def test(self):
-        if not gdaltest.download_file(self.downloadURL + '/' + self.fileName, self.fileName, self.download_size):
-            return 'skip'
 
-        ds = gdal.Open('tmp/cache/' + self.fileName)
+l1b_list = [
+    ('http://download.osgeo.org/gdal/data/l1b', 'n12gac8bit.l1b', 51754, -1, 1938),
+    ('http://download.osgeo.org/gdal/data/l1b', 'n12gac10bit.l1b', 46039, -1, 1887),
+    ('http://download.osgeo.org/gdal/data/l1b', 'n12gac10bit_ebcdic.l1b', 46039, -1, 1887),  # 2848
+    ('http://download.osgeo.org/gdal/data/l1b', 'n14gac16bit.l1b', 42286, -1, 2142),
+    ('http://download.osgeo.org/gdal/data/l1b', 'n15gac8bit.l1b', 55772, -1, 2091),
+    ('http://download.osgeo.org/gdal/data/l1b', 'n16gac10bit.l1b', 6749, -1, 2142),
+    ('http://download.osgeo.org/gdal/data/l1b', 'n17gac16bit.l1b', 61561, -1, 2040),
+    ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'frang.1b', 33700, 30000, 357),  # 10 bit guess
+    ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'franh.1b', 56702, 100000, 255),  # 10 bit guess
+    ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'calfirel.1b', 55071, 30000, 255),  # 16 bit guess
+    ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'rapnzg.1b', 58084, 30000, 612),  # 16 bit guess
+    ('http://www.sat.dundee.ac.uk/testdata/new_noaa/new_klm_format/', 'noaa18.n1b', 50229, 50000, 102),
+    ('http://www.sat.dundee.ac.uk/testdata/metop', 'noaa1b', 62411, 150000, 408)
+]
 
-        if ds.GetRasterBand(1).Checksum() != self.checksum:
-            gdaltest.post_reason('Bad checksum. Expected %d, got %d' % (self.checksum, ds.GetRasterBand(1).Checksum()))
-            return 'fail'
 
-        if len(ds.GetGCPs()) != self.gcpNumber:
-            gdaltest.post_reason('Bad GCP number. Expected %d, got %d' % (self.gcpNumber, len(ds.GetGCPs())))
-            return 'fail'
+@pytest.mark.parametrize(
+    'downloadURL,fileName,checksum,download_size,gcpNumber',
+    l1b_list,
+    ids=[item[1] for item in l1b_list]
+)
+def test_l1b(downloadURL, fileName, checksum, download_size, gcpNumber):
+    if not gdaltest.download_file(downloadURL + '/' + fileName, fileName, download_size):
+        pytest.skip()
 
-        return 'success'
+    ds = gdal.Open('tmp/cache/' + fileName)
 
-###############################################################################
-#
+    assert ds.GetRasterBand(1).Checksum() == checksum
+
+    assert len(ds.GetGCPs()) == gcpNumber
 
 
 def l1b_geoloc():
@@ -295,34 +304,16 @@ def l1b_little_endian():
     return 'success'
 
 
-gdaltest_list = []
+gdaltest_list = [
+    l1b_geoloc,
+    l1b_solar_zenith_angles_before_noaa_15,
+    l1b_metadata_before_noaa_15,
+    l1b_angles_after_noaa_15,
+    l1b_clouds_after_noaa_15,
+    l1b_metadata_after_noaa_15,
+    l1b_little_endian,
+]
 
-l1b_list = [('http://download.osgeo.org/gdal/data/l1b', 'n12gac8bit.l1b', 51754, -1, 1938),
-            ('http://download.osgeo.org/gdal/data/l1b', 'n12gac10bit.l1b', 46039, -1, 1887),
-            ('http://download.osgeo.org/gdal/data/l1b', 'n12gac10bit_ebcdic.l1b', 46039, -1, 1887),  # 2848
-            ('http://download.osgeo.org/gdal/data/l1b', 'n14gac16bit.l1b', 42286, -1, 2142),
-            ('http://download.osgeo.org/gdal/data/l1b', 'n15gac8bit.l1b', 55772, -1, 2091),
-            ('http://download.osgeo.org/gdal/data/l1b', 'n16gac10bit.l1b', 6749, -1, 2142),
-            ('http://download.osgeo.org/gdal/data/l1b', 'n17gac16bit.l1b', 61561, -1, 2040),
-            ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'frang.1b', 33700, 30000, 357),  # 10 bit guess
-            ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'franh.1b', 56702, 100000, 255),  # 10 bit guess
-            ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'calfirel.1b', 55071, 30000, 255),  # 16 bit guess
-            ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'rapnzg.1b', 58084, 30000, 612),  # 16 bit guess
-            ('http://www.sat.dundee.ac.uk/testdata/new_noaa/new_klm_format/', 'noaa18.n1b', 50229, 50000, 102),
-            ('http://www.sat.dundee.ac.uk/testdata/metop', 'noaa1b', 62411, 150000, 408)
-           ]
-
-for item in l1b_list:
-    ut = TestL1B(item[0], item[1], item[2], item[3], item[4])
-    gdaltest_list.append((ut.test, item[1]))
-
-gdaltest_list.append(l1b_geoloc)
-gdaltest_list.append(l1b_solar_zenith_angles_before_noaa_15)
-gdaltest_list.append(l1b_metadata_before_noaa_15)
-gdaltest_list.append(l1b_angles_after_noaa_15)
-gdaltest_list.append(l1b_clouds_after_noaa_15)
-gdaltest_list.append(l1b_metadata_after_noaa_15)
-gdaltest_list.append(l1b_little_endian)
 
 if __name__ == '__main__':
 

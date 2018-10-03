@@ -32,6 +32,8 @@
 import sys
 import shutil
 
+import pytest
+
 from osgeo import gdal
 
 
@@ -43,25 +45,29 @@ from uffd import uffd_compare
 # Test if HDF5 driver is present
 
 
-def hdf5_1():
+@pytest.fixture
+def driver(autouse=True, scope='module'):
+    driver = gdal.GetDriverByName('HDF5')
+    if driver is None:
+        pytest.skip('No HDF5 driver')
+    return driver
 
-    gdaltest.hdf5_drv = gdal.GetDriverByName('HDF5')
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
 
-    gdaltest.count_opened_files = len(gdaltest.get_opened_files())
+@pytest.fixture(autouse=True)
+def check_no_file_leaks():
+    num_files = len(gdaltest.get_opened_files())
 
-    return 'success'
+    yield
+
+    diff = len(gdaltest.get_opened_files()) - num_files
+    assert diff == 0, 'Leak of file handles: %d leaked' % diff
+
 
 ###############################################################################
 # Confirm expected subdataset information.
 
 
 def hdf5_2():
-
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
-
     ds = gdal.Open('data/groups.h5')
 
     sds_list = ds.GetMetadata('SUBDATASETS')
@@ -92,9 +98,6 @@ def hdf5_2():
 
 def hdf5_3():
 
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
-
     ds = gdal.Open('HDF5:"data/u8be.h5"://TestArray')
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -116,9 +119,6 @@ def hdf5_3():
 
 def hdf5_4():
 
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
-
     ds = gdal.Open('HDF5:"data/u8be.h5"://TestArray')
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -134,9 +134,6 @@ def hdf5_4():
 
 def hdf5_5():
 
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
-
     ds = gdal.Open('HDF5:"data/groups.h5"://MyGroup/dset1')
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -151,9 +148,6 @@ def hdf5_5():
 
 
 def hdf5_6():
-
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
 
     shutil.copyfile('data/groups.h5', 'tmp/groups.h5')
 
@@ -194,9 +188,6 @@ def hdf5_6():
 
 def hdf5_7():
 
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
-
     ds = gdal.Open('data/metadata.h5')
     metadata = ds.GetMetadata()
     metadataList = ds.GetMetadata_List()
@@ -224,9 +215,6 @@ def hdf5_7():
 
 
 def hdf5_8():
-
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
 
     ds = gdal.Open('data/metadata.h5')
     metadata = ds.GetMetadata()
@@ -292,9 +280,6 @@ def hdf5_8():
 
 def hdf5_9():
 
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
-
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
         gdaltest.post_reason('would crash')
         return 'skip'
@@ -340,9 +325,6 @@ def hdf5_9():
 
 def hdf5_10():
 
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
-
     # Try opening the QLK subdataset to check that no error is generated
     gdal.ErrorReset()
     ds = gdal.Open('HDF5:"data/CSK_DGM.h5"://S01/QLK')
@@ -381,9 +363,6 @@ def hdf5_10():
 
 def hdf5_11():
 
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
-
     # Try opening the QLK subdataset to check that no error is generated
     gdal.ErrorReset()
     ds = gdal.Open('HDF5:"data/CSK_GEC.h5"://S01/QLK')
@@ -421,9 +400,6 @@ def hdf5_11():
 
 def hdf5_12():
 
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
-
     if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/5032/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf', 'norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf'):
         return 'skip'
 
@@ -453,9 +429,6 @@ def hdf5_12():
 
 def hdf5_13():
 
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
-
     if not gdaltest.download_file('http://oceandata.sci.gsfc.nasa.gov/cgi/getfile/A2016273115000.L2_LAC_OC.nc', 'A2016273115000.L2_LAC_OC.nc'):
         return 'skip'
 
@@ -479,9 +452,6 @@ def hdf5_13():
 
 
 def hdf5_14():
-
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
 
     ds = gdal.Open('data/complex.h5')
     sds_list = ds.GetMetadata('SUBDATASETS')
@@ -513,9 +483,6 @@ def hdf5_14():
 
 def hdf5_15():
 
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
-
     ds = gdal.Open('HDF5:"data/complex.h5"://f32')
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -529,9 +496,6 @@ def hdf5_15():
 
 
 def hdf5_16():
-
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
 
     ds = gdal.Open('HDF5:"data/complex.h5"://f64')
 
@@ -547,9 +511,6 @@ def hdf5_16():
 
 def hdf5_17():
 
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
-
     ds = gdal.Open('HDF5:"data/complex.h5"://f16')
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -562,9 +523,6 @@ def hdf5_17():
 
 def hdf5_single_char_varname():
 
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
-
     ds = gdal.Open('HDF5:"data/single_char_varname.h5"://e')
     if ds is None:
         return 'fail'
@@ -573,10 +531,6 @@ def hdf5_single_char_varname():
 
 
 def hdf5_virtual_file():
-
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
-
     hdf5_files = [
         'CSK_GEC.h5',
         'vlstr_metadata.h5',
@@ -594,45 +548,32 @@ def hdf5_virtual_file():
     return 'success'
 
 
-class TestHDF5(object):
-    def __init__(self, downloadURL, fileName, subdatasetname, checksum, download_size):
-        self.downloadURL = downloadURL
-        self.fileName = fileName
-        self.subdatasetname = subdatasetname
-        self.checksum = checksum
-        self.download_size = download_size
-
-    def test(self):
-        if gdaltest.hdf5_drv is None:
-            return 'skip'
-
-        if not gdaltest.download_file(self.downloadURL + '/' + self.fileName, self.fileName, self.download_size):
-            return 'skip'
-
-        ds = gdal.Open('HDF5:"tmp/cache/' + self.fileName + '"://' + self.subdatasetname)
-
-        if ds.GetRasterBand(1).Checksum() != self.checksum:
-            gdaltest.post_reason('Bad checksum. Expected %d, got %d' % (self.checksum, ds.GetRasterBand(1).Checksum()))
-            return 'fail'
-
-        return 'success'
+# FIXME: This FTP server seems to have disappeared. Replace with something else?
+hdf5_list = [
+    ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
+        'HDF4_PALGROUP/HDF4_PALETTE_2', 7488, -1),
+    ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
+        'Raster_Image_#0', 3661, -1),
+    ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/geospatial/DEM', 'half_moon_bay.grid',
+        'HDFEOS/GRIDS/DEMGRID/Data_Fields/Elevation', 30863, -1),
+]
 
 
+@pytest.mark.parametrize(
+    'downloadURL,fileName,subdatasetname,checksum,download_size',
+    hdf5_list,
+    ids=['HDF5:"' + item[1] + '"://' + item[2] for item in hdf5_list],
+)
+def test_hdf5(driver, downloadURL, fileName, subdatasetname, checksum, download_size):
+    if not gdaltest.download_file(downloadURL + '/' + fileName, fileName, download_size):
+        pytest.skip('no download')
 
-def hdf5_postcheck():
+    ds = gdal.Open('HDF5:"tmp/cache/' + fileName + '"://' + subdatasetname)
 
-    if gdaltest.hdf5_drv is None:
-        return 'skip'
+    assert ds.GetRasterBand(1).Checksum() == checksum, 'Bad checksum. Expected %d, got %d' % (checksum, ds.GetRasterBand(1).Checksum())
 
-    diff = len(gdaltest.get_opened_files()) - gdaltest.count_opened_files
-    if diff != 0:
-        gdaltest.post_reason('Leak of file handles: %d leaked' % diff)
-        return 'fail'
-
-    return 'success'
 
 gdaltest_list = [
-    hdf5_1,
     hdf5_2,
     hdf5_3,
     hdf5_4,
@@ -651,20 +592,7 @@ gdaltest_list = [
     hdf5_17,
     hdf5_single_char_varname,
     hdf5_virtual_file,
-    hdf5_postcheck,
 ]
-
-hdf5_list = [('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
-              'HDF4_PALGROUP/HDF4_PALETTE_2', 7488, -1),
-             ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
-              'Raster_Image_#0', 3661, -1),
-             ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/geospatial/DEM', 'half_moon_bay.grid',
-              'HDFEOS/GRIDS/DEMGRID/Data_Fields/Elevation', 30863, -1),
-            ]
-
-for item in hdf5_list:
-    ut = TestHDF5(item[0], item[1], item[2], item[3], item[4])
-    gdaltest_list.append((ut.test, 'HDF5:"' + item[1] + '"://' + item[2]))
 
 
 if __name__ == '__main__':
