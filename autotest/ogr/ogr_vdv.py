@@ -77,6 +77,16 @@ def ogr_idf_1():
     return 'success'
 
 ###############################################################################
+#
+
+
+def ogr_idf_1_with_temp_sqlite_db():
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+    with gdaltest.config_option('OGR_IDF_TEMP_DB_THRESHOLD', '0'):
+        return ogr_idf_1()
+
+###############################################################################
 # Run test_ogrsf on .idf
 
 
@@ -557,6 +567,7 @@ def ogr_vdv_cleanup():
 
 gdaltest_list = [
     ogr_idf_1,
+    ogr_idf_1_with_temp_sqlite_db,
     ogr_idf_2,
     ogr_vdv_1,
     ogr_vdv_2,
