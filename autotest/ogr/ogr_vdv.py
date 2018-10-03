@@ -87,6 +87,43 @@ def ogr_idf_1_with_temp_sqlite_db():
         return ogr_idf_1()
 
 ###############################################################################
+# Basic test of .idf file
+
+
+def ogr_idf_3d():
+
+    ds = ogr.Open('data/test_3d.idf')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['NODE_ID'] != 1 or f['foo'] != 'U' or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49 10)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    lyr = ds.GetLayer(1)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (2 49 10,2.5 49.5 10,2.7 49.7 0,3 50 20)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    lyr = ds.GetLayer(2)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (2.5 49.5 10)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    lyr = ds.GetLayer(3)
+    f = lyr.GetNextFeature()
+    if f['FOO'] != 1:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Run test_ogrsf on .idf
 
 
@@ -568,6 +605,7 @@ def ogr_vdv_cleanup():
 gdaltest_list = [
     ogr_idf_1,
     ogr_idf_1_with_temp_sqlite_db,
+    ogr_idf_3d,
     ogr_idf_2,
     ogr_vdv_1,
     ogr_vdv_2,
