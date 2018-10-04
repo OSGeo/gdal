@@ -31,3 +31,4 @@ sudo i386 chroot "$chroot" apt-get install -y --force-yes python-numpy libpng12-
 sudo i386 chroot "$chroot" apt-get install -y make
 sudo i386 chroot "$chroot" apt-get install -y python-dev
 sudo i386 chroot "$chroot" apt-get install -y g++
+sudo i386 chroot "$chroot" apt-get install -y --force-yes curl
