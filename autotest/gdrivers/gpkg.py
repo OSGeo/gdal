@@ -3928,6 +3928,36 @@ def gpkg_delete_raster_layer():
 
 
 ###############################################################################
+
+
+def gpkg_delete_gridded_coverage_raster_layer():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    filename = '/vsimem/float32.gpkg'
+    gdal.Translate(filename, 'data/float32.tif', format='GPKG',
+                   creationOptions=['RASTER_TABLE=foo'])
+    ds = ogr.Open(filename, update=1)
+    ds.ExecuteSQL('DROP TABLE foo')
+    ds.ExecuteSQL('VACUUM')
+    ds = None
+
+    # Check that there is no more any reference to the layer
+    f = gdal.VSIFOpenL(filename, 'rb')
+    content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
+    gdal.VSIFCloseL(f)
+
+    if content.find('foo') >= 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink(filename)
+
+    return 'success'
+
+
+###############################################################################
 def gpkg_open_old_gpkg_elevation_tiles_extension():
 
     if gdaltest.gpkg_dr is None:
@@ -4061,6 +4091,7 @@ gdaltest_list = [
     gpkg_open_old_gpkg_elevation_tiles_extension,
     gpkg_GeneralCmdLineProcessor,
     gpkg_match_overview_factor,
+    gpkg_delete_gridded_coverage_raster_layer,
     gpkg_cleanup,
 ]
 # gdaltest_list = [ gpkg_init, gpkg_47, gpkg_cleanup ]
