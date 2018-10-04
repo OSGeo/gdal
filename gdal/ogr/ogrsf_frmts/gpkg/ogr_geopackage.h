@@ -191,6 +191,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
 
         int                     FindLayerIndex(const char* pszLayerName);
 
+        bool                    HasGriddedCoverageAncillaryTable();
         bool                    CreateTileGriddedTable(char** papszOptions);
 
         void                    CreateOGREmptyTableIfNeeded();
