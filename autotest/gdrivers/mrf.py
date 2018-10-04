@@ -79,11 +79,13 @@ def test_mrf(src_filename, chksum, chksum_after_reopening, options):
     if src_filename == '12bit_rose_extract.jpg':
         import jpeg
         jpeg.jpeg_1()
-        pytest.skipif(gdaltest.jpeg_version == '9b')
+        if gdaltest.jpeg_version == '9b':
+            pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/' + src_filename)
-    pytest.skipif(ds is None)
+    if ds is None:
+        pytest.skip()
 
     ds = None
     ut = gdaltest.GDALTest('MRF', src_filename, 1, chksum, options=options, chksum_after_reopening=chksum_after_reopening)
@@ -124,8 +126,6 @@ def mrf_zen_test():
             result = 'fail'
         for f in glob.glob('tmp/masked.*'):
             gdal.Unlink(f)
-        if result != 'success':
-            return result
 
     return result
 
