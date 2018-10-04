@@ -442,12 +442,12 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
         bGoOn = false;
         CURL* hCurlHandle = curl_easy_init();
         m_poS3HandleHelper->AddQueryParameter("uploads", "");
-        curl_easy_setopt(hCurlHandle, CURLOPT_URL,
-                         m_poS3HandleHelper->GetURL().c_str());
         curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
-            CPLHTTPSetOptions(hCurlHandle, nullptr));
+            CPLHTTPSetOptions(hCurlHandle,
+                              m_poS3HandleHelper->GetURL().c_str(),
+                              nullptr));
         headers = VSICurlMergeHeaders(headers,
                         m_poS3HandleHelper->GetCurlHeaders("POST", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -578,15 +578,15 @@ bool VSIS3WriteHandle::UploadPart()
     m_poS3HandleHelper->AddQueryParameter("partNumber",
                                           CPLSPrintf("%d", m_nPartNumber));
     m_poS3HandleHelper->AddQueryParameter("uploadId", m_osUploadID);
-    curl_easy_setopt(hCurlHandle, CURLOPT_URL,
-                     m_poS3HandleHelper->GetURL().c_str());
     curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
     curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION, ReadCallBackBuffer);
     curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
     curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, m_nBufferOff);
 
     struct curl_slist* headers = static_cast<struct curl_slist*>(
-        CPLHTTPSetOptions(hCurlHandle, nullptr));
+        CPLHTTPSetOptions(hCurlHandle,
+                          m_poS3HandleHelper->GetURL().c_str(),
+                          nullptr));
     headers = VSICurlMergeHeaders(headers,
                     m_poS3HandleHelper->GetCurlHeaders("PUT", headers,
                                                         m_pabyBuffer,
@@ -697,15 +697,15 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
     {
         m_hCurlMulti = curl_multi_init();
         CURL* hCurlHandle = curl_easy_init();
-        curl_easy_setopt(hCurlHandle, CURLOPT_URL,
-                        m_poS3HandleHelper->GetURL().c_str());
         curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
         curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
                          ReadCallBackBufferChunked);
         curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
 
         headers = static_cast<struct curl_slist*>(
-            CPLHTTPSetOptions(hCurlHandle, nullptr));
+            CPLHTTPSetOptions(hCurlHandle,
+                              m_poS3HandleHelper->GetURL().c_str(),
+                              nullptr));
         headers = VSICurlMergeHeaders(headers,
                         m_poS3HandleHelper->GetCurlHeaders("PUT", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -912,15 +912,15 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         bGoOn = false;
         m_nBufferOffReadCallback = 0;
         CURL* hCurlHandle = curl_easy_init();
-        curl_easy_setopt(hCurlHandle, CURLOPT_URL,
-                         m_poS3HandleHelper->GetURL().c_str());
         curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
         curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION, ReadCallBackBuffer);
         curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
         curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, m_nBufferOff);
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
-            CPLHTTPSetOptions(hCurlHandle, nullptr));
+            CPLHTTPSetOptions(hCurlHandle,
+                              m_poS3HandleHelper->GetURL().c_str(),
+                              nullptr));
         headers = VSICurlMergeHeaders(headers,
                         m_poS3HandleHelper->GetCurlHeaders("PUT", headers,
                                                            m_pabyBuffer,
@@ -1027,8 +1027,6 @@ bool VSIS3WriteHandle::CompleteMultipart()
     m_nOffsetInXML = 0;
     CURL* hCurlHandle = curl_easy_init();
     m_poS3HandleHelper->AddQueryParameter("uploadId", m_osUploadID);
-    curl_easy_setopt(hCurlHandle, CURLOPT_URL,
-                     m_poS3HandleHelper->GetURL().c_str());
     curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
     curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION, ReadCallBackXML);
     curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
@@ -1037,7 +1035,9 @@ bool VSIS3WriteHandle::CompleteMultipart()
     curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
 
     struct curl_slist* headers = static_cast<struct curl_slist*>(
-        CPLHTTPSetOptions(hCurlHandle, nullptr));
+        CPLHTTPSetOptions(hCurlHandle,
+                          m_poS3HandleHelper->GetURL().c_str(),
+                          nullptr));
     headers = VSICurlMergeHeaders(headers,
                     m_poS3HandleHelper->GetCurlHeaders("POST", headers,
                                                         m_osXML.c_str(),
@@ -1091,12 +1091,12 @@ bool VSIS3WriteHandle::AbortMultipart()
 
     CURL* hCurlHandle = curl_easy_init();
     m_poS3HandleHelper->AddQueryParameter("uploadId", m_osUploadID);
-    curl_easy_setopt(hCurlHandle, CURLOPT_URL,
-                     m_poS3HandleHelper->GetURL().c_str());
     curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
 
     struct curl_slist* headers = static_cast<struct curl_slist*>(
-        CPLHTTPSetOptions(hCurlHandle, nullptr));
+        CPLHTTPSetOptions(hCurlHandle,
+                          m_poS3HandleHelper->GetURL().c_str(),
+                          nullptr));
     headers = VSICurlMergeHeaders(headers,
                     m_poS3HandleHelper->GetCurlHeaders("DELETE", headers));
     curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -1547,12 +1547,12 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
     {
         bGoOn = false;
         CURL* hCurlHandle = curl_easy_init();
-        curl_easy_setopt(hCurlHandle, CURLOPT_URL,
-                         poS3HandleHelper->GetURL().c_str());
         curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
-            CPLHTTPSetOptions(hCurlHandle, nullptr));
+            CPLHTTPSetOptions(hCurlHandle,
+                              poS3HandleHelper->GetURL().c_str(),
+                              nullptr));
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("DELETE", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);

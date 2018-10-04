@@ -314,9 +314,8 @@ retry:
     CURL* hCurlHandle = curl_easy_init();
 
     struct curl_slist* headers = static_cast<struct curl_slist*>(
-        CPLHTTPSetOptions(hCurlHandle, nullptr));
+        CPLHTTPSetOptions(hCurlHandle, osURL.c_str(), nullptr));
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_URL, osURL.c_str());
     curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
     curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, 0);
 
@@ -397,9 +396,8 @@ bool VSIWebHDFSWriteHandle::Append()
     CURL* hCurlHandle = curl_easy_init();
 
     struct curl_slist* headers = static_cast<struct curl_slist*>(
-        CPLHTTPSetOptions(hCurlHandle, nullptr));
+        CPLHTTPSetOptions(hCurlHandle, osURL.c_str(), nullptr));
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_URL, osURL.c_str());
     curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
     curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
     curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -457,10 +455,9 @@ bool VSIWebHDFSWriteHandle::Append()
     hCurlHandle = curl_easy_init();
 
     headers = static_cast<struct curl_slist*>(
-        CPLHTTPSetOptions(hCurlHandle, nullptr));
+        CPLHTTPSetOptions(hCurlHandle, osURL.c_str(), nullptr));
     headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_URL, osURL.c_str());
     curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, m_pabyBuffer);
     curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDSIZE , m_nBufferOff);
     curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);

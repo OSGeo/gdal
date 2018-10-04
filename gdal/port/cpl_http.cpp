@@ -463,6 +463,7 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] =
     { "GDAL_HTTP_LOW_SPEED_LIMIT", "LOW_SPEED_LIMIT" },
     { "GDAL_HTTP_USERPWD", "USERPWD" },
     { "GDAL_HTTP_PROXY", "PROXY" },
+    { "GDAL_HTTPS_PROXY", "HTTPS_PROXY" },
     { "GDAL_HTTP_PROXYUSERPWD", "PROXYUSERPWD" },
     { "GDAL_PROXY_AUTH", "PROXYAUTH" },
     { "GDAL_HTTP_NETRC", "NETRC" },
@@ -802,10 +803,8 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
     CPLHTTPResult *psResult =
         static_cast<CPLHTTPResult *>(CPLCalloc(1, sizeof(CPLHTTPResult)));
 
-    curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
-
     struct curl_slist* headers= reinterpret_cast<struct curl_slist*>(
-                            CPLHTTPSetOptions(http_handle, papszOptions));
+                            CPLHTTPSetOptions(http_handle, pszURL, papszOptions));
 
     // Set Headers.
     const char *pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
@@ -1211,10 +1210,9 @@ CPLHTTPResult **CPLHTTPMultiFetch( const char * const * papszURL,
 
         const char* pszURL = papszURL[i];
         CURL* http_handle = curl_easy_init();
-        curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
 
         aHeaders[i] = reinterpret_cast<struct curl_slist*>(
-                            CPLHTTPSetOptions(http_handle, papszOptions));
+                            CPLHTTPSetOptions(http_handle, pszURL, papszOptions));
 
         // Set Headers.
         const char *pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
@@ -1411,11 +1409,14 @@ static const char* CPLFindWin32CurlCaBundleCrt()
 // see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html
 // caution: if we remove that assumption, we'll needto use CURLOPT_COPYPOSTFIELDS
 
-void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
+void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
+                       const char * const* papszOptions)
 {
     CheckCurlFeatures();
 
     CURL *http_handle = reinterpret_cast<CURL *>(pcurl);
+
+    curl_easy_setopt(http_handle, CURLOPT_URL, pszURL);
 
     if( CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")) )
         curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
@@ -1574,6 +1575,12 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         pszProxy = CPLGetConfigOption("GDAL_HTTP_PROXY", nullptr);
     if( pszProxy )
         curl_easy_setopt(http_handle, CURLOPT_PROXY, pszProxy);
+
+    const char* pszHttpsProxy = CSLFetchNameValue( papszOptions, "HTTPS_PROXY" );
+    if ( pszHttpsProxy == nullptr )
+        pszHttpsProxy = CPLGetConfigOption("GDAL_HTTPS_PROXY", nullptr);
+    if ( pszHttpsProxy && (STARTS_WITH(pszURL, "https")) )
+        curl_easy_setopt(http_handle, CURLOPT_PROXY, pszHttpsProxy);
 
     const char* pszProxyUserPwd =
         CSLFetchNameValue( papszOptions, "PROXYUSERPWD" );
