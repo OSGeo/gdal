@@ -3773,6 +3773,21 @@ def tiff_read_webp():
     return success
 
 ###############################################################################
+# Test WEBP compression
+
+
+def tiff_read_webp_huge_single_strip():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
+        return 'skip'
+    ds = gdal.Open('data/tif_webp_huge_single_strip.tif')
+    if ds.GetRasterBand(1).Checksum() == 0:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 
 def tiff_read_1bit_2bands():
@@ -3965,6 +3980,7 @@ gdaltest_list.append((tiff_read_online_1))
 gdaltest_list.append((tiff_read_online_2))
 
 gdaltest_list.append((tiff_read_webp))
+gdaltest_list.append((tiff_read_webp_huge_single_strip))
 
 # gdaltest_list = [ tiff_read_mmap_interface ]
 

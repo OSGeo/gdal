@@ -8031,11 +8031,60 @@ def tiff_write_tiled_webp():
     if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
         return 'skip'
 
-    ut = gdaltest.GDALTest('GTiff', 'md_ge_rgb_0010000.tif', 0, None,
-                           options=['COMPRESS=WEBP',
-                                    'WEBP_LOSSLESS=true',
-                                    'TILED=true'])
-    return ut.testCreateCopy()
+    filename = '/vsimem/tiff_write_tiled_webp.tif'
+    src_ds = gdal.Open('data/md_ge_rgb_0010000.tif')
+    gdaltest.tiff_drv.CreateCopy(filename, src_ds,
+                                 options=['COMPRESS=WEBP',
+                                          'WEBP_LOSSLESS=true',
+                                          'TILED=true'])
+    ds = gdal.Open(filename)
+    original_stats = [src_ds.GetRasterBand(i + 1).ComputeStatistics(True) for i in range(3)]
+    got_stats = [ds.GetRasterBand(i + 1).ComputeStatistics(True) for i in range(3)]
+    ds = None
+
+    for i in range(3):
+        for j in range(4):
+            if abs(original_stats[i][j] - got_stats[i][j]) > 1e-1 * abs(original_stats[i][j]):
+                gdaltest.post_reason('did not get expected statistics')
+                print(i, j)
+                print(original_stats)
+                print(got_stats)
+                return 'fail'
+
+    gdaltest.tiff_drv.Delete(filename)
+    return 'success'
+
+###############################################################################
+# Test WEBP compression with huge single strip
+
+
+def tiff_write_webp_huge_single_strip():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
+        return 'skip'
+
+    filename = '/vsimem/tif_webp_huge_single_strip.tif'
+    src_ds = gdal.Open('data/tif_webp_huge_single_strip.tif')
+    gdaltest.tiff_drv.CreateCopy(filename, src_ds,
+                                 options=['COMPRESS=WEBP',
+                                          'BLOCKYSIZE=2001'])
+    ds = gdal.Open(filename)
+    original_stats = [src_ds.GetRasterBand(i + 1).ComputeStatistics(True) for i in range(3)]
+    got_stats = [ds.GetRasterBand(i + 1).ComputeStatistics(True) for i in range(3)]
+    ds = None
+
+    for i in range(3):
+        for j in range(4):
+            if abs(original_stats[i][j] - got_stats[i][j]) > 1e-1 * abs(original_stats[i][j]):
+                gdaltest.post_reason('did not get expected statistics')
+                print(i, j)
+                print(original_stats)
+                print(got_stats)
+                return 'fail'
+
+    gdaltest.tiff_drv.Delete(filename)
+    return 'success'
 
 
 ###############################################################################
@@ -8588,6 +8637,7 @@ gdaltest_list = [
     # tiff_write_api_proxy,
     tiff_write_webp,
     tiff_write_tiled_webp,
+    tiff_write_webp_huge_single_strip,
     tiff_write_cleanup]
 
 # gdaltest_list = [ tiff_write_1, tiff_write_176_lerc_max_z_error ]
