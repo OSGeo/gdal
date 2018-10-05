@@ -701,8 +701,6 @@
 #define unixWarningHandler gdal_unixWarningHandler
 #define uv_decode gdal_uv_decode
 #define uv_encode gdal_uv_encode
-#define WebPInitDecBuffer gdal_WebPInitDecBuffer
-#define WebPPictureInit gdal_WebPPictureInit
 #define XYZtoRGB24 gdal_XYZtoRGB24
 #define ZIPCleanup gdal_ZIPCleanup
 #define ZIPDecode gdal_ZIPDecode

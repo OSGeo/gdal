@@ -8041,6 +8041,7 @@ def tiff_write_tiled_webp():
     original_stats = [src_ds.GetRasterBand(i + 1).ComputeStatistics(True) for i in range(3)]
     got_stats = [ds.GetRasterBand(i + 1).ComputeStatistics(True) for i in range(3)]
     ds = None
+    src_ds = None
 
     for i in range(3):
         for j in range(4):
@@ -8052,6 +8053,8 @@ def tiff_write_tiled_webp():
                 return 'fail'
 
     gdaltest.tiff_drv.Delete(filename)
+    gdal.Unlink('data/md_ge_rgb_0010000.tif.aux.xml')
+
     return 'success'
 
 ###############################################################################
@@ -8073,6 +8076,7 @@ def tiff_write_webp_huge_single_strip():
     original_stats = [src_ds.GetRasterBand(i + 1).ComputeStatistics(True) for i in range(3)]
     got_stats = [ds.GetRasterBand(i + 1).ComputeStatistics(True) for i in range(3)]
     ds = None
+    src_ds = None
 
     for i in range(3):
         for j in range(4):
@@ -8084,6 +8088,8 @@ def tiff_write_webp_huge_single_strip():
                 return 'fail'
 
     gdaltest.tiff_drv.Delete(filename)
+    gdal.Unlink('data/tif_webp_huge_single_strip.tif.aux.xml')
+
     return 'success'
 
 
