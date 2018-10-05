@@ -33,8 +33,10 @@
 import os
 import sys
 import shutil
-from osgeo import gdal
 
+import pytest
+
+from osgeo import gdal
 
 import gdaltest
 
@@ -402,16 +404,77 @@ def hfa_write_invalid_wkt():
 
 
 init_list = [
-    ('byte.tif', 1, 4672, None),
-    ('int16.tif', 1, 4672, None),
-    ('uint16.tif', 1, 4672, None),
-    ('int32.tif', 1, 4672, None),
-    ('uint32.tif', 1, 4672, None),
-    ('float32.tif', 1, 4672, None),
-    ('float64.tif', 1, 4672, None),
-    ('cfloat32.tif', 1, 5028, None),
-    ('cfloat64.tif', 1, 5028, None),
-    ('utmsmall.tif', 1, 50054, None)]
+    ('byte.tif', 4672),
+    ('int16.tif', 4672),
+    ('uint16.tif', 4672),
+    ('int32.tif', 4672),
+    ('uint32.tif', 4672),
+    ('float32.tif', 4672),
+    ('float64.tif', 4672),
+    ('cfloat32.tif', 5028),
+    ('cfloat64.tif', 5028),
+    ('utmsmall.tif', 50054)]
+
+# full set of tests for normal mode.
+
+@pytest.mark.parametrize(
+    'filename,checksum',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.parametrize(
+    'testfunction', [
+        'testCreateCopy',
+        'testCreate',
+        'testSetGeoTransform',
+        'testSetMetadata',
+    ]
+)
+@pytest.mark.require_driver('HFA')
+def test_hfa_create_normal(filename, checksum, testfunction):
+    ut = gdaltest.GDALTest('HFA', filename, 1, checksum)
+    getattr(ut, testfunction)()
+
+
+# Just a few for spill file, and compressed support.
+short_list = [
+    ('byte.tif', 4672),
+    ('uint16.tif', 4672),
+    ('float64.tif', 4672)]
+
+@pytest.mark.parametrize(
+    'filename,checksum',
+    short_list,
+    ids=[tup[0].split('.')[0] for tup in short_list],
+)
+@pytest.mark.parametrize(
+    'testfunction', [
+        'testCreateCopy',
+        'testCreate',
+    ]
+)
+@pytest.mark.require_driver('HFA')
+def test_hfa_create_spill(filename, checksum, testfunction):
+    ut = gdaltest.GDALTest('HFA', filename, 1, checksum, options=['USE_SPILL=YES'])
+    getattr(ut, testfunction)()
+
+
+@pytest.mark.parametrize(
+    'filename,checksum',
+    short_list,
+    ids=[tup[0].split('.')[0] for tup in short_list],
+)
+@pytest.mark.parametrize(
+    'testfunction', [
+        # 'testCreateCopy',
+        'testCreate',
+    ]
+)
+@pytest.mark.require_driver('HFA')
+def test_hfa_create_compress(filename, checksum, testfunction):
+    ut = gdaltest.GDALTest('HFA', filename, 1, checksum, options=['COMPRESS=YES'])
+    getattr(ut, testfunction)()
+
 
 gdaltest_list = [hfa_write_desc,
                  hfa_write_4bit,
@@ -423,38 +486,6 @@ gdaltest_list = [hfa_write_desc,
                  hfa_use_rrd,
                  hfa_update_existing_aux_overviews,
                  hfa_write_invalid_wkt]
-
-# full set of tests for normal mode.
-
-for item in init_list:
-    ut1 = gdaltest.GDALTest('HFA', item[0], item[1], item[2])
-    if ut1 is None:
-        print('HFA tests skipped')
-    gdaltest_list.append((ut1.testCreateCopy, item[0]))
-    gdaltest_list.append((ut1.testCreate, item[0]))
-    gdaltest_list.append((ut1.testSetGeoTransform, item[0]))
-    gdaltest_list.append((ut1.testSetMetadata, item[0]))
-
-# Just a few for spill file, and compressed support.
-short_list = [
-    ('byte.tif', 1, 4672, None),
-    ('uint16.tif', 1, 4672, None),
-    ('float64.tif', 1, 4672, None)]
-
-for item in short_list:
-    ut2 = gdaltest.GDALTest('HFA', item[0], item[1], item[2],
-                            options=['USE_SPILL=YES'])
-    if ut2 is None:
-        print('HFA tests skipped')
-    gdaltest_list.append((ut2.testCreateCopy, item[0] + ' (spill)'))
-    gdaltest_list.append((ut2.testCreate, item[0] + ' (spill)'))
-
-    ut2 = gdaltest.GDALTest('HFA', item[0], item[1], item[2],
-                            options=['COMPRESS=YES'])
-    if ut2 is None:
-        print('HFA tests skipped')
-#    gdaltest_list.append( (ut2.testCreateCopy, item[0] + ' (compressed)') )
-    gdaltest_list.append((ut2.testCreate, item[0] + ' (compressed)'))
 
 
 if __name__ == '__main__':

@@ -35,6 +35,7 @@ import sys
 import shutil
 import struct
 
+import pytest
 
 import gdaltest
 from osgeo import gdal
@@ -46,23 +47,36 @@ import test_cli_utilities
 gdaltest_list = []
 
 init_list = [
-    ('byte.vrt', 1, 4672, None),
-    ('int16.vrt', 1, 4672, None),
-    ('uint16.vrt', 1, 4672, None),
-    ('int32.vrt', 1, 4672, None),
-    ('uint32.vrt', 1, 4672, None),
-    ('float32.vrt', 1, 4672, None),
-    ('float64.vrt', 1, 4672, None),
-    ('cint16.vrt', 1, 5028, None),
-    ('cint32.vrt', 1, 5028, None),
-    ('cfloat32.vrt', 1, 5028, None),
-    ('cfloat64.vrt', 1, 5028, None),
-    ('msubwinbyte.vrt', 2, 2699, None),
-    ('utmsmall.vrt', 1, 50054, None),
-    ('byte_nearest_50pct.vrt', 1, 1192, None),
-    ('byte_averaged_50pct.vrt', 1, 1152, None),
-    ('byte_nearest_200pct.vrt', 1, 18784, None),
-    ('byte_averaged_200pct.vrt', 1, 18784, None)]
+    ('byte.vrt', 4672),
+    ('int16.vrt', 4672),
+    ('uint16.vrt', 4672),
+    ('int32.vrt', 4672),
+    ('uint32.vrt', 4672),
+    ('float32.vrt', 4672),
+    ('float64.vrt', 4672),
+    ('cint16.vrt', 5028),
+    ('cint32.vrt', 5028),
+    ('cfloat32.vrt', 5028),
+    ('cfloat64.vrt', 5028),
+    ('msubwinbyte.vrt', 2699),
+    ('utmsmall.vrt', 50054),
+    ('byte_nearest_50pct.vrt', 1192),
+    ('byte_averaged_50pct.vrt', 1152),
+    ('byte_nearest_200pct.vrt', 18784),
+    ('byte_averaged_200pct.vrt', 18784)
+]
+
+
+@pytest.mark.parametrize(
+    'filename,checksum',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.require_driver('VRT')
+def test_vrt_open(filename, checksum):
+    ut = gdaltest.GDALTest('VRT', filename, 1, checksum)
+    ut.testOpen()
+
 
 ###############################################################################
 # The VRT references a non existing TIF file
@@ -1454,47 +1468,44 @@ def vrt_dstsize_larger_than_source():
 
     return 'success'
 
-for item in init_list:
-    ut = gdaltest.GDALTest('VRT', item[0], item[1], item[2])
-    if ut is None:
-        print('VRT tests skipped')
-        sys.exit()
-    gdaltest_list.append((ut.testOpen, item[0]))
 
-gdaltest_list.append(vrt_read_1)
-gdaltest_list.append(vrt_read_2)
-gdaltest_list.append(vrt_read_3)
-gdaltest_list.append(vrt_read_4)
-gdaltest_list.append(vrt_read_5)
-gdaltest_list.append(vrt_read_6)
-gdaltest_list.append(vrt_read_7)
-gdaltest_list.append(vrt_read_8)
-gdaltest_list.append(vrt_read_9)
-gdaltest_list.append(vrt_read_10)
-gdaltest_list.append(vrt_read_11)
-gdaltest_list.append(vrt_read_12)
-gdaltest_list.append(vrt_read_13)
-gdaltest_list.append(vrt_read_14)
-gdaltest_list.append(vrt_read_15)
-gdaltest_list.append(vrt_read_16)
-gdaltest_list.append(vrt_read_17)
-gdaltest_list.append(vrt_read_18)
-gdaltest_list.append(vrt_read_19)
-gdaltest_list.append(vrt_read_20)
-gdaltest_list.append(vrt_read_21)
-gdaltest_list.append(vrt_read_22)
-gdaltest_list.append(vrt_read_23)
-gdaltest_list.append(vrt_read_24)
-gdaltest_list.append(vrt_read_25)
-gdaltest_list.append(vrt_read_26)
-gdaltest_list.append(vrt_read_27)
-gdaltest_list.append(vrt_read_28)
-gdaltest_list.append(vrt_read_29)
-gdaltest_list.append(vrt_read_30)
-gdaltest_list.append(vrt_read_31)
-gdaltest_list.append(vrt_float32_with_nodata_slightly_below_float_min)
-gdaltest_list.append(vrt_subpixel_offset)
-gdaltest_list.append(vrt_dstsize_larger_than_source)
+gdaltest_list = [
+    vrt_read_1,
+    vrt_read_2,
+    vrt_read_3,
+    vrt_read_4,
+    vrt_read_5,
+    vrt_read_6,
+    vrt_read_7,
+    vrt_read_8,
+    vrt_read_9,
+    vrt_read_10,
+    vrt_read_11,
+    vrt_read_12,
+    vrt_read_13,
+    vrt_read_14,
+    vrt_read_15,
+    vrt_read_16,
+    vrt_read_17,
+    vrt_read_18,
+    vrt_read_19,
+    vrt_read_20,
+    vrt_read_21,
+    vrt_read_22,
+    vrt_read_23,
+    vrt_read_24,
+    vrt_read_25,
+    vrt_read_26,
+    vrt_read_27,
+    vrt_read_28,
+    vrt_read_29,
+    vrt_read_30,
+    vrt_read_31,
+    vrt_float32_with_nodata_slightly_below_float_min,
+    vrt_subpixel_offset,
+    vrt_dstsize_larger_than_source,
+]
+
 
 if __name__ == '__main__':
 

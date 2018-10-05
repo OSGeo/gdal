@@ -30,6 +30,7 @@
 import os
 import sys
 
+import pytest
 
 import gdaltest
 from osgeo import ogr
@@ -38,46 +39,49 @@ from osgeo import gdal
 ###############################################################################
 
 
-class wkb_wkt_unit(object):
-    def __init__(self, unit):
-        self.unit = unit
+@pytest.mark.parametrize(
+    'unit',
+    [
+        f[:-4] for f in os.listdir(os.path.join(os.path.dirname(__file__), 'data/wkb_wkt'))
+        if f[-4:] == '.wkb'
+    ]
+)
+def test_wkbwkt_geom(unit):
+    raw_wkb = open('data/wkb_wkt/' + unit + '.wkb', 'rb').read()
+    raw_wkt = open('data/wkb_wkt/' + unit + '.wkt').read()
 
-    def wkbwkt_geom(self):
-        raw_wkb = open('data/wkb_wkt/' + self.unit + '.wkb', 'rb').read()
-        raw_wkt = open('data/wkb_wkt/' + self.unit + '.wkt').read()
+    ######################################################################
+    # Compare the WKT derived from the WKB file to the WKT provided
+    # but reformatted (normalized).
 
-        ######################################################################
-        # Compare the WKT derived from the WKB file to the WKT provided
-        # but reformatted (normalized).
+    geom_wkb = ogr.CreateGeometryFromWkb(raw_wkb)
+    wkb_wkt = geom_wkb.ExportToWkt()
 
-        geom_wkb = ogr.CreateGeometryFromWkb(raw_wkb)
-        wkb_wkt = geom_wkb.ExportToWkt()
+    geom_wkt = ogr.CreateGeometryFromWkt(raw_wkt)
+    normal_wkt = geom_wkt.ExportToWkt()
 
-        geom_wkt = ogr.CreateGeometryFromWkt(raw_wkt)
-        normal_wkt = geom_wkt.ExportToWkt()
+    # print(wkb_wkt)
+    # print(normal_wkt)
+    # print(raw_wkt)
+    if wkb_wkt != normal_wkt:
+        gdaltest.post_reason('WKT from WKB (%s) does not match clean WKT (%s).' % (wkb_wkt, normal_wkt))
+        return 'fail'
 
-        # print(wkb_wkt)
-        # print(normal_wkt)
-        # print(raw_wkt)
-        if wkb_wkt != normal_wkt:
-            gdaltest.post_reason('WKT from WKB (%s) does not match clean WKT (%s).' % (wkb_wkt, normal_wkt))
-            return 'fail'
+    ######################################################################
+    # Verify that the geometries appear to be the same.   This is
+    # intended to catch problems with the encoding too WKT that might
+    # cause passes above but that are mistaken.
+    if geom_wkb.GetCoordinateDimension() != geom_wkt.GetCoordinateDimension():
+        gdaltest.post_reason('Coordinate dimension differs!')
+        return 'fail'
 
-        ######################################################################
-        # Verify that the geometries appear to be the same.   This is
-        # intended to catch problems with the encoding too WKT that might
-        # cause passes above but that are mistaken.
-        if geom_wkb.GetCoordinateDimension() != geom_wkt.GetCoordinateDimension():
-            gdaltest.post_reason('Coordinate dimension differs!')
-            return 'fail'
+    if geom_wkb.GetGeometryType() != geom_wkt.GetGeometryType():
+        gdaltest.post_reason('Geometry type differs!')
+        return 'fail'
 
-        if geom_wkb.GetGeometryType() != geom_wkt.GetGeometryType():
-            gdaltest.post_reason('Geometry type differs!')
-            return 'fail'
-
-        if geom_wkb.GetGeometryName() != geom_wkt.GetGeometryName():
-            gdaltest.post_reason('Geometry name differs!')
-            return 'fail'
+    if geom_wkb.GetGeometryName() != geom_wkt.GetGeometryName():
+        gdaltest.post_reason('Geometry name differs!')
+        return 'fail'
 
 # It turns out this test is too picky about coordinate precision. skip.
 #       if geom_wkb.Equal( geom_wkt ) == 0:
@@ -86,35 +90,35 @@ class wkb_wkt_unit(object):
 #           print geom_wkt.ExportToWkt()
 #           return 'fail'
 
-        geom_wkb.Destroy()
+    geom_wkb.Destroy()
 
-        ######################################################################
-        # Convert geometry to WKB and back to verify that WKB encoding is
-        # working smoothly.
+    ######################################################################
+    # Convert geometry to WKB and back to verify that WKB encoding is
+    # working smoothly.
 
-        wkb_xdr = geom_wkt.ExportToWkb(ogr.wkbXDR)
-        geom_wkb = ogr.CreateGeometryFromWkb(wkb_xdr)
+    wkb_xdr = geom_wkt.ExportToWkb(ogr.wkbXDR)
+    geom_wkb = ogr.CreateGeometryFromWkb(wkb_xdr)
 
-        if str(geom_wkb) != str(geom_wkt):
-            print(geom_wkb)
-            print(geom_wkt)
-            gdaltest.post_reason('XDR WKB encoding/decoding failure.')
-            return 'fail'
+    if str(geom_wkb) != str(geom_wkt):
+        print(geom_wkb)
+        print(geom_wkt)
+        gdaltest.post_reason('XDR WKB encoding/decoding failure.')
+        return 'fail'
 
-        geom_wkb.Destroy()
+    geom_wkb.Destroy()
 
-        wkb_ndr = geom_wkt.ExportToWkb(ogr.wkbNDR)
-        geom_wkb = ogr.CreateGeometryFromWkb(wkb_ndr)
+    wkb_ndr = geom_wkt.ExportToWkb(ogr.wkbNDR)
+    geom_wkb = ogr.CreateGeometryFromWkb(wkb_ndr)
 
-        if str(geom_wkb) != str(geom_wkt):
-            gdaltest.post_reason('NDR WKB encoding/decoding failure.')
-            return 'fail'
+    if str(geom_wkb) != str(geom_wkt):
+        gdaltest.post_reason('NDR WKB encoding/decoding failure.')
+        return 'fail'
 
-        geom_wkb.Destroy()
+    geom_wkb.Destroy()
 
-        geom_wkt.Destroy()
+    geom_wkt.Destroy()
 
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Test geometry with very large exponents of coordinate values.
@@ -677,12 +681,6 @@ def ogr_wkt_multipolygon_corrupted():
 
 
 gdaltest_list = []
-
-files = os.listdir(os.path.join(os.path.dirname(__file__), 'data/wkb_wkt'))
-for filename in files:
-    if filename[-4:] == '.wkb':
-        ut = wkb_wkt_unit(filename[:-4])
-        gdaltest_list.append((ut.wkbwkt_geom, ut.unit))
 
 gdaltest_list.append(ogr_wkbwkt_geom_bigexponents)
 gdaltest_list.append(ogr_wkbwkt_test_broken_geom)

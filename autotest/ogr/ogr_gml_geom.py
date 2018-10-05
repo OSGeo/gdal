@@ -30,6 +30,7 @@
 import os
 import sys
 
+import pytest
 
 import gdaltest
 import ogrtest
@@ -40,36 +41,39 @@ from osgeo import gdal
 ###############################################################################
 
 
-class gml_geom_unit(object):
-    def __init__(self, unit):
-        self.unit = unit
+@pytest.mark.parametrize(
+    'unit',
+    [
+        f[:-4] for f in os.listdir(os.path.join(os.path.dirname(__file__), 'data/wkb_wkt'))
+        if f[-4:] == '.wkt'
+    ]
+)
+def test_gml_geom(unit):
+    raw_wkt = open('data/wkb_wkt/' + unit + '.wkt').read()
 
-    def gml_geom(self):
-        raw_wkt = open('data/wkb_wkt/' + self.unit + '.wkt').read()
+    ######################################################################
+    # Convert WKT to GML.
 
-        ######################################################################
-        # Convert WKT to GML.
+    geom_wkt = ogr.CreateGeometryFromWkt(raw_wkt)
 
-        geom_wkt = ogr.CreateGeometryFromWkt(raw_wkt)
+    gml = geom_wkt.ExportToGML()
 
-        gml = geom_wkt.ExportToGML()
+    if gml is None or not gml:
+        gdaltest.post_reason('Conversion to GML failed.')
+        return 'fail'
 
-        if gml is None or not gml:
-            gdaltest.post_reason('Conversion to GML failed.')
-            return 'fail'
+    ######################################################################
+    # Create geometry from GML.
 
-        ######################################################################
-        # Create geometry from GML.
+    geom_gml = ogr.CreateGeometryFromGML(gml)
 
-        geom_gml = ogr.CreateGeometryFromGML(gml)
+    if ogrtest.check_feature_geometry(geom_wkt, geom_gml, 0.0000000000001) == 1:
+        clean_wkt = geom_wkt.ExportToWkt()
+        gml_wkt = geom_gml.ExportToWkt()
+        gdaltest.post_reason('WKT from GML (%s) does not match clean WKT (%s).\ngml was (%s)' % (gml_wkt, clean_wkt, gml))
+        return 'fail'
 
-        if ogrtest.check_feature_geometry(geom_wkt, geom_gml, 0.0000000000001) == 1:
-            clean_wkt = geom_wkt.ExportToWkt()
-            gml_wkt = geom_gml.ExportToWkt()
-            gdaltest.post_reason('WKT from GML (%s) does not match clean WKT (%s).\ngml was (%s)' % (gml_wkt, clean_wkt, gml))
-            return 'fail'
-
-        return 'success'
+    return 'success'
 
 ###############################################################################
 # Test geometries with extra spaces at the end, as sometimes are generated
@@ -2440,11 +2444,6 @@ def gml_write_gml_ns():
 
 gdaltest_list = []
 
-files = os.listdir(os.path.join(os.path.dirname(__file__), 'data/wkb_wkt'))
-for filename in files:
-    if filename[-4:] == '.wkt':
-        ut = gml_geom_unit(filename[:-4])
-        gdaltest_list.append((ut.gml_geom, ut.unit))
 
 gdaltest_list.append(gml_space_test)
 gdaltest_list.append(gml_pos_point)

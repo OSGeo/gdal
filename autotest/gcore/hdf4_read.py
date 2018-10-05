@@ -28,6 +28,7 @@
 
 import sys
 
+import pytest
 
 import gdaltest
 from osgeo import gdal
@@ -38,22 +39,34 @@ from osgeo import gdal
 gdaltest_list = []
 
 init_list = [
-    ('byte_3.hdf', 1, 4672, None),
-    ('int16_3.hdf', 1, 4672, None),
-    ('uint16_3.hdf', 1, 4672, None),
-    ('int32_3.hdf', 1, 4672, None),
-    ('uint32_3.hdf', 1, 4672, None),
-    ('float32_3.hdf', 1, 4672, None),
-    ('float64_3.hdf', 1, 4672, None),
-    ('utmsmall_3.hdf', 1, 50054, None),
-    ('byte_2.hdf', 1, 4672, None),
-    ('int16_2.hdf', 1, 4672, None),
-    ('uint16_2.hdf', 1, 4672, None),
-    ('int32_2.hdf', 1, 4672, None),
-    ('uint32_2.hdf', 1, 4672, None),
-    ('float32_2.hdf', 1, 4672, None),
-    ('float64_2.hdf', 1, 4672, None),
-    ('utmsmall_2.hdf', 1, 50054, None)]
+    ('byte_3.hdf', 4672),
+    ('int16_3.hdf', 4672),
+    ('uint16_3.hdf', 4672),
+    ('int32_3.hdf', 4672),
+    ('uint32_3.hdf', 4672),
+    ('float32_3.hdf', 4672),
+    ('float64_3.hdf', 4672),
+    ('utmsmall_3.hdf', 50054),
+    ('byte_2.hdf', 4672),
+    ('int16_2.hdf', 4672),
+    ('uint16_2.hdf', 4672),
+    ('int32_2.hdf', 4672),
+    ('uint32_2.hdf', 4672),
+    ('float32_2.hdf', 4672),
+    ('float64_2.hdf', 4672),
+    ('utmsmall_2.hdf', 50054)]
+
+
+@pytest.mark.parametrize(
+    'filename,checksum',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.require_driver('HDF4Image')
+def test_hdf4_open(filename, checksum):
+    ut = gdaltest.GDALTest('HDF4Image', filename, 1, checksum)
+    ut.testOpen()
+
 
 ###############################################################################
 # Test HDF4_SDS with single subdataset
@@ -358,13 +371,6 @@ def hdf4_read_online_10():
 
     return 'success'
 
-
-for item in init_list:
-    ut = gdaltest.GDALTest('HDF4Image', item[0], item[1], item[2])
-    if ut is None:
-        print('HDF4 tests skipped')
-        sys.exit()
-    gdaltest_list.append((ut.testOpen, item[0]))
 
 gdaltest_list.append(hdf4_read_online_1)
 gdaltest_list.append(hdf4_read_online_2)

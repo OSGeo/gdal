@@ -30,6 +30,7 @@
 
 import sys
 
+import pytest
 
 import gdaltest
 from osgeo import gdal
@@ -38,19 +39,19 @@ from osgeo import gdal
 gdaltest_list = []
 
 init_list = [
-    ('byte.tif', 1, 4672, []),
-    ('byte_signed.tif', 1, 4672, []),
-    ('int16.tif', 1, 4672, []),
-    ('uint16.tif', 1, 4672, []),
-    ('int32.tif', 1, 4672, []),
-    ('uint32.tif', 1, 4672, []),
-    ('float32.tif', 1, 4672, []),
-    ('float64.tif', 1, 4672, []),
-    ('cint16.tif', 1, 5028, []),
-    ('cint32.tif', 1, 5028, []),
-    ('cfloat32.tif', 1, 5028, []),
-    ('cfloat64.tif', 1, 5028, []),
-    ('rgbsmall.tif', 1, 21212, [])]
+    ('byte.tif', 4672),
+    ('byte_signed.tif', 4672),
+    ('int16.tif', 4672),
+    ('uint16.tif', 4672),
+    ('int32.tif', 4672),
+    ('uint32.tif', 4672),
+    ('float32.tif', 4672),
+    ('float64.tif', 4672),
+    ('cint16.tif', 5028),
+    ('cint32.tif', 5028),
+    ('cfloat32.tif', 5028),
+    ('cfloat64.tif', 5028),
+    ('rgbsmall.tif', 21212)]
 
 ###############################################################################
 # Verify we have the driver.
@@ -264,16 +265,18 @@ def gta_5():
     return 'success'
 
 
-for item in init_list:
-    if item[0] == 'byte_signed.tif':
-        filename = item[0]
-    else:
-        filename = '../../gcore/data/' + item[0]
-    ut = gdaltest.GDALTest('GTA', filename, item[1], item[2], options=item[3])
-    if ut is None:
-        print('GTA tests skipped')
-        sys.exit()
-    gdaltest_list.append((ut.testCreateCopy, item[0]))
+@pytest.mark.parametrize(
+    'filename,checksum',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.require_driver('GTA')
+def test_gta_create(filename, checksum):
+    if filename != 'byte_signed.tif':
+        filename = '../../gcore/data/' + filename
+    ut = gdaltest.GDALTest('GTA', filename, 1, checksum, options=[])
+    ut.testCreateCopy()
+
 
 gdaltest_list.append(gta_1)
 gdaltest_list.append(gta_2)

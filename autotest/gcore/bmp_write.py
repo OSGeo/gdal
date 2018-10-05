@@ -29,6 +29,7 @@
 
 import sys
 
+import pytest
 
 import gdaltest
 
@@ -48,20 +49,29 @@ def bmp_vsimem():
 
 gdaltest_list = [bmp_vsimem]
 
+
 init_list = [
-    ('byte.tif', 1, 4672, None),
-    ('utmsmall.tif', 1, 50054, None),
-    ('8bit_pal.bmp', 1, 4672, None), ]
+    ('byte.tif', 4672),
+    ('utmsmall.tif', 50054),
+    ('8bit_pal.bmp', 4672), ]
 
-for item in init_list:
-    ut = gdaltest.GDALTest('BMP', item[0], item[1], item[2])
-    if ut is None:
-        print('BMP tests skipped')
-        sys.exit()
-    gdaltest_list.append((ut.testCreateCopy, item[0]))
-    gdaltest_list.append((ut.testCreate, item[0]))
 
-gdaltest_list.append((gdaltest.clean_tmp, 'bmp_cleanup'))
+@pytest.mark.parametrize(
+    'filename,checksum',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.parametrize(
+    'testfunction', [
+        'testCreateCopy',
+        'testCreate',
+    ]
+)
+@pytest.mark.require_driver('BMP')
+def test_bmp_create(filename, checksum, testfunction):
+    ut = gdaltest.GDALTest('BMP', filename, 1, checksum)
+    getattr(ut, testfunction)()
+
 
 if __name__ == '__main__':
 

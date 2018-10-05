@@ -28,6 +28,7 @@
 
 import sys
 
+import pytest
 
 import gdaltest
 
@@ -37,10 +38,21 @@ import gdaltest
 gdaltest_list = []
 
 init_list = [
-    ('1bit.bmp', 1, 200, None),
-    ('4bit_pal.bmp', 1, 2587, None),
-    ('8bit_pal.bmp', 1, 4672, None),
-    ('byte_rle8.bmp', 1, 4672, None)]
+    ('1bit.bmp', 200),
+    ('4bit_pal.bmp', 2587),
+    ('8bit_pal.bmp', 4672),
+    ('byte_rle8.bmp', 4672)]
+
+
+@pytest.mark.parametrize(
+    'filename,checksum',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.require_driver('BMP')
+def test_bmp_open(filename, checksum):
+    ut = gdaltest.GDALTest('BMP', filename, 1, checksum)
+    ut.testOpen()
 
 
 def bmp_online_1():
@@ -64,13 +76,6 @@ def bmp_online_2():
 
     return tst.testOpen()
 
-
-for item in init_list:
-    ut = gdaltest.GDALTest('BMP', item[0], item[1], item[2])
-    if ut is None:
-        print('BMP tests skipped')
-        sys.exit()
-    gdaltest_list.append((ut.testOpen, item[0]))
 
 gdaltest_list.append(bmp_online_1)
 gdaltest_list.append(bmp_online_2)

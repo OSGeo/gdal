@@ -3449,35 +3449,49 @@ gdaltest_list = [
 #  basic file creation tests
 
 init_list = [
-    ('byte.tif', 1, 4672, None, []),
-    ('byte_signed.tif', 1, 4672, None, ['PIXELTYPE=SIGNEDBYTE']),
-    ('int16.tif', 1, 4672, None, []),
-    ('int32.tif', 1, 4672, None, []),
-    ('float32.tif', 1, 4672, None, []),
-    ('float64.tif', 1, 4672, None, [])
+    ('byte.tif', 4672, []),
+    ('byte_signed.tif', 4672, ['PIXELTYPE=SIGNEDBYTE']),
+    ('int16.tif', 4672, []),
+    ('int32.tif', 4672, []),
+    ('float32.tif', 4672, []),
+    ('float64.tif', 4672, [])
 ]
 
+
 # Some tests we don't need to do for each type.
-item = init_list[0]
-ut = gdaltest.GDALTest('netcdf', item[0], item[1], item[2], options=item[4])
 
-# test geotransform and projection
-gdaltest_list.append((ut.testSetGeoTransform, item[0]))
-gdaltest_list.append((ut.testSetProjection, item[0]))
+@pytest.mark.parametrize(
+    'testfunction', [
+        'testSetGeoTransform',
+        'testSetProjection',
+        # SetMetadata() not supported
+        # 'testSetMetadata'
+    ]
+)
+@pytest.mark.require_driver('netcdf')
+def test_netcdf_functions_1(testfunction):
+    ut = gdaltest.GDALTest('netcdf', 'byte.tif', 1, 4672, options=[])
+    getattr(ut, testfunction)()
 
-# SetMetadata() not supported
-# gdaltest_list.append( (ut.testSetMetadata, item[0]) )
-
-# gdaltest_list = [ netcdf_1, netcdf_82 ]
 
 # Others we do for each pixel type.
-for item in init_list:
-    ut = gdaltest.GDALTest('netcdf', item[0], item[1], item[2], options=item[4])
-    if ut is None:
-        print('GTiff tests skipped')
-    gdaltest_list.append((ut.testCreateCopy, item[0]))
-    gdaltest_list.append((ut.testCreate, item[0]))
-    gdaltest_list.append((ut.testSetNoDataValue, item[0]))
+
+@pytest.mark.parametrize(
+    'filename,checksum,options',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.parametrize(
+    'testfunction', [
+        'testCreateCopy',
+        'testCreate',
+        'testSetNoDataValue'
+    ]
+)
+@pytest.mark.require_driver('netcdf')
+def test_netcdf_functions_2(filename, checksum, options, testfunction):
+    ut = gdaltest.GDALTest('netcdf', filename, 1, checksum, options=options)
+    getattr(ut, testfunction)()
 
 ###############################################################################
 #  other tests

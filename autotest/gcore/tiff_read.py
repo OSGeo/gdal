@@ -31,6 +31,7 @@ import os
 import sys
 import shutil
 
+import pytest
 
 import gdaltest
 from osgeo import gdal, osr
@@ -41,34 +42,47 @@ from osgeo import gdal, osr
 gdaltest_list = []
 
 init_list = [
-    ('byte.tif', 1, 4672, None),
-    ('uint16_sgilog.tif', 1, 4672, None),
-    ('next_literalrow.tif', 1, 4, None),
-    ('next_literalspan.tif', 1, 4, None),
-    ('next_default_case.tif', 1, 4, None),
-    ('thunder.tif', 1, 3, None),
-    ('int10.tif', 1, 4672, None),
-    ('int12.tif', 1, 4672, None),
-    ('int16.tif', 1, 4672, None),
-    ('uint16.tif', 1, 4672, None),
-    ('int24.tif', 1, 4672, None),
-    ('int32.tif', 1, 4672, None),
-    ('uint32.tif', 1, 4672, None),
-    ('float16.tif', 1, 4672, None),
-    ('float24.tif', 1, 4672, None),
-    ('float32.tif', 1, 4672, None),
-    ('float32_minwhite.tif', 1, 1, None),
-    ('float64.tif', 1, 4672, None),
-    ('cint16.tif', 1, 5028, None),
-    ('cint32.tif', 1, 5028, None),
-    ('cfloat32.tif', 1, 5028, None),
-    ('cfloat64.tif', 1, 5028, None),
+    ('byte.tif', 1, 4672),
+    ('uint16_sgilog.tif', 1, 4672),
+    ('next_literalrow.tif', 1, 4),
+    ('next_literalspan.tif', 1, 4),
+    ('next_default_case.tif', 1, 4),
+    ('thunder.tif', 1, 3),
+    ('int10.tif', 1, 4672),
+    ('int12.tif', 1, 4672),
+    ('int16.tif', 1, 4672),
+    ('uint16.tif', 1, 4672),
+    ('int24.tif', 1, 4672),
+    ('int32.tif', 1, 4672),
+    ('uint32.tif', 1, 4672),
+    ('float16.tif', 1, 4672),
+    ('float24.tif', 1, 4672),
+    ('float32.tif', 1, 4672),
+    ('float32_minwhite.tif', 1, 1),
+    ('float64.tif', 1, 4672),
+    ('cint16.tif', 1, 5028),
+    ('cint32.tif', 1, 5028),
+    ('cfloat32.tif', 1, 5028),
+    ('cfloat64.tif', 1, 5028),
     # The following four related partial final strip/tiles (#1179)
-    ('separate_tiled.tif', 2, 15234, None),
-    ('seperate_strip.tif', 2, 15234, None),  # TODO: Spelling.
-    ('contig_tiled.tif', 2, 15234, None),
-    ('contig_strip.tif', 2, 15234, None),
-    ('empty1bit.tif', 1, 0, None)]
+    ('separate_tiled.tif', 2, 15234),
+    ('seperate_strip.tif', 2, 15234),  # TODO: Spelling.
+    ('contig_tiled.tif', 2, 15234),
+    ('contig_strip.tif', 2, 15234),
+    ('empty1bit.tif', 1, 0)
+]
+
+
+@pytest.mark.parametrize(
+    'filename,band,checksum',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.require_driver('GTiff')
+def test_tiff_open(filename, band, checksum):
+    ut = gdaltest.GDALTest('GTiff', filename, band, checksum)
+    ut.testOpen()
+
 
 ###############################################################################
 # Test absolute/offset && index directory access
@@ -3854,12 +3868,6 @@ def tiff_read_overview_of_external_mask():
 ###############################################################################
 
 
-for item in init_list:
-    ut = gdaltest.GDALTest('GTiff', item[0], item[1], item[2])
-    if ut is None:
-        print('GTiff tests skipped')
-        sys.exit()
-    gdaltest_list.append((ut.testOpen, item[0]))
 gdaltest_list.append(tiff_read_off)
 gdaltest_list.append(tiff_check_alpha)
 gdaltest_list.append(tiff_read_cmyk_rgba)
