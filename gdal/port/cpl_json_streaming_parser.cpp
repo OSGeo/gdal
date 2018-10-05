@@ -87,7 +87,7 @@ void CPLJSonStreamingParser::Reset()
     m_aState.clear();
     m_aState.push_back(INIT);
     m_osToken.clear();
-    m_abFirstElement.clear();
+    m_abArrayState.clear();
     m_aeObjectState.clear();
     m_bInStringEscape = false;
     m_bInUnicode = false;
@@ -148,11 +148,20 @@ bool CPLJSonStreamingParser::EmitException(const char* pszMessage)
 /*                          EmitUnexpectedChar()                        */
 /************************************************************************/
 
-bool CPLJSonStreamingParser::EmitUnexpectedChar(char ch)
+bool CPLJSonStreamingParser::EmitUnexpectedChar(char ch,
+                                                const char* pszExpecting)
 {
     char szMessage[64];
-    snprintf(szMessage, sizeof(szMessage),
-             "Unexpected character (%c)", ch);
+    if( pszExpecting )
+    {
+        snprintf(szMessage, sizeof(szMessage),
+             "Unexpected character (%c). Expecting %s", ch, pszExpecting);
+    }
+    else
+    {
+        snprintf(szMessage, sizeof(szMessage),
+                "Unexpected character (%c)", ch);
+    }
     return EmitException(szMessage);
 }
 
@@ -196,7 +205,7 @@ bool CPLJSonStreamingParser::StartNewToken(const char*& pStr, size_t& nLength)
             return EmitException("Too many nested objects and/or arrays");
         }
         StartArray();
-        m_abFirstElement.push_back(true);
+        m_abArrayState.push_back(ArrayState::INIT);
         m_aState.push_back(ARRAY);
         AdvanceChar(pStr, nLength);
     }
@@ -279,7 +288,7 @@ bool CPLJSonStreamingParser::CheckStackEmpty()
     {
         return EmitException("Unterminated object");
     }
-    else if( !m_abFirstElement.empty() )
+    else if( !m_abArrayState.empty() )
     {
         return EmitException("Unterminated array");
     }
@@ -660,22 +669,33 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
             char ch = *pStr;
             if( ch == ',' )
             {
-                if( m_abFirstElement.back() )
+                if( m_abArrayState.back() != ArrayState::AFTER_VALUE )
                 {
-                    return EmitUnexpectedChar(ch);
+                    return EmitUnexpectedChar(ch, "','");
                 }
+                m_abArrayState.back() = ArrayState::AFTER_COMMA;
                 AdvanceChar(pStr, nLength);
             }
             else if( ch == ']' )
             {
+                if( m_abArrayState.back() == ArrayState::AFTER_COMMA)
+                {
+                    return EmitException("Missing value");
+                }
+
                 EndArray();
                 AdvanceChar(pStr, nLength);
-                m_abFirstElement.pop_back();
+                m_abArrayState.pop_back();
                 m_aState.pop_back();
             }
             else if( IsValidNewToken(ch) )
             {
-                m_abFirstElement.back() = false;
+                if( m_abArrayState.back() == ArrayState::AFTER_VALUE )
+                {
+                    return EmitException("Unexpected state: ',' or ']' expected");
+                }
+                m_abArrayState.back() = ArrayState::AFTER_VALUE;
+
                 StartArrayMember();
                 if( !StartNewToken(pStr, nLength) )
                 {
@@ -704,7 +724,7 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
             {
                 if( m_aeObjectState.back() != IN_VALUE )
                 {
-                    return EmitUnexpectedChar(ch);
+                    return EmitUnexpectedChar(ch, "','");
                 }
 
                 m_aeObjectState.back() = WAITING_KEY;
@@ -714,7 +734,7 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
             {
                 if( m_aeObjectState.back() != IN_KEY )
                 {
-                    return EmitUnexpectedChar(ch);
+                    return EmitUnexpectedChar(ch, "':'");
                 }
                 m_aeObjectState.back() = KEY_FINISHED;
                 AdvanceChar(pStr, nLength);
@@ -742,7 +762,7 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                 {
                     if( ch != '"' )
                     {
-                        return EmitUnexpectedChar(ch);
+                        return EmitUnexpectedChar(ch, "'\"'");
                     }
                      m_aeObjectState.back() = IN_KEY;
                 }

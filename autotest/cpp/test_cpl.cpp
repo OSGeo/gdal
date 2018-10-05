@@ -1885,6 +1885,30 @@ namespace tut
             ensure( !oParser.Parse( sText, strlen(sText), true ) );
             ensure( !oParser.GetException().empty() );
         }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[,]";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[true,]";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[true,,true]";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[true true]";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
     }
 
     // Test cpl_mem_cache
