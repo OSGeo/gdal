@@ -519,13 +519,13 @@ def tiff_update_colorimetric():
 ############################################################################
 
 
-gdaltest_list.append((tiff_write_icc))
-gdaltest_list.append((tiff_copy_icc))
-gdaltest_list.append((tiff_copy_options_icc))
-gdaltest_list.append((tiff_copy_options_colorimetric_data))
-gdaltest_list.append((tiff_copy_colorimetric_data))
-gdaltest_list.append((tiff_update_icc))
-gdaltest_list.append((tiff_update_colorimetric))
+gdaltest_list.append(tiff_write_icc)
+gdaltest_list.append(tiff_copy_icc)
+gdaltest_list.append(tiff_copy_options_icc)
+gdaltest_list.append(tiff_copy_options_colorimetric_data)
+gdaltest_list.append(tiff_copy_colorimetric_data)
+gdaltest_list.append(tiff_update_icc)
+gdaltest_list.append(tiff_update_colorimetric)
 
 if __name__ == '__main__':
 

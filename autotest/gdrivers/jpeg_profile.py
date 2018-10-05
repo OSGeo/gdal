@@ -215,9 +215,9 @@ def jpeg_copy_icc_64K():
 ###############################################################################################
 
 
-gdaltest_list.append((jpeg_copy_icc))
-gdaltest_list.append((jpeg_copy_options_icc))
-gdaltest_list.append((jpeg_copy_icc_64K))
+gdaltest_list.append(jpeg_copy_icc)
+gdaltest_list.append(jpeg_copy_options_icc)
+gdaltest_list.append(jpeg_copy_icc_64K)
 
 if __name__ == '__main__':
 

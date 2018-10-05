@@ -69,7 +69,7 @@ for item in init_list:
     gdaltest_list.append((ut.testOpen, item[0]))
 
 
-gdaltest_list.append((hfa_read_completedefn_recursion))
+gdaltest_list.append(hfa_read_completedefn_recursion)
 
 if __name__ == '__main__':
 

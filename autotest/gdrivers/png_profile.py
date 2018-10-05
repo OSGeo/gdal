@@ -365,11 +365,11 @@ def png_sRGB():
 ############################################################################
 
 
-gdaltest_list.append((png_copy_icc))
-gdaltest_list.append((png_copy_options_icc))
-gdaltest_list.append((png_copy_options_colorimetric_data))
-gdaltest_list.append((png_copy_colorimetric_data))
-gdaltest_list.append((png_sRGB))
+gdaltest_list.append(png_copy_icc)
+gdaltest_list.append(png_copy_options_icc)
+gdaltest_list.append(png_copy_options_colorimetric_data)
+gdaltest_list.append(png_copy_colorimetric_data)
+gdaltest_list.append(png_sRGB)
 
 if __name__ == '__main__':
 
