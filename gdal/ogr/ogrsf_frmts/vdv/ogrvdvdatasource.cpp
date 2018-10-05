@@ -178,31 +178,52 @@ void OGRIDFDataSource::Parse()
         return;
 
     VSIStatBufL sStatBuf;
-    bool bSQLite = false;
+    bool bGPKG = false;
     vsi_l_offset nFileSize = 0;
+    bool bSpatialIndex = false;
     if( VSIStatL(m_osFilename, &sStatBuf) == 0 &&
         sStatBuf.st_size > CPLAtoGIntBig(
             CPLGetConfigOption("OGR_IDF_TEMP_DB_THRESHOLD", "100000000")) )
     {
         nFileSize = sStatBuf.st_size;
 
-        GDALDriver* poSQLiteDriver = reinterpret_cast<GDALDriver*>(
-            GDALGetDriverByName("SQLITE"));
-        if( poSQLiteDriver )
+        GDALDriver* poGPKGDriver = reinterpret_cast<GDALDriver*>(
+            GDALGetDriverByName("GPKG"));
+        if( poGPKGDriver )
         {
-            CPLString osTmpFilename(m_osFilename + "_tmp.sqlite");
+            CPLString osTmpFilename(m_osFilename + "_tmp.gpkg");
+            VSILFILE* fp = VSIFOpenL(osTmpFilename, "wb");
+            if( fp )
+            {
+                VSIFCloseL(fp);
+            }
+            else
+            {
+                osTmpFilename =
+                    CPLGenerateTempFilename(CPLGetBasename(m_osFilename));
+            }
             VSIUnlink(osTmpFilename);
             CPLString osOldVal = CPLGetConfigOption("OGR_SQLITE_JOURNAL", "");
             CPLSetThreadLocalConfigOption("OGR_SQLITE_JOURNAL", "OFF");
-            m_poTmpDS = poSQLiteDriver->Create(
+            m_poTmpDS = poGPKGDriver->Create(
                 osTmpFilename, 0, 0, 0, GDT_Unknown, nullptr);
             CPLSetThreadLocalConfigOption("OGR_SQLITE_JOURNAL",
                 !osOldVal.empty() ? osOldVal.c_str() : nullptr);
+            bGPKG = m_poTmpDS != nullptr;
             m_bDestroyTmpDS =
                 CPLTestBool(
                     CPLGetConfigOption("OGR_IDF_DELETE_TEMP_DB", "YES")) &&
                 m_poTmpDS != nullptr;
-            bSQLite = m_poTmpDS != nullptr;
+            if( m_bDestroyTmpDS )
+            {
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                m_bDestroyTmpDS = VSIUnlink(osTmpFilename) != 0;
+                CPLPopErrorHandler();
+            }
+            else
+            {
+                bSpatialIndex = true;
+            }
         }
     }
 
@@ -287,8 +308,10 @@ void OGRIDFDataSource::Parse()
                 char** papszFrm = CSLTokenizeString2(osFrm,";",
                         CSLT_ALLOWEMPTYTOKENS|CSLT_STRIPLEADSPACES|CSLT_STRIPENDSPACES);
                 char* apszOptions[2] = { nullptr, nullptr };
-                if( bAdvertizeUTF8 && !bSQLite )
+                if( bAdvertizeUTF8 && !bGPKG )
                     apszOptions[0] = (char*)"ADVERTIZE_UTF8=YES";
+                else if( bGPKG && !bSpatialIndex )
+                    apszOptions[0] = (char*)"SPATIAL_INDEX=NO";
 
                 if( EQUAL(osTablename, "Node") &&
                     (iX = CSLFindString(papszAtr, "X")) >= 0 &&
@@ -449,7 +472,14 @@ void OGRIDFDataSource::Parse()
                 }
                 else
                 {
-                    oMapLinkCoordinateIter->second->addPoint(dfX, dfY);
+                    if( iZ >= 0 )
+                    {
+                        oMapLinkCoordinateIter->second->addPoint(dfX, dfY, dfZ);
+                    }
+                    else
+                    {
+                        oMapLinkCoordinateIter->second->addPoint(dfX, dfY);
+                    }
                 }
             }
             eErr = poCurLayer->CreateFeature(poFeature);

@@ -102,7 +102,7 @@ def ogr_idf_3d():
 
     lyr = ds.GetLayer(1)
     f = lyr.GetNextFeature()
-    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (2 49 10,2.5 49.5 10,2.7 49.7 0,3 50 20)':
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (2 49 10,2.5 49.5 10,2.7 49.7 20,3 50 20)':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
