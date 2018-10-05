@@ -2,7 +2,7 @@
 # GDAL specific script to extract exported libtiff symbols that can be renamed
 # to keep them internal to GDAL as much as possible
 
-gcc ./*.c -fPIC -shared -o libtiff.so -I. -I../../../port  -DPIXARLOG_SUPPORT -DZIP_SUPPORT -DOJPEG_SUPPORT -DLZMA_SUPPORT -DZSTD_SUPPORT ${ZSTD_INCLUDE}
+gcc ./*.c -fPIC -shared -o libtiff.so -I. -I../../../port  -DPIXARLOG_SUPPORT -DZIP_SUPPORT -DOJPEG_SUPPORT -DLZMA_SUPPORT -DZSTD_SUPPORT ${ZSTD_INCLUDE} -DWEBP_SUPPORT ${WEBP_INCLUDE}
 
 OUT_FILE=gdal_libtiff_symbol_rename.h
 

@@ -191,6 +191,7 @@ typedef enum {
 /* compression codes 34887-34889 are reserved for ESRI */
 #define	    COMPRESSION_LZMA		34925	/* LZMA2 */
 #define	    COMPRESSION_ZSTD		34926	/* ZSTD: WARNING not registered in Adobe-maintained registry */
+#define	    COMPRESSION_WEBP		34927	/* WEBP: WARNING not registered in Adobe-maintained registry */
 #define	TIFFTAG_PHOTOMETRIC		262	/* photometric interpretation */
 #define	    PHOTOMETRIC_MINISWHITE	0	/* min value is white */
 #define	    PHOTOMETRIC_MINISBLACK	1	/* min value is black */
@@ -614,6 +615,8 @@ typedef enum {
 #define     LERC_ADD_COMPRESSION_DEFLATE 1
 #define     LERC_ADD_COMPRESSION_ZSTD    2
 #define TIFFTAG_LERC_MAXZERROR          65567    /* LERC maximum error */
+#define TIFFTAG_WEBP_LEVEL		  65568	/* WebP compression level: WARNING not registered in Adobe-maintained registry */
+#define TIFFTAG_WEBP_LOSSLESS		65569	/* WebP lossless/lossy : WARNING not registered in Adobe-maintained registry */
 
 /*
  * EXIF tags
