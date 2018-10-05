@@ -35,10 +35,6 @@ import pytest
 from osgeo import gdal
 import gdaltest
 
-###############################################################################
-# When imported build a list of units based on the files available.
-
-gdaltest_list = []
 
 init_list = [
     ('byte.img', 4672),
@@ -72,7 +68,7 @@ def hfa_read_completedefn_recursion():
     return 'success'
 
 
-gdaltest_list.append(hfa_read_completedefn_recursion)
+gdaltest_list = [hfa_read_completedefn_recursion]
 
 if __name__ == '__main__':
 

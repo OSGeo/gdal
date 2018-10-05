@@ -2442,69 +2442,69 @@ def gml_write_gml_ns():
 # sys.stdin.readline()
 
 
-gdaltest_list = []
+gdaltest_list = [
+    gml_space_test,
+    gml_pos_point,
+    gml_pos_polygon,
+    gml_posList_line,
+    gml_posList_line3d,
+    gml_posList_line3d_2,
+    gml_polygon,
+    gml_out_point_srs,
+    gml_out_point3d_srs,
+    gml_out_linestring_srs,
+    gml_out_polygon_srs,
+    gml_out_multipoint_srs,
+    gml_out_multilinestring_srs,
+    gml_out_multipolygon_srs,
+    gml_out_geometrycollection_srs,
+    gml_Box,
+    gml_Envelope,
+    gml_Curve,
+    gml_Curve_with_pointProperty,
+    gml_MultiCurve,
+    gml_MultiSurface,
+    gml_MultiSurface_surfaceMembers,
+    gml_MultiCurve_curveMembers,
+    gml_MultiGeometry_geometryMembers,
+    gml_CompositeCurve_curveMembers,
+    gml_MultiCurve_pointMembers,
+    gml_Solid,
+    gml_OrientableSurface,
+    gml_Triangle,
+    gml_Rectangle,
+    gml_Tin,
+    gml_PolyhedralSurface,
+    gml_ConcatenatedDeduplication,
+    # gml_out_precision,
+    gml_invalid_geoms,
+    gml_write_gml3_geometries,
+    gml_write_gml3_srs,
+    gml_nested,
+    gml_SimplePolygon,
+    gml_SimpleRectangle,
+    gml_SimpleTriangle,
+    gml_SimpleMultiPoint,
+    gml_CompositeCurveInRing,
+    gml_CompositeSurface_in_surfaceMembers,
+    gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing,
+    gml_Coordinates_ts_cs_decimal,
+    gml_with_xml_header_and_comments,
+    gml_srsDimension_topgeometry,
+    gml_Arc,
+    gml_ArcByBulge,
+    gml_ArcByCenterPoint,
+    gml_CompoundCurve_of_ArcByCenterPoint,
+    gml_CircleByCenterPoint,
+    gml_Circle,
+    gml_ArcString,
+    gml_OGRCompoundCurve,
+    gml_OGRCurvePolygon,
+    gml_OGRMultiSurface,
+    gml_OGRMultiCurve,
+    gml_write_gml_ns,
+]
 
-
-gdaltest_list.append(gml_space_test)
-gdaltest_list.append(gml_pos_point)
-gdaltest_list.append(gml_pos_polygon)
-gdaltest_list.append(gml_posList_line)
-gdaltest_list.append(gml_posList_line3d)
-gdaltest_list.append(gml_posList_line3d_2)
-gdaltest_list.append(gml_polygon)
-gdaltest_list.append(gml_out_point_srs)
-gdaltest_list.append(gml_out_point3d_srs)
-gdaltest_list.append(gml_out_linestring_srs)
-gdaltest_list.append(gml_out_polygon_srs)
-gdaltest_list.append(gml_out_multipoint_srs)
-gdaltest_list.append(gml_out_multilinestring_srs)
-gdaltest_list.append(gml_out_multipolygon_srs)
-gdaltest_list.append(gml_out_geometrycollection_srs)
-gdaltest_list.append(gml_Box)
-gdaltest_list.append(gml_Envelope)
-gdaltest_list.append(gml_Curve)
-gdaltest_list.append(gml_Curve_with_pointProperty)
-gdaltest_list.append(gml_MultiCurve)
-gdaltest_list.append(gml_MultiSurface)
-gdaltest_list.append(gml_MultiSurface_surfaceMembers)
-gdaltest_list.append(gml_MultiCurve_curveMembers)
-gdaltest_list.append(gml_MultiGeometry_geometryMembers)
-gdaltest_list.append(gml_CompositeCurve_curveMembers)
-gdaltest_list.append(gml_MultiCurve_pointMembers)
-gdaltest_list.append(gml_Solid)
-gdaltest_list.append(gml_OrientableSurface)
-gdaltest_list.append(gml_Triangle)
-gdaltest_list.append(gml_Rectangle)
-gdaltest_list.append(gml_Tin)
-gdaltest_list.append(gml_PolyhedralSurface)
-gdaltest_list.append(gml_ConcatenatedDeduplication)
-# gdaltest_list.append( gml_out_precision )
-gdaltest_list.append(gml_invalid_geoms)
-gdaltest_list.append(gml_write_gml3_geometries)
-gdaltest_list.append(gml_write_gml3_srs)
-gdaltest_list.append(gml_nested)
-gdaltest_list.append(gml_SimplePolygon)
-gdaltest_list.append(gml_SimpleRectangle)
-gdaltest_list.append(gml_SimpleTriangle)
-gdaltest_list.append(gml_SimpleMultiPoint)
-gdaltest_list.append(gml_CompositeCurveInRing)
-gdaltest_list.append(gml_CompositeSurface_in_surfaceMembers)
-gdaltest_list.append(gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing)
-gdaltest_list.append(gml_Coordinates_ts_cs_decimal)
-gdaltest_list.append(gml_with_xml_header_and_comments)
-gdaltest_list.append(gml_srsDimension_topgeometry)
-gdaltest_list.append(gml_Arc)
-gdaltest_list.append(gml_ArcByBulge)
-gdaltest_list.append(gml_ArcByCenterPoint)
-gdaltest_list.append(gml_CompoundCurve_of_ArcByCenterPoint)
-gdaltest_list.append(gml_CircleByCenterPoint)
-gdaltest_list.append(gml_Circle)
-gdaltest_list.append(gml_ArcString)
-gdaltest_list.append(gml_OGRCompoundCurve)
-gdaltest_list.append(gml_OGRCurvePolygon)
-gdaltest_list.append(gml_OGRMultiSurface)
-gdaltest_list.append(gml_OGRMultiCurve)
-gdaltest_list.append(gml_write_gml_ns)
 
 if __name__ == '__main__':
 

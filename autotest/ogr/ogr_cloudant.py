@@ -205,17 +205,14 @@ def ogr_cloudant_SetSpatialFilter():
     return 'success'
 
 
-if gdaltest.skip_on_travis():
-    gdaltest_list = []
-else:
-    gdaltest_list = [
-        ogr_cloudant_init,
-        ogr_cloudant_GetFeatureCount,
-        ogr_cloudant_GetNextFeature,
-        ogr_cloudant_GetSpatialRef,
-        ogr_cloudant_GetExtent,
-        ogr_cloudant_SetSpatialFilter
-    ]
+gdaltest_list = [
+    ogr_cloudant_init,
+    ogr_cloudant_GetFeatureCount,
+    ogr_cloudant_GetNextFeature,
+    ogr_cloudant_GetSpatialRef,
+    ogr_cloudant_GetExtent,
+    ogr_cloudant_SetSpatialFilter
+]
 
 if __name__ == '__main__':
 

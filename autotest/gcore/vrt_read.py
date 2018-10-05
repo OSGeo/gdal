@@ -44,7 +44,6 @@ import test_cli_utilities
 ###############################################################################
 # When imported build a list of units based on the files available.
 
-gdaltest_list = []
 
 init_list = [
     ('byte.vrt', 4672),

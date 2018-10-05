@@ -38,11 +38,6 @@ import base64
 import gdaltest
 from osgeo import gdal
 
-###############################################################################
-# When imported build a list of units based on the files available.
-
-gdaltest_list = []
-
 
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy()
@@ -365,11 +360,13 @@ def png_sRGB():
 ############################################################################
 
 
-gdaltest_list.append(png_copy_icc)
-gdaltest_list.append(png_copy_options_icc)
-gdaltest_list.append(png_copy_options_colorimetric_data)
-gdaltest_list.append(png_copy_colorimetric_data)
-gdaltest_list.append(png_sRGB)
+gdaltest_list = [
+    png_copy_icc,
+    png_copy_options_icc,
+    png_copy_options_colorimetric_data,
+    png_copy_colorimetric_data,
+    png_sRGB,
+]
 
 if __name__ == '__main__':
 

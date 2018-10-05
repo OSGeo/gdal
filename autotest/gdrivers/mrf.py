@@ -747,25 +747,24 @@ def mrf_cleanup():
     return 'success'
 
 
-gdaltest_list = []
-
-
-gdaltest_list += [mrf_overview_near_fact_2]
-gdaltest_list += [mrf_overview_near_with_nodata_fact_2]
-gdaltest_list += [mrf_overview_avg_fact_2]
-gdaltest_list += [mrf_overview_avg_with_nodata_fact_2]
-gdaltest_list += [mrf_overview_near_fact_3]
-gdaltest_list += [mrf_overview_avg_fact_3]
-gdaltest_list += [mrf_overview_avg_with_nodata_fact_3]
-gdaltest_list += [mrf_overview_partial_block]
-gdaltest_list += [mrf_overview_near_implicit_level]
-gdaltest_list += [mrf_overview_external]
-gdaltest_list += [mrf_lerc_nodata]
-gdaltest_list += [mrf_lerc_with_huffman]
-gdaltest_list += [mrf_cached_source]
-gdaltest_list += [mrf_versioned]
-gdaltest_list += [mrf_zen_test]
-gdaltest_list += [mrf_cleanup]
+gdaltest_list = [
+    mrf_overview_near_fact_2,
+    mrf_overview_near_with_nodata_fact_2,
+    mrf_overview_avg_fact_2,
+    mrf_overview_avg_with_nodata_fact_2,
+    mrf_overview_near_fact_3,
+    mrf_overview_avg_fact_3,
+    mrf_overview_avg_with_nodata_fact_3,
+    mrf_overview_partial_block,
+    mrf_overview_near_implicit_level,
+    mrf_overview_external,
+    mrf_lerc_nodata,
+    mrf_lerc_with_huffman,
+    mrf_cached_source,
+    mrf_versioned,
+    mrf_zen_test,
+    mrf_cleanup,
+]
 
 if __name__ == '__main__':
 

@@ -36,8 +36,6 @@ import gdaltest
 from osgeo import gdal
 
 
-gdaltest_list = []
-
 init_list = [
     ('byte.tif', 4672),
     ('byte_signed.tif', 4672),
@@ -278,11 +276,13 @@ def test_gta_create(filename, checksum):
     ut.testCreateCopy()
 
 
-gdaltest_list.append(gta_1)
-gdaltest_list.append(gta_2)
-gdaltest_list.append(gta_3)
-gdaltest_list.append(gta_4)
-gdaltest_list.append(gta_5)
+gdaltest_list = [
+    gta_1,
+    gta_2,
+    gta_3,
+    gta_4,
+    gta_5,
+]
 
 if __name__ == '__main__':
 

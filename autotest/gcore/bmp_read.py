@@ -32,10 +32,6 @@ import pytest
 
 import gdaltest
 
-###############################################################################
-# When imported build a list of units based on the files available.
-
-gdaltest_list = []
 
 init_list = [
     ('1bit.bmp', 200),
@@ -77,8 +73,7 @@ def bmp_online_2():
     return tst.testOpen()
 
 
-gdaltest_list.append(bmp_online_1)
-gdaltest_list.append(bmp_online_2)
+gdaltest_list = [bmp_online_1, bmp_online_2]
 
 if __name__ == '__main__':
 

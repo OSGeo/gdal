@@ -36,11 +36,6 @@ import pytest
 import gdaltest
 from osgeo import gdal, osr
 
-###############################################################################
-# When imported build a list of units based on the files available.
-
-gdaltest_list = []
-
 init_list = [
     ('byte.tif', 1, 4672),
     ('uint16_sgilog.tif', 1, 4672),
@@ -3868,136 +3863,137 @@ def tiff_read_overview_of_external_mask():
 ###############################################################################
 
 
-gdaltest_list.append(tiff_read_off)
-gdaltest_list.append(tiff_check_alpha)
-gdaltest_list.append(tiff_read_cmyk_rgba)
-gdaltest_list.append(tiff_read_cmyk_raw)
-gdaltest_list.append(tiff_read_ojpeg)
-gdaltest_list.append(tiff_read_gzip)
-gdaltest_list.append(tiff_read_zip_1)
-gdaltest_list.append(tiff_read_zip_2)
-gdaltest_list.append(tiff_read_zip_3)
-gdaltest_list.append(tiff_read_zip_4)
-gdaltest_list.append(tiff_read_zip_5)
-gdaltest_list.append(tiff_read_tar_1)
-gdaltest_list.append(tiff_read_tar_2)
-gdaltest_list.append(tiff_read_tgz_1)
-gdaltest_list.append(tiff_read_tgz_2)
-gdaltest_list.append(tiff_grads)
-gdaltest_list.append(tiff_citation)
-gdaltest_list.append(tiff_linearparmunits)
-gdaltest_list.append(tiff_linearparmunits2)
-gdaltest_list.append(tiff_g4_split)
-gdaltest_list.append(tiff_multi_images)
-gdaltest_list.append(tiff_vsimem)
-gdaltest_list.append(tiff_vsizip_and_mem)
-gdaltest_list.append(tiff_ProjectedCSTypeGeoKey_only)
-gdaltest_list.append(tiff_GTModelTypeGeoKey_only)
-gdaltest_list.append(tiff_12bitjpeg)
-gdaltest_list.append(tiff_read_stats_from_pam)
-gdaltest_list.append(tiff_read_from_tab)
-gdaltest_list.append(tiff_read_pixelispoint)
-gdaltest_list.append(tiff_read_geomatrix)
-gdaltest_list.append(tiff_read_corrupted_gtiff)
-gdaltest_list.append(tiff_read_tag_without_null_byte)
-gdaltest_list.append(tiff_read_buggy_packbits)
-gdaltest_list.append(tiff_read_rpc_txt)
-gdaltest_list.append(tiff_read_rpc_tif)
-gdaltest_list.append(tiff_small)
-gdaltest_list.append(tiff_dos_strip_chop)
-gdaltest_list.append(tiff_read_exif_and_gps)
-gdaltest_list.append(tiff_jpeg_rgba_pixel_interleaved)
-gdaltest_list.append(tiff_jpeg_rgba_band_interleaved)
-gdaltest_list.append(tiff_read_huge4GB)
-gdaltest_list.append(tiff_read_bigtiff)
-gdaltest_list.append(tiff_read_tiff_metadata)
-gdaltest_list.append(tiff_read_irregular_tile_size_jpeg_in_tiff)
-gdaltest_list.append(tiff_direct_and_virtual_mem_io)
-gdaltest_list.append(tiff_read_empty_nodata_tag)
-gdaltest_list.append(tiff_read_strace_check)
-gdaltest_list.append(tiff_read_readdir_limit_on_open)
-gdaltest_list.append(tiff_read_minisblack_as_rgba)
-gdaltest_list.append(tiff_read_colortable_as_rgba)
-gdaltest_list.append(tiff_read_logl_as_rgba)
-gdaltest_list.append(tiff_read_strip_separate_as_rgba)
-gdaltest_list.append(tiff_read_tiled_separate_as_rgba)
-gdaltest_list.append(tiff_read_scanline_more_than_2GB)
-gdaltest_list.append(tiff_read_wrong_number_extrasamples)
-gdaltest_list.append(tiff_read_one_strip_no_bytecount)
+gdaltest_list = [
+    tiff_read_off,
+    tiff_check_alpha,
+    tiff_read_cmyk_rgba,
+    tiff_read_cmyk_raw,
+    tiff_read_ojpeg,
+    tiff_read_gzip,
+    tiff_read_zip_1,
+    tiff_read_zip_2,
+    tiff_read_zip_3,
+    tiff_read_zip_4,
+    tiff_read_zip_5,
+    tiff_read_tar_1,
+    tiff_read_tar_2,
+    tiff_read_tgz_1,
+    tiff_read_tgz_2,
+    tiff_grads,
+    tiff_citation,
+    tiff_linearparmunits,
+    tiff_linearparmunits2,
+    tiff_g4_split,
+    tiff_multi_images,
+    tiff_vsimem,
+    tiff_vsizip_and_mem,
+    tiff_ProjectedCSTypeGeoKey_only,
+    tiff_GTModelTypeGeoKey_only,
+    tiff_12bitjpeg,
+    tiff_read_stats_from_pam,
+    tiff_read_from_tab,
+    tiff_read_pixelispoint,
+    tiff_read_geomatrix,
+    tiff_read_corrupted_gtiff,
+    tiff_read_tag_without_null_byte,
+    tiff_read_buggy_packbits,
+    tiff_read_rpc_txt,
+    tiff_read_rpc_tif,
+    tiff_small,
+    tiff_dos_strip_chop,
+    tiff_read_exif_and_gps,
+    tiff_jpeg_rgba_pixel_interleaved,
+    tiff_jpeg_rgba_band_interleaved,
+    tiff_read_huge4GB,
+    tiff_read_bigtiff,
+    tiff_read_tiff_metadata,
+    tiff_read_irregular_tile_size_jpeg_in_tiff,
+    tiff_direct_and_virtual_mem_io,
+    tiff_read_empty_nodata_tag,
+    tiff_read_strace_check,
+    tiff_read_readdir_limit_on_open,
+    tiff_read_minisblack_as_rgba,
+    tiff_read_colortable_as_rgba,
+    tiff_read_logl_as_rgba,
+    tiff_read_strip_separate_as_rgba,
+    tiff_read_tiled_separate_as_rgba,
+    tiff_read_scanline_more_than_2GB,
+    tiff_read_wrong_number_extrasamples,
+    tiff_read_one_strip_no_bytecount,
 
-gdaltest_list.append(tiff_read_md1)
-gdaltest_list.append(tiff_read_md2)
-gdaltest_list.append(tiff_read_md3)
-gdaltest_list.append(tiff_read_md4)
-gdaltest_list.append(tiff_read_md5)
-gdaltest_list.append(tiff_read_md6)
-gdaltest_list.append(tiff_read_md7)
-gdaltest_list.append(tiff_read_md8)
-gdaltest_list.append(tiff_read_md9)
-gdaltest_list.append(tiff_read_md10)
-gdaltest_list.append(tiff_read_md11)
-gdaltest_list.append(tiff_read_md12)
+    tiff_read_md1,
+    tiff_read_md2,
+    tiff_read_md3,
+    tiff_read_md4,
+    tiff_read_md5,
+    tiff_read_md6,
+    tiff_read_md7,
+    tiff_read_md8,
+    tiff_read_md9,
+    tiff_read_md10,
+    tiff_read_md11,
+    tiff_read_md12,
 
-gdaltest_list.append(tiff_read_nogeoref)
-gdaltest_list.append(tiff_read_inconsistent_georef)
-gdaltest_list.append(tiff_read_gcp_internal_and_auxxml)
+    tiff_read_nogeoref,
+    tiff_read_inconsistent_georef,
+    tiff_read_gcp_internal_and_auxxml,
 
-gdaltest_list.append(tiff_read_aux)
+    tiff_read_aux,
 
-gdaltest_list.append(tiff_read_one_band_from_two_bands)
+    tiff_read_one_band_from_two_bands,
 
-gdaltest_list.append(tiff_read_jpeg_cloud_optimized)
-gdaltest_list.append(tiff_read_corrupted_jpeg_cloud_optimized)
+    tiff_read_jpeg_cloud_optimized,
+    tiff_read_corrupted_jpeg_cloud_optimized,
 
-gdaltest_list.append(tiff_read_ycbcr_lzw)
-gdaltest_list.append(tiff_read_ycbcr_int12)
+    tiff_read_ycbcr_lzw,
+    tiff_read_ycbcr_int12,
 
-gdaltest_list.append(tiff_read_unit_from_srs)
-gdaltest_list.append(tiff_read_arcgis93_geodataxform_gcp)
-gdaltest_list.append(tiff_read_block_width_above_32bit)
-gdaltest_list.append(tiff_read_image_width_above_32bit)
-gdaltest_list.append(tiff_read_second_image_width_above_32bit)
-gdaltest_list.append(tiff_read_minimum_tiff_tags_no_warning)
-gdaltest_list.append(tiff_read_minimum_tiff_tags_with_warning)
-gdaltest_list.append(tiff_read_unknown_compression)
-gdaltest_list.append(tiff_read_leak_ZIPSetupDecode)
-gdaltest_list.append(tiff_read_excessive_memory_TIFFFillStrip)
-gdaltest_list.append(tiff_read_excessive_memory_TIFFFillStrip2)
-gdaltest_list.append(tiff_read_excessive_memory_TIFFFillTile)
-gdaltest_list.append(tiff_read_big_strip)
-gdaltest_list.append(tiff_read_big_strip_chunky_way)
-gdaltest_list.append(tiff_read_big_tile)
-gdaltest_list.append(tiff_read_huge_tile)
-gdaltest_list.append(tiff_read_huge_number_strips)
-gdaltest_list.append(tiff_read_huge_implied_number_strips)
-gdaltest_list.append(tiff_read_many_blocks)
-gdaltest_list.append(tiff_read_many_blocks_truncated)
-gdaltest_list.append(tiff_read_uint33)
-gdaltest_list.append(tiff_read_corrupted_deflate_singlestrip)
-gdaltest_list.append(tiff_read_packbits_not_enough_data)
-gdaltest_list.append(tiff_read_toomanyblocks)
-gdaltest_list.append(tiff_read_toomanyblocks_separate)
-gdaltest_list.append(tiff_read_size_of_stripbytecount_lower_than_stripcount)
-gdaltest_list.append(tiff_read_stripoffset_types)
-gdaltest_list.append(tiff_read_progressive_jpeg_denial_of_service)
-gdaltest_list.append(tiff_read_old_style_lzw)
-gdaltest_list.append(tiff_read_mmap_interface)
-gdaltest_list.append(tiff_read_jpeg_too_big_last_stripe)
-gdaltest_list.append(tiff_read_negative_scaley)
-gdaltest_list.append(tiff_read_zstd)
-gdaltest_list.append(tiff_read_zstd_corrupted)
-gdaltest_list.append(tiff_read_zstd_corrupted2)
-gdaltest_list.append(tiff_read_1bit_2bands)
-gdaltest_list.append(tiff_read_lerc)
-gdaltest_list.append(tiff_read_overview_of_external_mask)
+    tiff_read_unit_from_srs,
+    tiff_read_arcgis93_geodataxform_gcp,
+    tiff_read_block_width_above_32bit,
+    tiff_read_image_width_above_32bit,
+    tiff_read_second_image_width_above_32bit,
+    tiff_read_minimum_tiff_tags_no_warning,
+    tiff_read_minimum_tiff_tags_with_warning,
+    tiff_read_unknown_compression,
+    tiff_read_leak_ZIPSetupDecode,
+    tiff_read_excessive_memory_TIFFFillStrip,
+    tiff_read_excessive_memory_TIFFFillStrip2,
+    tiff_read_excessive_memory_TIFFFillTile,
+    tiff_read_big_strip,
+    tiff_read_big_strip_chunky_way,
+    tiff_read_big_tile,
+    tiff_read_huge_tile,
+    tiff_read_huge_number_strips,
+    tiff_read_huge_implied_number_strips,
+    tiff_read_many_blocks,
+    tiff_read_many_blocks_truncated,
+    tiff_read_uint33,
+    tiff_read_corrupted_deflate_singlestrip,
+    tiff_read_packbits_not_enough_data,
+    tiff_read_toomanyblocks,
+    tiff_read_toomanyblocks_separate,
+    tiff_read_size_of_stripbytecount_lower_than_stripcount,
+    tiff_read_stripoffset_types,
+    tiff_read_progressive_jpeg_denial_of_service,
+    tiff_read_old_style_lzw,
+    tiff_read_mmap_interface,
+    tiff_read_jpeg_too_big_last_stripe,
+    tiff_read_negative_scaley,
+    tiff_read_zstd,
+    tiff_read_zstd_corrupted,
+    tiff_read_zstd_corrupted2,
+    tiff_read_1bit_2bands,
+    tiff_read_lerc,
+    tiff_read_overview_of_external_mask,
 
-gdaltest_list.append(tiff_read_online_1)
-gdaltest_list.append(tiff_read_online_2)
+    tiff_read_online_1,
+    tiff_read_online_2,
 
-gdaltest_list.append((tiff_read_webp))
-gdaltest_list.append((tiff_read_webp_huge_single_strip))
+    tiff_read_webp,
+    tiff_read_webp_huge_single_strip,
+]
 
-# gdaltest_list = [ tiff_read_mmap_interface ]
 
 if __name__ == '__main__':
 

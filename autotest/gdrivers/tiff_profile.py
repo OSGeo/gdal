@@ -38,11 +38,6 @@ import base64
 import gdaltest
 from osgeo import gdal
 
-###############################################################################
-# When imported build a list of units based on the files available.
-
-gdaltest_list = []
-
 
 ###############################################################################
 # Test writing and reading of ICC profile in Create() options
@@ -519,13 +514,15 @@ def tiff_update_colorimetric():
 ############################################################################
 
 
-gdaltest_list.append(tiff_write_icc)
-gdaltest_list.append(tiff_copy_icc)
-gdaltest_list.append(tiff_copy_options_icc)
-gdaltest_list.append(tiff_copy_options_colorimetric_data)
-gdaltest_list.append(tiff_copy_colorimetric_data)
-gdaltest_list.append(tiff_update_icc)
-gdaltest_list.append(tiff_update_colorimetric)
+gdaltest_list = [
+    tiff_write_icc,
+    tiff_copy_icc,
+    tiff_copy_options_icc,
+    tiff_copy_options_colorimetric_data,
+    tiff_copy_colorimetric_data,
+    tiff_update_icc,
+    tiff_update_colorimetric,
+]
 
 if __name__ == '__main__':
 

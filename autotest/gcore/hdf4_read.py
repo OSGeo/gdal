@@ -33,10 +33,6 @@ import pytest
 import gdaltest
 from osgeo import gdal
 
-###############################################################################
-# When imported build a list of units based on the files available.
-
-gdaltest_list = []
 
 init_list = [
     ('byte_3.hdf', 4672),
@@ -372,16 +368,18 @@ def hdf4_read_online_10():
     return 'success'
 
 
-gdaltest_list.append(hdf4_read_online_1)
-gdaltest_list.append(hdf4_read_online_2)
-gdaltest_list.append(hdf4_read_online_3)
-gdaltest_list.append(hdf4_read_online_4)
-gdaltest_list.append(hdf4_read_online_5)
-gdaltest_list.append(hdf4_read_online_6)
-gdaltest_list.append(hdf4_read_online_7)
-gdaltest_list.append(hdf4_read_online_8)
-gdaltest_list.append(hdf4_read_online_9)
-gdaltest_list.append(hdf4_read_online_10)
+gdaltest_list = [
+    hdf4_read_online_1,
+    hdf4_read_online_2,
+    hdf4_read_online_3,
+    hdf4_read_online_4,
+    hdf4_read_online_5,
+    hdf4_read_online_6,
+    hdf4_read_online_7,
+    hdf4_read_online_8,
+    hdf4_read_online_9,
+    hdf4_read_online_10,
+]
 
 if __name__ == '__main__':
 

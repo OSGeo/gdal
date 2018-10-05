@@ -680,19 +680,19 @@ def ogr_wkt_multipolygon_corrupted():
 # sys.stdin.readline()
 
 
-gdaltest_list = []
-
-gdaltest_list.append(ogr_wkbwkt_geom_bigexponents)
-gdaltest_list.append(ogr_wkbwkt_test_broken_geom)
-gdaltest_list.append(ogr_wkbwkt_test_import_wkt_sf12)
-gdaltest_list.append(ogr_wkbwkt_test_import_bad_multipoint_wkb)
-gdaltest_list.append(ogr_wkbwkt_test_geometrycollection_wktwkb)
-gdaltest_list.append(ogr_wkbwkt_test_geometrycollection_wkt_recursion)
-gdaltest_list.append(ogr_wkbwkt_test_geometrycollection_wkb_recursion)
-gdaltest_list.append(ogr_wkbwkt_export_wkt_iso_multipoint)
-gdaltest_list.append(ogr_wkt_inf_nan)
-gdaltest_list.append(ogr_wkt_multicurve_compoundcurve_corrupted)
-gdaltest_list.append(ogr_wkt_multipolygon_corrupted)
+gdaltest_list = [
+    ogr_wkbwkt_geom_bigexponents,
+    ogr_wkbwkt_test_broken_geom,
+    ogr_wkbwkt_test_import_wkt_sf12,
+    ogr_wkbwkt_test_import_bad_multipoint_wkb,
+    ogr_wkbwkt_test_geometrycollection_wktwkb,
+    ogr_wkbwkt_test_geometrycollection_wkt_recursion,
+    ogr_wkbwkt_test_geometrycollection_wkb_recursion,
+    ogr_wkbwkt_export_wkt_iso_multipoint,
+    ogr_wkt_inf_nan,
+    ogr_wkt_multicurve_compoundcurve_corrupted,
+    ogr_wkt_multipolygon_corrupted,
+]
 
 if __name__ == '__main__':
 

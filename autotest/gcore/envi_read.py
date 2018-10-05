@@ -57,8 +57,6 @@ def envi_1():
 # When imported build a list of units based on the files available.
 
 
-gdaltest_list = []
-
 init_list = [
     ('byte.raw', 4672),
     ('int16.raw', 4672),
@@ -83,7 +81,7 @@ def test_envi_open(filename, checksum):
     ut.testOpen()
 
 
-gdaltest_list.append(envi_1)
+gdaltest_list = [envi_1]
 
 if __name__ == '__main__':
 
