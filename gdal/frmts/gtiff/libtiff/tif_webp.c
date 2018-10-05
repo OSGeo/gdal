@@ -201,6 +201,8 @@ TWebPSetupDecode(TIFF* tif)
   WebPState* sp = DecoderState(tif);
   assert(sp != NULL);
 
+  sp->nSamples = tif->tif_dir.td_samplesperpixel;
+
   // check band count
   if ( sp->nSamples != 3
 #if WEBP_ENCODER_ABI_VERSION >= 0x0100
@@ -309,6 +311,8 @@ TWebPSetupEncode(TIFF* tif)
   
   WebPState* sp = EncoderState(tif);
   assert(sp != NULL);
+
+  sp->nSamples = tif->tif_dir.td_samplesperpixel;
 
   // check band count
   if ( sp->nSamples != 3
@@ -597,7 +601,6 @@ int
 TIFFInitWebP(TIFF* tif, int scheme)
 {
   static const char module[] = "TIFFInitWebP";
-  uint16 nSamples = tif->tif_dir.td_samplesperpixel;
   WebPState* sp;
 
   assert( scheme == COMPRESSION_WEBP );
@@ -631,7 +634,7 @@ TIFFInitWebP(TIFF* tif, int scheme)
   sp->quality_level = 75.0f;		/* default comp. level */
   sp->lossless = 0; // default to false
   sp->state = 0;
-  sp->nSamples = nSamples;
+  sp->nSamples = 0;
   sp->psDecoder = NULL;
   sp->last_y = 0;
   
