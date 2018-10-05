@@ -114,7 +114,6 @@ class TestMetaCRS(object):
 
             return 'fail'
 
-        return 'success'
     def parse_line(self):
         test_line = self.test_line
 
@@ -154,8 +153,6 @@ class TestMetaCRS(object):
         except:
             self.dst_error = max(float(test_line['tolOrd1']),
                                  float(test_line['tolOrd2']))
-
-        return 'success'
 
     def build_srs(self, typ, crstext):
         if typ == 'EPSG':

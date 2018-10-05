@@ -2487,7 +2487,7 @@ def ogr_dxf_33():
 
     geom = feat.GetGeometryRef()
     if geom.GetGeometryType() != ogr.wkbPolyhedralSurfaceZ:
-        gdaltest.post_reason('did not get expected geometry type; got %s instead of wkbPolyhedralSurface', geom.GetGeometryType())
+        gdaltest.post_reason('did not get expected geometry type; got %s instead of wkbPolyhedralSurface' % geom.GetGeometryType())
         return 'fail'
 
     wkt_string = geom.ExportToIsoWkt()
