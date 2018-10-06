@@ -777,6 +777,25 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         return FALSE;
     }
 
+    CPLString osBAND_STORAGE_TYPE = GetKeyword(osPrefix+"IMAGE.BAND_STORAGE_TYPE","");
+    if( EQUAL(osBAND_STORAGE_TYPE, "BAND_SEQUENTIAL") )
+    {
+        eLayout = PDS_BSQ;
+    }
+    else if( EQUAL(osBAND_STORAGE_TYPE, "PIXEL_INTERLEAVED") )
+    {
+        eLayout = PDS_BIP;
+    }
+    else if( EQUAL(osBAND_STORAGE_TYPE, "LINE_INTERLEAVED") )
+    {
+        eLayout = PDS_BIL;
+    }
+    else if( !osBAND_STORAGE_TYPE.empty() )
+    {
+        CPLDebug("PDS", "Unhandled BAND_STORAGE_TYPE = %s",
+                 osBAND_STORAGE_TYPE.c_str());
+    }
+
     /***********   Grab Qube record bytes  **********/
     int record_bytes = atoi(GetKeyword(osPrefix+"IMAGE.RECORD_BYTES"));
     if (record_bytes == 0)
@@ -1261,6 +1280,12 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
         if( osUncompressedFilename != "" )
             osPrefix = "UNCOMPRESSED_FILE.";
 
+        //Added ability to see into OBJECT = FILE section to support
+        //CRISM. Example file: hsp00017ba0_01_ra218s_trr3.lbl and *.img
+        if( strlen(poDS->GetKeyword( "IMAGE.LINE_SAMPLES")) == 0 &&
+            strlen(poDS->GetKeyword( "FILE.IMAGE.LINE_SAMPLES")) != 0 )
+            osPrefix = "FILE.";
+
         if( !poDS->ParseImage(osPrefix, osFilenamePrefix) )
         {
             delete poDS;
@@ -1281,7 +1306,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
           "PRODUCER_INSTITUTION_NAME", "PRODUCT_TYPE", "MISSION_NAME",
           "SPACECRAFT_NAME", "INSTRUMENT_NAME", "INSTRUMENT_ID",
           "TARGET_NAME", "CENTER_FILTER_WAVELENGTH", "BANDWIDTH",
-          "PRODUCT_CREATION_TIME", "NOTE",
+          "PRODUCT_CREATION_TIME", "START_TIME", "STOP_TIME", "NOTE",
           nullptr };
 
     for( int i = 0; apszKeywords[i] != nullptr; i++ )
