@@ -668,11 +668,12 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     // ^IMAGE = 3
     // ^IMAGE             = "GLOBAL_ALBEDO_8PPD.IMG"
     // ^IMAGE             = "MEGT90N000CB.IMG"
-    // ^IMAGE             = ("BLAH.IMG",1)       -- start at record 1 (1 based)
-    // ^IMAGE             = ("BLAH.IMG")         -- still start at record 1 (equiv of "BLAH.IMG")
-    // ^IMAGE             = ("BLAH.IMG", 5 <BYTES>) -- start at byte 5 (the fifth byte in the file)
+    // ^IMAGE             = ("FOO.IMG",1)       -- start at record 1 (1 based)
+    // ^IMAGE             = ("FOO.IMG")         -- start at record 1 equiv of ("FOO.IMG",1)
+    // ^IMAGE             = ("FOO.IMG", 5 <BYTES>) -- start at byte 5 (the fifth byte in the file)
     // ^IMAGE             = 10851 <BYTES>
     // ^SPECTRAL_QUBE = 5  for multi-band images
+    // ^QUBE = 5  for multi-band images
 
     CPLString osImageKeyword = "IMAGE";
     CPLString osQube = GetKeyword( osPrefix + "^" + osImageKeyword, "" );
@@ -680,6 +681,11 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 
     if (EQUAL(osQube,"")) {
         osImageKeyword = "SPECTRAL_QUBE";
+        osQube = GetKeyword( osPrefix + "^" + osImageKeyword );
+    }
+
+    if (EQUAL(osQube,"")) {
+        osImageKeyword = "QUBE";
         osQube = GetKeyword( osPrefix + "^" + osImageKeyword );
     }
 
