@@ -814,7 +814,9 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         return FALSE;
     }
 
-    nSkipBytes += atoi(GetKeyword(osPrefix+"IMAGE.LINE_PREFIX_BYTES",""));
+    const int nLinePrefixBytes
+        = atoi(GetKeyword(osPrefix+"IMAGE.LINE_PREFIX_BYTES",""));
+    nSkipBytes += nLinePrefixBytes;
 
     /***********   Grab SAMPLE_TYPE *****************/
     /** if keyword not found leave as "M" or "MSB" **/
@@ -1014,7 +1016,11 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
     const int nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    int nLineOffset;
+
+    // Needed for N1349177584_2.LBL from
+    // https://trac.osgeo.org/gdal/attachment/ticket/3355/PDS-TestFiles.zip
+    int nLineOffset = nLinePrefixBytes;
+
     int nPixelOffset;
     int nBandOffset;
 
@@ -1024,16 +1030,12 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         {
             nPixelOffset = (CPLSM(nItemSize) * CPLSM(l_nBands)).v();
             nBandOffset = nItemSize;
-            nLineOffset = (CPLSM(nPixelOffset) * CPLSM(nCols)).v();
-            nLineOffset = (CPLSM(DIV_ROUND_UP(nLineOffset, record_bytes ))
-                * CPLSM(record_bytes)).v();
+            nLineOffset = (CPLSM(nLineOffset) + CPLSM(nPixelOffset) * CPLSM(nCols)).v();
         }
         else if( eLayout == PDS_BSQ )
         {
             nPixelOffset = nItemSize;
-            nLineOffset = (CPLSM(nPixelOffset) * CPLSM(nCols)).v();
-            nLineOffset = (CPLSM(DIV_ROUND_UP(nLineOffset, record_bytes ))
-                * CPLSM(record_bytes)).v();
+            nLineOffset = (CPLSM(nLineOffset) + CPLSM(nPixelOffset) * CPLSM(nCols)).v();
             nBandOffset = (CPLSM(nLineOffset) * CPLSM(nRows)
                 + CPLSM(nSuffixLines) * (CPLSM(nCols) + CPLSM(nSuffixItems)) * CPLSM(nSuffixBytes)).v();
         }
@@ -1041,9 +1043,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         {
             nPixelOffset = nItemSize;
             nBandOffset = (CPLSM(nItemSize) * CPLSM(nCols)).v();
-            nLineOffset = (CPLSM(nBandOffset) * CPLSM(nCols)).v();
-            nLineOffset = (CPLSM(DIV_ROUND_UP(nLineOffset, record_bytes))
-                * CPLSM(record_bytes)).v();
+            nLineOffset = (CPLSM(nLineOffset) + CPLSM(nBandOffset) * CPLSM(nCols)).v();
         }
     }
     catch( const CPLSafeIntOverflow& )

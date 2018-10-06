@@ -333,6 +333,17 @@ END
 
     return 'success'
 
+###############################################################################
+# Read a hacked example of reading an image where the line offset is not
+# a multiple of the record size
+# https://github.com/OSGeo/gdal/issues/955
+
+
+def pds_line_offset_not_multiple_of_record():
+
+    tst = gdaltest.GDALTest('PDS', 'pds/map_000_038_truncated.lbl', 1, 14019)
+    return tst.testOpen()
+
 
 gdaltest_list = [
     pds_1,
@@ -344,7 +355,8 @@ gdaltest_list = [
     pds_7,
     pds_8,
     pds_9,
-    pds_10]
+    pds_10,
+    pds_line_offset_not_multiple_of_record]
 
 if __name__ == '__main__':
 
