@@ -31,7 +31,7 @@
 #ifndef CPL_AUTO_CLOSE_H_INCLUDED
 #define CPL_AUTO_CLOSE_H_INCLUDED
 
-#if defined(__cplusplus) && __cplusplus >= 201103L
+#if defined(__cplusplus)
 #include <type_traits>
 
 /************************************************************************/

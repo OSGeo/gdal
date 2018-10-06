@@ -2458,7 +2458,6 @@ namespace tut
     void object::test<36>()
     {
         static int counter = 0;
-#if __cplusplus >= 201103L
         class AutoCloseTest{
         public:
             AutoCloseTest() {
@@ -2482,9 +2481,6 @@ namespace tut
             CPL_AUTO_CLOSE_WARP(p2,AutoCloseTest::Destory);
 
         }
-#else
-        counter = 400;
-#endif
         ensure_equals(counter,400);
     }
 
