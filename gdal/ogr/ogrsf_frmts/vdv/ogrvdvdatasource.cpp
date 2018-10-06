@@ -201,6 +201,7 @@ void OGRIDFDataSource::Parse()
             {
                 osTmpFilename =
                     CPLGenerateTempFilename(CPLGetBasename(m_osFilename));
+                osTmpFilename += ".gpkg";
             }
             VSIUnlink(osTmpFilename);
             CPLString osOldVal = CPLGetConfigOption("OGR_SQLITE_JOURNAL", "");
@@ -352,6 +353,12 @@ void OGRIDFDataSource::Parse()
                 else
                 {
                     poCurLayer = m_poTmpDS->CreateLayer(osTablename, nullptr, wkbNone, apszOptions);
+                }
+                if( poCurLayer == nullptr )
+                {
+                    CSLDestroy(papszAtr);
+                    CSLDestroy(papszFrm);
+                    break;
                 }
 
                 if( !osAtr.empty() && CSLCount(papszAtr) == CSLCount(papszFrm) )
