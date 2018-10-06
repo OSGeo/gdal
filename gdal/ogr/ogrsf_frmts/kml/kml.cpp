@@ -240,10 +240,9 @@ void KML::checkValidity()
 void XMLCALL KML::startElement( void* pUserData, const char* pszName,
                                 const char** ppszAttr )
 {
-    KMLNode* poMynew = nullptr;
-
-    KML* poKML = static_cast<KML*>(pUserData);
-
+  KML* poKML = static_cast<KML*>(pUserData);
+  try
+  {
     poKML->nWithoutEventCounter = 0;
 
     const char* pszColumn = strchr(pszName, ':');
@@ -263,8 +262,8 @@ void XMLCALL KML::startElement( void* pUserData, const char* pszName,
             return;
         }
 
-        poMynew = new KMLNode();
-            poMynew->setName(pszName);
+        KMLNode* poMynew = new KMLNode();
+        poMynew->setName(pszName);
         poMynew->setLevel(poKML->nDepth_);
 
         for( int i = 0; ppszAttr[i]; i += 2 )
@@ -301,6 +300,13 @@ void XMLCALL KML::startElement( void* pUserData, const char* pszName,
         else
             poKML->poCurrent_->appendContent(sNewContent);
     }
+  }
+  catch(const std::exception& ex)
+  {
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "KML: libstdc++ exception : %s", ex.what());
+    XML_StopParser(poKML->oCurrentParser, XML_FALSE);
+  }
 }
 
 void XMLCALL KML::startElementValidate( void* pUserData, const char* pszName,
@@ -381,8 +387,10 @@ void XMLCALL KML::dataHandlerValidate( void * pUserData,
 
 void XMLCALL KML::endElement(void* pUserData, const char* pszName)
 {
-    KML* poKML = static_cast<KML *>(pUserData);
+  KML* poKML = static_cast<KML *>(pUserData);
 
+  try
+  {
     poKML->nWithoutEventCounter = 0;
 
     const char* pszColumn = strchr(pszName, ':');
@@ -516,6 +524,13 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
         else
             poKML->poCurrent_->appendContent(sNewContent);
     }
+  }
+  catch(const std::exception& ex)
+  {
+        CPLError(CE_Failure, CPLE_AppDefined,
+             "KML: libstdc++ exception : %s", ex.what());
+    XML_StopParser(poKML->oCurrentParser, XML_FALSE);
+  }
 }
 
 void XMLCALL KML::dataHandler(void* pUserData, const char* pszData, int nLen)
@@ -546,7 +561,8 @@ void XMLCALL KML::dataHandler(void* pUserData, const char* pszData, int nLen)
     }
     catch(const std::exception& ex)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "libstdc++ exception : %s", ex.what());
+        CPLError(CE_Failure, CPLE_AppDefined,
+             "KML: libstdc++ exception : %s", ex.what());
         XML_StopParser(poKML->oCurrentParser, XML_FALSE);
     }
 }
