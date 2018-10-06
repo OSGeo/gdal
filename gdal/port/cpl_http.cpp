@@ -577,7 +577,7 @@ static void CPLHTTPEmitFetchDebug(const char* pszURL,
  * <li>PROXY=val, to make requests go through a proxy server, where val is of the
  *                form proxy.server.com:port_number. This option affects both HTTP and HTTPS
  *                URLs.</li>
- * <li>HTTPS_PROXY=val, the same meaning as PROXY, but this option is taken into account only
+ * <li>HTTPS_PROXY=val (GDAL >= 2.4), the same meaning as PROXY, but this option is taken into account only
  *                 for HTTPS URLs.</li>
  * <li>PROXYUSERPWD=val, where val is of the form username:password</li>
  * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/ANY] to specify an proxy authentication scheme to use.</li>
