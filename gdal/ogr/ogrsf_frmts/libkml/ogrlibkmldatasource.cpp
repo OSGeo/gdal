@@ -172,9 +172,10 @@ static void OGRLIBKMLPreProcessInput( std::string& oKml )
         bool bDigitFound = false;
         for( ; nPos < nPosEnd; nPos++ )
         {
-            if( oKml[nPos] >= '0' && oKml[nPos] <= '9' )
+            char ch = oKml[nPos];
+            if( ch >= '0' && ch <= '9' )
                 bDigitFound = true;
-            else if( oKml[nPos] == '\t' )
+            else if( ch == '\t' || ch == '\n' )
                 oKml[nPos] = ' ';
         }
         if( !bDigitFound )
