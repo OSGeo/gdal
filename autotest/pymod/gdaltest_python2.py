@@ -70,18 +70,25 @@ def urlescape(url):
 def gdalurlopen(url, timeout=10):
     old_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(timeout)
+    proxy = None
 
     if 'GDAL_HTTP_PROXY' in os.environ:
         proxy = os.environ['GDAL_HTTP_PROXY']
+        protocol = 'http'
 
+    if 'GDAL_HTTPS_PROXY' in os.environ and url.startswith('https'):
+        proxy = os.environ['GDAL_HTTPS_PROXY']
+        protocol = 'https'
+
+    if proxy is not None:
         if 'GDAL_HTTP_PROXYUSERPWD' in os.environ:
             proxyuserpwd = os.environ['GDAL_HTTP_PROXYUSERPWD']
-            proxyHandler = urllib2.ProxyHandler({"http":
-                                                 "http://%s@%s" % (proxyuserpwd, proxy)})
+            proxyHandler = urllib2.ProxyHandler({"%s" % protocol:
+                                                 "%s://%s@%s" % (protocol, proxyuserpwd, proxy)})
         else:
             proxyuserpwd = None
-            proxyHandler = urllib2.ProxyHandler({"http":
-                                                 "http://%s" % (proxy)})
+            proxyHandler = urllib2.ProxyHandler({"%s" % protocol:
+                                                 "%s://%s" % (protocol, proxy)})
 
         opener = urllib2.build_opener(proxyHandler, urllib2.HTTPHandler)
 

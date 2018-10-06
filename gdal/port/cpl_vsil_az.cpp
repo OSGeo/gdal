@@ -448,15 +448,15 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
             m_poHandleHelper->AddQueryParameter("comp", "appendblock");
         }
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_URL,
-                            m_poHandleHelper->GetURL().c_str());
         curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
         curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION, ReadCallBackBuffer);
         curl_easy_setopt(hCurlHandle, CURLOPT_READDATA,
                          static_cast<VSIAppendWriteHandle*>(this));
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
-            CPLHTTPSetOptions(hCurlHandle, nullptr));
+            CPLHTTPSetOptions(hCurlHandle,
+                              m_poHandleHelper->GetURL().c_str(),
+                              nullptr));
 
         CPLString osContentLength; // leave it in this scope
         if( bSingleBlock )

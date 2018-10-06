@@ -3982,10 +3982,8 @@ struct curl_slist* VSICurlSetOptions(
                         CURL* hCurlHandle, const char* pszURL,
                         const char * const* papszOptions )
 {
-    curl_easy_setopt(hCurlHandle, CURLOPT_URL, pszURL);
-
     struct curl_slist* headers = static_cast<struct curl_slist*>(
-        CPLHTTPSetOptions(hCurlHandle, papszOptions));
+        CPLHTTPSetOptions(hCurlHandle, pszURL, papszOptions));
 
 // 7.16
 #if LIBCURL_VERSION_NUM >= 0x071000

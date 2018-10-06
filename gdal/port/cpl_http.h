@@ -136,7 +136,7 @@ CPL_C_END
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 /*! @cond Doxygen_Suppress */
 // Not sure if this belong here, used in cpl_http.cpp, cpl_vsil_curl.cpp and frmts/wms/gdalhttp.cpp
-void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions);
+void* CPLHTTPSetOptions(void *pcurl, const char *pszURL, const char * const* papszOptions);
 char** CPLHTTPGetOptionsFromEnv();
 double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay, const char* pszErrBuf);
 void* CPLHTTPIgnoreSigPipe();
