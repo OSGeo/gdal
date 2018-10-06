@@ -174,6 +174,8 @@ class BAGDataset final: public GDALPamDataset
     double       m_dfResFilterMin = 0;
     double       m_dfResFilterMax = std::numeric_limits<double>::infinity();
 
+    void         InitOverviewDS(BAGDataset* poParentDS, int nOvrFactor);
+
 public:
     BAGDataset();
     BAGDataset(BAGDataset* poParentDS, int nOvrFactor);
@@ -1764,6 +1766,11 @@ CPLErr BAGInterpolatedBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 BAGDataset::BAGDataset() = default;
 
 BAGDataset::BAGDataset(BAGDataset* poParentDS, int nOvrFactor)
+{
+    InitOverviewDS(poParentDS, nOvrFactor);
+}
+
+void BAGDataset::InitOverviewDS(BAGDataset* poParentDS, int nOvrFactor)
 {
     m_ePopulation = poParentDS->m_ePopulation;
     m_bMask = poParentDS->m_bMask;

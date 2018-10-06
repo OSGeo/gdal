@@ -514,10 +514,8 @@ CPLErr GDALContourGenerateEx( GDALRasterBandH hBand, void *hLayer,
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
-    const char* opt = nullptr;
-
     double contourInterval = 0.0;
-    opt = CSLFetchNameValue( options, "LEVEL_INTERVAL" );
+    const char* opt = CSLFetchNameValue( options, "LEVEL_INTERVAL" );
     if ( opt ) {
         contourInterval = CPLAtof( opt );
     }
