@@ -327,7 +327,7 @@ int  GDALTriangulationComputeBarycentricCoefficients(GDALTriangulation* psDT,
         double dfY3 = padfY[psFacet->anVertexIdx[2]];
         /* See https://en.wikipedia.org/wiki/Barycentric_coordinate_system */
         double dfDenom = (dfY2 - dfY3) * (dfX1 - dfX3) + (dfX3 - dfX2) * (dfY1 - dfY3);
-        if( dfDenom == 0.0 )
+        if( fabs(dfDenom) < 1e-5 )
         {
             // Degenerate triangle
             psCoeffs->dfMul1X = 0.0;
@@ -441,7 +441,8 @@ int GDALTriangulationFindFacetBruteForce(const GDALTriangulation* psDT,
         double l1, l2, l3;
         const GDALTriBarycentricCoefficients* psCoeffs =
                                     &(psDT->pasFacetCoefficients[nFacetIdx]);
-        if( psCoeffs->dfMul1X == 0.0 )
+        if( psCoeffs->dfMul1X == 0.0 && psCoeffs->dfMul2X == 0.0 &&
+            psCoeffs->dfMul1Y == 0.0 && psCoeffs->dfMul2Y == 0.0 )
         {
             // Degenerate triangle
             continue;
@@ -544,7 +545,8 @@ int GDALTriangulationFindFacetDirected(const GDALTriangulation* psDT,
         const GDALTriFacet* psFacet = &(psDT->pasFacets[nFacetIdx]);
         const GDALTriBarycentricCoefficients* psCoeffs =
                                 &(psDT->pasFacetCoefficients[nFacetIdx]);
-        if( psCoeffs->dfMul1X == 0.0 )
+        if( psCoeffs->dfMul1X == 0.0 && psCoeffs->dfMul2X == 0.0 &&
+            psCoeffs->dfMul1Y == 0.0 && psCoeffs->dfMul2Y == 0.0 )
         {
             // Degenerate triangle
             break;
