@@ -69,5 +69,5 @@ cd ../..
 cd swig/csharp
 make generate
 make
-make test
+make vagrant_safe_test
 cd ../..

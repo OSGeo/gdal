@@ -86,12 +86,14 @@ samples:
 	$(CSC) /r:gdal_csharp.dll /out:GDALCreateCopy.exe apps/GDALCreateCopy.cs
 	$(CSC) /r:gdal_csharp.dll /out:GDALGetHistogram.exe apps/GDALGetHistogram.cs
 
-test:
+vagrant_safe_test:
 	LC_ALL=C mono createdata.exe Data pointlayer
 	LC_ALL=C mono ogrinfo.exe Data/pointlayer.shp
-	LC_ALL=C mono OSRTransform.exe
 	LC_ALL=C mono GDALWrite.exe Data/sample.tif
 	LC_ALL=C mono GDALDatasetWrite.exe Data/sample1.tif
 	LC_ALL=C mono GDALCreateCopy.exe Data/sample.tif Data/sample2.tif
 	LC_ALL=C mono GDALOverviews.exe Data/sample.tif NEAREST 2 4
 	LC_ALL=C mono GDALInfo.exe Data/sample.tif
+
+test: vagrant_safe_test
+	LC_ALL=C mono OSRTransform.exe
