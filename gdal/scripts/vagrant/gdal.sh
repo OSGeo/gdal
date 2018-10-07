@@ -69,6 +69,7 @@ cd ../..
 cd swig/csharp
 make generate
 make
+make test
 # For some reason, this fails on Vagrant ubuntu trusty(14.04)
-#make test
+#make alltest
 cd ../..
