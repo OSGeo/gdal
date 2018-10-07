@@ -132,7 +132,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "vim",
     "ant",
     "unzip",
-    "mono-mcs",
+    "mono-devel",
     "libmono-system-drawing4.0-cil",
     "libjson-c-dev",
     "libtiff5-dev",
@@ -180,7 +180,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       pkg_cmd << 'echo "deb mirror://mirrors.ubuntu.com/mirrors.txt trusty universe" > /etc/apt/sources.list.d/official-ubuntu-trusty-universe.list; '
       pkg_cmd << 'echo "deb [ arch=amd64 ] http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.4 multiverse" > /etc/apt/sources.list.d/mongodb-org-3.4.list; '
       pkg_cmd << 'curl -Ls https://www.mongodb.org/static/pgp/server-3.4.asc | apt-key add -; '
-	  pkg_cmd << "apt-get update -qq; apt-get install -q -y python-software-properties; "
+      pkg_cmd << "apt-get update -qq; apt-get install -q -y python-software-properties; "
+      pkg_cmd << "apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF ; "
+      pkg_cmd << 'echo "deb https://download.mono-project.com/repo/ubuntu stable-trusty main" > /etc/apt/sources.list.d/mono-official-stable.list; '
       pkg_cmd << "dpkg --add-architecture i386; "
 
 	  if ppaRepos.length > 0
