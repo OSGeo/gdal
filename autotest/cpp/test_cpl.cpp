@@ -39,6 +39,7 @@
 #include "cpl_json_streaming_parser.h"
 #include "cpl_mem_cache.h"
 #include "cpl_http.h"
+#include "cpl_auto_close.h"
 
 #include <fstream>
 #include <string>
@@ -2473,6 +2474,38 @@ namespace tut
                      "%a, %d %b %Y %H:%M:%S GMT", &tm, "C");
         szDate[nRet] = 0;
         ensure_equals( std::string(szDate), std::string("Wed, 20 Jun 2018 12:34:56 GMT") );
+    }
+
+    // Test CPLAutoClose
+    template<>
+    template<>
+    void object::test<36>()
+    {
+        static int counter = 0;
+        class AutoCloseTest{
+        public:
+            AutoCloseTest() {
+                counter += 222;
+            }
+            virtual ~AutoCloseTest() { 
+                counter -= 22;
+            }
+            static AutoCloseTest* Create() {
+                return new AutoCloseTest;
+            }
+            static void Destory(AutoCloseTest* p) {
+                delete p;
+            }
+        };
+        {
+            AutoCloseTest* p1 = AutoCloseTest::Create();
+            CPL_AUTO_CLOSE_WARP(p1,AutoCloseTest::Destory);
+
+            AutoCloseTest* p2 = AutoCloseTest::Create();
+            CPL_AUTO_CLOSE_WARP(p2,AutoCloseTest::Destory);
+
+        }
+        ensure_equals(counter,400);
     }
 
 } // namespace tut
