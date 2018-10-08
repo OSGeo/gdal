@@ -368,6 +368,12 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
                             "HEAD74" ) )
         return nullptr;
 
+    if( memcmp(poOpenInfo->pabyHeader + 16, "S LAT   ", 8) == 0 )
+    {
+        // NTV1 format
+        return nullptr;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
