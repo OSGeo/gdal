@@ -4035,6 +4035,26 @@ OGRErr OSRSetNormProjParm( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                               SetTCEA()                              */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetTCEA( double dfCenterLat, double dfCenterLong,
+                                     double dfScale,
+                                     double dfFalseEasting,
+                                     double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_TRANSVERSE_CYLINDRICAL_EQUAL_AREA );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
+    SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
+    SetNormProjParm( SRS_PP_SCALE_FACTOR, dfScale );
+    SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                               SetTM()                                */
 /************************************************************************/
 
@@ -4404,6 +4424,26 @@ OGRErr OSRSetCS( OGRSpatialReferenceH hSRS,
     return ToPointer(hSRS)->SetCS(
         dfCenterLat, dfCenterLong,
         dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
+/*                              SetDS()                                 */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetDS( double dfOriginLat, double dfCMeridian,
+                                   double dfScale,
+                                   double dfFalseEasting,
+                                   double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_DOUBLE_STEREOGRAPHIC );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfOriginLat );
+    SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCMeridian );
+    SetNormProjParm( SRS_PP_SCALE_FACTOR, dfScale );
+    SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -5962,6 +6002,44 @@ int OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth )
     VALIDATE_POINTER1( hSRS, "OSRGetUTMZone", 0 );
 
     return ToPointer(hSRS)->GetUTMZone( pbNorth );
+}
+/************************************************************************/
+/*                              SetUPS()                                */
+/************************************************************************/
+OGRErr OGRSpatialReference::SetUPS(int bNorth)
+{
+    SetProjection( SRS_PT_POLAR_STEREOGRAPHIC );
+    if( bNorth )
+    {
+      SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 90.0 );
+    }
+    else
+    {
+      SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, -90.0 );
+    }
+    SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
+    SetNormProjParm( SRS_PP_SCALE_FACTOR, 0.994000 );
+    SetNormProjParm( SRS_PP_FALSE_EASTING, 2000000.0 );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, 2000000.0 );
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                   SetVerticalNearSidePerspective()                   */
+/************************************************************************/
+OGRErr OGRSpatialReference::SetVerticalNearSidePerspective(double dfCenterLat,
+                                                           double dfCenterLong,
+                                                           double dfHeight,
+                                                           double dfFalseEasting,
+                                                           double dfFalseNorthing)
+{
+    SetProjection( SRS_PT_VERTICAL_NEAR_SIDE_PERSPECTIVE );
+    SetProjParm(SRS_PP_LATITUDE_OF_CENTER, dfCenterLat);
+    SetProjParm(SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong);
+    SetProjParm(SRS_PP_HEIGHT, dfHeight);
+    SetProjParm(SRS_PP_FALSE_EASTING, dfFalseEasting);
+    SetProjParm(SRS_PP_FALSE_NORTHING, dfFalseNorthing);
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

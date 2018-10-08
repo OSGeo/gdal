@@ -107,6 +107,8 @@ typedef enum {
 #define SRS_PT_CYLINDRICAL_EQUAL_AREA "Cylindrical_Equal_Area"
 /** Cylindrical_Equal_Area projection */
 #define SRS_PT_BONNE            "Bonne"
+/** Double Stereographic projection */
+#define SRS_PT_DOUBLE_STEREOGRAPHIC "Double_Stereographic"
 /** Eckert_I projection */
 #define SRS_PT_ECKERT_I         "Eckert_I"
 /** Eckert_II projection */
@@ -196,6 +198,12 @@ typedef enum {
 /** Swiss_Oblique_Cylindrical projection */
 #define SRS_PT_SWISS_OBLIQUE_CYLINDRICAL                                \
                                 "Swiss_Oblique_Cylindrical"
+/** Transverse Cylindrical Equal Area projection */
+#define SRS_PT_TRANSVERSE_CYLINDRICAL_EQUAL_AREA                        \
+	                        "Transverse_Cylindrical_Equal_Area"
+/** Universal Polar Stereographic projection */
+#define SRS_PT_UNIVERSAL_POLAR_STEREOGRAPHIC                            \
+	                        "Universal_Polar_Stereographic"
 /** Transverse_Mercator projection */
 #define SRS_PT_TRANSVERSE_MERCATOR                                      \
                                 "Transverse_Mercator"
@@ -246,6 +254,9 @@ typedef enum {
 #define SRS_PT_WAGNER_VI        "Wagner_VI"
 /** Wagner_VII projection */
 #define SRS_PT_WAGNER_VII       "Wagner_VII"
+/** Vertical Near Side Perspective projection */
+#define SRS_PT_VERTICAL_NEAR_SIDE_PERSPECTIVE                            \
+                                "Vertical_Near_Side_Perspective"                                
 /** Quadrilateralized_Spherical_Cube projection */
 #define SRS_PT_QSC              "Quadrilateralized_Spherical_Cube"
 /** Aitoff projection */
@@ -323,6 +334,10 @@ typedef enum {
 #define SRS_PP_LATITUDE_OF_2ND_POINT    "Latitude_Of_2nd_Point"
 /** Longitude_Of_2nd_Point projection parameter */
 #define SRS_PP_LONGITUDE_OF_2ND_POINT   "Longitude_Of_2nd_Point"
+/** Hemisphere projeciton parameter */
+#define SRS_PP_HEMISPHERE               "Hemisphere"
+/** Height projection parameter */
+#define SRS_PP_HEIGHT                   "Height"
 /** peg_point_latitude projection parameter */
 #define SRS_PP_PEG_POINT_LATITUDE       "peg_point_latitude"
 /** peg_point_longitude projection parameter */

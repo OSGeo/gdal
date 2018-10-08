@@ -1045,6 +1045,22 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                  OSR_GDV( papszNV, "x_0", 0.0 ),
                  OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
+    else if( EQUAL(pszProj,"tcea") )
+    {
+        SetTCEA( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+	         OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                 OSR_GDV( papszNV, "k", 1.0 ), 
+                 OSR_GDV( papszNV, "x_0", 0.0 ), 
+                 OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+    else if ( EQUAL(pszProj, "nsper"))
+    {
+        SetVerticalNearSidePerspective( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                                        OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                                        OSR_GDV( papszNV, "h", 1.0 ), 
+                                        OSR_GDV( papszNV, "x_0", 0.0 ), 
+                                        OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
     else if( strstr(pszProj4, "wktext") != nullptr )
     {
         // Fake out a projected coordinate system for otherwise
@@ -2361,6 +2377,44 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
              GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
              GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
              GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0));
+    }
+    else if (EQUAL(pszProjection, SRS_PT_TRANSVERSE_CYLINDRICAL_EQUAL_AREA) )
+    {
+        sprintf(szProj4+strlen(szProj4),
+                "+proj=tcea +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
+                GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
+                GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0));
+    }
+    else if (EQUAL(pszProjection, SRS_PT_UNIVERSAL_POLAR_STEREOGRAPHIC) )
+    {
+        double hemi = GetNormProjParm(SRS_PP_HEMISPHERE, 1.0);
+        if (hemi > 0)
+            sprintf( szProj4+strlen(szProj4),"+proj=ups ");
+        else
+            sprintf(szProj4+strlen(szProj4),"+proj=ups +south ");
+    }
+    else if (EQUAL(pszProjection, SRS_PT_VERTICAL_NEAR_SIDE_PERSPECTIVE))
+    {
+        sprintf(szProj4+strlen(szProj4),
+                "+proj=nsper +lat_0=%.16g +lon_0=%.16g +h=%.16g +x_0=%.16g +y_0=%.16g ",
+                GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0),
+                GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0),
+                GetNormProjParm(SRS_PP_HEIGHT,1.0),
+                GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+    else if (EQUAL(pszProjection, SRS_PT_DOUBLE_STEREOGRAPHIC))
+    {
+        sprintf(szProj4+strlen(szProj4),
+                "+proj=sterea +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
+                GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
+                GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
     else
     {

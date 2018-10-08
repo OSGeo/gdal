@@ -418,6 +418,11 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetCS( double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
 
+	/** Double Stereographic */
+    OGRErr      SetDS (double dfOriginLat, double dfCMeridian,
+                       double dfScale,
+                       double dfFalseEasting,double dfFalseNorthing);
+
     /** Equidistant Conic */
     OGRErr      SetEC( double dfStdP1, double dfStdP2,
                        double dfCenterLat, double dfCenterLong,
@@ -582,6 +587,11 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetSOC( double dfLatitudeOfOrigin, double dfCentralMeridian,
                         double dfFalseEasting, double dfFalseNorthing );
 
+	/** Transverse Cylindrical Equal Area */
+    OGRErr      SetTCEA( double dfCenterLat, double dfCenterLong,
+                       double dfScale,
+                       double dfFalseEasting, double dfFalseNorthing );
+	
     /** Transverse Mercator */
     OGRErr      SetTM( double dfCenterLat, double dfCenterLong,
                        double dfScale,
@@ -614,6 +624,9 @@ class CPL_DLL OGRSpatialReference
     /** Universal Transverse Mercator */
     OGRErr      SetUTM( int nZone, int bNorth = TRUE );
     int         GetUTMZone( int *pbNorth = nullptr ) const;
+	
+	/** Universal Polar Stereographic */
+    OGRErr      SetUPS(int bNorth = TRUE);
 
     /** Wagner I -- VII */
     OGRErr      SetWagner( int nVariation, double dfCenterLat,
@@ -630,6 +643,10 @@ class CPL_DLL OGRSpatialReference
                                const char *pszOverrideUnitName = nullptr,
                                double dfOverrideUnit = 0.0 );
 
+	/** Near Side Perspective */
+    OGRErr      SetVerticalNearSidePerspective(double dfCenterLat, double dfCenterLong,
+									   double dfHeight,
+									   double dfFalseEasting, double dfFalseNorthing);
     /** ImportFromESRIStatePlaneWKT */
     OGRErr      ImportFromESRIStatePlaneWKT(
         int nCode, const char* pszDatumName, const char* pszUnitsName,

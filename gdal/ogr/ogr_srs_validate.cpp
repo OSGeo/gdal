@@ -81,6 +81,8 @@ static const char * const papszParameters[] =
     SRS_PP_PEG_POINT_LONGITUDE,  // For SCH.
     SRS_PP_PEG_POINT_HEADING,    // For SCH.
     SRS_PP_PEG_POINT_HEIGHT,     // For SCH.
+    SRS_PP_HEMISPHERE,
+    SRS_PP_HEIGHT,
     nullptr
 };
 
@@ -92,6 +94,7 @@ static const char * const papszParameters[] =
 static const char * const papszProjectionSupported[] =
 {
     SRS_PT_CASSINI_SOLDNER,
+    SRS_PT_CYLINDRICAL_EQUAL_AREA,
     SRS_PT_BONNE,
     SRS_PT_EQUIDISTANT_CONIC,
     SRS_PT_EQUIRECTANGULAR,
@@ -146,6 +149,10 @@ static const char * const papszProjectionSupported[] =
     SRS_PT_CYLINDRICAL_EQUAL_AREA,
     SRS_PT_GOODE_HOMOLOSINE,
     SRS_PT_IGH,
+    SRS_PT_VERTICAL_NEAR_SIDE_PERSPECTIVE,
+    SRS_PT_TRANSVERSE_CYLINDRICAL_EQUAL_AREA,
+    SRS_PT_UNIVERSAL_POLAR_STEREOGRAPHIC,
+    SRS_PT_DOUBLE_STEREOGRAPHIC,
     nullptr
 };
 
@@ -545,6 +552,34 @@ static const char * const papszProjWithParms[] = {
     nullptr,
 
     SRS_PT_IGH,
+    nullptr,
+
+    SRS_PT_VERTICAL_NEAR_SIDE_PERSPECTIVE,
+    SRS_PP_LATITUDE_OF_CENTER,
+    SRS_PP_LONGITUDE_OF_CENTER,
+    SRS_PP_HEIGHT,
+    SRS_PP_FALSE_EASTING,
+    SRS_PP_FALSE_NORTHING,
+    nullptr,
+	
+    SRS_PT_TRANSVERSE_CYLINDRICAL_EQUAL_AREA,
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_SCALE_FACTOR,
+    SRS_PP_FALSE_EASTING,
+    SRS_PP_FALSE_NORTHING,
+    nullptr,
+
+    SRS_PT_UNIVERSAL_POLAR_STEREOGRAPHIC,
+    SRS_PP_HEMISPHERE,
+    nullptr,
+
+    SRS_PT_DOUBLE_STEREOGRAPHIC,
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_SCALE_FACTOR,
+    SRS_PP_FALSE_EASTING,
+    SRS_PP_FALSE_NORTHING,
     nullptr,
 
     nullptr
