@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# abort install if any errors occur and enable tracing
+set -o errexit
+set -o xtrace
+
 echo "Configure for mingw-w64"
 
 NUMTHREADS=2
