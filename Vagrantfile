@@ -196,7 +196,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	  config.vm.provision :shell, :inline => pkg_cmd
     scripts = [
       "gdal.sh",
-      "postgis.sh"
+      "postgis.sh",
+      "gdal-mingw.sh"
     ];
     scripts.each { |script| config.vm.provision :shell, :privileged => false, :path => "gdal/scripts/vagrant/" << script }
   end
