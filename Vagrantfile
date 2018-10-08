@@ -145,15 +145,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "wine",
     "ccache",
     "curl",
-    "mingw32",
     "mingw-w64",
     "mingw-w64-i686-dev",
     "mingw-w64-x86-64-dev",
     "mingw-w64-tools",
+    "gdb-mingw-w64-target",
+    "libgeos-mingw-w64-dev",
+    "libproj-mingw-w64-dev",
     "cmake3-curses-gui",
     "gdb",
     "gdbserver",
-    "gdb-mingw-w64-target",
     "ninja-build",
     "openjdk-8-jdk",
     "ghostscript",
@@ -196,7 +197,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	  config.vm.provision :shell, :inline => pkg_cmd
     scripts = [
       "gdal.sh",
-      "postgis.sh"
+      "postgis.sh",
+      "gdal-mingw.sh"
     ];
     scripts.each { |script| config.vm.provision :shell, :privileged => false, :path => "gdal/scripts/vagrant/" << script }
   end
