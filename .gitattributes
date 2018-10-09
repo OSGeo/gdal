@@ -4,11 +4,11 @@
 # Declare files that will always have LF line endings on checkout.
 *.m4            text eol=lf
 *.sh            text eol=lf
+config.guess    text eol=lf
 config.h.in     text eol=lf
+config.sub      text eol=lf
 configure       text eol=lf
 configure.ac    text eol=lf
-config.guess    text eol=lf
-config.sub      text eol=lf
 gdal.pc.in      text eol=lf
 install-sh      text eol=lf
 GNUmakefile     text eol=lf
