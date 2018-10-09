@@ -400,6 +400,44 @@ def osr_epsg_13():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # WKT has EPSG code but the definition doesn't match with the official
+    # one (namely linear units are different)
+    # https://github.com/OSGeo/gdal/issues/990
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["NAD83 / Ohio North",
+    GEOGCS["NAD83",
+        DATUM["North_American_Datum_1983",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6269"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4269"]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",41.7],
+    PARAMETER["standard_parallel_2",40.43333333333333],
+    PARAMETER["latitude_of_origin",39.66666666666666],
+    PARAMETER["central_meridian",-82.5],
+    PARAMETER["false_easting",1968503.937007874],
+    PARAMETER["false_northing",0],
+    UNIT["International Foot",0.3048,
+        AUTHORITY["EPSG","9002"]],
+    AXIS["X",EAST],
+    AXIS["Y",NORTH],
+    AUTHORITY["EPSG","32122"]]
+""")
+    matches = sr.FindMatches()
+    if len(matches) != 1 or matches[0][1] != 50:
+        gdaltest.post_reason('fail')
+        print(matches)
+        return 'fail'
+    if matches[0][0].IsSame(sr) == 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

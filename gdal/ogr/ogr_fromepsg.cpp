@@ -3447,24 +3447,29 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
     if( ppanMatchConfidence )
         *ppanMatchConfidence = nullptr;
 
-    OGRSpatialReference oSRSClone(*this);
-    if( oSRSClone.AutoIdentifyEPSG() == OGRERR_NONE )
     {
-        const char* pszCode = oSRSClone.GetAuthorityCode(nullptr);
-        if( pszCode )
-            oSRSClone.importFromEPSG(atoi(pszCode));
-        OGRSpatialReferenceH* pahRet =
-            static_cast<OGRSpatialReferenceH*>(
-                    CPLCalloc(sizeof(OGRSpatialReferenceH), 2));
-        pahRet[0] = reinterpret_cast<OGRSpatialReferenceH>(oSRSClone.Clone());
-        if( pnEntries )
-            *pnEntries = 1;
-        if( ppanMatchConfidence )
+        OGRSpatialReference oSRSClone(*this);
+        if( oSRSClone.AutoIdentifyEPSG() == OGRERR_NONE )
         {
-            *ppanMatchConfidence = static_cast<int*>(CPLMalloc(sizeof(int)));
-            (*ppanMatchConfidence)[0] = 100;
+            const char* pszCode = oSRSClone.GetAuthorityCode(nullptr);
+            if( pszCode )
+                oSRSClone.importFromEPSG(atoi(pszCode));
+            if( IsSame( &oSRSClone ) )
+            {
+                OGRSpatialReferenceH* pahRet =
+                    static_cast<OGRSpatialReferenceH*>(
+                            CPLCalloc(sizeof(OGRSpatialReferenceH), 2));
+                pahRet[0] = reinterpret_cast<OGRSpatialReferenceH>(oSRSClone.Clone());
+                if( pnEntries )
+                    *pnEntries = 1;
+                if( ppanMatchConfidence )
+                {
+                    *ppanMatchConfidence = static_cast<int*>(CPLMalloc(sizeof(int)));
+                    (*ppanMatchConfidence)[0] = 100;
+                }
+                return pahRet;
+            }
         }
-        return pahRet;
     }
 
     const char* pszSRSType = "";
