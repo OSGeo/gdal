@@ -538,7 +538,7 @@ CPLErr GDALContourGenerateEx( GDALRasterBandH hBand, void *hLayer,
         char** values = CSLTokenizeStringComplex( opt, ",", FALSE, FALSE );
         fixedLevels.resize( CSLCount( values ) );
         for ( size_t i = 0; i < fixedLevels.size(); i++ ) {
-            fixedLevels[i] = atoi(values[i]);
+            fixedLevels[i] = CPLAtof(values[i]);
         }
         CSLDestroy( values );
     }
