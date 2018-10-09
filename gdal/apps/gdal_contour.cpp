@@ -57,8 +57,8 @@ static void Usage(const char* pszErrorMsg = nullptr)
 
 {
     printf(
-        "Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]\n"
-        "                    [-snodata n] [-f <formatname>] [-i <interval>]\n"
+        "Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-amin <attribute_name>] [-amax <attribute_name>]\n"
+        "                    [-3d] [-inodata] [-snodata n] [-f <formatname>] [-i <interval>]\n"
         "                    [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]\n"
         "                    [-off <offset>] [-fl <level> <level>...] [-e <exp_base>]\n"
         "                    [-nln <outlayername>] [-q] [-p]\n"
@@ -68,6 +68,19 @@ static void Usage(const char* pszErrorMsg = nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     exit( 1 );
+}
+
+static void CreateElevAttrib(const char* pszElevAttrib, OGRLayerH hLayer)
+{
+    OGRFieldDefnH hFld = OGR_Fld_Create( pszElevAttrib, OFTReal );
+    OGR_Fld_SetWidth( hFld, 12 );
+    OGR_Fld_SetPrecision( hFld, 3 );
+    OGRErr eErr = OGR_L_CreateField( hLayer, hFld, FALSE );
+    OGR_Fld_Destroy( hFld );
+    if( eErr == OGRERR_FAILURE )
+    {
+      exit( 1 );
+    }
 }
 
 /************************************************************************/
@@ -93,6 +106,8 @@ MAIN_START(argc, argv)
     const char *pszSrcFilename = nullptr;
     const char *pszDstFilename = nullptr;
     const char *pszElevAttrib = nullptr;
+    const char *pszElevAttribMin = nullptr;
+    const char *pszElevAttribMax = nullptr;
     const char *pszFormat = nullptr;
     char **papszDSCO = nullptr;
     char **papszLCO = nullptr;
@@ -138,6 +153,16 @@ MAIN_START(argc, argv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszElevAttrib = argv[++i];
+        }
+        else if( EQUAL(argv[i],"-amin") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            pszElevAttribMin = argv[++i];
+        }
+        else if( EQUAL(argv[i],"-amax") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            pszElevAttribMax = argv[++i];
         }
         else if( EQUAL(argv[i],"-off") )
         {
@@ -330,15 +355,17 @@ MAIN_START(argc, argv)
 
     if( pszElevAttrib )
     {
-        hFld = OGR_Fld_Create( pszElevAttrib, OFTReal );
-        OGR_Fld_SetWidth( hFld, 12 );
-        OGR_Fld_SetPrecision( hFld, 3 );
-        OGRErr eErr = OGR_L_CreateField( hLayer, hFld, FALSE );
-        OGR_Fld_Destroy( hFld );
-        if( eErr == OGRERR_FAILURE )
-        {
-            exit( 1 );
-        }
+      CreateElevAttrib( pszElevAttrib, hLayer );
+    }
+
+    if( pszElevAttribMin )
+    {
+      CreateElevAttrib( pszElevAttribMin, hLayer );
+    }
+
+    if( pszElevAttribMax )
+    {
+      CreateElevAttrib( pszElevAttribMax, hLayer );
     }
 
 /* -------------------------------------------------------------------- */
@@ -348,6 +375,15 @@ MAIN_START(argc, argv)
     int iElevField = (pszElevAttrib == nullptr) ? -1 :
         OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ),
                               pszElevAttrib );
+
+    int iElevFieldMin = (pszElevAttribMin == nullptr) ? -1 :
+        OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ),
+                              pszElevAttribMin );
+
+    int iElevFieldMax = (pszElevAttribMax == nullptr) ? -1 :
+        OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ),
+                              pszElevAttribMax );
+
     char** options = nullptr;
     if ( nFixedLevelCount > 0 ) {
         std::string values = "FIXED_LEVELS=";
@@ -384,6 +420,12 @@ MAIN_START(argc, argv)
     }
     if ( iElevField != -1 ) {
         options = CSLAppendPrintf( options, "ELEV_FIELD=%d", iElevField );
+    }
+    if ( iElevFieldMin != -1 ) {
+        options = CSLAppendPrintf( options, "ELEV_FIELD_MIN=%d", iElevFieldMin );
+    }
+    if ( iElevFieldMax != -1 ) {
+        options = CSLAppendPrintf( options, "ELEV_FIELD_MAX=%d", iElevFieldMax );
     }
     if ( bPolygonize ) {
         options = CSLAppendPrintf( options, "POLYGONIZE=YES" );

@@ -969,7 +969,8 @@ Builds vector contour lines from a raster elevation model.
 \section gdal_contour_synopsis SYNOPSIS
 
 \verbatim
-Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]
+Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-amin <attribute_name>] [-amax <attribute_name>]
+       		    [-3d] [-inodata]
                     [-snodata n] [-i <interval>]
                     [-f <formatname>] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]
                     [-off <offset>] [-fl <level> <level>...] [-e <exp_base>]
@@ -991,6 +992,11 @@ clockwise around a top.
 <dt> <b>-b</b> <em>band</em>:</dt><dd> picks a particular band to get the DEM from.  Defaults to band 1.</dd>
 
 <dt> <b>-a</b> <em>name</em>:</dt><dd>provides a name for the attribute in which to put the elevation. If not provided no elevation attribute is attached. </dd>
+
+<dt> <b>-amin</b> <em>name</em>:</dt><dd>(Since GDAL 2.4) provides a name for the attribute in which to put the minimum elevation of contour polygon. If not provided no minimum elevation attribute is attached. </dd>
+
+<dt> <b>-amax</b> <em>name</em>:</dt><dd>(Since GDAL 2.4) provides a name for the attribute in which to put the maximum elevation of contour polygon. If not provided no maximim elevation attribute is attached. </dd>
+
 <dt> <b>-3d</b>:</dt> <dd>
       Force production of 3D vectors instead of 2D.  Includes elevation at
       every vertex.</dd>

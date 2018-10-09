@@ -77,7 +77,7 @@ class FixedLevelRangeIterator
 {
 public:
     typedef RangeIterator<FixedLevelRangeIterator> Iterator;
-    FixedLevelRangeIterator( const double* levels, size_t count ) : levels_( levels ), count_( count )
+    FixedLevelRangeIterator( const double* levels, size_t count, double maxLevel = Inf ) : levels_( levels ), count_( count ), maxLevel_( maxLevel )
     {
     }
 
@@ -97,13 +97,14 @@ public:
     double level( int idx ) const
     {
         if ( idx >= int(count_) )
-            return Inf;
+            return maxLevel_;
         return levels_[size_t(idx)];
     }
 
 private:
     const double* levels_;
     size_t count_;
+    double maxLevel_;
 };
 
 struct IntervalLevelRangeIterator
