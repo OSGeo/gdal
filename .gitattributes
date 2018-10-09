@@ -5,7 +5,7 @@
 *.m4            text eol=lf
 *.sh            text eol=lf
 config.guess    text eol=lf
-config.h.in     text eol=lf
+cpl_config.h.in text eol=lf
 config.sub      text eol=lf
 configure       text eol=lf
 configure.ac    text eol=lf
@@ -19,4 +19,4 @@ VERSION         text eol=lf
 *.bat           text eol=crlf
 *.cmd           text eol=crlf
 *.ps1           text eol=crlf
-config.h.vc*    text eol=lf
+*.vc*           text eol=crlf
