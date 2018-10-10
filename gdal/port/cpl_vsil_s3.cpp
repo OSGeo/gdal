@@ -1414,6 +1414,10 @@ int IVSIS3LikeFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return -1;
 
+    memset(pStatBuf, 0, sizeof(VSIStatBufL));
+    if( !IsAllowedFilename( pszFilename ) )
+        return -1;
+
     CPLString osFilename(pszFilename);
     if( osFilename.find('/', GetFSPrefix().size()) == std::string::npos )
         osFilename += "/";

@@ -2585,7 +2585,7 @@ const char* VSICurlFilesystemHandler::GetOptions()
 /*                        IsAllowedFilename()                           */
 /************************************************************************/
 
-static bool IsAllowedFilename( const char* pszFilename )
+bool VSICurlFilesystemHandler::IsAllowedFilename( const char* pszFilename )
 {
     const char* pszAllowedFilename =
         CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME", nullptr);

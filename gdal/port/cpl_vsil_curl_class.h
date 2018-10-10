@@ -206,6 +206,8 @@ protected:
 
     static const char* GetOptionsStatic();
 
+    static bool IsAllowedFilename( const char* pszFilename );
+
 public:
     VSICurlFilesystemHandler();
     ~VSICurlFilesystemHandler() override;
