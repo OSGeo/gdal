@@ -998,7 +998,7 @@ def ogr_mvt_write_one_layer():
        out_f['int64field'] != 123456789012345 or \
        out_f['realfield'] != 1.25 or \
        out_f['datefield'] != '2018-02-01' or \
-       out_f['datetimefield'] != '2018-02-01T12:34:56Z' or \
+       out_f['datetimefield'] != '2018-02-01T12:34:56' or \
        out_f['boolfield'] is False or \
        ogrtest.check_feature_geometry(out_f, 'POINT (498980.920645632 997961.84129126)') != 0:
         gdaltest.post_reason('fail')
@@ -1011,7 +1011,7 @@ def ogr_mvt_write_one_layer():
        out_f['int64field'] != 123456789012345 or \
        out_f['realfield'] != 1.25 or \
        out_f['datefield'] != '2018-02-01' or \
-       out_f['datetimefield'] != '2018-02-01T12:34:56Z' or \
+       out_f['datetimefield'] != '2018-02-01T12:34:56' or \
        out_f['boolfield'] is False or \
        ogrtest.check_feature_geometry(out_f, 'MULTILINESTRING ((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,518548.799886636 1017529.72053226))') != 0:
         gdaltest.post_reason('fail')
@@ -1181,7 +1181,7 @@ def ogr_mvt_write_one_layer():
                             "count": 1,
                             "type": "string",
                             "values": [
-                                "2018-02-01T12:34:56Z"
+                                "2018-02-01T12:34:56"
                             ]
                         },
                         {

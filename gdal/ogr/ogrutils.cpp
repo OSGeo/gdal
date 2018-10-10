@@ -1377,44 +1377,49 @@ char* OGRGetRFC822DateTime( const OGRField* psField )
 
 char* OGRGetXMLDateTime(const OGRField* psField)
 {
-    const int year = psField->Date.Year;
-    const int month = psField->Date.Month;
-    const int day = psField->Date.Day;
-    const int hour = psField->Date.Hour;
-    const int minute = psField->Date.Minute;
+    const GInt16 year = psField->Date.Year;
+    const GByte month = psField->Date.Month;
+    const GByte day = psField->Date.Day;
+    const GByte hour = psField->Date.Hour;
+    const GByte minute = psField->Date.Minute;
     const float second = psField->Date.Second;
-    const int TZFlag = psField->Date.TZFlag;
+    const GByte TZFlag = psField->Date.TZFlag;
 
+    char szTimeZone[7];
     char* pszRet = nullptr;
 
-    if( TZFlag == 0 || TZFlag == 100 )
+    switch( TZFlag )
     {
-        if( OGR_GET_MS(second) )
-            pszRet = CPLStrdup(CPLSPrintf(
-                "%04d-%02d-%02dT%02d:%02d:%06.3fZ",
-                year, month, day, hour, minute, second));
-        else
-            pszRet = CPLStrdup(CPLSPrintf(
-                "%04d-%02d-%02dT%02d:%02d:%02dZ",
-                year, month, day, hour, minute, static_cast<int>(second)));
+        case 0:    // Unknown time zone
+        case 1:    // Local time zone (not specified)
+            szTimeZone[0] = 0;
+            break;
+
+        case 100:  // GMT
+            szTimeZone[0] = 'Z';
+            szTimeZone[1] = 0;
+            break;
+
+        default:   // Offset (in quarter-hour units) from GMT
+            const int TZOffset = std::abs(TZFlag - 100) * 15;
+            const int TZHour = TZOffset / 60;
+            const int TZMinute = TZOffset % 60;
+
+            snprintf(szTimeZone, 7, "%c%02d:%02d",
+                     (TZFlag > 100) ? '+' : '-', TZHour, TZMinute);
     }
+
+    if( OGR_GET_MS(second) )
+        pszRet = CPLStrdup(CPLSPrintf(
+                               "%04d-%02u-%02uT%02u:%02u:%06.3f%s",
+                               year, month, day, hour, minute, second,
+                               szTimeZone));
     else
-    {
-        const int TZOffset = std::abs(TZFlag - 100) * 15;
-        const int TZHour = TZOffset / 60;
-        const int TZMinute = TZOffset - TZHour * 60;
-        if( OGR_GET_MS(second) )
-            pszRet = CPLStrdup(CPLSPrintf(
-                "%04d-%02d-%02dT%02d:%02d:%06.3f%c%02d:%02d",
-                year, month, day, hour, minute, second,
-                (TZFlag > 100) ? '+' : '-', TZHour, TZMinute));
-        else
-            pszRet = CPLStrdup(
-                CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d",
-                           year, month, day, hour, minute,
-                           static_cast<int>(second),
-                           TZFlag > 100 ? '+' : '-', TZHour, TZMinute));
-    }
+        pszRet = CPLStrdup(CPLSPrintf(
+                               "%04d-%02u-%02uT%02u:%02u:%02u%s",
+                               year, month, day, hour, minute,
+                               static_cast<GByte>(second), szTimeZone));
+
     return pszRet;
 }
 
