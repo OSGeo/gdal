@@ -1,5 +1,6 @@
-# Set the default behavior, in case people don't have core.autocrlf set.
-* text=auto
+# Do NOT set the default behavior, in case people don't have core.autocrlf set.
+# This may lead to implicit modification of certain files (eg. test data) during git clone.
+#* text=auto
 
 # Declare files that will always have LF line endings on checkout.
 *.m4            text eol=lf
