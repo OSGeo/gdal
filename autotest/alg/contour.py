@@ -245,14 +245,17 @@ def contour_3():
     ogr_lyr = ogr_ds.CreateLayer('contour', geom_type=ogr.wkbMultiPolygon)
     field_defn = ogr.FieldDefn('ID', ogr.OFTInteger)
     ogr_lyr.CreateField(field_defn)
-    field_defn = ogr.FieldDefn('elev', ogr.OFTReal)
+    field_defn = ogr.FieldDefn('elevMin', ogr.OFTReal)
+    ogr_lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn('elevMax', ogr.OFTReal)
     ogr_lyr.CreateField(field_defn)
 
     ds = gdal.Open('tmp/gdal_contour.tif')
     #gdal.ContourGenerateEx(ds.GetRasterBand(1), 0, 0, 0, [10, 20, 25], 0, 0, ogr_lyr, 0, 1, 1)
     gdal.ContourGenerateEx(ds.GetRasterBand(1), ogr_lyr, options = [ "FIXED_LEVELS=10,20,25",
                                                                      "ID_FIELD=0",
-                                                                     "ELEV_FIELD=1",
+                                                                     "ELEV_FIELD_MIN=1",
+                                                                     "ELEV_FIELD_MAX=2",
                                                                      "POLYGONIZE=TRUE" ] )
     ds = None
 
@@ -265,7 +268,7 @@ def contour_3():
                           [1.25 + 0.125 + 0.0625, 1.75 - 0.125 - 0.0625, 49.25 + 0.125 + 0.0625, 49.75 - 0.125 - 0.0625]]
     expected_height = [10, 20, 25, 10000]
 
-    lyr = ogr_ds.ExecuteSQL("select * from contour order by elev asc")
+    lyr = ogr_ds.ExecuteSQL("select * from contour order by elevMin asc")
 
     if lyr.GetFeatureCount() != len(expected_envelopes):
         print('Got %d features. Expected %d' % (lyr.GetFeatureCount(), len(expected_envelopes)))
@@ -274,9 +277,13 @@ def contour_3():
     i = 0
     feat = lyr.GetNextFeature()
     while feat is not None:
-        if i < 3 and feat.GetField('elev') != expected_height[i]:
-            print('Got %f as z. Expected %f' % (feat.GetField('elev'), expected_height[i]))
+        if i < 3 and feat.GetField('elevMax') != expected_height[i]:
+            print('Got %f as z. Expected %f' % (feat.GetField('elevMax'), expected_height[i]))
             return 'fail'
+        elif i > 0 and i < 3 and feat.GetField('elevMin') != expected_height[i-1]:
+            print('Got %f as z. Expected %f' % (feat.GetField('elevMin'), expected_height[i-1]))
+            return 'fail'
+
         envelope = feat.GetGeometryRef().GetEnvelope()
         for j in range(4):
             if abs(expected_envelopes[i][j] - envelope[j]) > precision / 2 * 1.001:

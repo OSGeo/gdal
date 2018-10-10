@@ -306,6 +306,8 @@ typedef struct
     double adfGeoTransform[6];
 
     int    nElevField;
+    int    nElevFieldMin;
+    int    nElevFieldMax;
     int    nIDField;
     int    nNextID;
 } OGRContourWriterInfo;
