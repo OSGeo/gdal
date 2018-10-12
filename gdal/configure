@@ -664,6 +664,7 @@ PODOFO_INC
 HAVE_PODOFO
 POPPLER_PLUGIN_LIB
 POPPLER_INC
+POPPLER_0_69_OR_LATER
 POPPLER_0_58_OR_LATER
 POPPLER_0_23_OR_LATER
 POPPLER_0_20_OR_LATER
@@ -34386,6 +34387,7 @@ POPPLER_BASE_STREAM_HAS_TWO_ARGS=no
 POPPLER_0_20_OR_LATER=no
 POPPLER_0_23_OR_LATER=no
 POPPLER_0_58_OR_LATER=no
+POPPLER_0_69_OR_LATER=no
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for poppler" >&5
 $as_echo_n "checking for poppler... " >&6; }
@@ -34428,24 +34430,51 @@ $as_echo "yes" >&6; }
 
         CHECK_OTHER_POPPLER_VERSION=yes
 
-        # And now we check if we have Poppler >= 0.58.0
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if Object does have new API (>= 0.58.0)" >&5
-$as_echo_n "checking if Object does have new API (>= 0.58.0)... " >&6; }
-        rm -f testpoppler.*
-        echo '#include <poppler/Object.h>' > testpoppler.cpp
-        echo 'int main(int argc, char** argv) { Object o(objNull); return 0; }' >> testpoppler.cpp
-        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-            POPPLER_0_58_OR_LATER=yes
-            POPPLER_0_23_OR_LATER=yes
-            POPPLER_0_20_OR_LATER=yes
-            POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
-            POPPLER_HAS_OPTCONTENT=yes
-            CHECK_OTHER_POPPLER_VERSION=no
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+        if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking if OptionalContent has API >= 0.69.0" >&5
+$as_echo_n "checking if OptionalContent has API >= 0.69.0... " >&6; }
+            rm -f testpoppler.*
+            echo '#include <poppler/OptionalContent.h>' > testpoppler.cpp
+            echo 'int main(int argc, char** argv) {' >> testpoppler.cpp
+            echo 'OCGs ocg(nullptr, nullptr);' >> testpoppler.cpp
+            echo 'ocg.getOCGs().size();' >> testpoppler.cpp
+            echo 'return 0; }' >> testpoppler.cpp
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                POPPLER_0_69_OR_LATER=yes
+                POPPLER_0_58_OR_LATER=yes
+                POPPLER_0_23_OR_LATER=yes
+                POPPLER_0_20_OR_LATER=yes
+                POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
+                POPPLER_HAS_OPTCONTENT=yes
+                CHECK_OTHER_POPPLER_VERSION=no
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-        else
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+            else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
+            fi
+        fi
+
+        if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
+            # And now we check if we have Poppler >= 0.58.0
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking if Object does have new API (>= 0.58.0)" >&5
+$as_echo_n "checking if Object does have new API (>= 0.58.0)... " >&6; }
+            rm -f testpoppler.*
+            echo '#include <poppler/Object.h>' > testpoppler.cpp
+            echo 'int main(int argc, char** argv) { Object o(objNull); return 0; }' >> testpoppler.cpp
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                POPPLER_0_58_OR_LATER=yes
+                POPPLER_0_23_OR_LATER=yes
+                POPPLER_0_20_OR_LATER=yes
+                POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
+                POPPLER_HAS_OPTCONTENT=yes
+                CHECK_OTHER_POPPLER_VERSION=no
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+            else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+            fi
         fi
 
         if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
@@ -34549,6 +34578,8 @@ POPPLER_0_20_OR_LATER=$POPPLER_0_20_OR_LATER
 POPPLER_0_23_OR_LATER=$POPPLER_0_23_OR_LATER
 
 POPPLER_0_58_OR_LATER=$POPPLER_0_58_OR_LATER
+
+POPPLER_0_69_OR_LATER=$POPPLER_0_69_OR_LATER
 
 POPPLER_INC=$POPPLER_INC
 

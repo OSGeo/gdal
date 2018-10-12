@@ -3440,10 +3440,16 @@ void PDFDataset::FindLayersPoppler()
     }
     else
     {
+#ifdef POPPLER_0_69_OR_LATER
+        for( const auto& refOCGPair: optContentConfig->getOCGs() )
+        {
+            auto ocg = refOCGPair.second.get();
+#else
         GooList* ocgList = optContentConfig->getOCGs();
         for(int i=0;i<ocgList->getLength();i++)
         {
             OptionalContentGroup* ocg = (OptionalContentGroup*) ocgList->get(i);
+#endif
             if( ocg != nullptr && ocg->getName() != nullptr )
             {
                 const char* pszLayerName = (const char*)ocg->getName()->getCString();
@@ -3472,10 +3478,16 @@ void PDFDataset::TurnLayersOnOffPoppler()
     {
         int i;
         int bAll = EQUAL(pszLayers, "ALL");
+#ifdef POPPLER_0_69_OR_LATER
+        for( const auto& refOCGPair: optContentConfig->getOCGs() )
+        {
+            auto ocg = refOCGPair.second.get();
+#else
         GooList* ocgList = optContentConfig->getOCGs();
         for(i=0;i<ocgList->getLength();i++)
         {
             OptionalContentGroup* ocg = (OptionalContentGroup*) ocgList->get(i);
+#endif
             ocg->setState( (bAll) ? OptionalContentGroup::On : OptionalContentGroup::Off );
         }
 
