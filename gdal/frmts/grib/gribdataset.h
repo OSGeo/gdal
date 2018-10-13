@@ -133,9 +133,9 @@ private:
     CPLErr       LoadData();
     void    FindNoDataGrib2(bool bSeekToStart = true);
 
-    static void ReadGribData( DataSource &, sInt4, int, double **,
+    static void ReadGribData( DataSource &, long, int, double **,
                               grib_MetaData ** );
-    sInt4 start;
+    long start;
     int subgNum;
     char *longFstLevel;
 

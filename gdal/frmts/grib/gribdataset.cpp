@@ -758,7 +758,7 @@ double GRIBRasterBand::GetNoDataValue( int *pbSuccess )
 /*                            ReadGribData()                            */
 /************************************************************************/
 
-void GRIBRasterBand::ReadGribData( DataSource &fp, sInt4 start, int subgNum,
+void GRIBRasterBand::ReadGribData( DataSource &fp, long start, int subgNum,
                                    double **data, grib_MetaData **metaData)
 {
     // Initialization, for calling the ReadGrib2Record function.

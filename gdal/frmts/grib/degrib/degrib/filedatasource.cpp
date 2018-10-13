@@ -58,7 +58,7 @@ long FileDataSource::DataSourceFtell()
 {
     vsi_l_offset nOffset = VSIFTellL( fp );
     // FIXME ? change return type
-    if( nOffset > INT_MAX )
-        nOffset = INT_MAX;
+    if( nOffset > LONG_MAX )
+        nOffset = LONG_MAX;
     return static_cast<long>(nOffset);
 }

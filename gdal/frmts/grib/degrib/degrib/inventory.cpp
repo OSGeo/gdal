@@ -135,13 +135,13 @@ void GRIB2InventoryPrint (inventoryType *Inv, uInt4 LenInv)
       delta = (Inv[i].validTime - Inv[i].refTime) / 3600.;
       delta = myRound (delta, 2);
       if (Inv[i].comment == nullptr) {
-         printf ("%u.%u, %d, %d, %s, %s, %s, %s, %.2f\n",
+         printf ("%u.%u, %ld, %d, %s, %s, %s, %s, %.2f\n",
                  Inv[i].msgNum, Inv[i].subgNum, Inv[i].start,
                  Inv[i].GribVersion, Inv[i].element, Inv[i].shortFstLevel,
                  refTime, validTime, delta);
          fflush (stdout);
       } else {
-         printf ("%u.%u, %d, %d, %s=\"%s\", %s, %s, %s, %.2f\n",
+         printf ("%u.%u, %ld, %d, %s=\"%s\", %s, %s, %s, %.2f\n",
                  Inv[i].msgNum, Inv[i].subgNum, Inv[i].start,
                  Inv[i].GribVersion, Inv[i].element, Inv[i].comment,
                  Inv[i].shortFstLevel, refTime, validTime, delta);
@@ -959,7 +959,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
                     int numMsg, int *MsgNum)
 {
    //FileDataSource fp (filename);            /* The opened GRIB2 file. */
-   sInt4 offset = 0;    /* Where we are in the file. */
+   long  offset = 0;    /* Where we are in the file. */
    sInt4 msgNum;        /* Which GRIB2 message we are on. */
    uInt4 gribLen;       /* Length of the current GRIB message. */
    uInt4 secLen;        /* Length of current section. */
@@ -983,7 +983,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
                          * in the file.  If not found, is not a GRIB file. */
    int c;               /* Determine if end of the file without fileLen. */
 #ifdef DEBUG
-   sInt4 fileLen;       /* Length of the GRIB2 file. */
+   long fileLen;        /* Length of the GRIB2 file. */
 #endif
    unsigned short int center, subcenter; /* Who produced it. */
    uChar mstrVersion;   /* The master table version (is it 255?) */
@@ -1050,9 +1050,9 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
 #ifdef DEBUG
             /* find out how big the file is. */
             fp.DataSourceFseek (0L, SEEK_END);
-            fileLen = static_cast<int>(fp.DataSourceFtell());
+            fileLen = fp.DataSourceFtell();
             /* fseek (fp, 0L, SEEK_SET); */
-            printf ("There were %d trailing bytes in the file.\n",
+            printf ("There were %ld trailing bytes in the file.\n",
                     fileLen - offset);
 #endif
             free (buffer);
@@ -1223,7 +1223,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
       {
          increment = buffLen + gribLen;
       }
-      if( increment < buffLen || increment > (uInt4)(INT_MAX - offset) )
+      if( increment < buffLen || increment > (LONG_MAX - offset) )
           break;
       offset += increment;
       }
@@ -1239,7 +1239,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
 int GRIB2RefTime (const char *filename, double *refTime)
 {
    FileDataSource fp (filename);            /* The opened GRIB2 file. */
-   sInt4 offset = 0;    /* Where we are in the file. */
+   long  offset = 0;    /* Where we are in the file. */
    sInt4 msgNum;        /* Which GRIB2 message we are on. */
    uInt4 gribLen;       /* Length of the current GRIB message. */
    uInt4 secLen;        /* Length of current section. */
@@ -1260,7 +1260,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
                          * in the file.  If not found, is not a GRIB file. */
    int c;               /* Determine if end of the file without fileLen. */
 #ifdef DEBUG
-   sInt4 fileLen;       /* Length of the GRIB2 file. */
+   long fileLen;        /* Length of the GRIB2 file. */
 #endif
    const char *ptr;           /* used to find the file extension. */
    double refTime1;
@@ -1314,9 +1314,9 @@ int GRIB2RefTime (const char *filename, double *refTime)
 #ifdef DEBUG
             /* find out how big the file is. */
             fp.DataSourceFseek (0L, SEEK_END);
-            fileLen = static_cast<int>(fp.DataSourceFtell());
+            fileLen = fp.DataSourceFtell();
             /* fseek (fp, 0L, SEEK_SET); */
-            printf ("There were %d trailing bytes in the file.\n",
+            printf ("There were %ld trailing bytes in the file.\n",
                     fileLen - offset);
 #endif
             free (buffer);

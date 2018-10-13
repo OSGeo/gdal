@@ -26,7 +26,7 @@ extern "C" {
 
 typedef struct {
    sChar GribVersion;        /* 1 if GRIB1, 2 if GRIB2, -1 if it is TDLP */
-   sInt4 start;           /* Where this message starts in file. */
+   long start;               /* Where this message starts in file. */
    unsigned short int msgNum; /* Which "GRIB2" message we are working on. */
    unsigned short int subgNum; /* 0 for the first grid in the GRIB2 message
                               * NOT file, 1 for the second, etc. */
