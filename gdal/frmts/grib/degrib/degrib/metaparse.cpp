@@ -2906,7 +2906,7 @@ static void ParseGridSecMiss (gridAttribType *attrib, double *grib_Data,
  * NOTES
  *****************************************************************************
  */
-void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
+void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
                 uInt4 *grib_DataLen, uInt4 Nx, uInt4 Ny, int scan,
                 sInt4 nd2x3, sInt4 *iain, sInt4 ibitmap, sInt4 *ib, double unitM,
                 double unitB, uChar f_txtType, uInt4 txt_dataLen,
@@ -2951,12 +2951,12 @@ void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
 
       if( subNx * subNy > 100 * 1024 * 1024 )
       {
-          long curPos = fp.DataSourceFtell();
-          fp.DataSourceFseek(0, SEEK_END);
-          long fileSize = fp.DataSourceFtell();
-          fp.DataSourceFseek(curPos, SEEK_SET);
+          vsi_l_offset curPos = VSIFTellL(fp);
+          VSIFSeekL(fp, 0, SEEK_END);
+          vsi_l_offset fileSize = VSIFTellL(fp);
+          VSIFSeekL(fp, curPos, SEEK_SET);      
           // allow a compression ratio of 1:1000
-          if( subNx * subNy / 1000 > (uInt4)fileSize )
+          if( subNx * subNy / 1000 > fileSize )
           {
             errSprintf ("ERROR: File too short\n");
             *grib_DataLen = 0;

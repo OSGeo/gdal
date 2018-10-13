@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 #ifdef __cplusplus
-#include "datasource.h"
+#include "cpl_vsi.h"
 #endif
 
 #ifndef GRIB2BIT_ENUM
@@ -605,7 +605,7 @@ int MetaParse (grib_MetaData * meta, sInt4 *is0, sInt4 ns0,
 
 #ifdef __cplusplus
 
-void ParseGrid (DataSource &fp, gridAttribType * attrib, double **Grib_Data,
+void ParseGrid (VSILFILE *fp, gridAttribType * attrib, double **Grib_Data,
                 uInt4 *grib_DataLen, uInt4 Nx, uInt4 Ny, int scan,
                 sInt4 nd2x3, sInt4 *iain, sInt4 ibitmap, sInt4 *ib, double unitM,
                 double unitB, uChar f_txtType, uInt4 txt_dataLen,

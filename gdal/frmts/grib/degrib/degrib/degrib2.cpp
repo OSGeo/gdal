@@ -115,7 +115,7 @@
  *
  *****************************************************************************
  */
-int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
+int ReadSECT0 (VSILFILE *fp, char **buff, uInt4 *buffLen, sInt4 limit,
                sInt4 sect0[SECT0LEN_WORD], uInt4 *gribLen, int *version)
 {
    typedef union {
@@ -141,7 +141,7 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
       *buffLen = curLen;
       *buff = (char *) realloc ((void *) *buff, *buffLen * sizeof (char));
    }
-   if (fp.DataSourceFread(*buff, sizeof (char), curLen) != curLen) {
+   if (VSIFReadL(*buff, sizeof (char), curLen, fp) != curLen) {
       errSprintf ("ERROR: Couldn't find 'GRIB' or 'TDLP'\n");
       return -1;
    }
@@ -195,7 +195,7 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
             *buff = (char *) realloc ((void *) *buff,
                                       *buffLen * sizeof (char));
          }
-         if (fp.DataSourceFread((*buff) + (curLen - stillNeed), sizeof (char), stillNeed) != stillNeed) {
+         if (VSIFReadL((*buff) + (curLen - stillNeed), sizeof (char), stillNeed, fp) != stillNeed) {
             errSprintf ("ERROR: Ran out of file reading SECT0\n");
             *buffLen = curLen;
             return -1;
@@ -253,7 +253,7 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
    } else if (word.buffer[3] == 2) {
       *version = 2;
       /* Make sure we still have enough file for the rest of section 0. */
-      if (fp.DataSourceFread(sect0 + 2, sizeof (sInt4), 2) != 2) {
+      if (VSIFReadL(sect0 + 2, sizeof (sInt4), 2, fp) != 2) {
          errSprintf ("ERROR: Ran out of file reading SECT0\n");
          return -2;
       }
@@ -311,7 +311,7 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
  * NOTES
  *****************************************************************************
  */
-int FindGRIBMsg (DataSource &fp, int msgNum, sInt4 *offset, int *curMsg)
+int FindGRIBMsg (VSILFILE *fp, int msgNum, sInt4 *offset, int *curMsg)
 {
    int cnt;             /* The current message we are looking at. */
    char *buff = nullptr;   /* Holds the info between records. */
@@ -319,13 +319,14 @@ int FindGRIBMsg (DataSource &fp, int msgNum, sInt4 *offset, int *curMsg)
    sInt4 sect0[SECT0LEN_WORD]; /* Holds the current Section 0. */
    uInt4 gribLen;       /* Length of the current GRIB message. */
    int version;         /* Which version of GRIB is in this message. */
-   int c;               /* Determine if end of the file without fileLen. */
+   char c;              /* Determine if end of the file without fileLen. */
    sInt4 jump;          /* How far to jump to get to past GRIB message. */
 
    cnt = *curMsg + 1;
    buffLen = 0;
-   while ((c = fp.DataSourceFgetc()) != EOF) {
-      fp.DataSourceUngetc(c);
+   while (VSIFReadL(&c, sizeof(char), 1, fp) == 1) {
+      VSIFSeekL(fp, VSIFTellL(fp) - sizeof(char), SEEK_SET);
+
       if (cnt >= msgNum) {
          /* 12/1/2004 version 1.63 forgot to free buff */
          free (buff);
@@ -346,7 +347,7 @@ int FindGRIBMsg (DataSource &fp, int msgNum, sInt4 *offset, int *curMsg)
       } else {
          jump = gribLen - 16;
       }
-      fp.DataSourceFseek(jump, SEEK_CUR);
+      VSIFSeekL(fp, jump, SEEK_CUR);
       *offset = *offset + gribLen + buffLen;
       cnt++;
    }
@@ -849,7 +850,7 @@ void IS_Free (IS_dataType *is)
  */
 #define SECT2_INIT_SIZE 4000
 #define UNPK_NUM_ERRORS 22
-int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
+int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
                      uInt4 *grib_DataLen, grib_MetaData *meta,
                      IS_dataType *IS, int subgNum, double majEarth,
                      double minEarth, int simpVer,  int simpWWA,
@@ -963,11 +964,11 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
       if (nd5 > IS->ipackLen) {
          if( gribLen > 100 * 1024 * 1024 )
          {
-             long nCurPos = fp.DataSourceFtell();
-             fp.DataSourceFseek(0, SEEK_END);
-             long fileSize = fp.DataSourceFtell();
-             fp.DataSourceFseek(nCurPos, SEEK_SET);
-             if( (unsigned long)fileSize < (unsigned long)gribLen )
+             vsi_l_offset curPos = VSIFTellL(fp);
+             VSIFSeekL(fp, 0, SEEK_END);
+             vsi_l_offset fileSize = VSIFTellL(fp);
+             VSIFSeekL(fp, curPos, SEEK_SET);
+             if( fileSize < gribLen )
              {
                 errSprintf("File too short");
                 free (buff);
@@ -991,8 +992,8 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
       /* Init first 4 sInt4 to sect0. */
       memcpy (c_ipack, sect0, SECT0LEN_WORD * 4);
       /* Read in the rest of the message. */
-      if (fp.DataSourceFread (c_ipack + SECT0LEN_WORD * 4, sizeof (char),
-                 (gribLen - SECT0LEN_WORD * 4)) != (gribLen - SECT0LEN_WORD * 4)) {
+      if (VSIFReadL (c_ipack + SECT0LEN_WORD * 4, sizeof (char),
+                 (gribLen - SECT0LEN_WORD * 4), fp) != (gribLen - SECT0LEN_WORD * 4)) {
          errSprintf ("GribLen = %ld, SECT0Len_WORD = %d\n", gribLen,
                      SECT0LEN_WORD);
          errSprintf ("Ran out of file\n");
@@ -1056,12 +1057,13 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
       if (nd2x3 > IS->nd2x3) {
         if( nd2x3 > 100 * 1024 * 1024 )
         {
-            long curPos = fp.DataSourceFtell();
-            fp.DataSourceFseek(0, SEEK_END);
-            long fileSize = fp.DataSourceFtell();
-            fp.DataSourceFseek(curPos, SEEK_SET);
+
+            vsi_l_offset curPos = VSIFTellL(fp);
+            VSIFSeekL(fp, 0, SEEK_END);
+            vsi_l_offset fileSize = VSIFTellL(fp);
+            VSIFSeekL(fp, curPos, SEEK_SET);
             // allow a compression ratio of 1:1000
-            if( nd2x3 / 1000 > fileSize )
+            if( (vsi_l_offset)(nd2x3 / 1000) > fileSize )
             {
                 preErrSprintf ("File too short\n");
                 free (buff);

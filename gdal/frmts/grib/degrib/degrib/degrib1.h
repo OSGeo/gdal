@@ -65,11 +65,11 @@ extern const GRIB1ParmTable parm_table_undefined[256];
 
 extern const GRIB1SurfTable GRIB1Surface[256];
 
-int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType * inv);
+int GRIB1_Inventory (VSILFILE *fp, uInt4 gribLen, inventoryType * inv);
 
-int GRIB1_RefTime (DataSource &fp, uInt4 gribLen, double *refTime);
+int GRIB1_RefTime (VSILFILE *fp, uInt4 gribLen, double *refTime);
 
-int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
+int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
                      uInt4 *grib_DataLen, grib_MetaData * meta,
                      IS_dataType * IS, sInt4 sect0[SECT0LEN_WORD],
                      uInt4 gribLen, double majEarth, double minEarth);

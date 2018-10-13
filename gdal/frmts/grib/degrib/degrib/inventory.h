@@ -22,11 +22,9 @@ extern "C" {
 #include <time.h>
 #include "type.h"
 
-#include "datasource.h"
-
 typedef struct {
    sChar GribVersion;        /* 1 if GRIB1, 2 if GRIB2, -1 if it is TDLP */
-   sInt4 start;           /* Where this message starts in file. */
+   vsi_l_offset start;    /* Where this message starts in file. */
    unsigned short int msgNum; /* Which "GRIB2" message we are working on. */
    unsigned short int subgNum; /* 0 for the first grid in the GRIB2 message
                               * NOT file, 1 for the second, etc. */
@@ -51,7 +49,7 @@ void GRIB2InventoryFree (inventoryType *inv);
 void GRIB2InventoryPrint (inventoryType *Inv, uInt4 LenInv);
 
 /* Possible error messages left in errSprintf() */
-int GRIB2Inventory (DataSource &fp, inventoryType ** Inv, uInt4 *LenInv,
+int GRIB2Inventory (VSILFILE *fp, inventoryType ** Inv, uInt4 *LenInv,
                     int numMsg, int *MsgNum);
 
 int GRIB2RefTime (const char *filename, double *refTime);

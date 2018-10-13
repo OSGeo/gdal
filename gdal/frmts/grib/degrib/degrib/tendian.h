@@ -61,7 +61,7 @@ char memBitWrite (void *Src, size_t srcLen, void *Dst, size_t numBits,
 
 #ifdef __cplusplus
 
-#include "datasource.h"
+#include "cpl_vsi.h"
 
 /* The following #defines are used to make the code easier to read. */
 #ifdef BIG_ENDIAN
@@ -76,12 +76,12 @@ char memBitWrite (void *Src, size_t srcLen, void *Dst, size_t numBits,
   #define FWRITE_LIT fwrite
 #endif
 
-size_t norfread (void *Dst, size_t elem_size, size_t num_elem, DataSource &fp);
-size_t revfread (void *Dst, size_t elem_size, size_t num_elem, DataSource &fp);
+size_t norfread (void *Dst, size_t elem_size, size_t num_elem, VSILFILE *fp);
+size_t revfread (void *Dst, size_t elem_size, size_t num_elem, VSILFILE *fp);
 size_t revfwrite (void *Src, size_t elem_size, size_t num_elem, FILE *fp);
 
-size_t FREAD_ODDINT_BIG (sInt4 * dst, uChar len, DataSource &fp);
-size_t FREAD_ODDINT_LIT (sInt4 * dst, uChar len, DataSource &fp);
+size_t FREAD_ODDINT_BIG (sInt4 * dst, uChar len, VSILFILE *fp);
+size_t FREAD_ODDINT_LIT (sInt4 * dst, uChar len, VSILFILE *fp);
 size_t FWRITE_ODDINT_BIG (sInt4 * src, uChar len, FILE *fp);
 size_t FWRITE_ODDINT_LIT (sInt4 * src, uChar len, FILE *fp);
 
