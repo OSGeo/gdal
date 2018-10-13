@@ -1223,7 +1223,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
       {
          increment = buffLen + gribLen;
       }
-      if( increment < buffLen || increment > (LONG_MAX - offset) )
+      if( increment < buffLen || ((unsigned long)increment) > (unsigned long)(LONG_MAX - offset) )
           break;
       offset += increment;
       }
