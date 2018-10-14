@@ -1310,6 +1310,7 @@ def gml_invalid_geoms():
         ('<gml:MultiGeometry><foo/></gml:MultiGeometry>', 'GEOMETRYCOLLECTION EMPTY'),
         ('<gml:MultiGeometry><gml:geometryMember/></gml:MultiGeometry>', 'GEOMETRYCOLLECTION EMPTY'),  # valid in GML3 (accepted by PostGIS too)
         ('<gml:MultiGeometry><gml:geometryMember><foo/></gml:geometryMember></gml:MultiGeometry>', None),
+        ('<gml:MultiGeometry><gml:geometryMembers><foo/></gml:geometryMembers></gml:MultiGeometry>', None),
         ('<gml:Surface/>', 'POLYGON EMPTY'),  # valid GML3
         ('<gml:Surface><foo/></gml:Surface>', 'POLYGON EMPTY'),  # invalid GML3, but we are tolerant
         ('<gml:Surface><gml:patches/></gml:Surface>', 'POLYGON EMPTY'),  # valid GML3
