@@ -113,4 +113,7 @@ void RegisterOGRILI1() {
     poDriver->pfnCreate = OGRILI1DriverCreate;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
+#ifdef ILI_PLUGIN
+    RegisterOGRILI2();
+#endif
 }
