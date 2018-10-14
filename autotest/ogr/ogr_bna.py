@@ -100,7 +100,7 @@ def ogr_bna_3():
 
     lyr = gdaltest.bna_ds.GetLayerByName('test_polygons')
 
-    expect = ['PID2', 'PID1', 'PID7', 'PID8']
+    expect = ['PID2', 'PID1', 'PID7', 'PID8', 'PID9', 'PID10']
 
     tr = ogrtest.check_features_against_list(lyr, 'Primary ID', expect)
     if not tr:
@@ -116,6 +116,12 @@ def ogr_bna_3():
         return 'fail'
     feat = lyr.GetFeature(3)
     if ogrtest.check_feature_geometry(feat, 'POLYGON ((0 0,0 10,10 10,10 0,0 0),(2 2,2 8,8 8,8 2,2 2))', max_error=0.0001) != 0:
+        return 'fail'
+    feat = lyr.GetFeature(4)
+    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,0 10,10 10,10 0,0 0)))', max_error=0.0001) != 0:
+        return 'fail'
+    feat = lyr.GetFeature(5)
+    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,0 10,10 10,10 0,0 0)))', max_error=0.0001) != 0:
         return 'fail'
 
     return 'success'
@@ -223,8 +229,8 @@ def ogr_bna_6():
         return ret
 
     size = os.stat('tmp/out.bna').st_size
-    if size != 1479:
-        gdaltest.post_reason('Got size %d. Expected %d' % (size, 1479))
+    if size != 1601:
+        gdaltest.post_reason('Got size %d. Expected %d' % (size, 1601))
         return 'fail'
 
     os.remove('tmp/out.bna')
@@ -234,8 +240,8 @@ def ogr_bna_6():
         return ret
 
     size = os.stat('tmp/out.bna').st_size
-    if size != 1487:
-        gdaltest.post_reason('Got size %d. Expected %d' % (size, 1487))
+    if size != 1611:
+        gdaltest.post_reason('Got size %d. Expected %d' % (size, 1611))
         return 'fail'
 
     return 'success'

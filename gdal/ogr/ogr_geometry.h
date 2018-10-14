@@ -1169,6 +1169,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     virtual void setCoordinateDimension( int nDimension ) override;
     virtual void set3D( OGRBoolean bIs3D ) override;
     virtual void setMeasured( OGRBoolean bIsMeasured ) override;
+    void        reserve( int nReservedPointCount );
     void        setNumPoints( int nNewPointCount,
                               int bZeroizeNewContent = TRUE );
     void        setPoint( int, OGRPoint * );
