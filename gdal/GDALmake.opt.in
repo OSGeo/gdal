@@ -588,6 +588,7 @@ GDAL_FORMATS += kmlsuperoverlay ctg e00grid zmap ngsgeoid iris map cals
 GDAL_FORMATS += safe sentinel2 derived
 GDAL_FORMATS += prf
 GDAL_FORMATS += sigdem
+GDAL_FORMATS += ignfheightasciigrid
 GDAL_FORMATS += @OPT_GDAL_FORMATS@
 
 ifneq ($(PCIDSK_SETTING),no)

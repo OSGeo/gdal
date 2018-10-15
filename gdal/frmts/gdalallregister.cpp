@@ -578,8 +578,12 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_SIGDEM();
 #endif
 
-#ifdef FRMT_wcs
-    GDALRegister_HTTP();
+#ifdef FRMT_sigdem
+    GDALRegister_SIGDEM();
+#endif
+
+#ifdef FRMT_ignfheightasciigrid
+    GDALRegister_IGNFHeightASCIIGrid();
 #endif
 
 /* -------------------------------------------------------------------- */
