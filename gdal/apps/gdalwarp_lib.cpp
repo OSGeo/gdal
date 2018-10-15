@@ -1973,10 +1973,8 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             // so do not free it.
             if( !EQUAL(pszDest, "") )
             {
-                CPLErr eErrBefore = CPLGetLastErrorType();
                 GDALFlushCache( hDstDS );
-                if (eErrBefore == CE_None &&
-                    CPLGetLastErrorType() != CE_None)
+                if (CPLGetLastErrorType() == CE_Failure)
                 {
                     GDALReleaseDataset(hDstDS);
                     hDstDS = nullptr;
@@ -2026,10 +2024,8 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /* -------------------------------------------------------------------- */
 /*      Final Cleanup.                                                  */
 /* -------------------------------------------------------------------- */
-    CPLErr eErrBefore = CPLGetLastErrorType();
     GDALFlushCache( hDstDS );
-    if (eErrBefore == CE_None &&
-        CPLGetLastErrorType() != CE_None)
+    if (CPLGetLastErrorType() == CE_Failure)
     {
         bHasGotErr = true;
     }
