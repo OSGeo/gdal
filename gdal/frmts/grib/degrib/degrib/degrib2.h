@@ -24,7 +24,6 @@ extern "C" {
 #include "type.h"
 #include "meta.h"
 
-#include "datasource.h"
 
 /* The IS_dataType is used to organize and allocate all the arrays that the
  * unpack library uses. */
@@ -61,12 +60,12 @@ void IS_Free (IS_dataType *is);
 
 #define SECT0LEN_WORD 4
 /* Possible error messages left in errSprintf() */
-int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
+int ReadSECT0 (VSILFILE *fp, char **buff, uInt4 *buffLen, sInt4 limit,
                sInt4 sect0[SECT0LEN_WORD], uInt4 *gribLen,
                int *version);
 
 /* Possible error messages left in errSprintf() */
-int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
+int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
                      uInt4 *grib_DataLen, grib_MetaData * meta,
                      IS_dataType * IS, int subgNum, double majEarth,
                      double minEarth, int simpVer, int simpWWA, sInt4 * f_endMsg,
@@ -81,7 +80,7 @@ int ReadGrib2RecordFast (FILE *fp, sChar f_unit, double **Grib_Data,
 #endif
 
 /* Possible error messages left in errSprintf() */
-int FindGRIBMsg (DataSource &fp, int msg, sInt4 *offset, int *curMsg);
+int FindGRIBMsg (VSILFILE *fp, int msg, sInt4 *offset, int *curMsg);
 
 #ifdef __cplusplus
 }

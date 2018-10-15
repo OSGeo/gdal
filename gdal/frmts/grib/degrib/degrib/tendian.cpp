@@ -515,7 +515,7 @@ int main (int argc, char **argv)
  * Bas Retsios / ITC
  *
  * PURPOSE
- *   To map the #defined FREAD_BIG and FREAD_LIT to DataSource fread instead of "fread"
+ *   To map the #defined FREAD_BIG and FREAD_LIT to VSILFILE fread instead of "fread"
  *
  * ARGUMENTS
  *       Dst = The destination for the data. (Output)
@@ -534,9 +534,9 @@ int main (int argc, char **argv)
  *****************************************************************************
  */
 #ifdef BIG_ENDIAN
-size_t norfread (void *Dst, size_t elem_size, size_t num_elem, DataSource &fp)
+size_t norfread (void *Dst, size_t elem_size, size_t num_elem, VSILFILE *fp)
 {
-	return fp.DataSourceFread(Dst, elem_size, num_elem);
+	return VSIFReadL(Dst, elem_size, num_elem, fp);
 }
 #endif
 
@@ -570,7 +570,7 @@ size_t norfread (void *Dst, size_t elem_size, size_t num_elem, DataSource &fp)
  * revfwrite.
  *****************************************************************************
  */
-size_t revfread (void *Dst, size_t elem_size, size_t num_elem, DataSource &fp)
+size_t revfread (void *Dst, size_t elem_size, size_t num_elem, VSILFILE * fp)
 {
    size_t ans;          /* The answer from fread. */
    size_t j;            /* Byte count. */
@@ -578,7 +578,7 @@ size_t revfread (void *Dst, size_t elem_size, size_t num_elem, DataSource &fp)
    char temp;           /* A temporary holder of a byte when swapping. */
    char *ptr, *ptr2;    /* Pointers to the two bytes to swap. */
 
-   ans = fp.DataSourceFread(Dst, elem_size, num_elem);
+   ans = VSIFReadL(Dst, elem_size, num_elem, fp);
    if (elem_size == 1) {
       return ans;
    }
@@ -680,7 +680,7 @@ size_t revfwrite (void *Src, size_t elem_size, size_t num_elem, FILE * fp)
  * NOTES
  *****************************************************************************
  */
-size_t FREAD_ODDINT_BIG (sInt4 * dst, uChar len, DataSource &fp)
+size_t FREAD_ODDINT_BIG (sInt4 * dst, uChar len, VSILFILE * fp)
 {
    *dst = 0;
 #ifdef LITTLE_ENDIAN
@@ -716,7 +716,7 @@ size_t FREAD_ODDINT_BIG (sInt4 * dst, uChar len, DataSource &fp)
  * NOTES
  *****************************************************************************
  */
-size_t FREAD_ODDINT_LIT (sInt4 * dst, uChar len, DataSource &fp)
+size_t FREAD_ODDINT_LIT (sInt4 * dst, uChar len, VSILFILE * fp)
 {
    *dst = 0;
 #ifdef LITTLE_ENDIAN

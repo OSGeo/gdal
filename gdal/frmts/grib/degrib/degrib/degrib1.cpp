@@ -710,7 +710,7 @@ static int ReadGrib1Sect1 (uChar *pds, uInt4 pdsLen, uInt4 gribLen, uInt4 *curLo
  * NOTES
  *****************************************************************************
  */
-int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType *inv)
+int GRIB1_Inventory (VSILFILE *fp, uInt4 gribLen, inventoryType *inv)
 {
    uChar temp[3];        /* Used to determine the section length. */
    uInt4 sectLen;       /* Length in bytes of the current section. */
@@ -729,7 +729,7 @@ int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType *inv)
    unsigned short int subcenter; /* The Sub Center that created the data */
 
    curLoc = 8;
-   if (fp.DataSourceFread(temp, sizeof (char), 3) != 3) {
+   if (VSIFReadL(temp, sizeof (char), 3, fp) != 3) {
       errSprintf ("Ran out of file.\n");
       return -1;
    }
@@ -752,7 +752,7 @@ int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType *inv)
    *pds = *temp;
    pds[1] = temp[1];
    pds[2] = temp[2];
-   if (fp.DataSourceFread(pds + 3, sizeof (char), sectLen - 3) + 3 != sectLen) {
+   if (VSIFReadL(pds + 3, sizeof (char), sectLen - 3, fp) + 3 != sectLen) {
       errSprintf ("Ran out of file.\n");
       free (pds);
       return -1;
@@ -793,7 +793,7 @@ int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType *inv)
    return 0;
 }
 
-int GRIB1_RefTime (DataSource &fp, uInt4 gribLen, double *refTime)
+int GRIB1_RefTime (VSILFILE *fp, uInt4 gribLen, double *refTime)
 {
    uChar temp[3];        /* Used to determine the section length. */
    uInt4 sectLen;       /* Length in bytes of the current section. */
@@ -808,7 +808,7 @@ int GRIB1_RefTime (DataSource &fp, uInt4 gribLen, double *refTime)
    unsigned short int subcenter; /* The Sub Center that created the data */
 
    curLoc = 8;
-   if (fp.DataSourceFread (temp, sizeof (char), 3) != 3) {
+   if (VSIFReadL (temp, sizeof (char), 3, fp) != 3) {
       errSprintf ("Ran out of file.\n");
       return -1;
    }
@@ -821,7 +821,7 @@ int GRIB1_RefTime (DataSource &fp, uInt4 gribLen, double *refTime)
    *pds = *temp;
    pds[1] = temp[1];
    pds[2] = temp[2];
-   if (fp.DataSourceFread (pds + 3, sizeof (char), sectLen - 3) + 3 != sectLen) {
+   if (VSIFReadL (pds + 3, sizeof (char), sectLen - 3, fp) + 3 != sectLen) {
       errSprintf ("Ran out of file.\n");
       free (pds);
       return -1;
@@ -1852,7 +1852,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
  * 3) Should add unitM / unitB support.
  *****************************************************************************
  */
-int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
+int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
                      uInt4 *grib_DataLen, grib_MetaData *meta,
                      IS_dataType *IS, sInt4 sect0[SECT0LEN_WORD],
                      uInt4 gribLen, double majEarth, double minEarth)
@@ -1890,8 +1890,8 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    /* Init first 2 sInt4 to sect0. */
    memcpy (c_ipack, sect0, SECT0LEN_WORD * 2);
    /* Read in the rest of the message. */
-   if (fp.DataSourceFread (c_ipack + SECT0LEN_WORD * 2, sizeof (char),
-              (gribLen - SECT0LEN_WORD * 2)) + SECT0LEN_WORD * 2 != gribLen) {
+   if (VSIFReadL (c_ipack + SECT0LEN_WORD * 2, sizeof (char),
+              (gribLen - SECT0LEN_WORD * 2), fp) + SECT0LEN_WORD * 2 != gribLen) {
       errSprintf ("Ran out of file\n");
       return -1;
    }
@@ -1945,10 +1945,10 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    if (meta->gds.numPts > *grib_DataLen) {
       if( meta->gds.numPts > 100 * 1024 * 1024 )
       {
-          long curPos = fp.DataSourceFtell();
-          fp.DataSourceFseek(0, SEEK_END);
-          long fileSize = fp.DataSourceFtell();
-          fp.DataSourceFseek(curPos, SEEK_SET);
+          vsi_l_offset curPos = VSIFTellL(fp);
+          VSIFSeekL(fp, 0, SEEK_END);
+          vsi_l_offset fileSize = VSIFTellL(fp);
+          VSIFSeekL(fp, curPos, SEEK_SET);
           // allow a compression ratio of 1:1000
           if( meta->gds.numPts / 1000 > (uInt4)fileSize )
           {
@@ -2101,49 +2101,58 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
 #ifdef DEBUG_DEGRIB1
 int main (int argc, char **argv)
 {
-   DataSource grib_fp;       /* The opened grib2 file for input. */
-   sInt4 offset;        /* Where we currently are in grib_fp. */
-   sInt4 sect0[SECT0LEN_WORD]; /* Holds the current Section 0. */
-   char wmo[WMO_HEADER_LEN + 1]; /* Holds the current wmo message. */
-   sInt4 gribLen;       /* Length of the current GRIB message. */
-   sInt4 wmoLen;        /* Length of current wmo Message. */
+   VSILFILE * grib_fp;       /* The opened grib2 file for input. */
+   char *buff = nullptr;
+   uInt4 buffLen = 0;
+   sInt4 sect0[SECT0LEN_WORD] = { 0 }; /* Holds the current Section 0. */
+   uInt4 gribLen;       /* Length of the current GRIB message. */
    char *msg;
    int version;
    sChar f_unit = 0;
    double *grib_Data;
-   sInt4 grib_DataLen;
+   uInt4 grib_DataLen;
    grib_MetaData meta;
+
+   double majEarth = 0.0;  // -radEarth if < 6000 ignore, otherwise use this
+                           // to override the radEarth in the GRIB1 or GRIB2
+                           // message.  Needed because NCEP uses 6371.2 but
+                           // GRIB1 could only state 6367.47.
+   double minEarth = 0.0;  // -minEarth if < 6000 ignore, otherwise use this
+                           // to override the minEarth in the GRIB1 or GRIB2
+                           // message.
+
+
    IS_dataType is;      /* Un-parsed meta data for this GRIB2 message. As
                          * well as some memory used by the unpacker. */
 
-   //if ((grib_fp = fopen (argv[1], "rb")) == NULL) {
-   //   printf ("Problems opening %s for read\n", argv[1]);
-   //   return 1;
-   //}
-	 grib_fp = FileDataSource(argv[1]);
+   if ((grib_fp = VSIFOpenL (argv[1], "rb")) == NULL) {
+      printf ("Problems opening %s for read\n", argv[1]);
+      return 1;
+   }
    IS_Init (&is);
    MetaInit (&meta);
 
-   offset = 0;
-   if (ReadSECT0 (grib_fp, offset, WMO_HEADER_LEN, WMO_SECOND_LEN, wmo,
-                  sect0, &gribLen, &wmoLen, &version) < 0) {
+   if (ReadSECT0 (grib_fp, &buff, &buffLen, -1, sect0, &gribLen, &version) < 0) {
+      VSIFCloseL(grib_fp);
+      free(buff);
       msg = errSprintf (NULL);
       printf ("%s\n", msg);
       return -1;
    }
+   free(buff);
+
    grib_DataLen = 0;
    grib_Data = NULL;
    if (version == 1) {
       meta.GribVersion = version;
       ReadGrib1Record (grib_fp, f_unit, &grib_Data, &grib_DataLen, &meta,
-                       &is, sect0, gribLen);
-      offset = offset + gribLen + wmoLen;
+                       &is, sect0, gribLen, majEarth, minEarth);
    }
 
    MetaFree (&meta);
    IS_Free (&is);
    free (grib_Data);
-   //fclose (grib_fp);
+   VSIFCloseL(grib_fp);
    return 0;
 }
 #endif
