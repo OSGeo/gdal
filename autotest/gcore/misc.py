@@ -653,6 +653,77 @@ def misc_13():
     return 'success'
 
 ###############################################################################
+# Test SetErrorHandler
+
+def misc_15():
+    messages0 = []
+    def handle0(ecls, ecode, emsg):
+        messages0.append((ecls, ecode, emsg))
+
+    messages1 = []
+    def handle1(ecls, ecode, emsg):
+        messages1.append((ecls, ecode, emsg))
+
+    prev_debug = gdal.GetConfigOption("CPL_DEBUG")
+    try:
+        gdal.SetErrorHandler(handle0)
+        gdal.SetConfigOption('CPL_DEBUG', "ON")
+
+        gdal.Debug('foo', 'bar')
+        gdal.Error(gdal.CE_Debug, gdal.CPLE_FileIO, "debug2")
+        gdal.Error(gdal.CE_None, gdal.CPLE_AppDefined, "info1")
+        gdal.Error(gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1")
+        gdal.Error(gdal.CE_Failure, 99999, "error1")
+
+        expected0 = [
+            (gdal.CE_Debug, 0, 'foo: bar'),
+            (gdal.CE_Debug, gdal.CPLE_FileIO, "debug2"),
+            (gdal.CE_None, gdal.CPLE_AppDefined, "info1"),
+            (gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1"),
+            (gdal.CE_Failure, 99999, "error1"),
+        ]
+        if expected0 != messages0:
+            gdaltest.post_reason("SetErrorHandler: mismatched log messages")
+            return 'fail'
+        messages0[:] = []
+
+        # Check Push
+        gdal.PushErrorHandler(handle1)
+        gdal.SetConfigOption("CPL_DEBUG", "OFF")
+        gdal.Error(gdal.CE_Debug, gdal.CPLE_FileIO, "debug2")
+        gdal.Error(gdal.CE_None, gdal.CPLE_AppDefined, "info1")
+        gdal.Error(gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1")
+        gdal.Error(gdal.CE_Failure, 99999, "error1")
+
+        if len(messages0) != 0:
+            gdaltest.post_reason("PushErrorHandler: unexpected log messages")
+            return 'fail'
+        if len(messages1) != 4:
+            gdaltest.post_reason("PushErrorHandler: missing log messages")
+            return 'fail'
+
+        # and pop restores original behaviour
+        gdal.PopErrorHandler()
+        messages1[:] = []
+        gdal.Error(gdal.CE_Debug, gdal.CPLE_FileIO, "debug2")
+        gdal.Error(gdal.CE_None, gdal.CPLE_AppDefined, "info1")
+        gdal.Error(gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1")
+        gdal.Error(gdal.CE_Failure, 99999, "error1")
+
+        if len(messages0) != 4:
+            gdaltest.post_reason("PopErrorHandler: missing log messages")
+            return 'fail'
+        if len(messages1) != 0:
+            gdaltest.post_reason("PopErrorHandler: unexpected log messages")
+            return 'fail'
+
+    finally:
+        gdal.SetErrorHandler('CPLDefaultErrorHandler')
+        gdal.SetConfigOption('CPL_DEBUG', prev_debug)
+
+    return 'success'
+
+###############################################################################
 
 
 def misc_cleanup():
@@ -678,6 +749,7 @@ gdaltest_list = [misc_1,
                  misc_11,
                  misc_12,
                  misc_13,
+                 misc_15,
                  misc_cleanup]
 
 # gdaltest_list = [ misc_6 ]
