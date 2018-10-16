@@ -74,8 +74,17 @@ typedef char retStringAndCPLFree;
 %nothread;
 
 %{
+extern "C" int CPL_DLL GDALIsInGlobalDestructor();
+
 void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* pszErrorMsg)
 {
+    if( GDALIsInGlobalDestructor() )
+    {
+        // this is typically during Python interpreter shutdown, and ends up in a crash
+        // because error handling tries to do thread initialisation.
+        return;
+    }
+
     void* user_data = CPLGetErrorHandlerUserData();
     PyObject *psArgs;
 
