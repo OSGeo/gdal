@@ -142,7 +142,10 @@ int IGNFHeightASCIIGridDataset::Identify(GDALOpenInfo* poOpenInfo)
         const GByte ch = pabyHeader[i];
         if( ch == ' ' )
         {
-            nCountFields ++;
+            if( i > 0 && pabyHeader[i-1] != ' ' )
+            {
+                nCountFields ++;
+            }
         }
         else if( nCountFields <= 11 )
         {
@@ -251,7 +254,8 @@ bool IGNFHeightASCIIGridDataset::ParseHeader(GDALOpenInfo* poOpenInfo,
     }
     dfRasterXSize = (dfLongMax - dfLongMin) / dfStepLong;
     dfRasterYSize = (dfLatMax - dfLatMin) / dfStepLat;
-    if( dfRasterXSize > 10000 || dfRasterYSize > 10000 )
+    if( dfRasterXSize > 10000 || dfRasterYSize > 10000 ||
+        dfRasterXSize * dfRasterYSize > 10e6 )
     {
         return false;
     }
@@ -396,10 +400,10 @@ GDALDataset* IGNFHeightASCIIGridDataset::Open(GDALOpenInfo* poOpenInfo)
     size_t nBufferCount = 0;
     const size_t nHeaderSize = osBuffer.find('\r');
     CPLAssert(nHeaderSize != std::string::npos);
-    size_t nLastPos = nHeaderSize + 2;
+    size_t nLastPos = nHeaderSize + 1;
     int iValuePerNode = 0;
     bool lastWasSep = true;
-    for( size_t i = nHeaderSize + 2; i < osBuffer.size(); i++ )
+    for( size_t i = nLastPos; i < osBuffer.size(); i++ )
     {
         if( isspace(osBuffer[i]) )
         {
