@@ -3278,10 +3278,10 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
   }
 
   /*
-  ** We do not want to interfere with warnings or debug messages since
+  ** We do not want to interfere with non-failure messages since
   ** they won't be translated into exceptions.
   */
-  else if (eclass == CE_Warning || eclass == CE_Debug ) {
+  else if (eclass != CE_Failure ) {
     pfnPreviousHandler(eclass, code, msg );
   }
   else {
@@ -3309,8 +3309,9 @@ void UseExceptions() {
                    CPLGetConfigOption("__chain_python_error_handlers", "")));
     CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
     CPLFree(pszNewValue);
+    // if the previous logger was custom, we need the user data available
     pfnPreviousHandler =
-        CPLSetErrorHandler( (CPLErrorHandler) PythonBindingErrorHandler );
+        CPLSetErrorHandlerEx( (CPLErrorHandler) PythonBindingErrorHandler, CPLGetErrorHandlerUserData() );
   }
 }
 
@@ -3334,7 +3335,8 @@ void DontUseExceptions() {
     CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
     CPLFree(pszNewValue);
     bUseExceptions = 0;
-    CPLSetErrorHandler( pfnPreviousHandler );
+    // if the previous logger was custom, we need the user data available. Preserve it.
+    CPLSetErrorHandlerEx( pfnPreviousHandler, CPLGetErrorHandlerUserData());
   }
 }
 
@@ -3885,27 +3887,30 @@ typedef char retStringAndCPLFree;
     CPLDebug( msg_class, "%s", message );
   }
 
-  CPLErr SetErrorHandler( char const * pszCallbackName = NULL )
+  CPLErr SetErrorHandler( CPLErrorHandler pfnErrorHandler = NULL, void* user_data = NULL )
   {
-    CPLErrorHandler pfnHandler = NULL;
-    if( pszCallbackName == NULL || EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
-      pfnHandler = CPLQuietErrorHandler;
-    else if( EQUAL(pszCallbackName,"CPLDefaultErrorHandler") )
-      pfnHandler = CPLDefaultErrorHandler;
-    else if( EQUAL(pszCallbackName,"CPLLoggingErrorHandler") )
-      pfnHandler = CPLLoggingErrorHandler;
+    if( pfnErrorHandler == NULL )
+    {
+        pfnErrorHandler = CPLDefaultErrorHandler;
+    }
 
-    if ( pfnHandler == NULL )
-      return CE_Fatal;
-
-    CPLSetErrorHandler( pfnHandler );
+    CPLSetErrorHandlerEx( pfnErrorHandler, user_data );
 
     return CE_None;
   }
 
 
+extern "C" int CPL_DLL GDALIsInGlobalDestructor();
+
 void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* pszErrorMsg)
 {
+    if( GDALIsInGlobalDestructor() )
+    {
+        // this is typically during Python interpreter shutdown, and ends up in a crash
+        // because error handling tries to do thread initialisation.
+        return;
+    }
+
     void* user_data = CPLGetErrorHandlerUserData();
     PyObject *psArgs;
 
@@ -7222,20 +7227,48 @@ fail:
 
 SWIGINTERN PyObject *_wrap_SetErrorHandler(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  char *arg1 = (char *) NULL ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
+  CPLErrorHandler arg1 = (CPLErrorHandler) NULL ;
+  void *arg2 = (void *) NULL ;
   PyObject * obj0 = 0 ;
   CPLErr result;
   
   if (!PyArg_ParseTuple(args,(char *)"|O:SetErrorHandler",&obj0)) SWIG_fail;
   if (obj0) {
-    res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SetErrorHandler" "', argument " "1"" of type '" "char const *""'");
+    {
+      /* %typemap(in) (CPLErrorHandler pfnErrorHandler = NULL, void* user_data = NULL) */
+      int alloc = 0;
+      char* pszCallbackName = NULL;
+      arg2 = NULL;
+      if( SWIG_IsOK(SWIG_AsCharPtrAndSize(obj0, &pszCallbackName, NULL, &alloc)) )
+      {
+        if( pszCallbackName == NULL || EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
+        arg1 = CPLQuietErrorHandler;
+        else if( EQUAL(pszCallbackName,"CPLDefaultErrorHandler") )
+        arg1 = CPLDefaultErrorHandler;
+        else if( EQUAL(pszCallbackName,"CPLLoggingErrorHandler") )
+        arg1 = CPLLoggingErrorHandler;
+        else
+        {
+          if (alloc == SWIG_NEWOBJ) delete[] pszCallbackName;
+          PyErr_SetString( PyExc_RuntimeError, "Unhandled value for passed string" );
+          SWIG_fail;
+        }
+        
+        if (alloc == SWIG_NEWOBJ) delete[] pszCallbackName;
+      }
+      else if (!PyCallable_Check(obj0))
+      {
+        PyErr_SetString( PyExc_RuntimeError,
+          "Object given is not a String or a Python function" );
+        SWIG_fail;
+      }
+      else
+      {
+        Py_INCREF(obj0);
+        arg1 = PyCPLErrorHandler;
+        arg2 = obj0;
+      }
     }
-    arg1 = reinterpret_cast< char * >(buf1);
   }
   {
     if ( bUseExceptions ) {
@@ -7243,7 +7276,7 @@ SWIGINTERN PyObject *_wrap_SetErrorHandler(PyObject *SWIGUNUSEDPARM(self), PyObj
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      CPL_IGNORE_RET_VAL(result = (CPLErr)SetErrorHandler((char const *)arg1));
+      CPL_IGNORE_RET_VAL(result = (CPLErr)SetErrorHandler(arg1,arg2));
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -7256,11 +7289,9 @@ SWIGINTERN PyObject *_wrap_SetErrorHandler(PyObject *SWIGUNUSEDPARM(self), PyObj
 #endif
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return NULL;
 }
 
@@ -34350,7 +34381,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"VSIFReadL", _wrap_VSIFReadL, METH_VARARGS, (char *)"VSIFReadL(unsigned int nMembSize, unsigned int nMembCount, VSILFILE fp) -> unsigned int"},
 	 { (char *)"VSIGetMemFileBuffer_unsafe", _wrap_VSIGetMemFileBuffer_unsafe, METH_VARARGS, (char *)"VSIGetMemFileBuffer_unsafe(char const * utf8_path)"},
 	 { (char *)"Debug", _wrap_Debug, METH_VARARGS, (char *)"Debug(char const * msg_class, char const * message)"},
-	 { (char *)"SetErrorHandler", _wrap_SetErrorHandler, METH_VARARGS, (char *)"SetErrorHandler(char const * pszCallbackName=None) -> CPLErr"},
+	 { (char *)"SetErrorHandler", _wrap_SetErrorHandler, METH_VARARGS, (char *)"SetErrorHandler(CPLErrorHandler pfnErrorHandler=0) -> CPLErr"},
 	 { (char *)"PushErrorHandler", _wrap_PushErrorHandler, METH_VARARGS, (char *)"PushErrorHandler(CPLErrorHandler pfnErrorHandler=0) -> CPLErr"},
 	 { (char *)"PopErrorHandler", _wrap_PopErrorHandler, METH_VARARGS, (char *)"PopErrorHandler()"},
 	 { (char *)"Error", _wrap_Error, METH_VARARGS, (char *)"Error(CPLErr msg_class, int err_code=0, char const * msg)"},
