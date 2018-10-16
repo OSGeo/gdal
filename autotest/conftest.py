@@ -1,5 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
 
 import os
 import sys
@@ -14,6 +14,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "pymod"))
 # These files may be non-importable, and don't contain tests anyway.
 # So we skip searching them during test collection.
 collect_ignore = ["gdrivers/netcdf_cfchecks.py"]
+
+# we set ECW to not resolve projection and datum strings to get 3.x behavior.
+gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
+
+if 'APPLY_LOCALE' in os.environ:
+    import locale
+    locale.setlocale(locale.LC_ALL, '')
 
 
 @pytest.fixture(scope="module", autouse=True)

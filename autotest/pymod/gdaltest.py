@@ -30,6 +30,7 @@
 ###############################################################################
 
 import contextlib
+import math
 import os
 import os.path
 import stat
@@ -76,18 +77,6 @@ else:
 # Process commandline arguments for stuff like --debug, --locale, --config
 
 argv = gdal.GeneralCmdLineProcessor(sys.argv)
-
-###############################################################################
-
-
-def setup_run(name):
-
-    if 'APPLY_LOCALE' in os.environ:
-        import locale
-        locale.setlocale(locale.LC_ALL, '')
-
-    global cur_name
-    cur_name = name
 
 ###############################################################################
 
@@ -226,143 +215,6 @@ def post_reason(msg, frames=2):
 ###############################################################################
 
 
-def summarize():
-    global count_skipped_tests_download, count_skipped_tests_slow
-    global success_counter, failure_counter, blow_counter, skip_counter
-    global cur_name
-    global start_time, end_time
-
-    print('')
-    if cur_name is not None:
-        print('Test Script: %s' % cur_name)
-    print('Succeeded: %d' % success_counter)
-    print('Failed:    %d (%d blew exceptions)'
-          % (failure_counter + blow_counter, blow_counter))
-    print('Skipped:   %d' % skip_counter)
-    print('Expected fail:%d' % expected_failure_counter)
-    if start_time is not None:
-        duration = end_time - start_time
-        if duration >= 60:
-            print('Duration:  %02dm%02.1fs' % (duration / 60., duration % 60.))
-        else:
-            print('Duration:  %02.2fs' % duration)
-    if count_skipped_tests_download != 0:
-        print('As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined or set to NO, %d tests relying on data to downloaded from the Web have been skipped' % count_skipped_tests_download)
-    if count_skipped_tests_slow != 0:
-        print('As GDAL_RUN_SLOW_TESTS environment variable is not defined or set to NO, %d "slow" tests have been skipped' % count_skipped_tests_slow)
-    print('')
-
-    sys.path.append('gcore')
-    sys.path.append('../gcore')
-    import testnonboundtoswig
-    # Do it twice to ensure that cleanup routines properly do their jobs
-    for _ in range(2):
-        testnonboundtoswig.OSRCleanup()
-        testnonboundtoswig.GDALDestroyDriverManager()
-        testnonboundtoswig.OGRCleanupAll()
-
-    return failure_counter + blow_counter
-
-###############################################################################
-
-
-def run_all(dirlist, run_as_external=False):
-
-    global start_time, end_time
-    global cur_name
-
-    start_time = time.time()
-
-    for dir_name in dirlist:
-        files = os.listdir(dir_name)
-
-        old_path = sys.path
-        # We prepend '.' rather than append it, so that "import rasterio"
-        # imports our rasterio.py and not another famous external package.
-        sys.path = ['.'] + sys.path
-
-        for filename in files:
-            if not filename.endswith('.py'):
-                continue
-
-            # Do not use rstrip here since 'test_ogr2ogr_py.py'.rstrip('.py') returns 'test_ogr2ogr_'
-            module = filename[0:-len('.py')]
-            try:
-                wd = os.getcwd()
-                os.chdir(dir_name)
-
-                # Even try to import as module in run_as_external case
-                # so as to be able to detect ImportError and skip them
-                exec("import " + module)
-
-                if run_as_external:
-
-                    exec("%s.gdaltest_list" % module)
-
-                    python_exe = sys.executable
-                    if sys.platform == 'win32':
-                        python_exe = python_exe.replace('\\', '/')
-
-                    print('Running %s/%s...' % (dir_name, filename))
-                    if 'GDALTEST_ASAN_OPTIONS' in os.environ:
-                        if 'ASAN_OPTIONS' in os.environ:
-                            backup_asan_options = os.environ['ASAN_OPTIONS']
-                        else:
-                            backup_asan_options = None
-                        os.environ['ASAN_OPTIONS'] = os.environ['GDALTEST_ASAN_OPTIONS']
-                    ret = runexternal(python_exe + """ -c "import %s; import sys; sys.path.append('../pymod'); import gdaltest; gdaltest.run_tests( %s.gdaltest_list ); gdaltest.summarize()" """ % (module, module), display_live_on_parent_stdout=True)
-                    if 'GDALTEST_ASAN_OPTIONS' in os.environ:
-                        if backup_asan_options is None:
-                            del os.environ['ASAN_OPTIONS']
-                        else:
-                            os.environ['ASAN_OPTIONS'] = backup_asan_options
-
-                    global success_counter, failure_counter, failure_summary
-                    if ret.find('Failed:    0') < 0:
-                        failure_counter += 1
-                        failure_summary.append(dir_name + '/' + filename)
-                    else:
-                        success_counter += 1
-                else:
-                    try:
-                        print('Running tests from %s/%s' % (dir_name, filename))
-                        setup_run('%s/%s' % (dir_name, filename))
-                        exec("run_tests( " + module + ".gdaltest_list)")
-                    except KeyboardInterrupt:
-                        raise
-                    except:
-                        # import traceback
-                        # traceback.print_exc(file=sys.stderr)
-                        pass
-
-                os.chdir(wd)
-
-            except KeyboardInterrupt:
-                raise
-            except:
-                os.chdir(wd)
-                print('... failed to load %s ... skipping.' % filename)
-
-                import traceback
-                traceback.print_exc()
-
-        # We only add the tool directory to the python path long enough
-        # to load the tool files.
-        sys.path = old_path
-
-    end_time = time.time()
-    cur_name = None
-
-    if failure_summary:
-        print('')
-        print(' ------------ Failures ------------')
-        for item in failure_summary:
-            print(item)
-        print(' ----------------------------------')
-
-###############################################################################
-
-
 def clean_tmp():
     all_files = os.listdir('tmp')
     for filename in all_files:
@@ -373,7 +225,6 @@ def clean_tmp():
             os.remove('tmp/' + filename)
         except OSError:
             pass
-    return 'success'
 
 ###############################################################################
 
@@ -776,8 +627,6 @@ class GDALTest(object):
         if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON' and delete_copy == 1:
             self.driver.Delete(new_filename)
 
-        return 'success'
-
     def testCreate(self, vsimem=0, new_filename=None, out_bands=1,
                    check_minmax=1, dest_open_options=None):
         if self.testDriver() == 'fail':
@@ -864,8 +713,6 @@ class GDALTest(object):
         if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
             self.driver.Delete(new_filename)
 
-        return 'success'
-
     def testSetGeoTransform(self):
         if self.testDriver() == 'fail':
             return 'skip'
@@ -918,8 +765,6 @@ class GDALTest(object):
 
         if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
             self.driver.Delete(new_filename)
-
-        return 'success'
 
     def testSetProjection(self, prj=None, expected_prj=None):
         if self.testDriver() == 'fail':
@@ -984,8 +829,6 @@ class GDALTest(object):
         if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
             self.driver.Delete(new_filename)
 
-        return 'success'
-
     def testSetMetadata(self):
         if self.testDriver() == 'fail':
             return 'skip'
@@ -1036,8 +879,6 @@ class GDALTest(object):
 
         if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
             self.driver.Delete(new_filename)
-
-        return 'success'
 
     def testSetNoDataValue(self, delete=False):
         if self.testDriver() == 'fail':
@@ -1101,8 +942,6 @@ class GDALTest(object):
         if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
             self.driver.Delete(new_filename)
 
-        return 'success'
-
     def testSetNoDataValueAndDelete(self):
         return self.testSetNoDataValue(delete=True)
 
@@ -1146,8 +985,6 @@ class GDALTest(object):
 
         if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
             self.driver.Delete(new_filename)
-
-        return 'success'
 
     def testSetUnitType(self):
         if self.testDriver() == 'fail':
@@ -1195,8 +1032,6 @@ class GDALTest(object):
 
         if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
             self.driver.Delete(new_filename)
-
-        return 'success'
 
 
 def approx_equal(a, b):
@@ -1614,45 +1449,28 @@ def unzip(target_dir, zipfilename, verbose=False):
 
     return
 
-###############################################################################
-# Return if a number is the NaN number
 
-
-def isnan(val):
-    return val != val
-
+isnan = math.isnan
 
 ###############################################################################
 # Return NaN
 
 def NaN():
-    try:
-        # Python >= 2.6
-        return float('nan')
-    except NameError:
-        return 1e400 / 1e400
+    return float('nan')
 
 ###############################################################################
 # Return positive infinity
 
 
 def posinf():
-    try:
-        # Python >= 2.6
-        return float('inf')
-    except NameError:
-        return 1e400
+    return float('inf')
 
 ###############################################################################
 # Return negative infinity
 
 
 def neginf():
-    try:
-        # Python >= 2.6
-        return float('-inf')
-    except NameError:
-        return -1e400
+    return float('-inf')
 
 ###############################################################################
 # Has the user requested to dowload test data
