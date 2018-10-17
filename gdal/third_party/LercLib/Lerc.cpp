@@ -25,6 +25,8 @@ Contributors:  Thomas Maurer
 #include "Lerc.h"
 #include "Lerc2.h"
 
+#include <limits>
+
 #ifdef HAVE_LERC1_DECODE
 #include "Lerc1Decode/CntZImage.h"
 #endif
@@ -121,6 +123,9 @@ ErrCode Lerc::GetLercInfo(const Byte* pLercBlob, unsigned int numBytesBlob, stru
       {
         return ErrCode::Failed;
       }
+
+      if( lercInfo.blobSize > std::numeric_limits<int>::max() - hdInfo.blobSize )
+        return ErrCode::Failed;
 
       lercInfo.blobSize += hdInfo.blobSize;
 
