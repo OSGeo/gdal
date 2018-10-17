@@ -3626,7 +3626,7 @@ def tiff_write_87():
 
     import validate_cloud_optimized_geotiff
     try:
-        errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled=False)
+        _, errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled=False)
         if errors:
             gdaltest.post_reason('validate_cloud_optimized_geotiff failed')
             print(errors)
