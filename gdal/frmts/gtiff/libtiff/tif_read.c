@@ -346,7 +346,8 @@ TIFFSeek(TIFF* tif, uint32 row, uint16 sample )
             return 0;
         whole_strip = tif->tif_dir.td_stripbytecount[strip] < 10
                 || isMapped(tif);
-        if( td->td_compression == COMPRESSION_LERC )
+        if( td->td_compression == COMPRESSION_LERC ||
+            td->td_compression == COMPRESSION_JBIG )
         {
             /* Ideally plugins should have a way to declare they don't support
              * chunk strip */
