@@ -4157,6 +4157,8 @@ elif test "$with_webp" != "no" -a "$with_webp" != ""; then
 
 fi
 
+AC_SUBST(WEBP_SETTING,$WEBP_SETTING)
+
 if test "$WEBP_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="webp $OPT_GDAL_FORMATS"
 fi
