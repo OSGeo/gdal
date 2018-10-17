@@ -158,7 +158,8 @@ TWebPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
     /* Returns the RGB/A image decoded so far */
     buf = WebPIDecGetRGB(sp->psDecoder, &current_y, NULL, NULL, &stride);
     
-    if ((buf != NULL) && (current_y > sp->last_y)) {
+    if ((buf != NULL) &&
+        (occ == stride * (current_y - sp->last_y))) {
       memcpy(op,   
          buf + (sp->last_y * stride),
          occ);
