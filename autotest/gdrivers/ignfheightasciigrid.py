@@ -92,6 +92,19 @@ def ignfheightasciigrid_7():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
+def ignfheightasciigrid_description_multiword():
+
+    filename = '/vsimem/ignfheightasciigrid_invalid'
+    ok_content = '2 3 49 50 1 1 1 0 1 0 -0. MULTI WORD\r1 2 3 4'
+    gdal.FileFromMemBuffer(filename, ok_content)
+    ds = gdal.OpenEx(filename)
+    desc = ds.GetMetadataItem('DESCRIPTION')
+    if desc != 'MULTI WORD':
+        print(desc)
+        return 'fail'
+    return 'success'
+
+
 def ignfheightasciigrid_invalid():
 
     filename = '/vsimem/ignfheightasciigrid_invalid'
@@ -106,12 +119,13 @@ def ignfheightasciigrid_invalid():
         return 'fail'
     gdal.Unlink(filename)
 
-    contents = ['0 0 0 0 0 0 0 0 0 0 0 0\r',
-                '                   \r',
-                '2 3 49 50 1 1 1 0 1 0 0 DESC', # no newline
-                '2 3 49 50 1 1 1 0 1 0 0\r1 2 3 4', # missing description in header
-                '2 3 49 50 1 1 1 a 1 0 0 DESC\r1 2 3 4', # not a number in numeric header section
-                '2 3 49 50 1 1 1 0 1 0 0 DESC\ra 2 3 4', # not a number in value section
+    contents = ['0 0 0 0 0 0 0 0 0 0 0 0\r',  # a lot of invalid values
+                '                   \r',  # all spaces
+                '2 3 49 50 1 1 1 0 1 0 0 DESC',  # no newline
+                '2 3 49 50 1 1 1 0 1 0 0\r1 2 3 4',  # missing description in header
+                # not a number in numeric header section
+                '2 3 49 50 1 1 1 a 1 0 0 DESC\r1 2 3 4',
+                '2 3 49 50 1 1 1 0 1 0 0 DESC\ra 2 3 4',  # not a number in value section
                 '2 3 49 50 1 1 1 0 1 0 0 DES\xC3\xA8C\r1 2 3 4',  # invalid character in comment
                 '-200 3 49 50 1 1 1 0 1 0 0 DESC\r1 2 3 4',  # invalid longmin
                 '2 300 49 50 1 1 1 0 1 0 0 DESC\r1 2 3 4',  # invalid longmax
@@ -143,6 +157,23 @@ def ignfheightasciigrid_invalid():
     return 'success'
 
 
+def ignfheightasciigrid_huge():
+
+    filename = '/vsimem/ignfheightasciigrid_huge'
+    ok_content = '2 3 49 50 1 1 1 0 1 0 -0. MULTI WORD\r1 2 3 4'
+    gdal.FileFromMemBuffer(filename, ok_content)
+    f = gdal.VSIFOpenL(filename, 'rb+')
+    gdal.VSIFSeekL(f, 10 * 1024 * 1024 + 1, 0)
+    gdal.VSIFWriteL('x', 1, 1, f)
+    gdal.VSIFCloseL(f)
+
+    ds = gdal.OpenEx(filename, gdal.OF_RASTER)
+    gdal.Unlink(filename)
+    if ds is not None:
+        return 'fail'
+    return 'success'
+
+
 gdaltest_list = [
     ignfheightasciigrid_1,
     ignfheightasciigrid_2,
@@ -151,7 +182,9 @@ gdaltest_list = [
     ignfheightasciigrid_5,
     ignfheightasciigrid_6,
     ignfheightasciigrid_7,
+    ignfheightasciigrid_description_multiword,
     ignfheightasciigrid_invalid,
+    ignfheightasciigrid_huge,
 ]
 
 

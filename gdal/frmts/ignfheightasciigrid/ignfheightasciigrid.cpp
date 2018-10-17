@@ -162,10 +162,6 @@ int IGNFHeightASCIIGridDataset::Identify(GDALOpenInfo* poOpenInfo)
         }
         else if( ch == '\r' )
         {
-            if( nCountFields < 12 )
-            {
-                return FALSE;
-            }
             iPosFirstNewLine = i;
             break;
         }
@@ -181,6 +177,7 @@ int IGNFHeightASCIIGridDataset::Identify(GDALOpenInfo* poOpenInfo)
     {
         return FALSE;
     }
+    CPLAssert( nCountFields >= 12 );
 
     for( int i = iPosFirstNewLine + 1; i < poOpenInfo->nHeaderBytes; i++ )
     {
