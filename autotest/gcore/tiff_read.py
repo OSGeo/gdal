@@ -2448,6 +2448,10 @@ def tiff_read_md12():
     shutil.copy('../gdrivers/data/dimap2/RPC_foo.XML', 'tmp/RPC_foo.XML')
     ds = gdal.Open('tmp/IMG_foo_temp.TIF', gdal.GA_ReadOnly)
     filelist = ds.GetFileList()
+    ds = None
+    gdal.Unlink('tmp/IMG_foo_temp.TIF')
+    gdal.Unlink('tmp/DIM_foo.XML')
+    gdal.Unlink('tmp/RPC_foo.XML')
 
     if len(filelist) > 1:
         gdaltest.post_reason('did not get expected file list.')

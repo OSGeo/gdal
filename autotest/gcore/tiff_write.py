@@ -745,6 +745,8 @@ def tiff_write_18():
         gdaltest.post_reason('RPB did not get removed')
         return 'fail'
 
+    gdaltest.tiff_drv.Delete('tmp/tw_18.tif')
+
     return 'success'
 
 ###############################################################################
