@@ -627,8 +627,8 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
     }
 
     //Bypass parsing JSON if not in the expected format
-    if(!(strstr(osConnectionString, "graph-id") != nullptr ||
-           strstr(osConnectionString, "template-id") != nullptr))
+    if (!(strstr(osConnectionString, "graph-id") != nullptr ||
+          strstr(osConnectionString, "template-id") != nullptr))
         return false;
 
     json_object* poObj = nullptr;
@@ -748,7 +748,6 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
 
     return true;
 }
-
 /************************************************************************/
 /*                      ParseImageReferenceString()                         */
 /************************************************************************/
@@ -770,8 +769,8 @@ bool GDALRDADataset::ParseImageReferenceString( GDALOpenInfo* poOpenInfo )
     }
 
     //Bypass parsing JSON if not in the expected format
-    if(!(strstr(osConnectionString, "graphId") != nullptr ||
-         strstr(osConnectionString, "templateId") != nullptr))
+    if (!(strstr(osConnectionString, "graphId") != nullptr ||
+          strstr(osConnectionString, "templateId") != nullptr))
         return false;
 
     json_object* poObj = nullptr;
