@@ -128,7 +128,7 @@ def vsicurl_5():
 # Test with FTP server that doesn't support EPSV command
 
 
-def vsicurl_6():
+def vsicurl_6_disabled():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
@@ -497,7 +497,7 @@ gdaltest_list = [vsicurl_1,
                  # vsicurl_3,
                  vsicurl_4,
                  vsicurl_5,
-                 vsicurl_6,
+                 #vsicurl_6_disabled,
                  vsicurl_7,
                  # vsicurl_8,
                  vsicurl_9,
