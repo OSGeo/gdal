@@ -3077,7 +3077,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList( const char* pszFilename,
                     strcmp(beginFilename, "..") != 0 )
                 {
                     CPLString osCachedFilename =
-                        CPLSPrintf("%s/%s", pszFilename + strlen("/vsicurl/"),
+                        CPLSPrintf("%s/%s", osURL.c_str(),
                                    beginFilename);
                     CachedFileProp* cachedFileProp =
                         GetCachedFileProp(osCachedFilename);
@@ -3093,7 +3093,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList( const char* pszFilename,
                                  "File[%d] = %s, is_dir = %d, size = "
                                  CPL_FRMT_GUIB
                                  ", time = %04d/%02d/%02d %02d:%02d:%02d",
-                                 nCount, beginFilename, bIsDirectory ? 1 : 0,
+                                 nCount, osCachedFilename.c_str(), bIsDirectory ? 1 : 0,
                                  nFileSize,
                                  brokendowntime.tm_year + 1900,
                                  brokendowntime.tm_mon + 1,
@@ -3407,7 +3407,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
                     {
                         CPLString osCachedFilename =
                             CPLSPrintf("%s/%s",
-                                       pszDirname + strlen("/vsicurl/"),
+                                       osURL.c_str(),
                                        pszFilename);
                         CachedFileProp* cachedFileProp =
                             GetCachedFileProp(osCachedFilename);
