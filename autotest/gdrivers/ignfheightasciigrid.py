@@ -163,8 +163,9 @@ def ignfheightasciigrid_huge():
     ok_content = '2 3 49 50 1 1 1 0 1 0 -0. MULTI WORD\r1 2 3 4'
     gdal.FileFromMemBuffer(filename, ok_content)
     f = gdal.VSIFOpenL(filename, 'rb+')
-    gdal.VSIFSeekL(f, 10 * 1024 * 1024 + 1, 0)
-    gdal.VSIFWriteL('x', 1, 1, f)
+    gdal.VSIFSeekL(f, 0, 2)
+    padding = ' ' * (10 * 1024 * 1024)
+    gdal.VSIFWriteL(padding, 1, len(padding), f)
     gdal.VSIFCloseL(f)
 
     ds = gdal.OpenEx(filename, gdal.OF_RASTER)
