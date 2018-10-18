@@ -142,6 +142,7 @@ class GDALRDADataset: public GDALDataset
         bool      ReadConfiguration();
         bool      GetAuthorization();
         bool      ParseAuthorizationResponse(const CPLString& osAuth);
+        bool      ParseImageReferenceString( GDALOpenInfo* poOpenInfo );
         bool      ParseConnectionString( GDALOpenInfo* poOpenInfo );
         json_object* ReadJSonFile(const char* pszFilename, const char* pszKey,
                                   bool bErrorOn404);
@@ -343,9 +344,12 @@ int GDALRDADataset::Identify( GDALOpenInfo* poOpenInfo )
 {
     bool retval = false;
     // if connection string is JSON
-    if((strstr(poOpenInfo->pszFilename, "graph-id") != nullptr &&
+    if(((strstr(poOpenInfo->pszFilename, "graph-id") != nullptr &&
         strstr(poOpenInfo->pszFilename, "node-id") != nullptr) ||
-       strstr(poOpenInfo->pszFilename, "template-id") != nullptr)
+       strstr(poOpenInfo->pszFilename, "template-id") != nullptr) ||
+        (strstr(poOpenInfo->pszFilename, "graphId") != nullptr &&
+         strstr(poOpenInfo->pszFilename, "nodeId") != nullptr) ||
+        strstr(poOpenInfo->pszFilename, "templateId") != nullptr)
     {
         retval = true;
     }
@@ -357,7 +361,9 @@ int GDALRDADataset::Identify( GDALOpenInfo* poOpenInfo )
                 poOpenInfo->pabyHeader);
             if( pszHeader != nullptr && STARTS_WITH_CI(pszHeader, "{") &&
                 (strstr(pszHeader,"graph-id") != nullptr ||
-                 strstr(pszHeader,"template-id") != nullptr))
+                 strstr(pszHeader,"template-id") != nullptr ||
+                 strstr(pszHeader,"graphId") != nullptr ||
+                 strstr(pszHeader,"templateId") != nullptr))
             {
                 retval = true;
             }
@@ -601,10 +607,10 @@ bool GDALRDADataset::ParseAuthorizationResponse(const CPLString& osAuth)
 }
 
 /************************************************************************/
-/*                      ParseConnectionString()                         */
+/*                      ParseImageReferenceString()                         */
 /************************************************************************/
 
-bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
+bool GDALRDADataset::ParseImageReferenceString( GDALOpenInfo* poOpenInfo )
 {
     CPLString osConnectionString;
     if(EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "DGRDA"))
@@ -619,6 +625,12 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
     {
         osConnectionString = poOpenInfo->pszFilename;
     }
+
+    //Bypass parsing JSON if not in the expected format
+    if(!(strstr(osConnectionString, "graphId") != nullptr ||
+         strstr(osConnectionString, "templateId") != nullptr))
+        return false;
+
     json_object* poObj = nullptr;
     if( !OGRJSonParse(osConnectionString, &poObj, true) )
     {
@@ -629,7 +641,7 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
     JsonObjectUniquePtr oObj(poObj);
 
     json_object* poGraphId =
-        CPL_json_object_object_get(poObj, "graph-id");
+        CPL_json_object_object_get(poObj, "graphId");
 
     if( poGraphId != nullptr &&
          json_object_get_type(poGraphId) == json_type_string)
@@ -641,7 +653,7 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
 
 
     json_object* poTemplateId =
-            CPL_json_object_object_get(poObj, "template-id");
+            CPL_json_object_object_get(poObj, "templateId");
 
     if( poTemplateId != nullptr &&
         json_object_get_type(poTemplateId) == json_type_string)
@@ -653,19 +665,19 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
     if(m_osType == RDADatasetType::UNDEFINED)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Missing graph-id or template-id");
+                 "Missing graphId or templateId");
         return false;
     }
 
 
     json_object* poNodeId =
-        CPL_json_object_object_get(poObj, "node-id");
+        CPL_json_object_object_get(poObj, "nodeId");
     if( (poNodeId == nullptr ||
          json_object_get_type(poNodeId) != json_type_string) &&
         m_osType == RDADatasetType::GRAPH )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Missing node-id");
+                 "Missing nodeId");
         return false;
     }
 
@@ -701,10 +713,145 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
 
     if(m_osType == RDADatasetType::TEMPLATE)
     {
+        json_object *poParams = CPL_json_object_object_get(poObj, "parameters");
+
+        if(poParams != nullptr &&
+            json_object_get_type(poParams) == json_type_object ) {
+            json_object_iter it;
+            it.key = nullptr;
+            it.val = nullptr;
+            it.entry = nullptr;
+            json_object_object_foreachC( poParams, it )
+            {
+                if(it.key != nullptr && it.val != nullptr)
+                {
+                    CPLString tkey = it.key;
+                    const char* tval =
+                        json_object_get_string(it.val);
+                    if(tval != nullptr)
+                    {
+                        m_osParams.push_back(std::make_tuple(tkey,
+                                                CPLString(tval)));
+                    }
+                }
+            }
+        }
+
+    }
+
+    return true;
+}
+/************************************************************************/
+/*                      ParseConnectionString()                         */
+/************************************************************************/
+
+bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
+{
+    CPLString osConnectionString;
+    if(EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "DGRDA"))
+    {
+        CSLUniquePtr papszContent(CSLLoad2( poOpenInfo->pszFilename,
+                                            -1, -1, nullptr));
+        char** papszIter = papszContent.get();
+        if(papszIter != nullptr)
+            osConnectionString = *(papszIter);
+    }
+    else
+    {
+        osConnectionString = poOpenInfo->pszFilename;
+    }
+
+    //Bypass parsing JSON if not in the expected format
+    if(!(strstr(osConnectionString, "graph-id") != nullptr ||
+           strstr(osConnectionString, "template-id") != nullptr))
+        return false;
+
+    json_object* poObj = nullptr;
+    if( !OGRJSonParse(osConnectionString, &poObj, true) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid JSon document as dataset name");
+        return false;
+    }
+    JsonObjectUniquePtr oObj(poObj);
+
+    json_object* poGraphId =
+            CPL_json_object_object_get(poObj, "graph-id");
+
+    if( poGraphId != nullptr &&
+        json_object_get_type(poGraphId) == json_type_string)
+    {
+        m_osType = RDADatasetType::GRAPH;
+        m_osGraphId = json_object_get_string(poGraphId);
+    }
+
+
+
+    json_object* poTemplateId =
+            CPL_json_object_object_get(poObj, "template-id");
+
+    if( poTemplateId != nullptr &&
+        json_object_get_type(poTemplateId) == json_type_string)
+    {
+        m_osType = RDADatasetType::TEMPLATE;
+        m_osTemplateId = json_object_get_string(poTemplateId);
+    }
+
+    if(m_osType == RDADatasetType::UNDEFINED)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Missing graph-id or template-id");
+        return false;
+    }
+
+
+    json_object* poNodeId =
+            CPL_json_object_object_get(poObj, "node-id");
+    if( (poNodeId == nullptr ||
+         json_object_get_type(poNodeId) != json_type_string) &&
+        m_osType == RDADatasetType::GRAPH )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Missing node-id");
+        return false;
+    }
+
+    m_osNodeId = (poNodeId != nullptr &&
+                  json_object_get_type(poNodeId) == json_type_string)
+                 ?  json_object_get_string(poNodeId) :"";
+
+    json_object* poDeleteOnClose = json_ex_get_object_by_path(poObj,
+                                                              "options.delete-on-close");
+    if( poDeleteOnClose &&
+        json_object_get_type(poDeleteOnClose) == json_type_boolean )
+    {
+        m_bDeleteOnClose = CPL_TO_BOOL(
+                json_object_get_boolean(poDeleteOnClose));
+    }
+
+    json_object* poMaxConnections = json_ex_get_object_by_path(poObj,
+                                                               "options.max-connections");
+    if( poMaxConnections &&
+        json_object_get_type(poMaxConnections) == json_type_int )
+    {
+        MaxCurlConnectionsSet(json_object_get_int(poMaxConnections));
+    }
+
+    json_object* poEnforceAdviseRead = json_ex_get_object_by_path(poObj,
+                                                                  "options.advise-read");
+    if( poEnforceAdviseRead &&
+        json_object_get_type(poEnforceAdviseRead) == json_type_boolean )
+    {
+        m_bAdviseRead = CPL_TO_BOOL(
+                json_object_get_boolean(poEnforceAdviseRead));
+    }
+
+    if(m_osType == RDADatasetType::TEMPLATE)
+    {
         json_object *poParams = CPL_json_object_object_get(poObj, "params");
 
         if(poParams != nullptr &&
-            json_object_get_type(poParams) == json_type_array ) {
+           json_object_get_type(poParams) == json_type_array ) {
             const int nSize = json_object_array_length(poParams);
             for (int i = 0; i < nSize; ++i) {
                 json_object *ds = json_object_array_get_idx(poParams, i);
@@ -719,11 +866,11 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
                         {
                             CPLString tkey = it.key;
                             const char* tval =
-                                json_object_get_string(it.val);
+                                    json_object_get_string(it.val);
                             if(tval != nullptr)
                             {
                                 m_osParams.push_back(std::make_tuple(tkey,
-                                                        CPLString(tval)));
+                                                                     CPLString(tval)));
                             }
                         }
 
@@ -736,7 +883,6 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
 
     return true;
 }
-
 /************************************************************************/
 /*                             GetHTTPOptions()                         */
 /************************************************************************/
@@ -1400,7 +1546,7 @@ const char* GDALRDADataset::GetProjectionRef()
 
 bool GDALRDADataset::Open( GDALOpenInfo* poOpenInfo )
 {
-    if( !ParseConnectionString(poOpenInfo) )
+    if( !(ParseImageReferenceString(poOpenInfo) || ParseConnectionString(poOpenInfo) ))
         return false;
 
     if( !ReadConfiguration() )
