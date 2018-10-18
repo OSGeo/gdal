@@ -3367,7 +3367,13 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList( const char* pszFilename,
 
     CPLString osURL(VSICurlGetURLFromFilename(pszFilename, nullptr, nullptr, nullptr,
                                               nullptr, nullptr, nullptr));
-    const char* pszDir = strchr(osURL.c_str(), '/');
+    const char* pszDir = nullptr;
+    if( STARTS_WITH_CI(osURL, "http://") )
+        pszDir = strchr(osURL.c_str() + strlen("http://"), '/');
+    else if( STARTS_WITH_CI(osURL, "https://") )
+        pszDir = strchr(osURL.c_str() + strlen("https://"), '/');
+    else if( STARTS_WITH_CI(osURL, "ftp://") )
+        pszDir = strchr(osURL.c_str() + strlen("ftp://"), '/');
     if( pszDir == nullptr )
         pszDir = "";
 
