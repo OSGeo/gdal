@@ -653,6 +653,152 @@ def misc_13():
     return 'success'
 
 ###############################################################################
+# Test ConfigureLogging()
+
+def misc_14():
+    import collections
+    import logging
+
+    class MockLoggingHandler(logging.Handler):
+        def __init__(self, *args, **kwargs):
+            super(MockLoggingHandler, self).__init__(*args, **kwargs)
+            self.messages = collections.defaultdict(list)
+
+        def emit(self, record):
+            self.messages[record.levelname].append(record.getMessage())
+
+
+    logger = logging.getLogger('gdal_logging_test')
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+    handler = MockLoggingHandler(level=logging.DEBUG)
+    logger.addHandler(handler)
+
+    prev_debug = gdal.GetConfigOption("CPL_DEBUG")
+    try:
+        gdal.ConfigurePythonLogging(logger_name='gdal_logging_test')
+
+        if gdal.GetConfigOption("CPL_DEBUG") != "ON":
+            gdaltest.post_reason("should have enabled debug")
+            return 'fail'
+
+        gdal.Debug("test1", "debug1")
+        gdal.Error(gdal.CE_Debug, gdal.CPLE_FileIO, "debug2")
+        gdal.Error(gdal.CE_None, gdal.CPLE_AppDefined, "info1")
+        gdal.Error(gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1")
+        gdal.Error(gdal.CE_Failure, 99999, "error1")
+
+        expected = {
+            'DEBUG': ["test1: debug1", "FileIO: debug2"],
+            'INFO': ["AppDefined: info1"],
+            'WARNING': ["AssertionFailed: warning1"],
+            'ERROR': ["99999: error1"],
+        }
+
+        if handler.messages != expected:
+            print(handler.messages)
+            gdaltest.post_reason("missing log messages")
+            return 'fail'
+
+        gdal.SetErrorHandler('CPLDefaultErrorHandler')
+        handler.messages.clear()
+        gdal.SetConfigOption('CPL_DEBUG', "OFF")
+
+        gdal.ConfigurePythonLogging(logger_name='gdal_logging_test', enable_debug=False)
+
+        if gdal.GetConfigOption("CPL_DEBUG") != "OFF":
+            gdaltest.post_reason("shouldn't have enabled debug")
+            return 'fail'
+
+        # these get suppressed by CPL_DEBUG
+        gdal.Debug("test1", "debug3")
+        # these don't
+        gdal.Error(gdal.CE_Debug, gdal.CPLE_None, "debug4")
+
+        if handler.messages['DEBUG'] != ['debug4']:
+            gdaltest.post_reason("unexpected log messages")
+            return 'fail'
+
+    finally:
+        gdal.SetErrorHandler('CPLDefaultErrorHandler')
+        gdal.SetConfigOption('CPL_DEBUG', prev_debug)
+        logger.removeHandler(handler)
+
+    return 'success'
+
+
+###############################################################################
+# Test SetErrorHandler
+
+def misc_15():
+    messages0 = []
+    def handle0(ecls, ecode, emsg):
+        messages0.append((ecls, ecode, emsg))
+
+    messages1 = []
+    def handle1(ecls, ecode, emsg):
+        messages1.append((ecls, ecode, emsg))
+
+    prev_debug = gdal.GetConfigOption("CPL_DEBUG")
+    try:
+        gdal.SetErrorHandler(handle0)
+        gdal.SetConfigOption('CPL_DEBUG', "ON")
+
+        gdal.Debug('foo', 'bar')
+        gdal.Error(gdal.CE_Debug, gdal.CPLE_FileIO, "debug2")
+        gdal.Error(gdal.CE_None, gdal.CPLE_AppDefined, "info1")
+        gdal.Error(gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1")
+        gdal.Error(gdal.CE_Failure, 99999, "error1")
+
+        expected0 = [
+            (gdal.CE_Debug, 0, 'foo: bar'),
+            (gdal.CE_Debug, gdal.CPLE_FileIO, "debug2"),
+            (gdal.CE_None, gdal.CPLE_AppDefined, "info1"),
+            (gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1"),
+            (gdal.CE_Failure, 99999, "error1"),
+        ]
+        if expected0 != messages0:
+            gdaltest.post_reason("SetErrorHandler: mismatched log messages")
+            return 'fail'
+        messages0[:] = []
+
+        # Check Push
+        gdal.PushErrorHandler(handle1)
+        gdal.SetConfigOption("CPL_DEBUG", "OFF")
+        gdal.Error(gdal.CE_Debug, gdal.CPLE_FileIO, "debug2")
+        gdal.Error(gdal.CE_None, gdal.CPLE_AppDefined, "info1")
+        gdal.Error(gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1")
+        gdal.Error(gdal.CE_Failure, 99999, "error1")
+
+        if len(messages0) != 0:
+            gdaltest.post_reason("PushErrorHandler: unexpected log messages")
+            return 'fail'
+        if len(messages1) != 4:
+            gdaltest.post_reason("PushErrorHandler: missing log messages")
+            return 'fail'
+
+        # and pop restores original behaviour
+        gdal.PopErrorHandler()
+        messages1[:] = []
+        gdal.Error(gdal.CE_Debug, gdal.CPLE_FileIO, "debug2")
+        gdal.Error(gdal.CE_None, gdal.CPLE_AppDefined, "info1")
+        gdal.Error(gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1")
+        gdal.Error(gdal.CE_Failure, 99999, "error1")
+
+        if len(messages0) != 4:
+            gdaltest.post_reason("PopErrorHandler: missing log messages")
+            return 'fail'
+        if len(messages1) != 0:
+            gdaltest.post_reason("PopErrorHandler: unexpected log messages")
+            return 'fail'
+
+    finally:
+        gdal.SetErrorHandler('CPLDefaultErrorHandler')
+        gdal.SetConfigOption('CPL_DEBUG', prev_debug)
+
+    return 'success'
+
+###############################################################################
 
 
 def misc_cleanup():
@@ -678,6 +824,8 @@ gdaltest_list = [misc_1,
                  misc_11,
                  misc_12,
                  misc_13,
+                 misc_14,
+                 misc_15,
                  misc_cleanup]
 
 # gdaltest_list = [ misc_6 ]

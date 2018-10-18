@@ -72,8 +72,11 @@ void GDALDestroy(void)
         return;
     bGDALDestroyAlreadyCalled = true;
 
-    CPLDebug("GDAL", "In GDALDestroy - unloading GDAL shared library.");
     bInGDALGlobalDestructor = true;
+
+    // logging/error handling may call GDALIsInGlobalDestructor()
+    CPLDebug("GDAL", "In GDALDestroy - unloading GDAL shared library.");
+
     GDALDestroyDriverManager();
 
     OGRCleanupAll();
