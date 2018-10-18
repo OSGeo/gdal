@@ -3285,6 +3285,8 @@ def tiff_read_big_strip():
         return 'skip'
 
     gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options='-co compress=lzw -outsize 10000 2000  -co blockysize=2000 -r bilinear -ot float32')
+    if gdal.GetLastErrorMsg().find('cannot allocate') >= 0:
+        return 'skip'
     ds = gdal.Open('/vsimem/test.tif')
     if ds.GetRasterBand(1).Checksum() != 2676:
         return 'fail'
@@ -3319,6 +3321,8 @@ def tiff_read_big_tile():
         return 'skip'
 
     gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options='-co compress=lzw -outsize 10000 2000 -co tiled=yes -co blockxsize=10000 -co blockysize=2000 -r bilinear -ot float32')
+    if gdal.GetLastErrorMsg().find('cannot allocate') >= 0:
+        return 'skip'
     ds = gdal.Open('/vsimem/test.tif')
     if ds.GetRasterBand(1).Checksum() != 2676:
         return 'fail'
