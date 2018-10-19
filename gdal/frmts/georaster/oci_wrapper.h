@@ -417,6 +417,7 @@ public:
     unsigned long       ReadBlob( OCILobLocator* phLocator,
                             void* pBuffer, unsigned long nOffset, 
                                            unsigned long nSize );
+    void                FreeLob(OCILobLocator* phLocator);
     char*               ReadCLob( OCILobLocator* phLocator );
     void                WriteCLob( OCILobLocator** pphLocator, char* pszData );
     bool                WriteBlob( OCILobLocator* phLocator,
