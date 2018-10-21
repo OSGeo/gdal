@@ -135,7 +135,10 @@ def test_tiff_ovr_2(both_endian):
 
 def test_tiff_ovr_3(both_endian):
 
-    os.unlink('tmp/mfloat32.tif.ovr')
+    try:
+        os.unlink('tmp/mfloat32.tif.ovr')
+    except OSError:
+        pass
 
     src_ds = gdal.Open('tmp/mfloat32.tif', gdal.GA_Update)
 
@@ -322,6 +325,7 @@ def test_tiff_ovr_8(both_endian):
 
 
 def test_tiff_ovr_9(both_endian):
+    gdaltest.tiff_drv.Delete('tmp/ovr9.tif')
 
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()

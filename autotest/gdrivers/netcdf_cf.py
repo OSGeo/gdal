@@ -31,7 +31,7 @@
 
 import os
 import imp  # for netcdf_cf_setup()
-from netcdf import netcdf_setup, netcdf_test_copy
+from gdrivers.netcdf import netcdf_setup, netcdf_test_copy  # noqa
 from osgeo import gdal
 from osgeo import osr
 
@@ -548,10 +548,8 @@ def netcdf_cfproj_test_cf(proj, projNc):
 
 ###############################################################################
 # test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, tif->nc->tif
-def test_netcdf_cf_1():
-
+def test_netcdf_cf_1(netcdf_setup):  # noqa
     # setup netcdf and netcdf_cf environment
-    netcdf_setup()
     netcdf_cf_setup()
 
     if gdaltest.netcdf_drv is None:

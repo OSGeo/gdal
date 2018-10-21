@@ -35,10 +35,15 @@ import sys
 from osgeo import ogr
 from osgeo import gdal
 import gdaltest
-import ogrtest
 import pytest
 
+# Linter says this isn't used, but it actually is via pytest magic :)
+from ogr.ogr_sql_sqlite import require_ogr_sql_sqlite  # noqa
+
 ###############################################################################
+
+
+pytestmark = pytest.mark.usefixtures('require_ogr_sql_sqlite')
 
 
 def ogr_virtualogr_run_sql(sql_statement):
@@ -71,11 +76,6 @@ def ogr_virtualogr_run_sql(sql_statement):
 
 
 def test_ogr_virtualogr_1():
-
-    import ogr_sql_sqlite
-    if not ogr_sql_sqlite.ogr_sql_sqlite_available():
-        pytest.skip()
-
     # Invalid syntax
     assert not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR()")
 
@@ -116,10 +116,6 @@ def test_ogr_virtualogr_1():
 
 
 def test_ogr_virtualogr_2():
-
-    if not ogrtest.has_sqlite_dialect:
-        pytest.skip()
-
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_2.db')
     ds.ExecuteSQL("CREATE VIRTUAL TABLE foo USING VirtualOGR('data/poly.shp')")
     ds.ExecuteSQL("CREATE TABLE spy_table (spy_content VARCHAR)")
@@ -187,10 +183,6 @@ def test_ogr_virtualogr_2():
 
 
 def test_ogr_virtualogr_3():
-
-    if not ogrtest.has_sqlite_dialect:
-        pytest.skip()
-
     # Find path of libgdal
     libgdal_name = gdaltest.find_lib('gdal')
     if libgdal_name is None:
@@ -215,17 +207,13 @@ def test_ogr_virtualogr_3():
 
     if ret.find('skip') == 0:
         pytest.skip()
-    assert ret.find(gdal.VersionInfo('RELEASE_NAME')) >= 0, ('fail : %s' % ret)
+    assert gdal.VersionInfo('RELEASE_NAME') in ret
 
 ###############################################################################
 # Test ogr_datasource_load_layers()
 
 
 def test_ogr_virtualogr_4():
-
-    if not ogrtest.has_sqlite_dialect:
-        pytest.skip()
-
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_4.db')
     sql_lyr = ds.ExecuteSQL("SELECT ogr_datasource_load_layers('data/poly.shp')")
     ds.ReleaseResultSet(sql_lyr)
@@ -283,9 +271,6 @@ def test_ogr_virtualogr_4():
 
 
 def test_ogr_virtualogr_5():
-
-    if not ogrtest.has_sqlite_dialect:
-        pytest.skip()
 
     # Create a CSV with duplicate column name
     fp = gdal.VSIFOpenL('/vsimem/ogr_virtualogr_5.csv', 'wt')

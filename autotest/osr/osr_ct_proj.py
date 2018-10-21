@@ -142,7 +142,7 @@ def test_proj(src_srs, src_xyz, src_error,
              dst_srs, dst_xyz, dst_error, unit_name, options, requirements):
 
     import osr_ct
-    osr_ct.osr_ct_1()
+    osr_ct.test_osr_ct_1()
     if gdaltest.have_proj4 == 0:
         pytest.skip()
 

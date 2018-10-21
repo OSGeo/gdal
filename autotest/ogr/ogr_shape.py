@@ -740,7 +740,7 @@ def ogr_shape_23_write_valid_and_invalid(layer_name, wkt, invalid_wkt, wkbType, 
     gdaltest.shape_ds = ogr.GetDriverByName('ESRI Shapefile').Open('tmp', update=1)
 
     read_lyr = gdaltest.shape_ds.GetLayerByName(layer_name)
-    assert read_lyr.GetFeatureCount() == 1
+    assert read_lyr.GetFeatureCount() == 1, layer_name
     feat_read = read_lyr.GetNextFeature()
 
     if isEmpty and feat_read.GetGeometryRef() is None:
@@ -822,11 +822,9 @@ def test_ogr_shape_23():
     # Write a feature in a new layer (geometry type unset at layer creation)
 
     for item in test_geom_array:
-        assert ogr_shape_23_write_valid_and_invalid(item[0], item[1], item[2], ogr.wkbUnknown, 0) == 'success', \
-            ('Test for layer %s failed' % item[0])
+        ogr_shape_23_write_valid_and_invalid(item[0], item[1], item[2], ogr.wkbUnknown, 0)
     for item in test_empty_geom_array:
-        assert ogr_shape_23_write_valid_and_invalid(item[0], item[1], item[2], ogr.wkbUnknown, 1) == 'success', \
-            ('Test for layer %s failed' % item[0])
+        ogr_shape_23_write_valid_and_invalid(item[0], item[1], item[2], ogr.wkbUnknown, 1)
 
     #######################################################
     # Same test but use the wkb type when creating the layer
@@ -837,11 +835,9 @@ def test_ogr_shape_23():
     gdaltest.shape_ds = shape_drv.CreateDataSource('tmp')
 
     for item in test_geom_array:
-        assert ogr_shape_23_write_valid_and_invalid(item[0], item[1], item[2], item[3], 0) == 'success', \
-            ('(2) Test for layer %s failed' % item[0])
+        ogr_shape_23_write_valid_and_invalid(item[0], item[1], item[2], item[3], 0)
     for item in test_empty_geom_array:
-        assert ogr_shape_23_write_valid_and_invalid(item[0], item[1], item[2], item[3], 1) == 'success', \
-            ('(2) Test for layer %s failed' % item[0])
+        ogr_shape_23_write_valid_and_invalid(item[0], item[1], item[2], item[3], 1)
 
     #######################################################
     # Test writing of a geometrycollection
@@ -880,8 +876,7 @@ def test_ogr_shape_23():
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbPoint))
 
-    assert ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) == 'success', \
-        ('Test for layer %s failed' % layer_name)
+    ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown)
 
     #######################################################
     # Test writing of a multilinestring with an empty linestring inside
@@ -890,8 +885,7 @@ def test_ogr_shape_23():
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbLineString))
 
-    assert ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) == 'success', \
-        ('Test for layer %s failed' % layer_name)
+    ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown)
 
     #######################################################
     # Test writing of a polygon with an empty external ring
@@ -906,8 +900,7 @@ def test_ogr_shape_23():
     ring.AddPoint_2D(0, 0)
     geom.AddGeometry(ring)
 
-    assert ogr_shape_23_write_geom(layer_name, geom, None, ogr.wkbUnknown) == 'success', \
-        ('Test for layer %s failed' % layer_name)
+    ogr_shape_23_write_geom(layer_name, geom, None, ogr.wkbUnknown)
 
     #######################################################
     # Test writing of a polygon with an empty external ring
@@ -916,8 +909,7 @@ def test_ogr_shape_23():
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbLinearRing))
 
-    assert ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) == 'success', \
-        ('Test for layer %s failed' % layer_name)
+    ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown)
 
     #######################################################
     # Test writing of a multipolygon with an empty polygon and a polygon with an empty external ring
@@ -929,8 +921,7 @@ def test_ogr_shape_23():
     poly.AddGeometry(ogr.Geometry(type=ogr.wkbLinearRing))
     geom.AddGeometry(poly)
 
-    assert ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) == 'success', \
-        ('Test for layer %s failed' % layer_name)
+    ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown)
 
 
 ###############################################################################
@@ -945,8 +936,7 @@ def test_ogr_shape_24():
     wkt = 'MULTIPOLYGON(((0 0,0 10,10 10,0 0), (0 0,1 1,0 1,0 0)), ((100 100,100 200,200 200,200 100,100 100)))'
     geom = ogr.CreateGeometryFromWkt(wkt)
 
-    assert ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) == 'success', \
-        ('Test for layer %s failed' % layer_name)
+    ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown)
 
 ###############################################################################
 # Test reading a multipolygon with one part inside the bounding box of the other
@@ -958,8 +948,7 @@ def test_ogr_shape_25():
     wkt = 'MULTIPOLYGON(((10 5, 5 5,5 0,0 0,0 10,10 10,10 5)),((10 5,10 0,5 0,5 4.9,10 5)), ((100 100,100 200,200 200,200 100,100 100)))'
     geom = ogr.CreateGeometryFromWkt(wkt)
 
-    assert ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) == 'success', \
-        ('Test for layer %s failed' % layer_name)
+    ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown)
 
     # Same test, but use OGR_ORGANIZE_POLYGONS=DEFAULT to avoid relying only on the winding order
     layer_name = 'touchingrings3'
@@ -967,9 +956,8 @@ def test_ogr_shape_25():
     geom = ogr.CreateGeometryFromWkt(wkt)
 
     gdal.SetConfigOption('OGR_ORGANIZE_POLYGONS', 'DEFAULT')
-    ret = ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown)
+    ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown)
     gdal.SetConfigOption('OGR_ORGANIZE_POLYGONS', '')
-    assert ret == 'success', ('Test for layer %s failed' % layer_name)
 
 
 ###############################################################################
@@ -981,31 +969,23 @@ def test_ogr_shape_26():
     wkt = 'POLYGON ((100 100,100 200,200 200,200 100,100 100),(110 110,120 110,120 120,110 120,110 110),(130 110,140 110,140 120,130 120,130 110))'
     geom = ogr.CreateGeometryFromWkt(wkt)
 
-    ret = ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown)
-    assert ret == 'success', ('Test for layer %s failed' % layer_name)
+    ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown)
 
 ###############################################################################
 # Test alternate date formatting (#2746)
 
 
 def test_ogr_shape_27():
-
-    result = 'success'
-
     ds = ogr.Open('data/water_main_dist.dbf')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
-    if feat.installe_1 != '1989/04/25':
-        print(feat.installe_1)
-        gdaltest.post_reason('got wrong date result!')
-        result = 'fail'
+    assert feat.installe_1 == '1989/04/25', 'got wrong date result!'
 
     feat = None
     lyr = None
     ds = None
 
-    return result
 
 ###############################################################################
 # Test reading a 3 GB .DBF (#3011)

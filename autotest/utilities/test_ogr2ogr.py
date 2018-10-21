@@ -186,7 +186,7 @@ def test_ogr2ogr_6():
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
 
-    ogr_pg.ogr_pg_1()
+    ogr_pg.test_ogr_pg_1()
     if gdaltest.pg_ds is None:
         pytest.skip()
     gdaltest.pg_ds.Destroy()
@@ -215,7 +215,7 @@ def test_ogr2ogr_7():
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
 
-    ogr_pg.ogr_pg_1()
+    ogr_pg.test_ogr_pg_1()
     if gdaltest.pg_ds is None:
         pytest.skip()
     gdaltest.pg_ds.Destroy()
@@ -1348,7 +1348,7 @@ def test_ogr2ogr_41():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
 
-    ogr_pg.ogr_pg_1()
+    ogr_pg.test_ogr_pg_1()
     if gdaltest.pg_ds is None:
         pytest.skip()
     gdaltest.pg_ds.Destroy()

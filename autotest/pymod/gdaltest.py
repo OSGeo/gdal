@@ -266,9 +266,9 @@ class GDALTest(object):
     def testDriver(self):
         if self.driver is None:
             self.driver = gdal.GetDriverByName(self.drivername)
-            assert self.driver is not None, (self.drivername + ' driver not found!')
+            if self.driver is None:
+                pytest.skip(self.drivername + ' driver not found!')
 
-        
     def testOpen(self, check_prj=None, check_gt=None, gt_epsilon=None,
                  check_stat=None, check_approx_stat=None,
                  stat_epsilon=None, skip_checksum=None, check_min=None,
@@ -277,8 +277,7 @@ class GDALTest(object):
         matrix (tuple), gt_epsilon - geotransformation tolerance,
         check_stat - band statistics (tuple), stat_epsilon - statistics
         tolerance."""
-        if self.testDriver() == 'fail':
-            pytest.skip()
+        self.testDriver()
 
         if self.filename_absolute:
             wrk_filename = self.filename
@@ -454,8 +453,7 @@ class GDALTest(object):
                        check_checksum_not_null=None, interrupt_during_copy=False,
                        dest_open_options=None, quiet_error_handler=True):
 
-        if self.testDriver() == 'fail':
-            pytest.skip()
+        self.testDriver()
 
         if self.filename_absolute:
             wrk_filename = self.filename
@@ -591,8 +589,7 @@ class GDALTest(object):
 
     def testCreate(self, vsimem=0, new_filename=None, out_bands=1,
                    check_minmax=1, dest_open_options=None):
-        if self.testDriver() == 'fail':
-            pytest.skip()
+        self.testDriver()
 
         if self.filename_absolute:
             wrk_filename = self.filename
@@ -663,8 +660,7 @@ class GDALTest(object):
             self.driver.Delete(new_filename)
 
     def testSetGeoTransform(self):
-        if self.testDriver() == 'fail':
-            pytest.skip()
+        self.testDriver()
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
@@ -710,8 +706,7 @@ class GDALTest(object):
             self.driver.Delete(new_filename)
 
     def testSetProjection(self, prj=None, expected_prj=None):
-        if self.testDriver() == 'fail':
-            pytest.skip()
+        self.testDriver()
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
@@ -767,8 +762,7 @@ class GDALTest(object):
             self.driver.Delete(new_filename)
 
     def testSetMetadata(self):
-        if self.testDriver() == 'fail':
-            pytest.skip()
+        self.testDriver()
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
@@ -810,8 +804,7 @@ class GDALTest(object):
             self.driver.Delete(new_filename)
 
     def testSetNoDataValue(self, delete=False):
-        if self.testDriver() == 'fail':
-            pytest.skip()
+        self.testDriver()
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
@@ -867,8 +860,7 @@ class GDALTest(object):
         return self.testSetNoDataValue(delete=True)
 
     def testSetDescription(self):
-        if self.testDriver() == 'fail':
-            pytest.skip()
+        self.testDriver()
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
@@ -903,8 +895,7 @@ class GDALTest(object):
             self.driver.Delete(new_filename)
 
     def testSetUnitType(self):
-        if self.testDriver() == 'fail':
-            pytest.skip()
+        self.testDriver()
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:

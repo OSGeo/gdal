@@ -29,17 +29,14 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import os
 import shutil
 import pytest
 
-sys.path.append('../gcore')
-
 from osgeo import gdal
 import gdaltest
 import test_cli_utilities
-import tiff_ovr
+from gcore import tiff_ovr
 
 ###############################################################################
 # Similar to tiff_ovr_1

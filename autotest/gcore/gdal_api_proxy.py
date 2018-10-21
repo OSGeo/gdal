@@ -30,47 +30,49 @@
 ###############################################################################
 
 import sys
+import subprocess
+import time
 from osgeo import gdal
 
 
-import gdaltest
 import pytest
 
 ###############################################################################
 # Test forked gdalserver
 
 
-def test_gdal_api_proxy_1():
-
-    import test_py_scripts
+@pytest.fixture
+def gdalserver_path():
     import test_cli_utilities
-    gdaltest.gdalserver_path = test_cli_utilities.get_cli_utility_path('gdalserver')
-    if gdaltest.gdalserver_path is None:
-        gdaltest.gdalserver_path = 'gdalserver'
+    gdalserver_path = test_cli_utilities.get_cli_utility_path('gdalserver')
+    if gdalserver_path is None:
+        gdalserver_path = 'gdalserver'
+    return gdalserver_path
 
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -1' % gdaltest.gdalserver_path, display_live_on_parent_stdout=True)
 
-    assert ret.find('Failed:    0') != -1
+def test_gdal_api_proxy_1(gdalserver_path):
+    subprocess.check_call([
+        sys.executable, 'gdal_api_proxy.py', gdalserver_path, '-2',
+    ])
 
 ###############################################################################
 # Test connection to TCP server
 
 
-def test_gdal_api_proxy_2():
+def test_gdal_api_proxy_2(gdalserver_path):
 
     if sys.version_info < (2, 6, 0):
         pytest.skip()
 
-    import test_py_scripts
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -2' % gdaltest.gdalserver_path, display_live_on_parent_stdout=True)
-
-    assert ret.find('Failed:    0') != -1
+    subprocess.check_call([
+        sys.executable, 'gdal_api_proxy.py', gdalserver_path, '-2',
+    ])
 
 ###############################################################################
 # Test connection to Unix socket server
 
 
-def test_gdal_api_proxy_3():
+def test_gdal_api_proxy_3(gdalserver_path):
 
     if sys.version_info < (2, 6, 0):
         pytest.skip()
@@ -81,16 +83,15 @@ def test_gdal_api_proxy_3():
     if sys.platform == 'darwin':
         pytest.skip("Fails on MacOSX ('ERROR 1: posix_spawnp() failed'. Not sure why.")
 
-    import test_py_scripts
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -3' % gdaltest.gdalserver_path, display_live_on_parent_stdout=True)
-
-    assert ret.find('Failed:    0') != -1
+    subprocess.check_call([
+        sys.executable, 'gdal_api_proxy.py', gdalserver_path, '-3',
+    ])
 
 ###############################################################################
 # Test -nofork mode
 
 
-def test_gdal_api_proxy_4():
+def test_gdal_api_proxy_4(gdalserver_path):
 
     if sys.version_info < (2, 6, 0):
         pytest.skip()
@@ -101,16 +102,15 @@ def test_gdal_api_proxy_4():
     if sys.platform == 'darwin':
         pytest.skip("Fails on MacOSX ('ERROR 1: posix_spawnp() failed'. Not sure why.")
 
-    import test_py_scripts
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -4' % gdaltest.gdalserver_path, display_live_on_parent_stdout=True)
-
-    assert ret.find('Failed:    0') != -1
+    subprocess.check_call([
+        sys.executable, 'gdal_api_proxy.py', gdalserver_path, '-4',
+    ])
 
 ###############################################################################
 #
 
 
-def test_gdal_api_proxy_sub():
+def _gdal_api_proxy_sub():
 
     src_ds = gdal.Open('data/byte.tif')
     src_cs = src_ds.GetRasterBand(1).Checksum()
@@ -392,14 +392,93 @@ def test_gdal_api_proxy_sub():
 #
 
 
-def test_gdal_api_proxy_sub_clean():
+def _gdal_api_proxy_sub_clean():
     if gdaltest.api_proxy_server_p is not None:
         try:
             gdaltest.api_proxy_server_p.terminate()
-        except:
+        except Exception:
             pass
         gdaltest.api_proxy_server_p.wait()
     gdal.Unlink('tmp/gdalapiproxysocket')
 
 
+if __name__ == '__main__':
+    sys.path.insert(0, '../pymod')
+    import gdaltest
 
+    if len(sys.argv) >= 3 and sys.argv[2] == '-1':
+
+        gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
+        if sys.platform == 'win32':
+            gdalserver_path = sys.argv[1]  # noqa
+            gdal.SetConfigOption('GDAL_API_PROXY_SERVER', gdalserver_path)
+
+        gdaltest.api_proxy_server_p = None
+        gdaltest_list = [_gdal_api_proxy_sub]
+
+    elif len(sys.argv) >= 3 and sys.argv[2] == '-2':
+
+        gdalserver_path = sys.argv[1]
+
+        p = None
+        for port in [8080, 8081, 8082]:
+            p = subprocess.Popen([gdalserver_path, '-tcpserver', '%d' % port])
+            time.sleep(1)
+            if p.poll() is None:
+                break
+            try:
+                p.terminate()
+            except (AttributeError, OSError):
+                pass
+            p.wait()
+            p = None
+
+        if p is not None:
+            gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
+            gdal.SetConfigOption('GDAL_API_PROXY_SERVER', 'localhost:%d' % port)
+            print('port = %d' % port)
+            gdaltest.api_proxy_server_p = p
+            gdaltest_list = [_gdal_api_proxy_sub, _gdal_api_proxy_sub_clean]
+        else:
+            gdaltest_list = []
+
+    elif len(sys.argv) >= 3 and sys.argv[2] == '-3':
+
+        gdalserver_path = sys.argv[1]
+
+        p = subprocess.Popen([gdalserver_path, '-unixserver', 'tmp/gdalapiproxysocket'])
+        time.sleep(1)
+        if p.poll() is None:
+            gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
+            gdal.SetConfigOption('GDAL_API_PROXY_SERVER', 'tmp/gdalapiproxysocket')
+            gdaltest.api_proxy_server_p = p
+            gdaltest_list = [_gdal_api_proxy_sub, _gdal_api_proxy_sub_clean]
+        else:
+            try:
+                p.terminate()
+            except (AttributeError, OSError):
+                pass
+            p.wait()
+            gdaltest_list = []
+
+    elif len(sys.argv) >= 3 and sys.argv[2] == '-4':
+
+        gdalserver_path = sys.argv[1]
+
+        p = subprocess.Popen([gdalserver_path, '-nofork', '-unixserver', 'tmp/gdalapiproxysocket'])
+        time.sleep(1)
+        if p.poll() is None:
+            gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
+            gdal.SetConfigOption('GDAL_API_PROXY_SERVER', 'tmp/gdalapiproxysocket')
+            gdaltest.api_proxy_server_p = p
+            gdaltest_list = [_gdal_api_proxy_sub, _gdal_api_proxy_sub_clean]
+        else:
+            try:
+                p.terminate()
+            except (AttributeError, OSError):
+                pass
+            p.wait()
+            gdaltest_list = []
+
+    for func in gdaltest_list:
+        func()

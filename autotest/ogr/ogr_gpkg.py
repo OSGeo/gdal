@@ -35,53 +35,48 @@ import struct
 import sys
 import pytest
 
-# Make sure we run from the directory of the script
-if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
-    if os.path.dirname(sys.argv[0]) != '':
-        os.chdir(os.path.dirname(sys.argv[0]))
-
-sys.path.append('../../gdal/swig/python/samples')
-
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 import gdaltest
 
-sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), '../osr')))
-import osr_proj4
-sys.path.pop()
+from osr import osr_proj4
 
 ###############################################################################
 # Validate a geopackage
 
-try:
-    import validate_gpkg
-    has_validate = True
-except ImportError:
-    has_validate = False
+
+def _validate_check(filename):
+    path = '../../gdal/swig/python/samples'
+    if path not in sys.path:
+        sys.path.append(path)
+    try:
+        import validate_gpkg
+    except ImportError:
+        return
+    validate_gpkg.check(filename)
 
 
 def validate(filename, quiet=False):
-    if has_validate:
-        my_filename = filename
-        if my_filename.startswith('/vsimem/'):
-            my_filename = 'tmp/validate.gpkg'
-            f = gdal.VSIFOpenL(filename, 'rb')
-            if f is None:
-                print('Cannot open %s' % filename)
-                return False
-            content = gdal.VSIFReadL(1, 10000000, f)
-            gdal.VSIFCloseL(f)
-            open(my_filename, 'wb').write(content)
-        try:
-            validate_gpkg.check(my_filename)
-        except Exception as e:
-            if not quiet:
-                print(e)
+    my_filename = filename
+    if my_filename.startswith('/vsimem/'):
+        my_filename = 'tmp/validate.gpkg'
+        f = gdal.VSIFOpenL(filename, 'rb')
+        if f is None:
+            print('Cannot open %s' % filename)
             return False
-        finally:
-            if my_filename != filename:
-                os.unlink(my_filename)
+        content = gdal.VSIFReadL(1, 10000000, f)
+        gdal.VSIFCloseL(f)
+        open(my_filename, 'wb').write(content)
+    try:
+        _validate_check(my_filename)
+    except Exception as e:
+        if not quiet:
+            print(e)
+        return False
+    finally:
+        if my_filename != filename:
+            os.unlink(my_filename)
     return True
 
 ###############################################################################
@@ -2291,35 +2286,6 @@ def test_ogr_gpkg_33():
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_33.gpkg')
 
-###############################################################################
-# Run test_ogrsf
-
-
-def test_ogr_gpkg_test_ogrsf():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
-    # Do integrity check first
-    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("PRAGMA integrity_check")
-    feat = sql_lyr.GetNextFeature()
-    assert feat.GetField(0) == 'ok', 'integrity check failed'
-    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
-
-    import test_cli_utilities
-    if test_cli_utilities.get_test_ogrsf_path() is None:
-        pytest.skip()
-
-    gdaltest.gpkg_ds = None
-    # sys.exit(0)
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/gpkg_test.gpkg --config OGR_SQLITE_SYNCHRONOUS OFF')
-
-    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/gpkg_test.gpkg -sql "select * from tbl_linestring_renamed" --config OGR_SQLITE_SYNCHRONOUS OFF')
-
-    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
 
 ###############################################################################
 # Test rename and delete a layer registered in extensions, metadata, spatial index etc
@@ -3821,6 +3787,37 @@ def test_ogr_gpkg_wal():
     gdal.Unlink(filename)
     gdal.Unlink(filename + '-wal')
     gdal.Unlink(filename + '-shm')
+
+
+###############################################################################
+# Run test_ogrsf
+
+
+def test_ogr_gpkg_test_ogrsf():
+
+    if gdaltest.gpkg_dr is None:
+        pytest.skip()
+
+    # Do integrity check first
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("PRAGMA integrity_check")
+    feat = sql_lyr.GetNextFeature()
+    assert feat.GetField(0) == 'ok', 'integrity check failed'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    gdaltest.gpkg_ds = None
+    # sys.exit(0)
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/gpkg_test.gpkg --config OGR_SQLITE_SYNCHRONOUS OFF')
+
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/gpkg_test.gpkg -sql "select * from tbl_linestring_renamed" --config OGR_SQLITE_SYNCHRONOUS OFF')
+
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+
 
 ###############################################################################
 # Test JSon subtype support

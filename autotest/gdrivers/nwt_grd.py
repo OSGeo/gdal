@@ -42,16 +42,13 @@ import pytest
 def test_nwt_grd_1():
 
     tst1 = gdaltest.GDALTest('NWT_GRD', 'nwt_grd.grd', 1, 28093)
-    status1 = tst1.testOpen()
+    tst1.testOpen()
     tst2 = gdaltest.GDALTest('NWT_GRD', 'nwt_grd.grd', 2, 33690)
-    status2 = tst2.testOpen()
+    tst2.testOpen()
     tst3 = gdaltest.GDALTest('NWT_GRD', 'nwt_grd.grd', 3, 20365)
-    status3 = tst3.testOpen()
+    tst3.testOpen()
     tst4 = gdaltest.GDALTest('NWT_GRD', 'nwt_grd.grd', 4, 25856)
-    status4 = tst4.testOpen()
-    if status1 == 'success' and status2 == 'success' and status3 == 'success' and status4 == 'success':
-        return
-    pytest.fail()
+    tst4.testOpen()
 
 
 def test_nwt_grd_2():

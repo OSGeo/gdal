@@ -34,16 +34,19 @@ import os
 import numbers
 import re
 import shutil
-import urlparse
-import pytest
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 try:
     from BaseHTTPServer import BaseHTTPRequestHandler
 except ImportError:
     from http.server import BaseHTTPRequestHandler
 
+import pytest
+
 from osgeo import gdal
-
-
 import webserver
 import gdaltest
 
@@ -230,9 +233,9 @@ def read_urls():
     retval = {}
     fname = 'data/wcs/urls'
     f = open(fname, 'rb')
-    content = f.read()
+    text = f.read().decode('utf-8')
     f.close()
-    for line in content.splitlines():
+    for line in text.splitlines():
         items = line.split()
         if items[1].endswith('2'):
             items[1] = items[1][:-1]

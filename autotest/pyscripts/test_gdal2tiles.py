@@ -265,7 +265,6 @@ def _test_utf8(should_raise_unicode=False,
     except OSError:
         pass
 
-    
 
 def test_gdal2tiles_py_cleanup():
 

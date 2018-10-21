@@ -43,6 +43,9 @@ sys.path.append('../osr')
 import gdaltest
 
 
+pytestmark = pytest.mark.require_driver('GRIB')
+
+
 def has_jp2kdrv():
     for i in range(gdal.GetDriverCount()):
         if gdal.GetDriver(i).ShortName.startswith('JP2'):
@@ -54,14 +57,9 @@ def has_jp2kdrv():
 
 
 def test_grib_1():
-
-    gdaltest.grib_drv = gdal.GetDriverByName('GRIB')
-    if gdaltest.grib_drv is None:
-        pytest.skip()
-
     # Test proj4 presence
     import osr_ct
-    osr_ct.osr_ct_1()
+    osr_ct.test_osr_ct_1()
 
     tst = gdaltest.GDALTest('GRIB', 'grib/ds.mint.bin', 2, 46927)
     return tst.testOpen()
@@ -72,9 +70,6 @@ def test_grib_1():
 
 def test_grib_2():
 
-    if gdaltest.grib_drv is None:
-        pytest.skip()
-
     tst = gdaltest.GDALTest('GRIB', 'grib/Sample_QuikSCAT.grb', 4, 50714)
     return tst.testOpen()
 
@@ -84,9 +79,6 @@ def test_grib_2():
 
 
 def test_grib_read_different_sizes_messages():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest('GRIB', 'grib/bug3246.grb', 4, 4081)
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -106,9 +98,6 @@ def test_grib_read_different_sizes_messages():
 
 def test_grib_grib2_read_nodata():
 
-    if gdaltest.grib_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/grib/ds.mint.bin')
     assert ds.GetRasterBand(1).GetNoDataValue() == 9999
     assert ds.GetRasterBand(2).GetNoDataValue() == 9999
@@ -117,15 +106,12 @@ def test_grib_grib2_read_nodata():
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
-    
+
 ###############################################################################
 # Check grib units (#3606)
 
 
 def test_grib_read_units():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     gdal.Unlink('tmp/ds.mint.bin.aux.xml')
 
@@ -166,9 +152,6 @@ def test_grib_read_units():
 
 def test_grib_read_geotransform_one_n_or_n_one():
 
-    if gdaltest.grib_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/grib/one_one.grib2')
     egt = (-114.25, 0.5, 0.0, 47.250, 0.0, -0.5)
     gt = ds.GetGeoTransform()
@@ -185,9 +168,6 @@ def test_grib_read_geotransform_one_n_or_n_one():
 
 def test_grib_read_vsizip():
 
-    if gdaltest.grib_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('/vsizip/data/grib/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
     assert ds is not None
 
@@ -196,9 +176,6 @@ def test_grib_read_vsizip():
 
 
 def test_grib_grib2_test_grib_pds_all_bands():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
     ds = gdal.Open('/vsizip/data/grib/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
     assert ds is not None
     band = ds.GetRasterBand(2)
@@ -221,9 +198,6 @@ def test_grib_grib2_test_grib_pds_all_bands():
 
 def test_grib_grib2_read_template_4_15():
 
-    if gdaltest.grib_drv is None:
-        pytest.skip()
-
     import test_cli_utilities
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
@@ -240,9 +214,6 @@ def test_grib_grib2_read_template_4_15():
 
 def test_grib_grib2_read_png():
 
-    if gdaltest.grib_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('PNG') is None:
         pytest.skip()
 
@@ -256,9 +227,6 @@ def test_grib_grib2_read_png():
 
 def test_grib_grib2_read_template_4_32():
 
-    if gdaltest.grib_drv is None:
-        pytest.skip()
-
     # First band extracted from http://nomads.ncep.noaa.gov/pub/data/nccf/com/hur/prod/hwrf.2017102006/twenty-se27w.2017102006.hwrfsat.core.0p02.f000.grb2
     ds = gdal.Open('data/grib/twenty-se27w.2017102006.hwrfsat.core.0p02.f000_truncated.grb2')
     cs = ds.GetRasterBand(1).Checksum()
@@ -268,15 +236,12 @@ def test_grib_grib2_read_template_4_32():
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
-    
+
 ###############################################################################
 # GRIB2 file with all 0 data
 
 
 def test_grib_grib2_read_all_zero_data():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     # From http://dd.weather.gc.ca/model_wave/great_lakes/erie/grib2/00/CMC_rdwps_lake-erie_ICEC_SFC_0_latlon0.05x0.05_2017111800_P000.grib2
     ds = gdal.Open('data/grib/CMC_rdwps_lake-erie_ICEC_SFC_0_latlon0.05x0.05_2017111800_P000.grib2')
@@ -287,15 +252,12 @@ def test_grib_grib2_read_all_zero_data():
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
-    
+
 ###############################################################################
 # GRIB1 file with rotate pole lonlat
 
 
 def test_grib_grib2_read_rotated_pole_lonlat():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('/vsisparse/data/grib/rotated_pole.grb.xml')
 
@@ -316,15 +278,12 @@ def test_grib_grib2_read_rotated_pole_lonlat():
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
-    
+
 ###############################################################################
 # Test support for GRIB2 Section 4 Template 40, Analysis or forecast at a horizontal level or in a horizontal layer at a point in time for atmospheric chemical constituents
 
 
 def test_grib_grib2_read_template_4_40():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     # We could use some other encoding that JP2K...
     if not has_jp2kdrv():
@@ -338,15 +297,12 @@ def test_grib_grib2_read_template_4_40():
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
-    
+
 ###############################################################################
 # Test support for a unhandled GRIB2 Section 4 Template
 
 
 def test_grib_grib2_read_template_4_unhandled():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/grib/template_4_65535.grb2')
@@ -355,15 +311,12 @@ def test_grib_grib2_read_template_4_unhandled():
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
-    
+
 ###############################################################################
 # Test reading GRIB2 Transverse Mercator grid
 
 
 def test_grib_grib2_read_transverse_mercator():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/grib/transverse_mercator.grb2')
 
@@ -382,9 +335,6 @@ def test_grib_grib2_read_transverse_mercator():
 
 def test_grib_grib2_read_mercator():
 
-    if gdaltest.grib_drv is None:
-        pytest.skip()
-
     if gdaltest.have_proj4 == 0:
         pytest.skip()
 
@@ -399,14 +349,12 @@ def test_grib_grib2_read_mercator():
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
 
+
 ###############################################################################
 # Test reading GRIB2 Mercator grid
 
 
 def test_grib_grib2_read_mercator_2sp():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     if gdaltest.have_proj4 == 0:
         pytest.skip()
@@ -422,14 +370,12 @@ def test_grib_grib2_read_mercator_2sp():
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
 
+
 ###############################################################################
 # Test reading GRIB2 Lambert Conformal Conic grid
 
 
 def test_grib_grib2_read_lcc():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     if gdaltest.have_proj4 == 0:
         pytest.skip()
@@ -445,14 +391,12 @@ def test_grib_grib2_read_lcc():
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
 
+
 ###############################################################################
 # Test reading GRIB2 Polar Stereographic grid
 
 
 def test_grib_grib2_read_polar_stereo():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     if gdaltest.have_proj4 == 0:
         pytest.skip()
@@ -468,14 +412,12 @@ def test_grib_grib2_read_polar_stereo():
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
 
+
 ###############################################################################
 # Test reading GRIB2 Albers Equal Area grid
 
 
 def test_grib_grib2_read_aea():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     if gdaltest.have_proj4 == 0:
         pytest.skip()
@@ -491,14 +433,12 @@ def test_grib_grib2_read_aea():
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
 
+
 ###############################################################################
 # Test reading GRIB2 Lambert Azimuthal Equal Area grid
 
 
 def test_grib_grib2_read_laea():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     if gdaltest.have_proj4 == 0:
         pytest.skip()
@@ -514,14 +454,12 @@ def test_grib_grib2_read_laea():
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
 
+
 ###############################################################################
 # Test reading GRIB2 with Grid point data - IEEE Floating Point Data (template 5.4)
 
 
 def test_grib_grib2_read_template_5_4_grid_point_ieee_floating_point():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/grib/ieee754_single.grb2')
     cs = ds.GetRasterBand(1).Checksum()
@@ -531,14 +469,12 @@ def test_grib_grib2_read_template_5_4_grid_point_ieee_floating_point():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4727, 'Did not get expected checksum'
 
+
 ###############################################################################
 # Test reading GRIB2 with NBITS=0 and DECIMAL_SCALE !=0
 
 
 def test_grib_grib2_read_section_5_nbits_zero_decimal_scaled():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/grib/simple_packing_nbits_zero_decimal_scaled.grb2')
     cs = ds.GetRasterBand(1).Checksum()
@@ -554,15 +490,12 @@ def test_grib_grib2_read_section_5_nbits_zero_decimal_scaled():
         cs = ds.GetRasterBand(1).Checksum()
         assert cs == 5, 'Did not get expected checksum'
 
-    
+
 ###############################################################################
 # Test reading GRIB2 with complex packing and spatial differencing of order 1
 
 
 def test_grib_grib2_read_spatial_differencing_order_1():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/grib/spatial_differencing_order_1.grb2')
     cs = ds.GetRasterBand(1).Checksum()
@@ -570,15 +503,12 @@ def test_grib_grib2_read_spatial_differencing_order_1():
         gdaltest.post_reason('Did not get expected checksum')
         print(cs)
 
-    
+
 ###############################################################################
 # Test GRIB2 creation options
 
 
 def test_grib_grib2_write_creation_options():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     tmpfilename = '/vsimem/out.grb2'
     gdal.Translate(tmpfilename, 'data/byte.tif', format='GRIB',
@@ -796,9 +726,6 @@ def test_grib_grib2_write_creation_options():
 
 def test_grib_grib2_write_projections():
 
-    if gdaltest.grib_drv is None:
-        pytest.skip()
-
     filenames = ['albers_equal_area.grb2',
                  'lambert_azimuthal_equal_area.grb2',
                  'lambert_conformal_conic.grb2',
@@ -944,9 +871,6 @@ def _grib_read_section(filename, sect_num_to_read):
 
 
 def test_grib_grib2_write_data_encodings():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     # Template 5 numbers
     GS5_SIMPLE = 0
@@ -1173,15 +1097,12 @@ def test_grib_grib2_write_data_encodings():
             gdaltest.post_reason('did not get expected checksum for lossy JPEG2000 with ' + drvname)
             print(cs)
 
-    
+
 ###############################################################################
 # Test GRIB2 write support with warnings/errors
 
 
 def test_grib_grib2_write_data_encodings_warnings_and_errors():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     # Cases where warnings are expected
     tests = []
@@ -1293,7 +1214,7 @@ def test_grib_grib2_write_temperatures():
         assert max([abs((got_vals[i] - expected_vals[i]) / expected_vals[i]) for i in range(4)]) <= 1e-4, \
             ('fail with data_encoding = %s and type = %s' % (data_encoding, str(src_type)))
 
-    
+
 ###############################################################################
 
 
@@ -1326,9 +1247,6 @@ def test_grib_grib2_write_nodata():
 
 
 def test_grib_online_grib2_jpeg2000_single_line():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
 
     if not has_jp2kdrv():
         pytest.skip()

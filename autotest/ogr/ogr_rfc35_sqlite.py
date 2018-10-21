@@ -141,12 +141,9 @@ def CheckColumnOrder(lyr, expected_order):
     for i, exp_order in enumerate(expected_order):
         assert lyr_defn.GetFieldDefn(i).GetName() == exp_order
 
-    
 
 def Check(lyr, expected_order):
-
     CheckColumnOrder(lyr, expected_order)
-
     CheckFeatures(lyr)
 
 
@@ -169,28 +166,28 @@ def test_ogr_rfc35_sqlite_2():
 
     assert lyr.ReorderField(1, 3) == 0
 
-    ret = Check(lyr, ['foo5', 'baz15', 'baw20', 'bar10'])
+    Check(lyr, ['foo5', 'baz15', 'baw20', 'bar10'])
 
     lyr.ReorderField(3, 1)
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     lyr.ReorderField(0, 2)
-    ret = Check(lyr, ['bar10', 'baz15', 'foo5', 'baw20'])
+    Check(lyr, ['bar10', 'baz15', 'foo5', 'baw20'])
 
     lyr.ReorderField(2, 0)
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     lyr.ReorderField(0, 1)
-    ret = Check(lyr, ['bar10', 'foo5', 'baz15', 'baw20'])
+    Check(lyr, ['bar10', 'foo5', 'baz15', 'baw20'])
 
     lyr.ReorderField(1, 0)
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     lyr.ReorderFields([3, 2, 1, 0])
-    ret = Check(lyr, ['baw20', 'baz15', 'bar10', 'foo5'])
+    Check(lyr, ['baw20', 'baz15', 'bar10', 'foo5'])
 
     lyr.ReorderFields([3, 2, 1, 0])
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.ReorderFields([0, 0, 0, 0])
@@ -225,7 +222,7 @@ def test_ogr_rfc35_sqlite_3():
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, field3='baz25')
+    CheckFeatures(lyr, field3='baz25')
 
     fd = ogr.FieldDefn("baz5", ogr.OFTString)
     fd.SetWidth(5)
@@ -233,13 +230,13 @@ def test_ogr_rfc35_sqlite_3():
     lyr_defn = lyr.GetLayerDefn()
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz25"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5')
 
     lyr_defn = lyr.GetLayerDefn()
     fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('baz5'))
     assert fld_defn.GetWidth() == 5
 
-    ret = CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5')
 
 ###############################################################################
 # Test AlterFieldDefn() for change of type
@@ -274,7 +271,7 @@ def test_ogr_rfc35_sqlite_4():
     assert feat.GetField("intfield") == 12345
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5')
 
     fd.SetWidth(5)
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
@@ -284,7 +281,7 @@ def test_ogr_rfc35_sqlite_4():
     assert feat.GetField("intfield") == 12345
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5')
 
     fd.SetWidth(4)
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
@@ -295,7 +292,7 @@ def test_ogr_rfc35_sqlite_4():
     assert feat.GetField("intfield") == 12345
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5')
 
     fd = ogr.FieldDefn("oldintfld", ogr.OFTString)
     fd.SetWidth(15)
@@ -307,7 +304,7 @@ def test_ogr_rfc35_sqlite_4():
     assert feat.GetField("oldintfld") == '12345'
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5')
 
     lyr.DeleteField(lyr_defn.GetFieldIndex("oldintfld"))
 
@@ -332,7 +329,7 @@ def test_ogr_rfc35_sqlite_4():
     assert feat.GetField("oldintfld") == '98765'
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5')
 
 ###############################################################################
 # Test DeleteField()
@@ -360,21 +357,21 @@ def test_ogr_rfc35_sqlite_5():
 
     assert lyr.DeleteField(0) == 0
 
-    ret = CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5')
 
     assert lyr.DeleteField(lyr_defn.GetFieldIndex('baw20')) == 0
 
-    ret = CheckFeatures(lyr, field3='baz5', field4=None)
+    CheckFeatures(lyr, field3='baz5', field4=None)
 
     assert lyr.DeleteField(lyr_defn.GetFieldIndex('baz5')) == 0
 
-    ret = CheckFeatures(lyr, field3=None, field4=None)
+    CheckFeatures(lyr, field3=None, field4=None)
 
     assert lyr.DeleteField(lyr_defn.GetFieldIndex('foo5')) == 0
 
     assert lyr.DeleteField(lyr_defn.GetFieldIndex('bar10')) == 0
 
-    ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
+    CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
 
 ###############################################################################
 # Initiate the test file

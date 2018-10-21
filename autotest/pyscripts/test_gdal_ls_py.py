@@ -43,7 +43,7 @@ import pytest
 def run_gdal_ls(argv):
     script_path = test_py_scripts.get_py_script('gdal_ls')
     if script_path is None:
-        return ('skip', None)
+        pytest.skip()
 
     saved_syspath = sys.path
     sys.path.append(script_path)
@@ -51,7 +51,7 @@ def run_gdal_ls(argv):
         import gdal_ls
     except ImportError:
         sys.path = saved_syspath
-        return ('fail', None)
+        pytest.fail()
 
     sys.path = saved_syspath
 
@@ -66,11 +66,9 @@ def run_gdal_ls(argv):
     retstr = outstr.getvalue()
     outstr.close()
 
-    if ret != 0:
-        gdaltest.post_reason('got error code : %d' % ret)
-        return ('fail', 'None')
+    assert ret == 0, 'got error code : %d' % ret
 
-    return ('success', retstr)
+    return retstr
 
 ###############################################################################
 # List one file
@@ -78,7 +76,7 @@ def run_gdal_ls(argv):
 
 def test_gdal_ls_py_1():
     # TODO: Why the '' as the first element of the list here and below?
-    ret, ret_str = run_gdal_ls(['', '-l', '../ogr/data/poly.shp'])
+    ret_str = run_gdal_ls(['', '-l', '../ogr/data/poly.shp'])
 
     assert ret_str.find('poly.shp') != -1
 
@@ -87,7 +85,7 @@ def test_gdal_ls_py_1():
 
 
 def test_gdal_ls_py_2():
-    ret, ret_str = run_gdal_ls(['', '-l', '../ogr/data'])
+    ret_str = run_gdal_ls(['', '-l', '../ogr/data'])
 
     assert ret_str.find('poly.shp') != -1
 
@@ -96,16 +94,17 @@ def test_gdal_ls_py_2():
 
 
 def test_gdal_ls_py_3():
-    ret, ret_str = run_gdal_ls(['', '-R', '../ogr/data'])
+    ret_str = run_gdal_ls(['', '-R', '../ogr/data'])
 
     assert ret_str.find('PROJ_UNITS') != -1
+
 
 ###############################################################################
 # List in a .zip
 
 
 def test_gdal_ls_py_4():
-    ret, ret_str = run_gdal_ls(['', '-l', '/vsizip/../ogr/data/poly.zip'])
+    ret_str = run_gdal_ls(['', '-l', '/vsizip/../ogr/data/poly.zip'])
 
     if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/../ogr/data/poly.zip/poly.PRJ') == -1:
         if gdaltest.skip_on_travis():
@@ -115,7 +114,7 @@ def test_gdal_ls_py_4():
             pytest.skip()
         pytest.fail(ret_str)
 
-    
+
 ###############################################################################
 # List dir in /vsicurl/
 
@@ -137,16 +136,14 @@ def test_gdal_ls_py_5():
     if not d:
         pytest.skip()
 
-    # ret, ret_str = run_gdal_ls(['', '-R', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
-    #
-    # if ret != 'success':
-    #    return ret
+    # ret_str = run_gdal_ls(['', '-R', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
+
     #
     # if ret_str.find('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/wkb_wkt/3d_broken_line.wkb') == -1:
     #    print(ret_str)
-    #    return 'fail'
+    #    pytest.fail()
 
-    
+
 ###############################################################################
 # List in a .zip in /vsicurl/
 
@@ -165,7 +162,7 @@ def test_gdal_ls_py_6():
     if not d:
         pytest.skip()
 
-    ret, ret_str = run_gdal_ls(['', '-l', '/vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip'])
+    ret_str = run_gdal_ls(['', '-l', '/vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip'])
 
     if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
         if gdaltest.skip_on_travis():
@@ -175,7 +172,7 @@ def test_gdal_ls_py_6():
             pytest.skip()
         pytest.fail(ret_str)
 
-    
+
 ###############################################################################
 # List dir in /vsicurl/ and recurse in zip
 
@@ -201,16 +198,13 @@ def test_gdal_ls_py_7():
     if not d:
         pytest.skip()
 
-    # ret, ret_str = run_gdal_ls(['', '-R', '-Rzip', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
-
-    # if ret != 'success':
-    #    return ret
+    # ret_str = run_gdal_ls(['', '-R', '-Rzip', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
 
     # if ret_str.find('/vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
     #    print(ret_str)
-    #    return 'fail'
+    #    pytest.fail()
 
-    
+
 ###############################################################################
 # List FTP dir in /vsicurl/
 
@@ -234,11 +228,8 @@ def test_gdal_ls_py_8():
     if not d:
         pytest.skip()
 
-    ret, ret_str = run_gdal_ls(['', '-l', '-R', '-Rzip', 'ftp://download.osgeo.org/gdal/data/aig'])
+    ret_str = run_gdal_ls(['', '-l', '-R', '-Rzip', 'ftp://download.osgeo.org/gdal/data/aig'])
 
     assert ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 00:00 /vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem/info/arc0002r.001') != -1
 
     assert ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 12:20 /vsizip//vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem.zip/nzdem/info/arc0002r.001') != -1
-
-
-

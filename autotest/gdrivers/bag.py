@@ -41,7 +41,7 @@ import gdaltest
 pytestmark = pytest.mark.require_driver('BAG')
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope='module')
 def check_no_file_leaks():
     num_files = len(gdaltest.get_opened_files())
 

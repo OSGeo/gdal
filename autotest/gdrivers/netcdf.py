@@ -56,17 +56,9 @@ from uffd import uffd_compare
 # Get netcdf version and test for supported files
 
 
-@pytest.fixture(autouse=True)
-def check_no_file_leaks():
-    num_files = len(gdaltest.get_opened_files())
-
-    yield
-
-    diff = len(gdaltest.get_opened_files()) - num_files
-    assert diff == 0, 'Leak of file handles: %d leaked' % diff
-
-
+@pytest.fixture(autouse=True, scope='module')
 def netcdf_setup():
+    # NOTE: this is also used by netcdf_cf.py
 
     gdaltest.netcdf_drv_version = 'unknown'
     gdaltest.netcdf_drv_has_nc2 = False
@@ -107,6 +99,15 @@ def netcdf_setup():
           '  has_nc2: ' + str(gdaltest.netcdf_drv_has_nc2) + '  has_nc4: ' +
           str(gdaltest.netcdf_drv_has_nc4))
 
+    gdaltest.count_opened_files = len(gdaltest.get_opened_files())
+
+
+@pytest.fixture(autouse=True, scope='module')
+def netcdf_teardown():
+    diff = len(gdaltest.get_opened_files()) - gdaltest.count_opened_files
+    assert diff == 0, 'Leak of file handles: %d leaked' % diff
+
+
 ###############################################################################
 # test file copy
 # helper function needed so we can call Process() on it from netcdf_test_copy_timeout()
@@ -126,15 +127,13 @@ def netcdf_test_copy_timeout(ifile, band, checksum, ofile, opts=None, driver='NE
 
     from multiprocessing import Process
 
-    result = 'success'
-
     drv = gdal.GetDriverByName(driver)
 
     if os.path.exists(ofile):
         drv.Delete(ofile)
 
     if timeout is None:
-        result = netcdf_test_copy(ifile, band, checksum, ofile, opts, driver)
+        netcdf_test_copy(ifile, band, checksum, ofile, opts, driver)
 
     else:
         sys.stdout.write('.')
@@ -151,9 +150,7 @@ def netcdf_test_copy_timeout(ifile, band, checksum, ofile, opts=None, driver='NE
             if os.path.exists(ofile):
                 drv.Delete(ofile)
             print('testCreateCopy() for file %s has reached timeout limit of %d seconds' % (ofile, timeout))
-            result = 'fail'
-
-    return result
+            pytest.fail()
 
 ###############################################################################
 # check support for DEFLATE compression, requires HDF5 and zlib
@@ -180,11 +177,9 @@ def netcdf_test_deflate(ifile, checksum, zlevel=1, timeout=None):
 
     assert os.path.exists(ifile), ('ifile %s does not exist' % ifile)
 
-    result1 = netcdf_test_copy_timeout(ifile, 1, checksum, ofile1, ofile1_opts, 'NETCDF', timeout)
+    netcdf_test_copy_timeout(ifile, 1, checksum, ofile1, ofile1_opts, 'NETCDF', timeout)
 
-    result2 = netcdf_test_copy_timeout(ifile, 1, checksum, ofile2, ofile2_opts, 'NETCDF', timeout)
-
-    assert not (result1 == 'fail' or result2 == 'fail')
+    netcdf_test_copy_timeout(ifile, 1, checksum, ofile2, ofile2_opts, 'NETCDF', timeout)
 
     # make sure compressed file is smaller than uncompressed files
     try:
@@ -248,9 +243,6 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
 
 def test_netcdf_1():
 
-    # setup netcdf environment
-    netcdf_setup()
-
     if gdaltest.netcdf_drv is None:
         pytest.skip()
 
@@ -260,10 +252,8 @@ def test_netcdf_1():
     # We don't want to gum up the test stream output with the
     # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    result = tst.testOpen()
+    tst.testOpen()
     gdal.PopErrorHandler()
-
-    return result
 
 ###############################################################################
 # Verify a simple createcopy operation.  We can't do the trivial gdaltest
@@ -973,23 +963,15 @@ def test_netcdf_26():
     # test default config
     test = gdaltest.GDALTest('NETCDF', '../data/int16-nogeo.nc', 1, 4672)
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    result = test.testCreateCopy(check_gt=0, check_srs=0, check_minmax=0)
+    test.testCreateCopy(check_gt=0, check_srs=0, check_minmax=0)
     gdal.PopErrorHandler()
-
-    if result != 'success':
-        print('failed create copy without WRITE_BOTTOMUP')
-        return result
 
     # test WRITE_BOTTOMUP=NO
     test = gdaltest.GDALTest('NETCDF', '../data/int16-nogeo.nc', 1, 4855,
                              options=['WRITE_BOTTOMUP=NO'])
-    result = test.testCreateCopy(check_gt=0, check_srs=0, check_minmax=0)
+    test.testCreateCopy(check_gt=0, check_srs=0, check_minmax=0)
 
-    if result != 'success':
-        print('failed create copy with WRITE_BOTTOMUP=NO')
-        return result
 
-    
 ###############################################################################
 # check support for GDAL_NETCDF_BOTTOMUP configuration option
 
@@ -1003,25 +985,17 @@ def test_netcdf_27():
     test = gdaltest.GDALTest('NETCDF', '../data/int16-nogeo.nc', 1, 4672)
     config_bak = gdal.GetConfigOption('GDAL_NETCDF_BOTTOMUP')
     gdal.SetConfigOption('GDAL_NETCDF_BOTTOMUP', None)
-    result = test.testOpen()
+    test.testOpen()
     gdal.SetConfigOption('GDAL_NETCDF_BOTTOMUP', config_bak)
-
-    if result != 'success':
-        print('failed open without GDAL_NETCDF_BOTTOMUP')
-        return result
 
     # test GDAL_NETCDF_BOTTOMUP=NO
     test = gdaltest.GDALTest('NETCDF', '../data/int16-nogeo.nc', 1, 4855)
     config_bak = gdal.GetConfigOption('GDAL_NETCDF_BOTTOMUP')
     gdal.SetConfigOption('GDAL_NETCDF_BOTTOMUP', 'NO')
-    result = test.testOpen()
+    test.testOpen()
     gdal.SetConfigOption('GDAL_NETCDF_BOTTOMUP', config_bak)
 
-    if result != 'success':
-        print('failed open with GDAL_NETCDF_BOTTOMUP')
-        return result
 
-    
 ###############################################################################
 # check support for writing multi-dimensional files (helper function)
 
@@ -1121,14 +1095,10 @@ def test_netcdf_29():
         ('gdalwarp returned error\n' + str(ret) + ' ' + str(err))
 
     # copy vrt to netcdf, with proper dimension rolling
-    result = netcdf_test_copy(ofile1, 0, None, ofile)
+    netcdf_test_copy(ofile1, 0, None, ofile)
 
     # test file
-    result = netcdf_test_4dfile(ofile)
-    if result == 'fail':
-        print('test failed - does gdalwarp support metadata copying?')
-
-    return result
+    netcdf_test_4dfile(ofile)
 
 ###############################################################################
 # check support for file with nan values (bug #4705)
@@ -1542,10 +1512,8 @@ def test_netcdf_44():
         pytest.skip()
 
     for f, md5 in ('data/ushort.nc', 18), ('data/uint.nc', 10):
-        assert (not (netcdf_test_copy(f, 1, md5, 'tmp/netcdf_44.nc', ['FORMAT=NC4']) !=
-                'success'))
+        netcdf_test_copy(f, 1, md5, 'tmp/netcdf_44.nc', ['FORMAT=NC4'])
 
-    
 ###############################################################################
 # Test reading a vector NetCDF 3 file
 
@@ -1784,8 +1752,8 @@ def test_netcdf_51():
     ds = None
 
     import netcdf_cf
-    if netcdf_cf.netcdf_cf_setup() == 'success' and \
-       gdaltest.netcdf_cf_method is not None:
+    netcdf_cf.netcdf_cf_setup()
+    if gdaltest.netcdf_cf_method is not None:
         netcdf_cf.netcdf_cf_check_file('tmp/netcdf_51.nc', 'auto', False)
 
     gdal.Unlink('tmp/netcdf_51.nc')
@@ -1894,8 +1862,8 @@ def test_netcdf_52():
     ds = None
 
     import netcdf_cf
-    if netcdf_cf.netcdf_cf_setup() == 'success' and \
-       gdaltest.netcdf_cf_method is not None:
+    netcdf_cf.netcdf_cf_setup()
+    if gdaltest.netcdf_cf_method is not None:
         netcdf_cf.netcdf_cf_check_file('tmp/netcdf_52.nc', 'auto', False)
 
     gdal.Unlink('tmp/netcdf_52.nc')
@@ -2271,8 +2239,8 @@ def test_netcdf_62_cf_check():
         pytest.skip()
 
     import netcdf_cf
-    if netcdf_cf.netcdf_cf_setup() == 'success' and \
-       gdaltest.netcdf_cf_method is not None:
+    netcdf_cf.netcdf_cf_setup()
+    if gdaltest.netcdf_cf_method is not None:
         netcdf_cf.netcdf_cf_check_file('tmp/netcdf_62.nc', 'auto', False)
 
     gdal.Unlink('/vsimem/netcdf_62.nc')
@@ -2551,14 +2519,10 @@ def test_netcdf_67():
     # so for the moment compare the full image
     ds = gdal.Open('data/partial_block_ticket5950.nc', gdal.GA_ReadOnly)
     ref = numpy.arange(1, 10).reshape((3, 3))
-    if numpy.array_equal(ds.GetRasterBand(1).ReadAsArray(), ref):
-        result = 'success'
-    else:
-        result = 'fail'
+    if not numpy.array_equal(ds.GetRasterBand(1).ReadAsArray(), ref):
+        pytest.fail()
     ds = None
     gdal.SetConfigOption('GDAL_NETCDF_BOTTOMUP', None)
-
-    return result
 
 
 ###############################################################################

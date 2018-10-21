@@ -634,7 +634,7 @@ def warp_19_internal(size, datatype, resampling_string):
 
     gdaltest.tiff_drv.Delete('tmp/testwarp.tif')
 
-    assert checksum == checksum_ref, 'Result different from source'
+    assert checksum == checksum_ref
 
     gdaltest.tiff_drv.Delete('tmp/test.tif')
 
@@ -667,10 +667,8 @@ def test_warp_19():
         print('Testing size = %d ...' % size)
         for method in methods:
             for datatype in datatypes:
-                assert warp_19_internal(size, datatype, method) == 'success', \
-                    ('fail with size = %d, data type = %d and method %s' % (size, datatype, method))
+                warp_19_internal(size, datatype, method)
 
-    
 
 # Test fix for #2724 (initialization of destination area to nodata in warped VRT)
 def test_warp_20():

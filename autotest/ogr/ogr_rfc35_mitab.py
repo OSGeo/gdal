@@ -30,7 +30,6 @@
 ###############################################################################
 
 
-
 import gdaltest
 from osgeo import ogr
 from osgeo import gdal
@@ -41,19 +40,17 @@ import pytest
 
 
 def CheckFileSize(src_filename):
-
     import test_py_scripts
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-f "MapInfo File" /vsimem/CheckFileSize.tab ' + src_filename)
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-f "MapInfo File" tmp/CheckFileSize.tab ' + src_filename)
     statBufSrc = gdal.VSIStatL(src_filename[0:-3] + "dat", gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
-    statBufDst = gdal.VSIStatL('/vsimem/CheckFileSize.dat', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
-    ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/CheckFileSize.tab')
+    statBufDst = gdal.VSIStatL('tmp/CheckFileSize.dat', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/CheckFileSize.tab')
 
-    assert statBufSrc.size == statBufDst.size, \
-        ('src_size = %d, dst_size = %d', statBufSrc.size, statBufDst.size)
+    assert statBufSrc.size == statBufDst.size
 
 ###############################################################################
 # Initiate the test file
@@ -61,7 +58,7 @@ def CheckFileSize(src_filename):
 
 def test_ogr_rfc35_mitab_1():
 
-    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('/vsimem/rfc35_test.tab')
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('tmp/rfc35_test.tab')
     lyr = ds.CreateLayer('rfc35_test')
 
     lyr.ReorderFields([])
@@ -143,7 +140,7 @@ def CheckColumnOrder(lyr, expected_order):
     for i, exp_order in enumerate(expected_order):
         assert lyr_defn.GetFieldDefn(i).GetName() == exp_order
 
-    
+
 
 def Check(lyr, expected_order):
 
@@ -151,7 +148,7 @@ def Check(lyr, expected_order):
 
     CheckFeatures(lyr)
 
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
+    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
     lyr_reopen = ds.GetLayer(0)
 
     CheckColumnOrder(lyr_reopen, expected_order)
@@ -161,7 +158,7 @@ def Check(lyr, expected_order):
 
 def test_ogr_rfc35_mitab_2():
 
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
+    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
 
     assert lyr.TestCapability(ogr.OLCReorderFields) == 1
@@ -176,75 +173,51 @@ def test_ogr_rfc35_mitab_2():
 
     assert lyr.ReorderField(1, 3) == 0
     # ds = None
-    # ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
     # lyr = ds.GetLayer(0)
-    ret = Check(lyr, ['foo5', 'baz15', 'baw20', 'bar10'])
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    Check(lyr, ['foo5', 'baz15', 'baw20', 'bar10'])
 
     lyr.ReorderField(3, 1)
     # ds = None
-    # ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
     # lyr = ds.GetLayer(0)
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     lyr.ReorderField(0, 2)
     # ds = None
-    # ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
     # lyr = ds.GetLayer(0)
-    ret = Check(lyr, ['bar10', 'baz15', 'foo5', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    Check(lyr, ['bar10', 'baz15', 'foo5', 'baw20'])
 
     lyr.ReorderField(2, 0)
     # ds = None
-    # ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
     # lyr = ds.GetLayer(0)
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     lyr.ReorderField(0, 1)
     # ds = None
-    # ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
     # lyr = ds.GetLayer(0)
-    ret = Check(lyr, ['bar10', 'foo5', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    Check(lyr, ['bar10', 'foo5', 'baz15', 'baw20'])
 
     lyr.ReorderField(1, 0)
     # ds = None
-    # ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
     # lyr = ds.GetLayer(0)
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     lyr.ReorderFields([3, 2, 1, 0])
     # ds = None
-    # ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
     # lyr = ds.GetLayer(0)
-    ret = Check(lyr, ['baw20', 'baz15', 'bar10', 'foo5'])
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    Check(lyr, ['baw20', 'baz15', 'bar10', 'foo5'])
 
     lyr.ReorderFields([3, 2, 1, 0])
     # ds = None
-    # ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
     # lyr = ds.GetLayer(0)
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.ReorderFields([0, 0, 0, 0])
@@ -253,27 +226,21 @@ def test_ogr_rfc35_mitab_2():
 
     # ds = None
 
-    # ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
     lyr = ds.GetLayer(0)
 
-    ret = CheckColumnOrder(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    CheckColumnOrder(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
-    ret = CheckFeatures(lyr)
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    CheckFeatures(lyr)
 
-    
+
 ###############################################################################
 # Test AlterFieldDefn() for change of name and width
 
 
 def test_ogr_rfc35_mitab_3():
 
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
+    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
 
     fd = ogr.FieldDefn("baz25", ogr.OFTString)
@@ -293,10 +260,7 @@ def test_ogr_rfc35_mitab_3():
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, field3='baz25')
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    CheckFeatures(lyr, field3='baz25')
 
     fd = ogr.FieldDefn("baz5", ogr.OFTString)
     fd.SetWidth(5)
@@ -304,20 +268,17 @@ def test_ogr_rfc35_mitab_3():
     lyr_defn = lyr.GetLayerDefn()
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz25"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
+    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('baz5'))
     assert fld_defn.GetWidth() == 5
 
-    ret = CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5')
 
 ###############################################################################
 # Test AlterFieldDefn() for change of type
@@ -325,7 +286,7 @@ def test_ogr_rfc35_mitab_3():
 
 def test_ogr_rfc35_mitab_4():
 
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
+    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -353,10 +314,7 @@ def test_ogr_rfc35_mitab_4():
     assert feat.GetField("intfield") == 12345
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     if False:  # pylint: disable=using-constant-test
         fd.SetWidth(5)
@@ -367,15 +325,12 @@ def test_ogr_rfc35_mitab_4():
         assert feat.GetField("intfield") == 12345
         feat = None
 
-        ret = CheckFeatures(lyr, field3='baz5')
-        if ret != 'success':
-            gdaltest.post_reason(ret)
-            return ret
+        CheckFeatures(lyr, field3='baz5')
 
     ds = None
 
     if False:  # pylint: disable=using-constant-test
-        ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
+        ds = ogr.Open('tmp/rfc35_test.tab', update=1)
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
 
@@ -387,20 +342,14 @@ def test_ogr_rfc35_mitab_4():
         assert feat.GetField("intfield") == 1234
         feat = None
 
-        ret = CheckFeatures(lyr, field3='baz5')
-        if ret != 'success':
-            gdaltest.post_reason(ret)
-            return ret
+        CheckFeatures(lyr, field3='baz5')
 
         ds = None
 
         # Check that the file size has decreased after column shrinking
-        ret = CheckFileSize('/vsimem/rfc35_test.tab')
-        if ret == 'fail':
-            gdaltest.post_reason(ret)
-            return ret
+        CheckFileSize('tmp/rfc35_test.tab')
 
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
+    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -413,14 +362,11 @@ def test_ogr_rfc35_mitab_4():
     assert feat.GetField("oldintfld") == '12345'
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
+    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -429,10 +375,7 @@ def test_ogr_rfc35_mitab_4():
     assert feat.GetField("oldintfld") == '12345'
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     lyr.DeleteField(lyr_defn.GetFieldIndex("oldintfld"))
 
@@ -457,14 +400,11 @@ def test_ogr_rfc35_mitab_4():
     assert feat.GetField("oldintfld") == '98765'
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
+    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -473,19 +413,16 @@ def test_ogr_rfc35_mitab_4():
     assert feat.GetField("oldintfld") == '98765'
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
-    
+
 ###############################################################################
 # Test DeleteField()
 
 
 def test_ogr_rfc35_mitab_5():
 
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
+    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -503,36 +440,27 @@ def test_ogr_rfc35_mitab_5():
     gdal.PopErrorHandler()
     assert ret != 0
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     assert lyr.DeleteField(lyr_defn.GetFieldIndex('baw20')) == 0
 
     ds = None
 
     # Check that the file size has decreased after column removing
-    ret = CheckFileSize('/vsimem/rfc35_test.tab')
+    CheckFileSize('tmp/rfc35_test.tab')
     if ret == 'fail':
         gdaltest.post_reason(ret)
         return ret
 
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
+    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    ret = CheckFeatures(lyr, field3='baz5', field4=None)
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    CheckFeatures(lyr, field3='baz5', field4=None)
 
     assert lyr.DeleteField(lyr_defn.GetFieldIndex('baz5')) == 0
 
-    ret = CheckFeatures(lyr, field3=None, field4=None)
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    CheckFeatures(lyr, field3=None, field4=None)
 
     assert lyr.DeleteField(lyr_defn.GetFieldIndex('foo5')) == 0
 
@@ -542,30 +470,24 @@ def test_ogr_rfc35_mitab_5():
     gdal.PopErrorHandler()
     assert ret != 0
 
-    ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
+    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
-    if ret != 'success':
-        gdaltest.post_reason(ret)
-        return ret
+    CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
 
-    
+
 ###############################################################################
 # Initiate the test file
 
 
 def test_ogr_rfc35_mitab_cleanup():
 
-    ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/rfc35_test.tab')
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/rfc35_test.tab')
 
 
 

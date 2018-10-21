@@ -77,7 +77,7 @@ import gdaltest
 def test_mrf(src_filename, chksum, chksum_after_reopening, options):
     if src_filename == '12bit_rose_extract.jpg':
         import jpeg
-        jpeg.jpeg_1()
+        jpeg.test_jpeg_1()
         if gdaltest.jpeg_version == '9b':
             pytest.skip()
 

@@ -36,6 +36,8 @@ from osgeo import gdal
 import gdaltest
 import pytest
 
+from gcore.testnonboundtoswig import setup as testnonboundtoswig_setup  # noqa
+
 ###############################################################################
 # Use common test for /vsicrypt
 
@@ -458,24 +460,18 @@ def test_vsicrypt_5():
 # Test VSISetCryptKey
 
 
-def test_vsicrypt_6():
+def test_vsicrypt_6(testnonboundtoswig_setup):
 
     try:
         import ctypes
     except ImportError:
         pytest.skip()
-    import testnonboundtoswig
 
-    testnonboundtoswig.testnonboundtoswig_init()
-
-    if testnonboundtoswig.gdal_handle is None:
-        pytest.skip()
-
-    testnonboundtoswig.gdal_handle.VSISetCryptKey.argtypes = [ctypes.c_char_p, ctypes.c_int]
-    testnonboundtoswig.gdal_handle.VSISetCryptKey.restype = None
+    testnonboundtoswig_setup.VSISetCryptKey.argtypes = [ctypes.c_char_p, ctypes.c_int]
+    testnonboundtoswig_setup.VSISetCryptKey.restype = None
 
     # Set a valid key
-    testnonboundtoswig.gdal_handle.VSISetCryptKey('DONT_USE_IN_PROD'.encode('ASCII'), 16)
+    testnonboundtoswig_setup.VSISetCryptKey('DONT_USE_IN_PROD'.encode('ASCII'), 16)
 
     if not gdaltest.has_vsicrypt:
         pytest.skip()
@@ -503,7 +499,7 @@ def test_vsicrypt_6():
     assert content == 'hello'
 
     # Set a too short key
-    testnonboundtoswig.gdal_handle.VSISetCryptKey('bbc'.encode('ASCII'), 3)
+    testnonboundtoswig_setup.VSISetCryptKey('bbc'.encode('ASCII'), 3)
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'rb')
     assert fp is None
@@ -513,7 +509,7 @@ def test_vsicrypt_6():
     assert fp is None
 
     # Erase key
-    testnonboundtoswig.gdal_handle.VSISetCryptKey(None, 0)
+    testnonboundtoswig_setup.VSISetCryptKey(None, 0)
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'wb+')
     assert fp is None

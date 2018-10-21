@@ -68,7 +68,7 @@ def test_basic_test_strace_non_existing_file():
         " \" ")
     try:
         (_, err) = gdaltest.runexternal_out_and_err(cmd)
-    except:
+    except Exception:
         # strace not available
         pytest.skip()
 
@@ -78,6 +78,7 @@ def test_basic_test_strace_non_existing_file():
             interesting_lines += [ line ]
     # Only 3 calls on the file are legit: open(), stat() and readlink()
     assert len(interesting_lines) <= 3, 'too many system calls accessing file'
+
 
 def test_basic_test_2():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -130,23 +131,24 @@ def test_basic_test_6():
 
 
 def basic_test_7_internal():
-    try:
+
+    with pytest.raises(Exception):
         gdal.Open('non_existing_ds', gdal.GA_ReadOnly)
-        pytest.fail('opening should have thrown an exception')
-    except:
-        # Special case: we should still be able to get the error message
-        # until we call a new GDAL function
-        assert matches_non_existing_error_msg(gdal.GetLastErrorMsg()), \
-            ('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
 
-        assert gdal.GetLastErrorType() != 0, 'did not get expected error type'
+    # Special case: we should still be able to get the error message
+    # until we call a new GDAL function
+    assert matches_non_existing_error_msg(gdal.GetLastErrorMsg()), ('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
 
-        # Should issue an implicit CPLErrorReset()
-        gdal.GetCacheMax()
+    # Special case: we should still be able to get the error message
+    # until we call a new GDAL function
+    assert matches_non_existing_error_msg(gdal.GetLastErrorMsg()), 'did not get expected error message, got %s' % gdal.GetLastErrorMsg()
 
-        assert gdal.GetLastErrorType() == 0, 'got unexpected error type'
+    assert gdal.GetLastErrorType() != 0, 'did not get expected error type'
 
-        return
+    # Should issue an implicit CPLErrorReset()
+    gdal.GetCacheMax()
+
+    assert gdal.GetLastErrorType() == 0, 'got unexpected error type'
 
 
 def test_basic_test_7():
@@ -170,15 +172,22 @@ def test_basic_test_8():
     if sys.platform == 'win32':
         python_exe = python_exe.replace('\\', '/')
 
-    ret = gdaltest.runexternal(python_exe + ' basic_test.py LICENSE 0')
-    assert ret.find('GDAL/OGR is released under the MIT/X license') == 0 or ret.find('GDAL/OGR Licensing') >= 0
+    license_text = gdal.VersionInfo('LICENSE')
+    assert (
+        license_text.startswith('GDAL/OGR is released under the MIT/X license')
+        or 'GDAL/OGR Licensing' in license_text
+    )
 
-    f = open('tmp/LICENSE.TXT', 'wt')
-    f.write('fake_license')
-    f.close()
-    ret = gdaltest.runexternal(python_exe + ' basic_test.py LICENSE 1')
-    os.unlink('tmp/LICENSE.TXT')
-    assert ret.find('fake_license') == 0 or ret.find('GDAL/OGR Licensing') >= 0
+    with gdaltest.config_option('GDAL_DATA', 'tmp'):
+        with open('tmp/LICENSE.TXT', 'wt') as f:
+            f.write('fake_license')
+            license_text = gdal.VersionInfo('LICENSE')
+        os.unlink('tmp/LICENSE.TXT')
+        assert (
+            license_text.startswith('fake_license')
+            or 'GDAL/OGR Licensing' in license_text
+        )
+
 
 ###############################################################################
 # Test gdal.PushErrorHandler() with a Python error handler
@@ -381,7 +390,7 @@ def test_basic_test_13():
     for i in range(200):
         assert ds.GetMetadataItem("FILENAME_%d" % i) == '%d' % i
 
-    
+
 ###############################################################################
 # Test SetMetadata()
 
@@ -458,22 +467,23 @@ def basic_test_15_cbk_bad_ret(a, b, c):
 
 
 def test_basic_test_15():
+    mem_driver = gdal.GetDriverByName('MEM')
 
     with pytest.raises(Exception):
         with gdaltest.error_handler():
             gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback='foo')
-            
+
 
     with gdaltest.error_handler():
-        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback=basic_test_15_cbk_no_argument)
+        ds = mem_driver.CreateCopy('', mem_driver.Create('', 1, 1), callback=basic_test_15_cbk_no_argument)
     assert ds is None
 
     with gdaltest.error_handler():
-        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback=basic_test_15_cbk_no_ret)
+        ds = mem_driver.CreateCopy('', mem_driver.Create('', 1, 1), callback=basic_test_15_cbk_no_ret)
     assert ds is not None
 
     with gdaltest.error_handler():
-        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback=basic_test_15_cbk_bad_ret)
+        ds = mem_driver.CreateCopy('', mem_driver.Create('', 1, 1), callback=basic_test_15_cbk_bad_ret)
     assert ds is None
 
 ###############################################################################

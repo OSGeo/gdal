@@ -30,7 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import osr_proj4
+from osr import osr_proj4
 
 
 import gdaltest

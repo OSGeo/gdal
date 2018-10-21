@@ -377,7 +377,7 @@ def test_ogr_mitab_13():
         pytest.skip()
 
     import ogr_gml_read
-    ogr_gml_read.ogr_gml_1()
+    ogr_gml_read.test_ogr_gml_1()
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
@@ -422,7 +422,7 @@ def test_ogr_mitab_14():
         pytest.skip()
 
     import ogr_gml_read
-    ogr_gml_read.ogr_gml_1()
+    ogr_gml_read.test_ogr_gml_1()
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
@@ -522,7 +522,7 @@ def test_ogr_mitab_17():
         pytest.skip()
 
     import ogr_gml_read
-    ogr_gml_read.ogr_gml_1()
+    ogr_gml_read.test_ogr_gml_1()
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()

@@ -30,12 +30,12 @@
 ###############################################################################
 
 
-
-import gdaltest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
 import pytest
+
+from ogr.ogr_sql_sqlite import require_ogr_sql_sqlite  # noqa
 
 ###############################################################################
 # Test OGRGeomFieldDefn class
@@ -697,12 +697,7 @@ def test_ogr_rfc41_7():
 # Test SQLite dialect
 
 
-def test_ogr_rfc41_8():
-
-    import ogr_sql_sqlite
-    if not ogr_sql_sqlite.ogr_sql_sqlite_available():
-        pytest.skip()
-
+def test_ogr_rfc41_8(require_ogr_sql_sqlite):
     ds = ogr.GetDriverByName('memory').CreateDataSource('')
     lyr = ds.CreateLayer('mytable', geom_type=ogr.wkbPolygon)
     lyr.GetLayerDefn().GetGeomFieldDefn(0).SetName('geomfield')

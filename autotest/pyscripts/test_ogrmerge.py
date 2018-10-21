@@ -46,14 +46,14 @@ def test_ogrmerge_1():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-single -o /vsimem/out.shp ../ogr/data/poly.shp ../ogr/data/poly.shp')
+                                  '-single -o tmp/out.shp ../ogr/data/poly.shp ../ogr/data/poly.shp')
 
-    ds = ogr.Open('/vsimem/out.shp')
+    ds = ogr.Open('tmp/out.shp')
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 20
     ds = None
 
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/out.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/out.shp')
 
 ###############################################################################
 # Test -append and glob
@@ -65,16 +65,16 @@ def test_ogrmerge_2():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-single -o /vsimem/out.shp ../ogr/data/poly.shp')
+                                  '-single -o tmp/out.shp ../ogr/data/poly.shp')
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-append -single -o /vsimem/out.shp "../ogr/data/p*ly.shp"')
+                                  '-append -single -o tmp/out.shp "../ogr/data/p*ly.shp"')
 
-    ds = ogr.Open('/vsimem/out.shp')
+    ds = ogr.Open('tmp/out.shp')
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 20
     ds = None
 
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/out.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/out.shp')
 
 ###############################################################################
 # Test -overwrite_ds
@@ -86,16 +86,16 @@ def test_ogrmerge_3():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-overwrite_ds -o /vsimem/out.shp ../ogr/data/poly.shp')
+                                  '-overwrite_ds -o tmp/out.shp ../ogr/data/poly.shp')
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-overwrite_ds -single -o /vsimem/out.shp ../ogr/data/poly.shp')
+                                  '-overwrite_ds -single -o tmp/out.shp ../ogr/data/poly.shp')
 
-    ds = ogr.Open('/vsimem/out.shp')
+    ds = ogr.Open('tmp/out.shp')
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 10
     ds = None
 
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/out.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/out.shp')
 
 ###############################################################################
 # Test -f VRT
@@ -107,15 +107,15 @@ def test_ogrmerge_4():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp')
+                                  '-f VRT -o tmp/out.vrt ../ogr/data/poly.shp')
 
-    ds = ogr.Open('/vsimem/out.vrt')
+    ds = ogr.Open('tmp/out.vrt')
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'poly'
     assert lyr.GetFeatureCount() == 10
     ds = None
 
-    gdal.Unlink('/vsimem/out.vrt')
+    gdal.Unlink('tmp/out.vrt')
 
 ###############################################################################
 # Test -nln
@@ -127,10 +127,10 @@ def test_ogrmerge_5():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp ../ogr/data/testpoly.shp -nln '
+                                  '-f VRT -o tmp/out.vrt ../ogr/data/poly.shp ../ogr/data/testpoly.shp -nln '
                                   '"foo_{DS_NAME}_{DS_BASENAME}_{DS_INDEX}_{LAYER_NAME}_{LAYER_INDEX}"')
 
-    ds = ogr.Open('/vsimem/out.vrt')
+    ds = ogr.Open('tmp/out.vrt')
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'foo_../ogr/data/poly.shp_poly_0_poly_0'
     assert lyr.GetFeatureCount() == 10
@@ -139,7 +139,7 @@ def test_ogrmerge_5():
     assert lyr.GetFeatureCount() == 14
     ds = None
 
-    gdal.Unlink('/vsimem/out.vrt')
+    gdal.Unlink('tmp/out.vrt')
 
 ###############################################################################
 # Test -src_layer_field_name -src_layer_field_content
@@ -151,11 +151,11 @@ def test_ogrmerge_6():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-single -f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp '
+                                  '-single -f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
                                   '-src_layer_field_name source -src_layer_field_content '
                                   '"foo_{DS_NAME}_{DS_BASENAME}_{DS_INDEX}_{LAYER_NAME}_{LAYER_INDEX}"')
 
-    ds = ogr.Open('/vsimem/out.vrt')
+    ds = ogr.Open('tmp/out.vrt')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['source'] != 'foo_../ogr/data/poly.shp_poly_0_poly_0':
@@ -163,7 +163,7 @@ def test_ogrmerge_6():
         pytest.fail()
     ds = None
 
-    gdal.Unlink('/vsimem/out.vrt')
+    gdal.Unlink('tmp/out.vrt')
 
 ###############################################################################
 # Test -src_geom_type
@@ -176,47 +176,47 @@ def test_ogrmerge_7():
 
     # No match in -single mode
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-single -f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp '
+                                  '-single -f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
                                   '-src_geom_type POINT')
 
-    ds = ogr.Open('/vsimem/out.vrt')
+    ds = ogr.Open('tmp/out.vrt')
     assert ds.GetLayerCount() == 0
     ds = None
 
-    gdal.Unlink('/vsimem/out.vrt')
+    gdal.Unlink('tmp/out.vrt')
 
     # Match in single mode
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-single -f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp '
+                                  '-single -f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
                                   '-src_geom_type POLYGON')
 
-    ds = ogr.Open('/vsimem/out.vrt')
+    ds = ogr.Open('tmp/out.vrt')
     assert ds.GetLayerCount() == 1
     ds = None
 
-    gdal.Unlink('/vsimem/out.vrt')
+    gdal.Unlink('tmp/out.vrt')
 
     # No match in default mode
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp '
+                                  '-f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
                                   '-src_geom_type POINT')
 
-    ds = ogr.Open('/vsimem/out.vrt')
+    ds = ogr.Open('tmp/out.vrt')
     assert ds.GetLayerCount() == 0
     ds = None
 
-    gdal.Unlink('/vsimem/out.vrt')
+    gdal.Unlink('tmp/out.vrt')
 
     # Match in default mode
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp '
+                                  '-f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
                                   '-src_geom_type POLYGON')
 
-    ds = ogr.Open('/vsimem/out.vrt')
+    ds = ogr.Open('tmp/out.vrt')
     assert ds.GetLayerCount() == 1
     ds = None
 
-    gdal.Unlink('/vsimem/out.vrt')
+    gdal.Unlink('tmp/out.vrt')
 
 ###############################################################################
 # Test -s_srs -t_srs in -single mode
@@ -228,19 +228,19 @@ def test_ogrmerge_8():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-single -f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp '
+                                  '-single -f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
                                   '-s_srs EPSG:32630 -t_srs EPSG:4326')
 
-    ds = ogr.Open('/vsimem/out.vrt')
+    ds = ogr.Open('tmp/out.vrt')
     assert ds is not None
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/out.vrt', 'rb')
+    f = gdal.VSIFOpenL('tmp/out.vrt', 'rb')
     content = ''
     if f is not None:
         content = gdal.VSIFReadL(1, 10000, f).decode('UTF-8')
         gdal.VSIFCloseL(f)
-    gdal.Unlink('/vsimem/out.vrt')
+    gdal.Unlink('tmp/out.vrt')
 
     assert content.find('<SrcSRS>EPSG:32630</SrcSRS>') >= 0
 
@@ -256,19 +256,19 @@ def test_ogrmerge_9():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp '
+                                  '-f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
                                   '-s_srs EPSG:32630 -t_srs EPSG:4326')
 
-    ds = ogr.Open('/vsimem/out.vrt')
+    ds = ogr.Open('tmp/out.vrt')
     assert ds is not None
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/out.vrt', 'rb')
+    f = gdal.VSIFOpenL('tmp/out.vrt', 'rb')
     content = ''
     if f is not None:
         content = gdal.VSIFReadL(1, 10000, f).decode('UTF-8')
         gdal.VSIFCloseL(f)
-    gdal.Unlink('/vsimem/out.vrt')
+    gdal.Unlink('tmp/out.vrt')
 
     assert content.find('<SrcSRS>EPSG:32630</SrcSRS>') >= 0
 
@@ -284,19 +284,19 @@ def test_ogrmerge_10():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-single -f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp '
+                                  '-single -f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
                                   '-a_srs EPSG:32630')
 
-    ds = ogr.Open('/vsimem/out.vrt')
+    ds = ogr.Open('tmp/out.vrt')
     assert ds is not None
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/out.vrt', 'rb')
+    f = gdal.VSIFOpenL('tmp/out.vrt', 'rb')
     content = ''
     if f is not None:
         content = gdal.VSIFReadL(1, 10000, f).decode('UTF-8')
         gdal.VSIFCloseL(f)
-    gdal.Unlink('/vsimem/out.vrt')
+    gdal.Unlink('tmp/out.vrt')
 
     assert content.find('<LayerSRS>EPSG:32630</LayerSRS>') >= 0
 
@@ -310,19 +310,19 @@ def test_ogrmerge_11():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp '
+                                  '-f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
                                   '-a_srs EPSG:32630')
 
-    ds = ogr.Open('/vsimem/out.vrt')
+    ds = ogr.Open('tmp/out.vrt')
     assert ds is not None
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/out.vrt', 'rb')
+    f = gdal.VSIFOpenL('tmp/out.vrt', 'rb')
     content = ''
     if f is not None:
         content = gdal.VSIFReadL(1, 10000, f).decode('UTF-8')
         gdal.VSIFCloseL(f)
-    gdal.Unlink('/vsimem/out.vrt')
+    gdal.Unlink('tmp/out.vrt')
 
     assert content.find('<LayerSRS>EPSG:32630</LayerSRS>') >= 0
 
@@ -339,14 +339,14 @@ def test_ogrmerge_12():
         f.write("""{ "type": "FeatureCollection", "name": "\xc3\xa9ven", "features": [ { "type": "Feature", "properties": {}, "geometry": null} ]}""")
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-f VRT -o /vsimem/out.vrt tmp/tmp.json')
+                                  '-f VRT -o tmp/out.vrt tmp/tmp.json')
 
-    ds = ogr.Open('/vsimem/out.vrt')
+    ds = ogr.Open('tmp/out.vrt')
     assert ds is not None
     ds = None
 
     gdal.Unlink('tmp/tmp.json')
-    gdal.Unlink('/vsimem/out.vrt')
+    gdal.Unlink('tmp/out.vrt')
 
 
 

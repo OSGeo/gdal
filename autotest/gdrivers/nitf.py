@@ -47,6 +47,14 @@ import pytest
 # Write/Read test of simple byte reference data.
 
 
+@pytest.fixture(scope='module')
+def not_jpeg_9b():
+    import jpeg
+    jpeg.test_jpeg_1()
+    if gdaltest.jpeg_version == '9b':
+        pytest.skip()
+
+
 def test_nitf_1():
 
     tst = gdaltest.GDALTest('NITF', 'byte.tif', 1, 4672)
@@ -1042,13 +1050,7 @@ def test_nitf_40():
 ###############################################################################
 # Check reading a 12-bit JPEG compressed NITF
 
-def test_nitf_41():
-
-    import jpeg
-    jpeg.jpeg_1()
-    if gdaltest.jpeg_version == '9b':
-        pytest.skip()
-
+def test_nitf_41(not_jpeg_9b):
     # Check if JPEG driver supports 12bit JPEG reading/writing
     jpg_drv = gdal.GetDriverByName('JPEG')
     md = jpg_drv.GetMetadata()
@@ -1072,16 +1074,12 @@ def test_nitf_41():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Check creating a 12-bit JPEG compressed NITF
 
 
-def test_nitf_42():
-
-    if gdaltest.jpeg_version == '9b':
-        pytest.skip()
-
+def test_nitf_42(not_jpeg_9b):
     # Check if JPEG driver supports 12bit JPEG reading/writing
     jpg_drv = gdal.GetDriverByName('JPEG')
     md = jpg_drv.GetMetadata()
@@ -2114,7 +2112,7 @@ def test_nitf_72():
 
     gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_72.ntf')
 
-    assert compare_rpc(src_md, md)
+    compare_rpc(src_md, md)
 
     expected_RPC00B_max_precision = '11234.562345.6734567845678-89.8765-179.1234-987698765467890-12.3456-123.4567-1234+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+1.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+2.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+3.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9'
     assert RPC00B == expected_RPC00B_max_precision, 'fail: did not get expected RPC00B'
@@ -2213,7 +2211,7 @@ def test_nitf_72():
 
     gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_72.ntf')
 
-    assert compare_rpc(src_md, md)
+    compare_rpc(src_md, md)
 
     expected_RPC00B = '10123.000234.0000345604567+08.0000+017.0000+098709876506789+12.0000+109.0000+0034+0.000000E+0+9.870000E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+1.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+2.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+3.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9'
     assert RPC00B == expected_RPC00B, 'fail: did not get expected RPC00B'
@@ -2298,7 +2296,7 @@ def test_nitf_72():
         'fail: _RPC.TXT file not reported in file list'
 
     # Check that we get full precision from the _RPC.TXT file
-    assert compare_rpc(src_md, md)
+    compare_rpc(src_md, md)
 
     assert RPC00B == expected_RPC00B, 'fail: did not get expected RPC00B'
 
@@ -2856,12 +2854,12 @@ def test_nitf_online_13():
         assert md[item[0]] == item[1], ('wrong value for %s, got %s instead of %s.'
                                  % (item[0], md[item[0]], item[1]))
 
-    
+
 
 ###############################################################################
 # Check reading a 12-bit JPEG compressed NITF (multi-block)
 
-def test_nitf_online_14():
+def test_nitf_online_14(not_jpeg_9b):
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_4020h.ntf', 'U_4020h.ntf'):
         pytest.skip()
@@ -2870,9 +2868,6 @@ def test_nitf_online_14():
         os.remove('tmp/cache/U_4020h.ntf.aux.xml')
     except OSError:
         pass
-
-    if gdaltest.jpeg_version == '9b':
-        pytest.skip()
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
     jpg_drv = gdal.GetDriverByName('JPEG')

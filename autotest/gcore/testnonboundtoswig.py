@@ -56,14 +56,14 @@ def find_libgdal():
 # Init
 
 
-def test_testnonboundtoswig_init():
-
+@pytest.fixture(scope='module', autouse=True)
+def setup():
     global gdal_handle_init, gdal_handle, gdal_handle_stdcall
 
     if gdal_handle_init:
         if gdal_handle is None:
             pytest.skip()
-        return
+        return gdal_handle
 
     gdal_handle_init = True
 
@@ -100,69 +100,49 @@ def test_testnonboundtoswig_init():
             gdal_handle_stdcall = None
             pytest.skip('dynamic version(%s) does not match static version (%s)' % (dynamic_version, static_version))
 
-        return
-    except:
-        pytest.skip('cannot find gdal shared object')
+        return gdal_handle
+    except Exception:
+        print('cannot find gdal shared object')
+        pytest.skip()
 
 ###############################################################################
 # Call GDALDestroyDriverManager()
 
 
 def GDALDestroyDriverManager():
+    if gdal_handle_stdcall:
+        gdal_handle_stdcall.GDALDestroyDriverManager.argtypes = []
+        gdal_handle_stdcall.GDALDestroyDriverManager.restype = None
 
-    if gdal_handle is None:
-        test_testnonboundtoswig_init()
-
-    if gdal_handle is None:
-        pytest.skip()
-
-    gdal_handle_stdcall.GDALDestroyDriverManager.argtypes = []
-    gdal_handle_stdcall.GDALDestroyDriverManager.restype = None
-
-    gdal_handle_stdcall.GDALDestroyDriverManager()
+        gdal_handle_stdcall.GDALDestroyDriverManager()
 
 ###############################################################################
 # Call OGRCleanupAll()
 
 
 def OGRCleanupAll():
+    if gdal_handle_stdcall:
+        gdal_handle_stdcall.OGRCleanupAll.argtypes = []
+        gdal_handle_stdcall.OGRCleanupAll.restype = None
 
-    if gdal_handle is None:
-        test_testnonboundtoswig_init()
-
-    if gdal_handle is None:
-        pytest.skip()
-
-    gdal_handle_stdcall.OGRCleanupAll.argtypes = []
-    gdal_handle_stdcall.OGRCleanupAll.restype = None
-
-    gdal_handle_stdcall.OGRCleanupAll()
+        gdal_handle_stdcall.OGRCleanupAll()
 
 ###############################################################################
 # Call OSRCleanup()
 
 
 def OSRCleanup():
+    if gdal_handle:
+        gdal_handle.OSRCleanup.argtypes = []
+        gdal_handle.OSRCleanup.restype = None
 
-    if gdal_handle is None:
-        test_testnonboundtoswig_init()
-
-    if gdal_handle is None:
-        pytest.skip()
-
-    gdal_handle.OSRCleanup.argtypes = []
-    gdal_handle.OSRCleanup.restype = None
-
-    gdal_handle.OSRCleanup()
+        gdal_handle.OSRCleanup()
 
 ###############################################################################
 # Test GDALSimpleImageWarp
 
 
 def test_testnonboundtoswig_GDALSimpleImageWarp():
-
-    if gdal_handle is None:
-        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     gt = src_ds.GetGeoTransform()
@@ -248,29 +228,29 @@ def GDALTypeToCTypes(gdaltype):
 def my_pyDerivedPixelFunc(papoSources, nSources, pData, nBufXSize, nBufYSize, eSrcType, eBufType, nPixelSpace, nLineSpace):
     if nSources != 1:
         print(nSources)
-        gdaltest.post_reason('did not get expected nSources')
+        print('did not get expected nSources')
         return 1
 
     srcctype = GDALTypeToCTypes(eSrcType)
     if srcctype is None:
         print(eSrcType)
-        gdaltest.post_reason('did not get expected eSrcType')
+        print('did not get expected eSrcType')
         return 1
 
     dstctype = GDALTypeToCTypes(eBufType)
     if dstctype is None:
         print(eBufType)
-        gdaltest.post_reason('did not get expected eBufType')
+        print('did not get expected eBufType')
         return 1
 
     if nPixelSpace != gdal.GetDataTypeSize(eBufType) / 8:
         print(nPixelSpace)
-        gdaltest.post_reason('did not get expected nPixelSpace')
+        print('did not get expected nPixelSpace')
         return 1
 
     if (nLineSpace % nPixelSpace) != 0:
         print(nLineSpace)
-        gdaltest.post_reason('did not get expected nLineSpace')
+        print('did not get expected nLineSpace')
         return 1
 
     nLineStride = (int)(nLineSpace / nPixelSpace)
@@ -285,9 +265,6 @@ def my_pyDerivedPixelFunc(papoSources, nSources, pData, nBufXSize, nBufYSize, eS
 
 
 def test_testnonboundtoswig_VRTDerivedBands():
-
-    if gdal_handle is None:
-        pytest.skip()
 
     DerivedPixelFuncType = ctypes.CFUNCTYPE(ctypes.c_int,  # ret CPLErr
                                             ctypes.POINTER(ctypes.c_void_p),  # void **papoSources
@@ -339,7 +316,4 @@ def test_testnonboundtoswig_VRTDerivedBands():
 
     assert ref_cs == got_cs, 'wrong checksum'
 
-    assert ref_data == got_data, 'wrong data'
-
-
-
+    assert ref_data == got_data

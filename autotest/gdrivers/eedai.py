@@ -703,6 +703,27 @@ def test_eedai_geotiff():
 #
 
 
+def test_eedai_cleanup():
+
+    if gdaltest.eedai_drv is None:
+        pytest.skip()
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
+    gdal.SetConfigOption('EEDA_BEARER', gdaltest.EEDA_BEARER)
+    gdal.SetConfigOption('EEDA_URL', gdaltest.EEDA_URL)
+    gdal.SetConfigOption('EEDA_PRIVATE_KEY', gdaltest.EEDA_PRIVATE_KEY)
+    gdal.SetConfigOption('EEDA_CLIENT_EMAIL', gdaltest.EEDA_CLIENT_EMAIL)
+    gdal.SetConfigOption('GO2A_AUD', None)
+    gdal.SetConfigOption('GOA2_NOW', None)
+    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', gdaltest.GOOGLE_APPLICATION_CREDENTIALS)
+
+    gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/image')
+    gdal.RmdirRecursive('/vsimem/ee/')
+
+###############################################################################
+#
+
+
 def test_eedai_real_service():
 
     if gdaltest.eedai_drv is None:
@@ -729,27 +750,3 @@ def test_eedai_real_service():
     expected = {'files': [], 'cornerCoordinates': {'upperRight': [20015109.354, 10007554.677], 'lowerLeft': [-20015109.354, -10007554.677], 'lowerRight': [20015109.354, -10007554.677], 'upperLeft': [-20015109.354, 10007554.677], 'center': [9.6e-06, 6e-06]}, 'wgs84Extent': {'type': 'Polygon', 'coordinates': [[]]}, 'description': 'EEDAI:MODIS/006/MYD09GA/2017_05_24', 'driverShortName': 'EEDAI', 'driverLongName': 'Earth Engine Data API Image', 'bands': [{'description': 'num_observations_1km', 'band': 1, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {'IMAGE_STRUCTURE': {'PIXELTYPE': 'SIGNEDBYTE'}}}, {'description': 'state_1km', 'band': 2, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'UInt16', 'block': [256, 256], 'metadata': {}}, {'description': 'SensorZenith', 'band': 3, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Int16', 'block': [256, 256], 'metadata': {}}, {'description': 'SensorAzimuth', 'band': 4, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Int16', 'block': [256, 256], 'metadata': {}}, {'description': 'Range', 'band': 5, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'UInt16', 'block': [256, 256], 'metadata': {}}, {'description': 'SolarZenith', 'band': 6, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Int16', 'block': [256, 256], 'metadata': {}}, {'description': 'SolarAzimuth', 'band': 7, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Int16', 'block': [256, 256], 'metadata': {}}, {'description': 'gflags', 'band': 8, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'orbit_pnt', 'band': 9, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {'IMAGE_STRUCTURE': {'PIXELTYPE': 'SIGNEDBYTE'}}}, {'description': 'granule_pnt', 'band': 10, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}], 'coordinateSystem': {'wkt': 'PROJCS["MODIS Sinusoidal",\n    GEOGCS["WGS 84",\n        DATUM["WGS_1984",\n            SPHEROID["WGS 84",6378137,298.257223563,\n                AUTHORITY["EPSG","7030"]],\n            AUTHORITY["EPSG","6326"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.01745329251994328,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4326"]],\n    PROJECTION["Sinusoidal"],\n    PARAMETER["false_easting",0.0],\n    PARAMETER["false_northing",0.0],\n    PARAMETER["central_meridian",0.0],\n    PARAMETER["semi_major",6371007.181],\n    PARAMETER["semi_minor",6371007.181],\n    UNIT["m",1.0],\n    AUTHORITY["SR-ORG","6974"]]'}, 'geoTransform': [-20015109.354, 926.625433056, 0.0, 10007554.677, 0.0, -926.625433055], 'metadata': {'IMAGE_STRUCTURE': {'INTERLEAVE': 'PIXEL'}, 'SUBDATASETS': {'SUBDATASET_2_NAME': 'EEDAI:MODIS/006/MYD09GA/2017_05_24:num_observations_500m,sur_refl_b01,sur_refl_b02,sur_refl_b03,sur_refl_b04,sur_refl_b05,sur_refl_b06,sur_refl_b07,QC_500m,obscov_500m,iobs_res,q_scan', 'SUBDATASET_2_DESC': 'Bands num_observations_500m,sur_refl_b01,sur_refl_b02,sur_refl_b03,sur_refl_b04,sur_refl_b05,sur_refl_b06,sur_refl_b07,QC_500m,obscov_500m,iobs_res,q_scan of MODIS/006/MYD09GA/2017_05_24', 'SUBDATASET_1_NAME': 'EEDAI:MODIS/006/MYD09GA/2017_05_24:num_observations_1km,state_1km,SensorZenith,SensorAzimuth,Range,SolarZenith,SolarAzimuth,gflags,orbit_pnt,granule_pnt', 'SUBDATASET_1_DESC': 'Bands num_observations_1km,state_1km,SensorZenith,SensorAzimuth,Range,SolarZenith,SolarAzimuth,gflags,orbit_pnt,granule_pnt of MODIS/006/MYD09GA/2017_05_24'}}, 'size': [43200, 21600]}
     assert expected == res
     assert ds.ReadRaster(0, 0, 1, 1) is not None
-
-###############################################################################
-#
-
-
-def test_eedai_cleanup():
-
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
-
-    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
-    gdal.SetConfigOption('EEDA_BEARER', gdaltest.EEDA_BEARER)
-    gdal.SetConfigOption('EEDA_URL', gdaltest.EEDA_URL)
-    gdal.SetConfigOption('EEDA_PRIVATE_KEY', gdaltest.EEDA_PRIVATE_KEY)
-    gdal.SetConfigOption('EEDA_CLIENT_EMAIL', gdaltest.EEDA_CLIENT_EMAIL)
-    gdal.SetConfigOption('GO2A_AUD', None)
-    gdal.SetConfigOption('GOA2_NOW', None)
-    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', gdaltest.GOOGLE_APPLICATION_CREDENTIALS)
-
-    gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/image')
-    gdal.RmdirRecursive('/vsimem/ee/')
-
-
-

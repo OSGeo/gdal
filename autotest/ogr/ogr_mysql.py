@@ -129,6 +129,31 @@ def test_ogr_mysql_2():
         'not matching spatial ref'
 
 ###############################################################################
+# Test reading a layer extent
+
+
+def test_ogr_mysql_19():
+
+    if gdaltest.mysql_ds is None:
+        pytest.skip()
+
+    layer = gdaltest.mysql_ds.GetLayerByName('tpoly')
+    if layer is None:
+        pytest.fail('did not get tpoly layer')
+
+    extent = layer.GetExtent()
+    expect = (478315.53125, 481645.3125, 4762880.5, 4765610.5)
+
+    minx = abs(extent[0] - expect[0])
+    maxx = abs(extent[1] - expect[1])
+    miny = abs(extent[2] - expect[2])
+    maxy = abs(extent[3] - expect[3])
+
+    if max(minx, maxx, miny, maxy) > 0.0001:
+        print(extent)
+        pytest.fail('Extents do not match')
+
+###############################################################################
 # Verify that stuff we just wrote is still OK.
 
 
@@ -511,32 +536,6 @@ def ogr_mysql_18():
         'layer count unexpectedly unchanged.'
 
 ###############################################################################
-# Test reading a layer extent
-
-
-def test_ogr_mysql_19():
-
-    if gdaltest.mysql_ds is None:
-        pytest.skip()
-
-    layer = gdaltest.mysql_ds.GetLayerByName('tpoly')
-    assert layer is not None, 'did not get tpoly layer'
-
-    extent = layer.GetExtent()
-    expect = (478315.53125, 481645.3125, 4762880.5, 4765610.5)
-
-    minx = abs(extent[0] - expect[0])
-    maxx = abs(extent[1] - expect[1])
-    miny = abs(extent[2] - expect[2])
-    maxy = abs(extent[3] - expect[3])
-
-    if max(minx, maxx, miny, maxy) > 0.0001:
-        print(extent)
-        pytest.fail('Extents do not match')
-
-    
-###############################################################################
-# Test using reserved keywords as column names and table names
 
 
 def test_ogr_mysql_20():

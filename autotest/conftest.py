@@ -11,6 +11,10 @@ import gdal
 # Put the pymod dir on the path, so modules can `import gdaltest`
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "pymod"))
 
+# put the autotest dir on the path too. This lets us import all test modules
+sys.path.insert(1, os.path.dirname(__file__))
+
+
 # These files may be non-importable, and don't contain tests anyway.
 # So we skip searching them during test collection.
 collect_ignore = ["gdrivers/netcdf_cfchecks.py"]
@@ -43,6 +47,19 @@ def chdir_to_test_file(request):
     if sys.path and sys.path[0] == ".":
         sys.path.pop(0)
     os.chdir(old)
+
+
+@pytest.fixture(scope='session', autouse=True)
+def cleanup_on_exit():
+    yield
+
+    from gcore import testnonboundtoswig
+
+    # Do it twice to ensure that cleanup routines properly do their jobs
+    for _ in range(2):
+        testnonboundtoswig.OSRCleanup()
+        testnonboundtoswig.GDALDestroyDriverManager()
+        testnonboundtoswig.OGRCleanupAll()
 
 
 def pytest_collection_modifyitems(config, items):

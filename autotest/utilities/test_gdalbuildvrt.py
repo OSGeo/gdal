@@ -41,7 +41,7 @@ import pytest
 
 
 ###############################################################################
-def test_gdalbuildvrt_check():
+def gdalbuildvrt_check():
 
     ds = gdal.Open('tmp/mosaic.vrt')
     assert ds.GetProjectionRef().find('WGS 84') != -1, \
@@ -100,7 +100,7 @@ def test_gdalbuildvrt_1():
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
     assert (err is None or err == ''), 'got error/warning'
 
-    return test_gdalbuildvrt_check()
+    return gdalbuildvrt_check()
 
 ###############################################################################
 # Test with tile index
@@ -133,7 +133,7 @@ def test_gdalbuildvrt_2():
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/mosaic.vrt tmp/tileindex.shp')
 
-    return test_gdalbuildvrt_check()
+    return gdalbuildvrt_check()
 
 ###############################################################################
 # Test with file list
@@ -147,7 +147,7 @@ def test_gdalbuildvrt_3():
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -input_file_list tmp/filelist.txt tmp/mosaic.vrt')
 
-    return test_gdalbuildvrt_check()
+    return gdalbuildvrt_check()
 
 
 ###############################################################################
@@ -167,12 +167,14 @@ def test_gdalbuildvrt_4():
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif tmp/gdalbuildvrt5.tif')
 
-    return test_gdalbuildvrt_check()
+    return gdalbuildvrt_check()
 
 ###############################################################################
 # Try adding a raster with different band count
 
 
+# NOTE: fails. commented out originally in 4ef886421c99a4451f8873cb6e094d45ecc86d3f, not sure why
+@pytest.mark.xfail
 def test_gdalbuildvrt_5():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         pytest.skip()
@@ -189,7 +191,7 @@ def test_gdalbuildvrt_5():
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif tmp/gdalbuildvrt5.tif')
 
-    return test_gdalbuildvrt_check()
+    return gdalbuildvrt_check()
 
 ###############################################################################
 # Test -separate option
@@ -296,7 +298,7 @@ def test_gdalbuildvrt_8():
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -tr 0.1 0.1 tmp/mosaic.vrt tmp/mosaic2.vrt')
 
-    return test_gdalbuildvrt_check()
+    return gdalbuildvrt_check()
 
 ###############################################################################
 # Test -te option
@@ -321,7 +323,7 @@ def test_gdalbuildvrt_9():
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -te 2 47 4 49 tmp/mosaic.vrt tmp/mosaic2.vrt')
 
-    return test_gdalbuildvrt_check()
+    return gdalbuildvrt_check()
 
 ###############################################################################
 # Test explicit nodata setting (#3254)
