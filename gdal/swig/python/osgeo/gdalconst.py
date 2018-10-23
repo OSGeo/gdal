@@ -325,6 +325,27 @@ CPLE_NoWriteAccess = _gdalconst.CPLE_NoWriteAccess
 _gdalconst.CPLE_UserInterrupt_swigconstant(_gdalconst)
 CPLE_UserInterrupt = _gdalconst.CPLE_UserInterrupt
 
+_gdalconst.CPLE_ObjectNull_swigconstant(_gdalconst)
+CPLE_ObjectNull = _gdalconst.CPLE_ObjectNull
+
+_gdalconst.CPLE_HttpResponse_swigconstant(_gdalconst)
+CPLE_HttpResponse = _gdalconst.CPLE_HttpResponse
+
+_gdalconst.CPLE_AWSBucketNotFound_swigconstant(_gdalconst)
+CPLE_AWSBucketNotFound = _gdalconst.CPLE_AWSBucketNotFound
+
+_gdalconst.CPLE_AWSObjectNotFound_swigconstant(_gdalconst)
+CPLE_AWSObjectNotFound = _gdalconst.CPLE_AWSObjectNotFound
+
+_gdalconst.CPLE_AWSAccessDenied_swigconstant(_gdalconst)
+CPLE_AWSAccessDenied = _gdalconst.CPLE_AWSAccessDenied
+
+_gdalconst.CPLE_AWSInvalidCredentials_swigconstant(_gdalconst)
+CPLE_AWSInvalidCredentials = _gdalconst.CPLE_AWSInvalidCredentials
+
+_gdalconst.CPLE_AWSSignatureDoesNotMatch_swigconstant(_gdalconst)
+CPLE_AWSSignatureDoesNotMatch = _gdalconst.CPLE_AWSSignatureDoesNotMatch
+
 _gdalconst.OF_ALL_swigconstant(_gdalconst)
 OF_ALL = _gdalconst.OF_ALL
 

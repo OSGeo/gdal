@@ -745,6 +745,8 @@ def tiff_write_18():
         gdaltest.post_reason('RPB did not get removed')
         return 'fail'
 
+    gdaltest.tiff_drv.Delete('tmp/tw_18.tif')
+
     return 'success'
 
 ###############################################################################
@@ -3626,7 +3628,7 @@ def tiff_write_87():
 
     import validate_cloud_optimized_geotiff
     try:
-        errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled=False)
+        _, errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled=False)
         if errors:
             gdaltest.post_reason('validate_cloud_optimized_geotiff failed')
             print(errors)
@@ -5772,15 +5774,40 @@ def tiff_write_130():
 # Test LZMA compression
 
 
-def tiff_write_131():
+def tiff_write_131(level=1):
 
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('LZMA') == -1:
         return 'skip'
 
-    ut = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4672,
-                           options=['COMPRESS=LZMA', 'LZMA_PRESET=9'])
-    return ut.testCreateCopy()
+    filename = '/vsimem/tiff_write_131.tif'
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdaltest.tiff_drv.CreateCopy(filename, src_ds,
+                                 options=['COMPRESS=LZMA', 'LZMA_PRESET=' + str(level)])
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # LZMA requires an howful amount of memory even on small files
+    if gdal.GetLastErrorMsg().find('cannot allocate memory') >= 0:
+        gdal.Unlink(filename)
+        return 'skip'
+
+    ds = gdal.Open(filename)
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(filename)
+
+    return 'success'
+
+
+def tiff_write_131_level_9():
+    return tiff_write_131(level=9)
+
 
 ###############################################################################
 # Test that PAM metadata is cleared when internal metadata is set (#5807)
@@ -8585,6 +8612,7 @@ gdaltest_list = [
     tiff_write_129,
     tiff_write_130,
     tiff_write_131,
+    tiff_write_131_level_9,
     tiff_write_132,
     tiff_write_133,
     tiff_write_134,
@@ -8645,6 +8673,7 @@ gdaltest_list = [
     tiff_write_tiled_webp,
     tiff_write_webp_huge_single_strip,
     tiff_write_cleanup]
+
 
 # gdaltest_list = [ tiff_write_1, tiff_write_176_lerc_max_z_error ]
 

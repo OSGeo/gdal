@@ -560,30 +560,43 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_NULL();
 #endif
 
-#ifdef GNM_ENABLED
-    GNMRegisterAllInternal();
-#endif
-
-    OGRRegisterAllInternal();
-
-#ifdef FRMT_raw
-    // Those ones need to look for side car files so put them at end
-    GDALRegister_GenBin();
-    GDALRegister_ENVI();
-    GDALRegister_EHdr();
-    GDALRegister_ISCE();
-#endif
-
-#ifdef FRMT_sigdem
-    GDALRegister_SIGDEM();
-#endif
-
 #ifdef FRMT_sigdem
     GDALRegister_SIGDEM();
 #endif
 
 #ifdef FRMT_ignfheightasciigrid
     GDALRegister_IGNFHeightASCIIGrid();
+#endif
+
+    // NOTE: you need to generally your own driver before that line.
+
+/* -------------------------------------------------------------------- */
+/*     GNM and OGR drivers                                              */
+/* -------------------------------------------------------------------- */
+#ifdef GNM_ENABLED
+    GNMRegisterAllInternal();
+#endif
+
+    OGRRegisterAllInternal();
+
+/* -------------------------------------------------------------------- */
+/*      Put here drivers that absolutely need to look for side car      */
+/*      files in their Identify()/Open() procedure.                     */
+/* -------------------------------------------------------------------- */
+
+#ifdef FRMT_raw
+    GDALRegister_GenBin();
+    GDALRegister_ENVI();
+    GDALRegister_EHdr();
+    GDALRegister_ISCE();
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Register GDAL HTTP last, to let a chance to other drivers       */
+/*      accepting URL to handle them before.                            */
+/* -------------------------------------------------------------------- */
+#ifdef FRMT_wcs
+    GDALRegister_HTTP();
 #endif
 
 /* -------------------------------------------------------------------- */

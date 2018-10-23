@@ -3936,6 +3936,83 @@ SWIGINTERN PyObject *CPLE_UserInterrupt_swigconstant(PyObject *SWIGUNUSEDPARM(se
 }
 
 
+SWIGINTERN PyObject *CPLE_ObjectNull_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "CPLE_ObjectNull",SWIG_From_int((int)(CPLE_ObjectNull)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *CPLE_HttpResponse_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "CPLE_HttpResponse",SWIG_From_int((int)(CPLE_HttpResponse)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *CPLE_AWSBucketNotFound_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "CPLE_AWSBucketNotFound",SWIG_From_int((int)(CPLE_AWSBucketNotFound)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *CPLE_AWSObjectNotFound_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "CPLE_AWSObjectNotFound",SWIG_From_int((int)(CPLE_AWSObjectNotFound)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *CPLE_AWSAccessDenied_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "CPLE_AWSAccessDenied",SWIG_From_int((int)(CPLE_AWSAccessDenied)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *CPLE_AWSInvalidCredentials_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "CPLE_AWSInvalidCredentials",SWIG_From_int((int)(CPLE_AWSInvalidCredentials)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *CPLE_AWSSignatureDoesNotMatch_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "CPLE_AWSSignatureDoesNotMatch",SWIG_From_int((int)(CPLE_AWSSignatureDoesNotMatch)));
+  return SWIG_Py_Void();
+}
+
+
 SWIGINTERN PyObject *OF_ALL_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *module;
   PyObject *d;
@@ -4786,6 +4863,13 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"CPLE_AssertionFailed_swigconstant", CPLE_AssertionFailed_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"CPLE_NoWriteAccess_swigconstant", CPLE_NoWriteAccess_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"CPLE_UserInterrupt_swigconstant", CPLE_UserInterrupt_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"CPLE_ObjectNull_swigconstant", CPLE_ObjectNull_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"CPLE_HttpResponse_swigconstant", CPLE_HttpResponse_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"CPLE_AWSBucketNotFound_swigconstant", CPLE_AWSBucketNotFound_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"CPLE_AWSObjectNotFound_swigconstant", CPLE_AWSObjectNotFound_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"CPLE_AWSAccessDenied_swigconstant", CPLE_AWSAccessDenied_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"CPLE_AWSInvalidCredentials_swigconstant", CPLE_AWSInvalidCredentials_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"CPLE_AWSSignatureDoesNotMatch_swigconstant", CPLE_AWSSignatureDoesNotMatch_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"OF_ALL_swigconstant", OF_ALL_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"OF_RASTER_swigconstant", OF_RASTER_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"OF_VECTOR_swigconstant", OF_VECTOR_swigconstant, METH_VARARGS, NULL},

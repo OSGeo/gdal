@@ -247,6 +247,7 @@ LZMAPreEncode(TIFF* tif, uint16 s)
 {
 	static const char module[] = "LZMAPreEncode";
 	LZMAState *sp = EncoderState(tif);
+	lzma_ret ret;
 
 	(void) s;
 	assert(sp != NULL);
@@ -260,7 +261,13 @@ LZMAPreEncode(TIFF* tif, uint16 s)
 			     "Liblzma cannot deal with buffers this size");
 		return 0;
 	}
-	return (lzma_stream_encoder(&sp->stream, sp->filters, sp->check) == LZMA_OK);
+	ret = lzma_stream_encoder(&sp->stream, sp->filters, sp->check);
+	if (ret != LZMA_OK) {
+		TIFFErrorExt(tif->tif_clientdata, module,
+			"Error in lzma_stream_encoder(): %s", LZMAStrerror(ret));
+		return 0;
+	}
+	return 1;
 }
 
 /*

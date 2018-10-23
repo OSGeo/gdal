@@ -128,7 +128,7 @@ def vsicurl_5():
 # Test with FTP server that doesn't support EPSV command
 
 
-def vsicurl_6():
+def vsicurl_6_disabled():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
@@ -478,6 +478,49 @@ def vsicurl_test_fallback_from_head_to_get():
 ###############################################################################
 
 
+def vsicurl_test_parse_html_filelist_apache():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/mydir/', 200, {}, """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+ <head>
+  <title>Index of /mydir</title>
+ </head>
+ <body>
+<h1>Index of /mydir</h1>
+<table><tr><th><img src="/icons/blank.gif" alt="[ICO]"></th><th><a href="?C=N;O=D">Name</a></th><th><a href="?C=M;O=A">Last modified</a></th><th><a href="?C=S;O=A">Size</a></th><th><a href="?C=D;O=A">Description</a></th></tr><tr><th colspan="5"><hr></th></tr>
+<tr><td valign="top"><img src="/icons/back.gif" alt="[DIR]"></td><td><a href="/gdal/data/">Parent Directory</a></td><td>&nbsp;</td><td align="right">  - </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/image2.gif" alt="[IMG]"></td><td><a href="foo.tif">foo.tif</a></td><td align="right">17-May-2010 12:26  </td><td align="right"> 90K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/image2.gif" alt="[IMG]"></td><td><a href="foo%20with%20space.tif">foo with space.tif</a></td><td align="right">15-Jan-2007 11:02  </td><td align="right">736 </td><td>&nbsp;</td></tr>
+<tr><th colspan="5"><hr></th></tr>
+</table>
+</body></html>""")
+    with webserver.install_http_handler(handler):
+        fl = gdal.ReadDir('/vsicurl/http://localhost:%d/mydir' % gdaltest.webserver_port)
+    if fl != ['foo.tif', 'foo%20with%20space.tif']:
+        gdaltest.post_reason('fail')
+        print(fl)
+        return 'fail'
+
+    if gdal.VSIStatL('/vsicurl/http://localhost:%d/mydir/foo%%20with%%20space.tif' % gdaltest.webserver_port, gdal.VSI_STAT_EXISTS_FLAG) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    handler = webserver.SequentialHandler()
+    handler.add('HEAD', '/mydir/i_dont_exist', 404, {})
+    with webserver.install_http_handler(handler):
+        if gdal.VSIStatL('/vsicurl/http://localhost:%d/mydir/i_dont_exist' % gdaltest.webserver_port, gdal.VSI_STAT_EXISTS_FLAG) is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+
 def vsicurl_stop_webserver():
 
     if gdaltest.webserver_port == 0:
@@ -497,7 +540,7 @@ gdaltest_list = [vsicurl_1,
                  # vsicurl_3,
                  vsicurl_4,
                  vsicurl_5,
-                 vsicurl_6,
+                 #vsicurl_6_disabled,
                  vsicurl_7,
                  # vsicurl_8,
                  vsicurl_9,
@@ -508,6 +551,7 @@ gdaltest_list = [vsicurl_1,
                  vsicurl_test_clear_cache,
                  vsicurl_test_retry,
                  vsicurl_test_fallback_from_head_to_get,
+                 vsicurl_test_parse_html_filelist_apache,
                  vsicurl_stop_webserver]
 
 if __name__ == '__main__':
