@@ -676,7 +676,7 @@ def misc_14():
 
     prev_debug = gdal.GetConfigOption("CPL_DEBUG")
     try:
-        gdal.ConfigurePythonLogging(logger_name='gdal_logging_test')
+        gdal.ConfigurePythonLogging(logger_name='gdal_logging_test', enable_debug=True)
 
         if gdal.GetConfigOption("CPL_DEBUG") != "ON":
             gdaltest.post_reason("should have enabled debug")
@@ -704,7 +704,7 @@ def misc_14():
         handler.messages.clear()
         gdal.SetConfigOption('CPL_DEBUG', "OFF")
 
-        gdal.ConfigurePythonLogging(logger_name='gdal_logging_test', enable_debug=False)
+        gdal.ConfigurePythonLogging(logger_name='gdal_logging_test')
 
         if gdal.GetConfigOption("CPL_DEBUG") != "OFF":
             gdaltest.post_reason("shouldn't have enabled debug")

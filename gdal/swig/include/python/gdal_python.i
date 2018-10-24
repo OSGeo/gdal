@@ -2046,7 +2046,7 @@ def _pylog_handler(err_level, err_no, err_msg):
     level = _pylog_handler.level_map.get(err_level, 20)  # default level is INFO
     _pylog_handler.logger.log(level, message)
 
-def ConfigurePythonLogging(logger_name='gdal', enable_debug=True):
+def ConfigurePythonLogging(logger_name='gdal', enable_debug=False):
     """ Configure GDAL to use Python's logging framework """
     import logging
 
