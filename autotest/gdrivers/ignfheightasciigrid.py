@@ -122,6 +122,7 @@ def ignfheightasciigrid_invalid():
     contents = ['0 0 0 0 0 0 0 0 0 0 0 0\r',  # a lot of invalid values
                 '                   \r',  # all spaces
                 '2 3 49 50 1 1 1 0 1 0 0 DESC',  # no newline
+                '2 3 49 50 1 1 1 0 1 0 0 \r',  # missing  description in header
                 '2 3 49 50 1 1 1 0 1 0 0\r1 2 3 4',  # missing description in header
                 # not a number in numeric header section
                 '2 3 49 50 1 1 1 a 1 0 0 DESC\r1 2 3 4',

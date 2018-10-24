@@ -136,18 +136,24 @@ int IGNFHeightASCIIGridDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
     const GByte* pabyHeader = poOpenInfo->pabyHeader;
     int iPosFirstNewLine = -1;
-    int nCountFields = 1;
+    int nCountFields = 0;
     for(int i = 0; i < poOpenInfo->nHeaderBytes; i++ )
     {
         const GByte ch = pabyHeader[i];
         if( ch == ' ' )
         {
-            if( i > 0 && pabyHeader[i-1] != ' ' )
-            {
-                nCountFields ++;
-            }
+            continue;
         }
-        else if( nCountFields <= 11 )
+        if( ch == '\r' )
+        {
+            iPosFirstNewLine = i;
+            break;
+        }
+        if( i == 0 || pabyHeader[i-1] == ' ' )
+        {
+            nCountFields ++;
+        }
+        if( nCountFields <= 11 )
         {
             if( !((ch >= '0' && ch <= '9') || ch == '-' || ch == '.') )
             {
@@ -160,11 +166,6 @@ int IGNFHeightASCIIGridDataset::Identify(GDALOpenInfo* poOpenInfo)
         {
             i++;
         }
-        else if( ch == '\r' )
-        {
-            iPosFirstNewLine = i;
-            break;
-        }
         else if( ch < 32 || (ch > 127 &&
                 ch != static_cast<GByte>('\xE9') && // eacute LATIN-1
                 ch != static_cast<GByte>('\xEF') // i trema LATIN-1
@@ -173,11 +174,10 @@ int IGNFHeightASCIIGridDataset::Identify(GDALOpenInfo* poOpenInfo)
             return FALSE;
         }
     }
-    if( iPosFirstNewLine < 0 )
+    if( iPosFirstNewLine < 0 || nCountFields < 12 )
     {
         return FALSE;
     }
-    CPLAssert( nCountFields >= 12 );
 
     for( int i = iPosFirstNewLine + 1; i < poOpenInfo->nHeaderBytes; i++ )
     {
