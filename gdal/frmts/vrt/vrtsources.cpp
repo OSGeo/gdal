@@ -691,8 +691,14 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
 
         // Only the information of rasterBand nSrcBand will be accurate
         // but that's OK since we only use that band afterwards.
-        for( int i = 1; i <= nSrcBand; i++ )
-            proxyDS->AddSrcBandDescription(eDataType, nBlockXSize, nBlockYSize);
+        //
+        // Previously this added a src band for every band <= nSrcBand, but this becomes
+        // prohibitely expensive for files with a large number of bands. This optimization
+        // only adds the desired band and the rest of the bands will simply be initialized with a nullptr.
+        // This assumes no other code here accesses any of the lower bands in the GDALProxyPoolDataset.
+        // It has been suggested that in addition, we should to try share GDALProxyPoolDataset between multiple
+        // Simple Sources, which would save on memory for papoBands. For now, that's not implemented.
+        proxyDS->AddSrcBand(nSrcBand, eDataType, nBlockXSize, nBlockYSize);
 
         if( bGetMaskBand )
         {

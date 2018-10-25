@@ -36,6 +36,8 @@
 
 #include <algorithm>
 #include <typeinfo>
+#include "gdal_proxy.h"
+
 
 /*! @cond Doxygen_Suppress */
 
@@ -1384,6 +1386,59 @@ int VRTDataset::CheckCompatibleForDatasetIO()
     return nSources != 0;
 }
 
+
+/************************************************************************/
+/*                      ExpandProxyBands()                              */
+/************************************************************************/
+/* In ProxyPoolDatasets, by default only one band is initialized. When using
+ * VRTDataset::IRasterIO and CheckCompatibleForDatasetIO is True, we need to have
+ * all bands initialized (but only for the last band in the VRTDataset). This function
+ * assumes CheckCompatibleForDatasetIO() has already been run and returned succesfull.
+ */
+void VRTDataset::ExpandProxyBands()
+{
+    VRTSourcedRasterBand * poLastBand = reinterpret_cast<VRTSourcedRasterBand*>(papoBands[nBands - 1]);
+
+    CPLAssert(poLastBand != nullptr); // CheckCompatibleForDatasetIO()
+
+    int nSources = poLastBand->nSources;
+
+    for (int iSource = 0; iSource < nSources; iSource++)
+    {
+        VRTSimpleSource* poSource = reinterpret_cast<VRTSimpleSource *>(poLastBand->papoSources[iSource]);
+
+        CPLAssert(poSource != nullptr); // CheckCompatibleForDatasetIO()
+
+        GDALProxyPoolDataset * dataset = dynamic_cast<GDALProxyPoolDataset *>(poSource->GetBand()->GetDataset());
+
+        if (dataset == nullptr)
+        {
+            continue; // only GDALProxyPoolDataset needs to be expanded
+        }
+
+        if (dataset->GetBands()[0] != nullptr)
+        {
+            continue; // first band already set, so just assume all the others are set as well
+        }
+
+        for (int iBand = 1; iBand <= nBands - 1; iBand++ )
+        {
+            VRTSourcedRasterBand * srcband = reinterpret_cast<VRTSourcedRasterBand *>(papoBands[iBand - 1]);
+            VRTSimpleSource* src = reinterpret_cast<VRTSimpleSource *>(srcband->papoSources[iSource]);
+            GDALRasterBand * rasterband = src->GetBand();
+
+            int nBlockXSize, nBlockYSize;
+
+            rasterband->GetBlockSize(&nBlockXSize, &nBlockYSize);
+
+            dataset->AddSrcBand(iBand, rasterband->GetRasterDataType(), nBlockXSize, nBlockYSize);
+        }
+    }
+}
+
+
+
+
 /************************************************************************/
 /*                         GetSingleSimpleSource()                      */
 /*                                                                      */
@@ -1593,6 +1648,10 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     if( bLocalCompatibleForDatasetIO && eRWFlag == GF_Read )
     {
+
+        // Make sure the expand the last band before using them below
+        ExpandProxyBands();
+
         for(int iBandIndex=0; iBandIndex<nBandCount; iBandIndex++)
         {
             VRTSourcedRasterBand* poBand
