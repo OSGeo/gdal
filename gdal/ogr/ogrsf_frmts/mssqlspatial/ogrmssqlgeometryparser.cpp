@@ -139,15 +139,31 @@ OGRPoint* OGRMSSQLGeometryParser::ReadPoint(int iShape)
         {
             if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
             {
-                if ( chProps & SP_HASZVALUES )
+                if ( (chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES) )
+                    return new OGRPoint(ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint), ReadM(iPoint) );
+                else if ( chProps & SP_HASZVALUES )
                     return new OGRPoint( ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint) );
+                else if ( chProps & SP_HASMVALUES )
+                {
+                    OGRPoint* poPoint = new OGRPoint( ReadY(iPoint), ReadX(iPoint) );
+                    poPoint->setM( ReadZ(iPoint) );
+                    return poPoint;
+                }
                 else
                     return new OGRPoint( ReadY(iPoint), ReadX(iPoint) );
             }
             else
             {
-                if ( chProps & SP_HASZVALUES )
+                if ( (chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES) )
+                    return new OGRPoint( ReadX(iPoint), ReadY(iPoint), ReadZ(iPoint), ReadM(iPoint) );
+                else if ( chProps & SP_HASZVALUES )
                     return new OGRPoint( ReadX(iPoint), ReadY(iPoint), ReadZ(iPoint) );
+                else if ( chProps & SP_HASMVALUES )
+                {
+                    OGRPoint* poPoint = new OGRPoint( ReadX(iPoint), ReadY(iPoint) );
+                    poPoint->setM( ReadZ(iPoint) );
+                    return poPoint;
+                }
                 else
                     return new OGRPoint( ReadX(iPoint), ReadY(iPoint) );
             }
@@ -199,15 +215,23 @@ OGRLineString* OGRMSSQLGeometryParser::ReadLineString(int iShape)
     {
         if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
         {
-            if ( chProps & SP_HASZVALUES )
+            if ( (chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES) )
+                poLineString->setPoint(i, ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint), ReadM(iPoint) );
+            else if ( chProps & SP_HASZVALUES )
                 poLineString->setPoint(i, ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint) );
+            else if ( chProps & SP_HASMVALUES )
+                poLineString->setPointM(i, ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint) );
             else
                 poLineString->setPoint(i, ReadY(iPoint), ReadX(iPoint) );
         }
         else
         {
-            if ( chProps & SP_HASZVALUES )
+            if ( (chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES) )
+                poLineString->setPoint(i, ReadX(iPoint), ReadY(iPoint), ReadZ(iPoint), ReadM(iPoint) );
+            else if ( chProps & SP_HASZVALUES )
                 poLineString->setPoint(i, ReadX(iPoint), ReadY(iPoint), ReadZ(iPoint) );
+            else if ( chProps & SP_HASMVALUES )
+                poLineString->setPointM(i, ReadX(iPoint), ReadY(iPoint), ReadZ(iPoint) );
             else
                 poLineString->setPoint(i, ReadX(iPoint), ReadY(iPoint) );
         }
@@ -265,15 +289,23 @@ OGRPolygon* OGRMSSQLGeometryParser::ReadPolygon(int iShape)
         {
             if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
             {
-                if ( chProps & SP_HASZVALUES )
+                if ( (chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES) )
+                    poRing->setPoint(i, ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint), ReadM(iPoint) );
+                else if ( chProps & SP_HASZVALUES )
                     poRing->setPoint(i, ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint) );
+                else if (chProps & SP_HASMVALUES)
+                    poRing->setPointM(i, ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint) );
                 else
                     poRing->setPoint(i, ReadY(iPoint), ReadX(iPoint) );
             }
             else
             {
-                if ( chProps & SP_HASZVALUES )
+                if ( (chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES) )
+                    poRing->setPoint(i, ReadX(iPoint), ReadY(iPoint), ReadZ(iPoint), ReadM(iPoint) );
+                else if ( chProps & SP_HASZVALUES )
                     poRing->setPoint(i, ReadX(iPoint), ReadY(iPoint), ReadZ(iPoint) );
+                else if ( chProps & SP_HASMVALUES )
+                    poRing->setPointM(i, ReadX(iPoint), ReadY(iPoint), ReadZ(iPoint) );
                 else
                     poRing->setPoint(i, ReadX(iPoint), ReadY(iPoint) );
             }
@@ -380,12 +412,13 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
 
     chProps = ReadByte(5);
 
-    if ( chProps & SP_HASMVALUES )
-        nPointSize = 32;
-    else if ( chProps & SP_HASZVALUES )
-        nPointSize = 24;
-    else
-        nPointSize = 16;
+    nPointSize = 16;
+
+    if (chProps & SP_HASZVALUES)
+        nPointSize += 8;
+
+    if (chProps & SP_HASMVALUES)
+        nPointSize += 8;
 
     if ( chProps & SP_ISSINGLEPOINT )
     {
@@ -400,15 +433,29 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
 
         if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
         {
-            if (chProps & SP_HASZVALUES)
+            if ((chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES))
+                *poGeom = new OGRPoint(ReadY(0), ReadX(0), ReadZ(0), ReadM(0));
+            else if (chProps & SP_HASZVALUES)
                 *poGeom = new OGRPoint(ReadY(0), ReadX(0), ReadZ(0));
+            else if (chProps & SP_HASMVALUES)
+            {
+                *poGeom = new OGRPoint(ReadY(0), ReadX(0));
+                ((OGRPoint*)(*poGeom))->setM(ReadZ(0));
+            }
             else
                 *poGeom = new OGRPoint(ReadY(0), ReadX(0));
         }
         else
         {
-            if (chProps & SP_HASZVALUES)
+            if ((chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES))
+                *poGeom = new OGRPoint(ReadX(0), ReadY(0), ReadZ(0), ReadM(0));
+            else if (chProps & SP_HASZVALUES)
                 *poGeom = new OGRPoint(ReadX(0), ReadY(0), ReadZ(0));
+            else if (chProps & SP_HASMVALUES)
+            {
+                *poGeom = new OGRPoint(ReadX(0), ReadY(0));
+                ((OGRPoint*)(*poGeom))->setM(ReadZ(0));
+            }
             else
                 *poGeom = new OGRPoint(ReadX(0), ReadY(0));
         }
@@ -429,10 +476,20 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
 
         if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
         {
-            if ( chProps & SP_HASZVALUES )
+            if ( (chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES) )
+            {
+                line->setPoint(0, ReadY(0), ReadX(0), ReadZ(0), ReadM(0));
+                line->setPoint(1, ReadY(1), ReadX(1), ReadZ(1), ReadM(1));
+            }
+            else if ( chProps & SP_HASZVALUES )
             {
                 line->setPoint(0, ReadY(0), ReadX(0), ReadZ(0));
                 line->setPoint(1, ReadY(1), ReadX(1), ReadZ(1));
+            }
+            else if ( chProps & SP_HASMVALUES )
+            {
+                line->setPointM(0, ReadY(0), ReadX(0), ReadZ(0));
+                line->setPointM(1, ReadY(1), ReadX(1), ReadZ(1));
             }
             else
             {
@@ -442,10 +499,20 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
         }
         else
         {
-            if ( chProps & SP_HASZVALUES )
+            if ( (chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES) )
+            {
+                line->setPoint(0, ReadX(0), ReadY(0), ReadZ(0), ReadM(0));
+                line->setPoint(1, ReadX(1), ReadY(1), ReadZ(1), ReadM(1));
+            }
+            else if ( chProps & SP_HASZVALUES )
             {
                 line->setPoint(0, ReadX(0), ReadY(0), ReadZ(0));
                 line->setPoint(1, ReadX(1), ReadY(1), ReadZ(1));
+            }
+            else if ( chProps & SP_HASMVALUES )
+            {
+                line->setPointM(0, ReadX(0), ReadY(0), ReadZ(0));
+                line->setPointM(1, ReadX(1), ReadY(1), ReadZ(1));
             }
             else
             {
