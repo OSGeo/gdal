@@ -245,6 +245,11 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
     void AddSrcBandDescription( GDALDataType eDataType, int nBlockXSize,
                                 int nBlockYSize );
 
+    // Used by VRT SimpleSource to add a single GDALProxyPoolRasterBand while
+    // keeping all other bands initialized to a nullptr. This is under the assumption,
+    // VRT SimpleSource will not have to access any other bands than the one added.
+    void AddSrcBand(int nBand, GDALDataType eDataType, int nBlockXSize,
+                                int nBlockYSize );
     void FlushCache() override;
 
     const char *GetProjectionRef() override;

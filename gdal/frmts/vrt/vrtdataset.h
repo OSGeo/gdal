@@ -176,6 +176,8 @@ class CPL_DLL VRTDataset : public GDALDataset
 
     int            m_bCompatibleForDatasetIO;
     int            CheckCompatibleForDatasetIO();
+    void           ExpandProxyBands();
+
     std::vector<GDALDataset*> m_apoOverviews;
     std::vector<GDALDataset*> m_apoOverviewsBak;
     char         **m_papszXMLVRTMetadata;
