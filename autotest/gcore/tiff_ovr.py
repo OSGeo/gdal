@@ -797,7 +797,7 @@ def tiff_ovr_19(both_endian):
     ds.FlushCache()
     ds.BuildOverviews('NEAR', overviewlist=[2, 4])
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 2 is None:
+    if ds.GetRasterBand(1).GetOverviewCount() != 2:
         print('Overview could not be generated')
         return 'fail'
 
