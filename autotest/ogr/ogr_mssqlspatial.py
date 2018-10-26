@@ -226,6 +226,14 @@ def ogr_mssqlspatial_4():
             return 'fail'
 
         ######################################################################
+        # Before reading back the record, verify that the newly added feature 
+        # is returned from the CreateFeature method with a newly assigned FID.
+        
+        if dst_feat.GetFID() == -1:
+            gdaltest.post_reason('Assigned FID was not returned in the new feature')
+            return 'fail'
+
+        ######################################################################
         # Read back the feature and get the geometry.
 
         gdaltest.mssqlspatial_lyr.SetAttributeFilter("PRFEDEA = '%s'" % item)
@@ -241,6 +249,50 @@ def ogr_mssqlspatial_4():
         feat_read.Destroy()
 
     dst_feat.Destroy()
+    gdaltest.mssqlspatial_lyr.ResetReading()  # to close implicit transaction
+
+    return 'success'
+
+###############################################################################
+# Write more features and verify the newly assigned FIDs are returned in the 
+# feature.
+
+
+def ogr_mssqlspatial_5():
+    if gdaltest.mssqlspatial_ds is None:
+        return 'skip'
+
+    new_feat = ogr.Feature(
+        feature_def=gdaltest.mssqlspatial_lyr.GetLayerDefn())
+    wkt_list = ['10', '2', '1', '4', '5', '6']
+
+    for item in wkt_list:
+        wkt_filename = 'data/wkb_wkt/' + item + '.wkt'
+        wkt = open(wkt_filename).read()
+        geom = ogr.CreateGeometryFromWkt(wkt)
+
+        ######################################################################
+        # Write geometry as a new feature.
+
+        new_feat.SetGeometryDirectly(geom)
+        new_feat.SetField('PRFEDEA', item)
+        new_feat.SetFID(-1)
+        if gdaltest.mssqlspatial_lyr.CreateFeature(new_feat) \
+           != ogr.OGRERR_NONE:
+            gdaltest.post_reason('CreateFeature failed creating feature ' +
+                                 'from file "' + wkt_filename + '"')
+            return 'fail'
+
+        ######################################################################
+        # Newly added feature should be returned from CreateFeature method
+        # with newly assigned FID.
+        
+        if new_feat.GetFID() == -1:
+            gdaltest.post_reason('FID was not returned in the newly created feature')
+            return 'fail'
+
+        new_feat.Destroy()
+
     gdaltest.mssqlspatial_lyr.ResetReading()  # to close implicit transaction
 
     return 'success'
@@ -372,6 +424,7 @@ gdaltest_list = [
     ogr_mssqlspatial_2,
     ogr_mssqlspatial_3,
     ogr_mssqlspatial_4,
+    ogr_mssqlspatial_5,
     ogr_mssqlspatial_test_ogrsf,
     ogr_mssqlspatial_create_feature_in_unregistered_table,
     ogr_mssqlspatial_cleanup
