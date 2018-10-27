@@ -1554,11 +1554,9 @@ static OGRFeature* OGR2SQLITE_FeatureFromArgs(OGRLayer* poLayer,
                     case OFTDate:
                     case OFTTime:
                     case OFTDateTime:
-                    {
-                        if( !OGRSQLITEStringToDateTimeField( poFeature, i, pszValue ) )
+                        if( !OGRParseDate( pszValue, poFeature->GetRawFieldRef(i), 0 ) )
                             poFeature->SetField(i, pszValue);
                         break;
-                    }
 
                     default:
                         poFeature->SetField(i, pszValue);
