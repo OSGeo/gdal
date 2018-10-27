@@ -2266,7 +2266,7 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
 
         return OGRERR_FAILURE;
     }
-    else if(pszFIDColumn != nullptr && bIsIdentityFid)
+    else if(nFID == OGRNullFID && pszFIDColumn != nullptr && bIsIdentityFid)
     {
         // fetch new ID and set it into the feature
         if (oStatement.Fetch())
