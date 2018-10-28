@@ -2060,11 +2060,18 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
     if (oStatement.GetCommand()[strlen(oStatement.GetCommand()) - 1] != ']')
     {
         /* no fields were added */
-        oStatement.Appendf( "DEFAULT VALUES;" );
+        if (nFID == OGRNullFID && pszFIDColumn != nullptr && bIsIdentityFid)
+            oStatement.Appendf(" OUTPUT INSERTED.[%s] DEFAULT VALUES;", GetFIDColumn());
+        else
+            oStatement.Appendf( "DEFAULT VALUES;" );
     }
     else
     {
-        oStatement.Appendf( ") VALUES (" );
+        /* prepend VALUES section */
+        if (nFID == OGRNullFID && pszFIDColumn != nullptr && bIsIdentityFid)
+            oStatement.Appendf(") OUTPUT INSERTED.[%s] VALUES (", GetFIDColumn());
+        else
+            oStatement.Appendf( ") VALUES (" );
 
         /* Set the geometry */
         bNeedComma = FALSE;
@@ -2258,6 +2265,15 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
 #endif
 
         return OGRERR_FAILURE;
+    }
+    else if(nFID == OGRNullFID && pszFIDColumn != nullptr && bIsIdentityFid)
+    {
+        // fetch new ID and set it into the feature
+        if (oStatement.Fetch())
+        {
+            GIntBig newID = atoll(oStatement.GetColData(0));
+            poFeature->SetFID(newID);
+        }
     }
 
     for( i = 0; i < bind_num; i++ )

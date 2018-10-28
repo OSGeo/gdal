@@ -226,6 +226,14 @@ def ogr_mssqlspatial_4():
             return 'fail'
 
         ######################################################################
+        # Before reading back the record, verify that the newly added feature 
+        # is returned from the CreateFeature method with a newly assigned FID.
+        
+        if dst_feat.GetFID() == -1:
+            gdaltest.post_reason('Assigned FID was not returned in the new feature')
+            return 'fail'
+
+        ######################################################################
         # Read back the feature and get the geometry.
 
         gdaltest.mssqlspatial_lyr.SetAttributeFilter("PRFEDEA = '%s'" % item)
