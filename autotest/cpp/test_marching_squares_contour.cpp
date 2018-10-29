@@ -113,11 +113,11 @@ private:
         // we represent them with a vector, we need to find a common "first" point
         Point pfirst = aRing[0];
         size_t offset = 0;
-        for ( ; pfirst != bRing[offset]; offset++ ) {
-            if ( offset >= bRing.size() ) {
-                // can't find a common point
-                return false;
-            }
+        while ( offset < bRing.size() && pfirst != bRing[offset] )
+            offset++;
+        if ( offset >= bRing.size() ) {
+            // can't find a common point
+            return false;
         }
         // now compare each point of the two rings
         for ( size_t i = 0; i < aRing.size(); i++ ) {
