@@ -247,9 +247,9 @@ def summarize():
         else:
             print('Duration:  %02.2fs' % duration)
     if count_skipped_tests_download != 0:
-        print('As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined, %d tests relying on data to downloaded from the Web have been skipped' % count_skipped_tests_download)
+        print('As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined or set to NO, %d tests relying on data to downloaded from the Web have been skipped' % count_skipped_tests_download)
     if count_skipped_tests_slow != 0:
-        print('As GDAL_RUN_SLOW_TESTS environment variable is not defined, %d "slow" tests have been skipped' % count_skipped_tests_slow)
+        print('As GDAL_RUN_SLOW_TESTS environment variable is not defined or set to NO, %d "slow" tests have been skipped' % count_skipped_tests_slow)
     print('')
 
     sys.path.append('gcore')
@@ -1318,12 +1318,11 @@ def download_file(url, filename=None, download_size=-1, force_download=False, ma
     elif filename.startswith(base_dir + '/'):
         filename = filename[len(base_dir + '/'):]
 
-    global count_skipped_tests_download
     try:
         os.stat(base_dir + '/' + filename)
         return True
     except OSError:
-        if 'GDAL_DOWNLOAD_TEST_DATA' in os.environ or force_download:
+        if force_download or download_test_data():
             val = None
             start_time = time.time()
             try:
@@ -1390,9 +1389,6 @@ def download_file(url, filename=None, download_size=-1, force_download=False, ma
                 print('Cannot write %s' % (filename))
                 return False
         else:
-            if count_skipped_tests_download == 0:
-                print('As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined, some tests relying on data to downloaded from the Web will be skipped')
-            count_skipped_tests_download = count_skipped_tests_download + 1
             return False
 
 
@@ -1659,16 +1655,28 @@ def neginf():
         return -1e400
 
 ###############################################################################
+# Has the user requested to dowload test data
+def download_test_data():
+    global count_skipped_tests_download
+    val = gdal.GetConfigOption('GDAL_DOWNLOAD_TEST_DATA', None)
+    if val != 'yes' and val != 'YES':
+
+        if count_skipped_tests_download == 0:
+            print('As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined or set to NO, some tests relying on data to downloaded from the Web will be skipped')
+        count_skipped_tests_download = count_skipped_tests_download + 1
+
+        return False
+    return True
+
+###############################################################################
 # Has the user requested to run the slow tests
-
-
 def run_slow_tests():
     global count_skipped_tests_slow
     val = gdal.GetConfigOption('GDAL_RUN_SLOW_TESTS', None)
     if val != 'yes' and val != 'YES':
 
         if count_skipped_tests_slow == 0:
-            print('As GDAL_RUN_SLOW_TESTS environment variable is not defined, some "slow" tests will be skipped')
+            print('As GDAL_RUN_SLOW_TESTS environment variable is not defined or set to NO, some "slow" tests will be skipped')
         count_skipped_tests_slow = count_skipped_tests_slow + 1
 
         return False

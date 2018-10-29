@@ -102,9 +102,9 @@ def netcdf_cf_setup():
             return 'success'
 
     # skip http method if GDAL_DOWNLOAD_TEST_DATA and GDAL_RUN_SLOW_TESTS are not defined
-    if 'GDAL_DOWNLOAD_TEST_DATA' not in os.environ:
+    if not gdaltest.download_test_data():
         print('NOTICE: skipping netcdf CF compliance checks')
-        print('to enable remote http checker script, define GDAL_DOWNLOAD_TEST_DATA')
+        print('to enable remote http checker script, define GDAL_DOWNLOAD_TEST_DATA=YES')
         return 'success'
 
     if not gdaltest.run_slow_tests():
