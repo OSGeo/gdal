@@ -636,7 +636,7 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature,
 
                     if( it.val != nullptr )
                     {
-                        int nIdx = poFeature->GetFieldIndex("id");
+                        int nIdx = poFeature->GetDefnRef()->GetFieldIndexCaseSensitive("id");
                         if( eType == json_type_string &&
                             nIdx >= 0 &&
                             poFeature->GetFieldDefnRef(nIdx)->GetType() == OFTString &&
@@ -678,7 +678,7 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature,
 /* -------------------------------------------------------------------- */
     if( !oOptions.osIDField.empty() )
     {
-        int nIdx = poFeature->GetFieldIndex(oOptions.osIDField);
+        int nIdx = poFeature->GetDefnRef()->GetFieldIndexCaseSensitive(oOptions.osIDField);
         if( nIdx >= 0 )
         {
             if( (oOptions.bForceIDFieldType &&
@@ -797,7 +797,7 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature,
     OGRFeatureDefn* poDefn = poFeature->GetDefnRef();
 
     const int nIDField = !oOptions.osIDField.empty() ?
-        poFeature->GetFieldIndex(oOptions.osIDField) : -1;
+        poDefn->GetFieldIndexCaseSensitive(oOptions.osIDField) : -1;
 
     const int nFieldCount = poDefn->GetFieldCount();
     for( int nField = 0; nField < nFieldCount; ++nField )

@@ -1476,7 +1476,7 @@ void OGRGeoJSONBaseReader::FinalizeLayerDefn(OGRLayer* poLayer,
 
     if( !bFeatureLevelIdAsFID_ )
     {
-        const int idx = poLayerDefn->GetFieldIndex( "id" );
+        const int idx = poLayerDefn->GetFieldIndexCaseSensitive( "id" );
         if( idx >= 0 )
         {
             OGRFieldDefn* poFDefn = poLayerDefn->GetFieldDefn(idx);
@@ -1535,7 +1535,7 @@ void OGRGeoJSONReaderAddOrUpdateField(
         return;
     }
 
-    int nIndex = poDefn->GetFieldIndex(pszKey);
+    int nIndex = poDefn->GetFieldIndexCaseSensitive(pszKey);
     if( nIndex < 0 )
     {
         OGRFieldSubType eSubType;
@@ -1787,7 +1787,7 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn( OGRLayer* poLayer,
     json_object* poObjId = OGRGeoJSONFindMemberByName( poObj, "id" );
     if( poObjId )
     {
-        const int nIdx = poDefn->GetFieldIndex( "id" );
+        const int nIdx = poDefn->GetFieldIndexCaseSensitive( "id" );
         if( nIdx < 0 )
         {
             if( json_object_get_type(poObjId) == json_type_int )
@@ -1937,7 +1937,7 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn( OGRLayer* poLayer,
         it.entry = nullptr;
         json_object_object_foreachC( poObjProps, it )
         {
-            int nFldIndex = poDefn->GetFieldIndex( it.key );
+            int nFldIndex = poDefn->GetFieldIndexCaseSensitive( it.key );
             if( -1 == nFldIndex && !bIsGeocouchSpatiallistFormat )
             {
                 // Detect the special kind of GeoJSON output by a spatiallist of
@@ -1970,7 +1970,7 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn( OGRLayer* poLayer,
                                                "TRUE"));
                     if( bFlattenGeocouchSpatiallistFormat )
                     {
-                        poDefn->DeleteFieldDefn(poDefn->GetFieldIndex("type"));
+                        poDefn->DeleteFieldDefn(poDefn->GetFieldIndexCaseSensitive("type"));
                         bIsGeocouchSpatiallistFormat = true;
                         return GenerateFeatureDefn(poLayer, poObj);
                     }
@@ -2008,7 +2008,7 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn( OGRLayer* poLayer,
                 strcmp(it.key, "bbox") != 0 &&
                 strcmp(it.key, "center") != 0 )
             {
-                int nFldIndex = poDefn->GetFieldIndex( it.key );
+                int nFldIndex = poDefn->GetFieldIndexCaseSensitive( it.key );
                 if( -1 == nFldIndex )
                 {
                     OGRGeoJSONReaderAddOrUpdateField(poDefn, it.key, it.val,
@@ -2124,7 +2124,8 @@ static void OGRGeoJSONReaderSetFieldNestedAttribute( OGRLayer* poLayer,
         }
         else
         {
-            const int nField = poFeature->GetFieldIndex(osAttrName);
+            const int nField = poFeature->GetDefnRef()->
+                GetFieldIndexCaseSensitive(osAttrName);
             OGRGeoJSONReaderSetField(poLayer, poFeature, nField,
                                         osAttrName, it.val, false, 0);
         }
@@ -2292,7 +2293,8 @@ OGRFeature* OGRGeoJSONBaseReader::ReadFeature( OGRLayer* poLayer,
 {
     CPLAssert( nullptr != poObj );
 
-    OGRFeature* poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
+    OGRFeature* poFeature = new OGRFeature( poFDefn );
 
     if( bStoreNativeData_ )
     {
@@ -2337,7 +2339,7 @@ OGRFeature* OGRGeoJSONBaseReader::ReadFeature( OGRLayer* poLayer,
         it.entry = nullptr;
         json_object_object_foreachC( poObjProps, it )
         {
-            const int nField = poFeature->GetFieldIndex(it.key);
+            const int nField = poFDefn->GetFieldIndexCaseSensitive(it.key);
             if( nField < 0 &&
                 !( bFlattenNestedAttributes_ && it.val != nullptr &&
                    json_object_get_type(it.val) == json_type_object) )
@@ -2362,7 +2364,7 @@ OGRFeature* OGRGeoJSONBaseReader::ReadFeature( OGRLayer* poLayer,
         it.entry = nullptr;
         json_object_object_foreachC( poObj, it )
         {
-            const int nFldIndex = poFeature->GetFieldIndex(it.key);
+            const int nFldIndex = poFDefn->GetFieldIndexCaseSensitive(it.key);
             if( nFldIndex >= 0 )
             {
                 if( it.val )
@@ -2390,7 +2392,7 @@ OGRFeature* OGRGeoJSONBaseReader::ReadFeature( OGRLayer* poLayer,
 /* -------------------------------------------------------------------- */
     else if( nullptr != poObjId )
     {
-        const int nIdx = poLayer->GetLayerDefn()->GetFieldIndex( "id" );
+        const int nIdx = poFDefn->GetFieldIndexCaseSensitive( "id" );
         if( nIdx >= 0 && !poFeature->IsFieldSet(nIdx) )
         {
             poFeature->SetField(nIdx, json_object_get_string(poObjId));

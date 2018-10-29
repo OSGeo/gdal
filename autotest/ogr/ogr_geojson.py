@@ -4187,6 +4187,27 @@ def ogr_esrijson_without_geometryType():
 
     return 'success'
 
+
+###############################################################################
+
+
+def ogr_geojson_read_fields_with_different_case():
+
+    ds = ogr.Open("""{
+"type": "FeatureCollection",
+"features": [
+{ "type": "Feature", "id": "my_id", "geometry": null, "properties":
+                                { "ID": "MY_ID", "x": "foo", "X": "FOO"} }
+]}""")
+
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != 'my_id' or f.GetField(1) != 'MY_ID' or f.GetField(2) != 'foo' or f.GetField(3) != 'FOO':
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 
 
@@ -4300,6 +4321,7 @@ gdaltest_list = [
     ogr_geojson_append_flush,
     ogr_geojson_empty_geometrycollection,
     ogr_esrijson_without_geometryType,
+    ogr_geojson_read_fields_with_different_case,
     ogr_geojson_cleanup]
 
 if __name__ == '__main__':

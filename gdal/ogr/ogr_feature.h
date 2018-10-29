@@ -284,6 +284,7 @@ class CPL_DLL OGRFeatureDefn
     virtual OGRFieldDefn *GetFieldDefn( int i );
     virtual const OGRFieldDefn *GetFieldDefn( int i ) const;
     virtual int         GetFieldIndex( const char * ) const;
+    int                 GetFieldIndexCaseSensitive( const char * ) const;
 
     virtual void        AddFieldDefn( OGRFieldDefn * );
     virtual OGRErr      DeleteFieldDefn( int iField );
