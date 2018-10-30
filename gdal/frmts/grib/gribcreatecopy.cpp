@@ -33,6 +33,7 @@
 
 #include "cpl_port.h"
 #include "gribdataset.h"
+#include "gdal_priv_templates.hpp"
 
 #include <limits>
 
@@ -700,6 +701,7 @@ class GRIB2Section567Writer
         bool Write(float fValOffset,
                    char** papszOptions,
                    GDALProgressFunc pfnProgress, void * pProgressData);
+        void WriteComplexPackingNoData();
 };
 
 /************************************************************************/
@@ -927,6 +929,33 @@ bool GRIB2Section567Writer::WriteSimplePacking()
 }
 
 /************************************************************************/
+/*                      WriteComplexPackingNoData()                     */
+/************************************************************************/
+
+void GRIB2Section567Writer::WriteComplexPackingNoData()
+{
+    if( !m_bHasNoData )
+    {
+        WriteUInt32(m_fp, GRIB2MISSING_u4);
+    }
+    else if( GDALDataTypeIsFloating(m_eDT) )
+    {
+        WriteFloat32(m_fp, static_cast<float>(m_dfNoData));
+    }
+    else
+    {
+        if( GDALIsValueInRange<int>(m_dfNoData) )
+        {
+            WriteInt32(m_fp, static_cast<int>(m_dfNoData));
+        }
+        else
+        {
+            WriteUInt32(m_fp, GRIB2MISSING_u4);
+        }
+    }
+}
+
+/************************************************************************/
 /*                       WriteComplexPacking()                          */
 /************************************************************************/
 
@@ -965,10 +994,7 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
         WriteByte(m_fp, GDALDataTypeIsFloating(m_eDT) ? 0 : 1);
         WriteByte(m_fp, 0);
         WriteByte(m_fp, m_bHasNoData ? 1 : 0); // 1 missing value
-        if( !m_bHasNoData )
-            WriteUInt32(m_fp, GRIB2MISSING_u4);
-        else
-            WriteFloat32(m_fp, fNoData);
+        WriteComplexPackingNoData();
         WriteUInt32(m_fp, GRIB2MISSING_u4);
         WriteUInt32(m_fp, 0);
         WriteByte(m_fp, 0);
@@ -1092,10 +1118,7 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
     WriteByte(m_fp, GDALDataTypeIsFloating(m_eDT) ? 0 : 1);
     WriteByte(m_fp, idrstmpl[TMPL5_GROUP_SPLITTING_IDX]);
     WriteByte(m_fp, idrstmpl[TMPL5_MISSING_VALUE_MGNT_IDX]);
-    if( !m_bHasNoData )
-        WriteUInt32(m_fp, GRIB2MISSING_u4);
-    else
-        WriteFloat32(m_fp, fNoData);
+    WriteComplexPackingNoData();
     WriteUInt32(m_fp, GRIB2MISSING_u4);
     WriteUInt32(m_fp, idrstmpl[TMPL5_NG_IDX]);
     WriteByte(m_fp, idrstmpl[TMPL5_REF_GROUP_WIDTHS_IDX]);
