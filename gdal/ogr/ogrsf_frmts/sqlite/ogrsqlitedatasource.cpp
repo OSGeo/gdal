@@ -1653,9 +1653,11 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
     sqlite3_free( pszErrMsg );
     rc = sqlite3_get_table( hDB,
-                            "SELECT f_table_name, f_geometry_column, "
-                            "type, coord_dimension, srid, "
-                            "spatial_index_enabled FROM geometry_columns "
+                            "SELECT sm.name, gc.f_geometry_column, "
+                            "gc.type, gc.coord_dimension, gc.srid, "
+                            "gc.spatial_index_enabled FROM geometry_columns gc "
+                            "JOIN sqlite_master sm ON "
+                            "LOWER(gc.f_table_name)=LOWER(sm.name) "
                             "LIMIT 10000",
                             &papszResult, &nRowCount,
                             &nColCount, &pszErrMsg );
@@ -1664,9 +1666,11 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
         /* Test with SpatiaLite 4.0 schema */
         sqlite3_free( pszErrMsg );
         rc = sqlite3_get_table( hDB,
-                                "SELECT f_table_name, f_geometry_column, "
-                                "geometry_type, coord_dimension, srid, "
-                                "spatial_index_enabled FROM geometry_columns "
+                                "SELECT sm.name, gc.f_geometry_column, "
+                                "gc.geometry_type, gc.coord_dimension, gc.srid, "
+                                "gc.spatial_index_enabled FROM geometry_columns gc "
+                                "JOIN sqlite_master sm ON "
+                                "LOWER(gc.f_table_name)=LOWER(sm.name) "
                                 "LIMIT 10000",
                                 &papszResult, &nRowCount,
                                 &nColCount, &pszErrMsg );
