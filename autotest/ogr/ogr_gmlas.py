@@ -75,7 +75,7 @@ def compare_ogrinfo_output(gmlfile, reffile, options=''):
     if ret != expected:
         gdaltest.post_reason('fail')
         print('Got:')
-        print(ret)
+        print(ret.encode('utf-8'))
         open(tmpfilename, 'wb').write(ret.encode('utf-8'))
         print('Diff:')
         os.system('diff -u ' + reffile + ' ' + tmpfilename)
