@@ -1113,9 +1113,13 @@ gdaltest_list = [
 if __name__ == '__main__':
 
     if 'OCI_DSNAME' not in os.environ:
-        print('Enter ORACLE DataSource (e.g. OCI:scott/tiger):')
-        oci_dsname = sys.stdin.readline().strip()
-        os.environ['OCI_DSNAME'] = oci_dsname
+        if sys.stdout.isatty():
+            print('Enter ORACLE DataSource (e.g. OCI:scott/tiger):')
+            oci_dsname = sys.stdin.readline().strip()
+            os.environ['OCI_DSNAME'] = oci_dsname
+        else:
+            print('Skip test due not to set OCI_DSNAME environment variable.')
+            sys.exit(0)
 
     gdaltest.setup_run('ogr_oci')
 
