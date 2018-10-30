@@ -151,7 +151,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "mingw-w64-tools",
     "gdb-mingw-w64-target",
     "libgeos-mingw-w64-dev",
-    "libproj-mingw-w64-dev",
+    #"libproj-mingw-w64-dev",
     "cmake3-curses-gui",
     "gdb",
     "gdbserver",
