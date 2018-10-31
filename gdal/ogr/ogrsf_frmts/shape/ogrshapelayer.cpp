@@ -445,6 +445,8 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
     }
     if( STARTS_WITH_CI(pszCodePage, "UTF-8") )
         return CPL_ENC_UTF8;
+    if( STARTS_WITH_CI(pszCodePage, "ANSI 1251") )
+        return "CP1251";
 
     // Try just using the CPG value directly.  Works for stuff like Big5.
     return pszCodePage;
