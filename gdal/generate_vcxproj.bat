@@ -5,7 +5,7 @@
 :: 
 ::  Name:     generate_vcxproj.bat
 ::  Project:  GDAL 
-::  Purpose:  Generate MS Visual C++ => 10.0 project files    
+::  Purpose:  Generate MS Visual C++ => 12.0 project files
 ::  Author:   Ivan Lucena, [ivan lucena at outlook dot com]
 :: 
 :: ****************************************************************************
@@ -61,12 +61,6 @@ if "%_vcver_%"=="15.0" (
 ) else ( if "%_vcver_%"=="12.0" (
 	set _clver_=1800
 	set _vstoolset_=v120
-) else ( if "%_vcver_%"=="11.0" (
-	set _clver_=1700
-	set _vstoolset_=v110
-) else ( if "%_vcver_%"=="10.0" (
-	set _clver_=1600
-	set _vstoolset_=v100
 ) else (
     echo Wrong value for parameter 1. See usage:
 	goto :usage
@@ -102,15 +96,14 @@ goto :continue
 
 echo Usage: generate_vcxproj ^<Visual C++ version^> [32^|64] ^<^(*^) project file name^>
 echo Parameters:
-echo    1 : Visual C++ version is not the same as Visual Studio version ^( =^> 10.0 ^)
+echo    1 : Visual C++ version is not the same as Visual Studio version ^( =^> 14.0 ^)
 echo    2 : Windows platform 32 for Win32 and 64 for Win64
 echo    3 : Base file name, with no path and no extension ^(*^)
 echo Examples:
-echo    generate_vcxproj 10.1 32 gdal_vs2010
-echo    generate_vcxproj 11.0 64 gdal_vs2012
 echo    generate_vcxproj 12.0 64 gdal_vs2013
 echo    generate_vcxproj 14.0 64 gdal_vs2015
 echo    generate_vcxproj 15.0 64 gdal_vs2017
+echo WARNING: GDAL requires C++11. It is not guaranteed to build with VS2013.
 
 goto :end
 
