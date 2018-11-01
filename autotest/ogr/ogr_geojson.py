@@ -4177,6 +4177,51 @@ def ogr_esrijson_without_geometryType():
     return 'success'
 
 ###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/1068
+
+
+def ogr_geojson_clip_geometries_rfc7946():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    tmpfilename = '/vsimem/out.json'
+    gdal.VectorTranslate(tmpfilename, """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "geometry": {"type":"Polygon","coordinates":[[[-220,-20],[-220,30],[16,30],[16,-20],[-220,-20]]]} },
+      { "type": "Feature", "geometry": {"type":"Polygon","coordinates":[[[220,40],[220,70],[-16,70],[-16,40],[220,40]]]} },
+      { "type": "Feature", "geometry": {"type":"Polygon","coordinates":[[[170,-40],[170,-70],[-16,70],[-16,-40],[170,-40]]]} }
+  ]
+}""", options='-f GeoJSON -lco RFC7946=YES')
+
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('MULTIPOLYGON (((-180 30,-180 -20,16 -20,16 30,-180 30)),((140 -20,180 -20,180 30,140 30,140 -20)))')
+    if ogrtest.check_feature_geometry(f, ref_geom) != 0:
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('MULTIPOLYGON (((180 40,180 70,-16 70,-16 40,180 40)),((-180 70,-180 40,-140 40,-140 70,-180 70)))')
+    if ogrtest.check_feature_geometry(f, ref_geom) != 0:
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('POLYGON ((170 -40,-16 -40,-16 70,170 -70,170 -40))')
+    if ogrtest.check_feature_geometry(f, ref_geom) != 0:
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+    return 'success'
+
+
+###############################################################################
 
 
 def ogr_geojson_cleanup():
@@ -4288,6 +4333,7 @@ gdaltest_list = [
     ogr_geojson_starting_with_crs,
     ogr_geojson_append_flush,
     ogr_esrijson_without_geometryType,
+    ogr_geojson_clip_geometries_rfc7946,
     ogr_geojson_cleanup]
 
 if __name__ == '__main__':
