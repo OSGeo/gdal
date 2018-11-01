@@ -289,7 +289,7 @@ def process(argv, progress=None, progress_arg=None):
         else:
             if '*' in arg:
                 if sys.version_info < (3,0,0):
-                    src_datasets += [unicode(fn, sys.getfilesystemencoding()) for fn in glob.glob(arg)]
+                    src_datasets += [fn.decode(sys.getfilesystemencoding()) for fn in glob.glob(arg)]
                 else:
                     src_datasets += glob.glob(arg)
             else:
@@ -606,7 +606,7 @@ def process(argv, progress=None, progress_arg=None):
 def main():
     argv = sys.argv
     if sys.version_info < (3,0,0):
-        argv = [unicode(fn, sys.getfilesystemencoding()) for fn in argv]
+        argv = [fn.decode(sys.getfilesystemencoding()) for fn in argv]
     argv = ogr.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 1
