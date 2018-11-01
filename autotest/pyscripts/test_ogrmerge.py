@@ -404,6 +404,32 @@ def test_ogrmerge_11():
 
     return 'success'
 
+###############################################################################
+# Test layer names with accents
+
+
+def test_ogrmerge_12():
+    script_path = test_py_scripts.get_py_script('ogrmerge')
+    if script_path is None:
+        return 'skip'
+
+    with open('tmp/tmp.json', 'wt') as f:
+        f.write("""{ "type": "FeatureCollection", "name": "\xc3\xa9ven", "features": [ { "type": "Feature", "properties": {}, "geometry": null} ]}""")
+
+    test_py_scripts.run_py_script(script_path, 'ogrmerge',
+                                  '-f VRT -o /vsimem/out.vrt tmp/tmp.json')
+
+    ds = ogr.Open('/vsimem/out.vrt')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('tmp/tmp.json')
+    gdal.Unlink('/vsimem/out.vrt')
+
+    return 'success'
+
 
 gdaltest_list = [
     test_ogrmerge_1,
@@ -416,7 +442,8 @@ gdaltest_list = [
     test_ogrmerge_8,
     test_ogrmerge_9,
     test_ogrmerge_10,
-    test_ogrmerge_11
+    test_ogrmerge_11,
+    test_ogrmerge_12
 ]
 
 
