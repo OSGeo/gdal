@@ -2801,8 +2801,10 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
             const double dfDiffSpace = 360 - dfDateLineOffset;
 
             const double dfXOffset = (bAroundMinus180) ? 360.0 : 0.0;
-            if( oEnvelope.MinX + dfXOffset > dfLeftBorderX &&
-                oEnvelope.MaxX + dfXOffset > 180 )
+            if( oEnvelope.MinX < -180 ||
+                oEnvelope.MaxX > 180 ||
+                (oEnvelope.MinX + dfXOffset > dfLeftBorderX &&
+                 oEnvelope.MaxX + dfXOffset > 180) )
             {
 #ifndef HAVE_GEOS
                 CPLError( CE_Failure, CPLE_NotSupported,
@@ -2869,8 +2871,8 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
                 OGRGeometry* poRectangle1 = nullptr;
                 OGRGeometry* poRectangle2 = nullptr;
                 const char* pszWKT1 = !bAroundMinus180 ?
-                    "POLYGON((0 90,180 90,180 -90,0 -90,0 90))" :
-                    "POLYGON((0 90,-180 90,-180 -90,0 -90,0 90))";
+                    "POLYGON((-180 90,180 90,180 -90,-180 -90,-180 90))" :
+                    "POLYGON((180 90,-180 90,-180 -90,180 -90,180 90))";
                 const char* pszWKT2 = !bAroundMinus180 ?
                     "POLYGON((180 90,360 90,360 -90,180 -90,180 90))" :
                     "POLYGON((-180 90,-360 90,-360 -90,-180 -90,-180 90))";
