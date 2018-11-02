@@ -13889,16 +13889,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         dfNoDataValue = CPLAtofM( pszText );
         if( nBitsPerSample == 32 && nSampleFormat == SAMPLEFORMAT_IEEEFP )
         {
-            if( fabs(dfNoDataValue - std::numeric_limits<float>::max()) <
-                         1e-10 * std::numeric_limits<float>::max() )
-            {
-                dfNoDataValue = std::numeric_limits<float>::max();
-            }
-            else if( fabs(dfNoDataValue - (-std::numeric_limits<float>::max())) <
-                            1e-10 * std::numeric_limits<float>::max() )
-            {
-                dfNoDataValue = -std::numeric_limits<float>::max();
-            }
+            dfNoDataValue = GDALAdjustNoDataCloseToFloatMax(dfNoDataValue);
         }
     }
 

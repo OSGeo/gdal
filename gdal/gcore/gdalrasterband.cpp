@@ -2860,23 +2860,10 @@ static inline void ComputeFloatNoDataValue( GDALDataType eDataType,
 {
     if( eDataType == GDT_Float32 && bGotNoDataValue )
     {
+        dfNoDataValue = GDALAdjustNoDataCloseToFloatMax(dfNoDataValue);
         if (GDALIsValueInRange<float>(dfNoDataValue) )
         {
             fNoDataValue = static_cast<float>(dfNoDataValue);
-            bGotFloatNoDataValue = true;
-            bGotNoDataValue = false;
-        }
-        else if( fabs(dfNoDataValue - std::numeric_limits<float>::max()) <
-                         1e-10 * std::numeric_limits<float>::max() )
-        {
-            fNoDataValue = std::numeric_limits<float>::max();
-            bGotFloatNoDataValue = true;
-            bGotNoDataValue = false;
-        }
-        else if( fabs(dfNoDataValue - (-std::numeric_limits<float>::max())) <
-                         1e-10 * std::numeric_limits<float>::max() )
-        {
-            fNoDataValue = -std::numeric_limits<float>::max();
             bGotFloatNoDataValue = true;
             bGotNoDataValue = false;
         }
