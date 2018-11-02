@@ -149,6 +149,7 @@ class SDTS_CATD
     const char * GetEntryTypeDesc(int) const;
     const char * GetEntryFilePath(int) const;
     SDTSLayerType GetEntryType(int) const;
+    void          SetEntryTypeUnknown(int);
 };
 
 /************************************************************************/
