@@ -4019,3 +4019,17 @@ int GDALCanFileAcceptSidecarFile(const char* pszFilename)
         return FALSE;
     return TRUE;
 }
+
+/************************************************************************/
+/*                    GDALAdjustNoDataCloseToFloatMax()                 */
+/************************************************************************/
+
+double GDALAdjustNoDataCloseToFloatMax(double dfVal)
+{
+    const auto kMaxFloat = std::numeric_limits<float>::max();
+    if( std::fabs(dfVal - -kMaxFloat) < 1e-10 * kMaxFloat )
+        return -kMaxFloat;
+    if( std::fabs(dfVal - kMaxFloat) < 1e-10 * kMaxFloat )
+        return kMaxFloat;
+    return dfVal;
+}

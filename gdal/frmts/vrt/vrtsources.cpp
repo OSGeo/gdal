@@ -38,6 +38,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <limits>
 #include <string>
 
 #include "cpl_conv.h"
@@ -2097,9 +2098,23 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
     {
         if( CPLIsNan(m_dfNoDataValue) )
             CPLSetXMLValue( psSrc, "NODATA", "nan");
+        else if( m_poRasterBand->GetRasterDataType() == GDT_Float32 &&
+                 m_dfNoDataValue == -std::numeric_limits<float>::max() )
+        {
+            // To avoid rounding out of the range of float
+            CPLSetXMLValue( psSrc, "NODATA", "-3.4028234663852886e+38");
+        }
+        else if( m_poRasterBand->GetRasterDataType() == GDT_Float32 &&
+                 m_dfNoDataValue == std::numeric_limits<float>::max() )
+        {
+            // To avoid rounding out of the range of float
+            CPLSetXMLValue( psSrc, "NODATA", "3.4028234663852886e+38");
+        }
         else
+        {
             CPLSetXMLValue( psSrc, "NODATA",
                             CPLSPrintf("%.16g", m_dfNoDataValue) );
+        }
     }
 
     switch( m_eScalingType )
@@ -2235,6 +2250,10 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
     {
         m_bNoDataSet = TRUE;
         m_dfNoDataValue = CPLAtofM( CPLGetXMLValue(psSrc, "NODATA", "0") );
+        if( m_poRasterBand->GetRasterDataType() == GDT_Float32 )
+        {
+            m_dfNoDataValue = GDALAdjustNoDataCloseToFloatMax(m_dfNoDataValue);
+        }
     }
 
     if( CPLGetXMLValue(psSrc, "LUT", nullptr) != nullptr )
@@ -2506,7 +2525,9 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
     const bool bIsComplex = CPL_TO_BOOL( GDALDataTypeIsComplex(eBufType) );
     const int nWordSize = GDALGetDataTypeSizeBytes(eWrkDataType);
     const bool bNoDataSetIsNan = m_bNoDataSet && CPLIsNan(m_dfNoDataValue);
-    const bool bNoDataSetAndNotNan = m_bNoDataSet && !CPLIsNan(m_dfNoDataValue);
+    const bool bNoDataSetAndNotNan = m_bNoDataSet && !CPLIsNan(m_dfNoDataValue) &&
+                                GDALIsValueInRange<WorkingDT>(m_dfNoDataValue);
+    const auto fWorkingDataTypeNoData = static_cast<WorkingDT>(m_dfNoDataValue);
 
     WorkingDT *pafData = nullptr;
     if( m_eScalingType == VRT_SCALING_LINEAR &&
@@ -2588,8 +2609,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                 if( bNoDataSetIsNan && CPLIsNan(fResult) )
                     continue;
                 if( bNoDataSetAndNotNan &&
-                    GDALIsValueInRange<WorkingDT>(m_dfNoDataValue) &&
-                    ARE_REAL_EQUAL(fResult, static_cast<WorkingDT>(m_dfNoDataValue)) )
+                    ARE_REAL_EQUAL(fResult, fWorkingDataTypeNoData) )
                     continue;
 
                 if( m_nColorTableComponent )

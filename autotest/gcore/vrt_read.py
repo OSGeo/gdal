@@ -1385,6 +1385,47 @@ dy           1
     return 'success'
 
 
+###############################################################################
+# Test reading a VRT where the NODATA & NoDataValue are slighly below the
+# minimum float value (https://github.com/OSGeo/gdal/issues/1071)
+
+def vrt_float32_with_nodata_slightly_below_float_min():
+
+    shutil.copyfile('data/minfloat.tif', 'tmp/minfloat.tif')
+    shutil.copyfile('data/minfloat_nodata_slightly_out_of_float.vrt',
+                    'tmp/minfloat_nodata_slightly_out_of_float.vrt')
+    gdal.Unlink('tmp/minfloat_nodata_slightly_out_of_float.vrt.aux.xml')
+
+    ds = gdal.Open('tmp/minfloat_nodata_slightly_out_of_float.vrt')
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    stats = ds.GetRasterBand(1).ComputeStatistics(False)
+    ds = None
+
+    vrt_content = open('tmp/minfloat_nodata_slightly_out_of_float.vrt', 'rt').read()
+
+    gdal.Unlink('tmp/minfloat.tif')
+    gdal.Unlink('tmp/minfloat_nodata_slightly_out_of_float.vrt')
+
+    # Check that the values were 'normalized' when regenerating the VRT
+    if vrt_content.find('-3.402823466385289') >= 0:
+        gdaltest.post_reason('did not get expected nodata in rewritten VRT')
+        print(vrt_content)
+        return 'fail'
+
+    if nodata != -3.4028234663852886e+38:
+        gdaltest.post_reason('did not get expected nodata')
+        print("%.18g" % nodata)
+        return 'fail'
+
+    if stats != [-3.0, 5.0, 1.0, 4.0]:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+
+    return 'success'
+
+
+
 for item in init_list:
     ut = gdaltest.GDALTest('VRT', item[0], item[1], item[2])
     if ut is None:
@@ -1423,6 +1464,7 @@ gdaltest_list.append(vrt_read_28)
 gdaltest_list.append(vrt_read_29)
 gdaltest_list.append(vrt_read_30)
 gdaltest_list.append(vrt_read_31)
+gdaltest_list.append(vrt_float32_with_nodata_slightly_below_float_min)
 
 if __name__ == '__main__':
 
