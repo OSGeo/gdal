@@ -70,6 +70,7 @@ extern int snprintf(char* str, size_t size, const char* format, ...);
 #endif
 
 #define    streq(a,b)      (strcmp(a,b) == 0)
+#define    strneq(a,b,n)   (strncmp(a,b,n) == 0)
 
 #ifndef TRUE
 #define	TRUE	1

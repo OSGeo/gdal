@@ -62,9 +62,11 @@
 #ifdef _WIN64
 #  define TIFF_SSIZE_T GIntBig
 #  define TIFF_SSIZE_FORMAT CPL_FRMT_GIB
+#  define TIFF_SIZE_FORMAT CPL_FRMT_GUIB
 #else
 #  define TIFF_SSIZE_T signed long
 #  define TIFF_SSIZE_FORMAT "%ld"
+#  define TIFF_SIZE_FORMAT "%lu"
 #endif
 
 /* Unsigned 16-bit type */
