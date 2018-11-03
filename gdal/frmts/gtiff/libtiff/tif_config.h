@@ -66,7 +66,11 @@
 #else
 #  define TIFF_SSIZE_T signed long
 #  define TIFF_SSIZE_FORMAT "%ld"
-#  define TIFF_SIZE_FORMAT "%lu"
+#  if SIZEOF_VOIDP == 8
+#    define TIFF_SIZE_FORMAT "%lu"
+#  else
+#    define TIFF_SIZE_FORMAT "%u"
+#  endif
 #endif
 
 /* Unsigned 16-bit type */
