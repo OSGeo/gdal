@@ -34,7 +34,6 @@ import shutil
 from difflib import unified_diff
 
 
-import gdaltest
 import ogrtest
 import test_py_scripts
 from osgeo import ogr

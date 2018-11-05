@@ -32,7 +32,6 @@ import shutil
 from osgeo import gdal
 
 
-import gdaltest
 import pytest
 
 ###############################################################################

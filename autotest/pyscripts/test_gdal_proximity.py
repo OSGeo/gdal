@@ -32,7 +32,6 @@
 import os
 
 
-import gdaltest
 import test_py_scripts
 
 from osgeo import gdal

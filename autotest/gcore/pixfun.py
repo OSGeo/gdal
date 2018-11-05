@@ -39,7 +39,6 @@ except ImportError:
 from osgeo import gdal
 
 
-import gdaltest
 
 ###############################################################################
 # Verify real part extraction from a complex dataset.

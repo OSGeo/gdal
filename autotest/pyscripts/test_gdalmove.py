@@ -33,7 +33,6 @@ import shutil
 
 
 from osgeo import gdal
-import gdaltest
 import test_py_scripts
 import pytest
 

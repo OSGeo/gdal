@@ -31,7 +31,6 @@
 import struct
 
 
-import gdaltest
 import ogrtest
 
 from osgeo import gdal, ogr, osr

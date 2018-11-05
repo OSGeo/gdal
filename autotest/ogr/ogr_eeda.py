@@ -34,7 +34,6 @@ import json
 
 from osgeo import gdal, ogr
 
-import gdaltest
 import ogrtest
 import pytest
 

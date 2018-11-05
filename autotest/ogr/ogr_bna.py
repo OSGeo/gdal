@@ -194,14 +194,14 @@ def test_ogr_bna_6():
     except OSError:
         pass
 
-    ret = ogr_bna_write(['LINEFORMAT=LF', 'MULTILINE=NO', 'COORDINATE_PRECISION=3'])
+    ogr_bna_write(['LINEFORMAT=LF', 'MULTILINE=NO', 'COORDINATE_PRECISION=3'])
 
     size = os.stat('tmp/out.bna').st_size
     assert size == 1601, ('Got size %d. Expected %d' % (size, 1601))
 
     os.remove('tmp/out.bna')
 
-    ret = ogr_bna_write(['LINEFORMAT=CRLF', 'MULTILINE=NO', 'COORDINATE_PRECISION=3'])
+    ogr_bna_write(['LINEFORMAT=CRLF', 'MULTILINE=NO', 'COORDINATE_PRECISION=3'])
 
     size = os.stat('tmp/out.bna').st_size
     assert size == 1611, ('Got size %d. Expected %d' % (size, 1611))

@@ -35,7 +35,6 @@ import sys
 import base64
 
 
-import gdaltest
 from osgeo import gdal
 import pytest
 

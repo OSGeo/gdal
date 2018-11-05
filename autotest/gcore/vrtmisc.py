@@ -32,7 +32,6 @@
 from osgeo import gdal
 
 
-import gdaltest
 
 ###############################################################################
 # Test linear scaling

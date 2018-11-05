@@ -31,7 +31,6 @@
 from osgeo import gdal
 
 
-import gdaltest
 
 ###############################################################################
 # Read a truncated and modified version of C3607614.NWS

@@ -32,7 +32,6 @@
 import random
 
 
-import gdaltest
 from osgeo import ogr
 
 ###############################################################################

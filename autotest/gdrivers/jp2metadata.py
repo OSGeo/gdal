@@ -33,7 +33,6 @@ import os
 
 from osgeo import gdal
 
-import gdaltest
 import pytest
 
 

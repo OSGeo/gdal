@@ -35,7 +35,6 @@ import shutil
 
 from osgeo import gdal
 
-import gdaltest
 
 ###############################################################################
 # Fetch simple histogram.

@@ -33,7 +33,6 @@ import shutil
 from osgeo import gdal
 
 
-import gdaltest
 
 ###############################################################################
 # Open and verify a the GCPs and metadata.

@@ -31,7 +31,6 @@
 from osgeo import ogr
 
 
-import gdaltest
 import ogrtest
 import pytest
 

@@ -250,7 +250,7 @@ def test_ogr_rfc35_mem_4():
     assert feat.GetField("intfield") == 12345
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5')
 
     fd.SetWidth(5)
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
@@ -260,7 +260,7 @@ def test_ogr_rfc35_mem_4():
     assert feat.GetField("intfield") == 12345
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5')
 
     fd.SetWidth(4)
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
@@ -271,7 +271,7 @@ def test_ogr_rfc35_mem_4():
     assert feat.GetField("intfield") == 12345
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5')
 
     fd = ogr.FieldDefn("oldintfld", ogr.OFTString)
     fd.SetWidth(15)
@@ -283,7 +283,7 @@ def test_ogr_rfc35_mem_4():
     assert feat.GetField("oldintfld") == '12345'
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5')
 
     lyr.DeleteField(lyr_defn.GetFieldIndex("oldintfld"))
 
@@ -308,7 +308,7 @@ def test_ogr_rfc35_mem_4():
     assert feat.GetField("oldintfld") == '98765'
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5')
 
 ###############################################################################
 # Test DeleteField()

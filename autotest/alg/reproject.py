@@ -31,7 +31,6 @@
 
 
 
-import gdaltest
 
 from osgeo import gdal
 from osgeo import osr

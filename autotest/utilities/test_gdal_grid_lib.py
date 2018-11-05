@@ -34,7 +34,6 @@ import struct
 
 from osgeo import gdal, ogr
 
-import gdaltest
 import ogrtest
 
 ###############################################################################

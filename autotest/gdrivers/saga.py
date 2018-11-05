@@ -94,7 +94,7 @@ def test_saga_4():
             check_minmax = 0
         else:
             check_minmax = 1
-        ret = tst.testCreateCopy(new_filename='tmp/test4.sdat', check_minmax=check_minmax)
+        tst.testCreateCopy(new_filename='tmp/test4.sdat', check_minmax=check_minmax)
 
     
 ###############################################################################
@@ -117,7 +117,7 @@ def test_saga_5():
             check_minmax = 0
         else:
             check_minmax = 1
-        ret = tst.testCreate(new_filename='tmp/test5.sdat', out_bands=1, check_minmax=check_minmax)
+        tst.testCreate(new_filename='tmp/test5.sdat', out_bands=1, check_minmax=check_minmax)
 
     
 ###############################################################################

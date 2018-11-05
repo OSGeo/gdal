@@ -32,7 +32,6 @@
 import os
 
 
-import gdaltest
 import ogrtest
 import test_py_scripts
 

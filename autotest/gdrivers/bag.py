@@ -627,7 +627,7 @@ def test_bag_write_two_bands():
                             options=['BLOCK_SIZE=2',
                                      'VAR_ABSTRACT=foo',
                                      'VAR_XML_IDENTIFICATION_CITATION=<bar/>'])
-    ret = tst.testCreateCopy(quiet_error_handler=False,
+    tst.testCreateCopy(quiet_error_handler=False,
                              delete_copy=False,
                              new_filename='/vsimem/out.bag')
 

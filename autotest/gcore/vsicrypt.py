@@ -460,7 +460,7 @@ def test_vsicrypt_5():
 # Test VSISetCryptKey
 
 
-def test_vsicrypt_6(testnonboundtoswig_setup):
+def test_vsicrypt_6(testnonboundtoswig_setup):  # noqa
 
     try:
         import ctypes

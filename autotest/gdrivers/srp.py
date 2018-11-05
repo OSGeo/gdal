@@ -46,7 +46,7 @@ def test_srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
     srs.ImportFromEPSG(32600 + 17)
 
     tst = gdaltest.GDALTest('SRP', filename, 1, 24576)
-    ret = tst.testOpen(check_prj=srs.ExportToWkt(), check_gt=(500000.0, 5.0, 0.0, 5000000.0, 0.0, -5.0))
+    tst.testOpen(check_prj=srs.ExportToWkt(), check_gt=(500000.0, 5.0, 0.0, 5000000.0, 0.0, -5.0))
 
     ds = gdal.Open('data/' + filename)
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
@@ -130,7 +130,7 @@ def test_srp_5():
 def test_srp_6():
 
     tst = gdaltest.GDALTest('SRP', 'SRP:data/USRP_PCB4/FKUSRP01.GEN,data/USRP_PCB4/FKUSRP01.IMG', 1, 24576, filename_absolute=1)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -142,6 +142,3 @@ def test_srp_cleanup():
     os.unlink('data/USRP_PCB0/TRANSH01.THF.aux.xml')
 
 ###############################################################################
-
-
-

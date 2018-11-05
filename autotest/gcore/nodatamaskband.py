@@ -30,11 +30,7 @@
 ###############################################################################
 
 import struct
-import sys
 
-sys.path.append('../pymod')
-
-import gdaltest
 from osgeo import gdal
 
 
@@ -90,7 +86,3 @@ def test_nodatamaskband_1():
         expected_ar = (255, 0, 255,
                        0, 255, 255)
         assert data_ar == expected_ar, dt
-
-    
-
-

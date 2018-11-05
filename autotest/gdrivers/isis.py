@@ -116,7 +116,7 @@ def test_isis_3():
 def test_isis_4():
 
     tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978)
-    ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
+    tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     assert ds.GetMetadataDomainList() == ['', 'json:ISIS3']
@@ -132,7 +132,7 @@ def test_isis_4():
     # Preserve source Mapping group as well
     tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978,
                             options=['USE_SRC_MAPPING=YES'])
-    ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
+    tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
@@ -147,7 +147,7 @@ def test_isis_4():
                                      'LONGITUDE_DIRECTION=PositiveEast',
                                      'LATITUDE_TYPE=Planetocentric',
                                      'TARGET_NAME=my_label'])
-    ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
+    tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
@@ -165,7 +165,7 @@ def test_isis_5():
     tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978,
                             options=['USE_SRC_LABEL=NO',
                                      'WRITE_BOUNDING_DEGREES=NO'])
-    ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
+    tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
     assert gdal.VSIStatL('/vsimem/isis_tmp.cub') is None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
@@ -183,7 +183,7 @@ def test_isis_6():
                             options=['DATA_LOCATION=EXTERNAL',
                                      'USE_SRC_LABEL=NO',
                                      'COMMENT=my comment'])
-    ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
+    tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
     assert gdal.VSIStatL('/vsimem/isis_tmp.cub') is not None
     f = gdal.VSIFOpenL('/vsimem/isis_tmp.lbl', 'rb')
@@ -207,7 +207,7 @@ def test_isis_7():
     tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978,
                             options=['DATA_LOCATION=GEOTIFF',
                                      'USE_SRC_LABEL=NO'])
-    ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
+    tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
     assert gdal.VSIStatL('/vsimem/isis_tmp.tif') is not None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
@@ -221,7 +221,7 @@ def test_isis_7():
                             options=['DATA_LOCATION=GEOTIFF',
                                      'GEOTIFF_AS_REGULAR_EXTERNAL=NO',
                                      'USE_SRC_LABEL=NO'])
-    ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
+    tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
     assert gdal.VSIStatL('/vsimem/isis_tmp.tif') is not None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
@@ -239,7 +239,7 @@ def test_isis_8():
                             options=['DATA_LOCATION=GEOTIFF',
                                      'USE_SRC_LABEL=NO',
                                      'GEOTIFF_OPTIONS=COMPRESS=LZW'])
-    ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
+    tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
     assert gdal.VSIStatL('/vsimem/isis_tmp.tif') is not None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
@@ -264,7 +264,7 @@ def test_isis_9():
                                      'USE_SRC_LABEL=NO',
                                      'TILED=YES',
                                      'EXTERNAL_FILENAME=/vsimem/foo.bin'])
-    ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
+    tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
     assert gdal.VSIStatL('/vsimem/foo.bin') is not None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
@@ -286,7 +286,7 @@ def test_isis_10():
                                      'TILED=YES',
                                      'BLOCKXSIZE=16', 'BLOCKYSIZE=32',
                                      'EXTERNAL_FILENAME=/vsimem/foo.tif'])
-    ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
+    tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
     ds = gdal.Open('/vsimem/foo.tif')
     assert ds.GetRasterBand(1).GetBlockSize() == [16, 32]
@@ -304,7 +304,7 @@ def test_isis_11():
                                      'DATA_LOCATION=GEOTIFF',
                                      'TILED=YES',
                                      'GEOTIFF_OPTIONS=COMPRESS=LZW'])
-    ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
+    tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
     ds = gdal.Open('/vsimem/isis_tmp.tif')
     assert ds.GetRasterBand(1).GetBlockSize() == [256, 256]

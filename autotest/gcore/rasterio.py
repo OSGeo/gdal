@@ -33,7 +33,6 @@ import struct
 import sys
 
 
-import gdaltest
 from osgeo import gdal
 import pytest
 

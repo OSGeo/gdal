@@ -63,15 +63,15 @@ def test_rmf_3():
 def test_rmf_4():
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 1, 21212)
-    ret = tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
+    tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
                                  -22.932584, 0, -0.003432))
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 2, 21053)
-    ret = tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
+    tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
                                  -22.932584, 0, -0.003432))
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 3, 21349)
-    return tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
+    tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
                                   -22.932584, 0, -0.003432))
 
 

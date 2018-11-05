@@ -35,7 +35,6 @@ import os
 import shutil
 
 
-import gdaltest
 
 from osgeo import gdal
 from osgeo import gnm

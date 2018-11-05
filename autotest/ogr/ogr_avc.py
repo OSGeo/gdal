@@ -30,7 +30,6 @@
 
 
 
-import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import gdal

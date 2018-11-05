@@ -31,7 +31,6 @@
 import os
 
 
-import gdaltest
 import test_py_scripts
 import pytest
 

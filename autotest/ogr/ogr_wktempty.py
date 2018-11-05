@@ -29,7 +29,6 @@
 
 import pytest
 
-import gdaltest
 from osgeo import ogr
 
 

@@ -697,7 +697,7 @@ def test_ogr_rfc41_7():
 # Test SQLite dialect
 
 
-def test_ogr_rfc41_8(require_ogr_sql_sqlite):
+def test_ogr_rfc41_8(require_ogr_sql_sqlite):  # noqa
     ds = ogr.GetDriverByName('memory').CreateDataSource('')
     lyr = ds.CreateLayer('mytable', geom_type=ogr.wkbPolygon)
     lyr.GetLayerDefn().GetGeomFieldDefn(0).SetName('geomfield')

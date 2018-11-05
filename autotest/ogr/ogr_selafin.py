@@ -33,7 +33,6 @@ import math
 
 
 import gdaltest
-from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 import pytest

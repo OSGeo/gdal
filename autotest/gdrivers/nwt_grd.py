@@ -33,7 +33,6 @@ import shutil
 
 from osgeo import gdal
 import gdaltest
-import pytest
 
 ###############################################################################
 # Test a GRD dataset with three bands + Z

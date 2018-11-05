@@ -32,7 +32,6 @@
 
 from osgeo import gdal
 from osgeo import ogr
-import gdaltest
 import test_py_scripts
 import pytest
 

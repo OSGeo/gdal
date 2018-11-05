@@ -32,7 +32,6 @@
 import threading
 
 
-import gdaltest
 from osgeo import gdal
 import pytest
 

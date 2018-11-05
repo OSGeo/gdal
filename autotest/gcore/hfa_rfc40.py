@@ -34,7 +34,6 @@ from osgeo import gdal
 
 import pytest
 
-import gdaltest
 
 try:
     import numpy

@@ -35,7 +35,6 @@ import shutil
 
 
 from osgeo import gdal      # noqa
-import gdaltest             # noqa  # pylint: disable=E0401
 import test_py_scripts      # noqa  # pylint: disable=E0401
 import pytest
 

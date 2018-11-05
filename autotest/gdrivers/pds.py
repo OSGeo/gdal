@@ -47,11 +47,10 @@ def test_pds_1():
     expected_gt = (-10668384.903788566589355, 926.115274429321289, 0, 3852176.483988761901855, 0, -926.115274429321289)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen(check_prj=expected_prj,
+    tst.testOpen(check_prj=expected_prj,
                        check_gt=expected_gt)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
-    return ret
 
 
 ###############################################################################
@@ -73,7 +72,7 @@ def test_pds_2():
     expected_gt = (587861.55900404998, 75.000002980232239, 0.0, -7815243.4746123618, 0.0, -75.000002980232239)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen(check_prj=expected_prj,
+    tst.testOpen(check_prj=expected_prj,
                        check_gt=expected_gt)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
@@ -117,10 +116,9 @@ def test_pds_4():
     gt_expected = (6119184.3590369327, 1.0113804322107001, 0.0, -549696.39009125973, 0.0, -1.0113804322107001)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen(check_gt=gt_expected)
+    tst.testOpen(check_gt=gt_expected)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
-    return ret
 
 ###############################################################################
 # Read a hacked example of reading a detached file with an offset #3355.
@@ -147,7 +145,7 @@ def test_pds_6():
 
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen(check_gt=gt_expected)
+    tst.testOpen(check_gt=gt_expected)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
 
@@ -187,7 +185,7 @@ def test_pds_7():
 
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen(check_prj=prj_expected,
+    tst.testOpen(check_prj=prj_expected,
                        check_gt=gt_expected)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)

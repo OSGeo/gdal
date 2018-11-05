@@ -31,7 +31,6 @@
 import os
 
 
-import gdaltest
 from osgeo import gdal
 import test_cli_utilities
 import pytest

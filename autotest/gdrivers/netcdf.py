@@ -292,7 +292,7 @@ def test_netcdf_2():
         AUTHORITY["EPSG","9001"]],
     AUTHORITY["EPSG","26711"]]"""
 
-    result = tst.testOpen(check_prj=wkt)
+    tst.testOpen(check_prj=wkt)
 
     # Test that in raster-only mode, update isn't supported (not sure what would be missing for that...)
     with gdaltest.error_handler():
@@ -924,7 +924,7 @@ def netcdf_25_nc4():
     if not gdaltest.netcdf_drv_has_nc4:
         pytest.skip()
 
-    result = netcdf_test_copy('data/nc4_vars.nc', 1, None, 'tmp/netcdf_25_nc4.nc', ['FORMAT=NC4'])
+    netcdf_test_copy('data/nc4_vars.nc', 1, None, 'tmp/netcdf_25_nc4.nc', ['FORMAT=NC4'])
 
     vals_global = {'NC_GLOBAL#test': 'testval',
                    'NC_GLOBAL#test_string': 'testval_string',
@@ -1159,8 +1159,8 @@ def test_netcdf_32():
     # gdal.SetConfigOption('CPL_DEBUG', 'ON')
 
     # test basic read/write
-    result = netcdf_test_copy(ifile, 1, 4672, ofile, ['FORMAT=NC4'])
-    result = netcdf_test_copy(ifile, 1, 4672, ofile, ['FORMAT=NC4C'])
+    netcdf_test_copy(ifile, 1, 4672, ofile, ['FORMAT=NC4'])
+    netcdf_test_copy(ifile, 1, 4672, ofile, ['FORMAT=NC4C'])
 
 ###############################################################################
 # TEST NC_UBYTE metadata read - netcdf-4 (FORMAT=NC4) only (#5053)
@@ -1174,7 +1174,7 @@ def test_netcdf_33():
     ifile = 'data/nc_vars.nc'
     ofile = 'tmp/netcdf_33.nc'
 
-    result = netcdf_test_copy(ifile, 1, None, ofile, ['FORMAT=NC4'])
+    netcdf_test_copy(ifile, 1, None, ofile, ['FORMAT=NC4'])
 
     return netcdf_check_vars('tmp/netcdf_33.nc')
 

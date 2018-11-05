@@ -32,7 +32,6 @@ from sys import version_info
 from osgeo import ogr
 
 
-import gdaltest
 import pytest
 
 ###############################################################################
