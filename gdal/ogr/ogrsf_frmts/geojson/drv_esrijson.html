@@ -21,6 +21,10 @@ The page size can be explicitly set with the <i>resultRecordCount</i> parameter 
 is subject to a server limit). If it is not set, OGR will set it to the maximum
 value allowed by the server.</p>
 
+<p>Note: for paged requests to work properly, it is generally necessary to add
+a sort clause on a field, typically the OBJECTID with a "&amp;orderByFields=OBJECTID+ASC"
+parameter in the URL, so that the server returns the results in a reliable way.</p>
+
 <h2>Datasource</h2>
 
 <p>The driver accepts three types of sources of data:</p>
