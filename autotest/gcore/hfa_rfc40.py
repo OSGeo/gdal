@@ -31,23 +31,33 @@
 ###############################################################################
 
 import sys
-import numpy
 from osgeo import gdal
 
+import pytest
 
 import gdaltest
 
-INT_DATA = numpy.array([197, 83, 46, 29, 1, 78, 23, 90, 12, 45])
-DOUBLE_DATA = numpy.array([0.1, 43.2, 78.1, 9.9, 23.0, 0.92, 82.5, 0.0, 1.0, 99.0])
-STRING_DATA = numpy.array(["sddf", "wess", "grbgr", "dewd", "ddww", "qwsqw",
-                           "gbfgbf", "wwqw3", "e", ""])
-STRING_DATA_INTS = numpy.array(["197", "83", "46", "29", "1", "78",
-                                "23", "90", "12", "45"])
-STRING_DATA_DOUBLES = numpy.array(["0.1", "43.2", "78.1", "9.9", "23.0", "0.92",
-                                   "82.5", "0.0", "1.0", "99.0"])
-LONG_STRING_DATA = numpy.array(["sdfsdfsdfs", "sdweddw", "sdewdweee", "3423dedd",
-                                "jkejjjdjd", "edcdcdcdc", "fcdkmk4m534m", "edwededdd",
-                                "dedwedew", "wdedefrfrfrf"])
+try:
+    import numpy
+    array = numpy.array
+except ImportError:
+    numpy = None
+    array = list
+
+pytestmark = pytest.mark.skipif(numpy is None, reason="numpy not available")
+
+
+INT_DATA = array([197, 83, 46, 29, 1, 78, 23, 90, 12, 45])
+DOUBLE_DATA = array([0.1, 43.2, 78.1, 9.9, 23.0, 0.92, 82.5, 0.0, 1.0, 99.0])
+STRING_DATA = array(["sddf", "wess", "grbgr", "dewd", "ddww", "qwsqw",
+                     "gbfgbf", "wwqw3", "e", ""])
+STRING_DATA_INTS = array(["197", "83", "46", "29", "1", "78",
+                          "23", "90", "12", "45"])
+STRING_DATA_DOUBLES = array(["0.1", "43.2", "78.1", "9.9", "23.0", "0.92",
+                             "82.5", "0.0", "1.0", "99.0"])
+LONG_STRING_DATA = array(["sdfsdfsdfs", "sdweddw", "sdewdweee", "3423dedd",
+                          "jkejjjdjd", "edcdcdcdc", "fcdkmk4m534m", "edwededdd",
+                          "dedwedew", "wdedefrfrfrf"])
 
 
 class HFATestError(Exception):
