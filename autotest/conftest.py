@@ -49,19 +49,6 @@ def chdir_to_test_file(request):
     os.chdir(old)
 
 
-@pytest.fixture(scope='session', autouse=True)
-def cleanup_on_exit():
-    yield
-
-    from gcore import testnonboundtoswig
-
-    # Do it twice to ensure that cleanup routines properly do their jobs
-    for _ in range(2):
-        testnonboundtoswig.OSRCleanup()
-        testnonboundtoswig.GDALDestroyDriverManager()
-        testnonboundtoswig.OGRCleanupAll()
-
-
 def pytest_collection_modifyitems(config, items):
     # skip tests with @pytest.mark.require_driver(name) when the driver isn't available
     skip = pytest.mark.skip("Driver not present")
