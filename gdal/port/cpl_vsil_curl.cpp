@@ -2283,7 +2283,8 @@ int       VSICurlHandle::Close()
 
 VSICurlFilesystemHandler::VSICurlFilesystemHandler():
     oRegionCache{static_cast<size_t>(N_MAX_REGIONS)},
-    oCacheFileProp{1024}
+    oCacheFileProp{1024},
+    oCacheDirList{1024, 0}
 {
 }
 
@@ -2411,6 +2412,73 @@ VSICurlFilesystemHandler::SetCachedFileProp( const char* pszURL,
 }
 
 /************************************************************************/
+/*                         GetCachedDirList()                           */
+/************************************************************************/
+
+bool
+VSICurlFilesystemHandler::GetCachedDirList( const char* pszURL,
+                                            CachedDirList& oCachedDirList )
+{
+    CPLMutexHolder oHolder( &hMutex );
+
+    return oCacheDirList.tryGet(std::string(pszURL), oCachedDirList);
+}
+
+/************************************************************************/
+/*                         SetCachedDirList()                           */
+/************************************************************************/
+
+void
+VSICurlFilesystemHandler::SetCachedDirList( const char* pszURL,
+                                            const CachedDirList& oCachedDirList )
+{
+    CPLMutexHolder oHolder( &hMutex );
+
+    std::string key(pszURL);
+    CachedDirList oldValue;
+    if( oCacheDirList.tryGet(key, oldValue) )
+    {
+        nCachedFilesInDirList -= oldValue.oFileList.size();
+        oCacheDirList.remove(key);
+    }
+
+    while( (!oCacheDirList.empty() &&
+            nCachedFilesInDirList + oCachedDirList.oFileList.size() > 1024 * 1024) ||
+            oCacheDirList.size() == oCacheDirList.getMaxAllowedSize() )
+    {
+        std::string oldestKey;
+        oCacheDirList.getOldestEntry(oldestKey, oldValue);
+        nCachedFilesInDirList -= oldValue.oFileList.size();
+        oCacheDirList.remove(oldestKey);
+    }
+
+    nCachedFilesInDirList += oCachedDirList.oFileList.size();
+    oCacheDirList.insert(key, oCachedDirList);
+}
+
+/************************************************************************/
+/*                        ExistsInCacheDirList()                        */
+/************************************************************************/
+
+bool VSICurlFilesystemHandler::ExistsInCacheDirList(
+                            const CPLString& osDirname, bool *pbIsDir )
+{
+    CachedDirList cachedDirList;
+    if( GetCachedDirList(osDirname, cachedDirList) )
+    {
+        if( pbIsDir )
+            *pbIsDir = !cachedDirList.oFileList.empty();
+        return false;
+    }
+    else
+    {
+        if( pbIsDir )
+            *pbIsDir = false;
+        return false;
+    }
+}
+
+/************************************************************************/
 /*                        InvalidateCachedData()                        */
 /************************************************************************/
 
@@ -2447,15 +2515,8 @@ void VSICurlFilesystemHandler::ClearCache()
 
     oCacheFileProp.clear();
 
-    std::map<CPLString, CachedDirList*>::const_iterator iterCacheDirList;
-    for( iterCacheDirList = cacheDirList.begin();
-         iterCacheDirList != cacheDirList.end();
-         ++iterCacheDirList )
-    {
-        CSLDestroy(iterCacheDirList->second->papszFileList);
-        CPLFree(iterCacheDirList->second);
-    }
-    cacheDirList.clear();
+    oCacheDirList.clear();
+    nCachedFilesInDirList = 0;
 
     std::map<GIntBig, CachedConnection*>::const_iterator iterConnections;
     for( iterConnections = mapConnections.begin();
@@ -2504,19 +2565,21 @@ void VSICurlFilesystemHandler::PartialClearCache(const char* pszFilenamePrefix)
             oCacheFileProp.remove(key);
     }
 
-    auto iterCacheDirList = cacheDirList.begin();
-    const size_t nLen = strlen(pszFilenamePrefix);
-    while( iterCacheDirList != cacheDirList.end() )
     {
-        auto iter = iterCacheDirList;
-        auto nextiter = ++iterCacheDirList;
-        if( strncmp(iter->first.c_str(), pszFilenamePrefix, nLen) == 0 )
+        const size_t nLen = strlen(pszFilenamePrefix);
+        std::list<std::string> keysToRemove;
+        auto lambda = [this, &keysToRemove, pszFilenamePrefix, nLen](
+            const lru11::KeyValuePair<std::string, CachedDirList>& kv)
         {
-            CSLDestroy(iter->second->papszFileList);
-            CPLFree(iter->second);
-            cacheDirList.erase(iter);
-        }
-        iterCacheDirList = nextiter;
+            if( strncmp(kv.key.c_str(), pszFilenamePrefix, nLen) == 0 )
+            {
+                keysToRemove.push_back(kv.key);
+                nCachedFilesInDirList -= kv.value.oFileList.size();
+            }
+        };
+        oCacheDirList.cwalk(lambda);
+        for( auto& key: keysToRemove )
+            oCacheDirList.remove(key);
     }
 }
 
@@ -3305,14 +3368,12 @@ VSICurlFilesystemHandler::GetURLFromFilename( const CPLString& osFilename )
 
 void VSICurlFilesystemHandler::RegisterEmptyDir( const CPLString& osDirname )
 {
-    CPLMutexHolder oHolder( &hMutex );
-    CachedDirList* psCachedDirList = cacheDirList[osDirname];
-    if( psCachedDirList == nullptr )
+    CachedDirList cachedDirList;
+    if( !GetCachedDirList(osDirname, cachedDirList) )
     {
-        psCachedDirList =
-            static_cast<CachedDirList *>(CPLMalloc(sizeof(CachedDirList)));
-        psCachedDirList->papszFileList = CSLAddString(nullptr, ".");
-        cacheDirList[osDirname] = psCachedDirList;
+        cachedDirList.bGotFileList = true;
+        cachedDirList.oFileList.AddString(".");
+        SetCachedDirList(osDirname, cachedDirList);
     }
 }
 
@@ -3787,21 +3848,19 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
         }
     }
 
-    CachedDirList* psCachedDirList = cacheDirList[osDirname];
-    if( psCachedDirList == nullptr )
+    CachedDirList cachedDirList;
+    if( !GetCachedDirList(osDirname, cachedDirList) )
     {
-        psCachedDirList =
-            static_cast<CachedDirList *>(CPLMalloc(sizeof(CachedDirList)));
-        psCachedDirList->papszFileList =
+        cachedDirList.oFileList.Assign(
             GetFileList(osDirname, nMaxFiles,
-                        &psCachedDirList->bGotFileList);
-        cacheDirList[osDirname] = psCachedDirList;
+                        &cachedDirList.bGotFileList), true);
+        SetCachedDirList(osDirname, cachedDirList);
     }
 
     if( pbGotFileList )
-        *pbGotFileList = psCachedDirList->bGotFileList;
+        *pbGotFileList = cachedDirList.bGotFileList;
 
-    return CSLDuplicate(psCachedDirList->papszFileList);
+    return CSLDuplicate(cachedDirList.oFileList.List());
 }
 
 /************************************************************************/
@@ -3811,13 +3870,12 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
 void VSICurlFilesystemHandler::InvalidateDirContent( const char *pszDirname )
 {
     CPLMutexHolder oHolder( &hMutex );
-    std::map<CPLString, CachedDirList*>::iterator oIter =
-        cacheDirList.find(pszDirname);
-    if( oIter != cacheDirList.end() )
+
+    CachedDirList oCachedDirList;
+    if( oCacheDirList.tryGet(std::string(pszDirname), oCachedDirList) )
     {
-        CSLDestroy( oIter->second->papszFileList );
-        CPLFree( oIter->second );
-        cacheDirList.erase(oIter);
+        nCachedFilesInDirList -= oCachedDirList.oFileList.size();
+        oCacheDirList.remove(std::string(pszDirname));
     }
 }
 

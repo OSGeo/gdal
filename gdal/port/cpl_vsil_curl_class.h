@@ -81,8 +81,8 @@ class FileProp
 
 typedef struct
 {
-    bool            bGotFileList;
-    char**          papszFileList; /* only file name without path */
+    bool            bGotFileList = false;
+    CPLStringList   oFileList{}; /* only file name without path */
 } CachedDirList;
 
 typedef struct
@@ -160,7 +160,8 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
 
     lru11::Cache<std::string, FileProp>  oCacheFileProp;
 
-    std::map<CPLString, CachedDirList*>        cacheDirList{};
+    int                                       nCachedFilesInDirList = 0;
+    lru11::Cache<std::string, CachedDirList>  oCacheDirList;
 
     // Per-thread Curl connection cache.
     std::map<GIntBig, CachedConnection*> mapConnections{};
@@ -260,18 +261,12 @@ public:
     virtual void        ClearCache();
     virtual void        PartialClearCache(const char* pszFilename);
 
-    bool ExistsInCacheDirList( const CPLString& osDirname, bool *pbIsDir )
-    {
-        CPLMutexHolder oHolder( &hMutex );
-        std::map<CPLString, CachedDirList*>::const_iterator oIter =
-            cacheDirList.find(osDirname);
-        if( pbIsDir )
-        {
-            *pbIsDir = oIter != cacheDirList.end() &&
-                       oIter->second->papszFileList != nullptr;
-        }
-        return oIter != cacheDirList.end();
-    }
+
+    bool                GetCachedDirList( const char* pszURL,
+                                          CachedDirList& oCachedDirList );
+    void                SetCachedDirList( const char* pszURL,
+                                          const CachedDirList& oCachedDirList );
+    bool ExistsInCacheDirList( const CPLString& osDirname, bool *pbIsDir );
 
 };
 
