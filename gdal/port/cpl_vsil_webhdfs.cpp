@@ -647,7 +647,7 @@ char** VSIWebHDFSFSHandler::GetFileList( const char *pszDirname,
                 {
                     aosList.AddString(osName);
 
-                    CachedFileProp prop;
+                    FileProp prop;
                     prop.eExists = EXIST_YES;
                     prop.bIsDirectory = bIsDirectory;
                     prop.bHasComputedFileSize = true;
@@ -657,7 +657,7 @@ char** VSIWebHDFSFSHandler::GetFileList( const char *pszDirname,
 #if DEBUG_VERBOSE
                     CPLDebug("WEBHDFS", "Cache %s", osCachedFilename.c_str());
 #endif
-                    *GetCachedFileProp(osCachedFilename) = prop;
+                    SetCachedFileProp(osCachedFilename, prop);
                 }
             }
         }
@@ -845,11 +845,11 @@ int VSIWebHDFSFSHandler::Mkdir( const char *pszDirname, long nMode )
     {
         InvalidateDirContent( CPLGetDirname(osDirnameWithoutEndSlash) );
 
-        CachedFileProp* cachedFileProp =
-            GetCachedFileProp(GetURLFromFilename(osDirnameWithoutEndSlash));
-        cachedFileProp->eExists = EXIST_YES;
-        cachedFileProp->bIsDirectory = true;
-        cachedFileProp->bHasComputedFileSize = true;
+        FileProp cachedFileProp;
+        cachedFileProp.eExists = EXIST_YES;
+        cachedFileProp.bIsDirectory = true;
+        cachedFileProp.bHasComputedFileSize = true;
+        SetCachedFileProp(GetURLFromFilename(osDirnameWithoutEndSlash), cachedFileProp);
 
         RegisterEmptyDir(osDirnameWithoutEndSlash);
     }
@@ -892,10 +892,10 @@ VSIWebHDFSHandle::VSIWebHDFSHandle( VSIWebHDFSFSHandler* poFSIn,
 
 vsi_l_offset VSIWebHDFSHandle::GetFileSize( bool bSetError )
 {
-    if( bHasComputedFileSize )
-        return fileSize;
+    if( oFileProp.bHasComputedFileSize )
+        return oFileProp.fileSize;
 
-    bHasComputedFileSize = true;
+    oFileProp.bHasComputedFileSize = true;
 
     CURLM* hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
 
@@ -938,18 +938,18 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize( bool bSetError )
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
-    eExists = EXIST_NO;
+    oFileProp.eExists = EXIST_NO;
     if( response_code == 200 && sWriteFuncData.pBuffer )
     {
         CPLJSONDocument oDoc;
         if( oDoc.LoadMemory(reinterpret_cast<const GByte*>(sWriteFuncData.pBuffer )) )
         {
             CPLJSONObject oFileStatus = oDoc.GetRoot().GetObj("FileStatus");
-            fileSize = oFileStatus.GetLong("length");
-            mTime = static_cast<size_t>(
+            oFileProp.fileSize = oFileStatus.GetLong("length");
+            oFileProp.mTime = static_cast<size_t>(
                 oFileStatus.GetLong("modificationTime") / 1000);
-            bIsDirectory = oFileStatus.GetString("type") == "DIRECTORY";
-            eExists = EXIST_YES;
+            oFileProp.bIsDirectory = oFileStatus.GetString("type") == "DIRECTORY";
+            oFileProp.eExists = EXIST_YES;
         }
     }
 
@@ -981,20 +981,16 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize( bool bSetError )
     if( ENABLE_DEBUG )
         CPLDebug("WEBHDFS", "GetFileSize(%s)=" CPL_FRMT_GUIB
                     "  response_code=%d",
-                    osURL.c_str(), fileSize,
+                    osURL.c_str(), oFileProp.fileSize,
                     static_cast<int>(response_code));
 
     CPLFree(sWriteFuncData.pBuffer);
     curl_easy_cleanup(hCurlHandle);
 
-    CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(m_pszURL);
-    cachedFileProp->bHasComputedFileSize = true;
-    cachedFileProp->fileSize = fileSize;
-    cachedFileProp->eExists = eExists;
-    cachedFileProp->bIsDirectory = bIsDirectory;
-    cachedFileProp->mTime = mTime;
+    oFileProp.bHasComputedFileSize = true;
+    poFS->SetCachedFileProp(m_pszURL, oFileProp);
 
-    return fileSize;
+    return oFileProp.fileSize;
 }
 
 /************************************************************************/
@@ -1007,8 +1003,8 @@ bool VSIWebHDFSHandle::DownloadRegion( const vsi_l_offset startOffset,
     if( bInterrupted && bStopOnInterruptUntilUninstall )
         return false;
 
-    CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(m_pszURL);
-    if( cachedFileProp->eExists == EXIST_NO )
+    poFS->GetCachedFileProp(m_pszURL, oFileProp);
+    if( oFileProp.eExists == EXIST_NO )
         return false;
 
     CURLM* hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
@@ -1142,18 +1138,20 @@ retry:
             CPLError(CE_Failure, CPLE_AppDefined, "%d: %s",
                         static_cast<int>(response_code), szCurlErrBuf);
         }
-        if( !bHasComputedFileSize && startOffset == 0 )
+        if( !oFileProp.bHasComputedFileSize && startOffset == 0 )
         {
-            cachedFileProp->bHasComputedFileSize = bHasComputedFileSize = true;
-            cachedFileProp->fileSize = fileSize = 0;
-            cachedFileProp->eExists = eExists = EXIST_NO;
+            oFileProp.bHasComputedFileSize = true;
+            oFileProp.fileSize = 0;
+            oFileProp.eExists = EXIST_NO;
+            poFS->SetCachedFileProp(m_pszURL, oFileProp);
         }
         CPLFree(sWriteFuncData.pBuffer);
         curl_easy_cleanup(hCurlHandle);
         return false;
     }
 
-    cachedFileProp->eExists = eExists = EXIST_YES;
+    oFileProp.eExists = EXIST_YES;
+    poFS->SetCachedFileProp(m_pszURL, oFileProp);
 
     DownloadRegionPostProcess(startOffset, nBlocks,
                               sWriteFuncData.pBuffer,
