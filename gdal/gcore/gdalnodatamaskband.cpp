@@ -31,6 +31,7 @@
 #include "cpl_port.h"
 #include "gdal_priv.h"
 
+#include <algorithm>
 #include <cstring>
 
 #include "cpl_conv.h"
@@ -160,132 +161,21 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
                                        void * pImage )
 
 {
-    GDALDataType eWrkDT = GetWorkDataType( poParent->GetRasterDataType() );
+    const int nXOff = nXBlockOff * nBlockXSize;
+    const int nXSizeRequest = std::min(nBlockXSize, nRasterXSize - nXOff);
+    const int nYOff = nYBlockOff * nBlockYSize;
+    const int nYSizeRequest = std::min(nBlockYSize, nRasterYSize - nYOff);
 
-/* -------------------------------------------------------------------- */
-/*      Read the image data.                                            */
-/* -------------------------------------------------------------------- */
-    // TODO(schwehr): pabySrc would probably be better as a void ptr.
-    GByte *pabySrc = static_cast<GByte *>(
-        VSI_MALLOC3_VERBOSE( GDALGetDataTypeSizeBytes(eWrkDT),
-                             nBlockXSize, nBlockYSize ) );
-    if (pabySrc == nullptr)
+    if( nBlockXSize != nXSizeRequest || nBlockYSize != nYSizeRequest )
     {
-        return CE_Failure;
+        memset(pImage, 0, nBlockXSize * nBlockYSize);
     }
 
-    int nXSizeRequest = nBlockXSize;
-    if (nXBlockOff * nBlockXSize + nBlockXSize > nRasterXSize)
-        nXSizeRequest = nRasterXSize - nXBlockOff * nBlockXSize;
-    int nYSizeRequest = nBlockYSize;
-    if (nYBlockOff * nBlockYSize + nBlockYSize > nRasterYSize)
-        nYSizeRequest = nRasterYSize - nYBlockOff * nBlockYSize;
-
-    if (nXSizeRequest != nBlockXSize || nYSizeRequest != nBlockYSize)
-    {
-        // memset the whole buffer to avoid Valgrind warnings in case RasterIO
-        // fetches a partial block.
-        memset( pabySrc, 0,
-                GDALGetDataTypeSizeBytes(eWrkDT) * nBlockXSize * nBlockYSize );
-    }
-
-    CPLErr eErr =
-        poParent->RasterIO( GF_Read,
-                            nXBlockOff * nBlockXSize,
-                            nYBlockOff * nBlockYSize,
-                            nXSizeRequest, nYSizeRequest,
-                            pabySrc, nXSizeRequest, nYSizeRequest,
-                            eWrkDT, 0,
-                            nBlockXSize * GDALGetDataTypeSizeBytes(eWrkDT),
-                            nullptr );
-    if( eErr != CE_None )
-    {
-        CPLFree(pabySrc);
-        return eErr;
-    }
-
-    const bool bIsNoDataNan = CPLIsNan(dfNoDataValue) != 0;
-
-/* -------------------------------------------------------------------- */
-/*      Process different cases.                                        */
-/* -------------------------------------------------------------------- */
-    switch( eWrkDT )
-    {
-      case GDT_Byte:
-      {
-        GByte byNoData = static_cast<GByte>( dfNoDataValue );
-
-        for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
-        {
-            static_cast<GByte *>(pImage)[i] = pabySrc[i] == byNoData ? 0: 255;
-        }
-      }
-      break;
-
-      case GDT_UInt32:
-      {
-        GUInt32 nNoData = static_cast<GUInt32>( dfNoDataValue );
-
-        for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
-        {
-            static_cast<GByte *>(pImage)[i] =
-                reinterpret_cast<GUInt32 *>(pabySrc)[i] == nNoData ? 0 : 255;
-        }
-      }
-      break;
-
-      case GDT_Int32:
-      {
-        GInt32 nNoData = static_cast<GInt32>( dfNoDataValue );
-
-        for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
-        {
-            static_cast<GByte *>(pImage)[i] =
-                reinterpret_cast<GInt32 *>(pabySrc)[i] == nNoData ? 0 : 255;
-        }
-      }
-      break;
-
-      case GDT_Float32:
-      {
-        float fNoData = static_cast<float>( dfNoDataValue );
-
-        for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
-        {
-            const float fVal = reinterpret_cast<float *>(pabySrc)[i];
-            if( bIsNoDataNan && CPLIsNan(fVal))
-                static_cast<GByte *>(pImage)[i] = 0;
-            else if( ARE_REAL_EQUAL(fVal, fNoData) )
-                static_cast<GByte *>(pImage)[i] = 0;
-            else
-                static_cast<GByte *>(pImage)[i] = 255;
-        }
-      }
-      break;
-
-      case GDT_Float64:
-      {
-          for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
-          {
-              const double dfVal = reinterpret_cast<double *>(pabySrc)[i];
-              if( bIsNoDataNan && CPLIsNan(dfVal))
-                  static_cast<GByte *>(pImage)[i] = 0;
-              else if( ARE_REAL_EQUAL(dfVal, dfNoDataValue) )
-                  static_cast<GByte *>(pImage)[i] = 0;
-              else
-                  static_cast<GByte *>(pImage)[i] = 255;
-          }
-      }
-      break;
-
-      default:
-        CPLAssert( false );
-        break;
-    }
-
-    CPLFree( pabySrc );
-
-    return CE_None;
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    return IRasterIO(GF_Read, nXOff, nYOff, nXSizeRequest, nYSizeRequest,
+                     pImage, nXSizeRequest, nYSizeRequest,
+                     GDT_Byte, 1, nBlockXSize, &sExtraArg);
 }
 
 /************************************************************************/
@@ -301,13 +191,17 @@ CPLErr GDALNoDataMaskBand::IRasterIO( GDALRWFlag eRWFlag,
                                       GSpacing nPixelSpace, GSpacing nLineSpace,
                                       GDALRasterIOExtraArg* psExtraArg )
 {
+    if( eRWFlag != GF_Read )
+    {
+        return CE_Failure;
+    }
+
+    const GDALDataType eWrkDT = GetWorkDataType( poParent->GetRasterDataType() );
+
     // Optimization in common use case (#4488).
     // This avoids triggering the block cache on this band, which helps
     // reducing the global block cache consumption.
-    if (eRWFlag == GF_Read && eBufType == GDT_Byte &&
-        poParent->GetRasterDataType() == GDT_Byte &&
-        nXSize == nBufXSize && nYSize == nBufYSize &&
-        nPixelSpace == 1 && nLineSpace == nBufXSize)
+    if (eBufType == GDT_Byte && eWrkDT == GDT_Byte)
     {
         const CPLErr eErr =
             poParent->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
@@ -318,18 +212,192 @@ CPLErr GDALNoDataMaskBand::IRasterIO( GDALRWFlag eRWFlag,
             return eErr;
 
         GByte* pabyData = static_cast<GByte*>( pData );
-        GByte byNoData = static_cast<GByte>( dfNoDataValue );
+        const GByte byNoData = static_cast<GByte>( dfNoDataValue );
 
-        for( int i = nBufXSize * nBufYSize - 1; i >= 0; --i )
+        if( nPixelSpace == 1 && nLineSpace == nBufXSize )
         {
-            pabyData[i] = pabyData[i] == byNoData ? 0 : 255;
+            const size_t nBufSize = static_cast<size_t>(nBufXSize) * nBufYSize;
+            for( size_t i = 0; i < nBufSize; ++i )
+            {
+                pabyData[i] = pabyData[i] == byNoData ? 0 : 255;
+            }
+        }
+        else
+        {
+            for( int iY = 0; iY < nBufYSize; iY++ )
+            {
+                GByte* pabyLine = pabyData + iY * nLineSpace;
+                for( int iX = 0; iX < nBufXSize; iX++ )
+                {
+                    *pabyLine = *pabyLine == byNoData ? 0 : 255;
+                    pabyLine += nPixelSpace;
+                }
+            }
         }
         return CE_None;
     }
 
-    return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                      pData, nBufXSize, nBufYSize,
-                                      eBufType,
-                                      nPixelSpace, nLineSpace, psExtraArg );
+    if( eBufType == GDT_Byte )
+    {
+        const int nWrkDTSize = GDALGetDataTypeSizeBytes(eWrkDT);
+        void *pTemp =
+            VSI_MALLOC3_VERBOSE( nWrkDTSize, nBufXSize, nBufYSize );
+        if (pTemp == nullptr)
+        {
+            return GDALRasterBand::IRasterIO(
+                                      eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                      pTemp, nBufXSize, nBufYSize,
+                                      eWrkDT,
+                                      nWrkDTSize, nBufXSize * nWrkDTSize,
+                                      psExtraArg );
+        }
+
+        const CPLErr eErr =
+            poParent->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
+                                pTemp, nBufXSize, nBufYSize,
+                                eWrkDT,
+                                nWrkDTSize, nBufXSize * nWrkDTSize, psExtraArg );
+        if (eErr != CE_None)
+        {
+            VSIFree(pTemp);
+            return eErr;
+        }
+
+        const bool bIsNoDataNan = CPLIsNan(dfNoDataValue) != 0;
+        GByte* pabyDest = static_cast<GByte*>(pData);
+
+/* -------------------------------------------------------------------- */
+/*      Process different cases.                                        */
+/* -------------------------------------------------------------------- */
+        switch( eWrkDT )
+        {
+            case GDT_UInt32:
+            {
+                const GUInt32 nNoData = static_cast<GUInt32>( dfNoDataValue );
+                const GUInt32* panSrc = static_cast<const GUInt32 *>(pTemp);
+
+                size_t i = 0;
+                for( int iY = 0; iY < nBufYSize; iY++ )
+                {
+                    GByte* pabyLineDest = pabyDest + iY * nLineSpace;
+                    for( int iX = 0; iX < nBufXSize; iX++ )
+                    {
+                        *pabyLineDest = panSrc[i] == nNoData ? 0 : 255;
+                        ++i;
+                        pabyLineDest += nPixelSpace;
+                    }
+                }
+            }
+            break;
+
+            case GDT_Int32:
+            {
+                const GInt32 nNoData = static_cast<GInt32>( dfNoDataValue );
+                const GInt32* panSrc = static_cast<const GInt32 *>(pTemp);
+
+                size_t i = 0;
+                for( int iY = 0; iY < nBufYSize; iY++ )
+                {
+                    GByte* pabyLineDest = pabyDest + iY * nLineSpace;
+                    for( int iX = 0; iX < nBufXSize; iX++ )
+                    {
+                        *pabyLineDest = panSrc[i] == nNoData ? 0 : 255;
+                        ++i;
+                        pabyLineDest += nPixelSpace;
+                    }
+                }
+            }
+            break;
+
+            case GDT_Float32:
+            {
+                const float fNoData = static_cast<float>( dfNoDataValue );
+                const float* pafSrc = static_cast<const float *>(pTemp);
+
+                size_t i = 0;
+                for( int iY = 0; iY < nBufYSize; iY++ )
+                {
+                    GByte* pabyLineDest = pabyDest + iY * nLineSpace;
+                    for( int iX = 0; iX < nBufXSize; iX++ )
+                    {
+                        const float fVal = pafSrc[i];
+                        if( bIsNoDataNan && CPLIsNan(fVal))
+                            *pabyLineDest = 0;
+                        else if( ARE_REAL_EQUAL(fVal, fNoData) )
+                            *pabyLineDest = 0;
+                        else
+                            *pabyLineDest = 255;
+                        ++i;
+                        pabyLineDest += nPixelSpace;
+                    }
+                }
+            }
+            break;
+
+            case GDT_Float64:
+            {
+                const double* padfSrc = static_cast<const double *>(pTemp);
+
+                size_t i = 0;
+                for( int iY = 0; iY < nBufYSize; iY++ )
+                {
+                    GByte* pabyLineDest = pabyDest + iY * nLineSpace;
+                    for( int iX = 0; iX < nBufXSize; iX++ )
+                    {
+                        const double dfVal = padfSrc[i];
+                        if( bIsNoDataNan && CPLIsNan(dfVal))
+                            *pabyLineDest = 0;
+                        else if( ARE_REAL_EQUAL(dfVal, dfNoDataValue) )
+                            *pabyLineDest = 0;
+                        else
+                            *pabyLineDest = 255;
+                        ++i;
+                        pabyLineDest += nPixelSpace;
+                    }
+                }
+            }
+            break;
+
+            default:
+                CPLAssert( false );
+                break;
+        }
+
+        VSIFree(pTemp);
+        return CE_None;
+    }
+
+    // Output buffer is non-Byte. Ask for Byte and expand to user requested
+    // type
+    GByte* pabyBuf = static_cast<GByte*>(
+        VSI_MALLOC2_VERBOSE( nBufXSize, nBufYSize ));
+    if( pabyBuf == nullptr )
+    {
+        return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                        pData, nBufXSize, nBufYSize,
+                                        eBufType,
+                                        nPixelSpace, nLineSpace, psExtraArg );
+    }
+    const CPLErr eErr = IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                   pabyBuf, nBufXSize, nBufYSize,
+                                   GDT_Byte,
+                                   1, nBufXSize, psExtraArg );
+    if( eErr != CE_None )
+    {
+        VSIFree(pabyBuf);
+        return eErr;
+    }
+
+    for( int iY = 0; iY < nBufYSize; iY++ )
+    {
+        GDALCopyWords( pabyBuf + static_cast<size_t>(iY) * nBufXSize,
+                       GDT_Byte, 1,
+                       static_cast<GByte*>(pData) +
+                            iY * nLineSpace, eBufType,
+                       static_cast<int>(nPixelSpace),
+                       nBufXSize );
+    }
+    VSIFree(pabyBuf);
+    return CE_None;
 }
 //! @endcond
