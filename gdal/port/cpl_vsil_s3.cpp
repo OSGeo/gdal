@@ -173,11 +173,11 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                 }
             }
 
-            if( nMaxFiles > 0 && aoProps.size() > static_cast<unsigned>(nMaxFiles) )
+            if( nMaxFiles > 0 && aoProps.size() >= static_cast<unsigned>(nMaxFiles) )
                 break;
         }
 
-        if( !(nMaxFiles > 0 && aoProps.size() > static_cast<unsigned>(nMaxFiles)) )
+        if( !(nMaxFiles > 0 && aoProps.size() >= static_cast<unsigned>(nMaxFiles)) )
         {
             osNextMarker = CPLGetXMLValue(psListBucketResult, "NextMarker", "");
             bIsTruncated =
@@ -1386,7 +1386,7 @@ int IVSIS3LikeFSHandler::Rmdir( const char * pszDirname )
         return -1;
     }
 
-    char** papszFileList = ReadDirEx(osDirname, 1);
+    char** papszFileList = ReadDirEx(osDirname, 100);
     bool bEmptyDir = papszFileList == nullptr ||
                      (EQUAL(papszFileList[0], ".") &&
                       papszFileList[1] == nullptr);
@@ -1409,7 +1409,12 @@ int IVSIS3LikeFSHandler::Rmdir( const char * pszDirname )
         return -1;
     }
 
-    return DeleteObject(osDirname);
+    int ret = DeleteObject(osDirname);
+    if( ret == 0 )
+    {
+        InvalidateDirContent(osDirnameWithoutEndSlash);
+    }
+    return ret;
 }
 
 /************************************************************************/
@@ -1434,7 +1439,7 @@ int IVSIS3LikeFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
         return 0;
     }
 
-    char** papszRet = ReadDirInternal( osFilename, 1, nullptr );
+    char** papszRet = ReadDirInternal( osFilename, 100, nullptr );
     int nRet = papszRet ? 0 : -1;
     if( nRet == 0 )
     {
@@ -1678,7 +1683,7 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
     CPLString osNextMarker; // must be left in this scope !
 
     CPLString osMaxKeys = CPLGetConfigOption("AWS_MAX_KEYS", "");
-    if( nMaxFiles > 0 && nMaxFiles < 100 &&
+    if( nMaxFiles > 0 && nMaxFiles <= 100 &&
         (osMaxKeys.empty() || nMaxFiles < atoi(osMaxKeys)) )
     {
         osMaxKeys.Printf("%d", nMaxFiles);
@@ -1790,6 +1795,16 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
 
             if( osNextMarker.empty() )
             {
+                if( !osFileList.empty() )
+                {
+                    FileProp cachedFileProp;
+                    GetCachedFileProp(GetURLFromFilename(pszDirname), cachedFileProp);
+                    cachedFileProp.eExists = EXIST_YES;
+                    cachedFileProp.bIsDirectory = true;
+                    cachedFileProp.bHasComputedFileSize = true;
+                    SetCachedFileProp(GetURLFromFilename(pszDirname), cachedFileProp);
+                }
+
                 delete poS3HandleHelper;
                 curl_easy_cleanup(hCurlHandle);
                 return osFileList.StealList();

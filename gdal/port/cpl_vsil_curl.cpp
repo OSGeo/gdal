@@ -908,6 +908,22 @@ retry:
                 oFileProp.fileSize = static_cast<GUIntBig>(dfSize);
         }
 
+        if( sWriteFuncHeaderData.pBuffer != nullptr &&
+            (response_code == 200 || response_code == 206 ) )
+        {
+            const char* pzETag = strstr(
+                sWriteFuncHeaderData.pBuffer, "ETag: \"");
+            if( pzETag )
+            {
+                pzETag += strlen("ETag: \"");
+                const char* pszEndOfETag = strchr(pzETag, '"');
+                if( pszEndOfETag )
+                {
+                    oFileProp.ETag.assign(pzETag, pszEndOfETag - pzETag);
+                }
+            }
+        }
+
         if( UseLimitRangeGetInsteadOfHead() && response_code == 206 )
         {
             oFileProp.eExists = EXIST_NO;
@@ -3393,12 +3409,9 @@ VSICurlFilesystemHandler::GetURLFromFilename( const CPLString& osFilename )
 void VSICurlFilesystemHandler::RegisterEmptyDir( const CPLString& osDirname )
 {
     CachedDirList cachedDirList;
-    if( !GetCachedDirList(osDirname, cachedDirList) )
-    {
-        cachedDirList.bGotFileList = true;
-        cachedDirList.oFileList.AddString(".");
-        SetCachedDirList(osDirname, cachedDirList);
-    }
+    cachedDirList.bGotFileList = true;
+    cachedDirList.oFileList.AddString(".");
+    SetCachedDirList(osDirname, cachedDirList);
 }
 
 /************************************************************************/
@@ -3881,7 +3894,11 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
         cachedDirList.oFileList.Assign(
             GetFileList(osDirname, nMaxFiles,
                         &cachedDirList.bGotFileList), true);
-        SetCachedDirList(osDirname, cachedDirList);
+        if( nMaxFiles <= 0 || cachedDirList.oFileList.size() < nMaxFiles )
+        {
+            // Only cache content if we didn't hit the limitation
+            SetCachedDirList(osDirname, cachedDirList);
+        }
     }
 
     if( pbGotFileList )

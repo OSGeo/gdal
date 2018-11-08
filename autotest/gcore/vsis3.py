@@ -809,7 +809,7 @@ def vsis3_3():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_fake_bucket2/a_dir/resource3.bin', 400)
-    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&max-keys=1&prefix=a_dir%2Fresource3.bin%2F', 400)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&max-keys=100&prefix=a_dir%2Fresource3.bin%2F', 400)
     with webserver.install_http_handler(handler):
         gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir/resource3.bin')
 
@@ -1354,7 +1354,7 @@ def vsis3_5():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_delete_bucket/delete_file', 404, {'Connection': 'close'})
-    handler.add('GET', '/s3_delete_bucket/?delimiter=%2F&max-keys=1&prefix=delete_file%2F', 404, {'Connection': 'close'})
+    handler.add('GET', '/s3_delete_bucket/?delimiter=%2F&max-keys=100&prefix=delete_file%2F', 404, {'Connection': 'close'})
     with webserver.install_http_handler(handler):
         if gdal.VSIStatL('/vsis3/s3_delete_bucket/delete_file') is not None:
             gdaltest.post_reason('fail')
@@ -1655,7 +1655,7 @@ def vsis3_7():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_bucket_test_mkdir/dir/', 404, {'Connection': 'close'})
-    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=1&prefix=dir%2F', 404, {'Connection': 'close'})
+    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=100&prefix=dir%2F', 404, {'Connection': 'close'})
     handler.add('PUT', '/s3_bucket_test_mkdir/dir/', 200)
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsis3/s3_bucket_test_mkdir/dir', 0)
@@ -1667,8 +1667,10 @@ def vsis3_7():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if gdal.ReadDir('/vsis3/s3_bucket_test_mkdir/dir') is not None:
+    dir_content = gdal.ReadDir('/vsis3/s3_bucket_test_mkdir/dir')
+    if dir_content != ['.']:
         gdaltest.post_reason('fail')
+        print(dir_content)
         return 'fail'
 
     # Try creating already existing directory
@@ -1691,6 +1693,7 @@ def vsis3_7():
     # Try deleting already deleted directory
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_bucket_test_mkdir/dir/', 404)
+    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=100&prefix=dir%2F', 404, {'Connection': 'close'})
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsis3/s3_bucket_test_mkdir/dir')
     if ret == 0:
@@ -1700,7 +1703,7 @@ def vsis3_7():
     # Try deleting non-empty directory
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_bucket_test_mkdir/dir_nonempty/', 416)
-    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=1&prefix=dir_nonempty%2F', 200,
+    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=100&prefix=dir_nonempty%2F', 200,
                 {'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
@@ -1721,7 +1724,7 @@ def vsis3_7():
     # Try stat'ing a directory not ending with slash
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_bucket_test_dir_stat/test_dir_stat', 400)
-    handler.add('GET', '/s3_bucket_test_dir_stat/?delimiter=%2F&max-keys=1&prefix=test_dir_stat%2F', 200,
+    handler.add('GET', '/s3_bucket_test_dir_stat/?delimiter=%2F&max-keys=100&prefix=test_dir_stat%2F', 200,
                 {'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
@@ -1760,7 +1763,7 @@ def vsis3_7():
     # Try stat'ing a directory ending with slash
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_bucket_test_dir_stat_2/test_dir_stat/', 400)
-    handler.add('GET', '/s3_bucket_test_dir_stat_2/?delimiter=%2F&max-keys=1&prefix=test_dir_stat%2F', 200,
+    handler.add('GET', '/s3_bucket_test_dir_stat_2/?delimiter=%2F&max-keys=100&prefix=test_dir_stat%2F', 200,
                 {'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>

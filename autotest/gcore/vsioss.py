@@ -852,7 +852,7 @@ def visoss_5():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_delete_bucket/delete_file', 404, {'Connection': 'close'}, 'foo')
-    handler.add('GET', '/oss_delete_bucket/?delimiter=%2F&max-keys=1&prefix=delete_file%2F', 404, {'Connection': 'close'}, 'foo')
+    handler.add('GET', '/oss_delete_bucket/?delimiter=%2F&max-keys=100&prefix=delete_file%2F', 404, {'Connection': 'close'}, 'foo')
     with webserver.install_http_handler(handler):
         if gdal.VSIStatL('/vsioss/oss_delete_bucket/delete_file') is not None:
             gdaltest.post_reason('fail')
@@ -1105,7 +1105,7 @@ def visoss_7():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_bucket_test_mkdir/dir/', 404, {'Connection': 'close'})
-    handler.add('GET', '/oss_bucket_test_mkdir/?delimiter=%2F&max-keys=1&prefix=dir%2F', 404, {'Connection': 'close'})
+    handler.add('GET', '/oss_bucket_test_mkdir/?delimiter=%2F&max-keys=100&prefix=dir%2F', 404, {'Connection': 'close'})
     handler.add('PUT', '/oss_bucket_test_mkdir/dir/', 200)
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsioss/oss_bucket_test_mkdir/dir', 0)
@@ -1133,6 +1133,7 @@ def visoss_7():
     # Try deleting already deleted directory
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_bucket_test_mkdir/dir/', 404)
+    handler.add('GET', '/oss_bucket_test_mkdir/?delimiter=%2F&max-keys=100&prefix=dir%2F', 404, {'Connection': 'close'})
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsioss/oss_bucket_test_mkdir/dir')
     if ret == 0:
@@ -1142,7 +1143,7 @@ def visoss_7():
     # Try deleting non-empty directory
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_bucket_test_mkdir/dir_nonempty/', 416)
-    handler.add('GET', '/oss_bucket_test_mkdir/?delimiter=%2F&max-keys=1&prefix=dir_nonempty%2F', 200,
+    handler.add('GET', '/oss_bucket_test_mkdir/?delimiter=%2F&max-keys=100&prefix=dir_nonempty%2F', 200,
                 {'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
