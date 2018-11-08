@@ -70,13 +70,13 @@ class FileProp
 {
   public:
     ExistStatus     eExists = EXIST_UNKNOWN;
-    bool            bHasComputedFileSize = false;
     vsi_l_offset    fileSize = 0;
-    bool            bIsDirectory = false;
     time_t          mTime = 0;
-    bool            bS3LikeRedirect = false;
     time_t          nExpireTimestampLocal = 0;
     CPLString       osRedirectURL{};
+    bool            bHasComputedFileSize = false;
+    bool            bIsDirectory = false;
+    bool            bS3LikeRedirect = false;
 };
 
 typedef struct

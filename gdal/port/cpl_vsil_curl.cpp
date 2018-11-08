@@ -2283,7 +2283,7 @@ int       VSICurlHandle::Close()
 
 VSICurlFilesystemHandler::VSICurlFilesystemHandler():
     oRegionCache{static_cast<size_t>(N_MAX_REGIONS)},
-    oCacheFileProp{1024},
+    oCacheFileProp{100 * 1024},
     oCacheDirList{1024, 0}
 {
 }
