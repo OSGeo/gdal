@@ -113,6 +113,11 @@ public:
     virtual const char* GetActualURL(const char* /*pszFilename*/) { return nullptr; }
     virtual const char* GetOptions() { return nullptr; }
     virtual char* GetSignedURL(const char* /*pszFilename*/, CSLConstList /* papszOptions */) { return nullptr; }
+    virtual bool Sync( const char* pszSource, const char* pszTarget,
+                            const char* const * papszOptions,
+                            GDALProgressFunc pProgressFunc,
+                            void *pProgressData,
+                            char*** ppapszOutputs  );
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 

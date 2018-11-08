@@ -28,6 +28,7 @@
 
 #include "cpl_port.h"
 #include "cpl_http.h"
+#include "cpl_md5.h"
 #include "cpl_minixml.h"
 #include "cpl_time.h"
 #include "cpl_vsil_curl_priv.h"
@@ -112,6 +113,16 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                         CPLAtoGIntBig(CPLGetXMLValue(psIter, "Size", "0")));
                     prop.bIsDirectory = false;
                     prop.mTime = 0;
+                    prop.ETag = CPLGetXMLValue(psIter, "ETag", "");
+                    if( prop.ETag.size() > 2 && prop.ETag[0] == '"' &&
+                        prop.ETag.back() == '"')
+                    {
+                        prop.ETag = prop.ETag.substr(1, prop.ETag.size()-2);
+#if DEBUG_VERBOSE
+                        CPLDebug("S3", "ETag for %s: %s",
+                                 pszKey, prop.ETag.c_str());
+#endif
+                    }
 
                     int nYear = 0;
                     int nMonth = 0;
@@ -984,6 +995,27 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
             InvalidateParentDirectory();
         }
 
+        if( sWriteFuncHeaderData.pBuffer != nullptr )
+        {
+            const char* pzETag = strstr(
+                sWriteFuncHeaderData.pBuffer, "ETag: \"");
+            if( pzETag )
+            {
+                pzETag += strlen("ETag: \"");
+                const char* pszEndOfETag = strchr(pzETag, '"');
+                if( pszEndOfETag )
+                {
+                    FileProp oFileProp;
+                    oFileProp.eExists = EXIST_YES;
+                    oFileProp.fileSize = m_nBufferOff;
+                    oFileProp.bHasComputedFileSize = true;
+                    oFileProp.ETag.assign(pzETag, pszEndOfETag - pzETag);
+                    m_poFS->SetCachedFileProp(
+                        m_poFS->GetURLFromFilename(m_osFilename), oFileProp);
+                }
+            }
+        }
+
         CPLFree(sWriteFuncData.pBuffer);
         CPLFree(sWriteFuncHeaderData.pBuffer);
 
@@ -1813,6 +1845,333 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
 
         curl_easy_cleanup(hCurlHandle);
     }
+}
+
+/************************************************************************/
+/*                       ComputeMD5OfLocalFile()                        */
+/************************************************************************/
+
+static CPLString ComputeMD5OfLocalFile(VSILFILE* fp)
+{
+    constexpr size_t nBufferSize = 10 * 4096;
+    std::vector<GByte> abyBuffer(nBufferSize, 0);
+
+    struct CPLMD5Context context;
+    CPLMD5Init(&context);
+
+    while( true )
+    {
+        size_t nRead = VSIFReadL(&abyBuffer[0], 1, nBufferSize, fp);
+        CPLMD5Update(&context, &abyBuffer[0], static_cast<int>(nRead));
+        if( nRead < nBufferSize )
+        {
+            break;
+        }
+    }
+
+    unsigned char hash[16];
+    CPLMD5Final(hash, &context);
+
+    constexpr char tohex[] = "0123456789abcdef";
+    char hhash[33];
+    for (int i = 0; i < 16; ++i)
+    {
+        hhash[i * 2] = tohex[(hash[i] >> 4) & 0xf];
+        hhash[i * 2 + 1] = tohex[hash[i] & 0xf];
+    }
+    hhash[32] = '\0';
+
+    VSIFSeekL(fp, 0, SEEK_SET);
+
+    return hhash;
+}
+
+/************************************************************************/
+/*                               Sync()                                 */
+/************************************************************************/
+
+bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
+                            const char* const * papszOptions,
+                            GDALProgressFunc pProgressFunc,
+                            void *pProgressData,
+                            char*** ppapszOutputs  )
+{
+    if( ppapszOutputs )
+    {
+        *ppapszOutputs = nullptr;
+    }
+
+    CPLString osSource(pszSource);
+    CPLString osSourceWithoutSlash(pszSource);
+    if( osSourceWithoutSlash.back() == '/' )
+    {
+        osSourceWithoutSlash.resize(osSourceWithoutSlash.size()-1);
+    }
+
+    // If the source is likely to be a directory, try to issue a ReadDir()
+    // if we haven't stat'ed it yet
+    if( STARTS_WITH(pszSource, GetFSPrefix()) && osSource.back() == '/' )
+    {
+        FileProp cachedFileProp;
+        if( !GetCachedFileProp(GetURLFromFilename(osSourceWithoutSlash),
+                                cachedFileProp) )
+        {
+            CSLDestroy( VSIReadDir(osSourceWithoutSlash) );
+        }
+    }
+
+    VSIStatBufL sSource;
+    if( VSIStatL(osSourceWithoutSlash, &sSource) < 0 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "%s does not exist", pszSource);
+        return false;
+    }
+
+    if( VSI_ISDIR(sSource.st_mode) )
+    {
+        CPLString osTargetDir(pszTarget);
+        if( osSource.back() != '/' )
+        {
+            osTargetDir = CPLFormFilename(osTargetDir,
+                                          CPLGetFilename(pszSource), nullptr);
+        }
+
+        // Force caching of directory content to avoid less individual
+        // requests
+        char** papszFileList = VSIReadDir(osTargetDir);
+        const bool bTargetDirKnownExist = papszFileList != nullptr;
+        CSLDestroy(papszFileList);
+
+        VSIStatBufL sTarget;
+        bool ret = true;
+        if( !bTargetDirKnownExist && VSIStatL(osTargetDir, &sTarget) < 0 )
+        {
+            if( VSIMkdirRecursive(osTargetDir, 0755) < 0 )
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Cannot create directory %s", osTargetDir.c_str());
+                return false;
+            }
+        }
+
+        if( !CPLFetchBool(papszOptions, "STOP_ON_DIR", false) )
+        {
+            CPLStringList aosChildOptions(CSLDuplicate(papszOptions));
+            if( !CPLFetchBool(papszOptions, "RECURSIVE", true) )
+            {
+                aosChildOptions.SetNameValue("RECURSIVE", nullptr);
+                aosChildOptions.AddString("STOP_ON_DIR=TRUE");
+            }
+
+            char** papszSrcFiles = VSIReadDir(osSourceWithoutSlash);
+            int nFileCount = 0;
+            for( auto iter = papszSrcFiles ; iter && *iter; ++iter )
+            {
+                if( strcmp(*iter, ".") != 0 && strcmp(*iter, "..") != 0 )
+                {
+                    nFileCount ++;
+                }
+            }
+            int iFile = 0;
+            for( auto iter = papszSrcFiles ; iter && *iter; ++iter, ++iFile )
+            {
+                if( strcmp(*iter, ".") == 0 || strcmp(*iter, "..") == 0 )
+                {
+                    continue;
+                }
+                CPLString osSubSource(
+                    CPLFormFilename(osSourceWithoutSlash, *iter, nullptr) );
+                CPLString osSubTarget(
+                    CPLFormFilename(osTargetDir, *iter, nullptr) );
+                void* pScaledProgress = GDALCreateScaledProgress(
+                    double(iFile) / nFileCount, double(iFile + 1) / nFileCount,
+                    pProgressFunc, pProgressData);
+                ret = Sync( (osSubSource + '/').c_str(), osSubTarget,
+                            aosChildOptions.List(),
+                            GDALScaledProgress, pScaledProgress,
+                            nullptr );
+                GDALDestroyScaledProgress(pScaledProgress);
+                if( !ret )
+                {
+                    break;
+                }
+            }
+            CSLDestroy(papszSrcFiles);
+        }
+        return ret;
+    }
+
+    CPLString osMsg;
+    osMsg.Printf("Copying of %s", osSourceWithoutSlash.c_str());
+
+    VSIStatBufL sTarget;
+    CPLString osTarget(pszTarget);
+    bool bTargetIsFile = false;
+    if( VSIStatL(osTarget, &sTarget) == 0 )
+    {
+        bTargetIsFile = true;
+        if( VSI_ISDIR(sTarget.st_mode) )
+        {
+            osTarget = CPLFormFilename(osTarget, CPLGetFilename(pszSource), nullptr);
+            bTargetIsFile = VSIStatL(osTarget, &sTarget) == 0 && 
+                            !CPL_TO_BOOL(VSI_ISDIR(sTarget.st_mode));
+        }
+    }
+
+    const bool bETagStrategy = EQUAL(CSLFetchNameValueDef(
+        papszOptions, "SYNC_STRATEGY", "TIMESTAMP"), "ETAG");
+
+    // Download from network to local file system ?
+    if( (!STARTS_WITH(pszTarget, "/vsi") || STARTS_WITH(pszTarget, "/vsimem/")) &&
+        STARTS_WITH(pszSource, GetFSPrefix()) )
+    {
+        FileProp cachedFileProp;
+        if( bTargetIsFile && sSource.st_size == sTarget.st_size &&
+            GetCachedFileProp(GetURLFromFilename(osSourceWithoutSlash),
+                              cachedFileProp) )
+        {
+            if( bETagStrategy )
+            {
+                VSILFILE* fpOutAsIn = VSIFOpenExL(osTarget, "rb", TRUE);
+                if( fpOutAsIn )
+                {
+                    CPLString md5 = ComputeMD5OfLocalFile(fpOutAsIn);
+                    VSIFCloseL(fpOutAsIn);
+                    if( cachedFileProp.ETag == md5 )
+                    {
+                        CPLDebug(GetDebugKey(),
+                                 "%s has already same content as %s",
+                                osTarget.c_str(), osSourceWithoutSlash.c_str());
+                        if( pProgressFunc )
+                        {
+                            pProgressFunc(1.0, osMsg.c_str(), pProgressData);
+                        }
+                        return true;
+                    }
+                }
+            }
+            else
+            {
+                if( sTarget.st_mtime <= sSource.st_mtime )
+                {
+                    // Our local copy is older than the source, so
+                    // presumably the source was uploaded from it. Nothing to do
+                    CPLDebug(GetDebugKey(), "%s is older than %s. "
+                             "Do not replace %s assuming it was used to "
+                             "upload %s",
+                             osTarget.c_str(), osSourceWithoutSlash.c_str(),
+                             osTarget.c_str(), osSourceWithoutSlash.c_str());
+                    if( pProgressFunc )
+                    {
+                        pProgressFunc(1.0, osMsg.c_str(), pProgressData);
+                    }
+                    return true;
+                }
+            }
+        }
+    }
+
+    VSILFILE* fpIn = nullptr;
+
+    // Upload from local file system to network ?
+    if( (!STARTS_WITH(pszSource, "/vsi") || STARTS_WITH(pszSource, "/vsimem/")) &&
+        STARTS_WITH(pszTarget, GetFSPrefix()) )
+    {
+        FileProp cachedFileProp;
+        if( sSource.st_size == sTarget.st_size &&
+            GetCachedFileProp(GetURLFromFilename(osTarget), cachedFileProp) )
+        {
+            if( bETagStrategy )
+            {
+                fpIn = VSIFOpenExL(osSourceWithoutSlash, "rb", TRUE);
+                if( fpIn && cachedFileProp.ETag == ComputeMD5OfLocalFile(fpIn) )
+                {
+                    CPLDebug(GetDebugKey(), "%s has already same content as %s",
+                            osTarget.c_str(), osSourceWithoutSlash.c_str());
+                    VSIFCloseL(fpIn);
+                    if( pProgressFunc )
+                    {
+                        pProgressFunc(1.0, osMsg.c_str(), pProgressData);
+                    }
+                    return true;
+                }
+            }
+            else
+            {
+                if( sTarget.st_mtime >= sSource.st_mtime )
+                {
+                    // The remote copy is more recent than the source, so
+                    // presumably it was uploaded from the source. Nothing to do
+                    CPLDebug(GetDebugKey(), "%s is more recent than %s. "
+                             "Do not replace %s assuming it was uploaded from "
+                             "%s",
+                             osTarget.c_str(), osSourceWithoutSlash.c_str(),
+                             osTarget.c_str(), osSourceWithoutSlash.c_str());
+                    if( pProgressFunc )
+                    {
+                        pProgressFunc(1.0, osMsg.c_str(), pProgressData);
+                    }
+                    return true;
+                }
+            }
+        }
+    }
+
+    if( fpIn == nullptr )
+    {
+        fpIn = VSIFOpenExL(osSourceWithoutSlash, "rb", TRUE);
+    }
+    if( fpIn == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s",
+                 osSourceWithoutSlash.c_str());
+        return false;
+    }
+
+    VSILFILE* fpOut = VSIFOpenExL(osTarget.c_str(), "wb", TRUE);
+    if( fpOut == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", osTarget.c_str());
+        VSIFCloseL(fpIn);
+        return false;
+    }
+
+    bool ret = true;
+    constexpr size_t nBufferSize = 10 * 4096;
+    std::vector<GByte> abyBuffer(nBufferSize, 0);
+    GUIntBig nOffset = 0;
+    while( true )
+    {
+        size_t nRead = VSIFReadL(&abyBuffer[0], 1, nBufferSize, fpIn);
+        size_t nWritten = VSIFWriteL(&abyBuffer[0], 1, nRead, fpOut);
+        if( nWritten != nRead )
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Copying of %s to %s failed",
+                     osSourceWithoutSlash.c_str(), osTarget.c_str());
+            ret = false;
+            break;
+        }
+        nOffset += nRead;
+        if( pProgressFunc && !pProgressFunc(
+                double(nOffset) / sSource.st_size, osMsg.c_str(),
+                pProgressData) )
+        {
+            ret = false;
+            break;
+        }
+        if( nRead < nBufferSize )
+        {
+            break;
+        }
+    }
+
+    VSIFCloseL(fpIn);
+    if( VSIFCloseL(fpOut) != 0 )
+    {
+        ret = false;
+    }
+    return ret;
 }
 
 /************************************************************************/

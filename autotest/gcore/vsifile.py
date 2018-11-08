@@ -733,7 +733,7 @@ def vsifile_16():
     old_val = gdal.GetUseExceptions()
     gdal.UseExceptions()
     try:
-        gdal.Rename('/tmp/i_dont_exist_vsifile_16.tif', '/tmp/me_neither.tif')
+        gdal.Rename('/tmp/i_do_not_exist_vsifile_16.tif', '/tmp/me_neither.tif')
         ret = 'fail'
     except RuntimeError:
         ret = 'success'
@@ -916,6 +916,90 @@ def vsigzip_multi_thread():
 
     return 'success'
 
+###############################################################################
+# Test vsisync()
+
+
+def vsisync():
+
+    with gdaltest.error_handler():
+        if gdal.Sync('/i_do/not/exist', '/vsimem/'):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    with gdaltest.error_handler():
+        if gdal.Sync('vsifile.py', '/i_do/not/exist'):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Test copying a file
+    for i in range(2):
+        if not gdal.Sync('vsifile.py', '/vsimem/'):
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if gdal.VSIStatL('/vsimem/vsifile.py').size != gdal.VSIStatL('vsifile.py').size:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    gdal.Unlink('/vsimem/vsifile.py')
+
+    # Test copying the content of a directory
+    gdal.Mkdir('/vsimem/test_sync', 0)
+    gdal.FileFromMemBuffer('/vsimem/test_sync/foo.txt', 'bar')
+    gdal.Mkdir('/vsimem/test_sync/subdir', 0)
+    gdal.FileFromMemBuffer('/vsimem/test_sync/subdir/bar.txt', 'baz')
+
+    if sys.platform != 'win32':
+        with gdaltest.error_handler():
+            if gdal.Sync('/vsimem/test_sync/', '/i_do_not/exist'):
+                gdaltest.post_reason('fail')
+                return 'fail'
+
+    if not gdal.Sync('/vsimem/test_sync/', '/vsimem/out'):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.ReadDir('/vsimem/out') != [ 'foo.txt', 'subdir' ]:
+        gdaltest.post_reason('fail')
+        print(gdal.ReadDir('/vsimem/out'))
+        return 'fail'
+    if gdal.ReadDir('/vsimem/out/subdir') != [ 'bar.txt' ]:
+        gdaltest.post_reason('fail')
+        print(gdal.ReadDir('/vsimem/out/subdir'))
+        return 'fail'
+    # Again
+    if not gdal.Sync('/vsimem/test_sync/', '/vsimem/out'):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.RmdirRecursive('/vsimem/out')
+
+    # Test copying a directory
+    pct_values = []
+    def my_progress(pct, message, user_data):
+        pct_values.append(pct)
+
+    if not gdal.Sync('/vsimem/test_sync', '/vsimem/out', callback = my_progress):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if pct_values != [0.5, 1.0]:
+        gdaltest.post_reason('fail')
+        print(pct_values)
+        return 'fail'
+
+    if gdal.ReadDir('/vsimem/out') != [ 'test_sync' ]:
+        gdaltest.post_reason('fail')
+        print(gdal.ReadDir('/vsimem/out'))
+        return 'fail'
+    if gdal.ReadDir('/vsimem/out/test_sync') != [ 'foo.txt', 'subdir' ]:
+        gdaltest.post_reason('fail')
+        print(gdal.ReadDir('/vsimem/out/test_sync'))
+        return 'fail'
+
+    gdal.RmdirRecursive('/vsimem/test_sync')
+    gdal.RmdirRecursive('/vsimem/out')
+
+    return 'success'
+
 gdaltest_list = [vsifile_1,
                  vsifile_2,
                  vsifile_3,
@@ -939,7 +1023,8 @@ gdaltest_list = [vsifile_1,
                  vsifile_21,
                  vsifile_22,
                  vsitar_bug_675,
-                 vsigzip_multi_thread]
+                 vsigzip_multi_thread,
+                 vsisync]
 
 if __name__ == '__main__':
 

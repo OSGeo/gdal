@@ -1849,6 +1849,247 @@ def vsis3_8():
     return 'success'
 
 ###############################################################################
+# Test vsisync() with SYNC_STRATEGY=ETAG
+
+
+def vsis3_sync_etag():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    gdal.VSICurlClearCache()
+
+    options = ['SYNC_STRATEGY=ETAG']
+
+    with gdaltest.error_handler():
+        handler = webserver.SequentialHandler()
+        with webserver.install_http_handler(handler):
+            if gdal.Sync('/i_do/not/exist', '/vsis3/', options=options):
+                gdaltest.post_reason('fail')
+                return 'fail'
+
+    with gdaltest.error_handler():
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/do_not/exist', 404)
+        handler.add('GET', '/do_not/?delimiter=%2F&max-keys=100&prefix=exist%2F', 404)
+        handler.add('PUT', '/do_not/exist', 404)
+        with webserver.install_http_handler(handler):
+            if gdal.Sync('vsifile.py', '/vsis3/do_not/exist', options=options):
+                gdaltest.post_reason('fail')
+                return 'fail'
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/out/', 200)
+    handler.add('GET', '/out/testsync.txt', 404)
+    handler.add('GET', '/out/?delimiter=%2F&max-keys=100&prefix=testsync.txt%2F', 404)
+
+    def method(request):
+        if request.headers['Content-Length'] != '3':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+            return
+
+        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+
+        content = request.rfile.read(3).decode('ascii')
+        if content != 'foo':
+            sys.stderr.write('Did not get expected content: %s\n' % content)
+            request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+            return
+
+        request.send_response(200)
+        request.send_header('Content-Length', 0)
+        request.send_header('ETag', '"acbd18db4cc2f85cedef654fccc4a4d8"')
+        request.end_headers()
+
+    handler.add('PUT', '/out/testsync.txt', custom_method=method)
+
+    gdal.FileFromMemBuffer('/vsimem/testsync.txt', 'foo')
+    with webserver.install_http_handler(handler):
+        if not gdal.Sync('/vsimem/testsync.txt', '/vsis3/out', options=options):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Re-try with cached ETag. Should generate no network access
+    handler = webserver.SequentialHandler()
+    with webserver.install_http_handler(handler):
+        if not gdal.Sync('/vsimem/testsync.txt', '/vsis3/out', options=options):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    gdal.VSICurlClearCache()
+
+    # Other direction: S3 to /vsimem
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/out/testsync.txt', 206,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3',
+                  'ETag' : '"acbd18db4cc2f85cedef654fccc4a4d8"' }, "foo")
+    with webserver.install_http_handler(handler):
+        if not gdal.Sync( '/vsis3/out/testsync.txt', '/vsimem/', options=options):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Shouldn't do any copy, but hard to verify
+    with webserver.install_http_handler(webserver.SequentialHandler()):
+        if not gdal.Sync( '/vsis3/out/testsync.txt', '/vsimem/', options=options):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Modify target file, and redo synchronization
+    gdal.FileFromMemBuffer('/vsimem/testsync.txt', 'bar')
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/out/?delimiter=%2F', 200, {},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <ListBucketResult>
+                        <Prefix></Prefix>
+                        <Contents>
+                            <Key>testsync.txt</Key>
+                            <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                            <Size>3</Size>
+                            <ETag>"acbd18db4cc2f85cedef654fccc4a4d8"</ETag>
+                        </Contents>
+                    </ListBucketResult>
+                """)
+    handler.add('GET', '/out/testsync.txt', 206,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3',
+                  'ETag' : '"acbd18db4cc2f85cedef654fccc4a4d8"' }, "foo")
+    with webserver.install_http_handler(handler):
+        if not gdal.Sync( '/vsis3/out/testsync.txt', '/vsimem/', options=options):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    f = gdal.VSIFOpenL('/vsimem/testsync.txt', 'rb')
+    data = gdal.VSIFReadL(1, 3, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+    if data != 'foo':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # /vsimem to S3, but after cleaning the cache
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/out/', 200)
+    handler.add('GET', '/out/testsync.txt', 206,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3',
+                  'ETag' : '"acbd18db4cc2f85cedef654fccc4a4d8"' }, "foo")
+    with webserver.install_http_handler(handler):
+        if not gdal.Sync('/vsimem/testsync.txt', '/vsis3/out', options=options):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    gdal.Unlink('/vsimem/testsync.txt')
+
+    # Directory copying
+    gdal.VSICurlClearCache()
+
+    gdal.Mkdir('/vsimem/subdir', 0)
+    gdal.FileFromMemBuffer('/vsimem/subdir/testsync.txt', 'foo')
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/out/?delimiter=%2F', 200, {},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <ListBucketResult>
+                        <Prefix></Prefix>
+                        <Contents>
+                            <Key>testsync.txt</Key>
+                            <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                            <Size>3</Size>
+                            <ETag>"acbd18db4cc2f85cedef654fccc4a4d8"</ETag>
+                        </Contents>
+                    </ListBucketResult>
+                """)
+    with webserver.install_http_handler(handler):
+        if not gdal.Sync('/vsimem/subdir/', '/vsis3/out', options=options):
+            gdaltest.post_reason('fail')
+            return 'fail'
+    gdal.RmdirRecursive('/vsimem/subdir')
+
+    return 'success'
+
+###############################################################################
+# Test vsisync() with SYNC_STRATEGY=TIMESTAMP
+
+
+def vsis3_sync_timestamp():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    options = ['SYNC_STRATEGY=TIMESTAMP']
+
+    gdal.FileFromMemBuffer('/vsimem/testsync.txt', 'foo')
+
+    # S3 to local: S3 file is older -> download
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/out/testsync.txt', 206,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3',
+                  'Last-Modified': 'Mon, 01 Jan 1970 00:00:01 GMT' }, "foo")
+    handler.add('GET', '/out/?delimiter=%2F', 404)
+    handler.add('GET', '/out/testsync.txt', 206,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3',
+                  'Last-Modified': 'Mon, 01 Jan 1970 00:00:01 GMT' }, "foo")
+    with webserver.install_http_handler(handler):
+        if not gdal.Sync( '/vsis3/out/testsync.txt', '/vsimem/',
+                         options=options):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # S3 to local: S3 file is newer -> do nothing
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/out/testsync.txt', 206,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3',
+                  'Last-Modified': 'Mon, 01 Jan 2037 00:00:01 GMT' }, "foo")
+    with webserver.install_http_handler(handler):
+        if not gdal.Sync( '/vsis3/out/testsync.txt', '/vsimem/',
+                         options=options):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Local to S3: S3 file is older -> upload
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/out/testsync.txt', 206,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3',
+                  'Last-Modified': 'Mon, 01 Jan 1970 00:00:01 GMT' }, "foo")
+    handler.add('PUT', '/out/testsync.txt', 200)
+    with webserver.install_http_handler(handler):
+        if not gdal.Sync( '/vsimem/testsync.txt', '/vsis3/out/testsync.txt',
+                         options=options):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Local to S3: S3 file is newer -> do nothgin
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/out/testsync.txt', 206,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3',
+                  'Last-Modified': 'Mon, 01 Jan 2037 00:00:01 GMT' }, "foo")
+    with webserver.install_http_handler(handler):
+        if not gdal.Sync( '/vsimem/testsync.txt', '/vsis3/out/testsync.txt',
+                         options=options):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    gdal.Unlink('/vsimem/testsync.txt')
+
+    return 'success'
+
+###############################################################################
 # Read credentials from simulated ~/.aws/credentials
 
 
@@ -2510,6 +2751,8 @@ gdaltest_list = [vsis3_init,
                  vsis3_6,
                  vsis3_7,
                  vsis3_8,
+                 vsis3_sync_etag,
+                 vsis3_sync_timestamp,
                  vsis3_read_credentials_file,
                  vsis3_read_config_file,
                  vsis3_read_credentials_config_file,
@@ -2520,7 +2763,7 @@ gdaltest_list = [vsis3_init,
                  vsis3_stop_webserver,
                  vsis3_cleanup]
 
-# gdaltest_list = [ vsis3_init, vsis3_start_webserver, vsis3_7, vsis3_stop_webserver, vsis3_cleanup ]
+# gdaltest_list = [ vsis3_init, vsis3_start_webserver, vsis3_sync_etag, vsis3_stop_webserver, vsis3_cleanup ]
 
 gdaltest_list_extra = [vsis3_extra_1]
 

@@ -949,8 +949,8 @@ retry:
                 if( sWriteFuncData.pBuffer != nullptr )
                 {
                     for( size_t nOffset = 0;
-                         nOffset + DOWNLOAD_CHUNK_SIZE <= sWriteFuncData.nSize;
-                         nOffset += DOWNLOAD_CHUNK_SIZE )
+                            nOffset + DOWNLOAD_CHUNK_SIZE <= sWriteFuncData.nSize;
+                            nOffset += DOWNLOAD_CHUNK_SIZE )
                     {
                         poFS->AddRegion(m_pszURL,
                                         nOffset,
@@ -1091,7 +1091,7 @@ retry:
     curl_easy_cleanup(hCurlHandle);
 
     oFileProp.bHasComputedFileSize = true;
-    if( mtime != 0 )
+    if( mtime > 0 )
         oFileProp.mTime = mtime;
     poFS->SetCachedFileProp(m_pszURL, oFileProp);
 
@@ -1263,7 +1263,7 @@ retry:
 
     long mtime = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_FILETIME, &mtime);
-    if( mtime != 0 )
+    if( mtime > 0 )
     {
         oFileProp.mTime = mtime;
         poFS->SetCachedFileProp(m_pszURL, oFileProp);
