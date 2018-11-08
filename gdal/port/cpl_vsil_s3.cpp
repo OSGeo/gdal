@@ -84,7 +84,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
         (psListBucketResult != nullptr ) ? nullptr :
         CPLGetXMLNode(psTree, "=ListAllMyBucketsResult.Buckets");
 
-    std::vector< std::pair<CPLString, CachedFileProp> > aoProps;
+    std::vector< std::pair<CPLString, FileProp> > aoProps;
     // Count the number of occurrences of a path. Can be 1 or 2. 2 in the case
     // that both a filename and directory exist
     std::map<CPLString, int> aoNameCount;
@@ -104,7 +104,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                 const char* pszKey = CPLGetXMLValue(psIter, "Key", nullptr);
                 if( pszKey && strlen(pszKey) > osPrefix.size() )
                 {
-                    CachedFileProp prop;
+                    FileProp prop;
                     prop.eExists = EXIST_YES;
                     prop.bHasComputedFileSize = true;
                     prop.fileSize = static_cast<GUIntBig>(
@@ -136,7 +136,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                     }
 
                     aoProps.push_back(
-                        std::pair<CPLString, CachedFileProp>
+                        std::pair<CPLString, FileProp>
                             (pszKey + osPrefix.size(), prop));
                     aoNameCount[pszKey + osPrefix.size()] ++;
                 }
@@ -151,7 +151,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                         osKey.resize(osKey.size()-1);
                     if( osKey.size() > osPrefix.size() )
                     {
-                        CachedFileProp prop;
+                        FileProp prop;
                         prop.eExists = EXIST_YES;
                         prop.bIsDirectory = true;
                         prop.bHasComputedFileSize = true;
@@ -159,7 +159,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                         prop.mTime = 0;
 
                         aoProps.push_back(
-                            std::pair<CPLString, CachedFileProp>
+                            std::pair<CPLString, FileProp>
                                 (osKey.c_str() + osPrefix.size(), prop));
                         aoNameCount[osKey.c_str() + osPrefix.size()] ++;
                     }
@@ -196,7 +196,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
 #if DEBUG_VERBOSE
                 CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
 #endif
-                *GetCachedFileProp(osCachedFilename) = aoProps[i].second;
+                SetCachedFileProp(osCachedFilename, aoProps[i].second);
             }
             osFileList.AddString( (aoProps[i].first + osSuffix).c_str() );
         }
@@ -223,7 +223,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                 const char* pszName = CPLGetXMLValue(psIter, "Name", nullptr);
                 if( pszName )
                 {
-                    CachedFileProp prop;
+                    FileProp prop;
                     prop.eExists = EXIST_YES;
                     prop.bIsDirectory = true;
                     prop.bHasComputedFileSize = true;
@@ -234,7 +234,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
 #if DEBUG_VERBOSE
                     CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
 #endif
-                    *GetCachedFileProp(osCachedFilename) = prop;
+                    SetCachedFileProp(osCachedFilename, prop);
 
                     osFileList.AddString( pszName );
                 }
@@ -1334,11 +1334,12 @@ int IVSIS3LikeFSHandler::Mkdir( const char * pszDirname, long /* nMode */ )
 
             InvalidateDirContent( CPLGetDirname(osDirnameWithoutEndSlash) );
 
-            CachedFileProp* cachedFileProp =
-                GetCachedFileProp(GetURLFromFilename(osDirname));
-            cachedFileProp->eExists = EXIST_YES;
-            cachedFileProp->bIsDirectory = true;
-            cachedFileProp->bHasComputedFileSize = true;
+            FileProp cachedFileProp;
+            GetCachedFileProp(GetURLFromFilename(osDirname), cachedFileProp);
+            cachedFileProp.eExists = EXIST_YES;
+            cachedFileProp.bIsDirectory = true;
+            cachedFileProp.bHasComputedFileSize = true;
+            SetCachedFileProp(GetURLFromFilename(osDirname), cachedFileProp);
 
             RegisterEmptyDir(osDirnameWithoutEndSlash);
             RegisterEmptyDir(osDirname);
@@ -1433,11 +1434,13 @@ int IVSIS3LikeFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
         pStatBuf->st_mtime = 0;
         pStatBuf->st_size = 0;
         pStatBuf->st_mode = S_IFDIR;
-        CachedFileProp* cachedFileProp =
-            GetCachedFileProp(GetURLFromFilename(osFilename));
-        cachedFileProp->eExists = EXIST_YES;
-        cachedFileProp->bIsDirectory = true;
-        cachedFileProp->bHasComputedFileSize = true;
+
+        FileProp cachedFileProp;
+        GetCachedFileProp(GetURLFromFilename(osFilename), cachedFileProp);
+        cachedFileProp.eExists = EXIST_YES;
+        cachedFileProp.bIsDirectory = true;
+        cachedFileProp.bHasComputedFileSize = true;
+        SetCachedFileProp(GetURLFromFilename(osFilename), cachedFileProp);
     }
     CSLDestroy(papszRet);
     return nRet;

@@ -83,7 +83,7 @@ void VSICurlFilesystemHandler::AnalyseAzureFileList(
         return;
     CPLXMLNode* psEnumerationResults = CPLGetXMLNode(psTree, "=EnumerationResults");
 
-    std::vector< std::pair<CPLString, CachedFileProp> > aoProps;
+    std::vector< std::pair<CPLString, FileProp> > aoProps;
     // Count the number of occurrences of a path. Can be 1 or 2. 2 in the case
     // that both a filename and directory exist
     std::map<CPLString, int> aoNameCount;
@@ -115,7 +115,7 @@ void VSICurlFilesystemHandler::AnalyseAzureFileList(
                 {
                     bNonEmpty = true;
 
-                    CachedFileProp prop;
+                    FileProp prop;
                     prop.eExists = EXIST_YES;
                     prop.bHasComputedFileSize = true;
                     prop.fileSize = static_cast<GUIntBig>(
@@ -148,7 +148,7 @@ void VSICurlFilesystemHandler::AnalyseAzureFileList(
                     }
 
                     aoProps.push_back(
-                        std::pair<CPLString, CachedFileProp>
+                        std::pair<CPLString, FileProp>
                             (pszKey + osPrefix.size(), prop));
                     aoNameCount[pszKey + osPrefix.size()] ++;
                 }
@@ -166,7 +166,7 @@ void VSICurlFilesystemHandler::AnalyseAzureFileList(
                         osKey.resize(osKey.size()-1);
                     if( osKey.size() > osPrefix.size() )
                     {
-                        CachedFileProp prop;
+                        FileProp prop;
                         prop.eExists = EXIST_YES;
                         prop.bIsDirectory = true;
                         prop.bHasComputedFileSize = true;
@@ -174,7 +174,7 @@ void VSICurlFilesystemHandler::AnalyseAzureFileList(
                         prop.mTime = 0;
 
                         aoProps.push_back(
-                            std::pair<CPLString, CachedFileProp>
+                            std::pair<CPLString, FileProp>
                                 (osKey.c_str() + osPrefix.size(), prop));
                         aoNameCount[osKey.c_str() + osPrefix.size()] ++;
                     }
@@ -211,7 +211,7 @@ void VSICurlFilesystemHandler::AnalyseAzureFileList(
 #if DEBUG_VERBOSE
                 CPLDebug("AZURE", "Cache %s", osCachedFilename.c_str());
 #endif
-                *GetCachedFileProp(osCachedFilename) = aoProps[i].second;
+                SetCachedFileProp(osCachedFilename, aoProps[i].second);
             }
             osFileList.AddString( (aoProps[i].first + osSuffix).c_str() );
         }

@@ -66,7 +66,7 @@ typedef enum
     EXIST_YES,
 } ExistStatus;
 
-class CachedFileProp
+class FileProp
 {
   public:
     ExistStatus     eExists = EXIST_UNKNOWN;
@@ -147,7 +147,7 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
         }
     };
 
-    using CacheType =
+    using RegionCacheType =
         lru11::Cache<FilenameOffsetPair, std::shared_ptr<std::string>,
             lru11::NullLock,
             std::unordered_map<
@@ -156,9 +156,10 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
                     std::shared_ptr<std::string>>>::iterator,
                     FilenameOffsetPairHasher>>;
 
-    CacheType oRegionCache;
+    RegionCacheType oRegionCache;
 
-    std::map<CPLString, CachedFileProp*>   cacheFileSize{};
+    lru11::Cache<std::string, FileProp>  oCacheFileProp;
+
     std::map<CPLString, CachedDirList*>        cacheDirList{};
 
     // Per-thread Curl connection cache.
@@ -248,7 +249,10 @@ public:
                                    size_t nSize,
                                    const char *pData );
 
-    CachedFileProp*     GetCachedFileProp( const char* pszURL );
+    bool                GetCachedFileProp( const char* pszURL,
+                                           FileProp& oFileProp );
+    void                SetCachedFileProp( const char* pszURL,
+                                           const FileProp& oFileProp );
     void                InvalidateCachedData( const char* pszURL );
 
     CURLM              *GetCurlMultiHandleFor( const CPLString& osURL );
@@ -284,11 +288,8 @@ class VSICurlHandle : public VSIVirtualHandle
 
     bool            m_bCached = true;
 
-    vsi_l_offset    fileSize = 0;
-    bool            bHasComputedFileSize = false;
-    ExistStatus     eExists = EXIST_UNKNOWN;
-    bool            bIsDirectory = false;
-    time_t          mTime = 0;
+    FileProp  oFileProp{};
+
     CPLString       m_osFilename{}; // e.g "/vsicurl/http://example.com/foo"
     char*           m_pszURL = nullptr;     // e.g "http://example.com/foo"
 
@@ -318,17 +319,12 @@ class VSICurlHandle : public VSIVirtualHandle
 
     virtual bool            DownloadRegion(vsi_l_offset startOffset, int nBlocks);
 
-    bool                m_bS3LikeRedirect = false;
-    time_t              m_nExpireTimestampLocal = 0;
-    CPLString           m_osRedirectURL{};
-
     bool                m_bUseHead = false;
 
     int          ReadMultiRangeSingleGet( int nRanges, void ** ppData,
                                          const vsi_l_offset* panOffsets,
                                          const size_t* panSizes );
-    CPLString    GetRedirectURLIfValid(CachedFileProp* cachedFileProp,
-                                               bool& bHasExpired);
+    CPLString    GetRedirectURLIfValid(bool& bHasExpired);
 
   protected:
     virtual struct curl_slist* GetCurlHeaders( const CPLString& /*osVerb*/,
@@ -359,12 +355,12 @@ class VSICurlHandle : public VSIVirtualHandle
     int Flush() override;
     int Close() override;
 
-    bool IsKnownFileSize() const { return bHasComputedFileSize; }
+    bool IsKnownFileSize() const { return oFileProp.bHasComputedFileSize; }
     vsi_l_offset         GetFileSize() { return GetFileSize(false); }
     virtual vsi_l_offset GetFileSize( bool bSetError );
     bool                 Exists( bool bSetError );
-    bool                 IsDirectory() const { return bIsDirectory; }
-    time_t               GetMTime() const { return mTime; }
+    bool                 IsDirectory() const { return oFileProp.bIsDirectory; }
+    time_t               GetMTime() const { return oFileProp.mTime; }
 
     int                  InstallReadCbk( VSICurlReadCbkFunc pfnReadCbk,
                                          void* pfnUserData,
@@ -426,7 +422,7 @@ class IVSIS3LikeHandle:  public VSICurlHandle
         }
     void ProcessGetFileSizeResult( const char* pszContent ) override
         {
-            bIsDirectory = strstr(pszContent, "ListBucketResult") != nullptr;
+            oFileProp.bIsDirectory = strstr(pszContent, "ListBucketResult") != nullptr;
         }
 
   public:
