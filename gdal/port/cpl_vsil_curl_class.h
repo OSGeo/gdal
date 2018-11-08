@@ -178,6 +178,7 @@ protected:
                             const char* pszXML,
                             CPLStringList& osFileList,
                             int nMaxFiles,
+                            bool bIgnoreGlacierStorageClass,
                             bool& bIsTruncated,
                             CPLString& osNextMarker );
 

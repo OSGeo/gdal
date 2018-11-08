@@ -735,6 +735,12 @@ def vsis3_3():
                     <LastModified>2015-10-16T12:34:56.000Z</LastModified>
                     <Size>456789</Size>
                 </Contents>
+                <Contents>
+                    <Key>a_dir/i_am_a_glacier_file</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                     <StorageClass>GLACIER</StorageClass>
+                </Contents>
                 <CommonPrefixes>
                     <Prefix>a_dir/subdir/</Prefix>
                 </CommonPrefixes>
@@ -764,6 +770,7 @@ def vsis3_3():
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
+
     if gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir/resource3.bin').size != 123456:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -821,6 +828,36 @@ def vsis3_3():
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
     if dir_contents != ['test.txt']:
+        gdaltest.post_reason('fail')
+        print(dir_contents)
+        return 'fail'
+
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', 200, {},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>a_dir/</Prefix>
+                <Contents>
+                    <Key>a_dir/resource4.bin</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                </Contents>
+                <Contents>
+                    <Key>a_dir/i_am_a_glacier_file</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                     <StorageClass>GLACIER</StorageClass>
+                </Contents>
+                <CommonPrefixes>
+                    <Prefix>a_dir/subdir/</Prefix>
+                </CommonPrefixes>
+            </ListBucketResult>
+        """)
+    with gdaltest.config_option('CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE', 'NO'):
+        with webserver.install_http_handler(handler):
+            dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
+    if dir_contents != ['resource4.bin', 'i_am_a_glacier_file', 'subdir']:
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
