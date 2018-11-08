@@ -112,11 +112,6 @@ typedef struct
 /*                     VSICurlFilesystemHandler                         */
 /************************************************************************/
 
-typedef struct
-{
-    CURLM          *hCurlMultiHandle;
-} CachedConnection;
-
 class VSICurlHandle;
 
 class VSICurlFilesystemHandler : public VSIFilesystemHandler
@@ -162,9 +157,6 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
 
     int                                       nCachedFilesInDirList = 0;
     lru11::Cache<std::string, CachedDirList>  oCacheDirList;
-
-    // Per-thread Curl connection cache.
-    std::map<GIntBig, CachedConnection*> mapConnections{};
 
     char**              ParseHTMLFileList(const char* pszFilename,
                                           int nMaxFiles,

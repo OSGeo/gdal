@@ -2289,12 +2289,46 @@ VSICurlFilesystemHandler::VSICurlFilesystemHandler():
 }
 
 /************************************************************************/
+/*                           CachedConnection                           */
+/************************************************************************/
+
+struct CachedConnection
+{
+    CURLM          *hCurlMultiHandle = nullptr;
+    void            clear();
+
+    ~CachedConnection() { clear(); }
+};
+
+// Per-thread and per-filesystem Curl connection cache.
+static thread_local std::map<VSICurlFilesystemHandler*, CachedConnection> cachedConnection;
+
+/************************************************************************/
+/*                              clear()                                 */
+/************************************************************************/
+
+void CachedConnection::clear()
+{
+    if( hCurlMultiHandle )
+    {
+        curl_multi_cleanup(hCurlMultiHandle);
+        hCurlMultiHandle = nullptr;
+    }
+}
+
+/************************************************************************/
 /*                  ~VSICurlFilesystemHandler()                         */
 /************************************************************************/
+
+extern "C" int CPL_DLL GDALIsInGlobalDestructor();
 
 VSICurlFilesystemHandler::~VSICurlFilesystemHandler()
 {
     VSICurlFilesystemHandler::ClearCache();
+    if( !GDALIsInGlobalDestructor() )
+    {
+        cachedConnection.erase(this);
+    }
 
     if( hMutex != nullptr )
         CPLDestroyMutex( hMutex );
@@ -2328,20 +2362,12 @@ bool VSICurlFilesystemHandler::AllowCachedDataFor(const char* pszFilename)
 
 CURLM* VSICurlFilesystemHandler::GetCurlMultiHandleFor(const CPLString& /*osURL*/)
 {
-    CPLMutexHolder oHolder( &hMutex );
-
-    std::map<GIntBig, CachedConnection*>::const_iterator iterConnections =
-        mapConnections.find(CPLGetPID());
-    if( iterConnections == mapConnections.end() )
+    auto& conn = cachedConnection[this];
+    if( conn.hCurlMultiHandle == nullptr )
     {
-        CURLM* hCurlMultiHandle = curl_multi_init();
-        CachedConnection* psCachedConnection = new CachedConnection;
-        psCachedConnection->hCurlMultiHandle = hCurlMultiHandle;
-        mapConnections[CPLGetPID()] = psCachedConnection;
-        return hCurlMultiHandle;
+        conn.hCurlMultiHandle = curl_multi_init();
     }
-
-    return iterConnections->second->hCurlMultiHandle;
+    return conn.hCurlMultiHandle;
 }
 
 /************************************************************************/
@@ -2518,15 +2544,10 @@ void VSICurlFilesystemHandler::ClearCache()
     oCacheDirList.clear();
     nCachedFilesInDirList = 0;
 
-    std::map<GIntBig, CachedConnection*>::const_iterator iterConnections;
-    for( iterConnections = mapConnections.begin();
-         iterConnections != mapConnections.end();
-         ++iterConnections )
+    if( !GDALIsInGlobalDestructor() )
     {
-        curl_multi_cleanup(iterConnections->second->hCurlMultiHandle);
-        delete iterConnections->second;
+        cachedConnection[this].clear();
     }
-    mapConnections.clear();
 }
 
 /************************************************************************/
