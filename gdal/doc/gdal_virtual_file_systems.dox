@@ -439,6 +439,10 @@ storage. You'll have to abort yourself with other means such "ghost" uploads
 files smaller than the chunk size, a simple PUT request is used instead of
 the multipart upload API.
 
+Since GDAL 2.4, when listing a directory, files with GLACIER storage class are
+ignored unless the CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE configuration option
+is set to NO.
+
 @since GDAL 2.1
 
 \subsection gdal_virtual_file_systems_vsis3_streaming /vsis3_streaming/ (AWS S3 files: streaming)

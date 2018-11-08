@@ -68,8 +68,9 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
     const char* pszXML,
     CPLStringList& osFileList,
     int nMaxFiles,
+    bool bIgnoreGlacierStorageClass,
     bool& bIsTruncated,
-    CPLString& osNextMarker )
+    CPLString& osNextMarker)
 {
 #if DEBUG_VERBOSE
     CPLDebug("S3", "%s", pszXML);
@@ -135,10 +136,16 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                                 CPLYMDHMSToUnixTime(&brokendowntime));
                     }
 
-                    aoProps.push_back(
-                        std::pair<CPLString, CachedFileProp>
-                            (pszKey + osPrefix.size(), prop));
-                    aoNameCount[pszKey + osPrefix.size()] ++;
+                    const char* pszStorageClass = CPLGetXMLValue(psIter,
+                        "StorageClass", "");
+                    if( !bIgnoreGlacierStorageClass ||
+                        !EQUAL(pszStorageClass, "GLACIER") )
+                    {
+                        aoProps.push_back(
+                            std::pair<CPLString, CachedFileProp>
+                                (pszKey + osPrefix.size(), prop));
+                        aoNameCount[pszKey + osPrefix.size()] ++;
+                    }
                 }
             }
             else if( strcmp(psIter->pszValue, "CommonPrefixes") == 0 )
@@ -1765,10 +1772,13 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
         {
             *pbGotFileList = true;
             bool bIsTruncated;
+            const bool bIgnoreGlacier = CPLTestBool(
+                CPLGetConfigOption("CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE", "YES"));
             AnalyseS3FileList( osBaseURL,
                                sWriteFuncData.pBuffer,
                                osFileList,
                                nMaxFiles,
+                               bIgnoreGlacier,
                                bIsTruncated,
                                osNextMarker );
 

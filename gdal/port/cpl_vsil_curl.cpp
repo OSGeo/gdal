@@ -2614,7 +2614,10 @@ const char* VSICurlFilesystemHandler::GetActualURL(const char* pszFilename)
         "file' default='16384' min='1024' max='10485760'/>" \
     "  <Option name='CPL_VSIL_CURL_CACHE_SIZE' type='integer' " \
         "description='Size in bytes of the global /vsicurl/ cache' " \
-        "default='16384000'/>"
+        "default='16384000'/>" \
+    "  <Option name='CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE' type='boolean' " \
+        "description='Whether to skip files with Glacier storage class in " \
+        "directory listing.' default='YES'/>"
 
 const char* VSICurlFilesystemHandler::GetOptionsStatic()
 {
@@ -3584,10 +3587,13 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
             CPLString osBaseURL(pszDirname);
             osBaseURL += "/";
             bool bIsTruncated = true;
+            const bool bIgnoreGlacier = CPLTestBool(
+                CPLGetConfigOption("CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE", "YES"));
             AnalyseS3FileList( osBaseURL,
                                sWriteFuncData.pBuffer,
                                osFileList,
                                nMaxFiles,
+                               bIgnoreGlacier,
                                bIsTruncated,
                                osNextMarker );
             // If the list is truncated, then don't report it.
