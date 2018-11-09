@@ -1358,11 +1358,14 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     //      Copy GCPs
     // --------------------------------------------------------------------
 
-    if( poSrcDS->GetGCPCount() > 0 )
+    if( ! CPLFetchBool( papszOptions, "NOGCP", false ) )
     {
-        poDstDS->SetGCPs( poSrcDS->GetGCPCount(), 
-                          poSrcDS->GetGCPs(), 
-                          poSrcDS->GetGCPProjection() );
+        if( poSrcDS->GetGCPCount() > 0 )
+        {
+            poDstDS->SetGCPs( poSrcDS->GetGCPCount(), 
+                              poSrcDS->GetGCPs(), 
+                              poSrcDS->GetGCPProjection() );
+        }
     }
 
     // --------------------------------------------------------------------
@@ -2955,6 +2958,7 @@ void CPL_DLL GDALRegister_GEOR()
 "  <Option name='GENPYRLEVELS'  type='int'  description='Number of pyramid level to generate'/>"
 "  <Option name='OBJECTTABLE' type='boolean' "
                                            "description='Create RDT as object table'/>"
+"  <Option name='NOGCP' type='boolean' "   "description='Dont load GCP values'/>"
 "  <Option name='SPATIALEXTENT' type='boolean' "
                                            "description='Generate Spatial Extent' "
                                            "default='TRUE'/>"
