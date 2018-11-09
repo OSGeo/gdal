@@ -434,6 +434,29 @@ VSI_RETVAL VSIRename(const char * pszOld, const char *pszNew );
 %clear (const char* pszOld);
 %clear (const char* pszNew);
 
+#if defined(SWIGPYTHON)
+%rename (Sync) wrapper_VSISync;
+
+%apply (const char* utf8_path) {(const char* pszSource)};
+%apply (const char* utf8_path) {(const char* pszTarget)};
+%feature( "kwargs" ) wrapper_VSISync;
+
+%inline {
+bool wrapper_VSISync(const char* pszSource,
+                     const char* pszTarget,
+                     char** options = NULL,
+                     GDALProgressFunc callback=NULL,
+                     void* callback_data=NULL)
+{
+    return VSISync( pszSource, pszTarget, options, callback, callback_data, nullptr );
+}
+}
+
+%clear (const char* pszSource);
+%clear (const char* pszTarget);
+
+#endif
+
 const char* VSIGetActualURL(const char * utf8_path);
 
 %inline {

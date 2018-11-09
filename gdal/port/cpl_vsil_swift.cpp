@@ -510,7 +510,7 @@ char** VSISwiftFSHandler::GetFileList( const char *pszDirname,
 
     CPLString osMaxKeys = CPLGetConfigOption("SWIFT_MAX_KEYS", "10000");
     int nMaxFilesThisQuery = atoi(osMaxKeys);
-    if( nMaxFiles > 0 && nMaxFiles < 100 && nMaxFiles < nMaxFilesThisQuery )
+    if( nMaxFiles > 0 && nMaxFiles <= 100 && nMaxFiles < nMaxFilesThisQuery )
     {
         nMaxFilesThisQuery = nMaxFiles+1;
     }

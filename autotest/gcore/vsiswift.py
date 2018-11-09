@@ -638,7 +638,7 @@ def vsiswift_fake_mkdir_rmdir():
     # Valid
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something/foo/dir/', 200)
-    handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=2&prefix=dir%2F',
+    handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=101&prefix=dir%2F',
                 200,
                 {'Connection': 'close', 'Content-type': 'application/json'},
                 """[]
@@ -669,7 +669,7 @@ def vsiswift_fake_mkdir_rmdir():
                 200,
                 {'Connection': 'close', 'Content-type': 'application/json'},
                 """[ { "subdir": "dir_nonempty/" } ]""")
-    handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=2&prefix=dir_nonempty%2F',
+    handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=101&prefix=dir_nonempty%2F',
                 200,
                 {'Connection': 'close', 'Content-type': 'application/json'},
                 """[ { "name": "dir_nonempty/some_file", "bytes": 0, "last_modified": "1970-01-01T00:00:01" } ]""")

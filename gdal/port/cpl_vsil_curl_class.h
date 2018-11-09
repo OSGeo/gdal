@@ -77,6 +77,7 @@ class FileProp
     bool            bHasComputedFileSize = false;
     bool            bIsDirectory = false;
     bool            bS3LikeRedirect = false;
+    CPLString       ETag{};
 };
 
 typedef struct
@@ -170,7 +171,6 @@ protected:
     virtual char** GetFileList(const char *pszFilename,
                                int nMaxFiles,
                                bool* pbGotFileList);
-    virtual CPLString GetURLFromFilename( const CPLString& osFilename );
 
     void RegisterEmptyDir( const CPLString& osDirname );
 
@@ -261,6 +261,7 @@ public:
                                           const CachedDirList& oCachedDirList );
     bool ExistsInCacheDirList( const CPLString& osDirname, bool *pbIsDir );
 
+    virtual CPLString GetURLFromFilename( const CPLString& osFilename );
 };
 
 /************************************************************************/
@@ -389,6 +390,12 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 
     virtual void UpdateMapFromHandle(IVSIS3LikeHandleHelper*) {}
     virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * ) {}
+
+    bool Sync( const char* pszSource, const char* pszTarget,
+                const char* const * papszOptions,
+                GDALProgressFunc pProgressFunc,
+                void *pProgressData,
+                char*** ppapszOutputs  ) override;
 };
 
 /************************************************************************/

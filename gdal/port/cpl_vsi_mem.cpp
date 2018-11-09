@@ -586,7 +586,7 @@ int VSIMemFilesystemHandler::Stat( const char * pszFilename,
 
     memset( pStatBuf, 0, sizeof(VSIStatBufL) );
 
-    if( osFilename == "/vsimem/" )
+    if( osFilename == "/vsimem" || osFilename == "/vsimem/" )
     {
         pStatBuf->st_size = 0;
         pStatBuf->st_mode = S_IFDIR;

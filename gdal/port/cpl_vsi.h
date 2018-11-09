@@ -33,6 +33,7 @@
 #define CPL_VSI_H_INCLUDED
 
 #include "cpl_port.h"
+#include "cpl_progress.h"
 
 /**
  * \file cpl_vsi.h
@@ -307,6 +308,12 @@ int CPL_DLL VSIRmdir( const char * pszDirname );
 int CPL_DLL VSIRmdirRecursive( const char * pszDirname );
 int CPL_DLL VSIUnlink( const char * pszFilename );
 int CPL_DLL VSIRename( const char * oldpath, const char * newpath );
+int CPL_DLL VSISync( const char* pszSource, const char* pszTarget,
+                      const char* const * papszOptions,
+                      GDALProgressFunc pProgressFunc,
+                      void *pProgressData,
+                      char*** ppapszOutputs );
+
 char CPL_DLL *VSIStrerror( int );
 GIntBig CPL_DLL VSIGetDiskFreeSpace(const char *pszDirname);
 
