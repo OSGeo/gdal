@@ -200,9 +200,9 @@ CPLString AzureCSGetParameter(const CPLString& osStr, const char* pszKey,
     {
         const char* pszMsg = CPLSPrintf(
             "%s missing in AZURE_STORAGE_CONNECTION_STRING", pszKey);
-        CPLDebug("AZURE", "%s", pszMsg);
         if( bErrorIfMissing )
         {
+            CPLDebug("AZURE", "%s", pszMsg);
             VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
         }
         return CPLString();

@@ -453,14 +453,14 @@ int VSIRename( const char * oldpath, const char * newpath )
  * \brief Synchronize a source file/directory with a target file/directory.
  *
  * This is a analog of the 'rsync' utility. In the current implementation,
- * rsync would be more efficient for local file copying, but VSIRsync() main
+ * rsync would be more efficient for local file copying, but VSISync() main
  * interest is when the source or target is a remote
  * file system like /vsis3/ or /vsigs/, in which case it can take into account
  * the timestamps of the files (or optionally the ETag/MD5Sum) to avoid
  * unneeded copy operations.
  *
- * Note: current only implemented efficiently for local filesystem <--> /vsis3/
- * and local filesystem <--> /vsigs/
+ * Note: currently only implemented efficiently for local filesystem <-->
+ * remote filesystem.
  *
  * Similarly to rsync behaviour, if the source filename ends with a slash,
  * it means that the content of the directory must be copied, but not the
@@ -478,7 +478,7 @@ int VSIRename( const char * oldpath, const char * newpath )
  * <li>SYNC_STRATEGY=TIMESTAMP/ETAG. Determines which criterion is used to
  *     determine if a target file must be replaced when it already exists and
  *     has the same file size as the source.
- *     Only apply for a source being a network filesystem.
+ *     Only applies for a source or target being a network filesystem.
  *
  *     The default is TIMESTAMP (similarly to how 'aws s3 sync' works), that is
  *     to say that for an upload operation, a remote file is
@@ -490,6 +490,8 @@ int VSIRename( const char * oldpath, const char * newpath )
  *     the MD5Sum of the file content, which is only true in the case of /vsis3/
  *     for files not using KMS server side encryption and uploaded in a single
  *     PUT operation (so smaller than 50 MB given the default used by GDAL).
+ *     Only to be used for /vsis3/, /vsigs/ or other filesystems using a
+ *     MD5Sum as ETAG.
  * </li>
  * </ul>
  * @param pProgressFunc Progress callback, or NULL.
