@@ -190,8 +190,8 @@ typedef enum {
 #define     COMPRESSION_LERC            34887   /* ESRI Lerc codec: https://github.com/Esri/lerc */
 /* compression codes 34887-34889 are reserved for ESRI */
 #define	    COMPRESSION_LZMA		34925	/* LZMA2 */
-#define	    COMPRESSION_ZSTD		34926	/* ZSTD: WARNING not registered in Adobe-maintained registry */
-#define	    COMPRESSION_WEBP		34927	/* WEBP: WARNING not registered in Adobe-maintained registry */
+#define	    COMPRESSION_ZSTD		50000	/* ZSTD: WARNING not registered in Adobe-maintained registry */
+#define	    COMPRESSION_WEBP		50001	/* WEBP: WARNING not registered in Adobe-maintained registry */
 #define	TIFFTAG_PHOTOMETRIC		262	/* photometric interpretation */
 #define	    PHOTOMETRIC_MINISWHITE	0	/* min value is white */
 #define	    PHOTOMETRIC_MINISBLACK	1	/* min value is black */
