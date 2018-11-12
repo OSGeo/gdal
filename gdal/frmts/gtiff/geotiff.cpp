@@ -154,7 +154,7 @@ const char szPROFILE_BASELINE[] = "BASELINE";
 const char szPROFILE_GeoTIFF[] = "GeoTIFF";
 const char szPROFILE_GDALGeoTIFF[] = "GDALGeoTIFF";
 
-static bool isZSTD(uint val)
+static bool isZSTD(unsigned val)
 {
     return val == COMPRESSION_ZSTD_OLD || val == COMPRESSION_ZSTD_NEW;
 }
