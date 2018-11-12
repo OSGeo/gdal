@@ -97,7 +97,7 @@ uint16 GTiffGetAlphaValue(const char* pszValue, uint16 nDefault);
 #endif
 
 #if !defined(COMPRESSION_ZSTD)
-#define     COMPRESSION_ZSTD        34926   /* ZSTD */
+#define     COMPRESSION_ZSTD        50000   /* ZSTD */
 #endif
 
 #if !defined(TIFFTAG_ZSTD_LEVEL)
@@ -109,7 +109,7 @@ uint16 GTiffGetAlphaValue(const char* pszValue, uint16 nDefault);
 #endif
 
 #if !defined(COMPRESSION_WEBP)
-#define     COMPRESSION_WEBP        34927   /* WebP */
+#define     COMPRESSION_WEBP        50001   /* WebP */
 #endif
 
 #if !defined(TIFFTAG_WEBP_LEVEL)
