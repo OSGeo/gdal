@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import subprocess
 import sys
 
 
@@ -178,15 +179,19 @@ def test_basic_test_8():
         or 'GDAL/OGR Licensing' in license_text
     )
 
-    with gdaltest.config_option('GDAL_DATA', 'tmp'):
-        with open('tmp/LICENSE.TXT', 'wt') as f:
-            f.write('fake_license')
-            license_text = gdal.VersionInfo('LICENSE')
-        os.unlink('tmp/LICENSE.TXT')
-        assert (
-            license_text.startswith('fake_license')
-            or 'GDAL/OGR Licensing' in license_text
-        )
+    # Use a subprocess to avoid the cached license text
+    env = os.environ.copy()
+    env['GDAL_DATA'] = 'tmp'
+    with open('tmp/LICENSE.TXT', 'wt') as f:
+        f.write('fake_license')
+    license_text = subprocess.check_output(
+        [sys.executable, 'basic_test_subprocess.py'],
+        env=env
+    ).decode('utf-8')
+    os.unlink('tmp/LICENSE.TXT')
+    assert (
+        license_text.startswith(u'fake_license')
+    )
 
 
 ###############################################################################
@@ -541,8 +546,3 @@ def test_basic_test_17():
         assert not flag, 'expected failure'
         assert not gdal.GetUseExceptions()
         assert not ogr.GetUseExceptions()
-
-    
-
-
-
