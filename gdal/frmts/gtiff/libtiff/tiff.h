@@ -188,7 +188,8 @@ typedef enum {
 #define     COMPRESSION_SGILOG24	34677	/* SGI Log 24-bit packed */
 #define     COMPRESSION_JP2000          34712   /* Leadtools JPEG2000 */
 #define	    COMPRESSION_LZMA		34925	/* LZMA2 */
-#define	    COMPRESSION_ZSTD		34926	/* ZSTD: WARNING not registered in Adobe-maintained registry */
+#define	    COMPRESSION_ZSTD_OLD		34926	/* ZSTD: WARNING not registered in Adobe-maintained registry */
+#define	    COMPRESSION_ZSTD_NEW		50000	/* ZSTD: WARNING not registered in Adobe-maintained registry */
 #define	TIFFTAG_PHOTOMETRIC		262	/* photometric interpretation */
 #define	    PHOTOMETRIC_MINISWHITE	0	/* min value is white */
 #define	    PHOTOMETRIC_MINISBLACK	1	/* min value is black */

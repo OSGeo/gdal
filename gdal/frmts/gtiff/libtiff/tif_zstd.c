@@ -373,7 +373,15 @@ TIFFInitZSTD(TIFF* tif, int scheme)
         static const char module[] = "TIFFInitZSTD";
         ZSTDState* sp;
 
-        assert( scheme == COMPRESSION_ZSTD );
+        assert( scheme == COMPRESSION_ZSTD_OLD || scheme == COMPRESSION_ZSTD_NEW );
+        if( scheme == COMPRESSION_ZSTD_OLD )
+        {
+            TIFFWarningExt(tif->tif_clientdata, module,
+                           "Value of Compression tag is 34926, which is the "
+                           "deprecated value for ZStd. Please use the new "
+                           "value of 50000 by recreating/patching this file. "
+                           "Next GDAL releases won't recognize this file.");
+        }
 
         /*
         * Merge codec-specific tag information.

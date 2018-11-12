@@ -100,7 +100,8 @@ TIFFCodec _TIFFBuiltinCODECS[] = {
     { "SGILog",		COMPRESSION_SGILOG,	TIFFInitSGILog },
     { "SGILog24",	COMPRESSION_SGILOG24,	TIFFInitSGILog },
     { "LZMA",		COMPRESSION_LZMA,	TIFFInitLZMA },
-    { "ZSTD",		COMPRESSION_ZSTD,	TIFFInitZSTD },
+    { "ZSTD",		COMPRESSION_ZSTD_OLD,	TIFFInitZSTD },
+    { "ZSTD",		COMPRESSION_ZSTD_NEW,	TIFFInitZSTD },
     { NULL,             0,                      NULL }
 };
 

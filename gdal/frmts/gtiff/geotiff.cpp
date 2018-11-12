@@ -154,6 +154,11 @@ const char szPROFILE_BASELINE[] = "BASELINE";
 const char szPROFILE_GeoTIFF[] = "GeoTIFF";
 const char szPROFILE_GDALGeoTIFF[] = "GDALGeoTIFF";
 
+static bool isZSTD(uint val)
+{
+    return val == COMPRESSION_ZSTD_OLD || val == COMPRESSION_ZSTD_NEW;
+}
+
 /************************************************************************/
 /*                          GTIFFSetInExternalOvr()                     */
 /************************************************************************/
@@ -8575,7 +8580,7 @@ void GTiffDataset::ThreadCompressionFunc( void* pData )
         TIFFSetField(hTIFFTmp, TIFFTAG_ZIPQUALITY, poDS->nZLevel);
     if( poDS->nLZMAPreset > 0 && poDS->nCompression == COMPRESSION_LZMA)
         TIFFSetField(hTIFFTmp, TIFFTAG_LZMAPRESET, poDS->nLZMAPreset);
-    if( poDS->nZSTDLevel > 0 && poDS->nCompression == COMPRESSION_ZSTD)
+    if( poDS->nZSTDLevel > 0 && isZSTD(poDS->nCompression))
         TIFFSetField(hTIFFTmp, TIFFTAG_ZSTD_LEVEL, poDS->nZSTDLevel);
     TIFFSetField(hTIFFTmp, TIFFTAG_PHOTOMETRIC, poDS->nPhotometric);
     TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLEFORMAT, poDS->nSampleFormat);
@@ -8725,7 +8730,7 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
             nCompression == COMPRESSION_LZW ||
             nCompression == COMPRESSION_PACKBITS ||
             nCompression == COMPRESSION_LZMA ||
-            nCompression == COMPRESSION_ZSTD) ) )
+            isZSTD(nCompression)) ) )
         return false;
 
     int nNextCompressionJobAvail = -1;
@@ -11941,7 +11946,7 @@ bool GTiffDataset::SetDirectory( toff_t nNewOffset )
             TIFFSetField(hTIFF, TIFFTAG_ZIPQUALITY, nZLevel);
         if(nLZMAPreset > 0 && nCompression == COMPRESSION_LZMA)
             TIFFSetField(hTIFF, TIFFTAG_LZMAPRESET, nLZMAPreset);
-        if( nZSTDLevel > 0 && nCompression == COMPRESSION_ZSTD)
+        if( nZSTDLevel > 0 && isZSTD(nCompression))
             TIFFSetField(hTIFF, TIFFTAG_ZSTD_LEVEL, nZSTDLevel);
     }
 
@@ -14081,7 +14086,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     {
         oGTiffMDMD.SetMetadataItem( "COMPRESSION", "LZMA", "IMAGE_STRUCTURE" );
     }
-    else if( nCompression == COMPRESSION_ZSTD )
+    else if( isZSTD(nCompression) )
     {
         oGTiffMDMD.SetMetadataItem( "COMPRESSION", "ZSTD", "IMAGE_STRUCTURE" );
     }
@@ -15698,7 +15703,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         TIFFSetField( l_hTIFF, TIFFTAG_JPEGQUALITY, l_nJpegQuality );
     else if( l_nCompression == COMPRESSION_LZMA && l_nLZMAPreset != -1)
         TIFFSetField( l_hTIFF, TIFFTAG_LZMAPRESET, l_nLZMAPreset );
-    else if( l_nCompression == COMPRESSION_ZSTD && l_nZSTDLevel != -1)
+    else if( isZSTD(l_nCompression) && l_nZSTDLevel != -1)
         TIFFSetField( l_hTIFF, TIFFTAG_ZSTD_LEVEL, l_nZSTDLevel);
 
     if( l_nCompression == COMPRESSION_JPEG )
@@ -17349,7 +17354,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             TIFFSetField( l_hTIFF, TIFFTAG_LZMAPRESET, poDS->nLZMAPreset );
         }
     }
-    else if( l_nCompression == COMPRESSION_ZSTD )
+    else if( isZSTD(l_nCompression) )
     {
         if( poDS->nZSTDLevel != -1 )
         {
@@ -18704,7 +18709,7 @@ int GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName)
     else if( EQUAL( pszValue, "LZMA" ) )
         nCompression = COMPRESSION_LZMA;
     else if( EQUAL( pszValue, "ZSTD" ) )
-        nCompression = COMPRESSION_ZSTD;
+        nCompression = COMPRESSION_ZSTD_NEW;
     else
         CPLError( CE_Warning, CPLE_IllegalArg,
                   "%s=%s value not recognised, ignoring.",
@@ -18808,7 +18813,7 @@ void GDALRegister_GTiff()
             osCompressValues +=
                     "       <Value>LZMA</Value>";
         }
-        else if( c->scheme == COMPRESSION_ZSTD )
+        else if( c->scheme == COMPRESSION_ZSTD_NEW )
         {
             bHasZSTD = true;
             osCompressValues +=

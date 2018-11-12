@@ -96,8 +96,9 @@ uint16 GTiffGetAlphaValue(const char* pszValue, uint16 nDefault);
 #define TIFFTAG_LZMAPRESET      65562   /* LZMA2 preset (compression level) */
 #endif
 
-#if !defined(COMPRESSION_ZSTD)
-#define     COMPRESSION_ZSTD        34926   /* ZSTD */
+#if !defined(COMPRESSION_ZSTD_OLD)
+#define     COMPRESSION_ZSTD_OLD        34926   /* ZSTD */
+#define     COMPRESSION_ZSTD_NEW        50000   /* ZSTD */
 #endif
 
 #if !defined(TIFFTAG_ZSTD_LEVEL)

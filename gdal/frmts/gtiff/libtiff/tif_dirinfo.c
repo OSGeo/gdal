@@ -1052,7 +1052,8 @@ _TIFFCheckFieldIsValidForCodec(TIFF *tif, ttag_t tag)
 		if (tag == TIFFTAG_PREDICTOR)
 		    return 1;
 		break;
-	    case COMPRESSION_ZSTD:
+	    case COMPRESSION_ZSTD_OLD:
+            case COMPRESSION_ZSTD_NEW:
 		if (tag == TIFFTAG_PREDICTOR)
 		    return 1;
 		break;
