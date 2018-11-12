@@ -343,6 +343,16 @@ The driver has undergone significant changes in GDAL 1.9.0, see NEWS file and <a
 Since GDAL 2.4, and with Linux kernel &gt;=4.3 and libnetcdf &gt;=4.5,
 read operations on /vsi file systems are supported.<p>
 
+<h2>NetCDF-4 groups support on reading (GDAL >= 2.5.0)</h2>
+
+The driver has undergone significant changes in GDAL 2.5.0 to support NetCDF-4 groups on reading:
+<ul>
+<li><p>Explore recursively all nested groups to create the subdatasets list</p></li>
+<li><p>Subdatasets in nested groups use the /group1/group2/.../groupn/var standard NetCDF-4 convention, except for variables in the root group which do not have a leading slash for backward compatibility with the NetCDF-3 driver</p></li>
+<li><p>Global attributes of each nested group are also collected in the GDAL dataset metadata, using the same convention /group1/group2/.../groupn/NC_GLOBAL#attr_name, except for the root group which do not have a leading slash for backward compatibility</p></li>
+<li><p>When searching for a variable containing auxiliary information on the selected subdataset, like coordinate variables or grid_mapping, we now also search in parent groups and their childs as specified in <a href="https://github.com/cf-convention/cf-conventions/issues/144">Support of groups in CF</a></p></li>
+</ul>
+
 <h2>Driver building</h2>
 
 This driver is compiled with the UNIDATA NetCDF library.<p>

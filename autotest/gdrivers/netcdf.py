@@ -2763,7 +2763,7 @@ def test_netcdf_81():
 
 ###############################################################################
 # netCDF file with extra dimensions that are oddly indexed (1D variable
-# corresponding to the dimension but with a differentn ame, no corresponding
+# corresponding to the dimension but with a different name, no corresponding
 # 1D variable, several corresponding variables)
 
 
@@ -2815,6 +2815,21 @@ def test_netcdf_uffd():
     for netcdf_file in netcdf_files:
         assert uffd_compare(netcdf_file) is True
 
+###############################################################################
+# netCDF file containing both rasters and vectors
+
+def test_netcdf_mixed_raster_vector():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('NETCDF:data/nc_mixed_raster_vector.nc:Band1')
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+    ds = ogr.Open('data/nc_mixed_raster_vector.nc')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f['PRFEDEA'] == '35043411'
     
 
 ###############################################################################

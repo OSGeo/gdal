@@ -655,6 +655,41 @@ def test_netcdf_cf_5():
 
     
 ###############################################################################
+# test CF support for dims and variables in different groups 
+
+def test_netcdf_cf_6():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ifiles = ('data/cf_dimsindiff_4326.nc',
+              'NETCDF:data/cf_nasa_4326.nc:/science/grids/data/temp',
+              'NETCDF:data/cf_nasa_4326.nc:/science/grids/imagingGeometry/lookAngle')
+    for ifile in ifiles:
+        ds = gdal.Open(ifile)
+        prj = ds.GetProjection()
+        sr = osr.SpatialReference()
+        sr.ImportFromWkt(prj)
+        proj_out = sr.ExportToProj4()
+
+        assert proj_out == '+proj=longlat +ellps=WGS84 +no_defs '
 
 
+###############################################################################
+# test check sums
+def test_netcdf_cf_7(netcdf_setup):  # noqa
+    # setup netcdf and netcdf_cf environment
+    netcdf_cf_setup()
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    checks = (('data/cf_dimsindiff_4326.nc', 1, 2041),
+              ('NETCDF:data/cf_nasa_4326.nc:/science/grids/data/temp', 1, 2041),
+              ('NETCDF:data/cf_nasa_4326.nc:/science/grids/imagingGeometry/lookAngle', 1, 476),
+              ('NETCDF:data/cf_nasa_4326.nc:/science/grids/imagingGeometry/lookAngle', 4, 476))
+
+    for infile, band, checksum in checks:
+        ds = gdal.Open(infile, gdal.GA_ReadOnly)
+        assert ds.GetRasterBand(band).Checksum() == checksum
 
