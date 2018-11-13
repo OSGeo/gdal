@@ -1127,6 +1127,86 @@ def rasterio_lanczos_nodata():
 
     return 'success'
 
+###############################################################################
+
+
+def rasterio_resampled_value_is_nodata():
+
+    gdal.FileFromMemBuffer('/vsimem/in.asc',
+"""ncols        4
+nrows        4
+xllcorner    440720.000000000000
+yllcorner    3750120.000000000000
+cellsize     60.000000000000
+nodata_value 0
+ -1.1 -1.1 1.1 1.1
+ -1.1 -1.1 1.1 1.1
+ -1.1 -1.1 1.1 1.1
+ -1.1 -1.1 1.1 1.1""")
+
+    ds = gdal.Open('/vsimem/in.asc')
+
+    data = ds.GetRasterBand(1).ReadRaster(buf_xsize=1,
+                                          buf_ysize=1,
+                                          resample_alg=gdal.GRIORA_Lanczos)
+    data_ar = struct.unpack('f' * 1, data)
+    expected_ar = (1.1754943508222875e-38, )
+    if data_ar != expected_ar:
+        gdaltest.post_reason('fail')
+        print(data_ar)
+        return 'fail'
+
+    data = ds.GetRasterBand(1).ReadRaster(buf_xsize=1,
+                                          buf_ysize=1,
+                                          resample_alg=gdal.GRIORA_Average)
+    data_ar = struct.unpack('f' * 1, data)
+    expected_ar = (1.1754943508222875e-38, )
+    if data_ar != expected_ar:
+        gdaltest.post_reason('fail')
+        print(data_ar)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/in.asc')
+
+
+    gdal.FileFromMemBuffer('/vsimem/in.asc',
+"""ncols        4
+nrows        4
+xllcorner    440720.000000000000
+yllcorner    3750120.000000000000
+cellsize     60.000000000000
+nodata_value 0
+ -1 -1 1 1
+ -1 -1 1 1
+ -1 -1 1 1
+ -1 -1 1 1""")
+
+    ds = gdal.Open('/vsimem/in.asc')
+
+    data = ds.GetRasterBand(1).ReadRaster(buf_xsize=1,
+                                          buf_ysize=1,
+                                          resample_alg=gdal.GRIORA_Lanczos)
+    data_ar = struct.unpack('I' * 1, data)
+    expected_ar = (1, )
+    if data_ar != expected_ar:
+        gdaltest.post_reason('fail')
+        print(data_ar)
+        return 'fail'
+
+    data = ds.GetRasterBand(1).ReadRaster(buf_xsize=1,
+                                          buf_ysize=1,
+                                          resample_alg=gdal.GRIORA_Average)
+    data_ar = struct.unpack('I' * 1, data)
+    expected_ar = (1, )
+    if data_ar != expected_ar:
+        gdaltest.post_reason('fail')
+        print(data_ar)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/in.asc')
+
+    return 'success'
+
 gdaltest_list = [
     rasterio_1,
     rasterio_2,
@@ -1145,6 +1225,7 @@ gdaltest_list = [
     rasterio_15,
     rasterio_16,
     rasterio_lanczos_nodata,
+    rasterio_resampled_value_is_nodata,
 ]
 
 # gdaltest_list = [ rasterio_16 ]

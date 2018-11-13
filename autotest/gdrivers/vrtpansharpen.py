@@ -1681,7 +1681,7 @@ def vrtpansharpen_9():
         gdaltest.post_reason('fail')
         return 'fail'
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
-    if cs not in([4179, 8767, 52257], [4175, 8758, 52249]):
+    if cs not in ([4640, 9158, 54450],):
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
@@ -1723,7 +1723,7 @@ def vrtpansharpen_9():
         gdaltest.post_reason('fail')
         return 'fail'
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
-    if cs not in([4179, 8767, 52257], [4175, 8758, 52249]):
+    if cs not in ([4640, 9158, 54450],):
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
