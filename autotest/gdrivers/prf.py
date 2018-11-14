@@ -98,13 +98,21 @@ def prf_3():
 
     return 'success'
 
+
+def prf_4():
+
+    tst = gdaltest.GDALTest('prf', './PRF/dem.x-dem', 1, 0)
+    return tst.testOpen(check_gt=(1.5, 1.0, 0.0, 9329.0, 0.0, -2.0))
+
+
 ###############################################################################
 
 
 gdaltest_list = [
     prf_1,
     prf_2,
-    prf_3
+    prf_3,
+    prf_4
 ]
 
 if __name__ == '__main__':
