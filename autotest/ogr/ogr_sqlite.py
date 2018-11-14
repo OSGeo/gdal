@@ -43,30 +43,41 @@ import ogrtest
 
 pytestmark = [
     pytest.mark.require_driver('SQLite'),
-    # pytest.mark.usefixtures('tmp_dir'),
 ]
 
 
 ###############################################################################
 # Test if SpatiaLite is available
 
-@pytest.fixture(scope='module')
-def spatialite():
-    sl_ds = ogr.Open('tmp/sqlite_test.db', update=1)
-
+@pytest.fixture(autouse=True, scope='module')
+def setup():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr = sl_ds.ExecuteSQL("SELECT spatialite_version()")
-    gdal.PopErrorHandler()
-    if sql_lyr is None:
-        pytest.skip()
-    else:
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/foo.db', options=['SPATIALITE=YES'])
+    gdaltest.spatialite_version = None
+    if ds is not None:
+        sql_lyr = ds.ExecuteSQL("SELECT spatialite_version()")
         feat = sql_lyr.GetNextFeature()
-        print('Spatialite : %s' % feat.GetFieldAsString(0))
         gdaltest.spatialite_version = feat.GetFieldAsString(0)
-        gdaltest.has_spatialite = True
-        sl_ds.ReleaseResultSet(sql_lyr)
+        print('Spatialite : %s' % gdaltest.spatialite_version)
+        ds.ReleaseResultSet(sql_lyr)
+    ds = None
+    gdal.Unlink('/vsimem/foo.db')
+    gdal.PopErrorHandler()
 
+
+@pytest.fixture()
+def require_spatialite(setup):
+    if gdaltest.spatialite_version is None:
+        pytest.skip('Spatialite not available')
+    return gdaltest.spatialite_version
+
+
+@pytest.fixture(params=['no-spatialite', 'spatialite'])
+def with_and_without_spatialite(request):
+    if request.param == 'spatialite':
         return gdaltest.spatialite_version
+    else:
+        return None
 
 
 ###############################################################################
@@ -74,9 +85,7 @@ def spatialite():
 
 
 def test_ogr_sqlite_1():
-
     gdaltest.sl_ds = None
-    gdaltest.has_spatialite = False
 
     sqlite_dr = ogr.GetDriverByName('SQLite')
     if sqlite_dr is None:
@@ -792,7 +801,7 @@ def test_ogr_sqlite_16():
 # Test SPATIALITE dataset creation option
 
 
-def test_ogr_sqlite_17(spatialite):
+def test_ogr_sqlite_17(require_spatialite):
 
     if gdaltest.sl_ds is None:
         pytest.skip()
@@ -836,7 +845,7 @@ def test_ogr_sqlite_17(spatialite):
 # Create a layer with a non EPSG SRS into a SPATIALITE DB (#3506)
 
 
-def test_ogr_sqlite_18(spatialite):
+def test_ogr_sqlite_18(require_spatialite):
     if gdaltest.sl_ds is None:
         pytest.skip()
 
@@ -867,7 +876,7 @@ def test_ogr_sqlite_18(spatialite):
 # Create a SpatiaLite DB with INIT_WITH_EPSG=YES
 
 
-def test_ogr_sqlite_19(spatialite):
+def test_ogr_sqlite_19(require_spatialite):
 
     if gdaltest.sl_ds is None:
         pytest.skip()
@@ -875,7 +884,7 @@ def test_ogr_sqlite_19(spatialite):
     if int(gdal.VersionInfo('VERSION_NUM')) < 1800:
         pytest.skip()
 
-    if spatialite != '2.3.1':
+    if require_spatialite != '2.3.1':
         pytest.skip()
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/spatialite_test_with_epsg.db', options=['SPATIALITE=YES', 'INIT_WITH_EPSG=YES'])
@@ -901,12 +910,13 @@ def test_ogr_sqlite_19(spatialite):
 # Create a SpatiaLite DB with INIT_WITH_EPSG=NO
 
 
-def test_ogr_sqlite_19_bis(spatialite):
+def test_ogr_sqlite_19_bis(require_spatialite):
 
     if gdaltest.sl_ds is None:
         pytest.skip()
 
-    if int(spatialite[0:spatialite.find('.')]) < 4:
+    spatialite_major_ver = int(require_spatialite.split('.')[0])
+    if spatialite_major_ver < 4:
         pytest.skip()
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/spatialite_test_without_epsg.db', options=['SPATIALITE=YES', 'INIT_WITH_EPSG=NO'])
@@ -1285,7 +1295,7 @@ def test_ogr_sqlite_30():
 # Test spatial filter when SpatiaLite is available
 
 
-def test_ogr_spatialite_2(spatialite):
+def test_ogr_spatialite_2(require_spatialite):
 
     ds = ogr.Open('tmp/spatialite_test.db', update=1)
     srs = osr.SpatialReference()
@@ -1434,7 +1444,7 @@ def test_ogr_spatialite_2(spatialite):
 # Test VirtualShape feature of SpatiaLite
 
 
-def test_ogr_spatialite_3(spatialite):
+def test_ogr_spatialite_3(require_spatialite):
 
     ds = ogr.Open('tmp/spatialite_test.db', update=1)
     ds.ExecuteSQL('CREATE VIRTUAL TABLE testpoly USING VirtualShape(data/testpoly, CP1252, -1)')
@@ -1457,7 +1467,7 @@ def test_ogr_spatialite_3(spatialite):
 # Test updating a spatialite DB (#3471 and #3474)
 
 
-def test_ogr_spatialite_4(spatialite):
+def test_ogr_spatialite_4(require_spatialite):
 
     ds = ogr.Open('tmp/spatialite_test.db', update=1)
 
@@ -1512,8 +1522,8 @@ def test_ogr_spatialite_4(spatialite):
     'bUseComprGeom',
     [False, True]
 )
-def test_ogr_spatialite_5(spatialite, bUseComprGeom):
-    if bUseComprGeom and spatialite == '2.3.1':
+def test_ogr_spatialite_5(require_spatialite, bUseComprGeom):
+    if bUseComprGeom and require_spatialite == '2.3.1':
         pytest.skip()
 
     try:
@@ -1641,8 +1651,8 @@ def test_ogr_spatialite_5(spatialite, bUseComprGeom):
 # Test spatialite spatial views
 
 
-def test_ogr_spatialite_6(spatialite):
-    if spatialite.find('2.3') == 0:
+def test_ogr_spatialite_6(require_spatialite):
+    if gdaltest.spatialite_version.startswith('2.3'):
         pytest.skip()
 
     try:
@@ -1762,7 +1772,7 @@ def test_ogr_spatialite_6(spatialite):
 # Test VirtualShape:xxx.shp
 
 
-def test_ogr_spatialite_7(spatialite):
+def test_ogr_spatialite_7(require_spatialite):
     ds = ogr.Open('VirtualShape:data/poly.shp')
     assert ds is not None
 
@@ -1778,8 +1788,8 @@ def test_ogr_spatialite_7(spatialite):
 # Test tables with multiple geometry columns (#4768)
 
 
-def test_ogr_spatialite_8(spatialite):
-    if spatialite.find('2.3') == 0:
+def test_ogr_spatialite_8(require_spatialite):
+    if require_spatialite.find('2.3') == 0:
         pytest.skip()
 
     try:
@@ -2036,23 +2046,15 @@ def test_ogr_sqlite_32():
 # Test SRID layer creation option
 
 
-@pytest.mark.parametrize(
-    'use_spatialite',
-    [
-        False,
-        pytest.param(True, marks=pytest.mark.usefixtures('spatialite')),
-    ]
-)
-def test_ogr_sqlite_33(use_spatialite):
+def test_ogr_sqlite_33(with_and_without_spatialite):
     if gdaltest.sl_ds is None:
         pytest.skip()
-
 
     try:
         os.remove('tmp/ogr_sqlite_33.sqlite')
     except OSError:
         pass
-    if not use_spatialite:
+    if not with_and_without_spatialite:
         options = []
     else:
         if gdaltest.spatialite_version.find('2.3') == 0:
@@ -2061,7 +2063,7 @@ def test_ogr_sqlite_33(use_spatialite):
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_33.sqlite', options=options)
 
-    if not use_spatialite:
+    if not with_and_without_spatialite:
         # To make sure that the entry is added in spatial_ref_sys
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(4326)
@@ -2168,19 +2170,12 @@ def test_ogr_sqlite_34():
 # Test SetAttributeFilter() on SQL result layer
 
 
-@pytest.mark.parametrize(
-    'use_spatialite',
-    [
-        False,
-        pytest.param(True, marks=pytest.mark.usefixtures('spatialite')),
-    ]
-)
-def test_ogr_sqlite_35(use_spatialite):
+def test_ogr_sqlite_35(with_and_without_spatialite):
 
     if gdaltest.sl_ds is None:
         pytest.skip()
 
-    if use_spatialite:
+    if with_and_without_spatialite:
         if gdaltest.spatialite_version.find('2.3') >= 0:
             pytest.skip()
         options = ['SPATIALITE=YES']
@@ -2484,7 +2479,7 @@ def test_ogr_sqlite_38():
 # Test spatial filters with point extent
 
 
-def test_ogr_spatialite_9(spatialite):
+def test_ogr_spatialite_9(require_spatialite):
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_spatialite_9.sqlite', options=['SPATIALITE=YES'])
     lyr = ds.CreateLayer('point', geom_type=ogr.wkbPoint)
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -2501,7 +2496,7 @@ def test_ogr_spatialite_9(spatialite):
 # Test not nullable fields
 
 
-def test_ogr_spatialite_10(spatialite):
+def test_ogr_spatialite_10(require_spatialite):
     try:
         os.remove('tmp/ogr_spatialite_10.sqlite')
     except OSError:
@@ -2613,19 +2608,12 @@ def test_ogr_sqlite_39():
 # Test dataset transactions
 
 
-@pytest.mark.parametrize(
-    'use_spatialite',
-    [
-        False,
-        pytest.param(True, marks=pytest.mark.usefixtures('spatialite')),
-    ]
-)
-def test_ogr_sqlite_40(use_spatialite):
+def test_ogr_sqlite_40(with_and_without_spatialite):
 
     if gdaltest.sl_ds is None:
         pytest.skip()
 
-    if use_spatialite:
+    if with_and_without_spatialite:
         options = ['SPATIALITE=YES']
     else:
         options = []
@@ -2902,7 +2890,7 @@ def test_ogr_sqlite_45():
 ###############################################################################
 # Test creating unsupported geometry types
 
-def test_ogr_spatialite_11(spatialite):
+def test_ogr_spatialite_11(require_spatialite):
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_spatialite_11.sqlite', options=['SPATIALITE=YES'])
 
     # Will be converted to LineString
@@ -2924,7 +2912,7 @@ def test_ogr_spatialite_11(spatialite):
 # Test opening a .sql file
 
 
-def test_ogr_spatialite_12(spatialite):
+def test_ogr_spatialite_12(require_spatialite):
     if gdal.GetDriverByName('SQLite').GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
         pytest.skip()
 
@@ -2985,18 +2973,3 @@ def test_ogr_sqlite_cleanup():
     gdaltest.sl_ds = None
 
     gdaltest.shp_ds = None
-
-
-###############################################################################
-# Ask to run again tests in a new python process without libspatialite loaded
-# TODO: I don't think this is really feasible with pytest (?)
-
-# def test_ogr_sqlite_without_spatialite():
-
-#     if not gdaltest.has_spatialite or not run_without_spatialite:
-#         pytest.skip()
-
-#     import test_py_scripts
-#     ret = test_py_scripts.run_py_script_as_external_script('.', 'ogr_sqlite', ' -without_spatialite', display_live_on_parent_stdout=True)
-
-#     assert ret.find('Failed:    0') != -1
